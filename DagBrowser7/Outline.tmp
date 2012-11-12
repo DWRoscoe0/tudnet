@@ -1,0 +1,203 @@
+  Infogora Name Space
+    Publications
+        Publications By User
+            Alice
+                Alice's Restaurant
+                    Alice's Restaurant Menu
+
+                    cheeseburgers
+                    chips
+                    Pepsi
+                    .
+                    Alice's Restaurant Seating
+                    
+                    Seating for more than 100 guests.
+                    .
+                    Alice's Restaurant Nutritional Information
+                    
+                    Your on your own.
+                    .
+                .
+                Alice's Liberty Blog
+                    Blog Home Page
+                    
+                    Welcome to Alice's Liberty Blog
+                    .
+                    Alice's Article 1
+                    
+                    Liberty, YAY!
+                    .
+                    Alice's Article 2
+                    
+                    Liberty, YAY!
+                    .
+                .
+            .
+            Bob ...
+              Bob's Infogora Site
+              
+              COMING SOON
+              .
+            .
+            Carol ...
+              Carol's Infogora Site
+              
+              COMING SOON
+              .
+            .
+        .
+        Index Entries By Word (partial list).
+            bob
+              Bob's Infogora Site
+              .
+            .
+            carol
+              Carol's Infogora Site
+              .
+            .
+            coming
+              Bob's Infogora Site
+              .
+              Carol's Infogora Site
+              .
+            .
+            infogora
+              Bob's Infogora Site
+              .
+              Carol's Infogora Site
+              .
+            .
+            site
+              Bob's Infogora Site
+              .
+              Carol's Infogora Site
+              .
+            .
+            soon
+              Bob's Infogora Site
+              .
+              Carol's Infogora Site
+              .
+            .
+        .
+    .
+    Infogora Applications
+      Network Monitors
+        Network Adapters
+          Wire Networks
+          
+          [ If your computer has a wire network adapter,
+          it will appear here. ]
+          .
+          Wireless Networks
+          
+          [ If your computer has a wifi network adapter,
+          it will appear here. ]
+          .
+          Sneaker Networks
+          
+          [ If you exchange Infogora files with other people 
+          using removable media, then those exchanges will appear here. ]
+          .
+        .
+        Network Connections
+          Local Area Networks (LANs)
+          
+          [ Usually your one LAN will appear here. ]
+          .
+          Internets (connectivity beyond the LANs)
+
+          [ Usually just The Internet will appear here. ]
+          .
+          Infogora Overlay Networks
+            Infogora Base Network
+
+            Connected?  Yes/No
+            Number Of Other Nodes Connected: #######
+            Number Of Unique Files Stored: #########
+            ...
+            .
+            My Infogora Publication Networks.
+            
+            [ These overlay networks hold all your Infogora publications. ]
+            .
+            My Infogora Subscription Networks.
+            
+            [ These overlay networks represent all your 
+            Infogora subscriptions and active searches. ]
+            .
+          .
+        .
+      .
+      Publishing Tools
+      
+      [ These are applications for the creation and publishing
+      Infogora files, including documents, images, audios, and videos. 
+      
+      These tools also simultaneously create and publish 
+      appropriate Index Entries for those files.
+      This is the invisible half of the Infogora search engine. ]
+      .
+      Streaming Tools
+      
+      [ These are applications for generating Infogora streams.
+      
+      A stream is a special type of publication.
+      What makes a stream special is that instead of 
+      being delivered in one chunk after being created,
+      a stream is delivered while it is being created,
+      and often over an extended period of time.
+
+      Streaming is especially useful for reporting live events.
+
+      We usually think of streams as being audios and videos,
+      but in theory any publication can be streamed,
+      including text documents and sets of images. ]
+      .
+      Search App
+      
+      [ This is the visible half of the distributed search engine.
+      It looks like a typical Internet search engine.
+      
+      It searches the Infogora Index for words the user types
+      to find publications which contain those words.
+
+      It can also setup searches that run in the background,
+      looking for new publications as they become available.
+
+      The other invisible half of the distributed search engine 
+      is in the Publishing Tools which automaticly publish
+      Index Entries when users create publications. ]
+      .
+      Subscription and Search Management
+      
+      [ This is for managing the lists of publications 
+      to which you are subscribed, and all of your
+      persistant/background searches.
+      
+      These are all the things that interest you
+      that the Infogora is monitoring for you, 
+      looking for new publications or changes in old ones.
+      ]
+      .
+      Messaging
+
+      [ Internet messaging includes things like 
+      e-mail, Instant Messaging, Twitter, Web forums, 
+      text chat rooms, and USENET. 
+      
+      The Infogora will provide functionally similar messaging,
+      but to limit spam it will be done using the same 
+      Publish-Subscribe metaphor used for other publications. ]
+      .
+    .
+    My Short-Cuts
+    
+    [ This is where you can place short-cut links to
+    parts of the Infogora Name Space that you visit often. ]
+    .
+  
+  .
+  Sentinel-Record to catch going past EndOfFile.
+
+
