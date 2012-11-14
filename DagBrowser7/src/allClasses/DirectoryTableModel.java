@@ -1,6 +1,8 @@
 package allClasses;
 
 import java.io.*;
+import java.sql.Date;
+import java.text.SimpleDateFormat;
 
 import javax.swing.UIManager;
 import javax.swing.table.AbstractTableModel;
@@ -30,6 +32,8 @@ public class DirectoryTableModel
       protected Object DirectoryIconObject;  // ?? unused.
       protected Object FileIconObject;  // ?? unused.
 
+      private SimpleDateFormat ASimpleDateFormat=  // For displaying time-stamps.
+        new SimpleDateFormat(); 
       
     // constructor methods.
     
@@ -71,7 +75,8 @@ public class DirectoryTableModel
       public int getColumnCount() 
         {
           //return SortedNamesStrings != null ? 3 :0;
-          return 3; // There are always 3 columns.
+          //return 3; // There are always 3 columns.
+          return 4; // There are 4 columns with date column.
           }
 
       public Object getValueAt(int RowI, int ColumnI)
@@ -113,6 +118,11 @@ public class DirectoryTableModel
                       return "--";
                   else  // actual length for files.
                       return new Long( RowFile.length() );
+              case 3:  // modified date and time.
+                  Date ModifiedDate= new Date(RowFile.lastModified());
+                  //String ModifiedString= ModifiedDate.toString();
+                  String ModifiedString= ASimpleDateFormat.format( ModifiedDate );
+                  return ModifiedString;
               default:  // anything else, return empty string.
                   return "";
               }
@@ -130,6 +140,8 @@ public class DirectoryTableModel
                 return "Name";
             case 2:
                 return "Bytes";
+            case 3:
+                return "Modified";
             default:
                 return "unknown";
             }
