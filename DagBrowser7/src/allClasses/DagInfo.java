@@ -7,7 +7,9 @@ class DagInfo
   /* This class is used to store information associated with
     nodes of the Infogora DAG (Directed Acyclic Graph).
     This includes information about how recently 
-    each child of a node was referenced.
+    each child of a node was referenced or visited.
+    Generally a location with the DAG is specified with
+    a TreePath when information is to be read or stored.
     
     Possible speed optimizations (not needed yet).
       ITreeNodeFromUpdatedSubtreesWith( ):
@@ -33,7 +35,7 @@ class DagInfo
       private static ITreeNode RootITreeNode;  /* Root of tree which 
         holds Dag information.  */
 
-    // constructor.
+    // Constructor.
 
       public DagInfo( TreePath TreePathIn )  
         /* This constructor doesn't construct any instance,
@@ -44,7 +46,7 @@ class DagInfo
           UpdateTreeWith( TreePathIn );  // do this to create initial tree.
           }
 
-    // setter methods.  these write information to tree.
+    // Setter methods.  These write information to tree.
           
       static public void UpdateTreeWith( TreePath TreePathIn )
         /* This does the same as ITreeNodeFromUpdatedTreeWith(.) except 
@@ -55,7 +57,7 @@ class DagInfo
           ITreeNodeFromUpdatedTreeWith( TreePathIn ); // Update with TreePath.
           } // UpdateTreeWith(.)
 
-    // getter-setter methods.  these write to and read from info tree.
+    // Getter-Setter methods.  These write to and read from info tree.
             
       static public DagNode UpdateTreeAndGetRecentChildDagNodeAt
         ( TreePath TreePathIn )

@@ -7,10 +7,13 @@ public class ITreeNode
 
   extends DefaultMutableTreeNode
   
-  /* This class was originally created for convenience because
-    DefaultMutableTreeNode is such a long and clumsy 
-    type name to use a lot.
-    It was later expanded to store values for the DagInfo tree.
+  /* This class represents DagNode metadata, information about DagNodes.
+    Some of that data is now stored in a variable called TheHashMap,
+    but some of it is still stored in the superclass DefaultMutableTreeNode.
+    
+    Originally the class DefaultMutableTreeNode stored all the metadata.
+    This subclass was created for the convenience of a shorter name.
+    New metadata was added to it later.
     */
     
   { // class ITreeNode.
@@ -18,9 +21,9 @@ public class ITreeNode
     // Variables.
     
       private static final long serialVersionUID = 1L;
-      // public boolean AutoExpandedB= false;  
-    
-      private HashMap< String, Object > TheHashMap;  // For storage of attribute.
+
+      // public boolean AutoExpandedB= false;  // [moved to TheHashMap]
+      private HashMap< String, Object > TheHashMap;  // For storage of various attribute.
 
     // Constructor.
     
@@ -33,7 +36,7 @@ public class ITreeNode
             new HashMap<String, Object>( 2 );  // Construct only a little one at first.
           }
 
-    // Other methods.
+    // Methods which reference TheHashMap.
 
       public boolean containsKey( String KeyString ) 
         /* This is a pass-through to TheHashMap. */

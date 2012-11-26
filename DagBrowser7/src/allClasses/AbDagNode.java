@@ -12,10 +12,10 @@ public abstract class AbDagNode
 
   implements DagNode
   
-  /* This is an abstract class that implements part of the DagNode interface.
-    The default implementations here are 
+  /* This is an abstract class that implements part of the interface DagNode.
+    The methods implemented here are 
     ones that are likely to be useful for most subclasses.
-    Subclasses can override what they don't like.
+    Subclasses can override methods that are not appropriate.
     */
     
   {
@@ -27,9 +27,9 @@ public abstract class AbDagNode
 
       public int getChildCount( ) 
         /* This method actually scans all the children that are
-          visible to getChild(.) and counts them.  
+          visible to the method getChild(.) and counts them.  
           It assumes a functional getChild( IndexI ) method which
-          return null if IndexI is out of range.  */
+          returns null if IndexI is out of range.  */
         { // getChildCount( )
           int ChildIndexI= 0;  // Initialize child index.
           while  // Process all children...
@@ -54,23 +54,23 @@ public abstract class AbDagNode
                   ChildIndexI= -1;  // Set index to indicate failure.
                   break;  // Exit while loop.
                   } // Exit with failure.
-              if ( InChildObject.equals( ChildObject ) )
-                break;  // Found child.  Exit while loop.
-              ChildIndexI++;  // increment index for next child.
+              if ( InChildObject.equals( ChildObject ) )  // Found child.
+                break;  // Exit while loop.
+              ChildIndexI++;  // Increment index to check next child.
               } // Check one child.
-          return ChildIndexI;  // Return ending index as search result.
+          return ChildIndexI;  // Return ending child index as search result.
           } // getIndexOfChild(.)
 
       public String GetInfoString()
         /* Returns a String representing information about this object. */
         { 
-          return GetNameString( );
+          return GetNameString( );  // Use the name string.
           }
 
       public String GetHeadString()
         /* Returns a String representing this node excluding any children. */
         { 
-          return GetNameString( );
+          return GetNameString( );  // Use the name string.
           }
 
       public String GetNameString( )
@@ -82,22 +82,19 @@ public abstract class AbDagNode
       public JComponent GetDataJComponent
         ( TreePath InTreePath, TreeModel InTreeModel )
         /* Returns a JComponent which is appropriate for viewing 
-          the current tree node represented specified by InTreePath,
+          the this DagNode, which is referenced by InTreePath,
           using context from InTreeModel.
           */
         { // GetDataJComponent()
           JComponent ResultJComponent= null;  // For result.
 
-          if ( isLeaf( ) )
-            {
-              ResultJComponent= 
-                //new TextViewer( InTreePath, InTreeModel, TextString );
-                new TextViewer( InTreePath, InTreeModel, GetHeadString() );
-              }
-            else
-            ResultJComponent= // Calculate a ListViewer.
+          if ( isLeaf( ) )  // This DagNode is a leaf.
+            ResultJComponent= // Set result to be a TextViewer JComponent.
+              new TextViewer( InTreePath, InTreeModel, GetHeadString() );
+            else  // This DagNode is NOT a leaf.
+            ResultJComponent= // Set result to be a ListViewer JComponent.
               new ListViewer( InTreePath, InTreeModel );
-          return ResultJComponent;  // return the final result.
+          return ResultJComponent;  // Return the result from above.
           } // GetDataJComponent()
 
     // other methods.
