@@ -50,13 +50,8 @@ class DagInfo
         /* This does the same as ITreeNodeFromUpdatedTreeWith(.) except 
           it doesn't return the ITreeNode associated with the end of the path.
           It exists mainly to help other code be self-documenting.
-          // It also does nothing if the argument is null.
           */
         { // UpdateTreeWith(.)
-          //if ( TreePathIn != null )  // Update with TreePath if not null.
-          //  ITreeNodeFromUpdatedTreeWith( TreePathIn ); // Update with TreePath.
-          //  else
-          //  System.out.println( "DagInfo. UpdateTreeWith( null )"); // ???
           ITreeNodeFromUpdatedTreeWith( TreePathIn ); // Update with TreePath.
           } // UpdateTreeWith(.)
 
@@ -222,59 +217,6 @@ class DagInfo
           return  ChildITreeNode;  // return result child.
           } // UserObjectSearchITreeNode(.)
 
-    // auto-expand-collapse methods, under development.
-
-      static public void SetAutoExpanded
-        ( TreePath TreePathIn, boolean AutoExpandInB )
-        /* This method stores the value of the AutoExpandedB flag
-          from the value AutoExpandInB
-          in the info tree node specified by TreePathIn.
-          */
-        { 
-          ITreeNode TheITreeNode= ITreeNodeFromUpdatedTreeWith( TreePathIn );
-          TheITreeNode.AutoExpandedB= AutoExpandInB;
-          }
-      
-      static public boolean GetAutoExpandedB( TreePath TreePathIn )
-        /* This method returns the value of the AutoExpandedB flag
-          in the info tree node specified by TreePathIn.
-          */
-        { 
-          ITreeNode TheITreeNode= ITreeNodeFromUpdatedTreeWith( TreePathIn );
-          return TheITreeNode.AutoExpandedB; 
-          }
-
-      static public TreePath FollowAutoExpandToTreePath
-        ( TreePath StartTreePath )
-        /* This method tries to follow a chain of 
-          the most recently visited AutoExpanded nodes
-          starting with the node named by StartTreePath.
-          It returns the TreePath of the first node not AutoExpanded,
-          or null if there was no AutoExpanded node.
-          
-          ?? base on code from ITreeNodeFromUpdatedSubtreesWith(.).
-          */
-        { // FollowAutoExpandToTreePath( TreePath StartTreePath )
-          TreePath ScanTreePath=   // initialize TreePath scanner to be...
-            StartTreePath;  // ...start TreePath.
-          ITreeNode ScanITreeNode= // initialize ITreeNode scanner to be...
-            ITreeNodeFromUpdatedTreeWith( // ...ITreeNode at end...
-              ScanTreePath );  // ...of ScanTreePath.
-          while   // follow chain of all nodes with auto-expanded flag set.
-            ( ScanITreeNode.AutoExpandedB )  // auto-expanded flag set?
-            { // yes, process one auto-expanded node.
-              ITreeNode ChildITreeNode= // get most recently referenced child.
-                (ITreeNode)ScanITreeNode.getChildAt(
-                  ScanITreeNode.getChildCount()-1);
-              Object ChildUserObject= ChildITreeNode.getUserObject();
-              ScanTreePath=  // create ScanTreePath of next node...
-                ScanTreePath.pathByAddingChild( // ...by adding to it...
-                  ChildUserObject);  // ...the child user Object.
-              ScanITreeNode= ChildITreeNode; // make next scan node be child.
-              } // yes, process one auto-expanded node.
-          if ( ScanTreePath == StartTreePath ) // if we haven't moved.
-            ScanTreePath=  null;  // replace ScanTreePath with null.
-          return ScanTreePath;  // return final ScanTreePath as result.
-          } // FollowAutoExpandToTreePath( TreePath StartTreePath )
+    // auto-expand-collapse methods, under development, moved to class TreeExpansion.
 
     } // class DagInfo.

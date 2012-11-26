@@ -193,7 +193,7 @@ public class RootJTree
             { // expand downward if needed.
               if // scan node is a descendent of (same as) stop node.
                 ( StopTreePath.isDescendant( CommonAncestorTreePath ) )
-                DagInfo.SetAutoExpanded(  // clear auto-expanded status of...
+              	TreeExpansion.SetAutoExpanded(  // clear auto-expanded status of...
                   StopTreePath, false  // ...of stop node.
                   );
               else /// scan node is NOT a descendent of (same as) stop node.
@@ -203,7 +203,7 @@ public class RootJTree
                   );
               } // expand downward if needed.
             final TreePath AutoExpandTreePath= // destination auto-expandabe?
-              DagInfo.FollowAutoExpandToTreePath( StopTreePath );
+            	TreeExpansion.FollowAutoExpandToTreePath( StopTreePath );
             if ( AutoExpandTreePath != null )  // if so then...
               SwingUtilities.invokeLater(new Runnable() { // ...queue event...
                 @Override  
@@ -234,7 +234,7 @@ public class RootJTree
                   ScanTreePath.getParentPath();
                 if // auto-collapse this node if...
                   ( ( // ... it was auto-expanded. 
-                      DagInfo.GetAutoExpandedB( ScanTreePath ) 
+                  		TreeExpansion.GetAutoExpandedB( ScanTreePath ) 
                       ) &&  // ...and...
                     ( // ...not the top of an inverted-V.
                       ! ScanTreePath.isDescendant( StopTreePath ) ||
@@ -279,7 +279,7 @@ public class RootJTree
                 //setSelectionPath( StopsParentTreePath );  // select node
                   // temporarilly also for visibility.
                 scrollPathToVisible( StopsParentTreePath );  // to show progress.
-                DagInfo.SetAutoExpanded(  // set auto-expanded status.
+                TreeExpansion.SetAutoExpanded(  // set auto-expanded status.
                   StopsParentTreePath, true
                   );
                 MyPaintAfterDelay( );  // show progress.
@@ -375,7 +375,7 @@ public class RootJTree
             (isExpanded(SelectedRowI))
               { 
                 collapseRow(SelectedRowI);  // collapse present node.
-                DagInfo.SetAutoExpanded(  // force auto-expanded status...
+                TreeExpansion.SetAutoExpanded(  // force auto-expanded status...
                   getLeadSelectionPath() , // ...for selected path...
                   false  // ... to be off.
                   );
