@@ -303,6 +303,9 @@ public class IFile
           if ( ChildStrings == null )  // Read names of children if needed.
             ChildStrings=  // Read names of children from directory.
               TheFile.list();
+          if ( ChildStrings == null )  // Make certain the array is not null.
+            ChildStrings=  // Make it be a zero-length array.
+              new String[ 0 ];
           return ChildStrings;  // Return the array.
           }
 

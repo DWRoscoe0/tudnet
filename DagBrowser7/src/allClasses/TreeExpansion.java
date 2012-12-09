@@ -64,8 +64,9 @@ public class TreeExpansion {
           ( GetAutoExpandedB( ScanITreeNode ) )  // auto-expanded flag set?
           { // yes, process one auto-expanded node.
             ITreeNode ChildITreeNode= // get most recently referenced child.
-              (ITreeNode)ScanITreeNode.getChildAt(
-                ScanITreeNode.getChildCount()-1);
+              // (ITreeNode)ScanITreeNode.getChildAt(
+              //   ScanITreeNode.getChildCount()-1);
+              DagInfo.GetLastChildITreeNode(  ScanITreeNode );
             Object ChildUserObject= ChildITreeNode.getUserObject();
             ScanTreePath=  // create ScanTreePath of next node...
               ScanTreePath.pathByAddingChild( // ...by adding to it...

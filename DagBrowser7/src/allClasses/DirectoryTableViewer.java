@@ -191,8 +191,10 @@ public class DirectoryTableViewer
               (ListSelectionModel)TheListSelectionEvent.getSource();
             int IndexI =   // get index of selected element from the model.
               TheListSelectionModel.getMinSelectionIndex();
-            String[] IFileNameStrings =  // calculate list of child file names.
+            String[] IFileNameStrings =  // Calculate array of child file names.
               SubjectIFile.GetFile().list();
+            if ( IFileNameStrings == null )  // If array is null replace with empty array.
+              IFileNameStrings= new String[ 0 ]; // Replace with empty array.
             if // Process the selection if...
               ( //...the selection index is within the legal range.
                 (IndexI >= 0) && 
