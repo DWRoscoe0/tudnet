@@ -66,7 +66,7 @@ public class TreeExpansion {
             ITreeNode ChildITreeNode= // get most recently referenced child.
               // (ITreeNode)ScanITreeNode.getChildAt(
               //   ScanITreeNode.getChildCount()-1);
-              DagInfo.GetLastChildITreeNode(  ScanITreeNode );
+                ScanITreeNode.GetLastChildITreeNode( );
             Object ChildUserObject= ChildITreeNode.getUserObject();
             ScanTreePath=  // create ScanTreePath of next node...
               ScanTreePath.pathByAddingChild( // ...by adding to it...
