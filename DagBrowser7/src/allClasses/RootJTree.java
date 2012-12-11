@@ -187,7 +187,7 @@ public class RootJTree
             because collapsing or expanding apparently causes selections.
             */
           { // CollapseAndExpandRaw(.)
-            DagInfo.UpdateTreeWith( StartTreePath );  // record visit information.
+            DagInfo.UpdatePath( StartTreePath );  // record visit information.
             TreePath CommonAncestorTreePath= // do the up part.
               CollapseAndExpandUpTreePath( StartTreePath, StopTreePath );
             { // expand downward if needed.
@@ -304,7 +304,7 @@ public class RootJTree
         { // CommandGoToChildV().
           Object ChildObject=  // try to get child...
             DagInfo.  // ...from the visits tree...
-              UpdateTreeAndGetRecentChildDagNodeAt( // ...most recently visited...
+              UpdatePathDagNode( // ...most recently visited...
                 SelectedTreePath 
                 );  // ...of the tree node at end of selected TreePath.
               

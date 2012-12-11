@@ -15,7 +15,7 @@ public class TreeExpansion {
         in the info tree node specified by TreePathIn.
         */
       { 
-        ITreeNode TheITreeNode= DagInfo.ITreeNodeFromUpdatedTreeWith( TreePathIn );
+        ITreeNode TheITreeNode= DagInfo.UpdatePathITreeNode( TreePathIn );
         
         // TheITreeNode.AutoExpandedB= AutoExpandInB;
         if ( AutoExpandInB )  // Add or remove attribute depending on AutoExpandInB.
@@ -29,7 +29,7 @@ public class TreeExpansion {
         in the info tree node specified by TreePathIn.
         */
       { 
-        ITreeNode TheITreeNode= DagInfo.ITreeNodeFromUpdatedTreeWith( TreePathIn );
+        ITreeNode TheITreeNode= DagInfo.UpdatePathITreeNode( TreePathIn );
         // return TheITreeNode.AutoExpandedB; 
         return GetAutoExpandedB( TheITreeNode );
         }
@@ -58,7 +58,7 @@ public class TreeExpansion {
         TreePath ScanTreePath=   // initialize TreePath scanner to be...
           StartTreePath;  // ...start TreePath.
         ITreeNode ScanITreeNode= // initialize ITreeNode scanner to be...
-        		DagInfo.ITreeNodeFromUpdatedTreeWith( // ...ITreeNode at end...
+        		DagInfo.UpdatePathITreeNode( // ...ITreeNode at end...
             ScanTreePath );  // ...of ScanTreePath.
         while   // follow chain of all nodes with auto-expanded flag set.
           ( GetAutoExpandedB( ScanITreeNode ) )  // auto-expanded flag set?

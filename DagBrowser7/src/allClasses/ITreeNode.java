@@ -30,9 +30,11 @@ public class ITreeNode
       private Object UserObject;  // User object associated with this node.
       // public boolean AutoExpandedB= false;  // [moved to TheHashMap]
       private HashMap< String, Object > TheHashMap;  // For storage of various attribute.
-      public LinkedHashMap< Object, ITreeNode  > ChildrenLinkedHashMap;  /* LRU children,
-        with the Key being a user Object, 
-        and the Value being the child ITreeNode that contains it. */
+      public LinkedHashMap< Object, ITreeNode  > ChildrenLinkedHashMap;  /* Child map.
+        In each entry:
+          The Key is a user Object.
+          The Value is the child ITreeNode that contains the user Object. 
+        */
 
     // Constructor.
     
@@ -45,7 +47,7 @@ public class ITreeNode
 
           TheHashMap =  // For storage of attribute.
             new HashMap<String, Object>( 2 );  // Construct only a little Map at first.
-          ChildrenLinkedHashMap =  // For storage of LRU child references,
+          ChildrenLinkedHashMap =  // Initialize the child LinkedHashMap.
             new LinkedHashMap< Object, ITreeNode  >( 
               2, // Initial size (small).
               0.75f,  // Load factor
@@ -55,7 +57,7 @@ public class ITreeNode
 
           Object ChildUserObject= getUserObject();
 
-    // Methods which reference TheHashMap.
+    // Pass-through methods which reference TheHashMap where attributes are stored.
 
       public boolean containsKey( String KeyString ) 
         /* This is a pass-through to TheHashMap. */
@@ -84,50 +86,40 @@ public class ITreeNode
     // Other methods.
 
       public Object getUserObject()
-        /* This returns the UserObject associated with this node.  
-          At the moment it simply calls the superclass method.
-          */
+        /* This returns the UserObject associated with this node.  */
         { // getUserObject()
-          // return super.getUserObject();  // old location.
           return UserObject;  // Return the user object associated with this node.
           } // getUserObject()
 
       
-    // The following are low-level LRU child routines.
+    // Methods which deal with the children.
 
-			ITreeNode PutLastUserChildITreeNode( Object DesiredObject )
-        /* This method puts the object DesiriedObject in a child ITreeNode
-          at the LRU position within this parent ITreeNode.
-          It creates and uses a new ITreeNode if one with the DesiredObject
+			ITreeNode PutChildUserObjectITreeNode( Object UserObject )
+        /* This method puts the Object UserObject in a child ITreeNode
+          within this its parent ITreeNode.
+          It creates and uses a new ITreeNode if one with the UserObject
           does not already exist.
-          In either case, it returns the/a ITreeNode with the DesiredObject.
+          In either case, it returns the ITreeNode with the UserObject.
           */
-        { // ITreeNode PutLastUserChildITreeNode( DesiredObject )
-          ITreeNode NewChildITreeNode= // Create new ITreeNode with desired Object.
-            new ITreeNode( DesiredObject );  // It might or mignt not be used ahead.
-        
+        { // ITreeNode PutChildUserObjectITreeNode( UserObject )
           ITreeNode MapChildITreeNode=  // Try to get the ITreeNode and move-to-front...
             ChildrenLinkedHashMap.get(  // ...in the child LinkedHashMap...
-              DesiredObject );  // ... from the entry containing the DesiredObject.
+              UserObject );  // ... from the entry containing the UserObject.
           if ( MapChildITreeNode == null ) // Create new HashMap entry if not there.
             { // Create new HashMap entry.
               MapChildITreeNode= // Create new ITreeNode with desired Object.
-                //new ITreeNode( DesiredObject );
-                NewChildITreeNode;  
+                new ITreeNode( UserObject );
               ChildrenLinkedHashMap.put(   // Add new entry which maps...
-                DesiredObject,  // ...DesiredObject to...
+                UserObject,  // ...UserObject to...
                 MapChildITreeNode  // ... the ITreeNode containing it created earlier.
                 );
               } // Create new HashMap entry.
-        
-          // return ChildITreeNode;  // Return new/old child as result.
           return MapChildITreeNode;  // Return new/old child from map as result.
-          } // ITreeNode PutLastUserChildITreeNode( DesiredObject )
+          } // ITreeNode PutChildUserObjectITreeNode( UserObject )
 
 			public ITreeNode GetLastChildITreeNode(  )
-        /* This method gets the last child referenced in this ITreeNode,
-          or null if there is none.  InITreeNode must not be null.
-          */
+        /* This method gets the child ITreeNode of this ITreeNode 
+          which was referenced last, or null if there are no children.  */
         { // GetLastChildITreeNode( )
           ITreeNode LastChildITreeNode= null;  // Assume there is no last child.
           
@@ -143,12 +135,11 @@ public class ITreeNode
           return LastChildITreeNode; // return last child ITreeNode result, if any.
           } // GetLastChildITreeNode( )
 
-			DagNode GetRecentChildDagNode(  )
-        /* This method returns the user object DagNode of 
-          the most recently visited child of this ITreeNode,
-          or it returns null if there is no such object.
-          */
-        { // GetRecentChildDagNode( )
+			DagNode GetLastReferencedChildDagNode(  )
+        /* This method gets the user object DagNode from
+          the child ITreeNode in this ITreeNode 
+          which was referenced last, or null if there are no children.  */
+        { // GetLastReferencedChildDagNode( )
           DagNode RecentChildDagNode= null;// assume default value of null.
           switch (0) { // override with child if there is one.
             default:  // always start here.  switch allows break-outs.
@@ -163,6 +154,6 @@ public class ITreeNode
               getUserObject();  // user object.
             } // override with child if there is one.
           return RecentChildDagNode; // return resulting DagNode, or null if none.
-          } // GetRecentChildDagNode( )
+          } // GetLastReferencedChildDagNode( )
 
     } // class ITreeNode.
