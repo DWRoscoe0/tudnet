@@ -50,14 +50,22 @@ public class IFile
           return TheFile;
           }
       
-      public boolean equals( Object InObject )
-        /* Compares this to InObject.
-          They are considered equal if their TheFile components are equal.
-          */
+      public boolean equals( Object InIFile )
+        /* Compares this to InIFile.  */
         {
-          return TheFile.equals( ((IFile)InObject).TheFile );
+          boolean ResultB = false;
+          if (InIFile instanceof IFile) {
+              IFile OtherIFile = (IFile) InIFile;
+              ResultB = TheFile.equals( OtherIFile.TheFile );
+              }
+          return ResultB;
           }
-        
+
+      public int hashCode() 
+        {
+          return TheFile.hashCode();  // Simply return hashcode of the single field.
+          }
+
     // A subset of delegated TreeModel methods.
 
       public boolean isLeaf( ) 
