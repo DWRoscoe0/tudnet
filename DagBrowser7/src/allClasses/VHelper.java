@@ -19,7 +19,7 @@ public interface VHelper
           For efficienty it should be called only when
           the selected TreePath has actually changed.
           InternalB has the following meanings:
-            true: the selection is within the same DagNode as the previous 
+            true: the selection is within the same DataNode as the previous 
               selection, so it can be handled by this DagNodeViewer.
             false: the selection is to be handled by a new DagNodeViewer.
           */

@@ -48,15 +48,15 @@ public class TextViewer
 
         private boolean UpdateReentryBlockedB;  // to prevent method reentry.
         
-        /* Subject-DagNode-related variables.  These are in addition to 
+        /* Subject-DataNode-related variables.  These are in addition to 
           the ones in superclass DagNodeViewer.  */
 
-          // whole Subject, the DagNode that this class displays.
+          // whole Subject, the DataNode that this class displays.
             
-            private TreePath SubjectTreePath;  // TreePath of DagNode displayed.
-            private DagNode SubjectDagNode;  // DagNode displayed.
+            private TreePath SubjectTreePath;  // TreePath of DataNode displayed.
+            private DataNode SubjectDataNode;  // DataNode displayed.
             
-          // selection within Subject, the child DagNode that is selected.
+          // selection within Subject, the child DataNode that is selected.
 
             public ViewHelper aViewHelper;  // helper class ???
 
@@ -74,7 +74,7 @@ public class TextViewer
         /* Constructs a TextViewer.
           TreePathIn is the TreePath associated with
           the node of the Tree to be displayed.
-          The last DagNode in the path is that object.
+          The last DataNode in the path is that object.
           The contents is InString.
           InTreeModel provides context.
           */
@@ -101,7 +101,7 @@ public class TextViewer
         /* Constructs a TextViewer.
           TreePathIn is the TreePath associated with
           the node of the Tree to be displayed.
-          The last DagNode in the path is that object.
+          The last DataNode in the path is that object.
           The contents is InIFile.
           InTreeModel provides context.
           */
@@ -126,13 +126,13 @@ public class TextViewer
 
           if ( TreePathIn == null )  // prevent null TreePath.
             TreePathIn = new TreePath( new StringObject( "DUMMY TreePath" ));
-          SubjectDagNode=  // Extract and save List DagNode from TreePath.
-            (DagNode)TreePathIn.getLastPathComponent();
+          SubjectDataNode=  // Extract and save List DataNode from TreePath.
+            (DataNode)TreePathIn.getLastPathComponent();
           { // define a temporary selection TreePath to be overridden later.
-            DagNode SelectionDagNode=
+            DataNode SelectionDataNode=
               new StringObject( "TEMPORARY SELECTION" );
             SetSelectedChildTreePath( 
-              TreePathIn.pathByAddingChild(SelectionDagNode)
+              TreePathIn.pathByAddingChild(SelectionDataNode)
               );
             } // define a temporary selection TreePath to be overridden later.
           InitializeTheJTextArea( );
@@ -146,8 +146,8 @@ public class TextViewer
         { // InitializeTheJTextArea( )
           /*
           { // Set ListModel for the proper type of elements.
-            DefaultListModel<DagNode> ADefaultListModel= 
-              new DefaultListModel<DagNode>();
+            DefaultListModel<DataNode> ADefaultListModel= 
+              new DefaultListModel<DataNode>();
             TheJTextArea.setModel( ADefaultListModel );  // Define its ListModel.
             } // Set ListModel for the proper type of elements.
           TheJTextArea.setSelectionMode( ListSelectionModel.SINGLE_SELECTION );
@@ -182,12 +182,12 @@ public class TextViewer
             if // Process the selection if...
               ( //...the selection is legal.
                 (IndexI >= 0) && 
-                (IndexI < SubjectDagNode.getChildCount( ))
+                (IndexI < SubjectDataNode.getChildCount( ))
                 )
               { // Process the selection.
-                DagNode NewSelectionDagNode=  // Get selected DagNode...
-                  SubjectDagNode.getChild(IndexI);  // ...which is child at IndexI.
-                SetSelectionRelatedVariablesFrom( NewSelectionDagNode );
+                DataNode NewSelectionDataNode=  // Get selected DataNode...
+                  SubjectDataNode.getChild(IndexI);  // ...which is child at IndexI.
+                SetSelectionRelatedVariablesFrom( NewSelectionDataNode );
                 NotifyTreeSelectionListenersV(true); // tell others, if any.
                 } // Process the selection.
             } // void valueChanged(ListSelectionEvent TheListSelectionEvent)
@@ -298,7 +298,7 @@ public class TextViewer
               ; // do nothing.  or handle externally?
             else  // there is a parent.
               { // record visit and display parent.
-                DagInfo.  // In the visits tree...
+                MetaPath.  // In the visits tree...
                   UpdatePath( // update recent-visit info with...
                     GetSelectedChildTreePath()  // ...the new selected TreePath.
                     );
@@ -310,7 +310,7 @@ public class TextViewer
 
       /* private void CommandGoToChildV() 
         /* Tries to go to and displays a presentlly selected child 
-          of the present DagNode.  
+          of the present DataNode.  
           */
         /*
         { // CommandGoToChildV().
@@ -362,35 +362,35 @@ public class TextViewer
           */
         { // SetSubjectRelatedVariablesFrom(InSubjectTreePath()
           SubjectTreePath= InSubjectTreePath;  // Save base TreePath.
-          SubjectDagNode=  // store new list DagNode at end of TreePath.
-            (DagNode)SubjectTreePath.getLastPathComponent();
+          SubjectDataNode=  // store new list DataNode at end of TreePath.
+            (DataNode)SubjectTreePath.getLastPathComponent();
 
-          DagNode ChildDagNode=  // Try to get the child...
-            DagInfo.  // ...from the visits tree that was the...
-              UpdatePathDagNode( // ...most recently visited child...
+          DataNode ChildDataNode=  // Try to get the child...
+            MetaPath.  // ...from the visits tree that was the...
+              UpdatePathDataNode( // ...most recently visited child...
                 InSubjectTreePath  // ...of the List at the end of the TreePath.
                 );
-          if (ChildDagNode == null)  // if no recent child try first one.
+          if (ChildDataNode == null)  // if no recent child try first one.
             { // try getting first ChildDagNode.
-              if (SubjectDagNode.getChildCount() <= 0)  // there are no children.
-                ChildDagNode= StringObjectEmpty;  // use dummy child place-holder.
+              if (SubjectDataNode.getChildCount() <= 0)  // there are no children.
+                ChildDataNode= StringObjectEmpty;  // use dummy child place-holder.
               else  // there are children.
-                ChildDagNode= SubjectDagNode.getChild(0);  // get first ChildDagNode.
+                ChildDataNode= SubjectDataNode.getChild(0);  // get first ChildDagNode.
               } // get name of first child.
           
-          SetSelectionRelatedVariablesFrom( ChildDagNode );
+          SetSelectionRelatedVariablesFrom( ChildDataNode );
           } // SetSubjectRelatedVariablesFrom(InSubjectTreePath()
           
-      private void SetSelectionRelatedVariablesFrom( DagNode ChildDagNode )
+      private void SetSelectionRelatedVariablesFrom( DataNode ChildDataNode )
         /* This grouping method calculates values for and stores
           the child-related instance variables based on the ChildDagNode.
           It assumes the base variables are set already.
           */
         { // SetSelectionRelatedVariablesFrom( ChildUserObject ).
-          //SelectedDagNode= ChildDagNode;  // Save selected DagNode.
+          //SelectedDagNode= ChildDagNode;  // Save selected DataNode.
           TreePath ChildTreePath=  // Calculate selected child TreePath to be...
             SubjectTreePath.  // ...the base TreePath with...
-              pathByAddingChild( ChildDagNode );  // ... the child added.
+              pathByAddingChild( ChildDataNode );  // ... the child added.
           //SelectionNameString=   // Store name of selected child.
           //  ChildDagNode.GetNameString();
           SetSelectedChildTreePath( ChildTreePath );  // select new TreePath.
@@ -446,12 +446,12 @@ public class TextViewer
           */
       /*
         { //UpdateJTextAreaListModel()
-          DefaultListModel<DagNode> TheDefaultListModel= 
-            (DefaultListModel<DagNode>)TheJTextArea.getModel();
+          DefaultListModel<DataNode> TheDefaultListModel= 
+            (DefaultListModel<DataNode>)TheJTextArea.getModel();
           TheDefaultListModel.clear();  // empfy the ListModel.
           for   // Add all the children.
-            (int i = 0; i < SubjectDagNode.getChildCount(); i++)  // each child...
-            TheDefaultListModel.addElement( SubjectDagNode.getChild( i ) );
+            (int i = 0; i < SubjectDataNode.getChildCount(); i++)  // each child...
+            TheDefaultListModel.addElement( SubjectDataNode.getChild( i ) );
           } //UpdateJTextAreaListModel()
       */
       /*
@@ -465,7 +465,7 @@ public class TextViewer
       /*
         { // UpdateJTextAreaSelection()
           int IndexI= // try to get index of selected child.
-            SubjectDagNode.getIndexOfChild( SelectedDagNode );
+            SubjectDataNode.getIndexOfChild( SelectedDagNode );
           if ( IndexI < 0 )  // force index to 0 if child not found.
             IndexI= 0;
           TheJTextArea.  // set selection using final resulting index.

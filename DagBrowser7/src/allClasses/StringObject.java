@@ -6,8 +6,8 @@ import javax.swing.tree.TreePath;
 
 public class StringObject // ?? change to StringLeaf. 
   //extends Object
-  //implements DagNode
-  extends AbDagNode
+  //implements DataNode
+  extends AbDataNode
   /* This is a utility class that appears to be a leaf with a name.  */
   { // class StringObject
   
@@ -34,7 +34,7 @@ public class StringObject // ?? change to StringLeaf.
             return 0;  // It has 0 children.
             }
       
-        public DagNode getChild( int IndexI ) 
+        public DataNode getChild( int IndexI ) 
           {
             return null;  // Always return nothing.
             }
@@ -44,7 +44,7 @@ public class StringObject // ?? change to StringLeaf.
             return -1;  // Never find the child.  ???
             }
         
-        public DagNode[] GetDagNodes( )
+        public DataNode[] GetDataNodes( )
           {
             return null;
             }
@@ -64,7 +64,7 @@ public class StringObject // ?? change to StringLeaf.
         /* public JComponent GetDataJComponent( TreePath InTreePath )
           /* Returns a JComponent which is appropriate for viewing 
             the current tree node represented specified by InTreePath.  
-            This object is the last DagNode in the InTreePath.
+            This object is the last DataNode in the InTreePath.
             */
           /*
           { // GetDataTreeSelector.
@@ -77,7 +77,7 @@ public class StringObject // ?? change to StringLeaf.
           ( TreePath InTreePath, TreeModel InTreeModel )
           /* Returns a JComponent which is appropriate for viewing 
             the current tree node represented specified by InTreePath.  
-            This object is the last DagNode in the InTreePath.
+            This object is the last DataNode in the InTreePath.
             InTreeModel provides context.
             */
           { // GetDataTreeSelector.

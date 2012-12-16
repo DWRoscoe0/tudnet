@@ -27,7 +27,7 @@ public class RootJTree
     // variables.
       private static final long serialVersionUID = 1L;
       // private IJTree TheIJTree;
-      private RootTreeModel TheRootTreeModel;
+      private DataTreeModel TheDataTreeModel;
       private TreePath SelectedTreePath;  /* TreePath of node selected in tree.
         this should be synchronized with the one in the JTree,
         and therefore might be redundant.  ??
@@ -36,11 +36,11 @@ public class RootJTree
 
     // constructors.
 
-      public RootJTree( RootTreeModel InputTreeModel ) 
+      public RootJTree( DataTreeModel InputTreeModel ) 
         { // constructor.
           super( InputTreeModel );  // Construct the superclass.
           
-          TheRootTreeModel=   // save a local copy of the TreeModel.
+          TheDataTreeModel=   // save a local copy of the TreeModel.
             InputTreeModel;
           //TheIJTree.setLargeModel( true );        
           /*
@@ -103,7 +103,7 @@ public class RootJTree
             It records information about the selection.
             It checks for and performs any needed
             automatic expanding or collapsing of JTree nodes.
-            It records position and other information in the DagInfo tree.
+            It records position and other information in the MetaPath tree.
             */
           { // valueChanged( TreeSelectionEvent TheTreeSelectionEvent )
             final TreePath FinalNewTreePath=   // Get the destination TreePath which is...
@@ -182,12 +182,12 @@ public class RootJTree
             from the StartTreePath node to the common ancestor node,
             and it auto-expands nodes down
             from the common ancestor to the StopTreePath.
-            It records DagNode visit information along the way.
+            It records DataNode visit information along the way.
             This method must be wrapped by CollapseAndExpandRaw(.) 
             because collapsing or expanding apparently causes selections.
             */
           { // CollapseAndExpandRaw(.)
-            DagInfo.UpdatePath( StartTreePath );  // record visit information.
+            MetaPath.UpdatePath( StartTreePath );  // record visit information.
             TreePath CommonAncestorTreePath= // do the up part.
               CollapseAndExpandUpTreePath( StartTreePath, StopTreePath );
             { // expand downward if needed.
@@ -259,7 +259,7 @@ public class RootJTree
           /* This recursive method processes a change in Selection TreePath
             from StartTreePath to StopTreePath.
             It assumes StopTreePath is a descendant of StartTreePath.
-            It records DagNode visit information.
+            It records DataNode visit information.
             It does auto-expansion of nodes if needed 
             on the way to StopTreePath.
             */
@@ -303,17 +303,17 @@ public class RootJTree
           */
         { // CommandGoToChildV().
           Object ChildObject=  // try to get child...
-            DagInfo.  // ...from the visits tree...
-              UpdatePathDagNode( // ...most recently visited...
+            MetaPath.  // ...from the visits tree...
+              UpdatePathDataNode( // ...most recently visited...
                 SelectedTreePath 
                 );  // ...of the tree node at end of selected TreePath.
               
           if (ChildObject == null)  // if no recent child try first one.
             { // try getting first ChildObject.
-              if (TheRootTreeModel.getChildCount(SelectedObject) <= 0)  // there are no children.
+              if (TheDataTreeModel.getChildCount(SelectedObject) <= 0)  // there are no children.
                 ChildObject= null;  // keep ChildObject null.
               else  // there are children.
-                ChildObject= TheRootTreeModel.getChild(SelectedObject,0);  // get first ChildObject.
+                ChildObject= TheDataTreeModel.getChild(SelectedObject,0);  // get first ChildObject.
               } // get name of first child.
 
           if // act based on whether a usable Child found.

@@ -6,8 +6,8 @@ import javax.swing.tree.TreePath;
 
 public class InfogoraRoot
   //extends Object
-  extends AbDagNode
-  //implements DagNode
+  extends AbDataNode
+  //implements DataNode
   { // class InfogoraRoot
 
     // Variables.
@@ -19,7 +19,7 @@ public class InfogoraRoot
     
     // A subset of delegated AbstractTreeModel methods.
 
-/*      public DagNode[] xGetDagNodes( )
+/*      public DataNode[] xGetDagNodes( )
           /* Returns a reference to an an array of IFiles
             which represent all the filesystem roots.
             */
@@ -39,7 +39,7 @@ public class InfogoraRoot
             return 2;
             }
 */    
-        public DagNode getChild( int IndexI ) 
+        public DataNode getChild( int IndexI ) 
           /* This returns the child with index IndexI.  */
           {
             switch ( IndexI ) {

@@ -1,7 +1,7 @@
 package allClasses;
 
 public class Infinitree 
-  extends AbDagNode
+  extends AbDataNode
   /* The purpose of this class is to create a an infinite subtree
     for testing the Infogora browser.
     */
@@ -36,7 +36,7 @@ public class Infinitree
           return ChildIndexI;  // Return ending index as count.
           } // getChildCount( )
 
-      public DagNode getChild( int InIndexI ) 
+      public DataNode getChild( int InIndexI ) 
         /* This returns the child with index is InIndexI.  */
         { // getChild( int ) 
           Infinitree ChildInfinitree= null;  // assume InIndexI out of range.

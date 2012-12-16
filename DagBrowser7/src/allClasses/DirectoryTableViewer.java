@@ -43,8 +43,8 @@ public class DirectoryTableViewer
     an array of which is stored in TheDirectoryTableModel,
     with the value of the first column in the rows.
     
-    It might simplify things to make fuller use of the IFile DagNode-s
-    interface and the RootTreeModel.  ??
+    It might simplify things to make fuller use of the IFile DataNode-s
+    interface and the DataTreeModel.  ??
     Though doing this might occupy more memory.
     It would allow using more common code and reduce complexity.
     
@@ -75,16 +75,16 @@ public class DirectoryTableViewer
         private DirectoryTableCellRenderer TheDirectoryTableCellRenderer= 
           new DirectoryTableCellRenderer(); // for custom node rendering.
           
-        /* Subject-DagNode-related variables.  These are in addition to 
+        /* Subject-DataNode-related variables.  These are in addition to 
           the ones in superclass DagNodeViewer.  */
           
           // whole Subject, the directory that this class displays.
             private IFile SubjectIFile;  // as an IFile reference.
-            private DagNode SubjectDagNode;  // DagNode equivalent.
+            private DataNode SubjectDataNode;  // DataNode equivalent.
             private TreePath SubjectTreePath;  // its TreePath.
             
           // selection within Subject, the directory entry that is selected.
-            private DagNode SelectionDagNode;  // as a DagNode.
+            private DataNode SelectionDataNode;  // as a DataNode.
             //private String SelectionNameString; // as a Name String.
               // Also indicates table/directory is tmpty if null.
 
@@ -98,8 +98,8 @@ public class DirectoryTableViewer
           )
         /* Constructs a DirectoryTableViewer.
           InTreePath is the TreePath associated with
-          the Subject IFile DagNode to be displayed.
-          The last IFile DagNode in the TreePath is the Subject.
+          the Subject IFile DataNode to be displayed.
+          The last IFile DataNode in the TreePath is the Subject.
           */
         /* 
         { // constructor.
@@ -114,8 +114,8 @@ public class DirectoryTableViewer
           )
         /* Constructs a DirectoryTableViewer.
           InTreePath is the TreePath associated with
-          the Subject IFile DagNode to be displayed.
-          The last IFile DagNode in the TreePath is the Subject.
+          the Subject IFile DataNode to be displayed.
+          The last IFile DataNode in the TreePath is the Subject.
           It uses InTreeModel for context, but is presently ignored.
           */
         { // constructor.
@@ -322,7 +322,7 @@ public class DirectoryTableViewer
               ; // do nothing.  or handle externally?
             else  // there is a parent directory.
               { // record visit and display parent directory.
-                DagInfo.  // In the visits tree...
+                MetaPath.  // In the visits tree...
                   UpdatePath( // update recent-visit info with...
                     aViewHelper.GetSelectedChildTreePath()  // ...the new selected TreePath.
                     );
@@ -349,12 +349,12 @@ public class DirectoryTableViewer
           */
         { // CommandGoToChildV().
           if  // act only if a child file is selected.
-            ( SelectionDagNode != null )
+            ( SelectionDataNode != null )
             { // go to and display that child.
               File ChildFile=  // reference child object as file.
                 new File(
                   SubjectIFile.GetFile(), 
-                  SelectionDagNode.GetNameString( )  // was SelectionNameString
+                  SelectionDataNode.GetNameString( )  // was SelectionNameString
                   );
               if ( ChildFile.isDirectory() ) 
                 UpdateTableFor(  // select (and display) the child...
@@ -400,44 +400,44 @@ public class DirectoryTableViewer
       private void SetSubjectRelatedVariablesFrom
         (TreePath InSubjectTreePath)
         /* This grouping method calculates values for and stores
-          the Subject-DagNode-related instance variables from the
+          the Subject-DataNode-related instance variables from the
           directory TreePath InSubjectTreePath.
           Much of it is concerned with determining which child
           should be selected when the directory is displayed.
           */
         { // SetSubjectRelatedVariablesFrom(.).
           SubjectTreePath= InSubjectTreePath; // save Subject TreePath.
-          SubjectIFile=  // store as Subject directory IFile DagNode...
+          SubjectIFile=  // store as Subject directory IFile DataNode...
             (IFile)InSubjectTreePath.  // ...the direcoty TreePath's...
-              getLastPathComponent();  // ...last DagNode.
-          SubjectDagNode= SubjectIFile;  // copy to alias.
-          DagNode SelectedDagNode=  // try to get child...
-            DagInfo.  // ...from the visits tree which is...
-              UpdatePathDagNode( // ...most recently visited...
+              getLastPathComponent();  // ...last DataNode.
+          SubjectDataNode= SubjectIFile;  // copy to alias.
+          DataNode SelectedDataNode=  // try to get child...
+            MetaPath.  // ...from the visits tree which is...
+              UpdatePathDataNode( // ...most recently visited...
                 InSubjectTreePath
                 );  // ...of the tree node at end of selected TreePath.
-          if ( SelectedDagNode == null )  // if no recent child get first one.
+          if ( SelectedDataNode == null )  // if no recent child get first one.
             { // try getting first child.
               if (SubjectIFile.getChildCount() <= 0)  // there are no children.
-                SelectedDagNode= IFileDummy;  // use dummy child place-holder.
+                SelectedDataNode= IFileDummy;  // use dummy child place-holder.
               else  // there are children.
-                SelectedDagNode= SubjectIFile.getChild(0);  // get first one.
+                SelectedDataNode= SubjectIFile.getChild(0);  // get first one.
               } // try getting first child.
           SetSelectionRelatedVariablesFrom(  // set selection-related variables...
-            SelectedDagNode  // ...from the resulting SelectedDagNode.
+            SelectedDataNode  // ...from the resulting SelectedDagNode.
             );
           } // SetSubjectRelatedVariablesFrom(.)
 
-      private void SetSelectionRelatedVariablesFrom( DagNode SelectedDagNode )
+      private void SetSelectionRelatedVariablesFrom( DataNode SelectedDataNode )
           /* This grouping method calculates values for and stores the 
             selection-related instance variables based on the SelectedDagNode.
             It assumes the non-selection Subject variables are set already.
             */
         { // SetSelectionRelatedVariablesFrom( ChildUserObject ).
-          SelectionDagNode= SelectedDagNode;  // Save selection DagNode.
+          SelectionDataNode= SelectedDataNode;  // Save selection DataNode.
           TreePath ChildTreePath=  // Calculate selected child TreePath to be...
             SubjectTreePath.  // ...the base TreePath with...
-              pathByAddingChild( SelectedDagNode );  // ... the child added.
+              pathByAddingChild( SelectedDataNode );  // ... the child added.
               // maybe add Dummy if null?
           //SelectionNameString=   // Store name of selected child.
           //  SelectedDagNode.GetNameString();
@@ -511,7 +511,7 @@ public class DirectoryTableViewer
           esternal TreeSelectionListeners-s. */
         { // UpdateJTableSelection()
           int IndexI= // try to get index of selected child.
-            SubjectDagNode.getIndexOfChild( SelectionDagNode );
+            SubjectDataNode.getIndexOfChild( SelectionDataNode );
           if ( IndexI < 0 )  // force index to 0 if child not found.
             IndexI= 0;
           setRowSelectionInterval( IndexI, IndexI ); // set selection using final resulting index.

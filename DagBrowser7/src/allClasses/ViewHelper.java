@@ -71,10 +71,10 @@ public class ViewHelper
           For efficienty it should be called only when
           the selection actually has changed.
           InternalB has the following meanings:
-            true: the selection is within the same DagNode as the previous 
+            true: the selection is within the same DataNode as the previous 
               selection, so its display can be handled by 
               the same DagNodeViewer JComponent being helped.
-            false: the selection within the same DagNode as the previous 
+            false: the selection within the same DataNode as the previous 
               selection, so it must be handled by a new DagNodeViewer JComponent.
           */
         { // NotifyTreeSelectionListenersV.

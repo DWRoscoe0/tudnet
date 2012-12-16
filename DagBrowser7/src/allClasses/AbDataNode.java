@@ -8,18 +8,18 @@ import javax.swing.tree.TreePath;
 //import javax.swing.tree.TreeModel;
 //import javax.swing.tree.TreePath;
 
-public abstract class AbDagNode 
+public abstract class AbDataNode 
 
-  implements DagNode
+  implements DataNode
   
-  /* This is an abstract class that implements part of the interface DagNode.
+  /* This is an abstract class that implements part of the interface DataNode.
     The methods implemented here are 
     ones that are likely to be useful for most subclasses.
     Subclasses can override methods that are not appropriate.
     */
     
   {
-    // DagNode interface methods.
+    // DataNode interface methods.
   
       public boolean isLeaf( ) 
         /* Returns false, because most nodes are not leaves.  */
@@ -82,16 +82,16 @@ public abstract class AbDagNode
       public JComponent GetDataJComponent
         ( TreePath InTreePath, TreeModel InTreeModel )
         /* Returns a JComponent which is appropriate for viewing 
-          the this DagNode, which is referenced by InTreePath,
+          the this DataNode, which is referenced by InTreePath,
           using context from InTreeModel.
           */
         { // GetDataJComponent()
           JComponent ResultJComponent= null;  // For result.
 
-          if ( isLeaf( ) )  // This DagNode is a leaf.
+          if ( isLeaf( ) )  // This DataNode is a leaf.
             ResultJComponent= // Set result to be a TextViewer JComponent.
               new TextViewer( InTreePath, InTreeModel, GetHeadString() );
-            else  // This DagNode is NOT a leaf.
+            else  // This DataNode is NOT a leaf.
             ResultJComponent= // Set result to be a ListViewer JComponent.
               new ListViewer( InTreePath, InTreeModel );
           return ResultJComponent;  // Return the result from above.

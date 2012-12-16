@@ -6,7 +6,7 @@ import java.io.Serializable;
 import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
 
-public class RootTreeModel 
+public class DataTreeModel 
   extends AbstractTreeModel 
   implements Serializable
   
@@ -17,7 +17,7 @@ public class RootTreeModel
     the contents of a desired tree node.
     */
     
-  { // class RootTreeModel.
+  { // class DataTreeModel.
 
     // variables.
 
@@ -27,13 +27,13 @@ public class RootTreeModel
 
     // constructor methods.
 
-      public RootTreeModel( DagNode DagNodeRoot ) 
-        /* Constructs a RootTreeModel using TreeModelUserObjectRoot
+      public DataTreeModel( DataNode DataNodeRoot ) 
+        /* Constructs a DataTreeModel using TreeModelUserObjectRoot
           as the root of the tree.
           */
-        { // RootTreeModel( DagNode TreeModelUserObjectRoot )
-          ObjectRoot= DagNodeRoot;  // store root.
-          } // RootTreeModel( DagNode TreeModelUserObjectRoot )
+        { // DataTreeModel( DataNode TreeModelUserObjectRoot )
+          ObjectRoot= DataNodeRoot;  // store root.
+          } // DataTreeModel( DataNode TreeModelUserObjectRoot )
     
     // AbstractTreeModel/TreeModel methods.
       
@@ -46,7 +46,7 @@ public class RootTreeModel
   
       /* output methods.
         This TreeModel does no filtering,
-        so it passes all calls through to the DagNode Object for processing.
+        so it passes all calls through to the DataNode Object for processing.
         */
   
         public Object getRoot() 
@@ -59,42 +59,42 @@ public class RootTreeModel
           /* Returns the Object which is the child of ParentObject
             whose index is IndexI.  The child must exist.
             This operation is delegated to ParentObject which
-            is assumed to satisfy the DagNode interface.
+            is assumed to satisfy the DataNode interface.
             */
           {
-            return ((DagNode)ParentObject).getChild( IndexI );
+            return ((DataNode)ParentObject).getChild( IndexI );
             }
   
         public boolean isLeaf( Object NodeObject ) 
           /* Returns an indication whether NodeObject is a leaf.
             This operation is delegated to NodeObject which
-            is assumed to satisfy the DagNode interface.
+            is assumed to satisfy the DataNode interface.
             */
           {
-            return ((DagNode)NodeObject).isLeaf();
+            return ((DataNode)NodeObject).isLeaf();
             }
   
         public int getChildCount( Object ParentObject ) 
           /* Returns the number of children of the ParentObject.
             This operation is delegated to ParentObject which
-            is assumed to satisfy the DagNode interface.
+            is assumed to satisfy the DataNode interface.
             */
           {
             if ( Misc.ReminderB )
               System.out.println( 
-                "RootTreeModel.getChildCount() " +
-                ((AbDagNode)ParentObject).IDCode()
+                "DataTreeModel.getChildCount() " +
+                ((AbDataNode)ParentObject).IDCode()
                 );
-            return ((DagNode)ParentObject).getChildCount();
+            return ((DataNode)ParentObject).getChildCount();
             }
   
         public int getIndexOfChild( Object ParentObject, Object ChildObject ) 
           /* Returns the index of ChildObject in directory ParentObject.
             This operation is delegated to ParentObject which
-            is assumed to satisfy the DagNode interface.
+            is assumed to satisfy the DataNode interface.
             */
           {
-            return ((DagNode)ParentObject).
+            return ((DataNode)ParentObject).
               getIndexOfChild( ChildObject ); 
             }
 
@@ -108,14 +108,14 @@ public class RootTreeModel
             the current tree node represented specified by InTreePath.  
             */
           { // GetDataJComponent.
-            DagNode InDagNode= // extract...
-              (DagNode)  // ...user Object...
+            DataNode InDataNode= // extract...
+              (DataNode)  // ...user Object...
               InTreePath.getLastPathComponent();  // ...from the TreePath.
             JComponent ResultJComponent; 
             try { 
 	            ResultJComponent= 
 	              //InDagNode.GetDataJComponent( InTreePath );  // ??
-                InDagNode.GetDataJComponent( InTreePath, this );
+                InDataNode.GetDataJComponent( InTreePath, this );
               }
             catch ( IllegalArgumentException e) {
 	            ResultJComponent= null;  
@@ -134,12 +134,12 @@ public class RootTreeModel
           /* Returns a String representing the name of InObject,
             or null if InObject is null.
             This operation is delegated to InObject which
-            is assumed to satisfy the DagNode interface.
+            is assumed to satisfy the DataNode interface.
             */
           {
             String ResultString= null;
             if ( InObject != null )
-              ResultString= ((DagNode)InObject).GetNameString();
+              ResultString= ((DataNode)InObject).GetNameString();
             return ResultString;
             }
 
@@ -148,10 +148,10 @@ public class RootTreeModel
             the last element of InTreePath.
             */
           {
-            DagNode LastDagNode= 
-              (DagNode)(InTreePath.getLastPathComponent());
+            DataNode LastDataNode= 
+              (DataNode)(InTreePath.getLastPathComponent());
             String TheNameString= 
-              LastDagNode.GetNameString();
+              LastDataNode.GetNameString();
             return TheNameString;
             }
 
@@ -168,10 +168,10 @@ public class RootTreeModel
             String ResultString= "";  // Initialize ResultString to empty.
             while ( InTreePath != null )  // While more TreePath to process...
               { // ...process one element of TreePath onto ResultString.
-                DagNode LastDagNode=  // Get last element.
-                  (DagNode)(InTreePath.getLastPathComponent());
+                DataNode LastDataNode=  // Get last element.
+                  (DataNode)(InTreePath.getLastPathComponent());
                 String LastNameString=  // Get its name.
-                  LastDagNode.GetNameString();
+                  LastDataNode.GetNameString();
                 if  // Add seperator character to ResultString if needed,...
                   ( ResultString.length() != 0)  // ...if it is not empty...
                   ResultString=  // ...by prepending...
@@ -194,9 +194,9 @@ public class RootTreeModel
             TreePath InTreePath. 
             */
           {
-            DagNode LastDagNode= 
-              (DagNode)(InTreePath.getLastPathComponent());
-            return LastDagNode.GetInfoString();
+            DataNode LastDataNode= 
+              (DataNode)(InTreePath.getLastPathComponent());
+            return LastDataNode.GetInfoString();
             }
 
-    } // class RootTreeModel.
+    } // class DataTreeModel.

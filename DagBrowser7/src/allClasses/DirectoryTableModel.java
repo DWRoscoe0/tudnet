@@ -100,7 +100,7 @@ public class DirectoryTableModel
           IFile RowIFile= // get the IFile associated with row RowI.
             ((IFile)TheTreeModel.getChild( DirectoryIFile, RowI ));
           File RowFile= RowIFile.GetFile(); // and get the File also.
-          //DagNode RowDagNode= (DagNode)RowIFile;  // ???
+          //DataNode RowDagNode= (DataNode)RowIFile;  // ???
           switch   // return the apprropriate value.
             ( ColumnI )  // based on the desired column whose number is ColumnI.
             {

@@ -18,8 +18,8 @@ import java.io.RandomAccessFile;
 
 public class Outline
   //extends Object
-  //implements DagNode
-  extends AbDagNode
+  //implements DataNode
+  extends AbDataNode
   /* The purpose of this class is to create a large subtree
     for Infogora demonstration purposes
     from a text file that uses indented lines as in an outline.
@@ -107,7 +107,7 @@ public class Outline
               } // Skip child lines but stop after last one.
           } // SkipChild( )
     
-      public DagNode getChild( int IndexI ) 
+      public DataNode getChild( int IndexI ) 
         /* This returns the child with index IndexI.
           It gets the child from an array cache if possible.
           If not then it calculates the child and 

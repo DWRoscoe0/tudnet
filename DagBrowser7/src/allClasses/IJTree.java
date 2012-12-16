@@ -21,10 +21,10 @@ public class IJTree
     private DefaultTreeCellRenderer TheDefaultTreeCellRenderer;
     private Color DefaultBackgroundSelectionColor;
 
-    public IJTree( RootTreeModel InRootTreeModel )
+    public IJTree( DataTreeModel InDataTreeModel )
       // Constructor.
       { 
-        super(InRootTreeModel); 
+        super(InDataTreeModel); 
 
         { // customize the tree cell rendering.
           TheDefaultTreeCellRenderer=
@@ -65,7 +65,7 @@ public class IJTree
         only the final name in the associated path instead of the entire path. 
         */
       {
-        return ((DagNode)value).GetNameString();
+        return ((DataNode)value).GetNameString();
         }
         
         

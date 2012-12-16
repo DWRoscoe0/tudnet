@@ -15,13 +15,13 @@ public class TreeExpansion {
         in the info tree node specified by TreePathIn.
         */
       { 
-        ITreeNode TheITreeNode= DagInfo.UpdatePathITreeNode( TreePathIn );
+        MetaNode TheMetaNode= MetaPath.UpdatePathMetaNode( TreePathIn );
         
         // TheITreeNode.AutoExpandedB= AutoExpandInB;
         if ( AutoExpandInB )  // Add or remove attribute depending on AutoExpandInB.
-          TheITreeNode.put( "AutoExpanded", "T" );  // Add node's AutoExpanded attribute.
+          TheMetaNode.put( "AutoExpanded", "T" );  // Add node's AutoExpanded attribute.
           else
-          TheITreeNode.remove( "AutoExpanded" );  // Remove node's AutoExpanded attribute.
+          TheMetaNode.remove( "AutoExpanded" );  // Remove node's AutoExpanded attribute.
         }
 
     static public boolean GetAutoExpandedB( TreePath TreePathIn )
@@ -29,19 +29,19 @@ public class TreeExpansion {
         in the info tree node specified by TreePathIn.
         */
       { 
-        ITreeNode TheITreeNode= DagInfo.UpdatePathITreeNode( TreePathIn );
+        MetaNode TheMetaNode= MetaPath.UpdatePathMetaNode( TreePathIn );
         // return TheITreeNode.AutoExpandedB; 
-        return GetAutoExpandedB( TheITreeNode );
+        return GetAutoExpandedB( TheMetaNode );
         }
 
-    static public boolean GetAutoExpandedB( ITreeNode TheITreeNode )
+    static public boolean GetAutoExpandedB( MetaNode TheMetaNode )
       /* This method returns the value of the AutoExpandedB flag
         in the info tree node specified by TheITreeNode.
         */
       { 
         // return TheITreeNode.AutoExpandedB; 
         return   // Return whether the property is present.
-          TheITreeNode.containsKey( "AutoExpanded" );
+          TheMetaNode.containsKey( "AutoExpanded" );
         }
 
     static public TreePath FollowAutoExpandToTreePath
@@ -57,21 +57,21 @@ public class TreeExpansion {
       { // FollowAutoExpandToTreePath( TreePath StartTreePath )
         TreePath ScanTreePath=   // initialize TreePath scanner to be...
           StartTreePath;  // ...start TreePath.
-        ITreeNode ScanITreeNode= // initialize ITreeNode scanner to be...
-        		DagInfo.UpdatePathITreeNode( // ...ITreeNode at end...
+        MetaNode ScanMetaNode= // initialize MetaNode scanner to be...
+        		MetaPath.UpdatePathMetaNode( // ...ITreeNode at end...
             ScanTreePath );  // ...of ScanTreePath.
         while   // follow chain of all nodes with auto-expanded flag set.
-          ( GetAutoExpandedB( ScanITreeNode ) )  // auto-expanded flag set?
+          ( GetAutoExpandedB( ScanMetaNode ) )  // auto-expanded flag set?
           { // yes, process one auto-expanded node.
-            ITreeNode ChildITreeNode= // get most recently referenced child.
-              // (ITreeNode)ScanITreeNode.getChildAt(
+            MetaNode ChildMetaNode= // get most recently referenced child.
+              // (MetaNode)ScanITreeNode.getChildAt(
               //   ScanITreeNode.getChildCount()-1);
-                ScanITreeNode.GetLastChildITreeNode( );
-            Object ChildUserObject= ChildITreeNode.getUserObject();
+                ScanMetaNode.GetLastChildMetaNode( );
+            Object ChildUserObject= ChildMetaNode.getUserObject();
             ScanTreePath=  // create ScanTreePath of next node...
               ScanTreePath.pathByAddingChild( // ...by adding to it...
                 ChildUserObject);  // ...the child user Object.
-            ScanITreeNode= ChildITreeNode; // make next scan node be child.
+            ScanMetaNode= ChildMetaNode; // make next scan node be child.
             } // yes, process one auto-expanded node.
         if ( ScanTreePath == StartTreePath ) // if we haven't moved.
           ScanTreePath=  null;  // replace ScanTreePath with null.

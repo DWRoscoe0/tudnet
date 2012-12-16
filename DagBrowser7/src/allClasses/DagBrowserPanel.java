@@ -35,7 +35,7 @@ public class DagBrowserPanel
     the Infogora DAG (Directed Acyclic Graph).
     The left main subpanel is the navigation panel
     and displays the graph as a JTree.
-    The right main subpanel displays nodes of the graph (DagNode-s)
+    The right main subpanel displays nodes of the graph (DataNode-s)
     in a way appropriate to the type of node.
     */
 
@@ -49,7 +49,7 @@ public class DagBrowserPanel
       private Timer BlinkerTimer; // Timer that triggers the monitor Blinker.
     
       // data models.
-        private RootTreeModel TheRootTreeModel;  // holds all browsable data.
+        private DataTreeModel TheDataTreeModel;  // holds all browsable data.
         private TreePath StartTreePath;  // start TreePath to be displayed.
 
       // displayed subpanel JComponent tree.
@@ -183,11 +183,11 @@ public class DagBrowserPanel
                 } // create Current Working DirectoryJLabel.
               ViewJPanel.add(DirectoryJLabel,BorderLayout.NORTH);  // add as north subpanel.
               { // build JSplitPane to be used as content.
-                // note that TheRootTreeModel was built earlier.
+                // note that TheDataTreeModel was built earlier.
                 { // build the left scroller subpanel.
                   { // build the file system tree panel.
                     TheRootJTree = 
-                      new RootJTree( TheRootTreeModel );
+                      new RootJTree( TheDataTreeModel );
                     { // setup handling by listener of various Tree events.
                       TheRootJTree.addTreeSelectionListener(this);
                       TheRootJTree.addFocusListener(this);
@@ -202,7 +202,7 @@ public class DagBrowserPanel
                 { // build the right scroller subpanel.
                   { // build the scroller content.
                     DataJComponent=   // calculate JPanel from TableModel.
-                      TheRootTreeModel.GetDataJComponent(
+                      TheDataTreeModel.GetDataJComponent(
                         StartTreePath
                         ); // initially displaying root/child.
                     //DataJComponent=   // calculate JComponent from VHelper.
@@ -268,7 +268,7 @@ public class DagBrowserPanel
       private void BuildTreeModels()
         /* This decomposition method builds the TreeModel
           which will be the source of data to be browsed.
-          It also builds the DagInfo cache.
+          It also builds the MetaPath cache.
           */
         { // BuildTreeModels()
           StartTreePath= // Calculate and save StartTreePath for browsing...
@@ -277,14 +277,14 @@ public class DagBrowserPanel
             //FileRoots.TreePathStart(); // ... FileRoots.
             new TreePath( new InfogoraRoot( ) );   // BEING ADDED.
 
-          DagNode DagNodeRoot= // Extract tree root...
-            (DagNode)
+          DataNode DataNodeRoot= // Extract tree root...
+            (DataNode)
             StartTreePath.getPathComponent( 0 );  // ...from StartTreePath.
 
-          TheRootTreeModel =  // build TreeModel from tree root Object.
-            new RootTreeModel(DagNodeRoot); 
+          TheDataTreeModel =  // build TreeModel from tree root Object.
+            new DataTreeModel(DataNodeRoot); 
 
-          new DagInfo(  // initialize DagInfo from StartTreePath.
+          new MetaRoot(  // initialize MetaRoot from StartTreePath.
             StartTreePath
             );
             
@@ -464,7 +464,7 @@ public class DagBrowserPanel
           { // ReplaceRightPanelContent(.)
             { // build the scroller content.
               DataJComponent=   // calculate JComponent...
-                TheRootTreeModel.  // ...by having the TreeModel...
+                TheDataTreeModel.  // ...by having the TreeModel...
                 GetDataJComponent(  // ...generate a JComponent...
                   SelectedTreePath  // appropriate to new selection.
                   );
@@ -700,11 +700,11 @@ public class DagBrowserPanel
             else
             { // display non-null info.
               DirectoryJLabel.setText(  // in DirectoryJLabel display set...
-                TheRootTreeModel.  // ...TreeModel's calculation of...
+                TheDataTreeModel.  // ...TreeModel's calculation of...
                 GetAbsolutePathString( InTreePath ) // ...absolute path name of InTreePath.
                 );
               InfoJLabel.setText(  // set InfoJLabel to be...
-                TheRootTreeModel.  // ...TreeModel's calculation of...
+                TheDataTreeModel.  // ...TreeModel's calculation of...
                 GetInfoString(InTreePath)  // the info string of InTreePath.
                 );
               } // display non-null info.

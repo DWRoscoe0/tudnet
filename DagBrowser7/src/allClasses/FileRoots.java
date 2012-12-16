@@ -11,8 +11,8 @@ import javax.swing.tree.TreePath;
 
 public class FileRoots
   //extends Object
-  //implements DagNode
-  extends AbDagNode
+  //implements DataNode
+  extends AbDataNode
   /* This class is the root of the Infogora user's file system.  */
   { // class FileRoots
 
@@ -46,7 +46,7 @@ public class FileRoots
                 .length;  // ...length.
             }
       
-        public DagNode getChild( int IndexI ) 
+        public DataNode getChild( int IndexI ) 
           /* This returns the child with index IndexI.
             It gets the child from an array cache if possible.
             If not then it calculates the child and 
@@ -177,9 +177,9 @@ public class FileRoots
         public static TreePath TreePathStart()
           /* Returns the TreePath representing the path to the tree node
             that should be selected when beginning browsing FileRoots.
-            The user DagNode at the beginning of the path
+            The user DataNode at the beginning of the path
             can be used as the root of the tree when building a
-            RootTreeModel.
+            DataTreeModel.
             */
           { // TreePathStart()
             TreePath StartTreePath=  // Create the StartTreePath from...

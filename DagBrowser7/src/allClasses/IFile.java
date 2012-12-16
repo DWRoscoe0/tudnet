@@ -15,7 +15,7 @@ import javax.swing.tree.TreePath;
 
 public class IFile 
 
-  extends AbDagNode
+  extends AbDataNode
 
   { // class IFile
   
@@ -23,7 +23,7 @@ public class IFile
     
       //private static final long serialVersionUID = 1L;
       
-      File TheFile;  // File associated with this DagNode.
+      File TheFile;  // File associated with this DataNode.
 
       String[] ChildStrings= null;  // Initially empty array of child names.
       IFile[] ChildIFiles= null;  // Initially empty array of child IFiles.
@@ -45,7 +45,7 @@ public class IFile
     // TheFile pass-through methods.
       
       public File GetFile( )
-        /* This method returns the TheFile accociated with this DagNode.  */
+        /* This method returns the TheFile accociated with this DataNode.  */
         {
           return TheFile;
           }
@@ -89,7 +89,7 @@ public class IFile
           return ChildCountI;  // return the final child count.
           }
     
-      public DagNode getChild( int IndexI ) 
+      public DataNode getChild( int IndexI ) 
         /* This returns the child with index IndexI.
           It gets the child from an array cache if possible.
           If not then it calculates the child and 
@@ -120,7 +120,7 @@ public class IFile
           It does this by searching in the ChildStrings array,
           because file name strings uniquely identify the file.
           It doesn't need to calculate or use the ChildIFiles array,
-          which would happen if AbDagNode.getIndexOfChild(.) were used.
+          which would happen if AbDataNode.getIndexOfChild(.) were used.
           */
         {
           // System.out.println( "IFile.getIndexOfChild(.)" );
@@ -143,7 +143,7 @@ public class IFile
           return ResultI;
           }
           
-    // other interface DagNode methods.
+    // other interface DataNode methods.
       
       public String GetInfoString()
         /* Returns a String representing information about this object. */
@@ -214,9 +214,9 @@ public class IFile
       
       public JComponent GetDataJComponent
         ( TreePath InTreePath, TreeModel InTreeModel )
-        /* Returns a JComponent capable of displaying this DagNode.  
+        /* Returns a JComponent capable of displaying this DataNode.  
           using a TreeModel argument.  
-          This ignores the TreeModel for DagNode subclasses
+          This ignores the TreeModel for DataNode subclasses
           which do not yet support it.
           */
         // { return GetDataJComponent( InTreePath ); }
@@ -282,7 +282,7 @@ public class IFile
           
     // other methods.
       
-      public DagNode[] GetDagNodes( )
+      public DataNode[] GetDataNodes( )
         {
           return null;  // ?? nothing for now.
           }
@@ -326,9 +326,9 @@ public class IFile
       public static TreePath TreePathStart()  // ???
         /* Returns the TreePath representing the path to the tree node
           that should be selected when beginning browsing IFiles.
-          The user DagNode at the beginning of the path
+          The user DataNode at the beginning of the path
           can be used as the root of the tree when building a
-          RootTreeModel.
+          DataTreeModel.
           */
         /*
         { // TreePathStart()
