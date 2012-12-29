@@ -118,6 +118,7 @@ public class DagBrowserPanel
           This is too long and should be broken up.  ??
           */
         { // DagBrowserPanel()
+          MetaFile.start();  // Read state information.
           { // build and add subpanels of this Panel. ????
             setLayout(new BorderLayout());  // use BorderLayout manager.
             BuildTreeModels(); 
