@@ -118,7 +118,6 @@ public class DagBrowserPanel
           This is too long and should be broken up.  ??
           */
         { // DagBrowserPanel()
-          MetaFile.start();  // Read state information.
           { // build and add subpanels of this Panel. ????
             setLayout(new BorderLayout());  // use BorderLayout manager.
             BuildTreeModels(); 
@@ -272,23 +271,23 @@ public class DagBrowserPanel
           It also builds the MetaPath cache.
           */
         { // BuildTreeModels()
-          StartTreePath= // Calculate and save StartTreePath for browsing...
-            //IFile.TreePathStart(); // ... IFiles.
-            //new TreePath( new StringObject( "TEST-STRING" ) );
-            //FileRoots.TreePathStart(); // ... FileRoots.
-            new TreePath( new InfogoraRoot( ) );   // BEING ADDED.
 
-          DataNode DataNodeRoot= // Extract tree root...
-            (DataNode)
-            StartTreePath.getPathComponent( 0 );  // ...from StartTreePath.
+          DataNode RootDataNode= // Calculate data tree root to be...
+            (DataNode)new InfogoraRoot( );  // ...root of entire Infogora hierarchy.
+          StartTreePath= // Initialize StartTreePath for browsing...
+            new TreePath(   // ...to be TreePath...
+              RootDataNode  // ...to the root.
+              );
+          TheDataTreeModel =  // Initialize DataTreeModel from tree root Object.
+            new DataTreeModel(RootDataNode); 
 
-          TheDataTreeModel =  // build TreeModel from tree root Object.
-            new DataTreeModel(DataNodeRoot); 
+          { // Initialize external state.
+            new MetaRoot(  // initialize MetaRoot from TreeModel.
+              TheDataTreeModel
+              );
+            MetaFile.start();  // Read previous state information from file.
+            } // Initialize external state.
 
-          new MetaRoot(  // initialize MetaRoot from StartTreePath.
-            StartTreePath
-            );
-            
           } // BuildTreeModels()
 
     // Listener methods.

@@ -1,5 +1,6 @@
 package allClasses;
 
+
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -13,8 +14,9 @@ public class MetaNode
   // extends DefaultMutableTreeNode
   
   /* This class represents DataNode metadata, information about DagNodes.
-    Some of that data is now stored in a variable called TheHashMap,
-    but some of it is still stored in the superclass DefaultMutableTreeNode.
+    
+    Some of that data is now stored in a variable called AttributesHashMap.
+    Before it was stored in the superclass DefaultMutableTreeNode.
     
     Originally the class DefaultMutableTreeNode stored all the metadata.
     This subclass was created for the convenience of a shorter name.
@@ -27,14 +29,15 @@ public class MetaNode
     
       // private static final long serialVersionUID = 1L;
 
-      private Object UserObject;  // User object associated with this node.
-      // public boolean AutoExpandedB= false;  // [moved to TheHashMap]
-      private HashMap< String, Object > TheHashMap;  // For storage of various attribute.
-      public LinkedHashMap< Object, MetaNode  > ChildrenLinkedHashMap;  /* Child map.
-        In each entry:
-          The Key is a user Object.
-          The Value is the child MetaNode that contains the user Object. 
-        */
+      private DataNode UserObject;  // User object associated with this node.
+        // private Object UserObject;  // User object associated with this node.
+      private HashMap< String, Object > AttributesHashMap;
+        // public boolean AutoExpandedB= false;  // [moved to AttributesHashMap]
+      public LinkedHashMap< Object, MetaNode  > ChildrenLinkedHashMap;
+        /* In each child entry:
+          The Key is a child user Object.
+          The Value is the child MetaNode that contains the user Object and other data.
+          */
 
     // Constructor.
     
@@ -43,9 +46,9 @@ public class MetaNode
         {
           //super( ObjectUserIn );  // call superclass constructor.  ???
           // super( null );  // call superclass constructor.  ???
-          UserObject= ObjectUserIn;  // Save user object associated with this node.
+          UserObject= (DataNode)ObjectUserIn;  // Save user object associated with this node.
 
-          TheHashMap =  // For storage of attribute.
+          AttributesHashMap =  // For storage of attribute.
             new HashMap<String, Object>( 2 );  // Construct only a little Map at first.
           ChildrenLinkedHashMap =  // Initialize the child LinkedHashMap.
             new LinkedHashMap< Object, MetaNode  >( 
@@ -55,32 +58,31 @@ public class MetaNode
               );  
           }
 
-          Object ChildUserObject= getUserObject();
-
-    // Pass-through methods which reference TheHashMap where attributes are stored.
+    /* Pass-through methods which reference AttributesHashMap where 
+      attributes are stored.  */
 
       public boolean containsKey( String KeyString ) 
-        /* This is a pass-through to TheHashMap. */
+        /* This is a pass-through to AttributesHashMap. */
         { // get(..)
-          return TheHashMap.containsKey( KeyString );
+          return AttributesHashMap.containsKey( KeyString );
           } // get(..)
 
       public Object get( String KeyString ) 
-        /* This is a pass-through to TheHashMap. */
+        /* This is a pass-through to AttributesHashMap. */
         { // get(..)
-          return TheHashMap.get( KeyString );
+          return AttributesHashMap.get( KeyString );
           } // get(..)
 
       public Object remove( String KeyString ) 
-        /* This is a pass-through to TheHashMap. */
+        /* This is a pass-through to AttributesHashMap. */
         { // remove(..)
-          return TheHashMap.remove( KeyString );
+          return AttributesHashMap.remove( KeyString );
           } // remove(..)
 
       public Object put( String KeyString, Object ValueObject ) 
-        /* This is a pass-through to TheHashMap. */
+        /* This is a pass-through to AttributesHashMap. */
         { // put(..)
-          return TheHashMap.put( KeyString, ValueObject );
+          return AttributesHashMap.put( KeyString, ValueObject );
           } // put(..)
 
     // Other methods.
@@ -90,6 +92,72 @@ public class MetaNode
         { // getUserObject()
           return UserObject;  // Return the user object associated with this node.
           } // getUserObject()
+
+      public static void io( MetaNode InMetaNode )
+        /* This ios the node InMetaNode and all its descendeenta 
+          to the MetaFile.  */
+        { // io()
+          MetaFile.ioListBegin( );
+          MetaFile.io( " MetaNode" );
+          DataNode UserDataNode= (DataNode)InMetaNode.UserObject;
+          MetaFile.ioIndentedField( 
+            UserDataNode.GetNameString( )
+            );
+          ioAttributes( InMetaNode.AttributesHashMap );
+          ioChildren( InMetaNode.ChildrenLinkedHashMap );
+          MetaFile.ioListEnd( );
+          } // io()
+
+      private static void ioAttributes
+        ( HashMap< String, Object > InAttributesHashMap )
+        /* This ios the Attributes HashMap.  */
+        { // ioAttributes()
+          MetaFile.ioListBegin( );
+          MetaFile.io( " Attributes" );
+          Iterator < Map.Entry < String, Object > > MapIterator=  // Get an iterator...
+            InAttributesHashMap.
+            entrySet().
+            iterator();  // ...for HashMap entries.
+          while // Save all the HashMap's entries.
+            ( MapIterator.hasNext() ) // There is a next Entry.
+            { // Save this HashMap entry.
+              MetaFile.ioIndentedField( "(" );
+              Map.Entry < String, Object > AnEntry= // Get Entry 
+                MapIterator.next();  // ...that is next Entry.
+              MetaFile.io( " "+AnEntry.getKey( ) );
+              MetaFile.io( " "+(String)AnEntry.getValue( ) );
+              MetaFile.io( " )" );
+              } // Save this HashMap entry.
+          MetaFile.ioListEnd( );
+          } // ioAttributes()
+
+      private static void ioChildren
+        ( LinkedHashMap< Object, MetaNode  > InChildrenLinkedHashMap )
+        /* This ios the Children HashMap.  */
+        { // ioChildren()
+          MetaFile.ioListBegin( );
+          MetaFile.io( " Children" );
+          Iterator < Map.Entry < Object, MetaNode > > MapIterator=  // Get an iterator...
+            InChildrenLinkedHashMap.
+            entrySet().
+            iterator();  // ...for HashMap entries.
+          while // Save all the HashMap's entries.
+            ( MapIterator.hasNext() ) // There is a next Entry.
+            { // Save this HashMap entry.
+              MetaFile.ioListBegin( );
+              Map.Entry < Object, MetaNode > AnEntry= // Get Entry 
+                MapIterator.next();  // ...that is next Entry.
+              { // Save key.
+                DataNode UserDataNode= (DataNode)AnEntry.getKey( );
+                MetaFile.ioIndentedField( 
+                  UserDataNode.GetNameString( )
+                  );
+                } // Save key.
+              MetaNode.io( AnEntry.getValue( ) );  // Save value MetaNode.
+              MetaFile.ioListEnd( );
+              } // Save this HashMap entry.
+          MetaFile.ioListEnd( );
+          } // ioChildren()
 
       
     // Methods which deal with the children.
@@ -110,8 +178,8 @@ public class MetaNode
               MapChildMetaNode= // Create new MetaNode with desired Object.
                 new MetaNode( UserObject );
               ChildrenLinkedHashMap.put(   // Add new entry which maps...
-                UserObject,  // ...UserObject to...
-                MapChildMetaNode  // ... the MetaNode containing it created earlier.
+                UserObject,  // ...key UserObject to...
+                MapChildMetaNode  // ... the value MetaNode containing it.
                 );
               } // Create new HashMap entry.
           return MapChildMetaNode;  // Return new/old child from map as result.
@@ -122,7 +190,7 @@ public class MetaNode
           which was referenced last, or null if there are no children.  */
         { // GetLastChildITreeNode( )
           MetaNode LastChildMetaNode= null;  // Assume there is no last child.
-          
+
           Iterator < Map.Entry < Object, MetaNode > > MapIterator=  // Get an iterator...
             ChildrenLinkedHashMap.entrySet().iterator();  // ...for HashMap entries.
           while // Use Iterator to get the HashMap's last Entry's Value.
