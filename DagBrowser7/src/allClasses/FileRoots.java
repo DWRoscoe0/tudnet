@@ -38,7 +38,7 @@ public class FileRoots
             return false;  
             }
 
-        public int getChildCount( ) 
+        public int getChildCount( )
           /* Returns the number of filesystem roots.  */
           {
             return // Return...
@@ -54,22 +54,33 @@ public class FileRoots
             In either case it returns it.
             */
           {
+            IFile ChildIFile= null; // Default result of null.
             SetupCacheArrays( );  // Setup the cache arrays for use.
-            IFile ChildIFile=  // Try to get child IFile from cache.
-              ChildIFiles[ IndexI ];
-            if ( ChildIFile == null )  // Fix the cache if IFile slot was empty.
-              { // Fill the empty cache slot.
-                //System.out.println( 
-                //  "FileRoots.getChild(.) calculating IFile slot"
-                //  );
-                ChildIFile=  // Calculate IFile slot value to be...
-                  new IFile(  // ...a new IFile constructed from...
-                    ChildFiles[IndexI].  // ...the child File's...
-                      getAbsolutePath()  // ...absolute path name.
-                    );
-                ChildIFiles[ IndexI ]= ChildIFile;  // Save IFile in cache slot.
-                } // Fill the empty cache slot.
-            return ChildIFile;  // Return IFile as result.
+            switch (0) {  // Block for early exits.
+              default:  // Execution always starts here.
+              
+              if  // Exit with null if IndexI too low.
+                ( IndexI < 0 )
+                break;
+              if  // Exit with null if IndexI too high.
+                ( IndexI >= getChildCount( ) )
+                break;
+
+              ChildIFile=  // Try to get child IFile from cache.
+                ChildIFiles[ IndexI ];
+              if  // Fix the cache if IFile slot is empty.
+                ( ChildIFile == null )  // null means empty.
+                { // Fill the empty cache slot.
+                  ChildIFile=  // Calculate IFile slot value to be...
+                    new IFile(  // ...a new IFile constructed from...
+                      ChildFiles[IndexI].  // ...the child File's...
+                        getAbsolutePath()  // ...absolute path name.
+                      );
+                  ChildIFiles[ IndexI ]=  // Save in cache slot...
+                    ChildIFile;  // the resulting IFile.
+                  } // Fill the empty cache slot.
+              }  // Block for early exits.
+            return ChildIFile;  // Return IFile as result DataNode.
             }
 
         public int getIndexOfChild( Object ChildObject ) 

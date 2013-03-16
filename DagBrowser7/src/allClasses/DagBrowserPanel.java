@@ -120,8 +120,7 @@ public class DagBrowserPanel
         { // DagBrowserPanel()
           { // build and add subpanels of this Panel. ????
             setLayout(new BorderLayout());  // use BorderLayout manager.
-            BuildTreeModels(); 
-              // this will be used as the source of tree data,
+            BuildDataModelsAndGraphs();
             { // build HTopJPanel containing buttons and other helpful widgets.
             
               HTopJPanel= new JPanel();  // construct it.
@@ -265,30 +264,28 @@ public class DagBrowserPanel
             });
           } // DagBrowserPanel()
 
-      private void BuildTreeModels()
+      private void BuildDataModelsAndGraphs()
         /* This decomposition method builds the TreeModel
-          which will be the source of data to be browsed.
-          It also builds the MetaPath cache.
+          which will be the source of Infogora DAG to be browsed.
+          It also builds the MetaPath cache DAG which
+          stores information about the Infogora graph.
           */
-        { // BuildTreeModels()
+        { // BuildDataModelsAndGraphs()
 
           DataNode RootDataNode= // Calculate data tree root to be...
-            (DataNode)new InfogoraRoot( );  // ...root of entire Infogora hierarchy.
+            new InfogoraRoot( );  // ...root of entire Infogora hierarchy.
+
+          new DataRoot( RootDataNode ); // Initialize DataNode DAG and...
+            // ...associated MetaNode DAG.
+
           StartTreePath= // Initialize StartTreePath for browsing...
             new TreePath(   // ...to be TreePath...
               RootDataNode  // ...to the root.
               );
-          TheDataTreeModel =  // Initialize DataTreeModel from tree root Object.
-            new DataTreeModel(RootDataNode); 
+          TheDataTreeModel =  // Initialize DataTreeModel for JTree using...
+            new DataTreeModel(RootDataNode);  // ...DataNode root.
 
-          { // Initialize external state.
-            new MetaRoot(  // initialize MetaRoot from TreeModel.
-              TheDataTreeModel
-              );
-            MetaFile.start();  // Read previous state information from file.
-            } // Initialize external state.
-
-          } // BuildTreeModels()
+          } // BuildDataModelsAndGraphs()
 
     // Listener methods.
   

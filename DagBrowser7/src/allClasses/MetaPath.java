@@ -32,7 +32,8 @@ class MetaPath
           
       static public void UpdatePath( TreePath TreePathIn )
         /* This does the same as UpdatePathITreeNode(.) except 
-          it doesn't return the MetaNode associated with the end of the path.
+          it doesn't return the MetaNode associated with 
+          the end of the path.
           It exists mainly to help other code be self-documenting.
           */
         { // UpdatePath(.)
@@ -41,8 +42,9 @@ class MetaPath
 
       static public DataNode UpdatePathDataNode
         ( TreePath TreePathIn )
-        /* Updates the MetaPath with TreePathIn and returns the user object of
-          the most recently visited child of the tree node at the end of that path,
+        /* Updates the MetaPath with TreePathIn and returns 
+          the user object of the most recently visited child of 
+          the tree node at the end of that path,
           or null if there is no such child. 
           */
         { // UpdateToAndGetRecentChildUserObjectAt(.)
@@ -77,19 +79,21 @@ class MetaPath
 
     // private methods.
 
-      static private MetaNode UpdatePathFromArrayMetaNode( Object[] ObjectsInPath)
-        /* This grouping method is similar to UpdatePathMetaNode( TreePath TreePathIn )
-          except that the path is specified by the array of path elements ObjectsInPath
+      static private MetaNode UpdatePathFromArrayMetaNode
+        ( Object[] ObjectsInPath)
+        /* This grouping method is similar to 
+          UpdatePathMetaNode( TreePath TreePathIn ) except that 
+          the path is specified by the array of path elements ObjectsInPath
           instead of a TreePath.
           */
-        { // UpdatePathFromArrayITreeNode()
+        { // UpdatePathFromArrayMetaNode()
           MetaNode ScanMetaNode= // Initialize ScanMetaNode to be...
-            MetaRoot.SetRootMetaNode( ObjectsInPath[0] );  // ...checked 1st path element.
-          int IPathIndex= 1;  // Initialize path element array index to 2nd element.
+            MetaRoot.ParentOfRootMetaNode;  // ...parent of MetaRoot.
+          int IPathIndex= 0;  // Start scan at 1st path element.
           while   // Update all remaining path elements into structure.
             (IPathIndex < ObjectsInPath.length)  // Path elements remain.
             { // Update one path element into structure.
-              Object DesiredObject=  // Get the user Object from present path element.
+              Object DesiredObject=  // Get user Object from path element.
                 ObjectsInPath[ IPathIndex ];
               MetaNode ChildMetaNode=   // Put it in MetaNode in MetaPath structure.
                 ScanMetaNode.PutChildUserObjectMetaNode( DesiredObject );
@@ -97,6 +101,6 @@ class MetaPath
               IPathIndex++;  // Increment the path element index.
               } // Update one path element into structure.
           return ScanMetaNode;  // return final scan node.
-          } // UpdatePathFromArrayITreeNode()
+          } // UpdatePathFromArrayMetaNode()
 
     } // class MetaPath.

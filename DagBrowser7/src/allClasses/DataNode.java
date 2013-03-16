@@ -30,8 +30,14 @@ public interface DataNode
     public int getIndexOfChild( Object ChildObject );  /* Returns the index of 
       child ChildObject.  If ChildObject is not one of the children
       then -1 is returned.  */
+
     
   // Additional, non-tree methods.
+
+    public int getIndexOfNamedChild( String InString );
+      /* Returns the index of the child whose name is InString,
+        or -1 if this node's has no such child. 
+        It assumes a functional getChild(.) method.  */
 
     public String GetInfoString( );  /* Returns a String containing 
       human-readable information about this DataNode.  */

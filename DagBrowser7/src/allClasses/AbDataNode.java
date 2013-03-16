@@ -12,7 +12,8 @@ public abstract class AbDataNode
 
   implements DataNode
   
-  /* This is an abstract class that implements part of the interface DataNode.
+  /* This is an abstract class that implements part of 
+    the interface DataNode.
     The methods implemented here are 
     ones that are likely to be useful for most subclasses.
     Subclasses can override methods that are not appropriate.
@@ -24,6 +25,12 @@ public abstract class AbDataNode
       public boolean isLeaf( ) 
         /* Returns false, because most nodes are not leaves.  */
         { return false; }
+
+      public DataNode getChild( int IndexI ) 
+        /* This returns null to indicate a default of 0 children.  */
+        {
+          return null;
+          }
 
       public int getChildCount( ) 
         /* This method actually scans all the children that are
@@ -48,7 +55,8 @@ public abstract class AbDataNode
           int ChildIndexI= 0;  // Initialize child search index.
           while ( true ) // Search for child.
             { // Check one child.
-              Object ChildObject= getChild( ChildIndexI );  // get the child.
+              Object ChildObject=  // get the child.
+                 getChild( ChildIndexI );
               if ( ChildObject == null )  // null means no more children.
                 { // Exit with failure.
                   ChildIndexI= -1;  // Set index to indicate failure.
@@ -58,8 +66,33 @@ public abstract class AbDataNode
                 break;  // Exit while loop.
               ChildIndexI++;  // Increment index to check next child.
               } // Check one child.
-          return ChildIndexI;  // Return ending child index as search result.
+          return ChildIndexI;  // Return index as search result.
           } // getIndexOfChild(.)
+
+      public int getIndexOfNamedChild( String InString ) 
+        /* Returns the index of the child whose name is InString,
+          or -1 if this node's has no such child. 
+          It assumes a functional getChild(.) method.  */
+        { // getIndexOfNamedChild(.)
+          int ChildIndexI= 0;  // Initialize child search index.
+          while ( true ) // Search for child.
+            { // Check one child.
+              Object ChildObject=  // get the child.
+                 getChild( ChildIndexI );
+              if ( ChildObject == null )  // null means no more children.
+                { // Exit with failure.
+                  ChildIndexI= -1;  // Set index to indicate failure.
+                  break;  // Exit while loop.
+                  } // Exit with failure.
+              if  // Found child with desired name.
+               ( InString.equals( 
+                 ((DataNode)ChildObject).GetNameString( ) )
+                 )
+                break;  // Exit while loop.
+              ChildIndexI++;  // Increment index to check next child.
+              } // Check one child.
+          return ChildIndexI;  // Return index as search result.
+          } // getIndexOfNamedChild(.)
 
       public String GetInfoString()
         /* Returns a String representing information about this object. */

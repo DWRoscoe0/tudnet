@@ -67,7 +67,7 @@ public class TreeExpansion {
               // (MetaNode)ScanITreeNode.getChildAt(
               //   ScanITreeNode.getChildCount()-1);
                 ScanMetaNode.GetLastChildMetaNode( );
-            Object ChildUserObject= ChildMetaNode.getUserObject();
+            Object ChildUserObject= ChildMetaNode.getDataNode();
             ScanTreePath=  // create ScanTreePath of next node...
               ScanTreePath.pathByAddingChild( // ...by adding to it...
                 ChildUserObject);  // ...the child user Object.

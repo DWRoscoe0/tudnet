@@ -29,32 +29,38 @@ public class MetaNode
     
       // private static final long serialVersionUID = 1L;
 
-      private DataNode UserObject;  // User object associated with this node.
-        // private Object UserObject;  // User object associated with this node.
-      private HashMap< String, Object > AttributesHashMap;
+      private DataNode TheDataNode= null;
+        // User object associated with this node.
+        // was: private Object UserObject;  // User object associated with this node.
+      private HashMap< String, Object > AttributesHashMap= null;
         // public boolean AutoExpandedB= false;  // [moved to AttributesHashMap]
-      public LinkedHashMap< Object, MetaNode  > ChildrenLinkedHashMap;
+      public LinkedHashMap< Object, MetaNode  > ChildrenLinkedHashMap= null;
         /* In each child entry:
           The Key is a child user Object.
           The Value is the child MetaNode that contains the user Object and other data.
           */
 
-    // Constructor.
+    // Constructors.
     
-      public MetaNode(Object ObjectUserIn)
-        /* constructor.  */
+      public MetaNode( )
+        /* Constructor of blank MetaNode..  */
+        { // MetaNode( )
+          } // MetaNode( )
+    
+      public MetaNode( DataNode InDataNode )
+        /* Full constructor of a MetaNode with
+          a single child InDataNode and no attributes.  */
         {
-          //super( ObjectUserIn );  // call superclass constructor.  ???
-          // super( null );  // call superclass constructor.  ???
-          UserObject= (DataNode)ObjectUserIn;  // Save user object associated with this node.
+          TheDataNode=  // Save DataNode associated with this MetaNode.
+            InDataNode; 
 
-          AttributesHashMap =  // For storage of attribute.
-            new HashMap<String, Object>( 2 );  // Construct only a little Map at first.
-          ChildrenLinkedHashMap =  // Initialize the child LinkedHashMap.
-            new LinkedHashMap< Object, MetaNode  >( 
-              2, // Initial size (small).
-              0.75f,  // Load factor
-              true  // access-order.
+          AttributesHashMap =  // Initialize attributes to be...
+            new HashMap<String, Object>( 2 );  // ...a small empty map.
+          ChildrenLinkedHashMap =  // Initialize children to be an empty...
+            new LinkedHashMap< Object, MetaNode  >( // ...LinkedHashMap...
+              2, // ...with a small initial size...
+              0.75f,  // ...and this load factor...
+              true  // ...and with access-order enabled.
               );  
           }
 
@@ -87,103 +93,69 @@ public class MetaNode
 
     // Other methods.
 
-      public Object getUserObject()
-        /* This returns the UserObject associated with this node.  */
+      // public Object getUserObject()
+      public DataNode getDataNode()
+        /* This returns the DataNode associated with this MetaNode.  */
         { // getUserObject()
-          return UserObject;  // Return the user object associated with this node.
+          return TheDataNode;  // Return the user object associated with this node.
           } // getUserObject()
 
-      public static void io( MetaNode InMetaNode )
-        /* This ios the node InMetaNode and all its descendeenta 
-          to the MetaFile.  */
+      public static MetaNode io
+        ( MetaNode InMetaNode, DataNode ParentDataNode )
+        /* This io-processes the node InMetaNode and all its descendeenta 
+          in the MetaFile.  
+          ParentDataNode is used for name lookup in the case of loading.
+          It returns the MetaNode processed.
+          */
         { // io()
-          MetaFile.ioListBegin( );
-          MetaFile.io( " MetaNode" );
-          DataNode UserDataNode= (DataNode)InMetaNode.UserObject;
-          MetaFile.ioIndentedField( 
-            UserDataNode.GetNameString( )
+          MetaFile.ioIndentedWhiteSpace( );  // Indent correctly.  // not needed ???
+          MetaFile.ioListBegin( );  // Mark the beginning of the list.
+          MetaFile.ioLiteral( " MetaNode" );
+          
+          if ( InMetaNode == null ) // If there is no MetaNode then...
+            InMetaNode= new MetaNode( ); // ...create an empty one to be filled.
+          
+          InMetaNode.TheDataNode= DataIo.ioDataNode(  // Io...
+            InMetaNode.TheDataNode,  // ...TheDataNode using...
+            ParentDataNode  // ...ParentDataNode for name lookups.
             );
-          ioAttributes( InMetaNode.AttributesHashMap );
-          ioChildren( InMetaNode.ChildrenLinkedHashMap );
-          MetaFile.ioListEnd( );
+          InMetaNode.AttributesHashMap=  // Io the attributes.
+            Attributes.ioAttributesHashMap( InMetaNode.AttributesHashMap );
+          InMetaNode.ChildrenLinkedHashMap=  // Io...
+            Children.ioChildrenLinkedHashMap(  // ...the children hash map...
+              InMetaNode.ChildrenLinkedHashMap, 
+              InMetaNode.TheDataNode  // ...using this DataNode for lookups.
+              );
+
+          MetaFile.ioListEnd( );  // Mark the end of the list.
+          return InMetaNode;  // Return the new or the original MetaNode.
           } // io()
-
-      private static void ioAttributes
-        ( HashMap< String, Object > InAttributesHashMap )
-        /* This ios the Attributes HashMap.  */
-        { // ioAttributes()
-          MetaFile.ioListBegin( );
-          MetaFile.io( " Attributes" );
-          Iterator < Map.Entry < String, Object > > MapIterator=  // Get an iterator...
-            InAttributesHashMap.
-            entrySet().
-            iterator();  // ...for HashMap entries.
-          while // Save all the HashMap's entries.
-            ( MapIterator.hasNext() ) // There is a next Entry.
-            { // Save this HashMap entry.
-              MetaFile.ioIndentedField( "(" );
-              Map.Entry < String, Object > AnEntry= // Get Entry 
-                MapIterator.next();  // ...that is next Entry.
-              MetaFile.io( " "+AnEntry.getKey( ) );
-              MetaFile.io( " "+(String)AnEntry.getValue( ) );
-              MetaFile.io( " )" );
-              } // Save this HashMap entry.
-          MetaFile.ioListEnd( );
-          } // ioAttributes()
-
-      private static void ioChildren
-        ( LinkedHashMap< Object, MetaNode  > InChildrenLinkedHashMap )
-        /* This ios the Children HashMap.  */
-        { // ioChildren()
-          MetaFile.ioListBegin( );
-          MetaFile.io( " Children" );
-          Iterator < Map.Entry < Object, MetaNode > > MapIterator=  // Get an iterator...
-            InChildrenLinkedHashMap.
-            entrySet().
-            iterator();  // ...for HashMap entries.
-          while // Save all the HashMap's entries.
-            ( MapIterator.hasNext() ) // There is a next Entry.
-            { // Save this HashMap entry.
-              MetaFile.ioListBegin( );
-              Map.Entry < Object, MetaNode > AnEntry= // Get Entry 
-                MapIterator.next();  // ...that is next Entry.
-              { // Save key.
-                DataNode UserDataNode= (DataNode)AnEntry.getKey( );
-                MetaFile.ioIndentedField( 
-                  UserDataNode.GetNameString( )
-                  );
-                } // Save key.
-              MetaNode.io( AnEntry.getValue( ) );  // Save value MetaNode.
-              MetaFile.ioListEnd( );
-              } // Save this HashMap entry.
-          MetaFile.ioListEnd( );
-          } // ioChildren()
 
       
     // Methods which deal with the children.
 
-			MetaNode PutChildUserObjectMetaNode( Object UserObject )
-        /* This method puts the Object UserObject in a child MetaNode
+			MetaNode PutChildUserObjectMetaNode( Object InObject )
+        /* This method puts the Object InObject in a child MetaNode
           within this its parent MetaNode.
-          It creates and uses a new MetaNode if one with the UserObject
+          It creates a new child MetaNode if one with InObject
           does not already exist.
-          In either case, it returns the MetaNode with the UserObject.
+          In either case, it returns the child MetaNode with InObject.
           */
-        { // MetaNode PutChildUserObjectITreeNode( UserObject )
+        { // MetaNode PutChildUserObjectITreeNode( InObject )
           MetaNode MapChildMetaNode=  // Try to get the MetaNode and move-to-front...
             ChildrenLinkedHashMap.get(  // ...in the child LinkedHashMap...
-              UserObject );  // ... from the entry containing the UserObject.
+              InObject );  // ... from the entry containing InObject.
           if ( MapChildMetaNode == null ) // Create new HashMap entry if not there.
             { // Create new HashMap entry.
               MapChildMetaNode= // Create new MetaNode with desired Object.
-                new MetaNode( UserObject );
+                new MetaNode( (DataNode)InObject );
               ChildrenLinkedHashMap.put(   // Add new entry which maps...
-                UserObject,  // ...key UserObject to...
+                InObject,  // ...key InObject to...
                 MapChildMetaNode  // ... the value MetaNode containing it.
                 );
               } // Create new HashMap entry.
           return MapChildMetaNode;  // Return new/old child from map as result.
-          } // MetaNode PutChildUserObjectITreeNode( UserObject )
+          } // MetaNode PutChildUserObjectITreeNode( InObject )
 
 			public MetaNode GetLastChildMetaNode(  )
         /* This method gets the child MetaNode of this MetaNode 
@@ -217,9 +189,9 @@ public class MetaNode
             if (LastChildMetaNode == null)  // there is no last child.
               break ;  // so keep the default null result.
             RecentChildDataNode=  // Result recent child DataNode is...
-              (DataNode)  // ...a DataNode caste of...
+              //(DataNode)  // ...a DataNode caste of...
               LastChildMetaNode.   // ...the last child's...
-              getUserObject();  // user object.
+              getDataNode();  // user object.
             } // override with child if there is one.
           return RecentChildDataNode; // return resulting DataNode, or null if none.
           } // GetLastReferencedChildDagNode( )

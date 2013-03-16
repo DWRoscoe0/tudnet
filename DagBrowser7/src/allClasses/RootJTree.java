@@ -106,11 +106,12 @@ public class RootJTree
             It records position and other information in the MetaPath tree.
             */
           { // valueChanged( TreeSelectionEvent TheTreeSelectionEvent )
-            final TreePath FinalNewTreePath=   // Get the destination TreePath which is...
-              TheTreeSelectionEvent.  // ...the TreeSelectionEvent's...
+            final TreePath FinalNewTreePath=   // Get the destination TreePath...
+              TheTreeSelectionEvent.  // ...which is the TreeSelectionEvent's...
               getNewLeadSelectionPath();  // ...one and only TreePath.
-            if ( FinalNewTreePath == null ) // process TreePath based on null-hood.
-              ;  // ignore null TreePath.
+            if // process TreePath
+              ( FinalNewTreePath == null ) // ...based on null-hood.
+              ;  // ignore null selection TreePath-s.
               else
               { // process non-null selection TreePath.
                 TreePath OldTreePath= 
@@ -118,9 +119,9 @@ public class RootJTree
                 if ( OldTreePath == null )  // Don't let OldTreePath be null...
                   OldTreePath= FinalNewTreePath;  // ...simulating null selection change.
                 final TreePath FinalOldTreePath= OldTreePath;  // for Runnable().
-                SelectedTreePath=  // store the selected TreePath from...
+                SelectedTreePath=  // store the new selected TreePath from...
                   FinalNewTreePath; // which was calculated previously.
-                SelectedObject=  // store the last component as selected Object.
+                SelectedObject=  // store the last path component as selected Object.
                   SelectedTreePath.getLastPathComponent();
 
                 // SwingUtilities.invokeLater(.) can't be used because
@@ -153,7 +154,7 @@ public class RootJTree
           { // CollapseAndExpand(.)
             TreeSelectionListener[] TreeSelectionListeners= // get listeners.
               getTreeSelectionListeners();
-            for // disable all TreeSelectionListener by removing them.
+            for // disable all TreeSelectionListener-s by removing them.
               ( TreeSelectionListener ATreeSelectionListener : 
                 TreeSelectionListeners 
                 )
@@ -183,8 +184,8 @@ public class RootJTree
             and it auto-expands nodes down
             from the common ancestor to the StopTreePath.
             It records DataNode visit information along the way.
-            This method must be wrapped by CollapseAndExpandRaw(.) 
-            because collapsing or expanding apparently causes selections.
+            This method must be wrapped by CollapseAndExpandRaw(.) because 
+            collapsing or expanding apparently causes JTree selections.
             */
           { // CollapseAndExpandRaw(.)
             MetaPath.UpdatePath( StartTreePath );  // record visit information.
