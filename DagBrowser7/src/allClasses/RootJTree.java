@@ -53,7 +53,8 @@ public class RootJTree
           */
   
           collapseRow( 0 );  // collapse root which should be at row 0.
-          setRootVisible( true );  // show the root.
+          //setRootVisible( true );  // show the root.
+          setRootVisible( false );  // Do not show the pseudo-parent of root.
           setShowsRootHandles( true );
           putClientProperty( "IJTree.lineStyle", "Angled" );
 
@@ -103,7 +104,7 @@ public class RootJTree
             It records information about the selection.
             It checks for and performs any needed
             automatic expanding or collapsing of JTree nodes.
-            It records position and other information in the MetaPath tree.
+            It records position and other information in the MetaTool tree.
             */
           { // valueChanged( TreeSelectionEvent TheTreeSelectionEvent )
             final TreePath FinalNewTreePath=   // Get the destination TreePath...
@@ -188,7 +189,7 @@ public class RootJTree
             collapsing or expanding apparently causes JTree selections.
             */
           { // CollapseAndExpandRaw(.)
-            MetaPath.UpdatePath( StartTreePath );  // record visit information.
+            MetaTool.UpdatePath( StartTreePath );  // record visit information.
             TreePath CommonAncestorTreePath= // do the up part.
               CollapseAndExpandUpTreePath( StartTreePath, StopTreePath );
             { // expand downward if needed.
@@ -304,7 +305,7 @@ public class RootJTree
           */
         { // CommandGoToChildV().
           Object ChildObject=  // try to get child...
-            MetaPath.  // ...from the visits tree...
+            MetaTool.  // ...from the visits tree...
               UpdatePathDataNode( // ...most recently visited...
                 SelectedTreePath 
                 );  // ...of the tree node at end of selected TreePath.

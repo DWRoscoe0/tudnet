@@ -1,92 +1,80 @@
 package allClasses;
 
-import javax.swing.tree.TreePath;
+//import javax.swing.tree.TreePath;
 
 public class MetaRoot 
   /* This class manages the root of the MetaNode-s structure.  */
   {
     // variables.  all static, so this is a static class.
     
-      public static MetaNode ParentOfRootMetaNode;
       private static MetaNode RootMetaNode;  /* Root of tree which 
         holds Dag information.  */
+      private static MetaNode ParentOfRootMetaNode;  /* Pseudo-parent of root.
+        This is the same tree as RootMetaNode, but can be used as
+        a sentinel record to eliminate checking for null during
+        MetaPath traversals toward the root.  */
+      private static MetaPath ParentOfRootMetaPath;  /* MetaPath associated with
+        ParentOfRootMetaNode.  */
 
-    // Constructor.
+      static
+      /* This class static code block initializes the static variables.  */
+      { // Initialize MetaRoot static fields.
+        DataNode InRootDataNode= DataRoot.getRootDataNode( );
 
-      public MetaRoot( DataNode InRootDataNode )
-      /* This constructor doesn't construct any instance of this static class,
-          but it does initialize the static variables from InRootDataNode.
-          DataRoot must already be initialized.
-          */
-        { 
-          RootMetaNode=  // Try to load Root MetaNode DAG state...
-            MetaFile.start(  // ...from from MetaFile for...
-              InRootDataNode );  // ...DataNode-s rooted at InRootDataNode.
+        RootMetaNode=  // Try to load Root MetaNode DAG state...
+          MetaFile.start(  // ...from from MetaFile for...
+            InRootDataNode );  // ...DataNode-s rooted at InRootDataNode.
 
-          //MetaFile.finish();  // Debug ????
+        //MetaFile.finish();  // Debug ????
 
-          if // Make root MetaNode DAG a single MetaNode if...
-            ( ( RootMetaNode == null) || // ...the above loaded nothing, or...
-              ( RootMetaNode.getDataNode( ) ==  // ...the loaded MetaNode contained...
-                ErrorDataNode.getSingletonErrorDataNode( )  // ...an ErrorDataNode.
-                )
+        if // Make root MetaNode DAG a single MetaNode if...
+          ( ( RootMetaNode == null) || // ...the above loaded nothing, or...
+            ( RootMetaNode.getDataNode( ) ==  // ...the loaded MetaNode contained...
+              ErrorDataNode.getSingletonErrorDataNode( )  // ...an ErrorDataNode.
               )
-            { // Make root MetaNode DAG a single MetaNode.
-              RootMetaNode=  // Initialize present MetaNode tree root with...
-                new MetaNode(  // ...a new MetaNode containing...
-                  InRootDataNode   // ...the INFOGORA-ROOT DataNode.
-                  );
-              } // Make root MetaNode DAG a single MetaNode.
+            )
+          { // Make root MetaNode DAG a single MetaNode.
+            RootMetaNode=  // Initialize present MetaNode tree root with...
+              new MetaNode(  // ...a new MetaNode containing...
+                InRootDataNode   // ...the INFOGORA-ROOT DataNode.
+                );
+            } // Make root MetaNode DAG a single MetaNode.
 
-          ParentOfRootMetaNode= // Make parent of root MetaNode be...
-            new SingleChildMetaNode( // ...a MetaNode whose one-child is...
-              RootMetaNode, // ...the root MetaNode and whose object is...
-              DataRoot.ParentOfRootDataNode // ...parent of root DataNode.
-              );
-          // ???? I need to add root to it's parent.
-          MetaPath.UpdatePath(  // Initialize MetaPath...
-            new TreePath(   // ...with a single element TreePath to...
-              InRootDataNode   // ...the root DataNode.
-              ) 
+        ParentOfRootMetaNode= // Make parent of root MetaNode be...
+          new SingleChildMetaNode( // ...a MetaNode whose one-child is...
+            RootMetaNode, // ...the root MetaNode and whose object is...
+            DataRoot.getParentOfRootDataNode( ) // ...parent of root DataNode.
             );
             
-          }
+        ParentOfRootMetaPath=  // Make ParentOfRootMetaPath be...
+          new MetaPath( null, ParentOfRootMetaNode );  // MetaPath to parent node.
+
+        // ???? I need to add root to it's parent.
+        /*
+        MetaTool.UpdatePath(  // Initialize MetaTool...
+          new TreePath(   // ...with a single element TreePath to...
+            InRootDataNode   // ...the root DataNode.
+            ) 
+          );
+        */
+          
+        } // Initialize MetaRoot static fields.
 
     // Methods.
-    
-      public static MetaNode GetRootMetaNode( )
-        /* Returns the root MetaNode. */
-        {
-          return RootMetaNode;  // Return root as result.
-          }
-        
-/*    public static MetaNode xSetRootMetaNode
-        ( Object RootTreePathUserObject )
-        // ??? This is going to be removed.
-        /* This method sets or checks the Root MetaNode is 
-          RootTreePathUserObject.  This should probably be renamed because
-          it doesn't set the Root now.  It only checks it.  */
-/*      { // SetRootMetaNode( Object RootTreePathUserObject )
 
-          /* 
-          // This null check might be handled using a NullPointerException.
-          if (RootMetaNode == null)  // there is no root yet.
-            { // Create tree root.
-              // System.out.println( "MetaPath root assignment");
-              RootMetaNode=  // Replace present root with...
-                new MetaNode(  // ...a new MetaNode containing...
-                   RootTreePathUserObject   // ...the correct user object.
-                );
-              } // Create tree root.
+      //public static void Initialize( )
+      /* This initializes the static variables from InRootDataNode.
+          DataRoot must already be initialized.
           */
+      //  { }  // All code was moved to static code block.
+    
+      public static MetaNode getRootMetaNode( )
+        { return RootMetaNode; }
 
-/*        if  // root has incorrect user object.
-            ( RootMetaNode.getUserObject() != RootTreePathUserObject )
-            { // Handle root changing error.
-              System.out.println( "MetaPath root changed!");
-              System.exit( 0 );  // Abort program.
-              } // Handle root changing error.
-          return RootMetaNode;  // Return root as result.
-          } // SetRootMetaNode( Object RootTreePathUserObject )
-*/      
+      public static MetaNode getParentOfRootMetaNode( )
+        { return ParentOfRootMetaNode; }
+
+      public static MetaPath getParentOfRootMetaPath( )
+        { return ParentOfRootMetaPath; }
+
     }

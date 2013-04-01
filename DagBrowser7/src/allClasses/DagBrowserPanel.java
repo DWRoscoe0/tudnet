@@ -267,23 +267,32 @@ public class DagBrowserPanel
       private void BuildDataModelsAndGraphs()
         /* This decomposition method builds the TreeModel
           which will be the source of Infogora DAG to be browsed.
-          It also builds the MetaPath cache DAG which
+          It also builds the MetaTool cache DAG which
           stores information about the Infogora graph.
           */
         { // BuildDataModelsAndGraphs()
 
-          DataNode RootDataNode= // Calculate data tree root to be...
-            new InfogoraRoot( );  // ...root of entire Infogora hierarchy.
+          // RootDataNode= // Calculate data tree root to be...
+          //   new InfogoraRoot( );  // ...root of entire Infogora hierarchy.
 
-          new DataRoot( RootDataNode ); // Initialize DataNode DAG and...
+          // ??? DataRoot.Initialize( RootDataNode ); // Initialize DataNode DAG and...
+          // DataRoot.Initialize( ); // Initialize DataNode DAG and...
             // ...associated MetaNode DAG.
+          DataNode RootDataNode;
+          RootDataNode= // Get data tree root from DataRoot.
+            DataRoot.getRootDataNode( );
 
-          StartTreePath= // Initialize StartTreePath for browsing...
+          TreePath ParentOfRootTreePath=  // Calculate parent root TreePath...
             new TreePath(   // ...to be TreePath...
-              RootDataNode  // ...to the root.
+              DataRoot.getParentOfRootDataNode()  // ...to the parent root.
               );
+          StartTreePath= // Initialize StartTreePath for browsing...
+              ParentOfRootTreePath.pathByAddingChild( RootDataNode );  // ...by adding root.
           TheDataTreeModel =  // Initialize DataTreeModel for JTree using...
-            new DataTreeModel(RootDataNode);  // ...DataNode root.
+            //new DataTreeModel(RootDataNode);  // ...DataNode root.
+            new DataTreeModel(   // ...DataNode root parent.
+              DataRoot.getParentOfRootDataNode() 
+              );
 
           } // BuildDataModelsAndGraphs()
 

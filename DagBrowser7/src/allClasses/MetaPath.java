@@ -1,106 +1,44 @@
 package allClasses;
 
-import javax.swing.tree.TreePath;
- 
-class MetaPath
+class MetaPath  // Name reassigned.  MetaTool replaced it.
 
-  /* This class is used to store meta-data associated with
-    nodes of the Infogora DAG (Directed Acyclic Graph).
-    This includes information about which node children
-    were referenced or visited most recently.
-    A location within the DAG is specified with
-    a TreePath when information is to be read or stored.
-    
-    Possible optimizations (not needed yet):
-    
-      Speed:
-        To reduce TreePath tracing, 
-        cach the most recently used TreePath argument(s).
-        Check for the path, its parent, and possibly grandparent.
-        
-      Space:
-        Eliminate nodes which:
-          * have no children,
-          * have no attributes, and
-          * are not the most recently referenced or are not the top/default node.
-
+  /* This class represents a path in a tree or DAG of MetaNode-s
+    similar to how the Java TreePath class represents a path
+    in a tree of nodes that contain Object-s.
     */
       
   { // class MetaPath.
-  
-    // Setter methods.  These write information to tree.
+
+    // Instance variables.
+    
+      private final MetaNode LastMetaNode;  // Last MetaNode in MetaPath.
+      private final MetaPath ParentMetaPath;  // Parent MetaPath.
+      private final int PathCountI;  // Number of MetaNodes in path.
+      
+    // Constructors.
+    
+      public MetaPath( MetaPath InParentMetaPath, MetaNode InLastMetaNode )
+        /* This constructor constructs a new PataPath from
+          the parent metaPath and the MetaNode it will reference.
+          */
+        { // MetaPath( TreePath InTreePath )
+          LastMetaNode= InLastMetaNode;
+          ParentMetaPath= InParentMetaPath;
+          if ( ParentMetaPath == null )  // Calculate length of new path.
+            PathCountI= 1;
+            else
+            PathCountI= ParentMetaPath.getPathCountI( ) + 1;
+          } // MetaPath( TreePath InTreePath )
           
-      static public void UpdatePath( TreePath TreePathIn )
-        /* This does the same as UpdatePathITreeNode(.) except 
-          it doesn't return the MetaNode associated with 
-          the end of the path.
-          It exists mainly to help other code be self-documenting.
-          */
-        { // UpdatePath(.)
-          UpdatePathMetaNode( TreePathIn ); // Update with TreePath.
-          } // UpdatePath(.)
+    // Instance methods.
 
-      static public DataNode UpdatePathDataNode
-        ( TreePath TreePathIn )
-        /* Updates the MetaPath with TreePathIn and returns 
-          the user object of the most recently visited child of 
-          the tree node at the end of that path,
-          or null if there is no such child. 
-          */
-        { // UpdateToAndGetRecentChildUserObjectAt(.)
-          MetaNode EndOfPathMetaNode=  // Get last MetaNode in path by...
-            UpdatePathMetaNode(  // ...updating tree with...
-              TreePathIn  // ...the provided TreePath.
-              );
-          DataNode ChildDataNode=  // Get the last MetaNode's...
-            EndOfPathMetaNode.GetLastReferencedChildDataNode(  // ...most recent user object.
-              );
-          return ChildDataNode;  // return the resulting child user object.
-          } // UpdateToAndGetRecentChildUserObjectAt(.)
+      public int getPathCountI( )
+        { return PathCountI; }
 
-      static public MetaNode UpdatePathMetaNode( TreePath TreePathIn )
-        /* Updates the MetaPath structure anchored
-          starting with the root and ending at the node specified by InTreePath.
-          * It adds to the structure any part of the path TreePathIn 
-            that is not in the structure.
-          * It reorders the children so the more recently referenced ones
-            can be referenced later.
-          It also returns the MetaNode at the end of the specified TreePath.
-          */
-        { // UpdatePathITreeNode()
-          Object[] ObjectsInPath=  // The ObjectsInPath array becomes...
-            TreePathIn.getPath();  // ...TreePathIn translated to an array.
-          MetaNode FinalMetaNode=  // Final MetaNode becomes MetaNode...
-            UpdatePathFromArrayMetaNode(  // ...from the update of the structure...
-              ObjectsInPath // ...using the ObjectsInPath array.
-              );
-          return FinalMetaNode;  // Return final MetaNode in path.
-          } // UpdatePathITreeNode()
+      public MetaPath getParentMetaPath( )
+        { return ParentMetaPath; }
 
-    // private methods.
-
-      static private MetaNode UpdatePathFromArrayMetaNode
-        ( Object[] ObjectsInPath)
-        /* This grouping method is similar to 
-          UpdatePathMetaNode( TreePath TreePathIn ) except that 
-          the path is specified by the array of path elements ObjectsInPath
-          instead of a TreePath.
-          */
-        { // UpdatePathFromArrayMetaNode()
-          MetaNode ScanMetaNode= // Initialize ScanMetaNode to be...
-            MetaRoot.ParentOfRootMetaNode;  // ...parent of MetaRoot.
-          int IPathIndex= 0;  // Start scan at 1st path element.
-          while   // Update all remaining path elements into structure.
-            (IPathIndex < ObjectsInPath.length)  // Path elements remain.
-            { // Update one path element into structure.
-              Object DesiredObject=  // Get user Object from path element.
-                ObjectsInPath[ IPathIndex ];
-              MetaNode ChildMetaNode=   // Put it in MetaNode in MetaPath structure.
-                ScanMetaNode.PutChildUserObjectMetaNode( DesiredObject );
-              ScanMetaNode= ChildMetaNode; // Make child be new scan node.
-              IPathIndex++;  // Increment the path element index.
-              } // Update one path element into structure.
-          return ScanMetaNode;  // return final scan node.
-          } // UpdatePathFromArrayMetaNode()
+      public MetaNode getLastMetaNode( )
+        { return LastMetaNode; }
 
     } // class MetaPath.

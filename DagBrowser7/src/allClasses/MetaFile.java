@@ -72,7 +72,7 @@ public class MetaFile
         if ( TheRandomAccessFile != null )
           try {
             //TheRandomAccessFile.writeBytes( "State-File\n" );
-            MetaNode RootMetaNode= MetaRoot.GetRootMetaNode( );  // Get root MetaNode.
+            MetaNode RootMetaNode= MetaRoot.getRootMetaNode( );  // Get root MetaNode.
             ioAllState( RootMetaNode );
             TheRandomAccessFile.setLength( // Truncate file at...
               TheRandomAccessFile.getFilePointer( )  // ...file pointer.
@@ -101,7 +101,7 @@ public class MetaFile
           );
         RootMetaNode= MetaNode.io(  // Save or load... 
           RootMetaNode,  // ...the root MetaNode using...
-          DataRoot.ParentOfRootDataNode  // ...its parent for load lookups.
+          DataRoot.getParentOfRootDataNode()  // ...its parent for load lookups.
           );
 
         return RootMetaNode;  // Return the new or old root.
@@ -168,7 +168,7 @@ public class MetaFile
         catch ( IOException e ) {
           e.printStackTrace();
           }
-        return TokenString; // Token initially empty.
+        return TokenString.intern( );  // Return string or an older equal one.
         } // readTokenString( String InString )
   
     public static void ioIndentedWhiteSpace( )

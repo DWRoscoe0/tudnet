@@ -9,39 +9,53 @@ public class TreeExpansion {
     */
 
     static public void SetAutoExpanded
-      ( TreePath TreePathIn, boolean AutoExpandInB )
+      ( TreePath InTreePath, boolean AutoExpandInB )
       /* This method stores the value of the AutoExpandedB flag
         from the value AutoExpandInB
-        in the info tree node specified by TreePathIn.
+        in the info tree node specified by InTreePath.
         */
       { 
-        MetaNode TheMetaNode= MetaPath.UpdatePathMetaNode( TreePathIn );
+        // MetaNode TheMetaNode= MetaTool.UpdatePathMetaNode( InTreePath );
+        MetaTool WorkerMetaTool=  // Create new MetaTool...
+          new MetaTool( InTreePath ); // ...to work on InTreePath.
+        MetaNode TheMetaNode=  // Get MetaNode from end of MetaPath.
+          WorkerMetaTool.getMetaPath( ).getLastMetaNode();
         
-        // TheITreeNode.AutoExpandedB= AutoExpandInB;
-        if ( AutoExpandInB )  // Add or remove attribute depending on AutoExpandInB.
-          TheMetaNode.put( "AutoExpanded", "T" );  // Add node's AutoExpanded attribute.
-          else
-          TheMetaNode.remove( "AutoExpanded" );  // Remove node's AutoExpanded attribute.
+        String ValueString=  // Translate boolean Value into string.
+          ( AutoExpandInB ? "T" : "F" );
+        TheMetaNode.put( "AutoExpanded", ValueString );  // Store value String.
         }
 
-    static public boolean GetAutoExpandedB( TreePath TreePathIn )
+    static public boolean GetAutoExpandedB( TreePath InTreePath )
       /* This method returns the value of the AutoExpandedB flag
-        in the info tree node specified by TreePathIn.
+        in the info tree node specified by InTreePath.
         */
       { 
-        MetaNode TheMetaNode= MetaPath.UpdatePathMetaNode( TreePathIn );
-        // return TheITreeNode.AutoExpandedB; 
+        MetaTool WorkerMetaTool=  // Create new MetaTool...
+          new MetaTool( InTreePath ); // ...to work on InTreePath.
+        MetaNode TheMetaNode=  // Get MetaNode from end of MetaPath.
+          WorkerMetaTool.getMetaPath( ).getLastMetaNode();
         return GetAutoExpandedB( TheMetaNode );
         }
 
     static public boolean GetAutoExpandedB( MetaNode TheMetaNode )
-      /* This method returns the value of the AutoExpandedB flag
-        in the info tree node specified by TheITreeNode.
+      /* This method returns the boolean value of the AutoExpandedB flag
+        in TheMetaNode.
         */
       { 
-        // return TheITreeNode.AutoExpandedB; 
-        return   // Return whether the property is present.
-          TheMetaNode.containsKey( "AutoExpanded" );
+        boolean ResultB= false;
+        switch (0) {
+          default:
+          Object ValueObject= TheMetaNode.get( "AutoExpanded" );
+          if ( ValueObject == null )  // Value not there means false.
+            break;
+          if ( ValueObject.equals( "T" ) )  // Only a value of T means true.
+            ResultB= true;
+          }
+        return ResultB;
+        
+        //return   // Return whether the property is present.
+        //  TheMetaNode.containsKey( "AutoExpanded" );
         }
 
     static public TreePath FollowAutoExpandToTreePath
@@ -58,7 +72,7 @@ public class TreeExpansion {
         TreePath ScanTreePath=   // initialize TreePath scanner to be...
           StartTreePath;  // ...start TreePath.
         MetaNode ScanMetaNode= // initialize MetaNode scanner to be...
-        		MetaPath.UpdatePathMetaNode( // ...ITreeNode at end...
+        		MetaTool.UpdatePathMetaNode( // ...ITreeNode at end...
             ScanTreePath );  // ...of ScanTreePath.
         while   // follow chain of all nodes with auto-expanded flag set.
           ( GetAutoExpandedB( ScanMetaNode ) )  // auto-expanded flag set?
