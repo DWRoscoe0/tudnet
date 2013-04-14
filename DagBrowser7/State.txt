@@ -1,0 +1,74 @@
+Infogora-Meta-Data-File
+( MetaNode
+  INFOGORA-ROOT
+  ( Attributes
+    ( AutoExpanded T )
+    )
+  ( Children
+    ( FILE-SYSTEM-ROOTS
+      ( MetaNode
+        FILE-SYSTEM-ROOTS
+        ( Attributes
+          ( AutoExpanded T )
+          )
+        ( Children
+          ( C:\
+            ( MetaNode
+              C:\
+              ( Attributes
+                ( AutoExpanded T )
+                )
+              ( Children
+                ( $AVG
+                  ( MetaNode
+                    $AVG
+                    ( Attributes
+                      )
+                    ( Children
+                      )
+                    )
+                  )
+                ( dbase
+                  ( MetaNode
+                    dbase
+                    ( Attributes
+                      )
+                    ( Children
+                      )
+                    )
+                  )
+                ( dell
+                  ( MetaNode
+                    dell
+                    ( Attributes
+                      )
+                    ( Children
+                      )
+                    )
+                  )
+                ( dell.sdr
+                  ( MetaNode
+                    dell.sdr
+                    ( Attributes
+                      )
+                    ( Children
+                      )
+                    )
+                  )
+                ( "Documents and Settings"
+                  ( MetaNode
+                    "Documents and Settings"
+                    ( Attributes
+                      )
+                    ( Children
+                      )
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+  )

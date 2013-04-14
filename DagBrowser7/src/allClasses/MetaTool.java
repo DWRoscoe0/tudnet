@@ -14,8 +14,10 @@ class MetaTool
     A location within the DAG is specified with
     a TreePath when information is to be read or stored.
     
-    Possible optimizations (not needed yet):
+    Possible enhancements:
         
+      Subclasses:
+        AttributeTool: MetaTool for operating on Attributes.
       Space:
         Eliminate nodes which:
           * have no children,
@@ -28,48 +30,34 @@ class MetaTool
   
     // Instance variables.
     
-      private TreePath DataTreePath;  // Identifies data DAG position.
-      private MetaPath TheMetaPath;  // Identifies associated meta DAG position.
+      private TreePath DataTreePath;  // Identifies data DAG path from root.
+      private MetaPath TheMetaPath;  // Identifies associated meta DAG path.
       
       // This class non-static code block initializes some instance variables.
       {
         DataTreePath= DataRoot.getParentOfRootTreePath();
         TheMetaPath= MetaRoot.getParentOfRootMetaPath( );
         }
-
-      //Stack<Object> PathStack;  // ?? may not be needed soon.
-      //private MetaNode TerminalMetaNode;  // ?? may not be needed soon.
       
     // Constructors.  None at this time.
     
       public MetaTool( TreePath InTreePath )
-        /* This constructor takes InTreePath and builds a Stack
-          containing its path elements in order ready to scan
-          or build MetaNode-s associated with those elements.
+        /* This constructor takes InTreePath and builds a MetaTool
+          with DataTreePath set to InTreePath and
+          TheMetaPath set to an equivalent path using the Sync(..) method.
           */
         { // MetaTool( TreePath InTreePath )
-          Sync( InTreePath );  // Sync with InTreePath.
+        
+          // Instance variables DataTreePath and TheMetaPath are already set.
+          
+          Sync( InTreePath );  // Sync instance variables with InTreePath.
 
-          // DataTreePath= InTreePath;  // Save TreePath.
-
-          /*
-          PathStack= new Stack<Object>();
-          do  // Build Stack of path elements by...
-            { // ...pushing TreePath element onto Stack...
-              PathStack.push(  // Push onto the Stack...
-                InTreePath.getLastPathComponent( )  // ...last path element.
-                );
-              InTreePath= InTreePath.getParentPath( );  // Remove last element.
-              } // ...pushing TreePath element onto Stack.
-            while ( InTreePath != null );  // Until none of TreePath remains.
-          PathStack.pop();  // Pop off the pseudo-parent of root element.
-          */
           } // MetaTool( TreePath InTreePath )
   
     // Instance methods.
     
-      private void Sync( TreePath InTreePath )
-        /* This recursive method syncs the old DataTreePath 
+      public void Sync( TreePath InTreePath )
+        /* This recursive method syncs the [old] DataTreePath 
           with the new InTreePath.
           At the same time it causes TheMetaPath to match.
           It tries to do this incrementally and recursively, 
@@ -129,33 +117,15 @@ class MetaTool
               ChildMetaNode  // ...and ChildMetaNode as new path element.
               );
           } // UpdateTheMetaPathFromTreePath()
-
-      //private MetaNode UpdatePathFromStackMetaNode
-      /*
-      private void UpdatePathFromStackMetaNode
-        ( )
-        /* This private grouping method is similar to 
-          UpdatePathMetaNode( TreePath TreePathIn ) except that 
-          the path is specified by stack elements instead of a TreePath.
-          */
-      /*
-        { // UpdatePathFromStackMetaNode()
-          MetaNode ScanMetaNode= // Initialize ScanMetaNode to be...
-            MetaRoot.getParentOfRootMetaNode( );  // ...parent of MetaRoot.
-          while   // Update all remaining path elements into Meta DAG.
-            ( ! PathStack.empty( ) )  // Path elements remain in stack.
-            { // Update one path element into structure.
-              Object DesiredObject=  // Get user Object from path element...
-                PathStack.pop( );  // ...and simultaneously remove from Stack.
-              MetaNode ChildMetaNode=   // Put it in MetaNode in MetaTool structure.
-                ScanMetaNode.PutChildUserObjectMetaNode( DesiredObject );
-              ScanMetaNode= ChildMetaNode; // Make child be new scan node.
-              } // Update one path element into structure.
-          TerminalMetaNode= ScanMetaNode;  // Save reference to final MetaNode.
-          // return ScanMetaNode;  // return final scan node.
-          } // UpdatePathFromStackMetaNode()
-      */
   
+    // Non-static getter methods.
+
+      public MetaPath getMetaPath()
+        { return TheMetaPath; }
+
+      public MetaNode getMetaNode()
+        { return TheMetaPath.getLastMetaNode(); }
+
     // Static setter methods.  These write information to tree.
           
       static public void UpdatePath( TreePath TreePathIn )
@@ -200,20 +170,8 @@ class MetaTool
           MetaTool WorkerMetaTool= new MetaTool( // Create new MetaTool...
               InTreePath  // ...to work on InTreePath.
               );
-          // WorkerMetaTool.Sync( InTreePath );  // Run for test.
+          return WorkerMetaTool.getMetaNode();
 
-          return WorkerMetaTool.TheMetaPath.getLastMetaNode();
-
-          /*
-          WorkerMetaTool.
-              UpdatePathFromStackMetaNode( ); // ...from the update of the structure...
-                //PathStack  // ...using the Path stack.
-                //);w
-          return WorkerMetaTool.TerminalMetaNode;  // Return final MetaNode.
-          */
           } // UpdatePathMetaNode()
-
-    public MetaPath getMetaPath( )
-      { return TheMetaPath; }
 
     } // class MetaTool.

@@ -93,7 +93,6 @@ public class MetaNode
 
     // Other methods.
 
-      // public Object getUserObject()
       public DataNode getDataNode()
         /* This returns the DataNode associated with this MetaNode.  */
         { // getUserObject()

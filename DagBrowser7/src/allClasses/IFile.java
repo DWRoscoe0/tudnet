@@ -98,20 +98,26 @@ public class IFile
           */
         { // getChild( int IndexI ) 
           SetupCacheArrays( );  // Setup the cache arrays for use.
-          IFile ChildIFile=  // Try to get child IFile from cache.
-            ChildIFiles[ IndexI ];
-          if ( ChildIFile == null )  // Fix the cache if IFile slot was empty.
-            { // Fill the empty cache slot.
-              //System.out.println( 
-              //  "IFile.getChild(.) calculating IFile slot"
-              //  );
-              ChildIFile=  // Calculate IFile slot value
-                new IFile(   // return representation of desired child.
-                  this, 
-                  GetArrayOfStrings( )[IndexI] 
-                  );
-              ChildIFiles[ IndexI ]= ChildIFile;  // Save IFile in cache slot.
-              } // Fill the empty cache slot.
+          IFile ChildIFile= null;
+          do {  // Exittable block.
+            if  // Exit if index out of bounds.
+              ( IndexI < 0 || IndexI >= ChildIFiles.length ) 
+              break;
+            ChildIFile=  // Try to get child IFile from cache.
+              ChildIFiles[ IndexI ];
+            if ( ChildIFile == null )  // Fix the cache if IFile slot was empty.
+              { // Fill the empty cache slot.
+                //System.out.println( 
+                //  "IFile.getChild(.) calculating IFile slot"
+                //  );
+                ChildIFile=  // Calculate IFile slot value
+                  new IFile(   // return representation of desired child.
+                    this, 
+                    GetArrayOfStrings( )[IndexI] 
+                    );
+                ChildIFiles[ IndexI ]= ChildIFile;  // Save IFile in cache slot.
+                } // Fill the empty cache slot.
+            } while ( false );  // Exittable block.
           return ChildIFile;  // Return IFile as result.
           } // getChild( int IndexI ) 
 
