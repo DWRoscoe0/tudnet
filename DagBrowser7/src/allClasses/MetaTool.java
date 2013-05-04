@@ -16,14 +16,11 @@ class MetaTool
     
     Possible enhancements:
         
-      Subclasses:
-        AttributeTool: MetaTool for operating on Attributes.
       Space:
         Eliminate nodes which:
           * have no children,
           * have no attributes, and
           * are not the most recently referenced or are not the top/default node.
-
     */
       
   { // class MetaTool.
@@ -81,7 +78,7 @@ class MetaTool
       private void SyncLonger( TreePath InTreePath )
         { // SyncLonger()
           Sync( InTreePath.getParentPath() );  // Sync with shorter new path.
-          UpdateTheMetaPathFromTreePath( InTreePath );
+          SyncTheMetaPathFromTreePath( InTreePath );
           DataTreePath= InTreePath;  // Add last TreePath element by assigning.
           } // SyncLonger()
 
@@ -99,12 +96,16 @@ class MetaTool
           TheMetaPath=  // Shorten MetaPath by removing last MetaNode.
             TheMetaPath.getParentMetaPath( );
           Sync( InTreePath.getParentPath() );  // Sync shortened paths.
-          UpdateTheMetaPathFromTreePath( InTreePath );
+          SyncTheMetaPathFromTreePath( InTreePath );
           DataTreePath= InTreePath;  // Add last element by assigning.
           } // SyncSameLengthsButDifferent()
 
-      private void UpdateTheMetaPathFromTreePath( TreePath InTreePath )
-        { // UpdateTheMetaPathFromTreePath()
+      private void SyncTheMetaPathFromTreePath( TreePath InTreePath )
+        /* This is a helper method for the above Sync... methods.  
+          It extends the MetaNode DAG, and adds an element to TheMetaPath,
+          to match the DataNode DAG path InTreePath.
+          */
+        { // SyncTheMetaPathFromTreePath()
           Object DataObject=  // Get user Object from new TreePath element.
             InTreePath.getLastPathComponent( );
           MetaNode ChildMetaNode=   // Put it in MetaNode as child MetaNode.
@@ -116,62 +117,14 @@ class MetaTool
               TheMetaPath,  // ...old MetaPath...
               ChildMetaNode  // ...and ChildMetaNode as new path element.
               );
-          } // UpdateTheMetaPathFromTreePath()
+          } // SyncTheMetaPathFromTreePath()
   
-    // Non-static getter methods.
+    // Instance getter methods.
 
       public MetaPath getMetaPath()
         { return TheMetaPath; }
 
       public MetaNode getMetaNode()
         { return TheMetaPath.getLastMetaNode(); }
-
-    // Static setter methods.  These write information to tree.
-          
-      static public void UpdatePath( TreePath TreePathIn )
-        /* This does the same as UpdatePathITreeNode(.) except 
-          it doesn't return the MetaNode associated with 
-          the end of the path.
-          It exists mainly to help other code be self-documenting.
-          */
-        { // UpdatePath(.)
-          UpdatePathMetaNode( TreePathIn ); // Update with TreePath.
-          } // UpdatePath(.)
-
-      static public DataNode UpdatePathDataNode
-        ( TreePath TreePathIn )
-        /* Updates the MetaTool with TreePathIn and returns 
-          the user object of the most recently visited child of 
-          the tree node at the end of that path,
-          or null if there is no such child. 
-          */
-        { // UpdateToAndGetRecentChildUserObjectAt(.)
-          MetaNode EndOfPathMetaNode=  // Get last MetaNode in path by...
-            UpdatePathMetaNode(  // ...updating tree with...
-              TreePathIn  // ...the provided TreePath.
-              );
-          DataNode ChildDataNode=  // Get the last MetaNode's...
-            EndOfPathMetaNode.GetLastReferencedChildDataNode(  // ...most recent user object.
-              );
-          return ChildDataNode;  // return the resulting child user object.
-          } // UpdateToAndGetRecentChildUserObjectAt(.)
-
-      static public MetaNode UpdatePathMetaNode( TreePath InTreePath )
-        /* Updates the MetaTool structure anchored
-          starting with the root and ending at the node specified by InTreePath.
-          * It adds to the structure any part of the path InTreePath 
-            that is not in the structure.
-          * It reorders the children so the more recently referenced ones
-            can be referenced quickly later.
-          It also returns the MetaNode at the end of the specified TreePath.
-          */
-        { // UpdatePathMetaNode()
-
-          MetaTool WorkerMetaTool= new MetaTool( // Create new MetaTool...
-              InTreePath  // ...to work on InTreePath.
-              );
-          return WorkerMetaTool.getMetaNode();
-
-          } // UpdatePathMetaNode()
 
     } // class MetaTool.

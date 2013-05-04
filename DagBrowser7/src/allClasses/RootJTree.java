@@ -188,8 +188,8 @@ public class RootJTree
             This method must be wrapped by CollapseAndExpandRaw(.) because 
             collapsing or expanding apparently causes JTree selections.
             */
-          { // CollapseAndExpandRaw(.)
-            MetaTool.UpdatePath( StartTreePath );  // record visit information.
+          { // ](.)
+        	  // ??? Selection.put( StartTreePath );  // record visit information.
             TreePath CommonAncestorTreePath= // do the up part.
               CollapseAndExpandUpTreePath( StartTreePath, StopTreePath );
             { // expand downward if needed.
@@ -305,8 +305,8 @@ public class RootJTree
           */
         { // CommandGoToChildV().
           Object ChildObject=  // try to get child...
-            MetaTool.  // ...from the visits tree...
-              UpdatePathDataNode( // ...most recently visited...
+          	Selection.  // ...from the visits tree...
+          	  putAndReturnDataNode( // ...most recently visited...
                 SelectedTreePath 
                 );  // ...of the tree node at end of selected TreePath.
               

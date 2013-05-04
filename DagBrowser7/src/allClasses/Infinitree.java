@@ -62,17 +62,19 @@ public class Infinitree
           }
 
       @Override public boolean equals(Object other) 
-        /* This is the standard equals() method.  */
+        /* This is the standard equals() method.  
+          This is not a complete implimentation of equals(..).
+          It doesn't do null checks.
+          */
         {
           boolean ResultB = false;  // assume objects are not equal.
-          switch (0) {  // use switch as exitable block.
-            default:  // start here.
+          Comparer: {  // Comparer.
             if ( ! ( other instanceof Infinitree ) )  // different class.
-              break;  // exit with false.
+              break Comparer;  // exit with false.
             Infinitree that =  // create variable for easy access of fields.
               (Infinitree) other; 
             if ( this.ChildI != that.ChildI )  // child numbers not equal.
-              break;  // exit with false.
+              break Comparer;  // exit with false.
             if // parents not equal.
               ( ! ( ( ParentInfinitree == that.ParentInfinitree ) ||
                     ( ( ParentInfinitree != null ) &&
@@ -80,10 +82,19 @@ public class Infinitree
                       )
                     )
                 )
-              break;  // exit with false.
+              break Comparer;  // exit with false.
             ResultB= true;  // everything is equal, so override result.
-            }
+            }  // Comparer.
           return ResultB;
           }
 
+      @Override public int hashCode() 
+        {
+          int hash = 2047;
+          hash = hash * 17 + ChildI;
+          if ( ParentInfinitree != null)
+            hash = hash * 31 + ParentInfinitree.hashCode();
+          return hash;
+          }
+    
     }

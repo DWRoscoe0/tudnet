@@ -51,7 +51,9 @@ public class IFile
           }
       
       public boolean equals( Object InIFile )
-        /* Compares this to InIFile.  */
+        /* Compares this to InIFile.  
+          This is not a complete implimentation of equals(..).
+          */
         {
           boolean ResultB = false;
           if (InIFile instanceof IFile) {

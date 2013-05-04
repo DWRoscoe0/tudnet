@@ -6,7 +6,7 @@ public class BooleanAttributeMetaTool
 
   extends AttributeMetaTool
 
-  /* This is a MetaTool for dealing with a MetaNode's attributes. */
+  /* This is a MetaTool for dealing with a MetaNode's boolean attributes. */
 
   { // class BooleanAttributeMetaTool 
 
@@ -62,4 +62,4 @@ public class BooleanAttributeMetaTool
           put( ValueString );  // Store value String.
           }
 
-  }
+  } // class BooleanAttributeMetaTool 

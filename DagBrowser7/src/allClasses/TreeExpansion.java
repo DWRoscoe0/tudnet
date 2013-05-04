@@ -2,13 +2,15 @@ package allClasses;
 
 import javax.swing.tree.TreePath;
 
-public class TreeExpansion {
+public class TreeExpansion 
 
   /* This is an encapsulation of the code to do auto-expand-collapse of
     the tree managed by JTree.
     */
 
-    static private BooleanAttributeMetaTool newBooleanAttributeMetaTool
+  {
+
+    static private BooleanAttributeMetaTool newAutoExpandedAttributeMetaTool
       ( TreePath InTreePath )
       /* Returns a BooleanAttributeMetaTool that's ready to use for accessing
         the "AutoExpanded" attribute in the MetaNode at InTreePath.  */
@@ -22,7 +24,7 @@ public class TreeExpansion {
         */
       { 
         BooleanAttributeMetaTool WorkerBooleanAttributeMetaTool=
-          newBooleanAttributeMetaTool( InTreePath );
+          newAutoExpandedAttributeMetaTool( InTreePath );
         WorkerBooleanAttributeMetaTool.putAttributeB( AutoExpandInB );
         }
 
@@ -32,7 +34,7 @@ public class TreeExpansion {
         */
       { 
         BooleanAttributeMetaTool WorkerBooleanAttributeMetaTool=
-          newBooleanAttributeMetaTool( InTreePath );
+          newAutoExpandedAttributeMetaTool( InTreePath );
         return WorkerBooleanAttributeMetaTool.getAttributeB( );
         }
 
@@ -56,25 +58,25 @@ public class TreeExpansion {
         and moving away from the root.
         It returns the TreePath of the first node not AutoExpanded,
         or null if there was no AutoExpanded nodes at all.
-        
-        ?? base on code from ITreeNodeFromUpdatedSubtreesWith(.).
         */
       { // FollowAutoExpandToTreePath( TreePath StartTreePath )
         TreePath ScanTreePath=   // initialize TreePath scanner to be...
           StartTreePath;  // ...start TreePath.
         BooleanAttributeMetaTool ScanBooleanAttributeMetaTool=
-          newBooleanAttributeMetaTool( StartTreePath );
+          newAutoExpandedAttributeMetaTool( StartTreePath );
         while   // follow chain of all nodes with auto-expanded attribute set.
-          ( ScanBooleanAttributeMetaTool.getAttributeB( ) )
+          ( ScanBooleanAttributeMetaTool.getAttributeB( ) )  // Attribute set?
           { // yes, process one auto-expanded node.
-            MetaNode ChildMetaNodeOf= 
-              ScanBooleanAttributeMetaTool.getMetaNode().
-              GetLastChildMetaNode( );
-            Object ChildUserObject= ChildMetaNodeOf.getDataNode();
+            MetaNode ChildOfMetaNode=  // Get most recently selected child node.
+              Selection.getLastSelectedChildOfMetaNode(
+                ScanBooleanAttributeMetaTool.getMetaNode()
+                );
+            Object ChildOfDataNode=  // Get associated child DataNode.
+              ChildOfMetaNode.getDataNode();
             // Setup next possible iteration,
             ScanTreePath=  // create ScanTreePath of next node...
               ScanTreePath.pathByAddingChild( // ...by adding to it...
-                ChildUserObject);  // ...the child user Object.
+                ChildOfDataNode);  // ...the child user Object.
             ScanBooleanAttributeMetaTool.Sync( ScanTreePath );
             } // yes, process one auto-expanded node.
         if  // Handle special case of not moving at all.
@@ -82,4 +84,5 @@ public class TreeExpansion {
           ScanTreePath=  null;  // ...replace ScanTreePath with null.
         return ScanTreePath;  // Return final ScanTreePath as result.
         } // FollowAutoExpandToTreePath( TreePath StartTreePath )
-}
+
+    }

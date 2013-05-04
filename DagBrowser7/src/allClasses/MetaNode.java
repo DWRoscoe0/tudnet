@@ -99,6 +99,37 @@ public class MetaNode
           return TheDataNode;  // Return the user object associated with this node.
           } // getUserObject()
 
+      public boolean purgeB()
+        /* This method is used to purge MetaNode-s which contain
+          no useful information, meaning no attributes.
+          If this MetaNode has no attributes then it
+          recursively tries purging its child MetaNode-s.
+          It returns true if it finds attributes in any MetaNode, false otherwise.
+          */
+        { // boolean purgeB()
+          boolean OkayToRemoveB= false;  // Assume we can't complete purge.
+          Processor: {  // Purge testing and processing.
+            if ( ! AttributesHashMap.isEmpty() )  //* There are attributes.
+              break Processor;  // Exit with default no-purge indication.
+            Iterator  // Get an iterator for HashMap containing the children.
+              < Map.Entry < Object, MetaNode > > MapIterator= 
+              ChildrenLinkedHashMap.entrySet().iterator();
+            ChildScanner: while (true) { // Scan children for purging. 
+              if ( ! MapIterator.hasNext() )  //  There are no more children.
+                break ChildScanner;  // Exit child scanner loop.
+              MetaNode ChildMetaNode=  // Get a reference to...
+                (MetaNode)  // ...the child MetaNode which is...
+                MapIterator.next().  // ...that next Entry's...
+                getValue();  // ...Value.
+              if ( ! ChildMetaNode.purgeB() )  // Child is not purgable.
+                break Processor;  // Exit with default no-purge indication.
+              MapIterator.remove();  // Remove purgable child from map.
+              } // Scan children for purging. 
+            OkayToRemoveB= true;  // Indicate okay to complete purge.
+            }  // Purge testing and processing.
+          return OkayToRemoveB;  // Return calculated purge result.
+          } // boolean purgeB()
+
       public static MetaNode io
         ( MetaNode InMetaNode, DataNode ParentDataNode )
         /* This io-processes the node InMetaNode and all its descendeenta 
@@ -133,7 +164,84 @@ public class MetaNode
       
     // Methods which deal with the children.
 
-			MetaNode PutChildUserObjectMetaNode( Object InObject )
+      boolean hasAttributeB( String InKeyString, Object InValueObject )
+        /* This method tests whether this MetaNode contains an attribute entry
+          with key InKeyString and value InValueObject.
+          */
+        { // hasAttributeB( .. )
+          boolean ResultB = false;  // Set default test result.
+          Tester: { // Test for attribute.
+            if  // Does not have attribute with desired key String.
+              ( ! containsKey( InKeyString ))
+              break Tester;  // Exit Tester with default false result.
+            if  // Attribute does not have the desired value Object.
+              ( ! get( InKeyString ).equals( InValueObject ) )
+              break Tester;  // Exit Tester with default false result.
+            ResultB = true;  // Override default false result with true.
+            } // Test for attribute.
+          return ResultB;
+          } // hasAttributeB( .. )
+
+      MetaNode getChildWithAttributeMetaNode
+        ( String InKeyString, Object InValueObject )
+        /* This method returns the first child MetaNode, if any, 
+          with an attribute with key InKeyString and value InValueObject.
+          If no child MetaNode has the attribute then null is returned.
+          */
+        { // MetaNode getChildWithAttributeMetaNode( String InKeyString )
+          MetaNode ResultChildMetaNode= null;  // Assume no result child.
+          Piterator< Map.Entry < Object, MetaNode > > ChildPiterator= 
+            getChildPiterator(  );
+          Scanner: while (true) { // Scan children for desired attribute. 
+            Tester: { // Test child MetaNode for attribute.
+              if ( ChildPiterator.getE() == null )  //  There are no more children.
+                break Scanner;  // Exit search loop with default null result.
+              MetaNode ChildMetaNode=  // Get a reference to...
+                (MetaNode)  // ...the child MetaNode which is...
+                ChildPiterator.getE().  // ...that next Entry's...
+                getValue();  // ...Value.
+              if  // Child MetaNode does not have the desired key and value.
+                ( ! ChildMetaNode.hasAttributeB( InKeyString, InValueObject ) )
+                break Tester;  // Exit Tester.
+              { // Found child MetaNode with desired attribute.  Return it.
+                ResultChildMetaNode=  // Override default null result with...
+                  ChildMetaNode;  // ...found child MetaNode.
+                break Scanner;  // Exit search loop with found child.
+                } // Found child MetaNode with desired attribute.  Return it.
+              } // Test child MetaNode for attribute.
+            ChildPiterator.next();  // Point to next child MetaNode.
+            } // Scan children looking for desired attribute.
+          return ResultChildMetaNode; // return result child, if any.
+          } // MetaNode getChildWithAttributeMetaNode( String InKeyString )
+
+      Piterator< Map.Entry < Object, MetaNode > > getChildWithAttributePiterator
+        ( String InKeyString, Object InValueObject )
+        /* This method returns a map iterator,
+          pointing to the first child MetaNode, if any, 
+          with an attribute with key InKeyString and value InValueObject.
+          If no child MetaNode has the attribute then 
+          the returned Piterator will point to null. 
+          */
+        {
+          Piterator< Map.Entry < Object, MetaNode > > ChildPiterator= 
+            getChildPiterator(  );
+          Scanner: while (true) { // Scan children for desired attribute. 
+            if ( ChildPiterator.getE() == null )  //  There are no more children.
+              break Scanner;  // Exit search loop with Piterator on null.
+            MetaNode ChildMetaNode=  // Get a reference to...
+              (MetaNode)  // ...the child MetaNode which is...
+              ChildPiterator.getE().  // ...that next Entry's...
+              getValue();  // ...Value.
+            if  // Found child MetaNode with desired attribute.  Return it.
+              ( ChildMetaNode.hasAttributeB( InKeyString, InValueObject ) )
+              break Scanner;  // Exit search loop with Piterator on found child.
+            // Child MetaNode does not have the desired key and value.
+            ChildPiterator.next();  // Point to next child MetaNode.
+            } // Scan children looking for desired attribute.
+          return ChildPiterator;
+          }
+
+      MetaNode PutChildUserObjectMetaNode( Object InObject )
         /* This method puts the Object InObject in a child MetaNode
           within this its parent MetaNode.
           It creates a new child MetaNode if one with InObject
@@ -156,10 +264,30 @@ public class MetaNode
           return MapChildMetaNode;  // Return new/old child from map as result.
           } // MetaNode PutChildUserObjectITreeNode( InObject )
 
-			public MetaNode GetLastChildMetaNode(  )
+      public Piterator< Map.Entry < Object, MetaNode > > getChildPiterator(  )
+        /* This method returns a Piterator for iterating
+          over the child hash map.
+          */
+        { // getChildPiterator( )
+        
+          Iterator  // Get an iterator for HashMap containing the children.
+            < Map.Entry < Object, MetaNode > > MapIterator= 
+              ChildrenLinkedHashMap.entrySet().iterator();
+            
+          Piterator  // Make Piterator from Iterator.
+            < Map.Entry < Object, MetaNode > > ChildPiterator= 
+              new Piterator<>( MapIterator );
+
+          return ChildPiterator;
+          } // getChildPiterator( )
+
+      public MetaNode GetLastChildMetaNode(  )
         /* This method gets the child MetaNode of this MetaNode 
-          which was referenced last, or null if there are no children.  */
-        { // GetLastChildITreeNode( )
+          which was referenced last, or null if there are no children.  
+          It makes use of the fact that ChildrenLinkedHashMap
+          links its entries together in use-order.
+          */
+        { // GetLastChildMetaNode( )
           MetaNode LastChildMetaNode= null;  // Assume there is no last child.
 
           Iterator < Map.Entry < Object, MetaNode > > MapIterator=  // Get an iterator...
@@ -172,26 +300,22 @@ public class MetaNode
               getValue();  // ...Value.
         
           return LastChildMetaNode; // return last child MetaNode result, if any.
-          } // GetLastChildITreeNode( )
+          } // GetLastChildMetaNode( )
 
-			DataNode GetLastReferencedChildDataNode(  )
+      DataNode GetLastReferencedChildDataNode(  )
         /* This method gets the user object DataNode from
           the child MetaNode in this MetaNode 
           which was referenced last, or null if there are no children.  */
         { // GetLastReferencedChildDagNode( )
           DataNode RecentChildDataNode= null;// assume default value of null.
-          switch (0) { // override with child if there is one.
-            default:  // always start here.  switch allows break-outs.
-            //if (this == null)  // no MetaNode was provided.
-            //  break ;  // so keep the null result.
+          do { // override with child if there is one.
             MetaNode LastChildMetaNode= GetLastChildMetaNode( );
             if (LastChildMetaNode == null)  // there is no last child.
               break ;  // so keep the default null result.
             RecentChildDataNode=  // Result recent child DataNode is...
-              //(DataNode)  // ...a DataNode caste of...
               LastChildMetaNode.   // ...the last child's...
               getDataNode();  // user object.
-            } // override with child if there is one.
+            } while ( false );  // override with child if there is one.
           return RecentChildDataNode; // return resulting DataNode, or null if none.
           } // GetLastReferencedChildDagNode( )
 

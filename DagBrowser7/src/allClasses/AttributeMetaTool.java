@@ -30,14 +30,21 @@ public class AttributeMetaTool
     // Instance setter methods.
 
       public Object put( Object ValueObject )
-         { 
-           Object ResultObject=  // Put new attribute value and save old one.
-             getMetaNode().put( KeyString, ValueObject ); 
-           PropigateAttributeUp( );  // Propigate the attribute toward root.
-           return ResultObject;  // Return old value.
-           }
+        { 
+          Object ResultObject=  // Put new attribute value and save old one.
+            getMetaNode().put( KeyString, ValueObject ); 
+          PropigateAttributeUp( );  // Propigate the attribute toward root.
+          return ResultObject;  // Return old value.
+          }
 
-    // Non-static setter methods.
+      public Object remove( String KeyString ) 
+        /* This is a pass-through to AttributesHashMap. */
+        { // remove(..)
+          Object ResultObject=  // Remove attribute key and value.
+            getMetaNode().remove( KeyString ); 
+          return ResultObject;  // Return old value.
+          } // remove(..)
+    // Instance setter methods.
   
       public void PropigateAttributeUp( )
         /* This method propigates the pressence of the attribute
@@ -47,13 +54,13 @@ public class AttributeMetaTool
           MetaPath ScanMetaPath= getMetaPath();  // Initialize MetaPath scanner.          
           while (true)  // Add or verify attribute in all MetaNode-s up to root.
             { // Add or verify attribute in one MetaNode.
-              ScanMetaPath=  // Move path to next closer node toward root.
+              ScanMetaPath=  // Move path to node next closer toward root.
                 ScanMetaPath.getParentMetaPath();
               if // Exit loop if at pseudo-parent of root.
                 ( ScanMetaPath == MetaRoot.getParentOfRootMetaPath( ) )
                 break;
               MetaNode ScanMetaNode= ScanMetaPath.getLastMetaNode();
-              if // Exit loop if attribute there.
+              if // Exit loop if any attribute value there.
                 ( ScanMetaNode.containsKey( KeyString ) )
                 break;
               // Attribute is not there.
