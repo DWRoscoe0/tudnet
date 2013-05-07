@@ -24,6 +24,8 @@ public class Selection
 
   { // class Selection
 
+    final static String AttributeName= "SelectionPath";
+    
     // Static setter methods.  These write to the MetaNode DAG.
           
       static public void put( TreePath TreePathIn )
@@ -82,6 +84,17 @@ public class Selection
           Prsently it is a pass-through to MetaNode.GetLastChildMetaNode(). 
           */
         { return InMetaNode.GetLastChildMetaNode(); }
+
+      public static TreePath buildAttributeTreePath( )
+        /* This method returns a TreePath comprised of all the DataNodes
+          from the MetaNode's which contain attributes 
+          with key "SelectionPath" and value "IS".
+          */
+        { 
+          return PathAttributeMetaTool.buildAttributeTreePath( // Build path...
+            AttributeName // ...for the current selection.
+            );
+          }
 
       /*
       static private DataNode getLastSelectedChildOfDataNode

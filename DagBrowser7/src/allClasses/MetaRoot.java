@@ -38,6 +38,8 @@ public class MetaRoot
               new MetaNode(  // ...a new MetaNode containing...
                 InRootDataNode   // ...the INFOGORA-ROOT DataNode.
                 );
+            RootMetaNode.put(  // Add attribute for initial Selection.
+              Selection.AttributeName, "IS");
             } // Make root MetaNode DAG a single MetaNode.
 
         ParentOfRootMetaNode= // Make parent of root MetaNode be...

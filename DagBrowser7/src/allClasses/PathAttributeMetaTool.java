@@ -25,7 +25,39 @@ public class PathAttributeMetaTool
     // Static methods.
 
 
-    // Instance methods.
+    // Instance getter methods.
+
+      public static TreePath buildAttributeTreePath( String KeyString )
+        /* This method returns a TreePath comprised of all the DataNodes
+          from the MetaNode's which contain attributes 
+          whose key is KeyString and whose value of "IS".
+          At least the root must have an "IS" attribute value,
+          otherwise and invalid TreePath consisting of only the
+          ParentOfRootDataNode will be returned.
+          */
+        { // buildAttributeTreePath( .. )
+          TreePath ScanTreePath=  // Initialize TreePath accumulator...
+            new TreePath(   // ...to be TreePath...
+              DataRoot.getParentOfRootDataNode()  // ...to the parent root.
+              );
+          MetaNode ScanMetaNode=  // Get root MetaNode.
+            MetaRoot.getParentOfRootMetaNode( );
+          Scanner: while (true) { // Scan all nodes with "IS".
+            MetaNode ChildMetaNode= // Test for a child with "IS" value.
+              ScanMetaNode.getChildWithAttributeMetaNode( KeyString, "IS" );
+            if  // ScanMetaNode has no child with "IS" attribute value.
+              ( ChildMetaNode == null)
+              break Scanner;  // Exit Processor.
+            DataNode TheDataNode= // Get associated DataNode.
+              ChildMetaNode.getDataNode();
+            if ( ScanTreePath == null )  // Add DataNode to end of TreePath.
+              ScanTreePath= new TreePath( TheDataNode );
+              else
+              ScanTreePath= ScanTreePath.pathByAddingChild( TheDataNode );
+            ScanMetaNode= ChildMetaNode;  // Point to next MetaNode.
+            } // Scan all nodes with "IS".
+          return ScanTreePath;  // Return accumulated TreePath.
+          } // buildAttributeTreePath( .. )
 
     // Instance setter methods.
 
