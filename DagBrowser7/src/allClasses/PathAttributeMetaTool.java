@@ -22,15 +22,12 @@ public class PathAttributeMetaTool
           super( InTreePath, InKeyString );  // Superclass does it all.
           }
 
-    // Static methods.
-
-
-    // Instance getter methods.
+    // static getter methods.
 
       public static TreePath buildAttributeTreePath( String KeyString )
         /* This method returns a TreePath comprised of all the DataNodes
           from the MetaNode's which contain attributes 
-          whose key is KeyString and whose value of "IS".
+          with a key of KeyString and a value of "IS".
           At least the root must have an "IS" attribute value,
           otherwise and invalid TreePath consisting of only the
           ParentOfRootDataNode will be returned.
@@ -50,21 +47,13 @@ public class PathAttributeMetaTool
               break Scanner;  // Exit Processor.
             DataNode TheDataNode= // Get associated DataNode.
               ChildMetaNode.getDataNode();
-            if ( ScanTreePath == null )  // Add DataNode to end of TreePath.
-              ScanTreePath= new TreePath( TheDataNode );
-              else
-              ScanTreePath= ScanTreePath.pathByAddingChild( TheDataNode );
+            ScanTreePath= ScanTreePath.pathByAddingChild( TheDataNode );
             ScanMetaNode= ChildMetaNode;  // Point to next MetaNode.
             } // Scan all nodes with "IS".
           return ScanTreePath;  // Return accumulated TreePath.
           } // buildAttributeTreePath( .. )
 
     // Instance setter methods.
-
-      public Object put( Object ValueObject )
-        { 
-          return super.put( ValueObject );
-          }
 
       public void setPath( )
         /* This method sets the path attributes for the MetaPath 
@@ -173,4 +162,4 @@ public class PathAttributeMetaTool
             } // Process this MetaNode.
           } // replaceIsWithWasInDescendents( .. )
 
-  } // class PathAttributeMetaTool 
+    } // class PathAttributeMetaTool 

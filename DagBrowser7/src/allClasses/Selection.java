@@ -41,7 +41,7 @@ public class Selection
       static public DataNode putAndReturnDataNode( TreePath TreePathIn )
         /* Updates the PathAttributeMetaTool with TreePathIn and returns 
           the user object of the most recently visited child of 
-          the tree node at the end of that path,
+          the node at the end of that path,
           or null if there is no such child. 
           */
         { // putAndReturnDataNode(.)
@@ -50,8 +50,9 @@ public class Selection
               TreePathIn  // ...the provided TreePath.
               );
           DataNode ChildDataNode=  // Get the last MetaNode's...
-            EndOfPathMetaNode.  // ...most recent user object.
-              GetLastReferencedChildDataNode( );
+            GetLastSelectedChildDataNode(   // ...last selected child.
+              EndOfPathMetaNode );
+              
           return ChildDataNode;  // return the resulting child user object.
           } // putAndReturnDataNode(.)
 
@@ -83,12 +84,69 @@ public class Selection
           
           Prsently it is a pass-through to MetaNode.GetLastChildMetaNode(). 
           */
-        { return InMetaNode.GetLastChildMetaNode(); }
+        // { return InMetaNode.GetLastChildMetaNode(); }
+        { return GetLastSelectedChildMetaNode( InMetaNode ); }
+
+      static DataNode GetLastSelectedChildDataNode( MetaNode InMetaNode )
+        /* This method gets the user object DataNode from
+          the child MetaNode in InMetaNode 
+          which was selected last, or null if there isn't one.  
+          
+          This is replacing MetaNode.GetLastSelectedChildDataNode( ) ???
+          */
+        { // GetLastSelectedChildDataNode( )
+          DataNode RecentChildDataNode= null;// assume default value of null.
+          do { // override with child if there is one.
+            //MetaNode LastChildMetaNode= InMetaNode.GetLastChildMetaNode( );
+            MetaNode LastChildMetaNode= 
+              GetLastSelectedChildMetaNode( InMetaNode );
+            if (LastChildMetaNode == null)  // there is no last child.
+              break ;  // so keep the default null result.
+            RecentChildDataNode=  // Result recent child DataNode is...
+              LastChildMetaNode.   // ...the last child's...
+              getDataNode();  // user object.
+            } while ( false );  // override with child if there is one.
+          return RecentChildDataNode; // return resulting DataNode, or null if none.
+          } // GetLastSelectedChildDataNode( )
+
+      /*
+      public static MetaNode xGetLastSelectedChildMetaNode  // ???
+        ( MetaNode InMetaNode )
+        /* This method gets the child MetaNode of InMetaNode 
+          which was selected last, or null if there is none.
+          
+          This method is replacing a similar method in class MetaNode.  ???
+          */
+      /*
+        { // GetLastChildMetaNode( )
+          MetaNode LastChildMetaNode=  // Use old method for now. ????
+            InMetaNode.xGetLastChildMetaNode();
+          return LastChildMetaNode; // return last child MetaNode result, if any.
+          } // GetLastChildMetaNode( )
+      */
+
+      public static MetaNode GetLastSelectedChildMetaNode
+        ( MetaNode InMetaNode )
+        /* This method gets the child MetaNode of InMetaNode 
+          which was selected last, or null if there is none.
+          It does this by searching for the child with 
+          a "WAS" attribute value.
+          
+          This method is replacing a similar method in class MetaNode.  ???
+          */
+        { // GetLastChildMetaNode( )
+          MetaNode ChildMetaNode= // Test for a child with "WAS" value.
+            InMetaNode.getChildWithAttributeMetaNode( AttributeName, "WAS" );
+          return ChildMetaNode; // return last child MetaNode result, if any.
+          } // GetLastChildMetaNode( )
 
       public static TreePath buildAttributeTreePath( )
-        /* This method returns a TreePath comprised of all the DataNodes
+        /* This method returns a TreePath which 
+          identifies the current selection.
+          It is built from the sequence of DataNodes
           from the MetaNode's which contain attributes 
-          with key "SelectionPath" and value "IS".
+          with key "SelectionPath" and value "IS",
+          starting at the root.
           */
         { 
           return PathAttributeMetaTool.buildAttributeTreePath( // Build path...
@@ -96,16 +154,5 @@ public class Selection
             );
           }
 
-      /*
-      static private DataNode getLastSelectedChildOfDataNode
-        ( MetaNode InMetaNode )
-        /* This method returns the user object DataNode from
-          the child MetaNode of InMetaNode which was referenced last, 
-          or null if there are no child MetaNode-s.  */
-      /*
-      { // DataNode getLastSelectedChildOfDataNode( MetaNode InMetaNode )
-          return InMetaNode.GetLastReferencedChildDataNode( );
-          } // DataNode getLastSelectedChildOfDataNode( MetaNode InMetaNode )
-      */
 
     } // class Selection

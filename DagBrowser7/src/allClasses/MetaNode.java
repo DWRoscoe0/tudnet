@@ -29,15 +29,17 @@ public class MetaNode
     
       // private static final long serialVersionUID = 1L;
 
-      private DataNode TheDataNode= null;
-        // User object associated with this node.
-        // was: private Object UserObject;  // User object associated with this node.
+      private DataNode TheDataNode= null;  // Associated DataNode.
       private HashMap< String, Object > AttributesHashMap= null;
-        // public boolean AutoExpandedB= false;  // [moved to AttributesHashMap]
-      public LinkedHashMap< Object, MetaNode  > ChildrenLinkedHashMap= null;
-        /* In each child entry:
-          The Key is a child user Object.
-          The Value is the child MetaNode that contains the user Object and other data.
+        /* Attributes of the DataNode, if any.
+          The Key is a String name.
+          The Value is a String value.
+          */
+      protected LinkedHashMap< Object, MetaNode  > ChildrenLinkedHashMap= null;
+        /* MetaNodes of DataNode children which themselves have meta-data.
+          The Key is a child user DataNode.
+          The Value is the associated MetaNode that contains
+          the DataNode and its meta-data.
           */
 
     // Constructors.
@@ -104,7 +106,8 @@ public class MetaNode
           no useful information, meaning no attributes.
           If this MetaNode has no attributes then it
           recursively tries purging its child MetaNode-s.
-          It returns true if it finds attributes in any MetaNode, false otherwise.
+          It returns true if it finds attributes in any MetaNode, 
+          false otherwise.
           */
         { // boolean purgeB()
           boolean OkayToRemoveB= false;  // Assume we can't complete purge.
@@ -125,7 +128,7 @@ public class MetaNode
                 break Processor;  // Exit with default no-purge indication.
               MapIterator.remove();  // Remove purgable child from map.
               } // Scan children for purging. 
-            OkayToRemoveB= true;  // Indicate okay to complete purge.
+            OkayToRemoveB= true;  // Indicate okay for complete purge.
             }  // Purge testing and processing.
           return OkayToRemoveB;  // Return calculated purge result.
           } // boolean purgeB()
@@ -216,7 +219,7 @@ public class MetaNode
 
       Piterator< Map.Entry < Object, MetaNode > > getChildWithAttributePiterator
         ( String InKeyString, Object InValueObject )
-        /* This method returns a map iterator,
+        /* This method returns a Piterator into the child HashMap,
           pointing to the first child MetaNode, if any, 
           with an attribute with key InKeyString and value InValueObject.
           If no child MetaNode has the attribute then 
@@ -227,15 +230,15 @@ public class MetaNode
             getChildPiterator(  );
           Scanner: while (true) { // Scan children for desired attribute. 
             if ( ChildPiterator.getE() == null )  //  There are no more children.
-              break Scanner;  // Exit search loop with Piterator on null.
+              break Scanner;  // Exit loop with Piterator at null.
             MetaNode ChildMetaNode=  // Get a reference to...
               (MetaNode)  // ...the child MetaNode which is...
               ChildPiterator.getE().  // ...that next Entry's...
               getValue();  // ...Value.
             if  // Found child MetaNode with desired attribute.  Return it.
               ( ChildMetaNode.hasAttributeB( InKeyString, InValueObject ) )
-              break Scanner;  // Exit search loop with Piterator on found child.
-            // Child MetaNode does not have the desired key and value.
+              break Scanner;  // Exit loop with Piterator at found child.
+            // The child MetaNode does not have the desired key and value.
             ChildPiterator.next();  // Point to next child MetaNode.
             } // Scan children looking for desired attribute.
           return ChildPiterator;
@@ -281,12 +284,17 @@ public class MetaNode
           return ChildPiterator;
           } // getChildPiterator( )
 
-      public MetaNode GetLastChildMetaNode(  )
+      /*
+      public MetaNode xGetLastChildMetaNode(  )
         /* This method gets the child MetaNode of this MetaNode 
           which was referenced last, or null if there are no children.  
           It makes use of the fact that ChildrenLinkedHashMap
           links its entries together in use-order.
+          
+          Use of this method is being phased out and replace by
+          an equivalent method in class Selection.
           */
+        /*
         { // GetLastChildMetaNode( )
           MetaNode LastChildMetaNode= null;  // Assume there is no last child.
 
@@ -301,11 +309,14 @@ public class MetaNode
         
           return LastChildMetaNode; // return last child MetaNode result, if any.
           } // GetLastChildMetaNode( )
+        */
 
-      DataNode GetLastReferencedChildDataNode(  )
+      /*
+      DataNode xGetLastReferencedChildDataNode(  )
         /* This method gets the user object DataNode from
           the child MetaNode in this MetaNode 
           which was referenced last, or null if there are no children.  */
+      /*
         { // GetLastReferencedChildDagNode( )
           DataNode RecentChildDataNode= null;// assume default value of null.
           do { // override with child if there is one.
@@ -318,5 +329,6 @@ public class MetaNode
             } while ( false );  // override with child if there is one.
           return RecentChildDataNode; // return resulting DataNode, or null if none.
           } // GetLastReferencedChildDagNode( )
+      */
 
     } // class MetaNode.
