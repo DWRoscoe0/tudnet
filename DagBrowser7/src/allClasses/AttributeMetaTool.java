@@ -8,7 +8,7 @@ public class AttributeMetaTool
 
   /* This is a MetaTool for dealing with a MetaNode's attributes. */
 
-  { // class AttributeMetaTool 
+  { // class AttributeMetaTool
 
     // Instance variables.
 
@@ -49,10 +49,12 @@ public class AttributeMetaTool
       public void PropigateAttributeUp( )
         /* This method propigates the pressence of the attribute
           up the MetaNode DAG toward the root.  
+          Maybe add CLEAN attribute???
           */
         { // PropigateAttribute( String KeyString )
-          MetaPath ScanMetaPath= getMetaPath();  // Initialize MetaPath scanner.          
-          while (true)  // Add or verify attribute in all MetaNode-s up to root.
+          MetaPath ScanMetaPath=   // Initialize MetaPath scanner.
+            getMetaPath();
+          while (true)  // Add or verify attribute in MetaNode-s here to root.
             { // Add or verify attribute in one MetaNode.
               ScanMetaPath=  // Move path to node next closer toward root.
                 ScanMetaPath.getParentMetaPath();
@@ -64,7 +66,10 @@ public class AttributeMetaTool
                 ( ScanMetaNode.containsKey( KeyString ) )
                 break;
               // Attribute is not there.
-              ScanMetaNode.put( KeyString, "PRESENT" );  // Put attribute there.
+              ScanMetaNode.put(  // Put attribute in this MetaNode...
+                KeyString,  // ...for the preseet key...
+                "PRESENT"  // ...with place-holder value "PRESENT".
+                );
               } // Add or verify attribute in one MetaNode.
           } // PropigateAttribute( String KeyString )
 

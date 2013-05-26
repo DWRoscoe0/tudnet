@@ -7,36 +7,36 @@ import java.util.Map;
 public class Children 
   { // class Children 
 
-    public static LinkedHashMap< Object, MetaNode  > ioChildrenLinkedHashMap
+    public static LinkedHashMap< Object, MetaNode  > rwChildrenLinkedHashMap
       ( LinkedHashMap< Object, MetaNode  > InChildrenLinkedHashMap,
         DataNode InParentDataNode
         )
-      /* This io-s the InChildrenLinkedHashMap.
+      /* This rw-s the ChildrenLinkedHashMap.
           If InChildrenLinkedHashMap != null then it outputs the map
             to the MetaFile, and InParentDataNode is ignored.
           If InChildrenLinkedHashMap == null then it inputs the map
             using InParentDataNode to look up DataNode names,
             and returns the map as the function value.
           */
-      { // ioChildrenLinkedHashMap()
-        MetaFile.ioListBegin( );
-        MetaFile.ioLiteral( " Children" );
+      { // rwChildrenLinkedHashMap()
+        MetaFile.rwListBegin( );
+        MetaFile.rwLiteral( " Children" );
 
         if ( InChildrenLinkedHashMap == null )
           InChildrenLinkedHashMap= 
-            ioChildrenLinkedHashMapRead( InParentDataNode );
+            readChildrenLinkedHashMap( InParentDataNode );
           else
-            ioChildrenLinkedHashMapWrite( InChildrenLinkedHashMap );
+            writeChildrenLinkedHashMap( InChildrenLinkedHashMap );
 
-        MetaFile.ioListEnd( );
+        MetaFile.rwListEnd( );
         return InChildrenLinkedHashMap;  // Return new or original map.
-        } // ioChildrenLinkedHashMap()
+        } // rwChildrenLinkedHashMap()
 
-    public static LinkedHashMap< Object, MetaNode  > 
-      ioChildrenLinkedHashMapRead( DataNode InParentDataNode )
+    private static LinkedHashMap< Object, MetaNode  > 
+      readChildrenLinkedHashMap( DataNode InParentDataNode )
       /* This reads a Children HashMap and returns it as the result.  
         It uses InParentDataNode for name lookups.  */
-      { // ioChildrenLinkedHashMapRead()
+      { // readChildrenLinkedHashMap()
         LinkedHashMap< Object, MetaNode  > 
           ChildrenLinkedHashMap =  // Initialize to be...
           new LinkedHashMap< Object, MetaNode  >(  // ...a LinkedHashMap with...
@@ -46,38 +46,36 @@ public class Children
             );  
         while ( true )  // Read all children.
           { // Read a child or exit.
-            MetaFile.ioIndentedWhiteSpace( );  // Go to proper column.
+            MetaFile.rwIndentedWhiteSpace( );  // Go to proper column.
             if  // Exit loop if end character present.
               ( MetaFile.testTerminatorI( ")" ) != 0 )
               break;  // Exit loop.
-            MetaFile.ioListBegin( );
-            MetaFile.ioIndentedWhiteSpace( );  // Indent correctly.
-            /*
-            String KeyString= MetaFile.readTokenString( );
-            DataNode ChildDataNode=  // Set DataNode to be...
-              InParentDataNode.getChild(  // ...the child...
-                InParentDataNode.getIndexOfNamedChild( 
-                  KeyString  // ...with Key string as name.
-                  )
-                );
-            */
-            DataNode ChildDataNode=  // Set ChildDataNode by...
-              DataIo.readDataNode( // ...reading DataNode name and looking up in...
-                InParentDataNode  // ...this parent DataNode.
-                );
-            //MetaFile.ioLiteral( " " );
-            MetaNode ValueMetaNode= MetaNode.io( null, InParentDataNode );
-            MetaFile.ioIndentedWhiteSpace( );  // Go to proper column.
-            MetaFile.ioListEnd( );
-            ChildrenLinkedHashMap.put( ChildDataNode, ValueMetaNode );
+            //MetaFile.rwListBegin( );
+            //MetaFile.rwIndentedWhiteSpace( );  // Indent correctly.
+            //DataNode ChildDataNode=  // Set ChildDataNode by...
+            //  DataRw.readDataNode( // ...reading DataNode name and looking up in...
+            //    InParentDataNode  // ...this parent DataNode.
+            //    );
+            MetaNode ValueMetaNode= MetaNode.rwMetaNode( null, InParentDataNode );
+            //MetaFile.rwIndentedWhiteSpace( );  // Go to proper column.
+            //MetaFile.rwListEnd( );
+            //ChildrenLinkedHashMap.put( ChildDataNode, ValueMetaNode );
+            ChildrenLinkedHashMap.put( // Create map entry from...
+              ValueMetaNode.getDataNode(), // ...MetaNode's DataNode and...
+              ValueMetaNode // ...The MetaNode itself.
+              );
             } // Read a child or exit.
         return ChildrenLinkedHashMap;
-        } // ioChildrenLinkedHashMapRead()
+        } // readChildrenLinkedHashMap()
 
-    public static void ioChildrenLinkedHashMapWrite
+    private static void writeChildrenLinkedHashMap
       ( LinkedHashMap< Object, MetaNode  > InChildrenLinkedHashMap )
-      /* This io-s the Children HashMap.  */
-      { // ioChildrenLinkedHashMapWrite()
+      /* This writes the Children HashMap InChildrenLinkedHashMap.  
+        If FlatFileB == true then it writes ID numbers only,
+        otherwise it recursively writes the entire hash entry,
+        with node name string and child MetaNode and their descendents.
+        */
+      { // writeChildrenLinkedHashMap()
         Iterator < Map.Entry < Object, MetaNode > > MapIterator=  // Get an iterator...
           InChildrenLinkedHashMap.
           entrySet().
@@ -85,21 +83,18 @@ public class Children
         while // Save all the HashMap's entries.
           ( MapIterator.hasNext() ) // There is a next Entry.
           { // Save this HashMap entry.
-            MetaFile.ioListBegin( );
+            //MetaFile.rwListBegin( );
             Map.Entry < Object, MetaNode > AnEntry= // Get Entry 
               MapIterator.next();  // ...that is next Entry.
             { // Save key.
-              DataNode TheDataNode= (DataNode)AnEntry.getKey( );
-              //MetaFile.ioIndentedLiteral( 
-              //  TheDataNode.GetNameString( )
-              //  );
-              MetaFile.ioIndentedWhiteSpace( );
-              MetaFile.outToken( TheDataNode.GetNameString( ) );
+              //DataNode TheDataNode= (DataNode)AnEntry.getKey( );
+              //MetaFile.rwIndentedWhiteSpace( );
+              ////MetaFile.writeToken( TheDataNode.GetNameString( ) );
+              //MetaFile.writeToken( "JUNK-FILLER" );
               } // Save key.
-            MetaNode.io( AnEntry.getValue( ), null );  // Save value MetaNode.
-            MetaFile.ioListEnd( );
+            MetaNode.rwMetaNode( AnEntry.getValue( ), null );  // Save value MetaNode.
+            //MetaFile.rwListEnd( );
             } // Save this HashMap entry.
-        //MetaFile.ioListEnd( );  ???
-        } // ioChildrenLinkedHashMapWrite()
+        } // writeChildrenLinkedHashMap()
 
     } // class Children 

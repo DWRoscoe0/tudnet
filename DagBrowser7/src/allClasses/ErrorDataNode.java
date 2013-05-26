@@ -15,7 +15,7 @@ public class ErrorDataNode
 
     private ErrorDataNode( ) 
       { 
-        System.out.print( "  ErrorDataNode( ) " );
+        // System.out.print( "  ErrorDataNode( ) " );
         }  // To make debugging easier.
 
     public String GetNameString( )
@@ -26,7 +26,7 @@ public class ErrorDataNode
         
     public static ErrorDataNode getSingletonErrorDataNode( )
       { 
-        System.out.print( "  getSingletonErrorDataNode( ) " );
+        // System.out.print( "  getSingletonErrorDataNode( ) " );
         return TheErrorDataNode; 
         }
 

@@ -5,9 +5,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
-// import java.util.Map.Entry;
-
-// import javax.swing.tree.DefaultMutableTreeNode;
 
 public class MetaNode
 
@@ -29,6 +26,7 @@ public class MetaNode
     
       // private static final long serialVersionUID = 1L;
 
+      private IDNumber TheIDNumber= null;  // ID #.
       private DataNode TheDataNode= null;  // Associated DataNode.
       private HashMap< String, Object > AttributesHashMap= null;
         /* Attributes of the DataNode, if any.
@@ -53,6 +51,8 @@ public class MetaNode
         /* Full constructor of a MetaNode with
           a single child InDataNode and no attributes.  */
         {
+          TheIDNumber= new IDNumber( );  // Create a new IDNumber for this node.
+
           TheDataNode=  // Save DataNode associated with this MetaNode.
             InDataNode; 
 
@@ -133,36 +133,52 @@ public class MetaNode
           return OkayToRemoveB;  // Return calculated purge result.
           } // boolean purgeB()
 
-      public static MetaNode io
+      public static MetaNode rwEitherWay
         ( MetaNode InMetaNode, DataNode ParentDataNode )
-        /* This io-processes the node InMetaNode and all its descendeenta 
-          in the MetaFile.  
+        /* This completely rw-processes the node InMetaNode and 
+          all its descendeenta in the MetaFile.
+          It does it either hierarchically or flat,
+          depending on MetaFile.FlatFileB.
+          See rw(..) for details.
+          */
+        { // rwEitherWay()
+          return rwMetaNode( InMetaNode, ParentDataNode );
+          } // rwEitherWay()
+
+      public static MetaNode rwMetaNode
+        ( MetaNode InMetaNode, DataNode ParentDataNode )
+        /* This completely rw-processes the node InMetaNode and 
+          all its descendeenta in the MetaFile hierarchically.  
+          It does the child MetaNodes recursively.
           ParentDataNode is used for name lookup in the case of loading.
           It returns the MetaNode processed.
           */
-        { // io()
-          MetaFile.ioIndentedWhiteSpace( );  // Indent correctly.  // not needed ???
-          MetaFile.ioListBegin( );  // Mark the beginning of the list.
-          MetaFile.ioLiteral( " MetaNode" );
+        { // rw()
+          MetaFile.rwIndentedWhiteSpace( );  // Indent correctly.
+          MetaFile.rwListBegin( );  // Mark the beginning of the list.
+          MetaFile.rwLiteral( " MetaNode" );
           
           if ( InMetaNode == null ) // If there is no MetaNode then...
             InMetaNode= new MetaNode( ); // ...create an empty one to be filled.
-          
-          InMetaNode.TheDataNode= DataIo.ioDataNode(  // Io...
+            
+          InMetaNode.TheIDNumber= IDNumber.rwIDNumber(  // Rw...
+            InMetaNode.TheIDNumber  // ...TheIDNumber.
+            );
+          InMetaNode.TheDataNode= DataRw.rwDataNode(  // Rw...
             InMetaNode.TheDataNode,  // ...TheDataNode using...
             ParentDataNode  // ...ParentDataNode for name lookups.
             );
-          InMetaNode.AttributesHashMap=  // Io the attributes.
-            Attributes.ioAttributesHashMap( InMetaNode.AttributesHashMap );
-          InMetaNode.ChildrenLinkedHashMap=  // Io...
-            Children.ioChildrenLinkedHashMap(  // ...the children hash map...
+          InMetaNode.AttributesHashMap=  // Rw the attributes.
+            Attributes.rwAttributesHashMap( InMetaNode.AttributesHashMap );
+          InMetaNode.ChildrenLinkedHashMap=  // Rw...
+            Children.rwChildrenLinkedHashMap(  // ...the children hash map...
               InMetaNode.ChildrenLinkedHashMap, 
               InMetaNode.TheDataNode  // ...using this DataNode for lookups.
               );
 
-          MetaFile.ioListEnd( );  // Mark the end of the list.
+          MetaFile.rwListEnd( );  // Mark the end of the list.
           return InMetaNode;  // Return the new or the original MetaNode.
-          } // io()
+          } // rw()
 
       
     // Methods which deal with the children.

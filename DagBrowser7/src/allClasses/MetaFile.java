@@ -5,111 +5,130 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-public class MetaFile 
+public class MetaFile
+ 
   /* This class manages the file(s) that contains the external 
-    representation of the MetaNode-s rooted at MetaRoot.  
+    representation of this app's meta-data which is stored in
+    the MetaNode-s rooted at MetaRoot associated with 
+    the DataNode-s rooted at the DataNode root.
     It reads from the file(s) after the application starts,
     and it writes to the file(s) before the application terminates.
-	*/
+    */
+
   { // class MetaFile.
-  
-    private static RandomAccessFile TheRandomAccessFile= null;
-    private static boolean SavingB;  // Direction of io, Saving vs. Loading.
-    private static int indentLevelI; // = 0;  // Indent level of text in file.
-    private static int columnI; // = 0;  // Column of io.
+
+    private static final String FlatFileNameString= "Flat.txt";
+    private static final String HierarchicalFileNameString= "Hierarchical.txt";
     
+    private static boolean WritingB;  // true means Writing.  false means Reading.
+    public static boolean FlatFileB;  // true mean flag.  false mean hierarchical.
+    private static String FileNameString;
+    private static RandomAccessFile TheRandomAccessFile= null;
+    private static int indentLevelI; // Indent level in text file.
+    private static int columnI;  // Column of rw in text file.
+
     public static MetaNode start( DataNode InRootDataNode )
-      /* Initializes the MetaFile state manager.
-        It loads [the root] MetaNode[s] from external file(s)
-        that are associated with DataNode-s rooted at InRootDataNode.
-        It also prepares to run finish() on shutdown to save MetaNode[s].
-        It returns the root MetaNode gotten by loading, 
-        or null if nothing was loaded.
+      /* Starts activity in this MetaFile class.
+        It reads [the root] MetaNode[s] from external file(s).
+        It also prepares to run finish() at shutdown.
+        It returns the root MetaNode gotten by reading, 
+        or null if nothing was read.
         */
       { // start()
-        System.out.println( "MetaFile.start()");
-        MetaNode RootMetaNode= null;  // Set null root to indicate loading.
-        try { // Load state.
-          String StateFileString= "State.txt";  // Cache name of state file.
-          if  //  Load state from file if...
-            ( (new File( StateFileString )).exists() )  // ...the file exists.
-            { //  Load state from file.
+        // System.out.println( "MetaFile.start()");
+        MetaNode RootMetaNode= null;  // Set null root to indicate reading.
+        try { // Read state.
+          if  //  Read state from file if...
+            ( (new File( HierarchicalFileNameString )).exists() )  // ...the file exists.
+            { //  Read state from file.
               TheRandomAccessFile=  // Open random access file.
-                new RandomAccessFile( StateFileString, "r" );
-              RootMetaNode= ioAllState( RootMetaNode );  // Load all state.
+                new RandomAccessFile( HierarchicalFileNameString, "r" );
+              RootMetaNode= rwAllState( RootMetaNode );  // Read all state.
               DumpRemainder( );  // Output remainder for debugging.
               TheRandomAccessFile.close( );  // Close the input file.
-              } //  Load state from file.
-          } // Load state.
-        catch ( IOException e ) {  // Process any errors.
+              } //  Read state from file.
+          } // Read state.
+        catch ( IOException | NumberFormatException e ) {  // Process any errors.
           e.printStackTrace();
           }  // Process any errors.
 
-        { // Prepare for finish() when app terminates.
+        { // Prepare to run finish() when app terminates.
           ShutdownHook shutdownHook = new ShutdownHook();
           Runtime.getRuntime().addShutdownHook(shutdownHook);
-          } // Prepare for finish() when app terminates.
+          } // Prepare to run finish() when app terminates.
 
         return RootMetaNode;  // Return the root node for saving by caller.
         } // start()
-  
+
     public static void finish()
-      /* Finishes saving all new or modified MetaNode-s  
-        to external file(s).  
-        Presently it recursively saves the entire RootMetaNode tree.
+      /* Finishes activity in this MetaFile class.
+        All new or modified MetaNode-s are saved to external file(s).  
+        Presently it writes all nodes, modified or now.
+        Also presently it recursively writes the entire RootMetaNode tree.
         This should be called before application termination.  */
       { // finish()
-        System.out.println( "\n\nMetaFile.finish()");
+        // System.out.println( "\n\nMetaFile.finish()");
+
+        FlatFileB= false;
+        FileNameString= HierarchicalFileNameString;
+        writeAllState( );
         
+        FlatFileB= true;
+        FileNameString= FlatFileNameString;
+        writeAllState( );
+
+        } // finish()
+
+    private static void writeAllState( )
+      /* Writes all MetaNodes to file.  */
+      { // writeAllState(()
         try { // Try opening or creating file.
-          TheRandomAccessFile=  // For open random access Outline file.
-            new RandomAccessFile( "State.txt", "rw" );
+          TheRandomAccessFile=  // For open random access text file.
+            new RandomAccessFile( FileNameString, "rw" );
           } // Try opening or creating file.
         catch (FileNotFoundException e) { // Handle any errors.
           e.printStackTrace();
           } // Handle any errors.
-
-        if ( TheRandomAccessFile != null )
-          try {
-            //TheRandomAccessFile.writeBytes( "State-File\n" );
+        if ( TheRandomAccessFile != null ) // Write if file was opened or created.
+          try { // Try writing all MetaNodes.
             MetaNode RootMetaNode= MetaRoot.getRootMetaNode( );  // Get root MetaNode.
-            ioAllState( RootMetaNode );
+            rwAllState( RootMetaNode );
             TheRandomAccessFile.setLength( // Truncate file at...
               TheRandomAccessFile.getFilePointer( )  // ...file pointer.
               );
             TheRandomAccessFile.close( );
-            }
-          catch ( IOException e ) {
+            } // Try writing all MetaNodes.
+          catch ( IOException e ) { // Handle any exception.
             e.printStackTrace();
-            } // Write some data to TheRandomAccessFile.
-        } // finish()
-  
-    public static MetaNode ioAllState( MetaNode RootMetaNode )
-      /* If RootMetaNode == null then all state is loaded from Meta file.
-        If RootMetaNode != null then all state is saved to the Meta file.
-        Returns the RootMetaNode, either the original, or a loaded one.
+            } // Handle any exception.
+         } // writeAllState(()
+
+    private static MetaNode rwAllState( MetaNode RootMetaNode )
+      /* If RootMetaNode == null then all state is read from Meta file.
+        If RootMetaNode != null then all state is written to the Meta file.
+        Returns the RootMetaNode, either the original, or a read one.
         */
-      { // ioAllState( MetaNode RootMetaNode )
+      { // rwAllState( MetaNode RootMetaNode )
         indentLevelI= 0;  // Initialize indent level of text in file.
         columnI= 0;  // Initialize column of text in file.
 
-        SavingB=  // Determine for this session the io direction based on...
+        WritingB=  // Determine for this session the rw direction based on...
           ( RootMetaNode != null);  // ...whether RootMetaNode is defined.
 
-        ioLiteral(  // Begin file with identifying String.
-          "Infogora-Meta-Data-File" 
+        rwLiteral(  // Begin file with identifying String.
+          "Infogora-Hierarchical-Meta-Data-File" 
           );
-        RootMetaNode= MetaNode.io(  // Save or load... 
+        RootMetaNode= MetaNode.rwMetaNode(  // Read or write... 
           RootMetaNode,  // ...the root MetaNode using...
-          DataRoot.getParentOfRootDataNode()  // ...its parent for load lookups.
+          DataRoot.getParentOfRootDataNode()  // ...its parent for read lookups.
           );
 
         return RootMetaNode;  // Return the new or old root.
-        } // ioAllState( MetaNode RootMetaNode )
+        } // rwAllState( MetaNode RootMetaNode )
 
-    public static void outToken( String InTokenString )
+    public static void writeToken( String InTokenString )
       /* Outputs InTokenString using the appropriate delimiters.  */
-      { // outToken(..)
+      { // writeToken(..)
         int InStringLengthI= InTokenString.length();
 
         try {
@@ -128,7 +147,7 @@ public class MetaFile
         catch ( IOException e ) {
           e.printStackTrace();
           }
-        } // outToken(..)
+        } // writeToken(..)
   
     public static String readTokenString( )  // MAYBE PREVENT EMPTY RESULT???
       /* Reads a token from file and returns it as a String.
@@ -171,74 +190,74 @@ public class MetaFile
         return TokenString.intern( );  // Return string or an older equal one.
         } // readTokenString( String InString )
   
-    public static void ioIndentedWhiteSpace( )
+    public static void rwIndentedWhiteSpace( )
       /* Goes to a new line if needed, and indents to the correct level.  */
       { 
         if // Go to a new line if...
           ( columnI > indentLevelI )  // ...past indent level.
           { // Go to a new line.
-            ioLiteral( "\n" );  // Go to new line.
+            rwLiteral( "\n" );  // Go to new line.
             columnI= 0;  // Reset to column 0.
             } // Go to a new line.
         while  // Add spaces to indent while...
           ( columnI < indentLevelI )  // ...column is less than indent level.
-          if (ioLiteral( " " ))  // Try to add a single space.
+          if (rwLiteral( " " ))  // Try to add a single space.
             break;  // Exit loop if any error.
         }
   
-    public static void ioListBegin( )
+    public static void rwListBegin( )
       /* Begins a section.  */
       { 
-        ioIndentedLiteral( "(" );  // Go to new line.
+        rwIndentedLiteral( "(" );  // Go to new line.
         indentLevelI += 2;  // Increment indent level.
         }
   
-    public static void ioListEnd( )
+    public static void rwListEnd( )
       /* Ends a section.  */
       { 
-        ioIndentedLiteral( ")" );  // Output end token.
+        rwIndentedLiteral( ")" );  // Output end token.
         indentLevelI -= 2;  // Decrement indent level.
         }
   
-    public static void ioIndentedLiteral( String InString )
-      /* Saves a string to the file, on a new line, 
+    public static void rwIndentedLiteral( String InString )
+      /* rw-processes a string in the file, on a new line, 
         at correct indent level.  */
       { 
-        ioIndentedWhiteSpace( );  // Save line and indent.
-        ioLiteral( InString );  // Write string.
+        rwIndentedWhiteSpace( );  // rw-process line and indent.
+        rwLiteral( InString );  // rw-process string.
         }
 
-    public static boolean ioLiteral( String InString )
-      /* If SavingB == true it writes the literal InString to the file 
-        If SavingB == false it reads a literal String from the file and
+    public static boolean rwLiteral( String InString )
+      /* If WritingB == true it writes the literal InString to the file 
+        If WritingB == false it reads a literal String from the file and
         verifies that it equals InString.
         It also handles IOException-s.  
         Literals can be or can include white space.
         It returns true is there is an error, false otherwise.
         The return value is used mainly to prevent infinite loops.
         */
-      { // ioLiteral( String InString )
+      { // rwLiteral( String InString )
         boolean ErrorB= false;  // Assume no error.
         int InStringLengthI= InString.length();
 
         try {
-          if ( SavingB )  // Writing state.
-          { // Write litterl string.
-            TheRandomAccessFile.writeBytes( InString );
-            columnI+= InStringLengthI;  // Adjust columnI for string length.
-            } // Write litterl string.
-          else  // Reading state.
+          if ( WritingB )  // Writing state.
+            { // Write litterl string.
+              TheRandomAccessFile.writeBytes( InString );
+              columnI+= InStringLengthI;  // Adjust columnI for string length.
+              } // Write litterl string.
+            else  // Reading state.
             { // Read and verify String.
               if ( testLiteralB( InString ))
-              {
-                TheRandomAccessFile.skipBytes( InStringLengthI );
-                columnI+= InStringLengthI;  // Adjust columnI for string length.
-                }
+                {
+                  TheRandomAccessFile.skipBytes( InStringLengthI );
+                  columnI+= InStringLengthI;  // Adjust columnI for string length.
+                  }
                 else
                 {
                   ErrorB= true;  // Set error return value.
                   System.out.print( 
-                    "\nioLiteral( '"+
+                    "\nrwLiteral( '"+
                     InString+
                     "' ) MISMATCH!!!"
                     );
@@ -250,7 +269,7 @@ public class MetaFile
           e.printStackTrace();
           }
         return ErrorB;  // Return error value.
-        } // ioLiteral( String InString )
+        } // rwLiteral( String InString )
 
     public static int testTerminatorI( String DesiredString )
       /* Tests whether a terminator is is next in the file.
@@ -308,13 +327,17 @@ public class MetaFile
         This is mainly for debugging.
         */
       { // DumpRemainder( )
-        System.out.print( "  Remainder of file follows arrow ->" );
-        int ByteI;  // Place for bytes input.
-        while (true) {  // Process entire remainder of file.
-          ByteI= TheRandomAccessFile.read( );  // Read a byte.
-          if (ByteI==-1) break;  // Exit loop if end-of-file.
-          System.out.print( (char)ByteI );  // Display the byte.
-          }
+        int ByteI= TheRandomAccessFile.read( );  // Try to read first byte.
+        if ( ByteI != -1 ) // Process ramaining bytes if any.
+          { // Process remaining bytes.
+            System.out.print( // Introduce the data which will follow.
+              "  Unread file bytes follow arrow ->" 
+              );
+            do { // Display bytes until done.
+              System.out.print( (char)ByteI );  // Display the byte already read.
+              ByteI= TheRandomAccessFile.read( );  // Try to read next byte.
+              } while ( ByteI != -1 ); // Display bytes until done.
+            } // Process remaining bytes.
         } // DumpRemainder( )
     
     } // class MetaFile.
