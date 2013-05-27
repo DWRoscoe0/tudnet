@@ -17,33 +17,63 @@ public class MetaFile
 
   { // class MetaFile.
 
+    public enum RwMode {  // Mode of reading of writing to the state files.
+      FLAT,
+      HIERARCHICAL
+      };
+    public static RwMode TheRwMode;  // Whether Rw is split or not.
+
     private static final String FlatFileNameString= "Flat.txt";
     private static final String HierarchicalFileNameString= "Hierarchical.txt";
-    
-    private static boolean WritingB;  // true means Writing.  false means Reading.
-    public static boolean FlatFileB;  // true mean flag.  false mean hierarchical.
     private static String FileNameString;
+
+    private static String HeaderTokenString;  // First string in file.
+
+    private static boolean WritingB;  // true means Writing.  false means Reading.
     private static RandomAccessFile TheRandomAccessFile= null;
     private static int indentLevelI; // Indent level in text file.
     private static int columnI;  // Column of rw in text file.
 
     public static MetaNode start( DataNode InRootDataNode )
       /* Starts activity in this MetaFile class.
-        It reads [the root] MetaNode[s] from external file(s).
+        It tries to read at least the root MetaNode from external file(s).
         It also prepares to run finish() at shutdown.
         It returns the root MetaNode gotten by reading, 
-        or null if nothing was read.
+        or null if reading failed.
         */
       { // start()
         // System.out.println( "MetaFile.start()");
-        MetaNode RootMetaNode= null;  // Set null root to indicate reading.
+
+        // Set some appropriate mode variables.
+        TheRwMode= RwMode.HIERARCHICAL;
+        FileNameString= HierarchicalFileNameString;
+        HeaderTokenString= "Infogora-Hierarchical-Meta-Data-File";
+
+        MetaNode RootMetaNode= readAllStateMetaNode( );  // Do the actual read.
+
+        { // Prepare to run finish() when app terminates.
+          ShutdownHook shutdownHook = new ShutdownHook();
+          Runtime.getRuntime().addShutdownHook(shutdownHook);
+          } // Prepare to run finish() when app terminates.
+
+        return RootMetaNode;  // Return the read root MetaNode, if any.
+        } // start()
+
+    private static MetaNode readAllStateMetaNode( )
+      /* Read all MetaNodes, or at least the root one, from file.  
+        Returns the root MetaNode read.  
+        */
+      {
+        WritingB=  false;  // Indicate that we are reading.
+        MetaNode RootMetaNode= null;  // Set null root because we are reading.
+
         try { // Read state.
           if  //  Read state from file if...
             ( (new File( HierarchicalFileNameString )).exists() )  // ...the file exists.
             { //  Read state from file.
               TheRandomAccessFile=  // Open random access file.
                 new RandomAccessFile( HierarchicalFileNameString, "r" );
-              RootMetaNode= rwAllState( RootMetaNode );  // Read all state.
+              RootMetaNode= rwAllStateMetaNode( RootMetaNode );  // Read all state.
               DumpRemainder( );  // Output remainder for debugging.
               TheRandomAccessFile.close( );  // Close the input file.
               } //  Read state from file.
@@ -52,13 +82,8 @@ public class MetaFile
           e.printStackTrace();
           }  // Process any errors.
 
-        { // Prepare to run finish() when app terminates.
-          ShutdownHook shutdownHook = new ShutdownHook();
-          Runtime.getRuntime().addShutdownHook(shutdownHook);
-          } // Prepare to run finish() when app terminates.
-
-        return RootMetaNode;  // Return the root node for saving by caller.
-        } // start()
+        return RootMetaNode;
+        }
 
     public static void finish()
       /* Finishes activity in this MetaFile class.
@@ -69,19 +94,26 @@ public class MetaFile
       { // finish()
         // System.out.println( "\n\nMetaFile.finish()");
 
-        FlatFileB= false;
+        // Set some appropriate mode variables.
+        TheRwMode= RwMode.HIERARCHICAL;
         FileNameString= HierarchicalFileNameString;
-        writeAllState( );
+        HeaderTokenString= "Infogora-Hierarchical-Meta-Data-File";
+        writeAllState( );  // Do the actual write.
         
-        FlatFileB= true;
+        // Set some appropriate mode variables.
+        TheRwMode= RwMode.FLAT;
         FileNameString= FlatFileNameString;
-        writeAllState( );
+        HeaderTokenString= "Infogora-Flat-Meta-Data-File";
+        writeAllState( );  // Do the actual write.
 
         } // finish()
 
     private static void writeAllState( )
       /* Writes all MetaNodes to file.  */
       { // writeAllState(()
+        WritingB=  true;  // Indicate that we are writing.
+        MetaNode RootMetaNode= MetaRoot.getRootMetaNode( );  // Get root MetaNode.
+
         try { // Try opening or creating file.
           TheRandomAccessFile=  // For open random access text file.
             new RandomAccessFile( FileNameString, "rw" );
@@ -91,8 +123,7 @@ public class MetaFile
           } // Handle any errors.
         if ( TheRandomAccessFile != null ) // Write if file was opened or created.
           try { // Try writing all MetaNodes.
-            MetaNode RootMetaNode= MetaRoot.getRootMetaNode( );  // Get root MetaNode.
-            rwAllState( RootMetaNode );
+            rwAllStateMetaNode( RootMetaNode );
             TheRandomAccessFile.setLength( // Truncate file at...
               TheRandomAccessFile.getFilePointer( )  // ...file pointer.
               );
@@ -103,28 +134,23 @@ public class MetaFile
             } // Handle any exception.
          } // writeAllState(()
 
-    private static MetaNode rwAllState( MetaNode RootMetaNode )
+    private static MetaNode rwAllStateMetaNode( MetaNode RootMetaNode )
       /* If RootMetaNode == null then all state is read from Meta file.
         If RootMetaNode != null then all state is written to the Meta file.
         Returns the RootMetaNode, either the original, or a read one.
         */
-      { // rwAllState( MetaNode RootMetaNode )
+      {
         indentLevelI= 0;  // Initialize indent level of text in file.
         columnI= 0;  // Initialize column of text in file.
 
-        WritingB=  // Determine for this session the rw direction based on...
-          ( RootMetaNode != null);  // ...whether RootMetaNode is defined.
-
-        rwLiteral(  // Begin file with identifying String.
-          "Infogora-Hierarchical-Meta-Data-File" 
-          );
-        RootMetaNode= MetaNode.rwMetaNode(  // Read or write... 
+        rwLiteral( HeaderTokenString ); // Begin file with header token.
+        RootMetaNode= MetaNode.rwMultiMetaNode(  // Read or write... 
           RootMetaNode,  // ...the root MetaNode using...
           DataRoot.getParentOfRootDataNode()  // ...its parent for read lookups.
           );
 
         return RootMetaNode;  // Return the new or old root.
-        } // rwAllState( MetaNode RootMetaNode )
+        }
 
     public static void writeToken( String InTokenString )
       /* Outputs InTokenString using the appropriate delimiters.  */
@@ -328,8 +354,8 @@ public class MetaFile
         */
       { // DumpRemainder( )
         int ByteI= TheRandomAccessFile.read( );  // Try to read first byte.
-        if ( ByteI != -1 ) // Process ramaining bytes if any.
-          { // Process remaining bytes.
+        if ( ByteI != -1 ) // If success then output it and remainder.
+          { // Output header and all file bytes.
             System.out.print( // Introduce the data which will follow.
               "  Unread file bytes follow arrow ->" 
               );
@@ -337,7 +363,7 @@ public class MetaFile
               System.out.print( (char)ByteI );  // Display the byte already read.
               ByteI= TheRandomAccessFile.read( );  // Try to read next byte.
               } while ( ByteI != -1 ); // Display bytes until done.
-            } // Process remaining bytes.
+            } // Output header and all file bytes.
         } // DumpRemainder( )
     
     } // class MetaFile.

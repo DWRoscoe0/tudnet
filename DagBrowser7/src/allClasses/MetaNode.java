@@ -26,7 +26,7 @@ public class MetaNode
     
       // private static final long serialVersionUID = 1L;
 
-      private IDNumber TheIDNumber= null;  // ID #.
+      public IDNumber TheIDNumber= null;  // ID #.
       private DataNode TheDataNode= null;  // Associated DataNode.
       private HashMap< String, Object > AttributesHashMap= null;
         /* Attributes of the DataNode, if any.
@@ -48,8 +48,8 @@ public class MetaNode
           } // MetaNode( )
     
       public MetaNode( DataNode InDataNode )
-        /* Full constructor of a MetaNode with
-          a single child InDataNode and no attributes.  */
+        /* Full constructor of a MetaNode to be associated with
+          a single DataNode InDataNode and no attributes.  */
         {
           TheIDNumber= new IDNumber( );  // Create a new IDNumber for this node.
 
@@ -133,30 +133,68 @@ public class MetaNode
           return OkayToRemoveB;  // Return calculated purge result.
           } // boolean purgeB()
 
-      public static MetaNode rwEitherWay
+      public static MetaNode rwNumberOrNode
         ( MetaNode InMetaNode, DataNode ParentDataNode )
-        /* This completely rw-processes the node InMetaNode and 
-          all its descendeenta in the MetaFile.
-          It does it either hierarchically or flat,
-          depending on MetaFile.FlatFileB.
-          See rw(..) for details.
+        /* rw/Writes either an IDNumber or the whole MetaNode, 
+          depending on context.
           */
-        { // rwEitherWay()
-          return rwMetaNode( InMetaNode, ParentDataNode );
-          } // rwEitherWay()
+        { 
+          if  
+            ( MetaFile.TheRwMode == MetaFile.RwMode.FLAT )
+            InMetaNode.TheIDNumber= IDNumber.rwIDNumber(  // Rw...
+              InMetaNode.TheIDNumber  // ...TheIDNumber.
+              );
+            else
+            rwMultiMetaNode( InMetaNode, ParentDataNode );
 
-      public static MetaNode rwMetaNode
+          return InMetaNode;  // Return the new or the original MetaNode.
+          }
+
+      public static MetaNode rwMultiMetaNode
+        ( MetaNode InMetaNode, DataNode ParentDataNode )
+        /* This is like rwMetaNode(..) except that it will process
+          InMetaNode and its descendents if in flat file mode.
+          It does it either hierarchically as one chunk,
+          or flat by splitting off the individual descendent nodes,
+          depending on the value of MetaFile.FlatFileB.
+          See rwMetaNode(..) for more information.
+          */
+        { // rwSplittableMetaNode()
+          MetaNode ResultMetaNode=  // Process main MetaNode.
+            rwMetaNode( InMetaNode, ParentDataNode );
+
+          if  // Process the children if we're splitting them off.
+            ( MetaFile.TheRwMode == MetaFile.RwMode.FLAT )
+            { // Process the children separately.
+              Iterator < Map.Entry < Object, MetaNode > > MapIterator=  // Get an iterator...
+                InMetaNode.ChildrenLinkedHashMap.
+                entrySet().
+                iterator();  // ...for HashMap entries.
+              while // Save all the HashMap's entries.
+                ( MapIterator.hasNext() ) // There is a next Entry.
+                { // Write this HashMap entry.
+                  Map.Entry < Object, MetaNode > AnEntry= // Get Entry 
+                    MapIterator.next();  // ...that is next Entry.
+                  MetaNode TheMetaNode= AnEntry.getValue( );  // Get the value MetaNode.
+                  MetaNode.rwMultiMetaNode( TheMetaNode, null );  // Write MetaNode.
+                  } // Write this HashMap entry.
+              } // Process the children separately.
+
+          return ResultMetaNode;  // Return the main MetaNode.
+          } // rwSplittableMetaNode()
+
+      private static MetaNode rwMetaNode
         ( MetaNode InMetaNode, DataNode ParentDataNode )
         /* This completely rw-processes the node InMetaNode and 
-          all its descendeenta in the MetaFile hierarchically.  
+          all its descendants in the MetaFile hierarchically.  
           It does the child MetaNodes recursively.
-          ParentDataNode is used for name lookup in the case of loading.
+          ParentDataNode is used for name lookup in the case of Reading.
           It returns the MetaNode processed.
           */
-        { // rw()
+        {
           MetaFile.rwIndentedWhiteSpace( );  // Indent correctly.
           MetaFile.rwListBegin( );  // Mark the beginning of the list.
-          MetaFile.rwLiteral( " MetaNode" );
+          MetaFile.rwLiteral( " MetaNode" );  // Label as MetaNode list.
           
           if ( InMetaNode == null ) // If there is no MetaNode then...
             InMetaNode= new MetaNode( ); // ...create an empty one to be filled.
@@ -178,7 +216,7 @@ public class MetaNode
 
           MetaFile.rwListEnd( );  // Mark the end of the list.
           return InMetaNode;  // Return the new or the original MetaNode.
-          } // rw()
+          }
 
       
     // Methods which deal with the children.

@@ -36,7 +36,7 @@ public class Children
       readChildrenLinkedHashMap( DataNode InParentDataNode )
       /* This reads a Children HashMap and returns it as the result.  
         It uses InParentDataNode for name lookups.  */
-      { // readChildrenLinkedHashMap()
+      {
         LinkedHashMap< Object, MetaNode  > 
           ChildrenLinkedHashMap =  // Initialize to be...
           new LinkedHashMap< Object, MetaNode  >(  // ...a LinkedHashMap with...
@@ -50,23 +50,14 @@ public class Children
             if  // Exit loop if end character present.
               ( MetaFile.testTerminatorI( ")" ) != 0 )
               break;  // Exit loop.
-            //MetaFile.rwListBegin( );
-            //MetaFile.rwIndentedWhiteSpace( );  // Indent correctly.
-            //DataNode ChildDataNode=  // Set ChildDataNode by...
-            //  DataRw.readDataNode( // ...reading DataNode name and looking up in...
-            //    InParentDataNode  // ...this parent DataNode.
-            //    );
-            MetaNode ValueMetaNode= MetaNode.rwMetaNode( null, InParentDataNode );
-            //MetaFile.rwIndentedWhiteSpace( );  // Go to proper column.
-            //MetaFile.rwListEnd( );
-            //ChildrenLinkedHashMap.put( ChildDataNode, ValueMetaNode );
+            MetaNode ValueMetaNode= MetaNode.rwMultiMetaNode( null, InParentDataNode );
             ChildrenLinkedHashMap.put( // Create map entry from...
               ValueMetaNode.getDataNode(), // ...MetaNode's DataNode and...
               ValueMetaNode // ...The MetaNode itself.
               );
             } // Read a child or exit.
         return ChildrenLinkedHashMap;
-        } // readChildrenLinkedHashMap()
+        }
 
     private static void writeChildrenLinkedHashMap
       ( LinkedHashMap< Object, MetaNode  > InChildrenLinkedHashMap )
@@ -75,7 +66,7 @@ public class Children
         otherwise it recursively writes the entire hash entry,
         with node name string and child MetaNode and their descendents.
         */
-      { // writeChildrenLinkedHashMap()
+      {
         Iterator < Map.Entry < Object, MetaNode > > MapIterator=  // Get an iterator...
           InChildrenLinkedHashMap.
           entrySet().
@@ -83,18 +74,22 @@ public class Children
         while // Save all the HashMap's entries.
           ( MapIterator.hasNext() ) // There is a next Entry.
           { // Save this HashMap entry.
-            //MetaFile.rwListBegin( );
             Map.Entry < Object, MetaNode > AnEntry= // Get Entry 
               MapIterator.next();  // ...that is next Entry.
-            { // Save key.
-              //DataNode TheDataNode= (DataNode)AnEntry.getKey( );
-              //MetaFile.rwIndentedWhiteSpace( );
-              ////MetaFile.writeToken( TheDataNode.GetNameString( ) );
-              //MetaFile.writeToken( "JUNK-FILLER" );
-              } // Save key.
-            MetaNode.rwMetaNode( AnEntry.getValue( ), null );  // Save value MetaNode.
-            //MetaFile.rwListEnd( );
+            // The DataNode key is no longer saved because it is also in MetaNode.
+            MetaNode TheMetaNode= AnEntry.getValue( );  // Get the value MetaNode.
+            switch ( MetaFile.TheRwMode ) { // Write based on mode.
+              case FLAT:
+                MetaFile.rwIndentedWhiteSpace( );  // Go to proper column.
+                IDNumber.rwIDNumber(  // Rw...
+                  TheMetaNode.TheIDNumber  // ...TheIDNumber.
+                  );
+                break;
+              case HIERARCHICAL:
+                MetaNode.rwMultiMetaNode( TheMetaNode, null );  // Save MetaNode.
+                break;
+              } // Write based on mode.
             } // Save this HashMap entry.
-        } // writeChildrenLinkedHashMap()
+        }
 
     } // class Children 
