@@ -94,19 +94,33 @@ public class MetaFile
       { // finish()
         // System.out.println( "\n\nMetaFile.finish()");
 
+        writeFlat( );  // Write in Flat text format.
+
+        writeHierarchicalState( );  // Write in Hierarchical text format.
+
+        } // finish()
+
+    private static void writeFlat( )
+      /* Writes all MetaNodes to Flat file.  */
+      {
+        // Set some appropriate mode variables.
+        TheRwMode= RwMode.FLAT;
+        FileNameString= FlatFileNameString;
+        HeaderTokenString= "Infogora-Flat-Meta-Data-File";
+        writeAllState( );  // Do the actual write in flat text format.
+        }
+
+    private static void writeHierarchicalState( )
+      /* Writes all MetaNodes to Hierarchical file.  
+        This will eventually exist only for debugging.
+        */
+      {
         // Set some appropriate mode variables.
         TheRwMode= RwMode.HIERARCHICAL;
         FileNameString= HierarchicalFileNameString;
         HeaderTokenString= "Infogora-Hierarchical-Meta-Data-File";
         writeAllState( );  // Do the actual write.
-        
-        // Set some appropriate mode variables.
-        TheRwMode= RwMode.FLAT;
-        FileNameString= FlatFileNameString;
-        HeaderTokenString= "Infogora-Flat-Meta-Data-File";
-        writeAllState( );  // Do the actual write.
-
-        } // finish()
+        }
 
     private static void writeAllState( )
       /* Writes all MetaNodes to file.  */
@@ -259,7 +273,7 @@ public class MetaFile
         verifies that it equals InString.
         It also handles IOException-s.  
         Literals can be or can include white space.
-        It returns true is there is an error, false otherwise.
+        It returns true if there is an error, false otherwise.
         The return value is used mainly to prevent infinite loops.
         */
       { // rwLiteral( String InString )

@@ -192,16 +192,19 @@ public class MetaNode
           It returns the MetaNode processed.
           */
         {
-          MetaFile.rwIndentedWhiteSpace( );  // Indent correctly.
-          MetaFile.rwListBegin( );  // Mark the beginning of the list.
-          MetaFile.rwLiteral( " MetaNode" );  // Label as MetaNode list.
-          
           if ( InMetaNode == null ) // If there is no MetaNode then...
             InMetaNode= new MetaNode( ); // ...create an empty one to be filled.
+
+          MetaFile.rwIndentedWhiteSpace( );  // Indent correctly.
+          MetaFile.rwListBegin( );  // Mark the beginning of the list.
             
+          MetaFile.rwIndentedWhiteSpace( );  // Indent correctly.
           InMetaNode.TheIDNumber= IDNumber.rwIDNumber(  // Rw...
             InMetaNode.TheIDNumber  // ...TheIDNumber.
             );
+            
+          MetaFile.rwIndentedWhiteSpace( );  // Indent correctly.
+          MetaFile.rwLiteral( "MetaNode" );  // Label as MetaNode list.
           InMetaNode.TheDataNode= DataRw.rwDataNode(  // Rw...
             InMetaNode.TheDataNode,  // ...TheDataNode using...
             ParentDataNode  // ...ParentDataNode for name lookups.
