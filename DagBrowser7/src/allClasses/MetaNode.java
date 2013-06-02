@@ -8,6 +8,8 @@ import java.util.Map;
 
 public class MetaNode
 
+  extends IDNumber
+
   // extends DefaultMutableTreeNode
   
   /* This class represents DataNode metadata, information about DagNodes.
@@ -26,7 +28,7 @@ public class MetaNode
     
       // private static final long serialVersionUID = 1L;
 
-      public IDNumber TheIDNumber= null;  // ID #.
+      //public IDNumber TheIDNumber= null;  // ID #.
       private DataNode TheDataNode= null;  // Associated DataNode.
       private HashMap< String, Object > AttributesHashMap= null;
         /* Attributes of the DataNode, if any.
@@ -40,18 +42,22 @@ public class MetaNode
           the DataNode and its meta-data.
           */
 
-    // Constructors.
+    // Constructors (2).
     
       public MetaNode( )
         /* Constructor of blank MetaNode..  */
         { // MetaNode( )
+          super( 0 );  // Set superclass ID # to 0 so it can be loaded.
           } // MetaNode( )
     
       public MetaNode( DataNode InDataNode )
         /* Full constructor of a MetaNode to be associated with
-          a single DataNode InDataNode and no attributes.  */
+          a single DataNode InDataNode, 
+          but no attributes or child MetaNodes, yet.  
+          */
         {
-          TheIDNumber= new IDNumber( );  // Create a new IDNumber for this node.
+          //TheIDNumber= new IDNumber( );  // Create a new IDNumber for this node.
+          super( );  // Assign the superclass ID # to be something meaningful.
 
           TheDataNode=  // Save DataNode associated with this MetaNode.
             InDataNode; 
@@ -135,17 +141,21 @@ public class MetaNode
 
       public static MetaNode rwNumberOrNode
         ( MetaNode InMetaNode, DataNode ParentDataNode )
-        /* rw/Writes either an IDNumber or the whole MetaNode, 
-          depending on context.
+        /* rw/Writes either an IDNumber node or the whole MetaNode, 
+          depending on the RwMode context.
           */
         { 
-          if  
-            ( MetaFile.TheRwMode == MetaFile.RwMode.FLAT )
-            InMetaNode.TheIDNumber= IDNumber.rwIDNumber(  // Rw...
-              InMetaNode.TheIDNumber  // ...TheIDNumber.
-              );
-            else
-            rwMultiMetaNode( InMetaNode, ParentDataNode );
+          switch ( MetaFile.TheRwMode ) {
+            case FLAT:
+              //InMetaNode.TheIDNumber= IDNumber.rwIDNumber(  // Rw...
+              //  InMetaNode.TheIDNumber  // ...TheIDNumber.
+              //  );
+              InMetaNode.rwIDNumber();  // Rw the ID #.
+              break;
+            case HIERARCHICAL:
+              rwMultiMetaNode( InMetaNode, ParentDataNode );
+              break;
+            }
 
           return InMetaNode;  // Return the new or the original MetaNode.
           }
@@ -163,7 +173,7 @@ public class MetaNode
           MetaNode ResultMetaNode=  // Process main MetaNode.
             rwMetaNode( InMetaNode, ParentDataNode );
 
-          if  // Process the children if we're splitting them off.
+          if  // Process the children again if we're splitting them off.
             ( MetaFile.TheRwMode == MetaFile.RwMode.FLAT )
             { // Process the children separately.
               Iterator < Map.Entry < Object, MetaNode > > MapIterator=  // Get an iterator...
@@ -199,9 +209,10 @@ public class MetaNode
           MetaFile.rwListBegin( );  // Mark the beginning of the list.
             
           MetaFile.rwIndentedWhiteSpace( );  // Indent correctly.
-          InMetaNode.TheIDNumber= IDNumber.rwIDNumber(  // Rw...
-            InMetaNode.TheIDNumber  // ...TheIDNumber.
-            );
+          //InMetaNode.TheIDNumber= IDNumber.rwIDNumber(  // Rw...
+          //  InMetaNode.TheIDNumber  // ...TheIDNumber.
+          //  );
+          InMetaNode.rwIDNumber();  // Rw the ID #.
             
           MetaFile.rwIndentedWhiteSpace( );  // Indent correctly.
           MetaFile.rwLiteral( "MetaNode" );  // Label as MetaNode list.

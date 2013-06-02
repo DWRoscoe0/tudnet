@@ -73,7 +73,7 @@ public class Children
           iterator();  // ...for HashMap entries.
         while // Save all the HashMap's entries.
           ( MapIterator.hasNext() ) // There is a next Entry.
-          { // Save this HashMap entry.
+          { // Write this HashMap entry.
             Map.Entry < Object, MetaNode > AnEntry= // Get Entry 
               MapIterator.next();  // ...that is next Entry.
             // The DataNode key is no longer saved because it is also in MetaNode.
@@ -81,15 +81,16 @@ public class Children
             switch ( MetaFile.TheRwMode ) { // Write based on mode.
               case FLAT:
                 MetaFile.rwIndentedWhiteSpace( );  // Go to proper column.
-                IDNumber.rwIDNumber(  // Rw...
-                  TheMetaNode.TheIDNumber  // ...TheIDNumber.
-                  );
+                //IDNumber.rwIDNumber(  // Rw...
+                //  TheMetaNode.TheIDNumber  // ...TheIDNumber.
+                //  );
+                TheMetaNode.rwIDNumber();  // Rw the ID #.
                 break;
               case HIERARCHICAL:
                 MetaNode.rwMultiMetaNode( TheMetaNode, null );  // Save MetaNode.
                 break;
               } // Write based on mode.
-            } // Save this HashMap entry.
+            } // Write this HashMap entry.
         }
 
     } // class Children 
