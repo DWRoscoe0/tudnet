@@ -2,47 +2,74 @@ package allClasses;
 
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.Map;
 
 public class MetaChildren<K,V>  
 //public class MetaChildren
 
-  extends LinkedHashMap<K,V>  
+  // extends HashMap<K,V>  
   
   /* This class implements a Collection of child MetaNodes.
-    Presently is uses a LinkedHashMap for which:
+    Presently is uses a HashMap for which:
           The Key is the child's user DataNode, the MetaNode's TheDataNode.
           The Value is the associated MetaNode that contains
           that DataNode and its meta-data.
 
-    ??? Now in process of changing LinkedHashMap from a superclass to a field.
+    ???? Now in process of changing HashMap from a superclass to a field.
     */
 
   { // class MetaChildren 
 
     private static final long serialVersionUID = 1L;  // Added to remove warning.
 
+    private HashMap< Object, MetaNode > TheHashMap;  // children.
+    //private HashMap< K, V > TheHashMap;  // children.
+    
 		MetaChildren() 
       // Default constructor.
       {
-        super(  // Construct superclass LinkedHashMap...
+        /*
+        super(  // Construct superclass HashMap...  // 
           2, // ...with a small initial size...
-          0.75f,  // ...and this load factor...
-          true  // ...and with access-order enabled.
+          0.75f //,  // ...and this load factor...
+          //true  // ...and with access-order enabled.
           );
+        */
+        TheHashMap= 
+          new HashMap< Object, MetaNode >(  // Construct superclass HashMap...
+            2, // ...with a small initial size...
+            0.75f //,  // ...and this load factor...
+            //true  // ...and with access-order enabled.
+            );
         }
 
-    public Iterator<V> iterator()  
+    public Iterator<MetaNode> iterator()  
       /* This method returns an iterator for the MetaNode values,
-        not the superclass LinkedHashMap entries.
+        not the superclass HashMap entries.
         */
-      { return super.values().iterator(); }
+      { 
+        //Collection<V> ValuesCollection= super.values();  // This works.
+        Collection<MetaNode> ValuesCollection= TheHashMap.values(); // THIS IS RETURNING null!
+        return ValuesCollection.iterator();  // ????
 
-    public Collection<V> values()  // ???  Temp. method to find Map references.
-      { return null; }
+        //return TheHashMap.values().iterator(); 
+        }
 
-    public static MetaNode put
+    //public Collection<V> values()  // ???  Temp. method to find Map references.
+    //  { return null; }
+
+    // ???? need temporary static pass-through.
+    public static MetaNode get
+      ( 
+        MetaChildren< Object, MetaNode > InMetaChildren,
+        Object KeyObject
+        )
+      {
+        return InMetaChildren.TheHashMap.get( KeyObject );
+        }
+    
+    public static MetaNode put  // refactor-rename add() ????
       ( 
         MetaChildren< Object, MetaNode > InMetaChildren,
         MetaNode InMetaNode 
@@ -53,10 +80,10 @@ public class MetaChildren<K,V>
       { 
         //return null;
         return 
-         InMetaChildren.put( // Put in LinkedHashMap an entry with...
-              InMetaNode.getDataNode(), // ...key == MetaNode's DataNode and...
-              InMetaNode // ...value == the MetaNode itself.
-              );
+          InMetaChildren.TheHashMap.put( // Put in HashMap an entry with...
+            InMetaNode.getDataNode(), // ...key == MetaNode's DataNode and...
+            InMetaNode // ...value == the MetaNode itself.
+            );
         }
     
     public static MetaChildren< Object, MetaNode  > rwMetaChildren
@@ -117,8 +144,8 @@ public class MetaChildren<K,V>
         */
       {
         Iterator < Map.Entry < Object, MetaNode > >  // Get an iterator...
-          MapIterator=
-            InMetaChildren.entrySet().iterator();  // ...for HashMap entries.
+          MapIterator=  // ????
+            InMetaChildren.TheHashMap.entrySet().iterator();  // ...for HashMap entries.
         while // Save all the HashMap's entries.
           ( MapIterator.hasNext() ) // There is a next Entry.
           { // Write this HashMap entry.
