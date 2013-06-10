@@ -25,8 +25,12 @@ public class MetaFile
 
     private static final String FlatFileNameString= "Flat.txt";
     private static final String HierarchicalFileNameString= "Hierarchical.txt";
-    private static String FileNameString;
+    private static String FileNameString;  // Name of state file.
 
+    private static String FlatHeaderTokenString= 
+      "Infogora-Flat-Meta-Data-File";
+    private static String HierarchicalHeaderTokenString= 
+      "Infogora-Hierarchical-Meta-Data-File";
     private static String HeaderTokenString;  // First string in file.
 
     private static boolean WritingB;  // true means Writing.  false means Reading.
@@ -44,12 +48,9 @@ public class MetaFile
       { // start()
         // System.out.println( "MetaFile.start()");
 
-        // Set some appropriate mode variables.
-        TheRwMode= RwMode.HIERARCHICAL;
-        FileNameString= HierarchicalFileNameString;
-        HeaderTokenString= "Infogora-Hierarchical-Meta-Data-File";
-
-        MetaNode RootMetaNode= readAllStateMetaNode( );  // Do the actual read.
+        MetaNode RootMetaNode= 
+          //readFlatStateMetaNode( );
+          readHierarchicalStateMetaNode( );
 
         { // Prepare to run finish() when app terminates.
           ShutdownHook shutdownHook = new ShutdownHook();
@@ -59,9 +60,38 @@ public class MetaFile
         return RootMetaNode;  // Return the read root MetaNode, if any.
         } // start()
 
+    private static MetaNode readFlatStateMetaNode( )
+      /* Reads all MetaNodes from Flat state file.  
+        It returns the root MetaNode.
+        */
+      {
+        // Set some appropriate mode variables.
+        TheRwMode= RwMode.FLAT;
+        FileNameString= FlatFileNameString;
+        HeaderTokenString= FlatHeaderTokenString;
+        MetaNode RootMetaNode= readAllStateMetaNode( );  // Do the actual read.
+        
+        return RootMetaNode;
+        }
+
+    private static MetaNode readHierarchicalStateMetaNode( )
+      /* Reads all MetaNodes from Hierarchical state file.  
+        It returns the root MetaNode.
+        This will eventually exist only for debugging.
+        */
+      {
+        // Set some appropriate mode variables.
+        TheRwMode= RwMode.HIERARCHICAL;
+        FileNameString= HierarchicalFileNameString;
+        HeaderTokenString= HierarchicalHeaderTokenString;
+        MetaNode RootMetaNode= readAllStateMetaNode( );  // Do the actual read.
+        
+        return RootMetaNode;
+        }
+
     private static MetaNode readAllStateMetaNode( )
       /* Read all MetaNodes, or at least the root one, from file.  
-        Returns the root MetaNode read.  
+        Returns the root MetaNode that was read.  
         */
       {
         WritingB=  false;  // Indicate that we are reading.
@@ -69,10 +99,10 @@ public class MetaFile
 
         try { // Read state.
           if  //  Read state from file if...
-            ( (new File( HierarchicalFileNameString )).exists() )  // ...the file exists.
+            ( (new File( FileNameString )).exists() )  // ...the file exists.
             { //  Read state from file.
               TheRandomAccessFile=  // Open random access file.
-                new RandomAccessFile( HierarchicalFileNameString, "r" );
+                new RandomAccessFile( FileNameString, "r" );
               RootMetaNode= rwAllStateMetaNode( RootMetaNode );  // Read all state.
               DumpRemainder( );  // Output remainder for debugging.
               TheRandomAccessFile.close( );  // Close the input file.
@@ -94,9 +124,9 @@ public class MetaFile
       { // finish()
         // System.out.println( "\n\nMetaFile.finish()");
 
-        writeFlat( );  // Write in Flat text format.
-
         writeHierarchicalState( );  // Write in Hierarchical text format.
+
+        writeFlat( );  // Write in Flat text format.
 
         } // finish()
 
@@ -106,7 +136,7 @@ public class MetaFile
         // Set some appropriate mode variables.
         TheRwMode= RwMode.FLAT;
         FileNameString= FlatFileNameString;
-        HeaderTokenString= "Infogora-Flat-Meta-Data-File";
+        HeaderTokenString= FlatHeaderTokenString;
         writeAllState( );  // Do the actual write in flat text format.
         }
 
@@ -118,7 +148,7 @@ public class MetaFile
         // Set some appropriate mode variables.
         TheRwMode= RwMode.HIERARCHICAL;
         FileNameString= HierarchicalFileNameString;
-        HeaderTokenString= "Infogora-Hierarchical-Meta-Data-File";
+        HeaderTokenString= HierarchicalHeaderTokenString;
         writeAllState( );  // Do the actual write.
         }
 

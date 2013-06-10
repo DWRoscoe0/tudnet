@@ -1,6 +1,6 @@
 package allClasses;
 
-import java.util.Map;
+// import java.util.Map;
 
 import javax.swing.tree.TreePath;
 
@@ -126,14 +126,14 @@ public class PathAttributeMetaTool
           MetaNode ParentMetaNode=  // Get parent MetaNode.
             InMetaPath.getParentMetaPath().getLastMetaNode( );
           Processor: { // Process this MetaNode for a child with "WAS" attribute.
-            Piterator< Map.Entry < Object, MetaNode > > ChildPiterator= 
+            Piterator< MetaNode > ChildPiterator= 
               ParentMetaNode.getChildWithAttributePiterator( KeyString, "WAS" );
             if ( ChildPiterator.getE() == null )  // No chld with "WAS".,
               break Processor;  // Exit Processor.
             MetaNode ChildMetaNode=  // Get a reference to...
               (MetaNode)  // ...the child MetaNode which is...
-              ChildPiterator.getE().  // ...that next Entry's...
-              getValue();  // ...Value.
+              ChildPiterator.getE(); // .  // ...that next Entry's...
+              // getValue();  // ...Value.
             ChildMetaNode.remove( KeyString );  // Remove "WAS" to enable purgeB().
             if ( ChildMetaNode.purgeB() )  // If node is purgable...
               ChildPiterator.remove();  // ...remove its map entry...

@@ -3,57 +3,54 @@ package allClasses;
 
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
+// import java.util.Map;
 
 public class MetaNode
 
   extends IDNumber
 
-  // extends DefaultMutableTreeNode
-  
   /* This class represents DataNode metadata, information about DagNodes.
     
-    Some of that data is now stored in a variable called AttributesHashMap.
-    Before it was stored in the superclass DefaultMutableTreeNode.
+    Previously metadata was stored in superclass DefaultMutableTreeNode.
+    Information about previous selections was represented by
+    the order of their child MetaNodes.
     
-    Originally the class DefaultMutableTreeNode stored all the metadata.
-    This subclass was created for the convenience of a shorter name.
-    New metadata was added to it later.
+    Next the selection order information was represented by 
+    the order of entries in the children LinkedHashaaMap.
+    Also the remaining metadata was moved to attributes stored in
+    instance variable AttributesHashMap.
+    
+    Next the selection order information was moved to attributes,
+    and the order-preserving feature of LinkedHashMaps was no longer used.
     */
     
   { // class MetaNode.
   
     // Variables.
-    
-      // private static final long serialVersionUID = 1L;
 
-      //public IDNumber TheIDNumber= null;  // ID #.
+      //public IDNumber TheIDNumber= null;  // ID #.  Moved to superclass.
       private DataNode TheDataNode= null;  // Associated DataNode.
       private HashMap< String, Object > AttributesHashMap= null;
         /* Attributes of the DataNode, if any.
           The Key is a String name.
           The Value is a String value.
           */
-      protected LinkedHashMap< Object, MetaNode  > ChildrenLinkedHashMap= null;
-        /* MetaNodes of DataNode children which themselves have meta-data.
-          The Key is a child user DataNode.
-          The Value is the associated MetaNode that contains
-          the DataNode and its meta-data.
-          */
+      //protected LinkedHashMap< Object, MetaNode  > theMetaChildren= null;
+      protected MetaChildren < Object, MetaNode  > theMetaChildren= null;
+        /* MetaNodes of DataNode children which themselves have meta-data.  */
 
     // Constructors (2).
     
-      public MetaNode( )
-        /* Constructor of blank MetaNode..  */
-        { // MetaNode( )
-          super( 0 );  // Set superclass ID # to 0 so it can be loaded.
-          } // MetaNode( )
+      private MetaNode( )
+        /* Constructor of blank MetaNodes.  */
+        {
+          super( 0 );  // Set superclass ID # to 0 so it can be loaded later.
+          }
     
       public MetaNode( DataNode InDataNode )
         /* Full constructor of a MetaNode to be associated with
-          a single DataNode InDataNode, 
-          but no attributes or child MetaNodes, yet.  
+          the single DataNode InDataNode, 
+          but with no attributes or child MetaNodes, yet.  
           */
         {
           //TheIDNumber= new IDNumber( );  // Create a new IDNumber for this node.
@@ -64,12 +61,8 @@ public class MetaNode
 
           AttributesHashMap =  // Initialize attributes to be...
             new HashMap<String, Object>( 2 );  // ...a small empty map.
-          ChildrenLinkedHashMap =  // Initialize children to be an empty...
-            new LinkedHashMap< Object, MetaNode  >( // ...LinkedHashMap...
-              2, // ...with a small initial size...
-              0.75f,  // ...and this load factor...
-              true  // ...and with access-order enabled.
-              );  
+          theMetaChildren =  // Initialize children to be an empty...
+            new MetaChildren<Object, MetaNode>( );  // ...and empty MetaChildren.
           }
 
     /* Pass-through methods which reference AttributesHashMap where 
@@ -77,73 +70,74 @@ public class MetaNode
 
       public boolean containsKey( String KeyString ) 
         /* This is a pass-through to AttributesHashMap. */
-        { // get(..)
+        {
           return AttributesHashMap.containsKey( KeyString );
-          } // get(..)
+          }
 
       public Object get( String KeyString ) 
         /* This is a pass-through to AttributesHashMap. */
-        { // get(..)
+        {
           return AttributesHashMap.get( KeyString );
-          } // get(..)
+          }
 
       public Object remove( String KeyString ) 
         /* This is a pass-through to AttributesHashMap. */
-        { // remove(..)
+        {
           return AttributesHashMap.remove( KeyString );
-          } // remove(..)
+          }
 
       public Object put( String KeyString, Object ValueObject ) 
         /* This is a pass-through to AttributesHashMap. */
-        { // put(..)
+        {
           return AttributesHashMap.put( KeyString, ValueObject );
-          } // put(..)
+          }
 
     // Other methods.
 
       public DataNode getDataNode()
         /* This returns the DataNode associated with this MetaNode.  */
-        { // getUserObject()
+        {
           return TheDataNode;  // Return the user object associated with this node.
-          } // getUserObject()
+          }
 
       public boolean purgeB()
         /* This method is used to purge MetaNode-s which contain
           no useful information, meaning no attributes.
           If this MetaNode has no attributes then it
           recursively tries purging its child MetaNode-s.
-          It returns true if it finds attributes in any MetaNode, 
-          false otherwise.
+          It returns false if it finds attributes in any MetaNode,
+          meaning the node can't be purged, true otherwise.
           */
-        { // boolean purgeB()
+        {
           boolean OkayToRemoveB= false;  // Assume we can't complete purge.
           Processor: {  // Purge testing and processing.
             if ( ! AttributesHashMap.isEmpty() )  //* There are attributes.
               break Processor;  // Exit with default no-purge indication.
-            Iterator  // Get an iterator for HashMap containing the children.
-              < Map.Entry < Object, MetaNode > > MapIterator= 
-              ChildrenLinkedHashMap.entrySet().iterator();
+            Iterator  // Get an iterator for children.
+              < MetaNode > ChildIterator= 
+              theMetaChildren.iterator();
             ChildScanner: while (true) { // Scan children for purging. 
-              if ( ! MapIterator.hasNext() )  //  There are no more children.
+              if ( ! ChildIterator.hasNext() )  //  There are no more children.
                 break ChildScanner;  // Exit child scanner loop.
               MetaNode ChildMetaNode=  // Get a reference to...
                 (MetaNode)  // ...the child MetaNode which is...
-                MapIterator.next().  // ...that next Entry's...
-                getValue();  // ...Value.
-              if ( ! ChildMetaNode.purgeB() )  // Child is not purgable.
+                ChildIterator.next();  // ...the next one.
+              if ( ! ChildMetaNode.purgeB() )  // The child is not purgable.
                 break Processor;  // Exit with default no-purge indication.
-              MapIterator.remove();  // Remove purgable child from map.
+              ChildIterator.remove();  // Remove child from MetaChildren.
               } // Scan children for purging. 
             OkayToRemoveB= true;  // Indicate okay for complete purge.
             }  // Purge testing and processing.
           return OkayToRemoveB;  // Return calculated purge result.
-          } // boolean purgeB()
+          }
 
-      public static MetaNode rwNumberOrNode
+      /*
+      public static MetaNode XrwNumberOrNode
         ( MetaNode InMetaNode, DataNode ParentDataNode )
         /* rw/Writes either an IDNumber node or the whole MetaNode, 
           depending on the RwMode context.
           */
+      /*
         { 
           switch ( MetaFile.TheRwMode ) {
             case FLAT:
@@ -159,6 +153,7 @@ public class MetaNode
 
           return InMetaNode;  // Return the new or the original MetaNode.
           }
+      */
 
       public static MetaNode rwMultiMetaNode
         ( MetaNode InMetaNode, DataNode ParentDataNode )
@@ -166,32 +161,30 @@ public class MetaNode
           InMetaNode and its descendents if in flat file mode.
           It does it either hierarchically as one chunk,
           or flat by splitting off the individual descendent nodes,
-          depending on the value of MetaFile.FlatFileB.
+          depending on the value of MetaFile.TheRwMode.
           See rwMetaNode(..) for more information.
           */
-        { // rwSplittableMetaNode()
-          MetaNode ResultMetaNode=  // Process main MetaNode.
+        {
+          InMetaNode=  // Process main MetaNode.
             rwMetaNode( InMetaNode, ParentDataNode );
 
           if  // Process the children again if we're splitting them off.
             ( MetaFile.TheRwMode == MetaFile.RwMode.FLAT )
             { // Process the children separately.
-              Iterator < Map.Entry < Object, MetaNode > > MapIterator=  // Get an iterator...
-                InMetaNode.ChildrenLinkedHashMap.
-                entrySet().
-                iterator();  // ...for HashMap entries.
+              Iterator < MetaNode > ChildIterator=  // Get an iterator...
+                InMetaNode.theMetaChildren.
+                iterator();  // ...for MetaChildren MetaNodes.
               while // Save all the HashMap's entries.
-                ( MapIterator.hasNext() ) // There is a next Entry.
+                ( ChildIterator.hasNext() ) // There is a next Entry.
                 { // Write this HashMap entry.
-                  Map.Entry < Object, MetaNode > AnEntry= // Get Entry 
-                    MapIterator.next();  // ...that is next Entry.
-                  MetaNode TheMetaNode= AnEntry.getValue( );  // Get the value MetaNode.
+                  MetaNode TheMetaNode=  // Get the MetaNode...
+                    ChildIterator.next();  // ...that is next Entry.
                   MetaNode.rwMultiMetaNode( TheMetaNode, null );  // Write MetaNode.
                   } // Write this HashMap entry.
               } // Process the children separately.
 
-          return ResultMetaNode;  // Return the main MetaNode.
-          } // rwSplittableMetaNode()
+          return InMetaNode;  // Return the main MetaNode.
+          }
 
       private static MetaNode rwMetaNode
         ( MetaNode InMetaNode, DataNode ParentDataNode )
@@ -209,9 +202,6 @@ public class MetaNode
           MetaFile.rwListBegin( );  // Mark the beginning of the list.
             
           MetaFile.rwIndentedWhiteSpace( );  // Indent correctly.
-          //InMetaNode.TheIDNumber= IDNumber.rwIDNumber(  // Rw...
-          //  InMetaNode.TheIDNumber  // ...TheIDNumber.
-          //  );
           InMetaNode.rwIDNumber();  // Rw the ID #.
             
           MetaFile.rwIndentedWhiteSpace( );  // Indent correctly.
@@ -222,9 +212,9 @@ public class MetaNode
             );
           InMetaNode.AttributesHashMap=  // Rw the attributes.
             Attributes.rwAttributesHashMap( InMetaNode.AttributesHashMap );
-          InMetaNode.ChildrenLinkedHashMap=  // Rw...
-            Children.rwChildrenLinkedHashMap(  // ...the children hash map...
-              InMetaNode.ChildrenLinkedHashMap, 
+          InMetaNode.theMetaChildren=  // Rw...
+            MetaChildren.rwMetaChildren(  // ...the children hash map...
+              InMetaNode.theMetaChildren, 
               InMetaNode.TheDataNode  // ...using this DataNode for lookups.
               );
 
@@ -261,7 +251,7 @@ public class MetaNode
           */
         { // MetaNode getChildWithAttributeMetaNode( String InKeyString )
           MetaNode ResultChildMetaNode= null;  // Assume no result child.
-          Piterator< Map.Entry < Object, MetaNode > > ChildPiterator= 
+          Piterator< MetaNode > ChildPiterator= 
             getChildPiterator(  );
           Scanner: while (true) { // Scan children for desired attribute. 
             Tester: { // Test child MetaNode for attribute.
@@ -269,8 +259,8 @@ public class MetaNode
                 break Scanner;  // Exit search loop with default null result.
               MetaNode ChildMetaNode=  // Get a reference to...
                 (MetaNode)  // ...the child MetaNode which is...
-                ChildPiterator.getE().  // ...that next Entry's...
-                getValue();  // ...Value.
+                ChildPiterator.getE(); // .  // ...that next Entry's...
+                // getValue();  // ...Value.
               if  // Child MetaNode does not have the desired key and value.
                 ( ! ChildMetaNode.hasAttributeB( InKeyString, InValueObject ) )
                 break Tester;  // Exit Tester.
@@ -285,31 +275,30 @@ public class MetaNode
           return ResultChildMetaNode; // return result child, if any.
           } // MetaNode getChildWithAttributeMetaNode( String InKeyString )
 
-      Piterator< Map.Entry < Object, MetaNode > > getChildWithAttributePiterator
+      Piterator< MetaNode > getChildWithAttributePiterator
         ( String InKeyString, Object InValueObject )
-        /* This method returns a Piterator into the child HashMap,
+        /* This method returns a Piterator into the MetaChildren,
           pointing to the first child MetaNode, if any, 
-          with an attribute with key InKeyString and value InValueObject.
-          If no child MetaNode has the attribute then 
+          with an attribute with key==InKeyString and value==InValueObject.
+          If no child MetaNode has this attribute then 
           the returned Piterator will point to null. 
           */
         {
-          Piterator< Map.Entry < Object, MetaNode > > ChildPiterator= 
+          Piterator< MetaNode > ChildPiterator=  // Get initializzed Piterator.
             getChildPiterator(  );
           Scanner: while (true) { // Scan children for desired attribute. 
             if ( ChildPiterator.getE() == null )  //  There are no more children.
               break Scanner;  // Exit loop with Piterator at null.
             MetaNode ChildMetaNode=  // Get a reference to...
               (MetaNode)  // ...the child MetaNode which is...
-              ChildPiterator.getE().  // ...that next Entry's...
-              getValue();  // ...Value.
-            if  // Found child MetaNode with desired attribute.  Return it.
+              ChildPiterator.getE(); // .  // ...the present element.
+            if  // Child MetaNode has desired attribute.  Return it.
               ( ChildMetaNode.hasAttributeB( InKeyString, InValueObject ) )
               break Scanner;  // Exit loop with Piterator at found child.
             // The child MetaNode does not have the desired key and value.
-            ChildPiterator.next();  // Point to next child MetaNode.
+            ChildPiterator.next();  // Advance Piterator to next child MetaNode.
             } // Scan children looking for desired attribute.
-          return ChildPiterator;
+          return ChildPiterator;  // Return Piterator pointing to found child.
           }
 
       MetaNode PutChildUserObjectMetaNode( Object InObject )
@@ -319,84 +308,38 @@ public class MetaNode
           does not already exist.
           In either case, it returns the child MetaNode with InObject.
           */
-        { // MetaNode PutChildUserObjectITreeNode( InObject )
-          MetaNode MapChildMetaNode=  // Try to get the MetaNode and move-to-front...
-            ChildrenLinkedHashMap.get(  // ...in the child LinkedHashMap...
+        {
+          MetaNode MapChildMetaNode=  // Try to get the MetaNode...
+            theMetaChildren.get(  // ...from the MetaChildren...
               InObject );  // ... from the entry containing InObject.
           if ( MapChildMetaNode == null ) // Create new HashMap entry if not there.
             { // Create new HashMap entry.
               MapChildMetaNode= // Create new MetaNode with desired Object.
                 new MetaNode( (DataNode)InObject );
-              ChildrenLinkedHashMap.put(   // Add new entry which maps...
+              theMetaChildren.put(   // Add new entry which maps...
                 InObject,  // ...key InObject to...
                 MapChildMetaNode  // ... the value MetaNode containing it.
                 );
               } // Create new HashMap entry.
           return MapChildMetaNode;  // Return new/old child from map as result.
-          } // MetaNode PutChildUserObjectITreeNode( InObject )
+          }
 
-      public Piterator< Map.Entry < Object, MetaNode > > getChildPiterator(  )
+      public Piterator< MetaNode > getChildPiterator(  )
         /* This method returns a Piterator for iterating
-          over the child hash map.
+          over the MetaChildren MetaNodes.
           */
-        { // getChildPiterator( )
+        {
         
-          Iterator  // Get an iterator for HashMap containing the children.
-            < Map.Entry < Object, MetaNode > > MapIterator= 
-              ChildrenLinkedHashMap.entrySet().iterator();
+          Iterator  // Get a regular iterator for the MetaChildren.
+            < MetaNode > ChildIterator= 
+              theMetaChildren.iterator();
             
-          Piterator  // Make Piterator from Iterator.
-            < Map.Entry < Object, MetaNode > > ChildPiterator= 
-              new Piterator<>( MapIterator );
+          Piterator  // Make a Piterator from the Iterator.
+            < MetaNode > ChildPiterator= 
+              new Piterator<>( ChildIterator );
 
-          return ChildPiterator;
-          } // getChildPiterator( )
+          return ChildPiterator;  // Return the Piterator.
 
-      /*
-      public MetaNode xGetLastChildMetaNode(  )
-        /* This method gets the child MetaNode of this MetaNode 
-          which was referenced last, or null if there are no children.  
-          It makes use of the fact that ChildrenLinkedHashMap
-          links its entries together in use-order.
-          
-          Use of this method is being phased out and replace by
-          an equivalent method in class Selection.
-          */
-        /*
-        { // GetLastChildMetaNode( )
-          MetaNode LastChildMetaNode= null;  // Assume there is no last child.
-
-          Iterator < Map.Entry < Object, MetaNode > > MapIterator=  // Get an iterator...
-            ChildrenLinkedHashMap.entrySet().iterator();  // ...for HashMap entries.
-          while // Use Iterator to get the HashMap's last Entry's Value.
-            ( MapIterator.hasNext() ) // If there is a next Entry...
-            LastChildMetaNode= // ...get a reference to...
-              (MetaNode)  // ...the MetaNode which is...
-              MapIterator.next().  // ...that next Entry's...
-              getValue();  // ...Value.
-        
-          return LastChildMetaNode; // return last child MetaNode result, if any.
-          } // GetLastChildMetaNode( )
-        */
-
-      /*
-      DataNode xGetLastReferencedChildDataNode(  )
-        /* This method gets the user object DataNode from
-          the child MetaNode in this MetaNode 
-          which was referenced last, or null if there are no children.  */
-      /*
-        { // GetLastReferencedChildDagNode( )
-          DataNode RecentChildDataNode= null;// assume default value of null.
-          do { // override with child if there is one.
-            MetaNode LastChildMetaNode= GetLastChildMetaNode( );
-            if (LastChildMetaNode == null)  // there is no last child.
-              break ;  // so keep the default null result.
-            RecentChildDataNode=  // Result recent child DataNode is...
-              LastChildMetaNode.   // ...the last child's...
-              getDataNode();  // user object.
-            } while ( false );  // override with child if there is one.
-          return RecentChildDataNode; // return resulting DataNode, or null if none.
-          } // GetLastReferencedChildDagNode( )
-      */
+          }
 
     } // class MetaNode.

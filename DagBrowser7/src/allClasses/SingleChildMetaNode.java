@@ -20,18 +20,17 @@ public class SingleChildMetaNode
           whose DataNode is InDataNode and with
           a single child MetaNode InChildMetaNode 
           and no attributes.  */
-        { // SingleChildMetaNode( DataNode InDataNode )
+        {
 
           super(   // Use superclass constructor...
             InDataNode  // ...to store associated DataNode.
             );
 
-          ChildrenLinkedHashMap.put( // Add a child map entry which maps...
-            InChildMetaNode.  // ...the child MetaNode's...
-              getDataNode(),  // ...associated DataNode to...
-            InChildMetaNode  // ...the child MetaNode itself.
+          MetaChildren.put(  // Store...
+            theMetaChildren, // ...into the MetaChildren...
+            InChildMetaNode // ...the new child MetaNode.
             );
 
-          } // SingleChildMetaNode( DataNode InDataNode )
+          }
 
     } // class SingleChildMetaNode
