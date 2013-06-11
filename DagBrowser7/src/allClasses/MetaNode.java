@@ -287,15 +287,14 @@ public class MetaNode
           */
         {
           MetaNode MapChildMetaNode=  // Try to get the MetaNode...
-            MetaChildren.get(  // ...from the MetaChildren...
-              theMetaChildren,
-              InObject );  // ... from the entry containing InObject.
+            theMetaChildren.get(  // ...from the MetaChildren...
+              InObject   // ... from the entry containing InObject.
+              );
           if ( MapChildMetaNode == null ) // Create new HashMap entry if not there.
             { // Create new HashMap entry.
               MapChildMetaNode= // Create new MetaNode with desired Object.
                 new MetaNode( (DataNode)InObject );
-              MetaChildren.put(   // Add...
-                theMetaChildren,  // ...to MetaChildren...
+              theMetaChildren.put(   // Add...
                 MapChildMetaNode  // ... the child MetaNode.
                 );
               } // Create new HashMap entry.

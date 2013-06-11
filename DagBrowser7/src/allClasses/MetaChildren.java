@@ -44,28 +44,21 @@ public class MetaChildren
         return ValuesCollection.iterator();  // Return an iterator built from it.
         }
 
-    public static MetaNode get
-      ( 
-        MetaChildren InMetaChildren,
-        Object KeyObject
-        )
-      /* This method returns the MetaNode in InMetaChildren
+    public MetaNode get( Object KeyObject )
+      /* This method returns the child MetaNode 
         which is associated with DataNode KeyObject.
         */
       {
-        return InMetaChildren.TheHashMap.get( KeyObject );
+        return TheHashMap.get( KeyObject );
         }
     
-    public static MetaNode put
-      ( MetaChildren InMetaChildren,
-        MetaNode InMetaNode 
-        )
-      /* This method adds InMetaNode to the InMetaChildren,
-        unless it's already there.
+    public MetaNode put( MetaNode InMetaNode )
+      /* This method adds InMetaNode to this MetaChildren instance.
+        It also returns InMetaNode.
         */
       { 
         return  // Return result of...
-          InMetaChildren.TheHashMap.put( // ..putting into HashMap an entry with...
+          TheHashMap.put( // ..putting into HashMap an entry with...
             InMetaNode.getDataNode(), // ...key == MetaNode's DataNode and...
             InMetaNode // ...value == the MetaNode itself.
             );
@@ -111,8 +104,7 @@ public class MetaChildren
               break;  // Exit loop.
             MetaNode newMetaNode=  // Read the possibly nested MetaNode.
               MetaNode.rwMultiMetaNode( null, InParentDataNode );
-            MetaChildren.put(  // Store...
-              newMetaChildren, // ...into the new MetaChildren...
+            newMetaChildren.put(  // Store...
               newMetaNode // ...the new child MetaNode.
               );
             } // Read a child or exit.

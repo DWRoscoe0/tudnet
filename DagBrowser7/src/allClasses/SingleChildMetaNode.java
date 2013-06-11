@@ -26,8 +26,7 @@ public class SingleChildMetaNode
             InDataNode  // ...to store associated DataNode.
             );
 
-          MetaChildren.put(  // Store...
-            theMetaChildren, // ...into the MetaChildren...
+          theMetaChildren.put(  // Store...
             InChildMetaNode // ...the specified single child MetaNode.
             );
 
