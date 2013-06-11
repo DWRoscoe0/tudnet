@@ -28,7 +28,7 @@ public class SingleChildMetaNode
 
           MetaChildren.put(  // Store...
             theMetaChildren, // ...into the MetaChildren...
-            InChildMetaNode // ...the new child MetaNode.
+            InChildMetaNode // ...the specified single child MetaNode.
             );
 
           }

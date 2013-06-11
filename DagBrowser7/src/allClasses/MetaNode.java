@@ -16,12 +16,14 @@ public class MetaNode
     the order of their child MetaNodes.
     
     Next the selection order information was represented by 
-    the order of entries in the children LinkedHashaaMap.
+    the order of entries in the LinkedHashaaMap which contained the children.
     Also the remaining metadata was moved to attributes stored in
     instance variable AttributesHashMap.
     
     Next the selection order information was moved to attributes,
     and the order-preserving feature of LinkedHashMaps was no longer used.
+    
+    Next the children was moved to its own class, MetaChildren.
     */
     
   { // class MetaNode.
@@ -35,8 +37,7 @@ public class MetaNode
           The Key is a String name.
           The Value is a String value.
           */
-      //protected LinkedHashMap< Object, MetaNode  > theMetaChildren= null;
-      protected MetaChildren < Object, MetaNode  > theMetaChildren= null;
+      protected MetaChildren theMetaChildren= null;
         /* MetaNodes of DataNode children which themselves have meta-data.  */
 
     // Constructors (2).
@@ -48,21 +49,20 @@ public class MetaNode
           }
     
       public MetaNode( DataNode InDataNode )
-        /* Full constructor of a MetaNode to be associated with
+        /* This constructs a MetaNode associated with 
           the single DataNode InDataNode, 
           but with no attributes or child MetaNodes, yet.  
           */
         {
-          //TheIDNumber= new IDNumber( );  // Create a new IDNumber for this node.
           super( );  // Assign the superclass ID # to be something meaningful.
 
           TheDataNode=  // Save DataNode associated with this MetaNode.
             InDataNode; 
 
           AttributesHashMap =  // Initialize attributes to be...
-            new HashMap<String, Object>( 2 );  // ...a small empty map.
-          theMetaChildren =  // Initialize children to be an empty...
-            new MetaChildren<Object, MetaNode>( );  // ...and empty MetaChildren.
+            new HashMap< String, Object >( 2 );  // ...a small empty map.
+          theMetaChildren =  // Initialize children to be...
+            new MetaChildren( );  // ...an empty MetaChildren instance.
           }
 
     /* Pass-through methods which reference AttributesHashMap where 
@@ -106,7 +106,8 @@ public class MetaNode
           If this MetaNode has no attributes then it
           recursively tries purging its child MetaNode-s.
           It returns false if it finds attributes in any MetaNode,
-          meaning the node can't be purged, true otherwise.
+          meaning the node can't be purged.
+          It returns true otherwise.
           */
         {
           boolean OkayToRemoveB= false;  // Assume we can't complete purge.
@@ -131,35 +132,11 @@ public class MetaNode
           return OkayToRemoveB;  // Return calculated purge result.
           }
 
-      /*
-      public static MetaNode XrwNumberOrNode
-        ( MetaNode InMetaNode, DataNode ParentDataNode )
-        /* rw/Writes either an IDNumber node or the whole MetaNode, 
-          depending on the RwMode context.
-          */
-      /*
-        { 
-          switch ( MetaFile.TheRwMode ) {
-            case FLAT:
-              //InMetaNode.TheIDNumber= IDNumber.rwIDNumber(  // Rw...
-              //  InMetaNode.TheIDNumber  // ...TheIDNumber.
-              //  );
-              InMetaNode.rwIDNumber();  // Rw the ID #.
-              break;
-            case HIERARCHICAL:
-              rwMultiMetaNode( InMetaNode, ParentDataNode );
-              break;
-            }
-
-          return InMetaNode;  // Return the new or the original MetaNode.
-          }
-      */
-
       public static MetaNode rwMultiMetaNode
         ( MetaNode InMetaNode, DataNode ParentDataNode )
-        /* This is like rwMetaNode(..) except that it will process
-          InMetaNode and its descendents if in flat file mode.
-          It does it either hierarchically as one chunk,
+        /* This is like rwMetaNode(..) except that in addition to InMetaNode, 
+          it also rw-processes its descendents if in flat file mode.
+          It processes either hierarchically as one chunk,
           or flat by splitting off the individual descendent nodes,
           depending on the value of MetaFile.TheRwMode.
           See rwMetaNode(..) for more information.
@@ -222,9 +199,6 @@ public class MetaNode
           return InMetaNode;  // Return the new or the original MetaNode.
           }
 
-      
-    // Methods which deal with the children.
-
       boolean hasAttributeB( String InKeyString, Object InValueObject )
         /* This method tests whether this MetaNode contains an attribute entry
           with key InKeyString and value InValueObject.
@@ -242,6 +216,9 @@ public class MetaNode
             } // Test for attribute.
           return ResultB;
           } // hasAttributeB( .. )
+
+      
+    // Methods which deal more with the children of this MetaNode.
 
       MetaNode getChildWithAttributeMetaNode
         ( String InKeyString, Object InValueObject )
@@ -309,11 +286,6 @@ public class MetaNode
           In either case, it returns the child MetaNode with InObject.
           */
         {
-          /*
-          MetaNode MapChildMetaNode=  // Try to get the MetaNode...
-            theMetaChildren.get(  // ...from the MetaChildren...
-              InObject );  // ... from the entry containing InObject.
-          */
           MetaNode MapChildMetaNode=  // Try to get the MetaNode...
             MetaChildren.get(  // ...from the MetaChildren...
               theMetaChildren,
@@ -332,7 +304,7 @@ public class MetaNode
 
       public Piterator< MetaNode > getChildPiterator(  )
         /* This method returns a Piterator for iterating
-          over the MetaChildren MetaNodes.
+          through the MetaChildren MetaNodes.
           */
         {
         
