@@ -69,11 +69,31 @@ public abstract class AbDataNode
           return ChildIndexI;  // Return index as search result.
           } // getIndexOfChild(.)
 
-      public int getIndexOfNamedChild( String InString ) 
+      public DataNode getNamedChildDataNode( String InNameString )
+        /* Returns the child DataNode whose name is InNameString.
+          If no such child exists, then it returns null.
+          */
+        { 
+          DataNode ChildDataNode;
+          int ChildIndexI= 0;  // Initialize child search index.
+          while ( true ) // Search for child by trying each child index.
+            { // Check one child index.
+              ChildDataNode= getChild( ChildIndexI );  // get the child.
+              if ( ChildDataNode == null )  // null means no more children.
+                break;  // Exit while loop.
+              if  // Found child with desired name.
+                ( InNameString.equals( ChildDataNode.GetNameString( ) ) )
+                break;  // Exit while loop.
+              ChildIndexI++;  // Increment index to check next child.
+              } // Check one child index.
+          return ChildDataNode;  // Return the child DataNode.
+          }
+
+      public int getIndexOfNamedChild( String InString )  //???
         /* Returns the index of the child whose name is InString,
           or -1 if this node's has no such child. 
           It assumes a functional getChild(.) method.  */
-        { // getIndexOfNamedChild(.)
+        {
           int ChildIndexI= 0;  // Initialize child search index.
           while ( true ) // Search for child.
             { // Check one child.
@@ -92,7 +112,7 @@ public abstract class AbDataNode
               ChildIndexI++;  // Increment index to check next child.
               } // Check one child.
           return ChildIndexI;  // Return index as search result.
-          } // getIndexOfNamedChild(.)
+          }
 
       public String GetInfoString()
         /* Returns a String representing information about this object. */

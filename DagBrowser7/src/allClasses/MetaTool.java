@@ -8,9 +8,9 @@ import javax.swing.tree.TreePath;
 class MetaTool
 
   /* This class is used to store meta-data associated with
-    nodes of the Infogora DAG (Directed Acyclic Graph).
+    DataNodes of the Infogora DAG (Directed Acyclic Graph).
     This includes information about which node children
-    were referenced or visited most recently.
+    were selected, referenced or visited most recently.
     A location within the DAG is specified with
     a TreePath when information is to be read or stored.
     
@@ -27,85 +27,110 @@ class MetaTool
   
     // Instance variables.
     
-      private TreePath DataTreePath;  // Identifies data DAG path from root.
-      private MetaPath TheMetaPath;  // Identifies associated meta DAG path.
+      private TreePath TheTreePath;  /* The path of DataNodes from 
+        the DataNode DAG root parent to 
+        the DataNode at the location of interest.  */
+      private MetaPath TheMetaPath;  /* The path of MetaNodes from 
+        the MetaNode DAG root parent to 
+        the MetaNode that holds the meta-data for
+        the DataNode at the location of interest.  */
       
       // This class non-static code block initializes some instance variables.
       {
-        DataTreePath= DataRoot.getParentOfRootTreePath();
+        TheTreePath= DataRoot.getParentOfRootTreePath();
         TheMetaPath= MetaRoot.getParentOfRootMetaPath( );
         }
       
     // Constructors.  None at this time.
     
       public MetaTool( TreePath InTreePath )
-        /* This constructor takes InTreePath and builds a MetaTool
-          with DataTreePath set to InTreePath and
-          TheMetaPath set to an equivalent path using the Sync(..) method.
+        /* This constructor builds a MetaTool setup to access 
+          the MetaNode for the DAG location associated with InTreePath.
           */
-        { // MetaTool( TreePath InTreePath )
+        {
         
-          // Instance variables DataTreePath and TheMetaPath are already set.
+          /* The instance variables TheTreePath and TheMetaPath 
+            have already been set by the class non-static code block
+            to reference the parents of the roots of 
+            their respective DAGs.
+            */
           
-          Sync( InTreePath );  // Sync instance variables with InTreePath.
+          Sync( InTreePath );  // Adjust the instance variables so that...
+            // ...the locations they represent match...
+            // ...the MetaNode associated with InTreePath.
 
-          } // MetaTool( TreePath InTreePath )
+          }
   
     // Instance methods.
     
       public void Sync( TreePath InTreePath )
-        /* This recursive method syncs the [old] DataTreePath 
-          with the new InTreePath.
-          At the same time it causes TheMetaPath to match.
+        /* This recursive method adjusts the instance variables 
+          so that the locations they represent match
+          the MetaNode associated with InTreePath.
+          It does this by comparing InTreePath with instance variable
+          DataTree and if necessary adjusting TheTreePath and TheMetaPath 
+          to match InTreePath.
           It tries to do this incrementally and recursively, 
-          assuming the paths have a lot in common at the left end.
+          so if InTreePath and TheTreePath are very similar,
+          then syncing will be very fast.
           */
         { // Sync( TreePath InTreePath )
-          if ( InTreePath == DataTreePath ) // Paths are same reference.
+          if ( InTreePath == TheTreePath ) // Paths are same reference.
             ; // Do nothing because they are already in sync.
-          else if ( InTreePath.equals( DataTreePath ) ) // Paths are equal.
-            DataTreePath= InTreePath;  // Copy reference.  Now they're in sync.
+          else if ( InTreePath.equals( TheTreePath ) ) // Paths are equal.
+            TheTreePath= InTreePath;  // Copy reference.  Now they're in sync.
           else if  // Paths are different but have the same length.
-            ( InTreePath.getPathCount() == DataTreePath.getPathCount() )
+            ( InTreePath.getPathCount() == TheTreePath.getPathCount() )
             SyncSameLengthsButDifferent( InTreePath );
           else if // New path is longer than old path. 
-            ( InTreePath.getPathCount() > DataTreePath.getPathCount() )
+            ( InTreePath.getPathCount() > TheTreePath.getPathCount() )
             SyncLonger( InTreePath );
           else // New path is shorter than old path. 
             SyncShorter( InTreePath );
           } // Sync( TreePath InTreePath )
 
       private void SyncLonger( TreePath InTreePath )
-        { // SyncLonger()
+        /* This method handles the Sync case when
+          the new path is longer than the old path.
+          */
+        {
           Sync( InTreePath.getParentPath() );  // Sync with shorter new path.
           SyncTheMetaPathFromTreePath( InTreePath );
-          DataTreePath= InTreePath;  // Add last TreePath element by assigning.
-          } // SyncLonger()
+          TheTreePath= InTreePath;  // Add last TreePath element by assigning.
+          }
 
       private void SyncShorter( TreePath InTreePath )
-        { // SyncShorter()
-          DataTreePath= DataTreePath.getParentPath();  // Shorten old path.
+        /* This method handles the Sync case when
+          the new path is shorter than the old path.
+          */
+        {
+          TheTreePath= TheTreePath.getParentPath();  // Shorten old path.
           TheMetaPath=  // Shorten MetaPath by removing last MetaNode.
             TheMetaPath.getParentMetaPath( );
           Sync( InTreePath );  // Sync the shorter paths with new path.
-          } // SyncShorter()
+          }
 
       private void SyncSameLengthsButDifferent( TreePath InTreePath )
-        { // SyncSameLengthsButDifferent()
-          DataTreePath= DataTreePath.getParentPath();  // Shorten old path.
+        /* This method handles the Sync case when
+          the new path is the same length as the old path,
+          but they are known to be unequal.
+          */
+        {
+          TheTreePath= TheTreePath.getParentPath();  // Shorten old path.
           TheMetaPath=  // Shorten MetaPath by removing last MetaNode.
             TheMetaPath.getParentMetaPath( );
           Sync( InTreePath.getParentPath() );  // Sync shortened paths.
           SyncTheMetaPathFromTreePath( InTreePath );
-          DataTreePath= InTreePath;  // Add last element by assigning.
-          } // SyncSameLengthsButDifferent()
+          TheTreePath= InTreePath;  // Add last element by assigning.
+          }
 
       private void SyncTheMetaPathFromTreePath( TreePath InTreePath )
-        /* This is a helper method for the above Sync... methods.  
-          It extends the MetaNode DAG, and adds an element to TheMetaPath,
+        /* This is a helper method for some of the above Sync... methods.  
+          It extends the MetaNode DAG if needed, 
+          and adds an element to TheMetaPath,
           to match the DataNode DAG path InTreePath.
           */
-        { // SyncTheMetaPathFromTreePath()
+        {
           Object DataObject=  // Get user Object from new TreePath element.
             InTreePath.getLastPathComponent( );
           MetaNode ChildMetaNode=   // Put it in MetaNode as child MetaNode.
@@ -117,14 +142,16 @@ class MetaTool
               TheMetaPath,  // ...old MetaPath...
               ChildMetaNode  // ...and ChildMetaNode as new path element.
               );
-          } // SyncTheMetaPathFromTreePath()
+          }
   
     // Instance getter methods.
 
       public MetaPath getMetaPath()
+        /* Returns the MetaPath associated with this tool.  */
         { return TheMetaPath; }
 
       public MetaNode getMetaNode()
+        /* Returns the MetaNode associated with this tool.  */
         { return TheMetaPath.getLastMetaNode(); }
 
     } // class MetaTool.

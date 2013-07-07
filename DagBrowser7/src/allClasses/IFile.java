@@ -152,7 +152,20 @@ public class IFile
           }
           
     // other interface DataNode methods.
-      
+
+      public DataNode getNamedChildDataNode( String InNameString )
+        /* Returns the child DataNode whose name is InNameString.
+          If no such child exists, then it constructs and returns
+          a dummy IFile with the same name and this parent IFile.
+          */
+        { 
+          DataNode ChildDataNode=  // Let superclass try lookup.
+            super.getNamedChildDataNode( InNameString );
+          if ( ChildDataNode == null )  // Construct dummy if superclass failed.
+            ChildDataNode= new IFile( this, InNameString );
+          return ChildDataNode;  // Return the child DataNode.
+          }
+          
       public String GetInfoString()
         /* Returns a String representing information about this object. */
         { // GetInfoString()
@@ -160,15 +173,7 @@ public class IFile
           try { // Build information string about file.
             ResultInfoString+= ""
               + "Name=\"" + GetNameString() + "\""; // file name.
-            // if ( TheFile.isDirectory() )
-            //   ResultInfoString+= " Directory";
-            // if ( TheFile.isFile() )
-            //   ResultInfoString+= " File";
             ResultInfoString+= " Size=" + TheFile.length(); // file size.
-            // if ( TheFile.canRead() )
-            //   ResultInfoString+= " Readable"; // readability.
-            // if ( TheFile.canWrite() )
-            //   ResultInfoString+= " Writable"; // writability.
             
             Path ThePath= TheFile.toPath();  // Convert to Path for following.
             if ( Files.isDirectory( ThePath, LinkOption.NOFOLLOW_LINKS ) )

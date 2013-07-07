@@ -115,7 +115,7 @@ public class DagBrowserPanel
           It also starts a BlinkerTimer used to indicate 
           that the program is running.
           
-          This is too long and should be broken up.  ??
+          This is too long and should be broken up.  ???
           */
         { // DagBrowserPanel()
           { // build and add subpanels of this Panel. ????
@@ -270,32 +270,15 @@ public class DagBrowserPanel
           It also builds the MetaTool cache DAG which
           stores information about the Infogora graph.
           */
-        { // BuildDataModelsAndGraphs()
-
-          // RootDataNode= // Calculate data tree root to be...
-          //   new InfogoraRoot( );  // ...root of entire Infogora hierarchy.
-
-          // ??? DataRoot.Initialize( RootDataNode ); // Initialize DataNode DAG and...
-          // DataRoot.Initialize( ); // Initialize DataNode DAG and...
-            // ...associated MetaNode DAG.
-          //DataNode RootDataNode;
-          //RootDataNode= // Get data tree root from DataRoot.
-          //  DataRoot.getRootDataNode( );
-
-          //TreePath ParentOfRootTreePath=  // Calculate parent root TreePath...
-          //  new TreePath(   // ...to be TreePath...
-          //    DataRoot.getParentOfRootDataNode()  // ...to the parent root.
-          //    );
+        {
           StartTreePath= // Initialize StartTreePath for browsing...
-             Selection.buildAttributeTreePath( );  // ...selection path from state file.
-          //  ParentOfRootTreePath.pathByAddingChild( RootDataNode );  // ...by adding root.
+            Selection.buildAttributeTreePath( );  // ...saved selection state.
           TheDataTreeModel =  // Initialize DataTreeModel for JTree using...
             //new DataTreeModel(RootDataNode);  // ...DataNode root.
             new DataTreeModel(   // ...DataNode root parent.
               DataRoot.getParentOfRootDataNode() 
               );
-
-          } // BuildDataModelsAndGraphs()
+          }
 
     // Listener methods.
   
@@ -415,6 +398,7 @@ public class DagBrowserPanel
                 DisplayPathAndInfoV(SelectedTreePath); // display other info.
 
                 TreeSelectionReentryBlockedB= false;  // now that we are done, allow re-entry.
+                Misc.DbgEventDone(); // ??? Debug.
                 } // process the TreeSelectionEvent.
             } // valueChanged( TreeSelectionEvent TheTreeSelectionEvent ) 
 

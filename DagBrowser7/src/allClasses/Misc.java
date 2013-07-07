@@ -36,6 +36,22 @@ public class Misc
         { }
 
       private static int DbgCountI= 0;
+      
+      public static void xDbgOut( ) 
+        { 
+          DbgOut( "-" ); 
+          }
+      
+      public static void DbgEventDone()
+        /* This is a convenient place to catch 
+          after a user input event is processed. 
+          This is useful because the Java event loop is not accessible.
+          */
+        { 
+          // DbgOut( "-" ); 
+          // MetaFile.writeHierarchicalState( );  // ??? Display for debugging.
+          }
+      
       public static void DbgOut( String InString )
         /* This outputs to the console a new line containing a counter, 
           which is incremented, followed by InString.
@@ -49,6 +65,7 @@ public class Misc
             InString 
             );
 
+          NoOp( );
           }
 
     } // class Misc 

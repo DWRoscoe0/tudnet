@@ -166,7 +166,8 @@ public class DataTreeModel
             */
           { // GetAbsolutePathString(.)
             String ResultString= "";  // Initialize ResultString to empty.
-            while ( InTreePath != null )  // While more TreePath to process...
+            while  // While more TreePath to process...
+              ( ! DataRoot.getParentOfRootTreePath( ).equals( InTreePath ) )
               { // ...process one element of TreePath onto ResultString.
                 DataNode LastDataNode=  // Get last element.
                   (DataNode)(InTreePath.getLastPathComponent());
@@ -183,9 +184,6 @@ public class DataTreeModel
                 InTreePath=  // Replace the TreePath...
                   InTreePath.getParentPath();  // ...by its parent TreePath.                
                 } // ...process one element of TreePath onto ResultString.
-            //ResultString=  // Kludge Windows drive letter by prepending...
-            //  "DriveC" +  // ...volume prefix...
-            //  ResultString;  // ...to the ResultString.
             return ResultString;  // Return completed ResultString.
             } // GetAbsolutePathString(.)
 

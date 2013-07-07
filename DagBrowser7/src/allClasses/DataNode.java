@@ -39,6 +39,14 @@ public interface DataNode
         or -1 if this node's has no such child. 
         It assumes a functional getChild(.) method.  */
 
+    public DataNode getNamedChildDataNode( String InString );
+        /* Returns the child DataNode whose name is InNameString.
+          If no such child exists, then it can:
+            return null, or
+            return a dummy DataNode to represent a past child,
+              for example an IFile representing a deleted file.
+          This method is used for reading from the MetaFile.  */
+
     public String GetInfoString( );  /* Returns a String containing 
       human-readable information about this DataNode.  */
 

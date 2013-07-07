@@ -33,8 +33,8 @@ public class IDNumber
         { 
           TheI= InI;  // Use the number provided as argument to constructor.
           }
-      
-    // Other methods.
+
+    // static methods.
     
       private static void skipThisNumber( int NumberToSkipI )
         /* Makes certain that NumberToSkipI is not used as the ID number
@@ -45,6 +45,7 @@ public class IDNumber
             NextI= NumberToSkipI + 1;  // Increase NextI.
           }
         
+    // instance methods.
       
       public void rwIDNumber( )
         /* This io-processes this IDNumber's value int TheI.  */
@@ -68,31 +69,4 @@ public class IDNumber
 
           } // io()
  
-      /*
-      public static IDNumber rwIDNumber( IDNumber InIDNumber )  /* ??? This 
-          will be deleted when no longer needed. */
-        /* This io-processes an IDNumber InIDNumber.  */
-      /*
-      { // io()
-          MetaFile.rwIndentedWhiteSpace( );  // Rw the obligatory white-space.
-          
-          MetaFile.rwLiteral( "#" );  // Rw the special introducer character.
-          { // Load or save IDNumber.
-            if ( InIDNumber == null )  // An IDNumber was not provided.
-              { // Create and load an IDNumber from file.
-                String NumberString= MetaFile.readTokenString( );
-                int I= Integer.parseInt( NumberString );
-                InIDNumber= new IDNumber( I );  // Create one.
-                skipThisNumber( I );  // Make certain this # is not reused.
-                } // Create and load an IDNumber from file.
-            else  // An IDNumber was provided.
-              { // Save IDNumber to file.
-                MetaFile.writeToken( Integer.toString( InIDNumber.TheI ) );
-                } // Save IDNumber to file.
-            }  // Load or save IDNumber.
-
-          return InIDNumber;
-          } // io()
-      */
-
     }

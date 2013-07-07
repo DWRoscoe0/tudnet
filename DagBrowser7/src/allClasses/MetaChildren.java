@@ -1,4 +1,4 @@
-package allClasses;
+ package allClasses;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -42,6 +42,31 @@ public class MetaChildren
         Collection<MetaNode> ValuesCollection=  // Calculate the Collection.
           TheHashMap.values();
         return ValuesCollection.iterator();  // Return an iterator built from it.
+        }
+
+    public Collection<MetaNode> getCollectionOfMetaNode()
+      /* This method returns a Collection containing the child MetaNodes.  
+        Presently these are the child HashMap values.
+        */
+      { 
+        Collection<MetaNode> ValuesCollectionMetaNode= 
+          TheHashMap.values();
+        return ValuesCollectionMetaNode;
+        }
+
+    public Piterator<MetaNode> getPiteratorOfMetaNode()
+      /* This method returns a Piterator for this MetaNode's 
+        child MetaNodes.  Presently these are the child HashMap values.
+        */
+      { 
+        Collection<MetaNode> ValuesCollectionMetaNode= 
+          TheHashMap.values();
+        //return new MetaPiteratorOfMetaNode( ValuesCollectionMetaNode );
+        Iterator<MetaNode> ValuesIteratorMetaNode=
+          ValuesCollectionMetaNode.iterator();
+        Piterator<MetaNode> ValuesPiteratorMetaNode=
+              new Piterator<>( ValuesIteratorMetaNode );
+        return ValuesPiteratorMetaNode;
         }
 
     public MetaNode get( Object KeyObject )

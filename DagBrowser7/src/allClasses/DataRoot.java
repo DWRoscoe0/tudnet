@@ -21,23 +21,14 @@ public class DataRoot
       static
       /* This class static code block initializes the static variables.  */
       {
-        // RootDataNode= InRootDataNode;  // Save the root.  ???
         RootDataNode= new InfogoraRoot( );  // Define root node.
         ParentOfRootDataNode= // Initialize a usable Parent for root.
           new SingleChildDataNode( RootDataNode );
         ParentOfRootTreePath=  // Initialize associated TreePath.
           new TreePath( ParentOfRootDataNode );
-
-        // MetaRoot.Initialize( ); // initialize MetaNode DAG from DataNode DAG.
         }
 
     // Methods.
-
-      // public static void Initialize( )  // ( DataNode InRootDataNode )
-        /* This initializes the static variables.
-          InRootDataNode is used as the root of the Data DAG.
-          */
-      //  {}
 
       public static DataNode getRootDataNode( )
         { return RootDataNode; }

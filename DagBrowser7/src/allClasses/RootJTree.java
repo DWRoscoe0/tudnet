@@ -83,12 +83,17 @@ public class RootJTree
               CommandGoToParentV();  // go to parent folder.
             else if (KeyCodeI == KeyEvent.VK_RIGHT)  // right-arrow key.
               CommandGoToChildV();  // go to child folder.
+            else if (KeyCodeI == KeyEvent.VK_X)  // X-key.  ??? Debug.
+              Misc.DbgEventDone(); // ??? Debug.
             else
               KeyProcessedB= false;
             } // try to process the key event.
-          if (KeyProcessedB)  // if the key event was processed...
-            TheKeyEvent.consume();  // ... prevent further processing of it.
-                  
+          if // Post process key... 
+            (KeyProcessedB)  // ...if it was processed earlier.
+            { // Post process key.
+              TheKeyEvent.consume();  // ... prevent further processing of it.
+              Misc.DbgEventDone(); // ??? Debug.
+              } // Post process key.
           } // keyPressed.
 
         @Override
@@ -107,40 +112,41 @@ public class RootJTree
             It records position and other information in the MetaTool tree.
             */
           { // valueChanged( TreeSelectionEvent TheTreeSelectionEvent )
-            final TreePath FinalNewTreePath=   // Get the destination TreePath...
-              TheTreeSelectionEvent.  // ...which is the TreeSelectionEvent's...
+            final TreePath FinalNewTreePath=  // Get destination TreePath...
+              TheTreeSelectionEvent.  // ...which is the event's...
               getNewLeadSelectionPath();  // ...one and only TreePath.
-            if // process TreePath
-              ( FinalNewTreePath == null ) // ...based on null-hood.
-              ;  // ignore null selection TreePath-s.
-              else
-              { // process non-null selection TreePath.
-                TreePath OldTreePath= 
-                  SelectedTreePath;  // Get old TreePath.
-                if ( OldTreePath == null )  // Don't let OldTreePath be null...
-                  OldTreePath= FinalNewTreePath;  // ...simulating null selection change.
+            if // Process based on whether destination path is null.
+              ( FinalNewTreePath == null ) // Destination path is null.
+              ;  // So do nothing.
+              else  // Destination path is not null.
+              { // Process non-null destination TreePath.
+                TreePath OldTreePath= // Set old TreePath to...
+                  SelectedTreePath;  // ...present selection.
+                if ( OldTreePath == null )  // If OldTreePath is null...
+                  OldTreePath= FinalNewTreePath;  // ...simulate no change.
                 final TreePath FinalOldTreePath= OldTreePath;  // for Runnable().
                 SelectedTreePath=  // store the new selected TreePath from...
                   FinalNewTreePath; // which was calculated previously.
                 SelectedObject=  // store the last path component as selected Object.
                   SelectedTreePath.getLastPathComponent();
 
-                // SwingUtilities.invokeLater(.) can't be used because
-                // node is already expanded.
-                
-                //boolean wasCollapsedB= isCollapsed( OldTreePath );
                 if ( isVisible( SelectedTreePath ) )  // if new path is visible...
                   {
-                    scrollPathToVisible( SelectedTreePath );  // ...make it visible.
+                    scrollPathToVisible( SelectedTreePath );  // ...show it.
                     MyPaintImmediately( );  // show progress.
-                    //System.out.print( " RootJTree.valueChanged( ).scrollPathToVisible()");
                     }
                 
                 CollapseAndExpand( // Collapse and expand nodes along path...
                   FinalOldTreePath, // ...from the previous selection...
                   FinalNewTreePath  // ...to the new selection.
                   ) ;
-                } // process non-null selection TreePath.
+                //Misc.DbgOut( ); // ??? Debug.
+                Selection.setAndReturnMetaNode( // Do selection...
+                  FinalNewTreePath  // ...of the final path.
+                  );
+                } // Process non-null destination TreePath.
+
+            Misc.DbgEventDone(); // ??? Debug.
             } // valueChanged( TreeSelectionEvent TheTreeSelectionEvent )
         
         private void CollapseAndExpand
@@ -150,22 +156,20 @@ public class RootJTree
             
             It does this by calling CollapseAndExpandRaw(.)
             but wraps this call in code to insulate the app
-            from any JTree node selections that might cause.
+            from any JTree node selections that it might cause.
             */
           { // CollapseAndExpand(.)
-            TreeSelectionListener[] TreeSelectionListeners= // get listeners.
+            TreeSelectionListener[] TreeSelectionListeners= // Get listeners.
               getTreeSelectionListeners();
             for // disable all TreeSelectionListener-s by removing them.
               ( TreeSelectionListener ATreeSelectionListener : 
                 TreeSelectionListeners 
                 )
               removeTreeSelectionListener( ATreeSelectionListener );
-
             CollapseAndExpandRaw( // Collapse and expand along path...
               StartTreePath, // ...from the previous selection...
               StopTreePath  // ...to the new selection.
               ) ;
-
             SelectNodeV(  // reselect...
               StopTreePath   // ...original selection TreePath because...
               );  // ...CollapseAndExpandRaw() might have changed it.
@@ -188,9 +192,8 @@ public class RootJTree
             This method must be wrapped by CollapseAndExpandRaw(.) because 
             collapsing or expanding apparently causes JTree selections.
             */
-          { // ](.)
-        	  // ??? Selection.put( StartTreePath );  // record visit information.
-            TreePath CommonAncestorTreePath= // do the up part.
+          {
+            TreePath CommonAncestorTreePath= // Do the up part.
               CollapseAndExpandUpTreePath( StartTreePath, StopTreePath );
             { // expand downward if needed.
               if // scan node is a descendent of (same as) stop node.
@@ -214,9 +217,10 @@ public class RootJTree
                     //Misc.DbgOut( "RootJTree.CollapseAndExpandRaw( ).reselection");
                     setSelectionPath(   // ...to autoexpand by selecting...
                       AutoExpandTreePath );  // ...last node in expand path.
+                    //Misc.DbgOut( ); // ??? Debug.
                     }  
                 });
-            } // CollapseAndExpandRaw(.)
+            }
 
         private TreePath CollapseAndExpandUpTreePath
           ( TreePath StartTreePath, TreePath StopTreePath) 
@@ -229,12 +233,12 @@ public class RootJTree
             */
           { // CollapseAndExpandUpTreePath(.)
             TreePath ScanTreePath= StartTreePath;  // prepare up-scan.
-            while  // process tree positions up to the common ancestor.
+            while  // Process tree positions up to the common ancestor.
               ( ! ScanTreePath.isDescendant( StopTreePath ) )
-              { // move and process one position toward root.
+              { // Move and process one position toward root.
                 ScanTreePath=   // Move one position toward root.
                   ScanTreePath.getParentPath();
-                if // auto-collapse this node if...
+                if // Auto-collapse this node if...
                   ( ( // ... it was auto-expanded. 
                   		TreeExpansion.GetAutoExpandedB( ScanTreePath ) 
                       ) &&  // ...and...
@@ -243,16 +247,13 @@ public class RootJTree
                       ScanTreePath.equals( StopTreePath )
                       )  
                     )
-                  { // auto-collapse. 
-                    collapsePath( ScanTreePath );  // collapse.
+                  { // Collapse and display this path.
+                    collapsePath( ScanTreePath );  // Collapse it.
                     // Notice that the the AutoExpandedB status is not cleared.
-                    //setSelectionPath( ScanTreePath );  // select node
-                      // temporarilly also for visibility.
-                    scrollPathToVisible( ScanTreePath );  // to show progress.
-                    MyPaintAfterDelay( );  // show progress.
-                    //System.out.print( "RootJTree.CollapseAndExpandUpTreePath(.)");
-                    } // auto-collapse.
-                } // move and process one position toward root.
+                    scrollPathToVisible( ScanTreePath );  // Position it.
+                    MyPaintAfterDelay( );  // Paint now for a dynamic display.
+                    } // Collapse and display this path.
+                } // Move and process one position toward root.
             return ScanTreePath;  // return the final common ancestor TreePath.
             } // CollapseAndExpandUpTreePath(.)
 
@@ -269,23 +270,20 @@ public class RootJTree
             TreePath StopsParentTreePath= StopTreePath.getParentPath();
             boolean atTopLevelB=  // Determine whether recursion needed.
               ( StopsParentTreePath.equals( StartTreePath ) );
-            if  // recursively process nodes farther from StopTreePath.
-              ( ! atTopLevelB ) // there are such nodes.
-              CollapseAndExpandDown(  // recursively process them.
+            if  // Recursively process nodes farther from StopTreePath.
+              ( ! atTopLevelB ) // There are such nodes.
+              CollapseAndExpandDown(  // Recursively process them.
                 StartTreePath, StopsParentTreePath
                 );
-            if // auto-expand Parent node if it is presently collapsed. 
+            if // Auto-expand Parent node if it is presently collapsed. 
               ( isCollapsed( StopsParentTreePath ) )
-              { // auto-expand. 
-                expandPath( StopsParentTreePath );  // expand node.
-                //setSelectionPath( StopsParentTreePath );  // select node
-                  // temporarilly also for visibility.
-                scrollPathToVisible( StopsParentTreePath );  // to show progress.
-                TreeExpansion.SetAutoExpanded(  // set auto-expanded status.
+              { // Auto-expand. 
+                expandPath( StopsParentTreePath );  // Expand node.
+                scrollPathToVisible( StopsParentTreePath );  // Position it.
+                TreeExpansion.SetAutoExpanded(  // Set auto-expanded status.
                   StopsParentTreePath, true
                   );
                 MyPaintAfterDelay( );  // show progress.
-                //System.out.print( "RootJTree.CollapseAndExpandDown(.)");
                 } // auto-expand.
             } // CollapseAndExpandDown(.)
 
@@ -306,7 +304,7 @@ public class RootJTree
         { // CommandGoToChildV().
           Object ChildObject=  // try to get child...
           	Selection.  // ...from the visits tree...
-          	  putAndReturnDataNode( // ...most recently visited...
+          	  setAndReturnDataNode( // ...most recently visited...
                 SelectedTreePath 
                 );  // ...of the tree node at end of selected TreePath.
               
@@ -417,7 +415,6 @@ public class RootJTree
 
         private void MyPaintImmediately( )
           { // MyPaintImmediately( )
-            //Misc.DbgOut( "RootJTree.MyPaintImmediately( ).");
             paintImmediately( getBounds( ) );  // show progress.
             } // MyPaintImmediately( )
 

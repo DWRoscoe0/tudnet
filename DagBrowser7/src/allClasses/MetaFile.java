@@ -60,10 +60,12 @@ public class MetaFile
         return RootMetaNode;  // Return the read root MetaNode, if any.
         } // start()
 
+    /* ???
     private static MetaNode readFlatStateMetaNode( )
       /* Reads all MetaNodes from Flat state file.  
         It returns the root MetaNode.
         */
+    /*
       {
         // Set some appropriate mode variables.
         TheRwMode= RwMode.FLAT;
@@ -73,6 +75,7 @@ public class MetaFile
         
         return RootMetaNode;
         }
+    */
 
     private static MetaNode readHierarchicalStateMetaNode( )
       /* Reads all MetaNodes from Hierarchical state file.  
@@ -140,7 +143,7 @@ public class MetaFile
         writeAllState( );  // Do the actual write in flat text format.
         }
 
-    private static void writeHierarchicalState( )
+    public /*private*/ static void writeHierarchicalState( )
       /* Writes all MetaNodes to Hierarchical file.  
         This will eventually exist only for debugging.
         */
@@ -226,13 +229,17 @@ public class MetaFile
         or be delimited by double-quotes.
         On return the file position is after the token,
         and before the delimiting white space, if any.
-        This also handles IOException-s.  */
+        It uses String.intern( ) on returned strings can be compared using 
+        "==" and "!=".  
+
+        This also handles IOException-s.  
+        */
       { // readTokenString( String InString )
-        String TokenString= "";  // Token character accumulator initially empty.
+        String TokenString= "";  // Set token character accumulator to empty.
         try {
           long StartingOffsetLI= // Save offset of beginning of token.
             TheRandomAccessFile.getFilePointer();
-          int ByteI= TheRandomAccessFile.read( );  // Try reading the first byte.
+          int ByteI= TheRandomAccessFile.read( );  // Try reading first byte.
           if ( (char)ByteI == '\"') // Handle quoted string.
             while (true) { // Process entire token, if any.
               ByteI= TheRandomAccessFile.read( );  // Try reading token byte.

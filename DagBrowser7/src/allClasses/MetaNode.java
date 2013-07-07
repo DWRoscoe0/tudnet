@@ -89,48 +89,12 @@ public class MetaNode
       public Object put( String KeyString, Object ValueObject ) 
         /* This is a pass-through to AttributesHashMap. */
         {
-          return AttributesHashMap.put( KeyString, ValueObject );
+          Object ResultObject= 
+            AttributesHashMap.put( KeyString, ValueObject );
+          return ResultObject;
           }
 
-    // Other methods.
-
-      public DataNode getDataNode()
-        /* This returns the DataNode associated with this MetaNode.  */
-        {
-          return TheDataNode;  // Return the user object associated with this node.
-          }
-
-      public boolean purgeB()
-        /* This method is used to purge MetaNode-s which contain
-          no useful information, meaning no attributes.
-          If this MetaNode has no attributes then it
-          recursively tries purging its child MetaNode-s.
-          It returns false if it finds attributes in any MetaNode,
-          meaning the node can't be purged.
-          It returns true otherwise.
-          */
-        {
-          boolean OkayToRemoveB= false;  // Assume we can't complete purge.
-          Processor: {  // Purge testing and processing.
-            if ( ! AttributesHashMap.isEmpty() )  //* There are attributes.
-              break Processor;  // Exit with default no-purge indication.
-            Iterator  // Get an iterator for children.
-              < MetaNode > ChildIterator= 
-              theMetaChildren.iterator();
-            ChildScanner: while (true) { // Scan children for purging. 
-              if ( ! ChildIterator.hasNext() )  //  There are no more children.
-                break ChildScanner;  // Exit child scanner loop.
-              MetaNode ChildMetaNode=  // Get a reference to...
-                (MetaNode)  // ...the child MetaNode which is...
-                ChildIterator.next();  // ...the next one.
-              if ( ! ChildMetaNode.purgeB() )  // The child is not purgable.
-                break Processor;  // Exit with default no-purge indication.
-              ChildIterator.remove();  // Remove child from MetaChildren.
-              } // Scan children for purging. 
-            OkayToRemoveB= true;  // Indicate okay for complete purge.
-            }  // Purge testing and processing.
-          return OkayToRemoveB;  // Return calculated purge result.
-          }
+    // Read/Write methods.
 
       public static MetaNode rwMultiMetaNode
         ( MetaNode InMetaNode, DataNode ParentDataNode )
@@ -199,6 +163,9 @@ public class MetaNode
           return InMetaNode;  // Return the new or the original MetaNode.
           }
 
+    // Attribute tester and child searcher methods.
+    // These methods could benefit from refactoring.
+
       boolean hasAttributeB( String InKeyString, Object InValueObject )
         /* This method tests whether this MetaNode contains an attribute entry
           with key InKeyString and value InValueObject.
@@ -220,62 +187,109 @@ public class MetaNode
       
     // Methods which deal more with the children of this MetaNode.
 
+      MetaNode getChildWithKeyMetaNode( String InKeyString )
+        /* This method returns the first child MetaNode, if any, 
+          with an attribute with key InKeyString.
+          It returns null if no child MetaNode attribute has that key.
+          
+          Maybe refactor this use AttributePiterator subclasses???
+          */
+        {
+          KeyMetaPiteratorOfMetaNode ChildKeyMetaPiteratorOfMetaNode= 
+            new KeyMetaPiteratorOfMetaNode( 
+              theMetaChildren.getCollectionOfMetaNode(),
+              InKeyString
+              );
+          return ChildKeyMetaPiteratorOfMetaNode.getE();
+          }
+
       MetaNode getChildWithAttributeMetaNode
         ( String InKeyString, Object InValueObject )
         /* This method returns the first child MetaNode, if any, 
-          with an attribute with key InKeyString and value InValueObject.
-          If no child MetaNode has the attribute then null is returned.
-          */
-        { // MetaNode getChildWithAttributeMetaNode( String InKeyString )
-          MetaNode ResultChildMetaNode= null;  // Assume no result child.
-          Piterator< MetaNode > ChildPiterator= 
-            getChildPiterator(  );
-          Scanner: while (true) { // Scan children for desired attribute. 
-            Tester: { // Test child MetaNode for attribute.
-              if ( ChildPiterator.getE() == null )  //  There are no more children.
-                break Scanner;  // Exit search loop with default null result.
-              MetaNode ChildMetaNode=  // Get a reference to...
-                (MetaNode)  // ...the child MetaNode which is...
-                ChildPiterator.getE(); // .  // ...that next Entry's...
-                // getValue();  // ...Value.
-              if  // Child MetaNode does not have the desired key and value.
-                ( ! ChildMetaNode.hasAttributeB( InKeyString, InValueObject ) )
-                break Tester;  // Exit Tester.
-              { // Found child MetaNode with desired attribute.  Return it.
-                ResultChildMetaNode=  // Override default null result with...
-                  ChildMetaNode;  // ...found child MetaNode.
-                break Scanner;  // Exit search loop with found child.
-                } // Found child MetaNode with desired attribute.  Return it.
-              } // Test child MetaNode for attribute.
-            ChildPiterator.next();  // Point to next child MetaNode.
-            } // Scan children looking for desired attribute.
-          return ResultChildMetaNode; // return result child, if any.
-          } // MetaNode getChildWithAttributeMetaNode( String InKeyString )
-
-      Piterator< MetaNode > getChildWithAttributePiterator
-        ( String InKeyString, Object InValueObject )
-        /* This method returns a Piterator into the MetaChildren,
-          pointing to the first child MetaNode, if any, 
-          with an attribute with key==InKeyString and value==InValueObject.
-          If no child MetaNode has this attribute then 
-          the returned Piterator will point to null. 
+          with an attribute with key == InKeyString and value == InValueObject.
+          If no child MetaNode has this attribute then null is returned.
+          
+          Maybe refactor this use AttributePiterator subclasses???
           */
         {
-          Piterator< MetaNode > ChildPiterator=  // Get initializzed Piterator.
-            getChildPiterator(  );
+          KeyAndValueMetaPiteratorOfMetaNode ChildKeyAndValueMetaPiteratorOfMetaNode=
+            new KeyAndValueMetaPiteratorOfMetaNode( 
+              theMetaChildren.getCollectionOfMetaNode(),
+              InKeyString,
+              InValueObject
+              );
+          return ChildKeyAndValueMetaPiteratorOfMetaNode.getE();
+
+          }
+
+      Piterator< MetaNode > getChildWithAttributePiteratorOfMetaNode
+        ( String InKeyString, Object InValueObject )
+        /* This method returns a PiteratorOfMetaNode into the MetaChildren,
+          pointing to the first child MetaNode, if any, 
+          with an attribute with key==InKeyString and value==InValueObject.
+          If no child MetaNode has this attribute combination then 
+          the returned PiteratorOfMetaNode will point to null. 
+          
+          Maybe refactor this to put more logic into 
+          AttributePiterator subclasses which understand attributes ???
+          */
+        {
+          Piterator<MetaNode>  // Get initializzed PiteratorOfMetaNode.
+            ChildPiteratorOfMetaNode= getChildPiteratorOfMetaNode(  );
           Scanner: while (true) { // Scan children for desired attribute. 
-            if ( ChildPiterator.getE() == null )  //  There are no more children.
+            if   //  There are no more children.
+              ( ChildPiteratorOfMetaNode.getE() == null )
               break Scanner;  // Exit loop with Piterator at null.
             MetaNode ChildMetaNode=  // Get a reference to...
               (MetaNode)  // ...the child MetaNode which is...
-              ChildPiterator.getE(); // .  // ...the present element.
+              ChildPiteratorOfMetaNode.getE(); // ...the present element.
             if  // Child MetaNode has desired attribute.  Return it.
               ( ChildMetaNode.hasAttributeB( InKeyString, InValueObject ) )
               break Scanner;  // Exit loop with Piterator at found child.
-            // The child MetaNode does not have the desired key and value.
-            ChildPiterator.next();  // Advance Piterator to next child MetaNode.
+            // This child MetaNode does not have the desired key and value.
+            ChildPiteratorOfMetaNode.next();  // Advance to next child.
             } // Scan children looking for desired attribute.
-          return ChildPiterator;  // Return Piterator pointing to found child.
+          return ChildPiteratorOfMetaNode;  // Return child-pointing Piterator.
+          }
+
+    // Miscellaneous methods.
+
+      public DataNode getDataNode()
+        /* This returns the DataNode associated with this MetaNode.  */
+        {
+          return TheDataNode;  // Return the user object associated with this node.
+          }
+
+      public boolean purgeB()
+        /* This method is used to purge MetaNode-s which contain
+          no useful information, meaning no attributes.
+          If this MetaNode has no attributes then it
+          recursively tries purging its child MetaNode-s.
+          It returns false if it finds attributes in any MetaNode,
+          meaning the node can't be purged.
+          It returns true otherwise.
+          */
+        {
+          boolean OkayToRemoveB= false;  // Assume we can't complete purge.
+          Processor: {  // Purge testing and processing.
+            if ( ! AttributesHashMap.isEmpty() )  //* There are attributes.
+              break Processor;  // Exit with default no-purge indication.
+            Iterator  // Get an iterator for children.
+              < MetaNode > ChildIterator= 
+              theMetaChildren.iterator();
+            ChildScanner: while (true) { // Scan children for purging. 
+              if ( ! ChildIterator.hasNext() )  //  There are no more children.
+                break ChildScanner;  // Exit child scanner loop.
+              MetaNode ChildMetaNode=  // Get a reference to...
+                (MetaNode)  // ...the child MetaNode which is...
+                ChildIterator.next();  // ...the next one.
+              if ( ! ChildMetaNode.purgeB() )  // The child is not purgable.
+                break Processor;  // Exit with default no-purge indication.
+              ChildIterator.remove();  // Remove child from MetaChildren.
+              } // Scan children for purging. 
+            OkayToRemoveB= true;  // Indicate okay for complete purge.
+            }  // Purge testing and processing.
+          return OkayToRemoveB;  // Return calculated purge result.
           }
 
       MetaNode PutChildUserObjectMetaNode( Object InObject )
@@ -301,22 +315,12 @@ public class MetaNode
           return MapChildMetaNode;  // Return new/old child from map as result.
           }
 
-      public Piterator< MetaNode > getChildPiterator(  )
+      public Piterator<MetaNode> getChildPiteratorOfMetaNode(  )
         /* This method returns a Piterator for iterating
-          through the MetaChildren MetaNodes.
+          through this MetaNode's MetaChildren.
           */
         {
-        
-          Iterator  // Get a regular iterator for the MetaChildren.
-            < MetaNode > ChildIterator= 
-              theMetaChildren.iterator();
-            
-          Piterator  // Make a Piterator from the Iterator.
-            < MetaNode > ChildPiterator= 
-              new Piterator<>( ChildIterator );
-
-          return ChildPiterator;  // Return the Piterator.
-
+          return theMetaChildren.getPiteratorOfMetaNode();
           }
 
     } // class MetaNode.

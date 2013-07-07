@@ -19,11 +19,17 @@ public class DataRw
             else
               ; // Okay as is.
             } // Prevent troublesome values for name.
+          /*
           DataNode TheDataNode =  // Set DataNode to be...
             ParentDataNode.getChild(  // ...the child...
               ParentDataNode.getIndexOfNamedChild( 
                 NameString  // ...with that name.
                 )
+              );
+          */
+          DataNode TheDataNode =  // Set DataNode to be...
+            ParentDataNode.getNamedChildDataNode(  // ...the child...
+              NameString  // ...with that name.
               );
           if ( TheDataNode == null )  // replace with error object if null.  ???
             TheDataNode= ErrorDataNode.getSingletonErrorDataNode( );

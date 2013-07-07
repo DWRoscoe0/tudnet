@@ -13,9 +13,10 @@ public class ErrorDataNode
       
       // ??? convert to Singleton and test in MetaRoot constructor.
 
-    private ErrorDataNode( ) 
+    private ErrorDataNode( )
+      // Constructor.
       { 
-        // System.out.print( "  ErrorDataNode( ) " );
+        // Misc.DbgOut( "  ErrorDataNode( ) " );
         }  // To make debugging easier.
 
     public String GetNameString( )

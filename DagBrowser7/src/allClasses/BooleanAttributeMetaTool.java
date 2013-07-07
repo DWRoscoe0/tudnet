@@ -15,7 +15,7 @@ public class BooleanAttributeMetaTool
       public BooleanAttributeMetaTool
         ( TreePath InTreePath, String InKeyString )
         {
-          super( InTreePath, InKeyString );  // Superclass does it all.
+          super( InTreePath, InKeyString ); // Superclass does all initialization.
           }
 
     // Static methods.
@@ -58,7 +58,8 @@ public class BooleanAttributeMetaTool
           */
         { 
           String ValueString=  // Translate boolean Value into string.
-            ( ValueB ? "T" : "F" );
+            //( ValueB ? "T" : "F" );
+            ( ValueB ? "T" : null );
           put( ValueString );  // Store value String.
           }
 

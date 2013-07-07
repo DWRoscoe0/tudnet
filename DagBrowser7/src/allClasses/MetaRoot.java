@@ -2,9 +2,9 @@ package allClasses;
 
 //import javax.swing.tree.TreePath;
 
-public class MetaRoot 
+public class MetaRoot
   /* This class manages the root of the MetaNode-s structure.  */
-  {
+  { // class MetaRoot.
     // variables.  all static, so this is a static class.
     
       private static MetaNode RootMetaNode;  /* Root of tree which 
@@ -39,7 +39,7 @@ public class MetaRoot
                 InRootDataNode   // ...the INFOGORA-ROOT DataNode.
                 );
             RootMetaNode.put(  // Add attribute for initial Selection.
-              Selection.AttributeName, "IS");
+              Selection.SelectionAttributeString, "IS");  // ??? Kludgy.
             } // Make root MetaNode DAG a single MetaNode.
 
         ParentOfRootMetaNode= // Make parent of root MetaNode be...
@@ -50,15 +50,6 @@ public class MetaRoot
             
         ParentOfRootMetaPath=  // Make ParentOfRootMetaPath be...
           new MetaPath( null, ParentOfRootMetaNode );  // MetaPath to parent node.
-
-        // ???? I need to add root to it's parent.
-        /*
-        MetaTool.UpdatePath(  // Initialize MetaTool...
-          new TreePath(   // ...with a single element TreePath to...
-            InRootDataNode   // ...the root DataNode.
-            ) 
-          );
-        */
           
         } // Initialize MetaRoot static fields.
 
@@ -79,4 +70,4 @@ public class MetaRoot
       public static MetaPath getParentOfRootMetaPath( )
         { return ParentOfRootMetaPath; }
 
-    }
+    } // class MetaRoot.
