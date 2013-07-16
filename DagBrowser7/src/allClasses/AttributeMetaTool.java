@@ -47,16 +47,19 @@ public class AttributeMetaTool
           }
 
       public Object put( Object InValueObject )
-        /* This is like a normal put(..), with additional functionality:
-          * It removes attributes if their values are set to null.
-          * It adds place-holder attributes with the same KeyString
-            between the current MetaNode and the root.
+        /* This is like a normal put(..), to the KeyString entry
+          of the Map, but with some additional functionality:
+          * If an attribute entry is added then
+            t adds place-holder attributes with the same KeyString
+            between the current MetaNode and the root if needed.
             This is done so that all instances of attributes with
-            the same KeyString can be found quickly.
-          * It also deletes place-holder attributes if possible when
-            an attribute value is set to null.
-          All this is done to faciliate deletion of nodes that
-          hold no useful data.
+            the same KeyString can be found quickly from the root.
+          * It removes an attribute entry if 
+            the new value InValueObject is null.
+            It also removes place-holder attributes with the same KeyString
+            between the current MetaNode and the root.if possible.
+          The place-holder attributes are maintained 
+          to faciliate deletion of nodes that hold no useful data.
 
           // ??? attribute searchers should be refactored for keys and values.
           // ??? Might mean creating special Piterators.
@@ -65,7 +68,7 @@ public class AttributeMetaTool
           MetaNode TheMetaNode= getMetaNode();  // Cache the MetaNode.
           Object OldObject=  // Get present attribute value.
              TheMetaNode.get( KeyString );
-          { // Take appropriate actions.
+          { // Take appropriate action.
             if ( OldObject == InValueObject )  // Attribute is not changing.
               ; // So do nothing.
             else if ( OldObject == null )  // Adding missing attribute.
@@ -79,7 +82,7 @@ public class AttributeMetaTool
                 } // Remove the attribute.
             else // Replace present non-null attribute value with new value.
               TheMetaNode.put( KeyString, InValueObject );  // Replace value.
-            } // Take appropriate actions.
+            } // Take appropriate action.
           return OldObject;  // Return old attribute value as result.
           }
 

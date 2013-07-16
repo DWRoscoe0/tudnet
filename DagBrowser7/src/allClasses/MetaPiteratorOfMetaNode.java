@@ -45,5 +45,12 @@ public class MetaPiteratorOfMetaNode
       {
         return NestedPiteratorMetaNode.getE();
         }
+
+    public void remove()  
+      /* Does a remove by passing it to the nested iterator. */
+      {
+        NestedPiteratorMetaNode.remove();
+        // Window set by nested Piterator.
+        }
     
     }

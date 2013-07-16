@@ -50,4 +50,11 @@ public class KeyAndValueMetaPiteratorOfMetaNode
       	  }
     	  }
 
+    public void remove()  
+      /* Does a remove by passing it to the nested iterator and relocking. */
+      {
+        super.remove();  // Pass to nested Piterator.
+        this.lockOnTarget();  // Lock onto next target.
+        }
+
     } // class KeyAndValueMetaPiteratorOfMetaNode.

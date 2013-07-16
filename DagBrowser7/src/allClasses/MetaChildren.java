@@ -1,37 +1,42 @@
- package allClasses;
+package allClasses;
 
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.HashMap;
+//import java.util.HashMap;
 //import java.util.Map;
+import java.util.ArrayList;
 
 //public class MetaChildren<K,V>
 public class MetaChildren
-
-  // extends HashMap<K,V>  
   
   /* This class implements a Collection of child MetaNodes.
-    Presently is uses a HashMap for which:
-          The Key is the child's user DataNode, the MetaNode's TheDataNode.
-          The Value is the associated MetaNode that contains
-          that DataNode and its meta-data.
-
-    The child was recently changed from a LinkedHashMap to a HashMap, 
-    and more recently that HashMap was changed from a superclass to a field.
+    Presently is uses an ArrayList to store them.
+    Before that is used a HashMap and before that a LinkedHashMap,
+    in which the MetaNode's DataNode was the key 
+    and the MetaNode was the value.
     */
 
   { // class MetaChildren 
 
-    private HashMap< Object, MetaNode > TheHashMap;  // Container of the children.
-    
+    private ArrayList< IDNumber > TheArrayList;  // Container for children.
+
 		MetaChildren() 
       // Constructor.
       {
-        TheHashMap=  // Construct the child MetaNode container in the form of a...
-          new HashMap< Object, MetaNode >(  // ...HashMap...
-            2, // ...with a small initial size...
-            0.75f //,  // ...and this load factor...
-            );
+        TheArrayList=  // Construct the child MetaNode container as...
+          new ArrayList< IDNumber >( ); // ...an ArrayList of IDNumbe-s.
+        }
+
+    public Collection<MetaNode> getCollectionOfMetaNode()
+      /* This method returns a Collection containing the child MetaNodes.  */
+      { 
+        @SuppressWarnings("unchecked")
+        Collection<MetaNode> ValuesCollectionOfMetaNode= 
+          (Collection<MetaNode>)  // Kludgey double-caste needed...
+          (Collection<?>)  // ...because of use of generic types.
+          TheArrayList;
+        
+        return ValuesCollectionOfMetaNode;
         }
 
     public Iterator<MetaNode> iterator()  
@@ -40,18 +45,8 @@ public class MetaChildren
         */
       { 
         Collection<MetaNode> ValuesCollection=  // Calculate the Collection.
-          TheHashMap.values();
+          getCollectionOfMetaNode();
         return ValuesCollection.iterator();  // Return an iterator built from it.
-        }
-
-    public Collection<MetaNode> getCollectionOfMetaNode()
-      /* This method returns a Collection containing the child MetaNodes.  
-        Presently these are the child HashMap values.
-        */
-      { 
-        Collection<MetaNode> ValuesCollectionMetaNode= 
-          TheHashMap.values();
-        return ValuesCollectionMetaNode;
         }
 
     public Piterator<MetaNode> getPiteratorOfMetaNode()
@@ -59,11 +54,8 @@ public class MetaChildren
         child MetaNodes.  Presently these are the child HashMap values.
         */
       { 
-        Collection<MetaNode> ValuesCollectionMetaNode= 
-          TheHashMap.values();
-        //return new MetaPiteratorOfMetaNode( ValuesCollectionMetaNode );
         Iterator<MetaNode> ValuesIteratorMetaNode=
-          ValuesCollectionMetaNode.iterator();
+          iterator();
         Piterator<MetaNode> ValuesPiteratorMetaNode=
               new Piterator<>( ValuesIteratorMetaNode );
         return ValuesPiteratorMetaNode;
@@ -71,22 +63,32 @@ public class MetaChildren
 
     public MetaNode get( Object KeyObject )
       /* This method returns the child MetaNode 
-        which is associated with DataNode KeyObject.
+        which is associated with DataNode KeyObject,
+        or null if there is no such MetaNode.
         */
       {
-        return TheHashMap.get( KeyObject );
+        MetaNode scanMetaNode;
+        Piterator < MetaNode > ChildPiterator= getPiteratorOfMetaNode();
+    	  while (true) {
+    	  	scanMetaNode= ChildPiterator.getE();  // Cache present candidate. 
+    	    if ( scanMetaNode == null )  // Exit if past end.
+            break; 
+    	    if  // Exit if found.
+            ( KeyObject.equals(scanMetaNode.getDataNode()) )
+            break; 
+    	    ChildPiterator.next();  // Advance Piterator to next candidate.
+      	  }
+        return scanMetaNode;
         }
     
-    public MetaNode put( MetaNode InMetaNode )
+    public MetaNode add( MetaNode InMetaNode )
       /* This method adds InMetaNode to this MetaChildren instance.
-        It also returns InMetaNode.
+        There should not already be a MetaNode with the same DataNode.
+        Returns InMetaNode.
         */
       { 
-        return  // Return result of...
-          TheHashMap.put( // ..putting into HashMap an entry with...
-            InMetaNode.getDataNode(), // ...key == MetaNode's DataNode and...
-            InMetaNode // ...value == the MetaNode itself.
-            );
+        TheArrayList.add( InMetaNode );
+        return InMetaNode;
         }
 
     public static MetaChildren rwMetaChildren
@@ -94,9 +96,9 @@ public class MetaChildren
         DataNode InParentDataNode
         )
       /* This rw-processes the MetaChildren.
-          If InMetaChildren != null then it outputs the children
+          If InMetaChildren != null then it writes the children
             to the MetaFile, and InParentDataNode is ignored.
-          If InMetaChildren == null then it inputs the children
+          If InMetaChildren == null then it reads the children
             using InParentDataNode to look up DataNode names,
             and returns a new MetaChildren instance as the function value.
           */
@@ -129,7 +131,7 @@ public class MetaChildren
               break;  // Exit loop.
             MetaNode newMetaNode=  // Read the possibly nested MetaNode.
               MetaNode.rwMultiMetaNode( null, InParentDataNode );
-            newMetaChildren.put(  // Store...
+            newMetaChildren.add(  // Store...
               newMetaNode // ...the new child MetaNode.
               );
             } // Read a child or exit.
@@ -149,15 +151,17 @@ public class MetaChildren
           ( childIterator.hasNext() ) // There is a next child.
           { // Write one child.
             MetaNode TheMetaNode= childIterator.next();  // Get the child MetaNode.
-            switch ( MetaFile.TheRwMode ) { // Write child based on RwMode.
-              case FLAT:
-                MetaFile.rwIndentedWhiteSpace( );  // Go to proper column.
-                TheMetaNode.rwIDNumber();  // Write the ID #.
-                break;
-              case HIERARCHICAL:
-                MetaNode.rwMultiMetaNode( TheMetaNode, null );  // Write MetaNode.
-                break;
-              } // Write based on mode.
+            switch // Write child based on RwStructure.
+              ( MetaFile.TheRwStructure )
+              {
+                case FLAT:
+                  MetaFile.rwIndentedWhiteSpace( );  // Go to proper column.
+                  TheMetaNode.rwIDNumber();  // Write the ID #.
+                  break;
+                case HIERARCHICAL:
+                  MetaNode.rwMultiMetaNode( TheMetaNode, null );  // Write MetaNode.
+                  break;
+                }
             } // Write one child.
         }
 

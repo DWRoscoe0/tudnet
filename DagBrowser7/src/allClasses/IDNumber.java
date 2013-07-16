@@ -53,7 +53,7 @@ public class IDNumber
           MetaFile.rwIndentedWhiteSpace( );  // Rw the obligatory white-space.
           
           MetaFile.rwLiteral( "#" );  // Rw the special introducer character.
-          { // Load or save The.
+          { // Load or save TheI.
             if ( TheI == 0 )  // Value hasn't been defined yet.
               { // Read and define value.
                 String NumberString= MetaFile.readTokenString( );
@@ -65,7 +65,7 @@ public class IDNumber
               { // Save IDNumber to file.
                 MetaFile.writeToken( Integer.toString( TheI ) );
                 } // Save IDNumber to file.
-            } // Load or save The.
+            } // Load or save TheI.
 
           } // io()
  

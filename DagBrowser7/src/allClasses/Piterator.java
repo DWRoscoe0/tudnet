@@ -24,7 +24,7 @@ public class Piterator<E>
         at its first element, but if it is then so will the Piterator.
         */
       {
-        NestedIterator= InNestedIterator;  // Save nested iterator.
+        NestedIterator= InNestedIterator;  // Save nested Iterator.
         next();  // Initialize the pointer window by advancing the pointer.
         }
 
@@ -50,7 +50,8 @@ public class Piterator<E>
     public void remove()  
       /* Does a remove by passing it to the nested iterator. */
       {
-        NestedIterator.remove();
+        NestedIterator.remove();  // Remove from nested iterator.
+        this.next();  // Use local next() to set pointer window.
         }
       
     } // class Piterator.

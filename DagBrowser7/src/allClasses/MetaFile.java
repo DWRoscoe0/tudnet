@@ -17,11 +17,11 @@ public class MetaFile
 
   { // class MetaFile.
 
-    public enum RwMode {  // Mode of reading of writing to the state files.
+    public enum RwStructure {  // Structure of the state file text.
       FLAT,
       HIERARCHICAL
       };
-    public static RwMode TheRwMode;  // Whether Rw is split or not.
+    public static RwStructure TheRwStructure;  // Whether Rw is split or not.
 
     private static final String FlatFileNameString= "Flat.txt";
     private static final String HierarchicalFileNameString= "Hierarchical.txt";
@@ -48,8 +48,12 @@ public class MetaFile
       { // start()
         // System.out.println( "MetaFile.start()");
 
-        MetaNode RootMetaNode= 
-          //readFlatStateMetaNode( );
+        MetaNode RootMetaNode;  // Place for result root MetaNode.
+
+        RootMetaNode= // Read state from flat file.  
+          readFlatStateMetaNode( );
+
+        RootMetaNode= // Read state from hierarchical file.   
           readHierarchicalStateMetaNode( );
 
         { // Prepare to run finish() when app terminates.
@@ -60,22 +64,25 @@ public class MetaFile
         return RootMetaNode;  // Return the read root MetaNode, if any.
         } // start()
 
-    /* ???
     private static MetaNode readFlatStateMetaNode( )
-      /* Reads all MetaNodes from Flat state file.  
+      /* Reads all MetaNodes from a single Flat state file.  
         It returns the root MetaNode.
+
+        This does the same thing as readHierarchicalStateMetaNode( )
+        except it does it with a flat file instead of a hierarchical one.
+        Though having all state in a single flat state file
+        is not the way flat state files will eventually be used,
+        this is a good first step to going there.
         */
-    /*
       {
         // Set some appropriate mode variables.
-        TheRwMode= RwMode.FLAT;
+        TheRwStructure= RwStructure.FLAT;
         FileNameString= FlatFileNameString;
         HeaderTokenString= FlatHeaderTokenString;
         MetaNode RootMetaNode= readAllStateMetaNode( );  // Do the actual read.
         
         return RootMetaNode;
         }
-    */
 
     private static MetaNode readHierarchicalStateMetaNode( )
       /* Reads all MetaNodes from Hierarchical state file.  
@@ -84,7 +91,7 @@ public class MetaFile
         */
       {
         // Set some appropriate mode variables.
-        TheRwMode= RwMode.HIERARCHICAL;
+        TheRwStructure= RwStructure.HIERARCHICAL;
         FileNameString= HierarchicalFileNameString;
         HeaderTokenString= HierarchicalHeaderTokenString;
         MetaNode RootMetaNode= readAllStateMetaNode( );  // Do the actual read.
@@ -97,6 +104,8 @@ public class MetaFile
         Returns the root MetaNode that was read.  
         */
       {
+        if (TheRwStructure==RwStructure.FLAT) return null; // ???? Temp.
+
         WritingB=  false;  // Indicate that we are reading.
         MetaNode RootMetaNode= null;  // Set null root because we are reading.
 
@@ -107,7 +116,7 @@ public class MetaFile
               TheRandomAccessFile=  // Open random access file.
                 new RandomAccessFile( FileNameString, "r" );
               RootMetaNode= rwAllStateMetaNode( RootMetaNode );  // Read all state.
-              DumpRemainder( );  // Output remainder for debugging.
+              DumpRemainder( );  // Output any remainder for debugging.
               TheRandomAccessFile.close( );  // Close the input file.
               } //  Read state from file.
           } // Read state.
@@ -137,7 +146,7 @@ public class MetaFile
       /* Writes all MetaNodes to Flat file.  */
       {
         // Set some appropriate mode variables.
-        TheRwMode= RwMode.FLAT;
+        TheRwStructure= RwStructure.FLAT;
         FileNameString= FlatFileNameString;
         HeaderTokenString= FlatHeaderTokenString;
         writeAllState( );  // Do the actual write in flat text format.
@@ -149,7 +158,7 @@ public class MetaFile
         */
       {
         // Set some appropriate mode variables.
-        TheRwMode= RwMode.HIERARCHICAL;
+        TheRwStructure= RwStructure.HIERARCHICAL;
         FileNameString= HierarchicalFileNameString;
         HeaderTokenString= HierarchicalHeaderTokenString;
         writeAllState( );  // Do the actual write.
@@ -349,7 +358,7 @@ public class MetaFile
         } // rwLiteral( String InString )
 
     public static int testTerminatorI( String DesiredString )
-      /* Tests whether a terminator is is next in the file.
+      /* Tests whether a terminator is next in the file.
         A terminator is either the literal String DesiredString 
         or the EndOfFile.
         If DesiredString is there then it returns an int > 0.
@@ -416,7 +425,10 @@ public class MetaFile
               } while ( ByteI != -1 ); // Display bytes until done.
             } // Output header and all file bytes.
         } // DumpRemainder( )
-    
+
+    public static boolean getWritingB()
+      { return WritingB; }
+
     } // class MetaFile.
     
 

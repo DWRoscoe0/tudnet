@@ -123,16 +123,19 @@ public class PathAttributeMetaTool
             } // Process based on path attribute on this node.
           }
 
-      private void replaceWasWithOldInSiblings( MetaPath InMetaPath )
+      /*
+      private void XreplaceWasWithOldInSiblings( MetaPath InMetaPath ) // ???
         /* Searches the attributes of the MetaNode specified by InMetaPath
           and its sibling MetaNode-ss for the value "WAS".
           If it finds this value then it replaces it with "OLD".  */
-        {
+      /*
+      {
           MetaNode ParentMetaNode=  // Get parent MetaNode.
             InMetaPath.getParentMetaPath().getLastMetaNode( );
           Processor: { // Process its children one with "WAS" attribute.
             Piterator< MetaNode > ChildPiterator= 
-              ParentMetaNode.getChildWithAttributePiteratorOfMetaNode( KeyString, "WAS" );
+              ParentMetaNode.getChildWithAttributePiteratorOfMetaNode(  // ???
+                KeyString, "WAS" );
             if ( ChildPiterator.getE() == null )  // No chld with "WAS".,
               break Processor;  // Exit Processor.
             MetaNode ChildMetaNode=  // Get a reference to...
@@ -141,6 +144,38 @@ public class PathAttributeMetaTool
             ChildMetaNode.remove( KeyString );  // Remove "WAS" for purgeB().
             if ( ChildMetaNode.purgeB() )  // If node is purgable...
               ChildPiterator.remove();  // ...remove its map entry...
+              else  // ...otherwise we must keep it so...
+              ChildMetaNode.put( KeyString, "OLD" ); // ...set "OLD" attribute.
+            } // Process its children one with "WAS" attribute.
+          }
+      */
+      
+      private void replaceWasWithOldInSiblings( MetaPath InMetaPath )
+        /* Searches the attributes of the MetaNode specified by InMetaPath
+          and its sibling MetaNode-ss for the value "WAS".
+          If it finds this value then it replaces it with "OLD".  */
+        {
+          MetaNode ParentMetaNode=  // Get parent MetaNode.
+            InMetaPath.getParentMetaPath().getLastMetaNode( );
+          Processor: { // Process its children one with "WAS" attribute.
+            KeyAndValueMetaPiteratorOfMetaNode 
+              ChildKeyAndValueMetaPiteratorOfMetaNode=
+                new KeyAndValueMetaPiteratorOfMetaNode( 
+                  ParentMetaNode.getChildrenCollectionOfMetaNode(),
+                  KeyString, 
+                  "WAS"
+                  );
+            //Piterator< MetaNode > ChildPiterator= 
+            //  ParentMetaNode.getChildWithAttributePiteratorOfMetaNode( KeyString, "WAS" );
+            if  // No chld with "WAS".,
+              ( ChildKeyAndValueMetaPiteratorOfMetaNode.getE() == null )
+              break Processor;  // Exit Processor.
+            MetaNode ChildMetaNode=  // Get a reference to...
+              (MetaNode)  // ...the child MetaNode which is...
+              ChildKeyAndValueMetaPiteratorOfMetaNode.getE(); // .  // ...that next Entry's value.
+            ChildMetaNode.remove( KeyString );  // Remove "WAS" for purgeB().
+            if ( ChildMetaNode.purgeB() )  // If node is purgable...
+              ChildKeyAndValueMetaPiteratorOfMetaNode.remove();  // ...remove its map entry...
               else  // ...otherwise we must keep it so...
               ChildMetaNode.put( KeyString, "OLD" ); // ...set "OLD" attribute.
             } // Process its children one with "WAS" attribute.
