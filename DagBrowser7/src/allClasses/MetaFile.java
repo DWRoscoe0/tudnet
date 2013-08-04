@@ -21,23 +21,32 @@ public class MetaFile
       FLAT,
       HIERARCHICAL
       };
-    public static RwStructure TheRwStructure;  // Whether Rw is split or not.
 
+    // Constants.
     private static final String FlatFileNameString= "Flat.txt";
     private static final String HierarchicalFileNameString= "Hierarchical.txt";
-    private static String FileNameString;  // Name of state file.
-
-    private static String FlatHeaderTokenString= 
+    
+    private static final String FlatHeaderTokenString= 
       "Infogora-Flat-Meta-Data-File";
-    private static String HierarchicalHeaderTokenString= 
+    private static final String HierarchicalHeaderTokenString= 
       "Infogora-Hierarchical-Meta-Data-File";
-    private static String HeaderTokenString;  // First string in file.
 
+    // Duplicated static variables.
+    private static RandomAccessFile InputRandomAccessFile= null;
+    private static RandomAccessFile OutputRandomAccessFile= null;
+
+    // non-Duplicated static variables.
+    private static String FileNameString;  // Name of state file.
+    public static RwStructure TheRwStructure;  // Whether Rw is split or not.
+    private static String HeaderTokenString;  // First string in file.
     private static boolean WritingB;  // true means Writing.  false means Reading.
-    private static RandomAccessFile TheRandomAccessFile= null;
+    //private static long MetaNodesOffsetLI;  // Start of MetaNodes.
     private static int indentLevelI; // Indent level in text file.
     private static int columnI;  // Column of rw in text file.
 
+    // Instance variables.
+    private RandomAccessFile theRandomAccessFile= null;
+    
     public static MetaNode start( DataNode InRootDataNode )
       /* Starts activity in this MetaFile class.
         It tries to read at least the root MetaNode from external file(s).
@@ -48,10 +57,13 @@ public class MetaFile
       { // start()
         // System.out.println( "MetaFile.start()");
 
-        MetaNode RootMetaNode;  // Place for result root MetaNode.
+        MetaNode RootMetaNode= null;  // Place for result root MetaNode.
 
         RootMetaNode= // Read state from flat file.  
           readFlatStateMetaNode( );
+
+        // ??? Test by writing special Debug file.
+        writeDebugState( RootMetaNode );
 
         RootMetaNode= // Read state from hierarchical file.   
           readHierarchicalStateMetaNode( );
@@ -104,8 +116,6 @@ public class MetaFile
         Returns the root MetaNode that was read.  
         */
       {
-        if (TheRwStructure==RwStructure.FLAT) return null; // ???? Temp.
-
         WritingB=  false;  // Indicate that we are reading.
         MetaNode RootMetaNode= null;  // Set null root because we are reading.
 
@@ -113,11 +123,11 @@ public class MetaFile
           if  //  Read state from file if...
             ( (new File( FileNameString )).exists() )  // ...the file exists.
             { //  Read state from file.
-              TheRandomAccessFile=  // Open random access file.
+              InputRandomAccessFile=  // Open random access file.
                 new RandomAccessFile( FileNameString, "r" );
               RootMetaNode= rwAllStateMetaNode( RootMetaNode );  // Read all state.
-              DumpRemainder( );  // Output any remainder for debugging.
-              TheRandomAccessFile.close( );  // Close the input file.
+              DumpRemainder( );  // Output any file remainder for debugging.
+              InputRandomAccessFile.close( );  // Close the input file.
               } //  Read state from file.
           } // Read state.
         catch ( IOException | NumberFormatException e ) {  // Process any errors.
@@ -130,9 +140,11 @@ public class MetaFile
     public static void finish()
       /* Finishes activity in this MetaFile class.
         All new or modified MetaNode-s are saved to external file(s).  
-        Presently it writes all nodes, modified or now.
+        Presently it writes all nodes, whether modified or not.
         Also presently it recursively writes the entire RootMetaNode tree.
-        This should be called before application termination.  */
+        This should be called before application termination.  
+        Presently it is called by ShutdownHook.run().
+        */
       { // finish()
         // System.out.println( "\n\nMetaFile.finish()");
 
@@ -149,63 +161,109 @@ public class MetaFile
         TheRwStructure= RwStructure.FLAT;
         FileNameString= FlatFileNameString;
         HeaderTokenString= FlatHeaderTokenString;
-        writeAllState( );  // Do the actual write in flat text format.
+        writeAllState( MetaRoot.getRootMetaNode( ) );  // Do the actual write in flat text format.
         }
 
-    public /*private*/ static void writeHierarchicalState( )
-      /* Writes all MetaNodes to Hierarchical file.  
-        This will eventually exist only for debugging.
-        */
+    public static void writeHierarchicalState( )
+      /* Writes all MetaNodes to Hierarchical file.  */
       {
         // Set some appropriate mode variables.
         TheRwStructure= RwStructure.HIERARCHICAL;
         FileNameString= HierarchicalFileNameString;
         HeaderTokenString= HierarchicalHeaderTokenString;
-        writeAllState( );  // Do the actual write.
+        writeAllState( MetaRoot.getRootMetaNode( ) );  // Do the actual write.
         }
 
-    private static void writeAllState( )
-      /* Writes all MetaNodes to file.  */
+    public static void writeDebugState( MetaNode InMetaNode )
+      /* Writes all MetaNodes in Hierarchical format to Debug file.  */
+      {
+        // Set some appropriate mode variables.
+        TheRwStructure= RwStructure.HIERARCHICAL;
+        FileNameString= "Debug.txt";
+        HeaderTokenString= "Debug-State";
+        writeAllState( InMetaNode );  // Do the actual write.
+        }
+
+    private static void writeAllState( MetaNode InRootMetaNode )
+      /* Writes all MetaNodes to file rooted at InRootMetaNode.  */
       { // writeAllState(()
         WritingB=  true;  // Indicate that we are writing.
-        MetaNode RootMetaNode= MetaRoot.getRootMetaNode( );  // Get root MetaNode.
 
         try { // Try opening or creating file.
-          TheRandomAccessFile=  // For open random access text file.
+          OutputRandomAccessFile=  // For open random access text file.
             new RandomAccessFile( FileNameString, "rw" );
           } // Try opening or creating file.
         catch (FileNotFoundException e) { // Handle any errors.
           e.printStackTrace();
           } // Handle any errors.
-        if ( TheRandomAccessFile != null ) // Write if file was opened or created.
+        if ( OutputRandomAccessFile != null ) // Write if file was opened or created.
           try { // Try writing all MetaNodes.
-            rwAllStateMetaNode( RootMetaNode );
-            TheRandomAccessFile.setLength( // Truncate file at...
-              TheRandomAccessFile.getFilePointer( )  // ...file pointer.
+            rwAllStateMetaNode( InRootMetaNode );
+            OutputRandomAccessFile.setLength( // Truncate file at...
+              OutputRandomAccessFile.getFilePointer( )  // ...file pointer.
               );
-            TheRandomAccessFile.close( );
+            OutputRandomAccessFile.close( );
             } // Try writing all MetaNodes.
           catch ( IOException e ) { // Handle any exception.
             e.printStackTrace();
             } // Handle any exception.
          } // writeAllState(()
 
-    private static MetaNode rwAllStateMetaNode( MetaNode RootMetaNode )
-      /* If RootMetaNode == null then all state is read from Meta file.
-        If RootMetaNode != null then all state is written to the Meta file.
-        Returns the RootMetaNode, either the original, or a read one.
+    private static MetaNode rwAllStateMetaNode( MetaNode InRootMetaNode )
+      throws IOException
+      /* If InRootMetaNode == null then all state is read from Meta file.
+        If InRootMetaNode != null then all state is written to the Meta file.
+        Returns the InRootMetaNode, either the original, or a read one.
         */
       {
         indentLevelI= 0;  // Initialize indent level of text in file.
         columnI= 0;  // Initialize column of text in file.
 
         rwLiteral( HeaderTokenString ); // Begin file with header token.
-        RootMetaNode= MetaNode.rwMultiMetaNode(  // Read or write... 
-          RootMetaNode,  // ...the root MetaNode using...
+        //MetaNodesOffsetLI= // Save offset of beginning of MetaNodes.
+        //  InputRandomAccessFile.getFilePointer();
+        InRootMetaNode= MetaNode.rwFlatMetaNode(  // Read or write... 
+          InRootMetaNode,  // ...the root MetaNode using...
           DataRoot.getParentOfRootDataNode()  // ...its parent for read lookups.
           );
 
-        return RootMetaNode;  // Return the new or old root.
+        return InRootMetaNode;  // Return the new or old root.
+        }
+
+    public static IDNumber rwConvertIDNumber
+      ( IDNumber InIDNumber, DataNode parentDataNode )
+      throws IOException
+      /* This method returns the MetaNode equivalent in the state file
+        of the IDNumber TheIDNumber.
+        It should be called only if 
+        ( MetaFile.TheRwStructure == MetaFile.RwStructure.FLAT ).
+        It does this by finding and loading text of a MetaNode
+        which has the same IDNumber value.
+        DataNode parentDataNode is for name lookup during reading,
+        but is ignored during writing.
+        */
+      {
+        IDNumber resultIDNumber= null;
+        int DesiredI= InIDNumber.getTheI();
+        while (true) { // Search state file for desired MetaNode.
+          try {
+            //resultIDNumber= MetaNode.rwFlatMetaNode( null, parentDataNode );
+              // READ AND IGNORE FOR TEST.
+            resultIDNumber= MetaNode.rwFlatMetaNode( null, parentDataNode );
+            }
+          catch ( Exception theException ) {
+            //InputRandomAccessFile.seek( // Move file pointer back to...
+            //  MetaNodesOffsetLI // ...start of MetaNodes.
+            //  );
+            // Reset file pointer.
+            }
+          if ( DesiredI == resultIDNumber.getTheI() ) break;
+          // break;
+          } // Search state file for desired MetaNode.
+        if ( resultIDNumber != null ) // Lookup failed.
+          resultIDNumber= InIDNumber;  // Return original IDNumber node.
+        Misc.DbgConversionDone();  // Debug.
+        return resultIDNumber;
         }
 
     public static void writeToken( String InTokenString )
@@ -215,14 +273,14 @@ public class MetaFile
 
         try {
           if ( InTokenString.indexOf( ' ' ) >= 0 )  // Token contains space.
-            TheRandomAccessFile.writeByte( '\"' );  // Write double-quote.
+            OutputRandomAccessFile.writeByte( '\"' );  // Write double-quote.
           { // Write litterl string.
-            TheRandomAccessFile.writeBytes( InTokenString );
+            OutputRandomAccessFile.writeBytes( InTokenString );
             columnI+= InStringLengthI;  // Adjust columnI for string length.
             } // Write litterl string.
           if ( InTokenString.indexOf( ' ' ) >= 0 )  // Token contains space.
             {
-              TheRandomAccessFile.writeByte( '\"' );  // Write double-quote.
+              OutputRandomAccessFile.writeByte( '\"' );  // Write double-quote.
               columnI+= 2; // Adjust columnI double-quotes.
               }
           }
@@ -247,11 +305,11 @@ public class MetaFile
         String TokenString= "";  // Set token character accumulator to empty.
         try {
           long StartingOffsetLI= // Save offset of beginning of token.
-            TheRandomAccessFile.getFilePointer();
-          int ByteI= TheRandomAccessFile.read( );  // Try reading first byte.
+            InputRandomAccessFile.getFilePointer();
+          int ByteI= InputRandomAccessFile.read( );  // Try reading first byte.
           if ( (char)ByteI == '\"') // Handle quoted string.
             while (true) { // Process entire token, if any.
-              ByteI= TheRandomAccessFile.read( );  // Try reading token byte.
+              ByteI= InputRandomAccessFile.read( );  // Try reading token byte.
               if ( ByteI == -1 || ByteI == '\"' )  // End of token.
                 break;  // Exit loop. 
               TokenString+= (char)ByteI;  // Append byte to string.
@@ -260,15 +318,15 @@ public class MetaFile
             while (true) { // Process entire token, if any.
               if ( ByteI == -1 || ByteI == ' ' || ByteI == '\n' )  // End of token.
                 { // Back up file offset and exit.
-                  TheRandomAccessFile.seek( // Move file pointer back to...
+                  InputRandomAccessFile.seek( // Move file pointer back to...
                     StartingOffsetLI + TokenString.length() ); // ...end of token.
                   break;  // Exit loop. 
                   } // Back up file offset and exit.
               TokenString+= (char)ByteI;  // Append byte to string.
-              ByteI= TheRandomAccessFile.read( );  // Try reading next byte.
+              ByteI= InputRandomAccessFile.read( );  // Try reading next byte.
               } // Process entire token, if any.
           columnI+= // Adjust columnI for file offset movement.
-            ( TheRandomAccessFile.getFilePointer() - StartingOffsetLI );
+            ( InputRandomAccessFile.getFilePointer() - StartingOffsetLI );
           }
         catch ( IOException e ) {
           e.printStackTrace();
@@ -328,15 +386,15 @@ public class MetaFile
 
         try {
           if ( WritingB )  // Writing state.
-            { // Write litterl string.
-              TheRandomAccessFile.writeBytes( InString );
+            { // Write literal string.
+              OutputRandomAccessFile.writeBytes( InString );
               columnI+= InStringLengthI;  // Adjust columnI for string length.
               } // Write litterl string.
             else  // Reading state.
             { // Read and verify String.
               if ( testLiteralB( InString ))
                 {
-                  TheRandomAccessFile.skipBytes( InStringLengthI );
+                  InputRandomAccessFile.skipBytes( InStringLengthI );
                   columnI+= InStringLengthI;  // Adjust columnI for string length.
                   }
                 else
@@ -370,7 +428,7 @@ public class MetaFile
         int ResultI= 1;  // Set default result to indicate terminator found.
         try {
           long StartingOffsetLI= // Save offset of beginning of token.
-            TheRandomAccessFile.getFilePointer();
+            InputRandomAccessFile.getFilePointer();
           int ByteI;  // Place for bytes input.
           int IndexI= 0; 
           while ( true ) // Process all characters if possible.
@@ -378,7 +436,7 @@ public class MetaFile
               if ( IndexI >= DesiredString.length() )  // String exhausted.
                 break;  // Exit loop with ResultI indicating terminator-found.
               ByteI= // Try reading a byte.
-                TheRandomAccessFile.read( );
+                InputRandomAccessFile.read( );
               if ( ByteI != DesiredString.charAt( IndexI ) )
                 { // Exit loop with either string found or End-Of-File.
                   ResultI= 0;  // Set result Indicating terminator-not-found.
@@ -388,7 +446,7 @@ public class MetaFile
                   } // Exit loop with either string found or End-Of-File.
               IndexI++;  // Advance index.
               } // Process one character or exit loop.
-          TheRandomAccessFile.seek( // Move file pointer...
+          InputRandomAccessFile.seek( // Move file pointer...
             StartingOffsetLI );  // ... back to original position.
           }
         catch ( IOException e ) {
@@ -413,7 +471,7 @@ public class MetaFile
         This is mainly for debugging.
         */
       { // DumpRemainder( )
-        int ByteI= TheRandomAccessFile.read( );  // Try to read first byte.
+        int ByteI= InputRandomAccessFile.read( );  // Try to read first byte.
         if ( ByteI != -1 ) // If success then output it and remainder.
           { // Output header and all file bytes.
             System.out.print( // Introduce the data which will follow.
@@ -421,7 +479,7 @@ public class MetaFile
               );
             do { // Display bytes until done.
               System.out.print( (char)ByteI );  // Display the byte already read.
-              ByteI= TheRandomAccessFile.read( );  // Try to read next byte.
+              ByteI= InputRandomAccessFile.read( );  // Try to read next byte.
               } while ( ByteI != -1 ); // Display bytes until done.
             } // Output header and all file bytes.
         } // DumpRemainder( )

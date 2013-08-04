@@ -2,15 +2,17 @@ package allClasses;
 
 public class IDNumber 
   /* This is the class which represents an ID number.
-    The values for the number can come from two placs:
-    * It can create new ones by incrementing the counter NextI.
-    * It can load values from the MetaFile using rwIDNumber( ).
+    It is meant to be used as a place-holder and a superclass
+    for objects that can be saved to and loaded from the state files.
+    The values for the number in instances can come from two placs:
+    * It can create a new value by incrementing the static counter NextI.
+    * It can load a value from the MetaFile using rwIDNumber( ).
     At first it will be used for IDs for MetaNode's only.
-    Later it might be used for other superclasses.
+    Later it might be used for other subclasses.
     */
   {
 
-    private static int NextI= 1;  // Next value to be used.
+    private static int NextI= 1;  // Counter with next number to be used.
     
     private int TheI= 0;  // ID Value.  0 means undefined.
     
@@ -25,7 +27,7 @@ public class IDNumber
           }
     
       public IDNumber( int InI )  
-        /* This constructor was used for loading old objects.
+        /* This constructor is used for loading old objects.
           The ID # value is InI.
           It can be used to set a particular non-zero value,
           or a zero value so that rwIDNumber( ) will set it later.
@@ -38,20 +40,50 @@ public class IDNumber
     
       private static void skipThisNumber( int NumberToSkipI )
         /* Makes certain that NumberToSkipI is not used as the ID number
-          in any new IDNumbers.  It does this simply by making certain that
+          in any new instances.  It does this simply by making certain that
           NextI is greater than this number.  */
         {
           if ( NumberToSkipI >= NextI )  // Increase NextI if needed.
             NextI= NumberToSkipI + 1;  // Increase NextI.
           }
+      
+      public static IDNumber rwIDNumber( IDNumber InOutIDNumber )
+        /* This rw-processes IDNumber InOutIDNumber.
+          If InOutIDNumber == null the it allocates an actual IDNumber instance
+          with field TheI == 0 so that it will be read.
+          */
+        { 
+          if ( InOutIDNumber == null )  // Allocate IDNumber if none provided.
+            InOutIDNumber= new IDNumber( 0 );
+            
+          InOutIDNumber.rw( );  // Process the fields.
+
+          return InOutIDNumber;  // Return possible new IDNumber.
+          }
         
     // instance methods.
-      
-      public void rwIDNumber( )
-        /* This io-processes this IDNumber's value int TheI.  */
-        { // io()
+    
+      public int getTheI( )  
+        /* This method returns the IDNumber int value.  */
+        { 
+          return TheI;
+          }
+
+      public void rw( )
+        /* This rw-processes this IDNumber's fields.
+          It simply calls rwNumber( ).
+          */
+        {
+          rwNumberField();
+          }
+
+      public void rwNumberField( )
+        /* This rw-processes this IDNumber number field.
+          This is for access by subclasses that want
+          to process the number field of their superclass only.
+          */
+        {
           MetaFile.rwIndentedWhiteSpace( );  // Rw the obligatory white-space.
-          
           MetaFile.rwLiteral( "#" );  // Rw the special introducer character.
           { // Load or save TheI.
             if ( TheI == 0 )  // Value hasn't been defined yet.
@@ -66,7 +98,6 @@ public class IDNumber
                 MetaFile.writeToken( Integer.toString( TheI ) );
                 } // Save IDNumber to file.
             } // Load or save TheI.
-
-          } // io()
+          }
  
     }

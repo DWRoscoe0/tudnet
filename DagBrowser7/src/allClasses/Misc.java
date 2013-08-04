@@ -44,12 +44,22 @@ public class Misc
       
       public static void DbgEventDone()
         /* This is a convenient place to catch 
-          after a user input event is processed. 
+          after a user input event is processed or 
+          after any other signficant event occurs.
           This is useful because the Java event loop is not accessible.
           */
         { 
-          // DbgOut( "-" ); 
-          // MetaFile.writeHierarchicalState( );  // ??? Display for debugging.
+          //DbgOut( "-" ); 
+          //MetaFile.writeDebugState( );  // ??? Display for debugging.
+          //NoOp( );
+          }
+      
+      public static void DbgConversionDone()
+        /* This is called after a conversion from IDNumber to MetaNode.  */
+        { 
+          //DbgOut( "Conv." ); 
+          //MetaFile.writeDebugState( );  // ??? Display for debugging.
+          NoOp( );
           }
       
       public static void DbgOut( String InString )
