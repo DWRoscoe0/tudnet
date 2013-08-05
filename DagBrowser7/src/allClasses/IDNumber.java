@@ -46,9 +46,11 @@ public class IDNumber
           if ( NumberToSkipI >= NextI )  // Increase NextI if needed.
             NextI= NumberToSkipI + 1;  // Increase NextI.
           }
-      
-      public static IDNumber rwIDNumber( IDNumber InOutIDNumber )
-        /* This rw-processes IDNumber InOutIDNumber.
+        
+      public static IDNumber rwIDNumber
+        ( MetaFile inMetaFile, IDNumber InOutIDNumber )
+        /* This rw-processes IDNumber InOutIDNumber
+          with the MetaFile inMetaFile.
           If InOutIDNumber == null the it allocates an actual IDNumber instance
           with field TheI == 0 so that it will be read.
           */
@@ -56,7 +58,7 @@ public class IDNumber
           if ( InOutIDNumber == null )  // Allocate IDNumber if none provided.
             InOutIDNumber= new IDNumber( 0 );
             
-          InOutIDNumber.rw( );  // Process the fields.
+          InOutIDNumber.rw( inMetaFile );  // Process the fields.
 
           return InOutIDNumber;  // Return possible new IDNumber.
           }
@@ -69,33 +71,35 @@ public class IDNumber
           return TheI;
           }
 
-      public void rw( )
-        /* This rw-processes this IDNumber's fields.
+      public void rw( MetaFile inMetaFile )
+        /* This rw-processes this IDNumber's fields
+          with MetaFile inMetaFile.
           It simply calls rwNumber( ).
           */
         {
-          rwNumberField();
+          rwNumberField( inMetaFile );
           }
 
-      public void rwNumberField( )
-        /* This rw-processes this IDNumber number field.
+      public void rwNumberField( MetaFile inMetaFile )
+        /* This rw-processes this IDNumber number field
+          using MetaFile inMetaFile.
           This is for access by subclasses that want
           to process the number field of their superclass only.
           */
         {
-          MetaFile.rwIndentedWhiteSpace( );  // Rw the obligatory white-space.
-          MetaFile.rwLiteral( "#" );  // Rw the special introducer character.
+          inMetaFile.rwIndentedWhiteSpace( );  // Rw white-space.
+          inMetaFile.rwLiteral( "#" );  // Rw special introducer character.
           { // Load or save TheI.
             if ( TheI == 0 )  // Value hasn't been defined yet.
               { // Read and define value.
-                String NumberString= MetaFile.readTokenString( );
+                String NumberString= inMetaFile.readTokenString( );
                 int I= Integer.parseInt( NumberString );
                 TheI= I;  // Save value in instance variable.
                 skipThisNumber( I );  // Make certain this # is not reused.
                 } // Read and define value.
             else  // An IDNumber was provided.
               { // Save IDNumber to file.
-                MetaFile.writeToken( Integer.toString( TheI ) );
+                inMetaFile.writeToken( Integer.toString( TheI ) );
                 } // Save IDNumber to file.
             } // Load or save TheI.
           }

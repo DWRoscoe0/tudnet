@@ -8,46 +8,51 @@ public class Attributes
   {
 
       public static HashMap< String, Object >  rwAttributesHashMap
-        ( HashMap< String, Object > InAttributesHashMap )
-        /* This rw-processes the Attributes HashMap.  */
+        ( MetaFile inMetaFile, HashMap< String, Object > InAttributesHashMap )
+        /* This rw-processes the Attributes HashMap with
+          MetaFile inMetaFile.  
+          */
         { // rwAttributesHashMap()
-          MetaFile.rwListBegin( );
-          MetaFile.rwLiteral( " Attributes" );
+          inMetaFile.rwListBegin( );
+          inMetaFile.rwLiteral( " Attributes" );
           if ( InAttributesHashMap == null )
             InAttributesHashMap=  // Read entries to make a map.
-              rwAttributesHashMapRead( );
+              rwAttributesHashMapRead( inMetaFile );
             else
-            rwAttributesHashMapWrite(  // Write entries.
-              InAttributesHashMap );
-          MetaFile.rwListEnd( );
+            rwAttributesHashMapWrite(  // Write entries...
+              inMetaFile,  // ...to inMetaFile...
+              InAttributesHashMap  // ...of this HashMap.
+              );
+          inMetaFile.rwListEnd( );
           return InAttributesHashMap;  // Return new or original HashMap.
           } // rwAttributesHashMap()
 
-      private static HashMap< String, Object > rwAttributesHashMapRead( )
-        /* This reads hash map entries and returns a HashMap
+      private static HashMap< String, Object > rwAttributesHashMapRead
+        ( MetaFile inMetaFile )
+        /* This reads hash map entries from inMetaFile and returns a HashMap
           that contains them.  */
-        { // rwAttributesHashMapRead( )
+        {
           HashMap<String, Object> OutAttributesHashMap =  // Initialize...
             new HashMap<String, Object>( 2 );  // ...to a small empty map.
           while ( true )  // Read all entries.
             { // Read an entry or exit.
-              MetaFile.rwIndentedWhiteSpace( );  // Go to proper column.
+              inMetaFile.rwIndentedWhiteSpace( );  // Go to proper column.
               if  // Test for leading parenthesis and exit loop if fail.
-                ( MetaFile.testTerminatorI( ")" ) != 0 )
+                ( inMetaFile.testTerminatorI( ")" ) != 0 )
                 break;  // Exit loop.
-              MetaFile.rwLiteral( "( " );  // Read the same thing.
-              String KeyString= MetaFile.readTokenString( );
-              MetaFile.rwLiteral( " " );
-              String ValueString= MetaFile.readTokenString( );
-              MetaFile.rwLiteral( " )" );
+              inMetaFile.rwLiteral( "( " );  // Read the same thing.
+              String KeyString= inMetaFile.readTokenString( );
+              inMetaFile.rwLiteral( " " );
+              String ValueString= inMetaFile.readTokenString( );
+              inMetaFile.rwLiteral( " )" );
               OutAttributesHashMap.put( KeyString, ValueString );
               } // Read an entry or exit.
           return OutAttributesHashMap;
-          } // rwAttributesHashMapRead( )
+          }
 
       private static void rwAttributesHashMapWrite
-        ( HashMap< String, Object > InAttributesHashMap )
-        /* This writes the entries of an Attributes HashMap.  */
+        ( MetaFile inMetaFile, HashMap< String, Object > InAttributesHashMap )
+        /* This writes to InMetaFile the entries of an Attributes HashMap.  */
         { // rwAttributesHashMapWrite()
           Iterator < Map.Entry < String, Object > > MapIterator=  // Get an iterator...
             InAttributesHashMap.
@@ -58,10 +63,10 @@ public class Attributes
             { // Save this HashMap entry.
               Map.Entry < String, Object > AnEntry= // Get Entry 
                 MapIterator.next();  // ...that is next Entry.
-              MetaFile.rwIndentedLiteral( "(" );
-              MetaFile.rwLiteral( " "+AnEntry.getKey( ) );
-              MetaFile.rwLiteral( " "+(String)AnEntry.getValue( ) );
-              MetaFile.rwLiteral( " )" );
+              inMetaFile.rwIndentedLiteral( "(" );
+              inMetaFile.rwLiteral( " "+AnEntry.getKey( ) );
+              inMetaFile.rwLiteral( " "+(String)AnEntry.getValue( ) );
+              inMetaFile.rwLiteral( " )" );
               } // Save this HashMap entry.
           } // rwAttributesHashMapWrite()
 

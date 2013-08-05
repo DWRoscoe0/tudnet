@@ -104,7 +104,7 @@ public class MetaNode
     // Methods for Read/Write from/to state files.
 
       public static MetaNode rwMetaNode
-        ( MetaNode inMetaNode, DataNode ParentDataNode )
+        ( MetaFile inMetaFile, MetaNode inMetaNode, DataNode ParentDataNode )
         throws IOException
         /* This rw-processes the node inMetaNode and its MetaNode children.  
           If ( inMetaNode == null ) then it creates an empty MetaNode
@@ -123,14 +123,15 @@ public class MetaNode
           if ( inMetaNode == null ) // If there is no MetaNode then...
             inMetaNode= new MetaNode( ); // ...create one to be filled.
 
-          inMetaNode.rw( ParentDataNode );  // re-process the fields.
+          inMetaNode.rw( inMetaFile, ParentDataNode );  // rw-process fields.
 
           return inMetaNode;  // Return the new or the original MetaNode.
           }
 
-      private void rw( DataNode ParentDataNode )
+      private void rw( MetaFile inMetaFile, DataNode ParentDataNode )
         throws IOException
-        /* This rw-processes all fields of an existing MetaNode.
+        /* This rw-processes all fields of an existing MetaNode
+          using MetaFile inMetaFile.
           Empty fields are read.  Non-empty fields are written.
           If ( MetaFile.TheRwStructure == MetaFile.RwStructure.FLAT )
           then it processes the MetaChildren as IDNumber stubs only.
@@ -141,30 +142,33 @@ public class MetaNode
           */
         {
 
-          MetaFile.rwIndentedWhiteSpace( );  // Go to MetaFile.indentLevelI.
-          MetaFile.rwListBegin( );  // RW the beginning of the list.
-          IDNumber.rwIDNumber(this);  // Rw the ID #.
-          MetaFile.rwIndentedLiteral( "MetaNode" );  // Label as MetaNode list.
+          inMetaFile.rwIndentedWhiteSpace( );  // Go to MetaFile.indentLevelI.
+          inMetaFile.rwListBegin( );  // RW the beginning of the list.
+          IDNumber.rwIDNumber( inMetaFile, this );  // Rw the ID #.
+          inMetaFile.rwIndentedLiteral( "MetaNode" );  // Label as MetaNode list.
           TheDataNode= DataRw.rwDataNode(  // Rw...
+            inMetaFile,  // ...with MetaFile inMetaFile...
             TheDataNode,  // ...TheDataNode using...
             ParentDataNode  // ...ParentDataNode for name lookups.
             );
           AttributesHashMap=  // Rw the attributes.
-            Attributes.rwAttributesHashMap( AttributesHashMap );
+            Attributes.rwAttributesHashMap( inMetaFile, AttributesHashMap );
           theMetaChildren=  // Rw...
             MetaChildren.rwMetaChildren(  // ...the children hash map...
+              inMetaFile, 
               theMetaChildren, 
               TheDataNode  // ...using this DataNode for lookups.
               );
-          MetaFile.rwListEnd( );  // Mark the end of the list.
+          inMetaFile.rwListEnd( );  // Mark the end of the list.
 
           }
 
       public static MetaNode rwFlatMetaNode
-        ( MetaNode inMetaNode, DataNode ParentDataNode )
+        ( MetaFile inMetaFile, MetaNode inMetaNode, DataNode ParentDataNode )
         throws IOException
         /* This is like rwMetaNode(..) except that in addition to 
-          processing inMetaNode with MetaNode.rwMetaNode(..),
+          processing inMetaNode with MetaNode.rwMetaNode(..)
+          with MetaFile inMetaFile,
           if in flat file mode then
           it also rw-processes the node's children using 
           MetaChildren.rwFlatV().
@@ -172,11 +176,11 @@ public class MetaNode
           */
         {
           inMetaNode=  // Process main MetaNode.
-            rwMetaNode( inMetaNode, ParentDataNode );
-
+            rwMetaNode( inMetaFile, inMetaNode, ParentDataNode );
           if  // Write the children separately if writing flat file.
-            ( MetaFile.TheRwStructure == MetaFile.RwStructure.FLAT )
+            ( inMetaFile.TheRwStructure == MetaFile.RwStructure.FLAT )
             inMetaNode.theMetaChildren.rwFlatV(  // Process the children...
+              inMetaFile,  // ...with inMetaFile...
               inMetaNode.getDataNode()  // ...using present node for name lookup.
               );
 

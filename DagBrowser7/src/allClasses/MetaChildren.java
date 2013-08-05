@@ -109,7 +109,8 @@ public class MetaChildren
     // rw processors.
 
       public static MetaChildren rwMetaChildren
-        ( MetaChildren inMetaNode,
+        ( MetaFile inMetaFile, 
+          MetaChildren inMetaNode,
           DataNode InParentDataNode
           )
         throws IOException
@@ -121,22 +122,23 @@ public class MetaChildren
               and returns a new MetaChildren instance as the function value.
             */
         {
-          MetaFile.rwListBegin( );
-          MetaFile.rwLiteral( " MetaChildren" );
+          inMetaFile.rwListBegin( );
+          inMetaFile.rwLiteral( " MetaChildren" );
 
           if ( inMetaNode == null )
-            inMetaNode= 
-              readMetaChildren( InParentDataNode );
+            inMetaNode= readMetaChildren( inMetaFile, InParentDataNode );
             else
-            writeMetaChildren( inMetaNode );
+            writeMetaChildren( inMetaFile, inMetaNode );
 
-          MetaFile.rwListEnd( );
+          inMetaFile.rwListEnd( );
           return inMetaNode;
           }
 
-      private static MetaChildren readMetaChildren( DataNode InParentDataNode )
+      private static MetaChildren readMetaChildren
+        ( MetaFile inMetaFile, DataNode InParentDataNode )
         throws IOException
-        /* This reads a MetaChildren from the file and returns it as the result.  
+        /* This reads a MetaChildren from MetaFile inMetaFile
+          and returns it as the result.  
           It uses InParentDataNode for name lookups.  
           */
         {
@@ -145,20 +147,24 @@ public class MetaChildren
           while ( true )  // Read all children.
             { // Read a child or exit.
               IDNumber newIDNumber= null; // Variable for use in reading ahead.
-              MetaFile.rwIndentedWhiteSpace( );  // Go to proper column.
+              inMetaFile.rwIndentedWhiteSpace( );  // Go to proper column.
               if  // Exit loop if end character present.
-                ( MetaFile.testTerminatorI( ")" ) != 0 )
+                ( inMetaFile.testTerminatorI( ")" ) != 0 )
                 break;  // Exit loop.
               switch // Read child based on RwStructure.
-                ( MetaFile.TheRwStructure )
+                ( inMetaFile.TheRwStructure )
                 {
                   case FLAT:
                     newIDNumber= // Read a single IDNumber.
-                      MetaNode.rwIDNumber( null );
+                      MetaNode.rwIDNumber( inMetaFile, null );
                     break;
                   case HIERARCHICAL:
                     newIDNumber=  // Read the possibly nested MetaNode.
-                      MetaNode.rwFlatMetaNode( null, InParentDataNode );
+                      MetaNode.rwFlatMetaNode( 
+                        inMetaFile, 
+                        null, 
+                        InParentDataNode 
+                        );
                     break;
                   }
               newMetaChildren.add(  // Store...
@@ -169,9 +175,10 @@ public class MetaChildren
           }
 
       private static void writeMetaChildren
-        ( MetaChildren inMetaNode )
+        ( MetaFile inMetaFile, MetaChildren inMetaNode )
         throws IOException
-        /* This writes the MetaChildren instance inMetaNode.  
+        /* This writes the MetaChildren instance inMetaNode
+          using MetaFile inMetaFile.
           If MetaFile.TheRwStructure == FLAT then it writes ID numbers only,
           otherwise it recursively writes the complete MetaNodes.
           */
@@ -183,28 +190,30 @@ public class MetaChildren
             { // Write one child.
               IDNumber TheIDNumber= childIterator.next();  // Get the child MetaNode.
               switch // Write child based on RwStructure.
-                ( MetaFile.TheRwStructure )
+                ( inMetaFile.TheRwStructure )
                 {
                   case FLAT:
-                    TheIDNumber.rwNumberField();  // Write the ID # only.
+                    TheIDNumber.rwNumberField( inMetaFile );  // Write ID # only.
                     break;
                   case HIERARCHICAL:
                     if (TheIDNumber instanceof MetaNode)
                       //MetaNode TheMetaNode=  // Get the MetaNode...
                         MetaNode.rwFlatMetaNode(   // Write MetaNode.
-                          (MetaNode)TheIDNumber, null );
+                          inMetaFile, (MetaNode)TheIDNumber, null );
                       else
-                      IDNumber.rwIDNumber( TheIDNumber );
+                      IDNumber.rwIDNumber( inMetaFile, TheIDNumber );
                     break;
                   }
               } // Write one child.
           }
 
 
-        public void rwFlatV( DataNode parentDataNode )
+        public void rwFlatV
+          ( MetaFile inMetaFile, DataNode parentDataNode )
           throws IOException
           /* This method is a companion to MetaNode.rwFlatMetaNode(..).
-            It rw-processes a MetaNode's children but only in flat mode.
+            It rw-processes a MetaNode's children with MetaFile inMetaFile,
+            but only in flat mode.
             It should be called only if 
             ( MetaFile.TheRwStructure == MetaFile.RwStructure.FLAT ).
             The difference between this method and rwMetaChildren(..)
@@ -233,13 +242,14 @@ public class MetaChildren
                   ChildListIterator.next();
                 if ( TheIDNumber instanceof MetaNode )  // Is MetaNode.
                   MetaNode.rwFlatMetaNode(   // Write MetaNode.
-                    (MetaNode)TheIDNumber, null );
+                    inMetaFile, (MetaNode)TheIDNumber, null );
                   else  // Is IDNumber.
-                  if( MetaFile.getWritingB() )  // Writing.
-                    IDNumber.rwIDNumber( TheIDNumber );   // Write IDNumber.
+                  if( inMetaFile.getWritingB() )  // Writing.
+                    IDNumber.rwIDNumber(    // Write IDNumber.
+                      inMetaFile, TheIDNumber );
                     else  // Reading.
                     ChildListIterator.set( // Replace the child by the...
-                      MetaFile.rwConvertIDNumber( // ...MetaNode equivalent...
+                      inMetaFile.rwConvertIDNumber( // ...MetaNode equivalent...
                         TheIDNumber,  // ...of IDNumber using...
                         parentDataNode  // ...provided parent for lookup.
                         )
