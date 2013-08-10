@@ -108,7 +108,7 @@ public class MetaChildren
 
     // rw processors.
 
-      public static MetaChildren rwMetaChildren
+      public static MetaChildren rwGroupMetaChildren
         ( MetaFile inMetaFile, 
           MetaChildren inMetaNode,
           DataNode InParentDataNode
@@ -158,9 +158,9 @@ public class MetaChildren
                     newIDNumber= // Read a single IDNumber.
                       MetaNode.rwIDNumber( inMetaFile, null );
                     break;
-                  case HIERARCHICAL:
+                  case NESTED:
                     newIDNumber=  // Read the possibly nested MetaNode.
-                      MetaNode.rwFlatMetaNode( 
+                      MetaNode.rwFlatOrNestedMetaNode( 
                         inMetaFile, 
                         null, 
                         InParentDataNode 
@@ -195,10 +195,10 @@ public class MetaChildren
                   case FLAT:
                     TheIDNumber.rwNumberField( inMetaFile );  // Write ID # only.
                     break;
-                  case HIERARCHICAL:
+                  case NESTED:
                     if (TheIDNumber instanceof MetaNode)
                       //MetaNode TheMetaNode=  // Get the MetaNode...
-                        MetaNode.rwFlatMetaNode(   // Write MetaNode.
+                        MetaNode.rwFlatOrNestedMetaNode(   // Write MetaNode.
                           inMetaFile, (MetaNode)TheIDNumber, null );
                       else
                       IDNumber.rwIDNumber( inMetaFile, TheIDNumber );
@@ -207,30 +207,35 @@ public class MetaChildren
               } // Write one child.
           }
 
-
-        public void rwFlatV
+        public void rwRecurseFlatV
           ( MetaFile inMetaFile, DataNode parentDataNode )
           throws IOException
-          /* This method is a companion to MetaNode.rwFlatMetaNode(..).
-            It rw-processes a MetaNode's children with MetaFile inMetaFile,
-            but only in flat mode.
-            It should be called only if 
+          /* This method is used to recursively read-write process
+            the children of this MetaChildren instance,
+            using the MetaFile inMetaFile.
+            It should be called only in FLAT mode, meaning when
             ( MetaFile.TheRwStructure == MetaFile.RwStructure.FLAT ).
-            The difference between this method and rwMetaChildren(..)
-            is that this method does the delayed part of the processing
-            of the children.  For each child:
+
+            The difference between this method and rwGroupMetaChildren(..)
+            is that this method processes the children in the text file
+            as a flat sequence of MetaNodes, not as a 
+            syntactically enclosed MetaChildren-group of MetaNodes.
+            The text sequence should be a flat list of flat children, 
+            using IDNumbers to refer to nested children.
+            
+            For each child:
             * If writing then it writes the MetaNode or IDNumber,
               whichever is the class of the child.
-              If it is a MetaNode then only the IDField value 
-              was written earlier.
-            * If reading then the present child should be an IDNumber instance.
-              whose IDNumber value was read earlier.
-              It will be replaced with the MetaNode from the state file
-              that has same IDNumber value.
-            DataNode parentDataNode is for name lookup during reading,
-            but is ignored during writing.
+            * If reading then the present child should be 
+              an IDNumber instance whose IDNumber value was read earlier.
+              In this case it will call readAndConvertIDNumber(..) to search 
+              the file text for the unique MetaNode with 
+              the same IDNumber value.  The IDNumber instance 
+              will be replaced with that a new constructed MetaNode instance
+              with same IDNumber value.
 
-            Presently it does nothing in Read mode.  ????
+            As usual, DataNode parentDataNode is used for name lookup 
+            during reading, but is ignored during writing.
             */
           {
             ListIterator < IDNumber > ChildListIterator=   // Get iterator.
@@ -240,20 +245,21 @@ public class MetaChildren
               { // Process this child.
                 IDNumber TheIDNumber=   // Get the child.
                   ChildListIterator.next();
-                if ( TheIDNumber instanceof MetaNode )  // Is MetaNode.
-                  MetaNode.rwFlatMetaNode(   // Write MetaNode.
-                    inMetaFile, (MetaNode)TheIDNumber, null );
-                  else  // Is IDNumber.
-                  if( inMetaFile.getWritingB() )  // Writing.
+                if // Process according to direction.
+                  ( inMetaFile.getWritingB() )  // Writing.
+                  if ( TheIDNumber instanceof MetaNode )  // Is MetaNode.
+                    MetaNode.rwFlatOrNestedMetaNode(   // Write MetaNode.
+                      inMetaFile, (MetaNode)TheIDNumber, null );
+                    else  // Is IDNumber.
                     IDNumber.rwIDNumber(    // Write IDNumber.
                       inMetaFile, TheIDNumber );
-                    else  // Reading.
-                    ChildListIterator.set( // Replace the child by the...
-                      inMetaFile.rwConvertIDNumber( // ...MetaNode equivalent...
-                        TheIDNumber,  // ...of IDNumber using...
-                        parentDataNode  // ...provided parent for lookup.
-                        )
-                      ); // read.
+                  else  // Reading.
+                  ChildListIterator.set( // Replace the child by the...
+                    inMetaFile.readAndConvertIDNumber( // ...MetaNode equivalent...
+                      TheIDNumber,  // ...of IDNumber using...
+                      parentDataNode  // ...provided parent for lookup.
+                      )
+                    ); // read.
                 } // Process this child.
               }
 

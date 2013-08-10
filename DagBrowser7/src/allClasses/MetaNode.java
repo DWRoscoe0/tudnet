@@ -112,7 +112,7 @@ public class MetaNode
           If ( inMetaNode != null ) then it writes the fields.
           If ( MetaFile.TheRwStructure == MetaFile.RwStructure.FLAT )
           then it processes the MetaChildren as IDNumber stubs only.
-          If ( MetaFile.TheRwStructure == MetaFile.RwStructure.HIERARCHICAL )
+          If ( MetaFile.TheRwStructure == MetaFile.RwStructure.NESTED )
           then it fully processes the MetaChildren.
           In the case of Reading, ParentDataNode is used for name lookup.
           ParentDataNode is ignored during Writing.
@@ -125,6 +125,7 @@ public class MetaNode
 
           inMetaNode.rw( inMetaFile, ParentDataNode );  // rw-process fields.
 
+          Misc.DbgOut( "MetaNode.rwMetaNode(..) returning "+inMetaNode.getTheI() );  // Debug.
           return inMetaNode;  // Return the new or the original MetaNode.
           }
 
@@ -135,7 +136,7 @@ public class MetaNode
           Empty fields are read.  Non-empty fields are written.
           If ( MetaFile.TheRwStructure == MetaFile.RwStructure.FLAT )
           then it processes the MetaChildren as IDNumber stubs only.
-          If ( MetaFile.TheRwStructure == MetaFile.RwStructure.HIERARCHICAL )
+          If ( MetaFile.TheRwStructure == MetaFile.RwStructure.NESTED )
           then it fully processes the MetaChildren.
           In the case of Reading, ParentDataNode is used for name lookup.
           ParentDataNode is ignored during Writing.
@@ -154,37 +155,72 @@ public class MetaNode
           AttributesHashMap=  // Rw the attributes.
             Attributes.rwAttributesHashMap( inMetaFile, AttributesHashMap );
           theMetaChildren=  // Rw...
-            MetaChildren.rwMetaChildren(  // ...the children hash map...
+            MetaChildren.rwGroupMetaChildren(  // ...the children hash map...
               inMetaFile, 
               theMetaChildren, 
               TheDataNode  // ...using this DataNode for lookups.
               );
           inMetaFile.rwListEnd( );  // Mark the end of the list.
+          inMetaFile.rwIndentedWhiteSpace( );  // Go to MetaFile.indentLevelI.
 
           }
 
-      public static MetaNode rwFlatMetaNode
+      public static MetaNode rwFlatOrNestedMetaNode
         ( MetaFile inMetaFile, MetaNode inMetaNode, DataNode ParentDataNode )
         throws IOException
-        /* This is like rwMetaNode(..) except that in addition to 
-          processing inMetaNode with MetaNode.rwMetaNode(..)
-          with MetaFile inMetaFile,
-          if in flat file mode then
-          it also rw-processes the node's children using 
-          MetaChildren.rwFlatV().
-          It only works for RwStructure.FLAT when doing writing.  ????
+        /* This method will read or write one or more MetaNodes 
+          from the Meta state file inMetaFile.
+          It will recurse into the first MetaNode's children and
+          other descendants if there are any.
+          It handles both:
+          * NESTED mode, in which the children and other descendants 
+            are nested within the first and only top level MetaNode 
+            in the text file.
+          * FLAT mode, in which the children and other descendants 
+            follow at the top level the root first top level MetaNode.
           */
         {
-          inMetaNode=  // Process main MetaNode.
+          inMetaNode=  // Process possibly nested first/root MetaNode.
             rwMetaNode( inMetaFile, inMetaNode, ParentDataNode );
-          if  // Write the children separately if writing flat file.
+          if  // Recurse into the children now if in FLAT file mode.
             ( inMetaFile.TheRwStructure == MetaFile.RwStructure.FLAT )
-            inMetaNode.theMetaChildren.rwFlatV(  // Process the children...
+            inMetaNode.theMetaChildren.rwRecurseFlatV(  // Process the children...
               inMetaFile,  // ...with inMetaFile...
               inMetaNode.getDataNode()  // ...using present node for name lookup.
               );
 
           return inMetaNode;  // Return the main MetaNode.
+          }
+
+      public static MetaNode readParticularFlatMetaNode
+        ( MetaFile inMetaFile, IDNumber inIDNumber, DataNode ParentDataNode )
+        throws IOException
+        /* Being adapted from rwFlatOrNestedMetaNode(..).
+          This method work similar to rwFlatOrNestedMetaNode(..)
+          but is used only when reading a FLAT file and when
+          looking for a MetaNode whose root has a particular IDNumber.
+          
+          First it reads one flat, single-level MetaNode.
+          If its IDNumber is not equal to inIDNumber then
+          it returns that MetaNode and does not recurse into the children
+          by reading any more.
+          If its IDNumber is equal to inIDNumber then
+          it reads as many additional MetaNodes as needed
+          to recurse into the children and other descendents,
+          then it returns the first MetaNode it read.
+          */
+        {
+          MetaNode resultMetaNode=  // Read one MetaNode.
+            rwMetaNode( inMetaFile, null, ParentDataNode );
+          if  // Recurse into the children if it has desired ID number.
+            ( inIDNumber.getTheI( ) == resultMetaNode.getTheI( ) )
+            resultMetaNode.theMetaChildren.  // With the nodes children...
+              rwRecurseFlatV(  // ...recurse into them...
+                inMetaFile,  // ...with inMetaFile...
+                resultMetaNode.getDataNode()  // ...using root for name lookup.
+                );
+
+          return resultMetaNode;  // Return the main MetaNode.
           }
 
     // Simple getter methods.
