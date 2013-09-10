@@ -7,7 +7,34 @@ public class DataRw
 
   { // class DataRw
 
-      public static DataNode rwDataNode  // new.
+      public static DataNode rwDataNode
+        ( MetaFile inMetaFile, DataNode TheDataNode, MetaNode parentMetaNode  )
+        /* This rw-processes the node InMetaNode
+          using MetaFile inMetaFile.
+          If TheDataNode != null then it writes the name of that DataNode
+            to the MetaFile, and parentMetaNode is ignored.
+          If TheDataNode == null then it reads a name 
+            from the MetaFile, returns the DataNode with that name
+            from the children of parentMetaNode.
+          */
+        { // rwDataNode( DataNode TheDataNode )
+          //Misc.DbgOut( "DataRw.rwDataNode(..)" );
+
+          inMetaFile.rwIndentedWhiteSpace( );  // Do line and indent.
+
+          if ( TheDataNode == null )  // Reading...
+            TheDataNode= readDataNode(   // Read DataNode name...
+              inMetaFile,  // ...with inMetaFile...
+              parentMetaNode.getDataNode()  // ...and lookup in this parent DataNode.
+              );
+            else  // Writing...
+            inMetaFile.writeToken( TheDataNode.GetNameString( ) );  // Write name.
+
+          return TheDataNode;
+          } // rwDataNode( DataNode TheDataNode )
+
+      /*
+      public static DataNode rwDataNode
         ( MetaFile inMetaFile, DataNode TheDataNode, DataNode ParentDataNode  )
         /* This rw-processes the node InMetaNode
           using MetaFile inMetaFile.
@@ -17,7 +44,9 @@ public class DataRw
             from the MetaFile, returns the DataNode with that name
             from the children of ParentDataNode.
           */
+        /*
         { // rwDataNode( DataNode TheDataNode )
+          Misc.DbgOut( "DataRw.rwDataNode(..)" );
 
           inMetaFile.rwIndentedWhiteSpace( );  // Do line and indent.
 
@@ -31,6 +60,7 @@ public class DataRw
 
           return TheDataNode;
           } // rwDataNode( DataNode TheDataNode )
+        */
 
       private static DataNode readDataNode
         ( MetaFile inMetaFile, DataNode ParentDataNode  )

@@ -19,34 +19,39 @@ public class MetaRoot
       static
       /* This class static code block initializes the static variables.  */
       { // Initialize MetaRoot static fields.
-        DataNode InRootDataNode= DataRoot.getRootDataNode( );
+        { // Make root MetaNode DAG a single MetaNode.
+          RootMetaNode=  // Initialize present MetaNode tree root with...
+            new MetaNode(  // ...a new MetaNode containing...
+              DataRoot.getRootDataNode( )  // ...the INFOGORA-ROOT DataNode.
+              );
+          RootMetaNode.put(  // Add attribute for initial Selection.
+            Selection.SelectionAttributeString, "IS");  // ??? Kludgy.
+          ParentOfRootMetaNode= // Make parent of root MetaNode be...
+            new SingleChildMetaNode( // ...a MetaNode whose one-child is...
+              RootMetaNode, // ...the root MetaNode and whose object is...
+              DataRoot.getParentOfRootDataNode( ) // ...parent of root DataNode.
+              );
+          } // Make root MetaNode DAG a single MetaNode.
 
-        RootMetaNode=  // Try to load Root MetaNode DAG state...
-          MetaFile.start(  // ...from from MetaFile for...
-            InRootDataNode );  // ...DataNode-s rooted at InRootDataNode.
-
-        //MetaFile.finish();  // Debug ????
+        MetaNode loadedMetaNode=  // Try to load Root MetaNode DAG state...
+          MetaFile.start();  // ...from from MetaFile.
 
         if // Make root MetaNode DAG a single MetaNode if...
-          ( ( RootMetaNode == null) || // ...the above loaded nothing, or...
-            ( RootMetaNode.getDataNode( ) ==  // ...the loaded MetaNode contained...
+          ( ( loadedMetaNode == null) || // ...the above loaded nothing, or...
+            ( loadedMetaNode.getDataNode( ) ==  // ...the loaded MetaNode contained...
               ErrorDataNode.getSingletonErrorDataNode( )  // ...an ErrorDataNode.
               )
             )
-          { // Make root MetaNode DAG a single MetaNode.
-            RootMetaNode=  // Initialize present MetaNode tree root with...
-              new MetaNode(  // ...a new MetaNode containing...
-                InRootDataNode   // ...the INFOGORA-ROOT DataNode.
+          ;  // Do nothing, thereby leaving defaults.
+          else
+          { 
+            RootMetaNode= loadedMetaNode;  // Store as Root MetaNode.
+            ParentOfRootMetaNode= // Make parent of root MetaNode be...
+              new SingleChildMetaNode( // ...a MetaNode whose one-child is...
+                RootMetaNode, // ...the root MetaNode and whose object is...
+                DataRoot.getParentOfRootDataNode( ) // ...parent of root DataNode.
                 );
-            RootMetaNode.put(  // Add attribute for initial Selection.
-              Selection.SelectionAttributeString, "IS");  // ??? Kludgy.
-            } // Make root MetaNode DAG a single MetaNode.
-
-        ParentOfRootMetaNode= // Make parent of root MetaNode be...
-          new SingleChildMetaNode( // ...a MetaNode whose one-child is...
-            RootMetaNode, // ...the root MetaNode and whose object is...
-            DataRoot.getParentOfRootDataNode( ) // ...parent of root DataNode.
-            );
+            }
             
         ParentOfRootMetaPath=  // Make ParentOfRootMetaPath be...
           new MetaPath( null, ParentOfRootMetaNode );  // MetaPath to parent node.
@@ -55,12 +60,6 @@ public class MetaRoot
 
     // Methods.
 
-      //public static void Initialize( )
-      /* This initializes the static variables from InRootDataNode.
-          DataRoot must already be initialized.
-          */
-      //  { }  // All code was moved to static code block.
-    
       public static MetaNode getRootMetaNode( )
         { return RootMetaNode; }
 

@@ -51,7 +51,8 @@ public class IDNumber
         ( MetaFile inMetaFile, IDNumber InOutIDNumber )
         /* This rw-processes IDNumber InOutIDNumber
           with the MetaFile inMetaFile.
-          If InOutIDNumber == null the it allocates an actual IDNumber instance
+          If InOutIDNumber == null the it allocates 
+          an actual IDNumber instance
           with field TheI == 0 so that it will be read.
           */
         { 
@@ -74,15 +75,6 @@ public class IDNumber
       public void rw( MetaFile inMetaFile )
         /* This rw-processes this IDNumber's fields
           with MetaFile inMetaFile.
-          It simply calls rwNumber( ).
-          */
-        {
-          rwNumberField( inMetaFile );
-          }
-
-      public void rwNumberField( MetaFile inMetaFile )
-        /* This rw-processes this IDNumber number field
-          using MetaFile inMetaFile.
           This is for access by subclasses that want
           to process the number field of their superclass only.
           */

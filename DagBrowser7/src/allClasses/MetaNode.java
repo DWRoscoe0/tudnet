@@ -2,7 +2,6 @@ package allClasses;
 
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.HashMap;
 //import java.util.Iterator;
 // import java.util.Map;
@@ -34,7 +33,7 @@ public class MetaNode
 
       //public IDNumber TheIDNumber= null;  // ID #.  Moved to superclass.
 
-      private DataNode TheDataNode= null;  /* Associated DataNode for which
+      private DataNode theDataNode= null;  /* Associated DataNode for which
         this MetaNode contains meta-data.  */
       private HashMap< String, Object > AttributesHashMap= null;  /* Attributes 
         of the associated DataNode, if any.
@@ -55,16 +54,16 @@ public class MetaNode
           super( 0 );  // Set superclass ID # to 0 so it can be loaded later.
           }
     
-      public MetaNode( DataNode InDataNode )
+      public MetaNode( DataNode inDataNode )
         /* This constructs a MetaNode associated with 
-          an existing DataNode InDataNode.
+          an existing DataNode inDataNode.
           Initially it has no attributes or child MetaNodes.
           */
         {
           super( );  // Assign the superclass ID # to be something meaningful.
 
-          TheDataNode=  // Save DataNode associated with this MetaNode.
-            InDataNode; 
+          theDataNode=  // Save DataNode associated with this MetaNode.
+            inDataNode; 
 
           AttributesHashMap =  // Initialize attributes to be...
             new HashMap< String, Object >( 2 );  // ...a small empty map.
@@ -75,61 +74,64 @@ public class MetaNode
     /* Pass-through methods which reference AttributesHashMap where 
       attributes are stored.  */
 
-      public boolean containsKey( String KeyString ) 
+      public boolean containsKey( String keyString ) 
         /* This is a pass-through to AttributesHashMap. */
         {
-          return AttributesHashMap.containsKey( KeyString );
+          return AttributesHashMap.containsKey( keyString );
           }
 
-      public Object get( String KeyString ) 
+      public Object get( String keyString ) 
         /* This is a pass-through to AttributesHashMap. */
         {
-          return AttributesHashMap.get( KeyString );
+          return AttributesHashMap.get( keyString );
           }
 
-      public Object remove( String KeyString ) 
+      public Object remove( String keyString ) 
         /* This is a pass-through to AttributesHashMap. */
         {
-          return AttributesHashMap.remove( KeyString );
+          return AttributesHashMap.remove( keyString );
           }
 
-      public Object put( String KeyString, Object ValueObject ) 
+      public Object put( String keyString, Object valueObject ) 
         /* This is a pass-through to AttributesHashMap. */
         {
           Object ResultObject= 
-            AttributesHashMap.put( KeyString, ValueObject );
+            AttributesHashMap.put( keyString, valueObject );
           return ResultObject;
           }
 
     // Methods for Read/Write from/to state files.
 
       public static MetaNode rwMetaNode
-        ( MetaFile inMetaFile, MetaNode inMetaNode, DataNode ParentDataNode )
+        ( MetaFile inMetaFile, MetaNode inMetaNode, MetaNode parentMetaNode )
         throws IOException
         /* This rw-processes the node inMetaNode and its MetaNode children.  
           If ( inMetaNode == null ) then it creates an empty MetaNode
           and reads values into it.
           If ( inMetaNode != null ) then it writes the fields.
           If ( MetaFile.TheRwStructure == MetaFile.RwStructure.FLAT )
-          then it processes the MetaChildren as IDNumber stubs only.
+          then it expects the children to be IDNumber stubs only.
           If ( MetaFile.TheRwStructure == MetaFile.RwStructure.NESTED )
-          then it fully processes the MetaChildren.
-          In the case of Reading, ParentDataNode is used for name lookup.
-          ParentDataNode is ignored during Writing.
+          then it expects nested children.
+          In the case of Reading, parentMetaNode is used for name lookup.
+          parentMetaNode is ignored during Writing.
           
           It returns the MetaNode processed.
           */
         {
+          //Misc.DbgOut( "MetaNode.rwMetaNode(..)" );  // Debug.
           if ( inMetaNode == null ) // If there is no MetaNode then...
             inMetaNode= new MetaNode( ); // ...create one to be filled.
 
-          inMetaNode.rw( inMetaFile, ParentDataNode );  // rw-process fields.
+          inMetaNode.rw( inMetaFile, parentMetaNode );  // rw-process fields.
 
-          Misc.DbgOut( "MetaNode.rwMetaNode(..) returning "+inMetaNode.getTheI() );  // Debug.
+          System.out.print( " #"+inMetaNode.getTheI());  // Debug.
+
           return inMetaNode;  // Return the new or the original MetaNode.
           }
 
-      private void rw( MetaFile inMetaFile, DataNode ParentDataNode )
+
+      private void rw( MetaFile inMetaFile, MetaNode parentMetaNode )
         throws IOException
         /* This rw-processes all fields of an existing MetaNode
           using MetaFile inMetaFile.
@@ -138,19 +140,20 @@ public class MetaNode
           then it processes the MetaChildren as IDNumber stubs only.
           If ( MetaFile.TheRwStructure == MetaFile.RwStructure.NESTED )
           then it fully processes the MetaChildren.
-          In the case of Reading, ParentDataNode is used for name lookup.
-          ParentDataNode is ignored during Writing.
+          In the case of Reading, parentMetaNode is used for name lookup.
+          parentMetaNode is ignored during Writing.
           */
         {
+          //Misc.DbgOut( "MetaNode.rw(..)" );  // Debug.
 
           inMetaFile.rwIndentedWhiteSpace( );  // Go to MetaFile.indentLevelI.
           inMetaFile.rwListBegin( );  // RW the beginning of the list.
           IDNumber.rwIDNumber( inMetaFile, this );  // Rw the ID #.
           inMetaFile.rwIndentedLiteral( "MetaNode" );  // Label as MetaNode list.
-          TheDataNode= DataRw.rwDataNode(  // Rw...
+          theDataNode= DataRw.rwDataNode(  // Rw...
             inMetaFile,  // ...with MetaFile inMetaFile...
-            TheDataNode,  // ...TheDataNode using...
-            ParentDataNode  // ...ParentDataNode for name lookups.
+            theDataNode,  // ...theDataNode using...
+            parentMetaNode  // ...parentMetaNode for name lookups.
             );
           AttributesHashMap=  // Rw the attributes.
             Attributes.rwAttributesHashMap( inMetaFile, AttributesHashMap );
@@ -158,87 +161,102 @@ public class MetaNode
             MetaChildren.rwGroupMetaChildren(  // ...the children hash map...
               inMetaFile, 
               theMetaChildren, 
-              TheDataNode  // ...using this DataNode for lookups.
+              this  // ...using this MetaNode for lookups.
               );
           inMetaFile.rwListEnd( );  // Mark the end of the list.
           inMetaFile.rwIndentedWhiteSpace( );  // Go to MetaFile.indentLevelI.
 
           }
 
+
       public static MetaNode rwFlatOrNestedMetaNode
-        ( MetaFile inMetaFile, MetaNode inMetaNode, DataNode ParentDataNode )
+        ( MetaFile inMetaFile, MetaNode inMetaNode, MetaNode parentMetaNode )
         throws IOException
         /* This method will read or write one or more MetaNodes 
           from the Meta state file inMetaFile.
-          It will recurse into the first MetaNode's children and
-          other descendants if there are any.
-          It handles both:
-          * NESTED mode, in which the children and other descendants 
-            are nested within the first and only top level MetaNode 
-            in the text file.
-          * FLAT mode, in which the children and other descendants 
-            follow at the top level the root first top level MetaNode.
+          It processes the parent MetaNode and its children once,
+          though it might process only the ID numbers of the children
+          if RwStructure is FLAT.
+          It might process the child MetaNodes a second time,
+          again if RwStructure is FLAT, 
+          but also if Mode is NOT LAZY_LOADING.
           */
         {
+          //Misc.DbgOut( "MetaNode.rwFlatOrNestedMetaNode(..)" );  // Debug.
+
           inMetaNode=  // Process possibly nested first/root MetaNode.
-            rwMetaNode( inMetaFile, inMetaNode, ParentDataNode );
-          if  // Recurse into the children now if in FLAT file mode.
-            ( inMetaFile.TheRwStructure == MetaFile.RwStructure.FLAT )
+            rwMetaNode( inMetaFile, inMetaNode, parentMetaNode );
+          if  // Reprocess child MetaNodes if these conditions are true.
+            ( 
+              ( inMetaFile.getRwStructure() == MetaFile.RwStructure.FLAT ) &&
+              ( inMetaFile.getMode() != MetaFile.Mode.LAZY_LOADING )
+              )
             inMetaNode.theMetaChildren.rwRecurseFlatV(  // Process the children...
               inMetaFile,  // ...with inMetaFile...
-              inMetaNode.getDataNode()  // ...using present node for name lookup.
+              inMetaNode  // ...using present node for name lookup.
               );
 
           return inMetaNode;  // Return the main MetaNode.
           }
 
+
       public static MetaNode readParticularFlatMetaNode
-        ( MetaFile inMetaFile, IDNumber inIDNumber, DataNode ParentDataNode )
+        ( MetaFile inMetaFile, IDNumber inIDNumber, MetaNode ParentMetaNode )
         throws IOException
-        /* Being adapted from rwFlatOrNestedMetaNode(..).
-          This method work similar to rwFlatOrNestedMetaNode(..)
+        /* This method works similar to rwFlatOrNestedMetaNode(..)
           but is used only when reading a FLAT file and when
-          looking for a MetaNode whose root has a particular IDNumber.
-          
-          First it reads one flat, single-level MetaNode.
-          If its IDNumber is not equal to inIDNumber then
-          it returns that MetaNode and does not recurse into the children
-          by reading any more.
-          If its IDNumber is equal to inIDNumber then
-          it reads as many additional MetaNodes as needed
-          to recurse into the children and other descendents,
-          then it returns the first MetaNode it read.
+          searching for a MetaNode with a particular IDNumber.
+          It is a component of MetaNode searching,
+          called by MetaFile.readWithWrapFlatMetaNode(..).
+          It is used for both:
+          * Recursive greedy loading of entire FLAT files, and
+          * Lazy-loading of single MetaNodes.
+
+          It works as follows.
+          First it reads one flat, single-level MetaNode,
+          the next one in the file.
+          What is does next depends on context.
+          If the following condition is met:
+          * The MetaNode's IDNumber is equal to inIDNumber, and
+          * ( inMetaFile.getMode() != MetaFile.Mode.LAZY_LOADING )
+          then it reads and attaches all its associated descendants.
+
+          It returns the first MetaNode it read,
           */
         {
+          //Misc.DbgOut( "MetaNode.readParticularFlatMetaNode(..)" );  // Debug.
           MetaNode resultMetaNode=  // Read one MetaNode.
-            rwMetaNode( inMetaFile, null, ParentDataNode );
-          if  // Recurse into the children if it has desired ID number.
-            ( inIDNumber.getTheI( ) == resultMetaNode.getTheI( ) )
-            resultMetaNode.theMetaChildren.  // With the nodes children...
-              rwRecurseFlatV(  // ...recurse into them...
-                inMetaFile,  // ...with inMetaFile...
-                resultMetaNode.getDataNode()  // ...using root for name lookup.
-                );
+            rwMetaNode( inMetaFile, null, ParentMetaNode );
+          if  // Read and attach descendants if it satisfies 2 conditions.
+            ( ( inIDNumber.getTheI() == resultMetaNode.getTheI() ) &&
+              ( inMetaFile.getMode() != MetaFile.Mode.LAZY_LOADING )
+              )
+            { 
+              resultMetaNode.theMetaChildren.  // With the node's children...
+                rwRecurseFlatV(  // ...recurse into them...
+                  inMetaFile,  // ...with inMetaFile...
+                  resultMetaNode  // ...using root for name lookup.
+                  );
+              }
 
           return resultMetaNode;  // Return the main MetaNode.
           }
+
 
     // Simple getter methods.
 
       public DataNode getDataNode()
         /* This returns the DataNode associated with this MetaNode.  */
         {
-          return TheDataNode;  // Return the user object associated with this node.
+          return theDataNode;  // Return the user object associated with this node.
           }
     
-      Collection<MetaNode> getChildrenCollectionOfMetaNode()
-        /* This method returns the children of this MetaNode
-          as a Collection of MetaNodes.
-          */
+      public MetaChildren getMetaChildren()
+        /* This method returns the MetaChildren object of this MetaNode.  */
         {
-          return theMetaChildren.getCollectionOfMetaNode();
+          return theMetaChildren;
           }
-    
+
     // Attribute tester and child searcher methods.
 
       MetaNode getChildWithKeyMetaNode( String InKeyString )
@@ -249,27 +267,30 @@ public class MetaNode
         {
           KeyMetaPiteratorOfMetaNode ChildKeyMetaPiteratorOfMetaNode= 
             new KeyMetaPiteratorOfMetaNode( 
-              theMetaChildren.getCollectionOfMetaNode(),
+              //theMetaChildren.getCollectionOfMetaNode(),
+              theMetaChildren.getPiteratorOfMetaNode( this ),
               InKeyString
               );
           return ChildKeyMetaPiteratorOfMetaNode.getE();
           }
 
       MetaNode getChildWithAttributeMetaNode
-        ( String InKeyString, Object InValueObject )
+        ( String InKeyString, Object InvalueObject )
         /* This method returns the first child MetaNode, if any, 
-          with an attribute with key == InKeyString and value == InValueObject.
+          with an attribute with key == InKeyString and value == InvalueObject.
           If no child MetaNode has this attribute then null is returned.
           
           Maybe refactor this use AttributePiterator subclasses???
           */
         {
-          KeyAndValueMetaPiteratorOfMetaNode ChildKeyAndValueMetaPiteratorOfMetaNode=
-            new KeyAndValueMetaPiteratorOfMetaNode( 
-              theMetaChildren.getCollectionOfMetaNode(),
-              InKeyString,
-              InValueObject
-              );
+          KeyAndValueMetaPiteratorOfMetaNode 
+            ChildKeyAndValueMetaPiteratorOfMetaNode=
+              new KeyAndValueMetaPiteratorOfMetaNode( 
+                //theMetaChildren.getCollectionOfMetaNode(),
+                theMetaChildren.getPiteratorOfMetaNode( this ),
+                InKeyString,
+                InvalueObject
+                );
           return ChildKeyAndValueMetaPiteratorOfMetaNode.getE();
           }
 
@@ -292,7 +313,7 @@ public class MetaNode
           Processor: {  // Purge testing and processing.
             if ( ! AttributesHashMap.isEmpty() )  // There are attributes.
               break Processor;  // Exit with default no-purge result.
-            if ( ! theMetaChildren.purgeTryB() )  // Children not purgable.
+            if ( ! theMetaChildren.purgeTryB( this ) )  // Children not purgable.
               break Processor;  // Exit with default no-purge result.
             OkayToPurgeB= true;  // Indicate okay for complete purge.
             }  // Purge testing and processing.
@@ -308,8 +329,9 @@ public class MetaNode
           */
         {
           MetaNode MapChildMetaNode=  // Try to get the MetaNode...
-            theMetaChildren.get(  // ...from the MetaChildren...
-              InObject   // ... from the entry containing InObject.
+            theMetaChildren.getMetaNode(  // ...from the MetaChildren...
+              InObject,   // ... from the entry containing InObject...
+              this  // ...using this for name lookup.
               );
           if ( MapChildMetaNode == null ) // Create new HashMap entry if not there.
             { // Create new HashMap entry.

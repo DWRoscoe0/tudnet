@@ -1,7 +1,6 @@
 package allClasses;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.ListIterator;
 //import java.util.HashMap;
@@ -20,68 +19,32 @@ public class MetaChildren
 
   { // class MetaChildren 
 
-    private ArrayList< IDNumber > TheArrayList;  // Container for children.
+    // Instance variables.
 
-		MetaChildren() 
-      // Constructor.
-      {
-        TheArrayList=  // Construct the child MetaNode container as...
-          new ArrayList< IDNumber >( ); // ...an ArrayList of IDNumbe-s.
-        }
+      private ArrayList< IDNumber > TheArrayList;  // Container for children.
+
+		// Constructors.
+      
+      MetaChildren() 
+        /* This constructor creates an empty MetaChildren instance.  */
+        {
+          TheArrayList=  // Construct the child MetaNode container as...
+            new ArrayList< IDNumber >( ); // ...an ArrayList of IDNumbe-s.
+          }
 
     // Getter methods.
 
-      public Collection<MetaNode> getCollectionOfMetaNode()
-        /* This method returns a Collection containing the child MetaNodes.  */
-        { 
-          @SuppressWarnings("unchecked")
-          Collection<MetaNode> ValuesCollectionOfMetaNode= 
-            (Collection<MetaNode>)  // Kludgey double-caste needed...
-            (Collection<?>)  // ...because of use of generic types.
-            TheArrayList;
-          
-          return ValuesCollectionOfMetaNode;
-          }
-
-      public Iterator<MetaNode> iterator()  
-        /* This method returns an iterator for the child MetaNodes. */
-        { 
-          Collection<MetaNode> ValuesCollection=  // Calculate the Collection.
-            getCollectionOfMetaNode();
-          return ValuesCollection.iterator();  // Return an iterator built from it.
-          }
-
-      public ListIterator<IDNumber> listIterator()
-        /* This method returns a ListIterator for the child MetaNodes. */
-        { 
-          /*
-          ArrayList<MetaNode> AnArrayList=
-            (ArrayList<MetaNode>)  // Kludgey double-caste needed...
-            (ArrayList<?>)  // ...because of use of generic types.
-            TheArrayList;
-          */
-          return TheArrayList.listIterator();
-          }
-
-      public Piterator<MetaNode> getPiteratorOfMetaNode()
-        /* This method returns a Piterator for this MetaNode's 
-          child MetaNodes.  */
-        { 
-          Iterator<MetaNode> ValuesIteratorMetaNode=
-            iterator();
-          Piterator<MetaNode> ValuesPiteratorMetaNode=
-                new Piterator<>( ValuesIteratorMetaNode );
-          return ValuesPiteratorMetaNode;
-          }
-
-      public MetaNode get( Object KeyObject )
+      public MetaNode getMetaNode( Object KeyObject, MetaNode inParentMetaNode )
         /* This method returns the child MetaNode 
           which is associated with DataNode KeyObject,
           or null if there is no such MetaNode.
+          inParentMetaNode is used for name lookup in case
+          lazy-loading is needed.
           */
         {
           MetaNode scanMetaNode;
-          Piterator < MetaNode > ChildPiterator= getPiteratorOfMetaNode();
+          Piterator < MetaNode > ChildPiterator= 
+            getPiteratorOfMetaNode( inParentMetaNode );
           while (true) {
             scanMetaNode= ChildPiterator.getE();  // Cache present candidate. 
             if ( scanMetaNode == null )  // Exit if past end.
@@ -89,11 +52,98 @@ public class MetaChildren
             if  // Exit if found.
               ( KeyObject.equals(scanMetaNode.getDataNode()) )
               break; 
-            ChildPiterator.next();  // Advance Piterator to next candidate.
+            ChildPiterator.nextE();  // Advance Piterator to next candidate.
             }
           return scanMetaNode;
           }
-    
+
+      /* Methods for getting iterators.  This needs organizing because
+        there should be one base iterator which does 
+        lazy loading of child MetaNodes on which all other code,
+        including other special iterators, relies.
+        There are 4 of them now!  There should be fewer, maybe only one.
+        */
+
+        public Piterator<MetaNode> getPiteratorOfMetaNode // ???
+          ( MetaNode inParentMetaNode )
+          /* This method returns a Piterator for this MetaNode's 
+            child MetaNodes.  
+            It DOES, or WILL DO, lazy loading.
+            It has parameter inParentMetaNode for use in name lookup
+            in case lazy loading is triggered.
+            */
+          { 
+            //Misc.DbgOut( "NgetPiteratorOfMetaNode()" );
+            return  // Piterator built from iterator.
+              new Piterator<MetaNode>( 
+                getLoadingListIteratorOfMetaNode( inParentMetaNode ) 
+                );
+            }
+
+        public ListIterator<IDNumber> getMaybeLoadingIteratorOfMetaNode
+          ( MetaNode inParentMetaNode )
+          /* This method returns an iterator for the child MetaNodes. 
+            Whether it does lazy loading depends on whether
+            lazy loading is enabled when this method is called.
+            It uses parameter inParentMetaNode for name lookup
+            in case a lazy load is triggered.
+            */
+          { 
+            ListIterator<IDNumber> aListIiteratorOfIDNumber;
+            if  // Lazy loading enabled.
+              ( MetaFile.getForcedLoadingEnabledB() ) 
+              { // Get lazy loading ListIterator.
+                @SuppressWarnings("unchecked")
+                ListIterator<IDNumber> anotherListIiteratorOfIDNumber= 
+                  (ListIterator<IDNumber>)
+                  (ListIterator<?>)
+                  getLoadingListIteratorOfMetaNode( inParentMetaNode );
+                aListIiteratorOfIDNumber= anotherListIiteratorOfIDNumber; 
+                } // Get lazy loading ListIterator.
+              else
+              aListIiteratorOfIDNumber=  // Get non-loading ListIterator.
+                getListIteratorOfIDNumber();
+            return aListIiteratorOfIDNumber;
+            }
+          
+        public ListIterator<MetaNode> getLoadingListIteratorOfMetaNode
+          ( MetaNode inParentMetaNode )
+          /* This method returns a ListIterator for the child MetaNodes. 
+            It does lazy loading.
+            It uses parameter inParentMetaNode for name lookup
+            in case a lazy load is triggered.
+            */
+          { 
+        	  //Misc.DbgOut( "MetaChildren.getIteratorOfMetaNode(inParentMetaNode)" );
+            ListIterator<IDNumber> aListIteratorOfIDNumber= 
+              getListIteratorOfIDNumber();
+            ListLiteratorOfIDNumber aListLiteratorOfIDNumber= 
+              new ListLiteratorOfIDNumber( 
+                aListIteratorOfIDNumber,
+                inParentMetaNode
+                );
+        	  
+            @SuppressWarnings("unchecked")
+            ListIterator<MetaNode> aListIiteratorOfMetaNode=  // Caste it.
+              (ListIterator<MetaNode>)
+              (ListIterator<?>)
+              aListLiteratorOfIDNumber;
+            
+            return aListIiteratorOfMetaNode;
+            }
+
+        private ListIterator<IDNumber> getListIteratorOfIDNumber()
+          /* This private method returns a ListIterator for the children.
+            It is the lowest level and simplest iterator this class returns.
+            This iterator returns IDNumber-s, not MetaNodes. 
+            It does NOT do lazy-loading of MetaNodes in flat Meta files,
+            so it is called from only places that don't want lazy loading
+            or does loading of their own.
+            */
+          { 
+            return TheArrayList.listIterator();
+            }
+
     public void add( IDNumber InIDNumber )
       /* This method adds child InIDNumber to this MetaChildren instance.
         IDNumber is the superclass of MetaNode,
@@ -110,38 +160,43 @@ public class MetaChildren
 
       public static MetaChildren rwGroupMetaChildren
         ( MetaFile inMetaFile, 
-          MetaChildren inMetaNode,
-          DataNode InParentDataNode
+          MetaChildren inMetaChildren,
+          MetaNode inParentMetaNode
           )
         throws IOException
         /* This rw-processes the MetaChildren.
-            If inMetaNode != null then it writes the children
-              to the MetaFile, and InParentDataNode is ignored.
-            If inMetaNode == null then it reads the children
-              using InParentDataNode to look up DataNode names,
+            If inMetaChildren != null then it writes the children
+              to the MetaFile, and inParentMetaNode is ignored.
+            If inMetaChildren == null then it reads the children
+              using inParentMetaNode to look up DataNode names,
               and returns a new MetaChildren instance as the function value.
             */
         {
+          //Misc.DbgOut( "MetaChildren.rwGroupMetaChildren(..)" );  // Debug.
+
           inMetaFile.rwListBegin( );
           inMetaFile.rwLiteral( " MetaChildren" );
 
-          if ( inMetaNode == null )
-            inMetaNode= readMetaChildren( inMetaFile, InParentDataNode );
+          if ( inMetaChildren == null )
+            inMetaChildren= readMetaChildren( inMetaFile, inParentMetaNode );
             else
-            writeMetaChildren( inMetaFile, inMetaNode );
+            writeMetaChildren( 
+              inMetaFile, inMetaChildren, inParentMetaNode 
+              );
 
           inMetaFile.rwListEnd( );
-          return inMetaNode;
+          return inMetaChildren;
           }
 
       private static MetaChildren readMetaChildren
-        ( MetaFile inMetaFile, DataNode InParentDataNode )
+        ( MetaFile inMetaFile, MetaNode inParentMetaNode )
         throws IOException
         /* This reads a MetaChildren from MetaFile inMetaFile
           and returns it as the result.  
-          It uses InParentDataNode for name lookups.  
+          It uses inParentMetaNode for name lookups.  
           */
         {
+          //Misc.DbgOut( "MetaChildren.readMetaChildren()" );
           MetaChildren newMetaChildren =    // Initialize newMetaChildren to be...
             new MetaChildren( ); // ...an empty default instance.
           while ( true )  // Read all children.
@@ -152,7 +207,7 @@ public class MetaChildren
                 ( inMetaFile.testTerminatorI( ")" ) != 0 )
                 break;  // Exit loop.
               switch // Read child based on RwStructure.
-                ( inMetaFile.TheRwStructure )
+                ( inMetaFile.getRwStructure() )
                 {
                   case FLAT:
                     newIDNumber= // Read a single IDNumber.
@@ -160,10 +215,10 @@ public class MetaChildren
                     break;
                   case NESTED:
                     newIDNumber=  // Read the possibly nested MetaNode.
-                      MetaNode.rwFlatOrNestedMetaNode( 
+                      MetaNode.rwFlatOrNestedMetaNode(  // ???
                         inMetaFile, 
                         null, 
-                        InParentDataNode 
+                        inParentMetaNode
                         );
                     break;
                   }
@@ -175,31 +230,40 @@ public class MetaChildren
           }
 
       private static void writeMetaChildren
-        ( MetaFile inMetaFile, MetaChildren inMetaNode )
+        ( MetaFile inMetaFile, 
+          MetaChildren inMetaChildren, 
+          MetaNode inParentMetaNode 
+          )
         throws IOException
-        /* This writes the MetaChildren instance inMetaNode
+        /* This writes the MetaChildren instance inMetaChildren
           using MetaFile inMetaFile.
           If MetaFile.TheRwStructure == FLAT then it writes ID numbers only,
           otherwise it recursively writes the complete MetaNodes.
+          inParentMetaNode is used for name lookup if MetaNodes
+          must be loaded before being written.
           */
         {
-          Iterator<MetaNode> childIterator=  // Create child iterator.
-            inMetaNode.iterator();
+          //Misc.DbgOut( "MetaChildren.writeMetaChildren(..)" );
+          Iterator<IDNumber> theIteratorOfIDNumber=  // Create child iterator...
+            //inMetaChildren.getListIteratorOfIDNumber();
+            inMetaChildren.getMaybeLoadingIteratorOfMetaNode(
+              inParentMetaNode
+              );
           while // Write all the children.
-            ( childIterator.hasNext() ) // There is a next child.
+            ( theIteratorOfIDNumber.hasNext() ) // There is a next child.
             { // Write one child.
-              IDNumber TheIDNumber= childIterator.next();  // Get the child MetaNode.
+              IDNumber TheIDNumber=   // Get the child.
+                theIteratorOfIDNumber.next();
               switch // Write child based on RwStructure.
-                ( inMetaFile.TheRwStructure )
+                ( inMetaFile.getRwStructure() )
                 {
                   case FLAT:
-                    TheIDNumber.rwNumberField( inMetaFile );  // Write ID # only.
+                    TheIDNumber.rw( inMetaFile );  // Write ID # only.
                     break;
                   case NESTED:
                     if (TheIDNumber instanceof MetaNode)
-                      //MetaNode TheMetaNode=  // Get the MetaNode...
-                        MetaNode.rwFlatOrNestedMetaNode(   // Write MetaNode.
-                          inMetaFile, (MetaNode)TheIDNumber, null );
+                      MetaNode.rwFlatOrNestedMetaNode(   // Write MetaNode.
+                        inMetaFile, (MetaNode)TheIDNumber, null );
                       else
                       IDNumber.rwIDNumber( inMetaFile, TheIDNumber );
                     break;
@@ -208,7 +272,7 @@ public class MetaChildren
           }
 
         public void rwRecurseFlatV
-          ( MetaFile inMetaFile, DataNode parentDataNode )
+          ( MetaFile inMetaFile, MetaNode parentMetaNode )
           throws IOException
           /* This method is used to recursively read-write process
             the children of this MetaChildren instance,
@@ -218,35 +282,44 @@ public class MetaChildren
 
             The difference between this method and rwGroupMetaChildren(..)
             is that this method processes the children in the text file
-            as a flat sequence of MetaNodes, not as a 
-            syntactically enclosed MetaChildren-group of MetaNodes.
+            as part of a flat sequence of child MetaNodes
+            not as a syntactically enclosed MetaChildren-group of MetaNodes.
             The text sequence should be a flat list of flat children, 
             using IDNumbers to refer to nested children.
             
             For each child:
             * If writing then it writes the MetaNode or IDNumber,
               whichever is the class of the child.
+              If the child has descendants of its own then
+              these will also be written, recursively,
+              following the child.
             * If reading then the present child should be 
               an IDNumber instance whose IDNumber value was read earlier.
-              In this case it will call readAndConvertIDNumber(..) to search 
-              the file text for the unique MetaNode with 
+              In this case readAndConvertIDNumber(..) will be called to 
+              search the file text for the unique MetaNode with 
               the same IDNumber value.  The IDNumber instance 
-              will be replaced with that a new constructed MetaNode instance
+              will be replaced with a new constructed MetaNode instance
               with same IDNumber value.
+              This is not lazy-loading, but the replacement process 
+              is the same, so the Iterator it uses returns IDNumbers, 
+              not MetaNodes.
 
-            As usual, DataNode parentDataNode is used for name lookup 
+            As usual, MetaNode parentMetaNode is used for name lookup 
             during reading, but is ignored during writing.
             */
           {
+            //Misc.DbgOut( "MetaChildren.rwRecurseFlatV(..)" );
             ListIterator < IDNumber > ChildListIterator=   // Get iterator.
-              listIterator();
+              getListIteratorOfIDNumber();
+              //getIteratorOfMetaNode( parentMetaNode );
+              
             while // rw-process all the children.
               ( ChildListIterator.hasNext() ) // There is a next child.
               { // Process this child.
                 IDNumber TheIDNumber=   // Get the child.
                   ChildListIterator.next();
                 if // Process according to direction.
-                  ( inMetaFile.getWritingB() )  // Writing.
+                  ( inMetaFile.getMode() == MetaFile.Mode.WRITING )  // Writing.
                   if ( TheIDNumber instanceof MetaNode )  // Is MetaNode.
                     MetaNode.rwFlatOrNestedMetaNode(   // Write MetaNode.
                       inMetaFile, (MetaNode)TheIDNumber, null );
@@ -257,16 +330,18 @@ public class MetaChildren
                   ChildListIterator.set( // Replace the child by the...
                     inMetaFile.readAndConvertIDNumber( // ...MetaNode equivalent...
                       TheIDNumber,  // ...of IDNumber using...
-                      parentDataNode  // ...provided parent for lookup.
+                      parentMetaNode  // ...provided parent for lookup.
                       )
                     ); // read.
                 } // Process this child.
               }
 
-      public boolean purgeTryB()
+      public boolean purgeTryB( MetaNode inParentMetaNode )
         /* This method tries to purge child MetaNode-s which contain
           no useful information, meaning no attributes in them
-          or any of their descendents.
+          or any of their descendants.
+          inParentMetaNode is the parent MetaNode used for 
+          name lookup in case of lazy-loading. 
           
           It returns true if no child MetaNode-s survived the purge.
           It returns false otherwise.
@@ -275,7 +350,8 @@ public class MetaChildren
           boolean childrenPurgedB=  // Set default result of purge failure.
             false;
           Processor: {
-            Iterator < MetaNode > ChildIterator= iterator();
+            Iterator < MetaNode > ChildIterator= 
+            	getLoadingListIteratorOfMetaNode( inParentMetaNode );
             Scanner: while (true) { // Try scanning all  children for purging. 
               if ( ! ChildIterator.hasNext() )  //  There are no more children.
                 break Scanner;  // Exit child scanner loop.

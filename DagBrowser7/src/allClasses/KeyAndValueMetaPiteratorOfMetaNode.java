@@ -12,49 +12,69 @@ public class KeyAndValueMetaPiteratorOfMetaNode
 
   { // class KeyAndValueMetaPiteratorOfMetaNode.
 
-		private Object valueObject;
-    
-    public KeyAndValueMetaPiteratorOfMetaNode
-      ( Collection<MetaNode> inCollectionOfMetaNode, 
-        String inKeyString, Object inValueObject
-        )
-      /* This constructor creates a KeyAndValueMetaPiteratorOfMetaNode 
-        for inCollectionOfMetaNode using inKeyString and inValueObject.  
-        */
-      {
-    	  super( inCollectionOfMetaNode, inKeyString );  // Construct superclass.
-    	  valueObject= inValueObject;  // Save value for which to search.
+    // Instance variables.
 
-        this.lockOnTarget();  // Advance pointer to first search target.
-    	  }
+      private Object valueObject;
 
-    public void next()
-      /* This advances the pointer to the next element, if any,
-        and sets the pointer window appropriately. */
-      {
-  	    super.next();  // Advance superclass pointer to next candidate.
-        this.lockOnTarget();  // Advance pointer to next search target.
-        }
+    // Constructors.
+      
+      public KeyAndValueMetaPiteratorOfMetaNode
+        ( Piterator<MetaNode> inNestedPiteratorOfMetaNode, 
+          String inKeyString, Object inValueObject
+          )
+        /* This constructs from a Piterator,
+          a key String and a value Object.
+          */
+        {
+          super( // Construct superclass.
+            inNestedPiteratorOfMetaNode, inKeyString 
+            );  
+          valueObject= inValueObject;  // Save value for which to search.
+          this.SearchMetaNode();  // Advance pointer to first search target.
+          }
+      
+      public KeyAndValueMetaPiteratorOfMetaNode
+        ( // int DbgI,
+          Collection<MetaNode> inCollectionOfMetaNode, 
+          String inKeyString, Object inValueObject
+          )
+        /* This constructs from a Collection,
+          a key String and a value Object.
+          */
+        {
+          this(  // Use another constructor to do the work.
+            new Piterator<MetaNode>( inCollectionOfMetaNode.iterator() ),
+            inKeyString, inValueObject
+            );
+          //Misc.DbgOut( "KeyAndValueMetaPiteratorOfMetaNode(..) constructor");
+          }
 
-    public void lockOnTarget()
-      /* This advances the pointer to the next element, if any,
-        and sets the pointer window appropriately. */
-      {
-    	  while (true) {
-    	  	MetaNode scanMetaNode= getE();  // Cache next candidate. 
-    	    if ( scanMetaNode == null ) break;  // Exit if passed end.
-    	    if  // Exit if attribute key and value both found.
-            ( scanMetaNode.get( keyString ).equals( valueObject ) )
-            break; 
-    	    super.next();  // Advance superclass Piterator to next candidate.
-      	  }
-    	  }
+    // New Piterator methods.
 
-    public void remove()  
-      /* Does a remove by passing it to the nested iterator and relocking. */
-      {
-        super.remove();  // Pass to nested Piterator.
-        this.lockOnTarget();  // Lock onto next target.
-        }
+      public void removeV()  
+        /* Does a remove by passing it to the nested iterator and relocking. */
+        {
+          super.removeV();  // Pass to nested Piterator.
+          this.SearchMetaNode();  // Find next search target.
+          }
+
+    // Private methods.
+
+      private MetaNode SearchMetaNode()
+        /* This advances the pointer to the next element, if any,
+          and sets the pointer window appropriately. */
+        {
+          MetaNode scanMetaNode;
+          while (true) {
+            scanMetaNode= getE();  // Cache present candidate. 
+            if ( scanMetaNode == null )  // Exit if passed end.
+              break;
+            if  // Exit if attribute key and value both found.
+              ( scanMetaNode.get( keyString ).equals( valueObject ) )
+              break; 
+            super.nextE();  // Advance superclass Piterator to next candidate.
+            }
+          return scanMetaNode;
+          }
 
     } // class KeyAndValueMetaPiteratorOfMetaNode.
