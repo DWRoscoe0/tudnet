@@ -4,7 +4,6 @@ package allClasses;
 import java.awt.Color;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
@@ -52,6 +51,7 @@ public class IJTextArea
                         new FileInputStream(InFile))));
               */
               FileInputStream TheFileInputStream = new FileInputStream(InFile);
+              @SuppressWarnings("resource")
               BufferedReader TheBufferedReader = 
                 new BufferedReader(new InputStreamReader(TheFileInputStream));
               

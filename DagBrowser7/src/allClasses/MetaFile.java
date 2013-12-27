@@ -4,13 +4,15 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+// import java.nio.file.Paths;
+// import java.nio.file.Path;
 
 public class MetaFile
  
   /* This class manages the file(s) that contains the external 
     representation of this app's meta-data.
     This MetaData is stored internally in MetaNode-s rooted at MetaRoot.
-    Each MetaNode is associated with a the DataNode.
+    Each MetaNode is associated with a DataNode.
     DataNodes are rooted at the DataNode root.
     The application reads from the file(s) after the application starts,
     and it writes to the file(s) before the application terminates.
@@ -23,6 +25,11 @@ public class MetaFile
 
   { // class MetaFile.
 
+    public void methodToPreventUnusedIdentifierCompilerWarnings() {
+      readFlatFileMetaNode( );
+      readNestedFileMetaNode( );
+      }
+      
     // Enums.
 
       public enum RwStructure {  // Structure of the Meta state file text.
@@ -241,13 +248,13 @@ public class MetaFile
           TheMode= Mode.READING;  // Set Mode to reading.
 
           MetaNode loadedMetaNode= null;  // Set null root because we are reading.
-
+          File FileNameFile= AppFolders.resolveFile( FileNameString );
           try { // Read state.
             if  //  Read state from file if...
-              ( (new File( FileNameString )).exists() )  // ...the file exists.
+              ( FileNameFile.exists() )  // ...the file exists.
               { //  Read state from file.
                 theRandomAccessFile=  // Open random access file.
-                  new RandomAccessFile( FileNameString, "r" );
+                  new RandomAccessFile( FileNameFile, "r" );
                 loadedMetaNode= rwFileMetaNode( loadedMetaNode );  // Read all state.
                 DumpRemainder( );  // Output any file remainder for debugging.
                 theRandomAccessFile.close( );  // Close the input file.
@@ -313,7 +320,7 @@ public class MetaFile
           This includes opening the file, writing the data, and closing.
           The format depends on context.
           If inMetaNode == null then it does nothing.
-          Otherwise tt creates or overwrites the appropriate file.
+          Otherwise it creates or overwrites the appropriate file.
           */
         { // writeAllState(()
           if ( inRootMetaNode == null ) // There is NO MetaNode to process.
@@ -321,10 +328,14 @@ public class MetaFile
             else // There IS a MetaNode to process.
             { // Write the data rooted at inMetaNode.
               TheMode= Mode.WRITING;  // Set Mode to writing.
+              //File inputFile = new File( HomeFolderFile, FileNameString );
+              File inputFile = AppFolders.resolveFile( FileNameString );
+              //File outFile = new File( HomeFolderFile, FileNameString+".~" );
+              File outFile = AppFolders.resolveFile( FileNameString+".~" );
 
               try { // Try opening or creating file.
                 theRandomAccessFile=  // For open random access text file.
-                  new RandomAccessFile( FileNameString+".~", "rw" );
+                  new RandomAccessFile( outFile, "rw" );
                 } // Try opening or creating file.
               catch (FileNotFoundException e) { // Handle any errors.
                 e.printStackTrace();
@@ -338,9 +349,6 @@ public class MetaFile
                     );
                   theRandomAccessFile.close( );
                   { // Replace input file by output file.
-                    File inputFile = new File( FileNameString );
-                    File outFile = new File( FileNameString+".~" );
-
                     inputFile.delete();
                     outFile.renameTo(inputFile);
                     } // Replace input file by output file.
@@ -384,10 +392,13 @@ public class MetaFile
 
           try { // Read state.
             if  //  Read state from file if...
-              ( (new File( FileNameString )).exists() )  // ...the file exists.
+              ( (AppFolders.resolveFile( FileNameString )).exists() )  // ...the file exists.
               { //  Read state from file.
                 theRandomAccessFile=  // Open random access file.
-                  new RandomAccessFile( FileNameString, "r" );
+                  new RandomAccessFile( 
+                   AppFolders.resolveFile( FileNameString ), 
+                   "r" 
+                   );
                 loadedMetaNode=   // Immediately read root node.
                   rwFileMetaNode( loadedMetaNode );
                 lazyLoadMetaFile= // Save for lazy-loading of other nodes.
