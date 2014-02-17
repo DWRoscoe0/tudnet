@@ -20,7 +20,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
-import javax.swing.Timer;
+import javax.swing.Timer;  // a Timer for GUIs.
+//import java.util.Timer  // a more general Timer.
 
 
 public class DagBrowserPanel
@@ -143,7 +144,7 @@ public class DagBrowserPanel
                 HTopJPanel.add(RightArrowIJButton);  // add it to JPanel.
                 RightArrowIJButton.addActionListener(this);
                 } // create and add RightArrowIJButton.
-              { // create and add DownArrowIJButton.
+                { // create and add DownArrowIJButton.
                 DownArrowIJButton= new IJButton("v");  // create button.
                 HTopJPanel.add(DownArrowIJButton);  // add it to JPanel.
                 DownArrowIJButton.addActionListener(this);
@@ -343,9 +344,11 @@ public class DagBrowserPanel
             { // switch blinker color.
               BlinkerJLabel.setOpaque(!BlinkerJLabel.isOpaque());  // reverse opacity.
               BlinkerJLabel.repaint();  // request redisplay of it only.
+              // PaintCountJLabel.setText("Paints="+PaintCountI);  // store present paint count.
+              // PaintCountJLabel.repaint();  // request redisplay of it only.
               } // switch blinker color.
-            // PaintCountJLabel.setText("Paints="+PaintCountI);  // store present paint count.
-            // PaintCountJLabel.repaint();  // request redisplay of it only.
+
+            AppInstanceManager.tryExitForChainToUpdateFromNewerArgAppV();
             } // process timer event.
 
       /* TreeSelectionListener methods, for when TreeSelectionEvent-s
@@ -355,7 +358,7 @@ public class DagBrowserPanel
         public void valueChanged( TreeSelectionEvent TheTreeSelectionEvent ) 
           /* This processes TreeSelectionEvent-s.
             It's job is to coordinate selections in 
-            the left and right subpanels.  
+            the left and right sub-panels.  
             This includes 
               
               Passing appropriate TreePath selection information to
@@ -398,7 +401,7 @@ public class DagBrowserPanel
                 DisplayPathAndInfoV(SelectedTreePath); // display other info.
 
                 TreeSelectionReentryBlockedB= false;  // now that we are done, allow re-entry.
-                Misc.DbgEventDone(); // ??? Debug.
+                Misc.dbgEventDone(); // ??? Debug.
                 } // process the TreeSelectionEvent.
             } // valueChanged( TreeSelectionEvent TheTreeSelectionEvent ) 
 

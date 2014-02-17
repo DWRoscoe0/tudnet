@@ -84,7 +84,7 @@ public class RootJTree
             else if (KeyCodeI == KeyEvent.VK_RIGHT)  // right-arrow key.
               CommandGoToChildV();  // go to child folder.
             else if (KeyCodeI == KeyEvent.VK_X)  // X-key.  ??? Debug.
-              Misc.DbgEventDone(); // ??? Debug.
+              Misc.dbgEventDone(); // ??? Debug.
             else
               KeyProcessedB= false;
             } // try to process the key event.
@@ -92,7 +92,7 @@ public class RootJTree
             (KeyProcessedB)  // ...if it was processed earlier.
             { // Post process key.
               TheKeyEvent.consume();  // ... prevent further processing of it.
-              Misc.DbgEventDone(); // ??? Debug.
+              Misc.dbgEventDone(); // ??? Debug.
               } // Post process key.
           } // keyPressed.
 
@@ -146,7 +146,7 @@ public class RootJTree
                   );
                 } // Process non-null destination TreePath.
 
-            Misc.DbgEventDone(); // ??? Debug.
+            Misc.dbgEventDone(); // ??? Debug.
             } // valueChanged( TreeSelectionEvent TheTreeSelectionEvent )
         
         private void CollapseAndExpand

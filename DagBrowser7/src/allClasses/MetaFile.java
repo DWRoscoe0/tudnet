@@ -7,7 +7,7 @@ import java.io.RandomAccessFile;
 // import java.nio.file.Paths;
 // import java.nio.file.Path;
 
-public class MetaFile
+public class MetaFile // implements ShutdownerListener
  
   /* This class manages the file(s) that contains the external 
     representation of this app's meta-data.
@@ -109,61 +109,69 @@ public class MetaFile
 
           MetaNode loadedMetaNode= null;  // Place for result root MetaNode.
 
-          Misc.DbgOut( "MetaFile.start(..) lazyLoadWholeMetaNode()");  // Debug.
+          //Misc.DbgOut( "MetaFile.start(..) lazyLoadWholeMetaNode()");  // Debug.
           loadedMetaNode=  // Try doing a lazy-load of flat file root node.
             lazyLoadWholeMetaNode( );
 
           // ??? Test by above read by writing special Debug file.
-          Misc.DbgOut( "MetaFile.start(..) writeDebugFileV(..)");  // Debug.
+          //Misc.DbgOut( "MetaFile.start(..) writeDebugFileV(..)");  // Debug.
           writeDebugFileV( loadedMetaNode );
 
           /*
-          Misc.DbgOut( "MetaFile.start(..) readFlatFileMetaNode()");  // Debug.
+          //Misc.DbgOut( "MetaFile.start(..) readFlatFileMetaNode()");  // Debug.
           loadedMetaNode= // Read state from flat file.  
             readFlatFileMetaNode( );
 
           // ??? Test by above read by writing special Debug file.
-          Misc.DbgOut( "MetaFile.start(..) writeDebugFileV(..)");  // Debug.
+          //Misc.DbgOut( "MetaFile.start(..) writeDebugFileV(..)");  // Debug.
           writeDebugFileV( loadedMetaNode );
           */
 
           /*
-          Misc.DbgOut( "MetaFile.start(..) readNestedFileMetaNode(..)");  // Debug.
+          //Misc.DbgOut( "MetaFile.start(..) readNestedFileMetaNode(..)");  // Debug.
           loadedMetaNode= // Read state from hierarchical file.   
             readNestedFileMetaNode( );
           */
 
           { // Prepare to run finish() when app terminates.
-            ShutdownHook theShutdownHook = new MetaFile.ShutdownHook();
-            Runtime.getRuntime().addShutdownHook(theShutdownHook);
+            //ShutdownHook theShutdownHook = new MetaFile.ShutdownHook();
+            //Runtime.getRuntime().addShutdownHook(theShutdownHook);
+
+          	Shutdowner.addShutdownerListener(new ShutdownerListener() {
+              public void doMyShutdown() 
+              {
+            		MetaFile.finish();  // Write any changed state information.
+            	  }
+          	  });
             } // Prepare to run finish() when app terminates.
 
-          Misc.DbgOut( "MetaFile.start(..) end.");  // Debug.
+          //Misc.DbgOut( "MetaFile.start(..) end.");  // Debug.
 
           return loadedMetaNode;  // Return the last value, if any, as result.
           } // start()
 
-      static class ShutdownHook extends Thread 
-        /* This is used to execute finish() at shutdown to save things.  */
+      /*
+      private static class ShutdownHook extends Thread 
+        // This is used to execute finish() at shutdown to save things.
         {
           public void run() {
             MetaFile.finish();  // Write any changed state information.
             }
           }
+      */
 
       public static void finish()
         /* Finishes activity in this MetaFile class.
           All new or modified MetaNode-s are saved to external file(s).
           This should be called before application termination.  
-          Presently it is called by ShutdownHook.run().
 
           Presently it writes all nodes, whether modified or not.
           Also presently it recursively writes the entire MetaNode tree.
           This will change.  ???
 
-          Evantually only one format will be saved,
+          Eventually only one format will be saved,
           but presently, for development and debugging,
-          both nested and flat files.
+          both nested and flat files are written.
           These should contain equivalent information.
           The order of the writes is important because
           the lazy load file Flat.txt remains for lazy loading.
@@ -173,29 +181,29 @@ public class MetaFile
           Then a new Flat.txt can be written.
           */
         { // finish()
-          Misc.DbgOut( "MetaFile.finish() begin.");
+          Misc.dbgOut( "MetaFile.finish() begin.");
 
-          Misc.DbgOut( "MetaFile.finish(..) forcedLoadingEnabledB= true");  // Debug.
+          //Misc.DbgOut( "MetaFile.finish(..) forcedLoadingEnabledB= true");  // Debug.
           forcedLoadingEnabledB= true;  // Turn on forced loading.
 
-          Misc.DbgOut( "MetaFile.finish(..) writeNestedFileV()");  // Debug.
+          //Misc.DbgOut( "MetaFile.finish(..) writeNestedFileV()");  // Debug.
           writeNestedFileV( MetaRoot.getRootMetaNode( ) );  // Write Nested file.
             // This provides an easy read dump of all MetaNodes.
 
           if ( lazyLoadMetaFile != null )  // Lazy loading file open.
             try { // Close it.
-              Misc.DbgOut( "MetaFile.finish() closing lazy-loading Flat.txt.");
+              //Misc.DbgOut( "MetaFile.finish() closing lazy-loading Flat.txt.");
               lazyLoadMetaFile.theRandomAccessFile.close( );  // Close it.
               } // Close it.
             catch ( IOException e ) {  // Process any errors.
               e.printStackTrace();
               }  // Process any errors.
 
-          Misc.DbgOut( "MetaFile.finish(..) writeFlatFileV()");  // Debug.
+          //Misc.DbgOut( "MetaFile.finish(..) writeFlatFileV()");  // Debug.
           writeFlatFileV( MetaRoot.getRootMetaNode( ) );  // Write Flat file.
             // This complete dump is what is lazy-loaded during next run.
 
-          Misc.DbgOut( "MetaFile.finish() end.");
+          Misc.dbgOut( "MetaFile.finish() end.");
           } // finish()
 
     // Whole-file read methods.
@@ -446,7 +454,7 @@ public class MetaFile
             if  // Exit if node found.
               ( DesiredI == resultIDNumber.getTheI() )
               { 
-                System.out.print( " S:"+DesiredI );  // Indicate node found.
+                //System.out.print( " S:"+DesiredI );  // Indicate node found.
                 break;
                 }
             System.out.print( " F:"+DesiredI );  // Indicate node NOT found.
