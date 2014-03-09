@@ -93,7 +93,7 @@ public class IFile
     
       public DataNode getChild( int IndexI ) 
         /* This returns the child with index IndexI.
-          It gets the child from an array cache if possible.
+          It gets the child from an array cache if that is possible.
           If not then it calculates the child and 
           saves it in the cache for later.
           In either case it returns a reference to the child.
@@ -227,7 +227,7 @@ public class IFile
       
       public JComponent GetDataJComponent
         ( TreePath InTreePath, TreeModel InTreeModel )
-        /* Returns a JComponent capable of displaying this DataNode.  
+        /* Returns a JComponent capable of displaying this IFile.  
           using a TreeModel argument.  
           This ignores the TreeModel for DataNode subclasses
           which do not yet support it.

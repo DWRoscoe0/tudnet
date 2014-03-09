@@ -52,6 +52,12 @@ public class DirectoryTableViewer
     which gets all its data from an augmented TableModel which
     also understands TreePath-s.  ??
     */ 
+
+  /* ??? marks things to do below.  Here are those items summarized:
+    * ??? Rewrite so that calls to Combining 
+      SetSelectedChildTreePath( TreePath ) and 
+      NotifyTreeSelectionListenersV( boolean ) can be combined.
+    */
   
   { // DirectoryTableViewer
   

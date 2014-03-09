@@ -125,7 +125,7 @@ public class DagBrowser
     static class InstanceCreatedRunnable
       implements Runnable
       /* This nested class contains a run() method which
-        is used to process triggerings of 
+        is used to process triggerings of the
         AppInstanceListener method newInstanceCreated() on the AWT thread.
         This class is needed because DagBrowser.run() 
         is already used for another purpose.

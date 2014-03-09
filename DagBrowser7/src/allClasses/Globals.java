@@ -5,7 +5,8 @@ package allClasses;
 public class Globals 
   /* This class is used for things the app will need often.
     It will be the argument for "import static" to reduce
-    the need for fully qualified names.
+    the need for fully qualified names, as in:
+      import static allClasses.Globals.*;  // appLogger;
     */
   {
 		//public static Logger appLogger= Logger.getAnonymousLogger();

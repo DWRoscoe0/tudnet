@@ -20,7 +20,7 @@ public class RepeatDetector
           RepeatedB= true;  // Yes, set true result.
           else  // Value is not last recorded value.
           { // Count and maybe expand interval.
-            System.out.print( "." );  // Dbg: iteration iIndicator.
+            //System.out.print( "." );  // Dbg: iteration iIndicator.
             --countI;  // Decrement search count for recorded value.
             if ( countI == 0 )  // Time to record new value and expand count.
               { // Record new value and expand interval.

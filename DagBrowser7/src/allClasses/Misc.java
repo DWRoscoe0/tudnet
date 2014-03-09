@@ -63,17 +63,20 @@ public class Misc
         throws IOException  // Do-nothing put-off.
         /* This method calculates what the log session number should be,
           records it in the file session.txt,
-          and return the session number.
+          and returns the session number.
           */
         { 
       		int sessionI= 0;
           String sessionString = "0";
       		File sessionFile=  // Identify session file.
             AppFolders.resolveFile( "session.txt" );
-          if ( ! logFile.exists() )  // If log file is empty...
-            sessionFile.delete();  // ...start new session.
-          if ( ! sessionFile.exists() ) 
-            sessionI= 0;  // Start at session 0.
+          if ( ! logFile.exists() )  // If log file doesn't exist...
+            sessionFile.delete();  // ...delete session file also.
+          if ( ! sessionFile.exists() )  // If session file doesn't exist...
+            {
+              logFile.delete();  // ...delete session file also.
+              sessionI= 0;  // Start at session # 0.
+              }
             else
             try // Get session number from file and increment it.
               {

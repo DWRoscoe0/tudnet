@@ -4,7 +4,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.awt.event.InputEvent;
+//import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
@@ -21,11 +21,13 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
+import static allClasses.Globals.*;  // appLogger;
+
 public class ListViewer
 
   //extends JList<DataNode>
-  extends JList<Object>
   //extends DagNodeViewer 
+  extends JList<Object>
  
   implements 
     KeyListener, FocusListener, ListSelectionListener, MouseListener,
@@ -36,6 +38,9 @@ public class ListViewer
     It was created based on code from DirectoryTableViewer.
     Eventually it might be a good idea to create 
     a static or intermediate base class that handles common operations.
+
+    ??? It appears that JList<Object> implements many keyboard commands,
+    so these have been removed from KeyListener.keyPressed(KeyEvent).
     */
     
   { // ListViewer
@@ -173,10 +178,12 @@ public class ListViewer
             int KeyCodeI = TheKeyEvent.getKeyCode();  // cache key pressed.
             boolean KeyProcessedB= true;  // assume the key event will be processed here. 
             { // try to process the key event.
+              /* Tab decoded else by JList.
               if (KeyCodeI == KeyEvent.VK_TAB)  // Tab key.
                 { // process Tab key.
-                  // System.out.println( "ListViewer.keyPressed(), it's a tab" );
-                  Component SourceComponent= (Component)TheKeyEvent.getSource();
+                  appLogger.info( "ListViewer.keyPressed(), it's a tab" );
+                  Component SourceComponent= 
+                    (Component)TheKeyEvent.getSource();
                   int shift = // Determine (Shift) key state.
                     TheKeyEvent.getModifiersEx() & InputEvent.SHIFT_DOWN_MASK;
                   if (shift == 0) // (Shift) not down.
@@ -184,7 +191,11 @@ public class ListViewer
                     else   // (Shift) is down.
                     SourceComponent.transferFocusBackward();  // Move focus to previous component.
                   } // process Tab key.
-              else if (KeyCodeI == KeyEvent.VK_LEFT)  // left-arrow key.
+              else 
+              // Tab decoded else by JList.
+              */
+
+              if (KeyCodeI == KeyEvent.VK_LEFT)  // left-arrow key.
                 CommandGoToParentV();  // go to parent folder.
               else if (KeyCodeI == KeyEvent.VK_RIGHT)  // right-arrow key.
                 CommandGoToChildV();  // go to child folder.
@@ -194,7 +205,10 @@ public class ListViewer
                 KeyProcessedB= false;  // indicate no key was processed.
               } // try to process the key event.
             if (KeyProcessedB)  // if the key event was processed...
+            {
+              appLogger.info( "ListViewer.keyPressed(), key consumeds" );
               TheKeyEvent.consume();  // ... prevent more processing of this key.
+              }
             } // keyPressed.
 
         public void keyReleased(KeyEvent TheKeyEvent) { }  // unused part of KeyListener interface.
@@ -257,9 +271,9 @@ public class ListViewer
               ; // do nothing.  or handle externally?
             else  // there is a parent.
               { // record visit and display parent.
-            	  Selection.  // In the visits tree...
+                Selection.  // In the visits tree...
                   set( // record...
-                		aViewHelper.GetSelectedChildTreePath()  // ...the new selected TreePath.
+                    aViewHelper.GetSelectedChildTreePath()  // ...the new selected TreePath.
                     );
                 aViewHelper.SetSelectedChildTreePath( GrandParentTreePath );  // kluge so Notify will work.
                 aViewHelper.NotifyTreeSelectionListenersV( false );  // let listener handle it.
@@ -361,7 +375,6 @@ public class ListViewer
           which might cause further processing and calls to
           esternal TreeSelectionListeners-s. */
         { // UpdateJListStateV()
-          // UpdateJListListModel();  // not needed with TreeModel.
           if  // Update other stuff if...
             ( getModel().getSize() > 0 ) // ... any rows in model.
             { // Update other stuff.
@@ -369,21 +382,6 @@ public class ListViewer
               UpdateJListScrollState();
               } // Update other stuff.
           } // UpdateJListStateV()
-  
-      /* private void UpdateJListListModel()
-        /* This grouping method updates the JList's ListModel from
-          the selection-related instance variables.
-          */
-        /*
-        { //UpdateJListListModel()
-          DefaultListModel<Object> TheDefaultListModel= 
-            (DefaultListModel<Object>)getModel();
-          TheDefaultListModel.clear();  // empfy the ListModel.
-          for   // Add all the children.
-            (int i = 0; i < SubjectDataNode.getChildCount(); i++)  // each child...
-            TheDefaultListModel.addElement( SubjectDataNode.getChild( i ) );
-          } //UpdateJListListModel()
-        */
   
       private void UpdateJListSelection()
         /* This grouping method updates the JList selection state
@@ -427,7 +425,7 @@ public class ListViewer
   
     // rendering methods.  to be added.
 
-    // ViewHelper pass-through methods.
+    // interface ViewHelper pass-through methods.
 
       public TreePath GetSelectedChildTreePath()
         { 
@@ -444,45 +442,45 @@ public class ListViewer
           aViewHelper.SetSelectedChildTreePath( InSelectedChildTreePath );
           }
       
-    // nested class stuff.
+      // nested class stuff.
 
-      private ListCellRenderer TheListCellRenderer=
-        new ListCellRenderer(); // for custom cell rendering.
-    
-      public static class ListCellRenderer
-        extends DefaultListCellRenderer
-        /* This small helper class extends the method 
-          getTableCellRendererComponent() which is 
-          used for rendering JList cells.
-          The main purpose of this is to give the selected cell
-          a different color when the Component has focus.
-          */
-        { // class ListCellRenderer
-          private static final long serialVersionUID = 1L;
+        private ListCellRenderer TheListCellRenderer=
+          new ListCellRenderer(); // for custom cell rendering.
+      
+        public static class ListCellRenderer
+          extends DefaultListCellRenderer
+          /* This small helper class extends the method 
+            getTableCellRendererComponent() which is 
+            used for rendering JList cells.
+            The main purpose of this is to give the selected cell
+            a different color when the Component has focus.
+            */
+          { // class ListCellRenderer
+            private static final long serialVersionUID = 1L;
 
-          public Component getListCellRendererComponent
-            ( JList<?> list,
-              Object value,
-              int index,
-              boolean isSelected,
-              boolean hasFocus
-              )
-            {
+            public Component getListCellRendererComponent
+              ( JList<?> list,
+                Object value,
+                int index,
+                boolean isSelected,
+                boolean hasFocus
+                )
+              {
 
-            Component RenderComponent=  // get the superclass RenderCompoent.
-              super.getListCellRendererComponent(
-                list, value, index, isSelected, hasFocus );
-            { // make color adjustments to RenderComponent.
-              if ( ! isSelected )  // cell not selected.
-                RenderComponent.setBackground(list.getBackground());
-              else if ( ! list.isFocusOwner() )  // selected but not focused.
-                RenderComponent.setBackground( list.getSelectionBackground() );
-              else  // both selected and focused.
-                RenderComponent.setBackground( Color.GREEN ); // be distinctive.
-              } // make color adjustments to RenderComponent.
-            // RenderComponent.setBackground(Color.RED);  // ???
-            return RenderComponent;
-            }
-        } // class ListCellRenderer    
+              Component RenderComponent=  // get the superclass RenderCompoent.
+                super.getListCellRendererComponent(
+                  list, value, index, isSelected, hasFocus );
+              { // make color adjustments to RenderComponent.
+                if ( ! isSelected )  // cell not selected.
+                  RenderComponent.setBackground(list.getBackground());
+                else if ( ! list.isFocusOwner() )  // selected but not focused.
+                  RenderComponent.setBackground( list.getSelectionBackground() );
+                else  // both selected and focused.
+                  RenderComponent.setBackground( Color.GREEN ); // be distinctive.
+                } // make color adjustments to RenderComponent.
+              // RenderComponent.setBackground(Color.RED);  // ???
+              return RenderComponent;
+              }
+          } // class ListCellRenderer    
 
     } // ListViewer

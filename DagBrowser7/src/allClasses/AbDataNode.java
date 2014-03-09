@@ -134,9 +134,10 @@ public abstract class AbDataNode
     
       public JComponent GetDataJComponent
         ( TreePath InTreePath, TreeModel InTreeModel )
-        /* Returns a JComponent which is appropriate for viewing 
-          the this DataNode, which is referenced by InTreePath,
+        /* Returns a JComponent which is appropriate for viewing
+          and possibly changing its associated DataNode, 
           using context from InTreeModel.
+          The DataNode is defined by InTreePath,
           */
         { // GetDataJComponent()
           JComponent ResultJComponent= null;  // For result.

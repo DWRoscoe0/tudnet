@@ -12,11 +12,11 @@ public class DataTreeModel
   
   /* This class implements an extended TreeModel 
     used for browsing the Infogora.
-    In addition to implimenting the TreeModel interface, 
+    In addition to implementing the TreeModel interface, 
     this class also calculates a JComponent which represents 
-    the contents of a desired tree node.
+    the contents of a desired tree node as a JComponent.
     */
-    
+
   { // class DataTreeModel.
 
     // variables.
@@ -46,7 +46,10 @@ public class DataTreeModel
   
       /* output methods.
         This TreeModel does no filtering,
-        so it passes all calls through to the DataNode Object for processing.
+        so the methods which access a node's contents
+        simply delegate the call to the ParentObject,
+        which is assumed to be a DataNode,
+        and can perform the operation context-free.
         */
   
         public Object getRoot() 
@@ -104,8 +107,9 @@ public class DataTreeModel
       // output (getter) methods.
         
         public JComponent GetDataJComponent( TreePath InTreePath )
-          /* Returns a JComponent which is appropriate for viewing 
-            the current tree node represented specified by InTreePath.  
+          /* Returns a JComponent which is appropriate for 
+            viewing and possibly manipulating
+            the current tree node specified by InTreePath.  
             */
           { // GetDataJComponent.
             DataNode InDataNode= // extract...

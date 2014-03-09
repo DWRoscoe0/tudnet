@@ -457,7 +457,7 @@ public class MetaFile // implements ShutdownerListener
                 //System.out.print( " S:"+DesiredI );  // Indicate node found.
                 break;
                 }
-            System.out.print( " F:"+DesiredI );  // Indicate node NOT found.
+            //System.out.print( " F:"+DesiredI );  // Indicate node NOT found.
             if ( theRepeatDetector.testB( resultIDNumber.getTheI() ) ) break;
             } // Search state file for desired MetaNode.
           if ( resultIDNumber == null ) // Did not find matching MetaNode.

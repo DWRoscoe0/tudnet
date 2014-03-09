@@ -13,17 +13,6 @@ public interface VHelper
           It is called by only DagBrowserPanel.focusGained(.).  
           */
   
-      // public void NotifyTreeSelectionListenersV( boolean InternalB );
-        /* Notifies any TreeSelectionListeners
-          of the currently selected TreePath.
-          For efficienty it should be called only when
-          the selected TreePath has actually changed.
-          InternalB has the following meanings:
-            true: the selection is within the same DataNode as the previous 
-              selection, so it can be handled by this DagNodeViewer.
-            false: the selection is to be handled by a new DagNodeViewer.
-          */
-
       public void addTreeSelectionListener( TreeSelectionListener listener );
         
       public void SetSelectedChildTreePath(TreePath InSelectedChildTreePath);

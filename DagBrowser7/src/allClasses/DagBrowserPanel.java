@@ -7,22 +7,25 @@ import java.awt.Dimension;
 import java.awt.FlowLayout; // not recommended by Eclipse QuickFix.
 import java.awt.Font;
 import java.awt.Graphics;
-import java.awt.KeyboardFocusManager;
+import java.awt.KeyboardFocusManager;  // See note about this below.
 import java.awt.event.*;
 
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
+import javax.swing.AbstractAction;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;  // a Timer for GUIs.
 //import java.util.Timer  // a more general Timer.
 
+import static allClasses.Globals.*;  // appLogger;
 
 public class DagBrowserPanel
   extends JPanel 
@@ -40,10 +43,16 @@ public class DagBrowserPanel
     in a way appropriate to the type of node.
     */
 
+  /* ??? marks things to do below.  Here are those items summarized:
+    * DagBrowserPanel() too long.  refactor.
+    * FocusStepB() simplification using scanning loop.
+    * CommandHelpV() replacement with a general PromptingHelp system.
+    */
+
   { // class DagBrowserPanel. 
 
     // static variables.
-      private static final long serialVersionUID = 1L;
+      //private static final long serialVersionUID = 1L;
 
     // instance variables.
 
@@ -80,8 +89,17 @@ public class DagBrowserPanel
           private JLabel InfoJLabel;  // a place to display directory/file info.
 
       /* ComponentFocusStateMachine.
-        This restores the focus to either the left/navigation pane
-        or the right/content pain.  */
+        This state machine restores the focus to either 
+        the left/navigation JTree pane or the right/content pane.  
+        This restoration is done becaue most of the time 
+        the focus is in one of those two places while the user browses, 
+        and the user will want to move the cursor back into
+        one of these panes if it ever goes out.
+        The reason the restoration is done stepping
+        only one Component at a time in the component hierarchy
+        is because Component.requestFocusInWindow() did not seem
+        to be able to reliably move the focus more than one Component.
+        */
         private enum FocusPane {   // the normal focus panes.
           NO_PANE,  // neither pane.
           LEFT_PANE,  // left (tree view) pane.
@@ -97,7 +115,6 @@ public class DagBrowserPanel
             if LEFT_PANE or RIGHT_PANE then the ComponentFocusStateMachine 
             is active and trying to set the focus to that pane Component.  */
         // private int FocusStepCountI=0; // Debug.
-          
         private Component LastValidFocusOwnerPanelComponent= null;
           /* if non-null then a focus-altering command is underway and 
             the value is the penel Component with focus immediately before 
@@ -119,7 +136,7 @@ public class DagBrowserPanel
           This is too long and should be broken up.  ???
           */
         { // DagBrowserPanel()
-          { // build and add subpanels of this Panel. ????
+          { // build and add subpanels of this Panel.
             setLayout(new BorderLayout());  // use BorderLayout manager.
             BuildDataModelsAndGraphs();
             { // build HTopJPanel containing buttons and other helpful widgets.
@@ -222,7 +239,9 @@ public class DagBrowserPanel
                     TreeJScrollPane,  // ...left scroller subpanel and...
                     DataJScrollPane  // ...right scroller subpanel.
                     );
-                TheSplitPane.setContinuousLayout( true );  // enable continuous layoug mode.
+                TheSplitPane.setContinuousLayout( true );  // Enable continuous layoug mode.
+                //TheSplitPane.setDividerLocation( 0.25 );  // Set the position of split.
+                TheSplitPane.setResizeWeight( 0.25 );  // Handle extra space
                 } // build JSplitPane to be used as content.
               ViewJPanel.add(TheSplitPane,BorderLayout.CENTER); // add TheJSplitPane as...
                                                                 // ... the center subpanel.
@@ -263,6 +282,10 @@ public class DagBrowserPanel
                 CommandHelpV();  // give help.
                 }  
             });
+          { // Create key mapping.
+            bindKeys();  
+            bindActions();
+            } // Create key mapping.
           } // DagBrowserPanel()
 
       private void BuildDataModelsAndGraphs()
@@ -281,7 +304,7 @@ public class DagBrowserPanel
               );
           }
 
-    // Listener methods.
+    // Listener methods and their helpers.
   
       /* ActionListener and related methods, for processing ActionEvent-s from 
         buttons and timers.
@@ -401,7 +424,7 @@ public class DagBrowserPanel
                 DisplayPathAndInfoV(SelectedTreePath); // display other info.
 
                 TreeSelectionReentryBlockedB= false;  // now that we are done, allow re-entry.
-                Misc.dbgEventDone(); // ??? Debug.
+                Misc.dbgEventDone(); // Debug.
                 } // process the TreeSelectionEvent.
             } // valueChanged( TreeSelectionEvent TheTreeSelectionEvent ) 
 
@@ -482,7 +505,8 @@ public class DagBrowserPanel
             
               Saving the Component getting focus in 
               LastValidFocusOwnerPanelComponent so RestoreFocusV() 
-              can restore the focus later after temporary focus-altering user input.
+              can restore the focus later after 
+              temporary focus-altering user input.
               The two Components that usually have focus in this app are the
               left JTreePanel and the right DataJComponent.
               
@@ -594,29 +618,30 @@ public class DagBrowserPanel
             } // FocusStepperV()
 
         private Boolean FocusStepB()
-          /* performs one step of the ComponentFocusStateMachine,
+          /* This method performs one step of the ComponentFocusStateMachine,
             to move the focus one Component closer to desired Component
             in the Component hierarchy.  
-            returns true if the state machine is still running, false otherwise.
+            It returns true if the state machine is still running, 
+            false otherwise.
+            ??? This could be rewritten and simplified by replacing
+            all the Component-specific code by code which 
+            scans Components upward in the hierarchy from the 
+            Component which should have focus to
+            the Component which does have focus
+            and then requesting focus in the previous one scanned
+            one level down.
             */
           { // FocusStepB().
-            // System.out.println( "FocusStepB(), 1");
             if (DesiredFocusPane == FocusPane.NO_PANE)  // machine halted.
               return false;  // return indicating machine is halted.
-              
-            // System.out.println( "FocusStepB(), 2");
             Component FocusOwningComponent=  // get Component owning the focus.
               KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-            // if (FocusOwningComponent == null)  // no component has focus.
-            //   return false;  // return indicating machine is halted.
-             
-            // System.out.println( "FocusStepB(), 3");
             Component NextFocusComponent= null; // assume no more steps.
             
             /* the following complex code might be replace by
               a Component hierarchy scanning loop.  */
-
-            NextFocusComponent= ViewJPanel;  // assume focusing starts at root.
+            NextFocusComponent=  // assume focusing starts at...
+              ViewJPanel;   // ... the root Component.
             { // override if needed.
               if (FocusOwningComponent == ViewJPanel)
                 NextFocusComponent= TheSplitPane;
@@ -628,8 +653,6 @@ public class DagBrowserPanel
                         NextFocusComponent= TreeJScrollPane;
                       else if (FocusOwningComponent == TreeJScrollPane)
                         NextFocusComponent= TheRootJTree;
-                      // else if (FocusOwningComponent == TheRootJTree)
-                      //   NextFocusComponent= TheRootJTree.getTree();
                       else if (FocusOwningComponent == TheRootJTree)
                         NextFocusComponent= null;  // end of sequence.  don't change it.
                       } // step focus toward left pane.
@@ -668,13 +691,74 @@ public class DagBrowserPanel
                   DataJComponent.repaint();  // repaint right data panel.
                   TheRootJTree.repaint();  // repaint left tree panel.
                   } // now that focus is correct, repaint the two panels.
-                // System.out.println( "FocusStepB(), focusing complete" );
                 DesiredFocusPane= FocusPane.NO_PANE;  // halt state machine.
                 } // do final focus processing.
-
             return  // return an indication of whether ...
               (DesiredFocusPane != FocusPane.NO_PANE);  // ... machine still running.
             } // FocusStepB().
+
+    // Key and Action bindings (KeyboardFocusManager ).
+    
+      /* Although the way Java handles Keyboard Focus has been improved,
+        I still find it difficult to use.
+        There are some default Key and Action bindings which
+        cause Tab and Shift-Tab to move the forward and backward
+        through a default cycle.
+        But to use these bindings in a PromptingHelp system
+        it might be necessary to replace or override these.
+        
+        The following is the beginning of code to do Java KeyBindings.
+        It doesn't do much now because of 
+        the above mentioned default bindings,
+        but they don't do any harm either.
+        */
+
+      private void bindKeys()
+        /* This method binds keys decoded by this component 
+          to Action name Strings. 
+          Presently it does only (Tab) and (Shift-Tab).  
+          */
+        {
+          getInputMap().put(
+            KeyStroke.getKeyStroke(
+              KeyEvent.VK_TAB, 0
+              )
+            , "component forward"
+            );
+          getInputMap().put(
+            KeyStroke.getKeyStroke(
+              KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK
+              )
+            , "component backward"
+            );
+          }
+    
+      private void bindActions()
+        /* This method binds Action name Strings to Actions subclasses.
+          Presently it does only (Tab) and (Shift-Tab).  
+          */
+        {
+          getActionMap().put(
+            "component forward"
+            , new ComponentForwardAction( )
+            );
+          }
+
+      class ComponentForwardAction extends AbstractAction 
+        {
+          public ComponentForwardAction() {}
+
+          public void actionPerformed(ActionEvent e) 
+            {
+              Component FocusOwningComponent=  // get focused Component.
+                KeyboardFocusManager.
+                getCurrentKeyboardFocusManager().getFocusOwner();
+              FocusOwningComponent.transferFocus();  // Move focus forward.
+              appLogger.info(
+                "ComponentForwardAction(): "+FocusOwningComponent
+                );
+              }
+          }
 
     // miscellaneous methods.
 

@@ -74,7 +74,7 @@ public class TextViewer
         /* Constructs a TextViewer.
           TreePathIn is the TreePath associated with
           the node of the Tree to be displayed.
-          The last DataNode in the path is that object.
+          The last DataNode in the path is that Node.
           The contents is InString.
           InTreeModel provides context.
           */
@@ -88,13 +88,6 @@ public class TextViewer
           //  this;  // Reference self.  ???
           CommonInitialization( TreePathIn );
           } // TextViewer(.)
-
-      /* public TextViewer( TreePath TreePathIn, IFile InIFile )
-        { 
-          this( TreePathIn, null, InIFile ); 
-          System.out.println( "TextViewer(TreePathIn, InIFile)" );
-          }
-        */
 
       public TextViewer
         ( TreePath TreePathIn, TreeModel InTreeModel, IFile InIFile )

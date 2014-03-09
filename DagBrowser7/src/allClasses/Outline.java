@@ -1,5 +1,6 @@
 package allClasses;
 
+//import static allClasses.Globals.*;  // appLogger;
 //import java.io.File;
 //import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -94,6 +95,7 @@ public class Outline
           */
         { // SkipChild( )
           int ChildIndentI= LineIndentI;  // Save indent of child.
+          //appLogger.info( "Outline: SkipChild(), LineIndentI= "+LineIndentI);
           boolean DoneB= false;  // Set loop control flag to loop.
           while ( !DoneB ) // Skip past all child lines.
             { // Skip child lines but stop after last one.
@@ -102,7 +104,10 @@ public class Outline
               else if ( LineIndentI > ChildIndentI ) // Line is more indented.
                 ; // Do nothing to skip and keep going.
               else if ( LineString.equals( "." ) )  // Line is a single '.'.
-                DoneB= true;  // It is last child line, so terminate loop.
+                {
+	                //appLogger.info( "Outline: SkipChild(), Done.");
+	                DoneB= true;  // It is last child line, so terminate loop.
+	                }
               ReadLine( );  // Skip child line.
               } // Skip child lines but stop after last one.
           } // SkipChild( )
@@ -119,8 +124,11 @@ public class Outline
           GetSectionString( );  // Read past 1st section to 1st child.
           for (int i=0; i < IndexI; i++)  // Skip to the correct child.
             SkipChild( );
-          return new Outline(  // Return Outline node for this record with...
-            LineOffsetL  // ...its file offset.
+          if ( LineString.equals( "." ) )  // Line is a single '.'.
+            return null;
+            else
+            return new Outline(  // Return Outline node for this record with...
+              LineOffsetL  // ...its file offset.
             );
           } // getChild( int ) 
 
@@ -281,6 +289,8 @@ public class Outline
         /* Reads one next line of the outline file.
           It stores information about what it read in the
           ReadNext instance variable.
+          If an EndOfFile is encountered then it simulates
+          the reading of a line containing only a ".".
           */
         { // ReadLine.
           LineString= null; // Empty String accumulator.
@@ -293,8 +303,14 @@ public class Outline
             catch (IOException e) { // Handle errors.
               e.printStackTrace();
               } // Handle errors.
+          if (LineString == null)  // End of file (shouldn't happen).
+	          {
+	            //appLogger.info( "Outline: ReadLine() replacing EOF with '.'");
+	          	LineString= ".";  // Simulate terminator line.
+	            }
           { // Measure indent level.
             LineIndentI= 0;  // Clear indent level.
+            //appLogger.info( "Outline: ReadLine(),LineString= "+LineString );
             while // Increment indent level with each leading spaces
               ( ( LineIndentI < LineString.length() ) &&
                 ( LineString.charAt( LineIndentI ) == ' ' )
@@ -317,7 +333,7 @@ public class Outline
           }
 
       @Override public int hashCode() 
-        /* This is the standard hashCoe() method.  */
+        /* This is the standard hashCode() method.  */
         {
           return (int) (41 * StartingOffsetL);
           }
