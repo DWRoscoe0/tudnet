@@ -75,7 +75,7 @@ public class Outline
         {
           if ( Misc.ReminderB )
             System.out.println( "Outline.getChildCount() " + IDCode());
-          if ( TheChildCountI <= 0 )  // calculate if not doneyet.
+          if ( TheChildCountI <= 0 )  // calculate if not done yet.
             { // calculate child count.
               StartFile( );  // Prepare reading at the start position.
               GetSectionString( );  // Try to read past 1st section to 1st child.

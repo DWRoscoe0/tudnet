@@ -300,6 +300,7 @@ public class RootJTree
         /* Goes to and displays the most recently visited child 
           of the present node.  If none of the children
           have been visited before then it goes to the first child.
+          If there are no children then it ??? should do nothing.
           */
         { // CommandGoToChildV().
           Object ChildObject=  // try to get child...

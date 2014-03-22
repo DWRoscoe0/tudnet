@@ -28,7 +28,9 @@ import javax.swing.Timer;  // a Timer for GUIs.
 import static allClasses.Globals.*;  // appLogger;
 
 public class DagBrowserPanel
-  extends JPanel 
+
+  extends JPanel
+
   implements 
     ActionListener, 
     FocusListener,
@@ -66,10 +68,10 @@ public class DagBrowserPanel
             
         private JPanel HTopJPanel; // top horizontal panel for...
           private IJButton HelpIJButton;  // button to activate Help dialog.
-          private IJButton LeftArrowIJButton;  // button to move to parent.
-          private IJButton RightArrowIJButton;  // button to move to child.
           private IJButton DownArrowIJButton;  // button to move down.
           private IJButton UpArrowIJButton;  // button to move up.
+          private IJButton LeftArrowIJButton;  // button to move to parent.
+          private IJButton RightArrowIJButton;  // button to move to child.
           private JLabel BlinkerJLabel; // window monitor status.
           //private JTextArea DebugJTextArea; // for Debug output info.
           //private JLabel PaintCountJLabel; // a place to display paint count.
@@ -84,7 +86,7 @@ public class DagBrowserPanel
             private JScrollPane DataJScrollPane;  // right scroller subpanel...
               private JComponent DataJComponent;  // ... and its data content.
               private VHelper DataVHelper;  // ... and its VHelper handle.
-              // private JTable DataJComponent;  // was only table before.
+              //private VJComponent DataVJComponent;  // ??? and its combination.
 
           private JLabel InfoJLabel;  // a place to display directory/file info.
 
@@ -151,6 +153,16 @@ public class DagBrowserPanel
                 HTopJPanel.add(HelpIJButton);  // add it to JPanel.
                 HelpIJButton.addActionListener(this);
                 } // create and add HelpIJButton.
+              { // create and add DownArrowIJButton.
+                DownArrowIJButton= new IJButton("v");  // create button.
+                HTopJPanel.add(DownArrowIJButton);  // add it to JPanel.
+                DownArrowIJButton.addActionListener(this);
+                } // create and add DownArrowIJButton.
+              { // create and add UpArrowIJButton.
+                UpArrowIJButton= new IJButton("^");  // create button.
+                HTopJPanel.add(UpArrowIJButton);  // add it to JPanel.
+                UpArrowIJButton.addActionListener(this);
+                } // create and add UpArrowIJButton.
               { // create and add LeftArrowIJButton.
                 LeftArrowIJButton= new IJButton("<");  // create button.
                 HTopJPanel.add(LeftArrowIJButton);  // add it to JPanel.
@@ -161,16 +173,6 @@ public class DagBrowserPanel
                 HTopJPanel.add(RightArrowIJButton);  // add it to JPanel.
                 RightArrowIJButton.addActionListener(this);
                 } // create and add RightArrowIJButton.
-                { // create and add DownArrowIJButton.
-                DownArrowIJButton= new IJButton("v");  // create button.
-                HTopJPanel.add(DownArrowIJButton);  // add it to JPanel.
-                DownArrowIJButton.addActionListener(this);
-                } // create and add DownArrowIJButton.
-              { // create and add UpArrowIJButton.
-                UpArrowIJButton= new IJButton("^");  // create button.
-                HTopJPanel.add(UpArrowIJButton);  // add it to JPanel.
-                UpArrowIJButton.addActionListener(this);
-                } // create and add UpArrowIJButton.
               { // create and add BlinkerJLabel.
                 BlinkerJLabel= new JLabel("Active");  // for testing.
                 BlinkerJLabel.setOpaque(true);  // set opaque for use as blinker.
@@ -225,7 +227,9 @@ public class DagBrowserPanel
                     //DataJComponent=   // calculate JComponent from VHelper.
                     //  DataVHelper.GetContentJComponent();
                     DataVHelper= (VHelper)DataJComponent;
+                    // ??? DataVJComponent= (VJComponent)DataJComponent;
                     DataVHelper.addTreeSelectionListener(  // make handler of tree selectionss...
+                    //DataVJComponent.addTreeSelectionListener(  // make handler of tree selectionss...
                       this);  // ...be this.
                     } // build the scroller content.
                   DataJScrollPane = new JScrollPane( DataJComponent );  // construct scroller from data panel.
@@ -286,6 +290,7 @@ public class DagBrowserPanel
             bindKeys();  
             bindActions();
             } // Create key mapping.
+          appLogger.info("DagBrowserPanel constructor End.(");  // ???
           } // DagBrowserPanel()
 
       private void BuildDataModelsAndGraphs()
@@ -401,16 +406,22 @@ public class DagBrowserPanel
             right subpanel Viewer-s instead of using TreeSelectionEvent-s. ??
             */
           { // valueChanged( TreeSelectionEvent TheTreeSelectionEvent ) 
+            TreePath SelectedTreePath=
+              TheTreeSelectionEvent.  // ...the TreeSelectionEvent's...
+                getNewLeadSelectionPath();  // ...one and only TreePath.
+            appLogger.info(
+              "DagBrowserPanel.valueChanged("
+              +SelectedTreePath.getLastPathComponent()
+              +")."
+              );  // ???
             if ( TreeSelectionReentryBlockedB )  // process unless a reentry. 
               { // do nothing because the reentry blocking flag is set.
+                appLogger.info("DagBrowserPanel.valueChanged(..), reentry blocked.");  // ???
                 } // do nothing because the recursion blocking flag is set.
               else // flag is not set.
               { // process the TreeSelectionEvent.
                 TreeSelectionReentryBlockedB= true;  // disallow re-entry.
 
-                TreePath SelectedTreePath=
-                  TheTreeSelectionEvent.  // ...the TreeSelectionEvent's...
-                    getNewLeadSelectionPath();  // ...one and only TreePath.
                 if ( SelectedTreePath != null )  // process only if not null.
                   { // process based on Source.
                     if (TheTreeSelectionEvent.getSource() == DataJComponent)
@@ -426,6 +437,9 @@ public class DagBrowserPanel
                 TreeSelectionReentryBlockedB= false;  // now that we are done, allow re-entry.
                 Misc.dbgEventDone(); // Debug.
                 } // process the TreeSelectionEvent.
+            appLogger.info(
+              "DagBrowserPanel.valueChanged(..) End."
+              );  // ???
             } // valueChanged( TreeSelectionEvent TheTreeSelectionEvent ) 
 
         private void ProcessTreeSelectionFromLeftSubpanel
@@ -436,8 +450,9 @@ public class DagBrowserPanel
           ( TreePath InSelectedTreePath )
           { // ProcessTreeSelectionFromLeftSubpanel(.)
             // System.out.println( 
-            //   "TreeSelectionListener DagBrowserPanel.valueChanged(...), from left panel"
             //   );
+            //   "TreeSelectionListener DagBrowserPanel.valueChanged(...), from left panel"
+            appLogger.info("DagBrowserPanel.ProcessTreeSelectionFromLeftSubpanel(..).");  // ???
             ReplaceRightPanelContent( InSelectedTreePath );
             } // ProcessTreeSelectionFromLeftSubpanel(.)
             
@@ -457,6 +472,10 @@ public class DagBrowserPanel
             // System.out.println( 
             //   "TreeSelectionListener DagBrowserPanel.valueChanged(...), from right panel"
             //   );
+            appLogger.info(    
+              "DagBrowserPanel.ProcessTreeSelectionFromRightSubpanel(..), "
+              +"InternalSelectionB="+InternalSelectionB
+              );  // ???
             if // redo right panel if selection is outside it.
               ( ! InternalSelectionB )
               { ReplaceRightPanelContent( InSelectedTreePath );
@@ -479,6 +498,7 @@ public class DagBrowserPanel
             as content of the right subpanel for display.
             */
           { // ReplaceRightPanelContent(.)
+            appLogger.info("DagBrowserPanel.ReplaceRightPanelContent().");  // ???
             { // build the scroller content.
               DataJComponent=   // calculate JComponent...
                 TheDataTreeModel.  // ...by having the TreeModel...
@@ -532,7 +552,7 @@ public class DagBrowserPanel
                 { 
                   LastFocusPane= FocusPane.RIGHT_PANE;  // record right enum ID.
                   DisplayPathAndInfoV(  // display right subpanel's info for...
-                    DataVHelper.GetSelectedChildTreePath() // ...selected TreePath.
+                    DataVHelper.getSelectedChildTreePath() // ...selected TreePath.
                     );
                   }
               else 

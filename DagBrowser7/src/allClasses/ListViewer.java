@@ -2,15 +2,7 @@ package allClasses;
 
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-//import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 
-//import javax.swing.DefaultListModel;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JList;
 import javax.swing.ListModel;
@@ -21,17 +13,15 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
-import static allClasses.Globals.*;  // appLogger;
+//import static allClasses.Globals.*;  // appLogger;
 
 public class ListViewer
 
-  //extends JList<DataNode>
-  //extends DagNodeViewer 
   extends JList<Object>
  
   implements 
-    KeyListener, FocusListener, ListSelectionListener, MouseListener,
-    VHelper
+    ListSelectionListener
+    , VHelper
   
   /* This class provides a simple DagNodeViewer that 
     displays and browses List-s using a JList.
@@ -49,84 +39,86 @@ public class ListViewer
   
       private static final long serialVersionUID = 1L;
 
-      public ViewHelper aViewHelper;  // helper class ???
-
-      // static variables.
-        private final static StringObject StringObjectEmpty= // for place-holders.
-          new StringObject("EMPTY");
-
-      // instance variables.
-
-        private boolean UpdateListReentryBlockedB;  // to prevent reentry.
-        
-        /* Subject-DataNode-related variables.  These are in addition to 
-          the ones in superclass DagNodeViewer.  */
-
-          // whole Subject, the DataNode that this class displays.
-            
-            private TreePath SubjectTreePath;  // TreePath of DataNode displayed.
-            private DataNode SubjectDataNode;  // DataNode displayed.
-            
-          // selection within Subject, the child DataNode that is selected.
-
-            private DataNode SelectedDataNode;  // selected DataNode.
-            //private String SelectionNameString; // Name of selected child.
-              // This [might?] also function as a List-not-tmpty flag.
+      private ViewHelper aViewHelper;  // Mutual composition helper class ???
 
     // constructor and related methods.
 
-      public ListViewer( TreePath InTreePath, TreeModel InTreeModel )
+      public ListViewer( TreePath inTreePath, TreeModel inTreeModel )
         /* Constructs a ListViewer.
-          InTreePath is the TreePath associated with
+          inTreePath is the TreePath associated with
           the node of the Tree to be displayed.
           The last DataNode in the path is that object.
           */
         { // ListViewer(.)
-          super(   // do the inherited constructor code.
-            //null  // TreePath will be calculated and set later.
-            );  // do the inherited constructor code.
+          super();   // Call constructor inherited from JList<Object>.
+            // TreePath will be calculated and set later.
 
-          aViewHelper=  // construct helper class instance???
-            new ViewHelper( this );
-            
-          SubjectDataNode=  // Extract and save List DataNode from TreePath.
-            (DataNode)InTreePath.getLastPathComponent();
-          { // define a temporary selection TreePath to be overridden later.
-            DataNode SelectionDataNode=
-              new StringObject( "TEMPORARY SELECTION" );
-            aViewHelper.SetSelectedChildTreePath( 
-              InTreePath.pathByAddingChild( SelectionDataNode )
+          { // Prepare the helper object.
+            aViewHelper=  // Construct helper class instance.
+              new ViewHelper( this );  // Note, subject not set yet.
+            aViewHelper.setSubjectTreePathWithAutoSelectV(  // Set subject.
+              inTreePath
               );
-            } // define a temporary selection TreePath to be overridden later.
-          InitializeTheJList( InTreeModel );
-          UpdateEverythingForSubject(   // to finish go to the desired element...
-            InTreePath  // ...specified by TreePath.
-            );
+            } // Prepare the helper object.
+
+          InitializeTheJList( inTreeModel );
           } // ListViewer(.)
 
-      private void InitializeTheJList( TreeModel InTreeModel )
+      private void InitializeTheJList( TreeModel inTreeModel )
         /* This grouping method creates and initializes the JList.  */
         { // InitializeTheJList( )
-          //TheJList=   // Construct an empty JList.
-          //  new JList<DataNode>( );  // It's data will be supplied later.
           { // Set ListModel for the proper type of elements.
             ListModel<Object> AListModel;
-            //if ( InTreeModel != null )
-            AListModel= new TreeListModel( SubjectDataNode, InTreeModel );
-            //  else
-            //  AListModel= new DefaultListModel<Object>();
+            AListModel= new TreeListModel( 
+              //subjectDataNode, 
+              aViewHelper.getSubjectDataNode( ),
+              inTreeModel 
+              );
             setModel( AListModel );  // Define its ListModel.
             } // Set ListModel for the proper type of elements.
           setSelectionMode( ListSelectionModel.SINGLE_SELECTION );
           setCellRenderer( TheListCellRenderer );  // set custom rendering.
-          { // Add listeners.
-            addKeyListener(this);  // listen to process some key events.
-            addMouseListener(this);  // listen to process mouse double-click.
-            addFocusListener(this);  // listen to repaint on focus events.
-            getSelectionModel().  // in its selection model...
-              addListSelectionListener(this);  // ...listen to selections.
-            } // Add listeners.
+          { // Set the user input event listeners.
+            addKeyListener(aViewHelper);  // ViewHelper does KeyEvent-s.
+            addMouseListener(aViewHelper);  // ViewHelper does MouseEvent-s.
+            getSelectionModel().  // This does ListSelectionEvent-s.
+              addListSelectionListener(this);
+            } // Set the user input event listeners.
+          setJListSelection();
+          setJListScrollState();
           } // InitializeTheJList( )
+  
+      private void setJListSelection()
+        /* This grouping method updates the JList selection state
+          from the selection-related instance variables.
+          Note, this will trigger a call to 
+          internal method ListSelectionListener.valueChanged(),
+          which might cause further processing and calls to
+          esternal TreeSelectionListeners-s. */
+        { // setJListSelection()
+          int IndexI= // try to get index of selected child.
+            aViewHelper.getSubjectDataNode( ).getIndexOfChild( 
+              aViewHelper.getSelectionDataNode() 
+              );
+          if ( IndexI < 0 )  // force index to 0 if child not found.
+            IndexI= 0;
+          setSelectionInterval( IndexI, IndexI );  // set selection using final resulting index.
+          }  // setJListSelection()
+  
+      private void setJListScrollState()
+        /* This grouping method sets the JList scroll state
+          from its selection state to make the selection visible.
+          ??? This doesn't always work, or it's not called enough.
+          */
+        { // setJListScrollState()
+          ListSelectionModel TheListSelectionModel = // get ListSelectionModel.
+            (ListSelectionModel)getSelectionModel();
+          int SelectionIndexI= // cache selection index.
+            TheListSelectionModel.getMinSelectionIndex() ;
+          ensureIndexIsVisible( // scroll into view...
+            SelectionIndexI // ...the current selection.
+            );
+          }  // setJListScrollState()
 
     // input (setter) methods.  this includes Listeners.
         
@@ -149,300 +141,30 @@ public class ListViewer
             if // Process the selection if...
               ( //...the selection is legal.
                 (IndexI >= 0) && 
-                (IndexI < SubjectDataNode.getChildCount( ))
+                (IndexI < aViewHelper.getSubjectDataNode( ).getChildCount( ))
                 )
               { // Process the selection.
                 DataNode NewSelectionDataNode=  // Get selected DataNode...
-                  SubjectDataNode.getChild(IndexI);  // ...which is child at IndexI.
-                SetSelectionRelatedVariablesFrom( NewSelectionDataNode );
-                aViewHelper.NotifyTreeSelectionListenersV(true); // tell others, if any.
+                  aViewHelper.getSubjectDataNode( ).
+                    getChild(IndexI);  // ...which is child at IndexI.
+                aViewHelper.setSelectionDataNodeV( NewSelectionDataNode );
+                aViewHelper.notifyTreeSelectionListenersV(true); // tell others, if any.
                 } // Process the selection.
             } // void valueChanged(ListSelectionEvent TheListSelectionEvent)
   
-      /* KeyListener methods, for 
-        overriding normal Tab key processing
-        and providing command key processing.
-        Normally the Tab key moves the selection from table cell to cell.
-        The modification causes Tab to move keyboard focus out of the table
-        to the next Component.  (Shift-Tab) moves it in the opposite direction.
-        */
-      
-        public void keyPressed(KeyEvent TheKeyEvent) 
-          /* Processes KeyEvent-s.  
-            The keys processed and consued include:
-              Tab and Shift-Tab for focus transfering.
-              Right-Arrow and Enter keys to go to child.
-              Left-Arrow keys to go to parent.
-            */
-          { // keyPressed.
-            int KeyCodeI = TheKeyEvent.getKeyCode();  // cache key pressed.
-            boolean KeyProcessedB= true;  // assume the key event will be processed here. 
-            { // try to process the key event.
-              /* Tab decoded else by JList.
-              if (KeyCodeI == KeyEvent.VK_TAB)  // Tab key.
-                { // process Tab key.
-                  appLogger.info( "ListViewer.keyPressed(), it's a tab" );
-                  Component SourceComponent= 
-                    (Component)TheKeyEvent.getSource();
-                  int shift = // Determine (Shift) key state.
-                    TheKeyEvent.getModifiersEx() & InputEvent.SHIFT_DOWN_MASK;
-                  if (shift == 0) // (Shift) not down.
-                    SourceComponent.transferFocus();  // Move focus to next component.
-                    else   // (Shift) is down.
-                    SourceComponent.transferFocusBackward();  // Move focus to previous component.
-                  } // process Tab key.
-              else 
-              // Tab decoded else by JList.
-              */
-
-              if (KeyCodeI == KeyEvent.VK_LEFT)  // left-arrow key.
-                CommandGoToParentV();  // go to parent folder.
-              else if (KeyCodeI == KeyEvent.VK_RIGHT)  // right-arrow key.
-                CommandGoToChildV();  // go to child folder.
-              else if (KeyCodeI == KeyEvent.VK_ENTER)  // Enter key.
-                CommandGoToChildV();  // go to child folder.
-              else  // no more keys to check.
-                KeyProcessedB= false;  // indicate no key was processed.
-              } // try to process the key event.
-            if (KeyProcessedB)  // if the key event was processed...
-            {
-              appLogger.info( "ListViewer.keyPressed(), key consumeds" );
-              TheKeyEvent.consume();  // ... prevent more processing of this key.
-              }
-            } // keyPressed.
-
-        public void keyReleased(KeyEvent TheKeyEvent) { }  // unused part of KeyListener interface.
-        
-        public void keyTyped(KeyEvent TheKeyEvent) { }  // unused part of KeyListener interface.
-
-      // MouseListener methods, for user input from mouse.
-      
-        @Override
-        public void mouseClicked(MouseEvent TheMouseEvent) 
-          /* Checks for double click on mouse,
-            which now means to go to the child folder,
-            so is synonymous with the right arrow key.
-            */
-          {
-            System.out.println("MouseListener ListViewer.mouseClicked(...), ");
-            if (TheMouseEvent.getClickCount() >= 2)
-              CommandGoToChildV();  // go to child folder.
-            }
-            
-        @Override
-        public void mouseEntered(MouseEvent arg0) { }  // unused part of MouseListener interface.
-        
-        @Override
-        public void mouseExited(MouseEvent arg0) { }  // unused part of MouseListener interface.
-        
-        @Override
-        public void mousePressed(MouseEvent arg0) { }  // unused part of MouseListener interface.
-        
-        @Override
-        public void mouseReleased(MouseEvent arg0) { }  // unused part of MouseListener interface.
-  
-      // FocusListener methods, to fix JTable cell-invalidate/repaint bug.
-
-        @Override
-        public void focusGained(FocusEvent arg0) 
-          {
-            // System.out.println( "ListViewer.focusGained()" );
-            // TheJTable.repaint();  // bug fix Kluge to display cell in correct color.  
-            }
-      
-        @Override
-        public void focusLost(FocusEvent arg0) 
-          {
-            // System.out.println( "ListViewer.focusLost()" );
-            // TheJTable.repaint();  // bug fix Kluge to display cell in correct color.  
-            }
-      
-    // command methods.
-
-      private void CommandGoToParentV() 
-        /* Tries to go to and display the parent of this object. */
-        { // CommandGoToParentV().
-          TreePath ParentTreePath=  // get the parent of selection.
-            aViewHelper.GetSelectedChildTreePath().getParentPath();
-          TreePath GrandParentTreePath=  // try getting parent of the parent.
-            ParentTreePath.getParentPath();
-          { // process attempt to get grandparent.
-            if (GrandParentTreePath == null)  // there is no grandparent.
-              ; // do nothing.  or handle externally?
-            else  // there is a parent.
-              { // record visit and display parent.
-                Selection.  // In the visits tree...
-                  set( // record...
-                    aViewHelper.GetSelectedChildTreePath()  // ...the new selected TreePath.
-                    );
-                aViewHelper.SetSelectedChildTreePath( GrandParentTreePath );  // kluge so Notify will work.
-                aViewHelper.NotifyTreeSelectionListenersV( false );  // let listener handle it.
-                } // record visit and display parent.
-            } // process attempt to get parent.
-          } // CommandGoToParentV().
-
-      private void CommandGoToChildV() 
-        /* Tries to go to and displays a presentlly selected child 
-          of the present DataNode.  
-          */
-        { // CommandGoToChildV().
-          if  // act only if a child selected.
-            //( SubDagNode.getChildCount( ) > 0 )
-            //( SelectionNameString != null )
-            ( SelectedDataNode != null )
-            { // go to and display that child.
-              aViewHelper.NotifyTreeSelectionListenersV( false );  // let listener handle it.
-              } // go to and display that child.
-          } // CommandGoToChildV().
-      
-    // state updating methods.
-    
-      private void UpdateEverythingForSubject(TreePath TreePathSubject)
-        /* This grouping method updates everything needed to display 
-          the List named by TreePathSubject as a JList
-          It adjusts the instance variables, 
-          the JList ListModel, and the scroller state.
-          It also notifies any dependent TreeSelectionListeners.
-          */
-        { // UpdateEverythingForSubject()
-          if ( UpdateListReentryBlockedB )  // process unless this is a reentry. 
-            { // do not update, because the reentry blocking flag is set.
-              System.out.println( 
-                "ListViewer.java UpdateEverythingForSubject(...), "+
-                "UpdateListReentryBlockedB==true"
-                );
-              } // do not update, because the reentry blocking flag is set.
-            else // reentry flag is not set.
-            { // process the update.
-              UpdateListReentryBlockedB= true;  // disallow re-entry.
-              
-              SetSubjectRelatedVariablesFrom(TreePathSubject);
-              UpdateJListStateV();  // Updates JList selection and scroller state.
-
-              UpdateListReentryBlockedB=  // we are done so allow re-entry.
-                false;
-              } // process the update.
-          } // UpdateEverythingForSubject()
-          
-      private void SetSubjectRelatedVariablesFrom
-        (TreePath InSubjectTreePath)
-        /* This grouping method calculates values for and stores
-          the selection-related instance variables based on the
-          TreePath InSubjectTreePath.
-          */
-        { // SetSubjectRelatedVariablesFrom(InSubjectTreePath()
-          SubjectTreePath= InSubjectTreePath;  // Save base TreePath.
-          SubjectDataNode=  // store new list DataNode at end of TreePath.
-            (DataNode)SubjectTreePath.getLastPathComponent();
-
-          DataNode ChildDataNode=  // Try to get the child...
-          	Selection.  // ...from the visits tree that was the...
-          	  setAndReturnDataNode( // ...most recently visited child...
-                InSubjectTreePath  // ...of the List at the end of the TreePath.
-                );
-          if (ChildDataNode == null)  // if no recent child try first one.
-            { // try getting first ChildDagNode.
-              if (SubjectDataNode.getChildCount() <= 0)  // there are no children.
-                ChildDataNode= StringObjectEmpty;  // use dummy child place-holder.
-              else  // there are children.
-                ChildDataNode= SubjectDataNode.getChild(0);  // get first ChildDagNode.
-              } // get name of first child.
-          
-          SetSelectionRelatedVariablesFrom( ChildDataNode );
-          } // SetSubjectRelatedVariablesFrom(InSubjectTreePath()
-          
-      private void SetSelectionRelatedVariablesFrom( DataNode ChildDataNode )
-        /* This grouping method calculates values for and stores
-          the child-related instance variables based on the ChildDagNode.
-          It assumes the base variables are set already.
-          */
-        { // SetSelectionRelatedVariablesFrom( ChildUserObject ).
-          SelectedDataNode= ChildDataNode;  // Save selected DataNode.
-          TreePath ChildTreePath=  // Calculate selected child TreePath to be...
-            SubjectTreePath.  // ...the base TreePath with...
-              pathByAddingChild( ChildDataNode );  // ... the child added.
-          //SelectionNameString=   // Store name of selected child.
-          //  ChildDagNode.GetNameString();
-          aViewHelper.SetSelectedChildTreePath( ChildTreePath );  // select new TreePath.
-          } // SetSelectionRelatedVariablesFrom( ChildUserObject ).
-  
-      private void UpdateJListStateV()
-        /* This grouping method updates the JList state,
-          including its list Model, selection, and Scroller state,
-          to match the selection-related instance variables.
-          Note, this might trigger a call to 
-          internal method ListSelectionListener.valueChanged(),
-          which might cause further processing and calls to
-          esternal TreeSelectionListeners-s. */
-        { // UpdateJListStateV()
-          if  // Update other stuff if...
-            ( getModel().getSize() > 0 ) // ... any rows in model.
-            { // Update other stuff.
-              UpdateJListSelection();  // Note, this might trigger Event-s.
-              UpdateJListScrollState();
-              } // Update other stuff.
-          } // UpdateJListStateV()
-  
-      private void UpdateJListSelection()
-        /* This grouping method updates the JList selection state
-          from the selection-related instance variables.
-          Note, this will trigger a call to 
-          internal method ListSelectionListener.valueChanged(),
-          which might cause further processing and calls to
-          esternal TreeSelectionListeners-s. */
-        { // UpdateJListSelection()
-          int IndexI= // try to get index of selected child.
-            SubjectDataNode.getIndexOfChild( SelectedDataNode );
-          if ( IndexI < 0 )  // force index to 0 if child not found.
-            IndexI= 0;
-          setSelectionInterval( IndexI, IndexI );  // set selection using final resulting index.
-          }  // UpdateJListSelection()
-  
-      private void UpdateJListScrollState()
-        /* This grouping method updates the JList scroll state
-          from its selection state to make the selection visible.
-          */
-        { // UpdateJListScrollState()
-          ListSelectionModel TheListSelectionModel = // get ListSelectionModel.
-            (ListSelectionModel)getSelectionModel();
-          //int SelectionIndexI =   // get index of selected element from the model.
-          //  TheListSelectionModel.getMinSelectionIndex();
-          int SelectionIndexI= // cache selection index.
-            //TheJTable.getSelectedRow();
-              TheListSelectionModel.getMinSelectionIndex() ;
-          //Rectangle SelectionRectangle= // calculate rectangle...
-          //  new Rectangle(  //...of selected cell.
-          //    TheJTable.getCellRect(SelectionIndexI, 0, true)
-          //  );
-          ensureIndexIsVisible( // scroll into view...
-            SelectionIndexI // ...the current selection.
-            );
-          //TheJTable.scrollRectToVisible( // scroll into view...
-          //  SelectionRectangle); //...the cell's rectangle.
-          // TheJTable.scrollRectToVisible( // repeat for Java bug?
-          //   SelectionRectangle);
-          }  // UpdateJListScrollState()
-  
-    // rendering methods.  to be added.
-
     // interface ViewHelper pass-through methods.
 
-      public TreePath GetSelectedChildTreePath()
+      public TreePath getSelectedChildTreePath()
         { 
-          return aViewHelper.GetSelectedChildTreePath();
+          return aViewHelper.getSelectionTreePath();
           }
 
       public void addTreeSelectionListener( TreeSelectionListener listener ) 
         {
           aViewHelper.addTreeSelectionListener( listener );
           }
-         
-      public void SetSelectedChildTreePath(TreePath InSelectedChildTreePath)
-        { 
-          aViewHelper.SetSelectedChildTreePath( InSelectedChildTreePath );
-          }
-      
-      // nested class stuff.
+
+      // Nested class stuff for List cell rendering.
 
         private ListCellRenderer TheListCellRenderer=
           new ListCellRenderer(); // for custom cell rendering.

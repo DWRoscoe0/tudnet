@@ -19,6 +19,15 @@ public class DagBrowser
     */
   { // class DagBrowser
 
+    /* Beginnings of a tester class which takes no space unless called.  */
+      void f() { System.out.println("f()"); }
+      public static class /* Tester */ Object {
+        public static void main(String[] args) {
+          DagBrowser t = new DagBrowser();
+          t.f();
+        }
+      }
+
     static private JFrame appJFrame;  // App's only JFrame (now).
    
     public static void main(String[] argStrings)

@@ -198,13 +198,14 @@ public class Misc
           which is incremented, followed by InString.
           */
         { 
-          Misc.getMisc().log( 
+          String wholeString=
             (Misc.getMisc().theSessionI + ":")
             + dbgCountI++ 
             + ": "
             + InString 
             + "\n"
-            );
+            ;
+          Misc.getMisc().log( wholeString );
 
           noOp( );
           }

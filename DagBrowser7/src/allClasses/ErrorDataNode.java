@@ -4,7 +4,11 @@ public class ErrorDataNode
   extends AbDataNode
 
   /* This class is a DataNode that serves as a place-holder
-    to avoid null pointer references and to indicate an error.  */
+    to avoid null pointer references and to indicate an error.  
+    It is used when MetaNodes are reconstructed from 
+    MetaFile disk storage and a node name is encountered which
+    has no associated DadaNode at that point in the tree.
+    */
 
   { // class ErrorDataNode
   

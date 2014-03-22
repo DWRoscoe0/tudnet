@@ -4,28 +4,34 @@ import javax.swing.tree.TreePath;
 
 public class Selection 
 
-  /* This static class manages DataNode selections.  
-
+  /* This static class helps  manage DataNode selections.  
     Selections are specified by TreePath-s of DataNodes.
 
     Past selections are stored as DataNode meta-data in the MetaNode DAG,
     which is a structure which parallels a subset of the DataNode DAG.
-    This meta-data is useful for reselecing 
-    previously selected DataNode-s and their chldren.
+    This meta-data is useful for reselecting 
+    previously selected DataNode-s and their children.
     When a GoToChild command is given at a DataNode,
     instead of selecting the first child DataNode,
     selection meta-data is used to reselect 
     the most recently selected child, if there is one.
 
+    Note, because in the Infogora app 
+    the selection in the right pane is a child of
+    the selection in the left pane,
+    and because sometimes actual DataNodes are deleted or moved,
+    a selection might point to a non-existant node.
+    In these cases a TreePath might be created which
+    ends in a special node called an ErrorDataNode.
+
     Originally selection history information was stored as 
     one MRU/LRU lists of children in each MetaNode.  
     Now it's stored in MetaNode attributes with key "SelectionPath".
-
     */
 
   { // class Selection
 
-    final static String SelectionAttributeString= "SelectionPath";  // ??? class MetaRoot kludge.
+    final static String SelectionAttributeString=      "SelectionPath"; 
     
     // Static getter methods.  These read from the MetaNode DAG.
 
@@ -44,7 +50,7 @@ public class Selection
               );
           }
           
-      static public MetaNode getLastSelectedChildOfMetaNode
+      public static MetaNode getLastSelectedChildOfMetaNode
         ( MetaNode InMetaNode )
         /* This method returns the most recently selected child MetaNode 
           of InMetaNode.
@@ -72,29 +78,44 @@ public class Selection
           return ChildMetaNode; // Return last child MetaNode result, if any.
           }
     
-      static DataNode getLastSelectedChildDataNode( MetaNode InMetaNode )
+      public static DataNode getLastSelectedChildDataNode
+        ( MetaNode InMetaNode )
         /* This method gets the user object DataNode from
           the child MetaNode in InMetaNode 
-          which was selected last, or null if there isn't one.  
+          which was selected last, or null if there isn't one.
+          It also returns null if the Child DataNode
+          appears to be an ErrorDataNode,
+          because that is an unusable value.
           */
         {
           DataNode ResultChildDataNode=  // Assume default result of null.
             null;
-          do { // Override result with child if there is one.
+          Process: { // Override result with child if there is one.
             MetaNode LastChildMetaNode= 
               GetLastSelectedChildMetaNode( InMetaNode );
-            if (LastChildMetaNode == null)  // there is no last selected child.
-              break ;  // So exit and keep the default null result.
+            if // there is no last selected child.
+              (LastChildMetaNode == null)
+              break Process;  // So exit and keep the default null result.
+
             ResultChildDataNode=  // Result recent child DataNode is...
               LastChildMetaNode.   // ...the last child's...
               getDataNode();  // user object.
-            } while ( false );  // Override result with child if there is one.
+            if // Result child DataNode is not an ErrorDataNode.
+              ( ! ResultChildDataNode.equals(
+                  ErrorDataNode.getSingletonErrorDataNode()
+                  )
+                )
+              break Process;  // Exit with that okay result.
+
+            ResultChildDataNode= null; // Replace unusable value with null.
+            } // Override result with child if there is one.
+
           return ResultChildDataNode; // return resulting DataNode, or null if none.
           }
 
     // Static setter methods.  These write to the MetaNode DAG.
           
-      static public void set( TreePath TreePathIn )
+      public static void set( TreePath TreePathIn )
         /* This does the same as putAndReturnDataNode(.) except 
           it doesn't return the MetaNode associated with 
           the end of the path.
@@ -104,7 +125,7 @@ public class Selection
       	  setAndReturnMetaNode( TreePathIn ); // Update with TreePath.
           }
 
-      static public DataNode setAndReturnDataNode( TreePath TreePathIn )
+      public static DataNode setAndReturnDataNode( TreePath TreePathIn )
         /* Updates the PathAttributeMetaTool with TreePathIn and returns 
           the DataNode of the most recently visited child MetaNode of 
           the MetaNode at the end of that path,
@@ -122,7 +143,7 @@ public class Selection
           return ChildDataNode;  // Return the resulting child DataNode.
           }
 
-      static public MetaNode setAndReturnMetaNode( TreePath InTreePath )
+      public static MetaNode setAndReturnMetaNode( TreePath InTreePath )
         /* Updates the "SelectionPath" attributes of the MetaNode DAG
           starting with the root and ending at 
           the MetaNode specified by InTreePath.

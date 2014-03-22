@@ -1,16 +1,16 @@
 package allClasses;
 
-import java.awt.Component;
+//import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.io.File;
+//import java.awt.event.InputEvent;
+//import java.awt.event.KeyEvent;
+//import java.awt.event.KeyListener;
+//import java.awt.event.MouseEvent;
+//import java.awt.event.MouseListener;
+//import java.io.File;
 
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
@@ -22,6 +22,8 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
+//import static allClasses.Globals.*;  // appLogger;
+
 
 public class DirectoryTableViewer
 
@@ -29,10 +31,12 @@ public class DirectoryTableViewer
   extends JTable
   
   implements 
-    KeyListener, FocusListener, ListSelectionListener, MouseListener,
-    VHelper
+    //KeyListener, 
+    FocusListener, ListSelectionListener
+    //, MouseListener
+    , VHelper
   
-  /* This DagNodeViewer class displays filesystem directories as tables.
+  /* This class displays filesystem directories as tables.
     They appear in the main app's right side subpanel as a JTable.
     
     This class is more complicated than ListViewer because
@@ -51,6 +55,10 @@ public class DirectoryTableViewer
     It might be worthwhile to create a generic JTableViewer,
     which gets all its data from an augmented TableModel which
     also understands TreePath-s.  ??
+    
+    ??? If this panel has focus, and a selected folder is far from the top,
+    it might appear below the botton of the Scroller 
+    if the selection is moved to either a parent or child folder.  
     */ 
 
   /* ??? marks things to do below.  Here are those items summarized:
@@ -136,7 +144,7 @@ public class DirectoryTableViewer
                       
           { // Define a temporary selection TreePath.
             // It will be overridden later by a more appropriate one.
-          	aViewHelper.SetSelectedChildTreePath(   // not needed??
+          	aViewHelper.setSelectionTreePathV(   // not needed??
               InTreePath.pathByAddingChild( IFileDummy )
               );
             } // define a temporary selection TreePath.
@@ -169,8 +177,10 @@ public class DirectoryTableViewer
             } // limit Type field display width.
           
           { // add listeners.
-            addKeyListener(this);  // listen to process some key events.
-            addMouseListener(this);  // listen to process mouse double-click.
+            //addKeyListener(this);  // listen to process some key events.
+            addKeyListener(aViewHelper);  // listen to process some key events.
+            //addMouseListener(this);  // listen to process mouse double-click.
+            addMouseListener(aViewHelper);  // listen to process mouse double-click.
             addFocusListener(this);  // listen to repaint on focus events.
             getSelectionModel().  // in its selection model...
               addListSelectionListener(this);  // ...listen to selections.
@@ -210,86 +220,15 @@ public class DirectoryTableViewer
                 IFile NewSelectionIFile=   // build IFile of selection at IndexI.
                   new IFile( SubjectIFile, IFileNameStrings[IndexI] );
                 SetSelectionRelatedVariablesFrom( NewSelectionIFile );
-                aViewHelper.NotifyTreeSelectionListenersV(true); // tell others, if any.
+                aViewHelper.notifyTreeSelectionListenersV(true); // tell others, if any.
                 } // Process the selection.
             repaint();  // ??? kluge: do entire table for selection color.
               // this should repaint only the rows whose selection changed.
             } // void valueChanged(TheListSelectionEvent)
   
-      /* KeyListener methods, for 
-        overriding normal Tab key processing
-        and providing command key processing.
-        Normally the Tab key moves the selection from table cell to cell.
-        The modification causes Tab to move keyboard focus out of the table
-        to the next Component.  (Shift-Tab) moves it in the opposite direction.
-        */
+      // KeyListener methods  (moved to ViewHelper).
       
-        public void keyPressed(KeyEvent TheKeyEvent) 
-          /* Processes KeyEvent-s.  
-            The keys processed and consued include:
-              Tab and Shift-Tab for focus transfering.
-              Right-Arrow and Enter keys to go to child.
-              Left-Arrow keys to go to parent.
-            */
-          { // keyPressed.
-            int KeyCodeI = TheKeyEvent.getKeyCode();  // cache key pressed.
-            boolean KeyProcessedB= true;  // assume the key event will be processed here. 
-            { // try to process the key event.
-              if (KeyCodeI == KeyEvent.VK_TAB)  // Tab key.
-                { // process Tab key.
-                  // System.out.println( "DirectoryTableViewer.keyPressed(), it's a tab" );
-                  Component SourceComponent= (Component)TheKeyEvent.getSource();
-                  int shift = // Determine (Shift) key state.
-                    TheKeyEvent.getModifiersEx() & InputEvent.SHIFT_DOWN_MASK;
-                  if (shift == 0) // (Shift) not down.
-                    SourceComponent.transferFocus();  // Move focus to next component.
-                    else   // (Shift) is down.
-                    SourceComponent.transferFocusBackward();  // Move focus to previous component.
-                  } // process Tab key.
-              else if (KeyCodeI == KeyEvent.VK_LEFT)  // left-arrow key.
-                CommandGoToParentV();  // go to parent folder.
-              else if (KeyCodeI == KeyEvent.VK_RIGHT)  // right-arrow key.
-                CommandGoToChildV();  // go to child folder.
-              else if (KeyCodeI == KeyEvent.VK_ENTER)  // Enter key.
-                CommandGoToChildV();  // go to child folder.
-              else  // no more keys to check.
-                KeyProcessedB= false;  // indicate no key was processed.
-              } // try to process the key event.
-            if (KeyProcessedB)  // if the key event was processed...
-              TheKeyEvent.consume();  // ... prevent more processing of this key.
-            } // keyPressed.
-
-        public void keyReleased(KeyEvent TheKeyEvent) { }  // unused part of KeyListener interface.
-        
-        public void keyTyped(KeyEvent TheKeyEvent) { }  // unused part of KeyListener interface.
-      
-      // MouseListener methods, for user input from mouse.
-      
-        @Override
-        public void mouseClicked(MouseEvent TheMouseEvent) 
-          /* Checks for double click on mouse,
-            which now means to go to the child folder,
-            so is synonymous with the right arrow key.
-            */
-          {
-            // System.out.println("MouseListener DirectoryTableViewer.mouseClicked(...), ");
-            if (TheMouseEvent.getClickCount() >= 2)
-              CommandGoToChildV();  // go to child folder.
-            }
-            
-        @Override
-        public void mouseEntered(MouseEvent arg0) { }  // unused part of MouseListener interface.
-        
-        @Override
-        public void mouseExited(MouseEvent arg0) { }  // unused part of MouseListener interface.
-        
-        @Override
-        public void mousePressed(MouseEvent arg0) { }  // unused part of MouseListener interface.
-        
-        @Override
-        public void mouseReleased(MouseEvent arg0) { }  // unused part of MouseListener interface.
-      
-      // FocusListener methods, to fix JTable cell-invalidate/repaint bug.
+      // FocusListener methods  , to fix JTable cell-invalidate/repaint bug.
 
         @Override
         public void focusGained(FocusEvent arg0) 
@@ -305,75 +244,8 @@ public class DirectoryTableViewer
             repaint();  // bug fix Kluge to display cell in correct color.  
             }
         
-    // command methods.
+    // command methods (moved to ViewHelper).
     
-      private void CommandGoToParentV() 
-        /* Tries to go to and displays the parent of the present directory. 
-          There are 3 possibilities:
-          1.  There is a parent IFile directory.  This can be handled by 
-            displaying it in this DirectoryTableViewer.
-          2.  There is no parent IFile, but there is a parent that is something else.
-            This can be handled by passing a pseudo-selection
-            of that parent to any TreeSelectiooListener-s.
-          3.  There is no parent of any kind.  This will happen only in
-            stand-alone mode.  It is handled by doing nothing.
-          */
-        { // CommandGoToParentV().
-          TreePath DirectoryTreePath=  // get the directory of selection.
-            aViewHelper.GetSelectedChildTreePath().getParentPath();
-          TreePath ParentTreePath=  // try getting parent of the directory.
-            DirectoryTreePath.getParentPath();
-          { // process attempt to get parent.
-            if (ParentTreePath == null)  // there is no parent.
-              ; // do nothing.  or handle externally?
-            else  // there is a parent directory.
-              { // record visit and display parent directory.
-                Selection.  // In the visits tree...
-                  set( // record...
-                    aViewHelper.GetSelectedChildTreePath()  // ...the new selected TreePath.
-                    );
-                //UpdateTableFor(ParentTreePath);  // select (and display) the parent directory.
-                aViewHelper.SetSelectedChildTreePath( ParentTreePath );  // kluge so Notify will work.
-                aViewHelper.NotifyTreeSelectionListenersV( false );  // slow listener delegation. ??
-                } // record visit and display parent directory.
-            } // process attempt to get parent.
-          } // CommandGoToParentV().
-
-      private void CommandGoToChildV() 
-        /* Tries to go to and displays a presentlly selected child 
-          of the present directory.  There are 3 possibilities:
-          1.  The selected child is a directory IFile.  This can be 
-            handled by displaying it in this DirectoryTableViewer.
-          2.  The selected child is a data IFile.  
-            This could be handled by passing a pseudo-selection
-            of that child to the TreeSelectiooListener-s,
-            which will should handle it with an IJTextArea
-            in a DagNodeViewer.
-          3.  There is no selected child.  
-            This will happen when a directory is empty.
-            It is handled by doing nothing.
-          */
-        { // CommandGoToChildV().
-          if  // act only if a child file is selected.
-            ( SelectionDataNode != null )
-            { // go to and display that child.
-              File ChildFile=  // reference child object as file.
-                new File(
-                  SubjectIFile.GetFile(), 
-                  SelectionDataNode.GetNameString( )  // was SelectionNameString
-                  );
-              if ( ChildFile.isDirectory() ) 
-                UpdateTableFor(  // select (and display) the child...
-                    aViewHelper.GetSelectedChildTreePath()  // ...which is present selection.
-                  );
-              else if ( ChildFile.isFile() ) 
-                { // handle unable to display.
-                  aViewHelper.NotifyTreeSelectionListenersV( false );  // let listener
-                    // handle it.
-                  } // handle unable to display.
-              } // go to and display that child.
-          } // CommandGoToChildV().
-        
     // miscellaneous shared methods and grouping methods.
     
       private void UpdateTableFor(TreePath TreePathNewDirectory)
@@ -447,7 +319,7 @@ public class DirectoryTableViewer
               // maybe add Dummy if null?
           //SelectionNameString=   // Store name of selected child.
           //  SelectedDagNode.GetNameString();
-          aViewHelper.SetSelectedChildTreePath( ChildTreePath );  // select new TreePath.
+          aViewHelper.setSelectionTreePathV( ChildTreePath );  // select new TreePath.
           } // SetSelectionRelatedVariablesFrom( ChildUserObject ).
 
       private void UpdateJTableStateV()
@@ -563,26 +435,16 @@ public class DirectoryTableViewer
           }
         */
 
-    // ViewHelper pass-through methods.
+    // VHelper (ViewHelper pass-through) methods.
 
-      public TreePath GetSelectedChildTreePath()
+      public TreePath getSelectedChildTreePath()
         { 
-          return aViewHelper.GetSelectedChildTreePath();
+          return aViewHelper.getSelectionTreePath();
           }
-
-      public void NotifyTreeSelectionListenersV( boolean InternalB )
-        { // NotifyTreeSelectionListenersV.
-          aViewHelper.NotifyTreeSelectionListenersV( InternalB );
-          } // NotifyTreeSelectionListenersV.
 
       public void addTreeSelectionListener( TreeSelectionListener listener ) 
         {
           aViewHelper.addTreeSelectionListener( listener );
-          }
-         
-      public void SetSelectedChildTreePath(TreePath InSelectedChildTreePath)
-        { 
-          aViewHelper.SetSelectedChildTreePath( InSelectedChildTreePath );
           }
 
     } // DirectoryTableViewer

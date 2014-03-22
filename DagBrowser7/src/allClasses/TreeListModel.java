@@ -7,11 +7,11 @@ public class TreeListModel
 
   extends AbstractListModel<Object> 
 
-  /* This class impliments a ListModel which gets its data from
+  /* This class implements a ListModel which gets its data from
     a node Object in the context of a TreeModel.
     
-    ??? It will need the ability to Listen to the TreeModel for changes,
-    respond to only the relevant changes,
+    ??? It will eventually need the ability to Listen to 
+    the TreeModel for changes, respond to only the relevant changes,
     and fire Event-s to its own Listener-s.
     Wrap Listener-s in weak-references to prevent memory leaks.
     */

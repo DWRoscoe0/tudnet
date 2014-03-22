@@ -51,7 +51,9 @@ public class IJTree
 
       public void focusLost(FocusEvent TheFocusEvent)
         { 
-          TheDefaultTreeCellRenderer.setBackgroundSelectionColor(DefaultBackgroundSelectionColor);
+          TheDefaultTreeCellRenderer.setBackgroundSelectionColor(
+            DefaultBackgroundSelectionColor
+            );
           repaint();
           }
 
