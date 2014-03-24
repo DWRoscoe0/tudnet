@@ -9,9 +9,12 @@ import javax.swing.JButton;
 public class IJButton  
   extends JButton
   implements FocusListener
-  /* This class was created to customize the display of buttons.
-   * This is to make the holder of focus more identifiable. 
-   */
+
+  /* This class was created to customize the display of buttons,
+    specifically to make a button which holds focus more identifiable. 
+    
+    ??? Find icon image files of up, down, left, and right arrows.
+    */
   {
     // Constructors.
 

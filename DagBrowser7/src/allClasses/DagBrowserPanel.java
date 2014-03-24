@@ -38,15 +38,15 @@ public class DagBrowserPanel
     //, KeyListener, MouseListener
 
   /* This class implements a panel which allows a user to browse 
-    the Infogora DAG (Directed Acyclic Graph).
-    The left main subpanel is the navigation panel
+    the Infogora DAG (Directed Acyclic Graph) as a Tree.
+    The left main sub-panel is the navigation panel
     and displays the graph as a JTree.
-    The right main subpanel displays nodes of the graph (DataNode-s)
+    The right main sub-panel displays nodes of the graph (DataNode-s)
     in a way appropriate to the type of node.
     */
 
   /* ??? marks things to do below.  Here are those items summarized:
-    * DagBrowserPanel() too long.  refactor.
+    * Factor DagBrowserPanel() and other methods so eachffits on a screen.
     * FocusStepB() simplification using scanning loop.
     * CommandHelpV() replacement with a general PromptingHelp system.
     */
@@ -73,9 +73,6 @@ public class DagBrowserPanel
           private IJButton LeftArrowIJButton;  // button to move to parent.
           private IJButton RightArrowIJButton;  // button to move to child.
           private JLabel BlinkerJLabel; // window monitor status.
-          //private JTextArea DebugJTextArea; // for Debug output info.
-          //private JLabel PaintCountJLabel; // a place to display paint count.
-          //  int PaintCountI;  // window paint count and...
           
         private JPanel ViewJPanel; // JPanel where desired data is diaplayed.
           private JLabel DirectoryJLabel; // a place to display directory path.
@@ -86,7 +83,6 @@ public class DagBrowserPanel
             private JScrollPane DataJScrollPane;  // right scroller subpanel...
               private JComponent DataJComponent;  // ... and its data content.
               private VHelper DataVHelper;  // ... and its VHelper handle.
-              //private VJComponent DataVJComponent;  // ??? and its combination.
 
           private JLabel InfoJLabel;  // a place to display directory/file info.
 
@@ -138,61 +134,11 @@ public class DagBrowserPanel
           This is too long and should be broken up.  ???
           */
         { // DagBrowserPanel()
-          { // build and add subpanels of this Panel.
+          { // build and add sub-panels of this Panel.
             setLayout(new BorderLayout());  // use BorderLayout manager.
-            BuildDataModelsAndGraphs();
-            { // build HTopJPanel containing buttons and other helpful widgets.
-            
-              HTopJPanel= new JPanel();  // construct it.
-              HTopJPanel.setLayout(new WrapLayout());  // set Layout manager.
-              HTopJPanel.setAlignmentX(Component.LEFT_ALIGNMENT);  // set alignment.
-              ((FlowLayout)HTopJPanel.getLayout()).setHgap(20); // spread components.
-              
-              { // create and add HelpIJButton.
-                HelpIJButton= new IJButton("Help");  // create Help button.
-                HTopJPanel.add(HelpIJButton);  // add it to JPanel.
-                HelpIJButton.addActionListener(this);
-                } // create and add HelpIJButton.
-              { // create and add DownArrowIJButton.
-                DownArrowIJButton= new IJButton("v");  // create button.
-                HTopJPanel.add(DownArrowIJButton);  // add it to JPanel.
-                DownArrowIJButton.addActionListener(this);
-                } // create and add DownArrowIJButton.
-              { // create and add UpArrowIJButton.
-                UpArrowIJButton= new IJButton("^");  // create button.
-                HTopJPanel.add(UpArrowIJButton);  // add it to JPanel.
-                UpArrowIJButton.addActionListener(this);
-                } // create and add UpArrowIJButton.
-              { // create and add LeftArrowIJButton.
-                LeftArrowIJButton= new IJButton("<");  // create button.
-                HTopJPanel.add(LeftArrowIJButton);  // add it to JPanel.
-                LeftArrowIJButton.addActionListener(this);
-                } // create and add LeftArrowIJButton.
-              { // create and add RightArrowIJButton.
-                RightArrowIJButton= new IJButton(">");  // create button.
-                HTopJPanel.add(RightArrowIJButton);  // add it to JPanel.
-                RightArrowIJButton.addActionListener(this);
-                } // create and add RightArrowIJButton.
-              { // create and add BlinkerJLabel.
-                BlinkerJLabel= new JLabel("Active");  // for testing.
-                BlinkerJLabel.setOpaque(true);  // set opaque for use as blinker.
-                BlinkerJLabel.setBackground(Color.WHITE);  // override doesn't work.
-                BlinkerJLabel.setFont(new Font("Monospaced",Font.BOLD,16)); // set different font.
-                HTopJPanel.add(BlinkerJLabel);
-                } // create and add BlinkerJLabel.
-              { // create and add Key code debug output areas.
-                // HTopJPanel.add( new JLabel("DebugOut:")); // add key code label.
-                // HTopJPanel.add(DebugJTextArea= new JTextArea("Debug"));
-                // DebugJTextArea.setEditable(false);
-                // DebugJTextArea.setRequestFocusEnabled(false);
-                // DebugJTextArea.setFocusable(false);
-                } // create and add Key code debug output areas.
-              // { // create and add PaintCountJLabel debug output area.
-              //   PaintCountJLabel= new JLabel("X");  // create place for paint count.
-              //   HTopJPanel.add(PaintCountJLabel);  // add it.
-              //   } // create and add PaintCountJLabel debug output area.
-              } // build HTopJPanel containing buttons and other helpful widgets.
-            add(HTopJPanel,BorderLayout.NORTH); // add it as north subpanel
+            buildDataModelsAndGraphsV();
+            buildAndAddHTopJPanelV();
+
             { // build ViewJPanel for showing file info.
               ViewJPanel= new JPanel();  // construct ViewJPanel.
               ViewJPanel.setLayout(new BorderLayout());  // set BorderLayout manager.
@@ -227,9 +173,7 @@ public class DagBrowserPanel
                     //DataJComponent=   // calculate JComponent from VHelper.
                     //  DataVHelper.GetContentJComponent();
                     DataVHelper= (VHelper)DataJComponent;
-                    // ??? DataVJComponent= (VJComponent)DataJComponent;
                     DataVHelper.addTreeSelectionListener(  // make handler of tree selectionss...
-                    //DataVJComponent.addTreeSelectionListener(  // make handler of tree selectionss...
                       this);  // ...be this.
                     } // build the scroller content.
                   DataJScrollPane = new JScrollPane( DataJComponent );  // construct scroller from data panel.
@@ -279,21 +223,83 @@ public class DagBrowserPanel
             // TheRootJTree.getTree();
             TheRootJTree;  // was DataJComponent;            
           RestoreFocusV(); // make certain focus is set correctly.
-          SwingUtilities.invokeLater(new Runnable() {
+
+          SwingUtilities.invokeLater( new Runnable() { // queue giving Help.
             @Override  
-            public void run() 
-              {  
-                CommandHelpV();  // give help.
-                }  
-            });
-          { // Create key mapping.
+            public void run() { CommandHelpV(); }  
+            } );
+
+          { // Create key mapping.  Experimental and incomplete.
             bindKeys();  
             bindActions();
-            } // Create key mapping.
-          appLogger.info("DagBrowserPanel constructor End.(");  // ???
+            } // Create key mapping.  Experimental and incomplete.
+
+          //appLogger.info("DagBrowserPanel constructor End.(");  // ???
           } // DagBrowserPanel()
 
-      private void BuildDataModelsAndGraphs()
+      private void buildAndAddHTopJPanelV()
+        /* This method builds the HTopPanel with all its buttons
+          and the BlinkerJLabel and adds it to the main panel.
+          */
+        { // build HTopJPanel containing buttons and other helpful widgets.
+        
+          HTopJPanel= new JPanel();  // construct it.
+          HTopJPanel.setLayout(new WrapLayout());  // set Layout manager.
+          HTopJPanel.setAlignmentX(Component.LEFT_ALIGNMENT);  // set alignment.
+          ((FlowLayout)HTopJPanel.getLayout()).setHgap(20); // spread components.
+
+          buildAndAddIJButtonsV();
+
+          { // create and add BlinkerJLabel.
+            BlinkerJLabel= new JLabel("Active");  // for testing.
+            BlinkerJLabel.setOpaque(true);  // set opaque for use as blinker.
+            BlinkerJLabel.setBackground(Color.WHITE);  // override doesn't work.
+            BlinkerJLabel.setFont(new Font("Monospaced",Font.BOLD,16)); // set different font.
+            HTopJPanel.add(BlinkerJLabel);
+            } // create and add BlinkerJLabel.
+
+          add(HTopJPanel,BorderLayout.NORTH); // add it as north subpanel
+          } // build HTopJPanel containing buttons and other helpful widgets.
+
+      private void buildAndAddIJButtonsV()
+        /* This method creates and initializes
+          all the IJButtons for the HTopJPanel.
+          */
+        {
+          HelpIJButton= buildAndAddIJButton(
+            "Help", "Display what the buttons and some keys do."
+            );
+          DownArrowIJButton= buildAndAddIJButton(
+            "v", "Move to next item."
+            );
+          UpArrowIJButton= buildAndAddIJButton(
+            "^", "Move to previous item."
+            );
+          LeftArrowIJButton= buildAndAddIJButton(
+            "<", "Move to parent item."
+            );
+          RightArrowIJButton= buildAndAddIJButton(
+            ">", "Move to first or last-visited child item."
+            );
+          }
+
+      private IJButton buildAndAddIJButton
+        (String inLabelString, String inTipString)
+        /* This method creates an IJButton with label inLabelString
+          and tool tip inTipString, adds it to the HTopJPanel,
+          makes this class the ActionListener for ButtonEvent-s,
+          and returns the button as a value.
+          */
+        {
+          IJButton theIJButton=  // create JButton with...
+            new IJButton( inLabelString );  // ...this label.
+          HTopJPanel.add( theIJButton );  // Add it to HTopJPanel.
+          theIJButton.setToolTipText( inTipString ); // Add tip text.
+          theIJButton.addActionListener( this );  // Make this ActionListener.
+          return theIJButton;  // Return button for saving.
+          }
+
+      private void buildDataModelsAndGraphsV()
         /* This decomposition method builds the TreeModel
           which will be the source of Infogora DAG to be browsed.
           It also builds the MetaTool cache DAG which
@@ -372,8 +378,6 @@ public class DagBrowserPanel
             { // switch blinker color.
               BlinkerJLabel.setOpaque(!BlinkerJLabel.isOpaque());  // reverse opacity.
               BlinkerJLabel.repaint();  // request redisplay of it only.
-              // PaintCountJLabel.setText("Paints="+PaintCountI);  // store present paint count.
-              // PaintCountJLabel.repaint();  // request redisplay of it only.
               } // switch blinker color.
 
             AppInstanceManager.tryExitForChainToUpdateFromNewerArgAppV();
@@ -520,18 +524,18 @@ public class DagBrowserPanel
       /* methods of the FocusListener, the FocusStateMachine, and others.  */
 
         public void focusGained(FocusEvent TheFocusEvent)
-          /* This does what needs doing when one of the subpanels gains focus.
-            This includes:
+          /* This does what needs doing when 
+            one of the sub-panels gains focus.  This includes:
             
               Saving the Component getting focus in 
               LastValidFocusOwnerPanelComponent so RestoreFocusV() 
               can restore the focus later after 
               temporary focus-altering user input.
               The two Components that usually have focus in this app are the
-              left JTreePanel and the right DataJComponent.
+              left TheRootJTree and the right DataJComponent.
               
               Updating the Path and Info JLabel-s to agree with
-              the selection in the new focused subpanel.
+              the selection in the new focused sub-panel.
               
             */
           { // focusGained(FocusEvent TheFocusEvent)
@@ -543,7 +547,7 @@ public class DagBrowserPanel
                 (LastValidFocusOwnerPanelComponent == TheRootJTree)
                 { 
                   LastFocusPane= FocusPane.LEFT_PANE;  // record left enum ID.
-                  DisplayPathAndInfoV(  // display left subpanel's info.
+                  DisplayPathAndInfoV(  // display left sub-panel's info.
                     TheRootJTree.GetSelectedTreePath()
                     );
                   }
@@ -773,7 +777,7 @@ public class DagBrowserPanel
               Component FocusOwningComponent=  // get focused Component.
                 KeyboardFocusManager.
                 getCurrentKeyboardFocusManager().getFocusOwner();
-              FocusOwningComponent.transferFocus();  // Move focus forward.
+              //FocusOwningComponent.transferFocus();  // Move focus forward.
               appLogger.info(
                 "ComponentForwardAction(): "+FocusOwningComponent
                 );
@@ -816,9 +820,8 @@ public class DagBrowserPanel
           This method exists mostly for debugging.
           */
         {
-          // PaintCountI++;  // increment app pane paint count.
           super.paintComponent(g);  // let JPanel do most of the work..
-          } // end drawFrame()
+          }
 
     }  // class DagBrowserPanel.
 

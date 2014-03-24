@@ -7,9 +7,7 @@ import java.nio.file.Files;  // File utility package.
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 
-//import javax.swing.JPanel;
 import javax.swing.JComponent;
-//import javax.swing.JTable;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
@@ -20,8 +18,6 @@ public class IFile
   { // class IFile
   
     // Variables.
-    
-      //private static final long serialVersionUID = 1L;
       
       File TheFile;  // File associated with this DataNode.
 
@@ -33,13 +29,11 @@ public class IFile
       IFile ( String InString ) 
         { 
           TheFile= new File( InString );
-          //super( InString ); 
           }
     
       IFile ( IFile IFileIn, String InString ) 
         { 
           TheFile= new File( IFileIn.TheFile, InString );
-          //super( IFileIn, InString ); 
           }
 
     // TheFile pass-through methods.
@@ -109,9 +103,6 @@ public class IFile
               ChildIFiles[ IndexI ];
             if ( ChildIFile == null )  // Fix the cache if IFile slot was empty.
               { // Fill the empty cache slot.
-                //System.out.println( 
-                //  "IFile.getChild(.) calculating IFile slot"
-                //  );
                 ChildIFile=  // Calculate IFile slot value
                   new IFile(   // return representation of desired child.
                     this, 
@@ -131,8 +122,6 @@ public class IFile
           which would happen if AbDataNode.getIndexOfChild(.) were used.
           */
         {
-          // System.out.println( "IFile.getIndexOfChild(.)" );
-          
           IFile ChildIFile =  // Caste Child to this type.
              (IFile)ChildObject;
           String[] ChildrenStrings =  // Get local reference to Strings array.
@@ -261,22 +250,6 @@ public class IFile
           return ResultJComponent;  // return the final result.
           } // GetDataJComponent.
 
-      /* private JComponent JComponentForDirectoryJTable(TreePath InTreePath)
-        /* This grouping method returns a DagNodeViewer of 
-          a Directory JTable for displaying the last Object in InTreePath.
-          */
-        /*
-        { // JComponentForDirectoryJTable()
-          return 
-            new DirectoryTableViewer( 
-              InTreePath
-              //DirectoryIJTable
-              , null
-              );
-          } // JComponentForDirectoryJTable()
-        */
-
-      // private DagNodeViewer JComponentForJTextAreaFrom(IFile InIFile)
       private JComponent JComponentForJTextAreaFrom
         ( TreePath InTreePath, TreeModel InTreeModel )
         /* This grouping returns a DagNodeViewer of a JTextArea 
@@ -284,12 +257,6 @@ public class IFile
           */
         { // JComponentForJTextAreaFrom(InIFile)
           IFile InIFile= (IFile)InTreePath.getLastPathComponent();
-          //return new DagNodeViewer(
-          //  // this, 
-          //  // Misc.IFileToTreePath(InIFile), 
-          //  InTreePath,
-          //  new IJTextArea(InIFile)
-          //  );
           return new TextViewer( InTreePath, InTreeModel, InIFile );
           }  // JComponentForJTextAreaFrom(InIFile)
           
@@ -334,24 +301,5 @@ public class IFile
         /* it appears that JList uses toString() but
           JTree uses something else (getName()?).
           */
-
-      /* old method used during development.
-      public static TreePath TreePathStart()  // ???
-        /* Returns the TreePath representing the path to the tree node
-          that should be selected when beginning browsing IFiles.
-          The user DataNode at the beginning of the path
-          can be used as the root of the tree when building a
-          DataTreeModel.
-          */
-        /*
-        { // TreePathStart()
-          String StartPathString= System.getProperty( "user.dir" );
-          IFile StartIFile= // initialize start IFile.
-            new IFile( StartPathString ); 
-          TreePath StartTreePath= Misc.IFileToTreePath(StartIFile);  // ??
-          return StartTreePath;
-          } // TreePathStart()
-        */
-
 
     } // class IFile

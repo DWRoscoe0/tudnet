@@ -5,12 +5,6 @@ import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-//import java.awt.event.InputEvent;
-//import java.awt.event.KeyEvent;
-//import java.awt.event.KeyListener;
-//import java.awt.event.MouseEvent;
-//import java.awt.event.MouseListener;
-//import java.io.File;
 
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
@@ -27,13 +21,10 @@ import javax.swing.tree.TreePath;
 
 public class DirectoryTableViewer
 
-  //extends DagNodeViewer
   extends JTable
   
   implements 
-    //KeyListener, 
     FocusListener, ListSelectionListener
-    //, MouseListener
     , VHelper
   
   /* This class displays filesystem directories as tables.
@@ -75,117 +66,64 @@ public class DirectoryTableViewer
 
 			public ViewHelper aViewHelper;  // helper class ???
 
-      // static variables.
-
-        //private static final long serialVersionUID = 1L;
-        
-        private static IFile IFileDummy=   // selection place-holder.
-          new IFile("DUMMY");
-
-      // instance variables.
-      
-        //private JTable TheJTable;  // The JTable in which Subject is displayed.
-        
-        private DirectoryTableCellRenderer TheDirectoryTableCellRenderer= 
-          new DirectoryTableCellRenderer(); // for custom node rendering.
-          
-        /* Subject-DataNode-related variables.  These are in addition to 
-          the ones in superclass DagNodeViewer.  */
-          
-          // whole Subject, the directory that this class displays.
-            private IFile SubjectIFile;  // as an IFile reference.
-            private DataNode SubjectDataNode;  // DataNode equivalent.
-            private TreePath SubjectTreePath;  // its TreePath.
-            
-          // selection within Subject, the directory entry that is selected.
-            private DataNode SelectionDataNode;  // as a DataNode.
-            //private String SelectionNameString; // as a Name String.
-              // Also indicates table/directory is tmpty if null.
-
-          private boolean UpdateTableReentryBlockedB;  // to prevent method reentry.
+      private DirectoryTableCellRenderer theDirectoryTableCellRenderer= 
+        new DirectoryTableCellRenderer(); // for custom node rendering.
       
     // Constructor methods.
 
-      /* public DirectoryTableViewer
-        ( TreePath InTreePath
-          // , int ForceErrorI
+      public DirectoryTableViewer( 
+          TreePath inTreePath, TreeModel InTreeModel
           )
         /* Constructs a DirectoryTableViewer.
-          InTreePath is the TreePath associated with
-          the Subject IFile DataNode to be displayed.
-          The last IFile DataNode in the TreePath is the Subject.
-          */
-        /* 
-        { // constructor.
-          this( InTreePath, null );
-          System.out.println( "DirectoryTableViewer(InTreePath)" );
-          } // constructor.
-        */
-
-      public DirectoryTableViewer
-        ( TreePath InTreePath,
-          TreeModel InTreeModel
-          )
-        /* Constructs a DirectoryTableViewer.
-          InTreePath is the TreePath associated with
+          inTreePath is the TreePath associated with
           the Subject IFile DataNode to be displayed.
           The last IFile DataNode in the TreePath is the Subject.
           It uses InTreeModel for context, but is presently ignored.
           */
         { // constructor.
-          super( );
+          super( );  // Call superclass constructor.
             
-          aViewHelper= new ViewHelper( this );  // construct helper class instance???
-
-          SubjectIFile=  // Extract Subject directory to be displayed.
-            (IFile)InTreePath.getLastPathComponent();
-          SubjectTreePath=  // save the TreePath of Subject directory.
-            InTreePath;
-                      
-          { // Define a temporary selection TreePath.
-            // It will be overridden later by a more appropriate one.
-          	aViewHelper.setSelectionTreePathV(   // not needed??
-              InTreePath.pathByAddingChild( IFileDummy )
+          { // Construct and initialize the helper object.
+            aViewHelper=  // Construct helper class instance.
+              new ViewHelper( this );  // Note, subject not set yet.
+            aViewHelper.setSubjectTreePathWithAutoSelectV(  // Set subject.
+              inTreePath
               );
-            } // define a temporary selection TreePath.
+            } // Construct and initialize the helper object.
 
-          DirectoryTableModel ADirectoryTableModel =  // construct table model...
-            new DirectoryTableModel( SubjectIFile,   //...from IFile...
-              InTreeModel );  // ...and TreeModel.
+          DirectoryTableModel ADirectoryTableModel =  // Construct...
+            new DirectoryTableModel(  //...directory table model from...
+              (IFile)aViewHelper.getSubjectDataNode(), //...subject IFile...
+              InTreeModel  // ...and TreeModel.
+              );
           setModel( ADirectoryTableModel );  // store TableModel.
-          SetupTheJTable( );  // Initialize JTable state.
 
-          UpdateTableFor(   // to finish go to the desired directory...
-            InTreePath  // ...specified by TreePath.
-            );
+          SetupTheJTable( );  // Initialize JTable state.
           } // constructor.
 
       private void SetupTheJTable( )
-        /* This grouping method initializes TheJTable.  */
+        /* This grouping method initializes the JTable.  */
         { // SetupTheJTable( )
-                      
+
           setShowHorizontalLines( false );
           setShowVerticalLines( false );
           setIntercellSpacing( new Dimension( 0, 2 ) );
           setSelectionMode( ListSelectionModel.SINGLE_SELECTION );
           
-          // DirectoryIJTable.getColumn( "Type" ).setCellRenderer( new DirectoryTableCellRenderer() );
-          // getColumn( "Type" ).setCellRenderer( new DirectoryTableCellRenderer() );  // no longer rneeded??
           { // limit Type field display width.
             getColumn( "Type" ).setMaxWidth( 32 );
             getColumn( "Type" ).setMinWidth( 32 );
             } // limit Type field display width.
           
           { // add listeners.
-            //addKeyListener(this);  // listen to process some key events.
             addKeyListener(aViewHelper);  // listen to process some key events.
-            //addMouseListener(this);  // listen to process mouse double-click.
             addMouseListener(aViewHelper);  // listen to process mouse double-click.
             addFocusListener(this);  // listen to repaint on focus events.
             getSelectionModel().  // in its selection model...
               addListSelectionListener(this);  // ...listen to selections.
             } // add listeners.
 
+          UpdateJTableForContentV();
           } // SetupTheJTable( )
 
     // Listener interface methods.
@@ -207,8 +145,10 @@ public class DirectoryTableViewer
               (ListSelectionModel)TheListSelectionEvent.getSource();
             int IndexI =   // get index of selected element from the model.
               TheListSelectionModel.getMinSelectionIndex();
+            IFile subjectIFile=  // Cache Subject directory.
+              (IFile)aViewHelper.getSubjectDataNode();
             String[] IFileNameStrings =  // Calculate array of child file names.
-              SubjectIFile.GetFile().list();
+              subjectIFile.GetFile().list();
             if ( IFileNameStrings == null )  // If array is null replace with empty array.
               IFileNameStrings= new String[ 0 ]; // Replace with empty array.
             if // Process the selection if...
@@ -218,15 +158,14 @@ public class DirectoryTableViewer
                 )
               { // Process the selection.
                 IFile NewSelectionIFile=   // build IFile of selection at IndexI.
-                  new IFile( SubjectIFile, IFileNameStrings[IndexI] );
-                SetSelectionRelatedVariablesFrom( NewSelectionIFile );
+                  new IFile( subjectIFile, IFileNameStrings[IndexI] );
+                //SetSelectionRelatedVariablesFrom( NewSelectionIFile );
+                aViewHelper.setSelectionDataNodeV( NewSelectionIFile );
                 aViewHelper.notifyTreeSelectionListenersV(true); // tell others, if any.
                 } // Process the selection.
             repaint();  // ??? kluge: do entire table for selection color.
               // this should repaint only the rows whose selection changed.
             } // void valueChanged(TheListSelectionEvent)
-  
-      // KeyListener methods  (moved to ViewHelper).
       
       // FocusListener methods  , to fix JTable cell-invalidate/repaint bug.
 
@@ -244,85 +183,9 @@ public class DirectoryTableViewer
             repaint();  // bug fix Kluge to display cell in correct color.  
             }
         
-    // command methods (moved to ViewHelper).
-    
     // miscellaneous shared methods and grouping methods.
-    
-      private void UpdateTableFor(TreePath TreePathNewDirectory)
-        /* This method updates everything needed to display as a table
-          the directory named by TreePathNewDirectory.
-          It adjusts the instance variables, the JTable TableModel,
-          and the scroller state.
-          It also notifies any connected TreeSelectionListeners.
-          */
-        { // UpdateTableFor()
-          if ( UpdateTableReentryBlockedB )  // process unless this is a reentry. 
-            { // do not update, because the reentry blocking flag is set.
-              System.out.println( 
-                "DirectoryTableViewer.java UpdateTableFor(...), "+
-                "UpdateTableReentryBlockedB==true"
-                );
-              } // do not update, because the reentry blocking flag is set.
-            else // reentry flag is not set.
-            { // process the update.
-              UpdateTableReentryBlockedB= true;  // disallow re-entry.
-              
-              SetSubjectRelatedVariablesFrom(TreePathNewDirectory);
-              UpdateJTableStateV();
-
-              UpdateTableReentryBlockedB=  // we are done so allow re-entry.
-                false;
-              } // process the update.
-          } // UpdateTableFor()
-          
-      private void SetSubjectRelatedVariablesFrom
-        (TreePath InSubjectTreePath)
-        /* This grouping method calculates values for and stores
-          the Subject-DataNode-related instance variables from the
-          directory TreePath InSubjectTreePath.
-          Much of it is concerned with determining which child
-          should be selected when the directory is displayed.
-          */
-        { // SetSubjectRelatedVariablesFrom(.).
-          SubjectTreePath= InSubjectTreePath; // save Subject TreePath.
-          SubjectIFile=  // store as Subject directory IFile DataNode...
-            (IFile)InSubjectTreePath.  // ...the direcoty TreePath's...
-              getLastPathComponent();  // ...last DataNode.
-          SubjectDataNode= SubjectIFile;  // copy to alias.
-          DataNode SelectedDataNode=  // try to get child...
-          	Selection.  // ...from the visits tree which is...
-          	  setAndReturnDataNode( // ...most recently visited...
-                InSubjectTreePath
-                );  // ...of the tree node at end of selected TreePath.
-          if ( SelectedDataNode == null )  // if no recent child get first one.
-            { // try getting first child.
-              if (SubjectIFile.getChildCount() <= 0)  // there are no children.
-                SelectedDataNode= IFileDummy;  // use dummy child place-holder.
-              else  // there are children.
-                SelectedDataNode= SubjectIFile.getChild(0);  // get first one.
-              } // try getting first child.
-          SetSelectionRelatedVariablesFrom(  // set selection-related variables...
-            SelectedDataNode  // ...from the resulting SelectedDagNode.
-            );
-          } // SetSubjectRelatedVariablesFrom(.)
-
-      private void SetSelectionRelatedVariablesFrom( DataNode SelectedDataNode )
-          /* This grouping method calculates values for and stores the 
-            selection-related instance variables based on the SelectedDagNode.
-            It assumes the non-selection Subject variables are set already.
-            */
-        { // SetSelectionRelatedVariablesFrom( ChildUserObject ).
-          SelectionDataNode= SelectedDataNode;  // Save selection DataNode.
-          TreePath ChildTreePath=  // Calculate selected child TreePath to be...
-            SubjectTreePath.  // ...the base TreePath with...
-              pathByAddingChild( SelectedDataNode );  // ... the child added.
-              // maybe add Dummy if null?
-          //SelectionNameString=   // Store name of selected child.
-          //  SelectedDagNode.GetNameString();
-          aViewHelper.setSelectionTreePathV( ChildTreePath );  // select new TreePath.
-          } // SetSelectionRelatedVariablesFrom( ChildUserObject ).
-
-      private void UpdateJTableStateV()
+      
+      private void UpdateJTableForContentV()
         /* This grouping method updates the JTable state,
           including its table Model, selection, and Scroller state,
           to match the selection-related instance variables.
@@ -330,8 +193,8 @@ public class DirectoryTableViewer
           internal method ListSelectionListener.valueChanged(),
           which might cause further processing and calls to
           esternal TreeSelectionListeners-s. */
-        { // UpdateJTableStateV()
-          UpdateJTableModel();  // Update the JTable's DataModel.
+        { // UpdateJTableForContentV()
+          //UpdateJTableModel();  // Update the JTable's DataModel.
           if  // Update other stuff if...
             ( getModel().getRowCount() > 0 ) // ... any rows in model.
             { // Update other stuff.
@@ -339,46 +202,7 @@ public class DirectoryTableViewer
                 // Note, this might trigger ListSelectionEvent.
               UpdateJTableScrollState();  // Adjust scroll position.
               } // Update other stuff.
-          } // UpdateJTableStateV()
-
-      private void UpdateJTableModel()
-        /* This grouping method updates the JTable's TableModel from
-          the selection-related instance variables.
-          Maybe the FakeDirectory code belongs in the DirectoryTableModel??
-          
-          ??? This needs to create a fake directory for display when access is blocked.
-          */
-        { //UpdateJTableModel()
-          String[] DirectoryArrayString=  // read directory as Strings.
-            SubjectIFile.GetFile().list(); 
-          DirectoryTableModel TheDirectoryTableModel= // cache TableModel.
-            (DirectoryTableModel)getModel();
-            
-          if (DirectoryArrayString != null)  // A proper file list was returned.
-            TheDirectoryTableModel.  // in the TableModel...
-              setDirectory(SubjectIFile);  // ...store directory.
-          else  // IFile.list() failed to return directory file name list.
-            { // create and store fake file list for display and navigation.
-              /* System.out.println( // report lack of fake directory.
-                "DirectoryTableViewer.UpdateJTableModel() needs Fake" 
-                );
-              */
-              /*
-                String [] FakeDirectoryStrings=  // create a fake array...
-                  {};  //...ontaining zero elements initially.
-                if  // override if we previously...
-                  (SelectionNameString != null)  //...visited a child.
-                  { // create one-element file list containing child.
-                    FakeDirectoryStrings= // create new array...
-                      new String [1];  //... with 1 element.
-                    FakeDirectoryStrings[0]=  // store in it the...
-                      SelectionNameString;  //...last visited child.
-                    } // create one-element file list containing child.
-                TheDirectoryTableModel.  //... of the JTable...
-                  setChildNames(FakeDirectoryStrings); //...store fake.
-                */
-              } // create and store fake file list for display and navigation.
-          } //UpdateJTableModel()
+          } // UpdateJTableForContentV()
 
       private void UpdateJTableSelection()
         /* This grouping method updates the JTable selection state
@@ -388,10 +212,17 @@ public class DirectoryTableViewer
           which might cause further processing and calls to
           esternal TreeSelectionListeners-s. */
         { // UpdateJTableSelection()
-          int IndexI= // try to get index of selected child.
-            SubjectDataNode.getIndexOfChild( SelectionDataNode );
-          if ( IndexI < 0 )  // force index to 0 if child not found.
-            IndexI= 0;
+          int IndexI= 0;  // Assume index is zero for now.
+          DataNode selectionDataNode= aViewHelper.getSelectionDataNode();
+          if ( selectionDataNode != null )  // There is a selection.
+            { // Calculate child's index.
+              IndexI= // try to get index of selected child.
+                aViewHelper.getSubjectDataNode().getIndexOfChild( 
+                  selectionDataNode 
+                  );
+              if ( IndexI < 0 )  // force index to 0 if child not found.
+                IndexI= 0;
+              } // Calculate child's index.
           setRowSelectionInterval( IndexI, IndexI ); // set selection using final resulting index.
           }  // UpdateJTableSelection()
 
@@ -408,8 +239,6 @@ public class DirectoryTableViewer
             );
           scrollRectToVisible( // scroll into view...
             SelectionRectangle); //...the cell's rectangle.
-          // scrollRectToVisible( // repeat for Java bug?
-          //   SelectionRectangle);
           }  // UpdateJTableScrollState()
 
     // rendering methods, for coloring cells based on fucus state.
@@ -419,7 +248,7 @@ public class DirectoryTableViewer
         It is done this way so it's the same for every cell in a row.
         This is okay for now, but might need changing later.
         */
-      { return TheDirectoryTableCellRenderer; }
+      { return theDirectoryTableCellRenderer; }
 
       /* public Component prepareRenderer
         (TableCellRenderer renderer, int row, int column)

@@ -75,7 +75,7 @@ public class TextViewer
           aViewHelper=  // construct helper class instance.
             new ViewHelper( this ); 
           if ( TreePathIn == null )  // prevent null TreePath.
-            TreePathIn = new TreePath( new StringObject( "DUMMY TreePath" ));
+            TreePathIn = new TreePath( new StringObject( "ERROR TreePath" ));
           { // Add listeners.
             addKeyListener(aViewHelper);  // Make ViewHelper the KeyListeer.
             addFocusListener(this);  // listen to repaint on focus events.

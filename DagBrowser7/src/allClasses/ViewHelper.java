@@ -58,7 +58,7 @@ public class ViewHelper
         The modification causes Tab to move keyboard focus out of the table
         to the next Component.  (Shift-Tab) moves it in the opposite direction.
         
-        ??? Maybe replace with a KeyAdapter subclass.
+        ??? Maybe replace with a more compact KeyAdapter implimentation.
         */
       
         public void keyPressed(KeyEvent inKeyEvent) 
@@ -111,8 +111,8 @@ public class ViewHelper
         public void keyTyped(KeyEvent inKeyEvent) { }  // unused part of KeyListener interface.
 
       /* MouseListener methods, for user input from mouse.
-      
-        ??? Maybe replace with a MouseAdapter subclass.
+
+        ??? Maybe replace with a more compact MouseAdapter implimentation.
         */
       
         @Override
