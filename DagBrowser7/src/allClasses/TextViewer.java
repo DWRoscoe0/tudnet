@@ -114,7 +114,12 @@ public class TextViewer
 
     // ViewHelper pass-through methods.
 
-      public TreePath getSelectedChildTreePath()
+      public TreePath getSubjectTreePath()
+        { 
+          return aViewHelper.getSubjectTreePath();
+          }
+
+      public TreePath getSelectionTreePath()
         { 
           return aViewHelper.getSelectionTreePath();
           }

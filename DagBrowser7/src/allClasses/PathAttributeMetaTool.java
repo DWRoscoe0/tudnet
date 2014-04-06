@@ -33,7 +33,7 @@ public class PathAttributeMetaTool
           from the MetaNode's which contain attributes 
           with a key of KeyString and a value of "IS".
           At least the root must have an "IS" attribute value,
-          otherwise and invalid TreePath consisting of only the
+          otherwise an invalid TreePath consisting of only the
           ParentOfRootDataNode will be returned.
           */
         {
@@ -63,9 +63,8 @@ public class PathAttributeMetaTool
           attached to this PathAttributeMetaTool instance,
           from the end node all the way to the root
           by setting path MetaNodes' attribute value to "IS".  
-          It unsets any old path MetaNodes which are not ancestors
-          in common with the new path, if any, 
-          by setting their path attribute values to "WAS".
+          It sets  path attributes of MetaNodes which are not ancestors
+          in common with the new path, if any, to the value "WAS".
 
           This method uses two recursive helper methods 
           to performs the following sequence of operations:
@@ -75,8 +74,8 @@ public class PathAttributeMetaTool
             following to the end of the trail of "IS" attribute values.
           * Reverse scan back toward the common MetaNode,
             replacing "IS" attribute values with "WAS" attribute values.
-          * Reverse scan away from root back to the starting node while 
-            setting "IS" attribute values, 
+          * Reverse scan away from the common root back to the starting node 
+            while setting "IS" attribute values, 
             and in siblings replacing "WAS" values with "OLD" values.
 
           */

@@ -2,6 +2,8 @@ package allClasses;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JList;
@@ -21,6 +23,7 @@ public class ListViewer
  
   implements 
     ListSelectionListener
+    , FocusListener
     , VHelper
   
   /* This class provides a simple DagNodeViewer that 
@@ -81,6 +84,7 @@ public class ListViewer
           { // Set the user input event listeners.
             addKeyListener(aViewHelper);  // ViewHelper does KeyEvent-s.
             addMouseListener(aViewHelper);  // ViewHelper does MouseEvent-s.
+            addFocusListener(this);  // listen to repaint on focus events.???
             getSelectionModel().  // This does ListSelectionEvent-s.
               addListSelectionListener(this);
             } // Set the user input event listeners.
@@ -106,21 +110,21 @@ public class ListViewer
           }  // setJListSelection()
   
       private void setJListScrollState()
-        /* This grouping method sets the JList scroll state
-          from its selection state to make the selection visible.
-          ??? This doesn't always work, or it's not called enough.
+        /* This method sets the JList scroll state
+          from its selection state to make certain that
+          the selection is visible.
           */
         { // setJListScrollState()
-          ListSelectionModel TheListSelectionModel = // get ListSelectionModel.
+          ListSelectionModel TheListSelectionModel = // Get selection model.
             (ListSelectionModel)getSelectionModel();
-          int SelectionIndexI= // cache selection index.
+          int SelectionIndexI= // Get index of row selected.
             TheListSelectionModel.getMinSelectionIndex() ;
-          ensureIndexIsVisible( // scroll into view...
-            SelectionIndexI // ...the current selection.
+          ensureIndexIsVisible( // Scroll into view the row...
+            SelectionIndexI // ...with that index.
             );
           }  // setJListScrollState()
 
-    // input (setter) methods.  this includes Listeners.
+    // Input (setter) methods.  this includes Listeners.
         
       /* ListSelectionListener method, for processing ListSelectionEvent-s 
         from the List's SelectionModel.
@@ -136,10 +140,10 @@ public class ListViewer
           { // void valueChanged(ListSelectionEvent TheListSelectionEvent)
             ListSelectionModel TheListSelectionModel = // get ListSelectionModel.
               (ListSelectionModel)TheListSelectionEvent.getSource();
-            int IndexI =   // get index of selected element from the model.
+            int IndexI =   // Get index of selected element from the model.
               TheListSelectionModel.getMinSelectionIndex();
             if // Process the selection if...
-              ( //...the selection is legal.
+              ( //...the selection index is legal.
                 (IndexI >= 0) && 
                 (IndexI < aViewHelper.getSubjectDataNode( ).getChildCount( ))
                 )
@@ -148,13 +152,38 @@ public class ListViewer
                   aViewHelper.getSubjectDataNode( ).
                     getChild(IndexI);  // ...which is child at IndexI.
                 aViewHelper.setSelectionDataNodeV( NewSelectionDataNode );
-                aViewHelper.notifyTreeSelectionListenersV(true); // tell others, if any.
+                  // This will set the TreePaths also.
+                aViewHelper.notifyTreeSelectionListenersV(true);
+                  // This converts the row selection to a tree selection.
                 } // Process the selection.
             } // void valueChanged(ListSelectionEvent TheListSelectionEvent)
+      
+      // FocusListener methods  , to fix JTable cell-invalidate/repaint bug.
+
+        @Override
+        public void focusGained(FocusEvent arg0) 
+          {
+            // System.out.println( "DirectoryTableViewer.focusGained()" );
+            setJListScrollState();
+            repaint();  // bug fix Kluge to display cell in correct color.  
+            }
+      
+        @Override
+        public void focusLost(FocusEvent arg0) 
+          {
+            // System.out.println( "DirectoryTableViewer.focusLost()" );
+            setJListScrollState();
+            repaint();  // bug fix Kluge to display cell in correct color.  
+            }
   
     // interface ViewHelper pass-through methods.
 
-      public TreePath getSelectedChildTreePath()
+      public TreePath getSubjectTreePath()
+        { 
+          return aViewHelper.getSubjectTreePath();
+          }
+
+      public TreePath getSelectionTreePath()
         { 
           return aViewHelper.getSelectionTreePath();
           }

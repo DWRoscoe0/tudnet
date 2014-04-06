@@ -14,7 +14,7 @@ import javax.swing.tree.TreePath;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 
-import static allClasses.Globals.*;  // appLogger;
+//import static allClasses.Globals.*;  // appLogger;
 
 public class ViewHelper
   implements KeyListener, MouseListener
@@ -70,13 +70,11 @@ public class ViewHelper
             */
           { // keyPressed.
             int KeyCodeI = inKeyEvent.getKeyCode();  // cache key pressed.
-            appLogger.info("ViewHelper.keyPressed("+KeyCodeI+") begin.");
             boolean KeyProcessedB= true;  // assume the key event will be processed here. 
             { // try to process the key event.
               // /* Tab decoded else by JList.
               if (KeyCodeI == KeyEvent.VK_TAB)  // Tab key.
                 { // process Tab key.
-                  appLogger.info("ViewHelper.keyPressed("+KeyCodeI+"), it's a tab" );
                   Component SourceComponent= 
                     (Component)inKeyEvent.getSource();
                   int shift = // Determine (Shift) key state.
@@ -101,9 +99,7 @@ public class ViewHelper
             if (KeyProcessedB)  // if the key event was processed...
             {
               inKeyEvent.consume();  // ... prevent more processing of this key.
-              appLogger.info("ViewHelper.keyPressed("+KeyCodeI+") key consumed.");
               }
-            appLogger.info("ViewHelper.keyPressed("+KeyCodeI+") end.");  // ???
             } // keyPressed.
 
         public void keyReleased(KeyEvent inKeyEvent) { }  // unused part of KeyListener interface.
@@ -138,14 +134,16 @@ public class ViewHelper
         @Override
         public void mouseReleased(MouseEvent arg0) { }  // unused part of MouseListener interface.
         
-    // Command methods ??? being moved.
+    /* Command methods ??? being moved.
+      Maybe these methods should be integrated with the ones in IJTree.
+      Maybe IJTree should eventually be integrated with JComponent subclasses
+      so that DagBrowserPanel can manipulate those all viewer components,
+      including IJTree, with its navigation buttons.
+      */
 
       public void commandGoToParentV() 
         /* Tries to go to and display the parent of this object. */
         { // commandGoToParentV().
-          appLogger.info("ViewHelper.CommandGoToParentV() begin.");
-          //TreePath subjectTreePath=  // get the parent of selection.
-          //  GetSelectedChildTreePath().getParentPath();
           TreePath grandParentTreePath=  // try getting parent of the parent.
             subjectTreePath.getParentPath();
           { // process attempt to get grandparent.
@@ -167,7 +165,6 @@ public class ViewHelper
                   );
                 } // record visit and display parent.
             } // process attempt to get parent.
-          appLogger.info("ViewHelper.CommandGoToParentV() end.");
           } // commandGoToParentV().
 
       public void commandGoToChildV() 
@@ -175,7 +172,6 @@ public class ViewHelper
           of the present DataNode.  
           */
         { // commandGoToChildV().
-          appLogger.info("ViewHelper.commandGoToChildV() begin.");
           if  // act only if there is a child selected.
             ( selectionDataNode != null )
             { // go to and display that child.
@@ -183,7 +179,6 @@ public class ViewHelper
                 false  // Use new JComponent.
                 );
               } // go to and display that child.
-          appLogger.info("ViewHelper.commandGoToChildV() end.");
           } // commandGoToChildV().
     
     /* Subject and Selection code.

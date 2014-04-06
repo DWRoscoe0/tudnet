@@ -306,22 +306,26 @@ public class MetaFile // implements ShutdownerListener
           theMetaFile.HeaderTokenString= NestedHeaderTokenString;
           theMetaFile.writeFileV( inMetaNode );
           }
+          
+        public void writeDebugState( )
+          {
+            }
 
-      public static void writeDebugFileV( MetaNode inMetaNode )
-        /* This method is used for debugging this class.
-          It is used for checking the result of a previous load.
-          If inMetaNode == null then it does nothing.
-          Otherwise tt creates or overwrites the Debug file containing
-          all MetaNodes in Nested format rooted with inMetaNode.
-          */
-        {
-          MetaFile theMetaFile= new MetaFile();
-          // Set some appropriate mode variables.
-          theMetaFile.TheRwStructure= RwStructure.NESTED;
-          theMetaFile.FileNameString= "Debug.txt";
-          theMetaFile.HeaderTokenString= "Debug-State";
-          theMetaFile.writeFileV( inMetaNode );  // Do the actual write.
-          }
+        public static void writeDebugFileV( MetaNode inMetaNode )
+          /* This method is used for debugging this class.
+            It is used for checking the result of a previous load.
+            If inMetaNode == null then it does nothing.
+            Otherwise tt creates or overwrites the Debug file containing
+            all MetaNodes in Nested format rooted with inMetaNode.
+            */
+          {
+            MetaFile theMetaFile= new MetaFile();
+            // Set some appropriate mode variables.
+            theMetaFile.TheRwStructure= RwStructure.NESTED;
+            theMetaFile.FileNameString= "Debug.txt";
+            theMetaFile.HeaderTokenString= "Debug-State";
+            theMetaFile.writeFileV( inMetaNode );  // Do the actual write.
+            }
 
       private void writeFileV( MetaNode inRootMetaNode )
         /* Writes all MetaNodes rooted at inRootMetaNode to inMetaFile.  

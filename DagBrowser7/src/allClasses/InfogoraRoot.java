@@ -28,7 +28,7 @@ public class InfogoraRoot
           return null;  // anything else returns null, to prevent compiler warning.r
           }
 
-      public String GetNameString( )
+      public String toString( )
         /* Returns String representing name of this Object.  */
         {
           return "INFOGORA-ROOT";

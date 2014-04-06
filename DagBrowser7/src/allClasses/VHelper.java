@@ -14,9 +14,10 @@ public interface VHelper
   
       public void addTreeSelectionListener( TreeSelectionListener listener );
 
-      public TreePath getSelectedChildTreePath();
-        /* This method returns the TreePath representing the selected position. 
-          It is called by only DagBrowserPanel.focusGained(.).  
-          */
+      public TreePath getSubjectTreePath();
+        // This method returns the TreePath representing the subject being displayed.
+
+      public TreePath getSelectionTreePath();
+        // This method returns the TreePath representing the selection in the subject.
     }
   

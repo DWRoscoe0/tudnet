@@ -173,22 +173,27 @@ public class Misc
           return ResultString;
           }
       
+      private static boolean dbgEventDoneB= false;  // Set true to output Debug.txt.
+      
       public static void dbgEventDone()
-        /* This is a convenient place to catch 
+        /* This is a convenient place to output state information
           after a user input event is processed or 
-          after any other signficant event occurs.
+          after any other significant event occurs.
           This is useful because the Java event loop is not accessible.
           */
         { 
-          //DbgOut( "-" ); 
-          //MetaFile.writeDebugState( );  // ??? Display for debugging.
-          //NoOp( );
+        if ( dbgEventDoneB )
+          {
+            dbgOut( "-" ); 
+            MetaFile.writeDebugFileV( MetaRoot.getRootMetaNode( ));
+            noOp( );
+            }
           }
       
       public static void dbgConversionDone()
         /* This is called after a conversion from IDNumber to MetaNode.  */
         { 
-          //DbgOut( "Conv." ); 
+          //dbgOut( "Conv." ); 
           //MetaFile.writeDebugState( );  // ??? Display for debugging.
           noOp( );
           }
