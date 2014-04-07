@@ -20,7 +20,7 @@ public class RootJTree
 
   implements KeyListener, TreeSelectionListener
 
-  /* This class is used for the content in the left subpanel.
+  /* This class is used for the content in the left JTree subpanel.
     the only field is an IJTree.  why not just use IJTree?? */
 
   {
@@ -79,23 +79,10 @@ public class RootJTree
 
           This could be replaced by setSelectionPath(TreePath)
           since that is all that is done now.
-
-          ??? If the node is viewable, meaning not collapsed,
-          then it also scrolls the node into view 
-          in the JTree and paints it.
           */
         {
           setSelectionPath(inSelectionTreePath);  // Select in JTree.
             // This will trigger TreeSelectionListener activity.
-
-          /*
-          if  // if path is viewable then show it.
-            ( isVisible( inSelectionTreePath ) )
-            {
-              scrollPathToVisible( inSelectionTreePath ); // Scroll it.
-              paintImmediately( );  // Paint it to display.
-              }
-          */
           }
 
     // Output methods.  These return state information to the caller.
@@ -105,7 +92,6 @@ public class RootJTree
           There should be only one, because multiselection is disabled.
           */
         {
-          //return savedTreePath;
           return getSelectionPath();  // Get path directly from JTree.
           }
 
@@ -125,33 +111,27 @@ public class RootJTree
             It records the TreePath of the final selection for use in
             automatically collapsing and expanding the next time
             this method is called.
-
-            ???? This method no longer does any scrolling or repainting
-            to display the newly selected node because
-            it was affecting the expansion state.
             */
           { // valueChanged( TreeSelectionEvent TheTreeSelectionEvent )
-            logV("RootJTree.valueChanged(..) Begin");
-            //Do not scroll for painting because that changes expansion state.
+            dbgV("RootJTree.valueChanged(..) Begin");
             final TreePath FinalNewTreePath=  // Get selection TreePath...
               TheTreeSelectionEvent.  // ...which is the event's...
                 getNewLeadSelectionPath();  // ...one and only TreePath.
-            logV("RootJTree.valueChanged(..) FinalNewTreePath",FinalNewTreePath);
+            dbgV("RootJTree.valueChanged(..) FinalNewTreePath",FinalNewTreePath);
             if // Process based on whether selection path is null.
               ( FinalNewTreePath == null ) // Selection path is null.
               ;  // So do nothing.
               else  // Selection path is not null.
               { // Process non-null selection TreePath.
-                changesBeginV();  // Mark beginning of windows changes.
                 TreePath OldTreePath= // Set old TreePath to...
                   savedTreePath;  // ...TreePath of last selection made.
                 if ( OldTreePath == null )  // If OldTreePath is null...
                   OldTreePath= FinalNewTreePath;  // ...simulate no change.
+                changesBeginV(OldTreePath);  // Mark beginning of window changes.
                 final TreePath FinalOldTreePath= OldTreePath;  // for Runnable().
                 savedTreePath=  // Save the new selected TreePath...
                   FinalNewTreePath; // which was calculated previously.
                 // At this point a new selection may be triggered.
-                
                 changeSelectionV( // Collapse and expand nodes along path...
                   FinalOldTreePath, // ...from the previous selection...
                   FinalNewTreePath  // ...to the new selection...
@@ -159,24 +139,20 @@ public class RootJTree
                 Selection.set(FinalNewTreePath); // Record final selection position.
                 changesEndV();  // Mark end of windows changes.
                 } // Process non-null selection TreePath.
-
-            logV("RootJTree.valueChanged(..) End");
+            dbgV("RootJTree.valueChanged(..) End");
             Misc.dbgEventDone(); // ??? Debug.
             } // valueChanged( TreeSelectionEvent TheTreeSelectionEvent )
-        
+
         private void changeSelectionV
           ( TreePath startTreePath, TreePath stopTreePath) 
           /* This processes a recent change in Selection TreePath,
             a change from startTreePath to stopTreePath.
-            
+
             It does this by calling changeSelectionRawV(.)
             with all the TreeSelectionListeners temporarilly disabled,
             because changeSelectionRawV(..) makes a lot of selection changes
             for cosmetic reasons, and those listeners are interested in only
             the TreePath of the final selection.
-
-            ??? Maybe it is only this class which is not interested,
-            not all Listeners???
             */
           { // changeSelectionV(.)
             TreeSelectionListener[] TreeSelectionListeners= // Get listeners.
@@ -216,43 +192,68 @@ public class RootJTree
             which happen during the execution of this method.
             */
           {
-            logV("RootJTree.changeSelectionRawV(..) startTreePath",startTreePath);
-            logV("RootJTree.changeSelectionRawV(..) stopTreePath",stopTreePath);
+            dbgV("RootJTree.changeSelectionRawV(..) startTreePath",startTreePath);
+            dbgV("RootJTree.changeSelectionRawV(..) stopTreePath",stopTreePath);
             setSelectionPath(startTreePath);  // Reselect start node for animation.
             TreePath CommonAncestorTreePath= // Do the up part.
               collapseAndExpandUpTreePath( startTreePath, stopTreePath );
-            { // expand downward if needed.
+            { // Expand downward if needed.
               if // Common node is a descendent of (the same as) stop node.
                 ( stopTreePath.isDescendant( CommonAncestorTreePath ) )
-                {
-                  logV("RootJTree.changeSelectionRawV(..) at stop node");
-                  TreeExpansion.SetAutoExpanded(  // Set auto-expanded...
+                { // Set auto-expanded attribute of stop node to false.
+                  dbgV("RootJTree.changeSelectionRawV(..) at stop node");
+                  TreeExpansion.SetAutoExpanded(  // Set auto-expanded attribute...
                     stopTreePath, false  // ...of stop node to false.
                     );
-                  }
-              else // scan node is NOT a descendent of (same as) stop node.
-              {
-                logV("RootJTree.changeSelectionRawV(..) calling collapseAndExpandDownV(..)");
-                logV("RootJTree.changeSelectionRawV(..) CommonAncestorTreePath",CommonAncestorTreePath);
-                logV("RootJTree.changeSelectionRawV(..) stopTreePath",stopTreePath);
-                collapseAndExpandDownV(  // expand down to stop node.
-                  CommonAncestorTreePath, 
-                  stopTreePath 
+                  } // Set auto-expanded attribute of stop node to false.
+              else // Common node is NOT a descendent of (same as) stop node.
+              { // Expand downward.
+                dbgV("RootJTree.changeSelectionRawV(..) calling collapseAndExpandDownV(..)");
+                dbgV("RootJTree.changeSelectionRawV(..) CommonAncestorTreePath",CommonAncestorTreePath);
+                dbgV("RootJTree.changeSelectionRawV(..) stopTreePath",stopTreePath);
+                collapseAndExpandDownV(  // Expand down...
+                  CommonAncestorTreePath,  // ...from the common anestor...
+                  stopTreePath  // ...to the stop node.
                   );
-                }
-              } // expand downward if needed.
-            // We are at the stop node.  Now we do possible auto-expansion.
-            final TreePath AutoExpandTreePath= // Is stop node auto-expandable?
-            	TreeExpansion.FollowAutoExpandToTreePath( stopTreePath );
-            if ( AutoExpandTreePath != null )  // If yes then...
-              SwingUtilities.invokeLater(new Runnable() { // ...queue event...
-                @Override  
-                public void run() 
-                  {  
-                    setSelectionPath(   // ...to autoexpand by selecting...
-                      AutoExpandTreePath );  // ...last node of expand path.
-                    }  
-                });
+                } // Expand downward.
+              } // Expand downward if needed.
+            // We are at the stop node.  Now trigger possible auto-expansion there.
+            trySelectingToAutoExpandV( stopTreePath );
+            }
+
+        private void trySelectingToAutoExpandV( TreePath stopTreePath )
+          /* This method tries to trigger a new selection to auto-expand
+            the node at stopTreePath.
+            It follows the trail of most recently visited descendents
+            which have their "AutoExpanded" attribute set.
+            If there are no nodes in the trail then it simply returns.
+            If there is at least one node in the trail,
+            not including the first one,
+            it queues a selection in the JTree of the last node in the trail.
+            This is the first node encountered without the attribute set.
+            The expansion will handled later by that selection of that node.
+            The expansion is done by this 2nd selection so that
+            all the TreeSelectionListener-s are called
+            for the present selection before being called again for the new one.
+            */
+          {
+            final TreePath TrailEncTreePath= // Calculate end of trail of...
+            	TreeExpansion.FollowAutoExpandToTreePath( // ...expandable nodes...
+                stopTreePath  // ...starting at stopTreePath.
+                );
+            if ( TrailEncTreePath != null )  // If there is an expansion trail...
+              { // Trigger the trail's expansion.
+                changePaintSelectionIfChangedV( );  // Display present selection...
+                  // ...now for visual smoothness.
+                SwingUtilities.invokeLater(new Runnable() { // Queue GUI event...
+                  @Override  
+                  public void run() 
+                    {  
+                      setSelectionPath(   // ...to autoexpand by selecting...
+                        TrailEncTreePath );  // ...last node of expansion trail.
+                      }  
+                  });
+                } // Trigger the trail's expansion.
             }
 
         private TreePath collapseAndExpandUpTreePath
@@ -260,20 +261,22 @@ public class RootJTree
           /* This method processes only the upward, toward the root, 
             change in Selection TreePath from startTreePath to stopTreePath.
             It auto-collapses reached nodes if needed.
-            It displays each node as it goes.
+            It displays each selected node also as it goes if desired.
             It stops when it reaches a node which is an ancestor of 
             the node named by stopTreePath.
             It returns the TreePath of this common ancestor.
             */
           { // collapseAndExpandUpTreePath(.)
-            logV("RootJTree.collapseAndExpandUpTreePath(..) startTreePath", startTreePath);
-            logV("RootJTree.collapseAndExpandUpTreePath(..) stopTreePath", stopTreePath);
+            dbgV("RootJTree.collapseAndExpandUpTreePath(..) startTreePath", startTreePath);
+            dbgV("RootJTree.collapseAndExpandUpTreePath(..) stopTreePath", stopTreePath);
             TreePath ScanTreePath= startTreePath;  // Prepare up-scan.
             while  // Process tree positions up to the common ancestor.
               ( ! ScanTreePath.isDescendant( stopTreePath ) )
               { // Move and maybe collapse one position toward root.
                 ScanTreePath=   // Move one position toward root.
                   ScanTreePath.getParentPath();
+                dbgV("RootJTree.collapseAndExpandUpTreePath(..) selecct",ScanTreePath);
+                changeBySelectingV( ScanTreePath );
                 if // Auto-collapse this node if...
                   ( ( // ... it was auto-expanded. 
                   		TreeExpansion.GetAutoExpandedB( ScanTreePath ) 
@@ -283,27 +286,16 @@ public class RootJTree
                       || ScanTreePath.equals( stopTreePath )
                       )  
                     )
-                  { // Collapse and move.
-                    logV(
+                  { // Collapse.
+                    dbgV(
                       "RootJTree.collapseAndExpandUpTreePath(..) collapse",
                       ScanTreePath
                       );
-                    setSelectionPath( ScanTreePath ); // Select scan node.
-                    showChangeV( ScanTreePath );
-                    collapsePath( ScanTreePath );  // Collapse node.
-                    showChangeV( ScanTreePath );
-                    //changeBySelectingV( ScanTreePath );
-                    //changeByCollapsingV( ScanTreePath );
-                    // Notice that the the AutoExpandedB status is not cleared.
-                    } // Collapse and move.
-                  else
-                  { // Move only.
-                    logV("RootJTree.collapseAndExpandUpTreePath(..) out",ScanTreePath);
-                    setSelectionPath( ScanTreePath ); // Select scan node.
-                    showMoveV( ScanTreePath );
-                    } // Move only.
+                    changeByCollapsingV( ScanTreePath );
+                    // Notice that the the AutoExpandedB sttribute is not cleared.
+                    } // Collapse.
                 } // Move and maybe collapse one position toward root.
-            logV("RootJTree.collapseAndExpandUpTreePath(..) common");
+            dbgV("RootJTree.collapseAndExpandUpTreePath(..) common");
             return ScanTreePath;  // return the final common ancestor TreePath.
             } // collapseAndExpandUpTreePath(.)
 
@@ -315,6 +307,8 @@ public class RootJTree
             It records DataNode visit information.
             It does auto-expansion of nodes if needed 
             on the way to stopTreePath.
+            It displays each selected node also as it goes if desired.
+            It stops when it reaches a node which is an ancestor of 
             */
           { // collapseAndExpandDownV(.)
             TreePath stopParentTreePath= stopTreePath.getParentPath();
@@ -325,28 +319,20 @@ public class RootJTree
               collapseAndExpandDownV(  // Recursively process them.
                 startTreePath, stopParentTreePath
                 );
-            logV("RootJTree.collapseAndExpandDownV(..) stopParentTreePath",stopParentTreePath);
-            logV("RootJTree.collapseAndExpandDownV(..) isCollapsed(..): "+isCollapsed(stopParentTreePath));
+            dbgV("RootJTree.collapseAndExpandDownV(..) stopParentTreePath",stopParentTreePath);
+            dbgV("RootJTree.collapseAndExpandDownV(..) isCollapsed(..): "+isCollapsed(stopParentTreePath));
             if // Auto-expand Parent node if it is presently collapsed. 
               ( ! isExpanded( stopParentTreePath ) )
               { // Auto-expand and move.
-                logV("RootJTree.collapseAndExpandDownV(..) expanding");
-                setSelectionPath( stopParentTreePath ); // Select parent node.
-                showChangeV( stopParentTreePath );
-                expandPath( stopParentTreePath );  // Expand node.
+                dbgV("RootJTree.collapseAndExpandDownV(..) expanding");
+                changeBySelectingV( stopParentTreePath );
+                changeByExpandingV( stopParentTreePath );
                 TreeExpansion.SetAutoExpanded(  // Set auto-expanded status.
                   stopParentTreePath, true
                   );
-                showChangeV( stopTreePath );
-                setSelectionPath( stopTreePath );  // Select the stop node.
-                showChangeV( stopTreePath );
                 } // Auto-expand and move.
-              else
-              { // Move only.
-                logV("RootJTree.collapseAndExpandDownV(..) stopTreePath",stopTreePath);
-                setSelectionPath( stopTreePath );  // Select the stop node.
-                showMoveV( stopTreePath );
-                }// Move only.
+            dbgV("RootJTree.collapseAndExpandDownV(..) stopTreePath",stopTreePath);
+            changeBySelectingV( stopTreePath );
             } // collapseAndExpandDownV(.)
 
       // KeyListener methods.
@@ -410,7 +396,6 @@ public class RootJTree
           if (childObject == null)  // if no recent child try first one.
             { // try getting first childObject.
               Object selectedObject= 
-                // savedTreePath.getLastPathComponent();
                 getLastSelectedPathComponent();
               if (theDataTreeModel.getChildCount(selectedObject) <= 0)  // there are no children.
                 childObject= null;  // keep childObject null.
@@ -422,12 +407,11 @@ public class RootJTree
             (childObject!=null) // one was found.
             { // adjust visits tree and select the child.
               TreePath childTreePath=  // child path is...
-                //savedTreePath.   // ...old selected with...
                 getSelectionPath().   // ...old selected with...
                   pathByAddingChild(  // ...addition of...
                   childObject    // ...the found child object.
                   );
-              selectNodeV(  // select (and display)...
+              selectNodeV(  // Select...
                 childTreePath  // ...the new child path.
                 );
               } // adjust visits tree and select the child.
@@ -437,12 +421,10 @@ public class RootJTree
         /* Goes to and displays the parent of the present tree node. */
         { // CommandGoToParentV().
           TreePath parentTreePath=  // try getting get parent TreePath.
-          	//savedTreePath.getParentPath();
             getSelectionPath().getParentPath();
           if (parentTreePath != null)  // there is a parent.
             { // record visit then select and display parent node.
-              selectNodeV(parentTreePath);  // select (and display) the parent directory.
-              //setSelectionPath(parentTreePath); 
+              selectNodeV(parentTreePath);  // Select the parent directory.
               } // record visit then select and display parent node.
           } // CommandGoToParentV().
   
@@ -454,7 +436,7 @@ public class RootJTree
           	getPathForRow( RowI + 1 );
           if (NextTreePath != null)  // Select that path if it exists.
             { // select and display the node.
-              selectNodeV(NextTreePath);  // select (and display) the path.
+              selectNodeV(NextTreePath);  // Select the path.
               } // select and display the node.
           } // commandGoDownV().
   
@@ -466,7 +448,7 @@ public class RootJTree
           	getPathForRow( RowI - 1 );
           if (NextTreePath != null)  // Select that path if it exists.
             { // select and display the node.
-              selectNodeV(NextTreePath);  // select (and display) the path.
+              selectNodeV(NextTreePath);  // Select the path.
               } // select and display the node.
           } // CommandGoUpV().
 
@@ -478,7 +460,6 @@ public class RootJTree
         {
           int SelectedRowI=   // determine which row is selected.
             getLeadSelectionRow();
-          //logV("RootJTree.commandExpandOrCollapseV(..) ); ???
           if  // expand or collapse it, whichever makes sense.
             //(isExpanded(SelectedRowI))  // Row is expanded now.
             (isExpanded(getPathForRow(SelectedRowI)))  // Row is expanded now.
@@ -493,19 +474,7 @@ public class RootJTree
               expandRow(SelectedRowI);  // Expand the row.
           }
 
-    /* Display/paint code.
-
-      ??? This code, or at least the code which calls it,  needs work.
-      _ I need something to better control when to insert an animationDelay
-        so there will be 1 and only one delay between significant display changes.
-        Options are:
-        * A way to detect when the display needs repainting.
-        * A flag which can be set when paint is called.
-      / To make things simpler I should probably completely separate
-        the show code from the selection code.
-      _ Maybe insert a delay if a selection triggers an auto-expand selection.
-
-      */
+    /* Display/paint code. */
 
       private void paintImmediately( )
         /* This method displays the present state of
@@ -516,49 +485,10 @@ public class RootJTree
           are not the immediate result of user input.
           */
         { // paintImmediately( )
-          paintImmediately(  // Paint present Component contents.
-            getBounds( ) 
+          paintImmediately(  // Paint immediately...
+            getBounds( )  // ...the entire Component.
             );
           } // paintImmediately( )
-
-    /* showChange code.  This is being replaced by Change Manager.  */
-
-      private boolean showChangeB= true;  // true means show expansion changes.
-      private boolean showMoveB= false;  // true means show scan moves.
-      private boolean showAllB= false;  // true means show everything for debugging.
-      
-      /* The above default combination of parameters shows 
-        all auto-expansions and collapses, and the associated movements,
-        but not movements without auto-expansions and collapses.
-        This prevents scanning to common ancestors,
-        which would be annoying when the selection moves
-        from one sibling to another.
-        */
-
-      private void showChangeV( TreePath inTreePath )
-        {
-          if ( showChangeB || showMoveB || showAllB )
-            showV( inTreePath );
-          }
-
-      private void showMoveV( TreePath inTreePath )
-        {
-          if ( showMoveB || showAllB )  // Show state if showing moves is desired.
-            showV( inTreePath );
-          }
-
-      private void showV( TreePath inTreePath )
-        /* This method unconditionallly displays one step of a 
-          possiblly long and complex selection operation
-          involving possible automatic collapsing and expanding of tree nodes.
-          It does not make any JTree state changes,
-          except possibly to scroll the node named by inTreePath into view.
-          */
-        {
-          scrollPathToVisible( inTreePath ); // Scroll into view.
-          paintImmediately( );  // Display present JTree state.
-          animationDelayV( );  // Keep it on screen for a while,
-          }
 
     /* Change Manager.
       This code receives inputs regarding JTree node selections, expansions, and
@@ -566,63 +496,77 @@ public class RootJTree
       and decides when to change and output the state of the JTree.
       */
 
-      private TreePath changeSelectionTreePath= null;  // Present selection.
+      private TreePath changePreviousTreePath= null;  // Previous selection.
 
-      private boolean changeShowAllB= false;
+      private boolean changeShowAllB= false;  // Doesn't work if true ???
 
-      private void changesBeginV() 
+      private void changesBeginV( TreePath inTreePath ) 
         /* This method is called to begin a possible sequence of
           JTree display changes.
+          inTreePath is the previous JTree selection.
           */
         {
-          changeSelectionTreePath= getSelectionPath();  // Save initial selection.
+          //changePreviousTreePath= getSelectionPath();  // Save selection.
+          changePreviousTreePath= inTreePath;  // Save previous selection.
           }
 
       private void changesEndV()
         /* This method is called to end a sequence of JTree display changes. */
-        {}
+        {
+          changePaintSelectionIfChangedV( );  // Display any pending selection.
+          animationDelaySetRequestV( false );  // Disable the final delay.
+          }
 
       private void changeBySelectingV( TreePath inTreePath )
         /* This method is called to change, and possibly show, now or later,
           the JTree node selection. 
           */
         { 
-          changeSelectionTreePath= inTreePath;  // Save new selection.
+          setSelectionPath( inTreePath );  // Select the node.
           if ( changeShowAllB )  // If showing everything...
-            changeSelectionUpdateV( );  // ...show new selection immediately.
+            changePaintSelectionIfChangedV( );  // ...display new selection now.
           }
 
-      private void changeSelectionUpdateV( )
-        /* This method is called to update the JTree to
+      private void changePaintSelectionIfChangedV( )
+        /* This method is called to update the JTree display to
           a previously saved selection, if needed.
           */
         {
-          if  // Selection does not need changing.
-            ( changeSelectionTreePath.equals(getSelectionPath()) )
+          TreePath presentTreePath= getSelectionPath();  // Get selection.
+          if  // Selection has not changed since last saved.
+            ( changePreviousTreePath.equals(presentTreePath) )
             ;  // So do nothing.
-            else  // Selection needs changing.
-            { // Change it and show it.
+            else // Selection has changed.
+            { // Display the new selection.
               animationDelayRequestDoMaybeV( );  // Delay if requested earlier.
-              setSelectionPath( changeSelectionTreePath );  // Select the node.
-              scrollPathToVisible( changeSelectionTreePath ); // Move it into view.
-              paintImmediately( );  // Display present JTree state.
-              animationDelaySetRequestV( true );  // Request new delay.
-              } // Change it and show it.
+              changePaintV( presentTreePath ); // Update to screen.
+              // ??? Messes up old code: changePreviousTreePath= presentTreePath;  // Update selection copy.
+              } // Display the new selection.
           }
 
       private void changeByExpandingV( TreePath inTreePath )
         {
+          changePaintSelectionIfChangedV( );  // Display selection first if needed.
           animationDelayRequestDoMaybeV( );  // Delay if requested earlier.
-          expandPath( inTreePath );  // Collapse node.
-          scrollPathToVisible( inTreePath ); // Move it into view.
-          paintImmediately( );  // Display present JTree state.
-          animationDelaySetRequestV( true );  // Request new delay.
+          expandPath( inTreePath );  // Expand node.
+          changePaintV( inTreePath ); // Update to screen.
           }
 
       private void changeByCollapsingV( TreePath inTreePath )
         {
+          changePaintSelectionIfChangedV( );  // Update selection if needed.
           animationDelayRequestDoMaybeV( );  // Delay if requested earlier.
           collapsePath( inTreePath );  // Collapse node.
+          changePaintV( inTreePath ); // Update to screen.
+          }
+
+      private void changePaintV( TreePath inTreePath )
+        /* This method scrolls the node at inTreePath into view,
+          paints the display to show that node and any other changes,
+          and requests an animation delay to flow so that
+          the user can see what has changed.
+          */
+        {
           scrollPathToVisible( inTreePath ); // Move it into view.
           paintImmediately( );  // Display present JTree state.
           animationDelaySetRequestV( true );  // Request new delay.
@@ -678,7 +622,7 @@ public class RootJTree
 
       private boolean logB= false;  // false for no debug logging.
 
-      private void logV( String inString, TreePath inTreePath )
+      private void dbgV( String inString, TreePath inTreePath )
         /* This method logs inString as the name of the caller,
           and the name of the last element of inTreePath.
           This is used for debugging.  
@@ -693,30 +637,30 @@ public class RootJTree
               );
           }
 
-      private void logV( String inString )
-        /* This method logs inString as the name of the caller,
-          and the name of the last element of the present selection path.
-          This is used for debugging.  
-          */
-        {
-          logV( 
-            inString +  " SELECTION"
-            , getSelectionPath()
-            );
-          }
-
       public void collapsePath( TreePath inTreePath )
         /* This method is for debugging.  */
         {
-          logV("RootJTree.collapsePath(..)",inTreePath);
+          dbgV("RootJTree.collapsePath(..)",inTreePath);
           super.collapsePath( inTreePath );
           }
 
       public void expandPath( TreePath inTreePath )
         /* This method is for debugging.  */
         {
-          logV("RootJTree.expandPath(..)",inTreePath);
+          dbgV("RootJTree.expandPath(..)",inTreePath);
           super.expandPath( inTreePath );
+          }
+
+      private void dbgV( String inString )
+        /* This method logs inString as the name of the caller,
+          and the name of the last element of the present selection path.
+          This is used for debugging.  
+          */
+        {
+          dbgV( 
+            inString +  " SELECTION"
+            , getSelectionPath()
+            );
           }
 
     }
