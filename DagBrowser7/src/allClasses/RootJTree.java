@@ -244,7 +244,7 @@ public class RootJTree
             if ( TrailEncTreePath != null )  // If there is an expansion trail...
               { // Trigger the trail's expansion.
                 changePaintSelectionIfChangedV( );  // Display present selection...
-                  // ...now for visual smoothness.
+                animationDelayDoMaybeV( );  // and delay now for visual smoothness.
                 SwingUtilities.invokeLater(new Runnable() { // Queue GUI event...
                   @Override  
                   public void run() 
@@ -498,7 +498,7 @@ public class RootJTree
 
       private TreePath changePreviousTreePath= null;  // Previous selection.
 
-      private boolean changeShowAllB= false;  // Doesn't work if true ???
+      private boolean changeShowAllB= true; //false;  // Show selection paths.
 
       private void changesBeginV( TreePath inTreePath ) 
         /* This method is called to begin a possible sequence of
@@ -527,27 +527,9 @@ public class RootJTree
             changePaintSelectionIfChangedV( );  // ...display new selection now.
           }
 
-      private void changePaintSelectionIfChangedV( )
-        /* This method is called to update the JTree display to
-          a previously saved selection, if needed.
-          */
-        {
-          TreePath presentTreePath= getSelectionPath();  // Get selection.
-          if  // Selection has not changed since last saved.
-            ( changePreviousTreePath.equals(presentTreePath) )
-            ;  // So do nothing.
-            else // Selection has changed.
-            { // Display the new selection.
-              animationDelayRequestDoMaybeV( );  // Delay if requested earlier.
-              changePaintV( presentTreePath ); // Update to screen.
-              // ??? Messes up old code: changePreviousTreePath= presentTreePath;  // Update selection copy.
-              } // Display the new selection.
-          }
-
       private void changeByExpandingV( TreePath inTreePath )
         {
           changePaintSelectionIfChangedV( );  // Display selection first if needed.
-          animationDelayRequestDoMaybeV( );  // Delay if requested earlier.
           expandPath( inTreePath );  // Expand node.
           changePaintV( inTreePath ); // Update to screen.
           }
@@ -555,9 +537,25 @@ public class RootJTree
       private void changeByCollapsingV( TreePath inTreePath )
         {
           changePaintSelectionIfChangedV( );  // Update selection if needed.
-          animationDelayRequestDoMaybeV( );  // Delay if requested earlier.
           collapsePath( inTreePath );  // Collapse node.
           changePaintV( inTreePath ); // Update to screen.
+          }
+
+      private void changePaintSelectionIfChangedV( )
+        /* This method is called to update the JTree display to
+          a previously saved selection, if needed.
+          */
+        {
+          TreePath presentTreePath= getSelectionPath();  // Get present selection.
+          if  // Selection has not changed since last saved.
+            ( changePreviousTreePath.equals(presentTreePath) )
+            ;  // So do nothing.
+            else // Selection has changed.
+            { // Display the new selection.
+              changePaintV( presentTreePath ); // Update to screen.
+              // ??? Messes up old code: 
+              changePreviousTreePath= presentTreePath;  // Update selection copy.
+              } // Display the new selection.
           }
 
       private void changePaintV( TreePath inTreePath )
@@ -567,9 +565,10 @@ public class RootJTree
           the user can see what has changed.
           */
         {
-          scrollPathToVisible( inTreePath ); // Move it into view.
+          animationDelayDoMaybeV( );  // Delay if requested earlier.
+          scrollPathToVisible( inTreePath ); // Move node into view.
           paintImmediately( );  // Display present JTree state.
-          animationDelaySetRequestV( true );  // Request new delay.
+          animationDelaySetRequestV( true );  // Request new delay paint.
           }
 
     /* Animatiion Delay manager.
@@ -577,15 +576,17 @@ public class RootJTree
       window paints to animate complex changes to the window state.
       */
 
-      private int animationDelayI= 1000;  // != 0 means milliseconds to delay.
+      private int animationDelayI= 100;  // != 0 means milliseconds to delay.
 
       private boolean animationDelayRequestedB= false;  // Request flag.
 
       private void animationDelaySetRequestV( boolean inB )
-        /* This records a delay request by setting or clearing a flag.  */
-        { animationDelayRequestedB= inB; }
+        /* This sets or resets an animation delay request by storing a flag.  */
+        { 
+          animationDelayRequestedB= inB;  // Store new value.
+          }
 
-      private void animationDelayRequestDoMaybeV( )
+      private void animationDelayDoMaybeV( )
         /* This delays thread execution if a delay has been requested,
           and then clears the request so there won't be another delay
           unless and until another delay has been requested.
