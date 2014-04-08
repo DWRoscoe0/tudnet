@@ -148,21 +148,25 @@ public class DagBrowserPanel
               ViewJPanel.add(DirectoryJLabel,BorderLayout.NORTH);  // add as north subpanel.
               { // build JSplitPane to be used as content.
                 // note that TheDataTreeModel was built earlier.
-                { // build the left scroller subpanel.
-                  { // build the file system tree panel.
-                    theRootJTree = 
-                      new RootJTree( TheDataTreeModel );
+                { // Build the left JScrollPane sub-panel.
+                  TreeJScrollPane = new JScrollPane( );  // construct JScrollPane.
+                  TreeJScrollPane.setMinimumSize( new Dimension( 0, 0 ) );
+                  TreeJScrollPane.setPreferredSize( new Dimension( 400, 400 ) );
+                  { // Build the JTree view for the JScrollPane.
+                    theRootJTree= new RootJTree(  // Construct the JTree with...
+                      TheDataTreeModel,  // ...this model for tree data and...
+                      TreeJScrollPane   // ...JScrollPane for view-ability tests.
+                      );
                     { // setup handling by listener of various Tree events.
                       theRootJTree.addTreeSelectionListener(this);
                       theRootJTree.addFocusListener(this);
                       // theRootJTree.addKeyListener(this);
                       } // setup handling by listener of various Tree events.
-                    } // build the file system tree panel.
-                  TreeJScrollPane = new JScrollPane( // construct JScrollPanel to scroll
-                    theRootJTree );  // file system tree.
-                  TreeJScrollPane.setMinimumSize( new Dimension( 0, 0 ) );
-                  TreeJScrollPane.setPreferredSize( new Dimension( 400, 400 ) );
-                  }// build the left scroller subpanel.
+                    } // Build the JTree view for the JScrollPane.
+                  TreeJScrollPane.setViewportView(  // Set client to be scrolled...
+                    theRootJTree  // ...to be JTree .
+                    );
+                  } // Build the left JScrollPane sub-panel.
                 { // build the right scroller subpanel.
                   { // build the scroller content.
                     DataJComponent=   // calculate JPanel from TableModel.
