@@ -39,9 +39,9 @@ public class DagBrowserPanel
   /* This class implements a panel which allows a user to browse 
     the Infogora DAG (Directed Acyclic Graph) as a Tree.
     The left main sub-panel is the navigation panel
-    and displays the graph as a JTree.
-    The right main sub-panel displays nodes of the graph (DataNode-s)
-    in a way appropriate to the type of node.
+    and displays the graph using a JTree.
+    The right main sub-panel displays nodes of the graph (DataNode-s).
+    The JComponent used there depends on the type of data.
     */
 
   /* ??? marks things to do below.  Here are those items summarized:
@@ -63,7 +63,7 @@ public class DagBrowserPanel
         private DataTreeModel TheDataTreeModel;  // holds all browsable data.
         private TreePath StartTreePath;  // start TreePath to be displayed.
 
-      // displayed subpanel JComponent tree.
+      // displayed sub-panel JComponent tree.
             
         private JPanel HTopJPanel; // top horizontal panel for...
           private IJButton HelpIJButton;  // button to activate Help dialog.
@@ -77,9 +77,9 @@ public class DagBrowserPanel
           private JLabel DirectoryJLabel; // a place to display directory path.
 
           private JSplitPane TheSplitPane;  // horizontally split content panel
-            private JScrollPane TreeJScrollPane;  // left scroller subpanel...
+            private JScrollPane TreeJScrollPane;  // left scroller sub-panel...
               private RootJTree theRootJTree;  // ... and tree content.
-            private JScrollPane DataJScrollPane;  // right scroller subpanel...
+            private JScrollPane DataJScrollPane;  // right scroller sub-panel...
               private JComponent DataJComponent;  // ... and its data content.
               private VHelper DataVHelper;  // ... and its VHelper alias.
 
@@ -129,112 +129,26 @@ public class DagBrowserPanel
           connecting the various event listeners.
           It also starts a BlinkerTimer used to indicate 
           that the program is running.
-          
-          This is too long and should be broken up.  ???
           */
         { // DagBrowserPanel()
-          { // build and add sub-panels of this Panel.
-            setLayout(new BorderLayout());  // use BorderLayout manager.
-            buildDataModelsAndGraphsV();
-            buildAndAddHTopJPanelV();
+          buildDataModelsAndGraphsV();  // This is where the data is.
 
-            { // build ViewJPanel for showing file info.
-              ViewJPanel= new JPanel();  // construct ViewJPanel.
-              ViewJPanel.setLayout(new BorderLayout());  // set BorderLayout manager.
-              { // build Current Working DirectoryJLabel.
-                DirectoryJLabel= new JLabel();  // create CWD JLabel.
-                DirectoryJLabel.setAlignmentX(Component.LEFT_ALIGNMENT);  // align it.
-                } // create Current Working DirectoryJLabel.
-              ViewJPanel.add(DirectoryJLabel,BorderLayout.NORTH);  // add as north subpanel.
-              { // build JSplitPane to be used as content.
-                // note that TheDataTreeModel was built earlier.
-                { // Build the left JScrollPane sub-panel.
-                  TreeJScrollPane = new JScrollPane( );  // construct JScrollPane.
-                  TreeJScrollPane.setMinimumSize( new Dimension( 0, 0 ) );
-                  TreeJScrollPane.setPreferredSize( new Dimension( 400, 400 ) );
-                  { // Build the JTree view for the JScrollPane.
-                    theRootJTree= new RootJTree(  // Construct the JTree with...
-                      TheDataTreeModel,  // ...this model for tree data and...
-                      TreeJScrollPane   // ...JScrollPane for view-ability tests.
-                      );
-                    { // setup handling by listener of various Tree events.
-                      theRootJTree.addTreeSelectionListener(this);
-                      theRootJTree.addFocusListener(this);
-                      // theRootJTree.addKeyListener(this);
-                      } // setup handling by listener of various Tree events.
-                    } // Build the JTree view for the JScrollPane.
-                  TreeJScrollPane.setViewportView(  // Set client to be scrolled...
-                    theRootJTree  // ...to be JTree .
-                    );
-                  } // Build the left JScrollPane sub-panel.
-                { // build the right scroller subpanel.
-                  { // build the scroller content.
-                    DataJComponent=   // calculate JPanel from TableModel.
-                      TheDataTreeModel.GetDataJComponent(
-                        StartTreePath
-                        ); // initially displaying root/child.
-                    DataVHelper= (VHelper)DataJComponent;  // Define alias...
-                    DataVHelper.addTreeSelectionListener(  // ...and Listener.
-                      this
-                      );
-                    } // build the scroller content.
-                  DataJScrollPane = new JScrollPane( DataJComponent );  // construct scroller from data panel.
-                  DataJScrollPane.setMinimumSize( new Dimension( 0, 0 ) );
-                  DataJScrollPane.setPreferredSize( new Dimension( 400, 400 ) );
-                  DataJScrollPane.setBackground( Color.white );
-                  } // build the right scroller subpanel.
-                TheSplitPane = // construct...
-                  new JSplitPane(  // ... JSplitPane...
-                    JSplitPane.HORIZONTAL_SPLIT,  // ...split horizontally from...
-                    TreeJScrollPane,  // ...left scroller subpanel and...
-                    DataJScrollPane  // ...right scroller subpanel.
-                    );
-                TheSplitPane.setContinuousLayout( true );  // Enable continuous layoug mode.
-                //TheSplitPane.setDividerLocation( 0.25 );  // Set the position of split.
-                TheSplitPane.setResizeWeight( 0.25 );  // Handle extra space
-                } // build JSplitPane to be used as content.
-              ViewJPanel.add(TheSplitPane,BorderLayout.CENTER); // add TheJSplitPane as...
-                                                                // ... the center subpanel.
-              { // build InfoJLabel for displaying file information.
-                InfoJLabel= new JLabel();  // construct it.
-                InfoJLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-                InfoJLabel.setText("UNDEFINED");  // report the present info string.
-                } // build InfoJLabel for displaying file information.
-              ViewJPanel.add(InfoJLabel,BorderLayout.SOUTH);  // add as south subpanel.
-              } // build ViewJPanel for showing file info.
-            add(ViewJPanel,BorderLayout.CENTER);  // add it as center subpanel.
-            } // build and add subpanels of this Panel.
-          { // define the content in the above panels.
+          setLayout(new BorderLayout());  // use BorderLayout manager.
+          { // Build and add sub-panels of this Panel.
+            buildAndAddHTopJPanelV();  // Contains control components.
+            buildAndAddViewJPanelV();  // Contains data components.
+            } // Build and add sub-panels of this Panel.
+          { // Define the content in the above panels.
             TreePath CurrentTreePath=  // Get TreePath of starting node.
               StartTreePath;
-            theRootJTree.  // In the left subpanel...
+            theRootJTree.  // In the left sub-panel...
               selectNodeV(CurrentTreePath);  // ...select current tree node.
-            /* In theory, the above should trigger a series of events which
-              will load both the left and right subpanels with 
-              coordinated content which is ready for display.  
-              */
-            } // define the content in the above panels.
-          { // build and start BlinkerTimer.
-            BlinkerTimer = new Timer(  // construct a timer...
-              1000,  // ...set to fire once per second...
-              this  // ...with the DagBrowserPanel the tick Listener.
-              );
-            BlinkerTimer.start();  // start BlinkerTimer so 1-second blinkers will work.
-            } // build and start BlinkerTimer.
-          LastValidFocusOwnerPanelComponent=   // initialize ID of last component with focus.
-            // theRootJTree.getTree();
-            theRootJTree;  // was DataJComponent;            
-          RestoreFocusV(); // make certain focus is set correctly.
+              // This should trigger a series of events which
+              // loads all the data-dependent sub-panel components
+              // and get them ready for display.  
+            } // Define the content in the above panels.
 
-          SwingUtilities.invokeLater( new Runnable() { // queue giving Help.
-            @Override  
-            public void run() { CommandHelpV(); }  
-            } );
-
-          { // Create key mapping.  Experimental and incomplete.
-            bindKeys();  
-            bindActions();
-            } // Create key mapping.  Experimental and incomplete.
+          miscellaneousInitializationV();  // Odds and end.
 
           //appLogger.info("DagBrowserPanel constructor End.(");  // ???
           } // DagBrowserPanel()
@@ -260,7 +174,7 @@ public class DagBrowserPanel
             HTopJPanel.add(BlinkerJLabel);
             } // create and add BlinkerJLabel.
 
-          add(HTopJPanel,BorderLayout.NORTH); // add it as north subpanel
+          add(HTopJPanel,BorderLayout.NORTH); // add it as north sub-panel
           } // build HTopJPanel containing buttons and other helpful widgets.
 
       private void buildAndAddIJButtonsV()
@@ -301,8 +215,135 @@ public class DagBrowserPanel
           return theIJButton;  // Return button for saving.
           }
 
+      private void buildAndAddViewJPanelV()
+        /* This composition method builds the ViewJPanel with its 
+          major left and right sub-panels, and 2 smaller
+          path and status line sub-panels.
+          */
+        {
+          { // build ViewJPanel.
+            ViewJPanel= new JPanel();  // construct ViewJPanel.
+            ViewJPanel.setLayout(new BorderLayout());  // set layout manager.
+            { // Build and add Current Working DirectoryJLabel.
+              DirectoryJLabel= new JLabel();  // create CWD JLabel.
+              DirectoryJLabel.setAlignmentX(Component.LEFT_ALIGNMENT);  // align it.
+              ViewJPanel.add(DirectoryJLabel,BorderLayout.NORTH);  // add as north sub-panel.
+              } // Build and add Current Working DirectoryJLabel.
+            buildAndAddJSplitPane();  // Contains left and right sub-panels.
+              // It is added to the center sub-panel.
+            { // Build and add InfoJLabel for displaying file information.
+              InfoJLabel= new JLabel();  // construct it.
+              InfoJLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+              InfoJLabel.setText("UNDEFINED");  // report the present info string.
+              ViewJPanel.add(InfoJLabel,BorderLayout.SOUTH);  // add as south sub-panel.
+              } // Build and add InfoJLabel for displaying file information.
+            add(ViewJPanel,BorderLayout.CENTER);  // add it as center sub-panel.
+            } // build ViewJPanel.
+          }
+
+      private void buildAndAddJSplitPane()
+        /* This composition method builds and adds the 
+          JSplitPane for the main left and right sub-panels.
+          It is added in the center of the ViewJPanel
+          */
+        {
+          buildLeftJScrollPaneV();  // Build the navigation sub-panel.
+          buildRightJScrollPaneV();  // Build the content sub-panel.
+          TheSplitPane = // construct...
+            new JSplitPane(  // ... JSplitPane...
+              JSplitPane.HORIZONTAL_SPLIT,  // ...split horizontally into...
+              TreeJScrollPane,  // ...left scroller sub-panel and...
+              DataJScrollPane  // ...right scroller sub-panel.
+              );
+          TheSplitPane.setContinuousLayout( true );  // Enable continuous layoug mode.
+          //TheSplitPane.setDividerLocation( 0.25 );  // Set the position of split.
+          TheSplitPane.setResizeWeight( 0.25 );  // Handle extra space
+          ViewJPanel.add(TheSplitPane,BorderLayout.CENTER); // add TheJSplitPane as...
+          }
+
+      private void buildLeftJScrollPaneV()
+        /* This composition method builds the left JScrollPane
+          which contains the RootJTree which is used as
+          a navigation pane.
+          */
+        {
+          TreeJScrollPane = new JScrollPane( );  // construct JScrollPane.
+          TreeJScrollPane.setMinimumSize( new Dimension( 0, 0 ) );
+          TreeJScrollPane.setPreferredSize( new Dimension( 400, 400 ) );
+          { // Build the JTree view for the JScrollPane.
+            theRootJTree= new RootJTree(  // Construct the JTree with...
+              TheDataTreeModel,  // ...this model for tree data and...
+              TreeJScrollPane   // ...JScrollPane for view-ability tests.
+              );  // Note that TheDataTreeModel was built earlier.
+
+            { // setup handling by listener of various Tree events.
+              theRootJTree.addTreeSelectionListener(this);
+              theRootJTree.addFocusListener(this);
+              // theRootJTree.addKeyListener(this);
+              } // setup handling by listener of various Tree events.
+            } // Build the JTree view for the JScrollPane.
+          TreeJScrollPane.setViewportView(  // Set client to be scrolled...
+            theRootJTree  // ...to be JTree .
+            );
+          }
+
+      private void buildRightJScrollPaneV()
+        /* This composition method builds the right JScrollPane
+          which contains whatever JComponent is appropriate for
+          displaying the item selected in 
+          the left JScrollPane navigation pane.
+          */
+        {
+          { // build the scroller content.
+            DataJComponent=   // calculate JPanel from TableModel.
+              TheDataTreeModel.GetDataJComponent(
+                StartTreePath // initially displaying root/child.
+                );  // Note that TheDataTreeModel was built earlier.
+            DataVHelper= (VHelper)DataJComponent;  // Define alias...
+            DataVHelper.addTreeSelectionListener(  // ...and Listener.
+              this
+              );
+            } // build the scroller content.
+          DataJScrollPane = new JScrollPane( DataJComponent );  // construct scroller from data panel.
+          DataJScrollPane.setMinimumSize( new Dimension( 0, 0 ) );
+          DataJScrollPane.setPreferredSize( new Dimension( 400, 400 ) );
+          DataJScrollPane.setBackground( Color.white );
+          }
+
+      private void miscellaneousInitializationV()
+        /* This composition method does initialization of
+          miscellaneous systems such as the Timer,
+          the focus state machine, and an experimental key binder.
+          It also queues the display of the Help dialogue. 
+          */
+        {
+
+          { // build and start BlinkerTimer.
+            BlinkerTimer = new Timer(  // construct a timer...
+              1000,  // ...set to fire once per second...
+              this  // ...with the DagBrowserPanel the tick Listener.
+              );
+            BlinkerTimer.start();  // start BlinkerTimer so 1-second blinkers will work.
+            } // build and start BlinkerTimer.
+          LastValidFocusOwnerPanelComponent=   // initialize ID of last component with focus.
+            // theRootJTree.getTree();
+            theRootJTree;  // was DataJComponent;            
+          RestoreFocusV(); // make certain focus is set correctly.
+
+          { // Create key mapping.  Experimental and incomplete.
+            bindKeys();  
+            bindActions();
+            } // Create key mapping.  Experimental and incomplete.
+
+          SwingUtilities.invokeLater( new Runnable() { // queue giving Help.
+            @Override  
+            public void run() { CommandHelpV(); }  
+            } );
+          
+          }
+
       private void buildDataModelsAndGraphsV()
-        /* This decomposition method builds the TreeModel
+        /* This composition method builds the TreeModel
           which will be the source of Infogora DAG to be browsed.
           It also builds the MetaTool cache DAG which
           stores information about the Infogora graph.
@@ -362,7 +403,7 @@ public class DagBrowserPanel
             } // actionPerformed( ActionEvent )
 
         private void CommandHelpV()
-          /* This decomposition method impliments the Help command.  */
+          /* This composition method impliments the Help command.  */
           { // give help.
             JOptionPane.showMessageDialog(
               this, // null, 
@@ -379,7 +420,7 @@ public class DagBrowserPanel
             } // give help.
         
         private void ProcessBlinkerTimerV()
-          /* This decomposition method process one tick of the BlinkerTimer.  */
+          /* This composition method process one tick of the BlinkerTimer.  */
           { // process timer event.
             { // switch blinker color.
               BlinkerJLabel.setOpaque(!BlinkerJLabel.isOpaque());  // reverse opacity.
@@ -420,16 +461,11 @@ public class DagBrowserPanel
             2. The new TreePath is not a descendant of
               the TreePath currently displayed by 
               the JComponent in the right sub-panel
+              
+            Most the work of this method id done by alueChangedProcessorV(..)
+            if it determined that valueChanged(..) was not re-entered.
             */
           { // valueChanged( TreeSelectionEvent TheTreeSelectionEvent ) 
-            TreePath selectedTreePath=
-              TheTreeSelectionEvent.  // ...the TreeSelectionEvent's...
-                getNewLeadSelectionPath();  // ...one and only TreePath.
-            //appLogger.info(
-            //  "DagBrowserPanel.valueChanged("
-            //  +selectedTreePath.getLastPathComponent()
-            //  +")."
-            //  );  // ???
             if ( TreeSelectionReentryBlockedB ) // process unless a re-entry.
               { // do nothing because the re-entry blocking flag is set.
                 appLogger.info(
@@ -440,25 +476,43 @@ public class DagBrowserPanel
               { // process the TreeSelectionEvent.
                 TreeSelectionReentryBlockedB= true;  // disallow re-entry.
 
-                if ( selectedTreePath != null )  // process only if not null.
-                  { // process based on Source Component.
-                    if (TheTreeSelectionEvent.getSource() == DataJComponent)
-                      ProcessSelectionFromRightSubpanel(
-                        selectedTreePath,
-                        TheTreeSelectionEvent.isAddedPath()
-                        );
-                    else if 
-                      (TheTreeSelectionEvent.getSource() == theRootJTree)
-                      ProcessSelectionFromLeftSubpanel( selectedTreePath );
-                    } // process based on Source Component.
-                //DisplayPathAndInfoV(selectedTreePath); // display other info.
-                DisplayPathAndInfoV( ); // display other info.
+                valueChangedProcessorV( // Have this do all the work.
+                  TheTreeSelectionEvent 
+                  );
 
                 TreeSelectionReentryBlockedB= false;  // now that we are done, allow re-entry.
-                Misc.dbgEventDone(); // Debug.
                 } // process the TreeSelectionEvent.
-            //appLogger.info("DagBrowserPanel.valueChanged(..) End.");  // ???
             } // valueChanged( TreeSelectionEvent TheTreeSelectionEvent ) 
+
+        private void valueChangedProcessorV
+          ( TreeSelectionEvent TheTreeSelectionEvent )
+          /* This composition method does the work of valueChanged(..)
+            if valueChanged(..) determines that it was not re-entered.
+            */
+          {
+            TreePath selectedTreePath=  // Get...
+              TheTreeSelectionEvent.  // ...the TreeSelectionEvent's...
+                getNewLeadSelectionPath();  // ...one and only TreePath.
+            //appLogger.info(
+            //  "DagBrowserPanel.valueChangedProcessorV("
+            //  +selectedTreePath.getLastPathComponent()
+            //  +")."
+            //  );  // ???
+            if ( selectedTreePath != null )  // process only if not null.
+              { // process based on Source Component.
+                if (TheTreeSelectionEvent.getSource() == DataJComponent)
+                  ProcessSelectionFromRightSubpanel(
+                    selectedTreePath,
+                    TheTreeSelectionEvent.isAddedPath()
+                    );
+                else if 
+                  (TheTreeSelectionEvent.getSource() == theRootJTree)
+                  ProcessSelectionFromLeftSubpanel( selectedTreePath );
+                } // process based on Source Component.
+            DisplayPathAndInfoV( ); // display other info.
+            Misc.dbgEventDone(); // Debug.
+            //appLogger.info("DagBrowserPanel.valueChangedProcessorV(..) End.");  // ???
+            }
 
         private void ProcessSelectionFromLeftSubpanel( TreePath inTreePath )
           /* This always replaces the content of the right sub-panel
@@ -468,7 +522,8 @@ public class DagBrowserPanel
             if the right sub-panel JComponent says that it can handle it.
             */
           { // ProcessSelectionFromLeftSubpanel(.)
-            //appLogger.info("DagBrowserPanel.ProcessSelectionFromLeftSubpanel(..).");  // ???
+            //appLogger.info("DagBrowserPanel.ProcessSelectionFromLeftSubpanel(..).");  // 
+
             ReplaceRightPanelContent( inTreePath );
             } // ProcessSelectionFromLeftSubpanel(.)
             
@@ -477,7 +532,7 @@ public class DagBrowserPanel
             )
           /* What this does depends on the internalSelectionB flag.
           
-            if true then it simply selects the parent in the left subpanel.
+            if true then it simply selects the parent in the left sub-panel.
             
             if false then it replaces the right sub-panel content
             with a new Viewer appropriate to the new selection TreePath,
@@ -491,14 +546,14 @@ public class DagBrowserPanel
             if // redo right panel if selection is outside it.
               ( ! internalSelectionB )
               { ReplaceRightPanelContent( inTreePath );
-                theRootJTree.  // in the right subpanel...
+                theRootJTree.  // in the right sub-panel...
                   selectNodeV(inTreePath);
                 RestoreFocusV();
                 }
               else  // Not outside.  Select parent in left JTree.
               { TreePath SelectedParentTreePath=  // get parent.
                   inTreePath.getParentPath();
-                theRootJTree.  // in the right subpanel...
+                theRootJTree.  // in the right sub-panel...
                   selectNodeV(SelectedParentTreePath);  // ...select parent.
                 }
             } // ProcessSelectionFromRightSubpanel()
@@ -507,7 +562,7 @@ public class DagBrowserPanel
           /* This method calculates a new
             JComponent and VHelper appropriate for displaying
             the last element of selectedTreePath and sets them
-            as content of the right subpanel for display.
+            as content of the right sub-panel for display.
             */
           { // ReplaceRightPanelContent(.)
             //appLogger.info("DagBrowserPanel.ReplaceRightPanelContent().");  // ???
@@ -563,7 +618,7 @@ public class DagBrowserPanel
                 (LastValidFocusOwnerPanelComponent == DataJComponent)
                 { 
                   LastFocusPane= FocusPane.RIGHT_PANE;  // record right enum ID.
-                  DisplayPathAndInfoV(  // display right subpanel's info for...
+                  DisplayPathAndInfoV(  // display right sub-panel's info for...
                     DataVHelper.getSelectionTreePath() // ...selected TreePath.
                     );
                   }
@@ -658,7 +713,8 @@ public class DagBrowserPanel
             in the Component hierarchy.  
             It returns true if the state machine is still running, 
             false otherwise.
-            ??? This could be rewritten and simplified by replacing
+
+            ??? This could be rewritten to simplify and shorten  by replacing
             all the Component-specific code by code which 
             scans Components upward in the hierarchy from the 
             Component which should have focus to
@@ -812,12 +868,12 @@ public class DagBrowserPanel
 
           if ( focusedComponent == theRootJTree ) // Left sub-panel.
           {
-            //appLogger.info("DagBrowserPanel.DisplayPathAndInfoV() left subpanel.");  // ???
+            //appLogger.info("DagBrowserPanel.DisplayPathAndInfoV() left sub-panel.");  // ???
             theTreePath= theRootJTree.getSelectedTreePath();
             } 
           else if ( focusedComponent == DataJComponent ) // Right sub-panel.
             { // Calculate right sub-panel TreePath.
-              //appLogger.info("DagBrowserPanel.DisplayPathAndInfoV() right subpanel.");  // ???
+              //appLogger.info("DagBrowserPanel.DisplayPathAndInfoV() right sub-panel.");  // ???
               theTreePath= DataVHelper.getSelectionTreePath();
               if ( theTreePath == null ) // There is no selection TreePath.
                 theTreePath=  // Use subject TreePath instead.
@@ -825,7 +881,7 @@ public class DagBrowserPanel
               } // Calculate right sub-panel TreePath.
           else // Some other component has the focus.
             {
-              //appLogger.info("DagBrowserPanel.DisplayPathAndInfoV() NEITHER subpanel.");  // ???
+              //appLogger.info("DagBrowserPanel.DisplayPathAndInfoV() NEITHER sub-panel.");  // ???
               }
 
           DisplayPathAndInfoV( theTreePath ); // Display chosen TreePath.
@@ -848,11 +904,6 @@ public class DagBrowserPanel
               } // display null info.
             else  // A path was provided.
             { // display non-null info.
-              //appLogger.info(
-              //  "DagBrowserPanel.DisplayPathAndInfoV("
-              //  +inTreePath.getLastPathComponent()
-              //  +")."
-              //  );  // ???
               DirectoryJLabel.setText(  // in DirectoryJLabel display set...
                 TheDataTreeModel.  // ...DataTreeModel's calculation of...
                   GetAbsolutePathString(  // ...String representation of...
