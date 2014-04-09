@@ -173,7 +173,7 @@ public class Misc
           return ResultString;
           }
       
-      private static boolean dbgEventDoneB= true; //false;  // Set true to output Debug.txt.
+      private static boolean dbgEventDoneB= false;  // Set true to output Debug.txt.
       
       public static void dbgEventDone()
         /* This is a convenient place to output state information

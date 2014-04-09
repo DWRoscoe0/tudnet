@@ -23,7 +23,22 @@ public class RootJTree
   implements KeyListener, TreeSelectionListener
 
   /* This class is used for the content in the left JTree subpanel.
-    the only field is an IJTree.  why not just use IJTree?? */
+    the only field is an IJTree.  
+    
+    Possible changes/fixes ???
+    
+    * Initial selection is not scrolled into Viewport.
+    *!If (Down-Arrow) causes the collapse of a large subtree,
+      the final selection is not scrolled into Viewport.
+      * It seems to be calling the correct routines, including
+        paintImmediately() and scrollPathToVisible(..).
+      * The correct path is selected, but it is positioned
+        above the top of the Viewport.
+      ! expandPath(..) is called AFTER subselectionsEndV()(..)!
+        Why is that.
+    * Why not just use IJTree?? 
+
+    */
 
   {
 
@@ -132,10 +147,13 @@ public class RootJTree
                   savedTreePath;  // ...TreePath of last selection made.
                 if ( OldTreePath == null )  // If OldTreePath is null...
                   OldTreePath= FinalNewTreePath;  // ...simulate no change.
-                subselectionsBeginV(OldTreePath);  // Mark beginning of window changes.
                 final TreePath FinalOldTreePath= OldTreePath;  // for Runnable().
                 savedTreePath=  // Save the new selected TreePath...
                   FinalNewTreePath; // which was calculated previously.
+                subselectionsBeginV(   // Mark beginning of subselection...
+                  FinalOldTreePath, // ...from the previous selection...
+                  FinalNewTreePath  // ...to the new selection...
+                  );
                 // At this point a new selection may be triggered.
                 changeSelectionV( // Collapse and expand nodes along path...
                   FinalOldTreePath, // ...from the previous selection...
@@ -145,7 +163,7 @@ public class RootJTree
                 subselectionsEndV();  // Mark end of windows changes.
                 } // Process non-null selection TreePath.
             dbgV("RootJTree.valueChanged(..) End");
-            Misc.dbgEventDone(); // ??? Debug.
+            Misc.dbgEventDone(); // for Debug.
             } // valueChanged( TreeSelectionEvent TheTreeSelectionEvent )
 
         private void changeSelectionV
@@ -363,8 +381,8 @@ public class RootJTree
                 commandGoToParentV();  // go to parent folder.
               else if (KeyCodeI == KeyEvent.VK_RIGHT)  // right-arrow key.
                 commandGoToChildV();  // go to child folder.
-              //else if (KeyCodeI == KeyEvent.VK_X)  // X-key.  ??? For debugging.
-              //  Misc.dbgEventDone(); // ??? Debug.
+              //else if (KeyCodeI == KeyEvent.VK_X)  // X-key. For debugging.
+              //  Misc.dbgEventDone(); // Debug.
               else
                 KeyProcessedB= false;
               } // try to process the key event.
@@ -372,7 +390,7 @@ public class RootJTree
               (KeyProcessedB)  // ...if it was processed earlier.
               { // Post process key.
                 TheKeyEvent.consume();  // ... prevent further processing of it.
-                Misc.dbgEventDone(); // ??? Debug.
+                Misc.dbgEventDone(); // Debug.
                 } // Post process key.
             } // keyPressed.
 
@@ -508,23 +526,30 @@ public class RootJTree
 
       private boolean subselectionShowAllB= false;  // Show selection paths.
 
-      private void subselectionsBeginV( TreePath inTreePath ) 
+      private void subselectionsBeginV
+        ( TreePath startTreePath, TreePath stopTreePath) 
         /* This method is called to begin a possible sequence of
-          JTree display changes.
-          inTreePath is the previous JTree selection
-          to be used to decide when to show the selection.
+          JTree subselections in the processing of 
+          a selection change from startTreePath to stopTreePath.
           */
         {
-          //subselectionTreePath= getSelectionPath();  // Save selection.
-          subselectionTreePath= inTreePath;  // Save previous selection.
-          paintSelectionIfChangedV( );  // Paint the initial selection.
+          subselectionTreePath= startTreePath;  // Save previous selection.
+          if ( isVisible( stopTreePath) )
+            paintSelectionIfChangedV( );  // Paint the initial selection.
           }
 
       private void subselectionsEndV()
-        /* This method is called to end a sequence of JTree display changes. */
+        /* This method is called to end a sequence of JTree sub-selections. */
         {
-          paintSelectionIfChangedV( );  // Display any pending selection.
+          paintSelectionIfChangedV(   // Display any pending selection...
+            true  // ...and scroll into Viewport.
+            );
           animationDelaySetRequestV( false );  // Disable the final delay.
+          dbgV("RootJTree.subselectionsEndV()(..)",getSelectionPath());
+          scrollPathToVisible(  // ???
+            getSelectionPath()
+            );
+          paintImmediately(); // ???
           }
 
       private void subselectV( TreePath inTreePath )
@@ -534,7 +559,10 @@ public class RootJTree
         { 
           setSelectionPath( inTreePath );  // Actually Select the JTree node.
           if ( subselectionShowAllB )  // If showing everything...
-            paintSelectionIfChangedV( );  // ...display selection now.
+            //paintSelectionIfChangedV( );  // ...display selection now.
+            paintSelectionIfChangedV(   // Paint selection in Viewport only.
+              false 
+              );
           }
 
       private void expandV( TreePath inTreePath )
@@ -579,9 +607,7 @@ public class RootJTree
             ;  // So do nothing.
             else // Selection has changed.
             { // Display the new selection.
-              //paintV( presentTreePath, false ); // Paint in Viewport only.
               paintV( presentTreePath, outsideOfViewOkayB );
-              // ??? Messes up old code: 
               subselectionTreePath= presentTreePath;  // Update selection copy.
               } // Display the new selection.
           }
@@ -597,8 +623,6 @@ public class RootJTree
           will be painted only if it already in the Viewport.
           */
         {
-          outsideOfViewOkayB= true;  // ??? force for debugging ????
-          //if ( inViewportB( inTreePath ) )  // Do it but only if in Viewport.
           if   // Paint conditionally.
             ( outsideOfViewOkayB  // The node may be outside of Viewport...
               || inViewportB( inTreePath )   // ...or the node is inside.
@@ -647,7 +671,6 @@ public class RootJTree
             resultB= true;  // Override result with true.
 
           } // toReturn:
-            //resultB= true;  // Temporary debugging override ????
             return resultB;
 
           }
@@ -657,7 +680,7 @@ public class RootJTree
       window paints to animate complex changes to the window state.
       */
 
-      private int animationDelayI= 100;  // != 0 means milliseconds to delay.
+      private int animationDelayI= 50;  // != 0 means milliseconds to delay.
 
       private boolean animationDelayRequestedB= false;  // Request flag.
 
@@ -702,7 +725,21 @@ public class RootJTree
 
     // Debugging logging code.  Much of this might eventually be deleted.
 
-      private boolean logB= false;  // false for no debug logging.
+      public void collapsePath( TreePath inTreePath )
+        /* This method is for debugging.  */
+        {
+          dbgV("RootJTree.collapsePath(..)",inTreePath);
+          super.collapsePath( inTreePath );
+          }
+
+      public void expandPath( TreePath inTreePath )
+        /* This method is for debugging.  */
+        {
+          dbgV("RootJTree.expandPath(..)",inTreePath);
+          super.expandPath( inTreePath );
+          }
+
+      private boolean logB= true;  // false;  // false for no debug logging.
 
       private void dbgV( String inString, TreePath inTreePath )
         /* This method logs inString as the name of the caller,
@@ -717,20 +754,6 @@ public class RootJTree
               + ": "
               + inTreePath.getLastPathComponent()
               );
-          }
-
-      public void collapsePath( TreePath inTreePath )
-        /* This method is for debugging.  */
-        {
-          dbgV("RootJTree.collapsePath(..)",inTreePath);
-          super.collapsePath( inTreePath );
-          }
-
-      public void expandPath( TreePath inTreePath )
-        /* This method is for debugging.  */
-        {
-          dbgV("RootJTree.expandPath(..)",inTreePath);
-          super.expandPath( inTreePath );
           }
 
       private void dbgV( String inString )
