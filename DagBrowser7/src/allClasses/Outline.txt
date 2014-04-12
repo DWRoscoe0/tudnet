@@ -1,4 +1,4 @@
-  Infogora Name Space (in llClasses)
+  Infogora Name Space
     Publications
         Publications By User
             Alice

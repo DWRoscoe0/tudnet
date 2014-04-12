@@ -53,7 +53,7 @@ public class Infinitree
         {
           String ResultString= null;
           if ( ParentInfinitree == null ) // this is root.
-            ResultString= "INFINITE-TEST-TREE";
+            ResultString= "Infinite-Test-Tree";
             else
             ResultString= 
               ParentInfinitree.toString() +

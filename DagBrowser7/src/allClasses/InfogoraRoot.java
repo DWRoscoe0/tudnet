@@ -31,7 +31,7 @@ public class InfogoraRoot
       public String toString( )
         /* Returns String representing name of this Object.  */
         {
-          return "INFOGORA-ROOT";
+          return "Infogora-Root";
           }
 
     } // class InfogoraRoot

@@ -22,7 +22,7 @@ public class MetaRoot
         { // Set root MetaNode DAG to default of a single MetaNode.
           RootMetaNode=  // Initialize present MetaNode tree root with...
             new MetaNode(  // ...a new MetaNode containing...
-              DataRoot.getRootDataNode( )  // ...the INFOGORA-ROOT DataNode.
+              DataRoot.getRootDataNode( )  // ...the Infogora-Root DataNode.
               );
           RootMetaNode.put(  // Add attribute for initial Selection.
             Selection.SelectionAttributeString, "IS");  // ??? Kludgy.

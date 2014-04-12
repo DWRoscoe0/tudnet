@@ -145,7 +145,7 @@ public class FileRoots
         public String GetNameString( )
           /* Returns String representing name of this Object.  */
           {
-            return "FILE-SYSTEM-ROOTS";
+            return "File-System-Roots";
             }
         
         /* public JComponent GetDataJComponent( TreePath InTreePath )
