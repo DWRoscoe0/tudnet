@@ -144,39 +144,42 @@ public class ViewHelper
       public void commandGoToParentV() 
         /* Tries to go to and display the parent of this object. */
         { // commandGoToParentV().
-          TreePath grandParentTreePath=  // try getting parent of the parent.
-            subjectTreePath.getParentPath();
-          { // process attempt to get grandparent.
-            if (grandParentTreePath == null)  // there is no grandparent.
-              ; // do nothing.  or handle externally?
-            else  // there is a parent.
-              { // record visit and display parent.
-                TreePath childTreePath= getSelectionTreePath();
-                if ( childTreePath != null )
-                  Selection.  // In the visits tree...
-                    set( // record...
-                      childTreePath  // ...the new selected TreePath.
-                      );
-                setSelectionTreePathV(    // kluge so Notify will work.
-                  grandParentTreePath 
+          toReturn: {
+            TreePath parentTreePath=  // Try getting parent of Subject.
+              subjectTreePath.getParentPath();
+            if (parentTreePath == null)  // There is no parent.
+              break toReturn; // So do nothing.
+            TreePath grandparentTreePath=  // Try getting parent of parent.
+              parentTreePath.getParentPath();
+            if (grandparentTreePath == null)  // There is no parent of parent.
+              break toReturn; // So do nothing.
+            TreePath childTreePath= getSelectionTreePath();
+            if ( childTreePath != null )  // There is a selection so...
+              Selection.  // ...in the visits tree...
+                set( // record...
+                  childTreePath  // ...that selection.
                   );
-                notifyTreeSelectionListenersV(   // let listener handle it.
-                  false  // Tell it to use new JComponent.
-                  );
-                } // record visit and display parent.
-            } // process attempt to get parent.
+            setSelectionTreePathV(  // Set selection for Listener notification.
+              parentTreePath 
+              );
+            notifyTreeSelectionListenersV(   // Have listener(s) handle things.
+              false  // This means selection becomes the new subject.
+              );
+            } // toReturn
+          return;
           } // commandGoToParentV().
 
       public void commandGoToChildV() 
-        /* Tries to go to and displays a presentlly selected child 
-          of the present DataNode.  
+        /* This method tries to make the present Selection within
+          the present Subject become the new Subject.
+          It does this by simply calling the TreeSelectionListener-s.
           */
         { // commandGoToChildV().
           if  // act only if there is a child selected.
             ( selectionDataNode != null )
             { // go to and display that child.
-              notifyTreeSelectionListenersV(   // let listener handle it.
-                false  // Use new JComponent.
+              notifyTreeSelectionListenersV(   // Let listener handle it.
+                false  // This means selection becomes the new subject.
                 );
               } // go to and display that child.
           } // commandGoToChildV().
@@ -207,7 +210,7 @@ public class ViewHelper
         protected void setSubjectTreePathV( TreePath inTreePath )
           /* This method stores the TreePath representing the node
             being displayed.
-            It should be used only there is no selected subnode.
+            It should be used only there is no selected sub-node.
             selectionTreePath will be set to null;  
             */
           { 
@@ -372,6 +375,7 @@ public class ViewHelper
             false: the new selection is NOT within the same DataNode 
               as the previous selection, so it must be handled by 
               a new DagNodeViewer JComponent.
+              In this case, -this- object will be replaced.
           */
         { // NotifyTreeSelectionListenersV.
           TreePath childTreePath=   // get the selected TreePath.

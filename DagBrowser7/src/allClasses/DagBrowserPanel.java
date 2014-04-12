@@ -543,19 +543,21 @@ public class DagBrowserPanel
             //  "DagBrowserPanel.ProcessSelectionFromRightSubpanel(..), "
             //  +"internalSelectionB="+internalSelectionB
             //  );  // ???
-            if // redo right panel if selection is outside it.
-              ( ! internalSelectionB )
-              { ReplaceRightPanelContent( inTreePath );
-                theRootJTree.  // in the right sub-panel...
-                  selectNodeV(inTreePath);
-                RestoreFocusV();
-                }
-              else  // Not outside.  Select parent in left JTree.
-              { TreePath SelectedParentTreePath=  // get parent.
-                  inTreePath.getParentPath();
-                theRootJTree.  // in the right sub-panel...
-                  selectNodeV(SelectedParentTreePath);  // ...select parent.
-                }
+            if ( ! internalSelectionB ) // Selection is outside right panel.
+              { // Replace the right panel.
+                ReplaceRightPanelContent( inTreePath );  // Replace right panel.
+                theRootJTree.selectNodeV(  // Select its path in in the left.
+                  inTreePath
+                  );
+                RestoreFocusV();  // Restore right panel's focus.
+                } // Replace the right panel.
+              else   // Selection is not outside right panel.
+              { // Adjust left panel selection to match.
+                TreePath SelectedParentTreePath=  // Get path of...
+                  inTreePath.getParentPath();  // ...right selection's parent.
+                theRootJTree.  // In the left sub-panel...
+                  selectNodeV(SelectedParentTreePath);  // ...select that path.
+                } // Adjust left panel selection to match.
             } // ProcessSelectionFromRightSubpanel()
             
         private void ReplaceRightPanelContent( TreePath selectedTreePath )

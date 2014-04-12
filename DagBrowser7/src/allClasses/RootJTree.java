@@ -443,12 +443,18 @@ public class RootJTree
       public void commandGoToParentV() 
         /* Goes to and displays the parent of the present tree node. */
         { // CommandGoToParentV().
-          TreePath parentTreePath=  // try getting get parent TreePath.
-            getSelectionPath().getParentPath();
-          if (parentTreePath != null)  // there is a parent.
-            { // record visit then select and display parent node.
-              selectNodeV(parentTreePath);  // Select the parent directory.
-              } // record visit then select and display parent node.
+          toReturn: {
+            TreePath parentTreePath=  // Try getting parent of selection.
+              getSelectionPath().getParentPath();
+            if (parentTreePath == null)  // There is no parent.
+              break toReturn; // So do nothing.
+            TreePath grandparentTreePath=  // Try getting parent of parent.
+              parentTreePath.getParentPath();
+            if (grandparentTreePath == null)  // There is no parent of parent.
+              break toReturn; // So do nothing.
+            selectNodeV(parentTreePath);  // Select the parent directory.
+            } // toReturn
+          return;
           } // CommandGoToParentV().
   
       public void commandGoDownV() 
