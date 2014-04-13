@@ -85,10 +85,7 @@ public class DirectoryTableViewer
             
           { // Construct and initialize the helper object.
             aViewHelper=  // Construct helper class instance.
-              new ViewHelper( this );  // Note, subject not set yet.
-            aViewHelper.setWholeWithPartAutoSelectV(  // Set subject.
-              inTreePath
-              );
+              new ViewHelper( this, inTreePath );  // Note, subject not set yet.
             } // Construct and initialize the helper object.
 
           DirectoryTableModel ADirectoryTableModel =  // Construct...
@@ -161,8 +158,8 @@ public class DirectoryTableViewer
                   new IFile( subjectIFile, IFileNameStrings[IndexI] );
                 //SetSelectionRelatedVariablesFrom( NewSelectionIFile );
                 aViewHelper.setPartDataNodeV( NewSelectionIFile );
-                //aViewHelper.notifyTreeSelectionListenersV(true); // tell others, if any.
-                aViewHelper.notifyListenersAboutPartV();
+	                // This will set the TreePaths also.
+	                // This converts the row selection to a tree selection.
                 } // Process the selection.
             repaint();  // ??? kluge: do entire table for selection color.
               // this should repaint only the rows whose selection changed.
@@ -267,12 +264,12 @@ public class DirectoryTableViewer
 
     // VHelper (ViewHelper pass-through) methods.
 
-      public TreePath getSubjectTreePath()
+      public TreePath getWholeTreePath()
         { 
           return aViewHelper.getWholeTreePath();
           }
 
-      public TreePath getSelectionTreePath()
+      public TreePath getPartTreePath()
         { 
           return aViewHelper.getPartTreePath();
           }

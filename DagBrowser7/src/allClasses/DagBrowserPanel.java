@@ -621,7 +621,7 @@ public class DagBrowserPanel
                 { 
                   LastFocusPane= FocusPane.RIGHT_PANE;  // record right enum ID.
                   DisplayPathAndInfoV(  // display right sub-panel's info for...
-                    DataVHelper.getSelectionTreePath() // ...selected TreePath.
+                    DataVHelper.getPartTreePath() // ...selected TreePath.
                     );
                   }
               else 
@@ -876,10 +876,10 @@ public class DagBrowserPanel
           else if ( focusedComponent == DataJComponent ) // Right sub-panel.
             { // Calculate right sub-panel TreePath.
               //appLogger.info("DagBrowserPanel.DisplayPathAndInfoV() right sub-panel.");  // ???
-              theTreePath= DataVHelper.getSelectionTreePath();
+              theTreePath= DataVHelper.getPartTreePath();
               if ( theTreePath == null ) // There is no selection TreePath.
                 theTreePath=  // Use subject TreePath instead.
-                  DataVHelper.getSubjectTreePath();
+                  DataVHelper.getWholeTreePath();
               } // Calculate right sub-panel TreePath.
           else // Some other component has the focus.
             {

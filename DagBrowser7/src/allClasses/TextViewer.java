@@ -72,17 +72,16 @@ public class TextViewer
       private void CommonInitialization( TreePath TreePathIn )
         /* This grouping method creates and initializes the JTextArea.  */
         { // CommonInitialization( )
-          aViewHelper=  // construct helper class instance.
-            new ViewHelper( this ); 
           if ( TreePathIn == null )  // prevent null TreePath.
             TreePathIn = new TreePath( new StringObject( "ERROR TreePath" ));
+          aViewHelper=  // construct helper class instance.
+            new ViewHelper( this, TreePathIn ); 
           { // Add listeners.
             addKeyListener(aViewHelper);  // Make ViewHelper the KeyListeer.
             addFocusListener(this);  // listen to repaint on focus events.
             DefaultBackgroundColor=   // save present background color.
                 getBackground();
             } // Add listeners.
-          aViewHelper.setWholeV( TreePathIn ); // ??? Use new selector.
           getCaret().setVisible(true);  // Make text cursor visible.
           } // CommonInitialization( )
 
@@ -114,12 +113,12 @@ public class TextViewer
 
     // ViewHelper pass-through methods.
 
-      public TreePath getSubjectTreePath()
+      public TreePath getWholeTreePath()
         { 
           return aViewHelper.getWholeTreePath();
           }
 
-      public TreePath getSelectionTreePath()
+      public TreePath getPartTreePath()
         { 
           return aViewHelper.getPartTreePath();
           }
@@ -127,11 +126,6 @@ public class TextViewer
       public void addTreeSelectionListener( TreeSelectionListener listener ) 
         {
           aViewHelper.addTreeSelectionListener( listener );
-          }
-         
-      public void SetSelectedChildTreePath(TreePath InSelectedChildTreePath)
-        { 
-          aViewHelper.setPartTreePathV( InSelectedChildTreePath );
           }
 
     // rendering methods.  to be added.

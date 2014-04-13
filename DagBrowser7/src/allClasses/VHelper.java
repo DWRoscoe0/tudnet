@@ -10,14 +10,15 @@ public interface VHelper
 	{
     // Note,, default method implementations coming in Java 8 interfaces!
 
-    // ViewHelper pass-through methods.
+    // ViewHelper pass-through methods.  See class ViewHelper for details.
   
       public void addTreeSelectionListener( TreeSelectionListener listener );
+        // This is so the DagBrowserPanel can listen to the right sub-pael.
 
-      public TreePath getSubjectTreePath();
-        // This method returns the TreePath representing the subject being displayed.
+      public TreePath getWholeTreePath();  // This method returns the TreePath...
+        // ...of the Whole node being displayed.
 
-      public TreePath getSelectionTreePath();
-        // This method returns the TreePath representing the selection in the subject.
+      public TreePath getPartTreePath();  // This method returns the TreePath...
+        // ...of the Part of the Whole being displayed.
     }
   

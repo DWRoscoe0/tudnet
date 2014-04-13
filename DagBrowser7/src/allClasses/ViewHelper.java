@@ -20,7 +20,7 @@ public class ViewHelper
   implements KeyListener, MouseListener
 
   /* This class is being used to hold code which 
-    is usefull for right panel JComponents, 
+    is usefull for right panel interface VHelper JComponents, 
     but because of Java's lack of multiple inheritance 
     was moved here and is now referenced by composition,
     usually with a variable named aViewHelper.
@@ -44,7 +44,9 @@ public class ViewHelper
       but for now we're using the Java library class.
 
     ??? It might make more sense to call this class something else,
-    such as TreeViewHelper, TreeHelper, or RightPanelHelper.
+    such as TreeViewHelper, TreeHelper, or RightPanelHelper,
+    or to eliminate it by integrating it into 
+    an interface VHelper JComponent subclass.
 
     */
 
@@ -58,11 +60,12 @@ public class ViewHelper
 
     // Constructor.
     
-      ViewHelper( JComponent inOwningJComponent )
+      ViewHelper( JComponent inOwningJComponent, TreePath inTreePath  )
         {
           owningJComponent= inOwningJComponent;
+          setWholeWithPartAutoSelectV(inTreePath);
           }
- 
+
     /* User input Listeners, for Keyboard and Mouse.  */
 
       /* KeyListener methods, for 
@@ -158,7 +161,7 @@ public class ViewHelper
       */
 
       public void commandGoToParentV() 
-        /* Tries to go to and display the parent of this object. */
+        /* Tries to make the parent of present Whole be the new Whole.  */
         {
           toReturn: {
             TreePath parentTreePath=  // Try getting parent of Whole.
@@ -183,15 +186,12 @@ public class ViewHelper
           }
 
       public void commandGoToChildV() 
-        /* This method tries to make the present Part within
-          the present Whole become the new Whole.
-          It does this by simply calling the TreeSelectionListener-s.
-          */
+        /* Tries to make the present Part be the new Whole.  */
         {
           if  // act only if there is a child selected.
             ( getPartDataNode() != null )
             { // go to and display that child.
-              notifyListenersWithNewWholeV(  // Have listener swith to child.
+              notifyListenersWithNewWholeV(  // Have listener switch to child.
                 getPartTreePath()
                 );
               } // go to and display that child.
@@ -201,6 +201,8 @@ public class ViewHelper
 
       /* Whole code.  The Whole is the larger tree node being viewed.
         This was previously called the Subject.
+        Interestingly, after initialization, 
+        Whole is never changed!
         */
 
         private TreePath wholeTreePath;  /* TreePath of node displayed.  
@@ -212,7 +214,7 @@ public class ViewHelper
           This variable is never null.
           */
 
-        protected void setWholeV( TreePath inTreePath )
+        private void setWholeV( TreePath inTreePath )
           /* This method stores the TreePath representing the node
             being displayed.
             It should be used only when there is no accessible Part.
@@ -223,20 +225,18 @@ public class ViewHelper
             wholeDataNode=  // Store last element for easy access.
               (DataNode)wholeTreePath.getLastPathComponent();
             
-            { // Set Part assuming there is none.
+            { // Set Part to none, for now.
               partTreePath= null;
               partDataNode= null;
-              } // Set Part assuming there is none.
+              } // Set Part to none, for now.
             }
 
-        protected void setWholeWithPartAutoSelectV(TreePath inTreePath)
+        private void setWholeWithPartAutoSelectV(TreePath inTreePath)
           /* This method sets the Whole variables from inTreePath
             and sets the Part also to the most recently
             visited child of the Whole, if there is one.
             */
           {
-            setWholeV( inTreePath );  // Save Whole TreePath.
-              // This will [temporarilly] set the Part TreePath to null.
             DataNode childDataNode=  // Try to get the child...
               Selection.  // ...from the visits tree that was the...
                 setAndReturnDataNode( // ...most recently visited child...
@@ -244,21 +244,22 @@ public class ViewHelper
                   );
             if (childDataNode == null)  // if no recent child try first one.
               { // try getting first ChildDagNode.
-                DataNode wholeDataNode=  // Get DataNode at end of TreePath.
+                DataNode theDataNode=  // Get DataNode at end of TreePath.
                   (DataNode)inTreePath.getLastPathComponent();
                 if   // There are no children.
-                  (wholeDataNode.getChildCount() <= 0)
+                  (theDataNode.getChildCount() <= 0)
                     ;  // Do nothing.
-                    //childDataNode= StringObjectEmpty;  // use dummy child place-holder.
                   else  // There are children.
                     childDataNode=   // get first ChildDagNode.
-                      wholeDataNode.getChild(0);
+                      theDataNode.getChild(0);
                 } // get name of first child.
-            if (childDataNode != null)  // There is a accessible child.
+            if (childDataNode != null)  // There is an accessible child.
               setPartTreePathV(   // Set Part TreePath to be...
                 inTreePath.  // ...Whole TreePath with...
                   pathByAddingChild( childDataNode ) // ... child added.
-                );
+                );  // This will set the Whole also.
+              else  // There is no accessible child.
+              setWholeV( inTreePath );  // Save Whole TreePath only.
             }
 
         protected TreePath getWholeTreePath( )
@@ -299,11 +300,9 @@ public class ViewHelper
           a node with no highlighted child.
           */
 
-        public void setPartTreePathV( TreePath inTreePath )
+        private void setPartTreePathV( TreePath inTreePath )
           /* This method stores inTreePath as the TreePath of the Part. 
-            But it does not notify any TreeSelectionListener about it.
-            That must be done separately by calling
-            notifyTreeSelectionListenersV(.) or fireValueChanged(.).
+            It also notifies any TreeSelectionListener about it.
             */
           { 
             setWholeV(  // Set appropriate Whole TreePath to be...
@@ -313,6 +312,7 @@ public class ViewHelper
             partTreePath= inTreePath;  // Store Part TreePath.
             partDataNode=  // Store last element for easy access.
               (DataNode)partTreePath.getLastPathComponent();
+            notifyListenersAboutPartV( inTreePath );
             }
 
         protected TreePath getPartTreePath()
@@ -324,7 +324,8 @@ public class ViewHelper
         protected void setPartDataNodeV( DataNode inDataNode )
           /* This method sets the Part DataNode to be inDataNode.
             It updates other variables appropriately.
-            But it assumes that the Whole container is unchanged.
+            But it assumes that the Whole is unchanged.
+            It also notifies any TreeSelectionListener about it.
             */
           {
             TreePath childTreePath= // Calculate child TreePath to be...
@@ -367,15 +368,21 @@ public class ViewHelper
             listenerVector.removeElement( listener );
           }
 
-      public void notifyListenersAboutPartV( )
+      public void notifyListenersAboutPartV( TreePath inTreePath )
         {
           notifyTreeSelectionListenersV(  // Notify the listeners about...
             true,  // ... an internal/Part change...
-            getPartTreePath()  // ...to this selection path.
+            inTreePath  // ...to the Part path.
             );
           }
 
-      public void notifyListenersWithNewWholeV( TreePath inTreePath )
+      private void notifyListenersWithNewWholeV( TreePath inTreePath )
+        /* This method is named what it is instead of
+          notifyListenersAboutNewWholeV( .. ) because the Whole
+          never changes for the life of this component.
+          When this method executes it causes this object's
+          dereference and replacement by the Listener.
+          */
         {
           notifyTreeSelectionListenersV(  // Notify the listeners about...
             false,  // ... an external/Whole change...

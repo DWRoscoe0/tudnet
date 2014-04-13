@@ -58,10 +58,7 @@ public class ListViewer
 
           { // Prepare the helper object.
             aViewHelper=  // Construct helper class instance.
-              new ViewHelper( this );  // Note, subject not set yet.
-            aViewHelper.setWholeWithPartAutoSelectV(  // Set subject.
-              inTreePath
-              );
+                new ViewHelper( this, inTreePath );  // Note, subject not set yet.
             } // Prepare the helper object.
 
           InitializeTheJList( inTreeModel );
@@ -153,8 +150,6 @@ public class ListViewer
                     getChild(IndexI);  // ...which is child at IndexI.
                 aViewHelper.setPartDataNodeV( NewSelectionDataNode );
                   // This will set the TreePaths also.
-                aViewHelper.notifyListenersAboutPartV();
-                //aViewHelper.notifyTreeSelectionListenersV(true);
                   // This converts the row selection to a tree selection.
                 } // Process the selection.
             } // void valueChanged(ListSelectionEvent TheListSelectionEvent)
@@ -179,12 +174,12 @@ public class ListViewer
   
     // interface ViewHelper pass-through methods.
 
-      public TreePath getSubjectTreePath()
+      public TreePath getWholeTreePath()
         { 
           return aViewHelper.getWholeTreePath();
           }
 
-      public TreePath getSelectionTreePath()
+      public TreePath getPartTreePath()
         { 
           return aViewHelper.getPartTreePath();
           }
