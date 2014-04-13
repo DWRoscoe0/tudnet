@@ -59,7 +59,7 @@ public class ListViewer
           { // Prepare the helper object.
             aViewHelper=  // Construct helper class instance.
               new ViewHelper( this );  // Note, subject not set yet.
-            aViewHelper.setSubjectTreePathWithAutoSelectV(  // Set subject.
+            aViewHelper.setWholeWithPartAutoSelectV(  // Set subject.
               inTreePath
               );
             } // Prepare the helper object.
@@ -74,7 +74,7 @@ public class ListViewer
             ListModel<Object> AListModel;
             AListModel= new TreeListModel( 
               //subjectDataNode, 
-              aViewHelper.getSubjectDataNode( ),
+              aViewHelper.getWholeDataNode( ),
               inTreeModel 
               );
             setModel( AListModel );  // Define its ListModel.
@@ -101,8 +101,8 @@ public class ListViewer
           esternal TreeSelectionListeners-s. */
         { // setJListSelection()
           int IndexI= // try to get index of selected child.
-            aViewHelper.getSubjectDataNode( ).getIndexOfChild( 
-              aViewHelper.getSelectionDataNode() 
+            aViewHelper.getWholeDataNode( ).getIndexOfChild( 
+              aViewHelper.getPartDataNode() 
               );
           if ( IndexI < 0 )  // force index to 0 if child not found.
             IndexI= 0;
@@ -145,15 +145,16 @@ public class ListViewer
             if // Process the selection if...
               ( //...the selection index is legal.
                 (IndexI >= 0) && 
-                (IndexI < aViewHelper.getSubjectDataNode( ).getChildCount( ))
+                (IndexI < aViewHelper.getWholeDataNode( ).getChildCount( ))
                 )
               { // Process the selection.
                 DataNode NewSelectionDataNode=  // Get selected DataNode...
-                  aViewHelper.getSubjectDataNode( ).
+                  aViewHelper.getWholeDataNode( ).
                     getChild(IndexI);  // ...which is child at IndexI.
-                aViewHelper.setSelectionDataNodeV( NewSelectionDataNode );
+                aViewHelper.setPartDataNodeV( NewSelectionDataNode );
                   // This will set the TreePaths also.
-                aViewHelper.notifyTreeSelectionListenersV(true);
+                aViewHelper.notifyListenersAboutPartV();
+                //aViewHelper.notifyTreeSelectionListenersV(true);
                   // This converts the row selection to a tree selection.
                 } // Process the selection.
             } // void valueChanged(ListSelectionEvent TheListSelectionEvent)
@@ -180,12 +181,12 @@ public class ListViewer
 
       public TreePath getSubjectTreePath()
         { 
-          return aViewHelper.getSubjectTreePath();
+          return aViewHelper.getWholeTreePath();
           }
 
       public TreePath getSelectionTreePath()
         { 
-          return aViewHelper.getSelectionTreePath();
+          return aViewHelper.getPartTreePath();
           }
 
       public void addTreeSelectionListener( TreeSelectionListener listener ) 

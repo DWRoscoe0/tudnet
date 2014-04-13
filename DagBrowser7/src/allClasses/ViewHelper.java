@@ -19,19 +19,33 @@ import javax.swing.event.TreeSelectionListener;
 public class ViewHelper
   implements KeyListener, MouseListener
 
-  /* This class is being used to hold code which usefull for
-    right panel JComponents, 
-    but because of Java's lack of multiple was moved here
-    and is now referenced by composition,
+  /* This class is being used to hold code which 
+    is usefull for right panel JComponents, 
+    but because of Java's lack of multiple inheritance 
+    was moved here and is now referenced by composition,
     usually with a variable named aViewHelper.
     
+    Concepts and their names:
+
+    * Whole (formerly Subject): 
+      The tree node displayed by this Component.
+
+    * Part (formerly Selection within Subject): 
+      Highlighted tree node within the Whole.  
+
+    * Selection: The thing selected this Component.
+      This is the standard Java meaning.
+      It is not a node in the tree,
+      though it is associated with a node in the tree.
+      
+    * TreeSelectionEvent: The class used to pass locations of
+      Wholes and Parts within the Infogora DAG.
+      It should probably be its own class,
+      but for now we're using the Java library class.
+
     ??? It might make more sense to call this class something else,
     such as TreeViewHelper, TreeHelper, or RightPanelHelper.
 
-    Originally code in this class came mostly from base class DagNodeViewer.
-    That code was mainly about notifying Listeners about 
-    TreeSelectionEvents from a JComponent, 
-    but the code has since expanded.
     */
 
   { // class ViewHelper
@@ -42,7 +56,7 @@ public class ViewHelper
       so this linkage might be refered to as mutual-composition.  
       */
 
-    // constructor.
+    // Constructor.
     
       ViewHelper( JComponent inOwningJComponent )
         {
@@ -54,9 +68,11 @@ public class ViewHelper
       /* KeyListener methods, for 
         overriding normal Tab key processing
         and providing command key processing.
-        Normally the Tab key moves the selection from table cell to cell.
-        The modification causes Tab to move keyboard focus out of the table
-        to the next Component.  (Shift-Tab) moves it in the opposite direction.
+
+        Normally the Tab key moves the selection within a Table
+        from cell to cell.  The modification causes Tab 
+        to move keyboard focus out of the table to the next Component.  
+        (Shift-Tab) moves it in the opposite direction.
         
         ??? Maybe replace with a more compact KeyAdapter implimentation.
         */
@@ -64,9 +80,9 @@ public class ViewHelper
         public void keyPressed(KeyEvent inKeyEvent) 
           /* Processes KeyEvent-s.  
             The keys processed and consumed include:
-              Tab and Shift-Tab for focus transferring.
-              Right-Arrow and Enter keys to go to child.
-              Left-Arrow keys to go to parent.
+              * Tab and Shift-Tab for focus transferring.
+              * Right-Arrow and Enter keys to go to child.
+              * Left-Arrow keys to go to parent.
             */
           { // keyPressed.
             int KeyCodeI = inKeyEvent.getKeyCode();  // cache key pressed.
@@ -134,8 +150,8 @@ public class ViewHelper
         @Override
         public void mouseReleased(MouseEvent arg0) { }  // unused part of MouseListener interface.
         
-    /* Command methods ??? being moved.
-      Maybe these methods should be integrated with the ones in IJTree.
+    /* Command methods.
+      ??? Maybe these methods should be integrated with the ones in IJTree.
       Maybe IJTree should eventually be integrated with JComponent subclasses
       so that DagBrowserPanel can manipulate those all viewer components,
       including IJTree, with its navigation buttons.
@@ -143,95 +159,84 @@ public class ViewHelper
 
       public void commandGoToParentV() 
         /* Tries to go to and display the parent of this object. */
-        { // commandGoToParentV().
+        {
           toReturn: {
-            TreePath parentTreePath=  // Try getting parent of Subject.
-              subjectTreePath.getParentPath();
+            TreePath parentTreePath=  // Try getting parent of Whole.
+              wholeTreePath.getParentPath();
             if (parentTreePath == null)  // There is no parent.
               break toReturn; // So do nothing.
             TreePath grandparentTreePath=  // Try getting parent of parent.
               parentTreePath.getParentPath();
             if (grandparentTreePath == null)  // There is no parent of parent.
               break toReturn; // So do nothing.
-            TreePath childTreePath= getSelectionTreePath();
-            if ( childTreePath != null )  // There is a selection so...
+            TreePath childTreePath= getPartTreePath();
+            if ( childTreePath != null )  // There is an active child so...
               Selection.  // ...in the visits tree...
                 set( // record...
-                  childTreePath  // ...that selection.
+                  childTreePath  // ...that child.
                   );
-            setSelectionTreePathV(  // Set selection for Listener notification.
-              parentTreePath 
-              );
-            notifyTreeSelectionListenersV(   // Have listener(s) handle things.
-              false  // This means selection becomes the new subject.
+            notifyListenersWithNewWholeV(  // Have listener switch to parent.
+              parentTreePath
               );
             } // toReturn
           return;
-          } // commandGoToParentV().
+          }
 
       public void commandGoToChildV() 
-        /* This method tries to make the present Selection within
-          the present Subject become the new Subject.
+        /* This method tries to make the present Part within
+          the present Whole become the new Whole.
           It does this by simply calling the TreeSelectionListener-s.
           */
-        { // commandGoToChildV().
+        {
           if  // act only if there is a child selected.
-            ( selectionDataNode != null )
+            ( getPartDataNode() != null )
             { // go to and display that child.
-              notifyTreeSelectionListenersV(   // Let listener handle it.
-                false  // This means selection becomes the new subject.
+              notifyListenersWithNewWholeV(  // Have listener swith to child.
+                getPartTreePath()
                 );
               } // go to and display that child.
-          } // commandGoToChildV().
+          }
     
-    /* Subject and Selection code.
-      ??? This is being redesigned to support both
-      the TreePath of the entire item       
-      and the TreePath of the selected item within that component.
-      The two  are related.  Changing can change the others.
-      ??? They might also eventually automaticly trigger
-      TreeSelectionEvents.
+    /* Whole and Part node code.  */
 
-      ??? It will eventually support viewing a subject
-      which contains no children and therefore no selection.
-      */
+      /* Whole code.  The Whole is the larger tree node being viewed.
+        This was previously called the Subject.
+        */
 
-      /* Subject code.  The subject is the thing being viewed.  */
-
-        private TreePath subjectTreePath;  /* TreePath of node displayed.  
+        private TreePath wholeTreePath;  /* TreePath of node displayed.  
           This variable is never null.
           */
 
-        private DataNode subjectDataNode;  /* DataNode of subject. ???
-          This is the last element of the subjectTreePath.
+        private DataNode wholeDataNode;  /* DataNode of Whole.
+          This is the last element of the wholeTreePath.
           This variable is never null.
           */
 
-        protected void setSubjectTreePathV( TreePath inTreePath )
+        protected void setWholeV( TreePath inTreePath )
           /* This method stores the TreePath representing the node
             being displayed.
-            It should be used only there is no selected sub-node.
-            selectionTreePath will be set to null;  
+            It should be used only when there is no accessible Part.
+            partTreePath will be set to null;  
             */
           { 
-            subjectTreePath= inTreePath;  // Store subject TreePath.
-            subjectDataNode=  // Store last element for easy access.
-              (DataNode)subjectTreePath.getLastPathComponent();
+            wholeTreePath= inTreePath;  // Store Whole TreePath.
+            wholeDataNode=  // Store last element for easy access.
+              (DataNode)wholeTreePath.getLastPathComponent();
             
-            { // Set selection assuming there is none.
-              selectionTreePath= null;
-              selectionDataNode= null;
-              } // Set selection assuming there is none.
+            { // Set Part assuming there is none.
+              partTreePath= null;
+              partDataNode= null;
+              } // Set Part assuming there is none.
             }
 
-        protected void setSubjectTreePathWithAutoSelectV(TreePath inTreePath)
-          /* This method calculates sets the Subject from inTreePath
-            and sets the Selection also to the most recently
-            visited child, if there is one.
+        protected void setWholeWithPartAutoSelectV(TreePath inTreePath)
+          /* This method sets the Whole variables from inTreePath
+            and sets the Part also to the most recently
+            visited child of the Whole, if there is one.
             */
-          { // setSubjectTreePathWithAutoSelectV(inTreePath)
-            setSubjectTreePathV( inTreePath );  // Save subject TreePath.
-              // This will [temporarilly] set the selection TreePath to null.
+          {
+            setWholeV( inTreePath );  // Save Whole TreePath.
+              // This will [temporarilly] set the Part TreePath to null.
             DataNode childDataNode=  // Try to get the child...
               Selection.  // ...from the visits tree that was the...
                 setAndReturnDataNode( // ...most recently visited child...
@@ -239,104 +244,99 @@ public class ViewHelper
                   );
             if (childDataNode == null)  // if no recent child try first one.
               { // try getting first ChildDagNode.
-                DataNode subjectDataNode=  // Get DataNode at end of TreePath.
+                DataNode wholeDataNode=  // Get DataNode at end of TreePath.
                   (DataNode)inTreePath.getLastPathComponent();
                 if   // There are no children.
-                  (subjectDataNode.getChildCount() <= 0)
+                  (wholeDataNode.getChildCount() <= 0)
                     ;  // Do nothing.
                     //childDataNode= StringObjectEmpty;  // use dummy child place-holder.
                   else  // There are children.
                     childDataNode=   // get first ChildDagNode.
-                      subjectDataNode.getChild(0);
+                      wholeDataNode.getChild(0);
                 } // get name of first child.
-            if (childDataNode != null)  // There is a selectable child.
-              setSelectionTreePathV(   // Set selection TreePath to be...
-                inTreePath.  // ...subject TreePath with...
+            if (childDataNode != null)  // There is a accessible child.
+              setPartTreePathV(   // Set Part TreePath to be...
+                inTreePath.  // ...Whole TreePath with...
                   pathByAddingChild( childDataNode ) // ... child added.
                 );
-            } // setSubjectTreePathWithAutoSelectV(inTreePath()
+            }
 
-        protected TreePath getSubjectTreePath( )
+        protected TreePath getWholeTreePath( )
           /* This method returns the TreePath representing the node
             being displayed.
             */
           { 
-            return subjectTreePath;  // Return it.
+            return wholeTreePath;  // Return it.
             }
 
-        protected DataNode getSubjectDataNode()
-          /* This method returns the DataNode of the subject.  */
+        protected DataNode getWholeDataNode()
+          /* This method returns the DataNode of the Whole.  */
           { 
-            return subjectDataNode;  // return TreePath of selected item.
+            return wholeDataNode;  // return DataNode of Part.
             }
 
-      /* Selection code.  The selection is a single child of interest.
-        It it one of possibly multiple subject child items being displayed.
+      /* Part code.  The Part is the highlighted tree node within the Whole.
+        It it one of possibly multiple child nodes being displayed.
+        This was previously called the Selection,
+        but was changed to avoid confusion with selection within
+        the JComponent being used to represent the Whole.
         */
-        
-        private TreePath selectionTreePath; /* TreePath to selected item.  
-          The parent of this TreePath is subjectTreePath
+
+        private TreePath partTreePath; /* TreePath to Part.  
+          The parent of this TreePath is wholeTreePath
           which represents the entire set being displayed.
           This assumes that there is only one sub-level displayed,
           so all items displayed have the same parent.
           This restriction might be removed later if
           multiple levels are displayed simultaneously.
-          This variable is null if the subject contains 
-          no selectable children.
+          This variable is null if the Whole contains 
+          no highlighted child.
           */
 
-        private DataNode selectionDataNode; /* DataNode of selected item. ???
-          This is the last element of the selectionTreePath.
+        private DataNode partDataNode; /* DataNode of Part.
+          This is the last element of the partTreePath.
           This variable is null if the JComponent is displaying 
-          a node with no selectable children.
+          a node with no highlighted child.
           */
 
-        protected void setSelectionTreePathV( TreePath inTreePath )
-          /* This method stores inTreePath as 
-            the TreePath of the selected position. 
+        public void setPartTreePathV( TreePath inTreePath )
+          /* This method stores inTreePath as the TreePath of the Part. 
             But it does not notify any TreeSelectionListener about it.
-            That must be done by NotifyTreeSelectionListenersV(.)
-            or fireValueChanged(.).
-
-            ??? It might be a good idea to rewrite existing code so that
-            selection is always the last thing done,
-            and combine this method with NotifyTreeSelectionListenersV(.).
-            But I'm not certain this is possible for all callers.
+            That must be done separately by calling
+            notifyTreeSelectionListenersV(.) or fireValueChanged(.).
             */
           { 
-            setSubjectTreePathV(  // Set appropriate subject TreePath to be...
-              inTreePath.getParentPath()  // ...parent of selection TreePath.
-              );  // This will set the subject DataNode also.
+            setWholeV(  // Set appropriate Whole TreePath to be...
+              inTreePath.getParentPath()  // ...parent of Part TreePath.
+              );  // This will set the Whole DataNode also.
 
-            selectionTreePath= inTreePath;  // Store selection TreePath.
-            selectionDataNode=  // Store last element for easy access.
-              (DataNode)selectionTreePath.getLastPathComponent();
+            partTreePath= inTreePath;  // Store Part TreePath.
+            partDataNode=  // Store last element for easy access.
+              (DataNode)partTreePath.getLastPathComponent();
             }
 
-        protected TreePath getSelectionTreePath()
-          /* This method returns the TreePath representing 
-            the selected position.
-            */
+        protected TreePath getPartTreePath()
+          /* This method returns the TreePath representing the Part. */
           { 
-            return selectionTreePath;  // return TreePath of selected item.
+            return partTreePath;  // return TreePath of Part.
             }
 
-        protected void setSelectionDataNodeV( DataNode inDataNode )
-          /* This method sets a new selected DataNode to inDataNode.
+        protected void setPartDataNodeV( DataNode inDataNode )
+          /* This method sets the Part DataNode to be inDataNode.
             It updates other variables appropriately.
-            It assumes that the subject container is unchanged.
+            But it assumes that the Whole container is unchanged.
             */
           {
-            TreePath childTreePath= // Calculate selected child TreePath to be...
-              subjectTreePath.  // ...the base TreePath with...
+            TreePath childTreePath= // Calculate child TreePath to be...
+              wholeTreePath.  // ...the base TreePath with...
                 pathByAddingChild( inDataNode );  // ... the child added.
-            setSelectionTreePathV(  childTreePath );  // select new TreePath.
+            setPartTreePathV(  childTreePath );  // Set Part TreePath.
             }
 
-        protected DataNode getSelectionDataNode()
-          /* This method returns the DataNode of the selected position.  */
+        protected DataNode getPartDataNode()
+          /* This method returns the DataNode of the Part.  */
           { 
-            return selectionDataNode;  // return TreePath of selected item.
+            return partDataNode;  // return DataNode of Part.
             }
     
     // TreeSelectionListener code (setting and using).
@@ -345,7 +345,11 @@ public class ViewHelper
         neither this class or the class being helped by this class
         is a TreeSelectionModel, the usual source of TreeSelectionEvent-s.
         TreeSelectionEvent is being used simply because 
-        it is a convenient way to pass a TreePath and a boolean.
+        it is a convenient way to pass:
+        * a TreePath, which represents a change of location within a tree
+        * a boolean, interpreted as follows:
+          * false: the location is of the Whole.
+          * true: the location is of the Part.
         */
       
       private Vector<TreeSelectionListener> listenerVector =   // Listeners.
@@ -363,35 +367,49 @@ public class ViewHelper
             listenerVector.removeElement( listener );
           }
 
-      public void notifyTreeSelectionListenersV( boolean internalB )
+      public void notifyListenersAboutPartV( )
+        {
+          notifyTreeSelectionListenersV(  // Notify the listeners about...
+            true,  // ... an internal/Part change...
+            getPartTreePath()  // ...to this selection path.
+            );
+          }
+
+      public void notifyListenersWithNewWholeV( TreePath inTreePath )
+        {
+          notifyTreeSelectionListenersV(  // Notify the listeners about...
+            false,  // ... an external/Whole change...
+            inTreePath  // ...to this path.
+            );
+          }
+
+      private void notifyTreeSelectionListenersV( 
+          boolean internalB, TreePath inTreePath 
+          )
         /* Notifies any TreeSelectionListeners of the JComponent being helped
-          that the associated current selection has changed.
-          For efficiency it should be called only when
-          the selection actually has changed.
+          of a tree location change of either the Whole or the Part.
+          inTreePath is the TreePath of the new location.
           internalB has the following meanings:
-            true: the new selection is within the same DataNode 
-              as the previous selection, so its display can be handled by 
-              the same DagNodeViewer JComponent being helped.
-            false: the new selection is NOT within the same DataNode 
-              as the previous selection, so it must be handled by 
-              a new DagNodeViewer JComponent.
+            true: the new location is of the Part.
+              The new Part is within the same Whole as the old Part.
+              The viewer JComponent for viewing it doesn't need to be changed.
+            false: the new location is of the Whole.
+              It must be handle by a new viewer JComponent.
               In this case, -this- object will be replaced.
           */
-        { // NotifyTreeSelectionListenersV.
-          TreePath childTreePath=   // get the selected TreePath.
-            getSelectionTreePath();
+        {
           TreeSelectionEvent TheTreeSelectionEvent= //construct...
             new TreeSelectionEvent (  // ...a TreeSelectionEvent from...
               owningJComponent,  // ...the source JComponent being helped...
-              childTreePath,  // ...with a change of childTreePath...
+              inTreePath,  // ...with a change of inTreePath...
               internalB,  // ...being added as a selection path...
-              childTreePath,  // ...and also being the new lead selection path...
-              childTreePath  // ...and the old lead selection path.
+              inTreePath,  // ...and also being the new lead selection path...
+              inTreePath  // ...and the old lead selection path.
               ); 
           fireValueChanged(  // fire value changed with...
             TheTreeSelectionEvent  // ...newly constructed event.
             );
-          } // NotifyTreeSelectionListenersV.
+          }
 
       private void fireValueChanged( TreeSelectionEvent e ) 
         {

@@ -82,7 +82,7 @@ public class TextViewer
             DefaultBackgroundColor=   // save present background color.
                 getBackground();
             } // Add listeners.
-          aViewHelper.setSubjectTreePathV( TreePathIn ); // ??? Use new selector.
+          aViewHelper.setWholeV( TreePathIn ); // ??? Use new selector.
           getCaret().setVisible(true);  // Make text cursor visible.
           } // CommonInitialization( )
 
@@ -116,18 +116,13 @@ public class TextViewer
 
       public TreePath getSubjectTreePath()
         { 
-          return aViewHelper.getSubjectTreePath();
+          return aViewHelper.getWholeTreePath();
           }
 
       public TreePath getSelectionTreePath()
         { 
-          return aViewHelper.getSelectionTreePath();
+          return aViewHelper.getPartTreePath();
           }
-
-      public void NotifyTreeSelectionListenersV( boolean InternalB )
-        { // NotifyTreeSelectionListenersV.
-          aViewHelper.notifyTreeSelectionListenersV( InternalB );
-          } // NotifyTreeSelectionListenersV.
 
       public void addTreeSelectionListener( TreeSelectionListener listener ) 
         {
@@ -136,7 +131,7 @@ public class TextViewer
          
       public void SetSelectedChildTreePath(TreePath InSelectedChildTreePath)
         { 
-          aViewHelper.setSelectionTreePathV( InSelectedChildTreePath );
+          aViewHelper.setPartTreePathV( InSelectedChildTreePath );
           }
 
     // rendering methods.  to be added.

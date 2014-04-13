@@ -86,14 +86,14 @@ public class DirectoryTableViewer
           { // Construct and initialize the helper object.
             aViewHelper=  // Construct helper class instance.
               new ViewHelper( this );  // Note, subject not set yet.
-            aViewHelper.setSubjectTreePathWithAutoSelectV(  // Set subject.
+            aViewHelper.setWholeWithPartAutoSelectV(  // Set subject.
               inTreePath
               );
             } // Construct and initialize the helper object.
 
           DirectoryTableModel ADirectoryTableModel =  // Construct...
             new DirectoryTableModel(  //...directory table model from...
-              (IFile)aViewHelper.getSubjectDataNode(), //...subject IFile...
+              (IFile)aViewHelper.getWholeDataNode(), //...subject IFile...
               InTreeModel  // ...and TreeModel.
               );
           setModel( ADirectoryTableModel );  // store TableModel.
@@ -146,7 +146,7 @@ public class DirectoryTableViewer
             int IndexI =   // get index of selected element from the model.
               TheListSelectionModel.getMinSelectionIndex();
             IFile subjectIFile=  // Cache Subject directory.
-              (IFile)aViewHelper.getSubjectDataNode();
+              (IFile)aViewHelper.getWholeDataNode();
             String[] IFileNameStrings =  // Calculate array of child file names.
               subjectIFile.GetFile().list();
             if ( IFileNameStrings == null )  // If array is null replace with empty array.
@@ -160,8 +160,9 @@ public class DirectoryTableViewer
                 IFile NewSelectionIFile=   // build IFile of selection at IndexI.
                   new IFile( subjectIFile, IFileNameStrings[IndexI] );
                 //SetSelectionRelatedVariablesFrom( NewSelectionIFile );
-                aViewHelper.setSelectionDataNodeV( NewSelectionIFile );
-                aViewHelper.notifyTreeSelectionListenersV(true); // tell others, if any.
+                aViewHelper.setPartDataNodeV( NewSelectionIFile );
+                //aViewHelper.notifyTreeSelectionListenersV(true); // tell others, if any.
+                aViewHelper.notifyListenersAboutPartV();
                 } // Process the selection.
             repaint();  // ??? kluge: do entire table for selection color.
               // this should repaint only the rows whose selection changed.
@@ -213,11 +214,11 @@ public class DirectoryTableViewer
           esternal TreeSelectionListeners-s. */
         { // UpdateJTableSelection()
           int IndexI= 0;  // Assume index is zero for now.
-          DataNode selectionDataNode= aViewHelper.getSelectionDataNode();
+          DataNode selectionDataNode= aViewHelper.getPartDataNode();
           if ( selectionDataNode != null )  // There is a selection.
             { // Calculate child's index.
               IndexI= // try to get index of selected child.
-                aViewHelper.getSubjectDataNode().getIndexOfChild( 
+                aViewHelper.getWholeDataNode().getIndexOfChild( 
                   selectionDataNode 
                   );
               if ( IndexI < 0 )  // force index to 0 if child not found.
@@ -268,12 +269,12 @@ public class DirectoryTableViewer
 
       public TreePath getSubjectTreePath()
         { 
-          return aViewHelper.getSubjectTreePath();
+          return aViewHelper.getWholeTreePath();
           }
 
       public TreePath getSelectionTreePath()
         { 
-          return aViewHelper.getSelectionTreePath();
+          return aViewHelper.getPartTreePath();
           }
 
       public void addTreeSelectionListener( TreeSelectionListener listener ) 
