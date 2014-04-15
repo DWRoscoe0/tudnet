@@ -2,18 +2,16 @@ package allClasses;
 
 import java.io.File;
 
-// import javax.swing.JPanel;
-// import javax.swing.JTable;
 import javax.swing.JComponent;
-//import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
 public class FileRoots
-  //extends Object
-  //implements DataNode
+
   extends AbDataNode
+
   /* This class is the root of the Infogora user's file system.  */
+
   { // class FileRoots
 
     // Variables.
@@ -27,7 +25,6 @@ public class FileRoots
       IFile ChildIFiles[];  // Initially empty cache array of root IFiles.
     
     // Constructors (none yet).
-        
     
     // A subset of delegated AbstractTreeModel methods.
 

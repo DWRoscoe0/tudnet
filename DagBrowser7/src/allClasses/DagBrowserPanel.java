@@ -55,70 +55,70 @@ public class DagBrowserPanel
     // static variables.
       //private static final long serialVersionUID = 1L;
 
-    // instance variables.
+      // instance variables.
 
-      private Timer BlinkerTimer; // Timer that triggers the monitor Blinker.
-    
-      // data models.
-        private DataTreeModel TheDataTreeModel;  // holds all browsable data.
-        private TreePath StartTreePath;  // start TreePath to be displayed.
+        private Timer BlinkerTimer; // Timer that triggers the monitor Blinker.
+      
+        // data models.
+          private DataTreeModel TheDataTreeModel;  // holds all browsable data.
+          private TreePath StartTreePath;  // start TreePath to be displayed.
 
-      // displayed sub-panel JComponent tree.
+        // displayed sub-panel JComponent tree.
+              
+          private JPanel HTopJPanel; // top horizontal panel for...
+            private IJButton HelpIJButton;  // button to activate Help dialog.
+            private IJButton DownArrowIJButton;  // button to move down.
+            private IJButton UpArrowIJButton;  // button to move up.
+            private IJButton LeftArrowIJButton;  // button to move to parent.
+            private IJButton RightArrowIJButton;  // button to move to child.
+            private JLabel BlinkerJLabel; // window monitor status.
             
-        private JPanel HTopJPanel; // top horizontal panel for...
-          private IJButton HelpIJButton;  // button to activate Help dialog.
-          private IJButton DownArrowIJButton;  // button to move down.
-          private IJButton UpArrowIJButton;  // button to move up.
-          private IJButton LeftArrowIJButton;  // button to move to parent.
-          private IJButton RightArrowIJButton;  // button to move to child.
-          private JLabel BlinkerJLabel; // window monitor status.
+          private JPanel ViewJPanel; // JPanel where desired data is diaplayed.
+            private JLabel DirectoryJLabel; // a place to display directory path.
+
+            private JSplitPane TheSplitPane;  // horizontally split content panel
+              private JScrollPane TreeJScrollPane;  // left scroller sub-panel...
+                private RootJTree theRootJTree;  // ... and tree content.
+              private JScrollPane DataJScrollPane;  // right scroller sub-panel...
+                private JComponent DataJComponent;  // ... and its data content.
+                private VHelper DataVHelper;  // ... and its VHelper alias.
+
+            private JLabel InfoJLabel;  // a place to display directory/file info.
+
+        /* ComponentFocusStateMachine.
+          This state machine restores the focus to either 
+          the left/navigation JTree pane or the right/content pane.  
+          This restoration is done becaue most of the time 
+          the focus is in one of those two places while the user browses, 
+          and the user will want to move the cursor back into
+          one of these panes if it ever goes out.
+          The reason the restoration is done stepping
+          only one Component at a time in the component hierarchy
+          is because Component.requestFocusInWindow() did not seem
+          to be able to reliably move the focus more than one Component.
+          */
+          private enum FocusPane {   // the normal focus panes.
+            NO_PANE,  // neither pane.
+            LEFT_PANE,  // left (tree view) pane.
+            RIGHT_PANE   // right (content view) pane.
+            };
+          private FocusPane LastFocusPane=  // The last FocusPane that had focus.
+            FocusPane.LEFT_PANE;  // Set to focus right pane initially.
+            // was: FocusPane.RIGHT_PANE;  // Set to focus right pane initially.
+          private FocusPane desiredFocusPane=  // The next pane to get focus...
+            FocusPane.NO_PANE;  // ... is initially undefined.
+            /* The meanings are as follows:
+              if NO_PANE then the ComponentFocusStateMachine is not running.
+              if LEFT_PANE or RIGHT_PANE then the ComponentFocusStateMachine 
+              is active and trying to set the focus to that pane Component.  */
+          // private int FocusStepCountI=0; // Debug.
+          private Component LastValidFocusOwnerPanelComponent= null;
+            /* if non-null then a focus-altering command is underway and 
+              the value is the penel Component with focus immediately before 
+              the command began.  */
           
-        private JPanel ViewJPanel; // JPanel where desired data is diaplayed.
-          private JLabel DirectoryJLabel; // a place to display directory path.
-
-          private JSplitPane TheSplitPane;  // horizontally split content panel
-            private JScrollPane TreeJScrollPane;  // left scroller sub-panel...
-              private RootJTree theRootJTree;  // ... and tree content.
-            private JScrollPane DataJScrollPane;  // right scroller sub-panel...
-              private JComponent DataJComponent;  // ... and its data content.
-              private VHelper DataVHelper;  // ... and its VHelper alias.
-
-          private JLabel InfoJLabel;  // a place to display directory/file info.
-
-      /* ComponentFocusStateMachine.
-        This state machine restores the focus to either 
-        the left/navigation JTree pane or the right/content pane.  
-        This restoration is done becaue most of the time 
-        the focus is in one of those two places while the user browses, 
-        and the user will want to move the cursor back into
-        one of these panes if it ever goes out.
-        The reason the restoration is done stepping
-        only one Component at a time in the component hierarchy
-        is because Component.requestFocusInWindow() did not seem
-        to be able to reliably move the focus more than one Component.
-        */
-        private enum FocusPane {   // the normal focus panes.
-          NO_PANE,  // neither pane.
-          LEFT_PANE,  // left (tree view) pane.
-          RIGHT_PANE   // right (content view) pane.
-          };
-        private FocusPane LastFocusPane=  // The last FocusPane that had focus.
-          FocusPane.LEFT_PANE;  // Set to focus right pane initially.
-          // was: FocusPane.RIGHT_PANE;  // Set to focus right pane initially.
-        private FocusPane desiredFocusPane=  // The next pane to get focus...
-          FocusPane.NO_PANE;  // ... is initially undefined.
-          /* The meanings are as follows:
-            if NO_PANE then the ComponentFocusStateMachine is not running.
-            if LEFT_PANE or RIGHT_PANE then the ComponentFocusStateMachine 
-            is active and trying to set the focus to that pane Component.  */
-        // private int FocusStepCountI=0; // Debug.
-        private Component LastValidFocusOwnerPanelComponent= null;
-          /* if non-null then a focus-altering command is underway and 
-            the value is the penel Component with focus immediately before 
-            the command began.  */
-        
-      private Boolean TreeSelectionReentryBlockedB=   // for preventing entry...
-        false;  // ...to TreeSelectionListener.
+        private Boolean TreeSelectionReentryBlockedB=   // for preventing entry...
+          false;  // ...to TreeSelectionListener.
 
     // constructor and related methods.
     
@@ -304,6 +304,8 @@ public class DagBrowserPanel
               this
               );
             } // build the scroller content.
+            
+          // Maybe move JScrollPane into ViewHelpter or DataJComponent??
           DataJScrollPane = new JScrollPane( DataJComponent );  // construct scroller from data panel.
           DataJScrollPane.setMinimumSize( new Dimension( 0, 0 ) );
           DataJScrollPane.setPreferredSize( new Dimension( 400, 400 ) );
@@ -434,7 +436,7 @@ public class DagBrowserPanel
         happen in either the left or right panel.
         */
         
-        public void valueChanged( TreeSelectionEvent TheTreeSelectionEvent ) 
+        public void valueChanged( TreeSelectionEvent theTreeSelectionEvent ) 
           /* This processes TreeSelectionEvent-s.
             It's job is to coordinate selections in 
             the left and right sub-panels.  
@@ -465,7 +467,7 @@ public class DagBrowserPanel
             Most the work of this method id done by alueChangedProcessorV(..)
             if it determined that valueChanged(..) was not re-entered.
             */
-          { // valueChanged( TreeSelectionEvent TheTreeSelectionEvent ) 
+          { // valueChanged( TreeSelectionEvent theTreeSelectionEvent ) 
             if ( TreeSelectionReentryBlockedB ) // process unless a re-entry.
               { // do nothing because the re-entry blocking flag is set.
                 appLogger.info(
@@ -477,22 +479,24 @@ public class DagBrowserPanel
                 TreeSelectionReentryBlockedB= true;  // disallow re-entry.
 
                 valueChangedProcessorV( // Have this do all the work.
-                  TheTreeSelectionEvent 
+                  theTreeSelectionEvent 
                   );
 
                 TreeSelectionReentryBlockedB= false;  // now that we are done, allow re-entry.
                 } // process the TreeSelectionEvent.
-            } // valueChanged( TreeSelectionEvent TheTreeSelectionEvent ) 
+            } // valueChanged( TreeSelectionEvent theTreeSelectionEvent ) 
 
         private void valueChangedProcessorV
-          ( TreeSelectionEvent TheTreeSelectionEvent )
+          ( TreeSelectionEvent theTreeSelectionEvent )
           /* This composition method does the work of valueChanged(..)
             if valueChanged(..) determines that it was not re-entered.
             */
           {
             TreePath selectedTreePath=  // Get...
-              TheTreeSelectionEvent.  // ...the TreeSelectionEvent's...
+              theTreeSelectionEvent.  // ...the TreeSelectionEvent's...
                 getNewLeadSelectionPath();  // ...one and only TreePath.
+            Component sourceComponent=  // Also get its source Component.
+              (Component)theTreeSelectionEvent.getSource();
             //appLogger.info(
             //  "DagBrowserPanel.valueChangedProcessorV("
             //  +selectedTreePath.getLastPathComponent()
@@ -500,13 +504,17 @@ public class DagBrowserPanel
             //  );  // ???
             if ( selectedTreePath != null )  // process only if not null.
               { // process based on Source Component.
-                if (TheTreeSelectionEvent.getSource() == DataJComponent)
+                if (  // Source is right sub-pannel,...
+                    (sourceComponent == DataJComponent) ||  // ... equal to or...
+                    DataJComponent.isAncestorOf(  // ...an ancestor of it.
+                      sourceComponent)
+                      )
                   ProcessSelectionFromRightSubpanel(
                     selectedTreePath,
-                    TheTreeSelectionEvent.isAddedPath()
+                    theTreeSelectionEvent.isAddedPath()
                     );
-                else if 
-                  (TheTreeSelectionEvent.getSource() == theRootJTree)
+                else if  // Source is left sub-pannel,...
+                  (sourceComponent == theRootJTree) // ...equal to RootJTree.
                   ProcessSelectionFromLeftSubpanel( selectedTreePath );
                 } // process based on Source Component.
             DisplayPathAndInfoV( ); // display other info.
@@ -524,6 +532,7 @@ public class DagBrowserPanel
           { // ProcessSelectionFromLeftSubpanel(.)
             //appLogger.info("DagBrowserPanel.ProcessSelectionFromLeftSubpanel(..).");  // 
 
+            // Maybe let RightPanel decide whether to do this??
             ReplaceRightPanelContent( inTreePath );
             } // ProcessSelectionFromLeftSubpanel(.)
             

@@ -4,10 +4,6 @@ import javax.swing.JComponent;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
-//import javax.swing.JComponent;
-//import javax.swing.tree.TreeModel;
-//import javax.swing.tree.TreePath;
-
 public abstract class AbDataNode 
 
   implements DataNode
@@ -146,8 +142,9 @@ public abstract class AbDataNode
             ResultJComponent= // Set result to be a TextViewer JComponent.
               new TextViewer( InTreePath, InTreeModel, GetHeadString() );
             else  // This DataNode is NOT a leaf.
-            ResultJComponent= // Set result to be a ListViewer JComponent.
+            ResultJComponent= // Set result for exploring a List.
               new ListViewer( InTreePath, InTreeModel );
+              //new ListExplorer( InTreePath, InTreeModel );
           return ResultJComponent;  // Return the result from above.
           } // GetDataJComponent()
 
