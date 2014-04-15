@@ -81,7 +81,7 @@ public class DagBrowserPanel
                 private RootJTree theRootJTree;  // ... and tree content.
               private JScrollPane DataJScrollPane;  // right scroller sub-panel...
                 private JComponent DataJComponent;  // ... and its data content.
-                private VHelper DataVHelper;  // ... and its VHelper alias.
+                private TreeAware DataTreeAware;  // ... and its TreeAware alias.
 
             private JLabel InfoJLabel;  // a place to display directory/file info.
 
@@ -299,8 +299,8 @@ public class DagBrowserPanel
               TheDataTreeModel.GetDataJComponent(
                 StartTreePath // initially displaying root/child.
                 );  // Note that TheDataTreeModel was built earlier.
-            DataVHelper= (VHelper)DataJComponent;  // Define alias...
-            DataVHelper.addTreeSelectionListener(  // ...and Listener.
+            DataTreeAware= (TreeAware)DataJComponent;  // Define alias...
+            DataTreeAware.addTreeSelectionListener(  // ...and Listener.
               this
               );
             } // build the scroller content.
@@ -571,7 +571,7 @@ public class DagBrowserPanel
             
         private void ReplaceRightPanelContent( TreePath selectedTreePath )
           /* This method calculates a new
-            JComponent and VHelper appropriate for displaying
+            JComponent and TreeAware appropriate for displaying
             the last element of selectedTreePath and sets them
             as content of the right sub-panel for display.
             */
@@ -583,9 +583,9 @@ public class DagBrowserPanel
                 GetDataJComponent(  // ...generate a JComponent...
                   selectedTreePath  // appropriate to new selection.
                   );
-              DataVHelper= // Calculate VHelper alias.
-                (VHelper)DataJComponent;
-              DataVHelper.  // set VHelper's TreeSelectionListener by...
+              DataTreeAware= // Calculate TreeAware alias.
+                (TreeAware)DataJComponent;
+              DataTreeAware.  // set TreeAware's TreeSelectionListener by...
                 addTreeSelectionListener(  // adding to its Listener list...
                   this);  // ...a reference to this the main panel
               DataJComponent.addFocusListener(this);  // setup focus restoration.
@@ -630,7 +630,7 @@ public class DagBrowserPanel
                 { 
                   LastFocusPane= FocusPane.RIGHT_PANE;  // record right enum ID.
                   DisplayPathAndInfoV(  // display right sub-panel's info for...
-                    DataVHelper.getPartTreePath() // ...selected TreePath.
+                    DataTreeAware.getPartTreePath() // ...selected TreePath.
                     );
                   }
               else 
@@ -885,10 +885,10 @@ public class DagBrowserPanel
           else if ( focusedComponent == DataJComponent ) // Right sub-panel.
             { // Calculate right sub-panel TreePath.
               //appLogger.info("DagBrowserPanel.DisplayPathAndInfoV() right sub-panel.");  // ???
-              theTreePath= DataVHelper.getPartTreePath();
+              theTreePath= DataTreeAware.getPartTreePath();
               if ( theTreePath == null ) // There is no selection TreePath.
                 theTreePath=  // Use subject TreePath instead.
-                  DataVHelper.getWholeTreePath();
+                  DataTreeAware.getWholeTreePath();
               } // Calculate right sub-panel TreePath.
           else // Some other component has the focus.
             {

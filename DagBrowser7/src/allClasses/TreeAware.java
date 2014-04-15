@@ -4,13 +4,12 @@ package allClasses;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
 
-public interface VHelper 
-  //extends JComponent
+public interface TreeAware
 
 	{
     // Note,, default method implementations coming in Java 8 interfaces!
 
-    // ViewHelper pass-through methods.  See class ViewHelper for details.
+    // TreeHelper pass-through methods.  See class TreeHelper for details.
   
       public void addTreeSelectionListener( TreeSelectionListener listener );
         // This is so the DagBrowserPanel can listen to the right sub-pael.

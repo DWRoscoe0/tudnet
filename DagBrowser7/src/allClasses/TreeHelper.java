@@ -16,14 +16,14 @@ import javax.swing.event.TreeSelectionListener;
 
 //import static allClasses.Globals.*;  // appLogger;
 
-public class ViewHelper
+public class TreeHelper
   implements KeyListener, MouseListener
 
   /* This class is being used to hold code which 
-    is usefull for right panel interface VHelper JComponents, 
+    is usefull for right panel interface TreeAware JComponents, 
     but because of Java's lack of multiple inheritance 
     was moved here and is now referenced by composition,
-    usually with a variable named aViewHelper.
+    usually with a variable named aTreeHelper.
     
     Concepts and their names:
 
@@ -46,11 +46,11 @@ public class ViewHelper
     ??? It might make more sense to call this class something else,
     such as TreeViewHelper, TreeHelper, or RightPanelHelper,
     or to eliminate it by integrating it into 
-    an interface VHelper JComponent subclass.
+    an interface TreeAware JComponent subclass.
 
     */
 
-  { // class ViewHelper
+  { // class TreeHelper
 
     private JComponent owningJComponent;  /* JComponent being helped.
       This is the JComponent to which other parts of the system will refer.
@@ -60,7 +60,7 @@ public class ViewHelper
 
     // Constructor.
     
-      ViewHelper( JComponent inOwningJComponent, TreePath inTreePath  )
+      TreeHelper( JComponent inOwningJComponent, TreePath inTreePath  )
         {
           owningJComponent= inOwningJComponent;
           setWholeWithPartAutoSelectV(inTreePath);
@@ -430,4 +430,4 @@ public class ViewHelper
               }
         }
 
-    } // class ViewHelper
+    } // class TreeHelper

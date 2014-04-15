@@ -13,7 +13,7 @@ public class TextViewer
  
   implements 
     FocusListener, 
-    VHelper
+    TreeAware
   
   /* This class was created quickly from ListViewer 
     to provide a simple DagNodeViewer that 
@@ -33,7 +33,7 @@ public class TextViewer
       // instance variables.
 
         private Color DefaultBackgroundColor;  // For focusLost(..).
-        public ViewHelper aViewHelper;  // Mutual composition Helper class.
+        public TreeHelper aTreeHelper;  // Mutual composition Helper class.
 
     // constructor and related methods.
 
@@ -74,10 +74,10 @@ public class TextViewer
         { // CommonInitialization( )
           if ( TreePathIn == null )  // prevent null TreePath.
             TreePathIn = new TreePath( new StringObject( "ERROR TreePath" ));
-          aViewHelper=  // construct helper class instance.
-            new ViewHelper( this, TreePathIn ); 
+          aTreeHelper=  // construct helper class instance.
+            new TreeHelper( this, TreePathIn ); 
           { // Add listeners.
-            addKeyListener(aViewHelper);  // Make ViewHelper the KeyListeer.
+            addKeyListener(aTreeHelper);  // Make TreeHelper the KeyListeer.
             addFocusListener(this);  // listen to repaint on focus events.
             DefaultBackgroundColor=   // save present background color.
                 getBackground();
@@ -89,7 +89,7 @@ public class TextViewer
         
       /* ListSelectionListener method, deleted. */
   
-      // KeyListener methods,  (moved to ViewHelper).
+      // KeyListener methods,  (moved to TreeHelper).
       
       // FocusListener methods, to fix JTable cell-invalidate/repaint bug.
 
@@ -107,25 +107,25 @@ public class TextViewer
             setBackground( DefaultBackgroundColor );
             }
       
-    // command methods (moved to ViewHelper).
+    // command methods (moved to TreeHelper).
       
     // state updating methods (deleted).
 
-    // ViewHelper pass-through methods.
+    // TreeHelper pass-through methods.
 
       public TreePath getWholeTreePath()
         { 
-          return aViewHelper.getWholeTreePath();
+          return aTreeHelper.getWholeTreePath();
           }
 
       public TreePath getPartTreePath()
         { 
-          return aViewHelper.getPartTreePath();
+          return aTreeHelper.getPartTreePath();
           }
 
       public void addTreeSelectionListener( TreeSelectionListener listener ) 
         {
-          aViewHelper.addTreeSelectionListener( listener );
+          aTreeHelper.addTreeSelectionListener( listener );
           }
 
     // rendering methods.  to be added.

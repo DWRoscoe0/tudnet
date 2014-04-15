@@ -24,7 +24,7 @@ public class ListViewer
   implements 
     ListSelectionListener
     , FocusListener
-    , VHelper
+    , TreeAware
   
   /* This class provides a simple DagNodeViewer that 
     displays and browses List-s using a JList.
@@ -42,7 +42,7 @@ public class ListViewer
   
       private static final long serialVersionUID = 1L;
 
-      private ViewHelper aViewHelper;  // Mutual composition helper class ???
+      private TreeHelper aTreeHelper;  // Mutual composition helper class ???
 
     // constructor and related methods.
 
@@ -57,8 +57,8 @@ public class ListViewer
             // TreePath will be calculated and set later.
 
           { // Prepare the helper object.
-            aViewHelper=  // Construct helper class instance.
-                new ViewHelper( this, inTreePath );  // Note, subject not set yet.
+            aTreeHelper=  // Construct helper class instance.
+                new TreeHelper( this, inTreePath );  // Note, subject not set yet.
             } // Prepare the helper object.
 
           InitializeTheJList( inTreeModel );
@@ -71,7 +71,7 @@ public class ListViewer
             ListModel<Object> AListModel;
             AListModel= new TreeListModel( 
               //subjectDataNode, 
-              aViewHelper.getWholeDataNode( ),
+              aTreeHelper.getWholeDataNode( ),
               inTreeModel 
               );
             setModel( AListModel );  // Define its ListModel.
@@ -79,8 +79,8 @@ public class ListViewer
           setSelectionMode( ListSelectionModel.SINGLE_SELECTION );
           setCellRenderer( TheListCellRenderer );  // set custom rendering.
           { // Set the user input event listeners.
-            addKeyListener(aViewHelper);  // ViewHelper does KeyEvent-s.
-            addMouseListener(aViewHelper);  // ViewHelper does MouseEvent-s.
+            addKeyListener(aTreeHelper);  // TreeHelper does KeyEvent-s.
+            addMouseListener(aTreeHelper);  // TreeHelper does MouseEvent-s.
             addFocusListener(this);  // listen to repaint on focus events.???
             getSelectionModel().  // This does ListSelectionEvent-s.
               addListSelectionListener(this);
@@ -98,8 +98,8 @@ public class ListViewer
           esternal TreeSelectionListeners-s. */
         { // setJListSelection()
           int IndexI= // try to get index of selected child.
-            aViewHelper.getWholeDataNode( ).getIndexOfChild( 
-              aViewHelper.getPartDataNode() 
+            aTreeHelper.getWholeDataNode( ).getIndexOfChild( 
+              aTreeHelper.getPartDataNode() 
               );
           if ( IndexI < 0 )  // force index to 0 if child not found.
             IndexI= 0;
@@ -142,13 +142,13 @@ public class ListViewer
             if // Process the selection if...
               ( //...the selection index is legal.
                 (IndexI >= 0) && 
-                (IndexI < aViewHelper.getWholeDataNode( ).getChildCount( ))
+                (IndexI < aTreeHelper.getWholeDataNode( ).getChildCount( ))
                 )
               { // Process the selection.
                 DataNode NewSelectionDataNode=  // Get selected DataNode...
-                  aViewHelper.getWholeDataNode( ).
+                  aTreeHelper.getWholeDataNode( ).
                     getChild(IndexI);  // ...which is child at IndexI.
-                aViewHelper.setPartDataNodeV( NewSelectionDataNode );
+                aTreeHelper.setPartDataNodeV( NewSelectionDataNode );
                   // This will set the TreePaths also.
                   // This converts the row selection to a tree selection.
                 } // Process the selection.
@@ -172,21 +172,21 @@ public class ListViewer
             repaint();  // bug fix Kluge to display cell in correct color.  
             }
   
-    // interface ViewHelper pass-through methods.
+    // interface TreeHelper pass-through methods.
 
       public TreePath getWholeTreePath()
         { 
-          return aViewHelper.getWholeTreePath();
+          return aTreeHelper.getWholeTreePath();
           }
 
       public TreePath getPartTreePath()
         { 
-          return aViewHelper.getPartTreePath();
+          return aTreeHelper.getPartTreePath();
           }
 
       public void addTreeSelectionListener( TreeSelectionListener listener ) 
         {
-          aViewHelper.addTreeSelectionListener( listener );
+          aTreeHelper.addTreeSelectionListener( listener );
           }
 
       // Nested class stuff for List cell rendering.

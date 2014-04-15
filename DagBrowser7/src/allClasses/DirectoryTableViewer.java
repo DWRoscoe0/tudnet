@@ -25,7 +25,7 @@ public class DirectoryTableViewer
   
   implements 
     FocusListener, ListSelectionListener
-    , VHelper
+    , TreeAware
   
   /* This class displays filesystem directories as tables.
     They appear in the main app's right side subpanel as a JTable.
@@ -64,7 +64,7 @@ public class DirectoryTableViewer
   
       private static final long serialVersionUID = 1L;
 
-			public ViewHelper aViewHelper;  // helper class ???
+			public TreeHelper aTreeHelper;  // helper class ???
 
       private DirectoryTableCellRenderer theDirectoryTableCellRenderer= 
         new DirectoryTableCellRenderer(); // for custom node rendering.
@@ -84,13 +84,13 @@ public class DirectoryTableViewer
           super( );  // Call superclass constructor.
             
           { // Construct and initialize the helper object.
-            aViewHelper=  // Construct helper class instance.
-              new ViewHelper( this, inTreePath );  // Note, subject not set yet.
+            aTreeHelper=  // Construct helper class instance.
+              new TreeHelper( this, inTreePath );  // Note, subject not set yet.
             } // Construct and initialize the helper object.
 
           DirectoryTableModel ADirectoryTableModel =  // Construct...
             new DirectoryTableModel(  //...directory table model from...
-              (IFile)aViewHelper.getWholeDataNode(), //...subject IFile...
+              (IFile)aTreeHelper.getWholeDataNode(), //...subject IFile...
               InTreeModel  // ...and TreeModel.
               );
           setModel( ADirectoryTableModel );  // store TableModel.
@@ -113,8 +113,8 @@ public class DirectoryTableViewer
             } // limit Type field display width.
           
           { // add listeners.
-            addKeyListener(aViewHelper);  // listen to process some key events.
-            addMouseListener(aViewHelper);  // listen to process mouse double-click.
+            addKeyListener(aTreeHelper);  // listen to process some key events.
+            addMouseListener(aTreeHelper);  // listen to process mouse double-click.
             addFocusListener(this);  // listen to repaint on focus events.
             getSelectionModel().  // in its selection model...
               addListSelectionListener(this);  // ...listen to selections.
@@ -143,7 +143,7 @@ public class DirectoryTableViewer
             int IndexI =   // get index of selected element from the model.
               TheListSelectionModel.getMinSelectionIndex();
             IFile subjectIFile=  // Cache Subject directory.
-              (IFile)aViewHelper.getWholeDataNode();
+              (IFile)aTreeHelper.getWholeDataNode();
             String[] IFileNameStrings =  // Calculate array of child file names.
               subjectIFile.GetFile().list();
             if ( IFileNameStrings == null )  // If array is null replace with empty array.
@@ -157,7 +157,7 @@ public class DirectoryTableViewer
                 IFile NewSelectionIFile=   // build IFile of selection at IndexI.
                   new IFile( subjectIFile, IFileNameStrings[IndexI] );
                 //SetSelectionRelatedVariablesFrom( NewSelectionIFile );
-                aViewHelper.setPartDataNodeV( NewSelectionIFile );
+                aTreeHelper.setPartDataNodeV( NewSelectionIFile );
 	                // This will set the TreePaths also.
 	                // This converts the row selection to a tree selection.
                 } // Process the selection.
@@ -211,11 +211,11 @@ public class DirectoryTableViewer
           esternal TreeSelectionListeners-s. */
         { // UpdateJTableSelection()
           int IndexI= 0;  // Assume index is zero for now.
-          DataNode selectionDataNode= aViewHelper.getPartDataNode();
+          DataNode selectionDataNode= aTreeHelper.getPartDataNode();
           if ( selectionDataNode != null )  // There is a selection.
             { // Calculate child's index.
               IndexI= // try to get index of selected child.
-                aViewHelper.getWholeDataNode().getIndexOfChild( 
+                aTreeHelper.getWholeDataNode().getIndexOfChild( 
                   selectionDataNode 
                   );
               if ( IndexI < 0 )  // force index to 0 if child not found.
@@ -262,21 +262,21 @@ public class DirectoryTableViewer
           }
         */
 
-    // VHelper (ViewHelper pass-through) methods.
+    // TreeAware (TreeHelper pass-through) methods.
 
       public TreePath getWholeTreePath()
         { 
-          return aViewHelper.getWholeTreePath();
+          return aTreeHelper.getWholeTreePath();
           }
 
       public TreePath getPartTreePath()
         { 
-          return aViewHelper.getPartTreePath();
+          return aTreeHelper.getPartTreePath();
           }
 
       public void addTreeSelectionListener( TreeSelectionListener listener ) 
         {
-          aViewHelper.addTreeSelectionListener( listener );
+          aTreeHelper.addTreeSelectionListener( listener );
           }
 
     } // DirectoryTableViewer
