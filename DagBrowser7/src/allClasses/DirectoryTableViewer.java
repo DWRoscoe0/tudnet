@@ -10,7 +10,7 @@ import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.event.TreeSelectionListener;
+//import javax.swing.event.TreeSelectionListener;
 //import javax.swing.event.TreeSelectionEvent;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.tree.TreeModel;
@@ -274,9 +274,9 @@ public class DirectoryTableViewer
           return aTreeHelper.getPartTreePath();
           }
 
-      public void addTreeSelectionListener( TreeSelectionListener listener ) 
+      public void addTreePathListener( TreePathListener listener ) 
         {
-          aTreeHelper.addTreeSelectionListener( listener );
+          aTreeHelper.addTreePathListener( listener );
           }
 
     } // DirectoryTableViewer

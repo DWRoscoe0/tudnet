@@ -11,7 +11,7 @@ import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.event.TreeSelectionListener;
+//import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
@@ -42,7 +42,7 @@ public class ListViewer
   
       private static final long serialVersionUID = 1L;
 
-      private TreeHelper aTreeHelper;  // Mutual composition helper class ???
+      private TreeHelper aTreeHelper;  // For doing TreePath things.
 
     // constructor and related methods.
 
@@ -70,7 +70,6 @@ public class ListViewer
           { // Set ListModel for the proper type of elements.
             ListModel<Object> AListModel;
             AListModel= new TreeListModel( 
-              //subjectDataNode, 
               aTreeHelper.getWholeDataNode( ),
               inTreeModel 
               );
@@ -184,50 +183,50 @@ public class ListViewer
           return aTreeHelper.getPartTreePath();
           }
 
-      public void addTreeSelectionListener( TreeSelectionListener listener ) 
+      public void addTreePathListener( TreePathListener listener ) 
         {
-          aTreeHelper.addTreeSelectionListener( listener );
+          aTreeHelper.addTreePathListener( listener );
           }
 
-      // Nested class stuff for List cell rendering.
+    // List cell rendering.
 
-        private ListCellRenderer TheListCellRenderer=
-          new ListCellRenderer(); // for custom cell rendering.
-      
-        public static class ListCellRenderer
-          extends DefaultListCellRenderer
-          /* This small helper class extends the method 
-            getTableCellRendererComponent() which is 
-            used for rendering JList cells.
-            The main purpose of this is to give the selected cell
-            a different color when the Component has focus.
-            */
-          { // class ListCellRenderer
-            private static final long serialVersionUID = 1L;
+      private ListCellRenderer TheListCellRenderer=
+        new ListCellRenderer(); // for custom cell rendering.
+    
+      public static class ListCellRenderer
+        extends DefaultListCellRenderer
+        /* This small helper class extends the method 
+          getTableCellRendererComponent() which is 
+          used for rendering JList cells.
+          The main purpose of this is to give the selected cell
+          a different color when the Component has focus.
+          */
+        { // class ListCellRenderer
+          private static final long serialVersionUID = 1L;
 
-            public Component getListCellRendererComponent
-              ( JList<?> list,
-                Object value,
-                int index,
-                boolean isSelected,
-                boolean hasFocus
-                )
-              {
+          public Component getListCellRendererComponent
+            ( JList<?> list,
+              Object value,
+              int index,
+              boolean isSelected,
+              boolean hasFocus
+              )
+            {
 
-              Component RenderComponent=  // get the superclass RenderCompoent.
-                super.getListCellRendererComponent(
-                  list, value, index, isSelected, hasFocus );
-              { // make color adjustments to RenderComponent.
-                if ( ! isSelected )  // cell not selected.
-                  RenderComponent.setBackground(list.getBackground());
-                else if ( ! list.isFocusOwner() )  // selected but not focused.
-                  RenderComponent.setBackground( list.getSelectionBackground() );
-                else  // both selected and focused.
-                  RenderComponent.setBackground( Color.GREEN ); // be distinctive.
-                } // make color adjustments to RenderComponent.
-              // RenderComponent.setBackground(Color.RED);  // ???
-              return RenderComponent;
-              }
-          } // class ListCellRenderer    
+            Component RenderComponent=  // get the superclass RenderCompoent.
+              super.getListCellRendererComponent(
+                list, value, index, isSelected, hasFocus );
+            { // make color adjustments to RenderComponent.
+              if ( ! isSelected )  // cell not selected.
+                RenderComponent.setBackground(list.getBackground());
+              else if ( ! list.isFocusOwner() )  // selected but not focused.
+                RenderComponent.setBackground( list.getSelectionBackground() );
+              else  // both selected and focused.
+                RenderComponent.setBackground( Color.GREEN ); // be distinctive.
+              } // make color adjustments to RenderComponent.
+            // RenderComponent.setBackground(Color.RED);  // ???
+            return RenderComponent;
+            }
+        } // class ListCellRenderer    
 
     } // ListViewer

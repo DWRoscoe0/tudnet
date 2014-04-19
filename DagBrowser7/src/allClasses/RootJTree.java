@@ -10,24 +10,18 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
 
-// import java.awt.*;
-
-// import javax.swing.JPanel;
-
 import static allClasses.Globals.*;  // appLogger;
 
 public class RootJTree 
 
   extends IJTree
 
-  implements KeyListener, TreeSelectionListener
-
+  implements KeyListener, TreeSelectionListener, TreeAware
+  
   /* This class is used for the content in the left JTree subpanel.
-    the only field is an IJTree.  
     
     Possible changes/fixes ???
     
-    * Initial selection is not scrolled into Viewport.
     *!If (Down-Arrow) causes the collapse of a large subtree,
       the final selection is not scrolled into Viewport.
       * It seems to be calling the correct routines, including
@@ -36,7 +30,6 @@ public class RootJTree
         above the top of the Viewport.
       ! expandPath(..) is called AFTER subselectionsEndV()(..)!
         Why is that.
-    * Why not just use IJTree?? 
 
     */
 
@@ -44,11 +37,15 @@ public class RootJTree
 
     // Variables.
       private static final long serialVersionUID = 1L;
-      // private IJTree theIJTree;
-      private DataTreeModel theDataTreeModel;
-      private JScrollPane theJScrollPane;
+
+      private DataTreeModel theDataTreeModel;  // Defines Tree data.
+
+      private JScrollPane theJScrollPane;  // Associated JScrollPane.
+
       private TreePath savedTreePath;  // Previous selection.  This is...
         // ...for use as first argument to changeSelectionV(..)
+
+      private TreeHelper aTreeHelper;  // For doing TreePath things.
 
     // Constructors.
 
@@ -62,8 +59,11 @@ public class RootJTree
         { // Constructor.
           super( inTreeModel );  // Construct the superclass.
           
-          theDataTreeModel= inTreeModel;  // Cache the TreeModel.
-          theJScrollPane= inJScrollPane;  // Cache the JScrollPane.
+          aTreeHelper=  // Construct helper class instance.
+            new TreeHelper( this, null );  // Note, TreePath is not set yet.
+
+          theDataTreeModel= inTreeModel;  // Save the TreeModel.
+          theJScrollPane= inJScrollPane;  // Save the JScrollPane.
             
           //theIJTree.setLargeModel( true );        
           /*
@@ -84,6 +84,23 @@ public class RootJTree
           addKeyListener(this);  // listen for key presses.
           
           } // Constructor.
+  
+    // interface TreeHelper pass-through methods.
+
+      public TreePath getWholeTreePath()
+        { 
+          return aTreeHelper.getWholeTreePath();
+          }
+
+      public TreePath getPartTreePath()
+        { 
+          return aTreeHelper.getPartTreePath();
+          }
+
+      public void addTreePathListener( TreePathListener listener ) 
+        {
+          aTreeHelper.addTreePathListener( listener );
+          }
 
     // Input methods.
 
@@ -161,6 +178,7 @@ public class RootJTree
                   ) ;  // ...and maybe trigger an auto-expansion selection.
                 Selection.set(FinalNewTreePath); // Record final selection position.
                 subselectionsEndV();  // Mark end of windows changes.
+                aTreeHelper.setPartTreePathV( FinalNewTreePath );
                 } // Process non-null selection TreePath.
             dbgV("RootJTree.valueChanged(..) End");
             Misc.dbgEventDone(); // for Debug.

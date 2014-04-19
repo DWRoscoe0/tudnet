@@ -12,7 +12,7 @@ import java.util.Vector;
 import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
 import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
+//import javax.swing.event.TreeSelectionListener;
 
 //import static allClasses.Globals.*;  // appLogger;
 
@@ -215,20 +215,31 @@ public class TreeHelper
           */
 
         private void setWholeV( TreePath inTreePath )
-          /* This method stores the TreePath representing the node
-            being displayed.
+          /* This method stores inTreePath as the TreePath of the Whole.
+            ? It also notifies any TreePathListener about it.
             It should be used only when there is no accessible Part.
             partTreePath will be set to null;  
+            To prevent infinite recursion it acts only if
+            inTreePath is different from the present wholeTreePath.
             */
           { 
-            wholeTreePath= inTreePath;  // Store Whole TreePath.
-            wholeDataNode=  // Store last element for easy access.
-              (DataNode)wholeTreePath.getLastPathComponent();
-            
-            { // Set Part to none, for now.
-              partTreePath= null;
-              partDataNode= null;
-              } // Set Part to none, for now.
+            if  // This is a different wholeTreePath.
+              ( ! inTreePath.equals( wholeTreePath ) )
+
+              { // Update TreePath variables using the new value.
+
+                { // Store Whole Part variables.
+                  wholeTreePath= inTreePath;  // Store Whole TreePath.
+                  wholeDataNode=  // Store last element for easy access.
+                    (DataNode)wholeTreePath.getLastPathComponent();
+                  } // Store Whole Part variables. 
+
+                { // Set Part variables to none, for now.
+                  partTreePath= null;
+                  partDataNode= null;
+                  } // Set Part variables to none, for now.
+                  
+                } // Update TreePath variables using the new value.
             }
 
         private void setWholeWithPartAutoSelectV(TreePath inTreePath)
@@ -237,29 +248,32 @@ public class TreeHelper
             visited child of the Whole, if there is one.
             */
           {
-            DataNode childDataNode=  // Try to get the child...
-              Selection.  // ...from the visits tree that was the...
-                setAndReturnDataNode( // ...most recently visited child...
-                  inTreePath  // ...of the List at the end of the TreePath.
-                  );
-            if (childDataNode == null)  // if no recent child try first one.
-              { // try getting first ChildDagNode.
-                DataNode theDataNode=  // Get DataNode at end of TreePath.
-                  (DataNode)inTreePath.getLastPathComponent();
-                if   // There are no children.
-                  (theDataNode.getChildCount() <= 0)
-                    ;  // Do nothing.
-                  else  // There are children.
-                    childDataNode=   // get first ChildDagNode.
-                      theDataNode.getChild(0);
-                } // get name of first child.
-            if (childDataNode != null)  // There is an accessible child.
-              setPartTreePathV(   // Set Part TreePath to be...
-                inTreePath.  // ...Whole TreePath with...
-                  pathByAddingChild( childDataNode ) // ... child added.
-                );  // This will set the Whole also.
-              else  // There is no accessible child.
-              setWholeV( inTreePath );  // Save Whole TreePath only.
+            if (inTreePath != null)  // TreePath is not null.
+              { // Set things from inTreePath.
+                DataNode childDataNode=  // Try to get the child...
+                  Selection.  // ...from the visits tree that was the...
+                    setAndReturnDataNode( // ...most recently visited child...
+                      inTreePath  // ...of the List at the end of the TreePath.
+                      );
+                if (childDataNode == null)  // if no recent child try first one.
+                  { // try getting first ChildDagNode.
+                    DataNode theDataNode=  // Get DataNode at end of TreePath.
+                      (DataNode)inTreePath.getLastPathComponent();
+                    if   // There are no children.
+                      (theDataNode.getChildCount() <= 0)
+                        ;  // Do nothing.
+                      else  // There are children.
+                        childDataNode=   // get first ChildDagNode.
+                          theDataNode.getChild(0);
+                    } // get name of first child.
+                if (childDataNode != null)  // There is an accessible child.
+                  setPartTreePathV(   // Set Part TreePath to be...
+                    inTreePath.  // ...Whole TreePath with...
+                      pathByAddingChild( childDataNode ) // ... child added.
+                    );  // This will set the Whole also.
+                  else  // There is no accessible child.
+                  setWholeV( inTreePath );  // Save Whole TreePath only.
+                } // Set things from inTreePath.
             }
 
         protected TreePath getWholeTreePath( )
@@ -283,7 +297,7 @@ public class TreeHelper
         the JComponent being used to represent the Whole.
         */
 
-        private TreePath partTreePath; /* TreePath to Part.  
+        private TreePath partTreePath; /* TreePath of Part.  
           The parent of this TreePath is wholeTreePath
           which represents the entire set being displayed.
           This assumes that there is only one sub-level displayed,
@@ -300,19 +314,25 @@ public class TreeHelper
           a node with no highlighted child.
           */
 
-        private void setPartTreePathV( TreePath inTreePath )
+        public void setPartTreePathV( TreePath inTreePath )
           /* This method stores inTreePath as the TreePath of the Part. 
-            It also notifies any TreeSelectionListener about it.
+            It also notifies any TreePathListener about it.
+            To prevent infinite recursion it acts only if
+            inTreePath is different from the present partTreePath.
             */
           { 
-            setWholeV(  // Set appropriate Whole TreePath to be...
-              inTreePath.getParentPath()  // ...parent of Part TreePath.
-              );  // This will set the Whole DataNode also.
+            if  // This is a different partTreePath.
+              ( ! inTreePath.equals( partTreePath ) )
+              { // Update TreePath variables using the new value.
+                setWholeV(  // Set appropriate Whole TreePath to be...
+                  inTreePath.getParentPath()  // ...parent of Part TreePath.
+                  );  // This will set the Whole DataNode also.
 
-            partTreePath= inTreePath;  // Store Part TreePath.
-            partDataNode=  // Store last element for easy access.
-              (DataNode)partTreePath.getLastPathComponent();
-            notifyListenersAboutPartV( inTreePath );
+                partTreePath= inTreePath;  // Store Part TreePath.
+                partDataNode=  // Store last element for easy access.
+                  (DataNode)partTreePath.getLastPathComponent();
+                notifyListenersAboutPartV( inTreePath );
+                } // Update TreePath variables using the new value.
             }
 
         protected TreePath getPartTreePath()
@@ -325,7 +345,7 @@ public class TreeHelper
           /* This method sets the Part DataNode to be inDataNode.
             It updates other variables appropriately.
             But it assumes that the Whole is unchanged.
-            It also notifies any TreeSelectionListener about it.
+            It also notifies any TreePathListener about it.
             */
           {
             TreePath childTreePath= // Calculate child TreePath to be...
@@ -340,7 +360,7 @@ public class TreeHelper
             return partDataNode;  // return DataNode of Part.
             }
     
-    // TreeSelectionListener code (setting and using).
+    // TreePathListener code (setting and using).
 
       /* Though the class TreeSelectionEvent is used by the following methods,
         neither this class or the class being helped by this class
@@ -353,16 +373,16 @@ public class TreeHelper
           * true: the location is of the Part.
         */
       
-      private Vector<TreeSelectionListener> listenerVector =   // Listeners.
-        new Vector<TreeSelectionListener>();
+      private Vector<TreePathListener> listenerVector =   // Listeners.
+        new Vector<TreePathListener>();
 
-      public void addTreeSelectionListener( TreeSelectionListener listener ) 
+      public void addTreePathListener( TreePathListener listener ) 
         {
           if ( listener != null && !listenerVector.contains( listener ) )
             listenerVector.addElement( listener );
           }
 
-      public void removeTreeSelectionListener(TreeSelectionListener listener)
+      public void removeTreePathListener(TreePathListener listener)
         {
           if ( listener != null )
             listenerVector.removeElement( listener );
@@ -370,7 +390,7 @@ public class TreeHelper
 
       public void notifyListenersAboutPartV( TreePath inTreePath )
         {
-          notifyTreeSelectionListenersV(  // Notify the listeners about...
+          notifyTreePathListenersV(  // Notify the listeners about...
             true,  // ... an internal/Part change...
             inTreePath  // ...to the Part path.
             );
@@ -384,16 +404,16 @@ public class TreeHelper
           dereference and replacement by the Listener.
           */
         {
-          notifyTreeSelectionListenersV(  // Notify the listeners about...
+          notifyTreePathListenersV(  // Notify the listeners about...
             false,  // ... an external/Whole change...
             inTreePath  // ...to this path.
             );
           }
 
-      private void notifyTreeSelectionListenersV( 
+      private void notifyTreePathListenersV( 
           boolean internalB, TreePath inTreePath 
           )
-        /* Notifies any TreeSelectionListeners of the JComponent being helped
+        /* Notifies any TreePathListeners of the JComponent being helped
           of a tree location change of either the Whole or the Part.
           inTreePath is the TreePath of the new location.
           internalB has the following meanings:
@@ -420,13 +440,13 @@ public class TreeHelper
 
       private void fireValueChanged( TreeSelectionEvent e ) 
         {
-          Enumeration<TreeSelectionListener> listeners = 
+          Enumeration<TreePathListener> listeners = 
             listenerVector.elements();
           while ( listeners.hasMoreElements() ) 
             {
-              TreeSelectionListener listener = 
-                (TreeSelectionListener)listeners.nextElement();
-              listener.valueChanged( e );
+              TreePathListener listener = 
+                (TreePathListener)listeners.nextElement();
+              listener.partTreeChangedV( e );
               }
         }
 

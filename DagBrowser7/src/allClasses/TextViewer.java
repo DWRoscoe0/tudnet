@@ -3,7 +3,7 @@ package allClasses;
 import java.awt.Color;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import javax.swing.event.TreeSelectionListener;
+//import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
@@ -123,9 +123,9 @@ public class TextViewer
           return aTreeHelper.getPartTreePath();
           }
 
-      public void addTreeSelectionListener( TreeSelectionListener listener ) 
+      public void addTreePathListener( TreePathListener listener ) 
         {
-          aTreeHelper.addTreeSelectionListener( listener );
+          aTreeHelper.addTreePathListener( listener );
           }
 
     // rendering methods.  to be added.
