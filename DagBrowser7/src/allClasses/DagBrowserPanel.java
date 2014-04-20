@@ -46,7 +46,7 @@ public class DagBrowserPanel
     */
 
   /* ??? marks things to do below.  Here are those items summarized:
-    * Factor DagBrowserPanel() and other methods so eachffits on a screen.
+    * Factor DagBrowserPanel() and other methods so each fits on a screen.
     * FocusStepB() simplification using scanning loop.
     * CommandHelpV() replacement with a general PromptingHelp system.
     */
@@ -441,12 +441,6 @@ public class DagBrowserPanel
         */
         
         public void partTreeChangedV( TreeSelectionEvent theTreeSelectionEvent )
-/*
-          // Temporary bridge method. ???
-          { valueChanged( theTreeSelectionEvent ); }
-          
-        public void valueChanged( TreeSelectionEvent theTreeSelectionEvent ) 
-*/
           /* This processes TreeSelectionEvent-s.
             It's job is to coordinate selections in 
             the left and right sub-panels.  
