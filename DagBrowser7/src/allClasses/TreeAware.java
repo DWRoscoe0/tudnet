@@ -2,7 +2,7 @@ package allClasses;
 
 //import javax.swing.JComponent;
 //import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.TreePath;
+//import javax.swing.tree.TreePath;
 
 public interface TreeAware
 
@@ -11,13 +11,16 @@ public interface TreeAware
 
     // TreeHelper pass-through methods.  See class TreeHelper for details.
   
-      public void addTreePathListener( TreePathListener listener );
+      public TreeHelper getTreeHelper();
+        // Returns the TreeHelper object which can do TreePath things.
+
+      //public void addTreePathListener( TreePathListener listener );
         // This is so the DagBrowserPanel can listen to the right sub-pael.
 
-      public TreePath getWholeTreePath();  // This method returns the TreePath...
+      //public TreePath getWholeTreePath();  // This method returns the TreePath...
         // ...of the Whole node being displayed.
 
-      public TreePath getPartTreePath();  // This method returns the TreePath...
+      //public TreePath getPartTreePath();  // This method returns the TreePath...
         // ...of the Part of the Whole being displayed.
     }
   

@@ -4,6 +4,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.Rectangle;
 
+import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 import javax.swing.JScrollPane;
 import javax.swing.event.TreeSelectionEvent;
@@ -59,8 +60,8 @@ public class RootJTree
         { // Constructor.
           super( inTreeModel );  // Construct the superclass.
           
-          aTreeHelper=  // Construct helper class instance.
-            new TreeHelper( this, null );  // Note, TreePath is not set yet.
+          aTreeHelper=  // Construct customized TreeHelper class instance.
+            new MyTreeHelper( this, null );  // Note, TreePath is not set yet.
 
           theDataTreeModel= inTreeModel;  // Save the TreeModel.
           theJScrollPane= inJScrollPane;  // Save the JScrollPane.
@@ -87,6 +88,20 @@ public class RootJTree
   
     // interface TreeHelper pass-through methods.
 
+      class MyTreeHelper extends TreeHelper {
+
+				MyTreeHelper(JComponent inOwningJComponent, TreePath inTreePath) 
+          {
+            super(inOwningJComponent, inTreePath);
+            // TODO Auto-generated constructor stub
+            }
+
+        }
+
+  
+      public TreeHelper getTreeHelper() { return aTreeHelper; }
+
+      /* ???
       public TreePath getWholeTreePath()
         { 
           return aTreeHelper.getWholeTreePath();
@@ -101,6 +116,7 @@ public class RootJTree
         {
           aTreeHelper.addTreePathListener( listener );
           }
+      */
 
     // Input methods.
 
@@ -418,7 +434,7 @@ public class RootJTree
         @Override
         public void keyTyped(KeyEvent TheKeyEvent) { }  // unused part of KeyListener interface.
 
-    // Command methods.
+    // Tree Command methods.
 
       public void commandGoToChildV() 
         /* Goes to and displays the most recently visited child 
@@ -763,7 +779,7 @@ public class RootJTree
           super.expandPath( inTreePath );
           }
 
-      private boolean logB= true;  // false;  // false for no debug logging.
+      private boolean logB= false;  // false;  // false for no debug logging.
 
       private void dbgV( String inString, TreePath inTreePath )
         /* This method logs inString as the name of the caller,

@@ -38,11 +38,9 @@ public class ListViewer
     
   { // ListViewer
   
-    // variables.
+    // variables, most of them.
   
       private static final long serialVersionUID = 1L;
-
-      private TreeHelper aTreeHelper;  // For doing TreePath things.
 
     // constructor and related methods.
 
@@ -170,9 +168,14 @@ public class ListViewer
             setJListScrollState();
             repaint();  // bug fix Kluge to display cell in correct color.  
             }
-  
-    // interface TreeHelper pass-through methods.
 
+    // interface TreeAware code for TreeHelper access.
+
+			public TreeHelper aTreeHelper;  // helper class ???
+
+			public TreeHelper getTreeHelper() { return aTreeHelper; }
+
+      /* ???
       public TreePath getWholeTreePath()
         { 
           return aTreeHelper.getWholeTreePath();
@@ -187,6 +190,7 @@ public class ListViewer
         {
           aTreeHelper.addTreePathListener( listener );
           }
+      */
 
     // List cell rendering.
 

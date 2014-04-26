@@ -33,7 +33,6 @@ public class TextViewer
       // instance variables.
 
         private Color DefaultBackgroundColor;  // For focusLost(..).
-        public TreeHelper aTreeHelper;  // Mutual composition Helper class.
 
     // constructor and related methods.
 
@@ -111,8 +110,13 @@ public class TextViewer
       
     // state updating methods (deleted).
 
-    // TreeHelper pass-through methods.
+    // interface TreeAware code for TreeHelper access.
 
+			public TreeHelper aTreeHelper;  // helper class ???
+
+			public TreeHelper getTreeHelper() { return aTreeHelper; }
+
+      /* ???
       public TreePath getWholeTreePath()
         { 
           return aTreeHelper.getWholeTreePath();
@@ -127,6 +131,7 @@ public class TextViewer
         {
           aTreeHelper.addTreePathListener( listener );
           }
+      */
 
     // rendering methods.  to be added.
       

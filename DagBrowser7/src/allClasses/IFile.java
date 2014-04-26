@@ -19,70 +19,83 @@ public class IFile
   
     // Variables.
       
-      File TheFile;  // File associated with this DataNode.
+      File theFile;  // File associated with this DataNode.
 
-      String[] ChildStrings= null;  // Initially empty array of child names.
-      IFile[] ChildIFiles= null;  // Initially empty array of child IFiles.
+      String[] childStrings= null;  // Initially empty array of child names.
+      IFile[] childIFiles= null;  // Initially empty array of child IFiles.
     
     // Constructors.
 
-      IFile ( String InString ) 
+      IFile ( String inString ) 
+        // Constructs an IFile with a single element whose name is inString.
         { 
-          TheFile= new File( InString );
+          theFile= new File( inString );
           }
     
-      IFile ( IFile IFileIn, String InString ) 
+      IFile ( IFile inIFile, String inString ) 
+        /* Constructs an IFile whose parent is inIFile and 
+          whose last element has name inString.
+          */
         { 
-          TheFile= new File( IFileIn.TheFile, InString );
+          theFile= new File( inIFile.theFile, inString );
           }
 
-    // TheFile pass-through methods.
+    // theFile pass-through methods.
       
       public File GetFile( )
-        /* This method returns the TheFile accociated with this DataNode.  */
+        /* This method returns the theFile associated with this DataNode.  */
         {
-          return TheFile;
+          return theFile;
           }
       
-      public boolean equals( Object InIFile )
-        /* Compares this to InIFile.  
-          This is not a complete implimentation of equals(..).
+      public boolean equals( Object inIFile )
+        /* Compares this to inIFile.  
+          This is not a complete implementation of equals(..).
           */
         {
-          boolean ResultB = false;
-          if (InIFile instanceof IFile) {
-              IFile OtherIFile = (IFile) InIFile;
-              ResultB = TheFile.equals( OtherIFile.TheFile );
+          boolean resultB = false;
+          if (inIFile instanceof IFile) {
+              IFile OtherIFile = (IFile) inIFile;
+              resultB = theFile.equals( OtherIFile.theFile );
               }
-          return ResultB;
+          return resultB;
           }
 
       public int hashCode() 
+        // Returns the hash code of the single File field.
         {
-          return TheFile.hashCode();  // Simply return hashcode of the single field.
+          return theFile.hashCode();
           }
 
     // A subset of delegated TreeModel methods.
 
-      public boolean isLeaf( ) 
+      public boolean isLeaf( )
+        /* Returns true if this is a file, false if a directory.  */
         {
-          return TheFile.isFile();
+          return theFile.isFile();
           }
 
       public int getChildCount( ) 
-        // this is pretty fast because it doesn't do actual counting.
+        /* This is pretty fast because it doesn't do actual counting.
+          It returns the length of the file name string array.
+          */
         {
-          int ChildCountI= 0;  // assume 0 children.
-          do { // override 0 child count if there are any children.
-            if ( ! TheFile.isDirectory() )  //  if not a directory
-              break; //  keep 0 as number of children.
-            String[] ChildrenStrings=   // calculate list of child file names.
+          int childCountI= 0;  // Assume count of 0 children.
+
+          goReturn: {  // For block-exit breaks below.
+            if ( ! theFile.isDirectory() )  //  This is not a directory
+              break goReturn; //  Keep 0 as number of children.
+            String[] childrenStrings=   // Calculate list of child file names.
               GetArrayOfStrings( );
-            if (ChildrenStrings == null)  // if no list produced because directory inaccessible then
-              break; //  keep 0 as number of children.
-            ChildCountI= ChildrenStrings.length;  // override with actual number of actual children.
-            } while (false); // override child count if there are any children.
-          return ChildCountI;  // return the final child count.
+            if   // No list produced because directory inaccessible then
+              (childrenStrings == null)
+              break goReturn; //  Keep 0 as number of children.
+            childCountI=   // Override 0 count with actual child file count.
+              childrenStrings.length;
+
+          } // goReturn
+            return childCountI;  // return the final child count.
+
           }
     
       public DataNode getChild( int IndexI ) 
@@ -93,101 +106,88 @@ public class IFile
           In either case it returns a reference to the child.
           */
         { // getChild( int IndexI ) 
-          SetupCacheArrays( );  // Setup the cache arrays for use.
-          IFile ChildIFile= null;
+          setupCacheArrays( );  // Setup the cache arrays for use.
+          IFile childIFile= null;
           do {  // Exittable block.
             if  // Exit if index out of bounds.
-              ( IndexI < 0 || IndexI >= ChildIFiles.length ) 
+              ( IndexI < 0 || IndexI >= childIFiles.length ) 
               break;
-            ChildIFile=  // Try to get child IFile from cache.
-              ChildIFiles[ IndexI ];
-            if ( ChildIFile == null )  // Fix the cache if IFile slot was empty.
+            childIFile=  // Try to get child IFile from cache.
+              childIFiles[ IndexI ];
+            if ( childIFile == null )  // Fix the cache if IFile slot was empty.
               { // Fill the empty cache slot.
-                ChildIFile=  // Calculate IFile slot value
+                childIFile=  // Calculate IFile slot value
                   new IFile(   // return representation of desired child.
                     this, 
                     GetArrayOfStrings( )[IndexI] 
                     );
-                ChildIFiles[ IndexI ]= ChildIFile;  // Save IFile in cache slot.
+                childIFiles[ IndexI ]= childIFile;  // Save IFile in cache slot.
                 } // Fill the empty cache slot.
             } while ( false );  // Exittable block.
-          return ChildIFile;  // Return IFile as result.
+          return childIFile;  // Return IFile as result.
           } // getChild( int IndexI ) 
 
-      public int getIndexOfChild( Object ChildObject ) 
-        /* Returns the index of ChildObject in directory ParentObject.  
-          It does this by searching in the ChildStrings array,
+      public int getIndexOfChild( Object childObject ) 
+        /* Returns the index of childObject in directory ParentObject.  
+          It does this by searching in the childStrings array,
           because file name strings uniquely identify the file.
-          It doesn't need to calculate or use the ChildIFiles array,
+          It doesn't need to calculate or use the childIFiles array,
           which would happen if AbDataNode.getIndexOfChild(.) were used.
           */
         {
-          IFile ChildIFile =  // Caste Child to this type.
-             (IFile)ChildObject;
-          String[] ChildrenStrings =  // Get local reference to Strings array.
+          IFile childIFile =  // Caste Child to this type.
+             (IFile)childObject;
+          String[] childrenStrings =  // Get local reference to Strings array.
             GetArrayOfStrings( );
 
-          int ResultI = -1;  // Initialize result for not found.
-          for ( int i = 0; i < ChildrenStrings.length; ++i ) 
+          int resultI = -1;  // Initialize result for not found.
+          for ( int i = 0; i < childrenStrings.length; ++i ) 
             {
-              if ( ChildIFile.TheFile.getName().equals( ChildrenStrings[i] ) ) 
+              if ( childIFile.theFile.getName().equals( childrenStrings[i] ) ) 
               {
-                ResultI = i;  // Set result to index of found child.
+                resultI = i;  // Set result to index of found child.
                 break;
                 }
               }
 
-          return ResultI;
+          return resultI;
           }
           
     // other interface DataNode methods.
 
-      public DataNode getNamedChildDataNode( String InNameString )
-        /* Returns the child DataNode whose name is InNameString.
-          If no such child exists, then it constructs and returns
-          a dummy IFile with the same name and this parent IFile.
-          */
-        { 
-          DataNode ChildDataNode=  // Let superclass try lookup.
-            super.getNamedChildDataNode( InNameString );
-          if ( ChildDataNode == null )  // Construct dummy if superclass failed.
-            ChildDataNode= new IFile( this, InNameString );
-          return ChildDataNode;  // Return the child DataNode.
-          }
-          
       public String GetInfoString()
         /* Returns a String representing information about this object. */
         { // GetInfoString()
-          String ResultInfoString= "";
+          String resultInfoString= "";
           try { // Build information string about file.
-            ResultInfoString+= ""
+            resultInfoString+= ""
               + "Name=\"" + GetNameString() + "\""; // file name.
-            ResultInfoString+= " Size=" + TheFile.length(); // file size.
+            resultInfoString+= " Size=" + theFile.length(); // file size.
             
-            Path ThePath= TheFile.toPath();  // Convert to Path for following.
+            Path ThePath= theFile.toPath();  // Convert to Path for following.
             if ( Files.isDirectory( ThePath, LinkOption.NOFOLLOW_LINKS ) )
-              ResultInfoString+= " Directory";
+              resultInfoString+= " Directory";
             if ( Files.isRegularFile( ThePath, LinkOption.NOFOLLOW_LINKS ) )
-              ResultInfoString+= " RegularFile";
+              resultInfoString+= " RegularFile";
             if ( Files.isSymbolicLink( ThePath ) )
-              ResultInfoString+= " SymbolicLink";
+              resultInfoString+= " SymbolicLink";
             if ( Files.isReadable( ThePath ) )
-              ResultInfoString+= " Readable";
+              resultInfoString+= " Readable";
             if ( Files.isWritable( ThePath ) )
-              ResultInfoString+= " Writable";
+              resultInfoString+= " Writable";
             /* These always return true, so don't use.  
               if ( Files.isExecutable( ThePath ) )
-                ResultInfoString+= " isExecutable";
-              if ( TheFile.canExecute() )
-                ResultInfoString+= " canExecute";
+                resultInfoString+= " isExecutable";
+              if ( theFile.canExecute() )
+                resultInfoString+= " canExecute";
               */
             if ( Files.isHidden( ThePath ) )
-              ResultInfoString+= " Hidden";
+              resultInfoString+= " Hidden";
             } // Build information string about file.
           catch ( Throwable AThrowable ) {  // Handle any exception by...
-            ResultInfoString+= " "+AThrowable;  // ...appending its description to string.
+            resultInfoString+= " "+AThrowable;  // ...appending its description to string.
             }
-          return ResultInfoString;  // return the accumulated information string.
+          return resultInfoString;  // return the accumulated information string.
           } // GetInfoString()
 
       public String GetNameString( )
@@ -200,74 +200,67 @@ public class IFile
           the entire canonical path.
           */
         {
-          String StringResult=   // Try getting the last name element.
-            TheFile.getName();
+          String stringResult=   // Try getting the last name element.
+            theFile.getName();
           if // Get the prefix if there is no name.
-            ( StringResult.equals( "" ) )
+            ( stringResult.equals( "" ) )
             try {
-              StringResult= // Get the prefix which is actually...
-                TheFile.getCanonicalPath();
+              stringResult= // Get the prefix which is actually...
+                theFile.getCanonicalPath();
               } catch (IOException e) {
-                StringResult= "IOException";  // Get error string.
+                stringResult= "IOException";  // Get error string.
               }  // ...the canonical path name.
-          return StringResult;  // Return the final result.
-          //return "IFile:test";  // ???
+          return stringResult;  // Return the final result.
           }
       
       public JComponent GetDataJComponent
-        ( TreePath InTreePath, TreeModel InTreeModel )
+        ( TreePath inTreePath, TreeModel inTreeModel )
         /* Returns a JComponent capable of displaying this IFile.  
           using a TreeModel argument.  
           This ignores the TreeModel for DataNode subclasses
           which do not yet support it.
           */
-        // { return GetDataJComponent( InTreePath ); }
         { // GetDataJComponent.
-          Object InObject= InTreePath.getLastPathComponent();
-          IFile InIFile= // convert to what we know it is, an abstract IFile name...
-            (IFile)InObject;  // ...from the input Object.
-          JComponent ResultJComponent= null;  // allocate result space.
+          Object inObject= inTreePath.getLastPathComponent();
+          IFile inIFile= // convert to what we know it is, an abstract IFile name...
+            (IFile)inObject;  // ...from the input Object.
+          JComponent resultJComponent= null;  // allocate result space.
 
           { // calculate the associated DagNodeViewer.
-            if ( InIFile.TheFile.isDirectory() )  // file is a directory.
-              ResultJComponent= 
-                new DirectoryTableViewer( InTreePath, InTreeModel );
-                //JComponentForDirectoryJTable( InTreePath, InTreeModel );
-            else if ( InIFile.TheFile.isFile() )  // file is a regular file.
-              ResultJComponent= JComponentForJTextAreaFrom(
-                InTreePath, InTreeModel );
+            if ( inIFile.theFile.isDirectory() )  // file is a directory.
+              resultJComponent= 
+                new DirectoryTableViewer( inTreePath, inTreeModel );
+            else if ( inIFile.theFile.isFile() )  // file is a regular file.
+              resultJComponent= JComponentForJTextAreaFrom(
+                inTreePath, inTreeModel 
+                );
             else  // file is neither.
               { // Handle unreadable folder or device.
-                ResultJComponent=  // calculate a blank JPanel DagNodeViewer.
+                resultJComponent=  // calculate a blank JPanel DagNodeViewer.
                   new TextViewer( 
-                    InTreePath, 
-                    InTreeModel, 
+                    inTreePath, 
+                    inTreeModel, 
                     "\n\n    UNREADABLE AS FILE OR FOLDER\n" 
                     );
-                ResultJComponent.setBackground(Color.PINK);  // Indicate error with color.
+                resultJComponent.setBackground(Color.PINK);  // Indicate error with color.
                 } // Handle unreadable folder or device.
             } // calculate the associated DagNodeViewer.
-          return ResultJComponent;  // return the final result.
+          return resultJComponent;  // return the final result.
           } // GetDataJComponent.
 
       private JComponent JComponentForJTextAreaFrom
-        ( TreePath InTreePath, TreeModel InTreeModel )
+        ( TreePath inTreePath, TreeModel inTreeModel )
         /* This grouping returns a DagNodeViewer of a JTextArea 
-          for displaying the IFile named by InTreePath.
+          for displaying the IFile named by inTreePath.
           */
-        { // JComponentForJTextAreaFrom(InIFile)
-          IFile InIFile= (IFile)InTreePath.getLastPathComponent();
-          return new TextViewer( InTreePath, InTreeModel, InIFile );
-          }  // JComponentForJTextAreaFrom(InIFile)
+        { // JComponentForJTextAreaFrom(inIFile)
+          IFile inIFile= (IFile)inTreePath.getLastPathComponent();
+          return new TextViewer( inTreePath, inTreeModel, inIFile );
+          }  // JComponentForJTextAreaFrom(inIFile)
           
     // other methods.
-      
-      public DataNode[] GetDataNodes( )
-        {
-          return null;  // ?? nothing for now.
-          }
 
-      public IFile[] SetupCacheArrays( )
+      private IFile[] setupCacheArrays( )
         /* Sets up the array of Strings and IFile-s 
           associated with this object.
           It loads the String array if it has not already been loaded,
@@ -276,25 +269,25 @@ public class IFile
           */
         {
           GetArrayOfStrings( );  // Load array of Strings if needed.
-          if ( ChildIFiles == null )  // Create array of IFiles if needed.
-            ChildIFiles=  // Create array of IFiles with same size as...
-              new IFile[GetArrayOfStrings( ).length];  // ... ChildStrings.
-          return ChildIFiles;  // Return the array.
+          if ( childIFiles == null )  // Create array of IFiles if needed.
+            childIFiles=  // Create array of IFiles with same size as...
+              new IFile[GetArrayOfStrings( ).length];  // ... childStrings.
+          return childIFiles;  // Return the array.
           }
 
-      public String[] GetArrayOfStrings( )
+      private String[] GetArrayOfStrings( )
         /* Returns an array of Strings of names of files in 
           directory associated with this object.
           It loads this array if it has not already been loaded.
           */
         {
-          if ( ChildStrings == null )  // Read names of children if needed.
-            ChildStrings=  // Read names of children from directory.
-              TheFile.list();
-          if ( ChildStrings == null )  // Make certain the array is not null.
-            ChildStrings=  // Make it be a zero-length array.
+          if ( childStrings == null )  // Read names of children if needed.
+            childStrings=  // Read names of children from directory.
+              theFile.list();
+          if ( childStrings == null )  // Make certain the array is not null.
+            childStrings=  // Make it be a zero-length array.
               new String[ 0 ];
-          return ChildStrings;  // Return the array.
+          return childStrings;  // Return the array.
           }
 
       public String toString( ) { return GetNameString( ); }

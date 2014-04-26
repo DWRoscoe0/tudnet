@@ -8,8 +8,7 @@ public abstract class AbDataNode
 
   implements DataNode
   
-  /* This is an abstract class that implements part of 
-    the interface DataNode.
+  /* This is an abstract class that implements part of the DataNode interface.
     The methods implemented here are 
     ones that are likely to be useful for most subclasses.
     Subclasses can override methods that are not appropriate.
@@ -20,7 +19,9 @@ public abstract class AbDataNode
   
       public boolean isLeaf( ) 
         /* Returns false, because most nodes are not leaves.  */
-        { return false; }
+        { 
+          return false; 
+          }
 
       public DataNode getChild( int IndexI ) 
         /* This returns null to indicate a default of 0 children.  */
@@ -30,84 +31,75 @@ public abstract class AbDataNode
 
       public int getChildCount( ) 
         /* This method actually scans all the children that are
-          visible to the method getChild(.) and counts them.  
+          visible to the method getChild(..) and counts them.  
           It assumes a functional getChild( IndexI ) method which
           returns null if IndexI is out of range.  */
         { // getChildCount( )
-          int ChildIndexI= 0;  // Initialize child index.
+          int childIndexI= 0;  // Initialize child index.
           while  // Process all children...
-            ( getChild( ChildIndexI ) != null )  // ...returned by getChild(.).
+            ( getChild( childIndexI ) != null )  // ...returned by getChild(.).
             { // process this child.
-              ChildIndexI++;  // increment index.
+              childIndexI++;  // increment index.
               } // process this child.
-          return ChildIndexI;  // Return ending index as count.
+          return childIndexI;  // Return ending index as count.
           } // getChildCount( )
 
-      public int getIndexOfChild( Object InChildObject ) 
-        /* Returns the index of the child ChildObject,
+      public int getIndexOfChild( Object inChildObject ) 
+        /* Returns the index of the child inchildObject,
           or -1 if it is not one of this node's children. 
-          It assumes a functional getChild(.) method.  */
+          It assumes a functional getChild(.) method.  
+          */
         { // getIndexOfChild(.)
-          int ChildIndexI= 0;  // Initialize child search index.
+          int childIndexI= 0;  // Initialize child search index.
           while ( true ) // Search for child.
             { // Check one child.
-              Object ChildObject=  // get the child.
-                 getChild( ChildIndexI );
-              if ( ChildObject == null )  // null means no more children.
+              Object childObject=  // get the child.
+                 getChild( childIndexI );
+              if ( childObject == null )  // null means no more children.
                 { // Exit with failure.
-                  ChildIndexI= -1;  // Set index to indicate failure.
+                  childIndexI= -1;  // Set index to indicate failure.
                   break;  // Exit while loop.
                   } // Exit with failure.
-              if ( InChildObject.equals( ChildObject ) )  // Found child.
+              if ( inChildObject.equals( childObject ) )  // Found child.
                 break;  // Exit while loop.
-              ChildIndexI++;  // Increment index to check next child.
+              childIndexI++;  // Increment index to check next child.
               } // Check one child.
-          return ChildIndexI;  // Return index as search result.
+          return childIndexI;  // Return index as search result.
           } // getIndexOfChild(.)
 
-      public DataNode getNamedChildDataNode( String InNameString )
-        /* Returns the child DataNode whose name is InNameString.
+      public DataNode getNamedChildDataNode( String inNameString )
+        /* Returns the child DataNode whose name is inNameString.
           If no such child exists, then it returns null.
           */
         { 
-          DataNode ChildDataNode;
-          int ChildIndexI= 0;  // Initialize child search index.
-          while ( true ) // Search for child by trying each child index.
-            { // Check one child index.
-              ChildDataNode= getChild( ChildIndexI );  // get the child.
-              if ( ChildDataNode == null )  // null means no more children.
-                break;  // Exit while loop.
-              if  // Found child with desired name.
-                ( InNameString.equals( ChildDataNode.GetNameString( ) ) )
-                break;  // Exit while loop.
-              ChildIndexI++;  // Increment index to check next child.
-              } // Check one child index.
-          return ChildDataNode;  // Return the child DataNode.
+          int childIndexI= // Translate name to index.
+            getIndexOfNamedChild( inNameString );
+          DataNode childDataNode= // Translate index to DataNode.
+            getChild( childIndexI );
+          return childDataNode;  // Return DataNode.
           }
 
-      public int getIndexOfNamedChild( String InString )  //???
-        /* Returns the index of the child whose name is InString,
+      public int getIndexOfNamedChild( String inString )
+        /* Returns the index of the child whose name is inString,
           or -1 if this node's has no such child. 
-          It assumes a functional getChild(.) method.  */
+          It assumes a functional getChild(..) method.  */
         {
-          int ChildIndexI= 0;  // Initialize child search index.
+          int childIndexI= 0;  // Initialize child search index.
           while ( true ) // Search for child.
             { // Check one child.
-              Object ChildObject=  // get the child.
-                 getChild( ChildIndexI );
-              if ( ChildObject == null )  // null means no more children.
+              DataNode childDataNode=  // get the child.
+                 getChild( childIndexI );
+              if ( childDataNode == null )  // null means no more children.
                 { // Exit with failure.
-                  ChildIndexI= -1;  // Set index to indicate failure.
+                  childIndexI= -1;  // Set index to indicate failure.
                   break;  // Exit while loop.
                   } // Exit with failure.
               if  // Found child with desired name.
-               ( InString.equals( 
-                 ((DataNode)ChildObject).GetNameString( ) )
-                 )
+                ( inString.equals( childDataNode.GetNameString( ) ) )
                 break;  // Exit while loop.
-              ChildIndexI++;  // Increment index to check next child.
+              childIndexI++;  // Increment index to check next child.
               } // Check one child.
-          return ChildIndexI;  // Return index as search result.
+          return childIndexI;  // Return index as search result.
           }
 
       public String GetInfoString()
@@ -129,23 +121,27 @@ public abstract class AbDataNode
           }
     
       public JComponent GetDataJComponent
-        ( TreePath InTreePath, TreeModel InTreeModel )
+        ( TreePath inTreePath, TreeModel inTreeModel )
         /* Returns a JComponent which is appropriate for viewing
           and possibly changing its associated DataNode, 
-          using context from InTreeModel.
-          The DataNode is defined by InTreePath,
+          using context from inTreeModel.
+          The DataNode is defined by inTreePath,
           */
         { // GetDataJComponent()
-          JComponent ResultJComponent= null;  // For result.
+          JComponent resultJComponent= null;  // For result.
 
           if ( isLeaf( ) )  // This DataNode is a leaf.
-            ResultJComponent= // Set result to be a TextViewer JComponent.
-              new TextViewer( InTreePath, InTreeModel, GetHeadString() );
+            resultJComponent= // Set result to be a TextViewer JComponent.
+              new TextViewer( 
+                inTreePath, 
+                inTreeModel, 
+                "Leaf Object: "+GetHeadString() 
+                );
             else  // This DataNode is NOT a leaf.
-            ResultJComponent= // Set result for exploring a List.
-              new ListViewer( InTreePath, InTreeModel );
-              //new ListExplorer( InTreePath, InTreeModel );
-          return ResultJComponent;  // Return the result from above.
+            resultJComponent= // Set result for exploring a List.
+              new ListViewer( inTreePath, inTreeModel );
+              //new ListExplorer( inTreePath, inTreeModel );
+          return resultJComponent;  // Return the result from above.
           } // GetDataJComponent()
 
     // other methods.

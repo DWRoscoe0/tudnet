@@ -60,11 +60,9 @@ public class DirectoryTableViewer
   
   { // DirectoryTableViewer
   
-    // Variables.
+    // Variables, some of them.
   
       private static final long serialVersionUID = 1L;
-
-			public TreeHelper aTreeHelper;  // helper class ???
 
       private DirectoryTableCellRenderer theDirectoryTableCellRenderer= 
         new DirectoryTableCellRenderer(); // for custom node rendering.
@@ -262,8 +260,13 @@ public class DirectoryTableViewer
           }
         */
 
-    // TreeAware (TreeHelper pass-through) methods.
+    // interface TreeAware code for TreeHelper access.
 
+			public TreeHelper aTreeHelper;  // helper class ???
+
+			public TreeHelper getTreeHelper() { return aTreeHelper; }
+
+      /* ???
       public TreePath getWholeTreePath()
         { 
           return aTreeHelper.getWholeTreePath();
@@ -278,5 +281,6 @@ public class DirectoryTableViewer
         {
           aTreeHelper.addTreePathListener( listener );
           }
+      */
 
     } // DirectoryTableViewer
