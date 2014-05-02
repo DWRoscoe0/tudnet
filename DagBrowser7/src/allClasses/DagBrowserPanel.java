@@ -55,11 +55,11 @@ public class DagBrowserPanel
 
     // instance variables.
 
-      private Timer BlinkerTimer; // Timer that triggers the monitor Blinker.
+      private Timer blinkerTimer; // Timer that triggers the monitor Blinker.
     
       // data models.
-        private DataTreeModel TheDataTreeModel;  // holds all browsable data.
-        private TreePath StartTreePath;  // start TreePath to be displayed.
+        private DataTreeModel theDataTreeModel;  // holds all browsable data.
+        private TreePath startTreePath;  // start TreePath to be displayed.
 
       // displayed sub-panel JComponent tree.
             
@@ -83,37 +83,37 @@ public class DagBrowserPanel
 
           private JLabel InfoJLabel;  // a place to display directory/file info.
 
-      /* ComponentFocusStateMachine.
-        This state machine restores the focus to either 
-        the left/navigation JTree pane or the right/content pane.  
-        This restoration is done becaue most of the time 
-        the focus is in one of those two places while the user browses, 
-        and the user will want to move the cursor back into
-        one of these panes if it ever goes out.
-        The reason the restoration is done stepping
-        only one Component at a time in the component hierarchy
-        is because Component.requestFocusInWindow() did not seem
-        to be able to reliably move the focus more than one Component.
-        */
-        private enum FocusPane {   // the normal focus panes.
-          NO_PANE,  // neither pane.
-          LEFT_PANE,  // left (tree view) pane.
-          RIGHT_PANE   // right (content view) pane.
-          };
-        private FocusPane LastFocusPane=  // The last FocusPane that had focus.
-          FocusPane.LEFT_PANE;  // Set to focus right pane initially.
-          // was: FocusPane.RIGHT_PANE;  // Set to focus right pane initially.
-        private FocusPane desiredFocusPane=  // The next pane to get focus...
-          FocusPane.NO_PANE;  // ... is initially undefined.
-          /* The meanings are as follows:
-            if NO_PANE then the ComponentFocusStateMachine is not running.
-            if LEFT_PANE or RIGHT_PANE then the ComponentFocusStateMachine 
-            is active and trying to set the focus to that pane Component.  */
-        // private int FocusStepCountI=0; // Debug.
-        private Component LastValidFocusOwnerPanelComponent= null;
-          /* if non-null then a focus-altering command is underway and 
-            the value is the penel Component with focus immediately before 
-            the command began.  */
+        /* ComponentFocusStateMachine.
+          This state machine restores the focus to either 
+          the left/navigation JTree pane or the right/content pane.  
+          This restoration is done becaue most of the time 
+          the focus is in one of those two places while the user browses, 
+          and the user will want to move the cursor back into
+          one of these panes if it ever goes out.
+          The reason the restoration is done stepping
+          only one Component at a time in the component hierarchy
+          is because Component.requestFocusInWindow() did not seem
+          to be able to reliably move the focus more than one Component.
+          */
+          private enum FocusPane {   // the normal focus panes.
+            NO_PANE,  // neither pane.
+            LEFT_PANE,  // left (tree view) pane.
+            RIGHT_PANE   // right (content view) pane.
+            };
+          private FocusPane lastFocusPane=  // The last FocusPane that had focus.
+            FocusPane.LEFT_PANE;  // Set to focus right pane initially.
+            // was: FocusPane.RIGHT_PANE;  // Set to focus right pane initially.
+          private FocusPane desiredFocusPane=  // The next pane to get focus...
+            FocusPane.NO_PANE;  // ... is initially undefined.
+            /* The meanings are as follows:
+              if NO_PANE then the ComponentFocusStateMachine is not running.
+              if LEFT_PANE or RIGHT_PANE then the ComponentFocusStateMachine 
+              is active and trying to set the focus to that pane Component.  */
+          // private int FocusStepCountI=0; // Debug.
+          private Component LastValidFocusOwnerPanelComponent= null;
+            /* if non-null then a focus-altering command is underway and 
+              the value is the penel Component with focus immediately before 
+              the command began.  */
         
       private Boolean TreeSelectionReentryBlockedB=   // for preventing entry...
         false;  // ...to TreeSelectionListener.
@@ -125,7 +125,7 @@ public class DagBrowserPanel
           This includes creating all the components, 
           defining their appearances, and
           connecting the various event listeners.
-          It also starts a BlinkerTimer used to indicate 
+          It also starts a blinkerTimer used to indicate 
           that the program is running.
           */
         { // DagBrowserPanel()
@@ -138,12 +138,15 @@ public class DagBrowserPanel
             } // Build and add sub-panels of this Panel.
           { // Define the content in the above panels.
             TreePath CurrentTreePath=  // Get TreePath of starting node.
-              StartTreePath;
-            theRootJTree.  // In the left sub-panel...
-              selectNodeV(CurrentTreePath);  // ...select current tree node.
-              // This should trigger a series of events which
-              // loads all the data-dependent sub-panel components
-              // and get them ready for display.  
+              startTreePath;
+            theRootJTree  // In the left sub-panel JTree's...
+              .getTreeHelper()  // ...TreeHelper...
+              .setPartTreePathV(  // ...select...
+                CurrentTreePath  // ...current tree node.
+                );
+                // This should trigger a series of events which
+                // load all the data-dependent sub-panel components
+                // and get them ready for display.  
             } // Define the content in the above panels.
 
           miscellaneousInitializationV();  // Odds and end.
@@ -270,9 +273,9 @@ public class DagBrowserPanel
           TreeJScrollPane.setPreferredSize( new Dimension( 400, 400 ) );
           { // Build the JTree view for the JScrollPane.
             theRootJTree= new RootJTree(  // Construct the JTree with...
-              TheDataTreeModel,  // ...this model for tree data and...
+              theDataTreeModel,  // ...this model for tree data and...
               TreeJScrollPane   // ...JScrollPane for view-ability tests.
-              );  // Note that TheDataTreeModel was built earlier.
+              );  // Note that theDataTreeModel was built earlier.
 
             { // setup handling by listener of various Tree events.
               //theRootJTree.addTreeSelectionListener(this);
@@ -286,7 +289,7 @@ public class DagBrowserPanel
             );
           }
 
-      private void buildRightJScrollPaneV()
+      private void buildRightJScrollPaneV()  // ???? needs factoring.
         /* This composition method builds the right JScrollPane
           which contains whatever JComponent is appropriate for
           displaying the item selected in 
@@ -295,9 +298,9 @@ public class DagBrowserPanel
         {
           { // build the scroller content.
             DataJComponent=   // calculate JPanel from TableModel.
-              TheDataTreeModel.GetDataJComponent(
-                StartTreePath // initially displaying root/child.
-                );  // Note that TheDataTreeModel was built earlier.
+              theDataTreeModel.GetDataJComponent(
+                startTreePath // initially displaying root/child.
+                );  // Note that theDataTreeModel was built earlier.
             DataTreeAware= (TreeAware)DataJComponent;  // Define alias...
             DataTreeAware.getTreeHelper().addTreePathListener(  // ...and Listener.
               this
@@ -319,13 +322,13 @@ public class DagBrowserPanel
           */
         {
 
-          { // build and start BlinkerTimer.
-            BlinkerTimer = new Timer(  // construct a timer...
+          { // build and start blinkerTimer.
+            blinkerTimer = new Timer(  // construct a timer...
               1000,  // ...set to fire once per second...
               this  // ...with the DagBrowserPanel the tick Listener.
               );
-            BlinkerTimer.start();  // start BlinkerTimer so 1-second blinkers will work.
-            } // build and start BlinkerTimer.
+            blinkerTimer.start();  // start blinkerTimer so 1-second blinkers will work.
+            } // build and start blinkerTimer.
           LastValidFocusOwnerPanelComponent=   // initialize ID of last component with focus.
             // theRootJTree.getTree();
             theRootJTree;  // was DataJComponent;            
@@ -350,9 +353,9 @@ public class DagBrowserPanel
           stores information about the Infogora graph.
           */
         {
-          StartTreePath= // Initialize StartTreePath for browsing...
+          startTreePath= // Initialize startTreePath for browsing...
             Selection.buildAttributeTreePath( );  // ...saved selection state.
-          TheDataTreeModel =  // Initialize DataTreeModel for JTree using...
+          theDataTreeModel =  // Initialize DataTreeModel for JTree using...
             //new DataTreeModel(RootDataNode);  // ...DataNode root.
             new DataTreeModel(   // ...DataNode root parent.
               DataRoot.getParentOfRootDataNode() 
@@ -364,10 +367,10 @@ public class DagBrowserPanel
       /* ActionListener and related methods, for processing ActionEvent-s from 
         buttons and timers.
         */
-      
+
         public void actionPerformed(ActionEvent TheActionEvent) 
           /* This method processes ActionsEvent-s from 
-            the Button-s and the BlinkerTimer.
+            the Button-s and the blinkerTimer.
             
             ??? This should be changed so that if the right sub-panel has focus,
             then the triggered commands will happen in the right sub-panel.
@@ -378,29 +381,31 @@ public class DagBrowserPanel
             */
           { // actionPerformed( ActionEvent )
             Object SourceObject= TheActionEvent.getSource();  // get Evemt source.
-            if (SourceObject == BlinkerTimer)  // try processing timer event.
-              ProcessBlinkerTimerV();
+            if (SourceObject == blinkerTimer)  // try processing timer event.
+              ProcessblinkerTimerV();
               else // try processing button press.
               { 
-                Boolean ButtonDone= true; // assume we will do a button action.
-                { // try the various buttons.
+                TreeAware theTreeAware=  // Panel attached to buttons...
+                  getFocusedTreeAware();  // ...is the one last focused.
+                Boolean ButtonDone= true; // Assume a button action will happen.
+                { // Try the various buttons and execute JTree commands.
                   if (SourceObject == LeftArrowIJButton)
-                    theRootJTree. // delegate to JTree panel and...
-                      commandGoToParentV();  // ...its GoToParent command.
+                    theTreeAware.getTreeHelper().
+                      commandGoToParentB(true);
                   else if (SourceObject == RightArrowIJButton)
-                    theRootJTree. // delegate to JTree panel and...
-                      commandGoToChildV();  // ...its GoToChild command.
+                    theTreeAware.getTreeHelper().
+                      commandGoToChildB(true);
                   else if (SourceObject == DownArrowIJButton)
-                    theRootJTree. // delegate to JTree panel and...
-                      commandGoDownV();  // ...its GoDown command.
+                    theTreeAware.getTreeHelper().
+                      commandGoDownB(true);
                   else if (SourceObject == UpArrowIJButton)
-                    theRootJTree. // delegate to JTree panel and...
-                      commandGoUpV();  // ...its GoUp command.
+                    theTreeAware.getTreeHelper().
+                      commandGoUpB(true);
                   else if (SourceObject == HelpIJButton)
                     CommandHelpV();  // give help.
                   else
                     ButtonDone= false; // indicate no button action done.
-                  } // try the various buttons.
+                  } // Try the various buttons and execute JTree commands.
                 if (ButtonDone)  // restore focus to JTable if button was processed.
                   RestoreFocusV(); // change focus from button to what is was.
                 }
@@ -423,8 +428,8 @@ public class DagBrowserPanel
               );
             } // give help.
         
-        private void ProcessBlinkerTimerV()
-          /* This composition method process one tick of the BlinkerTimer.  */
+        private void ProcessblinkerTimerV()
+          /* This composition method process one tick of the blinkerTimer.  */
           { // process timer event.
             { // switch blinker color.
               BlinkerJLabel.setOpaque(!BlinkerJLabel.isOpaque());  // reverse opacity.
@@ -439,21 +444,20 @@ public class DagBrowserPanel
         This was based on TreeSelectionListener code.
         It still uses TreeSelectionEvent-s for passing TreePath info.
         */
-        
+
         public void partTreeChangedV( TreeSelectionEvent theTreeSelectionEvent )
           /* This processes TreeSelectionEvent-s.
             It's job is to coordinate selections in 
             the left and right sub-panels.  
-            This includes 
+            It is very source-panel-dependent.  This includes 
 
               Passing appropriate TreePath selection information to
               the major left and right sub-panels, 
 
-              Maintaining the parent-child relationship between them.
-              The selection, if it exists, in the right sub-panel,
-              should be a child of the selection in the left JTree sub-panel.
-              The right sub-panel should display a descendent
-              in the selection of the left sub-panel.
+              Maintaining the correct relationship between 
+              what is displayed and selected in the 2 main sub-panels.
+              Generally the node being displayed by the right sub-panel
+              is the selection of the left sub-panel.
 
             It also updates DirectoryJLabel and InfoJLabel
             appropriate to the selection in the sub-panel with focus.
@@ -461,39 +465,40 @@ public class DagBrowserPanel
             When a TreeSelectionEvent delivers a new TreePath
             it might or might not require that a new JComponent
             be used in the right sub-panel.  
-            It is required if 
+            It is required if :
             1. The JComponent in the right sub-panel
               determines that it can not display the new TreePath.
             2. The new TreePath is not a descendant of
               the TreePath currently displayed by 
               the JComponent in the right sub-panel
-              
-            Most the work of this method id done by alueChangedProcessorV(..)
-            if it determined that valueChanged(..) was not re-entered.
+
+            Most the work of this method id done by partTreeChangedProcessorV(..),
+            but this called only if it determined that 
+            valueChanged(..) was not re-entered.
             */
-          { // valueChanged( TreeSelectionEvent theTreeSelectionEvent ) 
-            if ( TreeSelectionReentryBlockedB ) // process unless a re-entry.
+          {
+            if ( TreeSelectionReentryBlockedB ) // Process unless a re-entry.
               { // do nothing because the re-entry blocking flag is set.
                 appLogger.info(
                   "DagBrowserPanel.valueChanged(..), re-entry blocked."
                   );
                 } // do nothing because the recursion blocking flag is set.
-              else // flag is not set.
+              else // flag is not  set.
               { // process the TreeSelectionEvent.
-                TreeSelectionReentryBlockedB= true;  // disallow re-entry.
+                TreeSelectionReentryBlockedB= true;  // Disable re-entry.
 
-                valueChangedProcessorV( // Have this do all the work.
+                partTreeChangedProcessorV( // Have this do all the work.
                   theTreeSelectionEvent 
                   );
 
-                TreeSelectionReentryBlockedB= false;  // now that we are done, allow re-entry.
+                TreeSelectionReentryBlockedB= false;  // Enable re-entry.
                 } // process the TreeSelectionEvent.
-            } // valueChanged( TreeSelectionEvent theTreeSelectionEvent ) 
+            }
 
-        private void valueChangedProcessorV
+        private void partTreeChangedProcessorV
           ( TreeSelectionEvent theTreeSelectionEvent )
-          /* This composition method does the work of valueChanged(..)
-            if valueChanged(..) determines that it was not re-entered.
+          /* This composition method does the work of partTreeChangedV(..).
+            See that method for more information.
             */
           {
             TreePath selectedTreePath=  // Get...
@@ -501,29 +506,36 @@ public class DagBrowserPanel
                 getNewLeadSelectionPath();  // ...one and only TreePath.
             Component sourceComponent=  // Also get its source Component.
               (Component)theTreeSelectionEvent.getSource();
-            //appLogger.info(
-            //  "DagBrowserPanel.valueChangedProcessorV("
-            //  +selectedTreePath.getLastPathComponent()
-            //  +")."
-            //  );
             if ( selectedTreePath != null )  // process only if not null.
-              { // process based on Source Component.
-                if (  // Source is right sub-pannel,...
-                    (sourceComponent == DataJComponent) ||  // ... equal to or...
-                    DataJComponent.isAncestorOf(  // ...an ancestor of it.
-                      sourceComponent)
-                      )
-                  ProcessSelectionFromRightSubpanel(
-                    selectedTreePath
-                    //,theTreeSelectionEvent.isAddedPath() // No longer used.
-                    );
-                else if  // Source is left sub-pannel,...
-                  (sourceComponent == theRootJTree) // ...equal to RootJTree.
-                  ProcessSelectionFromLeftSubpanel( selectedTreePath );
-                } // process based on Source Component.
-            DisplayPathAndInfoV( ); // display other info.
+              { // Process non-null path.
+                { // process based on Source Component.
+                  if (  // Source is right sub-pannel,...
+                      (sourceComponent == DataJComponent) ||  // ... equal to or...
+                      DataJComponent.isAncestorOf(  // ...an ancestor of it.
+                        sourceComponent)
+                        )
+                    ProcessSelectionFromRightSubpanel(
+                      selectedTreePath
+                      );
+                  else if  // Source is left sub-pannel,...
+                    (sourceComponent == theRootJTree) // ...equal to RootJTree.
+                    ProcessSelectionFromLeftSubpanel( selectedTreePath );
+                  } // process based on Source Component.
+                RecordPathSelectionV( );
+                } // Process non-null path.
+            DisplayPathAndInfoV( ); // Update the display of other info.
             Misc.dbgEventDone(); // Debug.
-            //appLogger.info("DagBrowserPanel.valueChangedProcessorV(..) End.");
+            }
+
+        private void RecordPathSelectionV( )
+          /* This records the selection from the always replaces the content of the right sub-panel
+            based on inTreePath.
+            */
+          {
+            TreeAware theTreeAware= getFocusedTreeAware();
+            TreePath theTreePath= 
+              theTreeAware.getTreeHelper().getPartTreePath();
+            Selection.set( theTreePath );  // Record as a selection.
             }
 
         private void ProcessSelectionFromLeftSubpanel( TreePath inTreePath )
@@ -539,25 +551,25 @@ public class DagBrowserPanel
             // Maybe let RightPanel decide whether to do this??
             ReplaceRightPanelContent( inTreePath );
             } // ProcessSelectionFromLeftSubpanel(.)
-            
+
+        private TreePath oldPanelTreePath; // Previous right-panel TreePath.
+          // ??? DataRoot.getParentOfRootTreePath( );  // An impossible value.
+
         private void ProcessSelectionFromRightSubpanel( TreePath inTreePath )
           /* What this does depends on inTreePath.
           
-            if the new inTreePath is a sibling of the old TreePath then 
-            it does nothing [or maybe selects the parent in the left sub-panel).
+            If the new inTreePath from the right panel 
+            is a sibling of the old TreePath then it does nothing 
+            [or maybe selects the parent in the left sub-panel).
             
-            if the new inTreePath is not a sibling of the old TreePath then 
+            If the new inTreePath is not a sibling of the old TreePath then 
             it replaces the right sub-panel content
             with a new Viewer appropriate to the new selection TreePath,
-            and select the appropriate TreePath in the left sub-panel.
+            and selects the appropriate TreePath in the left sub-panel.
             */
           { // ProcessSelectionFromRightSubpanel()
             boolean siblingsB=  // Is new path a sibling of the old path?
-              ( inTreePath.getParentPath().equals(
-                  DataTreeAware.getTreeHelper().
-                    getPartTreePath().getParentPath()
-                  )
-                );
+              inTreePath.getParentPath().equals(oldPanelTreePath);
             if ( siblingsB ) // New and old Part paths have same parent.
               ; // Nothing needs to be done.
               else // New and old selections do NOT have same parent.
@@ -568,25 +580,27 @@ public class DagBrowserPanel
                   panelTreePath
                   );
                 RestoreFocusV();  // Restore right panel's focus.
-                theRootJTree.  // In the left sub-panel...
-                  selectNodeV(panelTreePath);  // ...select appropriate path.
+                theRootJTree  // In the left sub-panel JTree's...
+                  .getTreeHelper()  // ...TreeHelper...
+                  .setPartTreePathV(  // ...select...
+                    panelTreePath  // ...appropriate path.
+                    );
                 } // Replace right panel and update things.
             } // ProcessSelectionFromRightSubpanel()
 
-            
-        private void ReplaceRightPanelContent( TreePath wholeTreePath )
+        private void ReplaceRightPanelContent( TreePath inTreePath )
           /* This method calculates a new
             JComponent and TreeAware appropriate for displaying
-            the last element of wholeTreePath and sets them
+            the last element of inTreePath and sets them
             as content of the right sub-panel for display.
             */
           { // ReplaceRightPanelContent(.)
             //appLogger.info("DagBrowserPanel.ReplaceRightPanelContent().");
             { // build the scroller content.
               DataJComponent=   // Calculate new JComponent...
-                TheDataTreeModel.  // ...by having the TreeModel...
+                theDataTreeModel.  // ...by having the TreeModel...
                 GetDataJComponent(  // ...generate a JComponent...
-                  wholeTreePath  // appropriate to new selection.
+                  inTreePath  // appropriate to new selection.
                   );
               DataTreeAware= // Calculate TreeAware alias.
                 (TreeAware)DataJComponent;
@@ -598,6 +612,7 @@ public class DagBrowserPanel
             DataJScrollPane.setViewportView(  // in the DataJScrollPane's viewport...
               DataJComponent);  // ...set the DataJPanel for viewing.
             DataJComponent.repaint();  // make certain it's displayed.
+            oldPanelTreePath= inTreePath;  // Save path for compares later.
             } // ReplaceRightPanelContent(.)
       
       /* methods of the FocusListener, the FocusStateMachine, and others.  */
@@ -625,7 +640,7 @@ public class DagBrowserPanel
               if  // left sub-panel gained focus.
                 (LastValidFocusOwnerPanelComponent == theRootJTree)
                 { 
-                  LastFocusPane= FocusPane.LEFT_PANE;  // record left enum ID.
+                  lastFocusPane= FocusPane.LEFT_PANE;  // record left enum ID.
                   DisplayPathAndInfoV(  // display left sub-panel's info.
                     theRootJTree.getSelectedTreePath()
                     );
@@ -633,19 +648,19 @@ public class DagBrowserPanel
               else if  // right sub-panel gained focus.
                 (LastValidFocusOwnerPanelComponent == DataJComponent)
                 { 
-                  LastFocusPane= FocusPane.RIGHT_PANE;  // record right enum ID.
+                  lastFocusPane= FocusPane.RIGHT_PANE;  // record right enum ID.
                   DisplayPathAndInfoV(  // display right sub-panel's info for...
                     DataTreeAware.getTreeHelper().getPartTreePath() // ...selected TreePath.
                     );
                   }
               else 
-                LastFocusPane= FocusPane.NO_PANE;  // record enum ID.
+                lastFocusPane= FocusPane.NO_PANE;  // record enum ID.
               } // record focused component as an enum because it might change.
 
             /* ??
             System.out.println(
               "focusGained(...) by"
-              + " " + LastFocusPane
+              + " " + lastFocusPane
               + ComponentInfoString(TheFocusEvent.getComponent()));
             System.out.println(
               "  component losing focus is"
@@ -688,7 +703,7 @@ public class DagBrowserPanel
             */
             
             desiredFocusPane=  // change state of the FocusStateMachine to...
-              LastFocusPane;  // ... pane that last had focus.
+              lastFocusPane;  // ... pane that last had focus.
             FocusStepperV();  // start the FocusStateMachine.
             } // RestoreFocusV()
 
@@ -736,7 +751,7 @@ public class DagBrowserPanel
             Component which should have focus to
             the Component which does have focus
             and then requesting focus in the previous one scanned
-            one level down.
+            one level down.  This could make use of getFocusedTreeAware().
             */
           { // FocusStepB().
             if (desiredFocusPane == FocusPane.NO_PANE)  // machine halted.
@@ -745,8 +760,8 @@ public class DagBrowserPanel
               KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
             Component nextFocusComponent= null; // assume no more steps.
             
-            /* the following complex code might be replace by
-              a Component hierarchy scanning loop.  */
+            /* The following complex code might be replace by
+              a Component hierarchy scanning loop ???  */
             nextFocusComponent=  // assume focusing starts at...
               ViewJPanel;   // ... the root Component.
             { // override if needed.
@@ -800,8 +815,8 @@ public class DagBrowserPanel
                   } // now that focus is correct, repaint the two panels.
                 desiredFocusPane= FocusPane.NO_PANE;  // halt state machine.
                 } // do final focus processing.
-            return  // return an indication of whether ...
-              (desiredFocusPane != FocusPane.NO_PANE);  // ... machine still running.
+            return  // return an indication of whether machine still running.
+              (desiredFocusPane != FocusPane.NO_PANE); 
             } // FocusStepB().
 
     // Key and Action bindings (KeyboardFocusManager ).
@@ -869,6 +884,26 @@ public class DagBrowserPanel
 
     // miscellaneous methods.
 
+        public TreeAware getFocusedTreeAware()
+          /* This method returns a reference to the TreeAware JComponent
+            which last had focus and will probably have it again if
+            it was taken away by a button click or dialog box activation.
+            It is called for restoring focus and for recording 
+            final correct Selections in the MetaNode tree.
+            */
+          {
+            TreeAware resultTreeAware;
+            switch ( lastFocusPane ) { // Calculate from last focused pane.
+              case RIGHT_PANE:
+                resultTreeAware= (TreeAware)DataJComponent; break;
+              case LEFT_PANE:
+              case NO_PANE:
+              default:
+                resultTreeAware= theRootJTree; break;
+              } // Calculate from last focused pane.
+            return resultTreeAware;
+            }
+
         private void DisplayPathAndInfoV()
           /* This method Updates DirectoryJLabel and InfoJLabel, 
             which appear as two lines above and below the two main sub-panels.
@@ -932,28 +967,28 @@ public class DagBrowserPanel
                     )  // Last elemenr is the ErrorDataNode.
                   inTreePath= inTreePath.getParentPath();  // Strip the node.
                 DirectoryJLabel.setText(  // in DirectoryJLabel display set...
-                  TheDataTreeModel.  // ...DataTreeModel's calculation of...
+                  theDataTreeModel.  // ...DataTreeModel's calculation of...
                     GetAbsolutePathString(  // ...String representation of...
                       inTreePath  // ...of inTreePath.
                     )
                   );
                 InfoJLabel.setText(  // set InfoJLabel to be...
-                  TheDataTreeModel.  // ...DataTreeModel's calculation of...
+                  theDataTreeModel.  // ...DataTreeModel's calculation of...
                     GetInfoString(inTreePath)  // the info string of inTreePath.
                   );
                 } // display non-null info.
             } // DisplayPathAndInfoV(TreePath inTreePath)
           
-      public void paintComponent(Graphics g)
-        /* The paintComponent() method draws the current state of the app pane.  
-          It isn't called as often as one might think, for example,
-          when the app pane is uncovered,
-          apparently because the display is restored from a saved image.
-          This method exists mostly for debugging.
-          */
-        {
-          super.paintComponent(g);  // let JPanel do most of the work..
-          }
+        public void paintComponent(Graphics g)
+          /* The paintComponent() method draws the current state of the app pane.  
+            It isn't called as often as one might think, for example,
+            when the app pane is uncovered,
+            apparently because the display is restored from a saved image.
+            This method exists mostly for debugging.
+            */
+          {
+            super.paintComponent(g);  // let JPanel do most of the work..
+            }
 
     }  // class DagBrowserPanel.
 

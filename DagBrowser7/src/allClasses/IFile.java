@@ -222,7 +222,7 @@ public class IFile
           */
         { // GetDataJComponent.
           Object inObject= inTreePath.getLastPathComponent();
-          IFile inIFile= // convert to what we know it is, an abstract IFile name...
+          IFile inIFile= // Cast to actual type, an abstract IFile name...
             (IFile)inObject;  // ...from the input Object.
           JComponent resultJComponent= null;  // allocate result space.
 
@@ -242,7 +242,9 @@ public class IFile
                     inTreeModel, 
                     "\n\n    UNREADABLE AS FILE OR FOLDER\n" 
                     );
-                resultJComponent.setBackground(Color.PINK);  // Indicate error with color.
+                resultJComponent.setBackground(  // Indicate error with color.
+                  Color.PINK
+                  );
                 } // Handle unreadable folder or device.
             } // calculate the associated DagNodeViewer.
           return resultJComponent;  // return the final result.

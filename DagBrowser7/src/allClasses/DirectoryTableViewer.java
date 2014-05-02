@@ -11,7 +11,7 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 //import javax.swing.event.TreeSelectionListener;
-//import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionEvent;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
@@ -24,8 +24,7 @@ public class DirectoryTableViewer
   extends JTable
   
   implements 
-    FocusListener, ListSelectionListener
-    , TreeAware
+    FocusListener, ListSelectionListener, TreeAware, TreePathListener
   
   /* This class displays filesystem directories as tables.
     They appear in the main app's right side subpanel as a JTable.
@@ -82,8 +81,9 @@ public class DirectoryTableViewer
           super( );  // Call superclass constructor.
             
           { // Construct and initialize the helper object.
-            aTreeHelper=  // Construct helper class instance.
-              new TreeHelper( this, inTreePath );  // Note, subject not set yet.
+            aTreeHelper= new TreeHelper(  // Construct helper class instance...
+              this, inTreePath  // ...with back-referene and path info.
+              );  // Note, subject not set yet.
             } // Construct and initialize the helper object.
 
           DirectoryTableModel ADirectoryTableModel =  // Construct...
@@ -93,12 +93,12 @@ public class DirectoryTableViewer
               );
           setModel( ADirectoryTableModel );  // store TableModel.
 
-          SetupTheJTable( );  // Initialize JTable state.
+          setupTheJTable( );  // Initialize JTable state.
           } // constructor.
 
-      private void SetupTheJTable( )
+      private void setupTheJTable( )
         /* This grouping method initializes the JTable.  */
-        { // SetupTheJTable( )
+        { // setupTheJTable( )
 
           setShowHorizontalLines( false );
           setShowVerticalLines( false );
@@ -111,6 +111,7 @@ public class DirectoryTableViewer
             } // limit Type field display width.
           
           { // add listeners.
+            aTreeHelper.addTreePathListener(this);  // Listen for tree paths.
             addKeyListener(aTreeHelper);  // listen to process some key events.
             addMouseListener(aTreeHelper);  // listen to process mouse double-click.
             addFocusListener(this);  // listen to repaint on focus events.
@@ -119,7 +120,7 @@ public class DirectoryTableViewer
             } // add listeners.
 
           UpdateJTableForContentV();
-          } // SetupTheJTable( )
+          } // setupTheJTable( )
 
     // Listener interface methods.
         
@@ -194,22 +195,24 @@ public class DirectoryTableViewer
           if  // Update other stuff if...
             ( getModel().getRowCount() > 0 ) // ... any rows in model.
             { // Update other stuff.
-              UpdateJTableSelection();  // Select appropriate row.  
+              TreePath selectionTreePath= aTreeHelper.getPartTreePath();
+              selectionTableRowV(selectionTreePath);  // Select appropriate row.  
                 // Note, this might trigger ListSelectionEvent.
               UpdateJTableScrollState();  // Adjust scroll position.
               } // Update other stuff.
           } // UpdateJTableForContentV()
 
-      private void UpdateJTableSelection()
-        /* This grouping method updates the JTable selection state
-          from the selection-related instance variables.
+      private void selectionTableRowV(TreePath selectionTreePath) //???
+        /* This helper method updates the JTable selection state
+          from selectionTreePath.
           Note, changing the JTable selection might trigger a call to 
           internal method ListSelectionListener.valueChanged(),
-          which might cause further processing and calls to
-          esternal TreeSelectionListeners-s. */
-        { // UpdateJTableSelection()
+          which might cause further processing and calls to other Listeners.
+          */
+        { // selectionTableRowV()
+          DataNode selectionDataNode=  // Translate TreePath to DataNode.
+            (DataNode)selectionTreePath.getLastPathComponent();
           int IndexI= 0;  // Assume index is zero for now.
-          DataNode selectionDataNode= aTreeHelper.getPartDataNode();
           if ( selectionDataNode != null )  // There is a selection.
             { // Calculate child's index.
               IndexI= // try to get index of selected child.
@@ -220,7 +223,7 @@ public class DirectoryTableViewer
                 IndexI= 0;
               } // Calculate child's index.
           setRowSelectionInterval( IndexI, IndexI ); // set selection using final resulting index.
-          }  // UpdateJTableSelection()
+          }  // selectionTableRowV()
 
       private void UpdateJTableScrollState()
         /* This grouping method updates the JTable scroll state
@@ -240,11 +243,11 @@ public class DirectoryTableViewer
     // rendering methods, for coloring cells based on fucus state.
       
       public TableCellRenderer getCellRenderer(int row, int column)
-      /* Returns precalculated Renderer.  
-        It is done this way so it's the same for every cell in a row.
-        This is okay for now, but might need changing later.
-        */
-      { return theDirectoryTableCellRenderer; }
+        /* Returns precalculated Renderer.  
+          It is done this way so it's the same for every cell in a row.
+          This is okay for now, but might need changing later.
+          */
+        { return theDirectoryTableCellRenderer; }
 
       /* public Component prepareRenderer
         (TableCellRenderer renderer, int row, int column)
@@ -260,27 +263,32 @@ public class DirectoryTableViewer
           }
         */
 
-    // interface TreeAware code for TreeHelper access.
+    // interface TreeAware code for TreeHelper access and TreePathListener.
 
 			public TreeHelper aTreeHelper;  // helper class ???
 
 			public TreeHelper getTreeHelper() { return aTreeHelper; }
 
-      /* ???
-      public TreePath getWholeTreePath()
-        { 
-          return aTreeHelper.getWholeTreePath();
-          }
-
-      public TreePath getPartTreePath()
-        { 
-          return aTreeHelper.getPartTreePath();
-          }
-
-      public void addTreePathListener( TreePathListener listener ) 
+      public void partTreeChangedV( TreeSelectionEvent inTreeSelectionEvent )
+        /* This TreePathListener method translates 
+          inTreeSelectionEvent TreeHelper tree paths into 
+          internal JTable selections.
+          It ignores any paths with which it cannot deal.
+          */
         {
-          aTreeHelper.addTreePathListener( listener );
+          TreePath inTreePath=  // Get the TreeHelper's path from...
+            inTreeSelectionEvent.  // ...the TreeSelectionEvent's...
+              getNewLeadSelectionPath();  // ...one and only TreePath.
+
+          toReturn:{
+            if (inTreePath == null)  // null path.
+              break toReturn;  // Ignore it.
+            selectionTableRowV(   // Select row appropriate to...
+              inTreePath  // ...path.
+              );  // Note, this might trigger ListSelectionEvent.
+
+          } // toReturn:
+
           }
-      */
 
     } // DirectoryTableViewer

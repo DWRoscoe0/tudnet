@@ -143,7 +143,7 @@ public class Selection
           return ChildDataNode;  // Return the resulting child DataNode.
           }
 
-      public static MetaNode setAndReturnMetaNode( TreePath InTreePath )
+      private static MetaNode setAndReturnMetaNode( TreePath InTreePath )
         /* Updates the "SelectionPath" attributes of the MetaNode DAG
           starting with the root and ending at 
           the MetaNode specified by InTreePath.

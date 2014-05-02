@@ -8,10 +8,11 @@ public abstract class AbDataNode
 
   implements DataNode
   
-  /* This is an abstract class that implements part of the DataNode interface.
-    The methods implemented here are 
-    ones that are likely to be useful for most subclasses.
-    Subclasses can override methods that are not appropriate.
+  /* This class started an abstract class.
+    It implemented only part of the DataNode interface.
+    Over time I was provided implementations for
+    all of the interface methods, and then some.
+    So now this class is abstract in name only.
     */
     
   {
@@ -22,7 +23,7 @@ public abstract class AbDataNode
         { 
           return false; 
           }
-
+  
       public DataNode getChild( int IndexI ) 
         /* This returns null to indicate a default of 0 children.  */
         {

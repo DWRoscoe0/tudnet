@@ -14,7 +14,7 @@ import javax.swing.tree.TreePath;
 import javax.swing.event.TreeSelectionEvent;
 //import javax.swing.event.TreeSelectionListener;
 
-//import static allClasses.Globals.*;  // appLogger;
+import static allClasses.Globals.*;  // appLogger;
 
 public class TreeHelper
   implements KeyListener, MouseListener
@@ -93,7 +93,7 @@ public class TreeHelper
           }
       */
 
-    /* User input Listeners, for Keyboard and Mouse.  */
+    /* Keyboard and Mouse Listener method.  */
 
       /* KeyListener methods, for 
         overriding normal Tab key processing
@@ -181,10 +181,13 @@ public class TreeHelper
         public void mouseReleased(MouseEvent arg0) { }  // unused part of MouseListener interface.
         
     /* Command methods.
-      ??? Maybe these methods are being integrated with the ones in RootJTree.
+      ??? These methods are being integrated with the ones in RootJTree.
       Maybe IJTree should eventually be integrated with JComponent subclasses
       so that DagBrowserPanel can manipulate those all viewer components,
       including IJTree, with its navigation buttons.
+      
+      ??? Maybe later make into a class with test() and do() methods?
+
       */
 
       public boolean commandGoToParentB( boolean doB  ) 
@@ -206,8 +209,8 @@ public class TreeHelper
               if (a1TreePath == null) break toReturn;
               TreePath a2TreePath= a1TreePath.getParentPath();
               if (a2TreePath == null) break toReturn;
-              TreePath a3TreePath= a2TreePath.getParentPath();
-              if (a3TreePath == null) break toReturn;
+              //TreePath a3TreePath= a2TreePath.getParentPath();
+              //if (a3TreePath == null) break toReturn;
 
             doableB= true;  // Override result to indicate command is doable.
 
@@ -227,43 +230,100 @@ public class TreeHelper
           }
 
       public boolean commandGoToChildB( boolean doB )
-        /* Tries to go to an appropriate child.
-          It does this by adding an ErrorDataNode to the end of
-          the present Part path.  */
+        /* Tries to go to an appropriate child if doB is true.
+          It returns true if the command is/was doable, false otherwise.
+          To facilitate the viewing of leaves, though they have no children,
+          it returns true for them and executes the command by 
+          adding an ErrorDataNode to the end of the present Part path.  
+          ??? This method is too long.  Break it up.
+          */
         {
-          boolean doableB= false;  
-
+            boolean doableB= false;  // Assume command is not doable.
           toReturn: {
             if ( getPartDataNode() == null )  // No part path.
-              break toReturn; // So not doable.
-            if ( // Part is an ErrorDataNode.
+              break toReturn; // So exit with not doable.
+            if ( // Part is itself an ErrorDataNode.
                 getPartDataNode() == ErrorDataNode.getSingletonErrorDataNode()  
                 )
-              break toReturn; // So not doable.
+              break toReturn; // So exit with not doable.
+            DataNode childDataNode= null;  // Storage for findingChild result.
+          findingChild: {
+            childDataNode=  // Try to find best child of part node.
+              findBestChildDataNode( getPartTreePath() );
+            if (childDataNode != null) break findingChild;  // Exit if found.
+            if (!getPartDataNode().isLeaf())  // It is an empty non-leaf.
+              break toReturn; // So exit with not doable.
+            childDataNode=  // Use a place holder child for entering leaf.
+              ErrorDataNode.getSingletonErrorDataNode();
+          } // findingChild end.
             doableB= true;  // Override result to indicate command doable.
 
             if (! doB)  // Command execution is not desired.
               break toReturn; // So exit with result.
 
             // Command execution begins.
-            notifyListenersAboutPartV(  // Set part path to...
+            notifyListenersAboutPartV(  // Set new part path to be...
               getPartTreePath().pathByAddingChild( // ...present part plus...
-                ErrorDataNode.getSingletonErrorDataNode()  // ...ErrorDataNode.
+                childDataNode  // ...whatever child was found.
                 )
-              );
+              );  // Using setPartTreePathV(..) here doesn't work.
+
+          } // toReturn end.
+            return doableB;  // Return whether command is/was doable.
+          }
+
+      public boolean commandGoDownB( boolean doB )
+        /* Tries to go down to the next node if doB is true.
+          It returns true if the command is/was doable, false otherwise.
+          */
+        { return commandGoUpOrDownB( doB, +1 ); }
+      
+      public boolean commandGoUpB( boolean doB )
+        /* Tries to go down to the previous node if doB is true.
+          It returns true if the command is/was doable, false otherwise.
+          */
+        { return commandGoUpOrDownB( doB, -1 ); }
+      
+      public boolean commandGoUpOrDownB( boolean doB, int incrementI )
+        /* This is a helper method for commandGoDownB(..) and commandGoUpB(..).
+          It tries to go up or down depending on the value of incrementI.
+          */
+        { 
+            boolean doableB= false;  
+
+          toReturn: {
+            TreePath a0TreePath= getPartTreePath();
+            if (a0TreePath == null) break toReturn;  // Check base path.
+            TreePath a1TreePath= a0TreePath.getParentPath();
+            if (a1TreePath == null) break toReturn;  // Check parent path.
+            DataNode a0DataNode= (DataNode)a0TreePath.getLastPathComponent();
+            if ( // Check that base node is not an ErrorDataNode.
+                a0DataNode == ErrorDataNode.getSingletonErrorDataNode()  
+                )
+              break toReturn;
+            DataNode a1DataNode= (DataNode)a1TreePath.getLastPathComponent();
+            int a0IndexI= // Get present index.
+               a1DataNode.getIndexOfChild( a0DataNode );
+            a0IndexI+= incrementI;  // Increment index to go up or down one.
+            DataNode a0NewDataNode= a1DataNode.getChild(a0IndexI);
+            if (a0NewDataNode == null) break toReturn;  // Check new node.
+            
+            doableB= true;  // Indicate that command is doable.
+            if (! doB)  // Command execution is not desired.
+              break toReturn; // So exit with result.
+            
+            // Command execution begins.
+            //notifyListenersAboutPartV(  // Set new part path to be...
+            //  a1TreePath.pathByAddingChild( // ...present parent plus...
+            //    a0NewDataNode  // ...the new child.
+            //    )
+            //  );  // Using setPartTreePathV(..) here doesn't work.
+            setPartDataNodeV(a0NewDataNode);  // Move to sibling.
 
           } // toReturn
             return doableB;
             
           }
-
-      public boolean commandGoDownB( boolean doB )
-        // ??? This should be expanded to do a default sibling check.
-        { return false; }
-      
-      public boolean commandGoUpB( boolean doB )
-        // ??? This should be expanded to do a default sibling check.
-        { return false; }
           
     /* Whole and Part node code.  */
 
@@ -273,12 +333,12 @@ public class TreeHelper
         Whole is never changed!
         */
 
-        private TreePath wholeTreePath;  /* TreePath of node displayed.  
+        private TreePath theWholeTreePath;  /* TreePath of node displayed.  
           This variable is never null.
           */
 
-        private DataNode wholeDataNode;  /* DataNode of Whole.
-          This is the last element of the wholeTreePath.
+        private DataNode theWholeDataNode;  /* DataNode of Whole.
+          This is the last element of the theWholeTreePath.
           This variable is never null.
           */
 
@@ -286,27 +346,27 @@ public class TreeHelper
           /* This method stores inTreePath as the TreePath of the Whole.
             ? It also notifies any TreePathListener about it.
             It should be used only when there is no accessible Part.
-            partTreePath is set to null;  
+            thePartTreePath is set to null;  
             Actually now it is called only by the constructors.
             To prevent infinite recursion it acts only if
-            inTreePath is different from the present wholeTreePath.
+            inTreePath is different from the present theWholeTreePath.
             */
           { 
-            if  // This is a different wholeTreePath.
-              ( ! inTreePath.equals( wholeTreePath ) )
+            if  // This is a different theWholeTreePath.
+              ( ! inTreePath.equals( theWholeTreePath ) )
 
               { // Update TreePath variables using the new value.
 
                 { // Store Whole Part variables.
-                  wholeTreePath= inTreePath;  // Store Whole TreePath.
-                  wholeDataNode=  // Store last element for easy access.
-                    (DataNode)wholeTreePath.getLastPathComponent();
+                  theWholeTreePath= inTreePath;  // Store Whole TreePath.
+                  theWholeDataNode=  // Store last element for easy access.
+                    (DataNode)theWholeTreePath.getLastPathComponent();
                   } // Store Whole Part variables. 
 
                 { // Set Part variables to non-null sentinel.
-                  partDataNode= ErrorDataNode.getSingletonErrorDataNode();
-                  partTreePath= wholeTreePath.pathByAddingChild( 
-                    partDataNode 
+                  thePartDataNode= ErrorDataNode.getSingletonErrorDataNode();
+                  thePartTreePath= theWholeTreePath.pathByAddingChild( 
+                    thePartDataNode 
                     );
                   } // Set Part variables to non-null sentinel
                   
@@ -321,23 +381,9 @@ public class TreeHelper
           {
             if (inTreePath != null)  // TreePath is not null.
               { // Set things from inTreePath.
-                setWholeV( inTreePath );  // Save Whole TreePath now.
-                DataNode childDataNode=  // Try to get the child...
-                  Selection.  // ...from the visits tree that was the...
-                    setAndReturnDataNode( // ...most recently visited child...
-                      inTreePath  // ...of the List at the end of the TreePath.
-                      );
-                if (childDataNode == null)  // if no recent child try first one.
-                  { // try getting first ChildDataNode.
-                    DataNode theDataNode=  // Get DataNode at end of TreePath.
-                      (DataNode)inTreePath.getLastPathComponent();
-                    if   // There are no children.
-                      (theDataNode.getChildCount() <= 0)
-                        ;  // Do nothing.
-                      else  // There are children.
-                        childDataNode=   // get first ChildDataNode.
-                          theDataNode.getChild(0);
-                    } // get name of first child.
+                setWholeV( inTreePath );  // Save Whole TreePath no
+                DataNode childDataNode=  // Calculate best child.
+                  findBestChildDataNode(inTreePath);
                 if (childDataNode != null)  // There is an accessible child.
                   setPartDataNodeV( childDataNode );  // Store it.
                 } // Set things from inTreePath.
@@ -348,13 +394,13 @@ public class TreeHelper
             being displayed.
             */
           { 
-            return wholeTreePath;  // Return it.
+            return theWholeTreePath;  // Return it.
             }
 
         public DataNode getWholeDataNode()
           /* This method returns the DataNode of the Whole.  */
           { 
-            return wholeDataNode;  // return DataNode of Part.
+            return theWholeDataNode;  // return DataNode of Part.
             }
 
       /* Part code.  The Part is the highlighted tree node within the Whole.
@@ -362,10 +408,14 @@ public class TreeHelper
         This was previously called the Selection,
         but was changed to avoid confusion with selection within
         the JComponent being used to represent the Whole.
+        The part variables should probably never remain null.
+        thePartDataNode might be the ErrorDataNode,
+        which means that the whole is a leaf,
+        which can be displayed but not as a collection of children.
         */
 
-        private TreePath partTreePath; /* TreePath of Part.  
-          The parent of this TreePath is wholeTreePath
+        private TreePath thePartTreePath; /* TreePath of Part.  
+          The parent of this TreePath is theWholeTreePath
           which represents the entire set being displayed.
           This assumes that there is only one sub-level displayed,
           so all items displayed have the same parent.
@@ -375,8 +425,8 @@ public class TreeHelper
           no highlighted child.
           */
 
-        private DataNode partDataNode; /* DataNode of Part.
-          This is the last element of the partTreePath.
+        private DataNode thePartDataNode; /* DataNode of Part.
+          This is the last element of the thePartTreePath.
           This variable is null if the JComponent is displaying 
           a node with no highlighted child.
           */
@@ -385,19 +435,19 @@ public class TreeHelper
           /* This method stores inTreePath as the TreePath of the Part. 
             It also notifies any TreePathListener about it.
             To prevent infinite recursion it acts only if
-            inTreePath is different from the present partTreePath.
+            inTreePath is different from the present thePartTreePath.
             */
           { 
-            if  // This is a different partTreePath.
-              ( ! inTreePath.equals( partTreePath ) )
+            if  // This is a different thePartTreePath.
+              ( ! inTreePath.equals( thePartTreePath ) )
               { // Update TreePath variables using the new value.
                 //setWholeV(  // Set appropriate Whole TreePath to be...
                 //  inTreePath.getParentPath()  // ...parent of Part TreePath.
                 //  );  // This will set the Whole DataNode also.
 
-                partTreePath= inTreePath;  // Store Part TreePath.
-                partDataNode=  // Store last element for easy access.
-                  (DataNode)partTreePath.getLastPathComponent();
+                thePartTreePath= inTreePath;  // Store Part TreePath.
+                thePartDataNode=  // Store last element for easy access.
+                  (DataNode)thePartTreePath.getLastPathComponent();
                 notifyListenersAboutPartV( inTreePath );
                 } // Update TreePath variables using the new value.
             }
@@ -405,7 +455,7 @@ public class TreeHelper
         protected TreePath getPartTreePath()
           /* This method returns the TreePath representing the Part. */
           { 
-            return partTreePath;  // return TreePath of Part.
+            return thePartTreePath;  // return TreePath of Part.
             }
 
         protected void setPartDataNodeV( DataNode inDataNode )
@@ -416,7 +466,7 @@ public class TreeHelper
             */
           {
             TreePath childTreePath= // Calculate child TreePath to be...
-              wholeTreePath.  // ...the base TreePath with...
+              theWholeTreePath.  // ...the base TreePath with...
                 pathByAddingChild( inDataNode );  // ... the child added.
             setPartTreePathV(  childTreePath );  // Set Part TreePath.
             }
@@ -424,10 +474,10 @@ public class TreeHelper
         protected DataNode getPartDataNode()
           /* This method returns the DataNode of the Part.  */
           { 
-            return partDataNode;  // return DataNode of Part.
+            return thePartDataNode;  // return DataNode of Part.
             }
     
-    // TreePathListener code (setting and using).
+    // TreePathListener code for adding, removing, and triggering.
 
       /* Though the class TreeSelectionEvent is used by the following methods,
         neither this class or the class being helped by this class
@@ -455,8 +505,9 @@ public class TreeHelper
             listenerVector.removeElement( listener );
           }
 
-      public void notifyListenersAboutPartV( TreePath inTreePath )
+      private void notifyListenersAboutPartV( TreePath inTreePath )
         {
+          Selection.set( inTreePath );  // Record as a selection.
           notifyTreePathListenersV(  // Notify the listeners about...
             true,  // ... an internal/Part change...
             inTreePath  // ...to the Part path.
@@ -516,8 +567,44 @@ public class TreeHelper
             {
               TreePathListener listener = 
                 (TreePathListener)listeners.nextElement();
-              listener.partTreeChangedV( e );
+              try {  // ??? kluge.
+                listener.partTreeChangedV( e );
+                } 
+              catch(ClassCastException ex) {
+                appLogger.info( ""+ex );
+                }
               }
         }
+
+    // Utility methods.
+
+        private DataNode findBestChildDataNode(TreePath inTreePath)
+          /* This method tries to find and return the best child DataNode 
+            of the node identified by inTreePath.  The best is:
+              * The most recently visited child, if there is one.
+              * The first child, if there is one.
+            Otherwise it returns null.
+            
+            ??? Maybe instead of null it should return ErrorDataNode?
+            */
+          {
+            DataNode childDataNode=  // Try to get the child...
+              Selection.  // ...from the visits tree that was the...
+                setAndReturnDataNode( // ...most recently visited child...
+                  inTreePath  // ...of the List at the end of the TreePath.
+                  );
+            if (childDataNode == null)  // if no recent child try first one.
+              { // try getting first ChildDataNode.
+                DataNode theDataNode=  // Get DataNode at end of TreePath.
+                  (DataNode)inTreePath.getLastPathComponent();
+                if   // There are no children.
+                  (theDataNode.getChildCount() <= 0)
+                    ;  // Do nothing.
+                  else  // There are children.
+                    childDataNode=   // get first ChildDataNode.
+                      theDataNode.getChild(0);
+                } // get name of first child.
+            return childDataNode;  // Return final result.
+            }
 
     } // class TreeHelper

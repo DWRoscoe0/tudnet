@@ -17,7 +17,7 @@ public class RootJTree
 
   extends IJTree
 
-  implements KeyListener, TreeSelectionListener, TreeAware
+  implements KeyListener, TreeSelectionListener, TreeAware, TreePathListener
   
   /* This class is used for the content in the left JTree subpanel.
     
@@ -39,12 +39,12 @@ public class RootJTree
     // Variables.
       private static final long serialVersionUID = 1L;
 
-      private DataTreeModel theDataTreeModel;  // Defines Tree data.
+      // private DataTreeModel theDataTreeModel;  // Defines Tree data.
 
       private JScrollPane theJScrollPane;  // Associated JScrollPane.
 
       private TreePath savedTreePath;  // Previous selection.  This is...
-        // ...for use as first argument to changeSelectionV(..)
+        // ...for use as first argument to doSubselectionsV(..)
 
       private TreeHelper aTreeHelper;  // For doing TreePath things.
 
@@ -60,10 +60,13 @@ public class RootJTree
         { // Constructor.
           super( inTreeModel );  // Construct the superclass.
           
-          aTreeHelper=  // Construct customized TreeHelper class instance.
-            new MyTreeHelper( this, null );  // Note, TreePath is not set yet.
+          aTreeHelper=  // Construct extended TreeHelper class instance...
+            new MyTreeHelper(  // ...from this nested class.
+              this, 
+              null   // Note, TreePath is not set yet.
+              );
 
-          theDataTreeModel= inTreeModel;  // Save the TreeModel.
+          // theDataTreeModel= inTreeModel;  // Save the TreeModel.
           theJScrollPane= inJScrollPane;  // Save the JScrollPane.
             
           //theIJTree.setLargeModel( true );        
@@ -82,70 +85,169 @@ public class RootJTree
           putClientProperty( "IJTree.lineStyle", "Angled" );
 
           addTreeSelectionListener(this);  // listen for tree selections.
+          aTreeHelper.addTreePathListener(this);  // listen for tree paths.
           addKeyListener(this);  // listen for key presses.
           
           } // Constructor.
   
-    // interface TreeHelper pass-through methods.
+    // TreeHelper code, including the TreePathListener
 
       class MyTreeHelper extends TreeHelper {
+      
+        /* This class overrides some TreeHelper methods
+          which need to be different for RootJTree.
+          */
 
-				MyTreeHelper(JComponent inOwningJComponent, TreePath inTreePath) 
+        MyTreeHelper(JComponent inOwningJComponent, TreePath inTreePath) 
+          // Constructor.
           {
             super(inOwningJComponent, inTreePath);
-            // TODO Auto-generated constructor stub
             }
+
+        public boolean commandGoToChildB( boolean doB )
+          /* Tries to go to an appropriate child if doB is true.
+            It returns true if the command is/was doable, false otherwise.
+            It tests first for the leaf case, 
+            which Tree panels can not handle.
+            If it's not a leaf then it lets the superclass method handle it.
+            */
+        {
+            boolean doableB= false;  // Assume command is not doable.
+
+          toReturn: {
+            if (getPartDataNode().isLeaf())  // It is undoable leaf case.
+              break toReturn;  // Exit with default not doable result.
+            if   // Superclass reports no other doable case.
+              (!super.commandGoToChildB(false))
+              break toReturn;  // Exit with default not doable result.
+            doableB= true;  // Override result to indicate command doable.
+
+            if (! doB)  // Command execution is not desired.
+              break toReturn; // So exit with doability result.
+            
+            // Command execution begins.
+            super.commandGoToChildB(true);  // Have superclass execute command.
+
+          } // toReturn end.
+            return doableB;  // Return whether command is/was doable.
+
+          }
+
+        public boolean commandGoDownB( boolean doB ) 
+          /* Tries to go down one node if doB is true.
+            It returns true if the operation is/was doable, false otherwise.
+            */
+          { // commandGoDownV().
+            boolean doableB= false;  // Assume command not doable.
+            int RowI= getLeadSelectionRow( );  // Get # of selected row.
+            TreePath NextTreePath=  // Convert next row to next TreePath.
+              getPathForRow( RowI + 1 );
+            if // Select that path if it exists and command desired.
+              ( (NextTreePath != null) && doB )
+              { // select and display the node.
+                doableB= true;  // Indicate command is doable.
+                setPathV(NextTreePath);  // Select the path.
+                } // select and display the node.
+            return doableB;  // Return doability result.
+            } // commandGoDownV().
+    
+        public boolean commandGoUpB( boolean doB )  
+          /* Tries to go up one node if doB is true.
+            It returns true if the operation is/was doable, false otherwise.
+            */
+          { // CommandGoUpV().
+            boolean doableB= false;  // Assume command not doable.
+            int RowI= getLeadSelectionRow( );  // Get # of selected row.
+            TreePath NextTreePath=  // Convert next row to next TreePath.
+              getPathForRow( RowI - 1 );
+            if (NextTreePath != null)  // Select that path if it exists.
+              { // select and display the node.
+                doableB= true;  // Indicate command is doable.
+                setPathV(NextTreePath);  // Select the path.
+                } // select and display the node.
+            return doableB;  // Return doability result.
+            } // CommandGoUpV().
 
         }
 
-  
-      public TreeHelper getTreeHelper() { return aTreeHelper; }
+      public TreeHelper getTreeHelper() 
+        /* Method to allow access by other classes to 
+          the TreeHelper code by returning the TreeHelper.
+          */
+        { return aTreeHelper; }
 
-      /* ???
-      public TreePath getWholeTreePath()
-        { 
-          return aTreeHelper.getWholeTreePath();
-          }
-
-      public TreePath getPartTreePath()
-        { 
-          return aTreeHelper.getPartTreePath();
-          }
-
-      public void addTreePathListener( TreePathListener listener ) 
-        {
-          aTreeHelper.addTreePathListener( listener );
-          }
-      */
-
-    // Input methods.
-
-      public void selectNodeV(TreePath inSelectionTreePath ) 
-        /* This method programmatically selects the node
-          identified by inSelectionTreePath in the JTree.
-          This method can be called as a result of a keyboard command
-          or a TreeSelectionEvent in the right sub-panel.
-          The selection will trigger any 
-          TreeSelectionListener valueChanged() methods, 
-          including the one in this class, 
-          which will cause further processing.
-
-          This could be replaced by setSelectionPath(TreePath)
-          since that is all that is done now.
+      public void partTreeChangedV( TreeSelectionEvent inTreeSelectionEvent )
+        /* This TreePathListener method translates 
+          inTreeSelectionEvent TreeHelper tree paths into 
+          internal JTree selections.
+          It ignores any paths with which it cannot deal.
           */
         {
-          setSelectionPath(inSelectionTreePath);  // Select in JTree.
-            // This will trigger TreeSelectionListener activity.
+          TreePath inTreePath=  // Get the TreeHelper's path from...
+            inTreeSelectionEvent.  // ...the TreeSelectionEvent's...
+              getNewLeadSelectionPath();  // ...one and only TreePath.
+
+          toReturn:{
+            if (inTreePath == null)  // null path.
+              break toReturn;  // Ignore it.
+
+            if (  // Last node is an ErrorDataNode
+                inTreePath.getLastPathComponent()
+                == ErrorDataNode.getSingletonErrorDataNode()
+                )
+              break toReturn;  // Ignore it.
+            if (   // Parent of root.
+                inTreePath 
+                == DataRoot.getParentOfRootTreePath( )
+                )
+              break toReturn;  // Ignore it.
+
+            // Execution begins on fully checked path.
+            setSelectionPath(inTreePath);  // Select path in the JTree.
+          } // toReturn:
+
           }
 
-    // Output methods.  These return state information to the caller.
-    
+      public void setPathV(TreePath inTreePath ) 
+        /* This method is simply shorthand for
+          aTreeHelper.setPartTreePathV(..).
+          */
+        {
+          aTreeHelper.setPartTreePathV( // In TreeHelper set path to...
+            inTreePath  // ...desired TreePath.
+            );
+          }
+
       public TreePath getSelectedTreePath()
         /* This method returns the selection TreePath.
           There should be only one, because multiselection is disabled.
           */
         {
           return getSelectionPath();  // Get path directly from JTree.
+          }
+
+    // Tree Command methods.  Only this one was not moved to TreeHelper.
+
+      private void commandExpandOrCollapseV()
+        /* This command method toggles when the presently selected row
+          is expanded or collapsed.  It also makes certain that
+          auto-expand is disabled.
+          */
+        {
+          int SelectedRowI=   // determine which row is selected.
+            getLeadSelectionRow();
+          if  // expand or collapse it, whichever makes sense.
+            //(isExpanded(SelectedRowI))  // Row is expanded now.
+            (isExpanded(getPathForRow(SelectedRowI)))  // Row is expanded now.
+            { // Collapse the row and disable auto-expansion.
+              collapseRow(SelectedRowI);  // collapse present node.
+              TreeExpansion.SetAutoExpanded(  // force auto-expanded status...
+                getLeadSelectionPath() , // ...for selected path...
+                false  // ... to be off.
+                );
+              } // Collapse the row and disable auto-expansion.
+            else  // Row is collapsed now.
+              expandRow(SelectedRowI);  // Expand the row.
           }
 
     /* Listener methods and their helpers.  
@@ -155,17 +257,15 @@ public class RootJTree
       /* TreeSelectionListener methods  and their exclusive helpers.
         These listen for JTree selection changes.
         */
-        
+
         public void valueChanged( TreeSelectionEvent TheTreeSelectionEvent ) 
-          /* This method processes TreeSelectionEvent-s from the JTree superclass.
-            It checks for and performs any needed
-            automatic expanding, collapsing, and selecting of JTree nodes.
-            It records position and other information in the MetaTool tree.
-            It records the TreePath of the final selection for use in
-            automatically collapsing and expanding the next time
-            this method is called.
+          /* This method processes TreeSelectionEvent-s from 
+            the JTree superclass.  After a validity check it does:
+            * Subselection processing such as automatic expanding, 
+              collapsing, and selecting of JTree nodes.
+            * Trivial translating of the JTree path to the TreeHelper path.
             */
-          { // valueChanged( TreeSelectionEvent TheTreeSelectionEvent )
+          {
             dbgV("RootJTree.valueChanged(..) Begin");
             final TreePath FinalNewTreePath=  // Get selection TreePath...
               TheTreeSelectionEvent.  // ...which is the event's...
@@ -175,43 +275,58 @@ public class RootJTree
               ( FinalNewTreePath == null ) // Selection path is null.
               ;  // So do nothing.
               else  // Selection path is not null.
-              { // Process non-null selection TreePath.
-                TreePath OldTreePath= // Set old TreePath to...
-                  savedTreePath;  // ...TreePath of last selection made.
-                if ( OldTreePath == null )  // If OldTreePath is null...
-                  OldTreePath= FinalNewTreePath;  // ...simulate no change.
-                final TreePath FinalOldTreePath= OldTreePath;  // for Runnable().
-                savedTreePath=  // Save the new selected TreePath...
-                  FinalNewTreePath; // which was calculated previously.
-                subselectionsBeginV(   // Mark beginning of subselection...
-                  FinalOldTreePath, // ...from the previous selection...
-                  FinalNewTreePath  // ...to the new selection...
+              { // Process non-null JTree path.
+                setupAndDoSubselectionsV(  // Process subselections to get to...
+                  FinalNewTreePath  // ...this new TreePath.
                   );
-                // At this point a new selection may be triggered.
-                changeSelectionV( // Collapse and expand nodes along path...
-                  FinalOldTreePath, // ...from the previous selection...
-                  FinalNewTreePath  // ...to the new selection...
-                  ) ;  // ...and maybe trigger an auto-expansion selection.
-                Selection.set(FinalNewTreePath); // Record final selection position.
-                subselectionsEndV();  // Mark end of windows changes.
-                aTreeHelper.setPartTreePathV( FinalNewTreePath );
-                } // Process non-null selection TreePath.
+                aTreeHelper.setPartTreePathV(  // Translate to TreeHelper...
+                  FinalNewTreePath  // ...from JTree selection, a trivial case.
+                  );
+                } // Process non-null JTree path.
             dbgV("RootJTree.valueChanged(..) End");
             Misc.dbgEventDone(); // for Debug.
-            } // valueChanged( TreeSelectionEvent TheTreeSelectionEvent )
+            }
 
-        private void changeSelectionV
+        private void setupAndDoSubselectionsV(TreePath FinalNewTreePath)
+          /* This sets up and then does all subselections
+            associated with the new TreePath FinalNewTreePath.
+            It records the TreePath of the final selection for use in
+            the next round of subselections.
+            It records position and other information in the MetaTool tree.
+            */
+          { 
+            TreePath OldTreePath= // Set old TreePath to...
+              savedTreePath;  // ...TreePath of last selection made.
+            if ( OldTreePath == null )  // If OldTreePath is null...
+              OldTreePath= FinalNewTreePath;  // ...simulate no change.
+            final TreePath FinalOldTreePath= OldTreePath;  // for Runnable().
+            savedTreePath=  // Save the new selected TreePath...
+              FinalNewTreePath; // which was calculated previously.
+            subselectionsBeginV(   // Mark beginning of subselection...
+              FinalOldTreePath, // ...from the previous selection...
+              FinalNewTreePath  // ...to the new selection...
+              );
+            // At this point a new selection may be triggered.
+            doSubselectionsV( // Collapse and expand nodes along path...
+              FinalOldTreePath, // ...from the previous selection...
+              FinalNewTreePath  // ...to the new selection...
+              ) ;  // ...and maybe trigger an auto-expansion selection.
+            Selection.set(FinalNewTreePath); // Record final selection position.
+            subselectionsEndV();  // Mark end of windows changes.
+            }
+
+        private void doSubselectionsV
           ( TreePath startTreePath, TreePath stopTreePath) 
           /* This processes a recent change in Selection TreePath,
             a change from startTreePath to stopTreePath.
 
-            It does this by calling changeSelectionRawV(.)
+            It does this by calling doSubselectionsRawV(.)
             with all the TreeSelectionListeners temporarilly disabled,
-            because changeSelectionRawV(..) makes a lot of selection changes
+            because doSubselectionsRawV(..) makes a lot of selection changes
             for cosmetic reasons, and those listeners are interested in only
             the TreePath of the final selection.
             */
-          { // changeSelectionV(.)
+          { // doSubselectionsV(.)
             TreeSelectionListener[] TreeSelectionListeners= // Get listeners.
               getTreeSelectionListeners();
             for // disable all TreeSelectionListener-s by removing them.
@@ -220,7 +335,7 @@ public class RootJTree
                 )
               removeTreeSelectionListener( ATreeSelectionListener );
 
-            changeSelectionRawV( // Collapse and expand along path...
+            doSubselectionsRawV( // Collapse and expand along path...
               startTreePath, // ...from the previous selection...
               stopTreePath  // ...to the new selection.
               ) ;
@@ -230,9 +345,9 @@ public class RootJTree
                 TreeSelectionListeners 
                 )
               addTreeSelectionListener( ATreeSelectionListener );
-            } // changeSelectionV(.)
+            } // doSubselectionsV(.)
 
-        private void changeSelectionRawV
+        private void doSubselectionsRawV
           ( TreePath startTreePath, TreePath stopTreePath) 
           /* This processes a change in JTree Selection TreePath
             from startTreePath to stopTreePath.
@@ -243,14 +358,14 @@ public class RootJTree
             It records DataNode visit information along the way
             in the static class Selection.
 
-            This method must be wrapped by changeSelectionV(.) 
+            This method must be wrapped by doSubselectionsV(.) 
             to disable TreeSelectionListener-s because 
             they have no interest in the many intermediate selections
             which happen during the execution of this method.
             */
           {
-            dbgV("RootJTree.changeSelectionRawV(..) startTreePath",startTreePath);
-            dbgV("RootJTree.changeSelectionRawV(..) stopTreePath",stopTreePath);
+            dbgV("RootJTree.doSubselectionsRawV(..) startTreePath",startTreePath);
+            dbgV("RootJTree.doSubselectionsRawV(..) stopTreePath",stopTreePath);
             setSelectionPath(startTreePath);  // Reselect start node for animation.
             TreePath CommonAncestorTreePath= // Do the up part.
               collapseAndExpandUpTreePath( startTreePath, stopTreePath );
@@ -258,16 +373,16 @@ public class RootJTree
               if // Common node is a descendent of (the same as) stop node.
                 ( stopTreePath.isDescendant( CommonAncestorTreePath ) )
                 { // Set auto-expanded attribute of stop node to false.
-                  dbgV("RootJTree.changeSelectionRawV(..) at stop node");
+                  dbgV("RootJTree.doSubselectionsRawV(..) at stop node");
                   TreeExpansion.SetAutoExpanded(  // Set auto-expanded attribute...
                     stopTreePath, false  // ...of stop node to false.
                     );
                   } // Set auto-expanded attribute of stop node to false.
               else // Common node is NOT a descendent of (same as) stop node.
               { // Expand downward.
-                dbgV("RootJTree.changeSelectionRawV(..) calling collapseAndExpandDownV(..)");
-                dbgV("RootJTree.changeSelectionRawV(..) CommonAncestorTreePath",CommonAncestorTreePath);
-                dbgV("RootJTree.changeSelectionRawV(..) stopTreePath",stopTreePath);
+                dbgV("RootJTree.doSubselectionsRawV(..) calling collapseAndExpandDownV(..)");
+                dbgV("RootJTree.doSubselectionsRawV(..) CommonAncestorTreePath",CommonAncestorTreePath);
+                dbgV("RootJTree.doSubselectionsRawV(..) stopTreePath",stopTreePath);
                 collapseAndExpandDownV(  // Expand down...
                   CommonAncestorTreePath,  // ...from the common anestor...
                   stopTreePath  // ...to the stop node.
@@ -412,9 +527,9 @@ public class RootJTree
               if      (KeyCodeI == KeyEvent.VK_ENTER)  // Enter key.
                 commandExpandOrCollapseV();  // expand or collapse node.
               else if (KeyCodeI == KeyEvent.VK_LEFT)  // left-arrow key.
-                commandGoToParentV();  // go to parent folder.
+                aTreeHelper.commandGoToParentB(true);  // go to parent folder.
               else if (KeyCodeI == KeyEvent.VK_RIGHT)  // right-arrow key.
-                commandGoToChildV();  // go to child folder.
+                aTreeHelper.commandGoToChildB(true);  // go to child folder.
               //else if (KeyCodeI == KeyEvent.VK_X)  // X-key. For debugging.
               //  Misc.dbgEventDone(); // Debug.
               else
@@ -434,109 +549,6 @@ public class RootJTree
         @Override
         public void keyTyped(KeyEvent TheKeyEvent) { }  // unused part of KeyListener interface.
 
-    // Tree Command methods.
-
-      public void commandGoToChildV() 
-        /* Goes to and displays the most recently visited child 
-          of the present node.  If none of the children
-          have been visited before then it goes to the first child.
-          If there are no children then it ??? should do nothing.
-          */
-        { // CommandGoToChildV().
-          Object childObject=  // try to get child...
-          	Selection.  // ...from the visits tree...
-          	  setAndReturnDataNode( // ...most recently visited...
-                //savedTreePath 
-                getSelectionPath()
-                );  // ...of the tree node at end of selected TreePath.
-              
-          if (childObject == null)  // if no recent child try first one.
-            { // try getting first childObject.
-              Object selectedObject= 
-                getLastSelectedPathComponent();
-              if (theDataTreeModel.getChildCount(selectedObject) <= 0)  // there are no children.
-                childObject= null;  // keep childObject null.
-              else  // there are children.
-                childObject= theDataTreeModel.getChild(selectedObject,0);  // get first childObject.
-              } // get name of first child.
-
-          if // act based on whether a usable Child found.
-            (childObject!=null) // one was found.
-            { // adjust visits tree and select the child.
-              TreePath childTreePath=  // child path is...
-                getSelectionPath().   // ...old selected with...
-                  pathByAddingChild(  // ...addition of...
-                  childObject    // ...the found child object.
-                  );
-              selectNodeV(  // Select...
-                childTreePath  // ...the new child path.
-                );
-              } // adjust visits tree and select the child.
-          } // CommandGoToChildV().
-  
-      public void commandGoToParentV() 
-        /* Goes to and displays the parent of the present tree node. */
-        { // CommandGoToParentV().
-          toReturn: {
-            TreePath parentTreePath=  // Try getting parent of selection.
-              getSelectionPath().getParentPath();
-            if (parentTreePath == null)  // There is no parent.
-              break toReturn; // So do nothing.
-            TreePath grandparentTreePath=  // Try getting parent of parent.
-              parentTreePath.getParentPath();
-            if (grandparentTreePath == null)  // There is no parent of parent.
-              break toReturn; // So do nothing.
-            selectNodeV(parentTreePath);  // Select the parent directory.
-            } // toReturn
-          return;
-          } // CommandGoToParentV().
-  
-      public void commandGoDownV() 
-        /* Goes to and displays the tree node in row below the present one. */
-        { // commandGoDownV().
-          int RowI= getLeadSelectionRow( );  // Get # of selected row.
-          TreePath NextTreePath=  // Convert next row to next TreePath.
-          	getPathForRow( RowI + 1 );
-          if (NextTreePath != null)  // Select that path if it exists.
-            { // select and display the node.
-              selectNodeV(NextTreePath);  // Select the path.
-              } // select and display the node.
-          } // commandGoDownV().
-  
-      public void commandGoUpV() 
-        /* Goes to and displays the tree node in row above the present one. */
-        { // CommandGoUpV().
-          int RowI= getLeadSelectionRow( );  // Get # of selected row.
-          TreePath NextTreePath=  // Convert next row to next TreePath.
-          	getPathForRow( RowI - 1 );
-          if (NextTreePath != null)  // Select that path if it exists.
-            { // select and display the node.
-              selectNodeV(NextTreePath);  // Select the path.
-              } // select and display the node.
-          } // CommandGoUpV().
-
-      private void commandExpandOrCollapseV()
-        /* This command method toggles when the presently selected row
-          is expanded or collapsed.  It also makes certain that
-          auto-expand is disabled.
-          */
-        {
-          int SelectedRowI=   // determine which row is selected.
-            getLeadSelectionRow();
-          if  // expand or collapse it, whichever makes sense.
-            //(isExpanded(SelectedRowI))  // Row is expanded now.
-            (isExpanded(getPathForRow(SelectedRowI)))  // Row is expanded now.
-            { // Collapse the row and disable auto-expansion.
-              collapseRow(SelectedRowI);  // collapse present node.
-              TreeExpansion.SetAutoExpanded(  // force auto-expanded status...
-                getLeadSelectionPath() , // ...for selected path...
-                false  // ... to be off.
-                );
-              } // Collapse the row and disable auto-expansion.
-            else  // Row is collapsed now.
-              expandRow(SelectedRowI);  // Expand the row.
-          }
-
     /* Display/paint code. */
 
       private void paintImmediately( )
@@ -553,7 +565,7 @@ public class RootJTree
             );
           } // paintImmediately( )
 
-    /* Subselection code.
+    /* Subselection helper code.
       This code receives inputs regarding JTree node selections, 
       expansions, and collapses, as well as output option "show" flag values,
       and decides when to output the state of the JTree.
