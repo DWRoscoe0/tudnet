@@ -184,7 +184,7 @@ public class Misc
         { 
         if ( dbgEventDoneB )
           {
-            dbgOut( "-" ); 
+            dbgOut( "Writing Debug.txt" ); 
             MetaFile.writeDebugFileV( MetaRoot.getRootMetaNode( ));
             noOp( );
             }

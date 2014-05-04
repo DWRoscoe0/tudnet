@@ -5,7 +5,7 @@ import javax.swing.tree.TreePath;
 public class Selection 
 
   /* This static class helps  manage DataNode selections.  
-    Selections are specified by TreePath-s of DataNodes.
+    Selections are identified with TreePath-s of DataNodes.
 
     Past selections are stored as DataNode meta-data in the MetaNode DAG,
     which is a structure which parallels a subset of the DataNode DAG.
@@ -17,8 +17,8 @@ public class Selection
     the most recently selected child, if there is one.
 
     Note, because in the Infogora app 
-    the selection in the right pane is a child of
-    the selection in the left pane,
+    the selection in the right pane is normally 
+    a child of the selection in the left pane,
     and because sometimes actual DataNodes are deleted or moved,
     a selection might point to a non-existant node.
     In these cases a TreePath might be created which
@@ -31,7 +31,8 @@ public class Selection
 
   { // class Selection
 
-    final static String SelectionAttributeString=      "SelectionPath"; 
+    final static String selectionAttributeString= // Key String to use.
+      "SelectionPath"; 
     
     // Static getter methods.  These read from the MetaNode DAG.
 
@@ -46,120 +47,119 @@ public class Selection
         { 
           return // Return the...
             PathAttributeMetaTool.buildAttributeTreePath( // ...path built...
-              SelectionAttributeString // ...from selection attribute nodes.
+              selectionAttributeString // ...from selection attribute nodes.
               );
           }
           
       public static MetaNode getLastSelectedChildOfMetaNode
-        ( MetaNode InMetaNode )
+        ( MetaNode inMetaNode )
         /* This method returns the most recently selected child MetaNode 
-          of InMetaNode.
+          of inMetaNode.
           
           Prsently it is a pass-through to MetaNode.GetLastChildMetaNode(). 
           */
         { 
-          return GetLastSelectedChildMetaNode( InMetaNode ); 
+          return getLastSelectedChildMetaNode( inMetaNode ); 
           }
 
-      public static MetaNode GetLastSelectedChildMetaNode
-        ( MetaNode InMetaNode )
+      private static MetaNode getLastSelectedChildMetaNode
+        ( MetaNode inMetaNode )
         /* This method returns the child MetaNode that was selected last
-          of the parent node InMetaNode. 
+          of the parent node inMetaNode. 
           If no child MetaNode has the attribute then null is returned.
           It does this by searching for the child with an attribute
           with key == "SelectionPath" and value == "WAS".
           */
         {
-          MetaNode ChildMetaNode= // Test for a child with "WAS" value.
-            InMetaNode.getChildWithAttributeMetaNode( 
-              SelectionAttributeString, 
+          MetaNode childMetaNode= // Test for a child with "WAS" value.
+            inMetaNode.getChildWithAttributeMetaNode( 
+              selectionAttributeString, 
               "WAS" 
               );
-          return ChildMetaNode; // Return last child MetaNode result, if any.
+          return childMetaNode; // Return last child MetaNode result, if any.
           }
     
       public static DataNode getLastSelectedChildDataNode
-        ( MetaNode InMetaNode )
+        ( MetaNode inMetaNode )
         /* This method gets the user object DataNode from
-          the child MetaNode in InMetaNode 
+          the child MetaNode in inMetaNode 
           which was selected last, or null if there isn't one.
           It also returns null if the Child DataNode
           appears to be an ErrorDataNode,
           because that is an unusable value.
           */
         {
-          DataNode ResultChildDataNode=  // Assume default result of null.
+          DataNode resultChildDataNode=  // Assume default result of null.
             null;
-          Process: { // Override result with child if there is one.
-            MetaNode LastChildMetaNode= 
-              GetLastSelectedChildMetaNode( InMetaNode );
+          process: { // Override result with child if there is one.
+            MetaNode lastChildMetaNode= 
+              getLastSelectedChildMetaNode( inMetaNode );
             if // there is no last selected child.
-              (LastChildMetaNode == null)
-              break Process;  // So exit and keep the default null result.
+              (lastChildMetaNode == null)
+              break process;  // So exit and keep the default null result.
 
-            ResultChildDataNode=  // Result recent child DataNode is...
-              LastChildMetaNode.   // ...the last child's...
+            resultChildDataNode=  // Result recent child DataNode is...
+              lastChildMetaNode.   // ...the last child's...
               getDataNode();  // user object.
             if // Result child DataNode is not an ErrorDataNode.
-              ( ! ResultChildDataNode.equals(
+              ( ! resultChildDataNode.equals(
                   ErrorDataNode.getSingletonErrorDataNode()
                   )
                 )
-              break Process;  // Exit with that okay result.
+              break process;  // Exit with that okay result.
 
-            ResultChildDataNode= null; // Replace unusable value with null.
+            resultChildDataNode= null; // Replace unusable value with null.
             } // Override result with child if there is one.
 
-          return ResultChildDataNode; // return resulting DataNode, or null if none.
+          return resultChildDataNode; // return resulting DataNode, or null if none.
           }
 
     // Static setter methods.  These write to the MetaNode DAG.
           
-      public static void set( TreePath TreePathIn )
+      public static void set( TreePath inTreePath )
         /* This does the same as putAndReturnDataNode(.) except 
-          it doesn't return the MetaNode associated with 
-          the end of the path.
+          it doesn't return the anything.
           It exists mainly to help other code be self-documenting.
           */
         {
-      	  setAndReturnMetaNode( TreePathIn ); // Update with TreePath.
+      	  setAndReturnMetaNode( inTreePath ); // Update with TreePath.
           }
 
-      public static DataNode setAndReturnDataNode( TreePath TreePathIn )
-        /* Updates the PathAttributeMetaTool with TreePathIn and returns 
+      public static DataNode setAndReturnDataNode( TreePath inTreePath )
+        /* Updates the PathAttributeMetaTool with inTreePath and returns 
           the DataNode of the most recently visited child MetaNode of 
           the MetaNode at the end of that path,
           or it returns null if there is no such child. 
           */
         {
-          MetaNode EndOfPathMetaNode=  // Get last MetaNode in path by...
+          MetaNode endOfPathMetaNode=  // Get last MetaNode in path by...
             setAndReturnMetaNode(  // ...updating tree with...
-              TreePathIn  // ...the provided TreePath.
+              inTreePath  // ...the provided TreePath.
               );
-          DataNode ChildDataNode=  // Get that last MetaNode's...
+          DataNode childDataNode=  // Get that last MetaNode's...
             getLastSelectedChildDataNode(  // ...last selected child DataNode.
-              EndOfPathMetaNode );
+              endOfPathMetaNode );
               
-          return ChildDataNode;  // Return the resulting child DataNode.
+          return childDataNode;  // Return the resulting child DataNode.
           }
 
-      private static MetaNode setAndReturnMetaNode( TreePath InTreePath )
+      private static MetaNode setAndReturnMetaNode( TreePath inTreePath )
         /* Updates the "SelectionPath" attributes of the MetaNode DAG
           starting with the root and ending at 
-          the MetaNode specified by InTreePath.
+          the MetaNode specified by inTreePath.
           If it needs to then it adds MetaNodes 
           to the DAG in the appropriate places.
           It returns the MetaNode at the end of the specified TreePath.
           */
         {
 
-          PathAttributeMetaTool WorkerPathAttributeMetaTool= 
+          PathAttributeMetaTool workerPathAttributeMetaTool= 
             new PathAttributeMetaTool( // Create new PathAttributeMetaTool...
-              InTreePath,  // ...to work on InTreePath.
-              "SelectionPath"
+              inTreePath,  // ...to work on inTreePath's...
+              selectionAttributeString  // ...selection path attribute.
               );
-          WorkerPathAttributeMetaTool.setPath( );  // Set path attributes.
-          return WorkerPathAttributeMetaTool.getMetaNode();
+          workerPathAttributeMetaTool.setPath( );  // Set path attributes.
+          return workerPathAttributeMetaTool.getMetaNode();
 
           }
 

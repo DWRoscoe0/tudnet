@@ -10,9 +10,16 @@ public class PathAttributeMetaTool
   
   /* This is a Attribute MetaTool for dealing with 
     a MetaNode's path attributes. 
-    At first it is mainly for the SelectionPath attribute.
+    At first it is only for the SelectionPath attribute.
+    
+    Attribute values have the following meanings:
+    IS: this node is now part of the path.
+    WAS: this node was the most recent part of the path
+      of all its siblings.
+    OLD: this node was part of the path but 
+      one of its siblings was a more recent part.
 
-    It is based on the my InfogoraPathHistoryAttribute notes.
+    This is based on the my InfogoraPathHistoryAttribute notes.
     */
   
   { // class PathAttributeMetaTool 
@@ -31,37 +38,35 @@ public class PathAttributeMetaTool
         /* This method returns path information from the MetaNode DAG.
           It returns a TreePath comprised of all the DataNodes
           from the MetaNode's which contain attributes 
-          with a key of KeyString and a value of "IS".
+          with a key of keyString and a value of "IS".
           At least the root must have an "IS" attribute value,
           otherwise an invalid TreePath consisting of only the
           ParentOfRootDataNode will be returned.
           It does not consider ErrorDataNode-s to be part of the path
-          even though they have the desired attribute
-          because that is an unusable value.
+          even if they have the desired attribute
+          because it is an unusable value.
           */
         {
-          TreePath ScanTreePath=  // Point ScanTreePath accumulator...
+          TreePath scanTreePath=  // Point scanTreePath accumulator...
             DataRoot.getParentOfRootTreePath( );  // ...to parent of root.
-          MetaNode ScanMetaNode=  // Get root MetaNode.
+          MetaNode scanMetaNode=  // Get root MetaNode.
             MetaRoot.getParentOfRootMetaNode( );
-          Scanner: while (true) { // Scan all nodes with "IS".
-            MetaNode ChildMetaNode= // Test for a child with "IS" value.
-              ScanMetaNode.getChildWithAttributeMetaNode( KeyString, "IS" );
-            if  // ScanMetaNode has no child with "IS" attribute value.
-              ( ChildMetaNode == null)
-              break Scanner;  // Exit Processor.
-            DataNode TheDataNode= // Get associated DataNode.
-              ChildMetaNode.getDataNode();
+          scanner: while (true) { // Scan all nodes with "IS".
+            MetaNode childMetaNode= // Test for a child with "IS" value.
+              scanMetaNode.getChildWithAttributeMetaNode( KeyString, "IS" );
+            if  // scanMetaNode has no child with "IS" attribute value.
+              ( childMetaNode == null)
+              break scanner;  // Exit Processor.
+            DataNode theDataNode= // Get associated DataNode.
+              childMetaNode.getDataNode();
             if // DataNode is an ErrorDataNode.
-              ( TheDataNode.equals(
-                  ErrorDataNode.getSingletonErrorDataNode()
-                  )
-                )
-              break Scanner;  // Exit Processor.
-            ScanTreePath= ScanTreePath.pathByAddingChild( TheDataNode );
-            ScanMetaNode= ChildMetaNode;  // Point to next MetaNode.
+              ( theDataNode == ErrorDataNode.getSingletonErrorDataNode() )
+              break scanner;  // Exit Processor.
+            scanTreePath=  // Add DataNode to TreePath.
+              scanTreePath.pathByAddingChild( theDataNode );
+            scanMetaNode= childMetaNode;  // Point to next MetaNode.
             } // Scan all nodes with "IS".
-          return ScanTreePath;  // Return accumulated TreePath.
+          return scanTreePath;  // Return accumulated TreePath.
           }
 
     // Instance setter methods.
@@ -72,8 +77,8 @@ public class PathAttributeMetaTool
           attached to this PathAttributeMetaTool instance,
           from the end node all the way to the root
           by setting path MetaNodes' attribute value to "IS".  
-          It sets  path attributes of MetaNodes which are not ancestors
-          in common with the new path, if any, to the value "WAS".
+          It might set the same path attributes of other MetaNodes 
+          to either "WAS", "OLD", or remove them, depending on context.
 
           This method uses two recursive helper methods 
           to performs the following sequence of operations:
@@ -94,92 +99,96 @@ public class PathAttributeMetaTool
             );
           }
 
-      private void setPathHereAndTowardRoot( MetaPath ScanMetaPath )
+      private void setPathHereAndTowardRoot( MetaPath scanMetaPath )
         /* This is a recursive helper method for the setPath( ) method.
-          It does what that method does except that it does it for
-          the ScanMetaPath argument instead of 
-          the MataPath associated with this PathAttributeMetaTool instance.
+          It does the same thing as that method except 
+          it does it for the scanMetaPath argument instead of 
+          the MataPath stored in this PathAttributeMetaTool instance.
           */
         {
-          Processor: { // Process based on path attribute value on this node.
-            MetaNode ScanMetaNode= ScanMetaPath.getLastMetaNode( );
-            String ValueString= (String) ScanMetaNode.get( KeyString );
-            if // Our location is on the old path.
-              ( ( // We are on an old path MetaNode indicated by value "IS"...
-                  ( ValueString != null ) && ValueString.equals( "IS" )
-                  )
-                ||  // ...or...
-                ( // ...we have passed the root.
-                  ScanMetaPath == MetaRoot.getParentOfRootMetaPath( ) 
-                  )
+          MetaNode scanMetaNode= scanMetaPath.getLastMetaNode( );
+          String valueString= (String) scanMetaNode.get( keyString );
+          if // Our location is on the old path.
+            ( ( // We are on an old path MetaNode indicated by value "IS"...
+                ( valueString != null ) && valueString.equals( "IS" )
                 )
-              { // Reset descendents of our location in old path.
-                replaceIsWithWasInDescendents( ScanMetaNode );
-                break Processor;  // Exit.
-                } // Reset descendents of out location in old path.
-            if (true)  // We haven't reached the old path yet.
-              { // Recursively process ancestors and set the path attribute.
-                setPathHereAndTowardRoot(  // Recurse into ancestors.
-                  ScanMetaPath.getParentMetaPath() );
-                ScanMetaNode.put( KeyString,    // Set new path attribute...
-                  "IS" );  // ...to be "IS".
-                replaceWasWithOldInSiblings(   // Adjust siblings...
-                  ScanMetaPath  // ...of this path.
-                  );
-                break Processor;  // Exit.
-                } // Recursively process ancestors and set the path attribute.
-            } // Process based on path attribute on this node.
+              ||  // ...or...
+              ( // ...we have passed the root.
+                scanMetaPath == MetaRoot.getParentOfRootMetaPath( ) 
+                )
+              )
+            { // Reset descendants of our location in old path.
+              replaceIsWithWasInDescendents( scanMetaNode );
+              } // Reset descendants of out location in old path.
+            else  // We haven't reached the old path yet.
+            { // Recursively process ancestors and set the path attribute.
+              setPathHereAndTowardRoot(  // Recurse into ancestors...
+                scanMetaPath.getParentMetaPath() // ...starting with partent.
+                );
+              scanMetaNode.put(  // Set attribute...
+                keyString, // ...for this path name...
+                "IS"  // ...to be "IS". 
+                );
+              replaceWasWithOldInSiblings(   // Adjust siblings...
+                scanMetaPath  // ...of this path.
+                );
+              } // Recursively process ancestors and set the path attribute.
           }
 
-      private void replaceWasWithOldInSiblings( MetaPath InMetaPath )
-        /* Searches the attributes of the MetaNode specified by InMetaPath
-          and its sibling MetaNode-ss for the value "WAS".
-          If it finds this value then it replaces it with "OLD".  */
+      private void replaceWasWithOldInSiblings( MetaPath inMetaPath )
+        /* Searches the attributes of the MetaNode specified by inMetaPath
+          and all of its sibling MetaNode-s for the attribute value "WAS".
+          If it finds this value then it replaces it with "OLD".  
+          It doesn't look for any more because there can be a maximum of
+          one sibling node with "WAS".
+          */
         {
-          MetaNode ParentMetaNode=  // Get parent MetaNode.
-            InMetaPath.getParentMetaPath().getLastMetaNode( );
+          MetaNode parentMetaNode=  // Get parent MetaNode.
+            inMetaPath.getParentMetaPath().getLastMetaNode( );
           Processor: { // Process its children one with "WAS" attribute.
-            KeyAndValueMetaPiteratorOfMetaNode 
-              ChildKeyAndValueMetaPiteratorOfMetaNode=
+            KeyAndValueMetaPiteratorOfMetaNode // Use iterator to search...
+              childKeyAndValueMetaPiteratorOfMetaNode=
                 new KeyAndValueMetaPiteratorOfMetaNode( 
-                  ParentMetaNode.getMetaChildren().getPiteratorOfMetaNode(
-                    ParentMetaNode
+                  parentMetaNode.getMetaChildren().getPiteratorOfMetaNode(
+                    parentMetaNode
                     ),
-                  KeyString, 
-                  "WAS"
+                  keyString, 
+                  "WAS"  // ...for child/sibling with "WAS" attribute value.
                   );
-            if  // No chld with "WAS".,
-              ( ChildKeyAndValueMetaPiteratorOfMetaNode.getE() == null )
+            if  // There is no child with "WAS".
+              ( childKeyAndValueMetaPiteratorOfMetaNode.getE() == null )
               break Processor;  // Exit Processor.
-            MetaNode ChildMetaNode=  // Get a reference to...
+            MetaNode childMetaNode=  // Get a reference to...
               (MetaNode)  // ...the child MetaNode which is...
-              ChildKeyAndValueMetaPiteratorOfMetaNode.getE(); // .  // ...that next Entry's value.
-            ChildMetaNode.remove( KeyString );  // Remove "WAS" for purgeB().
-            if ( ChildMetaNode.purgeTryB() )  // If node is purgable...
-              ChildKeyAndValueMetaPiteratorOfMetaNode.removeV();  // ...remove its map entry...
+              childKeyAndValueMetaPiteratorOfMetaNode.
+                getE(); // ...that next Entry's value.
+            childMetaNode.remove( keyString );  // Remove "WAS" now for purge.
+            if ( childMetaNode.purgeTryB() )  // If node is purge-able...
+              childKeyAndValueMetaPiteratorOfMetaNode.
+                removeV();  // ...remove its map entry...
               else  // ...otherwise we must keep it so...
-              ChildMetaNode.put( KeyString, "OLD" ); // ...set "OLD" attribute.
+              childMetaNode.put( keyString, "OLD" ); // ...set "OLD" attribute.
             } // Process its children one with "WAS" attribute.
           }
 
-      private void replaceIsWithWasInDescendents( MetaNode InMetaNode )
+      private void replaceIsWithWasInDescendents( MetaNode inMetaNode )
         /* This method replaces any "IS" attribute values with
-          "WAS" attribute values, for any descendents of InMetaNode,
+          "WAS" attribute values, for any descendants of inMetaNode,
           thereby removing those nodes from the selection path,
           but remembering them for possible future auto-selections.
           */
         {
           Processor: { // Process this MetaNode.
-            MetaNode ChildMetaNode= // Test for a child with "IS" value.
-              InMetaNode.getChildWithAttributeMetaNode( KeyString, "IS" );
-            if  // InMetaNode has no child with "IS" attribute value.
-              ( ChildMetaNode == null)
+            MetaNode childMetaNode= // Test for a child with "IS" value.
+              inMetaNode.getChildWithAttributeMetaNode( keyString, "IS" );
+            if  // inMetaNode has no child with "IS" attribute value.
+              ( childMetaNode == null)
               break Processor;  // Exit Processor.
             replaceIsWithWasInDescendents(   // Recurse in descendants.
-              ChildMetaNode
+              childMetaNode
               );
-            ChildMetaNode.put( KeyString, "WAS" );  // Replace IS with WAS.
-            // Done in above order for faster dirty-flag up-propigation.
+            childMetaNode.put( keyString, "WAS" );  // Replace IS with WAS.
+            // Done in above order for faster dirty-flag up-propagation.
             } // Process this MetaNode.
           }
 

@@ -226,7 +226,7 @@ public class RootJTree
           return getSelectionPath();  // Get path directly from JTree.
           }
 
-    // Tree Command methods.  Only this one was not moved to TreeHelper.
+    // Tree Command methods.  Other ones were moved to TreeHelper.
 
       private void commandExpandOrCollapseV()
         /* This command method toggles when the presently selected row

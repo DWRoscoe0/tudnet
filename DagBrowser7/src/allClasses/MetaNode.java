@@ -313,7 +313,7 @@ public class MetaNode
           Processor: {  // Purge testing and processing.
             if ( ! AttributesHashMap.isEmpty() )  // There are attributes.
               break Processor;  // Exit with default no-purge result.
-            if ( ! theMetaChildren.purgeTryB( this ) )  // Children not purgable.
+            if ( ! theMetaChildren.purgeTryB( this ) ) // Children not purgeable.
               break Processor;  // Exit with default no-purge result.
             OkayToPurgeB= true;  // Indicate okay for complete purge.
             }  // Purge testing and processing.

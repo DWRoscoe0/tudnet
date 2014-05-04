@@ -195,35 +195,49 @@ public class DirectoryTableViewer
           if  // Update other stuff if...
             ( getModel().getRowCount() > 0 ) // ... any rows in model.
             { // Update other stuff.
-              TreePath selectionTreePath= aTreeHelper.getPartTreePath();
-              selectionTableRowV(selectionTreePath);  // Select appropriate row.  
+              TreePath inTreePath= aTreeHelper.getPartTreePath();
+              selectTableRowV(inTreePath);  // Select appropriate row.  
                 // Note, this might trigger ListSelectionEvent.
               UpdateJTableScrollState();  // Adjust scroll position.
               } // Update other stuff.
           } // UpdateJTableForContentV()
 
-      private void selectionTableRowV(TreePath selectionTreePath) //???
-        /* This helper method updates the JTable selection state
-          from selectionTreePath.
+      private void selectTableRowV(TreePath inTreePath) //???
+        /* This helper method selects the row in the JTable 
+          associated with inTreePath, if possible.
+          It must be a sibling of the present part TreePath.
           Note, changing the JTable selection might trigger a call to 
-          internal method ListSelectionListener.valueChanged(),
-          which might cause further processing and calls to other Listeners.
+          internal method ListSelectionListener.valueChanged().
+          Otherwise it does nothing.
           */
-        { // selectionTableRowV()
-          DataNode selectionDataNode=  // Translate TreePath to DataNode.
-            (DataNode)selectionTreePath.getLastPathComponent();
-          int IndexI= 0;  // Assume index is zero for now.
-          if ( selectionDataNode != null )  // There is a selection.
-            { // Calculate child's index.
+        { // selectTableRowV()
+          toReturn: {
+            if ( inTreePath == null )  // Path is null.
+              break toReturn;  // Exit without selecting.
+            DataNode inDataNode=  // Translate TreePath to DataNode.
+              (DataNode)inTreePath.getLastPathComponent();
+            if ( inDataNode == null )  // There is no selection.
+              break toReturn;  // Exit without selecting.
+            if (   // New path not is sibling of old one because...
+                ! aTreeHelper.getWholeTreePath( ).  // ...whole path isn't...
+                   equals( inTreePath.getParentPath() )  // ...parent of new.
+                  )
+              break toReturn;  // Exit without selecting.
+            int IndexI;  // Allocate index.
+            { // Calculate new path's child's index.
               IndexI= // try to get index of selected child.
-                aTreeHelper.getWholeDataNode().getIndexOfChild( 
-                  selectionDataNode 
-                  );
+                aTreeHelper.getWholeDataNode().getIndexOfChild( inDataNode );
               if ( IndexI < 0 )  // force index to 0 if child not found.
                 IndexI= 0;
-              } // Calculate child's index.
-          setRowSelectionInterval( IndexI, IndexI ); // set selection using final resulting index.
-          }  // selectionTableRowV()
+              } // Calculate new path's child's index.
+            setRowSelectionInterval(  // Selection row as interval...
+              IndexI, IndexI  // ...with same start and end row index.
+              );
+              
+          } // toReturn ends.
+            return;
+
+          }  // selectTableRowV()
 
       private void UpdateJTableScrollState()
         /* This grouping method updates the JTable scroll state
@@ -271,8 +285,8 @@ public class DirectoryTableViewer
 
       public void partTreeChangedV( TreeSelectionEvent inTreeSelectionEvent )
         /* This TreePathListener method translates 
-          inTreeSelectionEvent TreeHelper tree paths into 
-          internal JTable selections.
+          inTreeSelectionEvent TreeHelper tree path into 
+          an internal JTable selection.
           It ignores any paths with which it cannot deal.
           */
         {
@@ -280,14 +294,9 @@ public class DirectoryTableViewer
             inTreeSelectionEvent.  // ...the TreeSelectionEvent's...
               getNewLeadSelectionPath();  // ...one and only TreePath.
 
-          toReturn:{
-            if (inTreePath == null)  // null path.
-              break toReturn;  // Ignore it.
-            selectionTableRowV(   // Select row appropriate to...
+            selectTableRowV(   // Select row appropriate to...
               inTreePath  // ...path.
               );  // Note, this might trigger ListSelectionEvent.
-
-          } // toReturn:
 
           }
 

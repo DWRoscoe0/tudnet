@@ -181,8 +181,7 @@ public class TreeHelper
         public void mouseReleased(MouseEvent arg0) { }  // unused part of MouseListener interface.
         
     /* Command methods.
-      ??? These methods are being integrated with the ones in RootJTree.
-      Maybe IJTree should eventually be integrated with JComponent subclasses
+      IJTree might eventually be integrated with JComponent subclasses
       so that DagBrowserPanel can manipulate those all viewer components,
       including IJTree, with its navigation buttons.
       
@@ -218,11 +217,9 @@ public class TreeHelper
               break toReturn; // So exit now with calculated result.
 
             // Execute the command to move to parent.
-              Selection.  // In the visits tree...
-                set( a0TreePath );// record the present part path.
               notifyListenersAboutPartV(  // Notify listener that...
                 a1TreePath  // ...parent of part path should be new part path.
-                );
+                );  // ??? Use ignoring-select instead?
 
           } // toReturn
             return doableB;  // Return doable result.
@@ -554,12 +551,12 @@ public class TreeHelper
               inTreePath,  // ...and also being the new lead selection path...
               inTreePath  // ...and the old lead selection path.
               ); 
-          fireValueChanged(  // fire value changed with...
+          firePartTreeChangedV(  // fire value changed with...
             TheTreeSelectionEvent  // ...newly constructed event.
             );
           }
 
-      private void fireValueChanged( TreeSelectionEvent e ) 
+      private void firePartTreeChangedV( TreeSelectionEvent e ) 
         {
           Enumeration<TreePathListener> listeners = 
             listenerVector.elements();
