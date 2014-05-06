@@ -39,17 +39,17 @@ public class DagBrowserPanel
     the Infogora DAG (Directed Acyclic Graph) as a Tree.
     The left main sub-panel is the navigation panel
     and displays the DAG as an outline using a JTree.
-    The right main sub-panel displays individual nodes  of the DAG (DataNode-s)
-    using different JComponents appropriate to the type of node.
+    The right main sub-panel displays an individual node  
+    of the DAG (DataNode-s) using different 
+    JComponents appropriate to the type of node.
     
     This class acts as both an Observer and a Mediator.
     As a Java Listener it observes the left and right sub-panels 
-    and several button looking for state changes in them.
-    It then adjusts the states of the other objects
+    and several buttons looking for input from them.
+    It then appropriately adjusts the states of the other objects
     in a coordinated manner.
-    */
 
-  /* ??? marks things to do in the code below.  
+    ??? marks things to do in the code below.  
     Here are those things summarized:
     * Factor DagBrowserPanel() and other methods so each fits on a screen.
     * focusStepB() simplification using scanning loop.
@@ -291,13 +291,24 @@ public class DagBrowserPanel
             );
           }
 
-      private void buildRightJScrollPaneV()  // ???? needs factoring.
+      private void buildRightJScrollPaneV()
         /* This composition method builds the right JScrollPane
           which contains whatever JComponent is appropriate for
           displaying the item selected in 
           the left JScrollPane navigation pane.
           */
         {
+          // Maybe move JScrollPane into ViewHelpter or dataJComponent??
+          dataJScrollPane =   // Construct JScrollPane with null content.
+            new JScrollPane( null );
+          dataJScrollPane.setMinimumSize( new Dimension( 0, 0 ) );
+          dataJScrollPane.setPreferredSize( new Dimension( 400, 400 ) );
+          dataJScrollPane.setBackground( Color.white );
+
+          replaceRightPanelContent(  // Replace null JScrollPane content...
+            startTreePath  // ...with content based on startTreePath.
+            );
+          /*
           { // build the scroller content.
             dataJComponent=   // calculate JPanel from TableModel.
               theDataTreeModel.GetDataJComponent(
@@ -308,12 +319,9 @@ public class DagBrowserPanel
               this
               );
             } // build the scroller content.
-            
-          // Maybe move JScrollPane into ViewHelpter or dataJComponent??
-          dataJScrollPane = new JScrollPane( dataJComponent );  // construct scroller from data panel.
-          dataJScrollPane.setMinimumSize( new Dimension( 0, 0 ) );
-          dataJScrollPane.setPreferredSize( new Dimension( 400, 400 ) );
-          dataJScrollPane.setBackground( Color.white );
+          dataJScrollPane.setViewportView(  // in the dataJScrollPane's viewport...
+            dataJComponent);  // ...set the DataJPanel for viewing.
+          */  
           }
 
       private void miscellaneousInitializationV()
@@ -363,7 +371,7 @@ public class DagBrowserPanel
               );
           }
 
-    // Listener methods and their helpers.
+    // Listener methods and their helper methods.
   
       /* ActionListener and related methods, for processing ActionEvent-s from 
         buttons and timers.
@@ -372,9 +380,9 @@ public class DagBrowserPanel
         public void actionPerformed(ActionEvent inActionEvent) 
           /* This method processes ActionsEvent-s from 
             the Button-s and the blinkerTimer.
-            
-            The button panel could be made its own class
-            which uses aTreeHelper for the commands ???
+
+            ??? The button panel could be made its own class
+            which uses aTreeHelper for the commands.
 
             */
           { // actionPerformed( ActionEvent )
@@ -384,31 +392,77 @@ public class DagBrowserPanel
               processBlinkerTimerV();
               else // try processing button press.
               { 
-                TreeAware theTreeAware=  // Panel attached to buttons...
-                  getFocusedTreeAware();  // ...is the one last focused.
-                Boolean buttonDone= true; // Assume a button action will happen.
+                Boolean buttonDoneB= true; // Assume a button action will happen.
                 { // Try the various buttons and execute JTree commands.
-                  if (sourceObject == leftArrowIJButton)
-                    theTreeAware.getTreeHelper().
-                      commandGoToParentB(true);
-                    else if (sourceObject == rightArrowIJButton)
-                      theTreeAware.getTreeHelper().
-                        commandGoToChildB(true);
-                    else if (sourceObject == downArrowIJButton)
-                      theTreeAware.getTreeHelper().
-                        commandGoDownB(true);
-                    else if (sourceObject == upArrowIJButton)
-                      theTreeAware.getTreeHelper().
-                        commandGoUpB(true);
-                    else if (sourceObject == helpIJButton)
+                  if ( buttonCommandScanB( sourceObject ) )
+                    ; // Nothing else.  Command was executed.
+                  else if (sourceObject == helpIJButton)
                     commandHelpV();  // give help.
                   else
-                    buttonDone= false; // indicate no button action done.
+                    buttonDoneB= false; // indicate no button action done.
                   } // Try the various buttons and execute JTree commands.
-                if (buttonDone)  // restore focus to JTable if button was processed.
-                  restoreFocusV(); // change focus from button to what is was.
+                if (buttonDoneB)  // restore focus to JTable if button was processed.
+                  {
+                    buttonEnableScanV( );
+                    restoreFocusV(); // change focus from button to what is was.
+                    }
                 }
             } // actionPerformed( ActionEvent )
+
+        private boolean buttonCommandScanB( Object sourceObject )
+          /* This composition method processes the navigation buttons
+            trying to executed an associate command.
+            sourceObject is the JComponent that triggered an ActionEvent.
+            It stops trying to execute at the first doable button found,
+            so it executes a maximum of one button command per call.
+            It returns true if a button command was executed.
+            */
+          {
+            TreeAware focusedTreeAware=  // Panel attached to buttons...
+              getFocusedTreeAware();  // ...is the one last focused.
+            TreeHelper cachedTreeHelper= focusedTreeAware.getTreeHelper();
+
+            boolean doB= true; // Set to do commands, not tests.
+            boolean buttonDoneB= true; // Assume a button action will happen.
+
+            if (sourceObject == leftArrowIJButton)
+              cachedTreeHelper.commandGoToParentB(doB);
+            else if (sourceObject == rightArrowIJButton)
+              cachedTreeHelper.commandGoToChildB(doB);
+            else if (sourceObject == downArrowIJButton)
+              cachedTreeHelper.commandGoToNextB(doB);
+            else if (sourceObject == upArrowIJButton)
+              cachedTreeHelper.commandGoToPreviousB(doB);
+            else
+              buttonDoneB= false; // indicate no button action done.
+              
+            return buttonDoneB;  // Return whether button action occurred.
+            }
+
+        private void buttonEnableScanV( )
+          /* This composition method processes the navigation buttons
+            enabling or disabling each one based on 
+            which commands are actually executable according to
+            the TreeHelper of the focused Component.
+            */
+          {
+            TreeAware focusedTreeAware=  // Panel attached to buttons...
+              getFocusedTreeAware();  // ...is the one last focused.
+            TreeHelper cachedTreeHelper= focusedTreeAware.getTreeHelper();
+
+            leftArrowIJButton.setEnabled( 
+              cachedTreeHelper.commandGoToParentB( false )
+              );
+            rightArrowIJButton.setEnabled( 
+              cachedTreeHelper.commandGoToChildB( false )
+              );
+            downArrowIJButton.setEnabled( 
+              cachedTreeHelper.commandGoToNextB( false )
+              );
+            upArrowIJButton.setEnabled( 
+              cachedTreeHelper.commandGoToPreviousB( false )
+              );
+            }
 
         private void commandHelpV()
           /* This composition method impliments the Help command.  */
@@ -469,24 +523,25 @@ public class DagBrowserPanel
             be used in the right sub-panel to display the node
             identified by that TreePath.  
 
-            Most the work of this method id done by partTreeChangedProcessorV(..),
-            but this called only if it determined that 
-            partTreeChangedV(..) has not been recursively re-entered.
+            ??? Maybe create separate Listeners to simplify code.
+            Most the work of this method id done by 
+            partTreeChangedProcessorV(..), but this called only if 
+            it determined that partTreeChangedV(..) 
+            has not been recursively re-entered.
             This can  happen because DagBrowser is an Observer (Listener)
             of both the major sub-panels, and while processing 
             a state change in one it sends TreePath information to the other 
             causing it to change state, which causes the reentry.
             This type of re-entry might not be a problem and
             could be eliminated by having separate Listener classes
-            for each sub-panel.  ???
-            This would also eliminate some deooding code.
+            for each sub-panel.  This would also eliminate deooding code.
             */
           {
             if ( partTreeChangedVReentryBlockedB ) // Process unless a re-entry.
               { // do nothing because the re-entry blocking flag is set.
                 appLogger.info(
                   "DagBrowserPanel.partTreeChangedV(..), re-entry detected."
-                  ); // Could be eliminated with nested class Listeners ???
+                  );
                 } // do nothing because the recursion blocking flag is set.
               else // flag is not  set.
               { // process the TreeSelectionEvent.
@@ -529,6 +584,7 @@ public class DagBrowserPanel
                 recordPartPathSelectionV( );
                 } // Process non-null path.
             displayPathAndInfoV( ); // Update the display of other info.
+            buttonEnableScanV( );
             Misc.dbgEventDone(); // Debug.
             }
 
@@ -539,10 +595,10 @@ public class DagBrowserPanel
             the active selection.
             */
           {
-            TreeAware theTreeAware= // Get TreeAware JComponent with focus.
+            TreeAware focusedTreeAware= // Get TreeAware JComponent with focus.
               getFocusedTreeAware();
             TreePath theTreePath=  // Get TreePath from its TreeHelper.
-              theTreeAware.getTreeHelper().getPartTreePath();
+              focusedTreeAware.getTreeHelper().getPartTreePath();
             Selection.set( theTreePath );  // Record TreePath as selection.
             }
 
@@ -599,7 +655,7 @@ public class DagBrowserPanel
           /* This method calculates a new
             JComponent and TreeAware appropriate for displaying
             the last element of inTreePath and sets them
-            as content of the right sub-panel for display.
+            as content of the right sub-panel JScrollPane for display.
             */
           { // replaceRightPanelContent(.)
             //appLogger.info("DagBrowserPanel.replaceRightPanelContent().");
@@ -664,6 +720,7 @@ public class DagBrowserPanel
                 lastFocusPane= focusPane.NO_PANE;  // record enum ID.
               } // record focused component as an enum because it might change.
 
+            buttonEnableScanV( );
             /* ??
             System.out.println(
               "focusGained(...) by"
@@ -746,7 +803,8 @@ public class DagBrowserPanel
             It returns true if the state machine is still running, 
             false otherwise.
 
-            ??? This could be rewritten to simplify and shorten  by replacing
+            ??? Simplify the focus step code.
+            This could be rewritten to simplify and shorten  by replacing
             all the Component-specific code by code which 
             scans Components upward in the hierarchy from the 
             Component which should have focus to
@@ -762,8 +820,8 @@ public class DagBrowserPanel
                 getCurrentKeyboardFocusManager().getFocusOwner();
             Component nextFocusComponent= null; // assume no more steps.
             
-            /* The following complex code might be replace by
-              a Component hierarchy scanning loop ???  */
+            /* The following complex code might be replaced by
+              a Component hierarchy scanning loop ?  */
             nextFocusComponent=  // assume focusing starts at...
               viewJPanel;   // ... the root Component.
             { // override if needed.
@@ -914,7 +972,7 @@ public class DagBrowserPanel
           This method is called whenever something changes
           that might effect these fields.
           
-          Maybe simplify this to use getFocusedTreeAware()???
+          Maybe simplify this by using getFocusedTreeAware()???
           */
         {
           TreePath theTreePath= null;  // TreePath to be displayed.

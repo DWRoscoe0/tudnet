@@ -2,6 +2,7 @@ package allClasses;
 
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
 import java.awt.Rectangle;
 
 import javax.swing.JComponent;
@@ -66,7 +67,6 @@ public class RootJTree
               null   // Note, TreePath is not set yet.
               );
 
-          // theDataTreeModel= inTreeModel;  // Save the TreeModel.
           theJScrollPane= inJScrollPane;  // Save the JScrollPane.
             
           //theIJTree.setLargeModel( true );        
@@ -86,10 +86,11 @@ public class RootJTree
 
           addTreeSelectionListener(this);  // listen for tree selections.
           aTreeHelper.addTreePathListener(this);  // listen for tree paths.
+          addMouseListener(aTreeHelper);  // TreeHelper does MouseEvent-s.
           addKeyListener(this);  // listen for key presses.
           
           } // Constructor.
-  
+
     // TreeHelper code, including the TreePathListener
 
       class MyTreeHelper extends TreeHelper {
@@ -111,62 +112,65 @@ public class RootJTree
             which Tree panels can not handle.
             If it's not a leaf then it lets the superclass method handle it.
             */
-        {
-            boolean doableB= false;  // Assume command is not doable.
+          {
+              boolean doableB= false;  // Assume command is not doable.
 
-          toReturn: {
-            if (getPartDataNode().isLeaf())  // It is undoable leaf case.
-              break toReturn;  // Exit with default not doable result.
-            if   // Superclass reports no other doable case.
-              (!super.commandGoToChildB(false))
-              break toReturn;  // Exit with default not doable result.
-            doableB= true;  // Override result to indicate command doable.
+            toReturn: {
+              if (getPartDataNode().isLeaf())  // It is undoable leaf case.
+                break toReturn;  // Exit with default not doable result.
+              if   // Superclass reports no other doable case.
+                (!super.commandGoToChildB(false))
+                break toReturn;  // Exit with default not doable result.
+              doableB= true;  // Override result to indicate command doable.
 
-            if (! doB)  // Command execution is not desired.
-              break toReturn; // So exit with doability result.
-            
-            // Command execution begins.
-            super.commandGoToChildB(true);  // Have superclass execute command.
+              if (! doB)  // Command execution is not desired.
+                break toReturn; // So exit with doability result.
+              
+              // Command execution begins.
+              super.commandGoToChildB(true);  // Have superclass execute command.
 
-          } // toReturn end.
-            return doableB;  // Return whether command is/was doable.
+            } // toReturn end.
+              return doableB;  // Return whether command is/was doable.
 
-          }
-
-        public boolean commandGoDownB( boolean doB ) 
-          /* Tries to go down one node if doB is true.
-            It returns true if the operation is/was doable, false otherwise.
+            }
+        
+        public boolean commandGoToPreviousOrNextB( boolean doB, int incrementI )
+          /* This is a helper method for commandGoDownB(..) and commandGoUpB(..).
+            If incrementI == +1 it tries to go to the next node.
+            If incrementI == -1 it tries to go to the previous node.
             */
-          { // commandGoDownV().
+          { 
             boolean doableB= false;  // Assume command not doable.
             int RowI= getLeadSelectionRow( );  // Get # of selected row.
             TreePath NextTreePath=  // Convert next row to next TreePath.
-              getPathForRow( RowI + 1 );
-            if // Select that path if it exists and command desired.
-              ( (NextTreePath != null) && doB )
-              { // select and display the node.
-                doableB= true;  // Indicate command is doable.
-                setPathV(NextTreePath);  // Select the path.
-                } // select and display the node.
+              getPathForRow( RowI + incrementI );
+            if ( NextTreePath != null )
+              doableB= true;  // Indicate command is doable.
+            if // Select that path doable and command desired.
+              ( doableB && doB )
+              setPathV(NextTreePath);  // Select the path.
             return doableB;  // Return doability result.
-            } // commandGoDownV().
-    
-        public boolean commandGoUpB( boolean doB )  
-          /* Tries to go up one node if doB is true.
-            It returns true if the operation is/was doable, false otherwise.
+            }
+
+        @Override
+        public void mouseClicked(MouseEvent inMouseEvent) 
+          /* This MouseListener method checks for double click on mouse,
+            which now means to expand or collapse the present node,
+            so is synonymous with the Enter key.
+            JTree already does this and can not be overrided,
+            so this only notifies TreePathLlistener about
+            a possible change which could effect button enabling.
             */
-          { // CommandGoUpV().
-            boolean doableB= false;  // Assume command not doable.
-            int RowI= getLeadSelectionRow( );  // Get # of selected row.
-            TreePath NextTreePath=  // Convert next row to next TreePath.
-              getPathForRow( RowI - 1 );
-            if (NextTreePath != null)  // Select that path if it exists.
-              { // select and display the node.
-                doableB= true;  // Indicate command is doable.
-                setPathV(NextTreePath);  // Select the path.
-                } // select and display the node.
-            return doableB;  // Return doability result.
-            } // CommandGoUpV().
+          {
+            if (inMouseEvent.getClickCount() >= 2)
+              {
+                //commandExpandOrCollapseV();  // expand or collapse node.
+                  // Above is commented out because JTree does it itself.
+                //inMouseEvent.consume();  // This didn't help.
+
+                aTreeHelper.notifyListenersAboutChangeV( );
+                }
+            }
 
         }
 
@@ -237,7 +241,6 @@ public class RootJTree
           int SelectedRowI=   // determine which row is selected.
             getLeadSelectionRow();
           if  // expand or collapse it, whichever makes sense.
-            //(isExpanded(SelectedRowI))  // Row is expanded now.
             (isExpanded(getPathForRow(SelectedRowI)))  // Row is expanded now.
             { // Collapse the row and disable auto-expansion.
               collapseRow(SelectedRowI);  // collapse present node.
@@ -248,6 +251,7 @@ public class RootJTree
               } // Collapse the row and disable auto-expansion.
             else  // Row is collapsed now.
               expandRow(SelectedRowI);  // Expand the row.
+          aTreeHelper.notifyListenersAboutChangeV( );
           }
 
     /* Listener methods and their helpers.  
@@ -441,34 +445,34 @@ public class RootJTree
           { // collapseAndExpandUpTreePath(.)
             dbgV("RootJTree.collapseAndExpandUpTreePath(..) startTreePath", startTreePath);
             dbgV("RootJTree.collapseAndExpandUpTreePath(..) stopTreePath", stopTreePath);
-            TreePath ScanTreePath= startTreePath;  // Prepare up-scan.
+            TreePath scanTreePath= startTreePath;  // Prepare up-scan.
             while  // Process tree positions up to the common ancestor.
-              ( ! ScanTreePath.isDescendant( stopTreePath ) )
+              ( ! scanTreePath.isDescendant( stopTreePath ) )
               { // Move and maybe collapse one position toward root.
-                ScanTreePath=   // Move one position toward root.
-                  ScanTreePath.getParentPath();
-                dbgV("RootJTree.collapseAndExpandUpTreePath(..) selecct",ScanTreePath);
-                subselectV( ScanTreePath );
+                scanTreePath=   // Move one position toward root.
+                  scanTreePath.getParentPath();
+                dbgV("RootJTree.collapseAndExpandUpTreePath(..) selecct",scanTreePath);
+                subselectV( scanTreePath );
                 if // Auto-collapse this node if...
                   ( ( // ... it was auto-expanded. 
-                  		TreeExpansion.GetAutoExpandedB( ScanTreePath ) 
+                  		TreeExpansion.GetAutoExpandedB( scanTreePath ) 
                       ) &&  // ...and...
                     ( // ...not the top of an inverted-V.
-                      ! ScanTreePath.isDescendant( stopTreePath ) 
-                      || ScanTreePath.equals( stopTreePath )
+                      ! scanTreePath.isDescendant( stopTreePath ) 
+                      || scanTreePath.equals( stopTreePath )
                       )  
                     )
                   { // Collapse.
                     dbgV(
                       "RootJTree.collapseAndExpandUpTreePath(..) collapse",
-                      ScanTreePath
+                      scanTreePath
                       );
-                    collapseV( ScanTreePath );
+                    collapseV( scanTreePath );
                     // Notice that the the AutoExpandedB sttribute is not cleared.
                     } // Collapse.
                 } // Move and maybe collapse one position toward root.
             dbgV("RootJTree.collapseAndExpandUpTreePath(..) common");
-            return ScanTreePath;  // return the final common ancestor TreePath.
+            return scanTreePath;  // return the final common ancestor TreePath.
             } // collapseAndExpandUpTreePath(.)
 
         private void collapseAndExpandDownV
@@ -535,10 +539,10 @@ public class RootJTree
               else
                 KeyProcessedB= false;
               } // try to process the key event.
-            if // Post process key... 
+            if // Post process key,... 
               (KeyProcessedB)  // ...if it was processed earlier.
               { // Post process key.
-                TheKeyEvent.consume();  // ... prevent further processing of it.
+                TheKeyEvent.consume();  // ...prevent more processing of it.
                 Misc.dbgEventDone(); // Debug.
                 } // Post process key.
             } // keyPressed.
