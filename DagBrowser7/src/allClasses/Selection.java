@@ -22,7 +22,7 @@ public class Selection
     and because sometimes actual DataNodes are deleted or moved,
     a selection might point to a non-existent node.
     In these cases a TreePath might be created which
-    ends in a special node called an ErrorDataNode.
+    ends in a special node called an UnknownDataNode.
 
     Originally selection history information was stored as 
     one MRU/LRU lists of children in each MetaNode.  
@@ -85,7 +85,7 @@ public class Selection
           the child MetaNode in inMetaNode 
           which was selected last, or null if there isn't one.
           It also returns null if the Child DataNode
-          appears to be an ErrorDataNode,
+          appears to be an UnknownDataNode,
           because that is an unusable value.
           */
         {
@@ -101,8 +101,8 @@ public class Selection
             resultChildDataNode=  // Result recent child DataNode is...
               lastChildMetaNode.   // ...the last child's...
               getDataNode();  // user object.
-            if // Result child DataNode is not an ErrorDataNode.
-              ( ! ErrorDataNode.isOneB( resultChildDataNode ) )
+            if // Result child DataNode is not an UnknownDataNode.
+              ( ! UnknownDataNode.isOneB( resultChildDataNode ) )
               break process;  // Exit with that okay result.
 
             resultChildDataNode= null; // Replace unusable value with null.

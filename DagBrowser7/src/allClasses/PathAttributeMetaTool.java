@@ -42,7 +42,7 @@ public class PathAttributeMetaTool
           At least the root must have an "IS" attribute value,
           otherwise an invalid TreePath consisting of only the
           ParentOfRootDataNode will be returned.
-          It does not consider ErrorDataNode-s to be part of the path
+          It does not consider UnknownDataNode-s to be part of the path
           even if they have the desired attribute
           because it is an unusable value.
           */
@@ -59,8 +59,8 @@ public class PathAttributeMetaTool
               break scanner;  // Exit Processor.
             DataNode theDataNode= // Get associated DataNode.
               childMetaNode.getDataNode();
-            if // DataNode is an ErrorDataNode.
-              ( ErrorDataNode.isOneB( theDataNode ) )
+            if // DataNode is an UnknownDataNode.
+              ( UnknownDataNode.isOneB( theDataNode ) )
               break scanner;  // Exit Processor.
             scanTreePath=  // Add DataNode to TreePath.
               scanTreePath.pathByAddingChild( theDataNode );

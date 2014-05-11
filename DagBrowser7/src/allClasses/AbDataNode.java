@@ -20,7 +20,7 @@ public abstract class AbDataNode
 
       static boolean isUsableB( DataNode inDataNode )
         /* This method returns true if inDataNode is usable,
-          which means it is not null and not an ErrorDataNode.
+          which means it is not null and not an UnknownDataNode.
           */
         { 
             boolean usableB= true;  // Assume the node is usable.
@@ -30,9 +30,9 @@ public abstract class AbDataNode
           
             if ( inDataNode == null )  // There is no DataNode reference.
               break toUnusable; // Go return value for unusable.
-            if // Node class is not an ErrorDataNode.
-              ( ! ErrorDataNode.isOneB( inDataNode ) )
-              // ( ! ( inDataNode instanceof ErrorDataNode ) )
+            if // Node class is not an UnknownDataNode.
+              ( ! UnknownDataNode.isOneB( inDataNode ) )
+              // ( ! ( inDataNode instanceof UnknownDataNode ) )
               break toReturn;  // Go return initial default value of usable.
 
           } // toUnusable

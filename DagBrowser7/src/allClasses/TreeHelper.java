@@ -233,7 +233,7 @@ public class TreeHelper
           It returns true if the command is/was doable, false otherwise.
           To facilitate the viewing of leaves, though they have no children,
           it returns true for them and executes the command by 
-          adding an ErrorDataNode to the end of the present Part path.  
+          adding an UnknownDataNode to the end of the present Part path.  
           ??? This method is too long.  Break it up.
           */
         {
@@ -241,8 +241,8 @@ public class TreeHelper
           toReturn: {
             if ( getPartDataNode() == null )  // No part path.
               break toReturn; // So exit with not doable.
-            if // Part is itself an ErrorDataNode.
-              ( ErrorDataNode.isOneB( getPartDataNode() ) )
+            if // Part is itself an UnknownDataNode.
+              ( UnknownDataNode.isOneB( getPartDataNode() ) )
               break toReturn; // So exit with not doable.
             DataNode childDataNode= null;  // Storage for findingChild result.
           findingChild: {
@@ -252,7 +252,7 @@ public class TreeHelper
             if (!getPartDataNode().isLeaf())  // It is an empty non-leaf.
               break toReturn; // So exit with not doable.
             childDataNode=  // Use a place holder child for entering leaf.
-              ErrorDataNode.newErrorDataNode();
+              UnknownDataNode.newUnknownDataNode();
           } // findingChild end.
             doableB= true;  // Override result to indicate command doable.
 
@@ -297,8 +297,8 @@ public class TreeHelper
             TreePath a1TreePath= a0TreePath.getParentPath();
             if (a1TreePath == null) break toReturn;  // Check parent path.
             DataNode a0DataNode= (DataNode)a0TreePath.getLastPathComponent();
-            if // Check that base node is not an ErrorDataNode.
-                ( ErrorDataNode.isOneB( a0DataNode ) )
+            if // Check that base node is not an UnknownDataNode.
+                ( UnknownDataNode.isOneB( a0DataNode ) )
               break toReturn;
             DataNode a1DataNode= (DataNode)a1TreePath.getLastPathComponent();
             int a0IndexI= // Get present index.
@@ -366,7 +366,7 @@ public class TreeHelper
                   } // Store Whole Part variables. 
 
                 { // Set Part variables to non-null sentinel.
-                  thePartDataNode= ErrorDataNode.newErrorDataNode();
+                  thePartDataNode= UnknownDataNode.newUnknownDataNode();
                   thePartTreePath= theWholeTreePath.pathByAddingChild( 
                     thePartDataNode 
                     );
@@ -411,7 +411,7 @@ public class TreeHelper
         but was changed to avoid confusion with selection within
         the JComponent being used to represent the Whole.
         The part variables should probably never remain null.
-        thePartDataNode might be the ErrorDataNode,
+        thePartDataNode might be the UnknownDataNode,
         which means that the whole is a leaf,
         which can be displayed but not as a collection of children.
         */
@@ -585,7 +585,7 @@ public class TreeHelper
             * The first child, if there is one.
           Otherwise it returns null.
           
-          ??? Maybe instead of null it should return ErrorDataNode?
+          ??? Maybe instead of null it should return UnknownDataNode?
           */
         {
           DataNode childDataNode=  // Try to get the child...

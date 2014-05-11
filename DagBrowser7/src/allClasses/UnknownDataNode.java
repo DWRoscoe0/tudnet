@@ -1,6 +1,6 @@
 package allClasses;
 
-public class ErrorDataNode extends StringDataNode
+public class UnknownDataNode extends StringDataNode
 
   /* This class is a DataNode that serves as a place-holder
     to indicate an error but also to avoid null pointer references.  
@@ -23,17 +23,17 @@ public class ErrorDataNode extends StringDataNode
     to better describe its use.
     */
 
-  { // class ErrorDataNode
+  { // class UnknownDataNode
   
-    private ErrorDataNode( )  
+    private UnknownDataNode( )  
       /* Constructor with no arguments to create a DataNode for use as
         a Part path place holder.
         */
       { 
-        super("!ErrorDataNode"); // Temporary String provided.
+        super("!UnknownDataNode"); // Temporary String provided.
         }  // To make debugging easier.
 
-    public ErrorDataNode( String inString )
+    public UnknownDataNode( String inString )
       /* Constructor with inString argument to be used as 
         a named place-holder in MetaNode tree when part od
         DataNode tree is missing.
@@ -42,9 +42,9 @@ public class ErrorDataNode extends StringDataNode
         super( inString ); // Store node name.
         }  // To make debugging easier.
 
-    public static ErrorDataNode newErrorDataNode( )
+    public static UnknownDataNode newUnknownDataNode( )
       { 
-        return new ErrorDataNode();
+        return new UnknownDataNode();
         }
 
     public String GetNameString( )
@@ -54,12 +54,12 @@ public class ErrorDataNode extends StringDataNode
         }
 
     public static boolean isOneB( Object inObject )
-        /* This method returns true if inDataNode is an ErrorDataNode.
+        /* This method returns true if inDataNode is an UnknownDataNode.
           */
         { 
           return ( 
-            (DataNode)inObject instanceof ErrorDataNode 
+            (DataNode)inObject instanceof UnknownDataNode 
             );
           }
 
-    } // class ErrorDataNode
+    } // class UnknownDataNode

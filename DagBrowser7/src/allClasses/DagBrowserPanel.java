@@ -1013,8 +1013,8 @@ public class DagBrowserPanel
           the final DataNode of that path in infoJLabel.
           This method is called whenever the TreeSelection changes
           or left-panel/right-panel focus changes.
-          But it doesn't display information on an ErrorDataNode.
-          If there are any ErrorDataNode-s at the end of the TreePath
+          But it doesn't display information on an UnknownDataNode.
+          If there are any UnknownDataNode-s at the end of the TreePath
           then it removes them first.
           This means that more than one path could display the same way.
           */
@@ -1028,7 +1028,7 @@ public class DagBrowserPanel
             else  // A path was provided.
             { // display non-null info.
               while // Strip all error nodes from tail of TreePath.
-                ( ErrorDataNode.isOneB( inTreePath.getLastPathComponent() ))
+                ( UnknownDataNode.isOneB( inTreePath.getLastPathComponent() ))
                 inTreePath= inTreePath.getParentPath();  // Strip the node.
               directoryJLabel.setText(  // in directoryJLabel display set...
                 theDataTreeModel.  // ...DataTreeModel's calculation of...
