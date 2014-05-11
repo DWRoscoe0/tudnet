@@ -60,7 +60,7 @@ public class PathAttributeMetaTool
             DataNode theDataNode= // Get associated DataNode.
               childMetaNode.getDataNode();
             if // DataNode is an ErrorDataNode.
-              ( theDataNode == ErrorDataNode.getSingletonErrorDataNode() )
+              ( ErrorDataNode.isOneB( theDataNode ) )
               break scanner;  // Exit Processor.
             scanTreePath=  // Add DataNode to TreePath.
               scanTreePath.pathByAddingChild( theDataNode );

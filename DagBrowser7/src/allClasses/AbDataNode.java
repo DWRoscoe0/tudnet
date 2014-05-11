@@ -16,6 +16,33 @@ public abstract class AbDataNode
     */
     
   {
+    // Static methods.
+
+      static boolean isUsableB( DataNode inDataNode )
+        /* This method returns true if inDataNode is usable,
+          which means it is not null and not an ErrorDataNode.
+          */
+        { 
+            boolean usableB= true;  // Assume the node is usable.
+
+          toReturn: { // block beginning.
+          toUnusable: { // block beginning.
+          
+            if ( inDataNode == null )  // There is no DataNode reference.
+              break toUnusable; // Go return value for unusable.
+            if // Node class is not an ErrorDataNode.
+              ( ! ErrorDataNode.isOneB( inDataNode ) )
+              // ( ! ( inDataNode instanceof ErrorDataNode ) )
+              break toReturn;  // Go return initial default value of usable.
+
+          } // toUnusable
+            usableB= false;  // Override default useability value.
+
+          } // toReturn
+            return usableB;  // Return final calculated value.
+
+          }
+      
     // DataNode interface methods.
   
       public boolean isLeaf( ) 
@@ -145,7 +172,7 @@ public abstract class AbDataNode
           return resultJComponent;  // Return the result from above.
           } // GetDataJComponent()
 
-    // other methods.
+    // Other non-static methods.
     
       public int IDCode() { return super.hashCode(); }
 

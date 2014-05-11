@@ -195,10 +195,8 @@ public class RootJTree
             if (inTreePath == null)  // null path.
               break toReturn;  // Ignore it.
 
-            if (  // Last node is an ErrorDataNode
-                inTreePath.getLastPathComponent()
-                == ErrorDataNode.getSingletonErrorDataNode()
-                )
+            if // Last node is an ErrorDataNode
+              ( ErrorDataNode.isOneB( inTreePath.getLastPathComponent() ) )
               break toReturn;  // Ignore it.
             if (   // Parent of root.
                 inTreePath 

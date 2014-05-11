@@ -72,7 +72,7 @@ public class TextViewer
         /* This grouping method creates and initializes the JTextArea.  */
         { // CommonInitialization( )
           if ( TreePathIn == null )  // prevent null TreePath.
-            TreePathIn = new TreePath( new StringObject( "ERROR TreePath" ));
+            TreePathIn = new TreePath( new StringDataNode( "ERROR TreePath" ));
           aTreeHelper=  // construct helper class instance.
             new TreeHelper( this, TreePathIn ); 
           { // Add listeners.

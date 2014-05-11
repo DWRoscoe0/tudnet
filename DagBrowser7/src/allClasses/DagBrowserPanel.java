@@ -51,9 +51,13 @@ public class DagBrowserPanel
 
     ??? marks things to do in the code below.  
     Here are those things summarized:
-    * Factor DagBrowserPanel() and other methods so each fits on a screen.
-    * focusStepB() simplification using scanning loop.
-    * commandHelpV() replacement with a general PromptingHelp system.
+    * ??? Re-factor so each method fits on a screen.
+    * ??? Integrate commandHelpV() general PromptingHelp button scanner.
+    * ??? Put code in JComponent building blocks sub-classes, such as:
+      / Existing classes to display a Tree as
+        a List, Directory, Text, as well as new classes such as
+      * An enclosing JPanel, for DagBrowserPanel at least.
+      * JLabels for displaying a Tree path and Tree node status.
     */
 
   { // class DagBrowserPanel. 
@@ -803,7 +807,7 @@ public class DagBrowserPanel
             It returns true if the state machine is still running, 
             false otherwise.
 
-            ??? Simplify the focus step code.
+            ??? Simplify the focus step code with a tree scanning loop.
             This could be rewritten to simplify and shorten  by replacing
             all the Component-specific code by code which 
             scans Components upward in the hierarchy from the 
@@ -1024,9 +1028,7 @@ public class DagBrowserPanel
             else  // A path was provided.
             { // display non-null info.
               while // Strip all error nodes from tail of TreePath.
-                ( inTreePath.getLastPathComponent() 
-                  == ErrorDataNode.getSingletonErrorDataNode() 
-                  )  // Last elemenr is the ErrorDataNode.
+                ( ErrorDataNode.isOneB( inTreePath.getLastPathComponent() ))
                 inTreePath= inTreePath.getParentPath();  // Strip the node.
               directoryJLabel.setText(  // in directoryJLabel display set...
                 theDataTreeModel.  // ...DataTreeModel's calculation of...

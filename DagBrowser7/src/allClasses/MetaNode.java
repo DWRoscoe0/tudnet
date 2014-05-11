@@ -6,9 +6,7 @@ import java.util.HashMap;
 //import java.util.Iterator;
 // import java.util.Map;
 
-public class MetaNode
-
-  extends IDNumber
+public class MetaNode extends IDNumber
 
   /* This class represents DataNode metadata, information about DagNodes.
     

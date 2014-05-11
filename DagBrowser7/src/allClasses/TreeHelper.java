@@ -241,9 +241,8 @@ public class TreeHelper
           toReturn: {
             if ( getPartDataNode() == null )  // No part path.
               break toReturn; // So exit with not doable.
-            if ( // Part is itself an ErrorDataNode.
-                getPartDataNode() == ErrorDataNode.getSingletonErrorDataNode()  
-                )
+            if // Part is itself an ErrorDataNode.
+              ( ErrorDataNode.isOneB( getPartDataNode() ) )
               break toReturn; // So exit with not doable.
             DataNode childDataNode= null;  // Storage for findingChild result.
           findingChild: {
@@ -253,7 +252,7 @@ public class TreeHelper
             if (!getPartDataNode().isLeaf())  // It is an empty non-leaf.
               break toReturn; // So exit with not doable.
             childDataNode=  // Use a place holder child for entering leaf.
-              ErrorDataNode.getSingletonErrorDataNode();
+              ErrorDataNode.newErrorDataNode();
           } // findingChild end.
             doableB= true;  // Override result to indicate command doable.
 
@@ -298,9 +297,8 @@ public class TreeHelper
             TreePath a1TreePath= a0TreePath.getParentPath();
             if (a1TreePath == null) break toReturn;  // Check parent path.
             DataNode a0DataNode= (DataNode)a0TreePath.getLastPathComponent();
-            if ( // Check that base node is not an ErrorDataNode.
-                a0DataNode == ErrorDataNode.getSingletonErrorDataNode()  
-                )
+            if // Check that base node is not an ErrorDataNode.
+                ( ErrorDataNode.isOneB( a0DataNode ) )
               break toReturn;
             DataNode a1DataNode= (DataNode)a1TreePath.getLastPathComponent();
             int a0IndexI= // Get present index.
@@ -368,7 +366,7 @@ public class TreeHelper
                   } // Store Whole Part variables. 
 
                 { // Set Part variables to non-null sentinel.
-                  thePartDataNode= ErrorDataNode.getSingletonErrorDataNode();
+                  thePartDataNode= ErrorDataNode.newErrorDataNode();
                   thePartTreePath= theWholeTreePath.pathByAddingChild( 
                     thePartDataNode 
                     );

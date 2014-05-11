@@ -20,7 +20,7 @@ public class Selection
     the selection in the right pane is normally 
     a child of the selection in the left pane,
     and because sometimes actual DataNodes are deleted or moved,
-    a selection might point to a non-existant node.
+    a selection might point to a non-existent node.
     In these cases a TreePath might be created which
     ends in a special node called an ErrorDataNode.
 
@@ -102,10 +102,7 @@ public class Selection
               lastChildMetaNode.   // ...the last child's...
               getDataNode();  // user object.
             if // Result child DataNode is not an ErrorDataNode.
-              ( ! resultChildDataNode.equals(
-                  ErrorDataNode.getSingletonErrorDataNode()
-                  )
-                )
+              ( ! ErrorDataNode.isOneB( resultChildDataNode ) )
               break process;  // Exit with that okay result.
 
             resultChildDataNode= null; // Replace unusable value with null.

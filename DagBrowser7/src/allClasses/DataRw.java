@@ -80,7 +80,8 @@ public class DataRw
               NameString  // ...with that name.
               );
           if ( TheDataNode == null )  // replace with error object if null.  ???
-            TheDataNode= ErrorDataNode.getSingletonErrorDataNode( );
+            //TheDataNode= ErrorDataNode.newErrorDataNode( );
+            TheDataNode= new ErrorDataNode( NameString );
           return TheDataNode;
           } // readDataNode(..)
 

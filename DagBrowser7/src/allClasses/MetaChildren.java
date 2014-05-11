@@ -24,6 +24,8 @@ public class MetaChildren
       private ArrayList< IDNumber > TheArrayList;  // Container for children.
 
 		// Constructors.
+
+    // Constructor.
       
       MetaChildren() 
         /* This constructor creates an empty MetaChildren instance.  */
@@ -144,18 +146,6 @@ public class MetaChildren
             return TheArrayList.listIterator();
             }
 
-    public void add( IDNumber InIDNumber )
-      /* This method adds child InIDNumber to this MetaChildren instance.
-        IDNumber is the superclass of MetaNode,
-        and might be added as a MetaNode place-holder 
-        during reading from disk.
-        If the new child is an actual MetaNode then there should not 
-        already be a MetaNode child with the same DataNode.
-        */
-      { 
-        TheArrayList.add( InIDNumber );  // Add the child object.
-        }
-
     // rw processors.
 
       public static MetaChildren rwGroupMetaChildren
@@ -227,6 +217,18 @@ public class MetaChildren
                 );
               } // Read a child or exit.
           return newMetaChildren;  // Return resulting MetaChildren instance.
+          }
+
+      public void add( IDNumber InIDNumber )
+        /* This method adds child InIDNumber to this MetaChildren instance.
+          IDNumber is the superclass of MetaNode,
+          and might be added as a MetaNode place-holder 
+          during reading from disk.
+          If the new child is an actual MetaNode then there should not 
+          already be a MetaNode child with the same DataNode.
+          */
+        { 
+          TheArrayList.add( InIDNumber );  // Add the child object.
           }
 
       private static void writeMetaChildren

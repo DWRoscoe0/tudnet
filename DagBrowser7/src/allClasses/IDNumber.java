@@ -1,23 +1,25 @@
 package allClasses;
 
-public class IDNumber 
+public class IDNumber // Superclass of MetaNode.
+
   /* This is the class which represents an ID number.
     It is meant to be used as a place-holder and a superclass
     for objects that can be saved to and loaded from the state files.
-    The values for the number in instances can come from two placs:
+    The values for the number in instances can come from two places:
     * It can create a new value by incrementing the static counter NextI.
     * It can load a value from the MetaFile using rwIDNumber( ).
     At first it will be used for IDs for MetaNode's only.
     Later it might be used for other subclasses.
     */
+
   {
 
-    private static int NextI= 1;  // Counter with next number to be used.
-    
+    private static int NextI= 1;  // Counter with next ID number to be used.
+
     private int TheI= 0;  // ID Value.  0 means undefined.
-    
+
     // Constructors.
-      
+
       public IDNumber( )  
         /* This constructor is used for creation of new objects.
           It assigns the next available ID number using counter NextI.
@@ -25,7 +27,7 @@ public class IDNumber
         { 
           TheI= NextI++;  // Allocate and store a new number.
           }
-    
+
       public IDNumber( int InI )  
         /* This constructor is used for loading old objects.
           The ID # value is InI.
@@ -37,7 +39,7 @@ public class IDNumber
           }
 
     // static methods.
-    
+
       private static void skipThisNumber( int NumberToSkipI )
         /* Makes certain that NumberToSkipI is not used as the ID number
           in any new instances.  It does this simply by making certain that
@@ -46,7 +48,7 @@ public class IDNumber
           if ( NumberToSkipI >= NextI )  // Increase NextI if needed.
             NextI= NumberToSkipI + 1;  // Increase NextI.
           }
-        
+
       public static IDNumber rwIDNumber
         ( MetaFile inMetaFile, IDNumber InOutIDNumber )
         /* This rw-processes IDNumber InOutIDNumber
@@ -58,14 +60,14 @@ public class IDNumber
         { 
           if ( InOutIDNumber == null )  // Allocate IDNumber if none provided.
             InOutIDNumber= new IDNumber( 0 );
-            
+
           InOutIDNumber.rw( inMetaFile );  // Process the fields.
 
           return InOutIDNumber;  // Return possible new IDNumber.
           }
-        
+
     // instance methods.
-    
+
       public int getTheI( )  
         /* This method returns the IDNumber int value.  */
         { 
@@ -95,5 +97,5 @@ public class IDNumber
                 } // Save IDNumber to file.
             } // Load or save TheI.
           }
- 
+
     }
