@@ -36,7 +36,7 @@ public class DagBrowser
         and calls a helper method to do all the work.
         */
       {
-        DagBrowser theDagBrowser= // Create instance to ease listening.
+        DagBrowser theDagBrowser= // Create instance to be Listener.
           new DagBrowser();
         theDagBrowser.mainHelperV(argStrings); // Make new instance...
           // ...do all the work.
@@ -72,22 +72,20 @@ public class DagBrowser
         }
 
       public void run()
-        /* This method initializes the app's GUI.
-          It creates the app's GUI in a new JFrame and starts it.
-          It also sets the AppInstanceListener to process
-          the detection of new running app instances.
+        /* This method builds the app's GUI.in a new JFrame and starts it.
+          It also activates some other code which might provide inputs.
           
-          This method is run after mainHelper() queues
-          the only single instance of this class onto the AWT thread
-          using invokeLater(..).
+          This method is run from the AWT thread after mainHelper() 
+          calls invokeLater(..) because AWT GUI code is not thread-safe.
           */
         {
           appJFrame =  // construct and start the main application JFrame.
             startJFrame();
           
-          AppInstanceManager.setAppInstanceListener(  // Activate...
-            this
+          AppInstanceManager.setAppInstanceListener(  // Link...
+            this  // ...to AppInstance events.
             );
+          NetworkThread.activateV( );  // Start network communication.
           }
 
     public void newInstanceCreated()

@@ -21,7 +21,7 @@ public class Misc
   
     // Singleton code.
     
-      private Misc()  // Private construtor prevents external instantiation.
+      private Misc()  // Private constructor prevents external instantiation.
         {}
 
       private static final Misc theMisc =  // Internal singleton builder.

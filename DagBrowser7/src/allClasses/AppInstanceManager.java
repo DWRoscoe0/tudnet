@@ -349,7 +349,7 @@ public class AppInstanceManager {
         the latest version, and then runs it.
         It returns true if this app instance should exit 
           because its job is done but it to be continued
-          by another runnng instance which has been started.
+          by another running instance which has been started.
         It returns false if this app instance should 
           continue with normal start-up, 
           because instance management has determined that
