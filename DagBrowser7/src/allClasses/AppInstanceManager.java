@@ -112,7 +112,12 @@ public class AppInstanceManager {
       and to do an update if it appears.
       */
     {
+      //appLogger.info("tryExitForChainToUpdateFromNewerArgAppV().");
       if ( argAppFile != null )  // argAppFile has been defined.
+      {
+        //appLogger.info(
+        //  "tryExitForChainToUpdateFromNewerArgAppV(): argAppFile!=null."
+        //  );
         if   // Arg app approved to update app in standard folder.
           ( updaterApprovedB() )
           {
@@ -122,6 +127,7 @@ public class AppInstanceManager {
               argAppFile.getAbsolutePath() 
               );
             }
+        }
       }
 
   private static boolean updaterApprovedB()
@@ -132,11 +138,25 @@ public class AppInstanceManager {
       */
     {
       boolean resultB= false;  // Assume false.
+      //appLogger.info(
+      //  "updaterApprovedB() Files: "+thisAppFile+" "+standardAppFile
+      //  );
       if // This app is the app in the standard folder.
         ( thisAppFile.equals( standardAppFile ) )
-        if // The arg app is newer than this app.
-          ( argAppFile.lastModified() > thisAppFile.lastModified() )
-          resultB= true;  // Override result.
+        {
+          long argAppFileLastModifiedL= argAppFile.lastModified();
+          long thisAppFileLastModifiedL= thisAppFile.lastModified();
+          //appLogger.info(
+          //  "updaterApprovedB() times: "
+          //  +argAppFileLastModifiedL
+          //  +" "
+          //  +thisAppFileLastModifiedL
+          //  );
+
+          if // The arg app is newer than this app.
+            ( argAppFileLastModifiedL > thisAppFileLastModifiedL )
+            resultB= true;  // Override result.
+          }
       return resultB;
       }
     
@@ -172,7 +192,8 @@ public class AppInstanceManager {
       null;  // ...to perform an action if desired.
 
     public static final int INSTANCE_FLAG_PORT = 
-      56944;  // A high number I chose at random.
+      PortManager.getDiscoveryPortI();
+      // 56944;  // A high number I chose at random.
     
     public static boolean manageRunningInstancesB( )
       /* Normally this method is called at app start-up.
@@ -181,7 +202,7 @@ public class AppInstanceManager {
         If it can't open the socket it is because an older instance did.
         In this case it connects to the socket and sends to it
         the path of this app's jar file.
-        If it can open the socket then it starts an InstanceListeningThread
+        If it can open the socket then it starts an InstanceManagerThread
         to monitor the socket for future messages from 
         newer running instances of the app.
         It returns true if this app should exit 
@@ -201,8 +222,13 @@ public class AppInstanceManager {
             new ServerSocket(
               INSTANCE_FLAG_PORT, 10, InetAddress.getLocalHost()
               );
-          (new InstanceListeningThread()).start();  // Start listener thread...
+          { // Setup InstanceManagerThread.
+            InstanceManagerThread theInstanceManagerThread=
+              new InstanceManagerThread();
+            theInstanceManagerThread.setName("InstanceManagerThread");
+            theInstanceManagerThread.start();  // Start thread...
             // ...on the socket just opened.
+            } // Setup InstanceManagerThread.
 
           Shutdowner.addShutdownerListener(new ShutdownerListener() {
             public void doMyShutdown() 
@@ -235,7 +261,7 @@ public class AppInstanceManager {
         to an existing older running app instance via the socket
         to which that app is listening.
         It returns true if it succeeds and to indicate that
-          this app should exit let the other app handle things.
+          this app should exit to let the other app handle things.
         It return false to indicate a sending error,
           and this app should not exit.
         */
@@ -278,7 +304,7 @@ public class AppInstanceManager {
           theAppInstanceListener.newInstanceCreated();
         }
 
-    static class InstanceListeningThread extends Thread
+    static class InstanceManagerThread extends Thread
       /* This class contains the run() method which waits for
         messages from other running app instances and processes them.  */
       {
@@ -471,44 +497,48 @@ public class AppInstanceManager {
 
     private static void copyAppToStandardFolderAndChainToIt()
       /* This method tries to copy this app's jar file 
-        to the standard folder, starts it as a Process, and exits.
-        If it is unable to do this then it returns.
-        
-        ??? The copy operation might need to be retried if
-        the other running instance is slow to terminate
-        and prevents overwrite of its jar file.
+        to the standard folder, start it as a Process, and exit.
+        If copying fails it keeps retrying unless the thread
+        is interrupted, in which case it returns.
         */
       {
         if  // This app is not from a jar file.
           (! thisAppFile.getName().endsWith(".jar"))
           { // Probably a class file running in Eclipse.  Do normal startup.
             appLogger.info( "Not a jar file, so not exiting.");
-            //break Process; // Keep appShouldExitB false for a normal startup.
             }
           else
-          try 
-            {
-              appLogger.info( 
-                "Copying jar file to standard folder."
-                );
-              //Thread.sleep(3000);  // Wait 3 s for target file to shut-down.
-              Files.copy(
-                  thisAppFile.toPath()
-                  ,standardAppFile.toPath()
-                  ,StandardCopyOption.COPY_ATTRIBUTES
-                  ,StandardCopyOption.REPLACE_EXISTING
-                  );
-              setJavaCommandAndExitV( standardAppFile.getAbsolutePath() );
-              }
-            //catch (IOException e)
-            catch (Exception e)
-              { System.out.println( "Error: "+e ); }
-        } // Copy this app to folder and chain to it.
+            while  // Keep trying until copy success and exit.
+              (!Thread.currentThread().isInterrupted())
+              try 
+                {
+                  appLogger.info( 
+                    "Copying jar file to standard folder."
+                    );
+                  Files.copy(
+                      thisAppFile.toPath()
+                      ,standardAppFile.toPath()
+                      ,StandardCopyOption.COPY_ATTRIBUTES
+                      ,StandardCopyOption.REPLACE_EXISTING
+                      );
+                  setJavaCommandAndExitV( standardAppFile.getAbsolutePath() );
+                  }
+                catch (Exception e)  // Other instance probably still running.
+                  { 
+                    appLogger.info( 
+                      "copyAppToStandardFolderAndChainToIt().\n  "
+                      +e.toString()
+                      +"  Will retry after 1 second." 
+                      ); 
+                    Misc.snoozeV(1000);  // Wait for other instance.
+                    }
+        }
     
     private static void setJavaCommandAndExitV( String argString )
       /* This method is equivalent to a 
         setJavaCommandForExitV( argString )
         followed by exit(0).
+        It never returns.
         */
       {
         setJavaCommandForExitV( argString );  // Setup command.

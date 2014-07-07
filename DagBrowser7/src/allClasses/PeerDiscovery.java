@@ -17,8 +17,9 @@ import java.util.Properties;
 import static allClasses.Globals.*;  // appLogger;
 
 /**
- * Performs broadcast and multicast peer detection. How well this works depends
- * on your network configuration
+ * Performs broadcast or multicast peer detection depending on
+ * which PeerDiscovery constructor is used.
+ * How well this works depends on your network configuration
  * 
  * @author ryanm
  */
@@ -28,13 +29,14 @@ public class PeerDiscovery
 	private static final byte RESPONSE_PACKET = 81;
 
 	/**
-	 * The group address. Determines the set of peers that are able to discover
-	 * each other
+	 * The group address.   It, combined with the port,
+   * determines the set of peers that are able to discover each other
 	 */
 	public final InetAddress group;
 
 	/**
-	 * The port number that we operate on
+	 * The port number that we operate on for discovery.
+   * It is used for both source and destination ports during.
 	 */
 	public final int port;
 
@@ -220,7 +222,11 @@ public class PeerDiscovery
 		this.group = group;
 		this.port = port;
 
-		mcastSocket = new MulticastSocket( port );
+		//mcastSocket = new MulticastSocket( port );
+    //mcastSocket = new MulticastSocket( 40404 );
+    mcastSocket = new MulticastSocket(  // Create MulticastSocket...
+      PortManager.getDiscoveryLocalPortI()  // ...bound to node's local port for Multicast.
+      );
 		mcastSocket.joinGroup( group );
 
 		// confusingly, this *disables* loopback. it's only a hint though,
@@ -229,6 +235,7 @@ public class PeerDiscovery
 
 		mcastSocket.setTimeToLive( ttl );
 
+		mcastListen.setName( "PeerDiscovery-Multicast" );  // Name Thread.
 		mcastListen.setDaemon( true );
 		mcastListen.start();
 
@@ -286,7 +293,7 @@ public class PeerDiscovery
 
 	/**
 	 * Queries the network and finds the addresses of other peers in the same
-	 * group
+	 * group.
 	 * 
 	 * @param timeout
 	 *           How long to wait for responses, in milliseconds. Call will block
@@ -329,8 +336,8 @@ public class PeerDiscovery
 		{
 		}
 
-		InetAddress[] peers = responseList.toArray( new InetAddress[ responseList
-				.size() ] );
+		InetAddress[] peers =  // Convert resulting List to an array.
+      responseList.toArray( new InetAddress[ responseList.size() ] );
 
 		responseList = null;
 

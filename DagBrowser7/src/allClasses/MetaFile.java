@@ -4,8 +4,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-// import java.nio.file.Paths;
-// import java.nio.file.Path;
+
+import static allClasses.Globals.*;  // For appLogger;
+
 
 public class MetaFile // implements ShutdownerListener
  
@@ -181,7 +182,7 @@ public class MetaFile // implements ShutdownerListener
           Then a new Flat.txt can be written.
           */
         { // finish()
-          Misc.dbgOut( "MetaFile.finish() begin.");
+          appLogger.info( "MetaFile.finish() begin.");
 
           //Misc.DbgOut( "MetaFile.finish(..) forcedLoadingEnabledB= true");  // Debug.
           forcedLoadingEnabledB= true;  // Turn on forced loading.
@@ -203,7 +204,7 @@ public class MetaFile // implements ShutdownerListener
           writeFlatFileV( MetaRoot.getRootMetaNode( ) );  // Write Flat file.
             // This complete dump is what is lazy-loaded during next run.
 
-          Misc.dbgOut( "MetaFile.finish() end.");
+          appLogger.info( "MetaFile.finish() end.");
           } // finish()
 
     // Whole-file read methods.

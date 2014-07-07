@@ -10,5 +10,6 @@ public class Globals
     */
   {
 		//public static Logger appLogger= Logger.getAnonymousLogger();
-    public static Misc appLogger= Misc.getMisc();  // Emulate Logger subset.
+    //public static Misc appLogger= Misc.getMisc();  // Emulate Logger subset.
+    public static AppLog appLogger= AppLog.getAppLog();
     }

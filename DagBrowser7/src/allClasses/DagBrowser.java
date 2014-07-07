@@ -1,9 +1,10 @@
 package allClasses;
 
+import java.io.IOException;
+
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 // import javax.swing.JOptionPane;
-
 
 
 import static allClasses.Globals.*;  // For appLogger;
@@ -36,12 +37,34 @@ public class DagBrowser
         and calls a helper method to do all the work.
         */
       {
+        DagBrowser.setDefaultExceptionHandlerV();
         DagBrowser theDagBrowser= // Create instance to be Listener.
           new DagBrowser();
         theDagBrowser.mainHelperV(argStrings); // Make new instance...
           // ...do all the work.
         }
-   
+
+    private static void setDefaultExceptionHandlerV()
+      /* This method sets the default handler for uncausht exceptions.
+        It sents a message about the exception to
+        the log file and to the console.
+        */
+      {
+        Thread.setDefaultUncaughtExceptionHandler(
+          new Thread.UncaughtExceptionHandler() {
+            @Override public void uncaughtException(Thread t, Throwable e) {
+              appLogger.error(
+                "Thread: "+t.getName()+". Uncaught Exception: "+e 
+                );
+              //System.out.println(t.getName()+": "+e);
+              }
+            }
+          );
+
+        // String nullString= null;  // Create null pointer.
+        // nullString.length();  // Test handler.
+        }
+
     public void mainHelperV(String[] argStrings)
       /* This is a non-static helper method 
         called by static method main(..).
@@ -52,8 +75,8 @@ public class DagBrowser
         this app's JFrame window on the UI thread.
         */
       {
-        Misc.dbgOut(
-          "Jar dated " + AppInstanceManager.thisAppDateString()
+        appLogger.info(
+          "App jar file dated " + AppInstanceManager.thisAppDateString()
           );
         if  // Exit if older instance already running and signalled.
           ( AppInstanceManager.manageInstancesAndExitB( 
@@ -85,7 +108,12 @@ public class DagBrowser
           AppInstanceManager.setAppInstanceListener(  // Link...
             this  // ...to AppInstance events.
             );
-          NetworkThread.activateV( );  // Start network communication.
+          try {
+              NetworkThread.getTheNetworkThread().start( );
+              ConnectionMaker.getTheConnectionMaker().activateV( );
+            } catch (IOException e) {
+              e.printStackTrace();
+            }
           }
 
     public void newInstanceCreated()

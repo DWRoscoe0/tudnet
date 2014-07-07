@@ -3,6 +3,9 @@ package allClasses;
 import java.io.IOException;
 import java.util.ListIterator;
 
+import static allClasses.Globals.*;  // For appLogger;
+
+
 public class ListLiteratorOfIDNumber 
   implements ListIterator<IDNumber> 
   
@@ -94,7 +97,7 @@ public class ListLiteratorOfIDNumber
                   );
               }
             catch ( IOException TheIOException ) {
-              Misc.dbgOut( "ListLiteratorOfIDNumber.IOException." );
+              appLogger.error( "ListLiteratorOfIDNumber.IOException." );
               // returnIDNumber already set to inIDNumber.
                 // ??? Use error MetaNode instead?
               };

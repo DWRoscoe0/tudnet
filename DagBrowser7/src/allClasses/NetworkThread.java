@@ -7,15 +7,25 @@ import static allClasses.Globals.*;  // appLogger;
 
 public class NetworkThread extends Thread {
 
-	/** This Thread class does network operations.
+	/** This Singleton Thread class does network operations.
 	 *  Presently it does nothing. 
 	 */
 
-  private static NetworkThread theNetworkThread= // Create Singleton Thread.
-    new NetworkThread();
+  private static NetworkThread theNetworkThread= null;
   
-  static { theNetworkThread.start(); }  // Start Singleton Thread.
-  
+  public static NetworkThread getTheNetworkThread()
+    throws IOException
+    /* Returns the Singleton NetworkThread.  */
+    {
+      if ( theNetworkThread == null )  // Make the  singleton if needed.
+        {
+          theNetworkThread= new NetworkThread();
+          theNetworkThread.setName("NetworkingThread");
+          }
+      return  theNetworkThread;
+      }
+
+  /*
   public static void activateV( )
     /* Normally this method is called at app start-up.
       It makes certain that the NetworkThread 
@@ -23,9 +33,11 @@ public class NetworkThread extends Thread {
       It calls nothing but its class loader will
       construct and start the thread.
       */
+  /*
     { 
-      // When here, the thread is running.
+      theNetworkThread.start();  // Start Singleton Thread.
       }
+  */
 
   public void run() 
     /* This method does network communication.
@@ -43,14 +55,15 @@ public class NetworkThread extends Thread {
             outside of those scopes.  There are two expandable scopes:
               Local Scope -- 239.255.0.0/16
               Organization Local Scope -- 239.192.0.0/14
-            Routers are supposed to block packets outside of thee ranges.
+            Routers are supposed to block packets outside of these ranges.
             */
         
-	      mPeerDiscovery = new PeerDiscovery( 
-          mcInetAddress,  // multicastGroupIP
-          7777,  // port
-          1  // TTL for LAN only.
-          );
+	      mPeerDiscovery =   // Prepare to do...
+          new PeerDiscovery(  // ...PeerDiscover in...
+            mcInetAddress,  // ...this multicastGroupIP...
+            PortManager.getDiscoveryPortI(),  // port  // ...on this port...
+            1  // ...with a TTL set for LAN peers only.
+            );
 
         // constructs broadcast-based peer
         // PeerDiscovery bpd = new PeerDiscovery( groupIP, port);
@@ -62,7 +75,10 @@ public class NetworkThread extends Thread {
       
         appLogger.info("PeerDiscovery beginning of peers responded.");
         for (InetAddress peer: peers)
-          appLogger.info("peer="+peer);
+          {
+            appLogger.info("peer="+peer);
+            ConnectionMaker.getTheConnectionMaker().requestConnectionV( peer );
+            }
         appLogger.info("PeerDiscovery end of peers responded.");
 
         // when you're done... stay connected to respond to queries.

@@ -1,22 +1,15 @@
 package allClasses;
 
 import java.awt.Component;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
 
-//import java.util.ArrayList;
-//import java.util.Collections;
-
-//import javax.swing.tree.TreePath;
+import static allClasses.Globals.*;  // appLogger;
 
 public class Misc
-  /* This class contains miscellaneous useful code
+
+  /* This Singleton class contains miscellaneous useful code
     for debugging and logging.
     */
+
   { // class Misc 
   
     // Singleton code.
@@ -30,123 +23,15 @@ public class Misc
       public static Misc getMisc()   // Returns singleton.
         { return theMisc; }
   
-    // Miscellaneous variables.
+    // Reminder variables.
 
       public static final boolean ReminderB= false;  // true;
 
-    // Logger class simulator code.
-      /* ??? Make log file be shareable in case two app instances
-        try to write to it at the same time.
-        */
-    
-      private int theSessionI= 0;
-      private File logFile;
-      
-      private void logFileInitializeV()
-        throws IOException  // Do-nothing put-off.
-        {
-          logFile=  // Identify log file.
-            AppFolders.resolveFile( "log.txt" );
-          theSessionI= getSessionI();
-          boolean appendB=  // Controls whether to start with empty file.
-            true;
-          createOrAppendToFileV( // Create new or append to log file.
-            appendB, ""  // false means new file, true means append.
-            );
-          dbgOut( ""); 
-          dbgOut( ""); 
-          dbgOut( "------------------- NEW LOG FILE SESSION -------------------");
-          //dbgOut("log.txt created.");            
-          }
-    
-      private int getSessionI()
-        throws IOException  // Do-nothing put-off.
-        /* This method calculates what the log session number should be,
-          records it in the file session.txt,
-          and returns the session number.
-          */
-        { 
-      		int sessionI= 0;
-          String sessionString = "0";
-      		File sessionFile=  // Identify session file.
-            AppFolders.resolveFile( "session.txt" );
-          if ( ! logFile.exists() )  // If log file doesn't exist...
-            sessionFile.delete();  // ...delete session file also.
-          if ( ! sessionFile.exists() )  // If session file doesn't exist...
-            {
-              logFile.delete();  // ...delete session file also.
-              sessionI= 0;  // Start at session # 0.
-              }
-            else
-            try // Get session number from file and increment it.
-              {
-                FileReader sessionFileReader = 
-                  new FileReader(sessionFile);
-                char[] chars = new char[(int) sessionFile.length()];
-                sessionFileReader.read(chars);
-                sessionString = new String(chars);
-                sessionFileReader.close();
-                sessionI= Integer.parseInt(sessionString)+1;
-              } catch (IOException e) {
-                  e.printStackTrace();
-                  }
-          //System.out.println("sessionString is: "+sessionString);
-          FileWriter theFileWriter = null;
-          sessionString= sessionI + "";
-          try {
-              theFileWriter = new FileWriter(sessionFile);
-              theFileWriter.write(sessionString);
-          }catch (IOException e) {
-              System.err.println(e);
-          }finally{
-              if(theFileWriter != null){
-                  theFileWriter.close();
-              }
-          }
-          return sessionI;
-          }
-    
-      public void info(String inString)
-        { dbgOut( "INFO:"+inString ); }
-    
-      public void severe(String inString)
-        { dbgOut( "SEVERE:"+inString ); }
-
-      public void log(String inString) // Appends to log file.
-        { createOrAppendToFileV( true, inString ); }
-        
-      private void createOrAppendToFileV( boolean appendB, String inString )
-        /* This method creates a new log file,
-          or empties an existing log file if appendB == false.
-          In any case it appends inString to the file.
-          ??? Needs analysis of close.
-          */
-        {
-          if ( ! appendB)  // If not appending then...
-            logFile.delete();  // ...delete the file first.
-          PrintWriter thePrintWriter = null;
-          try {
-              thePrintWriter = new PrintWriter(
-                //new BufferedWriter(new FileWriter(logFile, appendB))
-                new BufferedWriter(new FileWriter(logFile, true))
-                );
-              thePrintWriter.print( inString );
-          }catch (IOException e) {
-              System.err.println(e);
-          }finally{
-              if(thePrintWriter != null){
-                  thePrintWriter.close();
-              }
-          }
-        }
 
     /* Debugging code.
-      Now this code is called by Logger code.
-      Later the roles will be reversed and it will call Logger code.
+      This is code which is or was useful for debugging.
       */
 
-      private static int dbgCountI= 0;  // Output counter.
-  
       public static void noOp( ) {} // Convenience for setting breakpoints.
 
       public static void dbgProgress() 
@@ -154,7 +39,7 @@ public class Misc
           to verify that code is being executed.  
           */
         { 
-          Misc.getMisc().log( "!" );  // Debug. 
+          appLogger.appendRawV( "!" );  // Debug. 
           }
       
       public static String componentInfoString( Component InComponent )
@@ -184,7 +69,7 @@ public class Misc
         { 
         if ( dbgEventDoneB )
           {
-            dbgOut( "Writing Debug.txt" ); 
+            appLogger.appendEntry( "Writing Debug.txt" ); 
             MetaFile.writeDebugFileV( MetaRoot.getRootMetaNode( ));
             noOp( );
             }
@@ -193,35 +78,27 @@ public class Misc
       public static void dbgConversionDone()
         /* This is called after a conversion from IDNumber to MetaNode.  */
         { 
-          //dbgOut( "Conv." ); 
+          //appendEntry( "Conv." ); 
           //MetaFile.writeDebugState( );  // ??? Display for debugging.
           noOp( );
           }
-      
-      public static void dbgOut( String InString )
-        /* This outputs to the console a new line containing a counter, 
-          which is incremented, followed by InString.
+
+    // Sleep/Snooze code.
+
+      public static void snoozeV(long msL) 
+        /* This method uses Thread.sleep(..) to wait for msL milliseconds 
+          but doesn't throw an InterruptedException if 
+          the Thread is interrupted.
+          However if an InterruptedException is thrown then
+          it does return early with the Thread interrupted status set.
           */
         { 
-          String wholeString=
-            (Misc.getMisc().theSessionI + ":")
-            + dbgCountI++ 
-            + ": "
-            + InString 
-            + "\n"
-            ;
-          Misc.getMisc().log( wholeString );
-
-          noOp( );
+          try {
+            Thread.sleep(msL);  // Try sleeping the requested time.
+            }
+          catch (InterruptedException e) { // If interrupted...
+            Thread.currentThread().interrupt(); // ...restore status.
+            }
           }
-
-    static // static/class initialization.
-      // Done here so all subsection variables are created.
-      {
-        try 
-          { Misc.getMisc().logFileInitializeV(); }
-        catch(IOException e)
-          { System.out.println("\nIn Misc initialization:"+e); }
-        }
 
     } // class Misc 
