@@ -1,365 +1,309 @@
 package allClasses;
 
-//import java.io.BufferedReader;
 import java.io.IOException;
-//import java.io.InputStreamReader;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
 import java.net.SocketException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.net.SocketTimeoutException;
 import java.util.Properties;
+//import java.util.concurrent.BlockingQueue;
 
 import static allClasses.Globals.*;  // appLogger;
 
-/**
- * Performs broadcast or multicast peer detection depending on
- * which PeerDiscovery constructor is used.
- * How well this works depends on your network configuration
- * 
- * @author ryanm
- */
+/* This class uses UDP multicast to discover other peers on the LAN.
+  
+  ??? This class works, but is not fast nor robust. It needs much work.
+  This was based on PeerDiscovery.java at 
+    http://homepages.inf.ed.ac.uk/rmcnally/peerDiscover/PeerDiscovery.java
+  This originally worked using either multicast or broadcast.
+  Now it does only multicast.
+  
+  ??? RoundRobin beaconing and sharing the role of
+  responder to new arrivees.
+  
+  ??? Maybe the thread should be divided into two threads,
+  as in the Connection, one thread manages, and
+  one thread does nothing except receive packets.
+  
+  ??? For an unknown reason, 
+  multicast packets which packet sniffer indicates were sent
+  are not always received.
+  It might be timing because it worked when run under Eclipse IDE,
+  but not as a Java app from the command line.
+  So far it seems to affect only one side,
+  so at least one member of every pair can discover the other
+  and can initiate a connection.
+  */
+
 public class PeerDiscovery
 {
-	private static final byte QUERY_PACKET = 80;
-	private static final byte RESPONSE_PACKET = 81;
+	private static final byte QUERY_PACKET = 80;  // 050h
+	private static final byte RESPONSE_PACKET = 81;  // 051h
 
-	/**
-	 * The group address.   It, combined with the port,
-   * determines the set of peers that are able to discover each other
-	 */
-	public final InetAddress group;
+  public final InetAddress groupInetAddress; /* Multicast group IPAddress.   
+    This, combined with the port, determines 
+    the set of peers that are able to discover each other.
 
-	/**
-	 * The port number that we operate on for discovery.
-   * It is used for both source and destination ports during.
-	 */
-	public final int port;
+    RFC2365, "Administratively Scoped IP Multicast", allocates
+    239.0.0.0 to 239.255.255.255 for use local and organizational
+    scopes for multicast addresses.  They are not meant to be used
+    outside of those scopes.  There are two expandable scopes:
+      Local Scope -- 239.255.0.0/16
+      Organization Local Scope -- 239.192.0.0/14
+    Routers are supposed to block packets outside of these ranges.
+    Should be a valid multicast address, 
+    i.e.: in the range 224.0.0.1 to 239.255.255.255 inclusive.
+    */
 
-	private final MulticastSocket mcastSocket;
+  public final int multicastPortI;  // Multicast port number used with IP.
 
-	private final DatagramSocket bcastSocket;
+  public final SignallingQueue<SockPacket> // Send output.
+    sendQueueOfSockPackets;  // SockPackets for ConnectionManager to send.
 
-	private final InetSocketAddress broadcastAddress;
+  public final SignallingQueue<SockPacket> // Receive output.
+    receiveQueueOfSockPackets;  // SockPackets for ConnectionManager to note.
 
-	private boolean shouldStop = false;
+  private DatagramSocket unconnectedDatagramSocket;  // Socket for sending.
 
-	private List<InetAddress> responseList = null;
+  private final MulticastSocket aMulticastSocket; /* For receiving multicast 
+    datagrams.  Multicast datagrams are sent using 
+    a different DatagramSocket, an unconnected DatagramSocket because:
+      * That works.
+      * It's a way to specify a source/local port number.
+    */ 
 
-	/**
-	 * Used to detect and ignore this peers response to it's own query. When we
-	 * send a response packet, we set this to the destination. When we receive a
-	 * response, if this matches the source, we know that we're talking to
-	 * ourselves and we can ignore the response.
-	 */
-	private InetAddress lastResponseDestination = null;
+  int ttl;  /* ttl: The time-to-live for multicast packets. 
+    0 = restricted to the same host, 
+    1 = Restricted to the same subnet, 
+    <32 = Restricted to the same site, organisation or department, 
+    <64 = Restricted to the same region, 
+    <128 = Restricted to the same continent,
+    <255 = unrestricted
+    */
 
-	/**
-	 * Redefine this to be notified of exceptions on the listen thread. Default
-	 * behaviour is to print to stdout. Can be left as null for no-op
-	 */
-	public ExceptionHandler rxExceptionHandler = new ExceptionHandler();
+  private boolean shouldStop = false;  // For signalling Thread termination.
 
-	private Thread mcastListen = new Thread( PeerDiscovery.class.getSimpleName()
-			+ " multicast listen thread" ) {
-		@Override
-		public void run()
-		{
-			try
-			{
-				byte[] buffy = new byte[ 1 ];
-				DatagramPacket rx = new DatagramPacket( buffy, buffy.length );
+  public ExceptionHandler rxExceptionHandler = new ExceptionHandler();
+    // Redefine this to be a different handler if desired.  null means no-op.
 
-				DatagramPacket tx = new DatagramPacket(
-						new byte[] { RESPONSE_PACKET }, 1, group, port );
+  public PeerDiscovery (  // Constructor.
+      SignallingQueue<SockPacket> sendQueueOfSockPackets,
+      SignallingQueue<SockPacket> receiveQueueOfSockPackets,
+      DatagramSocket unconnectedDatagramSocket
+      )
+    throws IOException
+    /* Constructs a PeerDiscovery object and prepares it for
+      UDP multicast communications duties.  
+      Those duties are to help peers discover each other by
+      sending and receiving multicast packets on the LAN.
+      The parameters are:
+        * sendQueueOfSockPackets: thread-safe queue of 
+          multicast packets to be sent.
+        * receiveQueueOfSockPackets: thread-safe queue of 
+          multicast packets received.
+        * unconnectedDatagramSocket: DatagramSocket to use
+          for SockPadkets, which are what are actually queued.
+      */
+    {
+      this.sendQueueOfSockPackets= sendQueueOfSockPackets;
+      this.receiveQueueOfSockPackets= receiveQueueOfSockPackets;
+      this.unconnectedDatagramSocket= unconnectedDatagramSocket;
 
-				while( !shouldStop )
-				{
-					try
-					{
-						mcastSocket.receive( rx );
-            appLogger.info("PeerDiscovery: received multicast packet.");
-
-						if( buffy[ 0 ] == QUERY_PACKET )
-						{
-							lastResponseDestination = rx.getAddress();
-              appLogger.info("PeerDiscovery: sending multicast response.");
-							mcastSocket.send( tx );
-						}
-						else if( buffy[ 0 ] == RESPONSE_PACKET )
-						{
-							if( responseList != null
-									&& !rx.getAddress().equals( lastResponseDestination ) )
-							{
-                appLogger.info("PeerDiscovery: processing multicast response.");
-								responseList.add( rx.getAddress() );
-							}
-						}
-					}
-					catch( SocketException soe )
-					{
-						// someone may have called disconnect()
-					}
-				}
-
-				mcastSocket.disconnect();
-				mcastSocket.close();
-			}
-			catch( IOException e )
-			{
-				if( rxExceptionHandler != null )
-				{
-					rxExceptionHandler.handle( e );
-				}
-			}
-		}
-	};
-
-	private Thread bcastListen = new Thread( PeerDiscovery.class.getSimpleName()
-			+ " broadcast listen thread" ) {
-		@Override
-		public void run()
-		{
-			try
-			{
-				byte[] buffy = new byte[ 1 + group.getAddress().length ];
-				DatagramPacket rx = new DatagramPacket( buffy, buffy.length );
-
-				byte[] groupAddr = group.getAddress();
-
-				while( !shouldStop )
-				{
-					try
-					{
-						Arrays.fill( buffy, ( byte ) 0 );
-
-						bcastSocket.receive( rx );
-
-						boolean groupMatch = rx.getLength() == groupAddr.length + 1;
-						for( int i = 0; i < groupAddr.length; i++ )
-						{
-							groupMatch &= groupAddr[ i ] == buffy[ i + 1 ];
-						}
-
-						if( groupMatch )
-						{
-							if( buffy[ 0 ] == QUERY_PACKET )
-							{
-								byte[] data = new byte[ 1 + group.getAddress().length ];
-								data[ 0 ] = RESPONSE_PACKET;
-								System.arraycopy( group.getAddress(), 0, data, 1,
-										data.length - 1 );
-								DatagramPacket tx = new DatagramPacket( data,
-										data.length, rx.getAddress(), port );
-
-								lastResponseDestination = rx.getAddress();
-
-								bcastSocket.send( tx );
-							}
-							else if( buffy[ 0 ] == RESPONSE_PACKET )
-							{
-								if( responseList != null
-										&& !rx.getAddress().equals(
-												lastResponseDestination ) )
-								{
-									responseList.add( rx.getAddress() );
-								}
-							}
-						}
-					}
-					catch( SocketException stoe )
-					{
-						// someone may have called disconnect()
-					}
-				}
-
-				bcastSocket.disconnect();
-				bcastSocket.close();
-			}
-			catch( Exception e )
-			{
-				if( rxExceptionHandler != null )
-				{
-					rxExceptionHandler.handle( e );
-				}
-			}
-		};
-	};
-
-	/**
-	 * Constructs a peer and connects it to a UDP multicast group
-	 * 
-	 * @param group
-	 *           a valid multicast address, i.e.: in the range 224.0.0.1 to
-	 *           239.255.255.255 inclusive
-	 * @param port
-	 *           a valid port, i.e.: in the range 1025 to 65535 inclusive
-	 * @param ttl
-	 *           The time-to-live for multicast packets. 0 = restricted to the
-	 *           same host, 1 = Restricted to the same subnet, <32 = Restricted
-	 *           to the same site, organisation or department, <64 = Restricted
-	 *           to the same region, <128 = Restricted to the same continent,
-	 *           <255 = unrestricted
-	 * @throws IOException
-	 */
-	public PeerDiscovery( InetAddress group, int port, int ttl )
-			throws IOException
-	{
-    appLogger.info("PeerDiscovery multicast "+group+" "+port+" "+ttl);
+      this.groupInetAddress = InetAddress.getByName("239.255.0.0");
+      this.ttl= 1;  // Set Time-To-Live to 1 to discover LAN peers only.
+      this.multicastPortI = // Set multicast port #.
+        PortManager.getDiscoveryPortI();
     
-		/*
-		 * on systems with both IPv4 and IPv6 stacks,
-		 * MulticastSocket.setTimeToLive() does not work. This fixes things
-		 */
-		Properties props = System.getProperties();
-		props.setProperty( "java.net.preferIPv4Stack", "true" );
-		System.setProperties( props );
+      { // Fix MulticastSocket.setTimeToLive() bug for IPv4 + IPv6 systems.
+        Properties props = System.getProperties();
+        props.setProperty( "java.net.preferIPv4Stack", "true" );
+        System.setProperties( props );
+        }
+      aMulticastSocket = new MulticastSocket(  // Create MulticastSocket...
+        PortManager.getDiscoveryPortI()  // ...bound to Discovery port.
+        );
+      aMulticastSocket.joinGroup(  // To receive multicast packets, join...
+        groupInetAddress  // ...this group IPAddress.
+        );
+      aMulticastSocket.setLoopbackMode( true );  // Disable loopback.
+      aMulticastSocket.setTimeToLive( ttl );
+      mcastListen.setDaemon( true );  // Don't prevent exit for this thread.
+      mcastListen.start();  // Start the thread.
+      }
 
-		this.group = group;
-		this.port = port;
+  private MCThread mcastListen =  // This thread does multicast listening.
+    new MCThread( "MulticastDiscovery" );
 
-		//mcastSocket = new MulticastSocket( port );
-    //mcastSocket = new MulticastSocket( 40404 );
-    mcastSocket = new MulticastSocket(  // Create MulticastSocket...
-      PortManager.getDiscoveryLocalPortI()  // ...bound to node's local port for Multicast.
-      );
-		mcastSocket.joinGroup( group );
+  private class MCThread extends Thread {  // That thread defined.
 
-		// confusingly, this *disables* loopback. it's only a hint though,
-		// so we still need to look out for loopback manually
-		mcastSocket.setLoopbackMode( true );
+    MCThread( String nameString ) // Constructor.
+      { 
+        super( nameString );  // Name here because setName() not reliable.
+        }
 
-		mcastSocket.setTimeToLive( ttl );
+    @Override
+    public void run() 
+      /* This method continuously sends a multicast discovery/query packet,
+        and then receives multicast packets until there aren't any more.
+        The received packets might be queries from other peers,
+        or replies to this peers query.
+        */
+      {
+        appLogger.info(getName()+" thread starting.");
 
-		mcastListen.setName( "PeerDiscovery-Multicast" );  // Name Thread.
-		mcastListen.setDaemon( true );
-		mcastListen.start();
+        try { // Operations that might produce an IOException.
 
-		bcastSocket = null;
-		bcastListen = null;
-		broadcastAddress = null;
-	}
+          while( !shouldStop )  // While thread termination is not requested...
+            { // Send and receive multicast packets.
+              try {
+                DatagramPacket queryDatagramPacket = new DatagramPacket( 
+                  new byte[] { QUERY_PACKET },1, groupInetAddress, multicastPortI 
+                  );
+                SockPacket querySockPacket= new SockPacket(
+                  ///BoundUDPSockets.getDatagramSocket(),
+                  unconnectedDatagramSocket,
+                  queryDatagramPacket
+                  );
+                sendQueueOfSockPackets.add(  // Queue multicast query.
+                  querySockPacket
+                  );
+                receiveAllMulticastPacketsV( ); // Receive packets until they end.
+                }
+              catch( SocketException soe ) {
+                // someone may have called disconnect()
+                appLogger.info( 
+                  "PeerDiscovery.run() Terminating loop because of\n" + soe
+                  );
+                shouldStop= true;  // Terminate loop.
+                }
+              } // Send and receive multicast packets.
 
-	/**
-	 * Constructs a UDP broadcast-based peer
-	 * 
-	 * @param group
-	 *           The identifier shared by the peers that will be discovered.
-	 * @param port
-	 *           a valid port, i.e.: in the range 1025 to 65535 inclusive
-	 * @throws IOException
-	 */
-	public PeerDiscovery( InetAddress group, int port ) throws IOException
-	{
-		this.group = group;
-		this.port = port;
+          aMulticastSocket.disconnect();  // Stop filtering, though there is none.
+          aMulticastSocket.close();  // Free associated OS resource.
+          }
+        catch( IOException e ) {
+          if( rxExceptionHandler != null )
+            {
+              rxExceptionHandler.handle( e );
+            }
+          }
+        }
 
-		mcastSocket = null;
-		mcastListen = null;
+    private void receiveAllMulticastPacketsV( ) 
+      throws IOException 
+      /* This helper method receives and processes multicast packets,
+        both query packets and respons packets to a previously sent query,
+        until none are received for a timeout interval.
+        It reports all received packets to the ConnectionManager.
+        If any received packets are query packets then
+        it sends multicast response packets.
+        */
+      {
+        try { // Exceptions within this block terminate the receive loop.
+          while (true) { // Receive response packets until time-out.
+            byte[] responseBytes = new byte[ 1 ];
+            DatagramPacket rx =  // Construct receiving packet.
+              new DatagramPacket( responseBytes, responseBytes.length );
+            SockPacket receiveSockPacket=  // Cnstruct SockPacket.
+              new SockPacket( aMulticastSocket, rx );
+            //appLogger.info(
+            //  "PeerDiscovery.run(): waiting for multicast packet\n  "
+            //  + " SR:" + aMulticastSocket.getRemoteSocketAddress()
+            //  + " SL:" + aMulticastSocket.getLocalSocketAddress()
+            //  + " group:" + groupInetAddress
+            //  );
+            aMulticastSocket.setSoTimeout( 30000 ); // Set timeout interval.
+            aMulticastSocket.receive( rx );
+            //appLogger.info("PeerDiscovery.run(): received multicast packet\n"
+            //  + " R:" + rx.getSocketAddress()
+            //  + " to L:" + aMulticastSocket.getLocalSocketAddress()
+            //  );
 
-		bcastSocket = new DatagramSocket( port );
-		broadcastAddress = new InetSocketAddress( "255.255.255.255", port );
+            if( responseBytes[ 0 ] == QUERY_PACKET )
+              { // Create and queue response.
+                DatagramPacket responseDatagramPacket= // Construct packet.
+                  new DatagramPacket(
+                    new byte[] { RESPONSE_PACKET }, 
+                    1, 
+                    groupInetAddress, 
+                    multicastPortI 
+                    );
+                SockPacket aSockPacket= new SockPacket( 
+                    //BoundUDPSockets.getDatagramSocket(),
+                    unconnectedDatagramSocket,
+                    responseDatagramPacket
+                    );
+                sendQueueOfSockPackets.add(  // Queue multicast response.
+                  aSockPacket 
+                  );
 
-		bcastListen.setDaemon( true );
-		bcastListen.start();
-	}
+                receiveQueueOfSockPackets.add(  // Report peer.
+                  receiveSockPacket
+                  );
+                } // Create and queue response.
+            else if( responseBytes[ 0 ] == RESPONSE_PACKET )
+              { // Just report peer's existence.
+                //appLogger.info(
+                //  "PeerDiscovery.run(): multicast response address"
+                //  + rx.getSocketAddress()
+                //  );
+                receiveQueueOfSockPackets.add(  // Report peer.
+                  receiveSockPacket
+                  );
+                } // Just report peer's existence.
+            else
+              appLogger.info("PeerDiscovery.run(): unknown multicast packet.");
+            } // Receive response packets until time-out.
+          } // Exceptions within this block terminate the receive loop.
+        catch (SocketTimeoutException aSocketTimeoutException) {
+          //appLogger.info( "PeerDiscovery.run(): receive(..) timed out." );
+          }
+        }
 
-	/**
-	 * Signals this {@link PeerDiscovery} to shut down. This call will block
-	 * until everything's timed out and closed etc.
-	 */
-	public void disconnect()
-	{
-		shouldStop = true;
+    }; // mcastListen / MCThread
 
-		DatagramSocket sock = mcastSocket != null ? mcastSocket : bcastSocket;
-		sock.close();
-		sock.disconnect();
+  public void stop()  // Thread terminator.
+    /* This method terminates the thread and releases all
+      associated resources.  This call will block
+      until everything's timed out and closed etc.
+      */
+    {
+      appLogger.info("PeerDiscovery.disconnect().");
 
-		Thread listen = mcastListen != null ? mcastListen : bcastListen;
-		try
-		{
-			listen.join();
-		}
-		catch( InterruptedException e )
-		{
-			e.printStackTrace();
-		}
-	}
+      shouldStop = true;  // Request thread termination.
 
-	/**
-	 * Queries the network and finds the addresses of other peers in the same
-	 * group.
-	 * 
-	 * @param timeout
-	 *           How long to wait for responses, in milliseconds. Call will block
-	 *           for this long, although you can {@link Thread#interrupt()} to
-	 *           cut the wait short
-	 * @return The addresses of other peers in the group
-	 * @throws IOException
-	 *            If something goes wrong when sending the query packet
-	 */
-	public InetAddress[] getPeers( int timeout ) throws IOException
-	{
-		responseList = new ArrayList<InetAddress>();
+      DatagramSocket sock = aMulticastSocket ;
+      sock.close();  // Free associated OS resource.
+      sock.disconnect();  // Stop filtering, though there is none.
 
-		if( mcastSocket != null )
-		{ // send query byte
-			DatagramPacket tx = new DatagramPacket( new byte[] { QUERY_PACKET },
-					1, group, port );
+      Thread listen = mcastListen;
+      try {
+        listen.join();  // Wait for actual thread termination.
+        }
+      catch( InterruptedException e ) {
+        e.printStackTrace();
+        }
+      }
 
-      appLogger.info("PeerDiscovery: sending multicast query.");
-			mcastSocket.send( tx );
-		}
-		else
-		{ // send query byte, appended with the group address
-			byte[] data = new byte[ 1 + group.getAddress().length ];
-			data[ 0 ] = QUERY_PACKET;
-			System.arraycopy( group.getAddress(), 0, data, 1, data.length - 1 );
-			DatagramPacket tx = new DatagramPacket( data, data.length,
-					broadcastAddress );
+  public class ExceptionHandler  // For receiver thread.
+    /**
+     * Handles an exception.
+     * 
+     * @author ryanm
+     */
+    {
+      /**
+       * Called whenever an exception is thrown from the listen thread. The
+       * listen thread should now be dead
+       * 
+       * @param e
+       */
+      public void handle( Exception e )
+      {
+        e.printStackTrace();
+      }
+    }
 
-      appLogger.info("PeerDiscovery: sending broadcast query.");
-			bcastSocket.send( tx );
-		}
-
-		// wait for the listen thread to do its thing
-		try
-		{
-			Thread.sleep( timeout );
-		}
-		catch( InterruptedException e )
-		{
-		}
-
-		InetAddress[] peers =  // Convert resulting List to an array.
-      responseList.toArray( new InetAddress[ responseList.size() ] );
-
-		responseList = null;
-
-		return peers;
-	}
-
-	/**
-	 * Handles an exception.
-	 * 
-	 * @author ryanm
-	 */
-	public class ExceptionHandler
-	{
-		/**
-		 * Called whenever an exception is thrown from the listen thread. The
-		 * listen thread should now be dead
-		 * 
-		 * @param e
-		 */
-		public void handle( Exception e )
-		{
-			e.printStackTrace();
-		}
-	}
-}
+  }

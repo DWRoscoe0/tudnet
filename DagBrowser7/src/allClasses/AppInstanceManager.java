@@ -23,28 +23,42 @@ public class AppInstanceManager {
 
   /* This class manages instances of the app that uses it,  
     It does this by doing these things:
-    * It prevents more than one app instance running at once.
+    * It prevents more than one app instance 
+      being active simultaniously.
     * It performs updates such that the standard folder
-      always has the latest version.
-    * It runs app from the standard folder whenever possible.
+      always contains a copy of the latest version of the app.
+    * It re-runs the app from the standard folder whenever possible.
 
-    Normally registerInstance() is called at start-up.
-    It detects whether there is an older running instance
+    Normally managingInstancesThenNeedToExitB() is called at start-up.
+    It detects whether there is another running instance
     by trying to open a particular network socket.
-    If it couldn't open the socket it is because an older instance did.
-    In this case it connects to the socket and sends the app path to it.
+    If it couldn't open the socket it is because the other instance did.
+    In this case it connects to the socket and 
+    sends the current app path to it.
     If it could open the socket then it sets up a Listener on it
-    for messages from later instances of the app.
+    for messages from instances of the app run later.
     It returns true if an older instance is running, false otherwise.
 
-    This InfogoraAppRunningInstanceManager code was based on code at 
+    This running instance code was originally based on code at 
     http://www.rbgrn.net/content/43-java-single-application-instance
+
+    Presently if this manager wants this app to exit, 
+    it calls exit(0) after calling doShutdown().
+    This work in the Infogora.
+    But it might be better to actually return from 
+    managingInstancesThenNeedToExitB(), which
+    would then call doShutdown() and exit normally.
+    
+    !!! setJavaCommandForExitV(..) now expects exit(0) to trigger exec(..),
+    but it no longer does.  
+    
+    ??? Write a state-machine description summarizing the entire process.
     
     ??? One running instance can start another by using either:
     * Java Runtime.exec(..)
     * Java ProcessBuild.start()
 
-    This code needs to be more robust???
+    ??? This code needs to be more robust.
     It needs to handle when the socket link is not working.
     Maybe if indications are that there is no older app instance
     it launches another instance of itself, 
@@ -54,9 +68,7 @@ public class AppInstanceManager {
     unintentional ones, it might make sense to have a special
     configuration file used only for instance [and update] management.
     
-    ??? Fix copyAppToStandardFolderAndChainToIt() so that it
-    doesn't use a 3 second sleep() before trying to copy file.
-    It's annoyingly slow.  Process Exception and a retry a while.
+    ??? Finish partial conversion to state-machine state naming conventions.
     */
 
   private static File thisAppFile= null;  // This running app's file name.
@@ -69,31 +81,43 @@ public class AppInstanceManager {
     It came from either the first argument to main() or
     from an app that was run while this running app was active.
     */
+
     private static String[] argStrings= null;  // Array of all arguments.
+
     private static File argAppFile= null;  // First arg as a File name.
   
   private static ServerSocket instanceServerSocket = null;
 
-  public static boolean manageInstancesAndExitB( String[] inArgStrings )
-    /* Normally this method is called at start-up.
-      It manages both Running and File instances of the Infogora app.
-      appClass is the Class of this app.
-      It returns true if this app should exit 
-        to complete the instance management process.
-      It returns false if this app should continue with normal start-up,
-        because the instance management process is completed.
-      ??? Convert to tryExitToProcessIntancesV() form?
+  public static boolean managingInstancesThenNeedToExitB( 
+      String[] inArgStrings 
+      )
+    /* This main method manages both Running and File instances of the app.
+      inArgStrings is an array of strings which was used 
+      to start this app instance and might contain information 
+      about the instance what started this instance, for call-back purposes.
+      Normally this method is called at app start-up.
+      It returns true if this app should exit because its job is done,
+        except possibly for calling another instance at shutdown
+        to continue management operations.
+      It returns false if this app instance should continue with 
+        normal start-up, because no other running instance was detected.
       */
     {
-  	  identifyAppFilesV( inArgStrings  );  // Identify file containing this app.
+      appLogger.info(  // Logging app jar file information.
+        "App jar file is dated " + AppInstanceManager.thisAppDateString()
+        );
+
+  	  identifyAppFilesV(   // Identifying file containing this app.
+        inArgStrings  
+        );
       
       boolean appShouldExitB= true;  // Set default return for app exit.
 
       if // Manage running instances and exit if needed.  
-        ( manageRunningInstancesB( ) )
+        ( managingRunningInstancesThenNeedToExitB( ) )
         ; // Leave appShouldExitB == true to cause exit.
       else if // Manage file instances and exit if needed.  
-        ( manageFileInstancesAndExitB( ) )
+        ( managingFileInstancesThenNeedToExitB( ) )
         ; // Leave appShouldExitB == true to cause exit.
       else // All instance management completed.  No exit is needed.
         appShouldExitB= false; // Prevent exit, allowing normal start-up.
@@ -161,8 +185,10 @@ public class AppInstanceManager {
       }
     
   private static void identifyArgsV( String[] inArgStrings )
-    /* This method saves the arguments to this app fro inArgStrings.
-      By convention the first argument is the path to the calling app.
+    /* This method saves inArgStrings, the arguments used to run this app.
+      By convention 
+      ???* arg0 is the path to the file containing this app.
+      ???* arg1 is the path to the file containing the app which ran this app.
       It calculates argAppFile from that.
       For now the other arguments are unused.
       */
@@ -178,7 +204,6 @@ public class AppInstanceManager {
   private static void identifyAppFilesV( String[] inArgStrings )
     /* This method determines the jar file from which this app was loaded,
       and the jar file that should contain the app in the standard folder.
-      ??? appClass is the Class containing the main() method of this app.
       ??? inArgStrings.readString
       */
     {
@@ -195,7 +220,7 @@ public class AppInstanceManager {
       PortManager.getDiscoveryPortI();
       // 56944;  // A high number I chose at random.
     
-    public static boolean manageRunningInstancesB( )
+    public static boolean managingRunningInstancesThenNeedToExitB( )
       /* Normally this method is called at app start-up.
         It detects whether there is an older running instance
         by trying to open a particular network socket.
@@ -225,7 +250,7 @@ public class AppInstanceManager {
           { // Setup InstanceManagerThread.
             InstanceManagerThread theInstanceManagerThread=
               new InstanceManagerThread();
-            theInstanceManagerThread.setName("InstanceManagerThread");
+            theInstanceManagerThread.setName("AppInstances");
             theInstanceManagerThread.start();  // Start thread...
             // ...on the socket just opened.
             } // Setup InstanceManagerThread.
@@ -256,7 +281,7 @@ public class AppInstanceManager {
       }
 
     private static boolean sendPathInPacketB( )
-      /* This manageRunningInstancesB(..) sub-method 
+      /* This managingRunningInstancesThenNeedToExitB(..) sub-method 
         tries to send this app's path
         to an existing older running app instance via the socket
         to which that app is listening.
@@ -301,7 +326,7 @@ public class AppInstanceManager {
     private static void fireNewInstance() 
       {
         if (theAppInstanceListener != null) 
-          theAppInstanceListener.newInstanceCreated();
+          theAppInstanceListener.newAppInstanceCreated();
         }
 
     static class InstanceManagerThread extends Thread
@@ -336,7 +361,7 @@ public class AppInstanceManager {
                       );
                     identifyArgsV( new String[] {readString} ) ;
                     logInputsV();
-                    manageFileInstancesAndExitB( );  // Might not return.
+                    managingFileInstancesThenNeedToExitB( );  // Might not return.
                     fireNewInstance();  // Call AppInstanceListener it does.
                     }
                   inBufferedReader.close();
@@ -367,7 +392,7 @@ public class AppInstanceManager {
 
         }
 
-    private static boolean manageFileInstancesAndExitB( )
+    private static boolean managingFileInstancesThenNeedToExitB( )
       /* Normally this method is called at app start-up,
         but only if there is not another running instance.
         It begins the process of checking for and installing or updating
@@ -541,9 +566,13 @@ public class AppInstanceManager {
         It never returns.
         */
       {
-        setJavaCommandForExitV( argString );  // Setup command.
+        setJavaCommandForExitV( argString );  // Setting up command.
+
+        Shutdowner.doShutdown();  // Starting command just setup.
+
         //System.out.println( "Calling exit(0).");
-        System.exit(0);  // Exit, thereby triggering command.
+        System.exit(0);  // Exitting.
+          // Before this would use ShutdownHook to trigger command.
         }
 
     private static void setJavaCommandForExitV
@@ -556,9 +585,9 @@ public class AppInstanceManager {
       {
         String [] commandOrArgStrings=  // Allocation for all Process args. 
           new String [
-            2  // jave -jar
-            +1 // .jar file to run
-            +1 // .jar file of this app
+            2  // java -jar
+            +1 // (.jar file to run)
+            +1 // (.jar file of this app)
             ] ;
 
         commandOrArgStrings[0]= // Store path of java command.

@@ -12,83 +12,106 @@ import static allClasses.Globals.*;  // appLogger;
 
 public class Shutdowner
 
-  /* This is a Singleton class which does 
-    all things associated with app shut-down.
+  /* This is a Singleton class which manages
+    things that are done during app shut-down.
+    It does 3 things:
 
-    It does some things that ShutdownHook-s could do,
-    but does them with ShutdownerListener-s instead,
-    to avoid the uncertainties of ordering of execution.
-    ShutdownerListener-s are fired in the reverse of
-    the order in which they were added.
-
-    It manages the ShutdownerListener list and
-    calls each ShutdownerListener when shut down is underway.
-
-    It collects argStrings to be passed to a new process
-    before it shuts down.
-
-    Presently this class adds a ShutdownerHook thread to 
-    the app's Runtime as a way to detect when app shut down is underway.
-    However this might be changed to detect shut-down in other ways,
-    such as using the windowClosing(WindodwsEvent) method,
-    because some features such the Logger might not be available
-    after ShutdownHook-s start running.
+    1. It manages a list of ShutdownerListeners 
+      which are called in a controllable order
+      at shutdown time.  This is an alternative to
+      Java's ShutdownHook threads, which execute in 
+      uknown order.  The purpose for these 
+      Listenersis and threads is cleanup.
     
-    Note, if the app exits quickly without starting another Process,
-    then this class might not be loaded.
+    2. It creates and starts a user-definable Process
+      just before this app terminates.
+      An intended use for this is app updating.
+
+    3. It detects when shutdown is happening in order to
+      start the above operations.
+
+    ??? The above functions should probably be separated
+    with each function into its own class.
+
+    ??? Singletons generally, and this one in particular,
+    are globals, which are discouraged for various reasons,
+    such as making testing difficult.  
+    Their use should be limited or tempoaray.
+    If they must be used, they should be non-global,
+    and referenced with DependencyInjection.
     
    */
 
   {
   
-    // Singleton code.
+    /* Singleton code.  This is made thread-safe and fast with the
+      Initialization on Demand Holder (IODH) idom.
+      */
     
       private Shutdowner() {}  // Prevent instantiation by other classes.
 
-      private static final Shutdowner theShutdowner =  // Build singleton.
-        new Shutdowner();
+      private static class LazyHolder {
+        private static final Shutdowner INSTANCE = new Shutdowner();
+        }
+ 
+      public Shutdowner getShutdowner()   // Return singleton instance.
+        { return LazyHolder.INSTANCE; }
 
-      public Shutdowner getShutdowner()   // Return singleton.
-        { return theShutdowner; }
+    // ShutdownHook shutdown detection code.
 
-    // Shutdown hook code.
+      /* Old code no longer used.
 
-      static // Static block initialization to setup for shutdown hook thread.
+      static // Static block initialization to setup ShutdownerHook Thread.
         {
           ShutdownerHook theShutdownerHook =  // Create ShutdownerHook Thread.
             new ShutdownerHook();
-          Runtime.getRuntime().addShutdownHook(theShutdownerHook); // Setup...
-            // ... to run that ShutdownerHook Thread at shut-down time.
+          Runtime.getRuntime().addShutdownHook(theShutdownerHook); // Add...
+            // ...it to Runtime so it runs at shut-down time.
           }
         
-      static class ShutdownerHook  // For Runtime .getRuntime().addShutdownHook().
+      static class ShutdownerHook  // Thread which runs Shutdown code.
         extends Thread 
-        /* This Thread is used to detect and process 
-          the app shutdown when that time comes.  */
+        // This nested Thread class is used to detect and process 
+        //  the app shutdown when that time comes.
         {
           public void run()
             {
               doShutdown();
               }
           }
+
+      */
     
     // Shutdowner shutdown code.
     
       public static void doShutdown()
-        /* This method is called when shut down is underway
-          Its purpose is to perform app shutdown operations.
-          It calls each of the ShutdownerListeners in the Listener list.
-          After all Listeners have been called,
-          it uses ProcessBuilder to create and start a new Process
-          if the argStrings has been defined for one.
+        /* This method is called in the ShutdownHook thread
+          when shut down is underway
+          Its purpose is to perform app shutdown operations,
+          of which there are two, which it does in the following order:
+          
+          1. It calls each of the ShutdownerListeners in the Listener list.
+            It does this in the reverse of the order they were added.
+          
+          2. It uses ProcessBuilder to create and start a new Process.
+            if the argStrings has been defined for one.
+            This is for chaining from this app instance a newer one.
+
+          Parts of the app might have set other ShutdownHooks
+          to run their own shutdown code not included here.
           */
         {
-          appLogger.info( "ShutdownerHook running." );
-          //System.out.println( "ShutdownerHook running." );
+          appLogger.info( "Shutdowner: shutdown beginning." );
+          //System.out.println( "Shutdowner running." );
 
-          fireShutdownerListeners( );  // Call all defined listeners.
+          //fireShutdownerListeners();  // Call all defined listeners.
+          reverseFireShutdownerListeners();  // Call all listeners in reverse.
 
-          if  // Execute command if...
+          // At this point there should be nothing remaining for the app
+          //  to do except start the next app as an external command
+          //  and terminate.
+
+          if  // Execute an external command if...
             ( argStrings != null ) // ...a command was defined.
             {
               //System.out.println(
@@ -97,34 +120,50 @@ public class Shutdowner
               //  );
               callAProcess(argStrings);
               }
+
+          appLogger.info( "Shutdowner: shutdown ending." );
           }
     
-    // ShutdownerListener code.
+    // ShutdownerListener code.  Maintains and calls ShutdownListeners.
     
       private static EventListenerList theEventListenerList= 
         new EventListenerList();
 
-      public static void addShutdownerListener
+      public static synchronized void addShutdownerListener
         ( ShutdownerListener listener ) 
         {
           theEventListenerList.add(ShutdownerListener.class, listener);
           }
 
-      public static void removeShutdownerListener
+      public static synchronized void removeShutdownerListener
         ( ShutdownerListener listener ) 
         {
           theEventListenerList.remove(ShutdownerListener.class, listener);
           }
 
-      public static void fireShutdownerListeners( )
-        // ??? Maybe reverse firing order?
+      /*
+      private static synchronized void fireShutdownerListeners( )
+        // Fire listeners in the same order they were added.
         {
           for 
             ( ShutdownerListener aShutdownerListener: 
               theEventListenerList.getListeners(ShutdownerListener.class)
               )
             aShutdownerListener.doMyShutdown( );
-          //System.out.println("SHUTDOWN");
+        }
+      */
+
+      private static synchronized void reverseFireShutdownerListeners( )
+        // Fire listeners in the reverse of the order they were added.
+        {
+          ShutdownerListener theShutdownerListeners[]=
+            theEventListenerList.getListeners(ShutdownerListener.class);
+          for (int i = theShutdownerListeners.length-1; i>=0; i-=1)
+            { 
+              ShutdownerListener aShutdownerListener= 
+                theShutdownerListeners[i];
+              aShutdownerListener.doMyShutdown( );
+              }
         }
 
     // Code for defining and starting other processes and ending this one.
@@ -136,7 +175,8 @@ public class Shutdowner
 	      /* This method sets to inArgStrings the array of Strings which
 	        defines the command Process to be created and executed 
 	        at shut-down time by ProcessBuilder.
-	        If inArgStrings is null then no command will be executed.
+	        If at shutdown time inArgStrings is null 
+          then no command will be executed.
 	        */
 	      {
           appLogger.info(
@@ -148,13 +188,15 @@ public class Shutdowner
 	    	  }
 
       private static void callAProcess(String... inArgStrings)
-          //throws IOException
           /* This method calls a Process built with 
             a ProessBuilder operating on 
             the String argument array inArgStrings.
-            It redirects that Process's stdout and stderr to 
+            
+            ??? This could use some work.
+            In previous version it redirected 
+            the Process's stdout and stderr to 
             this Process's stdout.
-            Until this redirection ends it could cause an access violation
+            Until this redirection ended it could cause an access violation
             which would prevent replacement of the file from which 
             this Process was loaded!
             */

@@ -10,7 +10,19 @@ import java.io.PrintWriter;
 
 public class AppLog 
 
-  /* This class is for logging information from an app.  */
+  /* This class is for logging information from an app.  
+    This class needs some work.
+    
+    MadeMultiprocessSafe: It might fail if multiple app instances
+      try to log simultaniously.
+      
+    Windows8AntiMalwareSlowsItDown: It seems that 
+      the Windows8 AntiMalware task can slow this app,
+      apparently by scanning the log.txt file after every close
+      because when the file is short it causes little delay,
+      but if file is big it slows progress of the program.
+      Change to close less often.
+    */
 
   {
 
@@ -32,7 +44,8 @@ public class AppLog
     // Variables.
       private File logFile;  // Name of log file.
       private int theSessionI= 0;  // App session counter.
-      private int entryCountI= 0;  // Log entry counter.
+      ///private int entryCountI= 0;  // Log entry counter.
+      long startedAtMillisL;  // Time when initialized.
 
     static // static/class initialization for logger.
       // Done here so all subsection variables are created.
@@ -46,6 +59,8 @@ public class AppLog
     private void logFileInitializeV()
       throws IOException  // Do-nothing put-off.
       {
+        startedAtMillisL=  // Save time when we started.
+          System.currentTimeMillis();
         logFile=  // Identify log file name.
           AppFolders.resolveFile( "log.txt" );
         theSessionI= getSessionI();  // Get app session number.
@@ -145,15 +160,23 @@ public class AppLog
         followed by InString.
         */
       { 
-        String wholeString=  // Build string consisting of...
-          AppLog.getAppLog().theSessionI  //...the session number,...
-          + ":"  //...a seperator,...
-          + AppLog.getAppLog().entryCountI++  //...the entry count
-          + ": "  //...a seperator and space,...
-          + InString //...the string to log,...
-          + "\n"  //...and a line terminator.
-          ;
-        AppLog.getAppLog().appendRawV( wholeString );  // Append string to log file.
+        String aString= ""; // Initialize String to empty, then append...
+        aString+= AppLog.getAppLog().theSessionI;  //...the session number,...
+        aString+= ":";  //...and a seperator.
+        ///long differenceMillisL=  // Calculate time since start.
+        ///      System.currentTimeMillis() 
+        ///      - AppLog.getAppLog().startedAtMillisL
+        ///      ;
+        ///aString+= String.format( "%02d.%03d",  // Append it...
+        ///  differenceMillisL / 1000
+        ///  , differenceMillisL % 1000
+        ///  );
+        aString+= System.currentTimeMillis(); //...present real time,...
+        aString+= ": ";  //...a seperator and space,...
+        aString+= InString; //...the string to log,...
+        aString+= "\n";  //...and a line terminator.
+
+        AppLog.getAppLog().appendRawV( aString );  // Append it to log file.
         }
 
     public void appendRawV(String inString)
@@ -166,7 +189,7 @@ public class AppLog
       /* This method creates the log file if it doesn't exist.
         Then it appends inString to the file.
 
-        ??? Needs to be made multiprocess safe so 
+        ??? MadeMultiprocessSafe: Needs to be made multiprocess safe so 
           concurrent apps can access the log file.
         */
       {

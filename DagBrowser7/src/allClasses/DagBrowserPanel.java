@@ -64,7 +64,9 @@ public class DagBrowserPanel
 
     // instance variables.
 
-      private Timer blinkerTimer; // Timer that triggers the monitor Blinker.
+      private Timer activityTimer; // Timer that triggers the monitor activity.
+        // This timer is not started.  Using theTimerThread instead.
+      private TimerThread theTimerThread = new TimerThread();
     
       // data models.
         private DataTreeModel theDataTreeModel;  // holds all browsable data.
@@ -78,7 +80,7 @@ public class DagBrowserPanel
           private IJButton upArrowIJButton;  // button to move up.
           private IJButton leftArrowIJButton;  // button to move to parent.
           private IJButton rightArrowIJButton;  // button to move to child.
-          private JLabel blinkerJLabel; // window monitor status.
+          private JLabel activityJLabel; // window monitor status.
           
         private JPanel viewJPanel; // JPanel where desired data is diaplayed.
           private JLabel directoryJLabel; // a place to display directory path.
@@ -133,7 +135,7 @@ public class DagBrowserPanel
           This includes creating all the components, 
           defining their appearances, and
           connecting the various event listeners.
-          It also starts a blinkerTimer used to indicate 
+          It also starts a activityTimer used to indicate 
           that the program is running.
           */
         { // DagBrowserPanel()
@@ -164,7 +166,7 @@ public class DagBrowserPanel
 
       private void buildAndAddHTopJPanelV()
         /* This method builds the HTopPanel with all its buttons
-          and the blinkerJLabel and adds it to the main panel.
+          and the activityJLabel and adds it to the main panel.
           */
         { // build hTopJPanel containing buttons and other helpful widgets.
         
@@ -175,13 +177,13 @@ public class DagBrowserPanel
 
           buildAndAddIJButtonsV();
 
-          { // create and add blinkerJLabel.
-            blinkerJLabel= new JLabel("Active");  // for testing.
-            blinkerJLabel.setOpaque(true);  // set opaque for use as blinker.
-            blinkerJLabel.setBackground(Color.WHITE);  // override doesn't work.
-            blinkerJLabel.setFont(new Font("Monospaced",Font.BOLD,16)); // set different font.
-            hTopJPanel.add(blinkerJLabel);
-            } // create and add blinkerJLabel.
+          { // create and add activityJLabel.
+            activityJLabel= new JLabel("Active");  // for testing.
+            activityJLabel.setOpaque(true);  // set opaque for use as activity.
+            activityJLabel.setBackground(Color.WHITE);  // override doesn't work.
+            activityJLabel.setFont(new Font("Monospaced",Font.BOLD,16)); // set different font.
+            hTopJPanel.add(activityJLabel);
+            } // create and add activityJLabel.
 
           add(hTopJPanel,BorderLayout.NORTH); // add it as north sub-panel
           } // build hTopJPanel containing buttons and other helpful widgets.
@@ -336,13 +338,14 @@ public class DagBrowserPanel
           */
         {
 
-          { // build and start blinkerTimer.
-            blinkerTimer = new Timer(  // construct a timer...
+          { // build and start activityTimer.
+            activityTimer = new Timer(  // construct a timer...
               1000,  // ...set to fire once per second...
               this  // ...with the DagBrowserPanel the tick Listener.
               );
-            blinkerTimer.start();  // start blinkerTimer so 1-second blinkers will work.
-            } // build and start blinkerTimer.
+            activityTimer.start();  // start activityTimer so 1-second activitys will work.
+            } // build and start activityTimer.
+          theTimerThread.start();  // Start TimerThread.
           lastValidFocusOwnerPanelComponent=   // initialize ID of last component with focus.
             theRootJTree;  // was dataJComponent;            
           restoreFocusV(); // make certain focus is set correctly.
@@ -383,7 +386,7 @@ public class DagBrowserPanel
 
         public void actionPerformed(ActionEvent inActionEvent) 
           /* This method processes ActionsEvent-s from 
-            the Button-s and the blinkerTimer.
+            the Button-s and the activityTimer.
 
             ??? The button panel could be made its own class
             which uses aTreeHelper for the commands.
@@ -392,8 +395,9 @@ public class DagBrowserPanel
           { // actionPerformed( ActionEvent )
             Object sourceObject=   // get Evemt source.
               inActionEvent.getSource();
-            if (sourceObject == blinkerTimer)  // try processing timer event.
-              processBlinkerTimerV();
+            if (sourceObject == activityTimer)  // try processing timer event.
+              theTimerThread.interrupt();
+              // processTimerTickV();
               else // try processing button press.
               { 
                 Boolean buttonDoneB= true; // Assume a button action will happen.
@@ -485,17 +489,56 @@ public class DagBrowserPanel
               );
             }
         
-        private void processBlinkerTimerV()
-          /* This composition method process one tick of the blinkerTimer.  */
+        private void processTimerTickV()
+          /* This composition method processes one tick of the activityTimer.  
+            Because it accesses UI components,
+            it should be called from the UI/AWT Thread only.
+            Use SwingUtilities.invokeLater(..) if needed.
+            It does non-UI stuff also.
+            */
           {
-            { // switch blinker color.
-              blinkerJLabel.  // Reverse blinker JLabel opacity.
-                setOpaque(!blinkerJLabel.isOpaque());
-              blinkerJLabel.repaint();  // Request redisplay of it only.
-              } // switch blinker color.
+            { // switch activity color.
+              if ( activityJLabel.isOpaque() )  //Beep maybe.
+              {
+                //java.awt.Toolkit.getDefaultToolkit().beep();
+                //increent HearBeat. ???
+                }
+              activityJLabel.  // Reverse activity JLabel opacity.
+                setOpaque(!activityJLabel.isOpaque());
+              activityJLabel.repaint();  // Request redisplay of it only.
+              } // switch activity color.
 
             AppInstanceManager.  // Call so AppInstanceManager can poll things.
               tryExitForChainToUpdateFromNewerArgAppV();
+            }
+
+      /* TimerThread.
+        This a replacement for the activityTimer,
+        though I might keep it around for a while.
+        */
+        
+        class TimerThread extends Thread
+          {
+            public void run()
+              {
+                setName("SwingTimer");  // Make debugging easy.
+                while (true)
+                  {
+                    // Misc.snoozeV(2000);  // Do nothing for 2 second.
+                    try {  // Try sleeping the requested time.
+                      Thread.sleep(2000);
+                      }
+                    catch (InterruptedException e) { // If interrupted...
+                      // Do nothing except leave sleep cut short.
+                      }
+                    SwingUtilities.invokeLater( // Queue tick processor.
+                      new Runnable() {
+                        @Override  
+                        public void run() { processTimerTickV(); }  
+                        } 
+                      );
+                    }
+                }
             }
 
       /* TreePathListener methods, for when TreeSelectionEvent-s
@@ -777,7 +820,7 @@ public class DagBrowserPanel
 
         private void focusStepperV()
           /* Steps the FocusStateMachine until desired focus is achieved.'
-            The first version did nothing and let the Blinker timer step things.
+            The first version did nothing and let the activity timer step things.
             This version starts a fast self-stepper.
             */
           { // focusStepperV()
