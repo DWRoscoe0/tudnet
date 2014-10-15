@@ -8,7 +8,6 @@ import java.net.MulticastSocket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.util.Properties;
-//import java.util.concurrent.BlockingQueue;
 
 import static allClasses.Globals.*;  // appLogger;
 
@@ -104,7 +103,7 @@ public class PeerDiscovery
         * receiveQueueOfSockPackets: thread-safe queue of 
           multicast packets received.
         * unconnectedDatagramSocket: DatagramSocket to use
-          for SockPadkets, which are what are actually queued.
+          for SockPadkets, that are queued for sending.
       */
     {
       this.sendQueueOfSockPackets= sendQueueOfSockPackets;
@@ -162,7 +161,6 @@ public class PeerDiscovery
                   new byte[] { QUERY_PACKET },1, groupInetAddress, multicastPortI 
                   );
                 SockPacket querySockPacket= new SockPacket(
-                  ///BoundUDPSockets.getDatagramSocket(),
                   unconnectedDatagramSocket,
                   queryDatagramPacket
                   );

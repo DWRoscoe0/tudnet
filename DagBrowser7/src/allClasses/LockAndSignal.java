@@ -36,75 +36,84 @@ public class LockAndSignal  // Combination lock and signal class.
     */
   {
 
+    public enum Cause {  // Why a wait operation terminated.
+      NOTIFICATION, // doNotify() was called.
+      TIME, // The time limit, either time-out or absolute time, was reached.
+      INTERRUPT // The thread's isInterrupted() status is true.
+      }
+      
     private boolean signalB= false;  // Signal storage and default value.
 
     LockAndSignal( boolean aB )  // Constructor.
       { setV( aB ); }
 
-    public void doWaitV()
+    public Cause doWaitV()
       /* This method, called by the source thread,
         waits for any of the following:
           * An input signal.
           * The condition set by Thread.currentThread().interrupt().
             This condition is not cleared by this method.
+        It returns a Cause value indicating why the wait ended.
         */
       {
-        doWaitWithTimeOutV( 
+        return doWaitWithTimeOutV( 
           Long.MAX_VALUE  // Effectively an infinite time-out.
           );
         }
 
-    public void doWaitWithTimeOutV( long delayMillisL )
+    public Cause doWaitWithTimeOutV( long delayMillisL )
       /* This method, called by the source thread,
         waits for any of the following:
           * An input signal.
           * The condition set by Thread.currentThread().interrupt().
             This condition is not cleared by this method.
           * A time at (delayMillisL) milliseconds in the future.
+        It returns a Cause value indicating why the wait ended.
         */
       {
-        doWaitUntilV( 
+        return doWaitUntilV( 
           System.currentTimeMillis() +
           delayMillisL
           );
         }
 
-    public synchronized void doWaitUntilV(long realTimeMillisL)
+    public synchronized Cause doWaitUntilV(long realTimeMillisL)
       /* This method, called by the source thread,
         waits for any of the following:
           * An input signal.
           * The condition set by Thread.currentThread().interrupt().
             This condition is not cleared by this method.
           * The time realTimeMillisL.
+        It returns a Cause value indicating why the wait ended.
 
         Change to use await() instead of wait() ???
         */
       {
+        Cause theCause;
+        
         while (true) { // Looping until any of several conditions is true.
-
           if ( getB() ) // Handling input signal present.
-            break;  // Exit loop.
-
+            { theCause= Cause.NOTIFICATION; break; } // Exiting loop.
           long timeToNextJobMillisL= // Converting the real-time to a delay.
             realTimeMillisL - System.currentTimeMillis();
           if ( !( timeToNextJobMillisL > 0) )  // Handling time-out expired.
-            break;  // Exit loop.
-
+            { theCause= Cause.TIME; break; } // Exiting loop.
           if // Handling thread interrupt signal.
             ( Thread.currentThread().isInterrupted() )
-            break;  // Exit loop.
-
+            { theCause= Cause.INTERRUPT; break; }  // Exiting loop.
           try { // Waiting for notification or time-out.
             wait(  // Wait for input notification or...
               timeToNextJobMillisL  // ...time of next scheduled job.
               );
             } 
-          catch (InterruptedException e) { // Handling interrupted wait.
-            Thread.currentThread().interrupt(); // Re-establish condition.
+          catch (InterruptedException e) { // Handling wait interrupt.
+            Thread.currentThread().interrupt(); // Re-establishing for test.
             }
-
           }
+
         setV(false);  // Resetting input signal for next time.
+
+        return theCause;
         }
 
     public synchronized void doNotify()
