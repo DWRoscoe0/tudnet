@@ -499,10 +499,10 @@ public class DagBrowserPanel
           {
             { // switch activity color.
               if ( activityJLabel.isOpaque() )  //Beep maybe.
-              {
-                //java.awt.Toolkit.getDefaultToolkit().beep();
-                //increent HearBeat. ???
-                }
+                {
+                  //java.awt.Toolkit.getDefaultToolkit().beep();
+                  //increent HearBeat. ???
+                  }
               activityJLabel.  // Reverse activity JLabel opacity.
                 setOpaque(!activityJLabel.isOpaque());
               activityJLabel.repaint();  // Request redisplay of it only.

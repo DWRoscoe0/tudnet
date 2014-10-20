@@ -11,6 +11,7 @@ import java.net.SocketException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.PriorityQueue;
+import java.util.Random;
 
 import static allClasses.Globals.*;  // appLogger;
 
@@ -225,30 +226,28 @@ public class ConnectionManager extends Thread
       /* This method cointains a single loop which
         does various types of work.  The work consists of:
           * Processing inputs it get from several queues.
-          * Processing scheduled jobs whose times have come.
+          - It was also processing scheduled jobs whose times have come,
+            but these have been moved to other threads.
         When there is no more work, the loop blocks until 
         the next bit of work arrives, when it repeats the process.
-        The loop continues until the thread termination is requested
+        The loop continues until thread termination is requested
         by the condition set by Thread.currentThread().interrupt()
         and read by isInterrupted().
-        This condition is not cleared by this method.
+        This condition is not cleared by this method,
+        so it may be tested by its callers.
         */
       {
         while  // Repeating until thread termination is requested.
           ( !isInterrupted() )  // Thread termination is not requested.
           {
-            // Trying to do work.
+            { // Trying to do work of processing all inputs.
               processingUnconnectedSockPacketsB();
               if ( processingSockPacketsToSendB() )
                 continue;  // Loop if any SockPackets were sent.
               processingDiscoverySockPacketsB();  // Last because these are rare.
-              
-            // Waiting until next scheduled event or new input.
-              long earliestJobMillisL=  // Getting time of next scheduled job.
-                getNextScheduledJobMillisL();
-              theLockAndSignal.doWaitUntilV(  // Waiting for next input or...
-                earliestJobMillisL // ...the next scheduled job.
-                );
+              }
+
+            theLockAndSignal.doWaitE();  // Waiting for new inputs.
             }
         }
 
@@ -304,9 +303,11 @@ public class ConnectionManager extends Thread
           to enable the ConnectionManager to track all network i/o.
           This method returns true if at least one packet was sent,
           false otherwise.
+          It presently assumes that the packet is ready to be sent,
+          and nother else needs to be added first.
           */
         {
-          boolean packetsProcessedB= false;  // Assuming no packet to do.
+          boolean packetsProcessedB= false;  // Assuming no packet to send.
           SockPacket theSockPacket;
 
           while (true) {  // Processing all queued send packets.
@@ -423,10 +424,7 @@ public class ConnectionManager extends Thread
         //  );
         Peer thePeer=  // Get or create Peer.
           getOrCreateAndAddPeer( theSockPacket );
-        thePeer.putReceivedPacketV( theSockPacket );  // Why needed ???
-        thePeer.setReceivedV(  // Set last time received to be...
-          System.currentTimeMillis()  // ...the present time.
-          );  // This will setup the next send.
+        thePeer.puttingReceivedPacketV( theSockPacket );  // Why needed ???
         }
 
     private Peer getOrCreateAndAddPeer( SockPacket theSockPacket )
@@ -464,7 +462,8 @@ public class ConnectionManager extends Thread
             thePeer= new Peer( // Creating new Peer object with...
               peerInetSocketAddress,  // ...this address.
               sendPacketQueue,
-              peersPriorityQueueOf
+              peersPriorityQueueOf,
+              this
               );
             //appLogger.info(
             //  "ConnectionManager.getOrCreateAndAddPeer(..)\n"+
@@ -482,35 +481,9 @@ public class ConnectionManager extends Thread
         return thePeer;
         }
 
-    private long getNextScheduledJobMillisL()
-      /* This method returns the time of the next scheduled send job,
-        or a time in the most distant future if there is no such job.
-        */
-      {
-        long earliestJobMillisL; // Storage for return value.
-        Peer nextPeer=
-          peersPriorityQueueOf.peek();
-        if ( nextPeer == null )  // No jobs queued.
-          {
-            //appLogger.info(
-            //  "ConnectionManager.getNextScheduledJobMillisL()), no Peer."
-            //  );
-            earliestJobMillisL=  // Set result to be unreachable value,...
-              System.currentTimeMillis()
-              + Integer.MAX_VALUE  // ...a time in the most distant future.
-              ;
-            }
-          else // There is at least one job.
-          {
-            earliestJobMillisL=  // Set result to be...
-              nextPeer.nextSendMillisL;  // ...job's next send time.
-            }
-        return earliestJobMillisL;  // Return result.
-        }
-
     public static class Peer  // Nested class managing peer connection data.
       extends Thread
-      implements Comparable<Peer> // for use PriorityQueue.
+      implements Comparable<Peer> // for use by PriorityQueue.
 
       /* Each instance of this nested class contains and manages data about 
         one of the peer nodes of which the ConnectionManager is aware.
@@ -569,7 +542,8 @@ public class ConnectionManager extends Thread
             //DatagramSocket peerDatagramSocket,
             InetSocketAddress peerInetSocketAddress,
             PacketQueue sendQueueOfSockPackets,
-            PriorityQueue<Peer> peersPriorityQueueOf
+            PriorityQueue<Peer> peersPriorityQueueOf,
+            ConnectionManager theConnectionManager
             )
           /* This constructor constructs a Peer assuming that
             a packet has just been received from the peer at peerInetSocketAddress,
@@ -584,6 +558,7 @@ public class ConnectionManager extends Thread
               this.peerInetSocketAddress= peerInetSocketAddress;
               this.sendQueueOfSockPackets= sendQueueOfSockPackets;
               this.peersPriorityQueueOf= peersPriorityQueueOf;
+              this.theConnectionManager= theConnectionManager;
 
             // Setting meanful defaults for packet send and receive times.
               this.receivedMillisL=  // Assume packet received recently.
@@ -597,67 +572,189 @@ public class ConnectionManager extends Thread
         public void run()  // Main Peer thread.
           /* This method contains the main thread logic in the form of
             a state machine composed of the highest level states.
-            It alternates between pinging and echoing with the peer.
+            The only thing it does now is exchange ping and echo packets
+            with the remote peer, first one way, then the other.
+            
+            ??? This is only temporary because 
+            packets which are not ping or echo are ignored,
+            so a connection can do nothing else.
+            Later the protocol will be expanded by adding
+            more types of packets, or 
+            packets will be demultiplexed by protocol.
+            In this case Packets would contain 
+            a protocol value for this purpose.
             */
           {
-            appLogger.info(getName()+": Peer thread beginning.");
+            appLogger.info(getName()+":\n  Peer thread beginning.");
 
-            while  // Repeating until thread termination is requested.
-              ( !isInterrupted() )  // Thread termination is not requested.
+            while (true) // Repeating until thread termination is requested.
               {
-                if // Processing ping receive or no-receive.
-                  ( testAndConsumePacketB( "PING" ) )
-                  //  ( receiveQueueOfSockPackets.poll() != null )
-                  { // Processing ping receive.
-                    appLogger.info(getName()+": ping receive.");
-                    sendPacketV("ECHO"); // Sending echo packet.
-                    peerLockAndSignal.doWaitUntilV( // Awaiting ping or...
-                      System.currentTimeMillis()  // ... time-out.
-                        +PeriodMillisL
-                      );
-                    appLogger.info(getName()+": after echo send wait.");
-                    }
-                  else { // Processing ping no-receive...
-                    appLogger.info(getName()+": ping NO-receive.");
-                    }  // ...by doing nothing.  We will ping send next.
+                if ( isInterrupted() ) break;  // Exiting if requested.
+                //appLogger.info(getName()+":\n  CALLING tryingPingSendV() ===============.");
+                tryingPingSendV();
 
-                for // Trying ping send and echo receive up to 3 times.
-                  ( int retriesI= 0; ; retriesI++ ) 
-                  { // Trying ping send and echo receive one time.
-                    if  // Checking and handling retries exceeded.
-                      ( retriesI >= 4 )
-                      { interrupt(); break; } // Terminating, exceeded.
-                    sendPacketV("PING"); // Sending ping packet.
-                    LockAndSignal.Cause theCause= // Waiting next input.
-                      peerLockAndSignal.doWaitUntilV( // Awaiting echo or...
-                        System.currentTimeMillis()  // ... time-out.
-                          +PeriodMillisL
-                        );
-                    switch ( theCause ) {
-                      case NOTIFICATION:
-                      default:
-                      }
-                    if // Testing ping receive or no-receive.
-                      ( testPacketB( "PING" ) )
-                      { appLogger.info(getName()+": PING ping abort: "+retriesI);
-                        break; // Processing ping receive by exiting loop.
-                        }
-                    if // Testing and handling echo receive or no-receive.
-                      ( testAndConsumePacketB( "ECHO" ) )
-                      { appLogger.info(getName()+": echo receive: "+retriesI);
-                        peerLockAndSignal.doWaitUntilV( // Post-echo pauseing.
-                          System.currentTimeMillis()
-                            +PeriodMillisL
-                            );
-                        break; // Finishing echo receive by exiting loop.
-                        }
-                    appLogger.info(getName()+": echo NO-receive: "+retriesI);
-                    }
+                if ( isInterrupted() ) break;  // Exiting if requested.
+                //appLogger.info(getName()+":\n  CALLING tryingPingReceiveV() ===============.");
+                tryingPingReceiveV();
                 }
 
             // Terminating.
-            appLogger.info(getName()+": Peer thread ending.");
+            appLogger.info(getName()+":\n  Peer thread ending.");
             }
+
+        private void tryingPingSendV()
+          /* This method tries to send a ping to the remove peer
+            and receive an echo response.
+            If it doesn't receive an echo packet in response
+            within one-half period, it tries again.
+            It tries several times before giving up and 
+            terminating the current threat.
+            */
+          {
+            int maxRetries= 4;
+            LockAndSignal.Input theInput;  // Type of input that ends waits.
+            retryLoop: for // Sending pings until something stops us.
+              ( int retriesI= 0; ; retriesI++ ) // Retry counter.
+              { // Trying ping send and echo receive one time, or exiting.
+                if  // Checking and exiting if retries were exceeded.
+                  ( retriesI >= maxRetries )  // Maximum attempts exceeded.
+                  { interrupt(); break; } // Terminating thread.
+                sendingPacketV("PING"); // Sending ping packet.
+                long waitMillisL=  // Calculating half-period wait time.
+                  System.currentTimeMillis()+HalfPeriodMillisL;
+                waitLoop: while (true) { // Flushing for pause duration.
+                  theInput= // Awaiting next input and storing its type.
+                    peerLockAndSignal.doWaitUntilE( // Awaiting input or...
+                      waitMillisL  // ...maximum wait time.
+                      );
+                  switch ( theInput ) {  // Handling the input type.
+                    case INTERRUPTION: // Handlin a thread's interruption.
+                      break retryLoop; // Exiting to terminate thread.
+                    case TIME: // Handling a time-out.
+                      break waitLoop;  // Exiting wait loop to retry.
+                    case NOTIFICATION:  // Handling packet inputs.
+                      while (true) { // Handling possible multiple packets.
+                        if ( ! testingPacketB( ) ) // Handling empty queue.
+                          break;  // Exiting loop.
+                        if // Handling echo packet, maybe.
+                          ( testingPacketB( "ECHO" ) )
+                          { // Handling echo and exiting.
+                            //appLogger.info(getName()+":\n  echo received: "+retriesI);
+                            consumingOnePacketV(); // Consuming echo packet.
+                            // This should handle unwanted received packets.
+                            break retryLoop; // Finishing by exiting loop.
+                            }
+                        if // Handling ping-ping conflict, maybe.
+                          ( testingPacketB( "PING" ) )
+                          if // Handling ping-ping conflict.
+                            ( arbitratingYieldB() ) // Let arbiter decide.
+                            { // Yielding ping processing to other peer.
+                              //appLogger.info(
+                              //  getName()+":\n  PING ping abort: "+retriesI
+                              //  );
+                              break retryLoop; // Yielding by exiting loop.
+                              // Ping packet remains in queue.
+                              }
+                        ignoringOnePacketV(); // Ignoring any other packet value.
+                        //appLogger.info(getName()+":\n  echo NO-receive: "+retriesI);
+                        }
+                      // Dropping through to exit switch and continue waitLoop.
+                      }
+                  }
+                }
+            }
+
+        private void tryingPingReceiveV()
+          /* This method tries to receive a ping from the remote peer
+            to which it replies by sending an echo response.
+            It waits up to PeriodMillisL for a ping to arrive,
+            after which it gives up and returns.
+            If a ping is received it responds immediately by sending an echo,
+            after which it waits PeriodMillisL while ignoring all
+            received packets.
+            */
+          {
+            LockAndSignal.Input theInput;  // Type of input that ends wait.
+            long pingMillisL=  // Calculating latest ping receive time.
+              System.currentTimeMillis()
+              + PeriodMillisL
+              + HalfPeriodMillisL;
+            pingLoop: while (true) { // Inputing until one is acceptable.
+              if // Handling a received ping if present.
+                ( testingPacketB( "PING" ) )
+                { // Handling received ping.
+                  consumingOnePacketV(); // Consuming ping packet.
+                  sendingPacketV("ECHO"); // Sending echo packet.
+                  long pauseMillisL=  // Calculating end of post-echo pause.
+                    System.currentTimeMillis()+PeriodMillisL;
+                  while (true) { // Ignoring packets for pause duration.
+                    theInput= // Awaiting next input and storing its type.
+                      peerLockAndSignal.doWaitUntilE( pauseMillisL );
+                      switch ( theInput ) {  // Handling input type.
+                        case INTERRUPTION: // Handling thread interruption.
+                          break pingLoop;  // Exiting outer loop.
+                        case TIME: // Handling end of post-echo pause.
+                          break pingLoop;  // Exiting outer loop.
+                        case NOTIFICATION:  // Handling input packet(s).
+                          while (true) { // Ignoring all input packets.
+                            if ( ! testingPacketB( ) ) // Handling none left.
+                              break;  // Exiting loop.
+                            ignoringOnePacketV(); // Flushing one packet.
+                            }
+                        }
+                    }
+                  }
+              ignoringOnePacketV(); // Ignoring non-ping packet.
+              //appLogger.info(getName()+":\n  ignoring non-ping.");
+              theInput= // Awaiting next input and storing its type.
+                peerLockAndSignal.doWaitUntilE( // Awaiting input or...
+                  pingMillisL  // ...ping time limit.
+                  );
+              switch ( theInput ) {  // Handling input based on type.
+                case INTERRUPTION: // Handling a thread's interruption.
+                  break pingLoop;  // Exiting to terminate thread.
+                case TIME: // Handling the ping time-out.
+                  break pingLoop;  // Exiting to abort wait.
+                case NOTIFICATION:  // Handling a received packet.
+                  // Dropping through to exit switch, loop and retry.
+                }
+              }
+            }
+
+        private boolean arbitratingYieldB()
+          /* This method arbitrates when this local peer is trying
+            to do the same thing as the remote peer.
+            When executed on both peers, on one it should return true
+            and on the other it should return false.
+            It returns true when this peer should yield,
+            and false when it should not.
+
+            This method is not designed to be fair, but to 
+            simply resolve conflicts.
+            It is based on comparing each peer's port number.
+            Most of the time, when one peer yields, 
+            the other won't, and the conflict is resolved.
+            Where the port numbers are equal 
+            the yield result is chosen randomly,
+            and the conflict is resolved 50% of the time.
+            */
+          {
+            boolean yieldB;  // Storage for result.
+            int portDifferenceI=  // Calculate port differenc.
+              peerInetSocketAddress.getPort() - PortManager.getLocalPortI();
+            if ( portDifferenceI != 0 )  // Handling ports unequal.
+              yieldB= ( portDifferenceI < 0 );  // Lower ported peer yields.
+              else  // Handling rare case of ports equal.
+              {
+                theRandom.setSeed(System.currentTimeMillis());  // Reseting...
+                  // ...the random number generator seed with current time.
+                yieldB= theRandom.nextBoolean();  // Yield randomly.
+                }
+            //appLogger.info("arbitratingYieldB() = " + yieldB);
+            return yieldB;
+            }
+
+        Random theRandom= new Random(0);  // For arbitratingYieldB().
 
         private long getNextSendL( )  // Returns time of next action.
           /* This method returns 
@@ -666,30 +763,6 @@ public class ConnectionManager extends Thread
             */
           {
             return nextSendMillisL;
-            }
-
-        private void setReceivedV( long timeMillisL )
-          /* This method sets the receivedMillisL field to be timeMillisL,
-            and then updates the dependent field,
-            the time of the next send job.
-            */
-          {
-            receivedMillisL= timeMillisL;  // Store time provided.
-            updatePingV( );  // Update round-trip time.
-            updateNextSendV( );  // Update dependend field.
-            }
-
-        private void updatePingV( )
-          /* This method calculates and stores 
-            the round-trip time needed for a packet
-            sent to the Peer to get there and a response packet
-            to return.
-            */
-          {
-            long differenceMillisL=
-              receivedMillisL - sentMillisL;
-            if ( differenceMillisL > 0 )  // If it's posotive...
-              pingMillisL= differenceMillisL;  // Save it.
             }
 
         private void updateNextSendV( )
@@ -762,23 +835,25 @@ public class ConnectionManager extends Thread
 
         // Variables.
 
-          // Constructor arguments.
+          // Copies of constructor arguments.
             
             private InetSocketAddress peerInetSocketAddress= null;  // Address of peer.
             
             private final PacketQueue // Send output.
-              sendQueueOfSockPackets;  // SockPackets for ConnectionManager to send.
+              sendQueueOfSockPackets;  // SockPackets to be sent.
               
             PriorityQueue<Peer> peersPriorityQueueOf;
+
+            ConnectionManager theConnectionManager;
 
           LockAndSignal peerLockAndSignal=  // LockAndSignal for this thread.
             new LockAndSignal(false);
 
-          DatagramSocket peerDatagramSocket= null;
+          DatagramSocket peerDatagramSocket= null;  // For network io.
 
           private final long PeriodMillisL=  // Period between sends or receives.
-            4000; 
-          private final long HalfPeriodMillisL= // Half of that.
+            4000;   // 4 seconds.
+          private final long HalfPeriodMillisL= // Half of period.
             PeriodMillisL / 2;  
 
           // Independent times.
@@ -787,8 +862,6 @@ public class ConnectionManager extends Thread
 
           // Dependent times.
           private long nextSendMillisL;  // Time the next packet should be sent.
-          @SuppressWarnings("unused")
-          private long pingMillisL;  // Time for a round-trip to peer.
 
         // Receive packet code.
 
@@ -798,31 +871,46 @@ public class ConnectionManager extends Thread
                 peerLockAndSignal
                 );
 
-          public void putReceivedPacketV( SockPacket theSockPacket )
-            // This method adds theSockPacket to the peer's receive queue.
-            {
-              receiveQueueOfSockPackets.add(theSockPacket);
-              }
-
-        private boolean testAndConsumePacketB( String aString )
-          /* This method tests whether the next packet 
-            in the receiveQueueOfSockPackets contains aString.
-            It returns true if there is a next packet and
-            it is aString, false otherwise.
-            The packet, if any, is consumed.
-            */
+        public void puttingReceivedPacketV( SockPacket theSockPacket )
+          // This method adds theSockPacket to the peer's receive queue.
           {
-            boolean resultB=  // Testing packet for desired String.
-              testPacketB( aString );
-            receiveQueueOfSockPackets.poll();  // Consuming the packet,..
-              // ...if there was one.
-            return resultB;  // Returning the result.
+            receiveQueueOfSockPackets.add(theSockPacket);
             }
 
-        private boolean testPacketB( String aString )
-          /* This method tests whether the next packet 
-            in the receiveQueueOfSockPackets contains aString.
-            It returns true if there is a next packet and
+        private void consumingOnePacketV()
+          /* This method consumes one packet, if any,
+            at the head of the queue.
+            */
+          {
+            receiveQueueOfSockPackets.poll();  // Consuming the packet,..
+              // ...if there was one at head of queue.
+            }
+
+        private void ignoringOnePacketV()
+          /* This method logs that the present one packet, if any,
+            at the head of the queue, is being ignored,
+            and then consumes it.
+            */
+          {
+            testingPacketB( "(ignoring)" );  // Log that its ignored, sor of.
+            consumingOnePacketV();  // So it won't be seen again.
+            }
+
+        private boolean testingPacketB( )
+          /* This method tests whether a packet, if any,
+            at the head of the receiveQueueOfSockPackets,
+            is available.
+            It returns true if there is a packet available, false otherwise.
+            */
+          {
+            return ( receiveQueueOfSockPackets.peek() != null );
+            }
+
+        private boolean testingPacketB( String aString )
+          /* This method tests whether the packet, if any,
+            at the head of the receiveQueueOfSockPackets,
+            contains aString.
+            It returns true if there is a packet and
             it is aString, false otherwise.
             The packet, if any, remains in the queue.
             */
@@ -833,7 +921,7 @@ public class ConnectionManager extends Thread
                 receiveQueueOfSockPackets.peek();
               if (receivedSockPacket == null) // Handling no packet.
                 {
-                  appLogger.info("testPacketB() no packet is not "+aString);
+                  //appLogger.info("testingPacketB() no packet is not "+aString);
                   break decodingPacket;  // Exiting with false.
                   }
               DatagramPacket theDatagramPacket= // Getting DatagramPacket.
@@ -845,24 +933,30 @@ public class ConnectionManager extends Thread
                   ,theDatagramPacket.getLength()
                   );
               if   // Handling unequal Strings.
-                ( ! aString.equals( dataString ) )
+                ( ! dataString.contains( aString ) )
                 {
-                  appLogger.info(
-                    "testPacketB() packet "+dataString+" is not "+aString
-                    );
+                  //appLogger.info(
+                  //  "testingPacketB() packet "+dataString+" is NOT "+aString
+                  //  );
                   break decodingPacket;  // Exiting with false.
                   }
-              resultB= true;  // Changing result to true because Strings are equal.
+              //appLogger.info(
+              //  "testingPacketB() packet "+dataString+" IS "+aString
+              //  );
+              resultB= true;  // Changing result because Strings are equal.
               }
             return resultB;  // Returning the result.
             }
 
-        private void sendPacketV( String aString )
+        int packetIDI= 0; // ???
+
+        private void sendingPacketV( String aString )
           /* This method sends a packet containing aString to the peer.
             */
           {
-            appLogger.info( "sendPacketV(): " + aString );
-            byte[] buf = aString.getBytes();
+            String payloadString= ((packetIDI++) + ":" + aString);
+            //appLogger.info( "sendingPacketV(): " + payloadString );
+            byte[] buf = payloadString.getBytes();
             DatagramPacket packet = new DatagramPacket(
               buf, 
               buf.length, 

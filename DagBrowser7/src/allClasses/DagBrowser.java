@@ -33,8 +33,6 @@ public class DagBrowser
 
     Thread thisThread;  // Used for shutdown coordination.
 
-    /// private LockAndSignal shutdownLockAndSignal= new LockAndSignal(false);
-
     static private JFrame appJFrame;  // App's only JFrame (now).
 
     private DagBrowser( Thread aThread )  // Constructor.
@@ -95,14 +93,7 @@ public class DagBrowser
         
         // stoppingConnectionManager.
           appLogger.info("DagBrowser: triggering Connections termination.");
-          theConnectionManager.interrupt();  /// Request thread terminatation.
-          /*
-          try { // Wait until termination completes.  ???
-            theConnectionManager.join();
-            } catch (InterruptedException e) {
-              Thread.currentThread().interrupt();
-            }
-          */
+          theConnectionManager.interrupt();  // Request thread terminatation.
           for  // Waiting for termination of ConnectionManager to complete.
             ( boolean threadTerminatedB= false ; !threadTerminatedB ; )
             try { // Waiting for ConnectionManager thread to terminate.
@@ -151,7 +142,7 @@ public class DagBrowser
           new GUIMaker(guiLockAndSignal)  // ...this object,...
           );  //  whose run() will build and start the app's GUI.
 
-        guiLockAndSignal.doWaitV(); // Wait for signal that GUI is running.
+        guiLockAndSignal.doWaitE(); // Wait for signal that GUI is running.
 
         AppInstanceManager.setAppInstanceListener(  // App instance events...
           this  // ...will be heard by this main object's GUI.
@@ -194,7 +185,7 @@ public class DagBrowser
               startingJFrame();
             appLogger.info("GUI start-up complete.");
 
-            guiLockAndSignal.doNotify();  // Signal everything is done.
+            guiLockAndSignal.doNotifyV();  // Signal everything is done.
             }
 
         }

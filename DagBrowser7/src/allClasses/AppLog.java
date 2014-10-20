@@ -44,7 +44,6 @@ public class AppLog
     // Variables.
       private File logFile;  // Name of log file.
       private int theSessionI= 0;  // App session counter.
-      ///private int entryCountI= 0;  // Log entry counter.
       long startedAtMillisL;  // Time when initialized.
 
     static // static/class initialization for logger.
@@ -67,7 +66,7 @@ public class AppLog
         if (theSessionI == 0)  // If this is session 0...
           logFile.delete();  //...then empty log file by deleting.
         appendEntry( ""); 
-        appendEntry( "------------------- NEW LOG FILE SESSION -------------------");
+        appendEntry( "=================== NEW LOG FILE SESSION ===================");
         appendEntry( ""); 
         }
   
@@ -125,6 +124,15 @@ public class AppLog
         return sessionI;
         }
   
+    public void debug(String inString)
+      /* This method writes an information String inString to a log entry
+        but not to the console.
+        It is tagged as for debugging.
+        */
+      { 
+        appendEntry( "DEBUG: "+inString ); 
+        }
+  
     public void info(String inString)
       /* This method writes an information String inString to a log entry
         but not to the console.
@@ -163,14 +171,6 @@ public class AppLog
         String aString= ""; // Initialize String to empty, then append...
         aString+= AppLog.getAppLog().theSessionI;  //...the session number,...
         aString+= ":";  //...and a seperator.
-        ///long differenceMillisL=  // Calculate time since start.
-        ///      System.currentTimeMillis() 
-        ///      - AppLog.getAppLog().startedAtMillisL
-        ///      ;
-        ///aString+= String.format( "%02d.%03d",  // Append it...
-        ///  differenceMillisL / 1000
-        ///  , differenceMillisL % 1000
-        ///  );
         aString+= System.currentTimeMillis(); //...present real time,...
         aString+= ": ";  //...a seperator and space,...
         aString+= InString; //...the string to log,...

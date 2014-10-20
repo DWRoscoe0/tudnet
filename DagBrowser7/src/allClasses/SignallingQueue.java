@@ -29,14 +29,14 @@ extends ConcurrentLinkedQueue<E>
   public boolean add( E anE )
     {
       boolean resultB= super.add( anE );
-      threadLockAndSignal.doNotify();
+      threadLockAndSignal.doNotifyV();
       return resultB;
       }
 
   public boolean addAll(Collection<? extends E> aCollection) 
     {
       boolean resultB= super.addAll( aCollection );
-      threadLockAndSignal.doNotify();
+      threadLockAndSignal.doNotifyV();
       return resultB;
       }
   }

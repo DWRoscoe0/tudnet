@@ -2,27 +2,27 @@ package allClasses;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-///import java.net.SocketAddress;
 
 public class SockPacket
-  /* This class represents a socketed datagram packet,
-    a combination of a DatagramPacket and a DatagramSocket
-    through which it passes.
-    This combination can provide port and IP for both end-points.
-    
-    ??? This should probably be changed to replace DatagramSocket
-    with something else because an IOException caused by
-    a temporary network problem can render a DatagramSocket
-    permanently unusable and need to be replaced.
-    
-    See ??? deletion.
+  /* This class represents a datagram packet with other features attached.
+
+    ??? This should probably renamed to EnPacket for Enhanced Packet.
+
+    Originally and presently the other features was 
+    the DatagramSocket through which it passed.
+    Hence the class name.
+    But this isn't very useful for 2 reasons:
+    1. Bind errors that heppen when trying to create connected sockets 
+      when an unconnected already exists.
+    2. IOExceptions caused by a temporary network problem 
+      can render a DatagramSocket permanently unusable and 
+      needing to be replaced.
+      
+    As a result, DatagramSocket will probably be replaced,
+    possibly by a class which implements an interface that 
+    contains a send() method and a reference to a DatagramSocket.
     */
 	{
-
-    SignallingQueue<SockPacket> 
-      theSignallingQueue;  // Test...  ??? delete this?  Not needed.
-      // ... for general queuer which can be reused. ???
-
 		private DatagramPacket theDatagramPacket; // The packet to send/receive.
       // This stores remote IP and port.
     private DatagramSocket theDatagramSocket; // Associated Socket.
@@ -54,6 +54,7 @@ public class SockPacket
         return theDatagramSocket;
         }
 
+    /* ???
     public String getSocketAddressesString()
       /* This returns a String representing the
         end-point addresses (IP and port) of this SockPacket.
@@ -62,6 +63,7 @@ public class SockPacket
           SR: Socket Remote.
           PR: Packet Remote.
         */
+    /* ???
       {
         String packetAddressString;
 
@@ -81,5 +83,6 @@ public class SockPacket
 
         return valueString;
         }
+    */
 
 		}
