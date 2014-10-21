@@ -1,30 +1,31 @@
 package allClasses;
 
-//import static allClasses.Globals.*;  // appLogger;
-//import java.io.File;
-//import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
-//import java.nio.channels.FileChannel;
-//import java.net.URI;
-//import java.net.URISyntaxException;
-//import java.net.URL;
 
+//import java.nio.channels.FileChannel;
 
 //import javax.swing.JComponent;
 //import javax.swing.tree.TreeModel;
 //import javax.swing.tree.TreePath;
 
+import static allClasses.Globals.*;  // appLogger;
+
 public class Outline
-  //extends Object
-  //implements DataNode
+
   extends AbDataNode
-  /* The purpose of this class is to create a large subtree
-    for Infogora demonstration purposes
+
+  /* The purpose of this class is to create 
+    a large subtree for Infogora demonstrations
     from a text file that uses indented lines as in an outline.
+    
+    ??? It is supposed to be temporary, but is very inefficient.
+    It might benefit from caching as is done with IFile and FileRoots.
+    There is a 2-second pause when it is first accessed in right pane.
     */
+
   { // class Outline
 
     // Variables.
@@ -73,8 +74,8 @@ public class Outline
       public int getChildCount( ) 
         /* Returns the number of outline subsections of this section.  */
         {
-          if ( Misc.ReminderB )
-            System.out.println( "Outline.getChildCount() " + IDCode());
+          if ( Misc.ReminderB ) // Reminding me of this rarely called method.
+            appLogger.debug("Outline.getChildCount() " + IDCode());
           if ( TheChildCountI <= 0 )  // calculate if not done yet.
             { // calculate child count.
               StartFile( );  // Prepare reading at the start position.
@@ -114,16 +115,21 @@ public class Outline
     
       public DataNode getChild( int IndexI ) 
         /* This returns the child with index IndexI.
-          It gets the child from an array cache if possible.
           If not then it calculates the child and 
           saves it in the cache for later.
           In either case it returns it.
+
+          It doesn't get the child from an array cache if possible,
+          but maybe it should???
           */
         { // getChild( int ) 
           StartFile( );  // Prepare reading at the start position.
+
           GetSectionString( );  // Read past 1st section to 1st child.
+
           for (int i=0; i < IndexI; i++)  // Skip to the correct child.
             SkipChild( );
+
           if ( LineString.equals( "." ) )  // Line is a single '.'.
             return null;
             else
@@ -143,21 +149,11 @@ public class Outline
           rewriting like getChild(.).
           */
         {
-          if ( Misc.ReminderB )
-            System.out.println( "Outline.getIndexOfChild(...)" );
+          if ( Misc.ReminderB ) // Reminding me of this rarely called method.
+            appLogger.debug("Outline.getIndexOfChild(...)" );
+            //System.out.println( "Outline.getIndexOfChild(...)" );
 
-          int ResultI = -1;  // Set default result for not found.
-          Outline ChildOutline = (Outline)ChildObject;  // Caste Object to Outline.
-          int ChildCountI= getChildCount( );  // cache the child count.
-          for ( int i = 0; i < ChildCountI; ++i ) 
-            {
-              if ( ChildOutline.equals( getChild( i) ) ) 
-              {
-                ResultI = i;
-                break;
-                }
-              }
-          return ResultI;
+          return super.getIndexOfChild( ChildObject ) ;
           }
 
     // Other methods.
@@ -171,30 +167,6 @@ public class Outline
           StartFile( );  // Prepare reading at the start position.
           return LineString;  // Return data from line read.
           }
-      
-      /* public JComponent GetDataJComponent( TreePath InTreePath )
-        /* Returns a JComponent which is appropriate for viewing 
-          the current tree node represented specified by InTreePath.  
-          */
-        /*
-        { // GetDataJComponent()
-          System.out.println( "Outline.GetDataJComponent(InTreePath)" );
-          JComponent ResultJComponent= null;  // For result.
-
-          if ( isLeaf( ) )
-            {
-              StartFile( );  // Prepare reading at the start position.
-              String TextString=  // Read header section as text.
-                GetSectionString( );
-              ResultJComponent= 
-                new TextViewer( InTreePath, TextString );
-              }
-            else
-            ResultJComponent= // Calculate a ListViewer.
-              new ListViewer( InTreePath );
-          return ResultJComponent;  // return the final result.
-          } // GetDataJComponent()
-        */
 
       private void StartFile( )
         /* Prepares the outline file for reading by:
@@ -337,6 +309,5 @@ public class Outline
         {
           return (int) (41 * StartingOffsetL);
           }
-            
 
     } // class Outline

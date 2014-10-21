@@ -8,11 +8,18 @@ public abstract class AbDataNode
 
   implements DataNode
   
-  /* This class started an abstract class.
+  /* This class started as an abstract class.
     It implemented only part of the DataNode interface.
     Over time I was provided implementations for
     all of the interface methods, and then some.
-    So now this class is abstract in name only.
+    So now this class is now abstract in name only,
+    and I could probably remove the abstract keyword. ???
+
+    The DataNode methods will work, but some of them
+    do so by counting and searching.
+    They should be used only by subclasses which 
+    do not have a lot of children and can be evaluated quickly.
+    Otherwise they should be optimized or cached or both.
     */
     
   {
@@ -23,7 +30,7 @@ public abstract class AbDataNode
           which means it is not null and not an UnknownDataNode.
           */
         { 
-            boolean usableB= true;  // Assume the node is usable.
+          boolean usableB= true;  // Assume the node is usable.
 
           toReturn: { // block beginning.
           toUnusable: { // block beginning.
@@ -64,11 +71,13 @@ public abstract class AbDataNode
           returns null if IndexI is out of range.  */
         { // getChildCount( )
           int childIndexI= 0;  // Initialize child index.
+
           while  // Process all children...
             ( getChild( childIndexI ) != null )  // ...returned by getChild(.).
             { // process this child.
               childIndexI++;  // increment index.
               } // process this child.
+
           return childIndexI;  // Return ending index as count.
           } // getChildCount( )
 
@@ -79,19 +88,24 @@ public abstract class AbDataNode
           */
         { // getIndexOfChild(.)
           int childIndexI= 0;  // Initialize child search index.
+
           while ( true ) // Search for child.
             { // Check one child.
               Object childObject=  // get the child.
                  getChild( childIndexI );
+
               if ( childObject == null )  // null means no more children.
                 { // Exit with failure.
                   childIndexI= -1;  // Set index to indicate failure.
                   break;  // Exit while loop.
                   } // Exit with failure.
+
               if ( inChildObject.equals( childObject ) )  // Found child.
                 break;  // Exit while loop.
+
               childIndexI++;  // Increment index to check next child.
               } // Check one child.
+
           return childIndexI;  // Return index as search result.
           } // getIndexOfChild(.)
 
@@ -102,17 +116,22 @@ public abstract class AbDataNode
         { 
           int childIndexI= // Translate name to index.
             getIndexOfNamedChild( inNameString );
+
           DataNode childDataNode= // Translate index to DataNode.
             getChild( childIndexI );
+
           return childDataNode;  // Return DataNode.
           }
 
       public int getIndexOfNamedChild( String inString )
         /* Returns the index of the child whose name is inString,
           or -1 if this node's has no such child. 
-          It assumes a functional getChild(..) method.  */
+          It does this by doing a search.
+          It assumes a functional getChild(..) method.  
+          */
         {
           int childIndexI= 0;  // Initialize child search index.
+
           while ( true ) // Search for child.
             { // Check one child.
               DataNode childDataNode=  // get the child.
@@ -127,6 +146,7 @@ public abstract class AbDataNode
                 break;  // Exit while loop.
               childIndexI++;  // Increment index to check next child.
               } // Check one child.
+
           return childIndexI;  // Return index as search result.
           }
 
@@ -153,6 +173,8 @@ public abstract class AbDataNode
         /* Returns a JComponent which is appropriate for viewing
           and possibly changing its associated DataNode, 
           using context from inTreeModel.
+          It returns a TextViewer for leaves and 
+          a ListViewer for non-leaves.
           The DataNode is defined by inTreePath,
           */
         { // GetDataJComponent()
@@ -168,7 +190,7 @@ public abstract class AbDataNode
             else  // This DataNode is NOT a leaf.
             resultJComponent= // Set result for exploring a List.
               new ListViewer( inTreePath, inTreeModel );
-              //new ListExplorer( inTreePath, inTreeModel );
+
           return resultJComponent;  // Return the result from above.
           } // GetDataJComponent()
 

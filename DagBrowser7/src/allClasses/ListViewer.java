@@ -85,7 +85,7 @@ public class ListViewer
           setJListSelection();
           setJListScrollState();
           } // InitializeTheJList( )
-  
+
       private void setJListSelection()
         /* This grouping method updates the JList selection state
           from the selection-related instance variables.
@@ -102,7 +102,7 @@ public class ListViewer
             IndexI= 0;
           setSelectionInterval( IndexI, IndexI );  // set selection using final resulting index.
           }  // setJListSelection()
-  
+
       private void setJListScrollState()
         /* This method sets the JList scroll state
           from its selection state to make certain that
@@ -216,21 +216,22 @@ public class ListViewer
               boolean hasFocus
               )
             {
+              Component RenderComponent=  // Getting the superclass version.
+                super.getListCellRendererComponent(
+                  list, value, index, isSelected, hasFocus 
+                  );
+              { // Making color adjustments based on various state.
+                if ( ! isSelected )  // cell not selected.
+                  RenderComponent.setBackground(list.getBackground());
+                else if ( ! list.isFocusOwner() )  // selected but not focused.
+                  RenderComponent.setBackground( list.getSelectionBackground() );
+                else  // both selected and focused.
+                  RenderComponent.setBackground( Color.GREEN ); // be distinctive.
+                }
+              // RenderComponent.setBackground(Color.RED);  // ???
+              return RenderComponent;
+              }
 
-            Component RenderComponent=  // get the superclass RenderCompoent.
-              super.getListCellRendererComponent(
-                list, value, index, isSelected, hasFocus );
-            { // make color adjustments to RenderComponent.
-              if ( ! isSelected )  // cell not selected.
-                RenderComponent.setBackground(list.getBackground());
-              else if ( ! list.isFocusOwner() )  // selected but not focused.
-                RenderComponent.setBackground( list.getSelectionBackground() );
-              else  // both selected and focused.
-                RenderComponent.setBackground( Color.GREEN ); // be distinctive.
-              } // make color adjustments to RenderComponent.
-            // RenderComponent.setBackground(Color.RED);  // ???
-            return RenderComponent;
-            }
         } // class ListCellRenderer    
 
     } // ListViewer

@@ -7,7 +7,7 @@ import javax.swing.JFrame;
 // import javax.swing.JOptionPane;
 
 
-import javax.swing.UIManager;
+//import javax.swing.UIManager;
 
 import static allClasses.Globals.*;  // For appLogger;
 
@@ -177,10 +177,10 @@ public class DagBrowser
             calls invokeLater(..) because AWT GUI code is not thread-safe.
             */
           {
-            try { // Change GUI look-and-feel to be that of OS.
-              UIManager.setLookAndFeel(UIManager.
-                getSystemLookAndFeelClassName());
-              } catch(Exception e) {}
+            //try { // Change GUI look-and-feel to be that of OS.
+            //  UIManager.setLookAndFeel(UIManager.
+            //    getSystemLookAndFeelClassName());
+            //  } catch(Exception e) {}
             appJFrame =  // construct and start the main application JFrame.
               startingJFrame();
             appLogger.info("GUI start-up complete.");

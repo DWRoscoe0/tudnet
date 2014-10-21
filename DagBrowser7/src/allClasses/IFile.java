@@ -108,6 +108,7 @@ public class IFile
         { // getChild( int IndexI ) 
           setupCacheArrays( );  // Setup the cache arrays for use.
           IFile childIFile= null;
+
           do {  // Exittable block.
             if  // Exit if index out of bounds.
               ( IndexI < 0 || IndexI >= childIFiles.length ) 
@@ -124,6 +125,7 @@ public class IFile
                 childIFiles[ IndexI ]= childIFile;  // Save IFile in cache slot.
                 } // Fill the empty cache slot.
             } while ( false );  // Exittable block.
+
           return childIFile;  // Return IFile as result.
           } // getChild( int IndexI ) 
 
@@ -202,6 +204,7 @@ public class IFile
         {
           String stringResult=   // Try getting the last name element.
             theFile.getName();
+
           if // Get the prefix if there is no name.
             ( stringResult.equals( "" ) )
             try {
@@ -210,6 +213,7 @@ public class IFile
               } catch (IOException e) {
                 stringResult= "IOException";  // Get error string.
               }  // ...the canonical path name.
+
           return stringResult;  // Return the final result.
           }
       
@@ -256,8 +260,11 @@ public class IFile
           for displaying the IFile named by inTreePath.
           */
         { // JComponentForJTextAreaFrom(inIFile)
+
           IFile inIFile= (IFile)inTreePath.getLastPathComponent();
+
           return new TextViewer( inTreePath, inTreeModel, inIFile );
+          
           }  // JComponentForJTextAreaFrom(inIFile)
           
     // other methods.
@@ -271,9 +278,11 @@ public class IFile
           */
         {
           GetArrayOfStrings( );  // Load array of Strings if needed.
+
           if ( childIFiles == null )  // Create array of IFiles if needed.
             childIFiles=  // Create array of IFiles with same size as...
               new IFile[GetArrayOfStrings( ).length];  // ... childStrings.
+
           return childIFiles;  // Return the array.
           }
 
@@ -286,9 +295,11 @@ public class IFile
           if ( childStrings == null )  // Read names of children if needed.
             childStrings=  // Read names of children from directory.
               theFile.list();
+
           if ( childStrings == null )  // Make certain the array is not null.
             childStrings=  // Make it be a zero-length array.
               new String[ 0 ];
+
           return childStrings;  // Return the array.
           }
 

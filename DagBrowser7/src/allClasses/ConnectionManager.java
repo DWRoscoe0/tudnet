@@ -619,6 +619,7 @@ public class ConnectionManager extends Thread
                 if  // Checking and exiting if retries were exceeded.
                   ( retriesI >= maxRetries )  // Maximum attempts exceeded.
                   { interrupt(); break; } // Terminating thread.
+                long pingMillisL= System.currentTimeMillis();
                 sendingPacketV("PING"); // Sending ping packet.
                 long waitMillisL=  // Calculating half-period wait time.
                   System.currentTimeMillis()+HalfPeriodMillisL;
@@ -639,7 +640,9 @@ public class ConnectionManager extends Thread
                         if // Handling echo packet, maybe.
                           ( testingPacketB( "ECHO" ) )
                           { // Handling echo and exiting.
-                            //appLogger.info(getName()+":\n  echo received: "+retriesI);
+                            long echoMillisL= System.currentTimeMillis();
+                            roundTripTimeL= echoMillisL - pingMillisL;
+                            //appLogger.debug("RTT= "+roundTripTimeL);
                             consumingOnePacketV(); // Consuming echo packet.
                             // This should handle unwanted received packets.
                             break retryLoop; // Finishing by exiting loop.
@@ -861,6 +864,7 @@ public class ConnectionManager extends Thread
           private long sentMillisL;  // Time a packet was last sent to peer.
 
           // Dependent times.
+          long roundTripTimeL;
           private long nextSendMillisL;  // Time the next packet should be sent.
 
         // Receive packet code.
