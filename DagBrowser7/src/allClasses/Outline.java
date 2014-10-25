@@ -142,9 +142,12 @@ public class Outline
         /* Returns the index of the filesystem root named by ChildObject 
           in the list of filesystem roots, or -1 if it is not found.
           It does they by comparing Object-s as File-s.
+
           ??? This is very inefficient because it calls getChild(int),
           which is itself slow, inside of a loop.
-          Fortunately it doesn't seem to be called very often.
+          This amounts to a doubly nested loop.
+          Fortunately it doesn't seem to be called very often,
+          except at startup sometimes.
           But it could be made much faster by
           rewriting like getChild(.).
           */

@@ -78,23 +78,22 @@ public class TreeHelper
           setWholeWithPartAutoSelectV( inWholeTreePath );
           }
     
-      /*
-      TreeHelper(   // ??? not used yet.  For when Part is not Whole child.
-          JComponent inOwningJComponent, 
-          TreePath inWholeTreePath,
-          TreePath inPartTreePath
-          )
-        /* Constructs a TreeHelper.
-          inWholeTreePath identifies the root of the Whole subtree to display.
-          inPartTreePath identifies the part of the Whole to highlight.
+      /*TreeHelper(   // ??? not used yet.  For when Part is not Whole child.
+            JComponent inOwningJComponent, 
+            TreePath inWholeTreePath,
+            TreePath inPartTreePath
+            )
+          /* Constructs a TreeHelper.
+            inWholeTreePath identifies the root of the Whole subtree to display.
+            inPartTreePath identifies the part of the Whole to highlight.
+            */
+          /*
+          {
+            owningJComponent= inOwningJComponent;
+            setWholeV( inWholeTreePath );
+            //setPartV( inPartTreePath ); ???
+            }
           */
-      /*
-        {
-          owningJComponent= inOwningJComponent;
-          setWholeV( inWholeTreePath );
-          //setPartV( inPartTreePath ); ???
-          }
-      */
 
     /* Keyboard and Mouse Listener methods.  */
 
@@ -118,37 +117,38 @@ public class TreeHelper
               * Left-Arrow keys to go to parent.
             */
           { // keyPressed.
-            int KeyCodeI = inKeyEvent.getKeyCode();  // cache key pressed.
-            boolean KeyProcessedB= true;  // assume the key event will be processed here. 
-            { // try to process the key event.
-              // /* Tab decoded else by JList.
-              if (KeyCodeI == KeyEvent.VK_TAB)  // Tab key.
-                { // process Tab key.
+            int KeyCodeI = inKeyEvent.getKeyCode(); // Copyiing key pressed.
+            boolean KeyProcessedB=  // Sssuming key event will be processed.
+              true;
+            { // Trying to process the key event.
+              // /* Tab decoded elsewhere by JList.
+              if (KeyCodeI == KeyEvent.VK_TAB) // Handling Tab key maybe.
+                { // Handling Tab key.
                   Component SourceComponent= 
                     (Component)inKeyEvent.getSource();
                   int shift = // Determine (Shift) key state.
                     inKeyEvent.getModifiersEx() & InputEvent.SHIFT_DOWN_MASK;
-                  if (shift == 0) // (Shift) not down.
-                    SourceComponent.transferFocus();  // Move focus to next component.
-                    else   // (Shift) is down.
-                    SourceComponent.transferFocusBackward();  // Move focus to previous component.
+                  if // Moving focus forward or backward. 
+                    (shift == 0) // (Shift key) not down.
+                    SourceComponent.transferFocus();  // Move forward.
+                    else   // (Shift key) is down.
+                    SourceComponent.transferFocusBackward(); // Move backward.
                   } // process Tab key.
               else 
-              // Tab decoded else by JList.
+              // Tab decoded elsewehre by JList.
               // */
-              if (KeyCodeI == KeyEvent.VK_LEFT)  // left-arrow key.
-                commandGoToParentB(true);  // go to parent folder.
-              else if (KeyCodeI == KeyEvent.VK_RIGHT)  // right-arrow key.
-                commandGoToChildB(true);  // go to child folder.
-              else if (KeyCodeI == KeyEvent.VK_ENTER)  // Enter key.
-                commandGoToChildB(true);  // go to child folder.
+              if (KeyCodeI == KeyEvent.VK_LEFT) // Handling left-arrow maybe.
+                commandGoToParentB(true);  // Going to parent folder.
+              else if (KeyCodeI == KeyEvent.VK_RIGHT) // right-arrow maybe.
+                commandGoToChildB(true);  // Going to child folder.
+              else if (KeyCodeI == KeyEvent.VK_ENTER)  // Enter maybe.
+                commandGoToChildB(true);  // Going to child folder.
               else  // no more keys to check.
-                KeyProcessedB= false;  // indicate no key was processed.
-              } // try to process the key event.
-            if (KeyProcessedB)  // if the key event was processed...
-            {
-              inKeyEvent.consume();  // ... prevent more processing of this key.
+                KeyProcessedB= false;  // Indicating no key was handled.
               }
+            if  // Preventing processing by Event source of key handled.
+              (KeyProcessedB)
+              inKeyEvent.consume(); // Preventing more processing of the key.
             } // keyPressed.
 
         public void keyReleased(KeyEvent inKeyEvent) { }  // unused part of KeyListener interface.
@@ -157,7 +157,7 @@ public class TreeHelper
 
       /* MouseListener methods, for user input from mouse.
         Because this is a helper class, putting the MouseListener methds
-        in a MouseAdapter subclass would not be helpful.
+        in a MouseAdapter subclass would not be very helpful.
         */
 
         @Override
@@ -185,7 +185,7 @@ public class TreeHelper
         
     /* Command methods.
 
-      ??? Mr maybe impliment the Command pattern.
+      ??? Maybe impliment the Command pattern.
       In Java the Command pattern is implimented with the Action interface
       which extends the ActionListener interface.
       This might do everything I eventually want to do.
@@ -200,7 +200,7 @@ public class TreeHelper
           In any case it returns whether moving was doable.
           */
         {
-          boolean doableB= false;  // Set result assuming command isn't doable.
+          boolean doableB= false;  // Assuming command isn't doable.
 
           toReturn: {
             // Exit if not enough path valid for movement toward parent.
@@ -237,7 +237,7 @@ public class TreeHelper
           ??? This method is too long.  Break it up.
           */
         {
-            boolean doableB= false;  // Assume command is not doable.
+            boolean doableB= false;  // Assuming command is not doable.
           toReturn: {
             if ( getPartDataNode() == null )  // No part path.
               break toReturn; // So exit with not doable.
@@ -554,6 +554,9 @@ public class TreeHelper
               TreePathListener listener = 
                 (TreePathListener)listeners.nextElement();
               try {  // ??? kluge.
+                appLogger.debug( 
+                  "TreeHelper.firePartTreeChangedV( TreeSelectionEvent )"
+                  );
                 listener.partTreeChangedV( e );
                 } 
               catch(ClassCastException ex) {
@@ -578,33 +581,33 @@ public class TreeHelper
             );
           }
 
-      private DataNode findBestChildDataNode(TreePath inTreePath)
-        /* This method tries to find and return the best child DataNode 
-          of the node identified by inTreePath.  The best is:
-            * The most recently visited child, if there is one.
-            * The first child, if there is one.
-          Otherwise it returns null.
-          
-          ??? Maybe instead of null it should return UnknownDataNode?
-          */
-        {
-          DataNode childDataNode=  // Try to get the child...
-            Selection.  // ...from the visits tree that was the...
-              setAndReturnDataNode( // ...most recently visited child...
-                inTreePath  // ...of the List at the end of the TreePath.
-                );
-          if (childDataNode == null)  // if no recent child try first one.
-            { // try getting first ChildDataNode.
-              DataNode theDataNode=  // Get DataNode at end of TreePath.
-                (DataNode)inTreePath.getLastPathComponent();
-              if   // There are no children.
-                (theDataNode.getChildCount() <= 0)
-                  ;  // Do nothing.
-                else  // There are children.
-                  childDataNode=   // get first ChildDataNode.
-                    theDataNode.getChild(0);
-              } // get name of first child.
-          return childDataNode;  // Return final result.
-          }
+        private DataNode findBestChildDataNode(TreePath inTreePath)
+          /* This method tries to find and return the best child DataNode 
+            of the node identified by inTreePath.  The best is:
+              * The most recently visited child, if there is one.
+              * The first child, if there is one.
+            Otherwise it returns null.
+            
+            ??? Maybe instead of null it should return UnknownDataNode?
+            */
+          {
+            DataNode childDataNode=  // Try to get the child...
+              Selection.  // ...from the visits tree that was the...
+                setAndReturnDataNode( // ...most recently visited child...
+                  inTreePath  // ...of the List at the end of the TreePath.
+                  );
+            if (childDataNode == null)  // if no recent child try first one.
+              { // try getting first ChildDataNode.
+                DataNode theDataNode=  // Get DataNode at end of TreePath.
+                  (DataNode)inTreePath.getLastPathComponent();
+                if   // There are no children.
+                  (theDataNode.getChildCount() <= 0)
+                    ;  // Do nothing.
+                  else  // There are children.
+                    childDataNode=   // get first ChildDataNode.
+                      theDataNode.getChild(0);
+                } // get name of first child.
+            return childDataNode;  // Return final result.
+            }
 
     } // class TreeHelper

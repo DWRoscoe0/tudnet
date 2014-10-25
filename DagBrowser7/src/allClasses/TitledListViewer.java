@@ -1,0 +1,237 @@
+package allClasses;
+
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.ListModel;
+import javax.swing.ListSelectionModel;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+//import javax.swing.event.TreeSelectionListener;
+import javax.swing.tree.TreeModel;
+import javax.swing.tree.TreePath;
+
+//import static allClasses.Globals.*;  // appLogger;
+
+public class TitledListViewer // adapted from TitledListViewer.
+
+  extends JPanel
+  ///extends JList<Object>
+ 
+  implements 
+    ListSelectionListener
+    , FocusListener
+    , TreeAware
+  
+  /* This experimental class is being developed from,
+    and is intended to replace, the TitledListViewer class.
+    It can be developed and tested without disrupting other code by 
+    temporarilly replacing single TitledListViewer references to 
+    TitledListViewer references for the duration of the test.
+
+    This class provides a simple titled DagNodeViewer that 
+    displays and browses List-s using a JList.
+    It was created based on code from DirectoryTableViewer.
+    Eventually it might be a good idea to create 
+    a static or intermediate base class that handles common operations.
+
+    ??? It appears that JList<Object> implements many keyboard commands,
+    so these have been removed from KeyListener.keyPressed(KeyEvent).
+    */
+    
+  { // TitledListViewer
+  
+    // variables, most of them.
+  
+      /// private static final long serialVersionUID = 1L;
+
+      JList<Object> theJList;  // Component with the content.
+
+    // constructor and related methods.
+
+      public TitledListViewer( TreePath inTreePath, TreeModel inTreeModel )
+        /* Constructs a TitledListViewer.
+          inTreePath is the TreePath associated with
+          the node of the Tree to be displayed.
+          The last DataNode in the path is that object.
+          */
+        { // TitledListViewer(.)
+          super();   // Call constructor inherited from JList<Object>.
+            // TreePath will be calculated and set later.
+
+          theJList= new JList<Object>();  // Construct JList.
+          add(theJList); // Add it to main JPanel.
+
+          { // Prepare the helper object.
+            aTreeHelper=  // Construct helper class instance.
+                new TreeHelper( this, inTreePath );  // Note, subject not set yet.
+            } // Prepare the helper object.
+
+          InitializeTheJList( inTreeModel );
+          } // TitledListViewer(.)
+
+      private void InitializeTheJList( TreeModel inTreeModel )
+        /* This grouping method creates and initializes the JList.  */
+        { // InitializeTheJList( )
+          { // Set ListModel for the proper type of elements.
+            ListModel<Object> AListModel= new TreeListModel( 
+              aTreeHelper.getWholeDataNode( ),
+              inTreeModel 
+              );
+            theJList.setModel( AListModel );  // Define its ListModel.
+            } // Set ListModel for the proper type of elements.
+          theJList.setSelectionMode( ListSelectionModel.SINGLE_SELECTION );
+          theJList.setCellRenderer(   // Setting custom rendering.
+            TheListCellRenderer 
+            );
+          { // Set the user input event listeners.
+            theJList.addKeyListener(aTreeHelper);  // TreeHelper does KeyEvent-s.
+            theJList.addMouseListener(aTreeHelper);  // TreeHelper does MouseEvent-s.
+            theJList.addFocusListener(this);  // listen to repaint on focus events.???
+            theJList.getSelectionModel().  // This does ListSelectionEvent-s.
+              addListSelectionListener(this);
+            } // Set the user input event listeners.
+          setJListSelection();
+          setJListScrollState();
+          } // InitializeTheJList( )
+
+      private void setJListSelection()
+        /* This grouping method updates the JList selection state
+          from the selection-related instance variables.
+          Note, this will trigger a call to 
+          internal method ListSelectionListener.valueChanged(),
+          which might cause further processing and calls to
+          esternal TreeSelectionListeners-s. */
+        { // setJListSelection()
+          int IndexI= // try to get index of selected child.
+            aTreeHelper.getWholeDataNode( ).getIndexOfChild( 
+              aTreeHelper.getPartDataNode() 
+              );
+          if ( IndexI < 0 )  // force index to 0 if child not found.
+            IndexI= 0;
+          theJList.setSelectionInterval( // Set selection from index.
+            IndexI, IndexI 
+            );
+          }  // setJListSelection()
+
+      private void setJListScrollState()
+        /* This method sets the JList scroll state
+          from its selection state to make certain that
+          the selection is visible.
+          */
+        { // setJListScrollState()
+          ListSelectionModel TheListSelectionModel = // Get selection model.
+            (ListSelectionModel)theJList.getSelectionModel();
+          int SelectionIndexI= // Get index of row selected.
+            TheListSelectionModel.getMinSelectionIndex() ;
+          theJList.ensureIndexIsVisible( // Scroll into view the row...
+            SelectionIndexI // ...with that index.
+            );
+          }  // setJListScrollState()
+
+    // Input (setter) methods.  This includes Listeners.
+        
+      /* ListSelectionListener method, for processing ListSelectionEvent-s 
+        from the List's SelectionModel.
+        */
+      
+        public void valueChanged(ListSelectionEvent TheListSelectionEvent) 
+          /* Processes an [internal or external] ListSelectionEvent
+            from the ListSelectionModel.  It does this by 
+            determining what element was selected,
+            adjusting dependent instance variables, and 
+            firing a TreeSelectionEvent to notify TreeSelection]-s.
+            */
+          { // void valueChanged(ListSelectionEvent TheListSelectionEvent)
+              ListSelectionModel TheListSelectionModel = // get ListSelectionModel.
+              (ListSelectionModel)TheListSelectionEvent.getSource();
+            int IndexI =   // Get index of selected element from the model.
+              TheListSelectionModel.getMinSelectionIndex();
+            if // Process the selection if...
+              ( //...the selection index is legal.
+                (IndexI >= 0) && 
+                (IndexI < aTreeHelper.getWholeDataNode( ).getChildCount( ))
+                )
+              { // Process the selection.
+                DataNode newSelectionDataNode=  // Get selected DataNode...
+                  aTreeHelper.getWholeDataNode( ).
+                    getChild(IndexI);  // ...which is child at IndexI.
+                aTreeHelper.setPartDataNodeV( newSelectionDataNode );
+                  // This will set the TreePaths also.
+                  // This converts the row selection to a tree selection.
+                ///appLogger.info( "valueChanged(ListSelectionEvent TheListSelectionEvent)");
+              } // Process the selection.
+            } // void valueChanged(ListSelectionEvent TheListSelectionEvent)
+      
+      // FocusListener methods  , to fix JTable cell-invalidate/repaint bug.
+
+        @Override
+        public void focusGained(FocusEvent arg0) 
+          {
+            // System.out.println( "DirectoryTableViewer.focusGained()" );
+            setJListScrollState();
+            repaint();  // bug fix Kluge to display cell in correct color.  
+            }
+      
+        @Override
+        public void focusLost(FocusEvent arg0) 
+          {
+            // System.out.println( "DirectoryTableViewer.focusLost()" );
+            setJListScrollState();
+            repaint();  // bug fix Kluge to display cell in correct color.  
+            }
+
+    // interface TreeAware code for TreeHelper access.
+
+			public TreeHelper aTreeHelper;  // helper class ???
+
+			public TreeHelper getTreeHelper() { return aTreeHelper; }
+
+    // List cell rendering.
+
+      private ListCellRenderer TheListCellRenderer=
+        new ListCellRenderer(); // for custom cell rendering.
+    
+      public static class ListCellRenderer
+        extends DefaultListCellRenderer
+        /* This small helper class extends the method 
+          getTableCellRendererComponent() which is 
+          used for rendering JList cells.
+          The main purpose of this is to give the selected cell
+          a different color when the Component has focus.
+          */
+        { // class ListCellRenderer
+          private static final long serialVersionUID = 1L;
+
+          public Component getListCellRendererComponent
+            ( JList<?> list,
+              Object value,
+              int index,
+              boolean isSelected,
+              boolean hasFocus
+              )
+            {
+              Component RenderComponent=  // Getting the superclass version.
+                super.getListCellRendererComponent(
+                  list, value, index, isSelected, hasFocus 
+                  );
+              { // Making color adjustments based on various state.
+                if ( ! isSelected )  // cell not selected.
+                  RenderComponent.setBackground(list.getBackground());
+                else if ( ! list.isFocusOwner() )  // selected but not focused.
+                  RenderComponent.setBackground( list.getSelectionBackground() );
+                else  // both selected and focused.
+                  //RenderComponent.setBackground( Color.GREEN ); // be distinctive.
+                  RenderComponent.setBackground( Color.RED); // for test.
+                }
+              return RenderComponent;
+              }
+
+        } // class ListCellRenderer    
+
+    } // TitledListViewer

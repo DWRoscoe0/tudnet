@@ -3,6 +3,7 @@ package allClasses;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout; // not recommended by Eclipse QuickFix.
 import java.awt.Font;
@@ -111,9 +112,9 @@ public class DagBrowserPanel
             LEFT_PANE,  // left (tree view) pane.
             RIGHT_PANE   // right (content view) pane.
             };
-          private focusPane lastFocusPane=  // The last focusPane that had focus.
+          private focusPane lastFocusPane=  // Last focusPane that had focus.
             focusPane.LEFT_PANE;  // Set to focus right pane initially.
-            // was: focusPane.RIGHT_PANE;  // Set to focus right pane initially.
+            // was: focusPane.RIGHT_PANE;
           private focusPane desiredFocusPane=  // The next pane to get focus...
             focusPane.NO_PANE;  // ... is initially undefined.
             /* The meanings are as follows:
@@ -617,15 +618,17 @@ public class DagBrowserPanel
               { // Process non-null path.
                 { // process based on Source Component.
                   if (  // Source is right sub-pannel,...
-                      (sourceComponent == dataJComponent) ||  // ... equal to or...
-                      dataJComponent.isAncestorOf(  // ...an ancestor of it.
-                        sourceComponent)
-                        )
+                      ancestorOfB( dataJComponent, sourceComponent)
+                      ///(sourceComponent == dataJComponent) ||  // ... equal to or...
+                      ///dataJComponent.isAncestorOf(  // ...an ancestor of it.
+                      ///  sourceComponent)
+                      )
                     processSelectionFromRightSubpanel(
                       selectedTreePath
                       );
                   else if  // Source is left sub-pannel,...
-                    (sourceComponent == theRootJTree) // ...equal to RootJTree.
+                    ( ancestorOfB( theRootJTree, sourceComponent) )
+                    ///(sourceComponent == theRootJTree) // ...equal to RootJTree.
                     processSelectionFromLeftSubpanel( selectedTreePath );
                   } // process based on Source Component.
                 recordPartPathSelectionV( );
@@ -730,17 +733,17 @@ public class DagBrowserPanel
         public void focusGained(FocusEvent theFocusEvent)
           /* This does what needs doing when 
             one of the sub-panels gains focus.  This includes:
-            
+
               Saving the Component getting focus in 
               lastValidFocusOwnerPanelComponent so restoreFocusV() 
               can restore the focus later after 
               temporary focus-altering user input.
               The two Components that usually have focus in this app are the
               left theRootJTree and the right dataJComponent.
-              
+
               Updating the Path and Info JLabel-s to agree with
               the selection in the new focused sub-panel.
-              
+
             */
           { // focusGained(FocusEvent theFocusEvent)
             lastValidFocusOwnerPanelComponent=  // record last focus owner panel.
@@ -748,15 +751,22 @@ public class DagBrowserPanel
             
             { // record focused component as an enum because it might change.
               if  // left sub-panel gained focus.
-                (lastValidFocusOwnerPanelComponent == theRootJTree)
+                //(lastValidFocusOwnerPanelComponent == theRootJTree)
+                ( ancestorOfB(
+                    theRootJTree, lastValidFocusOwnerPanelComponent
+                    ) )
                 { 
                   lastFocusPane= focusPane.LEFT_PANE;  // record left enum ID.
                   displayPathAndInfoV(  // display left sub-panel's info.
                     theRootJTree.getSelectedTreePath()
                     );
                   }
-              else if  // right sub-panel gained focus.
-                (lastValidFocusOwnerPanelComponent == dataJComponent)
+              else if  // something in right sub-panel gained focus.
+                //( dataJComponent.isAncestorOf(lastValidFocusOwnerPanelComponent) )
+                //(lastValidFocusOwnerPanelComponent == dataJComponent)
+                ( ancestorOfB(
+                    dataJComponent, lastValidFocusOwnerPanelComponent
+                    ) )
                 { 
                   lastFocusPane= focusPane.RIGHT_PANE;  // record right enum ID.
                   displayPathAndInfoV(  // display right sub-panel's info for...
@@ -780,6 +790,33 @@ public class DagBrowserPanel
             */
             
             } // focusGained(FocusEvent theFocusEvent)
+
+        private boolean ancestorOfB(
+            Component theComponent,Component theOtherComponent)
+          /* This returns true if theComponent contains, that is, 
+            is an ancestor of, theOtherComponent.
+            A component is considered to be an ancestor of itself.
+            This method was created because of because 
+            a bug in Component.isAncestorOf(..) making
+            an extra equality test necessary. 
+            */
+          {
+            // Doing caste because of Java's weird [J]Component hierarchy.
+            Container theContainer= (Container)theComponent;
+            Container theOtherContainer= (Container)theOtherComponent;
+
+            boolean resultB= true;  // Assuming contained.
+
+            goReturn: {  // Overriding if actually not contained.
+              if ( theContainer == theOtherContainer )
+                break goReturn;
+              if ( theContainer.isAncestorOf( theOtherContainer ) )
+                break goReturn;
+              resultB= false;  // Overriding because both tests failed.
+              }
+
+            return resultB;
+            }
 
         public void focusLost(FocusEvent theFocusEvent)
           /* This method does nothing, 

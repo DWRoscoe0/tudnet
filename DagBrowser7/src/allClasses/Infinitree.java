@@ -1,64 +1,88 @@
 package allClasses;
 
+import javax.swing.JComponent;
+import javax.swing.tree.TreeModel;
+import javax.swing.tree.TreePath;
+
 public class Infinitree 
   extends AbDataNode
   /* The purpose of this class is to create a an infinite subtree
     for testing the Infogora browser.
+    
+    ??? GetDataJComponent(..) was added temporarilly 
+    to test TitledListViewer.
     */
   {
   
     // variables.
-       int ChildI;  // the number of child (0 - n-1).
-       Infinitree ParentInfinitree= null;  // parent, or null if none.
+       int childNumberI;  // The number of the parent's 0 - (n-1) children.
+       Infinitree parentInfinitree= null;  // Parent node, or null if none.
        
     // Constructors.
 
-      public Infinitree( Infinitree InParentInfinitree, int InChildI )
+      public Infinitree( Infinitree inparentInfinitree, int inChildI )
         /* Constructs an Infinitree node.
+          inparentInfinitree will be the parent of the new node.
+          inChildI is the child number of the node.
           */
         { // Infinitree(.)
-          ChildI= InChildI;  // save child index.
-          ParentInfinitree= InParentInfinitree;  // save parent.
+          childNumberI= inChildI;  // save child index.
+          parentInfinitree= inparentInfinitree;  // save parent.
           } // Infinitree(.)
        
-    // other methods.
+    // Other methods.
   
       public int getChildCount( ) 
+        /* This method returns the child cound.
+          Because the children are virtual, calculated as needed,
+          the child count is calculated from 
+          the number of ancestor levels below the root.
+          */
         { // getChildCount( )
-          Infinitree ScanInfinitree= ParentInfinitree;
+          Infinitree ScanInfinitree= parentInfinitree;
           int ChildIndexI= 2;  // Initialize child index.
-          while  // Increase that by the number of ancestors.
+          while  // Increase that by the number of ancestors levels.
             ( ScanInfinitree != null )
             {
               ChildIndexI++;  // increment index.
-              ScanInfinitree= ScanInfinitree.ParentInfinitree;
+              ScanInfinitree= ScanInfinitree.parentInfinitree;
               }
           return ChildIndexI;  // Return ending index as count.
           } // getChildCount( )
 
-      public DataNode getChild( int InIndexI ) 
-        /* This returns the child with index is InIndexI.  */
+      public DataNode getChild( int inIndexI ) 
+        /* This returns this node's child whose index is inIndexI.  
+          The node's children are not cached within the node.
+          They are constructe as needed,
+          so repeated calls to this method will return 
+          different but equal(..) instances.
+          */
         { // getChild( int ) 
-          Infinitree ChildInfinitree= null;  // assume InIndexI out of range.
-          if  // override result if InIndexI is in range. 
-            ( InIndexI >= 0 && InIndexI < getChildCount( ))  // in range?
-            ChildInfinitree= new Infinitree( // yes, calculate child node...
+          Infinitree childInfinitree= null;  // assume inIndexI out of range.
+          if  // override result if inIndexI is in range. 
+            ( inIndexI >= 0 && inIndexI < getChildCount( ))  // in range?
+            childInfinitree= new Infinitree( // yes, calculate child node...
               this,  // ...using this node as parent and...
-              InIndexI  // ...its InIndexI as child index.
+              inIndexI  // ...its inIndexI as child index.
               );
-          return ChildInfinitree;  // return result whatever.
+          return childInfinitree;  // return result whatever.
           } // getChild( int ) 
 
       public String toString( ) 
+        /* This method returns the String representation of
+          this tree node.
+          */
         {
-          String ResultString= null;
-          if ( ParentInfinitree == null ) // this is root.
-            ResultString= "Infinite-Test-Tree";
-            else
-            ResultString= 
-              ParentInfinitree.toString() +
-              "."+ ChildI;
-          return ResultString;  // Return ending String.
+          String resultString= null;
+
+          if ( parentInfinitree == null ) // This node is the root.
+            resultString= "Infinite-Test-Tree";  // Use root's name.
+            else  // This node is not root.
+            resultString=  // Use parent's name with our chid number appended.
+              parentInfinitree.toString() +
+              "."+ childNumberI;
+
+          return resultString;  // Return ending String.
           }
 
       @Override public boolean equals(Object other) 
@@ -67,34 +91,53 @@ public class Infinitree
           It doesn't do null checks.
           */
         {
-          boolean ResultB = false;  // assume objects are not equal.
+          boolean resultB = false;  // assume objects are not equal.
           Comparer: {  // Comparer.
             if ( ! ( other instanceof Infinitree ) )  // different class.
               break Comparer;  // exit with false.
             Infinitree that =  // create variable for easy access of fields.
               (Infinitree) other; 
-            if ( this.ChildI != that.ChildI )  // child numbers not equal.
+            if ( this.childNumberI != that.childNumberI )  // child numbers not equal.
               break Comparer;  // exit with false.
             if // parents not equal.
-              ( ! ( ( ParentInfinitree == that.ParentInfinitree ) ||
-                    ( ( ParentInfinitree != null ) &&
-                      ( ParentInfinitree.equals( that.ParentInfinitree ) )
+              ( ! ( ( parentInfinitree == that.parentInfinitree ) ||
+                    ( ( parentInfinitree != null ) &&
+                      ( parentInfinitree.equals( that.parentInfinitree ) )
                       )
                     )
                 )
               break Comparer;  // exit with false.
-            ResultB= true;  // everything is equal, so override result.
+            resultB= true;  // everything is equal, so override result.
             }  // Comparer.
-          return ResultB;
+          return resultB;
           }
 
       @Override public int hashCode() 
+        /* This method return a hash value for this node.
+          It takes into account this node's child number and
+          the hash codes of all it ancestors.
+          
+          ??? This method does some wasteful computation.
+          */
         {
           int hash = 2047;
-          hash = hash * 17 + ChildI;
-          if ( ParentInfinitree != null)
-            hash = hash * 31 + ParentInfinitree.hashCode();
+          hash = hash * 17 + childNumberI;  // wasteful computation ???
+          if ( parentInfinitree != null)
+            hash = hash * 31 + parentInfinitree.hashCode();
           return hash;
           }
-    
+
+      public JComponent GetDataJComponent
+        ( TreePath inTreePath, TreeModel inTreeModel )
+        /* Temporary test version to test TitledListViewer. ???
+          */
+        { // GetDataJComponent()
+          JComponent resultJComponent= null;  // For result.
+
+          resultJComponent= // Set result for exploring a List.
+            //new TitledListViewer( inTreePath, inTreeModel );
+            new ListViewer( inTreePath, inTreeModel );
+
+          return resultJComponent;  // Return the result from above.
+          } // GetDataJComponent()
     }
