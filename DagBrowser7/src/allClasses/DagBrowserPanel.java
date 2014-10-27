@@ -290,7 +290,8 @@ public class DagBrowserPanel
 
             { // setup handling by listener of various Tree events.
               theRootJTree.getTreeHelper().addTreePathListener(this);
-              theRootJTree.addFocusListener(this);
+              //theRootJTree.addFocusListener(this); // Old???
+              theRootJTree.getTreeHelper().addFocusListener(this); // New???
               } // setup handling by listener of various Tree events.
             } // Build the JTree view for the JScrollPane.
           treeJScrollPane.setViewportView(  // Set client to be scrolled...
@@ -720,7 +721,8 @@ public class DagBrowserPanel
               dataTreeAware.getTreeHelper().  // set TreeAware's TreeSelectionListener by...
                 addTreePathListener(  // adding to its Listener list...
                   this);  // ...a reference to this the main panel
-              dataJComponent.addFocusListener(this);  // setup focus restoration.
+              //dataJComponent.addFocusListener(this);  // Old???
+              dataTreeAware.getTreeHelper().addFocusListener(this); // New???
               } // build the scroller content.
             dataJScrollPane.setViewportView(  // in the dataJScrollPane's viewport...
               dataJComponent);  // ...set the DataJPanel for viewing.
@@ -750,31 +752,36 @@ public class DagBrowserPanel
               theFocusEvent.getComponent();
             
             { // record focused component as an enum because it might change.
-              if  // left sub-panel gained focus.
-                //(lastValidFocusOwnerPanelComponent == theRootJTree)
-                ( ancestorOfB(
-                    theRootJTree, lastValidFocusOwnerPanelComponent
-                    ) )
-                { 
-                  lastFocusPane= focusPane.LEFT_PANE;  // record left enum ID.
-                  displayPathAndInfoV(  // display left sub-panel's info.
-                    theRootJTree.getSelectedTreePath()
-                    );
-                  }
-              else if  // something in right sub-panel gained focus.
+              if  // something in right sub-panel gained focus.
                 //( dataJComponent.isAncestorOf(lastValidFocusOwnerPanelComponent) )
                 //(lastValidFocusOwnerPanelComponent == dataJComponent)
                 ( ancestorOfB(
                     dataJComponent, lastValidFocusOwnerPanelComponent
                     ) )
                 { 
+                  ///appLogger.debug("RIGHT_PANE gained focus.");
                   lastFocusPane= focusPane.RIGHT_PANE;  // record right enum ID.
                   displayPathAndInfoV(  // display right sub-panel's info for...
                     dataTreeAware.getTreeHelper().getPartTreePath() // ...selected TreePath.
                     );
                   }
+              else if  // left sub-panel gained focus.
+                //(lastValidFocusOwnerPanelComponent == theRootJTree)
+                ( ancestorOfB(
+                    theRootJTree, lastValidFocusOwnerPanelComponent
+                    ) )
+                { 
+                  appLogger.debug("LEFT_PANE gained focus.");
+                  lastFocusPane= focusPane.LEFT_PANE;  // record left enum ID.
+                  displayPathAndInfoV(  // display left sub-panel's info.
+                    theRootJTree.getSelectedTreePath()
+                    );
+                  }
               else 
-                lastFocusPane= focusPane.NO_PANE;  // record enum ID.
+                { 
+                  appLogger.debug("NO_PANE gained focus.");
+                  lastFocusPane= focusPane.NO_PANE;  // record enum ID.
+                  }
               } // record focused component as an enum because it might change.
 
             buttonEnableScanV( );

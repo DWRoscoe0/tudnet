@@ -4,8 +4,11 @@ import java.awt.Color;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 //import javax.swing.event.TreeSelectionListener;
+import javax.swing.event.TreeSelectionEvent;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
+
+import static allClasses.Globals.*;  // appLogger;
 
 public class TextViewer 
 
@@ -85,6 +88,13 @@ public class TextViewer
           } // CommonInitialization( )
 
     // input (setter) methods.  this includes Listeners.
+    
+      // ??? temporary.
+        public void partTreeChangedV( 
+            TreeSelectionEvent inTreeSelectionEvent )
+          {
+            appLogger.error( "TitledListViewer.partTreeChangedV(..) called");
+            }
         
       /* ListSelectionListener method, deleted. */
   

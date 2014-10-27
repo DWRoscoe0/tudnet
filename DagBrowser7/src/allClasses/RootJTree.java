@@ -91,7 +91,7 @@ public class RootJTree
           
           } // Constructor.
 
-    // TreeHelper code, including the TreePathListener
+    // TreeHelper code, including extension MyTreeHelper and TreePathListener.
 
       class MyTreeHelper extends TreeHelper {
       
@@ -210,7 +210,7 @@ public class RootJTree
 
           }
 
-      public void setPathV(TreePath inTreePath ) 
+      private void setPathV(TreePath inTreePath ) // ??? called internally only.
         /* This method is simply shorthand for
           aTreeHelper.setPartTreePathV(..).
           */
@@ -220,7 +220,7 @@ public class RootJTree
             );
           }
 
-      public TreePath getSelectedTreePath()
+      public TreePath getSelectedTreePath() // ??? called by DagBrowserPanel.
         /* This method returns the selection TreePath.
           There should be only one, because multiselection is disabled.
           */
@@ -230,7 +230,7 @@ public class RootJTree
 
     // Tree Command methods.  Other ones were moved to TreeHelper.
 
-      private void commandExpandOrCollapseV()
+      private void commandExpandOrCollapseV() // Move to MyTreeHelper???
         /* This command method toggles when the presently selected row
           is expanded or collapsed.  It also makes certain that
           auto-expand is disabled.
@@ -567,14 +567,16 @@ public class RootJTree
             );
           } // paintImmediately( )
 
-    /* Subselection helper code.
-      This code receives inputs regarding JTree node selections, 
-      expansions, and collapses, as well as output option "show" flag values,
-      and decides when to output the state of the JTree.
-      Subselections are program-generated selections that happen
-      in the processing of normal user-generated selections,
-      when all TreeSelectionListener-s are disabled.
-      */
+    // Subselection (expand/collapse, show) code.
+
+      /* This code receives inputs regarding JTree node selections, 
+        expansions, and collapses, as well as 
+        output option "show" flag values,
+        and decides when to output the state of the JTree.
+        Subselections are program-generated selections that happen
+        in the processing of normal user-generated selections,
+        when all TreeSelectionListener-s are disabled.
+        */
 
       private TreePath subselectionTreePath= null;  // Previous selection.
 
@@ -729,10 +731,11 @@ public class RootJTree
 
           }
 
-    /* Animatiion Delay manager.
-      This manages the creations of short delays to be used between
-      window paints to animate complex changes to the window state.
-      */
+    // Animatiion Delay manager.
+
+      /* This manages the creation of short delays to be used between
+        window paints to animate complex changes to the window state.
+        */
 
       private int animationDelayI= 50;  // != 0 means milliseconds to delay.
 

@@ -66,7 +66,7 @@ public class DirectoryTableViewer
       private DirectoryTableCellRenderer theDirectoryTableCellRenderer= 
         new DirectoryTableCellRenderer(); // for custom node rendering.
       
-    // Constructor methods.
+    // Constructor and related methods.
 
       public DirectoryTableViewer( 
           TreePath inTreePath, TreeModel InTreeModel
@@ -110,75 +110,106 @@ public class DirectoryTableViewer
             getColumn( "Type" ).setMinWidth( 32 );
             } // limit Type field display width.
           
-          { // add listeners.
-            aTreeHelper.addTreePathListener(this);  // Listen for tree paths.
-            addKeyListener(aTreeHelper);  // listen to process some key events.
-            addMouseListener(aTreeHelper);  // listen to process mouse double-click.
-            addFocusListener(this);  // listen to repaint on focus events.
-            getSelectionModel().  // in its selection model...
-              addListSelectionListener(this);  // ...listen to selections.
-            } // add listeners.
+          { // Linking event listeners to event sources.
+            getSelectionModel().addListSelectionListener(this); // Making...
+              // ...this DirectoryTableViewer be a ListSelectionListener...
+              // ...for its own ListSelectionEvent-s.
+            addFocusListener(this);  // Making this...
+              // DirectoryTableViewer be a FocusListener for...
+              // its own FocusEvent-s.
+            aTreeHelper.addTreePathListener(this); // Making this...
+              // ...DirectoryTableViewer be a TreePathListener for...
+              // ...TreeHelper TreeSelectionEvent-s.
+
+            addKeyListener(aTreeHelper); // Making TreeHelper be...
+              // ...a KeyListener for DirectoryTableViewer KeyEvent-s.
+            addMouseListener(aTreeHelper);// Making TreeHelper be...
+              // ...a MouseListener for DirectoryTableViewer MouseEvent-s.
+            }
 
           UpdateJTableForContentV();
           } // setupTheJTable( )
 
-    // Listener interface methods.
-        
-      /* ListSelectionListener method, for processing
-        ListSelectionEvent-s from the DirectoryIJTable's SelectionModel.
-        */
-      
-        public void valueChanged(ListSelectionEvent TheListSelectionEvent) 
-          /* Processes [internal or external] ListSelectionEvent
-            from the ListSelectionModel.  It does this by 
-            determining what row item has become selected,
-            adjusting any dependent instance variables,
-            and firing a TreeSelectionEvent to notify
-            any interested TreeSelectionListener-s.
-            */
-          { // void valueChanged(TheListSelectionEvent)
-            ListSelectionModel TheListSelectionModel = // get ListSelectionModel.
-              (ListSelectionModel)TheListSelectionEvent.getSource();
-            int IndexI =   // get index of selected element from the model.
-              TheListSelectionModel.getMinSelectionIndex();
-            IFile subjectIFile=  // Cache Subject directory.
-              (IFile)aTreeHelper.getWholeDataNode();
-            String[] IFileNameStrings =  // Calculate array of child file names.
-              subjectIFile.GetFile().list();
-            if ( IFileNameStrings == null )  // If array is null replace with empty array.
-              IFileNameStrings= new String[ 0 ]; // Replace with empty array.
-            if // Process the selection if...
-              ( //...the selection index is within the legal range.
-                (IndexI >= 0) && 
-                (IndexI < IFileNameStrings.length)
-                )
-              { // Process the selection.
-                IFile NewSelectionIFile=   // build IFile of selection at IndexI.
-                  new IFile( subjectIFile, IFileNameStrings[IndexI] );
-                //SetSelectionRelatedVariablesFrom( NewSelectionIFile );
-                aTreeHelper.setPartDataNodeV( NewSelectionIFile );
-	                // This will set the TreePaths also.
-	                // This converts the row selection to a tree selection.
-                } // Process the selection.
-            repaint();  // ??? kluge: do entire table for selection color.
-              // this should repaint only the rows whose selection changed.
-            } // void valueChanged(TheListSelectionEvent)
-      
-      // FocusListener methods  , to fix JTable cell-invalidate/repaint bug.
+    // ListSelectionListener interface code.
+    
+      public void valueChanged(ListSelectionEvent TheListSelectionEvent) 
+        /* Processes [internal or external] ListSelectionEvent
+          from the DirectoryIJTable's ListSelectionModel.  
+          It does this by determining what row item has become selected,
+          adjusting any dependent instance variables,
+          and firing a TreeSelectionEvent to notify
+          any interested TreeSelectionListener-s.
+          */
+        { // void valueChanged(TheListSelectionEvent)
+          ListSelectionModel TheListSelectionModel = // get ListSelectionModel.
+            (ListSelectionModel)TheListSelectionEvent.getSource();
+          int IndexI =   // get index of selected element from the model.
+            TheListSelectionModel.getMinSelectionIndex();
+          IFile subjectIFile=  // Cache Subject directory.
+            (IFile)aTreeHelper.getWholeDataNode();
+          String[] IFileNameStrings =  // Calculate array of child file names.
+            subjectIFile.GetFile().list();
+          if ( IFileNameStrings == null )  // If array is null replace with empty array.
+            IFileNameStrings= new String[ 0 ]; // Replace with empty array.
+          if // Process the selection if...
+            ( //...the selection index is within the legal range.
+              (IndexI >= 0) && 
+              (IndexI < IFileNameStrings.length)
+              )
+            { // Process the selection.
+              IFile NewSelectionIFile=   // build IFile of selection at IndexI.
+                new IFile( subjectIFile, IFileNameStrings[IndexI] );
+              //SetSelectionRelatedVariablesFrom( NewSelectionIFile );
+              aTreeHelper.setPartDataNodeV( NewSelectionIFile );
+                // This will set the TreePaths also.
+                // This converts the row selection to a tree selection.
+              } // Process the selection.
+          repaint();  // ??? kluge: do entire table for selection color.
+            // this should repaint only the rows whose selection changed.
+          } // void valueChanged(TheListSelectionEvent)
+    
+    // FocusListener  interface code.
 
-        @Override
-        public void focusGained(FocusEvent arg0) 
-          {
-            // System.out.println( "DirectoryTableViewer.focusGained()" );
-            repaint();  // bug fix Kluge to display cell in correct color.  
-            }
-      
-        @Override
-        public void focusLost(FocusEvent arg0) 
-          {
-            // System.out.println( "DirectoryTableViewer.focusLost()" );
-            repaint();  // bug fix Kluge to display cell in correct color.  
-            }
+      // The purpose of this is to fix JTable cell-invalidate/repaint bug.
+
+      @Override
+      public void focusGained(FocusEvent arg0) 
+        {
+          // System.out.println( "DirectoryTableViewer.focusGained()" );
+          repaint();  // bug fix Kluge to display cell in correct color.  
+          }
+    
+      @Override
+      public void focusLost(FocusEvent arg0) 
+        {
+          // System.out.println( "DirectoryTableViewer.focusLost()" );
+          repaint();  // bug fix Kluge to display cell in correct color.  
+          }
+
+    // TreeAware and TreePathListener interface code for TreeHelper class.
+
+			private TreeHelper aTreeHelper;  // Reference to helper class.
+
+			public TreeHelper getTreeHelper() { return aTreeHelper; }
+
+      public void partTreeChangedV( TreeSelectionEvent inTreeSelectionEvent )
+        /* This TreePathListener method is called by aTreeHelper
+          when aTreeHelper accepts a new TreePath.
+          This method translates inTreeSelectionEvent TreeHelper tree path 
+          into an internal JTable selection.
+
+          ??? It ignores any paths with which it cannot deal.
+          */
+        {
+          TreePath inTreePath=  // Get the TreeHelper's path from...
+            inTreeSelectionEvent.  // ...the TreeSelectionEvent's...
+              getNewLeadSelectionPath();  // ...one and only TreePath.
+
+            selectTableRowV(   // Select row appropriate to...
+              inTreePath  // ...path.
+              );  // Note, this might trigger ListSelectionEvent.
+
+          }
         
     // miscellaneous shared methods and grouping methods.
       
@@ -276,28 +307,5 @@ public class DirectoryTableViewer
           return c;
           }
         */
-
-    // interface TreeAware code for TreeHelper access and TreePathListener.
-
-			public TreeHelper aTreeHelper;  // helper class ???
-
-			public TreeHelper getTreeHelper() { return aTreeHelper; }
-
-      public void partTreeChangedV( TreeSelectionEvent inTreeSelectionEvent )
-        /* This TreePathListener method translates 
-          inTreeSelectionEvent TreeHelper tree path into 
-          an internal JTable selection.
-          It ignores any paths with which it cannot deal.
-          */
-        {
-          TreePath inTreePath=  // Get the TreeHelper's path from...
-            inTreeSelectionEvent.  // ...the TreeSelectionEvent's...
-              getNewLeadSelectionPath();  // ...one and only TreePath.
-
-            selectTableRowV(   // Select row appropriate to...
-              inTreePath  // ...path.
-              );  // Note, this might trigger ListSelectionEvent.
-
-          }
 
     } // DirectoryTableViewer

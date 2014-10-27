@@ -2,6 +2,8 @@ package allClasses;
 
 import java.awt.Component;
 import java.awt.event.InputEvent;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
@@ -18,31 +20,56 @@ import javax.swing.event.TreeSelectionEvent;
 import static allClasses.Globals.*;  // appLogger;
 
 public class TreeHelper
-  implements KeyListener, MouseListener
+  implements KeyListener, MouseListener, FocusListener
 
-  /* This class is being used to hold code which 
-    is usefull for right panel interface TreeAware JComponents, 
-    but because of Java's lack of multiple inheritance 
-    was moved here and is now referenced by composition,
-    usually with a variable named aTreeHelper.
-    
+  /* This class holds code which is usefull for TreeAware JComponents.
+    These are viewers for various types of tree DataNode-s.
+    The code was put here because of Java's lack of multiple inheritance.
+    Its public methods and listener methods can act as 
+    a common interface for these components.
+    The TreeHelper instance is usually referenced via 
+    composition variable aTreeHelper.
+
     Concepts and their names:
 
     * Whole (formerly Subject): 
       The tree node displayed by this Component.
 
     * Part (formerly Selection within Subject): 
-      Highlighted tree node within the Whole.  
+      Highlighted tree node within the Whole,
+      usually one of its children.
 
     * Selection: The thing selected in this Component.
       This is the standard Java meaning.
       It is not a node in the tree,
-      though it might associated with a node in the tree.
+      though it might be associated with a node in the tree.
       
     * TreeSelectionEvent: The class used to pass locations of
       Wholes and Parts within the Infogora DAG.
-      It should probably be its own class,
+      It should probably be its own class, TreePathEvent,
       but for now we're using the Java library class.
+
+    Functions provided by this class:
+    
+      * Keyboard and mouse listener methods for 
+        handling of user input common to tree node viewers.
+
+      * Testing for the validity of, or actual execution of,
+        various cursor moving commands (next, previous, child, parent).
+
+      * Getting and setting the Whole by TreePath, with optional autoselect.
+
+      * Getting and setting the Part by TreePath, DataNode, 
+        and maybe later child Index.
+
+      * Sending TreePathEvent-s to TreeSelectionListener-s when state chagnes.
+      
+    This class was originally intended for right panel JComponents only,
+    but now it is used by the left panel RootJTree also.
+    
+    This class may be extended before being instantiated
+    to provide slightly different tree handling behavior.
+    See RootJTree.MyTreeHelper for an example.
     
     ??? This class will probably be changed to 
     not force the Whole to be direct parent of the Part.  
@@ -74,8 +101,14 @@ public class TreeHelper
           The Part TreePath is auto-selected if possible.
           */
         {
-          owningJComponent= inOwningJComponent;
-          setWholeWithPartAutoSelectV( inWholeTreePath );
+          owningJComponent= inOwningJComponent; // Saving owning JComponent.
+          
+          setWholeWithPartAutoSelectV(  // Making initial sSelection.
+            inWholeTreePath 
+            );
+
+          owningJComponent.addFocusListener(this); // Making this TreeHelper 
+            // be a FocusListener for its owning JComponent.
           }
     
       /*TreeHelper(   // ??? not used yet.  For when Part is not Whole child.
@@ -95,8 +128,65 @@ public class TreeHelper
             }
           */
 
-    /* Keyboard and Mouse Listener methods.  */
+      // FocusListener code: registration, firing, and the interface.
 
+        /* This code implements the FocusListener interface.
+          It listens for FocusEvents and passes them on 
+          to other FocusListener-s.
+          It can be used to let TreeHelper-s objects manage focus events.
+          This can be helpful because the owningJComponent can have
+          nested JComponents which get focus instead of the owningJComponent.
+          */
+
+        private Vector<FocusListener> focusListenerVector =   // Listeners.
+          new Vector<FocusListener>();
+
+        public void addFocusListener( FocusListener listener ) 
+          {
+            if ( listener != null && 
+                !focusListenerVector.contains( listener ) 
+                )
+              focusListenerVector.addElement( listener );
+            }
+
+        public void removeFocusListener(FocusListener listener)
+          {
+            if ( listener != null )
+              focusListenerVector.removeElement( listener );
+            }
+
+        public void focusGained(FocusEvent theFocusEvent)
+          /* This interface method simply passes 
+            the event and the call to other listeners.
+            */
+          {
+            Enumeration<FocusListener> listeners = 
+              focusListenerVector.elements();
+            while ( listeners.hasMoreElements() ) 
+              {
+                FocusListener listener = 
+                  (FocusListener)listeners.nextElement(); // caste ???
+                listener.focusGained( theFocusEvent );
+                }
+            }
+
+        public void focusLost(FocusEvent theFocusEvent)
+          /* This interface method simply passes 
+            the event and the call to other listeners.
+            */
+          { 
+            Enumeration<FocusListener> listeners = 
+              focusListenerVector.elements();
+            while ( listeners.hasMoreElements() ) 
+              {
+                FocusListener listener = 
+                  (FocusListener)listeners.nextElement();
+                listener.focusLost( theFocusEvent );
+                }
+            }
+
+    // KeyListener methods.
+    
       /* KeyListener methods, for 
         overriding normal Tab key processing
         and providing command key processing.
@@ -108,88 +198,96 @@ public class TreeHelper
         
         ??? Maybe replace with a more compact KeyAdapter implimentation.
         */
-      
-        public void keyPressed(KeyEvent inKeyEvent) 
-          /* Processes KeyEvent-s.  
-            The keys processed and consumed include:
-              * Tab and Shift-Tab for focus transferring.
-              * Right-Arrow and Enter keys to go to child.
-              * Left-Arrow keys to go to parent.
-            */
-          { // keyPressed.
-            int KeyCodeI = inKeyEvent.getKeyCode(); // Copyiing key pressed.
-            boolean KeyProcessedB=  // Sssuming key event will be processed.
-              true;
-            { // Trying to process the key event.
-              // /* Tab decoded elsewhere by JList.
-              if (KeyCodeI == KeyEvent.VK_TAB) // Handling Tab key maybe.
-                { // Handling Tab key.
-                  Component SourceComponent= 
-                    (Component)inKeyEvent.getSource();
-                  int shift = // Determine (Shift) key state.
-                    inKeyEvent.getModifiersEx() & InputEvent.SHIFT_DOWN_MASK;
-                  if // Moving focus forward or backward. 
-                    (shift == 0) // (Shift key) not down.
-                    SourceComponent.transferFocus();  // Move forward.
-                    else   // (Shift key) is down.
-                    SourceComponent.transferFocusBackward(); // Move backward.
-                  } // process Tab key.
-              else 
-              // Tab decoded elsewehre by JList.
-              // */
-              if (KeyCodeI == KeyEvent.VK_LEFT) // Handling left-arrow maybe.
-                commandGoToParentB(true);  // Going to parent folder.
-              else if (KeyCodeI == KeyEvent.VK_RIGHT) // right-arrow maybe.
-                commandGoToChildB(true);  // Going to child folder.
-              else if (KeyCodeI == KeyEvent.VK_ENTER)  // Enter maybe.
-                commandGoToChildB(true);  // Going to child folder.
-              else  // no more keys to check.
-                KeyProcessedB= false;  // Indicating no key was handled.
-              }
-            if  // Preventing processing by Event source of key handled.
-              (KeyProcessedB)
-              inKeyEvent.consume(); // Preventing more processing of the key.
-            } // keyPressed.
+    
+      public void keyPressed(KeyEvent inKeyEvent) 
+        /* Processes KeyEvent-s.  
+          The keys processed and consumed include:
+            * Tab and Shift-Tab for focus transferring.
+            * Right-Arrow and Enter keys to go to child.
+            * Left-Arrow keys to go to parent.
+          */
+        { // keyPressed.
+          int KeyCodeI = inKeyEvent.getKeyCode(); // Copyiing key pressed.
+          boolean KeyProcessedB=  // Sssuming key event will be processed.
+            true;
+          { // Trying to process the key event.
+            // /* Tab decoded elsewhere by JList.
+            if (KeyCodeI == KeyEvent.VK_TAB) // Handling Tab key maybe.
+              { // Handling Tab key.
+                Component SourceComponent= 
+                  (Component)inKeyEvent.getSource();
+                int shift = // Determine (Shift) key state.
+                  inKeyEvent.getModifiersEx() & InputEvent.SHIFT_DOWN_MASK;
+                if // Moving focus forward or backward. 
+                  (shift == 0) // (Shift key) not down.
+                  SourceComponent.transferFocus();  // Move forward.
+                  else   // (Shift key) is down.
+                  SourceComponent.transferFocusBackward(); // Move backward.
+                } // process Tab key.
+            else 
+            // Tab decoded elsewehre by JList.
+            // */
+            if (KeyCodeI == KeyEvent.VK_LEFT) // Handling left-arrow maybe.
+              commandGoToParentB(true);  // Going to parent folder.
+            else if (KeyCodeI == KeyEvent.VK_RIGHT) // right-arrow maybe.
+              commandGoToChildB(true);  // Going to child folder.
+            else if (KeyCodeI == KeyEvent.VK_ENTER)  // Enter maybe.
+              commandGoToChildB(true);  // Going to child folder.
+            else  // no more keys to check.
+              KeyProcessedB= false;  // Indicating no key was handled.
+            }
+          if  // Preventing processing by Event source of key handled.
+            (KeyProcessedB)
+            inKeyEvent.consume(); // Preventing more processing of the key.
+          } // keyPressed.
 
-        public void keyReleased(KeyEvent inKeyEvent) { }  // unused part of KeyListener interface.
-        
-        public void keyTyped(KeyEvent inKeyEvent) { }  // unused part of KeyListener interface.
+      public void keyReleased(KeyEvent inKeyEvent) { }  // Unused method.
+      
+      public void keyTyped(KeyEvent inKeyEvent) { }  // Unused method.
+
+    // MouseListener methods.
 
       /* MouseListener methods, for user input from mouse.
         Because this is a helper class, putting the MouseListener methds
         in a MouseAdapter subclass would not be very helpful.
         */
 
-        @Override
-        public void mouseClicked(MouseEvent inMouseEvent) 
-          /* Checks for double click on mouse,
-            which now means to go to the child folder,
-            so is synonymous with the right arrow key.
-            */
-          {
-            if (inMouseEvent.getClickCount() >= 2)
-              commandGoToChildB(true);  // go to child folder.
-            }
-            
-        @Override
-        public void mouseEntered(MouseEvent arg0) { }  // unused part of MouseListener interface.
-        
-        @Override
-        public void mouseExited(MouseEvent arg0) { }  // unused part of MouseListener interface.
-        
-        @Override
-        public void mousePressed(MouseEvent arg0) { }  // unused part of MouseListener interface.
-        
-        @Override
-        public void mouseReleased(MouseEvent arg0) { }  // unused part of MouseListener interface.
-        
-    /* Command methods.
+      @Override
+      public void mouseClicked(MouseEvent inMouseEvent) 
+        /* Checks for double click on mouse,
+          which now means to go to the child folder,
+          so is synonymous with the right arrow key.
+          */
+        {
+          if (inMouseEvent.getClickCount() >= 2)
+            commandGoToChildB(true);  // go to child folder.
+          }
+          
+      @Override
+      public void mouseEntered(MouseEvent arg0) { }  // Unused method.
+      
+      @Override
+      public void mouseExited(MouseEvent arg0) { }  // Unused method.
+      
+      @Override
+      public void mousePressed(MouseEvent arg0) { }  // Unused method.
+      
+      @Override
+      public void mouseReleased(MouseEvent arg0) { }  // Unused method.
+      
+    // Command methods.
 
-      ??? Maybe impliment the Command pattern.
-      In Java the Command pattern is implimented with the Action interface
-      which extends the ActionListener interface.
-      This might do everything I eventually want to do.
-      */
+      /* Each of the following command methods can be used for two things:
+        * Executing particular commands.
+        * Testing whether particular commands are possible.
+          This is useful in determing whether command gadgets,
+          such as buttons and menus, should be grayed out.
+
+        ??? Maybe impliment the Command pattern.
+        In Java the Command pattern is implimented with the Action interface
+        which extends the ActionListener interface.
+        This might do everything I eventually want to do.
+        */
 
       public boolean commandGoToParentB( boolean doB  ) 
         /* Tries to go to the parent node.
@@ -282,7 +380,7 @@ public class TreeHelper
           */
         { return commandGoToPreviousOrNextB( doB, -1 ); }
       
-      public boolean commandGoToPreviousOrNextB( boolean doB, int incrementI )
+      private boolean commandGoToPreviousOrNextB( boolean doB, int incrementI )
         /* This is a helper method.  It is called by
           commandGoDownB(..) and commandGoUpB(..).
           If incrementI == +1 it tries to go to the next node.
@@ -324,88 +422,122 @@ public class TreeHelper
             
           }
           
-    /* Whole and Part node code.  */
+    // Whole related code.  
+    
+      /* All these methods are private.
 
-      /* Whole code.  The Whole is the larger tree node being viewed.
+        The Whole is the larger tree node being viewed.
         This was previously called the Subject.
         It tends to be the immediate parent of the Part,
-        but this might change when viewsr are able to display
+        but this might change when viewsrs are able to display
         more than one level.  
 
-        After initialization, Whole is never changed!
+        After initialization, Whole is never changed?
         */
 
-        private TreePath theWholeTreePath;  /* TreePath of node displayed.  
-          This variable is never null.
+      private TreePath theWholeTreePath;  /* TreePath of whole node displayed.  
+        This variable is never null.
+        */
+
+      private DataNode theWholeDataNode;  /* DataNode of Whole.
+        This is the last element of the theWholeTreePath.
+        This variable is never null.
+        */
+
+      private void setWholeV( TreePath inTreePath )
+        /* This method stores inTreePath as the TreePath of the Whole
+          which is stored in theWholeTreePath.
+          The Part variables are set to to non-null sentinel values.
+          It should be used only when there is no accessible Part.
+          Actually now it is called only by the constructors.
+          To prevent infinite recursion it acts only if
+          inTreePath is different from the present theWholeTreePath.
           */
+        { 
+          if  // Updating state if new TreePath if different from old one.
+            ( ! inTreePath.equals( theWholeTreePath ) )
 
-        private DataNode theWholeDataNode;  /* DataNode of Whole.
-          This is the last element of the theWholeTreePath.
-          This variable is never null.
+            { // Updating state with new TreePath.
+
+              { // Store Whole Part variables.
+                theWholeTreePath= inTreePath;  // Store Whole TreePath.
+                theWholeDataNode=  // Store last element for easy access.
+                  (DataNode)theWholeTreePath.getLastPathComponent();
+                }
+
+              { // Setting Part variables to non-null sentinel.
+                thePartDataNode= UnknownDataNode.newUnknownDataNode();
+                thePartTreePath= theWholeTreePath.pathByAddingChild( 
+                  thePartDataNode 
+                  );
+                }
+                
+              } // Update TreePath variables using the new value.
+          }
+
+      private void setWholeWithPartAutoSelectV(TreePath inTreePath)
+        /* This method sets the Whole variables from inTreePath
+          and sets the Part also to the most recently
+          visited child of the Whole, if there is one.
           */
+        {
+          if (inTreePath != null)  // TreePath is not null.
+            { // Set things from inTreePath.
+              setWholeV( inTreePath );  // Save Whole TreePath no
+              DataNode childDataNode=  // Calculate best child.
+                findBestChildDataNode(inTreePath);
+              if (childDataNode != null)  // There is an accessible child.
+                setPartDataNodeV( childDataNode );  // Store it.
+              } // Set things from inTreePath.
+          }
 
-        private void setWholeV( TreePath inTreePath )
-          /* This method stores inTreePath as the TreePath of the Whole.
-            ? It also notifies any TreePathListener about it.
-            It should be used only when there is no accessible Part.
-            thePartTreePath is set to null;  
-            Actually now it is called only by the constructors.
-            To prevent infinite recursion it acts only if
-            inTreePath is different from the present theWholeTreePath.
-            */
-          { 
-            if  // This is a different theWholeTreePath.
-              ( ! inTreePath.equals( theWholeTreePath ) )
+      private DataNode findBestChildDataNode(TreePath inTreePath)
+        /* This method finds a child for autoselect.
+          It tries to find and return the best child DataNode 
+          of the node identified by inTreePath.  The best is:
+            * The most recently visited child, if there is one.
+            * The first child, if there is one.
+          Otherwise it returns null.
+          
+          ??? Maybe instead of null it should return UnknownDataNode?
+          */
+        {
+          DataNode childDataNode=  // Try to get the child...
+            Selection.  // ...from the visits tree that was the...
+              setAndReturnDataNode( // ...most recently visited child...
+                inTreePath  // ...of the List at the end of the TreePath.
+                );
+          if (childDataNode == null)  // if no recent child try first one.
+            { // try getting first ChildDataNode.
+              DataNode theDataNode=  // Get DataNode at end of TreePath.
+                (DataNode)inTreePath.getLastPathComponent();
+              if   // There are no children.
+                (theDataNode.getChildCount() <= 0)
+                  ;  // Do nothing.
+                else  // There are children.
+                  childDataNode=   // get first ChildDataNode.
+                    theDataNode.getChild(0);
+              } // get name of first child.
+          return childDataNode;  // Return final result.
+          }
 
-              { // Update TreePath variables using the new value.
+      public TreePath getWholeTreePath( )
+        /* This method returns the TreePath representing the node
+          being displayed.
+          */
+        { 
+          return theWholeTreePath;  // Return it.
+          }
 
-                { // Store Whole Part variables.
-                  theWholeTreePath= inTreePath;  // Store Whole TreePath.
-                  theWholeDataNode=  // Store last element for easy access.
-                    (DataNode)theWholeTreePath.getLastPathComponent();
-                  } // Store Whole Part variables. 
+      public DataNode getWholeDataNode()
+        /* This method returns the DataNode of the Whole.  */
+        { 
+          return theWholeDataNode;  // return DataNode of Part.
+          }
 
-                { // Set Part variables to non-null sentinel.
-                  thePartDataNode= UnknownDataNode.newUnknownDataNode();
-                  thePartTreePath= theWholeTreePath.pathByAddingChild( 
-                    thePartDataNode 
-                    );
-                  } // Set Part variables to non-null sentinel
-                  
-                } // Update TreePath variables using the new value.
-            }
-
-        private void setWholeWithPartAutoSelectV(TreePath inTreePath)
-          /* This method sets the Whole variables from inTreePath
-            and sets the Part also to the most recently
-            visited child of the Whole, if there is one.
-            */
-          {
-            if (inTreePath != null)  // TreePath is not null.
-              { // Set things from inTreePath.
-                setWholeV( inTreePath );  // Save Whole TreePath no
-                DataNode childDataNode=  // Calculate best child.
-                  findBestChildDataNode(inTreePath);
-                if (childDataNode != null)  // There is an accessible child.
-                  setPartDataNodeV( childDataNode );  // Store it.
-                } // Set things from inTreePath.
-            }
-
-        public TreePath getWholeTreePath( )
-          /* This method returns the TreePath representing the node
-            being displayed.
-            */
-          { 
-            return theWholeTreePath;  // Return it.
-            }
-
-        public DataNode getWholeDataNode()
-          /* This method returns the DataNode of the Whole.  */
-          { 
-            return theWholeDataNode;  // return DataNode of Part.
-            }
-
-      /* Part code.  The Part is the highlighted tree node within the Whole.
+    // Part related code.  
+      
+      /* The Part is the highlighted tree node within the Whole.
         It it one of possibly multiple child nodes being displayed.
         This was previously called the Selection,
         but was changed to avoid confusion with selection within
@@ -416,82 +548,96 @@ public class TreeHelper
         which can be displayed but not as a collection of children.
         */
 
-        private TreePath thePartTreePath; /* TreePath of Part.  
-          The parent of this TreePath is theWholeTreePath
-          which represents the entire set being displayed.
-          This assumes that there is only one sub-level displayed,
-          so all items displayed have the same parent.
-          This restriction might be removed later if
-          multiple levels are displayed simultaneously.
-          This variable is null if the Whole contains 
-          no highlighted child.
+      private TreePath thePartTreePath; /* TreePath of Part.  
+        The parent of this TreePath is theWholeTreePath
+        which represents the entire set being displayed.
+        This assumes that there is only one sub-level displayed,
+        so all items displayed have the same parent.
+        This restriction might be removed later if
+        multiple levels are displayed simultaneously.
+        This variable is null if the Whole contains 
+        no highlighted child.
+        */
+
+      private DataNode thePartDataNode; /* DataNode of Part.
+        This is the last element of the thePartTreePath.
+        This variable is null if the JComponent is displaying 
+        a node with no highlighted child.
+        */
+
+      private int thePartIndexI; // Index of Part.
+
+      public int getPartIndexI()
+        { return thePartIndexI; }
+
+      public void setPartTreePathV( TreePath inTreePath )
+        /* This method stores inTreePath as the TreePath of the Part. 
+          It also notifies any TreePathListener about it.
+          To prevent infinite recursion it acts only if
+          inTreePath is different from the present thePartTreePath.
+          
+          This used to set Whole to be its parent, but no longer does.
+          It is the responsibility of part TreePathListener-s to
+          change the JComponent if the whole needs to be changes.
           */
+        { 
+          if  // Handle if inTreePath is different from thePartTreePath.
+            ( ! inTreePath.equals( thePartTreePath ) )
+            { // Handle new inTreePath.
+              thePartTreePath= inTreePath;  // Store Part TreePath.
+              thePartDataNode=  // Storing last element.
+                (DataNode)thePartTreePath.getLastPathComponent();
+              DataNode parentDataNode=
+                (DataNode)thePartTreePath.getParentPath().
+                  getLastPathComponent();
+              thePartIndexI=  // Storing index of element.
+                parentDataNode.getIndexOfChild( thePartDataNode );
+              notifyListenersAboutPartV( inTreePath );
+              }
+          }
 
-        private DataNode thePartDataNode; /* DataNode of Part.
-          This is the last element of the thePartTreePath.
-          This variable is null if the JComponent is displaying 
-          a node with no highlighted child.
+      protected TreePath getPartTreePath()
+        /* This method returns the TreePath representing the Part. */
+        { 
+          return thePartTreePath;  // return TreePath of Part.
+          }
+
+      protected void setPartDataNodeV( DataNode inDataNode )
+        /* This method sets the Part DataNode to be inDataNode.
+          It updates other variables appropriately.
+          It also notifies any TreePathListener about it.
+          This method no longer uses the Whole variables.
           */
+        {
+          TreePath childTreePath= // Calculate child TreePath to be...
+            ///theWholeTreePath  // ...the base TreePath with...
+            thePartTreePath  // ...present path's...
+              .getParentPath()  // ...parent with...
+              .pathByAddingChild( inDataNode );  // ...new child added.
+          setPartTreePathV( childTreePath );  // Set Part TreePath.
+          }
 
-        public void setPartTreePathV( TreePath inTreePath )
-          /* This method stores inTreePath as the TreePath of the Part. 
-            It also notifies any TreePathListener about it.
-            To prevent infinite recursion it acts only if
-            inTreePath is different from the present thePartTreePath.
-            
-            This used to set Whole to be its parent, but no longer does.
-            */
-          { 
-            if  // This is a different thePartTreePath.
-              ( ! inTreePath.equals( thePartTreePath ) )
-              { // Update TreePath variables using the new value.
-                thePartTreePath= inTreePath;  // Store Part TreePath.
-                thePartDataNode=  // Store last element for easy access.
-                  (DataNode)thePartTreePath.getLastPathComponent();
-                notifyListenersAboutPartV( inTreePath );
-                } // Update TreePath variables using the new value.
-            }
+      protected DataNode getPartDataNode()
+        /* This method returns the DataNode of the Part.  */
+        { 
+          return thePartDataNode;  // return DataNode of Part.
+          }
 
-        protected TreePath getPartTreePath()
-          /* This method returns the TreePath representing the Part. */
-          { 
-            return thePartTreePath;  // return TreePath of Part.
-            }
+      // ??? add get and set methods for Child index.
 
-        protected void setPartDataNodeV( DataNode inDataNode )
-          /* This method sets the Part DataNode to be inDataNode.
-            It updates other variables appropriately.
-            But it assumes that the Whole is unchanged.
-            It also notifies any TreePathListener about it.
-            */
-          {
-            TreePath childTreePath= // Calculate child TreePath to be...
-              //theWholeTreePath  // ...the base TreePath with...
-              thePartTreePath  // ...present path's...
-                .getParentPath()  // ...parent with...
-                .pathByAddingChild( inDataNode );  // ...new child added.
-            setPartTreePathV(  childTreePath );  // Set Part TreePath.
-            }
+    // TreePathListener code for adding, removing, and triggering.
 
-        protected DataNode getPartDataNode()
-          /* This method returns the DataNode of the Part.  */
-          { 
-            return thePartDataNode;  // return DataNode of Part.
-            }
-
-    /* TreePathListener code for adding, removing, and triggering.
-
-      Though the class TreeSelectionEvent is used by the following methods,
-      neither this class nor the class being helped by this class
-      is a TreeSelectionModel, the usual source of TreeSelectionEvent-s.
-      TreeSelectionEvent is being used simply because 
-      it is a convenient way to pass:
-      * a TreePath, which represents a change of location within a tree
-      It was also being used to pass a boolean, interpreted as follows:
-        * false: the location is of the Whole.
-        * true: the location is of the Part.
-      but this is no longer true.
-      */
+      /* Though the class TreeSelectionEvent is used by the following methods,
+        neither this class nor the class being helped by this class
+        is a TreeSelectionModel, the usual source of TreeSelectionEvent-s.
+        TreeSelectionEvent is being used simply because 
+        it is a convenient way to pass:
+        * a TreePath, which represents a change of location within a tree
+        It was also being used to pass a boolean, interpreted as follows:
+          * false: the location is of the Whole.
+          * true: the location is of the Part.
+        but this is no longer true.
+        */
       
       private Vector<TreePathListener> listenerVector =   // Listeners.
         new Vector<TreePathListener>();
@@ -506,6 +652,24 @@ public class TreeHelper
         {
           if ( listener != null )
             listenerVector.removeElement( listener );
+          }
+
+      public void notifyListenersAboutChangeV( )
+        /* This method is used to notify listeners that something other than
+          the node TreePath, such as the display of other nodes, has changed.  
+          It is communicated by sending a TreePath of null. 
+          Presently it used to communicate when a node 
+          is expanded or collapsed, which can happen when,
+          when a highlighed node, either:
+          * The (Enter) key is pressed.
+          * The mouse is double-clicked.
+          See RootJTree for an example caller.
+          */
+        {
+          notifyTreePathListenersV(  // Notify the listeners about...
+            true,  // ... an internal/Part change...
+            null // ...to the Part path.
+            );
           }
 
       private void notifyListenersAboutPartV( TreePath inTreePath )
@@ -554,9 +718,9 @@ public class TreeHelper
               TreePathListener listener = 
                 (TreePathListener)listeners.nextElement();
               try {  // ??? kluge.
-                appLogger.debug( 
-                  "TreeHelper.firePartTreeChangedV( TreeSelectionEvent )"
-                  );
+                //appLogger.debug( 
+                //  "TreeHelper.firePartTreeChangedV( TreeSelectionEvent )"
+                //  );
                 listener.partTreeChangedV( e );
                 } 
               catch(ClassCastException ex) {
@@ -564,50 +728,5 @@ public class TreeHelper
                 }
               }
         }
-
-    // Utility methods.
-
-      public void notifyListenersAboutChangeV( )
-        /* This method is used to notify listeners that something other than
-          the node TreePath, such as the display of other nodes, has changed.  
-          It is communicated by sending a TreePath of null. 
-          Presently it used to communicate when a node 
-          is expanded or collapsed.
-          */
-        {
-          notifyTreePathListenersV(  // Notify the listeners about...
-            true,  // ... an internal/Part change...
-            null // ...to the Part path.
-            );
-          }
-
-        private DataNode findBestChildDataNode(TreePath inTreePath)
-          /* This method tries to find and return the best child DataNode 
-            of the node identified by inTreePath.  The best is:
-              * The most recently visited child, if there is one.
-              * The first child, if there is one.
-            Otherwise it returns null.
-            
-            ??? Maybe instead of null it should return UnknownDataNode?
-            */
-          {
-            DataNode childDataNode=  // Try to get the child...
-              Selection.  // ...from the visits tree that was the...
-                setAndReturnDataNode( // ...most recently visited child...
-                  inTreePath  // ...of the List at the end of the TreePath.
-                  );
-            if (childDataNode == null)  // if no recent child try first one.
-              { // try getting first ChildDataNode.
-                DataNode theDataNode=  // Get DataNode at end of TreePath.
-                  (DataNode)inTreePath.getLastPathComponent();
-                if   // There are no children.
-                  (theDataNode.getChildCount() <= 0)
-                    ;  // Do nothing.
-                  else  // There are children.
-                    childDataNode=   // get first ChildDataNode.
-                      theDataNode.getChild(0);
-                } // get name of first child.
-            return childDataNode;  // Return final result.
-            }
 
     } // class TreeHelper

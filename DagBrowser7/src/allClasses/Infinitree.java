@@ -135,8 +135,8 @@ public class Infinitree
           JComponent resultJComponent= null;  // For result.
 
           resultJComponent= // Set result for exploring a List.
-            //new TitledListViewer( inTreePath, inTreeModel );
-            new ListViewer( inTreePath, inTreeModel );
+            new TitledListViewer( inTreePath, inTreeModel );
+            //new ListViewer( inTreePath, inTreeModel );
 
           return resultJComponent;  // Return the result from above.
           } // GetDataJComponent()

@@ -12,6 +12,7 @@ import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.event.TreeSelectionEvent;
 //import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
@@ -90,9 +91,11 @@ public class TitledListViewer // adapted from TitledListViewer.
             TheListCellRenderer 
             );
           { // Set the user input event listeners.
+            aTreeHelper.addTreePathListener(this);  // Listen for tree paths.
             theJList.addKeyListener(aTreeHelper);  // TreeHelper does KeyEvent-s.
             theJList.addMouseListener(aTreeHelper);  // TreeHelper does MouseEvent-s.
-            theJList.addFocusListener(this);  // listen to repaint on focus events.???
+            theJList.addFocusListener(this);  // Old FocusListener.
+            theJList.addFocusListener(aTreeHelper);  // New FocusListener.
             theJList.getSelectionModel().  // This does ListSelectionEvent-s.
               addListSelectionListener(this);
             } // Set the user input event listeners.
@@ -119,6 +122,15 @@ public class TitledListViewer // adapted from TitledListViewer.
             );
           }  // setJListSelection()
 
+      private void selectRowV(int IndexI) //??? being adapted.
+        {
+          if ( IndexI < 0 )  // force index to 0 if child not found.
+            IndexI= 0;
+          theJList.setSelectionInterval(  // Selection row as interval...
+            IndexI, IndexI  // ...with same start and end row index.
+            );
+          }
+
       private void setJListScrollState()
         /* This method sets the JList scroll state
           from its selection state to make certain that
@@ -135,11 +147,11 @@ public class TitledListViewer // adapted from TitledListViewer.
           }  // setJListScrollState()
 
     // Input (setter) methods.  This includes Listeners.
-        
+
       /* ListSelectionListener method, for processing ListSelectionEvent-s 
         from the List's SelectionModel.
         */
-      
+
         public void valueChanged(ListSelectionEvent TheListSelectionEvent) 
           /* Processes an [internal or external] ListSelectionEvent
             from the ListSelectionModel.  It does this by 
@@ -191,6 +203,23 @@ public class TitledListViewer // adapted from TitledListViewer.
 			public TreeHelper aTreeHelper;  // helper class ???
 
 			public TreeHelper getTreeHelper() { return aTreeHelper; }
+
+      public void partTreeChangedV( TreeSelectionEvent inTreeSelectionEvent )
+        /* This TreePathListener method translates 
+          inTreeSelectionEvent TreeHelper tree path into 
+          an internal JList selection.
+          It ignores any paths with which it cannot deal.
+          */
+        {
+          //TreePath inTreePath=  // Get the TreeHelper's path from...
+          //  inTreeSelectionEvent.  // ...the TreeSelectionEvent's...
+          //    getNewLeadSelectionPath();  // ...one and only TreePath.
+
+          selectRowV(   // Select row appropriate to...
+            //inTreePath  // ...path.
+            aTreeHelper.getPartIndexI()
+            );  // Note, this might trigger ListSelectionEvent.
+          }
 
     // List cell rendering.
 

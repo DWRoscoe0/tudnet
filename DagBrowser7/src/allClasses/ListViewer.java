@@ -11,6 +11,7 @@ import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.event.TreeSelectionEvent;
 //import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
@@ -25,6 +26,7 @@ public class ListViewer
     ListSelectionListener
     , FocusListener
     , TreeAware
+    , TreePathListener
   
   /* This class provides a simple DagNodeViewer that 
     displays and browses List-s using a JList.
@@ -66,16 +68,17 @@ public class ListViewer
         /* This grouping method creates and initializes the JList.  */
         { // InitializeTheJList( )
           { // Set ListModel for the proper type of elements.
-            ListModel<Object> AListModel;
-            AListModel= new TreeListModel( 
+            ListModel<Object> aListModel;
+            aListModel= new TreeListModel( 
               aTreeHelper.getWholeDataNode( ),
               inTreeModel 
               );
-            setModel( AListModel );  // Define its ListModel.
+            setModel( aListModel );  // Define its ListModel.
             } // Set ListModel for the proper type of elements.
           setSelectionMode( ListSelectionModel.SINGLE_SELECTION );
           setCellRenderer( TheListCellRenderer );  // set custom rendering.
           { // Set the user input event listeners.
+            aTreeHelper.addTreePathListener(this);  // Listen for tree paths.
             addKeyListener(aTreeHelper);  // TreeHelper does KeyEvent-s.
             addMouseListener(aTreeHelper);  // TreeHelper does MouseEvent-s.
             addFocusListener(this);  // listen to repaint on focus events.???
@@ -102,6 +105,55 @@ public class ListViewer
             IndexI= 0;
           setSelectionInterval( IndexI, IndexI );  // set selection using final resulting index.
           }  // setJListSelection()
+
+      /* ???
+      private void selectRowV(TreePath inTreePath) //??? being adapted.
+        /* This helper method selects the row in the JTable 
+          associated with inTreePath, if possible.
+          It must be a sibling of the present part TreePath.
+          Note, changing the JTable selection might trigger a call to 
+          internal method ListSelectionListener.valueChanged().
+          Otherwise it does nothing.
+          */
+      /* ???
+        { // selectTableRowV()
+          toReturn: {
+            if ( inTreePath == null )  // Path is null.
+              break toReturn;  // Exit without selecting.
+            DataNode inDataNode=  // Translate TreePath to DataNode.
+              (DataNode)inTreePath.getLastPathComponent();
+            if ( inDataNode == null )  // There is no selection.
+              break toReturn;  // Exit without selecting.
+            if (   // New path not is sibling of old one because...
+                ! aTreeHelper.getWholeTreePath( ).  // ...whole path isn't...
+                   equals( inTreePath.getParentPath() )  // ...parent of new.
+                  )
+              break toReturn;  // Exit without selecting.
+            int IndexI;  // Allocate index.
+            { // Calculate new path's child's index.
+              IndexI= // try to get index of selected child.
+                aTreeHelper.getWholeDataNode().getIndexOfChild( inDataNode );
+              //if ( IndexI < 0 )  // force index to 0 if child not found.
+              //  IndexI= 0;
+              } // Calculate new path's child's index.
+            //setSelectionInterval(  // Selection row as interval...
+            //  IndexI, IndexI  // ...with same start and end row index.
+            //  );
+            selectRowV(IndexI); //??? being adapted.
+          } // toReturn ends.
+            return;
+
+          }  // selectTableRowV()
+      */
+
+      private void selectRowV(int IndexI) //??? being adapted.
+        {
+          if ( IndexI < 0 )  // force index to 0 if child not found.
+            IndexI= 0;
+          setSelectionInterval(  // Selection row as interval...
+            IndexI, IndexI  // ...with same start and end row index.
+            );
+          }
 
       private void setJListScrollState()
         /* This method sets the JList scroll state
@@ -174,6 +226,23 @@ public class ListViewer
 			public TreeHelper aTreeHelper;  // helper class ???
 
 			public TreeHelper getTreeHelper() { return aTreeHelper; }
+
+      public void partTreeChangedV( TreeSelectionEvent inTreeSelectionEvent )
+        /* This TreePathListener method translates 
+          inTreeSelectionEvent TreeHelper tree path into 
+          an internal JList selection.
+          It ignores any paths with which it cannot deal.
+          */
+        {
+          //TreePath inTreePath=  // Get the TreeHelper's path from...
+          //  inTreeSelectionEvent.  // ...the TreeSelectionEvent's...
+          //    getNewLeadSelectionPath();  // ...one and only TreePath.
+
+          selectRowV(   // Select row appropriate to...
+            //inTreePath  // ...path.
+            aTreeHelper.getPartIndexI()
+            );  // Note, this might trigger ListSelectionEvent.
+          }
 
       /* ???
       public TreePath getWholeTreePath()
