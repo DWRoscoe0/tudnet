@@ -87,7 +87,7 @@ public class RootJTree
           addTreeSelectionListener(this);  // listen for tree selections.
           aTreeHelper.addTreePathListener(this);  // listen for tree paths.
           addMouseListener(aTreeHelper);  // TreeHelper does MouseEvent-s.
-          addKeyListener(this);  // listen for key presses.
+          addKeyListener(this);  // listen for key presses. ???
           
           } // Constructor.
 
@@ -215,7 +215,7 @@ public class RootJTree
           aTreeHelper.setPartTreePathV(..).
           */
         {
-          aTreeHelper.setPartTreePathV( // In TreeHelper set path to...
+          aTreeHelper.setPartTreePathB( // In TreeHelper set path to...
             inTreePath  // ...desired TreePath.
             );
           }
@@ -278,11 +278,11 @@ public class RootJTree
               ;  // So do nothing.
               else  // Selection path is not null.
               { // Process non-null JTree path.
-                setupAndDoSubselectionsV(  // Process subselections to get to...
-                  FinalNewTreePath  // ...this new TreePath.
+                setupAndDoSubselectionsV(  // Doing subselections to get to...
+                  FinalNewTreePath  // ...the new TreePath.
                   );
-                aTreeHelper.setPartTreePathV(  // Translate to TreeHelper...
-                  FinalNewTreePath  // ...from JTree selection, a trivial case.
+                aTreeHelper.setPartTreePathB(  // Informing TreeHelper...
+                  FinalNewTreePath  // ...of JTree selection, a trivial case.
                   );
                 } // Process non-null JTree path.
             dbgV("RootJTree.valueChanged(..) End");
@@ -361,7 +361,7 @@ public class RootJTree
             in the static class Selection.
 
             This method must be wrapped by doSubselectionsV(.) 
-            to disable TreeSelectionListener-s because 
+            to disable Tree-SelectionListener-s because 
             they have no interest in the many intermediate selections
             which happen during the execution of this method.
             */

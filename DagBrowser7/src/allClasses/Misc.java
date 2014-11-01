@@ -51,7 +51,7 @@ public class Misc
             return " null ";
             
           String ResultString= "";
-          ResultString+= " " + InComponent.hashCode(); 
+          //ResultString+= " " + InComponent.hashCode(); 
           ResultString+= " " + InComponent.getClass().getName();
           if ( InComponent.getName() != null )
             ResultString+= " name:"+InComponent.getName(); 

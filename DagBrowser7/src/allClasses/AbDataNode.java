@@ -125,27 +125,29 @@ public abstract class AbDataNode
 
       public int getIndexOfNamedChild( String inString )
         /* Returns the index of the child whose name is inString,
-          or -1 if this node's has no such child. 
-          It does this by doing a search.
+          or -1 if this node's has no such child or inString is null.
+          It does this by doing a search of the node's children.
           It assumes a functional getChild(..) method.  
           */
         {
-          int childIndexI= 0;  // Initialize child search index.
+          int childIndexI;  // Storage for search index and return result.
 
-          while ( true ) // Search for child.
-            { // Check one child.
-              DataNode childDataNode=  // get the child.
-                 getChild( childIndexI );
-              if ( childDataNode == null )  // null means no more children.
-                { // Exit with failure.
-                  childIndexI= -1;  // Set index to indicate failure.
-                  break;  // Exit while loop.
-                  } // Exit with failure.
-              if  // Found child with desired name.
-                ( inString.equals( childDataNode.GetNameString( ) ) )
-                break;  // Exit while loop.
-              childIndexI++;  // Increment index to check next child.
-              } // Check one child.
+          if ( inString == null )  // Handling null child name.
+            childIndexI= -1;  // Indicating no matching child.
+            else  // Handling non-null child name.
+            for ( childIndexI=0; ; childIndexI++ ) // Searching for child.
+              { // Checking one child.
+                DataNode childDataNode=  // Getting the child.
+                   getChild( childIndexI );
+                if ( childDataNode == null )  // Handling end of children.
+                  { // Exiting with search failure.
+                    childIndexI= -1;  // Setting index to indicate failure.
+                    break;  // Exiting loop.
+                    }
+                if  // Handling child with matching name.
+                  ( inString.equals( childDataNode.GetNameString( ) ) )
+                  break;  // Exiting while loop.
+                }
 
           return childIndexI;  // Return index as search result.
           }

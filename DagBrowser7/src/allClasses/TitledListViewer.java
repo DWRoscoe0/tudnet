@@ -96,6 +96,7 @@ public class TitledListViewer // adapted from TitledListViewer.
             theJList.addMouseListener(aTreeHelper);  // TreeHelper does MouseEvent-s.
             theJList.addFocusListener(this);  // Old FocusListener.
             theJList.addFocusListener(aTreeHelper);  // New FocusListener.
+            addFocusListener(this);  // Old FocusListener.  for autofocus ???
             theJList.getSelectionModel().  // This does ListSelectionEvent-s.
               addListSelectionListener(this);
             } // Set the user input event listeners.
@@ -185,7 +186,10 @@ public class TitledListViewer // adapted from TitledListViewer.
         @Override
         public void focusGained(FocusEvent arg0) 
           {
-            // System.out.println( "DirectoryTableViewer.focusGained()" );
+            ///appLogger.debug( "TitledListViewer.focusGained()" );
+
+            theJList.requestFocusInWindow();  // Autofocus the JList.
+
             setJListScrollState();
             repaint();  // bug fix Kluge to display cell in correct color.  
             }
@@ -194,6 +198,7 @@ public class TitledListViewer // adapted from TitledListViewer.
         public void focusLost(FocusEvent arg0) 
           {
             // System.out.println( "DirectoryTableViewer.focusLost()" );
+
             setJListScrollState();
             repaint();  // bug fix Kluge to display cell in correct color.  
             }

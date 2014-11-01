@@ -27,13 +27,13 @@ public class DataTreeModel
 
     // constructor methods.
 
-      public DataTreeModel( DataNode DataNodeRoot ) 
-        /* Constructs a DataTreeModel using TreeModelUserObjectRoot
-          as the root of the tree.
-          */
-        { // DataTreeModel( DataNode TreeModelUserObjectRoot )
-          ObjectRoot= DataNodeRoot;  // store root.
-          } // DataTreeModel( DataNode TreeModelUserObjectRoot )
+        public DataTreeModel( DataNode DataNodeRoot ) 
+          /* Constructs a DataTreeModel using TreeModelUserObjectRoot
+            as the root of the tree.
+            */
+          { // DataTreeModel( DataNode TreeModelUserObjectRoot )
+            ObjectRoot= DataNodeRoot;  // store root.
+            } // DataTreeModel( DataNode TreeModelUserObjectRoot )
     
     // AbstractTreeModel/TreeModel methods.
       
@@ -101,35 +101,34 @@ public class DataTreeModel
               getIndexOfChild( ChildObject ); 
             }
 
-
     // methods which are not part of AbstractTreeModel.
 
       // output (getter) methods.
         
-        public JComponent GetDataJComponent( TreePath InTreePath )
+        public JComponent GetDataJComponent( TreePath inTreePath )
           /* Returns a JComponent which is appropriate for 
             viewing and possibly manipulating
-            the current tree node specified by InTreePath.  
+            the current tree node specified by inTreePath.  
             */
           { // GetDataJComponent.
             DataNode InDataNode= // extract...
               (DataNode)  // ...user Object...
-              InTreePath.getLastPathComponent();  // ...from the TreePath.
+              inTreePath.getLastPathComponent();  // ...from the TreePath.
             JComponent ResultJComponent; 
             try { 
 	            ResultJComponent= 
-	              //InDagNode.GetDataJComponent( InTreePath );  // ??
-                InDataNode.GetDataJComponent( InTreePath, this );
+	              //InDagNode.GetDataJComponent( inTreePath );  // ??
+                InDataNode.GetDataJComponent( inTreePath, this );
               }
             catch ( IllegalArgumentException e) {
 	            ResultJComponent= null;  
               // System.out.println( "GetDataJComponent : "+e);              
               ResultJComponent=  // calculate a blank JLabel with message.
                 //new DagNodeViewer( 
-                //  InTreePath,
+                //  inTreePath,
                 //  new IJTextArea( "GetDataJComponent : "+e)
                 //  );
-                new TextViewer( InTreePath, this, "GetDataJComponent : "+e );
+                new TextViewer( inTreePath, this, "GetDataJComponent : "+e );
               }
             return ResultJComponent;
             } // GetDataJComponent.
@@ -141,64 +140,73 @@ public class DataTreeModel
             is assumed to satisfy the DataNode interface.
             */
           {
-            String ResultString= null;
+            String resultString;
             if ( InObject != null )
-              ResultString= ((DataNode)InObject).GetNameString();
-            return ResultString;
+              resultString= ((DataNode)InObject).GetNameString();
+              else
+              resultString= "NULL-DataTreeModel-Object";
+            return resultString;
             }
 
-        public String GetLastComponentNameString(TreePath InTreePath)
+        public String GetLastComponentNameString(TreePath inTreePath)
           /* Returns String represention of the name of 
-            the last element of InTreePath.
+            the last element of inTreePath.
             */
           {
-            DataNode LastDataNode= 
-              (DataNode)(InTreePath.getLastPathComponent());
+            DataNode lastDataNode= 
+              (DataNode)(inTreePath.getLastPathComponent());
             String TheNameString= 
-              LastDataNode.GetNameString();
+              lastDataNode.GetNameString();
             return TheNameString;
             }
 
-        public String GetAbsolutePathString(TreePath InTreePath)
-          /* Returns String representation of TreePath InTreePath.  
-            It presently does this by converting to IFile first.
-            
-            This could be made more efficient for the common case
-            of only the last component changing by 
-            encapsulating in a class the TreePath and its
-            associated String representation.
+        public String GetAbsolutePathString(TreePath inTreePath)
+          /* Returns String representation of TreePath inTreePath.  
+            ??? It is being modified to handle illegal TreePath values:
+            * null
+            * a reference to a pseudo-parent sentinal TreePath.
             */
           { // GetAbsolutePathString(.)
-            String ResultString= "";  // Initialize ResultString to empty.
-            while  // While more TreePath to process...
-              ( ! DataRoot.getParentOfRootTreePath( ).equals( InTreePath ) )
-              { // ...process one element of TreePath onto ResultString.
-                DataNode LastDataNode=  // Get last element.
-                  (DataNode)(InTreePath.getLastPathComponent());
-                String LastNameString=  // Get its name.
-                  LastDataNode.GetNameString();
-                if  // Add seperator character to ResultString if needed,...
-                  ( ResultString.length() != 0)  // ...if it is not empty...
-                  ResultString=  // ...by prepending...
-                    File.separator +  // ...the standard File seperator...
-                    ResultString;  // ...to the ResultString.
-                ResultString=  // Prepend...
-                  LastNameString +  // ...the element name String...
-                  ResultString;  // ...to the ResultString.
-                InTreePath=  // Replace the TreePath...
-                  InTreePath.getParentPath();  // ...by its parent TreePath.                
-                } // ...process one element of TreePath onto ResultString.
-            return ResultString;  // Return completed ResultString.
+            String resultString= "";  // Initializing resultString to empty.
+            while (true) {  // While more TreePath to process...
+              if // Handling detection of illegal null TreePath terminator.
+                ( inTreePath == null )
+                { resultString+= "NULL-PATH-TERMINATOR";
+                  break;
+                  }
+              DataNode lastDataNode=  // Getting last path element.
+                (DataNode)(inTreePath.getLastPathComponent());
+              if // Handling detection of normal TreePath root sentinel.
+                ( DataRoot.getParentOfRootTreePath( ).equals( inTreePath ) )
+                { if // Handling illegal sentinel-only TreePath.
+                    ( resultString == "" ) 
+                    resultString= lastDataNode.GetNameString();
+                  break;
+                  }
+              String LastNameString=  // Get its name.
+                lastDataNode.GetNameString();
+              if  // Add seperator character to resultString if needed,...
+                ( resultString.length() != 0)  // ...if it is not empty...
+                resultString=  // ...by prepending...
+                  File.separator +  // ...the standard File seperator...
+                  resultString;  // ...to the resultString.
+              resultString=  // Prepend...
+                LastNameString +  // ...the element name String...
+                resultString;  // ...to the resultString.
+              inTreePath=  // Replace the TreePath...
+                inTreePath.getParentPath();  // ...by its parent TreePath.                
+              }
+            return resultString;  // Return completed resultString.
             } // GetAbsolutePathString(.)
 
-        public String GetInfoString(TreePath InTreePath)
+        public String GetInfoString(TreePath inTreePath)
           /* Returns a String representing information about 
-            TreePath InTreePath. 
+            TreePath inTreePath. 
             */
           {
-            DataNode LastDataNode= 
-              (DataNode)(InTreePath.getLastPathComponent());
-            return LastDataNode.GetInfoString();
+            DataNode lastDataNode= 
+              (DataNode)(inTreePath.getLastPathComponent());
+            return lastDataNode.GetInfoString();
             }
 
     } // class DataTreeModel.

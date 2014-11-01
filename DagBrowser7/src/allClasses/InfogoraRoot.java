@@ -25,7 +25,7 @@ public class InfogoraRoot
             case 1: return TheOutline;
             case 2: return TheInfinitree;
             }
-          return null;  // anything else returns null, to prevent compiler warning.r
+          return null;  // anything else returns null.
           }
 
       public String toString( )

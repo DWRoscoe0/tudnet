@@ -570,30 +570,55 @@ public class TreeHelper
       public int getPartIndexI()
         { return thePartIndexI; }
 
-      public void setPartTreePathV( TreePath inTreePath )
-        /* This method stores inTreePath as the TreePath of the Part. 
+      public boolean setPartTreePathB( TreePath inTreePath )
+        /* This method is equivalent to
+          setPartTreePathB( inTreePath, true ).
+          */
+        { 
+          return setPartTreePathB( inTreePath, true );
+          }
+
+      public boolean setPartTreePathB( TreePath inTreePath, boolean doB )
+        /* This method checks whether changing 
+          the selected TreePath of Part to inTreePath is legal.
+          If it is not then it returns false.
+          If it is or there is no change then it return true.
+          If the change is legal and doB == true then
+          it actually makes the TreePath selection.
           It also notifies any TreePathListener about it.
-          To prevent infinite recursion it acts only if
-          inTreePath is different from the present thePartTreePath.
+          To prevent infinite recursion no selection submethods are called
+          inTreePath is not different from the present thePartTreePath.
           
           This used to set Whole to be its parent, but no longer does.
           It is the responsibility of part TreePathListener-s to
-          change the JComponent if the whole needs to be changes.
+          change the JComponent if the whole needs to be changed.
           */
         { 
-          if  // Handle if inTreePath is different from thePartTreePath.
-            ( ! inTreePath.equals( thePartTreePath ) )
-            { // Handle new inTreePath.
-              thePartTreePath= inTreePath;  // Store Part TreePath.
-              thePartDataNode=  // Storing last element.
-                (DataNode)thePartTreePath.getLastPathComponent();
-              DataNode parentDataNode=
-                (DataNode)thePartTreePath.getParentPath().
-                  getLastPathComponent();
-              thePartIndexI=  // Storing index of element.
-                parentDataNode.getIndexOfChild( thePartDataNode );
-              notifyListenersAboutPartV( inTreePath );
-              }
+          boolean legalB;
+          goReturn: {
+            if  // Handling case of no change in path.
+              ( inTreePath.equals( thePartTreePath ) )
+              { legalB= true; break goReturn; } // Exit, legal.
+            TreePath parentTreePath=  // Getting parent of path.
+              inTreePath.getParentPath();
+            if  // Handling case of null parent, path is the pseudo-parent.
+              ( parentTreePath == null )
+              { legalB= false; break goReturn; } // Exit, not legal.
+            legalB= true;  // Setting final result to legal.
+
+            if ( ! doB ) break goReturn;  // Exiting if action not desired.
+
+            // New path is okay.  Now use it.  Store variables.
+            thePartTreePath= inTreePath;  // Storing Part TreePath.
+            thePartDataNode=  // Storing last element as Part DataNode.
+              (DataNode)thePartTreePath.getLastPathComponent();
+            DataNode parentDataNode=
+              (DataNode)parentTreePath.getLastPathComponent();
+            thePartIndexI=  // Storing index of child DataNode.
+              parentDataNode.getIndexOfChild( thePartDataNode );
+            notifyListenersAboutPartV( inTreePath );
+            }
+          return legalB;
           }
 
       protected TreePath getPartTreePath()
@@ -614,7 +639,7 @@ public class TreeHelper
             thePartTreePath  // ...present path's...
               .getParentPath()  // ...parent with...
               .pathByAddingChild( inDataNode );  // ...new child added.
-          setPartTreePathV( childTreePath );  // Set Part TreePath.
+          setPartTreePathB( childTreePath );  // Set Part TreePath.
           }
 
       protected DataNode getPartDataNode()

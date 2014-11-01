@@ -126,8 +126,8 @@ public class DagBrowserPanel
               the value is the penel Component with focus immediately before 
               the command began.  */
         
-      private Boolean partTreeChangedVReentryBlockedB=   // for preventing entry...
-        false;  // ...to TreeSelectionListener.
+        ///private Boolean partTreeChangedVReentryBlockedB=   // for preventing entry...
+        ///  false;  // ...to TreeSelectionListener.
 
     // constructor and related methods.
     
@@ -152,7 +152,7 @@ public class DagBrowserPanel
               startTreePath;
             theRootJTree  // In the left sub-panel JTree's...
               .getTreeHelper()  // ...TreeHelper...
-              .setPartTreePathV(  // ...select...
+              .setPartTreePathB(  // ...select...
                 currentTreePath  // ...current tree node.
                 );
                 // This should trigger a series of events which
@@ -239,6 +239,7 @@ public class DagBrowserPanel
             { // Build and add Current Working directoryJLabel.
               directoryJLabel= new JLabel();  // create CWD JLabel.
               directoryJLabel.setAlignmentX(Component.LEFT_ALIGNMENT);  // align it.
+              // ??? Use left or center elipsis, not right, when truncating.
               viewJPanel.add(directoryJLabel,BorderLayout.NORTH);  // add as north sub-panel.
               } // Build and add Current Working directoryJLabel.
             buildAndAddJSplitPane();  // Contains left and right sub-panels.
@@ -350,17 +351,26 @@ public class DagBrowserPanel
           theTimerThread.start();  // Start TimerThread.
           lastValidFocusOwnerPanelComponent=   // initialize ID of last component with focus.
             theRootJTree;  // was dataJComponent;            
-          restoreFocusV(); // make certain focus is set correctly.
+          //restoreFocusV(); // make certain focus is set correctly.
 
           { // Create key mapping.  Experimental and incomplete.
             bindKeys();  
             bindActions();
             } // Create key mapping.  Experimental and incomplete.
 
-          SwingUtilities.invokeLater( new Runnable() { // queue giving Help.
-            @Override  
-            public void run() { commandHelpV(); }  
-            } );
+          SwingUtilities.invokeLater( // queuing final initialization.
+            new Runnable() {
+              @Override  
+              public void run() { 
+                displayPathAndInfoV(  // display left sub-panel's info.
+                  theRootJTree.getSelectedTreePath()
+                  );
+                commandHelpV();  // Displaying Help dialog.
+                buttonEnableScanV( );  // Updating button graying.
+                restoreFocusV(); // change focus from button to what is was.
+                } 
+              } 
+            );
           
           }
 
@@ -585,8 +595,11 @@ public class DagBrowserPanel
             could be eliminated by having separate Listener classes
             for each sub-panel.  This would also eliminate deooding code.
             */
+          /*
           {
-            if ( partTreeChangedVReentryBlockedB ) // Process unless a re-entry.
+            if  // Process unless a this is a re-entry.
+              ( false )
+              //( partTreeChangedVReentryBlockedB )  // Re-entry flag is set.
               { // do nothing because the re-entry blocking flag is set.
                 appLogger.info(
                   "DagBrowserPanel.partTreeChangedV(..), re-entry detected."
@@ -606,6 +619,7 @@ public class DagBrowserPanel
 
         private void partTreeChangedProcessorV
           ( TreeSelectionEvent theTreeSelectionEvent )
+        */
           /* This composition method does the work of partTreeChangedV(..).
             See that method for more information.
             */
@@ -620,16 +634,10 @@ public class DagBrowserPanel
                 { // process based on Source Component.
                   if (  // Source is right sub-pannel,...
                       ancestorOfB( dataJComponent, sourceComponent)
-                      ///(sourceComponent == dataJComponent) ||  // ... equal to or...
-                      ///dataJComponent.isAncestorOf(  // ...an ancestor of it.
-                      ///  sourceComponent)
                       )
-                    processSelectionFromRightSubpanel(
-                      selectedTreePath
-                      );
+                    processSelectionFromRightSubpanel(selectedTreePath);
                   else if  // Source is left sub-pannel,...
                     ( ancestorOfB( theRootJTree, sourceComponent) )
-                    ///(sourceComponent == theRootJTree) // ...equal to RootJTree.
                     processSelectionFromLeftSubpanel( selectedTreePath );
                   } // process based on Source Component.
                 recordPartPathSelectionV( );
@@ -696,7 +704,7 @@ public class DagBrowserPanel
                 restoreFocusV();  // Restore right panel's focus.
                 theRootJTree  // In the left sub-panel JTree's...
                   .getTreeHelper()  // ...TreeHelper...
-                  .setPartTreePathV(  // ...select...
+                  .setPartTreePathB(  // ...select...
                     panelTreePath  // ...appropriate path.
                     );
                 } // Replace right panel and update things.
@@ -730,7 +738,13 @@ public class DagBrowserPanel
             oldPanelTreePath= inTreePath;  // Save path for compares later.
             } // replaceRightPanelContent(.)
       
-      /* methods of the FocusListener, the FocusStateMachine, and others.  */
+      // methods of the FocusListener, the FocusStateMachine, and others.
+      
+        /* WARNING: Focus code is difficult to debug because
+          using Eclipse's breakpoints and stepping affects the
+          focus state of the app.  
+          It might be necessary to debug using logging.
+          */
 
         public void focusGained(FocusEvent theFocusEvent)
           /* This does what needs doing when 
@@ -750,6 +764,10 @@ public class DagBrowserPanel
           { // focusGained(FocusEvent theFocusEvent)
             lastValidFocusOwnerPanelComponent=  // record last focus owner panel.
               theFocusEvent.getComponent();
+            //appLogger.debug("focusGained(..). "
+            //  +Misc.componentInfoString(lastValidFocusOwnerPanelComponent)
+            //  + "."
+            //  );
             
             { // record focused component as an enum because it might change.
               if  // something in right sub-panel gained focus.
@@ -771,7 +789,7 @@ public class DagBrowserPanel
                     theRootJTree, lastValidFocusOwnerPanelComponent
                     ) )
                 { 
-                  appLogger.debug("LEFT_PANE gained focus.");
+                  ///appLogger.debug("LEFT_PANE gained focus.");
                   lastFocusPane= focusPane.LEFT_PANE;  // record left enum ID.
                   displayPathAndInfoV(  // display left sub-panel's info.
                     theRootJTree.getSelectedTreePath()
@@ -779,7 +797,7 @@ public class DagBrowserPanel
                   }
               else 
                 { 
-                  appLogger.debug("NO_PANE gained focus.");
+                  appLogger.info("NO_PANE gained focus.");
                   lastFocusPane= focusPane.NO_PANE;  // record enum ID.
                   }
               } // record focused component as an enum because it might change.
@@ -844,27 +862,26 @@ public class DagBrowserPanel
         public void restoreFocusV()
           /* Restores the state of the app focus to one of two states, 
             previously saved by the FocusListener methods, either:
-              * the left tree panel has focus, or 
-              * the right table panel has focus.
+              * the left tree navigation panel has focus, or 
+              * the right content panel has focus.
               
             ??? Replace complicated stepper by simple switch
             if Java bug that prevented setting focus is fixed.
             */
           { // restoreFocusV()
-            /* ??
-            System.out.println(  // Debug.
-              "restoreFocusV()"
-              );
-            */
-            
+            //appLogger.debug("restoreFocusV(), ");
+
             desiredFocusPane=  // change state of the FocusStateMachine to...
               lastFocusPane;  // ... pane that last had focus.
+
             focusStepperV();  // start the FocusStateMachine.
+            
             } // restoreFocusV()
 
         private void focusStepperV()
-          /* Steps the FocusStateMachine until desired focus is achieved.'
-            The first version did nothing and let the activity timer step things.
+          /* Steps the FocusStateMachine until desired focus is achieved.
+            The first version did nothing and let 
+            the activity timer step things.
             This version starts a fast self-stepper.
             */
           { // focusStepperV()
@@ -904,70 +921,74 @@ public class DagBrowserPanel
             one level down.  This could make use of getFocusedTreeAware().
             */
           { // focusStepB().
-            if (desiredFocusPane == focusPane.NO_PANE)  // machine halted.
-              return false;  // return indicating machine is halted.
-            Component focusedComponent=  // get Component owning the focus.
-              KeyboardFocusManager.
-                getCurrentKeyboardFocusManager().getFocusOwner();
-            Component nextFocusComponent= null; // assume no more steps.
-            
-            /* The following complex code might be replaced by
-              a Component hierarchy scanning loop ?  */
-            nextFocusComponent=  // assume focusing starts at...
-              viewJPanel;   // ... the root Component.
-            { // override if needed.
-              if (focusedComponent == viewJPanel)
-                nextFocusComponent= theSplitPane;
-              else
-                { // decode based on desired panel.
-                  if (desiredFocusPane == focusPane.LEFT_PANE)
-                    { // step focus toward left pane.
-                      if (focusedComponent == theSplitPane)
-                        nextFocusComponent= treeJScrollPane;
-                      else if (focusedComponent == treeJScrollPane)
-                        nextFocusComponent= theRootJTree;
-                      else if (focusedComponent == theRootJTree)
-                        nextFocusComponent= null;  // end of sequence.  don't change it.
-                      } // step focus toward left pane.
-                  if (desiredFocusPane == focusPane.RIGHT_PANE) 
-                    { // step focus toward right pane.
-                      if (focusedComponent == theSplitPane)
-                        nextFocusComponent= dataJScrollPane;
-                      else if (focusedComponent == dataJScrollPane)
-                        nextFocusComponent= dataJComponent;
-                      else if (focusedComponent == dataJComponent)
-                        nextFocusComponent= null;  // end of sequence.  don't change it.
-                      } // step focus toward right pane.
-                  } // decode based on desired panel.
-              } // override  if needed.
-                
-            if (nextFocusComponent != null)  // focus change desired.
-              { // change focus.
-                /*
-                System.out.println( 
-                  "focusStepB(), "
-                  + " " + desiredFocusPane
-                  + ComponentInfoString(focusedComponent)
-                  + " has focus, "
-                  );
-                System.out.println( 
-                  "  "
-                  +ComponentInfoString(nextFocusComponent)
-                  + " requests focus."
-                  );
-                */
-                nextFocusComponent.requestFocusInWindow();  // set focus
-                } // change focus.
-              else  // no focus change desired.
-              { // do final focus processing.
-                { // now that focus is correct, repaint the two panels.
-                  dataJComponent.repaint();  // repaint right data panel.
-                  theRootJTree.repaint();  // repaint left tree panel.
-                  } // now that focus is correct, repaint the two panels.
-                desiredFocusPane= focusPane.NO_PANE;  // halt state machine.
-                } // do final focus processing.
-            return  // return an indication of whether machine still running.
-              (desiredFocusPane != focusPane.NO_PANE); 
+            Component nextFocusComponent= null; // assume machine is halted.
+ 
+            goReturn: {
+              if (desiredFocusPane == focusPane.NO_PANE)  // machine halted.
+                break goReturn;  // Exiting.
+              Component focusedComponent=  // get Component owning the focus.
+                KeyboardFocusManager.
+                  getCurrentKeyboardFocusManager().getFocusOwner();
+              if (focusedComponent == null)  // Handling when no focus.
+                break goReturn;  // Exiting.
+              //appLogger.debug("focusStepB(), "
+              //  +Misc.componentInfoString(focusedComponent)
+              //  + " is focused."
+              //  );
+              
+              /* The following complex code might be replaced by
+                a Component hierarchy scanning loop,
+                or scanning using Component.transferFocus() ???  */
+
+              nextFocusComponent=  // assume focusing starts at...
+                viewJPanel;   // ... the root Component.
+              { // override if needed.
+                if (focusedComponent == viewJPanel)
+                  nextFocusComponent= theSplitPane;
+                else
+                  { // decode based on desired panel.
+                    if (desiredFocusPane == focusPane.LEFT_PANE)
+                      { // step focus toward left pane.
+                        if (focusedComponent == theSplitPane)
+                          nextFocusComponent= treeJScrollPane;
+                        else if (focusedComponent == treeJScrollPane)
+                          nextFocusComponent= theRootJTree;
+                        else if (focusedComponent == theRootJTree)
+                          nextFocusComponent= null;  // Halting machine.
+                        } // step focus toward left pane.
+                    if (desiredFocusPane == focusPane.RIGHT_PANE) 
+                      { // step focus toward right pane.
+                        if (focusedComponent == theSplitPane)
+                          nextFocusComponent= dataJScrollPane;
+                        else if (focusedComponent == dataJScrollPane)
+                          nextFocusComponent= dataJComponent;
+                        else if (focusedComponent == dataJComponent)
+                          nextFocusComponent= null;  // Halting machine.
+                        } // step focus toward right pane.
+                    } // decode based on desired panel.
+                } // override  if needed.
+                  
+              if (nextFocusComponent != null)  // focus change desired.
+                { // change focus.
+                  //appLogger.debug("focusStepB(), "
+                  //  +Misc.componentInfoString(nextFocusComponent)
+                  //  + " requests focus."
+                  //  );
+                  nextFocusComponent.requestFocusInWindow();  // set focus
+                  } // change focus.
+                else  // no focus change desired.
+                { // do final focus processing.
+                  { // now that focus is correct, repaint the two panels.
+                    dataJComponent.repaint();  // repaint right data panel.
+                    theRootJTree.repaint();  // repaint left tree panel.
+                    } // now that focus is correct, repaint the two panels.
+                  desiredFocusPane= focusPane.NO_PANE;  // halt state machine.
+                  } // do final focus processing.
+              }
+            return  // Returning whether there will be more steps.
+              (nextFocusComponent != null);
+              // runningB; // return whether machine still running.
+              
             } // focusStepB().
 
     // Key and Action bindings (KeyboardFocusManager ).
@@ -1088,8 +1109,8 @@ public class DagBrowserPanel
               //appLogger.info("DagBrowserPanel.displayPathAndInfoV() NEITHER sub-panel.");
               }
 
-          if ( theTreePath != null )  // Display only if not null.
-            displayPathAndInfoV( theTreePath ); // Display chosen TreePath.
+          ///if ( theTreePath != null )  // Display only if not null.
+          displayPathAndInfoV( theTreePath ); // Display chosen TreePath.
           }
 
       private void displayPathAndInfoV(TreePath inTreePath)
