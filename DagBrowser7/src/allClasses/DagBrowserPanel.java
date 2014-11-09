@@ -11,7 +11,7 @@ import java.awt.Graphics;
 import java.awt.KeyboardFocusManager;  // See note about this below.
 import java.awt.event.*;
 
-import javax.swing.event.TreeSelectionEvent;
+//import javax.swing.event.TreeSelectionEvent;
 import javax.swing.tree.TreePath;
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
@@ -33,8 +33,8 @@ public class DagBrowserPanel
 
   implements 
     ActionListener, 
-    FocusListener,
-    TreePathListener
+    FocusListener
+    // ,TreePathListener
 
   /* This class implements a JPanel which allows a user to browse 
     the Infogora DAG (Directed Acyclic Graph) as a Tree.
@@ -290,7 +290,10 @@ public class DagBrowserPanel
               );  // Note that theDataTreeModel was built earlier.
 
             { // setup handling by listener of various Tree events.
-              theRootJTree.getTreeHelper().addTreePathListener(this);
+              theRootJTree.getTreeHelper().addTreePathListener(
+                //this
+                theTreePathListener
+                );
               //theRootJTree.addFocusListener(this); // Old???
               theRootJTree.getTreeHelper().addFocusListener(this); // New???
               } // setup handling by listener of various Tree events.
@@ -325,7 +328,8 @@ public class DagBrowserPanel
                 );  // Note that theDataTreeModel was built earlier.
             dataTreeAware= (TreeAware)dataJComponent;  // Define alias...
             dataTreeAware.getTreeHelper().addTreePathListener(  // ...and Listener.
-              this
+              //this
+              theTreePathListener
               );
             } // build the scroller content.
           dataJScrollPane.setViewportView(  // in the dataJScrollPane's viewport...
@@ -553,98 +557,119 @@ public class DagBrowserPanel
                 }
             }
 
-      /* TreePathListener methods, for when TreeSelectionEvent-s
+      /* TreePathListener code, for when TreePathEvent-s
         happen in either the left or right panel.
         This was based on TreeSelectionListener code.
-        It still uses TreeSelectionEvent-s for passing TreePath info.
+        For a while it used TreeSelectionEvent-s for 
+        passing TreePath data.
         */
 
-        public void partTreeChangedV( TreeSelectionEvent theTreeSelectionEvent )
-          /* This processes TreeSelectionEvent-s from TreeAware JComponents,
-            which are JComponents with TreeHelper code.
-            It's job is to coordinate selections in 
-            the left and right sub-panels.  
-            It is very source-panel-dependent.  This includes 
+        private TreePathListener theTreePathListener= 
+          new MyTreePathListener();
 
-              Passing appropriate TreePath selection information to
-              the major left and right sub-panels, 
-
-              Maintaining the correct relationship between 
-              what is displayed and selected in the 2 main sub-panels.
-              Generally the node being displayed by the right sub-panel
-              is the selection of the left sub-panel.
-
-            It also updates directoryJLabel and infoJLabel
-            appropriate to the selection in the sub-panel with focus.
-
-            When a TreeSelectionEvent delivers a new TreePath
-            it might or might not require that a new JComponent
-            be used in the right sub-panel to display the node
-            identified by that TreePath.  
-
-            ??? Maybe create separate Listeners to simplify code.
-            Most the work of this method id done by 
-            partTreeChangedProcessorV(..), but this called only if 
-            it determined that partTreeChangedV(..) 
-            has not been recursively re-entered.
-            This can  happen because DagBrowser is an Observer (Listener)
-            of both the major sub-panels, and while processing 
-            a state change in one it sends TreePath information to the other 
-            causing it to change state, which causes the reentry.
-            This type of re-entry might not be a problem and
-            could be eliminated by having separate Listener classes
-            for each sub-panel.  This would also eliminate deooding code.
-            */
-          /*
+        private class MyTreePathListener 
+          extends TreePathAdapter
           {
-            if  // Process unless a this is a re-entry.
-              ( false )
-              //( partTreeChangedVReentryBlockedB )  // Re-entry flag is set.
-              { // do nothing because the re-entry blocking flag is set.
-                appLogger.info(
-                  "DagBrowserPanel.partTreeChangedV(..), re-entry detected."
-                  );
-                } // do nothing because the recursion blocking flag is set.
-              else // flag is not  set.
-              { // process the TreeSelectionEvent.
-                partTreeChangedVReentryBlockedB= true;  // Disable entry.
+            public boolean testPartTreePathB(TreePathEvent theTreePathEvent)
+              /* This method tests whether the TreePath in theTreePathEvent 
+                is legal in the current display context.  
+                It is implemented only by coordinators, such as this class, 
+                which coordinates the TreePath-s displayed by 
+                the left and right subpanels.
+                Presently the selected node in the left subpanel is always
+                the parent of path of the part selected in the right subpanel.
+                */
+              { 
+                boolean legalB;
+                goReturn: {
+                  TreePath inTreePath=  // Getting...
+                    theTreePathEvent.  // ...the TreePathEvent's...
+                      getTreePath();  // ...one and only TreePath.
 
-                partTreeChangedProcessorV( // Have this do all the work.
-                  theTreeSelectionEvent 
-                  );
+                  if ( ! DataRoot.isLegalB(inTreePath) )  // Handling illegal path.
+                    { legalB= false; break goReturn; } // Exiting, not legal.
+                  
+                  Component sourceComponent=  // Getting its source Component.
+                    (Component)theTreePathEvent.getSource();
+                  
+                  if  // Handling source that is not right sub-pannel,
+                    ( ! ancestorOfB( dataJComponent, sourceComponent) )
+                    { legalB= true; break goReturn; } // Exiting, legal.
+                      
+                  TreePath parentTreePath=  // Getting parent of path.
+                    inTreePath.getParentPath();
 
-                partTreeChangedVReentryBlockedB= false;  // Enable entry.
-                } // process the TreeSelectionEvent.
-            }
+                  if  // Handling illegal parent path.
+                    ( ! DataRoot.isLegalB(parentTreePath) ) 
+                    { legalB= false; break goReturn; } // Exiting, not legal.
 
-        private void partTreeChangedProcessorV
-          ( TreeSelectionEvent theTreeSelectionEvent )
-        */
-          /* This composition method does the work of partTreeChangedV(..).
-            See that method for more information.
-            */
-          {
-            TreePath selectedTreePath=  // Get...
-              theTreeSelectionEvent.  // ...the TreeSelectionEvent's...
-                getNewLeadSelectionPath();  // ...one and only TreePath.
-            Component sourceComponent=  // Also get its source Component.
-              (Component)theTreeSelectionEvent.getSource();
-            if ( selectedTreePath != null )  // process only if not null.
-              { // Process non-null path.
-                { // process based on Source Component.
-                  if (  // Source is right sub-pannel,...
-                      ancestorOfB( dataJComponent, sourceComponent)
-                      )
-                    processSelectionFromRightSubpanel(selectedTreePath);
-                  else if  // Source is left sub-pannel,...
-                    ( ancestorOfB( theRootJTree, sourceComponent) )
-                    processSelectionFromLeftSubpanel( selectedTreePath );
-                  } // process based on Source Component.
-                recordPartPathSelectionV( );
-                } // Process non-null path.
-            displayPathAndInfoV( ); // Update the display of other info.
-            buttonEnableScanV( );
-            Misc.dbgEventDone(); // Debug.
+                  legalB= true;  // Setting legal because path passed all tests.
+                  }
+                return legalB;
+                }
+
+            public void setPartTreePathV( TreePathEvent theTreePathEvent )
+              /* This TreePathListener method processes TreePathEvent-s 
+                from TreeAware JComponents, 
+                which are JComponents with TreeHelper code
+                in the left and right subpanels.
+                It coordinates selections in the left and right sub-panels.  
+                The left panel is a navigation pane containing a RootJTree.
+                The right panel is a JComponent apprpriate for
+                displaying whatever node is highlighted in the left subpanel.
+                It maintains the correct relationship between 
+                what is displayed and selected in the 2 main sub-panels.
+                It also updates directoryJLabel and infoJLabel with information 
+                about the selection in the sub-panel with focus.
+
+                When a TreePathEvent delivers a new TreePath
+                it might or might not require that a new JComponent
+                be created and placed in the right sub-panel 
+                to display the node identified by that TreePath.  
+                
+                This method might be re-entered.
+                This can  happen because DagBrowser
+                listens to the sub-panels for
+                TreePathEvents indicating new selections, and
+                sends TreePaths to the sub-panels,
+                which might themselves cause new selections.
+                To prevent infinite recursion, re-entry must be detected
+                and aborted somewhere.  There are several options:
+                * Detect it in TreeHelper and abort it there.
+                  This is also being done in 
+                  TreeHelper.setPartTreePathB(inTreePath,doB),
+                  by aborting processing if the TreePath would not change.
+                * Detect it here in DagBrowserPanel and abort it.  
+                  This is presently being done.  
+                  This was the original solution.  Maybe eliminate this ???
+
+                ??? Have a separate Listener class for each sub-panel.  
+                This would eliminate deooding code, but
+                might complicate re-entry detection.
+                */
+              {
+                TreePath selectedTreePath=  // Get...
+                  theTreePathEvent.  // ...the TreePathEvent's...
+                    getTreePath();  // ...one and only TreePath.
+                Component sourceComponent=  // Also get its source Component.
+                  (Component)theTreePathEvent.getSource();
+                if ( selectedTreePath != null )  // process only if not null.
+                  { // Process non-null path.
+                    { // process based on Source Component.
+                      if (  // Source is right sub-pannel,...
+                          ancestorOfB( dataJComponent, sourceComponent)
+                          )
+                        processSelectionFromRightSubpanel(selectedTreePath);
+                      else if  // Source is left sub-pannel,...
+                        ( ancestorOfB( theRootJTree, sourceComponent) )
+                        processSelectionFromLeftSubpanel( selectedTreePath );
+                      } // process based on Source Component.
+                    recordPartPathSelectionV( );
+                    } // Process non-null path.
+                displayPathAndInfoV( ); // Update the display of other info.
+                buttonEnableScanV( );
+                Misc.dbgEventDone(); // Debug.
+                }
             }
 
         private void recordPartPathSelectionV( )
@@ -728,7 +753,9 @@ public class DagBrowserPanel
                 (TreeAware)dataJComponent;
               dataTreeAware.getTreeHelper().  // set TreeAware's TreeSelectionListener by...
                 addTreePathListener(  // adding to its Listener list...
-                  this);  // ...a reference to this the main panel
+                  //this  // ...a reference to this the main panel
+                  theTreePathListener
+                  );
               //dataJComponent.addFocusListener(this);  // Old???
               dataTreeAware.getTreeHelper().addFocusListener(this); // New???
               } // build the scroller content.
@@ -1129,9 +1156,9 @@ public class DagBrowserPanel
         { // displayPathAndInfoV(TreePath inTreePath)
           if (inTreePath == null) // No path was provided.
             { // display null info.
-              appLogger.info("DagBrowserPanel.displayPathAndInfoV( null )");
+              //appLogger.info("DagBrowserPanel.displayPathAndInfoV( null )");
               directoryJLabel.setText("NO PATH");
-              infoJLabel.setText("NO INFO AVAILABLE");
+              infoJLabel.setText("NO INFORMATION AVAILABLE");
               } // display null info.
             else  // A path was provided.
             { // display non-null info.

@@ -4,7 +4,7 @@ import java.awt.Color;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 //import javax.swing.event.TreeSelectionListener;
-import javax.swing.event.TreeSelectionEvent;
+//import javax.swing.event.TreeSelectionEvent;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
@@ -91,7 +91,7 @@ public class TextViewer
     
       // ??? temporary.
         public void partTreeChangedV( 
-            TreeSelectionEvent inTreeSelectionEvent )
+            TreePathEvent inTreePathEvent )
           {
             appLogger.error( "TitledListViewer.partTreeChangedV(..) called");
             }

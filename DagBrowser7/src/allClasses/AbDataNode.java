@@ -8,15 +8,8 @@ public abstract class AbDataNode
 
   implements DataNode
   
-  /* This class started as an abstract class.
-    It implemented only part of the DataNode interface.
-    Over time I was provided implementations for
-    all of the interface methods, and then some.
-    So now this class is now abstract in name only,
-    and I could probably remove the abstract keyword. ???
-
-    The DataNode methods will work, but some of them
-    do so by counting and searching.
+  /* All the DataNode methods implemented here work, 
+    but some of them do so by counting and searching.
     They should be used only by subclasses which 
     do not have a lot of children and can be evaluated quickly.
     Otherwise they should be optimized or cached or both.

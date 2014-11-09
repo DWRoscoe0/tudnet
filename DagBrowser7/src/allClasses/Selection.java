@@ -123,8 +123,11 @@ public class Selection
           }
 
       public static DataNode setAndReturnDataNode( TreePath inTreePath )
-        /* Updates the PathAttributeMetaTool with inTreePath and returns 
-          the DataNode of the most recently visited child MetaNode of 
+        /* Updates the "SelectionPath" attributes of the MetaNode DAG
+          starting with the root and ending at 
+          the MetaNode specified by inTreePath.
+          Then it returns the DataNode of the most recently 
+          selected/visited child MetaNode of 
           the MetaNode at the end of that path,
           or it returns null if there is no such child. 
           */

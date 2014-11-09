@@ -18,7 +18,8 @@ public class RootJTree
 
   extends IJTree
 
-  implements KeyListener, TreeSelectionListener, TreeAware, TreePathListener
+  implements KeyListener, TreeSelectionListener, TreeAware
+  //, TreePathListener
   
   /* This class is used for the content in the left JTree subpanel.
     
@@ -85,13 +86,18 @@ public class RootJTree
           putClientProperty( "IJTree.lineStyle", "Angled" );
 
           addTreeSelectionListener(this);  // listen for tree selections.
-          aTreeHelper.addTreePathListener(this);  // listen for tree paths.
+          //aTreeHelper.addTreePathListener(this);  // listen for tree paths.
+          aTreeHelper.addTreePathListener(   // listen for tree paths.
+            new MyTreePathListener()
+            );
           addMouseListener(aTreeHelper);  // TreeHelper does MouseEvent-s.
           addKeyListener(this);  // listen for key presses. ???
           
           } // Constructor.
 
-    // TreeHelper code, including extension MyTreeHelper and TreePathListener.
+    /* TreeHelper code, including extension MyTreeHelper 
+      and TreePathListener.
+      */
 
       class MyTreeHelper extends TreeHelper {
       
@@ -180,34 +186,38 @@ public class RootJTree
           */
         { return aTreeHelper; }
 
-      public void partTreeChangedV( TreeSelectionEvent inTreeSelectionEvent )
-        /* This TreePathListener method translates 
-          inTreeSelectionEvent TreeHelper tree paths into 
-          internal JTree selections.
-          It ignores any paths with which it cannot deal.
-          */
+      private class MyTreePathListener 
+        extends TreePathAdapter
         {
-          TreePath inTreePath=  // Get the TreeHelper's path from...
-            inTreeSelectionEvent.  // ...the TreeSelectionEvent's...
-              getNewLeadSelectionPath();  // ...one and only TreePath.
+          public void setPartTreePathV( TreePathEvent inTreePathEvent )
+            /* This TreePathListener method translates 
+              inTreePathEvent TreeHelper tree paths into 
+              internal JTree selections.
+              It ignores any paths with which it cannot deal.
+              */
+            {
+              TreePath inTreePath=  // Get the TreeHelper's path from...
+                inTreePathEvent.  // ...the TreePathEvent's...
+                  getTreePath();  // ...one and only TreePath.
 
-          toReturn:{
-            if (inTreePath == null)  // null path.
-              break toReturn;  // Ignore it.
+              toReturn:{
+                if (inTreePath == null)  // null path.
+                  break toReturn;  // Ignore it.
 
-            if // Last node is an UnknownDataNode
-              ( UnknownDataNode.isOneB( inTreePath.getLastPathComponent() ) )
-              break toReturn;  // Ignore it.
-            if (   // Parent of root.
-                inTreePath 
-                == DataRoot.getParentOfRootTreePath( )
-                )
-              break toReturn;  // Ignore it.
+                if // Last node is an UnknownDataNode
+                  ( UnknownDataNode.isOneB( inTreePath.getLastPathComponent() ) )
+                  break toReturn;  // Ignore it.
+                if (   // Parent of root.
+                    inTreePath 
+                    == DataRoot.getParentOfRootTreePath( )
+                    )
+                  break toReturn;  // Ignore it.
 
-            // Execution begins on fully checked path.
-            setSelectionPath(inTreePath);  // Select path in the JTree.
-          } // toReturn:
+                // Execution begins on fully checked path.
+                setSelectionPath(inTreePath);  // Select path in the JTree.
+              } // toReturn:
 
+              }
           }
 
       private void setPathV(TreePath inTreePath ) // ??? called internally only.

@@ -11,7 +11,7 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 //import javax.swing.event.TreeSelectionListener;
-import javax.swing.event.TreeSelectionEvent;
+//import javax.swing.event.TreeSelectionEvent;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
@@ -24,7 +24,7 @@ public class DirectoryTableViewer
   extends JTable
   
   implements 
-    FocusListener, ListSelectionListener, TreeAware, TreePathListener
+    FocusListener, ListSelectionListener, TreeAware /// , TreePathListener
   
   /* This class displays filesystem directories as tables.
     They appear in the main app's right side subpanel as a JTable.
@@ -117,9 +117,9 @@ public class DirectoryTableViewer
             addFocusListener(this);  // Making this...
               // DirectoryTableViewer be a FocusListener for...
               // its own FocusEvent-s.
-            aTreeHelper.addTreePathListener(this); // Making this...
-              // ...DirectoryTableViewer be a TreePathListener for...
-              // ...TreeHelper TreeSelectionEvent-s.
+            aTreeHelper.addTreePathListener( // Making...
+              theTreePathListener  // ...my special TreePathAdapter be...
+              ); //  ...a TreePathListener for TreeHelper TreePathEvent-s.
 
             addKeyListener(aTreeHelper); // Making TreeHelper be...
               // ...a KeyListener for DirectoryTableViewer KeyEvent-s.
@@ -137,7 +137,7 @@ public class DirectoryTableViewer
           from the DirectoryIJTable's ListSelectionModel.  
           It does this by determining what row item has become selected,
           adjusting any dependent instance variables,
-          and firing a TreeSelectionEvent to notify
+          and firing a TreePathEvent to notify
           any interested TreeSelectionListener-s.
           */
         { // void valueChanged(TheListSelectionEvent)
@@ -191,25 +191,38 @@ public class DirectoryTableViewer
 			private TreeHelper aTreeHelper;  // Reference to helper class.
 
 			public TreeHelper getTreeHelper() { return aTreeHelper; }
+      /* TreePathListener code, for when TreePathEvent-s
+        happen in either the left or right panel.
+        This was based on TreeSelectionListener code.
+        For a while it used TreeSelectionEvent-s for 
+        passing TreePath data.
+        */
 
-      public void partTreeChangedV( TreeSelectionEvent inTreeSelectionEvent )
-        /* This TreePathListener method is called by aTreeHelper
-          when aTreeHelper accepts a new TreePath.
-          This method translates inTreeSelectionEvent TreeHelper tree path 
-          into an internal JTable selection.
+        private TreePathListener theTreePathListener= 
+          new MyTreePathListener();
 
-          ??? It ignores any paths with which it cannot deal.
-          */
-        {
-          TreePath inTreePath=  // Get the TreeHelper's path from...
-            inTreeSelectionEvent.  // ...the TreeSelectionEvent's...
-              getNewLeadSelectionPath();  // ...one and only TreePath.
+        private class MyTreePathListener 
+          extends TreePathAdapter
+          {
+            public void setPartTreePathV( TreePathEvent inTreePathEvent )
+              /* This TreePathListener method is called by aTreeHelper
+                when aTreeHelper accepts a new TreePath.
+                This method translates inTreePathEvent TreeHelper tree path 
+                into an internal JTable selection.
 
-            selectTableRowV(   // Select row appropriate to...
-              inTreePath  // ...path.
-              );  // Note, this might trigger ListSelectionEvent.
+                ??? It ignores any paths with which it cannot deal.
+                */
+              {
+                TreePath inTreePath=  // Get the TreeHelper's path from...
+                  inTreePathEvent.  // ...the TreePathEvent's...
+                    getTreePath();  // ...one and only TreePath.
 
-          }
+                  selectTableRowV(   // Select row appropriate to...
+                    inTreePath  // ...path.
+                    );  // Note, this might trigger ListSelectionEvent.
+
+                }
+            }
         
     // miscellaneous shared methods and grouping methods.
       

@@ -3,7 +3,7 @@ package allClasses;
 //import java.beans.PropertyChangeListener;
 
 public interface TreeAware
-  extends TreePathListener
+  // extends TreePathListener
 
   /* This interface describes what a JComponent must implement
     to integrate it into the Infogora's DataNode DAG browser.

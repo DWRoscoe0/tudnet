@@ -8,7 +8,14 @@ public class SingleChildDataNode
     It serves as a parent of the root of the DataNode DAG.
     This makes the MetaNode:ioDataNode(...) code simpler because 
     it doesn't need to handle the root DataNode as 
-    a special case.  */
+    a special case.  
+
+    This is used by only DataRoot, it might be appropriate to:
+    * Change the name to RootDataNode.
+    * Add another method isAncestorOfRootB() to to AbDataNode
+      which only this class returns as true to make
+      testing for in the illegal pseudo-parent status easier and faster.
+    */
 
   { // class SingleChildDataNode
 

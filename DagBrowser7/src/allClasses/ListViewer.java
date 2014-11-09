@@ -11,7 +11,7 @@ import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.event.TreeSelectionEvent;
+//import javax.swing.event.TreeSelectionEvent;
 //import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
@@ -26,7 +26,7 @@ public class ListViewer
     ListSelectionListener
     , FocusListener
     , TreeAware
-    , TreePathListener
+    /// , TreePathListener
   
   /* This class provides a simple DagNodeViewer that 
     displays and browses List-s using a JList.
@@ -50,7 +50,7 @@ public class ListViewer
         /* Constructs a ListViewer.
           inTreePath is the TreePath associated with
           the node of the Tree to be displayed.
-          The last DataNode in the path is that object.
+          The last DataNode in the path is that node.
           */
         { // ListViewer(.)
           super();   // Call constructor inherited from JList<Object>.
@@ -78,7 +78,10 @@ public class ListViewer
           setSelectionMode( ListSelectionModel.SINGLE_SELECTION );
           setCellRenderer( TheListCellRenderer );  // set custom rendering.
           { // Set the user input event listeners.
-            aTreeHelper.addTreePathListener(this);  // Listen for tree paths.
+            aTreeHelper.addTreePathListener(   // Listen for tree paths.
+              /// this
+              theTreePathListener
+              );
             addKeyListener(aTreeHelper);  // TreeHelper does KeyEvent-s.
             addMouseListener(aTreeHelper);  // TreeHelper does MouseEvent-s.
             addFocusListener(this);  // listen to repaint on focus events.???
@@ -181,7 +184,7 @@ public class ListViewer
             from the ListSelectionModel.  It does this by 
             determining what element was selected,
             adjusting dependent instance variables, and 
-            firing a TreeSelectionEvent to notify TreeSelectionListener-s.
+            firing a TreePathEvent to notify TreeSelectionListener-s.
             */
           { // void valueChanged(ListSelectionEvent TheListSelectionEvent)
             ListSelectionModel TheListSelectionModel = // get ListSelectionModel.
@@ -223,26 +226,40 @@ public class ListViewer
 
     // interface TreeAware code for TreeHelper access.
 
-			public TreeHelper aTreeHelper;  // helper class ???
+			private TreeHelper aTreeHelper;  // helper class ???
 
 			public TreeHelper getTreeHelper() { return aTreeHelper; }
 
-      public void partTreeChangedV( TreeSelectionEvent inTreeSelectionEvent )
-        /* This TreePathListener method translates 
-          inTreeSelectionEvent TreeHelper tree path into 
-          an internal JList selection.
-          It ignores any paths with which it cannot deal.
-          */
-        {
-          //TreePath inTreePath=  // Get the TreeHelper's path from...
-          //  inTreeSelectionEvent.  // ...the TreeSelectionEvent's...
-          //    getNewLeadSelectionPath();  // ...one and only TreePath.
+      /* TreePathListener code, for when TreePathEvent-s
+        happen in either the left or right panel.
+        This was based on TreeSelectionListener code.
+        For a while it used TreeSelectionEvent-s for 
+        passing TreePath data.
+        */
 
-          selectRowV(   // Select row appropriate to...
-            //inTreePath  // ...path.
-            aTreeHelper.getPartIndexI()
-            );  // Note, this might trigger ListSelectionEvent.
-          }
+        private TreePathListener theTreePathListener= 
+          new MyTreePathListener();
+
+        private class MyTreePathListener 
+          extends TreePathAdapter
+          {
+            public void setPartTreePathV( TreePathEvent inTreePathEvent )
+              /* This TreePathListener method translates 
+                inTreePathEvent TreeHelper tree path into 
+                an internal JList selection.
+                It ignores any paths with which it cannot deal.
+                */
+              {
+                //TreePath inTreePath=  // Get the TreeHelper's path from...
+                //  inTreeSelectionEvent.  // ...the TreeSelectionEvent's...
+                //    getNewLeadSelectionPath();  // ...one and only TreePath.
+
+                selectRowV(   // Select row appropriate to...
+                  //inTreePath  // ...path.
+                  aTreeHelper.getPartIndexI()
+                  );  // Note, this might trigger ListSelectionEvent.
+                }
+            }
 
       /* ???
       public TreePath getWholeTreePath()

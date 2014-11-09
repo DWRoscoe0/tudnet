@@ -1,6 +1,6 @@
 package allClasses;
 
-import javax.swing.event.TreeSelectionEvent;
+//import javax.swing.event.TreeSelectionEvent;
 
 public interface TreePathListener 
 
@@ -17,9 +17,15 @@ public interface TreePathListener
 
   {
 
-    public void partTreeChangedV( TreeSelectionEvent theTreeSelectionEvent );
+    boolean testPartTreePathB(TreePathEvent theTreePathEvent);
+      /* This method tests whether theTreePathEvent is legal in
+        the current display context.  It is implemented only by
+        coordinators, such as DagBrowserPanel.
+        */
+
+    void setPartTreePathV( TreePathEvent theTreePathEvent );
       /* This TreePathListener method get the TreePath in
-        theTreeSelectionEvent which came from a TreeHelper 
+        theTreePathEvent which came from a TreeHelper 
         and does something with it, such as making a selection
         in a JComponent associated with that TreePath.
         It ignores any paths with which it cannot deal.

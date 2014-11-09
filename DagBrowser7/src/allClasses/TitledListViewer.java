@@ -12,7 +12,7 @@ import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.event.TreeSelectionEvent;
+//import javax.swing.event.TreeSelectionEvent;
 //import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
@@ -28,6 +28,7 @@ public class TitledListViewer // adapted from TitledListViewer.
     ListSelectionListener
     , FocusListener
     , TreeAware
+    /// , TreePathListener
   
   /* This experimental class is being developed from,
     and is intended to replace, the TitledListViewer class.
@@ -91,7 +92,11 @@ public class TitledListViewer // adapted from TitledListViewer.
             TheListCellRenderer 
             );
           { // Set the user input event listeners.
-            aTreeHelper.addTreePathListener(this);  // Listen for tree paths.
+            /// aTreeHelper.addTreePathListener(this);  // Listen for tree paths.
+            aTreeHelper.addTreePathListener(   // Listen for tree paths.
+              /// this
+              theTreePathListener
+              );
             theJList.addKeyListener(aTreeHelper);  // TreeHelper does KeyEvent-s.
             theJList.addMouseListener(aTreeHelper);  // TreeHelper does MouseEvent-s.
             theJList.addFocusListener(this);  // Old FocusListener.
@@ -158,7 +163,7 @@ public class TitledListViewer // adapted from TitledListViewer.
             from the ListSelectionModel.  It does this by 
             determining what element was selected,
             adjusting dependent instance variables, and 
-            firing a TreeSelectionEvent to notify TreeSelection]-s.
+            firing a TreePathEvent to notify TreeSelection]-s.
             */
           { // void valueChanged(ListSelectionEvent TheListSelectionEvent)
               ListSelectionModel TheListSelectionModel = // get ListSelectionModel.
@@ -209,22 +214,36 @@ public class TitledListViewer // adapted from TitledListViewer.
 
 			public TreeHelper getTreeHelper() { return aTreeHelper; }
 
-      public void partTreeChangedV( TreeSelectionEvent inTreeSelectionEvent )
-        /* This TreePathListener method translates 
-          inTreeSelectionEvent TreeHelper tree path into 
-          an internal JList selection.
-          It ignores any paths with which it cannot deal.
-          */
-        {
-          //TreePath inTreePath=  // Get the TreeHelper's path from...
-          //  inTreeSelectionEvent.  // ...the TreeSelectionEvent's...
-          //    getNewLeadSelectionPath();  // ...one and only TreePath.
+      /* TreePathListener code, for when TreePathEvent-s
+        happen in either the left or right panel.
+        This was based on TreeSelectionListener code.
+        For a while it used TreeSelectionEvent-s for 
+        passing TreePath data.
+        */
 
-          selectRowV(   // Select row appropriate to...
-            //inTreePath  // ...path.
-            aTreeHelper.getPartIndexI()
-            );  // Note, this might trigger ListSelectionEvent.
-          }
+        private TreePathListener theTreePathListener= 
+          new MyTreePathListener();
+
+        private class MyTreePathListener 
+          extends TreePathAdapter
+          {
+            public void setPartTreePathV( TreePathEvent inTreePathEvent )
+              /* This TreePathListener method translates 
+                inTreePathEvent TreeHelper tree path into 
+                an internal JList selection.
+                It ignores any paths with which it cannot deal.
+                */
+              {
+                //TreePath inTreePath=  // Get the TreeHelper's path from...
+                //  inTreeSelectionEvent.  // ...the TreeSelectionEvent's...
+                //    getNewLeadSelectionPath();  // ...one and only TreePath.
+
+                selectRowV(   // Select row appropriate to...
+                  //inTreePath  // ...path.
+                  aTreeHelper.getPartIndexI()
+                  );  // Note, this might trigger ListSelectionEvent.
+                }
+            }
 
     // List cell rendering.
 

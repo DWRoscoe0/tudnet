@@ -7,7 +7,7 @@ import java.util.Vector;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 
-public class TreeModelSupport 
+public abstract class TreeModelSupport 
   /* This class acts as a base class for 
      classes which implement the TreeModel interface.
      It provides fields and methods which every TreeModel needs,
@@ -16,6 +16,9 @@ public class TreeModelSupport
      managing a TreeModelListener list
      and for firing TreeModelEvent-s and
      sending them to the TreeModelListener-s.
+     
+     Combine this with AbstractTreeModel ???
+
      */
   {
     private Vector<TreeModelListener> ListenerVector =   // ListenerVector to store listeners.
