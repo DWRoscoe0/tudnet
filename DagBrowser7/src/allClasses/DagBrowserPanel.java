@@ -589,7 +589,7 @@ public class DagBrowserPanel
                   if ( ! DataRoot.isLegalB(inTreePath) )  // Handling illegal path.
                     { legalB= false; break goReturn; } // Exiting, not legal.
                   
-                  Component sourceComponent=  // Getting its source Component.
+                  Component sourceComponent=  // Getting event's source Component.
                     (Component)theTreePathEvent.getSource();
                   
                   if  // Handling source that is not right sub-pannel,
@@ -1118,12 +1118,16 @@ public class DagBrowserPanel
           Component focusedComponent=  // Get Component with focus.
             KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
 
-          if ( focusedComponent == theRootJTree ) // Left sub-panel.
+          ///if ( focusedComponent == theRootJTree ) // Left sub-panel.
+          if  // Left sub-panel.
+            ( ancestorOfB( theRootJTree, focusedComponent) )
             {
               //appLogger.info("DagBrowserPanel.displayPathAndInfoV() left sub-panel.");
               theTreePath= theRootJTree.getSelectedTreePath();
               } 
-          else if ( focusedComponent == dataJComponent ) // Right sub-panel.
+          ///else if ( focusedComponent == dataJComponent ) // Right sub-panel.
+          else if  // Right sub-panel.
+            ( ancestorOfB( dataJComponent, focusedComponent) )
             { // Calculate right sub-panel TreePath.
               //appLogger.info("DagBrowserPanel.displayPathAndInfoV() right sub-panel.");
               theTreePath= dataTreeAware.getTreeHelper().getPartTreePath();
@@ -1136,7 +1140,6 @@ public class DagBrowserPanel
               //appLogger.info("DagBrowserPanel.displayPathAndInfoV() NEITHER sub-panel.");
               }
 
-          ///if ( theTreePath != null )  // Display only if not null.
           displayPathAndInfoV( theTreePath ); // Display chosen TreePath.
           }
 
