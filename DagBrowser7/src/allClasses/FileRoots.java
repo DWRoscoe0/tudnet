@@ -171,7 +171,8 @@ public class FileRoots
           */
         { // GetDataJComponent.
           JComponent ResultJComponent=  // Calculate a ListViewer.
-            new ListViewer( InTreePath, InTreeModel );
+            //new ListViewer( InTreePath, InTreeModel );
+          	new TitledListViewer( InTreePath, InTreeModel );
           return ResultJComponent;  // return the final result.
           } // GetDataJComponent.
 

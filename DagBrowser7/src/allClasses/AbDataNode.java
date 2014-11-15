@@ -184,7 +184,8 @@ public abstract class AbDataNode
                 );
             else  // This DataNode is NOT a leaf.
             resultJComponent= // Set result for exploring a List.
-              new ListViewer( inTreePath, inTreeModel );
+              //new ListViewer( inTreePath, inTreeModel );
+              new TitledListViewer( inTreePath, inTreeModel );
 
           return resultJComponent;  // Return the result from above.
           } // GetDataJComponent()

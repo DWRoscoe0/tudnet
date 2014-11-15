@@ -11,9 +11,11 @@ import java.awt.Graphics;
 import java.awt.KeyboardFocusManager;  // See note about this below.
 import java.awt.event.*;
 
+import javax.swing.border.EtchedBorder;
 //import javax.swing.event.TreeSelectionEvent;
 import javax.swing.tree.TreePath;
 import javax.swing.AbstractAction;
+import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -24,6 +26,8 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;  // a Timer for GUIs.
 //import java.util.Timer  // a more general Timer.
+
+
 
 import static allClasses.Globals.*;  // appLogger;
 
@@ -95,18 +99,18 @@ public class DagBrowserPanel
 
           private JLabel infoJLabel;  // a place to display directory/file info.
 
-        /* ComponentFocusStateMachine.
-          This state machine restores the focus to either 
-          the left/navigation JTree pane or the right/content pane.  
-          This restoration is done becaue most of the time 
-          the focus is in one of those two places while the user browses, 
-          and the user will want to move the cursor back into
-          one of these panes if it ever goes out.
-          The reason the restoration is done stepping
-          only one Component at a time in the component hierarchy
-          is because Component.requestFocusInWindow() did not seem
-          to be able to reliably move the focus more than one Component.
-          */
+        // ComponentFocusStateMachine.
+          /* This state machine restores the focus to either 
+            the left/navigation JTree pane or the right/content pane.  
+            This restoration is done becaue most of the time 
+            the focus is in one of those two places while the user browses, 
+            and the user will want to move the cursor back into
+            one of these panes if it ever goes out.
+            The reason the restoration is done stepping
+            only one Component at a time in the component hierarchy
+            is because Component.requestFocusInWindow() did not seem
+            to be able to reliably move the focus more than one Component.
+            */
           private enum focusPane {   // the normal focus panes.
             NO_PANE,  // neither pane.
             LEFT_PANE,  // left (tree view) pane.
@@ -140,6 +144,9 @@ public class DagBrowserPanel
           that the program is running.
           */
         { // DagBrowserPanel()
+          //setBackground( Color.CYAN ); /// ???
+          setOpaque( true ); /// ???
+
           buildDataModelsAndGraphsV();  // This is where the data is.
 
           setLayout(new BorderLayout());  // use BorderLayout manager.
@@ -236,9 +243,14 @@ public class DagBrowserPanel
           { // build viewJPanel.
             viewJPanel= new JPanel();  // construct viewJPanel.
             viewJPanel.setLayout(new BorderLayout());  // set layout manager.
+            //viewJPanel.setBackground( Color.CYAN ); ///???
+            //viewJPanel.setOpaque( true ); /// ???
             { // Build and add Current Working directoryJLabel.
               directoryJLabel= new JLabel();  // create CWD JLabel.
               directoryJLabel.setAlignmentX(Component.LEFT_ALIGNMENT);  // align it.
+              directoryJLabel.setBorder(
+                BorderFactory.createEtchedBorder(EtchedBorder.RAISED)
+                );
               // ??? Use left or center elipsis, not right, when truncating.
               viewJPanel.add(directoryJLabel,BorderLayout.NORTH);  // add as north sub-panel.
               } // Build and add Current Working directoryJLabel.
@@ -247,6 +259,8 @@ public class DagBrowserPanel
             { // Build and add infoJLabel for displaying file information.
               infoJLabel= new JLabel();  // construct it.
               infoJLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+              //infoJLabel.setBackground( Color.PINK ); ///???
+              infoJLabel.setOpaque( true ); /// ???
               infoJLabel.setText("UNDEFINED");  // report the present info string.
               viewJPanel.add(infoJLabel,BorderLayout.SOUTH);  // add as south sub-panel.
               } // Build and add infoJLabel for displaying file information.
@@ -269,7 +283,7 @@ public class DagBrowserPanel
               dataJScrollPane  // ...right scroller sub-panel.
               );
           theSplitPane.setContinuousLayout( true );  // Enable continuous layoug mode.
-          //theSplitPane.setDividerLocation( 0.25 );  // Set the position of split.
+          theSplitPane.setDividerLocation( 0.25 );  // Set the position of split.
           theSplitPane.setResizeWeight( 0.25 );  // Handle extra space
           viewJPanel.add(theSplitPane,BorderLayout.CENTER); // add TheJSplitPane as...
           }
@@ -283,6 +297,8 @@ public class DagBrowserPanel
           treeJScrollPane = new JScrollPane( );  // construct JScrollPane.
           treeJScrollPane.setMinimumSize( new Dimension( 0, 0 ) );
           treeJScrollPane.setPreferredSize( new Dimension( 400, 400 ) );
+          treeJScrollPane.getViewport().setOpaque( true );
+          treeJScrollPane.getViewport().setBackground( Color.GREEN );
           { // Build the JTree view for the JScrollPane.
             theRootJTree= new RootJTree(  // Construct the JTree with...
               theDataTreeModel,  // ...this model for tree data and...
@@ -315,7 +331,10 @@ public class DagBrowserPanel
             new JScrollPane( null );
           dataJScrollPane.setMinimumSize( new Dimension( 0, 0 ) );
           dataJScrollPane.setPreferredSize( new Dimension( 400, 400 ) );
-          dataJScrollPane.setBackground( Color.white );
+          //dataJScrollPane.setBackground( Color.white );
+          //dataJScrollPane.setOpaque( false );
+          dataJScrollPane.getViewport().setOpaque( true );
+          dataJScrollPane.getViewport().setBackground( Color.GRAY );
 
           replaceRightPanelContent(  // Replace null JScrollPane content...
             startTreePath  // ...with content based on startTreePath.
@@ -557,12 +576,13 @@ public class DagBrowserPanel
                 }
             }
 
-      /* TreePathListener code, for when TreePathEvent-s
-        happen in either the left or right panel.
-        This was based on TreeSelectionListener code.
-        For a while it used TreeSelectionEvent-s for 
-        passing TreePath data.
-        */
+      /* TreePathListener code.
+
+        /* This code is for when TreePathEvent-s happen in either the 
+          left or right panel.  This was based on TreeSelectionListener code.
+          For a while it used TreeSelectionEvent-s for 
+          passing TreePath data.
+          */
 
         private TreePathListener theTreePathListener= 
           new MyTreePathListener();
@@ -761,6 +781,8 @@ public class DagBrowserPanel
               } // build the scroller content.
             dataJScrollPane.setViewportView(  // in the dataJScrollPane's viewport...
               dataJComponent);  // ...set the DataJPanel for viewing.
+            dataJScrollPane.getViewport().setOpaque( true );
+            dataJScrollPane.getViewport().setBackground( Color.GRAY );
             dataJComponent.repaint();  // make certain it's displayed.
             oldPanelTreePath= inTreePath;  // Save path for compares later.
             } // replaceRightPanelContent(.)

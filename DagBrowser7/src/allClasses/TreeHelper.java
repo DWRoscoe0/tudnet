@@ -131,7 +131,7 @@ public class TreeHelper
       */
 
     // Constructors.
-    
+
       TreeHelper( JComponent inOwningJComponent, TreePath inWholeTreePath  )
         /* Constructs a TreeHelper.
           inWholeTreePath identifies the root of the Whole subtree to display.
@@ -148,7 +148,7 @@ public class TreeHelper
             // be a FocusListener for its owning JComponent.
           }
     
-      /*TreeHelper(   // ??? not used yet.  For when Part is not Whole child.
+      /* TreeHelper(   // ??? not used yet.  For when Part is not Whole child.
             JComponent inOwningJComponent, 
             TreePath inWholeTreePath,
             TreePath inPartTreePath
@@ -165,62 +165,62 @@ public class TreeHelper
             }
           */
 
-      // FocusListener code: registration, firing, and the interface.
+    // FocusListener code: registration, firing, and the interface.
 
-        /* This code implements the FocusListener interface.
-          It listens for FocusEvents and passes them on 
-          to other FocusListener-s.
-          It can be used to let TreeHelper-s objects manage focus events.
-          This can be helpful because the owningJComponent can have
-          nested JComponents which get focus instead of the owningJComponent.
+      /* This code implements the FocusListener interface.
+        It listens for FocusEvents and passes them on 
+        to other FocusListener-s.
+        It can be used to let TreeHelper-s objects manage focus events.
+        This can be helpful because the owningJComponent can have
+        nested JComponents which get focus instead of the owningJComponent.
+        */
+
+      private Vector<FocusListener> focusListenerVector =   // Listeners.
+        new Vector<FocusListener>();
+
+      public void addFocusListener( FocusListener listener ) 
+        {
+          if ( listener != null && 
+              !focusListenerVector.contains( listener ) 
+              )
+            focusListenerVector.addElement( listener );
+          }
+
+      public void removeFocusListener(FocusListener listener)
+        {
+          if ( listener != null )
+            focusListenerVector.removeElement( listener );
+          }
+
+      public void focusGained(FocusEvent theFocusEvent)
+        /* This interface method simply passes 
+          the event and the call to other listeners.
           */
+        {
+          Enumeration<FocusListener> listeners = 
+            focusListenerVector.elements();
+          while ( listeners.hasMoreElements() ) 
+            {
+              FocusListener listener = 
+                (FocusListener)listeners.nextElement(); // caste ???
+              listener.focusGained( theFocusEvent );
+              }
+          }
 
-        private Vector<FocusListener> focusListenerVector =   // Listeners.
-          new Vector<FocusListener>();
-
-        public void addFocusListener( FocusListener listener ) 
-          {
-            if ( listener != null && 
-                !focusListenerVector.contains( listener ) 
-                )
-              focusListenerVector.addElement( listener );
-            }
-
-        public void removeFocusListener(FocusListener listener)
-          {
-            if ( listener != null )
-              focusListenerVector.removeElement( listener );
-            }
-
-        public void focusGained(FocusEvent theFocusEvent)
-          /* This interface method simply passes 
-            the event and the call to other listeners.
-            */
-          {
-            Enumeration<FocusListener> listeners = 
-              focusListenerVector.elements();
-            while ( listeners.hasMoreElements() ) 
-              {
-                FocusListener listener = 
-                  (FocusListener)listeners.nextElement(); // caste ???
-                listener.focusGained( theFocusEvent );
-                }
-            }
-
-        public void focusLost(FocusEvent theFocusEvent)
-          /* This interface method simply passes 
-            the event and the call to other listeners.
-            */
-          { 
-            Enumeration<FocusListener> listeners = 
-              focusListenerVector.elements();
-            while ( listeners.hasMoreElements() ) 
-              {
-                FocusListener listener = 
-                  (FocusListener)listeners.nextElement();
-                listener.focusLost( theFocusEvent );
-                }
-            }
+      public void focusLost(FocusEvent theFocusEvent)
+        /* This interface method simply passes 
+          the event and the call to other listeners.
+          */
+        { 
+          Enumeration<FocusListener> listeners = 
+            focusListenerVector.elements();
+          while ( listeners.hasMoreElements() ) 
+            {
+              FocusListener listener = 
+                (FocusListener)listeners.nextElement();
+              listener.focusLost( theFocusEvent );
+              }
+          }
 
     // KeyListener methods.
     
@@ -521,23 +521,23 @@ public class TreeHelper
               } // Update TreePath variables using the new value.
           }
 
-      private void setWholeWithPartAutoSelectV(TreePath inTreePath)
-        /* This method sets the Whole variables from inTreePath
-          and sets the Part also to the most recently
-          selected child of the Whole, if there is one.
-          It is presently called only by a TreeHelper constructor,
-          which constructs using a Whole TreePath.
-          */
-        {
-          if (inTreePath != null)  // TreePath is not null.
-            { // Set things from inTreePath.
-              setWholeV( inTreePath );  // Save Whole TreePath no
-              DataNode childDataNode=  // Calculate best child.
-                findBestChildDataNode(inTreePath);
-              if (childDataNode != null)  // There is an accessible child.
-                setPartDataNodeV( childDataNode );  // Store it.
-              } // Set things from inTreePath.
-          }
+        private void setWholeWithPartAutoSelectV(TreePath inTreePath)
+          /* This method sets the Whole variables from inTreePath
+            and sets the Part also to the most recently
+            selected child of the Whole, if there is one.
+            It is presently called only by a TreeHelper constructor,
+            which constructs using a Whole TreePath.
+            */
+          {
+            if (inTreePath != null)  // TreePath is not null.
+              { // Set things from inTreePath.
+                setWholeV( inTreePath );  // Save Whole TreePath no
+                DataNode childDataNode=  // Calculate best child.
+                  findBestChildDataNode(inTreePath);
+                if (childDataNode != null)  // There is an accessible child.
+                  setPartDataNodeV( childDataNode );  // Store it.
+                } // Set things from inTreePath.
+            }
 
       private DataNode findBestChildDataNode(TreePath inTreePath)
         /* This method finds a child for autoselect.
@@ -693,20 +693,20 @@ public class TreeHelper
           setSelectionAndNotifyListenersV( inTreePath );
           }  
 
-        protected void setPartDataNodeV( DataNode inDataNode )
-          /* This method sets the Part DataNode to be inDataNode.
-            It updates other variables appropriately.
-            It also notifies any TreePathListener about it.
-            This method no longer uses the Whole variables.
-            */
-          {
-            TreePath childTreePath= // Calculate child TreePath to be...
-              ///theWholeTreePath  // ...the base TreePath with...
-              thePartTreePath  // ...present path's...
-                .getParentPath()  // ...parent with...
-                .pathByAddingChild( inDataNode );  // ...new child added.
-            setPartTreePathB( childTreePath );  // Set Part TreePath.
-            }
+      protected void setPartDataNodeV( DataNode inDataNode )
+        /* This method sets the Part DataNode to be inDataNode.
+          It updates other variables appropriately.
+          It also notifies any TreePathListener about it.
+          This method no longer uses the Whole variables.
+          */
+        {
+          TreePath childTreePath= // Calculate child TreePath to be...
+            ///theWholeTreePath  // ...the base TreePath with...
+            thePartTreePath  // ...present path's...
+              .getParentPath()  // ...parent with...
+              .pathByAddingChild( inDataNode );  // ...new child added.
+          setPartTreePathB( childTreePath );  // Set Part TreePath.
+          }
 
     // TreePathListener code for adding, removing, and triggering them.
 

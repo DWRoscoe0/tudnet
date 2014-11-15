@@ -1,15 +1,24 @@
 package allClasses;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 
+import javax.swing.BorderFactory;
+//import javax.swing.BoxLayout;
 import javax.swing.DefaultListCellRenderer;
+import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingConstants;
+import javax.swing.border.Border;
+import javax.swing.border.EtchedBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 //import javax.swing.event.TreeSelectionEvent;
@@ -54,6 +63,8 @@ public class TitledListViewer // adapted from TitledListViewer.
 
       JList<Object> theJList;  // Component with the content.
 
+      Color backgroundColor;  ////???
+
     // constructor and related methods.
 
       public TitledListViewer( TreePath inTreePath, TreeModel inTreeModel )
@@ -63,20 +74,45 @@ public class TitledListViewer // adapted from TitledListViewer.
           The last DataNode in the path is that object.
           */
         { // TitledListViewer(.)
-          super();   // Call constructor inherited from JList<Object>.
-            // TreePath will be calculated and set later.
-
-          theJList= new JList<Object>();  // Construct JList.
-          add(theJList); // Add it to main JPanel.
+          super();   // Call constructor inherited from JPanel.
 
           { // Prepare the helper object.
             aTreeHelper=  // Construct helper class instance.
                 new TreeHelper( this, inTreePath );  // Note, subject not set yet.
             } // Prepare the helper object.
 
+          backgroundColor= getBackground();  // Saving background for later use.
+          setLayout( new BorderLayout() );
+          //setLayout( new BoxLayout( this, BoxLayout.Y_AXIS ) );
+          
+          JLabel titleJLabel= new JLabel(
+            //"TEST-TITLE"
+            aTreeHelper.getWholeDataNode().GetNameString( )
+            );
+          //titleJLabel.setBackground( Color.RED );
+          titleJLabel.setOpaque( true );
+          Font labelFont= titleJLabel.getFont();
+          titleJLabel.setFont( labelFont.deriveFont( labelFont.getSize() * 1.5f) );
+          //titleJLabel.setAlignmentX( Component.CENTER_ALIGNMENT );
+          titleJLabel.setHorizontalAlignment( SwingConstants.CENTER );
+          Border raisedetched = BorderFactory.createEtchedBorder(EtchedBorder.RAISED);
+          titleJLabel.setBorder(raisedetched);
+          add(titleJLabel,BorderLayout.NORTH); // Adding it to main JPanel.
+          
+          theJList= new JList<Object>();  // Construct JList.
+          add(theJList,BorderLayout.CENTER); // Adding it to main JPanel.
+          //add(theJList); // Adding it to main JPanel.
+
           InitializeTheJList( inTreeModel );
           } // TitledListViewer(.)
 
+      public void setPreferredSize( Dimension inDimension ) /// ???
+        // Do this so theJList will be full width.
+        {
+          super.setPreferredSize( inDimension );
+          theJList.setPreferredSize( inDimension );
+          }
+      
       private void InitializeTheJList( TreeModel inTreeModel )
         /* This grouping method creates and initializes the JList.  */
         { // InitializeTheJList( )
@@ -250,7 +286,7 @@ public class TitledListViewer // adapted from TitledListViewer.
       private ListCellRenderer TheListCellRenderer=
         new ListCellRenderer(); // for custom cell rendering.
     
-      public static class ListCellRenderer
+      public class ListCellRenderer
         extends DefaultListCellRenderer
         /* This small helper class extends the method 
           getTableCellRendererComponent() which is 
@@ -275,12 +311,15 @@ public class TitledListViewer // adapted from TitledListViewer.
                   );
               { // Making color adjustments based on various state.
                 if ( ! isSelected )  // cell not selected.
-                  RenderComponent.setBackground(list.getBackground());
+                  //RenderComponent.setBackground(list.getBackground());
+                    // This returns white!
+                  RenderComponent.setBackground( backgroundColor );
+                  //RenderComponent.setBackground( Color.YELLOW );
                 else if ( ! list.isFocusOwner() )  // selected but not focused.
                   RenderComponent.setBackground( list.getSelectionBackground() );
                 else  // both selected and focused.
-                  //RenderComponent.setBackground( Color.GREEN ); // be distinctive.
-                  RenderComponent.setBackground( Color.RED); // for test.
+                  RenderComponent.setBackground( Color.GREEN ); // be distinctive.
+                  //RenderComponent.setBackground( Color.PINK); // for developing.
                 }
               return RenderComponent;
               }

@@ -34,8 +34,11 @@ public class ListViewer
     Eventually it might be a good idea to create 
     a static or intermediate base class that handles common operations.
 
-    ??? It appears that JList<Object> implements many keyboard commands,
+    ?? It appears that JList<Object> implements many keyboard commands,
     so these have been removed from KeyListener.keyPressed(KeyEvent).
+    
+    ??? This class is no longer needed,
+    having been replaced by TitledListViewere.
     */
     
   { // ListViewer
@@ -84,7 +87,7 @@ public class ListViewer
               );
             addKeyListener(aTreeHelper);  // TreeHelper does KeyEvent-s.
             addMouseListener(aTreeHelper);  // TreeHelper does MouseEvent-s.
-            addFocusListener(this);  // listen to repaint on focus events.???
+            addFocusListener(this);  // listen to repaint on focus events.??
             getSelectionModel().  // This does ListSelectionEvent-s.
               addListSelectionListener(this);
             } // Set the user input event listeners.
@@ -109,47 +112,7 @@ public class ListViewer
           setSelectionInterval( IndexI, IndexI );  // set selection using final resulting index.
           }  // setJListSelection()
 
-      /* ???
-      private void selectRowV(TreePath inTreePath) //??? being adapted.
-        /* This helper method selects the row in the JTable 
-          associated with inTreePath, if possible.
-          It must be a sibling of the present part TreePath.
-          Note, changing the JTable selection might trigger a call to 
-          internal method ListSelectionListener.valueChanged().
-          Otherwise it does nothing.
-          */
-      /* ???
-        { // selectTableRowV()
-          toReturn: {
-            if ( inTreePath == null )  // Path is null.
-              break toReturn;  // Exit without selecting.
-            DataNode inDataNode=  // Translate TreePath to DataNode.
-              (DataNode)inTreePath.getLastPathComponent();
-            if ( inDataNode == null )  // There is no selection.
-              break toReturn;  // Exit without selecting.
-            if (   // New path not is sibling of old one because...
-                ! aTreeHelper.getWholeTreePath( ).  // ...whole path isn't...
-                   equals( inTreePath.getParentPath() )  // ...parent of new.
-                  )
-              break toReturn;  // Exit without selecting.
-            int IndexI;  // Allocate index.
-            { // Calculate new path's child's index.
-              IndexI= // try to get index of selected child.
-                aTreeHelper.getWholeDataNode().getIndexOfChild( inDataNode );
-              //if ( IndexI < 0 )  // force index to 0 if child not found.
-              //  IndexI= 0;
-              } // Calculate new path's child's index.
-            //setSelectionInterval(  // Selection row as interval...
-            //  IndexI, IndexI  // ...with same start and end row index.
-            //  );
-            selectRowV(IndexI); //??? being adapted.
-          } // toReturn ends.
-            return;
-
-          }  // selectTableRowV()
-      */
-
-      private void selectRowV(int IndexI) //??? being adapted.
+      private void selectRowV(int IndexI) //?? being adapted.
         {
           if ( IndexI < 0 )  // force index to 0 if child not found.
             IndexI= 0;
@@ -226,7 +189,7 @@ public class ListViewer
 
     // interface TreeAware code for TreeHelper access.
 
-			private TreeHelper aTreeHelper;  // helper class ???
+			private TreeHelper aTreeHelper;  // helper class
 
 			public TreeHelper getTreeHelper() { return aTreeHelper; }
 
@@ -261,7 +224,7 @@ public class ListViewer
                 }
             }
 
-      /* ???
+      /* ??
       public TreePath getWholeTreePath()
         { 
           return aTreeHelper.getWholeTreePath();
@@ -314,7 +277,7 @@ public class ListViewer
                 else  // both selected and focused.
                   RenderComponent.setBackground( Color.GREEN ); // be distinctive.
                 }
-              // RenderComponent.setBackground(Color.RED);  // ???
+              // RenderComponent.setBackground(Color.RED);  // ??
               return RenderComponent;
               }
 

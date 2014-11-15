@@ -160,11 +160,14 @@ public class DataTreeModel
             return TheNameString;
             }
 
+        private static String spacyFileSeperator= " "+File.separator+" ";
+
         public String GetAbsolutePathString(TreePath inTreePath)
           /* Returns String representation of TreePath inTreePath.  
-            ??? It is being modified to handle illegal TreePath values:
-            * null
-            * a reference to a pseudo-parent sentinal TreePath.
+            ??? Maybe rewrite to be recursive so that 
+            java-optimized += String operation can be used,
+            maybe with StringBuilder with an initial capacity based on
+            previous value of path String being calculated.
             */
           { // GetAbsolutePathString(.)
             String resultString= "";  // Initializing resultString to empty.
@@ -183,19 +186,21 @@ public class DataTreeModel
                     resultString= lastDataNode.GetNameString();
                   break;
                   }
-              String LastNameString=  // Get its name.
+              String headString=  // Making head string be path element name.
                 lastDataNode.GetNameString();
-              if  // Add seperator character to resultString if needed,...
-                ( resultString.length() != 0)  // ...if it is not empty...
-                resultString=  // ...by prepending...
-                  File.separator +  // ...the standard File seperator...
-                  resultString;  // ...to the resultString.
-              resultString=  // Prepend...
-                LastNameString +  // ...the element name String...
+              if  // Appending separator to headString if needed,...
+                ( resultString.length() != 0)  // ...if result String is not empty...
+                headString+=  // ...by appending to the head String...
+                  spacyFileSeperator; // ...the File separator string.
+              resultString=  // Prepending...
+                headString +  // ...the head String...
                 resultString;  // ...to the resultString.
-              inTreePath=  // Replace the TreePath...
+              inTreePath=  // Replacing the TreePath...
                 inTreePath.getParentPath();  // ...by its parent TreePath.                
               }
+            resultString=  // Prepend...
+              "  " +  // ...some space for looks..
+              resultString;  // ...to the resultString.
             return resultString;  // Return completed resultString.
             } // GetAbsolutePathString(.)
 
