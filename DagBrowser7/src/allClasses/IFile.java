@@ -241,7 +241,7 @@ public class IFile
             else  // file is neither.
               { // Handle unreadable folder or device.
                 resultJComponent=  // calculate a blank JPanel DagNodeViewer.
-                  new TextViewer( 
+                  new TitledTextViewer( 
                     inTreePath, 
                     inTreeModel, 
                     "\n\n    UNREADABLE AS FILE OR FOLDER\n" 
@@ -263,7 +263,7 @@ public class IFile
 
           IFile inIFile= (IFile)inTreePath.getLastPathComponent();
 
-          return new TextViewer( inTreePath, inTreeModel, inIFile );
+          return new TitledTextViewer( inTreePath, inTreeModel, inIFile );
           
           }  // JComponentForJTextAreaFrom(inIFile)
           

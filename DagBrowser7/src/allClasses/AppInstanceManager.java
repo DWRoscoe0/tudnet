@@ -14,9 +14,7 @@ import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
-//import java.util.Arrays;
 
-//import static java.util.logging.Level.SEVERE;
 import static allClasses.Globals.*;  // appLogger;
 
 public class AppInstanceManager {
@@ -44,21 +42,22 @@ public class AppInstanceManager {
 
     Presently if this manager wants this app to exit, 
     it calls exit(0) after calling doShutdown().
-    This work in the Infogora.
-    But it might be better to actually return from 
+    This work but it might be better to actually return from 
     managingInstancesThenNeedToExitB(), which
     would then call doShutdown() and exit normally.
-    
-    !!! setJavaCommandForExitV(..) now expects exit(0) to trigger exec(..),
-    but it no longer does.  
-    
+
+    ??? Eliminate redundant manipulation of argStrings left over from
+    before it was passed into constructor.
+
     ??? Write a state-machine description summarizing the entire process.
+    
+    ??? Finish partial conversion to state-machine state naming conventions.
     
     ??? One running instance can start another by using either:
     * Java Runtime.exec(..)
     * Java ProcessBuild.start()
 
-    ??? This code needs to be more robust.
+    ??? This code should  be more robust.
     It needs to handle when the socket link is not working.
     Maybe if indications are that there is no older app instance
     it launches another instance of itself, 
@@ -67,13 +66,40 @@ public class AppInstanceManager {
     To be extra safe against intentional errors as well as
     unintentional ones, it might make sense to have a special
     configuration file used only for instance [and update] management.
-    
-    ??? Finish partial conversion to state-machine state naming conventions.
     */
 
-  private static File thisAppFile= null;  // This running app's file name.
+  /* Old Singleton code.  This is made thread-safe and fast with the
+    Initialization on Demand Holder (IODH) idiom.
+    */
 
-  private static File standardAppFile= null;  // Standard folder's...
+  private Shutdowner theShutdowner;
+
+  public AppInstanceManager(  // Constructor.  was private for Singleton.
+      String[] inArgStrings,
+      Shutdowner theShutdowner
+      )
+    {
+      this.theShutdowner= theShutdowner;
+
+      identifyAppFilesV(   // Identifying file containing this app.
+        inArgStrings  
+        );
+
+      URI thisAppURI = null;
+      try {
+          thisAppURI = DagBrowser.class.getProtectionDomain().
+            getCodeSource().getLocation().toURI();
+        } catch (URISyntaxException e1) {
+          // TODO Auto-generated catch block
+          e1.printStackTrace();
+        }
+      thisAppFile= new File( thisAppURI );
+      standardAppFile= AppFolders.resolveFile( "DagBrowser.jar" );
+      }
+
+  private File thisAppFile= null;  // This running app's file name.
+
+  private File standardAppFile= null;  // Standard folder's...
     // ...app's file name.
 
   /* Variables about the candidate/app, if any.
@@ -82,15 +108,13 @@ public class AppInstanceManager {
     from an app that was run while this running app was active.
     */
 
-    private static String[] argStrings= null;  // Array of all arguments.
+    private String[] argStrings= null;  // Array of all arguments.
 
-    private static File argAppFile= null;  // First arg as a File name.
+    private File argAppFile= null;  // First arg as a File name.
   
-  private static ServerSocket instanceServerSocket = null;
+  private ServerSocket instanceServerSocket = null;
 
-  public static boolean managingInstancesThenNeedToExitB( 
-      String[] inArgStrings 
-      )
+  public boolean managingInstancesThenNeedToExitB( )
     /* This main method manages both Running and File instances of the app.
       inArgStrings is an array of strings which was used 
       to start this app instance and might contain information 
@@ -104,12 +128,12 @@ public class AppInstanceManager {
       */
     {
       appLogger.info(  // Logging app jar file information.
-        "App jar file is dated " + AppInstanceManager.thisAppDateString()
+        "App jar file is dated " + thisAppDateString()
         );
 
-  	  identifyAppFilesV(   // Identifying file containing this app.
-        inArgStrings  
-        );
+  	  //identifyAppFilesV(   // Identifying file containing this app.
+      //  inArgStrings  
+      //  );
       
       boolean appShouldExitB= true;  // Set default return for app exit.
 
@@ -125,7 +149,7 @@ public class AppInstanceManager {
       return appShouldExitB;  // Return whether app should exit.
       }
 
-  public static void tryExitForChainToUpdateFromNewerArgAppV()
+  public void tryExitForChainToUpdateFromNewerArgAppV()
     /* If this app is the app in the standard folder.
       and the arg app is newer than this app,
       then exit and run the arg app.
@@ -154,7 +178,7 @@ public class AppInstanceManager {
         }
       }
 
-  private static boolean updaterApprovedB()
+  private boolean updaterApprovedB()
     /* If this app is the app in the standard folder.
       and the arg app is newer that this app,
       then return true,
@@ -184,27 +208,27 @@ public class AppInstanceManager {
       return resultB;
       }
     
-  private static void identifyArgsV( String[] inArgStrings )
+  private void identifyArgsV( String[] inArgStrings )
     /* This method saves inArgStrings, the arguments used to run this app.
       By convention 
-      ???* arg0 is the path to the file containing this app.
-      ???* arg1 is the path to the file containing the app which ran this app.
+      * arg0 is the path to the file containing this app.
+      * arg1 is the path to the file containing the app which ran this app.
       It calculates argAppFile from that.
       For now the other arguments are unused.
       */
     {
       argStrings= inArgStrings;
       if  // Extract calling app if there is one.
-        (AppInstanceManager.argStrings.length>0)
+        (argStrings.length>0)
 	      {
 		      argAppFile= new File(argStrings[0]);  // Convert string to File.
 	      	}
       }
 
-  private static void identifyAppFilesV( String[] inArgStrings )
+  private void identifyAppFilesV( String[] inArgStrings )
     /* This method determines the jar file from which this app was loaded,
       and the jar file that should contain the app in the standard folder.
-      ??? inArgStrings.readString
+      ?? inArgStrings.readString
       */
     {
       identifyArgsV( inArgStrings );  // Save arg string[s].
@@ -213,14 +237,14 @@ public class AppInstanceManager {
 
   // Running Instance management code.
 
-    private static AppInstanceListener theAppInstanceListener= // Listener ...
+    private AppInstanceListener theAppInstanceListener= // Listener ...
       null;  // ...to perform an action if desired.
 
     public static final int INSTANCE_FLAG_PORT = 
       PortManager.getDiscoveryPortI();
       // 56944;  // A high number I chose at random.
     
-    public static boolean managingRunningInstancesThenNeedToExitB( )
+    public boolean managingRunningInstancesThenNeedToExitB( )
       /* Normally this method is called at app start-up.
         It detects whether there is an older running instance
         by trying to open a particular network socket.
@@ -255,17 +279,19 @@ public class AppInstanceManager {
             // ...on the socket just opened.
             } // Setup InstanceManagerThread.
 
-          Shutdowner.addShutdownerListener(new ShutdownerListener() {
-            public void doMyShutdown() 
-            {
-              try {
-                instanceServerSocket.close();
-              } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-              } // Close flag socket.
-              }
-            });
+          ///Shutdowner.getShutdowner().addShutdownerListener(
+          theShutdowner.addShutdownerListener(
+            new ShutdownerListener() {
+              public void doMyShutdown() 
+              {
+                try {
+                  instanceServerSocket.close();
+                } catch (IOException e) {
+                  // TODO Auto-generated catch block
+                  e.printStackTrace();
+                } // Close flag socket.
+                }
+              });
           ; // Leave appShouldExitB false for no app exit.
         } catch (UnknownHostException e) { // Error.  What produces this??
           appLogger.severe( "error:"+e.getMessage()+ e );
@@ -280,7 +306,7 @@ public class AppInstanceManager {
       return appShouldExitB;  // Return whether or not app should exit.
       }
 
-    private static boolean sendPathInPacketB( )
+    private boolean sendPathInPacketB( )
       /* This managingRunningInstancesThenNeedToExitB(..) sub-method 
         tries to send this app's path
         to an existing older running app instance via the socket
@@ -318,18 +344,18 @@ public class AppInstanceManager {
         }
       }
 
-    public static void setAppInstanceListener(AppInstanceListener listener) 
+    public void setAppInstanceListener(AppInstanceListener listener) 
       {
         theAppInstanceListener = listener;
         }
 
-    private static void fireNewInstance() 
+    private void fireNewInstance() 
       {
         if (theAppInstanceListener != null) 
           theAppInstanceListener.newAppInstanceCreated();
         }
 
-    static class InstanceManagerThread extends Thread
+    class InstanceManagerThread extends Thread
       /* This class contains the run() method which waits for
         messages from other running app instances and processes them.  */
       {
@@ -370,29 +396,13 @@ public class AppInstanceManager {
                   socketClosed = true;
                 }
               }
+              }
             }
-          }
-      }
+        }
 
   // File Instance management code.
 
-    static  // Some class initialiation code.
-      {
-        URI thisAppURI = null;
-        try {
-          thisAppURI = DagBrowser.class.getProtectionDomain().
-            getCodeSource().getLocation().toURI();
-        } catch (URISyntaxException e1) {
-          // TODO Auto-generated catch block
-          e1.printStackTrace();
-        }
-        thisAppFile= new File( thisAppURI );
-
-        standardAppFile= AppFolders.resolveFile( "DagBrowser.jar" );
-
-        }
-
-    private static boolean managingFileInstancesThenNeedToExitB( )
+    private boolean managingFileInstancesThenNeedToExitB( )
       /* Normally this method is called at app start-up,
         but only if there is not another running instance.
         It begins the process of checking for and installing or updating
@@ -442,7 +452,7 @@ public class AppInstanceManager {
         return appShouldExitB;  // Return whether or not app should exit.
         }
 
-    private static boolean runningAppIsStandardAppB()
+    private boolean runningAppIsStandardAppB()
       /* If the file of the running instance app
         is the same as the app file in the standard folder 
         then return true, otherwise return false.
@@ -451,7 +461,7 @@ public class AppInstanceManager {
         return thisAppFile.equals( standardAppFile );
         }
 
-    private static void tryExitForInstallToStandardFolderV()
+    private void tryExitForInstallToStandardFolderV()
       /* If the standard folder has no app in it then this method 
         copies the jar file of the running app to the standard folder,
         exits this app, and runs the installed app.
@@ -466,7 +476,7 @@ public class AppInstanceManager {
             }
         }
 
-    private static void tryExitForUpdateToStandardFolderV()
+    private void tryExitForUpdateToStandardFolderV()
       /* If the standard folder has an app jar file in it,
         but it is older than the running app,
         then this method updates it by replacing 
@@ -484,7 +494,7 @@ public class AppInstanceManager {
             }
         }
 
-    private static void tryExitForChainToIdenticalAppInStandardFolderV()
+    private void tryExitForChainToIdenticalAppInStandardFolderV()
       /* If the running app is not in the standard folder,
         but it appears identical to the one in the standard folder,
         then this method exits this app, 
@@ -502,7 +512,7 @@ public class AppInstanceManager {
               }
         }
 
-    private static void tryExitForChainToApprovedUpdaterV()
+    private void tryExitForChainToApprovedUpdaterV()
       /* If this app is the app in the standard folder.
         and the arg app is newer that this app,
         then run the arg app.
@@ -520,7 +530,7 @@ public class AppInstanceManager {
             }
         }
 
-    private static void copyAppToStandardFolderAndChainToIt()
+    private void copyAppToStandardFolderAndChainToIt()
       /* This method tries to copy this app's jar file 
         to the standard folder, start it as a Process, and exit.
         If copying fails it keeps retrying unless the thread
@@ -559,7 +569,7 @@ public class AppInstanceManager {
                     }
         }
     
-    private static void setJavaCommandAndExitV( String argString )
+    private void setJavaCommandAndExitV( String argString )
       /* This method is equivalent to a 
         setJavaCommandForExitV( argString )
         followed by exit(0).
@@ -568,14 +578,15 @@ public class AppInstanceManager {
       {
         setJavaCommandForExitV( argString );  // Setting up command.
 
-        Shutdowner.doShutdown();  // Starting command just setup.
+        ///Shutdowner.getShutdowner().doShutdown();  // Starting that command.
+        theShutdowner.doShutdown();  // Starting that command.
 
         //System.out.println( "Calling exit(0).");
         System.exit(0);  // Exitting.
           // Before this would use ShutdownHook to trigger command.
         }
 
-    private static void setJavaCommandForExitV
+    private void setJavaCommandForExitV
       ( String argString )
       /* This method sets up the execution of a runnable jar file 
         whose name is JarFilePathString as a Process.  
@@ -602,14 +613,15 @@ public class AppInstanceManager {
         commandOrArgStrings[3]=  // Store path of this app;s .jar.
           thisAppFile.getAbsolutePath();  
 
-        Shutdowner.setCommandV(  // Set resulting String array as command.
+        ///Shutdowner.getShutdowner().setCommandV(  // Setting String as command.
+        theShutdowner.setCommandV(  // Setting String as command.
           commandOrArgStrings
           );
         }
 
   // Other miscellaneous code.
 
-    private static void logInputsV()
+    private void logInputsV()
       {
         String logStriing= "";  //Declare and initialize string to be logged.
         { // Add parts to the string to be logged.
@@ -624,7 +636,7 @@ public class AppInstanceManager {
         appLogger.info( logStriing );  // Log the completed String.
         }
 
-    public static String thisAppDateString()
+    public String thisAppDateString()
       /* Returns the lastModified time of this app's jar file as a String.  
         This is for use in appending to names of old versions of files
         so that they can all be stored in the same folder,

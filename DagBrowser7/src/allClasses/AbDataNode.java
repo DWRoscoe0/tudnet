@@ -43,7 +43,7 @@ public abstract class AbDataNode
 
           }
       
-    // DataNode interface methods.
+    // DataNode interface instance methods.
   
       public boolean isLeaf( ) 
         /* Returns false, because most nodes are not leaves.  */
@@ -163,24 +163,24 @@ public abstract class AbDataNode
           return toString();  // Return default String representation.
           }
     
-      public JComponent GetDataJComponent
-        ( TreePath inTreePath, TreeModel inTreeModel )
+      public JComponent GetDataJComponent( 
+          TreePath inTreePath, TreeModel inTreeModel 
+          )
         /* Returns a JComponent which is appropriate for viewing
-          and possibly changing its associated DataNode, 
-          using context from inTreeModel.
+          its associated DataNode, using context from inTreeModel.
           It returns a TextViewer for leaves and 
           a ListViewer for non-leaves.
-          The DataNode is defined by inTreePath,
+          The DataNode should be the last element of inTreePath,
           */
         { // GetDataJComponent()
           JComponent resultJComponent= null;  // For result.
 
           if ( isLeaf( ) )  // This DataNode is a leaf.
             resultJComponent= // Set result to be a TextViewer JComponent.
-              new TextViewer( 
+              new TitledTextViewer( 
                 inTreePath, 
                 inTreeModel, 
-                "Leaf Object: "+GetHeadString() 
+                "Leaf Object: "+GetHeadString() // Normally not seen.
                 );
             else  // This DataNode is NOT a leaf.
             resultJComponent= // Set result for exploring a List.

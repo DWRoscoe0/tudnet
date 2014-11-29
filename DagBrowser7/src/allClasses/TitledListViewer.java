@@ -39,10 +39,10 @@ public class TitledListViewer // adapted from TitledListViewer.
     , TreeAware
     /// , TreePathListener
   
-  /* This experimental class is being developed from,
-    and is intended to replace, the TitledListViewer class.
-    It can be developed and tested without disrupting other code by 
-    temporarilly replacing single TitledListViewer references to 
+  /* This class was developed from, and is intended to replace, 
+    the ListViewer class.
+    It was developed and tested without disrupting other code by 
+    temporarilly replacing single ListViewer references to 
     TitledListViewer references for the duration of the test.
 
     This class provides a simple titled DagNodeViewer that 
@@ -60,6 +60,8 @@ public class TitledListViewer // adapted from TitledListViewer.
     // variables, most of them.
   
       /// private static final long serialVersionUID = 1L;
+
+      JLabel titleJLabel;  // Label with the title.
 
       JList<Object> theJList;  // Component with the content.
 
@@ -85,7 +87,7 @@ public class TitledListViewer // adapted from TitledListViewer.
           setLayout( new BorderLayout() );
           //setLayout( new BoxLayout( this, BoxLayout.Y_AXIS ) );
           
-          JLabel titleJLabel= new JLabel(
+          titleJLabel= new JLabel(
             //"TEST-TITLE"
             aTreeHelper.getWholeDataNode().GetNameString( )
             );

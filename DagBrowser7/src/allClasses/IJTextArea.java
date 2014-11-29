@@ -19,7 +19,14 @@ public class IJTextArea
   implements FocusListener
 
   {
+    /* This class adds a few features to JTextArea.
+
+      ??? Use StringBuilder to make long files load and display faster.
+      The append(..) method is quite slow.
+      */
+
     private static final long serialVersionUID = 1L;
+    private Color backgroundColor= null;  // null means default.
 
     // constructors.
       
@@ -27,17 +34,12 @@ public class IJTextArea
         {
           super( StringIn );  // Construct superclass with text StringIn.
           
-          setEditable(false);  // allow user to read only.
-          addFocusListener(this);
-
+          commonInitializationV();
           }
-      
+
       public IJTextArea(File InFile)
         {
           super( );  // Construct superclass without any content yet.
-          
-          setEditable(false);  // allow user to read only.
-          addFocusListener(this);
 
           { // Read in file to JTextArea.
             String LineString;  // temporary storage for file lines.
@@ -62,9 +64,20 @@ public class IJTextArea
             catch (Exception ReaderException){
               // System.out.println("error reading file! " + ReaderException);
             	append("\nError reading file!\n\n" + ReaderException + "\n");
-              setBackground(Color.PINK);  // Indicate error with color.
-              } // Read in file to JTextArea.
-            }
+              backgroundColor= Color.PINK;  // Overriding color for error.
+              }
+            } // Read in file to JTextArea.
+
+          commonInitializationV();
+          }
+
+      private void commonInitializationV()
+        {
+          setEditable(false);  // allow user to read only.
+          addFocusListener(this);
+          setBackground(backgroundColor);  // revert to default color.
+          // setLineWrap(true);  This doesn't work well.
+          setCaretPosition(0);  // Put caret at beginning of text.
           }
       
     // FocusListener methods, to change color when focused.
@@ -78,7 +91,7 @@ public class IJTextArea
       @Override
       public void focusLost(FocusEvent arg0) 
         {
-          setBackground(null);  // revert to default color.
+          setBackground(backgroundColor);  // revert to default color.
           }
 
     }

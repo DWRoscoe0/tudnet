@@ -128,7 +128,7 @@ public class DataTreeModel
                 //  inTreePath,
                 //  new IJTextArea( "GetDataJComponent : "+e)
                 //  );
-                new TextViewer( inTreePath, this, "GetDataJComponent : "+e );
+                new TitledTextViewer( inTreePath, this, "GetDataJComponent : "+e );
               }
             return ResultJComponent;
             } // GetDataJComponent.

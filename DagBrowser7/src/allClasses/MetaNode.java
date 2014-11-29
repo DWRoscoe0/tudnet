@@ -186,8 +186,8 @@ public class MetaNode extends IDNumber
             rwMetaNode( inMetaFile, inMetaNode, parentMetaNode );
           if  // Reprocess child MetaNodes if these conditions are true.
             ( 
-              ( inMetaFile.getRwStructure() == MetaFile.RwStructure.FLAT ) &&
-              ( inMetaFile.getMode() != MetaFile.Mode.LAZY_LOADING )
+              ( inMetaFile.getRwStructure() == MetaFileManager.RwStructure.FLAT ) &&
+              ( inMetaFile.getMode() != MetaFileManager.Mode.LAZY_LOADING )
               )
             inMetaNode.theMetaChildren.rwRecurseFlatV(  // Process the children...
               inMetaFile,  // ...with inMetaFile...
@@ -216,7 +216,7 @@ public class MetaNode extends IDNumber
           What is does next depends on context.
           If the following condition is met:
           * The MetaNode's IDNumber is equal to inIDNumber, and
-          * ( inMetaFile.getMode() != MetaFile.Mode.LAZY_LOADING )
+          * ( inMetaFile.getMode() != MetaFileManager.Mode.LAZY_LOADING )
           then it reads and attaches all its associated descendants.
 
           It returns the first MetaNode it read,
@@ -227,7 +227,7 @@ public class MetaNode extends IDNumber
             rwMetaNode( inMetaFile, null, ParentMetaNode );
           if  // Read and attach descendants if it satisfies 2 conditions.
             ( ( inIDNumber.getTheI() == resultMetaNode.getTheI() ) &&
-              ( inMetaFile.getMode() != MetaFile.Mode.LAZY_LOADING )
+              ( inMetaFile.getMode() != MetaFileManager.Mode.LAZY_LOADING )
               )
             { 
               resultMetaNode.theMetaChildren.  // With the node's children...

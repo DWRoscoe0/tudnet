@@ -93,7 +93,7 @@ public class MetaChildren
           { 
             ListIterator<IDNumber> aListIiteratorOfIDNumber;
             if  // Lazy loading enabled.
-              ( MetaFile.getForcedLoadingEnabledB() ) 
+              ( MetaFileManager.getForcedLoadingEnabledB() ) 
               { // Get lazy loading ListIterator.
                 @SuppressWarnings("unchecked")
                 ListIterator<IDNumber> anotherListIiteratorOfIDNumber= 
@@ -321,7 +321,7 @@ public class MetaChildren
                 IDNumber TheIDNumber=   // Get the child.
                   ChildListIterator.next();
                 if // Process according to direction.
-                  ( inMetaFile.getMode() == MetaFile.Mode.WRITING )  // Writing.
+                  ( inMetaFile.getMode() == MetaFileManager.Mode.WRITING )  // Writing.
                   if ( TheIDNumber instanceof MetaNode )  // Is MetaNode.
                     MetaNode.rwFlatOrNestedMetaNode(   // Write MetaNode.
                       inMetaFile, (MetaNode)TheIDNumber, null );

@@ -1,13 +1,7 @@
 package allClasses;
 
-import java.io.IOException;
-
 import javax.swing.JComponent;
 import javax.swing.JFrame;
-// import javax.swing.JOptionPane;
-
-
-//import javax.swing.UIManager;
 
 import static allClasses.Globals.*;  // For appLogger;
 
@@ -21,7 +15,7 @@ public class DagBrowser
 
   { // class DagBrowser
 
-    /* Beginnings of a tester class which takes no space unless called.  
+    /* Beginnings of a unit tester class which takes no space unless called.  
       void f() { System.out.println("f()"); }
       public static class Object {  // Tester
         public static void main(String[] args) {
@@ -29,83 +23,31 @@ public class DagBrowser
           t.f();
         }
       }
-    */
+      */
 
-    Thread thisThread;  // Used for shutdown coordination.
-
-    static private JFrame appJFrame;  // App's only JFrame (now).
-
-    private DagBrowser( Thread aThread )  // Constructor.
-      {
-        thisThread= aThread;
-        }
-   
     public static void main(String[] argStrings)
       /* main(..) is the standard starting method of a Java application.
-        It can be considered the top level state machine.
-
-        It creates a single instance of DagBrowser to minimize statics.
-        Then it checks for another running instance of the app
-        and exits if needed after passing information to that instance.
-        If it doesn't exit then it continues to run the app normally.
         
-        ??? Presently its thread terminates after 
-        the GUI and some background threads are started.
-        But this will change to wait for app termination.
+        Except for some logging and exception catching setup,
+        it consists of 2 phases:
+        * Creation phase.  It uses a factory to create the App.
+        * Running phase. It runs the App.
         */
       {
-        // DoingBasicInitialization.
-          appLogger.info("main thread beginning.");
-          DagBrowser theDagBrowser= // Create main class instance.
-            new DagBrowser( Thread.currentThread() );
-          theDagBrowser.setDefaultExceptionHandlerV();
+        appLogger.info("main thread beginning.");
+        setDefaultExceptionHandlerV();
 
-        if ( !AppInstanceManager.managingInstancesThenNeedToExitB( 
-            argStrings  // contains information about other instances.
-            ) ) 
-          theDagBrowser.continuningThisAppInstanceV();
+        AppFactory theAppFactory=  // Creating app factory.
+          new AppFactory(argStrings);
 
-        Shutdowner.doShutdown();  // Doing accumulated shutdown jobs.
+        DagBrowser.App theApp= theAppFactory.makeApp(); // Creating app.
+
+        theApp.runV();  // Running app.
         
-        // ExitingThisAppInstance.
-          appLogger.info("main thread ending.");
+        appLogger.info("main thread ending.");
         }
 
-    public void continuningThisAppInstanceV()
-      /* This method is run after it is determined that
-        no other instance of the app is running,
-        so this app instance should continue running normally,
-        which means starting up the GUI, the background threads, etc.
-        */
-      {
-        startingGUIV();
-
-        // startingConnectionManager.
-          ConnectionManager theConnectionManager= null;
-          try {  // Construct and start ConnectionManager thread(s).
-              theConnectionManager= new ConnectionManager();
-              theConnectionManager.start( );  // Start its main thread.
-            } catch (IOException e) {
-              e.printStackTrace();
-            }
-
-          awaitingShutdownV();  // Most GUI interaction happens here.
-        
-        // stoppingConnectionManager.
-          appLogger.info("DagBrowser: triggering Connections termination.");
-          theConnectionManager.interrupt();  // Request thread terminatation.
-          for  // Waiting for termination of ConnectionManager to complete.
-            ( boolean threadTerminatedB= false ; !threadTerminatedB ; )
-            try { // Waiting for ConnectionManager thread to terminate.
-                theConnectionManager.join();  // Blocking until terminated.
-                threadTerminatedB= true;  // Recording termination complete.
-                } 
-              catch (InterruptedException e) {  // Handling interrupt().
-                Thread.currentThread().interrupt();
-                }
-        }
-
-    private void setDefaultExceptionHandlerV()
+    private static void setDefaultExceptionHandlerV()
       /* This method sets the default handler for uncausht exceptions.
         The handler sends a message about the exception to
         the log file and to the console.
@@ -116,14 +58,159 @@ public class DagBrowser
             @Override public void uncaughtException(Thread t, Throwable e) {
               System.out.println(t.getName()+": "+e);
               appLogger.error(
-                "Thread: "+t.getName()+". Uncaught Exception: "+e 
+                "Thread: "+t.getName()+". Uncaught Exception: "+e
                 );
+              e.printStackTrace();
               }
             }
           );
 
-        // String nullString= null;  // Create null pointer.
-        // nullString.length();  // Test handler.
+        // String nullString= null;  // Uncomment to Create null pointer...
+        // nullString.length();  //...and test uncaught exception handler.
+        }
+
+    private static class AppFactory {
+
+      // This is the factory for all classes with App instance lifetime.
+
+      String[] argStrings;
+      Thread mainThread;
+      ///Shutdowner theShutdowner;
+
+      public AppFactory( String[] argStrings )  // Constructor.
+        {
+          this.argStrings= argStrings;  // Saving app argument strings.
+          this.mainThread= Thread.currentThread(); // Determine out Thread.
+          ///theShutdowner=   // Getting/Making ??? singleton Shutdowner.
+          ///  Shutdowner.getShutdowner();
+          }
+
+      public App makeApp() 
+        {
+          Shutdowner theShutdowner= new Shutdowner();
+          
+          AppInstanceManager theAppInstanceManager=
+            new AppInstanceManager(argStrings,theShutdowner);
+
+          return new App(
+            theShutdowner,
+            theAppInstanceManager,
+            new DagBrowserFactory(
+              mainThread, 
+              theAppInstanceManager,
+              theShutdowner
+              )
+            );
+          }
+
+      }
+
+    private static class App {
+
+      Shutdowner theShutdowner;
+      AppInstanceManager theAppInstanceManager;
+      DagBrowserFactory theDagBrowserFactory;
+
+      private App(   // Constructor.  For app Creation phase.
+          Shutdowner theShutdowner,
+          AppInstanceManager theAppInstanceManager,
+          DagBrowserFactory theDagBrowserFactory
+          )
+        {
+          this.theShutdowner= theShutdowner;
+          this.theAppInstanceManager= theAppInstanceManager;
+          this.theDagBrowserFactory= theDagBrowserFactory;
+          }
+          
+      public void runV()  // For app Run phase. 
+        {
+          if ( !theAppInstanceManager.managingInstancesThenNeedToExitB( ) ) 
+
+            {
+              DagBrowser theDagBrowser= // Creating browser.
+                  theDagBrowserFactory.makeDagBrowser();
+
+              theDagBrowser.runV(); // Running browser.
+              }
+
+          theShutdowner.doShutdown();  // Doing shutdown jobs.
+          }
+
+      }
+
+    private static class DagBrowserFactory {
+
+      // This is the factory for all classes with DagBrowser lifetime.
+
+      Thread mainThread;
+      AppInstanceManager theAppInstanceManager;
+      Shutdowner thetheShutdowner;
+
+      public DagBrowserFactory(    // Constructor.
+          Thread mainThread, 
+          AppInstanceManager theAppInstanceManager,
+          Shutdowner thetheShutdowner
+          )
+        {
+          this.mainThread= mainThread;
+          this.theAppInstanceManager= theAppInstanceManager;
+          this.thetheShutdowner= thetheShutdowner;
+         }
+
+      public DagBrowser makeDagBrowser() 
+        {
+          ConnectionManager theConnectionManager=
+            new ConnectionManager();
+
+          MetaFileManager theMetaFileManager=
+            new MetaFileManager(thetheShutdowner);
+
+          MetaRoot theMetaRoot= new MetaRoot(theMetaFileManager);
+
+          return new DagBrowser( 
+            mainThread, 
+            theAppInstanceManager,
+            theConnectionManager,
+            theMetaRoot  /// Holding reference.
+            );
+          }
+
+      }
+
+    // DagBrowser variables.
+      Thread ourThread;  // Used for shutdown coordination.
+      AppInstanceManager theAppInstanceManager;
+      ConnectionManager theConnectionManager;
+      ///MetaFileManager theMetaFileManager;
+      MetaRoot theMetaRoot;
+
+      private JFrame appJFrame;  // App's only JFrame (now).
+
+    private DagBrowser(   // Constructor.
+        Thread ourThread, 
+        AppInstanceManager theAppInstanceManager,
+        ConnectionManager theConnectionManager,
+        ///MetaFileManager theMetaFileManager
+        MetaRoot theMetaRoot
+        )
+      {
+        this.ourThread= ourThread;
+        this.theAppInstanceManager= theAppInstanceManager;
+        this.theConnectionManager= theConnectionManager;
+        ///this.theMetaFileManager= theMetaFileManager;
+        this.theMetaRoot= theMetaRoot;
+
+        }
+
+    public void runV() // This method is the DagBrowser run phase.
+      {
+        startingGUIV();  // Building and displaying GUI.
+
+        theConnectionManager.start( );  // Starting ConnectionManager thread.
+
+        awaitingShutdownV();  // Interacting with user via GUI.
+
+        theConnectionManager.stopV( );  // Stopping ConnectionManager thread.
         }
 
     private void startingGUIV()
@@ -144,14 +231,14 @@ public class DagBrowser
 
         guiLockAndSignal.doWaitE(); // Wait for signal that GUI is running.
 
-        AppInstanceManager.setAppInstanceListener(  // App instance events...
+        theAppInstanceManager.setAppInstanceListener(  // App instance events...
           this  // ...will be heard by this main object's GUI.
           );
 
         appLogger.info("GUI/AWT thread signalled start-up done.");
         }
 
-    static class GUIMaker
+    class GUIMaker
       implements Runnable
 
       /* This nested class is used to create and start the app's GUI.
@@ -194,7 +281,7 @@ public class DagBrowser
       // This method blocks until shutdown is underway..
       {
         Thread theShutdownThread =  // Creating ShutdownThread Thread.
-          new TerminationShutdownThread(thisThread);
+          new TerminationShutdownThread(ourThread);
 
         Runtime.getRuntime().addShutdownHook(theShutdownThread); // Adding...
           // ...it to Runtime to be run at shut-down time.
@@ -214,7 +301,7 @@ public class DagBrowser
         // At this point shutdown is underway.
         }
       
-    static class TerminationShutdownThread
+    class TerminationShutdownThread
       extends Thread
       /* This nested shutdown hook Thread class's run() method
         requests that the main thread finalize and terminate.
@@ -224,9 +311,9 @@ public class DagBrowser
         eventually allowing the entire app to terminate.
         */
       {
-        private Thread mainThread;
+        private Thread mainThread;  // Other thread to terminate.
 
-        public TerminationShutdownThread(Thread mainThread)
+        public TerminationShutdownThread(Thread mainThread) // Constructor.
           { this.mainThread= mainThread; }
         
         public void run()
@@ -252,7 +339,7 @@ public class DagBrowser
           );
         }
 
-    private static JFrame startingJFrame()
+    private JFrame startingJFrame()
       /* This method creates the app's JFrame and starts it.
         It is meant to be run on the UI (AWT) thread.
         The JFrame content is set to a DagBrowserPanel 
@@ -265,11 +352,11 @@ public class DagBrowser
             AppName.getAppNameString()
             +", DAG Browser 7 Test"
             +", archived "
-            +AppInstanceManager.thisAppDateString()  // thisAppDateString()
+            +theAppInstanceManager.thisAppDateString()  // thisAppDateString()
             );
 
-        final JComponent ContentJComponent=  // Construct content to be...
-          new DagBrowserPanel();  // ... a DagBrowserPane.
+        final JComponent ContentJComponent=  // Construct content to be a...
+          new DagBrowserPanel(theAppInstanceManager);  // ...DagBrowserPane.
           //new JTextArea("TEST DATA");  // ... a JTextArea for a test???
           //new TextViewer(null,"test TextViewer");  // ... ???
         theJFrame.setContentPane( ContentJComponent );  // Store content.
@@ -282,7 +369,7 @@ public class DagBrowser
         return theJFrame;
         }
 
-    static class InstanceCreatedRunnable
+    class InstanceCreatedRunnable
       implements Runnable
       /* This nested class contains a run() method which
         is used to process triggerings of the

@@ -39,12 +39,13 @@ public class PathAttributeMetaTool
           It returns a TreePath comprised of all the DataNodes
           from the MetaNode's which contain attributes 
           with a key of keyString and a value of "IS".
-          At least the root must have an "IS" attribute value,
-          otherwise an invalid TreePath consisting of only the
-          ParentOfRootDataNode will be returned.
           It does not consider UnknownDataNode-s to be part of the path
           even if they have the desired attribute
           because it is an unusable value.
+          At least the root must have an "IS" attribute value,
+          otherwise it will return Dataroot.getParentOfRootTreePath(),
+          which is a sentinel value which can not for
+          anything but a termination marker.
           */
         {
           TreePath scanTreePath=  // Point scanTreePath accumulator...

@@ -44,47 +44,29 @@ public class Shutdowner
 
   {
   
-    /* Singleton code.  This is made thread-safe and fast with the
+    /* ??? OLD Singleton code.  This is made thread-safe and fast with the
       Initialization on Demand Holder (IODH) idom.
       */
     
-      private Shutdowner() {}  // Prevent instantiation by other classes.
+      public Shutdowner() {  // Constructor.
+        ///LazyHolder.INSTANCE= this;
+        }  // OLD: Prevent instantiation by other classes.
 
+      /* ???
       private static class LazyHolder {
-        private static final Shutdowner INSTANCE = new Shutdowner();
+        ///private static final Shutdowner INSTANCE = new Shutdowner();
+        private static Shutdowner INSTANCE;
         }
  
-      public Shutdowner getShutdowner()   // Return singleton instance.
+      public static Shutdowner XgetShutdowner()   // Return singleton instance.
         { return LazyHolder.INSTANCE; }
 
-    // ShutdownHook shutdown detection code.
-
-      /* Old code no longer used.
-
-      static // Static block initialization to setup ShutdownerHook Thread.
-        {
-          ShutdownerHook theShutdownerHook =  // Create ShutdownerHook Thread.
-            new ShutdownerHook();
-          Runtime.getRuntime().addShutdownHook(theShutdownerHook); // Add...
-            // ...it to Runtime so it runs at shut-down time.
-          }
-        
-      static class ShutdownerHook  // Thread which runs Shutdown code.
-        extends Thread 
-        // This nested Thread class is used to detect and process 
-        //  the app shutdown when that time comes.
-        {
-          public void run()
-            {
-              doShutdown();
-              }
-          }
-
       */
+    // ShutdownHook shutdown detection code.
     
     // Shutdowner shutdown code.
     
-      public static void doShutdown()
+      public void doShutdown()
         /* This method is called in the ShutdownHook thread
           when shut down is underway
           Its purpose is to perform app shutdown operations,
@@ -126,23 +108,23 @@ public class Shutdowner
     
     // ShutdownerListener code.  Maintains and calls ShutdownListeners.
     
-      private static EventListenerList theEventListenerList= 
+      private EventListenerList theEventListenerList= 
         new EventListenerList();
 
-      public static synchronized void addShutdownerListener
+      public synchronized void addShutdownerListener
         ( ShutdownerListener listener ) 
         {
           theEventListenerList.add(ShutdownerListener.class, listener);
           }
 
-      public static synchronized void removeShutdownerListener
+      public synchronized void removeShutdownerListener
         ( ShutdownerListener listener ) 
         {
           theEventListenerList.remove(ShutdownerListener.class, listener);
           }
 
       /*
-      private static synchronized void fireShutdownerListeners( )
+      private synchronized void fireShutdownerListeners( )
         // Fire listeners in the same order they were added.
         {
           for 
@@ -153,7 +135,7 @@ public class Shutdowner
         }
       */
 
-      private static synchronized void reverseFireShutdownerListeners( )
+      private synchronized void reverseFireShutdownerListeners( )
         // Fire listeners in the reverse of the order they were added.
         {
           ShutdownerListener theShutdownerListeners[]=
@@ -168,10 +150,10 @@ public class Shutdowner
 
     // Code for defining and starting other processes and ending this one.
 
-      private static String[] argStrings =  // Command to executed at exit.
+      private String[] argStrings =  // Command to executed at exit.
         null; 
 
-	    public static void setCommandV( String... inArgStrings )
+	    public void setCommandV( String... inArgStrings )
 	      /* This method sets to inArgStrings the array of Strings which
 	        defines the command Process to be created and executed 
 	        at shut-down time by ProcessBuilder.
@@ -187,7 +169,7 @@ public class Shutdowner
 	    	  argStrings = inArgStrings; 
 	    	  }
 
-      private static void callAProcess(String... inArgStrings)
+      private void callAProcess(String... inArgStrings)
           /* This method calls a Process built with 
             a ProessBuilder operating on 
             the String argument array inArgStrings.

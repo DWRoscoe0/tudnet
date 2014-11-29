@@ -1,6 +1,6 @@
 package allClasses;
 
-public class UnknownDataNode extends StringDataNode
+public class UnknownDataNode extends NamedLeaf
 
   /* This class is a DataNode that serves as a place-holder
     to indicate an error but also to avoid null pointer references.  

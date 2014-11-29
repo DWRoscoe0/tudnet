@@ -1,37 +1,24 @@
 package allClasses;
 
-public class InfogoraRoot
-  //extends Object
-  extends AbDataNode
-  //implements DataNode
-  { // class InfogoraRoot
-
-    // Variables.
-      FileRoots TheFileRoots= new FileRoots();  // the only child.
-      Outline TheOutline= new Outline( 0 );  // base outline.
-      Infinitree TheInfinitree= new Infinitree( null, 0 );
-
-      
-    // Constructors (none yet).  Default constructor is used.
-        
-    
-    // A subset of delegated AbstractTreeModel methods.
-
-      public DataNode getChild( int IndexI ) 
-        /* This returns the child with index IndexI.  */
-        {
-          switch ( IndexI ) {
-            case 0: return TheFileRoots;
-            case 1: return TheOutline;
-            case 2: return TheInfinitree;
-            }
-          return null;  // anything else returns null.
+public class InfogoraRoot  extends NamedList {
+  
+  /* This class is the root node of the DataNode DAG.
+    A NamedList could be used in its place,
+    but having a special separate class for it 
+    makes debugging easier.
+    */
+  
+  public InfogoraRoot( )  // Constructor.
+    {
+      super( // Calling superclass NamedList with...
+        "NEW-Infogora-Root", // ...the name for this DataNode and...
+        new DataNode[] { // ...an array of all child DataNodes.
+          new FileRoots(),
+          new Outline( 0 ),
+          new ConnectionManager.Root(), // Temporary.
+          new Infinitree( null, 0 )
           }
+        );
+      }
 
-      public String toString( )
-        /* Returns String representing name of this Object.  */
-        {
-          return "Infogora-Root";
-          }
-
-    } // class InfogoraRoot
+  }

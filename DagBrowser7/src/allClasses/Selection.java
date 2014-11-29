@@ -43,12 +43,20 @@ public class Selection
           associated with the MetaNode's which have attributes 
           with key == "SelectionPath" and value == "IS",
           starting at the MetaNode DAG root.
+          This method always returns a non-null TreePath.
+          It also never returns Dataroot.getParentOfRootTreePath(),
+          which is the sentinel representing the empty TreePath.
+          The TreePath returned always contains at least the root node.
           */
         { 
-          return // Return the...
+          TreePath resultTreePath= // Calculating tentative result...
             PathAttributeMetaTool.buildAttributeTreePath( // ...path built...
               selectionAttributeString // ...from selection attribute nodes.
               );
+          if  // Replacing with root path if result path was empty.
+            ( resultTreePath == DataRoot.getParentOfRootTreePath() )
+            resultTreePath= DataRoot.getRootTreePath();
+          return resultTreePath;
           }
           
       public static MetaNode getLastSelectedChildOfMetaNode
@@ -57,6 +65,7 @@ public class Selection
           of inMetaNode.
           
           Prsently it is a pass-through to MetaNode.GetLastChildMetaNode(). 
+          ??? Remove because it is totally redundant!  Only name is different.
           */
         { 
           return getLastSelectedChildMetaNode( inMetaNode ); 

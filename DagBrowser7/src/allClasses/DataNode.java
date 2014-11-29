@@ -4,14 +4,16 @@ import javax.swing.JComponent;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
-public interface DataNode 
+public interface DataNode {
 
   /* This interface forms the basis of the classes 
     which represent the DAG (Directed Acyclic Graph). 
     Many of its methods are similar to methods in the TreeModel interface.
+    
+    ??? Normalize field names.
     */
 
-  { // interface DataNode.
+  // Methods with equivalents in TreeModel.
 
     public boolean isLeaf( ); /* Returns true if this is a leaf node,
       which means it can never have children.
@@ -30,7 +32,6 @@ public interface DataNode
       child childObject.  If childObject is not one of the children 
       of this DataNode then it returns -1.  */
 
-    
   // Additional methods not directly related to TreeModel.
 
     public int getIndexOfNamedChild( String inString );
@@ -61,5 +62,19 @@ public interface DataNode
         and using the TreeModel InTreeModel to provide context.  
         The TreeModel might be ignored.
         */
+
+    /* ??? Add JComponent getSummaryJComponent() which returns a component,
+      such as a Label, which summarizes this DataNode,
+      at least with the name, but possibly also with a summary value,
+      can be used as a part of its parent DataJComponent ???
+      */
+
+    /* ??? Add String getSummaryString() which returns a String,
+      which summarizes this DataNode, similar to what
+      getSummaryJComponent() does.
+      
+      ??? Maybe use AbDataNode.getHeadString() for this?
+      It's otherwise unused.
+      */
 
   } // interface DataNode.

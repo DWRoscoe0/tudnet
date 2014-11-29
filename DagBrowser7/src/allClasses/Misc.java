@@ -70,7 +70,7 @@ public class Misc
         if ( dbgEventDoneB )
           {
             appLogger.appendEntry( "Writing Debug.txt" ); 
-            MetaFile.writeDebugFileV( MetaRoot.getRootMetaNode( ));
+            MetaFileManager.writeDebugFileV( MetaRoot.getRootMetaNode( ));
             noOp( );
             }
           }

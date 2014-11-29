@@ -69,6 +69,8 @@ public class DagBrowserPanel
 
     // instance variables.
 
+      AppInstanceManager theAppInstanceManager;  // For update checking.
+
       private Timer activityTimer; // Timer that triggers the monitor activity.
         // This timer is not started.  Using theTimerThread instead.
       private TimerThread theTimerThread = new TimerThread();
@@ -135,15 +137,17 @@ public class DagBrowserPanel
 
     // constructor and related methods.
     
-      public DagBrowserPanel()
+      public DagBrowserPanel( AppInstanceManager theAppInstanceManager )
         /* This constructor creates the DagBrowserPanel.
           This includes creating all the components, 
           defining their appearances, and
           connecting the various event listeners.
           It also starts a activityTimer used to indicate 
-          that the program is running.
+          that the program is running and for update checks.
           */
         { // DagBrowserPanel()
+          this.theAppInstanceManager= theAppInstanceManager;
+
           //setBackground( Color.CYAN ); /// ???
           setOpaque( true ); /// ???
 
@@ -156,7 +160,7 @@ public class DagBrowserPanel
             } // Build and add sub-panels of this Panel.
           { // Define the content in the above panels.
             TreePath currentTreePath=  // Get TreePath of starting node.
-              startTreePath;
+              startTreePath;  // ??? is this needed ???
             theRootJTree  // In the left sub-panel JTree's...
               .getTreeHelper()  // ...TreeHelper...
               .setPartTreePathB(  // ...select...
@@ -404,12 +408,11 @@ public class DagBrowserPanel
           stores information about the Infogora graph.
           */
         {
-          startTreePath= // Initialize startTreePath for browsing...
+          startTreePath= // Initialize startTreePath for browsing with...
             Selection.buildAttributeTreePath( );  // ...saved selection state.
-          theDataTreeModel =  // Initialize DataTreeModel for JTree using...
-            //new DataTreeModel(RootDataNode);  // ...DataNode root.
-            new DataTreeModel(   // ...DataNode root parent.
-              DataRoot.getParentOfRootDataNode() 
+          theDataTreeModel =  // Setting DataTreeModel for JTree with a...
+            new DataTreeModel(   // ...DataTreeModel rooted at...
+              DataRoot.getParentOfRootDataNode() // ...parent of root.
               );
           }
 
@@ -543,7 +546,7 @@ public class DagBrowserPanel
               activityJLabel.repaint();  // Request redisplay of it only.
               } // switch activity color.
 
-            AppInstanceManager.  // Call so AppInstanceManager can poll things.
+            theAppInstanceManager. // Call so AppInstanceManager.getAppInstanceManager(). can poll things.
               tryExitForChainToUpdateFromNewerArgAppV();
             }
 

@@ -10,7 +10,6 @@ import java.net.SocketException;
 
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.PriorityQueue;
 import java.util.Random;
 
 import static allClasses.Globals.*;  // appLogger;
@@ -58,33 +57,40 @@ public class ConnectionManager extends Thread
 
       private boolean TerminatingB= false;
 
-      /* Peer access variables, initialized to empty Collections.
-        These Collections provide different types of access to the Peers.
-        These structures must be maintained in parallel.
+      // Peer access variables. 
+      
+        /* These initially empty Collections provide 
+          different types of access to the Peers.
+          These structures must be maintained in parallel.
 
-        Maybe these should be in a separate class for them??
-        */
+          Maybe these should be in a separate class for them??
+          */
+
+        public static class Root extends NamedList {  // ???
+
+          /* This class is ConnectionManager's entry in
+            the Infogora hierarchy.
+            */
+
+          public Root( )
+            {
+              super( 
+                "ConnectionManager.Root" 
+                , new NamedLeaf( "dummy child 1" )
+                , new NamedLeaf( "dummy child 2" )
+                , new NamedLeaf( "dummy child 3" )
+                );
+              }
+
+          }
 
         private HashMap<SocketAddress,Peer> peerSocketAddressHashMap=
           new HashMap<SocketAddress,Peer>(); // For access by SocketAddress.
           /* This doesn't change much.
             It is used to lookup Peers by SocketAddress.
-            It would be needed for only packets received on unconnected sockets
-            if remote addresses were always stored in Packets (or SockPackets).
-            */
-
-        private PriorityQueue<Peer> peersPriorityQueueOf=
-          new PriorityQueue<Peer>(); // For access by next event time.
-          /* This changes a lot because:
-            * An entry is removed every time real-time reaches
-              the next keep-alive or transmit-time-out time.
-              Removals are usually followed immediately by
-              insertions at a high priority.
-              These could be replaced by in-heat position rotation.
-              need not be done at all.
-            priority changes a lot.
-            This data structure might need to be replaced by 
-            something customized for priority changes.
+            It would be needed for only packets received on 
+            unconnected sockets if remote addresses were always stored in 
+            Packets (or SockPackets).
             */
 
       protected static DatagramSocket unconnectedDatagramSocket= // UDP io.
@@ -93,7 +99,6 @@ public class ConnectionManager extends Thread
       private static UnconnectedReceiver theUnconnectedReceiver;  // Receiver thread.
 
     public ConnectionManager( )  // Constructor.
-      throws IOException
       {
         super( "Connections" );  // Name here because setName() not reliable.
 
@@ -140,6 +145,27 @@ public class ConnectionManager extends Thread
 
         appLogger.info("Connections.run(): thread ending.");  // Connections.
         } // Connections.
+
+    public void stopV()  // Called by current thread to stop this thread.
+      /* This method requests termination of the ConnectionManager thread,
+        waits until that termination completes, then returns.
+        */
+      {
+        appLogger.info("ConnectionManager.stop() begin.");
+
+        interrupt(); // Requesting terminatation of ConnectionManager thread.
+        for  // Looping until ConnectionManager thread ends.
+          ( boolean threadTerminatedB= false ; !threadTerminatedB ; )
+          try { // Blocking and handling how blocking ends.
+              join();  // Blocking.
+              threadTerminatedB= true;  // Setting flag to terminate loop.
+              } 
+            catch (InterruptedException e) {  // Handling interrupt of block.
+              Thread.currentThread().interrupt(); // Re-request interrupt.
+              }
+
+        appLogger.info("ConnectionManager.stop() end.");
+        }
 
     private void settingThreadsAndDoingWorkV()
       throws SocketException
@@ -214,9 +240,6 @@ public class ConnectionManager extends Thread
                   TerminatingB= true;  // Converting to termination flag.
                   }
             anIteratorOfPeers.remove(); // Removing from HashMap...
-            peersPriorityQueueOf.remove(  // Removing from event queue.
-              thePeer
-              );
             }
 
         appLogger.info("Connections.terminatingPeerThreadsV() ending.");
@@ -462,7 +485,6 @@ public class ConnectionManager extends Thread
             thePeer= new Peer( // Creating new Peer object with...
               peerInetSocketAddress,  // ...this address.
               sendPacketQueue,
-              peersPriorityQueueOf,
               this
               );
             //appLogger.info(
@@ -472,9 +494,6 @@ public class ConnectionManager extends Thread
             peerSocketAddressHashMap.put(  // Add to HashMap with...
               peerInetSocketAddress,  // ...the address as the key and...
               thePeer  // ...the Peer object as the value.
-              );
-            peersPriorityQueueOf.add(  // Add to event queue.
-              thePeer
               );
             thePeer.start();  // Start the peer's associated thread.
             }
@@ -542,7 +561,6 @@ public class ConnectionManager extends Thread
             //DatagramSocket peerDatagramSocket,
             InetSocketAddress peerInetSocketAddress,
             PacketQueue sendQueueOfSockPackets,
-            PriorityQueue<Peer> peersPriorityQueueOf,
             ConnectionManager theConnectionManager
             )
           /* This constructor constructs a Peer assuming that
@@ -557,7 +575,6 @@ public class ConnectionManager extends Thread
             // Storing constructor arguments.
               this.peerInetSocketAddress= peerInetSocketAddress;
               this.sendQueueOfSockPackets= sendQueueOfSockPackets;
-              this.peersPriorityQueueOf= peersPriorityQueueOf;
               this.theConnectionManager= theConnectionManager;
 
             // Setting meanful defaults for packet send and receive times.
@@ -790,7 +807,6 @@ public class ConnectionManager extends Thread
                   )
                 ) 
               ;
-            updatePriorityQueueWithV(this); // Adjust heap position.
             }
 
         public int compareTo( Peer anotherPeer )
@@ -806,36 +822,6 @@ public class ConnectionManager extends Thread
               ;
             }
 
-        private void updatePriorityQueueWithV(Peer thePeer)
-          /* This helper method adjusts a Peer entry position
-            in the PriorityQueue based on its next send packet time.
-            
-            ??? This uses the PriorityQueue.remove() method, but this is not 
-            an efficient way or data structure for changing 
-            the times/priorities of scheduled events.
-            Execution time is linear (remove(Object); add(Object)).
-            A faster implementation will be needed when
-            the number of peers grows larger.
-            There are several options:
-            ? Use PriorityHeap with access to heap pointer/index.
-              Might need to create a special PriorityHeap which:
-              = Can return the final index of an element so that
-                it can be stored in the element.
-              = Add an operation to change the priority(time) 
-                of an entry with a particular index and
-                SiftUp or SiftDown until the position
-                is okay for the new priority.
-            ? Use some other data structure.
-            */
-          { 
-            peersPriorityQueueOf.remove(  // Delete from queue if present.
-              thePeer
-              );  // This is inefficient for large queues.  Fix later.  ???
-            peersPriorityQueueOf.add(  // Add again in correct position.
-              thePeer
-              );
-            }
-
         // Variables.
 
           // Copies of constructor arguments.
@@ -845,8 +831,6 @@ public class ConnectionManager extends Thread
             private final PacketQueue // Send output.
               sendQueueOfSockPackets;  // SockPackets to be sent.
               
-            PriorityQueue<Peer> peersPriorityQueueOf;
-
             ConnectionManager theConnectionManager;
 
           LockAndSignal peerLockAndSignal=  // LockAndSignal for this thread.
@@ -856,6 +840,7 @@ public class ConnectionManager extends Thread
 
           private final long PeriodMillisL=  // Period between sends or receives.
             4000;   // 4 seconds.
+
           private final long HalfPeriodMillisL= // Half of period.
             PeriodMillisL / 2;  
 
