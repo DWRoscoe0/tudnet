@@ -70,6 +70,7 @@ public class DagBrowserPanel
     // instance variables.
 
       AppInstanceManager theAppInstanceManager;  // For update checking.
+      DataRoot theDataRoot;  // The stuff to display.
 
       private Timer activityTimer; // Timer that triggers the monitor activity.
         // This timer is not started.  Using theTimerThread instead.
@@ -135,9 +136,12 @@ public class DagBrowserPanel
         ///private Boolean partTreeChangedVReentryBlockedB=   // for preventing entry...
         ///  false;  // ...to TreeSelectionListener.
 
-    // constructor and related methods.
+    // Constructor and related methods.
     
-      public DagBrowserPanel( AppInstanceManager theAppInstanceManager )
+      public DagBrowserPanel( 
+          AppInstanceManager theAppInstanceManager,
+          DataRoot theDataRoot
+)
         /* This constructor creates the DagBrowserPanel.
           This includes creating all the components, 
           defining their appearances, and
@@ -147,6 +151,7 @@ public class DagBrowserPanel
           */
         { // DagBrowserPanel()
           this.theAppInstanceManager= theAppInstanceManager;
+          this.theDataRoot= theDataRoot;
 
           //setBackground( Color.CYAN ); /// ???
           setOpaque( true ); /// ???
@@ -412,7 +417,7 @@ public class DagBrowserPanel
             Selection.buildAttributeTreePath( );  // ...saved selection state.
           theDataTreeModel =  // Setting DataTreeModel for JTree with a...
             new DataTreeModel(   // ...DataTreeModel rooted at...
-              DataRoot.getParentOfRootDataNode() // ...parent of root.
+              theDataRoot.getParentOfRootDataNode() // ...parent of root.
               );
           }
 
@@ -609,7 +614,7 @@ public class DagBrowserPanel
                     theTreePathEvent.  // ...the TreePathEvent's...
                       getTreePath();  // ...one and only TreePath.
 
-                  if ( ! DataRoot.isLegalB(inTreePath) )  // Handling illegal path.
+                  if ( ! theDataRoot.isLegalB(inTreePath) )  // Handling illegal path.
                     { legalB= false; break goReturn; } // Exiting, not legal.
                   
                   Component sourceComponent=  // Getting event's source Component.
@@ -623,7 +628,7 @@ public class DagBrowserPanel
                     inTreePath.getParentPath();
 
                   if  // Handling illegal parent path.
-                    ( ! DataRoot.isLegalB(parentTreePath) ) 
+                    ( ! theDataRoot.isLegalB(parentTreePath) ) 
                     { legalB= false; break goReturn; } // Exiting, not legal.
 
                   legalB= true;  // Setting legal because path passed all tests.

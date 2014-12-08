@@ -38,7 +38,7 @@ class MetaTool
       
       // This class non-static code block initializes some instance variables.
       {
-        theTreePath= DataRoot.getParentOfRootTreePath();
+        theTreePath= DataRoot.getIt().getParentOfRootTreePath();
         theMetaPath= MetaRoot.getParentOfRootMetaPath( );
         }
       

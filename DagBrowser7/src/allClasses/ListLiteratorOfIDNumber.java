@@ -10,7 +10,12 @@ public class ListLiteratorOfIDNumber
   implements ListIterator<IDNumber> 
   
     /* This is a lazy-loading ListIterator.
-      It is constructed from a ListIterator.
+      It is constructed by adding lazy loading capability to a ListIterator.
+
+      The ListIterator was used because:
+      * It can go forward and backward.
+      * It can do replacement of elements.
+
       It mostly forwards method calls to the nested ListIterator,
       but in the case of the methods next() and previous() 
       it checks to see whether the IDNumber element retrieved 
@@ -23,12 +28,13 @@ public class ListLiteratorOfIDNumber
       // Instance variables.
 
         private ListIterator<IDNumber> NestedListIteratorOfIDNumber;
-        private MetaNode theParentMetaNode;  // Parent MetaNode...
+        ///private MetaNode theParentMetaNode;  // Parent MetaNode...
           // ...for name lookup.
+        private DataNode theParentDataNode;  // For name lookup.
 
       // Constructors.
 
-        public ListLiteratorOfIDNumber
+        public ListLiteratorOfIDNumber  ///
           ( 
             ListIterator<IDNumber> inListIteratorOfIDNumber, 
             MetaNode inParentMetaNode // , int DbgI  // ???
@@ -40,7 +46,26 @@ public class ListLiteratorOfIDNumber
             */
           {
             NestedListIteratorOfIDNumber= inListIteratorOfIDNumber;
-            theParentMetaNode= inParentMetaNode;
+            ///theParentMetaNode= inParentMetaNode; /// ???
+            ///theParentDataNode= MetaNode.getDataNode(theParentMetaNode);
+            theParentDataNode= MetaNode.getDataNode(inParentMetaNode);
+            }
+
+        public ListLiteratorOfIDNumber  /// ???
+          ( 
+            ListIterator<IDNumber> inListIteratorOfIDNumber, 
+            DataNode inParentDataNode // , int DbgI  // ???
+            )
+          /* This constructs a lazy-loading ListIterator from 
+            a regular ListIterator.
+            inParentMetaNode is used for name lookups if
+            lazy-loading needs to be done.
+            */
+          {
+            NestedListIteratorOfIDNumber= inListIteratorOfIDNumber;
+            ///theParentMetaNode= inParentMetaNode; /// ???
+            ///theParentDataNode= MetaNode.getDataNode(theParentMetaNode);
+            theParentDataNode= inParentDataNode;
             }
 
       // Method that does the node checking and loading.
@@ -50,7 +75,7 @@ public class ListLiteratorOfIDNumber
             it has already been loaded.
             It also replaces the current iterator element,
             assuming it to be the last read.
-            If InIDNumber is a MetaNode instance then it returns inIDNumber.
+            If inIDNumber is a MetaNode instance then it returns inIDNumber.
             If it is an IDNumber instance then it goes to the MetaFile, 
             finds the MetaNode text associated with that IDNumber, 
             loads it into a MetaNode, and replaces the IDNumber reference
@@ -81,7 +106,7 @@ public class ListLiteratorOfIDNumber
 
         private IDNumber ConvertIDNumber( IDNumber inIDNumber )
           /* This helper method tries to replace IDNumber with 
-            loaded MetaNode equivalent.
+            a lazy-loaded MetaNode equivalent.
             */
           { // Try to replace IDNumber with loaded MetaNode equivalent.
             //Misc.DbgOut( 
@@ -93,7 +118,9 @@ public class ListLiteratorOfIDNumber
               inIDNumber=  // ...MetaNode equivalent...
                 MetaFileManager.getLazyLoadMetaFile().readAndConvertIDNumber(  // ...
                   inIDNumber,  // ...of IDNumber using...
-                  theParentMetaNode  // ...provided parent for lookup.
+                  ///theParentMetaNode  // ...provided parent for lookup.
+                  ///MetaNode.getDataNode(theParentMetaNode)  // ...provided parent for lookup.
+                  theParentDataNode  // ...provided parent for lookup.
                   );
               }
             catch ( IOException TheIOException ) {

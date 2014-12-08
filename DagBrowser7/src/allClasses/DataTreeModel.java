@@ -180,7 +180,7 @@ public class DataTreeModel
               DataNode lastDataNode=  // Getting last path element.
                 (DataNode)(inTreePath.getLastPathComponent());
               if // Handling detection of normal TreePath root sentinel.
-                ( DataRoot.getParentOfRootTreePath( ).equals( inTreePath ) )
+                ( DataRoot.getIt().getParentOfRootTreePath( ).equals( inTreePath ) )
                 { if // Handling illegal sentinel-only TreePath.
                     ( resultString == "" ) 
                     resultString= lastDataNode.GetNameString();

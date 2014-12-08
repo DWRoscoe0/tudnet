@@ -12,9 +12,9 @@ public class MetaRoot {
 
     */
 
-  // variables.
+  // variables.  Being converted to non-static ???
   
-    private static MetaNode rootMetaNode;  /* Root of tree which 
+    private MetaNode rootMetaNode;  /* Root of tree which 
       holds Dag information.  */
     private static MetaNode parentOfRootMetaNode;  /* Pseudo-parent of root.
       This is the same tree as rootMetaNode, but can be used as
@@ -29,23 +29,30 @@ public class MetaRoot {
 
       } // Initializing MetaRoot static fields.
 
+  DataRoot theDataRoot;
   MetaFileManager theMetaFileManager;
 
-  MetaRoot( MetaFileManager theMetaFileManager )  // Constructor.
+  MetaRoot(    // Constructor.
+      DataRoot theDataRoot, 
+      MetaFileManager theMetaFileManager 
+      )
     {
       appLogger.info( "MetaRoot constructor starting.");
 
+      theMetaRoot= this;  /// Temporary for static references.
+
+      this.theDataRoot= theDataRoot;
       this.theMetaFileManager= theMetaFileManager;
 
       { // Setting root MetaNode DAG to default of a single MetaNode.
         rootMetaNode=  // Initialize present MetaNode tree root with...
           new MetaNode(  // ...a new MetaNode containing...
-            DataRoot.getRootDataNode( )  // ...the Infogora-Root DataNode.
+            theDataRoot.getRootDataNode( )  // ...the Infogora-Root DataNode.
             );
         parentOfRootMetaNode= // Making parent of root MetaNode be...
           new SingleChildMetaNode( // ...a MetaNode whose one-child is...
             rootMetaNode, // ...the root MetaNode and whose object is...
-            DataRoot.getParentOfRootDataNode( ) // ...parent of root DataNode.
+            theDataRoot.getParentOfRootDataNode( ) // ...parent of root DataNode.
             );
         } // Setting root MetaNode DAG to default of a single MetaNode.
 
@@ -66,7 +73,7 @@ public class MetaRoot {
           parentOfRootMetaNode= // Recalculating parent of root MetaNode...
             new SingleChildMetaNode( // ...to be MetaNode whose one-child is...
               rootMetaNode, // ...the root MetaNode and whose object is...
-              DataRoot.getParentOfRootDataNode( ) // ...parent of root node.
+              theDataRoot.getParentOfRootDataNode( ) // ...parent of root node.
               );
           }
           
@@ -79,12 +86,16 @@ public class MetaRoot {
         // This guarantees success Selection.buildAttributeTreePath( ).
         // This is compatible with both loaded and non-loaded MetaNodes,
         // because the root node should always be in the selection path.
-        
       }
 
-  // Methods.
+  private static MetaRoot theMetaRoot;  /// Temporary for static references.
 
-    public static MetaNode getRootMetaNode( )
+  public static MetaRoot get()  /// Temporary for static references.
+    { return theMetaRoot; }
+
+  // Methods.  Being converted to non-static ???
+
+    public MetaNode getRootMetaNode( )
       { return rootMetaNode; }
 
     public static MetaNode getParentOfRootMetaNode( )

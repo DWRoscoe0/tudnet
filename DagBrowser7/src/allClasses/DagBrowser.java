@@ -159,19 +159,28 @@ public class DagBrowser
 
       public DagBrowser makeDagBrowser() 
         {
+          DataRoot theDataRoot= new DataRoot();
+
           ConnectionManager theConnectionManager=
             new ConnectionManager();
 
           MetaFileManager theMetaFileManager=
             new MetaFileManager(thetheShutdowner);
 
-          MetaRoot theMetaRoot= new MetaRoot(theMetaFileManager);
+          MetaRoot theMetaRoot= new MetaRoot(theDataRoot,theMetaFileManager);
+
+          new MetaFileManager.Finisher(
+            theMetaFileManager,
+            thetheShutdowner, 
+            theMetaRoot
+            );
 
           return new DagBrowser( 
             mainThread, 
             theAppInstanceManager,
             theConnectionManager,
-            theMetaRoot  /// Holding reference.
+            theDataRoot,
+            theMetaRoot
             );
           }
 
@@ -182,6 +191,7 @@ public class DagBrowser
       AppInstanceManager theAppInstanceManager;
       ConnectionManager theConnectionManager;
       ///MetaFileManager theMetaFileManager;
+      DataRoot theDataRoot;
       MetaRoot theMetaRoot;
 
       private JFrame appJFrame;  // App's only JFrame (now).
@@ -191,6 +201,7 @@ public class DagBrowser
         AppInstanceManager theAppInstanceManager,
         ConnectionManager theConnectionManager,
         ///MetaFileManager theMetaFileManager
+        DataRoot theDataRoot,
         MetaRoot theMetaRoot
         )
       {
@@ -198,6 +209,7 @@ public class DagBrowser
         this.theAppInstanceManager= theAppInstanceManager;
         this.theConnectionManager= theConnectionManager;
         ///this.theMetaFileManager= theMetaFileManager;
+        this.theDataRoot= theDataRoot;
         this.theMetaRoot= theMetaRoot;
 
         }
@@ -356,7 +368,10 @@ public class DagBrowser
             );
 
         final JComponent ContentJComponent=  // Construct content to be a...
-          new DagBrowserPanel(theAppInstanceManager);  // ...DagBrowserPane.
+          new DagBrowserPanel(  // ...DagBrowserPane.
+            theAppInstanceManager,
+            theDataRoot
+            );
           //new JTextArea("TEST DATA");  // ... a JTextArea for a test???
           //new TextViewer(null,"test TextViewer");  // ... ???
         theJFrame.setContentPane( ContentJComponent );  // Store content.

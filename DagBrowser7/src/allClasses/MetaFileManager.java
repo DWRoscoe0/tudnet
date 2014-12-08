@@ -7,12 +7,25 @@ import static allClasses.Globals.*;  // For appLogger;
 
 public class MetaFileManager {
 
-  /* This class got most of its code from MetaFile 
+  /* This class manages the file(s) that contains the external 
+    representation of this app's meta-data.
+    Related classes are MetaFile and MetaFileManager.Finisher.
+
+    This meta-data is stored internally in MetaNode-s 
+    organized as a tree rooted at MetaRoot.
+    Each MetaNode is associated with, and contains meta-data about,
+    a DataNode.  DataNodes are organized as a tree rooted at the DataRoot.
+    The application reads from the file(s) after the application starts,
+    and it writes to the file(s) before the application terminates.
+    
+    This class came after MetaFile from which it got most of its code.
   
     ??? Eliminate static variables and methods using DependencyInjecction.
 
     ??? Might need to put finish() in a separate class to avoid
     infinite recursion from finish() to MetaRoot to start().
+    This might not be possible because call to finish() is
+    in a Listener referenced in start().
 
     ??? Refactor to eliminate the many public members added during
     division for dependency injection.
@@ -26,7 +39,10 @@ public class MetaFileManager {
   
     ///private MetaFileManager() {}  // Prevent instantiation by other classes.
 
-    ///private static MetaFileManager theMetaFileManager= null; // ???
+    private static MetaFileManager theMetaFileManager= null; // ???
+
+    public MetaFileManager get()
+      { return theMetaFileManager; }
 
     public MetaFileManager(  // Constructor for use by factory.
         Shutdowner theShutdowner
@@ -36,7 +52,7 @@ public class MetaFileManager {
 
         this.theShutdowner= theShutdowner;
         
-        ///theMetaFileManager= this;
+        theMetaFileManager= this;
         }
 
     // Instance variables.
@@ -48,7 +64,7 @@ public class MetaFileManager {
       private static final MetaFileManager INSTANCE = new MetaFileManager();
       }
 
-    public static MetaFileManager XgetMetaFileManager()   // Return singleton instance.
+    public static MetaFileManager getMetaFileManager()   // Return singleton instance.
       //{ return LazyHolder.INSTANCE; }
       { return theMetaFileManager; }
     */
@@ -149,6 +165,7 @@ public class MetaFileManager {
           readNestedFileMetaNode( );
         */
 
+        /*
         { // Prepare to run finish() when app terminates.
           //ShutdownHook theShutdownHook = new MetaFile.ShutdownHook();
           //Runtime.getRuntime().addShutdownHook(theShutdownHook);
@@ -162,19 +179,21 @@ public class MetaFileManager {
                 }
               });
           } // Prepare to run finish() when app terminates.
+          */
 
         //Misc.DbgOut( "MetaFile.start(..) end.");  // Debug.
 
         return loadedMetaNode;  // Return the last value, if any, as result.
         } // start()
 
-    private static void finish()
+    private void finish( MetaRoot theMetaRoot )
       /* Finishes activity in this MetaFile class.
         All new or modified MetaNode-s are saved to external file(s).
         This should be called before application termination.  
 
         Presently it writes all nodes, whether modified or not.
         Also presently it recursively writes the entire MetaNode tree.
+        So if lazy-loading was active all unloaded nodes will be loaded.
         This will change.  ???
 
         Eventually only one format will be saved,
@@ -195,8 +214,9 @@ public class MetaFileManager {
         forcedLoadingEnabledB= true;  // Turn on forced loading.
 
         //Misc.DbgOut( "MetaFile.finish(..) writeNestedFileV()");  // Debug.
-        writeNestedFileV( MetaRoot.getRootMetaNode( ) );  // Write Nested file.
-          // This provides an easy read dump of all MetaNodes.
+        ///writeNestedFileV( MetaRoot.getRootMetaNode( ) );  // Write Nested file.
+        writeNestedFileV( theMetaRoot.getRootMetaNode( ) );  // Write Nested file.
+          // This provides an easy-to-read dump of all MetaNodes.
 
         if ( lazyLoadMetaFile != null )  // Lazy loading file open.
           try { // Close it.
@@ -208,11 +228,40 @@ public class MetaFileManager {
             }  // Process any errors.
 
         //Misc.DbgOut( "MetaFile.finish(..) writeFlatFileV()");  // Debug.
-        writeFlatFileV( MetaRoot.getRootMetaNode( ) );  // Write Flat file.
+        ///writeFlatFileV( MetaRoot.getRootMetaNode( ) );  // Write Flat file.
+        writeFlatFileV( theMetaRoot.getRootMetaNode( ) );  // Write Flat file.
           // This complete dump is what is lazy-loaded during next run.
 
         appLogger.info( "MetaFile.finish() end.");
         } // finish()
+
+  public static class Finisher implements ShutdownerListener {
+  
+    /* This class must be constructed after MetaFileManager.
+      It is used to post-process the MetaFile system at shutdown.
+      */
+
+    private MetaRoot theMetaRoot;
+
+    public Finisher(  // Constructor.
+        MetaFileManager theMetaFileManager,
+        Shutdowner theShutdowner,
+        MetaRoot theMetaRoot
+        )
+      {
+        ///this.theShutdowner= theShutdowner;
+        this.theMetaRoot= theMetaRoot;
+
+        theShutdowner.addShutdownerListener( this ); // ???
+        }
+        
+    public void doMyShutdown() {  // ShutdownerListener method.
+      theMetaFileManager.finish(   // Finishing MetaFile operations.
+        theMetaRoot
+        );
+      }
+
+    }
 
   public static boolean getForcedLoadingEnabledB()
     { return forcedLoadingEnabledB; }
@@ -313,6 +362,7 @@ public class MetaFileManager {
         Its children are stored as IDNumber instances.
         Other nodes are lazy-loaded later when, and if, needed,
         by replacing IDNumber children by equivalent MetaNode children.
+        It returns null if there was an error.
         */
       {
         MetaFile theMetaFile= new MetaFile();

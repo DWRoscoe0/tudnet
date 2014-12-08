@@ -7,82 +7,86 @@ public class DataRw
 
   { // class DataRw
 
-      public static DataNode rwDataNode
-        ( MetaFile inMetaFile, DataNode TheDataNode, MetaNode parentMetaNode  )
+      public static DataNode XXrwDataNode  /// ???
+        ( MetaFile inMetaFile, DataNode theDataNode, MetaNode parentMetaNode )
         /* This rw-processes the node InMetaNode
           using MetaFile inMetaFile.
-          If TheDataNode != null then it writes the name of that DataNode
+          If theDataNode != null then it writes the name of that DataNode
             to the MetaFile, and parentMetaNode is ignored.
-          If TheDataNode == null then it reads a name 
+          If theDataNode == null then it reads a name 
             from the MetaFile, returns the DataNode with that name
             from the children of parentMetaNode.
           */
-        { // rwDataNode( DataNode TheDataNode )
+        { // rwDataNode( DataNode theDataNode )
           //Misc.DbgOut( "DataRw.rwDataNode(..)" );
 
           inMetaFile.rwIndentedWhiteSpace( );  // Do line and indent.
 
-          if ( TheDataNode == null )  // Reading...
-            TheDataNode= readDataNode(   // Read DataNode name...
+          if ( theDataNode == null )  // Reading...
+            theDataNode= readDataNode(   // Read DataNode name...
               inMetaFile,  // ...with inMetaFile...
               parentMetaNode.getDataNode()  // ...and lookup in this parent DataNode.
               );
             else  // Writing...
-            inMetaFile.writeToken( TheDataNode.GetNameString( ) );  // Write name.
+            inMetaFile.writeToken( theDataNode.GetNameString( ) );  // Write name.
 
-          return TheDataNode;
-          } // rwDataNode( DataNode TheDataNode )
+          return theDataNode;
+          } // rwDataNode( DataNode theDataNode )
 
-      /*
       public static DataNode rwDataNode
-        ( MetaFile inMetaFile, DataNode TheDataNode, DataNode ParentDataNode  )
+        ( MetaFile inMetaFile, DataNode theDataNode, DataNode parentDataNode )
         /* This rw-processes the node InMetaNode
           using MetaFile inMetaFile.
-          If TheDataNode != null then it writes the name of that DataNode
-            to the MetaFile, and ParentDataNode is ignored.
-          If TheDataNode == null then it reads a name 
+          If theDataNode != null then it writes the name of that DataNode
+            to the MetaFile, and parentDataNode is ignored.
+          If theDataNode == null then it reads a name 
             from the MetaFile, returns the DataNode with that name
-            from the children of ParentDataNode.
+            from the children of parentDataNode.
           */
-        /*
-        { // rwDataNode( DataNode TheDataNode )
-          Misc.DbgOut( "DataRw.rwDataNode(..)" );
+        { // rwDataNode( DataNode theDataNode )
+          //Misc.DbgOut( "DataRw.rwDataNode(..)" );
 
           inMetaFile.rwIndentedWhiteSpace( );  // Do line and indent.
 
-          if ( TheDataNode == null )  // Temporary reading...
-            TheDataNode= readDataNode(   // Read DataNode name...
+          if ( theDataNode == null )  // Reading...
+            theDataNode= readDataNode(   // Read DataNode name...
               inMetaFile,  // ...with inMetaFile...
-              ParentDataNode  // ...and lookup in this parent DataNode.
+              parentDataNode  // ...and lookup in this parent DataNode.
               );
-            else
-            inMetaFile.writeToken( TheDataNode.GetNameString( ) );  // Write name.
+            else  // Writing...
+            inMetaFile.writeToken( theDataNode.GetNameString( ) );  // Write name.
 
-          return TheDataNode;
-          } // rwDataNode( DataNode TheDataNode )
-        */
+          return theDataNode;
+          } // rwDataNode( DataNode theDataNode )
 
-      private static DataNode readDataNode
-        ( MetaFile inMetaFile, DataNode ParentDataNode  )
+      private static DataNode readDataNode( 
+          MetaFile inMetaFile, DataNode parentDataNode
+          )
+        /* This method reads a name string from inMetaFile and
+          returns a DataNode that best matches that name.
+          If first tries to find a child DataNode of parentDataNode
+          with the name.  If it finds none then it returns
+          an UnknownDataNode instance with that name.
+          It never returns a null.
+          */
         { // readDataNode(..)
-          String NameString=  // Get name of DataNode...
+          String nameString=  // Get name of DataNode...
             inMetaFile.readTokenString( );  // ...by reading a String
           { // Prevent troublesome values for name.
-            if ( NameString == null ) 
-              NameString= "ERROR-NullString";
-            else if ( NameString.equals( "" ) )
-              NameString= "ERROR-EmptyString";
+            if ( nameString == null ) 
+              nameString= "ERROR-NullString";
+            else if ( nameString.equals( "" ) )
+              nameString= "ERROR-EmptyString";
             else
               ; // Okay as is.
             } // Prevent troublesome values for name.
-          DataNode TheDataNode =  // Set DataNode to be...
-            ParentDataNode.getNamedChildDataNode(  // ...the child...
-              NameString  // ...with that name.
+          DataNode theDataNode =  // Set DataNode to be...
+            parentDataNode.getNamedChildDataNode(  // ...the child...
+              nameString  // ...with that name.
               );
-          if ( TheDataNode == null )  // replace with error object if null.  ???
-            //TheDataNode= UnknownDataNode.newErrorDataNode( );
-            TheDataNode= new UnknownDataNode( NameString );
-          return TheDataNode;
+          if ( theDataNode == null )  // replace with error object if null.  ???
+            theDataNode= new UnknownDataNode( nameString );
+          return theDataNode;
           } // readDataNode(..)
 
     } // class DataRw 

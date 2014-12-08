@@ -54,8 +54,8 @@ public class Selection
               selectionAttributeString // ...from selection attribute nodes.
               );
           if  // Replacing with root path if result path was empty.
-            ( resultTreePath == DataRoot.getParentOfRootTreePath() )
-            resultTreePath= DataRoot.getRootTreePath();
+            ( resultTreePath == DataRoot.getIt().getParentOfRootTreePath() )
+            resultTreePath= DataRoot.getIt().getRootTreePath();
           return resultTreePath;
           }
           

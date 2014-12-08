@@ -49,7 +49,7 @@ public class PathAttributeMetaTool
           */
         {
           TreePath scanTreePath=  // Point scanTreePath accumulator...
-            DataRoot.getParentOfRootTreePath( );  // ...to parent of root.
+            DataRoot.getIt().getParentOfRootTreePath( );  // ...to parent of root.
           MetaNode scanMetaNode=  // Get root MetaNode.
             MetaRoot.getParentOfRootMetaNode( );
           scanner: while (true) { // Scan all nodes with "IS".
@@ -151,7 +151,8 @@ public class PathAttributeMetaTool
               childKeyAndValueMetaPiteratorOfMetaNode=
                 new KeyAndValueMetaPiteratorOfMetaNode( 
                   parentMetaNode.getMetaChildren().getPiteratorOfMetaNode(
-                    parentMetaNode
+                    ///parentMetaNode
+                    parentMetaNode.getDataNode()
                     ),
                   keyString, 
                   "WAS"  // ...for child/sibling with "WAS" attribute value.

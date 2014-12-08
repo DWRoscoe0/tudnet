@@ -10,20 +10,13 @@ import java.io.RandomAccessFile;
 
 public class MetaFile { // For app's meta-data files.
 
-  // implements ShutdownerListener
-
-  /* This class manages the file(s) that contains the external 
+  /* This class helps to manage the file(s) that contains the external 
     representation of this app's meta-data.
-    This MetaData is stored internally in MetaNode-s rooted at MetaRoot.
-    Each MetaNode is associated with a DataNode.
-    DataNodes are rooted at the DataNode root.
-    The application reads from the file(s) after the application starts,
-    and it writes to the file(s) before the application terminates.
-    
-    ??? Can this class be divided into smaller files?
-    Maybe make additional classes be subclasses,
-    with only statics, and pass calls to them with a reference
-    to MetaFile instance?
+    Related classes are MetaFileManager and MetaFileManager.Finisher.
+
+    An instance of this class maintains state for one file,
+    and provides some low level routines from which 
+    file read and write operations can be built.
     */
 
   // Instance variables.
@@ -50,6 +43,7 @@ public class MetaFile { // For app's meta-data files.
         It includes opening the RandomAccessFile stream
         but not closing it so that it can be used for lazy-loading
         other nodes after this method returns.
+        If there was an error then tt returns null.
         */
       {
         MetaNode loadedMetaNode= null;  // Set null root because we are reading.
@@ -76,10 +70,11 @@ public class MetaFile { // For app's meta-data files.
         return loadedMetaNode;
         }
 
-    public IDNumber readAndConvertIDNumber
-      ( IDNumber inIDNumber, MetaNode parentMetaNode )
+    public IDNumber XreadAndConvertIDNumber( /// ???
+        IDNumber inIDNumber, MetaNode parentMetaNode 
+        )
       throws IOException
-      /* This method is used for loading of flat meta files,
+      /* This method is used in the loading of flat meta files,
         both lazy loading and greedy loading.
         It converts an IDNumber node into an equivalent MetaNode 
         by looking up the ID number in the FLAT text file
@@ -87,42 +82,102 @@ public class MetaFile { // For app's meta-data files.
         It should be called only if ( TheRwStructure == RwStructure.FLAT ).
 
         It is called by special iterators that do lazy loading 
-        by replacing IDNumbers by MetaNodes.
-        It is called by other load routines that do greedy loading.
+        by replacing IDNumber List elements by returned MetaNodes.
+        It is also called by other load routines that do greedy loading.
 
         If doing lazy loading then only one MetaNode is returned
-        with no children attached.
+        with no children attached, but maybe other IDNumbers instances.
         If doing greedy loading then the MetaNode is returned
         with all its children and other descendants attached.
 
-        As usual, MetaNode parentMetaNode is for name lookup.
+        A RepeatDetector is used to detect repeating nodes because
+        the node reader has flag MetaFile wrap-around.
+
+        As usual, the DataNode of parentMetaNode is used for name lookup.
         */
       {
-        RepeatDetector theRepeatDetector= new RepeatDetector();
+        RepeatDetector theRepeatDetector=  // Preparing repeat detector.
+          new RepeatDetector();
         IDNumber resultIDNumber= null;
-        int DesiredI= inIDNumber.getTheI();
-        //Misc.DbgOut( "MetaFile.readAndConvertIDNumber("+DesiredI+") begin");  // Debug.
-        while (true) { // Search state file for desired MetaNode.
-          resultIDNumber= 
-            readFlatWithWrapMetaNode( parentMetaNode, inIDNumber );
-          if ( resultIDNumber == null )  // Exit if no MetaNode readable.
+        int desiredI= inIDNumber.getTheI();
+        //Misc.DbgOut( "MetaFile.readAndConvertIDNumber("+desiredI+") begin");  // Debug.
+        while (true) { // Searching state file for desired MetaNode.
+          resultIDNumber=  // Setting tentative result to be next MetaNode.
+            ///readFlatWithWrapMetaNode( inIDNumber, parentMetaNode );
+            readFlatWithWrapMetaNode( 
+              inIDNumber, MetaNode.getDataNode(parentMetaNode) 
+              );
+          if ( resultIDNumber == null )  // Exitting if no MetaNode readable.
             break; 
-          if  // Exit if node found.
-            ( DesiredI == resultIDNumber.getTheI() )
+          if  // Exitting if node with desired ID number found.
+            ( desiredI == resultIDNumber.getTheI() )
             { 
-              //System.out.print( " S:"+DesiredI );  // Indicate node found.
               break;
               }
-          //System.out.print( " F:"+DesiredI );  // Indicate node NOT found.
-          if ( theRepeatDetector.testB( resultIDNumber.getTheI() ) ) break;
+          if  // Exitting if read ID numbers are repeating. 
+            ( theRepeatDetector.testB( resultIDNumber.getTheI() ) ) 
+            break;
           } // Search state file for desired MetaNode.
         if ( resultIDNumber == null ) // Did not find matching MetaNode.
           resultIDNumber= inIDNumber;  // Return original IDNumber node.
         return resultIDNumber;
         }
 
-    private IDNumber readFlatWithWrapMetaNode
-      ( MetaNode parentMetaNode, IDNumber inIDNumber )
+    public IDNumber readAndConvertIDNumber( 
+        ///IDNumber inIDNumber, MetaNode parentMetaNode
+        IDNumber inIDNumber, DataNode parentDataNode
+        )
+      throws IOException
+      /* This method is used in the loading of flat meta files,
+        both lazy loading and greedy loading.
+        It converts an IDNumber node into an equivalent MetaNode 
+        by looking up the ID number in the FLAT text file
+        and building a MetaNode from the text it finds there.
+        It should be called only if ( TheRwStructure == RwStructure.FLAT ).
+
+        It is called by special iterators that do lazy loading 
+        by replacing IDNumber List elements by returned MetaNodes.
+        It is also called by other load routines that do greedy loading.
+
+        If doing lazy loading then only one MetaNode is returned
+        with no children attached, but maybe other IDNumbers instances.
+        If doing greedy loading then the MetaNode is returned
+        with all its children and other descendants attached.
+
+        A RepeatDetector is used to detect repeating nodes because
+        the node reader has flag MetaFile wrap-around.
+
+        As usual, the DataNode of parentMetaNode is used for name lookup.
+        */
+      {
+        RepeatDetector theRepeatDetector=  // Preparing repeat detector.
+          new RepeatDetector();
+        IDNumber resultIDNumber= null;
+        int desiredI= inIDNumber.getTheI();
+        //Misc.DbgOut( "MetaFile.readAndConvertIDNumber("+desiredI+") begin");  // Debug.
+        while (true) { // Searching state file for desired MetaNode.
+          resultIDNumber=  // Setting tentative result to be next MetaNode.
+            ///readFlatWithWrapMetaNode( inIDNumber, parentMetaNode );
+            readFlatWithWrapMetaNode( inIDNumber, parentDataNode );
+          if ( resultIDNumber == null )  // Exitting if no MetaNode readable.
+            break; 
+          if  // Exitting if node with desired ID number found.
+            ( desiredI == resultIDNumber.getTheI() )
+            { 
+              break;
+              }
+          if  // Exitting if read ID numbers are repeating. 
+            ( theRepeatDetector.testB( resultIDNumber.getTheI() ) ) 
+            break;
+          } // Search state file for desired MetaNode.
+        if ( resultIDNumber == null ) // Did not find matching MetaNode.
+          resultIDNumber= inIDNumber;  // Return original IDNumber node.
+        return resultIDNumber;
+        }
+
+    public IDNumber XreadFlatWithWrapMetaNode( /// ???
+        IDNumber inIDNumber, MetaNode parentMetaNode
+        )
       /* This is like rwMetaNode(..) except:
         * It must read from a FLAT file,
         * but if reading fails because an an end-of-file is encountered
@@ -138,7 +193,8 @@ public class MetaFile { // For app's meta-data files.
         try {
           resultIDNumber=  // Try to...
             MetaNode.readParticularFlatMetaNode( // ...read flat MetaNode(s).
-              this, inIDNumber, parentMetaNode
+              ///this, inIDNumber, parentMetaNode
+              this, inIDNumber, MetaNode.getDataNode(parentMetaNode)
               );
           }
         catch ( Exception theException ) {  // Wrap if end of file.
@@ -146,7 +202,46 @@ public class MetaFile { // For app's meta-data files.
           restoreStreamStateV( );  // Rewind stream to beginning of MetaNodes.
           resultIDNumber=  // Try again to...
             MetaNode.readParticularFlatMetaNode( // ...read flat MetaNode(s).
-              this, inIDNumber, parentMetaNode
+              ///this, inIDNumber, parentMetaNode
+              this, inIDNumber, MetaNode.getDataNode(parentMetaNode)
+              );
+          }
+        //Misc.DbgOut( "MetaFile.readWithWrapFlatMetaNode(..) end");  // Debug.
+        return resultIDNumber;
+        }
+
+    private IDNumber readFlatWithWrapMetaNode( 
+        ///IDNumber inIDNumber, MetaNode parentMetaNode
+        IDNumber inIDNumber, DataNode parentDataNode
+        )
+      /* This is like rwMetaNode(..) except:
+        * It must read from a FLAT file,
+        * but if reading fails because an an end-of-file is encountered
+          then it rewinds the file to the beginning of the MetaNodes
+          and tries one more time.
+        It returns a reference to the MetaNode that it read,
+        or null if it was unable to read one.
+        */
+      throws IOException
+      {
+        //Misc.DbgOut( "MetaFile.readWithWrapFlatMetaNode(..) begin");  // Debug.
+        IDNumber resultIDNumber= null;  // Set default result of not gotten.
+        try {
+          resultIDNumber=  // Try to...
+            MetaNode.readParticularFlatMetaNode( // ...read flat MetaNode(s).
+              ///this, inIDNumber, parentMetaNode
+              ///this, inIDNumber, MetaNode.getDataNode(parentMetaNode)
+              this, inIDNumber, parentDataNode
+              );
+          }
+        catch ( Exception theException ) {  // Wrap if end of file.
+          //Misc.DbgOut( "MetaFile.readWithWrapFlatMetaNode(..) wrapping" );
+          restoreStreamStateV( );  // Rewind stream to beginning of MetaNodes.
+          resultIDNumber=  // Try again to...
+            MetaNode.readParticularFlatMetaNode( // ...read flat MetaNode(s).
+              ///this, inIDNumber, parentMetaNode
+              ///this, inIDNumber, MetaNode.getDataNode(parentMetaNode)
+              this, inIDNumber, parentDataNode
               );
           }
         //Misc.DbgOut( "MetaFile.readWithWrapFlatMetaNode(..) end");  // Debug.
@@ -218,7 +313,8 @@ public class MetaFile { // For app's meta-data files.
               MetaNode.rwFlatOrNestedMetaNode(  // ...read or write... 
                 this, // ...using this MetaFile...
                 inRootMetaNode,  // ...of the root MetaNode using...
-                MetaRoot.getParentOfRootMetaNode() // ...parent for lookup.
+                ///MetaRoot.getParentOfRootMetaNode() // ...parent for lookup.
+                DataRoot.getIt().getParentOfRootDataNode() // ...parent for lookup.
                 );
             } // Read or write process.
 
