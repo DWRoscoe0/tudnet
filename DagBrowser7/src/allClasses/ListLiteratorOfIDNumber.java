@@ -28,16 +28,13 @@ public class ListLiteratorOfIDNumber
       // Instance variables.
 
         private ListIterator<IDNumber> NestedListIteratorOfIDNumber;
-        ///private MetaNode theParentMetaNode;  // Parent MetaNode...
-          // ...for name lookup.
         private DataNode theParentDataNode;  // For name lookup.
 
       // Constructors.
 
-        public ListLiteratorOfIDNumber  ///
-          ( 
+        public ListLiteratorOfIDNumber( 
             ListIterator<IDNumber> inListIteratorOfIDNumber, 
-            MetaNode inParentMetaNode // , int DbgI  // ???
+            DataNode inParentDataNode
             )
           /* This constructs a lazy-loading ListIterator from 
             a regular ListIterator.
@@ -46,25 +43,6 @@ public class ListLiteratorOfIDNumber
             */
           {
             NestedListIteratorOfIDNumber= inListIteratorOfIDNumber;
-            ///theParentMetaNode= inParentMetaNode; /// ???
-            ///theParentDataNode= MetaNode.getDataNode(theParentMetaNode);
-            theParentDataNode= MetaNode.getDataNode(inParentMetaNode);
-            }
-
-        public ListLiteratorOfIDNumber  /// ???
-          ( 
-            ListIterator<IDNumber> inListIteratorOfIDNumber, 
-            DataNode inParentDataNode // , int DbgI  // ???
-            )
-          /* This constructs a lazy-loading ListIterator from 
-            a regular ListIterator.
-            inParentMetaNode is used for name lookups if
-            lazy-loading needs to be done.
-            */
-          {
-            NestedListIteratorOfIDNumber= inListIteratorOfIDNumber;
-            ///theParentMetaNode= inParentMetaNode; /// ???
-            ///theParentDataNode= MetaNode.getDataNode(theParentMetaNode);
             theParentDataNode= inParentDataNode;
             }
 
@@ -118,8 +96,6 @@ public class ListLiteratorOfIDNumber
               inIDNumber=  // ...MetaNode equivalent...
                 MetaFileManager.getLazyLoadMetaFile().readAndConvertIDNumber(  // ...
                   inIDNumber,  // ...of IDNumber using...
-                  ///theParentMetaNode  // ...provided parent for lookup.
-                  ///MetaNode.getDataNode(theParentMetaNode)  // ...provided parent for lookup.
                   theParentDataNode  // ...provided parent for lookup.
                   );
               }

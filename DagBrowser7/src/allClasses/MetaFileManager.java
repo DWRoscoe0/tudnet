@@ -1,6 +1,5 @@
 package allClasses;
 
-///import java.io.File;
 import java.io.IOException;
 
 import static allClasses.Globals.*;  // For appLogger;
@@ -37,8 +36,6 @@ public class MetaFileManager {
     Initialization on Demand Holder (IODH) idom.
     */
   
-    ///private MetaFileManager() {}  // Prevent instantiation by other classes.
-
     private static MetaFileManager theMetaFileManager= null; // ???
 
     public MetaFileManager get()
@@ -125,7 +122,6 @@ public class MetaFileManager {
 
   // Start/finish methods and associated shutdown hook class.
 
-    ///public static MetaNode start()
     public MetaNode start()
       /* Starts activity in this MetaFile class.
         It tries to read at least the root MetaNode from external file(s).
@@ -170,7 +166,6 @@ public class MetaFileManager {
           //ShutdownHook theShutdownHook = new MetaFile.ShutdownHook();
           //Runtime.getRuntime().addShutdownHook(theShutdownHook);
 
-          ///Shutdowner.getShutdowner().addShutdownerListener(
           theShutdowner.addShutdownerListener( // ???
             new ShutdownerListener() {
               public void doMyShutdown() 
@@ -214,7 +209,6 @@ public class MetaFileManager {
         forcedLoadingEnabledB= true;  // Turn on forced loading.
 
         //Misc.DbgOut( "MetaFile.finish(..) writeNestedFileV()");  // Debug.
-        ///writeNestedFileV( MetaRoot.getRootMetaNode( ) );  // Write Nested file.
         writeNestedFileV( theMetaRoot.getRootMetaNode( ) );  // Write Nested file.
           // This provides an easy-to-read dump of all MetaNodes.
 
@@ -228,7 +222,6 @@ public class MetaFileManager {
             }  // Process any errors.
 
         //Misc.DbgOut( "MetaFile.finish(..) writeFlatFileV()");  // Debug.
-        ///writeFlatFileV( MetaRoot.getRootMetaNode( ) );  // Write Flat file.
         writeFlatFileV( theMetaRoot.getRootMetaNode( ) );  // Write Flat file.
           // This complete dump is what is lazy-loaded during next run.
 
@@ -249,7 +242,6 @@ public class MetaFileManager {
         MetaRoot theMetaRoot
         )
       {
-        ///this.theShutdowner= theShutdowner;
         this.theMetaRoot= theMetaRoot;
 
         theShutdowner.addShutdownerListener( this ); // ???

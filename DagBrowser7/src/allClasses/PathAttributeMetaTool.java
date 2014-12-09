@@ -151,7 +151,6 @@ public class PathAttributeMetaTool
               childKeyAndValueMetaPiteratorOfMetaNode=
                 new KeyAndValueMetaPiteratorOfMetaNode( 
                   parentMetaNode.getMetaChildren().getPiteratorOfMetaNode(
-                    ///parentMetaNode
                     parentMetaNode.getDataNode()
                     ),
                   keyString, 

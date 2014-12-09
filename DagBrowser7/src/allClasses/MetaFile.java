@@ -70,61 +70,7 @@ public class MetaFile { // For app's meta-data files.
         return loadedMetaNode;
         }
 
-    public IDNumber XreadAndConvertIDNumber( /// ???
-        IDNumber inIDNumber, MetaNode parentMetaNode 
-        )
-      throws IOException
-      /* This method is used in the loading of flat meta files,
-        both lazy loading and greedy loading.
-        It converts an IDNumber node into an equivalent MetaNode 
-        by looking up the ID number in the FLAT text file
-        and building a MetaNode from the text it finds there.
-        It should be called only if ( TheRwStructure == RwStructure.FLAT ).
-
-        It is called by special iterators that do lazy loading 
-        by replacing IDNumber List elements by returned MetaNodes.
-        It is also called by other load routines that do greedy loading.
-
-        If doing lazy loading then only one MetaNode is returned
-        with no children attached, but maybe other IDNumbers instances.
-        If doing greedy loading then the MetaNode is returned
-        with all its children and other descendants attached.
-
-        A RepeatDetector is used to detect repeating nodes because
-        the node reader has flag MetaFile wrap-around.
-
-        As usual, the DataNode of parentMetaNode is used for name lookup.
-        */
-      {
-        RepeatDetector theRepeatDetector=  // Preparing repeat detector.
-          new RepeatDetector();
-        IDNumber resultIDNumber= null;
-        int desiredI= inIDNumber.getTheI();
-        //Misc.DbgOut( "MetaFile.readAndConvertIDNumber("+desiredI+") begin");  // Debug.
-        while (true) { // Searching state file for desired MetaNode.
-          resultIDNumber=  // Setting tentative result to be next MetaNode.
-            ///readFlatWithWrapMetaNode( inIDNumber, parentMetaNode );
-            readFlatWithWrapMetaNode( 
-              inIDNumber, MetaNode.getDataNode(parentMetaNode) 
-              );
-          if ( resultIDNumber == null )  // Exitting if no MetaNode readable.
-            break; 
-          if  // Exitting if node with desired ID number found.
-            ( desiredI == resultIDNumber.getTheI() )
-            { 
-              break;
-              }
-          if  // Exitting if read ID numbers are repeating. 
-            ( theRepeatDetector.testB( resultIDNumber.getTheI() ) ) 
-            break;
-          } // Search state file for desired MetaNode.
-        if ( resultIDNumber == null ) // Did not find matching MetaNode.
-          resultIDNumber= inIDNumber;  // Return original IDNumber node.
-        return resultIDNumber;
-        }
-
     public IDNumber readAndConvertIDNumber( 
-        ///IDNumber inIDNumber, MetaNode parentMetaNode
         IDNumber inIDNumber, DataNode parentDataNode
         )
       throws IOException
@@ -147,7 +93,7 @@ public class MetaFile { // For app's meta-data files.
         A RepeatDetector is used to detect repeating nodes because
         the node reader has flag MetaFile wrap-around.
 
-        As usual, the DataNode of parentMetaNode is used for name lookup.
+        parentDataNode is used for DataNode name lookup.
         */
       {
         RepeatDetector theRepeatDetector=  // Preparing repeat detector.
@@ -157,8 +103,8 @@ public class MetaFile { // For app's meta-data files.
         //Misc.DbgOut( "MetaFile.readAndConvertIDNumber("+desiredI+") begin");  // Debug.
         while (true) { // Searching state file for desired MetaNode.
           resultIDNumber=  // Setting tentative result to be next MetaNode.
-            ///readFlatWithWrapMetaNode( inIDNumber, parentMetaNode );
-            readFlatWithWrapMetaNode( inIDNumber, parentDataNode );
+            readFlatWithWrapMetaNode( inIDNumber, parentDataNode 
+            );
           if ( resultIDNumber == null )  // Exitting if no MetaNode readable.
             break; 
           if  // Exitting if node with desired ID number found.
@@ -172,46 +118,10 @@ public class MetaFile { // For app's meta-data files.
           } // Search state file for desired MetaNode.
         if ( resultIDNumber == null ) // Did not find matching MetaNode.
           resultIDNumber= inIDNumber;  // Return original IDNumber node.
-        return resultIDNumber;
-        }
-
-    public IDNumber XreadFlatWithWrapMetaNode( /// ???
-        IDNumber inIDNumber, MetaNode parentMetaNode
-        )
-      /* This is like rwMetaNode(..) except:
-        * It must read from a FLAT file,
-        * but if reading fails because an an end-of-file is encountered
-          then it rewinds the file to the beginning of the MetaNodes
-          and tries one more time.
-        It returns a reference to the MetaNode that it read,
-        or null if it was unable to read one.
-        */
-      throws IOException
-      {
-        //Misc.DbgOut( "MetaFile.readWithWrapFlatMetaNode(..) begin");  // Debug.
-        IDNumber resultIDNumber= null;  // Set default result of not gotten.
-        try {
-          resultIDNumber=  // Try to...
-            MetaNode.readParticularFlatMetaNode( // ...read flat MetaNode(s).
-              ///this, inIDNumber, parentMetaNode
-              this, inIDNumber, MetaNode.getDataNode(parentMetaNode)
-              );
-          }
-        catch ( Exception theException ) {  // Wrap if end of file.
-          //Misc.DbgOut( "MetaFile.readWithWrapFlatMetaNode(..) wrapping" );
-          restoreStreamStateV( );  // Rewind stream to beginning of MetaNodes.
-          resultIDNumber=  // Try again to...
-            MetaNode.readParticularFlatMetaNode( // ...read flat MetaNode(s).
-              ///this, inIDNumber, parentMetaNode
-              this, inIDNumber, MetaNode.getDataNode(parentMetaNode)
-              );
-          }
-        //Misc.DbgOut( "MetaFile.readWithWrapFlatMetaNode(..) end");  // Debug.
         return resultIDNumber;
         }
 
     private IDNumber readFlatWithWrapMetaNode( 
-        ///IDNumber inIDNumber, MetaNode parentMetaNode
         IDNumber inIDNumber, DataNode parentDataNode
         )
       /* This is like rwMetaNode(..) except:
@@ -221,6 +131,7 @@ public class MetaFile { // For app's meta-data files.
           and tries one more time.
         It returns a reference to the MetaNode that it read,
         or null if it was unable to read one.
+        parentDataNode is used for DataNode name lookup.
         */
       throws IOException
       {
@@ -229,8 +140,6 @@ public class MetaFile { // For app's meta-data files.
         try {
           resultIDNumber=  // Try to...
             MetaNode.readParticularFlatMetaNode( // ...read flat MetaNode(s).
-              ///this, inIDNumber, parentMetaNode
-              ///this, inIDNumber, MetaNode.getDataNode(parentMetaNode)
               this, inIDNumber, parentDataNode
               );
           }
@@ -239,8 +148,6 @@ public class MetaFile { // For app's meta-data files.
           restoreStreamStateV( );  // Rewind stream to beginning of MetaNodes.
           resultIDNumber=  // Try again to...
             MetaNode.readParticularFlatMetaNode( // ...read flat MetaNode(s).
-              ///this, inIDNumber, parentMetaNode
-              ///this, inIDNumber, MetaNode.getDataNode(parentMetaNode)
               this, inIDNumber, parentDataNode
               );
           }
@@ -313,7 +220,6 @@ public class MetaFile { // For app's meta-data files.
               MetaNode.rwFlatOrNestedMetaNode(  // ...read or write... 
                 this, // ...using this MetaFile...
                 inRootMetaNode,  // ...of the root MetaNode using...
-                ///MetaRoot.getParentOfRootMetaNode() // ...parent for lookup.
                 DataRoot.getIt().getParentOfRootDataNode() // ...parent for lookup.
                 );
             } // Read or write process.
@@ -396,7 +302,6 @@ public class MetaFile { // For app's meta-data files.
         }
 
     public String readTokenString( )
-      // MAYBE PREVENT EMPTY RESULT???
       /* Reads a token from file and returns it as a String.
         The token is assumed to begin at the current file position and
         be terminated by either a space or new-line,
@@ -407,6 +312,8 @@ public class MetaFile { // For app's meta-data files.
         "==" and "!=".  
 
         This also handles IOException-s.  
+        
+        MAYBE PREVENT EMPTY RESULT???
         */
       { // readTokenString( String InString )
         String TokenString= "";  // Set token character accumulator to empty.

@@ -7,34 +7,9 @@ public class DataRw
 
   { // class DataRw
 
-      public static DataNode XXrwDataNode  /// ???
-        ( MetaFile inMetaFile, DataNode theDataNode, MetaNode parentMetaNode )
-        /* This rw-processes the node InMetaNode
-          using MetaFile inMetaFile.
-          If theDataNode != null then it writes the name of that DataNode
-            to the MetaFile, and parentMetaNode is ignored.
-          If theDataNode == null then it reads a name 
-            from the MetaFile, returns the DataNode with that name
-            from the children of parentMetaNode.
-          */
-        { // rwDataNode( DataNode theDataNode )
-          //Misc.DbgOut( "DataRw.rwDataNode(..)" );
-
-          inMetaFile.rwIndentedWhiteSpace( );  // Do line and indent.
-
-          if ( theDataNode == null )  // Reading...
-            theDataNode= readDataNode(   // Read DataNode name...
-              inMetaFile,  // ...with inMetaFile...
-              parentMetaNode.getDataNode()  // ...and lookup in this parent DataNode.
-              );
-            else  // Writing...
-            inMetaFile.writeToken( theDataNode.GetNameString( ) );  // Write name.
-
-          return theDataNode;
-          } // rwDataNode( DataNode theDataNode )
-
-      public static DataNode rwDataNode
-        ( MetaFile inMetaFile, DataNode theDataNode, DataNode parentDataNode )
+      public static DataNode rwDataNode( 
+          MetaFile inMetaFile, DataNode theDataNode, DataNode parentDataNode 
+          )
         /* This rw-processes the node InMetaNode
           using MetaFile inMetaFile.
           If theDataNode != null then it writes the name of that DataNode
@@ -84,7 +59,7 @@ public class DataRw
             parentDataNode.getNamedChildDataNode(  // ...the child...
               nameString  // ...with that name.
               );
-          if ( theDataNode == null )  // replace with error object if null.  ???
+          if ( theDataNode == null )  // replace with error object if null.
             theDataNode= new UnknownDataNode( nameString );
           return theDataNode;
           } // readDataNode(..)
