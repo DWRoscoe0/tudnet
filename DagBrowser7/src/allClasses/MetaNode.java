@@ -34,8 +34,6 @@ public class MetaNode extends IDNumber
   
     // Variables.
 
-      ///private MetaRoot theMetaRoot;
-
       private MetaFileManager theMetaFileManager;
 
       private DataNode theDataNode= null;  /* Associated DataNode for which
@@ -60,61 +58,20 @@ public class MetaNode extends IDNumber
       */
 
     // Constructors (4 becoming 2).
-    
-      /* ???
-      public MetaNode( ) ///
-        /* Constructor of blank MetaNodes.  
-          These MetaNodes are filled in by the MetaNode loader.
-          */
-        /* ???
-        {
-          super( 0 );  // Set superclass IDNumber to 0 for loading.
 
-          ///this.theMetaRoot= MetaRoot.get(); /// ???
-          this.theMetaFileManager= MetaFileManager.get(); /// ???
-          }
-        */
-    
-      public MetaNode( MetaFileManager theMetaFileManager ) /// ???  new.
+      public MetaNode( MetaFileManager theMetaFileManager )
         /* Constructor of blank MetaNodes.  
           These MetaNodes are filled in by the MetaNode loader.
           */
         {
           super( 0 );  // Set superclass IDNumber to 0 for loading.
 
-          ///this.theMetaRoot= theMetaRoot;
-          ///this.theMetaFileManager= MetaFileManager.get(); /// ???
-          this.theMetaFileManager= theMetaFileManager; /// ???
+          this.theMetaFileManager= theMetaFileManager;
           }
-
-      /* ???
-      public MetaNode( DataNode inDataNode ) ///
-        /* This constructs a MetaNode associated with 
-          an existing DataNode inDataNode.
-          Initially it has no attributes or child MetaNodes.
-          */
-        /* ???
-        {
-          super( );  // Define the superclass IDNumber to non-zero.
-
-          ///this.theMetaRoot= MetaRoot.get(); /// ???
-          this.theMetaFileManager= MetaFileManager.get(); /// ???
-
-          theDataNode=  // Save DataNode associated with this MetaNode.
-            inDataNode; 
-
-          AttributesHashMap =  // Initialize attributes to be...
-            new HashMap< String, Object >( 2 );  // ...a small empty map.
-          theMetaChildren =  // Initialize children to be...
-            //new MetaChildren( );  // ...an empty MetaChildren instance.
-            ///theMetaRoot.makeMetaChildren( );  // ...an empty MetaChildren instance.
-            theMetaFileManager.makeMetaChildren( );  // ...an empty MetaChildren instance.
-          }
-        */
 
       public MetaNode( 
           MetaFileManager theMetaFileManager, DataNode inDataNode 
-          ) /// ???
+          )
         /* This constructs a MetaNode associated with 
           an existing DataNode inDataNode.
           Initially it has no attributes or child MetaNodes.
@@ -122,8 +79,7 @@ public class MetaNode extends IDNumber
         {
           super( );  // Define the superclass IDNumber to non-zero.
 
-          ///this.theMetaRoot= theMetaRoot;
-          this.theMetaFileManager= theMetaFileManager; /// ???
+          this.theMetaFileManager= theMetaFileManager;
 
           theDataNode=  // Save DataNode associated with this MetaNode.
             inDataNode; 
@@ -131,8 +87,6 @@ public class MetaNode extends IDNumber
           AttributesHashMap =  // Initialize attributes to be...
             new HashMap< String, Object >( 2 );  // ...a small empty map.
           theMetaChildren =  // Initialize children to be...
-            //new MetaChildren( );  // ...an empty MetaChildren instance.
-            ///theMetaRoot.makeMetaChildren( );  // ...an empty MetaChildren instance.
             theMetaFileManager.makeMetaChildren( );  // ...an empty MetaChildren instance.
           }
 
@@ -192,7 +146,6 @@ public class MetaNode extends IDNumber
           AttributesHashMap=  // Rw the attributes.
             Attributes.rwAttributesHashMap( inMetaFile, AttributesHashMap );
           theMetaChildren=  // Rw...
-            ///MetaChildren.rwGroupMetaChildren(  // ...the children hash map...
             theMetaFileManager.rwGroupMetaChildren(  // ...the children hash map...
               inMetaFile, 
               theMetaChildren, 
@@ -300,8 +253,6 @@ public class MetaNode extends IDNumber
           if ( MapChildMetaNode == null ) // Create new HashMap entry if not there.
             { // Create new HashMap entry.
               MapChildMetaNode= // Create new MetaNode with desired Object.
-                ///new MetaNode( (DataNode)InObject );
-                ///MetaRoot.get().makeMetaNode( (DataNode)InObject );
                 theMetaFileManager.makeMetaNode( (DataNode)InObject );
               theMetaChildren.add(   // Add...
                 MapChildMetaNode  // ... the new child MetaNode.

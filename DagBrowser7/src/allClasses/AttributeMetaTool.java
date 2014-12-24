@@ -32,7 +32,6 @@ abstract class AttributeMetaTool
           String inKeyString 
           )
         {
-          ///super( MetaRoot.get(), inTreePath );  // Construct superclass.
           super( theMetaRoot, inTreePath );  // Construct superclass.
 
           keyString= inKeyString;  // Initialize keyString.

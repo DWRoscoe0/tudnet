@@ -43,26 +43,6 @@ public class Shutdowner
    */
 
   {
-  
-    /* ??? OLD Singleton code.  This is made thread-safe and fast with the
-      Initialization on Demand Holder (IODH) idom.
-      */
-    
-      public Shutdowner() {  // Constructor.
-        ///LazyHolder.INSTANCE= this;
-        }  // OLD: Prevent instantiation by other classes.
-
-      /* ???
-      private static class LazyHolder {
-        ///private static final Shutdowner INSTANCE = new Shutdowner();
-        private static Shutdowner INSTANCE;
-        }
- 
-      public static Shutdowner XgetShutdowner()   // Return singleton instance.
-        { return LazyHolder.INSTANCE; }
-
-      */
-    // ShutdownHook shutdown detection code.
     
     // Shutdowner shutdown code.
     
@@ -190,24 +170,7 @@ public class Shutdowner
               ProcessBuilder MyProcessBuilder = 
                 new ProcessBuilder(inArgStrings);
               
-              //Process MyProcess= 
               MyProcessBuilder.start();
-
-              /*
-              // ??? Redirect in ProcessBuilder instread of Process?
-              StreamConsumer errorConsumer = 
-                new StreamConsumer(MyProcess.getErrorStream(),"stderr");
-              StreamConsumer outputConsumer = 
-                new StreamConsumer(MyProcess.getInputStream(),"stdout");
-              errorConsumer.start();
-              outputConsumer.start();
-
-              try { // Wait until the output copying threads terminate.
-                  Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                  e.printStackTrace();
-                }
-              */
 
               } catch (IOException e1) {
                 e1.printStackTrace();

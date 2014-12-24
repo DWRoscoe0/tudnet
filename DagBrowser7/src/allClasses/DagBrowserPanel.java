@@ -136,9 +136,6 @@ public class DagBrowserPanel
               the value is the penel Component with focus immediately before 
               the command began.  */
         
-        ///private Boolean partTreeChangedVReentryBlockedB=   // for preventing entry...
-        ///  false;  // ...to TreeSelectionListener.
-
     // Constructor and related methods.
     
       public DagBrowserPanel( 
@@ -168,12 +165,10 @@ public class DagBrowserPanel
           and the activityJLabel and adds it to the main panel.
           */
         {
-          ///buildDataModelsAndGraphsV();  // This is where the data is.
           startTreePath= // Initialize startTreePath for browsing with...
             theMetaRoot.buildAttributeTreePath( );  // ...selection state.
 
-          //setBackground( Color.CYAN ); /// ???
-          setOpaque( true ); /// ???
+          setOpaque( true ); // ???
           setLayout(new BorderLayout());  // use BorderLayout manager.
           { // Build and add sub-panels of this Panel.
             buildAndAddHTopJPanelV();  // Contains control components.
@@ -181,7 +176,7 @@ public class DagBrowserPanel
             } // Build and add sub-panels of this Panel.
           { // Define the content in the above panels.
             TreePath currentTreePath=  // Get TreePath of starting node.
-              startTreePath;  // ??? is this needed ???
+              startTreePath;  // Is this needed ???
             theRootJTree  // In the left sub-panel JTree's...
               .getTreeHelper()  // ...TreeHelper...
               .setPartTreePathB(  // ...select...
@@ -268,8 +263,6 @@ public class DagBrowserPanel
           { // build viewJPanel.
             viewJPanel= new JPanel();  // construct viewJPanel.
             viewJPanel.setLayout(new BorderLayout());  // set layout manager.
-            //viewJPanel.setBackground( Color.CYAN ); ///???
-            //viewJPanel.setOpaque( true ); /// ???
             { // Build and add Current Working directoryJLabel.
               directoryJLabel= new JLabel();  // create CWD JLabel.
               directoryJLabel.setAlignmentX(Component.LEFT_ALIGNMENT);  // align it.
@@ -284,8 +277,7 @@ public class DagBrowserPanel
             { // Build and add infoJLabel for displaying file information.
               infoJLabel= new JLabel();  // construct it.
               infoJLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-              //infoJLabel.setBackground( Color.PINK ); ///???
-              infoJLabel.setOpaque( true ); /// ???
+              infoJLabel.setOpaque( true ); // ???
               infoJLabel.setText("UNDEFINED");  // report the present info string.
               viewJPanel.add(infoJLabel,BorderLayout.SOUTH);  // add as south sub-panel.
               } // Build and add infoJLabel for displaying file information.
@@ -336,8 +328,7 @@ public class DagBrowserPanel
                 //this
                 theTreePathListener
                 );
-              //theRootJTree.addFocusListener(this); // Old???
-              theRootJTree.getTreeHelper().addFocusListener(this); // New???
+              theRootJTree.getTreeHelper().addFocusListener(this);
               } // setup handling by listener of various Tree events.
             } // Build the JTree view for the JScrollPane.
           treeJScrollPane.setViewportView(  // Set client to be scrolled...
@@ -422,25 +413,6 @@ public class DagBrowserPanel
             );
           
           }
-
-      /* ???
-      private void buildDataModelsAndGraphsV()
-        /* This composition method builds the TreeModel
-          which will be the source of Infogora DAG to be browsed.
-          It also builds the initial path to be displayed.
-          */
-      /* ???
-        {
-          startTreePath= // Initialize startTreePath for browsing with...
-            ///Selection.buildAttributeTreePath( );  // ...saved selection state.
-            ///MetaRoot.buildAttributeTreePath( );  // ...saved selection state.
-            theMetaRoot.buildAttributeTreePath( );  // ...saved selection state.
-          ///theDataTreeModel =  // Setting DataTreeModel for JTree with a...
-          ///  new DataTreeModel(  // ...DataTreeModel based on...
-          ///    theDataRoot  // ...the data root.
-          ///    );
-          }
-        */
 
     // Listener methods and their helper methods.
   
@@ -565,7 +537,7 @@ public class DagBrowserPanel
               if ( activityJLabel.isOpaque() )  //Beep maybe.
                 {
                   //java.awt.Toolkit.getDefaultToolkit().beep();
-                  //increent HearBeat. ???
+                  //increment HearBeat. ???
                   }
               activityJLabel.  // Reverse activity JLabel opacity.
                 setOpaque(!activityJLabel.isOpaque());
@@ -693,7 +665,7 @@ public class DagBrowserPanel
                   This was the original solution.  Maybe eliminate this ???
 
                 ??? Have a separate Listener class for each sub-panel.  
-                This would eliminate deooding code, but
+                This would eliminate decoding code, but
                 might complicate re-entry detection.
                 */
               {
@@ -732,8 +704,6 @@ public class DagBrowserPanel
               getFocusedTreeAware();
             TreePath theTreePath=  // Get TreePath from its TreeHelper.
               focusedTreeAware.getTreeHelper().getPartTreePath();
-            ///Selection.set( theTreePath );  // Record TreePath as selection.
-            ///MetaRoot.set( theTreePath );  // Record TreePath as selection.
             theMetaRoot.set( theTreePath );  // Record TreePath as selection.
             }
 
@@ -807,8 +777,7 @@ public class DagBrowserPanel
                   //this  // ...a reference to this the main panel
                   theTreePathListener
                   );
-              //dataJComponent.addFocusListener(this);  // Old???
-              dataTreeAware.getTreeHelper().addFocusListener(this); // New???
+              dataTreeAware.getTreeHelper().addFocusListener(this);
               } // build the scroller content.
             dataJScrollPane.setViewportView(  // in the dataJScrollPane's viewport...
               dataJComponent);  // ...set the DataJPanel for viewing.
@@ -857,7 +826,6 @@ public class DagBrowserPanel
                     dataJComponent, lastValidFocusOwnerPanelComponent
                     ) )
                 { 
-                  ///appLogger.debug("RIGHT_PANE gained focus.");
                   lastFocusPane= focusPane.RIGHT_PANE;  // record right enum ID.
                   displayPathAndInfoV(  // display right sub-panel's info for...
                     dataTreeAware.getTreeHelper().getPartTreePath() // ...selected TreePath.
@@ -869,7 +837,6 @@ public class DagBrowserPanel
                     theRootJTree, lastValidFocusOwnerPanelComponent
                     ) )
                 { 
-                  ///appLogger.debug("LEFT_PANE gained focus.");
                   lastFocusPane= focusPane.LEFT_PANE;  // record left enum ID.
                   displayPathAndInfoV(  // display left sub-panel's info.
                     theRootJTree.getSelectedTreePath()
@@ -1171,14 +1138,12 @@ public class DagBrowserPanel
           Component focusedComponent=  // Get Component with focus.
             KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
 
-          ///if ( focusedComponent == theRootJTree ) // Left sub-panel.
           if  // Left sub-panel.
             ( ancestorOfB( theRootJTree, focusedComponent) )
             {
               //appLogger.info("DagBrowserPanel.displayPathAndInfoV() left sub-panel.");
               theTreePath= theRootJTree.getSelectedTreePath();
               } 
-          ///else if ( focusedComponent == dataJComponent ) // Right sub-panel.
           else if  // Right sub-panel.
             ( ancestorOfB( dataJComponent, focusedComponent) )
             { // Calculate right sub-panel TreePath.

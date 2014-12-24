@@ -132,10 +132,7 @@ public class DataTreeModel
             JComponent ResultJComponent; 
             try { 
 	            ResultJComponent= 
-	              //InDagNode.GetDataJComponent( inTreePath );  // ??
-                ///InDataNode.GetDataJComponent( inTreePath, this );
-                InDataNode.GetDataJComponent( 
-                  ///inTreePath, theMetaRoot, this 
+                InDataNode.getDataJComponent( 
                   inTreePath, this 
                   );
               }
@@ -156,7 +153,7 @@ public class DataTreeModel
           {
             String resultString;
             if ( InObject != null )
-              resultString= ((DataNode)InObject).GetNameString();
+              resultString= ((DataNode)InObject).getNameString();
               else
               resultString= "NULL-DataTreeModel-Object";
             return resultString;
@@ -170,7 +167,7 @@ public class DataTreeModel
             DataNode lastDataNode= 
               (DataNode)(inTreePath.getLastPathComponent());
             String TheNameString= 
-              lastDataNode.GetNameString();
+              lastDataNode.getNameString();
             return TheNameString;
             }
 
@@ -195,11 +192,11 @@ public class DataTreeModel
                 ( theDataRoot.getParentOfRootTreePath( ).equals( inTreePath ) )
                 { if // Handling illegal sentinel-only TreePath.
                     ( resultString == "" ) 
-                    resultString= lastDataNode.GetNameString();
+                    resultString= lastDataNode.getNameString();
                   break;
                   }
               String headString=  // Making head string be path element name.
-                lastDataNode.GetNameString();
+                lastDataNode.getNameString();
               if  // Appending separator to headString if needed,...
                 ( resultString.length() != 0)  // ...if result String is not empty...
                 headString+=  // ...by appending to the head String...
@@ -223,7 +220,7 @@ public class DataTreeModel
           {
             DataNode lastDataNode= 
               (DataNode)(inTreePath.getLastPathComponent());
-            return lastDataNode.GetInfoString();
+            return lastDataNode.getInfoString();
             }
 
         public MetaRoot getMetaRoot()

@@ -98,7 +98,7 @@ public class RootJTree
             new MyTreePathListener()
             );
           addMouseListener(aTreeHelper);  // TreeHelper does MouseEvent-s.
-          addKeyListener(this);  // listen for key presses. ???
+          addKeyListener(this);  // listen for key presses.
           
           } // Constructor.
 
@@ -118,7 +118,6 @@ public class RootJTree
             MetaRoot theMetaRoot
             )
           {
-            ///super(inOwningJComponent, inTreePath);
             super(inOwningJComponent, theMetaRoot, inTreePath);
             }
 
@@ -231,7 +230,7 @@ public class RootJTree
               }
           }
 
-      private void setPathV(TreePath inTreePath ) // ??? called internally only.
+      private void setPathV(TreePath inTreePath )
         /* This method is simply shorthand for
           aTreeHelper.setPartTreePathV(..).
           */
@@ -241,7 +240,7 @@ public class RootJTree
             );
           }
 
-      public TreePath getSelectedTreePath() // ??? called by DagBrowserPanel.
+      public TreePath getSelectedTreePath()
         /* This method returns the selection TreePath.
           There should be only one, because multiselection is disabled.
           */
@@ -263,7 +262,6 @@ public class RootJTree
             (isExpanded(getPathForRow(SelectedRowI)))  // Row is expanded now.
             { // Collapse the row and disable auto-expansion.
               collapseRow(SelectedRowI);  // collapse present node.
-              ///TreeExpansion.SetAutoExpanded(  // force auto-expanded status...
               theMetaRoot.SetAutoExpanded(  // force auto-expanded status...
                 getLeadSelectionPath() , // ...for selected path...
                 false  // ... to be off.
@@ -335,10 +333,6 @@ public class RootJTree
               FinalOldTreePath, // ...from the previous selection...
               FinalNewTreePath  // ...to the new selection...
               ) ;  // ...and maybe trigger an auto-expansion selection.
-            ///Selection.set(FinalNewTreePath); // Record final selection position.
-            ///MetaRoot.set(FinalNewTreePath); // Record final selection position.
-            ///MetaRoot.get().set(FinalNewTreePath); // Record final selection position.
-            ///theMetaRoot.set(FinalNewTreePath); // Record final selection position.
             theMetaRoot.set(FinalNewTreePath); // Record final selection position.
             subselectionsEndV();  // Mark end of windows changes.
             }
@@ -402,7 +396,6 @@ public class RootJTree
                 ( stopTreePath.isDescendant( CommonAncestorTreePath ) )
                 { // Set auto-expanded attribute of stop node to false.
                   dbgV("RootJTree.doSubselectionsRawV(..) at stop node");
-                  ///TreeExpansion.SetAutoExpanded(  // Set auto-expanded attribute...
                   theMetaRoot.SetAutoExpanded(  // Set auto-expanded attribute...
                     stopTreePath, false  // ...of stop node to false.
                     );
@@ -439,7 +432,6 @@ public class RootJTree
             */
           {
             final TreePath TrailEncTreePath= // Calculate end of trail of...
-            	///TreeExpansion.FollowAutoExpandToTreePath( // ...expandable nodes...
               theMetaRoot.FollowAutoExpandToTreePath( // ...expandable nodes...
                 stopTreePath  // ...starting at stopTreePath.
                 );
@@ -481,7 +473,6 @@ public class RootJTree
                 subselectV( scanTreePath );
                 if // Auto-collapse this node if...
                   ( ( // ... it was auto-expanded. 
-                  		///TreeExpansion.GetAutoExpandedB( scanTreePath ) 
                       theMetaRoot.GetAutoExpandedB( scanTreePath ) 
                       ) &&  // ...and...
                     ( // ...not the top of an inverted-V.
@@ -530,7 +521,6 @@ public class RootJTree
                 dbgV("RootJTree.collapseAndExpandDownV(..) expanding");
                 subselectV( stopParentTreePath );
                 expandV( stopParentTreePath );
-                ///TreeExpansion.SetAutoExpanded(  // Set auto-expanded status.
                 theMetaRoot.SetAutoExpanded(  // Set auto-expanded status.
                   stopParentTreePath, true
                   );
@@ -632,10 +622,8 @@ public class RootJTree
             );
           animationDelaySetRequestV( false );  // Disable the final delay.
           dbgV("RootJTree.subselectionsEndV()(..)",getSelectionPath());
-          scrollPathToVisible(  // ???
-            getSelectionPath()
-            );
-          paintImmediately(); // ???
+          scrollPathToVisible( getSelectionPath() );
+          paintImmediately();
           }
 
       private void subselectV( TreePath inTreePath )

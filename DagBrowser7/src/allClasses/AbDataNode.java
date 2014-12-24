@@ -1,7 +1,6 @@
 package allClasses;
 
 import javax.swing.JComponent;
-///import javax.swing.tree.DataTreeModel;
 import javax.swing.tree.TreePath;
 
 public abstract class AbDataNode 
@@ -138,46 +137,32 @@ public abstract class AbDataNode
                     break;  // Exiting loop.
                     }
                 if  // Handling child with matching name.
-                  ( inString.equals( childDataNode.GetNameString( ) ) )
+                  ( inString.equals( childDataNode.getNameString( ) ) )
                   break;  // Exiting while loop.
                 }
 
           return childIndexI;  // Return index as search result.
           }
 
-      public String GetInfoString()
+      public String getInfoString()
         /* Returns a String representing information about this object. */
         { 
-          return GetNameString( );  // Use the name string.
+          return getNameString( );  // Use the name string.
           }
 
       public String GetHeadString()
         /* Returns a String representing this node excluding any children. */
         { 
-          return GetNameString( );  // Use the name string.
+          return getNameString( );  // Use the name string.
           }
 
-      public String GetNameString( )
+      public String getNameString( )
         /* Returns String representing name of this Object.  */
         {
           return toString();  // Return default String representation.
           }
 
-      /* ???
-      public JComponent GetDataJComponent(  /// ??? temporary.
-          TreePath inTreePath, 
-          MetaRoot theMetaRoot, 
-          DataTreeModel inDataTreeModel 
-          )
-        {
-          return GetDataJComponent(  
-            inTreePath, 
-            inDataTreeModel 
-            );
-          }
-        */
-
-      public JComponent GetDataJComponent(  /// ??? being replaced.  
+      public JComponent getDataJComponent(
           TreePath inTreePath, DataTreeModel inDataTreeModel 
           )
         /* Returns a JComponent which is appropriate for viewing
@@ -187,26 +172,20 @@ public abstract class AbDataNode
           The DataNode should be the last element of inTreePath,
           */
         {
-          JComponent resultJComponent= null;  // For result.
+          JComponent resultJComponent= null;
 
-          if ( isLeaf( ) )  // This DataNode is a leaf.
-            resultJComponent= // Set result to be a TextViewer JComponent.
+          if ( isLeaf( ) ) // Using TitledTextViewer if node is leaf.
+            resultJComponent= // Using TitledTextViewer.
               new TitledTextViewer( 
                 inTreePath, 
                 inDataTreeModel, 
                 "Leaf Object: "+GetHeadString() // Normally not seen.
                 );
-            else  // This DataNode is NOT a leaf.
-            resultJComponent= // Set result for exploring a List.
-              //new ListViewer( inTreePath, inDataTreeModel );
-              ///new TitledListViewer( inTreePath, inDataTreeModel );
-              new TitledListViewer( 
-                inTreePath, 
-                ///inDataTreeModel.getMetaRoot(), 
-                inDataTreeModel 
-                );
+            else  // Using TitledListViewer if not a leaf.
+            resultJComponent= // Using TitledListViewer.
+              new TitledListViewer( inTreePath, inDataTreeModel );
 
-          return resultJComponent;  // Return the result from above.
+          return resultJComponent;  // Returning result from above.
           }
 
     // Other non-static methods.

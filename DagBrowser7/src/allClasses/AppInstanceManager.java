@@ -279,7 +279,6 @@ public class AppInstanceManager {
             // ...on the socket just opened.
             } // Setup InstanceManagerThread.
 
-          ///Shutdowner.getShutdowner().addShutdownerListener(
           theShutdowner.addShutdownerListener(
             new ShutdownerListener() {
               public void doMyShutdown() 
@@ -578,10 +577,8 @@ public class AppInstanceManager {
       {
         setJavaCommandForExitV( argString );  // Setting up command.
 
-        ///Shutdowner.getShutdowner().doShutdown();  // Starting that command.
         theShutdowner.doShutdown();  // Starting that command.
 
-        //System.out.println( "Calling exit(0).");
         System.exit(0);  // Exitting.
           // Before this would use ShutdownHook to trigger command.
         }
@@ -613,7 +610,6 @@ public class AppInstanceManager {
         commandOrArgStrings[3]=  // Store path of this app;s .jar.
           thisAppFile.getAbsolutePath();  
 
-        ///Shutdowner.getShutdowner().setCommandV(  // Setting String as command.
         theShutdowner.setCommandV(  // Setting String as command.
           commandOrArgStrings
           );

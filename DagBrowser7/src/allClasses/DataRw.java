@@ -29,7 +29,7 @@ public class DataRw
               parentDataNode  // ...and lookup in this parent DataNode.
               );
             else  // Writing...
-            inMetaFile.writeToken( theDataNode.GetNameString( ) );  // Write name.
+            inMetaFile.writeToken( theDataNode.getNameString( ) );  // Write name.
 
           return theDataNode;
           } // rwDataNode( DataNode theDataNode )

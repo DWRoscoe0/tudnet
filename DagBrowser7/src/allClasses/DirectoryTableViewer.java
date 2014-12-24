@@ -24,7 +24,7 @@ public class DirectoryTableViewer
   extends JTable
   
   implements 
-    FocusListener, ListSelectionListener, TreeAware /// , TreePathListener
+    FocusListener, ListSelectionListener, TreeAware
   
   /* This class displays filesystem directories as tables.
     They appear in the main app's right side subpanel as a JTable.
@@ -68,40 +68,7 @@ public class DirectoryTableViewer
       
     // Constructor and related methods.
 
-      /* ???
-      public DirectoryTableViewer(  /// Being replaced.
-          TreePath inTreePath, TreeModel InTreeModel
-          )
-        /* Constructs a DirectoryTableViewer.
-          inTreePath is the TreePath associated with
-          the Subject IFile DataNode to be displayed.
-          The last IFile DataNode in the TreePath is the Subject.
-          It uses InTreeModel for context, but is presently ignored.
-          */
-        /* ???
-        {
-          super( );  // Call superclass constructor.
-            
-          { // Construct and initialize the helper object.
-            aTreeHelper= new TreeHelper(  // Construct helper class instance...
-              this, 
-              MetaRoot.get(), 
-              inTreePath  // ...with back-referene and path info.
-              );  // Note, subject not set yet.
-            } // Construct and initialize the helper object.
-
-          DirectoryTableModel ADirectoryTableModel =  // Construct...
-            new DirectoryTableModel(  //...directory table model from...
-              (IFile)aTreeHelper.getWholeDataNode(), //...subject IFile...
-              InTreeModel  // ...and TreeModel.
-              );
-          setModel( ADirectoryTableModel );  // store TableModel.
-
-          setupTheJTable( );  // Initialize JTable state.
-          }
-        */
-
-      public DirectoryTableViewer(  /// ???
+      public DirectoryTableViewer(
           TreePath inTreePath, 
           MetaRoot theMetaRoot, 
           TreeModel InTreeModel
@@ -118,7 +85,6 @@ public class DirectoryTableViewer
           { // Construct and initialize the helper object.
             aTreeHelper= new TreeHelper(  // Construct helper class instance...
               this, 
-              ///MetaRoot.get(), 
               theMetaRoot,
               inTreePath  // ...with back-referene and path info.
               );  // Note, subject not set yet.

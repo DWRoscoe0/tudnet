@@ -40,12 +40,12 @@ public class SingleChildDataNode
           return null;  // anything else returns null.
           }
 
-      public String GetNameString( )
+      public String getNameString( )
         /* Returns String representing name of this Object.  */
         {
           return // Return name which is composite of...
             "PARENT-OF:" +  // ...this and...
-            ChildDataNode.GetNameString( );  // ...this.
+            ChildDataNode.getNameString( );  // ...this.
           }
 
     } // class SingleChildDataNode

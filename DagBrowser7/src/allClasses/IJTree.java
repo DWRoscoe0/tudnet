@@ -67,7 +67,7 @@ public class IJTree
         only the final name in the associated path instead of the entire path. 
         */
       {
-        return ((DataNode)value).GetNameString();
+        return ((DataNode)value).getNameString();
         }
         
         

@@ -47,10 +47,10 @@ public class UnknownDataNode extends NamedLeaf
         return new UnknownDataNode();
         }
 
-    public String GetNameString( )
+    public String getNameString( )
       /* Returns String representing name of this Object.  */
       {
-        return super.GetNameString( );  // Return the attached string.
+        return super.getNameString( );  // Return the attached string.
         }
 
     public static boolean isOneB( Object inObject )

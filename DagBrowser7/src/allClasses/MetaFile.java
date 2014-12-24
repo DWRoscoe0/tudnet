@@ -53,14 +53,12 @@ public class MetaFile { // For app's meta-data files.
       MetaFileManager.RwStructure theRwStructure, 
       String FileNameString, 
       String HeaderTokenString
-      ///MetaFileManager.Mode TheMode
       ) 
     {
       this.theMetaFileManager= theMetaFileManager;
       this.TheRwStructure= theRwStructure;
       this.FileNameString= FileNameString;
       this.HeaderTokenString= HeaderTokenString;
-      ///this.TheMode= TheMode;
       }
 
   // Instance methods related to lazy loading.
@@ -342,7 +340,7 @@ public class MetaFile { // For app's meta-data files.
 
         This also handles IOException-s.  
         
-        MAYBE PREVENT EMPTY RESULT???
+        Maybe prevent empty result ???
         */
       { // readTokenString( String InString )
         String TokenString= "";  // Set token character accumulator to empty.

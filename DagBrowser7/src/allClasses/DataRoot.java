@@ -42,10 +42,10 @@ public class DataRoot {
 
     private TreePath rootTreePath; // Path to root node.
 
-  private static DataRoot theDataRoot; /// Temporary for static access.
+  private static DataRoot theDataRoot; // Temporary for static access. ???
 
   DataRoot( DataNode rootDataNode ) {  // Constructor.
-    theDataRoot= this;  /// Temporary for static access.
+    theDataRoot= this;  // Temporary for static access.
 
     this.rootDataNode= rootDataNode;
 
@@ -66,7 +66,7 @@ public class DataRoot {
           );
     }
 
-  public static DataRoot getIt() { /// Temporary for static access.
+  public static DataRoot getIt() { // Temporary for static access.
     return theDataRoot;
     }
   

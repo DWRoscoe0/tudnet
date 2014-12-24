@@ -20,8 +20,6 @@ public class MetaFileManager {
     and it writes to the file(s) before the application terminates.
     
     This class came after MetaFile from which it got most of its code.
-  
-    ??? Eliminate static variables and methods using DependencyInjecction.
 
     ??? Might need to put finish() in a separate class to avoid
     infinite recursion from finish() to MetaRoot to start().
@@ -67,16 +65,7 @@ public class MetaFileManager {
 
       this.theDataRoot= theDataRoot;
       this.theShutdowner= theShutdowner;
-      
-      ///theMetaFileManager= this;  ///
       }
-
-  /*  ///
-  private static MetaFileManager theMetaFileManager;
-  
-  public static MetaFileManager get()  ///
-    { return theMetaFileManager; }
-  */
   
   public void methodToPreventUnusedIdentifierCompilerWarnings() 
     // The following are references to methods I used during debugging.
@@ -212,7 +201,7 @@ public class MetaFileManager {
         this.theMetaRoot= theMetaRoot;
         this.theMetaFileManager= theMetaFileManager;
 
-        theShutdowner.addShutdownerListener( this ); // ???
+        theShutdowner.addShutdownerListener( this );
         }
         
     public void doMyShutdown() {  // ShutdownerListener method.
@@ -230,7 +219,6 @@ public class MetaFileManager {
         DataNode InDataNode 
         )
       {
-        ///return new MetaNode( this );
         return new SingleChildMetaNode( this, InChildMetaNode, InDataNode );
         }
 
@@ -249,39 +237,18 @@ public class MetaFileManager {
 
     public MetaNode makeMetaNode() 
       {
-        ///return new MetaNode( this );
-        ///return new MetaNode( );
         return new MetaNode( this );
         }
 
     public MetaNode makeMetaNode( DataNode inDataNode )
       {
-        ///return new MetaNode( this, inDataNode );  
-        ///return new MetaNode( inDataNode );  
         return new MetaNode( this, inDataNode );  
         }
 
     public MetaChildren makeMetaChildren( )
       {
-        ///return new MetaChildren( this );  
-        ///return new MetaChildren( );  
         return new MetaChildren( this );
         }
-
-    /* ???
-    private MetaFile makeMetaFile(
-        RwStructure theRwStructure, 
-        String FileNameString, 
-        String HeaderTokenString
-        ) 
-      {
-        MetaFile theMetaFile= new MetaFile( this );
-        theMetaFile.TheRwStructure= theRwStructure;
-        theMetaFile.FileNameString= FileNameString;
-        theMetaFile.HeaderTokenString= HeaderTokenString;
-        return theMetaFile;
-        }
-      */
 
     private MetaFile makeMetaFile( 
         MetaFileManager.RwStructure theRwStructure, 
@@ -395,7 +362,6 @@ public class MetaFileManager {
         MetaFile theMetaFile= makeMetaFile(
           RwStructure.FLAT, FlatFileNameString, FlatHeaderTokenString
           );
-        ///theMetaFile.TheMode= Mode.LAZY_LOADING;
         MetaNode loadedMetaNode=   // Do the actual read.
           theMetaFile.lazyLoadFileMetaNode( );
         return loadedMetaNode;
@@ -427,7 +393,6 @@ public class MetaFileManager {
         */
       {
         if ( inMetaNode == null ) // If there is no MetaNode then...
-          ///inMetaNode= new MetaNode( ); // ...create one to be filled.
           inMetaNode= makeMetaNode( ); // ...create one to be filled.
 
         inMetaNode.rw( inMetaFile, parentDataNode );  // rw-process fields.
@@ -549,9 +514,6 @@ public class MetaFileManager {
       {
         //Misc.DbgOut( "MetaChildren.readMetaChildren()" );
         MetaChildren newMetaChildren =    // Initialize newMetaChildren to be...
-          ///new MetaChildren( ); // ...an empty default instance.
-          ///MetaRoot.get().makeMetaChildren( ); // ...an empty default instance.
-          ///MetaFileManager.get().makeMetaChildren( ); // ...an empty default instance.
           makeMetaChildren( ); // ...an empty default instance.
         while ( true )  // Read all children.
           { // Read a child or exit.

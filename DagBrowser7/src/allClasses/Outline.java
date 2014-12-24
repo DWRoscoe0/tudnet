@@ -161,7 +161,7 @@ public class Outline
 
     // Other methods.
 
-      public String GetNameString( )
+      public String getNameString( )
         /* Returns String representing name of this Object.  */
         {
           // return "INFOGORA NAME-SPACE";
@@ -239,7 +239,7 @@ public class Outline
       public String toString()
         /* Returns a String representing this object, for JList. */
         { 
-          return GetNameString( );
+          return getNameString( );
           }
           
       public String GetSectionString( )

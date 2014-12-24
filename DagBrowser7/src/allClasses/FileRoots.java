@@ -3,7 +3,6 @@ package allClasses;
 import java.io.File;
 
 import javax.swing.JComponent;
-///import javax.swing.tree.DataTreeModel;
 import javax.swing.tree.TreePath;
 
 public class FileRoots
@@ -135,16 +134,16 @@ public class FileRoots
       public String toString()
         /* Override of the standard converter because List uses it. */
         { 
-          return GetNameString( );
+          return getNameString( );
           }
 
-      public String GetInfoString()
+      public String getInfoString()
         /* Returns a String representing information about this object. */
         { 
-          return GetNameString( );
+          return getNameString( );
           }
 
-      public String GetNameString( )
+      public String getNameString( )
         /* Returns String representing name of this Object.  */
         {
           return "File-System-Roots";
@@ -161,8 +160,6 @@ public class FileRoots
           */
         { // GetDataJComponent.
           JComponent ResultJComponent=  // Calculate a ListViewer.
-            //new ListViewer( InTreePath, InDataTreeModel );
-          	///new TitledListViewer( InTreePath, InDataTreeModel );
             new TitledListViewer( InTreePath, InDataTreeModel );
           return ResultJComponent;  // return the final result.
           } // GetDataJComponent.

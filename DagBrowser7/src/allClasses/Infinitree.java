@@ -1,16 +1,12 @@
 package allClasses;
 
 import javax.swing.JComponent;
-///import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
 public class Infinitree 
   extends AbDataNode
   /* The purpose of this class is to create a an infinite subtree
     for testing the Infogora browser.
-    
-    ??? GetDataJComponent(..) was added temporarilly 
-    to test TitledListViewer.
     */
   {
   
@@ -116,12 +112,9 @@ public class Infinitree
         /* This method return a hash value for this node.
           It takes into account this node's child number and
           the hash codes of all it ancestors.
-          
-          ??? This method does some wasteful computation.
           */
         {
-          int hash = 2047;
-          hash = hash * 17 + childNumberI;  // wasteful computation ???
+          int hash = (2047 * 17) + childNumberI;
           if ( parentInfinitree != null)
             hash = hash * 31 + parentInfinitree.hashCode();
           return hash;
@@ -130,18 +123,13 @@ public class Infinitree
       public JComponent GetDataJComponent( 
           TreePath inTreePath, 
           MetaRoot theMetaRoot,
-          ///TreeModel inTreeModel
           DataTreeModel InDataTreeModel
           )
-        /* Temporary test version to test TitledListViewer. ???
-          */
         { // GetDataJComponent()
           JComponent resultJComponent= null;  // For result.
 
           resultJComponent= // Set result for exploring a List.
-            ///new TitledListViewer( inTreePath, inTreeModel );
             new TitledListViewer( inTreePath, InDataTreeModel );
-            //new ListViewer( inTreePath, inTreeModel );
 
           return resultJComponent;  // Return the result from above.
           } // GetDataJComponent()

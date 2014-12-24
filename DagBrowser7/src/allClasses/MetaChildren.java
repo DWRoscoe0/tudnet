@@ -21,28 +21,14 @@ public class MetaChildren
 
     // Instance variables.
 
-      ///private MetaRoot theMetaRoot;
-
       private MetaFileManager theMetaFileManager;
 
       private ArrayList< IDNumber > TheArrayList;  // Container for children.
 
-    /* ???
-    MetaChildren()     // Constructor. ///
+    MetaChildren( MetaFileManager theMetaFileManager ) // Constructor.
       // This constructor creates an empty MetaChildren instance.
       {
-        ///this.theMetaRoot= MetaRoot.get(); /// ???
-        this.theMetaFileManager= MetaFileManager.get(); /// ???
- 
-        TheArrayList=  // Construct the child MetaNode container as...
-          new ArrayList< IDNumber >( ); // ...an ArrayList of IDNumbe-s.
-        }
-      */
-
-    MetaChildren( MetaFileManager theMetaFileManager ) // Constructor. /// ???
-      // This constructor creates an empty MetaChildren instance.
-      {
-        this.theMetaFileManager= theMetaFileManager; /// ???
+        this.theMetaFileManager= theMetaFileManager;
 
         TheArrayList=  // Construct the child MetaNode container as...
           new ArrayList< IDNumber >( ); // ...an ArrayList of IDNumbe-s.
@@ -111,8 +97,6 @@ public class MetaChildren
           { 
             ListIterator<IDNumber> aListIiteratorOfIDNumber;
             if  // Selecting iterator based on forced loading status.
-              ///( MetaFileManager.get().getForcedLoadingEnabledB() )
-              ///( theMetaRoot.getForcedLoadingEnabledB() )
               ( theMetaFileManager.getForcedLoadingEnabledB() )
               { // Selecting lazy-loading iterator.
                 @SuppressWarnings("unchecked")
@@ -140,8 +124,6 @@ public class MetaChildren
             ListIterator<IDNumber> aListIteratorOfIDNumber= 
               getListIteratorOfIDNumber();
             ListLiteratorOfIDNumber aListLiteratorOfIDNumber= 
-              ///new ListLiteratorOfIDNumber( 
-              ///theMetaRoot.makeListLiteratorOfIDNumber( 
               theMetaFileManager.makeListLiteratorOfIDNumber( 
                 aListIteratorOfIDNumber,
                 inParentDataNode

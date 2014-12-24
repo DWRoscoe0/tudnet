@@ -16,7 +16,6 @@ import static allClasses.Globals.*;  // appLogger;
 
 public class TitledTextViewer
 
-  ///extends IJTextArea
   extends JPanel
  
   implements 
@@ -101,7 +100,7 @@ public class TitledTextViewer
 
           titleJLabel= new JLabel(
             //"TEST-TITLE"
-            aTreeHelper.getWholeDataNode().GetNameString( )
+            aTreeHelper.getWholeDataNode().getNameString( )
             );
           //titleJLabel.setBackground( Color.RED );
           titleJLabel.setOpaque( true );
@@ -140,7 +139,7 @@ public class TitledTextViewer
 
     // interface TreeAware code for TreeHelper access.
 
-			public TreeHelper aTreeHelper;  // helper class ???
+			public TreeHelper aTreeHelper;
 
 			public TreeHelper getTreeHelper() { return aTreeHelper; }
 

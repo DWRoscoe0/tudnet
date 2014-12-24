@@ -59,11 +59,9 @@ abstract class MetaTool
           and then syncing them to inTreePath.
           */
         {
-          ///this.theMetaRoot= MetaRoot.get();
           this.theMetaRoot= theMetaRoot;
           
           theTreePath=  // Initializing DataNode TreePath.
-            ///DataRoot.getIt().getParentOfRootTreePath();
             theMetaRoot.getTheDataRoot().getParentOfRootTreePath();
           theMetaPath=  // Initializing MetaNode TreePath.
             theMetaRoot.getParentOfRootMetaPath( );

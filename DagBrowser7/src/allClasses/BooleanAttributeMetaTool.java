@@ -18,7 +18,6 @@ class BooleanAttributeMetaTool
           MetaRoot theMetaRoot, TreePath InTreePath, String InKeyString 
           )
         {
-          ///super( MetaRoot.get(), InTreePath, InKeyString ); // Superclass does all.
           super( theMetaRoot, InTreePath, InKeyString ); // Superclass does all.
           }
 

@@ -26,10 +26,10 @@ public class MetaRoot {
     private MetaPath parentOfRootMetaPath;  /* MetaPath associated with
       parentOfRootMetaNode.  */
 
-  private static MetaRoot theMetaRoot;  /// Temporary for static references.
+  //private static MetaRoot theMetaRoot;  // Temporary for static references.
 
-  public static MetaRoot get()  /// Temporary for static references.
-    { return theMetaRoot; }
+  //public static MetaRoot get()  // Temporary for static references.
+  //  { return theMetaRoot; }
 
   MetaRoot(  // Constructor.
       DataRoot theDataRoot, 
@@ -43,18 +43,16 @@ public class MetaRoot {
     {
       appLogger.info( "MetaRoot constructor starting.");
 
-      theMetaRoot= this;  /// for temporary static references.
+      //theMetaRoot= this;  // for temporary static references. ???
 
       this.theDataRoot= theDataRoot;
       this.theMetaFileManager= theMetaFileManager;
 
       rootMetaNode=  // Initialize present MetaNode tree root with...
-        ///new MetaNode(  // ...a new MetaNode containing...
         theMetaFileManager.makeMetaNode( // ...a MetaNode containing...
           theDataRoot.getRootDataNode( ) // ...the root DataNode.
           );
 
-      /// loadV( );  // Load meta-data from MetaFile.
       calculateInnerDependenciesV( );
       }
 
@@ -86,7 +84,6 @@ public class MetaRoot {
       */
     { 
       parentOfRootMetaNode= // Making parent of root MetaNode be...
-        ///new SingleChildMetaNode( // ...a MetaNode whose one-child is...
         theMetaFileManager.makeSingleChildMetaNode( // ...a MetaNode whose...
           rootMetaNode, // ...one-child is root MetaNode and whose object is...
           theDataRoot.getParentOfRootDataNode( ) // ...parent of root DataNode.
@@ -98,7 +95,6 @@ public class MetaRoot {
           );
 
       rootMetaNode.put(  // Forcing Selection attribute on Root.
-        ///Selection.selectionAttributeString, "IS"
         selectionAttributeString, "IS"
         ); // This guarantees success of buildAttributeTreePath( ).
           // This is compatible with both loaded and non-loaded meta data,
@@ -137,7 +133,7 @@ public class MetaRoot {
         )
       { 
         return new BooleanAttributeMetaTool(
-          theMetaRoot, InTreePath, InKeyString
+          this, InTreePath, InKeyString
           ); 
         }
 
@@ -146,7 +142,7 @@ public class MetaRoot {
         )
       {
         return new PathAttributeMetaTool( 
-          theMetaRoot, InTreePath, InKeyString 
+          this, InTreePath, InKeyString 
           );
         }
 
@@ -181,7 +177,7 @@ public class MetaRoot {
     final static String selectionAttributeString= // Key String to use.
       "SelectionPath"; 
 
-    // (formerly) static getter methods.  These read from the MetaNode DAG.
+    // Getter methods.  These read from the MetaNode DAG.
 
       public TreePath buildAttributeTreePath( String KeyString )
         /* This method returns path information from the MetaNode DAG.
@@ -200,7 +196,6 @@ public class MetaRoot {
           TreePath scanTreePath=  // Point scanTreePath accumulator...
             DataRoot.getIt().getParentOfRootTreePath( );  // ...to parent of root.
           MetaNode scanMetaNode=  // Get root MetaNode.
-            ///MetaRoot.get().getParentOfRootMetaNode( );
             getParentOfRootMetaNode( );
           scanner: while (true) { // Scan all nodes with "IS".
             MetaNode childMetaNode= // Test for a child with "IS" value.
@@ -230,7 +225,6 @@ public class MetaRoot {
           */
         { 
           return getLastSelectedChildMetaNode( inMetaNode ); 
-          ///return Selection.getLastSelectedChildMetaNode( inMetaNode ); 
           }
 
       private MetaNode getLastSelectedChildMetaNode
@@ -298,7 +292,6 @@ public class MetaRoot {
           */
         { 
           TreePath resultTreePath= // Calculating tentative result...
-            ///Selection.buildAttributeTreePath( // ...path built...
             buildAttributeTreePath( // ...path built...
               MetaRoot.selectionAttributeString // ...from selection attribute nodes.
               );
@@ -332,8 +325,6 @@ public class MetaRoot {
               inTreePath  // ...the provided TreePath.
               );
           DataNode childDataNode=  // Get that last MetaNode's...
-            ///getLastSelectedChildDataNode(  // ...last selected child DataNode.
-            ///MetaRoot.getLastSelectedChildDataNode(  // ...last selected child DataNode.
             getLastSelectedChildDataNode(  // ...last selected child DataNode.
               endOfPathMetaNode );
               
@@ -350,7 +341,6 @@ public class MetaRoot {
           */
         {
           PathAttributeMetaTool workerPathAttributeMetaTool= 
-            ///new PathAttributeMetaTool( // Create new PathAttributeMetaTool...
             makePathAttributeMetaTool( // Create new PathAttributeMetaTool...
               inTreePath,  // ...to work on inTreePath's...
               MetaRoot.selectionAttributeString  // ...selection path attribute.
@@ -361,7 +351,7 @@ public class MetaRoot {
 
   // Code from TreeExpansion class.
 
-    /* This code contains several static methods to help manage 
+    /* This code contains several methods to help manage 
       auto-expand and auto-collapse in JTrees of the DataNode DAG/tree.
       It does this with DataNode meta-data stored in the MetaNode DAG.
       It doesn't actually do any expansions or collapses of nodes.
@@ -375,7 +365,6 @@ public class MetaRoot {
         in the MetaNode associated with InTreePath.  
         */
       { 
-        ///return new BooleanAttributeMetaTool( 
         return makeAutoExpandedAttributeMetaTool(
           InTreePath, "AutoExpanded" 
           ); 
@@ -431,10 +420,7 @@ public class MetaRoot {
               ( ! ScanBooleanAttributeMetaTool.getAttributeB( ) )
               break;  // Exit loop.  We're past the last AutoExpanded node.
             MetaNode ChildOfMetaNode=  // Get recently selected child MetaNode.
-              ///Selection.getLastSelectedChildOfMetaNode(
-              //MetaRoot.getLastSelectedChildOfMetaNode(
-              ///MetaRoot.get().getLastSelectedChildOfMetaNode(
-              theMetaRoot.getLastSelectedChildOfMetaNode(
+              getLastSelectedChildOfMetaNode(
                 ScanBooleanAttributeMetaTool.getMetaNode()
                 );
             if ( ChildOfMetaNode == null ) // Exit loop if no such child.

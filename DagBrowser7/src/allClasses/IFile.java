@@ -8,7 +8,6 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 
 import javax.swing.JComponent;
-///import javax.swing.tree.DataTreeModel;
 import javax.swing.tree.TreePath;
 
 public class IFile 
@@ -157,13 +156,13 @@ public class IFile
           
     // other interface DataNode methods.
 
-      public String GetInfoString()
+      public String getInfoString()
         /* Returns a String representing information about this object. */
         { // GetInfoString()
           String resultInfoString= "";
           try { // Build information string about file.
             resultInfoString+= ""
-              + "Name=\"" + GetNameString() + "\""; // file name.
+              + "Name=\"" + getNameString() + "\""; // file name.
             resultInfoString+= " Size=" + theFile.length(); // file size.
             
             Path ThePath= theFile.toPath();  // Convert to Path for following.
@@ -192,7 +191,7 @@ public class IFile
           return resultInfoString;  // return the accumulated information string.
           } // GetInfoString()
 
-      public String GetNameString( )
+      public String getNameString( )
         /* Returns a String representing the name of this Object.  
           This is the last element of the File path.
           If the path represents a file or directory
@@ -236,9 +235,7 @@ public class IFile
           { // calculate the associated DagNodeViewer.
             if ( inIFile.theFile.isDirectory() )  // file is a directory.
               resultJComponent= 
-                ///new DirectoryTableViewer( inTreePath, inDataTreeModel );
                 new DirectoryTableViewer( 
-                  ///inTreePath, MetaRoot.get(), inDataTreeModel 
                   inTreePath, theMetaRoot, inDataTreeModel 
                   );
             else if ( inIFile.theFile.isFile() )  // file is a regular file.
@@ -310,7 +307,7 @@ public class IFile
           return childStrings;  // Return the array.
           }
 
-      public String toString( ) { return GetNameString( ); }
+      public String toString( ) { return getNameString( ); }
         /* it appears that JList uses toString() but
           JTree uses something else (getName()?).
           */

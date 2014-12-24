@@ -1,6 +1,5 @@
 package allClasses;
 
-///import javax.swing.JComponent;
 import javax.swing.JFrame;
 
 import static allClasses.Globals.*;  // For appLogger;
@@ -185,7 +184,6 @@ public class DagBrowser
             theAppInstanceManager,
             theConnectionManager,
             theDagBrowserPanel,
-            ///theDataRoot,
             theMetaRoot
             );
           }
@@ -197,7 +195,6 @@ public class DagBrowser
       private AppInstanceManager theAppInstanceManager;
       private ConnectionManager theConnectionManager;
       private DagBrowserPanel theDagBrowserPanel;
-      ///private DataRoot theDataRoot;  /// ??? not used.
       private MetaRoot theMetaRoot;
 
     // Other instance variables.
@@ -208,7 +205,6 @@ public class DagBrowser
         AppInstanceManager theAppInstanceManager,
         ConnectionManager theConnectionManager,
         DagBrowserPanel theDagBrowserPanel,
-        ///DataRoot theDataRoot,
         MetaRoot theMetaRoot
         )
       {
@@ -216,7 +212,6 @@ public class DagBrowser
         this.theAppInstanceManager= theAppInstanceManager;
         this.theConnectionManager= theConnectionManager;
         this.theDagBrowserPanel= theDagBrowserPanel;
-        ///this.theDataRoot= theDataRoot;
         this.theMetaRoot= theMetaRoot;
 
         }
@@ -375,14 +370,6 @@ public class DagBrowser
             +", archived "
             +theAppInstanceManager.thisAppDateString()
             );
-        /* ???
-        theDagBrowserPanel=  // Construct content to be a...
-          new DagBrowserPanel(  // ...DagBrowserPane.
-            theAppInstanceManager,
-            theDataRoot,
-            theMetaRoot
-            );
-          */
         theDagBrowserPanel.initializeV(); // Initialize content panel.
         theJFrame.setContentPane( theDagBrowserPanel );  // Store content.
         theJFrame.pack();  // Layout all the content's sub-panels.

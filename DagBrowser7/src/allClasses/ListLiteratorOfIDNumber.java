@@ -34,21 +34,7 @@ public class ListLiteratorOfIDNumber
 
       // Constructors.
 
-        public ListLiteratorOfIDNumber( ///
-            ListIterator<IDNumber> theListIteratorOfIDNumber, 
-            DataNode theParentDataNode
-            )
-          /* This constructs a lazy-loading ListIterator from 
-            a regular ListIterator.
-            inParentMetaNode is used for name lookups if
-            lazy-loading needs to be done.
-            */
-          {
-            this.theListIteratorOfIDNumber= theListIteratorOfIDNumber;
-            this.theParentDataNode= theParentDataNode;
-            }
-
-        public ListLiteratorOfIDNumber( /// ???
+        public ListLiteratorOfIDNumber(
             MetaFileManager theMetaFileManager,
             ListIterator<IDNumber> theListIteratorOfIDNumber, 
             DataNode theParentDataNode
@@ -105,7 +91,6 @@ public class ListLiteratorOfIDNumber
           { // Try to replace IDNumber with loaded MetaNode equivalent.
             try {
               inIDNumber=  // ...MetaNode equivalent...
-                ///MetaFileManager.get().getLazyLoadMetaFile().readAndConvertIDNumber(  // ...
                 theMetaFileManager.getLazyLoadMetaFile().readAndConvertIDNumber(  // ...
                   inIDNumber,  // ...of IDNumber using...
                   theParentDataNode  // ...provided parent for lookup.

@@ -132,32 +132,8 @@ public class TreeHelper
     MetaRoot theMetaRoot;
 
     // Constructors.
-
-      /* ???
-      TreeHelper(  /// Being removed.
-          JComponent inOwningJComponent,
-          ///MetaRoot theMetaRoot,
-          TreePath inWholeTreePath  
-          )
-        /* Constructs a TreeHelper.
-          inWholeTreePath identifies the root of the Whole subtree to display.
-          The Part TreePath is auto-selected if possible.
-          */
-        /* ???
-        {
-          owningJComponent= inOwningJComponent; // Saving owning JComponent.
-          this.theMetaRoot= MetaRoot.get();
-          
-          setWholeWithPartAutoSelectV(  // Making initial sSelection.
-            inWholeTreePath 
-            );
-
-          owningJComponent.addFocusListener(this); // Making this TreeHelper 
-            // be a FocusListener for its owning JComponent.
-          }
-        */
     
-      TreeHelper(  /// ???
+      TreeHelper(
           JComponent inOwningJComponent,
           MetaRoot theMetaRoot,
           TreePath inWholeTreePath  
@@ -177,23 +153,6 @@ public class TreeHelper
           owningJComponent.addFocusListener(this); // Making this TreeHelper 
             // be a FocusListener for its owning JComponent.
           }
-    
-      /* TreeHelper(   // ??? not used yet.  For when Part is not Whole child.
-            JComponent inOwningJComponent, 
-            TreePath inWholeTreePath,
-            TreePath inPartTreePath
-            )
-          /* Constructs a TreeHelper.
-            inWholeTreePath identifies the root of the Whole subtree to display.
-            inPartTreePath identifies the part of the Whole to highlight.
-            */
-          /*
-          {
-            owningJComponent= inOwningJComponent;
-            setWholeV( inWholeTreePath );
-            //setPartV( inPartTreePath ); ???
-            }
-          */
 
     // FocusListener code: registration, firing, and the interface.
 
@@ -351,8 +310,8 @@ public class TreeHelper
           This is useful in determing whether command gadgets,
           such as buttons and menus, should be grayed out.
 
-        ??? Maybe impliment the Command pattern.
-        In Java the Command pattern is implimented with the Action interface
+        ??? Maybe implement the Command pattern.
+        In Java the Command pattern is implemented with the Action interface
         which extends the ActionListener interface.
         This might do everything I eventually want to do.
         */
@@ -581,8 +540,6 @@ public class TreeHelper
           */
         {
           DataNode childDataNode=  // Try to get the child...
-            ///Selection.  // ...from the visits tree that was the...
-            ///MetaRoot.get().  // ...from the visits tree that was the...
             theMetaRoot.  // ...from the visits tree that was the...
               setAndReturnDataNode( // ...most recently visited child...
                 inTreePath  // ...of the List at the end of the TreePath.
@@ -733,7 +690,6 @@ public class TreeHelper
           */
         {
           TreePath childTreePath= // Calculate child TreePath to be...
-            ///theWholeTreePath  // ...the base TreePath with...
             thePartTreePath  // ...present path's...
               .getParentPath()  // ...parent with...
               .pathByAddingChild( inDataNode );  // ...new child added.
@@ -759,19 +715,6 @@ public class TreeHelper
         The TreePathListener interface has one method for 
         testing a TreePath value for legality and another for 
         setting a TreePath value.
-
-        ??? Originally this code used TreeSelectionEvent-s,
-        not TreePathEvent-s.  Neither this class nor 
-        the class being helped by this class is a TreeSelectionModel, 
-        the usual source of TreeSelectionEvent-s.
-        TreeSelectionEvent was being used simply because 
-        it was a convenient way to pass:
-        * a TreePath, which represents a change of location within a tree.
-        * It was also being used to pass a boolean, internalB,
-          interpreted as follows:
-          * false: the location is of the Whole.
-          * true: the location is of the Part.
-          but this is no longer true.
         */
       
       private Vector<TreePathListener> listenerVector =   // Listeners.
@@ -793,13 +736,13 @@ public class TreeHelper
         /* This method is used to notify listeners that 
           something other than the node TreePath, 
           such as the display of other nodes, has changed,
-          and there is no need to reload the entire right subpanel.
+          and there is no need to reload the entire right sub-panel.
           This was communicated by sending a TreePath of null,
           but now it resends the unchanged Part TreePath.
 
           Presently it is used to communicate when a node 
           is expanded or collapsed, which can happen when,
-          when in the RootJTree highlighed node, either:
+          when in the RootJTree highlighted node, either:
           * The (Enter) key is pressed.
           * The mouse is double-clicked.
           See RootJTree and DagBrowser details.
@@ -808,8 +751,6 @@ public class TreeHelper
           */
         {
           fireSetPartTreePathV(  // Notify the listeners...
-            ///true,  // ... an internal/Part change...
-            //null // ...to the Part path.
             getPartTreePath()  // ...by sending an unchanged path.
             );
           }
@@ -819,12 +760,8 @@ public class TreeHelper
           notifies the listeners about our newest TreePath.
           */
         {
-          ///Selection.set( inTreePath );  // Record as a selection.
-          ///MetaRoot.set( inTreePath );  // Record as a selection.
-          ///MetaRoot.get().set( inTreePath );  // Record as a selection.
           theMetaRoot.set( inTreePath );  // Record as a selection.
           fireSetPartTreePathV(  // Notify the listeners about...
-            ///true,  // ... an internal/Part change...
             inTreePath  // ...to the Part path.
             );
           }
