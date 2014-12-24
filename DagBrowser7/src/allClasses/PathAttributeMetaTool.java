@@ -1,16 +1,14 @@
 package allClasses;
 
-// import java.util.Map;
-
 import javax.swing.tree.TreePath;
 
 public class PathAttributeMetaTool
 
   extends AttributeMetaTool 
   
-  /* This is a Attribute MetaTool for dealing with 
+  /* This is an Attribute MetaTool for dealing with 
     a MetaNode's path attributes. 
-    At first it is only for the SelectionPath attribute.
+    At first it is only for the SelectionPath key.
     
     Attribute values have the following meanings:
     IS: this node is now part of the path.
@@ -22,80 +20,47 @@ public class PathAttributeMetaTool
     This is based on the my InfogoraPathHistoryAttribute notes.
     */
   
-  { // class PathAttributeMetaTool 
+  {
 
     // Constructors.
 
-      public PathAttributeMetaTool
-        ( TreePath InTreePath, String InKeyString )
+      public PathAttributeMetaTool( 
+          MetaRoot theMetaRoot, 
+          TreePath InTreePath, 
+          String InKeyString 
+          )
         {
-          super( InTreePath, InKeyString );  // Superclass does it all.
-          }
-
-    // static getter methods.
-
-      public static TreePath buildAttributeTreePath( String KeyString )
-        /* This method returns path information from the MetaNode DAG.
-          It returns a TreePath comprised of all the DataNodes
-          from the MetaNode's which contain attributes 
-          with a key of keyString and a value of "IS".
-          It does not consider UnknownDataNode-s to be part of the path
-          even if they have the desired attribute
-          because it is an unusable value.
-          At least the root must have an "IS" attribute value,
-          otherwise it will return Dataroot.getParentOfRootTreePath(),
-          which is a sentinel value which can not for
-          anything but a termination marker.
-          */
-        {
-          TreePath scanTreePath=  // Point scanTreePath accumulator...
-            DataRoot.getIt().getParentOfRootTreePath( );  // ...to parent of root.
-          MetaNode scanMetaNode=  // Get root MetaNode.
-            MetaRoot.getParentOfRootMetaNode( );
-          scanner: while (true) { // Scan all nodes with "IS".
-            MetaNode childMetaNode= // Test for a child with "IS" value.
-              scanMetaNode.getChildWithAttributeMetaNode( KeyString, "IS" );
-            if  // scanMetaNode has no child with "IS" attribute value.
-              ( childMetaNode == null)
-              break scanner;  // Exit Processor.
-            DataNode theDataNode= // Get associated DataNode.
-              childMetaNode.getDataNode();
-            if // DataNode is an UnknownDataNode.
-              ( UnknownDataNode.isOneB( theDataNode ) )
-              break scanner;  // Exit Processor.
-            scanTreePath=  // Add DataNode to TreePath.
-              scanTreePath.pathByAddingChild( theDataNode );
-            scanMetaNode= childMetaNode;  // Point to next MetaNode.
-            } // Scan all nodes with "IS".
-          return scanTreePath;  // Return accumulated TreePath.
+          super( theMetaRoot, InTreePath, InKeyString );
           }
 
     // Instance setter methods.
 
-      public void setPath( )
+      public void setPath( ) // Stores path with history.
         /* This method puts path information into the MetaNode DAG.
           It sets the path attributes for the MetaPath 
           attached to this PathAttributeMetaTool instance,
           from the end node all the way to the root
           by setting path MetaNodes' attribute value to "IS".  
           It might set the same path attributes of other MetaNodes 
-          to either "WAS", "OLD", or remove them, depending on context.
+          to either "WAS", "OLD", or remove them, 
+          depending on conditions.
 
           This method uses two recursive helper methods 
           to performs the following sequence of operations:
-          * Scan toward the root looking for the first "IS" attribute value.
+          * Scan toward the root looking for the first 
+            "IS" attribute value.
             This is the closest MetaNode in both old and new paths.
           * Scan from that common MetaNode away from the root 
             following to the end of the trail of "IS" attribute values.
-          * Reverse scan back toward the common MetaNode,
-            replacing "IS" attribute values with "WAS" attribute values.
-          * Reverse scan away from the common root back to the starting node 
-            while setting "IS" attribute values, 
+          * Reverse scan back toward the common MetaNode, replacing 
+            "IS" attribute values with "WAS" attribute values.
+          * Reverse scan away from the common root back to 
+            the starting node while setting "IS" attribute values, 
             and in siblings replacing "WAS" values with "OLD" values.
 
           */
         {
-          setPathHereAndTowardRoot(  // Use helper method starting from...
+          setPathHereAndTowardRoot(  // Setting attributes for...
             getMetaPath()  // ...MetaPath associated with this tool.
             );
           }
@@ -115,7 +80,7 @@ public class PathAttributeMetaTool
                 )
               ||  // ...or...
               ( // ...we have passed the root.
-                scanMetaPath == MetaRoot.getParentOfRootMetaPath( ) 
+                scanMetaPath == theMetaRoot.getParentOfRootMetaPath( ) 
                 )
               )
             { // Reset descendants of our location in old path.
@@ -193,4 +158,4 @@ public class PathAttributeMetaTool
             } // Process this MetaNode.
           }
 
-    } // class PathAttributeMetaTool 
+    }

@@ -31,7 +31,6 @@ public class TitledTextViewer
     */
     
   {
-  
     // variables.
     
       // static variables.
@@ -40,6 +39,8 @@ public class TitledTextViewer
 
       // instance variables.
 
+        private DataTreeModel theDataTreeModel;
+        
         private JLabel titleJLabel;  // Label with the title.
 
         private IJTextArea theIJTextArea;  // Component for the text.
@@ -47,7 +48,9 @@ public class TitledTextViewer
     // Constructors and related methods.
 
       public TitledTextViewer(  // Constructor.
-          TreePath TreePathIn, TreeModel InTreeModel, String InString 
+          TreePath TreePathIn, 
+          DataTreeModel theDataTreeModel, 
+          String InString 
           )
         /* Constructs a TitledTextViewer.
           TreePathIn is the TreePath associated with
@@ -57,6 +60,8 @@ public class TitledTextViewer
           InTreeModel provides context.
           */
         { // TitledTextViewer(.)
+          this.theDataTreeModel= theDataTreeModel;
+
           theIJTextArea= new IJTextArea(   // Construct JTextArea.
             InString  // String to view.
             );
@@ -87,7 +92,9 @@ public class TitledTextViewer
             TreePathIn = new TreePath( new NamedLeaf( "ERROR TreePath" ));
 
           aTreeHelper=  // construct helper class instance.
-            new TreeHelper( this, TreePathIn ); 
+            new TreeHelper( 
+              this, theDataTreeModel.getMetaRoot(), TreePathIn 
+              );
 
           setLayout( new BorderLayout() );
           //setLayout( new BoxLayout( this, BoxLayout.Y_AXIS ) );

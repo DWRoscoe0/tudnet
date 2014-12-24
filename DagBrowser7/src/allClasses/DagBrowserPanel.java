@@ -67,17 +67,20 @@ public class DagBrowserPanel
 
   { // class DagBrowserPanel. 
 
-    // instance variables.
+    // Injected dependency storage variables.
 
       AppInstanceManager theAppInstanceManager;  // For update checking.
+      DataTreeModel theDataTreeModel;  // holds all browsable data.
       DataRoot theDataRoot;  // The stuff to display.
+      MetaRoot theMetaRoot;  // How to display it.
+
+    // Other instance variables.
 
       private Timer activityTimer; // Timer that triggers the monitor activity.
         // This timer is not started.  Using theTimerThread instead.
       private TimerThread theTimerThread = new TimerThread();
     
       // data models.
-        private DataTreeModel theDataTreeModel;  // holds all browsable data.
         private TreePath startTreePath;  // start TreePath to be displayed.
 
       // displayed sub-panel JComponent tree.
@@ -140,7 +143,9 @@ public class DagBrowserPanel
     
       public DagBrowserPanel( 
           AppInstanceManager theAppInstanceManager,
-          DataRoot theDataRoot
+          DataTreeModel theDataTreeModel,
+          DataRoot theDataRoot,
+          MetaRoot theMetaRoot
 )
         /* This constructor creates the DagBrowserPanel.
           This includes creating all the components, 
@@ -149,15 +154,26 @@ public class DagBrowserPanel
           It also starts a activityTimer used to indicate 
           that the program is running and for update checks.
           */
-        { // DagBrowserPanel()
+        {
           this.theAppInstanceManager= theAppInstanceManager;
+          this.theDataTreeModel= theDataTreeModel;
           this.theDataRoot= theDataRoot;
+          this.theMetaRoot= theMetaRoot;
+          }
+
+      public void initializeV()
+        /* This method does initialization, exclucing dependency injection,
+          which is done by the oonstructor.
+          It builds the HTopPanel with all its buttons
+          and the activityJLabel and adds it to the main panel.
+          */
+        {
+          ///buildDataModelsAndGraphsV();  // This is where the data is.
+          startTreePath= // Initialize startTreePath for browsing with...
+            theMetaRoot.buildAttributeTreePath( );  // ...selection state.
 
           //setBackground( Color.CYAN ); /// ???
           setOpaque( true ); /// ???
-
-          buildDataModelsAndGraphsV();  // This is where the data is.
-
           setLayout(new BorderLayout());  // use BorderLayout manager.
           { // Build and add sub-panels of this Panel.
             buildAndAddHTopJPanelV();  // Contains control components.
@@ -179,7 +195,7 @@ public class DagBrowserPanel
           miscellaneousInitializationV();  // Odds and end.
 
           //appLogger.info("DagBrowserPanel constructor End.(");
-          } // DagBrowserPanel()
+          }
 
       private void buildAndAddHTopJPanelV()
         /* This method builds the HTopPanel with all its buttons
@@ -311,7 +327,8 @@ public class DagBrowserPanel
           { // Build the JTree view for the JScrollPane.
             theRootJTree= new RootJTree(  // Construct the JTree with...
               theDataTreeModel,  // ...this model for tree data and...
-              treeJScrollPane   // ...JScrollPane for view-ability tests.
+              treeJScrollPane,   // ...JScrollPane for view-ability tests,
+              theMetaRoot  // ...and MetaRoot for doing Selections.
               );  // Note that theDataTreeModel was built earlier.
 
             { // setup handling by listener of various Tree events.
@@ -406,20 +423,24 @@ public class DagBrowserPanel
           
           }
 
+      /* ???
       private void buildDataModelsAndGraphsV()
         /* This composition method builds the TreeModel
           which will be the source of Infogora DAG to be browsed.
-          It also builds the MetaTool cache DAG which
-          stores information about the Infogora graph.
+          It also builds the initial path to be displayed.
           */
+      /* ???
         {
           startTreePath= // Initialize startTreePath for browsing with...
-            Selection.buildAttributeTreePath( );  // ...saved selection state.
-          theDataTreeModel =  // Setting DataTreeModel for JTree with a...
-            new DataTreeModel(   // ...DataTreeModel rooted at...
-              theDataRoot.getParentOfRootDataNode() // ...parent of root.
-              );
+            ///Selection.buildAttributeTreePath( );  // ...saved selection state.
+            ///MetaRoot.buildAttributeTreePath( );  // ...saved selection state.
+            theMetaRoot.buildAttributeTreePath( );  // ...saved selection state.
+          ///theDataTreeModel =  // Setting DataTreeModel for JTree with a...
+          ///  new DataTreeModel(  // ...DataTreeModel based on...
+          ///    theDataRoot  // ...the data root.
+          ///    );
           }
+        */
 
     // Listener methods and their helper methods.
   
@@ -711,7 +732,9 @@ public class DagBrowserPanel
               getFocusedTreeAware();
             TreePath theTreePath=  // Get TreePath from its TreeHelper.
               focusedTreeAware.getTreeHelper().getPartTreePath();
-            Selection.set( theTreePath );  // Record TreePath as selection.
+            ///Selection.set( theTreePath );  // Record TreePath as selection.
+            ///MetaRoot.set( theTreePath );  // Record TreePath as selection.
+            theMetaRoot.set( theTreePath );  // Record TreePath as selection.
             }
 
         private void processSelectionFromLeftSubpanel( TreePath inTreePath )

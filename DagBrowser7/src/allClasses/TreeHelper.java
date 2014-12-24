@@ -129,16 +129,46 @@ public class TreeHelper
       That JComponent has a reference to this object also,
       so this linkage might be refered to as mutual-composition.  
       */
+    MetaRoot theMetaRoot;
 
     // Constructors.
 
-      TreeHelper( JComponent inOwningJComponent, TreePath inWholeTreePath  )
+      /* ???
+      TreeHelper(  /// Being removed.
+          JComponent inOwningJComponent,
+          ///MetaRoot theMetaRoot,
+          TreePath inWholeTreePath  
+          )
+        /* Constructs a TreeHelper.
+          inWholeTreePath identifies the root of the Whole subtree to display.
+          The Part TreePath is auto-selected if possible.
+          */
+        /* ???
+        {
+          owningJComponent= inOwningJComponent; // Saving owning JComponent.
+          this.theMetaRoot= MetaRoot.get();
+          
+          setWholeWithPartAutoSelectV(  // Making initial sSelection.
+            inWholeTreePath 
+            );
+
+          owningJComponent.addFocusListener(this); // Making this TreeHelper 
+            // be a FocusListener for its owning JComponent.
+          }
+        */
+    
+      TreeHelper(  /// ???
+          JComponent inOwningJComponent,
+          MetaRoot theMetaRoot,
+          TreePath inWholeTreePath  
+          )
         /* Constructs a TreeHelper.
           inWholeTreePath identifies the root of the Whole subtree to display.
           The Part TreePath is auto-selected if possible.
           */
         {
           owningJComponent= inOwningJComponent; // Saving owning JComponent.
+          this.theMetaRoot= theMetaRoot;
           
           setWholeWithPartAutoSelectV(  // Making initial sSelection.
             inWholeTreePath 
@@ -551,7 +581,9 @@ public class TreeHelper
           */
         {
           DataNode childDataNode=  // Try to get the child...
-            Selection.  // ...from the visits tree that was the...
+            ///Selection.  // ...from the visits tree that was the...
+            ///MetaRoot.get().  // ...from the visits tree that was the...
+            theMetaRoot.  // ...from the visits tree that was the...
               setAndReturnDataNode( // ...most recently visited child...
                 inTreePath  // ...of the List at the end of the TreePath.
                 );
@@ -787,7 +819,10 @@ public class TreeHelper
           notifies the listeners about our newest TreePath.
           */
         {
-          Selection.set( inTreePath );  // Record as a selection.
+          ///Selection.set( inTreePath );  // Record as a selection.
+          ///MetaRoot.set( inTreePath );  // Record as a selection.
+          ///MetaRoot.get().set( inTreePath );  // Record as a selection.
+          theMetaRoot.set( inTreePath );  // Record as a selection.
           fireSetPartTreePathV(  // Notify the listeners about...
             ///true,  // ... an internal/Part change...
             inTreePath  // ...to the Part path.

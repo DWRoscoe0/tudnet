@@ -43,7 +43,9 @@ public class RootJTree
 
       // private DataTreeModel theDataTreeModel;  // Defines Tree data.
 
+      // Injected dependencies.
       private JScrollPane theJScrollPane;  // Associated JScrollPane.
+      private MetaRoot theMetaRoot;
 
       private TreePath savedTreePath;  // Previous selection.  This is...
         // ...for use as first argument to doSubselectionsV(..)
@@ -52,7 +54,11 @@ public class RootJTree
 
     // Constructors.
 
-      public RootJTree( DataTreeModel inTreeModel, JScrollPane inJScrollPane ) 
+      public RootJTree( 
+          DataTreeModel inTreeModel, 
+          JScrollPane inJScrollPane,
+          MetaRoot theMetaRoot
+          ) 
         /* This constructs a RootJTree.
           inTreeModel is the TreeModel from which it gets it tree data.
           inJScrollPane is the JScrollPane of which it is a client.
@@ -61,15 +67,16 @@ public class RootJTree
           */
         { // Constructor.
           super( inTreeModel );  // Construct the superclass.
+          theJScrollPane= inJScrollPane;  // Save the JScrollPane.
+          this.theMetaRoot= theMetaRoot;
           
           aTreeHelper=  // Construct extended TreeHelper class instance...
             new MyTreeHelper(  // ...from this nested class.
               this, 
-              null   // Note, TreePath is not set yet.
+              null,   // Note, TreePath is not set yet.
+              theMetaRoot
               );
 
-          theJScrollPane= inJScrollPane;  // Save the JScrollPane.
-            
           //theIJTree.setLargeModel( true );        
           /*
           { // customize the tree cell rendering.
@@ -105,10 +112,14 @@ public class RootJTree
           which need to be different for RootJTree.
           */
 
-        MyTreeHelper(JComponent inOwningJComponent, TreePath inTreePath) 
-          // Constructor.
+        MyTreeHelper(  // Constructor.
+            JComponent inOwningJComponent, 
+            TreePath inTreePath,
+            MetaRoot theMetaRoot
+            )
           {
-            super(inOwningJComponent, inTreePath);
+            ///super(inOwningJComponent, inTreePath);
+            super(inOwningJComponent, theMetaRoot, inTreePath);
             }
 
         public boolean commandGoToChildB( boolean doB )
@@ -252,7 +263,8 @@ public class RootJTree
             (isExpanded(getPathForRow(SelectedRowI)))  // Row is expanded now.
             { // Collapse the row and disable auto-expansion.
               collapseRow(SelectedRowI);  // collapse present node.
-              TreeExpansion.SetAutoExpanded(  // force auto-expanded status...
+              ///TreeExpansion.SetAutoExpanded(  // force auto-expanded status...
+              theMetaRoot.SetAutoExpanded(  // force auto-expanded status...
                 getLeadSelectionPath() , // ...for selected path...
                 false  // ... to be off.
                 );
@@ -323,7 +335,11 @@ public class RootJTree
               FinalOldTreePath, // ...from the previous selection...
               FinalNewTreePath  // ...to the new selection...
               ) ;  // ...and maybe trigger an auto-expansion selection.
-            Selection.set(FinalNewTreePath); // Record final selection position.
+            ///Selection.set(FinalNewTreePath); // Record final selection position.
+            ///MetaRoot.set(FinalNewTreePath); // Record final selection position.
+            ///MetaRoot.get().set(FinalNewTreePath); // Record final selection position.
+            ///theMetaRoot.set(FinalNewTreePath); // Record final selection position.
+            theMetaRoot.set(FinalNewTreePath); // Record final selection position.
             subselectionsEndV();  // Mark end of windows changes.
             }
 
@@ -386,7 +402,8 @@ public class RootJTree
                 ( stopTreePath.isDescendant( CommonAncestorTreePath ) )
                 { // Set auto-expanded attribute of stop node to false.
                   dbgV("RootJTree.doSubselectionsRawV(..) at stop node");
-                  TreeExpansion.SetAutoExpanded(  // Set auto-expanded attribute...
+                  ///TreeExpansion.SetAutoExpanded(  // Set auto-expanded attribute...
+                  theMetaRoot.SetAutoExpanded(  // Set auto-expanded attribute...
                     stopTreePath, false  // ...of stop node to false.
                     );
                   } // Set auto-expanded attribute of stop node to false.
@@ -422,7 +439,8 @@ public class RootJTree
             */
           {
             final TreePath TrailEncTreePath= // Calculate end of trail of...
-            	TreeExpansion.FollowAutoExpandToTreePath( // ...expandable nodes...
+            	///TreeExpansion.FollowAutoExpandToTreePath( // ...expandable nodes...
+              theMetaRoot.FollowAutoExpandToTreePath( // ...expandable nodes...
                 stopTreePath  // ...starting at stopTreePath.
                 );
             if ( TrailEncTreePath != null )  // If there is an expansion trail...
@@ -463,7 +481,8 @@ public class RootJTree
                 subselectV( scanTreePath );
                 if // Auto-collapse this node if...
                   ( ( // ... it was auto-expanded. 
-                  		TreeExpansion.GetAutoExpandedB( scanTreePath ) 
+                  		///TreeExpansion.GetAutoExpandedB( scanTreePath ) 
+                      theMetaRoot.GetAutoExpandedB( scanTreePath ) 
                       ) &&  // ...and...
                     ( // ...not the top of an inverted-V.
                       ! scanTreePath.isDescendant( stopTreePath ) 
@@ -511,7 +530,8 @@ public class RootJTree
                 dbgV("RootJTree.collapseAndExpandDownV(..) expanding");
                 subselectV( stopParentTreePath );
                 expandV( stopParentTreePath );
-                TreeExpansion.SetAutoExpanded(  // Set auto-expanded status.
+                ///TreeExpansion.SetAutoExpanded(  // Set auto-expanded status.
+                theMetaRoot.SetAutoExpanded(  // Set auto-expanded status.
                   stopParentTreePath, true
                   );
                 } // Auto-expand and move.

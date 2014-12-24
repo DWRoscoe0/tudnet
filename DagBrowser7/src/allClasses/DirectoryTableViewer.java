@@ -68,7 +68,8 @@ public class DirectoryTableViewer
       
     // Constructor and related methods.
 
-      public DirectoryTableViewer( 
+      /* ???
+      public DirectoryTableViewer(  /// Being replaced.
           TreePath inTreePath, TreeModel InTreeModel
           )
         /* Constructs a DirectoryTableViewer.
@@ -77,12 +78,15 @@ public class DirectoryTableViewer
           The last IFile DataNode in the TreePath is the Subject.
           It uses InTreeModel for context, but is presently ignored.
           */
-        { // constructor.
+        /* ???
+        {
           super( );  // Call superclass constructor.
             
           { // Construct and initialize the helper object.
             aTreeHelper= new TreeHelper(  // Construct helper class instance...
-              this, inTreePath  // ...with back-referene and path info.
+              this, 
+              MetaRoot.get(), 
+              inTreePath  // ...with back-referene and path info.
               );  // Note, subject not set yet.
             } // Construct and initialize the helper object.
 
@@ -94,7 +98,41 @@ public class DirectoryTableViewer
           setModel( ADirectoryTableModel );  // store TableModel.
 
           setupTheJTable( );  // Initialize JTable state.
-          } // constructor.
+          }
+        */
+
+      public DirectoryTableViewer(  /// ???
+          TreePath inTreePath, 
+          MetaRoot theMetaRoot, 
+          TreeModel InTreeModel
+          )
+        /* Constructs a DirectoryTableViewer.
+          inTreePath is the TreePath associated with
+          the Subject IFile DataNode to be displayed.
+          The last IFile DataNode in the TreePath is the Subject.
+          It uses InTreeModel for context, but is presently ignored.
+          */
+        {
+          super( );  // Call superclass constructor.
+            
+          { // Construct and initialize the helper object.
+            aTreeHelper= new TreeHelper(  // Construct helper class instance...
+              this, 
+              ///MetaRoot.get(), 
+              theMetaRoot,
+              inTreePath  // ...with back-referene and path info.
+              );  // Note, subject not set yet.
+            } // Construct and initialize the helper object.
+
+          DirectoryTableModel ADirectoryTableModel =  // Construct...
+            new DirectoryTableModel(  //...directory table model from...
+              (IFile)aTreeHelper.getWholeDataNode(), //...subject IFile...
+              InTreeModel  // ...and TreeModel.
+              );
+          setModel( ADirectoryTableModel );  // store TableModel.
+
+          setupTheJTable( );  // Initialize JTable state.
+          }
 
       private void setupTheJTable( )
         /* This grouping method initializes the JTable.  */

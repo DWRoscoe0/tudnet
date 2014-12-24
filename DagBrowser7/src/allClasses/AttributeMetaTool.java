@@ -2,13 +2,15 @@ package allClasses;
 
 import javax.swing.tree.TreePath;
 
-public class AttributeMetaTool
+abstract class AttributeMetaTool
 
   extends MetaTool
 
-  /* This is a MetaTool specialized for dealing with a MetaNode's attributes. */
+  /* This is a MetaTool specialized for dealing with 
+    a MetaNode's attributes. 
+    */
 
-  { // class AttributeMetaTool
+  {
 
     // Constants.
 
@@ -24,76 +26,85 @@ public class AttributeMetaTool
 
     // Constructors.
 
-      public AttributeMetaTool( TreePath inTreePath, String inKeyString )
+      protected AttributeMetaTool( 
+          MetaRoot theMetaRoot, 
+          TreePath inTreePath, 
+          String inKeyString 
+          )
         {
-          super( inTreePath );  // Construct superclass.
+          ///super( MetaRoot.get(), inTreePath );  // Construct superclass.
+          super( theMetaRoot, inTreePath );  // Construct superclass.
+
           keyString= inKeyString;  // Initialize keyString.
           }
 
-    // Instance getter methods.  None.
+    // Instance methods.
 
-    // Instance setter methods.
-
-      public Object put( Object inValueObject )
+      protected Object put( Object inValueObject )
         /* This is like a normal put(..), to the keyString entry
-          of the Map, but with some additional functionality:
+          of a Map, but with some additional functionality:
           * If an attribute entry is added then
             it adds place-holder attributes with the same keyString
             between the current MetaNode and the root if needed.
-            This is done so that all instances of attributes with
-            the same keyString can be found quickly from the root.
           * It removes an attribute entry if 
             the new value inValueObject is null.
-            It also removes place-holder attributes with the same keyString
-            between the current MetaNode and the root.if possible.
+            It also removes place-holder attributes with 
+            the same keyString between the current MetaNode and 
+            the root if possible.
           The place-holder attributes are maintained 
-          to facilitate deletion of nodes that hold no useful data.
+          to facilitate deletion of nodes that hold no useful data
+          an to be able to quickly fin all instances 
+          of attributes with the same keyString.
 
-          // ??? attribute searchers should be re-factored for keys and values.
+          // ??? attribute searchers should be re-factored for 
+            keys and values.
           // ??? Might mean creating special Piterators.
           */
         { 
           MetaNode theMetaNode= getMetaNode();  // Cache the MetaNode.
           Object oldObject=  // Get present attribute value.
              theMetaNode.get( keyString );
-          { // Take appropriate action.
-            if ( oldObject == inValueObject )  // Attribute is not changing.
-              ; // So do nothing.
-            else if ( oldObject == null )  // Adding missing attribute.
-              { // Add the attribute.
-                theMetaNode.put( keyString, inValueObject ); // Add new value.
-                propagateAdditionV( );  // Add place-holders if needed.
-                } // Add the attribute.
-            else if ( inValueObject == null )  // Removing present attribute.
-              { // Remove the attribute.
-                removeOrReplaceV( );  // Remove or store place-holder.
-                } // Remove the attribute.
+          { // Taking appropriate action.
+            if   // Doing nothing if attribute value is not changing.
+              ( oldObject == inValueObject )
+              ; // Doing nothing.
+            else if   // Adding missing attribute if needed.
+              ( oldObject == null )
+              { // Adding the attribute.
+                theMetaNode.put(  // Adding new value.
+                  keyString, inValueObject 
+                  );
+                propagateAdditionV( );  // Adding place-holders.
+                } // Adding the attribute.
+            else if   // Removing present attribute needed.
+              ( inValueObject == null )
+              removeOrReplaceV( );  // Remove or store place-holder.
             else // Replace present non-null attribute value with new value.
               theMetaNode.put( keyString, inValueObject );  // Replace value.
-            } // Take appropriate action.
+            } // Taking appropriate action.
           return oldObject;  // Return old attribute value as result.
           }
     
-      public void removeOrReplaceV( )
-        /* This method removes the attribute at the present position by
-          either deleting it or replacing it by a place-holder value.
-          If it removes then it propagates the removal 
+      private void removeOrReplaceV( )
+        /* This method removes the attribute at the present position 
+          by either deleting it or replacing it by a place-holder value.
+          If it is removed then it propagates the removal 
           up the MetaNode DAG toward the root.
-          It either replaces the attribute with a place-holder attribute,
-          if any children have the same attribute key,
+          It either replaces the attribute with a place-holder 
+          attribute, if any children have the same attribute key,
           or it removes the attribute completely and removes 
           the place-holder attributes of any ancestor nodes 
           that have no children with the same attribute key.
           */
         {
           toReturn: {  // toReturn.
-            MetaPath scanMetaPath=  // Initialize MetaPath of present position.
+            MetaPath scanMetaPath=  // Get MetaPath of position.
               getMetaPath();
             MetaNode scanMetaNode=  // Get MetaNode at this position.
               scanMetaPath.getLastMetaNode();
 
-            if  // There is already a null-representing place-holder here. 
-              ( scanMetaNode.get( keyString ) == PlaceHolderValueString )
+            if  // Exitting if null-representing place-holder here. 
+              ( scanMetaNode.get(keyString) == PlaceHolderValueString )
               break toReturn; // Do nothing and exit.
 
             // There is a non-null something else here.
@@ -124,7 +135,7 @@ public class AttributeMetaTool
             } // toReturn.
           }
 
-      public void propagateAdditionV( )
+      private void propagateAdditionV( )
         /* This method propagates the addition of the attribute
           up the MetaNode DAG toward the root.
           It does it by adding place-holder attributes where needed.
@@ -139,7 +150,7 @@ public class AttributeMetaTool
               scanMetaPath=  // Move MetaPath one node closer to root.
                 scanMetaPath.getParentMetaPath();
               if // Exit loop if at pseudo-parent of root.
-                ( scanMetaPath == MetaRoot.getParentOfRootMetaPath( ) )
+                ( scanMetaPath == theMetaRoot.getParentOfRootMetaPath( ) )
                 break;
               MetaNode scanMetaNode=  // Get MetaNode at this position.
                 scanMetaPath.getLastMetaNode();
@@ -154,4 +165,4 @@ public class AttributeMetaTool
               } // Add or verify attribute in one MetaNode.
           }
 
-    } // class AttributeMetaTool 
+    }

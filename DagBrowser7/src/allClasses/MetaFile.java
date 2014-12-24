@@ -19,12 +19,18 @@ public class MetaFile { // For app's meta-data files.
     file read and write operations can be built.
     */
 
-  // Instance variables.
+  // Injection instance variables.
 
-    public String FileNameString;  // Name of associated external file.
+    MetaFileManager theMetaFileManager;
+
     public MetaFileManager.RwStructure TheRwStructure;  // File's text structure.
+    public String FileNameString;  // Name of associated external file.
     public String HeaderTokenString;  // First token in file.
+
+  // Other instance variables.
+
     public MetaFileManager.Mode TheMode;  // File access mode.
+
     public RandomAccessFile theRandomAccessFile= null;  // For file access.
     private int indentLevelI; // Indent level of cursor in text file.
     private int columnI;  // Column of cursor  in text file.
@@ -34,6 +40,28 @@ public class MetaFile { // For app's meta-data files.
       private long savedFileOffsetLI;  // Saved offset of MetaNodes.
       private int savedIndentLevelI; // Saved indent level.
       private int savedColumnI;  // Saved column.
+
+  public MetaFile(  // Constructor.  Eliminate this version???
+      MetaFileManager theMetaFileManager 
+      )
+    {
+      this.theMetaFileManager= theMetaFileManager;
+      }
+
+  public MetaFile( // Constructor.
+      MetaFileManager theMetaFileManager,
+      MetaFileManager.RwStructure theRwStructure, 
+      String FileNameString, 
+      String HeaderTokenString
+      ///MetaFileManager.Mode TheMode
+      ) 
+    {
+      this.theMetaFileManager= theMetaFileManager;
+      this.TheRwStructure= theRwStructure;
+      this.FileNameString= FileNameString;
+      this.HeaderTokenString= HeaderTokenString;
+      ///this.TheMode= TheMode;
+      }
 
   // Instance methods related to lazy loading.
 
@@ -46,6 +74,7 @@ public class MetaFile { // For app's meta-data files.
         If there was an error then tt returns null.
         */
       {
+        TheMode= MetaFileManager.Mode.LAZY_LOADING;
         MetaNode loadedMetaNode= null;  // Set null root because we are reading.
 
         try { // Read state.
@@ -59,7 +88,7 @@ public class MetaFile { // For app's meta-data files.
                  );
               loadedMetaNode=   // Immediately read root node.
                 rwFileMetaNode( loadedMetaNode );
-              MetaFileManager.lazyLoadMetaFile= // Save for lazy-loading of other nodes.
+              theMetaFileManager.lazyLoadMetaFile= // Save for lazy-loading of other nodes.
                 this;
               } //  Read state from file.
           } // Read state.
@@ -139,7 +168,7 @@ public class MetaFile { // For app's meta-data files.
         IDNumber resultIDNumber= null;  // Set default result of not gotten.
         try {
           resultIDNumber=  // Try to...
-            MetaNode.readParticularFlatMetaNode( // ...read flat MetaNode(s).
+            theMetaFileManager.readParticularFlatMetaNode( // ...read flat MetaNode(s).
               this, inIDNumber, parentDataNode
               );
           }
@@ -147,7 +176,7 @@ public class MetaFile { // For app's meta-data files.
           //Misc.DbgOut( "MetaFile.readWithWrapFlatMetaNode(..) wrapping" );
           restoreStreamStateV( );  // Rewind stream to beginning of MetaNodes.
           resultIDNumber=  // Try again to...
-            MetaNode.readParticularFlatMetaNode( // ...read flat MetaNode(s).
+            theMetaFileManager.readParticularFlatMetaNode( // ...read flat MetaNode(s).
               this, inIDNumber, parentDataNode
               );
           }
@@ -217,7 +246,7 @@ public class MetaFile { // For app's meta-data files.
             saveStreamStateV( );  // Save stream state at 1st MetaNode.
 
             inRootMetaNode=  // The root MetaNode becomes...
-              MetaNode.rwFlatOrNestedMetaNode(  // ...read or write... 
+              theMetaFileManager.rwFlatOrNestedMetaNode(  // ...read or write... 
                 this, // ...using this MetaFile...
                 inRootMetaNode,  // ...of the root MetaNode using...
                 DataRoot.getIt().getParentOfRootDataNode() // ...parent for lookup.

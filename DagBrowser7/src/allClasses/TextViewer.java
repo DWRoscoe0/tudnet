@@ -79,7 +79,7 @@ public class TextViewer
           if ( TreePathIn == null )  // prevent null TreePath.
             TreePathIn = new TreePath( new NamedLeaf( "ERROR TreePath" ));
           aTreeHelper=  // construct helper class instance.
-            new TreeHelper( this, TreePathIn ); 
+            new TreeHelper( this, MetaRoot.get(), TreePathIn ); 
           { // Add listeners.
             addKeyListener(aTreeHelper);  // Make TreeHelper the KeyListeer.
             addFocusListener(this);  // listen to repaint on focus events.

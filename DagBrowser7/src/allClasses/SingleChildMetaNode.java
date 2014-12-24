@@ -12,16 +12,19 @@ public class SingleChildMetaNode
 
   { // class SingleChildMetaNode
 
-    // Constructor.
+    // Constructors.
 
-      public SingleChildMetaNode
-        ( MetaNode InChildMetaNode, DataNode InDataNode )
+      /* ???
+      public SingleChildMetaNode ( ///
+          MetaNode InChildMetaNode, 
+          DataNode InDataNode 
+          )
         /* This constructor constructs a MetaNode 
           whose DataNode is InDataNode and with
           a single child MetaNode InChildMetaNode 
           and no attributes.  */
+        /* ???
         {
-
           super(   // Use superclass constructor...
             InDataNode  // ...to store associated DataNode.
             );
@@ -29,7 +32,27 @@ public class SingleChildMetaNode
           theMetaChildren.add(  // Store the SingleChildMetaNode's...
             InChildMetaNode // ...one and only child MetaNode.
             );
+          }
+        */
 
+      public SingleChildMetaNode ( /// ???
+          MetaFileManager theMetaFileManager,
+          MetaNode InChildMetaNode, 
+          DataNode InDataNode 
+          )
+        /* This constructor constructs a MetaNode 
+          whose DataNode is InDataNode and with
+          a single child MetaNode InChildMetaNode 
+          and no attributes.  */
+        {
+          super(   // Use superclass constructor...
+            theMetaFileManager,
+            InDataNode  // ...to store associated DataNode.
+            );
+
+          theMetaChildren.add(  // Store the SingleChildMetaNode's...
+            InChildMetaNode // ...one and only child MetaNode.
+            );
           }
 
     } // class SingleChildMetaNode

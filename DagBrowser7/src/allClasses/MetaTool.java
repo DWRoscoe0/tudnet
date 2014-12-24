@@ -5,16 +5,26 @@ package allClasses;
 
 import javax.swing.tree.TreePath;
  
-class MetaTool
+abstract class MetaTool
 
-  /* This class is used to store meta-data associated with
-    DataNodes of the Infogora DAG (Directed Acyclic Graph).
+  /* This class is a tool for reading and writing the meta-data 
+    in the MetaNodes associated with the DataNodes of 
+    the Infogora DAG (Directed Acyclic Graph).
     This includes information about which node children
     were selected, referenced or visited most recently.
     A location within the DAG is specified with
     a TreePath when information is to be read or stored.
-    
-    Possible enhancements:
+
+    This tool maintains two paths:
+    * A TreePath which represents a path to a DataNode 
+      in the DataNode DAG.
+    * A MetaPath which represents a path in a MetaNode
+      to the MetaNode DAG which contains data about 
+      the associated DataNode.
+    These paths are maintained in sync.
+    When one changes, the other changes to an equivalent value.
+
+    Possible enhancements ???
         
       Space:
         Eliminate nodes which:
@@ -26,7 +36,11 @@ class MetaTool
       
   { // class MetaTool.
   
-    // Instance variables.
+    // Injected dependency variables.
+
+      MetaRoot theMetaRoot;
+  
+    // Other instance variables.
     
       private TreePath theTreePath;  /* The path of DataNodes from 
         the DataNode DAG root parent to 
@@ -35,47 +49,45 @@ class MetaTool
         the MetaNode DAG root parent to 
         the MetaNode that holds the meta-data for
         the DataNode at the location of interest.  */
-      
-      // This class non-static code block initializes some instance variables.
-      {
-        theTreePath= DataRoot.getIt().getParentOfRootTreePath();
-        theMetaPath= MetaRoot.getParentOfRootMetaPath( );
-        }
-      
-    // Constructors.
-    
-      public MetaTool( TreePath inTreePath )
+
+     // Constructors.
+      public MetaTool( MetaRoot theMetaRoot, TreePath inTreePath )
         /* This constructor builds a MetaTool which is set-up to access 
           the MetaNode for the DAG location associated with inTreePath.
+          It does this by initializing both path instance variables
+          to point to the roots of their respective DAGs,
+          and then syncing them to inTreePath.
           */
         {
-        
-          /* The instance variables theTreePath and theMetaPath 
-            have already been set by the class non-static code block
-            to reference the parents of the roots of 
-            their respective DAGs.
-            */
+          ///this.theMetaRoot= MetaRoot.get();
+          this.theMetaRoot= theMetaRoot;
           
-          Sync( inTreePath );  // Adjust the instance variables so that...
+          theTreePath=  // Initializing DataNode TreePath.
+            ///DataRoot.getIt().getParentOfRootTreePath();
+            theMetaRoot.getTheDataRoot().getParentOfRootTreePath();
+          theMetaPath=  // Initializing MetaNode TreePath.
+            theMetaRoot.getParentOfRootMetaPath( );
+          
+          Sync( inTreePath ); // Adjusting the instance variables so...
             // ...the locations they represent match...
             // ...the MetaNode associated with inTreePath.
 
           }
-  
+
     // Instance methods.
     
-      public void Sync( TreePath inTreePath )
+      protected void Sync( TreePath inTreePath )
         /* This recursive method adjusts the instance variables 
           so that the locations they represent match
           the MetaNode associated with inTreePath.
           It does this by comparing inTreePath with instance variable
-          theTreePath and if necessary adjusting theTreePath and theMetaPath 
-          to match inTreePath.
+          theTreePath and if necessary adjusting 
+          theTreePath and theMetaPath to match inTreePath.
           It tries to do this incrementally and recursively, 
           so if inTreePath and theTreePath are very similar,
           then syncing will be very fast.
           */
-        { // Sync( TreePath inTreePath )
+        {
           if ( inTreePath == theTreePath ) // Paths are same reference.
             ; // Do nothing because they are already in sync.
           else if ( inTreePath.equals( theTreePath ) ) // Paths are equal.
@@ -88,16 +100,19 @@ class MetaTool
             SyncLonger( inTreePath );
           else // New path is shorter than old path. 
             SyncShorter( inTreePath );
-          } // Sync( TreePath inTreePath )
+          }
 
       private void SyncLonger( TreePath inTreePath )
         /* This method handles the Sync case when
           the new path is longer than the old path.
           */
         {
-          Sync( inTreePath.getParentPath() );  // Sync with shorter new path.
+          Sync(   // Sync with shorter new path.
+            inTreePath.getParentPath() 
+            );
           SyncTheMetaPathFromTreePath( inTreePath );
-          theTreePath= inTreePath;  // Add last TreePath element by assigning.
+          theTreePath=   // Add last TreePath element by assigning.
+            inTreePath;
           }
 
       private void SyncShorter( TreePath inTreePath )
@@ -105,7 +120,8 @@ class MetaTool
           the new path is shorter than the old path.
           */
         {
-          theTreePath= theTreePath.getParentPath();  // Shorten old path.
+          theTreePath=  // Shorten old path by removing last DataNode.
+            theTreePath.getParentPath();
           theMetaPath=  // Shorten MetaPath by removing last MetaNode.
             theMetaPath.getParentMetaPath( );
           Sync( inTreePath );  // Sync the shorter paths with new path.
@@ -126,32 +142,33 @@ class MetaTool
           }
 
       private void SyncTheMetaPathFromTreePath( TreePath inTreePath )
-        /* This is a helper method for some of the above Sync... methods.  
+        /* This is a helper method for 
+          some of the above Sync... methods.  
           It extends the MetaNode DAG if needed, 
           and adds an element to theMetaPath,
           to match the DataNode DAG path inTreePath.
           */
         {
-          Object DataObject=  // Get user Object from new TreePath element.
+          Object DataObject=  // Get Object from new TreePath element.
             inTreePath.getLastPathComponent( );
-          MetaNode ChildMetaNode=   // Put it in MetaNode as child MetaNode.
+          MetaNode ChildMetaNode= // Put it in MetaNode as child.
             theMetaPath.
             getLastMetaNode().
             PutChildUserObjectMetaNode( DataObject );
-          theMetaPath=  // Add resulting child MetaNode as path element by...
+          theMetaPath=  // Add resulting child MetaNode to path by...
             new MetaPath(  // ...constructing new MataPath from...
               theMetaPath,  // ...old MetaPath...
-              ChildMetaNode  // ...and ChildMetaNode as new path element.
+              ChildMetaNode  // ...and ChildMetaNode as new element.
               );
           }
   
     // Instance getter methods.
 
-      public MetaPath getMetaPath()
+      protected MetaPath getMetaPath()
         /* Returns the MetaPath associated with this tool.  */
         { return theMetaPath; }
 
-      public MetaNode getMetaNode()
+      protected MetaNode getMetaNode()
         /* Returns the MetaNode associated with this tool.  */
         { return theMetaPath.getLastMetaNode(); }
 

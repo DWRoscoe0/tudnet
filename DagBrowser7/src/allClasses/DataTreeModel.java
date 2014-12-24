@@ -19,43 +19,56 @@ public class DataTreeModel
 
   { // class DataTreeModel.
 
-    // variables.
+    // Constants.
 
         private static final long serialVersionUID = 1L;
 
-        private Object ObjectRoot;  // Object which is root of modelled tree.
+        private static final String spacyFileSeperator= 
+          " "+File.separator+" ";
+
+    // Injected dependency variables.
+
+        private DataRoot theDataRoot;
+        private MetaRoot theMetaRoot;
 
     // constructor methods.
 
-        public DataTreeModel( DataNode DataNodeRoot ) 
-          /* Constructs a DataTreeModel using TreeModelUserObjectRoot
-            as the root of the tree.
-            */
-          { // DataTreeModel( DataNode TreeModelUserObjectRoot )
-            ObjectRoot= DataNodeRoot;  // store root.
-            } // DataTreeModel( DataNode TreeModelUserObjectRoot )
+        public DataTreeModel( 
+            DataRoot theDataRoot, MetaRoot theMetaRoot 
+            )
+          {
+            this.theDataRoot= theDataRoot;
+            this.theMetaRoot= theMetaRoot;
+            }
     
     // AbstractTreeModel/TreeModel methods.
       
       // input methods.
   
-        public void valueForPathChanged
+        public void valueForPathChanged( 
+            TreePath TheTreePath, Object NewValueObject 
+            )
           /* Do-nothing stub to satisfy interface.  */
-          ( TreePath TheTreePath, Object NewValueObject ) 
           { }
   
-      /* output methods.
-        This TreeModel does no filtering,
-        so the methods which access a node's contents
-        simply delegate the call to the ParentObject,
-        which is assumed to be a DataNode,
-        and can perform the operation context-free.
-        */
+      // output methods.
+      
+        /* These methods simply delegate the call to the ParentObject,
+          which is assumed to be a DataNode,
+          and can perform the operation context-free.
+          This is because this TreeModel does no filtering.
+          If and when filtering is done then 
+          other processing will be needed.
+          */
   
         public Object getRoot() 
-          /* Returns tree root.  */
+          /* Returns tree root.  
+            This is not the Infogora root DataNode.
+            It is the parent of the root.
+            See DataRoot for more information.
+            */
           {
-            return ObjectRoot ;
+            return theDataRoot.getParentOfRootDataNode();
             }
   
         public Object getChild( Object ParentObject, int IndexI ) 
@@ -91,7 +104,9 @@ public class DataTreeModel
             return ((DataNode)ParentObject).getChildCount();
             }
   
-        public int getIndexOfChild( Object ParentObject, Object ChildObject ) 
+        public int getIndexOfChild( 
+            Object ParentObject, Object ChildObject 
+            ) 
           /* Returns the index of ChildObject in directory ParentObject.
             This operation is delegated to ParentObject which
             is assumed to satisfy the DataNode interface.
@@ -110,7 +125,7 @@ public class DataTreeModel
             viewing and possibly manipulating
             the current tree node specified by inTreePath.  
             */
-          { // GetDataJComponent.
+          {
             DataNode InDataNode= // extract...
               (DataNode)  // ...user Object...
               inTreePath.getLastPathComponent();  // ...from the TreePath.
@@ -118,20 +133,19 @@ public class DataTreeModel
             try { 
 	            ResultJComponent= 
 	              //InDagNode.GetDataJComponent( inTreePath );  // ??
-                InDataNode.GetDataJComponent( inTreePath, this );
+                ///InDataNode.GetDataJComponent( inTreePath, this );
+                InDataNode.GetDataJComponent( 
+                  ///inTreePath, theMetaRoot, this 
+                  inTreePath, this 
+                  );
               }
             catch ( IllegalArgumentException e) {
 	            ResultJComponent= null;  
-              // System.out.println( "GetDataJComponent : "+e);              
               ResultJComponent=  // calculate a blank JLabel with message.
-                //new DagNodeViewer( 
-                //  inTreePath,
-                //  new IJTextArea( "GetDataJComponent : "+e)
-                //  );
                 new TitledTextViewer( inTreePath, this, "GetDataJComponent : "+e );
               }
             return ResultJComponent;
-            } // GetDataJComponent.
+            }
   
         public String GetNameString( Object InObject )
           /* Returns a String representing the name of InObject,
@@ -160,8 +174,6 @@ public class DataTreeModel
             return TheNameString;
             }
 
-        private static String spacyFileSeperator= " "+File.separator+" ";
-
         public String GetAbsolutePathString(TreePath inTreePath)
           /* Returns String representation of TreePath inTreePath.  
             ??? Maybe rewrite to be recursive so that 
@@ -180,7 +192,7 @@ public class DataTreeModel
               DataNode lastDataNode=  // Getting last path element.
                 (DataNode)(inTreePath.getLastPathComponent());
               if // Handling detection of normal TreePath root sentinel.
-                ( DataRoot.getIt().getParentOfRootTreePath( ).equals( inTreePath ) )
+                ( theDataRoot.getParentOfRootTreePath( ).equals( inTreePath ) )
                 { if // Handling illegal sentinel-only TreePath.
                     ( resultString == "" ) 
                     resultString= lastDataNode.GetNameString();
@@ -212,6 +224,11 @@ public class DataTreeModel
             DataNode lastDataNode= 
               (DataNode)(inTreePath.getLastPathComponent());
             return lastDataNode.GetInfoString();
+            }
+
+        public MetaRoot getMetaRoot()
+          {
+            return theMetaRoot;
             }
 
     } // class DataTreeModel.

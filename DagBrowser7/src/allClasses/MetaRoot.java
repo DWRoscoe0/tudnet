@@ -1,6 +1,6 @@
 package allClasses;
 
-//import javax.swing.tree.TreePath;
+import javax.swing.tree.TreePath;
 
 import static allClasses.Globals.*;  // For appLogger;
 
@@ -8,110 +8,449 @@ public class MetaRoot {
 
   /* This class manages the root of the MetaNode-s structure.  
 
-    ??? Eliminate all statics and static references to this class.
+    ??? Eliminate all static fields and static references to this class.
 
     */
 
-  // variables.  Being converted to non-static ???
-  
+  // Dependency Injection variables.
+    DataRoot theDataRoot;
+    MetaFileManager theMetaFileManager;
+ 
+  // Other instance variables. 
     private MetaNode rootMetaNode;  /* Root of tree which 
       holds Dag information.  */
-    private static MetaNode parentOfRootMetaNode;  /* Pseudo-parent of root.
+    private MetaNode parentOfRootMetaNode;  /* Pseudo-parent of root.
       This is the same tree as rootMetaNode, but can be used as
       a sentinel record to eliminate checking for null during
       MetaPath traversals toward the root.  */
-    private static MetaPath parentOfRootMetaPath;  /* MetaPath associated with
+    private MetaPath parentOfRootMetaPath;  /* MetaPath associated with
       parentOfRootMetaNode.  */
-
-    static { // Initializing MetaRoot static fields.  ??? divide/shorten.
-
-      /* This class static code block initializes the static variables.  */
-
-      } // Initializing MetaRoot static fields.
-
-  DataRoot theDataRoot;
-  MetaFileManager theMetaFileManager;
-
-  MetaRoot(    // Constructor.
-      DataRoot theDataRoot, 
-      MetaFileManager theMetaFileManager 
-      )
-    {
-      appLogger.info( "MetaRoot constructor starting.");
-
-      theMetaRoot= this;  /// Temporary for static references.
-
-      this.theDataRoot= theDataRoot;
-      this.theMetaFileManager= theMetaFileManager;
-
-      { // Setting root MetaNode DAG to default of a single MetaNode.
-        rootMetaNode=  // Initialize present MetaNode tree root with...
-          new MetaNode(  // ...a new MetaNode containing...
-            theDataRoot.getRootDataNode( )  // ...the Infogora-Root DataNode.
-            );
-        parentOfRootMetaNode= // Making parent of root MetaNode be...
-          new SingleChildMetaNode( // ...a MetaNode whose one-child is...
-            rootMetaNode, // ...the root MetaNode and whose object is...
-            theDataRoot.getParentOfRootDataNode( ) // ...parent of root DataNode.
-            );
-        } // Setting root MetaNode DAG to default of a single MetaNode.
-
-      MetaNode loadedMetaNode=  // Trying to load new MetaNode DAG state...
-        ///MetaFileManager.start();  // ...from from MetaFile.  ???
-        theMetaFileManager.start();  // ...from from MetaFile.  ???
-
-      if // Handling load failure, either...
-        ( ( loadedMetaNode == null) || // ...nothing was loaded, or...
-          ( loadedMetaNode.getDataNode( ) == // ...the loaded data had...
-            UnknownDataNode.newUnknownDataNode( )  // ...an error.
-            )
-          )
-        ;  // Doing nothing, thereby using default of single MetaNode.
-        else // Handling case ofThe load succeeding.
-        { // Replacing default data with the loaded data.
-          rootMetaNode= loadedMetaNode;  // Store loaded MetaNode as Root.
-          parentOfRootMetaNode= // Recalculating parent of root MetaNode...
-            new SingleChildMetaNode( // ...to be MetaNode whose one-child is...
-              rootMetaNode, // ...the root MetaNode and whose object is...
-              theDataRoot.getParentOfRootDataNode( ) // ...parent of root node.
-              );
-          }
-          
-      parentOfRootMetaPath=  // Making parentOfRootMetaPath be...
-        new MetaPath( // ...MetaPath to parent node.
-          null, parentOfRootMetaNode 
-          );
-      rootMetaNode.put(  // Forcing Selection attribute on Root.
-        Selection.selectionAttributeString, "IS");  // ???.
-        // This guarantees success Selection.buildAttributeTreePath( ).
-        // This is compatible with both loaded and non-loaded MetaNodes,
-        // because the root node should always be in the selection path.
-      }
 
   private static MetaRoot theMetaRoot;  /// Temporary for static references.
 
   public static MetaRoot get()  /// Temporary for static references.
     { return theMetaRoot; }
 
-  // Methods.  Being converted to non-static ???
+  MetaRoot(  // Constructor.
+      DataRoot theDataRoot, 
+      MetaFileManager theMetaFileManager 
+      )
+    /* The need for theDataRoot should be obvious.
+      theMetaFileManager is a dependency because
+      it is used in the construction of MetaNodes
+      so that their children can be lazy-loaded.
+      */
+    {
+      appLogger.info( "MetaRoot constructor starting.");
+
+      theMetaRoot= this;  /// for temporary static references.
+
+      this.theDataRoot= theDataRoot;
+      this.theMetaFileManager= theMetaFileManager;
+
+      rootMetaNode=  // Initialize present MetaNode tree root with...
+        ///new MetaNode(  // ...a new MetaNode containing...
+        theMetaFileManager.makeMetaNode( // ...a MetaNode containing...
+          theDataRoot.getRootDataNode( ) // ...the root DataNode.
+          );
+
+      /// loadV( );  // Load meta-data from MetaFile.
+      calculateInnerDependenciesV( );
+      }
+
+  public void loadV( )
+    /* This method loads the MetaRoot data from the external MetaFile(s),
+      replacing whatever MetaRoot data is active now.
+      It will load at least the root node.
+      Other nodes will loaded if and when needed.
+      */
+    { 
+      MetaNode loadedMetaNode=  // Trying to load new MetaNode DAG state...
+        theMetaFileManager.start();  // ...from from MetaFile.  ???
+
+      if // Using load result as root if load was successful.
+        ( ( loadedMetaNode != null) && // Meta-data was loaded, and...
+          ( loadedMetaNode.getDataNode( ) != // ...the loaded data had no...
+            UnknownDataNode.newUnknownDataNode( )  // ...error.
+            )
+          )
+        {
+          rootMetaNode= loadedMetaNode;  // Storing loaded MetaNode as Root.
+          calculateInnerDependenciesV( );
+          }
+      }
+
+  private void calculateInnerDependenciesV( )
+    /* This method calculates the state that depends on
+      the root MetaNode.
+      */
+    { 
+      parentOfRootMetaNode= // Making parent of root MetaNode be...
+        ///new SingleChildMetaNode( // ...a MetaNode whose one-child is...
+        theMetaFileManager.makeSingleChildMetaNode( // ...a MetaNode whose...
+          rootMetaNode, // ...one-child is root MetaNode and whose object is...
+          theDataRoot.getParentOfRootDataNode( ) // ...parent of root DataNode.
+          );
+          
+      parentOfRootMetaPath=  // Making parentOfRootMetaPath be...
+        new MetaPath( // ...MetaPath to parent node.
+          null, parentOfRootMetaNode 
+          );
+
+      rootMetaNode.put(  // Forcing Selection attribute on Root.
+        ///Selection.selectionAttributeString, "IS"
+        selectionAttributeString, "IS"
+        ); // This guarantees success of buildAttributeTreePath( ).
+          // This is compatible with both loaded and non-loaded meta data,
+          // because the root node should always be in the selection path.
+      }
+
+  // Methods.
+
+    public DataRoot getTheDataRoot( )
+      { return theDataRoot; }
 
     public MetaNode getRootMetaNode( )
       { return rootMetaNode; }
 
-    public static MetaNode getParentOfRootMetaNode( )
+    public MetaNode getParentOfRootMetaNode( )
       { return parentOfRootMetaNode; }
 
-    public static MetaPath getParentOfRootMetaPath( )
+    public MetaPath getParentOfRootMetaPath( )
       { return parentOfRootMetaPath; }
 
     /* ??? Maybe add these, though maybe with different names:
 
-      public static boolean isRootB( MetaNode )
+      public boolean isRootB( MetaNode )
 
-      public static boolean isParentOfRootB( MetaNode )
+      public boolean isParentOfRootB( MetaNode )
 
-      public static boolean isParentOfRootB( MetaPath ) or isNullB(..)
+      public boolean isParentOfRootB( MetaPath ) or isNullB(..)
 
       */
 
+  // Factory methods, so users don't need to use new operator.
+
+    private BooleanAttributeMetaTool 
+    makeAutoExpandedAttributeMetaTool( 
+        TreePath InTreePath, String InKeyString 
+        )
+      { 
+        return new BooleanAttributeMetaTool(
+          theMetaRoot, InTreePath, InKeyString
+          ); 
+        }
+
+    private PathAttributeMetaTool makePathAttributeMetaTool( 
+        TreePath InTreePath, String InKeyString 
+        )
+      {
+        return new PathAttributeMetaTool( 
+          theMetaRoot, InTreePath, InKeyString 
+          );
+        }
+
+  // Code from Selection class.
+
+    /* This code came from static Selection class.
+      It helps to manage DataNode selections.  
+      Selections are identified with TreePath-s of DataNodes.
+
+      Past selections are stored as DataNode meta-data in the MetaNode DAG,
+      which is a structure which parallels a subset of the DataNode DAG.
+      This meta-data is useful for reselecting 
+      previously selected DataNode-s and their children.
+      When a GoToChild command is given at a DataNode,
+      instead of selecting the first child DataNode,
+      selection meta-data is used to reselect 
+      the most recently selected child, if there is one.
+
+      Note, because in the Infogora app 
+      the selection in the right pane is normally 
+      a child of the selection in the left pane,
+      and because sometimes actual DataNodes are deleted or moved,
+      a selection might point to a non-existent node.
+      In these cases a TreePath might be created which
+      ends in a special node called an UnknownDataNode.
+
+      Originally selection history information was stored as 
+      one MRU/LRU lists of children in each MetaNode.  
+      Now it's stored in MetaNode attributes with key "SelectionPath".
+      */
+
+    final static String selectionAttributeString= // Key String to use.
+      "SelectionPath"; 
+
+    // (formerly) static getter methods.  These read from the MetaNode DAG.
+
+      public TreePath buildAttributeTreePath( String KeyString )
+        /* This method returns path information from the MetaNode DAG.
+          It returns a TreePath comprised of all the DataNodes
+          from the MetaNode's which contain attributes 
+          with a key of keyString and a value of "IS".
+          It does not consider UnknownDataNode-s to be part of the path
+          even if they have the desired attribute
+          because it is an unusable value.
+          At least the root must have an "IS" attribute value,
+          otherwise it will return Dataroot.getParentOfRootTreePath(),
+          which is a sentinel value which can not for
+          anything but a termination marker.
+          */
+        {
+          TreePath scanTreePath=  // Point scanTreePath accumulator...
+            DataRoot.getIt().getParentOfRootTreePath( );  // ...to parent of root.
+          MetaNode scanMetaNode=  // Get root MetaNode.
+            ///MetaRoot.get().getParentOfRootMetaNode( );
+            getParentOfRootMetaNode( );
+          scanner: while (true) { // Scan all nodes with "IS".
+            MetaNode childMetaNode= // Test for a child with "IS" value.
+              scanMetaNode.getChildWithAttributeMetaNode( KeyString, "IS" );
+            if  // scanMetaNode has no child with "IS" attribute value.
+              ( childMetaNode == null)
+              break scanner;  // Exit Processor.
+            DataNode theDataNode= // Get associated DataNode.
+              childMetaNode.getDataNode();
+            if // DataNode is an UnknownDataNode.
+              ( UnknownDataNode.isOneB( theDataNode ) )
+              break scanner;  // Exit Processor.
+            scanTreePath=  // Add DataNode to TreePath.
+              scanTreePath.pathByAddingChild( theDataNode );
+            scanMetaNode= childMetaNode;  // Point to next MetaNode.
+            } // Scan all nodes with "IS".
+          return scanTreePath;  // Return accumulated TreePath.
+          }
+          
+      public MetaNode getLastSelectedChildOfMetaNode
+        ( MetaNode inMetaNode )
+        /* This method returns the most recently selected child MetaNode 
+          of inMetaNode.
+          
+          Prsently it is a pass-through to MetaNode.GetLastChildMetaNode(). 
+          ??? Remove because it is totally redundant!  Only name is different.
+          */
+        { 
+          return getLastSelectedChildMetaNode( inMetaNode ); 
+          ///return Selection.getLastSelectedChildMetaNode( inMetaNode ); 
+          }
+
+      private MetaNode getLastSelectedChildMetaNode
+        ( MetaNode inMetaNode )
+        /* This method returns the child MetaNode that was selected last
+          of the parent node inMetaNode. 
+          If no child MetaNode has the attribute then null is returned.
+          It does this by searching for the child with an attribute
+          with key == "SelectionPath" and value == "WAS".
+          */
+        {
+          MetaNode childMetaNode= // Test for a child with "WAS" value.
+            inMetaNode.getChildWithAttributeMetaNode( 
+              MetaRoot.selectionAttributeString, 
+              "WAS" 
+              );
+          return childMetaNode; // Return last child MetaNode result, if any.
+          }
+
+      public DataNode getLastSelectedChildDataNode
+        ( MetaNode inMetaNode )
+        /* This method gets the user object DataNode from
+          the child MetaNode in inMetaNode 
+          which was selected last, or null if there isn't one.
+          It also returns null if the Child DataNode
+          appears to be an UnknownDataNode,
+          because that is an unusable value.
+          */
+        {
+          DataNode resultChildDataNode=  // Assume default result of null.
+            null;
+          process: { // Override result with child if there is one.
+            MetaNode lastChildMetaNode= 
+              getLastSelectedChildMetaNode( inMetaNode );
+            if // there is no last selected child.
+              (lastChildMetaNode == null)
+              break process;  // So exit and keep the default null result.
+
+            resultChildDataNode=  // Result recent child DataNode is...
+              lastChildMetaNode.   // ...the last child's...
+              getDataNode();  // user object.
+            if // Result child DataNode is not an UnknownDataNode.
+              ( ! UnknownDataNode.isOneB( resultChildDataNode ) )
+              break process;  // Exit with that okay result.
+
+            resultChildDataNode= null; // Replace unusable value with null.
+            } // Override result with child if there is one.
+
+          return resultChildDataNode; // return resulting DataNode, or null if none.
+          }
+
+    // Static getter methods.  These read from the MetaNode DAG.
+
+      public TreePath buildAttributeTreePath( )
+        /* This method returns a TreePath of DataNodes which 
+          identifies the current DataNode selection.
+          The path is built from the sequence of DataNodes
+          associated with the MetaNode's which have attributes 
+          with key == "SelectionPath" and value == "IS",
+          starting at the MetaNode DAG root.
+          This method always returns a non-null TreePath.
+          It also never returns Dataroot.getParentOfRootTreePath(),
+          which is the sentinel representing the empty TreePath.
+          The TreePath returned always contains at least the root node.
+          */
+        { 
+          TreePath resultTreePath= // Calculating tentative result...
+            ///Selection.buildAttributeTreePath( // ...path built...
+            buildAttributeTreePath( // ...path built...
+              MetaRoot.selectionAttributeString // ...from selection attribute nodes.
+              );
+          if  // Replacing with root path if result path was empty.
+            ( resultTreePath == DataRoot.getIt().getParentOfRootTreePath() )
+            resultTreePath= DataRoot.getIt().getRootTreePath();
+          return resultTreePath;
+          }
+          
+      public void set( TreePath inTreePath )
+        /* This does the same as putAndReturnDataNode(.) except 
+          it doesn't return the anything.
+          It exists mainly to help other code be self-documenting.
+          */
+        {
+      	  setAndReturnMetaNode( inTreePath ); // Update with TreePath.
+          }
+
+      public DataNode setAndReturnDataNode( TreePath inTreePath )
+        /* Updates the "SelectionPath" attributes of the MetaNode DAG
+          starting with the root and ending at 
+          the MetaNode specified by inTreePath.
+          Then it returns the DataNode of the most recently 
+          selected/visited child MetaNode of 
+          the MetaNode at the end of that path,
+          or it returns null if there is no such child. 
+          */
+        {
+          MetaNode endOfPathMetaNode=  // Get last MetaNode in path by...
+            setAndReturnMetaNode(  // ...updating tree with...
+              inTreePath  // ...the provided TreePath.
+              );
+          DataNode childDataNode=  // Get that last MetaNode's...
+            ///getLastSelectedChildDataNode(  // ...last selected child DataNode.
+            ///MetaRoot.getLastSelectedChildDataNode(  // ...last selected child DataNode.
+            getLastSelectedChildDataNode(  // ...last selected child DataNode.
+              endOfPathMetaNode );
+              
+          return childDataNode;  // Return the resulting child DataNode.
+          }
+
+      private MetaNode setAndReturnMetaNode( TreePath inTreePath )
+        /* Updates the "SelectionPath" attributes of the MetaNode DAG
+          starting with the root and ending at 
+          the MetaNode specified by inTreePath.
+          If it needs to then it adds MetaNodes 
+          to the DAG in the appropriate places.
+          It returns the MetaNode at the end of the specified TreePath.
+          */
+        {
+          PathAttributeMetaTool workerPathAttributeMetaTool= 
+            ///new PathAttributeMetaTool( // Create new PathAttributeMetaTool...
+            makePathAttributeMetaTool( // Create new PathAttributeMetaTool...
+              inTreePath,  // ...to work on inTreePath's...
+              MetaRoot.selectionAttributeString  // ...selection path attribute.
+              );
+          workerPathAttributeMetaTool.setPath( );  // Set path attributes.
+          return workerPathAttributeMetaTool.getMetaNode();
+          }
+
+  // Code from TreeExpansion class.
+
+    /* This code contains several static methods to help manage 
+      auto-expand and auto-collapse in JTrees of the DataNode DAG/tree.
+      It does this with DataNode meta-data stored in the MetaNode DAG.
+      It doesn't actually do any expansions or collapses of nodes.
+      It only stores and retrieves information about them.
+      */
+
+    private BooleanAttributeMetaTool 
+    newAutoExpandedAttributeMetaTool( TreePath InTreePath )
+      /* This method returns a BooleanAttributeMetaTool 
+        that's ready to use for accessing the "AutoExpanded" attribute 
+        in the MetaNode associated with InTreePath.  
+        */
+      { 
+        ///return new BooleanAttributeMetaTool( 
+        return makeAutoExpandedAttributeMetaTool(
+          InTreePath, "AutoExpanded" 
+          ); 
+        }
+
+    public void SetAutoExpanded( 
+        TreePath InTreePath, boolean InAutoExpandedB 
+        )
+      /* This method stores InAutoExpandedB
+        as the boolean value of the AutoExpanded attribute
+        of the MetaNode associated with InTreePath.
+        */
+      { 
+        BooleanAttributeMetaTool WorkerBooleanAttributeMetaTool=
+          newAutoExpandedAttributeMetaTool( InTreePath );
+        WorkerBooleanAttributeMetaTool.putAttributeB( 
+          InAutoExpandedB 
+          );
+        }
+
+    public boolean GetAutoExpandedB( TreePath InTreePath )
+      /* This method returns the boolean value of 
+        the AutoExpanded attribute
+        of the MetaNode associated with InTreePath.
+        */
+      { 
+        BooleanAttributeMetaTool WorkerBooleanAttributeMetaTool=
+          newAutoExpandedAttributeMetaTool( InTreePath );
+        return WorkerBooleanAttributeMetaTool.getAttributeB( );
+        }
+
+    public TreePath FollowAutoExpandToTreePath( 
+        TreePath StartTreePath 
+        )
+      /* This method tries to follow a chain of 
+        the most recently selected and AutoExpanded MetaNodes
+        starting with the MetaNode associated with StartTreePath
+        and moving away from the root.
+        It returns:
+          The TreePath associated with the first MetaNode 
+          without the AutoExpanded attribute set, or 
+          
+          Null if there were no AutoExpanded MetaNodes at all.
+        */
+      {
+        TreePath ScanTreePath=  // Initialize TreePath scanner to be...
+          StartTreePath;  // ...the start TreePath.
+        BooleanAttributeMetaTool ScanBooleanAttributeMetaTool=
+          newAutoExpandedAttributeMetaTool( StartTreePath );
+        while (true) // Follow chain of nodes with AutoExpanded attribute set.
+          { // Try to process one node.
+            if  // Exit loop if AutoExpanded attribute of MetaNode not set.
+              ( ! ScanBooleanAttributeMetaTool.getAttributeB( ) )
+              break;  // Exit loop.  We're past the last AutoExpanded node.
+            MetaNode ChildOfMetaNode=  // Get recently selected child MetaNode.
+              ///Selection.getLastSelectedChildOfMetaNode(
+              //MetaRoot.getLastSelectedChildOfMetaNode(
+              ///MetaRoot.get().getLastSelectedChildOfMetaNode(
+              theMetaRoot.getLastSelectedChildOfMetaNode(
+                ScanBooleanAttributeMetaTool.getMetaNode()
+                );
+            if ( ChildOfMetaNode == null ) // Exit loop if no such child.
+              break;  // Exit loop.  Meta data is corrupted.
+            Object ChildOfDataNode=  // Get associated child DataNode.
+              ChildOfMetaNode.getDataNode();
+            // Setup next possible iteration,
+            ScanTreePath=  // create ScanTreePath of next node...
+              ScanTreePath.pathByAddingChild( // ...by adding to old path...
+                ChildOfDataNode);  // ...the child DataNode.
+            ScanBooleanAttributeMetaTool.Sync( // Sync the tool with...
+              ScanTreePath );  // ...the new ScanTreePath.
+            } // Try to process one node.
+        if  // Adjust result for special case of not moving at all.
+          ( ScanTreePath == StartTreePath ) // If we haven't moved...
+          ScanTreePath=  null;  // ...replace ScanTreePath with null.
+        return ScanTreePath;  // Return final ScanTreePath as result.
+        }
   }

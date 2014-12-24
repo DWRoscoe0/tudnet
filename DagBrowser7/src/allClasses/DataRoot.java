@@ -33,37 +33,44 @@ public class DataRoot {
       hide the first two levels instead of only the first.
 
       */
-  
-    private DataNode rootDataNode= // Root node of data DAG...
-      new InfogoraRoot( );  // ...set to be the Infogora root node.
 
-    private DataNode parentOfRootDataNode= // Parent of root node...
-      new SingleChildDataNode(   // set to be single child parent of...
-        rootDataNode // ..root node.
-        );
+    private DataNode rootDataNode; // Root node of data DAG.
 
-    private TreePath parentOfRootTreePath= // Path to parent set...
-      new TreePath(   // ...to TreePath consisting of only...
-        parentOfRootDataNode  // ...the parent node.
-        );
+    private DataNode parentOfRootDataNode; // Parent of root node.
 
-    private TreePath rootTreePath= // Path to root set...
-      parentOfRootTreePath.  // ...to the TreePath to parent...
-        pathByAddingChild(  // ...and adding...
-          rootDataNode  // ...the root node.
-          );
+    private TreePath parentOfRootTreePath; // Path to parent node.
+
+    private TreePath rootTreePath; // Path to root node.
 
   private static DataRoot theDataRoot; /// Temporary for static access.
 
-  DataRoot() {  // Constructor.
+  DataRoot( DataNode rootDataNode ) {  // Constructor.
     theDataRoot= this;  /// Temporary for static access.
+
+    this.rootDataNode= rootDataNode;
+
+    parentOfRootDataNode= // Setting parent of root node...
+      new SingleChildDataNode(   // to be single child parent of...
+        rootDataNode // ..root node.
+        );
+
+    parentOfRootTreePath= // Setting path to parent...
+      new TreePath(   // ...to be TreePath consisting of only...
+        parentOfRootDataNode  // ...the parent node.
+        );
+
+    rootTreePath= // Setting path to root...
+      parentOfRootTreePath.  // ...to be the TreePath to parent...
+        pathByAddingChild(  // ...and adding...
+          rootDataNode  // ...the root node.
+          );
     }
 
   public static DataRoot getIt() { /// Temporary for static access.
     return theDataRoot;
     }
   
-  // Methods.  All static.
+  // Methods.
 
     public DataNode getRootDataNode( )
       { return rootDataNode; }

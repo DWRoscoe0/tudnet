@@ -2,40 +2,50 @@ package allClasses;
 
 import javax.swing.tree.TreePath;
 
-public class BooleanAttributeMetaTool 
+class BooleanAttributeMetaTool 
 
   extends AttributeMetaTool
 
-  /* This is a MetaTool for dealing with a MetaNode's boolean attributes. */
+  /* This is am Attribute MetaTool for dealing with 
+    a MetaNode's boolean attributes. 
+    */
 
-  { // class BooleanAttributeMetaTool 
+  {
 
     // Constructors.
 
-      public BooleanAttributeMetaTool
-        ( TreePath InTreePath, String InKeyString )
+      public BooleanAttributeMetaTool( 
+          MetaRoot theMetaRoot, TreePath InTreePath, String InKeyString 
+          )
         {
-          super( InTreePath, InKeyString ); // Superclass does all initialization.
+          ///super( MetaRoot.get(), InTreePath, InKeyString ); // Superclass does all.
+          super( theMetaRoot, InTreePath, InKeyString ); // Superclass does all.
           }
 
     // Static methods.
 
-      static public boolean getNodeAttributeB
-        ( MetaNode TheMetaNode, String InKeyString )
-        /* This method returns the boolean value of attribute in TheMetaNode
-          with attribute name InKeyString.
-          It does this by getting the Value String and translating it.
+      private boolean getNodeAttributeB(  // Could be static.
+          MetaNode TheMetaNode, String InKeyString 
+          )
+        /* This method returns the boolean value of the attribute 
+          in TheMetaNode with attribute name InKeyString.
+          It does this by getting the associated Value String 
+          and translating it to a boolean value.
           */
         { 
-          boolean ResultB= false;  // Set default value of false.
-          do {  // Change default value if needed.
+          boolean ResultB= false;  // Setting default value of false.
+
+          do {  // Changing default value if needed.
             Object ValueObject= TheMetaNode.get( InKeyString );
-            if ( ValueObject == null )  // Value not there means false.
-              break;  // Exit and thereby use default false result.
-            if ( ValueObject.equals( "T" ) )  // Only a value of T means true.
+            if   // Returning with false if Value not there.
+              ( ValueObject == null )
+              break;  // Exiting with default false result.
+            if   // Returning with true if attribute value is "T".
+              ( ValueObject.equals( "T" ) )
               ResultB= true;
-            } while (false); // Change default value if needed.
-          return ResultB;
+            } while (false);
+
+          return ResultB; // Return final result value.
           }
 
     // Instance methods.
@@ -63,4 +73,4 @@ public class BooleanAttributeMetaTool
           put( ValueString );  // Store value String.
           }
 
-  } // class BooleanAttributeMetaTool 
+  }

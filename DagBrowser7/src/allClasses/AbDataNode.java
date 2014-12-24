@@ -1,7 +1,7 @@
 package allClasses;
 
 import javax.swing.JComponent;
-import javax.swing.tree.TreeModel;
+///import javax.swing.tree.DataTreeModel;
 import javax.swing.tree.TreePath;
 
 public abstract class AbDataNode 
@@ -162,33 +162,52 @@ public abstract class AbDataNode
         {
           return toString();  // Return default String representation.
           }
-    
-      public JComponent GetDataJComponent( 
-          TreePath inTreePath, TreeModel inTreeModel 
+
+      /* ???
+      public JComponent GetDataJComponent(  /// ??? temporary.
+          TreePath inTreePath, 
+          MetaRoot theMetaRoot, 
+          DataTreeModel inDataTreeModel 
+          )
+        {
+          return GetDataJComponent(  
+            inTreePath, 
+            inDataTreeModel 
+            );
+          }
+        */
+
+      public JComponent GetDataJComponent(  /// ??? being replaced.  
+          TreePath inTreePath, DataTreeModel inDataTreeModel 
           )
         /* Returns a JComponent which is appropriate for viewing
-          its associated DataNode, using context from inTreeModel.
+          its associated DataNode, using context from inDataTreeModel.
           It returns a TextViewer for leaves and 
           a ListViewer for non-leaves.
           The DataNode should be the last element of inTreePath,
           */
-        { // GetDataJComponent()
+        {
           JComponent resultJComponent= null;  // For result.
 
           if ( isLeaf( ) )  // This DataNode is a leaf.
             resultJComponent= // Set result to be a TextViewer JComponent.
               new TitledTextViewer( 
                 inTreePath, 
-                inTreeModel, 
+                inDataTreeModel, 
                 "Leaf Object: "+GetHeadString() // Normally not seen.
                 );
             else  // This DataNode is NOT a leaf.
             resultJComponent= // Set result for exploring a List.
-              //new ListViewer( inTreePath, inTreeModel );
-              new TitledListViewer( inTreePath, inTreeModel );
+              //new ListViewer( inTreePath, inDataTreeModel );
+              ///new TitledListViewer( inTreePath, inDataTreeModel );
+              new TitledListViewer( 
+                inTreePath, 
+                ///inDataTreeModel.getMetaRoot(), 
+                inDataTreeModel 
+                );
 
           return resultJComponent;  // Return the result from above.
-          } // GetDataJComponent()
+          }
 
     // Other non-static methods.
     

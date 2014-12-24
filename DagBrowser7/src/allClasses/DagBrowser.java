@@ -1,6 +1,6 @@
 package allClasses;
 
-import javax.swing.JComponent;
+///import javax.swing.JComponent;
 import javax.swing.JFrame;
 
 import static allClasses.Globals.*;  // For appLogger;
@@ -71,18 +71,15 @@ public class DagBrowser
 
     private static class AppFactory {
 
-      // This is the factory for all classes with App instance lifetime.
+      // This is the factory for all classes with App lifetime.
 
       String[] argStrings;
       Thread mainThread;
-      ///Shutdowner theShutdowner;
 
       public AppFactory( String[] argStrings )  // Constructor.
         {
           this.argStrings= argStrings;  // Saving app argument strings.
           this.mainThread= Thread.currentThread(); // Determine out Thread.
-          ///theShutdowner=   // Getting/Making ??? singleton Shutdowner.
-          ///  Shutdowner.getShutdowner();
           }
 
       public App makeApp() 
@@ -95,7 +92,7 @@ public class DagBrowser
           return new App(
             theShutdowner,
             theAppInstanceManager,
-            new DagBrowserFactory(
+            new AppGUIFactory(
               mainThread, 
               theAppInstanceManager,
               theShutdowner
@@ -109,26 +106,26 @@ public class DagBrowser
 
       Shutdowner theShutdowner;
       AppInstanceManager theAppInstanceManager;
-      DagBrowserFactory theDagBrowserFactory;
+      AppGUIFactory theAppGUIFactory;
 
       private App(   // Constructor.  For app Creation phase.
           Shutdowner theShutdowner,
           AppInstanceManager theAppInstanceManager,
-          DagBrowserFactory theDagBrowserFactory
+          AppGUIFactory theAppGUIFactory
           )
         {
           this.theShutdowner= theShutdowner;
           this.theAppInstanceManager= theAppInstanceManager;
-          this.theDagBrowserFactory= theDagBrowserFactory;
+          this.theAppGUIFactory= theAppGUIFactory;
           }
           
       public void runV()  // For app Run phase. 
         {
-          if ( !theAppInstanceManager.managingInstancesThenNeedToExitB( ) ) 
+          if ( ! theAppInstanceManager.managingInstancesThenNeedToExitB( ) ) 
 
             {
               DagBrowser theDagBrowser= // Creating browser.
-                  theDagBrowserFactory.makeDagBrowser();
+                  theAppGUIFactory.makeDagBrowser();
 
               theDagBrowser.runV(); // Running browser.
               }
@@ -138,84 +135,96 @@ public class DagBrowser
 
       }
 
-    private static class DagBrowserFactory {
+    private static class AppGUIFactory {
 
-      // This is the factory for all classes with DagBrowser lifetime.
+      /* This is the factory for all classes with AppGUI lifetime,
+        which means DagBrowser.
+        */
 
       Thread mainThread;
       AppInstanceManager theAppInstanceManager;
-      Shutdowner thetheShutdowner;
+      Shutdowner theShutdowner;
 
-      public DagBrowserFactory(    // Constructor.
+      public AppGUIFactory(    // Constructor.
           Thread mainThread, 
           AppInstanceManager theAppInstanceManager,
-          Shutdowner thetheShutdowner
+          Shutdowner theShutdowner
           )
         {
           this.mainThread= mainThread;
           this.theAppInstanceManager= theAppInstanceManager;
-          this.thetheShutdowner= thetheShutdowner;
+          this.theShutdowner= theShutdowner;
          }
 
       public DagBrowser makeDagBrowser() 
         {
-          DataRoot theDataRoot= new DataRoot();
-
-          ConnectionManager theConnectionManager=
-            new ConnectionManager();
-
+          DataRoot theDataRoot= new DataRoot(
+            new InfogoraRoot( )
+            );
+          ConnectionManager theConnectionManager= new ConnectionManager();
           MetaFileManager theMetaFileManager=
-            new MetaFileManager(thetheShutdowner);
-
-          MetaRoot theMetaRoot= new MetaRoot(theDataRoot,theMetaFileManager);
-
+            new MetaFileManager(theDataRoot, theShutdowner);
+          MetaRoot theMetaRoot= 
+            new MetaRoot( theDataRoot,theMetaFileManager);
           new MetaFileManager.Finisher(
             theMetaFileManager,
-            thetheShutdowner, 
+            theShutdowner, 
             theMetaRoot
             );
-
+          DataTreeModel theDataTreeModel= new DataTreeModel( 
+            theDataRoot, theMetaRoot 
+            );
+          DagBrowserPanel theDagBrowserPanel= new DagBrowserPanel(
+            theAppInstanceManager,
+            theDataTreeModel,
+            theDataRoot,
+            theMetaRoot
+            );
           return new DagBrowser( 
             mainThread, 
             theAppInstanceManager,
             theConnectionManager,
-            theDataRoot,
+            theDagBrowserPanel,
+            ///theDataRoot,
             theMetaRoot
             );
           }
 
       }
 
-    // DagBrowser variables.
-      Thread ourThread;  // Used for shutdown coordination.
-      AppInstanceManager theAppInstanceManager;
-      ConnectionManager theConnectionManager;
-      ///MetaFileManager theMetaFileManager;
-      DataRoot theDataRoot;
-      MetaRoot theMetaRoot;
+    // Injected dependency variables.
+      private Thread ourThread;  // Used for shutdown coordination.
+      private AppInstanceManager theAppInstanceManager;
+      private ConnectionManager theConnectionManager;
+      private DagBrowserPanel theDagBrowserPanel;
+      ///private DataRoot theDataRoot;  /// ??? not used.
+      private MetaRoot theMetaRoot;
 
+    // Other instance variables.
       private JFrame appJFrame;  // App's only JFrame (now).
 
     private DagBrowser(   // Constructor.
         Thread ourThread, 
         AppInstanceManager theAppInstanceManager,
         ConnectionManager theConnectionManager,
-        ///MetaFileManager theMetaFileManager
-        DataRoot theDataRoot,
+        DagBrowserPanel theDagBrowserPanel,
+        ///DataRoot theDataRoot,
         MetaRoot theMetaRoot
         )
       {
         this.ourThread= ourThread;
         this.theAppInstanceManager= theAppInstanceManager;
         this.theConnectionManager= theConnectionManager;
-        ///this.theMetaFileManager= theMetaFileManager;
-        this.theDataRoot= theDataRoot;
+        this.theDagBrowserPanel= theDagBrowserPanel;
+        ///this.theDataRoot= theDataRoot;
         this.theMetaRoot= theMetaRoot;
 
         }
 
     public void runV() // This method is the DagBrowser run phase.
       {
+        theMetaRoot.loadV();  // Load meta-data from external file(s).
+
         startingGUIV();  // Building and displaying GUI.
 
         theConnectionManager.start( );  // Starting ConnectionManager thread.
@@ -338,12 +347,12 @@ public class DagBrowser
               }
             // After return thread has terminated.
             }
-
         }
 
     public void newAppInstanceCreated()
       /* This AppInstanceListener method handles the creation of
         new running instances of this app.
+        It is called by theAppInstanceManager.
         */
       {
         java.awt.EventQueue.invokeLater(
@@ -356,7 +365,7 @@ public class DagBrowser
         It is meant to be run on the UI (AWT) thread.
         The JFrame content is set to a DagBrowserPanel 
         which contains the GUI and other code which does most of the work.
-        It returns that JFrame.  
+        It returns the JFrame.  
         */
       {
         JFrame theJFrame =  // construct the main application JFrame.
@@ -364,23 +373,23 @@ public class DagBrowser
             AppName.getAppNameString()
             +", DAG Browser 7 Test"
             +", archived "
-            +theAppInstanceManager.thisAppDateString()  // thisAppDateString()
+            +theAppInstanceManager.thisAppDateString()
             );
-
-        final JComponent ContentJComponent=  // Construct content to be a...
+        /* ???
+        theDagBrowserPanel=  // Construct content to be a...
           new DagBrowserPanel(  // ...DagBrowserPane.
             theAppInstanceManager,
-            theDataRoot
+            theDataRoot,
+            theMetaRoot
             );
-          //new JTextArea("TEST DATA");  // ... a JTextArea for a test???
-          //new TextViewer(null,"test TextViewer");  // ... ???
-        theJFrame.setContentPane( ContentJComponent );  // Store content.
-        theJFrame.pack();  // Layout all the sub-panels.
+          */
+        theDagBrowserPanel.initializeV(); // Initialize content panel.
+        theJFrame.setContentPane( theDagBrowserPanel );  // Store content.
+        theJFrame.pack();  // Layout all the content's sub-panels.
         theJFrame.setLocationRelativeTo(null);  // Center JFrame on screen.
         theJFrame.setDefaultCloseOperation(  // Set the close operation...
           JFrame.EXIT_ON_CLOSE );  // ...to be exit, since it's only frame.
         theJFrame.setVisible(true);  // make the app visible.
-
         return theJFrame;
         }
 

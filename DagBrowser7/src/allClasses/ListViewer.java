@@ -60,8 +60,9 @@ public class ListViewer
             // TreePath will be calculated and set later.
 
           { // Prepare the helper object.
-            aTreeHelper=  // Construct helper class instance.
-                new TreeHelper( this, inTreePath );  // Note, subject not set yet.
+            aTreeHelper= new TreeHelper(  // Construct helper instance.
+              this, MetaRoot.get(), inTreePath 
+              );  // Note, subject not set yet.
             } // Prepare the helper object.
 
           InitializeTheJList( inTreeModel );

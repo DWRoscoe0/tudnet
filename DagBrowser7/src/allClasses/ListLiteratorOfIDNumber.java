@@ -5,7 +5,6 @@ import java.util.ListIterator;
 
 import static allClasses.Globals.*;  // For appLogger;
 
-
 public class ListLiteratorOfIDNumber 
   implements ListIterator<IDNumber> 
   
@@ -20,21 +19,24 @@ public class ListLiteratorOfIDNumber
       but in the case of the methods next() and previous() 
       it checks to see whether the IDNumber element retrieved 
       is not an IDNumber subclass, and if it is not then 
-      it loads the MetaNode equivalent from the state lazy-load MetaFile 
+      it loads the MetaNode equivalent from the lazy-load state MetaFile 
       and stores that in place of the IDNumber before returning it.
       */
 
     {
       // Instance variables.
 
-        private ListIterator<IDNumber> NestedListIteratorOfIDNumber;
+        MetaFileManager theMetaFileManager;
+
+        private ListIterator<IDNumber> theListIteratorOfIDNumber;
+
         private DataNode theParentDataNode;  // For name lookup.
 
       // Constructors.
 
-        public ListLiteratorOfIDNumber( 
-            ListIterator<IDNumber> inListIteratorOfIDNumber, 
-            DataNode inParentDataNode
+        public ListLiteratorOfIDNumber( ///
+            ListIterator<IDNumber> theListIteratorOfIDNumber, 
+            DataNode theParentDataNode
             )
           /* This constructs a lazy-loading ListIterator from 
             a regular ListIterator.
@@ -42,8 +44,24 @@ public class ListLiteratorOfIDNumber
             lazy-loading needs to be done.
             */
           {
-            NestedListIteratorOfIDNumber= inListIteratorOfIDNumber;
-            theParentDataNode= inParentDataNode;
+            this.theListIteratorOfIDNumber= theListIteratorOfIDNumber;
+            this.theParentDataNode= theParentDataNode;
+            }
+
+        public ListLiteratorOfIDNumber( /// ???
+            MetaFileManager theMetaFileManager,
+            ListIterator<IDNumber> theListIteratorOfIDNumber, 
+            DataNode theParentDataNode
+            )
+          /* This constructs a lazy-loading ListIterator from 
+            a regular ListIterator.
+            inParentMetaNode is used for name lookups if
+            lazy-loading needs to be done.
+            */
+          {
+            this.theMetaFileManager= theMetaFileManager;
+            this.theListIteratorOfIDNumber= theListIteratorOfIDNumber;
+            this.theParentDataNode= theParentDataNode;
             }
 
       // Method that does the node checking and loading.
@@ -63,38 +81,32 @@ public class ListLiteratorOfIDNumber
             IDNumber returnIDNumber=  // Set default result to raw input.
               inIDNumber; 
 
-            { // Decode all the pertinant conditions.
-              if   // Already converted from IDNumber.
+            { // Decoding all the pertinant conditions.
+              if   // Doing nothing if already converted from IDNumber.
                 ( inIDNumber.getClass() != IDNumber.class )
-                {
-                  //System.out.print( " #"+inIDNumber.getTheI() );
-                  ; // Otherwise do nothing.
-                  }
+                ; // Doing nothing.
               /*
-              else if  // Lazy loading disabled.
+              else if  // Doing nothing if lazy loading disabled.
                 ( ! MetaFile.getLazyLoadingEnabledB() ) 
-                ;  // Do nothing.
+                ; // Doing nothing.
               */
-              else  // It is an IDNumber that needs conversion loading.
-                returnIDNumber=   // Convert/load.
-                  ConvertIDNumber( inIDNumber );
+              else  // Doing conversion loading of IDNumber.
+                returnIDNumber= ConvertIDNumber( inIDNumber );
               } // Decode all the pertinant conditions.
             return returnIDNumber;
             }
 
         private IDNumber ConvertIDNumber( IDNumber inIDNumber )
-          /* This helper method tries to replace IDNumber with 
+          /* This helper method tries to replace inIDNumber with 
             a lazy-loaded MetaNode equivalent.
+            If it succeeds then it returns the loaded replacement value,
+            otherwise it returns the original inIDNumber value.
             */
           { // Try to replace IDNumber with loaded MetaNode equivalent.
-            //Misc.DbgOut( 
-            //  "ListLiteratorOfIDNumber.ConvertIDNumber(#"+
-            //  inIDNumber.getTheI()+
-            //  ") replacing." 
-            //  );
             try {
               inIDNumber=  // ...MetaNode equivalent...
-                MetaFileManager.getLazyLoadMetaFile().readAndConvertIDNumber(  // ...
+                ///MetaFileManager.get().getLazyLoadMetaFile().readAndConvertIDNumber(  // ...
+                theMetaFileManager.getLazyLoadMetaFile().readAndConvertIDNumber(  // ...
                   inIDNumber,  // ...of IDNumber using...
                   theParentDataNode  // ...provided parent for lookup.
                   );
@@ -116,25 +128,25 @@ public class ListLiteratorOfIDNumber
         @Override
         public void add(IDNumber inIDNumber) 
           {
-            NestedListIteratorOfIDNumber.add(inIDNumber);
+            theListIteratorOfIDNumber.add(inIDNumber);
             }
 
         @Override
         public boolean hasNext() 
           {
-            return NestedListIteratorOfIDNumber.hasNext();
+            return theListIteratorOfIDNumber.hasNext();
             }  
 
         @Override
         public boolean hasPrevious() 
           {
-            return NestedListIteratorOfIDNumber.hasPrevious();
+            return theListIteratorOfIDNumber.hasPrevious();
             }  
 
         @Override
         public IDNumber next() 
           {
-            IDNumber outIDNumber= NestedListIteratorOfIDNumber.next();
+            IDNumber outIDNumber= theListIteratorOfIDNumber.next();
             outIDNumber= checkLoadAndReplaceIDNumber( outIDNumber );
             return outIDNumber;
             }  
@@ -142,13 +154,13 @@ public class ListLiteratorOfIDNumber
         @Override
         public int nextIndex() 
           {
-            return NestedListIteratorOfIDNumber.nextIndex();
+            return theListIteratorOfIDNumber.nextIndex();
             }  
 
         @Override
         public IDNumber previous() 
           {
-            IDNumber outIDNumber= NestedListIteratorOfIDNumber.previous();
+            IDNumber outIDNumber= theListIteratorOfIDNumber.previous();
             outIDNumber= checkLoadAndReplaceIDNumber( outIDNumber );
             return outIDNumber;
             }  
@@ -156,19 +168,19 @@ public class ListLiteratorOfIDNumber
         @Override
         public int previousIndex() 
           {
-            return NestedListIteratorOfIDNumber.previousIndex();
+            return theListIteratorOfIDNumber.previousIndex();
             }  
 
         @Override
         public void remove() 
           {
-            NestedListIteratorOfIDNumber.remove();
+            theListIteratorOfIDNumber.remove();
             }  
 
         @Override
         public void set(IDNumber inIDNumber) 
           {
-            NestedListIteratorOfIDNumber.set(inIDNumber);
+            theListIteratorOfIDNumber.set(inIDNumber);
             }  
 
     }

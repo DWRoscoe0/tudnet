@@ -3,7 +3,7 @@ package allClasses;
 import java.io.File;
 
 import javax.swing.JComponent;
-import javax.swing.tree.TreeModel;
+///import javax.swing.tree.DataTreeModel;
 import javax.swing.tree.TreePath;
 
 public class FileRoots
@@ -26,7 +26,7 @@ public class FileRoots
     
     // Constructors (none yet).
     
-    // A subset of delegated AbstractTreeModel methods.
+    // A subset of delegated AbstractDataTreeModel methods.
 
       /*
       public boolean isLeaf( ) 
@@ -150,41 +150,32 @@ public class FileRoots
           return "File-System-Roots";
           }
       
-      /* public JComponent GetDataJComponent( TreePath InTreePath )
-        /* Returns a JComponent which is appropriate for viewing 
-          the current tree node represented specified by InTreePath.  
-          */
-        /*
-        { // GetDataJComponent.
-          System.out.println( "FileRoots.GetDataJComponent(InTreePath)" );
-          JComponent ResultJComponent=  // Calculate a ListViewer.
-            new ListViewer( InTreePath );
-          return ResultJComponent;  // return the final result.
-          } // GetDataJComponent.
-        */
-      
-      public JComponent GetDataJComponent
-        ( TreePath InTreePath, TreeModel InTreeModel)
+      public JComponent GetDataJComponent( 
+          TreePath InTreePath, 
+          MetaRoot theMetaRoot,
+          DataTreeModel InDataTreeModel
+          )
         /* Returns a JComponent which is appropriate for viewing 
           the current tree node represented specified by InTreePath
-          using context from InTreeModel.
+          using context from InDataTreeModel.
           */
         { // GetDataJComponent.
           JComponent ResultJComponent=  // Calculate a ListViewer.
-            //new ListViewer( InTreePath, InTreeModel );
-          	new TitledListViewer( InTreePath, InTreeModel );
+            //new ListViewer( InTreePath, InDataTreeModel );
+          	///new TitledListViewer( InTreePath, InDataTreeModel );
+            new TitledListViewer( InTreePath, InDataTreeModel );
           return ResultJComponent;  // return the final result.
           } // GetDataJComponent.
 
 /*      public JComponent GetDataJComponent
-          ( TreePath InTreePath, TreeModel InTreeModel )
+          ( TreePath InTreePath, DataTreeModel InDataTreeModel )
           /* Returns a JComponent which is appropriate for viewing 
             the current tree node represented specified by InTreePath
-            using context from InTreeModel.
+            using context from InDataTreeModel.
             */
 /*        { // GetDataJComponent.
         	JComponent ResultJComponent=  // Calculate a ListViewer.
-              new ListViewer( InTreePath, InTreeModel );
+              new ListViewer( InTreePath, InDataTreeModel );
             return ResultJComponent;  // return the final result.
             } // GetDataJComponent.
 */          
@@ -193,7 +184,7 @@ public class FileRoots
             that should be selected when beginning browsing FileRoots.
             The user DataNode at the beginning of the path
             can be used as the root of the tree when building a
-            DataTreeModel.
+            DataDataTreeModel.
             */
           { // TreePathStart()
             TreePath StartTreePath=  // Create the StartTreePath from...

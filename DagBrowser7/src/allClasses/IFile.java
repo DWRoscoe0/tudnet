@@ -8,7 +8,7 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 
 import javax.swing.JComponent;
-import javax.swing.tree.TreeModel;
+///import javax.swing.tree.DataTreeModel;
 import javax.swing.tree.TreePath;
 
 public class IFile 
@@ -67,7 +67,7 @@ public class IFile
           return theFile.hashCode();
           }
 
-    // A subset of delegated TreeModel methods.
+    // A subset of delegated DataTreeModel methods.
 
       public boolean isLeaf( )
         /* Returns true if this is a file, false if a directory.  */
@@ -217,11 +217,14 @@ public class IFile
           return stringResult;  // Return the final result.
           }
       
-      public JComponent GetDataJComponent
-        ( TreePath inTreePath, TreeModel inTreeModel )
+      public JComponent GetDataJComponent( 
+          TreePath inTreePath, 
+          MetaRoot theMetaRoot, 
+          DataTreeModel inDataTreeModel 
+          )
         /* Returns a JComponent capable of displaying this IFile.  
-          using a TreeModel argument.  
-          This ignores the TreeModel for DataNode subclasses
+          using a DataTreeModel argument.  
+          This ignores the DataTreeModel for DataNode subclasses
           which do not yet support it.
           */
         { // GetDataJComponent.
@@ -233,17 +236,21 @@ public class IFile
           { // calculate the associated DagNodeViewer.
             if ( inIFile.theFile.isDirectory() )  // file is a directory.
               resultJComponent= 
-                new DirectoryTableViewer( inTreePath, inTreeModel );
+                ///new DirectoryTableViewer( inTreePath, inDataTreeModel );
+                new DirectoryTableViewer( 
+                  ///inTreePath, MetaRoot.get(), inDataTreeModel 
+                  inTreePath, theMetaRoot, inDataTreeModel 
+                  );
             else if ( inIFile.theFile.isFile() )  // file is a regular file.
               resultJComponent= JComponentForJTextAreaFrom(
-                inTreePath, inTreeModel 
+                inTreePath, inDataTreeModel 
                 );
             else  // file is neither.
               { // Handle unreadable folder or device.
                 resultJComponent=  // calculate a blank JPanel DagNodeViewer.
                   new TitledTextViewer( 
                     inTreePath, 
-                    inTreeModel, 
+                    inDataTreeModel, 
                     "\n\n    UNREADABLE AS FILE OR FOLDER\n" 
                     );
                 resultJComponent.setBackground(  // Indicate error with color.
@@ -255,7 +262,7 @@ public class IFile
           } // GetDataJComponent.
 
       private JComponent JComponentForJTextAreaFrom
-        ( TreePath inTreePath, TreeModel inTreeModel )
+        ( TreePath inTreePath, DataTreeModel inDataTreeModel )
         /* This grouping returns a DagNodeViewer of a JTextArea 
           for displaying the IFile named by inTreePath.
           */
@@ -263,7 +270,7 @@ public class IFile
 
           IFile inIFile= (IFile)inTreePath.getLastPathComponent();
 
-          return new TitledTextViewer( inTreePath, inTreeModel, inIFile );
+          return new TitledTextViewer( inTreePath, inDataTreeModel, inIFile );
           
           }  // JComponentForJTextAreaFrom(inIFile)
           

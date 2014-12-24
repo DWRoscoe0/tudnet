@@ -1,7 +1,7 @@
 package allClasses;
 
 import javax.swing.JComponent;
-import javax.swing.tree.TreeModel;
+///import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
 public class Infinitree 
@@ -127,15 +127,20 @@ public class Infinitree
           return hash;
           }
 
-      public JComponent GetDataJComponent
-        ( TreePath inTreePath, TreeModel inTreeModel )
+      public JComponent GetDataJComponent( 
+          TreePath inTreePath, 
+          MetaRoot theMetaRoot,
+          ///TreeModel inTreeModel
+          DataTreeModel InDataTreeModel
+          )
         /* Temporary test version to test TitledListViewer. ???
           */
         { // GetDataJComponent()
           JComponent resultJComponent= null;  // For result.
 
           resultJComponent= // Set result for exploring a List.
-            new TitledListViewer( inTreePath, inTreeModel );
+            ///new TitledListViewer( inTreePath, inTreeModel );
+            new TitledListViewer( inTreePath, InDataTreeModel );
             //new ListViewer( inTreePath, inTreeModel );
 
           return resultJComponent;  // Return the result from above.

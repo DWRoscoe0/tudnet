@@ -1,6 +1,8 @@
 package allClasses;
 
 import java.io.IOException;
+import java.util.Iterator;
+import java.util.ListIterator;
 
 import static allClasses.Globals.*;  // For appLogger;
 
@@ -31,41 +33,6 @@ public class MetaFileManager {
 
     */
 
-  /* Psuedo-Singleton code.    ???
-    This is made thread-safe and fast with the
-    Initialization on Demand Holder (IODH) idom.
-    */
-  
-    private static MetaFileManager theMetaFileManager= null; // ???
-
-    public MetaFileManager get()
-      { return theMetaFileManager; }
-
-    public MetaFileManager(  // Constructor for use by factory.
-        Shutdowner theShutdowner
-        )
-      {
-        appLogger.info( "MetaFileManager constructor starting.");
-
-        this.theShutdowner= theShutdowner;
-        
-        theMetaFileManager= this;
-        }
-
-    // Instance variables.
-
-      Shutdowner theShutdowner;
-
-    /* ???
-    private static class LazyHolder {
-      private static final MetaFileManager INSTANCE = new MetaFileManager();
-      }
-
-    public static MetaFileManager getMetaFileManager()   // Return singleton instance.
-      //{ return LazyHolder.INSTANCE; }
-      { return theMetaFileManager; }
-    */
-
   // Constants.
 
     private static final String FlatFileNameString= "Flat.txt";
@@ -75,17 +42,42 @@ public class MetaFileManager {
       "Infogora-Flat-Meta-Data-File";
     private static final String NestedHeaderTokenString= 
       "Infogora-Nested-Meta-Data-File";
+      
+  // Instance variables injected through constructor.
 
-  // Static variables.
+    DataRoot theDataRoot;
+    Shutdowner theShutdowner;
 
-    public static MetaFile lazyLoadMetaFile= null;  // For lazy-loading.
+  // Other instance variables.
+
+    public MetaFile lazyLoadMetaFile= null;  // For lazy-loading. ???
       // It stores a reference to the MetaFile used to load
       // the root MetaNode in lazy-loading mode.
       // If more MetaNodes need to be loaded later then is used again.
       // finish() closes its associated file at app termination.
-    private static boolean forcedLoadingEnabledB=   // Enable/disable.
+    private boolean forcedLoadingEnabledB=   // Enable/disable.
       false;
 
+  public MetaFileManager(  // Constructor for use by factory.
+      DataRoot theDataRoot,
+      Shutdowner theShutdowner
+      )
+    {
+      appLogger.info( "MetaFileManager constructor starting.");
+
+      this.theDataRoot= theDataRoot;
+      this.theShutdowner= theShutdowner;
+      
+      ///theMetaFileManager= this;  ///
+      }
+
+  /*  ///
+  private static MetaFileManager theMetaFileManager;
+  
+  public static MetaFileManager get()  ///
+    { return theMetaFileManager; }
+  */
+  
   public void methodToPreventUnusedIdentifierCompilerWarnings() 
     // The following are references to methods I used during debugging.
     {
@@ -117,72 +109,43 @@ public class MetaFileManager {
 
       };
 
-  public static MetaFile getLazyLoadMetaFile()
-    { return lazyLoadMetaFile; }
-
   // Start/finish methods and associated shutdown hook class.
 
     public MetaNode start()
       /* Starts activity in this MetaFile class.
         It tries to read at least the root MetaNode from external file(s).
-        It also prepares to run finish() at shutdown.
         It returns the root MetaNode gotten by reading, 
         or null if reading failed.
         
-        ???During development it might read and write several files
+        ??? During development it might read and write several files
         in different format to aid testing and debugging.
+        Only one written file is needed for normal operations.
+        
+        ??? This should probably be renamed to loadV().
         */
       { // start()
-        // System.out.println( "MetaFile.start()");
-
         MetaNode loadedMetaNode= null;  // Place for result root MetaNode.
 
-        //Misc.DbgOut( "MetaFile.start(..) lazyLoadWholeMetaNode()");  // Debug.
         loadedMetaNode=  // Try doing a lazy-load of flat file root node.
           lazyLoadWholeMetaNode( );
 
-        // ??? Test by above read by writing special Debug file.
-        //Misc.DbgOut( "MetaFile.start(..) writeDebugFileV(..)");  // Debug.
         writeDebugFileV( loadedMetaNode );
 
         /*
-        //Misc.DbgOut( "MetaFile.start(..) readFlatFileMetaNode()");  // Debug.
         loadedMetaNode= // Read state from flat file.  
           readFlatFileMetaNode( );
 
-        // ??? Test by above read by writing special Debug file.
-        //Misc.DbgOut( "MetaFile.start(..) writeDebugFileV(..)");  // Debug.
         writeDebugFileV( loadedMetaNode );
-        */
 
-        /*
-        //Misc.DbgOut( "MetaFile.start(..) readNestedFileMetaNode(..)");  // Debug.
         loadedMetaNode= // Read state from hierarchical file.   
           readNestedFileMetaNode( );
         */
-
-        /*
-        { // Prepare to run finish() when app terminates.
-          //ShutdownHook theShutdownHook = new MetaFile.ShutdownHook();
-          //Runtime.getRuntime().addShutdownHook(theShutdownHook);
-
-          theShutdowner.addShutdownerListener( // ???
-            new ShutdownerListener() {
-              public void doMyShutdown() 
-              {
-                MetaFileManager.finish();  // Write any changed state information.
-                }
-              });
-          } // Prepare to run finish() when app terminates.
-          */
-
-        //Misc.DbgOut( "MetaFile.start(..) end.");  // Debug.
 
         return loadedMetaNode;  // Return the last value, if any, as result.
         } // start()
 
     private void finish( MetaRoot theMetaRoot )
-      /* Finishes activity in this MetaFile class.
+      /* Finishes activity in this MetaFileManager class.
         All new or modified MetaNode-s are saved to external file(s).
         This should be called before application termination.  
 
@@ -201,29 +164,32 @@ public class MetaFileManager {
         so that all MetaNodes will be loaded.
         Then Flat.txt can be closed.
         Then a new Flat.txt can be written.
+
+        ??? This should probably be renamed to saveV().
         */
       { // finish()
         appLogger.info( "MetaFile.finish() begin.");
 
-        //Misc.DbgOut( "MetaFile.finish(..) forcedLoadingEnabledB= true");  // Debug.
         forcedLoadingEnabledB= true;  // Turn on forced loading.
 
-        //Misc.DbgOut( "MetaFile.finish(..) writeNestedFileV()");  // Debug.
-        writeNestedFileV( theMetaRoot.getRootMetaNode( ) );  // Write Nested file.
-          // This provides an easy-to-read dump of all MetaNodes.
+        writeNestedFileV(   // Writing Nested file.
+          theMetaRoot.getRootMetaNode( ) 
+          );  // This simultaneously 
+          // causes the lazy loading of all unloaded nodes, and
+          // provides a convenient human-readable dump of all MetaNodes.
 
-        if ( lazyLoadMetaFile != null )  // Lazy loading file open.
-          try { // Close it.
-            //Misc.DbgOut( "MetaFile.finish() closing lazy-loading Flat.txt.");
-            lazyLoadMetaFile.theRandomAccessFile.close( );  // Close it.
-            } // Close it.
-          catch ( IOException e ) {  // Process any errors.
+        if   // Closing lazy-loading file if open.
+          ( lazyLoadMetaFile != null )
+          try { // Closing it.
+            lazyLoadMetaFile.theRandomAccessFile.close( );
+            }
+          catch ( IOException e ) {  // Processing any errors.
             e.printStackTrace();
-            }  // Process any errors.
+            }
 
-        //Misc.DbgOut( "MetaFile.finish(..) writeFlatFileV()");  // Debug.
-        writeFlatFileV( theMetaRoot.getRootMetaNode( ) );  // Write Flat file.
-          // This complete dump is what is lazy-loaded during next run.
+        writeFlatFileV(   // Saving complete meta-data state to Flat file.
+          theMetaRoot.getRootMetaNode( ) 
+          );  // This file is what will be lazy-loaded during next run.
 
         appLogger.info( "MetaFile.finish() end.");
         } // finish()
@@ -234,6 +200,7 @@ public class MetaFileManager {
       It is used to post-process the MetaFile system at shutdown.
       */
 
+    private MetaFileManager theMetaFileManager;
     private MetaRoot theMetaRoot;
 
     public Finisher(  // Constructor.
@@ -243,6 +210,7 @@ public class MetaFileManager {
         )
       {
         this.theMetaRoot= theMetaRoot;
+        this.theMetaFileManager= theMetaFileManager;
 
         theShutdowner.addShutdownerListener( this ); // ???
         }
@@ -255,12 +223,88 @@ public class MetaFileManager {
 
     }
 
-  public static boolean getForcedLoadingEnabledB()
-    { return forcedLoadingEnabledB; }
+  // Factory methods.
+
+    public SingleChildMetaNode makeSingleChildMetaNode(
+        MetaNode InChildMetaNode, 
+        DataNode InDataNode 
+        )
+      {
+        ///return new MetaNode( this );
+        return new SingleChildMetaNode( this, InChildMetaNode, InDataNode );
+        }
+
+    public ListLiteratorOfIDNumber makeListLiteratorOfIDNumber( 
+        ListIterator<IDNumber> theListIteratorOfIDNumber, 
+        DataNode theParentDataNode
+        )
+      {
+        return new ListLiteratorOfIDNumber( 
+          //theMetaFileManager,
+          this,
+          theListIteratorOfIDNumber, 
+          theParentDataNode
+          );
+        }
+
+    public MetaNode makeMetaNode() 
+      {
+        ///return new MetaNode( this );
+        ///return new MetaNode( );
+        return new MetaNode( this );
+        }
+
+    public MetaNode makeMetaNode( DataNode inDataNode )
+      {
+        ///return new MetaNode( this, inDataNode );  
+        ///return new MetaNode( inDataNode );  
+        return new MetaNode( this, inDataNode );  
+        }
+
+    public MetaChildren makeMetaChildren( )
+      {
+        ///return new MetaChildren( this );  
+        ///return new MetaChildren( );  
+        return new MetaChildren( this );
+        }
+
+    /* ???
+    private MetaFile makeMetaFile(
+        RwStructure theRwStructure, 
+        String FileNameString, 
+        String HeaderTokenString
+        ) 
+      {
+        MetaFile theMetaFile= new MetaFile( this );
+        theMetaFile.TheRwStructure= theRwStructure;
+        theMetaFile.FileNameString= FileNameString;
+        theMetaFile.HeaderTokenString= HeaderTokenString;
+        return theMetaFile;
+        }
+      */
+
+    private MetaFile makeMetaFile( 
+        MetaFileManager.RwStructure theRwStructure, 
+        String FileNameString, 
+        String HeaderTokenString
+        ) 
+      {
+        return new MetaFile( 
+          this,
+          theRwStructure, 
+          FileNameString, 
+          HeaderTokenString
+          );
+        }
 
   // Whole-file read methods.
+  
+    private MetaFile makeMetaFile() 
+      {
+        return new MetaFile( this );
+        }
 
-    private static MetaNode readFlatFileMetaNode( )
+    private MetaNode readFlatFileMetaNode( )
       /* Reads all MetaNodes from a single Flat state file.  
         It returns the root MetaNode.
 
@@ -271,7 +315,7 @@ public class MetaFileManager {
         this is a good first step to going there.
         */
       {
-        MetaFile theMetaFile= new MetaFile();
+        MetaFile theMetaFile= makeMetaFile();
         // Set some appropriate mode variables.
         theMetaFile.TheRwStructure= RwStructure.FLAT;
         theMetaFile.FileNameString= FlatFileNameString;
@@ -282,13 +326,13 @@ public class MetaFileManager {
         return loadedMetaNode;
         }
 
-    private static MetaNode readNestedFileMetaNode( )
+    private MetaNode readNestedFileMetaNode( )
       /* Reads all MetaNodes from Nested state file.  
         It returns the root MetaNode.
         This will eventually exist only for debugging.
         */
       {
-        MetaFile theMetaFile= new MetaFile();
+        MetaFile theMetaFile= makeMetaFile();
         // Set some appropriate mode variables.
         theMetaFile.TheRwStructure= RwStructure.NESTED;
         theMetaFile.FileNameString= NestedFileNameString;
@@ -301,55 +345,46 @@ public class MetaFileManager {
 
   // Whole-file write methods.
 
-    private static void writeFlatFileV( MetaNode inMetaNode )
-      /* Writes all MetaNodes rooted at MetaNode inMetaNode
-        to Flat file in FLAT format.
-        If inMetaNode == null then it does nothing.
-        Otherwise tt creates or overwrites the appropriate file.
+    private void writeFlatFileV( MetaNode inMetaNode )
+      /* If inMetaNode == null then it does nothing.
+        Otherwise tt creates or overwrites the appropriate file and
+        writes to it all MetaNodes rooted at inMetaNode in FLAT format.
         */
       {
-        MetaFile theMetaFile= new MetaFile();
-        // Set some appropriate mode variables.
-        theMetaFile.TheRwStructure= RwStructure.FLAT;
-        theMetaFile.FileNameString= FlatFileNameString;
-        theMetaFile.HeaderTokenString= FlatHeaderTokenString;
+        MetaFile theMetaFile= makeMetaFile(
+          RwStructure.FLAT, FlatFileNameString, FlatHeaderTokenString
+          );
         theMetaFile.writeRootedFileV( inMetaNode );
         }
 
-    private static void writeNestedFileV( MetaNode inMetaNode )
-      /* This method writes all MetaNodes rooted at MetaNode inMetaNode
-        to Nested file in NESTED format.
-        If inMetaNode == null then it does nothing.
-        Otherwise tt creates or overwrites the appropriate file.
+    private void writeNestedFileV( MetaNode inMetaNode )
+      /* If inMetaNode == null then it does nothing.
+        Otherwise tt creates or overwrites the appropriate file and
+        writes to it all MetaNodes rooted at inMetaNode in NESTED format.
         */
       {
-        MetaFile theMetaFile= new MetaFile();
-        // Set some appropriate mode variables.
-        theMetaFile.TheRwStructure= RwStructure.NESTED;
-        theMetaFile.FileNameString= NestedFileNameString;
-        theMetaFile.HeaderTokenString= NestedHeaderTokenString;
+        MetaFile theMetaFile= makeMetaFile(
+          RwStructure.NESTED, NestedFileNameString, NestedHeaderTokenString
+          );
         theMetaFile.writeRootedFileV( inMetaNode );
         }
 
-    public static void writeDebugFileV( MetaNode inMetaNode )
-      /* This method is used for debugging this class.
-        It is used for checking the result of a previous load.
-        If inMetaNode == null then it does nothing.
-        Otherwise tt creates or overwrites the Debug file containing
-        all MetaNodes in Nested format rooted with inMetaNode.
+    public void writeDebugFileV( MetaNode inMetaNode )
+      /* If inMetaNode == null then it does nothing.
+        Otherwise tt creates or overwrites a file useful for debugging.
+        The file contains all MetaNodes in Nested format 
+        rooted at inMetaNode.
         */
       {
-        MetaFile theMetaFile= new MetaFile();
-        // Set some appropriate mode variables.
-        theMetaFile.TheRwStructure= RwStructure.NESTED;
-        theMetaFile.FileNameString= "Debug.txt";
-        theMetaFile.HeaderTokenString= "Debug-State";
+        MetaFile theMetaFile= makeMetaFile(
+          RwStructure.NESTED, "Debug.txt", "Debug-State"
+          );
         theMetaFile.writeRootedFileV( inMetaNode );  // Do the actual write.
         }
 
   // Method for lazy loading of FLAT files.
 
-    private static MetaNode lazyLoadWholeMetaNode( )
+    private MetaNode lazyLoadWholeMetaNode( )
       /* Reads and returns the root MetaNode from a Flat meta file.  
         Its children are stored as IDNumber instances.
         Other nodes are lazy-loaded later when, and if, needed,
@@ -357,16 +392,236 @@ public class MetaFileManager {
         It returns null if there was an error.
         */
       {
-        MetaFile theMetaFile= new MetaFile();
-
-        theMetaFile.TheRwStructure= RwStructure.FLAT;
-        theMetaFile.FileNameString= FlatFileNameString;
-        theMetaFile.HeaderTokenString= FlatHeaderTokenString;
-        theMetaFile.TheMode= Mode.LAZY_LOADING;
+        MetaFile theMetaFile= makeMetaFile(
+          RwStructure.FLAT, FlatFileNameString, FlatHeaderTokenString
+          );
+        ///theMetaFile.TheMode= Mode.LAZY_LOADING;
         MetaNode loadedMetaNode=   // Do the actual read.
           theMetaFile.lazyLoadFileMetaNode( );
-        
         return loadedMetaNode;
+        }
+
+  // Miscellaneous instance methods.
+
+    public boolean getForcedLoadingEnabledB()
+      { return forcedLoadingEnabledB; }
+
+    public MetaFile getLazyLoadMetaFile()
+      { return lazyLoadMetaFile; }
+
+    private MetaNode rwMetaNode( 
+        MetaFile inMetaFile, MetaNode inMetaNode, DataNode parentDataNode 
+        )
+      throws IOException
+      /* This rw-processes the node inMetaNode and its MetaNode children.  
+        If ( inMetaNode == null ) then it creates an empty MetaNode
+        and reads values into it.
+        If ( inMetaNode != null ) then it writes the fields.
+        If ( MetaFile.TheRwStructure == MetaFile.RwStructure.FLAT )
+        then it expects the children to be IDNumber stubs only.
+        If ( MetaFile.TheRwStructure == MetaFile.RwStructure.NESTED )
+        then it expects nested children.
+        In the case of Reading, parentDataNode is used for name lookup.
+        parentDataNode is ignored during Writing.
+        It returns the MetaNode processed.
+        */
+      {
+        if ( inMetaNode == null ) // If there is no MetaNode then...
+          ///inMetaNode= new MetaNode( ); // ...create one to be filled.
+          inMetaNode= makeMetaNode( ); // ...create one to be filled.
+
+        inMetaNode.rw( inMetaFile, parentDataNode );  // rw-process fields.
+
+        return inMetaNode;  // Return the new or the original MetaNode.
+        }
+
+    public MetaNode rwFlatOrNestedMetaNode( 
+        MetaFile inMetaFile, MetaNode inMetaNode, DataNode parentDataNode 
+        )
+      throws IOException
+      /* This method will read or write one or more MetaNodes 
+        from the Meta state file inMetaFile.
+        It processes the parent MetaNode and its children once,
+        though it might process only the ID numbers of the children
+        if RwStructure is FLAT.
+        It might process the child MetaNodes a second time,
+        again if RwStructure is FLAT, 
+        but also if Mode is NOT LAZY_LOADING.
+        In the case of Reading, parentDataNode is used for name lookup.
+        parentDataNode is ignored during Writing.
+        */
+      {
+        inMetaNode=  // Process possibly nested first/root MetaNode.
+          rwMetaNode( inMetaFile, inMetaNode, parentDataNode );
+        if  // Reprocess child MetaNodes if these conditions are true.
+          ( 
+            ( inMetaFile.getRwStructure() == MetaFileManager.RwStructure.FLAT ) &&
+            ( inMetaFile.getMode() != MetaFileManager.Mode.LAZY_LOADING )
+            )
+          inMetaNode.theMetaChildren.rwRecurseFlatV(  // Process the children...
+            inMetaFile,  // ...with inMetaFile...
+            inMetaNode.getDataNode()  // ...using DataNode for name lookup.
+            );
+
+        return inMetaNode;  // Return the main MetaNode.
+        }
+
+    public MetaNode readParticularFlatMetaNode( 
+        MetaFile inMetaFile, IDNumber inIDNumber, DataNode parentDataNode 
+        )
+      throws IOException
+      /* This method works similar to rwFlatOrNestedMetaNode(..)
+        but is used only when reading a FLAT file and when
+        searching for a MetaNode with a particular IDNumber.
+        It is a component of MetaNode searching,
+        called by MetaFile.readWithWrapFlatMetaNode(..).
+        It is used for both:
+        * Recursive greedy loading of entire FLAT files, and
+        * Lazy-loading of single MetaNodes.
+
+        It works as follows.
+        First it reads one flat, single-level MetaNode,
+        the next one in the file.
+        What is does next depends on context.
+        If the following condition is met:
+        * The MetaNode's IDNumber is equal to inIDNumber, and
+        * ( inMetaFile.getMode() != MetaFileManager.Mode.LAZY_LOADING )
+        then it reads and attaches all its associated descendants.
+
+        It returns the first MetaNode it read,
+
+        parentDataNode is used for name lookup.
+        */
+      {
+        MetaNode resultMetaNode=  // Read one MetaNode.
+          rwMetaNode( inMetaFile, null, parentDataNode );
+        if  // Read and attach descendants if it satisfies 2 conditions.
+          ( ( inIDNumber.getTheI() == resultMetaNode.getTheI() ) &&
+            ( inMetaFile.getMode() != MetaFileManager.Mode.LAZY_LOADING )
+            )
+          { 
+            resultMetaNode.theMetaChildren.  // With the node's children...
+              rwRecurseFlatV(  // ...recurse into them...
+                inMetaFile,  // ...with inMetaFile and...
+                resultMetaNode.getDataNode() // ...DataNode for name lookup.
+                );
+            }
+
+        return resultMetaNode;  // Return the main MetaNode.
+        }
+
+    public MetaChildren rwGroupMetaChildren( 
+        MetaFile inMetaFile, 
+        MetaChildren inMetaChildren,
+        DataNode parentDataNode
+        )
+      throws IOException
+      /* This rw-processes the MetaChildren.
+        If inMetaChildren != null then it writes the children
+          to the MetaFile, and parentDataNode is ignored.
+        If inMetaChildren == null then it reads the children
+          using parentDataNode to look up DataNode names,
+          and returns a new MetaChildren instance as the function value.
+        */
+      {
+        //Misc.DbgOut( "MetaChildren.rwGroupMetaChildren(..)" );  // Debug.
+
+        inMetaFile.rwListBegin( );
+        inMetaFile.rwLiteral( " MetaChildren" );
+
+        if ( inMetaChildren == null )
+          inMetaChildren= readMetaChildren( inMetaFile, parentDataNode );
+          else
+          writeMetaChildren( inMetaFile, inMetaChildren, parentDataNode );
+
+        inMetaFile.rwListEnd( );
+        return inMetaChildren;
+        }
+
+    private MetaChildren readMetaChildren( 
+        MetaFile inMetaFile, DataNode parentDataNode 
+        )
+      throws IOException
+      /* This reads a MetaChildren from MetaFile inMetaFile
+        and returns it as the result.  
+        It uses parentDataNode for name lookups.  
+        */
+      {
+        //Misc.DbgOut( "MetaChildren.readMetaChildren()" );
+        MetaChildren newMetaChildren =    // Initialize newMetaChildren to be...
+          ///new MetaChildren( ); // ...an empty default instance.
+          ///MetaRoot.get().makeMetaChildren( ); // ...an empty default instance.
+          ///MetaFileManager.get().makeMetaChildren( ); // ...an empty default instance.
+          makeMetaChildren( ); // ...an empty default instance.
+        while ( true )  // Read all children.
+          { // Read a child or exit.
+            IDNumber newIDNumber= null; // Variable for use in reading ahead.
+            inMetaFile.rwIndentedWhiteSpace( );  // Go to proper column.
+            if  // Exit loop if end character present.
+              ( inMetaFile.testTerminatorI( ")" ) != 0 )
+              break;  // Exit loop.
+            switch // Read child based on RwStructure.
+              ( inMetaFile.getRwStructure() )
+              {
+                case FLAT:
+                  newIDNumber= // Read a single IDNumber.
+                    MetaNode.rwIDNumber( inMetaFile, null );
+                  break;
+                case NESTED:
+                  newIDNumber=  // Read the possibly nested MetaNode.
+                    rwFlatOrNestedMetaNode(
+                      inMetaFile, 
+                      null, 
+                      parentDataNode
+                      );
+                  break;
+                }
+            newMetaChildren.add(  // Store...
+              newIDNumber // ...the new child MetaNode.
+              );
+            } // Read a child or exit.
+        return newMetaChildren;  // Return resulting MetaChildren instance.
+        }
+
+    private void writeMetaChildren(
+        MetaFile inMetaFile, 
+        MetaChildren inMetaChildren, 
+        DataNode inParentDataNode
+        )
+      throws IOException
+      /* This writes the MetaChildren instance inMetaChildren
+        to MetaFile inMetaFile.
+        If MetaFile.TheRwStructure == FLAT then it writes 
+        a flat file containing IDNumber nodes only,
+        otherwise it recursively writes the complete MetaNodes hierarchy.
+        inParentDataNode is used for name lookup if MetaNodes
+        must be lazy-loaded before being written.
+        */
+      {
+        Iterator<IDNumber> theIteratorOfIDNumber=  // Create child iterator...
+          inMetaChildren.getMaybeLoadingIteratorOfMetaNode(
+            inParentDataNode
+            );
+        while // Write all the children.
+          ( theIteratorOfIDNumber.hasNext() ) // There is a next child.
+          { // Write one child.
+            IDNumber TheIDNumber=   // Get the child.
+              theIteratorOfIDNumber.next();
+            switch // Write child based on RwStructure.
+              ( inMetaFile.getRwStructure() )
+              {
+                case FLAT:
+                  TheIDNumber.rw( inMetaFile );  // Write ID # only.
+                  break;
+                case NESTED:
+                  if (TheIDNumber instanceof MetaNode)
+                    rwFlatOrNestedMetaNode(   // Write MetaNode.
+                      inMetaFile, (MetaNode)TheIDNumber, (DataNode)null );
+                    else
+                    IDNumber.rwIDNumber( inMetaFile, TheIDNumber );
+                  break;
+                }
+            } // Write one child.
         }
 
   }

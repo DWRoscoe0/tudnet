@@ -1,19 +1,19 @@
 package allClasses;
 
 import javax.swing.JComponent;
-import javax.swing.tree.TreeModel;
+///import javax.swing.tree.DataTreeModel;
 import javax.swing.tree.TreePath;
 
 public interface DataNode {
 
   /* This interface forms the basis of the classes 
     which represent the DAG (Directed Acyclic Graph). 
-    Many of its methods are similar to methods in the TreeModel interface.
+    Many of its methods are similar to methods in the DataTreeModel interface.
     
     ??? Normalize field names.
     */
 
-  // Methods with equivalents in TreeModel.
+  // Methods with equivalents in DataTreeModel.
 
     public boolean isLeaf( ); /* Returns true if this is a leaf node,
       which means it can never have children.
@@ -32,7 +32,7 @@ public interface DataNode {
       child childObject.  If childObject is not one of the children 
       of this DataNode then it returns -1.  */
 
-  // Additional methods not directly related to TreeModel.
+  // Additional methods not directly related to DataTreeModel.
 
     public int getIndexOfNamedChild( String inString );
       /* Returns the index of the child whose name is inString,
@@ -56,11 +56,17 @@ public interface DataNode {
       identifies this DataNode distinctly from its siblings.
       */
 
+    /* ???
+    public JComponent GetDataJComponent( /// ??? bridge version.
+      TreePath InTreePath, MetaRoot theMetaRoot, DataTreeModel InDataTreeModel 
+      ); // ??? Maybe move theMetaRoot into DataTreeModel?
+      */
+
     public JComponent GetDataJComponent( 
-      TreePath InTreePath, TreeModel InTreeModel );
+      TreePath InTreePath, DataTreeModel InDataTreeModel );
       /* Returns a JComponent capable of displaying this DataNode
-        and using the TreeModel InTreeModel to provide context.  
-        The TreeModel might be ignored.
+        and using the DataTreeModel InDataTreeModel to provide context.  
+        The DataTreeModel might be ignored.
         */
 
     /* ??? Add JComponent getSummaryJComponent() which returns a component,
