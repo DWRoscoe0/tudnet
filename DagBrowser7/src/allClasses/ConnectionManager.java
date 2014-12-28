@@ -75,7 +75,8 @@ public class ConnectionManager extends Thread
           public Root( )
             {
               super( 
-                "ConnectionManager.Root" 
+                ///"ConnectionManager.Root" 
+                "Connections" 
                 , new NamedLeaf( "dummy child 1" )
                 , new NamedLeaf( "dummy child 2" )
                 , new NamedLeaf( "dummy child 3" )

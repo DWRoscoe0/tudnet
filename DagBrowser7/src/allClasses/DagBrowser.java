@@ -162,7 +162,7 @@ public class DagBrowser
             );
           ConnectionManager theConnectionManager= new ConnectionManager();
           MetaFileManager theMetaFileManager=
-            new MetaFileManager(theDataRoot, theShutdowner);
+          		new MetaFileManager(theDataRoot);
           MetaRoot theMetaRoot= 
             new MetaRoot( theDataRoot,theMetaFileManager);
           new MetaFileManager.Finisher(

@@ -24,13 +24,13 @@ public class DataRoot {
           a smaller TreePath referencing all the child's ancestors.
         * Some of the TreePath constructors provided by Java which
           could make the following code more self-documenting
-          are not public and can not be referenced here.
+          are not public and can not be used here.
 
       Some of the variables that were in this section were removed when
-      it was realized that the JTree class can make use of only
-      one TreePath sentinel level, which is done with 
+      it was realized that the JTree class can hide only
+      one TreePath sentinel level, which is done by calling
       JTree.setRootVisible( false ).  There is no easy way to
-      hide the first two levels instead of only the first.
+      hide the first two levels instead of only the first level.
 
       */
 
@@ -42,10 +42,10 @@ public class DataRoot {
 
     private TreePath rootTreePath; // Path to root node.
 
-  private static DataRoot theDataRoot; // Temporary for static access. ???
+  ///private static DataRoot theDataRoot; // Temporary for static access. ???
 
   DataRoot( DataNode rootDataNode ) {  // Constructor.
-    theDataRoot= this;  // Temporary for static access.
+    ///theDataRoot= this;  // Temporary for static access.
 
     this.rootDataNode= rootDataNode;
 
@@ -66,10 +66,12 @@ public class DataRoot {
           );
     }
 
+  /* ??? ///
   public static DataRoot getIt() { // Temporary for static access.
     return theDataRoot;
     }
-  
+  */
+
   // Methods.
 
     public DataNode getRootDataNode( )
@@ -95,7 +97,7 @@ public class DataRoot {
       { 
         return 
           (aTreePath != null) 
-          && (! aTreePath.equals( theDataRoot.getParentOfRootTreePath( ) ) )
+          && (! aTreePath.equals( getParentOfRootTreePath( ) ) )
           ; 
         }
 

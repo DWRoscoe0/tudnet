@@ -219,7 +219,7 @@ public class RootJTree
                   break toReturn;  // Ignore it.
                 if (   // Parent of root.
                     inTreePath 
-                    == DataRoot.getIt().getParentOfRootTreePath( )
+                    == theMetaRoot.getTheDataRoot().getParentOfRootTreePath( )
                     )
                   break toReturn;  // Ignore it.
 

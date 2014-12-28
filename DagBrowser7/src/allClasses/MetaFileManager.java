@@ -8,7 +8,7 @@ import static allClasses.Globals.*;  // For appLogger;
 
 public class MetaFileManager {
 
-  /* This class manages the file(s) that contains the external 
+  /* This class manages the file(s) that conta  ins the external 
     representation of this app's meta-data.
     Related classes are MetaFile and MetaFileManager.Finisher.
 
@@ -43,12 +43,11 @@ public class MetaFileManager {
       
   // Instance variables injected through constructor.
 
-    DataRoot theDataRoot;
-    Shutdowner theShutdowner;
+    private DataRoot theDataRoot;
 
   // Other instance variables.
 
-    public MetaFile lazyLoadMetaFile= null;  // For lazy-loading. ???
+    private MetaFile lazyLoadMetaFile= null;  // For lazy-loading. ???
       // It stores a reference to the MetaFile used to load
       // the root MetaNode in lazy-loading mode.
       // If more MetaNodes need to be loaded later then is used again.
@@ -57,18 +56,20 @@ public class MetaFileManager {
       false;
 
   public MetaFileManager(  // Constructor for use by factory.
-      DataRoot theDataRoot,
-      Shutdowner theShutdowner
+      DataRoot theDataRoot
       )
     {
       appLogger.info( "MetaFileManager constructor starting.");
 
       this.theDataRoot= theDataRoot;
-      this.theShutdowner= theShutdowner;
       }
   
   public void methodToPreventUnusedIdentifierCompilerWarnings() 
-    // The following are references to methods I used during debugging.
+    /* The following are references to methods I used during debugging.
+      This method is not actually called.
+      It exists, and is public, to prevent warnings.
+      The methods it calls have not been tested in a long time.
+      */
     {
       readFlatFileMetaNode( );
       readNestedFileMetaNode( );
@@ -170,7 +171,8 @@ public class MetaFileManager {
         if   // Closing lazy-loading file if open.
           ( lazyLoadMetaFile != null )
           try { // Closing it.
-            lazyLoadMetaFile.theRandomAccessFile.close( );
+            ///lazyLoadMetaFile.theRandomAccessFile.close( );
+          	lazyLoadMetaFile.closeV( );
             }
           catch ( IOException e ) {  // Processing any errors.
             e.printStackTrace();
@@ -250,6 +252,7 @@ public class MetaFileManager {
         return new MetaChildren( this );
         }
 
+    /* ???
     private MetaFile makeMetaFile( 
         MetaFileManager.RwStructure theRwStructure, 
         String FileNameString, 
@@ -263,14 +266,26 @@ public class MetaFileManager {
           HeaderTokenString
           );
         }
+      */
+
+    private MetaFile makeMetaFile( 
+        MetaFileManager.RwStructure theRwStructure, 
+        String FileNameString, 
+        String HeaderTokenString,
+        MetaFileManager.Mode theMode
+        ) 
+      {
+        return new MetaFile( 
+          this,
+          theRwStructure, 
+          FileNameString, 
+          HeaderTokenString,
+          theMode
+          );
+        }
 
   // Whole-file read methods.
   
-    private MetaFile makeMetaFile() 
-      {
-        return new MetaFile( this );
-        }
-
     private MetaNode readFlatFileMetaNode( )
       /* Reads all MetaNodes from a single Flat state file.  
         It returns the root MetaNode.
@@ -282,11 +297,13 @@ public class MetaFileManager {
         this is a good first step to going there.
         */
       {
-        MetaFile theMetaFile= makeMetaFile();
-        // Set some appropriate mode variables.
-        theMetaFile.TheRwStructure= RwStructure.FLAT;
-        theMetaFile.FileNameString= FlatFileNameString;
-        theMetaFile.HeaderTokenString= FlatHeaderTokenString;
+        MetaFile theMetaFile= makeMetaFile(
+          RwStructure.FLAT,
+          FlatFileNameString,
+          FlatHeaderTokenString,
+          Mode.READING
+          );
+
         MetaNode loadedMetaNode=   // Do the actual read.
           theMetaFile.readFileMetaNode( );
         
@@ -299,11 +316,13 @@ public class MetaFileManager {
         This will eventually exist only for debugging.
         */
       {
-        MetaFile theMetaFile= makeMetaFile();
-        // Set some appropriate mode variables.
-        theMetaFile.TheRwStructure= RwStructure.NESTED;
-        theMetaFile.FileNameString= NestedFileNameString;
-        theMetaFile.HeaderTokenString= NestedHeaderTokenString;
+        MetaFile theMetaFile= makeMetaFile(
+          RwStructure.NESTED,
+          NestedFileNameString,
+          NestedHeaderTokenString,
+          Mode.READING
+          );
+
         MetaNode loadedMetaNode=   // Do the actual read.
           theMetaFile.readFileMetaNode( );
         
@@ -319,7 +338,10 @@ public class MetaFileManager {
         */
       {
         MetaFile theMetaFile= makeMetaFile(
-          RwStructure.FLAT, FlatFileNameString, FlatHeaderTokenString
+          RwStructure.FLAT, 
+          FlatFileNameString, 
+          FlatHeaderTokenString,
+          Mode.WRITING
           );
         theMetaFile.writeRootedFileV( inMetaNode );
         }
@@ -331,7 +353,10 @@ public class MetaFileManager {
         */
       {
         MetaFile theMetaFile= makeMetaFile(
-          RwStructure.NESTED, NestedFileNameString, NestedHeaderTokenString
+          RwStructure.NESTED, 
+          NestedFileNameString, 
+          NestedHeaderTokenString,
+          Mode.WRITING
           );
         theMetaFile.writeRootedFileV( inMetaNode );
         }
@@ -344,7 +369,10 @@ public class MetaFileManager {
         */
       {
         MetaFile theMetaFile= makeMetaFile(
-          RwStructure.NESTED, "Debug.txt", "Debug-State"
+          RwStructure.NESTED, 
+          "Debug.txt", 
+          "Debug-State",
+          Mode.WRITING
           );
         theMetaFile.writeRootedFileV( inMetaNode );  // Do the actual write.
         }
@@ -360,14 +388,21 @@ public class MetaFileManager {
         */
       {
         MetaFile theMetaFile= makeMetaFile(
-          RwStructure.FLAT, FlatFileNameString, FlatHeaderTokenString
+          RwStructure.FLAT, 
+          FlatFileNameString, 
+          FlatHeaderTokenString,
+          Mode.LAZY_LOADING
           );
+        lazyLoadMetaFile= theMetaFile;  // Save this for later.
         MetaNode loadedMetaNode=   // Do the actual read.
           theMetaFile.lazyLoadFileMetaNode( );
         return loadedMetaNode;
         }
 
   // Miscellaneous instance methods.
+
+    public DataRoot getTheDataRoot()
+      { return theDataRoot; }
 
     public boolean getForcedLoadingEnabledB()
       { return forcedLoadingEnabledB; }

@@ -21,17 +21,17 @@ public class MetaFile { // For app's meta-data files.
 
   // Injection instance variables.
 
-    MetaFileManager theMetaFileManager;
+    private MetaFileManager theMetaFileManager;
 
-    public MetaFileManager.RwStructure TheRwStructure;  // File's text structure.
-    public String FileNameString;  // Name of associated external file.
-    public String HeaderTokenString;  // First token in file.
+    private MetaFileManager.RwStructure TheRwStructure;  // File's text structure.
+    private String FileNameString;  // Name of associated external file.
+    private String HeaderTokenString;  // First token in file.
+    private MetaFileManager.Mode theMode;  // read/write/lazy-load.
 
   // Other instance variables.
 
-    public MetaFileManager.Mode TheMode;  // File access mode.
-
-    public RandomAccessFile theRandomAccessFile= null;  // For file access.
+    private RandomAccessFile theRandomAccessFile= // For file access.
+      null;
     private int indentLevelI; // Indent level of cursor in text file.
     private int columnI;  // Column of cursor  in text file.
 
@@ -41,24 +41,19 @@ public class MetaFile { // For app's meta-data files.
       private int savedIndentLevelI; // Saved indent level.
       private int savedColumnI;  // Saved column.
 
-  public MetaFile(  // Constructor.  Eliminate this version???
-      MetaFileManager theMetaFileManager 
-      )
-    {
-      this.theMetaFileManager= theMetaFileManager;
-      }
-
   public MetaFile( // Constructor.
       MetaFileManager theMetaFileManager,
       MetaFileManager.RwStructure theRwStructure, 
       String FileNameString, 
-      String HeaderTokenString
+      String HeaderTokenString,
+      MetaFileManager.Mode theMode
       ) 
     {
       this.theMetaFileManager= theMetaFileManager;
       this.TheRwStructure= theRwStructure;
       this.FileNameString= FileNameString;
       this.HeaderTokenString= HeaderTokenString;
+      this.theMode= theMode;
       }
 
   // Instance methods related to lazy loading.
@@ -72,7 +67,6 @@ public class MetaFile { // For app's meta-data files.
         If there was an error then tt returns null.
         */
       {
-        TheMode= MetaFileManager.Mode.LAZY_LOADING;
         MetaNode loadedMetaNode= null;  // Set null root because we are reading.
 
         try { // Read state.
@@ -86,8 +80,6 @@ public class MetaFile { // For app's meta-data files.
                  );
               loadedMetaNode=   // Immediately read root node.
                 rwFileMetaNode( loadedMetaNode );
-              theMetaFileManager.lazyLoadMetaFile= // Save for lazy-loading of other nodes.
-                this;
               } //  Read state from file.
           } // Read state.
         catch ( IOException | NumberFormatException e ) {  // Process any errors.
@@ -212,6 +204,17 @@ public class MetaFile { // For app's meta-data files.
         indentLevelI= savedIndentLevelI; // Restore indent level.
         columnI= savedColumnI;  // Restore column.
         }
+  
+    public void closeV( )
+      throws IOException
+      /* This method closes the file.
+        It must be called for lazilly loaded files because
+        they are left open for extended periods of time
+        because they are not read or written all at once.
+        */
+      {
+        theRandomAccessFile.close();
+        }
 
   // Method to read or write entire file, depending on context.
 
@@ -230,7 +233,7 @@ public class MetaFile { // For app's meta-data files.
         */
       {
         if // Do nothing or process depending on conditions.
-          ( ( TheMode == MetaFileManager.Mode.WRITING ) &&
+          ( ( theMode == MetaFileManager.Mode.WRITING ) &&
             ( inRootMetaNode == null )
             ) 
           ;  // Do nothing because there is nothing to write.
@@ -247,7 +250,8 @@ public class MetaFile { // For app's meta-data files.
               theMetaFileManager.rwFlatOrNestedMetaNode(  // ...read or write... 
                 this, // ...using this MetaFile...
                 inRootMetaNode,  // ...of the root MetaNode using...
-                DataRoot.getIt().getParentOfRootDataNode() // ...parent for lookup.
+                theMetaFileManager.getTheDataRoot().
+                  getParentOfRootDataNode() // ...parent for lookup.
                 );
             } // Read or write process.
 
@@ -268,10 +272,7 @@ public class MetaFile { // For app's meta-data files.
           ; // Do nothing.
           else // There IS a MetaNode to process.
           { // Write the data rooted at inMetaNode.
-            TheMode= MetaFileManager.Mode.WRITING;  // Set Mode to writing.
-            //File inputFile = new File( HomeFolderFile, FileNameString );
             File inputFile = AppFolders.resolveFile( FileNameString );
-            //File outFile = new File( HomeFolderFile, FileNameString+".~" );
             File outFile = AppFolders.resolveFile( FileNameString+".~" );
 
             try { // Try opening or creating file.
@@ -306,8 +307,6 @@ public class MetaFile { // For app's meta-data files.
         Returns the root MetaNode of what was read.  
         */
       {
-        TheMode= MetaFileManager.Mode.READING;  // Set Mode to reading.
-
         MetaNode loadedMetaNode= null;  // Set null root because we are reading.
         File FileNameFile= AppFolders.resolveFile( FileNameString );
         try { // Read state.
@@ -449,7 +448,7 @@ public class MetaFile { // For app's meta-data files.
         int InStringLengthI= InString.length();
 
         try {
-          if ( TheMode == MetaFileManager.Mode.WRITING )  // Writing state.
+          if ( theMode == MetaFileManager.Mode.WRITING )  // Writing state.
             { // Write literal string.
               theRandomAccessFile.writeBytes( InString );
               columnI+= InStringLengthI;  // Adjust columnI for string length.
@@ -562,7 +561,7 @@ public class MetaFile { // For app's meta-data files.
   // Getter instance methods for access to useful modes and values.
   
     public MetaFileManager.Mode getMode()
-      { return TheMode; }
+      { return theMode; }
 
     public MetaFileManager.RwStructure getRwStructure()
       { return TheRwStructure; }

@@ -194,7 +194,7 @@ public class MetaRoot {
           */
         {
           TreePath scanTreePath=  // Point scanTreePath accumulator...
-            DataRoot.getIt().getParentOfRootTreePath( );  // ...to parent of root.
+          		theDataRoot.getParentOfRootTreePath( );  // ...to parent of root.
           MetaNode scanMetaNode=  // Get root MetaNode.
             getParentOfRootMetaNode( );
           scanner: while (true) { // Scan all nodes with "IS".
@@ -296,8 +296,8 @@ public class MetaRoot {
               MetaRoot.selectionAttributeString // ...from selection attribute nodes.
               );
           if  // Replacing with root path if result path was empty.
-            ( resultTreePath == DataRoot.getIt().getParentOfRootTreePath() )
-            resultTreePath= DataRoot.getIt().getRootTreePath();
+            ( resultTreePath == theDataRoot.getParentOfRootTreePath() )
+            resultTreePath= theDataRoot.getRootTreePath();
           return resultTreePath;
           }
           
