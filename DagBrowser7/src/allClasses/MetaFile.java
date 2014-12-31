@@ -213,7 +213,8 @@ public class MetaFile { // For app's meta-data files.
         because they are not read or written all at once.
         */
       {
-        theRandomAccessFile.close();
+        if ( theRandomAccessFile != null )
+        	theRandomAccessFile.close();
         }
 
   // Method to read or write entire file, depending on context.

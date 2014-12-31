@@ -8,16 +8,11 @@ public class InfogoraRoot  extends NamedList {
     makes debugging easier.
     */
   
-  public InfogoraRoot( )  // Constructor.
+  public InfogoraRoot( DataNode... inDataNodes )  // Constructor.
     {
       super( // Calling superclass NamedList with...
-        "NEW-Infogora-Root", // ...the name for this DataNode and...
-        new DataNode[] { // ...an array of all child DataNodes.
-          new FileRoots(),
-          new Outline( 0 ),
-          new ConnectionManager.Root(), // Temporary.
-          new Infinitree( null, 0 )
-          }
+        "Infogora-Root", // ...the name for this DataNode and...
+        inDataNodes // ...the array of all child DataNodes.
         );
       }
 

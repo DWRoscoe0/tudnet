@@ -14,10 +14,12 @@ import java.util.Random;
 
 import static allClasses.Globals.*;  // appLogger;
 
-public class ConnectionManager extends Thread 
+public class ConnectionManager 
 
-  /* This class makes and maintains simple UDP unicast connections based on 
-    input from various other Threads.
+  extends EpiThread
+
+  /* This class makes and maintains simple UDP unicast connections 
+    based on input from various other Threads.
 
     Originally the plan was to use a separate 
     connected DatagramSocket for each peer of a node.
@@ -33,7 +35,7 @@ public class ConnectionManager extends Thread
     * one for multicast receiving and 
     * another for every thing else.
     Their ports must be different/unique.
-    
+
     There are several types of thread classes defined in this file
     and in other java files.
     * ConnectionManager: manages everything.  
@@ -43,7 +45,7 @@ public class ConnectionManager extends Thread
       ? Maybe rename to ConnectionManager?
     * PeerDiscovery (now in its own file): 
       sends and receives multicast packets
-      used for discovering other peers on the LAN.
+      useded for discovering other peers on the LAN.
 
     An IOException can be caused by external events,
     such as a link going down, the computer going to sleep, etc.
@@ -52,77 +54,75 @@ public class ConnectionManager extends Thread
     */
 
   { // ConnectionManager/Connections.
+
   
-    // Variables.
+    // Instance variables, all private.
 
-      private boolean TerminatingB= false;
+    private HashMap<SocketAddress,Peer> peerSocketAddressHashMap;
+      /* This initially empty Collection provides access to the Peers.
+        It can be used for displaying the Peers.
+        It can also be used to lookup Peers by SocketAddress,
+        in the case of packets received on 
+        unconnected sockets if remote addresses were always stored in 
+        Packets (or SockPackets).
 
-      // Peer access variables. 
-      
-        /* These initially empty Collections provide 
-          different types of access to the Peers.
-          These structures must be maintained in parallel.
+        Maybe these should be in a separate class for this??
+        */
 
-          Maybe these should be in a separate class for them??
-          */
+    private DatagramSocket unconnectedDatagramSocket; // For UDP io.
 
-        public static class Root extends NamedList {  // ???
+    private UnconnectedReceiver theUnconnectedReceiver; // Receiver thread.
 
-          /* This class is ConnectionManager's entry in
-            the Infogora hierarchy.
-            */
+    private LockAndSignal theLockAndSignal;  // LockAndSignal for this thread.
+      /* This single object is used to synchronize communication between 
+        the ConnectionManager and all threads providing data to it.
+        The old way used an Objects for a lock and a separate 
+        boolean signal.
+        */
 
-          public Root( )
-            {
-              super( 
-                ///"ConnectionManager.Root" 
-                "Connections" 
-                , new NamedLeaf( "dummy child 1" )
-                , new NamedLeaf( "dummy child 2" )
-                , new NamedLeaf( "dummy child 3" )
-                );
-              }
+    private PacketQueue sendPacketQueue; // Queue of packets to be sent.
 
-          }
+    private PacketQueue multicastSignallingQueueOfSockPackets; 
+      // Discovery packets queue.
 
-        private HashMap<SocketAddress,Peer> peerSocketAddressHashMap=
-          new HashMap<SocketAddress,Peer>(); // For access by SocketAddress.
-          /* This doesn't change much.
-            It is used to lookup Peers by SocketAddress.
-            It would be needed for only packets received on 
-            unconnected sockets if remote addresses were always stored in 
-            Packets (or SockPackets).
-            */
+    private PacketQueue uniconnectedSignallingQueueOfSockPackets;
+      // For received uniconnected packets.
 
-      protected static DatagramSocket unconnectedDatagramSocket= // UDP io.
-        null;
-
-      private static UnconnectedReceiver theUnconnectedReceiver;  // Receiver thread.
 
     public ConnectionManager( )  // Constructor.
       {
         super( "Connections" );  // Name here because setName() not reliable.
 
-        // Variable initializations happen where they are declared.
+        // [some] variable initializations happen where they are declared.
+
+        peerSocketAddressHashMap=  // Setting no peers initially.
+          new HashMap<SocketAddress,Peer>();
+        theLockAndSignal= new LockAndSignal(false);  // Creating signaller.
+        sendPacketQueue=
+          new PacketQueue(theLockAndSignal);
+        multicastSignallingQueueOfSockPackets=
+          new PacketQueue(theLockAndSignal);
+        uniconnectedSignallingQueueOfSockPackets=
+          new PacketQueue(theLockAndSignal);
 
         }
 
+
     public void run()  // Main ConnectionManager thread logic.
-      /* This method creates an unconnected DatagramSocket 
-        for it use and uses it.
+      /* This method creates unconnectedDatagramSocket 
+        for its use and uses it and does other things
+        by calling settingThreadsAndDoingWorkV().
         This is inside of a try-catch block in a loop
         to recover and retry after SocketException-s.
-        The name of the thread should be Connections.
+        The name of the thread should be Connections??
         */
       { // Connections.
         appLogger.info("Connections.run(): thread beginning.");
-
-        while  // Repeating until termination is requested.
-          ( !TerminatingB )  // Termination is not requested.
+        while   // Repeating until termination is requested.
+          ( !isInterrupted() )
           {
             try { // Creating and using unconnected DatagramSocket.
               unconnectedDatagramSocket= // Construct socket for UDP io.
-                //BoundUDPSockets.getDatagramSocket();
                 new DatagramSocket(null);
               unconnectedDatagramSocket.setReuseAddress(true);
               unconnectedDatagramSocket.bind(  // Bind socket to...
@@ -133,113 +133,87 @@ public class ConnectionManager extends Thread
               settingThreadsAndDoingWorkV(); 
               }
             catch ( SocketException e ) { // Handling SocketException.
-              // Doing nothing because we will retry.
-              appLogger.info("Connections.run(): SocketException:"+e);
+              // Doing nothing now because we might retry.
+              appLogger.error("Connections.run(): SocketException:"+e);
               }
             finally { // Closing socket if it exists.
-              if ( unconnectedDatagramSocket != null ) {
-                appLogger.info("Connections.run(): closing socket.");
+              if ( unconnectedDatagramSocket != null )
                 unconnectedDatagramSocket.close();
-                }
               }
             }
-
         appLogger.info("Connections.run(): thread ending.");  // Connections.
         } // Connections.
 
-    public void stopV()  // Called by current thread to stop this thread.
-      /* This method requests termination of the ConnectionManager thread,
-        waits until that termination completes, then returns.
-        */
-      {
-        appLogger.info("ConnectionManager.stop() begin.");
-
-        interrupt(); // Requesting terminatation of ConnectionManager thread.
-        for  // Looping until ConnectionManager thread ends.
-          ( boolean threadTerminatedB= false ; !threadTerminatedB ; )
-          try { // Blocking and handling how blocking ends.
-              join();  // Blocking.
-              threadTerminatedB= true;  // Setting flag to terminate loop.
-              } 
-            catch (InterruptedException e) {  // Handling interrupt of block.
-              Thread.currentThread().interrupt(); // Re-request interrupt.
-              }
-
-        appLogger.info("ConnectionManager.stop() end.");
-        }
 
     private void settingThreadsAndDoingWorkV()
       throws SocketException
-      /* In this method, the DatagramSocket is assumed to be initialized.
-        After creating and starting some threads, 
+      /* In this method, the unconnectedDatagramSocket 
+        is assumed to be initialized.
+        After doing more initializing,
+        mainly creating and starting some threads,
         it processes various inputs and pending events until termination.
-        Then it terminates those same threads and returns.
+        Then it finalizes by terminating those same threads and returns.
         A return might also result from the throwing of a SocketException.
         */
       {
-        // Initializing.
-          startingPeerDiscoveryV();  // (This daemon will terminate itself.)
-          theUnconnectedReceiver=  // Constructing thread.
-            new UnconnectedReceiver( 
-              unconnectedDatagramSocket,
-              uniconnectedSignallingQueueOfSockPackets
-              );
-          theUnconnectedReceiver.start();  // Starting thread.
+        withSocketInitializingV();
 
         processingInputsAndExecutingEventsV(); // Until thread termination...
           // ...is requested.
 
-        appLogger.info("Connections: termination begun.");
+        withSocketFinalizingV();
+        }
 
-        // Finalizing.
-          terminatingPeerThreadsV();
-          appLogger.info(
-            "Connections: doing UnconnectedReceiver.interrupt()."
+    private void withSocketInitializingV()
+      {
+        startingPeerDiscoveryV();  // (This daemon will terminate itself.)
+        theUnconnectedReceiver=  // Constructing thread.
+          new UnconnectedReceiver( 
+            unconnectedDatagramSocket,
+            uniconnectedSignallingQueueOfSockPackets
             );
-          theUnconnectedReceiver.interrupt();  // Requesting termination...
-            // ..of theUnconnectedReceiver.
-          unconnectedDatagramSocket.close(); // Causing receive() to end.
+        theUnconnectedReceiver.start();  // Starting thread.
+        }
 
-          for  // Waiting for termination of theUnconnectedReceiver to finish.
-            ( boolean threadTerminatedB= false ; !threadTerminatedB ; )
-            try { // Waiting for theUnconnectedReceiver thread to terminate.
-                appLogger.info(
-                  "Connections: blocking until UnconnectedReceiver terminateds."
-                  );
-                theUnconnectedReceiver.join();  // Blocking until terminated.
-                threadTerminatedB= true;  // Recording termination complete.
-                } 
-              catch (InterruptedException e) {  // Handling interrupt().
-                appLogger.info(
-                  "Connections: settingThreadsAndDoingWorkV() InterruptedException."
-                  );
-                TerminatingB= true;  // Converting interrupt() to flag.
-                }
+    private void withSocketFinalizingV()
+      {
+        terminatingPeerThreadsV(); // most of theUnconnectedReceiver users.
+
+        theUnconnectedReceiver.stopV();  // Requesting termination of
+          // theUnconnectedReceiver thread.
+        unconnectedDatagramSocket.close(); // Causing immediate unblock of
+          // unconnectedDatagramSocket.receive() in that thread.
+        theUnconnectedReceiver.joinV();  // Waiting for termination of
+          // theUnconnectedReceiver thread.
         }
 
     private void terminatingPeerThreadsV()
       /* This method terminates all of the threads 
         that were created to communicate with discovered Peer nodes.
+        It does this in 2 loops because parallel terminations 
+        possible when there are multiple Peers.
         */
       {
         appLogger.info("Connections.terminatingPeerThreadsV() beginning.");
 
-        Iterator<Peer> anIteratorOfPeers=  // Creating peer iterator.
+        Iterator<Peer> anIteratorOfPeers;  // For peer iterator.
+
+        anIteratorOfPeers=  // Getting new peer iterator.
           peerSocketAddressHashMap.values().iterator();
-        while  // Terminating all Peers in peerSocketAddressHashMap.
+        while  // Requesting termination of all Peers.
           (anIteratorOfPeers.hasNext())
-          { // Terminating one Peer.
+          {
             Peer thePeer = anIteratorOfPeers.next();  // Getting Peer.
-            thePeer.interrupt();  // Requesting termination of Peer thread.
-            for   // Waiting for termination of Peer thread to complete.
-              ( boolean peerTerminatedB= false ; !peerTerminatedB ; )
-              try { // Waiting for Peer thread to terminate.
-                  thePeer.join();  // Blocking until Peer thread terminates.
-                  peerTerminatedB= true;  // Recording termination complete.
-                  } 
-                catch (InterruptedException e) {  // Handling interrupt().
-                  TerminatingB= true;  // Converting to termination flag.
-                  }
+            thePeer.stopV();  // Requesting Termination of Peer.
+            }
+
+        anIteratorOfPeers=  // Getting new peer iterator.
+          peerSocketAddressHashMap.values().iterator();
+        while  // Waiting for termination of all Peers.
+          (anIteratorOfPeers.hasNext())
+          {
+            Peer thePeer = anIteratorOfPeers.next();  // Getting Peer.
+            thePeer.joinV();  // Waiting for termination of Peer.
             anIteratorOfPeers.remove(); // Removing from HashMap...
             }
 
@@ -249,15 +223,14 @@ public class ConnectionManager extends Thread
     private void processingInputsAndExecutingEventsV()
       /* This method cointains a single loop which
         does various types of work.  The work consists of:
-          * Processing inputs it get from several queues.
+          * Processing inputs it gets from several queues.
           - It was also processing scheduled jobs whose times have come,
             but these have been moved to other threads.
         When there is no more work, the loop blocks until 
         the next bit of work arrives, when it repeats the process.
         The loop continues until thread termination is requested
-        by the condition set by Thread.currentThread().interrupt()
-        and read by isInterrupted().
-        This condition is not cleared by this method,
+        by setting the Interrupt Status Flag with Thread.interrupt().
+        This flag is preserved by this method,
         so it may be tested by its callers.
         */
       {
@@ -268,11 +241,14 @@ public class ConnectionManager extends Thread
               processingUnconnectedSockPacketsB();
               if ( processingSockPacketsToSendB() )
                 continue;  // Loop if any SockPackets were sent.
-              processingDiscoverySockPacketsB();  // Last because these are rare.
+              processingDiscoverySockPacketsB();
+                // Last because these are rare.
               }
 
             theLockAndSignal.doWaitE();  // Waiting for new inputs.
             }
+
+        appLogger.info("Connections: termination begun.");
         }
 
     private void startingPeerDiscoveryV()
@@ -290,147 +266,111 @@ public class ConnectionManager extends Thread
           }
         }
 
-    /* Common thread synchronization and internal timer code.
-      This code is used to coordinate 
-      the input and processing of data from other Threads.
-      */
+    private boolean processingSockPacketsToSendB()
+      /* This method processes packets stored in the send queue.
+        Packets to be sent arrive via the sendPacketQueue
+        to enable the ConnectionManager to track all network i/o.
+        This method returns true if at least one packet was sent,
+        false otherwise.
+        It presently assumes that the packet is ready to be sent,
+        and nothing else needs to be added first.
 
-      LockAndSignal theLockAndSignal=  // LockAndSignal for this thread.
-        new LockAndSignal(false);  /* This is used to synchronize
-          communication between the ConnectionManager and 
-          all threads providing data to it.
-          */
-        // The old way used a separate Object lock and a boolean signal.
+        Channelling all outgoing packets through this code
+        enables the ConnectionManager to better manage flow.
+        
+        ??? Though unlikely, unconnectedDatagramSocket.send(..) 
+        could block the thread if the network queue fills.
+        To avoid this, maybe a DatagramChannel could be used,
+        or sending could be done in a separate thread.
+        However congestion control might make this unnecessary.
+        */
+      {
+        boolean packetsProcessedB= false;  // Assuming no packet to send.
+        SockPacket theSockPacket;
 
-      // void doWait(long nextJobMillisL) was moved to class LockAndSignal.
-
-      // void doNotify() was moved to class LockAndSignal.
-      
-    /* Code for processing packets to be sent.
-
-      Channelling all outgoing packets through this code
-      enables the ConnectionManager to better manage flow.
-      
-      ??? Though unlikely, unconnectedDatagramSocket.send(..) 
-      could block the thread.
-      To avoid this, maybe a DatagramChannel could be used,
-      or sending could be done in a separate thread.
-      */
-
-      private PacketQueue // Queue of packets to be sent.
-        sendPacketQueue=
-          new PacketQueue(theLockAndSignal);
-
-      private boolean processingSockPacketsToSendB()
-        /* This method processes packets stored in the send queue.
-          Packets to be sent arrive via the sendPacketQueue
-          to enable the ConnectionManager to track all network i/o.
-          This method returns true if at least one packet was sent,
-          false otherwise.
-          It presently assumes that the packet is ready to be sent,
-          and nother else needs to be added first.
-          */
-        {
-          boolean packetsProcessedB= false;  // Assuming no packet to send.
-          SockPacket theSockPacket;
-
-          while (true) {  // Processing all queued send packets.
-            theSockPacket= // Trying to get next packet from queue.
-              sendPacketQueue.poll();
-
-            if (theSockPacket == null) break;  // Exitting if no more packets.
-
-            try { // Send the gotten packet.
-              theSockPacket.getDatagramSocket().send(   // Send packet.
-                theSockPacket.getDatagramPacket()
+        while (true) {  // Processing all queued send packets.
+          theSockPacket= // Trying to get next packet from queue.
+            sendPacketQueue.poll();
+          if (theSockPacket == null) break;  // Exitting if no more packets.
+          try { // Send the gotten packet.
+            theSockPacket.getDatagramSocket().send(   // Send packet.
+              theSockPacket.getDatagramPacket()
+              );
+            } catch (IOException e) { // Handle by dropping packet.
+              appLogger.info(
+                "ConnectionManager.processingSockPacketsToSendB(),"
+                +"IOException."
                 );
-              } catch (IOException e) { // Handle by dropping packet.
-                appLogger.info(
-                  "ConnectionManager.processingSockPacketsToSendB(),"
-                  +"IOException."
-                  );
-              }
-            //appLogger.info(
-            //  "sent unconnected packet:\n  "
-            //  + theSockPacket.getSocketAddressesString()
-            //  );
-
-            packetsProcessedB= true; // Recording that a packet was processed.
             }
-            
-          return packetsProcessedB;
+          //appLogger.info(
+          //  "sent unconnected packet:\n  "
+          //  + theSockPacket.getSocketAddressesString()
+          //  );
+
+          packetsProcessedB= true; // Recording that a packet was processed.
           }
+          
+        return packetsProcessedB;
+        }
 
-    // Code for processing unconnected multicast packets from PeerDiscovery.
+    private boolean processingDiscoverySockPacketsB() 
+      /* This method processes unconnected packets received by 
+        the PeerDiscovery Thread and forwarded here,
+        by adding the nodes that sent them to the known connections.
+        It returns true if any Discovery packets were processed,
+        false otherwise.
+        */
+      {
+        boolean packetsProcessedB= false;
+        SockPacket theSockPacket;
 
-      private PacketQueue // Discovery packets queue.
-        multicastSignallingQueueOfSockPackets=
-          new PacketQueue(theLockAndSignal);
-
-      private boolean processingDiscoverySockPacketsB() 
-        /* This method processes packets received by 
-          the PeerDiscovery Thread and forwarded here,
-          by adding the nodes that sent them to the known connections.
-          It returns true if any Discovery packets were processed,
-          false otherwise.
-          */
-        {
-          boolean packetsProcessedB= false;
-          SockPacket theSockPacket;
-
-          while (true) {  // Process all received discovery packets.
-            {
-              theSockPacket= // Try getting next packet from queue.
-                multicastSignallingQueueOfSockPackets.poll();
-              }
-            if (theSockPacket == null) break;  // Exit if no more packets.
-            processReceivedPacketV(  // Process packet.
-              theSockPacket
-              );
-            packetsProcessedB= true;
+        while (true) {  // Process all received discovery packets.
+          {
+            theSockPacket= // Try getting next packet from queue.
+              multicastSignallingQueueOfSockPackets.poll();
             }
-            
-          return packetsProcessedB;
+          if (theSockPacket == null) break;  // Exit if no more packets.
+          processReceivedPacketV(  // Process packet.
+            theSockPacket
+            );
+          packetsProcessedB= true;
           }
+          
+        return packetsProcessedB;
+        }
 
-    // Code for processing unconnected unicast packets from UnconnectedReceiver.
+    private boolean processingUnconnectedSockPacketsB()
+      /* This method processes unconnected unicastpackets 
+        that are received by the UnconnectedReceiver Thread 
+        and forwarded here.  It does this
+        by adding the nodes that sent them to the known connections.
+        It returns true if any packets were processed, false otherwise.
+        */
+      {
+        boolean packetsProcessedB= false;
+        SockPacket theSockPacket;
 
-      private PacketQueue // For received uniconnected packets.
-        uniconnectedSignallingQueueOfSockPackets=
-          //new ConcurrentLinkedQueue<SockPacket>();
-          new PacketQueue(theLockAndSignal);
-
-      private boolean processingUnconnectedSockPacketsB()
-        /* This method processes packets that are received by 
-          the uniconnected packet receiver Thread and forwarded here,
-          by adding the nodes that sent them to the known connections.
-          It returns true if any packets were processed, false otherwise.
-          */
-        {
-          boolean packetsProcessedB= false;
-          SockPacket theSockPacket;
-
-          while (true) {  // Process all received uniconnected packets.
-            {
-              theSockPacket= // Try getting next packet from queue.
-                uniconnectedSignallingQueueOfSockPackets.poll();
-              }
-
-            if (theSockPacket == null) break;  // Exit if no more packets.
-            
-            //appLogger.info(
-            //  "ConnectionManager.processingUnconnectedSockPacketsB()\n  "
-            //  + theSockPacket.getSocketAddressesString()
-            //  );
-            processReceivedPacketV(  // Process packet.
-              theSockPacket
-              );
-
-            packetsProcessedB= true;
+        while (true) {  // Process all received uniconnected packets.
+          {
+            theSockPacket= // Try getting next packet from queue.
+              uniconnectedSignallingQueueOfSockPackets.poll();
             }
-            
-          return packetsProcessedB;
+
+          if (theSockPacket == null) break;  // Exit if no more packets.
+          
+          //appLogger.info(
+          //  "ConnectionManager.processingUnconnectedSockPacketsB()\n  "
+          //  + theSockPacket.getSocketAddressesString()
+          //  );
+          processReceivedPacketV(  // Process packet.
+            theSockPacket
+            );
+
+          packetsProcessedB= true;
           }
+          
+        return packetsProcessedB;
+        }
 
     private void processReceivedPacketV(SockPacket theSockPacket)
       /* This method processes one packet received from a peer.
@@ -501,8 +441,31 @@ public class ConnectionManager extends Thread
         return thePeer;
         }
 
-    public static class Peer  // Nested class managing peer connection data.
-      extends Thread
+
+    // Nested classes.
+
+    public static class Root  // ConnectionManager's DataNode entry point.
+      extends NamedList 
+      {  // ???
+
+        /* This class is ConnectionManager's entry in
+          the Infogora DataNode hierarchy.
+          */
+
+        public Root( )
+          {
+            super( 
+              "Connections" 
+              , new NamedLeaf( "dummy child 1" )
+              , new NamedLeaf( "dummy child 2" )
+              , new NamedLeaf( "dummy child 3" )
+              );
+            }
+
+        }
+
+    private static class Peer  // Nested class managing peer connection data.
+      extends EpiThread
       implements Comparable<Peer> // for use by PriorityQueue.
 
       /* Each instance of this nested class contains and manages data about 
@@ -558,14 +521,55 @@ public class ConnectionManager extends Thread
 
       { // Peer.
 
+      
+        // Constants.
+        
+        private final long PeriodMillisL=  // Period between sends or receives.
+          4000;   // 4 seconds.
+
+        private final long HalfPeriodMillisL= // Half of period.
+          PeriodMillisL / 2;  
+
+
+        // Instance variables which are copies of constructor arguments.
+
+        private InetSocketAddress peerInetSocketAddress;  // Address of peer.
+        
+        private final PacketQueue sendQueueOfSockPackets;
+          // Queue to receive SockPackets to be sent to Peer.
+              
+        private final ConnectionManager theConnectionManager;
+
+
+        // Other instance variables.
+
+        LockAndSignal peerLockAndSignal;  // LockAndSignal for this thread.
+
+        int packetIDI; // Sequence number for sent packets.
+
+        // Independent times.
+        private long receivedMillisL;  // Time a packet was last received from peer.
+        private long sentMillisL;  // Time a packet was last sent to peer.
+
+        // Dependent times.
+        //long roundTripTimeL;
+        private long nextSendMillisL;  // Time the next packet should be sent.
+
+        Random theRandom;  // For random numbers for arbitratingYieldB().
+
+        private final PacketQueue receiveQueueOfSockPackets;
+          // Queue for SockPackets from ConnectionManager.
+
+
         public Peer(  // Constructor. 
-            //DatagramSocket peerDatagramSocket,
             InetSocketAddress peerInetSocketAddress,
             PacketQueue sendQueueOfSockPackets,
             ConnectionManager theConnectionManager
             )
-          /* This constructor constructs a Peer assuming that
-            a packet has just been received from the peer at peerInetSocketAddress,
+          /* This constructor constructs a Peer.
+            It is constructed assuming that 
+            a packet has just been received from it
+            at peerInetSocketAddress,
             but no response has yet been made.
             Fields are defined in a way to cause an initial response.
             */
@@ -573,10 +577,15 @@ public class ConnectionManager extends Thread
             super(  // Naming thread here because setName() is not reliable.
               peerInetSocketAddress+"-Manager" 
               );
+
             // Storing constructor arguments.
               this.peerInetSocketAddress= peerInetSocketAddress;
               this.sendQueueOfSockPackets= sendQueueOfSockPackets;
               this.theConnectionManager= theConnectionManager;
+
+            peerLockAndSignal= new LockAndSignal(false);
+
+            packetIDI= 0; // Setting starting packet sequence number.
 
             // Setting meanful defaults for packet send and receive times.
               this.receivedMillisL=  // Assume packet received recently.
@@ -584,8 +593,15 @@ public class ConnectionManager extends Thread
                 // It might be better to get this from a previously saved time.
               this.sentMillisL=  // But not sent for a long time.
                 receivedMillisL - PeriodMillisL;
-            updateNextSendV( );  // Updating dependent time.
+              updateNextSendV( );  // Updating dependent time.
+            
+            theRandom= new Random(0);  // Initialize arbitratingYieldB().
+
+            receiveQueueOfSockPackets=
+              new PacketQueue( peerLockAndSignal );
+                // SockPackets from ConnectionManager.
             }
+
 
         public void run()  // Main Peer thread.
           /* This method contains the main thread logic in the form of
@@ -621,7 +637,7 @@ public class ConnectionManager extends Thread
             }
 
         private void tryingPingSendV()
-          /* This method tries to send a ping to the remove peer
+          /* This method tries to send a ping to the remote peer
             and receive an echo response.
             If it doesn't receive an echo packet in response
             within one-half period, it tries again.
@@ -637,7 +653,7 @@ public class ConnectionManager extends Thread
                 if  // Checking and exiting if retries were exceeded.
                   ( retriesI >= maxRetries )  // Maximum attempts exceeded.
                   { interrupt(); break; } // Terminating thread.
-                long pingMillisL= System.currentTimeMillis();
+                //long pingMillisL= System.currentTimeMillis();
                 sendingPacketV("PING"); // Sending ping packet.
                 long waitMillisL=  // Calculating half-period wait time.
                   System.currentTimeMillis()+HalfPeriodMillisL;
@@ -647,7 +663,7 @@ public class ConnectionManager extends Thread
                       waitMillisL  // ...maximum wait time.
                       );
                   switch ( theInput ) {  // Handling the input type.
-                    case INTERRUPTION: // Handlin a thread's interruption.
+                    case INTERRUPTION: // Handling a thread's interruption.
                       break retryLoop; // Exiting to terminate thread.
                     case TIME: // Handling a time-out.
                       break waitLoop;  // Exiting wait loop to retry.
@@ -658,8 +674,8 @@ public class ConnectionManager extends Thread
                         if // Handling echo packet, maybe.
                           ( testingPacketB( "ECHO" ) )
                           { // Handling echo and exiting.
-                            long echoMillisL= System.currentTimeMillis();
-                            roundTripTimeL= echoMillisL - pingMillisL;
+                            //long echoMillisL= System.currentTimeMillis();
+                            //roundTripTimeL= echoMillisL - pingMillisL;
                             //appLogger.debug("RTT= "+roundTripTimeL);
                             consumingOnePacketV(); // Consuming echo packet.
                             // This should handle unwanted received packets.
@@ -761,7 +777,7 @@ public class ConnectionManager extends Thread
             */
           {
             boolean yieldB;  // Storage for result.
-            int portDifferenceI=  // Calculate port differenc.
+            int portDifferenceI=  // Calculate port difference.
               peerInetSocketAddress.getPort() - PortManager.getLocalPortI();
             if ( portDifferenceI != 0 )  // Handling ports unequal.
               yieldB= ( portDifferenceI < 0 );  // Lower ported peer yields.
@@ -774,8 +790,6 @@ public class ConnectionManager extends Thread
             //appLogger.info("arbitratingYieldB() = " + yieldB);
             return yieldB;
             }
-
-        Random theRandom= new Random(0);  // For arbitratingYieldB().
 
         private long getNextSendL( )  // Returns time of next action.
           /* This method returns 
@@ -823,43 +837,8 @@ public class ConnectionManager extends Thread
               ;
             }
 
-        // Variables.
-
-          // Copies of constructor arguments.
-            
-            private InetSocketAddress peerInetSocketAddress= null;  // Address of peer.
-            
-            private final PacketQueue // Send output.
-              sendQueueOfSockPackets;  // SockPackets to be sent.
-              
-            ConnectionManager theConnectionManager;
-
-          LockAndSignal peerLockAndSignal=  // LockAndSignal for this thread.
-            new LockAndSignal(false);
-
-          DatagramSocket peerDatagramSocket= null;  // For network io.
-
-          private final long PeriodMillisL=  // Period between sends or receives.
-            4000;   // 4 seconds.
-
-          private final long HalfPeriodMillisL= // Half of period.
-            PeriodMillisL / 2;  
-
-          // Independent times.
-          private long receivedMillisL;  // Time a packet was last received from peer.
-          private long sentMillisL;  // Time a packet was last sent to peer.
-
-          // Dependent times.
-          long roundTripTimeL;
-          private long nextSendMillisL;  // Time the next packet should be sent.
 
         // Receive packet code.
-
-          private final PacketQueue // Receive output.
-            receiveQueueOfSockPackets= // SockPackets from ConnectionManager.
-              new PacketQueue(
-                peerLockAndSignal
-                );
 
         public void puttingReceivedPacketV( SockPacket theSockPacket )
           // This method adds theSockPacket to the peer's receive queue.
@@ -938,8 +917,6 @@ public class ConnectionManager extends Thread
             return resultB;  // Returning the result.
             }
 
-        int packetIDI= 0; // ???
-
         private void sendingPacketV( String aString )
           /* This method sends a packet containing aString to the peer.
             */
@@ -954,7 +931,10 @@ public class ConnectionManager extends Thread
               peerInetSocketAddress.getPort()
               );
             SockPacket aSockPacket=
-              new SockPacket( unconnectedDatagramSocket, packet );
+              new SockPacket( 
+                theConnectionManager.unconnectedDatagramSocket, 
+                packet 
+                );
             sendQueueOfSockPackets.add( // Queuing packet for sending.
               aSockPacket
               );
@@ -973,15 +953,25 @@ public class ConnectionManager extends Thread
         }
 
     private class UnconnectedReceiver // Unconnected-unicast receiver.
-      extends Thread 
-      /* This local thread receives unicast DatagramPackets
-        from a unconnected DatagramSocket.
-        The packets are from peers to which connections 
-        have not [yet] been made.
-        They are passed out through a SignallingQueue.
+      extends EpiThread 
+      /* This simple thread receives and queues
+        unicast DatagramPackets from an unconnected DatagramSocket.
+        Though the DatagramSocket is not connected, the Peers 
+        from which the packets are received are considered connected.
+        The packets are queued to a PacketQueue for consumption by 
+        another thread, probably to the ConnectionManager.
         */
-
       {
+
+        // Injected dependency instance variables.
+        
+        private DatagramSocket receiverDatagramSocket;
+          // Unconnected socket which is source of packets.
+
+        private PacketQueue receiverSignallingQueueOfSockPackets;
+          // Queue which is destination of received packets.
+
+
         UnconnectedReceiver( // Constructor. 
             DatagramSocket receiverDatagramSocket,
             PacketQueue 
@@ -1001,18 +991,21 @@ public class ConnectionManager extends Thread
               receiverDatagramSocket;
             }
         
+
         @Override
         public void run() 
-          /* This method continuously reads DatagramPackets and
-            queues them for output.
+          /* This method repeatedly waits for and reads 
+            DatagramPackets and queues them 
+            for consumption by another thread.
             */
           {
             appLogger.info("UnconnectedReceiver: thread beginning.");
 
             try { // Operations that might produce an IOException.
 
-              while ( ! interrupted() )
-                { // Receive uniconnected packets.
+              while // Repeatedly receiving and queuing packets.
+                ( ! interrupted() )
+                { // Receiving and queuing one packet.
                   try {
                     byte[] buf = new byte[256];  // Construct packet buffer.
 
@@ -1040,7 +1033,7 @@ public class ConnectionManager extends Thread
                     appLogger.info( "UnconnectedReceiver.run() SocketException: " + soe );
                     interrupt();  // Terminate this thread.
                     }
-                  } // Receive uniconnected packets.
+                  } // Receiving and queuing one packet.
 
               }
               catch( IOException e ) {
@@ -1049,12 +1042,6 @@ public class ConnectionManager extends Thread
               }
             appLogger.info("UnconnectedReceiver: thread ending.");
             }
-
-        private PacketQueue  // For output of received packets.
-          receiverSignallingQueueOfSockPackets;
-
-        private DatagramSocket   // Unconnected socket receiving packets.
-          receiverDatagramSocket;  
 
         }
       ; // UnconnectedReceiver

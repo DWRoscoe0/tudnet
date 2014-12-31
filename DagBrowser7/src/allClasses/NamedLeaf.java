@@ -1,18 +1,21 @@
 package allClasses;
 
-public class NamedLeaf  extends AbDataNode
+public class NamedLeaf  
+
+  extends AbDataNode
   
-  /* This is a utility class that appears to be simply a leaf with a name.  
+  /* This is a utility class that appears to be 
+    simply a leaf with a name.  
    */
   
   { // class NamedLeaf
 
-    private String theString;  // The name associated with this node.
+    private String nameString;  // The name associated with this node.
 
-    NamedLeaf ( String inString )  // Constructor.
+    NamedLeaf ( String nameString )  // Constructor.
       { 
         super( ); 
-        theString = inString;  // Store this node's name.
+        this.nameString = nameString;  // Store this node's name.
         }
     
       public boolean isLeaf( ) 
@@ -23,7 +26,7 @@ public class NamedLeaf  extends AbDataNode
       public String toString( )
         /* Returns String representing name of this Object.  */
         {
-          return theString;  // Simply return the name.
+          return nameString;  // Simply return the name.
           }
       
     } // class NamedLeaf

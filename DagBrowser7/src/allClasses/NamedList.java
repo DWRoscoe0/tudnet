@@ -3,23 +3,26 @@ package allClasses;
 import java.util.Arrays;
 import java.util.List;
 
-public class NamedList extends NamedLeaf
+public class NamedList 
+
+  extends NamedLeaf  // Will override all leafy-ness.
   
-  /* This is a utility class that appears to be simply a List with a name.  
-   */
+  /* This is a utility class that appears to be 
+    simply a List with a name.  
+    */
   
   { // class NamedList
 
     List<DataNode> theListOfDataNodes;
 
-    NamedList ( String inString, DataNode... inDataNodes )  // Constructor.
+    NamedList ( String nameString, DataNode... inDataNodes )  // Constructor.
       /* This constructor creates a NamedList with
         0 or more DataNodes from the array inDataNodes.
         Theoretically it could be used for 
         many different types of DataNodes.
         */
       {
-        super( inString ); 
+        super( nameString ); 
 
         theListOfDataNodes= Arrays.asList( inDataNodes );
         }
@@ -34,12 +37,14 @@ public class NamedList extends NamedLeaf
         {
           DataNode resultDataNode;;  // Allocating result space.
 
-          if  // Handling index is out of range.
+          if  // Handling index which is out of range.
             ( (indexI < 0) || (indexI >= theListOfDataNodes.size()) )
             resultDataNode= null;  // Setting result to null.
-          else  // Handling index is in range.
-            resultDataNode=   // Setting result to be child...
-              theListOfDataNodes.get( indexI );  // ...from DataNode List.
+          else  // Handling index which is in range.
+            resultDataNode=   // Setting result to be child from...
+              theListOfDataNodes.get(   // ...DataNode List...
+                indexI  // ...at this position.
+                );
 
           return resultDataNode;
           }

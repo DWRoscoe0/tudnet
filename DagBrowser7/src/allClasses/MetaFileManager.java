@@ -171,7 +171,6 @@ public class MetaFileManager {
         if   // Closing lazy-loading file if open.
           ( lazyLoadMetaFile != null )
           try { // Closing it.
-            ///lazyLoadMetaFile.theRandomAccessFile.close( );
           	lazyLoadMetaFile.closeV( );
             }
           catch ( IOException e ) {  // Processing any errors.

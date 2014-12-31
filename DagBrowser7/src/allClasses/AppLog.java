@@ -13,15 +13,16 @@ public class AppLog
   /* This class is for logging information from an app.  
     This class needs some work.
     
-    MadeMultiprocessSafe: It might fail if multiple app instances
+    MadeMultiprocessSafe: ??? It might fail if multiple app instances
       try to log simultaniously.
-      
-    Windows8AntiMalwareSlowsItDown: It seems that 
-      the Windows8 AntiMalware task can slow this app,
-      apparently by scanning the log.txt file after every close
+
+    Windows8AntiMalwareSlowsItDown: ???
+      It can run much slower when the file is long.
+      This might be because of the Windows8 AntiMalware task.
+      Apparently it scans the log.txt file after every close
       because when the file is short it causes little delay,
       but if file is big it slows progress of the program.
-      Change to close less often.
+      Change to close less often?
     */
 
   {
