@@ -24,12 +24,19 @@ public class DagBrowser
     // Other instance variables.
       private JFrame appJFrame;  // App's only JFrame (now).
 
-    /* Beginnings of a unit tester class which takes no space unless called.  
+    /* Beginnings of a unit tester nested class ??
+      It takes no space unless called.  
+
       void f() { System.out.println("f()"); }
-      public static class Object {  // Tester
-        public static void main(String[] args) {
+      
+      public static class Test {
+
+        public static void main( String[] args ) {
+
           DagBrowser t = new DagBrowser();
+
           t.f();
+
         }
       }
       */
@@ -100,11 +107,15 @@ public class DagBrowser
 
         startingGUIV();  // Building and displaying GUI.
 
-        theConnectionManager.start( );  // Starting ConnectionManager thread.
+        EpiThread theConnectionManagerEpiThread=
+          new EpiThread( theConnectionManager, "ConnectionManager" );
+        theConnectionManagerEpiThread.start( );
+          // Starting ConnectionManager thread.
 
         awaitingShutdownV();  // Interacting with user via GUI.
 
-        theConnectionManager.stopAndJoinV( ); // Stopping CM thread.
+        theConnectionManagerEpiThread.stopAndJoinV( ); 
+          // Stopping ConnectionManager thread.
         }
 
     private void startingGUIV()
@@ -356,8 +367,8 @@ public class DagBrowser
           if ( ! theAppInstanceManager.managingInstancesThenNeedToExitB( ) ) 
 
             {
-              DagBrowser theDagBrowser= // Creating browser.
-                  theAppGUIFactory.makeDagBrowser();
+              DagBrowser theDagBrowser= // Getting browser singleton.
+                  theAppGUIFactory.getDagBrowser();
 
               theDagBrowser.runV(); // Running browser.
               }
@@ -370,27 +381,33 @@ public class DagBrowser
     private static class AppGUIFactory {
 
       /* This is the factory for all classes with AppGUI lifetime,
-        which means DagBrowser.
+        The AppGUI lifetime is shorter that the App lifetime,
+        because some App operations happen before or without
+        presentation of the AppGUI.
+        The DagBrowser class is the top level of the AppGUI.
+        DagBrowser should probably be renamed to AppGUI ???
         */
 
-      Thread mainThread;
-      AppInstanceManager theAppInstanceManager;
-      Shutdowner theShutdowner;
+      // Storage for dependencies.  Not needed because constructor use them.
+      ///Thread mainThread;
+      ///AppInstanceManager theAppInstanceManager;
+      ///Shutdowner theShutdowner;
 
-      public AppGUIFactory(    // Constructor.
+      // The one single that will be returned.
+      DagBrowser theDagBrowser;
+
+      public AppGUIFactory(  // Constructor.
           Thread mainThread, 
           AppInstanceManager theAppInstanceManager,
           Shutdowner theShutdowner
           )
         {
-          this.mainThread= mainThread;
-          this.theAppInstanceManager= theAppInstanceManager;
-          this.theShutdowner= theShutdowner;
-         }
+          // Store dependencies.
+          ///this.mainThread= mainThread;
+          ///this.theAppInstanceManager= theAppInstanceManager;
+          ///this.theShutdowner= theShutdowner;
 
-      public DagBrowser makeDagBrowser() 
-        // Makes several objects and returns one referencing them all.
-        {
+          // Calculate singletons.  Only the last one is returned.
           DataRoot theDataRoot= new DataRoot(
             new InfogoraRoot( 
               new DataNode[] { // ...an array of all child DataNodes.
@@ -401,11 +418,14 @@ public class DagBrowser
                 }
               )
             );
-          ConnectionManager theConnectionManager= new ConnectionManager();
+          ConnectionManager.Factory theConnectionManagerFactory= 
+            new ConnectionManager.Factory();
+          ConnectionManager theConnectionManager= 
+            theConnectionManagerFactory.getConnectionManager();
           MetaFileManager theMetaFileManager= 
-          		new MetaFileManager(theDataRoot);
+          		new MetaFileManager( theDataRoot );
           MetaRoot theMetaRoot= 
-            new MetaRoot( theDataRoot,theMetaFileManager);
+            new MetaRoot( theDataRoot, theMetaFileManager );
           new MetaFileManager.Finisher(
             theMetaFileManager,
             theShutdowner, 
@@ -420,13 +440,18 @@ public class DagBrowser
             theDataRoot,
             theMetaRoot
             );
-          return new DagBrowser( 
+          theDagBrowser= new DagBrowser( 
             mainThread, 
             theAppInstanceManager,
             theConnectionManager,
             theDagBrowserPanel,
             theMetaRoot
             );
+         }
+
+      public DagBrowser getDagBrowser() 
+        {
+          return theDagBrowser;
           }
 
       }

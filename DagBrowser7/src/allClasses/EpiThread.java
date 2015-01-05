@@ -10,9 +10,19 @@ public class EpiThread
 
   {
 
-    public EpiThread( String nameString )  // Constructor.
+    public EpiThread( String nameString ) // Constructor.
       {
         super( nameString ); // Name here because setName() not reliable.
+        }
+
+    public EpiThread( Runnable aRunnable ) // Constructor.
+      {
+        super( aRunnable );
+        }
+
+    public EpiThread( Runnable aRunnable, String nameString ) // Constructor.
+      {
+        super( aRunnable, nameString );
         }
 
     public void stopAndJoinV()  // Another thread uses to stop "this" thread.
@@ -64,4 +74,5 @@ public class EpiThread
 
         appLogger.info("EpiThread(" + getName() + ").joinV() end.");
         }
+
     }

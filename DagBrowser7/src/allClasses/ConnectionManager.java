@@ -1,13 +1,11 @@
 package allClasses;
 
 import java.io.IOException;
-
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.SocketException;
-
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Random;
@@ -16,7 +14,9 @@ import static allClasses.Globals.*;  // appLogger;
 
 public class ConnectionManager 
 
-  extends EpiThread
+  ///extends EpiThread
+  
+  implements Runnable
 
   /* This class makes and maintains simple UDP unicast connections 
     based on input from various other Threads.
@@ -56,9 +56,15 @@ public class ConnectionManager
   { // ConnectionManager/Connections.
 
   
-    // Instance variables, all private.
+    // Injected instance variables, all private.
+    
+    private ConnectionManager.Factory theConnectionManagerFactory; 
 
-    private HashMap<SocketAddress,Peer> peerSocketAddressHashMap;
+    // Other instance variables, all private.
+
+    ///private HashMap<SocketAddress,Peer> peerSocketAddressHashMap;
+    private HashMap<SocketAddress,PeerValue> peerSocketAddressHashMap;
+      /// Being converted from Peer to PeerValue.
       /* This initially empty Collection provides access to the Peers.
         It can be used for displaying the Peers.
         It can also be used to lookup Peers by SocketAddress,
@@ -71,7 +77,8 @@ public class ConnectionManager
 
     private DatagramSocket unconnectedDatagramSocket; // For UDP io.
 
-    private UnconnectedReceiver theUnconnectedReceiver; // Receiver thread.
+    private UnconnectedReceiver theUnconnectedReceiver; // Receiver and
+    private EpiThread theUnconnectedReceiverEpiThread ; // its thread.
 
     private LockAndSignal theLockAndSignal;  // LockAndSignal for this thread.
       /* This single object is used to synchronize communication between 
@@ -89,14 +96,19 @@ public class ConnectionManager
       // For received uniconnected packets.
 
 
-    public ConnectionManager( )  // Constructor.
+    public ConnectionManager(   // Constructor.
+        ConnectionManager.Factory theConnectionManagerFactory 
+        )
       {
-        super( "Connections" );  // Name here because setName() not reliable.
+        ///super( "Connections" );  // Name here because setName() not reliable.
 
         // [some] variable initializations happen where they are declared.
 
+        this.theConnectionManagerFactory= theConnectionManagerFactory;
+
         peerSocketAddressHashMap=  // Setting no peers initially.
-          new HashMap<SocketAddress,Peer>();
+          ///new HashMap<SocketAddress,Peer>();
+          new HashMap<SocketAddress,PeerValue>();
         theLockAndSignal= new LockAndSignal(false);  // Creating signaller.
         sendPacketQueue=
           new PacketQueue(theLockAndSignal);
@@ -119,7 +131,7 @@ public class ConnectionManager
       { // Connections.
         appLogger.info("Connections.run(): thread beginning.");
         while   // Repeating until termination is requested.
-          ( !isInterrupted() )
+          ( !Thread.currentThread().isInterrupted() )
           {
             try { // Creating and using unconnected DatagramSocket.
               unconnectedDatagramSocket= // Construct socket for UDP io.
@@ -172,49 +184,62 @@ public class ConnectionManager
             unconnectedDatagramSocket,
             uniconnectedSignallingQueueOfSockPackets
             );
-        theUnconnectedReceiver.start();  // Starting thread.
+        theUnconnectedReceiverEpiThread= new EpiThread( 
+          theUnconnectedReceiver,
+          "UnconnectedReceiver"
+          );
+
+        ///theUnconnectedReceiver.start();  // Starting thread.
+        theUnconnectedReceiverEpiThread.start();  // Starting thread.
         }
 
     private void withSocketFinalizingV()
       {
         terminatingPeerThreadsV(); // most of theUnconnectedReceiver users.
 
-        theUnconnectedReceiver.stopV();  // Requesting termination of
+        ///theUnconnectedReceiver.stopV();  // Requesting termination of
+        theUnconnectedReceiverEpiThread.stopV();  // Requesting termination of
           // theUnconnectedReceiver thread.
         unconnectedDatagramSocket.close(); // Causing immediate unblock of
           // unconnectedDatagramSocket.receive() in that thread.
-        theUnconnectedReceiver.joinV();  // Waiting for termination of
+        ///theUnconnectedReceiver.joinV();  // Waiting for termination of
+        theUnconnectedReceiverEpiThread.joinV();  // Waiting for termination of
           // theUnconnectedReceiver thread.
         }
 
     private void terminatingPeerThreadsV()
-      /* This method terminates all of the threads 
+      /* This method terminates all of the Peer threads 
         that were created to communicate with discovered Peer nodes.
-        It does this in 2 loops because parallel terminations 
-        possible when there are multiple Peers.
+        It does this in 2 loops: one to request termination,
+        and another to wait for termination to complete; because 
+        concurrent terminations are possible when there are multiple Peers.
         */
       {
         appLogger.info("Connections.terminatingPeerThreadsV() beginning.");
 
-        Iterator<Peer> anIteratorOfPeers;  // For peer iterator.
+        Iterator<PeerValue> anIteratorOfPeerValues;  // For peer iterator.
 
-        anIteratorOfPeers=  // Getting new peer iterator.
+        anIteratorOfPeerValues=  // Getting new peer iterator.
           peerSocketAddressHashMap.values().iterator();
         while  // Requesting termination of all Peers.
-          (anIteratorOfPeers.hasNext())
+          (anIteratorOfPeerValues.hasNext())
           {
-            Peer thePeer = anIteratorOfPeers.next();  // Getting Peer.
-            thePeer.stopV();  // Requesting Termination of Peer.
+            PeerValue thePeerValue= anIteratorOfPeerValues.next();
+            ///Peer thePeer= thePeerValue.getPeer();
+            ///thePeer.stopV();  // Requesting Termination of Peer.
+            thePeerValue.getEpiThread().stopV();  // Requesting Termination of Peer.
             }
 
-        anIteratorOfPeers=  // Getting new peer iterator.
+        anIteratorOfPeerValues=  // Getting new peer iterator.
           peerSocketAddressHashMap.values().iterator();
         while  // Waiting for termination of all Peers.
-          (anIteratorOfPeers.hasNext())
+          (anIteratorOfPeerValues.hasNext())
           {
-            Peer thePeer = anIteratorOfPeers.next();  // Getting Peer.
-            thePeer.joinV();  // Waiting for termination of Peer.
-            anIteratorOfPeers.remove(); // Removing from HashMap...
+            PeerValue thePeerValue= anIteratorOfPeerValues.next();
+            ///Peer thePeer= thePeerValue.getPeer();
+            ///thePeer.joinV();  // Waiting for termination of Peer.
+            thePeerValue.getEpiThread().joinV();  // Waiting for termination of Peer.
+            anIteratorOfPeerValues.remove(); // Removing from HashMap...
             }
 
         appLogger.info("Connections.terminatingPeerThreadsV() ending.");
@@ -235,7 +260,7 @@ public class ConnectionManager
         */
       {
         while  // Repeating until thread termination is requested.
-          ( !isInterrupted() )  // Thread termination is not requested.
+          ( !Thread.currentThread().isInterrupted() )
           {
             { // Trying to do work of processing all inputs.
               processingUnconnectedSockPacketsB();
@@ -415,30 +440,34 @@ public class ConnectionManager
         )
       /* Gets or creates the Peer whose SocketAddress
         is peerInetSocketAddress.
-        It adds the Peer to the appropriate data structures.
+        If a new Peer is created then it also:
+        * Adds the Peer to the appropriate data structures.
+        * Starts the Peer thread.
         It returns the found or created Peer.
         */
       {
-        Peer thePeer=  // Testing whether the peer already stored.
+        ///Peer thePeer;
+        PeerValue thePeerValue;
+        
+        thePeerValue=  // Testing whether the peer already stored.
           peerSocketAddressHashMap.get(peerInetSocketAddress);
-        if (thePeer == null) // Adding entry if not stored already.
+        if (thePeerValue == null) // Adding entry if not stored already.
           {
-            thePeer= new Peer( // Creating new Peer object with...
-              peerInetSocketAddress,  // ...this address.
-              sendPacketQueue,
-              this
-              );
-            //appLogger.info(
-            //  "ConnectionManager.getOrCreateAndAddPeer(..)\n"+
-            //    "  adding peer at "+peerInetSocketAddress
-            //  );
+            thePeerValue= 
+              theConnectionManagerFactory.buildPeerValue(
+                peerInetSocketAddress,
+                sendPacketQueue
+                );
             peerSocketAddressHashMap.put(  // Add to HashMap with...
               peerInetSocketAddress,  // ...the address as the key and...
-              thePeer  // ...the Peer object as the value.
+              thePeerValue  // ...the PeerValue as the value.
+              ///thePeer  // ...the Peer object as the value.
               );
-            thePeer.start();  // Start the peer's associated thread.
+            ///thePeer= thePeerValue.getPeer();
+            ///thePeer.start();  // Start the peer's associated thread.
+            thePeerValue.getEpiThread().start();  // Start the peer's associated thread.
             }
-        return thePeer;
+        return thePeerValue.getPeer();
         }
 
 
@@ -464,9 +493,92 @@ public class ConnectionManager
 
         }
 
+    public static class Factory {
+
+      /* This is the factory for class lifetimes
+        of the ConnectionManager or shorter.
+        */
+
+      private ConnectionManager theConnectionManager;
+
+      public Factory( )  // Constructor.
+        {
+          theConnectionManager= new ConnectionManager( this );
+          }
+
+      public ConnectionManager getConnectionManager()
+        { return theConnectionManager; }
+
+      public Peer buildPeer(
+          InetSocketAddress peerInetSocketAddress,
+          PacketQueue sendPacketQueue
+          ///ConnectionManager theConnectionManagerNOT ///
+          )
+        {
+          return new Peer(
+            peerInetSocketAddress,
+            sendPacketQueue,
+            theConnectionManager
+            );
+          }
+
+      public PeerValue buildPeerValue(
+          InetSocketAddress peerInetSocketAddress,
+          PacketQueue sendPacketQueue
+          )
+        {
+          Peer thePeer= buildPeer(
+            peerInetSocketAddress,
+            sendPacketQueue
+            );
+          return new PeerValue(
+            peerInetSocketAddress,
+            thePeer
+            );
+          }
+
+      }
+
+    private static class PeerValue  // Value of HashMap entry.
+
+     /* This class was created when it became necessary to
+       have access to both the Peer class and its Thread.
+       */
+
+      {
+
+        private Peer thePeer;
+        private EpiThread theEpiThread;
+
+        public PeerValue(  // Constructor. 
+            InetSocketAddress peerInetSocketAddress,
+            Peer thePeer
+            )
+          {
+            this.thePeer= thePeer;
+            this.theEpiThread= new EpiThread( 
+              thePeer,
+              "Peer-"+peerInetSocketAddress
+              );
+            }
+            
+        public Peer getPeer()
+          { 
+            return thePeer; 
+            }
+            
+        public EpiThread getEpiThread()
+          { 
+            return theEpiThread; 
+            }
+        }
+
     private static class Peer  // Nested class managing peer connection data.
-      extends EpiThread
-      implements Comparable<Peer> // for use by PriorityQueue.
+
+      ///extends EpiThread
+      implements Runnable
+      
+      ///implements Comparable<Peer> // for use by PriorityQueue.
 
       /* Each instance of this nested class contains and manages data about 
         one of the peer nodes of which the ConnectionManager is aware.
@@ -521,44 +633,45 @@ public class ConnectionManager
 
       { // Peer.
 
-      
-        // Constants.
+        // Fields (constant and variales).
         
-        private final long PeriodMillisL=  // Period between sends or receives.
-          4000;   // 4 seconds.
+          // Constants.
+          
+          private final long PeriodMillisL=  // Period between sends or receives.
+            4000;   // 4 seconds.
 
-        private final long HalfPeriodMillisL= // Half of period.
-          PeriodMillisL / 2;  
-
-
-        // Instance variables which are copies of constructor arguments.
-
-        private InetSocketAddress peerInetSocketAddress;  // Address of peer.
-        
-        private final PacketQueue sendQueueOfSockPackets;
-          // Queue to receive SockPackets to be sent to Peer.
-              
-        private final ConnectionManager theConnectionManager;
+          private final long HalfPeriodMillisL= // Half of period.
+            PeriodMillisL / 2;  
 
 
-        // Other instance variables.
+          // Instance variables which are copies of constructor arguments.
 
-        LockAndSignal peerLockAndSignal;  // LockAndSignal for this thread.
+          private InetSocketAddress peerInetSocketAddress;  // Address of peer.
+          
+          private final PacketQueue sendQueueOfSockPackets;
+            // Queue to receive SockPackets to be sent to Peer.
+                
+          private final ConnectionManager theConnectionManager;
 
-        int packetIDI; // Sequence number for sent packets.
 
-        // Independent times.
-        private long receivedMillisL;  // Time a packet was last received from peer.
-        private long sentMillisL;  // Time a packet was last sent to peer.
+          // Other instance variables.
 
-        // Dependent times.
-        //long roundTripTimeL;
-        private long nextSendMillisL;  // Time the next packet should be sent.
+          LockAndSignal peerLockAndSignal;  // LockAndSignal for this thread.
 
-        Random theRandom;  // For random numbers for arbitratingYieldB().
+          int packetIDI; // Sequence number for sent packets.
 
-        private final PacketQueue receiveQueueOfSockPackets;
-          // Queue for SockPackets from ConnectionManager.
+          // Independent times.
+          ///private long receivedMillisL;  // Time a packet was last received from peer.
+          ///private long sentMillisL;  // Time a packet was last sent to peer.
+
+          // Dependent times.
+          //long roundTripTimeL;
+          ///private long nextSendMillisL;  // Time the next packet should be sent.
+
+          Random theRandom;  // For random numbers for arbitratingYieldB().
+
+          private final PacketQueue receiveQueueOfSockPackets;
+            // Queue for SockPackets from ConnectionManager.
 
 
         public Peer(  // Constructor. 
@@ -574,9 +687,9 @@ public class ConnectionManager
             Fields are defined in a way to cause an initial response.
             */
           {
-            super(  // Naming thread here because setName() is not reliable.
-              peerInetSocketAddress+"-Manager" 
-              );
+            ///super(  // Naming thread here because setName() is not reliable.
+            ///  peerInetSocketAddress+"-Manager"  // ???
+            ///  );
 
             // Storing constructor arguments.
               this.peerInetSocketAddress= peerInetSocketAddress;
@@ -588,18 +701,18 @@ public class ConnectionManager
             packetIDI= 0; // Setting starting packet sequence number.
 
             // Setting meanful defaults for packet send and receive times.
-              this.receivedMillisL=  // Assume packet received recently.
-                System.currentTimeMillis();
+              ///this.receivedMillisL=  // Assume packet received recently.
+              ///  System.currentTimeMillis();
                 // It might be better to get this from a previously saved time.
-              this.sentMillisL=  // But not sent for a long time.
-                receivedMillisL - PeriodMillisL;
-              updateNextSendV( );  // Updating dependent time.
+              ///this.sentMillisL=  // But not sent for a long time.
+              ///  receivedMillisL - PeriodMillisL;
+              ///updateNextSendV( );  // Updating dependent time.
             
             theRandom= new Random(0);  // Initialize arbitratingYieldB().
 
             receiveQueueOfSockPackets=
               new PacketQueue( peerLockAndSignal );
-                // SockPackets from ConnectionManager.
+                // For SockPackets from ConnectionManager.
             }
 
 
@@ -619,21 +732,29 @@ public class ConnectionManager
             a protocol value for this purpose.
             */
           {
-            appLogger.info(getName()+":\n  Peer thread beginning.");
+            appLogger.info(
+              Thread.currentThread().getName()+": run() beginning."
+              );
 
             while (true) // Repeating until thread termination is requested.
               {
-                if ( isInterrupted() ) break;  // Exiting if requested.
+                if   // Exiting if requested.
+                  ( Thread.currentThread().isInterrupted() ) 
+                  break;
                 //appLogger.info(getName()+":\n  CALLING tryingPingSendV() ===============.");
                 tryingPingSendV();
 
-                if ( isInterrupted() ) break;  // Exiting if requested.
+                if   // Exiting if requested.
+                  ( Thread.currentThread().isInterrupted() ) 
+                  break;
                 //appLogger.info(getName()+":\n  CALLING tryingPingReceiveV() ===============.");
                 tryingPingReceiveV();
                 }
 
             // Terminating.
-            appLogger.info(getName()+":\n  Peer thread ending.");
+            appLogger.info(
+              Thread.currentThread().getName()+": run() ending."
+              );
             }
 
         private void tryingPingSendV()
@@ -652,7 +773,9 @@ public class ConnectionManager
               { // Trying ping send and echo receive one time, or exiting.
                 if  // Checking and exiting if retries were exceeded.
                   ( retriesI >= maxRetries )  // Maximum attempts exceeded.
-                  { interrupt(); break; } // Terminating thread.
+                  { // Terminating thread.
+                    Thread.currentThread().interrupt(); break; 
+                    }
                 //long pingMillisL= System.currentTimeMillis();
                 sendingPacketV("PING"); // Sending ping packet.
                 long waitMillisL=  // Calculating half-period wait time.
@@ -791,15 +914,19 @@ public class ConnectionManager
             return yieldB;
             }
 
+        /* ???
         private long getNextSendL( )  // Returns time of next action.
           /* This method returns 
             the next time the user node is scheduled to do something,
             specifically to send a packet to the peer.
             */
+          /* ???
           {
             return nextSendMillisL;
             }
+          */
 
+        /* ???
         private void updateNextSendV( )
           /* This method calculates and stores 
             the next time the user node is scheduled to do something,
@@ -811,6 +938,7 @@ public class ConnectionManager
             this node and the peer node 
             to alternate pinging and replying.
             */
+          /* ???
           {
             nextSendMillisL=  // Set next send time to be...
               Wrap.laterL(  // ...the later of...
@@ -823,19 +951,22 @@ public class ConnectionManager
                 ) 
               ;
             }
+          */
 
+        /* ???
         public int compareTo( Peer anotherPeer )
-          /* This method compares this Peer 
-            to anotherPeer.
+          /* This method compares this Peer to anotherPeer.
             It returns the difference between their next event times.
             This method exists so that PriorityQueue can compare them.
             */
+          /* ???
           {
             return 
               (int)
               ( getNextSendL( ) - anotherPeer.getNextSendL( ) )
               ;
             }
+          */
 
 
         // Receive packet code.
@@ -953,9 +1084,12 @@ public class ConnectionManager
         }
 
     private class UnconnectedReceiver // Unconnected-unicast receiver.
-      extends EpiThread 
-      /* This simple thread receives and queues
-        unicast DatagramPackets from an unconnected DatagramSocket.
+
+      ///extends EpiThread // Doesn't need to be separate Thread and Runnable.
+      implements Runnable
+
+      /* This simple thread receives and queues unicast DatagramPackets 
+        from an unconnected DatagramSocket.
         Though the DatagramSocket is not connected, the Peers 
         from which the packets are received are considered connected.
         The packets are queued to a PacketQueue for consumption by 
@@ -974,17 +1108,16 @@ public class ConnectionManager
 
         UnconnectedReceiver( // Constructor. 
             DatagramSocket receiverDatagramSocket,
-            PacketQueue 
-              receiverSignallingQueueOfSockPackets
+            PacketQueue receiverSignallingQueueOfSockPackets
             )
           /* Constructs an instance of this class from:
               * receiverDatagramSocket: the socket receiving packets.
               * receiverSignallingQueueOfSockPackets: the output queue.
             */
           { 
-            super(  // Name thread here because setName() is not reliable.
-              "UnconnectedReceiver"  
-              );
+            ///super(  // Name thread here because setName() is not reliable.
+            ///  "OLDUnconnectedReceiver"  
+            ///  );
             this.receiverSignallingQueueOfSockPackets=
               receiverSignallingQueueOfSockPackets;
             this.receiverDatagramSocket=
@@ -999,53 +1132,40 @@ public class ConnectionManager
             for consumption by another thread.
             */
           {
-            appLogger.info("UnconnectedReceiver: thread beginning.");
-
+            appLogger.threadInfo("run() beginning.");
             try { // Operations that might produce an IOException.
-
-              while // Repeatedly receiving and queuing packets.
-                ( ! interrupted() )
+              while  // Receiving and queuing packets unless termination is
+                ( ! Thread.currentThread().isInterrupted() ) // requested.
                 { // Receiving and queuing one packet.
                   try {
                     byte[] buf = new byte[256];  // Construct packet buffer.
-
-                    // receive.
-                    DatagramPacket aDatagramPacket=   // Construct packet.
+                    DatagramPacket aDatagramPacket=
                       new DatagramPacket(buf, buf.length);
                     SockPacket aSockPacket= new SockPacket(
                       receiverDatagramSocket, aDatagramPacket
                       );
-                    //appLogger.info(
-                    //  "UnconnectedReceiver.run() "
-                    //  +"waiting to receive unconnected packet:\n  "
-                    //  + aSockPacket.getSocketAddressesString()
-                    //  );
                     receiverDatagramSocket.receive(aDatagramPacket);
-                    //appLogger.info(
-                    //  "UnconnectedReceiver.run() "
-                    //  +"received unconnected packet:\n  "
-                    //  + aSockPacket.getSocketAddressesString()
-                    //  );
                     receiverSignallingQueueOfSockPackets.add(aSockPacket);
                     }
                   catch( SocketException soe ) {
                     // someone may have called disconnect()
-                    appLogger.info( "UnconnectedReceiver.run() SocketException: " + soe );
-                    interrupt();  // Terminate this thread.
+                    appLogger.threadInfo("run() SocketException: " + soe );
+                    Thread.currentThread().interrupt(); // Translating 
+                      // exception into request to terminate this thread.
                     }
                   } // Receiving and queuing one packet.
-
               }
               catch( IOException e ) {
-                appLogger.info( "UnconnectedReceiver.run() IOException: "+e );
+                appLogger.threadInfo("run() IOException: "+e );
                 throw new RuntimeException(e);
               }
-            appLogger.info("UnconnectedReceiver: thread ending.");
+            appLogger.threadInfo("run() ending.");
             }
 
         }
       ; // UnconnectedReceiver
 
+    /* ???
     private static class Wrap  // Cyclic/wrap-around operations on longs.
       /* This class is provides some utility methods which
         which perform some wrap-around operations on long integers.
@@ -1053,6 +1173,7 @@ public class ConnectionManager
         long times expressed in milliseconds,
         but they can be used in other applications also.
         */
+      /* ???
       {
         private static boolean isBeforeB( long x1L, long x2L )
           /* Returns true if x1L is before x2L in the cycle.
@@ -1060,6 +1181,7 @@ public class ConnectionManager
             It treats times as wrap-around long values
             by subtracting them and comparing the difference to 0.
             */
+          /* ???
           {
             return ( ( x1L - x2L ) < 0 );
             }
@@ -1068,10 +1190,12 @@ public class ConnectionManager
           /* Returns the later of times x1L and x2L.  
             It treats times as wrap-around long values.
             */
+          /* ???
           {
             return ( isBeforeB( x1L, x2L ) ? x2L : x1L ) ;
             }
 
         }
+        */
 
     }

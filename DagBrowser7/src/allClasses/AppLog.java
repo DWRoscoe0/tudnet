@@ -1,3 +1,4 @@
+
 package allClasses;
 
 //import java.awt.Component;
@@ -140,6 +141,19 @@ public class AppLog
         */
       { 
         appendEntry( "INFO: "+inString ); 
+        }
+  
+    public void threadInfo(String inString)
+      /* This method writes an information String inString to a log entry
+        but not to the console.  It also identifies the current Thread.
+        */
+      { 
+        info( 
+          "Thread "+
+          Thread.currentThread().getName()+
+          " "+
+          inString 
+          ); 
         }
   
     public void error(String inString)
