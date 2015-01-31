@@ -14,7 +14,8 @@ public abstract class AbDataNode
     Otherwise they should be optimized or cached or both.
     */
     
-  {
+  { // AbDataNode
+
     // Static methods.
 
       static boolean isUsableB( DataNode inDataNode )
@@ -31,7 +32,6 @@ public abstract class AbDataNode
               break toUnusable; // Go return value for unusable.
             if // Node class is not an UnknownDataNode.
               ( ! UnknownDataNode.isOneB( inDataNode ) )
-              // ( ! ( inDataNode instanceof UnknownDataNode ) )
               break toReturn;  // Go return initial default value of usable.
 
           } // toUnusable
@@ -192,4 +192,4 @@ public abstract class AbDataNode
     
       public int IDCode() { return super.hashCode(); }
 
-    }
+    } // AbDataNode

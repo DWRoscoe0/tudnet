@@ -21,7 +21,7 @@ import javax.swing.tree.TreePath;
 public class TreeHelper
   implements KeyListener, MouseListener, FocusListener
 
-  /* This class holds code which is usefull for most TreeAware JComponents,
+  /* This class holds code which is useful for most TreeAware JComponents,
     which are viewers for various types of tree DataNode-s.
     The code was put here because of Java's lack of multiple inheritance.
     Including an instance of TreeHelper in a tree node viewer can make 
@@ -60,10 +60,10 @@ public class TreeHelper
         testing for the validity of, or actual execution of,
         various cursor moving commands (next, previous, child, parent).
 
-      * Methds for getting and setting the Whole,
-        by TreePath, with optional autoselect.
+      * Methods for getting and setting the Whole,
+        by TreePath, with optional auto-select.
 
-      * Methds for getting and setting the Part,
+      * Methods for getting and setting the Part,
         by TreePath, DataNode, and maybe later child Index.
 
       * Code managing and using TreePathListener-s.
@@ -73,7 +73,8 @@ public class TreeHelper
     
     A TreeHelper object instance typically interacts with 2 other objects:
 
-      * Its owning viewer JComponent, for example ListViewer.
+      * Its owning viewer JComponent, 
+        for example ListViewer or TitledListViewer.
       * A coordinating JComponent, presently only DagBrowserPanel.
 
     These 3 objects interact as follows:
@@ -154,6 +155,20 @@ public class TreeHelper
             // be a FocusListener for its owning JComponent.
           }
 
+    // TreeModel code with Listener registration, etc.
+
+      protected DataTreeModel theDataTreeModel;
+
+      public DataTreeModel setDataTreeModel(DataTreeModel theDataTreeModel)
+        /* Sets theDataTreeModel value and returns the old value.
+          It doesn't set any listeners.  Subclasses should do that. 
+          */
+        {
+      	  DataTreeModel oldDataTreeModel= this.theDataTreeModel;
+      	  this.theDataTreeModel= theDataTreeModel;
+      	  return oldDataTreeModel;
+      	  }
+      
     // FocusListener code: registration, firing, and the interface.
 
       /* This code implements the FocusListener interface.

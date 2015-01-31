@@ -7,14 +7,15 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+//import java.awt.event.MouseEvent;
 
 import javax.swing.BorderFactory;
 //import javax.swing.BoxLayout;
 import javax.swing.DefaultListCellRenderer;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
-import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 import javax.swing.border.Border;
@@ -51,17 +52,18 @@ public class TitledListViewer // adapted from TitledListViewer.
   
     // variables, most of them.
 
-      JLabel titleJLabel;  // Label with the title.
+      private JLabel titleJLabel;  // Label with the title.
 
-      JList<Object> theJList;  // Component with the content.
+      private JList<Object> theJList;  // Component with the content.
+        private TreeListModel theTreeListModel;  // Model with the content.
 
-      Color backgroundColor;
+      private Color backgroundColor;
 
     // constructor and related methods.
 
       public TitledListViewer(
           TreePath inTreePath,
-          DataTreeModel inDataTreeModel
+          DataTreeModel theDataTreeModel
           )
         /* Constructs a TitledListViewer.
           inTreePath is the TreePath associated with
@@ -69,12 +71,12 @@ public class TitledListViewer // adapted from TitledListViewer.
           The last DataNode in the path is that object.
           */
         { // TitledListViewer(.)
-          super();   // Call constructor inherited from JPanel.
+          super();   // Constructing the superclass.
 
           { // Prepare the helper object.
             aTreeHelper=  // Construct helper class instance.
-              new TreeHelper( 
-                this, inDataTreeModel.getMetaRoot(), inTreePath 
+              new MyTreeHelper( 
+                this, theDataTreeModel.getMetaRoot(), inTreePath 
                 );  // Note, subject not set yet.
             } // Prepare the helper object.
 
@@ -100,25 +102,21 @@ public class TitledListViewer // adapted from TitledListViewer.
           add(theJList,BorderLayout.CENTER); // Adding it to main JPanel.
           //add(theJList); // Adding it to main JPanel.
 
-          InitializeTheJList( inDataTreeModel );
+          InitializeTheJList( theDataTreeModel );
           } // TitledListViewer(.)
-
-      public void setPreferredSize( Dimension inDimension )
-        // Do this so theJList will be full width.
-        {
-          super.setPreferredSize( inDimension );
-          theJList.setPreferredSize( inDimension );
-          }
       
-      private void InitializeTheJList( DataTreeModel inDataTreeModel )
+      private void InitializeTheJList( DataTreeModel theDataTreeModel )
         /* This grouping method creates and initializes the JList.  */
         { // InitializeTheJList( )
           { // Set ListModel for the proper type of elements.
-            ListModel<Object> AListModel= new TreeListModel( 
-              aTreeHelper.getWholeDataNode( ),
-              inDataTreeModel 
+            ///ListModel<Object> aListModel= new TreeListModel( 
+          	theTreeListModel= new TreeListModel(
+          		aTreeHelper.getWholeDataNode( ),
+          		aTreeHelper.getWholeTreePath( ),
+              null  /// theDataTreeModel 
               );
-            theJList.setModel( AListModel );  // Define its ListModel.
+          	theTreeListModel.setDataTreeModel( theDataTreeModel );
+          	theJList.setModel( theTreeListModel );  // Define its ListModel.
             } // Set ListModel for the proper type of elements.
           theJList.setSelectionMode( ListSelectionModel.SINGLE_SELECTION );
           theJList.setCellRenderer(   // Setting custom rendering.
@@ -140,13 +138,56 @@ public class TitledListViewer // adapted from TitledListViewer.
           setJListScrollState();
           } // InitializeTheJList( )
 
+    // TreeHelper customization code subclass MyTreeHelper. 
+
+      class MyTreeHelper extends TreeHelper {
+
+        MyTreeHelper(  // Constructor.
+            JComponent inOwningJComponent, 
+            MetaRoot theMetaRoot,
+            TreePath inTreePath
+            )
+          {
+            super(inOwningJComponent, theMetaRoot, inTreePath);
+            }
+
+        public DataTreeModel setDataTreeModel(DataTreeModel newDataTreeModel)
+          /* Sets new DataTreeModel and returns old one.
+           * ??? It also makes the present ListModel be a Listener of
+           * newDataTreeModel so one reflects the other.
+           * The JList is already a Listener of the ListModel.
+		       * In normal use it will be called only twice:
+		       * * once with newDataTreeModel != null,
+		       * * and once with newDataTreeModel == null,
+		       * but it should be able to work with any sequence.
+		       * ??? I doesn't need to return a value.
+           */
+          {
+        	  DataTreeModel oldDataTreeModel= 
+        	    super.setDataTreeModel( newDataTreeModel );
+
+        	  theTreeListModel.setDataTreeModel( null );
+        	  theTreeListModel.setDataTreeModel( newDataTreeModel );
+
+        	  return oldDataTreeModel;
+        	  }
+
+        } // MyTreeHelper
+
+      public void setPreferredSize( Dimension inDimension )
+        // Do this so theJList will be full width.
+        {
+          super.setPreferredSize( inDimension );
+          theJList.setPreferredSize( inDimension );
+          }
+
       private void setJListSelection()
         /* This grouping method updates the JList selection state
           from the selection-related instance variables.
           Note, this will trigger a call to 
           internal method ListSelectionListener.valueChanged(),
           which might cause further processing and calls to
-          esternal TreeSelectionListeners-s. */
+          external TreeSelectionListeners-s. */
         { // setJListSelection()
           int IndexI= // try to get index of selected child.
             aTreeHelper.getWholeDataNode( ).getIndexOfChild( 

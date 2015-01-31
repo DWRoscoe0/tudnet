@@ -10,29 +10,15 @@ public class DataRoot {
     which can be used as a sentinel to make code which 
     manipulates TreePath-s simpler, for example
     less checking for null references.
-    
-    ??? Statics are in the process of being eliminated from this class.
+
+    Some of the variables that were in this section were removed when
+    it was realized that the JTree class can hide only
+    one TreePath sentinel level, which is done by calling
+    JTree.setRootVisible( false ).  There is no easy way to
+    hide the first two levels instead of only the first level.
     */
 
   // Variables.
-
-    /* Initializing these variables is tricky and a little confusing because:
-      * DataNode-s are built right to left, 
-        with parents referencing their children.
-      * TreePath-s:
-        * Are built left to right, from a new child and
-          a smaller TreePath referencing all the child's ancestors.
-        * Some of the TreePath constructors provided by Java which
-          could make the following code more self-documenting
-          are not public and can not be used here.
-
-      Some of the variables that were in this section were removed when
-      it was realized that the JTree class can hide only
-      one TreePath sentinel level, which is done by calling
-      JTree.setRootVisible( false ).  There is no easy way to
-      hide the first two levels instead of only the first level.
-
-      */
 
     private DataNode rootDataNode; // Root node of data DAG.
 
@@ -42,37 +28,46 @@ public class DataRoot {
 
     private TreePath rootTreePath; // Path to root node.
 
-  //private static DataRoot theDataRoot; // Temporary for static access. ???
+  DataRoot( )  // Non-injecting constructor. 
+	  {
+	    }
 
-  DataRoot( DataNode rootDataNode ) {  // Constructor.
-    //theDataRoot= this;  // Temporary for static access.
+  // Injector methods.
 
-    this.rootDataNode= rootDataNode;
+    public void setRootV( DataNode rootDataNode )
+      /* This method sets the root Data node to rootDataNode and
+				adjusts all dependent variables.
+				Doing this correctly is tricky and a little confusing because:
+	      * DataNode-s are built right to left, 
+	        with parents referencing their children.
+	      * TreePath-s:
+	        * Are built left to right, from a new child and
+	          a smaller TreePath referencing all the child's ancestors.
+	        * Some of the TreePath constructors provided by Java which
+	          could make the following code more self-documenting
+	          are not public and can not be used here.
+				*/
+	    { 
+		    this.rootDataNode= rootDataNode;  // Setting root DataNode.
+		
+		    parentOfRootDataNode= // Calculating parent of root node...
+		      new SingleChildDataNode(   // to be single child parent of...
+		        rootDataNode // ..root node.
+		        );
+		
+		    parentOfRootTreePath= // Calculating path to parent...
+		      new TreePath(   // ...to be TreePath consisting of only...
+		        parentOfRootDataNode  // ...the parent node.
+		        );
+		
+		    rootTreePath= // Calculating path to root...
+		      parentOfRootTreePath.  // ...to be the TreePath to parent...
+		        pathByAddingChild(  // ...and adding...
+		          rootDataNode  // ...the root node.
+		          );
+	      }
 
-    parentOfRootDataNode= // Setting parent of root node...
-      new SingleChildDataNode(   // to be single child parent of...
-        rootDataNode // ..root node.
-        );
-
-    parentOfRootTreePath= // Setting path to parent...
-      new TreePath(   // ...to be TreePath consisting of only...
-        parentOfRootDataNode  // ...the parent node.
-        );
-
-    rootTreePath= // Setting path to root...
-      parentOfRootTreePath.  // ...to be the TreePath to parent...
-        pathByAddingChild(  // ...and adding...
-          rootDataNode  // ...the root node.
-          );
-    }
-
-  /* ?? //
-  public static DataRoot getIt() { // Temporary for static access.
-    return theDataRoot;
-    }
-    */
-
-  // Methods.
+  // Other methods.
 
     public DataNode getRootDataNode( )
       { return rootDataNode; }

@@ -6,19 +6,15 @@ import static allClasses.Globals.*;  // For appLogger;
 
 public class MetaRoot {
 
-  /* This class manages the root of the MetaNode-s structure.  
-
-    ??? Eliminate all static fields and static references to this class.
-
-    */
-
+  // This class manages the root of the MetaNode-s structure.  
+    
   // Dependency Injection variables.
     DataRoot theDataRoot;
     MetaFileManager theMetaFileManager;
  
   // Other instance variables. 
     private MetaNode rootMetaNode;  /* Root of tree which 
-      holds Dag information.  */
+      holds DAG information.  */
     private MetaNode parentOfRootMetaNode;  /* Pseudo-parent of root.
       This is the same tree as rootMetaNode, but can be used as
       a sentinel record to eliminate checking for null during
@@ -26,56 +22,49 @@ public class MetaRoot {
     private MetaPath parentOfRootMetaPath;  /* MetaPath associated with
       parentOfRootMetaNode.  */
 
-  //private static MetaRoot theMetaRoot;  // Temporary for static references.
-
-  //public static MetaRoot get()  // Temporary for static references.
-  //  { return theMetaRoot; }
-
   MetaRoot(  // Constructor.
       DataRoot theDataRoot, 
       MetaFileManager theMetaFileManager 
       )
     /* The need for theDataRoot should be obvious.
-      theMetaFileManager is a dependency because
+      theMetaFileManager is a dependency also because
       it is used in the construction of MetaNodes
       so that their children can be lazy-loaded.
       */
     {
       appLogger.info( "MetaRoot constructor starting.");
 
-      //theMetaRoot= this;  // for temporary static references. ???
-
       this.theDataRoot= theDataRoot;
       this.theMetaFileManager= theMetaFileManager;
-
-      rootMetaNode=  // Initialize present MetaNode tree root with...
-        theMetaFileManager.makeMetaNode( // ...a MetaNode containing...
-          theDataRoot.getRootDataNode( ) // ...the root DataNode.
-          );
-
-      calculateInnerDependenciesV( );
       }
 
-  public void loadV( )
-    /* This method loads the MetaRoot data from the external MetaFile(s),
+  public void initializeV( )
+    /* This method does initialization beyond simple assignment
+      and dependency injection done by constructors.
+      It loads the MetaRoot data from the external MetaFile(s),
       replacing whatever MetaRoot data is active now.
       It will load at least the root node.
-      Other nodes will loaded if and when needed.
+      Other nodes might be lazy-loaded later if needed.
       */
     { 
       MetaNode loadedMetaNode=  // Trying to load new MetaNode DAG state...
-        theMetaFileManager.start();  // ...from from MetaFile.  ???
-
-      if // Using load result as root if load was successful.
-        ( ( loadedMetaNode != null) && // Meta-data was loaded, and...
-          ( loadedMetaNode.getDataNode( ) != // ...the loaded data had no...
-            UnknownDataNode.newUnknownDataNode( )  // ...error.
-            )
+        theMetaFileManager.start();  // ...from from MetaFile.
+      if // Calculating rootMetaNode based on load result.
+        ( ( loadedMetaNode != null) && // Meta-data was loaded, and
+          !UnknownDataNode.isOneB( // load error. 
+          		loadedMetaNode.getDataNode( ) 
+          		)
           )
         {
-          rootMetaNode= loadedMetaNode;  // Storing loaded MetaNode as Root.
-          calculateInnerDependenciesV( );
+          rootMetaNode= // Storing as root MetaNode
+            loadedMetaNode;  // the loaded MetaNode.
           }
+        else
+        rootMetaNode= // Storing as root MetaNode
+          theMetaFileManager.makeMetaNode( // a single MetaNode referencing
+            theDataRoot.getRootDataNode( ) // the root DataNode.
+            );
+      calculateInnerDependenciesV( );
       }
 
   private void calculateInnerDependenciesV( )
@@ -98,12 +87,12 @@ public class MetaRoot {
         selectionAttributeString, "IS"
         ); // This guarantees success of buildAttributeTreePath( ).
           // This is compatible with both loaded and non-loaded meta data,
-          // because the root node should always be in the selection path.
+          // because the root node should always be part of the selection path.
       }
 
   // Methods.
 
-    public DataRoot getTheDataRoot( )
+    public DataRoot getTheDataRoot( )  // ?? Use separate DataRoot injection?
       { return theDataRoot; }
 
     public MetaNode getRootMetaNode( )
@@ -115,7 +104,7 @@ public class MetaRoot {
     public MetaPath getParentOfRootMetaPath( )
       { return parentOfRootMetaPath; }
 
-    /* ??? Maybe add these, though maybe with different names:
+    /* ?? Maybe add these, though maybe with different names:
 
       public boolean isRootB( MetaNode )
 
@@ -206,25 +195,13 @@ public class MetaRoot {
             DataNode theDataNode= // Get associated DataNode.
               childMetaNode.getDataNode();
             if // DataNode is an UnknownDataNode.
-              ( UnknownDataNode.isOneB( theDataNode ) )
+              ( ! AbDataNode.isUsableB( theDataNode ) )
               break scanner;  // Exit Processor.
             scanTreePath=  // Add DataNode to TreePath.
               scanTreePath.pathByAddingChild( theDataNode );
             scanMetaNode= childMetaNode;  // Point to next MetaNode.
             } // Scan all nodes with "IS".
           return scanTreePath;  // Return accumulated TreePath.
-          }
-          
-      public MetaNode getLastSelectedChildOfMetaNode
-        ( MetaNode inMetaNode )
-        /* This method returns the most recently selected child MetaNode 
-          of inMetaNode.
-          
-          Prsently it is a pass-through to MetaNode.GetLastChildMetaNode(). 
-          ??? Remove because it is totally redundant!  Only name is different.
-          */
-        { 
-          return getLastSelectedChildMetaNode( inMetaNode ); 
           }
 
       private MetaNode getLastSelectedChildMetaNode
@@ -420,7 +397,7 @@ public class MetaRoot {
               ( ! ScanBooleanAttributeMetaTool.getAttributeB( ) )
               break;  // Exit loop.  We're past the last AutoExpanded node.
             MetaNode ChildOfMetaNode=  // Get recently selected child MetaNode.
-              getLastSelectedChildOfMetaNode(
+            	getLastSelectedChildMetaNode(
                 ScanBooleanAttributeMetaTool.getMetaNode()
                 );
             if ( ChildOfMetaNode == null ) // Exit loop if no such child.

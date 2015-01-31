@@ -1,9 +1,6 @@
 package allClasses;
 
-//import java.beans.PropertyChangeListener;
-
 public interface TreeAware
-  // extends TreePathListener
 
   /* This interface describes what a JComponent must implement
     to integrate it into the Infogora's DataNode DAG browser.
@@ -12,22 +9,25 @@ public interface TreeAware
     Such a Viewer needs to know how to do many things.
 
     * Most of them can be done by a base or extended TreeHelper object.
-      For that there is getTreeHelper().
+      For that there is getTreeHelper() which returns the TreeHelper
+      associated with the JComponent.
       
-    * It also needs to select based on a TreePath.
-      This is done by a TreePathListener.
+    * It also needs to select a child from the displayed children
+      based on a TreePath.  This is done by a TreePathListener.
       
     * ???
     
     */
 
 	{
-    // Note,, default method implementations coming in Java 8 interfaces!
+    // Note, default method implementations coming in Java 8 interfaces!
 
     // TreeHelper pass-through methods.  See class TreeHelper for details.
   
       public TreeHelper getTreeHelper();
-        // Returns the TreeHelper object which can do TreePath things.
+        /* Returns the TreeHelper object associated with the JComponent
+          which can do TreePath things.
+          */
 
     }
   

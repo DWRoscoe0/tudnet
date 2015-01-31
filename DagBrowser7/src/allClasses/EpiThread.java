@@ -39,9 +39,11 @@ public class EpiThread
         termination of the "this" (EpiThread) Thread.
         It does this by calling this.interrupt().
         Later JoinV() should be called to wait for termination to complete.
+        It's okay to call this method more than once because
+        the only thing it does is call interrupt().
         */
       {
-        appLogger.info("EpiThread(" + getName() + ").stopV() begin.");
+        appLogger.info("EpiThread(" + getName() + ").stopV().");
 
         interrupt(); // Requesting termination of EpiThread thread.
         }
@@ -72,7 +74,7 @@ public class EpiThread
               Thread.currentThread().interrupt(); // Record interrupt status.
               }
 
-        appLogger.info("EpiThread(" + getName() + ").joinV() end.");
+        appLogger.info("EpiThread(" + getName() + ").joinV() done.");
         }
 
     }

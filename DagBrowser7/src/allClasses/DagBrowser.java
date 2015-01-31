@@ -19,7 +19,8 @@ public class DagBrowser
       private AppInstanceManager theAppInstanceManager;
       private ConnectionManager theConnectionManager;
       private DagBrowserPanel theDagBrowserPanel;
-      private MetaRoot theMetaRoot;
+      private DataTreeModel theDataTreeModel;
+      private DataNode theInitialRootDataNode;
 
     // Other instance variables.
       private JFrame appJFrame;  // App's only JFrame (now).
@@ -46,15 +47,16 @@ public class DagBrowser
         
         Except for some logging and exception catching setup,
         it consists of 2 phases:
-        * Creation phase.  It uses a factory to create the App.
-        * Running phase. It runs the App.
+        * Creation phase.  It uses an AppFactory to create the App.
+        * Running phase. It runs the App by calling runV().
         */
       {
         appLogger.info("main thread beginning.");
         setDefaultExceptionHandlerV();
 
-        AppFactory theAppFactory=  // Creating app factory.
-          new AppFactory(argStrings);
+        AppFactory theAppFactory=  // Creating AppFactory.
+          new AppFactory(argStrings); // This is the only "new" that is
+            // not in a Factory.
 
         DagBrowser.App theApp= theAppFactory.makeApp(); // Creating app.
 
@@ -85,27 +87,166 @@ public class DagBrowser
         // nullString.length();  //...and test uncaught exception handler.
         }
 
+    private static class AppFactory {  // For App class lifetimes.
+
+      // This is the factory for all classes with App lifetime.
+
+      String[] argStrings;
+      Thread mainThread;
+
+      public AppFactory( String[] argStrings )  // Constructor.
+        {
+          this.argStrings= argStrings;  // Saving app argument strings.
+          this.mainThread= Thread.currentThread(); // Determine out Thread.
+          }
+
+      public App makeApp() 
+        // Makes several objects and returns one referencing them all.
+        {
+          Shutdowner theShutdowner= new Shutdowner();
+          
+          AppInstanceManager theAppInstanceManager=
+            new AppInstanceManager(argStrings,theShutdowner);
+
+          return new App(
+            theShutdowner,
+            theAppInstanceManager,
+            new AppGUIFactory(
+              mainThread, 
+              theAppInstanceManager,
+              theShutdowner
+              )
+            );
+          }
+
+      }
+
+    private static class App { // The App, including pre-UI stuff.
+
+      Shutdowner theShutdowner;
+      AppInstanceManager theAppInstanceManager;
+      AppGUIFactory theAppGUIFactory;
+
+      private App(   // Constructor.  For app Creation phase.
+          Shutdowner theShutdowner,
+          AppInstanceManager theAppInstanceManager,
+          AppGUIFactory theAppGUIFactory
+          )
+        {
+          this.theShutdowner= theShutdowner;
+          this.theAppInstanceManager= theAppInstanceManager;
+          this.theAppGUIFactory= theAppGUIFactory;
+          }
+          
+      public void runV()  // This is the App Run phase. 
+        {
+          if ( ! theAppInstanceManager.managingInstancesThenNeedToExitB( ) ) 
+
+            {
+              DagBrowser theDagBrowser= // Getting browser singleton.
+                  theAppGUIFactory.getDagBrowser();
+
+              theDagBrowser.runV(); // Running browser.
+              }
+
+          theShutdowner.doShutdown();  // Doing shutdown jobs.
+          }
+
+      } // class App.
+
+    private static class AppGUIFactory {  // For DagBrowser class lifetimes.
+
+      /* This is the factory for all classes with AppGUI lifetime,
+        The AppGUI lifetime is shorter that the App lifetime,
+        because some App operations happen before or without
+        presentation of the AppGUI.
+        The DagBrowser class is the top level of the AppGUI.
+        DagBrowser should probably be renamed to AppGUI ???
+        */
+
+      // Storage for the singletons that will be returned.
+      DagBrowser theDagBrowser;
+
+      public AppGUIFactory(  // Constructor.
+          Thread mainThread, 
+          AppInstanceManager theAppInstanceManager,
+          Shutdowner theShutdowner
+          )
+      	// Builds the singletons in one possible order.
+        {
+          DataRoot theDataRoot= new DataRoot( );
+          MetaFileManager theMetaFileManager= 
+        		new MetaFileManager( theDataRoot );
+          MetaRoot theMetaRoot= 
+            new MetaRoot( theDataRoot, theMetaFileManager );
+          MetaFileManager.Finisher theMetaFileManagerFinisher= 
+          	new MetaFileManager.Finisher(
+              theMetaFileManager,
+              theMetaRoot
+              );
+          DataTreeModel theDataTreeModel= new DataTreeModel( 
+            theDataRoot, theMetaRoot, theMetaFileManagerFinisher, theShutdowner
+            );
+          ConnectionManager.Factory theConnectionManagerFactory= 
+            new ConnectionManager.Factory( theDataTreeModel );
+          ConnectionManager theConnectionManager= 
+            theConnectionManagerFactory.getConnectionManager();
+          DataNode theInitialRootDataNode=  // Building first legal value.
+            new InfogoraRoot( 
+              new DataNode[] { // ...an array of all child DataNodes.
+                new FileRoots(),
+                new Outline( 0 ),
+                theConnectionManager,
+                new Infinitree( null, 0 )
+                }
+              );
+          DagBrowserPanel theDagBrowserPanel= new DagBrowserPanel(
+            theAppInstanceManager,
+            theDataTreeModel,
+            theDataRoot,
+            theMetaRoot
+            );
+          theDagBrowser= new DagBrowser( 
+            mainThread, 
+            theAppInstanceManager,
+            theConnectionManager,
+            theDagBrowserPanel,
+            theDataTreeModel,
+            theInitialRootDataNode
+            );
+         }
+
+      public DagBrowser getDagBrowser() 
+        {
+          return theDagBrowser;
+          }
+
+      } // class AppGUIFactory.
+
     private DagBrowser(   // Constructor.
         Thread ourThread, 
         AppInstanceManager theAppInstanceManager,
         ConnectionManager theConnectionManager,
         DagBrowserPanel theDagBrowserPanel,
-        MetaRoot theMetaRoot
+        DataTreeModel theDataTreeModel,
+        DataNode theInitialRootDataNode
         )
       {
         this.ourThread= ourThread;
         this.theAppInstanceManager= theAppInstanceManager;
         this.theConnectionManager= theConnectionManager;
         this.theDagBrowserPanel= theDagBrowserPanel;
-        this.theMetaRoot= theMetaRoot;
-
+        this.theDataTreeModel= theDataTreeModel;
+        this.theInitialRootDataNode= theInitialRootDataNode;
         }
 
-    public void runV() // This method is the DagBrowser run phase.
+    public void runV() // This method is the main DagBrowser run phase.
       {
-        theMetaRoot.loadV();  // Load meta-data from external file(s).
+        theDataTreeModel.initializeV(
+        	theInitialRootDataNode
+          );
 
-        startingGUIV();  // Building and displaying GUI.
+        startingGUIV();  // Building and displaying Graphical User Interface.
 
         EpiThread theConnectionManagerEpiThread=
           new EpiThread( theConnectionManager, "ConnectionManager" );
@@ -143,7 +284,7 @@ public class DagBrowser
         appLogger.info("GUI/AWT thread signalled start-up done.");
         }
 
-    class GUIMaker
+    class GUIMaker  // Runs in the AWT thread.
       implements Runnable
 
       /* This nested class is used to create and start the app's GUI.
@@ -182,7 +323,7 @@ public class DagBrowser
 
         }
 
-    private void awaitingShutdownV()
+    private void awaitingShutdownV()  // While interacting with user.
       // This method blocks until shutdown is underway..
       {
         Thread theShutdownThread =  // Creating ShutdownThread Thread.
@@ -204,9 +345,10 @@ public class DagBrowser
         appLogger.info("DagBrowser.awaitingShutdownV(): ending wait.");
 
         // At this point shutdown is underway.
+        
         }
       
-    class TerminationShutdownThread
+    class TerminationShutdownThread  // For terminating main() thread.
       extends Thread
       /* This nested shutdown hook Thread class's run() method
         requests that the main thread finalize and terminate.
@@ -233,7 +375,7 @@ public class DagBrowser
             }
         }
 
-    public void newAppInstanceCreated()
+    public void newAppInstanceCreated()  // New instance listener method.
       /* This AppInstanceListener method handles the creation of
         new running instances of this app.
         It is called by theAppInstanceManager.
@@ -259,7 +401,7 @@ public class DagBrowser
             +", archived "
             +theAppInstanceManager.thisAppDateString()
             );
-        theDagBrowserPanel.initializeV(); // Initialize content panel.
+        theDagBrowserPanel.initializeV(); // Initializing post-construction.
         theJFrame.setContentPane( theDagBrowserPanel );  // Store content.
         theJFrame.pack();  // Layout all the content's sub-panels.
         theJFrame.setLocationRelativeTo(null);  // Center JFrame on screen.
@@ -310,150 +452,5 @@ public class DagBrowser
             appJFrame.repaint();
             }
         }
-
-    private static class AppFactory {
-
-      // This is the factory for all classes with App lifetime.
-
-      String[] argStrings;
-      Thread mainThread;
-
-      public AppFactory( String[] argStrings )  // Constructor.
-        {
-          this.argStrings= argStrings;  // Saving app argument strings.
-          this.mainThread= Thread.currentThread(); // Determine out Thread.
-          }
-
-      public App makeApp() 
-        // Makes several objects and returns one referencing them all.
-        {
-          Shutdowner theShutdowner= new Shutdowner();
-          
-          AppInstanceManager theAppInstanceManager=
-            new AppInstanceManager(argStrings,theShutdowner);
-
-          return new App(
-            theShutdowner,
-            theAppInstanceManager,
-            new AppGUIFactory(
-              mainThread, 
-              theAppInstanceManager,
-              theShutdowner
-              )
-            );
-          }
-
-      }
-
-    private static class App {
-
-      Shutdowner theShutdowner;
-      AppInstanceManager theAppInstanceManager;
-      AppGUIFactory theAppGUIFactory;
-
-      private App(   // Constructor.  For app Creation phase.
-          Shutdowner theShutdowner,
-          AppInstanceManager theAppInstanceManager,
-          AppGUIFactory theAppGUIFactory
-          )
-        {
-          this.theShutdowner= theShutdowner;
-          this.theAppInstanceManager= theAppInstanceManager;
-          this.theAppGUIFactory= theAppGUIFactory;
-          }
-          
-      public void runV()  // For app Run phase. 
-        {
-          if ( ! theAppInstanceManager.managingInstancesThenNeedToExitB( ) ) 
-
-            {
-              DagBrowser theDagBrowser= // Getting browser singleton.
-                  theAppGUIFactory.getDagBrowser();
-
-              theDagBrowser.runV(); // Running browser.
-              }
-
-          theShutdowner.doShutdown();  // Doing shutdown jobs.
-          }
-
-      }
-
-    private static class AppGUIFactory {
-
-      /* This is the factory for all classes with AppGUI lifetime,
-        The AppGUI lifetime is shorter that the App lifetime,
-        because some App operations happen before or without
-        presentation of the AppGUI.
-        The DagBrowser class is the top level of the AppGUI.
-        DagBrowser should probably be renamed to AppGUI ???
-        */
-
-      // Storage for dependencies.  Not needed because constructor use them.
-      ///Thread mainThread;
-      ///AppInstanceManager theAppInstanceManager;
-      ///Shutdowner theShutdowner;
-
-      // The one single that will be returned.
-      DagBrowser theDagBrowser;
-
-      public AppGUIFactory(  // Constructor.
-          Thread mainThread, 
-          AppInstanceManager theAppInstanceManager,
-          Shutdowner theShutdowner
-          )
-        {
-          // Store dependencies.
-          ///this.mainThread= mainThread;
-          ///this.theAppInstanceManager= theAppInstanceManager;
-          ///this.theShutdowner= theShutdowner;
-
-          // Calculate singletons.  Only the last one is returned.
-          DataRoot theDataRoot= new DataRoot(
-            new InfogoraRoot( 
-              new DataNode[] { // ...an array of all child DataNodes.
-                new FileRoots(),
-                new Outline( 0 ),
-                new ConnectionManager.Root(), // Temporary.
-                new Infinitree( null, 0 )
-                }
-              )
-            );
-          ConnectionManager.Factory theConnectionManagerFactory= 
-            new ConnectionManager.Factory();
-          ConnectionManager theConnectionManager= 
-            theConnectionManagerFactory.getConnectionManager();
-          MetaFileManager theMetaFileManager= 
-          		new MetaFileManager( theDataRoot );
-          MetaRoot theMetaRoot= 
-            new MetaRoot( theDataRoot, theMetaFileManager );
-          new MetaFileManager.Finisher(
-            theMetaFileManager,
-            theShutdowner, 
-            theMetaRoot
-            );
-          DataTreeModel theDataTreeModel= new DataTreeModel( 
-            theDataRoot, theMetaRoot 
-            );
-          DagBrowserPanel theDagBrowserPanel= new DagBrowserPanel(
-            theAppInstanceManager,
-            theDataTreeModel,
-            theDataRoot,
-            theMetaRoot
-            );
-          theDagBrowser= new DagBrowser( 
-            mainThread, 
-            theAppInstanceManager,
-            theConnectionManager,
-            theDagBrowserPanel,
-            theMetaRoot
-            );
-         }
-
-      public DagBrowser getDagBrowser() 
-        {
-          return theDagBrowser;
-          }
-
-      }
 
     } // class DagBrowser

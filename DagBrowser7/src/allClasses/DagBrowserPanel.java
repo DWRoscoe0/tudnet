@@ -325,7 +325,6 @@ public class DagBrowserPanel
 
             { // setup handling by listener of various Tree events.
               theRootJTree.getTreeHelper().addTreePathListener(
-                //this
                 theTreePathListener
                 );
               theRootJTree.getTreeHelper().addFocusListener(this);
@@ -356,21 +355,6 @@ public class DagBrowserPanel
           replaceRightPanelContent(  // Replace null JScrollPane content...
             startTreePath  // ...with content based on startTreePath.
             );
-          /*
-          { // build the scroller content.
-            dataJComponent=   // calculate JPanel from TableModel.
-              theDataTreeModel.GetDataJComponent(
-                startTreePath // initially displaying root/child.
-                );  // Note that theDataTreeModel was built earlier.
-            dataTreeAware= (TreeAware)dataJComponent;  // Define alias...
-            dataTreeAware.getTreeHelper().addTreePathListener(  // ...and Listener.
-              //this
-              theTreePathListener
-              );
-            } // build the scroller content.
-          dataJScrollPane.setViewportView(  // in the dataJScrollPane's viewport...
-            dataJComponent);  // ...set the DataJPanel for viewing.
-          */  
           }
 
       private void miscellaneousInitializationV()
@@ -596,9 +580,9 @@ public class DagBrowserPanel
                 is legal in the current display context.  
                 It is implemented only by coordinators, such as this class, 
                 which coordinates the TreePath-s displayed by 
-                the left and right subpanels.
-                Presently the selected node in the left subpanel is always
-                the parent of path of the part selected in the right subpanel.
+                the left and right sub-panels.
+                Presently the selected node in the left sub-panel is always
+                the parent of path of the part selected in the right sub-panel.
                 */
               { 
                 boolean legalB;
@@ -613,7 +597,7 @@ public class DagBrowserPanel
                   Component sourceComponent=  // Getting event's source Component.
                     (Component)theTreePathEvent.getSource();
                   
-                  if  // Handling source that is not right sub-pannel,
+                  if  // Handling source that is not right sub-panel,
                     ( ! ancestorOfB( dataJComponent, sourceComponent) )
                     { legalB= true; break goReturn; } // Exiting, legal.
                       
@@ -633,11 +617,11 @@ public class DagBrowserPanel
               /* This TreePathListener method processes TreePathEvent-s 
                 from TreeAware JComponents, 
                 which are JComponents with TreeHelper code
-                in the left and right subpanels.
+                in the left and right sub-panels.
                 It coordinates selections in the left and right sub-panels.  
                 The left panel is a navigation pane containing a RootJTree.
                 The right panel is a JComponent apprpriate for
-                displaying whatever node is highlighted in the left subpanel.
+                displaying whatever node is highlighted in the left sub-panel.
                 It maintains the correct relationship between 
                 what is displayed and selected in the 2 main sub-panels.
                 It also updates directoryJLabel and infoJLabel with information 
@@ -717,7 +701,6 @@ public class DagBrowserPanel
           { // processSelectionFromLeftSubpanel(.)
             //appLogger.info("DagBrowserPanel.processSelectionFromLeftSubpanel(..).");  // 
 
-            // Maybe let RightPanel decide whether to do this??
             replaceRightPanelContent( inTreePath );
             } // processSelectionFromLeftSubpanel(.)
 
@@ -757,34 +740,54 @@ public class DagBrowserPanel
             } // processSelectionFromRightSubpanel()
 
         private void replaceRightPanelContent( TreePath inTreePath )
-          /* This method calculates a new
-            JComponent and TreeAware appropriate for displaying
-            the last element of inTreePath and sets them
-            as content of the right sub-panel JScrollPane for display.
+          /* This method calculates a new JComponent and its equivalent 
+            TreeAware which are appropriate for displaying
+            the last DataNode element of inTreePath and sets to be
+            the content of the right sub-panel JScrollPane for display.
+
+            ??? This is being changed do here the
+            registration and unregistration of the JComponent 
+            as a TreeModelListener to prevent a Listener leak.
             */
           { // replaceRightPanelContent(.)
-            //appLogger.info("DagBrowserPanel.replaceRightPanelContent().");
-            { // build the scroller content.
+        	  TreeAware oldTreeAware= dataTreeAware;  // Snapshotting old content.
+        	    // ??? Done in case Java references old content when it shouldn't.
+        	    // Didn't help.
+      	    { // Initialize new scroller content.
               dataJComponent=   // Calculate new JComponent...
                 theDataTreeModel.  // ...by having the TreeModel...
-                GetDataJComponent(  // ...generate a JComponent...
+                getDataJComponent(  // ...generate a JComponent...
                   inTreePath  // appropriate to new selection.
                   );
+                // dataJComponent is registered indirectly as TreeModelListener.
               dataTreeAware= // Calculate TreeAware alias.
                 (TreeAware)dataJComponent;
+            	dataTreeAware.getTreeHelper().setDataTreeModel( // Initializing
+            	  theDataTreeModel // with respect to TreeModel, registering.
+            	  );
+                // dataJComponent is registered indirectly as TreeModelListener.
               dataTreeAware.getTreeHelper().  // set TreeAware's TreeSelectionListener by...
                 addTreePathListener(  // adding to its Listener list...
                   //this  // ...a reference to this the main panel
                   theTreePathListener
                   );
               dataTreeAware.getTreeHelper().addFocusListener(this);
-              } // build the scroller content.
-            dataJScrollPane.setViewportView(  // in the dataJScrollPane's viewport...
-              dataJComponent);  // ...set the DataJPanel for viewing.
-            dataJScrollPane.getViewport().setOpaque( true );
-            dataJScrollPane.getViewport().setBackground( Color.GRAY );
-            dataJComponent.repaint();  // make certain it's displayed.
-            oldPanelTreePath= inTreePath;  // Save path for compares later.
+              } // Initialize new scroller content.
+      	    { // Change scroller content. 
+	            dataJScrollPane.setViewportView(  // in the dataJScrollPane's viewport...
+	              dataJComponent);  // ...set the DataJPanel for viewing.
+	            dataJScrollPane.getViewport().setOpaque( true );
+	            dataJScrollPane.getViewport().setBackground( Color.GRAY );
+	            dataJComponent.repaint();  // make certain it's displayed.
+	            oldPanelTreePath= inTreePath;  // Save path for compares later.
+      	      }  // Change scroller content.
+	        	{ // Finalize old scroller content.
+		        	if // Unlinking TreeModel from old content.
+	              ( oldTreeAware != null ) 
+	            	oldTreeAware.getTreeHelper().setDataTreeModel( // Finalizing 
+	            	  null // with respect to TreeModel, unregistering.
+	            	  );
+	        		} // Finalize old scroller content.
             } // replaceRightPanelContent(.)
       
       // methods of the FocusListener, the FocusStateMachine, and others.
@@ -1188,13 +1191,13 @@ public class DagBrowserPanel
                 inTreePath= inTreePath.getParentPath();  // Strip the node.
               directoryJLabel.setText(  // in directoryJLabel display set...
                 theDataTreeModel.  // ...DataTreeModel's calculation of...
-                  GetAbsolutePathString(  // ...String representation of...
+                  getAbsolutePathString(  // ...String representation of...
                     inTreePath  // ...of inTreePath.
                   )
                 );
               infoJLabel.setText(  // set infoJLabel to be...
                 theDataTreeModel.  // ...DataTreeModel's calculation of...
-                  GetInfoString(inTreePath)  // the info string of inTreePath.
+                  getInfoString(inTreePath)  // the info string of inTreePath.
                 );
               } // display non-null info.
           } // displayPathAndInfoV(TreePath inTreePath)

@@ -6,20 +6,36 @@ import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.SocketException;
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
+
+import javax.swing.SwingUtilities;
 
 import static allClasses.Globals.*;  // appLogger;
 
 public class ConnectionManager 
 
-  ///extends EpiThread
-  
+  extends MutableList
+
   implements Runnable
 
-  /* This class makes and maintains simple UDP unicast connections 
-    based on input from various other Threads.
+  /* This class makes and maintains simple UDP unicast connections
+    with other Infogora peer nodes.
+
+    It extends MutableList.  This is a list of connected peers.
+    Because this list is accessed by a TreeModel on the EDT,
+    this List is asynchronously updated when changes are needed
+    using java.awt.EventQueue.invokeLater(..) method which runs on 
+    the Event Dispath Thread (EDT).
+
+    For maintaining the set of peers that can be updated immediately
+    by this ConnectionManager Thread, a Map is used.
+    It is also used to quickly 
+
+    This class makes use of other threads to manage the individual connections.
+    It receives inputs from those connection via thread-safe queues.
 
     Originally the plan was to use a separate 
     connected DatagramSocket for each peer of a node.
@@ -32,20 +48,20 @@ public class ConnectionManager
     This is an unacceptable complication.
     
     So, only 2 Datagram sockets are used: 
-    * one for multicast receiving and 
-    * another for every thing else.
+    * one socket for multicast receiving and 
+    * another socket for every thing else.
     Their ports must be different/unique.
 
     There are several types of thread classes defined in this file
     and in other java files.
-    * ConnectionManager: manages everything.  
-      ? Maybe rename to ConnectionsManager?
-    * UnconnectedReceiver: receives packets for Connection(s)Manager.
+    * ConnectionManager: the main thread for this class.
+      It manages everything.  
+    * UnconnectedReceiver: receives packets for ConnectionManager.
     * Peer: manages one connection.  
       ? Maybe rename to ConnectionManager?
     * PeerDiscovery (now in its own file): 
       sends and receives multicast packets
-      useded for discovering other peers on the LAN.
+      used for discovering other peers on the LAN.
 
     An IOException can be caused by external events,
     such as a link going down, the computer going to sleep, etc.
@@ -53,70 +69,80 @@ public class ConnectionManager
     and retrying the operation.
     */
 
-  { // ConnectionManager/Connections.
+  { // class ConnectionManager.
 
   
     // Injected instance variables, all private.
-    
-    private ConnectionManager.Factory theConnectionManagerFactory; 
+	    
+	    private ConnectionManager.Factory theConnectionManagerFactory; 
 
     // Other instance variables, all private.
+	
+	    private Map<SocketAddress,PeerValue> peerSocketAddressMap;
+	      /* This initially empty Collection provides lookup of Peers
+	        by associated SocketAddress.
+	        It is used mainly to determine which, if any, Peer
+	        is the source of a newly received packet.
 
-    ///private HashMap<SocketAddress,Peer> peerSocketAddressHashMap;
-    private HashMap<SocketAddress,PeerValue> peerSocketAddressHashMap;
-      /// Being converted from Peer to PeerValue.
-      /* This initially empty Collection provides access to the Peers.
-        It can be used for displaying the Peers.
-        It can also be used to lookup Peers by SocketAddress,
-        in the case of packets received on 
-        unconnected sockets if remote addresses were always stored in 
-        Packets (or SockPackets).
-
-        Maybe these should be in a separate class for this??
-        */
-
-    private DatagramSocket unconnectedDatagramSocket; // For UDP io.
-
-    private UnconnectedReceiver theUnconnectedReceiver; // Receiver and
-    private EpiThread theUnconnectedReceiverEpiThread ; // its thread.
-
-    private LockAndSignal theLockAndSignal;  // LockAndSignal for this thread.
-      /* This single object is used to synchronize communication between 
-        the ConnectionManager and all threads providing data to it.
-        The old way used an Objects for a lock and a separate 
-        boolean signal.
-        */
-
-    private PacketQueue sendPacketQueue; // Queue of packets to be sent.
-
-    private PacketQueue multicastSignallingQueueOfSockPackets; 
-      // Discovery packets queue.
-
-    private PacketQueue uniconnectedSignallingQueueOfSockPackets;
-      // For received uniconnected packets.
+					Presently only connected Peers are put in this Map,
+					and it is kept synchronized with the superclass MutableList,
+					but maybe it should contain presently and past connected Peers???
+	        Or maybe these should be in a separate class for this??
+	        */
+	
+	    private DatagramSocket unconnectedDatagramSocket; // For UDP io.
+	
+	    private UnconnectedReceiver theUnconnectedReceiver; // Receiver and
+	    private EpiThread theUnconnectedReceiverEpiThread ; // its thread.
+	
+	    private LockAndSignal theLockAndSignal;  // LockAndSignal for this thread.
+	      /* This single object is used to synchronize communication between 
+	        the ConnectionManager and all threads providing data to it.
+	        The old way used an Objects for a lock and a separate 
+	        boolean signal.
+	        */
+	
+	    private PacketQueue sendPacketQueue; // Queue of packets to be sent.
+	
+	    private PacketQueue multicastSignallingQueueOfSockPackets; 
+	      // Discovery packets queue.
+	
+	    private PacketQueue uniconnectedSignallingQueueOfSockPackets;
+	      // For received unconnected packets.
+	
+	    private SignallingQueue<Peer> peerQueue;
+	      // For Peers signaling their idleness.
 
 
     public ConnectionManager(   // Constructor.
-        ConnectionManager.Factory theConnectionManagerFactory 
+        ConnectionManager.Factory theConnectionManagerFactory,
+        DataTreeModel theDataTreeModel
         )
       {
-        ///super( "Connections" );  // Name here because setName() not reliable.
+        super(  // Constructing base class.
+          theDataTreeModel, // Injected, to be notified when Peer List changes.
+          "Network-Connections", // DataNode (and thread) name.
+          new DataNode[]{} // Initially empty List of Peers.
+          );
 
-        // [some] variable initializations happen where they are declared.
-
+        // Storing injected dependencies stored in this class.
         this.theConnectionManagerFactory= theConnectionManagerFactory;
 
-        peerSocketAddressHashMap=  // Setting no peers initially.
-          ///new HashMap<SocketAddress,Peer>();
-          new HashMap<SocketAddress,PeerValue>();
-        theLockAndSignal= new LockAndSignal(false);  // Creating signaller.
+        peerSocketAddressMap=  // Setting socket-to-peer map empty.
+          new ConcurrentHashMap<SocketAddress,PeerValue>();
+            // This probably doesn't need to be a concurrent map,
+            // but it probabably doesn't hurt.
+
+        // Setting all input queues empty.
+        theLockAndSignal= new LockAndSignal(false);  // Creating signaler.
         sendPacketQueue=
           new PacketQueue(theLockAndSignal);
         multicastSignallingQueueOfSockPackets=
           new PacketQueue(theLockAndSignal);
         uniconnectedSignallingQueueOfSockPackets=
           new PacketQueue(theLockAndSignal);
-
+        peerQueue=
+          new SignallingQueue<Peer>(theLockAndSignal);
         }
 
 
@@ -189,20 +215,17 @@ public class ConnectionManager
           "UnconnectedReceiver"
           );
 
-        ///theUnconnectedReceiver.start();  // Starting thread.
         theUnconnectedReceiverEpiThread.start();  // Starting thread.
         }
 
     private void withSocketFinalizingV()
       {
-        terminatingPeerThreadsV(); // most of theUnconnectedReceiver users.
+        terminatingPeerThreadsV(); // [most of?] theUnconnectedReceiver users.
 
-        ///theUnconnectedReceiver.stopV();  // Requesting termination of
         theUnconnectedReceiverEpiThread.stopV();  // Requesting termination of
           // theUnconnectedReceiver thread.
         unconnectedDatagramSocket.close(); // Causing immediate unblock of
           // unconnectedDatagramSocket.receive() in that thread.
-        ///theUnconnectedReceiver.joinV();  // Waiting for termination of
         theUnconnectedReceiverEpiThread.joinV();  // Waiting for termination of
           // theUnconnectedReceiver thread.
         }
@@ -210,9 +233,15 @@ public class ConnectionManager
     private void terminatingPeerThreadsV()
       /* This method terminates all of the Peer threads 
         that were created to communicate with discovered Peer nodes.
-        It does this in 2 loops: one to request termination,
-        and another to wait for termination to complete; because 
-        concurrent terminations are possible when there are multiple Peers.
+        It does this in 2 loops: the first to request terminations,
+        and a second to wait for terminations to complete; 
+        because faster concurrent terminations are possible 
+        when there are multiple Peers.
+        
+        ??? Though it might be good to update the displayed Peer list,
+        by removing the Peers from the inherited MutableList
+        during the second loop of the termination process 
+        to see any slow terminators, this is not done presently. 
         */
       {
         appLogger.info("Connections.terminatingPeerThreadsV() beginning.");
@@ -220,33 +249,32 @@ public class ConnectionManager
         Iterator<PeerValue> anIteratorOfPeerValues;  // For peer iterator.
 
         anIteratorOfPeerValues=  // Getting new peer iterator.
-          peerSocketAddressHashMap.values().iterator();
+          peerSocketAddressMap.values().iterator();
         while  // Requesting termination of all Peers.
           (anIteratorOfPeerValues.hasNext())
           {
             PeerValue thePeerValue= anIteratorOfPeerValues.next();
-            ///Peer thePeer= thePeerValue.getPeer();
-            ///thePeer.stopV();  // Requesting Termination of Peer.
-            thePeerValue.getEpiThread().stopV();  // Requesting Termination of Peer.
+            thePeerValue.getEpiThread().stopV();  // Requesting Termination 
+              // of Peer.
             }
 
         anIteratorOfPeerValues=  // Getting new peer iterator.
-          peerSocketAddressHashMap.values().iterator();
-        while  // Waiting for termination of all Peers.
+          peerSocketAddressMap.values().iterator();
+        while  // Waiting for completion of termination of all Peers.
           (anIteratorOfPeerValues.hasNext())
           {
             PeerValue thePeerValue= anIteratorOfPeerValues.next();
-            ///Peer thePeer= thePeerValue.getPeer();
-            ///thePeer.joinV();  // Waiting for termination of Peer.
-            thePeerValue.getEpiThread().joinV();  // Waiting for termination of Peer.
-            anIteratorOfPeerValues.remove(); // Removing from HashMap...
+            //?thePeerValue.getEpiThread().joinV();  // Waiting for termination 
+            thePeerValue.getEpiThread().stopAndJoinV();  // Waiting for termination
+              // of Peer.
+            //anIteratorOfPeerValues.remove(); // Removing from HashMap...
             }
 
         appLogger.info("Connections.terminatingPeerThreadsV() ending.");
         }
 
     private void processingInputsAndExecutingEventsV()
-      /* This method cointains a single loop which
+      /* This method contains a single loop which
         does various types of work.  The work consists of:
           * Processing inputs it gets from several queues.
           - It was also processing scheduled jobs whose times have come,
@@ -268,6 +296,7 @@ public class ConnectionManager
                 continue;  // Loop if any SockPackets were sent.
               processingDiscoverySockPacketsB();
                 // Last because these are rare.
+              processingIdlePeersB();
               }
 
             theLockAndSignal.doWaitE();  // Waiting for new inputs.
@@ -364,6 +393,41 @@ public class ConnectionManager
         return packetsProcessedB;
         }
 
+    private boolean processingIdlePeersB() // ??? 
+      /* This method processes Peers that 
+        have signaled that they need service
+        by queuing themselves in the peerQueue.
+        Presently this can mean only one thing,
+        that the peer thread has lost contact
+        with its associated peer node and is terminating its thread.
+        The connection manager's job is to removing the Peer from
+        the inherited MutableList and the Map.
+        This method returns true if any Peers 
+        were in the peerQueue and processed, false otherwise.
+        */
+      {
+        boolean elementProcessedB= false;
+
+        while (true) {  // Process all queued Peers.
+          final Peer thePeer= // Getting next Peer from queue.
+        		peerQueue.poll();
+          if (thePeer == null) break;  // Exiting if no more Peers.
+          	{
+		          SwingUtilities.invokeLater( // Queuing removal of Peer from List.
+		        		new Runnable() {
+		              @Override  
+		              public void run() { 
+		                remove( thePeer );  // Remove from DataNode List.
+		                }  
+		              } 
+		            );
+          		}
+          elementProcessedB= true;
+          }
+          
+        return elementProcessedB;
+        }
+
     private boolean processingUnconnectedSockPacketsB()
       /* This method processes unconnected unicastpackets 
         that are received by the UnconnectedReceiver Thread 
@@ -412,11 +476,11 @@ public class ConnectionManager
         //  + theSockPacket.getSocketAddressesString()
         //  );
         Peer thePeer=  // Get or create Peer.
-          getOrCreateAndAddPeer( theSockPacket );
+          getOrBuildPeer( theSockPacket );
         thePeer.puttingReceivedPacketV( theSockPacket );  // Why needed ???
         }
 
-    private Peer getOrCreateAndAddPeer( SockPacket theSockPacket )
+    private Peer getOrBuildPeer( SockPacket theSockPacket )
       /* Gets or creates the Peer associated with theSockPacket.
         It adds the Peer to the appropriate data structures.
         It returns the found or created Peer.
@@ -431,79 +495,72 @@ public class ConnectionManager
             theDatagramPacket.getPort()
             );
         Peer thePeer=  // Get or create Peer.
-          getOrCreateAndAddPeer(peerInetSocketAddress);
+          getOrBuildPeer(peerInetSocketAddress);
         return thePeer;
         }
 
-    private Peer getOrCreateAndAddPeer(
+    private Peer getOrBuildPeer(
         InetSocketAddress peerInetSocketAddress
         )
-      /* Gets or creates the Peer whose SocketAddress
-        is peerInetSocketAddress.
-        If a new Peer is created then it also:
+      /* Gets the Peer whose SocketAddress is peerInetSocketAddress.
+        If such a Peer does not exist then it builds one. 
+        If it builds one then it also:
         * Adds the Peer to the appropriate data structures.
-        * Starts the Peer thread.
-        It returns the found or created Peer.
+        * Starts the associated Peer thread.
+        It returns the gotten or built Peer.
         */
       {
-        ///Peer thePeer;
-        PeerValue thePeerValue;
-        
-        thePeerValue=  // Testing whether the peer already stored.
-          peerSocketAddressHashMap.get(peerInetSocketAddress);
-        if (thePeerValue == null) // Adding entry if not stored already.
+        PeerValue resultPeerValue= // Testing whether peer is already stored.
+          peerSocketAddressMap.get(peerInetSocketAddress);
+        if (resultPeerValue == null) // Adding peer if not stored already.
           {
-            thePeerValue= 
+            final PeerValue newPeerValue=  // Building new peer. 
               theConnectionManagerFactory.buildPeerValue(
                 peerInetSocketAddress,
-                sendPacketQueue
+                sendPacketQueue,
+                peerQueue
                 );
-            peerSocketAddressHashMap.put(  // Add to HashMap with...
-              peerInetSocketAddress,  // ...the address as the key and...
-              thePeerValue  // ...the PeerValue as the value.
-              ///thePeer  // ...the Peer object as the value.
+            peerSocketAddressMap.put(  // Adding to HashMap with...
+              peerInetSocketAddress,  // ...the SocketAddress as the key and...
+              newPeerValue  // ...the PeerValue as the value.
               );
-            ///thePeer= thePeerValue.getPeer();
-            ///thePeer.start();  // Start the peer's associated thread.
-            thePeerValue.getEpiThread().start();  // Start the peer's associated thread.
+            SwingUtilities.invokeLater( // Queuing add of Peer to List.
+          		new Runnable() {
+                @Override  
+                public void run() { 
+                  add( newPeerValue.getPeer() );  // Add to DataNode List.
+                  }  
+                } 
+              );
+            newPeerValue.getEpiThread().start(); // Start the peer's thread.
+            resultPeerValue= newPeerValue;  // Using new peer as result.
             }
-        return thePeerValue.getPeer();
+        return resultPeerValue.getPeer();
         }
 
 
     // Nested classes.
 
-    public static class Root  // ConnectionManager's DataNode entry point.
-      extends NamedList 
-      {  // ???
-
-        /* This class is ConnectionManager's entry in
-          the Infogora DataNode hierarchy.
-          */
-
-        public Root( )
-          {
-            super( 
-              "Connections" 
-              , new NamedLeaf( "dummy child 1" )
-              , new NamedLeaf( "dummy child 2" )
-              , new NamedLeaf( "dummy child 3" )
-              );
-            }
-
-        }
-
     public static class Factory {
 
-      /* This is the factory for class lifetimes
-        of the ConnectionManager or shorter.
+      /* This is the factory for objects with lifetimes
+        of the ConnectionManager's lifetime or shorter.
         */
+
+      private DataTreeModel theDataTreeModel;
 
       private ConnectionManager theConnectionManager;
 
-      public Factory( )  // Constructor.
+      public Factory(  // Constructor.
+          DataTreeModel theDataTreeModel
+          )
         {
-          theConnectionManager= new ConnectionManager( this );
+	        this.theDataTreeModel= theDataTreeModel;
+
+          theConnectionManager= new ConnectionManager( 
+            this,
+            this.theDataTreeModel
+            );
           }
 
       public ConnectionManager getConnectionManager()
@@ -511,25 +568,28 @@ public class ConnectionManager
 
       public Peer buildPeer(
           InetSocketAddress peerInetSocketAddress,
-          PacketQueue sendPacketQueue
-          ///ConnectionManager theConnectionManagerNOT ///
+          PacketQueue sendPacketQueue,
+          SignallingQueue<Peer> peerQueue
           )
         {
           return new Peer(
             peerInetSocketAddress,
             sendPacketQueue,
+            peerQueue,
             theConnectionManager
             );
           }
 
       public PeerValue buildPeerValue(
           InetSocketAddress peerInetSocketAddress,
-          PacketQueue sendPacketQueue
+          PacketQueue sendPacketQueue,
+          SignallingQueue<Peer> peerQueue
           )
         {
           Peer thePeer= buildPeer(
             peerInetSocketAddress,
-            sendPacketQueue
+            sendPacketQueue,
+            peerQueue
             );
           return new PeerValue(
             peerInetSocketAddress,
@@ -537,7 +597,7 @@ public class ConnectionManager
             );
           }
 
-      }
+      } // class Factory.
 
     private static class PeerValue  // Value of HashMap entry.
 
@@ -575,11 +635,10 @@ public class ConnectionManager
 
     private static class Peer  // Nested class managing peer connection data.
 
-      ///extends EpiThread
+      extends NamedLeaf
+
       implements Runnable
       
-      ///implements Comparable<Peer> // for use by PriorityQueue.
-
       /* Each instance of this nested class contains and manages data about 
         one of the peer nodes of which the ConnectionManager is aware.
         Its job is to manage a single Datagram connection
@@ -650,7 +709,9 @@ public class ConnectionManager
           
           private final PacketQueue sendQueueOfSockPackets;
             // Queue to receive SockPackets to be sent to Peer.
-                
+
+          private SignallingQueue<Peer> peerQueue;
+
           private final ConnectionManager theConnectionManager;
 
 
@@ -659,14 +720,6 @@ public class ConnectionManager
           LockAndSignal peerLockAndSignal;  // LockAndSignal for this thread.
 
           int packetIDI; // Sequence number for sent packets.
-
-          // Independent times.
-          ///private long receivedMillisL;  // Time a packet was last received from peer.
-          ///private long sentMillisL;  // Time a packet was last sent to peer.
-
-          // Dependent times.
-          //long roundTripTimeL;
-          ///private long nextSendMillisL;  // Time the next packet should be sent.
 
           Random theRandom;  // For random numbers for arbitratingYieldB().
 
@@ -677,6 +730,7 @@ public class ConnectionManager
         public Peer(  // Constructor. 
             InetSocketAddress peerInetSocketAddress,
             PacketQueue sendQueueOfSockPackets,
+            SignallingQueue<Peer> peerQueue,
             ConnectionManager theConnectionManager
             )
           /* This constructor constructs a Peer.
@@ -687,26 +741,17 @@ public class ConnectionManager
             Fields are defined in a way to cause an initial response.
             */
           {
-            ///super(  // Naming thread here because setName() is not reliable.
-            ///  peerInetSocketAddress+"-Manager"  // ???
-            ///  );
+            super( "Peer-leaf-at-"+peerInetSocketAddress );
 
             // Storing constructor arguments.
               this.peerInetSocketAddress= peerInetSocketAddress;
               this.sendQueueOfSockPackets= sendQueueOfSockPackets;
+              this.peerQueue= peerQueue;
               this.theConnectionManager= theConnectionManager;
 
             peerLockAndSignal= new LockAndSignal(false);
 
             packetIDI= 0; // Setting starting packet sequence number.
-
-            // Setting meanful defaults for packet send and receive times.
-              ///this.receivedMillisL=  // Assume packet received recently.
-              ///  System.currentTimeMillis();
-                // It might be better to get this from a previously saved time.
-              ///this.sentMillisL=  // But not sent for a long time.
-              ///  receivedMillisL - PeriodMillisL;
-              ///updateNextSendV( );  // Updating dependent time.
             
             theRandom= new Random(0);  // Initialize arbitratingYieldB().
 
@@ -721,6 +766,7 @@ public class ConnectionManager
             a state machine composed of the highest level states.
             The only thing it does now is exchange ping and echo packets
             with the remote peer, first one way, then the other.
+            It terminates if it fails to receive a reply to 4 pings.
             
             ??? This is only temporary because 
             packets which are not ping or echo are ignored,
@@ -774,7 +820,9 @@ public class ConnectionManager
                 if  // Checking and exiting if retries were exceeded.
                   ( retriesI >= maxRetries )  // Maximum attempts exceeded.
                   { // Terminating thread.
-                    Thread.currentThread().interrupt(); break; 
+                	  peerQueue.add(this); // Queuing this Peer for termination.
+                    Thread.currentThread().interrupt();  // Noting for self. 
+                    break;
                     }
                 //long pingMillisL= System.currentTimeMillis();
                 sendingPacketV("PING"); // Sending ping packet.
@@ -797,9 +845,6 @@ public class ConnectionManager
                         if // Handling echo packet, maybe.
                           ( testingPacketB( "ECHO" ) )
                           { // Handling echo and exiting.
-                            //long echoMillisL= System.currentTimeMillis();
-                            //roundTripTimeL= echoMillisL - pingMillisL;
-                            //appLogger.debug("RTT= "+roundTripTimeL);
                             consumingOnePacketV(); // Consuming echo packet.
                             // This should handle unwanted received packets.
                             break retryLoop; // Finishing by exiting loop.
@@ -913,45 +958,6 @@ public class ConnectionManager
             //appLogger.info("arbitratingYieldB() = " + yieldB);
             return yieldB;
             }
-
-        /* ???
-        private long getNextSendL( )  // Returns time of next action.
-          /* This method returns 
-            the next time the user node is scheduled to do something,
-            specifically to send a packet to the peer.
-            */
-          /* ???
-          {
-            return nextSendMillisL;
-            }
-          */
-
-        /* ???
-        private void updateNextSendV( )
-          /* This method calculates and stores 
-            the next time the user node is scheduled to do something,
-            specifically to send a packet to the associated peer.
-            This time depends on who transmitted last.
-            It also updates the position in the priority queue.
-            
-            Previously the values used were calculated to cause 
-            this node and the peer node 
-            to alternate pinging and replying.
-            */
-          /* ???
-          {
-            nextSendMillisL=  // Set next send time to be...
-              Wrap.laterL(  // ...the later of...
-                ( sentMillisL  // ...the last send time...
-                  + PeriodMillisL  // ...plus the period...
-                  ),  // ...or...
-                ( receivedMillisL  // ...the last receive time...
-                  + HalfPeriodMillisL  // ...plus half the period.
-                  )
-                ) 
-              ;
-            }
-          */
 
         /* ???
         public int compareTo( Peer anotherPeer )
@@ -1085,7 +1091,6 @@ public class ConnectionManager
 
     private class UnconnectedReceiver // Unconnected-unicast receiver.
 
-      ///extends EpiThread // Doesn't need to be separate Thread and Runnable.
       implements Runnable
 
       /* This simple thread receives and queues unicast DatagramPackets 
@@ -1115,9 +1120,6 @@ public class ConnectionManager
               * receiverSignallingQueueOfSockPackets: the output queue.
             */
           { 
-            ///super(  // Name thread here because setName() is not reliable.
-            ///  "OLDUnconnectedReceiver"  
-            ///  );
             this.receiverSignallingQueueOfSockPackets=
               receiverSignallingQueueOfSockPackets;
             this.receiverDatagramSocket=
@@ -1165,37 +1167,5 @@ public class ConnectionManager
         }
       ; // UnconnectedReceiver
 
-    /* ???
-    private static class Wrap  // Cyclic/wrap-around operations on longs.
-      /* This class is provides some utility methods which
-        which perform some wrap-around operations on long integers.
-        These operations were created for operating on 
-        long times expressed in milliseconds,
-        but they can be used in other applications also.
-        */
-      /* ???
-      {
-        private static boolean isBeforeB( long x1L, long x2L )
-          /* Returns true if x1L is before x2L in the cycle.
-            Returns false otherwise.
-            It treats times as wrap-around long values
-            by subtracting them and comparing the difference to 0.
-            */
-          /* ???
-          {
-            return ( ( x1L - x2L ) < 0 );
-            }
 
-        private static long laterL( long x1L, long x2L )
-          /* Returns the later of times x1L and x2L.  
-            It treats times as wrap-around long values.
-            */
-          /* ???
-          {
-            return ( isBeforeB( x1L, x2L ) ? x2L : x1L ) ;
-            }
-
-        }
-        */
-
-    }
+    } // class ConnectionManager.

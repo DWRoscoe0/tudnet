@@ -164,18 +164,6 @@ public class FileRoots
           return ResultJComponent;  // return the final result.
           } // GetDataJComponent.
 
-/*      public JComponent GetDataJComponent
-          ( TreePath InTreePath, DataTreeModel InDataTreeModel )
-          /* Returns a JComponent which is appropriate for viewing 
-            the current tree node represented specified by InTreePath
-            using context from InDataTreeModel.
-            */
-/*        { // GetDataJComponent.
-        	JComponent ResultJComponent=  // Calculate a ListViewer.
-              new ListViewer( InTreePath, InDataTreeModel );
-            return ResultJComponent;  // return the final result.
-            } // GetDataJComponent.
-*/          
         public static TreePath TreePathStart()
           /* Returns the TreePath representing the path to the tree node
             that should be selected when beginning browsing FileRoots.

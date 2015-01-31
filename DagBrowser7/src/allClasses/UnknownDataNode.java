@@ -4,7 +4,7 @@ public class UnknownDataNode extends NamedLeaf
 
   /* This class is a DataNode that serves as a place-holder
     to indicate an error but also to avoid null pointer references.  
-    It has at least 2 pourposes:
+    It has at least 2 purposes:
 
     1. It is used when MetaNodes are reconstructed from 
     MetaFile disk storage and a node name is encountered which
@@ -18,9 +18,6 @@ public class UnknownDataNode extends NamedLeaf
     to a Part TreePath.
     
     This was a Singleton, but isn't since adding a Name String.
-
-    ??? Change name to NullDataNode or UnknownDataNode
-    to better describe its use.
     */
 
   { // class UnknownDataNode
@@ -35,7 +32,7 @@ public class UnknownDataNode extends NamedLeaf
 
     public UnknownDataNode( String inString )
       /* Constructor with inString argument to be used as 
-        a named place-holder in MetaNode tree when part od
+        a named place-holder in MetaNode tree when part of
         DataNode tree is missing.
         */
       { 
@@ -55,6 +52,7 @@ public class UnknownDataNode extends NamedLeaf
 
     public static boolean isOneB( Object inObject )
         /* This method returns true if inDataNode is an UnknownDataNode.
+          ??? Maybe replace this with an instance method in AbDataNode.
           */
         { 
           return ( 

@@ -52,11 +52,10 @@ public class MetaFileManager {
       // the root MetaNode in lazy-loading mode.
       // If more MetaNodes need to be loaded later then is used again.
       // finish() closes its associated file at app termination.
-    private boolean forcedLoadingEnabledB=   // Enable/disable.
-      false;
+    private boolean forcedLoadingEnabledB= false;  // Enable/disable.
 
   public MetaFileManager(  // Constructor for use by factory.
-      DataRoot theDataRoot
+      DataRoot theDataRoot // ??? should go directly to Finisher. 
       )
     {
       appLogger.info( "MetaFileManager constructor starting.");
@@ -195,14 +194,11 @@ public class MetaFileManager {
 
     public Finisher(  // Constructor.
         MetaFileManager theMetaFileManager,
-        Shutdowner theShutdowner,
         MetaRoot theMetaRoot
         )
       {
         this.theMetaRoot= theMetaRoot;
         this.theMetaFileManager= theMetaFileManager;
-
-        theShutdowner.addShutdownerListener( this );
         }
         
     public void doMyShutdown() {  // ShutdownerListener method.
@@ -211,7 +207,7 @@ public class MetaFileManager {
         );
       }
 
-    }
+    } // Finisher.
 
   // Factory methods.
 
@@ -250,22 +246,6 @@ public class MetaFileManager {
       {
         return new MetaChildren( this );
         }
-
-    /* ???
-    private MetaFile makeMetaFile( 
-        MetaFileManager.RwStructure theRwStructure, 
-        String FileNameString, 
-        String HeaderTokenString
-        ) 
-      {
-        return new MetaFile( 
-          this,
-          theRwStructure, 
-          FileNameString, 
-          HeaderTokenString
-          );
-        }
-      */
 
     private MetaFile makeMetaFile( 
         MetaFileManager.RwStructure theRwStructure, 

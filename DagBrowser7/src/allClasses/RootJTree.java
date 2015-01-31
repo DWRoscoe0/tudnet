@@ -188,7 +188,7 @@ public class RootJTree
                 }
             }
 
-        }
+        } // MyTreeHelper
 
       public TreeHelper getTreeHelper() 
         /* Method to allow access by other classes to 
@@ -418,24 +418,24 @@ public class RootJTree
         private void trySelectingToAutoExpandV( TreePath stopTreePath )
           /* This method tries to trigger a new selection to auto-expand
             the node at stopTreePath.
-            It follows the trail of most recently visited descendents
+            It follows the trail of most recently visited descendants
             which have their "AutoExpanded" attribute set.
             If there are no nodes in the trail then it simply returns.
             If there is at least one node in the trail,
             not including the first one,
             it queues a selection in the JTree of the last node in the trail.
             This is the first node encountered without the attribute set.
-            The expansion will handled later by that selection of that node.
+            The expansion will be handled later by that selection of that node.
             The expansion is done by this 2nd selection so that
             all the TreeSelectionListener-s are called
             for the present selection before being called again for the new one.
             */
           {
-            final TreePath TrailEncTreePath= // Calculate end of trail of...
+            final TreePath TrailEndTreePath= // Calculate end of trail of...
               theMetaRoot.FollowAutoExpandToTreePath( // ...expandable nodes...
                 stopTreePath  // ...starting at stopTreePath.
                 );
-            if ( TrailEncTreePath != null )  // If there is an expansion trail...
+            if ( TrailEndTreePath != null )  // If there is an expansion trail...
               { // Trigger the trail's expansion.
                 paintSelectionIfChangedV( );  // Display present selection...
                 animationDelayDoMaybeV( );  // and delay now for visual smoothness.
@@ -444,7 +444,7 @@ public class RootJTree
                   public void run() 
                     {  
                       setSelectionPath(   // ...to autoexpand by selecting...
-                        TrailEncTreePath );  // ...last node of expansion trail.
+                        TrailEndTreePath );  // ...last node of expansion trail.
                       }  
                   });
                 } // Trigger the trail's expansion.
