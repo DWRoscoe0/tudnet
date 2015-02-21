@@ -59,7 +59,7 @@ public class TitledListViewer // adapted from TitledListViewer.
 
       private Color backgroundColor;
 
-    // constructor and related methods.
+    // constructor and constructed-related methods.
 
       public TitledListViewer(
           TreePath inTreePath,
@@ -109,11 +109,10 @@ public class TitledListViewer // adapted from TitledListViewer.
         /* This grouping method creates and initializes the JList.  */
         { // InitializeTheJList( )
           { // Set ListModel for the proper type of elements.
-            ///ListModel<Object> aListModel= new TreeListModel( 
-          	theTreeListModel= new TreeListModel(
+            theTreeListModel= new TreeListModel(
           		aTreeHelper.getWholeDataNode( ),
           		aTreeHelper.getWholeTreePath( ),
-              null  /// theDataTreeModel 
+              null  // theDataTreeModel is null for now. 
               );
           	theTreeListModel.setDataTreeModel( theDataTreeModel );
           	theJList.setModel( theTreeListModel );  // Define its ListModel.
@@ -130,7 +129,7 @@ public class TitledListViewer // adapted from TitledListViewer.
             theJList.addMouseListener(aTreeHelper);  // TreeHelper does MouseEvent-s.
             theJList.addFocusListener(this);  // Old FocusListener.
             theJList.addFocusListener(aTreeHelper);  // New FocusListener.
-            addFocusListener(this);  // Old FocusListener.  for autofocus ???
+            addFocusListener(this);  // Old FocusListener.  for autofocus ??
             theJList.getSelectionModel().  // This does ListSelectionEvent-s.
               addListSelectionListener(this);
             } // Set the user input event listeners.
@@ -138,41 +137,6 @@ public class TitledListViewer // adapted from TitledListViewer.
           setJListScrollState();
           } // InitializeTheJList( )
 
-    // TreeHelper customization code subclass MyTreeHelper. 
-
-      class MyTreeHelper extends TreeHelper {
-
-        MyTreeHelper(  // Constructor.
-            JComponent inOwningJComponent, 
-            MetaRoot theMetaRoot,
-            TreePath inTreePath
-            )
-          {
-            super(inOwningJComponent, theMetaRoot, inTreePath);
-            }
-
-        public DataTreeModel setDataTreeModel(DataTreeModel newDataTreeModel)
-          /* Sets new DataTreeModel and returns old one.
-           * ??? It also makes the present ListModel be a Listener of
-           * newDataTreeModel so one reflects the other.
-           * The JList is already a Listener of the ListModel.
-		       * In normal use it will be called only twice:
-		       * * once with newDataTreeModel != null,
-		       * * and once with newDataTreeModel == null,
-		       * but it should be able to work with any sequence.
-		       * ??? I doesn't need to return a value.
-           */
-          {
-        	  DataTreeModel oldDataTreeModel= 
-        	    super.setDataTreeModel( newDataTreeModel );
-
-        	  theTreeListModel.setDataTreeModel( null );
-        	  theTreeListModel.setDataTreeModel( newDataTreeModel );
-
-        	  return oldDataTreeModel;
-        	  }
-
-        } // MyTreeHelper
 
       public void setPreferredSize( Dimension inDimension )
         // Do this so theJList will be full width.
@@ -224,54 +188,54 @@ public class TitledListViewer // adapted from TitledListViewer.
             );
           }  // setJListScrollState()
 
-    // Input (setter) methods.  This includes Listeners.
+    /* ListSelectionListener interface method, 
+     * for processing ListSelectionEvent-s from the List's SelectionModel.
+      */
 
-      /* ListSelectionListener method, for processing ListSelectionEvent-s 
-        from the List's SelectionModel.
-        */
+      public void valueChanged(ListSelectionEvent TheListSelectionEvent) 
+        /* Processes an [internal or external] ListSelectionEvent
+          from the ListSelectionModel.  It does this by 
+          determining what element was selected,
+          adjusting dependent instance variables, and 
+          firing a TreePathEvent to notify TreeSelection]-s.
+          */
+        { // void valueChanged(ListSelectionEvent TheListSelectionEvent)
+            ListSelectionModel TheListSelectionModel = // get ListSelectionModel.
+            (ListSelectionModel)TheListSelectionEvent.getSource();
+          int IndexI =   // Get index of selected element from the model.
+            TheListSelectionModel.getMinSelectionIndex();
+          if // Process the selection if...
+            ( //...the selection index is legal.
+              (IndexI >= 0) && 
+              (IndexI < aTreeHelper.getWholeDataNode( ).getChildCount( ))
+              )
+            { // Process the selection.
+              DataNode newSelectionDataNode=  // Get selected DataNode...
+                aTreeHelper.getWholeDataNode( ).
+                  getChild(IndexI);  // ...which is child at IndexI.
+              aTreeHelper.setPartDataNodeV( newSelectionDataNode );
+            } // Process the selection.
+          } // void valueChanged(ListSelectionEvent TheListSelectionEvent)
+    
+    /* FocusListener interface methods, 
+			to fix JTable cell-invalidate/repaint bug.
+			*/
 
-        public void valueChanged(ListSelectionEvent TheListSelectionEvent) 
-          /* Processes an [internal or external] ListSelectionEvent
-            from the ListSelectionModel.  It does this by 
-            determining what element was selected,
-            adjusting dependent instance variables, and 
-            firing a TreePathEvent to notify TreeSelection]-s.
-            */
-          { // void valueChanged(ListSelectionEvent TheListSelectionEvent)
-              ListSelectionModel TheListSelectionModel = // get ListSelectionModel.
-              (ListSelectionModel)TheListSelectionEvent.getSource();
-            int IndexI =   // Get index of selected element from the model.
-              TheListSelectionModel.getMinSelectionIndex();
-            if // Process the selection if...
-              ( //...the selection index is legal.
-                (IndexI >= 0) && 
-                (IndexI < aTreeHelper.getWholeDataNode( ).getChildCount( ))
-                )
-              { // Process the selection.
-                DataNode newSelectionDataNode=  // Get selected DataNode...
-                  aTreeHelper.getWholeDataNode( ).
-                    getChild(IndexI);  // ...which is child at IndexI.
-                aTreeHelper.setPartDataNodeV( newSelectionDataNode );
-              } // Process the selection.
-            } // void valueChanged(ListSelectionEvent TheListSelectionEvent)
-      
-      // FocusListener methods  , to fix JTable cell-invalidate/repaint bug.
+      @Override
+      public void focusGained(FocusEvent arg0) 
+        {
+          theJList.requestFocusInWindow();  // Autofocus the JList.
 
-        @Override
-        public void focusGained(FocusEvent arg0) 
-          {
-            theJList.requestFocusInWindow();  // Autofocus the JList.
-
-            setJListScrollState();
-            repaint();  // bug fix Kluge to display cell in correct color.  
-            }
-      
-        @Override
-        public void focusLost(FocusEvent arg0) 
-          {
-            setJListScrollState();
-            repaint();  // bug fix Kluge to display cell in correct color.  
-            }
+          setJListScrollState();
+          repaint();  // bug fix Kluge to display cell in correct color.  
+          }
+    
+      @Override
+      public void focusLost(FocusEvent arg0) 
+        {
+          setJListScrollState();
+          repaint();  // bug fix Kluge to display cell in correct color.  
+          }
 
     // interface TreeAware code for TreeHelper access.
 
@@ -279,36 +243,36 @@ public class TitledListViewer // adapted from TitledListViewer.
 
 			public TreeHelper getTreeHelper() { return aTreeHelper; }
 
-      /* TreePathListener code, for when TreePathEvent-s
-        happen in either the left or right panel.
-        This was based on TreeSelectionListener code.
-        For a while it used TreeSelectionEvent-s for 
-        passing TreePath data.
-        */
+    /* TreePathListener code, for when TreePathEvent-s
+      happen in either the left or right panel.
+      This was based on TreeSelectionListener code.
+      For a while it used TreeSelectionEvent-s for 
+      passing TreePath data.
+      */
 
-        private TreePathListener theTreePathListener= 
-          new MyTreePathListener();
+      private TreePathListener theTreePathListener= 
+        new MyTreePathListener();
 
-        private class MyTreePathListener 
-          extends TreePathAdapter
-          {
-            public void setPartTreePathV( TreePathEvent inTreePathEvent )
-              /* This TreePathListener method translates 
-                inTreePathEvent TreeHelper tree path into 
-                an internal JList selection.
-                It ignores any paths with which it cannot deal.
-                */
-              {
-                //TreePath inTreePath=  // Get the TreeHelper's path from...
-                //  inTreeSelectionEvent.  // ...the TreeSelectionEvent's...
-                //    getNewLeadSelectionPath();  // ...one and only TreePath.
+      private class MyTreePathListener 
+        extends TreePathAdapter
+        {
+          public void setPartTreePathV( TreePathEvent inTreePathEvent )
+            /* This TreePathListener method translates 
+              inTreePathEvent TreeHelper tree path into 
+              an internal JList selection.
+              It ignores any paths with which it cannot deal.
+              */
+            {
+              //TreePath inTreePath=  // Get the TreeHelper's path from...
+              //  inTreeSelectionEvent.  // ...the TreeSelectionEvent's...
+              //    getNewLeadSelectionPath();  // ...one and only TreePath.
 
-                selectRowV(   // Select row appropriate to...
-                  //inTreePath  // ...path.
-                  aTreeHelper.getPartIndexI()
-                  );  // Note, this might trigger ListSelectionEvent.
-                }
-            }
+              selectRowV(   // Select row appropriate to...
+                //inTreePath  // ...path.
+                aTreeHelper.getPartIndexI()
+                );  // Note, this might trigger ListSelectionEvent.
+              }
+          }
 
     // List cell rendering.
 
@@ -354,5 +318,42 @@ public class TitledListViewer // adapted from TitledListViewer.
               }
 
         } // class ListCellRenderer    
+
+    class MyTreeHelper  // TreeHelper customization subclass.
+
+      extends TreeHelper 
+
+      {
+
+        MyTreeHelper(  // Constructor.
+            JComponent inOwningJComponent, 
+            MetaRoot theMetaRoot,
+            TreePath inTreePath
+            )
+          {
+            super(inOwningJComponent, theMetaRoot, inTreePath);
+            }
+
+        public DataTreeModel setDataTreeModel(DataTreeModel newDataTreeModel)
+          /* Sets new DataTreeModel and returns old one.
+           * It also makes the present ListModel be a Listener of
+           * newDataTreeModel so the former reflects the latter.
+           * The JList should be a Listener of the ListModel
+		       * In normal use this method will be called only twice:
+		       * * once with newDataTreeModel != null during initialization,
+		       * * and once with newDataTreeModel == null during finalization,
+		       * but it should be able to work with any null combination.
+		       * It doesn't need to return a value, but this doesn't hurt ??
+           */
+          {
+        	  DataTreeModel oldDataTreeModel= 
+        	    super.setDataTreeModel( newDataTreeModel );
+
+        	  theTreeListModel.setDataTreeModel( newDataTreeModel );
+
+        	  return oldDataTreeModel;
+        	  }
+
+        } // MyTreeHelper
 
     } // TitledListViewer

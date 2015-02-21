@@ -64,9 +64,9 @@ public class Infinitree
           return childInfinitree;  // return result whatever.
           } // getChild( int ) 
 
-      public String toString( ) 
+      public String getNameString( )
         /* This method returns the String representation of
-          this tree node.
+          the name of this tree node.
           */
         {
           String resultString= null;

@@ -60,7 +60,13 @@ public interface DataNode {
       identifies this DataNode distinctly from its siblings.
       */
 
-    public String getInfoString( );  /* Returns human-readable information
+    public String getValueString( );  /* Returns the value of the DataNode
+      as a String.  */
+
+    public String getLineSummaryString( );  /* Returns a one-line summary of
+      the contents of this DataNode as a String.  */
+
+    public String getInfoString( );  /* Returns additional attributes 
       about this DataNode as a String.  */
 
   // Other methods.

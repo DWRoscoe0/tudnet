@@ -734,10 +734,12 @@ public class RootJTree
             if ( ! isVisible( inTreePath ) )  // JTree node is hidden.
               break toReturn;  ;  // Return default of false.
 
+            Rectangle nodeRectangle=  // Calculate JTree node rectangle.
+                getPathBounds( inTreePath ); // Might be null.
+            if ( nodeRectangle == null )
+              break toReturn;  ;  // Return default of false.
             Rectangle viewportRectangle=  // Calculate scroller rectangle.
               theJScrollPane.getViewport().getViewRect();
-            Rectangle nodeRectangle=  // Calculate JTree node rectangle.
-              getPathBounds( inTreePath );
             if  // The two rectangles do not intersect. 
               ( ! nodeRectangle.intersects (viewportRectangle) )
               break toReturn;  ;  // Return default of false.

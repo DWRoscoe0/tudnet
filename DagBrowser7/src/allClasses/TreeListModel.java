@@ -18,7 +18,7 @@ public class TreeListModel
   /* This class implements a ListModel which gets its data from
     a node Object in the context of a DataTreeModel.
     
-    ??? Should this glass be generic on <Object> like its base class.
+    ??? Should this class be generic on <Object> like its base class.
     */
 
   { // class TreeListModel
@@ -34,15 +34,14 @@ public class TreeListModel
 	      this.theObject= theObject;
 	      this.theTreePath= theTreePath;
 	      
-        ///this.theDataTreeModel= theDataTreeModel;
         setDataTreeModel(theDataTreeModel);
-        ///theDataTreeModel.addTreeModelListener( this ); 
         }
 
     // Initialization/setter methods.
 
       public DataTreeModel setDataTreeModel(DataTreeModel newDataTreeModel)
-	      /* Sets new DataTreeModel.
+	      /* Sets new DataTreeModel.  
+	        This was added to help plug Listener leaks.
           If this ListModel is a TreeModelListener of the old DataTreeModel
           then it removes itself from its listener list.
           It adds itself to the listener list of the new DataTreeModel.
@@ -65,7 +64,7 @@ public class TreeListModel
 
 	        return oldDataTreeModel;
 	    	  }
-	
+
     // ListModel interface methods.
 	    
 	    @Override
@@ -91,14 +90,12 @@ public class TreeListModel
 		        return theDataTreeModel.getChildCount( theObject ); 
 	        }
 
-    // Methods which are not part of ListModel interface.
-
-    // Methods which are not part of ListModel interface.
-
-	    public void treeNodesChanged(TreeModelEvent theTreeModelEvent) {}
+    // TreeModelListener interface methods.
 
 	    public void treeNodesInserted(TreeModelEvent theTreeModelEvent)
-	      // Translates theTreeModemEvent into an appropriate ListModelEvent.
+	      /* Translates theTreeModelEvent reporting an insertion into 
+	        an equivalent ListDataEvent and notifies the ListDataListeners.
+	        */
 	      {
 	    		appLogger.debug("TreeListModel.treeNodesInserted(..)");
 	    	  if ( // Ignoring event if it doesn't have our TreePath. 
@@ -106,7 +103,7 @@ public class TreeListModel
 	    	      	)
 	    	  	; // Doing nothing.
 	    	  	else
-	    	  	{ // Sending an equivalent ListModelEvent.
+	    	  	{ // Sending an equivalent ListModelEvent for each child.
 	    	  		for (int childI: theTreeModelEvent.getChildIndices()) {
 	    	  			fireIntervalAdded( 
 		    	  				ListDataEvent.INTERVAL_ADDED,
@@ -118,7 +115,9 @@ public class TreeListModel
 	    	  }
 
 	    public void treeNodesRemoved(TreeModelEvent theTreeModelEvent)
-	      // Translates theTreeModemEvent into an appropriate ListModelEvent.
+	      /* Translates theTreeModelEvent reporting a removal into 
+		      an equivalent ListDataEvent and notifies the ListDataListeners.
+	        */
 	      {
 	    		appLogger.debug("TreeListModel.treeNodesRemoved(..)");
 	    	  if ( // Ignoring event if it doesn't have our TreePath. 
@@ -130,6 +129,28 @@ public class TreeListModel
 	    	  		for (int childI: theTreeModelEvent.getChildIndices()) {
 	    	  			fireIntervalAdded( 
 		    	  				ListDataEvent.INTERVAL_REMOVED,
+		    	  		  	childI,
+		    	  		  	childI
+		    	  		  	);
+	    	  		  }
+	    	  		}
+	    	  }
+
+	    public void treeNodesChanged(TreeModelEvent theTreeModelEvent) 
+	      /* Translates theTreeModelEvent reporting a DataNode change into 
+		      an equivalent ListDataEvent and notifies the ListDataListeners.
+		      */
+	      {
+	    		//appLogger.debug("TreeListModel.treeNodesChanged(..)");
+	    	  if ( // Ignoring event if parent doesn't have our TreePath. 
+	    	      	!theTreePath.equals(theTreeModelEvent.getTreePath())
+	    	      	)
+	    	  	; // Doing nothing.
+	    	  	else
+	    	  	{ // Firing an equivalent ListModelEvent.
+	    	  		for (int childI: theTreeModelEvent.getChildIndices()) {
+	    	  			fireContentsChanged(
+		    	  				ListDataEvent.CONTENTS_CHANGED,
 		    	  		  	childI,
 		    	  		  	childI
 		    	  		  	);

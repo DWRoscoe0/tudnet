@@ -21,7 +21,7 @@ public class MutableList
 
     // Constructors.
 			
-	    MutableList (   // Constructor.
+	    public MutableList (   // Constructor.
 	        DataTreeModel theDataTreeModel,
 	        String nameString, 
 	        DataNode... inDataNodes 

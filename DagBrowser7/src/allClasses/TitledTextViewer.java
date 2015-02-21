@@ -1,33 +1,36 @@
 package allClasses;
 
 import java.awt.BorderLayout;
+import java.awt.Font;
+
 import javax.swing.BorderFactory;
 import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
-import java.awt.Font;
+import javax.swing.event.TreeModelEvent;
+import javax.swing.event.TreeModelListener;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 import javax.swing.JPanel;
-
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
-import static allClasses.Globals.*;  // appLogger;
+//import static allClasses.Globals.*;  // appLogger;
 
 public class TitledTextViewer
 
   extends JPanel
  
   implements 
-    TreeAware
+    TreeAware, 
+    TreeModelListener
   
-  /* This class was created from TextViewer,
-    which was created quickly from ListViewer,
-    to provide a simple DagNodeViewer that 
-    displays and browses Text using a JTextArea.
-    For a while it contained a lot of unused and useless code,
-    but it has been trimmed down.
-    */
+  /* This class provides a simple DagNodeViewer that
+   * displays and browses Text using a JTextArea.
+   * It was created from TextViewer, which was created quickly from ListViewer.
+   * For a while it contained a lot of unused and useless code,
+   * but it has been trimmed down.
+   */
     
   {
     // variables.
@@ -44,55 +47,58 @@ public class TitledTextViewer
 
         private IJTextArea theIJTextArea;  // Component for the text.
 
-    // Constructors and related methods.
+    // Constructors and constructor-related methods.
 
-      public TitledTextViewer(  // Constructor.
-          TreePath TreePathIn, 
+      public TitledTextViewer(  // Constructor for viewing String text.
+          TreePath theTreePath, 
           DataTreeModel theDataTreeModel, 
-          String InString 
+          String theString 
           )
         /* Constructs a TitledTextViewer.
-          TreePathIn is the TreePath associated with
+          theTreePath is the TreePath associated with
           the node of the Tree to be displayed.
           The last DataNode in the path is that Node.
-          The contents is InString.
-          InTreeModel provides context.
+          The contents is theString.
+          theTreeModel provides context.
           */
         { // TitledTextViewer(.)
           this.theDataTreeModel= theDataTreeModel;
 
           theIJTextArea= new IJTextArea(   // Construct JTextArea.
-            InString  // String to view.
+            theString  // String to view.
             );
-          CommonInitialization( TreePathIn );
+          CommonInitialization( theTreePath, theDataTreeModel );
           } // TitledTextViewer(.)
 
-      public TitledTextViewer( 
-          TreePath TreePathIn, TreeModel InTreeModel, IFile InIFile 
+      public TitledTextViewer(  // Constructor for viewing a File text. 
+          TreePath theTreePath, TreeModel theTreeModel, IFile theIFile 
           )
         /* Constructs a TitledTextViewer.
-          TreePathIn is the TreePath associated with
+          theTreePath is the TreePath associated with
           the node of the Tree to be displayed.
           The last DataNode in the path is that object.
-          The contents is InIFile.
-          InTreeModel provides context.
+          The contents is theIFile.
+          theTreeModel provides context.
           */
         { // TitledTextViewer(.)
           theIJTextArea= new IJTextArea(    // Construct JTextArea.
-            InIFile.GetFile()   // File to view.
+            theIFile.GetFile()   // File to view.
             );
-          CommonInitialization( TreePathIn );
+          CommonInitialization( theTreePath, theTreeModel );
           } // TitledTextViewer(.)
 
-      private void CommonInitialization( TreePath TreePathIn )
+      private void CommonInitialization( 
+      		TreePath theTreePath, 
+      		TreeModel theTreeModel
+      		)
         /* This grouping method creates and initializes the JTextArea.  */
         { // CommonInitialization( )
-          if ( TreePathIn == null )  // prevent null TreePath.
-            TreePathIn = new TreePath( new NamedLeaf( "ERROR TreePath" ));
+          if ( theTreePath == null )  // prevent null TreePath.
+            theTreePath = new TreePath( new NamedLeaf( "ERROR TreePath" ));
 
           aTreeHelper=  // construct helper class instance.
-            new TreeHelper( 
-              this, theDataTreeModel.getMetaRoot(), TreePathIn 
+            new MyTreeHelper( 
+              this, theDataTreeModel.getMetaRoot(), theTreePath 
               );
 
           setLayout( new BorderLayout() );
@@ -117,32 +123,99 @@ public class TitledTextViewer
 
           { // Add listeners.
             addKeyListener(aTreeHelper);  // Make TreeHelper the KeyListeer.
+            // addTreeModelListener( this ) is done elsewhere.
             } // Add listeners.
           } // CommonInitialization( )
 
-    // input (setter) methods.  this includes Listeners.
-    
-      // ??? temporary.
-        public void partTreeChangedV( 
-            TreePathEvent inTreePathEvent )
-          {
-            appLogger.error( "TitledListViewer.partTreeChangedV(..) called");
-            }
-        
-      /* ListSelectionListener method, deleted. */
-  
-      // KeyListener methods,  (moved to TreeHelper).
+    // rendering methods.  to be added ??
 
-    // command methods (moved to TreeHelper).
-      
-    // state updating methods (deleted).
+    // TreeModelListener interface methods.
 
-    // interface TreeAware code for TreeHelper access.
+	    public void treeNodesInserted(TreeModelEvent theTreeModelEvent)
+	      { } // Ignored.
+
+	    public void treeNodesRemoved(TreeModelEvent theTreeModelEvent)
+      	{ } // Ignored.  Relevant TreeModelEvents might be handled elsewhere.
+
+	    public void treeNodesChanged(TreeModelEvent theTreeModelEvent) 
+	      /* Translates theTreeModelEvent reporting a DataNode change into 
+		      an equivalent ListDataEvent and notifies the ListDataListeners.
+		      ??? This works for only the non-File text.
+		      */
+	      {
+	    		//appLogger.debug("TitledTextViewer.treeNodesChanged(..)");
+	    		if ( // Ignoring event if event parent path isn't our parent path. 
+	    	      	!aTreeHelper.getWholeTreePath().getParentPath().equals(
+	    	      			theTreeModelEvent.getTreePath()
+	    	      			)
+	    	      	)
+	    	  	; // Ignoring.
+	    	  else // Updating TextArea if it shows any event child DataNode.
+	          for 
+		          ( Object childObject: theTreeModelEvent.getChildren() )
+	          	{ // Updating TextArea if it shows this event child DataNode.
+	          	  DataNode childDataNode= (DataNode)childObject;
+	          	  if ( childDataNode == aTreeHelper.getWholeDataNode() )
+	  	    	  		theIJTextArea.replaceRange(
+	  	    	  				childDataNode.getValueString(),
+	  	    	  			  0,
+	  	    	  				theIJTextArea.getText().length()
+	  	    	  			  );
+	          		}
+	    	  }
+
+	    public void treeStructureChanged(TreeModelEvent theTreeModelEvent)
+        { } // Ignored.
+	    
+    // TreeAware interface code for TreeHelper access.
 
 			public TreeHelper aTreeHelper;
 
 			public TreeHelper getTreeHelper() { return aTreeHelper; }
 
-    // rendering methods.  to be added.
-      
+    class MyTreeHelper  // TreeHelper customization subclass.
+
+      extends TreeHelper 
+
+      {
+
+        MyTreeHelper(  // Constructor.
+            JComponent inOwningJComponent, 
+            MetaRoot theMetaRoot,
+            TreePath inTreePath
+            )
+          {
+            super(inOwningJComponent, theMetaRoot, inTreePath);
+            }
+
+        public DataTreeModel setDataTreeModel(DataTreeModel newDataTreeModel)
+          /* Sets new DataTreeModel and returns old one.  ???
+           * It also makes the present ListModel be a Listener of
+           * newDataTreeModel so the former reflects the latter.
+           * The JList should be a Listener of the ListModel
+		       * In normal use this method will be called only twice:
+		       * * once with newDataTreeModel != null during initialization,
+		       * * and once with newDataTreeModel == null during finalization,
+		       * but it should be able to work with any null combination.
+		       * It doesn't need to return a value, but this doesn't hurt ???
+           */
+          {
+        	  DataTreeModel oldDataTreeModel= 
+        	    super.setDataTreeModel( newDataTreeModel );
+
+        	  if ( oldDataTreeModel != null )
+  	          oldDataTreeModel.removeTreeModelListener(
+  	    	  	  (TitledTextViewer)owningJComponent 
+  	    	  	  );
+
+  	    	  if ( newDataTreeModel != null )
+  	    	  	newDataTreeModel.addTreeModelListener(
+	    	  	  (TitledTextViewer)owningJComponent 
+	    	  	  );
+
+        	  return oldDataTreeModel;
+        	  }
+
+        } // MyTreeHelper
+
     }

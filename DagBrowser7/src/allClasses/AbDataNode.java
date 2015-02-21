@@ -35,7 +35,7 @@ public abstract class AbDataNode
               break toReturn;  // Go return initial default value of usable.
 
           } // toUnusable
-            usableB= false;  // Override default useability value.
+            usableB= false;  // Override default usability value.
 
           } // toReturn
             return usableB;  // Return final calculated value.
@@ -144,22 +144,42 @@ public abstract class AbDataNode
           return childIndexI;  // Return index as search result.
           }
 
-      public String getInfoString()
-        /* Returns a String representing information about this object. */
-        { 
-          return getNameString( );  // Use the name string.
-          }
-
-      public String GetHeadString()
-        /* Returns a String representing this node excluding any children. */
-        { 
-          return getNameString( );  // Use the name string.
-          }
-
       public String getNameString( )
-        /* Returns String representing name of this Object.  */
         {
-          return toString();  // Return default String representation.
+      	  return "NO-NAME";
+          }
+
+      public String getValueString( )
+	      {
+      	  return super.toString();  // Return default String representation.
+	        }
+
+      public String getLineSummaryString( )
+        /* This method returns a String which is a meaningful summary
+          of this DataNode. 
+          */
+	      {
+      	  if // Returning name only if value is the default/undefined.
+      	      ( getValueString( ).equals( super.toString() ))
+      	  	return getNameString(); // Returning name only.
+      	    else // Returning name and value if both are defined;
+		        return // Returning String consisting of
+		        		getNameString() // the name,
+		        		+ " : " // a separator,
+		        		+ getValueString( ) // and the value.
+		        		;
+	        }
+
+      public String getInfoString()
+        //Returns a String representing information about this object.
+        { 
+          return getLineSummaryString( );  // Using the summary string.
+          }
+
+      public String toString()
+        //Defines a meaningful and useful String representation.
+        { 
+          return getLineSummaryString( );  // Using the summary string.
           }
 
       public JComponent getDataJComponent(
@@ -179,7 +199,7 @@ public abstract class AbDataNode
               new TitledTextViewer( 
                 inTreePath, 
                 inDataTreeModel, 
-                "Leaf Object: "+GetHeadString() // Normally not seen.
+                getValueString()
                 );
             else  // Using TitledListViewer if not a leaf.
             resultJComponent= // Using TitledListViewer.

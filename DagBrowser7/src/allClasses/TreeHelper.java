@@ -27,7 +27,7 @@ public class TreeHelper
     Including an instance of TreeHelper in a tree node viewer can make 
     coding a new tree node viewer much easier.
     The TreeHelper instance is typically named "aTreeHelper".
-    For example, TreeHelper code to access tte present Part TreePath:
+    For example, TreeHelper code to access the present Part TreePath:
     would be "aTreeHelper.getPartTreePath()";
 
     Concepts and their names:
@@ -74,7 +74,7 @@ public class TreeHelper
     A TreeHelper object instance typically interacts with 2 other objects:
 
       * Its owning viewer JComponent, 
-        for example ListViewer or TitledListViewer.
+        for example TitledListViewer and TitledTextViewer.
       * A coordinating JComponent, presently only DagBrowserPanel.
 
     These 3 objects interact as follows:
@@ -115,7 +115,7 @@ public class TreeHelper
     This will allow it to be used for more components, 
     including JTree with Whole being the tree root.
     
-    ??? Breakout an interface of public methods for documentation purposes.
+    ??? Break-out an interface of public methods for documentation purposes.
 
     ??? Name this class something else, such as TreeLogic, 
     or eliminate it by integrating it into 
@@ -125,7 +125,7 @@ public class TreeHelper
 
   { // class TreeHelper
 
-    private JComponent owningJComponent;  /* JComponent being helped.
+    protected JComponent owningJComponent;  /* JComponent being helped.
       This is the JComponent to which other parts of the system will refer.
       That JComponent has a reference to this object also,
       so this linkage might be refered to as mutual-composition.  
@@ -161,7 +161,8 @@ public class TreeHelper
 
       public DataTreeModel setDataTreeModel(DataTreeModel theDataTreeModel)
         /* Sets theDataTreeModel value and returns the old value.
-          It doesn't set any listeners.  Subclasses should do that. 
+          It doesn't set any TreeModelListeners.  Subclasses should do that, 
+          becauseif needed, depending on the needs of their owningJComponent. 
           */
         {
       	  DataTreeModel oldDataTreeModel= this.theDataTreeModel;

@@ -13,7 +13,7 @@ import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeModel;
 
-import static allClasses.Globals.*;  // appLogger;
+//import static allClasses.Globals.*;  // appLogger;
 
 public class DataTreeModel 
 
@@ -123,7 +123,7 @@ public class DataTreeModel
       public int getIndexOfChild( 
           Object parentObject, Object childObject 
           ) 
-        /* Returns the index of childObject in directory parentObject.
+        /* Returns the index of childObject in parentObject.
           This operation is delegated to parentObject which
           is assumed to satisfy the DataNode interface.
           */
@@ -202,7 +202,7 @@ public class DataTreeModel
           }
 
       public String getLastComponentNameString(TreePath inTreePath)
-        /* Returns String represention of the name of 
+        /* Returns String representation of the name of 
           the last element of inTreePath.
           */
         {
@@ -270,8 +270,8 @@ public class DataTreeModel
           int indexI, 
           DataNode childDataNode 
           )
-        /* This method triggers an appropriate TreeModelEvent
-          for the insertion of a single childDataNode 
+        /* This method creates and triggers a single-child TreeModelEvent
+          for the insertion a single child DataNode, childDataNode,
           into parentDataNode at position indexI.
           */
         {
@@ -294,8 +294,8 @@ public class DataTreeModel
           int indexI, 
           DataNode childDataNode 
           )
-        /* This method triggers an appropriate TreeModelEvent
-          for the removal of a single childDataNode,
+      	/* This method creates and triggers a single-child TreeModelEvent
+          for the removal of a single child DataNode, childDataNode,
           whose previous position was indexI, into parentDataNode.
           */
         {
@@ -310,7 +310,37 @@ public class DataTreeModel
             	new Object[] {childDataNode}
             	);
 
-          fireTreeNodesRemoved( theTreeModelEvent );  // Firing removal event.
+          fireTreeNodesRemoved( theTreeModelEvent ); // Firing as removal event.
+          }
+
+      public void reportingChangeV( 
+          DataNode theDataNode
+          )
+      	/* This method creates and triggers a single-child TreeModelEvent
+          for the change of a single child DataNode, theDataNode,
+          whose position is indexI, into parentDataNode.
+          */
+        {
+	        TreePath theTreePath= // Calculating path of the DataNode. 
+	          	translatingToTreePath( theDataNode );
+	        TreePath parentTreePath= // Calculating path of the parent DataNode. 
+	            theTreePath.getParentPath();
+	        DataNode parentDataNode= // Calculating parent DataNode.
+	        		(DataNode)parentTreePath.getLastPathComponent();
+	        int indexI= getIndexOfChild( // Calculating index of the DataNode.
+	        		parentDataNode, 
+	        		theDataNode 
+	        		); 
+          
+          TreeModelEvent theTreeModelEvent= // Constructing TreeModelEvent.
+            new TreeModelEvent(
+            	this, 
+            	parentTreePath, 
+            	new int[] {indexI}, 
+            	new Object[] {theDataNode}
+            	);
+
+          fireTreeNodesChanged( theTreeModelEvent );  // Firing as change event.
           }
 
       private TreePath translatingToTreePath( DataNode targetDataNode )
@@ -326,7 +356,7 @@ public class DataTreeModel
           See Object hashCode() and equals() for HashTable requirements.
           */
         {
-          appLogger.info( "DataTreeModel.translatingToTreePath()." );
+          //appLogger.info( "DataTreeModel.translatingToTreePath()." );
       		TreePath resultTreePath= null;  // Defaulting result to null.
       		Queue<TreePath> queueOfTreePath = new LinkedList<TreePath>();
           queueOfTreePath.add(theDataRoot.getParentOfRootTreePath( ));

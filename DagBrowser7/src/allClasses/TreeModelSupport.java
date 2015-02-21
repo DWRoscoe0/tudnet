@@ -26,9 +26,8 @@ public abstract class TreeModelSupport
       new Vector<TreeModelListener>();   // Listener storage.
 
     public void addTreeModelListener( TreeModelListener theTreeModelListener )
-      /* ??? The number of listeners shouldn't go above 4.
-       * Actually I don't know why it gets that high.
-       * If it goes any higher a debug message is logged.
+      /* The number of listeners shouldn't go above 4.
+       * If it goes any higher then a debug message is logged.
        */
       {
         if ( 

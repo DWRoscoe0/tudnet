@@ -1,12 +1,12 @@
 package allClasses;
 
-public class NamedLeaf  
-
-  extends NamedNonLeaf
+public class NamedLeaf
   
   /* This is a utility class that appears to be 
     simply a leaf with a name.  
    */
+
+	extends NamedNonLeaf
   
   { // class NamedLeaf
 

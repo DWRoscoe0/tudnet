@@ -745,35 +745,30 @@ public class DagBrowserPanel
             the last DataNode element of inTreePath and sets to be
             the content of the right sub-panel JScrollPane for display.
 
-            ??? This is being changed do here the
-            registration and unregistration of the JComponent 
-            as a TreeModelListener to prevent a Listener leak.
+            It also does registration and unregistration 
+            of the JComponent as a TreeModelListener 
+            to prevent TreeModelListener leakage.
             */
           { // replaceRightPanelContent(.)
-        	  TreeAware oldTreeAware= dataTreeAware;  // Snapshotting old content.
-        	    // ??? Done in case Java references old content when it shouldn't.
-        	    // Didn't help.
+        	  TreeAware oldTreeAware= dataTreeAware;  // Save old content.
       	    { // Initialize new scroller content.
               dataJComponent=   // Calculate new JComponent...
                 theDataTreeModel.  // ...by having the TreeModel...
                 getDataJComponent(  // ...generate a JComponent...
                   inTreePath  // appropriate to new selection.
                   );
-                // dataJComponent is registered indirectly as TreeModelListener.
               dataTreeAware= // Calculate TreeAware alias.
                 (TreeAware)dataJComponent;
-            	dataTreeAware.getTreeHelper().setDataTreeModel( // Initializing
-            	  theDataTreeModel // with respect to TreeModel, registering.
-            	  );
-                // dataJComponent is registered indirectly as TreeModelListener.
-              dataTreeAware.getTreeHelper().  // set TreeAware's TreeSelectionListener by...
-                addTreePathListener(  // adding to its Listener list...
-                  //this  // ...a reference to this the main panel
-                  theTreePathListener
+              dataTreeAware.getTreeHelper(). // To the panel's TreeHelper's
+                addTreePathListener(  // TreeSelectionListener list add
+                  theTreePathListener // this panel's TreePathListener.
                   );
               dataTreeAware.getTreeHelper().addFocusListener(this);
+            	dataTreeAware.getTreeHelper(). // In the panel's TreeHelper
+                setDataTreeModel(theDataTreeModel); // set the DataTreeModel.
+                  // This makes the TreeHelper be a TreeModelListener.
               } // Initialize new scroller content.
-      	    { // Change scroller content. 
+      	    { // Changing scroller content. 
 	            dataJScrollPane.setViewportView(  // in the dataJScrollPane's viewport...
 	              dataJComponent);  // ...set the DataJPanel for viewing.
 	            dataJScrollPane.getViewport().setOpaque( true );
@@ -781,13 +776,13 @@ public class DagBrowserPanel
 	            dataJComponent.repaint();  // make certain it's displayed.
 	            oldPanelTreePath= inTreePath;  // Save path for compares later.
       	      }  // Change scroller content.
-	        	{ // Finalize old scroller content.
-		        	if // Unlinking TreeModel from old content.
-	              ( oldTreeAware != null ) 
-	            	oldTreeAware.getTreeHelper().setDataTreeModel( // Finalizing 
-	            	  null // with respect to TreeModel, unregistering.
-	            	  );
-	        		} // Finalize old scroller content.
+            if // Finalizing old scroller content...
+              ( oldTreeAware != null ) // ...if it exists.
+  	        	{ // Finalizing old scroller content.
+                { // Unsetting the DataTreeModel in the TreeHelper.
+                  oldTreeAware.getTreeHelper().setDataTreeModel( null );
+                  } // This is to prevent TreeModelListener leakage.
+	          		} // Finalize old scroller content.
             } // replaceRightPanelContent(.)
       
       // methods of the FocusListener, the FocusStateMachine, and others.

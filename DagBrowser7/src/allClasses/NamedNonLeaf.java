@@ -14,7 +14,7 @@ public abstract class NamedNonLeaf
         this.nameString = nameString;  // Store this node's name.
         }
 
-      public String toString( )
+      public String getNameString( )
         /* Returns String representing name of this Object.  */
         {
           return nameString;  // Simply return the name.
