@@ -8,17 +8,25 @@ import static allClasses.Globals.*;  // For appLogger;
 
 public class MetaFileManager {
 
-  /* This class manages the file(s) that conta  ins the external 
+  /* This class manages the file(s) that contains the external 
     representation of this app's meta-data.
     Related classes are MetaFile and MetaFileManager.Finisher.
 
     This meta-data is stored internally in MetaNode-s 
     organized as a tree rooted at MetaRoot.
-    Each MetaNode is associated with, and contains meta-data about,
-    a DataNode.  DataNodes are organized as a tree rooted at the DataRoot.
+    Each MetaNode is associated with, and contains meta-data about, a DataNode.  
+    DataNodes are organized as a tree rooted at the DataRoot.
     The application reads from the file(s) after the application starts,
     and it writes to the file(s) before the application terminates.
-    
+
+    Normally when a MetaNode is created from external meta-data,
+    it contains a reference to the DataNode with which it is associated.
+    Sometime this can't happen, because that DataNode has not been created yet,
+    for example the DataNode associated with a P2P connection which
+    has not been reestablished.  In these cases, a reference too 
+    a special DataNode subclass, an UnknownDataNode is used in its place.
+    That reference should be replaced when the corrected DataNode is created.
+
     This class came after MetaFile from which it got most of its code.
 
     ??? Might need to put finish() in a separate class to avoid
@@ -115,8 +123,15 @@ public class MetaFileManager {
       { // start()
         MetaNode loadedMetaNode= null;  // Place for result root MetaNode.
 
-        loadedMetaNode=  // Try doing a lazy-load of flat file root node.
-          lazyLoadWholeMetaNode( );
+        try { // Try doing a lazy-load of flat file root node.
+          //appLogger.debug("MetaFileManager.start() attemptying load.");
+        	loadedMetaNode= lazyLoadWholeMetaNode( );
+        	}
+        catch ( NumberFormatException e ) {  // Logging any errors.
+          appLogger.error(
+              "MetaFileManager.start() Exception: "+e
+              );
+          }
 
         writeDebugFileV( loadedMetaNode );
 

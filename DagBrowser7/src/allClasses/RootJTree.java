@@ -157,14 +157,14 @@ public class RootJTree
             */
           { 
             boolean doableB= false;  // Assume command not doable.
-            int RowI= getLeadSelectionRow( );  // Get # of selected row.
-            TreePath NextTreePath=  // Convert next row to next TreePath.
-              getPathForRow( RowI + incrementI );
-            if ( NextTreePath != null )
+            int rowI= getLeadSelectionRow( );  // Get # of selected row.
+            TreePath nextTreePath=  // Convert next row to next TreePath.
+              getPathForRow( rowI + incrementI );
+            if ( nextTreePath != null )
               doableB= true;  // Indicate command is doable.
             if // Select that path doable and command desired.
               ( doableB && doB )
-              setPathV(NextTreePath);  // Select the path.
+              setPathV(nextTreePath);  // Select the path.
             return doableB;  // Return doability result.
             }
 
@@ -256,19 +256,19 @@ public class RootJTree
           auto-expand is disabled.
           */
         {
-          int SelectedRowI=   // determine which row is selected.
+          int selectedRowI=   // determine which row is selected.
             getLeadSelectionRow();
           if  // expand or collapse it, whichever makes sense.
-            (isExpanded(getPathForRow(SelectedRowI)))  // Row is expanded now.
+            (isExpanded(getPathForRow(selectedRowI)))  // Row is expanded now.
             { // Collapse the row and disable auto-expansion.
-              collapseRow(SelectedRowI);  // collapse present node.
-              theMetaRoot.SetAutoExpanded(  // force auto-expanded status...
+              collapseRow(selectedRowI);  // collapse present node.
+              theMetaRoot.setAutoExpandedV(  // force auto-expanded status...
                 getLeadSelectionPath() , // ...for selected path...
                 false  // ... to be off.
                 );
               } // Collapse the row and disable auto-expansion.
             else  // Row is collapsed now.
-              expandRow(SelectedRowI);  // Expand the row.
+              expandRow(selectedRowI);  // Expand the row.
           aTreeHelper.notifyListenersAboutChangeV( );
           }
 
@@ -280,7 +280,8 @@ public class RootJTree
         These listen for JTree selection changes.
         */
 
-        public void valueChanged( TreeSelectionEvent TheTreeSelectionEvent ) 
+      
+        public void valueChanged( TreeSelectionEvent theTreeSelectionEvent ) 
           /* This method processes TreeSelectionEvent-s from 
             the JTree superclass.  After a validity check it does:
             * Subselection processing such as automatic expanding, 
@@ -289,51 +290,51 @@ public class RootJTree
             */
           {
             dbgV("RootJTree.valueChanged(..) Begin");
-            final TreePath FinalNewTreePath=  // Get selection TreePath...
-              TheTreeSelectionEvent.  // ...which is the event's...
+            final TreePath finalNewTreePath=  // Get selection TreePath...
+              theTreeSelectionEvent.  // ...which is the event's...
                 getNewLeadSelectionPath();  // ...one and only TreePath.
-            dbgV("RootJTree.valueChanged(..) FinalNewTreePath",FinalNewTreePath);
+            dbgV("RootJTree.valueChanged(..) finalNewTreePath",finalNewTreePath);
             if // Process based on whether selection path is null.
-              ( FinalNewTreePath == null ) // Selection path is null.
+              ( finalNewTreePath == null ) // Selection path is null.
               ;  // So do nothing.
               else  // Selection path is not null.
               { // Process non-null JTree path.
                 setupAndDoSubselectionsV(  // Doing subselections to get to...
-                  FinalNewTreePath  // ...the new TreePath.
+                  finalNewTreePath  // ...the new TreePath.
                   );
                 aTreeHelper.setPartTreePathB(  // Informing TreeHelper...
-                  FinalNewTreePath  // ...of JTree selection, a trivial case.
+                  finalNewTreePath  // ...of JTree selection, a trivial case.
                   );
                 } // Process non-null JTree path.
             dbgV("RootJTree.valueChanged(..) End");
             Misc.dbgEventDone(); // for Debug.
             }
 
-        private void setupAndDoSubselectionsV(TreePath FinalNewTreePath)
+        private void setupAndDoSubselectionsV(TreePath finalNewTreePath)
           /* This sets up and then does all subselections
-            associated with the new TreePath FinalNewTreePath.
+            associated with the new TreePath finalNewTreePath.
             It records the TreePath of the final selection for use in
             the next round of subselections.
             It records position and other information in the MetaTool tree.
             */
           { 
-            TreePath OldTreePath= // Set old TreePath to...
+            TreePath oldTreePath= // Set old TreePath to...
               savedTreePath;  // ...TreePath of last selection made.
-            if ( OldTreePath == null )  // If OldTreePath is null...
-              OldTreePath= FinalNewTreePath;  // ...simulate no change.
-            final TreePath FinalOldTreePath= OldTreePath;  // for Runnable().
+            if ( oldTreePath == null )  // If oldTreePath is null...
+              oldTreePath= finalNewTreePath;  // ...simulate no change.
+            final TreePath finalOldTreePath= oldTreePath;  // for Runnable().
             savedTreePath=  // Save the new selected TreePath...
-              FinalNewTreePath; // which was calculated previously.
+              finalNewTreePath; // which was calculated previously.
             subselectionsBeginV(   // Mark beginning of subselection...
-              FinalOldTreePath, // ...from the previous selection...
-              FinalNewTreePath  // ...to the new selection...
+              finalOldTreePath, // ...from the previous selection...
+              finalNewTreePath  // ...to the new selection...
               );
             // At this point a new selection may be triggered.
             doSubselectionsV( // Collapse and expand nodes along path...
-              FinalOldTreePath, // ...from the previous selection...
-              FinalNewTreePath  // ...to the new selection...
+              finalOldTreePath, // ...from the previous selection...
+              finalNewTreePath  // ...to the new selection...
               ) ;  // ...and maybe trigger an auto-expansion selection.
-            theMetaRoot.set(FinalNewTreePath); // Record final selection position.
+            theMetaRoot.set(finalNewTreePath); // Record final selection position.
             subselectionsEndV();  // Mark end of windows changes.
             }
 
@@ -392,15 +393,15 @@ public class RootJTree
             TreePath CommonAncestorTreePath= // Do the up part.
               collapseAndExpandUpTreePath( startTreePath, stopTreePath );
             { // Expand downward if needed.
-              if // Common node is a descendent of (the same as) stop node.
+              if // Common node is a descendant of (the same as) stop node.
                 ( stopTreePath.isDescendant( CommonAncestorTreePath ) )
                 { // Set auto-expanded attribute of stop node to false.
                   dbgV("RootJTree.doSubselectionsRawV(..) at stop node");
-                  theMetaRoot.SetAutoExpanded(  // Set auto-expanded attribute...
+                  theMetaRoot.setAutoExpandedV(  // Set auto-expanded attribute...
                     stopTreePath, false  // ...of stop node to false.
                     );
                   } // Set auto-expanded attribute of stop node to false.
-              else // Common node is NOT a descendent of (same as) stop node.
+              else // Common node is NOT a descendant of (same as) stop node.
               { // Expand downward.
                 dbgV("RootJTree.doSubselectionsRawV(..) calling collapseAndExpandDownV(..)");
                 dbgV("RootJTree.doSubselectionsRawV(..) CommonAncestorTreePath",CommonAncestorTreePath);
@@ -432,7 +433,7 @@ public class RootJTree
             */
           {
             final TreePath TrailEndTreePath= // Calculate end of trail of...
-              theMetaRoot.FollowAutoExpandToTreePath( // ...expandable nodes...
+              theMetaRoot.followAutoExpandToTreePathV( // ...expandable nodes...
                 stopTreePath  // ...starting at stopTreePath.
                 );
             if ( TrailEndTreePath != null )  // If there is an expansion trail...
@@ -473,7 +474,7 @@ public class RootJTree
                 subselectV( scanTreePath );
                 if // Auto-collapse this node if...
                   ( ( // ... it was auto-expanded. 
-                      theMetaRoot.GetAutoExpandedB( scanTreePath ) 
+                      theMetaRoot.getAutoExpandedB( scanTreePath ) 
                       ) &&  // ...and...
                     ( // ...not the top of an inverted-V.
                       ! scanTreePath.isDescendant( stopTreePath ) 
@@ -508,7 +509,7 @@ public class RootJTree
             TreePath stopParentTreePath= stopTreePath.getParentPath();
             boolean atTopLevelB=  // Determine whether recursion needed.
               ( stopParentTreePath.equals( startTreePath ) );
-            if  // Recursively process nodes farther from stopTreePath first.
+            if  // Recursively process lower nodes first.
               ( ! atTopLevelB ) // There are such nodes.
               collapseAndExpandDownV(  // Recursively process them.
                 startTreePath, stopParentTreePath
@@ -521,7 +522,7 @@ public class RootJTree
                 dbgV("RootJTree.collapseAndExpandDownV(..) expanding");
                 subselectV( stopParentTreePath );
                 expandV( stopParentTreePath );
-                theMetaRoot.SetAutoExpanded(  // Set auto-expanded status.
+                theMetaRoot.setAutoExpandedV(  // Set auto-expanded status.
                   stopParentTreePath, true
                   );
                 } // Auto-expand and move.

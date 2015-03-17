@@ -25,7 +25,7 @@ public class Misc
   
     // Reminder variables.
 
-      public static final boolean ReminderB= false;  // true;
+      public static final boolean reminderB= false;  // true;
 
 
     /* Debugging code.

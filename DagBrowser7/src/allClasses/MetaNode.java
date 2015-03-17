@@ -57,7 +57,7 @@ public class MetaNode extends IDNumber
         }
       */
 
-    // Constructors (4 becoming 2).
+    // Constructors.
 
       public MetaNode( MetaFileManager theMetaFileManager )
         /* Constructor of blank MetaNodes.  
@@ -90,8 +90,9 @@ public class MetaNode extends IDNumber
             theMetaFileManager.makeMetaChildren( );  // ...an empty MetaChildren instance.
           }
 
-    /* Pass-through methods which reference AttributesHashMap where 
-      attributes are stored.  */
+    /* Pass-through methods to reference AttributesHashMap 
+      where attributes are stored.  
+      */
 
       public boolean containsKey( String keyString ) 
         /* This is a pass-through to AttributesHashMap. */
@@ -190,11 +191,12 @@ public class MetaNode extends IDNumber
 
       MetaNode getChildWithAttributeMetaNode
         ( String inKeyString, Object inValueObject )
-        /* This method returns the first child MetaNode, if any, 
-          with an attribute with key == inKeyString and value == inValueObject.
+        /* This method returns the first child MetaNode, 
+          if any, with an attribute with 
+          key == inKeyString and value == inValueObject.
           If no child MetaNode has this attribute then null is returned.
           
-          Maybe refactor this use AttributePiterator subclasses???
+          Maybe refactor this using AttributePiterator subclasses???
           */
         {
           KeyAndValueMetaPiteratorOfMetaNode 
@@ -237,28 +239,84 @@ public class MetaNode extends IDNumber
           return OkayToPurgeB;  // Return calculated purge result.
           }
 
-      MetaNode PutChildUserObjectMetaNode( Object InObject )
-        /* This method puts the Object InObject in a child MetaNode
-          within this its parent MetaNode.
-          It creates a new child MetaNode if 
-          one with InObject does not already exist.
-          In either case, it returns the child MetaNode with InObject.
+      MetaNode addV( DataNode theDataNode )
+        /* This method theDataNode to this MetaNode 
+          in a child MetaNode unless it is already there.
+          It creates a new child MetaNode if necessary. 
+          In any case, it returns the child MetaNode referencing theDataNode.
           */
         {
-          MetaNode MapChildMetaNode=  // Try to get the MetaNode...
+          MetaNode childMetaNode=  // Try to get the MetaNode...
             theMetaChildren.getMetaNode(  // ...from the MetaChildren...
-              InObject,   // ... from the entry containing InObject...
-              this.getDataNode()  // ...using the DataNode for name lookup.
+              theDataNode, // ... from entry containing theDataNode...
+              this.getDataNode()  // ...using this for name lookup.
               );
-          if ( MapChildMetaNode == null ) // Create new HashMap entry if not there.
-            { // Create new HashMap entry.
-              MapChildMetaNode= // Create new MetaNode with desired Object.
-                theMetaFileManager.makeMetaNode( (DataNode)InObject );
+          if  // Creating and adding new child MetaNode if not there already.
+            ( childMetaNode == null )
+            { // Creating new child MetaNode.
+              childMetaNode= // Create new MetaNode with theDataNode.
+                theMetaFileManager.makeMetaNode( theDataNode );
               theMetaChildren.add(   // Add...
-                MapChildMetaNode  // ... the new child MetaNode.
+                childMetaNode  // ... the new child MetaNode.
                 );
-              } // Create new HashMap entry.
-          return MapChildMetaNode;  // Return new/old child from map as result.
+              }
+          return childMetaNode;  // Return new/old child as result.
+          }
+
+      boolean compareNamesWithSubstitutionB( DataNode inDataNode )
+        /* This tests for a match between the names of inDataNode
+          and the DataNode of this MetaNode.
+          It returns the result of this test.
+          Also, if there is a match, 
+          and this MetaNode's DataNode is an UnknownDataNode, 
+          which means it's probably a temporary
+          place-holder for MetaData loaded from a file,
+          then it replaces the UnknownDataNode with inDataNode. 
+          */
+        {
+      	  DataNode thisDataNode= getDataNode();
+  	  		String thisString =thisDataNode.getNameString( ); // ??? 
+  	  		String inString =inDataNode.getNameString( ); // ???
+      	  boolean matchB= // Determining whether names match.
+      	  		thisString.equals( inString ); 
+      	  if ( matchB )  // Attempting DataNode substitution if match.
+      	  	if // Substitute if it's a temporary UnknownDataNode.  
+      	  	  ( UnknownDataNode.isOneB( thisDataNode ))
+      	  	  this.theDataNode= inDataNode;
+      	  return matchB;
+          }
+
+      boolean eliminateAndTestForUnknownDataNodeB( 
+      		MetaTool parentHoldingMetaTool
+      		)
+        /* This method replaces an UnknownDataNode,
+          if present, in this MetaNode, with a valid DataNode.
+          It assumes that parentHoldingMetaTool references
+          the parent MetaNode and DataNode of this MetaNode,
+          and uses its DataNode children to find one
+          with the same name as this MetaNode's UnknownDataNode
+          if needed.
+          It returns true if an UnknownDataNode remains in this MetaNode,
+          false otherwise.
+          */
+        {
+      	  boolean resultB= false; // Assuming UnknownDataNode will be gone.
+
+    	  	if // Replacing UnknownDataNode if present.  
+	  	  	  ( UnknownDataNode.isOneB( theDataNode ))
+	    	  	{ // Replacing UnknownDataNode if replacement exists.
+    	  			String unknownDataNodeString= theDataNode.getNameString( );
+        	  	DataNode parentDataNode=
+        	  			parentHoldingMetaTool.getMetaNode().theDataNode;  
+            	DataNode replacementDataNode= // Searching for name match.
+            			parentDataNode.getNamedChildDataNode( unknownDataNodeString );
+    	  		  if ( replacementDataNode != null ) // Replacing if match found.
+    	  		    theDataNode= replacementDataNode; // Replacing.
+    	  		  	else
+    	  		    resultB= true; // Indicating UknownDataNode remains.
+    	  		  }
+
+    	  	return resultB;
           }
 
     } // class MetaNode.

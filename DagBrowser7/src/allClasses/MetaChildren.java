@@ -37,27 +37,27 @@ public class MetaChildren
     // Getter methods.
 
       public MetaNode getMetaNode( 
-          Object keyObject, 
+          DataNode keyDataNode, 
           DataNode inParentDataNode 
           )
         /* This method returns the child MetaNode 
-          which is associated with DataNode keyObject,
+          which is associated with DataNode keyDataNode,
           or null if there is no such MetaNode.
           inParentDataNode is used for name lookup in case
           lazy-loading is needed.
           */
         {
           MetaNode scanMetaNode;
-          Piterator < MetaNode > ChildPiterator= 
+          Piterator < MetaNode > childPiterator= // Creating iterator. 
             getPiteratorOfMetaNode( inParentDataNode );
           while (true) {
-            scanMetaNode= ChildPiterator.getE();  // Cache present candidate. 
-            if ( scanMetaNode == null )  // Exit if past end.
+            scanMetaNode= childPiterator.getE();  // Caching candidate. 
+            if ( scanMetaNode == null ) // Exiting if no more candidates.
               break; 
-            if  // Exit if found.
-              ( keyObject.equals(scanMetaNode.getDataNode()) )
+            if  // Exiting if name Strings match.
+            	( scanMetaNode.compareNamesWithSubstitutionB( keyDataNode) )
               break; 
-            ChildPiterator.nextE();  // Advance Piterator to next candidate.
+            childPiterator.nextE(); // Going to next candidate.
             }
           return scanMetaNode;
           }
@@ -72,8 +72,8 @@ public class MetaChildren
         public Piterator<MetaNode> getPiteratorOfMetaNode( 
             DataNode inParentDataNode 
             )
-          /* This method returns a Piterator for this MetaNode's 
-            child MetaNodes.  
+          /* This method returns a Piterator for 
+            this MetaChildren's child MetaNodes.  
             It DOES, or WILL DO, lazy loading.
             It has parameter inParentDataNode for use in name lookup
             in case lazy loading is triggered.

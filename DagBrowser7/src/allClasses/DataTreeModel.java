@@ -351,9 +351,19 @@ public class DataTreeModel
           building candidate TreePaths as it goes,
           and returning the first TreePath that ends in targetDataNode.
 
-          This method could be speeded by caching the search result???
+					The search algorithm used is slightly different from
+					the breadth-first-search in the literature.
+					This search queues only nodes that have already been checked.
+					The only thing that happens to nodes after they are removed
+					is that they are expanded.
+
+          ??? This method could be speeded by caching the search result.
           This can be enhanced later to handle duplicate references.
           See Object hashCode() and equals() for HashTable requirements.
+
+          ?? This method is a bit of a kludge.
+          It is used because DataNodes don't know their TreePaths,
+          and TreePaths are required by JTree.
           */
         {
           //appLogger.info( "DataTreeModel.translatingToTreePath()." );
@@ -361,6 +371,9 @@ public class DataTreeModel
       		Queue<TreePath> queueOfTreePath = new LinkedList<TreePath>();
           queueOfTreePath.add(theDataRoot.getParentOfRootTreePath( ));
             // Placing root into the initially empty queue.
+          int currentDepthI = 0;
+          int elementsToDepthIncreaseI = 1; // Init. queued nodes at this depth.
+          int nextElementsToDepthIncreaseI = 0;  // Same for next depth.
           queueScanner: while (true) // Searching queue of parent TreePaths.
             { // Searching one parent TreePath.
           		TreePath parentTreePath = queueOfTreePath.poll(); 
@@ -374,14 +387,21 @@ public class DataTreeModel
                 	DataNode childDataNode= 
                 	  parentDataNode.getChild(childIndexI);
               	  if ( childDataNode == null) break;
-              	    // Exiting if no more children.
+              	    // Exiting checking-children loop if no more children.
                   TreePath childTreePath=
                     parentTreePath.pathByAddingChild( childDataNode ); 
                   if // Returning result TreePath if target node found.
                     ( childDataNode == targetDataNode )
                   	{ resultTreePath= childTreePath; break queueScanner; }
                  	queueOfTreePath.add( childTreePath );
-                  }
+                 	nextElementsToDepthIncreaseI++;
+                 	}
+              if (--elementsToDepthIncreaseI == 0) // 
+              { // Handle tree depth increase.
+                if (++currentDepthI > 5) break queueScanner;
+                elementsToDepthIncreaseI = nextElementsToDepthIncreaseI;
+                nextElementsToDepthIncreaseI = 0;
+              	}
               }
           return resultTreePath;
           }

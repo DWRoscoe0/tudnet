@@ -551,7 +551,7 @@ public class TreeHelper
             * The most recently visited child, if there is one.
             * The first child, if there is one.
           Otherwise it returns null.
-          
+
           ??? Maybe instead of null it should return UnknownDataNode?
           */
         {

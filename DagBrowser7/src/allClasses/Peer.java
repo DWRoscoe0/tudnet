@@ -109,8 +109,10 @@ public class Peer  // Nested class managing peer connection data.
 
         private NamedInteger packetsSentNamedInteger;
 
-        //private int packetsSentI;
-	      //private NamedMutable packetsSentNamedMutable;
+        private NamedInteger packetsReceivedNamedInteger;
+
+        long pingSentAtNanosL;
+        private NamedInteger RoundTripTimeNamedInteger; 
 
 
     public Peer(  // Constructor. 
@@ -130,7 +132,7 @@ public class Peer  // Nested class managing peer connection data.
       {
         super( 
   	        theDataTreeModel,
-        		"Peer-at-"+peerInetSocketAddress,
+        		"Peer-at-" + peerInetSocketAddress.getAddress(),
             new DataNode[]{} // Initially empty of details.
         		);
 
@@ -199,18 +201,27 @@ public class Peer  // Nested class managing peer connection data.
     private void initializeChildrenV()
 	    {
 	      addressNamedMutable= new NamedMutable( 
-	      		theDataTreeModel, "Address-And-Port" 
+	      		theDataTreeModel, "Port" 
 	      		);
 	      add( addressNamedMutable );
-	      addressNamedMutable.setValueObject( ""+peerInetSocketAddress );
-	
+	      addressNamedMutable.setValueObject( 
+	      		"" + peerInetSocketAddress.getPort() 
+	      		);
+
+        RoundTripTimeNamedInteger= new NamedInteger( 
+	      		theDataTreeModel, "Round-Trip-Time-ns", 0 
+	      		);
+	      add( RoundTripTimeNamedInteger );
+
 	      packetsSentNamedInteger= new NamedInteger( 
 	      		theDataTreeModel, "Packets-Sent", 0 
 	      		);
 	      add( packetsSentNamedInteger );
-	      //packetsSentI= 0;
-		    //packetsSentNamedMutable= new NamedMutable( "Packets-Sent" );
-		    //add( packetsSentNamedMutable );
+	    	
+	      packetsReceivedNamedInteger= new NamedInteger( 
+	      		theDataTreeModel, "Packets-Received", 0 
+	      		);
+	      add( packetsReceivedNamedInteger );
 	    	}
 
     private void tryingPingSendV()
@@ -236,6 +247,7 @@ public class Peer  // Nested class managing peer connection data.
                 }
             //long pingMillisL= System.currentTimeMillis();
             sendingPacketV("PING"); // Sending ping packet.
+            pingSentAtNanosL= System.nanoTime(); // Recording send time.
             long waitMillisL=  // Calculating half-period wait time.
               System.currentTimeMillis()+HalfPeriodMillisL;
             waitLoop: while (true) { // Flushing for pause duration.
@@ -255,6 +267,9 @@ public class Peer  // Nested class managing peer connection data.
                     if // Handling echo packet, maybe.
                       ( testingPacketB( "ECHO" ) )
                       { // Handling echo and exiting.
+	                      RoundTripTimeNamedInteger.setValueL(
+	                      		(System.nanoTime() - pingSentAtNanosL)
+	                      		); // Calculating RoundTripTime.
                         consumingOnePacketV(); // Consuming echo packet.
                         // This should handle unwanted received packets.
                         break retryLoop; // Finishing by exiting loop.
@@ -385,6 +400,8 @@ public class Peer  // Nested class managing peer connection data.
       {
         receiveQueueOfSockPackets.poll();  // Consuming the packet,..
           // ...if there was one at head of queue.
+
+        packetsReceivedNamedInteger.addValueL( 1 );
         }
 
     private void ignoringOnePacketV()
@@ -468,11 +485,10 @@ public class Peer  // Nested class managing peer connection data.
             packet 
             );
         sendQueueOfSockPackets.add( // Queuing packet for sending.
-          aSockPacket
-          );
-        packetsSentNamedInteger.addValueI( 1 );
-        //packetsSentI++;
-	      //packetsSentNamedMutable.setValueObject( new Integer(packetsSentI));
+            aSockPacket
+            );
+
+        packetsSentNamedInteger.addValueL( 1 );
         }
 
     } // Peer.

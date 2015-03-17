@@ -105,37 +105,39 @@ public class DagBrowserPanel
 
           private JLabel infoJLabel;  // a place to display directory/file info.
 
-        // ComponentFocusStateMachine.
-          /* This state machine restores the focus to either 
-            the left/navigation JTree pane or the right/content pane.  
-            This restoration is done becaue most of the time 
-            the focus is in one of those two places while the user browses, 
-            and the user will want to move the cursor back into
-            one of these panes if it ever goes out.
-            The reason the restoration is done stepping
-            only one Component at a time in the component hierarchy
-            is because Component.requestFocusInWindow() did not seem
-            to be able to reliably move the focus more than one Component.
-            */
-          private enum focusPane {   // the normal focus panes.
+        /* Component focus control.
+          
+          This is the code to control what component has focus
+          and the behavior that.  
+          This includes the ComponentFocusStateMachine.
+
+          The focus is normally set to either 
+          the left/navigation JTree pane or the right/content pane.
+          This must be restored when a button is pushed because
+          that takes the focus away from whatever component had focus.  
+          The focus restoration is done by stepping
+          only one Component at a time in the component hierarchy
+          because Java's Component.requestFocusInWindow() did not seem
+          to be able to reliably move the focus more than one Component.
+          */
+
+          private enum FocusPane { // IDs of panes that can be focused.
             NO_PANE,  // neither pane.
-            LEFT_PANE,  // left (tree view) pane.
-            RIGHT_PANE   // right (content view) pane.
+            LEFT_PANE,  // left (tree navigation) pane.
+            RIGHT_PANE   // right (content) pane.
             };
-          private focusPane lastFocusPane=  // Last focusPane that had focus.
-            focusPane.LEFT_PANE;  // Set to focus right pane initially.
-            // was: focusPane.RIGHT_PANE;
-          private focusPane desiredFocusPane=  // The next pane to get focus...
-            focusPane.NO_PANE;  // ... is initially undefined.
-            /* The meanings are as follows:
-              if NO_PANE then the ComponentFocusStateMachine is not running.
-              if LEFT_PANE or RIGHT_PANE then the ComponentFocusStateMachine 
-              is active and trying to set the focus to that pane Component.  */
-          private Component lastValidFocusOwnerPanelComponent= null;
-            /* if non-null then a focus-altering command is underway and 
-              the value is the penel Component with focus immediately before 
-              the command began.  */
-        
+          private Component lastGainedFocusComponent= null;
+            // Last main panel Component which gained focus.
+          private FocusPane lastGainedFocusPane= // FocusPane equivalent.
+          		FocusPane.LEFT_PANE;
+          private FocusPane targetFocusPane= // State machine target pane
+              FocusPane.NO_PANE;  // is initially undefined.
+              /* The meanings are as follows:
+                NO_PANE: the state-machine is halted.
+                LEFT_PANE or RIGHT_PANE: the state machine 
+                	is active and trying to reach the target focus pane.
+                */
+
     // Constructor and related methods.
     
       public DagBrowserPanel( 
@@ -373,8 +375,8 @@ public class DagBrowserPanel
             activityTimer.start();  // start activityTimer so 1-second activitys will work.
             } // build and start activityTimer.
           theTimerThread.start();  // Start TimerThread.
-          lastValidFocusOwnerPanelComponent=   // initialize ID of last component with focus.
-            theRootJTree;  // was dataJComponent;            
+          lastGainedFocusComponent= // Initialize record of 
+            theRootJTree;  // last component with focus.
           //restoreFocusV(); // make certain focus is set correctly.
 
           { // Create key mapping.  Experimental and incomplete.
@@ -784,74 +786,86 @@ public class DagBrowserPanel
                   } // This is to prevent TreeModelListener leakage.
 	          		} // Finalize old scroller content.
             } // replaceRightPanelContent(.)
-      
+
       // methods of the FocusListener, the FocusStateMachine, and others.
-      
-        /* WARNING: Focus code is difficult to debug because
+
+        /* Maybe make this its own class?
+
+          WARNING: Focus code is presently difficult to debug because
           using Eclipse's breakpoints and stepping affects the
           focus state of the app.  
           It might be necessary to debug using logging.
+          But at least these focus changes no longer interfere with
+          debugging of non-focus code.
           */
 
+        public void focusLost(FocusEvent theFocusEvent)
+          /* This FocusListener method does nothing, 
+            but it must be here as part of the FocusListener interface.
+            */
+          { 
+            /* ??
+            System.out.println(
+              "focusLost(...) by "
+              + ComponentInfoString(theFocusEvent.getComponent()));
+            System.out.println(
+              "  component gaining focus is"
+              + ComponentInfoString(theFocusEvent.getOppositeComponent())
+              );
+            */
+            }
+
         public void focusGained(FocusEvent theFocusEvent)
-          /* This does what needs doing when 
-            one of the sub-panels gains focus.  This includes:
+          /* This FocusListener method does what needs doing when 
+            one of the main sub-panels gains focus.  This includes:
 
               Saving the Component getting focus in 
-              lastValidFocusOwnerPanelComponent so restoreFocusV() 
+              lastGainedFocusComponent so restoreFocusV() 
               can restore the focus later after 
               temporary focus-altering user input.
-              The two Components that usually have focus in this app are the
-              left theRootJTree and the right dataJComponent.
+              The two Components that usually have focus in this app are 
+              the left theRootJTree and the right dataJComponent.
 
               Updating the Path and Info JLabel-s to agree with
               the selection in the new focused sub-panel.
 
+							Updating the button enable states based on what
+							movements are possible in the panel with focus. 
             */
           { // focusGained(FocusEvent theFocusEvent)
-            lastValidFocusOwnerPanelComponent=  // record last focus owner panel.
+        		FocusPane previousFocusPane= lastGainedFocusPane;
+            lastGainedFocusComponent= // Recording component with focus.
               theFocusEvent.getComponent();
-            //appLogger.debug("focusGained(..). "
-            //  +Misc.componentInfoString(lastValidFocusOwnerPanelComponent)
-            //  + "."
-            //  );
-            
-            { // record focused component as an enum because it might change.
-              if  // something in right sub-panel gained focus.
-                //( dataJComponent.isAncestorOf(lastValidFocusOwnerPanelComponent) )
-                //(lastValidFocusOwnerPanelComponent == dataJComponent)
-                ( ancestorOfB(
-                    dataJComponent, lastValidFocusOwnerPanelComponent
-                    ) )
-                { 
-                  lastFocusPane= focusPane.RIGHT_PANE;  // record right enum ID.
-                  displayPathAndInfoV(  // display right sub-panel's info for...
-                    dataTreeAware.getTreeHelper().getPartTreePath() // ...selected TreePath.
-                    );
-                  }
-              else if  // left sub-panel gained focus.
-                //(lastValidFocusOwnerPanelComponent == theRootJTree)
-                ( ancestorOfB(
-                    theRootJTree, lastValidFocusOwnerPanelComponent
-                    ) )
-                { 
-                  lastFocusPane= focusPane.LEFT_PANE;  // record left enum ID.
-                  displayPathAndInfoV(  // display left sub-panel's info.
-                    theRootJTree.getSelectedTreePath()
-                    );
-                  }
-              else 
-                { 
-                  appLogger.info("NO_PANE gained focus.");
-                  lastFocusPane= focusPane.NO_PANE;  // record enum ID.
-                  }
-              } // record focused component as an enum because it might change.
+            lastGainedFocusPane= // Translate owning component to enum.
+              ancestorFocusPane( lastGainedFocusComponent );
+        		if // Updating things only if focus owner changed.
+        		    // Done to make debugging with Eclipse window easier.
+        		  ( previousFocusPane != lastGainedFocusPane )
+	        		{ // Updating things.
+		            switch // Updating path and info based on focus owner. 
+		              ( lastGainedFocusPane ) 
+			            {
+				            case RIGHT_PANE:
+				              displayPathAndInfoV(
+				                  dataTreeAware.getTreeHelper().getPartTreePath()
+				                  );
+				              break;
+				            case LEFT_PANE:
+				              displayPathAndInfoV(
+				                  theRootJTree.getSelectedTreePath()
+				                  );
+				              break;
+				            case NO_PANE:
+				            default:
+				            	; // Displaying nothing.
+			            	}
+		            buttonEnableScanV(); // Adjusting which buttons enabled.
+  	        		}
 
-            buttonEnableScanV( );
             /* ??
             System.out.println(
               "focusGained(...) by"
-              + " " + lastFocusPane
+              + " " + lastGainedFocusPane
               + ComponentInfoString(theFocusEvent.getComponent()));
             System.out.println(
               "  component losing focus is"
@@ -861,12 +875,34 @@ public class DagBrowserPanel
             
             } // focusGained(FocusEvent theFocusEvent)
 
+        private FocusPane ancestorFocusPane( Component inComponent )
+          /* This method returns the FocusPanel ID of the major component panel,
+            either dataJComponent or theRootJTree, 
+            which is ancestor of inComponent, or
+            FocusPane.NO_PANE if neither major panel is its ancestor.
+            */
+        	{
+        	  FocusPane resultFocusPane;
+          	if // inComponent is in right sub-panel (dataJComponent).
+              ( ancestorOfB( dataJComponent, inComponent ) )
+          		resultFocusPane= FocusPane.RIGHT_PANE;  // record right enum ID.
+            else if // inComponent is in left sub-panel (theRootJTree).
+              ( ancestorOfB( theRootJTree, inComponent ) )
+            	resultFocusPane= FocusPane.LEFT_PANE;  // record left enum ID.
+            else 
+              { 
+	            	resultFocusPane= FocusPane.NO_PANE;  // record no pane enum ID.
+	                appLogger.info("NO_PANE gained focus.");
+                }
+        	  return resultFocusPane; // Return determined panel ID.
+        	  }
+        
         private boolean ancestorOfB(
             Component theComponent,Component theOtherComponent)
           /* This returns true if theComponent contains, that is, 
             is an ancestor of, theOtherComponent.
             A component is considered to be an ancestor of itself.
-            This method was created because of because 
+            This method was created because of 
             a bug in Component.isAncestorOf(..) making
             an extra equality test necessary. 
             */
@@ -888,22 +924,6 @@ public class DagBrowserPanel
             return resultB;
             }
 
-        public void focusLost(FocusEvent theFocusEvent)
-          /* This method does nothing, 
-            but it must be here as part of the FocusListener interface.
-            */
-          { 
-            /* ??
-            System.out.println(
-              "focusLost(...) by "
-              + ComponentInfoString(theFocusEvent.getComponent()));
-            System.out.println(
-              "  component gaining focus is"
-              + ComponentInfoString(theFocusEvent.getOppositeComponent())
-              );
-            */
-            }
-
         public void restoreFocusV()
           /* Restores the state of the app focus to one of two states, 
             previously saved by the FocusListener methods, either:
@@ -916,23 +936,24 @@ public class DagBrowserPanel
           { // restoreFocusV()
             //appLogger.debug("restoreFocusV(), ");
 
-            desiredFocusPane=  // change state of the FocusStateMachine to...
-              lastFocusPane;  // ... pane that last had focus.
+            targetFocusPane=  // change state of the FocusStateMachine to...
+              lastGainedFocusPane;  // ... pane that last had focus.
 
-            focusStepperV();  // start the FocusStateMachine.
+            focusStepperV();  // start the FocusStateMachine stepper.
             
             } // restoreFocusV()
 
         private void focusStepperV()
           /* Steps the FocusStateMachine until desired focus is achieved.
-            The first version did nothing and let 
-            the activity timer step things.
-            This version starts a fast self-stepper.
+            The first version separated steps using
+            the 1-second activity timer for debugging.
+            This version uses a no-delay fast stepper.
             */
           { // focusStepperV()
             
-            if (focusStepB())  //* step the FocusStateMachine and if still running...
-              { // queue another step.
+            if // Recursively stepping the FocusStateMachine until done.
+              (focusStepB()) // Stepping and testing whether more needed
+              { // Queuing more needed stepping.
                 SwingUtilities.invokeLater(new Runnable() {                   
                   @Override  
                   public void run() 
@@ -942,10 +963,10 @@ public class DagBrowserPanel
                         "restarting the FocusStateMachine."
                         );
                       */
-                      focusStepperV();  // restart the FocusStateMachine.
+                      focusStepperV(); // Continuing to step.
                       }  
                   });
-                } // queue another step.
+                }
             
             } // focusStepperV()
 
@@ -953,7 +974,7 @@ public class DagBrowserPanel
           /* This method performs one step of the ComponentFocusStateMachine,
             to move the focus one Component closer to desired Component
             in the Component hierarchy.  
-            It returns true if the state machine is still running, 
+            It returns true if more steps of the state machine are needed, 
             false otherwise.
 
             ??? Simplify the focus step code with a tree scanning loop.
@@ -969,7 +990,7 @@ public class DagBrowserPanel
             Component nextFocusComponent= null; // assume machine is halted.
  
             goReturn: {
-              if (desiredFocusPane == focusPane.NO_PANE)  // machine halted.
+              if (targetFocusPane == FocusPane.NO_PANE)  // machine halted.
                 break goReturn;  // Exiting.
               Component focusedComponent=  // get Component owning the focus.
                 KeyboardFocusManager.
@@ -992,7 +1013,7 @@ public class DagBrowserPanel
                   nextFocusComponent= theSplitPane;
                 else
                   { // decode based on desired panel.
-                    if (desiredFocusPane == focusPane.LEFT_PANE)
+                    if (targetFocusPane == FocusPane.LEFT_PANE)
                       { // step focus toward left pane.
                         if (focusedComponent == theSplitPane)
                           nextFocusComponent= treeJScrollPane;
@@ -1001,7 +1022,7 @@ public class DagBrowserPanel
                         else if (focusedComponent == theRootJTree)
                           nextFocusComponent= null;  // Halting machine.
                         } // step focus toward left pane.
-                    if (desiredFocusPane == focusPane.RIGHT_PANE) 
+                    if (targetFocusPane == FocusPane.RIGHT_PANE) 
                       { // step focus toward right pane.
                         if (focusedComponent == theSplitPane)
                           nextFocusComponent= dataJScrollPane;
@@ -1027,7 +1048,7 @@ public class DagBrowserPanel
                     dataJComponent.repaint();  // repaint right data panel.
                     theRootJTree.repaint();  // repaint left tree panel.
                     } // now that focus is correct, repaint the two panels.
-                  desiredFocusPane= focusPane.NO_PANE;  // halt state machine.
+                  targetFocusPane= FocusPane.NO_PANE;  // halt state machine.
                   } // do final focus processing.
               }
             return  // Returning whether there will be more steps.
@@ -1036,7 +1057,28 @@ public class DagBrowserPanel
               
             } // focusStepB().
 
-    // Key and Action bindings (KeyboardFocusManager ).
+        public TreeAware getFocusedTreeAware()
+          /* This method returns a reference to the JComponent,
+            casted to a TreeAware, which last had focus 
+            and will probably have it again if
+            it was taken away by a button click or dialog box activation.
+            It is called for restoring focus and for recording 
+            final correct Selections in the MetaNode tree.
+            */
+          {
+            TreeAware resultTreeAware;
+            switch ( lastGainedFocusPane ) { // Calculate from last focused pane.
+              case RIGHT_PANE:
+                resultTreeAware= (TreeAware)dataJComponent; break;
+              case LEFT_PANE:
+              case NO_PANE:
+              default:
+                resultTreeAware= theRootJTree; break;
+              } // Calculate from last focused pane.
+            return resultTreeAware;
+            }
+
+    // Key and Action bindings (KeyboardFocusManager ).  Experimental/Unused???
     
       /* Although the way Java handles Keyboard Focus has been improved,
         I still find it difficult to use.
@@ -1101,30 +1143,10 @@ public class DagBrowserPanel
 
     // miscellaneous methods.
 
-      public TreeAware getFocusedTreeAware()
-        /* This method returns a reference to the TreeAware JComponent
-          which last had focus and will probably have it again if
-          it was taken away by a button click or dialog box activation.
-          It is called for restoring focus and for recording 
-          final correct Selections in the MetaNode tree.
-          */
-        {
-          TreeAware resultTreeAware;
-          switch ( lastFocusPane ) { // Calculate from last focused pane.
-            case RIGHT_PANE:
-              resultTreeAware= (TreeAware)dataJComponent; break;
-            case LEFT_PANE:
-            case NO_PANE:
-            default:
-              resultTreeAware= theRootJTree; break;
-            } // Calculate from last focused pane.
-          return resultTreeAware;
-          }
-
       private void displayPathAndInfoV()
         /* This method Updates directoryJLabel and infoJLabel, 
           which appear as two lines above and below the two main sub-panels.
-          What it displays depends on which of the two major sub-panel
+          What it displays depends on which of the two major sub-panels
           has focus and what, if anything, is selected in that panel.
           This method is called whenever something changes
           that might effect these fields.

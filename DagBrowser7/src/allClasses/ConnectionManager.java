@@ -77,7 +77,7 @@ public class ConnectionManager
 
     // Other instance variables, all private.
 	
-	    private Map<SocketAddress,PeerValue> peerSocketAddressMap;
+	    private Map<SocketAddress,PeerValue> peerSocketAddressConcurrentHashMap;
 	      /* This initially empty Collection provides lookup of Peers
 	        by associated SocketAddress.
 	        It is used mainly to determine which, if any, Peer
@@ -127,10 +127,10 @@ public class ConnectionManager
         // Storing injected dependencies stored in this class.
         this.theConnectionManagerFactory= theConnectionManagerFactory;
 
-        peerSocketAddressMap=  // Setting socket-to-peer map empty.
+        peerSocketAddressConcurrentHashMap= // Setting socket-to-peer map empty.
           new ConcurrentHashMap<SocketAddress,PeerValue>();
             // This probably doesn't need to be a concurrent map,
-            // but it probabably doesn't hurt.
+            // but it probably doesn't hurt.
 
         // Setting all input queues empty.
         theLockAndSignal= new LockAndSignal(false);  // Creating signaler.
@@ -248,7 +248,7 @@ public class ConnectionManager
         Iterator<PeerValue> anIteratorOfPeerValues;  // For peer iterator.
 
         anIteratorOfPeerValues=  // Getting new peer iterator.
-          peerSocketAddressMap.values().iterator();
+          peerSocketAddressConcurrentHashMap.values().iterator();
         while  // Requesting termination of all Peers.
           (anIteratorOfPeerValues.hasNext())
           {
@@ -258,7 +258,7 @@ public class ConnectionManager
             }
 
         anIteratorOfPeerValues=  // Getting new peer iterator.
-          peerSocketAddressMap.values().iterator();
+          peerSocketAddressConcurrentHashMap.values().iterator();
         while  // Waiting for completion of termination of all Peers.
           (anIteratorOfPeerValues.hasNext())
           {
@@ -512,7 +512,7 @@ public class ConnectionManager
         */
       {
         PeerValue resultPeerValue= // Testing whether peer is already stored.
-          peerSocketAddressMap.get(peerInetSocketAddress);
+          peerSocketAddressConcurrentHashMap.get(peerInetSocketAddress);
         if (resultPeerValue == null) // Adding peer if not stored already.
           {
             final PeerValue newPeerValue=  // Building new peer. 
@@ -522,7 +522,7 @@ public class ConnectionManager
                 peerQueue,
                 unconnectedDatagramSocket
                 );
-            peerSocketAddressMap.put(  // Adding to HashMap with...
+            peerSocketAddressConcurrentHashMap.put( // Adding to HashMap with...
               peerInetSocketAddress,  // ...the SocketAddress as the key and...
               newPeerValue  // ...the PeerValue as the value.
               );
@@ -534,7 +534,7 @@ public class ConnectionManager
                   }  
                 } 
               );
-            newPeerValue.getEpiThread().start(); // Start the peer's thread.
+            newPeerValue.getEpiThread().start(); // Start peer's thread.
             resultPeerValue= newPeerValue;  // Using new peer as result.
             }
         return resultPeerValue.getPeer();

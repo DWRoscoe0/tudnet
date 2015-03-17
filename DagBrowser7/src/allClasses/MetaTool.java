@@ -7,26 +7,24 @@ import javax.swing.tree.TreePath;
  
 abstract class MetaTool
 
-  /* This class is a tool for reading and writing the meta-data 
-    in the MetaNodes associated with the DataNodes of 
-    the Infogora DAG (Directed Acyclic Graph).
-    This includes information about which node children
-    were selected, referenced or visited most recently.
-    A location within the DAG is specified with
-    a TreePath when information is to be read or stored.
+  /* This tool maintains two paths:
 
-    This tool maintains two paths:
     * A TreePath which represents a path to a DataNode 
       in the DataNode DAG.
-    * A MetaPath which represents a path in a MetaNode
-      to the MetaNode DAG which contains data about 
-      the associated DataNode.
-    These paths are maintained in sync.
-    When one changes, the other changes to an equivalent value.
+    * A MetaPath which represents a path to a MetaNode
+      in the MetaNode DAG.
+
+    These paths are maintained in sync so that 
+    the two paths reference equivalent locations 
+    in the different but related data DAG.
+    When one path changes, the other changes to an equivalent value.
+
+    These paths are useful for performing operations on the two DAGs.
+    The MetaNode DAG stores data about the DataNode DAG.
 
     Possible enhancements ???
-        
-      Space:
+
+      Optimize MetaNode space:
         Eliminate nodes which:
           * have no children,
           * have no attributes, and
@@ -66,15 +64,15 @@ abstract class MetaTool
           theMetaPath=  // Initializing MetaNode TreePath.
             theMetaRoot.getParentOfRootMetaPath( );
           
-          Sync( inTreePath ); // Adjusting the instance variables so...
+          syncV( inTreePath ); // Adjusting the instance variables so...
             // ...the locations they represent match...
             // ...the MetaNode associated with inTreePath.
 
           }
 
     // Instance methods.
-    
-      protected void Sync( TreePath inTreePath )
+      
+      protected void syncV( TreePath inTreePath )
         /* This recursive method adjusts the instance variables 
           so that the locations they represent match
           the MetaNode associated with inTreePath.
@@ -84,81 +82,136 @@ abstract class MetaTool
           It tries to do this incrementally and recursively, 
           so if inTreePath and theTreePath are very similar,
           then syncing will be very fast.
+          
+          Optimize path-length code??  Underway.
+          Use less recursion?? Underway.
           */
-        {
-          if ( inTreePath == theTreePath ) // Paths are same reference.
-            ; // Do nothing because they are already in sync.
-          else if ( inTreePath.equals( theTreePath ) ) // Paths are equal.
-            theTreePath= inTreePath;  // Copy reference.  Now they're in sync.
-          else if  // Paths are different but have the same length.
-            ( inTreePath.getPathCount() == theTreePath.getPathCount() )
-            SyncSameLengthsButDifferent( inTreePath );
-          else if // New path is longer than old path. 
-            ( inTreePath.getPathCount() > theTreePath.getPathCount() )
-            SyncLonger( inTreePath );
-          else // New path is shorter than old path. 
-            SyncShorter( inTreePath );
+        { 
+        	int inPathLengthI= inTreePath.getPathCount();
+        	int thePathLengthI= theTreePath.getPathCount();
+        	int lengthDifferenceI= inPathLengthI - thePathLengthI;
+
+          if ( lengthDifferenceI > 0 )
+          	syncToLongerLengthNewPathV( inTreePath, lengthDifferenceI );
+          else if ( lengthDifferenceI < 0 ) 
+          	syncToShorterLengthNewPathV( inTreePath, -lengthDifferenceI );
+          else // if ( lengthDifferenceI == 0 )
+            syncToSameLengthNewPathV( inTreePath );
           }
 
-      private void SyncLonger( TreePath inTreePath )
-        /* This method handles the Sync case when
-          the new path is longer than the old path.
-          */
-        {
-          Sync(   // Sync with shorter new path.
-            inTreePath.getParentPath() 
-            );
-          SyncTheMetaPathFromTreePath( inTreePath );
-          theTreePath=   // Add last TreePath element by assigning.
-            inTreePath;
-          }
+      private void syncToLongerLengthNewPathV(
+		  		TreePath inTreePath, int lengthDifferenceI 
+		  		)
+	      /* This method handles the Sync case when
+		      the new path length is longer than or equal to the old path length.
+		      lengthDifferenceI is how much longer inTreePath is than
+		      theTreePath in this MetaTool.
+		      */
+	      {
+	    	  if ( lengthDifferenceI == 0 ) // Syncing based on length difference.
+	    	  	syncToSameLengthNewPathV( inTreePath ); // Syncing same length.
+	    	  	else
+	    	  	{ // Syncing to longer new path.
+	    	  		syncToLongerLengthNewPathV( // Syncing paths one child shorter.
+	    	  				inTreePath.getParentPath(), lengthDifferenceI - 1 
+	  		          );
+  		        appendMetaChildFromTreePathV( inTreePath ); // Appending child.
+		          theTreePath= inTreePath;  // Extending TreePath to match.
+  	    	  	}
+	        }
+	
+      private void syncToShorterLengthNewPathV( 
+      		TreePath inTreePath, int lengthDifferenceI 
+      		)
+	      /* This method handles the Sync case when
+	        the new path length is shorter than or equal to the old path length.
+	        lengthDifferenceI is how much shorter inTreePath is than
+	        theTreePath in this MetaTool.
+	        */
+	      {
+      	  if ( lengthDifferenceI == 0 ) // Syncing based on length difference.
+      	  	syncToSameLengthNewPathV( inTreePath ); // Syncing same length.
+      	  	else
+      	  	{ // Syncing shorter new path.
+			        theTreePath=  // Shorten old path by removing last DataNode.
+			          theTreePath.getParentPath();
+			        theMetaPath=  // Shorten MetaPath by removing last MetaNode.
+			          theMetaPath.getParentMetaPath( );
+			        syncToShorterLengthNewPathV( inTreePath, lengthDifferenceI - 1 );
+      	  		}
+	        }
 
-      private void SyncShorter( TreePath inTreePath )
-        /* This method handles the Sync case when
-          the new path is shorter than the old path.
-          */
-        {
-          theTreePath=  // Shorten old path by removing last DataNode.
-            theTreePath.getParentPath();
-          theMetaPath=  // Shorten MetaPath by removing last MetaNode.
-            theMetaPath.getParentMetaPath( );
-          Sync( inTreePath );  // Sync the shorter paths with new path.
-          }
-
-      private void SyncSameLengthsButDifferent( TreePath inTreePath )
+      private void syncToSameLengthNewPathV( TreePath inTreePath )
         /* This method handles the Sync case when
           the new path is the same length as the old path,
-          but they are known to be unequal.
+          but they are (not necessarily) known to be unequal.
           */
         {
-          theTreePath= theTreePath.getParentPath();  // Shorten old path.
-          theMetaPath=  // Shorten MetaPath by removing last MetaNode.
-            theMetaPath.getParentMetaPath( );
-          Sync( inTreePath.getParentPath() );  // Sync shortened paths.
-          SyncTheMetaPathFromTreePath( inTreePath );
-          theTreePath= inTreePath;  // Add last element by assigning.
+	        if ( equalsB( inTreePath, theTreePath ) ) // Returning if equal.
+	        	; // Nothing to do.  Sync achieved.
+        	else // Syncing by recursing on parent and appending children.
+	        	{
+		          theTreePath= // Remove old TreePath child.
+		          		theTreePath.getParentPath();
+		          theMetaPath=  // Remove MetaPath child.
+		          		theMetaPath.getParentMetaPath( ); 
+		          TreePath parentOfInTreePath= // Remove new TreePath child. 
+		          		inTreePath.getParentPath();
+		
+            	syncToSameLengthNewPathV( parentOfInTreePath ); // Sync parents.
+		
+		          appendMetaChildFromTreePathV( inTreePath ); // Append child.
+		          theTreePath= inTreePath;  // Extending TreePath to match.
+	        		}
           }
 
-      private void SyncTheMetaPathFromTreePath( TreePath inTreePath )
+      private void appendMetaChildFromTreePathV( TreePath inTreePath )
         /* This is a helper method for 
           some of the above Sync... methods.  
-          It extends the MetaNode DAG if needed, 
-          and adds an element to theMetaPath,
+          It adds an element to theMetaPath,
+          extending the MetaNode DAG if needed,
           to match the DataNode DAG path inTreePath.
           */
         {
-          Object DataObject=  // Get Object from new TreePath element.
-            inTreePath.getLastPathComponent( );
-          MetaNode ChildMetaNode= // Put it in MetaNode as child.
+          DataNode theDataNode= // Getting DataNode from end of TreePath.
+            (DataNode)inTreePath.getLastPathComponent( );
+          MetaNode childMetaNode= // Putting it in MetaNode as child.
             theMetaPath.
             getLastMetaNode().
-            PutChildUserObjectMetaNode( DataObject );
+            addV( theDataNode );
           theMetaPath=  // Add resulting child MetaNode to path by...
             new MetaPath(  // ...constructing new MataPath from...
               theMetaPath,  // ...old MetaPath...
-              ChildMetaNode  // ...and ChildMetaNode as new element.
+              childMetaNode  // ...and childMetaNode as new element.
               );
           }
+
+      private boolean equalsB( TreePath aTreePath, TreePath otherTreePath )
+        /* Special version of equals(..) customized for this app.  
+          It doesn't use getPathCount().
+          It works best for TreePaths which have 
+          frequent common prefixes but rare common suffices. 
+          */
+	      {
+      	  boolean resultB= false; // Assuming paths not equal.
+	        while (true) { // Looping, testing, and shortening paths.
+	        	if // Exiting with true if path references are equal.
+	        	  ( aTreePath == otherTreePath )
+         			{ resultB= true; break; }
+	        	{ // Exiting with false if only one reference is null.
+		        	if ( aTreePath == null ) break;
+		        	if ( otherTreePath == null ) break;
+	        		}
+	        	if // Exiting with false if children are unequal.
+	        	  ( ! aTreePath.getLastPathComponent().equals( 
+	        	  		otherTreePath.getLastPathComponent() 
+	        	  		) )
+	        		break;
+	        	aTreePath= aTreePath.getParentPath(); // Removing child.
+	        	otherTreePath= otherTreePath.getParentPath(); // Removing child.
+	        	}
+      	  return resultB;
+	        }
   
     // Instance getter methods.
 

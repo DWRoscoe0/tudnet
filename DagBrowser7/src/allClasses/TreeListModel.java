@@ -1,6 +1,6 @@
 package allClasses;
 
-import static allClasses.Globals.appLogger;
+//import static allClasses.Globals.appLogger;
 
 import javax.swing.AbstractListModel;
 import javax.swing.event.ListDataEvent;
@@ -97,7 +97,7 @@ public class TreeListModel
 	        an equivalent ListDataEvent and notifies the ListDataListeners.
 	        */
 	      {
-	    		appLogger.debug("TreeListModel.treeNodesInserted(..)");
+	    		//appLogger.debug("TreeListModel.treeNodesInserted(..)");
 	    	  if ( // Ignoring event if it doesn't have our TreePath. 
 	    	      	!theTreePath.equals(theTreeModelEvent.getTreePath())
 	    	      	)
@@ -119,7 +119,7 @@ public class TreeListModel
 		      an equivalent ListDataEvent and notifies the ListDataListeners.
 	        */
 	      {
-	    		appLogger.debug("TreeListModel.treeNodesRemoved(..)");
+	    		//appLogger.debug("TreeListModel.treeNodesRemoved(..)");
 	    	  if ( // Ignoring event if it doesn't have our TreePath. 
 	    	      	!theTreePath.equals(theTreeModelEvent.getTreePath())
 	    	      	)

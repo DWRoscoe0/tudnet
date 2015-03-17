@@ -7,47 +7,47 @@ public class NamedInteger // A DataNode for tracking integer attributes.
   {
 	  private DataTreeModel theDataTreeModel; // For reporting changes.
 
-	  private int theI;
+	  private long theL;
 
 	  public NamedInteger( // Constructor. 
         DataTreeModel theDataTreeModel,
         String nameString, 
-        int theI 
+        int theL 
         )
 		  {
 		  	super(nameString);
         this.theDataTreeModel= theDataTreeModel;
-		  	this.theI= theI;
+		  	this.theL= theL;
         }
 
     public String getValueString( ) // DataNode interface method.
       {
-        return Integer.toString( theI );
+        return Long.toString( theL );
         }
 
-    public int getValueI( )
+    public long getValueI( )
       {
-        return theI;
+        return theL;
         }
 
-    public int addValueI( int deltaI )
-	    /* This method adds deltaI to the value and returns the new value.
+    public long addValueL( long deltaL )
+	    /* This method adds deltaL to the value and returns the new value.
 		    It also begins the process of firing associated change listeners.
 		    */
       {
-    	  setValueI( this.theI + deltaI ); // Adding delta to old value.
-	  	  return theI; // Returning new value.
+    	  setValueL( this.theL + deltaL ); // Adding delta to old value.
+	  	  return theL; // Returning new value.
         }
 
-	  public Object setValueI( int theI )
+	  public Object setValueL( long theL )
 	    /* This method sets a new value and returns the old one.
 	      It also begins the process of firing associated change listeners.
 	      */
 	    {
-	  	  int oldI= this.theI; // Saving present value as old one. 
-	  	  this.theI= theI; // Setting new value.
+	  	  long oldL= this.theL; // Saving present value as old one. 
+	  	  this.theL= theL; // Setting new value.
 	  	  theDataTreeModel.reportingChangeV( this ); // Fire associated listeners.
-	  	  return oldI; // Returning old value.
+	  	  return oldL; // Returning old value.
 		  	}
     
     }

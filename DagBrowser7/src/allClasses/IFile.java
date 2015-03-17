@@ -136,19 +136,20 @@ public class IFile
           which would happen if AbDataNode.getIndexOfChild(.) were used.
           */
         {
-          IFile childIFile =  // Caste Child to this type.
-             (IFile)childObject;
+      		DataNode childDataNode= (DataNode)childObject;
+      		String childString= childDataNode.toString();
+
           String[] childrenStrings =  // Get local reference to Strings array.
             GetArrayOfStrings( );
 
           int resultI = -1;  // Initialize result for not found.
           for ( int i = 0; i < childrenStrings.length; ++i ) 
             {
-              if ( childIFile.theFile.getName().equals( childrenStrings[i] ) ) 
-              {
-                resultI = i;  // Set result to index of found child.
-                break;
-                }
+          		if ( childString.equals( childrenStrings[i] ) )
+	              {
+	                resultI = i;  // Set result to index of found child.
+	                break;
+	                }
               }
 
           return resultI;

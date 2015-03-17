@@ -155,14 +155,29 @@ public class AppLog
           inString 
           ); 
         }
-  
+    
+    public void exception(String inString, Exception e)
+      /* This method writes an error String inString to a log entry
+        and also to the console error stream for Exception e.
+        */
+      { 
+        String wholeString= "EXCEPTION: " + inString + " : " + e ;
+
+        System.err.println(wholeString);  // Send to error console.
+        e.printStackTrace();
+
+        appendEntry( wholeString );  // Send to log. 
+        }
+    
     public void error(String inString)
       /* This method writes an error String inString to a log entry
         and also to the console error stream.
         */
       { 
         String wholeString= "ERROR: "+inString;
+
         System.err.println(wholeString);  // Send to error console.
+
         appendEntry( wholeString );  // Send to log. 
         }
   
@@ -172,11 +187,13 @@ public class AppLog
         */
       { 
         String wholeString= "SEVERE: "+inString;
+
         System.err.println(wholeString);  // Send to error console.
+
         appendEntry( wholeString );  // Send to log. 
         }
 
-    public /* static */ void appendEntry( String InString )
+    public void appendEntry( String InString )
       /* This appends to the log file a new log entry.
         It contains the app session,
         the entry counters, which is incremented, 

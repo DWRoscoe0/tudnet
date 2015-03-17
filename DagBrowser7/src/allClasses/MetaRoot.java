@@ -318,7 +318,7 @@ public class MetaRoot {
           */
         {
           PathAttributeMetaTool workerPathAttributeMetaTool= 
-            makePathAttributeMetaTool( // Create new PathAttributeMetaTool...
+            makePathAttributeMetaTool( // Create PathAttributeMetaTool...
               inTreePath,  // ...to work on inTreePath's...
               MetaRoot.selectionAttributeString  // ...selection path attribute.
               );
@@ -335,8 +335,8 @@ public class MetaRoot {
       It only stores and retrieves information about them.
       */
 
-    private BooleanAttributeMetaTool 
-    newAutoExpandedAttributeMetaTool( TreePath InTreePath )
+    private BooleanAttributeMetaTool newAutoExpandedAttributeMetaTool( 
+    		TreePath InTreePath )
       /* This method returns a BooleanAttributeMetaTool 
         that's ready to use for accessing the "AutoExpanded" attribute 
         in the MetaNode associated with InTreePath.  
@@ -347,7 +347,7 @@ public class MetaRoot {
           ); 
         }
 
-    public void SetAutoExpanded( 
+    public void setAutoExpandedV( 
         TreePath InTreePath, boolean InAutoExpandedB 
         )
       /* This method stores InAutoExpandedB
@@ -362,7 +362,7 @@ public class MetaRoot {
           );
         }
 
-    public boolean GetAutoExpandedB( TreePath InTreePath )
+    public boolean getAutoExpandedB( TreePath InTreePath )
       /* This method returns the boolean value of 
         the AutoExpanded attribute
         of the MetaNode associated with InTreePath.
@@ -373,12 +373,12 @@ public class MetaRoot {
         return WorkerBooleanAttributeMetaTool.getAttributeB( );
         }
 
-    public TreePath FollowAutoExpandToTreePath( 
-        TreePath StartTreePath 
+    public TreePath followAutoExpandToTreePathV( 
+        TreePath startTreePath 
         )
       /* This method tries to follow a chain of 
         the most recently selected and AutoExpanded MetaNodes
-        starting with the MetaNode associated with StartTreePath
+        starting with the MetaNode associated with startTreePath
         and moving away from the root.
         It returns:
           The TreePath associated with the first MetaNode 
@@ -387,33 +387,38 @@ public class MetaRoot {
           Null if there were no AutoExpanded MetaNodes at all.
         */
       {
-        TreePath ScanTreePath=  // Initialize TreePath scanner to be...
-          StartTreePath;  // ...the start TreePath.
-        BooleanAttributeMetaTool ScanBooleanAttributeMetaTool=
-          newAutoExpandedAttributeMetaTool( StartTreePath );
+        TreePath scanTreePath=  // Initialize TreePath scanner to be...
+          startTreePath;  // ...the start TreePath.
+        BooleanAttributeMetaTool scanBooleanAttributeMetaTool=
+          newAutoExpandedAttributeMetaTool( startTreePath );
         while (true) // Follow chain of nodes with AutoExpanded attribute set.
           { // Try to process one node.
             if  // Exit loop if AutoExpanded attribute of MetaNode not set.
-              ( ! ScanBooleanAttributeMetaTool.getAttributeB( ) )
+              ( ! scanBooleanAttributeMetaTool.getAttributeB( ) )
               break;  // Exit loop.  We're past the last AutoExpanded node.
-            MetaNode ChildOfMetaNode=  // Get recently selected child MetaNode.
+            MetaNode childMetaNode=  // Get recently selected child MetaNode.
             	getLastSelectedChildMetaNode(
-                ScanBooleanAttributeMetaTool.getMetaNode()
+                scanBooleanAttributeMetaTool.getMetaNode()
                 );
-            if ( ChildOfMetaNode == null ) // Exit loop if no such child.
+            if ( childMetaNode == null ) // Exiting loop if no such child.
               break;  // Exit loop.  Meta data is corrupted.
-            Object ChildOfDataNode=  // Get associated child DataNode.
-              ChildOfMetaNode.getDataNode();
+            if // Exiting loop if child MetaNode contains UnknownDataNode. 
+              ( childMetaNode.eliminateAndTestForUnknownDataNodeB(
+            		scanBooleanAttributeMetaTool
+            		) )
+            	break;
+            Object childOfDataNode=  // Get associated child DataNode.
+              childMetaNode.getDataNode();
             // Setup next possible iteration,
-            ScanTreePath=  // create ScanTreePath of next node...
-              ScanTreePath.pathByAddingChild( // ...by adding to old path...
-                ChildOfDataNode);  // ...the child DataNode.
-            ScanBooleanAttributeMetaTool.Sync( // Sync the tool with...
-              ScanTreePath );  // ...the new ScanTreePath.
+            scanTreePath=  // create scanTreePath of next node...
+              scanTreePath.pathByAddingChild( // ...by adding to old path...
+                childOfDataNode);  // ...the child DataNode.
+            scanBooleanAttributeMetaTool.syncV( // Sync the MetaTool with...
+              scanTreePath );  // ...the new scanTreePath.
             } // Try to process one node.
         if  // Adjust result for special case of not moving at all.
-          ( ScanTreePath == StartTreePath ) // If we haven't moved...
-          ScanTreePath=  null;  // ...replace ScanTreePath with null.
-        return ScanTreePath;  // Return final ScanTreePath as result.
+          ( scanTreePath == startTreePath ) // If we haven't moved...
+          scanTreePath=  null;  // ...replace scanTreePath with null.
+        return scanTreePath;  // Return final scanTreePath as result.
         }
   }

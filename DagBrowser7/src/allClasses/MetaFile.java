@@ -1,5 +1,7 @@
 package allClasses;
 
+import static allClasses.Globals.appLogger;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -61,10 +63,12 @@ public class MetaFile { // For app's meta-data files.
     public MetaNode lazyLoadFileMetaNode( )
       /* This is a helper method which finishes the job of
         reading and returning the root MetaNode from a Flat meta file.  
-        It includes opening the RandomAccessFile stream
-        but not closing it so that it can be used for lazy-loading
+        It includes opening the RandomAccessFile stream,
+        but not closing, unless there was an error,
+        so that it can be used for lazy-loading
         other nodes after this method returns.
-        If there was an error then tt returns null.
+        If there was an error then it returns null.
+        If there was no error then it returns the root MetaNode.
         */
       {
         MetaNode loadedMetaNode= null;  // Set null root because we are reading.
@@ -82,9 +86,16 @@ public class MetaFile { // For app's meta-data files.
                 rwFileMetaNode( loadedMetaNode );
               } //  Read state from file.
           } // Read state.
-        catch ( IOException | NumberFormatException e ) {  // Process any errors.
-          e.printStackTrace();
-          }  // Process any errors.
+        catch ( IOException e ) {
+          appLogger.error(
+              "lazyLoadFileMetaNode( ) closing theRandomAccessFile : "+e
+              );
+        	}
+        catch ( NumberFormatException e ) {
+          appLogger.error(
+              "lazyLoadFileMetaNode( ) aborting load : "+e
+              );
+        	}
 
         return loadedMetaNode;
         }

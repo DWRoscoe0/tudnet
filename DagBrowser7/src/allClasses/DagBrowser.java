@@ -78,7 +78,6 @@ public class DagBrowser
               appLogger.error(
                 "Thread: "+t.getName()+". Uncaught Exception: "+e
                 );
-              e.printStackTrace();
               }
             }
           );
