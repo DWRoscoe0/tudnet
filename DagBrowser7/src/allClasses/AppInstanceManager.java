@@ -87,14 +87,14 @@ public class AppInstanceManager {
 
       URI thisAppURI = null;
       try {
-          thisAppURI = DagBrowser.class.getProtectionDomain().
+          thisAppURI = Infogora.class.getProtectionDomain().
             getCodeSource().getLocation().toURI();
         } catch (URISyntaxException e1) {
           // TODO Auto-generated catch block
           e1.printStackTrace();
         }
       thisAppFile= new File( thisAppURI );
-      standardAppFile= AppFolders.resolveFile( "DagBrowser.jar" );
+      standardAppFile= AppFolders.resolveFile( "Infogora.jar" );
       }
 
   private File thisAppFile= null;  // This running app's file name.
@@ -160,12 +160,12 @@ public class AppInstanceManager {
       and to do an update if it appears.
       */
     {
-      //appLogger.info("tryExitForChainToUpdateFromNewerArgAppV().");
+      //appLogger.debug("tryExitForChainToUpdateFromNewerArgAppV().");
       if ( argAppFile != null )  // argAppFile has been defined.
       {
-        //appLogger.info(
-        //  "tryExitForChainToUpdateFromNewerArgAppV(): argAppFile!=null."
-        //  );
+      	//appLogger.debug(
+      	//  "tryExitForChainToUpdateFromNewerArgAppV(): argAppFile!=null."
+      	//  );
         if   // Arg app approved to update app in standard folder.
           ( updaterApprovedB() )
           {
@@ -186,7 +186,7 @@ public class AppInstanceManager {
       */
     {
       boolean resultB= false;  // Assume false.
-      //appLogger.info(
+      //appLogger.debug(
       //  "updaterApprovedB() Files: "+thisAppFile+" "+standardAppFile
       //  );
       if // This app is the app in the standard folder.
@@ -194,7 +194,7 @@ public class AppInstanceManager {
         {
           long argAppFileLastModifiedL= argAppFile.lastModified();
           long thisAppFileLastModifiedL= thisAppFile.lastModified();
-          //appLogger.info(
+          //appLogger.debug(
           //  "updaterApprovedB() times: "
           //  +argAppFileLastModifiedL
           //  +" "
@@ -351,7 +351,7 @@ public class AppInstanceManager {
     private void fireNewInstance() 
       {
         if (theAppInstanceListener != null) 
-          theAppInstanceListener.newAppInstanceCreated();
+          theAppInstanceListener.appInstanceCreatedV();
         }
 
     class InstanceManagerThread extends Thread

@@ -161,8 +161,8 @@ public class DagBrowserPanel
           }
 
       public void initializeV()
-        /* This method does initialization, exclucing dependency injection,
-          which is done by the oonstructor.
+        /* This method does initialization, excluding dependency injection,
+          which is done by the constructor.
           It builds the HTopPanel with all its buttons
           and the activityJLabel and adds it to the main panel.
           */
@@ -177,7 +177,8 @@ public class DagBrowserPanel
             buildAndAddViewJPanelV();  // Contains data components.
             } // Build and add sub-panels of this Panel.
           { // Define the content in the above panels.
-            TreePath currentTreePath=  // Get TreePath of starting node.
+          	theRootJTree.initJTree( ); // Initialize the JTree expansion state.
+          	TreePath currentTreePath=  // Get TreePath of starting node.
               startTreePath;  // Is this needed ???
             theRootJTree  // In the left sub-panel JTree's...
               .getTreeHelper()  // ...TreeHelper...
@@ -635,7 +636,7 @@ public class DagBrowserPanel
                 to display the node identified by that TreePath.  
                 
                 This method might be re-entered.
-                This can  happen because DagBrowser
+                This can  happen because Infogora
                 listens to the sub-panels for
                 TreePathEvents indicating new selections, and
                 sends TreePaths to the sub-panels,

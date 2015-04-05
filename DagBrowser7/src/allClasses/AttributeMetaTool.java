@@ -8,16 +8,26 @@ abstract class AttributeMetaTool
 
   /* This is a MetaTool specialized for dealing with 
     a MetaNode's attributes. 
+
+    Attribute are name-value pairs.
+    Values for attributes handled by this class are as follows:
+
+    * "" (blank): default value, and all descendants have the same value.
+    * "$NESTED$": default value, and at least some descendants do not
+      have the same value.
+    * (anything else): some other value.
+
     */
 
   {
 
     // Constants.
 
-      private final String PlaceHolderValueString= "PRESENT";
-        /* This Map value is used to indicate that
-          the MetaNode has a null value for
-          this attribute but some of its descendants do not.  
+      private final String PlaceHolderValueString= "$NESTED$";
+        /* This attribute Map value is used to indicate that
+          the MetaNode has a null value for this attribute 
+          but at least one of its descendants MetaNodes does not.
+          Any other otherwise-unused value could be used here.  
           */
 
     // Instance variables.
@@ -52,7 +62,7 @@ abstract class AttributeMetaTool
             the root if possible.
           The place-holder attributes are maintained 
           to facilitate deletion of nodes that hold no useful data
-          an to be able to quickly fin all instances 
+          and to be able to quickly find all instances 
           of attributes with the same keyString.
 
           // ??? attribute searchers should be re-factored for 
@@ -87,13 +97,12 @@ abstract class AttributeMetaTool
       private void removeOrReplaceV( )
         /* This method removes the attribute at the present position 
           by either deleting it or replacing it by a place-holder value.
-          If it is removed then it propagates the removal 
-          up the MetaNode DAG toward the root.
-          It either replaces the attribute with a place-holder 
-          attribute, if any children have the same attribute key,
-          or it removes the attribute completely and removes 
-          the place-holder attributes of any ancestor nodes 
-          that have no children with the same attribute key.
+          If any children have the same attribute key,
+          then it replaces the attribute value with a place-holder value. 
+          If no children have the same attribute key,
+          then it removes the attribute completely.
+          Then it scans toward the root and removes any place-holder values
+          for those ancestors which have no children with the same key.
           */
         {
           toReturn: {  // toReturn.
@@ -102,35 +111,36 @@ abstract class AttributeMetaTool
             MetaNode scanMetaNode=  // Get MetaNode at this position.
               scanMetaPath.getLastMetaNode();
 
-            if  // Exitting if null-representing place-holder here. 
+            if  // Exiting if null-representing place-holder is already here. 
               ( scanMetaNode.get(keyString) == PlaceHolderValueString )
               break toReturn; // Do nothing and exit.
 
             // There is a non-null something else here.
             if  // At least one of the children has an attribute with same key.
               ( scanMetaNode.getChildWithKeyMetaNode( keyString ) != null )
-              { // Replace attribute with place-holder and exit.
-                scanMetaNode.put(  // Replace the attribute in this MetaNode...
-                  keyString,  // ...for the same keyString...
-                  PlaceHolderValueString  // ...with place-holder ValueString.
+              { // Replacing attribute with place-holder and exit.
+                scanMetaNode.put(  // Replacing the attribute in this MetaNode
+                  keyString,  // for the same keyString
+                  PlaceHolderValueString  // with place-holder ValueString.
                   );
                 break toReturn;  // Exit.
-                } // Replace attribute with place-holder and exit.
+                }
             
-            while (true)  // Remove attribute and place-holders toward root.
-              { // Remove one attribute and test for removal in parent.
-                scanMetaNode.remove( keyString );  // Remove attribute here.
-                scanMetaPath=  // Move MetaPath one MetaNode closer to root.
+            // None of the children had the same attribute key.
+            while (true)  // Removing attribute and place-holders toward root.
+              { // Removing attribute here and checking toward root.
+                scanMetaNode.remove( keyString );  // Removing attribute here.
+                scanMetaPath=  // Moving MetaPath one MetaNode closer to root.
                   scanMetaPath.getParentMetaPath();
-                scanMetaNode=  // Get MetaNode at this new location.
+                scanMetaNode=  // Getting MetaNode at this new location.
                   scanMetaPath.getLastMetaNode();
-                if  // There is no null-representing place-holder here. 
+                if  // Exiting if no null-representing place-holder here. 
                   ( scanMetaNode.get( keyString ) != PlaceHolderValueString )
-                  break toReturn; // So a regular attribute is here.  Exit.
-                if  // At least one of the children has a same-key attribute.
+                  break toReturn; // Exiting because regular attribute is here.
+                if  // Exiting if any of its children has the same key.
                   ( scanMetaNode.getChildWithKeyMetaNode(keyString) != null )
-                  break;  // Place-holder justified.  Exit loop.
-                } // Remove one attribute and test for removal in parent.
+                  break;  // Exiting because place-holder here is justified.
+                }
             } // toReturn.
           }
 

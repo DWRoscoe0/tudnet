@@ -9,13 +9,21 @@ public class PathAttributeMetaTool
   /* This is an Attribute MetaTool for dealing with 
     a MetaNode's path attributes. 
     At first it is only for the SelectionPath key.
-    
-    Attribute values have the following meanings:
-    IS: this node is now part of the path.
-    WAS: this node was the most recent part of the path
+
+    Attribute are name-value pairs.
+    Values for attributes handled by this class are as follows:
+
+    * "" (blank) : default value, which means this node was was never 
+      part of the path, or was but is the first child of its parent,
+      which is the default selection when going to a child node.  
+      All descendants have the same value.
+    * "$NESTED$" : default value (see above for meaning),
+      but at least some descendants do not have the same value.
+    * "IS": this node is now part of the path.
+    * "WAS": this node was the most recent part of the path
       of all its siblings.
-    OLD: this node was part of the path but 
-      one of its siblings was a more recent part.
+    * "OLD": this node was part of the path but not the most recent
+      of all its siblings.
 
     This is based on the my InfogoraPathHistoryAttribute notes.
     */

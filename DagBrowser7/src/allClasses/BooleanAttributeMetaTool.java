@@ -8,6 +8,17 @@ class BooleanAttributeMetaTool
 
   /* This is am Attribute MetaTool for dealing with 
     a MetaNode's boolean attributes. 
+
+    Attribute are name-value pairs.
+    Values for attributes handled by this class are as follows:
+
+    * "" (blank) : default value, which is FALSE.  
+      All descendants have the same value.
+    * "$NESTED$" : default value, FALSE, 
+      and at least some descendants do not have the same value.
+    * "T": TRUE.
+    * (anything else) : illegal value.
+
     */
 
   {
@@ -67,7 +78,6 @@ class BooleanAttributeMetaTool
           */
         { 
           String ValueString=  // Translate boolean Value into string.
-            //( ValueB ? "T" : "F" );
             ( ValueB ? "T" : null );
           put( ValueString );  // Store value String.
           }

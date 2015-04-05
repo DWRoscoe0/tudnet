@@ -761,7 +761,7 @@ public class TreeHelper
           when in the RootJTree highlighted node, either:
           * The (Enter) key is pressed.
           * The mouse is double-clicked.
-          See RootJTree and DagBrowser details.
+          See RootJTree and Infogora details.
           
           Changed to not use null.  This made other code difficult. ???
           */
