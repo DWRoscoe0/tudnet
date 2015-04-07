@@ -163,7 +163,7 @@ public class MetaRoot {
       */
 
     final static String selectionAttributeString= // Key String to use.
-      "SelectionPath"; 
+        "SelectionPath"; 
 
     // Getter methods.  These read from the MetaNode DAG.
 

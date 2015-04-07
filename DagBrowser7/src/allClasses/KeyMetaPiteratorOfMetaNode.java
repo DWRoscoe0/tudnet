@@ -21,18 +21,20 @@ public class KeyMetaPiteratorOfMetaNode
 
     // Constructors.
       
-      public KeyMetaPiteratorOfMetaNode
-        ( Piterator<MetaNode> inNestedPiteratorOfMetaNode, String inKeyString )
+      public KeyMetaPiteratorOfMetaNode( 
+      		Piterator<MetaNode> inNestedPiteratorOfMetaNode, String inKeyString 
+      		)
         /* This constructs from a Piterator and a key String.  */
         {
           super( inNestedPiteratorOfMetaNode );  // Construct superclass.
           keyString= inKeyString;  // Save key for which to search.
 
-          this.SearchMetaNode();  // Advance pointer to first search target.
+          this.searchMetaNode();  // Advance pointer to first search target.
           }
       
-      public KeyMetaPiteratorOfMetaNode
-        ( Collection<MetaNode> inCollectionOfMetaNode, String inKeyString)
+      public KeyMetaPiteratorOfMetaNode( 
+      		Collection<MetaNode> inCollectionOfMetaNode, String inKeyString
+      		)
         /* This constructs from a Collection and a key String.  */
         {
           this(  // Use another constructor to do the work.
@@ -50,19 +52,19 @@ public class KeyMetaPiteratorOfMetaNode
           and sets the pointer window appropriately. */
         {
           super.nextE();  // Advance superclass pointer to next candidate.
-          return this.SearchMetaNode();  // Search for and return next match.
+          return this.searchMetaNode();  // Search for and return next match.
           }
 
       public void removeV()  
         /* Does a remove by passing it to the nested iterator and searching. */
         {
           super.removeV();  // Pass to superclass.
-          this.SearchMetaNode();  // Search for next match.
+          this.searchMetaNode();  // Search for next match.
           }
 
     // Private methods.
    
-      private MetaNode SearchMetaNode()
+      private MetaNode searchMetaNode()
         /* If the pointer window is not on a node with the desired key
           then the superclass nextE() method is called until it is.
           */

@@ -160,7 +160,7 @@ public class DagBrowserPanel
           this.theMetaRoot= theMetaRoot;
           }
 
-      public void initializeV()
+      public void initializingV()
         /* This method does initialization, excluding dependency injection,
           which is done by the constructor.
           It builds the HTopPanel with all its buttons
@@ -177,17 +177,10 @@ public class DagBrowserPanel
             buildAndAddViewJPanelV();  // Contains data components.
             } // Build and add sub-panels of this Panel.
           { // Define the content in the above panels.
-          	theRootJTree.initJTree( ); // Initialize the JTree expansion state.
-          	TreePath currentTreePath=  // Get TreePath of starting node.
-              startTreePath;  // Is this needed ???
-            theRootJTree  // In the left sub-panel JTree's...
-              .getTreeHelper()  // ...TreeHelper...
-              .setPartTreePathB(  // ...select...
-                currentTreePath  // ...current tree node.
-                );
-                // This should trigger a series of events which
-                // load all the data-dependent sub-panel components
-                // and get them ready for display.  
+          	theRootJTree.initializingV( startTreePath );
+	            // Initializing the RootJTree should trigger a series of events 
+	            // which load all the data-dependent sub-panel components
+	            // and get them ready for display.  
             } // Define the content in the above panels.
 
           miscellaneousInitializationV();  // Odds and end.

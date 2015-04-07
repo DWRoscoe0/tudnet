@@ -26,36 +26,38 @@ class BooleanAttributeMetaTool
     // Constructors.
 
       public BooleanAttributeMetaTool( 
-          MetaRoot theMetaRoot, TreePath InTreePath, String InKeyString 
+          MetaRoot theMetaRoot, TreePath inTreePath, String inKeyString 
           )
         {
-          super( theMetaRoot, InTreePath, InKeyString ); // Superclass does all.
+          super( // Superclass does all. 
+          		theMetaRoot, inTreePath, inKeyString 
+          		);
           }
 
     // Static methods.
 
-      private boolean getNodeAttributeB(  // Could be static.
-          MetaNode TheMetaNode, String InKeyString 
+      public static boolean getNodeAttributeB(
+          MetaNode theMetaNode, String inKeyString 
           )
         /* This method returns the boolean value of the attribute 
-          in TheMetaNode with attribute name InKeyString.
+          in theMetaNode with attribute name InKeyString.
           It does this by getting the associated Value String 
           and translating it to a boolean value.
           */
         { 
-          boolean ResultB= false;  // Setting default value of false.
+          boolean resultB= false;  // Setting default value of false.
 
           do {  // Changing default value if needed.
-            Object ValueObject= TheMetaNode.get( InKeyString );
+            Object valueObject= theMetaNode.get( inKeyString );
             if   // Returning with false if Value not there.
-              ( ValueObject == null )
+              ( valueObject == null )
               break;  // Exiting with default false result.
             if   // Returning with true if attribute value is "T".
-              ( ValueObject.equals( "T" ) )
-              ResultB= true;
+              ( valueObject.equals( "T" ) )
+              resultB= true;
             } while (false);
 
-          return ResultB; // Return final result value.
+          return resultB; // Return final result value.
           }
 
     // Instance methods.
@@ -74,12 +76,12 @@ class BooleanAttributeMetaTool
 
       public void putAttributeB( boolean ValueB )
         /* This method sets the attribute value to ValueB,
-          translating to the appropriate ValueString equivalent.  
+          translating to the appropriate valueString equivalent.  
           */
         { 
-          String ValueString=  // Translate boolean Value into string.
+          String valueString=  // Translate boolean Value into string.
             ( ValueB ? "T" : null );
-          put( ValueString );  // Store value String.
+          put( valueString );  // Store value String.
           }
 
   }

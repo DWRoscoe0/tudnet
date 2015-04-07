@@ -43,6 +43,8 @@ public class RootJTree
     */
 
   {
+  final static String ExpandedAttributeString= "Expanded"; 
+  final static String autoExpandedAttributeString= "AutoExpanded"; 
 
     // Variables.
       private static final long serialVersionUID = 1L;
@@ -107,39 +109,85 @@ public class RootJTree
         
         } // Constructor.
 
-    public TreePath initJTree( ) // ??? being created.
+    public void initializingV( TreePath selectedTreePath ) // ??? being created.
       /* This method initializes the state of the JTree,
-        or at least the part that is visible in the JTree pane,
-        based on the state of the MetaNodes.
-        ??? At first this is only the SelectionPath data.
+        or at least the part that is visible in the JTree pane.
+        Most of this is based on the state of the MetaNodes.
+        
+        Things to be initialized:
+        = Expansion state.  This comes from the MetaNodes.
+        * Selection state.  This comes from selectedTreePath.
         */
       {
-    		String KeyString= // Get key for selection paths.
-    				MetaRoot.selectionAttributeString;
-        TreePath scanTreePath=  // Point scanTreePath accumulator...
+    		TreePath subtreeTreePath=  // Get path to
       		theMetaRoot.getTheDataRoot().
-      		  getParentOfRootTreePath( );  // ...to parent of root.
-        MetaNode scanMetaNode=  // Get root MetaNode.
+      		  getParentOfRootTreePath( );  // to parent of root.
+        MetaNode subtreeMetaNode=  // Get parent of root MetaNode.
           theMetaRoot.getParentOfRootMetaNode( );
-        scanner: while (true) { // Scan all nodes with "IS".
-          MetaNode childMetaNode= // Test for a child with "IS" value.
-            scanMetaNode.getChildWithAttributeMetaNode( KeyString, "IS" );
-          if  // scanMetaNode has no child with "IS" attribute value.
-            ( childMetaNode == null)
-            break scanner;  // Exit Processor.
-          DataNode theDataNode= // Get associated DataNode.
-            childMetaNode.getDataNode();
-          if // DataNode is an UnknownDataNode.
-            ( ! AbDataNode.isUsableB( theDataNode ) )
-            break scanner;  // Exit Processor.
-          scanTreePath=  // Add DataNode to TreePath.
-            scanTreePath.pathByAddingChild( theDataNode );
-          scanMetaNode= childMetaNode;  // Point to next MetaNode.
-          //expandPath(scanTreePath); // Expand node that was auto-expanded.
-          } // Scan all nodes with "IS".
-        return scanTreePath;  // Return accumulated TreePath.
+        expandSubtreeV( // Expand all nodes that need it in this subtree. 
+        		subtreeTreePath, subtreeMetaNode 
+        		);
+
+        getTreeHelper()  // In TreeHelper...
+	        .setPartTreePathB(  // ...select...
+	          selectedTreePath  // ...current tree node.
+	          );
+		      // This JTree selection should trigger a series of events which
+		      // load all the data-dependent sub-panel components
+		      // and get them ready for display.  
         }
 
+    public void expandSubtreeV( TreePath subTreePath, MetaNode subtreeMetaNode )
+      /* This method expands all the nodes in a subtree 
+        named by subTreePath using information in subtreeMetaNode.
+        */
+      {
+        KeyMetaPiteratorOfMetaNode // Creating iterator which does the search.  
+		      childKeyMetaPiteratorOfMetaNode= 
+		      		subtreeMetaNode.makeKeyMetaPiteratorOfMetaNode( 
+		      				ExpandedAttributeString
+		      				);
+        scanner: while (true) { // Scan all nodes with attribute.
+          MetaNode childMetaNode= // Test for a child with attribute key.
+          		childKeyMetaPiteratorOfMetaNode.getE();
+          if  // No more children with the desired attribute.
+            ( childMetaNode == null)
+            break scanner;  // Exit Processor.
+          DataNode childDataNode= // Get associated DataNode.
+            childMetaNode.getDataNode();
+          if // DataNode is an UnknownDataNode.
+            ( ! AbDataNode.isUsableB( childDataNode ) )
+            break scanner;  // Exit Processor.
+          TreePath childTreePath=  // Add DataNode to TreePath.
+          		subTreePath.pathByAddingChild( childDataNode );
+          expandSubtreeChildV( childTreePath, childMetaNode );
+          childKeyMetaPiteratorOfMetaNode.nextE(); // Advance Piterator to
+            // next child with desired attribute key.
+          }
+        }
+
+    private void expandSubtreeChildV( TreePath childTreePath, MetaNode childMetaNode )
+    /* This is a helper method for expandSubtreeChildV(..).
+      It handles the expansion of identified by childTreePath and
+      whose Meta data is in childMetaNode.
+      It needs to deal with the fact that expanding a node 
+      expands all of its ancestors in order to make it viewable
+      because expanding a node also makes it viewable.
+      */
+    {
+    	boolean expandedB= // Saving attribute of whether this node is expanded. 
+        BooleanAttributeMetaTool.getNodeAttributeB(
+      		childMetaNode, ExpandedAttributeString
+      		);  // Saved because recursive expand might change the attribute.
+	    expandSubtreeV( // Recursively expand its children. 
+	    		childTreePath, childMetaNode 
+	    		);
+	    if ( expandedB ) // Setting expansion state according to saved value.
+	      expandPath(childTreePath); // Expanding child node.
+  	    else
+	      collapsePath(childTreePath); // Collapsing child node.
+	    }
+    
     /* TreeHelper code, including extension MyTreeHelper 
       and TreePathListener.
       */
@@ -291,19 +339,18 @@ public class RootJTree
           the presently selected node/row is expanded or collapsed.  
           This is for manual expansions and collapses, 
           not auto expansions and collapses,
-          so it makes certain that AutoExpanded attribute
+          so it makes certain that the AutoExpanded attribute
           for the selected node is false.
           */
         {
-          int selectedRowI=   // Determinin which node/row is selected.
-            getLeadSelectionRow();
+          TreePath selectedTreePath= getLeadSelectionPath();
           if  // Expanding or collapsing it, whichever makes sense.
-            (isExpanded(getPathForRow(selectedRowI)))  // Row is expanded now.
-              collapseRow(selectedRowI);  // Collapsing the row.
-            else  // Row is collapsed now.
-              expandRow(selectedRowI);  // Expanding the row.
+            (isExpanded( selectedTreePath ))  // Node is expanded now.
+          	collapsePath(selectedTreePath);  // Collapsing it.
+            else  // Node is collapsed now.
+            expandPath(selectedTreePath);  // Expanding the row.
           setAutoExpandedV(  // Forcing auto-expanded status...
-              getLeadSelectionPath() , // ...for selected path...
+          		selectedTreePath , // ...for selected path...
               false  // ... to be off.
               );
           aTreeHelper.notifyListenersAboutChangeV( );
@@ -570,7 +617,7 @@ public class RootJTree
             subselectV( stopTreePath );
             } // collapseAndExpandDownV(.)
 
-        // The following 4 method came from old TreeExpansion class.
+        // The following 4 methods came from old TreeExpansion class.
 
         private BooleanAttributeMetaTool 
         newAutoExpandedBooleanAttributeMetaTool( TreePath InTreePath )
@@ -580,7 +627,7 @@ public class RootJTree
             */
           { 
             return theMetaRoot.makeBooleanAttributeMetaTool(
-              InTreePath, "AutoExpanded" 
+              InTreePath, autoExpandedAttributeString 
               ); 
             }
 

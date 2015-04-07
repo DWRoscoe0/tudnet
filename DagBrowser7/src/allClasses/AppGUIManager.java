@@ -236,7 +236,7 @@ public class AppGUIManager // Top level of the app's GUI, the window manager.
             +", archived "
             +theAppInstanceManager.thisAppDateString()
             );
-        theDagBrowserPanel.initializeV(); // Initializing post-construction.
+        theDagBrowserPanel.initializingV(); // Initializing post-construction.
         theJFrame.setContentPane( theDagBrowserPanel );  // Store content.
         theJFrame.pack();  // Layout all the content's sub-panels.
         theJFrame.setLocationRelativeTo(null);  // Center JFrame on screen.

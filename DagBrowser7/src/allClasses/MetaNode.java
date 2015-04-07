@@ -170,6 +170,26 @@ public class MetaNode extends IDNumber
           return theMetaChildren;
           }
 
+    // Iterator factory methods.
+
+      KeyMetaPiteratorOfMetaNode makeKeyMetaPiteratorOfMetaNode( 
+      		String inKeyString 
+      		)
+        /* This method makes and returns a KeyMetaPiteratorOfMetaNode
+          for iterating through the attributes of this MetaNode
+          seaching for an attribute with key inKeyString.
+          */
+        {
+          return 
+            new KeyMetaPiteratorOfMetaNode( 
+              //theMetaChildren.getCollectionOfMetaNode(),
+              theMetaChildren.getPiteratorOfMetaNode( 
+                this.getDataNode()
+                ),
+              inKeyString
+              );
+          }
+
     // Attribute tester and child searcher methods.
 
       MetaNode getChildWithKeyMetaNode( String inKeyString )
@@ -178,15 +198,12 @@ public class MetaNode extends IDNumber
           It returns null if no child MetaNode attribute has that key.
           */
         {
-          KeyMetaPiteratorOfMetaNode ChildKeyMetaPiteratorOfMetaNode= 
-            new KeyMetaPiteratorOfMetaNode( 
-              //theMetaChildren.getCollectionOfMetaNode(),
-              theMetaChildren.getPiteratorOfMetaNode( 
-                this.getDataNode()
-                ),
-              inKeyString
-              );
-          return ChildKeyMetaPiteratorOfMetaNode.getE();
+          KeyMetaPiteratorOfMetaNode // Creating iterator which does the search.  
+            childKeyMetaPiteratorOfMetaNode= 
+              makeKeyMetaPiteratorOfMetaNode( inKeyString );
+
+          return  // Return first child which has the desired key.
+          		childKeyMetaPiteratorOfMetaNode.getE(); 
           }
 
       MetaNode getChildWithAttributeMetaNode
@@ -200,7 +217,7 @@ public class MetaNode extends IDNumber
           */
         {
           KeyAndValueMetaPiteratorOfMetaNode 
-            ChildKeyAndValueMetaPiteratorOfMetaNode=
+            childKeyAndValueMetaPiteratorOfMetaNode=
               new KeyAndValueMetaPiteratorOfMetaNode( 
                 //theMetaChildren.getCollectionOfMetaNode(),
                 theMetaChildren.getPiteratorOfMetaNode( 
@@ -209,7 +226,7 @@ public class MetaNode extends IDNumber
                 inKeyString,
                 inValueObject
                 );
-          return ChildKeyAndValueMetaPiteratorOfMetaNode.getE();
+          return childKeyAndValueMetaPiteratorOfMetaNode.getE();
           }
 
     // Miscellaneous methods.
