@@ -124,7 +124,7 @@ public class RootJTree
       		  getParentOfRootTreePath( );  // to parent of root.
         MetaNode subtreeMetaNode=  // Get parent of root MetaNode.
           theMetaRoot.getParentOfRootMetaNode( );
-        expandSubtreeV( // Expand all nodes that need it in this subtree. 
+        expandSubtreeV( // Expanding all nodes that need expanding.
         		subtreeTreePath, subtreeMetaNode 
         		);
 
@@ -167,25 +167,28 @@ public class RootJTree
         }
 
     private void expandSubtreeChildV( TreePath childTreePath, MetaNode childMetaNode )
-    /* This is a helper method for expandSubtreeChildV(..).
-      It handles the expansion of identified by childTreePath and
+    /* This is a helper method for expandSubtreeV(..).
+      It handles the expansion of the node identified by childTreePath and
       whose Meta data is in childMetaNode.
-      It needs to deal with the fact that expanding a node 
-      expands all of its ancestors in order to make it viewable
-      because expanding a node also makes it viewable.
+      It handles the fact that expanding a node expands all of its ancestors. 
+      This is because expanding a node is defined to make a node,
+      its immediate children, and all its ancestors, viewable.
       */
     {
     	boolean expandedB= // Saving attribute of whether this node is expanded. 
         BooleanAttributeMetaTool.getNodeAttributeB(
       		childMetaNode, ExpandedAttributeString
-      		);  // Saved because recursive expand might change the attribute.
-	    expandSubtreeV( // Recursively expand its children. 
+      		);  // Saving because recursive expand might change the attribute.
+	    expandSubtreeV( // Recursively expand child's children if needed.
 	    		childTreePath, childMetaNode 
 	    		);
-	    if ( expandedB ) // Setting expansion state according to saved value.
-	      expandPath(childTreePath); // Expanding child node.
+	    if // Setting child expansion state according to saved attribute value.
+	    	( expandedB ) 
+	    	expandPath(childTreePath); // Expanding child node because
+	        // all JTree nodes are initially collapsed.
   	    else
-	      collapsePath(childTreePath); // Collapsing child node.
+	      collapsePath(childTreePath); // Collapsing child node because
+	        // the above recursive expansion might have expanded this child.
 	    }
     
     /* TreeHelper code, including extension MyTreeHelper 

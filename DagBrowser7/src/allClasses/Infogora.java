@@ -1,5 +1,8 @@
 package allClasses;
 
+import java.net.DatagramSocket;
+import java.net.InetSocketAddress;
+
 import javax.swing.JFrame;
 
 import static allClasses.Globals.appLogger;  // For appLogger;
@@ -19,8 +22,11 @@ import static allClasses.Globals.appLogger;  // For appLogger;
 	* AppGUIFactory: This is the factory for all classes with 
 	  app GUI lifetime.  It wires together the second level of the app.
 
-  These are not the only factories in the app,
-  but they are the top 2 levels.  Factories serve 2 purposes:
+  * ConnectionsFactory: This is the factory for all classes with
+    lifetimes of the ConnectionManager's lifetime or shorter.
+
+  The factories above may not be the only factories in the app,
+  but they are the top levels.  Factories serve 2 purposes:
 
   * They contain, or eventually will contain,  all the new-operators, 
     except for 2 uses in the top level Infogora class.
@@ -31,6 +37,65 @@ import static allClasses.Globals.appLogger;  // For appLogger;
     constructor injection, but occasionally with setter injection.
 
   */
+
+
+class ConnectionsFactory {
+
+  // This is the factory for classes with connection lifetimes.
+
+  // Injected unconditional singleton storage.
+  private DataTreeModel theDataTreeModel;
+
+  public ConnectionsFactory(   // Factory constructor. 
+  		DataTreeModel theDataTreeModel 
+  		)
+  	// This constructor define the unconditional singletons.
+    {
+      this.theDataTreeModel= theDataTreeModel; // Save injected singleton.
+      }
+
+  // Unconditional singleton getters.
+  // None.
+
+  // Conditional singleton getters and storage.
+  // None.
+
+  // Maker methods.  These construct using new operator each time called.
+  public Peer makePeer(
+      InetSocketAddress peerInetSocketAddress,
+      ConnectionManager.PacketQueue sendPacketQueue,
+      SignallingQueue<Peer> peerQueue,
+      DatagramSocket unconnectedDatagramSocket
+      )
+    {
+      return new Peer(
+        peerInetSocketAddress,
+        sendPacketQueue,
+        peerQueue,
+        unconnectedDatagramSocket,
+        theDataTreeModel
+        );
+      }
+  public ConnectionManager.PeerValue makePeerValue(
+      InetSocketAddress peerInetSocketAddress,
+      ConnectionManager.PacketQueue sendPacketQueue,
+      SignallingQueue<Peer> peerQueue,
+      DatagramSocket unconnectedDatagramSocket
+      )
+    {
+      Peer thePeer= makePeer(
+        peerInetSocketAddress,
+        sendPacketQueue,
+        peerQueue,
+        unconnectedDatagramSocket
+        );
+      return new ConnectionManager.PeerValue(
+        peerInetSocketAddress,
+        thePeer
+        );
+      }
+
+  } // class ConnectionsFactory.
 
 
 class AppGUIFactory {  // For GUI class lifetimes.
@@ -46,7 +111,7 @@ class AppGUIFactory {  // For GUI class lifetimes.
   // Unconditional singleton storage.
   AppGUIManager theAppGUIManager;
   LockAndSignal theGUILockAndSignal;
-  AppGUIManager.GUIStarter theGUIStarter;
+  AppGUIManager.GUIDefiner theGUIDefiner;
 
   public AppGUIFactory(  // Factory constructor.
       Thread mainThread, 
@@ -73,10 +138,13 @@ class AppGUIFactory {  // For GUI class lifetimes.
 		        theMetaFileManagerFinisher, 
 		        theShutdowner
 		        );
-      ConnectionManager.Factory theConnectionManagerFactory= 
-      		new ConnectionManager.Factory( theDataTreeModel );
+      ConnectionsFactory theConnectionsFactory= 
+      		new ConnectionsFactory( theDataTreeModel );
       ConnectionManager theConnectionManager= 
-      		theConnectionManagerFactory.getConnectionManager();
+          new ConnectionManager( 
+            theConnectionsFactory,
+            theDataTreeModel
+            );
       DataNode theInitialRootDataNode=  // Building first legal value.
 	        new InfogoraRoot( 
 	          new DataNode[] { // ...an array of all child DataNodes.
@@ -93,33 +161,28 @@ class AppGUIFactory {  // For GUI class lifetimes.
 		        theDataRoot,
 		        theMetaRoot
 		        );
-      AppGUIManager.TerminationShutdownThread 
-      theTerminationShutdownThread=
+      AppGUIManager.TerminationShutdownThread theTerminationShutdownThread=
           new AppGUIManager.TerminationShutdownThread( mainThread );
       EpiThread theConnectionManagerEpiThread=
           makeEpiThread( theConnectionManager, "ConnectionManager" );
-
       theGUILockAndSignal= 
       		new LockAndSignal(false);
+      theGUIDefiner=  
+      		new AppGUIManager.GUIDefiner( 
+      		  theGUILockAndSignal, 
+      		  theAppInstanceManager,
+      		  theDagBrowserPanel,
+		        this // GUIDefiner gets to know the factory that made it. 
+      		  );
       theAppGUIManager= 
       		new AppGUIManager( 
-		        theAppInstanceManager,
 		        theConnectionManagerEpiThread,
-		        theDagBrowserPanel,
 		        theDataTreeModel,
 		        theInitialRootDataNode,
 		        theTerminationShutdownThread,
 		        theGUILockAndSignal,
-		        this // AppGUIManager gets to know the factory that made it. 
+		        theGUIDefiner
 		        );
-      theGUIStarter=  
-      		new AppGUIManager.GUIStarter( 
-      		  theGUILockAndSignal, 
-      		  theAppGUIManager 
-      		  );
-      theAppGUIManager.setGUIStarterV( // Complete circular dependency. 
-      		theGUIStarter 
-      		);
       }
 
   // Unconditional singleton getter methods.
@@ -135,8 +198,8 @@ class AppGUIFactory {  // For GUI class lifetimes.
   public JFrame makeJFrame( String titleString ) 
     { return new JFrame( titleString ); }
   public AppGUIManager.InstanceCreationRunnable 
-  makeInstanceCreationRunnable()
-  	{ return theAppGUIManager.new InstanceCreationRunnable( ); }
+  makeInstanceCreationRunnable( JFrame aJFrame)
+  	{ return theAppGUIManager.new InstanceCreationRunnable( aJFrame ); }
 
   } // class AppGUIFactory.
 
@@ -251,7 +314,7 @@ class Infogora  // The root of this app.
 	      AppFactory theAppFactory=  // Constructing AppFactory.
 	        new AppFactory(argStrings);
 	      App theApp=  // Getting the App from the factory.
-	      		theAppFactory.getApp();
+      		theAppFactory.getApp();
 	      theApp.runV();  // Running the app until it finishes.
 	      
 	      appLogger.info("main thread ending.");

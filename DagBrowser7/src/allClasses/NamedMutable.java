@@ -1,4 +1,4 @@
-package allClasses;  // ??? Get rid of this.  It's too specialized.
+package allClasses;
 
 public class NamedMutable 
   extends NamedLeaf 

@@ -49,5 +49,11 @@ public class NamedInteger // A DataNode for tracking integer attributes.
 	  	  theDataTreeModel.reportingChangeV( this ); // Fire associated listeners.
 	  	  return oldL; // Returning old value.
 		  	}
-    
+
+	  public void run( )
+	    /* This method runs on the AWT thread.
+	      */
+	    {
+		  	}
+
     }

@@ -270,7 +270,7 @@ public class DataTreeModel
           int indexI, 
           DataNode childDataNode 
           )
-        /* This method creates and triggers a single-child TreeModelEvent
+        /* This method creates and fires a single-child TreeModelEvent
           for the insertion a single child DataNode, childDataNode,
           into parentDataNode at position indexI.
           */
@@ -294,7 +294,7 @@ public class DataTreeModel
           int indexI, 
           DataNode childDataNode 
           )
-      	/* This method creates and triggers a single-child TreeModelEvent
+      	/* This method creates and fires a single-child TreeModelEvent
           for the removal of a single child DataNode, childDataNode,
           whose previous position was indexI, into parentDataNode.
           */
@@ -316,7 +316,7 @@ public class DataTreeModel
       public void reportingChangeV( 
           DataNode theDataNode
           )
-      	/* This method creates and triggers a single-child TreeModelEvent
+      	/* This method creates and fires fires a single-child TreeModelEvent
           for the change of a single child DataNode, theDataNode,
           whose position is indexI, into parentDataNode.
           */
@@ -345,23 +345,34 @@ public class DataTreeModel
 
       private TreePath translatingToTreePath( DataNode targetDataNode )
         /* This method returns a TreePath of targetDataNode,
-          or null if none can not be found in the DataNode tree.
+          or null if node can not be found in the DataNode tree.
           It does this with a breadth-first search of 
           the DataNode tree from the root,
           building candidate TreePaths as it goes,
           and returning the first TreePath that ends in targetDataNode.
 
 					The search algorithm used is slightly different from
-					the breadth-first-search in the literature.
+					the breadth-first-search commonly shown in the literature.
 					This search queues only nodes that have already been checked.
 					The only thing that happens to nodes after they are removed
 					is that they are expanded.
 
-          ??? This method could be speeded by caching the search result.
-          This can be enhanced later to handle duplicate references.
-          See Object hashCode() and equals() for HashTable requirements.
+          ?? This method could be speeded in the following way:
 
-          ?? This method is a bit of a kludge.
+          * By caching the search results and checking the cache first.
+	          This can be enhanced later to handle duplicate references.
+	          See Object hashCode() and equals() for HashTable requirements.
+
+          * By using a starting TreePath different from the root and
+            known to be closer to the node that changed. 
+
+					* By using a closest-first search instead of breadth-first search.
+					  This means searching toward the tree root in addition to
+					  searching into the descendants.  
+					  It implies a starting path which is not the root,
+					  which could some either from a cache or the last path returned.
+					  
+          This method is a bit of a kludge.
           It is used because DataNodes don't know their TreePaths,
           and TreePaths are required by JTree.
           */
@@ -397,11 +408,11 @@ public class DataTreeModel
                  	nextElementsToDepthIncreaseI++;
                  	}
               if (--elementsToDepthIncreaseI == 0) // 
-              { // Handle tree depth increase.
-                if (++currentDepthI > 5) break queueScanner;
-                elementsToDepthIncreaseI = nextElementsToDepthIncreaseI;
-                nextElementsToDepthIncreaseI = 0;
-              	}
+	              { // Handle tree depth increase.
+	                if (++currentDepthI > 5) break queueScanner;
+	                elementsToDepthIncreaseI = nextElementsToDepthIncreaseI;
+	                nextElementsToDepthIncreaseI = 0;
+	              	}
               }
           return resultTreePath;
           }

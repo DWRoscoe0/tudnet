@@ -15,48 +15,31 @@ public class AppGUIManager // Top level of the app's GUI, the window manager.
   { // class AppGUIManager
 
     // AppGUIManager's constructor injected dependency variables.
-    private AppInstanceManager theAppInstanceManager;
     private EpiThread theConnectionManagerEpiThread;
-    private DagBrowserPanel theDagBrowserPanel;
     private DataTreeModel theDataTreeModel;
     private DataNode theInitialRootDataNode;
     private TerminationShutdownThread theTerminationShutdownThread;
     private LockAndSignal theGUILockAndSignal;
-    private AppGUIFactory theAppGUIFactory;
-    // AppGUIManager's setter injected dependency variables.
-    private GUIStarter theGUIStarter;
-    
-    // Other AppGUIManager instance variables.
-    private JFrame theJFrame;  // App's only JFrame (now).
+    private GUIDefiner theGUIDefiner;
 
     public AppGUIManager(   // Constructor.
-        AppInstanceManager theAppInstanceManager,
         EpiThread theConnectionManagerEpiThread,
-        DagBrowserPanel theDagBrowserPanel,
         DataTreeModel theDataTreeModel,
         DataNode theInitialRootDataNode,
         TerminationShutdownThread theTerminationShutdownThread,
         LockAndSignal theGUILockAndSignal,
-        AppGUIFactory theAppGUIFactory
+        GUIDefiner theGUIDefiner
         )
       {
-        this.theAppInstanceManager= theAppInstanceManager;
         this.theConnectionManagerEpiThread= theConnectionManagerEpiThread;
-        this.theDagBrowserPanel= theDagBrowserPanel;
         this.theDataTreeModel= theDataTreeModel;
         this.theInitialRootDataNode= theInitialRootDataNode;
         this.theTerminationShutdownThread= theTerminationShutdownThread;
         this.theGUILockAndSignal= theGUILockAndSignal;
-        this.theAppGUIFactory= theAppGUIFactory;
+        this.theGUIDefiner= theGUIDefiner;
         }
 
-    public void setGUIStarterV( GUIStarter theGUIStarter )
-      // This method is for completing the injection of a circular dependency.
-    	{
-	    	this.theGUIStarter= theGUIStarter;
-	    	}
-
-    public static class GUIStarter // This Runnable starts the GUI in the AWT thread.
+    public static class GUIDefiner // This Runnable starts the GUI in the AWT thread.
       implements Runnable
 
       /* This nested class is used to create and start the app's GUI.
@@ -66,18 +49,29 @@ public class AppGUIManager // Top level of the app's GUI, the window manager.
         its instance is constructed.
         */
 
-      { // GUIStarter
+      { // GUIDefiner
+
+    		// Injected dependency variables.
         LockAndSignal theGUILockAndSignal;
-    		AppGUIManager theAppGUIManager;
+    		private AppInstanceManager theAppInstanceManager;
+    		private DagBrowserPanel theDagBrowserPanel;
+    		private AppGUIFactory theAppGUIFactory;
+
+        // Other AppGUIManager instance variables.
+        private JFrame theJFrame;  // App's only JFrame (now).
         
-        GUIStarter(   // Constructor. 
+        GUIDefiner(   // Constructor. 
         		LockAndSignal theGUILockAndSignal, 
-        		AppGUIManager theAppGUIManager 
+        		AppInstanceManager theAppInstanceManager,
+        		DagBrowserPanel theDagBrowserPanel,
+        		AppGUIFactory theAppGUIFactory
         		)
           {
             this.theGUILockAndSignal=   // Save lock reference.
               theGUILockAndSignal;
-        		this.theAppGUIManager= theAppGUIManager; 
+        		this.theAppInstanceManager= theAppInstanceManager;
+        		this.theDagBrowserPanel= theDagBrowserPanel;
+        		this.theAppGUIFactory= theAppGUIFactory;
             }
 
         public void run()
@@ -92,13 +86,43 @@ public class AppGUIManager // Top level of the app's GUI, the window manager.
             //    getSystemLookAndFeelClassName());
             //  } catch(Exception e) {}
 
-	        	theAppGUIManager.theJFrame =  // construct and start the app JFrame.
-	            		theAppGUIManager.startingJFrame();
+        		theJFrame =  // construct and start the app JFrame.
+        				startingJFrame();
+
+            theAppInstanceManager.setAppInstanceListener(  // App instance events...
+              theAppGUIFactory.makeInstanceCreationRunnable(theJFrame)
+              );
+
             appLogger.info("GUI start-up complete.");
             theGUILockAndSignal.doNotifyV();  // Signal that starting is done.
             }
 
-        } //GUIStarter
+        private JFrame startingJFrame()
+          /* This method creates the app's JFrame and starts it.
+            It is meant to be run on the UI (AWT) thread.
+            The JFrame content is set to a DagBrowserPanel 
+            which contains the GUI and other code which does most of the work.
+            It returns the JFrame.  
+            */
+          {
+            JFrame theJFrame =  // Make the main application JFrame.
+              theAppGUIFactory.makeJFrame( 
+                AppName.getAppNameString()
+                +", DAG Browser 7 Test"
+                +", archived "
+                +theAppInstanceManager.thisAppDateString()
+                );
+            theDagBrowserPanel.initializingV(); // Initializing post-construction.
+            theJFrame.setContentPane( theDagBrowserPanel );  // Store content.
+            theJFrame.pack();  // Layout all the content's sub-panels.
+            theJFrame.setLocationRelativeTo(null);  // Center JFrame on screen.
+            theJFrame.setDefaultCloseOperation(  // Set the close operation...
+              JFrame.EXIT_ON_CLOSE );  // ...to be exit, since it's the only frame.
+            theJFrame.setVisible(true);  // Make the app visible.
+            return theJFrame;
+            }
+
+        } //GUIDefiner
       
     static class TerminationShutdownThread  // For terminating main() thread.
       extends Thread
@@ -119,7 +143,7 @@ public class AppGUIManager // Top level of the app's GUI, the window manager.
           {
             mainThread.interrupt();  // Request termination of main thread.
 
-            try {  // Wait for main thread to terminate to complete.
+            try {  // Wait for main thread to terminate.
               mainThread.join();
               } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -186,8 +210,12 @@ public class AppGUIManager // Top level of the app's GUI, the window manager.
 
         */
       {
-    		InstanceCreationRunnable ( )
+    		private JFrame theJFrame;
+
+    		InstanceCreationRunnable ( JFrame theJFrame )
 	    		{
+    				this.theJFrame= theJFrame;
+    				
 	    			//throw new NullPointerException(); // Un-comment to test this path.
 	      		}
 
@@ -221,31 +249,6 @@ public class AppGUIManager // Top level of the app's GUI, the window manager.
 
         } // InstanceCreationRunnable
 
-    private JFrame startingJFrame()
-      /* This AppGUIManager method creates the app's JFrame and starts it.
-        It is meant to be run on the UI (AWT) thread.
-        The JFrame content is set to a DagBrowserPanel 
-        which contains the GUI and other code which does most of the work.
-        It returns the JFrame.  
-        */
-      {
-        JFrame theJFrame =  // Make the main application JFrame.
-          theAppGUIFactory.makeJFrame( 
-            AppName.getAppNameString()
-            +", DAG Browser 7 Test"
-            +", archived "
-            +theAppInstanceManager.thisAppDateString()
-            );
-        theDagBrowserPanel.initializingV(); // Initializing post-construction.
-        theJFrame.setContentPane( theDagBrowserPanel );  // Store content.
-        theJFrame.pack();  // Layout all the content's sub-panels.
-        theJFrame.setLocationRelativeTo(null);  // Center JFrame on screen.
-        theJFrame.setDefaultCloseOperation(  // Set the close operation...
-          JFrame.EXIT_ON_CLOSE );  // ...to be exit, since it's the only frame.
-        theJFrame.setVisible(true);  // Make the app visible.
-        return theJFrame;
-        }
-
     private void startingBrowserGUIV()
       /* This method builds and starts the Graphical User Interface (GUI).
         It doesn't return until the GUI has been started.
@@ -254,21 +257,17 @@ public class AppGUIManager // Top level of the app's GUI, the window manager.
         we must wait for those operations to complete.
         */
       {
-        appLogger.info("Queuing GUIStarter.");
+        appLogger.info("Queuing GUIDefiner.");
 
         java.awt.EventQueue.invokeLater(  // Queue on GUI (AWT) thread...
-        	theGUIStarter   // ...this Runnable GUIStarter,...
+        	theGUIDefiner   // ...this Runnable GUIDefiner,...
           );  //  whose run() method will build and start the app's GUI.
 
         theGUILockAndSignal.doWaitE(); // Wait for signal
-          // which means that the GUIStarter has finished.
+          // which means that the GUIDefiner has finished.
         
         
-        appLogger.info("GUI/AWT thread signalled GUIStarter done.");
-
-        theAppInstanceManager.setAppInstanceListener(  // App instance events...
-          theAppGUIFactory.makeInstanceCreationRunnable()
-          );
+        appLogger.info("GUI/AWT thread signalled GUIDefiner done.");
         }
 
     public void runV() // This method does the main AppGUIManager run phase.

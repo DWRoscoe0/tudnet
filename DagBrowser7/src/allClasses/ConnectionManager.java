@@ -1,6 +1,7 @@
 package allClasses;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
@@ -27,11 +28,11 @@ public class ConnectionManager
     Because this list is accessed by a TreeModel on the EDT,
     this List is asynchronously updated when changes are needed
     using java.awt.EventQueue.invokeLater(..) method which runs on 
-    the Event Dispath Thread (EDT).
+    the Event Dispatch Thread (EDT).
 
     For maintaining the set of peers that can be updated immediately
     by this ConnectionManager Thread, a Map is used.
-    It is also used to quickly 
+    It is also used to quickly ?
 
     This class makes use of other threads to manage the individual connections.
     It receives inputs from those connection via thread-safe queues.
@@ -73,7 +74,7 @@ public class ConnectionManager
   
     // Injected instance variables, all private.
 	    
-	    private ConnectionManager.Factory theConnectionManagerFactory; 
+	    private ConnectionsFactory theConnectionsFactory; 
 
     // Other instance variables, all private.
 	
@@ -114,7 +115,7 @@ public class ConnectionManager
 
 
     public ConnectionManager(   // Constructor.
-        ConnectionManager.Factory theConnectionManagerFactory,
+        ConnectionsFactory theConnectionsFactory,
         DataTreeModel theDataTreeModel
         )
       {
@@ -125,7 +126,7 @@ public class ConnectionManager
           );
 
         // Storing injected dependencies stored in this class.
-        this.theConnectionManagerFactory= theConnectionManagerFactory;
+        this.theConnectionsFactory= theConnectionsFactory;
 
         peerSocketAddressConcurrentHashMap= // Setting socket-to-peer map empty.
           new ConcurrentHashMap<SocketAddress,PeerValue>();
@@ -411,8 +412,9 @@ public class ConnectionManager
           final Peer thePeer= // Getting next Peer from queue.
         		peerQueue.poll();
           if (thePeer == null) break;  // Exiting if no more Peers.
-          	{
-		          SwingUtilities.invokeLater( // Queuing removal of Peer from List.
+          	try {
+		          ///SwingUtilities.invokeLater( // Queuing removal of Peer from List.
+          		SwingUtilities.invokeAndWait( // Queuing removal of Peer from List.
 		        		new Runnable() {
 		              @Override  
 		              public void run() { 
@@ -421,6 +423,12 @@ public class ConnectionManager
 		              } 
 		            );
           		}
+            catch (InterruptedException e) { // Handling wait interrupt by 
+              Thread.currentThread().interrupt(); // setting interrupt flag.
+              } // Is a termination request so no need to continue waiting.
+          	catch  // Handling invocation exception by
+          	  (InvocationTargetException e) 
+          	  { throw new RuntimeException(e); } // wrapping and re-throwing.
           elementProcessedB= true;
           }
           
@@ -516,7 +524,7 @@ public class ConnectionManager
         if (resultPeerValue == null) // Adding peer if not stored already.
           {
             final PeerValue newPeerValue=  // Building new peer. 
-              theConnectionManagerFactory.buildPeerValue(
+              theConnectionsFactory.makePeerValue(
                 peerInetSocketAddress,
                 sendPacketQueue,
                 peerQueue,
@@ -543,69 +551,7 @@ public class ConnectionManager
 
     // Nested classes.
 
-    public static class Factory {
-
-      /* This is the factory for objects with lifetimes
-        of the ConnectionManager's lifetime or shorter.
-        */
-
-      private DataTreeModel theDataTreeModel;
-
-      private ConnectionManager theConnectionManager;
-
-      public Factory(  // Constructor.
-          DataTreeModel theDataTreeModel
-          )
-        {
-	        this.theDataTreeModel= theDataTreeModel;
-
-          theConnectionManager= new ConnectionManager( 
-            this,
-            this.theDataTreeModel
-            );
-          }
-
-      public ConnectionManager getConnectionManager()
-        { return theConnectionManager; }
-
-      public Peer buildPeer(
-          InetSocketAddress peerInetSocketAddress,
-          PacketQueue sendPacketQueue,
-          SignallingQueue<Peer> peerQueue,
-          DatagramSocket unconnectedDatagramSocket
-          )
-        {
-          return new Peer(
-            peerInetSocketAddress,
-            sendPacketQueue,
-            peerQueue,
-            unconnectedDatagramSocket,
-  	        theDataTreeModel
-            );
-          }
-
-      public PeerValue buildPeerValue(
-          InetSocketAddress peerInetSocketAddress,
-          PacketQueue sendPacketQueue,
-          SignallingQueue<Peer> peerQueue,
-          DatagramSocket unconnectedDatagramSocket
-          )
-        {
-          Peer thePeer= buildPeer(
-            peerInetSocketAddress,
-            sendPacketQueue,
-            peerQueue,
-            unconnectedDatagramSocket
-            );
-          return new PeerValue(
-            peerInetSocketAddress,
-            thePeer
-            );
-          }
-
-      } // class Factory.
-
-    private static class PeerValue  // Value of HashMap entry.
+    public static class PeerValue  // Value of HashMap entry.
 
      /* This class was created when it became necessary to
        have access to both the Peer class and its Thread.
