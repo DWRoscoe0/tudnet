@@ -10,26 +10,20 @@ public interface DataNode {
     Many of its methods are similar to methods in 
     the DataTreeModel interface.
 
-    ??? Possile new subclasses:
+    ?? Possible new subclasses:
 
-      ??? Maybe create a subclass CachedDataNode.
+      ?? Maybe create a subclass CachedDataNode.
 		    * It maintains an array of all names of all its children,
 		      for fast counts and name searches.
 		    * It caches the actual child nodes for fast child getChild(..).
 
-    ??? Possible methods to add:
+    ?? Possible methods to add:
 
-		  ??? Add JComponent getSummaryJComponent() which returns 
+		  ?? Add JComponent getSummaryJComponent() which returns 
 		    a component, such as a Label, which summarizes this DataNode,
 		    at least with the name, but possibly also with a summary value,
-		    can be used as a part of its parent DataJComponent ???
-		  
-		  ??? Add String getSummaryString() which returns a String,
-		    which summarizes this DataNode, similar to what
-		    getSummaryJComponent() does.
-		    
-		    ??? Maybe use AbDataNode.getHeadString() for this?
-		    It's otherwise unused.
+		    can be used as a part of its parent DataJComponent.
+		    See getSummaryString() which returns a String.
 	    
     */
 
@@ -61,10 +55,19 @@ public interface DataNode {
       */
 
     public String getValueString( );  /* Returns the value of the DataNode
-      as a String.  */
+      as a String.  This is meant to be a very short string that
+      might be appended to the name to represent a title. 
+      */
+
+    public String getContentString( );  /* Returns the content of the DataNode
+      as a String.  This is meant to represent 
+      potentially large blocks of data, such as the contents of files,
+      and often consists of multiple lines.
+      */
 
     public String getLineSummaryString( );  /* Returns a one-line summary of
-      the contents of this DataNode as a String.  */
+      the contents of this DataNode as a String, usually the name
+      followed maybe by something else.  */
 
     public String getInfoString( );  /* Returns additional attributes 
       about this DataNode as a String.  */

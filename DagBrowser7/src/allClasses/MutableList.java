@@ -1,5 +1,8 @@
 package allClasses;
 
+import static allClasses.Globals.appLogger;
+
+
 public class MutableList 
 
 	/* This class is a NamedList which can be changed.
@@ -35,33 +38,46 @@ public class MutableList
 
 	  // DataNode methods which change the node's state.
 
-		  public void add( DataNode childDataNode ) // Add child at end of List.
-		    /* This is a convenience method which adds childDataNode 
-		      at end of the List.
-
-			    It also informs theDataTreeModel so that TreeModelListeners
-			    can be informed.
-
-		      It might be better to maintain and add to a sorted List???
-		      There is none, so a sorted Set might be better.
+		  public void add(  // Add child at end of List.
+		  		final DataNode childDataNode 
+		  		)
+		    /* This method uses add( indexI , childDataNode ) to add
+		      childDataNode at the end of the List.
 		      */
 		    {
-		      add( theListOfDataNodes.size(), childDataNode );
+		  	  add( -1, childDataNode ); // Adding with index == -1 to add to end.
 		      }
 	
-		  public void add( int indexI, DataNode childDataNode ) // Add at index.
-		    /* This adds childDataNode at the specified indexI position
-
-		      It also informs theDataTreeModel so that TreeModelListeners
-		      can be informed.
+		  public void add(  // Add at index. 
+		  		final int indexI, final DataNode childDataNode 
+		  		)
+		    /* This adds childDataNode at index position indexI,
+		      or the end of the list if indexI<0. 
+		      It also informs theDataTreeModel about the insertion
+		      so that TreeModelListeners can be fired.
 	  	    */
 		    {
-		      theListOfDataNodes.add( indexI, childDataNode );
-	
-		      theDataTreeModel.reportingInsertV( this, indexI, childDataNode );
+        	appLogger.debug("MutableList.add(..) "+childDataNode+" at "+indexI);
+		  		final DataNode parentDataNode= this;
+  	  		runOrInvokeAndWaitV( // Queuing add to AWT queue. 
+        		new Runnable() {
+
+        			@Override  
+              public void run() {
+              	int insertAtI= (indexI < 0) ? // Converting index < 0 
+              		theListOfDataNodes.size() : // to mean end of list,
+              	  indexI; // otherwise use raw index.
+                theListOfDataNodes.add( insertAtI, childDataNode );
+                theDataTreeModel.reportingInsertV( 
+    		      		parentDataNode, insertAtI, childDataNode 
+    		      		);
+                }
+
+              } 
+            );
 		      }
 	
-		  public void remove( DataNode childDataNode )
+		  public void remove( final DataNode childDataNode )
 			  /* This is a convenience method which removes childDataNode 
 			    from the list.  It searches the List first.
 			    If it is not found then it does nothing.
@@ -70,13 +86,22 @@ public class MutableList
 			    so TreeModelListeners can be informed.
 			    */
 		    {
-		  	  int indexI=  // Searching for child by getting its position index. 
-		    	  getIndexOfChild( childDataNode );
-	    	  if ( indexI != -1) { // Removing and reporting change if child found.
-			  		theListOfDataNodes.remove( indexI );
-			      theDataTreeModel.reportingRemoveV( 
-			      	this, indexI, childDataNode 
-			      	);
-	    	  	}
+		  	  final DataNode parentDataNode= this;
+		  	  runOrInvokeAndWaitV( // Queuing removal of Peer from List.
+        		new Runnable() {
+              @Override  
+              public void run() { 
+      		  	  int indexI=  // Searching for child by getting its position index. 
+      			    	  getIndexOfChild( childDataNode );
+      		    	  if ( indexI != -1) { // Removing and reporting change if child found.
+      				  		theListOfDataNodes.remove( indexI );
+      				      theDataTreeModel.reportingRemoveV( 
+      				      	parentDataNode, indexI, childDataNode 
+      				      	);
+      		    	  	}
+                }  
+              } 
+            );
 		      }
+
     } // MutableList 

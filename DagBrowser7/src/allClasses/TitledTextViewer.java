@@ -71,7 +71,7 @@ public class TitledTextViewer
           } // TitledTextViewer(.)
 
       public TitledTextViewer(  // Constructor for viewing a File text. 
-          TreePath theTreePath, TreeModel theTreeModel, IFile theIFile 
+          TreePath theTreePath, TreeModel theTreeModel, IFile theIFile , int I
           )
         /* Constructs a TitledTextViewer.
           theTreePath is the TreePath associated with
@@ -82,7 +82,7 @@ public class TitledTextViewer
           */
         { // TitledTextViewer(.)
           theIJTextArea= new IJTextArea(    // Construct JTextArea.
-            theIFile.GetFile()   // File to view.
+            theIFile.getFile()   // File to view.
             );
           CommonInitialization( theTreePath, theTreeModel );
           } // TitledTextViewer(.)
@@ -157,7 +157,7 @@ public class TitledTextViewer
 	          	  DataNode childDataNode= (DataNode)childObject;
 	          	  if ( childDataNode == aTreeHelper.getWholeDataNode() )
 	  	    	  		theIJTextArea.replaceRange(
-	  	    	  				childDataNode.getValueString(),
+	  	    	  				childDataNode.getContentString(),
 	  	    	  			  0,
 	  	    	  				theIJTextArea.getText().length()
 	  	    	  			  );
@@ -188,8 +188,8 @@ public class TitledTextViewer
             super(inOwningJComponent, theMetaRoot, inTreePath);
             }
 
-        public DataTreeModel setDataTreeModel(DataTreeModel newDataTreeModel)
-          /* Sets new DataTreeModel and returns old one.  ???
+        public void setDataTreeModelV(DataTreeModel newDataTreeModel)
+          /* Sets new DataTreeModel.
            * It also makes the present ListModel be a Listener of
            * newDataTreeModel so the former reflects the latter.
            * The JList should be a Listener of the ListModel
@@ -197,12 +197,10 @@ public class TitledTextViewer
 		       * * once with newDataTreeModel != null during initialization,
 		       * * and once with newDataTreeModel == null during finalization,
 		       * but it should be able to work with any null combination.
-		       * It doesn't need to return a value, but this doesn't hurt ???
            */
           {
-        	  DataTreeModel oldDataTreeModel= 
-        	    super.setDataTreeModel( newDataTreeModel );
-
+        		DataTreeModel oldDataTreeModel= theDataTreeModel;
+      	  
         	  if ( oldDataTreeModel != null )
   	          oldDataTreeModel.removeTreeModelListener(
   	    	  	  (TitledTextViewer)owningJComponent 
@@ -212,8 +210,6 @@ public class TitledTextViewer
   	    	  	newDataTreeModel.addTreeModelListener(
 	    	  	  (TitledTextViewer)owningJComponent 
 	    	  	  );
-
-        	  return oldDataTreeModel;
         	  }
 
         } // MyTreeHelper

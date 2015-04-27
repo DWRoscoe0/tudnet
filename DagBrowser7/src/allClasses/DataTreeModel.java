@@ -13,7 +13,7 @@ import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeModel;
 
-//import static allClasses.Globals.*;  // appLogger;
+import static allClasses.Globals.*;  // appLogger;
 
 public class DataTreeModel 
 
@@ -22,25 +22,32 @@ public class DataTreeModel
   implements TreeModel, Serializable
   
   /* This class implements an extended TreeModel 
-    used for browsing the Infogora.
+    used for browsing the Infogora hierarchy.
+    
+    It implements, or will implement, the following extensions beyond
+    the basic capabilities needed by the JTree class.
+	
+	  * The method getDataJComponent( TreePath inTreePath )
+	    returns a JComponent capable of displaying the node.
 
-    One of the more important extensions is
-    a method getDataJComponent( TreePath inTreePath )
-    which returns a JComponent capable of displaying the node.
+	  * This class will eventually maintain a 2-way association between 
+	    a DataNode and 	    the TreePath (or TreePaths in the case of DAGs)
+	    that can be followed to get to them.
 
-    ??? Repeat what was done with 
+	    ?? One understandable drawback of the superclass TreeModel is
+	    its inability to deal with the general Directed Graph,
+	    or even the Directed Acyclic Graph, in which
+	    a node can have multiple parents.
+	    This is  desirable feature of the Infogora Hierarchy
+	    so a solution needs to be found.
+	    It will probably be done with a HashMap.
+
+    ?? Repeat what was done with 
     	TitledListViewer and TreeListModel to report ConnectionManager changes
     with 
 	    DirectoryTableViewer and DirectoryTableModel to report
 	    file-system changes using Java Watchable, WatchService, WatchEvent, 
 	    and WatchKey.
-
-    ?? One understandable drawback of the TreeModel is
-    its inability to deal with the general Directed Graph,
-    or even the Directed Acyclic Graph, in which
-    a node can have multiple parents.
-    This is  desirable feature of the Infogora Hierarchy
-    so a solution needs to be found.
     */
 
   { // class DataTreeModel.
@@ -215,7 +222,7 @@ public class DataTreeModel
 
       public String getAbsolutePathString(TreePath inTreePath)
         /* Returns String representation of TreePath inTreePath.  
-          ??? Maybe rewrite to be recursive so that 
+          ?? Maybe rewrite to be recursive so that 
           java-optimized += String operation can be used,
           maybe with StringBuilder with an initial capacity based on
           previous value of path String being calculated.
@@ -286,7 +293,13 @@ public class DataTreeModel
             	new Object[] {childDataNode}
             	);
 
+        	appLogger.debug( 
+	        	  "DataTreeModel.reportingInsertV(..) before firing:\n  "+theTreeModelEvent
+	        	  );
           fireTreeNodesInserted( theTreeModelEvent ); // Firing insertion event.
+        	appLogger.debug( 
+	        	  "DataTreeModel.reportingInsertV(..) after firing:\n  "+theTreeModelEvent
+	        	  );
           }
 
       public void reportingRemoveV( 
@@ -323,6 +336,13 @@ public class DataTreeModel
         {
 	        TreePath theTreePath= // Calculating path of the DataNode. 
 	          	translatingToTreePath( theDataNode );
+	        if ( theTreePath == null ) {
+	        	appLogger.error( 
+	        	  "DataTreeModel.reportingChangeV(..): "+
+	        	    "translatingToTreePath(..) failed." 
+	        	  );
+	        	return;
+	        	}
 	        TreePath parentTreePath= // Calculating path of the parent DataNode. 
 	            theTreePath.getParentPath();
 	        DataNode parentDataNode= // Calculating parent DataNode.
@@ -357,27 +377,32 @@ public class DataTreeModel
 					The only thing that happens to nodes after they are removed
 					is that they are expanded.
 
-          ?? This method could be speeded in the following way:
+          ?? This method could be speeded with 
+          some combination of the following:
 
-          * By caching the search results and checking the cache first.
+          * By caching the search result TreePath and checking the cache first.
 	          This can be enhanced later to handle duplicate references.
 	          See Object hashCode() and equals() for HashTable requirements.
+	          The contents of this cache could be stored in MetaNodes before exit.
 
           * By using a starting TreePath different from the root and
             known to be closer to the node that changed. 
+            Unfortunately a general way of picking this path is difficult.
 
 					* By using a closest-first search instead of breadth-first search.
 					  This means searching toward the tree root in addition to
-					  searching into the descendants.  
+					  breadth-first searching into the descendants.
 					  It implies a starting path which is not the root,
 					  which could some either from a cache or the last path returned.
+					  To prevent checking the same nodes, a check for the child node 
+					  should be skipped when expanding its parent.  
 					  
           This method is a bit of a kludge.
           It is used because DataNodes don't know their TreePaths,
           and TreePaths are required by JTree.
           */
         {
-          //appLogger.info( "DataTreeModel.translatingToTreePath()." );
+          //appLogger.error( "DataTreeModel.translatingToTreePath()." );
       		TreePath resultTreePath= null;  // Defaulting result to null.
       		Queue<TreePath> queueOfTreePath = new LinkedList<TreePath>();
           queueOfTreePath.add(theDataRoot.getParentOfRootTreePath( ));
@@ -400,7 +425,7 @@ public class DataTreeModel
               	  if ( childDataNode == null) break;
               	    // Exiting checking-children loop if no more children.
                   TreePath childTreePath=
-                    parentTreePath.pathByAddingChild( childDataNode ); 
+                    parentTreePath.pathByAddingChild( childDataNode );
                   if // Returning result TreePath if target node found.
                     ( childDataNode == targetDataNode )
                   	{ resultTreePath= childTreePath; break queueScanner; }
@@ -409,7 +434,13 @@ public class DataTreeModel
                  	}
               if (--elementsToDepthIncreaseI == 0) // 
 	              { // Handle tree depth increase.
-	                if (++currentDepthI > 5) break queueScanner;
+	                if (++currentDepthI > 5) 
+	                	{ appLogger.error( "DataTreeModel.translatingToTreePath():"+
+	                			"\n  depth "+currentDepthI+" exceeds maximum, node="+
+	                			targetDataNode.getLineSummaryString( )
+	                			);
+	                	  break queueScanner;
+	                		}
 	                elementsToDepthIncreaseI = nextElementsToDepthIncreaseI;
 	                nextElementsToDepthIncreaseI = 0;
 	              	}

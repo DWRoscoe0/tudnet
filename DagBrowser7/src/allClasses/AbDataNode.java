@@ -146,28 +146,47 @@ public abstract class AbDataNode
 
       public String getNameString( )
         {
-      	  return "NO-NAME";
+      	  return "NAME-UNDEFINED";
           }
 
       public String getValueString( )
 	      {
-      	  return super.toString();  // Return default String representation.
-	        }
+      		return "VALUE-UNDEFINED";
+      		}
+
+      public String getContentString( )
+	      {
+      		return "CONTENT-UNDEFINED";
+      		}
 
       public String getLineSummaryString( )
         /* This method returns a String which is a meaningful summary
           of this DataNode. 
           */
 	      {
-      	  if // Returning name only if value is the default/undefined.
-      	      ( getValueString( ).equals( super.toString() ))
-      	  	return getNameString(); // Returning name only.
-      	    else // Returning name and value if both are defined;
-		        return // Returning String consisting of
-		        		getNameString() // the name,
+      	  String nameString= getNameString();  // Caching name.
+      	  String summaryString= getValueString(); // Initializing summary.
+      	  process: {
+      	  	if ( summaryString == "VALUE-UNDEFINED" )
+      	  	  { summaryString= ""; break process; }
+	    	    int indexOfNewLineI= summaryString.indexOf("\n");
+	      	  if // Trimming extra lines if there are any in value string.
+	      	    ( indexOfNewLineI >= 0 )
+	      	  	summaryString= // Replacing value string with only its first line. 
+	      	  	  summaryString.substring(0,indexOfNewLineI);
+	      	  }
+      	  if // Combining with name if value not nil or same as name.
+      	  	( ( summaryString != "" ) && 
+      	  		( ! nameString.equals(summaryString) ) 
+      	  		)
+	      	  summaryString= // Using
+	      	  		nameString // the name,
 		        		+ " : " // a separator,
-		        		+ getValueString( ) // and the value.
+		        		+summaryString // and the trimmed value.
 		        		;
+      	  	else
+  	      	  summaryString= getNameString(); // Using only the name.
+      	  return summaryString; 
 	        }
 
       public String getInfoString()
@@ -199,7 +218,7 @@ public abstract class AbDataNode
               new TitledTextViewer( 
                 inTreePath, 
                 inDataTreeModel, 
-                getValueString()
+                getContentString()
                 );
             else  // Using TitledListViewer if not a leaf.
             resultJComponent= // Using TitledListViewer.

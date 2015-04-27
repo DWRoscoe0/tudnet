@@ -286,6 +286,8 @@ public class AppGUIManager // Top level of the app's GUI, the window manager.
 
         awaitingShutdownV();  // Interacting with user via GUI until shutdown.
 
+        theDataTreeModel.logListenersV();
+
         theConnectionManagerEpiThread.stopAndJoinV( ); 
           // Stopping ConnectionManager thread.
         }

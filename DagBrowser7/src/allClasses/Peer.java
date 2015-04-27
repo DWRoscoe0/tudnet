@@ -71,48 +71,31 @@ public class Peer  // Nested class managing peer connection data.
     // Fields (constant and variales).
     
       // Constants.
-      
       private final long PeriodMillisL=  // Period between sends or receives.
         4000;   // 4 seconds.
-
       private final long HalfPeriodMillisL= // Half of period.
         PeriodMillisL / 2;  
 
-
-      // Instance variables which are copies of constructor arguments.
-
+      // Injected dependency instance variables.
       private InetSocketAddress peerInetSocketAddress;  // Address of peer.
-      
       private final PacketQueue sendQueueOfSockPackets;
         // Queue to receive SockPackets to be sent to Peer.
-
       private SignallingQueue<Peer> peerQueue; // CM's Peer termination queue.
-
       private final DatagramSocket unconnectedDatagramSocket;
-
       private DataTreeModel theDataTreeModel;
 
       // Other instance variables.
-
       LockAndSignal peerLockAndSignal;  // LockAndSignal for this thread.
-
       int packetIDI; // Sequence number for sent packets.
-
       private Random theRandom; // For arbitratingYieldB() random numbers.
-
       private final PacketQueue receiveQueueOfSockPackets;
         // Queue for SockPackets from ConnectionManager.
-
       // Detail-containing sub-objects.
-
-        private NamedMutable addressNamedMutable;
-
-        private NamedInteger packetsSentNamedInteger;
-
-        private NamedInteger packetsReceivedNamedInteger;
-
-        long pingSentAtNanosL;
-        private NamedInteger RoundTripTimeNamedInteger; 
+	      private NamedMutable addressNamedMutable;
+	      private NamedInteger packetsSentNamedInteger;
+	      private NamedInteger packetsReceivedNamedInteger;
+	      long pingSentAtNanosL;
+	      private NamedInteger RoundTripTimeNamedInteger; 
 
 
     public Peer(  // Constructor. 
@@ -136,7 +119,7 @@ public class Peer  // Nested class managing peer connection data.
             new DataNode[]{} // Initially empty of details.
         		);
 
-        // Storing constructor arguments.
+        // Storing injected dependency constructor arguments.
           this.peerInetSocketAddress= peerInetSocketAddress;
           this.sendQueueOfSockPackets= sendQueueOfSockPackets;
           this.peerQueue= peerQueue;
@@ -203,10 +186,10 @@ public class Peer  // Nested class managing peer connection data.
 	      addressNamedMutable= new NamedMutable( 
 	      		theDataTreeModel, "Port" 
 	      		);
-	      add( addressNamedMutable );
 	      addressNamedMutable.setValueObject( 
 	      		"" + peerInetSocketAddress.getPort() 
 	      		);
+	      add( addressNamedMutable );
 
         RoundTripTimeNamedInteger= new NamedInteger( 
 	      		theDataTreeModel, "Round-Trip-Time-ns", 0 
@@ -230,7 +213,7 @@ public class Peer  // Nested class managing peer connection data.
         If it doesn't receive an echo packet in response
         within one-half period, it tries again.
         It tries several times before giving up and 
-        terminating the current threat.
+        terminating the current thread.
         */
       {
         int maxRetries= 4;

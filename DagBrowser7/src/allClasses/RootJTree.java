@@ -10,6 +10,8 @@ import javax.swing.SwingUtilities;
 import javax.swing.JScrollPane;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
+import javax.swing.event.TreeModelEvent;
+import javax.swing.event.TreeModelListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
@@ -24,7 +26,8 @@ public class RootJTree
     KeyListener, 
     TreeSelectionListener, 
     TreeExpansionListener, 
-    TreeAware
+    TreeAware,
+    TreeModelListener
     //, TreePathListener
   
   /* This class is used for the content in the left JTree subpanel.
@@ -43,8 +46,8 @@ public class RootJTree
     */
 
   {
-  final static String ExpandedAttributeString= "Expanded"; 
-  final static String autoExpandedAttributeString= "AutoExpanded"; 
+	  final static String ExpandedAttributeString= "Expanded"; 
+	  final static String autoExpandedAttributeString= "AutoExpanded"; 
 
     // Variables.
       private static final long serialVersionUID = 1L;
@@ -98,6 +101,9 @@ public class RootJTree
         setShowsRootHandles( true );
         putClientProperty( "IJTree.lineStyle", "Angled" );
 
+        getModel().addTreeModelListener(   // listen for tree model events.
+        		this
+        		);
         addTreeSelectionListener(this);  // listen for tree selections.
         addTreeExpansionListener(this);  // Listen for expansion events.
         //aTreeHelper.addTreePathListener(this);  // listen for tree paths.
@@ -362,6 +368,53 @@ public class RootJTree
     /* Listener methods and their helpers.  
       Listeners respond to state changes or externals.
       */
+
+      /* TreeModelListener methods. Most do nothing.
+        Only treeNodesInserted(..) does anything.
+        It checks whether an insertion
+        */
+
+		    public void treeStructureChanged(TreeModelEvent theTreeModelEvent) { }
+		
+		    public void treeNodesRemoved(TreeModelEvent theTreeModelEvent) { }
+		
+		    public void treeNodesInserted(TreeModelEvent theTreeModelEvent)
+		      /* This method checks whether an inserted node was selected before,
+		        and is a descendant of the presently selected node.
+		        If it is then it is selected.
+		        The purpose of this is to automatically select and display a node
+		        which was selected and being displayed when the app shutdown.
+		        */
+		      {
+		    	  processingEvent: {
+			    		//appLogger.debug("RootJTree.treeNodesInserted(..)");
+          	  TreePath parentTreePath= theTreeModelEvent.getTreePath();
+			    		if ( // Ignoring event if event's parent path isn't selected path. 
+			    	      	!aTreeHelper.getPartTreePath().equals(parentTreePath)
+			    	      	)
+			    	  	break processingEvent; // Ignoring.
+		          for 
+			          ( Object childObject: theTreeModelEvent.getChildren() )
+		          	{ // Selecting child if is meets requirements.
+		          	  DataNode childDataNode= (DataNode)childObject;
+		          	  TreePath childTreePath= 
+		          	  		parentTreePath.pathByAddingChild(childDataNode);
+		          	  PathAttributeMetaTool childPathAttributeMetaTool=
+		          	    theMetaRoot.makePathAttributeMetaTool( 
+		          	    		childTreePath, MetaRoot.selectionAttributeString 
+		                  );
+		          	  String valueString= // Getting selection path attribute value. 
+		          	  		(String)childPathAttributeMetaTool.get();
+		          	  if ( "IS".equals(valueString) )
+		                getTreeHelper()  // In TreeHelper...
+		        	        .setPartTreePathB(  // ...select...
+		        	          childTreePath  // ...child tree node.
+		        	          );
+		          		}
+		    			}
+		      	}
+		
+		    public void treeNodesChanged(TreeModelEvent theTreeModelEvent) { }
 
       /* TreeSelectionListener method  and its numerous exclusive helpers.
         There is a lot of code here.

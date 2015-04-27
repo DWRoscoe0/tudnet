@@ -23,18 +23,19 @@ public class TreeListModel
 
   { // class TreeListModel
 
-    private Object theObject;  //Node in tree with source data.
-	  private TreePath theTreePath;  // Path to that node.
-    private DataTreeModel theDataTreeModel;  // Model of tree containing node.
+	  // Injected dependency variables.
+    private final Object theObject;  //Node in tree with source data.
+	  private final TreePath theTreePath;  // Path to that node.
+
+	  // Other instance variables.
+	  private DataTreeModel theDataTreeModel;  // Model of tree containing node.
 
     TreeListModel(  // Constructor.
-    		Object theObject, TreePath theTreePath, DataTreeModel theDataTreeModel
+    		Object theObject, TreePath theTreePath
     		)
       {
 	      this.theObject= theObject;
 	      this.theTreePath= theTreePath;
-	      
-        setDataTreeModel(theDataTreeModel);
         }
 
     // Initialization/setter methods.
@@ -127,7 +128,7 @@ public class TreeListModel
 	    	  	else
 	    	  	{ // Sending an equivalent ListModelEvent.
 	    	  		for (int childI: theTreeModelEvent.getChildIndices()) {
-	    	  			fireIntervalAdded( 
+	    	  			fireIntervalRemoved( 
 		    	  				ListDataEvent.INTERVAL_REMOVED,
 		    	  		  	childI,
 		    	  		  	childI

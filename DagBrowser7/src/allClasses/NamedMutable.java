@@ -3,7 +3,8 @@ package allClasses;
 public class NamedMutable 
   extends NamedLeaf 
   {
-	
+
+	  // Injected dependencies.
 		protected DataTreeModel theDataTreeModel; // For reporting changes.
 
 	  private Object valueObject;
@@ -24,16 +25,27 @@ public class NamedMutable
         return valueObject.toString();
         }
 	  
-	  public Object setValueObject( Object valueObject )
+	  public Object setValueObject( final Object newObject )
 	    /* This method sets a new value and returns the old one.
 	      The old one is returned to simplify object pooling and recycling.
   	    */
 		  {
+	  		final DataNode thisDataNode= this; // Converting this pointer.
 	  	  Object oldObject= this.valueObject; // Saving present value. 
-	  	  this.valueObject= valueObject; // Setting new value.
+
+	  	  runOrInvokeAndWaitV( // Do following on AWT thread. 
+	    		new Runnable() {
+	    			@Override  
+	          public void run() {
+	    				valueObject= newObject; // Setting new value.
+	    	  	  theDataTreeModel.reportingChangeV(  // Fire associated listeners. 
+	    	  	  		thisDataNode 
+	    	  	  		);
+	            }
+	          } 
+	        );
+
 	  	  return oldObject; // Returning old value.
-	  		
-	      //theDataTreeModel.reportingInsertV( this, indexI, childDataNode );
 		  	}
 
     public Object getValueObject( )

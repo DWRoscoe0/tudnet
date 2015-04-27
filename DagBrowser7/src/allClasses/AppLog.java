@@ -14,10 +14,10 @@ public class AppLog
   /* This class is for logging information from an app.  
     This class needs some work.
     
-    MadeMultiprocessSafe: ??? It might fail if multiple app instances
+    ??? MadeMultiprocessSafe: It might fail if multiple app instances
       try to log simultaniously.
 
-    Windows8AntiMalwareSlowsItDown: ???
+    ??? Windows8AntiMalwareSlowsItDown: fix. 
       It can run much slower when the file is long.
       This might be because of the Windows8 AntiMalware task.
       Apparently it scans the log.txt file after every close
@@ -85,7 +85,7 @@ public class AppLog
         ??? This method is messy and long.  Fix.
         */
       { 
-        //logFile.delete();  // !!! DO THIS TO CLEAR ESSION ???
+        //logFile.delete();  // !!! DO THIS TO CLEAR ESSION.
         
         File sessionFile=  // Identify session file name.
           AppFolders.resolveFile( "session.txt" );
@@ -174,9 +174,9 @@ public class AppLog
         and also to the console error stream.
         */
       { 
-        String wholeString= "ERROR: "+inString;
+        String wholeString= "ERROR: "+inString; // Build error output string.
 
-        System.err.println(wholeString);  // Send to error console.
+        //System.err.println(wholeString);  // Send to error console.
 
         appendEntry( wholeString );  // Send to log. 
         }

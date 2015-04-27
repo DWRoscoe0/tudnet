@@ -6,23 +6,19 @@ public class PathAttributeMetaTool
 
   extends AttributeMetaTool 
   
-  /* This is an Attribute MetaTool for dealing with 
-    a MetaNode's path attributes. 
-    At first it is only for the SelectionPath key.
+  /* This is an Attribute MetaTool for dealing with MetaNode path attributes. 
+    It was created for managing the selection path using theSelectionPath key,
+    but it could be used for other paths also.
 
-    Attribute are name-value pairs.
     Values for attributes handled by this class are as follows:
 
-    * "" (blank) : default value, which means this node was was never 
-      part of the path, or was but is the first child of its parent,
+    * "" (blank) : default value, meaning this node was never part of the path, 
+      or was but is the first child of its parent,
       which is the default selection when going to a child node.  
-      All descendants have the same value.
-    * "$NESTED$" : default value (see above for meaning),
-      but at least some descendants do not have the same value.
+      All descendants have the same default value.
     * "IS": this node is now part of the path.
-    * "WAS": this node was the most recent part of the path
-      of all its siblings.
-    * "OLD": this node was part of the path but not the most recent
+    * "WAS": this node was the most recent part of the path of all its siblings.
+    * "OLD": this node was part of the path but is not the most recent
       of all its siblings.
 
     This is based on the my InfogoraPathHistoryAttribute notes.
@@ -43,7 +39,7 @@ public class PathAttributeMetaTool
 
     // Instance setter methods.
 
-      public void setPath( ) // Stores path with history.
+      public void setPath( ) // Stores path and history.
         /* This method puts path information into the MetaNode DAG.
           It sets the path attributes for the MetaPath 
           attached to this PathAttributeMetaTool instance,
@@ -97,7 +93,7 @@ public class PathAttributeMetaTool
             else  // We haven't reached the old path yet.
             { // Recursively process ancestors and set the path attribute.
               setPathHereAndTowardRoot(  // Recurse into ancestors...
-                scanMetaPath.getParentMetaPath() // ...starting with partent.
+                scanMetaPath.getParentMetaPath() // ...starting with parent.
                 );
               scanMetaNode.put(  // Set attribute...
                 keyString, // ...for this path name...
@@ -150,6 +146,8 @@ public class PathAttributeMetaTool
           "WAS" attribute values, for any descendants of inMetaNode,
           thereby removing those nodes from the selection path,
           but remembering them for possible future auto-selections.
+          It will stop its descent and stop replacing attributes if
+          it encounters a node which is an UnknownDataNode.
           */
         {
           Processor: { // Process this MetaNode.
@@ -158,10 +156,13 @@ public class PathAttributeMetaTool
             if  // inMetaNode has no child with "IS" attribute value.
               ( childMetaNode == null)
               break Processor;  // Exit Processor.
+            if // Associated DataNode is an UnknownDataNode.
+	            ( UnknownDataNode.isOneB( childMetaNode.getDataNode() ) )
+              break Processor;  // Exit Processor.
             replaceIsWithWasInDescendents(   // Recurse in descendants.
               childMetaNode
               );
-            childMetaNode.put( keyString, "WAS" );  // Replace IS with WAS.
+            childMetaNode.put( keyString, "WAS" );  // Replace the IS with WAS.
             // Done in above order for faster dirty-flag up-propagation.
             } // Process this MetaNode.
           }

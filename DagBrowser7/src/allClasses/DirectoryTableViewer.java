@@ -152,7 +152,7 @@ public class DirectoryTableViewer
           IFile subjectIFile=  // Cache Subject directory.
             (IFile)aTreeHelper.getWholeDataNode();
           String[] IFileNameStrings =  // Calculate array of child file names.
-            subjectIFile.GetFile().list();
+            subjectIFile.getFile().list();
           if ( IFileNameStrings == null )  // If array is null replace with empty array.
             IFileNameStrings= new String[ 0 ]; // Replace with empty array.
           if // Process the selection if...

@@ -39,21 +39,27 @@ public class NamedInteger // A DataNode for tracking integer attributes.
 	  	  return theL; // Returning new value.
         }
 
-	  public Object setValueL( long theL )
+	  public Object setValueL( final long newL )
 	    /* This method sets a new value and returns the old one.
 	      It also begins the process of firing associated change listeners.
 	      */
 	    {
 	  	  long oldL= this.theL; // Saving present value as old one. 
-	  	  this.theL= theL; // Setting new value.
-	  	  theDataTreeModel.reportingChangeV( this ); // Fire associated listeners.
-	  	  return oldL; // Returning old value.
-		  	}
+	  	  final DataNode thisDataNode= this; // Converting this pointer.
 
-	  public void run( )
-	    /* This method runs on the AWT thread.
-	      */
-	    {
+	  	  runOrInvokeAndWaitV( // Do following on AWT thread. 
+	    		new Runnable() {
+	    			@Override  
+	          public void run() {
+	    				theL= newL; // Setting new value.
+	    	  	  theDataTreeModel.reportingChangeV(  // Fire associated listeners. 
+	    	  	  		thisDataNode 
+	    	  	  		);
+	            }
+	          } 
+	        );
+
+				return oldL; // Returning old value.
 		  	}
 
     }

@@ -13,9 +13,9 @@ abstract class AttributeMetaTool
     Values for attributes handled by this class are as follows:
 
     * "" (blank): default value, and all descendants have the same value.
-    * "$NESTED$": default value, and at least some descendants do not
-      have the same value.
-    * (anything else): some other value.
+    * "$NESTED$": default value (same meaning as above) but some descendants 
+      do not have the default value.
+    * (anything else): all other values, with various meanings.
 
     */
 
@@ -24,15 +24,15 @@ abstract class AttributeMetaTool
     // Constants.
 
       private final String PlaceHolderValueString= "$NESTED$";
-        /* This attribute Map value is used to indicate that
-          the MetaNode has a null value for this attribute 
-          but at least one of its descendants MetaNodes does not.
+        /* This attribute Map special value is used to indicate that
+          the MetaNode has a null/default value for this attribute 
+          but at least one of its descendants MetaNodes do not.
           Any other otherwise-unused value could be used here.  
           */
 
     // Instance variables.
 
-      String keyString;  // Key String naming attribute of interest.
+      String keyString;  // String giving name of Key of attribute of interest.
 
     // Constructors.
 
@@ -49,31 +49,59 @@ abstract class AttributeMetaTool
 
     // Instance methods.
 
+      protected Object get( )
+      /* This is like a normal get(..) from the keyString entry of a Map.  
+        It returns the value associated with the Key and TreePath
+        associated with this tool.
+        This method will not return PlaceHolderValueString
+        but will return "" instead.
+        If you want the actual value, including PlaceHolderValueString,
+        use getRaw() instead.
+        */
+      { 
+        Object valueObject= getRaw(); // Getting raw attribute value.
+        if (valueObject == PlaceHolderValueString)
+        	valueObject= "";  // Replace with default value.
+        return valueObject; // Returning the attribute value.
+      	}
+
+      protected Object getRaw( )
+      /* This is like a normal get(..), from the keyString entry
+        of a Map.  It returns the value associated with the key
+        associated with this tool.
+        This method will return PlaceHolderValueString
+        if that is the value of the attribute.
+        */
+      { 
+        MetaNode theMetaNode= getMetaNode();  // Getting the MetaNode.
+        Object valueObject=  // Getting present attribute value.
+           theMetaNode.get( keyString );
+        return valueObject; // Returning the attribute value.
+      	}
+
       protected Object put( Object inValueObject )
-        /* This is like a normal put(..), to the keyString entry
+        /* This is like a normal put(..) to the keyString entry
           of a Map, but with some additional functionality:
           * If an attribute entry is added then
-            it adds place-holder attributes with the same keyString
-            between the current MetaNode and the root if needed.
+            it adds PlaceHolderValueString as the value of the attributes with 
+            the same keyString between the current MetaNode and the root 
+            if needed.
           * It removes an attribute entry if 
             the new value inValueObject is null.
             It also removes place-holder attributes with 
             the same keyString between the current MetaNode and 
             the root if possible.
           The place-holder attributes are maintained 
-          to facilitate deletion of nodes that hold no useful data
-          and to be able to quickly find all instances 
-          of attributes with the same keyString.
-
-          // ??? attribute searchers should be re-factored for 
-            keys and values.
-          // ??? Might mean creating special Piterators.
+          to be able to quickly find all instances 
+          of attributes with the same keyString starting from the root,
+          and to facilitate deletion of MetaNodes that 
+          no longer hold useful data.
           */
         { 
           MetaNode theMetaNode= getMetaNode();  // Cache the MetaNode.
           Object oldObject=  // Get present attribute value.
              theMetaNode.get( keyString );
-          { // Taking appropriate action.
+          { // Updating the attribute in the appropriate way.
             if   // Doing nothing if attribute value is not changing.
               ( oldObject == inValueObject )
               ; // Doing nothing.
@@ -83,14 +111,14 @@ abstract class AttributeMetaTool
                 theMetaNode.put(  // Adding new value.
                   keyString, inValueObject 
                   );
-                propagateAdditionV( );  // Adding place-holders.
+                propagateAdditionV( );  // Adding place-holders if needed.
                 } // Adding the attribute.
-            else if   // Removing present attribute needed.
+            else if // Removal of present attribute needed.
               ( inValueObject == null )
-              removeOrReplaceV( );  // Remove or store place-holder.
-            else // Replace present non-null attribute value with new value.
-              theMetaNode.put( keyString, inValueObject );  // Replace value.
-            } // Taking appropriate action.
+              removeOrReplaceV( );  // Removing or replacing with place-holder.
+            else // Replacing present non-null value with the new value.
+              theMetaNode.put( keyString, inValueObject );  // Replacing value.
+            } // Updating the attribute in the appropriate way.
           return oldObject;  // Return old attribute value as result.
           }
     
@@ -169,7 +197,7 @@ abstract class AttributeMetaTool
               // Attribute is not there.  We must add place-holder.
               scanMetaNode.put(  // Put an attribute in this MetaNode...
                 keyString,  // ...for the same keyString...
-                PlaceHolderValueString  // ...with place-holder ValueString.
+                PlaceHolderValueString  // ...with place-holder valueString.
                 );
               } // Add or verify attribute in one MetaNode.
           }

@@ -1,7 +1,6 @@
 package allClasses;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
@@ -10,8 +9,6 @@ import java.net.SocketException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-import javax.swing.SwingUtilities;
 
 import static allClasses.Globals.*;  // appLogger;
 
@@ -181,6 +178,11 @@ public class ConnectionManager
             }
         appLogger.info("Connections.run(): thread ending.");  // Connections.
         } // Connections.
+
+    public String getValueString( )
+      {
+    	  return Integer.toString(getChildCount( ));
+        }
 
 
     private void settingThreadsAndDoingWorkV()
@@ -412,23 +414,7 @@ public class ConnectionManager
           final Peer thePeer= // Getting next Peer from queue.
         		peerQueue.poll();
           if (thePeer == null) break;  // Exiting if no more Peers.
-          	try {
-		          ///SwingUtilities.invokeLater( // Queuing removal of Peer from List.
-          		SwingUtilities.invokeAndWait( // Queuing removal of Peer from List.
-		        		new Runnable() {
-		              @Override  
-		              public void run() { 
-		                remove( thePeer );  // Remove from DataNode List.
-		                }  
-		              } 
-		            );
-          		}
-            catch (InterruptedException e) { // Handling wait interrupt by 
-              Thread.currentThread().interrupt(); // setting interrupt flag.
-              } // Is a termination request so no need to continue waiting.
-          	catch  // Handling invocation exception by
-          	  (InvocationTargetException e) 
-          	  { throw new RuntimeException(e); } // wrapping and re-throwing.
+          remove( thePeer );  // Remove from DataNode List.
           elementProcessedB= true;
           }
           
@@ -534,14 +520,7 @@ public class ConnectionManager
               peerInetSocketAddress,  // ...the SocketAddress as the key and...
               newPeerValue  // ...the PeerValue as the value.
               );
-            SwingUtilities.invokeLater( // Queuing add of Peer to List.
-          		new Runnable() {
-                @Override  
-                public void run() { 
-                  add( newPeerValue.getPeer() );  // Add to DataNode List.
-                  }  
-                } 
-              );
+            add( newPeerValue.getPeer() );  // Add to DataNode List.
             newPeerValue.getEpiThread().start(); // Start peer's thread.
             resultPeerValue= newPeerValue;  // Using new peer as result.
             }

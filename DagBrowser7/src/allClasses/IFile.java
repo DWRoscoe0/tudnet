@@ -1,8 +1,11 @@
 package allClasses;
 
 import java.awt.Color;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.Files;  // File utility package.
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
@@ -41,7 +44,7 @@ public class IFile
 
     // theFile pass-through methods.
       
-      public File GetFile( )
+      public File getFile( )
         /* This method returns the theFile associated with this DataNode.  */
         {
           return theFile;
@@ -216,6 +219,35 @@ public class IFile
 
           return stringResult;  // Return the final result.
           }
+
+      public String getContentString()
+        /* This method produces the value which is used by
+          TitledTextViewer to display the contents of a file.
+          */
+        {
+      	  String valueString= "";
+          { // Read in file to JTextArea.
+            String LineString;  // temporary storage for file lines.
+            try {
+              FileInputStream TheFileInputStream = 
+              		new FileInputStream(getFile());
+              @SuppressWarnings("resource")
+              BufferedReader TheBufferedReader = 
+                new BufferedReader(new InputStreamReader(TheFileInputStream));
+              
+              while ((LineString = TheBufferedReader.readLine()) != null) {
+                  valueString= valueString.concat(LineString + "\n");
+                  }
+              }
+            catch (Exception ReaderException){
+              // System.out.println("error reading file! " + ReaderException);
+            	valueString= valueString.concat(
+            			"\nError reading file!\n\n" + ReaderException + "\n"
+            			);
+              }
+            } // Read in file to JTextArea.
+          return valueString;
+          }
       
       public JComponent GetDataJComponent( 
           TreePath inTreePath, 
@@ -240,9 +272,12 @@ public class IFile
                   inTreePath, theMetaRoot, inDataTreeModel 
                   );
             else if ( inIFile.theFile.isFile() )  // file is a regular file.
-              resultJComponent= JComponentForJTextAreaFrom(
-                inTreePath, inDataTreeModel 
-                );
+              resultJComponent=  // calculate a blank JPanel DagNodeViewer.
+	              new TitledTextViewer( 
+	                inTreePath, 
+	                inDataTreeModel, 
+	                getContentString() 
+	                );
             else  // file is neither.
               { // Handle unreadable folder or device.
                 resultJComponent=  // calculate a blank JPanel DagNodeViewer.
@@ -259,11 +294,13 @@ public class IFile
           return resultJComponent;  // return the final result.
           } // GetDataJComponent.
 
-      private JComponent JComponentForJTextAreaFrom
+      /* ???
+      private JComponent XJComponentForJTextAreaFrom
         ( TreePath inTreePath, DataTreeModel inDataTreeModel )
         /* This grouping returns a DagNodeViewer of a JTextArea 
           for displaying the IFile named by inTreePath.
           */
+      /* ???
         { // JComponentForJTextAreaFrom(inIFile)
 
           IFile inIFile= (IFile)inTreePath.getLastPathComponent();
@@ -271,6 +308,7 @@ public class IFile
           return new TitledTextViewer( inTreePath, inDataTreeModel, inIFile );
           
           }  // JComponentForJTextAreaFrom(inIFile)
+        ??? */
           
     // other methods.
 

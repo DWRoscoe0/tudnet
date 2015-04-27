@@ -26,35 +26,63 @@ public abstract class TreeModelSupport
       new Vector<TreeModelListener>();   // Listener storage.
 
     public void addTreeModelListener( TreeModelListener theTreeModelListener )
-      /* The number of listeners shouldn't go above 4.
-       * If it goes any higher then a debug message is logged.
-       */
       {
         if ( 
         		  theTreeModelListener != null && 
         		  !vectorOfTreeModelListener.contains( theTreeModelListener ) 
         		  )
-          vectorOfTreeModelListener.addElement( theTreeModelListener );
-
-        if ( vectorOfTreeModelListener.size() > 4)
-	    		appLogger.debug(
-	      			"TreeModelSupport.addTreeModelListener(..),\n  vector now has "+
-	      		    vectorOfTreeModelListener.size()+
-	      		    " listeners."
-	            );
+	        { 
+	        	vectorOfTreeModelListener.addElement( theTreeModelListener );
+		        if ( vectorOfTreeModelListener.size() > 10)
+		    		appLogger.debug(
+		      			"TreeModelSupport.addTreeModelListener(..), listeners: "+
+	      		    vectorOfTreeModelListener.size()+ "\n  "+
+	      		    theTreeModelListener.getClass().getName() + "@" +
+	      		    Integer.toHexString(
+	      		    		System.identityHashCode(theTreeModelListener)
+	      		    		)
+		            );
+  	        }
+        	else
+	    		appLogger.error(
+      			"TreeModelSupport.addTreeModelListener(..) rejecting duplicate listener "+
+      		    "\n  "+theTreeModelListener
+            );
         }
 
     public void removeTreeModelListener(TreeModelListener theTreeModelListener) 
       {
         if ( theTreeModelListener != null )
-          vectorOfTreeModelListener.removeElement( theTreeModelListener );
-
-        //appLogger.debug(
-        //		"TreeModelSupport.removeTreeModelListener(..),\n  vector now has "+
-        //	    vectorOfTreeModelListener.size()+
-        //	    " listeners."
-        //    );
+	        {
+	          if (vectorOfTreeModelListener.removeElement( theTreeModelListener ))
+		  	      //appLogger.debug(
+	          	//		"TreeModelSupport.removeTreeModelListener(..), listeners: "+
+	          	//    vectorOfTreeModelListener.size()+ "\n  "+
+	          	//    theTreeModelListener.getClass().getName() + "@" +
+	          	//    Integer.toHexString(
+	          	//    		System.identityHashCode(theTreeModelListener)
+	          	//    		)
+	          	//    )
+	          	;
+  	          else
+		  	      appLogger.debug(
+		  	      		"TreeModelSupport.removeTreeModelListener(..), not registered:\n   "+
+		      		    theTreeModelListener.getClass().getName() + "@" +
+		      		    Integer.toHexString(
+		      		    		System.identityHashCode(theTreeModelListener)
+		      		    		)
+			            );
+	          }
         }
+
+    public void logListenersV()
+      // Logs the number of registered listeners.
+    	{
+	      appLogger.info(
+	      		"TreeModelSupport.logListenersV(), listeners: "+
+	  		    vectorOfTreeModelListener.size()
+	  		    );
+    	}
 
     public void fireTreeNodesChanged( TreeModelEvent theTreeModelEvent ) 
       {
@@ -87,6 +115,9 @@ public abstract class TreeModelSupport
           {
             TreeModelListener theTreeModelListener = 
             	(TreeModelListener)listeners.nextElement();
+  	    		appLogger.debug(
+  	      			"TreeModelSupport.fireTreeNodesInserted(..) to:\n"+theTreeModelListener
+  	            );
             theTreeModelListener.treeNodesInserted( theTreeModelEvent );
             }
         }

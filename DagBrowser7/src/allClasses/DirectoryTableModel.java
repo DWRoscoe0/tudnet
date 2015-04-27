@@ -86,7 +86,7 @@ public class DirectoryTableModel
         { 
           IFile rowIFile= // Get the IFile associated with row rowI.
             ((IFile)theTreeModel.getChild( DirectoryIFile, rowI ));
-          File rowFile= rowIFile.GetFile(); // Get the File also.
+          File rowFile= rowIFile.getFile(); // Get the File also.
           Object resultObject;  // Place for result.
           switch   // Return the appropriate value.
             ( columnI )  // based on the desired column whose number is columnI.

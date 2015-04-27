@@ -18,24 +18,24 @@ public class IJTree
    
   {       
     private static final long serialVersionUID = 1L;
-    private DefaultTreeCellRenderer TheDefaultTreeCellRenderer;
-    private Color DefaultBackgroundSelectionColor;
+    private DefaultTreeCellRenderer theDefaultTreeCellRenderer;
+    private Color defaultBackgroundSelectionColor;
 
-    public IJTree( DataTreeModel InDataTreeModel )
+    public IJTree( DataTreeModel inDataTreeModel )
       // Constructor.
       { 
-        super(InDataTreeModel); 
+        super(inDataTreeModel); 
 
         { // customize the tree cell rendering.
-          TheDefaultTreeCellRenderer=
+          theDefaultTreeCellRenderer=
             new DefaultTreeCellRenderer() 
               {
                 private static final long serialVersionUID = 1L;
                 };
-          DefaultBackgroundSelectionColor=   // save present color.
-        		  TheDefaultTreeCellRenderer.getBackgroundSelectionColor();
-          // TheDefaultTreeCellRenderer.setBackgroundSelectionColor(Color.RED);
-          setCellRenderer(TheDefaultTreeCellRenderer);
+          defaultBackgroundSelectionColor=   // save present color.
+        		  theDefaultTreeCellRenderer.getBackgroundSelectionColor();
+          // theDefaultTreeCellRenderer.setBackgroundSelectionColor(Color.RED);
+          setCellRenderer(theDefaultTreeCellRenderer);
           } // customize the tree cell rendering.
 
         this.addFocusListener(this);  // make this be FocusListener.
@@ -45,14 +45,14 @@ public class IJTree
 
       public void focusGained(FocusEvent TheFocusEvent)
         { 
-          TheDefaultTreeCellRenderer.setBackgroundSelectionColor(Color.GREEN);
+          theDefaultTreeCellRenderer.setBackgroundSelectionColor(Color.GREEN);
           repaint();
           }
 
       public void focusLost(FocusEvent TheFocusEvent)
         { 
-          TheDefaultTreeCellRenderer.setBackgroundSelectionColor(
-            DefaultBackgroundSelectionColor
+          theDefaultTreeCellRenderer.setBackgroundSelectionColor(
+            defaultBackgroundSelectionColor
             );
           repaint();
           }
@@ -67,7 +67,8 @@ public class IJTree
         only the final name in the associated path instead of the entire path. 
         */
       {
-        return ((DataNode)value).getNameString();
+        //return ((DataNode)value).getNameString() + "-???";
+    		return ((DataNode)value).getLineSummaryString();
         }
         
         

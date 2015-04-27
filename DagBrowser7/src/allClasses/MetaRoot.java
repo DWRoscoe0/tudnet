@@ -125,7 +125,7 @@ public class MetaRoot {
           ); 
         }
 
-    private PathAttributeMetaTool makePathAttributeMetaTool( 
+    public PathAttributeMetaTool makePathAttributeMetaTool( 
         TreePath InTreePath, String InKeyString 
         )
       {
@@ -134,12 +134,16 @@ public class MetaRoot {
           );
         }
 
-  // Code from Selection class.
+  // Code from old Selection class.
 
-    /* This code came from static Selection class.
-      It helps to manage DataNode selections.  
+    /* This code came from old static Selection class.  ???
+      ??? It should probably not be here and should instead maybe
+      be in a new class called SelectionAttributeMetaTool.
+
+      These methods help to manage DataNode selections and 
+      the MetaNodes that represent them.
+
       Selections are identified with TreePath-s of DataNodes.
-
       Past selections are stored as DataNode meta-data in the MetaNode DAG,
       which is a structure which parallels a subset of the DataNode DAG.
       This meta-data is useful for reselecting 
@@ -167,7 +171,7 @@ public class MetaRoot {
 
     // Getter methods.  These read from the MetaNode DAG.
 
-      public TreePath buildAttributeTreePath( String KeyString )
+      public TreePath buildAttributeTreePath( String keyString )
         /* This method returns path information from the MetaNode DAG.
           It returns a TreePath comprised of all the DataNodes
           from the MetaNode's which contain attributes 
@@ -179,6 +183,9 @@ public class MetaRoot {
           otherwise it will return Dataroot.getParentOfRootTreePath(),
           which is a sentinel value which can not for
           anything but a termination marker.
+          
+          ??? This probably doesn't belong with the Selection methods
+          because it takes a keyString for any type of path.
           */
         {
           TreePath scanTreePath=  // Point scanTreePath accumulator...
@@ -187,7 +194,7 @@ public class MetaRoot {
             getParentOfRootMetaNode( );
           scanner: while (true) { // Scan all nodes with "IS".
             MetaNode childMetaNode= // Test for a child with "IS" value.
-              scanMetaNode.getChildWithAttributeMetaNode( KeyString, "IS" );
+              scanMetaNode.getChildWithAttributeMetaNode( keyString, "IS" );
             if  // scanMetaNode has no child with "IS" attribute value.
               ( childMetaNode == null)
               break scanner;  // Exit Processor.
@@ -203,8 +210,7 @@ public class MetaRoot {
           return scanTreePath;  // Return accumulated TreePath.
           }
 
-      public MetaNode getLastSelectedChildMetaNode
-        ( MetaNode inMetaNode )
+      public MetaNode getLastSelectedChildMetaNode( MetaNode inMetaNode )
         /* This method returns the child MetaNode that was selected last
           of the parent node inMetaNode. 
           If no child MetaNode has the attribute then null is returned.
@@ -220,8 +226,7 @@ public class MetaRoot {
           return childMetaNode; // Return last child MetaNode result, if any.
           }
 
-      public DataNode getLastSelectedChildDataNode
-        ( MetaNode inMetaNode )
+      public DataNode getLastSelectedChildDataNode( MetaNode inMetaNode )
         /* This method gets the user object DataNode from
           the child MetaNode in inMetaNode 
           which was selected last, or null if there isn't one.
@@ -324,4 +329,5 @@ public class MetaRoot {
           workerPathAttributeMetaTool.setPath( );  // Set path attributes.
           return workerPathAttributeMetaTool.getMetaNode();
           }
+  
   }

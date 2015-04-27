@@ -54,11 +54,11 @@ public class DagBrowserPanel
     It then appropriately adjusts the states of the other objects
     in a coordinated manner.
 
-    ??? marks things to do in the code below.  
+    ?? marks things to do in the code below.  
     Here are those things summarized:
-    * ??? Re-factor so each method fits on a screen.
-    * ??? Integrate commandHelpV() general PromptingHelp button scanner.
-    * ??? Put code in JComponent building blocks sub-classes, such as:
+    * ?? Re-factor so each method fits on a screen.
+    * ?? Integrate commandHelpV() general PromptingHelp button scanner.
+    * ?? Put code in JComponent building blocks sub-classes, such as:
       / Existing classes to display a Tree as
         a List, Directory, Text, as well as new classes such as
       * An enclosing JPanel, for DagBrowserPanel at least.
@@ -170,7 +170,7 @@ public class DagBrowserPanel
           startTreePath= // Initialize startTreePath for browsing with...
             theMetaRoot.buildAttributeTreePath( );  // ...selection state.
 
-          setOpaque( true ); // ???
+          setOpaque( true ); // ??
           setLayout(new BorderLayout());  // use BorderLayout manager.
           { // Build and add sub-panels of this Panel.
             buildAndAddHTopJPanelV();  // Contains control components.
@@ -265,7 +265,7 @@ public class DagBrowserPanel
               directoryJLabel.setBorder(
                 BorderFactory.createEtchedBorder(EtchedBorder.RAISED)
                 );
-              // ??? Use left or center elipsis, not right, when truncating.
+              // ?? Use left or center elipsis, not right, when truncating.
               viewJPanel.add(directoryJLabel,BorderLayout.NORTH);  // add as north sub-panel.
               } // Build and add Current Working directoryJLabel.
             buildAndAddJSplitPane();  // Contains left and right sub-panels.
@@ -273,7 +273,7 @@ public class DagBrowserPanel
             { // Build and add infoJLabel for displaying file information.
               infoJLabel= new JLabel();  // construct it.
               infoJLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-              infoJLabel.setOpaque( true ); // ???
+              infoJLabel.setOpaque( true ); // ??
               infoJLabel.setText("UNDEFINED");  // report the present info string.
               viewJPanel.add(infoJLabel,BorderLayout.SOUTH);  // add as south sub-panel.
               } // Build and add infoJLabel for displaying file information.
@@ -404,7 +404,7 @@ public class DagBrowserPanel
           /* This method processes ActionsEvent-s from 
             the Button-s and the activityTimer.
 
-            ??? The button panel could be made its own class
+            ?? The button panel could be made its own class
             which uses aTreeHelper for the commands.
 
             */
@@ -517,7 +517,7 @@ public class DagBrowserPanel
               if ( activityJLabel.isOpaque() )  //Beep maybe.
                 {
                   //java.awt.Toolkit.getDefaultToolkit().beep();
-                  //increment HearBeat. ???
+                  //increment HearBeat. ??
                   }
               activityJLabel.  // Reverse activity JLabel opacity.
                 setOpaque(!activityJLabel.isOpaque());
@@ -587,10 +587,11 @@ public class DagBrowserPanel
                     theTreePathEvent.  // ...the TreePathEvent's...
                       getTreePath();  // ...one and only TreePath.
 
-                  if ( ! theDataRoot.isLegalB(inTreePath) )  // Handling illegal path.
+                  if  // Handling illegal path.
+                    ( ! theDataRoot.isLegalB(inTreePath) )
                     { legalB= false; break goReturn; } // Exiting, not legal.
                   
-                  Component sourceComponent=  // Getting event's source Component.
+                  Component sourceComponent=  // Getting event's source.
                     (Component)theTreePathEvent.getSource();
                   
                   if  // Handling source that is not right sub-panel,
@@ -616,7 +617,7 @@ public class DagBrowserPanel
                 in the left and right sub-panels.
                 It coordinates selections in the left and right sub-panels.  
                 The left panel is a navigation pane containing a RootJTree.
-                The right panel is a JComponent apprpriate for
+                The right panel is a JComponent appropriate for
                 displaying whatever node is highlighted in the left sub-panel.
                 It maintains the correct relationship between 
                 what is displayed and selected in the 2 main sub-panels.
@@ -637,14 +638,15 @@ public class DagBrowserPanel
                 To prevent infinite recursion, re-entry must be detected
                 and aborted somewhere.  There are several options:
                 * Detect it in TreeHelper and abort it there.
-                  This is also being done in 
                   TreeHelper.setPartTreePathB(inTreePath,doB),
                   by aborting processing if the TreePath would not change.
+                  This is being done in 
                 * Detect it here in DagBrowserPanel and abort it.  
+                  This was the original solution.  
                   This is presently being done.  
-                  This was the original solution.  Maybe eliminate this ???
+                  Maybe eliminate this ??
 
-                ??? Have a separate Listener class for each sub-panel.  
+                ?? Have a separate Listener class for each sub-panel.  
                 This would eliminate decoding code, but
                 might complicate re-entry detection.
                 */
@@ -657,11 +659,11 @@ public class DagBrowserPanel
                 if ( selectedTreePath != null )  // process only if not null.
                   { // Process non-null path.
                     { // process based on Source Component.
-                      if (  // Source is right sub-pannel,...
+                      if (  // Source is right sub-panel,...
                           ancestorOfB( dataJComponent, sourceComponent)
                           )
                         processSelectionFromRightSubpanel(selectedTreePath);
-                      else if  // Source is left sub-pannel,...
+                      else if  // Source is left sub-panel,...
                         ( ancestorOfB( theRootJTree, sourceComponent) )
                         processSelectionFromLeftSubpanel( selectedTreePath );
                       } // process based on Source Component.
@@ -691,7 +693,7 @@ public class DagBrowserPanel
           /* This always replaces the content of the right sub-panel
             based on inTreePath.
 
-            ??? Change to possibly reuse the present JComponent
+            ?? Change to possibly reuse the present JComponent
             if the right sub-panel JComponent says that it can handle it.
             */
           { // processSelectionFromLeftSubpanel(.)
@@ -721,6 +723,7 @@ public class DagBrowserPanel
               ; // Nothing needs to be done.
               else // New and old selections do NOT have same parent.
               { // Replace right panel and update things.
+  	            oldPanelTreePath= inTreePath;  // Save path for compares later.
                 TreePath panelTreePath= inTreePath;
                 panelTreePath= panelTreePath.getParentPath();
                 replaceRightPanelContent(   // Replace right panel.
@@ -738,47 +741,42 @@ public class DagBrowserPanel
         private void replaceRightPanelContent( TreePath inTreePath )
           /* This method calculates a new JComponent and its equivalent 
             TreeAware which are appropriate for displaying
-            the last DataNode element of inTreePath and sets to be
-            the content of the right sub-panel JScrollPane for display.
+            the last DataNode element of inTreePath.  
+            Then it replace in the right sub-panel JScrollPane 
+            the old JComponent and TreeAware alias with the new ones.
 
-            It also does registration and unregistration 
-            of the JComponent as a TreeModelListener 
+            During this process it also does 
+            registration and unregistration of objects as TreeModelListeners 
             to prevent TreeModelListener leakage.
             */
           { // replaceRightPanelContent(.)
-        	  TreeAware oldTreeAware= dataTreeAware;  // Save old content.
-      	    { // Initialize new scroller content.
-              dataJComponent=   // Calculate new JComponent...
-                theDataTreeModel.  // ...by having the TreeModel...
-                getDataJComponent(  // ...generate a JComponent...
-                  inTreePath  // appropriate to new selection.
-                  );
-              dataTreeAware= // Calculate TreeAware alias.
-                (TreeAware)dataJComponent;
-              dataTreeAware.getTreeHelper(). // To the panel's TreeHelper's
-                addTreePathListener(  // TreeSelectionListener list add
-                  theTreePathListener // this panel's TreePathListener.
-                  );
-              dataTreeAware.getTreeHelper().addFocusListener(this);
-            	dataTreeAware.getTreeHelper(). // In the panel's TreeHelper
-                setDataTreeModel(theDataTreeModel); // set the DataTreeModel.
-                  // This makes the TreeHelper be a TreeModelListener.
-              } // Initialize new scroller content.
-      	    { // Changing scroller content. 
+        	  TreeAware oldTreeAware=  // Saving  (alias of) present JComponent. 
+        	  		dataTreeAware;
+
+            dataJComponent=   // Calculating new JComponent...
+              theDataTreeModel.  // ...by having the TreeModel build it.
+              getDataJComponent( inTreePath );
+            dataTreeAware= // Calculating its new TreeAware alias.
+              (TreeAware)dataJComponent;
+
+            dataTreeAware. // Initializing the new JComponent calling
+              getTreeHelper().initializeHelperV( // its helper's initializer.
+            		theTreePathListener, // this panel's TreePathListener.
+            		this, // as a FocusListener.
+            		theDataTreeModel
+                );
+
+      	    { // Replacing scroller content with new JComponent. ?? factor? 
 	            dataJScrollPane.setViewportView(  // in the dataJScrollPane's viewport...
 	              dataJComponent);  // ...set the DataJPanel for viewing.
 	            dataJScrollPane.getViewport().setOpaque( true );
 	            dataJScrollPane.getViewport().setBackground( Color.GRAY );
 	            dataJComponent.repaint();  // make certain it's displayed.
-	            oldPanelTreePath= inTreePath;  // Save path for compares later.
-      	      }  // Change scroller content.
-            if // Finalizing old scroller content...
-              ( oldTreeAware != null ) // ...if it exists.
-  	        	{ // Finalizing old scroller content.
-                { // Unsetting the DataTreeModel in the TreeHelper.
-                  oldTreeAware.getTreeHelper().setDataTreeModel( null );
-                  } // This is to prevent TreeModelListener leakage.
-	          		} // Finalize old scroller content.
+      	      }
+
+            if // Finalizing old scroller content
+              ( oldTreeAware != null ) // if it exists, through 
+            	oldTreeAware.getTreeHelper().finalizeHelperV(); // its TreeHelper.
             } // replaceRightPanelContent(.)
 
       // methods of the FocusListener, the FocusStateMachine, and others.
@@ -924,7 +922,7 @@ public class DagBrowserPanel
               * the left tree navigation panel has focus, or 
               * the right content panel has focus.
               
-            ??? Replace complicated stepper by simple switch
+            ?? Replace complicated stepper by simple switch
             if Java bug that prevented setting focus is fixed.
             */
           { // restoreFocusV()
@@ -971,7 +969,7 @@ public class DagBrowserPanel
             It returns true if more steps of the state machine are needed, 
             false otherwise.
 
-            ??? Simplify the focus step code with a tree scanning loop.
+            ?? Simplify the focus step code with a tree scanning loop.
             This could be rewritten to simplify and shorten  by replacing
             all the Component-specific code by code which 
             scans Components upward in the hierarchy from the 
@@ -998,7 +996,7 @@ public class DagBrowserPanel
               
               /* The following complex code might be replaced by
                 a Component hierarchy scanning loop,
-                or scanning using Component.transferFocus() ???  */
+                or scanning using Component.transferFocus() ??  */
 
               nextFocusComponent=  // assume focusing starts at...
                 viewJPanel;   // ... the root Component.
@@ -1072,7 +1070,7 @@ public class DagBrowserPanel
             return resultTreeAware;
             }
 
-    // Key and Action bindings (KeyboardFocusManager ).  Experimental/Unused???
+    // Key and Action bindings (KeyboardFocusManager ).  Experimental/Unused??
     
       /* Although the way Java handles Keyboard Focus has been improved,
         I still find it difficult to use.
@@ -1145,7 +1143,7 @@ public class DagBrowserPanel
           This method is called whenever something changes
           that might effect these fields.
           
-          Maybe simplify this by using getFocusedTreeAware()???
+          Maybe simplify this by using getFocusedTreeAware()??
           */
         {
           TreePath theTreePath= null;  // TreePath to be displayed.

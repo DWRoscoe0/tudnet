@@ -11,6 +11,7 @@ import java.io.RandomAccessFile;
 //import javax.swing.tree.TreeModel;
 //import javax.swing.tree.TreePath;
 
+
 import static allClasses.Globals.*;  // appLogger;
 
 public class Outline
@@ -242,17 +243,28 @@ public class Outline
           return super.getIndexOfChild( childObject ) ;
           }
 
+      /* ???
+      public String getValueString( ) 
+        { 
+      	  return prepareAndGetAid().getSectionString( );
+      	  }
+      ??? */
+
     // Other methods.
 
       public String getNameString( )
         /* Returns String representing name of this Object.  */
         {
-          // return "INFOGORA NAME-SPACE";
-          //return readLine( );
-
           Aid theAid= prepareAndGetAid( );
           return theAid.lineString;  // Return data from line read.
           }
+
+      public String getContentString( )
+	      /* Returns String representing name of this Object.  */
+	      {
+	        Aid theAid= prepareAndGetAid( );
+	        return theAid.getSectionString( );
+	        }
 
       private Aid prepareAndGetAid( )
         /* Prepares the Outline file for reading by:
