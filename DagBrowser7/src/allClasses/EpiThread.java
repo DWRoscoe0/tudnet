@@ -25,6 +25,14 @@ public class EpiThread
         super( aRunnable, nameString );
         }
 
+    public void startV()
+      /* This method writes to the log and calls start().  */
+      {
+      	appLogger.info("EpiThread(" + getName() + ").startV(): starting.");
+
+        start();
+        }
+
     public void stopAndJoinV()  // Another thread uses to stop "this" thread.
       /* This method uses stopV() to request termination of "this" thread,
         and then joinV() to wait for that termination to complete.
@@ -43,7 +51,7 @@ public class EpiThread
         the only thing it does is call interrupt().
         */
       {
-        appLogger.info("EpiThread(" + getName() + ").stopV().");
+        appLogger.info("EpiThread(" + getName() + ").stopV(): stopping.");
 
         interrupt(); // Requesting termination of EpiThread thread.
         }
@@ -74,7 +82,7 @@ public class EpiThread
               Thread.currentThread().interrupt(); // Record interrupt status.
               }
 
-        appLogger.info("EpiThread(" + getName() + ").joinV() done.");
+        appLogger.info("EpiThread(" + getName() + ").joinV(): stopped.");
         }
 
     }

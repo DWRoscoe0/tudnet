@@ -3,7 +3,7 @@ package allClasses;
 //import java.util.logging.Logger;
 
 public class Globals 
-  /* This class is used for convient access to
+  /* This class is used for convenient access to
     things the app needs to access from many different source files. 
 
     It is used as the argument for "import static" to reduce

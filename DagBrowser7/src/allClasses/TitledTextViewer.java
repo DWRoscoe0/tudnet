@@ -70,6 +70,7 @@ public class TitledTextViewer
           CommonInitialization( theTreePath, theDataTreeModel );
           } // TitledTextViewer(.)
 
+      /* ???
       public TitledTextViewer(  // Constructor for viewing a File text. 
           TreePath theTreePath, TreeModel theTreeModel, IFile theIFile , int I
           )
@@ -80,12 +81,14 @@ public class TitledTextViewer
           The contents is theIFile.
           theTreeModel provides context.
           */
+      /* ???
         { // TitledTextViewer(.)
           theIJTextArea= new IJTextArea(    // Construct JTextArea.
             theIFile.getFile()   // File to view.
             );
           CommonInitialization( theTreePath, theTreeModel );
           } // TitledTextViewer(.)
+      ??? */
 
       private void CommonInitialization( 
       		TreePath theTreePath, 
@@ -129,18 +132,21 @@ public class TitledTextViewer
 
     // rendering methods.  to be added ??
 
-    // TreeModelListener interface methods.
+    /* TreeModelListener interface methods.
+      The only method which is handled is treeNodesChanged(..),
+      which is used to indicate that the JTextArea needs to be updated,
+      and only if the tree changes is associated with the displayed DataNode.
+     	*/
 
 	    public void treeNodesInserted(TreeModelEvent theTreeModelEvent)
-	      { } // Ignored.
+      	{ } // Ignoring.
 
 	    public void treeNodesRemoved(TreeModelEvent theTreeModelEvent)
-      	{ } // Ignored.  Relevant TreeModelEvents might be handled elsewhere.
+      	{ } // Ignoring.
 
 	    public void treeNodesChanged(TreeModelEvent theTreeModelEvent) 
 	      /* Translates theTreeModelEvent reporting a DataNode change into 
-		      an equivalent ListDataEvent and notifies the ListDataListeners.
-		      ??? This works for only the non-File text.
+		      replacing the JTextArea text.
 		      */
 	      {
 	    		//appLogger.debug("TitledTextViewer.treeNodesChanged(..)");
@@ -150,14 +156,13 @@ public class TitledTextViewer
 	    	      			)
 	    	      	)
 	    	  	; // Ignoring.
-	    	  else // Updating TextArea if it shows any event child DataNode.
+	    	  else // Updating TextArea if it shows any (the) event child DataNode.
 	          for 
 		          ( Object childObject: theTreeModelEvent.getChildren() )
 	          	{ // Updating TextArea if it shows this event child DataNode.
-	          	  DataNode childDataNode= (DataNode)childObject;
-	          	  if ( childDataNode == aTreeHelper.getWholeDataNode() )
+	          	  if ( childObject == aTreeHelper.getWholeDataNode() )
 	  	    	  		theIJTextArea.replaceRange(
-	  	    	  				childDataNode.getContentString(),
+	  	    	  				((DataNode)childObject).getContentString(),
 	  	    	  			  0,
 	  	    	  				theIJTextArea.getText().length()
 	  	    	  			  );
@@ -165,8 +170,10 @@ public class TitledTextViewer
 	    	  }
 
 	    public void treeStructureChanged(TreeModelEvent theTreeModelEvent)
-        { } // Ignored.
-	    
+	    	{ } // Ignoring.
+    
+      // End of TreeModelListener interface methods.
+
     // TreeAware interface code for TreeHelper access.
 
 			public TreeHelper aTreeHelper;

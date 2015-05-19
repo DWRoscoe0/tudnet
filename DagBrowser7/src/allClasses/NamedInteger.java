@@ -47,7 +47,7 @@ public class NamedInteger // A DataNode for tracking integer attributes.
 	  	  long oldL= this.theL; // Saving present value as old one. 
 	  	  final DataNode thisDataNode= this; // Converting this pointer.
 
-	  	  runOrInvokeAndWaitV( // Do following on AWT thread. 
+	  	  theDataTreeModel.runOrInvokeAndWaitV( // Do following on AWT thread. 
 	    		new Runnable() {
 	    			@Override  
 	          public void run() {

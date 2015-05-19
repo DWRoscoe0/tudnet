@@ -6,14 +6,18 @@ import java.net.DatagramSocket;
 public class SockPacket
   /* This class represents a datagram packet with other features attached.
 
-    ??? This should probably renamed to EnPacket for Enhanced Packet.
+    ??? This should probably renamed to 
+    EnPacket for Enhanced Packet or maybe EpiPacket.
 
-    Originally and presently the other features was 
+    ??? I don't recall why I didn't simply subclass DatagramPacket.
+    Maybe I should do that instead?
+    
+    Originally and presently the other feature was 
     the DatagramSocket through which it passed.
     Hence the class name.
     But this isn't very useful for 2 reasons:
-    1. Bind errors that heppen when trying to create connected sockets 
-      when an unconnected already exists.
+    1. Bind errors that happen when trying to create connected sockets 
+      when an unconnected socket already exists.
     2. IOExceptions caused by a temporary network problem 
       can render a DatagramSocket permanently unusable and 
       needing to be replaced.
@@ -27,6 +31,7 @@ public class SockPacket
       // This stores remote IP and port.
     private DatagramSocket theDatagramSocket; // Associated Socket.
       // This might store both local and remote IP and port.
+    //private long timeL; // The time this packet was sent or received.
 
     public SockPacket(  // Constructor.
         DatagramSocket inDatagramSocket, DatagramPacket inDatagramPacket
@@ -54,7 +59,6 @@ public class SockPacket
         return theDatagramSocket;
         }
 
-    /* ???
     public String getSocketAddressesString()
       /* This returns a String representing the
         end-point addresses (IP and port) of this SockPacket.
@@ -63,7 +67,6 @@ public class SockPacket
           SR: Socket Remote.
           PR: Packet Remote.
         */
-    /* ???
       {
         String packetAddressString;
 
@@ -83,6 +86,5 @@ public class SockPacket
 
         return valueString;
         }
-    */
 
 		}

@@ -146,17 +146,17 @@ public abstract class AbDataNode
 
       public String getNameString( )
         {
-      	  return "NAME-UNDEFINED";
+      	  return "-NAME-UNDEFINED-";
           }
 
       public String getValueString( )
 	      {
-      		return "VALUE-UNDEFINED";
+      		return "-UNDEFINED-";
       		}
 
       public String getContentString( )
 	      {
-      		return "CONTENT-UNDEFINED";
+      		return getValueString( );
       		}
 
       public String getLineSummaryString( )
@@ -167,7 +167,7 @@ public abstract class AbDataNode
       	  String nameString= getNameString();  // Caching name.
       	  String summaryString= getValueString(); // Initializing summary.
       	  process: {
-      	  	if ( summaryString == "VALUE-UNDEFINED" )
+      	  	if ( summaryString == "-UNDEFINED-" )
       	  	  { summaryString= ""; break process; }
 	    	    int indexOfNewLineI= summaryString.indexOf("\n");
 	      	  if // Trimming extra lines if there are any in value string.

@@ -1,8 +1,8 @@
 package allClasses;
 
-import java.lang.reflect.InvocationTargetException;
+///import java.lang.reflect.InvocationTargetException;
 
-import javax.swing.SwingUtilities;
+///import javax.swing.SwingUtilities;
 
 public abstract class NamedNonLeaf 
 
@@ -24,12 +24,14 @@ public abstract class NamedNonLeaf
         return nameString;  // Simply return the name.
         }
 
+    /* ???
     protected void runOrInvokeAndWaitV( Runnable theRunnable )
       /* This helper method runs theRunnable on the AWT thread.
         one way or another.
         It already running on the AWT thread then it just calls run().
         Otherwise it uses invokeAndWait(..).
        */
+    /* ???
 	    {
 	      if ( SwingUtilities.isEventDispatchThread() )
 	        theRunnable.run();
@@ -50,5 +52,6 @@ public abstract class NamedNonLeaf
 		  	  (InvocationTargetException e) 
 		  	  { throw new RuntimeException(e); } // wrapping and re-throwing.
       	}
+    ??? */
 
     }

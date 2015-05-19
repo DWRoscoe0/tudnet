@@ -1,6 +1,6 @@
 package allClasses;
 
-import static allClasses.Globals.appLogger;
+//import static allClasses.Globals.appLogger;
 
 
 public class MutableList 
@@ -20,7 +20,7 @@ public class MutableList
   {
 	  // Variables for injected values.
 	
-			private DataTreeModel theDataTreeModel; // For reporting List changes.
+			protected DataTreeModel theDataTreeModel; // For reporting List changes.
 
     // Constructors.
 			
@@ -57,9 +57,9 @@ public class MutableList
 		      so that TreeModelListeners can be fired.
 	  	    */
 		    {
-        	appLogger.debug("MutableList.add(..) "+childDataNode+" at "+indexI);
+        	//appLogger.debug("MutableList.add(..) "+childDataNode+" at "+indexI);
 		  		final DataNode parentDataNode= this;
-  	  		runOrInvokeAndWaitV( // Queuing add to AWT queue. 
+		  		theDataTreeModel.runOrInvokeAndWaitV( // Queuing add to AWT queue. 
         		new Runnable() {
 
         			@Override  
@@ -87,7 +87,7 @@ public class MutableList
 			    */
 		    {
 		  	  final DataNode parentDataNode= this;
-		  	  runOrInvokeAndWaitV( // Queuing removal of Peer from List.
+		  	  theDataTreeModel.runOrInvokeAndWaitV( // Queuing removal of Unicaster from List.
         		new Runnable() {
               @Override  
               public void run() { 

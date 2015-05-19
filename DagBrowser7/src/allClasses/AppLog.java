@@ -8,6 +8,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+///import java.text.DecimalFormat;
 
 public class AppLog 
 
@@ -47,12 +48,18 @@ public class AppLog
       private File logFile;  // Name of log file.
       private int theSessionI= 0;  // App session counter.
       long startedAtMillisL;  // Time when initialized.
+      long lastMillisL; // Last time measured.
+      ///DecimalFormat theDecimalFormat= new DecimalFormat();
 
     static // static/class initialization for logger.
       // Done here so all subsection variables are created.
       {
         try 
-          { AppLog.getAppLog().logFileInitializeV(); }
+          { 
+        		///AppLog.getAppLog().theDecimalFormat= 
+        		///		new DecimalFormat( "#####" );
+	        	AppLog.getAppLog().logFileInitializeV(); 
+	          }
         catch(IOException e)
           { System.out.println("\nIn AppLog initialization:"+e); }
         }
@@ -203,7 +210,12 @@ public class AppLog
         String aString= ""; // Initialize String to empty, then append...
         aString+= AppLog.getAppLog().theSessionI;  //...the session number,...
         aString+= ":";  //...and a seperator.
-        aString+= System.currentTimeMillis(); //...present real time,...
+        long nowMillisL= System.currentTimeMillis();
+        ///aString+= System.currentTimeMillis(); //...present real time,...
+        aString+= String.format(  // ...time since last output,...
+        		"%1$5d", nowMillisL - lastMillisL
+        		);
+        lastMillisL= nowMillisL; // Save last time when we started.
         aString+= ": ";  //...a seperator and space,...
         aString+= InString; //...the string to log,...
         aString+= "\n";  //...and a line terminator.

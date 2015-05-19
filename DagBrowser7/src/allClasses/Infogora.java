@@ -1,6 +1,8 @@
 package allClasses;
 
+import java.io.IOException;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
 import javax.swing.JFrame;
@@ -49,7 +51,7 @@ class ConnectionsFactory {
   public ConnectionsFactory(   // Factory constructor. 
   		DataTreeModel theDataTreeModel 
   		)
-  	// This constructor define the unconditional singletons.
+  	// This constructor defines the unconditional singletons.
     {
       this.theDataTreeModel= theDataTreeModel; // Save injected singleton.
       }
@@ -61,37 +63,57 @@ class ConnectionsFactory {
   // None.
 
   // Maker methods.  These construct using new operator each time called.
-  public Peer makePeer(
+  public Multicaster makeMulticaster(
+      SignallingQueue<SockPacket> sendQueueOfSockPackets,
+      SignallingQueue<SockPacket> receiveQueueOfSockPackets,
+      DatagramSocket unconnectedDatagramSocket
+      )
+    throws IOException
+    { 
+  	  return new Multicaster(
+  	    theDataTreeModel,
+  	    ///(InetSocketAddress)null, ///
+	  		new InetSocketAddress(
+	  				InetAddress.getByName("239.255.0.0"),
+	  				PortManager.getDiscoveryPortI()
+	  				),
+        sendQueueOfSockPackets,
+        receiveQueueOfSockPackets,
+        unconnectedDatagramSocket
+        ); 
+      }
+
+  public Unicaster makeUnicaster(
       InetSocketAddress peerInetSocketAddress,
       ConnectionManager.PacketQueue sendPacketQueue,
-      SignallingQueue<Peer> peerQueue,
+      SignallingQueue<Unicaster> unicasterQueue,
       DatagramSocket unconnectedDatagramSocket
       )
     {
-      return new Peer(
+      return new Unicaster(
         peerInetSocketAddress,
         sendPacketQueue,
-        peerQueue,
+        unicasterQueue,
         unconnectedDatagramSocket,
         theDataTreeModel
         );
       }
-  public ConnectionManager.PeerValue makePeerValue(
+  public ConnectionManager.NetCasterValue makeUnicasterValue(
       InetSocketAddress peerInetSocketAddress,
       ConnectionManager.PacketQueue sendPacketQueue,
-      SignallingQueue<Peer> peerQueue,
+      SignallingQueue<Unicaster> unicasterQueue,
       DatagramSocket unconnectedDatagramSocket
       )
     {
-      Peer thePeer= makePeer(
+      Unicaster theUnicaster= makeUnicaster(
         peerInetSocketAddress,
         sendPacketQueue,
-        peerQueue,
+        unicasterQueue,
         unconnectedDatagramSocket
         );
-      return new ConnectionManager.PeerValue(
+      return new ConnectionManager.NetCasterValue(
         peerInetSocketAddress,
-        thePeer
+        theUnicaster
         );
       }
 

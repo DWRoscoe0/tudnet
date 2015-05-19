@@ -281,7 +281,7 @@ public class AppGUIManager // Top level of the app's GUI, the window manager.
         		); // Adding...
           // ...it to Runtime to be run at shut-down time.
 
-        theConnectionManagerEpiThread.start( );
+        theConnectionManagerEpiThread.startV( );
           // Starting ConnectionManager thread.
 
         awaitingShutdownV();  // Interacting with user via GUI until shutdown.

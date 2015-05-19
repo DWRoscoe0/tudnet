@@ -91,7 +91,12 @@ public class TreeListModel
 		        return theDataTreeModel.getChildCount( theObject ); 
 	        }
 
-    // TreeModelListener interface methods.
+    /* Each of these TreeModelListener interface methods translates 
+      a TreeModelListener method call with a TreeModelEvent into
+      a ListDataListener method call with a ListDataEvent,
+      but only when the TreeModelEvent is about the subset of nodes
+      covered by this TreeListModel.
+      */
 
 	    public void treeNodesInserted(TreeModelEvent theTreeModelEvent)
 	      /* Translates theTreeModelEvent reporting an insertion into 
@@ -159,6 +164,10 @@ public class TreeListModel
 	    	  		}
 	    	  }
 
-	    public void treeStructureChanged(TreeModelEvent theTreeModelEvent) {}
+	    public void treeStructureChanged(TreeModelEvent theTreeModelEvent) 
+	      /* This method is ignored because there is 
+	        no ListDataListener equivalent.
+	        */
+	       {}
 
     } // class TreeListModel

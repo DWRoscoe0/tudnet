@@ -54,9 +54,9 @@ public class ConnectionManager
     * ConnectionManager: the main thread for this class.
       It manages everything.  
     * UnconnectedReceiver: receives packets for ConnectionManager.
-    * Peer: manages one connection.  
+    * Unicaster: manages one connection.  
       ? Maybe rename to ConnectionManager?
-    * PeerDiscovery (now in its own file): 
+    * Multicaster (now in its own file): 
       sends and receives multicast packets
       used for discovering other peers on the LAN.
 
@@ -75,10 +75,10 @@ public class ConnectionManager
 
     // Other instance variables, all private.
 	
-	    private Map<SocketAddress,PeerValue> peerSocketAddressConcurrentHashMap;
+	    private Map<SocketAddress,NetCasterValue> peerSocketAddressConcurrentHashMap;
 	      /* This initially empty Collection provides lookup of Peers
 	        by associated SocketAddress.
-	        It is used mainly to determine which, if any, Peer
+	        It is used mainly to determine which, if any, Unicaster
 	        is the source of a newly received packet.
 
 					Presently only connected Peers are put in this Map,
@@ -107,7 +107,7 @@ public class ConnectionManager
 	    private PacketQueue uniconnectedSignallingQueueOfSockPackets;
 	      // For received unconnected packets.
 	
-	    private SignallingQueue<Peer> peerQueue;
+	    private SignallingQueue<Unicaster> unicasterQueue;
 	      // For Peers signaling their idleness.
 
 
@@ -117,29 +117,13 @@ public class ConnectionManager
         )
       {
         super(  // Constructing base class.
-          theDataTreeModel, // Injected, to be notified when Peer List changes.
+          theDataTreeModel, // Injected, to be notified when Unicaster List changes.
           "Connections", // DataNode (and thread) name.
           new DataNode[]{} // Initially empty List of Peers.
           );
 
-        // Storing injected dependencies stored in this class.
+        // Storing other injected dependencies stored in this class.
         this.theConnectionsFactory= theConnectionsFactory;
-
-        peerSocketAddressConcurrentHashMap= // Setting socket-to-peer map empty.
-          new ConcurrentHashMap<SocketAddress,PeerValue>();
-            // This probably doesn't need to be a concurrent map,
-            // but it probably doesn't hurt.
-
-        // Setting all input queues empty.
-        theLockAndSignal= new LockAndSignal(false);  // Creating signaler.
-        sendPacketQueue=
-          new PacketQueue(theLockAndSignal);
-        multicastSignallingQueueOfSockPackets=
-          new PacketQueue(theLockAndSignal);
-        uniconnectedSignallingQueueOfSockPackets=
-          new PacketQueue(theLockAndSignal);
-        peerQueue=
-          new SignallingQueue<Peer>(theLockAndSignal);
         }
 
 
@@ -152,7 +136,9 @@ public class ConnectionManager
         The name of the thread should be Connections??
         */
       { // Connections.
-        appLogger.info("Connections.run(): thread beginning.");
+    		///appLogger.info("Connections.run(): thread beginning.");
+    		initilizeV();  // Do non-injection initialization.
+
         while   // Repeating until termination is requested.
           ( !Thread.currentThread().isInterrupted() )
           {
@@ -176,8 +162,27 @@ public class ConnectionManager
                 unconnectedDatagramSocket.close();
               }
             }
-        appLogger.info("Connections.run(): thread ending.");  // Connections.
+        ///appLogger.info("Connections.run(): thread ending.");  // Connections.
         } // Connections.
+
+    private void initilizeV()
+      {
+		    peerSocketAddressConcurrentHashMap= // Setting socket-to-peer map empty.
+		      new ConcurrentHashMap<SocketAddress,NetCasterValue>();
+		        // This probably doesn't need to be a concurrent map,
+		        // but it probably doesn't hurt.
+		
+		    // Setting all input queues empty.
+		    theLockAndSignal= new LockAndSignal(false);  // Creating signaler.
+		    sendPacketQueue=
+		      new PacketQueue(theLockAndSignal);
+		    multicastSignallingQueueOfSockPackets=
+		      new PacketQueue(theLockAndSignal);
+		    uniconnectedSignallingQueueOfSockPackets=
+		      new PacketQueue(theLockAndSignal);
+		    unicasterQueue=
+		      new SignallingQueue<Unicaster>(theLockAndSignal);
+    		}
 
     public String getValueString( )
       {
@@ -217,7 +222,7 @@ public class ConnectionManager
           "UnconnectedReceiver"
           );
 
-        theUnconnectedReceiverEpiThread.start();  // Starting thread.
+        theUnconnectedReceiverEpiThread.startV();  // Starting thread.
         }
 
     private void withSocketFinalizingV()
@@ -233,46 +238,46 @@ public class ConnectionManager
         }
 
     private void terminatingPeerThreadsV()
-      /* This method terminates all of the Peer threads 
-        that were created to communicate with discovered Peer nodes.
+      /* This method terminates all of the Unicaster threads 
+        that were created to communicate with discovered Unicaster nodes.
         It does this in 2 loops: the first to request terminations,
         and a second to wait for terminations to complete; 
         because faster concurrent terminations are possible 
         when there are multiple Peers.
 
-        ?? Though it might be good to update the displayed Peer list,
+        ?? Though it might be good to update the displayed Unicaster list,
         by removing the Peers from the inherited MutableList
         during the second loop of the termination process 
         to see any slow terminators, this is not done presently. 
         */
       {
-        appLogger.info("Connections.terminatingPeerThreadsV() beginning.");
+        ///appLogger.info("Connections.terminatingPeerThreadsV() beginning.");
 
-        Iterator<PeerValue> anIteratorOfPeerValues;  // For peer iterator.
+        Iterator<NetCasterValue> anIteratorOfNetCasterValues;  // For peer iterator.
 
-        anIteratorOfPeerValues=  // Getting new peer iterator.
+        anIteratorOfNetCasterValues=  // Getting new peer iterator.
           peerSocketAddressConcurrentHashMap.values().iterator();
         while  // Requesting termination of all Peers.
-          (anIteratorOfPeerValues.hasNext())
+          (anIteratorOfNetCasterValues.hasNext())
           {
-            PeerValue thePeerValue= anIteratorOfPeerValues.next();
-            thePeerValue.getEpiThread().stopV();  // Requesting Termination 
-              // of Peer.
+            NetCasterValue theNetCasterValue= anIteratorOfNetCasterValues.next();
+            theNetCasterValue.getEpiThread().stopV();  // Requesting Termination 
+              // of Unicaster.
             }
 
-        anIteratorOfPeerValues=  // Getting new peer iterator.
+        anIteratorOfNetCasterValues=  // Getting new peer iterator.
           peerSocketAddressConcurrentHashMap.values().iterator();
         while  // Waiting for completion of termination of all Peers.
-          (anIteratorOfPeerValues.hasNext())
+          (anIteratorOfNetCasterValues.hasNext())
           {
-            PeerValue thePeerValue= anIteratorOfPeerValues.next();
-            //?thePeerValue.getEpiThread().joinV();  // Waiting for termination 
-            thePeerValue.getEpiThread().stopAndJoinV();  // Waiting for termination
-              // of Peer.
-            //anIteratorOfPeerValues.remove(); // Removing from HashMap...
+            NetCasterValue theNetCasterValue= anIteratorOfNetCasterValues.next();
+            theNetCasterValue.getEpiThread().joinV(); // Waiting for termination 
+            ///?theNetCasterValue.getEpiThread().stopAndJoinV();  // Waiting for termination
+              // of Unicaster.
+            anIteratorOfNetCasterValues.remove(); // Removing from HashMap...
             }
 
-        appLogger.info("Connections.terminatingPeerThreadsV() ending.");
+        ///appLogger.info("Connections.terminatingPeerThreadsV() ending.");
         }
 
     private void processingInputsAndExecutingEventsV()
@@ -304,18 +309,30 @@ public class ConnectionManager
             theLockAndSignal.doWaitE();  // Waiting for new inputs.
             }
 
-        appLogger.info("Connections: termination begun.");
+        ///appLogger.info("Connections: termination begun.");
         }
 
     private void startingPeerDiscoveryV()
       // Klugy start of PeerDiscover daemon, which needs a lot of work??
       {
+  		Multicaster theMulticaster;
+  		EpiThread PeerDiscoveryEpiThread;
         try { // PeerDiscoery
-          new PeerDiscovery(  // Construct PeerDiscovery...
-            sendPacketQueue // ...with send queue,...
-            ,multicastSignallingQueueOfSockPackets // ...receive queue,...
-            ,unconnectedDatagramSocket // ...and socket to use.
-            );  // PeerDiscovery will start its own thread.
+          //new Multicaster(  // Construct Multicaster...
+        	theMulticaster=
+	        	theConnectionsFactory.makeMulticaster(
+	            sendPacketQueue // ...with send queue,...
+	            ,multicastSignallingQueueOfSockPackets // ...receive queue,...
+	            ,unconnectedDatagramSocket // ...and socket to use.
+	            );  // Multicaster will start its own thread.
+          add( theMulticaster );  // Add to DataNode List.
+          theDataTreeModel. // Informing TreeModel.
+            safelyReportingChangeV( this );
+          PeerDiscoveryEpiThread= new EpiThread( 
+              theMulticaster,
+              "Multicaster-?" ///+peerInetSocketAddress
+              );
+          PeerDiscoveryEpiThread.startV();
           } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -347,7 +364,7 @@ public class ConnectionManager
         while (true) {  // Processing all queued send packets.
           theSockPacket= // Trying to get next packet from queue.
             sendPacketQueue.poll();
-          if (theSockPacket == null) break;  // Exitting if no more packets.
+          if (theSockPacket == null) break;  // Exiting if no more packets.
           try { // Send the gotten packet.
             theSockPacket.getDatagramSocket().send(   // Send packet.
               theSockPacket.getDatagramPacket()
@@ -371,7 +388,7 @@ public class ConnectionManager
 
     private boolean processingDiscoverySockPacketsB() 
       /* This method processes unconnected packets received by 
-        the PeerDiscovery Thread and forwarded here,
+        the Multicaster Thread and forwarded here,
         by adding the nodes that sent them to the known connections.
         It returns true if any Discovery packets were processed,
         false otherwise.
@@ -398,28 +415,40 @@ public class ConnectionManager
     private boolean processingIdlePeersB() 
       /* This method processes Peers that 
         have signaled that they need service
-        by queuing themselves in the peerQueue.
+        by queuing themselves in the unicasterQueue.
         Presently this can mean only one thing,
         that the peer thread has lost contact
         with its associated peer node and is terminating its thread.
-        The connection manager's job is to remove the Peer from
+        The connection manager's job is to remove the Unicaster from
         the inherited MutableList and the Map.
         This method returns true if any Peers 
-        were in the peerQueue and processed, false otherwise.
+        were in the unicasterQueue and processed, false otherwise.
         */
       {
         boolean elementProcessedB= false;
 
         while (true) {  // Process all queued Peers.
-          final Peer thePeer= // Getting next Peer from queue.
-        		peerQueue.poll();
-          if (thePeer == null) break;  // Exiting if no more Peers.
-          remove( thePeer );  // Remove from DataNode List.
+          final Unicaster theUnicaster= // Getting next Unicaster from queue.
+        		unicasterQueue.poll();
+          if (theUnicaster == null) break;  // Exiting if no more Peers.
+
+          remove( theUnicaster );  // Remove from DataNode List.
+          InetSocketAddress theInetSocketAddress=
+            theUnicaster.getInetSocketAddress();
+          NetCasterValue theNetCasterValue=
+          	peerSocketAddressConcurrentHashMap.get(theInetSocketAddress);
+          theNetCasterValue.getEpiThread().stopAndJoinV(); // Terminate thread.
+          peerSocketAddressConcurrentHashMap.remove( // Remove from Map.
+            theInetSocketAddress
+            );
+
           elementProcessedB= true;
           }
-          
+
+        theDataTreeModel.safelyReportingChangeV( this ); // Informing TreeModel.
+
         return elementProcessedB;
-        }
+        } 
 
     private boolean processingUnconnectedSockPacketsB()
       /* This method processes unconnected unicastpackets 
@@ -457,7 +486,7 @@ public class ConnectionManager
     private void processReceivedPacketV(SockPacket theSockPacket)
       /* This method processes one packet received from a peer.
         The peer is assumed to be at the packet's remote address and port.
-        It adds an entry to the Peer data structures
+        It adds an entry to the Unicaster data structures
         if the entry doesn't already exist.
         If the entry does exist then it updates it.
         This should work with both unicast and multicast packets
@@ -468,17 +497,46 @@ public class ConnectionManager
         //  "ConnectionManager.processReceivedPacketV(..)\n  "
         //  + theSockPacket.getSocketAddressesString()
         //  );
-        Peer thePeer=  // Get or create Peer.
-          getOrBuildPeer( theSockPacket );
-        thePeer.puttingReceivedPacketV( // Giving to Peer its genesis packet. 
-        		theSockPacket 
-        		);
+	      Unicaster theUnicaster=  // Get or create Unicaster.
+	          tryGettingExistingUnicaster( theSockPacket );
+	      if ( theUnicaster == null )
+		      {
+		        appLogger.info(
+		          "ConnectionManager.processReceivedPacketV(..)\n  "
+		          + theSockPacket.getSocketAddressesString()
+		          );
+			      theUnicaster=  // Get or create Unicaster.
+			          getOrBuildUnicaster( theSockPacket );
+			      }
+	      theUnicaster.puttingReceivedPacketV( // Giving to Unicaster  
+	      		theSockPacket  // its genesis packet.
+	      		);
         }
 
-    private Peer getOrBuildPeer( SockPacket theSockPacket )
-      /* Gets or creates the Peer associated with theSockPacket.
-        It adds the Peer to the appropriate data structures.
-        It returns the found or created Peer.
+    private Unicaster tryGettingExistingUnicaster( SockPacket theSockPacket )
+      /* This method returns the Uniaster associated with the
+         source address of theSockPacket, if such as Unicaster exists.
+         It returns null otherwise.
+         */
+	    { 
+    		Unicaster resultUnicaster= null;
+        DatagramPacket theDatagramPacket= theSockPacket.getDatagramPacket();
+        InetSocketAddress peerInetSocketAddress= // Building packet's address.
+          new InetSocketAddress(
+            theDatagramPacket.getAddress(),
+            theDatagramPacket.getPort()
+            );
+        NetCasterValue theNetCasterValue= // Getting associated NetCasterValue.
+          peerSocketAddressConcurrentHashMap.get(peerInetSocketAddress);
+        if (theNetCasterValue != null)
+        		resultUnicaster= theNetCasterValue.getUnicaster();
+        return resultUnicaster;
+	      }
+
+    private Unicaster getOrBuildUnicaster( SockPacket theSockPacket )
+      /* Gets or creates the Unicaster associated with theSockPacket.
+        It adds the Unicaster to the appropriate data structures.
+        It returns the found or created Unicaster.
         */
       {
         DatagramPacket theDatagramPacket=  // Get DatagramPacket.
@@ -489,73 +547,75 @@ public class ConnectionManager
             theDatagramPacket.getAddress(),
             theDatagramPacket.getPort()
             );
-        Peer thePeer=  // Get or create Peer.
-          getOrBuildPeer(peerInetSocketAddress);
-        return thePeer;
+        Unicaster theUnicaster=  // Get or create Unicaster.
+          getOrBuildUnicaster(peerInetSocketAddress);
+        return theUnicaster;
         }
 
-    private Peer getOrBuildPeer(
+    private Unicaster getOrBuildUnicaster(
         InetSocketAddress peerInetSocketAddress
         )
-      /* Gets the Peer whose SocketAddress is peerInetSocketAddress.
-        If such a Peer does not exist then it builds one. 
+      /* Gets the Unicaster whose SocketAddress is peerInetSocketAddress.
+        If such a Unicaster does not exist then it builds one. 
         If it builds one then it also:
-        * Adds the Peer to the appropriate data structures.
-        * Starts the associated Peer thread.
-        It returns the gotten or built Peer.
+        * Adds the Unicaster to the appropriate data structures.
+        * Starts the associated Unicaster thread.
+        It returns the gotten or built Unicaster.
         */
       {
-        PeerValue resultPeerValue= // Testing whether peer is already stored.
+        NetCasterValue resultNetCasterValue= // Testing whether peer is already stored.
           peerSocketAddressConcurrentHashMap.get(peerInetSocketAddress);
-        if (resultPeerValue == null) // Adding peer if not stored already.
+        if (resultNetCasterValue == null) // Adding peer if not stored already.
           {
-            final PeerValue newPeerValue=  // Building new peer. 
-              theConnectionsFactory.makePeerValue(
+            final NetCasterValue newNetCasterValue=  // Building new peer. 
+              theConnectionsFactory.makeUnicasterValue(
                 peerInetSocketAddress,
                 sendPacketQueue,
-                peerQueue,
+                unicasterQueue,
                 unconnectedDatagramSocket
                 );
             peerSocketAddressConcurrentHashMap.put( // Adding to HashMap with...
               peerInetSocketAddress,  // ...the SocketAddress as the key and...
-              newPeerValue  // ...the PeerValue as the value.
+              newNetCasterValue  // ...the NetCasterValue as the value.
               );
-            add( newPeerValue.getPeer() );  // Add to DataNode List.
-            newPeerValue.getEpiThread().start(); // Start peer's thread.
-            resultPeerValue= newPeerValue;  // Using new peer as result.
+            add( newNetCasterValue.getUnicaster() );  // Add to DataNode List.
+            theDataTreeModel. // Informing TreeModel.
+              safelyReportingChangeV( this );
+            newNetCasterValue.getEpiThread().startV(); // Start peer's thread.
+            resultNetCasterValue= newNetCasterValue;  // Using new peer as result.
             }
-        return resultPeerValue.getPeer();
+        return resultNetCasterValue.getUnicaster();
         }
 
 
     // Nested classes.
 
-    public static class PeerValue  // Value of HashMap entry.
+    public static class NetCasterValue  // Value of HashMap entry.
 
      /* This class was created when it became necessary to
-       have access to both the Peer class and its Thread.
+       have access to both the Unicaster class and its Thread.
        */
 
       {
 
-        private Peer thePeer;
+        private Unicaster theUnicaster;
         private EpiThread theEpiThread;
 
-        public PeerValue(  // Constructor. 
+        public NetCasterValue(  // Constructor. 
             InetSocketAddress peerInetSocketAddress,
-            Peer thePeer
+            Unicaster theUnicaster
             )
           {
-            this.thePeer= thePeer;
+            this.theUnicaster= theUnicaster;
             this.theEpiThread= new EpiThread( 
-              thePeer,
-              "Peer-"+peerInetSocketAddress
+              theUnicaster,
+              "Unicaster-"+peerInetSocketAddress
               );
             }
             
-        public Peer getPeer()
+        public Unicaster getUnicaster()
           { 
-            return thePeer; 
+            return theUnicaster; 
             }
             
         public EpiThread getEpiThread()
@@ -619,7 +679,7 @@ public class ConnectionManager
             for consumption by another thread.
             */
           {
-            appLogger.threadInfo("run() beginning.");
+            ///appLogger.threadInfo("run() beginning.");
             try { // Operations that might produce an IOException.
               while  // Receiving and queuing packets unless termination is
                 ( ! Thread.currentThread().isInterrupted() ) // requested.
@@ -631,12 +691,13 @@ public class ConnectionManager
                     SockPacket aSockPacket= new SockPacket(
                       receiverDatagramSocket, aDatagramPacket
                       );
+                    appLogger.threadInfo("run(): waiting for packet.");
                     receiverDatagramSocket.receive(aDatagramPacket);
+                    appLogger.threadInfo("run(): received packet.");
                     receiverSignallingQueueOfSockPackets.add(aSockPacket);
                     }
                   catch( SocketException soe ) {
-                    // someone may have called disconnect()
-                    appLogger.threadInfo("run() SocketException: " + soe );
+                    appLogger.threadInfo("run(): " + soe );
                     Thread.currentThread().interrupt(); // Translating 
                       // exception into request to terminate this thread.
                     }
@@ -646,7 +707,7 @@ public class ConnectionManager
                 appLogger.threadInfo("run() IOException: "+e );
                 throw new RuntimeException(e);
               }
-            appLogger.threadInfo("run() ending.");
+            ///appLogger.threadInfo("run() ending.");
             }
 
         }

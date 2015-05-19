@@ -5,11 +5,13 @@ import java.io.Serializable;
 //import java.util.LinkedList;
 //import java.util.Queue;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedList;
 import java.util.Queue;
 
 import javax.swing.event.TreeModelEvent;
 import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeModel;
 
@@ -293,13 +295,13 @@ public class DataTreeModel
             	new Object[] {childDataNode}
             	);
 
-        	appLogger.debug( 
-	        	  "DataTreeModel.reportingInsertV(..) before firing:\n  "+theTreeModelEvent
-	        	  );
+        	//appLogger.debug( 
+          //	  "DataTreeModel.reportingInsertV(..) before firing:\n  "+theTreeModelEvent
+          //	  );
           fireTreeNodesInserted( theTreeModelEvent ); // Firing insertion event.
-        	appLogger.debug( 
-	        	  "DataTreeModel.reportingInsertV(..) after firing:\n  "+theTreeModelEvent
-	        	  );
+          //appLogger.debug( 
+          //	  "DataTreeModel.reportingInsertV(..) after firing:\n  "+theTreeModelEvent
+          //	  );
           }
 
       public void reportingRemoveV( 
@@ -326,10 +328,48 @@ public class DataTreeModel
           fireTreeNodesRemoved( theTreeModelEvent ); // Firing as removal event.
           }
 
-      public void reportingChangeV( 
-          DataNode theDataNode
-          )
-      	/* This method creates and fires fires a single-child TreeModelEvent
+      protected void runOrInvokeAndWaitV( Runnable theRunnable ) /// ???
+        /* This helper method runs theRunnable on the AWT thread.
+          one way or another.
+          It already running on the AWT thread then it just calls run().
+          Otherwise it uses invokeAndWait(..).
+         */
+  	    {
+  	      if ( SwingUtilities.isEventDispatchThread() )
+  	        theRunnable.run();
+  	      else
+  	        invokeAndWaitV( theRunnable );
+  	    	}
+
+      protected void invokeAndWaitV( Runnable theRunnable ) /// ???
+        // Calls SwingUtilities.invokeAndWait(..) and handles any exceptions.
+        {
+  		  	try  // Queuing theRunnable on AWT thread.
+  		  	  { SwingUtilities.invokeAndWait( theRunnable ); 			  		}
+  		    catch // Handling wait interrupt by
+  		    	(InterruptedException e) 
+  		      { Thread.currentThread().interrupt(); } // setting interrupt flag.
+  		        // Is a termination request so no need to continue waiting.
+  		  	catch  // Handling invocation exception by
+  		  	  (InvocationTargetException e) 
+  		  	  { throw new RuntimeException(e); } // wrapping and re-throwing.
+        	}
+
+      public void safelyReportingChangeV( final DataNode theDataNode )
+        // This is a thread-safe version of reportingChangeV( theDataNode ).
+	      {
+	  	  runOrInvokeAndWaitV( // Do following on AWT thread. 
+	    		new Runnable() {
+	    			@Override  
+	          public void run() {
+	    				reportingChangeV( theDataNode );
+	            }
+	          } 
+	        );
+	      }
+
+      public void reportingChangeV( DataNode theDataNode )
+      	/* This method creates and fires a single-child TreeModelEvent
           for the change of a single child DataNode, theDataNode,
           whose position is indexI, into parentDataNode.
           */
@@ -338,8 +378,8 @@ public class DataTreeModel
 	          	translatingToTreePath( theDataNode );
 	        if ( theTreePath == null ) {
 	        	appLogger.error( 
-	        	  "DataTreeModel.reportingChangeV(..): "+
-	        	    "translatingToTreePath(..) failed." 
+	        	  "DataTreeModel.reportingChangeV(..): failure in\n"+
+	        	    "  translatingToTreePath(..) "+theDataNode 
 	        	  );
 	        	return;
 	        	}

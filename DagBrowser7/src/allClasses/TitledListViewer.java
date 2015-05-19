@@ -1,6 +1,6 @@
 package allClasses;
 
-import static allClasses.Globals.appLogger;
+//import static allClasses.Globals.appLogger;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -10,9 +10,6 @@ import java.awt.Font;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 //import java.awt.event.MouseEvent;
-
-
-
 
 
 import javax.swing.BorderFactory;
@@ -31,8 +28,6 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreePath;
-
-//import static allClasses.Globals.*;  // appLogger;
 
 public class TitledListViewer // adapted from TitledListViewer.
 
@@ -298,9 +293,11 @@ public class TitledListViewer // adapted from TitledListViewer.
           }  // setJListScrollState()
 
       /* TreeModelListener methods. 
-        Most do nothing but are required by interface.
+        Most do nothing but are required by the TreeModelListener interface.
         Only treeNodesInserted(..) does anything.
-        It checks whether an insertion
+        It updates the displayed title if the TreePath is of this List.
+        Changes to the List itself are handled by the ListModel,
+        which is itself also a TreeModelListener.
         */
 
 		    public void treeStructureChanged(TreeModelEvent theTreeModelEvent)
@@ -315,15 +312,23 @@ public class TitledListViewer // adapted from TitledListViewer.
 		
 		    public void treeNodesInserted(TreeModelEvent theTreeModelEvent) 
 		      { 
-		    		appLogger.debug("TitledListViewer.treeNodesInserted()\n  "+theTreeModelEvent);
-			    	//setTitleTextV();
+		    		//appLogger.debug("TitledListViewer.treeNodesInserted()\n  "+theTreeModelEvent);
 		      	}
 		
 		    public void treeNodesChanged(TreeModelEvent theTreeModelEvent) 
 		      { 
 		        //appLogger.debug("TitledListViewer.treeNodesChanged()\n  "+theTreeModelEvent);
-			    	
-			    	//setTitleTextV();
+		    	  if ( // Ignoring event if parent TreePath doesn't match our List's. 
+	    	      	!aTreeHelper.getWholeTreePath().getParentPath().equals(
+	    	      			theTreeModelEvent.getTreePath()
+	    	      			)
+	    	      	)
+  	    	  	; // Ignoring.
+	    	  	else
+	    	  		for // Updating title text if our List matches a child. 
+	    	  		  (Object childObject: theTreeModelEvent.getChildren()) 
+	    	  			if ( childObject == aTreeHelper.getWholeDataNode())
+	  				    	setTitleTextV(); // Updating title text.
 		      	}
 
     /* ListSelectionListener interface method, 

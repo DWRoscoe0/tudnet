@@ -2,16 +2,19 @@ package allClasses;
 
 import static allClasses.Globals.appLogger;
 
+import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
+///import java.net.SocketException;
 import java.util.Random;
 
 import allClasses.ConnectionManager.PacketQueue;
 
-public class Peer  // Nested class managing peer connection data.
+public class Unicaster
 
-  extends MutableList
+  ///extends MutableList
+	extends NetCaster
 
   implements Runnable
   
@@ -20,13 +23,13 @@ public class Peer  // Nested class managing peer connection data.
     Its job is to manage a single Datagram connection
     with another peer node.
     
-    This class is also a Thread.
-    The thread informally implements a state machine
+    This class is not a Thread, but is a Runnable on which to base a Thread.
+    The thread will informally implement a state machine
     which manages the connection.
     
-    Originally it was planned for each Peer thread to 
+    Originally it was planned for each Unicaster thread to 
     send and receive packets using a connected DatagramSocket.
-    Different peers would use different DatagramSocket,
+    Different peers would use different DatagramSockets,
     each with different remote addresses, but the same local addresses.
     Bind errors can be avoided by using 
     DatagramSocket.setReuseAddress(true).
@@ -38,14 +41,14 @@ public class Peer  // Nested class managing peer connection data.
     but reopening the unconnected socket disables the 
     connected ones again.
     As a result, connected sockets are not used.
-    Instead all packets are received by 
-    an unconnected DatagramSocket, and those packets 
-    are demultiplexed and forwarded to the appropriate peer thread.
-    
+    Instead all packets are received by one unconnected DatagramSocket, 
+    and those packets are demultiplexed and forwarded to 
+    the appropriate peer thread.
+
     The plan is to add functionality to this class in small stages.
-    At first peers will simply exchange packets,
+    At first peers simply exchanged packets,
     waiting half a period, making no attempt to measure ping times.
-    More functionality can be added later.
+    More functionality will be added later.
 
     Here is the beginnings of a table representing
     a state machine for unicast connections.
@@ -66,7 +69,7 @@ public class Peer  // Nested class managing peer connection data.
 
     */
 
-  { // Peer.
+  { // Unicaster.
 
     // Fields (constant and variales).
     
@@ -77,12 +80,11 @@ public class Peer  // Nested class managing peer connection data.
         PeriodMillisL / 2;  
 
       // Injected dependency instance variables.
-      private InetSocketAddress peerInetSocketAddress;  // Address of peer.
       private final PacketQueue sendQueueOfSockPackets;
-        // Queue to receive SockPackets to be sent to Peer.
-      private SignallingQueue<Peer> peerQueue; // CM's Peer termination queue.
+        // Queue to receive SockPackets to be sent to Unicaster.
+      private SignallingQueue<Unicaster> terminationQueueOfUnicasters;
       private final DatagramSocket unconnectedDatagramSocket;
-      private DataTreeModel theDataTreeModel;
+      ///private DataTreeModel theDataTreeModel;
 
       // Other instance variables.
       LockAndSignal peerLockAndSignal;  // LockAndSignal for this thread.
@@ -90,41 +92,44 @@ public class Peer  // Nested class managing peer connection data.
       private Random theRandom; // For arbitratingYieldB() random numbers.
       private final PacketQueue receiveQueueOfSockPackets;
         // Queue for SockPackets from ConnectionManager.
-      // Detail-containing sub-objects.
-	      private NamedMutable addressNamedMutable;
-	      private NamedInteger packetsSentNamedInteger;
-	      private NamedInteger packetsReceivedNamedInteger;
-	      long pingSentAtNanosL;
+      private long pingSentAtNanosL; // Time the last ping was sent.
+      private boolean arbitratedYieldingB; // Used to arbitrate race conditions.
+
+      // Detail-containing child sub-objects.
 	      private NamedInteger RoundTripTimeNamedInteger; 
 
 
-    public Peer(  // Constructor. 
-        InetSocketAddress peerInetSocketAddress,
+    public Unicaster(  // Constructor. 
+        InetSocketAddress remoteInetSocketAddress,
         PacketQueue sendQueueOfSockPackets,
-        SignallingQueue<Peer> peerQueue,
+        SignallingQueue<Unicaster> terminationQueueOfUnicasters,
         DatagramSocket unconnectedDatagramSocket,
         DataTreeModel theDataTreeModel
         )
-      /* This constructor constructs a Peer.
-        It is constructed assuming that 
-        a packet has just been received from it
-        at peerInetSocketAddress,
+      /* This constructor constructs a Unicaster for the purpose of
+        communicating with the node at remoteInetSocketAddress,
         but no response has yet been made.
         Fields are defined in a way to cause an initial response.
+        
+        ??? Add parameter which controls whether thread first waits for
+        a PING or an ECHO, to reduce or eliminate ping-ping conflicts.
+        Implement protocol with a state-machine.
         */
       {
         super( 
   	        theDataTreeModel,
-        		"Peer-at-" + peerInetSocketAddress.getAddress(),
-            new DataNode[]{} // Initially empty of details.
+  	        remoteInetSocketAddress,
+        		"Unicaster-at-" /// + 
+		  	      ///remoteInetSocketAddress.getAddress() +
+		  	      /// ":" + remoteInetSocketAddress.getPort()
         		);
 
         // Storing injected dependency constructor arguments.
-          this.peerInetSocketAddress= peerInetSocketAddress;
+          ///this.remoteInetSocketAddress= remoteInetSocketAddress;
           this.sendQueueOfSockPackets= sendQueueOfSockPackets;
-          this.peerQueue= peerQueue;
+          this.terminationQueueOfUnicasters= terminationQueueOfUnicasters;
           this.unconnectedDatagramSocket= unconnectedDatagramSocket;
-	        this.theDataTreeModel= theDataTreeModel;
+	        ///this.theDataTreeModel= theDataTreeModel;
 
         peerLockAndSignal= new LockAndSignal(false);
 
@@ -138,7 +143,7 @@ public class Peer  // Nested class managing peer connection data.
         }
 
 
-    public void run()  // Main Peer thread.
+    public void run()  // Main Unicaster thread.
       /* This method contains the main thread logic in the form of
         a state machine composed of the highest level states.
         The only thing it does now is exchange ping and echo packets
@@ -155,57 +160,61 @@ public class Peer  // Nested class managing peer connection data.
         a protocol value for this purpose.
         */
       {
-        appLogger.info(
-          Thread.currentThread().getName()+": run() beginning."
-          );
-        initializeChildrenV();
+        ///appLogger.info(
+		    ///  Thread.currentThread().getName()+": run() beginning."
+		    ///   );
+    	  int stateI= // Initialize ping-reply protocol state from yield flag. 
+    	  		arbitratedYieldingB ? 0 : 1 ;
+        try { // Operations that might produce an IOException.
+          initializeV();
 
-        while (true) // Repeating until thread termination is requested.
-          {
-            if   // Exiting if requested.
-              ( Thread.currentThread().isInterrupted() ) 
-              break;
-            //appLogger.info(getName()+":\n  CALLING tryingPingSendV() ===============.");
-            tryingPingSendV();
-
-            if   // Exiting if requested.
-              ( Thread.currentThread().isInterrupted() ) 
-              break;
-            //appLogger.info(getName()+":\n  CALLING tryingPingReceiveV() ===============.");
-            tryingPingReceiveV();
-            }
+          while (true) // Repeating until thread termination is requested.
+            {
+          		recordStatusV( 0 ); // ??
+              if   // Exiting if requested.
+	              ( Thread.currentThread().isInterrupted() ) 
+	              break;
+          	  switch ( stateI ) { // Decoding alternating state.
+	          	  case 0:
+	                //appLogger.info(getName()+":\n  CALLING tryingPingSendV() ===============.");
+	                tryingPingSendV();
+	                stateI= 1;
+	          	  	
+	          	  case 1:
+	                //appLogger.info(getName()+":\n  CALLING tryingPingReceiveV() ===============.");
+	                tryingPingReceiveV();
+	                stateI= 0;
+	          	  }
+              }
+          }
+          catch( IOException e ) {
+            appLogger.threadInfo("run() IOException: "+e );
+            throw new RuntimeException(e);
+          }
 
         // Terminating.
-        appLogger.info(
-          Thread.currentThread().getName()+": run() ending."
-          );
+	      ///appLogger.info(
+	      /// Thread.currentThread().getName()+": run() ending."
+	      /// );
         }
 
-    private void initializeChildrenV()
+    protected void initializeV()
+	    throws IOException
 	    {
-	      addressNamedMutable= new NamedMutable( 
-	      		theDataTreeModel, "Port" 
-	      		);
-	      addressNamedMutable.setValueObject( 
-	      		"" + peerInetSocketAddress.getPort() 
-	      		);
-	      add( addressNamedMutable );
-
-        RoundTripTimeNamedInteger= new NamedInteger( 
-	      		theDataTreeModel, "Round-Trip-Time-ns", 0 
-	      		);
-	      add( RoundTripTimeNamedInteger );
-
-	      packetsSentNamedInteger= new NamedInteger( 
-	      		theDataTreeModel, "Packets-Sent", 0 
-	      		);
-	      add( packetsSentNamedInteger );
+      	super.initializeV();
+	      add( 	RoundTripTimeNamedInteger= new NamedInteger( 
+			      		theDataTreeModel, "Round-Trip-Time-ns", 0 
+			      		)
+	      			);
+	  	  arbitratedYieldingB= arbitratingYieldB();
 	    	
-	      packetsReceivedNamedInteger= new NamedInteger( 
-	      		theDataTreeModel, "Packets-Received", 0 
-	      		);
-	      add( packetsReceivedNamedInteger );
 	    	}
+
+    private void recordStatusV( int conditionI )
+      /* This method records the connection status.
+        It logs or displays the status if it has changed significantly.
+        */
+    	{}
 
     private void tryingPingSendV()
       /* This method tries to send a ping to the remote peer
@@ -216,16 +225,22 @@ public class Peer  // Nested class managing peer connection data.
         terminating the current thread.
         */
       {
-        int maxRetries= 4;
+        int maxTriesI= 3;
         LockAndSignal.Input theInput;  // Type of input that ends waits.
         retryLoop: for // Sending pings until something stops us.
-          ( int retriesI= 0; ; retriesI++ ) // Retry counter.
+          ( int triesI= 1; ; triesI++ ) // Retry counter.
           { // Trying ping send and echo receive one time, or exiting.
             if  // Checking and exiting if retries were exceeded.
-              ( retriesI >= maxRetries )  // Maximum attempts exceeded.
+              ( triesI > maxTriesI )  // Maximum attempts exceeded.
               { // Terminating thread.
-            	  peerQueue.add(this); // Queuing this Peer for termination.
-                Thread.currentThread().interrupt();  // Noting for self. 
+	              appLogger.info(
+	                	Thread.currentThread().getName()+
+	                	  ": requesting termination after "+maxTriesI+" ECHO"+
+	                	  "  \n  time-outs."
+	                  );
+            	  terminationQueueOfUnicasters.add( // Queuing for termination.
+            	  		this
+            	  		);
                 break;
                 }
             //long pingMillisL= System.currentTimeMillis();
@@ -242,11 +257,15 @@ public class Peer  // Nested class managing peer connection data.
                 case INTERRUPTION: // Handling a thread's interruption.
                   break retryLoop; // Exiting to terminate thread.
                 case TIME: // Handling a time-out.
-                  break waitLoop;  // Exiting wait loop to retry.
+                  //appLogger.info(
+                  //  	Thread.currentThread().getName()+
+                  //  	  ": time-out waiting for ECHO: "+triesI
+                  //    );
+                  break waitLoop;  // Exiting wait loop to send PING.
                 case NOTIFICATION:  // Handling packet inputs.
                   while (true) { // Handling possible multiple packets.
                     if ( ! testingPacketB( ) ) // Handling empty queue.
-                      break;  // Exiting loop.
+                      break;  // Exiting packet NOTIFICATION loop.
                     if // Handling echo packet, maybe.
                       ( testingPacketB( "ECHO" ) )
                       { // Handling echo and exiting.
@@ -259,17 +278,23 @@ public class Peer  // Nested class managing peer connection data.
                         }
                     if // Handling ping-ping conflict, maybe.
                       ( testingPacketB( "PING" ) )
-                      if // Handling ping-ping conflict.
-                        ( arbitratingYieldB() ) // Let arbiter decide.
-                        { // Yielding ping processing to other peer.
-                          //appLogger.info(
-                          //  getName()+":\n  PING ping abort: "+retriesI
-                          //  );
-                          break retryLoop; // Yielding by exiting loop.
-                          // Ping packet remains in queue.
-                          }
+	                    { // Handling ping-ping conflict.
+	                      appLogger.info(
+	                        	Thread.currentThread().getName()+
+	                        	  ": PING ping conflict."
+	                          );
+                      	if // Handling ping-ping conflict.
+	                        ( arbitratedYieldingB ) // Let arbiter decide.
+	                        { // Yielding ping processing to other peer.
+	                          appLogger.info(
+	                          	Thread.currentThread().getName()+
+	                          	  ": PING ping yield: "+triesI
+	                            );
+	                          break retryLoop; // Yielding by exiting loop.
+	                          // Ping packet remains in queue.
+	                          }
+	                    	}
                     ignoringOnePacketV(); // Ignoring any other packet value.
-                    //appLogger.info(getName()+":\n  echo NO-receive: "+retriesI);
                     }
                   // Dropping through to exit switch and continue waitLoop.
                   }
@@ -327,11 +352,15 @@ public class Peer  // Nested class managing peer connection data.
             case INTERRUPTION: // Handling a thread's interruption.
               break pingLoop;  // Exiting to terminate thread.
             case TIME: // Handling the ping time-out.
+              appLogger.info(
+                	Thread.currentThread().getName()+
+                	  ": time-out waiting for PING."
+                  );
               break pingLoop;  // Exiting to abort wait.
             case NOTIFICATION:  // Handling a received packet.
-              // Dropping through to exit switch, loop and retry.
+              // Dropping through to exit switch, go to pingLoop, and decode it.
             }
-          }
+          } // pingLoop
         }
 
     private boolean arbitratingYieldB()
@@ -342,21 +371,22 @@ public class Peer  // Nested class managing peer connection data.
         It returns true when this peer should yield,
         and false when it should not.
 
-        This method is not designed to be fair, but to 
-        simply resolve conflicts.
-        It is based on comparing each peer's port number.
-        Most of the time, when one peer yields, 
-        the other won't, and the conflict is resolved.
-        Where the port numbers are equal 
-        the yield result is chosen randomly,
-        and the conflict is resolved 50% of the time.
+        This method is not designed to be fair, but to simply resolve conflicts.
+        It is used to resolve ping-ping conflicts,
+        putting two connected peers in complementary parts of their
+        ping-reply protocols.
+
+        It is based on comparing each peer's address information.
+        Presently it uses port information.
+        ??? It should probably use something more unique,
+        such as IP address or other unique ID number.  
         */
       {
         boolean yieldB;  // Storage for result.
-        int portDifferenceI=  // Calculate port difference.
-          peerInetSocketAddress.getPort() - PortManager.getLocalPortI();
-        if ( portDifferenceI != 0 )  // Handling ports unequal.
-          yieldB= ( portDifferenceI < 0 );  // Lower ported peer yields.
+        int addressDifferenceI=  // Calculate port difference.
+          remoteInetSocketAddress.getPort() - PortManager.getLocalPortI();
+        if ( addressDifferenceI != 0 )  // Handling ports unequal.
+          yieldB= ( addressDifferenceI < 0 );  // Lower ported peer yields.
           else  // Handling rare case of ports equal.
           {
             theRandom.setSeed(System.currentTimeMillis());  // Reseting...
@@ -367,6 +397,20 @@ public class Peer  // Nested class managing peer connection data.
         return yieldB;
         }
 
+    /* ???
+    private int packBytesToI(byte[] bytes)
+      /* This method packs an array of 4 bytes into an int.
+        It could be used for converting IP addresses to ints.
+        */
+    /*
+	    {
+	      int resultI= 0;
+	      for (int I= 0; I < bytes.length; I++) {
+	      	resultI= (resultI << 8) | (bytes[I] & 0xff);
+	      	}
+	      return resultI;
+	    	}
+	  ??? */
 
     // Receive packet code.
 
@@ -449,6 +493,9 @@ public class Peer  // Nested class managing peer connection data.
         return resultB;  // Returning the result.
         }
 
+    
+    // Send packet code.
+
     private void sendingPacketV( String aString )
       /* This method sends a packet containing aString to the peer.
         */
@@ -459,8 +506,8 @@ public class Peer  // Nested class managing peer connection data.
         DatagramPacket packet = new DatagramPacket(
           buf, 
           buf.length, 
-          peerInetSocketAddress.getAddress(),
-          peerInetSocketAddress.getPort()
+          remoteInetSocketAddress.getAddress(),
+          remoteInetSocketAddress.getPort()
           );
         SockPacket aSockPacket=
           new SockPacket( 
@@ -474,4 +521,4 @@ public class Peer  // Nested class managing peer connection data.
         packetsSentNamedInteger.addValueL( 1 );
         }
 
-    } // Peer.
+    } // Unicaster.

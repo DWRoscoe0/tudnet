@@ -34,14 +34,14 @@ public abstract class TreeModelSupport
 	        { 
 	        	vectorOfTreeModelListener.addElement( theTreeModelListener );
 		        if ( vectorOfTreeModelListener.size() > 10)
-		    		appLogger.debug(
-		      			"TreeModelSupport.addTreeModelListener(..), listeners: "+
-	      		    vectorOfTreeModelListener.size()+ "\n  "+
-	      		    theTreeModelListener.getClass().getName() + "@" +
-	      		    Integer.toHexString(
-	      		    		System.identityHashCode(theTreeModelListener)
-	      		    		)
-		            );
+			    		appLogger.error(
+			      			"TreeModelSupport.addTreeModelListener(..), listeners: "+
+		      		    vectorOfTreeModelListener.size()+ "\n  "+
+		      		    theTreeModelListener.getClass().getName() + "@" +
+		      		    Integer.toHexString(
+		      		    		System.identityHashCode(theTreeModelListener)
+		      		    		)
+			            );
   	        }
         	else
 	    		appLogger.error(
@@ -115,9 +115,9 @@ public abstract class TreeModelSupport
           {
             TreeModelListener theTreeModelListener = 
             	(TreeModelListener)listeners.nextElement();
-  	    		appLogger.debug(
-  	      			"TreeModelSupport.fireTreeNodesInserted(..) to:\n"+theTreeModelListener
-  	            );
+  	    		//appLogger.debug(
+            //		"TreeModelSupport.fireTreeNodesInserted(..) to:\n"+theTreeModelListener
+            //    );
             theTreeModelListener.treeNodesInserted( theTreeModelEvent );
             }
         }

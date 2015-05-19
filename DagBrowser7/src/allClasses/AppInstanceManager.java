@@ -240,8 +240,8 @@ public class AppInstanceManager {
     private AppInstanceListener theAppInstanceListener= // Listener ...
       null;  // ...to perform an action if desired.
 
-    public static final int INSTANCE_FLAG_PORT = 
-      PortManager.getDiscoveryPortI();
+    public static final int getInstancePortI() 
+      { return PortManager.getDiscoveryPortI(); }
       // 56944;  // A high number I chose at random.
     
     public boolean managingRunningInstancesThenNeedToExitB( )
@@ -263,13 +263,20 @@ public class AppInstanceManager {
         boolean appShouldExitB= false;  // Set default return for no app exit.
 
         try { // Try to start listening, indicating no other instances.
+        	
           appLogger.info(
-            "About to listen for a newer app signal-packet on socket port " + 
-            INSTANCE_FLAG_PORT
+            "Local Host IP: " + 
+            InetAddress.getLocalHost().getHostAddress() // Get real IP. 
+            );
+        	
+          appLogger.info(
+            "About to listen for a newer app packet on port " + 
+            getInstancePortI()
             );
           instanceServerSocket =  // Try opening listener socket.
             new ServerSocket(
-              INSTANCE_FLAG_PORT, 10, InetAddress.getLocalHost()
+              ///getInstancePortI(), 10, InetAddress.getLocalHost()
+              getInstancePortI(), 10, InetAddress.getLoopbackAddress() 
               );
           { // Setup InstanceManagerThread.
             InstanceManagerThread theInstanceManagerThread=
@@ -297,13 +304,13 @@ public class AppInstanceManager {
           ; // Leave appShouldExitB false for no app exit.
         } catch (IOException e) { // This error means port # already in use.
           appLogger.info(
-            "Port "+INSTANCE_FLAG_PORT+" is already taken."+
+            "Port "+getInstancePortI()+" is already taken."+
             "  Sending signal-packet to older app using it.");
           appShouldExitB=  // Set exit to the result of...
             sendPathInPacketB( );  // ...sending packet to port.
         }
       return appShouldExitB;  // Return whether or not app should exit.
-      }
+      } 
 
     private boolean sendPathInPacketB( )
       /* This managingRunningInstancesThenNeedToExitB(..) sub-method 
@@ -319,7 +326,8 @@ public class AppInstanceManager {
         try {
             Socket clientSocket =  // Create socket for send.
               new Socket(
-                InetAddress.getLocalHost(), INSTANCE_FLAG_PORT
+                ///InetAddress.getLocalHost(), getInstancePortI()
+                InetAddress.getLoopbackAddress(), getInstancePortI()
                 );
             OutputStream out =   // Get its stream.
               clientSocket.getOutputStream();

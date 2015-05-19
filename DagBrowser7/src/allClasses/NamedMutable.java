@@ -11,13 +11,15 @@ public class NamedMutable
 
 	  public NamedMutable( // Constructor. 
         DataTreeModel theDataTreeModel,
-	  		String nameString 
+	  		String nameString,
+	  		final Object newObject
 	  		)
 		  {
 		  	super(nameString); // Constructing base class. 
 
         // Storing injected values stored in this class.
         this.theDataTreeModel= theDataTreeModel;
+				valueObject= newObject; // Setting new value.
         }
 
     public String getValueString( ) // DataNode interface method.
@@ -33,7 +35,7 @@ public class NamedMutable
 	  		final DataNode thisDataNode= this; // Converting this pointer.
 	  	  Object oldObject= this.valueObject; // Saving present value. 
 
-	  	  runOrInvokeAndWaitV( // Do following on AWT thread. 
+	  	  theDataTreeModel.runOrInvokeAndWaitV( // Do following on AWT thread. 
 	    		new Runnable() {
 	    			@Override  
 	          public void run() {
