@@ -107,21 +107,21 @@ public class TreeHelper
     to provide slightly different tree handling behavior.
     See RootJTree.MyTreeHelper for an example.
 
-    ??? Because there are closed paths between the coordinating component
+    ?? Because there are closed paths between the coordinating component
     and the TreeHelper, and between the owning component and the TreeHelper,
     there is the danger of infinite recursion.
     The logical place to do this is in TreeHelper, because it
     is part of all the closed paths.  Add this.
     
-    ??? This class will probably be changed to not force the Whole 
+    ?? This class will probably be changed to not force the Whole 
     to be direct parent of the Part, as it is now.
     It would remain constant through the life of the object.
     This will allow it to be used for more components, 
     including JTree with Whole being the tree root.
     
-    ??? Break-out an interface of public methods for documentation purposes.
+    ?? Break-out an interface of public methods for documentation purposes.
 
-    ??? Name this class something else, such as TreeLogic, 
+    ?? Name this class something else, such as TreeLogic, 
     or eliminate it by integrating it into 
     a TreeAware JComponent subclass or abstract.
 
@@ -172,7 +172,7 @@ public class TreeHelper
     	  addFocusListener( theFocusListener );
     	  
     	  // Setting the TreeModel.
-        setDataTreeModelV(theDataTreeModel); // Needed???
+        setDataTreeModelV(theDataTreeModel); // Needed??
       	}
     
     public void finalizeHelperV() 
@@ -181,7 +181,7 @@ public class TreeHelper
     	  It exists mainly for undoing non-final listener registrations.  
   		  */
       {
-      	setDataTreeModelV( null ); // ??? prevent listener leak. Needed???
+      	setDataTreeModelV( null ); //  prevent listener leak. Needed??
         }
       
     // TreeModel code with Listener registration, etc.
@@ -235,7 +235,7 @@ public class TreeHelper
           while ( listeners.hasMoreElements() ) 
             {
               FocusListener listener = 
-                (FocusListener)listeners.nextElement(); // caste ???
+                (FocusListener)listeners.nextElement(); // caste.
               listener.focusGained( theFocusEvent );
               }
           }
@@ -266,7 +266,7 @@ public class TreeHelper
         to move keyboard focus out of the table to the next Component.  
         (Shift-Tab) moves it in the opposite direction.
         
-        ??? Maybe replace with a more compact KeyAdapter implimentation.
+        ?? Maybe replace with a more compact KeyAdapter implementation.
         */
     
       public void keyPressed(KeyEvent inKeyEvent) 
@@ -354,7 +354,7 @@ public class TreeHelper
           This is useful in determing whether command gadgets,
           such as buttons and menus, should be grayed out.
 
-        ??? Maybe implement the Command pattern.
+        ?? Maybe implement the Command pattern.
         In Java the Command pattern is implemented with the Action interface
         which extends the ActionListener interface.
         This might do everything I eventually want to do.
@@ -400,7 +400,7 @@ public class TreeHelper
           To facilitate the viewing of leaves, though they have no children,
           it returns true for them and executes the command by 
           adding an UnknownDataNode to the end of the present Part path.  
-          ??? This method is too long.  Break it up.
+          ?? This method is too long.  Break it up.
           */
         {
             boolean doableB= false;  // Assuming command is not doable.
@@ -580,7 +580,7 @@ public class TreeHelper
             * The first child, if there is one.
           Otherwise it returns null.
 
-          ??? Maybe instead of null it should return UnknownDataNode?
+          ?? Maybe instead of null it should return UnknownDataNode?
           */
         {
           DataNode childDataNode=  // Try to get the child...
@@ -670,7 +670,7 @@ public class TreeHelper
           It calls the TreePathListener-s as part of this process but 
           not if inTreePath is the same as the present thePartTreePath.
           
-          ??? This used to set Whole to be its parent, but no longer does.
+          ?? This used to set Whole to be its parent, but no longer does.
           It is the responsibility of part TreePathListener-s to
           change the JComponent if the whole needs to be changed.
           */
@@ -791,8 +791,6 @@ public class TreeHelper
           * The (Enter) key is pressed.
           * The mouse is double-clicked.
           See RootJTree and Infogora details.
-          
-          Changed to not use null.  This made other code difficult. ???
           */
         {
           fireSetPartTreePathV(  // Notify the listeners...

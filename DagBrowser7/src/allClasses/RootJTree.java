@@ -32,7 +32,7 @@ public class RootJTree
   
   /* This class is used for the content in the left JTree subpanel.
     
-    Possible changes/fixes ???
+    Possible changes/fixes ??
     
     *!If (Down-Arrow) causes the collapse of a large subtree,
       the final selection is not scrolled into Viewport.
@@ -115,7 +115,7 @@ public class RootJTree
         
         } // Constructor.
 
-    public void initializingV( TreePath selectedTreePath ) // ??? being created.
+    public void initializingV( TreePath selectedTreePath )
       /* This method initializes the state of the JTree,
         or at least the part that is visible in the JTree pane.
         Most of this is based on the state of the MetaNodes.
@@ -343,7 +343,7 @@ public class RootJTree
 
     // Tree Command methods.  Other ones were moved to TreeHelper.
 
-      private void commandExpandOrCollapseV() // Move to MyTreeHelper???
+      private void commandExpandOrCollapseV() // Move to MyTreeHelper??
         /* This command method toggles whether 
           the presently selected node/row is expanded or collapsed.  
           This is for manual expansions and collapses, 

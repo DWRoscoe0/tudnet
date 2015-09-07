@@ -20,7 +20,7 @@ public abstract class TreePathAdapter
         is changing the TreePath of the Part that it is displaying,
         and the listener should adjust its state appropriately.
         
-        ??? Maybe this method should be called called 
+        ?? Maybe this method should be called called 
         setTreePathB..) or settingTreePathB(,,).
         */
       { 

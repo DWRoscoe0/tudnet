@@ -5,14 +5,14 @@ import java.net.InetSocketAddress;
 import java.net.SocketException;
 
 public class BoundUDPSockets 
-  /* ??? This is not presently used.
+  /* This is not presently used.
 
     This class manages bound UDP sockets.
     It creates a DatagramSocket for sending and receiving
     all packets except received multicast packets.
     DatagramSocket is thread-safe,
     so it could be used by any number of threads,
-    simultaniously for sending and receiving.
+    simultaneously for sending and receiving.
 
     At first it will manage only one DatagramSocket
     bound to PortManager.getLocalPortI().
@@ -22,7 +22,7 @@ public class BoundUDPSockets
     the first choice of a port number is already 
     bound or reserved by another application
     
-    ??? Or this might disappear because of 
+    ?? Or this might disappear because of 
     the need for ConnectedDatagramSockets.
     */
   {

@@ -29,12 +29,12 @@ public class MetaFileManager {
 
     This class came after MetaFile from which it got most of its code.
 
-    ??? Might need to put finish() in a separate class to avoid
+    ?? Might need to put finish() in a separate class to avoid
     infinite recursion from finish() to MetaRoot to start().
     This might not be possible because call to finish() is
     in a Listener referenced in start().
 
-    ??? Refactor to eliminate the many public members added during
+    ?? Refactor to eliminate the many public members added during
     division for dependency injection.
 
     */
@@ -55,7 +55,7 @@ public class MetaFileManager {
 
   // Other instance variables.
 
-    private MetaFile lazyLoadMetaFile= null;  // For lazy-loading. ???
+    private MetaFile lazyLoadMetaFile= null;  // For lazy-loading.
       // It stores a reference to the MetaFile used to load
       // the root MetaNode in lazy-loading mode.
       // If more MetaNodes need to be loaded later then is used again.
@@ -63,7 +63,7 @@ public class MetaFileManager {
     private boolean forcedLoadingEnabledB= false;  // Enable/disable.
 
   public MetaFileManager(  // Constructor for use by factory.
-      DataRoot theDataRoot // ??? should go directly to Finisher. 
+      DataRoot theDataRoot // ?? should go directly to Finisher. 
       )
     {
       appLogger.info( "MetaFileManager constructor starting.");
@@ -114,11 +114,11 @@ public class MetaFileManager {
         It returns the root MetaNode gotten by reading, 
         or null if reading failed.
         
-        ??? During development it might read and write several files
+        ?? During development it might read and write several files
         in different format to aid testing and debugging.
         Only one written file is needed for normal operations.
         
-        ??? This should probably be renamed to loadV().
+        ?? This should probably be renamed to loadV().
         */
       { // start()
         MetaNode loadedMetaNode= null;  // Place for result root MetaNode.
@@ -156,9 +156,8 @@ public class MetaFileManager {
         Presently it writes all nodes, whether modified or not.
         Also presently it recursively writes the entire MetaNode tree.
         So if lazy-loading was active all unloaded nodes will be loaded.
-        This will change.  ???
 
-        Eventually only one format will be saved,
+        This will change??  Eventually only one format will be saved,
         but presently, for development and debugging,
         both nested and flat files are written.
         These should contain equivalent information.
@@ -169,7 +168,7 @@ public class MetaFileManager {
         Then Flat.txt can be closed.
         Then a new Flat.txt can be written.
 
-        ??? This should probably be renamed to saveV().
+        ?? This should probably be renamed to saveV().
         */
       { // finish()
         appLogger.info( "MetaFile.finish() begin.");

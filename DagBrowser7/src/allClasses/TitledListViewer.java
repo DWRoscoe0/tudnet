@@ -144,7 +144,7 @@ public class TitledListViewer // adapted from TitledListViewer.
   		       * but it should be able to work with any null combination.
              */
             {
-          		super.setDataTreeModelV( newDataTreeModel ); // Needed???
+          		super.setDataTreeModelV( newDataTreeModel ); // Needed??
 
   		    		//appLogger.debug("TitledListViewer.setDataTreeModel()\n  theTreeListModel: "+theTreeListModel);
 

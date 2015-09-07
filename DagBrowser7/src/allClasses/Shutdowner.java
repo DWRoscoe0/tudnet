@@ -214,7 +214,7 @@ public class Shutdowner
 
 				After this method is called, the app should exit.
 				
-				??? Log a list of all unterminated non-daemon threads.  
+				?? Log a list of all unterminated non-daemon threads.  
 				There should be none.
 
         */
@@ -307,7 +307,7 @@ public class Shutdowner
           the String argument array inArgStrings.
           It does nothing if inArgStrings is null.
 
-          ??? This could use some work.
+          ?? This could use some work.
           In previous version it redirected 
           the Process's stdout and stderr to 
           this Process's stdout.

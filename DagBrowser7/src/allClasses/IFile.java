@@ -293,22 +293,6 @@ public class IFile
             } // calculate the associated DagNodeViewer.
           return resultJComponent;  // return the final result.
           } // GetDataJComponent.
-
-      /* ???
-      private JComponent XJComponentForJTextAreaFrom
-        ( TreePath inTreePath, DataTreeModel inDataTreeModel )
-        /* This grouping returns a DagNodeViewer of a JTextArea 
-          for displaying the IFile named by inTreePath.
-          */
-      /* ???
-        { // JComponentForJTextAreaFrom(inIFile)
-
-          IFile inIFile= (IFile)inTreePath.getLastPathComponent();
-
-          return new TitledTextViewer( inTreePath, inDataTreeModel, inIFile );
-          
-          }  // JComponentForJTextAreaFrom(inIFile)
-        ??? */
           
     // other methods.
 

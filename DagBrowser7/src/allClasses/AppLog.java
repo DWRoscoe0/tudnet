@@ -14,12 +14,12 @@ public class AppLog
   /* This class is for logging information from an app.  
     This class needs some work.
     
-    ??? MakeMultiprocessSafe: 
+    ?? MakeMultiprocessSafe: 
       It might fail if multiple app instances try to log simultaneously.
       Make log file be share-able in case two app instances
       try to write to it at the same time.  See createOrAppendToFileV(..).
 
-    ??? Slowdown migh happen because of  
+    ?? Slowdown migh happen because of  
       * Antimalware Service Executable  
       * Microsoft Windows Search Indexer
       App can run much slower when the log file is long.
@@ -86,7 +86,7 @@ public class AppLog
         Otherwise the session number will be 
         the number stored in the session file incremented by one.
         
-        ??? This method is messy and long.  Fix.
+        ?? This method is messy and long.  Fix.
         */
       { 
         //logFile.delete(); // DO THIS TO CLEAR LOG AND RESET SESSION COUNT!
@@ -221,7 +221,7 @@ public class AppLog
         writing inString.  This might happen if another program,
         such as another instance of this app, is accessing the file.
 
-        ??? MakeMultiprocessSafe: Maybe it is now.  
+        ?? MakeMultiprocessSafe: Maybe it is now.  
           If not then it should be made multiprocess safe so 
           concurrent apps can access the log file.
         */

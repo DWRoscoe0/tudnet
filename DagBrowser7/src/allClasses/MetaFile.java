@@ -351,7 +351,7 @@ public class MetaFile { // For app's meta-data files.
 
         This also handles IOException-s.  
         
-        Maybe prevent empty result ???
+        Maybe prevent empty result ??
         */
       { // readTokenString( String InString )
         String TokenString= "";  // Set token character accumulator to empty.

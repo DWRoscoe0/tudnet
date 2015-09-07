@@ -18,7 +18,7 @@ public abstract class TreeModelSupport
      and for firing TreeModelEvent-s and
      sending them to the TreeModelListener-s.
      
-     Combine this with AbstractTreeModel ???
+     Combine this with AbstractTreeModel ??
 
      */
   {

@@ -5,15 +5,15 @@ import java.util.EventObject;
 public class TestEvent extends EventObject {
 
   /* This class is an Event that can be used to
-    perform operation like most other events.
+    perform operations like most other events.
     But it can be used to only test whether
     such execution is legal given other event fields.
     The legality status is passed via field legalB
     and its access methods.
     */
 
-  private boolean doB= true;  // true means execution is requested.
-    // false means only return whether execution requested is legal.
+  private boolean doB= true;  // true means that an execution is requested.
+    // false means that only return whether an execution requested is legal.
 
   private boolean legalB= true;  // true means request is legal.
 

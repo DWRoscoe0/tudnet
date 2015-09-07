@@ -65,7 +65,7 @@ public class ConnectionManager
     new DatagramSockets are passed to the constructors because
     closing the socket is the only way to terminate receive() operations. 
 
-    ??? Presently the unconnected unicast receiver and multicast receiver
+    ?? Presently the unconnected unicast receiver and multicast receiver
     threads can not recover from an IOException.
     This is related to the fact that their sockets are created by
     other threads and injected so that closing the socket by
@@ -239,9 +239,6 @@ public class ConnectionManager
 				were moved to separate threads with their own queues.
 				The 2 that remain are for miscellaneous packets from the Multcaster
 				and UnconnectedReceiver threads.
-				
-        ??? It might make sense to restore the code that does scheduled jobs
-        when and if things become more complex.
         */
       {
     	  toReturn: {
@@ -337,7 +334,7 @@ public class ConnectionManager
           theMulticastSocket = new MulticastSocket(  // Create MulticastSocket...
 			      PortManager.getDiscoveryPortI()  // ...bound to Discovery port.
 			      );
-          // Need a better way to resupply theMulticastSocket on error ???
+          // Need a better way to resupply theMulticastSocket on error ??
           //new Multicaster(  // Construct Multicaster...
         	theMulticaster= theConnectionsFactory.makeMulticaster(
      	  		theMulticastSocket
@@ -411,7 +408,7 @@ public class ConnectionManager
 	      	( ! removeB( thisUnicaster ) )
 	      	appLogger.error("CM:stoppingUnicasterV(): removeB(..) failed");
 
-	    	theUnicasterManager.removeV(thisUnicaster); // Move to Unicaster???
+	    	theUnicasterManager.removeV(thisUnicaster); // Move to Unicaster??
 	      }
 
     private boolean processingUnconnectedSockPacketsB()
@@ -476,7 +473,7 @@ public class ConnectionManager
         It adds the Unicaster to the appropriate data structures.
         It returns the found or created Unicaster.
         
-        ??? An InetSocketAddress can be built only with new-operator.
+        ?? An InetSocketAddress can be built only with new-operator.
         This makes fast testing difficult.
         Maybe define a new class and use it instead as the key value 
         in the peerSocketAddressConcurrentHashMap.  

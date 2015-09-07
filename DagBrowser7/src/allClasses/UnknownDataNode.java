@@ -52,7 +52,7 @@ public class UnknownDataNode extends NamedLeaf
 
     public static boolean isOneB( Object inObject )
         /* This method returns true if inDataNode is an UnknownDataNode.
-          ??? Maybe replace this with an instance method in AbDataNode.
+          ?? Maybe replace this with an instance method in AbDataNode.
           */
         { 
           return ( 

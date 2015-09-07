@@ -7,11 +7,9 @@ public interface TreePathListener
   /* Classes that need to know when a TreeAware's Part TreePath has changed
     should implement this Listener.
 
-    ??? Presently it passes TreePath information in a TreeSelectionEvent,
-    but this should probably be changed to use its own event,
-    a TreePathEvent, eventually.
-    The Event doesn't actually need to have a TreePath,
-    because that information could be gotten by interogating
+    ?? The TreePathEvent received by this listener
+    doesn't actually need to have a TreePath in it
+    because that information could be gotten by interrogating
     the TreeHelper that is the source of the Event.
     */
 
@@ -24,7 +22,7 @@ public interface TreePathListener
         */
 
     void setPartTreePathV( TreePathEvent theTreePathEvent );
-      /* This TreePathListener method get the TreePath in
+      /* This TreePathListener method gets the TreePath in
         theTreePathEvent which came from a TreeHelper 
         and does something with it, such as making a selection
         in a JComponent associated with that TreePath.

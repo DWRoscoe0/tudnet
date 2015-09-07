@@ -35,22 +35,6 @@ public class NamedMutable
 	  	  Object oldObject= this.valueObject; // Saving present value. 
 				valueObject= newObject; // Setting new value.
 	  	  theDataTreeModel.safelyReportingChangeV( this );
-
-	  		/* ???
-	  		final DataNode thisDataNode= this; // Converting this pointer.
-	  		theDataTreeModel.runOrInvokeAndWaitV( // Do following on AWT thread. 
-	    		new Runnable() {
-	    			@Override  
-	          public void run() {
-	    				valueObject= newObject; // Setting new value.
-	    	  	  theDataTreeModel.reportingChangeV(  // Fire associated listeners. 
-	    	  	  		thisDataNode 
-	    	  	  		);
-	            }
-	          } 
-	        );
-	      ??? */
-
 	  	  return oldObject; // Returning old value.
 		  	}
 

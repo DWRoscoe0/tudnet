@@ -24,7 +24,7 @@ public class MetaNode extends IDNumber
     
     Next the children was moved to its own class, MetaChildren.
     
-    ??? The MetaFileManager is a dependency because
+    ?? The MetaFileManager is a dependency because
     it is used in the construction of MetaNodes
     so that their children can be lazy-loaded.
     The is not efficient use of storage, but for now it works.
@@ -213,7 +213,7 @@ public class MetaNode extends IDNumber
           key == inKeyString and value == inValueObject.
           If no child MetaNode has this attribute then null is returned.
           
-          Maybe refactor this using AttributePiterator subclasses???
+          Maybe refactor this using AttributePiterator subclasses??
           */
         {
           KeyAndValueMetaPiteratorOfMetaNode 
@@ -292,8 +292,8 @@ public class MetaNode extends IDNumber
           */
         {
       	  DataNode thisDataNode= getDataNode();
-  	  		String thisString =thisDataNode.getNameString( ); // ??? 
-  	  		String inString =inDataNode.getNameString( ); // ???
+  	  		String thisString =thisDataNode.getNameString( ); 
+  	  		String inString =inDataNode.getNameString( );
       	  boolean matchB= // Determining whether names match.
       	  		thisString.equals( inString ); 
       	  if ( matchB )  // Attempting DataNode substitution if match.

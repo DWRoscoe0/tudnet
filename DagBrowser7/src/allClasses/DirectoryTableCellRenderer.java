@@ -10,7 +10,7 @@ public class DirectoryTableCellRenderer
   /* This small helper class extends the method getTableCellRendererComponent()
     used for rendering DirectoryTableViewer (JTable) cells.
     It could be renamed to something more generic, for plain JTable cells,
-    since the rendering is not directory-specific.  ???
+    since the rendering is not directory-specific.  ??
     */
   { // class DirectoryTableCellRenderer
 	  private static final long serialVersionUID = 1L;
@@ -56,7 +56,7 @@ public class DirectoryTableCellRenderer
             RenderComponent.setBackground(FocusDependentSelectionColor);
             else
             RenderComponent.setBackground(table.getBackground());
-        // RenderComponent.setBackground(Color.RED);  // ???
+        // RenderComponent.setBackground(Color.RED);
 
         return RenderComponent;
         } // getTableCellRendererComponent(.)

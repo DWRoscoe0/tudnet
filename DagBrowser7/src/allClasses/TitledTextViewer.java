@@ -70,25 +70,6 @@ public class TitledTextViewer
           CommonInitialization( theTreePath, theDataTreeModel );
           } // TitledTextViewer(.)
 
-      /* ???
-      public TitledTextViewer(  // Constructor for viewing a File text. 
-          TreePath theTreePath, TreeModel theTreeModel, IFile theIFile , int I
-          )
-        /* Constructs a TitledTextViewer.
-          theTreePath is the TreePath associated with
-          the node of the Tree to be displayed.
-          The last DataNode in the path is that object.
-          The contents is theIFile.
-          theTreeModel provides context.
-          */
-      /* ???
-        { // TitledTextViewer(.)
-          theIJTextArea= new IJTextArea(    // Construct JTextArea.
-            theIFile.getFile()   // File to view.
-            );
-          CommonInitialization( theTreePath, theTreeModel );
-          } // TitledTextViewer(.)
-      ??? */
 
       private void CommonInitialization( 
       		TreePath theTreePath, 

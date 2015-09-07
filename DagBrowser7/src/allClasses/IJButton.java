@@ -19,7 +19,7 @@ public class IJButton
     * It (will) allow interrogating and clearing whether
       a button has been clicked.
     
-    ??? Find icon image files of up, down, left, and right arrows.
+    ?? Find and use icon image files of up, down, left, and right arrows.
     */
   {
     // Variables.
@@ -69,9 +69,6 @@ public class IJButton
             in the order in which they were added.
             Since this one is added by the constructor,
             it is added before any other user code Listener.
-            
-            ??? This won't work yet.  The order is backwards.
-            Override add(..) so this Listener is always the last one.
             */
           {
             boolean returnB= buttonClickedB;  // Save flag value for return.

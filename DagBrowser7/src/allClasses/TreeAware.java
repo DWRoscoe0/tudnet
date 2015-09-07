@@ -15,7 +15,7 @@ public interface TreeAware
     * It also needs to select a child from the displayed children
       based on a TreePath.  This is done by a TreePathListener.
       
-    * ???
+    * ??
     
     */
 

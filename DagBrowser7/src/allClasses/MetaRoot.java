@@ -136,8 +136,8 @@ public class MetaRoot {
 
   // Code from old Selection class.
 
-    /* This code came from old static Selection class.  ???
-      ??? It should probably not be here and should instead maybe
+    /* This code came from old static Selection class.
+      ?? It should probably not be here and should instead maybe
       be in a new class called SelectionAttributeMetaTool.
 
       These methods help to manage DataNode selections and 
@@ -184,7 +184,7 @@ public class MetaRoot {
           which is a sentinel value which can not for
           anything but a termination marker.
           
-          ??? This probably doesn't belong with the Selection methods
+          ?? This probably doesn't belong with the Selection methods
           because it takes a keyString for any type of path.
           */
         {

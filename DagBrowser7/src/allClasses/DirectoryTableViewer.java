@@ -46,15 +46,14 @@ public class DirectoryTableViewer
     which gets all its data from an augmented TableModel which
     also understands TreePath-s.  ??
     
-    ??? If this panel has focus, and a selected folder is far from the top,
-    it might appear below the botton of the Scroller 
+    ?? If this panel has focus, and a selected folder is far from the top,
+    it might appear below the bottom of the Scroller 
     if the selection is moved to either a parent or child folder.  
-    */ 
 
-  /* ??? marks things to do below.  Here are those items summarized:
-    * ??? Rewrite so that calls to Combining 
-      SetSelectedChildTreePath( TreePath ) and 
-      NotifyTreeSelectionListenersV( boolean ) can be combined.
+    ?? Rewrite so that calls to Combining 
+    SetSelectedChildTreePath( TreePath ) and 
+    NotifyTreeSelectionListenersV( boolean ) can be combined.
+
     */
   
   { // DirectoryTableViewer
@@ -168,7 +167,7 @@ public class DirectoryTableViewer
                 // This will set the TreePaths also.
                 // This converts the row selection to a tree selection.
               } // Process the selection.
-          repaint();  // ??? kluge: do entire table for selection color.
+          repaint();  // ?? kluge: do entire table for selection color.
             // this should repaint only the rows whose selection changed.
           } // void valueChanged(TheListSelectionEvent)
     
@@ -214,7 +213,7 @@ public class DirectoryTableViewer
                 This method translates inTreePathEvent TreeHelper tree path 
                 into an internal JTable selection.
 
-                ??? It ignores any paths with which it cannot deal.
+                ?? It ignores any paths with which it cannot deal.
                 */
               {
                 TreePath inTreePath=  // Get the TreeHelper's path from...
@@ -250,7 +249,7 @@ public class DirectoryTableViewer
               } // Update other stuff.
           } // UpdateJTableForContentV()
 
-      private void selectTableRowV(TreePath inTreePath) //???
+      private void selectTableRowV(TreePath inTreePath) //??
         /* This helper method selects the row in the JTable 
           associated with inTreePath, if possible.
           It must be a sibling of the present part TreePath.

@@ -18,7 +18,7 @@ public class TreeListModel
   /* This class implements a ListModel which gets its data from
     a node Object in the context of a DataTreeModel.
     
-    ??? Should this class be generic on <Object> like its base class.
+    ?? Should this class be generic on <Object> like its base class.
     */
 
   { // class TreeListModel
@@ -76,7 +76,7 @@ public class TreeListModel
 	
 	    @Override
 	    public int getSize()
-	      /* ??? This is being called from the EDT when theDataTreeModel is null,
+	      /* ?? This is being called from the EDT when theDataTreeModel is null,
 	       * apparently after it is finalized.
 	       * For now catch it and return 0.
 	       * Eventually figure out why it's happening.

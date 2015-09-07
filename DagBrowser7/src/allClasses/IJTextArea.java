@@ -21,7 +21,7 @@ public class IJTextArea
   {
     /* This class adds a few features to JTextArea.
 
-      ??? Use StringBuilder to make long files load and display faster.
+      ?? Use StringBuilder to make long files load and display faster.
       The append(..) method is quite slow.
       */
 
@@ -44,14 +44,6 @@ public class IJTextArea
           { // Read in file to JTextArea.
             String LineString;  // temporary storage for file lines.
             try {
-              /*
-              BufferedReader TheBufferedReader = 
-                  new BufferedReader(new InputStreamReader(
-                      new ProgressMonitorInputStream(
-                        TheJTextArea, // parentComponent???
-                        "Reading " + InFile,
-                        new FileInputStream(InFile))));
-              */
               FileInputStream TheFileInputStream = new FileInputStream(InFile);
               @SuppressWarnings("resource")
               BufferedReader TheBufferedReader = 

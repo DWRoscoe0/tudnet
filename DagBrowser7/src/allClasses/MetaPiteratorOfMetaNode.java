@@ -15,7 +15,7 @@ public class MetaPiteratorOfMetaNode
     objects with attributes/maps attached.
     This would have only basic lookup capability.
 
-    Maybe call the interface a MiniMap.  ???
+    Maybe call the interface a MiniMap.  ??
     */
 
   { // class MetaPiteratorOfMetaNode.

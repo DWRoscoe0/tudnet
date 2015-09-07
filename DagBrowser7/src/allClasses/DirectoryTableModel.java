@@ -15,7 +15,7 @@ public class DirectoryTableModel
   /* This class is the data model for directory tables.
     It contains no selection information within the directory it models.
     
-    ??? It will need the ability to Listen to the TreeModel for changes,
+    ?? It will need the ability to Listen to the TreeModel for changes,
     respond to only the relevant changes,
     and fire Event-s to its own Listener-s.
     Wrap Listener-s in weak-references to prevent memory leaks.

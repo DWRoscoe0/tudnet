@@ -22,7 +22,7 @@ abstract class MetaTool
     in the different but related DAGs.  When one path changes, 
     the other is changed to an equivalent value.
 
-    Possible enhancements ???
+    Possible enhancements ??
 
       Optimize MetaNode space:
         Eliminate nodes which:

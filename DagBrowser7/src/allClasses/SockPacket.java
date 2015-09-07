@@ -6,12 +6,12 @@ import java.net.DatagramSocket;
 public class SockPacket
   /* This class represents a datagram packet with other features attached.
 
-    ??? This class is being deprecated.
+    ?? This class is being deprecated.
     
-    ??? This should probably renamed to 
+    ?? This should probably be renamed to 
     EnPacket for Enhanced Packet or maybe EpiPacket.
 
-    ??? I don't recall why I didn't simply subclass DatagramPacket.
+    ?? I don't recall why I didn't simply subclass DatagramPacket.
     Maybe I should do that instead?  No.  All packet info should be nonlocal.
     
     Originally and presently the other feature was 
@@ -56,45 +56,5 @@ public class SockPacket
       {
         return theDatagramPacket;
         }
-
-    /* ???
-    public DatagramSocket getDatagramSocket()
-      // This returns the DatagramSocket associated with this SockPacket.  
-      {
-        return theDatagramSocket;
-        }
-    ??? */
-
-    /* ???
-    public String XgetSocketAddressesString()
-      /* This returns a String representing the
-        end-point addresses (IP and port) of this SockPacket.
-        The String actually contains 3 parts:
-          SL: Socket Local.
-          SR: Socket Remote.
-          PR: Packet Remote.
-        */
-
-    /* ???
-      {
-        String packetAddressString;
-
-        try { // Calculating packet address separately in case of Exception.
-            packetAddressString= 
-              theDatagramPacket.getSocketAddress().toString();
-            }
-          catch (Exception e) { // Handling undefined value.
-            packetAddressString= "undefined";
-            }
-
-        String valueString= "" // Assembling entire string.
-              + " SL:" + theDatagramSocket.getLocalSocketAddress()
-              + " SR:" + theDatagramSocket.getRemoteSocketAddress()
-              + " PR:" + packetAddressString
-              ;
-
-        return valueString;
-        }
-    ??? */
 
 		}
