@@ -6,17 +6,15 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
-///import java.net.SocketException;
 import java.util.Random;
 
-import allClasses.ConnectionManager.PacketQueue;
+import allClasses.LockAndSignal.Input;
 
 public class Unicaster
 
-  ///extends MutableList
 	extends NetCaster
 
-  implements Runnable
+  implements Runnable, JobStatus  // JobStatus code is no longer needed?? 
   
   /* Each instance of this nested class contains and manages data about 
     one of the peer nodes of which the ConnectionManager is aware.
@@ -82,9 +80,11 @@ public class Unicaster
       // Injected dependency instance variables.
       private final PacketQueue sendQueueOfSockPackets;
         // Queue to receive SockPackets to be sent to Unicaster.
-      private SignallingQueue<Unicaster> terminationQueueOfUnicasters;
+    	@SuppressWarnings("unused") // ??
+    	private JobQueue<Unicaster> cmJobQueueOfUnicasters;
       private final DatagramSocket unconnectedDatagramSocket;
-      ///private DataTreeModel theDataTreeModel;
+      private final ConnectionManager theConnectionManager;
+      private final Shutdowner theShutdowner;
 
       // Other instance variables.
       LockAndSignal peerLockAndSignal;  // LockAndSignal for this thread.
@@ -102,16 +102,18 @@ public class Unicaster
     public Unicaster(  // Constructor. 
         InetSocketAddress remoteInetSocketAddress,
         PacketQueue sendQueueOfSockPackets,
-        SignallingQueue<Unicaster> terminationQueueOfUnicasters,
-        DatagramSocket unconnectedDatagramSocket,
-        DataTreeModel theDataTreeModel
+        JobQueue<Unicaster> cmJobQueueOfUnicasters,
+        DatagramSocket unconnectedDatagramSocket, // No longer used??
+        DataTreeModel theDataTreeModel,
+        ConnectionManager theConnectionManager,
+        Shutdowner theShutdowner
         )
       /* This constructor constructs a Unicaster for the purpose of
         communicating with the node at remoteInetSocketAddress,
         but no response has yet been made.
         Fields are defined in a way to cause an initial response.
         
-        ??? Add parameter which controls whether thread first waits for
+        ?? Add parameter which controls whether thread first waits for
         a PING or an ECHO, to reduce or eliminate ping-ping conflicts.
         Implement protocol with a state-machine.
         */
@@ -119,17 +121,15 @@ public class Unicaster
         super( 
   	        theDataTreeModel,
   	        remoteInetSocketAddress,
-        		"Unicaster-at-" /// + 
-		  	      ///remoteInetSocketAddress.getAddress() +
-		  	      /// ":" + remoteInetSocketAddress.getPort()
+        		"Unicaster-at-" 
         		);
 
         // Storing injected dependency constructor arguments.
-          ///this.remoteInetSocketAddress= remoteInetSocketAddress;
           this.sendQueueOfSockPackets= sendQueueOfSockPackets;
-          this.terminationQueueOfUnicasters= terminationQueueOfUnicasters;
+          this.cmJobQueueOfUnicasters= cmJobQueueOfUnicasters;
           this.unconnectedDatagramSocket= unconnectedDatagramSocket;
-	        ///this.theDataTreeModel= theDataTreeModel;
+          this.theConnectionManager= theConnectionManager;
+          this.theShutdowner= theShutdowner;
 
         peerLockAndSignal= new LockAndSignal(false);
 
@@ -160,10 +160,9 @@ public class Unicaster
         a protocol value for this purpose.
         */
       {
-        ///appLogger.info(
-		    ///  Thread.currentThread().getName()+": run() beginning."
-		    ///   );
-    	  int stateI= // Initialize ping-reply protocol state from yield flag. 
+        theConnectionManager.addingV( this );
+
+      	int stateI= // Initialize ping-reply protocol state from yield flag. 
     	  		arbitratedYieldingB ? 0 : 1 ;
         try { // Operations that might produce an IOException.
           initializeV();
@@ -186,23 +185,28 @@ public class Unicaster
 	                stateI= 0;
 	          	  }
               }
-          }
+	      		if  // Informing remote end if we are doing Shutdown.
+	      		  ( theShutdowner.isShuttingDownB() ) 
+		      		{
+	      				sendingPacketV("SHUTTING-DOWN"); // Sending SHUTTING-DOWN packet.
+	  	          appLogger.info( "SHUTTING-DOWN packet sent.");
+		      			}
+          	}
           catch( IOException e ) {
-            appLogger.threadInfo("run() IOException: "+e );
+            appLogger.info("run() IOException: "+e );
             throw new RuntimeException(e);
-          }
+            }
 
-        // Terminating.
-	      ///appLogger.info(
-	      /// Thread.currentThread().getName()+": run() ending."
-	      /// );
+        theConnectionManager.removingV( this );
+
+        appLogger.info("Unicaster run() exitting.");
         }
 
     protected void initializeV()
 	    throws IOException
 	    {
       	super.initializeV();
-	      add( 	RoundTripTimeNamedInteger= new NamedInteger( 
+	      addB( 	RoundTripTimeNamedInteger= new NamedInteger( 
 			      		theDataTreeModel, "Round-Trip-Time-ns", 0 
 			      		)
 	      			);
@@ -225,143 +229,126 @@ public class Unicaster
         terminating the current thread.
         */
       {
-        int maxTriesI= 3;
         LockAndSignal.Input theInput;  // Type of input that ends waits.
-        retryLoop: for // Sending pings until something stops us.
-          ( int triesI= 1; ; triesI++ ) // Retry counter.
-          { // Trying ping send and echo receive one time, or exiting.
-            if  // Checking and exiting if retries were exceeded.
-              ( triesI > maxTriesI )  // Maximum attempts exceeded.
-              { // Terminating thread.
-	              appLogger.info(
-	                	Thread.currentThread().getName()+
-	                	  ": requesting termination after "+maxTriesI+" ECHO"+
-	                	  "  \n  time-outs."
-	                  );
-            	  terminationQueueOfUnicasters.add( // Queuing for termination.
-            	  		this
-            	  		);
-                break;
-                }
-            //long pingMillisL= System.currentTimeMillis();
-            sendingPacketV("PING"); // Sending ping packet.
-            pingSentAtNanosL= System.nanoTime(); // Recording send time.
-            long waitMillisL=  // Calculating half-period wait time.
-              System.currentTimeMillis()+HalfPeriodMillisL;
-            waitLoop: while (true) { // Flushing for pause duration.
-              theInput= // Awaiting next input and storing its type.
-                peerLockAndSignal.doWaitUntilE( // Awaiting input or...
-                  waitMillisL  // ...maximum wait time.
+        int maxTriesI= 3;
+        int triesI= 1;
+        pingEchoRetryLoop: while (true) { // Sending ping getting echo.
+          if  // Checking and exiting if maximum retries were exceeded.
+            ( triesI > maxTriesI )  // Maximum attempts exceeded.
+            { // Terminating thread.
+              appLogger.info(
+                	Thread.currentThread().getName()+
+                	  ": requesting termination after "+maxTriesI+" ECHO"+
+                	  "  \n  time-outs."
                   );
-              switch ( theInput ) {  // Handling the input type.
-                case INTERRUPTION: // Handling a thread's interruption.
-                  break retryLoop; // Exiting to terminate thread.
-                case TIME: // Handling a time-out.
-                  //appLogger.info(
-                  //  	Thread.currentThread().getName()+
-                  //  	  ": time-out waiting for ECHO: "+triesI
-                  //    );
-                  break waitLoop;  // Exiting wait loop to send PING.
-                case NOTIFICATION:  // Handling packet inputs.
-                  while (true) { // Handling possible multiple packets.
-                    if ( ! testingPacketB( ) ) // Handling empty queue.
-                      break;  // Exiting packet NOTIFICATION loop.
-                    if // Handling echo packet, maybe.
-                      ( testingPacketB( "ECHO" ) )
-                      { // Handling echo and exiting.
-	                      RoundTripTimeNamedInteger.setValueL(
-	                      		(System.nanoTime() - pingSentAtNanosL)
-	                      		); // Calculating RoundTripTime.
-                        consumingOnePacketV(); // Consuming echo packet.
-                        // This should handle unwanted received packets.
-                        break retryLoop; // Finishing by exiting loop.
-                        }
-                    if // Handling ping-ping conflict, maybe.
-                      ( testingPacketB( "PING" ) )
-	                    { // Handling ping-ping conflict.
-	                      appLogger.info(
-	                        	Thread.currentThread().getName()+
-	                        	  ": PING ping conflict."
-	                          );
-                      	if // Handling ping-ping conflict.
-	                        ( arbitratedYieldingB ) // Let arbiter decide.
-	                        { // Yielding ping processing to other peer.
-	                          appLogger.info(
-	                          	Thread.currentThread().getName()+
-	                          	  ": PING ping yield: "+triesI
-	                            );
-	                          break retryLoop; // Yielding by exiting loop.
-	                          // Ping packet remains in queue.
-	                          }
-	                    	}
-                    ignoringOnePacketV(); // Ignoring any other packet value.
-                    }
-                  // Dropping through to exit switch and continue waitLoop.
-                  }
+              Thread.currentThread().interrupt(); // Starting termination.
+              break pingEchoRetryLoop;
               }
-            }
+          sendingPacketV("PING"); // Sending ping packet.
+          pingSentAtNanosL= System.nanoTime(); // Recording ping send time.
+          echoWaitLoop: while (true) { // Handling echo or other conditions.
+            theInput=  // Awaiting next input.
+            		testWaitWithTimeOutE( HalfPeriodMillisL );
+            if ( theInput == Input.TIME ) // Exiting echo wait if time-out.
+              { appLogger.info( "Time-out waiting for ECHO: "+triesI );
+                break echoWaitLoop;  // Exiting wait loop to send PING.
+              	}
+            else if // Handling SHUTTING-DOWN packet or interrupt by exiting.
+    	    		( tryingToCaptureTriggeredExitB( ) )
+  	    			break pingEchoRetryLoop; // Exit everything.
+        		else if ( tryingToGetPacketB( "ECHO" ) ) // Handling echo, maybe.
+              { // Handling echo and exiting.
+                RoundTripTimeNamedInteger.setValueL(
+                		(System.nanoTime() - pingSentAtNanosL)
+                		); // Calculating RoundTripTime.
+                // This should handle unwanted received packets.
+    	    			break pingEchoRetryLoop; // Exit everything.
+                }
+        		else if ( testingPacketB( "PING" ) ) // Handling ping conflict, maybe.
+              { // Handling ping conflict.
+                appLogger.info( "PING-PING conflict." );
+              	if ( arbitratedYieldingB ) // Arbitrating ping-ping conflict.
+                  { // Yielding ping processing to other peer.
+                    appLogger.info( "PING ping yield: "+triesI );
+                    break pingEchoRetryLoop; // Yielding by exiting loop.
+                    // Ping packet remains in queue.
+                    }
+              		else
+              		{ appLogger.info( "PING ping not yielding: "+triesI );
+              			tryingToConsumeOnePacketB();  // Consuming PING.
+              			}
+              	  }
+        		else 
+        			tryingToConsumeOnePacketB();  // Consume any other packet.
+            } // echoWaitLoop:
+          triesI++;
+          } // pingEchoRetryLoop: 
         }
 
     private void tryingPingReceiveV()
-      /* This method tries to receive a ping from the remote peer
-        to which it replies by sending an echo response.
-        It waits up to PeriodMillisL for a ping to arrive,
+      /* This method tries to process a received PING packet 
+        from the remote peer to which it replies by sending an ECHO response.
+        If a PING is not immediately available then
+        it waits up to PeriodMillisL for a PING to arrive,
         after which it gives up and returns.
-        If a ping is received it responds immediately by sending an echo,
+        If a PING is received it responds immediately by sending an ECHO,
         after which it waits PeriodMillisL while ignoring all
-        received packets.
+        received packets except Shutdowner.
+        It will exit immediately if isInterrupted() becomes trun
+        or a Shutdowner packet is received.
         */
       {
         LockAndSignal.Input theInput;  // Type of input that ends wait.
-        long pingMillisL=  // Calculating latest ping receive time.
+        long pingTimeMillisL= // Calculating latest okay ping receive time.
           System.currentTimeMillis()
           + PeriodMillisL
           + HalfPeriodMillisL;
-        pingLoop: while (true) { // Inputing until one is acceptable.
+        pingWaitLoop: while (true) { // Processing until something causes exit.
+      		if // Handling SHUTTING-DOWN packet or interrupt by exiting.
+	    			( tryingToCaptureTriggeredExitB( ) )
+	    			break pingWaitLoop;
           if // Handling a received ping if present.
-            ( testingPacketB( "PING" ) )
-            { // Handling received ping.
-              consumingOnePacketV(); // Consuming ping packet.
-              sendingPacketV("ECHO"); // Sending echo packet.
-              long pauseMillisL=  // Calculating end of post-echo pause.
-                System.currentTimeMillis()+PeriodMillisL;
-              while (true) { // Ignoring packets for pause duration.
-                theInput= // Awaiting next input and storing its type.
-                  peerLockAndSignal.doWaitUntilE( pauseMillisL );
-                  switch ( theInput ) {  // Handling input type.
-                    case INTERRUPTION: // Handling thread interruption.
-                      break pingLoop;  // Exiting outer loop.
-                    case TIME: // Handling end of post-echo pause.
-                      break pingLoop;  // Exiting outer loop.
-                    case NOTIFICATION:  // Handling input packet(s).
-                      while (true) { // Ignoring all input packets.
-                        if ( ! testingPacketB( ) ) // Handling none left.
-                          break;  // Exiting loop.
-                        ignoringOnePacketV(); // Flushing one packet.
-                        }
-                    }
-                }
+            ( tryingToGetPacketB( "PING" ) )
+            { // Handling received ping, then exit.
+              sendingPacketV("ECHO"); // Sending echo packet as reply.
+              while (true) { // Ignoring packets until end time, then exit.
+                theInput=  // Awaiting input.
+                		testWaitWithTimeOutE( PeriodMillisL );
+                if ( theInput == Input.TIME ) // Exiting if time limit reached.
+                  break pingWaitLoop;  
+            		if // Exiting everything if exit has been triggered.
+            			( tryingToCaptureTriggeredExitB( ) )
+            			break pingWaitLoop;
+            		tryingToConsumeOnePacketB();  // Consume any other packet.
+              	} // while (true)
               }
-          ignoringOnePacketV(); // Ignoring non-ping packet.
-          //appLogger.info(getName()+":\n  ignoring non-ping.");
-          theInput= // Awaiting next input and storing its type.
-            peerLockAndSignal.doWaitUntilE( // Awaiting input or...
-              pingMillisL  // ...ping time limit.
-              );
-          switch ( theInput ) {  // Handling input based on type.
-            case INTERRUPTION: // Handling a thread's interruption.
-              break pingLoop;  // Exiting to terminate thread.
-            case TIME: // Handling the ping time-out.
-              appLogger.info(
-                	Thread.currentThread().getName()+
-                	  ": time-out waiting for PING."
-                  );
-              break pingLoop;  // Exiting to abort wait.
-            case NOTIFICATION:  // Handling a received packet.
-              // Dropping through to exit switch, go to pingLoop, and decode it.
-            }
-          } // pingLoop
+      		tryingToConsumeOnePacketB();  // Consume any other packet.
+          theInput= testWaitWithTimeOutE( // Awaiting next input.
+          		pingTimeMillisL - System.currentTimeMillis()
+          		);
+          if ( theInput == Input.TIME ) // Exiting outer loop if time-out.
+	          {
+	            appLogger.info( "Time-out waiting for PING." );
+	            break pingWaitLoop;  // Exiting to abort wait.
+	          	}
+          } // pingWaitLoop
         }
+    
+    
+    
+    private Input testWaitWithTimeOutE( long timeOutMsL)
+      /* This is a special test-and-wait method which will return immediately 
+        with Input.NOTIFICATION if a received packet available for processing,
+        otherwise it will do a LockAndSignal.doWaitWithTimeOutE(..).
+        So it might block, or it might not.
+       */
+	    {
+	      return ( testingPacketB( ) ) // Returning the appropriate thing.
+	        ? Input.NOTIFICATION // Returning immediately because packet is ready.
+	        : peerLockAndSignal.doWaitWithTimeOutE( // Returning from normal wait. 
+	        		timeOutMsL
+	        		);
+	      }
 
     private boolean arbitratingYieldB()
       /* This method arbitrates when this local peer is trying
@@ -378,7 +365,7 @@ public class Unicaster
 
         It is based on comparing each peer's address information.
         Presently it uses port information.
-        ??? It should probably use something more unique,
+        ?? It should probably use something more unique,
         such as IP address or other unique ID number.  
         */
       {
@@ -397,104 +384,126 @@ public class Unicaster
         return yieldB;
         }
 
-    /* ???
-    private int packBytesToI(byte[] bytes)
-      /* This method packs an array of 4 bytes into an int.
-        It could be used for converting IP addresses to ints.
-        */
-    /*
-	    {
-	      int resultI= 0;
-	      for (int I= 0; I < bytes.length; I++) {
-	      	resultI= (resultI << 8) | (bytes[I] & 0xff);
-	      	}
-	      return resultI;
-	    	}
-	  ??? */
-
-    // Receive packet code.
+    // Receive packet code.  This might be enhanced with streaming.
 
     public void puttingReceivedPacketV( SockPacket theSockPacket )
-      // This method adds theSockPacket to the peer's receive queue.
+      /* This method is used by source threads, actually the UnicastReceiver,
+        to add theSockPacket to this Unicaster's receive queue.
+       */
       {
         receiveQueueOfSockPackets.add(theSockPacket);
         }
 
-    private void consumingOnePacketV()
-      /* This method consumes one packet, if any,
-        at the head of the queue.
-        */
+    private boolean tryingToCaptureTriggeredExitB( )
+      /* This method tests whether exit has been triggered, meaning either:
+        * The current thread's isInterrupted() is true, or
+        * The next packet, if any, at the head of the receiveQueueOfSockPackets,
+		    	contains "Shutdowner", indicating the remote node is shutting down.
+		    	If true then the packet is consumed and
+		    	the current thread's isInterrupted() status is set true.
+		    This method returns true if exit is triggered, false otherwise.
+		    */
       {
-        receiveQueueOfSockPackets.poll();  // Consuming the packet,..
-          // ...if there was one at head of queue.
-
-        packetsReceivedNamedInteger.addValueL( 1 );
+        if // Trying to get and convert SHUTTING-DOWN packet to interrupt status. 
+          ( tryingToGetPacketB( "SHUTTING-DOWN" ) )
+	        {
+	          appLogger.info( "SHUTTING-DOWN packet received.");
+	          Thread.currentThread().interrupt(); // Converting to thread interrupt.
+	          }
+	      return Thread.currentThread().isInterrupted();
         }
 
-    private void ignoringOnePacketV()
-      /* This method logs that the present one packet, if any,
-        at the head of the queue, is being ignored,
-        and then consumes it.
-        */
-      {
-        testingPacketB( "(ignoring)" );  // Log that its ignored, sort of.
-        consumingOnePacketV();  // So it won't be seen again.
-        }
-
-    private boolean testingPacketB( )
-      /* This method tests whether a packet, if any,
-        at the head of the receiveQueueOfSockPackets,
-        is available.
-        It returns true if there is a packet available, false otherwise.
-        */
-      {
-        return ( receiveQueueOfSockPackets.peek() != null );
-        }
-
-    private boolean testingPacketB( String aString )
-      /* This method tests whether the packet, if any,
+    private boolean tryingToGetPacketB( String aString )
+      /* This method tries to get a packet, if any,
         at the head of the receiveQueueOfSockPackets,
         contains aString.
-        It returns true if there is a packet and
+        It consumes the packet and returns true if there is a packet and
         it is aString, false otherwise.
-        The packet, if any, remains in the queue.
         */
       {
-        boolean resultB= false;  // Assuming aString is not present.
-        decodingPacket: {
+    	  boolean gotPacketB=  // Testing for packet with desired string.
+    	  	testingPacketB( aString );
+    	  if ( gotPacketB ) // Consuming packet if desired one is there.
+        	tryingToConsumeOnePacketB();
+    	  return gotPacketB;
+      	}
+
+    private boolean tryingToConsumeOnePacketB()
+      /* This method consumes one packet, if any,
+        at the head of the queue.
+        It returns true if a packet was consumed,
+        false if there was none to consume.
+        */
+      {
+    	  boolean processingPacketB= 
+    	  	( peekingPacketString( ) != null );
+        if ( processingPacketB ) // Consuming the packet if there is one.
+	        {
+	        	receiveQueueOfSockPackets.poll(); // Removing head of queue.
+	        	cachedPacketString= null; // Empty the string cache/flag.
+	          packetsReceivedNamedInteger.addValueL( 1 );  // Count the packet.
+	          }
+    	  return processingPacketB;
+        }
+
+    private String cachedPacketString= null;
+
+    private String peekingPacketString( )
+      /* This method returns the String in the next received packet
+        in the queue, if there is one.  
+        If there's no packet then it returns null. 
+        */
+      {
+        calculatingString: {
+  				if ( cachedPacketString != null ) // Exiting if String is cached. 
+  				  break calculatingString;
           SockPacket receivedSockPacket= // Testing queue for a packet.
             receiveQueueOfSockPackets.peek();
-          if (receivedSockPacket == null) // Handling no packet.
-            {
-              //appLogger.info("testingPacketB() no packet is not "+aString);
-              break decodingPacket;  // Exiting with false.
-              }
+          if (receivedSockPacket == null) // Exiting if no packet.
+            break calculatingString;
           DatagramPacket theDatagramPacket= // Getting DatagramPacket.
             receivedSockPacket.getDatagramPacket();
-          String dataString=  // Creating String from packet data.
-            new String(
-              theDatagramPacket.getData()
-              ,theDatagramPacket.getOffset()
-              ,theDatagramPacket.getLength()
-              );
-          if   // Handling unequal Strings.
-            ( ! dataString.contains( aString ) )
-            {
-              //appLogger.info(
-              //  "testingPacketB() packet "+dataString+" is NOT "+aString
-              //  );
-              break decodingPacket;  // Exiting with false.
-              }
-          //appLogger.info(
-          //  "testingPacketB() packet "+dataString+" IS "+aString
-          //  );
+          cachedPacketString= // Calculating and caching String from packet.
+            PacketStuff.gettingPacketString( theDatagramPacket );
+          } // calculatingString: 
+	    	return cachedPacketString; // Returning whatever is now in cache.
+	      }
+
+      private boolean testingPacketB( String aString )
+        /* This method tests whether the packet, if any,
+          at the head of the receiveQueueOfSockPackets,
+          contains aString.
+          It returns true if there is a packet and
+          it is aString, false otherwise.
+          The packet, if any, remains in the queue.
+          */
+        {
+        boolean resultB= false;  // Assuming aString is not present.
+        decodingPacket: {
+          String packetString= // Getting string from packet if possible. 
+          	peekingPacketString( );
+          if ( packetString == null ) // Exiting if no packet or no string.
+            break decodingPacket;  // Exiting with false.
+          if   // Exiting if the desired String is not in packet String.
+            ( ! packetString.contains( aString ) )
+            break decodingPacket;  // Exiting with false.
           resultB= true;  // Changing result because Strings are equal.
-          }
+          } // decodingPacket:
         return resultB;  // Returning the result.
         }
 
+      private boolean testingPacketB( )
+        /* This method tests whether a packet, if any,
+          at the head of the receiveQueueOfSockPackets,
+          is available.
+          It returns true if there is a packet available, false otherwise.
+          */
+        {
+          return ( receiveQueueOfSockPackets.peek() != null );
+          }
+
     
-    // Send packet code.
+    // Send packet code.  This might be enhanced with streaming.
 
     private void sendingPacketV( String aString )
       /* This method sends a packet containing aString to the peer.
@@ -521,4 +530,13 @@ public class Unicaster
         packetsSentNamedInteger.addValueL( 1 );
         }
 
+
+    // interface JobStatus code.  Not presently used.
+    
+    private boolean jobDoneB= false;
+    
+  	public boolean getJobDoneB() { return jobDoneB; }
+  	
+  	public void setJobDoneV( Boolean jobDoneB ) { this.jobDoneB= jobDoneB; }
+  	
     } // Unicaster.

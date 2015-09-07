@@ -6,90 +6,243 @@ import java.util.Arrays;
 //import java.util.Enumeration;
 //import java.util.Vector;
 
+
+
 import javax.swing.event.EventListenerList;
 
 import static allClasses.Globals.*;  // appLogger;
 
 public class Shutdowner
 
-  /* This is a Singleton class which manages
-    things that are done during app shut-down.
-    It does 3 things:
+  /* This class is used for app shut-down.  It does the following:
 
-    1. It manages a list of ShutdownerListeners 
-      which are called in a controllable order
-      at shutdown time.  This is an alternative to
-      Java's ShutdownHook threads, which execute in 
-      uknown order.  The purpose for these 
-      Listenersis and threads is cleanup.
+    1. It manages a list of app ShutdownerListeners 
+      which are called as part of app shutdown.  
+      This is similar to what Java's Runtime ShutdownHook threads do,
+      but in a more controlled order.  
+
+    2. It provides the ability to create and start 
+      a user-defined executable Process just before this app terminates.
+      The process is usually a different instance or version
+      of this same app.  It is intended to be used for 
+      instance management and software updating.
+      
+    3. It provides the ability to make certain that app shutdown completes 
+      before java virtual machine (JVM) shutdown does,
+      regardless of which one starts to shutdown first.
+      It does this using one Java Runtime ShutdownHook thread
+      to initiate app shutdown if it hasn't already been initiated,
+      and then wait for app shutdown to complete.
+
+    The app shutdown sequence is as follows:
+
+	  1.  requestAppShutdownV() is called.  This initiates app shutdown.
+	    This can happen in two ways:
+
+	    1.  From inside the app, for example when the uses closes 
+	      the last of the app's windows.
+
+	    2.  From outside the app, while the JVM is shutting down,
+	      when it runs the app's shutdown hook thread.
+	      For example, this would happen when the OS shuts down.
+
+	    Note that requestAppShutdownV() might be called from both places,
+	    but if it does then the second call has no effect.
     
-    2. It creates and starts a user-definable Process
-      just before this app terminates.
-      An intended use for this is app updating.
-
-    3. It detects when shutdown is happening in order to
-      start the above operations.
-
-    ??? The above functions should probably be separated
-    with each function into its own class.
-
-    ??? Singletons generally, and this one in particular,
-    are globals, which are discouraged for various reasons,
-    such as making testing difficult.  
-    Their use should be limited or tempoaray.
-    If they must be used, they should be non-global,
-    and referenced with DependencyInjection.
+    2.  Control returns to an app thread which earlier had called 
+      Shutdowner.waitForAppShutdownV(). 
+      
+    3.  The app does an orderly shutdown of all its threads.
     
-   */
+    4.  The app calls Shutdowner.finishV().
+    
+    5.  Shutdowner.finishV() performs the last of 
+    	the app's shutdown operations, such as calling
+    	each of the previously registered ShutdownerListeners, and
+    	possibly creating and starting a new Process to replace this one.
+    
+    6.  Shutdowner.finishV() signals that app shutdown is complete 
+      by calling appShutdownDoneLockAndSignal.doNotifyV().
+      This is the signal to the ShutdownHook thread that it can stop waiting.
+
+		7. It returns from main(..) thereby terminating the last of its threads,
+		  or it calls exit(..).  This will start JVM shutdown unless 
+		  it is already underway.
+
+		The JVM shutdown sequence is as follows:
+		
+		1.  Something initiates JVM shutdown, such as:
+		
+		  1.  The app's shutdown sequence completes and 
+		    last of the it's threads terminate, or the app calls exit(..).
+		  
+		  2.  An external trigger, such as an OS restart.
+		
+		2.  The JVM starts all registered shutdown hooks in some unspecified order. 
+		  One of these is the app's shutdown hook, which does only two things:
+		  
+		  1.  It calls requestAppShutdownV(), which starts 
+		    the app's shutdown sequence unless it has been started already.
+		    
+		  2,  It waits until the app's shutdown sequence is complete.
+
+    3.  The JVM waits until all shutdown hook threads, 
+      including the app's shutdown hook described above,  have finished.
+
+    4.  The JVM runs all un-invoked finalizers if 
+      finalization-on-exit has been enabled.
+      
+    5.  The JVM halts.
+
+	  The app's shutdown hook guarantees that under normal circumstances,
+	  regardless of whether shutdown is initiated internally or externally,
+	  app shutdown will be started and finished before JVM shutdown completes.
+
+    Examples of how shutdowns might be triggered external to the app are:
+    
+        1. A computer shutdown.
+        2. A computer restart.
+        3. A manual process termination.
+
+    Examples of how shutdowns might be triggered internal to the app are:
+    
+        1. The execution of an exit command.
+        2. The closing of the app's last window.
+      
+    */
 
   {
+
+	  private LockAndSignal appShutdownRequestedLockAndSignal= 
+	  		new LockAndSignal(false); // Requested by JVM shutdown hook or app.
+
+	  private LockAndSignal appShutdownDoneLockAndSignal= 
+	  		new LockAndSignal(false); // Shutdown, excluding libs and JVM, is done.
+
+	  private boolean shutdownUnderwayB= false;
+	  
+	  public void initializeV() // Prepares ShutdownHook as shutdown hook.
+		  {
+	      Runtime.getRuntime().addShutdownHook(
+	      		new ShutdownHook("ShutDwn")
+	      		); // Adding...
+	        // ...it to Runtime to be run at shut-down time.
+		    }
+
+    class ShutdownHook  // For terminating the app.
+	    extends Thread
+	    /* This nested shutdown hook Thread's run() method
+	      is started when JVM shutdown is underway.
+	      It requests app shutdown, which might or might not have started already.
+	      Next it waits for the app to signal completion of its shutdown. 
+	      Then this thread ends.
+	      */
+	    { // ShutdownHook
+	      
+    	  public ShutdownHook( String nameString ) // Constructor.
+    	  	{ super( nameString ); }
+    	  
+	      public void run()
+	        {
+	      		appLogger.info( 
+	      				"ShutdownHook.run() beginning, calling requestAppShutdownV()." 
+	      				);
+	      		requestAppShutdownV(); // Requesting app code shutdown.
+	      		  // App code might have done this already.
+
+	      		appLogger.info( 
+	      				"ShutdownHook.run() appShutdownDoneLockAndSignal.doWaitE()." 
+	      				);
+	      	  appShutdownDoneLockAndSignal.doWaitE(); // Awaiting shutdown done.
+	      	  
+	      		appLogger.info( "ShutdownHook.run() ending." );
+	          }
+	
+	      } // ShutdownHook
+
+    public boolean isShuttingDownB()
+      /* This method returns a boolean indication of whether
+        the shutdown process has begun.
+        This method was added because When shutdown had begun
+        some Java libraries, such as AWT and Swing,
+        might not be safe to use.
+        */
+    	{ return  shutdownUnderwayB; }
     
-    // Shutdowner shutdown code.
+	  public void waitForAppShutdownUnderwayV()
+	    /* This method Waits until either:
+	      * app shutdown has started or has been requested, really the same thing.
+	      * this thread isInterrupted() is true. 
+	     */
+	    { 
+		  	appLogger.info( "Shutdowner.waitForAppShutdownStartedV()." );
+	  	  appShutdownRequestedLockAndSignal.doWaitE(); 
+	  	  }
+
+	  public void requestAppShutdownV()
+	    /* This method requests app shutdown and records that it is underway.
+	      Shutdown might have begun already, but if it hasn't, it now will.
+	      */
+	    { 
+	  	  if ( shutdownUnderwayB )
+		  		appLogger.info( 
+		  				"Shutdowner.requestAppShutdownV(), already underway." 
+		  				);
+		  	  else
+		  	  {
+			  		shutdownUnderwayB= true; // Recording that shutdown is underway.
+			  		appLogger.info( "Shutdowner.requestAppShutdownV() initiating." );
+			  	  appShutdownRequestedLockAndSignal.doNotifyV();
+		  	    }
+	  	  }
+	  
+    private boolean finishVCalledB= false; // For detecting reentry.
     
-      public void doShutdown()
-        /* This method is called in the ShutdownHook thread
-          when shut down is underway
-          Its purpose is to perform app shutdown operations,
-          of which there are two, which it does in the following order:
+    public void finishV()
+      /* This method performs the last of an app's shutdown operations,
+        which are the following, which it does in the following order:
+
+        1. It calls each of the ShutdownerListeners in the Listener list.
+          It does this in the reverse of the order they were added.
+
+        2. It uses ProcessBuilder to create and start a new Process.
+          if the argStrings has been defined for doing that.
+          This is for chaining from this app instance to another one.
           
-          1. It calls each of the ShutdownerListeners in the Listener list.
-            It does this in the reverse of the order they were added.
-          
-          2. It uses ProcessBuilder to create and start a new Process.
-            if the argStrings has been defined for one.
-            This is for chaining from this app instance a newer one.
+        3. It signals that app shutdown is complete by doing a 
+	        appShutdownDoneLockAndSignal.doNotifyV().
 
-          Parts of the app might have set other ShutdownHooks
-          to run their own shutdown code not included here.
-          */
-        {
-          appLogger.info( "Shutdowner: shutdown beginning." );
-          //System.out.println( "Shutdowner running." );
+				After this method is called, the app should exit.
+				
+				??? Log a list of all unterminated non-daemon threads.  
+				There should be none.
 
-          //fireShutdownerListeners();  // Call all defined listeners.
-          reverseFireShutdownerListeners();  // Call all listeners in reverse.
+        */
+      {
+    		if ( finishVCalledB ) // Prevent multiple executions of this method.
+      		{
+            appLogger.error( "Shutdowner.finishV() finishV() already called." );
+            return;
+        		}
+        finishVCalledB= true;
 
-          // At this point there should be nothing remaining for the app
-          //  to do except start the next app as an external command
-          //  and terminate.
+        appLogger.info( "Shutdowner.finishV() beginning, calling listeners." );
+        reverseFireShutdownerListeners(); // Calling all listeners in reverse.
 
-          if  // Execute an external command if...
-            ( argStrings != null ) // ...a command was defined.
-            {
-              //System.out.println(
-              //  "Executing argStrings: "+
-              //  Arrays.toString(argStrings)
-              //  );
-              callAProcess(argStrings);
-              }
+        appLogger.info( 
+        	"Shutdowner.finishV() listeners done, starting process if requested." 
+        	);
+        startAProcessV(argStrings); // Executing an external command.
 
-          appLogger.info( "Shutdowner: shutdown ending." );
-          }
+        appLogger.info( "Shutdowner.finishV() signaling app shutdown done." );
+    	  appShutdownDoneLockAndSignal.doNotifyV(); // Signaling shutdown done.
+
+    	  appLogger.info( "Shutdowner.finishV(), ending." );
+        }
     
     // ShutdownerListener code.  Maintains and calls ShutdownListeners.
     
-      private EventListenerList theEventListenerList= 
-        new EventListenerList();
+      private EventListenerList theEventListenerList= new EventListenerList();
 
       public synchronized void addShutdownerListener
         ( ShutdownerListener listener ) 
@@ -103,7 +256,7 @@ public class Shutdowner
           theEventListenerList.remove(ShutdownerListener.class, listener);
           }
 
-      /*
+      /* forwardFire...  not used.
       private synchronized void fireShutdownerListeners( )
         // Fire listeners in the same order they were added.
         {
@@ -130,8 +283,7 @@ public class Shutdowner
 
     // Code for defining and starting other processes and ending this one.
 
-      private String[] argStrings =  // Command to executed at exit.
-        null; 
+      private String[] argStrings = null; // Command to be executed at exit.
 
 	    public void setCommandV( String... inArgStrings )
 	      /* This method sets to inArgStrings the array of Strings which
@@ -141,42 +293,45 @@ public class Shutdowner
           then no command will be executed.
 	        */
 	      {
-          appLogger.info(
-          	"Setting shutdown command of: " 
+          appLogger.info( 
+          	"Shutdowner.setCommandV(..): " 
             + Arrays.toString(inArgStrings)
             );
           
 	    	  argStrings = inArgStrings; 
 	    	  }
 
-      private void callAProcess(String... inArgStrings)
-          /* This method calls a Process built with 
-            a ProessBuilder operating on 
-            the String argument array inArgStrings.
-            
-            ??? This could use some work.
-            In previous version it redirected 
-            the Process's stdout and stderr to 
-            this Process's stdout.
-            Until this redirection ended it could cause an access violation
-            which would prevent replacement of the file from which 
-            this Process was loaded!
-            */
-          {
-            try {
-              appLogger.info( 
-                "Starting Process with these Strings:" + Arrays.toString(inArgStrings)
-                );
-              ProcessBuilder MyProcessBuilder = 
-                new ProcessBuilder(inArgStrings);
-              
-              MyProcessBuilder.start();
+      private void startAProcessV(String... inArgStrings)
+        /* This method calls a Process built with 
+          a ProessBuilder operating on 
+          the String argument array inArgStrings.
+          It does nothing if inArgStrings is null.
 
+          ??? This could use some work.
+          In previous version it redirected 
+          the Process's stdout and stderr to 
+          this Process's stdout.
+          Until this redirection ended it could cause an access violation
+          which would prevent replacement of the file from which 
+          this Process was loaded!
+          */
+        {
+	        if  // Executing an external command if...
+		        ( inArgStrings != null ) // ...command arguments were defined.
+            try {
+	              appLogger.info( 
+	                "Shutdowner.startAProcessV(..) w: " 
+	                + Arrays.toString(inArgStrings)
+	                );
+	              ProcessBuilder MyProcessBuilder= // Build the process. 
+	                new ProcessBuilder(inArgStrings);
+	              
+	              MyProcessBuilder.start();  // Start the process.
+	
+	              appLogger.info( "Shutdowner.startAProcessV(..): succeeded." ); 
               } catch (IOException e1) {
-                e1.printStackTrace();
+                appLogger.error( "Shutdowner.startAProcessV(..): FAILED." ); 
               }
-              //appLogger.info( "Monitoring done.");  // Logger unreliable.
-              //System.out.println( "Monitoring done.");
           }
 
     }

@@ -1,6 +1,18 @@
 package allClasses;
 
+import java.awt.AWTEvent;
+import java.awt.EventQueue;
+import java.awt.Toolkit;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+
 import javax.swing.JFrame;
+
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
+import java.util.HashMap;
+import java.util.Map;
 
 import static allClasses.Globals.appLogger;  // For appLogger;
 
@@ -16,34 +28,37 @@ public class AppGUIManager // Top level of the app's GUI, the window manager.
 
     // AppGUIManager's constructor injected dependency variables.
     private EpiThread theConnectionManagerEpiThread;
+    private EpiThread theCPUMonitorEpiThread;
     private DataTreeModel theDataTreeModel;
     private DataNode theInitialRootDataNode;
-    private TerminationShutdownThread theTerminationShutdownThread;
     private LockAndSignal theGUILockAndSignal;
     private GUIDefiner theGUIDefiner;
+    private Shutdowner theShutdowner;
 
     public AppGUIManager(   // Constructor.
         EpiThread theConnectionManagerEpiThread,
+        EpiThread theCPUMonitorEpiThread,
         DataTreeModel theDataTreeModel,
         DataNode theInitialRootDataNode,
-        TerminationShutdownThread theTerminationShutdownThread,
         LockAndSignal theGUILockAndSignal,
-        GUIDefiner theGUIDefiner
+        GUIDefiner theGUIDefiner,
+        Shutdowner theShutdowner
         )
       {
-        this.theConnectionManagerEpiThread= theConnectionManagerEpiThread;
+	      this.theConnectionManagerEpiThread= theConnectionManagerEpiThread;
+	      this.theCPUMonitorEpiThread= theCPUMonitorEpiThread;
         this.theDataTreeModel= theDataTreeModel;
         this.theInitialRootDataNode= theInitialRootDataNode;
-        this.theTerminationShutdownThread= theTerminationShutdownThread;
         this.theGUILockAndSignal= theGUILockAndSignal;
         this.theGUIDefiner= theGUIDefiner;
+        this.theShutdowner= theShutdowner;
         }
 
-    public static class GUIDefiner // This Runnable starts the GUI in the AWT thread.
+    public static class GUIDefiner // This EDT Runnable starts the GUI. 
       implements Runnable
 
       /* This nested class is used to create and start the app's GUI.
-        It's run() method runs in the AWT thread.
+        It's run() method runs in the EDT thread.
         It signals its completion by executing doNotify() on
         the LockAndSignal object passed to it when 
         its instance is constructed.
@@ -52,19 +67,21 @@ public class AppGUIManager // Top level of the app's GUI, the window manager.
       { // GUIDefiner
 
     		// Injected dependency variables.
-        LockAndSignal theGUILockAndSignal;
+        private LockAndSignal theGUILockAndSignal;
     		private AppInstanceManager theAppInstanceManager;
     		private DagBrowserPanel theDagBrowserPanel;
     		private AppGUIFactory theAppGUIFactory;
+    		private Shutdowner theShutdowner;
 
         // Other AppGUIManager instance variables.
         private JFrame theJFrame;  // App's only JFrame (now).
-        
+
         GUIDefiner(   // Constructor. 
         		LockAndSignal theGUILockAndSignal, 
         		AppInstanceManager theAppInstanceManager,
         		DagBrowserPanel theDagBrowserPanel,
-        		AppGUIFactory theAppGUIFactory
+        		AppGUIFactory theAppGUIFactory,
+        		Shutdowner theShutdowner
         		)
           {
             this.theGUILockAndSignal=   // Save lock reference.
@@ -72,7 +89,192 @@ public class AppGUIManager // Top level of the app's GUI, the window manager.
         		this.theAppInstanceManager= theAppInstanceManager;
         		this.theDagBrowserPanel= theDagBrowserPanel;
         		this.theAppGUIFactory= theAppGUIFactory;
+        		this.theShutdowner= theShutdowner;
             }
+
+    		public class TracingEventQueue extends EventQueue {
+
+    			/* This class was gotten from an article at
+    			  https://today.java.net/pub/a/today/2007/08/30/debugging-swing.html
+    			  Its purpose is to identify when the EDT is taking too long
+    			  to process events.
+    			 	*/
+
+    		   private TracingEventQueueMonitor theTracingEventQueueMonitor;
+
+    		   public TracingEventQueue() {
+   		       //this.theTracingEventQueueMonitor= 
+   		  	   //  new TracingEventQueueMonitor(500);
+   		  	   this.theTracingEventQueueMonitor= 
+   		  	  		 new TracingEventQueueMonitor(TracingEventQueueMonitor.LIMIT);
+   		       this.theTracingEventQueueMonitor.start();
+    		   }
+
+    		   @Override
+    		   protected void dispatchEvent(AWTEvent event) {
+    		     this.theTracingEventQueueMonitor.eventDispatchingBeginningV(event);
+    		     super.dispatchEvent(event);
+    		     this.theTracingEventQueueMonitor.eventDispatchingEndingV(event);
+    		     }
+    		} // TracingEventQueue
+
+    		class TracingEventQueueMonitor extends Thread {
+
+    			/* This class was gotten from an article at
+    			  https://today.java.net/pub/a/today/2007/08/30/debugging-swing.html
+    			  Its purpose is to help TracingEventQueue 
+    			  identify when the EDT is taking too long to process events.
+    			  It displays the elapsed time and the stack
+    			  the first time it notices elapsed time has exceeded the threshold.
+    			  The Thread.sleep(..) time defines the sampling rate.
+    			  It might need to be adjusted to locate hogging code.
+		     	  */
+
+    			private long thresholdDelay;
+
+    			private final static long PERIOD= 100;  // was 100
+    			private final static long LIMIT= 500; // was 500
+
+    			class EventValue { 
+    				long startTimeL; 
+    				boolean outputtedB; 
+    				EventValue(long startTimeL) {
+    					this.startTimeL= startTimeL;
+    				  }
+    				}
+
+    			private Map<AWTEvent, EventValue> eventTimeMap;
+					private boolean eventDispatchingEndingB= false;
+
+    			public TracingEventQueueMonitor(long thresholdDelay) {
+    				super("EDTMonitor");
+    				this.thresholdDelay = thresholdDelay;
+    				this.eventTimeMap = new HashMap<AWTEvent, EventValue>();
+    			  setDaemon(true);
+    				}
+
+    			public synchronized void eventDispatchingBeginningV(AWTEvent event)
+    			  // Processes the beginning of event dispatching by recording in map.
+	    			{
+	    				this.eventTimeMap.put(
+	    						event, new EventValue(System.currentTimeMillis())
+	    						);
+	    			  }
+
+    			public void eventDispatchingEndingV(AWTEvent event) 
+	  			  /* Processes the ending of event dispatching by
+				      doing a time check and removing the associated map entry.
+				      It does not do a stack trace, which should already have been done.
+				      */
+	    			{
+    					eventDispatchingEndingB= true;
+    				  synchronized(this) {
+		    				this.checkEventTimeB(
+		    						"Total",
+		    						event, 
+		    						System.currentTimeMillis(),
+		    						this.eventTimeMap.get(event).startTimeL);
+		    				this.eventTimeMap.remove(event);
+    				  	}
+    					eventDispatchingEndingB= false;
+	    			  }
+
+    			private boolean checkEventTimeB(
+    					String labelString, AWTEvent event, long currTime, long startTime
+    					) 
+    			  /* Reports whether an event dispatch has been running to long,
+    			    longer that thresholdDelay. 
+    			    It returns true if it has, false otherwise. 
+    			    It is called by:
+    			    * run() when excessive dispatch time is first detected.
+    			      The EDT stack is displayed at this time also.
+    			    * eventDispatchingEndingV(..) later to 
+    			      display total dispatch time.
+    			    */
+	    			{
+	    				long currProcessingTime = currTime - startTime;
+	    				boolean thresholdExceededB= 
+	    						(currProcessingTime >= this.thresholdDelay);
+	    				if (thresholdExceededB) {
+	    					String outString= "EDT "
+	    							//Event [" + event.hashCode() + "] "
+	    							+ labelString
+	    							+ " "
+	    							+ event.getClass().getName()
+	    							+ " has taken too much time (" + currProcessingTime
+	    							+ ")";
+	    					//System.out.println(outString);
+	              appLogger.warning(outString);
+	    				  }
+	    				return thresholdExceededB; 
+  	    			}
+
+    			@Override
+    			public void run() 
+    			  /* This method periodically tests whether an EDT dispatch
+    			    has taken too long and reports it if so.
+    			    The report includes a stack trace of the AWT-EventQueue thread.
+							*/
+	    			{
+	    				while (true) {
+	    					long currTime = System.currentTimeMillis();
+	    					synchronized (this) {
+	    						for (Map.Entry<AWTEvent, EventValue> entry : this.eventTimeMap
+	    								.entrySet()) {
+	    							AWTEvent event = entry.getKey();
+	    							if (entry.getValue() == null) // Skipping if no entry.
+	    								continue;
+	    							if  // Skipping if this entry output earlier.
+	    							  (entry.getValue().outputtedB)
+	    								continue;
+	    							long startTime = entry.getValue().startTimeL;
+	    	    				boolean thresholdExceededB= // Displaying if too long.
+	    	    						this.checkEventTimeB(
+	    	    								"Partial",event, currTime, startTime
+	    	    								);
+	    	    				if (thresholdExceededB) // Displaying stack also if too long.
+			    	    			{
+	    	    						entry.getValue().outputtedB= true; // Recording output.
+			  	              ThreadMXBean threadBean= 
+			  	              		ManagementFactory.getThreadMXBean();
+			  	              long threadIds[] = threadBean.getAllThreadIds();
+			  	              for (long threadId : threadIds) {
+			  	                 ThreadInfo threadInfo = threadBean.getThreadInfo(threadId,
+			  	                       Integer.MAX_VALUE);
+			  	                 if (threadInfo.getThreadName().startsWith("AWT-EventQueue")) {
+			  	                    //System.out.println(
+			  	                	  appLogger.warning(
+					  	                	   threadInfo.getThreadName() + " / "
+					  	                     + threadInfo.getThreadState()
+					  	                     );
+			  	          					if ( eventDispatchingEndingB ) 
+				  	                	  appLogger.warning("Dispatch already ended.");
+				  	                	  else
+				  	                	  { // Display stack.
+					  	                	  appLogger.warning("Begin Stack Trace.");
+					  	                	  // /* ?? Disable stack trace logging.
+					  	                    StackTraceElement[] stack = threadInfo.getStackTrace();
+					  	                    for (StackTraceElement stackEntry : stack) {
+					  	                       //System.out.println(
+					  	                    	 appLogger.warning("\t" + stackEntry.getClassName()
+					  	                       + "." + stackEntry.getMethodName() + " ["
+					  	                       + stackEntry.getLineNumber() + "]");
+					  	                    }
+					  	                	  appLogger.warning("End Stack Trace.");
+					  	                	  // ?? Disable stack trace logging. */
+				  	          				  	}
+			  	                 }
+			  	              }
+			    	    			}
+	    						}
+	    					}
+	    					try { Thread.sleep(PERIOD); // Waiting for the sample time.   
+	    					  } 
+	    					catch (InterruptedException ie) { }
+	    				}
+	    			}
+
+    		} // TracingEventQueueMonitor
 
         public void run()
           /* This method builds the app's GUI in a new JFrame 
@@ -81,10 +283,15 @@ public class AppGUIManager // Top level of the app's GUI, the window manager.
             calls invokeLater(..) because AWT GUI code is not thread-safe.
             */
           {
-            //try { // Change GUI look-and-feel to be OS instead of java.
+	        	Toolkit.getDefaultToolkit().getSystemEventQueue().push(
+	        	    new TracingEventQueue()); // For monitoring dispatch times.
+
+        	  //try { // Change GUI look-and-feel to be OS instead of java.
             //  UIManager.setLookAndFeel(UIManager.
             //    getSystemLookAndFeelClassName());
             //  } catch(Exception e) {}
+	        	
+        		theDagBrowserPanel.initializingV(); // (post-construction).
 
         		theJFrame =  // construct and start the app JFrame.
         				startingJFrame();
@@ -99,7 +306,7 @@ public class AppGUIManager // Top level of the app's GUI, the window manager.
 
         private JFrame startingJFrame()
           /* This method creates the app's JFrame and starts it.
-            It is meant to be run on the UI (AWT) thread.
+            It is meant to be run on the EDT (Event Dispatching Thread).
             The JFrame content is set to a DagBrowserPanel 
             which contains the GUI and other code which does most of the work.
             It returns the JFrame.  
@@ -112,66 +319,24 @@ public class AppGUIManager // Top level of the app's GUI, the window manager.
                 +", archived "
                 +theAppInstanceManager.thisAppDateString()
                 );
-            theDagBrowserPanel.initializingV(); // Initializing post-construction.
             theJFrame.setContentPane( theDagBrowserPanel );  // Store content.
             theJFrame.pack();  // Layout all the content's sub-panels.
             theJFrame.setLocationRelativeTo(null);  // Center JFrame on screen.
-            theJFrame.setDefaultCloseOperation(  // Set the close operation...
-              JFrame.EXIT_ON_CLOSE );  // ...to be exit, since it's the only frame.
-            theJFrame.setVisible(true);  // Make the app visible.
+            theJFrame.setDefaultCloseOperation( // Set the close operation to be
+              JFrame.DO_NOTHING_ON_CLOSE // nothing, so listener can handle. 
+              );
+            theJFrame.addWindowListener( // Set Listener to handle close.
+	            new WindowAdapter() {
+	              public void windowClosing(WindowEvent e) {
+	                appLogger.info("windowClosing(..), will request shutdown.");
+	                theShutdowner.requestAppShutdownV();
+	                }
+	            	});
+            theJFrame.setVisible(true);  // Make the window visible.
             return theJFrame;
             }
 
         } //GUIDefiner
-      
-    static class TerminationShutdownThread  // For terminating main() thread.
-      extends Thread
-      /* This nested shutdown hook Thread class's run() method
-        requests that the main thread finalize and terminate.
-        It does this by setting the main thread's interrupt() flag.
-        After the main thread finishes its finalization and terminates,
-        this shutdown hook thread terminates also,
-        eventually allowing the entire app to terminate.
-        */
-      { // TerminationShutdownThread
-        private Thread mainThread;  // Other thread to terminate.
-
-        public TerminationShutdownThread(Thread mainThread) // Constructor.
-          { this.mainThread= mainThread; }
-        
-        public void run()
-          {
-            mainThread.interrupt();  // Request termination of main thread.
-
-            try {  // Wait for main thread to terminate.
-              mainThread.join();
-              } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-              }
-
-            // At this point, main thread has been terminated.
-            }
-
-        } // TerminationShutdownThread
-
-    private void awaitingShutdownV()  // While interacting with user.
-      // This method blocks until shutdown is underway..
-      {
-        appLogger.info("AppGUIManager.awaitingShutdownV(): begining wait.");
-
-        while  // Sleeping in a loop until notification by interrupt().
-          (! Thread.interrupted() )  // Test and clear thread interrupt flag.
-          try { // Block for 30 seconds or end early if interrupt() occurs.
-              Thread.sleep(30*1000);  // Sleep 30 seconds.  Any amount works.
-            } catch (InterruptedException anInterruptedException) {
-              Thread.currentThread().interrupt();  // Re-interrupt for exit.
-            }
-
-        appLogger.info("AppGUIManager.awaitingShutdownV(): ending wait.");
-
-        // At this point shutdown is underway.
-        
-        }
 
     class InstanceCreationRunnable
     	implements AppInstanceListener, Runnable
@@ -202,17 +367,17 @@ public class AppGUIManager // Top level of the app's GUI, the window manager.
         which is described by the [best] answer, with 18 votes, at
         http://stackoverflow.com/questions/309023/howto-bring-a-java-window-to-the-front
 
-        ??? Eventually this method might also process command arguments
+        ?? Eventually this method might also process command arguments
         as part of the software update process as part of
         the AppInstanceManager logic.
 
-        ??? Maybe some of this should be done in DagBrowserPanel?
+        ?? Maybe some of this should be done in DagBrowserPanel?
 
         */
       {
     		private JFrame theJFrame;
 
-    		InstanceCreationRunnable ( JFrame theJFrame )
+    		InstanceCreationRunnable( JFrame theJFrame )  // Constructor.
 	    		{
     				this.theJFrame= theJFrame;
     				
@@ -247,7 +412,7 @@ public class AppGUIManager // Top level of the app's GUI, the window manager.
             */
             }
 
-        } // InstanceCreationRunnable
+        } // class InstanceCreationRunnable
 
     private void startingBrowserGUIV()
       /* This method builds and starts the Graphical User Interface (GUI).
@@ -255,6 +420,8 @@ public class AppGUIManager // Top level of the app's GUI, the window manager.
         This is tricky because GUI operations must be performed
         on a different thread, the AWT thread, and
         we must wait for those operations to complete.
+        
+        ?? Simplify by using invokeAndWait().
         */
       {
         appLogger.info("Queuing GUIDefiner.");
@@ -273,21 +440,14 @@ public class AppGUIManager // Top level of the app's GUI, the window manager.
     public void runV() // This method does the main AppGUIManager run phase.
       {
         theDataTreeModel.initializeV( theInitialRootDataNode );
-
         startingBrowserGUIV();  // Building and displaying GUI.
+        theConnectionManagerEpiThread.startV();
+        theCPUMonitorEpiThread.startV();
 
-        Runtime.getRuntime().addShutdownHook(
-        		theTerminationShutdownThread
-        		); // Adding...
-          // ...it to Runtime to be run at shut-down time.
+        theShutdowner.waitForAppShutdownUnderwayV();
 
-        theConnectionManagerEpiThread.startV( );
-          // Starting ConnectionManager thread.
-
-        awaitingShutdownV();  // Interacting with user via GUI until shutdown.
-
-        theDataTreeModel.logListenersV();
-
+        theDataTreeModel.logListenersV(); // [for debugging]
+        // theCPUMonitorEpiThread.stopAndJoinV( ); ?? 
         theConnectionManagerEpiThread.stopAndJoinV( ); 
           // Stopping ConnectionManager thread.
         }

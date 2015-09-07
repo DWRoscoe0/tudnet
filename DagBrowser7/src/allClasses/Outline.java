@@ -12,17 +12,23 @@ import java.io.RandomAccessFile;
 //import javax.swing.tree.TreePath;
 
 
+
+
+
+
 import static allClasses.Globals.*;  // appLogger;
 
 public class Outline
 
-  extends AbDataNode
+	extends MutableList
 
   /* The purpose of this class is to create 
     a large subtree for Infogora demonstrations
     from a text file that uses indented lines as in an outline.
     
-    ??? This class is supposed to be temporary.
+    This class does lazy-loading, based on needs.
+    
+    ?? This class is supposed to be temporary.
     It is very inefficient.
     It might benefit from caching as is done with IFile and FileRoots.
     There is a 2-second pause when it is first accessed in right pane.
@@ -36,87 +42,145 @@ public class Outline
       		null;
   
     // instance variables.
-      // Initial values.
-        private long startingOffsetL;  // Nodes starting file offset.
-          // This value is sufficient to distinguish one node from another.
+      private long startingOffsetL;  // Nodes starting file offset.
+        // This value is sufficient to distinguish one node from another.
+      private LoadState theLoadState= LoadState.CONSTRUCTED;
 
-          // pseudo-statics variables for general state values.
+    public enum LoadState {
 
-        	// pseudo-statics variables for information about previous line read.
+      CONSTRUCTED, // has temporary name. and is not displayable yet.
+      LEAF, // displayable.  name defined.  body text to be loaded from file.
+      EMPTY_BRANCH, // displayable.  name defined.  has no children yet.
+        // children will be lazy loaded after node is selected.
+      FULL_BRANCH // displayable.  has all its children.
+
+      };
 
     static class Aid { // Helper class for Outline.
 
       long fileOffsetL;  // File offset of file when reading.
       String debugString;  // Line data for use during debugging.
 
-      // pseudo-statics variables for read process.
+      // pseudo-statics variables for readline() processing.
       long lineOffsetL;  // File offset of line.
-      int lineIndentI;  // Indent level (# of leading blanks) of line
+      int lineIndentI;  // Indent level (# of leading blanks) in line
       String lineString;  // Line data without leading and trailing blanks.
-    	
+
       // pseudo-statics variables for cached node properties.
       int nodeIndentI;  // Indent level (# of leading blanks) for this node.
       int theChildCountI= -1;  // cached count of children.
 
       private static boolean readLineReentryB= false; // ?? Debug.
+        // Should no longer be needed because of synchronized (lockObject). 
 
-      private void readLine( )
+      private void readLineV( )
         /* Reads one next line of the outline file.
-          It stores information about what it read in the
-          ReadNext instance variable.
+          It stores information about what it read in theAid object.
           If an EndOfFile is encountered then it simulates
           the reading of a line containing only a ".".
           */
-        { // readLine.
+        { // readLineV.
       		synchronized (lockObject) {
 	      		if ( readLineReentryB ) // ?? catch 2nd thread at entrance.
 	      			{ readLineReentryB= false;             
-	      			  appLogger.error( "Outline: readLine() REENTRY Begin.");
+	      			  appLogger.error( "Outline: readLineV() REENTRY Begin.");
 	      				}
 	      			else
 	      			readLineReentryB= true;
-	      		lineString= null; // Clearing String accumulator.
-        	  lineOffsetL= fileOffsetL;  // Saving file offset of line being read.
-	          try 
-	            {
-	          	  theRandomAccessFile.seek(fileOffsetL);  // Seeking read point.
-	          		lineString = theRandomAccessFile.readLine();  // Reading line.
-	          	  fileOffsetL= // Saving end point.
-	          	  		theRandomAccessFile.getFilePointer(); 
-	              }
-	            catch (IOException e) { // Handle errors.
-	              e.printStackTrace();
-	              } // Handle errors.
-	          if (lineString == null) // Handling End of file (shouldn't happen).
-		          {
-		            //appLogger.info( "Outline: readLine() replacing EOF with '.'");
-	          	  lineString= ".";  // Simulating read of a terminator line.
-		            }
-	          { // Measuring line indent level.
-	          	lineIndentI= 0;  // Clearing indent level.
-	            //appLogger.info( "Outline: readLine(),lineString= "+lineString );
-	            while // Incrementing indent level for each leading space
-	              ( ( lineIndentI < lineString.length() ) &&
-	                ( lineString.charAt( lineIndentI ) == ' ' )
-	                )
-	            	lineIndentI++;
-	            } // Measure indent level.
-	          lineString=  // Removing leading and trailing spaces from line.
-	          		lineString.trim( ); 
+	          int maxTriesI= 3;
+	          int triesI= 1;
+	          readlineRetryLoop: while (true) {
+	            if  // Checking and exiting if maximum retries were exceeded.
+	              ( triesI > maxTriesI )  // Maximum attempts exceeded.
+	              { // Terminating thread.
+	                appLogger.error( "Outline.readLineV() retries failed." );
+	                break readlineRetryLoop; // Exiting with failure.
+	                }
+	            try { 
+	            	  doReadLineV( ); 
+	                break readlineRetryLoop; // Exiting with success.
+	            	  } 
+	              catch ( IOException e ) {
+	              	try {
+		                appLogger.info( "Outline.readLineV() re-openning file." );
+	              		theRandomAccessFile.close(); // Closing bad file.
+	                  theRandomAccessFile=  // Re-opening it.
+	                      new RandomAccessFile( "Outline.tmp", "r" );
+	              		}
+		              catch ( IOException e1 ) {
+		                appLogger.error( "Outline.readLineV() re-open failed." );
+		                }
+	              	};
+	    	      triesI++;
+	            } // readlineRetryLoop: 
 	      		if ( ! readLineReentryB ) // ?? catch 1st thread at exit.
 		    			{ readLineReentryB= true;
-		  			  	appLogger.error( "Outline: readLine() REENTRY End.");
+		  			  	appLogger.error( "Outline: readLineV() REENTRY End.");
 		    				}
 	      			else
 	      			readLineReentryB= false;
       			}
-          } // readLine.
+          } // readLineV.
 
-      public String getSectionString( )
+      private void doReadLineV( )
+        throws IOException
+        // Does readLine() except for setup and error recovery and retrying.
+        {
+	    		lineString= null; // Clearing String accumulator.
+	    	  lineOffsetL= fileOffsetL;  // Saving file offset of line being read.
+	        try 
+	          {
+	        	  theRandomAccessFile.seek(fileOffsetL);  // Seeking read point.
+	            }
+	          catch (IOException e) { // Logging and re-throwing.
+	            appLogger.error(
+	            		"Outline.readLineV() seek() "+fileOffsetL+"\n"+e
+	            		);
+	            throw e;
+	            } // Handle errors.
+	        try 
+		        {
+		      		lineString = theRandomAccessFile.readLine();  // Reading line.
+		          }
+	          catch (IOException e) { // Logging and re-throwing.
+		          appLogger.error("Outline.readLineV() readline()\n"+e);
+	            throw e;
+		          } // Handle errors.
+	        try 
+		        {
+		      	  fileOffsetL= // Saving end point.
+		      	  		theRandomAccessFile.getFilePointer(); 
+		          }
+	          catch (IOException e) { // Logging and re-throwing.
+		          appLogger.error("Outline.readLineV() getFilePointer()\n"+e);
+	            throw e;
+		          } // Handle errors.
+	        if (lineString == null) // Handling End of file (shouldn't happen).
+	          {
+	            //appLogger.info( "Outline: readLineV() replacing EOF with '.'");
+	        	  lineString= ".";  // Simulating read of a terminator line.
+	            }
+	        { // Measuring line indent level.
+	        	lineIndentI= 0;  // Clearing indent level.
+	          //appLogger.info( "Outline: readLineV(),lineString= "+lineString );
+	          while // Incrementing indent level for each leading space in line.
+	            ( ( lineIndentI < lineString.length() ) &&
+	              ( lineString.charAt( lineIndentI ) == ' ' )
+	              )
+	          	lineIndentI++;
+	          } // Measure indent level.
+	        lineString=  // Removing leading and trailing spaces from line.
+	        		lineString.trim( ); 
+	        }
+
+      public String getBodyString()
         /* This returns a String containing all the text
-          at the beginning of a node before its children, if any.
+          at the beginning of a node, after its name,
+          but before its children, if any.
+          It assumes that the line containing the name has already been read.
           */
-        { // String getSectionString( )
+        { // String p;( )
+      		readLineV( );  // Skipping line containing name.
           String totalString= "";  // Initialize String accumulator.
           while // Accumulate all lines in the section which...
             ( ( lineIndentI <= nodeIndentI ) && // ...are not indented more...
@@ -125,7 +189,7 @@ public class Outline
             { // Accumulate line.
               totalString+= lineString;  // Append present line.
               totalString+= '\n';  // Append newline character.
-              readLine( );  // Read next line.
+              readLineV( );  // Read next line.
               } // Accumulate line.
           return totalString;  // Return final result.
           } // String getSectionString( )
@@ -147,23 +211,26 @@ public class Outline
 	                //appLogger.info( "Outline: skipChild(), Done.");
 	                doneB= true;  // It is last child line, so terminate loop.
 	                }
-              readLine( );  // Skip child line.
+              readLineV( );  // Skip child line.
               } // Skip child lines but stop after last one.
           } // skipChild( )
     
       } // class Aid
-      
-    // Constructors.
 
-        public Outline ( long offsetInL )
-          /* Constructs an Outline node that will be found
-            at Outline file at offset offsetInL.
-            Normally the root node is constructed with Outline( 0 ).
-            */
-          { // Outline(.)
-            startingOffsetL= offsetInL;  // Save starting file offset.
-            } // Outline(.)
-    
+    public Outline( long offsetInL, DataTreeModel theDataTreeModel ) // Constructor.
+      /* Constructs an Outline node whose source can be found
+        in Outline file at offset offsetInL.
+        Normally the root node is constructed with Outline( 0 ).
+        */
+      { // Outline(.)
+	    	super(
+	        theDataTreeModel,
+	        NamedNonLeaf.temporaryNameString, 
+          new DataNode[]{} // Initially empty List for lazy-loaded children.
+	        );
+        startingOffsetL= offsetInL;  // Save starting file offset.
+        } // Outline(.)
+
     // A subset of delegated AbstractTreeModel interface methods.
 
       public boolean isLeaf( ) 
@@ -171,167 +238,48 @@ public class Outline
           is more indented, indicating the start of a child.
           */
         {
-      	  Aid theAid= prepareAndGetAid( );
-      	  theAid.getSectionString( );  // Read past header section.
-          return   // Is a leaf if line's indent is not greater than node's.  
-            ! ( theAid.lineIndentI > theAid.nodeIndentI );
+	      	preparePartiallyLoadedNodeV();
+	      	return (theLoadState == LoadState.LEAF );
           }
 
       public int getChildCount( ) 
         /* Returns the number of outline subsections of this section.  */
         {
-          if ( Misc.reminderB ) // Reminding me of this rarely called method.
-            appLogger.debug("Outline.getChildCount() " + IDCode());
-          Aid theAid= prepareAndGetAid( );
-          if ( theAid.theChildCountI <= 0 )  // calculate if not done yet.
-            { // calculate child count.
-          		theAid.getSectionString( );  // Read past header.
-              theAid.theChildCountI= 0;  // Initialize child count.
-              while  // Count all children.
-                ( theAid.lineIndentI > theAid.nodeIndentI )  // There is a child here.
-                { // process this child.
-              		theAid.theChildCountI++;  // Count it.
-                  theAid.skipChild( );  // Skip past this child.
-                  } // process this child.
-              } // calculate child count.
-          return theAid.theChildCountI;  // Return accumulated child count.
-          }
-    
-      public DataNode getChild( int indexI ) 
-        /* This returns the child with index indexI.
-          If not then it calculates the child and 
-          saves it in the cache for later.
-          In either case it returns it.
-
-          It doesn't get the child from an array cache if possible,
-          but maybe it should???
-          */
-        { // getChild( int ) 
-      	  Aid theAid= prepareAndGetAid( );
-
-      	  theAid.getSectionString( );  // Read past 1st section to 1st child.
-
-          for (int i=0; i < indexI; i++)  // Skip to the correct child.
-          	theAid.skipChild( );
-
-          if ( theAid.lineString.equals( "." ) )  // Line is a single '.'.
-            return null;
-            else
-            return new Outline(  // Return Outline node for this record with...
-              theAid.lineOffsetL  // ...its file offset.
-            );
-          } // getChild( int ) 
-
-      public int getIndexOfChild( Object childObject ) 
-        /* Returns the index of the filesystem root named by childObject 
-          in the list of filesystem roots, or -1 if it is not found.
-          It does they by comparing Object-s as File-s.
-
-          ??? This is very inefficient because it calls getChild(int),
-          which is itself slow, inside of a loop.
-          This amounts to a doubly nested loop.
-          Fortunately it doesn't seem to be called very often,
-          except at startup sometimes.
-          But it could be made much faster by
-          rewriting like getChild(.).
-          */
-        {
-          if ( Misc.reminderB ) // Reminding me of this rarely called method.
-            appLogger.debug("Outline.getIndexOfChild(...)" );
-            //System.out.println( "Outline.getIndexOfChild(...)" );
-
-          return super.getIndexOfChild( childObject ) ;
-          }
-
-      /* ???
-      public String getValueString( ) 
-        { 
-      	  return prepareAndGetAid().getSectionString( );
+      		prepareFullyLoadedNodeV();
+      	  return super.getChildCount();
       	  }
-      ??? */
-
-    // Other methods.
+        
+        public DataNode getChild( int indexI ) 
+          // This returns the child with index indexI.
+        {
+      		prepareFullyLoadedNodeV();
+      	  return super.getChild(indexI);
+        	}
+        
+    // Other getter methods.
 
       public String getNameString( )
-        /* Returns String representing name of this Object.  */
-        {
-          Aid theAid= prepareAndGetAid( );
-          return theAid.lineString;  // Return data from line read.
-          }
-
-      public String getContentString( )
 	      /* Returns String representing name of this Object.  */
 	      {
-	        Aid theAid= prepareAndGetAid( );
-	        return theAid.getSectionString( );
+	      	preparePartiallyLoadedNodeV();
+	        //return theAid.lineString;  // Return data from line read.
+	        return super.getNameString( );
 	        }
 
-      private Aid prepareAndGetAid( )
-        /* Prepares the Outline file for reading by:
-            * Opening it if needed.
-            * Seeking the position of the data for this object.
-            * Reading and storing the first line in the file.
-            * 
-          It also returns an Aid object containing variables needed for
-          more operations. 
-          */
-        { // prepareAndGetAid( )
-      		Aid theAid= new Aid();  // Create theAid.
-      	  theAid.fileOffsetL= startingOffsetL;
-      		synchronized (lockObject) { // Thread-safe preparation of file.
-	          if ( theRandomAccessFile == null )  // Open the file if needed.
-	            prepareTheRandomAccessFile();
-      			}
-          theAid.readLine( );  // Read first line.
-          theAid.debugString= theAid.lineString;  // Save first line as ID for debugging.
-          theAid.nodeIndentI= theAid.lineIndentI;  // Save indent level of section.
-          return theAid;
-          } // prepareAndGetAid( )
-
-      private void prepareTheRandomAccessFile()
-        /* This grouping method prepares the RandomAccessFile by
-          creating it using resource Outline.txt.
-          The reason for this is because files inside jar files
-          can be read only as streams, probably because
-          they must be uncompressed as a stream.
-          To access them randomly they must be extracted.
-          
-          ??? Create RandomAccessStream which reads acts like RandomAccessFile
-          but appends lines of stream only as needed.
-          This might hot help much with Outline because Jtree
-          seems to need to know the child count,
-          but it might be helpful for other resources 
-          distributed in jar files.
-          */
-        { // prepareTheRandomAccessFile(..)
-          InputStream resourceInputStream= 
-            getClass().getResourceAsStream("Outline.txt");
-          { // open random-access file for creation and reading.
-            try { // Try creating file.
-              theRandomAccessFile=  // For open random access Outline file.
-                new RandomAccessFile( "Outline.tmp", "rw" );
-              } // Try creating file.
-            catch (FileNotFoundException e) { // Handle any errors.
-              e.printStackTrace();
-              } // Handle any errors.
-            } // open random-access file for creation and reading.
-          { // copy bytes from ResourceInputStream to theRandomAccessFile.
-            int byteI;
-            try {
-              while ( ( byteI= resourceInputStream.read() ) != -1) 
-                theRandomAccessFile.write( byteI );
-              }
-            catch ( IOException e ) {
-              e.printStackTrace();
-              }
-            }
-          } // prepareTheRandomAccessFile(..)
+      public String getContentString( )
+	      // Returns String representing the body text of this Object.
+	      {
+	        Aid theAid= prepareAndGetAid( );
+	        return theAid.getBodyString( );
+	        }
 
       public String toString()
         /* Returns a String representing this object, for JList. */
         { 
           return getNameString( );
           }
+
+      // Other methods.
 
       @Override public boolean equals(Object other) 
         /* This is the standard equals() method.  */
@@ -349,5 +297,144 @@ public class Outline
         {
           return (int) (41 * startingOffsetL);
           }
+
+      // Access preparation methods.
+
+      private void prepareFullyLoadedNodeV()
+        // Prepares for accessing this Outline node as a fully loaded node.
+        {
+      		stateLoop: while (true) {
+	      	  switch ( theLoadState ) {
+			    	  case CONSTRUCTED: 
+			    	  	preparePartiallyLoadedNodeV();
+			    	  	break;
+			    	  case EMPTY_BRANCH:
+			    	  	loadChildrenV();
+			      	  break;
+			    	  case LEAF: 
+			    	  	break stateLoop; // Exiting loop with terminal state.
+			    	  case FULL_BRANCH: 
+			    	  	break stateLoop; // Exiting loop with terminal state.
+		    	  	}
+      			} // stateLoop:
+      	  //if ( theLoadState.ordinal() < LoadState.FULL_BRANCH.ordinal() )
+          }
+
+	  	private void loadChildrenV() 
+		  	{
+	        Aid theAid= prepareAndGetAid( );
+      		theAid.getBodyString( );  // Read past header.
+          theAid.theChildCountI= 0;  // Initialize child count.
+          while  // Processing all children indicated by indented first lines.
+            ( theAid.lineIndentI > theAid.nodeIndentI )
+            { // process this child.
+	            DataNode childDataNode= new Outline( // Constructing child node
+		            theAid.lineOffsetL,  // for this file offset.
+		            theDataTreeModel
+	            	);
+	            addRawV(childDataNode); // Add to parent List, without EDT??
+          		theAid.theChildCountI++;  // Count it.
+              theAid.skipChild( );  // Skip past this child.
+              } // process this child.
+      	  theLoadState= LoadState.FULL_BRANCH; // Recording new node state.
+	  	  	}
+	  	
+      private void preparePartiallyLoadedNodeV()
+      	/* Prepares for accessing this Outline node as a partially loaded node.
+          It return a helper Aid object. 
+          */
+        {
+      	  switch ( theLoadState ) {
+	      	  case CONSTRUCTED: ;
+		      	  { // Doing partial loading.
+	      	  		Aid theAid= prepareAndGetAid();
+		      	  	setNameStringV(  // Redefining name from 
+		      	  			theAid.lineString  // first line read from node text.
+		      	  			);
+		        	  theAid.getBodyString( );  // Read past header section.
+		            if ( // Setting the LoadState based on whether  
+			              ! ( theAid.lineIndentI > theAid.nodeIndentI ) 
+			              ) // line's indent is not greater than node's.
+		            	theLoadState= LoadState.LEAF;
+		            	else
+		            	theLoadState= LoadState.EMPTY_BRANCH;
+		      	  	}
+	      	    break;
+	      	  default:
+	      	  }
+          }
+
+      private Aid prepareAndGetAid()
+        /* Prepares for accessing this Outline node in the way before 
+          lazy loading was added.
+          This includes returning a helper Aid object 
+          containing variables needed for more operations. 
+          This is the original Aid getter before lazy loading.
+          */
+        { // prepareAndGetAid( )
+      		Aid theAid= makeAid();  // Create theAid.
+      	  theAid.fileOffsetL= startingOffsetL;
+      	  prepareFileV();
+          theAid.readLineV( );  // Read first line.
+          theAid.debugString= theAid.lineString;  // Save first line as ID for debugging.
+          theAid.nodeIndentI= theAid.lineIndentI;  // Save indent level of section.
+          return theAid;
+          } // prepareAndGetAid( )
+
+      private Aid makeAid()
+	    	/* Makes and returns a helper Aid object.  */
+        { // prepareAndGetAid( )
+      		Aid theAid= new Aid();  // Create theAid.
+          return theAid;
+          }
+  
+  	  private void prepareFileV()
+  	    // Prepares theRandomAccessFile if it was not done already.
+	  	  {
+		  		synchronized (lockObject) { // Thread-safe creation of file.
+		        if ( theRandomAccessFile == null )  // Open the file if needed.
+		          createTheRandomAccessFileV();
+		  			}
+		  	  }
+
+      private void createTheRandomAccessFileV()
+        /* This grouping method prepares the RandomAccessFile by
+          making a copy of resource file Outline.txt.
+          The reason for this is because when resource files 
+          are inside jar files they can be read only as streams, 
+          probably because they must be uncompressed as a stream.
+          To access them randomly they must be uncompressed and copied first.
+          
+          ?? Create LazyRandomAccessFile which acts like RandomAccessFile
+          but appends lines of resource stream only as needed.
+          This might not help much with this Outline class because 
+          Jtree seems to need to know the child count,
+          but it might be helpful for other resources 
+          distributed in jar files.
+          */
+        { // createTheRandomAccessFileV(..)
+          InputStream resourceInputStream= 
+            getClass().getResourceAsStream("Outline.txt");
+          { // open random-access file for creation and reading.
+            try { // Try creating file.
+              theRandomAccessFile=  // For open random access Outline file.
+                new RandomAccessFile( "Outline.tmp", "rw" );
+              } // Try creating file.
+            catch (FileNotFoundException e) { // Handle any errors.
+              appLogger.error("Outline.createTheRandomAccessFileV(), new "+e);
+              } // Handle any errors.
+            } // open random-access file for creation and reading.
+          { // copy bytes from ResourceInputStream to theRandomAccessFile.
+            int byteI;
+            try {
+            	theRandomAccessFile.setLength(0); // Empty the file.
+              while ( ( byteI= resourceInputStream.read() ) != -1) 
+                theRandomAccessFile.write( byteI );
+              }
+            catch ( IOException e ) {
+              appLogger.error("Outline.createTheRandomAccessFileV(), read() "+e);
+              }
+            }
+          } // createTheRandomAccessFileV(..)
 
     } // class Outline

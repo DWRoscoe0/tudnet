@@ -5,7 +5,7 @@ import java.util.Iterator;
 
 public class Piterator<E> 
   
-  /* This is an ierator with pointer semantics,
+  /* This is an iterator with pointer semantics,
     which makes it more useful for passing into and out of methods.
     Iterators without pointer semantics are not useful in this way.
     It gets it functionality from a regular Iterator,

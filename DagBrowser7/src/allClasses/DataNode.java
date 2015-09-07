@@ -19,6 +19,10 @@ public interface DataNode {
 
     ?? Possible methods to add:
 
+			?? Add getEpiThread() which returns the EpiThread associated with
+			  this DataNode, or null if there is none, which is the default.
+			  This would standardize and simplify thread starting and stopping.
+			   
 		  ?? Add JComponent getSummaryJComponent() which returns 
 		    a component, such as a Label, which summarizes this DataNode,
 		    at least with the name, but possibly also with a summary value,

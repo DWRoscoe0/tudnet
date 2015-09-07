@@ -19,45 +19,57 @@ import static allClasses.Globals.*;  // appLogger;
 
 public class AppInstanceManager {
 
-  /* This class manages instances of the app that uses it,  
-    It does this by doing these things:
-    * It prevents more than one app instance 
-      being active simultaniously.
-    * It performs updates such that the standard folder
-      always contains a copy of the latest version of the app.
-    * It re-runs the app from the standard folder whenever possible.
+  /* This class detects, communicates, and manages 
+    running instances and file instances of the app.
 
-    Normally managingInstancesThenNeedToExitB() is called at start-up.
+    It tries to maintain the following conditions:
+    * A maximum of one instance running at any given moment.
+    * The running instance should have been run from the standard folder.
+    * The file in the standard folder and the running instance
+      should be the newest one detected. 
+
+    It maintains these conditions by doing various things, such as:
+    * When first run if it detects another running instance then
+      it communicates its presence to the one already running 
+      and then terminates.
+    * When first run if it does not detect another running instance,
+      and it was not run from the standard folder, 
+      and there is not a file instance in the standard folder
+      which is at least as new as this one,
+      then it copies its file to the standard folder,
+      then runs the one in the standard folder and terminates.
+    * If while running it detects a newer file instance of itself,
+      then it runs that one and terminates itself.
+    * If while running it receives a message indicating
+      the presence of a new running instance but it is not a newer version,
+      then it does a move-to-front.
+    * If while running it receives a message indicating
+      the presence of a new running instance and it is a newer version,
+      then it runs that one and terminates itself.
+
+    The method managingInstancesThenNeedToExitB() does all of this.
+    It is supposed to be called at app start-up.
     It detects whether there is another running instance
     by trying to open a particular network socket.
     If it couldn't open the socket it is because the other instance did.
-    In this case it connects to the socket and 
-    sends the current app path to it.
+    In this case it communicates its presence to the other running instance by
+    connecting to the socket and sending this app's path to it.
     If it could open the socket then it sets up a Listener on it
-    for messages from instances of the app run later.
-    It returns true if an older instance is running, false otherwise.
+    for messages from instances of the app which might be run later.
+
+    It returns true to indicate that this app is shutting down
+    because another instance, running or to be run, will handle things.
+    It returns false if it is the only instance and should continue running.
 
     This running instance code was originally based on code at 
     http://www.rbgrn.net/content/43-java-single-application-instance
-
-    Presently if this manager wants this app to exit, 
-    it calls exit(0) after calling doShutdown().
-    This work but it might be better to actually return from 
-    managingInstancesThenNeedToExitB(), which
-    would then call doShutdown() and exit normally.
-
-    ??? Eliminate redundant manipulation of argStrings left over from
+    
+    ?? Eliminate redundant manipulation of argStrings left over from
     before it was passed into constructor.
 
-    ??? Write a state-machine description summarizing the entire process.
-    
-    ??? Finish partial conversion to state-machine state naming conventions.
-    
-    ??? One running instance can start another by using either:
-    * Java Runtime.exec(..)
-    * Java ProcessBuild.start()
+    ?? Write a state-machine description summarizing the entire process.
 
-    ??? This code should  be more robust.
+    ?? The network code should  be more robust.
     It needs to handle when the socket link is not working.
     Maybe if indications are that there is no older app instance
     it launches another instance of itself, 
@@ -68,18 +80,30 @@ public class AppInstanceManager {
     configuration file used only for instance [and update] management.
     */
 
-  /* Old Singleton code.  This is made thread-safe and fast with the
-    Initialization on Demand Holder (IODH) idiom.
-    */
-
   private Shutdowner theShutdowner;
 
-  public AppInstanceManager(  // Constructor.  was private for Singleton.
+  /* Variables about the candidate/app, if any.
+    This is another app that called this running app.  It came from either:
+    * the first argument to main() when the other app started this app, or
+    * through the instanceServerSocket from app run after this running app.
+    */
+
+    private String[] argStrings= null;  // Array of all arguments.
+
+    private File argAppFile= null;  // First arguments converted to a File name.
+
+  private File thisAppFile= null;  // File name of this running app.
+
+  private File standardAppFile= null;  // File name of app in standard folder.
+  
+  private ServerSocket instanceServerSocket = null;
+
+  public AppInstanceManager(  // Constructor.
       String[] inArgStrings,
       Shutdowner theShutdowner
       )
     {
-      this.theShutdowner= theShutdowner;
+	    this.theShutdowner= theShutdowner;
 
       identifyAppFilesV(   // Identifying file containing this app.
         inArgStrings  
@@ -97,29 +121,13 @@ public class AppInstanceManager {
       standardAppFile= AppFolders.resolveFile( "Infogora.jar" );
       }
 
-  private File thisAppFile= null;  // This running app's file name.
-
-  private File standardAppFile= null;  // Standard folder's...
-    // ...app's file name.
-
-  /* Variables about the candidate/app, if any.
-    This is another app that called this running app.
-    It came from either the first argument to main() or
-    from an app that was run while this running app was active.
-    */
-
-    private String[] argStrings= null;  // Array of all arguments.
-
-    private File argAppFile= null;  // First arg as a File name.
-  
-  private ServerSocket instanceServerSocket = null;
-
   public boolean managingInstancesThenNeedToExitB( )
     /* This main method manages both Running and File instances of the app.
+      This method is called at app start-up.
       inArgStrings is an array of strings which was used 
-      to start this app instance and might contain information 
-      about the instance what started this instance, for call-back purposes.
-      Normally this method is called at app start-up.
+      to start this app instance and might also contain, for call-back purposes,
+      the path of the instance that started this instance.
+
       It returns true if this app should exit because its job is done,
         except possibly for calling another instance at shutdown
         to continue management operations.
@@ -127,79 +135,71 @@ public class AppInstanceManager {
         normal start-up, because no other running instance was detected.
       */
     {
-      appLogger.info(  // Logging app jar file information.
+    	appLogger.info(  // Logging app jar file information.
         "App jar file is dated " + thisAppDateString()
         );
-
-  	  //identifyAppFilesV(   // Identifying file containing this app.
-      //  inArgStrings  
-      //  );
       
       boolean appShouldExitB= true;  // Set default return for app exit.
 
-      if // Manage running instances and exit if needed.  
-        ( managingRunningInstancesThenNeedToExitB( ) )
+      if ( tryARunningInstanceActionB( ) )
         ; // Leave appShouldExitB == true to cause exit.
-      else if // Manage file instances and exit if needed.  
-        ( managingFileInstancesThenNeedToExitB( ) )
+      else if ( tryAFileInstanceActionB( ) )
         ; // Leave appShouldExitB == true to cause exit.
-      else // All instance management completed.  No exit is needed.
-        appShouldExitB= false; // Prevent exit, allowing normal start-up.
+      else // All app instance management actions failed.
+        appShouldExitB= false; // Prevent exit, meaning, do a normal start-up.
 
       return appShouldExitB;  // Return whether app should exit.
       }
 
-  public void tryExitForChainToUpdateFromNewerArgAppV()
-    /* If this app is the app in the standard folder.
-      and the arg app is newer than this app,
-      then exit and run the arg app.
-      Otherwise return.
-      
-      This method is meant be called by a timer
+  private boolean updateTriggeredB= false; // For re-trigger detection.
+  
+  public void tryUpdateFromNewerFileInstanceV()
+    /* This method is meant be called periodically by a timer
       to check for the appearance of a new version of the argAppFile
-      and to do an update if it appears.
+      and to do an update with it if a newer version appears.
+
+      It works as follows:
+	      If this app is the app in the standard folder.
+	      and the new arg app is an approved updater app,
+	      then setup to run the arg app, which will do the update,
+	      and trigger a shutdown of this app.
       */
     {
-      //appLogger.debug("tryExitForChainToUpdateFromNewerArgAppV().");
+  	  if (updateTriggeredB) // Preventing re-triggering of update. 
+  	  	{ 
+  	  	  appLogger.warning(
+  	  	  		"tryUpdateFromNewerFileInstanceV(): re-triggered."
+  	  	  		);
+  	  		return;
+      	  }
+      //appLogger.debug("tryUpdateFromNewerFileInstanceV().");
       if ( argAppFile != null )  // argAppFile has been defined.
-      {
-      	//appLogger.debug(
-      	//  "tryExitForChainToUpdateFromNewerArgAppV(): argAppFile!=null."
-      	//  );
-        if   // Arg app approved to update app in standard folder.
-          ( updaterApprovedB() )
-          {
-            // User approval or authenticity checks would go here.
-            appLogger.info("Detected an approved updater.  Chaining to it");
-            setJavaCommandAndExitV(  // Chain to arg app to do the copy.
-              argAppFile.getAbsolutePath() 
-              );
-            }
-        }
+	      {
+	        if   // Arg app approved to update app in standard folder.
+	          ( updaterApprovedB() )
+	          {
+	        		updateTriggeredB= true;
+	            // User approval or authenticity checks would go here.
+	            appLogger.info("Detected an approved updater file.  Preparing it");
+	            setForJavaCommandAndExitB(  // Chain to arg app to do the copy.
+	              argAppFile.getAbsolutePath() 
+	              );
+	            }
+	        }
       }
 
   private boolean updaterApprovedB()
     /* If this app is the app in the standard folder.
       and the arg app is newer that this app,
-      then return true,
-      otherwise return false.
+      then return true, otherwise return false.
       */
     {
       boolean resultB= false;  // Assume false.
-      //appLogger.debug(
-      //  "updaterApprovedB() Files: "+thisAppFile+" "+standardAppFile
-      //  );
       if // This app is the app in the standard folder.
         ( thisAppFile.equals( standardAppFile ) )
         {
           long argAppFileLastModifiedL= argAppFile.lastModified();
           long thisAppFileLastModifiedL= thisAppFile.lastModified();
-          //appLogger.debug(
-          //  "updaterApprovedB() times: "
-          //  +argAppFileLastModifiedL
-          //  +" "
-          //  +thisAppFileLastModifiedL
-          //  );
 
           if // The arg app is newer than this app.
             ( argAppFileLastModifiedL > thisAppFileLastModifiedL )
@@ -208,18 +208,17 @@ public class AppInstanceManager {
       return resultB;
       }
     
-  private void identifyArgsV( String[] inArgStrings )
+  private void identifyArgFileV( String[] inArgStrings )
     /* This method saves inArgStrings, the arguments used to run this app.
       By convention 
       * arg0 is the path to the file containing this app.
       * arg1 is the path to the file containing the app which ran this app.
-      It calculates argAppFile from that.
-      For now the other arguments are unused.
+      It also identifies the File associated with the first argument.
       */
     {
       argStrings= inArgStrings;
-      if  // Extract calling app if there is one.
-        (argStrings.length>0)
+      if  // Extract calling app File if there is one.
+        (argStrings.length>0) // There is at least one argument.
 	      {
 		      argAppFile= new File(argStrings[0]);  // Convert string to File.
 	      	}
@@ -228,36 +227,36 @@ public class AppInstanceManager {
   private void identifyAppFilesV( String[] inArgStrings )
     /* This method determines the jar file from which this app was loaded,
       and the jar file that should contain the app in the standard folder.
-      ?? inArgStrings.readString
+      It also logs the arguments.
       */
     {
-      identifyArgsV( inArgStrings );  // Save arg string[s].
+      identifyArgFileV( inArgStrings );  // Save arg string[s].
       logInputsV();
       }
 
-  // Running Instance management code.
+  // Code that manages running instances.
 
-    private AppInstanceListener theAppInstanceListener= // Listener ...
+    private AppInstanceListener theAppInstanceListener= // Single listener ...
       null;  // ...to perform an action if desired.
 
     public static final int getInstancePortI() 
       { return PortManager.getDiscoveryPortI(); }
       // 56944;  // A high number I chose at random.
     
-    public boolean managingRunningInstancesThenNeedToExitB( )
+    public boolean tryARunningInstanceActionB( )
       /* Normally this method is called at app start-up.
-        It detects whether there is an older running instance
+        It detects whether there is a previously run running instance
         by trying to open a particular network socket.
-        If it can't open the socket it is because an older instance did.
-        In this case it connects to the socket and sends to it
+        If it can't open the socket it is because an earlier run instance did.
+        In this case it connects to the socket and sends through it
         the path of this app's jar file.
         If it can open the socket then it starts an InstanceManagerThread
-        to monitor the socket for future messages from 
-        newer running instances of the app.
+        to monitor that socket for future messages from 
+        later run running instances of the app.
         It returns true if this app should exit 
-          to let the older running instance decide what to do.
+          to let the earlier run running instance decide what to do.
         It returns false if this app should continue with normal start-up,
-          because the there is no other older running instance.
+          because the there is no earlier run running instance.
         */
       { 
         boolean appShouldExitB= false;  // Set default return for no app exit.
@@ -266,54 +265,52 @@ public class AppInstanceManager {
         	
           appLogger.info(
             "Local Host IP: " + 
-            InetAddress.getLocalHost().getHostAddress() // Get real IP. 
+            InetAddress.getLocalHost().getHostAddress() // Logging real IP. 
             );
         	
           appLogger.info(
-            "About to listen for a newer app packet on port " + 
+            "About to listen for a later app packets on port " + 
             getInstancePortI()
             );
           instanceServerSocket =  // Try opening listener socket.
             new ServerSocket(
-              ///getInstancePortI(), 10, InetAddress.getLocalHost()
               getInstancePortI(), 10, InetAddress.getLoopbackAddress() 
               );
-          { // Setup InstanceManagerThread.
+          { // Setup InstanceManagerThread to monitor the socket.
             InstanceManagerThread theInstanceManagerThread=
               new InstanceManagerThread();
-            theInstanceManagerThread.setName("AppInstances");
-            theInstanceManagerThread.start();  // Start thread...
-            // ...on the socket just opened.
-            } // Setup InstanceManagerThread.
+            theInstanceManagerThread.setName("InstcMgr");
+            theInstanceManagerThread.start();
+            } // Setup InstanceManagerThread to monitor the socket.
 
-          theShutdowner.addShutdownerListener(
+          theShutdowner.addShutdownerListener( // Adding this listener.
             new ShutdownerListener() {
               public void doMyShutdown() 
-              {
-                try {
-                  instanceServerSocket.close();
-                } catch (IOException e) {
-                  // TODO Auto-generated catch block
-                  e.printStackTrace();
-                } // Close flag socket.
-                }
+	              {
+	                try {  // Terminating monitor thread by closing its socket.
+		                  instanceServerSocket.close();
+		                } catch (IOException e) {
+		                  appLogger.error("Error closing instanceServerSocket" + e);
+		                  e.printStackTrace();
+		                }
+	                }
               });
-          ; // Leave appShouldExitB false for no app exit.
+          ; // Leaving appShouldExitB false for no app exit.
         } catch (UnknownHostException e) { // Error.  What produces this??
-          appLogger.severe( "error:"+e.getMessage()+ e );
-          ; // Leave appShouldExitB false for no app exit.
+          appLogger.error( e.getMessage()+ e );
+          ; // Leaving appShouldExitB false for no app exit.
         } catch (IOException e) { // This error means port # already in use.
           appLogger.info(
             "Port "+getInstancePortI()+" is already taken."+
             "  Sending signal-packet to older app using it.");
-          appShouldExitB=  // Set exit to the result of...
+		      appShouldExitB=  // Set exit to the result of...
             sendPathInPacketB( );  // ...sending packet to port.
         }
       return appShouldExitB;  // Return whether or not app should exit.
-      } 
+      }
 
     private boolean sendPathInPacketB( )
-      /* This managingRunningInstancesThenNeedToExitB(..) sub-method 
+      /* This tryARunningInstanceActionB(..) sub-method 
         tries to send this app's path
         to an existing older running app instance via the socket
         to which that app is listening.
@@ -326,7 +323,6 @@ public class AppInstanceManager {
         try {
             Socket clientSocket =  // Create socket for send.
               new Socket(
-                ///InetAddress.getLocalHost(), getInstancePortI()
                 InetAddress.getLoopbackAddress(), getInstancePortI()
                 );
             OutputStream out =   // Get its stream.
@@ -367,14 +363,18 @@ public class AppInstanceManager {
         messages from other running app instances and processes them.  */
       {
         public void run() 
-          /* This method, for as long as the communication socket is open,
-            waits for messages from other running app instances and 
-            processes them.  Processing includes:
-            * Firing any associated Listener.  
-            * Setting argAppFile to be the received message
-              converted to a File object.
+          /* This method, for as long as the instanceServerSocket is open,
+            waits for messages from other running app instances 
+            announcing their presence, and processes those messages.
+            Processing includes:
+            * Parsing the received message and storing the result
+              into argAppFile.
+            * Depending on circumstances:
+	            * firing any associated Listener, or  
+	            * trigger an app shutdown to allow a software update to happen.
             */
           {
+	          appLogger.info(Thread.currentThread().getName()+": beginning.");
             boolean socketClosed = false;
             while (!socketClosed) {
               if (instanceServerSocket.isClosed()) {
@@ -388,15 +388,18 @@ public class AppInstanceManager {
                       )
                     );
                   String readString = inBufferedReader.readLine();
-                  {
-                    appLogger.info(
-                      "Received a newer app signal-packet:" + readString
-                      );
-                    identifyArgsV( new String[] {readString} ) ;
-                    logInputsV();
-                    managingFileInstancesThenNeedToExitB( );  // Might not return.
-                    fireNewInstance();  // Call AppInstanceListener it does.
-                    }
+      	          appLogger.info(Thread.currentThread().getName()+": beginning.");
+                  appLogger.info(
+                  	Thread.currentThread().getName()
+                  	+"Received a newer app signal-packet:" + readString
+                    );
+                  identifyArgFileV( new String[] {readString} ) ;
+                  logInputsV();
+                  if // Exiting or firing event depending on other instance.
+                    (tryAFileInstanceActionB( ))
+                    theShutdowner.requestAppShutdownV(); // Triggering app exit.
+                    else
+                    fireNewInstance(); // Triggering AppInstanceListener action.
                   inBufferedReader.close();
                   clientSocket.close();
                 } catch (IOException e) {
@@ -404,24 +407,24 @@ public class AppInstanceManager {
                 }
               }
               }
+	          appLogger.info(Thread.currentThread().getName()+": ending.");
             }
         }
 
-  // File Instance management code.
+  // Code that does file instance management.
 
-    private boolean managingFileInstancesThenNeedToExitB( )
+    private boolean tryAFileInstanceActionB( )
       /* Normally this method is called at app start-up,
         but only if there is not another running instance.
         It begins the process of checking for and installing or updating
         the app file in the Infogora standard folder to make it
         the latest version, and then runs it.
-        It returns true if this app instance should exit 
-          because its job is done but it to be continued
-          by another running instance which has been started.
+        It returns true if this app instance should shutdown
+          because its job is done but is to be continued
+          by another running instance which will be run to replace it.
         It returns false if this app instance should 
           continue with normal start-up, 
-          because instance management has determined that
-          no further work is needed.
+          because it has been determined that no further work is needed.
         The logic in the code below can result in as few as 
         1 app command to be run,
         in the case of a normal start-up from the standard folder,
@@ -431,31 +434,34 @@ public class AppInstanceManager {
         depending on the conditions of the first app run.
         */
       { 
-        boolean appShouldExitB= false;  // Set default return for no app exit.
+        boolean appShouldExitB= true;  // Set default return app exit.
 
-        if ( argAppFile == null )  // The app command was arg-less.
-          { // Handle the arg-less command possibilities.
-            if (runningAppIsStandardAppB())  // Was from standard folder.
-              { // Prepare for normal startup.
-                appLogger.info("We are starting plain app from standard folder.");
-                ;  // Keep appShouldExitB false for normal startup.
-                } // Prepare for normal startup.
-              else  // Is argless but not from standard folder.
-              { // Try processing a plain (arg-less) app command.
-                tryExitForInstallToStandardFolderV();
-                tryExitForUpdateToStandardFolderV();
-                tryExitForChainToIdenticalAppInStandardFolderV();
-                appLogger.info("Exhausted without-arg possibilities.");
-                } // Try processing plain (arg-less) app commands.
-            } // Handle the arg-less command possibilities.
-          else  // The app command has one (or more?) arguments.
-          { // Handle app commands with argument[s].
-            tryExitForChainToApprovedUpdaterV();
-            tryExitForUpdateToStandardFolderV();
-            // Others to be added.
-            appLogger.info("Exhausted with-arg possibilities.");
-            } // Handle app commands with argument[s].
-          
+        toReturn: { // The block after which all returns will go.
+	        if ( argAppFile == null )  // The app command was without arguments.
+	          { // Handle the arg-less command possibilities.
+	            if (runningAppIsStandardAppB())  // Was from standard folder.
+	              { // Prepare for normal startup.
+	                appLogger.info("Starting app from standard folder.");
+	                appShouldExitB= false;  // For normal startup.
+	                } // Prepare for normal startup.
+	              else  // Is arg-less but not from standard folder.
+	              { // Try processing a plain app command without arguments.
+	                if (tryInstallToStandardFolderB()) break toReturn;
+	  	            if (tryUpdateToStandardFolderB()) break toReturn;
+	                if (tryPokingAppInStandardFolderB()) break toReturn;
+	                appLogger.info("Exhausted without-arg possibilities.");
+	                appShouldExitB= false;  // For normal startup.
+	                } // Try processing a plain app command without arguments.
+	            } // Handle the arg-less command possibilities.
+	          else  // The app command has one (or more?) arguments.
+	          { // Try processing an app command with argument[s].
+	            if (tryRunningApprovedUpdaterB()) break toReturn;
+	            if (tryUpdateToStandardFolderB()) break toReturn;
+	            // Others to be added?
+	            appLogger.info("Exhausted with-arg possibilities.");
+	            appShouldExitB= false;  // For normal startup.
+	            } // Handle app commands with argument[s].
+          } // toReturn
         return appShouldExitB;  // Return whether or not app should exit.
         }
 
@@ -468,22 +474,25 @@ public class AppInstanceManager {
         return thisAppFile.equals( standardAppFile );
         }
 
-    private void tryExitForInstallToStandardFolderV()
+    private boolean tryInstallToStandardFolderB()
       /* If the standard folder has no app in it then this method 
         copies the jar file of the running app to the standard folder,
-        exits this app, and runs the installed app.
-        Otherwise it returns.
+        prepares to run it on exit, and returns true to cause exit.
+        Otherwise it returns false.
         */
       {
+    	  boolean appShouldExitB= false;
         if // A version of this app is not already in standard folder.
           ( ! standardAppFile.exists() )  // The file doesn't exist.
           {
             appLogger.info("Trying to install.");
-            copyAppToStandardFolderAndChainToIt();
+            copyAppToStandardFolderAndPrepareToRunB();
+            appShouldExitB= true;
             }
+        return appShouldExitB;
         }
 
-    private void tryExitForUpdateToStandardFolderV()
+    private boolean tryUpdateToStandardFolderB()
       /* If the standard folder has an app jar file in it,
         but it is older than the running app,
         then this method updates it by replacing 
@@ -493,15 +502,17 @@ public class AppInstanceManager {
         Otherwise it returns.
         */
       {
+    	  boolean appShouldExitB= false;
         if // This apps file is newer that the one in standard folder.
           ( thisAppFile.lastModified() > standardAppFile.lastModified() )
           {
-            appLogger.info("Updating.");
-            copyAppToStandardFolderAndChainToIt();
+            appLogger.info("Updating by copying this app file to standard folder.");
+        	  appShouldExitB= copyAppToStandardFolderAndPrepareToRunB();
             }
+        return appShouldExitB;
         }
 
-    private void tryExitForChainToIdenticalAppInStandardFolderV()
+    private boolean tryPokingAppInStandardFolderB()
       /* If the running app is not in the standard folder,
         but it appears identical to the one in the standard folder,
         then this method exits this app, 
@@ -509,41 +520,50 @@ public class AppInstanceManager {
         Otherwise it returns.
         */
       {
+    		boolean appShouldExitB= false;
         if // This app is in the standard folder.
           ( ! thisAppFile.equals( standardAppFile ) )
           if // The date stamps are equal.
             ( thisAppFile.lastModified() == standardAppFile.lastModified() )
             {
               appLogger.info("Running identical app in standard folder.");
-              setJavaCommandAndExitV( standardAppFile.getAbsolutePath() );
+          	  appShouldExitB= 
+          	    setForJavaCommandAndExitB( standardAppFile.getAbsolutePath() );
               }
+        return appShouldExitB;
         }
 
-    private void tryExitForChainToApprovedUpdaterV()
+    private boolean tryRunningApprovedUpdaterB()
       /* If this app is the app in the standard folder.
         and the arg app is newer that this app,
-        then run the arg app.
-        Otherwise return.
+        then it prepares for shutdown, running the arg app,
+        and it returns true.
+        Otherwise it returns false.
         */
       {
+    	  boolean appShouldExitB= false;
         if   // Arg app approved to update app in standard folder.
           ( updaterApprovedB() )
           {
             // User approval or authenticity checks would go here.
-            appLogger.info("An approved updater had signalled.");
-            setJavaCommandAndExitV(  // Chain to arg app to do the copy.
-              argAppFile.getAbsolutePath() 
-              );
+            appLogger.info("An approved updater has signalled.");
+        	  appShouldExitB=   // Chain to arg app to do the copy.
+	            setForJavaCommandAndExitB(
+	              argAppFile.getAbsolutePath() 
+	              );
             }
+    	  return appShouldExitB;
         }
 
-    private void copyAppToStandardFolderAndChainToIt()
-      /* This method tries to copy this app's jar file 
-        to the standard folder, start it as a Process, and exit.
-        If copying fails it keeps retrying unless the thread
-        is interrupted, in which case it returns.
+    private boolean copyAppToStandardFolderAndPrepareToRunB()
+      /* This method tries to copy this app's jar file to the standard folder, 
+        and prepare it to be run as a Process on exit. 
+        It keeps trying until copying succeeds, or the thread is interrupted.
+        If copying succeeds then it requests an app shutdown and returns true.
+        If the thread is interrupted then it returns false.
         */
       {
+	  	  boolean copySuccessB= false;
         if  // This app is not from a jar file.
           (! thisAppFile.getName().endsWith(".jar"))
           { // Probably a class file running in Eclipse.  Do normal startup.
@@ -551,7 +571,7 @@ public class AppInstanceManager {
             }
           else
             while  // Keep trying until copy success and exit.
-              (!Thread.currentThread().isInterrupted())
+              (!Thread.currentThread().isInterrupted() && !copySuccessB)
               try 
                 {
                   appLogger.info( 
@@ -563,50 +583,53 @@ public class AppInstanceManager {
                       ,StandardCopyOption.COPY_ATTRIBUTES
                       ,StandardCopyOption.REPLACE_EXISTING
                       );
-                  setJavaCommandAndExitV( standardAppFile.getAbsolutePath() );
+                  appLogger.info( "Copying successful." );
+              	  copySuccessB= setForJavaCommandAndExitB( 
+              	  		standardAppFile.getAbsolutePath() 
+              	  		);
                   }
                 catch (Exception e)  // Other instance probably still running.
                   { 
                     appLogger.info( 
-                      "copyAppToStandardFolderAndChainToIt().\n  "
+                      "copyAppToStandardFolderAndPrepareToRunB().\n  "
                       +e.toString()
                       +"  Will retry after 1 second." 
                       ); 
-                    Misc.snoozeV(1000);  // Wait for other instance.
+                    (new LockAndSignal(false)).doWaitWithTimeOutE(1000);
+                      // Wait 1 second.
                     }
+        return copySuccessB;
         }
     
-    private void setJavaCommandAndExitV( String argString )
+    private boolean setForJavaCommandAndExitB( String argString ) 
       /* This method is equivalent to a 
         setJavaCommandForExitV( argString )
-        followed by exit(0).
-        It never returns.
+        followed by triggering exiting of this app.
+        It always true to simplify caller code and 
+        to indicate that app should exit.
         */
       {
         setJavaCommandForExitV( argString );  // Setting up command.
 
-        theShutdowner.doShutdown();  // Starting that command.
-
-        System.exit(0);  // Exitting.
-          // Before this would use ShutdownHook to trigger command.
+        theShutdowner.requestAppShutdownV(); // Triggering controlled exit.
+        
+        return true;  // Returning to simplify caller code.
         }
-
-    private void setJavaCommandForExitV
-      ( String argString )
+    
+    private void setJavaCommandForExitV( String argString )
       /* This method sets up the execution of a runnable jar file 
-        whose name is JarFilePathString as a Process.  
-        It will execute when this app terminates,
-        probably by calling System.exit(0).
+        whose name is argString as a Process.  
+        It will execute as the last step in the app shutdown process.
         */
       {
-        String [] commandOrArgStrings=  // Allocation for all Process args. 
+        String [] commandOrArgStrings=  // Allocating space for for all args. 
           new String [
             2  // java -jar
             +1 // (.jar file to run)
             +1 // (.jar file of this app)
             ] ;
 
-        commandOrArgStrings[0]= // Store path of java command.
+        commandOrArgStrings[0]= // Storing path of java command in array.
           System.getProperty("java.home") + 
           File.separator + 
           "bin" + 
@@ -615,10 +638,10 @@ public class AppInstanceManager {
         commandOrArgStrings[1]= "-jar";  // Store java -jar option.
         commandOrArgStrings[2]=  // Store path of .jar file to run
           argString;
-        commandOrArgStrings[3]=  // Store path of this app;s .jar.
+        commandOrArgStrings[3]=  // Store path of this app's .jar.
           thisAppFile.getAbsolutePath();  
 
-        theShutdowner.setCommandV(  // Setting String as command.
+        theShutdowner.setCommandV(  // Setting String as command to run later.
           commandOrArgStrings
           );
         }
@@ -626,6 +649,7 @@ public class AppInstanceManager {
   // Other miscellaneous code.
 
     private void logInputsV()
+      // Logs all the file arguments.
       {
         String logStriing= "";  //Declare and initialize string to be logged.
         { // Add parts to the string to be logged.

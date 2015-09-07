@@ -1,15 +1,22 @@
 package allClasses;
 
-///import java.lang.reflect.InvocationTargetException;
+import static allClasses.Globals.appLogger;
 
-///import javax.swing.SwingUtilities;
 
 public abstract class NamedNonLeaf 
 
   extends AbDataNode
 
+  /* This class is the base class for all named MetaNodes.
+    It has a name.  The name can be changed, but this should happen only
+    very shortly after construction, and only to replace
+    a temporary value set to enable lazy loading of
+    the remainder of the node.
+    */
   {
-
+		public static final String temporaryNameString= 
+				"NamedNonLeaf.temporaryNameString";
+	
     private String nameString;  // The name associated with this node.
 
     NamedNonLeaf ( String nameString )  // Constructor.
@@ -24,34 +31,27 @@ public abstract class NamedNonLeaf
         return nameString;  // Simply return the name.
         }
 
-    /* ???
-    protected void runOrInvokeAndWaitV( Runnable theRunnable )
-      /* This helper method runs theRunnable on the AWT thread.
-        one way or another.
-        It already running on the AWT thread then it just calls run().
-        Otherwise it uses invokeAndWait(..).
-       */
-    /* ???
-	    {
-	      if ( SwingUtilities.isEventDispatchThread() )
-	        theRunnable.run();
-	      else
-	        invokeAndWaitV( theRunnable );
-	    	}
-
-    protected void invokeAndWaitV( Runnable theRunnable )
-      // Calls SwingUtilities.invokeAndWait(..) and handles any exceptions.
+    public void setNameStringV( String nameString )
+      /* Replaces the String representing name of this Object.
+		    This should happen once only very shortly after construction, 
+		    and only to replace a temporary value set to enable 
+		    lazy loading of the remainder of the node.
+		    */
       {
-		  	try  // Queuing theRunnable on AWT thread.
-		  	  { SwingUtilities.invokeAndWait( theRunnable ); 			  		}
-		    catch // Handling wait interrupt by
-		    	(InterruptedException e) 
-		      { Thread.currentThread().interrupt(); } // setting interrupt flag.
-		        // Is a termination request so no need to continue waiting.
-		  	catch  // Handling invocation exception by
-		  	  (InvocationTargetException e) 
-		  	  { throw new RuntimeException(e); } // wrapping and re-throwing.
-      	}
-    ??? */
+	  	  if ( // Error checking
+		  	    ( this.nameString != temporaryNameString) // the old name.
+		  	    || ( nameString == temporaryNameString) // and new name.
+		  	    )
+	        appLogger.error(
+	          "NamedNonLeaf.setNameStringV("
+	          +nameString
+	          +") with old value=("
+	          +this.nameString
+	          +")."
+	          );
+
+        this.nameString= nameString;
+        }
+
 
     }

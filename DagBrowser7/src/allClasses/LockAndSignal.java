@@ -1,139 +1,317 @@
 package allClasses;
 
-//import static allClasses.Globals.*;  // appLogger;
+//import static allClasses.Globals.appLogger;
 
 public class LockAndSignal  // Combination lock and signal class.
-  /* This class serves the following two roles:
-    * As a monitor-lock for Object.wait(..) and Object.notify(), 
-    * As the associated boolean signal variable.
 
-    Threads can use these objects to synchronize 
-    the passing of data between them.
-    The LockAndSignal class can be used by itself,
-    for example to signal boolean conditions such as task completion,
-    or integrated within other classes such as the SignallingQueue class
-    to signal the arrival of new input data.
+  /* An instance of this class may be used by a thread to manage and process
+    several types of inputs without using busy-waiting.  The types are: 
 
-    The doNotify() method is used by source threads
-    to indicate to destination threads the readiness of new input.
+    * Data from a data source (Input.NOTIFICATION).
+    * The passage of real time (Input.TIME and Input.TIME_PASSED.
+    * Thread.isInterrupted() (Input.INTERRUPTION).
 
-    The doWait...() methods are called by destination threads
-    to wait until new input has been provided by source threads.
+    A thread can make use of any one, two, or all three types of inputs.
+    
+    Though this class is thread-safe, the thread-safety of 
+    the objects used to pass NOTIFICATION data between threads, 
+    queues for example, must be guaranteed by other means. 
+    
+		The doNotify() method is called by source threads
+    to indicate to destination threads the readiness of new inputs.
+    It can be called using a direct LockAndSignal instance reference,
+    or called indirectly, for example in the add(..) method of 
+    the InputQueue class which contains a LockAndSignal reference.
 
-    This class was created because neither the boolean primitive nor 
-    the wrapper Boolean class could not be used for the two roles.
+    The doWait...() methods are called by the destination thread
+    to wait until new input has been provided and signaled by source threads.
+    They will also return if a user-specified time-out passes
+    or if the thread isInterrupted() returns true.
+    Typically a destination thread will have a loop containing:
+	    
+	    * A call to one of the LockAndSignal.doWait...() methods.
+	    * The processing of at least one of the inputs that became available.
+
+    A destination thread needs only one LockAndSignal instance
+    to manage its inputs regardless of the number of source threads
+    that are providing those inputs.  
+    In fact it makes no sense to have more than one.
+
+    A destination thread's one LockAndSignal instance may also be used 
+    as the monitor lock for synchronized code blocks.
+    
+	  This class works by serving the following two roles:
+	  
+	    * As a monitor-lock for Object.wait(..), Object.notify(),
+	      and synchronized code blocks.
+	    * As an associated boolean NOTIFICATION signal variable.
+
+    This class was created because neither the Java boolean primitive nor 
+    the wrapper Boolean class could be used for these two roles.
     The wrapper Boolean is immutable.  Assuming aBoolean == false, then
     "aBoolean= true;" is equivalent to "aBoolean= new Boolean(true);", 
     which changes the object referenced by aBoolean,
     which causes an IllegalMonitorStateException.
     This class solves this problem by using
     methods to access an internal mutable boolean value.
+
+    When control is returned from any of the doWait...() methods,
+    it returns a value of type Input.
+    The range of this return value depends on the call and execution context.
+    The Input type value returned is the type of 
+    the first (highest priority) input found.
+		These values, listed in increasing priority order, are:
+
+      NOTIFICATION // doNotify() was called at least once.
+      TIME // The time limit, either time-out or absolute time, was reached.
+      TIME_LATE // Same as TIME but the time limit has long passed!
+      INTERRUPTION // The thread's isInterrupted() status is true.
+
+    On return, if only one Input type is to be checked and processed, 
+    then it should be the one specified by the returned value.
+    The returned value may be ignored, but if it is ignored then 
+    the caller should check for and process manually ALL possible Input types.
     
-    ??? It might be worthwhile to use an object reference, or a null,
+    Also, if any NOTIFICATION inputs are available, 
+    then ALL NOTIFICATION inputs must be checked and processed.
+    This is because they share a single NOTIFICATION flag signalB.
+    This can be done in multiple ways:
+
+    * As an example, if processing only NOTIFICATION inputs,
+     an obvious way to do it is to do this:
+
+	      while ( true ) {
+		      doWaitE(); // Wait for the next batch of inputs.
+		      while ( unprocessedNotificationInputsAvailableB() )
+		        processOneNotificationInput();
+		      }
+
+      but this way adds nested loops, which can make coding 
+      more complex systems difficult.  For example, 
+      it makes encoding the state of an algorithm or protocol 
+      with the position of a thread's instruction pointer virtually impossible.
+
+    * Another way that might be less obvious, 
+      but makes easier coding of complex systems,
+      is to first create a specialized test-or-wait method, such as this:
+
+        Input testWaitE() 
+	        {
+	          if ( unprocessedNotificationInputsAvailableB() )
+	            return NOTIFICATION; // Returning immediately.
+	            else
+	            return doWaitE(); // Waiting for next batch.
+	          }
+
+      and use it this way:
+
+	      while ( true ) {
+		      testWaitE(); // Wait for any single input.
+		      processOneNotificationInput();
+		      }
+
+		  No nested loops are required.  Using a method like testWaitE()
+		  can greatly simplify the coding of complex protocols and algorithms.
+
+    ?? Create a similar class which takes an argument to the constructor
+    which is the client object to be used as 
+    the monitor lock to use instead of the LockAndSignal object.
+    This would make use with synchronized methods in other classes easier.
+    Unfortunately this defeats the goal of using 
+    constructor Dependency Injection.
+    It creates a circular dependency between the LockAndSignal and its client
+    that can not be eliminated by restructuring.
+    It requires dividing the client, as follows:
+    
+      theClientPart1: // The lock object which also contains thread-safe state.
+        methods synchronized on (ClientPart1 this).
+        
+      theLockAndSignal:
+        lockObject: ref:theClientPart1
+        
+      theClientPart2: // For thread that receives inputs.
+        theClientPart1: ref:theClientPart1:
+        theLockAndSignal: ref:theLockAndSignal
+          // Used by input wait loop.  
+
+    ?? It might be worthwhile to use an object reference, or a null,
     instead of a boolean, to be the signal.
     Additional versions of the doWait() and doNotify() methods
     could pass these values.  This would allow passing of
     more complex information as if through a single element queue,
     but only from one specific object to another.
+    Or maybe it would be better to have a different class for this.
     */
   {
 
-    public enum Input {  // Return value indicating input which ended a wait.
-      NOTIFICATION, // doNotify() was called.
+    public enum Input {  // Return value indicating an input which has appeared.
+    	// These values are listed from lowest to highest priority.
+    	NONE, // There has been no input.
+      NOTIFICATION, // doNotify() was called to signal data input.
       TIME, // The time limit, either time-out or absolute time, was reached.
-      INTERRUPTION // The thread's isInterrupted() status is true.
-      }  // These return values can save input decoding time.
+      TIME_LATE, // Same as TIME but the time limit has long passed!
+      INTERRUPTION, // The thread's isInterrupted() status is true.
+      }  // These return values can simplify input processing in some cases.
       
-    private boolean signalB= false;  // Signal storage and default value.
+    private boolean signalB= false;  // NOTIFICATION flag.
 
     LockAndSignal( boolean aB )  // Constructor.
       { setV( aB ); }
 
+
+    // Input wait methods, of which there are several.
+
+    public long correctionMsL( long targetTimeMsL, long periodMsL )
+      /* This method returns how much targetTimeMsL should be shifted,
+        in integer multiples of intervalMsL, to correct it for
+        any jumps that might have happened to 
+        the value returned by System.currentTimeMillis().
+        Normally it will return 0, but sometimes it will return
+        positive or negative multiples of intervalMsL,
+        depending on whether time has been advanced or retarded.
+        */
+		{
+    	long shiftMsL= 0;
+    	long targetTimeOutMsL;
+			final long currentTimeMsL= System.currentTimeMillis();
+    	while (true) { // Advance target until time-out positive.
+    		targetTimeMsL+= periodMsL; // Advancing target time.
+  			targetTimeOutMsL= targetTimeMsL - currentTimeMsL;
+    	  if // Exiting loop if time-out is positive.
+    	    ( targetTimeOutMsL > 0 ) 
+    	  	break;
+    	  shiftMsL+= periodMsL;
+				}
+    	while (true) { // Retarding target while time-out excessive.
+    		if // Exiting loop if time-out not above period. 
+    			( targetTimeOutMsL <= periodMsL ) 
+    			break; 
+    		targetTimeMsL-= periodMsL; // Retarding target time.
+  			targetTimeOutMsL= targetTimeMsL - currentTimeMsL;
+  			shiftMsL-= periodMsL;
+     	  }
+    	return shiftMsL; // Returning how much shift is needed.
+			}
+
+    public long timeOutForMsL( long targetTimeMsL, long periodMsL )
+      /* This method returns a value to be used as a time-out parameter
+        to terminate a wait at time targetTimeMsL+periodMsL.
+        The value returned will be such that
+        it is not less than 0 or greater than periodMsL,
+        and the time-out will occur on a multiple of periodMsL 
+        from the targetTimeMsL.
+        The process is similar to the one used by correctionMsL(..).
+        */
+		{
+    	long targetTimeOutMsL= // Calculating tentative time-out. 
+    			(targetTimeMsL + periodMsL) - System.currentTimeMillis();
+    	while ( targetTimeOutMsL <= 0 ) // Correcting while too low. 
+    		targetTimeMsL+= periodMsL; 
+    	while ( targetTimeOutMsL > periodMsL ) // Correcting while too high.
+    		targetTimeMsL-= periodMsL; 
+    	return targetTimeOutMsL;
+			}
+
     public Input doWaitE()
-      /* This method, called by the source thread,
+      /* This method, called by a source thread,
         waits for any of the following:
-          * An input signal.
+          * An input signal notification.
           * The condition set by Thread.currentThread().interrupt().
             This condition is not cleared by this method.
         It returns an Input value indicating why the wait ended.
         */
       {
-        return doWaitWithTimeOutE( 
-          Long.MAX_VALUE  // Effectively an infinite time-out.
-          );
+      	Input theInput;  // For type of Input that ended wait.
+      	do { // Waiting but ignoring any time-outs.
+      		theInput= doWaitWithTimeOutE( 
+	          Long.MAX_VALUE  // A very long time-out.
+	          );
+      		} while ( theInput == Input.TIME ); // Loop if it did time out.
+        return theInput;  // Returning why the wait loop ended.
         }
+    
+    public synchronized Input doWaitWithTimeOutE( long delayMsL )
+    /* This method, called by a source thread,
+      waits for any of the following:
+        * An input signal notification.
+        * The condition set by Thread.currentThread().interrupt().
+          This condition is not cleared by this method.
+        * The interval delayMsL ms has passedL.
+          0 is treated as infinite time.
+      It returns an Input value of the first Input type
+      that it found present.  It might not be the only one.
 
-    public Input doWaitWithTimeOutE( long delayMillisL )
-      /* This method, called by the source thread,
-        waits for any of the following:
-          * An input signal.
-          * The condition set by Thread.currentThread().interrupt().
-            This condition is not cleared by this method.
-          * A time at (delayMillisL) milliseconds in the future.
-        It returns an Input value indicating why the wait ended.
-        */
-      {
-        return doWaitUntilE( 
-          System.currentTimeMillis() +
-          delayMillisL
-          );
-        }
+      The wait(..) can end for several different reasons.
+      Here is how this method distinguishes between and handles each:
 
-    public synchronized Input doWaitUntilE(long realTimeMillisL)
-      /* This method, called by the source thread,
-        waits for any of the following:
-          * An input signal.
-          * The condition set by Thread.currentThread().interrupt().
-            This condition is not cleared by this method.
-          * The time realTimeMillisL.
-        It returns an Input value indicating why the wait ended.
+		    Some other thread invokes the notify(..) or notifyAll(..) methods 
+		    for this object.  By convention this must be done after
+		    setting the signal variable true by calling doNotifyV(). 
+		    
+		    Some other thread interrupts this thread.
+		    This is detected with Thread.currentThread().isInterrupted().
+		    
+		    The specified amount of time has elapsed.
+		    This is tricky because the value returned by 
+		    System.currentTimeMillis() can change suddenly by large amounts.
+		    The amount of real time which has passed 
+		    can not be determined with accuracy.
+        If this method finds the System.currentTimeMillis() either
+        before or after time-out interval it will treat it as a time-out.
+        So this method might return sooner than it should, but
+        it will never return more than delayMsL later than it should.
+		    
+		    Anything else is a spurious wake-up.  
+		    This is ignored and the method loops. 
 
-        Change to use await() instead of wait() ???
-        */
-      {
-        Input theInput;  // For type of Input that ended wait.
-        
-        while (true) { // Looping until any of several conditions is true.
-          if ( getB() ) // Handling input signal present.
-            { theInput= Input.NOTIFICATION; break; } // Exiting loop.
-          long timeToNextJobMillisL= // Converting the real-time to a delay.
-            realTimeMillisL - System.currentTimeMillis();
-          if ( !( timeToNextJobMillisL > 0) )  // Handling time-out expired.
-            { theInput= Input.TIME; break; } // Exiting loop.
-          if // Handling thread interrupt signal.
-            ( Thread.currentThread().isInterrupted() )
-            { theInput= Input.INTERRUPTION; break; }  // Exiting loop.
-          try { // Waiting for notification or time-out.
-            wait(  // Wait for input notification or...
-              timeToNextJobMillisL  // ...time of next scheduled job.
-              );
-            } 
-          catch (InterruptedException e) { // Handling wait interrupt.
-            Thread.currentThread().interrupt(); // Re-establishing for tests.
-            }
+		  ?? Change to use await() instead of wait() ??
+      */
+    {
+      Input theInput;  // For type of Input that will exit wait loop.
+      final long startMsL= System.currentTimeMillis();
+      while (true) { // Looping until one of several conditions is true.
+        if // Handling thread interrupt signal.
+          ( Thread.currentThread().isInterrupted() )
+          { theInput= Input.INTERRUPTION; break; }  // Exiting loop.
+        final long elapsedMsL= System.currentTimeMillis() - startMsL;
+        if // Exiting if time before or after time-out interval.
+          ( (  elapsedMsL >= delayMsL ) || ( elapsedMsL < 0 ) )
+          { theInput= Input.TIME; break; } // Exiting loop.
+        if ( getB() ) // Handling explicit input notification.
+          {  // Resetting input signal and exiting loop
+        	  setV(false);  // Resetting NOTIFICATION flag for next doDnotify().
+            theInput= Input.NOTIFICATION; 
+        	  break; 
+        	  }
+        try { // Waiting for notification or time-out.
+          wait(  // Wait for call to notify() or...
+            delayMsL - elapsedMsL // ...for remainder of time-out interval.
+            );
+          } 
+        catch (InterruptedException e) { // Handling wait interrupt.
+          Thread.currentThread().interrupt(); // Re-establishing for test.
           }
-        //appLogger.debug( 
-        //  Thread.currentThread().getName() + " doWaitUntilE(..) "+theInput 
-        //  );
-
-        setV(false);  // Resetting input signal for next time.
-          // ??? Maybe this should be within only NOTIFICATION branch?
-
-        return theInput;  // Return reason the wait ended.
         }
+      return theInput;  // Returning why the wait loop ended.
+      }
+
+    // Input notification methods, of which there is only one.
 
     public synchronized void doNotifyV()
       /* This method is called by threads which are data sources.
-        It signals that new input has been provided 
-        to the destination thread by the source thread.
-        It is called by the source thread.
+        It delivers notification that new input has been provided 
+        to the destination thread by a source thread.
+        It is called only by a source thread.
         */
       {
-        setV(true);  // Set signal to end doWait() loop.
+        setV(true);  // Set signal to end the loop in doWaitUntilE().
         notify();  // Terminate any active wait() blocking.
         }
 
-    private boolean getB()  // Get mutable boolean value.
+
+    // Other methods.
+
+    public boolean getB()  // Get mutable boolean value.
       { return signalB ; }
 
     private void setV( boolean aB )  // Set mutable boolean value.

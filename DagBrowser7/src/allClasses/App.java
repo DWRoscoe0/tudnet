@@ -1,5 +1,7 @@
 package allClasses;
 
+import static allClasses.Globals.appLogger;
+
 public class App { // The App, especially pre-GUI stuff.  See runV(..) for details.
 
   Shutdowner theShutdowner;
@@ -22,10 +24,13 @@ public class App { // The App, especially pre-GUI stuff.  See runV(..) for detai
       If the instance manager says it's okay then
       it presents the GUI to the user.
       When this is all done it uses the Shutdowner to
-      do any needed shutdown jobs.
+      do any final shutdown jobs.
      */
     {
-      if ( ! theAppInstanceManager.managingInstancesThenNeedToExitB( ) ) 
+  		appLogger.info("App beginning.");
+  		theShutdowner.initializeV(); // Preparing for future app shutdown.
+
+  	  if ( ! theAppInstanceManager.managingInstancesThenNeedToExitB( ) ) 
 
         {
       	  AppGUIFactory theAppGUIFactory= theAppFactory.getAppGUIFactory();
@@ -34,7 +39,11 @@ public class App { // The App, especially pre-GUI stuff.  See runV(..) for detai
           theAppGUIManager.runV(); // Running GUI manager until finished.
           }
 
-      theShutdowner.doShutdown();  // Doing shutdown jobs.
-      }
+  		appLogger.info("App calling Shutdowner.finishV().");
+      theShutdowner.finishV();  // Doing final app shutdown jobs.
+
+  		appLogger.info("App exiting.");
+      // After this method returns, the main thread of this app should exit.
+      } // runV().
 
   } // class App.

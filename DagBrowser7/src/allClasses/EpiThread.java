@@ -51,7 +51,7 @@ public class EpiThread
         the only thing it does is call interrupt().
         */
       {
-        appLogger.info("EpiThread(" + getName() + ").stopV(): stopping.");
+        //appLogger.info("EpiThread(" + getName() + ").stopV(): stopping.");
 
         interrupt(); // Requesting termination of EpiThread thread.
         }

@@ -32,10 +32,13 @@ public class NamedMutable
 	      The old one is returned to simplify object pooling and recycling.
   	    */
 		  {
-	  		final DataNode thisDataNode= this; // Converting this pointer.
 	  	  Object oldObject= this.valueObject; // Saving present value. 
+				valueObject= newObject; // Setting new value.
+	  	  theDataTreeModel.safelyReportingChangeV( this );
 
-	  	  theDataTreeModel.runOrInvokeAndWaitV( // Do following on AWT thread. 
+	  		/* ???
+	  		final DataNode thisDataNode= this; // Converting this pointer.
+	  		theDataTreeModel.runOrInvokeAndWaitV( // Do following on AWT thread. 
 	    		new Runnable() {
 	    			@Override  
 	          public void run() {
@@ -46,6 +49,7 @@ public class NamedMutable
 	            }
 	          } 
 	        );
+	      ??? */
 
 	  	  return oldObject; // Returning old value.
 		  	}

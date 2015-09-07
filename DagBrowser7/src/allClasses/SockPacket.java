@@ -6,11 +6,13 @@ import java.net.DatagramSocket;
 public class SockPacket
   /* This class represents a datagram packet with other features attached.
 
+    ??? This class is being deprecated.
+    
     ??? This should probably renamed to 
     EnPacket for Enhanced Packet or maybe EpiPacket.
 
     ??? I don't recall why I didn't simply subclass DatagramPacket.
-    Maybe I should do that instead?
+    Maybe I should do that instead?  No.  All packet info should be nonlocal.
     
     Originally and presently the other feature was 
     the DatagramSocket through which it passed.
@@ -24,11 +26,13 @@ public class SockPacket
       
     As a result, DatagramSocket will probably be replaced,
     possibly by a class which implements an interface that 
-    contains a send() method and a reference to a DatagramSocket.
+    contains a send() method and a reference to a DatagramSocket,
+    or it will be completely eliminated.
     */
 	{
 		private DatagramPacket theDatagramPacket; // The packet to send/receive.
       // This stores remote IP and port.
+    @SuppressWarnings("unused")
     private DatagramSocket theDatagramSocket; // Associated Socket.
       // This might store both local and remote IP and port.
     //private long timeL; // The time this packet was sent or received.
@@ -53,13 +57,16 @@ public class SockPacket
         return theDatagramPacket;
         }
 
+    /* ???
     public DatagramSocket getDatagramSocket()
       // This returns the DatagramSocket associated with this SockPacket.  
       {
         return theDatagramSocket;
         }
+    ??? */
 
-    public String getSocketAddressesString()
+    /* ???
+    public String XgetSocketAddressesString()
       /* This returns a String representing the
         end-point addresses (IP and port) of this SockPacket.
         The String actually contains 3 parts:
@@ -67,6 +74,8 @@ public class SockPacket
           SR: Socket Remote.
           PR: Packet Remote.
         */
+
+    /* ???
       {
         String packetAddressString;
 
@@ -86,5 +95,6 @@ public class SockPacket
 
         return valueString;
         }
+    ??? */
 
 		}

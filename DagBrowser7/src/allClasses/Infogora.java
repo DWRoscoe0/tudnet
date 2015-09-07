@@ -1,9 +1,12 @@
 package allClasses;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.MulticastSocket;
 
 import javax.swing.JFrame;
 
@@ -64,54 +67,64 @@ class ConnectionsFactory {
 
   // Maker methods.  These construct using new operator each time called.
   public Multicaster makeMulticaster(
-      SignallingQueue<SockPacket> sendQueueOfSockPackets,
-      SignallingQueue<SockPacket> receiveQueueOfSockPackets,
-      DatagramSocket unconnectedDatagramSocket
+  		MulticastSocket theMulticastSocket,
+      InputQueue<SockPacket> sendQueueOfSockPackets,
+      InputQueue<SockPacket> receiveQueueOfSockPackets,
+      DatagramSocket unconnectedDatagramSocket,
+	  	UnicasterManager theUnicasterManager
       )
     throws IOException
     { 
   	  return new Multicaster(
   	    theDataTreeModel,
-  	    ///(InetSocketAddress)null, ///
 	  		new InetSocketAddress(
 	  				InetAddress.getByName("239.255.0.0"),
 	  				PortManager.getDiscoveryPortI()
 	  				),
+	  		theMulticastSocket,
         sendQueueOfSockPackets,
         receiveQueueOfSockPackets,
-        unconnectedDatagramSocket
+        unconnectedDatagramSocket,
+		  	theUnicasterManager
         ); 
       }
-
   public Unicaster makeUnicaster(
       InetSocketAddress peerInetSocketAddress,
-      ConnectionManager.PacketQueue sendPacketQueue,
-      SignallingQueue<Unicaster> unicasterQueue,
-      DatagramSocket unconnectedDatagramSocket
+      PacketQueue sendPacketQueue,
+      JobQueue<Unicaster> cmJobQueueOfUnicasters,
+      DatagramSocket unconnectedDatagramSocket,
+      ConnectionManager theConnectionManager,
+      Shutdowner theShutdowner
       )
     {
       return new Unicaster(
         peerInetSocketAddress,
         sendPacketQueue,
-        unicasterQueue,
+        cmJobQueueOfUnicasters,
         unconnectedDatagramSocket,
-        theDataTreeModel
+        theDataTreeModel,
+        theConnectionManager,
+        theShutdowner
         );
       }
-  public ConnectionManager.NetCasterValue makeUnicasterValue(
+  public NetCasterValue makeUnicasterValue(
       InetSocketAddress peerInetSocketAddress,
-      ConnectionManager.PacketQueue sendPacketQueue,
-      SignallingQueue<Unicaster> unicasterQueue,
-      DatagramSocket unconnectedDatagramSocket
+      PacketQueue sendPacketQueue,
+      JobQueue<Unicaster> cmJobQueueOfUnicasters,
+      DatagramSocket unconnectedDatagramSocket,
+      ConnectionManager theConnectionManager,
+      Shutdowner theShutdowner
       )
     {
       Unicaster theUnicaster= makeUnicaster(
         peerInetSocketAddress,
         sendPacketQueue,
-        unicasterQueue,
-        unconnectedDatagramSocket
+        cmJobQueueOfUnicasters,
+        unconnectedDatagramSocket,
+        theConnectionManager,
+        theShutdowner
         );
-      return new ConnectionManager.NetCasterValue(
+      return new NetCasterValue(
         peerInetSocketAddress,
         theUnicaster
         );
@@ -162,16 +175,26 @@ class AppGUIFactory {  // For GUI class lifetimes.
 		        );
       ConnectionsFactory theConnectionsFactory= 
       		new ConnectionsFactory( theDataTreeModel );
+      UnicasterManager theUnicasterManager= 
+      		new UnicasterManager( );
       ConnectionManager theConnectionManager= 
           new ConnectionManager( 
             theConnectionsFactory,
-            theDataTreeModel
+            theDataTreeModel,
+            theUnicasterManager,
+            theShutdowner
             );
+      EpiThread theConnectionManagerEpiThread=
+          makeEpiThread( theConnectionManager, "ConnMgr" );
+      SystemMonitor theSystemMonitor= new SystemMonitor(theDataTreeModel);
+      EpiThread theCPUMonitorEpiThread=
+          makeEpiThread( theSystemMonitor, "SystemMonitor" );
       DataNode theInitialRootDataNode=  // Building first legal value.
 	        new InfogoraRoot( 
 	          new DataNode[] { // ...an array of all child DataNodes.
 	            new FileRoots(),
-	            new Outline( 0 ),
+	            new Outline( 0, theDataTreeModel ),
+	            theSystemMonitor,
 	            theConnectionManager,
 	            new Infinitree( null, 0 )
 	            }
@@ -183,10 +206,6 @@ class AppGUIFactory {  // For GUI class lifetimes.
 		        theDataRoot,
 		        theMetaRoot
 		        );
-      AppGUIManager.TerminationShutdownThread theTerminationShutdownThread=
-          new AppGUIManager.TerminationShutdownThread( mainThread );
-      EpiThread theConnectionManagerEpiThread=
-          makeEpiThread( theConnectionManager, "ConnectionManager" );
       theGUILockAndSignal= 
       		new LockAndSignal(false);
       theGUIDefiner=  
@@ -194,16 +213,18 @@ class AppGUIFactory {  // For GUI class lifetimes.
       		  theGUILockAndSignal, 
       		  theAppInstanceManager,
       		  theDagBrowserPanel,
-		        this // GUIDefiner gets to know the factory that made it. 
-      		  );
+		        this, // GUIDefiner gets to know the factory that made it. 
+		        theShutdowner
+		        );
       theAppGUIManager= 
       		new AppGUIManager( 
 		        theConnectionManagerEpiThread,
+		        theCPUMonitorEpiThread,
 		        theDataTreeModel,
 		        theInitialRootDataNode,
-		        theTerminationShutdownThread,
 		        theGUILockAndSignal,
-		        theGUIDefiner
+		        theGUIDefiner,
+		        theShutdowner
 		        );
       }
 
@@ -219,8 +240,8 @@ class AppGUIFactory {  // For GUI class lifetimes.
 	  { return new EpiThread( aRunnable, nameString ); }
   public JFrame makeJFrame( String titleString ) 
     { return new JFrame( titleString ); }
-  public AppGUIManager.InstanceCreationRunnable 
-  makeInstanceCreationRunnable( JFrame aJFrame)
+  public AppGUIManager.InstanceCreationRunnable makeInstanceCreationRunnable( 
+  		JFrame aJFrame)
   	{ return theAppGUIManager.new InstanceCreationRunnable( aJFrame ); }
 
   } // class AppGUIFactory.
@@ -305,10 +326,14 @@ class Infogora  // The root of this app.
           new Thread.UncaughtExceptionHandler() {
             @Override 
             public void uncaughtException(Thread t, Throwable e) {
-              System.out.println(t.getName()+": "+e);
-              appLogger.error(
-                "Thread: "+t.getName()+". Uncaught Exception: "+e
-                );
+              System.out.println( "Uncaught Exception, "+t.getName()+", "+e);
+
+              appLogger.error( "Uncaught Exception: "+e );
+
+              StringWriter aStringWriter= new StringWriter();
+              PrintWriter aPrintWriter= new PrintWriter(aStringWriter);
+              e.printStackTrace(aPrintWriter);
+              appLogger.info( "Stack trace: "+aStringWriter.toString() );
               }
             }
           );
@@ -328,7 +353,7 @@ class Infogora  // The root of this app.
 				this app's high-level structure.
 			  */
       { // main(..)
-	      appLogger.info("main thread beginning.");
+	      appLogger.info("main Infogora main() beginning.");
 
 	      setDefaultExceptionHandlerV(); // Preparing for exceptions 
 	        // before doing anything else.
@@ -339,7 +364,13 @@ class Infogora  // The root of this app.
       		theAppFactory.getApp();
 	      theApp.runV();  // Running the app until it finishes.
 	      
-	      appLogger.info("main thread ending.");
+	      // At this point, this thread should be the only non-daemon running.
+	      // When it ends, it should trigger a JVM shutdown,
+	      // unless it was triggered already, and terminate the app.
+	      // Unfortunately the app doesn't terminate, so we call exit(0).
+
+	      appLogger.info("Infogora.main() calling exit(0).");
+	      System.exit(0); // Will killing any remaining unknown threads running??
 	      } // main(..)
 	
 		} // Infogora

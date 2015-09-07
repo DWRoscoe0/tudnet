@@ -8,30 +8,29 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-///import java.text.DecimalFormat;
 
 public class AppLog 
 
   /* This class is for logging information from an app.  
     This class needs some work.
     
-    ??? MadeMultiprocessSafe: It might fail if multiple app instances
-      try to log simultaniously.
+    ??? MakeMultiprocessSafe: 
+      It might fail if multiple app instances try to log simultaneously.
+      Make log file be share-able in case two app instances
+      try to write to it at the same time.  See createOrAppendToFileV(..).
 
-    ??? Windows8AntiMalwareSlowsItDown: fix. 
-      It can run much slower when the file is long.
-      This might be because of the Windows8 AntiMalware task.
-      Apparently it scans the log.txt file after every close
+    ??? Slowdown migh happen because of  
+      * Antimalware Service Executable  
+      * Microsoft Windows Search Indexer
+      App can run much slower when the log file is long.
+      This might be because of these tasks.
+      Apparently it scans the log.txt file after every file close
       because when the file is short it causes little delay,
       but if file is big it slows progress of the program.
       Change to close less often?
     */
 
   {
-
-    /* ??? Make log file be shareable in case two app instances
-      try to write to it at the same time.  See createOrAppendToFileV(..).
-      */
   
     // Singleton code.
     
@@ -49,15 +48,12 @@ public class AppLog
       private int theSessionI= 0;  // App session counter.
       long startedAtMillisL;  // Time when initialized.
       long lastMillisL; // Last time measured.
-      ///DecimalFormat theDecimalFormat= new DecimalFormat();
 
     static // static/class initialization for logger.
       // Done here so all subsection variables are created.
       {
         try 
           { 
-        		///AppLog.getAppLog().theDecimalFormat= 
-        		///		new DecimalFormat( "#####" );
 	        	AppLog.getAppLog().logFileInitializeV(); 
 	          }
         catch(IOException e)
@@ -74,6 +70,7 @@ public class AppLog
         theSessionI= getSessionI();  // Get app session number.
         if (theSessionI == 0)  // If this is session 0...
           logFile.delete();  //...then empty log file by deleting.
+        appendEntry( "<--< This is an absolute time.  Later ones are relative."); 
         appendEntry( ""); 
         appendEntry( "=================== NEW LOG FILE SESSION ===================");
         appendEntry( ""); 
@@ -92,7 +89,7 @@ public class AppLog
         ??? This method is messy and long.  Fix.
         */
       { 
-        //logFile.delete();  // !!! DO THIS TO CLEAR ESSION.
+        //logFile.delete(); // DO THIS TO CLEAR LOG AND RESET SESSION COUNT!
         
         File sessionFile=  // Identify session file name.
           AppFolders.resolveFile( "session.txt" );
@@ -134,7 +131,7 @@ public class AppLog
         }
   
     public void debug(String inString)
-      /* This method writes an information String inString to a log entry
+      /* This method writes a debug String inString to a log entry
         but not to the console.
         It is tagged as for debugging.
         */
@@ -150,21 +147,8 @@ public class AppLog
         appendEntry( "INFO: "+inString ); 
         }
   
-    public void threadInfo(String inString)
-      /* This method writes an information String inString to a log entry
-        but not to the console.  It also identifies the current Thread.
-        */
-      { 
-        info( 
-          "Thread "+
-          Thread.currentThread().getName()+
-          " "+
-          inString 
-          ); 
-        }
-    
     public void exception(String inString, Exception e)
-      /* This method writes an error String inString to a log entry
+      /* This method writes a Java exception String inString to a log entry
         and also to the console error stream for Exception e.
         */
       { 
@@ -188,39 +172,38 @@ public class AppLog
         appendEntry( wholeString );  // Send to log. 
         }
   
-    public void severe(String inString)
-      /* This method writes a severe error String inString to a log entry
-        and also to the console error stream.
-        */
+    public void warning(String inString)
+      // This method writes a severe error String inString to a log entry.
       { 
-        String wholeString= "SEVERE: "+inString;
-
-        System.err.println(wholeString);  // Send to error console.
+        String wholeString= "WARNING: "+inString;
 
         appendEntry( wholeString );  // Send to log. 
         }
 
-    public void appendEntry( String InString )
+    public void appendEntry( String inString )
       /* This appends to the log file a new log entry.
         It contains the app session,
         the entry counters, which is incremented, 
-        followed by InString.
+        followed by inString.
         */
       { 
+    		long nowMillisL= System.currentTimeMillis(); // Saving present time.
+
         String aString= ""; // Initialize String to empty, then append...
         aString+= AppLog.getAppLog().theSessionI;  //...the session number,...
         aString+= ":";  //...and a seperator.
-        long nowMillisL= System.currentTimeMillis();
-        ///aString+= System.currentTimeMillis(); //...present real time,...
         aString+= String.format(  // ...time since last output,...
         		"%1$5d", nowMillisL - lastMillisL
         		);
-        lastMillisL= nowMillisL; // Save last time when we started.
-        aString+= ": ";  //...a seperator and space,...
-        aString+= InString; //...the string to log,...
+        aString+= " ";  //...a space,...
+        aString+= Thread.currentThread().getName(); // the name of thread,
+        aString+= " ";  //...a space,...
+        aString+= inString; //...the string to log,...
         aString+= "\n";  //...and a line terminator.
 
         AppLog.getAppLog().appendRawV( aString );  // Append it to log file.
+
+        lastMillisL= nowMillisL; // Saving present time as new last time.
         }
 
     public void appendRawV(String inString)
@@ -229,33 +212,50 @@ public class AppLog
         */
       { createOrAppendToFileV( inString ); }
       
-    private void createOrAppendToFileV( String inString )
+    private synchronized void createOrAppendToFileV( String inString )
       /* This method creates the log file if it doesn't exist.
         Then it appends inString to the file.
+        
+        If there is an error appending to the file then
+        it will insert an error message into the file before
+        writing inString.  This might happen if another program,
+        such as another instance of this app, is accessing the file.
 
-        ??? MadeMultiprocessSafe: Needs to be made multiprocess safe so 
+        ??? MakeMultiprocessSafe: Maybe it is now.  
+          If not then it should be made multiprocess safe so 
           concurrent apps can access the log file.
         */
       {
+    	  int errorCountI= 0;
         PrintWriter thePrintWriter = null;
-        try {
-            thePrintWriter =  // Prepare...
-              new PrintWriter(  // ...a character output stream..
-                new BufferedWriter(  // ...with buffering to...
-                  new FileWriter(  // ...a writable file...
-                    logFile,   // ...with this name...
-                    true  // ...and write to end of file, not the beginning.
-                    )
-                  )
-                );
-            thePrintWriter.print( inString );  // Append inString to file.
-          } catch (IOException e) {
-            System.err.println(e);
-          } finally {
-            if (thePrintWriter != null) {  // File is (still) open.
-                thePrintWriter.close();  // Close it.
-                }
-            }
+        do {
+	        try {
+	            thePrintWriter =  // Prepare...
+	              new PrintWriter(  // ...a character output stream..
+	                new BufferedWriter(  // ...with buffering to...
+	                  new FileWriter(  // ...a writable file...
+	                    logFile,   // ...with this name...
+	                    true  // ...and write to end of file, not the beginning.
+	                    )
+	                  )
+	                );
+	            if (errorCountI > 0) // Handling any errors.
+		            { // Appending error count to file.
+			            thePrintWriter.print( 
+			            		"ERRORS ("+errorCountI+") writing following to log file."
+			            		);
+			            errorCountI= 0;
+		            	}
+	            thePrintWriter.print( inString );  // Append inString to file.
+	          } catch (IOException e) {
+	            System.err.println("AppLog error: "+e);
+	            errorCountI++;
+	          } finally {
+	            if (thePrintWriter != null) {  // Closing file if open.
+	                thePrintWriter.close();  
+	                }
+	            }
+        	} while (errorCountI > 0);
         }
 
-  }
+  }  

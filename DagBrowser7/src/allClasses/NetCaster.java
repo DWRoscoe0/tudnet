@@ -38,24 +38,24 @@ public class NetCaster
     protected void initializeV()
 	    throws IOException
 	    {
-    		add( 	addressNamedMutable= new NamedMutable( 
+    		addB( 	addressNamedMutable= new NamedMutable( 
 		        theDataTreeModel, 
 		        "IP-Address", 
 		        "" + remoteInetSocketAddress.getAddress()
 		      	)
 					);
 		    
-		    add( 	portNamedMutable= new NamedMutable( 
+		    addB( 	portNamedMutable= new NamedMutable( 
 			      		theDataTreeModel, "Port", "" + remoteInetSocketAddress.getPort()
 			      		)
 		    			);
 		
-		    add( 	packetsSentNamedInteger= new NamedInteger( 
+		    addB( 	packetsSentNamedInteger= new NamedInteger( 
 			      		theDataTreeModel, "Packets-Sent", 0 
 			      		)
 		    			);
 		
-		    add( 	packetsReceivedNamedInteger= new NamedInteger( 
+		    addB( 	packetsReceivedNamedInteger= new NamedInteger( 
 			      		theDataTreeModel, "Packets-Received", 0 
 			      		)
 		    			);
@@ -63,7 +63,5 @@ public class NetCaster
     
 		InetSocketAddress getInetSocketAddress()
 			{ return remoteInetSocketAddress; }
-
-
 	
 		}

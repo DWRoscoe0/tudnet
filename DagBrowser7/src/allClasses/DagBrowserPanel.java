@@ -11,24 +11,26 @@ import java.awt.Graphics;
 import java.awt.KeyboardFocusManager;  // See note about this below.
 import java.awt.event.*;
 
+import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
-//import javax.swing.event.TreeSelectionEvent;
 import javax.swing.tree.TreePath;
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
+//import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
-import javax.swing.Timer;  // a Timer for GUIs.
-//import java.util.Timer  // a more general Timer.
 
-
-
+//import allClasses.LockAndSignal.Input;
 import static allClasses.Globals.*;  // appLogger;
 
 public class DagBrowserPanel
@@ -63,6 +65,7 @@ public class DagBrowserPanel
         a List, Directory, Text, as well as new classes such as
       * An enclosing JPanel, for DagBrowserPanel at least.
       * JLabels for displaying a Tree path and Tree node status.
+    * ?? Remove unneeded repaint() calls.
     */
 
   { // class DagBrowserPanel. 
@@ -76,9 +79,10 @@ public class DagBrowserPanel
 
     // Other instance variables.
 
-      private Timer activityTimer; // Timer that triggers the monitor activity.
-        // This timer is not started.  Using theTimerThread instead.
-      private TimerThread theTimerThread = new TimerThread();
+      private LockAndSignal activityLockAndSignal=
+      		new LockAndSignal(false);
+      private TimerThread theTimerThread = // 2-second backup timer. 
+      		new TimerThread("ActivityTimer");
     
       // data models.
         private TreePath startTreePath;  // start TreePath to be displayed.
@@ -202,10 +206,11 @@ public class DagBrowserPanel
           buildAndAddIJButtonsV();
 
           { // create and add activityJLabel.
-            activityJLabel= new JLabel("Active");  // for testing.
+            activityJLabel= new JLabel("Activity");  // for testing.
             activityJLabel.setOpaque(true);  // set opaque for use as activity.
-            activityJLabel.setBackground(Color.WHITE);  // override doesn't work.
-            activityJLabel.setFont(new Font("Monospaced",Font.BOLD,16)); // set different font.
+            activityJLabel.setFont( // set different font.
+            		new Font("Monospaced",Font.BOLD,16)
+            		);
             hTopJPanel.add(activityJLabel);
             } // create and add activityJLabel.
 
@@ -360,18 +365,11 @@ public class DagBrowserPanel
           It also queues the display of the Help dialogue. 
           */
         {
+          theTimerThread.setDaemon(true); // ?? temporary so I needn't terminate it.
+          theTimerThread.start();  // Start backup TimerThread.
 
-          { // build and start activityTimer.
-            activityTimer = new Timer(  // construct a timer...
-              1000,  // ...set to fire once per second...
-              this  // ...with the DagBrowserPanel the tick Listener.
-              );
-            activityTimer.start();  // start activityTimer so 1-second activitys will work.
-            } // build and start activityTimer.
-          theTimerThread.start();  // Start TimerThread.
           lastGainedFocusComponent= // Initialize record of 
             theRootJTree;  // last component with focus.
-          //restoreFocusV(); // make certain focus is set correctly.
 
           { // Create key mapping.  Experimental and incomplete.
             bindKeys();  
@@ -411,26 +409,22 @@ public class DagBrowserPanel
           { // actionPerformed( ActionEvent )
             Object sourceObject=   // get Evemt source.
               inActionEvent.getSource();
-            if (sourceObject == activityTimer)  // try processing timer event.
-              theTimerThread.interrupt();
-              // processTimerTickV();
-              else // try processing button press.
-              { 
-                Boolean buttonDoneB= true; // Assume a button action will happen.
-                { // Try the various buttons and execute JTree commands.
-                  if ( buttonCommandScanB( sourceObject ) )
-                    ; // Nothing else.  Command was executed.
-                  else if (sourceObject == helpIJButton)
-                    commandHelpV();  // give help.
-                  else
-                    buttonDoneB= false; // indicate no button action done.
-                  } // Try the various buttons and execute JTree commands.
-                if (buttonDoneB)  // restore focus to JTable if button was processed.
-                  {
-                    buttonEnableScanV( );
-                    restoreFocusV(); // change focus from button to what is was.
-                    }
-                }
+            { 
+              Boolean buttonDoneB= true; // Assume a button action will happen.
+              { // Try the various buttons and execute JTree commands.
+                if ( buttonCommandScanB( sourceObject ) )
+                  ; // Nothing else.  Command was executed.
+                else if (sourceObject == helpIJButton)
+                  commandHelpV();  // give help.
+                else
+                  buttonDoneB= false; // indicate no button action done.
+                } // Try the various buttons and execute JTree commands.
+              if (buttonDoneB)  // restore focus to JTable if button was processed.
+                {
+                  buttonEnableScanV( );
+                  restoreFocusV(); // change focus from button to what is was.
+                  }
+              }
             } // actionPerformed( ActionEvent )
 
         private boolean buttonCommandScanB( Object sourceObject )
@@ -489,73 +483,138 @@ public class DagBrowserPanel
             }
 
         private void commandHelpV()
-          /* This composition method impliments the Help command.  */
+          /* This composition method implements the Help command.
+            It uses a JTextArea in a JFrame.
+            
+            ?? Improve:
+              ? Determine why restoreFocusV() doesn't work with this.
+              ? Don't open multiple help JFrames if Help button pressed 
+                multiple times.
+            */
           {
-            JOptionPane.showMessageDialog(
-              this, // null, 
-              "Use Arrows, in keys or buttons, to navigate folders.\n"+
+            String helpString= 
+            	"Use Arrows, in keys or buttons, to navigate folders.\n"+
               "      <Right-arrow> moves to child item.\n"+
               "      <Left-arrow> moves to parent item.\n"+
               "      <Down-arrow> moves to next item.\n"+
               "      <Up-arrow> moves to previous item\n"+
               " <Tab> key selects next window gadget.\n"+
-              " <Enter> key manually expands or collapses an item.",
-              "Help",
-              JOptionPane.INFORMATION_MESSAGE
-              );
+              " <Enter> key manually expands or collapses an item.";
+            
+            final JFrame theJFrame =  // Make the Help JFrame.
+                new JFrame( 
+                  AppName.getAppNameString()
+                  +" Help"
+                  );
+            
+            JPanel theJPanel= new JPanel();
+            Border emptyBorder = BorderFactory.createEmptyBorder(
+            		20,20,20,20
+            		);
+            theJPanel.setBorder( emptyBorder );
+            theJPanel.setLayout( 
+            		new BoxLayout( theJPanel, BoxLayout.PAGE_AXIS) 
+            		);
+            
+            JTextArea theJTextArea= new JTextArea( helpString );
+            theJTextArea.setBackground( theJFrame.getBackground() );
+            theJTextArea.setEditable( false );
+            theJPanel.add( theJTextArea );
+            
+            Component spacerComponent= Box.createVerticalStrut( 10 );
+            theJPanel.add( spacerComponent );
+            
+            JButton theJButton= new JButton("OK");
+            theJButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+            theJButton.addActionListener( 
+            		new ActionListener() {
+            			public void actionPerformed(ActionEvent inActionEvent) {
+            				theJFrame.dispose();
+            			}
+            			}
+            		);
+            theJPanel.add( theJButton );
+
+            theJFrame.setContentPane( theJPanel );
+            
+            theJFrame.pack();  // Layout all the content's sub-panels.
+            theJFrame.setLocationRelativeTo(null);  // Center JFrame on screen.
+            theJFrame.setVisible(true);  // Make the window visible.
             }
-        
-        private void processTimerTickV()
-          /* This composition method processes one tick of the activityTimer.  
-            Because it accesses UI components,
-            it should be called from the UI/AWT Thread only.
-            Use SwingUtilities.invokeLater(..) if needed.
-            It does non-UI stuff also.
-            */
-          {
-            { // switch activity color.
-              if ( activityJLabel.isOpaque() )  //Beep maybe.
+
+      class TimerThread extends Thread
+
+	      /* This class does does some tasks once every second:
+	        * Thread wake delay measurement and display.
+	        * EDT delay measurement and display.
+	        * Software update file check.
+
+          In the past it called java.awt.Toolkit.getDefaultToolkit().beep().
+
+	        ?? Make into an EpiThread and start and stop in the normal way.
+	        */
+
+        {
+      		long periodicTargetTimeMsL; // Target times for waits.
+      		  // Making variable volatile doesn't make any difference.
+      		boolean colorToggleB= false; // For gadget color.
+
+      		TimerThread( String nameString )
+        		{
+        			super( nameString );
+        		  }
+      		
+          public void run()
+            {
+              appLogger.info("begun.");
+              periodicTargetTimeMsL= System.currentTimeMillis();
+        			while (! Thread.currentThread().isInterrupted() )
                 {
-                  //java.awt.Toolkit.getDefaultToolkit().beep();
-                  //increment HearBeat. ??
+              		//appLogger.info("in loop.");
+              		doDelayMeasurementsV();
+                  theAppInstanceManager. // Executing updater if present.
+                    tryUpdateFromNewerFileInstanceV();
                   }
-              activityJLabel.  // Reverse activity JLabel opacity.
-                setOpaque(!activityJLabel.isOpaque());
-              activityJLabel.repaint();  // Request redisplay of it only.
-              } // switch activity color.
+              appLogger.info("ending.");
+              }
 
-            theAppInstanceManager. // Call so AppInstanceManager.getAppInstanceManager(). can poll things.
-              tryExitForChainToUpdateFromNewerArgAppV();
-            }
+      		private void doDelayMeasurementsV()
+      		  /* This methods now does little more than toggle the color
+      		    of the Activity Label.
+      		    
+      		    Earlier this method measured and displayed two delays,
+      		    but this has since been moved to SystemMonitor.  They were:
+			        * Thread wake delay, the time between the desired end of a wait
+			          and the actual end of that wait.
+			        * EDT delay, the time it takes between when 
+			          SwingUtilities.invokeLater(..) is called and
+			          the time the Runnable's run() method is executing.
 
-      /* TimerThread.
-        This a replacement for the activityTimer,
-        though I might keep it around for a while.
-        */
-        
-        class TimerThread extends Thread
-          {
-            public void run()
-              {
-                setName("SwingTimer");  // Make debugging easy.
-                while (true)
-                  {
-                    // Misc.snoozeV(2000);  // Do nothing for 2 second.
-                    try {  // Try sleeping the requested time.
-                      Thread.sleep(2000);
-                      }
-                    catch (InterruptedException e) { // If interrupted...
-                      // Do nothing except leave sleep cut short.
-                      }
-                    SwingUtilities.invokeLater( // Queue tick processor.
-                      new Runnable() {
-                        @Override  
-                        public void run() { processTimerTickV(); }  
-                        } 
-                      );
-                    }
-                }
-            }
+      		    */
+        		{
+      			  final long periodMsL= 1000;
+    				  long shiftInTimeMsL= // Determining any unexpected time shift.
+    				    activityLockAndSignal.correctionMsL(periodicTargetTimeMsL, periodMsL);
+    				  periodicTargetTimeMsL+= shiftInTimeMsL; // Adjusting target time for shift.
+    	  			activityLockAndSignal.doWaitWithTimeOutE( // Waiting for next mark.
+  	  					activityLockAndSignal.timeOutForMsL( periodicTargetTimeMsL, periodMsL )
+      					);
+    	  			periodicTargetTimeMsL+= periodMsL; // Advancing target.
+		        	theDataTreeModel.invokeAndWaitV( // Executing on EDT...
+	              new Runnable() {
+	                @Override  
+	                public void run() { 
+	                	activityJLabel.setText( "Active" );
+                  	Color activityColor= (colorToggleB^=true) 
+                  			? Color.WHITE
+                  		  : getBackground();
+                    activityJLabel.setBackground(activityColor);
+                    }  
+	                } 
+	              );
+        			}
+      		
+          } // class TimerThread
 
       /* TreePathListener code.
 

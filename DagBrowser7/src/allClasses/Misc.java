@@ -25,7 +25,7 @@ public class Misc
   
     // Reminder variables.
 
-      public static final boolean reminderB= false;  // true;
+      public static final boolean reminderB= true;
 
 
     /* Debugging code.
@@ -85,20 +85,49 @@ public class Misc
 
     // Sleep/Snooze code.
 
-      public static void snoozeV(long msL) 
-        /* This method uses Thread.sleep(..) to wait for msL milliseconds 
+      /* ??? Using LockAndSignal instead.
+      public static void sleepForV(long intervalMsL) 
+        /* This method uses Thread.sleep(..) to wait for intervalMsL milliseconds 
           but doesn't throw an InterruptedException if 
           the Thread is interrupted.
           However if an InterruptedException is thrown then
           it does return early with the Thread interrupted status set.
           */
+      /* ??? 
         { 
           try {
-            Thread.sleep(msL);  // Try sleeping the requested time.
+            Thread.sleep(intervalMsL);  // Try sleeping the requested time.
             }
           catch (InterruptedException e) { // If interrupted...
             Thread.currentThread().interrupt(); // ...restore status.
             }
           }
+      ??? */
+
+      /* ??? Using LockAndSignal instead.
+      public static void XsleepUntilV(long timeMsL) 
+        /* This method uses Thread.sleep(..) to wait until time timeMsL
+          but doesn't throw an InterruptedException if 
+          the Thread is interrupted.
+          However if an InterruptedException is thrown then
+          it does return early with the Thread interrupted status set.
+          */
+      /* ???
+        { 
+      		long timeToEndOfSleepL= // Converting the real-time to a delay.
+            timeMsL - System.currentTimeMillis();
+          if ( timeToEndOfSleepL > 0 ) // Sleeping if delay is posotive.
+            {  
+		          try { // Waiting for notification or time-out.
+		            Thread.sleep(  // Wait for call to notify() or...
+		              timeToEndOfSleepL  // ...time of next scheduled job.
+		              );
+		            } 
+		          catch (InterruptedException e) { // Handling sleep interrupt.
+		            Thread.currentThread().interrupt(); // Re-establishing for tests.
+		            }
+              }
+          }
+      */
 
     } // class Misc 

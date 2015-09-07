@@ -9,12 +9,12 @@ public class PortManager {
     It avoids allowing opening the same port for multiple simultaneous uses,
     such as Multicast and Unicast uses
 
-    ??? Figure out how to makes this deal with multiple NetworkInterface-s.
+    ?? Figure out how to makes this deal with multiple NetworkInterface-s.
 
-    ??? It might eventually do pseudorandomly scramble port numbers
+    ?? It might eventually do pseudorandomly scramble port numbers
     as a function of time and peer ID to make blocking more difficult.
 
-    ??? This should probably be renamed to AddressManager
+    ?? This should probably be renamed to AddressManager
     and its role expanded to manage assigned IP addresses,
     such as the group Multicast addresses.
     */
@@ -28,21 +28,12 @@ public class PortManager {
       return 44444;
       }
 
-  /*///???
-    public static int getDiscoveryLocalPortI()
-    // Experimental method.
-    {
-      //return 44444;
-      return 40404;
-      }
-  ??? */
-
   private static int localPortI= 0;
   
   public static int getLocalPortI()
     /* Experimental method.
-      ??? Make this be a function of local IP?
-        This would be NetworkInterface-dependent.
+      Make this be a function of local IP??
+      This would be NetworkInterface-dependent.
       */
     {
       while ( localPortI == 0 ) {

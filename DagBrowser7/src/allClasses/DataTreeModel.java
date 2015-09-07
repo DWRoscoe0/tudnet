@@ -25,7 +25,6 @@ public class DataTreeModel
   
   /* This class implements an extended TreeModel 
     used for browsing the Infogora hierarchy.
-    
     It implements, or will implement, the following extensions beyond
     the basic capabilities needed by the JTree class.
 	
@@ -33,7 +32,7 @@ public class DataTreeModel
 	    returns a JComponent capable of displaying the node.
 
 	  * This class will eventually maintain a 2-way association between 
-	    a DataNode and 	    the TreePath (or TreePaths in the case of DAGs)
+	    a DataNode and the TreePath (or TreePaths in the case of DAGs)
 	    that can be followed to get to them.
 
 	    ?? One understandable drawback of the superclass TreeModel is
@@ -44,12 +43,22 @@ public class DataTreeModel
 	    so a solution needs to be found.
 	    It will probably be done with a HashMap.
 
+    Because this class will be used with JTree as part of a user interface,
+    there are some threading considerations:
+    * The notification methods, the ones which fire TreeModelListeners,
+      must be called only within the EDT (Event Dispatch Thread).
+      This is what is done now, using the invokeAndWaitV(..) method.
+    * Simply synchronizing its methods might not be sufficient
+      to make the model thread-safe because values read by the tree reader
+      methods can change at any time.
+    
     ?? Repeat what was done with 
     	TitledListViewer and TreeListModel to report ConnectionManager changes
     with 
 	    DirectoryTableViewer and DirectoryTableModel to report
 	    file-system changes using Java Watchable, WatchService, WatchEvent, 
-	    and WatchKey.
+	    and WatchKey.  Unfortunately to watch sub-directories, each
+	    individual directory must be registered separately.
     */
 
   { // class DataTreeModel.
@@ -274,6 +283,16 @@ public class DataTreeModel
           return lastDataNode.getInfoString();
           }
 
+
+      /* Reporting methods for reporting changes to the TreeModel data.
+        This is tricky for 2 reasons:
+        * It must be done on the Event Dispatch Thread (EDT),
+          and must be done in real time.  It is done using invokeAndWaitV(..).
+	      * The TreeModel is used to report changes, but it doesn't make changes.
+	        But both changes and their reporting must be protected using
+	        invokeAndWaitV(..). 
+        */
+
       public void reportingInsertV( 
           DataNode parentDataNode, 
           int indexI, 
@@ -328,45 +347,21 @@ public class DataTreeModel
           fireTreeNodesRemoved( theTreeModelEvent ); // Firing as removal event.
           }
 
-      protected void runOrInvokeAndWaitV( Runnable theRunnable ) /// ???
-        /* This helper method runs theRunnable on the AWT thread.
-          one way or another.
-          It already running on the AWT thread then it just calls run().
-          Otherwise it uses invokeAndWait(..).
-         */
-  	    {
-  	      if ( SwingUtilities.isEventDispatchThread() )
-  	        theRunnable.run();
-  	      else
-  	        invokeAndWaitV( theRunnable );
-  	    	}
-
-      protected void invokeAndWaitV( Runnable theRunnable ) /// ???
-        // Calls SwingUtilities.invokeAndWait(..) and handles any exceptions.
-        {
-  		  	try  // Queuing theRunnable on AWT thread.
-  		  	  { SwingUtilities.invokeAndWait( theRunnable ); 			  		}
-  		    catch // Handling wait interrupt by
-  		    	(InterruptedException e) 
-  		      { Thread.currentThread().interrupt(); } // setting interrupt flag.
-  		        // Is a termination request so no need to continue waiting.
-  		  	catch  // Handling invocation exception by
-  		  	  (InvocationTargetException e) 
-  		  	  { throw new RuntimeException(e); } // wrapping and re-throwing.
-        	}
-
       public void safelyReportingChangeV( final DataNode theDataNode )
-        // This is a thread-safe version of reportingChangeV( theDataNode ).
+        /* This is a thread-safe version of reportingChangeV( theDataNode ).
+          It's mainly to save code needed to report appearance changes
+          by eliminating need to make lengthy calls to runOrInvokeAndWaitV(..). 
+          */
 	      {
-	  	  runOrInvokeAndWaitV( // Do following on AWT thread. 
-	    		new Runnable() {
-	    			@Override  
-	          public void run() {
-	    				reportingChangeV( theDataNode );
-	            }
-	          } 
-	        );
-	      }
+		  	  runOrInvokeAndWaitV( // Do following on EDT thread. 
+		    		new Runnable() {
+		    			@Override  
+		          public void run() {
+		    				reportingChangeV( theDataNode );
+		            }
+		          } 
+		        );
+		      }
 
       public void reportingChangeV( DataNode theDataNode )
       	/* This method creates and fires a single-child TreeModelEvent
@@ -433,7 +428,7 @@ public class DataTreeModel
 					  This means searching toward the tree root in addition to
 					  breadth-first searching into the descendants.
 					  It implies a starting path which is not the root,
-					  which could some either from a cache or the last path returned.
+					  which could come either from a cache or the last path returned.
 					  To prevent checking the same nodes, a check for the child node 
 					  should be skipped when expanding its parent.  
 					  
@@ -487,5 +482,117 @@ public class DataTreeModel
               }
           return resultTreePath;
           }
+
+      
+      // EDT (Event Dispatch Thread) safety routines.
+      
+      protected void runOrInvokeAndWaitV( Runnable jobRunnable )
+        /* This helper method runs jobRunnable on the EDT thread.
+          one way or another.
+          It already running on the EDT thread then it just calls run().
+          Otherwise it uses invokeAndWait(..).
+         */
+  	    {
+  	      if ( SwingUtilities.isEventDispatchThread() )
+  	        jobRunnable.run();
+  	      else
+  	        invokeAndWaitV( jobRunnable );
+  	    	}
+
+      protected void invokeAndWaitV( Runnable jobRunnable )
+        /* This method does nothing if shutdown is underway, 
+          because using the EDT (Event Dispatch Thread) 
+          might not be safe if shutdown is underway.  
+          
+          Otherwise this method calls SwingUtilities.invokeAndWait(..) 
+          to execute jobRunnable.run().
+          It also handles any exceptions invokeAndWait(..) might throw.
+          
+          If, either before or during execution of this method, 
+          its thread is interrupted, which results in 
+          an InterruptedException from SwingUtilities.invokeAndWait(..), 
+          then this method will clear the interrupt and 
+          call invokeAndWait(..) again with a do-nothing Runnable.
+          If an InterruptedException happens again it will do this again.
+          It will continue to do this until invokeAndWait(..) ends 
+          without being interrupted.
+          The purpose of doing this is to guarantees that 
+          when this method finally returns,
+          the processing of jobRunnable will be complete.
+          For this to work the EDT must be running normally.
+
+          This thread's interrupt status will be true 
+          on return from this method if it was true on entry, 
+          or it became true during processing.
+          It will be false otherwise.
+          
+          ?? Rewrite to make a single loop do both
+          the jobRunnable and any possible null Runnables 
+          if InterruptedException happens.
+
+          ?? Or rewrite to reflect that thread interrupt probably means
+          abort and jobRunnable need not or can not be completed.
+          */
+        {
+      		//appLogger.debug( "DataTreeModel.invokeAndWaitV(..) begins.");
+
+      		if ( theShutdowner.isShuttingDownB() ) // Returning if shutting down. 
+	      		{
+      			  //appLogger.debug( "DataTreeModel.invokeAndWaitV(..) isShuttingDownB() return.");
+	      			return;
+	      			} // Doing this because EDT is unreliable during shutdown.
+      		
+      	  boolean interruptedB= // Saving and disabling interrupted status. 
+      	  		Thread.interrupted(); // (in case it was already true)
+
+      	  try  // Processing jobRunnable on EDT thread.
+  		  	  { 
+      	  	  //appLogger.debug( "DataTreeModel.invokeAndWaitV(..) before invokeAndWait(jobRunnable).");
+      	  	  SwingUtilities.invokeAndWait( jobRunnable ); 			  		
+				  		//appLogger.debug( "DataTreeModel.invokeAndWaitV(..) after invokeAndWait(jobRunnable).");
+      	  	  }
+  		    catch // Handling wait interrupt.  Avoid.  Sometimes hangs?! 
+  		    	(InterruptedException e) 
+  		      { // Flush: Executing null Runnable to guarantee jobRunnable done.
+  	      	  appLogger.debug( "DataTreeModel.invokeAndWaitV(..) jobRunnable interrupted.");
+  	      	  while (true) {  
+    	      	  appLogger.debug( "DataTreeModel.invokeAndWaitV(..) begin loop.");
+							  try  // Queuing and waiting for null Runnable on EDT thread.
+						  	  { 
+							  		appLogger.debug( "DataTreeModel.invokeAndWaitV(..) before invokeAndWait(null Runnable).");
+							  		SwingUtilities.invokeAndWait( new Runnable() { 
+				              @Override  
+				              public void run() { 
+								    	  appLogger.debug( "DataTreeModel.invokeAndWaitV(..) null run()");
+				              	} // Doing nothing. 
+							  	    } );  
+							  		appLogger.debug( "DataTreeModel.invokeAndWaitV(..) after invokeAndWait(null Runnable).");
+							  		break;  // Exiting because wait ended normally.
+						  	  	}
+						    catch // Handling wait interrupt.
+						    	(InterruptedException e1) 
+						      { 
+						    	  appLogger.debug( "DataTreeModel.invokeAndWaitV(..) null run() interrupted.");
+						    	  
+					      	  interruptedB= true; // Record interrupt for later.
+						      	}
+						  	catch  // Handling invocation exception by re-throwing.
+						  	  (InvocationTargetException e1) 
+						  	  { 
+							  		appLogger.debug( "DataTreeModel.invokeAndWaitV(..):"+e1 );
+						    	  throw new RuntimeException(e); 
+						  			} // wrapping and re-throwing.
+    	      	  appLogger.debug( "DataTreeModel.invokeAndWaitV(..) end loop.");
+  	      	  	}
+  		      	}
+			  	catch  // Handling invocation exception by re-throwing.
+  		  	  (InvocationTargetException e) 
+			  	  { 
+				  		appLogger.error( "DataTreeModel.invokeAndWaitV(..):"+e );
+			    	  throw new RuntimeException(e); 
+			  			} // wrapping and re-throwing.
+      	  if (interruptedB) // Setting interrupted status if interrupt occurred. 
+      	  	Thread.currentThread().interrupt(); 
+        	}
       
     } // class DataTreeModel.

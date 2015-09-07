@@ -1,5 +1,6 @@
 package allClasses;
 
+
 public class NamedInteger // A DataNode for tracking integer attributes.
 
   extends NamedLeaf 
@@ -31,35 +32,31 @@ public class NamedInteger // A DataNode for tracking integer attributes.
         }
 
     public long addValueL( long deltaL )
-	    /* This method adds deltaL to the value and returns the new value.
-		    It also begins the process of firing associated change listeners.
+	    /* This method does nothing if deltaL is 0.
+	      Otherwise it adds deltaL to the value and returns the new value.
+		    It also fires any associated change listeners.
 		    */
       {
     	  setValueL( this.theL + deltaL ); // Adding delta to old value.
-	  	  return theL; // Returning new value.
+	  	  return theL; // Returning possibly different value.
         }
 
-	  public Object setValueL( final long newL )
-	    /* This method sets a new value and returns the old one.
-	      It also begins the process of firing associated change listeners.
-	      */
+	  //public Object setValueL( final long newL )  // Does not produce error!
+    public long setValueL( final long newL )
+	    /* This method does nothing if deltaL is the same value 
+	      as the present value of this NamedInteger.
+		    Otherwise it sets sets deltaL as the new value 
+		    and returns the old unchanged value.
+		    It also fires any associated change listeners.
+		    */
 	    {
-	  	  long oldL= this.theL; // Saving present value as old one. 
-	  	  final DataNode thisDataNode= this; // Converting this pointer.
-
-	  	  theDataTreeModel.runOrInvokeAndWaitV( // Do following on AWT thread. 
-	    		new Runnable() {
-	    			@Override  
-	          public void run() {
-	    				theL= newL; // Setting new value.
-	    	  	  theDataTreeModel.reportingChangeV(  // Fire associated listeners. 
-	    	  	  		thisDataNode 
-	    	  	  		);
-	            }
-	          } 
-	        );
-
-				return oldL; // Returning old value.
+	  	  long oldL= this.theL; // Saving present value as old one.
+	  	  if ( newL != theL ) // Setting new value if it's different.
+	  	    {
+						theL= newL; // Setting new value.
+		        theDataTreeModel.safelyReportingChangeV( this );
+		  	  	}
+				return oldL; // Returning old unchanged value.
 		  	}
 
     }
