@@ -150,22 +150,21 @@ public class Shutdowner
 	      		requestAppShutdownV(); // Requesting app code shutdown.
 	      		  // App code might have done this already.
 
-	      		appLogger.info( 
-	      				"ShutdownHook.run() appShutdownDoneLockAndSignal.doWaitE()." 
-	      				);
 	      	  appShutdownDoneLockAndSignal.doWaitE(); // Awaiting shutdown done.
-	      	  
-	      		appLogger.info( "ShutdownHook.run() ending." );
+	      		appLogger.info( "ShutdownHook.run() app shutdown done, ending." );
 	          }
 	
 	      } // ShutdownHook
 
     public boolean isShuttingDownB()
       /* This method returns a boolean indication of whether
-        the shutdown process has begun.
-        This method was added because When shutdown had begun
-        some Java libraries, such as AWT and Swing,
-        might not be safe to use.
+        the app's shutdown process has begun.
+        This method is used to control conditional code.
+        * Sometimes extra code must be executed if shutdown is underway,
+          such as code to break connections with peers.
+        * Sometimes code must be prevented from executing if
+          shutdown is underway, such as code which calls modules which
+          might themselves be in the process of shutting down.
         */
     	{ return  shutdownUnderwayB; }
     
@@ -175,7 +174,7 @@ public class Shutdowner
 	      * this thread isInterrupted() is true. 
 	     */
 	    { 
-		  	appLogger.info( "Shutdowner.waitForAppShutdownStartedV()." );
+		  	//appLogger.info( "Shutdowner.waitForAppShutdownStartedV()." );
 	  	  appShutdownRequestedLockAndSignal.doWaitE(); 
 	  	  }
 
@@ -229,15 +228,17 @@ public class Shutdowner
         appLogger.info( "Shutdowner.finishV() beginning, calling listeners." );
         reverseFireShutdownerListeners(); // Calling all listeners in reverse.
 
-        appLogger.info( 
-        	"Shutdowner.finishV() listeners done, starting process if requested." 
-        	);
+        //appLogger.info( 
+        //	"Shutdowner.finishV() listeners done, starting process if requested." 
+        //	);
         startAProcessV(argStrings); // Executing an external command.
 
-        appLogger.info( "Shutdowner.finishV() signaling app shutdown done." );
+        appLogger.info( 
+        		"Shutdowner.finishV() signaling app shutdown done, ending." 
+        		);
     	  appShutdownDoneLockAndSignal.doNotifyV(); // Signaling shutdown done.
 
-    	  appLogger.info( "Shutdowner.finishV(), ending." );
+    	  //appLogger.info( "Shutdowner.finishV(), ending." );
         }
     
     // ShutdownerListener code.  Maintains and calls ShutdownListeners.

@@ -75,7 +75,7 @@ public class SystemMonitor
         measures and displays various CPU values once every second.
        */
       {
-    		appLogger.info( "SystemMonitor.run() beginning." );
+    		//appLogger.info( "SystemMonitor.run() beginning." );
 
     		initializeV();  // Do non-dependency injection initialization.
 

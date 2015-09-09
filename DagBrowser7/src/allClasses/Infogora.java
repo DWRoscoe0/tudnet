@@ -353,7 +353,7 @@ class Infogora  // The root of this app.
 				this app's high-level structure.
 			  */
       { // main(..)
-	      appLogger.info("main Infogora main() beginning.");
+	      appLogger.info("Infogora.main() beginning.");
 
 	      setDefaultExceptionHandlerV(); // Preparing for exceptions 
 	        // before doing anything else.

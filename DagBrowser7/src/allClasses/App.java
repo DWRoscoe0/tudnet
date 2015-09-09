@@ -1,6 +1,6 @@
 package allClasses;
 
-import static allClasses.Globals.appLogger;
+//import static allClasses.Globals.appLogger;
 
 public class App { // The App, especially pre-GUI stuff.  See runV(..) for details.
 
@@ -27,7 +27,7 @@ public class App { // The App, especially pre-GUI stuff.  See runV(..) for detai
       do any final shutdown jobs.
      */
     {
-  		appLogger.info("App beginning.");
+  		//appLogger.info("App beginning.");
   		theShutdowner.initializeV(); // Preparing for future app shutdown.
 
   	  if ( ! theAppInstanceManager.managingInstancesThenNeedToExitB( ) ) 
@@ -39,10 +39,11 @@ public class App { // The App, especially pre-GUI stuff.  See runV(..) for detai
           theAppGUIManager.runV(); // Running GUI manager until finished.
           }
 
-  		appLogger.info("App calling Shutdowner.finishV().");
+  		//appLogger.info("App calling Shutdowner.finishV().");
       theShutdowner.finishV();  // Doing final app shutdown jobs.
 
-  		appLogger.info("App exiting.");
+  		//appLogger.info("App exiting.");
+      
       // After this method returns, the main thread of this app should exit.
       } // runV().
 

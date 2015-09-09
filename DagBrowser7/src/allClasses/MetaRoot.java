@@ -2,7 +2,7 @@ package allClasses;
 
 import javax.swing.tree.TreePath;
 
-import static allClasses.Globals.*;  // For appLogger;
+//import static allClasses.Globals.*;  // For appLogger;
 
 public class MetaRoot {
 
@@ -32,7 +32,7 @@ public class MetaRoot {
       so that their children can be lazy-loaded.
       */
     {
-      appLogger.info( "MetaRoot constructor starting.");
+      //appLogger.info( "MetaRoot constructor starting.");
 
       this.theDataRoot= theDataRoot;
       this.theMetaFileManager= theMetaFileManager;

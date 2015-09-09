@@ -134,7 +134,8 @@ public class AppGUIManager // Top level of the app's GUI, the window manager.
 
     			private final static long PERIOD= 100;  // was 100
     			private final static long LIMIT= 500; // was 500
-
+    			private final static boolean displayStackB= false;
+    			
     			class EventValue { 
     				long startTimeL; 
     				boolean outputtedB; 
@@ -209,7 +210,7 @@ public class AppGUIManager // Top level of the app's GUI, the window manager.
 	    				return thresholdExceededB; 
   	    			}
 
-    			@Override
+          @Override
     			public void run() 
     			  /* This method periodically tests whether an EDT dispatch
     			    has taken too long and reports it if so.
@@ -232,40 +233,13 @@ public class AppGUIManager // Top level of the app's GUI, the window manager.
 	    	    						this.checkEventTimeB(
 	    	    								"Partial",event, currTime, startTime
 	    	    								);
-	    	    				if (thresholdExceededB) // Displaying stack also if too long.
-			    	    			{
-	    	    						entry.getValue().outputtedB= true; // Recording output.
-			  	              ThreadMXBean threadBean= 
-			  	              		ManagementFactory.getThreadMXBean();
-			  	              long threadIds[] = threadBean.getAllThreadIds();
-			  	              for (long threadId : threadIds) {
-			  	                 ThreadInfo threadInfo = threadBean.getThreadInfo(threadId,
-			  	                       Integer.MAX_VALUE);
-			  	                 if (threadInfo.getThreadName().startsWith("AWT-EventQueue")) {
-			  	                    //System.out.println(
-			  	                	  appLogger.warning(
-					  	                	   threadInfo.getThreadName() + " / "
-					  	                     + threadInfo.getThreadState()
-					  	                     );
-			  	          					if ( eventDispatchingEndingB ) 
-				  	                	  appLogger.warning("Dispatch already ended.");
-				  	                	  else
-				  	                	  { // Display stack.
-					  	                	  appLogger.warning("Begin Stack Trace.");
-					  	                	  // /* ?? Disable stack trace logging.
-					  	                    StackTraceElement[] stack = threadInfo.getStackTrace();
-					  	                    for (StackTraceElement stackEntry : stack) {
-					  	                       //System.out.println(
-					  	                    	 appLogger.warning("\t" + stackEntry.getClassName()
-					  	                       + "." + stackEntry.getMethodName() + " ["
-					  	                       + stackEntry.getLineNumber() + "]");
-					  	                    }
-					  	                	  appLogger.warning("End Stack Trace.");
-					  	                	  // ?? Disable stack trace logging. */
-				  	          				  	}
-			  	                 }
-			  	              }
-			    	    			}
+	    	    				if  // Displaying stack also if too long.
+	    	    				  ( thresholdExceededB )
+		    	    				{
+		    	    					displayStackTraceV();
+		    	  						entry.getValue().outputtedB= true; // Recording output.
+		    	    					}
+
 	    						}
 	    					}
 	    					try { Thread.sleep(PERIOD); // Waiting for the sample time.   
@@ -273,6 +247,43 @@ public class AppGUIManager // Top level of the app's GUI, the window manager.
 	    					catch (InterruptedException ie) { }
 	    				}
 	    			}
+
+					private void displayStackTraceV()
+	    			{
+		  				if ( displayStackB ) // Displaying stack if enabled.
+		  				  {
+		              ThreadMXBean threadBean= 
+		              		ManagementFactory.getThreadMXBean();
+		              long threadIds[] = threadBean.getAllThreadIds();
+		              for (long threadId : threadIds) {
+		                 ThreadInfo threadInfo = threadBean.getThreadInfo(threadId,
+		                       Integer.MAX_VALUE);
+		                 if (threadInfo.getThreadName().startsWith("AWT-EventQueue")) {
+		                    //System.out.println(
+		                	  appLogger.warning(
+		  	                	   threadInfo.getThreadName() + " / "
+		  	                     + threadInfo.getThreadState()
+		  	                     );
+		          					if ( eventDispatchingEndingB ) 
+			                	  appLogger.warning("Dispatch already ended.");
+			                	  else
+			                	  { // Display stack.
+		  	                	  appLogger.warning("Begin Stack Trace.");
+		  	                	  // /* ?? Disable stack trace logging.
+		  	                    StackTraceElement[] stack = threadInfo.getStackTrace();
+		  	                    for (StackTraceElement stackEntry : stack) {
+		  	                       //System.out.println(
+		  	                    	 appLogger.warning("\t" + stackEntry.getClassName()
+		  	                       + "." + stackEntry.getMethodName() + " ["
+		  	                       + stackEntry.getLineNumber() + "]");
+		  	                    }
+		  	                	  appLogger.warning("End Stack Trace.");
+		  	                	  // ?? Disable stack trace logging. */
+			          				  	}
+		                 }
+		              }
+			    			}
+	    			  }
 
     		} // TracingEventQueueMonitor
 
@@ -300,7 +311,7 @@ public class AppGUIManager // Top level of the app's GUI, the window manager.
               theAppGUIFactory.makeInstanceCreationRunnable(theJFrame)
               );
 
-            appLogger.info("GUI start-up complete.");
+            //appLogger.info("GUI start-up complete.");
             theGUILockAndSignal.doNotifyV();  // Signal that starting is done.
             }
 
@@ -424,7 +435,7 @@ public class AppGUIManager // Top level of the app's GUI, the window manager.
         ?? Simplify by using invokeAndWait().
         */
       {
-        appLogger.info("Queuing GUIDefiner.");
+        //appLogger.info("Queuing GUIDefiner.");
 
         java.awt.EventQueue.invokeLater(  // Queue on GUI (AWT) thread...
         	theGUIDefiner   // ...this Runnable GUIDefiner,...
@@ -432,9 +443,8 @@ public class AppGUIManager // Top level of the app's GUI, the window manager.
 
         theGUILockAndSignal.doWaitE(); // Wait for signal
           // which means that the GUIDefiner has finished.
-        
-        
-        appLogger.info("GUI/AWT thread signalled GUIDefiner done.");
+
+        //appLogger.info("GUI/AWT thread signalled GUIDefiner done.");
         }
 
     public void runV() // This method does the main AppGUIManager run phase.

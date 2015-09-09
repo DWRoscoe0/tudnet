@@ -268,10 +268,10 @@ public class AppInstanceManager {
             InetAddress.getLocalHost().getHostAddress() // Logging real IP. 
             );
         	
-          appLogger.info(
-            "About to listen for a later app packets on port " + 
-            getInstancePortI()
-            );
+          //appLogger.info(
+          //  "About to listen for a later app packets on port " + 
+          //  getInstancePortI()
+          //  );
           instanceServerSocket =  // Try opening listener socket.
             new ServerSocket(
               getInstancePortI(), 10, InetAddress.getLoopbackAddress() 
@@ -288,6 +288,9 @@ public class AppInstanceManager {
               public void doMyShutdown() 
 	              {
 	                try {  // Terminating monitor thread by closing its socket.
+	                		appLogger.info(
+	                				"AppInstanceManager doMyShutdowner(..),"
+	                				+" closing socket.");
 		                  instanceServerSocket.close();
 		                } catch (IOException e) {
 		                  appLogger.error("Error closing instanceServerSocket" + e);
@@ -407,7 +410,7 @@ public class AppInstanceManager {
                 }
               }
               }
-	          appLogger.info(Thread.currentThread().getName()+": ending.");
+	          appLogger.info("Socket closed, ending.");
             }
         }
 
@@ -449,7 +452,7 @@ public class AppInstanceManager {
 	                if (tryInstallToStandardFolderB()) break toReturn;
 	  	            if (tryUpdateToStandardFolderB()) break toReturn;
 	                if (tryPokingAppInStandardFolderB()) break toReturn;
-	                appLogger.info("Exhausted without-arg possibilities.");
+	                //appLogger.info("Exhausted without-arg possibilities.");
 	                appShouldExitB= false;  // For normal startup.
 	                } // Try processing a plain app command without arguments.
 	            } // Handle the arg-less command possibilities.
@@ -506,7 +509,7 @@ public class AppInstanceManager {
         if // This apps file is newer that the one in standard folder.
           ( thisAppFile.lastModified() > standardAppFile.lastModified() )
           {
-            appLogger.info("Updating by copying this app file to standard folder.");
+            //appLogger.info("Updating by copying this app file to standard folder.");
         	  appShouldExitB= copyAppToStandardFolderAndPrepareToRunB();
             }
         return appShouldExitB;
@@ -567,7 +570,7 @@ public class AppInstanceManager {
         if  // This app is not from a jar file.
           (! thisAppFile.getName().endsWith(".jar"))
           { // Probably a class file running in Eclipse.  Do normal startup.
-            appLogger.info( "Not a jar file, so not exiting.");
+            appLogger.info( "Not a jar file, so not copying or exiting.");
             }
           else
             while  // Keep trying until copy success and exit.

@@ -283,7 +283,7 @@ public class Multicaster
             appLogger.error(Thread.currentThread().getName()+"run(): " + e );
             }
 
-          appLogger.info( Thread.currentThread().getName()+": run() ending." );
+          //appLogger.info( Thread.currentThread().getName()+": run() ending." );
           }
 
     private void startingMultcastReceiverThreadV()

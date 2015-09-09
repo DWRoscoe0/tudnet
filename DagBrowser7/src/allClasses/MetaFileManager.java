@@ -66,7 +66,7 @@ public class MetaFileManager {
       DataRoot theDataRoot // ?? should go directly to Finisher. 
       )
     {
-      appLogger.info( "MetaFileManager constructor starting.");
+      //appLogger.info( "MetaFileManager constructor starting.");
 
       this.theDataRoot= theDataRoot;
       }
@@ -171,7 +171,7 @@ public class MetaFileManager {
         ?? This should probably be renamed to saveV().
         */
       { // finish()
-        appLogger.info( "MetaFile.finish() begin.");
+        //appLogger.info( "MetaFile.finish() begin.");
 
         forcedLoadingEnabledB= true;  // Turn on forced loading.
 
@@ -194,7 +194,7 @@ public class MetaFileManager {
           theMetaRoot.getRootMetaNode( ) 
           );  // This file is what will be lazy-loaded during next run.
 
-        appLogger.info( "MetaFile.finish() end.");
+        //appLogger.info( "MetaFile.finish() end.");
         } // finish()
 
   public static class Finisher implements ShutdownerListener {
@@ -216,6 +216,10 @@ public class MetaFileManager {
         }
         
     public void doMyShutdown() {  // ShutdownerListener method.
+      appLogger.info( 
+      		"MetaFileManager.Finisher.doMyShutdown() calling finish()"
+      		);
+
       theMetaFileManager.finish(   // Finishing MetaFile operations.
         theMetaRoot
         );

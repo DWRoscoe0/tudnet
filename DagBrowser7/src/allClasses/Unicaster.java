@@ -199,7 +199,7 @@ public class Unicaster
 
         theConnectionManager.removingV( this );
 
-        appLogger.info("Unicaster run() exitting.");
+        //appLogger.info("Unicaster.run() exiting.");
         }
 
     protected void initializeV()
