@@ -6,6 +6,7 @@ import java.io.Serializable;
 //import java.util.Queue;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -51,11 +52,12 @@ public class DataTreeModel
     * Simply synchronizing its methods might not be sufficient
       to make the model thread-safe because values read by the tree reader
       methods can change at any time.
-    
+
+    ?? Use ObjectInterning to use less memory and to go faster.
+
     ?? Repeat what was done with 
     	TitledListViewer and TreeListModel to report ConnectionManager changes
-    with 
-	    DirectoryTableViewer and DirectoryTableModel to report
+    	with DirectoryTableViewer and DirectoryTableModel to report
 	    file-system changes using Java Watchable, WatchService, WatchEvent, 
 	    and WatchKey.  Unfortunately to watch sub-directories, each
 	    individual directory must be registered separately.
@@ -75,6 +77,10 @@ public class DataTreeModel
         private MetaFileManager.Finisher theMetaFileManagerFinisher; 
         private Shutdowner theShutdowner;
 
+    // Other variables.
+
+      HashMap<DataNode,TreePath> theHashMap= new HashMap<DataNode,TreePath>();
+    
     // constructor methods.
 
         public DataTreeModel( 
@@ -117,7 +123,19 @@ public class DataTreeModel
           is assumed to satisfy the DataNode interface.
           */
         {
-          return ((DataNode)parentObject).getChild( IndexI );
+      	  DataNode childDataNode= // Getting the child from parent.
+      	  		((DataNode)parentObject).getChild( IndexI ); 
+
+      	  { // Calculating and adding to map the TreePath of child for later.  
+	      	  DataNode parentDataNode= (DataNode)parentObject;
+	          TreePath parentTreePath= // Retrieving path of parent from map. 
+	            	translatingToTreePath( parentDataNode );
+	      	  theHashMap.put( // Making and adding child path to map. 
+		      			childDataNode, parentTreePath.pathByAddingChild(childDataNode) 
+		      			);
+      	  	}
+
+      	  return childDataNode; // Returning the child.
           }
 
       public boolean isLeaf( Object NodeObject ) 
@@ -162,15 +180,26 @@ public class DataTreeModel
       		DataNode theInitialDataNode 
       		)
         /* This is code that couldn't [easily] be done at injection time.
-          It initializes the DataRoot and 
-          tries to load the MetaRoot from external file(s).
-          theMetaFileManagerFinisher is used to set a shutdown listener
-          in theShutdowner to write MetaRoot back to disk if it was changed.
+
+          First it initializes injected variables:
+	        * It initializes the DataRoot.
+	        * It tries to load the MetaRoot from external file(s).
+	        * theMetaFileManagerFinisher is set a shutdown listener in 
+	          theShutdowner for later writing MetaRoot back to disk if changed.
+
+          Then finally theHashMap is seeded with 
+          an entry for the sentinel parent of the root tree node
+          which is used as a base for tree exploration and growth. 
           */
         {
-          theDataRoot.setRootV( theInitialDataNode );
+          theDataRoot.setRootV( theInitialDataNode ); 
           theMetaRoot.initializeV( );
           theShutdowner.addShutdownerListener( theMetaFileManagerFinisher );
+
+          theHashMap.put( // Making and adding root path to our map. 
+      	  		theDataRoot.getParentOfRootDataNode( ), 
+      	  		theDataRoot.getParentOfRootTreePath( ) 
+	      			);
           }
 
       // Getter methods which are not part of AbstractTreeModel.
@@ -299,13 +328,13 @@ public class DataTreeModel
           DataNode childDataNode 
           )
         /* This method creates and fires a single-child TreeModelEvent
-          for the insertion a single child DataNode, childDataNode,
+          for the insertion of a single child DataNode, childDataNode,
           into parentDataNode at position indexI.
+          It also adds the path of the new child to the map for user later.
           */
         {
           TreePath parentTreePath= // Calculating path of parent. 
-          	translatingToTreePath( parentDataNode );
-          
+          	translatingToTreePath( parentDataNode ); // Should be in map.
           TreeModelEvent theTreeModelEvent= // Construct TreeModelEvent.
             new TreeModelEvent(
             	this, 
@@ -313,14 +342,11 @@ public class DataTreeModel
             	new int[] {indexI}, 
             	new Object[] {childDataNode}
             	);
-
-        	//appLogger.debug( 
-          //	  "DataTreeModel.reportingInsertV(..) before firing:\n  "+theTreeModelEvent
-          //	  );
           fireTreeNodesInserted( theTreeModelEvent ); // Firing insertion event.
-          //appLogger.debug( 
-          //	  "DataTreeModel.reportingInsertV(..) after firing:\n  "+theTreeModelEvent
-          //	  );
+
+        	theHashMap.put( // Making and adding child to map for later. 
+        			childDataNode, parentTreePath.pathByAddingChild(childDataNode) 
+        			);
           }
 
       public void reportingRemoveV( 
@@ -335,7 +361,6 @@ public class DataTreeModel
         {
           TreePath parentTreePath= // Calculating path of parent. 
           	translatingToTreePath( parentDataNode );
-          
           TreeModelEvent theTreeModelEvent= // Constructing TreeModelEvent.
             new TreeModelEvent(
             	this, 
@@ -343,8 +368,11 @@ public class DataTreeModel
             	new int[] {indexI}, 
             	new Object[] {childDataNode}
             	);
-
           fireTreeNodesRemoved( theTreeModelEvent ); // Firing as removal event.
+
+        	theHashMap.remove( // Removing entry for removed child from map. 
+        			childDataNode // This won't remove descendants of child?? 
+        			);
           }
 
       public void safelyReportingChangeV( final DataNode theDataNode )
@@ -399,7 +427,35 @@ public class DataTreeModel
           }
 
       private TreePath translatingToTreePath( DataNode targetDataNode )
-        /* This method returns a TreePath of targetDataNode,
+	      /* This method returns a TreePath of targetDataNode,
+  	      or null if node can not be found in the DataNode tree.
+  	      It tries to return a value from theHashMap first.
+  	      If that fails then tries returning TreePath from a search
+  	        and caches the result.
+  	      If that fails then it returns null.
+  	      */
+      	{ 
+      	  TreePath targetTreePath= // Looking in cache first.
+      	  		theHashMap.get( targetDataNode );
+	        if ( targetTreePath == null ) // Doing a search if not in cache.
+		        {
+	        		appLogger.warning( 
+	        				"DataTreeModel.translatingToTreePath(), cache miss." 
+	        				);
+			        targetTreePath= // Generating path using a search. 
+			        		searchingForTreePath( targetDataNode );
+			        if ( targetTreePath != null ) // Caching search result, if any.
+			        	theHashMap.put( targetDataNode, targetTreePath );
+			        }
+      	  return targetTreePath;   
+      	  }
+
+      private TreePath searchingForTreePath( DataNode targetDataNode )
+        /* This method might never be called anymore because
+          its only caller, translatingToTreePath(..),
+          now checks theHashMap first.  So this method is a backup.
+
+          This method returns a TreePath of targetDataNode,
           or null if node can not be found in the DataNode tree.
           It does this with a breadth-first search of 
           the DataNode tree from the root,
@@ -412,13 +468,12 @@ public class DataTreeModel
 					The only thing that happens to nodes after they are removed
 					is that they are expanded.
 
-          ?? This method could be speeded with 
-          some combination of the following:
+          ?? If this was actually being called, 
+          it could be speeded with some combination of the following:
 
           * By caching the search result TreePath and checking the cache first.
 	          This can be enhanced later to handle duplicate references.
-	          See Object hashCode() and equals() for HashTable requirements.
-	          The contents of this cache could be stored in MetaNodes before exit.
+	          This is actually done in its only caller.
 
           * By using a starting TreePath different from the root and
             known to be closer to the node that changed. 
@@ -437,7 +492,7 @@ public class DataTreeModel
           and TreePaths are required by JTree.
           */
         {
-          //appLogger.error( "DataTreeModel.translatingToTreePath()." );
+      		appLogger.warning( "DataTreeModel.translatingToTreePath() called.");
       		TreePath resultTreePath= null;  // Defaulting result to null.
       		Queue<TreePath> queueOfTreePath = new LinkedList<TreePath>();
           queueOfTreePath.add(theDataRoot.getParentOfRootTreePath( ));

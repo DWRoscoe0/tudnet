@@ -196,10 +196,10 @@ public class LockAndSignal  // Combination lock and signal class.
     public long timeOutForMsL( long targetTimeMsL, long periodMsL )
       /* This method returns a value to be used as a time-out parameter
         to terminate a wait at time targetTimeMsL+periodMsL.
-        The value returned will be such that
-        it is not less than 0 or greater than periodMsL,
-        and the time-out will occur on a multiple of periodMsL 
-        from the targetTimeMsL.
+        The value returned will be greater than 0 
+        but not greater than periodMsL,
+        and the time-out will occur on 
+        a multiples of periodMsL from the targetTimeMsL.
         The process is similar to the one used by correctionMsL(..).
         */
 		{
