@@ -583,7 +583,7 @@ public class DagBrowserPanel
       		    of the Activity Label.
       		    
       		    Earlier this method measured and displayed two delays,
-      		    but this has since been moved to SystemMonitor.  They were:
+      		    but this has since been moved to SystemsMonitor.  They were:
 			        * Thread wake delay, the time between the desired end of a wait
 			          and the actual end of that wait.
 			        * EDT delay, the time it takes between when 

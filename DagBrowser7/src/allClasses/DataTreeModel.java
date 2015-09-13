@@ -53,7 +53,7 @@ public class DataTreeModel
       to make the model thread-safe because values read by the tree reader
       methods can change at any time.
 
-    ?? Use ObjectInterning to use less memory and to go faster.
+    ?? Use ObjectInterning to use less memory and to run faster.
 
     ?? Repeat what was done with 
     	TitledListViewer and TreeListModel to report ConnectionManager changes

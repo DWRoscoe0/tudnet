@@ -186,15 +186,15 @@ class AppGUIFactory {  // For GUI class lifetimes.
             );
       EpiThread theConnectionManagerEpiThread=
           makeEpiThread( theConnectionManager, "ConnMgr" );
-      SystemMonitor theSystemMonitor= new SystemMonitor(theDataTreeModel);
+      SystemsMonitor theSystemsMonitor= new SystemsMonitor(theDataTreeModel);
       EpiThread theCPUMonitorEpiThread=
-          makeEpiThread( theSystemMonitor, "SystemMonitor" );
+          makeEpiThread( theSystemsMonitor, "SystemsMonitor" );
       DataNode theInitialRootDataNode=  // Building first legal value.
 	        new InfogoraRoot( 
 	          new DataNode[] { // ...an array of all child DataNodes.
 	            new FileRoots(),
 	            new Outline( 0, theDataTreeModel ),
-	            theSystemMonitor,
+	            theSystemsMonitor,
 	            theConnectionManager,
 	            new Infinitree( null, 0 )
 	            }

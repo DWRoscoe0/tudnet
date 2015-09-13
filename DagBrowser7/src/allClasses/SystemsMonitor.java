@@ -6,13 +6,13 @@ import java.util.Random;
 
 //import static allClasses.Globals.*;  // appLogger;
 
-public class SystemMonitor 
+public class SystemsMonitor 
 
   extends MutableList
 
   implements Runnable
 
-  { // class SystemMonitor
+  { // class SystemsMonitor
   
     // Injected instance variables, all private.
 
@@ -57,13 +57,13 @@ public class SystemMonitor
 
     Random theRandom= new Random(0);  // Initialize random # generator.
 
-    public SystemMonitor(   // Constructor.
+    public SystemsMonitor(   // Constructor.
     		DataTreeModel theDataTreeModel
     		)
       {
         super(  // Constructing base class.
           theDataTreeModel, // For receiving tree change notifications.
-          "SystemMonitor", // DataNode (not thread) name.
+          "Systems-Monitor", // DataNode (not thread) name.
           new DataNode[]{} // Initially empty List of Peers.
           );
 
@@ -75,7 +75,7 @@ public class SystemMonitor
         measures and displays various CPU values once every second.
        */
       {
-    		//appLogger.info( "SystemMonitor.run() beginning." );
+    		//appLogger.info( "SystemsMonitor.run() beginning." );
 
     		initializeV();  // Do non-dependency injection initialization.
 
@@ -187,7 +187,7 @@ public class SystemMonitor
 	  		long differenceNsL= stopNsL - startNsL;
 	  		if ( differenceNsL < 0 )  // This should never happen.
 	    		appLogger.error( 
-	    				"SystemMonitor.measureNanoTimeL()="+stopNsL+"-"+startNsL 
+	    				"SystemsMonitor.measureNanoTimeL()="+stopNsL+"-"+startNsL 
 	    				);
 	  		return differenceNsL;
 	    	}
@@ -263,4 +263,4 @@ public class SystemMonitor
 	  		return System.nanoTime() - startNsL;
     	  }
 
-    } // class SystemMonitor
+    } // class SystemsMonitor
