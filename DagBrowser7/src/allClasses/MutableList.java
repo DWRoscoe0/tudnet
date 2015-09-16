@@ -1,7 +1,5 @@
 package allClasses;
 
-import static allClasses.Globals.appLogger;
-
 //import static allClasses.Globals.appLogger;
 
 
@@ -128,18 +126,18 @@ public class MutableList
         		new Runnable() {
               @Override  
               public void run() { 
-		          	appLogger.debug("MutableList.remove(..): run() starting.");
+		          	//appLogger.debug("MutableList.remove(..): run() starting.");
       		  	  int indexI=  // Searching for child by getting its index. 
       			    	  getIndexOfChild( childDataNode );
     		    	  if  // Removing and reporting change if child found. 
     		    	    ( indexI == -1)
 	    		    	  {
-	  		          	appLogger.debug("MutableList.remove(..): not present.");
+	  		          	//appLogger.debug("MutableList.remove(..): not present.");
 	    		    	  	removedB[0]= false; // Returning indication of not in List.
 	    		    	  	}
     		    	  	else
 	    		    	  {
-	  		          	appLogger.debug("MutableList.remove(..): removing.");
+	  		          	//appLogger.debug("MutableList.remove(..): removing.");
 	    				  		theListOfDataNodes.remove( indexI );
 	    				      theDataTreeModel.reportingRemoveV( 
 	    				      	parentDataNode, indexI, childDataNode 

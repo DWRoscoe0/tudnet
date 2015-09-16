@@ -110,8 +110,9 @@ public class ConnectionManager
 	    private LockAndSignal cmLockAndSignal;  // LockAndSignal for this thread.
 	      /* This single object is used to synchronize communication between 
 	        the ConnectionManager and all threads providing data to it.
-	        It is used by the input queues that follow.
-	        It can also be used separately to signal asynchronous inputs
+					It should be the same LockAndSignal instance used in the construction
+					of the input queues that follow.
+	        It man also be used separately to signal asynchronous inputs
 	        such as the socket open/closed state.
 	        The old way of synchronizing inputs used 
 	        an Objects for a lock and a separate boolean signal.

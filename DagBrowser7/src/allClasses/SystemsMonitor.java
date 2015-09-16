@@ -54,6 +54,7 @@ public class SystemsMonitor
 		private long midCountL;
 
 		private LockAndSignal theLockAndSignal= new LockAndSignal(false);
+		  // Used for waiting.
 
     Random theRandom= new Random(0);  // Initialize random # generator.
 

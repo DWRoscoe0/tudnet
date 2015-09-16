@@ -19,9 +19,9 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
     The packets that don't have associated Unicaster threads
     will be queued to the ConnectionManager.
     This thread is kept simple because the only known way to guarantee
-    fast termination of the a receive(..) operation
+    fast termination of the receive(..) operation
     is for another thread to close its DatagramSocket.
-    Doing this will also terminate this thread.
+    Doing this will also cause this thread to terminate.
     */
 
   {
@@ -53,10 +53,10 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
     @Override
     public void run() 
       /* This method repeatedly waits for and receives 
-        DatagramPackets and queues them 
-        for consumption by another thread.
-        It terminates any pending receive and this thread
-        if another thread closes the receiverDatagramSocket. 
+        DatagramPackets and queues each of them 
+        for consumption by another appropriate thread.
+        To terminates any pending receive and this thread,
+        another thread should close the receiverDatagramSocket. 
         */
       {
         try { // Doing operations that might produce an IOException.
@@ -68,7 +68,7 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
                 DatagramPacket theDatagramPacket=
                   new DatagramPacket(buf, buf.length);
                 SockPacket theSockPacket= new SockPacket(
-                  receiverDatagramSocket, theDatagramPacket
+                	theDatagramPacket
                   );
                 receiverDatagramSocket.receive(theDatagramPacket);
                 Unicaster theUnicaster= // Testing for associated Unicaster.

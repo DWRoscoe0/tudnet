@@ -1,26 +1,25 @@
 package allClasses;
 
 import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 
 public class SockPacket
   /* This class represents a datagram packet with other features attached.
 
-    ?? This class is being deprecated.
+    ?? This class might be deprecated, or at least be renamed.
     
     ?? This should probably be renamed to 
     EnPacket for Enhanced Packet or maybe EpiPacket.
 
-    ?? I don't recall why I didn't simply subclass DatagramPacket.
-    Maybe I should do that instead?  No.  All packet info should be nonlocal.
+    DatagramPacket can't be sub-classed because it is declared final.
+    So compsition is used here instead.
     
-    Originally and presently the other feature was 
-    the DatagramSocket through which it passed.
+    Originally and presently the other field was 
+    the DatagramSocket through which the packet passed.
     Hence the class name.
-    But this isn't very useful for 2 reasons:
+    But having DatagramSocket isn't very useful for 2 reasons:
     1. Bind errors that happen when trying to create connected sockets 
       when an unconnected socket already exists.
-    2. IOExceptions caused by a temporary network problem 
+    2. IOExceptions caused by a temporary network problems 
       can render a DatagramSocket permanently unusable and 
       needing to be replaced.
       
@@ -32,13 +31,13 @@ public class SockPacket
 	{
 		private DatagramPacket theDatagramPacket; // The packet to send/receive.
       // This stores remote IP and port.
-    @SuppressWarnings("unused")
-    private DatagramSocket theDatagramSocket; // Associated Socket.
+    //@SuppressWarnings("unused")
+    //private DatagramSocket theDatagramSocket; // Associated Socket.  ???
       // This might store both local and remote IP and port.
-    //private long timeL; // The time this packet was sent or received.
+    //private long timeNsL; // The time this packet was sent or received.
 
     public SockPacket(  // Constructor.
-        DatagramSocket inDatagramSocket, DatagramPacket inDatagramPacket
+        /* ??? DatagramSocket inDatagramSocket, */ DatagramPacket inDatagramPacket
         )
       /* Constructs a SockPacket associated with 
         DatagramSocket inDatagramSocket and DatagramPacket inDatagramPacket.
@@ -47,7 +46,7 @@ public class SockPacket
         this class had extended DatagramPacket.
         */
       {
-        theDatagramSocket= inDatagramSocket;  // Save socket.
+        //theDatagramSocket= inDatagramSocket;  // Save socket.
         theDatagramPacket= inDatagramPacket;  // Save packet.
         }
 

@@ -4,7 +4,6 @@ import static allClasses.Globals.appLogger;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.util.Random;
 
@@ -33,14 +32,14 @@ public class Unicaster
     DatagramSocket.setReuseAddress(true).
     Unfortunately, such connected and bound DatagramSockets
     will not receive any packets if there is 
-    an unonnected DatagramSocket bound to the same local address
+    an unconnected DatagramSocket bound to the same local address
     used for receiving the initial connection requests.
     Closing the unconnected socket allows the connected ones to work,
     but reopening the unconnected socket disables the 
     connected ones again.
     As a result, connected sockets are not used.
     Instead all packets are received by one unconnected DatagramSocket, 
-    and those packets are demultiplexed and forwarded to 
+    and those packets are de-multiplexed and forwarded to 
     the appropriate peer thread.
 
     The plan is to add functionality to this class in small stages.
@@ -82,28 +81,31 @@ public class Unicaster
         // Queue to receive SockPackets to be sent to Unicaster.
     	@SuppressWarnings("unused") // ??
     	private JobQueue<Unicaster> cmJobQueueOfUnicasters;
-      private final DatagramSocket unconnectedDatagramSocket;
       private final ConnectionManager theConnectionManager;
       private final Shutdowner theShutdowner;
 
       // Other instance variables.
       LockAndSignal peerLockAndSignal;  // LockAndSignal for this thread.
+				// LockAndSignal for inputs to this thread.  It is used in
+        // the construction of the following queue. 
+      private final PacketQueue receiveQueueOfSockPackets;
+        // Queue for SockPackets from unconnected receiver thread.
       int packetIDI; // Sequence number for sent packets.
       private Random theRandom; // For arbitratingYieldB() random numbers.
-      private final PacketQueue receiveQueueOfSockPackets;
-        // Queue for SockPackets from ConnectionManager.
       private long pingSentAtNanosL; // Time the last ping was sent.
       private boolean arbitratedYieldingB; // Used to arbitrate race conditions.
 
       // Detail-containing child sub-objects.
-	      private NamedInteger RoundTripTimeNamedInteger; 
+	      private NamedInteger RoundTripTimeNamedInteger;
+	        // This is an important value.  It is used to determine
+	        // how long to wait for a message acknowledgement before
+	        // re-sending a message.
 
 
     public Unicaster(  // Constructor. 
         InetSocketAddress remoteInetSocketAddress,
         PacketQueue sendQueueOfSockPackets,
         JobQueue<Unicaster> cmJobQueueOfUnicasters,
-        DatagramSocket unconnectedDatagramSocket, // No longer used??
         DataTreeModel theDataTreeModel,
         ConnectionManager theConnectionManager,
         Shutdowner theShutdowner
@@ -127,15 +129,14 @@ public class Unicaster
         // Storing injected dependency constructor arguments.
           this.sendQueueOfSockPackets= sendQueueOfSockPackets;
           this.cmJobQueueOfUnicasters= cmJobQueueOfUnicasters;
-          this.unconnectedDatagramSocket= unconnectedDatagramSocket;
           this.theConnectionManager= theConnectionManager;
           this.theShutdowner= theShutdowner;
-
-        peerLockAndSignal= new LockAndSignal(false);
 
         packetIDI= 0; // Setting starting packet sequence number.
         
         theRandom= new Random(0);  // Initialize arbitratingYieldB().
+
+        peerLockAndSignal= new LockAndSignal(false);
 
         receiveQueueOfSockPackets=
           new PacketQueue( peerLockAndSignal );
@@ -387,7 +388,7 @@ public class Unicaster
     // Receive packet code.  This might be enhanced with streaming.
 
     public void puttingReceivedPacketV( SockPacket theSockPacket )
-      /* This method is used by source threads, actually the UnicastReceiver,
+      /* This method is used by the UnicastReceiver threads,
         to add theSockPacket to this Unicaster's receive queue.
        */
       {
@@ -518,11 +519,7 @@ public class Unicaster
           remoteInetSocketAddress.getAddress(),
           remoteInetSocketAddress.getPort()
           );
-        SockPacket aSockPacket=
-          new SockPacket( 
-            unconnectedDatagramSocket,
-            packet 
-            );
+        SockPacket aSockPacket= new SockPacket(packet);
         sendQueueOfSockPackets.add( // Queuing packet for sending.
             aSockPacket
             );

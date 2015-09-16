@@ -84,7 +84,6 @@ class ConnectionsFactory {
 	  		theMulticastSocket,
         sendQueueOfSockPackets,
         receiveQueueOfSockPackets,
-        unconnectedDatagramSocket,
 		  	theUnicasterManager
         ); 
       }
@@ -101,7 +100,6 @@ class ConnectionsFactory {
         peerInetSocketAddress,
         sendPacketQueue,
         cmJobQueueOfUnicasters,
-        unconnectedDatagramSocket,
         theDataTreeModel,
         theConnectionManager,
         theShutdowner

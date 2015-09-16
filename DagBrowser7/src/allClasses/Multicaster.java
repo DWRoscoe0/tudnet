@@ -65,7 +65,6 @@ public class Multicaster
 	    sendQueueOfSockPackets;  // SockPackets for ConnectionManager to send.
 	  public final InputQueue<SockPacket> // Receive output.
 	    cmUnicastInputQueueOfSockPackets;  // SockPackets for ConnectionManager to note.
-	  private DatagramSocket unconnectedDatagramSocket;  // Socket for sending.
   	private UnicasterManager theUnicasterManager;
 
 	  public InetAddress groupInetAddress; /* Multicast group IPAddress.   
@@ -100,7 +99,6 @@ public class Multicaster
 	  		MulticastSocket theMulticastSocket,
 	  		InputQueue<SockPacket> sendQueueOfSockPackets,
 	      InputQueue<SockPacket> cmUnicastInputQueueOfSockPackets,
-	      DatagramSocket unconnectedDatagramSocket,
 		  	UnicasterManager theUnicasterManager
 	      )
 	    throws IOException
@@ -129,7 +127,6 @@ public class Multicaster
 	  	  this.theInetSocketAddress= theInetSocketAddress;
 	      this.sendQueueOfSockPackets= sendQueueOfSockPackets;
 	      this.cmUnicastInputQueueOfSockPackets= cmUnicastInputQueueOfSockPackets;
-	      this.unconnectedDatagramSocket= unconnectedDatagramSocket;
 		  	this.theUnicasterManager= theUnicasterManager;
 	      }
 
@@ -137,9 +134,11 @@ public class Multicaster
 	  /* The following is new code that uses the MulticastReceier thread.  */
 	  
     private LockAndSignal multicastLockAndSignal;
+			// LockAndSignal for inputs to this thread.  It is used in 
+      // the construction of multicastSignallingQueueOfSockPackets. 
+    private PacketQueue multicastSignallingQueueOfSockPackets;
     private MulticastReceiver theMulticastReceiver; // Receiver and
     private EpiThread theMulticastReceiverEpiThread; // its thread.
-    private PacketQueue multicastSignallingQueueOfSockPackets;
 
     private class MulticastReceiver
 
@@ -199,7 +198,7 @@ public class Multicaster
 	                    new DatagramPacket( responseBytes, responseBytes.length );
 	                  //@SuppressWarnings("unused")
 	                  SockPacket receiveSockPacket=  // Construct SockPacket.
-	                    new SockPacket( theMulticastSocket, rx );
+	                    new SockPacket( rx );
 	                  theMulticastSocket.receive( rx );
 	                  receiverSignallingQueueOfSockPackets.add( // Queuing packet.
 	                  		receiveSockPacket
@@ -254,7 +253,6 @@ public class Multicaster
     	                  new byte[] { QUERY_PACKET },1, groupInetAddress, multicastPortI 
     	                  );
     	                SockPacket querySockPacket= new SockPacket(
-    	                  unconnectedDatagramSocket,
     	                  queryDatagramPacket
     	                  );
     	                sendQueueOfSockPackets.add( // Queuing query packet for sending.
@@ -362,8 +360,6 @@ public class Multicaster
 	                  multicastPortI 
 	                  );
 	              SockPacket aSockPacket= new SockPacket( 
-	                  //BoundUDPSockets.getDatagramSocket(),
-	                  unconnectedDatagramSocket,
 	                  responseDatagramPacket
 	                  );
 	              sendQueueOfSockPackets.add( // Queuing response for sending.

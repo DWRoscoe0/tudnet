@@ -21,11 +21,12 @@ public class Sender // Uunicast and multicast sender thread.
 
     // Injected dependency instance variables.  Define.
 	  private DatagramSocket theDatagramSocket;
-	  	// Unconnected socket which is source of packets.
+	  	// Unconnected socket through which packets are sent.
 		private PacketQueue senderInputQueueOfSockPackets;
-		  // Queue which is destination of received packets.
+		  // Queue from which this thread inputs packets to be sent.
 		private LockAndSignal senderLockAndSignal;  
-			// LockAndSignal for this thread.
+			// LockAndSignal for inputs to this thread.  It should be the same 
+		  // LockAndSignal instance in senderInputQueueOfSockPackets construction. 
 		
     Sender( // Constructor. 
         DatagramSocket theDatagramSocket,
@@ -40,7 +41,7 @@ public class Sender // Uunicast and multicast sender thread.
 
     @Override
     public void run() 
-      /* This method repeatedly waits for and receives 
+      /* This method repeatedly waits for and inputs 
         DatagramPackets from the queue and sends them
         through the DatagramSocket.
         */
@@ -50,11 +51,8 @@ public class Sender // Uunicast and multicast sender thread.
 	      		if // Exiting loop if  thread termination is requested.
 	      		  ( Thread.currentThread().isInterrupted() ) break toReturn;
 		      		
-		    		// toLoopBack: 
-		    		{ // Processing inputs and waiting for more.
-		          processingSockPacketsToSendB();
-		          senderLockAndSignal.doWaitE();  // Waiting for next signal of inputs.
-	      			} // toLoopBack
+	          processingSockPacketsToSendB(); // Processing inputs.
+	          senderLockAndSignal.doWaitE();  // Waiting for next input signal.
 		        } // while (true)
 	    		} // toReturn.
         }
@@ -70,11 +68,12 @@ public class Sender // Uunicast and multicast sender thread.
         Channeling all outgoing packets through this code
         makes congestion control possible, though it's not done yet.
         
-        ?? Though unlikely, theDatagramSocket.send(..) 
-        could block the thread if the network queue fills.
+        ?? DatagramSocket.send(..) could block the thread 
+        if the network queue fills.
         To avoid this, maybe a DatagramChannel could be used,
         or sending could be done in a separate thread.
-        However congestion control might make this unnecessary.
+        However the eventual addition of congestion control 
+        might make this unnecessary.
         */
       {
         boolean packetsProcessedB= false;  // Assuming no packet to send.
