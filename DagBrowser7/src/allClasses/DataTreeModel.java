@@ -555,11 +555,7 @@ public class DataTreeModel
   	    	}
 
       protected void invokeAndWaitV( Runnable jobRunnable )
-        /* This method does nothing if shutdown is underway, 
-          because using the EDT (Event Dispatch Thread) 
-          might not be safe if shutdown is underway.  
-          
-          Otherwise this method calls SwingUtilities.invokeAndWait(..) 
+        /* This method calls SwingUtilities.invokeAndWait(..) 
           to execute jobRunnable.run().
           It also handles any exceptions invokeAndWait(..) might throw.
           
@@ -581,6 +577,11 @@ public class DataTreeModel
           or it became true during processing.
           It will be false otherwise.
           
+          An earlier version of this method did nothing if 
+          shutdown was underway, 
+          because using the EDT (Event Dispatch Thread) 
+          was thought to be safe if shutdown is underway.  
+          
           ?? Rewrite to make a single loop do both
           the jobRunnable and any possible null Runnables 
           if InterruptedException happens.
@@ -591,11 +592,11 @@ public class DataTreeModel
         {
       		//appLogger.debug( "DataTreeModel.invokeAndWaitV(..) begins.");
 
-      		if ( theShutdowner.isShuttingDownB() ) // Returning if shutting down. 
-	      		{
-      			  //appLogger.debug( "DataTreeModel.invokeAndWaitV(..) isShuttingDownB() return.");
-	      			return;
-	      			} // Doing this because EDT is unreliable during shutdown.
+      		///if ( theShutdowner.isShuttingDownB() ) // Returning if shutting down. 
+		      ///	{
+		      ///	  //appLogger.debug( "DataTreeModel.invokeAndWaitV(..) isShuttingDownB() return.");
+		      ///		return;
+		      ///		} // Doing this because EDT is unreliable during shutdown.
       		
       	  boolean interruptedB= // Saving and disabling interrupted status. 
       	  		Thread.interrupted(); // (in case it was already true)
