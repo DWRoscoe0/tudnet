@@ -50,8 +50,8 @@ public class Multicaster
 	implements Runnable
 	
 	{
-		public static final byte QUERY_PACKET = 80;  // 050h
-		public static final byte RESPONSE_PACKET = 81;  // 051h
+		public static final byte QUERY_PACKET = 80;  // 050h 'P'
+		public static final byte RESPONSE_PACKET = 81;  // 051h 'Q'
 	
 	  // Injected dependencies.
 	  private MulticastSocket theMulticastSocket; /* For receiving multicast 
@@ -249,6 +249,8 @@ public class Multicaster
                 	( ! Thread.currentThread().isInterrupted() )
     	            { // Send and receive multicast packets.
     	              try {
+    		      				//sendingMessageV("P"); // Sending QUERY_PACKET packet.
+    		      				/// The previous line will replac the following lines.
     	                DatagramPacket queryDatagramPacket = new DatagramPacket( 
     	                  new byte[] { QUERY_PACKET },1, groupInetAddress, multicastPortI 
     	                  );
@@ -260,6 +262,7 @@ public class Multicaster
     	                  );
     	                //appLogger.debug("Multicaster.run() 4: before addValue().");
     	                packetsSentNamedInteger.addValueL( 1 );
+
     	                receivingMulticastPacketsV( ); // Receiving packets until done.
     	                }
     	              catch( SocketException soe ) {
@@ -311,6 +314,7 @@ public class Multicaster
 			  theMulticastReceiverEpiThread.joinV();  // Waiting for termination of
 	        // theMulticastReceiver thread.
 	      }
+		
 		
     private void receivingMulticastPacketsV( ) 
       throws IOException 
@@ -373,8 +377,8 @@ public class Multicaster
 	              }
 	          else
 	            appLogger.error("Multicaster.receivingMulticastPacketsV(): unknown multicast packet.");
-	          } // processorLoop:  // Processing packet or exiting.
-        	} // processor: // Processing packets until exit.
+        		} // processor: // Processing packets until exit.
+        	} // processorLoop:  // Processing packet or exiting.
         } // receivingMulticastPacketsV( )
 
 	  protected void processingPossibleNewUnicasterV( SockPacket theSockPacket )
@@ -412,11 +416,18 @@ public class Multicaster
 	  	  super.initializeV();
 	  	  }
 	  
+	  private boolean multicastActiveB= false;
+	  
     private void multicastConnectionLoggerV( boolean activeB )
       /* This method logs when bidirectional multicast communication
         either begins or ends.  Activity ending is defined as
         no received multicast packets for 40 seconds or more.
        */
-    	{}
+    	{
+    	  if ( multicastActiveB != activeB ) {
+    	  	multicastActiveB= activeB;
+          appLogger.info("multicastActiveB= " + multicastActiveB );
+          }
+    	  }
     
 	  }

@@ -13,7 +13,7 @@ public class Unicaster
 
 	extends NetCaster
 
-  implements Runnable, JobStatus  // JobStatus code is no longer needed?? 
+  implements Runnable ///, JobStatus  // JobStatus code is no longer needed?? 
   
   /* Each instance of this nested class contains and manages data about 
     one of the peer nodes of which the ConnectionManager is aware.
@@ -80,7 +80,7 @@ public class Unicaster
       private final PacketQueue sendQueueOfSockPackets;
         // Queue to receive SockPackets to be sent to Unicaster.
     	@SuppressWarnings("unused") // ??
-    	private JobQueue<Unicaster> cmJobQueueOfUnicasters;
+    	private InputQueue<Unicaster> cmInputQueueOfUnicasters;
       private final ConnectionManager theConnectionManager;
       private final Shutdowner theShutdowner;
 
@@ -90,10 +90,15 @@ public class Unicaster
         // the construction of the following queue. 
       private final PacketQueue receiveQueueOfSockPackets;
         // Queue for SockPackets from unconnected receiver thread.
+        /// References to this for input are being replaces by 
+        /// InputStream references.
       int packetIDI; // Sequence number for sent packets.
       private Random theRandom; // For arbitratingYieldB() random numbers.
-      private long pingSentAtNanosL; // Time the last ping was sent.
+      private long pingSentNanosL; // Time the last ping was sent.
       private boolean arbitratedYieldingB; // Used to arbitrate race conditions.
+
+      private String cachedString= "";  // Used for parsing packet data.
+        // This is a copy of the next string in the NetInputStream.
 
       // Detail-containing child sub-objects.
 	      private NamedInteger RoundTripTimeNamedInteger;
@@ -101,11 +106,14 @@ public class Unicaster
 	        // how long to wait for a message acknowledgement before
 	        // re-sending a message.
 
+	    NetOutputStream theNetOutputStream;
+			NetInputStream theNetInputStream;
 
-    public Unicaster(  // Constructor. 
+
+			public Unicaster(  // Constructor. 
         InetSocketAddress remoteInetSocketAddress,
         PacketQueue sendQueueOfSockPackets,
-        JobQueue<Unicaster> cmJobQueueOfUnicasters,
+        InputQueue<Unicaster> cmInputQueueOfUnicasters,
         DataTreeModel theDataTreeModel,
         ConnectionManager theConnectionManager,
         Shutdowner theShutdowner
@@ -128,7 +136,7 @@ public class Unicaster
 
         // Storing injected dependency constructor arguments.
           this.sendQueueOfSockPackets= sendQueueOfSockPackets;
-          this.cmJobQueueOfUnicasters= cmJobQueueOfUnicasters;
+          this.cmInputQueueOfUnicasters= cmInputQueueOfUnicasters;
           this.theConnectionManager= theConnectionManager;
           this.theShutdowner= theShutdowner;
 
@@ -141,6 +149,18 @@ public class Unicaster
         receiveQueueOfSockPackets=
           new PacketQueue( peerLockAndSignal );
             // For SockPackets from ConnectionManager.
+
+    	  theNetInputStream= new NetInputStream(
+  	    		receiveQueueOfSockPackets, 
+  	    		remoteInetSocketAddress.getAddress(),
+            remoteInetSocketAddress.getPort()
+  	    		);
+
+  	    theNetOutputStream= new NetOutputStream(
+  	    		sendQueueOfSockPackets, 
+  	    		remoteInetSocketAddress.getAddress(),
+            remoteInetSocketAddress.getPort()
+  	    		);
         }
 
 
@@ -189,13 +209,15 @@ public class Unicaster
 	      		if  // Informing remote end if we are doing Shutdown.
 	      		  ( theShutdowner.isShuttingDownB() ) 
 		      		{
-	      				sendingPacketV("SHUTTING-DOWN"); // Sending SHUTTING-DOWN packet.
+	      				sendingMessageV("SHUTTING-DOWN"); // Sending SHUTTING-DOWN packet.
 	  	          appLogger.info( "SHUTTING-DOWN packet sent.");
 		      			}
+	      		theNetOutputStream.close(); // Closing output stream.
           	}
           catch( IOException e ) {
             appLogger.info("run() IOException: "+e );
             throw new RuntimeException(e);
+            // Try reestablishing connection??
             }
 
         theConnectionManager.removingV( this );
@@ -221,7 +243,7 @@ public class Unicaster
         */
     	{}
 
-    private void tryingPingSendV()
+    private void tryingPingSendV() throws IOException
       /* This method tries to send a ping to the remote peer
         and receive an echo response.
         If it doesn't receive an echo packet in response
@@ -245,11 +267,12 @@ public class Unicaster
               Thread.currentThread().interrupt(); // Starting termination.
               break pingEchoRetryLoop;
               }
-          sendingPacketV("PING"); // Sending ping packet.
-          pingSentAtNanosL= System.nanoTime(); // Recording ping send time.
+          sendingMessageV("PING"); // Sending ping packet.
+          pingSentNanosL= System.nanoTime(); // Recording ping send time in ns
+          long pingSentMsL= System.currentTimeMillis(); // and in ms.
           echoWaitLoop: while (true) { // Handling echo or other conditions.
-            theInput=  // Awaiting next input.
-            		testWaitWithTimeOutE( HalfPeriodMillisL );
+            theInput=  // Awaiting next input within reply interval.
+            		testWaitInIntervalE( pingSentMsL, HalfPeriodMillisL );
             if ( theInput == Input.TIME ) // Exiting echo wait if time-out.
               { appLogger.info( "Time-out waiting for ECHO: "+triesI );
                 break echoWaitLoop;  // Exiting wait loop to send PING.
@@ -257,15 +280,15 @@ public class Unicaster
             else if // Handling SHUTTING-DOWN packet or interrupt by exiting.
     	    		( tryingToCaptureTriggeredExitB( ) )
   	    			break pingEchoRetryLoop; // Exit everything.
-        		else if ( tryingToGetPacketB( "ECHO" ) ) // Handling echo, maybe.
+        		else if ( tryingToGetMessageB( "ECHO" ) ) // Handling echo, maybe.
               { // Handling echo and exiting.
                 RoundTripTimeNamedInteger.setValueL(
-                		(System.nanoTime() - pingSentAtNanosL)
+                		(System.nanoTime() - pingSentNanosL)
                 		); // Calculating RoundTripTime.
                 // This should handle unwanted received packets.
     	    			break pingEchoRetryLoop; // Exit everything.
                 }
-        		else if ( testingPacketB( "PING" ) ) // Handling ping conflict, maybe.
+        		else if ( testingMessageB( "PING" ) ) // Handling ping conflict, maybe.
               { // Handling ping conflict.
                 appLogger.info( "PING-PING conflict." );
               	if ( arbitratedYieldingB ) // Arbitrating ping-ping conflict.
@@ -276,17 +299,17 @@ public class Unicaster
                     }
               		else
               		{ appLogger.info( "PING ping not yielding: "+triesI );
-              			tryingToConsumeOnePacketB();  // Consuming PING.
+              			tryingToConsumeOneMessageB();  // Consuming PING.
               			}
               	  }
         		else 
-        			tryingToConsumeOnePacketB();  // Consume any other packet.
+        			tryingToConsumeOneMessageB();  // Consume any other packet.
             } // echoWaitLoop:
           triesI++;
           } // pingEchoRetryLoop: 
         }
 
-    private void tryingPingReceiveV()
+    private void tryingPingReceiveV() throws IOException
       /* This method tries to process a received PING packet 
         from the remote peer to which it replies by sending an ECHO response.
         If a PING is not immediately available then
@@ -300,32 +323,34 @@ public class Unicaster
         */
       {
         LockAndSignal.Input theInput;  // Type of input that ends wait.
-        long pingTimeMillisL= // Calculating latest okay ping receive time.
-          System.currentTimeMillis()
-          + PeriodMillisL
-          + HalfPeriodMillisL;
+        long pingWaitStartMsL= System.currentTimeMillis();
+        ///long pingTimeMillisL= // Calculating latest okay ping receive time.
+	      ///  pingWaitStart
+	      /// + PeriodMillisL
+	      /// + HalfPeriodMillisL;
         pingWaitLoop: while (true) { // Processing until something causes exit.
       		if // Handling SHUTTING-DOWN packet or interrupt by exiting.
 	    			( tryingToCaptureTriggeredExitB( ) )
 	    			break pingWaitLoop;
           if // Handling a received ping if present.
-            ( tryingToGetPacketB( "PING" ) )
+            ( tryingToGetMessageB( "PING" ) )
             { // Handling received ping, then exit.
-              sendingPacketV("ECHO"); // Sending echo packet as reply.
-              while (true) { // Ignoring packets until end time, then exit.
-                theInput=  // Awaiting input.
-                		testWaitWithTimeOutE( PeriodMillisL );
+              sendingMessageV("ECHO"); // Sending echo packet as reply.
+              long echoSentMsL= System.currentTimeMillis();
+              while (true) { // Ignoring packets for a while, then exit.
+                theInput=  // Awaiting input within the ignore interval.
+                		testWaitInIntervalE( echoSentMsL, PeriodMillisL );
                 if ( theInput == Input.TIME ) // Exiting if time limit reached.
                   break pingWaitLoop;  
             		if // Exiting everything if exit has been triggered.
             			( tryingToCaptureTriggeredExitB( ) )
             			break pingWaitLoop;
-            		tryingToConsumeOnePacketB();  // Consume any other packet.
+            		tryingToConsumeOneMessageB(); // Ignore any other packet.
               	} // while (true)
               }
-      		tryingToConsumeOnePacketB();  // Consume any other packet.
-          theInput= testWaitWithTimeOutE( // Awaiting next input.
-          		pingTimeMillisL - System.currentTimeMillis()
+      		tryingToConsumeOneMessageB();  // Consume any other packet.
+          theInput= testWaitInIntervalE( // Awaiting next input.
+          		pingWaitStartMsL, PeriodMillisL + HalfPeriodMillisL
           		);
           if ( theInput == Input.TIME ) // Exiting outer loop if time-out.
 	          {
@@ -334,21 +359,67 @@ public class Unicaster
 	          	}
           } // pingWaitLoop
         }
-    
-    
-    
-    private Input testWaitWithTimeOutE( long timeOutMsL)
+
+    /* ???
+    private Input testWaitWithTimeOutE( long timeOutMsL) throws IOException
       /* This is a special test-and-wait method which will return immediately 
-        with Input.NOTIFICATION if a received packet available for processing,
+        with Input.NOTIFICATION if a received packet 
+        is available for processing,
         otherwise it will do a LockAndSignal.doWaitWithTimeOutE(..).
         So it might block, or it might not.
+        NOTIFICATION has priority over TIME,
+        even if a time-out has already occurred.
+        This is not the normal way the LockAndSignal wait methods work.
        */
+    /* ???
 	    {
-	      return ( testingPacketB( ) ) // Returning the appropriate thing.
-	        ? Input.NOTIFICATION // Returning immediately because packet is ready.
-	        : peerLockAndSignal.doWaitWithTimeOutE( // Returning from normal wait. 
+    		LockAndSignal.Input theInput;
+
+    		if ( testingMessageB( ) ) 
+	        theInput= Input.NOTIFICATION;
+    	  else
+    	  	theInput=
+    	  	  peerLockAndSignal.doWaitWithTimeOutE( 
 	        		timeOutMsL
 	        		);
+
+    	  return theInput;
+	      }
+	  ??? */
+
+    private Input testWaitInIntervalE( long startMsL, long lengthMsL) 
+    		throws IOException
+      /* ??? Being converted to give TIME priority.
+       * 
+       * This is a special test-and-wait method which will return immediately 
+        with Input.NOTIFICATION if a received packet 
+        is available for processing,
+        otherwise it will do a LockAndSignal.doWaitWithIntervalE(..).
+        So it might block, or it might not.
+        NOTIFICATION has priority over TIME,
+        even if the time limit has already passed.
+        This is not the normal way the LockAndSignal wait methods work.
+       */
+	    {
+    		LockAndSignal.Input theInput;
+
+    		process: {
+	        final long remainingMsL= 
+	        		peerLockAndSignal.intervalRemainingMsL( startMsL, lengthMsL ); 
+	        if // Exiting if time before, but more likely after, time interval.
+	          ( remainingMsL == 0 )
+	          { theInput= Input.TIME; break process; } // Exiting loop.
+	    		if ( testingMessageB( ) ) ///
+		        { theInput= Input.NOTIFICATION; break process; }
+    	  	theInput= // Doing general wait. 
+		    	///	  peerLockAndSignal.doWaitWithIntervalE(
+		    	///  	    startMsL,
+		    	///     		lengthMsL
+		    	///     		);
+    	  			peerLockAndSignal.doWaitWithTimeOutE( remainingMsL );
+    			}
+
+    	  return theInput;
 	      }
 
     private boolean arbitratingYieldB()
@@ -388,14 +459,15 @@ public class Unicaster
     // Receive packet code.  This might be enhanced with streaming.
 
     public void puttingReceivedPacketV( SockPacket theSockPacket )
-      /* This method is used by the UnicastReceiver threads,
-        to add theSockPacket to this Unicaster's receive queue.
+      /* This method is used by the UnicastReceiver threads
+        which is associated with this Unicaster thread
+        to add theSockPacket to this thread's receive queue.
        */
       {
         receiveQueueOfSockPackets.add(theSockPacket);
         }
 
-    private boolean tryingToCaptureTriggeredExitB( )
+    private boolean tryingToCaptureTriggeredExitB( ) throws IOException
       /* This method tests whether exit has been triggered, meaning either:
         * The current thread's isInterrupted() is true, or
         * The next packet, if any, at the head of the receiveQueueOfSockPackets,
@@ -406,7 +478,7 @@ public class Unicaster
 		    */
       {
         if // Trying to get and convert SHUTTING-DOWN packet to interrupt status. 
-          ( tryingToGetPacketB( "SHUTTING-DOWN" ) )
+          ( tryingToGetMessageB( "SHUTTING-DOWN" ) )
 	        {
 	          appLogger.info( "SHUTTING-DOWN packet received.");
 	          Thread.currentThread().interrupt(); // Converting to thread interrupt.
@@ -414,7 +486,7 @@ public class Unicaster
 	      return Thread.currentThread().isInterrupted();
         }
 
-    private boolean tryingToGetPacketB( String aString )
+    private boolean tryingToGetMessageB( String aString ) throws IOException
       /* This method tries to get a packet, if any,
         at the head of the receiveQueueOfSockPackets,
         contains aString.
@@ -423,40 +495,48 @@ public class Unicaster
         */
       {
     	  boolean gotPacketB=  // Testing for packet with desired string.
-    	  	testingPacketB( aString );
+    	  	testingMessageB( aString );
     	  if ( gotPacketB ) // Consuming packet if desired one is there.
-        	tryingToConsumeOnePacketB();
+        	tryingToConsumeOneMessageB();
     	  return gotPacketB;
       	}
 
-    private boolean tryingToConsumeOnePacketB()
+    private boolean tryingToConsumeOneMessageB() throws IOException /// Packet.
       /* This method consumes one packet, if any,
         at the head of the queue.
         It returns true if a packet was consumed,
         false if there was none to consume.
         */
-      {
-    	  boolean processingPacketB= 
-    	  	( peekingPacketString( ) != null );
-        if ( processingPacketB ) // Consuming the packet if there is one.
+      { /// Marker
+	      /* ??
+	      boolean processingPacketB= 
+	      	( peekingMessageString( ) != null );
+	      if ( processingPacketB ) // Consuming the packet if there is one.
 	        {
 	        	receiveQueueOfSockPackets.poll(); // Removing head of queue.
-	        	cachedPacketString= null; // Empty the string cache/flag.
+	        	cachedString= ""; // Empty the string cache/flag.
 	          packetsReceivedNamedInteger.addValueL( 1 );  // Count the packet.
 	          }
-    	  return processingPacketB;
-        }
+	  	  return processingPacketB;
+	  	  ??? */
+    	
+	      return ( 
+	      		getOrTestString( null, true)
+	      		!= 
+	      		null 
+	      		);
+	      }
 
-    private String cachedPacketString= null;
-
-    private String peekingPacketString( )
+    private String peekingMessageString( ) throws IOException
       /* This method returns the String in the next received packet
         in the queue, if there is one.  
-        If there's no packet then it returns null. 
+        If there's no packet then it returns null.
+        As a side-effect it stores the string, or null, in cachedString.  
         */
-      {
+      { /// Marker
+    	  /* ???
         calculatingString: {
-  				if ( cachedPacketString != null ) // Exiting if String is cached. 
+  				if ( cachedString != "" ) // Exiting if String is cached. 
   				  break calculatingString;
           SockPacket receivedSockPacket= // Testing queue for a packet.
             receiveQueueOfSockPackets.peek();
@@ -464,13 +544,16 @@ public class Unicaster
             break calculatingString;
           DatagramPacket theDatagramPacket= // Getting DatagramPacket.
             receivedSockPacket.getDatagramPacket();
-          cachedPacketString= // Calculating and caching String from packet.
+          cachedString= // Calculating and caching String from packet.
             PacketStuff.gettingPacketString( theDatagramPacket );
           } // calculatingString: 
-	    	return cachedPacketString; // Returning whatever is now in cache.
+	    	return cachedString; // Returning whatever is now in cache.
+	    	??? */
+
+	      return getOrTestString( null, false );
 	      }
 
-      private boolean testingPacketB( String aString )
+      private boolean testingMessageB( String aString ) throws IOException
         /* This method tests whether the packet, if any,
           at the head of the receiveQueueOfSockPackets,
           contains aString.
@@ -478,56 +561,205 @@ public class Unicaster
           it is aString, false otherwise.
           The packet, if any, remains in the queue.
           */
-        {
-        boolean resultB= false;  // Assuming aString is not present.
-        decodingPacket: {
-          String packetString= // Getting string from packet if possible. 
-          	peekingPacketString( );
-          if ( packetString == null ) // Exiting if no packet or no string.
-            break decodingPacket;  // Exiting with false.
-          if   // Exiting if the desired String is not in packet String.
-            ( ! packetString.contains( aString ) )
-            break decodingPacket;  // Exiting with false.
-          resultB= true;  // Changing result because Strings are equal.
-          } // decodingPacket:
-        return resultB;  // Returning the result.
-        }
+        { 
+	        boolean resultB= false;  // Assuming aString is not present.
+	        decodingPacket: {
+	          String packetString= // Getting string from packet if possible. 
+	          	peekingMessageString( );
+	          if ( packetString == null ) // Exiting if no packet or no string.
+	            break decodingPacket;  // Exiting with false.
+	          if   // Exiting if the desired String is not in packet String.
+	            ( ! packetString.contains( aString ) )
+	            break decodingPacket;  // Exiting with false.
+	          resultB= true;  // Changing result because Strings are equal.
+	          } // decodingPacket:
+	        return resultB;  // Returning the result.
+	        }
 
-      private boolean testingPacketB( )
+      private boolean testingMessageB( ) throws IOException
         /* This method tests whether a packet, if any,
           at the head of the receiveQueueOfSockPackets,
           is available.
           It returns true if there is a packet available, false otherwise.
           */
-        {
-          return ( receiveQueueOfSockPackets.peek() != null );
+        { /// Marker
+          return ( 
+          		//receiveQueueOfSockPackets.peek() 
+          		getOrTestString( null, false )
+          		!= 
+          		null 
+          		);
           }
 
-    
+      @SuppressWarnings("unused") ///
+      private String NEWgetOrTestString( String desiredString, boolean consumeB) 
+      		throws IOException
+        /* ??? This method is being converted to use NetInputStream.
+
+          This is a new, possibly temporary method,
+          through which all packet reading will pass
+          at least during the transition from packet io to stream io.
+
+          This method tries to get or test for desiredString in the input.
+          consumeB means consume any acceptable string, 
+          otherwise do a test only.
+          
+          If no bytes are available then it returns null.
+          Otherwise it reads an entire string, blocking if necessary.
+          If desiredString==null then it returns the read string.
+          If desiredString!=null and the read string contains desiredString
+          then it returns desiredString, null otherwise. 
+          if consumedB is true and a string is returned,
+          then the read string is consumed and can not be read
+          from the stream again.
+
+          As a side-effect it stores the read string, or null, in cachedString.  
+          */
+	      {
+      	  String returnString= null;
+          parsing: {
+	  				theNetInputStream.mark(0); // Marking now  in case we reset() later.
+	  				if ( cachedString != "" ) // Exiting if String already cached. 
+	  				  break parsing;
+  					if // Exiting if no bytes available. 
+						  ( 0 >= theNetInputStream.available() )
+							break parsing;
+	  				while (true) { // Reading all bytes in string.
+	  					int byteI= theNetInputStream.read();
+	  					cachedString+= (char)byteI;
+	  					if ( '.' == byteI ) break; // Exiting if terminator seen.
+	  				  }
+	         	} // parsing: 
+	        testing: {
+	          if ( cachedString == "" ) // Exiting if no packet or no string.
+	            break testing; // Exiting with null.
+	          if ( desiredString == null ) // Exiting if any string is acceptable.
+		          { returnString= cachedString; // Using read string as result.
+		            break testing;  // Exiting with string.
+		            }
+	          if   // Exiting if the desired String is the one read.
+	            ( cachedString.contains( desiredString ) )
+		          { returnString= desiredString; // Using desired string as result.
+		            break testing;  // Exiting with string.
+		            }
+	          } // testing:
+	        consuming: {
+	          if ( ! consumeB ) // Exiting if consuming not requested.
+	            {
+			  				theNetInputStream.reset(); // Backup stream to start.
+		          	break consuming; // Exiting 
+		          	}
+	          if ( returnString == null) // Exiting if no string to consume. 
+	          	break consuming;
+	        	// Stream has already been advanced.
+            appLogger.debug( "consuming from InputStream: "+cachedString );
+	        	cachedString= ""; // Emptying the string cache.
+	          packetsReceivedNamedInteger.addValueL( 1 );  // Counting the packet.
+	          } // consuming:
+	      	return returnString;
+	      	}
+
+      private String getOrTestString( String desiredString, boolean consumeB)
+        /* This is a new, possibly temporary method,
+          through which all packet reading will pass
+          at least during the transition from packet io to stream io.
+
+          This method tries to get or test for desiredString in the input.
+          consumeB means consume any acceptable packet, otherwise test only.
+          Returns reference to desired string, or null if desired string
+          was not seen.
+          If desiredStringB==null then any input string is acceptable.  
+        	As a side-effect it stores the string, or null, in cachedString.  
+         */
+	      {
+      	  String returnString= null;
+          parsing: {
+	  				if ( cachedString != "" ) // Exiting if String is cached. 
+	  				  break parsing;
+	          SockPacket receivedSockPacket= // Testing queue for a packet.
+	            receiveQueueOfSockPackets.peek();
+	          if (receivedSockPacket == null) // Exiting if no packet.
+	            break parsing;
+	          DatagramPacket theDatagramPacket= // Getting DatagramPacket.
+	            receivedSockPacket.getDatagramPacket();
+	          cachedString= // Calculating and caching String from packet.
+	            PacketStuff.gettingPacketString( theDatagramPacket );
+	          } // parsing: 
+	        testing: {
+	          if ( cachedString == "" ) // Exiting if no packet or no string.
+	            break testing; // Exiting with null.
+	          if ( desiredString == null ) // Exiting if any string is acceptable.
+		          { returnString= cachedString; // Using cached string as result.
+		            break testing;  // Exiting with string.
+		            }
+	          if   // Exiting if the desired String is in packet String.
+	            ( cachedString.contains( desiredString ) )
+		          { returnString= desiredString; // Using desired string as result.
+		            break testing;  // Exiting with string.
+		            }
+	          } // testing:
+	        consuming: {
+	          if ( ! consumeB ) // Exiting if consuming not requested.
+	          	break consuming;
+	          if ( returnString == null) // Exiting if nothing to consume. 
+	          	break consuming;
+            appLogger.debug( "consuming from packet: "+cachedString );
+	        	receiveQueueOfSockPackets.poll(); // Removing head of queue.
+	        	cachedString= ""; // Emptying the string cache.
+	          packetsReceivedNamedInteger.addValueL( 1 );  // Counting the packet.
+	          } // consuming:
+	      	return returnString;
+	      	}
+
     // Send packet code.  This might be enhanced with streaming.
 
-    private void sendingPacketV( String aString )
-      /* This method sends a packet containing aString to the peer.
-        */
-      {
-        String payloadString= ((packetIDI++) + ":" + aString);
-        //appLogger.info( "sendingPacketV(): " + payloadString );
-        byte[] buf = payloadString.getBytes();
-        DatagramPacket packet = new DatagramPacket(
-          buf, 
-          buf.length, 
-          remoteInetSocketAddress.getAddress(),
-          remoteInetSocketAddress.getPort()
-          );
-        SockPacket aSockPacket= new SockPacket(packet);
-        sendQueueOfSockPackets.add( // Queuing packet for sending.
-            aSockPacket
+      private void sendingMessageV( String aString ) throws IOException
+        /* This method sends a packet containing aString to the peer.
+          It does NOT use NetOutputStream.  It accesses packets directly.
+          It prepends a packet ID number.
+          */
+        {
+      	  ///newSendingPacketV( aString );
+      	  String payloadString= ((packetIDI++) + ":" + aString);
+          //appLogger.info( "sendingMessageV(): " + payloadString );
+          byte[] buf = payloadString.getBytes();
+          DatagramPacket packet = new DatagramPacket(
+            buf, 
+            buf.length, 
+            remoteInetSocketAddress.getAddress(),
+            remoteInetSocketAddress.getPort()
             );
+          SockPacket aSockPacket= new SockPacket(packet);
+          sendQueueOfSockPackets.add( // Queuing packet for sending.
+              aSockPacket
+              );
 
-        packetsSentNamedInteger.addValueL( 1 );
-        }
+          packetsSentNamedInteger.addValueL( 1 );
+          }
+
+      @SuppressWarnings("unused") ///
+      private void NEWsendingMessageV( String aString ) throws IOException
+        /* This method sends a packet containing aString to the peer.
+          It uses NetOutputStream instead of accessing packets directly.
+          It prepends a packet ID number.
+          It does it using a NetOutputStream.
+          */
+        {
+      		appLogger.debug( "sending: "+aString );
+      		
+          String payloadString= ((packetIDI++) + ":" + aString);
+          //appLogger.info( "sendingMessageV(): " + payloadString );
+          byte[] buf = payloadString.getBytes();
+          
+          theNetOutputStream.write(buf); // Writing it to memory.
+          theNetOutputStream.write('.'); // Writing terminator.
+          theNetOutputStream.flush(); // Sending it in packet.
+
+          packetsSentNamedInteger.addValueL( 1 );
+          }
 
 
+    /* ???
     // interface JobStatus code.  Not presently used.
     
     private boolean jobDoneB= false;
@@ -535,5 +767,6 @@ public class Unicaster
   	public boolean getJobDoneB() { return jobDoneB; }
   	
   	public void setJobDoneV( Boolean jobDoneB ) { this.jobDoneB= jobDoneB; }
+  	??? */
   	
     } // Unicaster.

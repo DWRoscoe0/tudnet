@@ -6,7 +6,16 @@ public class EpiThread
 
   extends Thread
 
-  // This class adds some useful features to Thread.
+  /* This class adds some useful features to Thread.
+
+	  A destination thread needs only one LockAndSignal instance
+	  to manage its inputs regardless of the number of source threads
+	  that are providing those inputs.  
+	  In fact it makes no sense to have more than one.
+	  Therefore, it might make sense to include one LockAndSignal instance
+	  and an access method, in every EpiThread for use in these operations??
+	  
+	  */
 
   {
 
@@ -42,13 +51,18 @@ public class EpiThread
         joinV();  // Waiting until that termination completes.
         }
 
-    public void stopV()  // Requests stop of "this" thread.
+    public void stopV()  // Requests stopping of "this" thread.
       /* Thread.currentThread() calls this method to request 
         termination of the "this" (EpiThread) Thread.
         It does this by calling this.interrupt().
         Later JoinV() should be called to wait for termination to complete.
         It's okay to call this method more than once because
         the only thing it does is call interrupt().
+        
+        ?? Threads which use code which blocks without 
+        supporting InterruptedException could override this method 
+        to take action to end the block, for example by
+        closing the socket or stream which might be blocked. 
         */
       {
         //appLogger.info("EpiThread(" + getName() + ").stopV(): stopping.");

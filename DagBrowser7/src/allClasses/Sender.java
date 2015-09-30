@@ -14,7 +14,14 @@ public class Sender // Uunicast and multicast sender thread.
     from via a queue from other threads and sends them
     though a DatagramSocket.
     
-    ?? This thread might later do some rate control.
+    ?? This thread might later do some rate control,
+    including rate control affected by attributes of
+    segments of the tracrt paths to the peers.
+    
+    ?? This thread might later perform OutputStream multiplexing services.
+    
+    ?? This stream might later record and report send times
+    for the purpose of determining round trip time.
     */
 
   {

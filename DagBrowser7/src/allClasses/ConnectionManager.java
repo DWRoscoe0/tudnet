@@ -121,7 +121,7 @@ public class ConnectionManager
 	      // Queue receiving multicast packets received.
 	    private PacketQueue cmUnicastInputQueueOfSockPackets;
 	    	// Queue receiving unconnected unicast packets received.
-	    private JobQueue<Unicaster> cmJobQueueOfUnicasters;
+	    private InputQueue<Unicaster> cmInputQueueOfUnicasters;
 	      // Queue receiving unicasters beginning or end.
 
 
@@ -194,8 +194,8 @@ public class ConnectionManager
 		      new PacketQueue(cmLockAndSignal);
 		    cmUnicastInputQueueOfSockPackets=
 		      new PacketQueue(cmLockAndSignal);
-		    cmJobQueueOfUnicasters=
-		      new JobQueue<Unicaster>(cmLockAndSignal);
+		    cmInputQueueOfUnicasters=
+		      new InputQueue<Unicaster>(cmLockAndSignal);
     		}
 
     public String getValueString( )
@@ -247,18 +247,15 @@ public class ConnectionManager
 	      		if // Exiting loop if  thread termination is requested.
 	      		  ( Thread.currentThread().isInterrupted() ) break toReturn;
 		      		
-		    		// toLoopBack: 
-		    		{ // Processing inputs and waiting for more.
-		          processingUnconnectedSockPacketsB();
-		          processingMulticasterSockPacketsB();
+	          processingUnconnectedSockPacketsB();
+	          processingMulticasterSockPacketsB();
 
-		          /* At this point, all inputs that arrived before 
-		            the last notification signal should have been processed, 
-		            and maybe a few more inputs that arrived after that.  
-		            */
+	          /* At this point, all inputs that arrived before 
+	            the last notification signal should have been processed, 
+	            and maybe a few more inputs that arrived after that.  
+	            */
 
-		          cmLockAndSignal.doWaitE();  // Waiting for next signal of inputs.
-	      			} // toLoopBack
+	          cmLockAndSignal.doWaitE();  // Waiting for next signal of inputs.
 		        } // while (true)
 	    		} // toReturn.
         return;
@@ -413,7 +410,7 @@ public class ConnectionManager
 	      }
 
     private boolean processingUnconnectedSockPacketsB()
-      /* This method processes unconnected unicastpackets 
+      /* This method processes unconnected unicast packets 
         that are received by the UnconnectedReceiver Thread 
         and forwarded here.  It does this
         by adding the nodes that sent them to the known connections.
@@ -423,11 +420,9 @@ public class ConnectionManager
         boolean packetsProcessedB= false;
         SockPacket theSockPacket;
 
-        while (true) {  // Process all received uniconnected packets.
-          {
-            theSockPacket= // Try getting next packet from queue.
-              cmUnicastInputQueueOfSockPackets.poll();
-            }
+        while (true) {  // Process all received unconnected packets.
+          theSockPacket= // Try getting next packet from queue.
+            cmUnicastInputQueueOfSockPackets.poll();
 
           if (theSockPacket == null) break;  // Exit if no more packets.
           
@@ -513,7 +508,7 @@ public class ConnectionManager
               theConnectionsFactory.makeUnicasterValue(
                 peerInetSocketAddress,
                 senderInputQueueOfSockPackets,
-                cmJobQueueOfUnicasters,
+                cmInputQueueOfUnicasters,
                 unconnectedDatagramSocket,
                 this, // theConnectionManager
                 theShutdowner

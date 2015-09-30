@@ -90,7 +90,7 @@ class ConnectionsFactory {
   public Unicaster makeUnicaster(
       InetSocketAddress peerInetSocketAddress,
       PacketQueue sendPacketQueue,
-      JobQueue<Unicaster> cmJobQueueOfUnicasters,
+      InputQueue<Unicaster> cmInputQueueOfUnicasters,
       DatagramSocket unconnectedDatagramSocket,
       ConnectionManager theConnectionManager,
       Shutdowner theShutdowner
@@ -99,7 +99,7 @@ class ConnectionsFactory {
       return new Unicaster(
         peerInetSocketAddress,
         sendPacketQueue,
-        cmJobQueueOfUnicasters,
+        cmInputQueueOfUnicasters,
         theDataTreeModel,
         theConnectionManager,
         theShutdowner
@@ -108,7 +108,7 @@ class ConnectionsFactory {
   public NetCasterValue makeUnicasterValue(
       InetSocketAddress peerInetSocketAddress,
       PacketQueue sendPacketQueue,
-      JobQueue<Unicaster> cmJobQueueOfUnicasters,
+      InputQueue<Unicaster> cmInputQueueOfUnicasters,
       DatagramSocket unconnectedDatagramSocket,
       ConnectionManager theConnectionManager,
       Shutdowner theShutdowner
@@ -117,7 +117,7 @@ class ConnectionsFactory {
       Unicaster theUnicaster= makeUnicaster(
         peerInetSocketAddress,
         sendPacketQueue,
-        cmJobQueueOfUnicasters,
+        cmInputQueueOfUnicasters,
         unconnectedDatagramSocket,
         theConnectionManager,
         theShutdowner
