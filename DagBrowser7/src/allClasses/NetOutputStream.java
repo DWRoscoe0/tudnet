@@ -9,11 +9,16 @@ public class NetOutputStream
 
 	extends OutputStream
 
-  /* This class makes is a network output stream,
-    at first generating UDP packets.
+  /* This class is a network output stream, at first generating UDP packets.
     
     ??? When working, rename fields to things more meaningful.
-    */
+
+    ?? Eventually this will be used with DataOutputStream for writing
+      particular types to the stream.
+    	?? Maybe give it ability to write packets and control packet boundaries.
+    		This is addition to flush() which forces an unconditional end of packet.
+	  
+	  */
 
 	{
 

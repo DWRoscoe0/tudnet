@@ -12,10 +12,9 @@ public class InputQueue<E> // For inter-thread communication.
 	extends LinkedBlockingQueue<E>
 	
 	/* This convenience class combines the following:
-	  * The thread-safe LinkedBlockingQueue.  It had used ConcurrentLinkedQueue 
-	    until blocking methods became needed.
-	  * A LockAndSignal monitor-lock variable that a threads
-	    can use to manage multiple input, such as this queue.
+	  * The thread-safe LinkedBlockingQueue.  
+	  * A LockAndSignal monitor-lock variable that a thread
+	    can use to manage multiple inputs, such as these queues.
 	  * Methods that combine addition of new data elements to the queue with 
 	    notification of the destination thread of those additions.
 	  Normally a single destination thread will use a set of these queues,
@@ -32,6 +31,8 @@ public class InputQueue<E> // For inter-thread communication.
     whose addAndWait( E anE ) method did not return until
     the element had been removed and processed,
     but was removed because its functionality was not being used.
+    
+    This class used ConcurrentLinkedQueue until blocking methods became needed.
 	  */
 	
 	{

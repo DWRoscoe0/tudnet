@@ -351,10 +351,10 @@ public class LockAndSignal  // Combination lock and signal class.
 	      The wait(..) can end for several different reasons.
 	      Here is how this method distinguishes between and handles each:
 	
-			    Some other thread interrupts this thread with Thread.interrupt().
+			  * Some other thread interrupts this thread with Thread.interrupt().
 			    This is detected with Thread.currentThread().isInterrupted().
 	
-			    The specified amount of time has elapsed.
+			  * The specified amount of time has elapsed.
 			    This is tricky because the value returned by 
 			    System.currentTimeMillis() can change suddenly by large amounts
 			    when the computer's clock is adjusted.
@@ -369,13 +369,14 @@ public class LockAndSignal  // Combination lock and signal class.
 	        Treating this as a time-out is a way of preventing
 	        the code getting stuck in a wait state.
 	
-			    Some other thread invokes the notify(..) or notifyAll(..) methods 
+			  * Some other thread invokes the notify(..) or notifyAll(..) methods 
 			    for this object.  By convention this must be done after
 			    setting the signal variable true.
 			    Typically this is done by calling doNotifyV(). 
 			    
-			    Anything else is considered a spurious wake-up.  
-			    This is ignored and the method loops. 
+		    Anything else is considered a spurious wake-up.  
+		    This is ignored and the method loops.
+		    The method does not return in this case. 
 	
 			  ?? Change to use await() instead of wait() ??
 	      */

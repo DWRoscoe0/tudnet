@@ -402,7 +402,7 @@ public class ConnectionManager
         It is called when thisUnicaster is terminating.
         */
 	    {
-	    	if  // Removing to DataNode List if it's there.
+	    	if  // Removing from DataNode List if it's there.
 	      	( ! removeB( thisUnicaster ) )
 	      	appLogger.error("CM:stoppingUnicasterV(): removeB(..) failed");
 
@@ -459,7 +459,7 @@ public class ConnectionManager
 			      theUnicaster=  // Get or create Unicaster.
 			          getOrBuildAndStartUnicaster( theSockPacket );
 			      }
-	      theUnicaster.puttingReceivedPacketV( // Giving packet to Unicaster.  
+	      theUnicaster.puttingReceivedPacketV( // Giving Unicaster copy of packet.  
 	      		theSockPacket
 	      		);
         }
@@ -477,6 +477,10 @@ public class ConnectionManager
       {
         DatagramPacket theDatagramPacket=  // Get DatagramPacket.
           theSockPacket.getDatagramPacket();
+        appLogger.info( 
+        		"Creating Unicaster from "
+        		+PacketStuff.gettingPacketString(theDatagramPacket)
+        		);
         InetSocketAddress peerInetSocketAddress=  // Build packet's address.
           //theDatagramPacket.getSocketAddress();
           new InetSocketAddress(

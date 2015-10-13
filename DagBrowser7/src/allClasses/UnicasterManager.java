@@ -1,6 +1,7 @@
 package allClasses;
 
 import java.net.DatagramPacket;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Iterator;
@@ -46,7 +47,7 @@ public class UnicasterManager
     	  return peerSocketAddressConcurrentHashMap.get(theInetSocketAddress);
         }
 
-    public Unicaster tryGettingExistingUnicaster( SockPacket theSockPacket )
+    public Unicaster tryGettingExistingUnicaster( SockPacket theSockPacket ) ///
       /* This method returns the Uniaster associated with the
          source address of theSockPacket, if such as Unicaster exists.
          It returns null otherwise.
@@ -59,11 +60,18 @@ public class UnicasterManager
       {
         DatagramPacket theDatagramPacket=  // Get DatagramPacket.
           theSockPacket.getDatagramPacket();
-        InetSocketAddress peerInetSocketAddress= // Build it's remote address
-          new InetSocketAddress( // from its
+        return tryGettingExistingUnicaster( 
             theDatagramPacket.getAddress(), // IP and
             theDatagramPacket.getPort()  // port #.
-            );
+        		);
+        }
+
+    public Unicaster tryGettingExistingUnicaster( 
+    		InetAddress theInetAddress, int portI 
+    		)
+	    {
+	      InetSocketAddress peerInetSocketAddress= // Build remote address
+	          new InetSocketAddress( theInetAddress, portI );
         NetCasterValue theNetCasterValue= // Testing whether peer is already stored.
             getMap().get(peerInetSocketAddress);
         Unicaster theUnicaster= // Calculating the Unicaster based on
@@ -72,7 +80,7 @@ public class UnicasterManager
 	        	: null; // or null if it wasn't.
         return theUnicaster;
         }
-
+  		
     public void removeV( Unicaster thisUnicaster )
       /* This method removes thisUnicaster from the map.  */
 	    {
