@@ -1,8 +1,6 @@
 package allClasses;
 
 import java.io.IOException;
-///import java.net.DatagramPacket;
-///import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -72,8 +70,6 @@ public class Multicaster
 	      * It's a way to specify a source/local port number.
 	    */ 
 	  private InetSocketAddress theInetSocketAddress;
-		///public final InputQueue<SockPacket> // Send output.
-	  ///  sendQueueOfSockPackets;  /// SockPackets for ConnectionManager to send?
 	  public final InputQueue<SockPacket> // Receive output.
 	    cmUnicastInputQueueOfSockPackets;  // SockPackets for ConnectionManager to note.
   	private UnicasterManager theUnicasterManager;
@@ -137,7 +133,6 @@ public class Multicaster
 	  		// Store remaining injected dependencies.
 	  		this.theMulticastSocket= theMulticastSocket;
 	  	  this.theInetSocketAddress= theInetSocketAddress;
-	      ///this.sendQueueOfSockPackets= sendQueueOfSockPackets;
 	      this.cmUnicastInputQueueOfSockPackets= cmUnicastInputQueueOfSockPackets;
 		  	this.theUnicasterManager= theUnicasterManager;
 	      }
@@ -145,10 +140,6 @@ public class Multicaster
 	  
 	  /* The following is new code that uses the MulticastReceier thread.  */
 	  
-    ///private LockAndSignal threadLockAndSignal;
-		///	// LockAndSignal for inputs to this thread.  It is used in 
-		/// // the construction of receiveQueueOfSockPackets. 
-    ///private PacketQueue receiveQueueOfSockPackets;
     private MulticastReceiver theMulticastReceiver; // Receiver and
     private EpiThread theMulticastReceiverEpiThread; // its thread.
 
@@ -205,12 +196,8 @@ public class Multicaster
 	              ( ! Thread.currentThread().isInterrupted() ) // requested.
 	              { // Receiving and queuing one packet.
 	                try {
-	      						///byte[] responseBytes = new byte[ 1 ];
-		                ///DatagramPacket rx =  // Construct receiving packet.
-		                /// new DatagramPacket( responseBytes, responseBytes.length );
 	                  SockPacket receiveSockPacket=  // Construct SockPacket.
 	                  		PacketStuff.makeSockPacket( );
-	                    ///new SockPacket( rx );
 	                  theMulticastSocket.receive( 
 	                  		receiveSockPacket.getDatagramPacket() 
 	                  		);
@@ -264,19 +251,6 @@ public class Multicaster
     	            { // Send and receive multicast packets.
     	              try {
     		      				sendingMessageV("DISCOVERY"); // Sending query.
-    		      				/// The previous line will replac the following lines.
-    	                ///DatagramPacket queryDatagramPacket = new DatagramPacket( 
-	    		      			///  new byte[] { QUERY_PACKET },1, groupInetAddress, multicastPortI 
-	    		      			/// );
-	    		      			///SockPacket querySockPacket= new SockPacket(
-	    		      			/// queryDatagramPacket
-	    		      			/// );
-	    		      			///sendQueueOfSockPackets.add( // Queuing query packet for sending.
-	    		      			/// querySockPacket
-	    		      			/// );
-	    		      			/////appLogger.debug("Multicaster.run() 4: before addValue().");
-	    		      			///packetsSentNamedInteger.addValueL( 1 );
-
     	                receivingPacketsV( ); // Receiving packets until done.
     	                }
     	              catch( SocketException soe ) {
@@ -304,12 +278,10 @@ public class Multicaster
     private void startingMultcastReceiverThreadV()
       // Needs work??
       {
-	      ///receiveQueueOfSockPackets=
-	      ///    new PacketQueue(threadLockAndSignal);
 	      theMulticastReceiver=  // Constructing thread.
 	          new MulticastReceiver( 
 	          	theMulticastSocket,
-	            receiveQueueOfSockPackets /// make receiveQueue?
+	            receiveQueueOfSockPackets
 	            );
         theMulticastReceiverEpiThread= new EpiThread( 
           theMulticastReceiver,
@@ -328,11 +300,9 @@ public class Multicaster
 	        // theMulticastReceiver thread.
 	      }
 
-    private void receivingPacketsV( ) /// 
+    private void receivingPacketsV( ) 
       throws IOException 
-      /* ??? This is being adapted to use Strings.
-
-        This helper method receives and processes multicast packets,
+      /* This helper method receives and processes multicast packets,
         both query packets and response packets to a previously sent query,
         until no more packets are received for a timeout interval.
         It reports all received packets to the ConnectionManager.
@@ -343,79 +313,35 @@ public class Multicaster
     		LockAndSignal.Input theInput;  // Type of input that ends waits.
       	long querySentMsL= System.currentTimeMillis(); // and in ms.
         processorLoop: while (true) { // Processing packets until exit.
-        	///processor: 
         	{ // Processing packet or exiting.
         		long delayMsL= 40000;
           	theInput=  // Awaiting next input within reply interval.
           		testWaitInIntervalE( querySentMsL, delayMsL );
-	          ///LockAndSignal.Input theInput= // Awaiting input and storing type.
-	          ///		threadLockAndSignal.doWaitWithTimeOutE( // Awaiting input or
-	          ///			delayMsL  // maximum wait time.
-	          ///   );
 	          switch ( theInput ) {  // Handling the input type.
 	          	case TIME: // Handling a time-out.
 	              multicastConnectionLoggerV( false ); // Comm. ended.
+	              break processorLoop;  // Exiting loop.
 	            case INTERRUPTION: // Handling a thread's interruption.
-	              break processorLoop;  // Exiting loop in either case.
+	              break processorLoop;  // Exiting loop.
 	            case NOTIFICATION:  // Handling packet inputs.
-	            default:
-	            	; // Continuing with the code that follows.
+	          		if ( testingMessageB( "DISCOVERY" ) ) // Handling query, maybe.
+		        			{ sendingMessageV("ALIVE"); // Sending response.
+			              processingPossibleNewUnicasterV();
+			              } // Create and queue response.
+		        		else if ( testingMessageB( "ALIVE" ) ) // Handling response, maybe.
+			            processingPossibleNewUnicasterV();
+			          else
+				          {
+				            appLogger.warning(
+				            		"receivingPacketsV(): unexpected: "
+				            		+ PacketStuff.gettingPacketString( 
+				            				theNetInputStream.getSockPacket().getDatagramPacket()
+				            				//receivedSockPacket.getDatagramPacket() 
+				            				)
+				            		);
+			        		  tryingToConsumeOneMessageB();
+				            }
 	            }
-	          ///SockPacket receivedSockPacket= // Copying packet from queue.
-		        		//////receiveQueueOfSockPackets.peek();
-	          		///theNetInputStream.getSockPacket();
-	          ///SockPacket receivedSockPacket= // Testing queue for a packet.
-		        ///		receiveQueueOfSockPackets.poll();
-		        ///multicastConnectionLoggerV( true ); // Comm. started.
-		        ///packetsReceivedNamedInteger.addValueL( 1 );
-		        ///if (receivedSockPacket == null) // Handling no packet.
-	        ///  {
-	        ///	appLogger.error("NOTIFICATION but no packet!" );
-	        ///   ///break processor;
-	        ///	break;
-	        ///   }
-		        ///DatagramPacket receivedDatagramPacket= // Getting DatagramPacket.
-		        ///  receivedSockPacket.getDatagramPacket();
-		        ///byte receivedBytes[]= receivedDatagramPacket.getData();
-		        ///if( receivedBytes[ 0 ] == QUERY_PACKET )
-        		if ( testingMessageB( "DISCOVERY" ) ) // Handling query, maybe.
-        			{ // Create and queue response.
-        				sendingMessageV("ALIVE"); // Sending response.
-	              ///DatagramPacket responseDatagramPacket= // Constructing response.
-	        			///  new DatagramPacket(
-	        			///   new byte[] { RESPONSE_PACKET }, 
-	        			///   1, 
-	        			///   groupInetAddress, 
-	        			///   multicastPortI 
-	        			///   );
-	        			///SockPacket aSockPacket= new SockPacket( 
-	        			///   responseDatagramPacket
-	        			///   );
-	        			///sendQueueOfSockPackets.add( // Queuing response for sending.
-	        			/// aSockPacket 
-	        			/// );
-	              processingPossibleNewUnicasterV();
-	              ///processingPossibleNewUnicasterV(receivedSockPacket);
-	              ///tryingToConsumeOneMessageB();
-	              } // Create and queue response.
-	          ///else if( receivedBytes[ 0 ] == RESPONSE_PACKET )
-        		else if ( testingMessageB( "ALIVE" ) ) // Handling response, maybe.
-	            {
-	              processingPossibleNewUnicasterV();
-	              ///processingPossibleNewUnicasterV(receivedSockPacket);
-	              ///tryingToConsumeOneMessageB();
-	              }
-	          else
-		          {
-		            appLogger.warning(
-		            		"receivingPacketsV(): unexpected: "
-		            		+ PacketStuff.gettingPacketString( 
-		            				theNetInputStream.getSockPacket().getDatagramPacket()
-		            				//receivedSockPacket.getDatagramPacket() 
-		            				)
-		            		);
-	        		  tryingToConsumeOneMessageB();
-		            }
             } // processor: // Processing packets until exit.
         	} // processorLoop:  // Processing packet or exiting.
         }
@@ -427,74 +353,6 @@ public class Multicaster
     	processingPossibleNewUnicasterV(streamSockPacket);
     	tryingToConsumeOneMessageB();
       }
-
-    /* ???
-    private void OLDreceivingPacketsV( ) 
-      throws IOException 
-      /* This helper method receives and processes multicast packets,
-        both query packets and response packets to a previously sent query,
-        until no more packets are received for a timeout interval.
-        It reports all received packets to the ConnectionManager.
-        If any received packets are query packets then
-        it sends multicast response packets.
-        */
-    /* ???
-      {
-        processorLoop: while (true) { // Processing packets until exit.
-        	processor: { // Processing packet or exiting.
-	          long delayMsL= 40000;
-	          LockAndSignal.Input theInput= // Awaiting input and storing type.
-	          		threadLockAndSignal.doWaitWithTimeOutE( // Awaiting input or
-	          				delayMsL  // maximum wait time.
-	              );
-	          switch ( theInput ) {  // Handling the input type.
-	          	case TIME: // Handling a time-out.
-	              multicastConnectionLoggerV( false ); // Comm. ended.
-	            case INTERRUPTION: // Handling a thread's interruption.
-	              break processorLoop;  // Exiting loop in either case.
-	            case NOTIFICATION:  // Handling packet inputs.
-	            default:
-	            	; // Continuing with the code that follows.
-	            }
-	          SockPacket receivedSockPacket= // Testing queue for a packet.
-	          		receiveQueueOfSockPackets.poll();
-	          multicastConnectionLoggerV( true ); // Comm. started.
-	          packetsReceivedNamedInteger.addValueL( 1 );
-	          if (receivedSockPacket == null) // Handling no packet.
-		          {
-	          		appLogger.error("NOTIFICATION but no packet!" );
-		            break processor;
-		            }
-	          DatagramPacket receivedDatagramPacket= // Getting DatagramPacket.
-	            receivedSockPacket.getDatagramPacket();
-	          byte receivedBytes[]= receivedDatagramPacket.getData();
-	          if( receivedBytes[ 0 ] == QUERY_PACKET )
-	            { // Create and queue response.
-	              DatagramPacket responseDatagramPacket= // Constructing response.
-	                new DatagramPacket(
-	                  new byte[] { RESPONSE_PACKET }, 
-	                  1, 
-	                  groupInetAddress, 
-	                  multicastPortI 
-	                  );
-	              SockPacket aSockPacket= new SockPacket( 
-	                  responseDatagramPacket
-	                  );
-	              sendQueueOfSockPackets.add( // Queuing response for sending.
-	                aSockPacket 
-	                );
-	              processingPossibleNewUnicasterV(receivedSockPacket);
-	              } // Create and queue response.
-	          else if( receivedBytes[ 0 ] == RESPONSE_PACKET )
-	            {
-	              processingPossibleNewUnicasterV(receivedSockPacket);
-	              }
-	          else
-	            appLogger.error("Multicaster.receivingPacketsV(): unknown multicast packet.");
-        		} // processor: // Processing packets until exit.
-        	} // processorLoop:  // Processing packet or exiting.
-        }
-    ??? */
 
 	  protected void processingPossibleNewUnicasterV( SockPacket theSockPacket )
 	    {

@@ -592,12 +592,6 @@ public class DataTreeModel
         {
       		//appLogger.debug( "DataTreeModel.invokeAndWaitV(..) begins.");
 
-      		///if ( theShutdowner.isShuttingDownB() ) // Returning if shutting down. 
-		      ///	{
-		      ///	  //appLogger.debug( "DataTreeModel.invokeAndWaitV(..) isShuttingDownB() return.");
-		      ///		return;
-		      ///		} // Doing this because EDT is unreliable during shutdown.
-      		
       	  boolean interruptedB= // Saving and disabling interrupted status. 
       	  		Thread.interrupted(); // (in case it was already true)
 

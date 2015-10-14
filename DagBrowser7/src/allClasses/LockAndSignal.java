@@ -66,7 +66,7 @@ public class LockAndSignal  // Combination lock and signal class.
 
       NOTIFICATION // doNotify() was called at least once.
       TIME // The time limit, either time-out or absolute time, was reached.
-      TIME_LATE // Same as TIME but the time limit has long passed!
+      //TIME_LATE // Same as TIME but the time limit has long passed!
       INTERRUPTION // The thread's isInterrupted() status is true.
 
     On return, if only one Input type is to be checked and processed, 
@@ -148,10 +148,10 @@ public class LockAndSignal  // Combination lock and signal class.
 
     public enum Input {  // Return value indicating an input which has appeared.
     	// These values are listed from lowest to highest priority.
-    	NONE, // There has been no input.
+    	// NONE, // There has been no input.
       NOTIFICATION, // doNotify() was called to signal data input.
       TIME, // The time limit, either time-out or absolute time, was reached.
-      TIME_LATE, // Same as TIME but the time limit has long passed!
+      // TIME_LATE, // Same as TIME but the time limit has long passed!
       INTERRUPTION, // The thread's isInterrupted() status is true.
       }  // These return values can simplify input processing in some cases.
       
@@ -233,8 +233,8 @@ public class LockAndSignal  // Combination lock and signal class.
         }
     
     public synchronized Input doWaitWithTimeOutE( long delayMsL )
-      /* ??? This is like doWaitWithIntervalE(..) 
-        starting with the current time.
+      /* This is like doWaitWithIntervalE(..) with 
+        startMsL set to the current time.
         Use this when reaching a time limit will not terminate a protocol loop.
         */
       {
@@ -244,102 +244,15 @@ public class LockAndSignal  // Combination lock and signal class.
 		      );
         }
 
-    public synchronized Input OLDdoWaitWithIntervalE( /// 
-    		long startMsL, long lengthMsL 
-    		)
-	    /* ??? Being converted from doWaitWithTimeOutE(..).  Adjust doc.
-	      Use this when reaching a time limit will terminate a protocol loop.
-	      
-	      This method, called by a source thread,
-	      waits for any of the following:
-	        * The condition set by Thread.currentThread().interrupt().
-	          This condition is not cleared by this method.
-	        * The interval delayMsL ms has passedL.
-	          delayMsL is normally positive but may be 0 or negative.
-	          0 is not treated as infinite time.  It means no delay.
-	        * An input signal notification.
-	      It checks the conditions in the above order.
-	      If a different order is desired, the call to this method can
-	      be preceded by another test or tests that should be first.
-	      
-	      This method returns an Input value of the first Input type
-	      that it found present.  It might not be the only one.
-	
-	      The wait(..) can end for several different reasons.
-	      Here is how this method distinguishes between and handles each:
-	
-			    Some other thread interrupts this thread with Thread.interrupt().
-			    This is detected with Thread.currentThread().isInterrupted().
-	
-			    The specified amount of time has elapsed.
-			    This is tricky because the value returned by 
-			    System.currentTimeMillis() can change suddenly by large amounts
-			    when the computer's clock is adjusted.
-			    The amount of real time which has passed 
-			    can not be determined with accuracy.
-	        If this method finds the System.currentTimeMillis() either
-	        before or after the time-out interval 
-	        then it will treat it as a time-out.
-	        It's normal to return after the time-out interval.
-	        If it returns before the time-out interval then
-	        it's probably because the clock was set forward a large amount.
-	        Treating this as a time-out is a way of preventing
-	        the code getting stuck in a wait state.
-	
-			    Some other thread invokes the notify(..) or notifyAll(..) methods 
-			    for this object.  By convention this must be done after
-			    setting the signal variable true.
-			    Typically this is done by calling doNotifyV(). 
-			    
-			    Anything else is considered a spurious wake-up.  
-			    This is ignored and the method loops. 
-	
-			  ?? Change to use await() instead of wait() ??
-	      */
-	    {
-	      Input theInput;  // For type of Input that will exit wait loop.
-	      ///final long startMsL= System.currentTimeMillis();
-	      while (true) { // Looping until one of several conditions is true.
-	        if // Handling thread interrupt signal.
-	          ( Thread.currentThread().isInterrupted() )
-	          { theInput= Input.INTERRUPTION; break; }  // Exiting loop.
-	        final long elapsedMsL= System.currentTimeMillis() - startMsL;
-		      if // Exiting if time before or after time-out interval.
-		       ( (  elapsedMsL >= lengthMsL ) || ( elapsedMsL < 0 ) )
-	        ///if // Exiting if time before or after time interval.
-		      ///  ( testOutsideIntervalB( startMsL, lengthMsL ) )
-	          { theInput= Input.TIME; break; } // Exiting loop.
-	        if ( getB() ) // Handling explicit input notification.
-	          {  // Resetting input signal and exiting loop
-	        	  setV(false);  // Resetting NOTIFICATION flag for next doDnotify().
-	            theInput= Input.NOTIFICATION; 
-	        	  break; 
-	        	  }
-	        try { // Waiting for notification or time-out.
-	          wait(  // Wait for call to notify() or...
-	            lengthMsL - elapsedMsL // ...for remainder of time-out interval.
-	            );
-	          } 
-	        catch (InterruptedException e) { // Handling wait interrupt.
-	          Thread.currentThread().interrupt(); // Re-establishing for test.
-	          }
-	        }
-	      return theInput;  // Returning why the wait loop ended.
-	      }
-
     public synchronized Input doWaitWithIntervalE( 
     		long startMsL, long lengthMsL 
     		)
-	    /* ??? Being converted from doWaitWithTimeOutE(..).  Adjust doc.
-	      Use this when reaching a time limit will terminate a protocol loop.
-	      
-	      This method, called by a source thread,
+	    /* This method, called by a source thread,
 	      waits for any of the following:
 	        * The condition set by Thread.currentThread().interrupt().
 	          This condition is not cleared by this method.
-	        * The interval delayMsL ms has passedL.
-	          delayMsL is normally positive but may be 0 or negative.
-	          0 is not treated as infinite time.  It means no delay.
+	        * Time is outside the interval beginning at startMsL
+	          and of length lengthMs milliseconds. 
 	        * An input signal notification.
 	      It checks the conditions in the above order.
 	      If a different order is desired, the call to this method can
@@ -354,8 +267,8 @@ public class LockAndSignal  // Combination lock and signal class.
 			  * Some other thread interrupts this thread with Thread.interrupt().
 			    This is detected with Thread.currentThread().isInterrupted().
 	
-			  * The specified amount of time has elapsed.
-			    This is tricky because the value returned by 
+			  * The time is outside the specified time-out interval.
+			    The reason it is done this way is because the value returned by 
 			    System.currentTimeMillis() can change suddenly by large amounts
 			    when the computer's clock is adjusted.
 			    The amount of real time which has passed 
@@ -376,23 +289,20 @@ public class LockAndSignal  // Combination lock and signal class.
 			    
 		    Anything else is considered a spurious wake-up.  
 		    This is ignored and the method loops.
-		    The method does not return in this case. 
-	
+		    The method does not return in this case.
+
+	      Use this when reaching a time limit will terminate a protocol loop.
+	      
 			  ?? Change to use await() instead of wait() ??
 	      */
 	    {
 	      Input theInput;  // For type of Input that will exit wait loop.
-	      ///final long startMsL= System.currentTimeMillis();
 	      while (true) { // Looping until one of several conditions is true.
 	        if // Handling thread interrupt signal.
 	          ( Thread.currentThread().isInterrupted() )
 	          { theInput= Input.INTERRUPTION; break; }  // Exiting loop.
-	        ///final long elapsedMsL= System.currentTimeMillis() - startMsL;
-		      ///if // Exiting if time before or after time-out interval.
-		      /// ( (  elapsedMsL >= lengthMsL ) || ( elapsedMsL < 0 ) )
 	        final long remainingMsL= intervalRemainingMsL( startMsL, lengthMsL ); 
 	        if // Exiting if time before or after time interval.
-	          ///( testOutsideIntervalB( startMsL, lengthMsL ) )
 	          ( remainingMsL == 0 )
 	          { theInput= Input.TIME; break; } // Exiting loop.
 	        if ( getB() ) // Handling explicit input notification.
@@ -403,7 +313,6 @@ public class LockAndSignal  // Combination lock and signal class.
 	        	  }
 	        try { // Waiting for notification or time-out.
 	          wait(  // Wait for call to notify() or...
-	            ///lengthMsL - elapsedMsL // ...for remainder of time-out interval.
 	          	remainingMsL
 	            );
 	          } 
@@ -434,26 +343,18 @@ public class LockAndSignal  // Combination lock and signal class.
 		    return remainingMsL;
 		    }
 
-    public boolean testOutsideIntervalB( long startMsL, long lengthMsL ) /// 
-			{
-		    final long elapsedMsL= System.currentTimeMillis() - startMsL;
-		    final boolean resultB= // Test whether time before or after interval.
-		      ( (  elapsedMsL >= lengthMsL ) || ( elapsedMsL < 0 ) );
-		    return resultB;
-		    }
-
     // Input notification methods, of which there is only one.
-
-    public synchronized void doNotifyV()
-      /* This method is called by threads which are data sources.
-        It delivers notification that new input has been provided 
-        to the destination thread by a source thread.
-        It is called only by a source thread.
-        */
-      {
-        setV(true);  // Set signal to end the loop in doWaitUntilE().
-        notify();  // Terminate any active wait() blocking.
-        }
+	
+	    public synchronized void doNotifyV()
+	      /* This method is called by threads which are data sources.
+	        It delivers notification that new input has been provided 
+	        to the destination thread by a source thread.
+	        It is called only by a source thread.
+	        */
+	      {
+	        setV(true);  // Set signal to end the loop in doWaitUntilE().
+	        notify();  // Terminate any active wait() blocking.
+	        }
 
 
     // Other methods.

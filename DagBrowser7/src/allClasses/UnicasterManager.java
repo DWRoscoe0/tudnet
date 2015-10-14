@@ -47,7 +47,7 @@ public class UnicasterManager
     	  return peerSocketAddressConcurrentHashMap.get(theInetSocketAddress);
         }
 
-    public Unicaster tryGettingExistingUnicaster( SockPacket theSockPacket ) ///
+    public Unicaster tryGettingExistingUnicaster( SockPacket theSockPacket )
       /* This method returns the Uniaster associated with the
          source address of theSockPacket, if such as Unicaster exists.
          It returns null otherwise.

@@ -3,7 +3,6 @@ package allClasses;
 import static allClasses.Globals.appLogger;
 
 import java.io.IOException;
-///import java.net.DatagramPacket;
 import java.net.InetSocketAddress;
 import java.util.Random;
 
@@ -13,7 +12,7 @@ public class Unicaster
 
 	extends NetCaster
 
-  implements Runnable ///, JobStatus  // JobStatus code is no longer needed?? 
+  implements Runnable 
   
   /* Each instance of this nested class contains and manages data about 
     one of the peer nodes of which the ConnectionManager is aware.
@@ -77,8 +76,6 @@ public class Unicaster
         PeriodMillisL / 2;  
 
       // Injected dependency instance variables.
-      ///private final PacketQueue sendQueueOfSockPackets;
-        /// Queue to receive SockPackets to be sent to Unicaster?
     	@SuppressWarnings("unused") // ??
     	private InputQueue<Unicaster> cmInputQueueOfUnicasters;
       private final ConnectionManager theConnectionManager;
@@ -122,14 +119,11 @@ public class Unicaster
         		);
 
         // Storing injected dependency constructor arguments.
-          ///this.sendQueueOfSockPackets= sendQueueOfSockPackets;
           this.cmInputQueueOfUnicasters= cmInputQueueOfUnicasters;
           this.theConnectionManager= theConnectionManager;
           this.theShutdowner= theShutdowner;
         
         theRandom= new Random(0);  // Initialize arbitratingYieldB().
-
-        ///threadLockAndSignal= new LockAndSignal(false);
 
   	    theNetOutputStream= new NetOutputStream(
   	    		sendQueueOfSockPackets, 
@@ -298,10 +292,6 @@ public class Unicaster
       {
         LockAndSignal.Input theInput;  // Type of input that ends wait.
         long pingWaitStartMsL= System.currentTimeMillis();
-        ///long pingTimeMillisL= // Calculating latest okay ping receive time.
-	      ///  pingWaitStart
-	      /// + PeriodMillisL
-	      /// + HalfPeriodMillisL;
         pingWaitLoop: while (true) { // Processing until something causes exit.
       		if // Handling SHUTTING-DOWN packet or interrupt by exiting.
 	    			( tryingToCaptureTriggeredExitB( ) )
@@ -333,33 +323,6 @@ public class Unicaster
 	          	}
           } // pingWaitLoop
         }
-
-    /* ???
-    private Input testWaitWithTimeOutE( long timeOutMsL) throws IOException
-      /* This is a special test-and-wait method which will return immediately 
-        with Input.NOTIFICATION if a received packet 
-        is available for processing,
-        otherwise it will do a LockAndSignal.doWaitWithTimeOutE(..).
-        So it might block, or it might not.
-        NOTIFICATION has priority over TIME,
-        even if a time-out has already occurred.
-        This is not the normal way the LockAndSignal wait methods work.
-       */
-    /* ???
-	    {
-    		LockAndSignal.Input theInput;
-
-    		if ( testingMessageB( ) ) 
-	        theInput= Input.NOTIFICATION;
-    	  else
-    	  	theInput=
-    	  	  threadLockAndSignal.doWaitWithTimeOutE( 
-	        		timeOutMsL
-	        		);
-
-    	  return theInput;
-	      }
-	  ??? */
 
     private boolean arbitratingYieldB()
       /* This method arbitrates when this local peer is trying
@@ -442,15 +405,4 @@ public class Unicaster
 
     // Send packet code.  This might be enhanced with streaming.
 
-
-    /* ???
-    // interface JobStatus code.  Not presently used.
-    
-    private boolean jobDoneB= false;
-    
-  	public boolean getJobDoneB() { return jobDoneB; }
-  	
-  	public void setJobDoneV( Boolean jobDoneB ) { this.jobDoneB= jobDoneB; }
-  	??? */
-  	
     } // Unicaster.

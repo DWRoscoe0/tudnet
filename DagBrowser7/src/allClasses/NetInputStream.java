@@ -26,7 +26,7 @@ public class NetInputStream
       This code uses IOException and InterruptedException, but
       exactly how has not been completely determined ??
       
-	    ??? When working, rename fields to things more meaningful.
+	    ?? When working, rename fields to things more meaningful.
 
       ?? Eventually this will be used with DataInputStream for reading
         particular types from the stream.
@@ -38,8 +38,6 @@ public class NetInputStream
 
 	  // Constructor-injected instance variables.
 		PacketQueue receiveQueueOfSockPackets= null;
-		///InetAddress iAdd = null;
-	  ///int port = 0;
 
 	  // Other instance variables.
 		SockPacket theSockPacket= null;
@@ -52,12 +50,10 @@ public class NetInputStream
   
 		public NetInputStream( 
 			PacketQueue receiveQueueOfSockPackets, 
-			InetAddress address, int portI  /// Remove unneeded arguments.
+			InetAddress address, int portI  // Remove unneeded arguments??
 			)
 		{
 			this.receiveQueueOfSockPackets= receiveQueueOfSockPackets;
-			///iAdd = address;
-		  ///port = portI;		
 	    }
 
     public int available() throws IOException 
@@ -109,23 +105,16 @@ public class NetInputStream
     	  return theSockPacket;
       	}
 
-    private void loadNextPacketV() throws IOException /// , InterruptedException 
+    private void loadNextPacketV() throws IOException 
       /* This method loads the packet buffers from the 
         next packet in the input queue.
         It blocks if no packet is immediately available.
         This method changes virtually all object at once.
-        
-        ??? Change so that packet being read is still in queue for 
-          other purposes, or make packet available for examination
-          through this class.
-         */
+        */
 	    {
     		if // Adjusting saved mark index for buffer replacement. 
     		  (markedB) // if stream is marked. 
-    			markIndexI-= packIdx; // Subtracting present index or length ???
-
-	      ///String oldPacketString= // debug.
-    		///		PacketStuff.gettingPacketString( theDatagramPacket );
+    			markIndexI-= packIdx; // Subtracting present index or length ??
 
         try {
         	theSockPacket= receiveQueueOfSockPackets.take();
@@ -138,14 +127,6 @@ public class NetInputStream
 	      ddata= theDatagramPacket.getData();
 	      packIdx= theDatagramPacket.getOffset();
 	      packSize= theDatagramPacket.getLength();
-
-		    ///String newPacketString= // debug.
-		    ///	PacketStuff.gettingPacketString( theDatagramPacket );
-		    ///appLogger.debug( 
-		    ///"loadNextPacketV() \n"
-		    ///+"  old="+oldPacketString
-		    ///+"  new="+newPacketString
-		    ///);
 		    }
 
     public boolean markSupported()

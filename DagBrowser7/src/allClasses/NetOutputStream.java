@@ -11,7 +11,7 @@ public class NetOutputStream
 
   /* This class is a network output stream, at first generating UDP packets.
     
-    ??? When working, rename fields to things more meaningful.
+    ?? When working, rename fields to things more meaningful.
 
     ?? Eventually this will be used with DataOutputStream for writing
       particular types to the stream.
@@ -46,7 +46,7 @@ public class NetOutputStream
 			idx++;
 			
 			if (idx >= buffer.length) {
-			    flush(); ///???
+			    flush();
 			}
 	  }
 	  
