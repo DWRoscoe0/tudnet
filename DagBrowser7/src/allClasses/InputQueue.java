@@ -32,7 +32,13 @@ public class InputQueue<E> // For inter-thread communication.
     the element had been removed and processed,
     but was removed because its functionality was not being used.
     
-    This class used ConcurrentLinkedQueue until blocking methods became needed.
+    ?? A better name is wanted for this class. 
+    Calling this and Input is a little misleading because
+    the input to one thread must be an output from another thread.
+    I think it was called a Signaling queue, but that was longer.     
+    
+    ?? This class used ConcurrentLinkedQueue until 
+    blocking methods became needed.
 	  */
 	
 	{
@@ -45,7 +51,7 @@ public class InputQueue<E> // For inter-thread communication.
 		
 	  public boolean add( E anE )
 	    /* This method adds anE to the queue and returns immediately.
-	      It does not wait for it to be completely processed 
+	      It does not wait for anE to be completely processed 
 	      by the destination thread.
 	     	*/
 	    {

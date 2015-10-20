@@ -25,7 +25,7 @@ public class NetOutputStream
 		public static final int DEFAULT_BUFFER_SIZE = 1024;
 	  
 		byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
-		PacketQueue sendQueueOfSockPackets;
+		InputQueue<SockPacket> sendQueueOfSockPackets;
 		InetAddress iAdd = null;
     int port = 0;
   
@@ -33,7 +33,7 @@ public class NetOutputStream
 		DatagramPacket dpack = null;
     
 		NetOutputStream(
-				PacketQueue sendQueueOfSockPackets, InetAddress address, int portI
+				InputQueue<SockPacket> sendQueueOfSockPackets, InetAddress address, int portI
 				)
 			{
 				this.sendQueueOfSockPackets= sendQueueOfSockPackets;

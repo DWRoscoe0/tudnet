@@ -8,12 +8,14 @@ import java.net.InetSocketAddress;
 
 import allClasses.LockAndSignal.Input;
 
+//import static allClasses.Globals.*;  // appLogger;
+
 public class NetCaster 
-	
+
 	extends MutableList
 
 	// This class is the superclass of Unicaster and Multicaster.
-	
+
 	{
 		protected InetSocketAddress remoteInetSocketAddress;  // Address of peer.
 		public final InputQueue<SockPacket> // Send output.
@@ -42,11 +44,11 @@ public class NetCaster
 	  public NetCaster(  // Constructor. 
 	      DataTreeModel theDataTreeModel,
 	      InetSocketAddress remoteInetSocketAddress,
-	  		InputQueue<SockPacket> sendQueueOfSockPackets,
+	      InputQueue<SockPacket> sendQueueOfSockPackets,
 	      String namePrefixString
 	      )
 	    {
-	      super( // Constructing MutableList.  
+	      super( // Constructing MutableList superclass.
 		        theDataTreeModel,
 		        namePrefixString + 
     	          remoteInetSocketAddress.getAddress() +
@@ -62,6 +64,11 @@ public class NetCaster
     	  theNetInputStream= new NetInputStream(
   	    		receiveQueueOfSockPackets, 
   	    		remoteInetSocketAddress.getAddress(),
+            remoteInetSocketAddress.getPort()
+  	    		);
+    	  theNetOutputStream= new NetOutputStream(
+    	  		sendQueueOfSockPackets, 
+    	  		remoteInetSocketAddress.getAddress(),
             remoteInetSocketAddress.getPort()
   	    		);
 	      }
@@ -243,7 +250,7 @@ public class NetCaster
 
     // Send packet code.  This might be enhanced with streaming.
 
-      protected void sendingMessageV( String aString ) throws IOException
+      protected void OLDsendingMessageV( String aString ) throws IOException
         /* This method sends a packet containing aString to the peer.
           It does NOT use NetOutputStream.  It accesses packets directly.
           It prepends a packet ID number.
@@ -266,21 +273,19 @@ public class NetCaster
           packetsSentNamedInteger.addValueL( 1 );
           }
 
-      protected void NEWsendingMessageV( String aString ) throws IOException//??
+      protected void sendingMessageV( String aString ) throws IOException//??
         /* This method sends a packet containing aString to the peer.
           It uses NetOutputStream instead of accessing packets directly.
           It prepends a packet ID number.
           It does it using a NetOutputStream.
           */
         {
-      		//appLogger.debug( "sending: "+aString );
-      		
           String payloadString= ((packetIDI++) + ":" + aString) + ".";
-          //appLogger.info( "sendingMessageV(): " + payloadString );
+          //appLogger.debug( "sendingMessageV(): " + payloadString );
           byte[] buf = payloadString.getBytes();
           
           theNetOutputStream.write(buf); // Writing it to memory.
-          theNetOutputStream.write('.'); // Writing terminator.
+          //theNetOutputStream.write('.'); // Writing terminator.
           theNetOutputStream.flush(); // Sending it in packet.
 
           packetsSentNamedInteger.addValueL( 1 );

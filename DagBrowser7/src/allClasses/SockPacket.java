@@ -31,13 +31,9 @@ public class SockPacket
 	{
 		private DatagramPacket theDatagramPacket; // The packet to send/receive.
       // This stores remote IP and port.
-    //@SuppressWarnings("unused")
-    //private DatagramSocket theDatagramSocket; // Associated Socket.  ???
-      // This might store both local and remote IP and port.
-    //private long timeNsL; // The time this packet was sent or received.
 
     public SockPacket(  // Constructor.
-        /* ??? DatagramSocket inDatagramSocket, */ DatagramPacket inDatagramPacket
+        DatagramPacket inDatagramPacket
         )
       /* Constructs a SockPacket associated with 
         DatagramSocket inDatagramSocket and DatagramPacket inDatagramPacket.

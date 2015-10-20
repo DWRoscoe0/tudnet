@@ -16,7 +16,7 @@ import static allClasses.Globals.appLogger;  // For appLogger;
 /* This file is the root of this application.  
   If you want to understand the application then
   this is where you should start reading.  
-  This file contains 3 classes:
+  This file contains 4 classes:
  
   * Infogora: This is the class that contains the main(..) method
     which is the entry point of the application.
