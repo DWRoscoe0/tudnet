@@ -180,7 +180,7 @@ public class AppLog
         appendEntry( wholeString );  // Send to log. 
         }
 
-    public void appendEntry( String inString )
+    public synchronized void appendEntry( String inString )
       /* This appends to the log file a new log entry.
         It contains the app session,
         the entry counters, which is incremented, 

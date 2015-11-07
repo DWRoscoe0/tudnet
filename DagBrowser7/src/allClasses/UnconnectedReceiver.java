@@ -51,7 +51,7 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
     
 
     @Override
-    public void run() 
+    public void run()
       /* This method repeatedly waits for and receives 
         DatagramPackets and queues each of them 
         for consumption by another appropriate thread.
@@ -71,6 +71,10 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
                 	theDatagramPacket
                   );
                 receiverDatagramSocket.receive(theDatagramPacket);
+                appLogger.debug(
+                		" run() received: "
+                		+ PacketStuff.gettingPacketString(theDatagramPacket)
+                		);
                 Unicaster theUnicaster= // Testing for associated Unicaster.
                 		theUnicasterManager.tryGettingExistingUnicaster( 
                 				theSockPacket 

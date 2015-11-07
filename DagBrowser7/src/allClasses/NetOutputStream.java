@@ -11,60 +11,71 @@ public class NetOutputStream
 
   /* This class is a network output stream, at first generating UDP packets.
     
-    ?? When working, rename fields to things more meaningful.
-
     ?? Eventually this will be used with DataOutputStream for writing
-      particular types to the stream.
-    	?? Maybe give it ability to write packets and control packet boundaries.
-    		This is addition to flush() which forces an unconditional end of packet.
+    particular types to the stream, as follows:
+    * NetOutputStream extends OutputStream.
+    * NetDataOutputStream(NetOutputStream) extends 
+        DataOutputStream(OutputStream).
+		NetFilterOutputStream is probably not needed, but could be added?
 	  
 	  */
 
 	{
+	  // Injected dependency variables.
+		InputQueue<SockPacket> sendQueueOfSockPackets;
+		InetAddress theInetAddress = null;
+	  int thePortI = 0;
+		NamedInteger counterNamedInteger;
 
 		public static final int DEFAULT_BUFFER_SIZE = 1024;
 	  
-		byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
-		InputQueue<SockPacket> sendQueueOfSockPackets;
-		InetAddress iAdd = null;
-    int port = 0;
+		byte[] bufferBytes= new byte[DEFAULT_BUFFER_SIZE];
   
-		int idx = 0; // buffer index; points to next empty buffer byte
-		DatagramPacket dpack = null;
+		int bufferSizeI= 0; // 0 forces initial flush() to allocate bufferBytes.
+		int indexI = 0; // 0 prevents sending any packet during initial flush().
+		DatagramPacket theDatagramPacket = null;
     
-		NetOutputStream(
-				InputQueue<SockPacket> sendQueueOfSockPackets, InetAddress address, int portI
+		NetOutputStream(  // Constructor.
+				InputQueue<SockPacket> sendQueueOfSockPackets, 
+				InetAddress theInetAddress, 
+				int thePortI,
+				NamedInteger counterNamedInteger
 				)
 			{
 				this.sendQueueOfSockPackets= sendQueueOfSockPackets;
-				iAdd = address;
-			  port = portI;		
+				this.theInetAddress = theInetAddress;
+			  this.thePortI = thePortI;		
+				this.counterNamedInteger= counterNamedInteger;
         }
 		
-		public void write(int value) throws IOException {
-			buffer[idx] = (byte) (value & 0x0ff);
-			idx++;
-			
-			if (idx >= buffer.length) {
-			    flush();
-			}
-	  }
+		public void write(int value) throws IOException
+		  // This writes one byte to the stream.
+			{
+				if (indexI >= bufferSizeI) // Flushing if there is no room in buffer. 
+				  flush();
+				bufferBytes[indexI] = (byte) (value & 0x0ff); // Storing byte.
+				indexI++; // Advancing buffer index.
+				}
 	  
-    public void flush() throws IOException 
+    public void flush() throws IOException
+      /* This writes any bytes written to the buffer so far, if any,
+        and prepares another buffer to receive more bytes.
+        */
       {
-			  if (idx == 0) {  // no data in buffer
-			      return;
-			  }
-			  
-			  // send data
-			  dpack = new DatagramPacket(buffer, 0, idx, iAdd, port);
-        SockPacket aSockPacket= new SockPacket(dpack);
-        sendQueueOfSockPackets.add( // Queuing packet for sending.
-            aSockPacket
-            );
-
-			  // reset buffer index
-			  idx = 0;
-			    }
+			  if (indexI > 0) // Sending packet if any bytes in buffer.
+			  	{
+					  theDatagramPacket = new DatagramPacket(
+					  		bufferBytes, 0, indexI, theInetAddress, thePortI
+					  		);
+		        SockPacket aSockPacket= new SockPacket(theDatagramPacket);
+		        sendQueueOfSockPackets.add( // Queuing packet for sending.
+		            aSockPacket
+		            );
+		  			counterNamedInteger.addValueL( 1 ); // Counting received packet.
+			  		}
+    		bufferBytes = new byte[DEFAULT_BUFFER_SIZE]; // Allocating new buffer.
+    		bufferSizeI= bufferBytes.length; 
+			  indexI = 0; // Resetting buffer index.
+  	    }
 
 	}

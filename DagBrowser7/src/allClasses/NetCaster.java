@@ -1,9 +1,8 @@
 package allClasses;
 
-//import static allClasses.Globals.appLogger;
+import static allClasses.Globals.appLogger;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
 import java.net.InetSocketAddress;
 
 import allClasses.LockAndSignal.Input;
@@ -34,9 +33,7 @@ public class NetCaster
 
     int packetIDI; // Sequence number for sent packets.
     
-    protected PacketQueue receiveQueueOfSockPackets=
-      new PacketQueue( threadLockAndSignal );
-        // For SockPackets from receiver thread.
+    protected PacketQueue receiveQueueOfSockPackets; // Received SockPackets.
 
     NetOutputStream theNetOutputStream;
 		NetInputStream theNetInputStream;
@@ -61,16 +58,28 @@ public class NetCaster
 
         packetIDI= 0; // Setting starting packet sequence number.
 
+		    portNamedMutable= new NamedMutable( 
+			    theDataTreeModel, "Port", "" + remoteInetSocketAddress.getPort()
+			  	);
+		    packetsSentNamedInteger= new NamedInteger( 
+      		theDataTreeModel, "Packets-Sent", 0 
+      		);
+		    packetsReceivedNamedInteger= new NamedInteger( 
+      		theDataTreeModel, "Packets-Received", 0 
+      		);
+
+		    receiveQueueOfSockPackets= new PacketQueue(threadLockAndSignal);
+
     	  theNetInputStream= new NetInputStream(
   	    		receiveQueueOfSockPackets, 
-  	    		remoteInetSocketAddress.getAddress(),
-            remoteInetSocketAddress.getPort()
+            packetsReceivedNamedInteger 
   	    		);
     	  theNetOutputStream= new NetOutputStream(
     	  		sendQueueOfSockPackets, 
     	  		remoteInetSocketAddress.getAddress(),
-            remoteInetSocketAddress.getPort()
-  	    		);
+            remoteInetSocketAddress.getPort(),
+            packetsSentNamedInteger
+            );
 	      }
 
     protected void initializeV()
@@ -82,21 +91,10 @@ public class NetCaster
 		        "" + remoteInetSocketAddress.getAddress()
 		      	)
 					);
-		    
-		    addB( 	portNamedMutable= new NamedMutable( 
-			      		theDataTreeModel, "Port", "" + remoteInetSocketAddress.getPort()
-			      		)
-		    			);
-		
-		    addB( 	packetsSentNamedInteger= new NamedInteger( 
-			      		theDataTreeModel, "Packets-Sent", 0 
-			      		)
-		    			);
-		
-		    addB( 	packetsReceivedNamedInteger= new NamedInteger( 
-			      		theDataTreeModel, "Packets-Received", 0 
-			      		)
-		    			);
+
+		    addB( 	portNamedMutable );
+		    addB( 	packetsSentNamedInteger );
+		    addB( 	packetsReceivedNamedInteger );
 	    	}
     
 		InetSocketAddress getInetSocketAddress()
@@ -120,7 +118,9 @@ public class NetCaster
 	        if // Exiting if time before, or more likely after, time interval.
 	          ( remainingMsL == 0 )
 	          { theInput= Input.TIME; break process; }
-	    		if ( testingMessageB( ) ) // Exiting if a notification input is ready.
+	    		//if ( testingMessageB( ) ) // Exiting if a notification input is ready.
+	        if // Exiting if a notification input is ready.
+	          ( theNetInputStream.available() > 0 )
 		        { theInput= Input.NOTIFICATION; break process; }
     	  	theInput= // Doing general wait. 
     	  			threadLockAndSignal.doWaitWithTimeOutE( remainingMsL );
@@ -130,12 +130,10 @@ public class NetCaster
 	      }
 
     protected boolean testingMessageB( String aString ) throws IOException
-      /* This method tests whether the packet, if any,
-        at the head of the receiveQueueOfSockPackets,
-        contains aString.
-        It returns true if there is a packet and
-        it is aString, false otherwise.
-        The packet, if any, remains in the queue.
+      /* This method tests whether the next message String in 
+        the next received packet in the queue, if there is one,  is aString.
+        It returns true if so, false otherwise.
+        The message is not consumed, so can be read later.
         */
       { 
         boolean resultB= false;  // Assuming aString is not present.
@@ -145,133 +143,54 @@ public class NetCaster
           if ( packetString == null ) // Exiting if no packet or no string.
             break decodingPacket;  // Exiting with false.
           if   // Exiting if the desired String is not in packet String.
-            ( ! packetString.contains( aString ) )
+          	( ! packetString.equals( aString ) )
             break decodingPacket;  // Exiting with false.
           resultB= true;  // Changing result because Strings are equal.
           } // decodingPacket:
         return resultB;  // Returning the result.
         }
 
-    private boolean testingMessageB( ) throws IOException
-      /* This method tests whether a packet, if any,
-        at the head of the receiveQueueOfSockPackets, is available.
-        It returns true if there is a packet available, false otherwise.
-        */
-      { 
-        return ( 
-        		//receiveQueueOfSockPackets.peek() 
-        		getOrTestString( null, false )
-        		!= 
-        		null 
-        		);
-        }
-
     private String peekingMessageString( ) throws IOException
-      /* This method returns the String in the next received packet
-        in the queue, if there is one.  
-        If there's no packet then it returns null.
+      /* This method returns the next message String in 
+        the next received packet in the queue, if there is one.  
+        If there's no message then it returns null.
+        The message is not consumed, so can be read later.
         */
       { 
-	      return getOrTestString( null, false );
-	      }
+    		String inString= null;
+	  		if ( theNetInputStream.available() > 0) // Reading string if available.
+		  		{
+			  		theNetInputStream.mark(0); // Marking stream position.
+			  	  inString= readAString();
+		  	  	theNetInputStream.reset(); // Resetting so String is not consumed.
+			  		}
+	  	  return inString;
+	  		}
 
-    protected String getOrTestString( String desiredString, boolean consumeB) 
-    		throws IOException
-      /* This is a possibly temporary method,
-        through which all packet reading will pass
-        at least during the transition from packet io to stream io.
-
-        This method tries to get or test for desiredString in the input.
-        consumeB means consume any acceptable string, 
-        otherwise do a test only.
-        
-        If no bytes are available then it returns null.
-        Otherwise it reads an entire string, 
-        after blocking if necessary to read new packets.
-        If desiredString==null then it returns the read string.
-        If desiredString!=null and the read string contains desiredString
-        then it returns the read string, null otherwise. 
-        If consumedB is true and a a non-null string is being returned,
-        then the read string is consumed and can not be read
-        from the stream again.
-        */
-      {
-    	  String readString= "";
-	    	String returnString= null;
-        parsing: {
-  				theNetInputStream.mark(0); // Marking now  in case we reset() later.
-					if // Exiting if no bytes available. 
-					  ( 0 >= theNetInputStream.available() )
-						break parsing;
-  				while (true) { // Reading and accumulating all bytes in string.
-  					int byteI= theNetInputStream.read();
-  					readString+= (char)byteI;
-  					if ( '.' == byteI ) break; // Exiting if terminator seen.
-  				  }
-         	} // parsing: 
-        testing: {
-          if ( readString == "" ) // Exiting if no packet or no string.
-            break testing; // Exiting with null.
-          if ( desiredString == null ) // Exiting if any string is acceptable.
-	          { returnString= readString; // Using read string as result.
-	            break testing;  // Exiting with string.
-	            }
-          if   // Exiting if the desired String is the one read.
-            ( readString.contains( desiredString ) )
-	          { returnString= readString; // Using read string as result.
-		          break testing;  // Exiting with string.
-		          }
-          } // testing:
-        consuming: {
-          if ( ! consumeB ) // Exiting if consuming not requested.
-            {
-		  				theNetInputStream.reset(); // Backup stream to start.
-	          	break consuming; // Exiting 
-	          	}
-          if ( returnString == null) // Exiting if no string to consume. 
-          	break consuming;
-          packetsReceivedNamedInteger.addValueL( 1 );  // Counting the packet.
-          } // consuming:
-      	return returnString;
-      	}
-
-    protected boolean tryingToConsumeOneMessageB() throws IOException
-      /* This method consumes one message.
-        It returns true if a message was consumed,
-        false if there was none to consume.
-        */
-      {
-	      return ( 
-	      		getOrTestString( null, true)
-	      		!= 
-	      		null 
-	      		);
-	      }
-
-    // Send packet code.  This might be enhanced with streaming.
-
-      protected void OLDsendingMessageV( String aString ) throws IOException
-        /* This method sends a packet containing aString to the peer.
-          It does NOT use NetOutputStream.  It accesses packets directly.
-          It prepends a packet ID number.
-          */
-        {
-      	  String payloadString= ((packetIDI++) + ":" + aString + ".");
-          //appLogger.debug( "sendingMessageV(): " + payloadString );
-          byte[] buf = payloadString.getBytes();
-          DatagramPacket packet = new DatagramPacket(
-            buf, 
-            buf.length, 
-            remoteInetSocketAddress.getAddress(),
-            remoteInetSocketAddress.getPort()
-            );
-          SockPacket aSockPacket= new SockPacket(packet);
-          sendQueueOfSockPackets.add( // Queuing packet for sending.
-              aSockPacket
-              );
-
-          packetsSentNamedInteger.addValueL( 1 );
-          }
+		String readAString()
+  		throws IOException
+  		/* This method reads and returns one String ending in the first
+  		  delimiterChar='.' from theNetInputStream.  It blocks if needed.
+  		  The String returned includes the delimiter.
+  		 */
+			{
+			  final char delimiterChar= '.';
+				String readString= "";
+				while (true) { // Reading and accumulating all bytes in string.
+					if ( theNetInputStream.available() <= 0 ) // debug.
+						{
+							readString+="!NOT-AVAILABLE!";
+		          appLogger.error( "readAString(): returning " + readString );
+							break;
+	  					}
+					int byteI= theNetInputStream.read();
+					if ( delimiterChar == byteI ) break; // Exiting if terminator seen.
+					readString+= (char)byteI;
+					}
+				return readString;
+				}
+		
+    // Send packet code.
 
       protected void sendingMessageV( String aString ) throws IOException//??
         /* This method sends a packet containing aString to the peer.
@@ -280,15 +199,12 @@ public class NetCaster
           It does it using a NetOutputStream.
           */
         {
-          String payloadString= ((packetIDI++) + ":" + aString) + ".";
+          String payloadString= ((packetIDI++) + "." + aString) + ".";
           //appLogger.debug( "sendingMessageV(): " + payloadString );
           byte[] buf = payloadString.getBytes();
           
           theNetOutputStream.write(buf); // Writing it to memory.
-          //theNetOutputStream.write('.'); // Writing terminator.
           theNetOutputStream.flush(); // Sending it in packet.
-
-          packetsSentNamedInteger.addValueL( 1 );
           }
 
 		}

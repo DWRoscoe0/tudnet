@@ -1,60 +1,66 @@
 package allClasses;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.DatagramPacket;
-import java.net.InetAddress;
 //import static allClasses.Globals.appLogger;
 
 
 public class NetInputStream
+
+  extends InputStream
+
+  /* This class is a network input stream.
+    It provides methods from InputStream to do normal stream operations,
+    but it also provides additional methods for dealing with 
+    the UDP (Datagram) packets from which the stream data comes.
+    It gets the packets from a receiveQueueOfSockPackets.
+
+    The read methods in this class block if data is not available.
+    Time-outs are not supported by these read methods,
+    but time-outs at the packet level can be done in
+    the standard way with the thread's LockAndSignal instance,
+    which should be the same LockAndSignal as the one
+    in this classes receiveQueueOfSockPackets.
+    Use InputStream.available() as the input availability test.
+
+    This code uses IOException and InterruptedException, but
+    exactly how they interact has not been completely determined ??
+    
+    ?? Rename fields to things more meaningful.
+
+    ?? Eventually this will be used with DataInputStream for reading
+    particular types from the stream, as follows:
+    * NetInputStream extends InputStream.
+    * NetDataInputStream(NetInputStream) extends DataInputStream(InputStream).
+		NetFilterInputStream is probably not needed, but could be added?
+    
+    ?? Add close() which causes IOException which can signal termination.
+    */
+  
 	{
-
-	  /* This class is a network input stream.
-	    It provides methods from OutputStream to do normal stream operation,
-	    but it also provides additional methods for dealing with 
-	    the UDP (Datagram) packets from which the stream data comes.
-	    It gets the packets from a receiveQueueOfSockPackets.
-
-	    The read methods in this class block if data is not available.
-	    Time-outs are not supported by these read methods,
-	    but time-outs at the packet level can be done in
-	    the standard way with the thread's LockAndSignal instance,
-	    which should be the same LockAndSignal as the one
-	    in this classes receiveQueueOfSockPackets.
-	    Use InputStream.available() as the input availability test.
-
-      This code uses IOException and InterruptedException, but
-      exactly how has not been completely determined ??
-      
-	    ?? When working, rename fields to things more meaningful.
-
-      ?? Eventually this will be used with DataInputStream for reading
-        particular types from the stream.
-        
-	    . Maybe give it ability to read packets and detect packet boundaries.
-	    
-	    ?? Add close() which causes IOException which can signal termination.
-	    */
 
 	  // Constructor-injected instance variables.
 		PacketQueue receiveQueueOfSockPackets= null;
+		NamedInteger packetCounterNamedInteger;
 
 	  // Other instance variables.
 		SockPacket theSockPacket= null;
     DatagramPacket theDatagramPacket = null;
-    byte[] ddata = null;
-    int packSize = 0;
-    int packIdx = 0;
+    byte[] bufferBytes = null;
+    int packetSizeI = 0;
+    int packetIndexI = 0;
     boolean markedB= false;  
     int markIndexI= -1; 
   
 		public NetInputStream( 
 			PacketQueue receiveQueueOfSockPackets, 
-			InetAddress address, int portI  // Remove unneeded arguments??
+			NamedInteger packetCounterNamedInteger
 			)
 		{
 			this.receiveQueueOfSockPackets= receiveQueueOfSockPackets;
-	    }
+			this.packetCounterNamedInteger= packetCounterNamedInteger;
+			}
 
     public int available() throws IOException 
       /* This method tests whether there are any bytes available for reading.
@@ -71,7 +77,7 @@ public class NetInputStream
       {
     		int availableI;
     	  while (true) {
-      	  availableI= packSize - packIdx; // Calculating bytes in buffer.
+      	  availableI= packetSizeI - packetIndexI; // Calculating bytes in buffer.
 	    	  if ( availableI > 0) break; // Exiting if any bytes in buffer.
 	    	  if  // Exiting if no packet in queue to load.
 	    	    ( receiveQueueOfSockPackets.peek() == null ) 
@@ -87,16 +93,16 @@ public class NetInputStream
         */
       {
       	while  // Receiving and loading packets until bytes are in buffer.
-      		(packIdx == packSize)
+      		(packetIndexI == packetSizeI)
 	        loadNextPacketV();
-			  int value = ddata[packIdx] & 0xff;
-			  packIdx++;
+			  int value = bufferBytes[packetIndexI] & 0xff;
+			  packetIndexI++;
 			  return value;
 			  }
 
     public SockPacket getSockPacket() throws IOException
       /* Returns the current SockPacket associated with this stream.
-        Initially it return null.
+        Initially it returns null.
         After data has been read from the stream
         it returns a reference to the packet from which 
         the most recent data was gotten.
@@ -114,19 +120,21 @@ public class NetInputStream
 	    {
     		if // Adjusting saved mark index for buffer replacement. 
     		  (markedB) // if stream is marked. 
-    			markIndexI-= packIdx; // Subtracting present index or length ??
+    			markIndexI-= packetIndexI; // Subtracting present index or length ??
 
         try {
         	theSockPacket= receiveQueueOfSockPackets.take();
-	        } catch (InterruptedException e) {
+	        } catch (InterruptedException e) { // Converting interrupt to IO error 
 	        	throw new IOException(); 
 		      } 
 
+  			packetCounterNamedInteger.addValueL( 1 ); // Counting received packet.
+
 	      // Setting variables from the new packet.
 	  	  theDatagramPacket= theSockPacket.getDatagramPacket();
-	      ddata= theDatagramPacket.getData();
-	      packIdx= theDatagramPacket.getOffset();
-	      packSize= theDatagramPacket.getLength();
+	      bufferBytes= theDatagramPacket.getData();
+	      packetIndexI= theDatagramPacket.getOffset();
+	      packetSizeI= theDatagramPacket.getLength();
 		    }
 
     public boolean markSupported()
@@ -139,17 +147,17 @@ public class NetInputStream
     
     public void mark(int readlimit) 
     	{
-    		//appLogger.debug( "NetInputStream.mark(..), "+markIndexI+" "+packIdx);
-    		markIndexI= packIdx; // Recording present buffer byte index.
+    		//appLogger.debug( "NetInputStream.mark(..), "+markIndexI+" "+packetIndexI);
+    		markIndexI= packetIndexI; // Recording present buffer byte index.
     		markedB= true; // Record that stream is marked.
         }
 
     public void reset() throws IOException 
 	    {
-    		//appLogger.debug( "NetInputStream.reset(..), "+markIndexI+" "+packIdx);
+    		//appLogger.debug( "NetInputStream.reset(..), "+markIndexI+" "+packetIndexI);
 	    	if ( markedB ) // Un-marking if marked
 	    		{
-			      packIdx= markIndexI; // Restoring buffer byte index.
+			      packetIndexI= markIndexI; // Restoring buffer byte index.
 			    	markIndexI= -1; // Restoring undefined value.
 			    	markedB= false; // Ending marked state.
 		    		}

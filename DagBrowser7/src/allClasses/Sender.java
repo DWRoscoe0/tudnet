@@ -84,10 +84,9 @@ public class Sender // Uunicast and multicast sender thread.
         */
       {
         boolean packetsProcessedB= false;  // Assuming no packet to send.
-        SockPacket theSockPacket;
 
         while (true) {  // Processing all queued send packets.
-          theSockPacket= // Trying to get next packet from queue.
+          SockPacket theSockPacket= // Trying to get next packet from queue.
           		senderInputQueueOfSockPackets.poll();
           if (theSockPacket == null) break;  // Exiting if no more packets.
           try { // Send the gotten packet.
@@ -95,16 +94,18 @@ public class Sender // Uunicast and multicast sender thread.
             theDatagramSocket.send(   // Send packet.
             	theDatagramPacket
               );
+            //if // Logging packet but only if not with multicast address.
+            //  ( ! theDatagramPacket.getAddress().isMulticastAddress())
+	            appLogger.debug(
+	            		" sent: "
+	            		+ PacketStuff.gettingPacketString(theDatagramPacket)
+	            		);
             } catch (IOException e) { // Handle by dropping packet.
               appLogger.info(
                 "processingSockPacketsToSendB(),"
                 +"IOException."
                 );
             }
-          //appLogger.info(
-          //  "sent unconnected packet:\n  "
-          //  + theSockPacket.getSocketAddressesString()
-          //  );
 
           packetsProcessedB= true; // Recording that a packet was processed.
           }

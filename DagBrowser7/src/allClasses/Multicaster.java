@@ -1,6 +1,7 @@
 package allClasses;
 
 import java.io.IOException;
+import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -198,8 +199,12 @@ public class Multicaster
 	                try {
 	                  SockPacket receiveSockPacket=  // Construct SockPacket.
 	                  		PacketStuff.makeSockPacket( );
-	                  theMulticastSocket.receive( 
-	                  		receiveSockPacket.getDatagramPacket() 
+	                  DatagramPacket theDatagramPacket= 
+	                  		receiveSockPacket.getDatagramPacket(); 
+	                  theMulticastSocket.receive( theDatagramPacket );
+	                  appLogger.debug(
+	                  		" run() received: "
+	                  		+ PacketStuff.gettingPacketString(theDatagramPacket)
 	                  		);
 	                  receiverSignallingQueueOfSockPackets.add( // Queuing packet.
 	                  		receiveSockPacket
@@ -310,11 +315,14 @@ public class Multicaster
         it sends multicast response packets.
         */
       {
+    		long delayMsL= // Minimum time between multicasts. 
+    				// 3600000; // 1 hour for testing to disable multicasting.
+    				20000; // 20 seconds to make multicast happen more often.
+    		    // 40000; // 40 seconds for normal use.
     		LockAndSignal.Input theInput;  // Type of input that ends waits.
-      	long querySentMsL= System.currentTimeMillis(); // and in ms.
-        processorLoop: while (true) { // Processing packets until exit.
-        	{ // Processing packet or exiting.
-        		long delayMsL= 40000;
+      	long querySentMsL= System.currentTimeMillis();
+        processorLoop: while (true) { // Processing messages until exit.
+        	{ // Processing messages or exiting.
           	theInput=  // Awaiting next input within reply interval.
           		testWaitInIntervalE( querySentMsL, delayMsL );
 	          switch ( theInput ) {  // Handling the input type.
@@ -323,46 +331,41 @@ public class Multicaster
 	              break processorLoop;  // Exiting loop.
 	            case INTERRUPTION: // Handling a thread's interruption.
 	              break processorLoop;  // Exiting loop.
-	            case NOTIFICATION:  // Handling packet inputs.
-	          		if ( testingMessageB( "DISCOVERY" ) ) // Handling query, maybe.
-		        			{ sendingMessageV("ALIVE"); // Sending response.
-			              processingPossibleNewUnicasterV();
-			              } // Create and queue response.
-		        		else if ( testingMessageB( "ALIVE" ) ) // Handling response, maybe.
-			            processingPossibleNewUnicasterV();
-			          else
-				          {
-				            appLogger.warning(
-				            		"receivingPacketsV(): unexpected: "
-				            		+ PacketStuff.gettingPacketString( 
-				            				theNetInputStream.getSockPacket().getDatagramPacket()
-				            				//receivedSockPacket.getDatagramPacket() 
-				            				)
-				            		);
-			        		  tryingToConsumeOneMessageB();
-				            }
+	            case NOTIFICATION:  // Handling a message input.
+	            	processor: {
+	            		String inString= readAString(); // Reading message.
+		          		//if ( testingMessageB( "DISCOVERY" ) ) // Handling query, maybe.
+	            		if ( inString.equals( "DISCOVERY" ) ) // Handling query, maybe.
+			        			{ sendingMessageV("ALIVE"); // Sending response.
+				              processingPossibleNewUnicasterV();
+				              break processor;
+				              }
+			        		//if ( testingMessageB( "ALIVE" ) ) // Handling response, maybe.
+			        		if ( inString.equals( "ALIVE" ) ) // Handling response, maybe.
+				            { processingPossibleNewUnicasterV(); break processor; }
+		          		// Ignoring anything else.
+			            //appLogger.warning(
+			        		//		"receivingPacketsV(): unexpected: "
+			        		// //+ getAndConsumeOneMessageString()
+			        		//  + inString 
+			        		//+ " from "
+			        		//+ PacketStuff.gettingPacketAddressString( 
+			        		//		theNetInputStream.getSockPacket().getDatagramPacket()
+			        		//	  )
+			        		//);
+	            		}
 	            }
             } // processor: // Processing packets until exit.
         	} // processorLoop:  // Processing packet or exiting.
         }
 
     private void processingPossibleNewUnicasterV( ) throws IOException
-    {
-      SockPacket streamSockPacket= // Copying packet from queue.
-      		theNetInputStream.getSockPacket();
-    	processingPossibleNewUnicasterV(streamSockPacket);
-    	tryingToConsumeOneMessageB();
-      }
-
-	  protected void processingPossibleNewUnicasterV( SockPacket theSockPacket )
 	    {
+	      SockPacket theSockPacket= // Copying packet from queue.
+	      		theNetInputStream.getSockPacket();
 	      Unicaster theUnicaster= // Testing for associated Unicaster.
-	      		theUnicasterManager.tryGettingExistingUnicaster( 
-	      				theSockPacket 
-	      				);
-	      if ( theUnicaster != null )  // Ignoring if Unicaster exists already.
-	      	; // Ignoring.
-       	else // Associated Unicaster does not exist.
+	      		theUnicasterManager.tryGettingExistingUnicaster( theSockPacket );
+	      if ( theUnicaster == null )  // Processing if Unicaster does not exists.
 	       	{
        			//appLogger.debug(
 	       		//	"Multicaster.processingPossibleNewUnicasterV():\n  queuing: "
@@ -400,7 +403,7 @@ public class Multicaster
     private void multicastConnectionLoggerV( boolean activeB )
       /* This method logs when bidirectional multicast communication
         either begins or ends.  Activity ending is defined as
-        no received multicast packets for 40 seconds or more.
+        no received multicast packets for the multicast period.
        */
     	{
     	  if ( multicastActiveB != activeB ) {

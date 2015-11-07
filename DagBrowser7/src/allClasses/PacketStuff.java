@@ -26,19 +26,38 @@ public class PacketStuff
 		    If theDatagramPacket is null then null is returned.
 		    */
 		  {
-		    String packetString= null; // Setting default null value.
+		    String resultString= null; // Setting default null value.
 		    calculatingString: {
 		    	if ( theDatagramPacket == null) // Exiting if there is no packet.
 		    		break calculatingString;// Exiting to use default value.
-		    	packetString= // Calculating String from packet.
-		      		theDatagramPacket.getAddress()+":"+theDatagramPacket.getPort()
-  	          +";" + new String(
+		    	resultString= // Calculating String from packet.
+		    			gettingPacketAddressString(theDatagramPacket)
+  	          +";" 
+		      		+ new String(
 			          theDatagramPacket.getData()
 			          ,theDatagramPacket.getOffset()
 			          ,theDatagramPacket.getLength()
 			          );
 		      } // calculatingString: 
-		  	return packetString; // Returning present and final value.
+		  	return resultString; // Returning present and final value.
 		    }
+		 
+			public static String gettingPacketAddressString( 
+					DatagramPacket theDatagramPacket 
+					)
+			  /* This method returns a String representation of 
+			    theDatagramPacket IP and port.
+			    If theDatagramPacket is null then null is returned.
+			    */
+			  {
+			    String resultString= null; // Setting default null value.
+			    calculatingString: {
+			    	if ( theDatagramPacket == null) // Exiting if there is no packet.
+			    		break calculatingString;// Exiting to use default value.
+			    	resultString= // Calculating String from packet.
+			      		theDatagramPacket.getAddress()+":"+theDatagramPacket.getPort();
+			      } // calculatingString: 
+			  	return resultString; // Returning present and final value.
+			    }
 
 		}

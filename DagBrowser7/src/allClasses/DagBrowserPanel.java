@@ -200,6 +200,8 @@ public class DagBrowserPanel
         
           hTopJPanel= new JPanel();  // construct it.
           hTopJPanel.setLayout(new WrapLayout());  // set Layout manager.
+            // WrapLayout handles multiple rows better than FlowLayout.
+            // It has something to do with handling of PreferredSize.
           hTopJPanel.setAlignmentX(Component.LEFT_ALIGNMENT);  // set alignment.
           ((FlowLayout)hTopJPanel.getLayout()).setHgap(20); // spread components.
 

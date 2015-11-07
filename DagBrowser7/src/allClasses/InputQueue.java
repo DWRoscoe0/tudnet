@@ -33,11 +33,11 @@ public class InputQueue<E> // For inter-thread communication.
     but was removed because its functionality was not being used.
     
     ?? A better name is wanted for this class. 
-    Calling this and Input is a little misleading because
+    Calling this an InputQueue is a misleading or redundant because
     the input to one thread must be an output from another thread.
-    I think it was called a Signaling queue, but that was longer.     
-    
-    ?? This class used ConcurrentLinkedQueue until 
+    I think it was called a Signaling queue, but that was more typing.     
+
+    ?? This class extended ConcurrentLinkedQueue until 
     blocking methods became needed.
 	  */
 	
