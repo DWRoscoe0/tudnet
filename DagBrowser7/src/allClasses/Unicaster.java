@@ -76,8 +76,7 @@ public class Unicaster
         PeriodMillisL / 2;  
 
       // Injected dependency instance variables.
-    	@SuppressWarnings("unused") // ??
-    	private InputQueue<Unicaster> cmInputQueueOfUnicasters;
+    	//private InputQueue<Unicaster> cmInputQueueOfUnicasters; ??
       private final ConnectionManager theConnectionManager;
       private final Shutdowner theShutdowner;
 
@@ -92,11 +91,11 @@ public class Unicaster
 	        // how long to wait for a message acknowledgement before
 	        // re-sending a message.
 
-
 			public Unicaster(  // Constructor. 
+	    	LockAndSignal threadLockAndSignal,
+	      NetInputStream theNetInputStream,
+	      NetOutputStream theNetOutputStream,
         InetSocketAddress remoteInetSocketAddress,
-        PacketQueue sendQueueOfSockPackets,
-        InputQueue<Unicaster> cmInputQueueOfUnicasters,
         DataTreeModel theDataTreeModel,
         ConnectionManager theConnectionManager,
         Shutdowner theShutdowner
@@ -111,15 +110,17 @@ public class Unicaster
         Implement protocol with a state-machine.
         */
       {
-        super( 
+        super(
+        		threadLockAndSignal,
+	  	      theNetInputStream,
+	  	      theNetOutputStream,
   	        theDataTreeModel,
   	        remoteInetSocketAddress,
-		        sendQueueOfSockPackets,
         		"Unicaster-at-" 
         		);
 
         // Storing injected dependency constructor arguments.
-          this.cmInputQueueOfUnicasters= cmInputQueueOfUnicasters;
+          //this.cmInputQueueOfUnicasters= cmInputQueueOfUnicasters; ??
           this.theConnectionManager= theConnectionManager;
           this.theShutdowner= theShutdowner;
         
@@ -360,18 +361,19 @@ public class Unicaster
     // Receive packet code.  This might be enhanced with streaming.
 
     public void puttingReceivedPacketV( SockPacket theSockPacket )
-      /* This method is used by the UnicastReceiver threads
-        which is associated with this Unicaster thread
+      /* This method is used by UnicastReceiver threads.
+        The one associated with this Unicaster thread uses this method
         to add theSockPacket to this thread's receive queue.
        */
       {
-        receiveQueueOfSockPackets.add(theSockPacket);
+        //receiverToNetCasterPacketQueue.add(theSockPacket);
+    		theNetInputStream.getPacketQueue().add(theSockPacket);
         }
 
     private boolean tryingToCaptureTriggeredExitB( ) throws IOException
       /* This method tests whether exit has been triggered, meaning either:
         * The current thread's isInterrupted() is true, or
-        * The next packet, if any, at the head of the receiveQueueOfSockPackets,
+        * The next packet, if any, at the head of the receiverToNetCasterPacketQueue,
 		    	contains "SHUTTING-DOWN", indicating the remote node is shutting down.
 		    	If true then the packet is consumed and
 		    	the current thread's isInterrupted() status is set true.

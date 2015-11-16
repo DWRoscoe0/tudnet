@@ -49,6 +49,11 @@ public class InputQueue<E> // For inter-thread communication.
 	      this.destinationThreadLockAndSignal= destinationThreadLockAndSignal;
 	      }
 		
+	  public LockAndSignal getLockAndSignal()
+	    // Returns the ThreadLockAndSignal assiciated with this queue,
+	    // mainly for debugging.
+	    { return destinationThreadLockAndSignal; } 
+	  
 	  public boolean add( E anE )
 	    /* This method adds anE to the queue and returns immediately.
 	      It does not wait for anE to be completely processed 

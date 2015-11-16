@@ -29,19 +29,19 @@ public class Sender // Uunicast and multicast sender thread.
     // Injected dependency instance variables.  Define.
 	  private DatagramSocket theDatagramSocket;
 	  	// Unconnected socket through which packets are sent.
-		private PacketQueue senderInputQueueOfSockPackets;
+		private PacketQueue netcasterToSenderPacketQueue;
 		  // Queue from which this thread inputs packets to be sent.
 		private LockAndSignal senderLockAndSignal;  
 			// LockAndSignal for inputs to this thread.  It should be the same 
-		  // LockAndSignal instance in senderInputQueueOfSockPackets construction. 
+		  // LockAndSignal instance in netcasterToSenderPacketQueue construction. 
 		
     Sender( // Constructor. 
         DatagramSocket theDatagramSocket,
-        PacketQueue senderInputQueueOfSockPackets,
+        PacketQueue netcasterToSenderPacketQueue,
         LockAndSignal senderLockAndSignal
         )
       { 
-        this.senderInputQueueOfSockPackets= senderInputQueueOfSockPackets;
+        this.netcasterToSenderPacketQueue= netcasterToSenderPacketQueue;
         this.theDatagramSocket= theDatagramSocket;
         this.senderLockAndSignal=  senderLockAndSignal;
         }
@@ -87,19 +87,19 @@ public class Sender // Uunicast and multicast sender thread.
 
         while (true) {  // Processing all queued send packets.
           SockPacket theSockPacket= // Trying to get next packet from queue.
-          		senderInputQueueOfSockPackets.poll();
+          		netcasterToSenderPacketQueue.poll();
           if (theSockPacket == null) break;  // Exiting if no more packets.
           try { // Send the gotten packet.
           	DatagramPacket theDatagramPacket= theSockPacket.getDatagramPacket();
             theDatagramSocket.send(   // Send packet.
             	theDatagramPacket
               );
-            //if // Logging packet but only if not with multicast address.
-            //  ( ! theDatagramPacket.getAddress().isMulticastAddress())
-	            appLogger.debug(
-	            		" sent: "
-	            		+ PacketStuff.gettingPacketString(theDatagramPacket)
-	            		);
+          //if // Logging packet but only of a particular type.
+          // ( theDatagramPacket.getAddress().isMulticastAddress())
+	            //appLogger.debug(
+	            //	" sent: "
+	            //	+ PacketStuff.gettingPacketString(theDatagramPacket)
+	            //	);
             } catch (IOException e) { // Handle by dropping packet.
               appLogger.info(
                 "processingSockPacketsToSendB(),"

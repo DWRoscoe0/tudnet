@@ -22,7 +22,7 @@ public class NetOutputStream
 
 	{
 	  // Injected dependency variables.
-		InputQueue<SockPacket> sendQueueOfSockPackets;
+		PacketQueue netcasterToSenderPacketQueue;
 		InetAddress theInetAddress = null;
 	  int thePortI = 0;
 		NamedInteger counterNamedInteger;
@@ -36,18 +36,24 @@ public class NetOutputStream
 		DatagramPacket theDatagramPacket = null;
     
 		NetOutputStream(  // Constructor.
-				InputQueue<SockPacket> sendQueueOfSockPackets, 
+				PacketQueue netcasterToSenderPacketQueue, 
 				InetAddress theInetAddress, 
 				int thePortI,
 				NamedInteger counterNamedInteger
 				)
 			{
-				this.sendQueueOfSockPackets= sendQueueOfSockPackets;
+				this.netcasterToSenderPacketQueue= netcasterToSenderPacketQueue;
 				this.theInetAddress = theInetAddress;
 			  this.thePortI = thePortI;		
 				this.counterNamedInteger= counterNamedInteger;
         }
-		
+
+		public PacketQueue getPacketQueue () 
+		  { return netcasterToSenderPacketQueue; }
+
+		public NamedInteger getCounterNamedInteger() 
+		  { return counterNamedInteger; }
+
 		public void write(int value) throws IOException
 		  // This writes one byte to the stream.
 			{
@@ -68,7 +74,7 @@ public class NetOutputStream
 					  		bufferBytes, 0, indexI, theInetAddress, thePortI
 					  		);
 		        SockPacket aSockPacket= new SockPacket(theDatagramPacket);
-		        sendQueueOfSockPackets.add( // Queuing packet for sending.
+		        netcasterToSenderPacketQueue.add( // Queuing packet for sending.
 		            aSockPacket
 		            );
 		  			counterNamedInteger.addValueL( 1 ); // Counting received packet.

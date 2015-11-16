@@ -49,14 +49,16 @@ class ConnectionsFactory {
   // This is the factory for classes with connection lifetimes.
 
   // Injected unconditional singleton storage.
-  private DataTreeModel theDataTreeModel;
-
+	private AppGUIFactory theAppGUIFactory;
+	private DataTreeModel theDataTreeModel;
+  
   public ConnectionsFactory(   // Factory constructor. 
-  		DataTreeModel theDataTreeModel 
+  		AppGUIFactory theAppGUIFactory, DataTreeModel theDataTreeModel 
   		)
   	// This constructor defines the unconditional singletons.
     {
-      this.theDataTreeModel= theDataTreeModel; // Save injected singleton.
+  	  this.theAppGUIFactory= theAppGUIFactory;
+      this.theDataTreeModel= theDataTreeModel;
       }
 
   // Unconditional singleton getters.
@@ -66,40 +68,86 @@ class ConnectionsFactory {
   // None.
 
   // Maker methods.  These construct using new operator each time called.
-  public Multicaster makeMulticaster(
+  public PacketQueue makePacketQueue(LockAndSignal threadLockAndSignal)
+  	{ return new PacketQueue(threadLockAndSignal); }
+	public LockAndSignal makeLockAndSignal()
+		{ return 	theAppGUIFactory.makeLockAndSignal(); }
+  public NetInputStream makeNetInputStream(
+  		PacketQueue receiverToNetCasterPacketQueue
+  		)
+	  {						
+			NamedInteger packetsReceivedNamedInteger=  
+					new NamedInteger( theDataTreeModel, "Packets-Received", 0 );
+	  	return new NetInputStream(
+	  	  receiverToNetCasterPacketQueue, packetsReceivedNamedInteger 
+	  		);
+	  	}
+  public NetOutputStream makeNetOutputStream(
+  		PacketQueue netcasterToSenderPacketQueue, 
+  		InetAddress theInetAddress, int portI
+      )
+	  {
+		  NamedInteger packetsSentNamedInteger= 
+		    new NamedInteger( 
+		  		theDataTreeModel, "Packets-Sent", 0 
+		  		);
+		  return new NetOutputStream(
+		  	netcasterToSenderPacketQueue, 
+		  	theInetAddress, 
+		  	portI, 
+		  	packetsSentNamedInteger
+	      );
+	    }
+	public Multicaster makeMulticaster(
   		MulticastSocket theMulticastSocket,
-      InputQueue<SockPacket> sendQueueOfSockPackets,
-      InputQueue<SockPacket> receiveQueueOfSockPackets,
+  		PacketQueue netcasterToSenderPacketQueue,
+  		PacketQueue multicasterToConnectionManagerPacketQueue,
       DatagramSocket unconnectedDatagramSocket,
 	  	UnicasterManager theUnicasterManager
       )
     throws IOException
     { 
+		  LockAndSignal netcasterLockAndSignal= makeLockAndSignal();  
+		  PacketQueue receiverToNetCasterPacketQueue=
+		  		new PacketQueue(netcasterLockAndSignal);
+			InetAddress theInetAddress= InetAddress.getByName("239.255.0.0"); 
+			int thePortI= PortManager.getDiscoveryPortI();
   	  return new Multicaster(
-  	    theDataTreeModel,
-	  		new InetSocketAddress(
-	  				InetAddress.getByName("239.255.0.0"),
-	  				PortManager.getDiscoveryPortI()
+  	  	netcasterLockAndSignal,
+	  		makeNetInputStream( receiverToNetCasterPacketQueue ),
+	  		makeNetOutputStream( 
+	  				netcasterToSenderPacketQueue, theInetAddress, thePortI 
 	  				),
+  	    theDataTreeModel,
+	  		new InetSocketAddress( theInetAddress, thePortI ),
 	  		theMulticastSocket,
-        sendQueueOfSockPackets,
-        receiveQueueOfSockPackets,
+        multicasterToConnectionManagerPacketQueue,
 		  	theUnicasterManager
         ); 
       }
   public Unicaster makeUnicaster(
-      InetSocketAddress peerInetSocketAddress,
-      PacketQueue sendPacketQueue,
+  		ConnectionsFactory theConnectionsFactory,
+  		InetSocketAddress peerInetSocketAddress,
+      PacketQueue netcasterToSenderPacketQueue,
       InputQueue<Unicaster> cmInputQueueOfUnicasters,
       DatagramSocket unconnectedDatagramSocket,
       ConnectionManager theConnectionManager,
       Shutdowner theShutdowner
       )
     {
-      return new Unicaster(
-        peerInetSocketAddress,
-        sendPacketQueue,
-        cmInputQueueOfUnicasters,
+		  LockAndSignal netcasterLockAndSignal= makeLockAndSignal();
+  		PacketQueue receiverToNetCasterPacketQueue= 
+  				makePacketQueue(netcasterLockAndSignal);
+  		return new Unicaster(
+  			netcasterLockAndSignal,
+	  		makeNetInputStream( receiverToNetCasterPacketQueue ),
+	  		makeNetOutputStream( 
+	  				netcasterToSenderPacketQueue,  
+    	  		peerInetSocketAddress.getAddress(),
+    	  		peerInetSocketAddress.getPort()
+	  				),
+  	  	peerInetSocketAddress,
+        //cmInputQueueOfUnicasters, ??
         theDataTreeModel,
         theConnectionManager,
         theShutdowner
@@ -107,7 +155,7 @@ class ConnectionsFactory {
       }
   public NetCasterValue makeUnicasterValue(
       InetSocketAddress peerInetSocketAddress,
-      PacketQueue sendPacketQueue,
+      PacketQueue netcasterToSenderPacketQueue,
       InputQueue<Unicaster> cmInputQueueOfUnicasters,
       DatagramSocket unconnectedDatagramSocket,
       ConnectionManager theConnectionManager,
@@ -115,17 +163,15 @@ class ConnectionsFactory {
       )
     {
       Unicaster theUnicaster= makeUnicaster(
+  	    this, // Unicaster gets to know its factory.
         peerInetSocketAddress,
-        sendPacketQueue,
+        netcasterToSenderPacketQueue,
         cmInputQueueOfUnicasters,
         unconnectedDatagramSocket,
         theConnectionManager,
         theShutdowner
         );
-      return new NetCasterValue(
-        peerInetSocketAddress,
-        theUnicaster
-        );
+      return new NetCasterValue( peerInetSocketAddress, theUnicaster );
       }
 
   } // class ConnectionsFactory.
@@ -153,12 +199,9 @@ class AppGUIFactory {  // For GUI class lifetimes.
       )
   	// This constructor builds the unconditional singletons.
     {
-      DataRoot theDataRoot= 
-      		new DataRoot( );
-      MetaFileManager theMetaFileManager= 
-      		new MetaFileManager( theDataRoot );
-      MetaRoot theMetaRoot= 
-      		new MetaRoot( theDataRoot, theMetaFileManager );
+      DataRoot theDataRoot= new DataRoot( );
+      MetaFileManager theMetaFileManager= new MetaFileManager( theDataRoot );
+      MetaRoot theMetaRoot= new MetaRoot( theDataRoot, theMetaFileManager );
       MetaFileManager.Finisher theMetaFileManagerFinisher= 
 	      	new MetaFileManager.Finisher(
 	          theMetaFileManager,
@@ -172,9 +215,8 @@ class AppGUIFactory {  // For GUI class lifetimes.
 		        theShutdowner
 		        );
       ConnectionsFactory theConnectionsFactory= 
-      		new ConnectionsFactory( theDataTreeModel );
-      UnicasterManager theUnicasterManager= 
-      		new UnicasterManager( );
+      		new ConnectionsFactory( this, theDataTreeModel );
+      UnicasterManager theUnicasterManager= new UnicasterManager( );
       ConnectionManager theConnectionManager= 
           new ConnectionManager( 
             theConnectionsFactory,
@@ -204,8 +246,7 @@ class AppGUIFactory {  // For GUI class lifetimes.
 		        theDataRoot,
 		        theMetaRoot
 		        );
-      theGUILockAndSignal= 
-      		new LockAndSignal(false);
+      theGUILockAndSignal= makeLockAndSignal();
       theGUIDefiner=  
       		new AppGUIManager.GUIDefiner( 
       		  theGUILockAndSignal, 
@@ -233,7 +274,9 @@ class AppGUIFactory {  // For GUI class lifetimes.
   // Conditional singleton getter methods and storage.
   // None.
 
-  // Maker methods.  These construct using new operator each time called.
+  // Maker methods which construct something with new operator each time called.
+	public LockAndSignal makeLockAndSignal()
+		{ return 	new LockAndSignal(false); }
   public EpiThread makeEpiThread( Runnable aRunnable, String nameString )
 	  { return new EpiThread( aRunnable, nameString ); }
   public JFrame makeJFrame( String titleString ) 
@@ -264,8 +307,7 @@ class AppFactory {  // For App class lifetimes.
   	// This constructor builds the unconditional singletons.
     {
       theShutdowner= new Shutdowner();
-      theAppInstanceManager=
-        new AppInstanceManager(argStrings,theShutdowner);
+      theAppInstanceManager= new AppInstanceManager(argStrings,theShutdowner);
       theApp= new App(
         theShutdowner,
         theAppInstanceManager,
@@ -364,7 +406,7 @@ class Infogora  // The root of this app.
 	      
 	      // At this point, this thread should be the only non-daemon running.
 	      // When it ends, it should trigger a JVM shutdown,
-	      // unless it was triggered already, and terminate the app.
+	      // unless a JVM shutdown was triggered already, and terminate the app.
 	      // Unfortunately the app doesn't terminate, so we call exit(0).
 
 	      appLogger.info("Infogora.main() calling exit(0).");

@@ -104,10 +104,10 @@ public class ConnectionManager
 	
 	    // Inputs to the Sender thread.
       private LockAndSignal senderLockAndSignal;
-	    private PacketQueue senderInputQueueOfSockPackets;
+	    private PacketQueue netcasterToSenderPacketQueue;
 
 	    // Inputs to the connection manager thread.
-	    private LockAndSignal cmLockAndSignal;  // LockAndSignal for this thread.
+	    private LockAndSignal cmThreadLockAndSignal;  // LockAndSignal for this thread.
 	      /* This single object is used to synchronize communication between 
 	        the ConnectionManager and all threads providing data to it.
 					It should be the same LockAndSignal instance used in the construction
@@ -117,12 +117,12 @@ public class ConnectionManager
 	        The old way of synchronizing inputs used 
 	        an Objects for a lock and a separate boolean signal.
 	        */
-	    private PacketQueue multicastSignallingQueueOfSockPackets; 
-	      // Queue receiving multicast packets received.
-	    private PacketQueue cmUnicastInputQueueOfSockPackets;
-	    	// Queue receiving unconnected unicast packets received.
+	    private PacketQueue multicasterToConnectionManagerPacketQueue; 
+	      // Queue of multicast packets received from Multicaster.
+	    private PacketQueue unconnectedReceiverToConnectionManagerPacketQueue;
+	    	// Queue of unconnected unicast packets received from Unicasters.
 	    private InputQueue<Unicaster> cmInputQueueOfUnicasters;
-	      // Queue receiving unicasters beginning or end.
+	      // Queue receiving Unicaster objects beginning or end.
 
 
     public ConnectionManager(   // Constructor.
@@ -186,16 +186,16 @@ public class ConnectionManager
 		    // Setting all input queues empty.
 
 	    	senderLockAndSignal= new LockAndSignal(false);  // Sender signaler.
-	    	senderInputQueueOfSockPackets=
+	    	netcasterToSenderPacketQueue=
 		      new PacketQueue(senderLockAndSignal);
 	
-	      cmLockAndSignal= new LockAndSignal(false);  // CM signaler.
-		    multicastSignallingQueueOfSockPackets=
-		      new PacketQueue(cmLockAndSignal);
-		    cmUnicastInputQueueOfSockPackets=
-		      new PacketQueue(cmLockAndSignal);
+	      cmThreadLockAndSignal= new LockAndSignal(false);  // CM thread signaler.
+		    multicasterToConnectionManagerPacketQueue=
+		      new PacketQueue(cmThreadLockAndSignal);
+		    unconnectedReceiverToConnectionManagerPacketQueue=
+		      new PacketQueue(cmThreadLockAndSignal);
 		    cmInputQueueOfUnicasters=
-		      new InputQueue<Unicaster>(cmLockAndSignal);
+		      new InputQueue<Unicaster>(cmThreadLockAndSignal);
     		}
 
     public String getValueString( )
@@ -255,7 +255,7 @@ public class ConnectionManager
 	            and maybe a few more inputs that arrived after that.  
 	            */
 
-	          cmLockAndSignal.doWaitE();  // Waiting for next signal of inputs.
+	          cmThreadLockAndSignal.doWaitE();  // Waiting for next signal of inputs.
 		        } // while (true)
 	    		} // toReturn.
         return;
@@ -283,7 +283,7 @@ public class ConnectionManager
 	      theSender=  // Constructing thread.
 	          new Sender( 
 	            unconnectedDatagramSocket,
-	            senderInputQueueOfSockPackets,
+	            netcasterToSenderPacketQueue,
 	            senderLockAndSignal
 	            );
         theSenderEpiThread= new EpiThread( 
@@ -299,7 +299,7 @@ public class ConnectionManager
 	      theUnconnectedReceiver=  // Constructing thread.
 	          new UnconnectedReceiver( 
 	            unconnectedDatagramSocket,
-	            cmUnicastInputQueueOfSockPackets,
+	            unconnectedReceiverToConnectionManagerPacketQueue,
 	            theUnicasterManager
 	            );
         theUnconnectedReceiverEpiThread= new EpiThread( 
@@ -336,11 +336,11 @@ public class ConnectionManager
           //new Multicaster(  // Construct Multicaster...
         	theMulticaster= theConnectionsFactory.makeMulticaster(
      	  		theMulticastSocket
-     	  		,senderInputQueueOfSockPackets // ...with Sender queue,...
-            ,multicastSignallingQueueOfSockPackets // ...receive queue,...
+     	  		,netcasterToSenderPacketQueue // ...with Sender queue,...
+            ,multicasterToConnectionManagerPacketQueue // ...receive queue,...
             ,unconnectedDatagramSocket // ...and socket to use.
     		  	,theUnicasterManager
-            );  // Multicaster will start its own thread.
+            );
 					addB( theMulticaster );  // Add to DataNode List.
           multicasterEpiThread= new EpiThread( 
             theMulticaster,
@@ -374,7 +374,7 @@ public class ConnectionManager
 
         while (true) {  // Process all received packets.
           theSockPacket= // Try getting next packet from queue.
-            multicastSignallingQueueOfSockPackets.poll();
+            multicasterToConnectionManagerPacketQueue.poll();
           if (theSockPacket == null) break;  // Exit if no more packets.
       		createAndPassToUnicasterV( theSockPacket );
           packetsProcessedB= true;
@@ -422,7 +422,7 @@ public class ConnectionManager
 
         while (true) {  // Process all received unconnected packets.
           theSockPacket= // Try getting next packet from queue.
-            cmUnicastInputQueueOfSockPackets.poll();
+            unconnectedReceiverToConnectionManagerPacketQueue.poll();
 
           if (theSockPacket == null) break;  // Exit if no more packets.
           
@@ -511,7 +511,7 @@ public class ConnectionManager
             final NetCasterValue newNetCasterValue=  // Building new peer. 
               theConnectionsFactory.makeUnicasterValue(
                 peerInetSocketAddress,
-                senderInputQueueOfSockPackets,
+                netcasterToSenderPacketQueue,
                 cmInputQueueOfUnicasters,
                 unconnectedDatagramSocket,
                 this, // theConnectionManager

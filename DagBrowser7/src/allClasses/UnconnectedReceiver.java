@@ -30,21 +30,18 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
     
     private DatagramSocket receiverDatagramSocket;
       // Unconnected socket which is source of packets.
-    private PacketQueue cmUnicastInputQueueOfSockPackets;
+    private PacketQueue unconnectedReceiverToConnectionManagerPacketQueue;
       // Queue which is destination of received packets.
     private UnicasterManager theUnicasterManager;
 
     UnconnectedReceiver( // Constructor. 
         DatagramSocket receiverDatagramSocket,
-        PacketQueue cmUnicastInputQueueOfSockPackets,
+        PacketQueue unconnectedReceiverToConnectionManagerPacketQueue,
         UnicasterManager theUnicasterManager
         )
-      /* Constructs an instance of this class from:
-          * receiverDatagramSocket: the socket receiving packets.
-          * cmUnicastInputQueueOfSockPackets: the output queue.
-        */
       { 
-        this.cmUnicastInputQueueOfSockPackets= cmUnicastInputQueueOfSockPackets;
+        this.unconnectedReceiverToConnectionManagerPacketQueue= 
+        		unconnectedReceiverToConnectionManagerPacketQueue;
         this.receiverDatagramSocket=receiverDatagramSocket;
         this.theUnicasterManager= theUnicasterManager;
         }
@@ -71,10 +68,10 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
                 	theDatagramPacket
                   );
                 receiverDatagramSocket.receive(theDatagramPacket);
-                appLogger.debug(
-                		" run() received: "
-                		+ PacketStuff.gettingPacketString(theDatagramPacket)
-                		);
+                //appLogger.debug(
+                //		" run() received: "
+                //	+ PacketStuff.gettingPacketString(theDatagramPacket)
+                //	);
                 Unicaster theUnicaster= // Testing for associated Unicaster.
                 		theUnicasterManager.tryGettingExistingUnicaster( 
                 				theSockPacket 
@@ -84,7 +81,7 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
           	      		theSockPacket
           	      		);
                 	else
-                	cmUnicastInputQueueOfSockPackets.add(theSockPacket); // To CM.
+                	unconnectedReceiverToConnectionManagerPacketQueue.add(theSockPacket); // To CM.
                 }
               catch( SocketException soe ) {
                 appLogger.info("run(): " + soe );

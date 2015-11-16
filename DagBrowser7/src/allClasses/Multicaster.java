@@ -2,7 +2,6 @@ package allClasses;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
@@ -17,14 +16,20 @@ import static allClasses.Globals.*;  // appLogger;
   It does these things by sending and receiving query and response packets.
   It receives query packets and generates responses.
   It informs the ConnectionManager of new peers that it discovers.
+
+  After construction and initialization, 
+  data for this thread passes through the following:
+  * receiverToNetCasterPacketQueue: packets from the MulticastReceiver.
+  * multicasterToConnectionManagerPacketQueue: packets to ConnectionManager.
+  * netcasterToSenderPacketQueue: packets to the network Sender.
   
-  This was based on Multicaster.java at 
+  This was originally based on Multicaster.java at 
     http://homepages.inf.ed.ac.uk/rmcnally/peerDiscover/Multicaster.java
   but it has changed a lot since then.
   This originally worked using either multicast or broadcast.
   Now it does only multicast.
 
-  Changes to make.  No rush until # nodes on a LAN becomes large.
+  ?? Changes to make.  No rush until # nodes on a LAN becomes large.
 
 	  ?? RoundRobin beaconing and sharing the role of
 	  responder to new arrivees.
@@ -71,8 +76,8 @@ public class Multicaster
 	      * It's a way to specify a source/local port number.
 	    */ 
 	  private InetSocketAddress theInetSocketAddress;
-	  public final InputQueue<SockPacket> // Receive output.
-	    cmUnicastInputQueueOfSockPackets;  // SockPackets for ConnectionManager to note.
+	  private final PacketQueue // Receive output.
+	    multicasterToConnectionManagerPacketQueue;  // SockPackets for ConnectionManager to note.
   	private UnicasterManager theUnicasterManager;
 
 	  public InetAddress groupInetAddress; /* Multicast group IPAddress.   
@@ -102,11 +107,13 @@ public class Multicaster
 	    */
 	
 	  public Multicaster (  // Constructor.
+	      LockAndSignal netcasterLockAndSignal,
+	      NetInputStream theNetInputStream,
+	  		NetOutputStream theNetOutputStream,
 	  		DataTreeModel theDataTreeModel,
 	  		InetSocketAddress theInetSocketAddress,
 	  		MulticastSocket theMulticastSocket,
-	  		InputQueue<SockPacket> sendQueueOfSockPackets,
-	      InputQueue<SockPacket> cmUnicastInputQueueOfSockPackets,
+	      PacketQueue multicasterToConnectionManagerPacketQueue,
 		  	UnicasterManager theUnicasterManager
 	      )
 	    throws IOException
@@ -114,27 +121,21 @@ public class Multicaster
 	      UDP multicast communications duties.  
 	      Those duties are to help peers discover each other by
 	      sending and receiving multicast packets on the LAN.
-	      The parameters are:
-	        * theDataTreeModel: TreeModel to which this object will be added.
-	        * sendQueueOfSockPackets: thread-safe queue to receive 
-	          multicast packets to be sent.  This how transmitting happens.
-	        * cmUnicastInputQueueOfSockPackets: thread-safe queue to receive 
-	          multicast packets received.
-	        * unconnectedDatagramSocket: DatagramSocket to use
-	          for SockPadkets, that are queued for sending.
 	      */
 	    {
 	      super(  // Superclass NetCaster List constructor with some dependencies. 
-		        theDataTreeModel,
+	          netcasterLockAndSignal,
+	  	      theNetInputStream,
+	  	      theNetOutputStream,
+	  	  		theDataTreeModel,
 		        theInetSocketAddress,
-		        sendQueueOfSockPackets,
 		        "Multicaster-at-"
 	      		);
 
 	  		// Store remaining injected dependencies.
 	  		this.theMulticastSocket= theMulticastSocket;
 	  	  this.theInetSocketAddress= theInetSocketAddress;
-	      this.cmUnicastInputQueueOfSockPackets= cmUnicastInputQueueOfSockPackets;
+	      this.multicasterToConnectionManagerPacketQueue= multicasterToConnectionManagerPacketQueue;
 		  	this.theUnicasterManager= theUnicasterManager;
 	      }
 
@@ -149,39 +150,37 @@ public class Multicaster
       implements Runnable
 
       /* This simple thread receives and queues 
-        multicast DatagramPackets from an MulticastSocket.
+        multicast DatagramPackets from a MulticastSocket.
         The packets are queued to a PacketQueue for consumption by 
         the main Multicaster thread.
+			
+			  After construction and initialization, 
+			  data for this thread passes through the following:
+        * theMulticastSocket: DatagramPackets from the network.
+        * receiverToNetCasterPacketQueue: packets to the Multicaster. 
+        
         This thread is kept simple because the only known way to guarantee
-        fast termination of the a multicast receive(..) operation
+        fast termination of a multicast receive(..) operation
         is for another thread to close its MulticastSocket.
         Doing this will also terminate this thread.
         */
       {
 
         // Injected dependency instance variables.
-        
-      	@SuppressWarnings("unused")
-    		private DatagramSocket receiverDatagramSocket;
-          // Unconnected socket which is source of packets.
-
-        private PacketQueue receiverSignallingQueueOfSockPackets;
+        private PacketQueue receiverToNetCasterPacketQueue;
           // Queue which is destination of received packets.
 
 
         MulticastReceiver( // Constructor. 
-            DatagramSocket receiverDatagramSocket,
-            PacketQueue receiverSignallingQueueOfSockPackets
+            PacketQueue receiverToNetCasterPacketQueue
             )
           /* Constructs an instance of this class from:
               * receiverDatagramSocket: the socket receiving packets.
-              * receiverSignallingQueueOfSockPackets: the output queue.
+              * receiverToNetCasterPacketQueue: the output queue.
             */
           { 
-            this.receiverSignallingQueueOfSockPackets=
-              receiverSignallingQueueOfSockPackets;
-            this.receiverDatagramSocket=
-              receiverDatagramSocket;
+            this.receiverToNetCasterPacketQueue=
+              receiverToNetCasterPacketQueue;
             }
         
 
@@ -202,11 +201,7 @@ public class Multicaster
 	                  DatagramPacket theDatagramPacket= 
 	                  		receiveSockPacket.getDatagramPacket(); 
 	                  theMulticastSocket.receive( theDatagramPacket );
-	                  appLogger.debug(
-	                  		" run() received: "
-	                  		+ PacketStuff.gettingPacketString(theDatagramPacket)
-	                  		);
-	                  receiverSignallingQueueOfSockPackets.add( // Queuing packet.
+	                  receiverToNetCasterPacketQueue.add( // Queuing packet.
 	                  		receiveSockPacket
 	                  		);
 	                	}
@@ -241,7 +236,6 @@ public class Multicaster
         {
 	      	try { // Operations that might produce an IOException.
           	initializeV();  // Do non-injection initialization.
-            //initializeChildrenV();
   	      	startingMultcastReceiverThreadV();
 
             while (true) // Repeating until thread termination is requested.
@@ -285,8 +279,7 @@ public class Multicaster
       {
 	      theMulticastReceiver=  // Constructing thread.
 	          new MulticastReceiver( 
-	          	theMulticastSocket,
-	            receiveQueueOfSockPackets
+	            theNetInputStream.getPacketQueue()
 	            );
         theMulticastReceiverEpiThread= new EpiThread( 
           theMulticastReceiver,
@@ -317,7 +310,7 @@ public class Multicaster
       {
     		long delayMsL= // Minimum time between multicasts. 
     				// 3600000; // 1 hour for testing to disable multicasting.
-    				20000; // 20 seconds to make multicast happen more often.
+    				10000; // 10 seconds to make multicast happen more often.
     		    // 40000; // 40 seconds for normal use.
     		LockAndSignal.Input theInput;  // Type of input that ends waits.
       	long querySentMsL= System.currentTimeMillis();
@@ -371,7 +364,7 @@ public class Multicaster
 	       		//	"Multicaster.processingPossibleNewUnicasterV():\n  queuing: "
 		       	//	+PacketStuff.gettingPacketString(theSockPacket.getDatagramPacket())
 	       		//);
-          	cmUnicastInputQueueOfSockPackets.add( // Passing to CM.
+          	multicasterToConnectionManagerPacketQueue.add( // Passing to CM.
 			    		theSockPacket
 			        );
        	    }

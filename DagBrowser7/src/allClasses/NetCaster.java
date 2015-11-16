@@ -17,34 +17,29 @@ public class NetCaster
 
 	{
 		protected InetSocketAddress remoteInetSocketAddress;  // Address of peer.
-		public final InputQueue<SockPacket> // Send output.
-	    sendQueueOfSockPackets;  // SockPackets to be sent.
-    
-    // Detail-containing child sub-objects.
-	    protected NamedMutable addressNamedMutable;
-	    protected NamedMutable portNamedMutable;
-	    protected NamedInteger packetsSentNamedInteger;
-	    protected NamedInteger packetsReceivedNamedInteger;
-		  
-    LockAndSignal threadLockAndSignal=  // LockAndSignal for this thread.
+    private LockAndSignal netcasterLockAndSignal;
 			// LockAndSignal for inputs to this thread.  It is used in
       // the construction of the following queue. 
-        new LockAndSignal(false); 
+    
+    // Some detail-containing child sub-objects.  Others are in streams.
+	    protected NamedMutable addressNamedMutable;
+	    protected NamedMutable portNamedMutable;
+
+    protected NetOutputStream theNetOutputStream;
+		protected NetInputStream theNetInputStream;
 
     int packetIDI; // Sequence number for sent packets.
-    
-    protected PacketQueue receiveQueueOfSockPackets; // Received SockPackets.
-
-    NetOutputStream theNetOutputStream;
-		NetInputStream theNetInputStream;
 
 	  public NetCaster(  // Constructor. 
+	      LockAndSignal netcasterLockAndSignal,
+	      NetInputStream theNetInputStream,
+	      NetOutputStream theNetOutputStream,
 	      DataTreeModel theDataTreeModel,
 	      InetSocketAddress remoteInetSocketAddress,
-	      InputQueue<SockPacket> sendQueueOfSockPackets,
 	      String namePrefixString
 	      )
 	    {
+	  		// Superclass injections.
 	      super( // Constructing MutableList superclass.
 		        theDataTreeModel,
 		        namePrefixString + 
@@ -52,34 +47,17 @@ public class NetCaster
     	          ":" + remoteInetSocketAddress.getPort(),
 	          new DataNode[]{} // Initially empty of children.
 	      		);
-	
+
+	      // This class injections.
+	      this.netcasterLockAndSignal= netcasterLockAndSignal;
 	      this.remoteInetSocketAddress= remoteInetSocketAddress;
-	      this.sendQueueOfSockPackets= sendQueueOfSockPackets;
+	      this.theNetInputStream= theNetInputStream;
+	      this.theNetOutputStream= theNetOutputStream;
 
         packetIDI= 0; // Setting starting packet sequence number.
-
 		    portNamedMutable= new NamedMutable( 
 			    theDataTreeModel, "Port", "" + remoteInetSocketAddress.getPort()
 			  	);
-		    packetsSentNamedInteger= new NamedInteger( 
-      		theDataTreeModel, "Packets-Sent", 0 
-      		);
-		    packetsReceivedNamedInteger= new NamedInteger( 
-      		theDataTreeModel, "Packets-Received", 0 
-      		);
-
-		    receiveQueueOfSockPackets= new PacketQueue(threadLockAndSignal);
-
-    	  theNetInputStream= new NetInputStream(
-  	    		receiveQueueOfSockPackets, 
-            packetsReceivedNamedInteger 
-  	    		);
-    	  theNetOutputStream= new NetOutputStream(
-    	  		sendQueueOfSockPackets, 
-    	  		remoteInetSocketAddress.getAddress(),
-            remoteInetSocketAddress.getPort(),
-            packetsSentNamedInteger
-            );
 	      }
 
     protected void initializeV()
@@ -91,10 +69,9 @@ public class NetCaster
 		        "" + remoteInetSocketAddress.getAddress()
 		      	)
 					);
-
 		    addB( 	portNamedMutable );
-		    addB( 	packetsSentNamedInteger );
-		    addB( 	packetsReceivedNamedInteger );
+		    addB( 	theNetOutputStream.getCounterNamedInteger() );
+		    addB( 	theNetInputStream.getCounterNamedInteger());
 	    	}
     
 		InetSocketAddress getInetSocketAddress()
@@ -114,7 +91,7 @@ public class NetCaster
 
     		process: {
 	        final long remainingMsL= 
-	        		threadLockAndSignal.intervalRemainingMsL( startMsL, lengthMsL ); 
+	          netcasterLockAndSignal.intervalRemainingMsL( startMsL, lengthMsL ); 
 	        if // Exiting if time before, or more likely after, time interval.
 	          ( remainingMsL == 0 )
 	          { theInput= Input.TIME; break process; }
@@ -123,7 +100,7 @@ public class NetCaster
 	          ( theNetInputStream.available() > 0 )
 		        { theInput= Input.NOTIFICATION; break process; }
     	  	theInput= // Doing general wait. 
-    	  			threadLockAndSignal.doWaitWithTimeOutE( remainingMsL );
+    	  	  netcasterLockAndSignal.doWaitWithTimeOutE( remainingMsL );
     			}
 
     	  return theInput;
