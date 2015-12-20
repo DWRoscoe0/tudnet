@@ -3,9 +3,12 @@ package allClasses;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
+import java.net.SocketAddress;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 
 import static allClasses.Globals.*;  // appLogger;
 
@@ -15,21 +18,22 @@ public class ConnectionManager
 
   implements Runnable
 
-  /* This class makes and maintains simple UDP unicast connections
+  /* This class manages connections, both Unicast and Multicast,
     with other Infogora peer nodes.
+    It makes use of the class UnicasterManager as a helper.
 
-    It extends MutableList.  This is a list of connected peers.
+    It extends MutableList to manage the list of connected peers.
     Because this list is accessed by a TreeModel on the EDT,
-    this List is asynchronously updated when changes are needed
+    this List is synchronously updated when changes are needed
     using java.awt.EventQueue.invokeLater(..) method which runs on 
     the Event Dispatch Thread (EDT).
 
-    For maintaining the set of peers that can be updated immediately
-    by this ConnectionManager Thread, a Map is used.
-    It is also used to quickly ?
-
-    This class makes use of other threads to manage the individual connections.
-    It receives inputs from those connection via thread-safe queues.
+    ?? This class makes use of other threads 
+    to manage the individual connections.
+    It receives inputs from those threads via thread-safe queues.
+    Some work is needed to better manage these threads,
+    because DatagramSockets must be closed to terminate these threads,
+    and recovery from an IOException on these sockets is troublesome.
 
     Originally the plan was to use a separate 
     connected DatagramSocket for each peer of a node.
@@ -43,7 +47,7 @@ public class ConnectionManager
     
     So, only 2 Datagram sockets are used: 
     * one socket for multicast receiving and 
-    * another socket for every thing else.
+    * another socket for unicast receiving and all sending.
     Their ports must be different/unique.
 
     There are several types of thread classes defined in this file
@@ -53,9 +57,10 @@ public class ConnectionManager
     * UnconnectedReceiver: receives packets for ConnectionManager.
     * Unicaster: manages one connection.  
       ? Maybe rename to ConnectionManager?
+    * MulticastReceiver: used to receive multicast packets for Multicaster.
     * Multicaster: sends and receives multicast packets
       used for discovering other peers on the LAN.
-    * MulticastReceiver: used to receive multicast packets for Multicaster.
+    * Sender: does the actual calls to send(..) to send all packets.
 
     An IOException can be caused by external events,
     such as a link going down, the computer going to sleep, etc.
@@ -64,6 +69,8 @@ public class ConnectionManager
     In the case of the MulticastReceiver and UnconnectedReceiver,
     new DatagramSockets are passed to the constructors because
     closing the socket is the only way to terminate receive() operations. 
+    There should be a better way of doing this so 
+    the threads don't need to be completely reconstructed ??
 
     ?? Presently the unconnected unicast receiver and multicast receiver
     threads can not recover from an IOException.
@@ -84,64 +91,65 @@ public class ConnectionManager
   
     // Injected instance variables, all private.
 	    
-	    private ConnectionsFactory theConnectionsFactory;
+			private AppGUIFactory theAppGUIFactory;
+	    private ConnectionFactory theConnectionFactory;
+	    
 	  	private UnicasterManager theUnicasterManager;
-      private Shutdowner theShutdowner;
+
+	    private LockAndSignal cmThreadLockAndSignal;  // LockAndSignal for this thread.
+      /* This single object is used to synchronize communication between 
+        the ConnectionManager and all threads providing data to it.
+				It should be the same LockAndSignal instance used in the construction
+				of the input queues that follow.
+        It man also be used separately to signal asynchronous inputs
+        such as the socket open/closed state.
+        The old way of synchronizing inputs used 
+        an Objects for a lock and a separate boolean signal.
+        */
+	    private PacketQueue multicasterToConnectionManagerPacketQueue; 
+      // Queue of multicast packets received from Multicaster.
+
+	    // Inputs to the connection manager thread.
+	    private PacketQueue unconnectedReceiverToConnectionManagerPacketQueue;
+	    	// Queue of unconnected unicast packets received from Unicasters.
 
     // Other instance variables, all private.
 		  private MulticastSocket theMulticastSocket; // For multicast receiver. 
-  		private Multicaster theMulticaster;
 	    private EpiThread multicasterEpiThread ; // Its thread.
+  		private InetAddress multicastInetAddress;
 		
 	    public DatagramSocket unconnectedDatagramSocket; // For UDP io.
 	      // It is used for receiving unicast packets and sending both types.
 
-	    private UnconnectedReceiver theUnconnectedReceiver; // Receiver and
 	    private EpiThread theUnconnectedReceiverEpiThread ; // its thread.
 
-	    private Sender theSender; // Sender and
 	    private EpiThread theSenderEpiThread ; // its thread.
 	
-	    // Inputs to the Sender thread.
-      private LockAndSignal senderLockAndSignal;
-	    private PacketQueue netcasterToSenderPacketQueue;
-
-	    // Inputs to the connection manager thread.
-	    private LockAndSignal cmThreadLockAndSignal;  // LockAndSignal for this thread.
-	      /* This single object is used to synchronize communication between 
-	        the ConnectionManager and all threads providing data to it.
-					It should be the same LockAndSignal instance used in the construction
-					of the input queues that follow.
-	        It man also be used separately to signal asynchronous inputs
-	        such as the socket open/closed state.
-	        The old way of synchronizing inputs used 
-	        an Objects for a lock and a separate boolean signal.
-	        */
-	    private PacketQueue multicasterToConnectionManagerPacketQueue; 
-	      // Queue of multicast packets received from Multicaster.
-	    private PacketQueue unconnectedReceiverToConnectionManagerPacketQueue;
-	    	// Queue of unconnected unicast packets received from Unicasters.
-	    private InputQueue<Unicaster> cmInputQueueOfUnicasters;
-	      // Queue receiving Unicaster objects beginning or end.
 
 
     public ConnectionManager(   // Constructor.
-        ConnectionsFactory theConnectionsFactory,
-        DataTreeModel theDataTreeModel,
-        UnicasterManager theUnicasterManager,
-        Shutdowner theShutdowner
-        )
+    		AppGUIFactory theAppGUIFactory
+        ,ConnectionFactory theConnectionFactory
+        ,DataTreeModel theDataTreeModel
+    		,LockAndSignal cmThreadLockAndSignal
+    		,PacketQueue multicasterToConnectionManagerPacketQueue
+    		,PacketQueue unconnectedReceiverToConnectionManagerPacketQueue
+    		)
       {
         super(  // Constructing base class.
           theDataTreeModel, // For receiving tree change notifications.
-          "Connections", // DataNode (not thread) name.
-          new DataNode[]{} // Initially empty List of Peers.
+          "Connection-Manager", // DataNode (not thread) name.
+          emptyListOfDataNodes()
           );
 
         // Storing other dependencies injected into this class.
-        this.theConnectionsFactory= theConnectionsFactory;
-        this.theUnicasterManager= theUnicasterManager;
-        this.theShutdowner= theShutdowner;
+  	    this.theAppGUIFactory= theAppGUIFactory;
+        this.theConnectionFactory= theConnectionFactory;
+  	    this.cmThreadLockAndSignal= cmThreadLockAndSignal;
+  	    this.multicasterToConnectionManagerPacketQueue=
+  	    		multicasterToConnectionManagerPacketQueue;
+  	    this.unconnectedReceiverToConnectionManagerPacketQueue=
+  	    		unconnectedReceiverToConnectionManagerPacketQueue;
         }
 
 
@@ -151,76 +159,29 @@ public class ConnectionManager
         by calling settingThreadsAndDoingWorkV().
         This is inside of a try-catch block in a loop
         to recover and retry after SocketException-s.
-        The name of the thread should be Connections??
-        */
-      { // Connections.
-    		initilizeV();  // Do non-injection initialization.
-
-        while   // Repeating until termination is requested.
-          ( !Thread.currentThread().isInterrupted() )
-          {
-            try { // Creating and using unconnected DatagramSocket.
-              unconnectedDatagramSocket= // Construct socket for UDP io.
-                new DatagramSocket(null);
-              unconnectedDatagramSocket.setReuseAddress(true);
-              unconnectedDatagramSocket.bind(  // Bind socket to...
-                new InetSocketAddress(  // ...new INetSocketAddress...
-                  PortManager.getLocalPortI()  // ...bound to app's local port.
-                  )  // Note, the IP is not defined.
-                );
-              settingThreadsAndDoingWorkV(); 
-              }
-            catch ( SocketException e ) { // Handling SocketException.
-              // Doing nothing now because we might retry.
-              appLogger.error("Connections.run(): SocketException:"+e);
-              }
-            finally { // Closing socket if it exists.
-              if ( unconnectedDatagramSocket != null )
-                unconnectedDatagramSocket.close();
-              }
-            }
-        } // Connections.
-
-    private void initilizeV()
-      {
-		    // Setting all input queues empty.
-
-	    	senderLockAndSignal= new LockAndSignal(false);  // Sender signaler.
-	    	netcasterToSenderPacketQueue=
-		      new PacketQueue(senderLockAndSignal);
-	
-	      cmThreadLockAndSignal= new LockAndSignal(false);  // CM thread signaler.
-		    multicasterToConnectionManagerPacketQueue=
-		      new PacketQueue(cmThreadLockAndSignal);
-		    unconnectedReceiverToConnectionManagerPacketQueue=
-		      new PacketQueue(cmThreadLockAndSignal);
-		    cmInputQueueOfUnicasters=
-		      new InputQueue<Unicaster>(cmThreadLockAndSignal);
-    		}
-
-    public String getValueString( )
-      {
-    	  return Integer.toString(getChildCount( ));
-        }
-
-    private void settingThreadsAndDoingWorkV()
-      throws SocketException
-      /* In this method, the unconnectedDatagramSocket 
-        is assumed to be initialized.
-        After doing more initializing,
-        mainly creating and starting some threads,
-        it processes various inputs and pending events until termination.
-        Then it finalizes by terminating those same threads and returns.
-        A return might also result from the throwing of a SocketException.
+        Because DatagramSockets can't be reused after IOExceptions,
+        all the threads that use it are recreated if that occurs.
         */
       {
-        startingAllThreads();
+    		initializeV();  // Do non-injection initialization.
 
         processingInputsAndExecutingEventsV(); // Until thread termination...
           // ...is requested.
 
         stoppingAllThreadsV();
         }
+
+    private void initializeV()
+    	// This method does non-injection initialization.
+      {
+		    theUnicasterManager= theAppGUIFactory.getUnicasterManager();
+		    addB( theUnicasterManager ); // Adding to our list.
+				try { 
+					  multicastInetAddress= InetAddress.getByName("239.255.0.0"); }
+				  catch ( UnknownHostException e ) { 
+          	Globals.logAndRethrowAsRuntimeExceptionV( "run()", e );
+				  }
+    		}
 
     private void processingInputsAndExecutingEventsV()
       /* This method contains the main processing loop which
@@ -242,171 +203,100 @@ public class ConnectionManager
 				and UnconnectedReceiver threads.
         */
       {
-    	  toReturn: {
-	    		while (true) { // Repeating until thread termination requested.
-	      		if // Exiting loop if  thread termination is requested.
-	      		  ( Thread.currentThread().isInterrupted() ) break toReturn;
-		      		
-	          processingUnconnectedSockPacketsB();
-	          processingMulticasterSockPacketsB();
+    		while (true) { // Repeating until thread termination requested.
+      		if // Exiting loop if  thread termination is requested.
+      		  ( Thread.currentThread().isInterrupted() ) 
+      			break;
+      		
+      		managingDatagramSocketAndDependentThreadsV( );
+      		managingMulticastSocketAndDependentThreadsV( );
+      		
+          processingUnconnectedSockPacketsB();
+          processingMulticasterSockPacketsB();
 
-	          /* At this point, all inputs that arrived before 
-	            the last notification signal should have been processed, 
-	            and maybe a few more inputs that arrived after that.  
-	            */
+          /* At this point, at least the inputs that arrived before 
+            the last notification signal should have been processed. 
+            */
 
-	          cmThreadLockAndSignal.doWaitE();  // Waiting for next signal of inputs.
-		        } // while (true)
-	    		} // toReturn.
+          cmThreadLockAndSignal.doWaitE(); // Waiting for signal of k inputs.
+	        } // while (true)
         return;
         }
 
-    private void startingAllThreads()
-      {
-    	  startingSenderThreadV();
-        startingMulticasterThreadV();
-        startingUnicastReceiverThreadV();
-        }
-
     private void stoppingAllThreadsV()
+      // Possibly use a different stop order??
       {
         theUnicasterManager.stoppingPeerThreadsV();
 
-        stoppingUnicastReceiverThreadV(); // reverse??
-        stoppingMulticasterThreadV(); // reverse??
+        stoppingUnicastReceiverThreadV();
+        stoppingMulticasterThreadV(); 
     	  stoppingSenderThreadV();
         }
 
+	  private void managingDatagramSocketAndDependentThreadsV( )
+      /* This method creates the DatagramSocket and 
+        the threads which depend on it
+        if the socket has not been opened yet.
+        It does this again if the socket was open but has been closed.  
+       */
+	    { 
+    	  if // Preparing socket and dependencies if socket not working.
+    	    ( EpiDatagramSocket.isNullOrClosedB( unconnectedDatagramSocket ) )
+	    	  preparingAll: { // Preparing socket and dependencies.
+        	  stoppingSenderThreadV();
+            stoppingUnicastReceiverThreadV();
+    	    	preparingSocketLoop: while (true) {
+              if ( Thread.currentThread().isInterrupted() )
+              	break preparingAll;
+    	  	  	prepareDatagramSocketV();
+    	  	  	if ( ! EpiDatagramSocket.isNullOrClosedB( 
+    	  	  			unconnectedDatagramSocket 
+    	  	  			) )
+    	  	  		break preparingSocketLoop;
+    	  	  	} // preparingSocketLoop:
+	      	  startingSenderThreadV();
+	          startingUnicastReceiverThreadV();
+	    	  	} // preparingAll: 
+	    	}
+    
+	  private void prepareDatagramSocketV()
+	    // Makes one attempt to create the unconnectedDatagramSocket.
+		  {
+		    try { // Creating a new unconnected DatagramSocket and using it.
+		      unconnectedDatagramSocket= // Construct socket for UDP io.
+		      	theConnectionFactory.makeDatagramSocket((SocketAddress)null);
+		      unconnectedDatagramSocket.setReuseAddress(true);
+		      unconnectedDatagramSocket.bind( // Binding socket to...
+		    		theConnectionFactory.makeInetSocketAddress(
+		          PortManager.getLocalPortI()  // ...app's local port.
+		          ) // Note, the IP is not defined.
+		        );
+		      }
+		    catch ( SocketException e ) { // Handling SocketException.
+		      appLogger.error("unconnectedDatagramSocket:"+e);
+		      if ( unconnectedDatagramSocket != null )
+		        unconnectedDatagramSocket.close();
+		      EpiThread.interruptableSleepB(1000); // Don't hog CPU in error loop.
+		      }
+		    finally {
+		      }
+		  	}
+
     private void startingSenderThreadV()
-      // Needs work??
-      {
-	      theSender=  // Constructing thread.
-	          new Sender( 
-	            unconnectedDatagramSocket,
-	            netcasterToSenderPacketQueue,
-	            senderLockAndSignal
-	            );
-        theSenderEpiThread= new EpiThread( 
-        	theSender,
-          "Sender"
-          );
+      { 
+    		theSenderEpiThread= theAppGUIFactory.makeSenderEpiThread( 
+    				unconnectedDatagramSocket 
+            );
         theSenderEpiThread.startV();  // Starting thread.
 	      }
 
     private void startingUnicastReceiverThreadV()
-      // Needs work??
       {
-	      theUnconnectedReceiver=  // Constructing thread.
-	          new UnconnectedReceiver( 
-	            unconnectedDatagramSocket,
-	            unconnectedReceiverToConnectionManagerPacketQueue,
-	            theUnicasterManager
-	            );
-        theUnconnectedReceiverEpiThread= new EpiThread( 
-          theUnconnectedReceiver,
-          "UcRcvr"
-          );
+    		theUnconnectedReceiverEpiThread= 
+    				theAppGUIFactory.makeUnconnectedReceiverEpiThread( 
+    						unconnectedDatagramSocket 
+    						);
         theUnconnectedReceiverEpiThread.startV();  // Starting thread.
-	      }
-
-    private void stoppingUnicastReceiverThreadV()
-	    {
-	      theUnconnectedReceiverEpiThread.stopV();  // Requesting termination of
-			    // theUnconnectedReceiver thread.
-			  unconnectedDatagramSocket.close(); // Causing immediate unblock of
-			    // unconnectedDatagramSocket.receive() in that thread.
-			  theUnconnectedReceiverEpiThread.joinV();  // Waiting for termination of
-	        // theUnconnectedReceiver thread.
-	      }
-
-    private void stoppingSenderThreadV()
-	    {
-	      theSenderEpiThread.stopV(); // Requesting termination of Sender thread.
-			  // Note, DatagramSocket should already be closed.
-	      theSenderEpiThread.joinV(); // Waiting for termination of Sender thread.
-	      }
-
-    private void startingMulticasterThreadV()
-      {
-        try { // PeerDiscoery
-          theMulticastSocket = new MulticastSocket(  // Create MulticastSocket...
-			      PortManager.getDiscoveryPortI()  // ...bound to Discovery port.
-			      );
-          // Need a better way to resupply theMulticastSocket on error ??
-          //new Multicaster(  // Construct Multicaster...
-        	theMulticaster= theConnectionsFactory.makeMulticaster(
-     	  		theMulticastSocket
-     	  		,netcasterToSenderPacketQueue // ...with Sender queue,...
-            ,multicasterToConnectionManagerPacketQueue // ...receive queue,...
-            ,unconnectedDatagramSocket // ...and socket to use.
-    		  	,theUnicasterManager
-            );
-					addB( theMulticaster );  // Add to DataNode List.
-          multicasterEpiThread= new EpiThread( 
-            theMulticaster,
-            "Multicaster" //+peerInetSocketAddress
-            );
-          multicasterEpiThread.startV();
-          } catch (IOException e) {
-            appLogger.error("startingMulticasterThreadV():"+e);
-          }
-        }
-
-    private void stoppingMulticasterThreadV()
-	    {
-    		multicasterEpiThread.stopV();  // Requesting termination of thread.
-	      theMulticastSocket.close(); // Causing immediate unblock of
-			    // DatagramSocket.receive() in the thread.
-	      multicasterEpiThread.joinV();  // Waiting for termination of thread.
-	      }
-
-    private boolean processingMulticasterSockPacketsB() 
-      /* This method processes packets received by 
-        the Multicaster Thread and forwarded here,
-        by adding the nodes that sent them to the known connections.
-        It handles each differently depending on whether it is
-        a query packet or a response.
-        It returns true if any packets were processed, false otherwise.
-        */
-      {
-        boolean packetsProcessedB= false;
-        SockPacket theSockPacket;
-
-        while (true) {  // Process all received packets.
-          theSockPacket= // Try getting next packet from queue.
-            multicasterToConnectionManagerPacketQueue.poll();
-          if (theSockPacket == null) break;  // Exit if no more packets.
-      		createAndPassToUnicasterV( theSockPacket );
-          packetsProcessedB= true;
-          }
-          
-        return packetsProcessedB;
-        }
-
-    public synchronized void addingV( Unicaster thisUnicaster ) 
-      /* This method's job is to add the thisUnicaster to
-	      the ConnectionManager's inherited MutableList.  
-	      It should already be in the Map.
-        This method is called when thisUnicaster is starting.
-        */
-	    {
-	    	if  // Adding to DataNode List if it's not there.
-	      	( ! addB( thisUnicaster ) )
-	      	appLogger.error("CM:startingUnicasterV(): Already added.");
-	      // There is no need to add to Map.  It is there already.
-	      }
-
-    public synchronized void removingV( Unicaster thisUnicaster ) 
-      /* This method's job is to remove the thisUnicaster from
-	      the inherited MutableList and the Map.
-        It is called when thisUnicaster is terminating.
-        */
-	    {
-	    	if  // Removing from DataNode List if it's there.
-	      	( ! removeB( thisUnicaster ) )
-	      	appLogger.error("CM:stoppingUnicasterV(): removeB(..) failed");
-
-	    	theUnicasterManager.removeV(thisUnicaster); // Move to Unicaster??
 	      }
 
     private boolean processingUnconnectedSockPacketsB()
@@ -438,12 +328,118 @@ public class ConnectionManager
         return packetsProcessedB;
         }
 
+    private void stoppingUnicastReceiverThreadV()
+	    {
+    		EpiDatagramSocket.closeIfNotNullV(  // Causing unblock and termination.
+    				unconnectedDatagramSocket
+    				);
+    		EpiThread.stopAndJoinIfNotNullV(theUnconnectedReceiverEpiThread);
+	      }
+
+    private void stoppingSenderThreadV()
+	    {
+	  		EpiDatagramSocket.closeIfNotNullV(  // Causing unblock and termination.
+	  				unconnectedDatagramSocket
+	  				);
+    		EpiThread.stopAndJoinIfNotNullV(theSenderEpiThread);
+		  	}
+
+		private void managingMulticastSocketAndDependentThreadsV( )
+      /* This method creates the MulticastSocket and 
+        the thread which depends on it
+        if the socket has not been opened yet.
+        It does this again if the socket was open but has been closed.  
+        */
+	    { 
+    	  if // Preparing socket and dependencies if socket not working.
+    	    ( EpiDatagramSocket.isNullOrClosedB( theMulticastSocket ) )
+	    	  preparingAll: { // Preparing socket and dependencies. 
+            stoppingMulticasterThreadV();
+    	    	preparingSocketLoop: while (true) {
+              if ( Thread.currentThread().isInterrupted() )
+              	break preparingAll;
+    	  	  	prepareMulcicastSocketV();
+    	  	  	if ( ! EpiDatagramSocket.isNullOrClosedB( theMulticastSocket ) )
+    	  	  		break preparingSocketLoop;
+    	  	  	} // preparingSocketLoop:
+            startingMulticasterThreadV();
+	    	  	} // preparingAll: 
+	    	}
+
+	  private void prepareMulcicastSocketV()
+    // Makes one attempt to create theMulticastSocket.
+	  {
+	    try { // Creating a new unconnected DatagramSocket and using it.
+	    	theMulticastSocket= theConnectionFactory.makeMulticastSocket(
+		      PortManager.getDiscoveryPortI()  // ...bound to Discovery port.
+		      );
+	      }
+	    catch ( IOException e ) { // Handling SocketException.
+	      appLogger.error("theMulticastSocket:"+e);
+	      if ( theMulticastSocket != null )
+	      	theMulticastSocket.close();
+	      EpiThread.interruptableSleepB(1000); // Don't hog CPU in error loop.
+	      }
+	    finally {
+	      }
+	  	}
+
+    private void startingMulticasterThreadV()
+      {
+    		Multicaster theMulticaster= theConnectionFactory.makeMulticaster(
+		      theMulticastSocket
+		      ,multicasterToConnectionManagerPacketQueue // ...receive queue,...
+		      ,multicastInetAddress
+		      );
+    		addB( theMulticaster );  // Add to DataNode List.
+        multicasterEpiThread= AppGUIFactory.makeEpiThread( 
+            theMulticaster,
+            "Multicaster"
+            );
+        multicasterEpiThread.startV();
+        }
+
+    private boolean processingMulticasterSockPacketsB() 
+      /* This method processes packets received by 
+        the Multicaster Thread and forwarded here,
+        by adding the nodes that sent them to the known connections.
+        It handles each differently depending on whether it is
+        a query packet or a response.
+        It returns true if any packets were processed, false otherwise.
+        */
+      {
+        boolean packetsProcessedB= false;
+        SockPacket theSockPacket;
+
+        while (true) {  // Process all received packets.
+          theSockPacket= // Try getting next packet from queue.
+            multicasterToConnectionManagerPacketQueue.poll();
+          if (theSockPacket == null) break;  // Exit if no more packets.
+      		createAndPassToUnicasterV( theSockPacket );
+          packetsProcessedB= true;
+          }
+          
+        return packetsProcessedB;
+        }
+
+    private void stoppingMulticasterThreadV()
+	    {
+				EpiDatagramSocket.closeIfNotNullV(  // Causing unblock and termination.
+						theMulticastSocket
+						);
+				EpiThread.stopAndJoinIfNotNullV(multicasterEpiThread);
+		    }
+
+
     private void createAndPassToUnicasterV(SockPacket theSockPacket)
       /* This method processes one packet received from a peer.
         The peer is assumed to be at the packet's remote address and port.
-        It adds a Unicaster to the Unicaster data structures
-        if the appropriate Unicaster doesn't already exist.
-        If the entry does exist then it updates it.
+        The ConnectionManager should no longer receive packets
+        destined for existing Unicasters, 
+        but if it does, it will pass them along.
+        Normally when this method is called, the Unicaster does not exist,
+        so an appropriate Unicaster is created and added to the data structures.
+        After the Unicaster is created packets, should be passed directly to it.
         This should work with both unicast and multicast packets
         provided that their remote addresses are those of the remote peer.
         */
@@ -452,14 +448,13 @@ public class ConnectionManager
         //  "ConnectionManager.createAndPassToUnicasterV(..)\n  "
         //  + theSockPacket.getSocketAddressesString()
         //  );
-	      Unicaster theUnicaster=  // Get or create Unicaster.
-	          theUnicasterManager.tryGettingExistingUnicaster( theSockPacket );
-	      if ( theUnicaster == null )
-		      {
+	      Unicaster theUnicaster= theUnicasterManager.tryGettingUnicaster( 
+	      		theSockPacket 
+	      		);
+	      if ( theUnicaster == null ) // Building Unicaster if needed.
 			      theUnicaster=  // Get or create Unicaster.
 			          getOrBuildAndStartUnicaster( theSockPacket );
-			      }
-	      theUnicaster.puttingReceivedPacketV( // Giving Unicaster copy of packet.  
+	      theUnicaster.puttingReceivedPacketV( // Giving to it its first packet.  
 	      		theSockPacket
 	      		);
         }
@@ -483,48 +478,15 @@ public class ConnectionManager
         		);
         InetSocketAddress peerInetSocketAddress=  // Build packet's address.
           //theDatagramPacket.getSocketAddress();
-          new InetSocketAddress(
+          ConnectionFactory.makeInetSocketAddress(
             theDatagramPacket.getAddress(),
             theDatagramPacket.getPort()
             );
         Unicaster theUnicaster=  // Get or create Unicaster.
-          getOrBuildAndStartUnicaster(peerInetSocketAddress);
+          theUnicasterManager.buildAddAndStartUnicaster(
+            peerInetSocketAddress
+            );
         return theUnicaster;
-        }
-
-    private Unicaster getOrBuildAndStartUnicaster(
-        InetSocketAddress peerInetSocketAddress
-        )
-      /* Gets the Unicaster whose SocketAddress is peerInetSocketAddress.
-        If such a Unicaster does not exist then it builds one. 
-        If it builds one then it also:
-        * Adds the Unicaster to the appropriate data structures.
-        * Starts the associated Unicaster thread.
-        It returns the gotten or built Unicaster.
-        */
-      {
-        NetCasterValue resultNetCasterValue= // Testing whether peer is already stored.
-          theUnicasterManager.getNetCasterValue(peerInetSocketAddress);
-        if (resultNetCasterValue == null) // Adding peer if not stored already.
-          {
-		        appLogger.info( "Creating new Unicaster." );
-            final NetCasterValue newNetCasterValue=  // Building new peer. 
-              theConnectionsFactory.makeUnicasterValue(
-                peerInetSocketAddress,
-                netcasterToSenderPacketQueue,
-                cmInputQueueOfUnicasters,
-                unconnectedDatagramSocket,
-                this, // theConnectionManager
-                theShutdowner
-                );
-            theUnicasterManager.putV( // Adding to HashMap with...
-              peerInetSocketAddress,  // ...the SocketAddress as the key and...
-              newNetCasterValue  // ...the NetCasterValue as the value.
-              );
-            newNetCasterValue.getEpiThread().startV(); // Start peer's thread.
-            resultNetCasterValue= newNetCasterValue;  // Using new peer as result.
-            }
-        return resultNetCasterValue.getUnicaster();
         }
 
     } // class ConnectionManager.

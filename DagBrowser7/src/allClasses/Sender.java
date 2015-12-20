@@ -55,8 +55,9 @@ public class Sender // Uunicast and multicast sender thread.
       {
 	  	  toReturn: {
 	    		while (true) { // Repeating until thread termination requested.
-	      		if // Exiting loop if  thread termination is requested.
-	      		  ( Thread.currentThread().isInterrupted() ) break toReturn;
+	      		if // Exiting loop if thread termination is requested.
+	      		  ( Thread.currentThread().isInterrupted() ) 
+	      			break toReturn;
 		      		
 	          processingSockPacketsToSendB(); // Processing inputs.
 	          senderLockAndSignal.doWaitE();  // Waiting for next input signal.

@@ -22,8 +22,8 @@ public class App { // The App, especially pre-GUI stuff.  See runV(..) for detai
   public void runV()  // This is for app Running.
     /* This method does any executable instance management it can.
       If the instance manager says it's okay then
-      it presents the GUI to the user.
-      When this is all done it uses the Shutdowner to
+      it presents the GUI to the user and interacts with him or her.
+      When it's time to exit it uses the Shutdowner to
       do any final shutdown jobs.
      */
     {
@@ -32,11 +32,11 @@ public class App { // The App, especially pre-GUI stuff.  See runV(..) for detai
 
   	  if ( ! theAppInstanceManager.managingInstancesThenNeedToExitB( ) ) 
 
-        {
-      	  AppGUIFactory theAppGUIFactory= theAppFactory.getAppGUIFactory();
-          AppGUIManager theAppGUIManager= // Getting GUI manager singleton.
-              theAppGUIFactory.getAppGUIManager();
-          theAppGUIManager.runV(); // Running GUI manager until finished.
+        { // Presenting GUI to user and interacting.
+      	  AppGUIFactory theAppGUIFactory= theAppFactory.lazyGetAppGUIFactory();
+          AppGUI theAppGUI= // Getting GUI manager singleton.
+              theAppGUIFactory.getAppGUI();
+          theAppGUI.runV(); // Running GUI manager until finished.
           }
 
   		//appLogger.info("App calling Shutdowner.finishV().");

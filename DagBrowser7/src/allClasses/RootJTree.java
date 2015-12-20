@@ -1048,18 +1048,7 @@ public class RootJTree
           */
         {
           if ( animationDelayI != 0 )  // Delay if desired.
-            mySleepV( animationDelayI );  // Delay next output appropriately.
-          }
-
-      private void mySleepV( int msI )
-        /* This method sleep for msI milliseconds.  */
-        {
-          try {
-            Thread.sleep( msI );
-            } 
-          catch(InterruptedException ex) {
-            Thread.currentThread().interrupt();
-            }
+            EpiThread.interruptableSleepB( animationDelayI );
           }
 
     // Debugging logging code.  Much of this might eventually be deleted.

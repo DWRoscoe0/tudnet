@@ -3,36 +3,24 @@ package allClasses;
 import java.net.InetSocketAddress;
 
 
-public class NetCasterValue  // Value of HashMap entry.
+public class NetCasterValue
 
- /* This class was created when it became necessary to
-   have access to both the Unicaster class and its Thread.
-   */
+   extends DataNodeAndThreadValue< Unicaster >
 
   {
 
-    private Unicaster theUnicaster;
-    private EpiThread theEpiThread;
-
     public NetCasterValue(  // Constructor. 
-        InetSocketAddress peerInetSocketAddress,
+        InetSocketAddress remoteInetSocketAddress,
         Unicaster theUnicaster
         )
       {
-        this.theUnicaster= theUnicaster;
-        this.theEpiThread= new EpiThread( 
-          theUnicaster,
-          "Unicaster-"+peerInetSocketAddress
-          );
+    	  super( 
+    	  		theUnicaster,
+        		new EpiThread( 
+  		          theUnicaster,
+  		          "Unicaster-"+remoteInetSocketAddress
+  		          )
+    	  		);
         }
-        
-    public Unicaster getUnicaster()
-      { 
-        return theUnicaster; 
-        }
-        
-    public EpiThread getEpiThread()
-      { 
-        return theEpiThread; 
-        }
+
     }

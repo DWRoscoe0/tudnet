@@ -76,9 +76,8 @@ public class Unicaster
         PeriodMillisL / 2;  
 
       // Injected dependency instance variables.
-    	//private InputQueue<Unicaster> cmInputQueueOfUnicasters; ??
-      private final ConnectionManager theConnectionManager;
       private final Shutdowner theShutdowner;
+      private UnicasterManager theUnicasterManager;
 
       // Other instance variables.
       private Random theRandom; // For arbitratingYieldB() random numbers.
@@ -92,12 +91,12 @@ public class Unicaster
 	        // re-sending a message.
 
 			public Unicaster(  // Constructor. 
+			  UnicasterManager theUnicasterManager,
 	    	LockAndSignal threadLockAndSignal,
 	      NetInputStream theNetInputStream,
 	      NetOutputStream theNetOutputStream,
         InetSocketAddress remoteInetSocketAddress,
         DataTreeModel theDataTreeModel,
-        ConnectionManager theConnectionManager,
         Shutdowner theShutdowner
         )
       /* This constructor constructs a Unicaster for the purpose of
@@ -120,9 +119,8 @@ public class Unicaster
         		);
 
         // Storing injected dependency constructor arguments.
-          //this.cmInputQueueOfUnicasters= cmInputQueueOfUnicasters; ??
-          this.theConnectionManager= theConnectionManager;
           this.theShutdowner= theShutdowner;
+  			  this.theUnicasterManager= theUnicasterManager;
         
         theRandom= new Random(0);  // Initialize arbitratingYieldB().
         }
@@ -145,8 +143,6 @@ public class Unicaster
         a sub-protocol value for this purpose.
         */
       {
-        theConnectionManager.addingV( this );
-
       	int stateI= // Initialize ping-reply protocol state from yield flag. 
       	  arbitratedYieldingB ? 0 : 1 ;
         try { // Operations that might produce an IOException.
@@ -173,20 +169,22 @@ public class Unicaster
 	      		if  // Informing remote end whether we are doing Shutdown.
 	      		  ( theShutdowner.isShuttingDownB() ) 
 		      		{
-	      				sendingMessageV("SHUTTING-DOWN"); // Sending SHUTTING-DOWN packet.
-	  	          appLogger.info( "SHUTTING-DOWN packet sent.");
+	      				sendingMessageV("SHUTTING-DOWN"); // Informing peer of shutdown.
+	  	          appLogger.info( "SHUTTING-DOWN message sent.");
 		      			}
 	      		theNetOutputStream.close(); // Closing output stream.
           	}
           catch( IOException e ) {
-            appLogger.info("run() IOException: "+e );
-            throw new RuntimeException(e);
-            // Try reestablishing connection??
+          	Globals.logAndRethrowAsRuntimeExceptionV( 
+          			"run() IOException", e 
+          			);
             }
 
-        theConnectionManager.removingV( this );
+	    	theUnicasterManager.removingV( // Removing self from manager.
+	    			this 
+	    			);
 
-        appLogger.info("run() exiting."); // Needed if peer self-terminates.
+        appLogger.info("run() exiting."); // Needed if thread self-terminates.
         }
 
     protected void initializeV()

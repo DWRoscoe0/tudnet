@@ -13,6 +13,8 @@ public class MutableList
 
 	  Except for the constructor, the methods in this class
 	  should be called only from the Event Dispatch Thread (EDT).
+	  
+	  ?? Synchronize some of these methods?
 	  */
 
   extends NamedList
@@ -43,6 +45,9 @@ public class MutableList
 		  		)
 		    /* This method adds childDataNode at the end of the List
 		      It does not try to do it on the EDT.
+		      
+		      ?? This is used and apparently needed by Outline.
+		      Using addB(..) causes a stack overflow.
 		      */
 		    {
 		  		theListOfDataNodes.add( theListOfDataNodes.size(), childDataNode );
@@ -60,7 +65,7 @@ public class MutableList
 		  	  		);
 		      }
 	
-		  public boolean addB(  // Add at index. 
+		  public synchronized boolean addB(  // Add at index. 
 		  		final int indexI, final DataNode childDataNode 
 		  		)
 		    /* If childDataNode is already in the List 
@@ -108,7 +113,7 @@ public class MutableList
 		  		return addSuccessB[0]; // Returning whether add succeeded.
 		      }
 	
-		  public boolean removeB( final DataNode childDataNode )
+		  public synchronized boolean removeB( final DataNode childDataNode )
 		    /* If childDataNode not in the List 
 		      then it does nothing and returns false,
 		      otherwise it removes childDataNode from the List and returns true. 

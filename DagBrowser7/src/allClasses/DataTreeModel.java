@@ -433,6 +433,18 @@ public class DataTreeModel
   	      If that fails then tries returning TreePath from a search
   	        and caches the result.
   	      If that fails then it returns null.
+  	      
+  	      ?? Consider storing parentsObject in AbDataNode.
+  	      This would contain TreePath or parent DataNode information
+  	      caching of explosively computationally intensive searches 
+  	      can be eliminated.
+  	        * TreePaths would still be cached, but they would be TreePaths
+  	          that are constructed by following parent links,
+  	          not by searching huge sections of the DataNode tree.
+  	        * TreePath building could use cached TreePaths of parent DataNodes,
+  	          and TreePath interning, to increase speed and reduce memory use.
+  	        ? At first there could be a single parent link stored.
+  	        ? Later a list of multiple parent links might be needed.
   	      */
       	{ 
       	  TreePath targetTreePath= // Looking in cache first.
@@ -629,8 +641,9 @@ public class DataTreeModel
 						  	catch  // Handling invocation exception by re-throwing.
 						  	  (InvocationTargetException e1) 
 						  	  { 
-							  		appLogger.debug( "DataTreeModel.invokeAndWaitV(..):"+e1 );
-						    	  throw new RuntimeException(e); 
+						  			Globals.logAndRethrowAsRuntimeExceptionV( 
+						  					"DataTreeModel.invokeAndWaitV(..)", e1
+						  					);
 						  			} // wrapping and re-throwing.
     	      	  appLogger.debug( "DataTreeModel.invokeAndWaitV(..) end loop.");
   	      	  	}

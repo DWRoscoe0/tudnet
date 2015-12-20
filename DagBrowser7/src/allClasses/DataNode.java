@@ -29,6 +29,12 @@ public interface DataNode {
 		    can be used as a part of its parent DataJComponent.
 		    See getSummaryString() which returns a String.
 	    
+    ?? This could be combined with the abstract class AbDataNode.
+
+    ?? Maybe add a field, parentsObject, which contains references to
+      DataNodes which parents of this node.
+      This would be used by DataTreeModel.translatingToTreePath( .. ).
+
     */
 
   // Methods with equivalents in DataTreeModel, all getters or testers.

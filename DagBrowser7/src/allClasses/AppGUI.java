@@ -16,7 +16,7 @@ import java.util.Map;
 
 import static allClasses.Globals.appLogger;  // For appLogger;
 
-public class AppGUIManager // Top level of the app's GUI, the window manager.
+public class AppGUI
 
   /* This class is the top level of the app GUI.
     Presently is manages only a single JFrame window
@@ -24,9 +24,9 @@ public class AppGUIManager // Top level of the app's GUI, the window manager.
     Later it might manage multiple JFrames with different contents.
     */
 
-  { // class AppGUIManager
+  { // class AppGUI
 
-    // AppGUIManager's constructor injected dependency variables.
+    // AppGUI's constructor injected dependency variables.
     private EpiThread theConnectionManagerEpiThread;
     private EpiThread theCPUMonitorEpiThread;
     private DataTreeModel theDataTreeModel;
@@ -35,7 +35,7 @@ public class AppGUIManager // Top level of the app's GUI, the window manager.
     private GUIDefiner theGUIDefiner;
     private Shutdowner theShutdowner;
 
-    public AppGUIManager(   // Constructor.
+    public AppGUI(   // Constructor.
         EpiThread theConnectionManagerEpiThread,
         EpiThread theCPUMonitorEpiThread,
         DataTreeModel theDataTreeModel,
@@ -73,7 +73,7 @@ public class AppGUIManager // Top level of the app's GUI, the window manager.
     		private AppGUIFactory theAppGUIFactory;
     		private Shutdowner theShutdowner;
 
-        // Other AppGUIManager instance variables.
+        // Other AppGUI instance variables.
         private JFrame theJFrame;  // App's only JFrame (now).
 
         GUIDefiner(   // Constructor. 
@@ -447,7 +447,7 @@ public class AppGUIManager // Top level of the app's GUI, the window manager.
         //appLogger.info("GUI/AWT thread signalled GUIDefiner done.");
         }
 
-    public void runV() // This method does the main AppGUIManager run phase.
+    public void runV() // This method does the main AppGUI run phase.
       {
         theDataTreeModel.initializeV( theInitialRootDataNode );
         startingBrowserGUIV();  // Building and displaying GUI.
@@ -462,4 +462,4 @@ public class AppGUIManager // Top level of the app's GUI, the window manager.
           // Stopping ConnectionManager thread.
         }
 
-    } // class AppGUIManager
+    } // class AppGUI

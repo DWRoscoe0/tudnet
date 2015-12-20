@@ -39,7 +39,7 @@ public class NetCaster
 	      String namePrefixString
 	      )
 	    {
-	  		// Superclass injections.
+	  		// Superclass's injections.
 	      super( // Constructing MutableList superclass.
 		        theDataTreeModel,
 		        namePrefixString + 
@@ -48,7 +48,7 @@ public class NetCaster
 	          new DataNode[]{} // Initially empty of children.
 	      		);
 
-	      // This class injections.
+	      // This class's injections.
 	      this.netcasterLockAndSignal= netcasterLockAndSignal;
 	      this.remoteInetSocketAddress= remoteInetSocketAddress;
 	      this.theNetInputStream= theNetInputStream;
@@ -176,7 +176,10 @@ public class NetCaster
           It does it using a NetOutputStream.
           */
         {
-          String payloadString= ((packetIDI++) + "." + aString) + ".";
+          String payloadString=
+          		"N."
+          		+((packetIDI++)+ "." 
+          		+ aString) + ".";
           //appLogger.debug( "sendingMessageV(): " + payloadString );
           byte[] buf = payloadString.getBytes();
           

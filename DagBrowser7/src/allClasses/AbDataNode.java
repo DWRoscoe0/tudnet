@@ -10,13 +10,21 @@ public abstract class AbDataNode
   /* All the DataNode methods implemented here work, 
     but some of them do so by counting and searching.
     They should be used only by subclasses which 
-    do not have a lot of children and can be evaluated quickly.
+    do not have a lot of children so they will run quickly.
     Otherwise they should be optimized or cached or both.
+    
+    ?? This could be combined with the interface DataNode.
     */
     
   { // AbDataNode
 
     // Static methods.
+
+		  static DataNode[] emptyListOfDataNodes()
+		  	// This method returns an empty DataNode list.
+		    { 
+		      return new DataNode[]{}; 
+		      }
 
       static boolean isUsableB( DataNode inDataNode )
         /* This method returns true if inDataNode is usable,

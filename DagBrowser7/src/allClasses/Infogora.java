@@ -1,25 +1,23 @@
 package allClasses;
 
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.MulticastSocket;
-
-import javax.swing.JFrame;
 
 import static allClasses.Globals.appLogger;  // For appLogger;
 
 
 /* This file is the root of this application.  
-  If you want to understand the application then
+  If you want to understand this application then
   this is where you should start reading.  
-  This file contains 4 classes:
  
-  * Infogora: This is the class that contains the main(..) method
-    which is the entry point of the application.
+  This file defines the Infogora class: 
+  This is the class that contains the main(..) method
+  which is the entry point of the application.
+  It constructs the AppFactory, uses it to construct the App,
+  and runs that.
+  
+  Much about the structure of this can be obtained by
+  examining the high-level factory classes.  They are:
 
 	* AppFactory: This is the factory for all classes with app lifetime.
 	  It wires together the first level of the app.
@@ -27,312 +25,31 @@ import static allClasses.Globals.appLogger;  // For appLogger;
 	* AppGUIFactory: This is the factory for all classes with 
 	  app GUI lifetime.  It wires together the second level of the app.
 
-  * ConnectionsFactory: This is the factory for all classes with
-    lifetimes of the ConnectionManager's lifetime or shorter.
+  * ConnectionFactory: This is the factory for all classes with
+    lifetimes of a connection.
 
   The factories above may not be the only factories in the app,
   but they are the top levels.  Factories serve 2 purposes:
 
   * They contain, or eventually will contain,  all the new-operators, 
     except for 2 uses in the top level Infogora class.
-    This makes unit testing easier.
+    This will, in theory, make unit testing easier.
 
   * Their code shows how classes relate to each other in the app
     by showing all dependency injections, usually with
     constructor injection, but occasionally with setter injection.
 
+  * Factory fields are:
+    * Singleton variable fields, preferably private.
+    * One constructor, which creates all the non-lazy singletons.
+    * Lazy singleton getters methods, 
+      whose constructions are delayed until needed.
+    * Maker methods, which construct new objects each time called.
+    ! There should be no non-lazy getters, except for the top level,
+      or the helper classes for each scope,
+      because non-lazy singletons should be constructor-injected. 
+    
   */
-
-
-class ConnectionsFactory {
-
-  // This is the factory for classes with connection lifetimes.
-
-  // Injected unconditional singleton storage.
-	private AppGUIFactory theAppGUIFactory;
-	private DataTreeModel theDataTreeModel;
-  
-  public ConnectionsFactory(   // Factory constructor. 
-  		AppGUIFactory theAppGUIFactory, DataTreeModel theDataTreeModel 
-  		)
-  	// This constructor defines the unconditional singletons.
-    {
-  	  this.theAppGUIFactory= theAppGUIFactory;
-      this.theDataTreeModel= theDataTreeModel;
-      }
-
-  // Unconditional singleton getters.
-  // None.
-
-  // Conditional singleton getters and storage.
-  // None.
-
-  // Maker methods.  These construct using new operator each time called.
-  public PacketQueue makePacketQueue(LockAndSignal threadLockAndSignal)
-  	{ return new PacketQueue(threadLockAndSignal); }
-	public LockAndSignal makeLockAndSignal()
-		{ return 	theAppGUIFactory.makeLockAndSignal(); }
-  public NetInputStream makeNetInputStream(
-  		PacketQueue receiverToNetCasterPacketQueue
-  		)
-	  {						
-			NamedInteger packetsReceivedNamedInteger=  
-					new NamedInteger( theDataTreeModel, "Packets-Received", 0 );
-	  	return new NetInputStream(
-	  	  receiverToNetCasterPacketQueue, packetsReceivedNamedInteger 
-	  		);
-	  	}
-  public NetOutputStream makeNetOutputStream(
-  		PacketQueue netcasterToSenderPacketQueue, 
-  		InetAddress theInetAddress, int portI
-      )
-	  {
-		  NamedInteger packetsSentNamedInteger= 
-		    new NamedInteger( 
-		  		theDataTreeModel, "Packets-Sent", 0 
-		  		);
-		  return new NetOutputStream(
-		  	netcasterToSenderPacketQueue, 
-		  	theInetAddress, 
-		  	portI, 
-		  	packetsSentNamedInteger
-	      );
-	    }
-	public Multicaster makeMulticaster(
-  		MulticastSocket theMulticastSocket,
-  		PacketQueue netcasterToSenderPacketQueue,
-  		PacketQueue multicasterToConnectionManagerPacketQueue,
-      DatagramSocket unconnectedDatagramSocket,
-	  	UnicasterManager theUnicasterManager
-      )
-    throws IOException
-    { 
-		  LockAndSignal netcasterLockAndSignal= makeLockAndSignal();  
-		  PacketQueue receiverToNetCasterPacketQueue=
-		  		new PacketQueue(netcasterLockAndSignal);
-			InetAddress theInetAddress= InetAddress.getByName("239.255.0.0"); 
-			int thePortI= PortManager.getDiscoveryPortI();
-  	  return new Multicaster(
-  	  	netcasterLockAndSignal,
-	  		makeNetInputStream( receiverToNetCasterPacketQueue ),
-	  		makeNetOutputStream( 
-	  				netcasterToSenderPacketQueue, theInetAddress, thePortI 
-	  				),
-  	    theDataTreeModel,
-	  		new InetSocketAddress( theInetAddress, thePortI ),
-	  		theMulticastSocket,
-        multicasterToConnectionManagerPacketQueue,
-		  	theUnicasterManager
-        ); 
-      }
-  public Unicaster makeUnicaster(
-  		ConnectionsFactory theConnectionsFactory,
-  		InetSocketAddress peerInetSocketAddress,
-      PacketQueue netcasterToSenderPacketQueue,
-      InputQueue<Unicaster> cmInputQueueOfUnicasters,
-      DatagramSocket unconnectedDatagramSocket,
-      ConnectionManager theConnectionManager,
-      Shutdowner theShutdowner
-      )
-    {
-		  LockAndSignal netcasterLockAndSignal= makeLockAndSignal();
-  		PacketQueue receiverToNetCasterPacketQueue= 
-  				makePacketQueue(netcasterLockAndSignal);
-  		return new Unicaster(
-  			netcasterLockAndSignal,
-	  		makeNetInputStream( receiverToNetCasterPacketQueue ),
-	  		makeNetOutputStream( 
-	  				netcasterToSenderPacketQueue,  
-    	  		peerInetSocketAddress.getAddress(),
-    	  		peerInetSocketAddress.getPort()
-	  				),
-  	  	peerInetSocketAddress,
-        //cmInputQueueOfUnicasters, ??
-        theDataTreeModel,
-        theConnectionManager,
-        theShutdowner
-        );
-      }
-  public NetCasterValue makeUnicasterValue(
-      InetSocketAddress peerInetSocketAddress,
-      PacketQueue netcasterToSenderPacketQueue,
-      InputQueue<Unicaster> cmInputQueueOfUnicasters,
-      DatagramSocket unconnectedDatagramSocket,
-      ConnectionManager theConnectionManager,
-      Shutdowner theShutdowner
-      )
-    {
-      Unicaster theUnicaster= makeUnicaster(
-  	    this, // Unicaster gets to know its factory.
-        peerInetSocketAddress,
-        netcasterToSenderPacketQueue,
-        cmInputQueueOfUnicasters,
-        unconnectedDatagramSocket,
-        theConnectionManager,
-        theShutdowner
-        );
-      return new NetCasterValue( peerInetSocketAddress, theUnicaster );
-      }
-
-  } // class ConnectionsFactory.
-
-
-class AppGUIFactory {  // For GUI class lifetimes.
-
-  /* This is the factory for all classes with AppGUI lifetime.
-    It wires together the 2nd level of the application.
-    The classes constructed here are mainly the ones 
-    needed for presenting a GUI to the user,
-    but it also builds the ConnectionManager which
-    is not part of the GUI, but it has the same lifetime.
-    */
-
-  // Unconditional singleton storage.
-  AppGUIManager theAppGUIManager;
-  LockAndSignal theGUILockAndSignal;
-  AppGUIManager.GUIDefiner theGUIDefiner;
-
-  public AppGUIFactory(  // Factory constructor.
-      Thread mainThread, 
-      AppInstanceManager theAppInstanceManager,
-      Shutdowner theShutdowner
-      )
-  	// This constructor builds the unconditional singletons.
-    {
-      DataRoot theDataRoot= new DataRoot( );
-      MetaFileManager theMetaFileManager= new MetaFileManager( theDataRoot );
-      MetaRoot theMetaRoot= new MetaRoot( theDataRoot, theMetaFileManager );
-      MetaFileManager.Finisher theMetaFileManagerFinisher= 
-	      	new MetaFileManager.Finisher(
-	          theMetaFileManager,
-	          theMetaRoot
-	          );
-      DataTreeModel theDataTreeModel= 
-      		new DataTreeModel( 
-		        theDataRoot, 
-		        theMetaRoot, 
-		        theMetaFileManagerFinisher, 
-		        theShutdowner
-		        );
-      ConnectionsFactory theConnectionsFactory= 
-      		new ConnectionsFactory( this, theDataTreeModel );
-      UnicasterManager theUnicasterManager= new UnicasterManager( );
-      ConnectionManager theConnectionManager= 
-          new ConnectionManager( 
-            theConnectionsFactory,
-            theDataTreeModel,
-            theUnicasterManager,
-            theShutdowner
-            );
-      EpiThread theConnectionManagerEpiThread=
-          makeEpiThread( theConnectionManager, "ConnMgr" );
-      SystemsMonitor theSystemsMonitor= new SystemsMonitor(theDataTreeModel);
-      EpiThread theCPUMonitorEpiThread=
-          makeEpiThread( theSystemsMonitor, "SystemsMonitor" );
-      DataNode theInitialRootDataNode=  // Building first legal value.
-	        new InfogoraRoot( 
-	          new DataNode[] { // ...an array of all child DataNodes.
-	            new FileRoots(),
-	            new Outline( 0, theDataTreeModel ),
-	            theSystemsMonitor,
-	            theConnectionManager,
-	            new Infinitree( null, 0 )
-	            }
-	          );
-      DagBrowserPanel theDagBrowserPanel= 
-      		new DagBrowserPanel(
-		        theAppInstanceManager,
-		        theDataTreeModel,
-		        theDataRoot,
-		        theMetaRoot
-		        );
-      theGUILockAndSignal= makeLockAndSignal();
-      theGUIDefiner=  
-      		new AppGUIManager.GUIDefiner( 
-      		  theGUILockAndSignal, 
-      		  theAppInstanceManager,
-      		  theDagBrowserPanel,
-		        this, // GUIDefiner gets to know the factory that made it. 
-		        theShutdowner
-		        );
-      theAppGUIManager= 
-      		new AppGUIManager( 
-		        theConnectionManagerEpiThread,
-		        theCPUMonitorEpiThread,
-		        theDataTreeModel,
-		        theInitialRootDataNode,
-		        theGUILockAndSignal,
-		        theGUIDefiner,
-		        theShutdowner
-		        );
-      }
-
-  // Unconditional singleton getter methods.
-  public AppGUIManager getAppGUIManager()
-    { return theAppGUIManager; }
-
-  // Conditional singleton getter methods and storage.
-  // None.
-
-  // Maker methods which construct something with new operator each time called.
-	public LockAndSignal makeLockAndSignal()
-		{ return 	new LockAndSignal(false); }
-  public EpiThread makeEpiThread( Runnable aRunnable, String nameString )
-	  { return new EpiThread( aRunnable, nameString ); }
-  public JFrame makeJFrame( String titleString ) 
-    { return new JFrame( titleString ); }
-  public AppGUIManager.InstanceCreationRunnable makeInstanceCreationRunnable( 
-  		JFrame aJFrame)
-  	{ return theAppGUIManager.new InstanceCreationRunnable( aJFrame ); }
-
-  } // class AppGUIFactory.
-
-
-class AppFactory {  // For App class lifetimes.
-
-  /* This is the factory for all classes with App lifetime.
-    It wires together the top level of the application.
-    The classes constructed here are mainly the ones 
-    needed before a GUI is presented to the user.
-    In some cases the GUI is not presented, but if it is
-    then its factory is constructed with getAppGUIFactory().
-    */
-
-  // Unconditional singleton storage.
-  private Shutdowner theShutdowner;
-  private AppInstanceManager theAppInstanceManager;
-  private App theApp;
-
-  public AppFactory( String[] argStrings )  // Factory constructor.
-  	// This constructor builds the unconditional singletons.
-    {
-      theShutdowner= new Shutdowner();
-      theAppInstanceManager= new AppInstanceManager(argStrings,theShutdowner);
-      theApp= new App(
-        theShutdowner,
-        theAppInstanceManager,
-        this // The App gets to know the factory that made it. 
-        );
-      }
-
-  // Unconditional singleton getters.
-  public App getApp() 
-    { return theApp; }
-
-  // Conditional singleton getters and storage.
-  AppGUIFactory theAppGUIFactory= null;
-  public AppGUIFactory getAppGUIFactory()
-	  {
-	    if (theAppGUIFactory == null) 
-	      theAppGUIFactory= new AppGUIFactory(
-	          Thread.currentThread(), // Our Thread. 
-	          theAppInstanceManager,
-	          theShutdowner
-	      		);
-	    return theAppGUIFactory;
-	    }
-
-  } // AppFactory
 
 
 class Infogora  // The root of this app.

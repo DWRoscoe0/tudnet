@@ -32,8 +32,12 @@ public class PortManager {
   
   public static int getLocalPortI()
     /* Experimental method.
-      Make this be a function of local IP??
-      This would be NetworkInterface-dependent.
+
+      ?? Make this be a function of local IP??
+      This would use class NetworkInterface and depend on
+      which interface was in use.
+      
+      ?? Eventually get the permanent value saved in configuration file.
       */
     {
       while ( localPortI == 0 ) {

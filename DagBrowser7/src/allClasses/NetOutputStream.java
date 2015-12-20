@@ -66,6 +66,13 @@ public class NetOutputStream
     public void flush() throws IOException
       /* This writes any bytes written to the buffer so far, if any,
         and prepares another buffer to receive more bytes.
+        
+        ?? Add a variation of this which takes a time limit limitMsL,
+        which is the maximum number of milliseconds before
+        an actual physical flush() happens.  
+        This will allow a parent NetOutputStream to combine data from
+        child multiplexed streams into larger packets
+        for better bandwidth utilization.
         */
       {
 			  if (indexI > 0) // Sending packet if any bytes in buffer.
@@ -77,7 +84,7 @@ public class NetOutputStream
 		        netcasterToSenderPacketQueue.add( // Queuing packet for sending.
 		            aSockPacket
 		            );
-		  			counterNamedInteger.addValueL( 1 ); // Counting received packet.
+		  			counterNamedInteger.addValueL( 1 ); // Counting sent packet.
 			  		}
     		bufferBytes = new byte[DEFAULT_BUFFER_SIZE]; // Allocating new buffer.
     		bufferSizeI= bufferBytes.length; 

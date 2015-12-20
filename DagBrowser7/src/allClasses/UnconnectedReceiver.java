@@ -69,11 +69,11 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
                   );
                 receiverDatagramSocket.receive(theDatagramPacket);
                 //appLogger.debug(
-                //		" run() received: "
-                //	+ PacketStuff.gettingPacketString(theDatagramPacket)
-                //	);
+                //		"run() received: "
+                //+ PacketStuff.gettingPacketString(theDatagramPacket)
+                //);
                 Unicaster theUnicaster= // Testing for associated Unicaster.
-                		theUnicasterManager.tryGettingExistingUnicaster( 
+                		theUnicasterManager.tryGettingUnicaster( 
                 				theSockPacket 
                 				);
                 if ( theUnicaster != null )  // Queuing packet appropriately.
@@ -91,8 +91,9 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
               } // Receiving and queuing one packet.
           }
           catch( IOException e ) {
-            appLogger.info("run() IOException: "+e );
-            throw new RuntimeException(e);
+		  			Globals.logAndRethrowAsRuntimeExceptionV( 
+		  					"run() IOException: ", e
+		  					);
           }
         }
 

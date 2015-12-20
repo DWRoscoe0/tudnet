@@ -158,9 +158,13 @@ public class SystemsMonitor
   					);
   			targetTimeMsL+= periodMsL; // Advancing target time.
   			if (shiftInTimeMsL > 0) // Processing skipped time, if any.
-	    		skippedTimeMsNamedInteger.addValueL( shiftInTimeMsL );
+	  			{
+		    		skippedTimeMsNamedInteger.addValueWithLoggingL( shiftInTimeMsL );
+	  				}
   			if (shiftInTimeMsL < 0) // Processing reversed time, if any.
-	  			reversedTimeMsNamedInteger.addValueL( -shiftInTimeMsL );
+	  			{
+		  			reversedTimeMsNamedInteger.addValueWithLoggingL( -shiftInTimeMsL );
+	  				}
         }
 
   	private long measureNanoTimeL()

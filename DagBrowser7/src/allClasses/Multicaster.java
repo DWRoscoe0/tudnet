@@ -10,7 +10,7 @@ import java.util.Properties;
 
 import static allClasses.Globals.*;  // appLogger;
 
-/* Each peer node use this class to use UDP multicast to:
+/* Each peer node used this class to use UDP multicast to:
   * announce its arrival on a LAN; and
   * to discover other peers already on the LAN.
   It does these things by sending and receiving query and response packets.
@@ -19,7 +19,7 @@ import static allClasses.Globals.*;  // appLogger;
 
   After construction and initialization, 
   data for this thread passes through the following:
-  * receiverToNetCasterPacketQueue: packets from the MulticastReceiver.
+  * receiverToMulticasterPacketQueue: packets from the MulticastReceiver.
   * multicasterToConnectionManagerPacketQueue: packets to ConnectionManager.
   * netcasterToSenderPacketQueue: packets to the network Sender.
   
@@ -65,9 +65,6 @@ public class Multicaster
 	implements Runnable
 	
 	{
-		public static final byte QUERY_PACKET = 80;  // 050h 'P'
-		public static final byte RESPONSE_PACKET = 81;  // 051h 'Q'
-	
 	  // Injected dependencies.
 	  private MulticastSocket theMulticastSocket; /* For receiving multicast 
 	    datagrams.  Multicast datagrams are sent using 
@@ -116,7 +113,6 @@ public class Multicaster
 	      PacketQueue multicasterToConnectionManagerPacketQueue,
 		  	UnicasterManager theUnicasterManager
 	      )
-	    throws IOException
 	    /* Constructs a Multicaster object and prepares it for
 	      UDP multicast communications duties.  
 	      Those duties are to help peers discover each other by
@@ -142,10 +138,9 @@ public class Multicaster
 	  
 	  /* The following is new code that uses the MulticastReceier thread.  */
 	  
-    private MulticastReceiver theMulticastReceiver; // Receiver and
     private EpiThread theMulticastReceiverEpiThread; // its thread.
 
-    private class MulticastReceiver
+    public static class MulticastReceiver
 
       implements Runnable
 
@@ -157,7 +152,7 @@ public class Multicaster
 			  After construction and initialization, 
 			  data for this thread passes through the following:
         * theMulticastSocket: DatagramPackets from the network.
-        * receiverToNetCasterPacketQueue: packets to the Multicaster. 
+        * receiverToMulticasterPacketQueue: packets to the Multicaster. 
         
         This thread is kept simple because the only known way to guarantee
         fast termination of a multicast receive(..) operation
@@ -167,20 +162,23 @@ public class Multicaster
       {
 
         // Injected dependency instance variables.
-        private PacketQueue receiverToNetCasterPacketQueue;
+        private PacketQueue receiverToMulticasterPacketQueue;
           // Queue which is destination of received packets.
+        private MulticastSocket theMulticastSocket;
 
 
         MulticastReceiver( // Constructor. 
-            PacketQueue receiverToNetCasterPacketQueue
+            PacketQueue receiverToMulticasterPacketQueue,
+            MulticastSocket theMulticastSocket
             )
           /* Constructs an instance of this class from:
-              * receiverDatagramSocket: the socket receiving packets.
-              * receiverToNetCasterPacketQueue: the output queue.
+              * theMulticastSocket: the socket receiving packets.
+              * receiverToMulticasterPacketQueue: the output queue.
             */
-          { 
-            this.receiverToNetCasterPacketQueue=
-              receiverToNetCasterPacketQueue;
+          {
+	          this.receiverToMulticasterPacketQueue= 
+	          		receiverToMulticasterPacketQueue;
+	          this.theMulticastSocket= theMulticastSocket;
             }
         
 
@@ -201,7 +199,11 @@ public class Multicaster
 	                  DatagramPacket theDatagramPacket= 
 	                  		receiveSockPacket.getDatagramPacket(); 
 	                  theMulticastSocket.receive( theDatagramPacket );
-	                  receiverToNetCasterPacketQueue.add( // Queuing packet.
+	                  //appLogger.debug(
+	                  //		"run() received: "
+	                  //+ PacketStuff.gettingPacketString(theDatagramPacket)
+	                  //);
+	                  receiverToMulticasterPacketQueue.add( // Queuing packet.
 	                  		receiveSockPacket
 	                  		);
 	                	}
@@ -213,8 +215,9 @@ public class Multicaster
 	                } // Receiving and queuing one packet.
 	            }
 	            catch( IOException e ) {
-	              appLogger.info("run() IOException: "+e );
-	              throw new RuntimeException(e);
+				  			Globals.logAndRethrowAsRuntimeExceptionV( 
+				  					"run() IOException: ", e
+				  					);
 	            }
         		//appLogger.debug("run() end.");
             }
@@ -275,16 +278,12 @@ public class Multicaster
           }
 
     private void startingMultcastReceiverThreadV()
-      // Needs work??
       {
-	      theMulticastReceiver=  // Constructing thread.
-	          new MulticastReceiver( 
-	            theNetInputStream.getPacketQueue()
+    		theMulticastReceiverEpiThread= // Constructing thread.
+    				AppGUIFactory.makeMulticastReceiverEpiThread(
+	            theNetInputStream.getPacketQueue(),
+	            theMulticastSocket
 	            );
-        theMulticastReceiverEpiThread= new EpiThread( 
-          theMulticastReceiver,
-          "McRcvr"
-          );
         theMulticastReceiverEpiThread.startV();  // Starting thread.
 	      }
 
@@ -357,7 +356,7 @@ public class Multicaster
 	      SockPacket theSockPacket= // Copying packet from queue.
 	      		theNetInputStream.getSockPacket();
 	      Unicaster theUnicaster= // Testing for associated Unicaster.
-	      		theUnicasterManager.tryGettingExistingUnicaster( theSockPacket );
+	      		theUnicasterManager.tryGettingUnicaster( theSockPacket );
 	      if ( theUnicaster == null )  // Processing if Unicaster does not exists.
 	       	{
        			//appLogger.debug(

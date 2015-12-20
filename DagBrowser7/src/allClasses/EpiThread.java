@@ -42,6 +42,12 @@ public class EpiThread
         start();
         }
 
+    public static void stopAndJoinIfNotNullV( EpiThread theEpiThread )
+      /* This is like theEpiThread.stopAndJoinV() but 
+        does nothing if theEpiThread == null.
+        */
+	    { if ( theEpiThread != null ) theEpiThread.stopAndJoinV(); }
+
     public void stopAndJoinV()  // Another thread uses to stop "this" thread.
       /* This method uses stopV() to request termination of "this" thread,
         and then joinV() to wait for that termination to complete.
@@ -50,6 +56,12 @@ public class EpiThread
         stopV(); // Requesting termination of EpiThread thread.
         joinV();  // Waiting until that termination completes.
         }
+
+    public static void stopIfNotNullV( EpiThread theEpiThread )
+      /* This is like theEpiThread.stopV() but 
+        does nothing if theEpiThread == null.
+        */
+	    { if ( theEpiThread != null ) theEpiThread.stopV(); }
 
     public void stopV()  // Requests stopping of "this" thread.
       /* Thread.currentThread() calls this method to request 
@@ -62,7 +74,7 @@ public class EpiThread
         ?? Threads which use code which blocks without 
         supporting InterruptedException could override this method 
         to take action to end the block, for example by
-        closing the socket or stream which might be blocked. 
+        closing the socket or stream which might be blocking the thread. 
         */
       {
         //appLogger.info("EpiThread(" + getName() + ").stopV(): stopping.");
@@ -97,6 +109,29 @@ public class EpiThread
               }
 
         appLogger.info("EpiThread(" + getName() + ").joinV(): stopped.");
+        }
+
+    public static boolean interruptableSleepB( int msI )
+      /* This method works like Thread.sleep( msI ),
+        causing the current thread to sleep for msI milliseconds,
+        except that it does not throw an InterruptedException if interrupted.
+        Instead, if that happens then the method simply returns with
+        the thread's interrupt status set.
+        It can be processed by the caller.
+        It returns true if the sleep was interrupted, false otherwise.  
+        */
+      {
+    	  boolean interruptedB= false;
+    	  
+        try {
+          Thread.sleep( msI );
+          } 
+        catch( InterruptedException ex ) {
+        	interruptedB= true;
+          Thread.currentThread().interrupt();
+          }
+        
+        return interruptedB;
         }
 
     }
