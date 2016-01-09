@@ -25,7 +25,7 @@ import static allClasses.Globals.appLogger;  // For appLogger;
 	* AppGUIFactory: This is the factory for all classes with 
 	  app GUI lifetime.  It wires together the second level of the app.
 
-  * ConnectionFactory: This is the factory for all classes with
+  * UnicasterFactory: This is the factory for all classes with
     lifetimes of a connection.
 
   The factories above may not be the only factories in the app,

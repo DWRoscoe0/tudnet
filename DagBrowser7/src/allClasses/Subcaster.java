@@ -1,36 +1,36 @@
 package allClasses;
 
+import static allClasses.Globals.appLogger;
+
 public class Subcaster
 
-	extends MutableList
+	extends DataNodeWithKey< String >
 
-	/* ?? This is not being used, yet.
+  implements Runnable 
+
+	/* ?? This is being included in Unicasters, but it doesn't do anything, yet.
 	  Eventually it will handle nested protocols for Unicaster.
 	  */
 
 	{
-	  public LockAndSignal theLockAndSignal;
-			// LockAndSignal for inputs to this thread.  It is used in
-	    // the construction of the following queue. 
+	  public final LockAndSignal theLockAndSignal; // For inputs to this thread.
 	  
-	  protected NetOutputStream theNetOutputStream;
-		protected NetInputStream theNetInputStream;
+	  private final NetOutputStream theNetOutputStream;
+	  private final NetInputStream theNetInputStream;
 
 	  public Subcaster(  // Constructor. 
 	      LockAndSignal theLockAndSignal,
 	      NetInputStream theNetInputStream,
 	      NetOutputStream theNetOutputStream,
 	      DataTreeModel theDataTreeModel,
-	      String namePrefixString,
-	      String namePostfixString
+	      String keyString
 	      )
 	    {
-	  		// Superclass's injections.
-	      super( // Constructing MutableList superclass.
+	      super( // Superclass's constructor injections.
 		        theDataTreeModel,
-		        namePrefixString + namePostfixString,
-	          new DataNode[]{} // Initially empty of children.
-	      		);
+		      	"Subcaster",
+	      	  keyString
+		        );
 
 	      // This class's injections.
 	      this.theLockAndSignal= theLockAndSignal;
@@ -38,10 +38,29 @@ public class Subcaster
 	      this.theNetOutputStream= theNetOutputStream;
 	      }
 
-    protected void initializeV()
+    public void run()  // Main Unicaster thread.
+    	{
+    		initializingV();
+        while (true) // Repeating until thread termination is requested.
+	        {
+	      		if // Exiting if requested.
+	            ( Thread.currentThread().isInterrupted() ) 
+	            break;
+	      		theLockAndSignal.doWaitE(); // Waiting for any input.
+	        	}
+    		finalizingV();
+    		}
+
+    protected void initializingV()
 	    {
+    		appLogger.info("initializingV() at start."); // Needed if thread self-terminates.
 		    addB( 	theNetOutputStream.getCounterNamedInteger() );
-		    addB( 	theNetInputStream.getCounterNamedInteger());
+		    addB( 	theNetInputStream.getCounterNamedInteger() );
+	    	}
+
+    protected void finalizingV()
+	    {
+    		appLogger.info("finalizingV() for exit."); // Needed if thread self-terminates.
 	    	}
 
 		}

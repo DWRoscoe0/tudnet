@@ -42,7 +42,7 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
       { 
         this.unconnectedReceiverToConnectionManagerPacketQueue= 
         		unconnectedReceiverToConnectionManagerPacketQueue;
-        this.receiverDatagramSocket=receiverDatagramSocket;
+        this.receiverDatagramSocket= receiverDatagramSocket;
         this.theUnicasterManager= theUnicasterManager;
         }
     
@@ -81,7 +81,9 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
           	      		theSockPacket
           	      		);
                 	else
-                	unconnectedReceiverToConnectionManagerPacketQueue.add(theSockPacket); // To CM.
+                	unconnectedReceiverToConnectionManagerPacketQueue.add(
+                			theSockPacket
+                			); // Queue to CM.
                 }
               catch( SocketException soe ) {
                 appLogger.info("run(): " + soe );

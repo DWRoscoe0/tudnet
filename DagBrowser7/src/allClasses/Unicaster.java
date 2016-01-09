@@ -77,13 +77,14 @@ public class Unicaster
 
       // Injected dependency instance variables.
       private final Shutdowner theShutdowner;
-      private UnicasterManager theUnicasterManager;
+      private final UnicasterManager theUnicasterManager;
+      private final SubcasterManager theSubcasterManager;
 
       // Other instance variables.
       private Random theRandom; // For arbitratingYieldB() random numbers.
       private long pingSentNanosL; // Time the last ping was sent.
       private boolean arbitratedYieldingB; // Used to arbitrate race conditions.
-
+      
       // Detail-containing child sub-objects.
 	      private NamedInteger RoundTripTimeNamedInteger;
 	        // This is an important value.  It is used to determine
@@ -92,6 +93,7 @@ public class Unicaster
 
 			public Unicaster(  // Constructor. 
 			  UnicasterManager theUnicasterManager,
+			  SubcasterManager theSubcasterManager,
 	    	LockAndSignal threadLockAndSignal,
 	      NetInputStream theNetInputStream,
 	      NetOutputStream theNetOutputStream,
@@ -115,14 +117,13 @@ public class Unicaster
 	  	      theNetOutputStream,
   	        theDataTreeModel,
   	        remoteInetSocketAddress,
-        		"Unicaster-at-" 
+        		"Unicaster" 
         		);
 
         // Storing injected dependency constructor arguments.
           this.theShutdowner= theShutdowner;
   			  this.theUnicasterManager= theUnicasterManager;
-        
-        theRandom= new Random(0);  // Initialize arbitratingYieldB().
+  			  this.theSubcasterManager= theSubcasterManager;
         }
 
 
@@ -143,11 +144,15 @@ public class Unicaster
         a sub-protocol value for this purpose.
         */
       {
-      	int stateI= // Initialize ping-reply protocol state from yield flag. 
-      	  arbitratedYieldingB ? 0 : 1 ;
         try { // Operations that might produce an IOException.
-          initializeV();
+          initializingV();
+          
+          theSubcasterManager.buildAddAndStartSubcaster( // Adding test Subcaster.
+              "TEST-SUBCASTER."
+      	  		); //???
 
+        	int stateI= // Initialize ping-reply protocol state from yield flag. 
+          	  arbitratedYieldingB ? 0 : 1 ;
           while (true) // Repeating until thread termination is requested.
             {
           		if   // Exiting if requested.
@@ -180,23 +185,24 @@ public class Unicaster
           			);
             }
 
-	    	theUnicasterManager.removingV( // Removing self from manager.
-	    			this 
-	    			);
+        theSubcasterManager.stoppingEntryThreadsV();
+	    	theUnicasterManager.removingV( this ); // Removing self from manager.
 
         appLogger.info("run() exiting."); // Needed if thread self-terminates.
         }
 
-    protected void initializeV()
+    protected void initializingV()
 	    throws IOException
 	    {
-      	super.initializeV();
+      	super.initializingV();
+        theRandom= new Random(0);  // Initialize arbitratingYieldB().
+	  	  arbitratedYieldingB= arbitratingYieldB();
 	      addB( 	RoundTripTimeNamedInteger= new NamedInteger( 
 			      		theDataTreeModel, "Round-Trip-Time-ns", 0 
 			      		)
 	      			);
-	  	  arbitratedYieldingB= arbitratingYieldB();
-	    	
+	  	  
+		    addB( theSubcasterManager ); // Adding to our list.
 	    	}
 
     private void tryingPingSendV() throws IOException
@@ -330,20 +336,26 @@ public class Unicaster
         It returns true when this peer should yield,
         and false when it should not.
 
-        This method is not designed to be fair, but to simply resolve conflicts.
-        It is used to resolve ping-ping conflicts,
-        putting two connected peers in complementary parts of their
-        ping-reply protocols.
+        This method is not designed to be fair, 
+        but to simply help resolve conflicts quickly.
+        When used it put two connected peers into
+        complementary parts of their ping-reply protocols.
+        It is used:
+        * When two connected Unicaster threads start.
+        * To resolve ping-ping conflicts, which is when
+          two connected Unicasters somehow end up in
+          the same parts of their protocols.
 
-        It is based on comparing each peer's address information.
+        This method is based on comparing each peer's address information.
         Presently it uses port information.
         ?? It should probably use something more unique,
-        such as IP address or other unique ID number.  
+        such as IP address or other unique ID number,
+        but one's own IP address is more difficult to get than port.  
         */
       {
         boolean yieldB;  // Storage for result.
         int addressDifferenceI=  // Calculate port difference.
-          remoteInetSocketAddress.getPort() - PortManager.getLocalPortI();
+          getKeyK().getPort() - PortManager.getLocalPortI();
         if ( addressDifferenceI != 0 )  // Handling ports unequal.
           yieldB= ( addressDifferenceI < 0 );  // Lower ported peer yields.
           else  // Handling rare case of ports equal.

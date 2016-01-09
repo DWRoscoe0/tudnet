@@ -92,7 +92,6 @@ public class ConnectionManager
     // Injected instance variables, all private.
 	    
 			private AppGUIFactory theAppGUIFactory;
-	    private ConnectionFactory theConnectionFactory;
 	    
 	  	private UnicasterManager theUnicasterManager;
 
@@ -127,13 +126,13 @@ public class ConnectionManager
 	
 
 
-    public ConnectionManager(   // Constructor.
-    		AppGUIFactory theAppGUIFactory
-        ,ConnectionFactory theConnectionFactory
-        ,DataTreeModel theDataTreeModel
-    		,LockAndSignal cmThreadLockAndSignal
-    		,PacketQueue multicasterToConnectionManagerPacketQueue
-    		,PacketQueue unconnectedReceiverToConnectionManagerPacketQueue
+    public ConnectionManager(  // Constructor.
+    		AppGUIFactory theAppGUIFactory,
+    		UnicasterManager theUnicasterManager,
+        DataTreeModel theDataTreeModel,
+    		LockAndSignal cmThreadLockAndSignal,
+    		PacketQueue multicasterToConnectionManagerPacketQueue,
+    		PacketQueue unconnectedReceiverToConnectionManagerPacketQueue
     		)
       {
         super(  // Constructing base class.
@@ -144,7 +143,7 @@ public class ConnectionManager
 
         // Storing other dependencies injected into this class.
   	    this.theAppGUIFactory= theAppGUIFactory;
-        this.theConnectionFactory= theConnectionFactory;
+  	    this.theUnicasterManager= theUnicasterManager; 
   	    this.cmThreadLockAndSignal= cmThreadLockAndSignal;
   	    this.multicasterToConnectionManagerPacketQueue=
   	    		multicasterToConnectionManagerPacketQueue;
@@ -163,7 +162,7 @@ public class ConnectionManager
         all the threads that use it are recreated if that occurs.
         */
       {
-    		initializeV();  // Do non-injection initialization.
+    		initializingV();  // Doing non-injection initialization.
 
         processingInputsAndExecutingEventsV(); // Until thread termination...
           // ...is requested.
@@ -171,15 +170,15 @@ public class ConnectionManager
         stoppingAllThreadsV();
         }
 
-    private void initializeV()
+    private void initializingV()
     	// This method does non-injection initialization.
       {
-		    theUnicasterManager= theAppGUIFactory.getUnicasterManager();
-		    addB( theUnicasterManager ); // Adding to our list.
-				try { 
+		    addB( theUnicasterManager ); // Adding UnicasterManager to our list.
+
+				try { // Doing this here is a bit of a kludge.
 					  multicastInetAddress= InetAddress.getByName("239.255.0.0"); }
 				  catch ( UnknownHostException e ) { 
-          	Globals.logAndRethrowAsRuntimeExceptionV( "run()", e );
+          	Globals.logAndRethrowAsRuntimeExceptionV( "initializingV()", e );
 				  }
     		}
 
@@ -226,7 +225,7 @@ public class ConnectionManager
     private void stoppingAllThreadsV()
       // Possibly use a different stop order??
       {
-        theUnicasterManager.stoppingPeerThreadsV();
+        theUnicasterManager.stoppingEntryThreadsV();
 
         stoppingUnicastReceiverThreadV();
         stoppingMulticasterThreadV(); 
@@ -264,10 +263,10 @@ public class ConnectionManager
 		  {
 		    try { // Creating a new unconnected DatagramSocket and using it.
 		      unconnectedDatagramSocket= // Construct socket for UDP io.
-		      	theConnectionFactory.makeDatagramSocket((SocketAddress)null);
+		      		theAppGUIFactory.makeDatagramSocket((SocketAddress)null);
 		      unconnectedDatagramSocket.setReuseAddress(true);
 		      unconnectedDatagramSocket.bind( // Binding socket to...
-		    		theConnectionFactory.makeInetSocketAddress(
+		      	theAppGUIFactory.makeInetSocketAddress(
 		          PortManager.getLocalPortI()  // ...app's local port.
 		          ) // Note, the IP is not defined.
 		        );
@@ -370,7 +369,7 @@ public class ConnectionManager
     // Makes one attempt to create theMulticastSocket.
 	  {
 	    try { // Creating a new unconnected DatagramSocket and using it.
-	    	theMulticastSocket= theConnectionFactory.makeMulticastSocket(
+	    	theMulticastSocket= theAppGUIFactory.makeMulticastSocket(
 		      PortManager.getDiscoveryPortI()  // ...bound to Discovery port.
 		      );
 	      }
@@ -386,7 +385,7 @@ public class ConnectionManager
 
     private void startingMulticasterThreadV()
       {
-    		Multicaster theMulticaster= theConnectionFactory.makeMulticaster(
+    		Multicaster theMulticaster= theAppGUIFactory.makeMulticaster(
 		      theMulticastSocket
 		      ,multicasterToConnectionManagerPacketQueue // ...receive queue,...
 		      ,multicastInetAddress
@@ -478,7 +477,7 @@ public class ConnectionManager
         		);
         InetSocketAddress peerInetSocketAddress=  // Build packet's address.
           //theDatagramPacket.getSocketAddress();
-          ConnectionFactory.makeInetSocketAddress(
+        		AppGUIFactory.makeInetSocketAddress(
             theDatagramPacket.getAddress(),
             theDatagramPacket.getPort()
             );

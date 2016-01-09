@@ -2,19 +2,14 @@ package allClasses;
 
 //import static allClasses.Globals.appLogger;
 
-
 public class MutableList 
 
-	/* This class is a NamedList which can be changed.
+	/* This class is a NamedList whose contents can be changed.
 
-	  This class includes methods for changing the List
-	  and a DataTreeModel.Talker class instance
-	  to inform TreeModelListeners of those changes.
-
-	  Except for the constructor, the methods in this class
-	  should be called only from the Event Dispatch Thread (EDT).
-	  
-	  ?? Synchronize some of these methods?
+	  This class includes methods for changing the List.
+	  It uses a DataTreeModel to inform TreeModelListeners of those changes.
+	  For thread safety some methods are synchronized and 
+	  switch to the Event Dispatch Thread (EDT) to call the TreeModel methods.
 	  */
 
   extends NamedList

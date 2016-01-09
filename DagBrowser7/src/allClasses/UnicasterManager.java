@@ -4,12 +4,14 @@ import static allClasses.Globals.appLogger;
 
 import java.net.DatagramPacket;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.util.Iterator;
 
 public class UnicasterManager
 
-	extends MutableListWithMap<SocketAddress,NetCasterValue>
+	extends MutableListWithMap< 
+		InetSocketAddress, // Key for map.
+		NetCasterValue, // Value for map. 
+		Unicaster // DataNode in Value.
+		>
 
 	/* This class manages the app's Unicasters.
 	  It provides methods for creating them, storing references to them,
@@ -38,12 +40,11 @@ public class UnicasterManager
       ?? This doesn't need to be a concurrent map, but it doesn't hurt.
      */
 
-		private ConnectionFactory theConnectionFactory; // Our factory.
+		private final AppGUIFactory theAppGUIFactory;
 	
 		public UnicasterManager(  // Constructor. 
 	      DataTreeModel theDataTreeModel
-	      ,ConnectionFactory theConnectionFactory
-        ,ConnectionManager theConnectionManager
+	      ,AppGUIFactory theAppGUIFactory
 	      )
 	    {
 	  		// Superclass's injections.
@@ -54,30 +55,8 @@ public class UnicasterManager
 	      		);
 
 	      // This class's injections.
-	  		this.theConnectionFactory= theConnectionFactory;
+	      this.theAppGUIFactory= theAppGUIFactory;
 	      }
-
-    public synchronized void removingV( Unicaster thisUnicaster ) 
-      /* This method's job is to remove the thisUnicaster from
-	      this MutableList and the HashMap.
-        It is called when thisUnicaster is terminating.
-        */
-	    {
-	    	if  // Removing from DataNode List if it's there.
-	      	( ! removeB( thisUnicaster ) )
-	      	appLogger.error("UnicasterManager.removingV(..): removeB(..) failed");
-
-		  	InetSocketAddress theInetSocketAddress=
-		      thisUnicaster.getInetSocketAddress();
-		    childHashMap.remove( // Remove from Map.
-		      theInetSocketAddress
-		      );
-		    }
-
-    public String getValueString( ) // This is for displaying Unicaster count.
-      {
-    	  return Integer.toString(getChildCount( ));
-        }
 
     public synchronized Unicaster tryGettingUnicaster( 
     		SockPacket theSockPacket 
@@ -113,7 +92,7 @@ public class UnicasterManager
             childHashMap.get(peerInetSocketAddress);
         Unicaster theUnicaster;
         if ( theNetCasterValue != null ) 
-	        theUnicaster= theNetCasterValue.getD(); 
+	        theUnicaster= theNetCasterValue.getDataNodeD(); 
         else
         	theUnicaster= null;
         return theUnicaster;
@@ -124,51 +103,15 @@ public class UnicasterManager
 	  		)
 	    { 
     	  appLogger.info( "Creating new Unicaster." );
-	      final NetCasterValue resultNetCasterValue=  // Building new peer. 
-	        theConnectionFactory.makeUnicasterValue(
-	        	peerInetSocketAddress
-	          );
+    	  UnicasterFactory theUnicasterFactory=
+    	  		theAppGUIFactory.makeUnicasterFactory( peerInetSocketAddress );
+	      final NetCasterValue resultNetCasterValue=  // Getting the Unicaster. 
+	      	theUnicasterFactory.getNetCasterValue();
 	      addingV( // Adding new Unicaster to data structures.
 	          peerInetSocketAddress, resultNetCasterValue
 	          );
-	      resultNetCasterValue.getEpiThread().startV(); // Start it's thread.
-	      return resultNetCasterValue.getD();
+	      resultNetCasterValue.getEpiThread().startV(); // Start its thread.
+	      return resultNetCasterValue.getDataNodeD();
 	      }
-
-    public void stoppingPeerThreadsV()
-      /* This method terminates all of the Unicaster threads in its collection.
-        It does this in 2 loops: the first to request terminations,
-        and a second to wait for the terminations to complete.
-        This is done in anticipation of when termination will require
-        a handshake, requiring significant time,
-        and therefore would benefit from parallel termination.
-        
-        ?? Maybe this method belongs back in the ConnectionManager.
-        */
-      {
-    	  // Creating both iterators now before 
-    	  //   Unicasters begin disappearing from Map.
-	      Iterator<NetCasterValue> stopIteratorOfNetCasterValues=
-            childHashMap.values().iterator();
-	      Iterator<NetCasterValue> joinIteratorOfNetCasterValues=
-            childHashMap.values().iterator();
-
-        while  // Requesting termination of all Unicasters.
-          (stopIteratorOfNetCasterValues.hasNext())
-          {
-            NetCasterValue theNetCasterValue= 
-            		stopIteratorOfNetCasterValues.next();
-            theNetCasterValue.getEpiThread().stopV(); // Requesting termination. 
-            }
-
-        while  // Waiting for completion of termination of all Unicasters.
-          (joinIteratorOfNetCasterValues.hasNext())
-          {
-            NetCasterValue theNetCasterValue= 
-            		joinIteratorOfNetCasterValues.next();
-            theNetCasterValue.getEpiThread().joinV(); // Awaiting termination 
-            //joinIteratorOfNetCasterValues.remove(); // Removing from HashMap...
-            }
-        }
 
   	}

@@ -5,7 +5,9 @@ import java.net.InetSocketAddress;
 
 public class NetCasterValue
 
-   extends DataNodeAndThreadValue< Unicaster >
+	extends DataNodeWithKeyAndThreadValue< Unicaster, InetSocketAddress >
+
+  // Shouldn't this be UnicasterValue???
 
   {
 

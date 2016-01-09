@@ -53,7 +53,7 @@ public class SystemsMonitor
 		private long minCountL= 2; // Using 2 to make initial expansion pretty.
 		private long midCountL;
 
-		private LockAndSignal theLockAndSignal= new LockAndSignal(false);
+		private LockAndSignal theLockAndSignal= new LockAndSignal();
 		  // Used for waiting.
 
     Random theRandom= new Random(0);  // Initialize random # generator.

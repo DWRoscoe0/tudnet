@@ -2,19 +2,19 @@ package allClasses;
 
 public class SubcasterValue
 
-  extends DataNodeAndThreadValue< Unicaster >
+	extends DataNodeWithKeyAndThreadValue< Subcaster, String >
 
   {
 
     public SubcasterValue(  // Constructor. 
         String subcasterString,
-        Unicaster theUnicaster
+        Subcaster theSubcaster
         )
       {
     	  super( 
-    	  		theUnicaster,  /// change this to Subcaster.
+    	  		theSubcaster,
         		new EpiThread( 
-  		          theUnicaster,
+  		          theSubcaster,
   		          "SubcasterValue-"+subcasterString
   		          )
     	  		);

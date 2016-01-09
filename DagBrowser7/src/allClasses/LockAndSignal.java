@@ -157,9 +157,6 @@ public class LockAndSignal  // Combination lock and signal class.
       
     private boolean signalB= false;  // NOTIFICATION flag.
 
-    LockAndSignal( boolean aB )  // Constructor.
-      { setV( aB ); }
-
 
     // Input wait methods, of which there are several.
 

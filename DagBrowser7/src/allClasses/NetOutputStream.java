@@ -10,6 +10,10 @@ public class NetOutputStream
 	extends OutputStream
 
   /* This class is a network output stream, at first generating UDP packets.
+    If used by a Unicaster then packets generated will be queued to the Sender.
+    If used by a Subcaster then packets generated will be queued to 
+    the parent Unicaster and the unicasterInetAddress and unicasterPortI
+    will be ignored.
     
     ?? Eventually this will be used with DataOutputStream for writing
     particular types to the stream, as follows:
@@ -22,51 +26,52 @@ public class NetOutputStream
 
 	{
 	  // Injected dependency variables.
-		PacketQueue netcasterToSenderPacketQueue;
-		InetAddress theInetAddress = null;
-	  int thePortI = 0;
-		NamedInteger counterNamedInteger;
+		PacketQueue outputPacketQueue; // This is the queue of either
+		  // the main Sender thread, or the parent NetOutputStream. 
+		InetAddress unicasterInetAddress = null;
+	  int unicasterPortI = 0;
+		NamedInteger packetCounterNamedInteger;
 
 		public static final int DEFAULT_BUFFER_SIZE = 1024;
 	  
-		byte[] bufferBytes= new byte[DEFAULT_BUFFER_SIZE];
-  
 		int bufferSizeI= 0; // 0 forces initial flush() to allocate bufferBytes.
-		int indexI = 0; // 0 prevents sending any packet during initial flush().
+		byte[] bufferBytes= null;
+		int indexI= 0; // 0 prevents sending any packet during initial flush().
 		DatagramPacket theDatagramPacket = null;
     
 		NetOutputStream(  // Constructor.
-				PacketQueue netcasterToSenderPacketQueue, 
-				InetAddress theInetAddress, 
-				int thePortI,
-				NamedInteger counterNamedInteger
+				PacketQueue outputPacketQueue, 
+				InetAddress unicasterInetAddress, // Ignored if a Subcaster stream.
+				int unicasterPortI, // Ignored if a Subcaster stream.
+				NamedInteger packetCounterNamedInteger
 				)
 			{
-				this.netcasterToSenderPacketQueue= netcasterToSenderPacketQueue;
-				this.theInetAddress = theInetAddress;
-			  this.thePortI = thePortI;		
-				this.counterNamedInteger= counterNamedInteger;
+				this.outputPacketQueue= outputPacketQueue;
+				this.unicasterInetAddress= unicasterInetAddress;
+			  this.unicasterPortI= unicasterPortI;		
+				this.packetCounterNamedInteger= packetCounterNamedInteger;
         }
 
 		public PacketQueue getPacketQueue () 
-		  { return netcasterToSenderPacketQueue; }
+		  { return outputPacketQueue; }
 
 		public NamedInteger getCounterNamedInteger() 
-		  { return counterNamedInteger; }
+		  { return packetCounterNamedInteger; }
 
 		public void write(int value) throws IOException
 		  // This writes one byte to the stream.
 			{
-				if (indexI >= bufferSizeI) // Flushing if there is no room in buffer. 
+				if (indexI >= bufferSizeI) // Flushing buffer if there is no more room. 
 				  flush();
-				bufferBytes[indexI] = (byte) (value & 0x0ff); // Storing byte.
+				bufferBytes[indexI]=  // Storing byte in buffer.
+						(byte) (value & 0x0ff);
 				indexI++; // Advancing buffer index.
 				}
 	  
     public void flush() throws IOException
       /* This writes any bytes written to the buffer so far, if any,
         and prepares another buffer to receive more bytes.
-        
+
         ?? Add a variation of this which takes a time limit limitMsL,
         which is the maximum number of milliseconds before
         an actual physical flush() happens.  
@@ -78,13 +83,13 @@ public class NetOutputStream
 			  if (indexI > 0) // Sending packet if any bytes in buffer.
 			  	{
 					  theDatagramPacket = new DatagramPacket(
-					  		bufferBytes, 0, indexI, theInetAddress, thePortI
+					  		bufferBytes, 0, indexI, unicasterInetAddress, unicasterPortI
 					  		);
-		        SockPacket aSockPacket= new SockPacket(theDatagramPacket);
-		        netcasterToSenderPacketQueue.add( // Queuing packet for sending.
-		            aSockPacket
+		        SockPacket theSockPacket= new SockPacket(theDatagramPacket);
+		        outputPacketQueue.add( // Queuing packet for sending.
+		            theSockPacket
 		            );
-		  			counterNamedInteger.addValueL( 1 ); // Counting sent packet.
+		  			packetCounterNamedInteger.addValueL( 1 ); // Counting sent packet.
 			  		}
     		bufferBytes = new byte[DEFAULT_BUFFER_SIZE]; // Allocating new buffer.
     		bufferSizeI= bufferBytes.length; 

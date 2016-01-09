@@ -1,147 +1,135 @@
 package allClasses;
 
+import java.io.IOException;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
+import java.net.SocketAddress;
+import java.net.SocketException;
 
 import javax.swing.JFrame;
 
 public class AppGUIFactory {  // For classes with GUI lifetimes.
 
-  /* This is the factory for all classes with AppGUI lifetime.
-    It wires together the 2nd level of the application.
+  /* This is the factory for all classes with GUI scope.
+    Most have lifetimes close to the AppGUI lifetime, but some are shorter.
+    The app has a maximum of one instance of this factory.
+    
+    This factory wires together the 2nd level of the application.
     The classes constructed here are mainly the ones 
-    needed for presenting a GUI to the user,
-    but it also builds other classes such as the ConnectionManager which
-    is not part of the GUI, but it has the same lifetime.
+    used to present a GUI to the user and must of the GUI content.
+    
+    There is only one AppGUI, 
+    and all its code could have been put in the AppFactory,
+    but a GUI is not always created,
+    so it made sense to divide the code between the App and GUI factory classes.
+
     */
 
-  // private injected dependencies.
+  // Injected dependencies that need saving for later.
+  private final Shutdowner theShutdowner;
 
-  // public unconditional singleton storage.
-  private final AppGUI theAppGUI;
-  private final DataTreeModel theDataTreeModel;
-  
-	//private unconditional singleton storage.
+	// Other objects that will be needed later.
   private final UnicasterManager theUnicasterManager;
-  private final LockAndSignal theGUILockAndSignal;
   private final LockAndSignal senderLockAndSignal;
   private final PacketQueue netcasterToSenderPacketQueue;
   private final PacketQueue unconnectedReceiverToConnectionManagerPacketQueue;
-
+  private final DataTreeModel theDataTreeModel;
+  private final AppGUI theAppGUI;
+  
   public AppGUIFactory(  // Factory constructor.
-  		AppFactory theAppFactory,
+  		AppFactory XtheAppFactory, // Not needed??
   		Shutdowner theShutdowner,
   		AppInstanceManager theAppInstanceManager
   		)
-  	// This constructor builds the unconditional singletons.
+  	// This builds all objects that are or comprise unconditional singletons.
+    // Note, no non-static maker methods are called from here.
     {
-  	  senderLockAndSignal= makeLockAndSignal();
-	    netcasterToSenderPacketQueue=
-	    		makePacketQueue(senderLockAndSignal);
-      DataRoot theDataRoot= new DataRoot( );
+  	  LockAndSignal senderLockAndSignal= new LockAndSignal();
+  	  PacketQueue netcasterToSenderPacketQueue= 
+  	  		new PacketQueue( senderLockAndSignal );
+      DataRoot theDataRoot= new DataRoot();
       MetaFileManager theMetaFileManager= new MetaFileManager( theDataRoot );
       MetaRoot theMetaRoot= new MetaRoot( theDataRoot, theMetaFileManager );
       MetaFileManager.Finisher theMetaFileManagerFinisher= 
-	      	new MetaFileManager.Finisher(
-	          theMetaFileManager,
-	          theMetaRoot
-	          );
-      theDataTreeModel= 
-      		new DataTreeModel( 
-		        theDataRoot, 
-		        theMetaRoot, 
-		        theMetaFileManagerFinisher, 
-		        theShutdowner
-		        );
-      ConnectionFactory theConnectionFactory= new ConnectionFactory( 
-      		this, 
-      		netcasterToSenderPacketQueue, 
-      		theDataTreeModel, 
-      		theShutdowner
-      		);
-	    LockAndSignal cmThreadLockAndSignal= makeLockAndSignal();
+      	new MetaFileManager.Finisher( theMetaFileManager, theMetaRoot );
+      DataTreeModel theDataTreeModel= new DataTreeModel( 
+        theDataRoot, theMetaRoot, theMetaFileManagerFinisher, theShutdowner 
+        );
+	    LockAndSignal cmThreadLockAndSignal= new LockAndSignal();
 	    PacketQueue multicasterToConnectionManagerPacketQueue=
-		      makePacketQueue(cmThreadLockAndSignal);
-	    unconnectedReceiverToConnectionManagerPacketQueue=
-		      makePacketQueue(cmThreadLockAndSignal);
-      ConnectionManager theConnectionManager= 
-          new ConnectionManager(
-            this, // the AppGuiFactory.
-            theConnectionFactory,
-            theDataTreeModel,
-      	    cmThreadLockAndSignal,
-      	    multicasterToConnectionManagerPacketQueue,
-      	    unconnectedReceiverToConnectionManagerPacketQueue
-      	    );
+	      new PacketQueue(cmThreadLockAndSignal);
+	    PacketQueue unconnectedReceiverToConnectionManagerPacketQueue=
+	      new PacketQueue(cmThreadLockAndSignal);
+      UnicasterManager theUnicasterManager= new UnicasterManager( 
+        	theDataTreeModel, this
+       		);
+	    ConnectionManager theConnectionManager= new ConnectionManager(
+        this, // the AppGuiFactory.
+        theUnicasterManager,
+        theDataTreeModel,
+  	    cmThreadLockAndSignal,
+  	    multicasterToConnectionManagerPacketQueue,
+  	    unconnectedReceiverToConnectionManagerPacketQueue
+  	    );
       EpiThread theConnectionManagerEpiThread=
-          makeEpiThread( theConnectionManager, "ConnMgr" );
-      theUnicasterManager= new UnicasterManager( 
-      		theDataTreeModel, 
-      		theConnectionFactory, 
-      		theConnectionManager
-      		);
+        AppGUIFactory.makeEpiThread( theConnectionManager, "ConnMgr" );
       SystemsMonitor theSystemsMonitor= new SystemsMonitor(theDataTreeModel);
       EpiThread theCPUMonitorEpiThread=
-          makeEpiThread( theSystemsMonitor, "SystemsMonitor" );
-      DataNode theInitialRootDataNode=  // Building first legal value.
-	        new InfogoraRoot( 
-	          new DataNode[] { // An array of all of the child DataNodes.
-	            new FileRoots(),
-	            new Outline( 0, theDataTreeModel ),
-	            theSystemsMonitor,
-	            theConnectionManager,
-	            new Infinitree( null, 0 )
-	            }
-	          );
-      DagBrowserPanel theDagBrowserPanel= 
-      		new DagBrowserPanel(
-      			theAppInstanceManager,
-		        theDataTreeModel,
-		        theDataRoot,
-		        theMetaRoot
-		        );
-      theGUILockAndSignal= makeLockAndSignal();
-      AppGUI.GUIDefiner theGUIDefiner=  
-      		new AppGUI.GUIDefiner( 
-      		  theGUILockAndSignal, 
-      		  theAppInstanceManager,
-      		  theDagBrowserPanel,
-		        this, // GUIDefiner gets to know the factory that made it. 
-		        theShutdowner
-		        );
-      theAppGUI= 
-      		new AppGUI( 
-		        theConnectionManagerEpiThread,
-		        theCPUMonitorEpiThread,
-		        theDataTreeModel,
-		        theInitialRootDataNode,
-		        theGUILockAndSignal,
-		        theGUIDefiner,
-		        theShutdowner
-		        );
+        AppGUIFactory.makeEpiThread( theSystemsMonitor, "SystemsMonitor" );
+      DataNode theInitialRootDataNode=  // Building DataNode tree.
+        new InfogoraRoot( 
+          new DataNode[] { // An array of all of the child DataNodes.
+            new FileRoots(),
+            new Outline( 0, theDataTreeModel ),
+            theSystemsMonitor,
+            theConnectionManager,
+            new Infinitree( null, 0 )
+            }
+          );
+      DagBrowserPanel theDagBrowserPanel= new DagBrowserPanel(
+    			theAppInstanceManager, theDataTreeModel, theDataRoot, theMetaRoot
+	        );
+      LockAndSignal theGUILockAndSignal= new LockAndSignal();
+      AppGUI.GUIDefiner theGUIDefiner= new AppGUI.GUIDefiner( 
+  		  theGUILockAndSignal, 
+  		  theAppInstanceManager,
+  		  theDagBrowserPanel,
+        this, // GUIDefiner gets to know the factory that made it. 
+        theShutdowner
+        );
+      AppGUI theAppGUI= new AppGUI( 
+        theConnectionManagerEpiThread,
+        theCPUMonitorEpiThread,
+        theDataTreeModel,
+        theInitialRootDataNode,
+        theGUILockAndSignal,
+        theGUIDefiner,
+        theShutdowner
+        );
+      
+      // Save in instance variables injected objects that are needed later.
+  	  this.theShutdowner= theShutdowner;
+  	  
+  	  // Save in instance variables other objects that are needed later.
+      this.theUnicasterManager= theUnicasterManager;
+      this.senderLockAndSignal= senderLockAndSignal;
+      this.netcasterToSenderPacketQueue= netcasterToSenderPacketQueue;
+      this.unconnectedReceiverToConnectionManagerPacketQueue=
+      		unconnectedReceiverToConnectionManagerPacketQueue;
+      this.theDataTreeModel= theDataTreeModel;
+      this.theAppGUI= theAppGUI;
       }
 
-  // Unconditional getter methods with null checking.
-  // Some might be singletons.
-
-  public AppGUI getAppGUI()
-  	{ 
-  		return (AppGUI)Globals.fastFailNullCheckObject( theAppGUI );
-  	  }
+  // Unconditional singleton getter methods with null checking.
+  // There shouldn't be more than one.
+  // More than one indicates cyclic dependencies, which are undesirable.
   
-  public UnicasterManager getUnicasterManager()
-		{ 
-	  	return (UnicasterManager)Globals.fastFailNullCheckObject( 
-	  			theUnicasterManager
-	  			);
-	  	}
-
-  public PacketQueue getNetcasterToSenderPacketQueue()
-		{ 
-	  	return (PacketQueue)Globals.fastFailNullCheckObject( 
-	  			netcasterToSenderPacketQueue 
-	  			);
-		  }
+  public AppGUI getAppGUI() // This is the main getter of this factory.
+  	{ 
+  		return Globals.fastFailNullCheckT( theAppGUI );
+  	  }
 
   // Conditional singleton getter methods and storage.
   // None.
@@ -149,12 +137,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
   
   // Maker methods which construct something with new-operator each time called.
   // These are for classes with multiple instances in space or time.
-  
-	public static LockAndSignal makeLockAndSignal()
-		{ return 	new LockAndSignal(false); }
-
-  public PacketQueue makePacketQueue(LockAndSignal threadLockAndSignal)
-  	{ return new PacketQueue(threadLockAndSignal); }
+  // ?? fastFailNullCheckT(..) might no longer be needed.
 
 	public static EpiThread makeEpiThread( Runnable aRunnable, String nameString )
 	  { return new EpiThread( aRunnable, nameString ); }
@@ -165,7 +148,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 	public AppGUI.InstanceCreationRunnable makeInstanceCreationRunnable( 
   		JFrame aJFrame
   		)
-	  // This should be a singleton because aJFrame is always the same??
+	  // This should be a singleton because aJFrame is always only one??
   	{ return theAppGUI.new InstanceCreationRunnable( aJFrame ); }
 
   public EpiThread makeSenderEpiThread( 
@@ -173,7 +156,8 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
   		)
 	  {
 	    Sender theSender= makeSender( unconnectedDatagramSocket );
-	    EpiThread theSenderEpiThread= makeEpiThread( theSender, "Sender" );
+	    EpiThread theSenderEpiThread= 
+	    		AppGUIFactory.makeEpiThread( theSender, "Sender" );
 	    return theSenderEpiThread;
 	    }
   
@@ -181,7 +165,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 			DatagramSocket unconnectedDatagramSocket 
 			)
 	  {
-			Globals.fastFailNullCheckObject(unconnectedDatagramSocket);
+			Globals.fastFailNullCheckT( unconnectedDatagramSocket );
 			return new Sender( 
 	      unconnectedDatagramSocket,
 	      netcasterToSenderPacketQueue,
@@ -196,7 +180,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 			UnconnectedReceiver theUnconnectedReceiver= 
 					makeUnconnectedReceiver( unconnectedDatagramSocket );
 			EpiThread theUnconnectedReceiverEpiThread= 
-					makeEpiThread( theUnconnectedReceiver, "UcRcvr" );
+					AppGUIFactory.makeEpiThread( theUnconnectedReceiver, "UcRcvr" );
 	    return theUnconnectedReceiverEpiThread;
 	    }
 	  
@@ -204,7 +188,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
   		DatagramSocket unconnectedDatagramSocket
   		)
 	  {
-			Globals.fastFailNullCheckObject(unconnectedDatagramSocket);
+			Globals.fastFailNullCheckT( unconnectedDatagramSocket );
 			return new UnconnectedReceiver( 
 	          unconnectedDatagramSocket,
 	          unconnectedReceiverToConnectionManagerPacketQueue,
@@ -227,5 +211,86 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 		  	new EpiThread( theMulticastReceiver, "McRcvr" );
 		  return theMulticastReceiverEpiThread;
 	    }
+
+	public InetSocketAddress makeInetSocketAddress( int multicastPortI )
+	  // This is for the unconnected DatagramSocket.
+		{ return new InetSocketAddress( multicastPortI ); }
+
+	public static InetSocketAddress makeInetSocketAddress( 
+			InetAddress theInetAddress, int multicastPortI 
+			)
+	  // This SocketAddress is for the Multicaster.
+		{ return new InetSocketAddress( theInetAddress, multicastPortI ); }
+
+  public DatagramSocket makeDatagramSocket( SocketAddress aSocketAddress )
+    throws SocketException
+    { return new DatagramSocket( aSocketAddress ); }
+
+  public MulticastSocket makeMulticastSocket( int portI )
+    throws IOException
+    { return new MulticastSocket( portI ); }
+
+	public NetInputStream makeNetcasterNetInputStream(
+			PacketQueue receiverToNetCasterPacketQueue
+			)
+	  {
+			NamedInteger packetsReceivedNamedInteger=  
+					new NamedInteger( theDataTreeModel, "Packets-Received", 0 );
+	  	return new NetInputStream(
+	  	  receiverToNetCasterPacketQueue, packetsReceivedNamedInteger 
+	  		);
+	  	}
+	
+	public NetOutputStream makeNetcasterNetOutputStream(
+			InetAddress remoteInetAddress, int remotePortI
+	    )
+	  {
+		  NamedInteger packetsSentNamedInteger= 
+					new NamedInteger( theDataTreeModel, "Packets-Sent", 0 );
+		  return new NetOutputStream(
+		  	netcasterToSenderPacketQueue, 
+		  	remoteInetAddress, 
+		  	remotePortI, 
+		  	packetsSentNamedInteger
+	      );
+	    }
+	
+	public Multicaster makeMulticaster(
+			MulticastSocket theMulticastSocket,
+			PacketQueue multicasterToConnectionManagerPacketQueue,
+			InetAddress multicastInetAddress
+	    )
+	  { 
+		  LockAndSignal multicasterLockAndSignal= new LockAndSignal();  
+		  PacketQueue multicastReceiverToMulticasterPacketQueue= 
+		  		new PacketQueue( multicasterLockAndSignal );
+			int multicastPortI= PortManager.getDiscoveryPortI();
+			
+		  return new Multicaster(
+		  	multicasterLockAndSignal,
+	  		makeNetcasterNetInputStream( multicastReceiverToMulticasterPacketQueue ),
+	  		makeNetcasterNetOutputStream( multicastInetAddress, multicastPortI ),
+	  		theDataTreeModel,
+	  		AppGUIFactory.makeInetSocketAddress( 
+	  				multicastInetAddress, multicastPortI 
+	  				),
+	  		theMulticastSocket,
+	      multicasterToConnectionManagerPacketQueue,
+	      theUnicasterManager
+	      ); 
+	    }
+	
+	public UnicasterFactory makeUnicasterFactory(
+	    InetSocketAddress peerInetSocketAddress
+	    )
+	  {
+			return new UnicasterFactory( 
+				this,
+				theUnicasterManager,
+				peerInetSocketAddress,
+				theDataTreeModel, 
+				theShutdowner 
+				);
+	  	}
 
   } // class AppGUIFactory.

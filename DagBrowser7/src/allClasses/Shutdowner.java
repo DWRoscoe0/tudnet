@@ -114,10 +114,10 @@ public class Shutdowner
   {
 
 	  private LockAndSignal appShutdownRequestedLockAndSignal= 
-	  		new LockAndSignal(false); // Requested by JVM shutdown hook or app.
+	  		new LockAndSignal(); // Requested by JVM shutdown hook or app.
 
 	  private LockAndSignal appShutdownDoneLockAndSignal= 
-	  		new LockAndSignal(false); // Shutdown, excluding libs and JVM, is done.
+	  		new LockAndSignal(); // Shutdown, excluding libs and JVM, is done.
 
 	  private boolean shutdownUnderwayB= false;
 	  

@@ -125,7 +125,7 @@ public class Multicaster
 	  	      theNetOutputStream,
 	  	  		theDataTreeModel,
 		        theInetSocketAddress,
-		        "Multicaster-at-"
+		        "Multicaster"
 	      		);
 
 	  		// Store remaining injected dependencies.
@@ -238,7 +238,7 @@ public class Multicaster
          	*/
         {
 	      	try { // Operations that might produce an IOException.
-          	initializeV();  // Do non-injection initialization.
+          	initializingV();  // Do non-injection initialization.
   	      	startingMultcastReceiverThreadV();
 
             while (true) // Repeating until thread termination is requested.
@@ -369,7 +369,7 @@ public class Multicaster
        	    }
 	      }
 
-	  protected void initializeV()
+	  protected void initializingV()
 	    throws IOException
 	    {
 		    this.groupInetAddress = theInetSocketAddress.getAddress();
@@ -387,7 +387,7 @@ public class Multicaster
 		    theMulticastSocket.setLoopbackMode( true );  // Disable loopback.
 		    theMulticastSocket.setTimeToLive( ttl );
 
-	  	  super.initializeV();
+	  	  super.initializingV();
 	  	  }
 	  
 	  private boolean multicastActiveB= false;

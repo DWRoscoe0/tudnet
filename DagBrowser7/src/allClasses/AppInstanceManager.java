@@ -598,7 +598,7 @@ public class AppInstanceManager {
                       +e.toString()
                       +"  Will retry after 1 second." 
                       ); 
-                    (new LockAndSignal(false)).doWaitWithTimeOutE(1000);
+                    (new LockAndSignal()).doWaitWithTimeOutE(1000);
                       // Wait 1 second.
                     }
         return copySuccessB;

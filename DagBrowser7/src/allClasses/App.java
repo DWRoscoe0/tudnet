@@ -4,25 +4,26 @@ package allClasses;
 
 public class App { // The App, especially pre-GUI stuff.  See runV(..) for details.
 
+  AppFactory theAppFactory;
   Shutdowner theShutdowner;
   AppInstanceManager theAppInstanceManager;
-  AppFactory theAppFactory;
 
   public App(   // Constructor.  For app creation.
+      AppFactory theAppFactory,
       Shutdowner theShutdowner,
-      AppInstanceManager theAppInstanceManager,
-      AppFactory theAppFactory
+      AppInstanceManager theAppInstanceManager
       )
     {
+  		this.theAppFactory= theAppFactory;
       this.theShutdowner= theShutdowner;
       this.theAppInstanceManager= theAppInstanceManager;
-      this.theAppFactory= theAppFactory;
       }
 
   public void runV()  // This is for app Running.
     /* This method does any executable instance management it can.
       If the instance manager says it's okay then
       it presents the GUI to the user and interacts with him or her.
+      At the same time normal network operations are done.
       When it's time to exit it uses the Shutdowner to
       do any final shutdown jobs.
      */
@@ -34,9 +35,10 @@ public class App { // The App, especially pre-GUI stuff.  See runV(..) for detai
 
         { // Presenting GUI to user and interacting.
       	  AppGUIFactory theAppGUIFactory= theAppFactory.lazyGetAppGUIFactory();
-          AppGUI theAppGUI= // Getting GUI manager singleton.
+          AppGUI theAppGUI= // Getting GUI singleton.
               theAppGUIFactory.getAppGUI();
-          theAppGUI.runV(); // Running GUI manager until finished.
+          theAppGUI.runV(); // Running GUI until finished.
+          	// Network operations happen at this time also.
           }
 
   		//appLogger.info("App calling Shutdowner.finishV().");

@@ -11,19 +11,14 @@ import allClasses.LockAndSignal.Input;
 
 public class NetCaster 
 
-	extends MutableList
+	extends DataNodeWithKey< InetSocketAddress >
 
 	// This class is the superclass of Unicaster and Multicaster.
 
 	{
-		protected InetSocketAddress remoteInetSocketAddress;  // Address of peer.
     private LockAndSignal netcasterLockAndSignal;
 			// LockAndSignal for inputs to this thread.  It is used in
       // the construction of the following queue. 
-    
-    // Some detail-containing child sub-objects.  Others are in streams.
-	    protected NamedMutable addressNamedMutable;
-	    protected NamedMutable portNamedMutable;
 
     protected NetOutputStream theNetOutputStream;
 		protected NetInputStream theNetInputStream;
@@ -36,46 +31,41 @@ public class NetCaster
 	      NetOutputStream theNetOutputStream,
 	      DataTreeModel theDataTreeModel,
 	      InetSocketAddress remoteInetSocketAddress,
-	      String namePrefixString
+	      String typeString
 	      )
 	    {
 	  		// Superclass's injections.
-	      super( // Constructing MutableList superclass.
-		        theDataTreeModel,
-		        namePrefixString + 
-    	          remoteInetSocketAddress.getAddress() +
-    	          ":" + remoteInetSocketAddress.getPort(),
-	          new DataNode[]{} // Initially empty of children.
-	      		);
+	  	  super( // Constructing DataNodeWithKey superclass.
+			      theDataTreeModel,
+			      typeString,
+			      remoteInetSocketAddress // key K
+			      );
 
 	      // This class's injections.
 	      this.netcasterLockAndSignal= netcasterLockAndSignal;
-	      this.remoteInetSocketAddress= remoteInetSocketAddress;
 	      this.theNetInputStream= theNetInputStream;
 	      this.theNetOutputStream= theNetOutputStream;
 
         packetIDI= 0; // Setting starting packet sequence number.
-		    portNamedMutable= new NamedMutable( 
-			    theDataTreeModel, "Port", "" + remoteInetSocketAddress.getPort()
-			  	);
 	      }
 
-    protected void initializeV()
+    protected void initializingV()
 	    throws IOException
 	    {
-    		addB( 	addressNamedMutable= new NamedMutable( 
+    		InetSocketAddress remoteInetSocketAddress= getKeyK();
+    		addB( 	new NamedMutable( 
 		        theDataTreeModel, 
 		        "IP-Address", 
 		        "" + remoteInetSocketAddress.getAddress()
 		      	)
 					);
-		    addB( 	portNamedMutable );
+		    addB( 	new NamedMutable( 
+				    theDataTreeModel, "Port", "" + remoteInetSocketAddress.getPort()
+				  	) );
+
 		    addB( 	theNetOutputStream.getCounterNamedInteger() );
 		    addB( 	theNetInputStream.getCounterNamedInteger());
 	    	}
-    
-		InetSocketAddress getInetSocketAddress()
-			{ return remoteInetSocketAddress; }
 
     protected Input testWaitInIntervalE( long startMsL, long lengthMsL) 
     		throws IOException

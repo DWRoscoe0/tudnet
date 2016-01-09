@@ -84,30 +84,34 @@ public class EpiThread
 
     public void joinV()  // Waits for this thread to terminate.
       /* Thread.currentThread() calls this method to wait for the
-        termination of the "this" EpiThread.
+        termination of this's EpiThread.
         this.stopV() should already have been called.
-        It will not return until the "this" EpiThread terminates.
+        This method will not return until the this's EpiThread terminates.
         It uses this.join() to wait until that termination completes.
-        If Thread.currentThread().interrupt() is called by another Thread
-        and interrupts the join(), then Thread.currentThread().interrupt()
-        is called again to set the thread's interrupt status,
-        and the method loops to do another join().
-        This repeats until join() returns without being interrupted,
-        indicating the "this" EpiThread has terminated.
+        
+        When this method returns, Thread.currentThread()'s interrupt status 
+        will set if it was set when the method began or became set
+        while the method was executing.  
+        Otherwise Thread.currentThread()'s interrupt status will be false.
         */
       {
-        for  // Looping until EpiThread thread has terminated.
-          ( boolean threadTerminatedB= false ; !threadTerminatedB ; )
-          try { // Blocking and handling how blocking ends.
-              join();  // Blocking.
-              // Being here means EpiThread thread terminated.
-              threadTerminatedB= true;  // Setting flag to terminate loop.
+    	  boolean currentThreadInteruptStatusB= false;
+        for  // Looping until this's thread has terminated.
+          ( boolean thisThreadTerminatedB= false ; 
+        		!thisThreadTerminatedB ; 
+        		)
+          try { // Calling blocking join() and handling how it ends.
+              join();  // Trying to wait for this's thread to terminate.
+              // Being here means this's thread terminated.
+              thisThreadTerminatedB= true;  // Setting flag to terminate loop.
               }
-            catch (InterruptedException e) {  // Handling interrupt of block.
-              // Being here means the caller's thread was interrupted.
-              Thread.currentThread().interrupt(); // Record interrupt status.
+            catch (InterruptedException e) {  // Handling interrupt of join().
+              // Being here means current thread's interrupt status was set.
+            	currentThreadInteruptStatusB= true; // Recording it for later.
               }
-
+        if  // Restoring current thread's interrupt status if recorded earlier.
+          ( currentThreadInteruptStatusB )
+          Thread.currentThread().interrupt(); // Setting interrupt status.
         appLogger.info("EpiThread(" + getName() + ").joinV(): stopped.");
         }
 

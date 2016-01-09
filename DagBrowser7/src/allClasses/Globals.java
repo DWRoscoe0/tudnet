@@ -19,16 +19,17 @@ public class Globals
 		//public static Logger appLogger= Logger.getAnonymousLogger();
     //public static Misc appLogger= Misc.getMisc();  // Emulate Logger subset.
     public static AppLog appLogger= AppLog.getAppLog();
-    
-    public static Object fastFailNullCheckObject( Object testObject )
-      // Throws a NullPointerException if testObject == null.  Returns object.
+
+    public static <T> T fastFailNullCheckT( T testT )
+      // Throws a NullPointerException if testT == null, 
+      // Otherwise returns testT.
 	    {
-			  if ( testObject == null ) // Doing fast-fail construction check.
+			  if ( testT == null ) // Doing fast-fail construction check.
 				  {
 			  		appLogger.error("nullCheckV():");
 				  	throw new NullPointerException();
 				  	}
-			  return testObject;
+			  return testT;
 	      }
 
     public static void logAndRethrowAsRuntimeExceptionV( 

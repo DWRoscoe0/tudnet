@@ -36,6 +36,7 @@ public abstract class NamedNonLeaf
 		    This should happen once only very shortly after construction, 
 		    and only to replace a temporary value set to enable 
 		    lazy loading of the remainder of the node.
+		    This is used by the class Outline only.
 		    */
       {
 	  	  if ( // Error checking

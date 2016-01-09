@@ -80,7 +80,7 @@ public class DagBrowserPanel
     // Other instance variables.
 
       private LockAndSignal activityLockAndSignal=
-      		new LockAndSignal(false);
+      		new LockAndSignal();
       private TimerThread theTimerThread = // 2-second backup timer. 
       		new TimerThread("ActivityTimer");
     
