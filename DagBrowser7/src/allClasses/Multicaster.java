@@ -3,7 +3,6 @@ package allClasses;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
 import java.net.SocketException;
 import java.util.Properties;
@@ -72,10 +71,11 @@ public class Multicaster
 	      * That works.
 	      * It's a way to specify a source/local port number.
 	    */ 
-	  private InetSocketAddress theInetSocketAddress;
+	  private IPAndPort theIPAndPort;
 	  private final PacketQueue // Receive output.
 	    multicasterToConnectionManagerPacketQueue;  // SockPackets for ConnectionManager to note.
   	private UnicasterManager theUnicasterManager;
+  	private final NetcasterPacketManager multicastReceiverNetcasterPacketManager;
 
 	  public InetAddress groupInetAddress; /* Multicast group IPAddress.   
 	    This, combined with the port, determines 
@@ -108,11 +108,11 @@ public class Multicaster
 	      NetInputStream theNetInputStream,
 	  		NetOutputStream theNetOutputStream,
 	  		DataTreeModel theDataTreeModel,
-	  		InetSocketAddress theInetSocketAddress,
+	  		IPAndPort theIPAndPort,
 	  		MulticastSocket theMulticastSocket,
 	      PacketQueue multicasterToConnectionManagerPacketQueue,
-		  	UnicasterManager theUnicasterManager
-	      )
+		  	UnicasterManager theUnicasterManager,
+		  	NetcasterPacketManager multicastReceiverNetcasterPacketManager	      )
 	    /* Constructs a Multicaster object and prepares it for
 	      UDP multicast communications duties.  
 	      Those duties are to help peers discover each other by
@@ -124,15 +124,17 @@ public class Multicaster
 	  	      theNetInputStream,
 	  	      theNetOutputStream,
 	  	  		theDataTreeModel,
-		        theInetSocketAddress,
+	  	  		theIPAndPort,
 		        "Multicaster"
 	      		);
 
 	  		// Store remaining injected dependencies.
 	  		this.theMulticastSocket= theMulticastSocket;
-	  	  this.theInetSocketAddress= theInetSocketAddress;
+	  	  this.theIPAndPort= theIPAndPort;
 	      this.multicasterToConnectionManagerPacketQueue= multicasterToConnectionManagerPacketQueue;
 		  	this.theUnicasterManager= theUnicasterManager;
+		  	this.multicastReceiverNetcasterPacketManager=
+		  			multicastReceiverNetcasterPacketManager;
 	      }
 
 	  
@@ -162,14 +164,16 @@ public class Multicaster
       {
 
         // Injected dependency instance variables.
-        private PacketQueue receiverToMulticasterPacketQueue;
+        private final PacketQueue receiverToMulticasterPacketQueue;
           // Queue which is destination of received packets.
-        private MulticastSocket theMulticastSocket;
+        private final MulticastSocket theMulticastSocket;
+        private final NetcasterPacketManager theNetcasterPacketManager;
 
 
         MulticastReceiver( // Constructor. 
             PacketQueue receiverToMulticasterPacketQueue,
-            MulticastSocket theMulticastSocket
+            MulticastSocket theMulticastSocket,
+            NetcasterPacketManager theNetcasterPacketManager
             )
           /* Constructs an instance of this class from:
               * theMulticastSocket: the socket receiving packets.
@@ -179,7 +183,8 @@ public class Multicaster
 	          this.receiverToMulticasterPacketQueue= 
 	          		receiverToMulticasterPacketQueue;
 	          this.theMulticastSocket= theMulticastSocket;
-            }
+	          this.theNetcasterPacketManager= theNetcasterPacketManager;
+	          }
         
 
         public void run() 
@@ -194,17 +199,13 @@ public class Multicaster
 	              ( ! Thread.currentThread().isInterrupted() ) // requested.
 	              { // Receiving and queuing one packet.
 	                try {
-	                  SockPacket receiveSockPacket=  // Construct SockPacket.
-	                  		PacketStuff.makeSockPacket( );
-	                  DatagramPacket theDatagramPacket= 
-	                  		receiveSockPacket.getDatagramPacket(); 
-	                  theMulticastSocket.receive( theDatagramPacket );
-	                  //appLogger.debug(
-	                  //		"run() received: "
-	                  //+ PacketStuff.gettingPacketString(theDatagramPacket)
-	                  //);
+	                  NetcasterPacket receiverNetcasterPacket=
+	                  		theNetcasterPacketManager.makeSize512NetcasterPacket( );
+	                  DatagramPacket receiverDatagramPacket= 
+	                  		receiverNetcasterPacket.getDatagramPacket(); 
+	                  theMulticastSocket.receive( receiverDatagramPacket );
 	                  receiverToMulticasterPacketQueue.add( // Queuing packet.
-	                  		receiveSockPacket
+	                  		receiverNetcasterPacket
 	                  		);
 	                	}
 	                catch( SocketException soe ) {
@@ -282,7 +283,8 @@ public class Multicaster
     		theMulticastReceiverEpiThread= // Constructing thread.
     				AppGUIFactory.makeMulticastReceiverEpiThread(
 	            theNetInputStream.getPacketQueue(),
-	            theMulticastSocket
+	            theMulticastSocket,
+				   		multicastReceiverNetcasterPacketManager
 	            );
         theMulticastReceiverEpiThread.startV();  // Starting thread.
 	      }
@@ -352,19 +354,23 @@ public class Multicaster
         }
 
     private void processingPossibleNewUnicasterV( ) throws IOException
+      /* This method passes the present packet of theNetInputStream
+       to the ConnectionManager if there isn't a Unicaster
+       associated with the packet's remote address.
+       */
 	    {
-	      SockPacket theSockPacket= // Copying packet from queue.
-	      		theNetInputStream.getSockPacket();
+	      NetcasterPacket theNetcasterPacket= // Copying packet from queue.
+	      		theNetInputStream.getNetcasterPacket();
 	      Unicaster theUnicaster= // Testing for associated Unicaster.
-	      		theUnicasterManager.tryGettingUnicaster( theSockPacket );
+	      		theUnicasterManager.tryGettingUnicaster( theNetcasterPacket );
 	      if ( theUnicaster == null )  // Processing if Unicaster does not exists.
 	       	{
        			//appLogger.debug(
 	       		//	"Multicaster.processingPossibleNewUnicasterV():\n  queuing: "
-		       	//	+PacketStuff.gettingPacketString(theSockPacket.getDatagramPacket())
+		       	//	+PacketStuff.gettingPacketString(theNetcasterPacket.getDatagramPacket())
 	       		//);
           	multicasterToConnectionManagerPacketQueue.add( // Passing to CM.
-			    		theSockPacket
+			    		theNetcasterPacket
 			        );
        	    }
 	      }
@@ -372,8 +378,8 @@ public class Multicaster
 	  protected void initializingV()
 	    throws IOException
 	    {
-		    this.groupInetAddress = theInetSocketAddress.getAddress();
-		    this.multicastPortI = theInetSocketAddress.getPort();
+		    this.groupInetAddress = theIPAndPort.getInetAddress();
+		    this.multicastPortI = theIPAndPort.getPortI();
 		    this.ttl= 1;  // Set Time-To-Live to 1 to discover LAN peers only.
 		  
 		    { // Fix MulticastSocket.setTimeToLive() bug for IPv4 + IPv6 systems.

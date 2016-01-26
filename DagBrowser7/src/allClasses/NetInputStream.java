@@ -47,7 +47,7 @@ public class NetInputStream
 		NamedInteger packetCounterNamedInteger;
 
 	  // Other instance variables.
-		SockPacket theSockPacket= null;
+		NetcasterPacket theNetcasterPacket= null;
     DatagramPacket theDatagramPacket = null;
     byte[] bufferBytes = null;
     int packetSizeI = 0;
@@ -114,22 +114,23 @@ public class NetInputStream
 			  return value;
 			  }
 
-    public SockPacket getSockPacket() throws IOException
-      /* Returns the current SockPacket associated with this stream.
+    public NetcasterPacket getNetcasterPacket() throws IOException
+      /* Returns the current NetcasterPacket associated with this stream.
         Initially it returns null.
         After data has been read from the stream
-        it returns a reference to the packet from which 
-        the most recent data was gotten.
+        it returns a reference to the packet that
+        was most recently loaded.
+        This is not the same as reading a packet as any other data type.
        */
       {
-    	  return theSockPacket;
+    	  return theNetcasterPacket;
       	}
 
     private void loadNextPacketV() throws IOException 
       /* This method loads the packet buffers from the 
         next packet in the input queue.
         It blocks if no packet is immediately available.
-        This method changes virtually all object at once.
+        This method changes virtually all objects at once.
         */
 	    {
     		if // Adjusting saved mark index for buffer replacement. 
@@ -137,15 +138,15 @@ public class NetInputStream
     			markIndexI-= packetIndexI; // Subtracting present index or length ??
 
         try {
-        	theSockPacket= receiverToNetCasterPacketQueue.take();
-	        } catch (InterruptedException e) { // Converting interrupt to IO error 
+        	theNetcasterPacket= receiverToNetCasterPacketQueue.take();
+	        } catch (InterruptedException e) { // Converting interrupt to error. 
 	        	throw new IOException(); 
 		      } 
 
   			packetCounterNamedInteger.addValueL( 1 ); // Counting received packet.
 
 	      // Setting variables from the new packet.
-	  	  theDatagramPacket= theSockPacket.getDatagramPacket();
+	  	  theDatagramPacket= theNetcasterPacket.getDatagramPacket();
 	      bufferBytes= theDatagramPacket.getData();
 	      packetIndexI= theDatagramPacket.getOffset();
 	      packetSizeI= theDatagramPacket.getLength();

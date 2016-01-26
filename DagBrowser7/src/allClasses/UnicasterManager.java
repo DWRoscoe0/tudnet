@@ -3,13 +3,12 @@ package allClasses;
 import static allClasses.Globals.appLogger;
 
 import java.net.DatagramPacket;
-import java.net.InetSocketAddress;
 
 public class UnicasterManager
 
-	extends MutableListWithMap< 
-		InetSocketAddress, // Key for map.
-		NetCasterValue, // Value for map. 
+	extends MutableListWithMap<
+		IPAndPort, // Key for map.
+		UnicasterValue, // Value for map. 
 		Unicaster // DataNode in Value.
 		>
 
@@ -21,8 +20,8 @@ public class UnicasterManager
 
   {
 		
-	  /* private Map<SocketAddress,NetCasterValue> childHashMap= // Setting empty.
-		  new ConcurrentHashMap<SocketAddress,NetCasterValue>();
+	  /* private Map<SocketAddress,UnicasterValue> childHashMap= // Setting empty.
+		  new ConcurrentHashMap<SocketAddress,UnicasterValue>();
 		   
 	    The above Map was moved to the superclass.
 	    It is an initially empty Collection 
@@ -59,10 +58,10 @@ public class UnicasterManager
 	      }
 
     public synchronized Unicaster tryGettingUnicaster( 
-    		SockPacket theSockPacket 
+    		NetcasterPacket theNetcasterPacket 
     		)
       /* This method returns the Unicaster associated with the
-        source address of theSockPacket, if such a Unicaster exists.
+        source address of theNetcasterPacket, if such a Unicaster exists.
         If it doesn't exist then it returns null.
         
         ?? Rewrite for speed.  
@@ -82,36 +81,36 @@ public class UnicasterManager
         */
       {
         DatagramPacket theDatagramPacket=  // Getting DatagramPacket.
-          theSockPacket.getDatagramPacket();
-	      InetSocketAddress peerInetSocketAddress= // Building its remote address.
-	          new InetSocketAddress( 
+          theNetcasterPacket.getDatagramPacket();
+        IPAndPort peerIPAndPort= // Building its remote address.
+	          AppGUIFactory.makeIPAndPort(		
 	              theDatagramPacket.getAddress(), // IP and
 	              theDatagramPacket.getPort()  // port #.
 	          		);
-        NetCasterValue theNetCasterValue= // Testing whether Unicaster exists.
-            childHashMap.get(peerInetSocketAddress);
+        UnicasterValue theUnicasterValue= // Testing whether Unicaster exists.
+            childHashMap.get(peerIPAndPort);
         Unicaster theUnicaster;
-        if ( theNetCasterValue != null ) 
-	        theUnicaster= theNetCasterValue.getDataNodeD(); 
+        if ( theUnicasterValue != null ) 
+	        theUnicaster= theUnicasterValue.getDataNodeD(); 
         else
         	theUnicaster= null;
         return theUnicaster;
         }
 
     public synchronized Unicaster buildAddAndStartUnicaster(
-        InetSocketAddress peerInetSocketAddress
+        IPAndPort peerIPAndPort
 	  		)
 	    { 
     	  appLogger.info( "Creating new Unicaster." );
     	  UnicasterFactory theUnicasterFactory=
-    	  		theAppGUIFactory.makeUnicasterFactory( peerInetSocketAddress );
-	      final NetCasterValue resultNetCasterValue=  // Getting the Unicaster. 
-	      	theUnicasterFactory.getNetCasterValue();
+    	  		theAppGUIFactory.makeUnicasterFactory( peerIPAndPort );
+	      final UnicasterValue resultUnicasterValue=  // Getting the Unicaster. 
+	      	theUnicasterFactory.getUnicasterValue();
 	      addingV( // Adding new Unicaster to data structures.
-	          peerInetSocketAddress, resultNetCasterValue
+	          peerIPAndPort, resultUnicasterValue
 	          );
-	      resultNetCasterValue.getEpiThread().startV(); // Start its thread.
-	      return resultNetCasterValue.getDataNodeD();
+	      resultUnicasterValue.getEpiThread().startV(); // Start its thread.
+	      return resultUnicasterValue.getDataNodeD();
 	      }
 
   	}

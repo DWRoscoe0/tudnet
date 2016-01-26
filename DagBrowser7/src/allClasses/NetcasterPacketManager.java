@@ -1,26 +1,42 @@
 package allClasses;
 
-//import static allClasses.Globals.appLogger;
-
 import java.net.DatagramPacket;
+import java.net.InetAddress;
 
-public class PacketStuff 
-  /* This class contains methods to perform operations on DatagramPackets,
-    because DatagramPacket can not be extended because it is a final class.
-    */
+public class NetcasterPacketManager
+  extends PacketManager
   {
-	 
-		public static SockPacket makeSockPacket( )
-		  // Create a SockPacket with a standard sized DatagramPacket buffer.
+		// Injected variables.
+	    // None.
+
+		public NetcasterPacketManager(
+				InetAddress unicasterInetAddress, 
+				int unicasterPortI
+				)
+			{
+			  super(
+						unicasterInetAddress, 
+						unicasterPortI
+						);
+				}
+
+
+		// Methods for producing NetcasterPackets.
+
+	  public NetcasterPacket makeSize512NetcasterPacket( )
+		  // Create a NetcasterPacket with a standard sized DatagramPacket buffer.
 			{
 				byte[] bufferBytes= new byte[ 512 ];
 			  DatagramPacket theDatagramPacket=
 			    new DatagramPacket( bufferBytes, bufferBytes.length );
-			  SockPacket theSockPacket=  // Construct SockPacket.
-			    new SockPacket( theDatagramPacket );
-			  return theSockPacket;
+			  NetcasterPacket theNetcasterPacket=  // Construct NetcasterPacket.
+			    new NetcasterPacket( theDatagramPacket );
+			  return theNetcasterPacket;
 				}
-	 
+
+
+	  // Methods for converting to String.
+	  
 		public static String gettingPacketString( DatagramPacket theDatagramPacket )
 		  /* This method returns a String representation of theDatagramPacket.
 		    If theDatagramPacket is null then null is returned.
@@ -42,7 +58,7 @@ public class PacketStuff
 		  	return resultString; // Returning present and final value.
 		    }
 		 
-			public static String gettingPacketAddressString( 
+			private static String gettingPacketAddressString( 
 					DatagramPacket theDatagramPacket 
 					)
 			  /* This method returns a String representation of 
@@ -60,4 +76,5 @@ public class PacketStuff
 			  	return resultString; // Returning present and final value.
 			    }
 
-		}
+  	}
+

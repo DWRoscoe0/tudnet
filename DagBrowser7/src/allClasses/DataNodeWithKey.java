@@ -5,7 +5,6 @@ public class DataNodeWithKey< K >
   extends MutableList 
   
   {
-	
 	  private K theKeyK;
 	  
 	  public DataNodeWithKey(  // Constructor.

@@ -11,8 +11,18 @@ public class SubcasterManager
 		>
 
 	/* This class manages a Unicaster's Subcasters.
-	  It provides methods for creating them, storing references to them,
-	  displaying them, testing for their existence, and destroying them.
+	  In addition to storing information about them, 
+	  it provides methods for:
+	  
+	  * Testing for their existence, 
+	  * Creating them and starting their threads.
+	  * Displaying information about them.
+	  * Stopping their threads.
+	  
+	  It is also used to pass packets between 
+	  the NetInputStreams and NetOutputStreams of
+	  the Subcasters and their associated Unicaster
+	  
 	  Most of its methods are synchronized.
 	  */
 
@@ -52,4 +62,27 @@ public class SubcasterManager
 	      return resultSubcasterValue.getDataNodeD();
 	      }
 
-  	}
+    // Stopping threads is handled by superclass.
+
+    public synchronized void queueToSubcasterInputStreamV(
+    		String keyString,
+    		NetcasterPacket theNetcasterPacket
+	  		)
+	    {
+    	  //???
+	      }
+
+    public synchronized Subcaster tryGettingReadySubcaster(
+    		String keyString
+	  		)
+      /* Tries to return a Subcaster with SockPackets from its NetOutputStream.
+        If no Subcaster's have any packets ready then it returns null.
+        Doing it this way instead of somehow 
+        associating the keyString to the NetcasterPacket
+        moves complexity from the NetOutputStream to this class.
+        */ 
+	    {
+    	  return null; //???
+	      }
+
+    }

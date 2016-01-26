@@ -1,7 +1,6 @@
 package allClasses;
 
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 
 public class UnicasterFactory {
 
@@ -15,15 +14,16 @@ public class UnicasterFactory {
   // Injected dependencies that need saving for later.
 	private final DataTreeModel theDataTreeModel;
 	private final AppGUIFactory theAppGUIFactory;
+	private final Shutdowner theShutdowner;
 	
 	// Other objects that will be needed later.
-	private final NetCasterValue unicasterNetCasterValue; 
+	private final UnicasterValue unicasterUnicasterValue; 
 	//private final PacketQueue subcasterToUnicasterPacketQueue;
 	
   public UnicasterFactory(   // Factory constructor. 
   		AppGUIFactory theAppGUIFactory,
   		UnicasterManager theUnicasterManager,
-	    InetSocketAddress unicasterInetSocketAddress,
+  		IPAndPort unicasterIPAndPort,
   		DataTreeModel theDataTreeModel,
   		Shutdowner theShutdowner
   		)
@@ -35,8 +35,8 @@ public class UnicasterFactory {
 					new PacketQueue( unicasterLockAndSignal );
 			NetInputStream unicasterNetInputStream= 
 					theAppGUIFactory.makeNetcasterNetInputStream( receiverToUnicasterPacketQueue );
-			InetAddress unicasterInetAddress= unicasterInetSocketAddress.getAddress(); 
-			int unicasterPortI= unicasterInetSocketAddress.getPort();
+			InetAddress unicasterInetAddress= unicasterIPAndPort.getInetAddress(); 
+			int unicasterPortI= unicasterIPAndPort.getPortI();
 			NetOutputStream unicasterNetOutputStream= 
 					theAppGUIFactory.makeNetcasterNetOutputStream( 
 						unicasterInetAddress, unicasterPortI
@@ -49,27 +49,28 @@ public class UnicasterFactory {
 					unicasterLockAndSignal,
 		  		unicasterNetInputStream,
 		  		unicasterNetOutputStream,
-		  		unicasterInetSocketAddress,
+		  		unicasterIPAndPort,
 			  	theDataTreeModel,
 			   	theShutdowner
 			  	);
   	
-	    NetCasterValue unicasterNetCasterValue=  
-  				new NetCasterValue( unicasterInetSocketAddress, theUnicaster );
+	    UnicasterValue unicasterUnicasterValue=  
+  				new UnicasterValue( unicasterIPAndPort, theUnicaster );
 
       // Save in instance variables injected objects that are needed later.
   		this.theAppGUIFactory= theAppGUIFactory;
 	  	this.theDataTreeModel= theDataTreeModel;
+	  	this.theShutdowner= theShutdowner;
 
 	  	// Save in instance variables other objects that are needed later.
-      this.unicasterNetCasterValue= unicasterNetCasterValue;
+      this.unicasterUnicasterValue= unicasterUnicasterValue;
 			//this.subcasterToUnicasterPacketQueue= subcasterToUnicasterPacketQueue; 
       }
 
   // Unconditional singleton getters.
 
-  public NetCasterValue getNetCasterValue() // Returns created Unicaster.
-  	{ return unicasterNetCasterValue; }
+  public UnicasterValue getUnicasterValue() // Returns created Unicaster.
+  	{ return unicasterUnicasterValue; }
   
   // Conditional singleton getters and storage.
   // None.
@@ -101,7 +102,8 @@ public class UnicasterFactory {
   				subcasterNetInputStream, 
   				subcasterNetOutputStream, 
   	      theDataTreeModel,
-  	      keyString
+  	      keyString,
+  	      theShutdowner
   	      );
 	    SubcasterValue unicasterSubcasterValue=  
   				new SubcasterValue( keyString, unicasterSubcaster );

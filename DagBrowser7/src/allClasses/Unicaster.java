@@ -3,7 +3,6 @@ package allClasses;
 import static allClasses.Globals.appLogger;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.Random;
 
 import allClasses.LockAndSignal.Input;
@@ -69,12 +68,6 @@ public class Unicaster
 
     // Fields (constant and variales).
     
-      // Constants.
-      private final long PeriodMillisL=  // Period between sends or receives.
-        4000;   // 4 seconds.
-      private final long HalfPeriodMillisL= // Half of period.
-        PeriodMillisL / 2;  
-
       // Injected dependency instance variables.
       private final Shutdowner theShutdowner;
       private final UnicasterManager theUnicasterManager;
@@ -82,14 +75,7 @@ public class Unicaster
 
       // Other instance variables.
       private Random theRandom; // For arbitratingYieldB() random numbers.
-      private long pingSentNanosL; // Time the last ping was sent.
       private boolean arbitratedYieldingB; // Used to arbitrate race conditions.
-      
-      // Detail-containing child sub-objects.
-	      private NamedInteger RoundTripTimeNamedInteger;
-	        // This is an important value.  It is used to determine
-	        // how long to wait for a message acknowledgement before
-	        // re-sending a message.
 
 			public Unicaster(  // Constructor. 
 			  UnicasterManager theUnicasterManager,
@@ -97,7 +83,7 @@ public class Unicaster
 	    	LockAndSignal threadLockAndSignal,
 	      NetInputStream theNetInputStream,
 	      NetOutputStream theNetOutputStream,
-        InetSocketAddress remoteInetSocketAddress,
+	      IPAndPort remoteIPAndPort,
         DataTreeModel theDataTreeModel,
         Shutdowner theShutdowner
         )
@@ -116,7 +102,7 @@ public class Unicaster
 	  	      theNetInputStream,
 	  	      theNetOutputStream,
   	        theDataTreeModel,
-  	        remoteInetSocketAddress,
+  	        remoteIPAndPort,
         		"Unicaster" 
         		);
 
@@ -145,32 +131,17 @@ public class Unicaster
         */
       {
         try { // Operations that might produce an IOException.
-          initializingV();
-          
-          theSubcasterManager.buildAddAndStartSubcaster( // Adding test Subcaster.
-              "TEST-SUBCASTER."
-      	  		); //???
+	          initializingV();
+	          
+	          theSubcasterManager.buildAddAndStartSubcaster( // Adding Subcaster.
+	              "PING-REPLY." //??? Hard wired at first.
+	      	  		);
 
-        	int stateI= // Initialize ping-reply protocol state from yield flag. 
-          	  arbitratedYieldingB ? 0 : 1 ;
-          while (true) // Repeating until thread termination is requested.
-            {
-          		if   // Exiting if requested.
-	              ( Thread.currentThread().isInterrupted() ) 
-	              break;
-          	  switch ( stateI ) { // Decoding alternating state.
-	          	  case 0:
-	                //appLogger.info(getName()+":\n  CALLING tryingPingSendV() ===============.");
-	                tryingPingSendV();
-	                stateI= 1;
-	                break;
-	          	  case 1:
-	                //appLogger.info(getName()+":\n  CALLING tryingPingReceiveV() ===============.");
-	                tryingPingReceiveV();
-	                stateI= 0;
-	                break;
-	          	  }
-              } // while(true)
+	          { //??? Uncomment only one of the following method calls.
+	          	runWithoutSubcastersV(); // Original code.
+	          	// runWithSubcastersV(); // Experiment code with Subcaster.
+		          }
+	          
 	      		if  // Informing remote end whether we are doing Shutdown.
 	      		  ( theShutdowner.isShuttingDownB() ) 
 		      		{
@@ -205,20 +176,64 @@ public class Unicaster
 		    addB( theSubcasterManager ); // Adding to our list.
 	    	}
 
+    public void runWithSubcastersV() throws IOException //???
+      // Does (or will do) full PING-REPLY protocol using a Subcaster.
+	    {
+			  while (true) // Repeating until thread termination is requested.
+				  {
+		    		if // Exiting if requested.
+		          ( Thread.currentThread().isInterrupted() ) 
+		          break;
+
+		    		while ( theNetInputStream.available() > 0 ); //??? send packet.
+		    		
+		    		//??? Get packets from Subcasters and send to peer.
+		    		
+		    		netcasterLockAndSignal.doWaitE(); // Waiting for any input.
+		      	}
+	    	}
+
+    public void runWithoutSubcastersV() throws IOException //??? Needn't be public.
+      // Does full PING-REPLY protocol without help of Subcaster.
+	    {
+	    	int stateI= // Initialize ping-reply protocol state from yield flag. 
+	      	  arbitratedYieldingB ? 0 : 1 ;
+	      while (true) // Repeating until thread termination is requested.
+	        {
+	      		if   // Exiting if requested.
+	            ( Thread.currentThread().isInterrupted() ) 
+	            break;
+	      	  switch ( stateI ) { // Decoding alternating state.
+	        	  case 0:
+	              //appLogger.info(getName()+":\n  CALLING tryingPingSendV() ===============.");
+	              tryingPingSendV();
+	              stateI= 1;
+	              break;
+	        	  case 1:
+	              //appLogger.info(getName()+":\n  CALLING tryingPingReceiveV() ===============.");
+	              tryingPingReceiveV();
+	              stateI= 0;
+	              break;
+	        	  }
+	          } // while(true)
+	    	}
+
     private void tryingPingSendV() throws IOException
-      /* This method tries to send a ping to the remote peer
-        and receive an echo response.
+      /* This method does the sub-protocol of trying to 
+        send a ping to the remote peer and receiving an echo response.
         If it doesn't receive an echo packet in response
         within one-half period, it tries again.
         It tries several times before giving up and 
         terminating the current thread.
+        If it receives a ping instead of an echo then
+        it might give up this sub-protocol.
         */
       {
         LockAndSignal.Input theInput;  // Type of input that ends waits.
         int maxTriesI= 3;
         int triesI= 1;
-        pingEchoRetryLoop: while (true) { // Sending ping getting echo.
-          if  // Checking and exiting if maximum retries were exceeded.
+        pingEchoRetryLoop: while (true) { // Sending ping and receiving echo.
+          if  // Checking and exiting if maximum attempts have been done.
             ( triesI > maxTriesI )  // Maximum attempts exceeded.
             { // Terminating thread.
               appLogger.info(
@@ -280,16 +295,17 @@ public class Unicaster
         }
 
     private void tryingPingReceiveV() throws IOException
-      /* This method tries to process a received PING message 
-        from the remote peer to which it replies by sending an ECHO response.
+	    /* This method does the sub-protocol of trying to 
+		    receive a PING message from the remote peer 
+		    to which it replies by sending an ECHO response.
         If a PING is not immediately available then
         it waits up to PeriodMillisL for a PING to arrive,
         after which it gives up and returns.
         If a PING is received it responds immediately by sending an ECHO,
         after which it waits PeriodMillisL while ignoring all
-        received messages except tryingPingReceiveV.
-        It will exit immediately if isInterrupted() becomes trun
-        or a tryingPingReceiveV message is received.
+        received messages except SHUTTING-DOWN.
+        It will exit immediately if isInterrupted() becomes true
+        or a SHUTTING-DOWN message is received.
         */
       {
         LockAndSignal.Input theInput;  // Type of input that ends wait.
@@ -355,7 +371,7 @@ public class Unicaster
       {
         boolean yieldB;  // Storage for result.
         int addressDifferenceI=  // Calculate port difference.
-          getKeyK().getPort() - PortManager.getLocalPortI();
+          getKeyK().getPortI() - PortManager.getLocalPortI();
         if ( addressDifferenceI != 0 )  // Handling ports unequal.
           yieldB= ( addressDifferenceI < 0 );  // Lower ported peer yields.
           else  // Handling rare case of ports equal.
@@ -370,63 +386,14 @@ public class Unicaster
 
     // Receive packet code.  This might be enhanced with streaming.
 
-    public void puttingReceivedPacketV( SockPacket theSockPacket )
+    public void puttingReceivedPacketV( NetcasterPacket theNetcasterPacket )
       /* This method is used by UnicastReceiver threads.
         The one associated with this Unicaster thread uses this method
-        to add theSockPacket to this thread's receive queue.
+        to add theNetcasterPacket to this thread's receive queue.
        */
       {
-        //receiverToNetCasterPacketQueue.add(theSockPacket);
-    		theNetInputStream.getPacketQueue().add(theSockPacket);
+        //receiverToNetCasterPacketQueue.add(theNetcasterPacket);
+    		theNetInputStream.getPacketQueue().add(theNetcasterPacket);
         }
-
-    private boolean tryingToCaptureTriggeredExitB( ) throws IOException
-      /* This method tests whether exit has been triggered, meaning either:
-        * The current thread's isInterrupted() is true, or
-        * The next packet, if any, at the head of the receiverToNetCasterPacketQueue,
-		    	contains "SHUTTING-DOWN", indicating the remote node is shutting down.
-		    	If true then the packet is consumed and
-		    	the current thread's isInterrupted() status is set true.
-		    This method returns true if exit is triggered, false otherwise.
-		    */
-      { 
-        if // Trying to get and convert SHUTTING-DOWN packet to interrupt status. 
-          ( tryingToGetStringB( "SHUTTING-DOWN" ) )
-	        {
-	          appLogger.info( "SHUTTING-DOWN packet received.");
-	          Thread.currentThread().interrupt(); // Interrupting this thread.
-	          }
-	      return Thread.currentThread().isInterrupted();
-        }
-
-    private boolean tryingToGetStringB( String aString ) throws IOException
-      /* This method tries to get a particular String aString.
-        It consumes the String and returns true if the desired string is there, 
-        otherwise it does not consume the message and returns false.
-        */
-      {
-  			boolean gotStringB= false;
-    		theNetInputStream.mark(0); // Marking stream position.
-    		String inString= tryingToGetString();
-    	  gotStringB=  // Testing for desired string.
-    	  		aString.equals( inString );
-    	  if ( ! gotStringB ) // Resetting position if String is not correct.
-    	  	theNetInputStream.reset();
-    	  return gotStringB;
-      	}
-
-    private String tryingToGetString( ) throws IOException
-    /* This method tries to get any String.
-      It returns a String if there is one available, null otherwise.
-      */
-    {
-			String inString= null;
-			if // Overriding if desired string is able to be read. 
-			  ( theNetInputStream.available() > 0 )
-				{
-	    	  inString= readAString();
-	    	  }
-  	  return inString;
-    	}
 
     } // Unicaster.

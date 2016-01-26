@@ -33,17 +33,20 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
     private PacketQueue unconnectedReceiverToConnectionManagerPacketQueue;
       // Queue which is destination of received packets.
     private UnicasterManager theUnicasterManager;
+    private final NetcasterPacketManager theNetcasterPacketManager;
 
     UnconnectedReceiver( // Constructor. 
         DatagramSocket receiverDatagramSocket,
         PacketQueue unconnectedReceiverToConnectionManagerPacketQueue,
-        UnicasterManager theUnicasterManager
+        UnicasterManager theUnicasterManager,
+        NetcasterPacketManager theNetcasterPacketManager
         )
       { 
         this.unconnectedReceiverToConnectionManagerPacketQueue= 
         		unconnectedReceiverToConnectionManagerPacketQueue;
         this.receiverDatagramSocket= receiverDatagramSocket;
         this.theUnicasterManager= theUnicasterManager;
+        this.theNetcasterPacketManager= theNetcasterPacketManager;
         }
     
 
@@ -61,12 +64,10 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
             ( ! Thread.currentThread().isInterrupted() ) // requested.
             { // Receiving and queuing one packet.
               try {
-                byte[] buf = new byte[256];  // Construct packet buffer.
-                DatagramPacket theDatagramPacket=
-                  new DatagramPacket(buf, buf.length);
-                SockPacket theSockPacket= new SockPacket(
-                	theDatagramPacket
-                  );
+                NetcasterPacket theNetcasterPacket= 
+                		theNetcasterPacketManager.makeSize512NetcasterPacket();
+                DatagramPacket theDatagramPacket= 
+                		theNetcasterPacket.getDatagramPacket();
                 receiverDatagramSocket.receive(theDatagramPacket);
                 //appLogger.debug(
                 //		"run() received: "
@@ -74,15 +75,15 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
                 //);
                 Unicaster theUnicaster= // Testing for associated Unicaster.
                 		theUnicasterManager.tryGettingUnicaster( 
-                				theSockPacket 
+                				theNetcasterPacket 
                 				);
                 if ( theUnicaster != null )  // Queuing packet appropriately.
           	      theUnicaster.puttingReceivedPacketV( // To found Unicaster.  
-          	      		theSockPacket
+          	      		theNetcasterPacket
           	      		);
                 	else
                 	unconnectedReceiverToConnectionManagerPacketQueue.add(
-                			theSockPacket
+                			theNetcasterPacket
                 			); // Queue to CM.
                 }
               catch( SocketException soe ) {

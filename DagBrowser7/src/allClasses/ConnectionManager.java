@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
 import java.net.SocketAddress;
 import java.net.SocketException;
@@ -266,7 +265,7 @@ public class ConnectionManager
 		      		theAppGUIFactory.makeDatagramSocket((SocketAddress)null);
 		      unconnectedDatagramSocket.setReuseAddress(true);
 		      unconnectedDatagramSocket.bind( // Binding socket to...
-		      	theAppGUIFactory.makeInetSocketAddress(
+		      	AppGUIFactory.makeInetSocketAddress(
 		          PortManager.getLocalPortI()  // ...app's local port.
 		          ) // Note, the IP is not defined.
 		        );
@@ -307,19 +306,19 @@ public class ConnectionManager
         */
       {
         boolean packetsProcessedB= false;
-        SockPacket theSockPacket;
+        NetcasterPacket theNetcasterPacket;
 
         while (true) {  // Process all received unconnected packets.
-          theSockPacket= // Try getting next packet from queue.
+          theNetcasterPacket= // Try getting next packet from queue.
             unconnectedReceiverToConnectionManagerPacketQueue.poll();
 
-          if (theSockPacket == null) break;  // Exit if no more packets.
+          if (theNetcasterPacket == null) break;  // Exit if no more packets.
           
           //appLogger.info(
           //  "ConnectionManager.processingUnconnectedSockPacketsB()\n  "
-          //  + theSockPacket.getSocketAddressesString()
+          //  + theNetcasterPacket.getSocketAddressesString()
           //  );
-          createAndPassToUnicasterV( theSockPacket );
+          createAndPassToUnicasterV( theNetcasterPacket );
 
           packetsProcessedB= true;
           }
@@ -408,13 +407,13 @@ public class ConnectionManager
         */
       {
         boolean packetsProcessedB= false;
-        SockPacket theSockPacket;
+        NetcasterPacket theNetcasterPacket;
 
         while (true) {  // Process all received packets.
-          theSockPacket= // Try getting next packet from queue.
+          theNetcasterPacket= // Try getting next packet from queue.
             multicasterToConnectionManagerPacketQueue.poll();
-          if (theSockPacket == null) break;  // Exit if no more packets.
-      		createAndPassToUnicasterV( theSockPacket );
+          if (theNetcasterPacket == null) break;  // Exit if no more packets.
+      		createAndPassToUnicasterV( theNetcasterPacket );
           packetsProcessedB= true;
           }
           
@@ -430,7 +429,7 @@ public class ConnectionManager
 		    }
 
 
-    private void createAndPassToUnicasterV(SockPacket theSockPacket)
+    private void createAndPassToUnicasterV(NetcasterPacket theNetcasterPacket)
       /* This method processes one packet received from a peer.
         The peer is assumed to be at the packet's remote address and port.
         The ConnectionManager should no longer receive packets
@@ -445,21 +444,23 @@ public class ConnectionManager
       {
         //appLogger.info(
         //  "ConnectionManager.createAndPassToUnicasterV(..)\n  "
-        //  + theSockPacket.getSocketAddressesString()
+        //  + theNetcasterPacket.getSocketAddressesString()
         //  );
 	      Unicaster theUnicaster= theUnicasterManager.tryGettingUnicaster( 
-	      		theSockPacket 
+	      		theNetcasterPacket 
 	      		);
 	      if ( theUnicaster == null ) // Building Unicaster if needed.
 			      theUnicaster=  // Get or create Unicaster.
-			          getOrBuildAndStartUnicaster( theSockPacket );
+			          getOrBuildAndStartUnicaster( theNetcasterPacket );
 	      theUnicaster.puttingReceivedPacketV( // Giving to it its first packet.  
-	      		theSockPacket
+	      		theNetcasterPacket
 	      		);
         }
 
-    private Unicaster getOrBuildAndStartUnicaster( SockPacket theSockPacket )
-      /* Gets or creates the Unicaster associated with theSockPacket.
+    private Unicaster getOrBuildAndStartUnicaster( 
+    		NetcasterPacket theNetcasterPacket 
+    		)
+      /* Gets or creates the Unicaster associated with theNetcasterPacket.
         It adds the Unicaster to the appropriate data structures.
         It returns the found or created Unicaster.
         
@@ -470,20 +471,20 @@ public class ConnectionManager
         */
       {
         DatagramPacket theDatagramPacket=  // Get DatagramPacket.
-          theSockPacket.getDatagramPacket();
+          theNetcasterPacket.getDatagramPacket();
         appLogger.info( 
         		"Creating Unicaster from "
-        		+PacketStuff.gettingPacketString(theDatagramPacket)
+        		+NetcasterPacketManager.gettingPacketString(theDatagramPacket)
         		);
-        InetSocketAddress peerInetSocketAddress=  // Build packet's address.
-          //theDatagramPacket.getSocketAddress();
-        		AppGUIFactory.makeInetSocketAddress(
-            theDatagramPacket.getAddress(),
-            theDatagramPacket.getPort()
-            );
+        IPAndPort peerIPAndPort=  // Build packet's address.
+        		//theDatagramPacket.getSocketAddress();
+        		AppGUIFactory.makeIPAndPort(
+	            theDatagramPacket.getAddress(),
+	            theDatagramPacket.getPort()
+	            );
         Unicaster theUnicaster=  // Get or create Unicaster.
           theUnicasterManager.buildAddAndStartUnicaster(
-            peerInetSocketAddress
+            peerIPAndPort
             );
         return theUnicaster;
         }

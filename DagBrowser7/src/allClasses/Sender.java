@@ -87,11 +87,11 @@ public class Sender // Uunicast and multicast sender thread.
         boolean packetsProcessedB= false;  // Assuming no packet to send.
 
         while (true) {  // Processing all queued send packets.
-          SockPacket theSockPacket= // Trying to get next packet from queue.
+          NetcasterPacket theNetcasterPacket= // Trying to get next packet from queue.
           		netcasterToSenderPacketQueue.poll();
-          if (theSockPacket == null) break;  // Exiting if no more packets.
+          if (theNetcasterPacket == null) break;  // Exiting if no more packets.
           try { // Send the gotten packet.
-          	DatagramPacket theDatagramPacket= theSockPacket.getDatagramPacket();
+          	DatagramPacket theDatagramPacket= theNetcasterPacket.getDatagramPacket();
             theDatagramSocket.send(   // Send packet.
             	theDatagramPacket
               );

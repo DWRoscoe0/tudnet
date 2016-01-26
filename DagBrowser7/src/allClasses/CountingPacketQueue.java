@@ -28,21 +28,21 @@ public class CountingPacketQueue extends PacketQueue
 	  		this.outputCountNamedInteger= outputCountNamedInteger;
 	      }
 	  
-	  public SockPacket poll(long timeout, TimeUnit unit)
+	  public NetcasterPacket poll(long timeout, TimeUnit unit)
 	        throws InterruptedException
 	    {
-	  	  SockPacket resultSockPacket= super.poll(timeout, unit);
-	  	  if ( resultSockPacket != null ) // Counting packet if gotten.
+	  	  NetcasterPacket resultNetcasterPacket= super.poll(timeout, unit);
+	  	  if ( resultNetcasterPacket != null ) // Counting packet if gotten.
 	  	  	outputCountNamedInteger.addValueL( 1 );
-	  	  return resultSockPacket;
+	  	  return resultNetcasterPacket;
 	  	  }
 
-	  public SockPacket take()
+	  public NetcasterPacket take()
 	       throws InterruptedException
 	    {
-	  	  SockPacket resultSockPacket= super.take();
+	  	  NetcasterPacket resultNetcasterPacket= super.take();
 	  	  outputCountNamedInteger.addValueL( 1 ); // Counting packet.
-	  	  return resultSockPacket;
+	  	  return resultNetcasterPacket;
 	    	}
 	  	  
 		}

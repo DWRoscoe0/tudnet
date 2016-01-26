@@ -21,7 +21,7 @@ public class LockAndSignal  // Combination lock and signal class.
     to indicate to destination threads the readiness of new inputs.
     It can be called using a direct LockAndSignal instance reference,
     or called indirectly, for example in the add(..) method of 
-    the InputQueue class which contains a LockAndSignal reference.
+    the NotifyingQueue class which contains a LockAndSignal reference.
 
     The doWait...() methods are called by the destination thread
     to wait until new input has been provided and signaled by source threads.

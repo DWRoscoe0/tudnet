@@ -82,18 +82,18 @@ public class Infinitree
           }
 
       @Override public boolean equals(Object other) 
-        /* This is the standard equals() method.  
-          This is not a complete implimentation of equals(..).
-          It doesn't do null checks.
-          */
+        // This is the standard equals() method.  
         {
           boolean resultB = false;  // assume objects are not equal.
           Comparer: {  // Comparer.
+            if ( other == null )  // Other is null.
+              break Comparer;  // exit with false.
             if ( ! ( other instanceof Infinitree ) )  // different class.
               break Comparer;  // exit with false.
             Infinitree that =  // create variable for easy access of fields.
               (Infinitree) other; 
-            if ( this.childNumberI != that.childNumberI )  // child numbers not equal.
+            if   // child numbers not equal.
+              ( this.childNumberI != that.childNumberI )
               break Comparer;  // exit with false.
             if // parents not equal.
               ( ! ( ( parentInfinitree == that.parentInfinitree ) ||

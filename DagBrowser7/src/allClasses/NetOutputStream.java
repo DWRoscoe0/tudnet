@@ -2,8 +2,6 @@ package allClasses;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.DatagramPacket;
-import java.net.InetAddress;
 
 public class NetOutputStream 
 
@@ -26,34 +24,25 @@ public class NetOutputStream
 
 	{
 	  // Injected dependency variables.
-		PacketQueue outputPacketQueue; // This is the queue of either
+		private final PacketQueue outputPacketQueue; // This is the queue of either
 		  // the main Sender thread, or the parent NetOutputStream. 
-		InetAddress unicasterInetAddress = null;
-	  int unicasterPortI = 0;
-		NamedInteger packetCounterNamedInteger;
+		private final NetcasterPacketManager theNetcasterPacketManager;
+		private final NamedInteger packetCounterNamedInteger;
 
-		public static final int DEFAULT_BUFFER_SIZE = 1024;
-	  
-		int bufferSizeI= 0; // 0 forces initial flush() to allocate bufferBytes.
-		byte[] bufferBytes= null;
-		int indexI= 0; // 0 prevents sending any packet during initial flush().
-		DatagramPacket theDatagramPacket = null;
+		private int bufferSizeI= 0; // 0 forces initial flush() to allocate bufferBytes.
+		private byte[] bufferBytes= null;
+		private int indexI= 0; // 0 prevents sending packet during initial flush().
     
 		NetOutputStream(  // Constructor.
-				PacketQueue outputPacketQueue, 
-				InetAddress unicasterInetAddress, // Ignored if a Subcaster stream.
-				int unicasterPortI, // Ignored if a Subcaster stream.
+				PacketQueue outputPacketQueue,
+				NetcasterPacketManager theNetcasterPacketManager,
 				NamedInteger packetCounterNamedInteger
 				)
 			{
 				this.outputPacketQueue= outputPacketQueue;
-				this.unicasterInetAddress= unicasterInetAddress;
-			  this.unicasterPortI= unicasterPortI;		
+				this.theNetcasterPacketManager= theNetcasterPacketManager;
 				this.packetCounterNamedInteger= packetCounterNamedInteger;
         }
-
-		public PacketQueue getPacketQueue () 
-		  { return outputPacketQueue; }
 
 		public NamedInteger getCounterNamedInteger() 
 		  { return packetCounterNamedInteger; }
@@ -69,7 +58,7 @@ public class NetOutputStream
 				}
 	  
     public void flush() throws IOException
-      /* This writes any bytes written to the buffer so far, if any,
+      /* This outputs any bytes written to the buffer so far, if any,
         and prepares another buffer to receive more bytes.
 
         ?? Add a variation of this which takes a time limit limitMsL,
@@ -80,18 +69,19 @@ public class NetOutputStream
         for better bandwidth utilization.
         */
       {
-			  if (indexI > 0) // Sending packet if any bytes in buffer.
+			  if (indexI > 0) // Outputting packet if any bytes in its buffer.
 			  	{
-					  theDatagramPacket = new DatagramPacket(
-					  		bufferBytes, 0, indexI, unicasterInetAddress, unicasterPortI
+		        NetcasterPacket theNetcasterPacket= 
+		        	theNetcasterPacketManager.produceNetcasterPacket(
+		        		bufferBytes, indexI
 					  		);
-		        SockPacket theSockPacket= new SockPacket(theDatagramPacket);
 		        outputPacketQueue.add( // Queuing packet for sending.
-		            theSockPacket
+		            theNetcasterPacket
 		            );
 		  			packetCounterNamedInteger.addValueL( 1 ); // Counting sent packet.
 			  		}
-    		bufferBytes = new byte[DEFAULT_BUFFER_SIZE]; // Allocating new buffer.
+    		bufferBytes= // Allocating new buffer.
+			  	  theNetcasterPacketManager.produceBufferBytes();
     		bufferSizeI= bufferBytes.length; 
 			  indexI = 0; // Resetting buffer index.
   	    }
