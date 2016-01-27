@@ -59,7 +59,7 @@ import static allClasses.Globals.*;  // appLogger;
 
 public class Multicaster
 
-	extends NetCaster
+	extends Netcaster
 	
 	implements Runnable
 	
@@ -119,7 +119,7 @@ public class Multicaster
 	      sending and receiving multicast packets on the LAN.
 	      */
 	    {
-	      super(  // Superclass NetCaster List constructor with some dependencies. 
+	      super(  // Superclass Netcaster List constructor with some dependencies. 
 	          netcasterLockAndSignal,
 	  	      theNetInputStream,
 	  	      theNetOutputStream,

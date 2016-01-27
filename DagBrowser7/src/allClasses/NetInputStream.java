@@ -43,7 +43,7 @@ public class NetInputStream
 	{
 
 	  // Constructor-injected instance variables.
-		PacketQueue receiverToNetCasterPacketQueue= null;
+		PacketQueue receiverToNetcasterPacketQueue= null;
 		NamedInteger packetCounterNamedInteger;
 
 	  // Other instance variables.
@@ -56,11 +56,11 @@ public class NetInputStream
     int markIndexI= -1; 
   
 		public NetInputStream( 
-			PacketQueue receiverToNetCasterPacketQueue, 
+			PacketQueue receiverToNetcasterPacketQueue, 
 			NamedInteger packetCounterNamedInteger
 			)
 		{
-			this.receiverToNetCasterPacketQueue= receiverToNetCasterPacketQueue;
+			this.receiverToNetcasterPacketQueue= receiverToNetcasterPacketQueue;
 			this.packetCounterNamedInteger= packetCounterNamedInteger;
 			}
 
@@ -69,12 +69,12 @@ public class NetInputStream
 
 		public PacketQueue getPacketQueue()
 		  // Returns the receive queue through which data is passing.
-			{ return receiverToNetCasterPacketQueue; }
+			{ return receiverToNetcasterPacketQueue; }
 
 		public LockAndSignal getLockAndSignal()
 		  // Returns the LockAndSignal associated with the receive queue 
 		  // through which data is passing, mainly for debugging.
-			{ return receiverToNetCasterPacketQueue.getLockAndSignal(); }
+			{ return receiverToNetcasterPacketQueue.getLockAndSignal(); }
     
 		public int available() throws IOException 
       /* This method tests whether there are any bytes available for reading.
@@ -94,7 +94,7 @@ public class NetInputStream
       	  availableI= packetSizeI - packetIndexI; // Calculating bytes in buffer.
 	    	  if ( availableI > 0) break; // Exiting if any bytes in buffer.
 	    	  if  // Exiting if no packet in queue to load.
-	    	    ( receiverToNetCasterPacketQueue.peek() == null ) 
+	    	    ( receiverToNetcasterPacketQueue.peek() == null ) 
 	    	  	break;
           loadNextPacketV();
     	  	}
@@ -138,7 +138,7 @@ public class NetInputStream
     			markIndexI-= packetIndexI; // Subtracting present index or length ??
 
         try {
-        	theNetcasterPacket= receiverToNetCasterPacketQueue.take();
+        	theNetcasterPacket= receiverToNetcasterPacketQueue.take();
 	        } catch (InterruptedException e) { // Converting interrupt to error. 
 	        	throw new IOException(); 
 		      } 

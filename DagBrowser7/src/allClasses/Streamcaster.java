@@ -12,7 +12,7 @@ public class Streamcaster< K >
 
   /* This is the base class is for streaming with UDP packets, but
     it doesn't know anything about packet IP addresses or ports.
-    That is handled by subclass NetCaster.
+    That is handled by subclass Netcaster.
     */
 
 	{
@@ -92,7 +92,7 @@ public class Streamcaster< K >
     protected boolean tryingToCaptureTriggeredExitB( ) throws IOException
       /* This method tests whether exit has been triggered, meaning either:
         * The current thread's isInterrupted() is true, or
-        * The next packet, if any, at the head of the receiverToNetCasterPacketQueue,
+        * The next packet, if any, at the head of the receiverToNetcasterPacketQueue,
 		    	contains "SHUTTING-DOWN", indicating the remote node is shutting down.
 		    	If true then the packet is consumed and
 		    	the current thread's isInterrupted() status is set true.

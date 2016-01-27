@@ -4,14 +4,14 @@ import java.io.IOException;
 
 //import static allClasses.Globals.*;  // appLogger;
 
-public class NetCaster 
+public class Netcaster 
 
 	extends Streamcaster< IPAndPort >
 
 	// This class is the superclass of Unicaster and Multicaster.
 
 	{
-	  public NetCaster(  // Constructor. 
+	  public Netcaster(  // Constructor. 
 	      LockAndSignal netcasterLockAndSignal,
 	      NetInputStream theNetInputStream,
 	      NetOutputStream theNetOutputStream,

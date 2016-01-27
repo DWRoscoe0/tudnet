@@ -248,13 +248,13 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
     { return new MulticastSocket( portI ); }
 
 	public NetInputStream makeNetcasterNetInputStream(
-			PacketQueue receiverToNetCasterPacketQueue
+			PacketQueue receiverToNetcasterPacketQueue
 			)
 	  {
 			NamedInteger packetsReceivedNamedInteger=  
 					new NamedInteger( theDataTreeModel, "Packets-Received", 0 );
 	  	return new NetInputStream(
-	  	  receiverToNetCasterPacketQueue, packetsReceivedNamedInteger 
+	  	  receiverToNetcasterPacketQueue, packetsReceivedNamedInteger 
 	  		);
 	  	}
 	

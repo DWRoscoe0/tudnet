@@ -9,7 +9,7 @@ import allClasses.LockAndSignal.Input;
 
 public class Unicaster
 
-	extends NetCaster
+	extends Netcaster
 
   implements Runnable 
   
@@ -392,7 +392,7 @@ public class Unicaster
         to add theNetcasterPacket to this thread's receive queue.
        */
       {
-        //receiverToNetCasterPacketQueue.add(theNetcasterPacket);
+        //receiverToNetcasterPacketQueue.add(theNetcasterPacket);
     		theNetInputStream.getPacketQueue().add(theNetcasterPacket);
         }
 
