@@ -16,14 +16,14 @@ public class NetInputStream
     It provides methods from InputStream to do normal stream operations,
     but it also provides additional methods for dealing with 
     the UDP (Datagram) packets from which the stream data comes.
-    It gets the packets from a PacketQueue.
+    It gets the packets from a NetcasterQueue.
 
     The read methods in this class block if data is not available.
     Time-outs are not supported by these read methods,
     but time-outs at the packet level can be done in
     the standard way with the thread's LockAndSignal instance,
     which should be the same LockAndSignal as the one
-    in this class's PacketQueue.
+    in this class's NetcasterQueue.
     Use InputStream.available() as the input availability test.
 
     This code uses IOException and InterruptedException, but
@@ -43,7 +43,7 @@ public class NetInputStream
 	{
 
 	  // Constructor-injected instance variables.
-		PacketQueue receiverToNetcasterPacketQueue= null;
+		NetcasterQueue receiverToNetcasterNetcasterQueue= null;
 		NamedInteger packetCounterNamedInteger;
 
 	  // Other instance variables.
@@ -56,25 +56,25 @@ public class NetInputStream
     int markIndexI= -1; 
   
 		public NetInputStream( 
-			PacketQueue receiverToNetcasterPacketQueue, 
+			NetcasterQueue receiverToNetcasterNetcasterQueue, 
 			NamedInteger packetCounterNamedInteger
 			)
 		{
-			this.receiverToNetcasterPacketQueue= receiverToNetcasterPacketQueue;
+			this.receiverToNetcasterNetcasterQueue= receiverToNetcasterNetcasterQueue;
 			this.packetCounterNamedInteger= packetCounterNamedInteger;
 			}
 
 		public NamedInteger getCounterNamedInteger() 
 		  { return packetCounterNamedInteger; }
 
-		public PacketQueue getPacketQueue()
+		public NetcasterQueue getNetcasterQueue()
 		  // Returns the receive queue through which data is passing.
-			{ return receiverToNetcasterPacketQueue; }
+			{ return receiverToNetcasterNetcasterQueue; }
 
 		public LockAndSignal getLockAndSignal()
 		  // Returns the LockAndSignal associated with the receive queue 
 		  // through which data is passing, mainly for debugging.
-			{ return receiverToNetcasterPacketQueue.getLockAndSignal(); }
+			{ return receiverToNetcasterNetcasterQueue.getLockAndSignal(); }
     
 		public int available() throws IOException 
       /* This method tests whether there are any bytes available for reading.
@@ -94,7 +94,7 @@ public class NetInputStream
       	  availableI= packetSizeI - packetIndexI; // Calculating bytes in buffer.
 	    	  if ( availableI > 0) break; // Exiting if any bytes in buffer.
 	    	  if  // Exiting if no packet in queue to load.
-	    	    ( receiverToNetcasterPacketQueue.peek() == null ) 
+	    	    ( receiverToNetcasterNetcasterQueue.peek() == null ) 
 	    	  	break;
           loadNextPacketV();
     	  	}
@@ -138,7 +138,7 @@ public class NetInputStream
     			markIndexI-= packetIndexI; // Subtracting present index or length ??
 
         try {
-        	theNetcasterPacket= receiverToNetcasterPacketQueue.take();
+        	theNetcasterPacket= receiverToNetcasterNetcasterQueue.take();
 	        } catch (InterruptedException e) { // Converting interrupt to error. 
 	        	throw new IOException(); 
 		      } 

@@ -9,14 +9,14 @@ public class DataNodeWithKey< K >
 	  
 	  public DataNodeWithKey(  // Constructor.
 	      DataTreeModel theDataTreeModel,
-	      String typeString,
+	      String nameString,
 	  		K theKeyK
 	      )
 	    {
 	  		// Superclass's injections.
 	      super( // Constructing MutableList superclass.
 		        theDataTreeModel,
-		        typeString, // Type name but not entire name.
+		        nameString, // Type name but not entire name.
 	          new DataNode[]{} // Initially empty array of children.
 	      		);
 	

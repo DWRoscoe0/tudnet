@@ -6,7 +6,7 @@ import java.util.Collection;
 //import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class NotifyingQueue<E> // For inter-thread communication.
+public class NotifyingQueue<E> // Queue inter-thread communication.
 	
 	//extends ConcurrentLinkedQueue<E>
 	extends LinkedBlockingQueue<E>
@@ -63,8 +63,7 @@ public class NotifyingQueue<E> // For inter-thread communication.
 	  public boolean add( E anE )
 	    /* This method adds anE to the queue and returns immediately.
 	      It also notifies the consumer thread of the new element.
-	      It does not wait for anE to be completely processed 
-	      by the destination thread.
+	      It does not wait for anE to be processed by the destination thread.
 	     	*/
 	    {
 	      boolean resultB= super.add( anE );

@@ -18,7 +18,7 @@ public class UnicasterFactory {
 	
 	// Other objects that will be needed later.
 	private final UnicasterValue unicasterUnicasterValue; 
-	//private final PacketQueue subcasterToUnicasterPacketQueue;
+	//private final NetcasterQueue subcasterToUnicasterPacketQueue;
 	
   public UnicasterFactory(   // Factory constructor. 
   		AppGUIFactory theAppGUIFactory,
@@ -31,14 +31,14 @@ public class UnicasterFactory {
     // relative to their Unicaster.
     {
 		  LockAndSignal unicasterLockAndSignal= new LockAndSignal();
-			PacketQueue receiverToUnicasterPacketQueue= 
-					new PacketQueue( unicasterLockAndSignal );
+			NetcasterQueue receiverToUnicasterNetcasterQueue= 
+					new NetcasterQueue( unicasterLockAndSignal );
 			NetInputStream unicasterNetInputStream= 
-					theAppGUIFactory.makeNetcasterNetInputStream( receiverToUnicasterPacketQueue );
+					theAppGUIFactory.makeNetcasterNetInputStream( receiverToUnicasterNetcasterQueue );
 			InetAddress unicasterInetAddress= unicasterIPAndPort.getInetAddress(); 
 			int unicasterPortI= unicasterIPAndPort.getPortI();
-			NetOutputStream unicasterNetOutputStream= 
-					theAppGUIFactory.makeNetcasterNetOutputStream( 
+			NetcasterOutputStream unicasterNetcasterOutputStream= 
+					theAppGUIFactory.makeNetcasterNetcasterOutputStream( 
 						unicasterInetAddress, unicasterPortI
 						);
 		  SubcasterManager theSubcasterManager= 
@@ -48,7 +48,7 @@ public class UnicasterFactory {
 	    		theSubcasterManager,
 					unicasterLockAndSignal,
 		  		unicasterNetInputStream,
-		  		unicasterNetOutputStream,
+		  		unicasterNetcasterOutputStream,
 		  		unicasterIPAndPort,
 			  	theDataTreeModel,
 			   	theShutdowner
@@ -84,23 +84,23 @@ public class UnicasterFactory {
       )
 	  { 
 		  LockAndSignal subcasterLockAndSignal= new LockAndSignal();
-			PacketQueue unicasterToSubcasterPacketQueue= 
-					new PacketQueue( subcasterLockAndSignal );
+			NetcasterQueue unicasterToSubcasterNetcasterQueue= 
+					new NetcasterQueue( subcasterLockAndSignal );
 			NetInputStream subcasterNetInputStream= 
 					theAppGUIFactory.makeNetcasterNetInputStream( 
-							unicasterToSubcasterPacketQueue 
+							unicasterToSubcasterNetcasterQueue 
 							);
 		  InetAddress unicasterInetAddress= null; 
 			int unicasterPortI= 0;
-			NetOutputStream subcasterNetOutputStream= 
-					theAppGUIFactory.makeNetcasterNetOutputStream( 
+			NetcasterOutputStream subcasterNetcasterOutputStream= 
+					theAppGUIFactory.makeNetcasterNetcasterOutputStream( 
 						unicasterInetAddress, unicasterPortI
 						  // subcasterToUnicasterPacketQueue: use this instead??
 						);
   	  Subcaster unicasterSubcaster= new Subcaster(
   	  		subcasterLockAndSignal,
   				subcasterNetInputStream, 
-  				subcasterNetOutputStream, 
+  				subcasterNetcasterOutputStream, 
   	      theDataTreeModel,
   	      keyString,
   	      theShutdowner

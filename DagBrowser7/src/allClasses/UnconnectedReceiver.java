@@ -30,20 +30,20 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
     
     private DatagramSocket receiverDatagramSocket;
       // Unconnected socket which is source of packets.
-    private PacketQueue unconnectedReceiverToConnectionManagerPacketQueue;
+    private NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue;
       // Queue which is destination of received packets.
     private UnicasterManager theUnicasterManager;
     private final NetcasterPacketManager theNetcasterPacketManager;
 
     UnconnectedReceiver( // Constructor. 
         DatagramSocket receiverDatagramSocket,
-        PacketQueue unconnectedReceiverToConnectionManagerPacketQueue,
+        NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue,
         UnicasterManager theUnicasterManager,
         NetcasterPacketManager theNetcasterPacketManager
         )
       { 
-        this.unconnectedReceiverToConnectionManagerPacketQueue= 
-        		unconnectedReceiverToConnectionManagerPacketQueue;
+        this.unconnectedReceiverToConnectionManagerNetcasterQueue= 
+        		unconnectedReceiverToConnectionManagerNetcasterQueue;
         this.receiverDatagramSocket= receiverDatagramSocket;
         this.theUnicasterManager= theUnicasterManager;
         this.theNetcasterPacketManager= theNetcasterPacketManager;
@@ -65,7 +65,7 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
             { // Receiving and queuing one packet.
               try {
                 NetcasterPacket theNetcasterPacket= 
-                		theNetcasterPacketManager.makeSize512NetcasterPacket();
+                		theNetcasterPacketManager.produceKeyedPacket();
                 DatagramPacket theDatagramPacket= 
                 		theNetcasterPacket.getDatagramPacket();
                 receiverDatagramSocket.receive(theDatagramPacket);
@@ -82,7 +82,7 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
           	      		theNetcasterPacket
           	      		);
                 	else
-                	unconnectedReceiverToConnectionManagerPacketQueue.add(
+                	unconnectedReceiverToConnectionManagerNetcasterQueue.add(
                 			theNetcasterPacket
                 			); // Queue to CM.
                 }

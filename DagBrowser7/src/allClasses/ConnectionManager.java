@@ -104,11 +104,11 @@ public class ConnectionManager
         The old way of synchronizing inputs used 
         an Objects for a lock and a separate boolean signal.
         */
-	    private PacketQueue multicasterToConnectionManagerPacketQueue; 
+	    private NetcasterQueue multicasterToConnectionManagerNetcasterQueue; 
       // Queue of multicast packets received from Multicaster.
 
 	    // Inputs to the connection manager thread.
-	    private PacketQueue unconnectedReceiverToConnectionManagerPacketQueue;
+	    private NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue;
 	    	// Queue of unconnected unicast packets received from Unicasters.
 
     // Other instance variables, all private.
@@ -130,8 +130,8 @@ public class ConnectionManager
     		UnicasterManager theUnicasterManager,
         DataTreeModel theDataTreeModel,
     		LockAndSignal cmThreadLockAndSignal,
-    		PacketQueue multicasterToConnectionManagerPacketQueue,
-    		PacketQueue unconnectedReceiverToConnectionManagerPacketQueue
+    		NetcasterQueue multicasterToConnectionManagerNetcasterQueue,
+    		NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue
     		)
       {
         super(  // Constructing base class.
@@ -144,10 +144,10 @@ public class ConnectionManager
   	    this.theAppGUIFactory= theAppGUIFactory;
   	    this.theUnicasterManager= theUnicasterManager; 
   	    this.cmThreadLockAndSignal= cmThreadLockAndSignal;
-  	    this.multicasterToConnectionManagerPacketQueue=
-  	    		multicasterToConnectionManagerPacketQueue;
-  	    this.unconnectedReceiverToConnectionManagerPacketQueue=
-  	    		unconnectedReceiverToConnectionManagerPacketQueue;
+  	    this.multicasterToConnectionManagerNetcasterQueue=
+  	    		multicasterToConnectionManagerNetcasterQueue;
+  	    this.unconnectedReceiverToConnectionManagerNetcasterQueue=
+  	    		unconnectedReceiverToConnectionManagerNetcasterQueue;
         }
 
 
@@ -310,7 +310,7 @@ public class ConnectionManager
 
         while (true) {  // Process all received unconnected packets.
           theNetcasterPacket= // Try getting next packet from queue.
-            unconnectedReceiverToConnectionManagerPacketQueue.poll();
+            unconnectedReceiverToConnectionManagerNetcasterQueue.poll();
 
           if (theNetcasterPacket == null) break;  // Exit if no more packets.
           
@@ -386,7 +386,7 @@ public class ConnectionManager
       {
     		Multicaster theMulticaster= theAppGUIFactory.makeMulticaster(
 		      theMulticastSocket
-		      ,multicasterToConnectionManagerPacketQueue // ...receive queue,...
+		      ,multicasterToConnectionManagerNetcasterQueue // ...receive queue,...
 		      ,multicastInetAddress
 		      );
     		addB( theMulticaster );  // Add to DataNode List.
@@ -411,7 +411,7 @@ public class ConnectionManager
 
         while (true) {  // Process all received packets.
           theNetcasterPacket= // Try getting next packet from queue.
-            multicasterToConnectionManagerPacketQueue.poll();
+            multicasterToConnectionManagerNetcasterQueue.poll();
           if (theNetcasterPacket == null) break;  // Exit if no more packets.
       		createAndPassToUnicasterV( theNetcasterPacket );
           packetsProcessedB= true;

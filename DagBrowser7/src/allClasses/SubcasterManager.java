@@ -4,7 +4,7 @@ package allClasses;
 
 public class SubcasterManager
 
-	extends MutableListWithMap< 
+	extends StreamcasterManager< 
 		String, // Key for map.
 		SubcasterValue, // Value for map. 
 		Subcaster // DataNode in Value.
@@ -69,20 +69,20 @@ public class SubcasterManager
     		NetcasterPacket theNetcasterPacket
 	  		)
 	    {
-    	  //???
+    	  ///
 	      }
 
     public synchronized Subcaster tryGettingReadySubcaster(
     		String keyString
 	  		)
-      /* Tries to return a Subcaster with SockPackets from its NetOutputStream.
+      /* Tries to return a Subcaster with SockPackets from its NetcasterOutputStream.
         If no Subcaster's have any packets ready then it returns null.
         Doing it this way instead of somehow 
         associating the keyString to the NetcasterPacket
-        moves complexity from the NetOutputStream to this class.
+        moves complexity from the NetcasterOutputStream to this class.
         */ 
 	    {
-    	  return null; //???
+    	  return null; ///
 	      }
 
     }

@@ -2,7 +2,7 @@ package allClasses;
 
 import java.util.concurrent.TimeUnit;
 
-public class CountingPacketQueue extends PacketQueue
+public class CountingPacketQueue extends NetcasterQueue
 
   /* I decided to remove this class and move the counting elsewhere.
    

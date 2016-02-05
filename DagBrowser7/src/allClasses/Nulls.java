@@ -50,7 +50,7 @@ public class Nulls
 	  		}
 		
 		public static String toString(Object theObject) 
-		  /* This static toString(..) works like the regular instance hashCode() 
+		  /* This static toString(..) works like the regular instance tpStromg() 
 		    but returns "null" if the object reference is null.
 		    */
 			{

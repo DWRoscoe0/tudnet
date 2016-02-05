@@ -82,7 +82,7 @@ public class Unicaster
 			  SubcasterManager theSubcasterManager,
 	    	LockAndSignal threadLockAndSignal,
 	      NetInputStream theNetInputStream,
-	      NetOutputStream theNetOutputStream,
+	      NetcasterOutputStream theNetcasterOutputStream,
 	      IPAndPort remoteIPAndPort,
         DataTreeModel theDataTreeModel,
         Shutdowner theShutdowner
@@ -100,7 +100,7 @@ public class Unicaster
         super(
         		threadLockAndSignal,
 	  	      theNetInputStream,
-	  	      theNetOutputStream,
+	  	      theNetcasterOutputStream,
   	        theDataTreeModel,
   	        remoteIPAndPort,
         		"Unicaster" 
@@ -134,10 +134,10 @@ public class Unicaster
 	          initializingV();
 	          
 	          theSubcasterManager.buildAddAndStartSubcaster( // Adding Subcaster.
-	              "PING-REPLY." //??? Hard wired at first.
+	              "PING-REPLY." /// Hard wired at first.
 	      	  		);
 
-	          { //??? Uncomment only one of the following method calls.
+	          { /// Uncomment only one of the following method calls.
 	          	runWithoutSubcastersV(); // Original code.
 	          	// runWithSubcastersV(); // Experiment code with Subcaster.
 		          }
@@ -148,7 +148,7 @@ public class Unicaster
 	      				sendingMessageV("SHUTTING-DOWN"); // Informing peer of shutdown.
 	  	          appLogger.info( "SHUTTING-DOWN message sent.");
 		      			}
-	      		theNetOutputStream.close(); // Closing output stream.
+	      		theNetcasterOutputStream.close(); // Closing output stream.
           	}
           catch( IOException e ) {
           	Globals.logAndRethrowAsRuntimeExceptionV( 
@@ -176,7 +176,7 @@ public class Unicaster
 		    addB( theSubcasterManager ); // Adding to our list.
 	    	}
 
-    public void runWithSubcastersV() throws IOException //???
+    public void runWithSubcastersV() throws IOException ///
       // Does (or will do) full PING-REPLY protocol using a Subcaster.
 	    {
 			  while (true) // Repeating until thread termination is requested.
@@ -185,15 +185,15 @@ public class Unicaster
 		          ( Thread.currentThread().isInterrupted() ) 
 		          break;
 
-		    		while ( theNetInputStream.available() > 0 ); //??? send packet.
+		    		while ( theNetInputStream.available() > 0 ); /// send packet.
 		    		
-		    		//??? Get packets from Subcasters and send to peer.
+		    		/// Get packets from Subcasters and send to peer.
 		    		
 		    		netcasterLockAndSignal.doWaitE(); // Waiting for any input.
 		      	}
 	    	}
 
-    public void runWithoutSubcastersV() throws IOException //??? Needn't be public.
+    public void runWithoutSubcastersV() throws IOException /// Needn't be public.
       // Does full PING-REPLY protocol without help of Subcaster.
 	    {
 	    	int stateI= // Initialize ping-reply protocol state from yield flag. 
@@ -392,8 +392,8 @@ public class Unicaster
         to add theNetcasterPacket to this thread's receive queue.
        */
       {
-        //receiverToNetcasterPacketQueue.add(theNetcasterPacket);
-    		theNetInputStream.getPacketQueue().add(theNetcasterPacket);
+        //receiverToNetcasterNetcasterQueue.add(theNetcasterPacket);
+    		theNetInputStream.getNetcasterQueue().add(theNetcasterPacket);
         }
 
     } // Unicaster.

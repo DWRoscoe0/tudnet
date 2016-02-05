@@ -27,7 +27,8 @@ public class Streamcaster< K >
 			// LockAndSignal for inputs to this thread.  It is used in
       // the construction of the following queue. 
 
-	  protected final NetOutputStream theNetOutputStream;
+	  protected final 
+	    NetcasterOutputStream theNetcasterOutputStream;
 		protected final NetInputStream theNetInputStream;
 
 		protected long pingSentNanosL; // Time the last ping was sent.
@@ -41,22 +42,22 @@ public class Streamcaster< K >
 
 	  public Streamcaster(  // Constructor.
 	      DataTreeModel theDataTreeModel,
-	      String typeString,
+	      String nameString,
 	  		K theKeyK,
 	  		LockAndSignal netcasterLockAndSignal,
 	      NetInputStream theNetInputStream,
-	      NetOutputStream theNetOutputStream
+	      NetcasterOutputStream theNetcasterOutputStream
 	  		)
 	    {
 	  		// Superclass's injections.
 	      super( // Constructing MutableList superclass.
 		        theDataTreeModel,
-		        typeString, // Type name but not entire name.
+		        nameString, // Type name but not entire name.
 		        theKeyK
 	      		);
 
 	      this.theNetInputStream= theNetInputStream;
-	      this.theNetOutputStream= theNetOutputStream;
+	      this.theNetcasterOutputStream= theNetcasterOutputStream;
 	      this.netcasterLockAndSignal= netcasterLockAndSignal;
 	      }
 
@@ -92,7 +93,7 @@ public class Streamcaster< K >
     protected boolean tryingToCaptureTriggeredExitB( ) throws IOException
       /* This method tests whether exit has been triggered, meaning either:
         * The current thread's isInterrupted() is true, or
-        * The next packet, if any, at the head of the receiverToNetcasterPacketQueue,
+        * The next packet, if any, at the head of the receiverToNetcasterNetcasterQueue,
 		    	contains "SHUTTING-DOWN", indicating the remote node is shutting down.
 		    	If true then the packet is consumed and
 		    	the current thread's isInterrupted() status is set true.
@@ -165,9 +166,9 @@ public class Streamcaster< K >
 
       protected void sendingMessageV( String aString ) throws IOException//??
         /* This method sends a packet containing aString to the peer.
-          It uses NetOutputStream instead of accessing packets directly.
+          It uses NetcasterOutputStream instead of accessing packets directly.
           It prepends a packet ID number.
-          It does it using a NetOutputStream.
+          It does it using a NetcasterOutputStream.
           */
         {
           String payloadString=
@@ -177,8 +178,8 @@ public class Streamcaster< K >
           //appLogger.debug( "sendingMessageV(): " + payloadString );
           byte[] buf = payloadString.getBytes();
           
-          theNetOutputStream.write(buf); // Writing it to memory.
-          theNetOutputStream.flush(); // Sending it in packet.
+          theNetcasterOutputStream.write(buf); // Writing it to memory.
+          theNetcasterOutputStream.flush(); // Sending it in packet.
           }
 
 	}

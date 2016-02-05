@@ -14,20 +14,20 @@ public class Netcaster
 	  public Netcaster(  // Constructor. 
 	      LockAndSignal netcasterLockAndSignal,
 	      NetInputStream theNetInputStream,
-	      NetOutputStream theNetOutputStream,
+	      NetcasterOutputStream theNetcasterOutputStream,
 	      DataTreeModel theDataTreeModel,
 	      IPAndPort  remoteIPAndPort, 
-	      String typeString
+	      String nameString
 	      )
 	    {
 	  		// Superclass's injections.
 	  	  super( // Constructing Streamcaster DataNodeWithKey superclass.
 			      theDataTreeModel,
-			      typeString,
+			      nameString,
 			      remoteIPAndPort, // key K
 			      netcasterLockAndSignal,
 			      theNetInputStream,
-			      theNetOutputStream
+			      theNetcasterOutputStream
 			      );
 
         packetIDI= 0; // Setting starting packet sequence number.
@@ -47,7 +47,7 @@ public class Netcaster
 				    theDataTreeModel, "Port", "" + remoteIPAndPort.getPortI()
 				  	) );
 
-		    addB( 	theNetOutputStream.getCounterNamedInteger() );
+		    addB( 	theNetcasterOutputStream.getCounterNamedInteger() );
 		    addB( 	theNetInputStream.getCounterNamedInteger());
 	    	}
 

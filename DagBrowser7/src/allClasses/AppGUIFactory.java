@@ -33,8 +33,8 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 	// Other objects that will be needed later.
   private final UnicasterManager theUnicasterManager;
   private final LockAndSignal senderLockAndSignal;
-  private final PacketQueue netcasterToSenderPacketQueue;
-  private final PacketQueue unconnectedReceiverToConnectionManagerPacketQueue;
+  private final NetcasterQueue netcasterToSenderNetcasterQueue;
+  private final NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue;
   private final DataTreeModel theDataTreeModel;
   private final AppGUI theAppGUI;
   private final NetcasterPacketManager receiverNetcasterPacketManager;
@@ -48,8 +48,8 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
     // Note, no non-static maker methods are called from here.
     {
   	  LockAndSignal senderLockAndSignal= new LockAndSignal();
-  	  PacketQueue netcasterToSenderPacketQueue= 
-  	  		new PacketQueue( senderLockAndSignal );
+  	  NetcasterQueue netcasterToSenderNetcasterQueue= 
+  	  		new NetcasterQueue( senderLockAndSignal );
       DataRoot theDataRoot= new DataRoot();
       MetaFileManager theMetaFileManager= new MetaFileManager( theDataRoot );
       MetaRoot theMetaRoot= new MetaRoot( theDataRoot, theMetaFileManager );
@@ -59,10 +59,10 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
         theDataRoot, theMetaRoot, theMetaFileManagerFinisher, theShutdowner 
         );
 	    LockAndSignal cmThreadLockAndSignal= new LockAndSignal();
-	    PacketQueue multicasterToConnectionManagerPacketQueue=
-	      new PacketQueue(cmThreadLockAndSignal);
-	    PacketQueue unconnectedReceiverToConnectionManagerPacketQueue=
-	      new PacketQueue(cmThreadLockAndSignal);
+	    NetcasterQueue multicasterToConnectionManagerNetcasterQueue=
+	      new NetcasterQueue(cmThreadLockAndSignal);
+	    NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue=
+	      new NetcasterQueue(cmThreadLockAndSignal);
       UnicasterManager theUnicasterManager= new UnicasterManager( 
         	theDataTreeModel, this
        		);
@@ -71,8 +71,8 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
         theUnicasterManager,
         theDataTreeModel,
   	    cmThreadLockAndSignal,
-  	    multicasterToConnectionManagerPacketQueue,
-  	    unconnectedReceiverToConnectionManagerPacketQueue
+  	    multicasterToConnectionManagerNetcasterQueue,
+  	    unconnectedReceiverToConnectionManagerNetcasterQueue
   	    );
       EpiThread theConnectionManagerEpiThread=
         AppGUIFactory.makeEpiThread( theConnectionManager, "ConnMgr" );
@@ -111,7 +111,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
         );
 
       receiverNetcasterPacketManager= 
-      		new NetcasterPacketManager(null,0);
+      		new NetcasterPacketManager( (IPAndPort)null );
 
       // Save in instance variables injected objects that are needed later.
   	  this.theShutdowner= theShutdowner;
@@ -119,9 +119,9 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
   	  // Save in instance variables other objects that are needed later.
       this.theUnicasterManager= theUnicasterManager;
       this.senderLockAndSignal= senderLockAndSignal;
-      this.netcasterToSenderPacketQueue= netcasterToSenderPacketQueue;
-      this.unconnectedReceiverToConnectionManagerPacketQueue=
-      		unconnectedReceiverToConnectionManagerPacketQueue;
+      this.netcasterToSenderNetcasterQueue= netcasterToSenderNetcasterQueue;
+      this.unconnectedReceiverToConnectionManagerNetcasterQueue=
+      		unconnectedReceiverToConnectionManagerNetcasterQueue;
       this.theDataTreeModel= theDataTreeModel;
       this.theAppGUI= theAppGUI;
       }
@@ -172,7 +172,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 			Nulls.fastFailNullCheckT( unconnectedDatagramSocket );
 			return new Sender( 
 	      unconnectedDatagramSocket,
-	      netcasterToSenderPacketQueue,
+	      netcasterToSenderNetcasterQueue,
 	      senderLockAndSignal
 	      );
 			}
@@ -195,14 +195,14 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
   		Nulls.fastFailNullCheckT( unconnectedDatagramSocket );
 			return new UnconnectedReceiver( 
 	          unconnectedDatagramSocket,
-	          unconnectedReceiverToConnectionManagerPacketQueue,
+	          unconnectedReceiverToConnectionManagerNetcasterQueue,
 	          theUnicasterManager,
 	          receiverNetcasterPacketManager
 	          );
 	    }
   
 	public static EpiThread makeMulticastReceiverEpiThread(
-			PacketQueue multicastReceiverToMulticasterPacketQueue,
+			NetcasterQueue multicastReceiverToMulticasterNetcasterQueue,
 			MulticastSocket theMulticastSocket,
    		NetcasterPacketManager receiverNetcasterPacketManager
 			)
@@ -210,7 +210,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 		
 			Multicaster.MulticastReceiver theMulticastReceiver=  // Constructing runnable.
 		    new Multicaster.MulticastReceiver( 
-			   		multicastReceiverToMulticasterPacketQueue,
+			   		multicastReceiverToMulticasterNetcasterQueue,
 			   		theMulticastSocket,
 			   		receiverNetcasterPacketManager
             );
@@ -223,15 +223,6 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 	  // This is needed for the unconnected DatagramSocket.
 	  // It cannot use an IPAndPort.
 		{ return new InetSocketAddress( remotePortI ); }
-
-	/* ???
-	  public static InetSocketAddress makeInetSocketAddress( 
-	 	InetAddress theInetAddress, int remotePortI 
-			)
-	  // This SocketAddress is for the Multicaster.
-		//{ return new InetSocketAddress( theInetAddress, remotePortI ); }
-		{ return makeIPAndPort( theInetAddress, remotePortI ); }
-  ??? */
 
 	public static IPAndPort makeIPAndPort( 
 			InetAddress theInetAddress, int remotePortI 
@@ -248,26 +239,28 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
     { return new MulticastSocket( portI ); }
 
 	public NetInputStream makeNetcasterNetInputStream(
-			PacketQueue receiverToNetcasterPacketQueue
+			NetcasterQueue receiverToNetcasterNetcasterQueue
 			)
 	  {
 			NamedInteger packetsReceivedNamedInteger=  
 					new NamedInteger( theDataTreeModel, "Packets-Received", 0 );
 	  	return new NetInputStream(
-	  	  receiverToNetcasterPacketQueue, packetsReceivedNamedInteger 
+	  	  receiverToNetcasterNetcasterQueue, packetsReceivedNamedInteger 
 	  		);
 	  	}
 	
-	public NetOutputStream makeNetcasterNetOutputStream(
+	public NetcasterOutputStream makeNetcasterNetcasterOutputStream(
 			InetAddress remoteInetAddress, int remotePortI
 	    )
 	  {
+			IPAndPort theIPAndPort= 
+					AppGUIFactory.makeIPAndPort( remoteInetAddress, remotePortI );
+		  NetcasterPacketManager theNetcasterPacketManager=
+		  		new NetcasterPacketManager( theIPAndPort );
 		  NamedInteger packetsSentNamedInteger= 
 					new NamedInteger( theDataTreeModel, "Packets-Sent", 0 );
-		  NetcasterPacketManager theNetcasterPacketManager=
-		  		new NetcasterPacketManager( remoteInetAddress, remotePortI );
-		  return new NetOutputStream(
-		  	netcasterToSenderPacketQueue,
+		  return new NetcasterOutputStream(
+		  	netcasterToSenderNetcasterQueue,
 		  	theNetcasterPacketManager,
 		  	packetsSentNamedInteger
 	      );
@@ -275,25 +268,25 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 	
 	public Multicaster makeMulticaster(
 			MulticastSocket theMulticastSocket,
-			PacketQueue multicasterToConnectionManagerPacketQueue,
+			NetcasterQueue multicasterToConnectionManagerNetcasterQueue,
 			InetAddress multicastInetAddress
 	    )
 	  { 
 		  LockAndSignal multicasterLockAndSignal= new LockAndSignal();  
-		  PacketQueue multicastReceiverToMulticasterPacketQueue= 
-		  		new PacketQueue( multicasterLockAndSignal );
+		  NetcasterQueue multicastReceiverToMulticasterNetcasterQueue= 
+		  		new NetcasterQueue( multicasterLockAndSignal );
 			int multicastPortI= PortManager.getDiscoveryPortI();
 			
 		  return new Multicaster(
 		  	multicasterLockAndSignal,
-	  		makeNetcasterNetInputStream( multicastReceiverToMulticasterPacketQueue ),
-	  		makeNetcasterNetOutputStream( multicastInetAddress, multicastPortI ),
+	  		makeNetcasterNetInputStream( multicastReceiverToMulticasterNetcasterQueue ),
+	  		makeNetcasterNetcasterOutputStream( multicastInetAddress, multicastPortI ),
 	  		theDataTreeModel,
 	  		AppGUIFactory.makeIPAndPort(
 	  				multicastInetAddress, multicastPortI 
 	  				),
 	  		theMulticastSocket,
-	      multicasterToConnectionManagerPacketQueue,
+	      multicasterToConnectionManagerNetcasterQueue,
 	      theUnicasterManager,
 	      receiverNetcasterPacketManager
 	      ); 

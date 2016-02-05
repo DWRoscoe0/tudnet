@@ -2,10 +2,6 @@ package allClasses;
 
 import static allClasses.Globals.appLogger;
 
-
-
-
-import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -22,6 +18,7 @@ public class MutableListWithMap<
   
   // This class extends MutableList with a HashMap for fast child lookup.
   // It also has some support for EpiThreads associated with the child values.
+  // The HashMap and List are kept synchronized.
   
   {
 
@@ -35,7 +32,7 @@ public class MutableListWithMap<
 	      )
 	    {
 	  		// Superclass injections.
-	      super( // Constructing MutableList superclass.
+	      super(
 		        theDataTreeModel,
 		        nameString,
 		        inDataNodes
@@ -75,37 +72,5 @@ public class MutableListWithMap<
 	    	K childKeyK= childD.getKeyK();
 		    childHashMap.remove( childKeyK );  // Removing from Map.
 		    }
-
-    public void stoppingEntryThreadsV()
-      /* This method terminates all of the threads 
-        which are associated with the V values in its collection.
-        It does this in 2 loops.
-        * The first loop requests thread terminations.
-	      * The second loop waits for the terminations to complete.
-        This is done in anticipation of when termination will require
-        protocol handshakes, requiring significant time,
-        and therefore would benefit from parallelism.
-        */
-      {
-    	  // Creating both iterators now before entries have disappeared from Map.
-	      Iterator<V> stopIteratorOfVs=
-            childHashMap.values().iterator();
-	      Iterator<V> joinIteratorOfVs=
-            childHashMap.values().iterator();
-
-        while  // Requesting/initiating termination of all entry threads.
-          (stopIteratorOfVs.hasNext())
-          {
-            V theV= stopIteratorOfVs.next();
-            theV.getEpiThread().stopV(); // Requesting termination. 
-            }
-
-        while  // Waiting for completion of termination of all entry threads.
-          (joinIteratorOfVs.hasNext())
-          {
-            V theV= joinIteratorOfVs.next();
-            theV.getEpiThread().joinV(); // Awaiting termination 
-            }
-        }
 
   }

@@ -6,7 +6,7 @@ import java.net.DatagramPacket;
 
 public class UnicasterManager
 
-	extends MutableListWithMap<
+	extends StreamcasterManager<
 		IPAndPort, // Key for map.
 		UnicasterValue, // Value for map. 
 		Unicaster // DataNode in Value.
@@ -20,25 +20,6 @@ public class UnicasterManager
 
   {
 		
-	  /* private Map<SocketAddress,UnicasterValue> childHashMap= // Setting empty.
-		  new ConcurrentHashMap<SocketAddress,UnicasterValue>();
-		   
-	    The above Map was moved to the superclass.
-	    It is an initially empty Collection 
-	    which provides fast lookup of Unicasters
-      by associated IPAddress and port.
-      It is used mainly to quickly determine which, if any, Unicaster
-      is associated with a remote address from which a DatagramPacket
-      is received.
-      
-			Presently only connected Unicasters are put in this Map.
-
-			?? This map is kept synchronized with 
-			this class's superclass MutableList.
-
-      ?? This doesn't need to be a concurrent map, but it doesn't hurt.
-     */
-
 		private final AppGUIFactory theAppGUIFactory;
 	
 		public UnicasterManager(  // Constructor. 

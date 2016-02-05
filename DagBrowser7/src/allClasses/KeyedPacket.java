@@ -6,14 +6,15 @@ public class KeyedPacket<K>
 
 	extends EpiPacket
 
-  /* This class a key K to a packet which identifies the handler for it.
+  /* This packet class contains a key K 
+    which identifies handlers for the packet.
 	  The key might be the IPAndPort of a peer, or a String identifying
-	  a subprotocol for that peer.
+	  a sub-protocol for a particular peer.
 	  */
   {
   	protected final K keyK; // Identifies the address/protocol with which
   	  // this packet is associated.  It might be either:
-  	  // * IPAndPort, the remote-address, replacing (InetAddress,portI). 
+  	  // * netcasterIPAndPort, the remote-address, replaces (InetAddress,portI). 
   	  // * subcasterString.
 
     public KeyedPacket(  // Constructor.
@@ -24,5 +25,8 @@ public class KeyedPacket<K>
     	  super( theDatagramPacket );
     		this.keyK= keyK;
         }
+
+    public K getKeyK()
+    	{ return keyK; }
 
   	}

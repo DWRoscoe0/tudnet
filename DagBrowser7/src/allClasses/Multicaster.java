@@ -18,8 +18,8 @@ import static allClasses.Globals.*;  // appLogger;
 
   After construction and initialization, 
   data for this thread passes through the following:
-  * receiverToMulticasterPacketQueue: packets from the MulticastReceiver.
-  * multicasterToConnectionManagerPacketQueue: packets to ConnectionManager.
+  * receiverToMulticasterNetcasterQueue: packets from the MulticastReceiver.
+  * multicasterToConnectionManagerNetcasterQueue: packets to ConnectionManager.
   * netcasterToSenderPacketQueue: packets to the network Sender.
   
   This was originally based on Multicaster.java at 
@@ -72,8 +72,8 @@ public class Multicaster
 	      * It's a way to specify a source/local port number.
 	    */ 
 	  private IPAndPort theIPAndPort;
-	  private final PacketQueue // Receive output.
-	    multicasterToConnectionManagerPacketQueue;  // SockPackets for ConnectionManager to note.
+	  private final NetcasterQueue // Receive output.
+	    multicasterToConnectionManagerNetcasterQueue;  // SockPackets for ConnectionManager to note.
   	private UnicasterManager theUnicasterManager;
   	private final NetcasterPacketManager multicastReceiverNetcasterPacketManager;
 
@@ -106,11 +106,11 @@ public class Multicaster
 	  public Multicaster (  // Constructor.
 	      LockAndSignal netcasterLockAndSignal,
 	      NetInputStream theNetInputStream,
-	  		NetOutputStream theNetOutputStream,
+	  		NetcasterOutputStream theNetcasterOutputStream,
 	  		DataTreeModel theDataTreeModel,
 	  		IPAndPort theIPAndPort,
 	  		MulticastSocket theMulticastSocket,
-	      PacketQueue multicasterToConnectionManagerPacketQueue,
+	      NetcasterQueue multicasterToConnectionManagerNetcasterQueue,
 		  	UnicasterManager theUnicasterManager,
 		  	NetcasterPacketManager multicastReceiverNetcasterPacketManager	      )
 	    /* Constructs a Multicaster object and prepares it for
@@ -122,7 +122,7 @@ public class Multicaster
 	      super(  // Superclass Netcaster List constructor with some dependencies. 
 	          netcasterLockAndSignal,
 	  	      theNetInputStream,
-	  	      theNetOutputStream,
+	  	      theNetcasterOutputStream,
 	  	  		theDataTreeModel,
 	  	  		theIPAndPort,
 		        "Multicaster"
@@ -131,7 +131,7 @@ public class Multicaster
 	  		// Store remaining injected dependencies.
 	  		this.theMulticastSocket= theMulticastSocket;
 	  	  this.theIPAndPort= theIPAndPort;
-	      this.multicasterToConnectionManagerPacketQueue= multicasterToConnectionManagerPacketQueue;
+	      this.multicasterToConnectionManagerNetcasterQueue= multicasterToConnectionManagerNetcasterQueue;
 		  	this.theUnicasterManager= theUnicasterManager;
 		  	this.multicastReceiverNetcasterPacketManager=
 		  			multicastReceiverNetcasterPacketManager;
@@ -148,13 +148,13 @@ public class Multicaster
 
       /* This simple thread receives and queues 
         multicast DatagramPackets from a MulticastSocket.
-        The packets are queued to a PacketQueue for consumption by 
+        The packets are queued to a NetcasterQueue for consumption by 
         the main Multicaster thread.
 			
 			  After construction and initialization, 
 			  data for this thread passes through the following:
         * theMulticastSocket: DatagramPackets from the network.
-        * receiverToMulticasterPacketQueue: packets to the Multicaster. 
+        * receiverToMulticasterNetcasterQueue: packets to the Multicaster. 
         
         This thread is kept simple because the only known way to guarantee
         fast termination of a multicast receive(..) operation
@@ -164,24 +164,24 @@ public class Multicaster
       {
 
         // Injected dependency instance variables.
-        private final PacketQueue receiverToMulticasterPacketQueue;
+        private final NetcasterQueue receiverToMulticasterNetcasterQueue;
           // Queue which is destination of received packets.
         private final MulticastSocket theMulticastSocket;
         private final NetcasterPacketManager theNetcasterPacketManager;
 
 
         MulticastReceiver( // Constructor. 
-            PacketQueue receiverToMulticasterPacketQueue,
+            NetcasterQueue receiverToMulticasterNetcasterQueue,
             MulticastSocket theMulticastSocket,
             NetcasterPacketManager theNetcasterPacketManager
             )
           /* Constructs an instance of this class from:
               * theMulticastSocket: the socket receiving packets.
-              * receiverToMulticasterPacketQueue: the output queue.
+              * receiverToMulticasterNetcasterQueue: the output queue.
             */
           {
-	          this.receiverToMulticasterPacketQueue= 
-	          		receiverToMulticasterPacketQueue;
+	          this.receiverToMulticasterNetcasterQueue= 
+	          		receiverToMulticasterNetcasterQueue;
 	          this.theMulticastSocket= theMulticastSocket;
 	          this.theNetcasterPacketManager= theNetcasterPacketManager;
 	          }
@@ -200,11 +200,11 @@ public class Multicaster
 	              { // Receiving and queuing one packet.
 	                try {
 	                  NetcasterPacket receiverNetcasterPacket=
-	                  		theNetcasterPacketManager.makeSize512NetcasterPacket( );
+	                  		theNetcasterPacketManager.produceKeyedPacket();
 	                  DatagramPacket receiverDatagramPacket= 
 	                  		receiverNetcasterPacket.getDatagramPacket(); 
 	                  theMulticastSocket.receive( receiverDatagramPacket );
-	                  receiverToMulticasterPacketQueue.add( // Queuing packet.
+	                  receiverToMulticasterNetcasterQueue.add( // Queuing packet.
 	                  		receiverNetcasterPacket
 	                  		);
 	                	}
@@ -282,7 +282,7 @@ public class Multicaster
       {
     		theMulticastReceiverEpiThread= // Constructing thread.
     				AppGUIFactory.makeMulticastReceiverEpiThread(
-	            theNetInputStream.getPacketQueue(),
+	            theNetInputStream.getNetcasterQueue(),
 	            theMulticastSocket,
 				   		multicastReceiverNetcasterPacketManager
 	            );
@@ -369,7 +369,7 @@ public class Multicaster
 	       		//	"Multicaster.processingPossibleNewUnicasterV():\n  queuing: "
 		       	//	+PacketStuff.gettingPacketString(theNetcasterPacket.getDatagramPacket())
 	       		//);
-          	multicasterToConnectionManagerPacketQueue.add( // Passing to CM.
+          	multicasterToConnectionManagerNetcasterQueue.add( // Passing to CM.
 			    		theNetcasterPacket
 			        );
        	    }

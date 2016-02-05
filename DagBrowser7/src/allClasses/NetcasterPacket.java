@@ -6,21 +6,16 @@ public class NetcasterPacket
 
   extends KeyedPacket< IPAndPort >
 
-  // These are packet associated with particular addresses.
+  // These are packets associated with particular addresses.
 
 	{
 
     public NetcasterPacket(  // Constructor.
-        DatagramPacket inDatagramPacket
+        DatagramPacket theDatagramPacket,
+        IPAndPort theIPAndPort
         )
-      /* Constructs a NetcasterPacket associated with 
-        DatagramSocket inDatagramSocket and DatagramPacket inDatagramPacket.
-
-        This constructor would not be possible if
-        this class had extended DatagramPacket.
-        */
       {
-	    	super( inDatagramPacket, (IPAndPort)null );
+	    	super( theDatagramPacket, theIPAndPort );
         }
 
 		}

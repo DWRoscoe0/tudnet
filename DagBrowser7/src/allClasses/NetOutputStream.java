@@ -3,15 +3,19 @@ package allClasses;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public class NetOutputStream 
+public class NetOutputStream<
+		K, // Key.
+		E extends KeyedPacket<K>, // Packet. 
+		Q extends NotifyingQueue<E>, // Packet queue.
+    M extends PacketManager<K,E> // Packet manager.
+    >
 
 	extends OutputStream
 
-  /* This class is a network output stream, at first generating UDP packets.
-    If used by a Unicaster then packets generated will be queued to the Sender.
-    If used by a Subcaster then packets generated will be queued to 
-    the parent Unicaster and the unicasterInetAddress and unicasterPortI
-    will be ignored.
+  /* This class is a network output stream which generates packets.
+    If used by a Unicaster then the packets are queued for sending.
+    If used by a Subcaster then the packets are queued multiplexing
+    before sending. 
     
     ?? Eventually this will be used with DataOutputStream for writing
     particular types to the stream, as follows:
@@ -19,28 +23,26 @@ public class NetOutputStream
     * NetDataOutputStream(NetOutputStream) extends 
         DataOutputStream(OutputStream).
 		NetFilterOutputStream is probably not needed, but could be added?
-	  
 	  */
 
 	{
 	  // Injected dependency variables.
-		private final PacketQueue outputPacketQueue; // This is the queue of either
-		  // the main Sender thread, or the parent NetOutputStream. 
-		private final NetcasterPacketManager theNetcasterPacketManager;
+		private final Q notifyingQueueQ; // This is the output packet queue.
+		private final M packetManagerP; // Used to produce buffers and packets.
 		private final NamedInteger packetCounterNamedInteger;
 
-		private int bufferSizeI= 0; // 0 forces initial flush() to allocate bufferBytes.
+		private int bufferSizeI= 0; // 0 forces initial flush() to allocate buffer.
 		private byte[] bufferBytes= null;
 		private int indexI= 0; // 0 prevents sending packet during initial flush().
-    
+
 		NetOutputStream(  // Constructor.
-				PacketQueue outputPacketQueue,
-				NetcasterPacketManager theNetcasterPacketManager,
+				Q notifyingQueueQ,
+				M packetManagerP,
 				NamedInteger packetCounterNamedInteger
 				)
 			{
-				this.outputPacketQueue= outputPacketQueue;
-				this.theNetcasterPacketManager= theNetcasterPacketManager;
+				this.notifyingQueueQ= notifyingQueueQ;
+				this.packetManagerP= packetManagerP;
 				this.packetCounterNamedInteger= packetCounterNamedInteger;
         }
 
@@ -50,7 +52,7 @@ public class NetOutputStream
 		public void write(int value) throws IOException
 		  // This writes one byte to the stream.
 			{
-				if (indexI >= bufferSizeI) // Flushing buffer if there is no more room. 
+				if (indexI >= bufferSizeI) // Flushing buffer if no more room there. 
 				  flush();
 				bufferBytes[indexI]=  // Storing byte in buffer.
 						(byte) (value & 0x0ff);
@@ -71,18 +73,18 @@ public class NetOutputStream
       {
 			  if (indexI > 0) // Outputting packet if any bytes in its buffer.
 			  	{
-		        NetcasterPacket theNetcasterPacket= 
-		        	theNetcasterPacketManager.produceNetcasterPacket(
-		        		bufferBytes, indexI
+			  		E keyedPacketE=
+		        	packetManagerP.produceKeyedPacketE(
+		        		bufferBytes, indexI // Using buffer containing bytes.
 					  		);
-		        outputPacketQueue.add( // Queuing packet for sending.
-		            theNetcasterPacket
+		        notifyingQueueQ.add( // Queuing packet for output.
+		            keyedPacketE
 		            );
-		  			packetCounterNamedInteger.addValueL( 1 ); // Counting sent packet.
+		  			packetCounterNamedInteger.addValueL( 1 ); // Counting packet.
 			  		}
     		bufferBytes= // Allocating new buffer.
-			  	  theNetcasterPacketManager.produceBufferBytes();
-    		bufferSizeI= bufferBytes.length; 
+			  	  packetManagerP.produceDefaultSizeBufferBytes();
+    		bufferSizeI= bufferBytes.length; // Caching its length. 
 			  indexI = 0; // Resetting buffer index.
   	    }
 
