@@ -238,25 +238,21 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
     throws IOException
     { return new MulticastSocket( portI ); }
 
-	public NetInputStream makeNetcasterNetInputStream(
+	public NetcasterInputStream makeNetcasterInputStream(
 			NetcasterQueue receiverToNetcasterNetcasterQueue
 			)
 	  {
 			NamedInteger packetsReceivedNamedInteger=  
 					new NamedInteger( theDataTreeModel, "Packets-Received", 0 );
-	  	return new NetInputStream(
+	  	return new NetcasterInputStream(
 	  	  receiverToNetcasterNetcasterQueue, packetsReceivedNamedInteger 
 	  		);
 	  	}
-	
-	public NetcasterOutputStream makeNetcasterNetcasterOutputStream(
-			InetAddress remoteInetAddress, int remotePortI
-	    )
+
+	public NetcasterOutputStream makeNetcasterOutputStream(
+			NetcasterPacketManager theNetcasterPacketManager
+		  )
 	  {
-			IPAndPort theIPAndPort= 
-					AppGUIFactory.makeIPAndPort( remoteInetAddress, remotePortI );
-		  NetcasterPacketManager theNetcasterPacketManager=
-		  		new NetcasterPacketManager( theIPAndPort );
 		  NamedInteger packetsSentNamedInteger= 
 					new NamedInteger( theDataTreeModel, "Packets-Sent", 0 );
 		  return new NetcasterOutputStream(
@@ -276,15 +272,21 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 		  NetcasterQueue multicastReceiverToMulticasterNetcasterQueue= 
 		  		new NetcasterQueue( multicasterLockAndSignal );
 			int multicastPortI= PortManager.getDiscoveryPortI();
-			
+			IPAndPort theIPAndPort= AppGUIFactory.makeIPAndPort(
+  				multicastInetAddress, multicastPortI 
+  				);
+		  NetcasterPacketManager theNetcasterPacketManager=
+		  		new NetcasterPacketManager( theIPAndPort );
+
 		  return new Multicaster(
 		  	multicasterLockAndSignal,
-	  		makeNetcasterNetInputStream( multicastReceiverToMulticasterNetcasterQueue ),
-	  		makeNetcasterNetcasterOutputStream( multicastInetAddress, multicastPortI ),
-	  		theDataTreeModel,
-	  		AppGUIFactory.makeIPAndPort(
-	  				multicastInetAddress, multicastPortI 
+	  		makeNetcasterInputStream( 
+	  				multicastReceiverToMulticasterNetcasterQueue 
 	  				),
+	  		makeNetcasterOutputStream( theNetcasterPacketManager ),
+        theShutdowner,
+	  		theDataTreeModel,
+	  		theIPAndPort,
 	  		theMulticastSocket,
 	      multicasterToConnectionManagerNetcasterQueue,
 	      theUnicasterManager,

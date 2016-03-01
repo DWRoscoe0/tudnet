@@ -105,14 +105,16 @@ public class Multicaster
 	
 	  public Multicaster (  // Constructor.
 	      LockAndSignal netcasterLockAndSignal,
-	      NetInputStream theNetInputStream,
+	      NetcasterInputStream theNetcasterInputStream,
 	  		NetcasterOutputStream theNetcasterOutputStream,
+        Shutdowner theShutdowner,
 	  		DataTreeModel theDataTreeModel,
 	  		IPAndPort theIPAndPort,
 	  		MulticastSocket theMulticastSocket,
 	      NetcasterQueue multicasterToConnectionManagerNetcasterQueue,
 		  	UnicasterManager theUnicasterManager,
-		  	NetcasterPacketManager multicastReceiverNetcasterPacketManager	      )
+		  	NetcasterPacketManager multicastReceiverNetcasterPacketManager
+		  	)
 	    /* Constructs a Multicaster object and prepares it for
 	      UDP multicast communications duties.  
 	      Those duties are to help peers discover each other by
@@ -121,8 +123,9 @@ public class Multicaster
 	    {
 	      super(  // Superclass Netcaster List constructor with some dependencies. 
 	          netcasterLockAndSignal,
-	  	      theNetInputStream,
+	  	      theNetcasterInputStream,
 	  	      theNetcasterOutputStream,
+	          theShutdowner,
 	  	  		theDataTreeModel,
 	  	  		theIPAndPort,
 		        "Multicaster"
@@ -204,6 +207,13 @@ public class Multicaster
 	                  DatagramPacket receiverDatagramPacket= 
 	                  		receiverNetcasterPacket.getDatagramPacket(); 
 	                  theMulticastSocket.receive( receiverDatagramPacket );
+	                  appLogger.debug(
+	                  		///"run() received: "
+	                  		///+ PacketManager.gettingPacketString(
+	                  		PacketManager.gettingDirectedPacketString(
+	                  				receiverDatagramPacket, false
+	                  				)
+	                  		);
 	                  receiverToMulticasterNetcasterQueue.add( // Queuing packet.
 	                  		receiverNetcasterPacket
 	                  		);
@@ -253,7 +263,7 @@ public class Multicaster
                 	( ! Thread.currentThread().isInterrupted() )
     	            { // Send and receive multicast packets.
     	              try {
-    		      				sendingMessageV("DISCOVERY"); // Sending query.
+    		      				writingNumberedPacketV("DISCOVERY"); // Sending query.
     	                receivingPacketsV( ); // Receiving packets until done.
     	                }
     	              catch( SocketException soe ) {
@@ -282,7 +292,7 @@ public class Multicaster
       {
     		theMulticastReceiverEpiThread= // Constructing thread.
     				AppGUIFactory.makeMulticastReceiverEpiThread(
-	            theNetInputStream.getNetcasterQueue(),
+	            theEpiInputStreamI.getNotifyingQueueQ(),
 	            theMulticastSocket,
 				   		multicastReceiverNetcasterPacketManager
 	            );
@@ -330,7 +340,7 @@ public class Multicaster
 	            		String inString= readAString(); // Reading message.
 		          		//if ( testingMessageB( "DISCOVERY" ) ) // Handling query, maybe.
 	            		if ( inString.equals( "DISCOVERY" ) ) // Handling query, maybe.
-			        			{ sendingMessageV("ALIVE"); // Sending response.
+			        			{ writingNumberedPacketV("ALIVE"); // Sending response.
 				              processingPossibleNewUnicasterV();
 				              break processor;
 				              }
@@ -344,7 +354,7 @@ public class Multicaster
 			        		//  + inString 
 			        		//+ " from "
 			        		//+ PacketStuff.gettingPacketAddressString( 
-			        		//		theNetInputStream.getSockPacket().getDatagramPacket()
+			        		//		theNetcasterInputStream.getSockPacket().getDatagramPacket()
 			        		//	  )
 			        		//);
 	            		}
@@ -354,20 +364,20 @@ public class Multicaster
         }
 
     private void processingPossibleNewUnicasterV( ) throws IOException
-      /* This method passes the present packet of theNetInputStream
+      /* This method passes the present packet of theNetcasterInputStream
        to the ConnectionManager if there isn't a Unicaster
        associated with the packet's remote address.
        */
 	    {
 	      NetcasterPacket theNetcasterPacket= // Copying packet from queue.
-	      		theNetInputStream.getNetcasterPacket();
+	      		theEpiInputStreamI.getKeyedPacketE();
 	      Unicaster theUnicaster= // Testing for associated Unicaster.
-	      		theUnicasterManager.tryGettingUnicaster( theNetcasterPacket );
+	      		theUnicasterManager.tryingToGetUnicaster( theNetcasterPacket );
 	      if ( theUnicaster == null )  // Processing if Unicaster does not exists.
-	       	{
+	       	{ // Informing ConnectionManager.
        			//appLogger.debug(
 	       		//	"Multicaster.processingPossibleNewUnicasterV():\n  queuing: "
-		       	//	+PacketStuff.gettingPacketString(theNetcasterPacket.getDatagramPacket())
+		       	//	+PacketStuff.gettingPacketString(theKeyedPacket.getDatagramPacket())
 	       		//);
           	multicasterToConnectionManagerNetcasterQueue.add( // Passing to CM.
 			    		theNetcasterPacket

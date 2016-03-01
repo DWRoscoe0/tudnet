@@ -3,9 +3,10 @@ package allClasses;
 import static allClasses.Globals.appLogger;
 
 import java.io.IOException;
+import java.net.DatagramPacket;
 import java.util.Random;
 
-import allClasses.LockAndSignal.Input;
+///import allClasses.LockAndSignal.Input;
 
 public class Unicaster
 
@@ -69,23 +70,22 @@ public class Unicaster
     // Fields (constant and variales).
     
       // Injected dependency instance variables.
-      private final Shutdowner theShutdowner;
       private final UnicasterManager theUnicasterManager;
       private final SubcasterManager theSubcasterManager;
 
       // Other instance variables.
-      private Random theRandom; // For arbitratingYieldB() random numbers.
-      private boolean arbitratedYieldingB; // Used to arbitrate race conditions.
+      private final SubcasterQueue subcasterToUnicasterSubcasterQueue;
 
 			public Unicaster(  // Constructor. 
 			  UnicasterManager theUnicasterManager,
 			  SubcasterManager theSubcasterManager,
 	    	LockAndSignal threadLockAndSignal,
-	      NetInputStream theNetInputStream,
+	      NetcasterInputStream theNetcasterInputStream,
 	      NetcasterOutputStream theNetcasterOutputStream,
 	      IPAndPort remoteIPAndPort,
         DataTreeModel theDataTreeModel,
-        Shutdowner theShutdowner
+        Shutdowner theShutdowner,
+        SubcasterQueue subcasterToUnicasterSubcasterQueue
         )
       /* This constructor constructs a Unicaster for the purpose of
         communicating with the node at remoteInetSocketAddress,
@@ -99,17 +99,19 @@ public class Unicaster
       {
         super(
         		threadLockAndSignal,
-	  	      theNetInputStream,
+	  	      theNetcasterInputStream,
 	  	      theNetcasterOutputStream,
+	          theShutdowner,
   	        theDataTreeModel,
   	        remoteIPAndPort,
         		"Unicaster" 
         		);
 
         // Storing injected dependency constructor arguments.
-          this.theShutdowner= theShutdowner;
   			  this.theUnicasterManager= theUnicasterManager;
   			  this.theSubcasterManager= theSubcasterManager;
+  			  this.subcasterToUnicasterSubcasterQueue= 
+  			  		subcasterToUnicasterSubcasterQueue;
         }
 
 
@@ -133,22 +135,16 @@ public class Unicaster
         try { // Operations that might produce an IOException.
 	          initializingV();
 	          
-	          theSubcasterManager.buildAddAndStartSubcaster( // Adding Subcaster.
-	              "PING-REPLY." /// Hard wired at first.
-	      	  		);
+	          theSubcasterManager.getOrBuildAddAndStartSubcaster(
+	              "PING-REPLY" //// Hard wired creation at first.
+	      	  		); // Adding Subcaster.
 
-	          { /// Uncomment only one of the following method calls.
-	          	runWithoutSubcastersV(); // Original code.
-	          	// runWithSubcastersV(); // Experiment code with Subcaster.
+	          { //// Uncomment only one of the following method calls.
+	          	//////runWithoutSubcastersV(); // Original code.
+	          	runWithSubcastersV(); // Experimental code with Subcaster.
 		          }
 	          
-	      		if  // Informing remote end whether we are doing Shutdown.
-	      		  ( theShutdowner.isShuttingDownB() ) 
-		      		{
-	      				sendingMessageV("SHUTTING-DOWN"); // Informing peer of shutdown.
-	  	          appLogger.info( "SHUTTING-DOWN message sent.");
-		      			}
-	      		theNetcasterOutputStream.close(); // Closing output stream.
+	      		theEpiOutputStreamO.close(); // Closing output stream.
           	}
           catch( IOException e ) {
           	Globals.logAndRethrowAsRuntimeExceptionV( 
@@ -167,233 +163,191 @@ public class Unicaster
 	    {
       	super.initializingV();
         theRandom= new Random(0);  // Initialize arbitratingYieldB().
-	  	  arbitratedYieldingB= arbitratingYieldB();
-	      addB( 	RoundTripTimeNamedInteger= new NamedInteger( 
-			      		theDataTreeModel, "Round-Trip-Time-ns", 0 
-			      		)
-	      			);
+	  	  arbitratedYieldingB= arbitratingYieldB( getKeyK().getPortI() );
 	  	  
 		    addB( theSubcasterManager ); // Adding to our list.
 	    	}
 
-    public void runWithSubcastersV() throws IOException ///
-      // Does (or will do) full PING-REPLY protocol using a Subcaster.
+    public void runWithSubcastersV() throws IOException ////
+      /* Does (or will do) full PING-REPLY protocol 
+        by letting a Subcaster do it, 
+        and forwarding its packets in both directions.
+        */
 	    {
-			  while (true) // Repeating until thread termination is requested.
+			  while (true) // Repeating until termination is requested.
 				  {
-		    		if // Exiting if requested.
+	    			streamcasterLockAndSignal.doWaitE(); // Waiting for any new input.
+	  			  //// This wait doesn't work at front of loop!  Check LockAndSignal.
+
+        		///if // Exiting everything if exit has been triggered.
+	      		///	( tryingToCaptureTriggeredExitB( ) )
+	      		///	break;
+        		if // Exiting if thread termination requested.
 		          ( Thread.currentThread().isInterrupted() ) 
 		          break;
 
-		    		while ( theNetInputStream.available() > 0 ); /// send packet.
+		    		while (processingRemoteMessagesB() ) ;
+
+		    		multiplexingPacketsFromSubcastersV();
 		    		
-		    		/// Get packets from Subcasters and send to peer.
-		    		
-		    		netcasterLockAndSignal.doWaitE(); // Waiting for any input.
 		      	}
+    		if  // Informing remote end whether we are doing Shutdown.
+    			( theShutdowner.isShuttingDownB() ) 
+	    		{
+	  				writingNumberedPacketV("SHUTTING-DOWN"); // Informing peer of shutdown.
+	          appLogger.info( "SHUTTING-DOWN message sent.");
+	    			}
 	    	}
 
-    public void runWithoutSubcastersV() throws IOException /// Needn't be public.
+		private void multiplexingPacketsFromSubcastersV() throws IOException
+		  /* This method forwards messages from Subcasters to remote peers.
+		    Presently it simply repackages the SubcasterPacket as 
+		    a NetcasterPacket.
+		    */ ////
+			{
+	      while (true) {  // Process all packets queued from Subcasters.
+		      SubcasterPacket theSubcasterPacket= // Getting next SubcasterPacket 
+	        		subcasterToUnicasterSubcasterQueue.poll(); // from queue.
+	        if (theSubcasterPacket == null) break; // Exiting if queue empty.
+
+	        queueWithMultiplexHeaderV(theSubcasterPacket);
+	        }
+			 	}
+
+		private void queueWithMultiplexHeaderV(SubcasterPacket theSubcasterPacket) 
+				throws IOException
+		  /* This method forwards theSubcasterPacket to the remote peer.
+		    It prepends a PING-REPLY multiplex header.
+			  //// Improve efficiency by passing a buffer window instead of 
+			    doing write(..).
+		    */
+			{
+	      DatagramPacket theDatagramPacket= // Extracting DatagramPacket.
+						theSubcasterPacket.getDatagramPacket();
+	      theEpiOutputStreamO.flush(); // Flushing to prepare new stream buffer.
+	      writingSequenceNumberV();
+	      writingTerminatedStringV( // Writing key as de-multiplex header. 
+	      	theSubcasterPacket.getKeyK() 
+	      	);
+				writingTerminatedStringV( // Writing length of Subcaster packet. 
+				  theDatagramPacket.getLength() + "" 
+				  );
+				theEpiOutputStreamO.write( // Writing Subcaster packet to OutputStream.
+						theDatagramPacket.getData(),
+						theDatagramPacket.getOffset(),
+						theDatagramPacket.getLength()
+						);
+			  theEpiOutputStreamO.flush(); // Flushing again to send it all.
+				}
+
+		private boolean processingRemoteMessagesB() throws IOException //////
+		  /* This method processes one message from the remote peer,
+		    if one is available.
+		    If a messages is a Subcaster key then 
+		    the remainder of the packet is forwarded to the associated Subcaster. 
+		    ////Presently it simply repackages NetcasterPackets as SubcasterPackets
+		    ////for the PING-REPLY Subcaster.
+		    It returns true if a message was processed, false otherwise.
+		    */
+		  {
+			  boolean messageToProcessB= ( theEpiInputStreamI.available() > 0 ); 
+				if// Processing if there is anything to process. 
+					( messageToProcessB )
+					{ // Processing one message.
+						String keyString= readAString(); // Reading message key string
+            Subcaster theSubcaster= // Getting associated Subcaster, if any.
+              theSubcasterManager.tryingToGetDataNodeWithKeyD( keyString );
+              
+            if // Passing remainder of message to associated Subcaster if any.
+              ( theSubcaster != null )
+              processMessageToSubcasterV( theSubcaster );
+            else if // Trying to get and convert SHUTTING-DOWN packet to interrupt status. 
+		          ( keyString.equals( "SHUTTING-DOWN" ) )
+			        {
+			          appLogger.info( "SHUTTING-DOWN message received.");
+			          Thread.currentThread().interrupt(); // Interrupting this thread.
+			          }
+		        ; // Ignoring other messages, for now.  //////
+						}
+				return messageToProcessB;
+			  }
+
+		/*  ////
+		private void OLDprocessMessageToSubcasterV( Subcaster theSubcaster )////
+      throws IOException 
+      /* Processes one message to theSubcaster.
+			  The message key string is assumed to have already been read.
+				*/
+		/*  ////
+      {
+  			NetcasterPacket theNetcasterPacket= // Getting Unicaster packet. 
+						///theEpiInputStreamI.getKeyedPacketE();
+						theEpiInputStreamI.readKeyedPacketE();
+				DatagramPacket theDatagramPacket= // Extracting DatagramPacket.
+					theNetcasterPacket.getDatagramPacket();
+        SubcasterPacketManager theSubcasterPacketManager= 
+        		theSubcaster.getPacketManagerM();
+				SubcasterPacket theSubcasterPacket= // Repackaging packet. 
+						theSubcasterPacketManager.produceKeyedPacketE( 
+								theDatagramPacket 
+								);
+	      theSubcaster.puttingKeyedPacketV( // Passing to Subcaster. 
+	      		theSubcasterPacket 
+	      		);
+	      }
+		*/  ////
+
+		private void processMessageToSubcasterV( Subcaster theSubcaster )
+      throws IOException 
+      /* Processes one message to theSubcaster.
+			  The message key string is assumed to have already been read.
+			  //// Improve efficiency by passing a buffer window instead of 
+			    doing read(..).
+				*/
+      {
+			  processing: {
+					String lengthString= // Reading Subcaster message length String. 
+							readAString();
+					int lengthI;
+			    try { // Converting length string to number, or exiting.
+				      lengthI= Integer.parseInt( lengthString );
+				    	}
+				    catch (NumberFormatException aNumberFormatException)
+					    { // Handling parse error.
+			        	appLogger.warning(
+			        			"Subcaster message length: " + aNumberFormatException
+			        			);
+				    		theEpiInputStreamI.emptyingBufferV(); // Consuming remaining 
+				    		  // bytes in buffer because interpretation is impossible.
+				    		break processing; // Exiting.
+						    }
+	        SubcasterPacketManager theSubcasterPacketManager= 
+	        		theSubcaster.getPacketManagerM();
+	        byte[] bufferBytes= // Allocating Subcaster packet buffer. 
+	        		theSubcasterPacketManager.produceBufferBytes( lengthI );
+	        if // Reading Subcaster message bytes into buffer, or exiting.
+	          ( theEpiInputStreamI.read( bufferBytes, 0, lengthI ) < lengthI )
+				    { // Handling failure to fit error.
+		        	appLogger.error(
+		        			"Subcaster packet repacking error: length: "
+		        			);
+			    		break processing; // Exiting.
+					    }
+					SubcasterPacket theSubcasterPacket= // Repackaging buffer. 
+						theSubcasterPacketManager.produceKeyedPacketE(
+									bufferBytes, lengthI
+									);
+		      theSubcaster.puttingKeyedPacketV( // Passing to Subcaster. 
+		      		theSubcasterPacket 
+		      		);
+					} //processing:
+	      }
+
+		public void runWithoutSubcastersV() throws IOException //// Needn't be public.
       // Does full PING-REPLY protocol without help of Subcaster.
 	    {
-	    	int stateI= // Initialize ping-reply protocol state from yield flag. 
-	      	  arbitratedYieldingB ? 0 : 1 ;
-	      while (true) // Repeating until thread termination is requested.
-	        {
-	      		if   // Exiting if requested.
-	            ( Thread.currentThread().isInterrupted() ) 
-	            break;
-	      	  switch ( stateI ) { // Decoding alternating state.
-	        	  case 0:
-	              //appLogger.info(getName()+":\n  CALLING tryingPingSendV() ===============.");
-	              tryingPingSendV();
-	              stateI= 1;
-	              break;
-	        	  case 1:
-	              //appLogger.info(getName()+":\n  CALLING tryingPingReceiveV() ===============.");
-	              tryingPingReceiveV();
-	              stateI= 0;
-	              break;
-	        	  }
-	          } // while(true)
-	    	}
-
-    private void tryingPingSendV() throws IOException
-      /* This method does the sub-protocol of trying to 
-        send a ping to the remote peer and receiving an echo response.
-        If it doesn't receive an echo packet in response
-        within one-half period, it tries again.
-        It tries several times before giving up and 
-        terminating the current thread.
-        If it receives a ping instead of an echo then
-        it might give up this sub-protocol.
-        */
-      {
-        LockAndSignal.Input theInput;  // Type of input that ends waits.
-        int maxTriesI= 3;
-        int triesI= 1;
-        pingEchoRetryLoop: while (true) { // Sending ping and receiving echo.
-          if  // Checking and exiting if maximum attempts have been done.
-            ( triesI > maxTriesI )  // Maximum attempts exceeded.
-            { // Terminating thread.
-              appLogger.info(
-              		"Requesting termination after "
-                	+"\n  "+maxTriesI+" ECHO time-outs."
-                  );
-              Thread.currentThread().interrupt(); // Starting termination.
-              break pingEchoRetryLoop;
-              }
-          sendingMessageV("PING"); // Sending ping packet.
-          pingSentNanosL= System.nanoTime(); // Recording ping send time in ns
-          long pingSentMsL= System.currentTimeMillis(); // and in ms.
-          echoWaitLoop: while (true) { // Handling echo or other conditions.
-            theInput=  // Awaiting next input within reply interval.
-            		testWaitInIntervalE( pingSentMsL, HalfPeriodMillisL );
-            if ( theInput == Input.TIME ) // Exiting echo wait if time-out.
-              { appLogger.info( "Time-out waiting for ECHO: "+triesI );
-                break echoWaitLoop;  // End wait to send new PING, maybe.
-              	}
-            if // Handling SHUTTING-DOWN packet or interrupt by exiting.
-    	    		( tryingToCaptureTriggeredExitB( ) )
-  	    			break pingEchoRetryLoop; // Exit everything.
-        		theNetInputStream.mark(0); // Preparing to not consume message.
-        		String inString= readAString(); // Reading message.
-        		if ( inString.equals( "ECHO" ) ) // Handling echo, maybe.
-              { // Handling echo and exiting.
-                RoundTripTimeNamedInteger.setValueL(
-                		(System.nanoTime() - pingSentNanosL)
-                		); // Calculating RoundTripTime.
-            		break pingEchoRetryLoop; // Exit everything.
-                }
-        		if ( inString.equals( "PING" ) ) // Handling ping conflict, maybe.
-              { // Handling ping conflict.
-                appLogger.info( "PING-PING conflict." );
-              	if ( arbitratedYieldingB ) // Arbitrating ping-ping conflict.
-                  { // Yielding ping processing to other peer.
-                    appLogger.info( "PING ping yield: "+triesI );
-                		theNetInputStream.reset(); // Putting message back.
-                    break pingEchoRetryLoop; // Yielding by exiting main loop.
-                    }
-              		else
-              		{ appLogger.info( "PING ping not yielding: "+triesI );
-              			// Ignoring this PING.
-                    break echoWaitLoop;  // End wait to send new PING, maybe.
-              			}
-              	  }
-            //appLogger.debug( 
-        		//		"tryingPingSendV(): unexpected: "
-        		//	+ inString
-        		//	+ " from "
-        		//	+ PacketStuff.gettingPacketString( 
-        		//			theNetInputStream.getSockPacket().getDatagramPacket()
-        		//			)
-        		//	);
-        		// Ignoring the message that was gotten, whatever it was.
-            } // echoWaitLoop:
-          triesI++;
-          } // pingEchoRetryLoop: 
-        }
-
-    private void tryingPingReceiveV() throws IOException
-	    /* This method does the sub-protocol of trying to 
-		    receive a PING message from the remote peer 
-		    to which it replies by sending an ECHO response.
-        If a PING is not immediately available then
-        it waits up to PeriodMillisL for a PING to arrive,
-        after which it gives up and returns.
-        If a PING is received it responds immediately by sending an ECHO,
-        after which it waits PeriodMillisL while ignoring all
-        received messages except SHUTTING-DOWN.
-        It will exit immediately if isInterrupted() becomes true
-        or a SHUTTING-DOWN message is received.
-        */
-      {
-        LockAndSignal.Input theInput;  // Type of input that ends wait.
-        long pingWaitStartMsL= System.currentTimeMillis();
-        pingWaitLoop: while (true) { // Processing until something causes exit.
-      		if // Handling SHUTTING-DOWN packet or interrupt by exiting.
-	    			( tryingToCaptureTriggeredExitB( ) )
-	    			break pingWaitLoop;
-      		// Note, can't readAString() here because it might not be available.
-          if // Handling a received ping if present.
-            ( tryingToGetStringB( "PING" ) )
-            { // Handling received ping, then exit.
-              sendingMessageV("ECHO"); // Sending echo packet as reply.
-              long echoSentMsL= System.currentTimeMillis();
-              while (true) { // Ignoring packets for a while, then exit.
-                theInput=  // Awaiting input within the ignore interval.
-                		testWaitInIntervalE( echoSentMsL, PeriodMillisL );
-                if ( theInput == Input.TIME ) // Exiting if time limit reached.
-                  break pingWaitLoop;  
-            		if // Exiting everything if exit has been triggered.
-            			( tryingToCaptureTriggeredExitB( ) )
-            			break pingWaitLoop;
-            		readAString(); // Reading message and ignoring it.
-              	} // while (true)
-              }
-      		tryingToGetString(); // Reading and ignoring any message.
-
-          theInput= testWaitInIntervalE( // Awaiting next input.
-          		pingWaitStartMsL, PeriodMillisL + HalfPeriodMillisL
-          		);
-          if ( theInput == Input.TIME ) // Exiting outer loop if time-out.
-	          {
-	            appLogger.info( "Time-out waiting for PING." );
-	            break pingWaitLoop;  // Exiting to abort wait.
-	          	}
-          } // pingWaitLoop
-        }
-
-    private boolean arbitratingYieldB()
-      /* This method arbitrates when this local peer is trying
-        to do the same thing as the remote peer.
-        When executed on both peers, on one it should return true
-        and on the other it should return false.
-        It returns true when this peer should yield,
-        and false when it should not.
-
-        This method is not designed to be fair, 
-        but to simply help resolve conflicts quickly.
-        When used it put two connected peers into
-        complementary parts of their ping-reply protocols.
-        It is used:
-        * When two connected Unicaster threads start.
-        * To resolve ping-ping conflicts, which is when
-          two connected Unicasters somehow end up in
-          the same parts of their protocols.
-
-        This method is based on comparing each peer's address information.
-        Presently it uses port information.
-        ?? It should probably use something more unique,
-        such as IP address or other unique ID number,
-        but one's own IP address is more difficult to get than port.  
-        */
-      {
-        boolean yieldB;  // Storage for result.
-        int addressDifferenceI=  // Calculate port difference.
-          getKeyK().getPortI() - PortManager.getLocalPortI();
-        if ( addressDifferenceI != 0 )  // Handling ports unequal.
-          yieldB= ( addressDifferenceI < 0 );  // Lower ported peer yields.
-          else  // Handling rare case of ports equal.
-          {
-            theRandom.setSeed(System.currentTimeMillis());  // Reseting...
-              // ...the random number generator seed with current time.
-            yieldB= theRandom.nextBoolean();  // Yield randomly.
-            }
-        //appLogger.info("arbitratingYieldB() = " + yieldB);
-        return yieldB;
-        }
-
-    // Receive packet code.  This might be enhanced with streaming.
-
-    public void puttingReceivedPacketV( NetcasterPacket theNetcasterPacket )
-      /* This method is used by UnicastReceiver threads.
-        The one associated with this Unicaster thread uses this method
-        to add theNetcasterPacket to this thread's receive queue.
-       */
-      {
-        //receiverToNetcasterNetcasterQueue.add(theNetcasterPacket);
-    		theNetInputStream.getNetcasterQueue().add(theNetcasterPacket);
-        }
+				pingReplyProtocolV();
+		    }
 
     } // Unicaster.
+

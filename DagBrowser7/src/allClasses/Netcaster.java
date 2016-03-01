@@ -6,15 +6,23 @@ import java.io.IOException;
 
 public class Netcaster 
 
-	extends Streamcaster< IPAndPort >
+	extends Streamcaster< 
+			IPAndPort,
+			NetcasterPacket,
+			NetcasterQueue,
+			NetcasterPacketManager,
+			NetcasterInputStream,
+			NetcasterOutputStream
+			>
 
 	// This class is the superclass of Unicaster and Multicaster.
 
 	{
 	  public Netcaster(  // Constructor. 
 	      LockAndSignal netcasterLockAndSignal,
-	      NetInputStream theNetInputStream,
+	      NetcasterInputStream theNetcasterInputStream,
 	      NetcasterOutputStream theNetcasterOutputStream,
+        Shutdowner theShutdowner,
 	      DataTreeModel theDataTreeModel,
 	      IPAndPort  remoteIPAndPort, 
 	      String nameString
@@ -24,9 +32,10 @@ public class Netcaster
 	  	  super( // Constructing Streamcaster DataNodeWithKey superclass.
 			      theDataTreeModel,
 			      nameString,
+		        theShutdowner,
 			      remoteIPAndPort, // key K
 			      netcasterLockAndSignal,
-			      theNetInputStream,
+			      theNetcasterInputStream,
 			      theNetcasterOutputStream
 			      );
 
@@ -47,16 +56,20 @@ public class Netcaster
 				    theDataTreeModel, "Port", "" + remoteIPAndPort.getPortI()
 				  	) );
 
-		    addB( 	theNetcasterOutputStream.getCounterNamedInteger() );
-		    addB( 	theNetInputStream.getCounterNamedInteger());
+		    addB( 	theEpiOutputStreamO.getCounterNamedInteger() );
+		    addB( 	theEpiInputStreamI.getCounterNamedInteger());
+
+		    super.initializingV();
 	    	}
 
+    /*////
     protected boolean testingMessageB( String aString ) throws IOException
       /* This method tests whether the next message String in 
         the next received packet in the queue, if there is one,  is aString.
         It returns true if so, false otherwise.
         The message is not consumed, so can be read later.
         */
+    /*////
       { 
         boolean resultB= false;  // Assuming aString is not present.
         decodingPacket: {
@@ -78,15 +91,17 @@ public class Netcaster
         If there's no message then it returns null.
         The message is not consumed, so can be read later.
         */
+    /*////
       { 
     		String inString= null;
-	  		if ( theNetInputStream.available() > 0) // Reading string if available.
+	  		if ( theEpiInputStreamI.available() > 0) // Reading string if available.
 		  		{
-			  		theNetInputStream.mark(0); // Marking stream position.
+	  				theEpiInputStreamI.mark(0); // Marking stream position.
 			  	  inString= readAString();
-		  	  	theNetInputStream.reset(); // Resetting so String is not consumed.
+			  	  theEpiInputStreamI.reset(); // Resetting so String is not consumed.
 			  		}
 	  	  return inString;
 	  		}
+	  */ ////
 
 		}

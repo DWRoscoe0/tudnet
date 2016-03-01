@@ -1,7 +1,7 @@
 package allClasses;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
+///import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
@@ -316,9 +316,9 @@ public class ConnectionManager
           
           //appLogger.info(
           //  "ConnectionManager.processingUnconnectedSockPacketsB()\n  "
-          //  + theNetcasterPacket.getSocketAddressesString()
+          //  + theKeyedPacket.getSocketAddressesString()
           //  );
-          createAndPassToUnicasterV( theNetcasterPacket );
+          passToUnicasterV( theNetcasterPacket );
 
           packetsProcessedB= true;
           }
@@ -413,7 +413,7 @@ public class ConnectionManager
           theNetcasterPacket= // Try getting next packet from queue.
             multicasterToConnectionManagerNetcasterQueue.poll();
           if (theNetcasterPacket == null) break;  // Exit if no more packets.
-      		createAndPassToUnicasterV( theNetcasterPacket );
+      		passToUnicasterV( theNetcasterPacket );
           packetsProcessedB= true;
           }
           
@@ -429,64 +429,27 @@ public class ConnectionManager
 		    }
 
 
-    private void createAndPassToUnicasterV(NetcasterPacket theNetcasterPacket)
-      /* This method processes one packet received from a peer.
+    private void passToUnicasterV( NetcasterPacket theNetcasterPacket )
+      /* This method passes theNetcasterPacket to the Unicaster 
+        associated with the remote peer that sent the packet.
         The peer is assumed to be at the packet's remote address and port.
-        The ConnectionManager should no longer receive packets
-        destined for existing Unicasters, 
-        but if it does, it will pass them along.
-        Normally when this method is called, the Unicaster does not exist,
-        so an appropriate Unicaster is created and added to the data structures.
-        After the Unicaster is created packets, should be passed directly to it.
-        This should work with both unicast and multicast packets
-        provided that their remote addresses are those of the remote peer.
+        If the Unicaster doesn't exist then it will be created first.
+        Normally the Unicaster will not exist when this method is called.
+        This method should work with packets received by 
+        either the unicast receiver or the multicast receiver. 
         */
       {
         //appLogger.info(
         //  "ConnectionManager.createAndPassToUnicasterV(..)\n  "
-        //  + theNetcasterPacket.getSocketAddressesString()
+        //  + theKeyedPacket.getSocketAddressesString()
         //  );
-	      Unicaster theUnicaster= theUnicasterManager.tryGettingUnicaster( 
-	      		theNetcasterPacket 
-	      		);
-	      if ( theUnicaster == null ) // Building Unicaster if needed.
-			      theUnicaster=  // Get or create Unicaster.
-			          getOrBuildAndStartUnicaster( theNetcasterPacket );
-	      theUnicaster.puttingReceivedPacketV( // Giving to it its first packet.  
+    		Unicaster theUnicaster=  // Getting the appropriate Unicaster.
+    				theUnicasterManager.getOrBuildAddAndStartUnicaster( 
+		      		theNetcasterPacket 
+		      		);
+	      theUnicaster.puttingKeyedPacketV( // Giving to it its first packet.  
 	      		theNetcasterPacket
 	      		);
-        }
-
-    private Unicaster getOrBuildAndStartUnicaster( 
-    		NetcasterPacket theNetcasterPacket 
-    		)
-      /* Gets or creates the Unicaster associated with theNetcasterPacket.
-        It adds the Unicaster to the appropriate data structures.
-        It returns the found or created Unicaster.
-        
-        ?? An InetSocketAddress can be built only with new-operator.
-        This makes fast testing difficult.
-        Maybe define a new class and use it instead as the key value 
-        in the peerSocketAddressConcurrentHashMap.  
-        */
-      {
-        DatagramPacket theDatagramPacket=  // Get DatagramPacket.
-          theNetcasterPacket.getDatagramPacket();
-        appLogger.info( 
-        		"Creating Unicaster from "
-        		+NetcasterPacketManager.gettingPacketString(theDatagramPacket)
-        		);
-        IPAndPort peerIPAndPort=  // Build packet's address.
-        		//theDatagramPacket.getSocketAddress();
-        		AppGUIFactory.makeIPAndPort(
-	            theDatagramPacket.getAddress(),
-	            theDatagramPacket.getPort()
-	            );
-        Unicaster theUnicaster=  // Get or create Unicaster.
-          theUnicasterManager.buildAddAndStartUnicaster(
-            peerIPAndPort
-            );
-        return theUnicaster;
         }
 
     } // class ConnectionManager.

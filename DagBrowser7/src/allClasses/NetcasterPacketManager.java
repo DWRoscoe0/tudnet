@@ -17,12 +17,10 @@ public class NetcasterPacketManager
 
 
 		// Definitions of superclass abstract methods.
-		
-		NetcasterPacket produceKeyedPacketE( 
-				DatagramPacket theDatagramPacket, IPAndPort theIPAndPort 
-				)
+
+		NetcasterPacket produceKeyedPacketE( DatagramPacket theDatagramPacket )
 			{ 
-			  return new NetcasterPacket( theDatagramPacket, theIPAndPort );
+			  return new NetcasterPacket( theDatagramPacket, theKeyK );
 			  }
 
 

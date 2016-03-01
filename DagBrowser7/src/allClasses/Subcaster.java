@@ -7,7 +7,14 @@ import java.io.IOException;
 
 public class Subcaster
 
-	extends Streamcaster< String >
+	extends Streamcaster< 
+	  String,
+		SubcasterPacket,
+		SubcasterQueue,
+		SubcasterPacketManager,
+		SubcasterInputStream,
+		SubcasterOutputStream
+	  >
 
   implements Runnable 
 
@@ -18,17 +25,15 @@ public class Subcaster
 	{
   
     // Injected dependencies.
-	  private final NetcasterOutputStream theNetcasterOutputStream;
-	  private final NetInputStream theNetInputStream;
-	  private final Shutdowner theShutdowner;
+	  private final SubcasterOutputStream theSubcasterOutputStream;
+	  private final SubcasterInputStream theSubcasterInputStream;
 
-    // Other instance variables.
-    private boolean arbitratedYieldingB; // Used to arbitrate race conditions.
+    // Other instance variables.  none.
 
 	  public Subcaster(  // Constructor. 
-	      LockAndSignal netcasterLockAndSignal,
-	      NetInputStream theNetInputStream,
-	      NetcasterOutputStream theNetcasterOutputStream,
+	      LockAndSignal streamcasterLockAndSignal,
+	      SubcasterInputStream theSubcasterInputStream,
+	      SubcasterOutputStream theSubcasterOutputStream,
 	      DataTreeModel theDataTreeModel,
 	      String keyString,
 	      Shutdowner theShutdowner
@@ -37,49 +42,32 @@ public class Subcaster
 	      super( // Superclass's constructor injections.
 		        theDataTreeModel,
 		      	"Subcaster",
+		        theShutdowner,
 	      	  keyString,
-	      	  netcasterLockAndSignal,
-			      theNetInputStream,
-			      theNetcasterOutputStream
+	      	  streamcasterLockAndSignal,
+	      	  theSubcasterInputStream,
+			      theSubcasterOutputStream
 		        );
 
 	      // This class's injections.
-	      this.theNetInputStream= theNetInputStream;
-	      this.theNetcasterOutputStream= theNetcasterOutputStream;
-	      this.theShutdowner= theShutdowner;
+	      this.theSubcasterInputStream= theSubcasterInputStream;
+	      this.theSubcasterOutputStream= theSubcasterOutputStream;
 	      }
 
     public void run()  // Main Unicaster thread.
     	{
-    	  try { /// Needs work.
+    	  try {
 	    		initializingV();
 	
-			  	int stateI= // Initialize ping-reply protocol state from yield flag. 
-			  			arbitratedYieldingB ? 0 : 1 ;
 					while (true) // Repeating until thread termination is requested.
 					  {
 							if   // Exiting if requested.
 					      ( Thread.currentThread().isInterrupted() ) 
 					      break;
-						  switch ( stateI ) { // Decoding alternating state.
-					  	  case 0:
-					        //appLogger.info(getName()+":\n  CALLING tryingPingSendV() ===============.");
-					        ///tryingPingSendV();
-					        stateI= 1;
-					        break;
-					  	  case 1:
-					        //appLogger.info(getName()+":\n  CALLING tryingPingReceiveV() ===============.");
-					        ///tryingPingReceiveV();
-					        stateI= 0;
-					        break;
-					  	  }
+							pingReplyProtocolV(); //////
+			    		streamcasterLockAndSignal.doWaitE(); // Waiting for any input.
 					    } // while(true)
-					if  // Informing remote end whether we are doing Shutdown.
-					  ( theShutdowner.isShuttingDownB() ) 
-						{
-				      appLogger.info( "SHUTTING-DOWN message sent.");
-							}
-					theNetcasterOutputStream.close(); // Closing output stream.
+					theSubcasterOutputStream.close(); // Closing output stream.
 					}
 				catch( IOException e ) {
 					Globals.logAndRethrowAsRuntimeExceptionV( 
@@ -91,11 +79,12 @@ public class Subcaster
     		finalizingV();
     		}
 
-    protected void initializingV()
+    protected void initializingV() throws IOException
 	    {
     		appLogger.info("initializingV() at start."); // Needed if thread self-terminates.
-		    addB( 	theNetcasterOutputStream.getCounterNamedInteger() );
-		    addB( 	theNetInputStream.getCounterNamedInteger() );
+		    addB( 	theSubcasterOutputStream.getCounterNamedInteger() );
+		    addB( 	theSubcasterInputStream.getCounterNamedInteger() );
+		    super.initializingV();
 	    	}
 
     protected void finalizingV()

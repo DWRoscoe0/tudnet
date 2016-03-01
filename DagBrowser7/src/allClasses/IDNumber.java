@@ -63,7 +63,7 @@ public class IDNumber // Superclass of MetaNode.
           with the MetaFile inMetaFile.
           If inOutIDNumber == null the it allocates 
           an actual IDNumber instance
-          with field theI == 0 so that it will be read.
+          with field theEpiInputStreamI == 0 so that it will be read.
           */
         { 
           if ( inOutIDNumber == null )  // Allocate IDNumber if none provided.
@@ -91,7 +91,7 @@ public class IDNumber // Superclass of MetaNode.
         {
           inMetaFile.rwIndentedWhiteSpace( );  // Rw white-space.
           inMetaFile.rwLiteral( "#" );  // Rw special introducer character.
-          { // Load or save theI.
+          { // Load or save theEpiInputStreamI.
             if ( theI == 0 )  // Value hasn't been defined yet.
               { // Read and define value.
                 String NumberString= inMetaFile.readTokenString( );
@@ -103,7 +103,7 @@ public class IDNumber // Superclass of MetaNode.
               { // Save IDNumber to file.
                 inMetaFile.writeToken( Integer.toString( theI ) );
                 } // Save IDNumber to file.
-            } // Load or save theI.
+            } // Load or save theEpiInputStreamI.
           }
 
     }

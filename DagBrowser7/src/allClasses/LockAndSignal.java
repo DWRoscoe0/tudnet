@@ -310,7 +310,7 @@ public class LockAndSignal  // Combination lock and signal class.
 	        	  }
 	        try { // Waiting for notification or time-out.
 	          wait(  // Wait for call to notify() or...
-	          	remainingMsL
+	          	remainingMsL  // this much time.
 	            );
 	          } 
 	        catch (InterruptedException e) { // Handling wait interrupt.

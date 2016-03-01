@@ -182,9 +182,9 @@ public class AppLog
 
     public synchronized void appendEntry( String inString )
       /* This appends to the log file a new log entry.
-        It contains the app session,
-        the entry counters, which is incremented, 
-        followed by inString.
+        It contains the app session number,
+        milliseconds since the previous entry, the thread name,
+        and finally inString.
         */
       { 
     		long nowMillisL= System.currentTimeMillis(); // Saving present time.

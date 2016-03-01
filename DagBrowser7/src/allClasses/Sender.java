@@ -100,10 +100,13 @@ public class Sender // Uunicast and multicast sender thread.
               );
 	          //if // Logging packet but only of a particular type.
 	          // ( theDatagramPacket.getAddress().isMulticastAddress())
-		            //appLogger.debug(
-		            //	" sent: "
-		            //	+ PacketStuff.gettingPacketString(theDatagramPacket)
-		            //	);
+		            appLogger.debug(
+		            	///" sent: "
+		            	///+ PacketManager.gettingPacketString(theDatagramPacket)
+		            	PacketManager.gettingDirectedPacketString(
+		            			theDatagramPacket, true
+		            			)
+		            	);
             } catch (IOException e) { // Handle by dropping packet.
               appLogger.info(
                 "processingSockPacketsToSendB(),"

@@ -69,22 +69,25 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
                 DatagramPacket theDatagramPacket= 
                 		theNetcasterPacket.getDatagramPacket();
                 receiverDatagramSocket.receive(theDatagramPacket);
-                //appLogger.debug(
-                //		"run() received: "
-                //+ PacketStuff.gettingPacketString(theDatagramPacket)
-                //);
-                Unicaster theUnicaster= // Testing for associated Unicaster.
-                		theUnicasterManager.tryGettingUnicaster( 
+                appLogger.debug(
+                		///"run() received: "
+                		///+ PacketManager.gettingPacketString(theDatagramPacket)
+                		PacketManager.gettingDirectedPacketString(
+                				theDatagramPacket, false
+                				)
+                		);
+                Unicaster theUnicaster= // Testing for existing Unicaster.
+                		theUnicasterManager.tryingToGetUnicaster( 
                 				theNetcasterPacket 
                 				);
-                if ( theUnicaster != null )  // Queuing packet appropriately.
-          	      theUnicaster.puttingReceivedPacketV( // To found Unicaster.  
+                if ( theUnicaster != null )  // Queuing packet to...
+          	      theUnicaster.puttingKeyedPacketV( // Queuing to Unicaster.  
           	      		theNetcasterPacket
           	      		);
                 	else
                 	unconnectedReceiverToConnectionManagerNetcasterQueue.add(
                 			theNetcasterPacket
-                			); // Queue to CM.
+                			); // Queuing to ConnectionManager to let it decide.
                 }
               catch( SocketException soe ) {
                 appLogger.info("run(): " + soe );

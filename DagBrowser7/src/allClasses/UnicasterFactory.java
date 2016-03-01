@@ -1,11 +1,10 @@
 package allClasses;
 
-import java.net.InetAddress;
 
 public class UnicasterFactory {
 
   /* This is the factory for classes with Unicaster lifetimes.
-    This is not a singleton factory.  Each Unicaster has one.
+    This is not a singleton factory.  Each Unicaster has its own.
 
     This might eventually be converted to a scope object,
     or divided into a scope object and an injector object??
@@ -13,12 +12,12 @@ public class UnicasterFactory {
 
   // Injected dependencies that need saving for later.
 	private final DataTreeModel theDataTreeModel;
-	private final AppGUIFactory theAppGUIFactory;
+	public final AppGUIFactory theAppGUIFactory;
 	private final Shutdowner theShutdowner;
 	
 	// Other objects that will be needed later.
 	private final UnicasterValue unicasterUnicasterValue; 
-	//private final NetcasterQueue subcasterToUnicasterPacketQueue;
+	private final SubcasterQueue subcasterToUnicasterSubcasterQueue;
 	
   public UnicasterFactory(   // Factory constructor. 
   		AppGUIFactory theAppGUIFactory,
@@ -33,25 +32,30 @@ public class UnicasterFactory {
 		  LockAndSignal unicasterLockAndSignal= new LockAndSignal();
 			NetcasterQueue receiverToUnicasterNetcasterQueue= 
 					new NetcasterQueue( unicasterLockAndSignal );
-			NetInputStream unicasterNetInputStream= 
-					theAppGUIFactory.makeNetcasterNetInputStream( receiverToUnicasterNetcasterQueue );
-			InetAddress unicasterInetAddress= unicasterIPAndPort.getInetAddress(); 
-			int unicasterPortI= unicasterIPAndPort.getPortI();
+			NetcasterInputStream unicasterNetcasterInputStream=
+					theAppGUIFactory.makeNetcasterInputStream( 
+							receiverToUnicasterNetcasterQueue 
+							);
+		  NetcasterPacketManager theNetcasterPacketManager=
+		  		new NetcasterPacketManager( unicasterIPAndPort );
 			NetcasterOutputStream unicasterNetcasterOutputStream= 
-					theAppGUIFactory.makeNetcasterNetcasterOutputStream( 
-						unicasterInetAddress, unicasterPortI
+					theAppGUIFactory.makeNetcasterOutputStream( 
+						theNetcasterPacketManager 
 						);
+			subcasterToUnicasterSubcasterQueue= 
+					new SubcasterQueue( unicasterLockAndSignal );
 		  SubcasterManager theSubcasterManager= 
-					new SubcasterManager( theDataTreeModel, this );
+					new SubcasterManager( theDataTreeModel, theAppGUIFactory, this );
 	    Unicaster theUnicaster= new Unicaster(
 	    		theUnicasterManager,
 	    		theSubcasterManager,
 					unicasterLockAndSignal,
-		  		unicasterNetInputStream,
+      		unicasterNetcasterInputStream,
 		  		unicasterNetcasterOutputStream,
 		  		unicasterIPAndPort,
 			  	theDataTreeModel,
-			   	theShutdowner
+			   	theShutdowner,
+			   	subcasterToUnicasterSubcasterQueue
 			  	);
   	
 	    UnicasterValue unicasterUnicasterValue=  
@@ -84,23 +88,20 @@ public class UnicasterFactory {
       )
 	  { 
 		  LockAndSignal subcasterLockAndSignal= new LockAndSignal();
-			NetcasterQueue unicasterToSubcasterNetcasterQueue= 
-					new NetcasterQueue( subcasterLockAndSignal );
-			NetInputStream subcasterNetInputStream= 
-					theAppGUIFactory.makeNetcasterNetInputStream( 
-							unicasterToSubcasterNetcasterQueue 
+			SubcasterPacketManager theSubcasterPacketManager=
+					new SubcasterPacketManager( keyString ); 
+			SubcasterQueue unicasterToSubcasterSubcasterQueue=
+					new SubcasterQueue( subcasterLockAndSignal );
+			SubcasterInputStream theSubcasterInputStream= 
+			  	makeSubcasterInputStream( unicasterToSubcasterSubcasterQueue );
+			SubcasterOutputStream theSubcasterOutputStream= 
+					makeSubcasterOutputStream( 
+							keyString, theSubcasterPacketManager
 							);
-		  InetAddress unicasterInetAddress= null; 
-			int unicasterPortI= 0;
-			NetcasterOutputStream subcasterNetcasterOutputStream= 
-					theAppGUIFactory.makeNetcasterNetcasterOutputStream( 
-						unicasterInetAddress, unicasterPortI
-						  // subcasterToUnicasterPacketQueue: use this instead??
-						);
   	  Subcaster unicasterSubcaster= new Subcaster(
   	  		subcasterLockAndSignal,
-  				subcasterNetInputStream, 
-  				subcasterNetcasterOutputStream, 
+  	  		theSubcasterInputStream,
+  				theSubcasterOutputStream,
   	      theDataTreeModel,
   	      keyString,
   	      theShutdowner
@@ -110,4 +111,29 @@ public class UnicasterFactory {
 	    return unicasterSubcasterValue;
 	  	}
 
-  } // class UnicasterFactory.
+  	private SubcasterOutputStream makeSubcasterOutputStream( 
+  			String keyString, 
+  			SubcasterPacketManager theSubcasterPacketManager
+  		  )
+  	  {
+  		  NamedInteger packetsSentNamedInteger= 
+  					new NamedInteger( theDataTreeModel, "Packets-Sent", 0 );
+  		  return new SubcasterOutputStream(
+  		  	subcasterToUnicasterSubcasterQueue,
+  		  	theSubcasterPacketManager,
+  		  	packetsSentNamedInteger
+  	      );
+  	    }
+
+  	public SubcasterInputStream makeSubcasterInputStream(
+  			SubcasterQueue receiverToSubcasterSubcasterQueue
+  			)
+  	  {
+  			NamedInteger packetsReceivedNamedInteger=  
+  					new NamedInteger( theDataTreeModel, "Packets-Received", 0 );
+  	  	return new SubcasterInputStream(
+  	  	  receiverToSubcasterSubcasterQueue, packetsReceivedNamedInteger 
+  	  		);
+  	  	}
+
+} // class UnicasterFactory.

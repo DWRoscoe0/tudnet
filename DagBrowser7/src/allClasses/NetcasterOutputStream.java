@@ -2,14 +2,14 @@ package allClasses;
 
 public class NetcasterOutputStream 
 
-  extends NetOutputStream<
+  extends EpiOutputStream<
     IPAndPort,
     NetcasterPacket,
   	NetcasterQueue,
   	NetcasterPacketManager
 		> 
 
-  /* This is the NetOutputStream used by Netcasters 
+  /* This is the EpiOutputStream used by Netcasters 
     (Unicasters and Multicasters.  
     */
 

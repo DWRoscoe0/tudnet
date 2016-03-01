@@ -6,32 +6,21 @@ public class SubcasterManager
 
 	extends StreamcasterManager< 
 		String, // Key for map.
-		SubcasterValue, // Value for map. 
-		Subcaster // DataNode in Value.
+		Subcaster, // DataNode in Value.
+		SubcasterValue // Value for map. 
 		>
 
-	/* This class manages a Unicaster's Subcasters.
-	  In addition to storing information about them, 
-	  it provides methods for:
+	/* This class is a Streamcaster specialized to manage 
+    a Unicaster's Subcasters.
+    */
 	  
-	  * Testing for their existence, 
-	  * Creating them and starting their threads.
-	  * Displaying information about them.
-	  * Stopping their threads.
-	  
-	  It is also used to pass packets between 
-	  the NetInputStreams and NetOutputStreams of
-	  the Subcasters and their associated Unicaster
-	  
-	  Most of its methods are synchronized.
-	  */
-
   {
 
 		private final UnicasterFactory theUnicasterFactory;
 	
 		public SubcasterManager(  // Constructor. 
 	      DataTreeModel theDataTreeModel,
+	      AppGUIFactory theAppGUIFactory,
 	      UnicasterFactory theUnicasterFactory
 	      )
 	    {
@@ -39,6 +28,7 @@ public class SubcasterManager
 	      super( // Constructing MutableListWithMap superclass.
 		        theDataTreeModel,
 		        "Subcasters",
+			      theAppGUIFactory,
 	          new DataNode[]{} // Initially empty of children.
 	      		);
 
@@ -46,43 +36,33 @@ public class SubcasterManager
 	      this.theUnicasterFactory= theUnicasterFactory;
 	      }
 
-    public synchronized Subcaster buildAddAndStartSubcaster(
+    public synchronized Subcaster getOrBuildAddAndStartSubcaster(
     		String keyString
 	  		)
+      /* This method returns the Subcaster associated with keyString.
+        If necessary it builds and starts the Subcaster.
+        */
 	    { 
-    	  //appLogger.info( "Creating new Subcaster." );
-	      final SubcasterValue resultSubcasterValue=  // Making the Subcaster. 
-	      	theUnicasterFactory.makeSubcasterValue( 
-	      			keyString 
-	      			);
-	      addingV( // Adding new Subcaster to data structures.
-	          keyString, resultSubcasterValue
-	          );
-	      resultSubcasterValue.getEpiThread().startV(); // Start its thread.
-	      return resultSubcasterValue.getDataNodeD();
+	      SubcasterValue resultSubcasterValue=  // Making the Subcaster. 
+	      			          childHashMap.get(keyString);
+	      if // Making Subcaster if it doesn't exist.
+		      ( resultSubcasterValue == null )
+		      { // Making and starting the Subcaster.
+	    	  	//appLogger.info( "Creating new Subcaster." );
+			      resultSubcasterValue=  // Making the Subcaster. 
+			      	theUnicasterFactory.makeSubcasterValue( 
+			      			keyString 
+			      			);
+			      addingV( // Adding new Subcaster to data structures.
+			          keyString, resultSubcasterValue
+			          );
+			      resultSubcasterValue.getEpiThread().startV(); // Start its thread.
+		    		}
+    		Subcaster theSubcaster= // Get its Subcaster data node from value. 
+    				resultSubcasterValue.getDataNodeD(); 
+	      return theSubcaster;
 	      }
 
     // Stopping threads is handled by superclass.
-
-    public synchronized void queueToSubcasterInputStreamV(
-    		String keyString,
-    		NetcasterPacket theNetcasterPacket
-	  		)
-	    {
-    	  ///
-	      }
-
-    public synchronized Subcaster tryGettingReadySubcaster(
-    		String keyString
-	  		)
-      /* Tries to return a Subcaster with SockPackets from its NetcasterOutputStream.
-        If no Subcaster's have any packets ready then it returns null.
-        Doing it this way instead of somehow 
-        associating the keyString to the NetcasterPacket
-        moves complexity from the NetcasterOutputStream to this class.
-        */ 
-	    {
-    	  return null; ///
-	      }
 
     }
