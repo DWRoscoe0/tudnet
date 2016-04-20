@@ -138,4 +138,8 @@ public class EpiThread
         return interruptedB;
         }
 
-    }
+		public static boolean exitingB()
+		  // This is a method to save a little typing.
+			{ return Thread.currentThread().isInterrupted(); }
+		
+		}

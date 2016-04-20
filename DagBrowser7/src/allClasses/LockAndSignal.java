@@ -161,19 +161,20 @@ public class LockAndSignal  // Combination lock and signal class.
     // Input wait methods, of which there are several.
 
     public long correctionMsL( long targetTimeMsL, long periodMsL )
-      /* This method returns how much targetTimeMsL should be shifted,
-        in integer multiples of intervalMsL, to correct it for
-        any jumps that might have happened to 
-        the value returned by System.currentTimeMillis().
+      /* This method returns how much targetTimeMsL should be shifted
+        before using as a time-out limit time.
         Normally it will return 0, but sometimes it will return
-        positive or negative multiples of intervalMsL,
-        depending on whether time has been advanced or retarded.
+        positive or negative multiples of periodMsL,
+        depending on whether System.currentTimeMillis() 
+        has been advanced or retarded by amounts greater than periodMsL.
+        This method is used to prevent problems caused by
+        large sudden changes in System.currentTimeMillis().
         */
 		{
     	long shiftMsL= 0;
     	long targetTimeOutMsL;
 			final long currentTimeMsL= System.currentTimeMillis();
-    	while (true) { // Advance target until time-out positive.
+    	while (true) { // Advancing target until time-out positive.
     		targetTimeMsL+= periodMsL; // Advancing target time.
   			targetTimeOutMsL= targetTimeMsL - currentTimeMsL;
     	  if // Exiting loop if time-out is positive.
@@ -193,12 +194,15 @@ public class LockAndSignal  // Combination lock and signal class.
 			}
 
     public long timeOutForMsL( long targetTimeMsL, long periodMsL )
-      /* This method returns a value to be used as a time-out parameter
-        to terminate a wait at time targetTimeMsL+periodMsL.
+      /* This method returns a value to be used as 
+        a time-out interval parameter to terminate a wait 
+        at time targetTimeMsL plus periodMsL.
         The value returned will be greater than 0 
         but not greater than periodMsL,
         and the time-out will occur on 
-        a multiples of periodMsL from the targetTimeMsL.
+        a multiple of periodMsL from the targetTimeMsL.
+        This method is used to prevent problems caused by
+        large sudden changes in System.currentTimeMillis().
         The process is similar to the one used by correctionMsL(..).
         */
 		{
@@ -262,7 +266,8 @@ public class LockAndSignal  // Combination lock and signal class.
 	      Here is how this method distinguishes between and handles each:
 	
 			  * Some other thread interrupts this thread with Thread.interrupt().
-			    This is detected with Thread.currentThread().isInterrupted().
+			    This is detected with Thread.currentThread().isInterrupted()
+			    called by EpiThread.exitingB().
 	
 			  * The time is outside the specified time-out interval.
 			    The reason it is done this way is because the value returned by 
@@ -296,9 +301,10 @@ public class LockAndSignal  // Combination lock and signal class.
 	      Input theInput;  // For type of Input that will exit wait loop.
 	      while (true) { // Looping until one of several conditions is true.
 	        if // Handling thread interrupt signal.
-	          ( Thread.currentThread().isInterrupted() )
+	          ( EpiThread.exitingB() )
 	          { theInput= Input.INTERRUPTION; break; }  // Exiting loop.
-	        final long remainingMsL= intervalRemainingMsL( startMsL, lengthMsL ); 
+	        final long remainingMsL= 
+	        		intervalRemainingMsL( startMsL, lengthMsL ); 
 	        if // Exiting if time before or after time interval.
 	          ( remainingMsL == 0 )
 	          { theInput= Input.TIME; break; } // Exiting loop.
@@ -316,7 +322,7 @@ public class LockAndSignal  // Combination lock and signal class.
 	        catch (InterruptedException e) { // Handling wait interrupt.
 	          Thread.currentThread().interrupt(); // Re-establishing for test.
 	          }
-	        }
+	        } // while(true)
 	      return theInput;  // Returning why the wait loop ended.
 	      }
 

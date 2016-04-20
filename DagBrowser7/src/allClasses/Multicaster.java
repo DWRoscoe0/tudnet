@@ -199,7 +199,7 @@ public class Multicaster
         		//appLogger.debug("run() begin.");
 	          try { // Operations that might produce an IOException.
 	            while  // Receiving and queuing packets unless termination is
-	              ( ! Thread.currentThread().isInterrupted() ) // requested.
+	              ( ! EpiThread.exitingB() ) // requested.
 	              { // Receiving and queuing one packet.
 	                try {
 	                  NetcasterPacket receiverNetcasterPacket=
@@ -207,12 +207,8 @@ public class Multicaster
 	                  DatagramPacket receiverDatagramPacket= 
 	                  		receiverNetcasterPacket.getDatagramPacket(); 
 	                  theMulticastSocket.receive( receiverDatagramPacket );
-	                  appLogger.debug(
-	                  		///"run() received: "
-	                  		///+ PacketManager.gettingPacketString(
-	                  		PacketManager.gettingDirectedPacketString(
-	                  				receiverDatagramPacket, false
-	                  				)
+	                  PacketManager.logMulticastReceiverPacketV(
+	                  		receiverDatagramPacket
 	                  		);
 	                  receiverToMulticasterNetcasterQueue.add( // Queuing packet.
 	                  		receiverNetcasterPacket
@@ -255,12 +251,12 @@ public class Multicaster
             while (true) // Repeating until thread termination is requested.
               {
                 if   // Exiting if requested.
-                  ( Thread.currentThread().isInterrupted() ) 
+                  ( EpiThread.exitingB() ) 
                   break;
                 // Code to be repeated goes here.
               	
                 while  // Processing while thread termination is not requested...
-                	( ! Thread.currentThread().isInterrupted() )
+                	( ! EpiThread.exitingB() )
     	            { // Send and receive multicast packets.
     	              try {
     		      				writingNumberedPacketV("DISCOVERY"); // Sending query.

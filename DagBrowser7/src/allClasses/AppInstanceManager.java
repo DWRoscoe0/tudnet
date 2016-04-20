@@ -574,7 +574,7 @@ public class AppInstanceManager {
             }
           else
             while  // Keep trying until copy success and exit.
-              (!Thread.currentThread().isInterrupted() && !copySuccessB)
+              (!EpiThread.exitingB() && !copySuccessB)
               try 
                 {
                   appLogger.info( 

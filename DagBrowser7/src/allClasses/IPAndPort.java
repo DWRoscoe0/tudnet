@@ -6,7 +6,14 @@ public class IPAndPort
 
   //extends InetSocketAddress // Temporary extension while replacing class. 
 
-  // This class is a mutable replacement for InetSocketAddress.
+  /* This class is a mutable replacement for InetSocketAddress.
+   It's main purpose is to make Unicaster lookup by 
+   remote address from a DatagramPacket faster by reducing
+   the number of new-operators performed.
+   Unfortunately it doesn't eliminate them because
+   DatagramPacket.getAddress() returns a [new] InetAddress, and
+   there doesn't appear to be a way to return the IP address another way.
+   */
 
   {
 		private InetAddress netcasterInetAddress;
@@ -18,7 +25,7 @@ public class IPAndPort
 				this.netcasterPortI= netcasterPortI;
 				}
 
-		// Gettersf.
+		// Getters.
 		public InetAddress getInetAddress() 
 	  	{ return netcasterInetAddress; }
 		public int getPortI() 
@@ -27,7 +34,7 @@ public class IPAndPort
 		// Setters.
 		public void setInetAddressV( InetAddress netcasterInetAddress) 
 		  { this.netcasterInetAddress= netcasterInetAddress; }
-		public void getPortI( int netcasterPortI )
+		public void setPortI( int netcasterPortI )
 		  { this.netcasterPortI= netcasterPortI; }
 
 		// Other methods.
@@ -49,7 +56,7 @@ public class IPAndPort
           			this.netcasterInetAddress, otherIPAndPort.netcasterInetAddress
           			))
             break Comparer;  // Exiting with false.
-          resultB= true;  // everything is equal, so override result.
+          resultB= true;  // All parts are equal, so override result.
           }  // Comparer.
         return resultB;
         }

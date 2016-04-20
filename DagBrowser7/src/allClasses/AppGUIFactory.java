@@ -243,7 +243,9 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 			)
 	  {
 			NamedInteger packetsReceivedNamedInteger=  
-					new NamedInteger( theDataTreeModel, "Packets-Received", 0 );
+					new NamedInteger( 
+							theDataTreeModel, "Incoming-Packets-Received", 0 
+							);
 	  	return new NetcasterInputStream(
 	  	  receiverToNetcasterNetcasterQueue, packetsReceivedNamedInteger 
 	  		);
@@ -254,7 +256,9 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 		  )
 	  {
 		  NamedInteger packetsSentNamedInteger= 
-					new NamedInteger( theDataTreeModel, "Packets-Sent", 0 );
+					new NamedInteger( 
+							theDataTreeModel, "Outgoing-Packets-Sent", 0 
+							);
 		  return new NetcasterOutputStream(
 		  	netcasterToSenderNetcasterQueue,
 		  	theNetcasterPacketManager,

@@ -29,7 +29,8 @@ public class NamedMutable
 	  
 	  public Object setValueObject( final Object newObject )
 	    /* This method sets a new value and returns the old one.
-	      The old one is returned to simplify object pooling and recycling.
+	      The old one is returned to simplify 
+	      possible future object pooling and recycling.
   	    */
 		  {
 	  	  Object oldObject= this.valueObject; // Saving present value. 

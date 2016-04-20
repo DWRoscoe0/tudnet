@@ -2,6 +2,8 @@
 package allClasses;
 
 //import java.awt.Component;
+///import static allClasses.Globals.appLogger;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
@@ -19,8 +21,8 @@ public class AppLog
       Make log file be share-able in case two app instances
       try to write to it at the same time.  See createOrAppendToFileV(..).
 
-    ?? Slowdown migh happen because of  
-      * Antimalware Service Executable  
+    ?? Slowing might happen because of  
+      * Anti-malware Service Executable  
       * Microsoft Windows Search Indexer
       App can run much slower when the log file is long.
       This might be because of these tasks.
@@ -59,6 +61,14 @@ public class AppLog
         catch(IOException e)
           { System.out.println("\nIn AppLog initialization:"+e); }
         }
+
+    /* Debug Flags.  These are added or removed as needed during debugging
+      when calls to logging methods should be called in 
+      only very limited conditions. 
+     */
+    
+    static boolean testingForPingB= false;
+
     
     private void logFileInitializeV()
       throws IOException  // Do-nothing put-off.

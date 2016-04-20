@@ -10,15 +10,18 @@ public class SubcasterManager
 		SubcasterValue // Value for map. 
 		>
 
-	/* This class is a Streamcaster specialized to manage 
+	/* This class is a StreamcasterManager specialized to manage 
     a Unicaster's Subcasters.
     */
 	  
   {
 
-		private final UnicasterFactory theUnicasterFactory;
-	
-		public SubcasterManager(  // Constructor. 
+	  // Injected dependency variables.
+	  private final UnicasterFactory theUnicasterFactory;
+	  private boolean leadingB= false; // Controls whether Subcasters
+	    // should be leaders or followers.
+	  
+		public SubcasterManager(  // Injecting constructor. 
 	      DataTreeModel theDataTreeModel,
 	      AppGUIFactory theAppGUIFactory,
 	      UnicasterFactory theUnicasterFactory
@@ -32,9 +35,15 @@ public class SubcasterManager
 	          new DataNode[]{} // Initially empty of children.
 	      		);
 
-	      // This class's injections.
+	      // This class's constructor injections.
 	      this.theUnicasterFactory= theUnicasterFactory;
 	      }
+
+    public synchronized void setLeadingV( // Injecting setter. 
+    		boolean leadingB )
+    	{ 
+    	  this.leadingB= leadingB; 
+    	  }
 
     public synchronized Subcaster getOrBuildAddAndStartSubcaster(
     		String keyString
@@ -51,7 +60,7 @@ public class SubcasterManager
 	    	  	//appLogger.info( "Creating new Subcaster." );
 			      resultSubcasterValue=  // Making the Subcaster. 
 			      	theUnicasterFactory.makeSubcasterValue( 
-			      			keyString 
+			      			keyString, leadingB
 			      			);
 			      addingV( // Adding new Subcaster to data structures.
 			          keyString, resultSubcasterValue

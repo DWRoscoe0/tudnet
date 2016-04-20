@@ -33,7 +33,7 @@ public class CountingPacketQueue extends NetcasterQueue
 	    {
 	  	  NetcasterPacket resultNetcasterPacket= super.poll(timeout, unit);
 	  	  if ( resultNetcasterPacket != null ) // Counting packet if gotten.
-	  	  	outputCountNamedInteger.addValueL( 1 );
+	  	  	outputCountNamedInteger.addDeltaL( 1 );
 	  	  return resultNetcasterPacket;
 	  	  }
 
@@ -41,7 +41,7 @@ public class CountingPacketQueue extends NetcasterQueue
 	       throws InterruptedException
 	    {
 	  	  NetcasterPacket resultNetcasterPacket= super.take();
-	  	  outputCountNamedInteger.addValueL( 1 ); // Counting packet.
+	  	  outputCountNamedInteger.addDeltaL( 1 ); // Counting packet.
 	  	  return resultNetcasterPacket;
 	    	}
 	  	  

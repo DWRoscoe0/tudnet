@@ -89,7 +89,8 @@ public class EpiOutputStream<
         for better bandwidth utilization.
         */
       {
-	  		if (queuingBufferDataB() ) // Queuing packet with buffer bytes if any.
+	  		if  // Queuing packet with buffer bytes if any.
+	  		  (queuingBufferDataB() )
 		  		{ // Allocating new buffer because old one was queued.
 		    		bufferBytes= // Allocating new buffer.
 					  	  packetManagerM.produceDefaultSizeBufferBytes();
@@ -101,7 +102,8 @@ public class EpiOutputStream<
 
 	  public boolean queuingBufferDataB() throws IOException
 	    /* Queues a packet containing bytes in the buffer, if there are any.
-	      It returns true if a new buffer needs to be allocated, false otherwise.
+	      It returns true if a new buffer needs to be allocated, 
+	      false otherwise.
 	      A new buffer needs to be allocated if:
 	      * the previous buffer was queued, or
 	      * a buffer has never been allocated.
@@ -119,7 +121,8 @@ public class EpiOutputStream<
 						  indexI = 0; // Resetting buffer index to indicate empty.
 						  break processing; // Exitting with new buffer needed.
 				  		}
-					testB= (bufferSizeI==0); // Testing whether initial buffer is needed.
+					testB=  // Testing whether initial buffer needed.
+							(bufferSizeI==0);
 	  	  	}
 		    return testB; // Returning whether anew buffer is needed.
 		    }
@@ -128,8 +131,8 @@ public class EpiOutputStream<
 	  private void queuingV( E theKeyedPacketE )
 		  // This method queues a packet and counts it.
 			{
-		    notifyingQueueQ.add( theKeyedPacketE ); // Addding packet to the queue.
-				packetCounterNamedInteger.addValueL( 1 ); // Counting the packet.
+		    notifyingQueueQ.add( theKeyedPacketE ); // Adding packet to queue.
+				packetCounterNamedInteger.addDeltaL( 1 ); // Counting the packet.
 				}
 				
 	}

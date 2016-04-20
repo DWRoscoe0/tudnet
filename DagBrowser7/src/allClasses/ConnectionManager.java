@@ -203,7 +203,7 @@ public class ConnectionManager
       {
     		while (true) { // Repeating until thread termination requested.
       		if // Exiting loop if  thread termination is requested.
-      		  ( Thread.currentThread().isInterrupted() ) 
+      		  ( EpiThread.exitingB() ) 
       			break;
       		
       		managingDatagramSocketAndDependentThreadsV( );
@@ -244,7 +244,7 @@ public class ConnectionManager
         	  stoppingSenderThreadV();
             stoppingUnicastReceiverThreadV();
     	    	preparingSocketLoop: while (true) {
-              if ( Thread.currentThread().isInterrupted() )
+              if ( EpiThread.exitingB() )
               	break preparingAll;
     	  	  	prepareDatagramSocketV();
     	  	  	if ( ! EpiDatagramSocket.isNullOrClosedB( 
@@ -354,7 +354,7 @@ public class ConnectionManager
 	    	  preparingAll: { // Preparing socket and dependencies. 
             stoppingMulticasterThreadV();
     	    	preparingSocketLoop: while (true) {
-              if ( Thread.currentThread().isInterrupted() )
+              if ( EpiThread.exitingB() )
               	break preparingAll;
     	  	  	prepareMulcicastSocketV();
     	  	  	if ( ! EpiDatagramSocket.isNullOrClosedB( theMulticastSocket ) )
@@ -413,7 +413,12 @@ public class ConnectionManager
           theNetcasterPacket= // Try getting next packet from queue.
             multicasterToConnectionManagerNetcasterQueue.poll();
           if (theNetcasterPacket == null) break;  // Exit if no more packets.
-      		passToUnicasterV( theNetcasterPacket );
+      		//passToUnicasterV( theNetcasterPacket ); //// Don't sent packet.
+      		//Unicaster theUnicaster=  //// Getting the appropriate Unicaster.
+      				theUnicasterManager.getOrBuildAddAndStartUnicaster( 
+  		      		theNetcasterPacket 
+  		      		);
+
           packetsProcessedB= true;
           }
           

@@ -1,5 +1,7 @@
 package allClasses;
 
+import static allClasses.Globals.appLogger;
+
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 //import java.net.InetAddress;
@@ -91,6 +93,48 @@ public abstract class PacketManager<
 	  	  }
 
 
+	  // Methods for packet logging, mostly for debugging.
+
+		public static void logUnconnectedReceiverPacketV( 
+				DatagramPacket theDatagramPacket 
+				)
+			{
+			  ///* 
+			  appLogger.debug(
+	      		PacketManager.gettingDirectedPacketString(
+	      				theDatagramPacket, false
+	      				)
+	      		);
+	      //*/
+	    	}
+
+		public static void logSenderPacketV( 
+				DatagramPacket theDatagramPacket 
+				)
+			{
+			  // /*
+	    	if ( ! theDatagramPacket.getAddress().isMulticastAddress() )
+				  appLogger.debug(
+		      		PacketManager.gettingDirectedPacketString(
+		      				theDatagramPacket, true
+		      				)
+		      		);
+		    // */
+	    	}
+
+		public static void logMulticastReceiverPacketV( 
+				DatagramPacket theDatagramPacket 
+				)
+			{
+			  /* 
+			  appLogger.debug(
+	      		PacketManager.gettingDirectedPacketString(
+	      				theDatagramPacket, false
+	      				)
+	      		);
+	      */
+	    	}
+
 	  // Methods for converting packets to Strings for display.
 
 		public static String gettingDirectedPacketString( 
@@ -160,18 +204,23 @@ public abstract class PacketManager<
 					InetAddress theInetAddress 
 					)
 			  /* This method returns a String representation of theInetAddress.
-			    This address representation is fixed for columnar alighment.
+			    This address representation is fixed for columnar alignment.
 			    */
 			  {
-					byte[] addressBytes= theInetAddress.getAddress();
 					String resultString= "";
-			    for (int indexI= 0; indexI < addressBytes.length; indexI++)
-				    {
-				    	if (indexI != 0) resultString+= ".";
-				    	resultString+= String.format(
-				    			"%03d", addressBytes[indexI] & 0xFF
-				    			);
-				    	}
+					if ( theInetAddress == null )
+						resultString+= "!null-InetAddress!";
+					else
+						{
+							byte[] addressBytes= theInetAddress.getAddress();
+					    for (int indexI= 0; indexI < addressBytes.length; indexI++)
+						    {
+						    	if (indexI != 0) resultString+= ".";
+						    	resultString+= String.format(
+						    			"%03d", addressBytes[indexI] & 0xFF
+						    			);
+						    	}
+							}
 			  	return resultString; // Returning present and final value.
 			    }
 

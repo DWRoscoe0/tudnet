@@ -36,13 +36,15 @@ public class Subcaster
 	      SubcasterOutputStream theSubcasterOutputStream,
 	      DataTreeModel theDataTreeModel,
 	      String keyString,
-	      Shutdowner theShutdowner
+	      Shutdowner theShutdowner,
+        boolean leadingB
 	      )
 	    {
 	      super( // Superclass's constructor injections.
 		        theDataTreeModel,
 		      	"Subcaster",
 		        theShutdowner,
+		        leadingB,
 	      	  keyString,
 	      	  streamcasterLockAndSignal,
 	      	  theSubcasterInputStream,
@@ -62,7 +64,7 @@ public class Subcaster
 					while (true) // Repeating until thread termination is requested.
 					  {
 							if   // Exiting if requested.
-					      ( Thread.currentThread().isInterrupted() ) 
+					      ( EpiThread.exitingB() ) 
 					      break;
 							pingReplyProtocolV(); //////
 			    		streamcasterLockAndSignal.doWaitE(); // Waiting for any input.

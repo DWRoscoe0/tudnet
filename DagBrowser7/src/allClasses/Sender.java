@@ -56,7 +56,7 @@ public class Sender // Uunicast and multicast sender thread.
 	  	  toReturn: {
 	    		while (true) { // Repeating until thread termination requested.
 	      		if // Exiting loop if thread termination is requested.
-	      		  ( Thread.currentThread().isInterrupted() ) 
+	      		  ( EpiThread.exitingB() ) 
 	      			break toReturn;
 		      		
 	          processingSockPacketsToSendB(); // Processing inputs.
@@ -95,22 +95,15 @@ public class Sender // Uunicast and multicast sender thread.
           theDatagramPacket.setAddress(theIPAndPort.getInetAddress());
           theDatagramPacket.setPort(theIPAndPort.getPortI());
           try { // Send the gotten packet.
-            theDatagramSocket.send(   // Send packet.
-            	theDatagramPacket
-              );
-	          //if // Logging packet but only of a particular type.
-	          // ( theDatagramPacket.getAddress().isMulticastAddress())
-		            appLogger.debug(
-		            	///" sent: "
-		            	///+ PacketManager.gettingPacketString(theDatagramPacket)
-		            	PacketManager.gettingDirectedPacketString(
-		            			theDatagramPacket, true
-		            			)
-		            	);
+          		PacketManager.logSenderPacketV(theDatagramPacket);
+          		  // Log before sending so log will make sense.
+	            theDatagramSocket.send(   // Send packet.
+	            	theDatagramPacket
+	              );
             } catch (IOException e) { // Handle by dropping packet.
               appLogger.info(
                 "processingSockPacketsToSendB(),"
-                +"IOException."
+                +e
                 );
             }
 

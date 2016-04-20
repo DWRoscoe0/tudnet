@@ -17,8 +17,9 @@ public class SystemsMonitor
     // Injected instance variables, all private.
 
     // Other instance variables, all private.
-		  private long targetTimeMsL= System.currentTimeMillis();
-		  
+
+	  private long targetTimeMsL; // For timing periodic activity.
+
 	  // Detail-containing child sub-objects.
 		  private NamedInteger measurementsNamedInteger= 
 		  	new NamedInteger( 
@@ -76,12 +77,15 @@ public class SystemsMonitor
         measures and displays various CPU values once every second.
        */
       {
-    		//appLogger.info( "SystemsMonitor.run() beginning." );
+    		appLogger.debug( "SystemsMonitor.run() beginning." );
 
     		initializeV();  // Do non-dependency injection initialization.
+    		
+  		  targetTimeMsL= // Saving system now that slow initialization done. 
+  		  		System.currentTimeMillis();
 
         while   // Repeating until termination is requested.
-          ( !Thread.currentThread().isInterrupted() )
+          ( !EpiThread.exitingB() )
           {
 	        	updateSpeedEtcV( measureCPUSpeedL() );
         		}
@@ -117,7 +121,7 @@ public class SystemsMonitor
 	    {
     		cpuSpeedNamedInteger.setValueL( cpuSpeedL );
     		
-    		measurementsNamedInteger.addValueL(1);
+    		measurementsNamedInteger.addDeltaL(1);
     		processorsNamedInteger.setValueL( 
     				Runtime.getRuntime().availableProcessors() 
     				); // Keep measuring because this could change.
@@ -148,7 +152,8 @@ public class SystemsMonitor
   	  /* This method waits for the next measurement time,
   	    and records any anomalous data associated with it. 
   	    */
-	    {
+	    { 
+  			//appLogger.debug( "advanceTimeV() before wait." );
 			  final long periodMsL= 1000;
 			  long shiftInTimeMsL= // Determining any unexpected time shift.
 			  		theLockAndSignal.correctionMsL(targetTimeMsL, periodMsL);
@@ -156,14 +161,15 @@ public class SystemsMonitor
   			theLockAndSignal.doWaitWithTimeOutE( // Waiting for next mark.
   					theLockAndSignal.timeOutForMsL( targetTimeMsL, periodMsL )
   					);
+  			//appLogger.debug( "advanceTimeV() after wait." );
   			targetTimeMsL+= periodMsL; // Advancing target time.
   			if (shiftInTimeMsL > 0) // Processing skipped time, if any.
 	  			{
-		    		skippedTimeMsNamedInteger.addValueWithLoggingL( shiftInTimeMsL );
+		    		skippedTimeMsNamedInteger.addDeltaAndLogNonzeroL( shiftInTimeMsL );
 	  				}
   			if (shiftInTimeMsL < 0) // Processing reversed time, if any.
 	  			{
-		  			reversedTimeMsNamedInteger.addValueWithLoggingL( -shiftInTimeMsL );
+		  			reversedTimeMsNamedInteger.addDeltaAndLogNonzeroL( -shiftInTimeMsL );
 	  				}
         }
 

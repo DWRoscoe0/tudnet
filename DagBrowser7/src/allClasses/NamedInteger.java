@@ -4,8 +4,8 @@ import static allClasses.Globals.appLogger;
 
 
 public class NamedInteger // A DataNode for tracking integer attributes.
-
   extends NamedLeaf
+  implements LongLike
 
   {
 	  private DataTreeModel theDataTreeModel; // For reporting changes.
@@ -28,22 +28,23 @@ public class NamedInteger // A DataNode for tracking integer attributes.
         return Long.toString( theL );
         }
 
-    public long getValueI( )
+    public long getValueL( )
       {
         return theL;
         }
 
-    public long addValueWithLoggingL( long deltaL )
-	    /* This method does the same as addValueL(deltaL) and
-	      it logs deltaL if it is not 0.
+    public long addDeltaAndLogNonzeroL( long deltaL )
+	    /* This method does the same as addDeltaL(deltaL) but
+	      also logs as a warning any deltaL which not 0.
+	      This is for NamedIntegers which are not supposed to change.
 	      */
       {
     	  if (deltaL != 0) // Logging deltaL if it's not 0.
-		  		appLogger.info( this.getNameString( )+" changed by "+deltaL );
-	  	  return addValueL( deltaL ); // Doing the add.
+		  		appLogger.warning( this.getNameString( )+" changed by "+deltaL );
+	  	  return addDeltaL( deltaL ); // Doing the add.
         }
 
-    public long addValueL( long deltaL )
+    public long addDeltaL( long deltaL )
 	    /* This method does nothing if deltaL is 0.
 	      Otherwise it adds deltaL to the value and returns the new value.
 		    It also fires any associated change listeners.
@@ -53,7 +54,6 @@ public class NamedInteger // A DataNode for tracking integer attributes.
 	  	  return theL; // Returning possibly different value.
         }
 
-		//public Object setValueL( final long newL )  // Does not produce error!
     public long setValueL( final long newL )
 	    /* This method does nothing if deltaL is the same value 
 	      as the present value of this NamedInteger.

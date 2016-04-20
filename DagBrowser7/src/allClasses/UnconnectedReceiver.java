@@ -59,9 +59,10 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
         another thread should close the receiverDatagramSocket. 
         */
       {
+    	  ///boolean missFlagB= false;
         try { // Doing operations that might produce an IOException.
           while  // Receiving and queuing packets unless termination is
-            ( ! Thread.currentThread().isInterrupted() ) // requested.
+            ( ! EpiThread.exitingB() ) // requested.
             { // Receiving and queuing one packet.
               try {
                 NetcasterPacket theNetcasterPacket= 
@@ -69,12 +70,9 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
                 DatagramPacket theDatagramPacket= 
                 		theNetcasterPacket.getDatagramPacket();
                 receiverDatagramSocket.receive(theDatagramPacket);
-                appLogger.debug(
-                		///"run() received: "
-                		///+ PacketManager.gettingPacketString(theDatagramPacket)
-                		PacketManager.gettingDirectedPacketString(
-                				theDatagramPacket, false
-                				)
+                ///if (missFlagB^= true) continue; // Lose half of packets.
+                PacketManager.logUnconnectedReceiverPacketV(
+                		theDatagramPacket
                 		);
                 Unicaster theUnicaster= // Testing for existing Unicaster.
                 		theUnicasterManager.tryingToGetUnicaster( 

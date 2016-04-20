@@ -1,5 +1,7 @@
 package allClasses;
 
+import static allClasses.Globals.appLogger;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.DatagramPacket;
@@ -95,6 +97,8 @@ public class EpiInputStream<
 	  		int availableI;
 	  	  while (true) {
 	    	  availableI= packetSizeI - packetIndexI; // Calculating bytes in buffer.
+	    		if (AppLog.testingForPingB)
+	  	  		appLogger.debug("available() "+availableI+" "+packetSizeI+" "+packetIndexI);
 	    	  if ( availableI > 0) break; // Exiting if any bytes in buffer.
 	    	  if  // Exiting if no packet in queue to load.
 	    	    ( receiverToStreamcasterNotifyingQueueQ.peek() == null ) 
@@ -159,8 +163,11 @@ public class EpiInputStream<
 	      next packet in the input queue.
 	      It blocks if no packet is immediately available.
 	      This method changes virtually all objects at once.
+	      This includes the packet counter.
 	      */
 	    {
+	  		if (AppLog.testingForPingB)
+		  		appLogger.debug("loadNextPacketV() executing.");
 	  		if // Adjusting saved mark index for buffer replacement. 
 	  		  (markedB) // if stream is marked. 
 	  			markIndexI-= packetIndexI; // Subtracting present index or length ??
@@ -171,9 +178,9 @@ public class EpiInputStream<
 	        	throw new IOException(); 
 		      } 
 	
-				packetCounterNamedInteger.addValueL( 1 ); // Counting received packet.
+				packetCounterNamedInteger.addDeltaL( 1 ); // Counting received packet.
 	
-	      // Setting variables from the new packet.
+	      // Setting variables for reading from the new packet.
 	  	  loadedDatagramPacket= loadedKeyedPacketE.getDatagramPacket();
 	      bufferBytes= loadedDatagramPacket.getData();
 	      packetIndexI= loadedDatagramPacket.getOffset();
@@ -189,20 +196,27 @@ public class EpiInputStream<
 		    }
 	  
 	  public void mark(int readlimit) 
+	  	/* Saves the state of the stream so that it might be restored
+	  	  with the reset() method.  This allows undoing reads after
+	  	  it has been concluded that the bytes read since mark(..)
+	  	  are not what we were looking for.
+	  	 	This allows only one level of undoing, but this often suffices.
+	  	 	*/
 	  	{
 	  		//appLogger.debug( "NetcasterInputStream.mark(..), "+markIndexI+" "+packetIndexI);
 	  		markIndexI= packetIndexI; // Recording present buffer byte index.
-	  		markedB= true; // Record that stream is marked.
+	  		markedB= true; // Recording that stream is marked.
 	      }
 	
 	  public void reset() throws IOException 
+	    // Restores the stream to the state recorded by mark(int).
 	    {
 	  		//appLogger.debug( "NetcasterInputStream.reset(..), "+markIndexI+" "+packetIndexI);
 	    	if ( markedB ) // Un-marking if marked
 	    		{
 			      packetIndexI= markIndexI; // Restoring buffer byte index.
 			    	markIndexI= -1; // Restoring undefined value.
-			    	markedB= false; // Ending marked state.
+			    	markedB= false; // Recording that stream is unmarked.
 		    		}
 	    	}
 	

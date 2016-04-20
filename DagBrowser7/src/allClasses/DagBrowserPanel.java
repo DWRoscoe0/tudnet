@@ -30,6 +30,7 @@ import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
+
 //import allClasses.LockAndSignal.Input;
 import static allClasses.Globals.*;  // appLogger;
 
@@ -570,7 +571,7 @@ public class DagBrowserPanel
             {
               appLogger.info("begun.");
               periodicTargetTimeMsL= System.currentTimeMillis();
-        			while (! Thread.currentThread().isInterrupted() )
+        			while (! EpiThread.exitingB() )
                 {
               		//appLogger.info("in loop.");
               		doDelayMeasurementsV();

@@ -33,16 +33,27 @@ public class Netcaster
 			      theDataTreeModel,
 			      nameString,
 		        theShutdowner,
+		        false,
 			      remoteIPAndPort, // key K
 			      netcasterLockAndSignal,
 			      theNetcasterInputStream,
 			      theNetcasterOutputStream
 			      );
 
-        packetIDI= 0; // Setting starting packet sequence number.
+        ////packetIDI= 0; // Setting starting packet sequence number.
 	      }
 
     protected void initializingV()
+	    throws IOException
+	    {
+		    initializingWithoutStreamsV();
+		    
+		    // Initializing stream monitors.
+		    addB( 	theEpiOutputStreamO.getCounterNamedInteger() );
+		    addB( 	theEpiInputStreamI.getCounterNamedInteger());
+		    }
+
+    protected void initializingWithoutStreamsV()
 	    throws IOException
 	    {
     		IPAndPort remoteIPAndPort= getKeyK();
@@ -55,9 +66,6 @@ public class Netcaster
 		    addB( 	new NamedMutable( 
 				    theDataTreeModel, "Port", "" + remoteIPAndPort.getPortI()
 				  	) );
-
-		    addB( 	theEpiOutputStreamO.getCounterNamedInteger() );
-		    addB( 	theEpiInputStreamI.getCounterNamedInteger());
 
 		    super.initializingV();
 	    	}
