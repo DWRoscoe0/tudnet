@@ -204,7 +204,7 @@ public class TreeHelper
 
       /* This code implements the FocusListener interface.
         It listens for and receives FocusEvents from its owningJComponent,
-        and passes them on any FocusListener-s that have registered with it.
+        and passes them on to any FocusListener-s that have registered with it.
         With this code TreeHelper-s can help manage focus events.
         */
 

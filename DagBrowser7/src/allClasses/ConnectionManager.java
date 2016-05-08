@@ -21,11 +21,9 @@ public class ConnectionManager
     with other Infogora peer nodes.
     It makes use of the class UnicasterManager as a helper.
 
-    It extends MutableList to manage the list of connected peers.
-    Because this list is accessed by a TreeModel on the EDT,
-    this List is synchronously updated when changes are needed
-    using java.awt.EventQueue.invokeLater(..) method which runs on 
-    the Event Dispatch Thread (EDT).
+    It extends MutableList to manage its list of connected peers.
+    Because this list is accessed by a TreeModel for a GUI JTree,
+    the List is synchronously on the Event Dispatch Thread (EDT).
 
     ?? This class makes use of other threads 
     to manage the individual connections.
@@ -415,9 +413,9 @@ public class ConnectionManager
           if (theNetcasterPacket == null) break;  // Exit if no more packets.
       		//passToUnicasterV( theNetcasterPacket ); //// Don't sent packet.
       		//Unicaster theUnicaster=  //// Getting the appropriate Unicaster.
-      				theUnicasterManager.getOrBuildAddAndStartUnicaster( 
-  		      		theNetcasterPacket 
-  		      		);
+  				theUnicasterManager.getOrBuildAddAndStartUnicaster( 
+	      		theNetcasterPacket 
+	      		);
 
           packetsProcessedB= true;
           }

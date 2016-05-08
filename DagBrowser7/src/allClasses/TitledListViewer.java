@@ -367,8 +367,8 @@ public class TitledListViewer // adapted from TitledListViewer.
       @Override
       public void focusGained(FocusEvent arg0) 
         {
+    		  //appLogger.debug("TitledListViewer.focusGained() adjusting JList.");
           theJList.requestFocusInWindow();  // Autofocus the JList.
-
           setJListScrollState();
           repaint();  // bug fix Kluge to display cell in correct color.  
           }
@@ -376,6 +376,7 @@ public class TitledListViewer // adapted from TitledListViewer.
       @Override
       public void focusLost(FocusEvent arg0) 
         {
+      		//appLogger.debug("TitledListViewer.focusLost() adjusting JList.");
           setJListScrollState();
           repaint();  // bug fix Kluge to display cell in correct color.  
           }

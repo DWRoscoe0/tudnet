@@ -1,18 +1,10 @@
 package allClasses;
 
-import java.awt.AWTEvent;
-import java.awt.EventQueue;
 import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 import javax.swing.JFrame;
-
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadInfo;
-import java.lang.management.ThreadMXBean;
-import java.util.HashMap;
-import java.util.Map;
 
 import static allClasses.Globals.appLogger;  // For appLogger;
 
@@ -72,6 +64,8 @@ public class AppGUI
     		private DagBrowserPanel theDagBrowserPanel;
     		private AppGUIFactory theAppGUIFactory;
     		private Shutdowner theShutdowner;
+    		private TracingEventQueue theTracingEventQueue;
+      	private BackgroundEventQueue theBackgroundEventQueue;
 
         // Other AppGUI instance variables.
         private JFrame theJFrame;  // App's only JFrame (now).
@@ -81,7 +75,9 @@ public class AppGUI
         		AppInstanceManager theAppInstanceManager,
         		DagBrowserPanel theDagBrowserPanel,
         		AppGUIFactory theAppGUIFactory,
-        		Shutdowner theShutdowner
+        		Shutdowner theShutdowner,
+        		TracingEventQueue theTracingEventQueue,
+	        	BackgroundEventQueue theBackgroundEventQueue
         		)
           {
             this.theGUILockAndSignal=   // Save lock reference.
@@ -90,226 +86,38 @@ public class AppGUI
         		this.theDagBrowserPanel= theDagBrowserPanel;
         		this.theAppGUIFactory= theAppGUIFactory;
         		this.theShutdowner= theShutdowner;
+        		this.theTracingEventQueue= theTracingEventQueue;
+	        	this.theBackgroundEventQueue= theBackgroundEventQueue;
             }
 
-    		public class TracingEventQueue extends EventQueue {
-
-    			/* This class was gotten from an article at
-    			  https://today.java.net/pub/a/today/2007/08/30/debugging-swing.html
-    			  Its purpose is to identify when the EDT is taking too long
-    			  to process events.
-    			 	*/
-
-    		   private TracingEventQueueMonitor theTracingEventQueueMonitor;
-
-    		   public TracingEventQueue() {
-   		       //this.theTracingEventQueueMonitor= 
-   		  	   //  new TracingEventQueueMonitor(500);
-   		  	   this.theTracingEventQueueMonitor= 
-   		  	  		 new TracingEventQueueMonitor(TracingEventQueueMonitor.LIMIT);
-   		       this.theTracingEventQueueMonitor.start();
-    		   }
-
-    		   @Override
-    		   protected void dispatchEvent(AWTEvent event) {
-    		     this.theTracingEventQueueMonitor.eventDispatchingBeginningV(event);
-    		     super.dispatchEvent(event);
-    		     this.theTracingEventQueueMonitor.eventDispatchingEndingV(event);
-    		     }
-    		} // TracingEventQueue
-
-    		class TracingEventQueueMonitor extends Thread {
-
-    			/* This class was gotten from an article at
-    			  https://today.java.net/pub/a/today/2007/08/30/debugging-swing.html
-    			  Its purpose is to help TracingEventQueue 
-    			  identify when the EDT is taking too long to process events.
-    			  It displays the elapsed time and the stack
-    			  the first time it notices elapsed time has exceeded the threshold.
-    			  The Thread.sleep(..) time defines the sampling rate.
-    			  It might need to be adjusted to locate hogging code.
-		     	  */
-
-    			private long thresholdDelay;
-
-    			private final static long PERIOD= 100;  // was 100
-    			private final static long LIMIT= 500; // was 500
-    			private final static boolean displayStackB= false;
-    			
-    			class EventValue { 
-    				long startTimeL; 
-    				boolean outputtedB; 
-    				EventValue(long startTimeL) {
-    					this.startTimeL= startTimeL;
-    				  }
-    				}
-
-    			private Map<AWTEvent, EventValue> eventTimeMap;
-					private boolean eventDispatchingEndingB= false;
-
-    			public TracingEventQueueMonitor(long thresholdDelay) {
-    				super("EDTMonitor");
-    				this.thresholdDelay = thresholdDelay;
-    				this.eventTimeMap = new HashMap<AWTEvent, EventValue>();
-    			  setDaemon(true);
-    				}
-
-    			public synchronized void eventDispatchingBeginningV(AWTEvent event)
-    			  // Processes the beginning of event dispatching by recording in map.
-	    			{
-	    				this.eventTimeMap.put(
-	    						event, new EventValue(System.currentTimeMillis())
-	    						);
-	    			  }
-
-    			public void eventDispatchingEndingV(AWTEvent event) 
-	  			  /* Processes the ending of event dispatching by
-				      doing a time check and removing the associated map entry.
-				      It does not do a stack trace, which should already have been done.
-				      */
-	    			{
-    					eventDispatchingEndingB= true;
-    				  synchronized(this) {
-		    				this.checkEventTimeB(
-		    						"Total",
-		    						event, 
-		    						System.currentTimeMillis(),
-		    						this.eventTimeMap.get(event).startTimeL);
-		    				this.eventTimeMap.remove(event);
-    				  	}
-    					eventDispatchingEndingB= false;
-	    			  }
-
-    			private boolean checkEventTimeB(
-    					String labelString, AWTEvent event, long currTime, long startTime
-    					) 
-    			  /* Reports whether an event dispatch has been running to long,
-    			    longer that thresholdDelay. 
-    			    It returns true if it has, false otherwise. 
-    			    It is called by:
-    			    * run() when excessive dispatch time is first detected.
-    			      The EDT stack is displayed at this time also.
-    			    * eventDispatchingEndingV(..) later to 
-    			      display total dispatch time.
-    			    */
-	    			{
-	    				long currProcessingTime = currTime - startTime;
-	    				boolean thresholdExceededB= 
-	    						(currProcessingTime >= this.thresholdDelay);
-	    				if (thresholdExceededB) {
-	    					String outString= "EDT "
-	    							//Event [" + event.hashCode() + "] "
-	    							+ labelString
-	    							+ " "
-	    							+ event.getClass().getName()
-	    							+ " has taken too much time (" + currProcessingTime
-	    							+ ")";
-	    					//System.out.println(outString);
-	              appLogger.warning(outString);
-	    				  }
-	    				return thresholdExceededB; 
-  	    			}
-
-          @Override
-    			public void run() 
-    			  /* This method periodically tests whether an EDT dispatch
-    			    has taken too long and reports it if so.
-    			    The report includes a stack trace of the AWT-EventQueue thread.
-							*/
-	    			{
-	    				while (true) {
-	    					long currTime = System.currentTimeMillis();
-	    					synchronized (this) {
-	    						for (Map.Entry<AWTEvent, EventValue> entry : this.eventTimeMap
-	    								.entrySet()) {
-	    							AWTEvent event = entry.getKey();
-	    							if (entry.getValue() == null) // Skipping if no entry.
-	    								continue;
-	    							if  // Skipping if this entry output earlier.
-	    							  (entry.getValue().outputtedB)
-	    								continue;
-	    							long startTime = entry.getValue().startTimeL;
-	    	    				boolean thresholdExceededB= // Displaying if too long.
-	    	    						this.checkEventTimeB(
-	    	    								"Partial",event, currTime, startTime
-	    	    								);
-	    	    				if  // Displaying stack also if too long.
-	    	    				  ( thresholdExceededB )
-		    	    				{
-		    	    					displayStackTraceV();
-		    	  						entry.getValue().outputtedB= true; // Recording output.
-		    	    					}
-
-	    						}
-	    					}
-	    					try { Thread.sleep(PERIOD); // Waiting for the sample time.   
-	    					  } 
-	    					catch (InterruptedException ie) { }
-	    				}
-	    			}
-
-					private void displayStackTraceV()
-	    			{
-		  				if ( displayStackB ) // Displaying stack if enabled.
-		  				  {
-		              ThreadMXBean threadBean= 
-		              		ManagementFactory.getThreadMXBean();
-		              long threadIds[] = threadBean.getAllThreadIds();
-		              for (long threadId : threadIds) {
-		                 ThreadInfo threadInfo = threadBean.getThreadInfo(threadId,
-		                       Integer.MAX_VALUE);
-		                 if (threadInfo.getThreadName().startsWith("AWT-EventQueue")) {
-		                    //System.out.println(
-		                	  appLogger.warning(
-		  	                	   threadInfo.getThreadName() + " / "
-		  	                     + threadInfo.getThreadState()
-		  	                     );
-		          					if ( eventDispatchingEndingB ) 
-			                	  appLogger.warning("Dispatch already ended.");
-			                	  else
-			                	  { // Display stack.
-		  	                	  appLogger.warning("Begin Stack Trace.");
-		  	                	  // /* ?? Disable stack trace logging.
-		  	                    StackTraceElement[] stack = threadInfo.getStackTrace();
-		  	                    for (StackTraceElement stackEntry : stack) {
-		  	                       //System.out.println(
-		  	                    	 appLogger.warning("\t" + stackEntry.getClassName()
-		  	                       + "." + stackEntry.getMethodName() + " ["
-		  	                       + stackEntry.getLineNumber() + "]");
-		  	                    }
-		  	                	  appLogger.warning("End Stack Trace.");
-		  	                	  // ?? Disable stack trace logging. */
-			          				  	}
-		                 }
-		              }
-			    			}
-	    			  }
-
-    		} // TracingEventQueueMonitor
-
-        public void run()
-          /* This method builds the app's GUI in a new JFrame 
-            and starts it.
-            This method is run from the AWT thread after startingBrowserGUIV() 
-            calls invokeLater(..) because AWT GUI code is not thread-safe.
+        public void run() // GUIDefiner.
+          /* This method builds the app's GUI in a new JFrame and starts it.
+            This method is run on the AWT thread by startingBrowserGUIV() 
+            because AWT GUI code is not thread-safe.
             */
           {
+        		theTracingEventQueue.initializeV(); // to start monitor thread.
+
 	        	Toolkit.getDefaultToolkit().getSystemEventQueue().push(
-	        	    new TracingEventQueue()); // For monitoring dispatch times.
+	        			theTracingEventQueue
+	        			); // For monitoring dispatch times.
+	        	Toolkit.getDefaultToolkit().getSystemEventQueue().push(
+	        			theBackgroundEventQueue
+	        			); // For doing low-priority window creation.
 
         	  //try { // Change GUI look-and-feel to be OS instead of java.
             //  UIManager.setLookAndFeel(UIManager.
             //    getSystemLookAndFeelClassName());
             //  } catch(Exception e) {}
 	        	
-        		theDagBrowserPanel.initializingV(); // (post-construction).
+        		theDagBrowserPanel.initializingV();
 
-        		theJFrame =  // construct and start the app JFrame.
+        		theJFrame =  // Construct and start the app JFrame.
         				startingJFrame();
 
-            theAppInstanceManager.setAppInstanceListener(  // App instance events...
+            theAppInstanceManager.setAppInstanceListener(
               theAppGUIFactory.makeInstanceCreationRunnable(theJFrame)
-              );
+              ); // For dealing with other running app instances.
 
             //appLogger.info("GUI start-up complete.");
             theGUILockAndSignal.doNotifyV();  // Signal that starting is done.
@@ -352,19 +160,18 @@ public class AppGUI
     class InstanceCreationRunnable
     	implements AppInstanceListener, Runnable
       /* This nested class does 2 things:
-        
-	      * It contains a run() method which can be used to
-	        execute code on the AWT thread using invokeLater(..).
 	        
 	      * It acts as an AppInstanceListener because of
 	        its appInstanceCreatedV() method,
 	        which calls the invokeLater(..) method.
+        
+	      * It contains a run() method for executing code on the AWT thread.
 
 				Because this class is a non-static nested class,
 				it can do anything its parent, the AppInstanceManager, can do.
 				
         Presently the only thing the run() method does is
-        to move the app's main JFrame to the front.
+        try to move the app's main JFrame to the front.
         Other actions might be appropriate if the UI were different, 
         such as there being multiple tabs and/or multiple JFrames.
 
@@ -406,8 +213,8 @@ public class AppGUI
           {
             java.awt.EventQueue.invokeLater( this );
             }
-	    	
-        public void run() 
+
+        public void run() // Method executed by appInstanceCreatedV(). 
           {
             appLogger.info("Trying move-to-front.");
             theJFrame.toFront();
@@ -428,14 +235,16 @@ public class AppGUI
     private void startingBrowserGUIV()
       /* This method builds and starts the Graphical User Interface (GUI).
         It doesn't return until the GUI has been started.
-        This is tricky because GUI operations must be performed
-        on a different thread, the AWT thread, and
-        we must wait for those operations to complete.
+        This is tricky because:
+        * GUI operations must be performed on a different thread, 
+          the AWT thread.  EventQueue.invokeLater(..) is used to do this.
+        * We must wait for those operations to complete before returning.
         
-        ?? Simplify by using invokeAndWait().
+        ?? Simplify by using invokeAndWait(..) instead of 
+        invokeLater(..) and doWaitE().
         */
       {
-        //appLogger.info("Queuing GUIDefiner.");
+        appLogger.info("Queuing GUIDefiner.");
 
         java.awt.EventQueue.invokeLater(  // Queue on GUI (AWT) thread...
         	theGUIDefiner   // ...this Runnable GUIDefiner,...
@@ -444,22 +253,24 @@ public class AppGUI
         theGUILockAndSignal.doWaitE(); // Wait for signal
           // which means that the GUIDefiner has finished.
 
-        //appLogger.info("GUI/AWT thread signalled GUIDefiner done.");
+        appLogger.info("GUI/AWT thread signalled GUIDefiner done.");
         }
 
     public void runV() // This method does the main AppGUI run phase.
       {
         theDataTreeModel.initializeV( theInitialRootDataNode );
-        startingBrowserGUIV();  // Building and displaying GUI.
+        startingBrowserGUIV();  // Building and displaying GUI on AWT thread.
         theConnectionManagerEpiThread.startV();
         theCPUMonitorEpiThread.startV();
 
+        // Now the app is running and interacting with the user.
         theShutdowner.waitForAppShutdownUnderwayV();
-
+        // Now the app is shutting down.
+        
         theDataTreeModel.logListenersV(); // [for debugging]
         // theCPUMonitorEpiThread.stopAndJoinV( ); ?? 
         theConnectionManagerEpiThread.stopAndJoinV( ); 
-          // Stopping ConnectionManager thread.
+          // Stopping ConnectionManager thread, ending all connections.
         }
 
     } // class AppGUI

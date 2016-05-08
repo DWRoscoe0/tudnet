@@ -89,8 +89,23 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
             new Infinitree( null, 0 )
             }
           );
+  		TracingEventQueueMonitor theTracingEventQueueMonitor=
+  				new TracingEventQueueMonitor(
+	  	  				TracingEventQueueMonitor.LIMIT
+ 		  	  		  //  500
+	  	  				); 
+  		TracingEventQueue theTracingEventQueue=        	  
+    	    new TracingEventQueue(
+    	    		theTracingEventQueueMonitor
+		  	  		  );
+    	BackgroundEventQueue theBackgroundEventQueue=
+    			new BackgroundEventQueue();
       DagBrowserPanel theDagBrowserPanel= new DagBrowserPanel(
-    			theAppInstanceManager, theDataTreeModel, theDataRoot, theMetaRoot
+    			theAppInstanceManager, 
+    			theDataTreeModel, 
+    			theDataRoot, 
+    			theMetaRoot,
+    			theBackgroundEventQueue
 	        );
       LockAndSignal theGUILockAndSignal= new LockAndSignal();
       AppGUI.GUIDefiner theGUIDefiner= new AppGUI.GUIDefiner( 
@@ -98,7 +113,9 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
   		  theAppInstanceManager,
   		  theDagBrowserPanel,
         this, // GUIDefiner gets to know the factory that made it. 
-        theShutdowner
+        theShutdowner,
+    		theTracingEventQueue,
+      	theBackgroundEventQueue
         );
       AppGUI theAppGUI= new AppGUI( 
         theConnectionManagerEpiThread,

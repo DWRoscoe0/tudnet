@@ -6,10 +6,11 @@ public class MutableList
 
 	/* This class is a NamedList whose contents can be changed.
 
-	  This class includes methods for changing the List.
-	  It uses a DataTreeModel to inform TreeModelListeners of those changes.
+	  This class includes methods for changing its NamedList.
 	  For thread safety some methods are synchronized and 
-	  switch to the Event Dispatch Thread (EDT) to call the TreeModel methods.
+	  switch to the Event Dispatch Thread (EDT) to make changes to the list.
+	  It  calls the TreeModel methods of DataTreeModel 
+	  to inform TreeModelListeners of those changes.
 	  */
 
   extends NamedList
