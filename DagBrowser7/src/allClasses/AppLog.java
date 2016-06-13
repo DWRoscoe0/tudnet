@@ -1,9 +1,8 @@
 
 package allClasses;
 
-//import java.awt.Component;
-///import static allClasses.Globals.appLogger;
-
+import java.awt.Component;
+import java.awt.KeyboardFocusManager;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
@@ -68,6 +67,7 @@ public class AppLog
      */
     
     static boolean testingForPingB= false;
+    static boolean focusChangeCheckingB= true;
 
     
     private void logFileInitializeV()
@@ -140,13 +140,16 @@ public class AppLog
         return sessionI;
         }
   
+    private boolean debugEnabledB= true;
+
     public void debug(String inString)
       /* This method writes a debug String inString to a log entry
         but not to the console.
         It is tagged as for debugging.
         */
       { 
-        appendEntry( "DEBUG: "+inString ); 
+    	  if (debugEnabledB)
+    	  	appendEntry( "DEBUG: "+inString ); 
         }
   
     public void info(String inString)
@@ -197,6 +200,7 @@ public class AppLog
         and finally inString.
         */
       { 
+    	  //appendAnyFocusChangeV();
     		long nowMillisL= System.currentTimeMillis(); // Saving present time.
 
         String aString= ""; // Initialize String to empty, then append...
@@ -215,6 +219,30 @@ public class AppLog
 
         lastMillisL= nowMillisL; // Saving present time as new last time.
         }
+
+    Component savedFocusedComponent= null;
+    
+    @SuppressWarnings("unused") 
+    private void appendAnyFocusChangeV()
+	    {
+	    	if (focusChangeCheckingB)
+		    	{
+	          Component focusedComponent= // get Component owning the focus.
+	              KeyboardFocusManager.
+	                getCurrentKeyboardFocusManager().getFocusOwner();
+	          if ( savedFocusedComponent != focusedComponent )
+	          	{
+	          		AppLog.getAppLog().appendRawV( 
+	          				"-----DEBUG: FOCUS CHANGE FROM: "
+	          			  +Misc.componentInfoString(savedFocusedComponent)
+	          				+ " TO: "
+	          			  +Misc.componentInfoString(focusedComponent)
+	          				+"-----\n" 
+	          				);  // Append it to log file.
+	              savedFocusedComponent= focusedComponent;
+	          		}
+		    		}
+	      }
 
     public void appendRawV(String inString)
       /* Appends a raw string to the log file.

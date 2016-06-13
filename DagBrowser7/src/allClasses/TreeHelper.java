@@ -1,5 +1,7 @@
 package allClasses;
 
+//import static allClasses.Globals.appLogger;
+
 import java.awt.Component;
 import java.awt.event.InputEvent;
 import java.awt.event.FocusEvent;
@@ -24,7 +26,7 @@ public class TreeHelper
     TreeAware JComponents are viewers for various types of tree DataNode-s.
     Including an instance of TreeHelper in a DataNode viewer can make 
     coding a new tree node viewer much easier.
-    The code in this class is hear instead of the TreeAware JComponent
+    The code in this class is here instead of the TreeAware JComponent
     because of Java's lack of multiple inheritance.
 
     The TreeHelper instance of this class is typically named "aTreeHelper".
@@ -58,12 +60,12 @@ public class TreeHelper
         and translates them into viewer component selections.
 
       * The TreeHelper listens for KeyEvent-s and MouseEvent-s and
-        gives special meaning to some of them.
+        gives standard meaning to some of them.
 
     Concepts and their names:
 
     * Whole (formerly Subject): 
-      The tree node displayed by this Component.
+      The tree node displayed by this JComponent.
 
     * Part (formerly Selection within Subject): 
       Highlighted tree node within the Whole,
@@ -110,6 +112,7 @@ public class TreeHelper
     ?? Because there are closed paths between the coordinating component
     and the TreeHelper, and between the owning component and the TreeHelper,
     there is the danger of infinite recursion.
+    This should be detected and prevented.
     The logical place to do this is in TreeHelper, because it
     is part of all the closed paths.  Add this.
     
@@ -230,6 +233,16 @@ public class TreeHelper
           the event and the call to other listeners.
           */
         {
+      	  /* debug 
+		      appLogger.debug(
+		        "TreeHelper.focusGained(...) for "
+		      	+ Misc.componentInfoString(owningJComponent)
+		      	+ " begin,\n  gained by "
+		        + Misc.componentInfoString(theFocusEvent.getComponent())
+		       	+", lost by "
+		        + Misc.componentInfoString(theFocusEvent.getOppositeComponent())
+		       	);
+		      */ 
           Enumeration<FocusListener> listeners = 
             focusListenerVector.elements();
           while ( listeners.hasMoreElements() ) 
@@ -238,6 +251,13 @@ public class TreeHelper
                 (FocusListener)listeners.nextElement(); // caste.
               listener.focusGained( theFocusEvent );
               }
+	        /* debug
+	        appLogger.debug(
+	          "TreeHelper.focusGained(...) for "
+	        	+ Misc.componentInfoString(owningJComponent)
+	        	+ " end."
+	          );
+	        */
           }
 
       public void focusLost(FocusEvent theFocusEvent)
@@ -245,6 +265,16 @@ public class TreeHelper
           the event and the call to other listeners.
           */
         { 
+      		/* debug 
+		      appLogger.debug(
+		        "TreeHelper.focusLost(...) for "
+		      	+ Misc.componentInfoString(owningJComponent)
+		      	+ " begin,\n  lost by "
+		        + Misc.componentInfoString(theFocusEvent.getComponent())
+		       	+", gained by "
+		        + Misc.componentInfoString(theFocusEvent.getOppositeComponent())
+		       	);
+		       */
           Enumeration<FocusListener> listeners = 
             focusListenerVector.elements();
           while ( listeners.hasMoreElements() ) 
@@ -253,6 +283,13 @@ public class TreeHelper
                 (FocusListener)listeners.nextElement();
               listener.focusLost( theFocusEvent );
               }
+      		/* debug 
+	        appLogger.debug(
+	           "TreeHelper.focusLost(...) for "
+	           + Misc.componentInfoString(owningJComponent)
+	           + " end."
+	           );
+	        */
           }
 
     // KeyListener methods.
@@ -426,12 +463,21 @@ public class TreeHelper
               break toReturn; // So exit with result.
 
             // Command execution begins.
+	          /* debug
+	          appLogger.debug(
+	             "TreeHelper.commandGoToChildB(...) command execution begin."
+	             );
+	          */
             setSelectionAndNotifyListenersV(  // Set new part path to be...
               getPartTreePath().pathByAddingChild( // ...present part plus...
                 childDataNode  // ...whatever child was found.
                 )
               );  // Using setPartTreePathV(..) here doesn't work.
-
+        	  /* debug 
+						appLogger.debug(
+	             "TreeHelper.commandGoToChildB(...) command execution end."
+	             );
+	          */
           } // toReturn end.
             return doableB;  // Return whether command is/was doable.
           }
@@ -448,7 +494,7 @@ public class TreeHelper
           */
         { return commandGoToPreviousOrNextB( doB, -1 ); }
       
-      private boolean commandGoToPreviousOrNextB( 
+      public boolean commandGoToPreviousOrNextB( 
           boolean doB, int incrementI 
           )
         /* This is a helper method.  It is called by
@@ -681,10 +727,11 @@ public class TreeHelper
           return legalB;
           }
 
-      boolean testSetPartTreePathB(TreePath inTreePath)  // Returns whether op is legal.
+      boolean testSetPartTreePathB(TreePath inTreePath)
         /* This method tests whether inTreePath is legal to be displayed
           by the owning JComponent in the present context,
-          which depends on the component in which the owning JComponent is nested.
+          which depends on the component in which 
+          the owning JComponent is nested.
           It returns true if legal, false otherwise.
           */
         { 

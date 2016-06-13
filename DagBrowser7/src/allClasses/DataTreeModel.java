@@ -202,6 +202,25 @@ public class DataTreeModel
 	      			);
           }
 
+      public void cachePathInMapV( TreePath theTreePath )
+        /* This method caches an entire path theTreePath.
+          It was created to prevent a cache miss and a long search
+          if the selection at startup is a very long path.
+          Seeding the cache with the initial selection path prevents this.
+          */
+      	{
+      	  DataNode theDataNode= // Getting last element of path.
+      	  		(DataNode)theTreePath.getLastPathComponent();
+	    	  TreePath targetTreePath= // Testing whether present in cache.
+	    	  		theHashMap.get( theDataNode );
+	        if ( targetTreePath == null ) // Caching if not already present.
+		        {
+	        		cachePathInMapV( theTreePath.getParentPath() ); // Caching parent.
+	        		  // This is a recursive call.
+			        theHashMap.put( theDataNode, theTreePath ); // Caching child.
+			        }
+      		}
+      
       // Getter methods which are not part of AbstractTreeModel.
 
       public MetaRoot getMetaRoot()
@@ -466,6 +485,9 @@ public class DataTreeModel
         /* This method might never be called anymore because
           its only caller, translatingToTreePath(..),
           now checks theHashMap first.  So this method is a backup.
+          The one exception is startup when initial selection path
+          is longer than maximum depth.  It will cause error.
+          Seeding cache with selection path might fix this.
 
           This method returns a TreePath of targetDataNode,
           or null if node can not be found in the DataNode tree.

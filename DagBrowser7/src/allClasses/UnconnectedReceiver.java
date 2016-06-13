@@ -59,7 +59,7 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
         another thread should close the receiverDatagramSocket. 
         */
       {
-    	  ///boolean missFlagB= false;
+    	  ////boolean missFlagB= false;
         try { // Doing operations that might produce an IOException.
           while  // Receiving and queuing packets unless termination is
             ( ! EpiThread.exitingB() ) // requested.
@@ -70,7 +70,7 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
                 DatagramPacket theDatagramPacket= 
                 		theNetcasterPacket.getDatagramPacket();
                 receiverDatagramSocket.receive(theDatagramPacket);
-                ///if (missFlagB^= true) continue; // Lose half of packets.
+                ////if (missFlagB^= true) continue; // Lose half of packets.
                 PacketManager.logUnconnectedReceiverPacketV(
                 		theDatagramPacket
                 		);

@@ -2,6 +2,8 @@ package allClasses;
 
 //import static allClasses.Globals.appLogger;
 
+//import static allClasses.Globals.appLogger;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -10,6 +12,9 @@ import java.awt.Font;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 //import java.awt.event.MouseEvent;
+
+
+
 
 
 import javax.swing.BorderFactory;
@@ -283,10 +288,10 @@ public class TitledListViewer // adapted from TitledListViewer.
           the selection is visible.
           */
         { // setJListScrollState()
-          ListSelectionModel TheListSelectionModel = // Get selection model.
+          ListSelectionModel theListSelectionModel = // Get selection model.
             (ListSelectionModel)theJList.getSelectionModel();
           int SelectionIndexI= // Get index of row selected.
-            TheListSelectionModel.getMinSelectionIndex() ;
+            theListSelectionModel.getMinSelectionIndex() ;
           theJList.ensureIndexIsVisible( // Scroll into view the row...
             SelectionIndexI // ...with that index.
             );
@@ -360,16 +365,20 @@ public class TitledListViewer // adapted from TitledListViewer.
             } // Process the selection.
           } // void valueChanged(ListSelectionEvent TheListSelectionEvent)
     
-    /* FocusListener interface methods, 
-			to fix JTable cell-invalidate/repaint bug.
+    /* FocusListener interface methods.
+      This was created initially to fix JTable cell-invalidate/repaint bug.
+      It was later expanded to do nested focusing.
 			*/
 
       @Override
-      public void focusGained(FocusEvent arg0) 
+      public void focusGained(FocusEvent arg0)
+        /* This method makes certain that the JList content pane
+          has the focus when this TitledListViewer gains focus.
+          It also fixed a repaint bug.
+         */
         {
-    		  //appLogger.debug("TitledListViewer.focusGained() adjusting JList.");
-          theJList.requestFocusInWindow();  // Autofocus the JList.
-          setJListScrollState();
+    			Misc.requestFocusV(theJList);
+      	  setJListScrollState();
           repaint();  // bug fix Kluge to display cell in correct color.  
           }
     

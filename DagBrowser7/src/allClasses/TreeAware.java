@@ -2,7 +2,7 @@ package allClasses;
 
 public interface TreeAware
 
-  /* This interface describes what a JComponent must implement
+  /* This interface describes what a JComponent subclass must implement
     to integrate it into the Infogora's DataNode DAG browser.
     These are the things a Viewer needs to know to be used
     for viewing it's type of DataNode in the Infogora DAG.

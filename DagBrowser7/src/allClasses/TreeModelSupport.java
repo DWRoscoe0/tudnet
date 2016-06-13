@@ -26,6 +26,10 @@ public abstract class TreeModelSupport
       new Vector<TreeModelListener>();   // Listener storage.
 
     public void addTreeModelListener( TreeModelListener theTreeModelListener )
+      /* //// Note, I keep increasing the vector size limit.
+        I suspect I have a Listener leak, and some type of command mode
+        is causing it, but I haven't figured out what that is yet.
+        */
       {
         if ( 
         		  theTreeModelListener != null && 
@@ -33,7 +37,7 @@ public abstract class TreeModelSupport
         		  )
 	        { 
 	        	vectorOfTreeModelListener.addElement( theTreeModelListener );
-		        if ( vectorOfTreeModelListener.size() > 10)
+		        if ( vectorOfTreeModelListener.size() > 12)
 			    		appLogger.error(
 			      			"TreeModelSupport.addTreeModelListener(..), listeners: "+
 		      		    vectorOfTreeModelListener.size()+ "\n  "+

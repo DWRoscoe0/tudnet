@@ -127,7 +127,7 @@ class Infogora  // The root of this app.
 	      // Unfortunately the app doesn't terminate, so we call exit(0).
 
 	      appLogger.info("Infogora.main() calling exit(0).");
-	      System.exit(0); // Will killing any remaining unknown threads running??
+	      System.exit(0); // Will kill any remaining unknown threads running??
 	      } // main(..)
 	
 		} // Infogora

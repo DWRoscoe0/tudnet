@@ -152,6 +152,10 @@ public class AppGUI
 	                }
 	            	});
             theJFrame.setVisible(true);  // Make the window visible.
+            appLogger.info(
+              	"GUIDefiner.theJFrame.setVisible(true) done."
+              	);
+            theDagBrowserPanel.restoreFocusV(); // Setting initial focus.
             return theJFrame;
             }
 

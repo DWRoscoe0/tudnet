@@ -284,7 +284,7 @@ public class MetaRoot {
           
       public void set( TreePath inTreePath )
         /* This does the same as putAndReturnDataNode(.) except 
-          it doesn't return the anything.
+          it doesn't return anything.
           It exists mainly to help other code be self-documenting.
           */
         {

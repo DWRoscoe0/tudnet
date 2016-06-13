@@ -8,10 +8,11 @@ import java.awt.EventQueue;
 public class BackgroundEventQueue extends EventQueue {
 
 	/* This simple class extends EventQueue so that
-	  background tasks can be done only when the EventQueue is empty.
+	  background Runnable tasks can be done only when the EventQueue is empty.
+	  There can be a maximum of one background Runnable.
 	  */
 
-	private Runnable backgroundRunnable= null;
+	private Runnable backgroundRunnable= null; // The one background Runnble.
 	
   public BackgroundEventQueue() // Constructor. 
 	 {

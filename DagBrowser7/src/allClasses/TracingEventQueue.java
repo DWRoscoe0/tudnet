@@ -79,7 +79,6 @@ class TracingEventQueueMonitor extends Thread {
 		this.thresholdDelay = thresholdDelay;
 		this.eventTimeMap = new HashMap<AWTEvent, EventValue>();
 	  setDaemon(true);
-    ///appLogger.debug( "TracingEventQueueMonitor.constructed." );
 		}
 
 	public synchronized void eventDispatchingBeginningV(AWTEvent event)

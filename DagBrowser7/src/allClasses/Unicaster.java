@@ -10,8 +10,6 @@ import java.net.DatagramPacket;
 
 import allClasses.LockAndSignal.Input;
 
-///import allClasses.LockAndSignal.Input;
-
 public class Unicaster
 
 	extends Netcaster
@@ -355,7 +353,7 @@ public class Unicaster
 		    when needed.  This determination is based on their IP addresses.
 		    */
 			{
-				int triesRemainingI= 3; // 3 tries then we gie up.
+				int triesRemainingI= 3; // 3 tries then we give up.
 			  boolean successB= false;
 			  exchangingHellos: 
 			  	while (true) // Repeating until connected or terminated.

@@ -101,18 +101,18 @@ public class RootJTree
         setShowsRootHandles( true );
         putClientProperty( "IJTree.lineStyle", "Angled" );
 
-        getModel().addTreeModelListener(   // listen for tree model events.
+        getModel().addTreeModelListener( // This listening for TreeModel events.
         		this
         		);
-        addTreeSelectionListener(this);  // listen for tree selections.
-        addTreeExpansionListener(this);  // Listen for expansion events.
-        //aTreeHelper.addTreePathListener(this);  // listen for tree paths.
-        aTreeHelper.addTreePathListener(   // listen for tree paths.
+        addTreeSelectionListener(this); // This listening for tree selections.
+        addTreeExpansionListener(this); // This listening for expansion events.
+        addKeyListener(this);  // This listening for key events.
+        aTreeHelper.addTreePathListener( // Customized listening for tree paths.
           new MyTreePathListener()
           );
-        addMouseListener(aTreeHelper);  // TreeHelper does MouseEvent-s.
-        addKeyListener(this);  // listen for key presses.
-        
+        addFocusListener(aTreeHelper); // TreeHelper listening for focus events.
+        addMouseListener(aTreeHelper); // TreeHelper listening for MouseEvent-s.
+
         } // Constructor.
 
     public void initializingV( TreePath selectedTreePath )
@@ -201,7 +201,7 @@ public class RootJTree
       and TreePathListener.
       */
 
-      class MyTreeHelper extends TreeHelper {
+    	class MyTreeHelper extends EmptyBranchTreeHelper {
       
         /* This class overrides some TreeHelper methods
           which need to be different for RootJTree.
@@ -273,7 +273,7 @@ public class RootJTree
             a possible change which could effect button enabling.
             */
           {
-            if (inMouseEvent.getClickCount() >= 2)
+        		if (inMouseEvent.getClickCount() >= 2)
               {
                 //commandExpandOrCollapseV();  // Already done by JTree.
             	  //inMouseEvent.consume();  // This not needed either.
@@ -332,7 +332,7 @@ public class RootJTree
             inTreePath  // ...desired TreePath.
             );
           }
-
+    
       public TreePath getSelectedTreePath()
         /* This method returns the selection TreePath.
           There should be only one, because multiselection is disabled.
