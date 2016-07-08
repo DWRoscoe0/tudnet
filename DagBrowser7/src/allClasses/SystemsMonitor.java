@@ -48,8 +48,9 @@ public class SystemsMonitor
       		theDataTreeModel, "Reversed-Time (ms)", 0
         	);
 
-		private volatile long counterL; // Here because volatiles must be object field.
-  	
+		private volatile long volatileCounterL;
+		  // This is volatile to prevent over-optimizing count loops.
+		  	
 		private long maxCountL= 2; // Using 2 to make initial expansion pretty.
 		private long minCountL= 2; // Using 2 to make initial expansion pretty.
 		private long midCountL;
@@ -183,14 +184,14 @@ public class SystemsMonitor
 	        More Firefox windows and tabs means longer times.
 	        Once in a while it returns outside values of 0 or 1080.
 	      * Sometimes it returns 541 or 1081 instead of 540 or 1080.
-	      ! Sometimes it returns negative values.
+	      * Rarely it returns a number in the many thousands. 
+	      * Very rarely it returns a negative values.
 	        This usually happens after the app has been running a while.
+        I think nanoTime() actually takes between 0 and 540 ns,
+        but sometimes interrupt service routines cause it to take longer.
 	      I suspect that nanoTime() is calculated by 
-        scaling clock with a period of close to 540 ns,
+        scaling a clock with a period of close to 540 ns,
         but not exactly, so 1 must be added sometimes.
-        I think nanoTime() takes between 0 and 540 ns,
-        but sometimes interrupt service routines 
-        cause it to take longer.
         */
 	    {
 	  		long startNsL= System.nanoTime();
@@ -266,11 +267,12 @@ public class SystemsMonitor
     private long measureCPUDelayNsL( long countMaxL )
       /* This method returns the amount of time in ns needed 
         to count from countMaxL down to 0.
+        It uses a volatile counter variable to preventing over-optimizing.
        */
       { 
-    		counterL= countMaxL;
+    		volatileCounterL= countMaxL;
 	  		long startNsL= System.nanoTime();
-	  		while ( counterL > 0 ) counterL--;
+	  		while ( volatileCounterL > 0 ) volatileCounterL--;
 	  		return System.nanoTime() - startNsL;
     	  }
 

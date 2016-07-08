@@ -134,8 +134,7 @@ public class AppGUI
             JFrame theJFrame =  // Make the main application JFrame.
               theAppGUIFactory.makeJFrame( 
                 AppName.getAppNameString()
-                +", DAG Browser 7 Test"
-                +", archived "
+                +", version "
                 +theAppInstanceManager.thisAppDateString()
                 );
             theJFrame.setContentPane( theDagBrowserPanel );  // Store content.

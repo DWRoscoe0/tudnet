@@ -29,14 +29,15 @@ public class App { // The App, especially pre-GUI stuff.  See runV(..) for detai
      */
     {
   		//appLogger.info("App beginning.");
-  		theShutdowner.initializeV(); // Preparing for future app shutdown.
+			theShutdowner.initializeV();
+			theAppInstanceManager.initializeV();
 
-  	  if ( ! theAppInstanceManager.managingInstancesThenNeedToExitB( ) ) 
+  	  if ( ! theAppInstanceManager.managingInstancesWithExitB( ) ) 
 
         { // Presenting GUI to user and interacting.
-      	  AppGUIFactory theAppGUIFactory= theAppFactory.lazyGetAppGUIFactory();
-          AppGUI theAppGUI= // Getting GUI singleton.
-              theAppGUIFactory.getAppGUI();
+      	  AppGUIFactory theAppGUIFactory= 
+      	  		theAppFactory.lazyGetAppGUIFactory();
+          AppGUI theAppGUI= theAppGUIFactory.getAppGUI();
           theAppGUI.runV(); // Running GUI until finished.
           	// Network operations happen at this time also.
           }
