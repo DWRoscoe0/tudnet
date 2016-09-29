@@ -410,8 +410,6 @@ public class ConnectionManager
           theNetcasterPacket= // Try getting next packet from queue.
             multicasterToConnectionManagerNetcasterQueue.poll();
           if (theNetcasterPacket == null) break;  // Exit if no more packets.
-      		//passToUnicasterV( theNetcasterPacket ); //// Don't sent packet.
-      		//Unicaster theUnicaster=  //// Getting the appropriate Unicaster.
   				theUnicasterManager.getOrBuildAddAndStartUnicaster( 
 	      		theNetcasterPacket 
 	      		);

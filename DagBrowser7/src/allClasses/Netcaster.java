@@ -15,7 +15,18 @@ public class Netcaster
 			NetcasterOutputStream
 			>
 
-	// This class is the superclass of Unicaster and Multicaster.
+	/*
+
+	  This class extends the UDP Streamcaster.
+	  The main thing it adds is knowledge of the IPAndPort address,
+	  which Streamcaster uses as a key and to differentiate 
+	  this Netcaster from other Netcasters.
+	  
+	  This class is extended by:
+	  * Unicaster for unicast UDP communications.
+	  * Multicaster for multicast UDP communications.
+    
+    */
 
 	{
 	  public Netcaster(  // Constructor. 
@@ -39,12 +50,12 @@ public class Netcaster
 			      theNetcasterInputStream,
 			      theNetcasterOutputStream
 			      );
-
-        ////packetIDI= 0; // Setting starting packet sequence number.
 	      }
 
     protected void initializingV()
 	    throws IOException
+	    /* This initializing method includes stream packet counts.
+	      */
 	    {
 		    initializingWithoutStreamsV();
 		    
@@ -55,6 +66,10 @@ public class Netcaster
 
     protected void initializingWithoutStreamsV()
 	    throws IOException
+	    /* This special version does not include stream packet counts so
+	      they can be place in a different position.
+	      It exists so subclass Netcaster can reference it.
+	      */
 	    {
     		IPAndPort remoteIPAndPort= getKeyK();
     		addB( 	new NamedMutable( 
@@ -70,46 +85,28 @@ public class Netcaster
 		    super.initializingV();
 	    	}
 
-    /*////
-    protected boolean testingMessageB( String aString ) throws IOException
-      /* This method tests whether the next message String in 
-        the next received packet in the queue, if there is one,  is aString.
-        It returns true if so, false otherwise.
-        The message is not consumed, so can be read later.
+    protected void writingNumberedPacketV( String aString ) 
+    		throws IOException
+      /* This method is like writingPacketV(..) but
+        it prepends a packet ID / sequence number.
+        ??? Maybe have a version that appends number?
         */
-    /*////
-      { 
-        boolean resultB= false;  // Assuming aString is not present.
-        decodingPacket: {
-          String packetString= // Getting string from packet if possible. 
-          	peekingMessageString( );
-          if ( packetString == null ) // Exiting if no packet or no string.
-            break decodingPacket;  // Exiting with false.
-          if   // Exiting if the desired String is not equal to packet String.
-          	( ! packetString.equals( aString ) )
-            break decodingPacket;  // Exiting with false.
-          resultB= true;  // Setting result true because Strings are equal.
-          } // decodingPacket:
-        return resultB;  // Returning the result.
+      {
+    		writingSequenceNumberV();
+    		writingPacketV(aString); // Writing string into buffer.
         }
 
-    private String peekingMessageString( ) throws IOException
-      /* This method returns the next message String in 
-        the next received packet in the queue, if there is one.  
-        If there's no message then it returns null.
-        The message is not consumed, so can be read later.
+    protected void writingSequenceNumberV() throws IOException
+      /* This method increments and writes the packet ID (sequence) number
+        to the EpiOutputStream.
+        It doesn't flush().
+        ??? Shouldn't this be a Unicaster method?
         */
-    /*////
-      { 
-    		String inString= null;
-	  		if ( theEpiInputStreamI.available() > 0) // Reading string if available.
-		  		{
-	  				theEpiInputStreamI.mark(0); // Marking stream position.
-			  	  inString= readAString();
-			  	  theEpiInputStreamI.reset(); // Resetting so String is not consumed.
-			  		}
-	  	  return inString;
-	  		}
-	  */ ////
+      {
+	  		writingTerminatedStringV( "N" );
+	  		writingTerminatedLongV( 
+	  				(theEpiOutputStreamO.getCounterNamedInteger().getValueL()) 
+	  				);
+        }
 
 		}

@@ -63,13 +63,13 @@ public class NamedFloat // A DataNode for tracking floating point things.
 		    It also fires any associated change listeners.
 		    */
 	    {
-	  	  float oldL= this.theF; // Saving present value as old one.
+	  	  float oldF= this.theF; // Saving present value as old one.
 	  	  if ( newL != theF ) // Setting new value if it's different.
 	  	    {
 						theF= newL; // Setting new value.
 		        theDataTreeModel.safelyReportingChangeV( this );
 		  	  	}
-				return oldL; // Returning old unchanged value.
+				return oldF; // Returning old unchanged value.
 		  	}
 
     }

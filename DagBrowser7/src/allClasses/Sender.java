@@ -5,6 +5,7 @@ import static allClasses.Globals.appLogger;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.util.Random;
 
 public class Sender // Uunicast and multicast sender thread.
 
@@ -14,14 +15,19 @@ public class Sender // Uunicast and multicast sender thread.
     from via a queue from other threads and sends them
     though a DatagramSocket.
     
-    ?? This thread might later do some rate control,
-    including rate control affected by attributes of
-    segments of the tracrt paths to the peers.
+    ?? Add congestion control and fair queuing.
+    It would limit not only total data rate,
+    but also data rates to  the individual peers
+    on the branches of the tree of paths determined by
+    tracert-like measurements.
+    To do this it would maintain one queue per peer,
+    organized as a tree similar to a tree showing
+    tracert paths to those peers, and decorated with
+    bandwidths of the various edges.
     
-    ?? This thread might later perform OutputStream multiplexing services.
-    
-    ?? This stream might later record and report send times
-    for the purpose of determining round trip time.
+    ?? Record the times that packets are passed to the DatagramSocket
+    with the send(..) method, to be used for determining round trip time
+    as accurately, instead of doing it in Unicaster as it is done now. 
     */
 
   {
@@ -35,7 +41,10 @@ public class Sender // Uunicast and multicast sender thread.
 			// LockAndSignal for inputs to this thread.  It should be the same 
 		  // LockAndSignal instance in netcasterToSenderNetcasterQueue construction. 
 		
-    Sender( // Constructor. 
+		private Random theRandom= new Random(1);
+		  // Seed is not zero so first DISCOVER packet is sent.  
+
+		Sender( // Constructor. 
         DatagramSocket theDatagramSocket,
         NetcasterQueue netcasterToSenderNetcasterQueue,
         LockAndSignal senderLockAndSignal
@@ -74,7 +83,8 @@ public class Sender // Uunicast and multicast sender thread.
         and nothing else needs to be added first.
 
         Channeling all outgoing packets through this code
-        makes congestion control possible, though it's not done yet.
+        makes congestion control theoretically possible here, 
+        though it's not done here yet.
         
         ?? DatagramSocket.send(..) could block the thread 
         if the network queue fills.
@@ -94,18 +104,27 @@ public class Sender // Uunicast and multicast sender thread.
           IPAndPort theIPAndPort= theNetcasterPacket.getKeyK();
           theDatagramPacket.setAddress(theIPAndPort.getInetAddress());
           theDatagramPacket.setPort(theIPAndPort.getPortI());
-          try { // Send the gotten packet.
-          		PacketManager.logSenderPacketV(theDatagramPacket);
-          		  // Log before sending so log will make sense.
-	            theDatagramSocket.send(   // Send packet.
-	            	theDatagramPacket
-	              );
-            } catch (IOException e) { // Handle by dropping packet.
-              appLogger.info(
-                "processingSockPacketsToSendB(),"
-                +e
-                );
-            }
+          if  // Debug: Send all but 1/10 of packets.
+            (theRandom.nextInt(20) == 0)
+            appLogger.debug( // Drop the packet.
+            		"dropping packet "
+            		+PacketManager.gettingDirectedPacketString(
+            				theDatagramPacket,true
+            				)
+            		);
+	          else
+	          try { // Send the packet.
+	          		PacketManager.logSenderPacketV(theDatagramPacket);
+	          		  // Log before sending so log will make sense.
+		            theDatagramSocket.send(   // Send packet.
+		            	theDatagramPacket
+		              );
+	            } catch (IOException e) { // Handle exception by dropping packet.
+	              appLogger.info(
+	                "processingSockPacketsToSendB(),"
+	                +e
+	                );
+	            }
 
           packetsProcessedB= true; // Recording that a packet was processed.
           }
@@ -113,4 +132,4 @@ public class Sender // Uunicast and multicast sender thread.
         return packetsProcessedB;
         }
     
-    } // UnconnectedReceiver
+    }

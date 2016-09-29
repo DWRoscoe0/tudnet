@@ -2,7 +2,7 @@ package allClasses;
 
 //import static allClasses.Globals.appLogger;
 
-public class App { // The App, especially pre-GUI stuff.  See runV(..) for details.
+public class App { // The App, especially pre-GUI stuff.
 
   AppFactory theAppFactory;
   Shutdowner theShutdowner;

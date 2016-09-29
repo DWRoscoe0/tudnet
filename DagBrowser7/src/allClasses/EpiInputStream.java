@@ -46,6 +46,9 @@ public class EpiInputStream<
 	  // Constructor-injected instance variables.
 		private final Q receiverToStreamcasterNotifyingQueueQ;
 		private final NamedInteger packetCounterNamedInteger;
+		  // This is the count of received packets. 
+		  // The value is 1 during read of 1st packet data, assuming
+		  // it is constructed with a value of 0.
 	
 	  // Other instance variables.
 		private E loadedKeyedPacketE= null;
@@ -82,25 +85,36 @@ public class EpiInputStream<
 	  
 		public int available() throws IOException 
 	    /* This method tests whether there are any bytes available for reading.
-	      If there are bytes in the byte buffer it returns the number of them.
-	      If not then it tries to load the byte buffer 
-	      from packets in the queue.
-	      If there are no bytes and no non-empty packets in the queue
+	      If there are bytes in the byte buffer it returns the number of bytes.
+	      If not then it tries to load the byte buffer from 
+	      the next packet in the queue and checks again.
+	      If there are no bytes in the buffer and no more packets in the queue
 	      then it returns 0.
 	
 	      This method may be used for asynchronous stream input, however
-	      it should not be used to detect/parse packet boundaries in the input,
+	      it should not be used to detect packet boundaries in the input,
 	      because delays, such as single-stepping during debugging,
-	      could affect program flow.
+	      could make this unreliable.
 	     */
 	    {
 	  		int availableI;
 	  	  while (true) {
 	    	  availableI= packetSizeI - packetIndexI; // Calculating bytes in buffer.
+	    	  /* 
 	    		if (AppLog.testingForPingB)
-	  	  		appLogger.debug("available() "+availableI+" "+packetSizeI+" "+packetIndexI);
+	  	  		appLogger.debug(
+	  	  				"available() "+
+	  	  				availableI+" "+packetSizeI+" "+packetIndexI+" "+
+	  	  			  ( bufferBytes == null
+	  	  			    ? ""
+	  	  			    : new String(
+	  	  			    		bufferBytes, packetIndexI, packetSizeI-packetIndexI
+	  	  			    		)
+	  	  			    )
+	  	  				);
+	  	  	*/
 	    	  if ( availableI > 0) break; // Exiting if any bytes in buffer.
-	    	  if  // Exiting if no packet in queue to load.
+	    	  if  // Exiting with 0 if no packet in queue to load.
 	    	    ( receiverToStreamcasterNotifyingQueueQ.peek() == null ) 
 	    	  	break;
 	        loadNextPacketV();
@@ -132,9 +146,10 @@ public class EpiInputStream<
 	      After data has been read from the stream
 	      it returns a reference to the packet that
 	      was most recently loaded.
+	      The packet and its bytes can still be read.
 	      
 	      This is not the same as reading a packet as any other data type,
-	      which is done by readNetcasterPacket().
+	      which is done by readKeyedPacketE().
 	      In that case the packet and its data are no longer available
 	      for reading, which makes available()==0.
 				*/
@@ -143,10 +158,12 @@ public class EpiInputStream<
 	    	}
 	
 	  public E readKeyedPacketE() throws IOException
-	    /* This is like getNetcasterPacket(), but only reads a packet
-	      if one is available.  If one isn't then it blocks until one is loaded.
+	    /* This reads a packet if one is available.  
+	      If one isn't then it blocks until one is loaded.
 	      It also prevents the packet or any of its bytes 
 	      being gotten or read later.
+	      
+	      This is not presently used.
 	      */
 	    {
 		  	if // Loading a packet if none loaded.

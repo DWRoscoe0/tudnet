@@ -1,0 +1,14 @@
+Debug-State
+( #1
+  MetaNode
+  INFOGORA-ROOT
+  ( Attributes
+    ( SelectionPath IS )
+    ( AutoExpanded T )
+    )
+  ( MetaChildren
+    #4
+    #10
+    #13
+    )
+  )

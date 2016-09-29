@@ -18,8 +18,13 @@ public class Subcaster
 
   implements Runnable 
 
-	/* ?? This is being included in Unicasters, but it doesn't do anything, yet.
-	  Eventually it will handle nested protocols for Unicaster.
+	/* 
+	  This class extends the UDP Streamcaster.
+	  The main thing it adds is knowledge of using a String as a name
+	  which Streamcaster uses as a key and to differentiate 
+	  this Subcaster from other Subcasters.
+	  A Subcaster is a Streamcaster that is nested within
+	  the data stream of a Unicaster.
 	  */
 
 	{
@@ -64,7 +69,7 @@ public class Subcaster
 					while (true) // Repeating until thread termination is requested.
 					  {
 							if ( EpiThread.exitingB() ) break; // Exiting if requested. 
-							pingReplyProtocolV(); //////
+							pingReplyProtocolV();
 			    		streamcasterLockAndSignal.doWaitE(); // Waiting for any input.
 					    } // while(true)
 					theSubcasterOutputStream.close(); // Closing output stream.
@@ -80,6 +85,9 @@ public class Subcaster
     		}
 
     protected void initializingV() throws IOException
+      /* Adds the packet counters for the input and output streams and
+        does Streamcaster initializing.
+        */
 	    {
     		appLogger.info("initializingV() at start."); // Needed if thread self-terminates.
 		    addB( 	theSubcasterOutputStream.getCounterNamedInteger() );

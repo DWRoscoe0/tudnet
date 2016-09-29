@@ -4,8 +4,6 @@ import static allClasses.Globals.appLogger;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
-////import java.net.InetAddress;
-////import java.util.Random;
 
 
 import allClasses.LockAndSignal.Input;
@@ -16,14 +14,19 @@ public class Unicaster
 
   implements Runnable 
   
-  /* Each instance of this nested class contains and manages data about 
+  /* Each instance of this class manages a a single Datagram connection with
     one of the peer nodes of which the ConnectionManager is aware.
-    Its job is to manage a single Datagram connection
-    with another peer node.
+    It uses unicast packets, not multicast packets.
     
     This class is not a Thread, but is a Runnable on which to base a Thread.
-    The thread will informally implement a state machine
-    which manages the connection.
+    The Runnable contains a loop which:
+    * Receives packets from the remote peer.
+    * Send packets to the remote peer.
+    * Implement several protocols for various purposes, such as:
+      * Establishing and shutting down a connection.
+	    * Exchanging sequence numbers to measure packet loss. 
+	    * Multiplexing packets from and de-multiplexing packets to other threads
+	      which implement their own protocols.
     
     Originally it was planned for each Unicaster thread to 
     send and receive packets using a connected DatagramSocket.
@@ -48,23 +51,6 @@ public class Unicaster
     waiting half a period, making no attempt to measure ping times.
     More functionality will be added later.
 
-    Here is the beginnings of a table representing
-    a state machine for unicast connections.
-    It will probably change.
-    It might be changed to an HSM (HierarchicalStateMachine)
-      
-      StateName     Input           Next-State  Output
-      -----------   ------------    ----------  ----------
-      Unconnected   Receive-packet  WillReply   Pass-packet
-      Replying      (none)          Ignoring    Send-reply
-      Ignoring      Receive-packet  Ignoring    Pass-packet
-                    Half-period     RePingable   
-      RePingable    Half-period     IPing
-                    Receive-packet  Replying
-      IPing         (none)          GetReply    SendReply
-                    Retry-period  
-      GetReply
-
     */
 
   { // Unicaster.
@@ -75,42 +61,57 @@ public class Unicaster
       private final UnicasterManager theUnicasterManager;
       private final SubcasterManager theSubcasterManager;
 
-      // Local child variables for containing and displaying stats.
+      // Local variables for containing, measuring, and displaying stats.
+      // Some are DataNode children.
 
-			protected DefaultLongLike newIncomingPacketsSentDefaultLongLike;
-	    	// This comes from the remote end via the "N" message.
-			  // It should match the remote ends OutputStream packet counter
-			  // and match the local count of received plus lost packets.
-      protected NamedInteger oldIncomingPacketsSentNamedInteger;
-      	// This eventually becomes the remote EpiInputStream packet count.
-        // plus 1.  It comes via the "N" message.
-        // It represents the latest count of received plus lost packets.
-      protected NamedInteger newIncomingPacketsReceivedNamedInteger;
-      	// This is the local EpiInputStream packet counter.
-      	// It represents the latest count of received packets only.
+      // Variables for managing incoming packets and 
+      // their sequence numbers.  They all start at 0.
+      private DefaultLongLike newIncomingPacketsSentDefaultLongLike;
+	    	// This is set to the value of the sequence number argument of the
+			  // most recently received "N" message plus 1.  
+			  // When sent this argument was the remote end's 
+			  // EpiOutputStream packet counter.
+      	// This value usually increases, but can decrease 
+        // if an "N" is carried by an out-of-order packets.
+      private NamedInteger oldIncomingPacketsSentNamedInteger;
+	    	// A difference between this and newIncomingPacketsSentDefaultLongLike 
+        // indicates a new received sequence number needs to be processed.
+      private NamedInteger newIncomingPacketsReceivedNamedInteger;
+      	// This is a copy of the local EpiInputStream packet counter.
+      	// It represents the latest count of locally received packets.
+      	// This value can only increase.
   		private DefaultLongLike oldIncomingPacketsReceivedDefaultLongLike;
-			  // This is used to detect gaps in incoming packets
-	  		// by detecting changes in newIncomingPacketsReceivedNamedInteger.
-  			// It represents the previous count of received packets only.
-      protected NamedFloat incomingPacketLossNamedFloat;
-        // String representation of incomingPacketLossFractionF.
-
-      protected NamedInteger newOutgoingPacketsSentNamedInteger;
-    	// This is the local EpiOutputStreamO packet counter.
-      // It is the sum of the lost and received outgoing packets.
-      protected DefaultLongLike oldOutgoingPacketsSentDefaultLongLike;
-    	// This follows and is used to detect changes in
-      // newOutgoingPacketsSentNamedInteger
-      protected NamedInteger newOutgoingPacketsReceivedNamedInteger;
-	    	// This comes from the remote EpiInputStream packet count
-	      // in the "NFB" message.
-  		protected DefaultLongLike oldOutgoingPacketsReceivedDefaultLongLike;
-			  // This follows and is used to detect changes in
-  			// newOutgoingPacketsReceivedNamedInteger.
-      protected NamedFloat outgoingPacketLossNamedFloat;
-        // This is calculated from outgoing packet differences. 
-
-  		private final float smoothingFactorF= 0.1F; // 0.01; 
+  			// A difference between this and newIncomingPacketsReceivedNamedInteger 
+  			// indicates a new packet has been received and needs to be processed.
+  		private NamedFloat incomingPacketLossNamedFloat;
+        // Floating representation of the fraction of incoming packets lost.
+      LossAverager incomingPacketLossAverager;
+      
+      // Variables for managing outgoing packets and their acknowledgement.
+      private NamedInteger newOutgoingPacketsSentNamedInteger;
+	    	// This is a copy of the local EpiOutputStreamO packet counter.
+      	// This value can only increase.
+      private NamedInteger newOutgoingPacketsSentEchoedNamedInteger;
+	    	// This is the local EpiOutputStreamO packet counter after 
+        // being returned from remote.  It might lag the real counter by RTT.
+      	// This value can only increase.
+      private DefaultLongLike oldOutgoingPacketsSentDefaultLongLike;
+	    	// A difference between this and newOutgoingPacketsSentNamedInteger 
+	      // indicates new packets have been sent and need to be processed.
+      private NamedInteger newOutgoingPacketsReceivedNamedInteger;
+	    	// This value comes from the most recently received "NFB" message.  
+			  // When sent this argument was the remote end's 
+			  // EpiInputStream packet counter, 
+        // counting the number of packets recevied.
+	    	// This value normally increases, but can decrease because of 
+        // out-of-order "NFB" packets. 
+      private DefaultLongLike oldOutgoingPacketsReceivedDefaultLongLike;
+	    	// A difference between this and newOutgoingPacketsReceivedNamedInteger 
+	      // indicates a new packet has been acknowledged and 
+  			// needs to be processed.
+  		private NamedFloat outgoingPacketLossNamedFloat;
+      	// Floating representation of the fraction of outgoing packets lost.
+      private LossAverager outgoingPacketLossLossAverager;
 
   		// Other instance variables.
       private final SubcasterQueue subcasterToUnicasterSubcasterQueue;
@@ -156,16 +157,14 @@ public class Unicaster
 
     public void run()  // Main Unicaster thread.
       /* This method contains the main thread logic.
-				////////
-        
         */
       {
         try { // Operations that might produce an IOException.
 	          initializingV();
 
 	          { // Uncomment only one of the following method calls.
-	          	//////runWithoutSubcastersV(); // Original code.
-	          	runWithSubcastersV(); // Experimental code with Subcaster.
+	          	runWithSubcastersV(); // Code which uses Subcasters.
+	          	//runWithoutSubcastersV(); // Original code without Subcasters.
 		          }
 	          
 	      		theEpiOutputStreamO.close(); // Closing output stream.
@@ -186,9 +185,6 @@ public class Unicaster
 	    {
     		super.initializingWithoutStreamsV(); // We do the streams below.
 
-		    ////theRandom= new Random(0);  // Initialize fpr arbitratingYieldB().
-	  	  ////leadingB= arbitratingYieldB( getKeyK().getPortI() );
-
 	  	  // Adding incoming packet statistics children and related trackers.
 	  	  newIncomingPacketsSentDefaultLongLike= new DefaultLongLike(0);
 	  	  addB( oldIncomingPacketsSentNamedInteger= new NamedInteger(
@@ -200,35 +196,49 @@ public class Unicaster
 		    		);
 	  	  oldIncomingPacketsReceivedDefaultLongLike= new DefaultLongLike(0);
 	  	  addB( incomingPacketLossNamedFloat= new NamedFloat( 
-	      		theDataTreeModel, "IncomingPacketLoss", 0.0F ////"%" 
+	      		theDataTreeModel, "Incoming-Packet-Loss", 0.0F  
 	      		)
 	  			);
+	  	  incomingPacketLossAverager= new LossAverager(
+	  	  				oldIncomingPacketsSentNamedInteger,
+	  	  				oldIncomingPacketsReceivedDefaultLongLike,
+	  	  				incomingPacketLossNamedFloat
+	  	  				);
 
 	  	  // Adding outgoing packet statistics children and related trackers.
-		    addB( newOutgoingPacketsSentNamedInteger=
-		    		theEpiOutputStreamO.getCounterNamedInteger() 
-		    		);
+    		newOutgoingPacketsSentNamedInteger=
+    				theEpiOutputStreamO.getCounterNamedInteger(); 
+		    addB( newOutgoingPacketsSentNamedInteger );
+		    addB( newOutgoingPacketsSentEchoedNamedInteger= new NamedInteger(
+		    		theDataTreeModel, "Outgoing-Packets-Sent-Echoed", 0 
+		    		)
+		    	); 
 		    oldOutgoingPacketsSentDefaultLongLike= new DefaultLongLike(0);
 		    addB( newOutgoingPacketsReceivedNamedInteger= new NamedInteger( 
-			      theDataTreeModel, "OutgoingPacketsReceived", 0 
+			      theDataTreeModel, "Outgoing-Packets-Received", 0 
 			      )
 		    	);
 	  	  addB( outgoingPacketLossNamedFloat= new NamedFloat( 
-	      		theDataTreeModel, "OutgoingPacketLoss", 0.0f 
+	      		theDataTreeModel, "Outgoing-Packet-Loss", 0.0f 
 	      		)
 	  			);
 	  	  oldOutgoingPacketsReceivedDefaultLongLike= new DefaultLongLike(0);
+	  	  outgoingPacketLossLossAverager= new LossAverager(
+	  	  		oldOutgoingPacketsSentDefaultLongLike,
+	  	  		oldOutgoingPacketsReceivedDefaultLongLike,
+	  	  		outgoingPacketLossNamedFloat
+	  	  		);
 
-	  	  addB( theSubcasterManager ); // Adding to our list.
+	  	  addB( theSubcasterManager );
 	    	}
 
     public void runWithSubcastersV() throws IOException
-      /* This method does, or will do, or will delegate, 
+      /* This method does, or will do itself, or will delegate to Subcasters, 
         all protocols of a Unicaster.  This might include:
         * Doing full PING-REPLY protocol by letting a Subcaster do it, 
         	and forwarding its packets in both directions.
         * Passing packets from Subcasters to the network.
-        * Passing subcaster packets from the network to Subcasters.
+        * Passing Subcaster packets from the network to Subcasters.
         * Doing simple received message decoding.
         * Connection/Hello handshake state machine cycling.
         */
@@ -236,7 +246,7 @@ public class Unicaster
     	  processing: {
 	    		if (!processingHellosB()) break processing;
 		      theSubcasterManager.getOrBuildAddAndStartSubcaster(
-		          "PING-REPLY" //// Hard wired creation at first.
+		          "PING-REPLY" //// Hard wired creation at first.  Fix later.
 		  	  		); // Adding Subcaster.
 				  while (true) // Repeating until termination is requested.
 					  {
@@ -271,12 +281,12 @@ public class Unicaster
 
 		private void nestedWritingWithMultiplexHeaderV(
 				  SubcasterPacket theSubcasterPacket
-				  ) 
+				  )
 				throws IOException
 		  /* This method forwards theSubcasterPacket to the remote peer.
 		    It prepends the Subcaster key as a multiplex/demultiplex header.
 			  //// Improve efficiency by passing a buffer window instead of 
-			    doing write(..).
+			    doing write(..)?
 		    */
 			{
 	      DatagramPacket theDatagramPacket= // Extracting DatagramPacket.
@@ -287,8 +297,7 @@ public class Unicaster
 	      	theSubcasterPacket.getKeyK() 
 	      	);
 	  		writingTerminatedLongV( 
-				////writingTerminatedStringV( // Writing length of Subcaster packet. 
-				  theDatagramPacket.getLength() ////+ "" 
+				  theDatagramPacket.getLength() 
 				  );
 				theEpiOutputStreamO.write( // Writing nested Subcaster packet.
 						theDatagramPacket.getData(),
@@ -322,35 +331,46 @@ public class Unicaster
 				}
 
 		private void processingRemoteMessageV() throws IOException
-		  // This method processes the next available message.
+		  /* This method processes the next available message.
+		    Most will be demultiplexed and passed to Subcasters.
+		   */
+		
 			{
 				String keyString= readAString(); // Reading message key string
 
 				process: {
 		      Subcaster theSubcaster= // Getting associated Subcaster, if any.
 		        theSubcasterManager.tryingToGetDataNodeWithKeyD( keyString );
-		      if // Passing remainder of message to associated Subcaster if any.
+		      if // Passing remainder of message to associated Subcaster.
 		        ( theSubcaster != null )
 		        { processMessageToSubcasterV( theSubcaster ); break process; }
-		      if ( processSequenceNumberB(keyString) ) 
-		      	break process;  // "N"
-		      if ( processSequenceFeedbackB(keyString) ) 
-		      	break process; // "NFB"
-  			  if ( processHelloB( keyString ) ) 
-  			   	break process; // "HELLO"
-   			  if ( processShuttingDownB(keyString) ) 
-		      	break process; // "SHUTTING-DOWN"
-		      ; // Ignoring any other message, for now.  //////
+
+		      if ( processSequenceNumberB(keyString) ) // "N"
+   			  	break process;
+		      if ( processSequenceFeedbackB(keyString) ) // "NFB"
+   			  	break process;
+  			  if ( processHelloB( keyString ) ) // "HELLO"
+   			  	break process;
+   			  if ( processShuttingDownB(keyString) ) // "SHUTTING-DOWN"
+   			  	break process;
+
           appLogger.warning( "Ignoring remote message: " + keyString );
 					} // process:
 				}
   	
-		public boolean processingHellosB() //////////////// 
+		public boolean processingHellosB()  
 			throws IOException
-		  /* This method establishes the connection 
-		    by exchanging HELLO messages. 
-		    This includes determining which peer should act as the leader
-		    when needed.  This determination is based on their IP addresses.
+		  /* This method tries to establish the Unicaster connection 
+		    by exchanging HELLO messages.  This includes:
+		    * Sending a HELLO message.
+		    * Receiving a HELLO message.
+		    * determining which peer should act as the leader when needed.  
+		      This determination is based on peer IP addresses.
+		    * Ignoring other messages.
+		    This method should execute in both peers at approximately
+		    the same time.
+		    Returns true if HELLO messages were exchanged, meaning
+		    the connection may be considered established, false otherwise.
 		    */
 			{
 				int triesRemainingI= 3; // 3 tries then we give up.
@@ -362,71 +382,40 @@ public class Unicaster
 			  		writingTerminatedStringV( "HELLO" );
 			  		writingTerminatedStringV( 
 			  				getKeyK().getInetAddress().getHostAddress() 
-			  				); // Writing what will be IP./////
+			  				); // Writing what will be IP.
 			  		flush();
 	          long helloSentMsL= System.currentTimeMillis();
-	          awaitingResponseHello: while (true) {
-	            Input theInput=  // Awaiting next input within reply interval.
+	          awaitingResponseToHello: while (true) {
+	            Input theInput=  // Awaiting next input within interval.
 	            		testWaitInIntervalE( helloSentMsL, 5000 );
-	            if // Handling SHUTTING-DOWN packet or interrupt by exiting.
+	            if // Handling exit interrupt by exiting.
 	    	    		( tryingToCaptureTriggeredExitB( ) )
 	  	    			break exchangingHellos; // Exit everything.
 	            if ( theInput == Input.TIME ) // Handling time-out.
 		            { appLogger.info( "Time-out waiting for HELLO." );
-		              break awaitingResponseHello;
+		              break awaitingResponseToHello;
 		            	}
-		    			String keyString= readAString(); // Reading message key string
+		    			String keyString= // Reading message key string
+		    				readAString(); 
 		  			  if ( processHelloB( keyString ) ) 
 		  			  	{ successB= true; break exchangingHellos; }
-		  			  // Ignoring any other input.
-	          	} // awaitingResponseHello:
+		  			  // Ignoring any other message.
+	          	} // awaitingResponseToHello:
 	  			  } // exchangingHellos:
 				return successB;
 				}
-  	
-  	private boolean processSequenceNumberB(String keyString) 
-  			throws IOException
-  	  /* This method processes packet sequence numbers,
-  	    which come from the remote EpiOutputStreamO packet count.
-  	    This is mostly about calculate the incomingPacketLossFractionF
-  	    using exponential smoothing.
-  	    Each call to this method represents a received packet.
-  	    Each gap in sequence numbers represents one or most lost packets.
-	  		//// Sequence numbers eventually need to be converted 
-	  		  to use modulo arithmetic.
-	  	  */
-	  	{
-  		  boolean isKeyB= keyString.equals( "N" ); 
-  		  if (isKeyB) {
-	  		  int sequenceNumberI= readANumberI(); // Reading # from packet.
-				  newIncomingPacketsSentDefaultLongLike.setValueL( // Recording.
-							sequenceNumberI + 1 // Adding 1 to convert sequence # to count.
-							);
-		      processPacketLossesV( 
-		      		newIncomingPacketsSentDefaultLongLike,
-			  			oldIncomingPacketsSentNamedInteger,
-			  			newIncomingPacketsReceivedNamedInteger,
-			  			oldIncomingPacketsReceivedDefaultLongLike,
-			  			incomingPacketLossNamedFloat
-		      		);
-		  		writingTerminatedStringV( "NFB" );
-		  		writingTerminatedLongV( 
-		  				newIncomingPacketsReceivedNamedInteger.getValueL() 
-		  				);
-  				}
-  		  return isKeyB;
-	  		}
   	
   	private boolean processHelloB(String keyString) 
   			throws IOException
   	  /* This method tries to process the Hello message and its arguments.
   	    If keyString is "HELLO" then it processes,
-  	    which means parsing its IP address and determining
+  	    which means parsing the IP address which follows and determining
   	    which peer, the local or remote, will be leader,
-  	    by comparing the IP addresses, and setting
+  	    by comparing the IP addresses, and setting 
   	    the value for leadingB.
-  	    It returns true if HELLO is processed, false otherwise.
-  	    The first time processing is the only one that counts.
+  	    It does not send a reply "HELLO".  This is done elsewhere.
+  	    It returns true if HELLO was processed, false otherwise.
+  	    The first time this method is called is the only one that counts.
   	    Later uses handle redundant retransmissions.
   	   */
 	  	{
@@ -437,144 +426,102 @@ public class Unicaster
 					String remoteIpString= 
 							getKeyK().getInetAddress().getHostAddress();
 					leadingB= localIpString.compareTo(remoteIpString) > 0;
-					leadingB= !leadingB; //// Reverse roles for debugging. 
+					//leadingB= !leadingB; // Reverse roles for debug test. 
 					// Note, the particular ordering of IP address Strings
-					// doesn't matter.  What matters is that there is an ordering.
+					// doesn't matter.  What matters is that the ordering is consistent.
 					theSubcasterManager.setLeadingV( leadingB );
 	        appLogger.info( 
-	        		"This node has assumed the role of: "
+	        		"This Unicaster is overriding its role to be: "
 	        		+ (leadingB ? "LEADER" : "FOLLOWER")
 	        		);
 				  }
+  		  return isKeyB;
+	  		}
+
+  	private boolean processSequenceNumberB(String keyString) 
+  			throws IOException
+  	  /* This method processes the packet sequence number that follows "N",
+  	    which comes from the remote peer EpiOutputStreamO packet count.
+  	    From this and the local EPIInputStreamI packet count it calculates 
+  	    a new value of the local peer's incoming packet loss ratio.
+  	    This ratio is accurate when calculated because
+  	    the values it uses in the calculation are synchronized.
+
+  	    It also sends an "NFB" message back to the remote peer with same numbers
+  	    so the remote peer can calculate the same ratio, 
+  	    which for the remote peer is called the outgoing packet loss ratio.
+  	    By sending and using both numbers the remote peer's calculation is
+  	    not affected by variations in Round-Trip-Time (RTT).
+
+  	    Every packet has a sequence number, but 
+  	    not every packet needs to contain its sequence number.
+  	    The reception of an "N" message with its sequence number means that
+  	    the remote has sent at least that number of packets.
+  	    The difference of the highest sequence number received and
+  	    the number of packets received is the number of packets lost.
+  	    A new difference and a loss ratio average can be calculated
+  	    each time a new sequence number is received.
+  	    In fact that is how reception of a sequence number can be interpreted.
+
+	  		//// Sequence numbers and other numbers eventually need to be converted 
+	  		  to use modulo (wrap-around) arithmetic.
+	  	  */
+	  	{
+  		  boolean isKeyB= keyString.equals( "N" ); 
+  		  if (isKeyB) {
+	  		  int sequenceNumberI= readANumberI(); // Reading # from packet.
+				  newIncomingPacketsSentDefaultLongLike.setValueL( // Recording.
+							sequenceNumberI + 1
+							); // Adding 1 to convert sequence # to remote sent packet count.
+	  			incomingPacketLossAverager.recordPacketsReceivedOrLostV(
+	      		newIncomingPacketsSentDefaultLongLike,
+						newIncomingPacketsReceivedNamedInteger
+					  );
+		  		writingTerminatedStringV( "NFB" );
+		  		writingTerminatedLongV( // The remote sent packet count.
+		  				newIncomingPacketsSentDefaultLongLike.getValueL() 
+		  				);
+		  		writingTerminatedLongV( // The local received packet count.
+		  				newIncomingPacketsReceivedNamedInteger.getValueL() 
+		  				);
+		  		// Don't flush now.
+  				}
   		  return isKeyB;
 	  		}
   	
   	private boolean processSequenceFeedbackB(String keyString) 
   			throws IOException
   	  /* This method processes the "NFB" sequence number 
-  	    feedback message.  This should reproduce [approximately]
-  	    the incomingPacketLossFractionF in the receiver.
-        The ratios might not be exactly the same, 
-        if the processing orders of received vs. missed packets 
-        are different, but the ratios should be close.
-        
-        Note, one is added to the number argument,
-        not because a sequence number is being converted to
-        a sequence number, it is already both a sequence and a count.
-        It is added to prevent an initial lost packet.
-        This is needed because NFBs are not self-flushing.  
-        They are flushed later by other messages which do flush().
-        This was done so there wouldn't be a bunch of
-        empty packets containing nothing but N and NFB messages.
-        So there are 2 NFBs in the same packet.
-        So when the first of a pair is processed,
-        it appears as 1 received packet and one lost packet.
-        This is temporarily corrected by incrementing
-        the NFB number argument by one.
-        
-        Eventually packet losses will be calculated with a moving average
-        and this issue will disappear.
+  	    feedback message, which the remote peer sends
+  	    in response to receiving an "N" sequence number message.
+  	    The "NFB" is followed by:
+  	    * an echo of the local sent packets count received by the remote peer,
+  	    * the remote peers received packet count.
+  	    From these two values it calculates 
+  	    the packet loss ratio in the remote peer receiver.
+  	    By having "NFB" include both values, its calculation is RTT-immune.
+
+				See processSequenceNumberB(..) about "N" for more information.
 	  	  */
 	  	{
 	  	  boolean isKeyB= keyString.equals( "NFB" ); 
 			  if (isKeyB) {
-		  		int numberI= readANumberI(); // Reading # from packet.
-			      newOutgoingPacketsReceivedNamedInteger.setValueL(
-							numberI + 1 // Adding one prevent initial single packet loss.
-							);
-		      processPacketLossesV( 
-			  			newOutgoingPacketsSentNamedInteger,
-			  			oldOutgoingPacketsSentDefaultLongLike,
-			  			newOutgoingPacketsReceivedNamedInteger,
-			  			oldOutgoingPacketsReceivedDefaultLongLike,
-			  			outgoingPacketLossNamedFloat
-		      		);
+		  		int numberI= readANumberI(); // Reading echo of packets sent.
+			    newOutgoingPacketsSentEchoedNamedInteger.setValueL(numberI);
+		  		numberI= readANumberI(); // Reading packets received.
+		      newOutgoingPacketsReceivedNamedInteger.setValueL(numberI);
+		      outgoingPacketLossLossAverager.recordPacketsReceivedOrLostV(
+	  					newOutgoingPacketsSentEchoedNamedInteger,
+	  					newOutgoingPacketsReceivedNamedInteger
+						  );
 			  	}
 			  return isKeyB;
 	  		}
 
-  	private void processPacketLossesV( 
-  			LongLike newPacketsSentLongLike,
-  			LongLike oldPacketsSentLongLike,
-  			LongLike newPacketsReceivedLongLike,
-  			LongLike oldPacketsReceivedLongLike,
-  			NamedFloat packetLossNamedFloat
-  			)
-  	  /* This method does some packet statistics calculations,
-  	    mainly calculating packet losses.
-  	    It operates on its argument variables as follows.
-  	    * newPacketsSentLongLike: 
-  	      This is the latest number of packets which 
-  	      have actually been sent, which is also 
-  	      the sum of packets received and packets lost.
-  	      It is not changed by this method.
-  	    * oldPacketsSentLongLike:
-  	      This is the number of packets actually sent
-  	      at the time of this method's previous call.
-  	      It is incremented in parallel with oldPacketsReceivedLongLike 
-  	      until it equals newPacketsSentIDefaultLongLike.
-  	      See oldPacketsReceivedLongLike for more info.
-  	    * newPacketsReceivedLongLike:
-  	      This is number of packets which have actually been received.
-  	      This excludes lost packets.
-  	      It is not changed by this method.
-  	    * oldPacketsReceivedLongLike: 
-  	      This is the number of packets actually received 
-  	      at the time of this method's previous call.
-  	      It is incremented in parallel with oldPacketsSentLongLike 
-  	      until it equals newPacketsReceivedLongLike.
-  	      When oldPacketsReceivedLongLike and oldPacketsSentLongLike
-  	      are incremented together it represents a received packet. 
-  	      When oldPacketsSentLongLike is incremented alone
-  	      it represents a lost packet.
-  	    * packetLossNamedFloat:
-  	      This is the fraction of sent packets that are lost.
-  	      It is calculated by using a process called 
-  	      "exponential smoothing" which merges in
-  	      0.0 for each received packet and 1.0 for each lost packet.
-  	      The numbers of lost and received packets are determined by
-  	      the incrementing of oldPacketsReceivedLongLike and 
-  	      oldPacketsSentLongLike described above.
-  	   	*/
-	  	{
-		    while (true) {
-		    	if // Exiting if all sent packet counts processed.
-			    	( oldPacketsSentLongLike.getValueL() >= 
-			    	  newPacketsSentLongLike.getValueL() )
-		    		break;
-					if // Processing whether or not packet received. 
-					  ( oldPacketsReceivedLongLike.getValueL() < 
-							newPacketsReceivedLongLike.getValueL() 
-							)
-						{ // Processing packet received.
-						  smoothWithV( packetLossNamedFloat, 0 );
-			      	oldPacketsReceivedLongLike.addDeltaL(1); // Incrementing.
-			      	}
-			      else 
-			      { // Processing packet lost.
-			      	smoothWithV( packetLossNamedFloat, 1 );
-			      	}
-					oldPacketsSentLongLike.addDeltaL(1); // Incrementing.
-		      }
-	  		}
-
-  	private void smoothWithV( NamedFloat theNamedFloat, float valueF )
-  	  /* This method combines incomingPacketLossNamedFloat
-  	    with new values from valueF according to the smoothingFactorF. 
-  	    */
-	  	{
-  			theNamedFloat.setValueF(
-  				( smoothingFactorF * valueF ) + 
-  				( ( 1 - smoothingFactorF ) * 
-  						theNamedFloat.getValueF()
-						)
-	  			);
-        //appLogger.debug( 
-        //		"smoothWithV( "+theNamedFloat.getValueF()+", "+valueF+" )" 
-        //		);
-	  		}
-
   	private boolean processShuttingDownB(String keyString)
+  	  /* This method sets this thread's interrupt status to cause exit
+  	    if keyString is "SHUTTING-DOWN".
+  	   */
       {
 			  boolean isKeyB= keyString.equals( "SHUTTING-DOWN" ); 
 				if (isKeyB) {
@@ -586,10 +533,13 @@ public class Unicaster
 
 		private void processMessageToSubcasterV( Subcaster theSubcaster )
       throws IOException 
-      /* Processes one message to theSubcaster.
-			  The message key string is assumed to have already been read.
+      /* This method sends the remainder of the present message buffer
+        to theSubcaster for processing.
+			  The message key string is assumed to have already been read
+			  and decoded to mean theSubcaster.
+
 			  //// Improve efficiency by passing a buffer window instead of 
-			    doing read(..).
+			    doing a read(..) into a new buffer.
 				*/
       {
 			  processing: {
@@ -608,10 +558,10 @@ public class Unicaster
 		        			);
 			    		break processing; // Exiting.
 					    }
-	        appLogger.debug(
-	        		"processMessageToSubcasterV(): " + 
-	        		new String( bufferBytes, 0, lengthI )
-	        		);
+	        //appLogger.debug(
+	        //		"processMessageToSubcasterV(): " + 
+	        //	new String( bufferBytes, 0, lengthI )
+	        //	);
 					SubcasterPacket theSubcasterPacket= // Repackaging buffer. 
 						theSubcasterPacketManager.produceKeyedPacketE(
 									bufferBytes, lengthI
@@ -622,8 +572,8 @@ public class Unicaster
 					} //processing:
 	      }
 
-		public void runWithoutSubcastersV() throws IOException //// Needn't be public.
-      // Does full PING-REPLY protocol without help of Subcaster.
+		private void runWithoutSubcastersV() throws IOException //// Needn't be public.
+      // Does PING-REPLY protocol in this thread, not in a Subcaster.
 	    {
 				pingReplyProtocolV();
 		    }

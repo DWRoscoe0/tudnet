@@ -5,6 +5,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
 
 import static allClasses.Globals.appLogger;  // For appLogger;
 
@@ -154,7 +155,16 @@ public class AppGUI
             appLogger.info(
               	"GUIDefiner.theJFrame.setVisible(true) done."
               	);
-            theDagBrowserPanel.restoreFocusV(); // Setting initial focus.
+            SwingUtilities.invokeLater(new Runnable() { // Queue GUI event...
+              @Override  
+              public void run() 
+                {  
+                  theDagBrowserPanel.restoreFocusV(); // Setting initial focus.
+                  }  
+              }); /* Done way because in Java 8 
+                Compoent.requestFocusInWindow() will cause 
+                NullPointerException before the first dispatched message.
+                */
             return theJFrame;
             }
 
