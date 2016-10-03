@@ -10,10 +10,10 @@ public class SubcasterQueue
   {
 
     SubcasterQueue(  // Constructor.
-    		LockAndSignal destinationThreadLockAndSignal
+    		LockAndSignal destinationThreadLockAndSignal, int capacityI
     		)
       {
-        super( destinationThreadLockAndSignal );
+        super( destinationThreadLockAndSignal, capacityI );
         }
 
     }

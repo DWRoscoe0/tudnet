@@ -68,11 +68,11 @@ public class Unicaster
       // their sequence numbers.  They all start at 0.
       private DefaultLongLike newIncomingPacketsSentDefaultLongLike;
 	    	// This is set to the value of the sequence number argument of the
-			  // most recently received "N" message plus 1.  
+			  // most recently received "PS" message plus 1.  
 			  // When sent this argument was the remote end's 
 			  // EpiOutputStream packet counter.
       	// This value usually increases, but can decrease 
-        // if an "N" is carried by an out-of-order packets.
+        // if an "PS" is carried by an out-of-order packets.
       private NamedInteger oldIncomingPacketsSentNamedInteger;
 	    	// A difference between this and newIncomingPacketsSentDefaultLongLike 
         // indicates a new received sequence number needs to be processed.
@@ -99,12 +99,12 @@ public class Unicaster
 	    	// A difference between this and newOutgoingPacketsSentNamedInteger 
 	      // indicates new packets have been sent and need to be processed.
       private NamedInteger newOutgoingPacketsReceivedNamedInteger;
-	    	// This value comes from the most recently received "NFB" message.  
+	    	// This value comes from the most recently received "PA" message.  
 			  // When sent this argument was the remote end's 
 			  // EpiInputStream packet counter, 
         // counting the number of packets recevied.
 	    	// This value normally increases, but can decrease because of 
-        // out-of-order "NFB" packets. 
+        // out-of-order "PA" packets. 
       private DefaultLongLike oldOutgoingPacketsReceivedDefaultLongLike;
 	    	// A difference between this and newOutgoingPacketsReceivedNamedInteger 
 	      // indicates a new packet has been acknowledged and 
@@ -252,13 +252,16 @@ public class Unicaster
 					  {
 		    			streamcasterLockAndSignal.doWaitE(); // Waiting for new input.
 	        		if ( EpiThread.exitingB() ) break;
-			    		processingRemoteMessagesV(); // Includes de-multiplexing.
+			    		processingMessagesFromRemotePeerV(); // Includes de-multiplexing.
 			    		multiplexingPacketsFromSubcastersV();
+				  		writingTerminatedStringV( "TEST" );
+				  		endingPacketV(); // Forcing send.
 			      	}
 	    		if  // Informing remote end whether app is doing a Shutdown.
 	    			( theShutdowner.isShuttingDownB() ) 
 		    		{
-		  				writingNumberedPacketV("SHUTTING-DOWN"); // Informing peer.
+		  				///writingNumberedPacketV("SHUTTING-DOWN"); // Informing peer.
+		  				writingAndSendingV("SHUTTING-DOWN"); // Informing peer.
 		          appLogger.info( "SHUTTING-DOWN message sent.");
 		    			}
     			} // processing:
@@ -292,7 +295,7 @@ public class Unicaster
 	      DatagramPacket theDatagramPacket= // Extracting DatagramPacket.
 						theSubcasterPacket.getDatagramPacket();
 	      //theEpiOutputStreamO.flush(); // Flushing to prepare new stream buffer.
-	      writingSequenceNumberV();
+	      ///writingSequenceNumberV();
 	      writingTerminatedStringV( // Writing key as de-multiplex header. 
 	      	theSubcasterPacket.getKeyK() 
 	      	);
@@ -304,21 +307,22 @@ public class Unicaster
 						theDatagramPacket.getOffset(),
 						theDatagramPacket.getLength()
 						);
-			  theEpiOutputStreamO.flush(); // Flushing to send it as a packet.
+			  ///theEpiOutputStreamO.flush(); // Flushing to send it as a packet.
+				endingPacketV();
 				}
 
-		private void processingRemoteMessagesV() throws IOException
+		private void processingMessagesFromRemotePeerV() throws IOException
 		  /* This method processes all available messages from the remote peer.
-		    These messages might not be in a single packet.
+		    These messages might be in a single packet or several packets.
 		    If a message begins with a Subcaster key then 
 		    the body of the message is forwarded to 
-		    the associated Subcaster as a new packet. 
+		    the associated Subcaster as a new nested packet. 
 		    Otherwise the message is decoded locally.
 		    */
 		  {
-			  while ( theEpiInputStreamI.available() > 0 ) {
+			  while ( theEpiInputStreamI.available() > 0 ) { // Doing all available.
 		  	  try 
-			  	  { processingRemoteMessageV(); }
+			  	  { processingRemoteMessageV(); } // Doing only one.
 			    	catch (IllegalArgumentException anIllegalArgumentException)
 				    { // Handling any parse errors.
 		        	appLogger.warning(
@@ -334,7 +338,6 @@ public class Unicaster
 		  /* This method processes the next available message.
 		    Most will be demultiplexed and passed to Subcasters.
 		   */
-		
 			{
 				String keyString= readAString(); // Reading message key string
 
@@ -345,14 +348,17 @@ public class Unicaster
 		        ( theSubcaster != null )
 		        { processMessageToSubcasterV( theSubcaster ); break process; }
 
-		      if ( processSequenceNumberB(keyString) ) // "N"
+		      // Process non-Subcaster message.
+		      if ( processPacketSequenceNumberB(keyString) ) // "PS"
    			  	break process;
-		      if ( processSequenceFeedbackB(keyString) ) // "NFB"
+		      if ( processPacketAcknowledgementB(keyString) ) // "PA"
    			  	break process;
   			  if ( processHelloB( keyString ) ) // "HELLO"
    			  	break process;
    			  if ( processShuttingDownB(keyString) ) // "SHUTTING-DOWN"
    			  	break process;
+    		  if ( keyString.equals( "TEST" ) ) // "TEST" packet.
+   			  	break process; // Accepting by breaking.
 
           appLogger.warning( "Ignoring remote message: " + keyString );
 					} // process:
@@ -364,44 +370,48 @@ public class Unicaster
 		    by exchanging HELLO messages.  This includes:
 		    * Sending a HELLO message.
 		    * Receiving a HELLO message.
-		    * determining which peer should act as the leader when needed.  
-		      This determination is based on peer IP addresses.
-		    * Ignoring other messages.
+		    * determining which peer should act as the leader when needed.
+		      If the local peer decides to be the LEADER then 
+		      the remoate peer decides to be the follower, and vice versa.
+		      This determination is based on the peer's IP addresses.
+		    * Ignoring messages other than HELLO.
 		    This method should execute in both peers at approximately
-		    the same time.
+		    the same time and is called when the local and remote peers
+		    recognize each other's existence.
 		    Returns true if HELLO messages were exchanged, meaning
-		    the connection may be considered established, false otherwise.
+		    the connection may be considered established.
+		    Returns false otherwise.
 		    */
 			{
 				int triesRemainingI= 3; // 3 tries then we give up.
 			  boolean successB= false;
-			  exchangingHellos: 
-			  	while (true) // Repeating until connected or terminated.
-				  {
-	          if ( triesRemainingI-- <= 0 ) break exchangingHellos;
-			  		writingTerminatedStringV( "HELLO" );
-			  		writingTerminatedStringV( 
-			  				getKeyK().getInetAddress().getHostAddress() 
-			  				); // Writing what will be IP.
-			  		flush();
-	          long helloSentMsL= System.currentTimeMillis();
-	          awaitingResponseToHello: while (true) {
-	            Input theInput=  // Awaiting next input within interval.
-	            		testWaitInIntervalE( helloSentMsL, 5000 );
-	            if // Handling exit interrupt by exiting.
-	    	    		( tryingToCaptureTriggeredExitB( ) )
-	  	    			break exchangingHellos; // Exit everything.
-	            if ( theInput == Input.TIME ) // Handling time-out.
-		            { appLogger.info( "Time-out waiting for HELLO." );
-		              break awaitingResponseToHello;
-		            	}
-		    			String keyString= // Reading message key string
-		    				readAString(); 
-		  			  if ( processHelloB( keyString ) ) 
-		  			  	{ successB= true; break exchangingHellos; }
-		  			  // Ignoring any other message.
-	          	} // awaitingResponseToHello:
-	  			  } // exchangingHellos:
+			  tryingToConnectByExchangingHellos: while (true) {
+          if ( triesRemainingI-- <= 0 ) // Exiting if try limit exceeded. 
+          	break tryingToConnectByExchangingHellos;
+		  		writingTerminatedStringV( "HELLO" );
+		  		writingTerminatedStringV(  // Writing other peer's IP address. 
+		  				getKeyK().getInetAddress().getHostAddress() 
+		  				);
+		  		endingPacketV(); // Forcing send.
+          long helloSentMsL= System.currentTimeMillis();
+          processingPossibleHelloResponse: while (true) {
+            Input theInput=  // Awaiting next input within time interval.
+            		testWaitInIntervalE( helloSentMsL, 5000 );
+            if // Handling possible exit interrupt.
+    	    		( tryingToCaptureTriggeredExitB( ) )
+  	    			break tryingToConnectByExchangingHellos; // Exit everything.
+            if ( theInput == Input.TIME ) // Handling possible time-out.
+	            { appLogger.info( "Time-out waiting for HELLO." );
+	              break processingPossibleHelloResponse;
+	            	}
+	    			String keyString= // Reading message key string.
+	    				readAString(); 
+	  			  if // Handling possible received HELLO key message. 
+	  			    ( processHelloB( keyString ) ) 
+	  			  	{ successB= true; break tryingToConnectByExchangingHellos; }
+	  			  // Ignoring any other message.
+          	} // processingPossibleHelloResponse:
+  			  } // tryingToConnectByExchangingHellos:
 				return successB;
 				}
   	
@@ -413,18 +423,18 @@ public class Unicaster
   	    which peer, the local or remote, will be leader,
   	    by comparing the IP addresses, and setting 
   	    the value for leadingB.
-  	    It does not send a reply "HELLO".  This is done elsewhere.
+  	    It does not send a reply "HELLO".  
+  	    This is assumed to have been done simultaneously elsewhere.
   	    It returns true if HELLO was processed, false otherwise.
   	    The first time this method is called is the only one that counts.
-  	    Later uses handle redundant retransmissions.
+  	    Later calls might redundant retransmissions, 
+  	    but should have no other effect.
   	   */
 	  	{
   		  boolean isKeyB= keyString.equals( "HELLO" ); // Testing key.
-  		  if (isKeyB) { // Decode argument if key is "HELLO".
-					String localIpString= 
-							readAString();
-					String remoteIpString= 
-							getKeyK().getInetAddress().getHostAddress();
+  		  if (isKeyB) { // Decoding argument if key is "HELLO".
+					String localIpString= readAString();
+					String remoteIpString= getKeyK().getInetAddress().getHostAddress();
 					leadingB= localIpString.compareTo(remoteIpString) > 0;
 					//leadingB= !leadingB; // Reverse roles for debug test. 
 					// Note, the particular ordering of IP address Strings
@@ -438,16 +448,16 @@ public class Unicaster
   		  return isKeyB;
 	  		}
 
-  	private boolean processSequenceNumberB(String keyString) 
+  	private boolean processPacketSequenceNumberB(String keyString) 
   			throws IOException
-  	  /* This method processes the packet sequence number that follows "N",
+  	  /* This method processes the packet sequence number that follows "PS",
   	    which comes from the remote peer EpiOutputStreamO packet count.
   	    From this and the local EPIInputStreamI packet count it calculates 
   	    a new value of the local peer's incoming packet loss ratio.
   	    This ratio is accurate when calculated because
   	    the values it uses in the calculation are synchronized.
 
-  	    It also sends an "NFB" message back to the remote peer with same numbers
+  	    It also sends an "PA" message back to the remote peer with same numbers
   	    so the remote peer can calculate the same ratio, 
   	    which for the remote peer is called the outgoing packet loss ratio.
   	    By sending and using both numbers the remote peer's calculation is
@@ -455,7 +465,7 @@ public class Unicaster
 
   	    Every packet has a sequence number, but 
   	    not every packet needs to contain its sequence number.
-  	    The reception of an "N" message with its sequence number means that
+  	    The reception of an "PS" message with its sequence number means that
   	    the remote has sent at least that number of packets.
   	    The difference of the highest sequence number received and
   	    the number of packets received is the number of packets lost.
@@ -467,7 +477,7 @@ public class Unicaster
 	  		  to use modulo (wrap-around) arithmetic.
 	  	  */
 	  	{
-  		  boolean isKeyB= keyString.equals( "N" ); 
+  		  boolean isKeyB= keyString.equals( "PS" ); 
   		  if (isKeyB) {
 	  		  int sequenceNumberI= readANumberI(); // Reading # from packet.
 				  newIncomingPacketsSentDefaultLongLike.setValueL( // Recording.
@@ -477,9 +487,10 @@ public class Unicaster
 	      		newIncomingPacketsSentDefaultLongLike,
 						newIncomingPacketsReceivedNamedInteger
 					  );
-		  		writingTerminatedStringV( "NFB" );
-		  		writingTerminatedLongV( // The remote sent packet count.
-		  				newIncomingPacketsSentDefaultLongLike.getValueL() 
+		  		writingTerminatedStringV( "PA" );
+		  		writingTerminatedLongV( // The remote sequence number.
+		  				//newIncomingPacketsSentDefaultLongLike.getValueL()
+		  				sequenceNumberI
 		  				);
 		  		writingTerminatedLongV( // The local received packet count.
 		  				newIncomingPacketsReceivedNamedInteger.getValueL() 
@@ -489,27 +500,29 @@ public class Unicaster
   		  return isKeyB;
 	  		}
   	
-  	private boolean processSequenceFeedbackB(String keyString) 
+  	private boolean processPacketAcknowledgementB(String keyString) 
   			throws IOException
-  	  /* This method processes the "NFB" sequence number 
+  	  /* This method processes the "PA" sequence number 
   	    feedback message, which the remote peer sends
-  	    in response to receiving an "N" sequence number message.
-  	    The "NFB" is followed by:
-  	    * an echo of the local sent packets count received by the remote peer,
+  	    in response to receiving an "PS" sequence number message.
+  	    The "PA" is followed by:
+  	    * a copy of the sent packet sequence number received by the remote peer,
   	    * the remote peers received packet count.
   	    From these two values it calculates 
   	    the packet loss ratio in the remote peer receiver.
-  	    By having "NFB" include both values, its calculation is RTT-immune.
+  	    By having "PA" include both values, its calculation is RTT-immune.
 
-				See processSequenceNumberB(..) about "N" for more information.
+				See processSequenceNumberB(..) about "PS" for more information.
 	  	  */
 	  	{
-	  	  boolean isKeyB= keyString.equals( "NFB" ); 
+	  	  boolean isKeyB= keyString.equals( "PA" ); 
 			  if (isKeyB) {
-		  		int numberI= readANumberI(); // Reading echo of packets sent.
-			    newOutgoingPacketsSentEchoedNamedInteger.setValueL(numberI);
-		  		numberI= readANumberI(); // Reading packets received.
-		      newOutgoingPacketsReceivedNamedInteger.setValueL(numberI);
+		  		int sequenceNumberI= readANumberI(); // Reading echo of sequence #.
+			    newOutgoingPacketsSentEchoedNamedInteger.setValueL(
+			    		sequenceNumberI + 1 // Convert sequence # to sent packet count.
+			    		);
+		  		int packetsReceivedI= readANumberI(); // Reading packets received.
+		      newOutgoingPacketsReceivedNamedInteger.setValueL(packetsReceivedI);
 		      outgoingPacketLossLossAverager.recordPacketsReceivedOrLostV(
 	  					newOutgoingPacketsSentEchoedNamedInteger,
 	  					newOutgoingPacketsReceivedNamedInteger
@@ -517,6 +530,41 @@ public class Unicaster
 			  	}
 			  return isKeyB;
 	  		}
+
+    private long nextSequenceNumberMsL= System.currentTimeMillis();
+
+    protected void endingPacketV() throws IOException
+      /* This method writes a packet sequence number 
+        into the stream if it is time for it.
+        Next it forces what has been written to the stream to be sent.
+        This method overrides the Streamcaster version.
+    		*/
+      {
+    	  if // Write next packet sequence number if it's time for it. 
+    	    ( System.currentTimeMillis() - nextSequenceNumberMsL  >= 0 )
+	    	  {
+	    	  	writingSequenceNumberV();
+	    	    do // Increment next time until it's in the future.
+		    	  	nextSequenceNumberMsL+= 1000; // Add 1 second to next time.
+	    	    	while 
+	    	    		( System.currentTimeMillis() - nextSequenceNumberMsL  >= 0 );
+	    	    }
+	  		super.endingPacketV();
+	  		}
+
+    
+    protected void writingSequenceNumberV() throws IOException
+      /* This method increments and writes the packet ID (sequence) number
+        to the EpiOutputStream.
+        It doesn't flush().
+        ??? Shouldn't this be a Unicaster method?
+        */
+      {
+	  		writingTerminatedStringV( "PS" );
+	  		writingTerminatedLongV( 
+	  				(theEpiOutputStreamO.getCounterNamedInteger().getValueL()) 
+	  				);
+        }
 
   	private boolean processShuttingDownB(String keyString)
   	  /* This method sets this thread's interrupt status to cause exit
@@ -572,7 +620,8 @@ public class Unicaster
 					} //processing:
 	      }
 
-		private void runWithoutSubcastersV() throws IOException //// Needn't be public.
+		public void runWithoutSubcastersV()  //// Needn't be public. 
+			throws IOException
       // Does PING-REPLY protocol in this thread, not in a Subcaster.
 	    {
 				pingReplyProtocolV();

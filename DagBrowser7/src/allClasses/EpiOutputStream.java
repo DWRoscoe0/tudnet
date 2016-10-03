@@ -142,7 +142,8 @@ public class EpiOutputStream<
 	  private void queuingV( E theKeyedPacketE )
 		  // This method queues a packet and counts it.
 			{
-		    notifyingQueueQ.add( theKeyedPacketE ); // Adding packet to queue.
+		    ///notifyingQueueQ.add( theKeyedPacketE ); // Adding packet to queue.
+	  		notifyingQueueQ.put( theKeyedPacketE ); // Adding packet to queue.
 				packetCounterNamedInteger.addDeltaL( 1 ); // Counting the packet.
 				}
 				

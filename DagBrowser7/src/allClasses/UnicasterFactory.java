@@ -31,7 +31,7 @@ public class UnicasterFactory {
     {
 		  LockAndSignal unicasterLockAndSignal= new LockAndSignal();
 			NetcasterQueue receiverToUnicasterNetcasterQueue= 
-					new NetcasterQueue( unicasterLockAndSignal );
+					new NetcasterQueue( unicasterLockAndSignal, Integer.MAX_VALUE );
 			NetcasterInputStream unicasterNetcasterInputStream=
 					theAppGUIFactory.makeNetcasterInputStream( 
 							receiverToUnicasterNetcasterQueue 
@@ -43,7 +43,7 @@ public class UnicasterFactory {
 						theNetcasterPacketManager 
 						);
 			subcasterToUnicasterSubcasterQueue= 
-					new SubcasterQueue( unicasterLockAndSignal );
+					new SubcasterQueue( unicasterLockAndSignal, Integer.MAX_VALUE );
 		  SubcasterManager theSubcasterManager= 
 					new SubcasterManager( theDataTreeModel, theAppGUIFactory, this );
 	    Unicaster theUnicaster= new Unicaster(
@@ -92,7 +92,7 @@ public class UnicasterFactory {
 			SubcasterPacketManager theSubcasterPacketManager=
 					new SubcasterPacketManager( keyString ); 
 			SubcasterQueue unicasterToSubcasterSubcasterQueue=
-					new SubcasterQueue( subcasterLockAndSignal );
+					new SubcasterQueue( subcasterLockAndSignal, Integer.MAX_VALUE );
 			SubcasterInputStream theSubcasterInputStream= 
 			  	makeSubcasterInputStream( unicasterToSubcasterSubcasterQueue );
 			SubcasterOutputStream theSubcasterOutputStream= 

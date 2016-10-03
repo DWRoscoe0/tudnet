@@ -153,7 +153,7 @@ public class Streamcaster<
               Thread.currentThread().interrupt(); // Starting termination.
               break pingEchoRetryLoop;
               }
-          writingPacketV("PING"); // Sending ping packet.
+          writingAndSendingV("PING"); // Sending ping packet.
           pingSentNanosL= System.nanoTime(); // Recording ping send time in ns
           long pingSentMsL= System.currentTimeMillis(); // and in ms.
           replyWaitLoop: while (true) { // Handling echo or other conditions.
@@ -271,7 +271,7 @@ public class Streamcaster<
         		ignoringOrLoggingStringV(); // Ignoring any other string.
 	          } // pingWaitLoop
 	        while(true) { // Sending and confirming receipt of REPLY.
-	          writingPacketV("REPLY");
+	          writingAndSendingV("REPLY");
 	          long echoSentMsL= System.currentTimeMillis();
 	          postReplyPause: while (true) {
 	            theInput=  // Awaiting input within the ignore interval.
@@ -288,9 +288,9 @@ public class Streamcaster<
 			          	break postReplyPause;  // Exiting pingWaitLoop only.
 			            }
 	        		// Change following to use: ignoringOrLoggingStringV(); // Ignoring any other string.
-	        		String aString= readAString(); // Reading message to ignore it.
+	        		String theString= readAString(); // Reading message to ignore it.
 	            appLogger.warning( 
-	        			"tryingPingReceiveV(): unexpected " + aString + ", ignoring"
+	        			"tryingPingReceiveV(): unexpected " + theString + ", ignoring"
 	        			);
 	          	} // postReplyPause: 
 	          }
@@ -351,8 +351,8 @@ public class Streamcaster<
 
     // String reading methods.
 
-    protected boolean tryingToGetStringB( String aString ) throws IOException
-      /* This method tries to get a particular String aString.
+    protected boolean tryingToGetStringB( String theString ) throws IOException
+      /* This method tries to get a particular String theString.
         It consumes the String and returns true 
         if the desired string is there, 
         otherwise it does not consume the String and returns false.
@@ -367,7 +367,7 @@ public class Streamcaster<
     		String inString= tryingToGetString();
 		    //appLogger.debug( "tryingToGetStringB(): inString= "+ inString );
     	  gotStringB=  // Testing for desired string.
-    	  		aString.equals( inString );
+    	  		theString.equals( inString );
 		    if ( ! gotStringB ) // Resetting position if String is not correct.
     	  	theEpiInputStreamI.reset(); // Putting String back into stream.
     	  return gotStringB;
@@ -427,56 +427,55 @@ public class Streamcaster<
 
     // String writing and packet sending code.
 
-    protected void writingPacketV( String aString ) throws IOException
-      /* This method writes aString to the EpiOutputStream.
-        It does it using a EpiOutputStream.
-        It ends with a flush() so that the message is actually sent
-        and sent quickly.
+    protected void writingAndSendingV( String theString ) throws IOException
+      /* This method writes theString to theEpiOutputStream
+        and then sends it and anything else that has been written 
+        to the stream in a packet.
         */
       {
-	  		writingTerminatedStringV( aString );
-	  		flush(); // Sending it by flushing.
+	  		writingTerminatedStringV( theString );
+	  		endingPacketV(); // Sending it by flushing.
         }
 
-    protected void flush() throws IOException
-      /* This flushes the stream.
-        It guarantees a packet boundary by sending a packet.
-        This version simply flushes that EpiOutputStream,
-        but an overridden version could do things such as
-    		adding a sequence number.
+    protected void endingPacketV() throws IOException
+      /* This method forces what has been written to the stream to be sent.
+        It also guarantees a packet boundary at this point in the stream.
+        
+        This version simply flushes theEpiOutputStreamO,
+        but an overridden version could do other things also,
+        such as adding a packet sequence number.
     		*/
       {
-	  		theEpiOutputStreamO.flush(); // Sending it by flushing.
+	  		theEpiOutputStreamO.flush(); // Sending it by flushing stream.
         }
 
-    protected void writingTerminatedStringV( String aString ) 
+    protected void writingTerminatedStringV( String theString ) 
     		throws IOException
-      /* This method writes to the EpiOutputStream the following:
-        * aString 
-        * delimiterChar as the terminator character on the end.
-        It doesn't flush() the stream.
+      /* This method writes to the EpiOutputStream 
+        theString followed by the delimiterChar.
+        But it doesn't force a flush().
         */
       { 
-	  		writingStringV( aString );
+	  		writingStringV( theString );
 	  		writingStringV( String.valueOf(delimiterChar) );
         }
 
     protected void writingTerminatedLongV( long theL ) 
     		throws IOException
-      /* This method writes theL with delimiterChar
-        as the terminator character on the end to the EpiOutputStream.
-        It doesn't flush().
+      /* This method writes theL long int 
+        followed by the delimiterChar to the EpiOutputStream.  
+        But it doesn't force a flush().
         */
       { 
 	  		writingTerminatedStringV( theL + "" ); // Converting to String.
         }
 
-    protected void writingStringV( String aString ) throws IOException
-      /* This method write aString to the EpiOutputStream.
-        It doesn't flush().
+    protected void writingStringV( String theString ) throws IOException
+      /* This method writes theString to the EpiOutputStream.
+        But it doesn't force a flush().
         */
       { 
-    		byte[] buf = aString.getBytes(); // Getting byte buffer from String
+    		byte[] buf = theString.getBytes(); // Getting byte buffer from String
         theEpiOutputStreamO.write(buf); // Writing it to stream memory.
         }
     

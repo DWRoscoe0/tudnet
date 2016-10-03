@@ -24,7 +24,7 @@ public class CountingPacketQueue extends NetcasterQueue
 	  		NamedInteger outputCountNamedInteger
 	  		)
 	    {
-	      super( destinationThreadLockAndSignal );
+	      super( destinationThreadLockAndSignal, Integer.MAX_VALUE );
 	  		this.outputCountNamedInteger= outputCountNamedInteger;
 	      }
 	  

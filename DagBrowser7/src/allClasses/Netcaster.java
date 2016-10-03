@@ -85,28 +85,18 @@ public class Netcaster
 		    super.initializingV();
 	    	}
 
+    /*///
     protected void writingNumberedPacketV( String aString ) 
     		throws IOException
-      /* This method is like writingPacketV(..) but
+      /* This method is like writingAndSendingV(..) but
         it prepends a packet ID / sequence number.
         ??? Maybe have a version that appends number?
         */
+    /*///
       {
     		writingSequenceNumberV();
-    		writingPacketV(aString); // Writing string into buffer.
+    		writingAndSendingV(aString); // Writing string into buffer.
         }
-
-    protected void writingSequenceNumberV() throws IOException
-      /* This method increments and writes the packet ID (sequence) number
-        to the EpiOutputStream.
-        It doesn't flush().
-        ??? Shouldn't this be a Unicaster method?
-        */
-      {
-	  		writingTerminatedStringV( "N" );
-	  		writingTerminatedLongV( 
-	  				(theEpiOutputStreamO.getCounterNamedInteger().getValueL()) 
-	  				);
-        }
+    */ ///
 
 		}

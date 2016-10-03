@@ -12,9 +12,15 @@ public class Sender // Uunicast and multicast sender thread.
   implements Runnable
 
   /* This simple thread repeatedly receives DatagramPackets 
-    from via a queue from other threads and sends them
+    via a queue from other threads and sends them
     though a DatagramSocket.
     
+    //// Limit queue size.  Block queuers when full.
+    
+    //// Change this or callers to gracefully
+    finish sending queued packets before 
+    closing socket and terminating.
+      
     ?? Add congestion control and fair queuing.
     It would limit not only total data rate,
     but also data rates to  the individual peers
@@ -27,7 +33,8 @@ public class Sender // Uunicast and multicast sender thread.
     
     ?? Record the times that packets are passed to the DatagramSocket
     with the send(..) method, to be used for determining round trip time
-    as accurately, instead of doing it in Unicaster as it is done now. 
+    as accurately, instead of doing it in Unicaster as it is done now.
+    NO, because RTT should include time in queue. 
     */
 
   {
@@ -67,7 +74,7 @@ public class Sender // Uunicast and multicast sender thread.
 	      		if // Exiting loop if thread termination is requested.
 	      		  ( EpiThread.exitingB() ) 
 	      			break toReturn;
-		      		
+
 	          processingSockPacketsToSendB(); // Processing inputs.
 	          senderLockAndSignal.doWaitE();  // Waiting for next input signal.
 		        } // while (true)
@@ -97,14 +104,15 @@ public class Sender // Uunicast and multicast sender thread.
         boolean packetsProcessedB= false;  // Assuming no packet to send.
 
         while (true) {  // Processing all queued send packets.
-          NetcasterPacket theNetcasterPacket= // Trying to get next packet from queue.
+          NetcasterPacket theNetcasterPacket= // Trying to get next packet.
           		netcasterToSenderNetcasterQueue.poll();
           if (theNetcasterPacket == null) break;  // Exiting if no more packets.
-        	DatagramPacket theDatagramPacket= theNetcasterPacket.getDatagramPacket();
+        	DatagramPacket theDatagramPacket= 
+        			theNetcasterPacket.getDatagramPacket();
           IPAndPort theIPAndPort= theNetcasterPacket.getKeyK();
           theDatagramPacket.setAddress(theIPAndPort.getInetAddress());
           theDatagramPacket.setPort(theIPAndPort.getPortI());
-          if  // Debug: Send all but 1/10 of packets.
+          if  // Debug: Send all but 1/10 of packets to test retries.
             (theRandom.nextInt(20) == 0)
             appLogger.debug( // Drop the packet.
             		"dropping packet "
@@ -120,7 +128,7 @@ public class Sender // Uunicast and multicast sender thread.
 		            	theDatagramPacket
 		              );
 	            } catch (IOException e) { // Handle exception by dropping packet.
-	              appLogger.info(
+	              appLogger.error(
 	                "processingSockPacketsToSendB(),"
 	                +e
 	                );

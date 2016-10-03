@@ -5,7 +5,8 @@ public class LossAverager
 	/* This class calculates packet losses based on
 	  changing counts of sent and received packets.
     
-    ?? Maybe have multiple methods, different ones for "N" and "NFB" processing,
+    ?? Maybe have multiple methods, different ones for 
+    "PS" and "PA" processing,
     or have different subclasses.
 
     */

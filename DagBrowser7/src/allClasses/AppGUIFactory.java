@@ -49,7 +49,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
     {
   	  LockAndSignal senderLockAndSignal= new LockAndSignal();
   	  NetcasterQueue netcasterToSenderNetcasterQueue= 
-  	  		new NetcasterQueue( senderLockAndSignal );
+  	  		new NetcasterQueue( senderLockAndSignal, 5 );
       DataRoot theDataRoot= new DataRoot();
       MetaFileManager theMetaFileManager= new MetaFileManager( theDataRoot );
       MetaRoot theMetaRoot= new MetaRoot( theDataRoot, theMetaFileManager );
@@ -60,9 +60,9 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
         );
 	    LockAndSignal cmThreadLockAndSignal= new LockAndSignal();
 	    NetcasterQueue multicasterToConnectionManagerNetcasterQueue=
-	      new NetcasterQueue(cmThreadLockAndSignal);
+	      new NetcasterQueue(cmThreadLockAndSignal, Integer.MAX_VALUE);
 	    NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue=
-	      new NetcasterQueue(cmThreadLockAndSignal);
+	      new NetcasterQueue(cmThreadLockAndSignal, Integer.MAX_VALUE);
       UnicasterManager theUnicasterManager= new UnicasterManager( 
         	theDataTreeModel, this
        		);
@@ -291,7 +291,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 	  { 
 		  LockAndSignal multicasterLockAndSignal= new LockAndSignal();  
 		  NetcasterQueue multicastReceiverToMulticasterNetcasterQueue= 
-		  		new NetcasterQueue( multicasterLockAndSignal );
+		  		new NetcasterQueue( multicasterLockAndSignal, Integer.MAX_VALUE );
 			int multicastPortI= PortManager.getDiscoveryPortI();
 			IPAndPort theIPAndPort= AppGUIFactory.makeIPAndPort(
   				multicastInetAddress, multicastPortI 

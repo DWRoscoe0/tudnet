@@ -10,10 +10,10 @@ public class NetcasterQueue
   {
 
     NetcasterQueue(  // Constructor.
-    		LockAndSignal destinationThreadLockAndSignal
+    		LockAndSignal destinationThreadLockAndSignal, int capacityI
     		)
       {
-        super( destinationThreadLockAndSignal );
+        super( destinationThreadLockAndSignal, capacityI );
         }
 
     }

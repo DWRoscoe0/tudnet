@@ -2,7 +2,7 @@ package allClasses;
 
 //import static allClasses.Globals.appLogger;
 
-import java.util.Collection;
+///import java.util.Collection;
 //import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -50,8 +50,12 @@ public class NotifyingQueue<E> // Queue inter-thread communication.
 	{
 	  LockAndSignal consumerThreadLockAndSignal;  // The monitor-lock to use.
 	  
-	  NotifyingQueue( LockAndSignal consumerThreadLockAndSignal )  // Constructor.
+	  NotifyingQueue(   // Constructor. 
+	  		LockAndSignal consumerThreadLockAndSignal, int capacityI 
+	  		)
 	    {
+	  	  ///super(consumerThreadLockAndSignal != null ? 5 : 0); // Create queue of size 5.
+	  	  super(capacityI);
 	      this.consumerThreadLockAndSignal= consumerThreadLockAndSignal;
 	      }
 		
@@ -66,22 +70,47 @@ public class NotifyingQueue<E> // Queue inter-thread communication.
 	      It does not wait for anE to be processed by the destination thread.
 	     	*/
 	    {
-	      boolean resultB= super.add( anE );
+	      boolean resultB= super.add( anE ); ////
 	      consumerThreadLockAndSignal.doNotifyV();
 	      return resultB;
 	      }
+	  
+	  public void put( E anE )
+	    /*//// document, based on add().
+	     	*/
+	    {
+	  	  boolean interruptedB= false; // Assume no interrupted will happen.
 
-	  public boolean addAll(Collection<? extends E> aCollection) 
+	  	  while (true) // Looping until element added to queue.
+		  	  {
+			      try {
+				  		super.put( anE ); // Adding element to queue.  This might block.
+				  		break; // Exiting loop if put finished without interruption.
+			        } 
+			      catch( InterruptedException ex ) { // Block was interrupted.
+			      	interruptedB= true; // Recording interrupt for restoring later.
+			        }
+			  	  }
+	      consumerThreadLockAndSignal.doNotifyV();
+
+      	if ( interruptedB ) // Restoring interrupt status if interrupt happened.
+      		Thread.currentThread().interrupt();
+	      }
+
+	  /*///
+	  public boolean XaddAll(Collection<? extends E> aCollection) 
 	    /* This method adds aCollection, all elements of it,
 	      to the queue and returns immediately.
 	      It also notifies the consumer thread of the new elements.
 	      It does not wait for those elements to be completely processed 
 	      by the destination thread.
  	      */
+	  /*///
 	    {
 	      boolean resultB= super.addAll( aCollection );
 	      consumerThreadLockAndSignal.doNotifyV();
 	      return resultB;
 	      }
+	  *///
 
 	  }

@@ -259,7 +259,8 @@ public class Multicaster
                 	( ! EpiThread.exitingB() )
     	            { // Send and receive multicast packets.
     	              try {
-    		      				writingNumberedPacketV("DISCOVERY"); // Sending query.
+    		      				///writingNumberedPacketV("DISCOVERY"); // Sending query.
+    		      				writingAndSendingV("DISCOVERY"); // Sending query.
     	                receivingPacketsV( ); // Receiving packets until done.
     	                }
     	              catch( SocketException soe ) {
@@ -336,7 +337,8 @@ public class Multicaster
 	            		String inString= readAString(); // Reading message.
 		          		//if ( testingMessageB( "DISCOVERY" ) ) // Handling query, maybe.
 	            		if ( inString.equals( "DISCOVERY" ) ) // Handling query, maybe.
-			        			{ writingNumberedPacketV("ALIVE"); // Sending response.
+			        			{ ///writingNumberedPacketV("ALIVE"); // Sending response.
+	            				writingAndSendingV("ALIVE"); // Sending response.
 				              processingPossibleNewUnicasterV();
 				              break processor;
 				              }
