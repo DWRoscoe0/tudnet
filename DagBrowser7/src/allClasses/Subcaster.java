@@ -70,7 +70,7 @@ public class Subcaster
 					  {
 							if ( EpiThread.exitingB() ) break; // Exiting if requested. 
 							pingReplyProtocolV();
-			    		streamcasterLockAndSignal.doWaitE(); // Waiting for any input.
+			    		theLockAndSignal.waitingForInterruptOrNotificationE(); // Waiting for any input.
 					    } // while(true)
 					theSubcasterOutputStream.close(); // Closing output stream.
 					}

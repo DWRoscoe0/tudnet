@@ -356,6 +356,9 @@ public class Multicaster
 			        		//	  )
 			        		//);
 	            		}
+	            case NONE: // Handling case of no input.
+		            appLogger.error( "receivingPacketsV(): Input.NONE" );
+		            break;
 	            }
             } // processor: // Processing packets until exit.
         	} // processorLoop:  // Processing packet or exiting.

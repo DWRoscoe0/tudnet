@@ -44,7 +44,7 @@ public class Streamcaster<
 	  protected final long HalfPeriodMillisL= // Half of period.
 	    PeriodMillisL / 2;  
 
-    protected final LockAndSignal streamcasterLockAndSignal;
+    protected final LockAndSignal theLockAndSignal;
 			// LockAndSignal for inputs to this thread.  It is used in
       // the construction of the following queue. 
 
@@ -70,7 +70,7 @@ public class Streamcaster<
         Shutdowner theShutdowner,
         boolean leadingB,
 	  		K theKeyK,
-	  		LockAndSignal netcasterLockAndSignal,
+	  		LockAndSignal theLockAndSignal,
 	      I theEpiInputStreamI,
 	      O theEpiOutputStreamO
 	  		)
@@ -82,7 +82,7 @@ public class Streamcaster<
 		        theKeyK
 	      		);
 
-	      this.streamcasterLockAndSignal= netcasterLockAndSignal;
+	      this.theLockAndSignal= theLockAndSignal;
 	      this.theEpiInputStreamI= theEpiInputStreamI;
 	      this.theEpiOutputStreamO= theEpiOutputStreamO;
         this.theShutdowner= theShutdowner;
@@ -91,8 +91,8 @@ public class Streamcaster<
 
     protected void initializingV() throws IOException
       // Adds a DataNode for displaying round trip time.
-      //// This might be eliminated if roundTripTimeNamedInteger is moved.
       // It's not presently calculated.
+    	//// This might be eliminated if roundTripTimeNamedInteger is moved.
 	    {
 	      addB( 	roundTripTimeNamedInteger= new NamedInteger( 
 	      		theDataTreeModel, "Round-Trip-Time-ns", -1
@@ -163,8 +163,8 @@ public class Streamcaster<
               { appLogger.info( "Time-out waiting for REPLY: "+triesI );
                 break replyWaitLoop;  // End wait to send new PING, maybe.
               	}
-            if // Handling SHUTTING-DOWN packet or interrupt by exiting.
-    	    		( tryingToCaptureTriggeredExitB( ) )
+            if // Handling thread interrupt by exiting.
+		          ( theInput == Input.INTERRUPTION )
   	    			break pingEchoRetryLoop; // Exit everything.
             theEpiInputStreamI.mark(0); // Preparing to not consume message.
         		String inString= readAString(); // Reading message.
@@ -249,14 +249,14 @@ public class Streamcaster<
 	          theInput= testWaitInIntervalE( // Awaiting next input.
 	          		pingWaitStartMsL, PeriodMillisL + HalfPeriodMillisL
 	          		);
+	      		if // Handling thread interrupt by exiting.
+		          ( theInput == Input.INTERRUPTION )
+		    			break all;
 	          if ( theInput == Input.TIME ) // Exiting all if time-out.
 		          {
 		            appLogger.warning( "Time-out waiting for PING." );
 		            break all;  // Exiting to abort wait.
 		          	}
-	      		if // Handling exit request interrupt by exiting.
-		    			( tryingToCaptureTriggeredExitB( ) )
-		    			break all;
 	      		// Note, can't readAString() here because it might not be available?
             //appLogger.debug( "Testing for PING." );
             AppLog.testingForPingB= true;
@@ -279,7 +279,7 @@ public class Streamcaster<
 	            if ( theInput == Input.TIME ) // Exiting if time limit reached.
 	              break all;  
 	        		if // Exiting everything if exit has been triggered.
-	        			( tryingToCaptureTriggeredExitB( ) )
+			          ( theInput == Input.INTERRUPTION )
 	        			break all;
 		          if // Handling a repeat received ping if present.
 		        	  ( tryingToGetStringB( "PING" ) )
@@ -299,54 +299,40 @@ public class Streamcaster<
 
     protected Input testWaitInIntervalE( long startMsL, long lengthMsL) 
     		throws IOException
-      /* This is a special test-and-wait method with 
-        different input priorities than the LockAndSignal wait methods.
-        The priority order used here is:
-		      TIME
-		      NOTIFICATION
-		      INTERRUPTION
+      /* This is a special test-and-wait method which differs from
+        the methods available in LockAndSignal as follows:
+        * It uses a different input priority order, which is:
+			      NOTIFICATION
+	          TIME
+			      INTERRUPTION
+			    This priority order is useful in those situations when
+			    it is important to finish processing all other pending inputs
+			    before honoring an INTERRUPTION, which usually means a
+			    thread termination request.
+			  * It treats input available from the input stream as NOTIFICATION input. 
        */
 	    {
     		LockAndSignal.Input theInput;
-
     		process: while (true) {
-	        final long remainingMsL= 
-	          streamcasterLockAndSignal.intervalRemainingMsL( 
-	          		startMsL, lengthMsL 
-	          		);
-	        if // Exiting if time before, or after, time interval.
-	          ( remainingMsL == 0 )
-	          { theInput= Input.TIME; break process; }
 	        if // Exiting if a notification from InputStream is ready.
 	          ( theEpiInputStreamI.available() > 0 )
-		        { theInput= Input.NOTIFICATION; 
-            	break process; 
-            	}
-    	  	theInput= // Doing general wait for anything else. 
-    	  	  streamcasterLockAndSignal.doWaitWithTimeOutE( remainingMsL );
-	        if // Handling thread interrupt signal.
-	          ( EpiThread.exitingB() )
-	          { theInput= Input.INTERRUPTION; break; }
+		        { theInput= Input.NOTIFICATION; break process; }
+	      	theInput= theLockAndSignal.testingForNotificationE();
+	      	if ( theInput != Input.NONE ) break process;
+	        final long remainingMsL= 
+		          theLockAndSignal.timeCheckedDelayMsL( 
+		          		startMsL, lengthMsL 
+		          		);
+				  theInput= theLockAndSignal.testingRemainingDelayE( remainingMsL );
+	      	if ( theInput != Input.NONE ) break process;
+	      	theInput= theLockAndSignal.testingForInterruptE();
+	      	if ( theInput != Input.NONE ) break process;
+	      	theLockAndSignal.waitingForInterruptOrDelayOrNotificationV(
+		      		0 // This means waiting with no time limit.
+		      		);
     	  	} // process: while (true) 
-
     	  return theInput;
 	      }
-
-    protected boolean tryingToCaptureTriggeredExitB( ) throws IOException
-      /* This method tests whether exit has been triggered, meaning:
-        * The current thread's isInterrupted() is true.
-		    This method returns true if exit is triggered, false otherwise.
-
-        It no longer does the following additional check:
-        * The next packet, if any, at the head of 
-          the receiverToStreamcasterNotifyingQueueQ,
-		    	contains "SHUTTING-DOWN", indicating the remote node is shutting down.
-		    	If true then the packet is consumed and
-		    	the current thread's isInterrupted() status is set true.
-		    */
-      { 
-	      return EpiThread.exitingB();
-        }
 
 
     // String reading methods.

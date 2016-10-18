@@ -8,6 +8,8 @@ import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
+import allClasses.LockAndSignal.Input;
+
 import static allClasses.Globals.*;  // appLogger;
 
 public class ConnectionManager 
@@ -199,21 +201,22 @@ public class ConnectionManager
         */
       {
     		while (true) { // Repeating until thread termination requested.
+      		maintainingDatagramSocketAndDependentThreadsV( );
+      		maintainingMulticastSocketAndDependentThreadsV( );
+
+          LockAndSignal.Input theInput= // Waiting for any new inputs. 
+        		cmThreadLockAndSignal.waitingForNotificationOrInterruptE();
+
       		if // Exiting loop if  thread termination is requested.
-      		  ( EpiThread.exitingB() ) 
+      		  ( theInput == Input.INTERRUPTION )
       			break;
-      		
-      		managingDatagramSocketAndDependentThreadsV( );
-      		managingMulticastSocketAndDependentThreadsV( );
-      		
+
           processingUnconnectedSockPacketsB();
           processingMulticasterSockPacketsB();
 
           /* At this point, at least the inputs that arrived before 
             the last notification signal should have been processed. 
             */
-
-          cmThreadLockAndSignal.doWaitE(); // Waiting for signal of k inputs.
 	        } // while (true)
         return;
         }
@@ -228,7 +231,7 @@ public class ConnectionManager
     	  stoppingSenderThreadV();
         }
 
-	  private void managingDatagramSocketAndDependentThreadsV( )
+	  private void maintainingDatagramSocketAndDependentThreadsV( )
       /* This method creates the DatagramSocket and 
         the threads which depend on it
         if the socket has not been opened yet.
@@ -339,7 +342,7 @@ public class ConnectionManager
     		EpiThread.stopAndJoinIfNotNullV(theSenderEpiThread);
 		  	}
 
-		private void managingMulticastSocketAndDependentThreadsV( )
+		private void maintainingMulticastSocketAndDependentThreadsV( )
       /* This method creates the MulticastSocket and 
         the thread which depends on it
         if the socket has not been opened yet.

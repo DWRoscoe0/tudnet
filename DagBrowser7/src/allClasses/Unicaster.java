@@ -250,7 +250,7 @@ public class Unicaster
 		  	  		); // Adding Subcaster.
 				  while (true) // Repeating until termination is requested.
 					  {
-		    			streamcasterLockAndSignal.doWaitE(); // Waiting for new input.
+		    			theLockAndSignal.waitingForInterruptOrNotificationE(); // Waiting for new input.
 	        		if ( EpiThread.exitingB() ) break;
 			    		processingMessagesFromRemotePeerV(); // Includes de-multiplexing.
 			    		multiplexingPacketsFromSubcastersV();
@@ -398,7 +398,7 @@ public class Unicaster
             Input theInput=  // Awaiting next input within time interval.
             		testWaitInIntervalE( helloSentMsL, 5000 );
             if // Handling possible exit interrupt.
-    	    		( tryingToCaptureTriggeredExitB( ) )
+    	      	( theInput == Input.INTERRUPTION )
   	    			break tryingToConnectByExchangingHellos; // Exit everything.
             if ( theInput == Input.TIME ) // Handling possible time-out.
 	            { appLogger.info( "Time-out waiting for HELLO." );
@@ -410,7 +410,7 @@ public class Unicaster
 	  			    ( processHelloB( keyString ) ) 
 	  			  	{ successB= true; break tryingToConnectByExchangingHellos; }
 	  			  // Ignoring any other message.
-          	} // processingPossibleHelloResponse:
+          	} // processingPossibleHelloResponse: while (true) 
   			  } // tryingToConnectByExchangingHellos:
 				return successB;
 				}

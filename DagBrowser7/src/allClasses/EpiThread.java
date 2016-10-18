@@ -118,7 +118,8 @@ public class EpiThread
     public static boolean interruptableSleepB( int msI )
       /* This method works like Thread.sleep( msI ),
         causing the current thread to sleep for msI milliseconds,
-        except that it does not throw an InterruptedException if interrupted.
+        except that it does not throw an InterruptedException 
+        if it was interrupted while sleeping.
         Instead, if that happens then the method simply returns with
         the thread's interrupt status set.
         It can be processed by the caller.
@@ -128,18 +129,21 @@ public class EpiThread
     	  boolean interruptedB= false;
     	  
         try {
-          Thread.sleep( msI );
+          Thread.sleep( msI ); // Try to sleep for desired time.
           } 
-        catch( InterruptedException ex ) {
-        	interruptedB= true;
-          Thread.currentThread().interrupt();
+        catch( InterruptedException ex ) { // Handling interruption.
+          Thread.currentThread().interrupt(); // Reestablish interrupted.
+        	interruptedB= true; // Changing return value to indicate it.
           }
         
         return interruptedB;
         }
 
 		public static boolean exitingB()
-		  // This is a method to save a little typing.
+		  /* This is a method to save a little typing.
+		    Like the Thread method that it calls,
+		    it clears this thread's interrupted status.
+		    */
 			{ return Thread.currentThread().isInterrupted(); }
 		
 		}

@@ -14,7 +14,7 @@ public class Misc
     /////////////////////////////////// Need a better way of
     noting and prioritizing things-to-do in the code.
     ? //% to mark old code to be deleted.
-    ? //..../ to mark other things to do,
+    ? //.... to mark other things to do,
       with the number of slashes indicating the priority.
     */
 

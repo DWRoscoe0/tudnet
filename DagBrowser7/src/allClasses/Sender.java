@@ -17,9 +17,8 @@ public class Sender // Uunicast and multicast sender thread.
     
     //// Limit queue size.  Block queuers when full.
     
-    //// Change this or callers to gracefully
-    finish sending queued packets before 
-    closing socket and terminating.
+    //// Change this or callers to gracefully finish sending queued packets 
+    before closing socket and terminating.
       
     ?? Add congestion control and fair queuing.
     It would limit not only total data rate,
@@ -76,7 +75,7 @@ public class Sender // Uunicast and multicast sender thread.
 	      			break toReturn;
 
 	          processingSockPacketsToSendB(); // Processing inputs.
-	          senderLockAndSignal.doWaitE();  // Waiting for next input signal.
+	          senderLockAndSignal.waitingForInterruptOrNotificationE();
 		        } // while (true)
 	    		} // toReturn.
         }

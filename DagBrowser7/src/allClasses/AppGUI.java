@@ -121,7 +121,7 @@ public class AppGUI
               ); // For dealing with other running app instances.
 
             //appLogger.info("GUI start-up complete.");
-            theGUILockAndSignal.doNotifyV();  // Signal that starting is done.
+            theGUILockAndSignal.notifyingV();  // Signal that starting is done.
             }
 
         private JFrame startingJFrame()
@@ -263,7 +263,7 @@ public class AppGUI
         	theGUIDefiner   // ...this Runnable GUIDefiner,...
           );  //  whose run() method will build and start the app's GUI.
 
-        theGUILockAndSignal.doWaitE(); // Wait for signal
+        theGUILockAndSignal.waitingForInterruptOrNotificationE();
           // which means that the GUIDefiner has finished.
 
         appLogger.info("GUI/AWT thread signalled GUIDefiner done.");

@@ -150,7 +150,7 @@ public class Shutdowner
 	      		requestAppShutdownV(); // Requesting app code shutdown.
 	      		  // App code might have done this already.
 
-	      	  appShutdownDoneLockAndSignal.doWaitE(); // Awaiting shutdown done.
+	      	  appShutdownDoneLockAndSignal.waitingForInterruptOrNotificationE();
 	      		appLogger.info( "ShutdownHook.run() app shutdown done, ending." );
 	          }
 	
@@ -175,7 +175,7 @@ public class Shutdowner
 	     */
 	    { 
 		  	//appLogger.info( "Shutdowner.waitForAppShutdownStartedV()." );
-	  	  appShutdownRequestedLockAndSignal.doWaitE(); 
+	  	  appShutdownRequestedLockAndSignal.waitingForInterruptOrNotificationE(); 
 	  	  }
 
 	  public void requestAppShutdownV()
@@ -191,7 +191,7 @@ public class Shutdowner
 		  	  {
 			  		shutdownUnderwayB= true; // Recording that shutdown is underway.
 			  		appLogger.info( "Shutdowner.requestAppShutdownV() initiating." );
-			  	  appShutdownRequestedLockAndSignal.doNotifyV();
+			  	  appShutdownRequestedLockAndSignal.notifyingV();
 		  	    }
 	  	  }
 	  
@@ -236,7 +236,7 @@ public class Shutdowner
         appLogger.info( 
         		"Shutdowner.finishV() signaling app shutdown done, ending." 
         		);
-    	  appShutdownDoneLockAndSignal.doNotifyV(); // Signaling shutdown done.
+    	  appShutdownDoneLockAndSignal.notifyingV(); // Signaling shutdown done.
 
     	  //appLogger.info( "Shutdowner.finishV(), ending." );
         }

@@ -11,6 +11,21 @@ public class SystemsMonitor
   extends MutableList
 
   implements Runnable
+  
+  /* This class measures and displays various performance parameters.
+
+	  //// Maybe completely rewrite to measure everything in 2 ms periods,
+	  without binary search, as follows:
+	  * in first ms
+	    * Start with a wait for ms boundary.
+	    * do some measurements, new and more robust.
+	    * do all displays 
+	    * busy wait while reading ms time to next ms boundary.
+	  * in second ms
+	    * do a simple CPU counting loop to measure CPU performance. 
+	    * Loop if reading ms time shows next ms boundary not reached yet.
+	  
+	  */
 
   { // class SystemsMonitor
   
@@ -18,29 +33,39 @@ public class SystemsMonitor
 
     // Other instance variables, all private.
 
-	  private long targetTimeMsL; // For timing periodic activity.
-
+	  private long measurementTimeMsL; // Next time to do measurements.
+	  final long periodMsL= 1000; // Time between measurements.
+	  
 	  // Detail-containing child sub-objects.
-		  private NamedInteger measurementsNamedInteger= 
+		  private NamedInteger measurementCountNamedInteger= 
 		  	new NamedInteger( 
       		theDataTreeModel, "Measurements", 0
         	);
       private NamedInteger processorsNamedInteger= new NamedInteger( 
       		theDataTreeModel, "Processors", -1
         	);
-		  private long nanoTimeOverheadL;
-		  private NamedInteger nanoTimeOverheadNamedInteger= new NamedInteger( 
-      		theDataTreeModel, "nanoTime() overhead (ns)", -1 
-        	);
+		  private long waitEndNsL= -1;
+		  private long waitEndOldNsL= -1;
+		  private NamedInteger waitJitterNsNamedInteger= new NamedInteger( 
+      	theDataTreeModel, "Wait-Jitter (ns)", -1 
+       	);
+      // No longer measured.
+		  // private long nanoTimeOverheadNsL;
+		  // private NamedInteger nanoTimeOverheadNamedInteger= new NamedInteger( 
+      //		theDataTreeModel, "nanoTime() overhead (ns)", -1 
+      //  	);
 		  private NamedInteger cpuSpeedNamedInteger= new NamedInteger( 
       		theDataTreeModel, "CPU-speed (counts / ms)", -1
         	);
+		  private long endWaitDelayMsL;
 		  private NamedInteger endWaitMsNamedInteger= new NamedInteger( 
       		theDataTreeModel, "End-Wait (ms)", -1
         	);
 		  private NamedInteger edtDispatchMsNamedInteger= new NamedInteger( 
       		theDataTreeModel, "EDT-Dispatch (ms)", -1
         	);
+		  //// Add dispatch call and return times in ms.  Above is total.
+		  //// Add dispatch call, return, and total times in ns.  Use nanoTime().
 		  private NamedInteger skippedTimeMsNamedInteger= new NamedInteger( 
       		theDataTreeModel, "Skipped-Time (ms)", 0
         	);
@@ -48,12 +73,13 @@ public class SystemsMonitor
       		theDataTreeModel, "Reversed-Time (ms)", 0
         	);
 
-		private volatile long volatileCounterL;
-		  // This is volatile to prevent over-optimizing count loops.
-		  	
-		private long maxCountL= 2; // Using 2 to make initial expansion pretty.
-		private long minCountL= 2; // Using 2 to make initial expansion pretty.
-		private long midCountL;
+		// Variables for binary search to find CPU speed.
+			private volatile long volatileCounterL;
+			  // This is volatile to prevent over-optimizing count loops.
+			  	
+			private long maxCountL= 2; // Using 2 to make initial expansion pretty.
+			private long minCountL= 2; // Using 2 to make initial expansion pretty.
+			private long midCountL;
 
 		private LockAndSignal theLockAndSignal= new LockAndSignal();
 		  // Used for waiting.
@@ -75,142 +101,51 @@ public class SystemsMonitor
 
     public void run()
       /* This method, after some initialization, repeatedly
-        measures and displays various CPU values once every second.
+        measures and displays various parameters once every second.
+        It might seem a little confusing because 
+        the method it calls in a loop is actually 
+        a binary search method that determines CPU speed.
+        A method it calls to do a search test also
+        measures and displays other performances parameters
+        and does a wait that determines the measurement cycle time.
        */
       {
     		appLogger.info( "SystemsMonitor.run() beginning." );
 
-    		initializeV();  // Do non-dependency injection initialization.
-    		
-  		  targetTimeMsL= // Saving system now that slow initialization done. 
-  		  		System.currentTimeMillis();
+    		initializeV();  // Do non-dependency-injection initialization.
 
-        while   // Repeating until termination is requested.
-          ( !EpiThread.exitingB() )
+  		  measurementTimeMsL= // Setting time do first measurement... 
+  		  		System.currentTimeMillis(); //  immediately.
+        while // Repeating measurement and display... 
+          ( !EpiThread.exitingB() ) // until termination is requested.
           {
-	        	updateSpeedEtcV( measureCPUSpeedL() );
+        		doBinarySearchOfCPUSpeedAndDoOtherStuffL();
         		}
         }
 
     private void initializeV()
 	    {
-      addB( measurementsNamedInteger );
-      addB( processorsNamedInteger );
-      addB( nanoTimeOverheadNamedInteger );
-      addB( cpuSpeedNamedInteger );
-      addB( endWaitMsNamedInteger );
-      addB( edtDispatchMsNamedInteger );
-      addB( skippedTimeMsNamedInteger );
-      addB( reversedTimeMsNamedInteger );
-      }
+	    	// Add variables to our displayed list.
+	      addB( measurementCountNamedInteger );
+	      addB( processorsNamedInteger );
+	      //addB( nanoTimeOverheadNamedInteger );
+	      addB( cpuSpeedNamedInteger );
+	      addB( waitJitterNsNamedInteger );
+	      addB( endWaitMsNamedInteger );
+	      addB( edtDispatchMsNamedInteger );
+	      addB( skippedTimeMsNamedInteger );
+	      addB( reversedTimeMsNamedInteger );
+	      }
 
-    private void updateSpeedEtcV( long cpuSpeedL )
-      /* This method does several things:
-        * It updates the CPU speed display from cpuSpeedL.
-        * It measures and displays other parameters.
-        * Delays this thread until the next measuring point,
-          which are 1000 ms apart.
-		    CPU speed measurement takes approximately 1 ms,
-		    so the overhead is only about 0.1%.
-		    
-        ?? Maybe randomize the sample times to get better measurements.
-        * Pick an period p, for example, 1 second.
-        * Generate wait delays evenly distributed between 0 and 2p.
-        * Don't do this for blinker.  Use one second for that.
-        
-        */
-	    {
-    		cpuSpeedNamedInteger.setValueL( cpuSpeedL );
-    		
-    		measurementsNamedInteger.addDeltaL(1);
-    		processorsNamedInteger.setValueL( 
-    				Runtime.getRuntime().availableProcessors() 
-    				); // Keep measuring because this could change.
-      	final long endWaitTimeMsL= System.currentTimeMillis();
-      	theDataTreeModel.invokeAndWaitV( // Executing on EDT...
-          new Runnable() {
-            @Override  
-            public void run() { 
-            	long inEDTTimeMsL= System.currentTimeMillis();
-            	endWaitMsNamedInteger.setValueL( endWaitTimeMsL-targetTimeMsL );
-            	edtDispatchMsNamedInteger.setValueL( 
-            			inEDTTimeMsL-endWaitTimeMsL 
-            			);
-        		  }  
-            } 
-          );
-      	nanoTimeOverheadNamedInteger.setValueL( nanoTimeOverheadL  );
-      	advanceTimeV();
-
-      	// We just finished a wait, so now is the best time to do 
-      	// computations or measurements without interruption.
-    		nanoTimeOverheadL= measureNanoTimeL(); // Measure and save now.
-
-    		return;  // The next thing in caller will be a CPU speed measurement.
-		    }
-
-  	private void advanceTimeV()
-  	  /* This method waits for the next measurement time,
-  	    and records any anomalous data associated with it. 
-  	    */
-	    { 
-  			//appLogger.debug( "advanceTimeV() before wait." );
-			  final long periodMsL= 1000;
-			  long shiftInTimeMsL= // Determining any unexpected time shift.
-			  		theLockAndSignal.correctionMsL(targetTimeMsL, periodMsL);
-  			targetTimeMsL+= shiftInTimeMsL; // Adjusting target time for shift.
-  			theLockAndSignal.doWaitWithTimeOutE( // Waiting for next mark.
-  					theLockAndSignal.timeOutForMsL( targetTimeMsL, periodMsL )
-  					);
-  			//appLogger.debug( "advanceTimeV() after wait." );
-  			targetTimeMsL+= periodMsL; // Advancing target time.
-  			if (shiftInTimeMsL > 0) // Processing skipped time, if any.
-	  			{
-		    		skippedTimeMsNamedInteger.addDeltaAndLogNonzeroL( shiftInTimeMsL );
-	  				}
-  			if (shiftInTimeMsL < 0) // Processing reversed time, if any.
-	  			{
-		  			reversedTimeMsNamedInteger.addDeltaAndLogNonzeroL( -shiftInTimeMsL );
-	  				}
-        }
-
-  	private long measureNanoTimeL()
-	    /* This method measures the execution time in ns of System.nanoTime().
-	      It returns strange values: 
-	      * Some times, such as when Firefox is running and has many windows
-	        and tabs open, it returns 540 or 1080.
-	        At other times, when Firefox is not running, 
-	        it returns mostly 0 or 540.
-	        More Firefox windows and tabs means longer times.
-	        Once in a while it returns outside values of 0 or 1080.
-	      * Sometimes it returns 541 or 1081 instead of 540 or 1080.
-	      * Rarely it returns a number in the many thousands. 
-	      * Very rarely it returns a negative values.
-	        This usually happens after the app has been running a while.
-        I think nanoTime() actually takes between 0 and 540 ns,
-        but sometimes interrupt service routines cause it to take longer.
-	      I suspect that nanoTime() is calculated by 
-        scaling a clock with a period of close to 540 ns,
-        but not exactly, so 1 must be added sometimes.
-        */
-	    {
-	  		long startNsL= System.nanoTime();
-	  		long stopNsL= System.nanoTime();
-	  		long differenceNsL= stopNsL - startNsL;
-	  		if ( differenceNsL < 0 )  // This should never happen.
-	    		appLogger.error( 
-	    				"SystemsMonitor.measureNanoTimeL()="+stopNsL+"-"+startNsL 
-	    				);
-	  		return differenceNsL;
-	    	}
-
-    private long measureCPUSpeedL()
-      /* This method measures the CPU speed.
-        It returns how far the CPU can count in a loop for 1 ms.
-        It does not measure this count directly.
-        Instead it uses an expanding and contracting binary search
-        to find the count value that produces
+    private long doBinarySearchOfCPUSpeedAndDoOtherStuffL()
+      /* This method does a expanding and contracting binary search 
+        to measure the CPU speed, 
+        which is expressed as the count value that produces
         a 1 ms delay using the method measureCPUDelayNsL(long countL).
+        It calls cpuMeasureAndDisplayAndDelayNsL(..) to make that measurement,
+        but that method also measure and display other performance parameters
+        and does a wait to create the measurement cycle.
+        It returns how far the CPU can count in a loop for 1 ms.
 
         The CPU speed can be affected by several factors, such as:
         * Variation of the processor clock speed by power management systems.
@@ -219,28 +154,28 @@ public class SystemsMonitor
         * Contention with threads running on other processors or cores which
           share resources such as caches, data pathways, or 
           instruction sequencing logic.
+          
+		    CPU speed measurement takes approximately 1 ms.
+		    The measuremet cycles is 1000 ms.
+		    So the execution overhead is only about 0.1%.
 
-        ?? Do rapid measurements until value converges, 
-        then drop back to one measurement per second.  
-        Define converged as position of highest one-bit in count 
-        does not change?  Use Integer.highestOneBit(int i)
+        //// Maybe prevent overshoot in displayed values,
+        which can happen during expanding parts of binary search.
         */
     	{
-    	  final long targetNsL= 1000000; // This many ns is 1 ms count time. 
+    	  final long targetNsL= 1000000; // ns per ms. 
 	
-        while (true) // Expand interval up if possible.
+        while (true) // Expand interval up while possible.
           { 
-        		updateSpeedEtcV( maxCountL );
-        		final long maxNsL= measureCPUDelayNsL( maxCountL );
+        		final long maxNsL= cpuMeasureAndDisplayAndDelayNsL( maxCountL );
         		if ( targetNsL <= maxNsL ) break;		              	  
         		final long intervalL= (maxCountL - minCountL) + 1;
             minCountL+= intervalL;
             maxCountL+= (intervalL*2);
           	}
-        while (true) // Expand interval down if possible.
+        while (true) // Expand interval down while possible.
           { 
-        		updateSpeedEtcV( minCountL );
-        		final long minNsL= measureCPUDelayNsL( minCountL );
+        		final long minNsL= cpuMeasureAndDisplayAndDelayNsL( minCountL );
           	if ( targetNsL >= minNsL ) break;
         		final long intervalL= (maxCountL - minCountL) + 1;
             minCountL-= (intervalL*2);
@@ -249,17 +184,11 @@ public class SystemsMonitor
         while (maxCountL > minCountL) // Divide interval until its one point.
 	        { // Divide the interval.
 	          midCountL= (maxCountL - minCountL)/2 + minCountL; // Use shift?
-	          updateSpeedEtcV( midCountL );
-	          final long midNsL= measureCPUDelayNsL( midCountL );
-	          if // Select half-interval based on result */
-	          	( targetNsL < midNsL )
-	            {
-	              maxCountL= midCountL; /* select lower interval half */
-	            	}
+        		final long midNsL= cpuMeasureAndDisplayAndDelayNsL( midCountL );
+	          if ( targetNsL < midNsL ) // Select half-interval based on result.
+              maxCountL= midCountL; /* select lower interval half */
 	            else
-	            {
-	              minCountL= midCountL+1; /* select upper interval half */
-	              }
+              minCountL= midCountL+1; /* select upper interval half */
 	          }
 	    	return minCountL;
       	}
@@ -275,5 +204,152 @@ public class SystemsMonitor
 	  		while ( volatileCounterL > 0 ) volatileCounterL--;
 	  		return System.nanoTime() - startNsL;
     	  }
+
+    private int cpuInitCountDownI= 50; // While non-0 we update only CPU speed.
+
+    private long cpuMeasureAndDisplayAndDelayNsL( long cpuSpeedCountL )
+      /* This method is called by the binary search routine.
+        It displays cpuSpeedCountL, and measures and returns
+        the number of ns needed to count to cpuSpeedCountL.
+        
+       */
+	    {
+	    	cpuSpeedNamedInteger.setValueL(  // Update display of CPU speed. 
+	    			cpuSpeedCountL 
+	    			);
+	    	
+	    	if ( cpuInitCountDownI != 0 ) // Acting based on initialization counter.
+	    		{ // Decrement CPU speed initialization counter and wait briefly. 
+		    		cpuInitCountDownI--; // Decrement initialization counter.
+		    		theLockAndSignal.waitingForInterruptOrDelayOrNotificationE(10);
+		    		}
+	    		else
+	    		measureAndDisplayAndDelayV(); // Do everything else.
+	  		
+	    	// CPU speed measurement is done now because a wait ended very recently.
+	    	final long cpuSpeedNsL= measureCPUDelayNsL( cpuSpeedCountL );
+	  		return cpuSpeedNsL;
+	  		}
+
+    private void measureAndDisplayAndDelayV()
+      /* 
+        This method does several things:
+        * It measures several performance parameters.
+        * It delays its this thread by waiting until the next measurement time.
+        
+        The caller of this method should do several things:
+        * It should call this method repeatedly.
+        * It may do other things, provided it can complete them
+          within the measurement period, but it should keep these to a minimum.
+        Presently the caller is binarySearchOfCPUSpeedAndDoOtherStuffL(),
+        a method which does a binary search to measure CPU speed
+        in terms of how far the CPU can count in 1 ms. 
+		    
+        //// Do only simple measurements and stores in Runnable.
+        //// To truly measure EDT dispatch time.
+          call invokeLater(..) to queue 2 Runnables which save nanoTime()
+          in 2 seperate variables.  Use those to measure dispatch time.
+
+        //// Maybe randomize the measurement delays to get better measurements.
+        * Pick an period p, for example, 1 second.
+        * Generate wait delays evenly distributed between 0 and 2p.
+        * 
+        
+        */
+	    {
+    		measurementCountNamedInteger.addDeltaL(1);
+    		processorsNamedInteger.setValueL( // Displaying processor count. 
+    				Runtime.getRuntime().availableProcessors() 
+    				); // Keep measuring because this could change.
+      	final long beforeEDTDispatchMsL= System.currentTimeMillis();
+      	theDataTreeModel.invokeAndWaitV( // Dispatching on EDT...
+          new Runnable() {
+            @Override  
+            public void run() { 
+            	edtDispatchMsNamedInteger.setValueL( 
+            			System.currentTimeMillis() - beforeEDTDispatchMsL
+            			); // Displaying time for EDT to dispatch this Runnable job. 
+        		  }  
+            } 
+          );
+      	//nanoTimeOverheadNamedInteger.setValueL( nanoTimeOverheadNsL  );
+      	waitJitterNsNamedInteger.setValueL( 
+      			(waitEndNsL - waitEndOldNsL) - 1000000000L
+      			);
+      	waitEndOldNsL= waitEndNsL;
+      	endWaitMsNamedInteger.setValueL( endWaitDelayMsL );
+
+	    	waitForNextMeasurementTimeV();
+
+	    	// We just finished a wait until a point in time, 
+	    	// so now is the best time to do interrupt-free measurements.
+	    	// We will now measure end-wait time, 
+	    	// and then return to let the caller measure CPU speed.
+    	  waitEndNsL= System.nanoTime(); 
+	    	endWaitDelayMsL= System.currentTimeMillis() - measurementTimeMsL;
+      	//nanoTimeOverheadNsL= measureNanoTimeOverheadNsL();
+    		return;  // The next thing in caller will be a CPU speed measurement.
+		    }
+
+  	private void waitForNextMeasurementTimeV()
+  	  /* This method waits for the next measurement time.
+  	    It also detects, reports, and compensates for
+  	    any large time discontinuities caused by device sleeping
+  	    or resetting of the system clock. 
+  	    */
+	    { 
+			  long shiftInTimeMsL= // Testing for large time discontinuity.
+				    theLockAndSignal.periodCorrectedShiftMsL(
+				    		measurementTimeMsL, periodMsL
+				    		);
+  			if (shiftInTimeMsL > 0) // Processing skipped time, if any.
+	  			skippedTimeMsNamedInteger.addDeltaAndLogNonzeroL( shiftInTimeMsL );
+	  		if (shiftInTimeMsL < 0) // Processing reversed time, if any.
+	  			reversedTimeMsNamedInteger.addDeltaAndLogNonzeroL( -shiftInTimeMsL );
+	  		measurementTimeMsL+= // Adjusting base time for discontinuity, if any.
+	  				shiftInTimeMsL; 
+	  		
+  			theLockAndSignal.waitingForInterruptOrDelayOrNotificationE(
+  					theLockAndSignal.periodCorrectedDelayMsL( 
+  							measurementTimeMsL, periodMsL 
+  							)
+  					); // Waiting for next measurement time.
+  			measurementTimeMsL+= periodMsL; // Incrementing variable to match it.
+        }
+
+  	/* No longer used.
+
+  	private long measureNanoTimeOverheadNsL() //// archive this?
+	    /* This method measures the execution time in ns of System.nanoTime().
+	      It can return strange values, depending on what else is running.
+	      On my laptop computer I observed the following: 
+	      * Some times, such as when Firefox is running and has many windows
+	        and tabs open, it returns 540 or 1080.
+	        At other times, when Firefox is not running, 
+	        it returns mostly 0 or 540.
+	        More Firefox windows and tabs means longer times.
+	        Once in a while it returns outside values of 0 or 1080.
+	      * Sometimes it returns 541 or 1081 instead of 540 or 1080.
+	      * Rarely it returns a number in the many thousands. 
+	      * Very rarely it returns negative values.
+	        This usually happens after the app has been running a while.
+        I think nanoTime() actually takes between 0 and 540 ns,
+        but sometimes interrupt service routines cause it to take longer.
+	      I suspect that nanoTime() is calculated by 
+        scaling a clock with a period of close to 540 ns,
+        but not exactly, so 1 must be added sometimes.
+        */
+  	/* No longer used.
+	    {
+	  		long startNsL= System.nanoTime();
+	  		long stopNsL= System.nanoTime();
+	  		long differenceNsL= stopNsL - startNsL;
+	  		if ( differenceNsL < 0 )  // This should never happen.
+	    		appLogger.error( 
+	    				"SystemsMonitor.measureNanoTimeL()="+stopNsL+"-"+startNsL 
+	    				);
+	  		return differenceNsL;
+	    	}
+  	*/// No longer used.
 
     } // class SystemsMonitor

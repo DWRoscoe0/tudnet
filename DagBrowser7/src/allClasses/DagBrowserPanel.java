@@ -635,12 +635,15 @@ public class DagBrowserPanel
       		    */
         		{
       			  final long periodMsL= 1000;
-    				  long shiftInTimeMsL= // Determining any unexpected time shift.
-    				    activityLockAndSignal.correctionMsL(periodicTargetTimeMsL, periodMsL);
+    				  long shiftInTimeMsL= // Calculating any needed time shift.
+    				    activityLockAndSignal.periodCorrectedShiftMsL(
+    				    		periodicTargetTimeMsL, periodMsL
+    				    		);
     				  periodicTargetTimeMsL+= shiftInTimeMsL; // Adjusting target time for shift.
-    	  			activityLockAndSignal.doWaitWithTimeOutE( // Waiting for next mark.
-  	  					activityLockAndSignal.timeOutForMsL( periodicTargetTimeMsL, periodMsL )
-      					);
+    	  			activityLockAndSignal.waitingForInterruptOrIntervalOrNotificationE(
+  	  					///activityLockAndSignal.timeOutForMsL( 
+    	  					periodicTargetTimeMsL, periodMsL ///)
+      					); // Waiting for next mark.
     	  			periodicTargetTimeMsL+= periodMsL; // Advancing target.
 		        	theDataTreeModel.invokeAndWaitV( // Executing on EDT...
 	              new Runnable() {

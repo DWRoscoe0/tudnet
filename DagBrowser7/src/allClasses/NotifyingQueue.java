@@ -65,21 +65,34 @@ public class NotifyingQueue<E> // Queue inter-thread communication.
 	    { return consumerThreadLockAndSignal; } 
 	  
 	  public boolean add( E anE )
-	    /* This method adds anE to the queue and returns immediately.
-	      It also notifies the consumer thread of the new element.
-	      It does not wait for anE to be processed by the destination thread.
+	    /* 
+	      If this method returns true then:
+	      * It added anE to the queue.
+	      * It notified the consumer thread of the new element.
+	      * It did not wait for anE to be processed by the destination thread.
+
+	      If this method throws an IllegalStateException then:
+	      * It means that there was not enough space in the queue for 
+	        the new element.
+
+				It never returns false.  This is the spec. of Queue.add(E).
 	     	*/
 	    {
-	      boolean resultB= super.add( anE ); ////
-	      consumerThreadLockAndSignal.doNotifyV();
+	      boolean resultB= super.add( anE );
+	      consumerThreadLockAndSignal.notifyingV();
 	      return resultB;
 	      }
 	  
 	  public void put( E anE )
-	    /*//// document, based on add().
+	    /* If there is no space available in the queue 
+	      then it blocks until there is.  When there is space:
+	      * It adds anE to the queue.
+	      * It notifies the consumer thread of the new element.
+	      * It does not wait for anE to be processed by the destination thread.
+	      It ignores but maintains Thread interrupt status for testing later.
 	     	*/
 	    {
-	  	  boolean interruptedB= false; // Assume no interrupted will happen.
+	  	  boolean interruptedB= false; // Assume no interruption will happen.
 
 	  	  while (true) // Looping until element added to queue.
 		  	  {
@@ -91,7 +104,7 @@ public class NotifyingQueue<E> // Queue inter-thread communication.
 			      	interruptedB= true; // Recording interrupt for restoring later.
 			        }
 			  	  }
-	      consumerThreadLockAndSignal.doNotifyV();
+	      consumerThreadLockAndSignal.notifyingV();
 
       	if ( interruptedB ) // Restoring interrupt status if interrupt happened.
       		Thread.currentThread().interrupt();
