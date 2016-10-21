@@ -246,16 +246,16 @@ public class Unicaster
     	  processing: {
 	    		if (!processingHellosB()) break processing;
 		      theSubcasterManager.getOrBuildAddAndStartSubcaster(
-		          "PING-REPLY" //// Hard wired creation at first.  Fix later.
-		  	  		); // Adding Subcaster.
+					  "PING-REPLY" //// Hard wired creation at first.  Fix later.
+					  ); // Adding Subcaster.
 				  while (true) // Repeating until termination is requested.
 					  {
-		    			theLockAndSignal.waitingForInterruptOrNotificationE(); // Waiting for new input.
-	        		if ( EpiThread.exitingB() ) break;
+				  	  LockAndSignal.Input theInput= // Waiting for new input.
+		    			  theLockAndSignal.waitingForInterruptOrNotificationE();
+				  	  if ( theInput == Input.INTERRUPTION ) break;
 			    		processingMessagesFromRemotePeerV(); // Includes de-multiplexing.
 			    		multiplexingPacketsFromSubcastersV();
-				  		writingTerminatedStringV( "TEST" );
-				  		endingPacketV(); // Forcing send.
+			    		sendTestPacketV();
 			      	}
 	    		if  // Informing remote end whether app is doing a Shutdown.
 	    			( theShutdowner.isShuttingDownB() ) 
@@ -266,6 +266,12 @@ public class Unicaster
 		    			}
     			} // processing:
 	    	}
+	  
+		private void sendTestPacketV() throws IOException
+			{
+				writingTerminatedStringV( "TEST" );
+				endingPacketV(); // Forcing send.
+				}
 	  
 		private void multiplexingPacketsFromSubcastersV() throws IOException
 		  /* This method forwards messages from Subcasters to remote peers.
@@ -396,7 +402,9 @@ public class Unicaster
           long helloSentMsL= System.currentTimeMillis();
           processingPossibleHelloResponse: while (true) {
             Input theInput=  // Awaiting next input within time interval.
-            		testWaitInIntervalE( helloSentMsL, 5000 );
+            		waitingForSubnotificationOrIntervalOrInterruptE( 
+            				helloSentMsL, 5000 
+            				);
             if // Handling possible exit interrupt.
     	      	( theInput == Input.INTERRUPTION )
   	    			break tryingToConnectByExchangingHellos; // Exit everything.
@@ -404,7 +412,7 @@ public class Unicaster
 	            { appLogger.info( "Time-out waiting for HELLO." );
 	              break processingPossibleHelloResponse;
 	            	}
-	    			String keyString= // Reading message key string.
+	    			String keyString= // Reading SUBNOTIFICATION message key string.
 	    				readAString(); 
 	  			  if // Handling possible received HELLO key message. 
 	  			    ( processHelloB( keyString ) ) 

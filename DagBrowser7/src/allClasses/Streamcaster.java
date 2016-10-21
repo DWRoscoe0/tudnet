@@ -158,7 +158,7 @@ public class Streamcaster<
           long pingSentMsL= System.currentTimeMillis(); // and in ms.
           replyWaitLoop: while (true) { // Handling echo or other conditions.
             theInput=  // Awaiting next input within reply interval.
-            		testWaitInIntervalE( pingSentMsL, HalfPeriodMillisL );
+            		waitingForSubnotificationOrIntervalOrInterruptE( pingSentMsL, HalfPeriodMillisL );
             if ( theInput == Input.TIME ) // Exiting echo wait if time-out.
               { appLogger.info( "Time-out waiting for REPLY: "+triesI );
                 break replyWaitLoop;  // End wait to send new PING, maybe.
@@ -246,7 +246,7 @@ public class Streamcaster<
 	        LockAndSignal.Input theInput;  // Type of input that ends wait.
 	        long pingWaitStartMsL= System.currentTimeMillis();
 	        pingWaitLoop: while (true) { // Processing until exit triggered.
-	          theInput= testWaitInIntervalE( // Awaiting next input.
+	          theInput= waitingForSubnotificationOrIntervalOrInterruptE( // Awaiting next input.
 	          		pingWaitStartMsL, PeriodMillisL + HalfPeriodMillisL
 	          		);
 	      		if // Handling thread interrupt by exiting.
@@ -275,7 +275,7 @@ public class Streamcaster<
 	          long echoSentMsL= System.currentTimeMillis();
 	          postReplyPause: while (true) {
 	            theInput=  // Awaiting input within the ignore interval.
-	            		testWaitInIntervalE( echoSentMsL, PeriodMillisL );
+	            		waitingForSubnotificationOrIntervalOrInterruptE( echoSentMsL, PeriodMillisL );
 	            if ( theInput == Input.TIME ) // Exiting if time limit reached.
 	              break all;  
 	        		if // Exiting everything if exit has been triggered.
@@ -297,40 +297,45 @@ public class Streamcaster<
     			} // all:
         }
 
-    protected Input testWaitInIntervalE( long startMsL, long lengthMsL) 
+    protected Input waitingForSubnotificationOrIntervalOrInterruptE( 
+    			long startMsL, long lengthMsL
+    			) 
     		throws IOException
-      /* This is a special test-and-wait method which differs from
-        the methods available in LockAndSignal as follows:
-        * It uses a different input priority order, which is:
-			      NOTIFICATION
+      /* This is a special wait method which uses 
+        its own set of Input types and priority order, which is:
+			      SUBNOTIFICATION
 	          TIME
 			      INTERRUPTION
-			    This priority order is useful in those situations when
-			    it is important to finish processing all other pending inputs
-			    before honoring an INTERRUPTION, which usually means a
-			    thread termination request.
-			  * It treats input available from the input stream as NOTIFICATION input. 
-       */
+		    This priority order is useful in those situations when
+		    it is important to finish processing all other pending inputs
+		    before processing an INTERRUPTION, which usually means a
+		    thread termination request.
+
+			  It is assumed that all SUBNOTIFICATION input data,
+			  which is data being read from theEpiInputStreamI,
+			  has been, or will be, preceded by NOTIFICATION input.
+        */
 	    {
     		LockAndSignal.Input theInput;
-    		process: while (true) {
-	        if // Exiting if a notification from InputStream is ready.
+    		loopWithoutResult: while (true) {
+	        if // Exiting if a datum from InputStream is ready.
 	          ( theEpiInputStreamI.available() > 0 )
-		        { theInput= Input.NOTIFICATION; break process; }
-	      	theInput= theLockAndSignal.testingForNotificationE();
-	      	if ( theInput != Input.NONE ) break process;
-	        final long remainingMsL= 
-		          theLockAndSignal.timeCheckedDelayMsL( 
-		          		startMsL, lengthMsL 
-		          		);
-				  theInput= theLockAndSignal.testingRemainingDelayE( remainingMsL );
-	      	if ( theInput != Input.NONE ) break process;
-	      	theInput= theLockAndSignal.testingForInterruptE();
-	      	if ( theInput != Input.NONE ) break process;
-	      	theLockAndSignal.waitingForInterruptOrDelayOrNotificationV(
-		      		0 // This means waiting with no time limit.
-		      		);
-    	  	} // process: while (true) 
+		        { theInput= Input.SUBNOTIFICATION; break loopWithoutResult; }
+	        loopWithoutNotification: while (true) {
+		        final long remainingMsL= theLockAndSignal.timeCheckedDelayMsL( 
+          		startMsL, lengthMsL 
+          		);
+					  theInput= theLockAndSignal.testingRemainingDelayE( remainingMsL );
+		      	if ( theInput != Input.NONE ) break loopWithoutResult;
+		      	theInput= theLockAndSignal.testingForInterruptE();
+		      	if ( theInput != Input.NONE ) break loopWithoutResult;
+		      	theLockAndSignal.waitingForInterruptOrDelayOrNotificationV(
+			      		remainingMsL
+			      		);
+		      	theInput= theLockAndSignal.testingForNotificationE();
+		      	if ( theInput != Input.NONE ) break loopWithoutNotification;
+	        	} // loopWithoutNotification: while(true)
+    	  	} // loopWithoutResult: while (true) 
     	  return theInput;
 	      }
 
@@ -376,8 +381,11 @@ public class Streamcaster<
 		protected String readAString()
   		throws IOException
   		/* This method reads and returns one String ending in the first
-  		  delimiterChar from theEpiInputStreamI.  It blocks if needed.
+  		  delimiterChar from theEpiInputStreamI.  
   		  The String returned does not include the delimiter.
+  		  It does not block.
+				If a complete string, including delimiter is not available,
+				then logs and returns an empty string.
   		 */
 			{
 				String readString= "";

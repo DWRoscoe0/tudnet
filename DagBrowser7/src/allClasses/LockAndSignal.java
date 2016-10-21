@@ -30,6 +30,12 @@ public class LockAndSignal  // Combination lock and signal class.
 
     	NONE: This means that there has been no recognized input.
 
+      SUBNOTIFICATION // This is a special value for use by the caller only.
+        This class defines it, but does not reference it anywhere.
+        It is meant to be used indicate that an input datum, 
+        a group of which might have been signaled by a NOTIFICATION input, 
+        is available.
+
     A thread can make use of any one, two, or all three input types.
 
     If inputs occur one at a time, and the destination thread 
@@ -135,9 +141,10 @@ public class LockAndSignal  // Combination lock and signal class.
     	// The order shown is a common priority order, lowest to highest.
     	NONE, // There has been no recognized input.
 
-      NOTIFICATION, // notifyingV() was called to signal data input.
-      TIME, // Clock time has moved outside a designated interval.
       INTERRUPTION, // The thread's isInterrupted() status is true.
+      TIME, // Clock time has moved outside a designated interval.
+      NOTIFICATION, // notifyingV() was called to signal data input.
+      SUBNOTIFICATION // Special value for use by caller.
       }
       
     private boolean signalB= false;  // NOTIFICATION flag.
@@ -549,7 +556,7 @@ public class LockAndSignal  // Combination lock and signal class.
 	  		    * The passage of waitTimeMsL time.
 
 	  		    It does all of this with a call to Object.wait(waitTimeMsL).
-	  		    waitTimeMsL equaling 0 is means that
+	  		    waitTimeMsL equaling 0 means that
 	  		    the passage of no amount of time will terminate the wait().
 
 	  		    This method does not loop and returns no results.
@@ -573,7 +580,7 @@ public class LockAndSignal  // Combination lock and signal class.
 	  		    waits for any of the following:
 	  		    * A call to notify() during the wait().
 	  		    * The passage of waitTimeMsL time.
-	  		    * It ignores, but preserves, thread interrupts.
+	  		    It ignores, but preserves, thread interrupts.
 
 	  		    It does this with a call to Object.wait(waitTimeMsL).
 	  		    waitTimeMsL equaling 0 means that

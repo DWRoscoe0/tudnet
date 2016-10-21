@@ -211,8 +211,8 @@ public class Multicaster
 	                  		receiverDatagramPacket
 	                  		);
 	                  receiverToMulticasterNetcasterQueue.add( // Queuing packet.
-	                  		receiverNetcasterPacket
-	                  		);
+                  		receiverNetcasterPacket
+                  		);
 	                	}
 	                catch( SocketException soe ) {
 	                  appLogger.info("run(): " + soe );
@@ -308,9 +308,10 @@ public class Multicaster
 
     private void receivingPacketsV( ) 
       throws IOException 
-      /* This helper method receives and processes multicast packets,
+      /* This helper method receives and processes multicast message packets,
         both query packets and response packets to a previously sent query,
-        until no more packets are received for a timeout interval.
+        until no more packets are received for a timeout interval
+        or a thread exit is requested.
         It reports all received packets to the ConnectionManager.
         If any received packets are query packets then
         it sends multicast response packets.
@@ -322,29 +323,30 @@ public class Multicaster
     		    // 40000; // 40 seconds for normal use.
     		LockAndSignal.Input theInput;  // Type of input that ends waits.
       	long querySentMsL= System.currentTimeMillis();
-        processorLoop: while (true) { // Processing messages until exit.
+        processorLoop: while (true) { // Processing messages until exit request.
         	{ // Processing messages or exiting.
           	theInput=  // Awaiting next input within reply interval.
-          		testWaitInIntervalE( querySentMsL, delayMsL );
-	          switch ( theInput ) {  // Handling the input type.
+          			waitingForSubnotificationOrIntervalOrInterruptE( 
+          					querySentMsL, delayMsL 
+          					);
+	          inputDecoder: switch ( theInput ) {  // Decoding the input type.
 	          	case TIME: // Handling a time-out.
 	              multicastConnectionLoggerV( false ); // Comm. ended.
 	              break processorLoop;  // Exiting loop.
-	            case INTERRUPTION: // Handling a thread's interruption.
+	            case INTERRUPTION: // Handling a thread exit request.
 	              break processorLoop;  // Exiting loop.
-	            case NOTIFICATION:  // Handling a message input.
-	            	processor: {
+	            case SUBNOTIFICATION:  // Handling a message.
+	            	messageDecpder: {
 	            		String inString= readAString(); // Reading message.
-		          		//if ( testingMessageB( "DISCOVERY" ) ) // Handling query, maybe.
 	            		if ( inString.equals( "DISCOVERY" ) ) // Handling query, maybe.
 			        			{ ///writingNumberedPacketV("ALIVE"); // Sending response.
 	            				writingAndSendingV("ALIVE"); // Sending response.
 				              processingPossibleNewUnicasterV();
-				              break processor;
+				              break messageDecpder;
 				              }
 			        		//if ( testingMessageB( "ALIVE" ) ) // Handling response, maybe.
 			        		if ( inString.equals( "ALIVE" ) ) // Handling response, maybe.
-				            { processingPossibleNewUnicasterV(); break processor; }
+				            { processingPossibleNewUnicasterV(); break messageDecpder; }
 		          		// Ignoring anything else.
 			            //appLogger.warning(
 			        		//		"receivingPacketsV(): unexpected: "
@@ -355,12 +357,15 @@ public class Multicaster
 			        		//		theNetcasterInputStream.getSockPacket().getDatagramPacket()
 			        		//	  )
 			        		//);
-	            		}
-	            case NONE: // Handling case of no input.
-		            appLogger.error( "receivingPacketsV(): Input.NONE" );
-		            break;
-	            }
-            } // processor: // Processing packets until exit.
+	            		} // messageDecpder: 
+	            	break inputDecoder;
+	            default: // Handling anything else as an error.
+		            appLogger.error( 
+		            		"receivingPacketsV(): Unknown LockAndSignal.Input" 
+		            		);
+		            break inputDecoder;
+	            } // inputDecoder: 
+            } // Processing packets until exit.
         	} // processorLoop:  // Processing packet or exiting.
         }
 
