@@ -34,13 +34,13 @@ public class Streamcaster<
 	  // Constants.
 		private final char delimiterChar= '!';
 		
-	  protected final long PeriodMillisL= // Period between handshakes.
+	  protected final long PeriodMillisL= // PING-REPLY handshake period.
 	    //4000;   // 4 seconds.
 	  	//100;
 	  	//200;
 	  	//400;
 	  	//1000;
-	    2000;
+	    Delay.pingReplyHandshakePeriod2000MsL; // 2000;
 	  protected final long HalfPeriodMillisL= // Half of period.
 	    PeriodMillisL / 2;  
 
@@ -59,7 +59,7 @@ public class Streamcaster<
       protected NamedInteger roundTripTimeNamedInteger;
         // This is an important value.  It can be used to determine
         // how long to wait for a message acknowledgement before
-        // re-sending a message.
+        // re-sending a message.  Initial value of 1/10 second.
 
     // Other variables.
     protected boolean leadingB= false; // Used to settle race conditions.
@@ -95,12 +95,13 @@ public class Streamcaster<
     	//// This might be eliminated if roundTripTimeNamedInteger is moved.
 	    {
 	      addB( 	roundTripTimeNamedInteger= new NamedInteger( 
-	      		theDataTreeModel, "Round-Trip-Time-ns", -1
+	      		theDataTreeModel, "Round-Trip-Time-ms", 
+	      		Delay.initialRoundTripTime100MsL // 100
 	      		)
 	  			);
 	
         appLogger.info( 
-        		"This Streamcasteer has been given the role of: "
+        		"This Streamcaster has been given the role of: "
         		+ (leadingB ? "LEADER" : "FOLLOWER")
         		);
 		    }
@@ -170,9 +171,9 @@ public class Streamcaster<
         		String inString= readAString(); // Reading message.
         		if ( inString.equals( "REPLY" ) ) // Handling echo, maybe.
               { // Handling echo and exiting.
-                roundTripTimeNamedInteger.setValueL(
-                		(System.nanoTime() - pingSentNanosL)
-                		); // Calculating RoundTripTime.
+                ////roundTripTimeNamedInteger.setValueL(
+		        		////		(System.nanoTime() - pingSentNanosL)
+		        		////		); // Calculating RoundTripTime.
       			    //appLogger.debug( "Got REPLY." );
             		break pingEchoRetryLoop; // Exit everything.
                 }
@@ -434,13 +435,20 @@ public class Streamcaster<
     protected void endingPacketV() throws IOException
       /* This method forces what has been written to the stream to be sent.
         It also guarantees a packet boundary at this point in the stream.
-        
-        This version simply flushes theEpiOutputStreamO,
-        but an overridden version could do other things also,
-        such as adding a packet sequence number.
+        It is equivalent to endingPacketV( 0 );
     		*/
       {
-	  		theEpiOutputStreamO.flush(); // Sending it by flushing stream.
+	  		//%theEpiOutputStreamO.flush(); // Sending it by flushing stream.
+    		endingPacketV( 0 );
+        }
+
+    protected void endingPacketV( long delayMsL ) throws IOException
+      /* This method forces what has been written to the stream to be sent
+        within delayMsL milliseconds.
+        It also guarantees a packet boundary at this point in the stream.
+    		*/
+      {
+	  		theEpiOutputStreamO.doOrScheduleFlushB( delayMsL );
         }
 
     protected void writingTerminatedStringV( String theString ) 
@@ -484,7 +492,8 @@ public class Streamcaster<
         */
       {
     	  Q theStreamcasterQueueQ= theEpiInputStreamI.getNotifyingQueueQ();
-    	  theStreamcasterQueueQ.add(theKeyedPacketE);
+    	  //%theStreamcasterQueueQ.add(theKeyedPacketE);
+    	  theStreamcasterQueueQ.put(theKeyedPacketE);
         }
 
     public M getPacketManagerM()

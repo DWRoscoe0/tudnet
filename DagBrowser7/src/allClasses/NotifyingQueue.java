@@ -64,7 +64,7 @@ public class NotifyingQueue<E> // Queue inter-thread communication.
 	    // mainly for debugging.
 	    { return consumerThreadLockAndSignal; } 
 	  
-	  public boolean add( E anE )
+	  public boolean add( E anE ) ///////////
 	    /* 
 	      If this method returns true then:
 	      * It added anE to the queue.
@@ -90,6 +90,8 @@ public class NotifyingQueue<E> // Queue inter-thread communication.
 	      * It notifies the consumer thread of the new element.
 	      * It does not wait for anE to be processed by the destination thread.
 	      It ignores but maintains Thread interrupt status for testing later.
+	      
+	      //// Test for full queue and log message if so before putting?
 	     	*/
 	    {
 	  	  boolean interruptedB= false; // Assume no interruption will happen.
@@ -106,8 +108,9 @@ public class NotifyingQueue<E> // Queue inter-thread communication.
 			  	  }
 	      consumerThreadLockAndSignal.notifyingV();
 
-      	if ( interruptedB ) // Restoring interrupt status if interrupt happened.
-      		Thread.currentThread().interrupt();
+      	if // Restoring interrupt status if interrupt happened.
+	      	( interruptedB ) 
+	      	Thread.currentThread().interrupt();
 	      }
 
 	  /*///

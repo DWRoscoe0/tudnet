@@ -210,7 +210,8 @@ public class Multicaster
 	                  PacketManager.logMulticastReceiverPacketV(
 	                  		receiverDatagramPacket
 	                  		);
-	                  receiverToMulticasterNetcasterQueue.add( // Queuing packet.
+	                  //%receiverToMulticasterNetcasterQueue.add( // Queuing packet.
+	                  receiverToMulticasterNetcasterQueue.put( // Queuing packet.
                   		receiverNetcasterPacket
                   		);
 	                	}
@@ -319,7 +320,7 @@ public class Multicaster
       {
     		long delayMsL= // Minimum time between multicasts. 
     				// 3600000; // 1 hour for testing to disable multicasting.
-    				10000; // 10 seconds to make multicast happen more often.
+    				Delay.multicastPeriod10000MsL;
     		    // 40000; // 40 seconds for normal use.
     		LockAndSignal.Input theInput;  // Type of input that ends waits.
       	long querySentMsL= System.currentTimeMillis();
@@ -385,7 +386,8 @@ public class Multicaster
 	       		//	"Multicaster.processingPossibleNewUnicasterV():\n  queuing: "
 		       	//	+PacketStuff.gettingPacketString(theKeyedPacket.getDatagramPacket())
 	       		//);
-          	multicasterToConnectionManagerNetcasterQueue.add( // Passing to CM.
+          	//%multicasterToConnectionManagerNetcasterQueue.add( // Passing to CM.
+	      		multicasterToConnectionManagerNetcasterQueue.put( // Passing to CM.
 			    		theNetcasterPacket
 			        );
        	    }

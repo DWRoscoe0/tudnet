@@ -15,7 +15,7 @@ public class NamedInteger // A DataNode for tracking integer attributes.
 	  public NamedInteger( // Constructor. 
         DataTreeModel theDataTreeModel,
         String nameString, 
-        int theL 
+        long theL
         )
 		  {
 		  	super(nameString);

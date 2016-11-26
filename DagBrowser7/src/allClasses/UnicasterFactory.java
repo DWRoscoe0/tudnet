@@ -1,5 +1,6 @@
 package allClasses;
 
+import java.util.Timer;
 
 public class UnicasterFactory {
 
@@ -14,24 +15,30 @@ public class UnicasterFactory {
 	private final DataTreeModel theDataTreeModel;
 	public final AppGUIFactory theAppGUIFactory;
 	private final Shutdowner theShutdowner;
+	private final int queueCapacityI;
+	private final Timer theTimer;
+
 	
 	// Other objects that will be needed later.
 	private final UnicasterValue unicasterUnicasterValue; 
 	private final SubcasterQueue subcasterToUnicasterSubcasterQueue;
+
 	
   public UnicasterFactory(   // Factory constructor. 
   		AppGUIFactory theAppGUIFactory,
   		UnicasterManager theUnicasterManager,
   		IPAndPort unicasterIPAndPort,
   		DataTreeModel theDataTreeModel,
-  		Shutdowner theShutdowner
+  		Shutdowner theShutdowner,
+  		int queueCapacityI,
+  		Timer theTimer
   		)
   	// This builds all objects that are or comprise unconditional singletons
     // relative to their Unicaster.
     {
-		  LockAndSignal unicasterLockAndSignal= new LockAndSignal();
+  	  LockAndSignal unicasterLockAndSignal= new LockAndSignal();
 			NetcasterQueue receiverToUnicasterNetcasterQueue= 
-					new NetcasterQueue( unicasterLockAndSignal, Integer.MAX_VALUE );
+					new NetcasterQueue( unicasterLockAndSignal, queueCapacityI );
 			NetcasterInputStream unicasterNetcasterInputStream=
 					theAppGUIFactory.makeNetcasterInputStream( 
 							receiverToUnicasterNetcasterQueue 
@@ -43,7 +50,7 @@ public class UnicasterFactory {
 						theNetcasterPacketManager 
 						);
 			subcasterToUnicasterSubcasterQueue= 
-					new SubcasterQueue( unicasterLockAndSignal, Integer.MAX_VALUE );
+					new SubcasterQueue( unicasterLockAndSignal, queueCapacityI );
 		  SubcasterManager theSubcasterManager= 
 					new SubcasterManager( theDataTreeModel, theAppGUIFactory, this );
 	    Unicaster theUnicaster= new Unicaster(
@@ -55,7 +62,8 @@ public class UnicasterFactory {
 		  		unicasterIPAndPort,
 			  	theDataTreeModel,
 			   	theShutdowner,
-			   	subcasterToUnicasterSubcasterQueue
+			   	subcasterToUnicasterSubcasterQueue,
+			   	theTimer
 			  	);
   	
 	    UnicasterValue unicasterUnicasterValue=  
@@ -65,6 +73,8 @@ public class UnicasterFactory {
   		this.theAppGUIFactory= theAppGUIFactory;
 	  	this.theDataTreeModel= theDataTreeModel;
 	  	this.theShutdowner= theShutdowner;
+  		this.queueCapacityI= queueCapacityI;
+  		this.theTimer= theTimer;
 
 	  	// Save in instance variables other objects that are needed later.
       this.unicasterUnicasterValue= unicasterUnicasterValue;
@@ -92,7 +102,7 @@ public class UnicasterFactory {
 			SubcasterPacketManager theSubcasterPacketManager=
 					new SubcasterPacketManager( keyString ); 
 			SubcasterQueue unicasterToSubcasterSubcasterQueue=
-					new SubcasterQueue( subcasterLockAndSignal, Integer.MAX_VALUE );
+					new SubcasterQueue( subcasterLockAndSignal, queueCapacityI );
 			SubcasterInputStream theSubcasterInputStream= 
 			  	makeSubcasterInputStream( unicasterToSubcasterSubcasterQueue );
 			SubcasterOutputStream theSubcasterOutputStream= 
@@ -123,7 +133,8 @@ public class UnicasterFactory {
   		  return new SubcasterOutputStream(
   		  	subcasterToUnicasterSubcasterQueue,
   		  	theSubcasterPacketManager,
-  		  	packetsSentNamedInteger
+  		  	packetsSentNamedInteger,
+  	  		theTimer
   	      );
   	    }
 

@@ -14,21 +14,24 @@ public class AppLog
 
   /* This class is for logging information from an app.  
     This class needs some work.
-    
-    ?? MakeMultiprocessSafe: 
-      It might fail if multiple app instances try to log simultaneously.
-      Make log file be share-able in case two app instances
-      try to write to it at the same time.  See createOrAppendToFileV(..).
 
-    ?? Slowing might happen because of  
+    //// Slowing of speed-sensitive parts of the app might happen because of:
       * Anti-malware Service Executable  
       * Microsoft Windows Search Indexer
+      * File io.
       App can run much slower when the log file is long.
       This might be because of these tasks.
       Apparently it scans the log.txt file after every file close
       because when the file is short it causes little delay,
       but if file is big it slows progress of the program.
-      Change to close less often?
+      Fix by:
+      * Closing less often so most logging would be to buffer.
+      * Always write to open files which are copied to main file in background.
+
+    //// MakeMultiprocessSafe: 
+      It might fail if multiple app instances try to log simultaneously.
+      Make log file be share-able in case two app instances
+      try to write to it at the same time.  See createOrAppendToFileV(..).
     */
 
   {
@@ -49,6 +52,7 @@ public class AppLog
       private int theSessionI= 0;  // App session counter.
       long startedAtMillisL;  // Time when initialized.
       long lastMillisL; // Last time measured.
+      PrintWriter thePrintWriter = null;
 
     static // static/class initialization for logger.
       // Done here so all subsection variables are created.
@@ -224,6 +228,7 @@ public class AppLog
     
     @SuppressWarnings("unused") 
     private void appendAnyFocusChangeV()
+      // This was used to debug early window focus problems.
 	    {
 	    	if (focusChangeCheckingB)
 		    	{
@@ -254,10 +259,11 @@ public class AppLog
       /* This method creates the log file if it doesn't exist.
         Then it appends inString to the file.
         
-        If there is an error appending to the file then
-        it will insert an error message into the file before
-        writing inString.  This might happen if another program,
+        If there is an error appending to the file then it is supposed to 
+        insert an error message into the file before writing inString.  
+        For example, this might happen if another program,
         such as another instance of this app, is accessing the file.
+        I don't recall ever seeing this happen.
 
         ?? MakeMultiprocessSafe: Maybe it is now.  
           If not then it should be made multiprocess safe so 
@@ -265,7 +271,6 @@ public class AppLog
         */
       {
     	  int errorCountI= 0;
-        PrintWriter thePrintWriter = null;
         do {
 	        try {
 	            thePrintWriter =  // Prepare...

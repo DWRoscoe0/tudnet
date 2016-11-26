@@ -148,7 +148,7 @@ class TracingEventQueueMonitor extends Thread {
 			*/
 		{
     	appLogger.info( "daemon run() starting." );
-    	while (true) {
+    	while (true) { // Repeat periodic tests.
 				long currTime = System.currentTimeMillis();
 				synchronized (this) {
 					for (Map.Entry<AWTEvent, EventValue> entry : this.eventTimeMap

@@ -21,10 +21,11 @@ public class CountingPacketQueue extends NetcasterQueue
 	
 	  CountingPacketQueue(  // Constructor.
 	  		LockAndSignal destinationThreadLockAndSignal,
-	  		NamedInteger outputCountNamedInteger
+	  		NamedInteger outputCountNamedInteger,
+	  		int queueSizeI
 	  		)
 	    {
-	      super( destinationThreadLockAndSignal, Integer.MAX_VALUE );
+	      super( destinationThreadLockAndSignal, queueSizeI );
 	  		this.outputCountNamedInteger= outputCountNamedInteger;
 	      }
 	  

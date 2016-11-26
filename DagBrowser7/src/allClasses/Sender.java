@@ -5,7 +5,9 @@ import static allClasses.Globals.appLogger;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.util.Random;
+//import java.util.Random;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class Sender // Uunicast and multicast sender thread.
 
@@ -47,7 +49,10 @@ public class Sender // Uunicast and multicast sender thread.
 			// LockAndSignal for inputs to this thread.  It should be the same 
 		  // LockAndSignal instance in netcasterToSenderNetcasterQueue construction. 
 		
-		private Random theRandom= new Random(1);
+		// Other variables.
+		private ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor=
+				new ScheduledThreadPoolExecutor(1); ////// Inject this dependency.
+		//private Random theRandom= new Random(1);
 		  // Seed is not zero so first DISCOVER packet is sent.  
 
 		Sender( // Constructor. 
@@ -68,25 +73,22 @@ public class Sender // Uunicast and multicast sender thread.
         through the DatagramSocket.
         */
       {
-	  	  toReturn: {
-	    		while (true) { // Repeating until thread termination requested.
-	      		if // Exiting loop if thread termination is requested.
-	      		  ( EpiThread.exitingB() ) 
-	      			break toReturn;
+	  	  beforeReturn: while (true) { // Processing packets until terminated.
+      		if // Exiting loop if thread termination is requested.
+      		  ( EpiThread.exitingB() ) 
+      			break beforeReturn;
 
-	          processingSockPacketsToSendB(); // Processing inputs.
-	          senderLockAndSignal.waitingForInterruptOrNotificationE();
-		        } // while (true)
-	    		} // toReturn.
+          if ( tryingToProcessOneQueuedSockPacketB() ) 
+          	continue beforeReturn; // Looping if success.
+
+          senderLockAndSignal.waitingForInterruptOrNotificationE();
+	        } // while (true) beforeReturn:
         }
 
 
-    private boolean processingSockPacketsToSendB()
-      /* This method sends packets stored in the send queue.
-        This method returns true if at least one packet was sent,
-        false otherwise.
-        It presently assumes that the packet is ready to be sent,
-        and nothing else needs to be added first.
+    private boolean tryingToProcessOneQueuedSockPacketB()
+      /* This method tries to send one SockPacket stored in the send queue.
+        This method returns true if one packet was sent, false otherwise.
 
         Channeling all outgoing packets through this code
         makes congestion control theoretically possible here, 
@@ -102,41 +104,92 @@ public class Sender // Uunicast and multicast sender thread.
       {
         boolean packetsProcessedB= false;  // Assuming no packet to send.
 
-        while (true) {  // Processing all queued send packets.
+        beforeReturn: { // Processing maximum of one queued packet.
           NetcasterPacket theNetcasterPacket= // Trying to get next packet.
           		netcasterToSenderNetcasterQueue.poll();
-          if (theNetcasterPacket == null) break;  // Exiting if no more packets.
+          if (theNetcasterPacket == null)  // Exiting if no queued packets. 
+          	break beforeReturn;
+          packetsProcessedB= true; // Recording a packet to be processed.
         	DatagramPacket theDatagramPacket= 
         			theNetcasterPacket.getDatagramPacket();
           IPAndPort theIPAndPort= theNetcasterPacket.getKeyK();
           theDatagramPacket.setAddress(theIPAndPort.getInetAddress());
           theDatagramPacket.setPort(theIPAndPort.getPortI());
-          if  // Debug: Send all but 1/10 of packets to test retries.
-            (theRandom.nextInt(20) == 0)
-            appLogger.debug( // Drop the packet.
-            		"dropping packet "
-            		+PacketManager.gettingDirectedPacketString(
-            				theDatagramPacket,true
-            				)
-            		);
-	          else
-	          try { // Send the packet.
-	          		PacketManager.logSenderPacketV(theDatagramPacket);
-	          		  // Log before sending so log will make sense.
-		            theDatagramSocket.send(   // Send packet.
-		            	theDatagramPacket
-		              );
-	            } catch (IOException e) { // Handle exception by dropping packet.
-	              appLogger.error(
-	                "processingSockPacketsToSendB(),"
-	                +e
-	                );
-	            }
 
-          packetsProcessedB= true; // Recording that a packet was processed.
-          }
-          
+         	processingDatagramPacketV( theDatagramPacket );
+          } // beforeReturn: 
         return packetsProcessedB;
         }
+
+    private void processingDatagramPacketV( 
+    		final DatagramPacket theDatagramPacket 
+    		)
+      /* This method processes theDatagramPacket.
+        Generally that means sending it, but depending on Debug state,
+        it might mean dropping it, or delaying it.
+       	*/
+	    {
+    	  beforeReturn: {
+			    if  // Debug: drop a fraction of packets to test retries logics.
+			    	( testingForDropOfPacketB( theDatagramPacket ) )
+			    	break beforeReturn;
+			    //// add Timer delay logic here.
+          if ( Delay.packetSendDelayMsL == 0L )
+          	sendingDatagramPacketV( theDatagramPacket );
+          	else
+          	{
+          		theScheduledThreadPoolExecutor.schedule(
+          				new Runnable() { 
+          					public void run() {
+	          					sendingDatagramPacketV( theDatagramPacket );
+	          					} 
+          					},
+          				Delay.packetSendDelayMsL,
+          				TimeUnit.MILLISECONDS
+          				);
+            	sendingDatagramPacketV( theDatagramPacket );
+          		}
+    			} // beforeReturn:
+	    	}
+
+    boolean testingForDropOfPacketB( DatagramPacket theDatagramPacket )
+      /* This method, when its code is enabled,
+        tests whether a packet should be randomly dropped.
+        It displays a log message including theDatagramPacket
+        if the caller should drop the packet.
+        It returns true if the packet should be dropped, false otherwise.
+       */
+	    {
+    	  boolean droppingB= 
+    	  		//(theRandom.nextInt(20) == 0); // Debug.
+    	  		false;
+		    if ( droppingB )
+			    {
+			      appLogger.debug( // Logging the drop of the packet.
+			      		"dropping packet "
+			      		+PacketManager.gettingDirectedPacketString(
+			      				theDatagramPacket,true
+			      				)
+			      		);
+			    	}
+		    return droppingB;
+	    	}
+
+    private void sendingDatagramPacketV( DatagramPacket theDatagramPacket )
+      // This method sends theDatagramPacket and handles exceptions.
+	    {
+	    	try { // Send the packet.
+	    		PacketManager.logSenderPacketV(theDatagramPacket);
+	    		  // Log before sending so log will make sense.
+	        theDatagramSocket.send(   // Send packet.
+	        	theDatagramPacket
+	          );
+	      } catch (IOException e) { // Handle exception by dropping packet.
+	        appLogger.error(
+	          "processingSockPacketsToSendB(),"
+	          +e
+	          );
+	      }
+	    }
     
     }

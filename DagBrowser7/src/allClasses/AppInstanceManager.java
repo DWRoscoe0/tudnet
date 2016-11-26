@@ -628,8 +628,10 @@ public class AppInstanceManager {
 	                      +e.toString()
 	                      +"  Will retry after 1 second." 
 	                      ); 
-	                    (new LockAndSignal()).waitingForInterruptOrDelayOrNotificationE(1000);
-	                      // Wait 1 second.
+	                    (new LockAndSignal()).
+	                      waitingForInterruptOrDelayOrNotificationE(
+	                      		Delay.fileCopyRetryPause1000MsL
+	                      		); // Wait 1 second.
 	                    }
 	        return copySuccessB;
 	        }

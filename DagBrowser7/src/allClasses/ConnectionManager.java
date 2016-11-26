@@ -274,7 +274,9 @@ public class ConnectionManager
 		      appLogger.error("unconnectedDatagramSocket:"+e);
 		      if ( unconnectedDatagramSocket != null )
 		        unconnectedDatagramSocket.close();
-		      EpiThread.interruptableSleepB(1000); // Don't hog CPU in error loop.
+		      EpiThread.interruptableSleepB(  // Don't hog CPU in error loop.
+		      	Delay.errorRetryPause1000MsL
+		      	);
 		      }
 		    finally {
 		      }
@@ -376,7 +378,9 @@ public class ConnectionManager
 	      appLogger.error("theMulticastSocket:"+e);
 	      if ( theMulticastSocket != null )
 	      	theMulticastSocket.close();
-	      EpiThread.interruptableSleepB(1000); // Don't hog CPU in error loop.
+	      EpiThread.interruptableSleepB(  // Don't hog CPU in error loop.
+	      		Delay.errorRetryPause1000MsL
+	      		);
 	      }
 	    finally {
 	      }

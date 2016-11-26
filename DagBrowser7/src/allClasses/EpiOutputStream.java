@@ -2,6 +2,8 @@ package allClasses;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class EpiOutputStream<
 		K, // Key.
@@ -17,8 +19,27 @@ public class EpiOutputStream<
     If used by a Unicaster then the packets are queued for sending.
     If used by a Subcaster then the packets are queued for multiplexing
     before sending. 
+    
+    //// markIndivisibleBlock().
+    Add this method which records the buffer position as the end of the block.
+    If the buffer becomes full, only the bytes up to 
+    the last block mark will be sent in a packet.
+    The remaining bytes will be copied to the front of the buffer
+    and become the beginning of the next packet. 
 
-    ?? Eventually this will be used with DataOutputStream for writing
+    ////?? delayedFlush(long delayMsL).
+    Add this variation of flush() which takes a time limitMsL,
+    which is the maximum number of milliseconds before
+    an actual physical flush() happens.  
+    This will allow fuller packets and better bandwidth utilization allowing:
+    * a parent EpiOutputStream to combine data from
+    	child multiplexed streams into larger packets
+    * interactive apps to produce fewer packets.
+    This is a good case for using a single Timer. 
+    Alternatively, a setFlushIntervalV(..) method might be better.
+    It would remain in effect until changed.
+
+    //// Eventually this will be used with DataOutputStream for writing
     particular types to the stream, as follows:
     * EpiOutputStream extends OutputStream.
     * NetDataOutputStream(EpiOutputStream) extends 
@@ -35,15 +56,21 @@ public class EpiOutputStream<
 		  // The value is 0 during read of 1st packet data, assuming
 		  // it is constructed with a value of 0.
 			// It becomes 1 after the packet containing that data is queued.
+		private Timer theTimer; // For delayedBlockFlushV( long delayMsL ).
+
+  	private TimerTask theTimerTask= null;
+  	private long sendTimeMsL;
 
 		private int bufferSizeI= 0; // 0 forces initial flush() to allocate buffer.
 		private byte[] bufferBytes= null;
 		private int indexI= 0; // 0 prevents sending packet during initial flush().
+		private int sendableI= 0; // End of data when packet is sent.
 
 		EpiOutputStream(  // Constructor.
 				Q notifyingQueueQ,
 				M packetManagerM,
-				NamedInteger packetCounterNamedInteger
+				NamedInteger packetCounterNamedInteger,
+	  		Timer theTimer
 				)
 			{
 				this.notifyingQueueQ= notifyingQueueQ;
@@ -59,6 +86,7 @@ public class EpiOutputStream<
 		
 		public void write(int value) throws IOException
 		  // This writes one byte to the stream.
+		  //// Because this is UDP, it should never flush here.  Make Exception?
 			{
 				if (indexI >= bufferSizeI) // Flushing buffer if no more room there. 
 				  	flush();
@@ -74,72 +102,120 @@ public class EpiOutputStream<
 	      Then it queues theKeyedPacketE.
 	      */
 	    {
-	  		queuingBufferDataB(); // Queuing packet with buffer data if any.
-	  	  queuingV( theKeyedPacketE ); // Queuing new data argument packet.
+	  		queuingBufferDataV(); // Queuing packet with buffer data if any.
+	  	  queuingForSendV( theKeyedPacketE ); // Queuing new data argument packet.
 	    	}
 
-	  public void flush() throws IOException
-      /* This outputs any bytes written to the buffer so far, if any,
-        and prepares another buffer to receive more bytes.
-        It can be called internally when the buffer becomes full,
-        or externally when written bytes need to be sent and
-        thereby create a new packet boundary.
+	  public void flush() throws IOException 
+	    /* This outputs any bytes written to the buffer so far, if any,
+		    and prepares another buffer to receive more bytes.
+		    It can be called internally when the buffer becomes full,
+		    or externally when written bytes need to be sent and
+		    thereby create a new packet boundary.
+		    It is equivalent to a delayedBlockflushV(...), with no delay.
+		    */
+	    { 
+	  		////delayedBlockflushV( 0 ); 
+	  		doOrScheduleFlushB( 0 );
+	  		}
 
-        ////?? Add a variation of this which takes a time limitMsL,
-        which is the maximum number of milliseconds before
-        an actual physical flush() happens.  
-        This will allow better bandwidth utilization allowing:
-        * a parent EpiOutputStream to combine data from
-        	child multiplexed streams into larger packets
-        * interactive apps to produce fewer packets.
-        This might mean creating a new thread?
-        Or maybe this was would be a good case for 
-        using a single existing re-programmable timer thread
-        which can be used by all EpiOutputStreams.
-        Alternatively, a setFlushIntervalV(..) method might be better.
-        It would remain in effect until changed.
-        */
-      {
-	  		if  // Queuing packet with buffer bytes if any.
-	  		  (queuingBufferDataB() )
-		  		{ // Allocating new buffer because old one was queued.
-		    		bufferBytes= // Allocating new buffer.
-					  	  packetManagerM.produceDefaultSizeBufferBytes();
-		    		bufferSizeI= bufferBytes.length; // Caching its length. 
-					  ///indexI = 0; // Resetting buffer index.
-			  		}
-  	    }
+    public synchronized boolean doOrScheduleFlushB( long delayMsL )
+    /* This method either queues a packet for sending 
+      containing sendable bytes(), or schedules the send for later.
+      The packet will contain only the bytes written so far,
+      even though more might have been written by the time the send occurs.
+      It returns true if a flush was done, false if it was scheduled.
 
+    	The proper time for flushing is the nearer of delayMsL or
+    	the remaining time on the flush Timer.
+      The flush Timer is cancelled, and reset if necessary, 
+      depending on the circumstances.
+     */
+    {
+    	boolean queuePacketB;
+    	TimerTask newTimerTask= null;
 
-	  public boolean queuingBufferDataB() throws IOException
-	    /* Queues a packet containing bytes in the buffer, if there are any.
-	      It returns true if a new buffer needs to be allocated, 
-	      false otherwise.
-	      A new buffer needs to be allocated if either:
-	      * the previous buffer was queued, or
-	      * a buffer has never been allocated.
+    	// Defining break goto targets.
+    	beforeExit: {
+    	beforeCancelAndReplaceTimerTask: {
+    	beforeCreateCancelAndReplaceTimerTask: {
+  
+	  		sendableI= indexI; // Marking new end of sendable bytes.
+    		queuePacketB= ( delayMsL == 0 );
+    	  if ( queuePacketB ) { // Queuing send now if no delay requested.
+      		queuingBufferDataV();
+	        break beforeCancelAndReplaceTimerTask;
+    	    }
+    	  if (theTimerTask == null) // Creating new TimerTask if none already. 
+    	  	break beforeCreateCancelAndReplaceTimerTask;
+
+    	  { // Exiting if the existing TimerTask will do the job.
+    	  	long newSendTimeMsL= System.currentTimeMillis() + delayMsL;
+    	  	if ( newSendTimeMsL >= sendTimeMsL )
+    	  		break beforeExit; // Exiting because new send would be later.
+    	  }
+
+    	} // beforeCreateCancelAndReplaceTimerTask:
+    		newTimerTask= new TimerTask() { // Creating TimerTask.
+	        public void run()
+	          {
+	        		queuingBufferDataV();
+	        	  }
+	    		};
+	    	theTimer.schedule(newTimerTask, delayMsL); // Scheduling it.
+	    	sendTimeMsL= System.currentTimeMillis() + delayMsL; // Saving its time.
+	    	  
+    	} // beforeCancelAndReplaceTimerTask: 
+	  		if (theTimerTask != null) { // Canceling old TimerTask if it exists.
+	  				theTimerTask.cancel();
+			    	theTimerTask= null; // Recording no longer scheduled.
+	    			}
+	  		if (newTimerTask != null) { // Recording new TimerTask, if any.
+	  			  theTimerTask= newTimerTask;
+	  			  newTimerTask= null;
+	    	  	}
+
+     	} // beforeExit: 
+	      return queuePacketB;
+    	}
+
+	  public void queuingBufferDataV()
+	    /* Queues a packet containing send-able buffer bytes, if there are any.
+	      It also allocates a new buffer to replace the one queued,
+	      and copies any unsendable bytes from the old buffer to the new one.
 	      */
 	  	{
-	  	  boolean testB;
+	  	  ////boolean testB;
+	  		// Allocating new buffer because old one will be queued.
+  			byte[] newBufferBytes= 
+  					packetManagerM.produceDefaultSizeBufferBytes();
 	  	  processing: {
-		  	  testB= (indexI > 0); // Testing for bytes in buffer.
-			  	if ( testB ) // Outputting packet if any bytes in buffer.
+	  	  	//// Changed this to use sendableI.
+		  	  //%testB= (indexI > 0); // Testing for bytes in buffer.
+	  	  	////testB= (sendableI > 0); // Testing for send-able bytes in buffer.
+			  	if ( sendableI > 0 ) // Outputting packet if any bytes in buffer.
 				  	{
+							///indexI = 0; // Resetting buffer index.
 				  		E keyedPacketE= packetManagerM.produceKeyedPacketE(
 			        		bufferBytes, indexI // Using buffer containing bytes.
 						  		);
-				  		queuingV( keyedPacketE );
-						  indexI = 0; // Resetting buffer index to indicate empty.
+				  		for // Copying unsent bytes to beginning of new buffer.
+						  	( int dstI=0, srcI= sendableI; srcI < indexI ; )
+						  	bufferBytes[dstI++]= bufferBytes[srcI++];
+						  indexI-= sendableI; // Subtracting sent bytes from buffer index.
+						  sendableI= 0;  // Indicating no bytes are sendable.
+				  		queuingForSendV( keyedPacketE ); // Queuing old buffer.
 						  break processing; // Exiting with new buffer needed.
 				  		}
-					testB=  // Testing whether initial buffer allocation needed.
-							(bufferSizeI==0);
+					////testB=  // Testing whether initial buffer allocation needed.
+			  	////		(bufferSizeI==0);
 	  	  	}
-		    return testB; // Returning whether a new buffer is needed.
+	  		bufferBytes= newBufferBytes; // Start using new buffer.
+	    	bufferSizeI= newBufferBytes.length; // Caching its length. 
 		    }
 	    
 
-	  private void queuingV( E theKeyedPacketE )
+	  private void queuingForSendV( E theKeyedPacketE )
 		  // This method queues a packet and counts it.
 			{
 		    ///notifyingQueueQ.add( theKeyedPacketE ); // Adding packet to queue.

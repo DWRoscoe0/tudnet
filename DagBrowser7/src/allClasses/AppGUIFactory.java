@@ -7,6 +7,7 @@ import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
 import java.net.SocketAddress;
 import java.net.SocketException;
+import java.util.Timer;
 
 import javax.swing.JFrame;
 
@@ -27,6 +28,8 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 
     */
 
+	private final int QUEUE_SIZE= 5;
+	
   // Injected dependencies that need saving for later.
   private final Shutdowner theShutdowner;
 
@@ -38,7 +41,8 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
   private final DataTreeModel theDataTreeModel;
   private final AppGUI theAppGUI;
   private final NetcasterPacketManager receiverNetcasterPacketManager;
-  
+	private final Timer theTimer;
+
   public AppGUIFactory(  // Factory constructor.
   		AppFactory XtheAppFactory, // Not needed??
   		Shutdowner theShutdowner,
@@ -49,7 +53,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
     {
   	  LockAndSignal senderLockAndSignal= new LockAndSignal();
   	  NetcasterQueue netcasterToSenderNetcasterQueue= 
-  	  		new NetcasterQueue( senderLockAndSignal, 5 );
+  	  		new NetcasterQueue( senderLockAndSignal, QUEUE_SIZE );
       DataRoot theDataRoot= new DataRoot();
       MetaFileManager theMetaFileManager= new MetaFileManager( theDataRoot );
       MetaRoot theMetaRoot= new MetaRoot( theDataRoot, theMetaFileManager );
@@ -60,9 +64,9 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
         );
 	    LockAndSignal cmThreadLockAndSignal= new LockAndSignal();
 	    NetcasterQueue multicasterToConnectionManagerNetcasterQueue=
-	      new NetcasterQueue(cmThreadLockAndSignal, Integer.MAX_VALUE);
+	      new NetcasterQueue(cmThreadLockAndSignal, QUEUE_SIZE);
 	    NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue=
-	      new NetcasterQueue(cmThreadLockAndSignal, Integer.MAX_VALUE);
+	      new NetcasterQueue(cmThreadLockAndSignal, QUEUE_SIZE);
       UnicasterManager theUnicasterManager= new UnicasterManager( 
         	theDataTreeModel, this
        		);
@@ -127,8 +131,10 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
         theShutdowner
         );
 
-      receiverNetcasterPacketManager= 
+      receiverNetcasterPacketManager=  //// use local? 
       		new NetcasterPacketManager( (IPAndPort)null );
+
+  		Timer theTimer= new Timer(); // Single timer for entire app.
 
       // Save in instance variables injected objects that are needed later.
   	  this.theShutdowner= theShutdowner;
@@ -141,6 +147,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
       		unconnectedReceiverToConnectionManagerNetcasterQueue;
       this.theDataTreeModel= theDataTreeModel;
       this.theAppGUI= theAppGUI;
+  		this.theTimer= theTimer;
       }
 
   // Unconditional singleton getter methods with null checking.
@@ -279,7 +286,8 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 		  return new NetcasterOutputStream(
 		  	netcasterToSenderNetcasterQueue,
 		  	theNetcasterPacketManager,
-		  	packetsSentNamedInteger
+		  	packetsSentNamedInteger,
+	  		theTimer
 	      );
 	    }
 	
@@ -291,7 +299,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 	  { 
 		  LockAndSignal multicasterLockAndSignal= new LockAndSignal();  
 		  NetcasterQueue multicastReceiverToMulticasterNetcasterQueue= 
-		  		new NetcasterQueue( multicasterLockAndSignal, Integer.MAX_VALUE );
+		  		new NetcasterQueue( multicasterLockAndSignal, QUEUE_SIZE );
 			int multicastPortI= PortManager.getDiscoveryPortI();
 			IPAndPort theIPAndPort= AppGUIFactory.makeIPAndPort(
   				multicastInetAddress, multicastPortI 
@@ -324,7 +332,9 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 				theUnicasterManager,
 				peerIPAndPort,
 				theDataTreeModel, 
-				theShutdowner 
+				theShutdowner, 
+				QUEUE_SIZE,
+	  		theTimer
 				);
 	  	}
 

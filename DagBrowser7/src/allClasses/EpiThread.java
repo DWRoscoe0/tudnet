@@ -115,7 +115,7 @@ public class EpiThread
         appLogger.info("EpiThread(" + getName() + ").joinV(): stopped.");
         }
 
-    public static boolean interruptableSleepB( int msI )
+    public static boolean interruptableSleepB( long msL )
       /* This method works like Thread.sleep( msI ),
         causing the current thread to sleep for msI milliseconds,
         except that it does not throw an InterruptedException 
@@ -129,7 +129,7 @@ public class EpiThread
     	  boolean interruptedB= false;
     	  
         try {
-          Thread.sleep( msI ); // Try to sleep for desired time.
+          Thread.sleep( msL ); // Try to sleep for desired time.
           } 
         catch( InterruptedException ex ) { // Handling interruption.
           Thread.currentThread().interrupt(); // Reestablish interrupted.

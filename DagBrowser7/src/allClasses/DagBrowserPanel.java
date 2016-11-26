@@ -634,7 +634,7 @@ public class DagBrowserPanel
 
       		    */
         		{
-      			  final long periodMsL= 1000;
+      			  final long periodMsL= Delay.activityBlinkerPeriod1000MsL;
     				  long shiftInTimeMsL= // Calculating any needed time shift.
     				    activityLockAndSignal.periodCorrectedShiftMsL(
     				    		periodicTargetTimeMsL, periodMsL

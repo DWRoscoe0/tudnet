@@ -1,5 +1,7 @@
 package allClasses;
 
+import java.util.Timer;
+
 public class NetcasterOutputStream 
 
   extends EpiOutputStream<
@@ -10,7 +12,7 @@ public class NetcasterOutputStream
 		> 
 
   /* This is the EpiOutputStream used by Netcasters 
-    (Unicasters and Multicasters.  
+    (Unicasters and Multicasters).  
     */
 
   {
@@ -18,13 +20,15 @@ public class NetcasterOutputStream
 		NetcasterOutputStream(  // Constructor.
 				NetcasterQueue outputNetcasterQueue,
 				NetcasterPacketManager theNetcasterPacketManager,
-				NamedInteger packetCounterNamedInteger
-				)
+				NamedInteger packetCounterNamedInteger,
+	  		Timer theTimer
+)
 			{
 			  super(
 			  		outputNetcasterQueue,
 			  		theNetcasterPacketManager,
-			  		packetCounterNamedInteger
+			  		packetCounterNamedInteger,
+			  		theTimer
 			  		);
 	      }
 

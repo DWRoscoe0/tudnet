@@ -33,9 +33,12 @@ public class SystemsMonitor
 
     // Other instance variables, all private.
 
-	  private long measurementTimeMsL; // Next time to do measurements.
-	  final long periodMsL= 1000; // Time between measurements.
+	  private final long oneSecondOfNsL=  1000000000L;
+	  private final long periodMsL=  // Time between measurements.
+	  		Delay.systemsMonitorPeriod1000MsL;
 	  
+	  private long measurementTimeMsL; // Next time to do measurements.
+
 	  // Detail-containing child sub-objects.
 		  private NamedInteger measurementCountNamedInteger= 
 		  	new NamedInteger( 
@@ -156,14 +159,14 @@ public class SystemsMonitor
           instruction sequencing logic.
           
 		    CPU speed measurement takes approximately 1 ms.
-		    The measuremet cycles is 1000 ms.
-		    So the execution overhead is only about 0.1%.
+		    With a measuremet cycle of 1000 ms.
+		    the execution overhead is only about 0.1%.
 
         //// Maybe prevent overshoot in displayed values,
         which can happen during expanding parts of binary search.
         */
     	{
-    	  final long targetNsL= 1000000; // ns per ms. 
+    	  final long targetNsL= 1000000; // # of ns in the 1 ms target interval. 
 	
         while (true) // Expand interval up while possible.
           { 
@@ -235,7 +238,7 @@ public class SystemsMonitor
       /* 
         This method does several things:
         * It measures several performance parameters.
-        * It delays its this thread by waiting until the next measurement time.
+        * It delays this thread by waiting until the next measurement time.
         
         The caller of this method should do several things:
         * It should call this method repeatedly.
@@ -274,7 +277,7 @@ public class SystemsMonitor
           );
       	//nanoTimeOverheadNamedInteger.setValueL( nanoTimeOverheadNsL  );
       	waitJitterNsNamedInteger.setValueL( 
-      			(waitEndNsL - waitEndOldNsL) - 1000000000L
+      			(waitEndNsL - waitEndOldNsL) - oneSecondOfNsL
       			);
       	waitEndOldNsL= waitEndNsL;
       	endWaitMsNamedInteger.setValueL( endWaitDelayMsL );
