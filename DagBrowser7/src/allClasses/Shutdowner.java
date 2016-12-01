@@ -218,27 +218,22 @@ public class Shutdowner
 
         */
       {
-    		if ( finishVCalledB ) // Prevent multiple executions of this method.
-      		{
+    	  beforeReturn: {
+	    		if ( finishVCalledB ) { // Exitting if executed before.
             appLogger.error( "Shutdowner.finishV() finishV() already called." );
-            return;
+            break beforeReturn;
         		}
-        finishVCalledB= true;
-
-        appLogger.info( "Shutdowner.finishV() beginning, calling listeners." );
-        reverseFireShutdownerListeners(); // Calling all listeners in reverse.
-
-        //appLogger.info( 
-        //	"Shutdowner.finishV() listeners done, starting process if requested." 
-        //	);
-        startAProcessV(argStrings); // Executing an external command.
-
-        appLogger.info( 
-        		"Shutdowner.finishV() signaling app shutdown done, ending." 
-        		);
-    	  appShutdownDoneLockAndSignal.notifyingV(); // Signaling shutdown done.
-
-    	  //appLogger.info( "Shutdowner.finishV(), ending." );
+	        finishVCalledB= true;
+	        appLogger.info( "Shutdowner.finishV() beginning, calling listeners." );
+	        reverseFireShutdownerListeners(); // Calling all listeners in reverse.
+	        //appLogger.debug( "Shutdowner.finishV() calling startAProcessV(..)" );
+	        startAProcessV(argStrings); // Executing an external command.
+	        appLogger.info( 
+	        		"Shutdowner.finishV() signaling app shutdown done, ending." 
+	        		);
+	    	  appShutdownDoneLockAndSignal.notifyingV(); // Signaling shutdown done.
+  			} // beforeReturn: 
+      		appLogger.setBufferedModeV( false ); // Disabling buffered logging.
         }
     
     // ShutdownerListener code.  Maintains and calls ShutdownListeners.
@@ -278,6 +273,9 @@ public class Shutdowner
             { 
               ShutdownerListener aShutdownerListener= 
                 theShutdownerListeners[i];
+              //appLogger.debug( 
+              //		"reverseFireShutdownerListeners( ): calling listener." 
+              //	); 
               aShutdownerListener.doMyShutdown( );
               }
         }

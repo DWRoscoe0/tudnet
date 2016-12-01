@@ -171,7 +171,7 @@ public class MetaFileManager {
         ?? This should probably be renamed to saveV().
         */
       { // finish()
-        //appLogger.info( "MetaFile.finish() begin.");
+        appLogger.info( "MetaFile.finish() begin.  This could take a while.");
 
         forcedLoadingEnabledB= true;  // Turn on forced loading.
 
@@ -180,11 +180,13 @@ public class MetaFileManager {
           );  // This simultaneously 
           // causes the lazy loading of all unloaded nodes, and
           // provides a convenient human-readable dump of all MetaNodes.
+        //appLogger.debug( "MetaFile.finish() nested file written.");
 
         if   // Closing lazy-loading file if open.
           ( lazyLoadMetaFile != null )
           try { // Closing it.
           	lazyLoadMetaFile.closeV( );
+            //appLogger.debug( "MetaFile.finish() lazyLoadMetaFile closed.");
             }
           catch ( IOException e ) {  // Processing any errors.
             e.printStackTrace();
@@ -194,7 +196,7 @@ public class MetaFileManager {
           theMetaRoot.getRootMetaNode( ) 
           );  // This file is what will be lazy-loaded during next run.
 
-        //appLogger.info( "MetaFile.finish() end.");
+        appLogger.info( "MetaFile.finish() end.");
         } // finish()
 
   public static class Finisher implements ShutdownerListener {

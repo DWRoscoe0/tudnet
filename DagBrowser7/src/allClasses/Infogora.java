@@ -36,15 +36,15 @@ import static allClasses.Globals.appLogger;  // For appLogger;
     This will, in theory, make unit testing easier.
 
   * Their code shows how classes relate to each other in the app
-    by showing all dependency injections, usually with
-    constructor injection, but occasionally with setter injection.
+    by showing all dependency injections, usually with constructor injection, 
+    but occasionally with setter injection.
 
   * Factory fields are:
     * Singleton variable fields, preferably private.
     * One constructor, which creates all the non-lazy singletons.
     * Lazy singleton getters methods, 
       whose constructions are delayed until needed.
-    * Maker methods, which construct new objects each time called.
+    * Maker methods, which construct a new object each time called.
     ! There should be no non-lazy getters, except for the top level,
       or the helper classes for each scope,
       because non-lazy singletons should be constructor-injected. 
@@ -110,6 +110,7 @@ class Infogora  // The root of this app.
 				this app's high-level structure.
 			  */
       { // main(..)
+	      appLogger.setBufferedModeV( true ); // Enabling buffered logging.
 	      appLogger.info("Infogora.main() beginning.");
 
 	      setDefaultExceptionHandlerV(); // Preparing for exceptions 
@@ -127,6 +128,7 @@ class Infogora  // The root of this app.
 	      // Unfortunately the app doesn't terminate, so we call exit(0).
 
 	      appLogger.info("Infogora.main() calling exit(0).");
+    		appLogger.setBufferedModeV( false ); // Disabling buffered logging.
 	      System.exit(0); // Will kill any remaining unknown threads running??
 	      } // main(..)
 	

@@ -1,8 +1,8 @@
 
 package allClasses;
 
-import java.awt.Component;
-import java.awt.KeyboardFocusManager;
+//%import java.awt.Component;
+//%import java.awt.KeyboardFocusManager;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
@@ -13,7 +13,20 @@ import java.io.PrintWriter;
 public class AppLog 
 
   /* This class is for logging information from an app.  
-    This class needs some work.
+    It is of a special design to provide the following features:
+    * Logs strings provided by the application.
+    * Multiple app instances can log to the same file
+      and their log entries will be interleaved.
+    * Output from different app instances 
+      are identified by different session numbers.
+    * Log entries are stamped with the relative times since
+      the previous entry of the same session.
+
+		If any errors occur during logging they will be reported:
+		* As an Exception occurrence reported to the err stream
+		* As an error count later to the log, if possible.
+
+    This class is under development.
 
     //// Slowing of speed-sensitive parts of the app might happen because of:
       * Anti-malware Service Executable  
@@ -44,15 +57,16 @@ public class AppLog
       private static final AppLog theAppLog=  // Internal singleton builder.
         new AppLog();
 
-      public static AppLog getAppLog()   // Returns singleton.
+      public static AppLog getAppLog()   // Returns singleton logger.
         { return theAppLog; }
 
     // Variables.
+      ////private boolean theBufferedModeB= false;
       private File logFile;  // Name of log file.
       private int theSessionI= 0;  // App session counter.
-      long startedAtMillisL;  // Time when initialized.
-      long lastMillisL; // Last time measured.
-      PrintWriter thePrintWriter = null;
+      //%private long startedAtMillisL;  // Time when initialized.
+      private long lastMillisL; // Last time measured.
+      private PrintWriter thePrintWriter = null; // non-null means file open.
 
     static // static/class initialization for logger.
       // Done here so all subsection variables are created.
@@ -62,7 +76,7 @@ public class AppLog
 	        	AppLog.getAppLog().logFileInitializeV(); 
 	          }
         catch(IOException e)
-          { System.out.println("\nIn AppLog initialization:"+e); }
+          { System.err.println("\nIn AppLog initialization:"+e); }
         }
 
     /* Debug Flags.  These are added or removed as needed during debugging
@@ -70,24 +84,42 @@ public class AppLog
       only very limited conditions. 
      */
     
-    static boolean testingForPingB= false;
-    static boolean focusChangeCheckingB= true;
+    public static boolean testingForPingB= false;
+    //%private static boolean focusChangeCheckingB= true;
 
+    public void setBufferedModeV( boolean desiredBufferedModeB ) 
+    	/* This method opens the file for buffered mode,
+    	  and closes it for non-buffered mode.
+    	  */
+	    {
+	    	if ( desiredBufferedModeB )
+		    	{ openFileV();
+		    	  info("setBufferedModeV(..), enabled.");
+		    		}
+		    	else
+		      { info("setBufferedModeV(..), disabled.");
+		    	  closeFileV();
+		      	}
+	    	}
     
     private void logFileInitializeV()
       throws IOException  // Do-nothing put-off.
       {
-        startedAtMillisL=  // Save time when we started.
-          System.currentTimeMillis();
+        //%startedAtMillisL=  // Save time when we started.
+    		//%  System.currentTimeMillis();
         logFile=  // Identify log file name.
           AppFolders.resolveFile( "log.txt" );
         theSessionI= getSessionI();  // Get app session number.
         if (theSessionI == 0)  // If this is session 0...
           logFile.delete();  //...then empty log file by deleting.
-        appendEntry( "<--< This is an absolute time.  Later ones are relative."); 
-        appendEntry( ""); 
-        appendEntry( "=================== NEW LOG FILE SESSION ===================");
-        appendEntry( ""); 
+        appendEntry( 
+        		"<--< This is an absolute time.  Later ones are relative times."
+        		); 
+        appendEntry( "" ); 
+        appendEntry( 
+        		"=================== NEW LOG FILE SESSION ==================="
+        		);
+        appendEntry( "" ); 
         }
   
     private int getSessionI()
@@ -131,7 +163,7 @@ public class AppLog
                 }
         FileWriter theFileWriter = null;
         sessionString= sessionI + "";  // Convert int to string.
-        try {
+        try { // Write [new] session # string to session file.
             theFileWriter = new FileWriter(sessionFile);
             theFileWriter.write(sessionString);
         }catch (IOException e) {
@@ -197,8 +229,8 @@ public class AppLog
         appendEntry( wholeString );  // Send to log. 
         }
 
-    public synchronized void appendEntry( String inString )
-      /* This appends to the log file a new log entry.
+    public void appendEntry( String inString )
+      /* This appends to the log file a new log entry line.
         It contains the app session number,
         milliseconds since the previous entry, the thread name,
         and finally inString.
@@ -219,45 +251,30 @@ public class AppLog
         aString+= inString; //...the string to log,...
         aString+= "\n";  //...and a line terminator.
 
-        AppLog.getAppLog().appendRawV( aString );  // Append it to log file.
+        AppLog.getAppLog().appendV( aString );  // Append it to log file.
 
         lastMillisL= nowMillisL; // Saving present time as new last time.
         }
 
-    Component savedFocusedComponent= null;
-    
-    @SuppressWarnings("unused") 
-    private void appendAnyFocusChangeV()
-      // This was used to debug early window focus problems.
-	    {
-	    	if (focusChangeCheckingB)
-		    	{
-	          Component focusedComponent= // get Component owning the focus.
-	              KeyboardFocusManager.
-	                getCurrentKeyboardFocusManager().getFocusOwner();
-	          if ( savedFocusedComponent != focusedComponent )
-	          	{
-	          		AppLog.getAppLog().appendRawV( 
-	          				"-----DEBUG: FOCUS CHANGE FROM: "
-	          			  +Misc.componentInfoString(savedFocusedComponent)
-	          				+ " TO: "
-	          			  +Misc.componentInfoString(focusedComponent)
-	          				+"-----\n" 
-	          				);  // Append it to log file.
-	              savedFocusedComponent= focusedComponent;
-	          		}
-		    		}
-	      }
-
-    public void appendRawV(String inString)
+    public synchronized void appendV(String inString)
       /* Appends a raw string to the log file.
         It can be used to append as little as a single character.
+        If the file doesn't exist or exists but is closed
+        then it calls createOrAppendToFileV(..).
+        If the file exists and is open then it calls writeToOpenFileV(..).
         */
-      { createOrAppendToFileV( inString ); }
+      { 
+    	  if ( thePrintWriter == null ) // Acting based on whether file is open.
+    	  	createOrAppendToFileV( inString ); // File not open.
+    	  	else
+          writeToOpenFileV( inString ); // File open.
+    	  }
       
     private synchronized void createOrAppendToFileV( String inString )
       /* This method creates the log file if it doesn't exist.
         Then it appends inString to the file.
+        If the file already exists then it must be closed.
+        The file will be closed when the method exits.
         
         If there is an error appending to the file then it is supposed to 
         insert an error message into the file before writing inString.  
@@ -270,35 +287,48 @@ public class AppLog
           concurrent apps can access the log file.
         */
       {
-    	  int errorCountI= 0;
-        do {
-	        try {
-	            thePrintWriter =  // Prepare...
-	              new PrintWriter(  // ...a character output stream..
-	                new BufferedWriter(  // ...with buffering to...
-	                  new FileWriter(  // ...a writable file...
-	                    logFile,   // ...with this name...
-	                    true  // ...and write to end of file, not the beginning.
-	                    )
-	                  )
-	                );
-	            if (errorCountI > 0) // Handling any errors.
-		            { // Appending error count to file.
-			            thePrintWriter.print( 
-			            		"ERRORS ("+errorCountI+") writing following to log file."
-			            		);
-			            errorCountI= 0;
-		            	}
-	            thePrintWriter.print( inString );  // Append inString to file.
-	          } catch (IOException e) {
-	            System.err.println("AppLog error: "+e);
-	            errorCountI++;
-	          } finally {
-	            if (thePrintWriter != null) {  // Closing file if open.
-	                thePrintWriter.close();  
-	                }
-	            }
-        	} while (errorCountI > 0);
+	    	openFileV();
+        writeToOpenFileV( inString ); // Appending string to output.
+      	closeFileV();
         }
+
+    private void openFileV()
+      /* This method opens thePrintWriter and 
+        everything else associated with the log file.  
+        */
+    {
+      if (thePrintWriter == null) {  // Opening file if closed.
+	      try {
+          thePrintWriter =  // Prepare...
+            new PrintWriter(  // ...a character output stream..
+              new BufferedWriter(  // ...with buffering to...
+                new FileWriter(  // ...a writable file...
+                  logFile,   // ...with this name...
+                  true  // ...and write to end of file, not the beginning.
+                  )
+                )
+              );
+        } catch (IOException e) {
+          System.err.println("AppLog error opening file: "+e);
+          }
+        }
+      }
+
+    private void closeFileV()
+      /* This method closes thePrintWriter if it's opn, 
+        which closes everything associated with the log file.  
+        */
+	    { 
+	      if (thePrintWriter != null) {  // Closing file if open.
+	        thePrintWriter.close(); // Close file.
+	        thePrintWriter= null; // Indicate file is closed.
+	        }
+	      }
+
+    private void writeToOpenFileV(String inString)
+      /* This method writes to thePrintWriter, which must be open.  */
+	    { 
+	    	thePrintWriter.print( inString );  // Append inString to file.
+	      }
 
   }  

@@ -9,7 +9,7 @@ public class Globals
     the need for fully qualified names, for example:
       import static allClasses.Globals.*;  // For appLogger;
 
-    Often groups of methods start here, but are eventually move
+    Often groups of methods start here, but are eventually moved
     to their own class.
 
     WARNING: Globals (public statics) should be used as little as possible,

@@ -329,13 +329,19 @@ public class AppInstanceManager {
 		              {
 		                try {  // Terminating monitor thread by closing its socket.
 		                		appLogger.info(
-		                				"AppInstanceManager doMyShutdowner(..),"
+		                				"AppInstanceManager ShutdownerListener.doMyShutdowner(..),"
 		                				+" closing socket.");
 			                  instanceServerSocket.close();
 			                } catch (IOException e) {
-			                  appLogger.error("Error closing instanceServerSocket" + e);
+			                  appLogger.error(
+			                  		"AppInstanceManager ShutdownerListener.doMyShutdowner(..),"
+			                  		+"Error closing instanceServerSocket: " + e
+			                  	  );
 			                  e.printStackTrace();
 			                }
+                		appLogger.debug( 
+                				"AppInstanceManager ShutdownerListener.doMyShutdowner(..), done" 
+                				);
 		                }
 	              });
 	          ; // Leaving appShouldExitB false for no app exit.
