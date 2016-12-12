@@ -105,23 +105,14 @@ public class Streamcaster<
         ////?? Get rid of all traces of state machine?
        */
 	    {
-	    	int stateI= // Initialize protocol state from leadership flag. 
-	      	  leadingB ? 0 : 1 ;
+	  	  if (! leadingB) // Start with ping-receive if not leading. 
+	  	  	tryingPingReceiveV();
 	      while (true) // Repeating until thread termination is requested.
 	        {
 	      		if ( EpiThread.exitingB() ) break;  // Exiting if requested.
-	      	  switch ( stateI ) { // Decoding alternating state.
-	        	  case 0:
-	              //appLogger.info(getName()+":\n  CALLING tryingPingSendV() ===============.");
-	              tryingPingSendV();
-	              stateI= 1;
-	              break;
-	        	  case 1:
-	              //appLogger.info(getName()+":\n  CALLING tryingPingReceiveV() ===============.");
-	              tryingPingReceiveV();
-	              stateI= 0;
-	              break;
-	        	  }
+	  	      tryingPingSendV();
+	  	  		if ( EpiThread.exitingB() ) break;  // Exiting if requested.
+	  	    	      tryingPingReceiveV();
 	          } // while(true)
 	    	}
 
