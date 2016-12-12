@@ -103,7 +103,7 @@ public class Multicaster
 	    <255 = unrestricted
 	    */
 	
-	  public Multicaster (  // Constructor.
+	  public Multicaster(  // Constructor.
 	      LockAndSignal netcasterLockAndSignal,
 	      NetcasterInputStream theNetcasterInputStream,
 	  		NetcasterOutputStream theNetcasterOutputStream,
@@ -113,7 +113,8 @@ public class Multicaster
 	  		MulticastSocket theMulticastSocket,
 	      NetcasterQueue multicasterToConnectionManagerNetcasterQueue,
 		  	UnicasterManager theUnicasterManager,
-		  	NetcasterPacketManager multicastReceiverNetcasterPacketManager
+		  	NetcasterPacketManager multicastReceiverNetcasterPacketManager,
+	      NamedLong retransmitDelayMsNamedLong
 		  	)
 	    /* Constructs a Multicaster object and prepares it for
 	      UDP multicast communications duties.  
@@ -128,7 +129,8 @@ public class Multicaster
 	          theShutdowner,
 	  	  		theDataTreeModel,
 	  	  		theIPAndPort,
-		        "Multicaster"
+		        "Multicaster",
+			      retransmitDelayMsNamedLong
 	      		);
 
 	  		// Store remaining injected dependencies.
@@ -320,7 +322,7 @@ public class Multicaster
       {
     		long delayMsL= // Minimum time between multicasts. 
     				// 3600000; // 1 hour for testing to disable multicasting.
-    				Delay.multicastPeriod10000MsL;
+    				Config.multicastPeriod10000MsL;
     		    // 40000; // 40 seconds for normal use.
     		LockAndSignal.Input theInput;  // Type of input that ends waits.
       	long querySentMsL= System.currentTimeMillis();

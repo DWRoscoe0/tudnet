@@ -68,6 +68,18 @@ public class Unicaster
       // Local variables for containing, measuring, and displaying stats.
       // Some are DataNode children.
 
+  		// Variables for counting measurement handshakes.
+      private NamedLong sequenceHandshakesNamedLong;
+
+  		// Variables for managing round trip time.
+      protected NsAsMsNamedLong rawRoundTripTimeNsAsMsNamedLong;
+	      // This is an important value.  It can be used to determine
+	      // how long to wait for a message acknowledgement before
+	      // re-sending a message.  Initial value of 1/10 second.
+      private NsAsMsNamedLong smoothedRoundTripTimeNsAsMsNamedLong;
+      private NsAsMsNamedLong smoothedMinRoundTripTimeNsAsMsNamedLong; // Minimum.
+      private NsAsMsNamedLong smoothedMaxRoundTripTimeNsAsMsNamedLong; // Maximum.
+  		
       // Variables for managing incoming packets and 
       // their sequence numbers.  They all start at 0.
       private DefaultLongLike newIncomingPacketsSentDefaultLongLike;
@@ -77,32 +89,32 @@ public class Unicaster
 			  // EpiOutputStream packet counter.
       	// This value usually increases, but can decrease 
         // if an "PS" is carried by an out-of-order packets.
-      private NamedInteger oldIncomingPacketsSentNamedInteger;
+      private NamedLong oldIncomingPacketsSentNamedLong;
 	    	// A difference between this and newIncomingPacketsSentDefaultLongLike 
         // indicates a new received sequence number needs to be processed.
-      private NamedInteger newIncomingPacketsReceivedNamedInteger;
+      private NamedLong newIncomingPacketsReceivedNamedLong;
       	// This is a copy of the local EpiInputStream packet counter.
       	// It represents the latest count of locally received packets.
       	// This value can only increase.
   		private DefaultLongLike oldIncomingPacketsReceivedDefaultLongLike;
-  			// A difference between this and newIncomingPacketsReceivedNamedInteger 
+  			// A difference between this and newIncomingPacketsReceivedNamedLong 
   			// indicates a new packet has been received and needs to be processed.
   		private NamedFloat incomingPacketLossNamedFloat;
         // Floating representation of the fraction of incoming packets lost.
       LossAverager incomingPacketLossAverager;
       
       // Variables for managing outgoing packets and their acknowledgement.
-      private NamedInteger newOutgoingPacketsSentNamedInteger;
+      private NamedLong newOutgoingPacketsSentNamedLong;
 	    	// This is a copy of the local EpiOutputStreamO packet counter.
       	// This value can only increase.
-      private NamedInteger newOutgoingPacketsSentEchoedNamedInteger;
+      private NamedLong newOutgoingPacketsSentEchoedNamedLong;
 	    	// This is the local EpiOutputStreamO packet counter after 
         // being returned from remote.  It might lag the real counter by RTT.
       	// This value can only increase.
       private DefaultLongLike oldOutgoingPacketsSentDefaultLongLike;
-	    	// A difference between this and newOutgoingPacketsSentNamedInteger 
+	    	// A difference between this and newOutgoingPacketsSentNamedLong 
 	      // indicates new packets have been sent and need to be processed.
-      private NamedInteger newOutgoingPacketsReceivedNamedInteger;
+      private NamedLong newOutgoingPacketsReceivedNamedLong;
 	    	// This value comes from the most recently received "PA" message.  
 			  // When sent this argument was the remote end's 
 			  // EpiInputStream packet counter, 
@@ -110,7 +122,7 @@ public class Unicaster
 	    	// This value normally increases, but can decrease because of 
         // out-of-order "PA" packets. 
       private DefaultLongLike oldOutgoingPacketsReceivedDefaultLongLike;
-	    	// A difference between this and newOutgoingPacketsReceivedNamedInteger 
+	    	// A difference between this and newOutgoingPacketsReceivedNamedLong 
 	      // indicates a new packet has been acknowledged and 
   			// needs to be processed.
   		private NamedFloat outgoingPacketLossNamedFloat;
@@ -121,7 +133,7 @@ public class Unicaster
 
       /*////
       private long timeToSendNextSequenceNumberMsL= 
-       	System.currentTimeMillis()+1000;  /* Delay sending first PS.
+       	System.currentTimeMillis()+1000;  /* Config sending first PS.
             This is done to let startup logging settle down so
             it won't interfere with measurement of first Round-Trip-Time. 
             */ 
@@ -139,7 +151,8 @@ public class Unicaster
         DataTreeModel theDataTreeModel,
         Shutdowner theShutdowner,
         SubcasterQueue subcasterToUnicasterSubcasterQueue,
-    		Timer theTimer
+    		Timer theTimer,
+    		NamedLong retransmitDelayMsNamedLong
         )
       /* This constructor constructs a Unicaster for the purpose of
         communicating with the node at remoteInetSocketAddress,
@@ -158,7 +171,8 @@ public class Unicaster
 	          theShutdowner,
   	        theDataTreeModel,
   	        remoteIPAndPort,
-        		"Unicaster" 
+        		"Unicaster", 
+            retransmitDelayMsNamedLong 
         		);
 
         // Storing injected dependency arguments not stored in superclass.
@@ -205,14 +219,42 @@ public class Unicaster
     		////theTimerInput=  new TimerInput( theLockAndSignal, theTimer ); ////
     		theRTTMeasurer= new RTTMeasurer( this ); ////
 
-    		// Adding incoming packet statistics children and related trackers.
+        // Adding measurement count.
+	  	  addB( sequenceHandshakesNamedLong= new NamedLong(
+	      		theDataTreeModel, "Sequence-Handshakes", 0 
+	      		)
+	  	  	);
+
+        // Adding the new round trip time trackers.
+	      addB( smoothedRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
+	      		theDataTreeModel, "Smoothed-Round-Trip-Time (ms)", 
+	      		Config.initialRoundTripTime100MsAsNsL
+	      		)
+	  	  	);
+	  	  addB( smoothedMinRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
+	      		theDataTreeModel, "Smoothed-Minimum-Round-Trip-Time (ms)", 
+	      		Config.initialRoundTripTime100MsAsNsL
+	      		)
+	  	  	);
+	  	  addB( smoothedMaxRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
+	      		theDataTreeModel, "Smoothed-Maximum-Round-Trip-Time (ms)", 
+	      		Config.initialRoundTripTime100MsAsNsL
+	      		)
+	  	  	);
+	      addB( rawRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong( 
+	      		theDataTreeModel, "Raw-Round-Trip-Time-ms", 
+	      		Config.initialRoundTripTime100MsAsNsL
+	      		)
+	  			);
+
+        // Adding incoming packet statistics children and related trackers.
 	  	  newIncomingPacketsSentDefaultLongLike= new DefaultLongLike(0);
-	  	  addB( oldIncomingPacketsSentNamedInteger= new NamedInteger(
+	  	  addB( oldIncomingPacketsSentNamedLong= new NamedLong(
 	      		theDataTreeModel, "Incoming-Packets-Sent", 0 
 	      		)
 	  			);
-		    addB( newIncomingPacketsReceivedNamedInteger=
-		    		theEpiInputStreamI.getCounterNamedInteger()
+		    addB( newIncomingPacketsReceivedNamedLong=
+		    		theEpiInputStreamI.getCounterNamedLong()
 		    		);
 	  	  oldIncomingPacketsReceivedDefaultLongLike= new DefaultLongLike(0);
 	  	  addB( incomingPacketLossNamedFloat= new NamedFloat( 
@@ -220,21 +262,21 @@ public class Unicaster
 	      		)
 	  			);
 	  	  incomingPacketLossAverager= new LossAverager(
-	  	  				oldIncomingPacketsSentNamedInteger,
+	  	  				oldIncomingPacketsSentNamedLong,
 	  	  				oldIncomingPacketsReceivedDefaultLongLike,
 	  	  				incomingPacketLossNamedFloat
 	  	  				);
 
 	  	  // Adding outgoing packet statistics children and related trackers.
-    		newOutgoingPacketsSentNamedInteger=
-    				theEpiOutputStreamO.getCounterNamedInteger(); 
-		    addB( newOutgoingPacketsSentNamedInteger );
-		    addB( newOutgoingPacketsSentEchoedNamedInteger= new NamedInteger(
+    		newOutgoingPacketsSentNamedLong=
+    				theEpiOutputStreamO.getCounterNamedLong(); 
+		    addB( newOutgoingPacketsSentNamedLong );
+		    addB( newOutgoingPacketsSentEchoedNamedLong= new NamedLong(
 		    		theDataTreeModel, "Outgoing-Packets-Sent-Echoed", 0 
 		    		)
 		    	); 
 		    oldOutgoingPacketsSentDefaultLongLike= new DefaultLongLike(0);
-		    addB( newOutgoingPacketsReceivedNamedInteger= new NamedInteger( 
+		    addB( newOutgoingPacketsReceivedNamedLong= new NamedLong( 
 			      theDataTreeModel, "Outgoing-Packets-Received", 0 
 			      )
 		    	);
@@ -404,7 +446,7 @@ public class Unicaster
 					} // process:
 				}
 
-		public boolean processingHellosB()  
+		public boolean processingHellosB()
 			throws IOException
 		  /* This method tries to establish the Unicaster connection 
 		    by exchanging HELLO messages.  This includes:
@@ -421,11 +463,16 @@ public class Unicaster
 		    Returns true if HELLO messages were exchanged, meaning
 		    the connection may be considered established.
 		    Returns false otherwise.
+		    
+		    This could be a state machine, but doesn't have to be,
+		    because it happens only when a peer-to-peer connection is established.
+		    
+		    //// Replace retry count with a overall time limit?
 		    */
 			{
 				int triesRemainingI= 3; // 3 tries then we give up.
 			  boolean successB= false;
-			  long helloIimeLimitMsL= roundTripTimeNamedInteger.getValueL();
+			  long helloIimeLimitMsL= retransmitDelayMsNamedLong.getValueL();
 			  tryingToConnectByExchangingHellos: while (true) {
           if ( triesRemainingI-- <= 0 ) // Exiting if try limit exceeded. 
           	break tryingToConnectByExchangingHellos;
@@ -525,21 +572,6 @@ public class Unicaster
 	  		}
   	*/ ////
 
-    
-    protected void sendingSequenceNumberV() throws IOException
-      /* This method increments and writes the packet ID (sequence) number
-        to the EpiOutputStream.
-        It doesn't flush().
-        */
-      {
-    	  long sequenceNumberL= 
-    	  		(theEpiOutputStreamO.getCounterNamedInteger().getValueL()); 
-        appLogger.debug( "sendingSequenceNumberV() " + sequenceNumberL);
-	    	writingTerminatedStringV( "PS" );
-	  		writingTerminatedLongV( sequenceNumberL );
-	  		super.endingPacketV();
-	  		theRTTMeasurer.signalSequenceNumberSentV();
-  	  	}
 
   	private boolean processShuttingDownB(String keyString)
   	  /* This method sets this thread's interrupt status to cause exit
@@ -601,27 +633,17 @@ public class Unicaster
 	    {
 				pingReplyProtocolV();
 		    }
-		
-		/*/////
-		private boolean rttStateMachineB() ////
-			{
-			  boolean inputArrivedB= false;
-				if (theTimerInput.getInputArrivedB())
-					{
-						inputArrivedB= true;
-						}
-					else if (! theTimerInput.getInputScheduledB())
-						theTimerInput.scheduleV(1000);
-				return inputArrivedB;
-				}
-		*//////
-		
-		////static // This class must be static because it contains a static enum.
+
 		static class RTTMeasurer // Being developed for PS-PS RTT timing.
 		  /* This class is a state machine that uses PS and PA to 
 		    measure Round-Trip-Time.  
 		    It is not thread-safe and must be called only from 
 		    within the Unicaster thread.
+
+		    //// Eliminate the cyclic dependency with Unicaster.
+
+		    //// Factor out superclass code for a reusable base class.
+
 		   */
 			{	
 			  
@@ -629,7 +651,7 @@ public class Unicaster
 				private Unicaster theUnicaster; //// temporary cyclic dependency.
 
 				// Other variables.
-				long timeOutMsL;
+				long retryTimeOutMsL;
 			
 				RTTMeasurer( Unicaster theUnicaster ) // Constructor.
 			  	{
@@ -648,9 +670,10 @@ public class Unicaster
 		
      	  private volatile boolean machineCyclingB= false;
 			  private TimerInput statisticsTimerInput; 
-			  private long sendSequenceNumberTimeMsL;
+			  private long sendSequenceNumberTimeNsL;
 	      ////private long lastPacketSequenceSentMsL;
 			  private boolean sequenceNumberSentB= false;
+    		private long lastSequenceNumberSentL;
 				private boolean acknowledgementReceivedB= false;
 
         public boolean processMeasurementMessageB(String keyString) 
@@ -704,7 +727,7 @@ public class Unicaster
     							); // Adding 1 to convert sequence # to remote sent packet count.
     	  			theUnicaster.incomingPacketLossAverager.recordPacketsReceivedOrLostV(
     	  					theUnicaster.newIncomingPacketsSentDefaultLongLike,
-    	  					theUnicaster.newIncomingPacketsReceivedNamedInteger
+    	  					theUnicaster.newIncomingPacketsReceivedNamedLong
     					  );
     	  			theUnicaster.writingTerminatedStringV( "PA" );
     	  			theUnicaster.writingTerminatedLongV( // The remote sequence number.
@@ -712,7 +735,7 @@ public class Unicaster
     		  				sequenceNumberI
     		  				);
     	  			long receivedPacketCountL= 
-    	  			  theUnicaster.newIncomingPacketsReceivedNamedInteger.getValueL(); 
+    	  			  theUnicaster.newIncomingPacketsReceivedNamedLong.getValueL(); 
     	  			theUnicaster.writingTerminatedLongV( // The local received packet count.
     	  					receivedPacketCountL 
     		  				);
@@ -742,32 +765,104 @@ public class Unicaster
     	  	{
     	  	  boolean isKeyB= keyString.equals( "PA" ); 
     			  if (isKeyB) {
-    			  	theUnicaster.roundTripTimeNamedInteger.setValueL(
-              		(System.currentTimeMillis() - sendSequenceNumberTimeMsL)
-              		);
-              signalPacketAcknowledgementReceivedV();
+    			  	long ackReceivedTimeNsL= System.nanoTime();
     		  		int sequenceNumberI= theUnicaster.readANumberI(); // Reading echo of sequence #.
     		  		int packetsReceivedI= theUnicaster.readANumberI(); // Reading packets received.
-    	        appLogger.debug( "processPacketAcknowledgementB() PA:"
-    		  		  +sequenceNumberI+","
-    	        	+packetsReceivedI+";TO="
-    		  		  +theUnicaster.roundTripTimeNamedInteger.getValueL()
-    		  		  );
-    		  		theUnicaster.newOutgoingPacketsSentEchoedNamedInteger.setValueL(
+              signalPacketAcknowledgementReceivedV();
+              theUnicaster.sequenceHandshakesNamedLong.addDeltaL(1);
+              
+              theUnicaster.newOutgoingPacketsSentEchoedNamedLong.setValueL(
     			    		sequenceNumberI + 1 // Convert sequence # to sent packet count.
     			    		);
-    		  		theUnicaster.newOutgoingPacketsReceivedNamedInteger.setValueL(packetsReceivedI);
+    		  		theUnicaster.newOutgoingPacketsReceivedNamedLong.setValueL(packetsReceivedI);
     		  		theUnicaster.outgoingPacketLossLossAverager.recordPacketsReceivedOrLostV(
-    		  				theUnicaster.newOutgoingPacketsSentEchoedNamedInteger,
-    		  				theUnicaster.newOutgoingPacketsReceivedNamedInteger
+    		  				theUnicaster.newOutgoingPacketsSentEchoedNamedLong,
+    		  				theUnicaster.newOutgoingPacketsReceivedNamedLong
     						  );
+    		  	  calculateRoundTripTimesV(
+    		  	  		sequenceNumberI, ackReceivedTimeNsL, packetsReceivedI
+    		  	  		);
     			  	}
     			  return isKeyB;
     	  		}
 
+	  	  private void calculateRoundTripTimesV(
+	  	  		int sequenceNumberI, long ackReceivedTimeNsL, int packetsReceivedI
+	  	  		)
+	  	  	{
+			  		String rttString= "";
+			  		if ( sequenceNumberI != lastSequenceNumberSentL )
+			  			rttString+= "unchanged, wrong number.";
+			  			else
+			  			{ 
+			  				long rawRoundTripTimeNsL= 
+			  						ackReceivedTimeNsL - sendSequenceNumberTimeNsL; 
+			  	  	  processRoundTripTimeV(rawRoundTripTimeNsL);
+				  			rttString+= ""+
+		            		theUnicaster.rawRoundTripTimeNsAsMsNamedLong.getValueString()+","+
+		            		theUnicaster.smoothedMinRoundTripTimeNsAsMsNamedLong.getValueString()+","+
+		            		theUnicaster.smoothedMaxRoundTripTimeNsAsMsNamedLong.getValueString()
+						  			;
+			  				}
+		        appLogger.debug( "calculateRoundTripTimesV(...) PA:"
+			  		  +sequenceNumberI+","
+		        	+packetsReceivedI+";RTT="
+		        	+rttString
+			  		  );
+		  	  	}
+
+	  	  private void processRoundTripTimeV(long rawRoundTripTimeNsL)
+	  	    /* This method updates various variables which
+	  	      are dependent on round trip times.
+	  	      
+	  	      Integer arithmetic is used for speed.
+	  	     */
+	  	  	{
+				  	theUnicaster.rawRoundTripTimeNsAsMsNamedLong.setValueL(
+	          		rawRoundTripTimeNsL
+	          		);
+
+				  	theUnicaster.smoothedRoundTripTimeNsAsMsNamedLong.setValueL(
+				  			( (7 * theUnicaster.smoothedRoundTripTimeNsAsMsNamedLong.getValueL()) + 
+				  				rawRoundTripTimeNsL
+				  				)
+				  			/ 
+				  			8
+				  			);
+
+				  	{ /*  Smoothed maximum and minimum RTT are calculated here.
+			  	      More extreme values are stored immediately.
+			  	      A less extreme value is exponentially smoothed in.
+			  	      The smoothing factor is presently 1/8.
+			  	      */
+					  	{ // Updating minimum round trip time.
+			  	  	  long minL= 
+			  	  	  		theUnicaster.smoothedMinRoundTripTimeNsAsMsNamedLong.getValueL();
+			  	  	  if ( minL > rawRoundTripTimeNsL )
+			  	  	  	minL= rawRoundTripTimeNsL;
+			  	  	  	else
+			  	  	  	minL= minL + ( ( rawRoundTripTimeNsL - minL ) + 7 ) / 8;
+			  	  	  theUnicaster.smoothedMinRoundTripTimeNsAsMsNamedLong.setValueL(minL);
+			  	  		}
+			  	  	{ // Updating maximum round trip time.
+			  	  	  long maxL= 
+			  	  	  		theUnicaster.smoothedMaxRoundTripTimeNsAsMsNamedLong.getValueL();
+			  	  	  if ( maxL < rawRoundTripTimeNsL )
+			  	  	  	maxL= rawRoundTripTimeNsL;
+			  	  	  	else
+			  	  	  	maxL= maxL - ( ( maxL - rawRoundTripTimeNsL ) + 7 ) / 8;
+				  	  	theUnicaster.smoothedMaxRoundTripTimeNsAsMsNamedLong.setValueL(maxL);
+			  	  		}
+				  		}
+
+		  	  	theUnicaster.retransmitDelayMsNamedLong.setValueL(
+								(theUnicaster.smoothedMaxRoundTripTimeNsAsMsNamedLong.getValueL()/1000000) * 2
+								); // Use double present maximum round-trip-time.
+	  	  		}
+	  	  
         public void signalSequenceNumberSentV() throws IOException
           { 
-        		sendSequenceNumberTimeMsL= System.currentTimeMillis();
+        		sendSequenceNumberTimeNsL= System.nanoTime();
         		//appLogger.debug("signalSequenceNumberSentV().");
 	        	sequenceNumberSentB= true;
 	        	////runMachineB(); Recursive race condition?
@@ -782,7 +877,7 @@ public class Unicaster
 
 		    public boolean cycleMachineB() throws IOException
 		      /* Decodes the state by calling associated handler method once.
-		        It true if the machine can run more cycles,
+		        It returns true if the machine can run more cycles,
 		        false if it is waiting for the next input.
 		        */
 		      { 
@@ -809,22 +904,29 @@ public class Unicaster
 		    	{ 
 		    	  boolean runningB= true;
 		    	  beforeExit: {
-			    		if (! statisticsTimerInput.getInputScheduledB()) { 
-		    			  statisticsTimerInput.scheduleV( Delay.handshakePause5000MsL );
-		    			  //appLogger.debug("handlingPauseB() scheduling pause end input.");
-				    		break beforeExit;
-				    	  }
-			    		if (! statisticsTimerInput.getInputArrivedB()) {
-		    				runningB= false; // This means the machine is waiting.
-		    				//appLogger.debug("handlingPauseB() pause end input scheduled.");
-				    		break beforeExit;
-				    	  }
-			    		{ // Changing state at end of pause. 
+
+		    	  	if // Scheduling pause timer if not scheduled yet.
+		    	  		(! statisticsTimerInput.getInputScheduledB()) 
+			    	  	{ statisticsTimerInput.scheduleV( Config.handshakePause5000MsL );
+			    			  //appLogger.debug("handlingPauseB() scheduling pause end input.");
+					    		break beforeExit;
+					    	  }
+
+			    		if // Handling pause timer still running.
+				    		(! statisticsTimerInput.getInputArrivedB()) 
+				    		{ runningB= false; // Indicate state machine is waiting.
+			    				//appLogger.debug("handlingPauseB() pause end input scheduled.");
+					    		break beforeExit;
+					    	  }
+
+			    		{ // Handling pause complete by changing state. 
 		    				statisticsTimerInput.cancelingV();
-		    			  timeOutMsL= theUnicaster.roundTripTimeNamedInteger.getValueL()*2;
+		    			  retryTimeOutMsL=   // Initializing retry time-out.
+		    			  		theUnicaster.retransmitDelayMsNamedLong.getValueL();
 		    			  theStateI= SENDING_AND_WAITING;
 		    			  //appLogger.debug("handlingPauseB() pause end input arrived.");
 		    			  }
+
 		    	  } // beforeExit:
 		    		  return runningB; 
 		    		}
@@ -835,54 +937,83 @@ public class Unicaster
 		    	  	boolean runningB= true;
 		    	  beforeExit: { 
 		    	  beforeStartPausing: { 
-		    	  beforeWaiting: { 
-			    		if (! statisticsTimerInput.getInputScheduledB()) { 
-			    			statisticsTimerInput.scheduleV(timeOutMsL);
-			    			//appLogger.debug("handleSendingAndWaiting() scheduling "+timeOutMsL);
-				    		theUnicaster.sendingSequenceNumberV();
-				    		break beforeExit;
-					    	}
-		        	if (! sequenceNumberSentB) break beforeWaiting;
-		        	if (acknowledgementReceivedB) { // Handling PA acknowledgement.
+		    	  beforeTimerChecks: { 
+
+			    		if // Sending PS and scheduling time-out, if not done yet.
+			    		  (! statisticsTimerInput.getInputScheduledB())
+				    		{ statisticsTimerInput.scheduleV(retryTimeOutMsL);
+				    			//appLogger.debug("handleSendingAndWaiting() scheduling "+retryTimeOutMsL);
+					    		sendingSequenceNumberV();
+					    		break beforeExit;
+						    	}
+		        	if (! sequenceNumberSentB) // Waiting if PS not sent yet. 
+		        		break beforeTimerChecks;
+		        	if (! acknowledgementReceivedB) // Waiting if PA not received yet. 
+		        		break beforeTimerChecks;
+		        	{ // Handling received PA.
 		        		//appLogger.debug("handleSendingAndWaiting() PA acknowledgement and resets.");
-		        		acknowledgementReceivedB= false;  // Resetting signal variable,
-		        		sequenceNumberSentB= false; // and the other one.
-		    				statisticsTimerInput.cancelingV();
+		        		acknowledgementReceivedB= false;  // Resetting PS input,
+		        		sequenceNumberSentB= false; // Resetting PA input
+		    				statisticsTimerInput.cancelingV(); // Resetting timer state.
 				    		break beforeStartPausing; // Going to Pausing state.
 					    	}
-		    	  } // beforeWaiting:
-			    		if (! statisticsTimerInput.getInputArrivedB()) {
-				    	  runningB= false; // This means the machine is waiting.
-				    	  //appLogger.debug("handleSendingAndWaiting() time-out scheduled.");
-				    		break beforeExit;
-					    	}
-		        	// Time-out.   
-			    		//appLogger.debug("handleSendingAndWaiting() time-out occurred.");
-	    				statisticsTimerInput.cancelingV();
-	    			  if ( timeOutMsL <= Delay.maxTimeOut5000MsL ) { // Handling limit not reached.
-	    				  timeOutMsL*=2;  // Doubling time limit for retrying.
-	    					break beforeExit;
-	  					  }
-	    			  //appLogger.debug("handleSendingAndWaiting() last time-out.");
+
+		    	  } // beforeTimerChecks:
+			    		if // Handling PA reply timer still running.
+			    			(! statisticsTimerInput.getInputArrivedB()) 
+				    		{ runningB= false; // Indicate state machine is waiting.
+					    	  //appLogger.debug("handleSendingAndWaiting() time-out scheduled.");
+					    		break beforeExit;
+						    	}
+			    		{ // Handling PA reply timer time-out.   
+				    		//appLogger.debug("handleSendingAndWaiting() time-out occurred.");
+		    				statisticsTimerInput.cancelingV(); // Resetting timer.
+		    			  if  // Handling maximum time-out interval not reached yet.
+		    			  	( retryTimeOutMsL <= Config.maxTimeOut5000MsL )
+		    				  { retryTimeOutMsL*=2;  // Doubling time limit for retrying.
+			    					break beforeExit; // Going to send PS again.
+			  					  }
+		    			  //appLogger.debug("handleSendingAndWaiting() last time-out.");
+		    			  {  // Handling maximum exponential backoff time-out reached.
+			    			  break beforeStartPausing; // Pausing.
+			    			  }
+			    			}
+
 		    	  } // beforeStartPausing:
     			  	theStateI= PAUSING; // Doing state switch to pausing. 
     			  	break beforeExit; 
-	    			} // beforeExit:
-		    			return runningB;
-		    		}
-		
-				} // RTTMeasurer
 
-		static class TimerInput // Being developed for PS-PS RTT timing.
-		  /* This class functions as an input to 
-		    processes modeled as threads.
-		    It uses the LockAndSignal.notifyingV() method,
+		    	  } // beforeExit:
+		    			return runningB;
+
+		    	  }
+
+		    protected void sendingSequenceNumberV() throws IOException
+		      /* This method increments and writes the packet ID (sequence) number
+		        to the EpiOutputStream.
+		        It doesn't flush().
+		        */
+		      {
+			    	lastSequenceNumberSentL= 
+		    	  		theUnicaster.theEpiOutputStreamO.
+		    	  		  getCounterNamedLong().getValueL(); 
+		        appLogger.debug( "sendingSequenceNumberV() " + lastSequenceNumberSentL);
+		        theUnicaster.writingTerminatedStringV( "PS" );
+		        theUnicaster.writingTerminatedLongV( lastSequenceNumberSentL );
+		        theUnicaster.endingPacketV();
+		        signalSequenceNumberSentV();
+		  	  	}
+
+				} // class RTTMeasurer
+
+		static class TimerInput // First developed for PS-PS RTT timing.
+		  /* This class functions as an input to processes modeled as threads.
+		    It is not meant to be used with processes modeled as state-machines.
+		    This class uses the LockAndSignal.notifyingV() method,
 		    so it is guaranteed to be quick.
 		    The presence of an active input can be tested 
 		    with the getInputArrivedB() method.
-		    This class is not meant to be used with 
-		    processes modeled as state-machines.
-		    
+
 		    //// This class's documentation needs better terminology.
 		   */
 			{	
@@ -946,7 +1077,7 @@ public class Unicaster
 			    			}
 			    	}	 
 		
-			}
+			} // class TimerInput
 
 
 	} // Unicaster.

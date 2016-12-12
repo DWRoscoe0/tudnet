@@ -42,7 +42,8 @@ public class Subcaster
 	      DataTreeModel theDataTreeModel,
 	      String keyString,
 	      Shutdowner theShutdowner,
-        boolean leadingB
+        boolean leadingB,
+        NamedLong retransmitDelayMsNamedLong
 	      )
 	    {
 	      super( // Superclass's constructor injections.
@@ -53,7 +54,8 @@ public class Subcaster
 	      	  keyString,
 	      	  streamcasterLockAndSignal,
 	      	  theSubcasterInputStream,
-			      theSubcasterOutputStream
+			      theSubcasterOutputStream,
+			      retransmitDelayMsNamedLong
 		        );
 
 	      // This class's injections.
@@ -90,8 +92,8 @@ public class Subcaster
         */
 	    {
     		appLogger.info("initializingV() at start."); // Needed if thread self-terminates.
-		    addB( 	theSubcasterOutputStream.getCounterNamedInteger() );
-		    addB( 	theSubcasterInputStream.getCounterNamedInteger() );
+		    addB( 	theSubcasterOutputStream.getCounterNamedLong() );
+		    addB( 	theSubcasterInputStream.getCounterNamedLong() );
 		    super.initializingV();
 	    	}
 

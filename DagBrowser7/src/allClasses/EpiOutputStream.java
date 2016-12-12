@@ -51,7 +51,7 @@ public class EpiOutputStream<
 	  // Injected dependency variables.
 		private final Q notifyingQueueQ; // This is the output packet queue.
 		private final M packetManagerM; // Used to produce buffers and packets.
-		private final NamedInteger packetCounterNamedInteger;
+		private final NamedLong packetCounterNamedLong;
 		  // This is the count of sent packets. 
 		  // The value is 0 during read of 1st packet data, assuming
 		  // it is constructed with a value of 0.
@@ -69,17 +69,17 @@ public class EpiOutputStream<
 		EpiOutputStream(  // Constructor.
 				Q notifyingQueueQ,
 				M packetManagerM,
-				NamedInteger packetCounterNamedInteger,
+				NamedLong packetCounterNamedLong,
 	  		Timer theTimer
 				)
 			{
 				this.notifyingQueueQ= notifyingQueueQ;
 				this.packetManagerM= packetManagerM;
-				this.packetCounterNamedInteger= packetCounterNamedInteger;
+				this.packetCounterNamedLong= packetCounterNamedLong;
         }
 
-		public NamedInteger getCounterNamedInteger() 
-		  { return packetCounterNamedInteger; }
+		public NamedLong getCounterNamedLong() 
+		  { return packetCounterNamedLong; }
 
 		public M getPacketManagerM()
 		  { return packetManagerM; }
@@ -220,7 +220,7 @@ public class EpiOutputStream<
 			{
 		    ///notifyingQueueQ.add( theKeyedPacketE ); // Adding packet to queue.
 	  		notifyingQueueQ.put( theKeyedPacketE ); // Adding packet to queue.
-				packetCounterNamedInteger.addDeltaL( 1 ); // Counting the packet.
+				packetCounterNamedLong.addDeltaL( 1 ); // Counting the packet.
 				}
 				
 	}

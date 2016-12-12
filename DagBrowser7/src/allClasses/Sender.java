@@ -134,7 +134,7 @@ public class Sender // Uunicast and multicast sender thread.
 			    	( testingForDropOfPacketB( theDatagramPacket ) )
 			    	break beforeReturn;
 			    //// add Timer delay logic here.
-          if ( Delay.packetSendDelayMsL == 0L )
+          if ( Config.packetSendDelayMsL == 0L )
           	sendingDatagramPacketV( theDatagramPacket );
           	else
           	{
@@ -144,7 +144,7 @@ public class Sender // Uunicast and multicast sender thread.
 	          					sendingDatagramPacketV( theDatagramPacket );
 	          					} 
           					},
-          				Delay.packetSendDelayMsL,
+          				Config.packetSendDelayMsL,
           				TimeUnit.MILLISECONDS
           				);
             	sendingDatagramPacketV( theDatagramPacket );
@@ -178,15 +178,16 @@ public class Sender // Uunicast and multicast sender thread.
     private void sendingDatagramPacketV( DatagramPacket theDatagramPacket )
       // This method sends theDatagramPacket and handles exceptions.
 	    {
+    		appLogger.debug("sendingDatagramPacketV(..) calling send(..)." );
 	    	try { // Send the packet.
-	    		PacketManager.logSenderPacketV(theDatagramPacket);
-	    		  // Log before sending so log will make sense.
 	        theDatagramSocket.send(   // Send packet.
 	        	theDatagramPacket
 	          );
+	    		PacketManager.logSenderPacketV(theDatagramPacket);
+    		  	// Was logging before sending so log would make sense.
 	      } catch (IOException e) { // Handle exception by dropping packet.
 	        appLogger.error(
-	          "processingSockPacketsToSendB(),"
+	          "Sendre.sendingDatagramPacketV(),"
 	          +e
 	          );
 	      }

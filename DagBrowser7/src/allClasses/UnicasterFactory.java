@@ -17,11 +17,11 @@ public class UnicasterFactory {
 	private final Shutdowner theShutdowner;
 	private final int queueCapacityI;
 	private final Timer theTimer;
-
 	
 	// Other objects that will be needed later.
 	private final UnicasterValue unicasterUnicasterValue; 
 	private final SubcasterQueue subcasterToUnicasterSubcasterQueue;
+	private final NamedLong retransmitDelayMsNamedLong;
 
 	
   public UnicasterFactory(   // Factory constructor. 
@@ -33,8 +33,9 @@ public class UnicasterFactory {
   		int queueCapacityI,
   		Timer theTimer
   		)
-  	// This builds all objects that are or comprise unconditional singletons
-    // relative to their Unicaster.
+  	/* This builds all objects that are or comprise 
+  	  unconditional singletons relative to their Unicaster.
+  	  */
     {
   	  LockAndSignal unicasterLockAndSignal= new LockAndSignal();
 			NetcasterQueue receiverToUnicasterNetcasterQueue= 
@@ -53,6 +54,11 @@ public class UnicasterFactory {
 					new SubcasterQueue( unicasterLockAndSignal, queueCapacityI );
 		  SubcasterManager theSubcasterManager= 
 					new SubcasterManager( theDataTreeModel, theAppGUIFactory, this );
+      NamedLong retransmitDelayMsNamedLong= new NamedLong( 
+					theDataTreeModel, 
+					"Retransmit-Delay (ms)",
+					Config.initialRoundTripTime100MsL * 2
+					);
 	    Unicaster theUnicaster= new Unicaster(
 	    		theUnicasterManager,
 	    		theSubcasterManager,
@@ -63,7 +69,8 @@ public class UnicasterFactory {
 			  	theDataTreeModel,
 			   	theShutdowner,
 			   	subcasterToUnicasterSubcasterQueue,
-			   	theTimer
+			   	theTimer,
+		      retransmitDelayMsNamedLong 
 			  	);
   	
 	    UnicasterValue unicasterUnicasterValue=  
@@ -78,7 +85,7 @@ public class UnicasterFactory {
 
 	  	// Save in instance variables other objects that are needed later.
       this.unicasterUnicasterValue= unicasterUnicasterValue;
-			//this.subcasterToUnicasterPacketQueue= subcasterToUnicasterPacketQueue; 
+      this.retransmitDelayMsNamedLong= retransmitDelayMsNamedLong;
       }
 
   // Unconditional singleton getters.
@@ -116,8 +123,9 @@ public class UnicasterFactory {
   	      theDataTreeModel,
   	      keyString,
   	      theShutdowner,
-  	      leadingB
-  	      );
+  	      leadingB,
+  	      retransmitDelayMsNamedLong 
+  	  		);
 	    SubcasterValue unicasterSubcasterValue=  
   				new SubcasterValue( keyString, unicasterSubcaster );
 	    return unicasterSubcasterValue;
@@ -128,12 +136,12 @@ public class UnicasterFactory {
   			SubcasterPacketManager theSubcasterPacketManager
   		  )
   	  {
-  		  NamedInteger packetsSentNamedInteger= 
-  					new NamedInteger( theDataTreeModel, "Outgoing-Packets-Sent", 0 );
+  		  NamedLong packetsSentNamedLong= 
+  					new NamedLong( theDataTreeModel, "Outgoing-Packets-Sent", 0 );
   		  return new SubcasterOutputStream(
   		  	subcasterToUnicasterSubcasterQueue,
   		  	theSubcasterPacketManager,
-  		  	packetsSentNamedInteger,
+  		  	packetsSentNamedLong,
   	  		theTimer
   	      );
   	    }
@@ -142,10 +150,10 @@ public class UnicasterFactory {
   			SubcasterQueue receiverToSubcasterSubcasterQueue
   			)
   	  {
-  			NamedInteger packetsReceivedNamedInteger=  
-  					new NamedInteger( theDataTreeModel, "Incoming-Packets-Received", 0 );
+  			NamedLong packetsReceivedNamedLong=  
+  					new NamedLong( theDataTreeModel, "Incoming-Packets-Received", 0 );
   	  	return new SubcasterInputStream(
-  	  	  receiverToSubcasterSubcasterQueue, packetsReceivedNamedInteger 
+  	  	  receiverToSubcasterSubcasterQueue, packetsReceivedNamedLong 
   	  		);
   	  	}
 

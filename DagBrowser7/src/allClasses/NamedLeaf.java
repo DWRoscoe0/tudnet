@@ -17,7 +17,7 @@ public class NamedLeaf
     
       public boolean isLeaf( ) 
         {
-          return true;  // Overriing superclass non-leaf result.
+          return true;  // Overriding superclass non-leaf result.
           }
       
     } // class NamedLeaf

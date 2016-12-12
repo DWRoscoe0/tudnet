@@ -6,7 +6,7 @@ public class DefaultLongLike
   {
 	  private long theL;
 
-	  public DefaultLongLike( int theL ) // Constructor. 
+	  public DefaultLongLike( long theL ) // Constructor. 
 		  {
 		  	this.theL= theL;
         }

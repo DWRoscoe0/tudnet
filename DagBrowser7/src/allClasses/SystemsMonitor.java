@@ -35,44 +35,45 @@ public class SystemsMonitor
 
 	  private final long oneSecondOfNsL=  1000000000L;
 	  private final long periodMsL=  // Time between measurements.
-	  		Delay.systemsMonitorPeriod1000MsL;
+	  		Config.systemsMonitorPeriod1000MsL;
 	  
 	  private long measurementTimeMsL; // Next time to do measurements.
 
 	  // Detail-containing child sub-objects.
-		  private NamedInteger measurementCountNamedInteger= 
-		  	new NamedInteger( 
+		  private NamedLong measurementCountNamedLong= 
+		  	new NamedLong( 
       		theDataTreeModel, "Measurements", 0
         	);
-      private NamedInteger processorsNamedInteger= new NamedInteger( 
+      private NamedLong processorsNamedLong= new NamedLong( 
       		theDataTreeModel, "Processors", -1
         	);
 		  private long waitEndNsL= -1;
 		  private long waitEndOldNsL= -1;
-		  private NamedInteger waitJitterNsNamedInteger= new NamedInteger( 
-      	theDataTreeModel, "Wait-Jitter (ns)", -1 
+		  private NamedLong waitJitterNsNamedLong= new NsAsMsNamedLong( 
+      	theDataTreeModel, "Wait-Jitter (ms)", 0 
        	);
       // No longer measured.
 		  // private long nanoTimeOverheadNsL;
-		  // private NamedInteger nanoTimeOverheadNamedInteger= new NamedInteger( 
+		  // private NamedLong nanoTimeOverheadNamedInteger= new NamedLong( 
       //		theDataTreeModel, "nanoTime() overhead (ns)", -1 
       //  	);
-		  private NamedInteger cpuSpeedNamedInteger= new NamedInteger( 
+		  private NamedLong cpuSpeedNamedLong= new NamedLong( 
       		theDataTreeModel, "CPU-speed (counts / ms)", -1
         	);
 		  private long endWaitDelayMsL;
-		  private NamedInteger endWaitMsNamedInteger= new NamedInteger( 
+		  private NamedLong endWaitMsNamedLong= new NamedLong( 
       		theDataTreeModel, "End-Wait (ms)", -1
         	);
-		  private NamedInteger edtDispatchMsNamedInteger= new NamedInteger( 
-      		theDataTreeModel, "EDT-Dispatch (ms)", -1
-        	);
-		  //// Add dispatch call and return times in ms.  Above is total.
-		  //// Add dispatch call, return, and total times in ns.  Use nanoTime().
-		  private NamedInteger skippedTimeMsNamedInteger= new NamedInteger( 
+		  private NsAsMsNamedLong eventQueueInvokeAndWaitNsAsMsNamedLong= 
+		  		new NsAsMsNamedLong( 
+		  				theDataTreeModel, 
+		  				"EventQueue.invokeAndWait(..) (ms)", 
+		  				-1
+		  				);
+		  private NamedLong skippedTimeMsNamedLong= new NamedLong( 
       		theDataTreeModel, "Skipped-Time (ms)", 0
         	);
-		  private NamedInteger reversedTimeMsNamedInteger= new NamedInteger( 
+		  private NamedLong reversedTimeMsNamedLong= new NamedLong( 
       		theDataTreeModel, "Reversed-Time (ms)", 0
         	);
 
@@ -129,15 +130,15 @@ public class SystemsMonitor
     private void initializeV()
 	    {
 	    	// Add variables to our displayed list.
-	      addB( measurementCountNamedInteger );
-	      addB( processorsNamedInteger );
+	      addB( measurementCountNamedLong );
+	      addB( processorsNamedLong );
 	      //addB( nanoTimeOverheadNamedInteger );
-	      addB( cpuSpeedNamedInteger );
-	      addB( waitJitterNsNamedInteger );
-	      addB( endWaitMsNamedInteger );
-	      addB( edtDispatchMsNamedInteger );
-	      addB( skippedTimeMsNamedInteger );
-	      addB( reversedTimeMsNamedInteger );
+	      addB( cpuSpeedNamedLong );
+	      addB( waitJitterNsNamedLong );
+	      addB( endWaitMsNamedLong );
+	      addB( eventQueueInvokeAndWaitNsAsMsNamedLong );
+	      addB( skippedTimeMsNamedLong );
+	      addB( reversedTimeMsNamedLong );
 	      }
 
     private long doBinarySearchOfCPUSpeedAndDoOtherStuffL()
@@ -217,7 +218,7 @@ public class SystemsMonitor
         
        */
 	    {
-	    	cpuSpeedNamedInteger.setValueL(  // Update display of CPU speed. 
+	    	cpuSpeedNamedLong.setValueL(  // Update display of CPU speed. 
 	    			cpuSpeedCountL 
 	    			);
 	    	
@@ -260,27 +261,27 @@ public class SystemsMonitor
         
         */
 	    {
-    		measurementCountNamedInteger.addDeltaL(1);
-    		processorsNamedInteger.setValueL( // Displaying processor count. 
+    		measurementCountNamedLong.addDeltaL(1);
+    		processorsNamedLong.setValueL( // Displaying processor count. 
     				Runtime.getRuntime().availableProcessors() 
     				); // Keep measuring because this could change.
-      	final long beforeEDTDispatchMsL= System.currentTimeMillis();
+      	final long beforeEDTDispatchNsL= System.nanoTime();
       	theDataTreeModel.invokeAndWaitV( // Dispatching on EDT...
           new Runnable() {
             @Override  
             public void run() { 
-            	edtDispatchMsNamedInteger.setValueL( 
-            			System.currentTimeMillis() - beforeEDTDispatchMsL
+            	eventQueueInvokeAndWaitNsAsMsNamedLong.setValueL( 
+            			System.nanoTime() - beforeEDTDispatchNsL
             			); // Displaying time for EDT to dispatch this Runnable job. 
         		  }  
             } 
           );
       	//nanoTimeOverheadNamedInteger.setValueL( nanoTimeOverheadNsL  );
-      	waitJitterNsNamedInteger.setValueL( 
+      	waitJitterNsNamedLong.setValueL( 
       			(waitEndNsL - waitEndOldNsL) - oneSecondOfNsL
       			);
       	waitEndOldNsL= waitEndNsL;
-      	endWaitMsNamedInteger.setValueL( endWaitDelayMsL );
+      	endWaitMsNamedLong.setValueL( endWaitDelayMsL );
 
 	    	waitForNextMeasurementTimeV();
 
@@ -306,9 +307,9 @@ public class SystemsMonitor
 				    		measurementTimeMsL, periodMsL
 				    		);
   			if (shiftInTimeMsL > 0) // Processing skipped time, if any.
-	  			skippedTimeMsNamedInteger.addDeltaAndLogNonzeroL( shiftInTimeMsL );
+	  			skippedTimeMsNamedLong.addDeltaAndLogNonzeroL( shiftInTimeMsL );
 	  		if (shiftInTimeMsL < 0) // Processing reversed time, if any.
-	  			reversedTimeMsNamedInteger.addDeltaAndLogNonzeroL( -shiftInTimeMsL );
+	  			reversedTimeMsNamedLong.addDeltaAndLogNonzeroL( -shiftInTimeMsL );
 	  		measurementTimeMsL+= // Adjusting base time for discontinuity, if any.
 	  				shiftInTimeMsL; 
 	  		

@@ -57,7 +57,7 @@ public class NamedFloat // A DataNode for tracking floating point things.
 
     public float setValueF( final float newL )
 	    /* This method does nothing if deltaF is the same value 
-	      as the present value of this NamedInteger.
+	      as the present value of this NamedLong.
 		    Otherwise it sets sets deltaF as the new value 
 		    and returns the old unchanged value.
 		    It also fires any associated change listeners.

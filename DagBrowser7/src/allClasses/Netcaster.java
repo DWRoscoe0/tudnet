@@ -36,7 +36,8 @@ public class Netcaster
         Shutdowner theShutdowner,
 	      DataTreeModel theDataTreeModel,
 	      IPAndPort  remoteIPAndPort, 
-	      String nameString
+	      String nameString,
+	      NamedLong retransmitDelayMsNamedLong
 	      )
 	    {
 	  		// Superclass's injections.
@@ -48,7 +49,8 @@ public class Netcaster
 			      remoteIPAndPort, // key K
 			      netcasterLockAndSignal,
 			      theNetcasterInputStream,
-			      theNetcasterOutputStream
+			      theNetcasterOutputStream,
+			      retransmitDelayMsNamedLong
 			      );
 	      }
 
@@ -60,8 +62,8 @@ public class Netcaster
 		    initializingWithoutStreamsV();
 		    
 		    // Initializing stream monitors.
-		    addB( 	theEpiOutputStreamO.getCounterNamedInteger() );
-		    addB( 	theEpiInputStreamI.getCounterNamedInteger());
+		    addB( 	theEpiOutputStreamO.getCounterNamedLong() );
+		    addB( 	theEpiInputStreamI.getCounterNamedLong());
 		    }
 
     protected void initializingWithoutStreamsV()

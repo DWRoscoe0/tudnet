@@ -8,7 +8,7 @@ public class CountingPacketQueue extends NetcasterQueue
    
     This class adds packet counting to its superclass.
     It counts the packets removed from  the queue
-    in a NamedInteger injected at construction time.
+    in a NamedLong injected at construction time.
 
     ?? Not all removal methods are overridden.
     To do so properly would need to account for methods, 
@@ -17,16 +17,16 @@ public class CountingPacketQueue extends NetcasterQueue
     */
 
 	{
-		private NamedInteger outputCountNamedInteger;
+		private NamedLong outputCountNamedLong;
 	
 	  CountingPacketQueue(  // Constructor.
 	  		LockAndSignal destinationThreadLockAndSignal,
-	  		NamedInteger outputCountNamedInteger,
+	  		NamedLong outputCountNamedLong,
 	  		int queueSizeI
 	  		)
 	    {
 	      super( destinationThreadLockAndSignal, queueSizeI );
-	  		this.outputCountNamedInteger= outputCountNamedInteger;
+	  		this.outputCountNamedLong= outputCountNamedLong;
 	      }
 	  
 	  public NetcasterPacket poll(long timeout, TimeUnit unit)
@@ -34,7 +34,7 @@ public class CountingPacketQueue extends NetcasterQueue
 	    {
 	  	  NetcasterPacket resultNetcasterPacket= super.poll(timeout, unit);
 	  	  if ( resultNetcasterPacket != null ) // Counting packet if gotten.
-	  	  	outputCountNamedInteger.addDeltaL( 1 );
+	  	  	outputCountNamedLong.addDeltaL( 1 );
 	  	  return resultNetcasterPacket;
 	  	  }
 
@@ -42,7 +42,7 @@ public class CountingPacketQueue extends NetcasterQueue
 	       throws InterruptedException
 	    {
 	  	  NetcasterPacket resultNetcasterPacket= super.take();
-	  	  outputCountNamedInteger.addDeltaL( 1 ); // Counting packet.
+	  	  outputCountNamedLong.addDeltaL( 1 ); // Counting packet.
 	  	  return resultNetcasterPacket;
 	    	}
 	  	  

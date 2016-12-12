@@ -40,26 +40,20 @@ public class Streamcaster<
 	  	//200;
 	  	//400;
 	  	//1000;
-	    Delay.pingReplyHandshakePeriod2000MsL; // 2000;
+	    Config.pingReplyHandshakePeriod2000MsL; // 2000;
 	  protected final long HalfPeriodMillisL= // Half of period.
 	    PeriodMillisL / 2;  
 
-    protected final LockAndSignal theLockAndSignal;
+	  // Injected dependencies.
+	  protected final LockAndSignal theLockAndSignal;
 			// LockAndSignal for inputs to this thread.  It is used in
       // the construction of the following queue. 
-
 	  protected final O theEpiOutputStreamO;
 		protected final I theEpiInputStreamI;
-
     protected final Shutdowner theShutdowner;
+    protected NamedLong retransmitDelayMsNamedLong;
 
-		protected long pingSentNanosL; // Time the last ping was sent.
-
-    // Detail-containing child sub-objects.
-      protected NamedInteger roundTripTimeNamedInteger;
-        // This is an important value.  It can be used to determine
-        // how long to wait for a message acknowledgement before
-        // re-sending a message.  Initial value of 1/10 second.
+    // Detail-containing child sub-objects.  None.
 
     // Other variables.
     protected boolean leadingB= false; // Used to settle race conditions.
@@ -72,7 +66,8 @@ public class Streamcaster<
 	  		K theKeyK,
 	  		LockAndSignal theLockAndSignal,
 	      I theEpiInputStreamI,
-	      O theEpiOutputStreamO
+	      O theEpiOutputStreamO,
+	      NamedLong retransmitDelayMsNamedLong
 	  		)
 	    {
 	  		// Superclass's injections.
@@ -87,19 +82,13 @@ public class Streamcaster<
 	      this.theEpiOutputStreamO= theEpiOutputStreamO;
         this.theShutdowner= theShutdowner;
         this.leadingB= leadingB;
-	      }
+        this.retransmitDelayMsNamedLong= retransmitDelayMsNamedLong;
+	    	}
 
     protected void initializingV() throws IOException
-      // Adds a DataNode for displaying round trip time.
-      // It's not presently calculated.
-    	//// This might be eliminated if roundTripTimeNamedInteger is moved.
 	    {
-	      addB( 	roundTripTimeNamedInteger= new NamedInteger( 
-	      		theDataTreeModel, "Round-Trip-Time-ms", 
-	      		Delay.initialRoundTripTime100MsL // 100
-	      		)
-	  			);
-	
+	  	  addB( retransmitDelayMsNamedLong );
+	  	  
         appLogger.info( 
         		"This Streamcaster has been given the role of: "
         		+ (leadingB ? "LEADER" : "FOLLOWER")
@@ -107,7 +96,14 @@ public class Streamcaster<
 		    }
 
 		public void pingReplyProtocolV() throws IOException
-      // Does full PING-REPLY protocol.  Will terminate thread if requested.
+      /* Does full PING-REPLY protocol.  Will terminate thread if requested.
+        Except for this method, this protocol code 
+        is written as a thread, not as a state machine.
+        Control stays within it until Unicaster termination.
+        A protocol written as a state machine must be called by another thread.
+        
+        ////?? Get rid of all traces of state machine?
+       */
 	    {
 	    	int stateI= // Initialize protocol state from leadership flag. 
 	      	  leadingB ? 0 : 1 ;
@@ -143,7 +139,8 @@ public class Streamcaster<
         LockAndSignal.Input theInput;  // Type of input that ends waits.
         int maxTriesI= 5;
         int triesI= 1;
-        pingEchoRetryLoop: while (true) { // Sending PING and receiving REPLY.
+        long retransmitDelayMsL= retransmitDelayMsNamedLong.getValueL();
+        pingReplyLoop: while (true) { // Sending PING and receiving REPLY.
           if  // Checking and exiting if maximum attempts have been done.
             ( triesI > maxTriesI )  // Maximum attempts exceeded.
             { // Terminating thread.
@@ -152,30 +149,29 @@ public class Streamcaster<
                 	+"\n  "+maxTriesI+" REPLY time-outs."
                   );
               Thread.currentThread().interrupt(); // Starting termination.
-              break pingEchoRetryLoop;
+              break pingReplyLoop;
               }
           writingAndSendingV("PING"); // Sending ping packet.
-          pingSentNanosL= System.nanoTime(); // Recording ping send time in ns
-          long pingSentMsL= System.currentTimeMillis(); // and in ms.
+          long pingSentMsL= System.currentTimeMillis();
           replyWaitLoop: while (true) { // Handling echo or other conditions.
             theInput=  // Awaiting next input within reply interval.
-            		waitingForSubnotificationOrIntervalOrInterruptE( pingSentMsL, HalfPeriodMillisL );
+            		waitingForSubnotificationOrIntervalOrInterruptE( 
+            				//%pingSentMsL, HalfPeriodMillisL
+            				pingSentMsL, retransmitDelayMsL
+            				);
             if ( theInput == Input.TIME ) // Exiting echo wait if time-out.
               { appLogger.info( "Time-out waiting for REPLY: "+triesI );
                 break replyWaitLoop;  // End wait to send new PING, maybe.
               	}
             if // Handling thread interrupt by exiting.
 		          ( theInput == Input.INTERRUPTION )
-  	    			break pingEchoRetryLoop; // Exit everything.
+  	    			break pingReplyLoop; // Exit everything.
             theEpiInputStreamI.mark(0); // Preparing to not consume message.
         		String inString= readAString(); // Reading message.
         		if ( inString.equals( "REPLY" ) ) // Handling echo, maybe.
               { // Handling echo and exiting.
-                ////roundTripTimeNamedInteger.setValueL(
-		        		////		(System.nanoTime() - pingSentNanosL)
-		        		////		); // Calculating RoundTripTime.
       			    //appLogger.debug( "Got REPLY." );
-            		break pingEchoRetryLoop; // Exit everything.
+            		break pingReplyLoop; // Exit everything.
                 }
         		if ( inString.equals( "PING" ) ) // Handling ping conflict, maybe.
               { // Handling ping conflict.
@@ -184,7 +180,7 @@ public class Streamcaster<
                   { // Yielding ping processing to other peer.
                     appLogger.info( "PING ping yield: "+triesI );
                     theEpiInputStreamI.reset(); // Putting message back.
-                    break pingEchoRetryLoop; // Yielding by exiting main loop.
+                    break pingReplyLoop; // Yielding by exiting main loop.
                     }
               		else
               		{ appLogger.info( "PING ping not yielding: "+triesI );
@@ -195,6 +191,7 @@ public class Streamcaster<
         		ignoringOrLoggingStringV(inString); // Ignoring any other string.
             } // replyWaitLoop:
           triesI++;
+          retransmitDelayMsL*= 2; // Doubling the time-out delay.
           } // pingEchoRetryLoop: 
         }
 

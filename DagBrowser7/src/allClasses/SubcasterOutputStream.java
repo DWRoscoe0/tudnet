@@ -18,14 +18,14 @@ public class SubcasterOutputStream
 		SubcasterOutputStream(  // Constructor.
 				SubcasterQueue outputSubcasterQueue,
 				SubcasterPacketManager theSubcasterPacketManager,
-				NamedInteger packetCounterNamedInteger,
+				NamedLong packetCounterNamedLong,
 	  		Timer theTimer
 				)
 			{
 			  super(
 			  		outputSubcasterQueue,
 			  		theSubcasterPacketManager,
-			  		packetCounterNamedInteger,
+			  		packetCounterNamedLong,
 			  		theTimer
 			  		);
 	      }

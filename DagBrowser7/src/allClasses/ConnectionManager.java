@@ -275,7 +275,7 @@ public class ConnectionManager
 		      if ( unconnectedDatagramSocket != null )
 		        unconnectedDatagramSocket.close();
 		      EpiThread.interruptableSleepB(  // Don't hog CPU in error loop.
-		      	Delay.errorRetryPause1000MsL
+		      	Config.errorRetryPause1000MsL
 		      	);
 		      }
 		    finally {
@@ -379,7 +379,7 @@ public class ConnectionManager
 	      if ( theMulticastSocket != null )
 	      	theMulticastSocket.close();
 	      EpiThread.interruptableSleepB(  // Don't hog CPU in error loop.
-	      		Delay.errorRetryPause1000MsL
+	      		Config.errorRetryPause1000MsL
 	      		);
 	      }
 	    finally {

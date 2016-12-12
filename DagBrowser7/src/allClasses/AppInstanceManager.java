@@ -636,7 +636,7 @@ public class AppInstanceManager {
 	                      ); 
 	                    (new LockAndSignal()).
 	                      waitingForInterruptOrDelayOrNotificationE(
-	                      		Delay.fileCopyRetryPause1000MsL
+	                      		Config.fileCopyRetryPause1000MsL
 	                      		); // Wait 1 second.
 	                    }
 	        return copySuccessB;

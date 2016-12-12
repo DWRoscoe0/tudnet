@@ -45,7 +45,7 @@ public class EpiInputStream<
 	
 	  // Constructor-injected instance variables.
 		private final Q receiverToStreamcasterNotifyingQueueQ;
-		private final NamedInteger packetCounterNamedInteger;
+		private final NamedLong packetCounterNamedLong;
 		  // This is the count of received packets. 
 		  // The value is 1 during read of 1st packet data, assuming
 		  // it is constructed with a value of 0.
@@ -62,17 +62,17 @@ public class EpiInputStream<
 	
 		public EpiInputStream ( // Constructor. 
 			Q receiverToStreamcasterNotifyingQueueQ, 
-			NamedInteger packetCounterNamedInteger
+			NamedLong packetCounterNamedLong
 			)
 			{
 				this.receiverToStreamcasterNotifyingQueueQ= 
 						receiverToStreamcasterNotifyingQueueQ;
-				this.packetCounterNamedInteger= packetCounterNamedInteger;
+				this.packetCounterNamedLong= packetCounterNamedLong;
 				}
 	
-		public NamedInteger getCounterNamedInteger()
+		public NamedLong getCounterNamedLong()
 		  // Returns an integer which counts packets processed.
-		  { return packetCounterNamedInteger; }
+		  { return packetCounterNamedLong; }
 	
 		public Q getNotifyingQueueQ()
 		  // Returns the queue through which data is passing.
@@ -195,7 +195,7 @@ public class EpiInputStream<
 	        	throw new IOException(); 
 		      } 
 	
-				packetCounterNamedInteger.addDeltaL( 1 ); // Counting received packet.
+				packetCounterNamedLong.addDeltaL( 1 ); // Counting received packet.
 	
 	      // Setting variables for reading from the new packet.
 	  	  loadedDatagramPacket= loadedKeyedPacketE.getDatagramPacket();

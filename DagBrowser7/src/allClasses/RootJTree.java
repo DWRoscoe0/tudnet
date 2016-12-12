@@ -976,7 +976,7 @@ public class RootJTree
           scrollPathToVisible(  // Scroll node completely into view.
             inTreePath 
             );
-          animationDelayDoMaybeV( );  // Delay if requested earlier.
+          animationDelayDoMaybeV( );  // Config if requested earlier.
           paintImmediately( );  // Display present JTree state.
           animationDelaySetRequestV( true );  // Request new paint delay.
           }
@@ -1013,7 +1013,7 @@ public class RootJTree
 
           }
 
-    // Animation Delay manager.
+    // Animation Config manager.
 
       /* This manages the creation of short delays to be used between
         window paints to animate complex changes to the window state.
@@ -1047,7 +1047,7 @@ public class RootJTree
           It is used for delays in multistep display changes.
           */
         {
-          if ( animationDelayI != 0 )  // Delay if desired.
+          if ( animationDelayI != 0 )  // Config if desired.
             EpiThread.interruptableSleepB( animationDelayI );
           }
 

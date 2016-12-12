@@ -3,7 +3,7 @@ package allClasses;
 import static allClasses.Globals.appLogger;
 
 
-public class NamedInteger // A DataNode for tracking integer attributes.
+public class NamedLong
   extends NamedLeaf
   implements LongLike
 
@@ -12,7 +12,7 @@ public class NamedInteger // A DataNode for tracking integer attributes.
 
 	  private long theL;
 
-	  public NamedInteger( // Constructor. 
+	  public NamedLong( // Constructor. 
         DataTreeModel theDataTreeModel,
         String nameString, 
         long theL
@@ -56,7 +56,7 @@ public class NamedInteger // A DataNode for tracking integer attributes.
 
     public long setValueL( final long newL )
 	    /* This method does nothing if deltaL is the same value 
-	      as the present value of this NamedInteger.
+	      as the present value of this NamedLong.
 		    Otherwise it sets sets deltaL as the new value 
 		    and returns the old unchanged value.
 		    It also fires any associated change listeners.
