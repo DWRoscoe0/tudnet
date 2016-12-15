@@ -138,7 +138,7 @@ public class Unicaster
             it won't interfere with measurement of first Round-Trip-Time. 
             */ 
 
-  		////private TimerInput theTimerInput;  // For PS-PS RTT timing. 
+  		////private ThreadTimerInput theTimerInput;  // For PS-PS RTT timing. 
   		private RTTMeasurer theRTTMeasurer;
   		
 			public Unicaster(  // Constructor. 
@@ -216,7 +216,7 @@ public class Unicaster
     		super.initializingWithoutStreamsV(); // We do the streams below.
 
     		//% theTimer= new Timer(); ////
-    		////theTimerInput=  new TimerInput( theLockAndSignal, theTimer ); ////
+    		////theTimerInput=  new ThreadTimerInput( theLockAndSignal, theTimer ); ////
     		theRTTMeasurer= new RTTMeasurer( this ); ////
 
         // Adding measurement count.
@@ -316,7 +316,7 @@ public class Unicaster
 		      	if ( theInput != Input.NONE ) break;
 		      	if (processingMessagesFromRemotePeerB()) continue;
 		    		if (multiplexingPacketsFromSubcastersB()) continue;
-		    		if (theRTTMeasurer.cycleMachineB()) continue;
+		    		////if (theRTTMeasurer.cycleMachineB()) continue;
 			  	  theInput= // Waiting for at least one new input.
 		    			  theLockAndSignal.waitingForInterruptOrNotificationE();
 			  	  }
@@ -625,14 +625,26 @@ public class Unicaster
 			  	{
 					  this.theUnicaster= theUnicaster; //// temporary cyclic dependency.
 					  
-					  statisticsTimerInput= //// Move to factory. 
-					  		new TimerInput(theUnicaster.theLockAndSignal,theUnicaster.theTimer);
+					  statisticsThreadTimerInput= //// Move to factory. 
+					  		new ThreadTimerInput(
+					  				//% theUnicaster.theLockAndSignal,
+					  				theUnicaster.theTimer,
+					  				new Runnable() {
+							        public void run()
+							          // Activates this as an input and notifies interested thread.
+								        {
+							        	  try { cycleMachineB(); }
+							        	  catch ( IOException theIOException) 
+							        	    {} //// do something.
+							        	  }
+							    		}
+					  				);
 					  }
 
 
 				// Inputs code activated or used by inputs.
 	     	  
-				  private TimerInput statisticsTimerInput; // Used for timing
+				  private ThreadTimerInput statisticsThreadTimerInput; // Used for timing
 				    // both pauses and time-outs. 
 	
 	        private synchronized boolean processMeasurementMessageB(
@@ -705,21 +717,21 @@ public class Unicaster
 		    	  beforeExit: {
 
 		    	  	if // Scheduling pause timer if not scheduled yet.
-		    	  		(! statisticsTimerInput.getInputScheduledB()) 
-			    	  	{ statisticsTimerInput.scheduleV( Config.handshakePause5000MsL );
+		    	  		(! statisticsThreadTimerInput.getInputScheduledB()) 
+			    	  	{ statisticsThreadTimerInput.scheduleV( Config.handshakePause5000MsL );
 			    			  //appLogger.debug("handlingPauseB() scheduling pause end input.");
 					    		break beforeExit;
 					    	  }
 
 			    		if // Handling pause timer still running.
-				    		(! statisticsTimerInput.getInputArrivedB()) 
+				    		(! statisticsThreadTimerInput.getInputArrivedB()) 
 				    		{ runningB= false; // Indicate state machine is waiting.
 			    				//appLogger.debug("handlingPauseB() pause end input scheduled.");
 					    		break beforeExit;
 					    	  }
 
 			    		{ // Handling pause complete by changing state. 
-		    				statisticsTimerInput.cancelingV();
+		    				statisticsThreadTimerInput.cancelingV();
 		    			  retryTimeOutMsL=   // Initializing retry time-out.
 		    			  		theUnicaster.retransmitDelayMsNamedLong.getValueL();
 		    			  theStateI= SENDING_AND_WAITING;
@@ -739,8 +751,8 @@ public class Unicaster
 		    	  beforeTimerChecks: { 
 
 			    		if // Sending PS and scheduling time-out, if not done yet.
-			    		  (! statisticsTimerInput.getInputScheduledB())
-				    		{ statisticsTimerInput.scheduleV(retryTimeOutMsL);
+			    		  (! statisticsThreadTimerInput.getInputScheduledB())
+				    		{ statisticsThreadTimerInput.scheduleV(retryTimeOutMsL);
 				    			//appLogger.debug("handleSendingAndWaiting() scheduling "+retryTimeOutMsL);
 					    		sendingSequenceNumberV();
 					    		break beforeExit;
@@ -750,20 +762,20 @@ public class Unicaster
 		        	{ // Handling received PA.
 		        		//appLogger.debug("handleSendingAndWaiting() PA acknowledgement and resets.");
 		        		acknowledgementReceivedB= false;  // Resetting PS input,
-		        		statisticsTimerInput.cancelingV(); // Resetting timer state.
+		        		statisticsThreadTimerInput.cancelingV(); // Resetting timer state.
 				    		break beforeStartPausing; // Going to Pausing state.
 					    	}
 
 		    	  } // beforeTimerChecks:
 			    		if // Handling PA reply timer still running.
-			    			(! statisticsTimerInput.getInputArrivedB()) 
+			    			(! statisticsThreadTimerInput.getInputArrivedB()) 
 				    		{ runningB= false; // Indicate state machine is waiting.
 					    	  //appLogger.debug("handleSendingAndWaiting() time-out scheduled.");
 					    		break beforeExit;
 						    	}
 			    		{ // Handling PA reply timer time-out.   
 				    		//appLogger.debug("handleSendingAndWaiting() time-out occurred.");
-		    				statisticsTimerInput.cancelingV(); // Resetting timer.
+		    				statisticsThreadTimerInput.cancelingV(); // Resetting timer.
 		    			  if  // Handling maximum time-out interval not reached yet.
 		    			  	( retryTimeOutMsL <= Config.maxTimeOut5000MsL )
 		    				  { retryTimeOutMsL*=2;  // Doubling time limit for retrying.
@@ -977,7 +989,7 @@ public class Unicaster
 
 				} // class RTTMeasurer
 
-		static class TimerInput // First developed for PS-PS RTT timing.
+		static class ThreadTimerInput // First developed for PS-PS RTT timing.
 		  /* This class functions as an input to processes modeled as threads.
 		    It is not meant to be used with processes modeled as state-machines.
 		    This class uses the LockAndSignal.notifyingV() method
@@ -990,20 +1002,23 @@ public class Unicaster
 		   */
 			{	
 			  // Injected dependencies.
-				private LockAndSignal theLockAndSignal;
+				//private LockAndSignal theLockAndSignal; //// no longer needed.
 			  private Timer theTimer;
+			  private Runnable theRunnable;
 			  
 				// Other variables.
 				private TimerTask theTimerTask= null;
 				private boolean inputArrivedB= false; 
 		
-		    TimerInput( // Constructor.
-			  		LockAndSignal theLockAndSignal,
-			  		Timer theTimer
+		    ThreadTimerInput( // Constructor.
+			  		//% LockAndSignal theLockAndSignal,
+			  		Timer theTimer,
+			  		Runnable theRunnable
 			  		)
 			  	{
-				  	this.theLockAndSignal= theLockAndSignal;
+				  	//% this.theLockAndSignal= theLockAndSignal;
 				  	this.theTimer= theTimer;
+				  	this.theRunnable= theRunnable;
 				  	}
 		
 		    public boolean getInputArrivedB() 
@@ -1026,7 +1041,8 @@ public class Unicaster
 			          // Activates this as an input and notifies interested thread.
 				        {
 			        		inputArrivedB= true;
-			        	  theLockAndSignal.notifyingV();
+			        	  ////theLockAndSignal.notifyingV();
+			        	  theRunnable.run(); // cycleMachineB();
 				          }
 			    		};
 			    	theTimer.schedule(theTimerTask, delayMsL);
@@ -1049,7 +1065,7 @@ public class Unicaster
 			    			}
 			    	}	 
 		
-			} // class TimerInput
+			} // class ThreadTimerInput
 
 
 	} // Unicaster.

@@ -418,7 +418,7 @@ public class Streamcaster<
 	  		endingPacketV(); // Sending it by flushing.
         }
 
-    protected void endingPacketV() throws IOException
+    protected void endingPacketV() //% throws IOException
       /* This method forces what has been written to the stream to be sent.
         It also guarantees a packet boundary at this point in the stream.
         It is equivalent to endingPacketV( 0 );
@@ -428,7 +428,7 @@ public class Streamcaster<
     		endingPacketV( 0 );
         }
 
-    protected void endingPacketV( long delayMsL ) throws IOException
+    protected void endingPacketV( long delayMsL ) //% throws IOException
       /* This method forces what has been written to the stream to be sent
         within delayMsL milliseconds.
         It also guarantees a packet boundary at this point in the stream.
