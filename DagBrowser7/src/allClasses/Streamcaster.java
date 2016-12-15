@@ -96,13 +96,11 @@ public class Streamcaster<
 		    }
 
 		public void pingReplyProtocolV() throws IOException
-      /* Does full PING-REPLY protocol.  Will terminate thread if requested.
+      /* This method does the full PING-REPLY protocol.  
+        It will terminate this thread if requested.
         Except for this method, this protocol code 
         is written as a thread, not as a state machine.
         Control stays within it until Unicaster termination.
-        A protocol written as a state machine must be called by another thread.
-        
-        ////?? Get rid of all traces of state machine?
        */
 	    {
 	  	  if (! leadingB) // Start with ping-receive if not leading. 
@@ -112,7 +110,7 @@ public class Streamcaster<
 	      		if ( EpiThread.exitingB() ) break;  // Exiting if requested.
 	  	      tryingPingSendV();
 	  	  		if ( EpiThread.exitingB() ) break;  // Exiting if requested.
-	  	    	      tryingPingReceiveV();
+	  	    	tryingPingReceiveV();
 	          } // while(true)
 	    	}
 

@@ -201,7 +201,7 @@ public class EpiOutputStream<
 						  		);
 				  		for // Copying unsent bytes to beginning of new buffer.
 						  	( int dstI=0, srcI= sendableI; srcI < indexI ; )
-						  	bufferBytes[dstI++]= bufferBytes[srcI++];
+						  	newBufferBytes[dstI++]= bufferBytes[srcI++];
 						  indexI-= sendableI; // Subtracting sent bytes from buffer index.
 						  sendableI= 0;  // Indicating no bytes are sendable.
 				  		queuingForSendV( keyedPacketE ); // Queuing old buffer.
