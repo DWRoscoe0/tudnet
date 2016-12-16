@@ -138,7 +138,7 @@ public class Unicaster
             it won't interfere with measurement of first Round-Trip-Time. 
             */ 
 
-  		////private ThreadTimerInput theTimerInput;  // For PS-PS RTT timing. 
+  		////private TimerInput theTimerInput;  // For PS-PS RTT timing. 
   		private RTTMeasurer theRTTMeasurer;
   		
 			public Unicaster(  // Constructor. 
@@ -216,7 +216,7 @@ public class Unicaster
     		super.initializingWithoutStreamsV(); // We do the streams below.
 
     		//% theTimer= new Timer(); ////
-    		////theTimerInput=  new ThreadTimerInput( theLockAndSignal, theTimer ); ////
+    		////theTimerInput=  new TimerInput( theLockAndSignal, theTimer ); ////
     		theRTTMeasurer= new RTTMeasurer( this ); ////
 
         // Adding measurement count.
@@ -625,8 +625,8 @@ public class Unicaster
 			  	{
 					  this.theUnicaster= theUnicaster; //// temporary cyclic dependency.
 					  
-					  statisticsThreadTimerInput= //// Move to factory. 
-					  		new ThreadTimerInput(
+					  statisticsTimerInput= //// Move to factory. 
+					  		new TimerInput(
 					  				//% theUnicaster.theLockAndSignal,
 					  				theUnicaster.theTimer,
 					  				new Runnable() {
@@ -644,7 +644,7 @@ public class Unicaster
 
 				// Inputs code activated or used by inputs.
 	     	  
-				  private ThreadTimerInput statisticsThreadTimerInput; // Used for timing
+				  private TimerInput statisticsTimerInput; // Used for timing
 				    // both pauses and time-outs. 
 	
 	        private synchronized boolean processMeasurementMessageB(
@@ -717,21 +717,21 @@ public class Unicaster
 		    	  beforeExit: {
 
 		    	  	if // Scheduling pause timer if not scheduled yet.
-		    	  		(! statisticsThreadTimerInput.getInputScheduledB()) 
-			    	  	{ statisticsThreadTimerInput.scheduleV( Config.handshakePause5000MsL );
+		    	  		(! statisticsTimerInput.getInputScheduledB()) 
+			    	  	{ statisticsTimerInput.scheduleV( Config.handshakePause5000MsL );
 			    			  //appLogger.debug("handlingPauseB() scheduling pause end input.");
 					    		break beforeExit;
 					    	  }
 
 			    		if // Handling pause timer still running.
-				    		(! statisticsThreadTimerInput.getInputArrivedB()) 
+				    		(! statisticsTimerInput.getInputArrivedB()) 
 				    		{ runningB= false; // Indicate state machine is waiting.
 			    				//appLogger.debug("handlingPauseB() pause end input scheduled.");
 					    		break beforeExit;
 					    	  }
 
 			    		{ // Handling pause complete by changing state. 
-		    				statisticsThreadTimerInput.cancelingV();
+		    				statisticsTimerInput.cancelingV();
 		    			  retryTimeOutMsL=   // Initializing retry time-out.
 		    			  		theUnicaster.retransmitDelayMsNamedLong.getValueL();
 		    			  theStateI= SENDING_AND_WAITING;
@@ -751,8 +751,8 @@ public class Unicaster
 		    	  beforeTimerChecks: { 
 
 			    		if // Sending PS and scheduling time-out, if not done yet.
-			    		  (! statisticsThreadTimerInput.getInputScheduledB())
-				    		{ statisticsThreadTimerInput.scheduleV(retryTimeOutMsL);
+			    		  (! statisticsTimerInput.getInputScheduledB())
+				    		{ statisticsTimerInput.scheduleV(retryTimeOutMsL);
 				    			//appLogger.debug("handleSendingAndWaiting() scheduling "+retryTimeOutMsL);
 					    		sendingSequenceNumberV();
 					    		break beforeExit;
@@ -762,20 +762,20 @@ public class Unicaster
 		        	{ // Handling received PA.
 		        		//appLogger.debug("handleSendingAndWaiting() PA acknowledgement and resets.");
 		        		acknowledgementReceivedB= false;  // Resetting PS input,
-		        		statisticsThreadTimerInput.cancelingV(); // Resetting timer state.
+		        		statisticsTimerInput.cancelingV(); // Resetting timer state.
 				    		break beforeStartPausing; // Going to Pausing state.
 					    	}
 
 		    	  } // beforeTimerChecks:
 			    		if // Handling PA reply timer still running.
-			    			(! statisticsThreadTimerInput.getInputArrivedB()) 
+			    			(! statisticsTimerInput.getInputArrivedB()) 
 				    		{ runningB= false; // Indicate state machine is waiting.
 					    	  //appLogger.debug("handleSendingAndWaiting() time-out scheduled.");
 					    		break beforeExit;
 						    	}
 			    		{ // Handling PA reply timer time-out.   
 				    		//appLogger.debug("handleSendingAndWaiting() time-out occurred.");
-		    				statisticsThreadTimerInput.cancelingV(); // Resetting timer.
+		    				statisticsTimerInput.cancelingV(); // Resetting timer.
 		    			  if  // Handling maximum time-out interval not reached yet.
 		    			  	( retryTimeOutMsL <= Config.maxTimeOut5000MsL )
 		    				  { retryTimeOutMsL*=2;  // Doubling time limit for retrying.
@@ -989,7 +989,7 @@ public class Unicaster
 
 				} // class RTTMeasurer
 
-		static class ThreadTimerInput // First developed for PS-PS RTT timing.
+		static class TimerInput // First developed for PS-PS RTT timing.
 		  /* This class functions as an input to processes modeled as threads.
 		    It is not meant to be used with processes modeled as state-machines.
 		    This class uses the LockAndSignal.notifyingV() method
@@ -1010,7 +1010,7 @@ public class Unicaster
 				private TimerTask theTimerTask= null;
 				private boolean inputArrivedB= false; 
 		
-		    ThreadTimerInput( // Constructor.
+		    TimerInput( // Constructor.
 			  		//% LockAndSignal theLockAndSignal,
 			  		Timer theTimer,
 			  		Runnable theRunnable
@@ -1065,7 +1065,7 @@ public class Unicaster
 			    			}
 			    	}	 
 		
-			} // class ThreadTimerInput
+			} // class TimerInput
 
 
 	} // Unicaster.
