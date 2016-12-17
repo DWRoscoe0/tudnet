@@ -87,7 +87,9 @@ public class AppLog
     public static boolean testingForPingB= false;
     //%private static boolean focusChangeCheckingB= true;
 
-    public void setBufferedModeV( boolean desiredBufferedModeB ) 
+    public synchronized void setBufferedModeV( 
+    		boolean desiredBufferedModeB 
+    		) 
     	/* This method opens the file for buffered mode,
     	  and closes it for non-buffered mode.
     	  */
