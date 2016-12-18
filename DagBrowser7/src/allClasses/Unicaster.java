@@ -197,7 +197,7 @@ public class Unicaster
 	          	//runWithoutSubcastersV(); // Original code without Subcasters.
 		          }
 	          
-	      		theEpiOutputStreamO.close(); // Closing output stream.
+	          finalizingV();
           	}
           catch( IOException e ) {
           	Globals.logAndRethrowAsRuntimeExceptionV( 
@@ -218,6 +218,7 @@ public class Unicaster
     		//% theTimer= new Timer(); ////
     		////theTimerInput=  new TimerInput( theLockAndSignal, theTimer ); ////
     		theRTTMeasurer= new RTTMeasurer( this ); ////
+    		theRTTMeasurer.initializingV();
 
         // Adding measurement count.
 	  	  addB( sequenceHandshakesNamedLong= new NamedLong(
@@ -292,6 +293,13 @@ public class Unicaster
 	  	  		);
 
 	  	  addB( theSubcasterManager );
+	    	}
+
+    protected void finalizingV() throws IOException
+      // This is the opposite of initilizingV().
+	    {
+	    	theRTTMeasurer.finalizingV();
+	    	theEpiOutputStreamO.close(); // Closing output stream.
 	    	}
 
     public void runWithSubcastersV() throws IOException
@@ -633,7 +641,7 @@ public class Unicaster
 							        public void run()
 							          // Activates this as an input and notifies interested thread.
 								        {
-							        	  try { cycleMachineB(); }
+							        	  try { cycleMachineV(); }
 							        	  catch ( IOException theIOException) 
 							        	    {} //// do something.
 							        	  }
@@ -646,7 +654,20 @@ public class Unicaster
 	     	  
 				  private TimerInput statisticsTimerInput; // Used for timing
 				    // both pauses and time-outs. 
-	
+					
+				  private synchronized void initializingV() throws IOException
+				    // This starts the timer for the first time.
+					  {
+			        cycleMachineV(); // Starting the input-producing timer.
+			        }
+					
+				  private synchronized void finalizingV() throws IOException
+				    // This method process any pending loose ends before shutdown.
+					  {
+				  		cycleMachineV(); // Catching any saved IOException from timer.
+				  		statisticsTimerInput.cancelingV(); // Stopping timer.
+			        }
+
 	        private synchronized boolean processMeasurementMessageB(
 	        		String keyString
 	        		) 
@@ -665,7 +686,7 @@ public class Unicaster
 				        	break beforeExit;
 				        successB= false;  // Indicating message was neither of the two.
 			        	} // beforeExit:
-			        if (successB) cycleMachineB(); // Process the input.
+			        if (successB) cycleMachineV(); // Process resulting input.
 			        return successB;
 			        }
 
@@ -686,10 +707,10 @@ public class Unicaster
 
 					private boolean acknowledgementReceivedB= false;
 
-		    public synchronized boolean cycleMachineB() throws IOException
-		      /* Decodes the state by calling associated handler method once.
-		        It returns true if the machine can run more cycles,
-		        false if it is waiting for the next input.
+		    public synchronized void cycleMachineV() throws IOException
+		      /* Decodes the state by calling associated handler method,
+		        repeating until a handler returns false,
+		        indicating it is waiting for input.
 		        */
 		      { 
 		    		boolean stillRunningB= true;
@@ -705,7 +726,7 @@ public class Unicaster
 			    			}
 		    	  	//%machineCyclingB= false;
 		    	  	}
-		    	  return false;
+		    	  ////return false;
 		    		}
 		
 		    // State handler methods.
