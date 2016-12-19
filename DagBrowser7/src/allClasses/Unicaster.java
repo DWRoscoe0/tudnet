@@ -627,7 +627,11 @@ public class Unicaster
 				private Unicaster theUnicaster; //// temporary cyclic dependency.
 
 				// Other variables.
-				long retryTimeOutMsL;
+				private long retryTimeOutMsL;
+				private IOException delaydIOException= null; /* For re-throwing 
+					an exception which occurred in one thread which couldn't handle it 
+			    in another thread that can.
+			    */
 			
 				RTTMeasurer( Unicaster theUnicaster ) // Constructor.
 			  	{
@@ -643,7 +647,7 @@ public class Unicaster
 								        {
 							        	  try { cycleMachineV(); }
 							        	  catch ( IOException theIOException) 
-							        	    {} //// do something.
+							        	    { delaydIOException= theIOException; }
 							        	  }
 							    		}
 					  				);
@@ -713,6 +717,8 @@ public class Unicaster
 		        indicating it is waiting for input.
 		        */
 		      { 
+		    	  if (delaydIOException != null) // Rethrow other thread's exception. 
+		    	  	throw delaydIOException;  
 		    		boolean stillRunningB= true;
 		    	  while (stillRunningB) { // Cycling until done.
 		    	  	//%machineCyclingB= true;
