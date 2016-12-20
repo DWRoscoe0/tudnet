@@ -433,7 +433,8 @@ public class Unicaster
 		    Most will be demultiplexed and passed to Subcasters.
 		   */
 			{
-				String keyString= readAString(); // Reading message key string
+				String keyString=  // Reading message key string
+						theEpiInputStreamI.readAString();
 
 				process: {
 		      Subcaster theSubcaster= // Getting associated Subcaster, if any.
@@ -510,7 +511,7 @@ public class Unicaster
 	              break processingPossibleHelloResponse;
 	            	}
 	    			String keyString= // Reading SUBNOTIFICATION message key string.
-	    				readAString(); 
+	    					theEpiInputStreamI.readAString(); 
 	  			  if // Handling possible received HELLO key message. 
 	  			    ( processHelloB( keyString ) ) 
 	  			  	{ successB= true; break tryingToConnectByExchangingHellos; }
@@ -539,7 +540,7 @@ public class Unicaster
 	  	{
   		  boolean isKeyB= keyString.equals( "HELLO" ); // Testing key.
   		  if (isKeyB) { // Decoding argument if key is "HELLO".
-					String localIpString= readAString();
+					String localIpString= theEpiInputStreamI.readAString();
 					String remoteIpString= getKeyK().getInetAddress().getHostAddress();
 					leadingB= localIpString.compareTo(remoteIpString) > 0;
 					//leadingB= !leadingB; // Reverse roles for debug test. 
@@ -580,7 +581,7 @@ public class Unicaster
       {
 			  processing: {
 					String lengthString= // Reading Subcaster message length String. 
-							readAString();
+							theEpiInputStreamI.readAString();
 					int lengthI= Integer.parseInt( lengthString );
 	        SubcasterPacketManager theSubcasterPacketManager= 
 	        		theSubcaster.getPacketManagerM();

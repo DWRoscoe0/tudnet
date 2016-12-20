@@ -16,12 +16,14 @@ public class NetcasterInputStream
 
   	public NetcasterInputStream( // Constructor. 
   		NetcasterQueue receiverToNetcasterNetcasterQueue, 
-  		NamedLong packetCounterNamedLong
+  		NamedLong packetCounterNamedLong,
+  		char delimiterChar
   		)
   	{
     	super( 
       		receiverToNetcasterNetcasterQueue, 
-      		packetCounterNamedLong
+      		packetCounterNamedLong,
+      		delimiterChar
       		);
   		}
 

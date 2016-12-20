@@ -13,13 +13,15 @@ public class SubcasterInputStream
 	
 		public SubcasterInputStream( // Constructor. 
 			SubcasterQueue receiverToSubcasterSubcasterQueue, 
-			NamedLong packetCounterNamedLong
+			NamedLong packetCounterNamedLong,
+			char delimiterChar
 			)
 		{
 	  	super( 
 	    		receiverToSubcasterSubcasterQueue, 
-	    		packetCounterNamedLong
-	    		);
+	    		packetCounterNamedLong,
+	    		delimiterChar
+					);
 			}
 
 }

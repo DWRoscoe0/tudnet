@@ -340,7 +340,8 @@ public class Multicaster
 	              break processorLoop;  // Exiting loop.
 	            case SUBNOTIFICATION:  // Handling a message.
 	            	messageDecpder: {
-	            		String inString= readAString(); // Reading message.
+	            		String inString= 
+	            				theEpiInputStreamI.readAString(); // Reading message.
 	            		if ( inString.equals( "DISCOVERY" ) ) // Handling query, maybe.
 			        			{ ///writingNumberedPacketV("ALIVE"); // Sending response.
 	            				theEpiOutputStreamO.writingAndSendingV("ALIVE"); // Sending response.

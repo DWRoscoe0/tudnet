@@ -276,7 +276,8 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
     { return new MulticastSocket( portI ); }
 
 	public NetcasterInputStream makeNetcasterInputStream(
-			NetcasterQueue receiverToNetcasterNetcasterQueue
+			NetcasterQueue receiverToNetcasterNetcasterQueue,
+			char delimiterChar
 			)
 	  {
 			NamedLong packetsReceivedNamedLong=  
@@ -284,8 +285,10 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 							theDataTreeModel, "Incoming-Packets-Received", 0 
 							);
 	  	return new NetcasterInputStream(
-	  	  receiverToNetcasterNetcasterQueue, packetsReceivedNamedLong 
-	  		);
+	  	  receiverToNetcasterNetcasterQueue, 
+	  	  packetsReceivedNamedLong,
+	  	  delimiterChar
+				);
 	  	}
 
 	public NetcasterOutputStream makeNetcasterOutputStream(
@@ -324,7 +327,8 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 		  return new Multicaster(
 		  	multicasterLockAndSignal,
 	  		makeNetcasterInputStream( 
-	  				multicastReceiverToMulticasterNetcasterQueue 
+	  				multicastReceiverToMulticasterNetcasterQueue, 
+	  	  		Config.delimiterChar
 	  				),
 	  		makeNetcasterOutputStream( theNetcasterPacketManager ),
         theShutdowner,

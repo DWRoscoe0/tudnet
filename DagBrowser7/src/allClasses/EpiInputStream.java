@@ -49,7 +49,8 @@ public class EpiInputStream<
 		  // This is the count of received packets. 
 		  // The value is 1 during read of 1st packet data, assuming
 		  // it is constructed with a value of 0.
-	
+		private final char delimiterChar;
+		
 	  // Other instance variables.
 		private E loadedKeyedPacketE= null;
 		private DatagramPacket loadedDatagramPacket = null;
@@ -61,13 +62,15 @@ public class EpiInputStream<
 		private int markIndexI= -1; 
 	
 		public EpiInputStream ( // Constructor. 
-			Q receiverToStreamcasterNotifyingQueueQ, 
-			NamedLong packetCounterNamedLong
-			)
+				Q receiverToStreamcasterNotifyingQueueQ, 
+				NamedLong packetCounterNamedLong,
+				final char delimiterChar
+				)
 			{
 				this.receiverToStreamcasterNotifyingQueueQ= 
 						receiverToStreamcasterNotifyingQueueQ;
 				this.packetCounterNamedLong= packetCounterNamedLong;
+				this.delimiterChar= delimiterChar;
 				}
 	
 		public NamedLong getCounterNamedLong()
@@ -82,7 +85,33 @@ public class EpiInputStream<
 		  // Returns the LockAndSignal associated with the receive queue 
 		  // through which data is passing, mainly for debugging.
 			{ return receiverToStreamcasterNotifyingQueueQ.getLockAndSignal(); }
-	  
+
+		
+
+		protected String readAString() throws IOException
+  		/* This method reads and returns one String ending in the first
+  		  delimiterChar from stream, 
+  		  but the String returned does not include the delimiter.
+  		  This method does not block.
+				If a complete string, including delimiter, is not available,
+				then it logs this as an error and returns an empty string.
+  		 */
+			{
+				String readString= "";
+				while (true) { // Reading and accumulating all bytes in string.
+					if ( available() <= 0 ) // debug.
+						{
+							readString+="!NO-DATA-AVAILABLE!";
+		          appLogger.error( "readAString(): returning " + readString );
+							break;
+	  					}
+					int byteI= read();
+					if ( delimiterChar == byteI ) break; // Exiting if terminator seen.
+					readString+= (char)byteI;
+					}
+				return readString;
+				}
+		
 		public int available() throws IOException 
 	    /* This method tests whether there are any bytes available for reading.
 	      If there are bytes in the byte buffer it returns the number of bytes.

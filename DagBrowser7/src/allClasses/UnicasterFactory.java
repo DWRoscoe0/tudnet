@@ -42,7 +42,8 @@ public class UnicasterFactory {
 					new NetcasterQueue( unicasterLockAndSignal, queueCapacityI );
 			NetcasterInputStream unicasterNetcasterInputStream=
 					theAppGUIFactory.makeNetcasterInputStream( 
-							receiverToUnicasterNetcasterQueue 
+							receiverToUnicasterNetcasterQueue, 
+				  		Config.delimiterChar
 							);
 		  NetcasterPacketManager theNetcasterPacketManager=
 		  		new NetcasterPacketManager( unicasterIPAndPort );
@@ -111,7 +112,10 @@ public class UnicasterFactory {
 			SubcasterQueue unicasterToSubcasterSubcasterQueue=
 					new SubcasterQueue( subcasterLockAndSignal, queueCapacityI );
 			SubcasterInputStream theSubcasterInputStream= 
-			  	makeSubcasterInputStream( unicasterToSubcasterSubcasterQueue );
+			  	makeSubcasterInputStream( 
+			  			unicasterToSubcasterSubcasterQueue, 
+				  		Config.delimiterChar
+			  			);
 			SubcasterOutputStream theSubcasterOutputStream= 
 					makeSubcasterOutputStream( 
 							keyString, theSubcasterPacketManager
@@ -148,14 +152,17 @@ public class UnicasterFactory {
   	    }
 
   	public SubcasterInputStream makeSubcasterInputStream(
-  			SubcasterQueue receiverToSubcasterSubcasterQueue
-  			)
+  			SubcasterQueue receiverToSubcasterSubcasterQueue,
+  			char delimiterChar
+				)
   	  {
   			NamedLong packetsReceivedNamedLong=  
   					new NamedLong( theDataTreeModel, "Incoming-Packets-Received", 0 );
   	  	return new SubcasterInputStream(
-  	  	  receiverToSubcasterSubcasterQueue, packetsReceivedNamedLong 
-  	  		);
+  	  	  receiverToSubcasterSubcasterQueue, 
+  	  	  packetsReceivedNamedLong, 
+  	  	  delimiterChar
+  				);
   	  	}
 
 } // class UnicasterFactory.

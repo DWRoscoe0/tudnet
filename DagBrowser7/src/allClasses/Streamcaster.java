@@ -32,7 +32,7 @@ public class Streamcaster<
 	{
   
 	  // Constants.
-		private final char delimiterChar= Config.delimiterChar; //////
+		//% private final char delimiterChar= Config.delimiterChar; //////
 		
 	  protected final long PeriodMillisL= // PING-REPLY handshake period.
 	    //4000;   // 4 seconds.
@@ -156,7 +156,8 @@ public class Streamcaster<
 		          ( theInput == Input.INTERRUPTION )
   	    			break pingReplyLoop; // Exit everything.
             theEpiInputStreamI.mark(0); // Preparing to not consume message.
-        		String inString= readAString(); // Reading message.
+        		String inString=  // Reading message.
+        				theEpiInputStreamI.readAString();
         		if ( inString.equals( "REPLY" ) ) // Handling echo, maybe.
               { // Handling echo and exiting.
       			    //appLogger.debug( "Got REPLY." );
@@ -275,7 +276,8 @@ public class Streamcaster<
 			          	break postReplyPause;  // Exiting pingWaitLoop only.
 			            }
 	        		// Change following to use: ignoringOrLoggingStringV(); // Ignoring any other string.
-	        		String theString= readAString(); // Reading message to ignore it.
+	        		String theString=  // Reading message to ignore it.
+	        				theEpiInputStreamI.readAString();
 	            appLogger.warning( 
 	        			"tryingPingReceiveV(): unexpected " + theString + ", ignoring"
 	        			);
@@ -360,12 +362,26 @@ public class Streamcaster<
 			if // Overriding if desired string is able to be read. 
 			  ( theEpiInputStreamI.available() > 0 )
 				{
-	    	  inString= readAString();
+	    	  inString= theEpiInputStreamI.readAString();
 	    	  }
   	  return inString;
     	}
 
-		protected String readAString()
+		protected int readANumberI()
+  		throws IOException
+  		/* This method reads and returns one int number 
+  		  converted from a String ending in the delimiterChar.
+  		  from theEpiInputStreamI.
+  		  This means it could not be used for floating point numbers.  
+  		  It blocks if a full number is not available.
+  		 */
+			{
+				String numberString= theEpiInputStreamI.readAString();
+	      int numberI= Integer.parseInt( numberString );
+			  return numberI;
+				}
+
+		protected String XreadAString() //////
   		throws IOException
   		/* This method reads and returns one String ending in the first
   		  delimiterChar from theEpiInputStreamI.  
@@ -375,6 +391,7 @@ public class Streamcaster<
 				then logs and returns an empty string.
   		 */
 			{
+			  /*////
 				String readString= "";
 				while (true) { // Reading and accumulating all bytes in string.
 					if ( theEpiInputStreamI.available() <= 0 ) // debug.
@@ -388,20 +405,8 @@ public class Streamcaster<
 					readString+= (char)byteI;
 					}
 				return readString;
-				}
-
-		protected int readANumberI()
-  		throws IOException
-  		/* This method reads and returns one int number 
-  		  converted from a String ending in the delimiterChar.
-  		  from theEpiInputStreamI.
-  		  This means it could not be used for floating point numbers.  
-  		  It blocks if a full number is not available.
-  		 */
-			{
-				String numberString= readAString();
-	      int numberI= Integer.parseInt( numberString );
-			  return numberI;
+				*/ ////
+				return theEpiInputStreamI.readAString();
 				}
 		
 
