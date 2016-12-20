@@ -57,7 +57,8 @@ public class EpiOutputStream<
 		  // it is constructed with a value of 0.
 			// It becomes 1 after the packet containing that data is queued.
 		private Timer theTimer; // For delayedBlockFlushV( long delayMsL ).
-
+		private char delimiterChar;
+		
   	private TimerTask theTimerTask= null;
   	private long sendTimeMsL;
 
@@ -70,20 +71,50 @@ public class EpiOutputStream<
 				Q notifyingQueueQ,
 				M packetManagerM,
 				NamedLong packetCounterNamedLong,
-	  		Timer theTimer
+	  		Timer theTimer,
+	  		char delimiterChar
 				)
 			{
 				this.notifyingQueueQ= notifyingQueueQ;
 				this.packetManagerM= packetManagerM;
 				this.packetCounterNamedLong= packetCounterNamedLong;
-        }
+				this.delimiterChar= delimiterChar;
+				}
 
 		public NamedLong getCounterNamedLong() 
 		  { return packetCounterNamedLong; }
 
 		public M getPacketManagerM()
 		  { return packetManagerM; }
-		
+
+
+    protected void writingTerminatedLongV( long theL ) 
+    		throws IOException
+      /* This method writes theL long int 
+        followed by the delimiterChar to the stream,  
+        but it doesn't force a flush().
+        */
+      { 
+    		writingTerminatedStringV( theL + "" ); // Converting to String.
+        }
+
+    public void writingTerminatedStringV( String theString ) 
+    		throws IOException
+      /* This method writes theString followed by the delimiterChar.
+        But it doesn't force a flush().
+        */
+      { 
+	    	writingStringV( theString );
+	    	writingStringV( String.valueOf(delimiterChar) );
+        }
+
+    public void writingStringV( String theString ) throws IOException
+      // This method writes theString but it doesn't force a flush().
+      {
+    		byte[] buf = theString.getBytes(); // Getting byte buffer from String
+        write(buf); // Writing it to stream memory.
+        }
+
 		public void write(int value) throws IOException
 		  // This writes one byte to the stream.
 		  //// Because this is UDP, it should never flush here.  Make Exception?

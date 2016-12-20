@@ -32,7 +32,7 @@ public class Streamcaster<
 	{
   
 	  // Constants.
-		private final char delimiterChar= '!';
+		private final char delimiterChar= Config.delimiterChar; //////
 		
 	  protected final long PeriodMillisL= // PING-REPLY handshake period.
 	    //4000;   // 4 seconds.
@@ -414,7 +414,7 @@ public class Streamcaster<
         to the stream in a packet.
         */
       {
-	  		writingTerminatedStringV( theString );
+    		theEpiOutputStreamO.writingTerminatedStringV( theString );
 	  		endingPacketV(); // Sending it by flushing.
         }
 
@@ -437,34 +437,37 @@ public class Streamcaster<
 	  		theEpiOutputStreamO.doOrScheduleFlushB( delayMsL );
         }
 
-    protected void writingTerminatedStringV( String theString ) 
+    protected void XwritingTerminatedStringV( String theString ) ////// 
     		throws IOException
       /* This method writes to the EpiOutputStream 
         theString followed by the delimiterChar.
         But it doesn't force a flush().
         */
       { 
-	  		writingStringV( theString );
-	  		writingStringV( String.valueOf(delimiterChar) );
+    		theEpiOutputStreamO.writingTerminatedStringV( theString );
+	    	//% theEpiOutputStreamO.writingStringV( theString );
+    		//% theEpiOutputStreamO.writingStringV( String.valueOf(delimiterChar) );
         }
 
-    protected void writingTerminatedLongV( long theL ) 
+    protected void XwritingTerminatedLongV( long theL ) ////// 
     		throws IOException
       /* This method writes theL long int 
         followed by the delimiterChar to the EpiOutputStream.  
         But it doesn't force a flush().
         */
       { 
-	  		writingTerminatedStringV( theL + "" ); // Converting to String.
+  			//% theEpiOutputStreamO.writingTerminatedStringV( theL + "" ); // Converting to String.
+    		theEpiOutputStreamO.writingTerminatedLongV( theL );
         }
 
-    protected void writingStringV( String theString ) throws IOException
+    protected void XwritingStringV( String theString ) throws IOException //////
       /* This method writes theString to the EpiOutputStream.
         But it doesn't force a flush().
         */
       { 
-    		byte[] buf = theString.getBytes(); // Getting byte buffer from String
-        theEpiOutputStreamO.write(buf); // Writing it to stream memory.
+    		///byte[] buf = theString.getBytes(); // Getting byte buffer from String
+        ///theEpiOutputStreamO.write(buf); // Writing it to stream memory.
+        theEpiOutputStreamO.writingStringV(theString);
         }
     
     

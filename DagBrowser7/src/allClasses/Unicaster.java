@@ -217,7 +217,12 @@ public class Unicaster
 
     		//% theTimer= new Timer(); ////
     		////theTimerInput=  new TimerInput( theLockAndSignal, theTimer ); ////
-    		theRTTMeasurer= new RTTMeasurer( this ); ////
+    		theRTTMeasurer= new RTTMeasurer( 
+    				this, 
+    				theTimer, 
+    				theEpiOutputStreamO, 
+    				retransmitDelayMsNamedLong 
+    				);
     		theRTTMeasurer.initializingV();
 
         // Adding measurement count.
@@ -381,10 +386,10 @@ public class Unicaster
 						theSubcasterPacket.getDatagramPacket();
 	      //theEpiOutputStreamO.flush(); // Flushing to prepare new stream buffer.
 	      ///writingSequenceNumberV();
-	      writingTerminatedStringV( // Writing key as de-multiplex header. 
+	    		theEpiOutputStreamO.writingTerminatedStringV( // Writing key as de-multiplex header. 
 	      	theSubcasterPacket.getKeyK() 
 	      	);
-	  		writingTerminatedLongV( 
+	      theEpiOutputStreamO.writingTerminatedLongV( 
 				  theDatagramPacket.getLength() 
 				  );
 				theEpiOutputStreamO.write( // Writing nested Subcaster packet.
@@ -485,8 +490,8 @@ public class Unicaster
           if ( triesRemainingI-- <= 0 ) // Exiting if try limit exceeded. 
           	break tryingToConnectByExchangingHellos;
 	        appLogger.info( "Sending HELLO." );
-		  		writingTerminatedStringV( "HELLO" );
-		  		writingTerminatedStringV(  // Writing other peer's IP address. 
+	    		theEpiOutputStreamO.writingTerminatedStringV( "HELLO" );
+	    		theEpiOutputStreamO.writingTerminatedStringV(  // Writing other peer's IP address. 
 		  				getKeyK().getInetAddress().getHostAddress() 
 		  				);
 		  		endingPacketV(); // Forcing send.
@@ -625,6 +630,8 @@ public class Unicaster
 			  
 			  // Injected dependencies.
 				private Unicaster theUnicaster; //// temporary cyclic dependency.
+				private NetcasterOutputStream theNetcasterOutputStream; 
+				private NamedLong retransmitDelayMsNamedLong;
 
 				// Other variables.
 				private long retryTimeOutMsL;
@@ -633,14 +640,21 @@ public class Unicaster
 			    in another thread that can.
 			    */
 			
-				RTTMeasurer( Unicaster theUnicaster ) // Constructor.
+				RTTMeasurer( 
+						Unicaster theUnicaster, 
+						Timer theTimer, 
+						NetcasterOutputStream theNetcasterOutputStream,
+						NamedLong retransmitDelayMsNamedLong
+						) // Constructor.
 			  	{
+					  // Injected dependencies.
 					  this.theUnicaster= theUnicaster; //// temporary cyclic dependency.
+					  this.theNetcasterOutputStream= theNetcasterOutputStream;
+					  this.retransmitDelayMsNamedLong= retransmitDelayMsNamedLong;
 					  
 					  statisticsTimerInput= //// Move to factory. 
 					  		new TimerInput(
-					  				//% theUnicaster.theLockAndSignal,
-					  				theUnicaster.theTimer,
+					  				theTimer,
 					  				new Runnable() {
 							        public void run()
 							          // Activates this as an input and notifies interested thread.
@@ -760,7 +774,7 @@ public class Unicaster
 			    		{ // Handling pause complete by changing state. 
 		    				statisticsTimerInput.cancelingV();
 		    			  retryTimeOutMsL=   // Initializing retry time-out.
-		    			  		theUnicaster.retransmitDelayMsNamedLong.getValueL();
+		    			  		retransmitDelayMsNamedLong.getValueL();
 		    			  theStateI= SENDING_AND_WAITING;
 		    			  //appLogger.debug("handlingPauseB() pause end input arrived.");
 		    			  }
@@ -830,11 +844,12 @@ public class Unicaster
 		        */
 		      {
 			    	lastSequenceNumberSentL= 
-		    	  		theUnicaster.theEpiOutputStreamO.
-		    	  		  getCounterNamedLong().getValueL(); 
+			    			theNetcasterOutputStream.getCounterNamedLong().getValueL(); 
 		        appLogger.debug( "sendingSequenceNumberV() " + lastSequenceNumberSentL);
-		        theUnicaster.writingTerminatedStringV( "PS" );
-		        theUnicaster.writingTerminatedLongV( lastSequenceNumberSentL );
+		        theNetcasterOutputStream.writingTerminatedStringV( "PS" );
+		        theNetcasterOutputStream.writingTerminatedLongV( 
+		        		lastSequenceNumberSentL 
+		        		);
 		        theUnicaster.endingPacketV();
         		sentSequenceNumberTimeNsL= System.nanoTime();
 		        }
@@ -880,14 +895,14 @@ public class Unicaster
     	  					theUnicaster.newIncomingPacketsSentDefaultLongLike,
     	  					theUnicaster.newIncomingPacketsReceivedNamedLong
     					  );
-    	  			theUnicaster.writingTerminatedStringV( "PA" );
-    	  			theUnicaster.writingTerminatedLongV( // The remote sequence number.
+    	  			theNetcasterOutputStream.writingTerminatedStringV( "PA" );
+    	  			theNetcasterOutputStream.writingTerminatedLongV( // The remote sequence number.
     		  				//newIncomingPacketsSentDefaultLongLike.getValueL()
     		  				sequenceNumberI
     		  				);
     	  			long receivedPacketCountL= 
     	  			  theUnicaster.newIncomingPacketsReceivedNamedLong.getValueL(); 
-    	  			theUnicaster.writingTerminatedLongV( // The local received packet count.
+    	  			theNetcasterOutputStream.writingTerminatedLongV( // The local received packet count.
     	  					receivedPacketCountL 
     		  				);
     	  			theUnicaster.endingPacketV(); // Flushing now for minimum RTT.
@@ -1009,7 +1024,7 @@ public class Unicaster
 		  	  		}
 			  		}
 
-	  	  	theUnicaster.retransmitDelayMsNamedLong.setValueL(
+	  	  	retransmitDelayMsNamedLong.setValueL(
 							(theUnicaster.smoothedMaxRoundTripTimeNsAsMsNamedLong.getValueL()/1000000) * 2
 							); // Use double present maximum round-trip-time.
   	  		}

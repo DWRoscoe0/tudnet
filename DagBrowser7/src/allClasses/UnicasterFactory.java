@@ -142,7 +142,8 @@ public class UnicasterFactory {
   		  	subcasterToUnicasterSubcasterQueue,
   		  	theSubcasterPacketManager,
   		  	packetsSentNamedLong,
-  	  		theTimer
+  	  		theTimer,
+  	  		Config.delimiterChar
   	      );
   	    }
 

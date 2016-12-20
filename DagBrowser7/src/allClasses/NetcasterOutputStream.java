@@ -21,14 +21,16 @@ public class NetcasterOutputStream
 				NetcasterQueue outputNetcasterQueue,
 				NetcasterPacketManager theNetcasterPacketManager,
 				NamedLong packetCounterNamedLong,
-	  		Timer theTimer
-)
+	  		Timer theTimer,
+	  		char delimiterChar
+				)
 			{
 			  super(
 			  		outputNetcasterQueue,
 			  		theNetcasterPacketManager,
 			  		packetCounterNamedLong,
-			  		theTimer
+			  		theTimer,
+			  		delimiterChar
 			  		);
 	      }
 

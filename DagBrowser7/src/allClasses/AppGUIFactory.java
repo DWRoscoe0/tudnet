@@ -300,7 +300,8 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 		  	netcasterToSenderNetcasterQueue,
 		  	theNetcasterPacketManager,
 		  	packetsSentNamedLong,
-	  		theTimer
+	  		theTimer,
+	  		Config.delimiterChar
 	      );
 	    }
 	

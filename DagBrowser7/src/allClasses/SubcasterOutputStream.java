@@ -19,14 +19,16 @@ public class SubcasterOutputStream
 				SubcasterQueue outputSubcasterQueue,
 				SubcasterPacketManager theSubcasterPacketManager,
 				NamedLong packetCounterNamedLong,
-	  		Timer theTimer
+	  		Timer theTimer,
+	  		char delimiterChar
 				)
 			{
 			  super(
 			  		outputSubcasterQueue,
 			  		theSubcasterPacketManager,
 			  		packetCounterNamedLong,
-			  		theTimer
+			  		theTimer,
+			  		delimiterChar
 			  		);
 	      }
 
