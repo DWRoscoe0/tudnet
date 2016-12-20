@@ -263,7 +263,7 @@ public class Multicaster
     	            { // Send and receive multicast packets.
     	              try {
     		      				///writingNumberedPacketV("DISCOVERY"); // Sending query.
-    		      				writingAndSendingV("DISCOVERY"); // Sending query.
+    	              	theEpiOutputStreamO.writingAndSendingV("DISCOVERY"); // Sending query.
     	                receivingPacketsV( ); // Receiving packets until done.
     	                }
     	              catch( SocketException soe ) {
@@ -343,7 +343,7 @@ public class Multicaster
 	            		String inString= readAString(); // Reading message.
 	            		if ( inString.equals( "DISCOVERY" ) ) // Handling query, maybe.
 			        			{ ///writingNumberedPacketV("ALIVE"); // Sending response.
-	            				writingAndSendingV("ALIVE"); // Sending response.
+	            				theEpiOutputStreamO.writingAndSendingV("ALIVE"); // Sending response.
 				              processingPossibleNewUnicasterV();
 				              break messageDecpder;
 				              }

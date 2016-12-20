@@ -140,7 +140,7 @@ public class Streamcaster<
               Thread.currentThread().interrupt(); // Starting termination.
               break pingReplyLoop;
               }
-          writingAndSendingV("PING"); // Sending ping packet.
+          theEpiOutputStreamO.writingAndSendingV("PING"); // Sending ping packet.
           long pingSentMsL= System.currentTimeMillis();
           replyWaitLoop: while (true) { // Handling echo or other conditions.
             theInput=  // Awaiting next input within reply interval.
@@ -258,7 +258,7 @@ public class Streamcaster<
         		ignoringOrLoggingStringV(); // Ignoring any other string.
 	          } // pingWaitLoop
 	        while(true) { // Sending and confirming receipt of REPLY.
-	          writingAndSendingV("REPLY");
+	        	theEpiOutputStreamO.writingAndSendingV("REPLY");
 	          long echoSentMsL= System.currentTimeMillis();
 	          postReplyPause: while (true) {
 	            theInput=  // Awaiting input within the ignore interval.
@@ -408,33 +408,36 @@ public class Streamcaster<
 
     // String writing and packet sending code.
 
-    protected void writingAndSendingV( String theString ) throws IOException
+    protected void XwritingAndSendingV( String theString ) throws IOException //////
       /* This method writes theString to theEpiOutputStream
         and then sends it and anything else that has been written 
         to the stream in a packet.
         */
       {
-    		theEpiOutputStreamO.writingTerminatedStringV( theString );
-	  		endingPacketV(); // Sending it by flushing.
+    		//% theEpiOutputStreamO.writingTerminatedStringV( theString );
+    		//% theEpiOutputStreamO.sendingPacketV();
+    		theEpiOutputStreamO.writingAndSendingV( theString );
         }
 
-    protected void endingPacketV() //% throws IOException
+    protected void XsendingPacketV() throws IOException //////
       /* This method forces what has been written to the stream to be sent.
         It also guarantees a packet boundary at this point in the stream.
         It is equivalent to endingPacketV( 0 );
     		*/
       {
 	  		//%theEpiOutputStreamO.flush(); // Sending it by flushing stream.
-    		endingPacketV( 0 );
+    		//%endingPacketV( 0 );
+    		//% theEpiOutputStreamO.doOrScheduleSendB( 0 );
+  			theEpiOutputStreamO.sendingPacketV();
         }
 
-    protected void endingPacketV( long delayMsL ) //% throws IOException
+    protected void XendingPacketV( long delayMsL ) //% throws IOException  //////
       /* This method forces what has been written to the stream to be sent
         within delayMsL milliseconds.
         It also guarantees a packet boundary at this point in the stream.
     		*/
       {
-	  		theEpiOutputStreamO.doOrScheduleFlushB( delayMsL );
+	  		theEpiOutputStreamO.doOrScheduleSendB( delayMsL );
         }
 
     protected void XwritingTerminatedStringV( String theString ) ////// 

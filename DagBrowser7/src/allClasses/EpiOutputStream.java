@@ -88,6 +88,16 @@ public class EpiOutputStream<
 		  { return packetManagerM; }
 
 
+    protected void writingAndSendingV( String theString ) throws IOException
+      /* This method writes theString to the stream
+        and then sends it and anything else that has been written 
+        to the stream in a packet.
+        */
+      {
+    		writingTerminatedStringV( theString );
+    		sendingPacketV();
+        }
+
     protected void writingTerminatedLongV( long theL ) 
     		throws IOException
       /* This method writes theL long int 
@@ -137,31 +147,35 @@ public class EpiOutputStream<
 	  	  queuingForSendV( theKeyedPacketE ); // Queuing new data argument packet.
 	    	}
 
-	  public void flush() throws IOException 
+	  public void flush() throws IOException // Synonym for compatibility. 
+	    { sendingPacketV(); } 
+		  
+	  public void sendingPacketV() throws IOException 
 	    /* This outputs any bytes written to the buffer so far, if any,
 		    and prepares another buffer to receive more bytes.
 		    It can be called internally when the buffer becomes full,
 		    or externally when written bytes need to be sent and
 		    thereby create a new packet boundary.
-		    It is equivalent to a delayedBlockflushV(...), with no delay.
+		    It is equivalent to a doOrScheduleSendB( 0 ), with no delay.
 		    */
 	    { 
 	  		////delayedBlockflushV( 0 ); 
-	  		doOrScheduleFlushB( 0 );
+	  		doOrScheduleSendB( 0 );
 	  		}
 
-    public synchronized boolean doOrScheduleFlushB( long delayMsL )
+    public synchronized boolean doOrScheduleSendB( long delayMsL )
     /* This method either queues a packet for sending 
       containing sendable bytes(), or schedules the send for later.
-      The packet will contain only the bytes written so far,
+      In either case the packet will contain only 
+      the bytes written to the buffer so far,
       even though more might have been written by the time the send occurs.
-      It returns true if a flush was done, false if it was scheduled.
+      It returns true if a send was done, false if the send was scheduled.
 
-    	The proper time for flushing is the nearer of delayMsL or
-    	the remaining time on the flush Timer.
-      The flush Timer is cancelled, and reset if necessary, 
+    	The proper time for sending is the nearer of delayMsL or
+    	the remaining time on the send Timer.
+      The send Timer is cancelled, and reset if necessary, 
       depending on the circumstances.
-     */
+     	*/
     {
     	boolean queuePacketB;
     	TimerTask newTimerTask= null;
@@ -194,7 +208,7 @@ public class EpiOutputStream<
 	        	  }
 	    		};
 	    	theTimer.schedule(newTimerTask, delayMsL); // Scheduling it.
-	    	sendTimeMsL= System.currentTimeMillis() + delayMsL; // Saving its time.
+	    	sendTimeMsL= System.currentTimeMillis() + delayMsL; // Saving the time.
 	    	  
     	} // beforeCancelAndReplaceTimerTask: 
 	  		if (theTimerTask != null) { // Canceling old TimerTask if it exists.

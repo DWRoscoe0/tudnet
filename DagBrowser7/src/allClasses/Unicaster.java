@@ -335,7 +335,7 @@ public class Unicaster
 			  	  }
 	    		if  // Informing remote end whether app is doing a Shutdown.
 	    			( theShutdowner.isShuttingDownB() ) 
-		    		{ writingAndSendingV("SHUTTING-DOWN"); // Informing peer.
+		    		{ theEpiOutputStreamO.writingAndSendingV("SHUTTING-DOWN"); // Informing peer.
 		          appLogger.info( "SHUTTING-DOWN message sent.");
 		    			}
     			} // processing:
@@ -398,7 +398,7 @@ public class Unicaster
 						theDatagramPacket.getLength()
 						);
 			  ///theEpiOutputStreamO.flush(); // Flushing to send it as a packet.
-				endingPacketV(); //// Could this be delayed?
+				theEpiOutputStreamO.sendingPacketV(); //// Could this be delayed?
 				}
 
 		private boolean processingMessagesFromRemotePeerB() throws IOException
@@ -494,7 +494,7 @@ public class Unicaster
 	    		theEpiOutputStreamO.writingTerminatedStringV(  // Writing other peer's IP address. 
 		  				getKeyK().getInetAddress().getHostAddress() 
 		  				);
-		  		endingPacketV(); // Forcing send.
+	    		theEpiOutputStreamO.sendingPacketV(); // Forcing send.
           long helloSentMsL= System.currentTimeMillis();
           processingPossibleHelloResponse: while (true) {
             Input theInput=  // Awaiting next input within time interval.
@@ -850,7 +850,7 @@ public class Unicaster
 		        theNetcasterOutputStream.writingTerminatedLongV( 
 		        		lastSequenceNumberSentL 
 		        		);
-		        theUnicaster.endingPacketV();
+		        theNetcasterOutputStream.sendingPacketV();
         		sentSequenceNumberTimeNsL= System.nanoTime();
 		        }
 		    
@@ -905,7 +905,7 @@ public class Unicaster
     	  			theNetcasterOutputStream.writingTerminatedLongV( // The local received packet count.
     	  					receivedPacketCountL 
     		  				);
-    	  			theUnicaster.endingPacketV(); // Flushing now for minimum RTT.
+    	  			theNetcasterOutputStream.sendingPacketV(); // Sending now for minimum RTT.
     	        appLogger.debug( "processPacketSequenceNumberB(..) PS:"
     		  		  +sequenceNumberI+","
     	        	+receivedPacketCountL
