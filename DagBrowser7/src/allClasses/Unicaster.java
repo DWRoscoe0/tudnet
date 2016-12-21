@@ -220,6 +220,7 @@ public class Unicaster
     		theRTTMeasurer= new RTTMeasurer( 
     				this, 
     				theTimer, 
+    				theEpiInputStreamI,
     				theEpiOutputStreamO, 
     				retransmitDelayMsNamedLong 
     				);
@@ -631,6 +632,7 @@ public class Unicaster
 			  
 			  // Injected dependencies.
 				private Unicaster theUnicaster; //// temporary cyclic dependency.
+				private NetcasterInputStream theNetcasterInputStream;
 				private NetcasterOutputStream theNetcasterOutputStream; 
 				private NamedLong retransmitDelayMsNamedLong;
 
@@ -644,12 +646,14 @@ public class Unicaster
 				RTTMeasurer( 
 						Unicaster theUnicaster, 
 						Timer theTimer, 
+					  NetcasterInputStream theNetcasterInputStream,
 						NetcasterOutputStream theNetcasterOutputStream,
 						NamedLong retransmitDelayMsNamedLong
 						) // Constructor.
 			  	{
 					  // Injected dependencies.
 					  this.theUnicaster= theUnicaster; //// temporary cyclic dependency.
+					  this.theNetcasterInputStream= theNetcasterInputStream;
 					  this.theNetcasterOutputStream= theNetcasterOutputStream;
 					  this.retransmitDelayMsNamedLong= retransmitDelayMsNamedLong;
 					  
@@ -888,7 +892,7 @@ public class Unicaster
     	  	{
       		  boolean isKeyB= keyString.equals( "PS" ); 
       		  if (isKeyB) {
-    	  		  int sequenceNumberI= theUnicaster.readANumberI(); // Reading # from packet.
+    	  		  int sequenceNumberI= theNetcasterInputStream.readANumberI(); // Reading # from packet.
     				  theUnicaster.newIncomingPacketsSentDefaultLongLike.setValueL( // Recording.
     							sequenceNumberI + 1
     							); // Adding 1 to convert sequence # to remote sent packet count.
@@ -933,8 +937,10 @@ public class Unicaster
     	  	  boolean isKeyB= keyString.equals( "PA" ); 
     			  if (isKeyB) {
     			  	long ackReceivedTimeNsL= System.nanoTime();
-    		  		int sequenceNumberI= theUnicaster.readANumberI(); // Reading echo of sequence #.
-    		  		int packetsReceivedI= theUnicaster.readANumberI(); // Reading packets received.
+    		  		int sequenceNumberI=  // Reading echo of sequence #.
+    		  				theNetcasterInputStream.readANumberI();
+    		  		int packetsReceivedI=  // Reading packets received.
+    		  				theNetcasterInputStream.readANumberI();
           		acknowledgementReceivedB= true; 
           		theUnicaster.sequenceHandshakesNamedLong.addDeltaL(1);
               

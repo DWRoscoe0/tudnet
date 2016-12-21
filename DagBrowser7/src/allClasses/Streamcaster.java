@@ -192,7 +192,8 @@ public class Streamcaster<
 		    If there is not string available for reading then it is logged as null.
 		    */
 		  {
-			  String inString= tryingToGetString( ); // Reading string to ignore.
+			  String inString=  // Reading string to ignore.
+			  		theEpiInputStreamI.tryingToGetString( );
 			  ignoringOrLoggingStringV(inString); // Ignoring it.
 			  }
 
@@ -249,7 +250,7 @@ public class Streamcaster<
             //appLogger.debug( "Testing for PING." );
             AppLog.testingForPingB= true;
 	          if // Handling a received ping if present.
-	            ( tryingToGetStringB( "PING" ) )
+	            ( theEpiInputStreamI.tryingToGetStringB( "PING" ) )
 		          {
 	          		AppLog.testingForPingB= false;
 		            //appLogger.debug( "tryingPingReceiveV() got PING." );
@@ -270,7 +271,7 @@ public class Streamcaster<
 			          ( theInput == Input.INTERRUPTION )
 	        			break all;
 		          if // Handling a repeat received ping if present.
-		        	  ( tryingToGetStringB( "PING" ) )
+		        	  ( theEpiInputStreamI.tryingToGetStringB( "PING" ) )
 			          { 
 			            appLogger.warning( "tryingPingReceiveV(): got repeat PING." );
 			          	break postReplyPause;  // Exiting pingWaitLoop only.
@@ -331,7 +332,7 @@ public class Streamcaster<
 
     // String reading methods.
 
-    protected boolean tryingToGetStringB( String theString ) throws IOException
+    protected boolean XtryingToGetStringB( String theString ) throws IOException ////
       /* This method tries to get a particular String theString.
         It consumes the String and returns true 
         if the desired string is there, 
@@ -342,22 +343,26 @@ public class Streamcaster<
           not the desired string.
         */
       {
+    	  /*  ////
   			boolean gotStringB= false;
     		theEpiInputStreamI.mark(0); // Marking stream position.
-    		String inString= tryingToGetString();
+    		String inString= theEpiInputStreamI.tryingToGetString();
 		    //appLogger.debug( "tryingToGetStringB(): inString= "+ inString );
     	  gotStringB=  // Testing for desired string.
     	  		theString.equals( inString );
 		    if ( ! gotStringB ) // Resetting position if String is not correct.
     	  	theEpiInputStreamI.reset(); // Putting String back into stream.
     	  return gotStringB;
+    	  */ ////
+    	  return theEpiInputStreamI.tryingToGetStringB( theString );
       	}
 
-    protected String tryingToGetString( ) throws IOException
+    protected String XtryingToGetString( ) throws IOException //////
     /* This method tries to get any String.
       It returns a String if there is one available, null otherwise.
       */
     {
+    	/*////
 			String inString= null;
 			if // Overriding if desired string is able to be read. 
 			  ( theEpiInputStreamI.available() > 0 )
@@ -365,9 +370,11 @@ public class Streamcaster<
 	    	  inString= theEpiInputStreamI.readAString();
 	    	  }
   	  return inString;
+  	  */ ////
+    	return theEpiInputStreamI.tryingToGetString( );
     	}
 
-		protected int readANumberI()
+		protected int XreadANumberI() //////
   		throws IOException
   		/* This method reads and returns one int number 
   		  converted from a String ending in the delimiterChar.
@@ -376,9 +383,10 @@ public class Streamcaster<
   		  It blocks if a full number is not available.
   		 */
 			{
-				String numberString= theEpiInputStreamI.readAString();
-	      int numberI= Integer.parseInt( numberString );
-			  return numberI;
+				//% String numberString= theEpiInputStreamI.readAString();
+				//% int numberI= Integer.parseInt( numberString );
+				//% return numberI;
+			  return theEpiInputStreamI.readANumberI();
 				}
 
 		protected String XreadAString() //////

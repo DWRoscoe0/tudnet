@@ -88,6 +88,55 @@ public class EpiInputStream<
 
 		
 
+    protected boolean tryingToGetStringB( String theString ) throws IOException
+      /* This method tries to get a particular String theString.
+        It consumes the String and returns true 
+        if the desired string is there, 
+        otherwise it does not consume the String and returns false.
+        The string is considered to be not there if either:
+        * There are no characters available in the input stream buffer.
+        * The characters available in the input stream buffer are
+          not the desired string.
+        */
+      {
+  			boolean gotStringB= false;
+    		mark(0); // Marking stream position.
+    		String inString= tryingToGetString();
+		    //appLogger.debug( "tryingToGetStringB(): inString= "+ inString );
+    	  gotStringB=  // Testing for desired string.
+    	  		theString.equals( inString );
+		    if ( ! gotStringB ) // Resetting position if String is not correct.
+    	  	reset(); // Putting String back into stream.
+    	  return gotStringB;
+      	}
+
+    protected String tryingToGetString( ) throws IOException
+    /* This method tries to get any String.
+      It returns a String if there is one available, null otherwise.
+      */
+    {
+			String inString= null;
+			if // Overriding if desired string is able to be read. 
+			  ( available() > 0 )
+				{
+	    	  inString= readAString();
+	    	  }
+  	  return inString;
+    	}
+
+		protected int readANumberI()
+  		throws IOException
+  		/* This method reads and returns one int number 
+  		  converted from a String ending in the delimiterChar.
+  		  This means it could not be used for floating point numbers.  
+  		  It blocks if a full number is not available.
+  		 */
+			{
+				String numberString= readAString();
+	      int numberI= Integer.parseInt( numberString );
+			  return numberI;
+				}
+
 		protected String readAString() throws IOException
   		/* This method reads and returns one String ending in the first
   		  delimiterChar from stream, 
