@@ -65,70 +65,6 @@ public class Unicaster
       private final SubcasterQueue subcasterToUnicasterSubcasterQueue;
   		private Timer theTimer;
 
-      // Local variables for containing, measuring, and displaying stats.
-      // Some are DataNode children.
-
-  		// Variables for counting measurement handshakes.
-      private NamedLong sequenceHandshakesNamedLong;
-
-  		// Variables for managing round trip time.
-      protected NsAsMsNamedLong rawRoundTripTimeNsAsMsNamedLong;
-	      // This is an important value.  It can be used to determine
-	      // how long to wait for a message acknowledgement before
-	      // re-sending a message.  Initial value of 1/10 second.
-      private NsAsMsNamedLong smoothedRoundTripTimeNsAsMsNamedLong;
-      private NsAsMsNamedLong smoothedMinRoundTripTimeNsAsMsNamedLong; // Minimum.
-      private NsAsMsNamedLong smoothedMaxRoundTripTimeNsAsMsNamedLong; // Maximum.
-  		
-      // Variables for managing incoming packets and 
-      // their sequence numbers.  They all start at 0.
-      private DefaultLongLike newIncomingPacketsSentDefaultLongLike;
-	    	// This is set to the value of the sequence number argument of the
-			  // most recently received "PS" message plus 1.  
-			  // When sent this argument was the remote end's 
-			  // EpiOutputStream packet counter.
-      	// This value usually increases, but can decrease 
-        // if an "PS" is carried by an out-of-order packets.
-      private NamedLong oldIncomingPacketsSentNamedLong;
-	    	// A difference between this and newIncomingPacketsSentDefaultLongLike 
-        // indicates a new received sequence number needs to be processed.
-      private NamedLong newIncomingPacketsReceivedNamedLong;
-      	// This is a copy of the local EpiInputStream packet counter.
-      	// It represents the latest count of locally received packets.
-      	// This value can only increase.
-  		private DefaultLongLike oldIncomingPacketsReceivedDefaultLongLike;
-  			// A difference between this and newIncomingPacketsReceivedNamedLong 
-  			// indicates a new packet has been received and needs to be processed.
-  		private NamedFloat incomingPacketLossNamedFloat;
-        // Floating representation of the fraction of incoming packets lost.
-      LossAverager incomingPacketLossAverager;
-      
-      // Variables for managing outgoing packets and their acknowledgement.
-      private NamedLong newOutgoingPacketsSentNamedLong;
-	    	// This is a copy of the local EpiOutputStreamO packet counter.
-      	// This value can only increase.
-      private NamedLong newOutgoingPacketsSentEchoedNamedLong;
-	    	// This is the local EpiOutputStreamO packet counter after 
-        // being returned from remote.  It might lag the real counter by RTT.
-      	// This value can only increase.
-      private DefaultLongLike oldOutgoingPacketsSentDefaultLongLike;
-	    	// A difference between this and newOutgoingPacketsSentNamedLong 
-	      // indicates new packets have been sent and need to be processed.
-      private NamedLong newOutgoingPacketsReceivedNamedLong;
-	    	// This value comes from the most recently received "PA" message.  
-			  // When sent this argument was the remote end's 
-			  // EpiInputStream packet counter, 
-        // counting the number of packets recevied.
-	    	// This value normally increases, but can decrease because of 
-        // out-of-order "PA" packets. 
-      private DefaultLongLike oldOutgoingPacketsReceivedDefaultLongLike;
-	    	// A difference between this and newOutgoingPacketsReceivedNamedLong 
-	      // indicates a new packet has been acknowledged and 
-  			// needs to be processed.
-  		private NamedFloat outgoingPacketLossNamedFloat;
-      	// Floating representation of the fraction of outgoing packets lost.
-      private LossAverager outgoingPacketLossLossAverager;
-
   		// Other instance variables.
 
       /*////
@@ -217,88 +153,23 @@ public class Unicaster
 
     		//% theTimer= new Timer(); ////
     		////theTimerInput=  new TimerInput( theLockAndSignal, theTimer ); ////
-    		theRTTMeasurer= new RTTMeasurer( 
-    				this, 
+
+    		// Adding measurement count.
+	  	  addB( theRTTMeasurer= new RTTMeasurer( 
+	  		    theDataTreeModel,
+    				//% this, 
     				theTimer, 
     				theEpiInputStreamI,
     				theEpiOutputStreamO, 
     				retransmitDelayMsNamedLong 
-    				);
-    		theRTTMeasurer.initializingV();
-
-        // Adding measurement count.
-	  	  addB( sequenceHandshakesNamedLong= new NamedLong(
-	      		theDataTreeModel, "Sequence-Handshakes", 0 
 	      		)
 	  	  	);
-
-        // Adding the new round trip time trackers.
-	      addB( smoothedRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
-	      		theDataTreeModel, "Smoothed-Round-Trip-Time (ms)", 
-	      		Config.initialRoundTripTime100MsAsNsL
-	      		)
-	  	  	);
-	  	  addB( smoothedMinRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
-	      		theDataTreeModel, "Smoothed-Minimum-Round-Trip-Time (ms)", 
-	      		Config.initialRoundTripTime100MsAsNsL
-	      		)
-	  	  	);
-	  	  addB( smoothedMaxRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
-	      		theDataTreeModel, "Smoothed-Maximum-Round-Trip-Time (ms)", 
-	      		Config.initialRoundTripTime100MsAsNsL
-	      		)
-	  	  	);
-	      addB( rawRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong( 
-	      		theDataTreeModel, "Raw-Round-Trip-Time-ms", 
-	      		Config.initialRoundTripTime100MsAsNsL
-	      		)
-	  			);
-
-        // Adding incoming packet statistics children and related trackers.
-	  	  newIncomingPacketsSentDefaultLongLike= new DefaultLongLike(0);
-	  	  addB( oldIncomingPacketsSentNamedLong= new NamedLong(
-	      		theDataTreeModel, "Incoming-Packets-Sent", 0 
-	      		)
-	  			);
-		    addB( newIncomingPacketsReceivedNamedLong=
-		    		theEpiInputStreamI.getCounterNamedLong()
-		    		);
-	  	  oldIncomingPacketsReceivedDefaultLongLike= new DefaultLongLike(0);
-	  	  addB( incomingPacketLossNamedFloat= new NamedFloat( 
-	      		theDataTreeModel, "Incoming-Packet-Loss", 0.0F  
-	      		)
-	  			);
-	  	  incomingPacketLossAverager= new LossAverager(
-	  	  				oldIncomingPacketsSentNamedLong,
-	  	  				oldIncomingPacketsReceivedDefaultLongLike,
-	  	  				incomingPacketLossNamedFloat
-	  	  				);
-
-	  	  // Adding outgoing packet statistics children and related trackers.
-    		newOutgoingPacketsSentNamedLong=
-    				theEpiOutputStreamO.getCounterNamedLong(); 
-		    addB( newOutgoingPacketsSentNamedLong );
-		    addB( newOutgoingPacketsSentEchoedNamedLong= new NamedLong(
-		    		theDataTreeModel, "Outgoing-Packets-Sent-Echoed", 0 
-		    		)
-		    	); 
-		    oldOutgoingPacketsSentDefaultLongLike= new DefaultLongLike(0);
-		    addB( newOutgoingPacketsReceivedNamedLong= new NamedLong( 
-			      theDataTreeModel, "Outgoing-Packets-Received", 0 
-			      )
-		    	);
-	  	  addB( outgoingPacketLossNamedFloat= new NamedFloat( 
-	      		theDataTreeModel, "Outgoing-Packet-Loss", 0.0f 
-	      		)
-	  			);
-	  	  oldOutgoingPacketsReceivedDefaultLongLike= new DefaultLongLike(0);
-	  	  outgoingPacketLossLossAverager= new LossAverager(
-	  	  		oldOutgoingPacketsSentDefaultLongLike,
-	  	  		oldOutgoingPacketsReceivedDefaultLongLike,
-	  	  		outgoingPacketLossNamedFloat
-	  	  		);
 
 	  	  addB( theSubcasterManager );
+
+	  	  // Everything is constructed.  Now initialize.
+
+	  	  theRTTMeasurer.initializingV();
 	    	}
 
     protected void finalizingV() throws IOException
@@ -618,23 +489,86 @@ public class Unicaster
 		    }
 
 		static class RTTMeasurer // Being developed for PS-PS RTT timing.
+		  extends MutableList
 		  /* This class is a state machine that uses PS and PA to 
 		    measure Round-Trip-Time.  
 		    It is not thread-safe and must be called only from 
 		    within the Unicaster thread.
 
-		    //// Eliminate the cyclic dependency with Unicaster.
+		    //// Eliminating the cyclic dependency with Unicaster.
 
-		    //// Factor out superclass code for a reusable base class.
-
+				//// Rename to something more appropriate.  Possible names:
+				 * LinkPerformance
+				 * LinkResistance
+				 * LinkBarriers
 		   */
 			{	
 			  
 			  // Injected dependencies.
-				private Unicaster theUnicaster; //// temporary cyclic dependency.
+				//% private Unicaster theUnicaster; //// temporary cyclic dependency.
 				private NetcasterInputStream theNetcasterInputStream;
 				private NetcasterOutputStream theNetcasterOutputStream; 
 				private NamedLong retransmitDelayMsNamedLong;
+
+	  		// Variables for counting measurement handshakes.
+	      private NamedLong sequenceHandshakesNamedLong;
+	      // Variables for managing incoming packets and 
+	      // their sequence numbers.  They all start at 0.
+	      private DefaultLongLike newIncomingPacketsSentDefaultLongLike;
+		    	// This is set to the value of the sequence number argument of the
+				  // most recently received "PS" message plus 1.  
+				  // When sent this argument was the remote end's 
+				  // EpiOutputStream packet counter.
+	      	// This value usually increases, but can decrease 
+	        // if an "PS" is carried by an out-of-order packets.
+	      private NamedLong oldIncomingPacketsSentNamedLong;
+		    	// A difference between this and newIncomingPacketsSentDefaultLongLike 
+	        // indicates a new received sequence number needs to be processed.
+	      private NamedLong newIncomingPacketsReceivedNamedLong;
+	      	// This is a copy of the local EpiInputStream packet counter.
+	      	// It represents the latest count of locally received packets.
+	      	// This value can only increase.
+	  		private DefaultLongLike oldIncomingPacketsReceivedDefaultLongLike;
+	  			// A difference between this and newIncomingPacketsReceivedNamedLong 
+	  			// indicates a new packet has been received and needs to be processed.
+	  		private NamedFloat incomingPacketLossNamedFloat;
+	        // Floating representation of the fraction of incoming packets lost.
+	      LossAverager incomingPacketLossAverager;
+	  		
+	      // Variables for managing outgoing packets and their acknowledgement.
+	      private NamedLong newOutgoingPacketsSentNamedLong;
+		    	// This is a copy of the local EpiOutputStreamO packet counter.
+	      	// This value can only increase.
+	      private NamedLong newOutgoingPacketsSentEchoedNamedLong;
+		    	// This is the local EpiOutputStreamO packet counter after 
+	        // being returned from remote.  It might lag the real counter by RTT.
+	      	// This value can only increase.
+	      private DefaultLongLike oldOutgoingPacketsSentDefaultLongLike;
+		    	// A difference between this and newOutgoingPacketsSentNamedLong 
+		      // indicates new packets have been sent and need to be processed.
+	      private NamedLong newOutgoingPacketsReceivedNamedLong;
+		    	// This value comes from the most recently received "PA" message.  
+				  // When sent this argument was the remote end's 
+				  // EpiInputStream packet counter, 
+	        // counting the number of packets recevied.
+		    	// This value normally increases, but can decrease because of 
+	        // out-of-order "PA" packets. 
+	      private DefaultLongLike oldOutgoingPacketsReceivedDefaultLongLike;
+		    	// A difference between this and newOutgoingPacketsReceivedNamedLong 
+		      // indicates a new packet has been acknowledged and 
+	  			// needs to be processed.
+	  		private NamedFloat outgoingPacketLossNamedFloat;
+	      	// Floating representation of the fraction of outgoing packets lost.
+	      private LossAverager outgoingPacketLossLossAverager;
+
+	  		// Variables for managing round trip time.
+	      protected NsAsMsNamedLong rawRoundTripTimeNsAsMsNamedLong;
+		      // This is an important value.  It can be used to determine
+		      // how long to wait for a message acknowledgement before
+		      // re-sending a message.  Initial value of 1/10 second.
+	      private NsAsMsNamedLong smoothedRoundTripTimeNsAsMsNamedLong;
+	      private NsAsMsNamedLong smoothedMinRoundTripTimeNsAsMsNamedLong; // Minimum.
+	      private NsAsMsNamedLong smoothedMaxRoundTripTimeNsAsMsNamedLong; // Maximum.
 
 				// Other variables.
 				private long retryTimeOutMsL;
@@ -643,16 +577,23 @@ public class Unicaster
 			    in another thread that can.
 			    */
 			
-				RTTMeasurer( 
-						Unicaster theUnicaster, 
+				RTTMeasurer(  // Constructor.
+	  		    DataTreeModel theDataTreeModel,
+						//% Unicaster theUnicaster, 
 						Timer theTimer, 
 					  NetcasterInputStream theNetcasterInputStream,
 						NetcasterOutputStream theNetcasterOutputStream,
 						NamedLong retransmitDelayMsNamedLong
-						) // Constructor.
+						)
 			  	{
-					  // Injected dependencies.
-					  this.theUnicaster= theUnicaster; //// temporary cyclic dependency.
+			  	  super( // Constructing MutableList superclass with injections.
+			  		    theDataTreeModel,
+				        "RTTMeasurer",
+			          new DataNode[]{} // Initially empty array of children.
+			      		);
+
+		  	    // Injected dependencies.
+					  //% this.theUnicaster= theUnicaster; //// temporary cyclic dependency.
 					  this.theNetcasterInputStream= theNetcasterInputStream;
 					  this.theNetcasterOutputStream= theNetcasterOutputStream;
 					  this.retransmitDelayMsNamedLong= retransmitDelayMsNamedLong;
@@ -681,13 +622,85 @@ public class Unicaster
 				  private synchronized void initializingV() throws IOException
 				    // This starts the timer for the first time.
 					  {
-			        cycleMachineV(); // Starting the input-producing timer.
+			        // Adding measurement count.
+				  	  addB( sequenceHandshakesNamedLong= new NamedLong(
+				      		theDataTreeModel, "Sequence-Handshakes", 0 
+				      		)
+				  	  	);
+
+			        // Adding incoming packet statistics children and related trackers.
+				  	  newIncomingPacketsSentDefaultLongLike= new DefaultLongLike(0);
+				  	  addB( oldIncomingPacketsSentNamedLong= new NamedLong(
+				      		theDataTreeModel, "Incoming-Packets-Sent", 0 
+				      		)
+				  			);
+					    addB( newIncomingPacketsReceivedNamedLong=
+					    		theNetcasterInputStream.getCounterNamedLong()
+					    		);
+				  	  oldIncomingPacketsReceivedDefaultLongLike= new DefaultLongLike(0);
+				  	  addB( incomingPacketLossNamedFloat= new NamedFloat( 
+				      		theDataTreeModel, "Incoming-Packet-Loss", 0.0F  
+				      		)
+				  			);
+				  	  incomingPacketLossAverager= new LossAverager(
+				  	  				oldIncomingPacketsSentNamedLong,
+				  	  				oldIncomingPacketsReceivedDefaultLongLike,
+				  	  				incomingPacketLossNamedFloat
+				  	  				);
+
+				  	  // Adding outgoing packet statistics children and related trackers.
+			    		newOutgoingPacketsSentNamedLong=
+			    				theNetcasterOutputStream.getCounterNamedLong(); 
+					    addB( newOutgoingPacketsSentNamedLong );
+					    addB( newOutgoingPacketsSentEchoedNamedLong= new NamedLong(
+					    		theDataTreeModel, "Outgoing-Packets-Sent-Echoed", 0 
+					    		)
+					    	); 
+					    oldOutgoingPacketsSentDefaultLongLike= new DefaultLongLike(0);
+					    addB( newOutgoingPacketsReceivedNamedLong= new NamedLong( 
+						      theDataTreeModel, "Outgoing-Packets-Received", 0 
+						      )
+					    	);
+				  	  addB( outgoingPacketLossNamedFloat= new NamedFloat( 
+				      		theDataTreeModel, "Outgoing-Packet-Loss", 0.0f 
+				      		)
+				  			);
+				  	  oldOutgoingPacketsReceivedDefaultLongLike= new DefaultLongLike(0);
+				  	  outgoingPacketLossLossAverager= new LossAverager(
+				  	  		oldOutgoingPacketsSentDefaultLongLike,
+				  	  		oldOutgoingPacketsReceivedDefaultLongLike,
+				  	  		outgoingPacketLossNamedFloat
+				  	  		);
+
+			        // Adding the new round trip time trackers.
+				      addB( smoothedRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
+				      		theDataTreeModel, "Smoothed-Round-Trip-Time (ms)", 
+				      		Config.initialRoundTripTime100MsAsNsL
+				      		)
+				  	  	);
+				  	  addB( smoothedMinRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
+				      		theDataTreeModel, "Smoothed-Minimum-Round-Trip-Time (ms)", 
+				      		Config.initialRoundTripTime100MsAsNsL
+				      		)
+				  	  	);
+				  	  addB( smoothedMaxRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
+				      		theDataTreeModel, "Smoothed-Maximum-Round-Trip-Time (ms)", 
+				      		Config.initialRoundTripTime100MsAsNsL
+				      		)
+				  	  	);
+				      addB( rawRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong( 
+				      		theDataTreeModel, "Raw-Round-Trip-Time-ms", 
+				      		Config.initialRoundTripTime100MsAsNsL
+				      		)
+				  			);
+
+			  	  	cycleMachineV(); // Starting the input-producing timer.
 			        }
 					
 				  private synchronized void finalizingV() throws IOException
 				    // This method process any pending loose ends before shutdown.
 					  {
-				  		cycleMachineV(); // Catching any saved IOException from timer.
+				  		cycleMachineV(); // Throw any saved IOException from timer.
 				  		statisticsTimerInput.cancelingV(); // Stopping timer.
 			        }
 
@@ -893,12 +906,12 @@ public class Unicaster
       		  boolean isKeyB= keyString.equals( "PS" ); 
       		  if (isKeyB) {
     	  		  int sequenceNumberI= theNetcasterInputStream.readANumberI(); // Reading # from packet.
-    				  theUnicaster.newIncomingPacketsSentDefaultLongLike.setValueL( // Recording.
+    				  newIncomingPacketsSentDefaultLongLike.setValueL( // Recording.
     							sequenceNumberI + 1
     							); // Adding 1 to convert sequence # to remote sent packet count.
-    	  			theUnicaster.incomingPacketLossAverager.recordPacketsReceivedOrLostV(
-    	  					theUnicaster.newIncomingPacketsSentDefaultLongLike,
-    	  					theUnicaster.newIncomingPacketsReceivedNamedLong
+    	  			incomingPacketLossAverager.recordPacketsReceivedOrLostV(
+    	  					newIncomingPacketsSentDefaultLongLike,
+    	  					newIncomingPacketsReceivedNamedLong
     					  );
     	  			theNetcasterOutputStream.writingTerminatedStringV( "PA" );
     	  			theNetcasterOutputStream.writingTerminatedLongV( // The remote sequence number.
@@ -906,7 +919,7 @@ public class Unicaster
     		  				sequenceNumberI
     		  				);
     	  			long receivedPacketCountL= 
-    	  			  theUnicaster.newIncomingPacketsReceivedNamedLong.getValueL(); 
+    	  			  newIncomingPacketsReceivedNamedLong.getValueL(); 
     	  			theNetcasterOutputStream.writingTerminatedLongV( // The local received packet count.
     	  					receivedPacketCountL 
     		  				);
@@ -942,15 +955,15 @@ public class Unicaster
     		  		int packetsReceivedI=  // Reading packets received.
     		  				theNetcasterInputStream.readANumberI();
           		acknowledgementReceivedB= true; 
-          		theUnicaster.sequenceHandshakesNamedLong.addDeltaL(1);
+          		sequenceHandshakesNamedLong.addDeltaL(1);
               
-              theUnicaster.newOutgoingPacketsSentEchoedNamedLong.setValueL(
+              newOutgoingPacketsSentEchoedNamedLong.setValueL(
     			    		sequenceNumberI + 1 // Convert sequence # to sent packet count.
     			    		);
-    		  		theUnicaster.newOutgoingPacketsReceivedNamedLong.setValueL(packetsReceivedI);
-    		  		theUnicaster.outgoingPacketLossLossAverager.recordPacketsReceivedOrLostV(
-    		  				theUnicaster.newOutgoingPacketsSentEchoedNamedLong,
-    		  				theUnicaster.newOutgoingPacketsReceivedNamedLong
+    		  		newOutgoingPacketsReceivedNamedLong.setValueL(packetsReceivedI);
+    		  		outgoingPacketLossLossAverager.recordPacketsReceivedOrLostV(
+    		  				newOutgoingPacketsSentEchoedNamedLong,
+    		  				newOutgoingPacketsReceivedNamedLong
     						  );
     		  	  calculateRoundTripTimesV(
     		  	  		sequenceNumberI, ackReceivedTimeNsL, packetsReceivedI
@@ -975,9 +988,9 @@ public class Unicaster
 		  						ackReceivedTimeNsL - sentSequenceNumberTimeNsL; 
 		  	  	  processRoundTripTimeV(rawRoundTripTimeNsL);
 			  			rttString+= ""+
-	            		theUnicaster.rawRoundTripTimeNsAsMsNamedLong.getValueString()+","+
-	            		theUnicaster.smoothedMinRoundTripTimeNsAsMsNamedLong.getValueString()+","+
-	            		theUnicaster.smoothedMaxRoundTripTimeNsAsMsNamedLong.getValueString()
+	            		rawRoundTripTimeNsAsMsNamedLong.getValueString()+","+
+	            		smoothedMinRoundTripTimeNsAsMsNamedLong.getValueString()+","+
+	            		smoothedMaxRoundTripTimeNsAsMsNamedLong.getValueString()
 					  			;
 		  				}
 	        appLogger.debug( "calculateRoundTripTimesV(...) PA:"
@@ -994,12 +1007,12 @@ public class Unicaster
   	      Integer arithmetic is used for speed.
   	     */
   	  	{
-			  	theUnicaster.rawRoundTripTimeNsAsMsNamedLong.setValueL(
+			  	rawRoundTripTimeNsAsMsNamedLong.setValueL(
           		rawRoundTripTimeNsL
           		);
 
-			  	theUnicaster.smoothedRoundTripTimeNsAsMsNamedLong.setValueL(
-			  			( (7 * theUnicaster.smoothedRoundTripTimeNsAsMsNamedLong.getValueL()) + 
+			  	smoothedRoundTripTimeNsAsMsNamedLong.setValueL(
+			  			( (7 * smoothedRoundTripTimeNsAsMsNamedLong.getValueL()) + 
 			  				rawRoundTripTimeNsL
 			  				)
 			  			/ 
@@ -1013,26 +1026,26 @@ public class Unicaster
 		  	      */
 				  	{ // Updating minimum round trip time.
 		  	  	  long minL= 
-		  	  	  		theUnicaster.smoothedMinRoundTripTimeNsAsMsNamedLong.getValueL();
+		  	  	  		smoothedMinRoundTripTimeNsAsMsNamedLong.getValueL();
 		  	  	  if ( minL > rawRoundTripTimeNsL )
 		  	  	  	minL= rawRoundTripTimeNsL;
 		  	  	  	else
 		  	  	  	minL= minL + ( ( rawRoundTripTimeNsL - minL ) + 7 ) / 8;
-		  	  	  theUnicaster.smoothedMinRoundTripTimeNsAsMsNamedLong.setValueL(minL);
+		  	  	  smoothedMinRoundTripTimeNsAsMsNamedLong.setValueL(minL);
 		  	  		}
 		  	  	{ // Updating maximum round trip time.
 		  	  	  long maxL= 
-		  	  	  		theUnicaster.smoothedMaxRoundTripTimeNsAsMsNamedLong.getValueL();
+		  	  	  		smoothedMaxRoundTripTimeNsAsMsNamedLong.getValueL();
 		  	  	  if ( maxL < rawRoundTripTimeNsL )
 		  	  	  	maxL= rawRoundTripTimeNsL;
 		  	  	  	else
 		  	  	  	maxL= maxL - ( ( maxL - rawRoundTripTimeNsL ) + 7 ) / 8;
-			  	  	theUnicaster.smoothedMaxRoundTripTimeNsAsMsNamedLong.setValueL(maxL);
+			  	  	smoothedMaxRoundTripTimeNsAsMsNamedLong.setValueL(maxL);
 		  	  		}
 			  		}
 
 	  	  	retransmitDelayMsNamedLong.setValueL(
-							(theUnicaster.smoothedMaxRoundTripTimeNsAsMsNamedLong.getValueL()/1000000) * 2
+							(smoothedMaxRoundTripTimeNsAsMsNamedLong.getValueL()/1000000) * 2
 							); // Use double present maximum round-trip-time.
   	  		}
 
