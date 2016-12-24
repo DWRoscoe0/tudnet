@@ -15,7 +15,7 @@ public class Unicaster
 	extends Netcaster
 
   implements Runnable 
-  
+
   /* Each instance of this class manages a a single Datagram connection with
     one of the peer nodes of which the ConnectionManager is aware.
     It uses unicast packets, not multicast packets.
@@ -24,9 +24,9 @@ public class Unicaster
     The Runnable contains a loop which:
     * Receives packets from the remote peer.
     * Send packets to the remote peer.
-    * Implement several protocols for various purposes, such as:
+    * Implements several protocols for various purposes, such as:
       * Establishing and shutting down a connection.
-	    * Exchanging sequence numbers to measure packet loss. 
+	    * Exchanging sequence numbers to measure packet loss and round-trip-time. 
 	    * Multiplexing packets from and de-multiplexing packets to other threads
 	      which implement their own protocols.
     
@@ -41,18 +41,11 @@ public class Unicaster
     an unconnected DatagramSocket bound to the same local address
     used for receiving the initial connection requests.
     Closing the unconnected socket allows the connected ones to work,
-    but reopening the unconnected socket disables the 
-    connected ones again.
+    but reopening the unconnected socket disables the connected ones again.
     As a result, connected sockets are not used.
     Instead all packets are received by one unconnected DatagramSocket, 
     and those packets are de-multiplexed and forwarded to 
     the appropriate peer thread.
-
-    The plan is to add functionality to this class in small stages.
-    At first peers simply exchanged packets,
-    waiting half a period, making no attempt to measure ping times.
-    More functionality will be added later.
-
     */
 
   { // Unicaster.
@@ -75,7 +68,7 @@ public class Unicaster
             */ 
 
   		////private TimerInput theTimerInput;  // For PS-PS RTT timing. 
-  		private RTTMeasurer theRTTMeasurer;
+  		private LinkMeasurements theLinkMeasurements;
   		
 			public Unicaster(  // Constructor. 
 			  UnicasterManager theUnicasterManager,
@@ -155,7 +148,7 @@ public class Unicaster
     		////theTimerInput=  new TimerInput( theLockAndSignal, theTimer ); ////
 
     		// Adding measurement count.
-	  	  addB( theRTTMeasurer= new RTTMeasurer( 
+	  	  addB( theLinkMeasurements= new LinkMeasurements( 
 	  		    theDataTreeModel,
     				//% this, 
     				theTimer, 
@@ -169,13 +162,13 @@ public class Unicaster
 
 	  	  // Everything is constructed.  Now initialize.
 
-	  	  theRTTMeasurer.initializingV();
+	  	  theLinkMeasurements.initializingV();
 	    	}
 
     protected void finalizingV() throws IOException
       // This is the opposite of initilizingV().
 	    {
-	    	theRTTMeasurer.finalizingV();
+	    	theLinkMeasurements.finalizingV();
 	    	theEpiOutputStreamO.close(); // Closing output stream.
 	    	}
 
@@ -201,7 +194,7 @@ public class Unicaster
 		      	if ( theInput != Input.NONE ) break;
 		      	if (processingMessagesFromRemotePeerB()) continue;
 		    		if (multiplexingPacketsFromSubcastersB()) continue;
-		    		////if (theRTTMeasurer.cycleMachineB()) continue;
+		    		////if (theLinkMeasurements.cycleMachineB()) continue;
 			  	  theInput= // Waiting for at least one new input.
 		    			  theLockAndSignal.waitingForInterruptOrNotificationE();
 			  	  }
@@ -319,7 +312,7 @@ public class Unicaster
 		      //if ( processPacketSequenceNumberB(keyString) ) // "PS"
    			  //	break process;
 		      //if ( processPacketAcknowledgementB(keyString) ) // "PA"
-		      if ( theRTTMeasurer.processMeasurementMessageB(keyString) ) ////
+		      if ( theLinkMeasurements.processMeasurementMessageB(keyString) ) ////
 		      	break process;
   			  if ( processHelloB( keyString ) ) // "HELLO"
    			  	break process;
@@ -488,20 +481,19 @@ public class Unicaster
 				pingReplyProtocolV();
 		    }
 
-		static class RTTMeasurer // Being developed for PS-PS RTT timing.
+		static class LinkMeasurements
+
 		  extends MutableList
-		  /* This class is a state machine that uses PS and PA to 
-		    measure Round-Trip-Time.  
-		    It is not thread-safe and must be called only from 
-		    within the Unicaster thread.
 
-		    //// Eliminating the cyclic dependency with Unicaster.
-
-				//// Rename to something more appropriate.  Possible names:
-				 * LinkPerformance
-				 * LinkResistance
-				 * LinkBarriers
-		   */
+		  /* This class is a [hierarchical] state machine that 
+		    measures and displays several performances parameters
+		    * Round-Trip-Time.
+		    * Packets sent and received, locally and remotely.
+		    * Packet loss ratios.  
+		    
+		    This code is not thread-safe.
+		    It is meant to be called only from the Unicaster thread.
+		   	*/
 			{	
 			  
 			  // Injected dependencies.
@@ -511,7 +503,7 @@ public class Unicaster
 				private NamedLong retransmitDelayMsNamedLong;
 
 	  		// Variables for counting measurement handshakes.
-	      private NamedLong sequenceHandshakesNamedLong;
+	      private NamedLong measurementHandshakesNamedLong;
 	      // Variables for managing incoming packets and 
 	      // their sequence numbers.  They all start at 0.
 	      private DefaultLongLike newIncomingPacketsSentDefaultLongLike;
@@ -577,7 +569,7 @@ public class Unicaster
 			    in another thread that can.
 			    */
 			
-				RTTMeasurer(  // Constructor.
+				LinkMeasurements(  // Constructor.
 	  		    DataTreeModel theDataTreeModel,
 						//% Unicaster theUnicaster, 
 						Timer theTimer, 
@@ -588,7 +580,7 @@ public class Unicaster
 			  	{
 			  	  super( // Constructing MutableList superclass with injections.
 			  		    theDataTreeModel,
-				        "RTTMeasurer",
+				        "LinkMeasurements",
 			          new DataNode[]{} // Initially empty array of children.
 			      		);
 
@@ -620,13 +612,36 @@ public class Unicaster
 				    // both pauses and time-outs. 
 					
 				  private synchronized void initializingV() throws IOException
-				    // This starts the timer for the first time.
 					  {
-			        // Adding measurement count.
-				  	  addB( sequenceHandshakesNamedLong= new NamedLong(
-				      		theDataTreeModel, "Sequence-Handshakes", 0 
+				  		// Adding measurement count.
+				  	  addB( measurementHandshakesNamedLong= new NamedLong(
+				      		theDataTreeModel, "Measurement-Handshakes", 0 
 				      		)
 				  	  	);
+
+				  		addB( retransmitDelayMsNamedLong );
+
+			        // Adding the new round trip time trackers.
+				      addB( smoothedRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
+				      		theDataTreeModel, "Smoothed-Round-Trip-Time (ms)", 
+				      		Config.initialRoundTripTime100MsAsNsL
+				      		)
+				  	  	);
+				  	  addB( smoothedMinRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
+				      		theDataTreeModel, "Smoothed-Minimum-Round-Trip-Time (ms)", 
+				      		Config.initialRoundTripTime100MsAsNsL
+				      		)
+				  	  	);
+				  	  addB( smoothedMaxRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
+				      		theDataTreeModel, "Smoothed-Maximum-Round-Trip-Time (ms)", 
+				      		Config.initialRoundTripTime100MsAsNsL
+				      		)
+				  	  	);
+				      addB( rawRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong( 
+				      		theDataTreeModel, "Raw-Round-Trip-Time-ms", 
+				      		Config.initialRoundTripTime100MsAsNsL
+				      		)
+				  			);
 
 			        // Adding incoming packet statistics children and related trackers.
 				  	  newIncomingPacketsSentDefaultLongLike= new DefaultLongLike(0);
@@ -672,28 +687,6 @@ public class Unicaster
 				  	  		outgoingPacketLossNamedFloat
 				  	  		);
 
-			        // Adding the new round trip time trackers.
-				      addB( smoothedRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
-				      		theDataTreeModel, "Smoothed-Round-Trip-Time (ms)", 
-				      		Config.initialRoundTripTime100MsAsNsL
-				      		)
-				  	  	);
-				  	  addB( smoothedMinRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
-				      		theDataTreeModel, "Smoothed-Minimum-Round-Trip-Time (ms)", 
-				      		Config.initialRoundTripTime100MsAsNsL
-				      		)
-				  	  	);
-				  	  addB( smoothedMaxRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
-				      		theDataTreeModel, "Smoothed-Maximum-Round-Trip-Time (ms)", 
-				      		Config.initialRoundTripTime100MsAsNsL
-				      		)
-				  	  	);
-				      addB( rawRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong( 
-				      		theDataTreeModel, "Raw-Round-Trip-Time-ms", 
-				      		Config.initialRoundTripTime100MsAsNsL
-				      		)
-				  			);
-
 			  	  	cycleMachineV(); // Starting the input-producing timer.
 			        }
 					
@@ -701,6 +694,7 @@ public class Unicaster
 				    // This method process any pending loose ends before shutdown.
 					  {
 				  		cycleMachineV(); // Throw any saved IOException from timer.
+
 				  		statisticsTimerInput.cancelingV(); // Stopping timer.
 			        }
 
@@ -730,10 +724,14 @@ public class Unicaster
 				// States.
         
 					// This can't be a static enum because we are in a non-static class.
-					private static final int PAUSING= 1;
-					private static final int SENDING_AND_WAITING=2; 
+					private static final int SENDING_AND_WAITING=1; 
+					private static final int PAUSING= 2;
 			  
 					private int theStateI= PAUSING; // Initial state of the machine.
+					  /* If initial state is SENDING_AND_WAITING instead of PAUSING
+					   * then system can send rapid PS packets for some reason.
+					   * There is no back off.
+					   */ ////
 		
 					//%private volatile boolean machineCyclingB= false; // Reentry detection.
 					
@@ -782,20 +780,21 @@ public class Unicaster
 					    		break beforeExit;
 					    	  }
 
-			    		if // Handling pause timer still running.
-				    		(! statisticsTimerInput.getInputArrivedB()) 
-				    		{ runningB= false; // Indicate state machine is waiting.
-			    				//appLogger.debug("handlingPauseB() pause end input scheduled.");
+			    		if // Handling pause complete if it is.
+				    		(statisticsTimerInput.getInputArrivedB()) 
+				    		{ // Handling pause complete by changing state. 
+			    				statisticsTimerInput.cancelingV();
+			    			  retryTimeOutMsL=   // Initializing retry time-out.
+			    			  		retransmitDelayMsNamedLong.getValueL();
+			    			  theStateI= SENDING_AND_WAITING;
+			    			  //appLogger.debug("handlingPauseB() pause end input arrived.");
 					    		break beforeExit;
-					    	  }
+			    			  }
 
-			    		{ // Handling pause complete by changing state. 
-		    				statisticsTimerInput.cancelingV();
-		    			  retryTimeOutMsL=   // Initializing retry time-out.
-		    			  		retransmitDelayMsNamedLong.getValueL();
-		    			  theStateI= SENDING_AND_WAITING;
-		    			  //appLogger.debug("handlingPauseB() pause end input arrived.");
-		    			  }
+			    		{ runningB= false; // Indicate state machine is waiting.
+		    				//appLogger.debug("handlingPauseB() pause end input scheduled.");
+				    		break beforeExit;
+				    	  }
 
 		    	  } // beforeExit:
 		    		  return runningB; 
@@ -807,44 +806,42 @@ public class Unicaster
 		    	  	boolean runningB= true;
 		    	  beforeExit: { 
 		    	  beforeStartPausing: { 
-		    	  beforeTimerChecks: { 
 
-			    		if // Sending PS and scheduling time-out, if not done yet.
+			    		if // Doing state entry operations if this is state entry.
 			    		  (! statisticsTimerInput.getInputScheduledB())
-				    		{ statisticsTimerInput.scheduleV(retryTimeOutMsL);
+				    		{ // Sending PS and scheduling time-out, if not done yet.
+			    			  statisticsTimerInput.scheduleV(retryTimeOutMsL);
 				    			//appLogger.debug("handleSendingAndWaiting() scheduling "+retryTimeOutMsL);
 					    		sendingSequenceNumberV();
 					    		break beforeExit;
 						    	}
-		        	if (! acknowledgementReceivedB) // Waiting if PA not received yet. 
-		        		break beforeTimerChecks;
-		        	{ // Handling received PA.
-		        		//appLogger.debug("handleSendingAndWaiting() PA acknowledgement and resets.");
-		        		acknowledgementReceivedB= false;  // Resetting PS input,
-		        		statisticsTimerInput.cancelingV(); // Resetting timer state.
-				    		break beforeStartPausing; // Going to Pausing state.
-					    	}
-
-		    	  } // beforeTimerChecks:
-			    		if // Handling PA reply timer still running.
-			    			(! statisticsTimerInput.getInputArrivedB()) 
-				    		{ runningB= false; // Indicate state machine is waiting.
-					    	  //appLogger.debug("handleSendingAndWaiting() time-out scheduled.");
-					    		break beforeExit;
+		        	if  // Processing acknowledgement PA if received.
+		        	  (acknowledgementReceivedB) 
+			        	{ // Handling received PA.
+			        		//appLogger.debug("handleSendingAndWaiting() PA acknowledgement and resets.");
+			        		acknowledgementReceivedB= false;  // Resetting PS input,
+			        		statisticsTimerInput.cancelingV(); // Resetting timer state.
+					    		break beforeStartPausing; // Going to Pausing state.
 						    	}
-			    		{ // Handling PA reply timer time-out.   
-				    		//appLogger.debug("handleSendingAndWaiting() time-out occurred.");
-		    				statisticsTimerInput.cancelingV(); // Resetting timer.
-		    			  if  // Handling maximum time-out interval not reached yet.
-		    			  	( retryTimeOutMsL <= Config.maxTimeOut5000MsL )
-		    				  { retryTimeOutMsL*=2;  // Doubling time limit for retrying.
-			    					break beforeExit; // Going to send PS again.
-			  					  }
-		    			  //appLogger.debug("handleSendingAndWaiting() last time-out.");
-		    			  {  // Handling maximum exponential backoff time-out reached.
-			    			  break beforeStartPausing; // Pausing.
-			    			  }
-			    			}
+			    		if // Handling PA reply timer time-out if it happened.
+			    			(statisticsTimerInput.getInputArrivedB()) 
+				    		{ // Handling PA reply timer time-out.   
+					    		//appLogger.debug("handleSendingAndWaiting() time-out occurred.");
+			    				statisticsTimerInput.cancelingV(); // Resetting timer.
+			    			  if  // Handling maximum time-out interval not reached yet.
+			    			  	( retryTimeOutMsL <= Config.maxTimeOut5000MsL )
+			    				  { retryTimeOutMsL*=2;  // Doubling time limit for retrying.
+				    					break beforeExit; // Going to send PS again.
+				  					  }
+			    			  //appLogger.debug("handleSendingAndWaiting() last time-out.");
+			    			  {  // Handling maximum exponential backoff time-out reached.
+				    			  break beforeStartPausing; // Pausing.
+				    			  }
+				    			}
+			    		{ runningB= false; // Indicate state machine is waiting for input.
+				    	  //appLogger.debug("handleSendingAndWaiting() time-out scheduled.");
+				    		break beforeExit;
+					    	}
 
 		    	  } // beforeStartPausing:
     			  	theStateI= PAUSING; // Doing state switch to pausing. 
@@ -955,7 +952,7 @@ public class Unicaster
     		  		int packetsReceivedI=  // Reading packets received.
     		  				theNetcasterInputStream.readANumberI();
           		acknowledgementReceivedB= true; 
-          		sequenceHandshakesNamedLong.addDeltaL(1);
+          		measurementHandshakesNamedLong.addDeltaL(1);
               
               newOutgoingPacketsSentEchoedNamedLong.setValueL(
     			    		sequenceNumberI + 1 // Convert sequence # to sent packet count.
@@ -1049,7 +1046,7 @@ public class Unicaster
 							); // Use double present maximum round-trip-time.
   	  		}
 
-				} // class RTTMeasurer
+				} // class LinkMeasurements
 
 		static class TimerInput // First developed for PS-PS RTT timing.
 		  /* This class functions as an input to processes modeled as threads.

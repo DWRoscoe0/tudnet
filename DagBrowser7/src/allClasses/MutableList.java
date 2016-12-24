@@ -4,7 +4,7 @@ package allClasses;
 
 public class MutableList 
 
-	/* This class is a NamedList whose contents can be changed.
+	/* This class is a NamedList DataNode whose contents can be changed.
 
 	  This class includes methods for changing its NamedList.
 	  For thread safety some methods are synchronized and 
@@ -75,6 +75,8 @@ public class MutableList
 		      
 		      It does all this in a thread-safe manner using 
 		      safelyReportingChangeV(..).
+		      
+		      //// Replace single element boolean array with a MutableBoolean.
 	  	    */
 		    {
         	//appLogger.debug("MutableList.add(..) "+childDataNode+" at "+indexI);
@@ -119,6 +121,8 @@ public class MutableList
 
 		      It does all this in a thread-safe manner using 
 		      safelyReportingChangeV(..).
+		      
+		      //// Replace single element boolean array with a MutableBoolean.
 			    */
 		    {
 		  	  final DataNode parentDataNode= this;
