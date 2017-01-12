@@ -10,24 +10,33 @@ public class LinkMeasurement
 	extends MutableList
 	
 	/* This class is a [hierarchical] state machine that 
-	  measures and displays several performances parameters
+	  measures and displays several performance parameters
+	  of a peer-to-peer link.
 	  * Round-Trip-Time.
-	  * Packets sent and received, locally and remotely.
+	  * Count of packets sent and received, locally and remotely.
 	  * Packet loss ratios.  
 	  
 	  This code is not thread-safe.
-	  It is meant to be called only from the Unicaster thread.
+	  It is meant to be called only from the Unicaster thread,
+	  except for its own internal use of a timer.
 	 	*/
 	{	
 	  
 	  // Injected dependencies.
-		//% private Unicaster theUnicaster; //// temporary cyclic dependency.
 		private NetcasterInputStream theNetcasterInputStream;
 		private NetcasterOutputStream theNetcasterOutputStream; 
 		private NamedLong retransmitDelayMsNamedLong;
+
+	  private TimerInput statisticsTimerInput; // Used for timing
+	    // both pauses and time-outs. 
+		
+	  // Sub-state machine instances.
+	  private RemoteMeasurement stateRemoteMeasurement;
+	  private LocalMeasurement stateLocalMeasurement;
 	
 		// Variables for counting measurement handshakes.
 	  private NamedLong measurementHandshakesNamedLong;
+
 	  // Variables for managing incoming packets and 
 	  // their sequence numbers.  They all start at 0.
 	  private DefaultLongLike newIncomingPacketsSentDefaultLongLike;
@@ -85,7 +94,7 @@ public class LinkMeasurement
 	  private NsAsMsNamedLong smoothedRoundTripTimeNsAsMsNamedLong;
 	  private NsAsMsNamedLong smoothedMinRoundTripTimeNsAsMsNamedLong; // Minimum.
 	  private NsAsMsNamedLong smoothedMaxRoundTripTimeNsAsMsNamedLong; // Maximum.
-	
+	  
 		// Other variables.
 		private long retryTimeOutMsL;
 		private IOException delaydIOException= null; /* For re-throwing 
@@ -95,7 +104,6 @@ public class LinkMeasurement
 	
 		LinkMeasurement(  // Constructor.
 		    DataTreeModel theDataTreeModel,
-				//% Unicaster theUnicaster, 
 				Timer theTimer, 
 			  NetcasterInputStream theNetcasterInputStream,
 				NetcasterOutputStream theNetcasterOutputStream,
@@ -109,19 +117,21 @@ public class LinkMeasurement
 	      		);
 	
 		    // Injected dependencies.
-			  //% this.theUnicaster= theUnicaster; //// temporary cyclic dependency.
 			  this.theNetcasterInputStream= theNetcasterInputStream;
 			  this.theNetcasterOutputStream= theNetcasterOutputStream;
 			  this.retransmitDelayMsNamedLong= retransmitDelayMsNamedLong;
-			  
-			  statisticsTimerInput= //// Move to factory. 
-			  		new TimerInput(
+	
+			  // Orthoginal sub-state machines.
+	  	  stateRemoteMeasurement= new RemoteMeasurement();
+	  	  stateLocalMeasurement= new LocalMeasurement();
+
+	  	  statisticsTimerInput= 
+			  		new TimerInput(  //// Move to factory.
 			  				theTimer,
 			  				new Runnable() {
 					        public void run()
-					          // Activates this as an input and notifies interested thread.
 						        {
-					        	  try { cycleMachineV(); }
+					        	  try { cycleMainMachineV(); }
 					        	  catch ( IOException theIOException) 
 					        	    { delaydIOException= theIOException; }
 					        	  }
@@ -130,14 +140,12 @@ public class LinkMeasurement
 			  }
 	
 	
-		// Inputs code activated or used by inputs.
-	 	  
-		  private TimerInput statisticsTimerInput; // Used for timing
-		    // both pauses and time-outs. 
+		// Input code activated or used by inputs.
 			
 		  public synchronized void initializingV() throws IOException
 			  {
-		  		// Adding measurement count.
+
+	  	  	// Adding measurement count.
 		  	  addB( measurementHandshakesNamedLong= new NamedLong(
 		      		theDataTreeModel, "Measurement-Handshakes", 0 
 		      		)
@@ -162,7 +170,7 @@ public class LinkMeasurement
 		      		)
 		  	  	);
 		      addB( rawRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong( 
-		      		theDataTreeModel, "Raw-Round-Trip-Time-ms", 
+		      		theDataTreeModel, "Raw-Round-Trip-Time (ms)", 
 		      		Config.initialRoundTripTime100MsAsNsL
 		      		)
 		  			);
@@ -210,14 +218,14 @@ public class LinkMeasurement
 		  	  		oldOutgoingPacketsReceivedDefaultLongLike,
 		  	  		outgoingPacketLossNamedFloat
 		  	  		);
-	
-	  	  	cycleMachineV(); // Starting the input-producing timer.
+
+	  	  	cycleMainMachineV(); // Starting the input-producing timer.
 	        }
 			
 		  public synchronized void finalizingV() throws IOException
-		    // This method process any pending loose ends before shutdown.
+		    // This method processes any pending loose ends before shutdown.
 			  {
-		  		cycleMachineV(); // Throw any saved IOException from timer.
+		  		cycleMainMachineV(); // Throwing any saved IOException from timer.
 	
 		  		statisticsTimerInput.cancelingV(); // Stopping timer.
 	        }
@@ -226,349 +234,404 @@ public class LinkMeasurement
 	    		String keyString
 	    		) 
 	  		throws IOException
-	  		/* This method is called to process a possible PS or PA message.
-	  		  It returns true is one of those messages is processed,
+	  		/* This method is called to process a possible PS or PA message input.
+	  		  It returns true if one of those messages is processed,
 	  		  meaning keyString was one of them and it was consumed.
 	  		  It returns false otherwise.
+
+	  		  It does its processing by calling methods in the sub-machines.
+	  		  It cycles the main machine if input was processed.
 	  		  */
 	      {
 	        boolean successB= true; // Assuming message is one of the two.
-	    	  beforeExit: {
-		        if ( processPacketSequenceNumberB(keyString) ) // "PS"
+	    	  
+	        beforeExit: {
+
+	        	if  // "PS"
+		          ( stateRemoteMeasurement.processPacketSequenceNumberB(keyString) )
 		        	break beforeExit;
-		        if ( processPacketAcknowledgementB(keyString) ) // "PA"
+		        if  // "PA"
+		          ( stateLocalMeasurement.processPacketAcknowledgementB(keyString) )
 		        	break beforeExit;
 		        successB= false;  // Indicating message was neither of the two.
-	        	} // beforeExit:
-	        if (successB) cycleMachineV(); // Process resulting input.
+	        
+	        } // beforeExit:
+	        
+	        if (successB)  // Post-processing input if successful.
+	        	cycleMainMachineV();
+
 	        return successB;
 	        }
+
+		  public synchronized void cycleMainMachineV() throws IOException
+		    /* Cycles the main state machine.
+		      It does this by cycling the sub-machines.
+		      It needs to do this only for the local machine.
+		      */
+		    { 
+		  	  if (delaydIOException != null) // Re-throw other thread's exception. 
+		  	  	throw delaydIOException;  
+
+		  		// stateRemoteMeasurement : No remote machine cycling needed.
+
+		  		stateLocalMeasurement.cycleMachineV();
+
+		    	}
 	
-	
-		// States.
-	  
-			// This can't be a static enum because we are in a non-static class.
-			private static final int SENDING_AND_WAITING=1; 
-			private static final int PAUSING= 2;
-	  
-			private int theStateI= PAUSING; // Initial state of the machine.
-			  /* If initial state is SENDING_AND_WAITING instead of PAUSING
-			   * then system can send rapid PS packets for some reason.
-			   * There is no back off.
-			   */ ////
-	
-			//%private volatile boolean machineCyclingB= false; // Reentry detection.
 			
 		  private long sentSequenceNumberTimeNsL;
 	
 			private long lastSequenceNumberSentL;
 	
 			private boolean acknowledgementReceivedB= false;
-	
-	  public synchronized void cycleMachineV() throws IOException
-	    /* Decodes the state by calling associated handler method,
-	      repeating until a handler returns false,
-	      indicating it is waiting for input.
-	      */
-	    { 
-	  	  if (delaydIOException != null) // Rethrow other thread's exception. 
-	  	  	throw delaydIOException;  
-	  		boolean stillRunningB= true;
-	  	  while (stillRunningB) { // Cycling until done.
-	  	  	//%machineCyclingB= true;
-	    	  switch (theStateI) { // Repeatedly decoding state.
-		    		case PAUSING: 
-		    			stillRunningB= handlingPausingB(); break;
-		    		case SENDING_AND_WAITING: 
-		    			stillRunningB= handleSendingAndWaiting(); break;
-	 					default: 
-	 						stillRunningB= false; break;
-	    			}
-	  	  	//%machineCyclingB= false;
-	  	  	}
-	  	  ////return false;
-	  		}
-	
-	  // State handler methods.
-	
-	  private boolean handlingPausingB()
-	    // This state method generates the pause between PS-PA handshakes.
-	  	{ 
-	  	  boolean runningB= true;
-	  	  beforeExit: {
-	
-	  	  	if // Scheduling pause timer if not scheduled yet.
-	  	  		(! statisticsTimerInput.getInputScheduledB()) 
-	    	  	{ statisticsTimerInput.scheduleV( Config.handshakePause5000MsL );
-	    			  //appLogger.debug("handlingPauseB() scheduling pause end input.");
-			    		break beforeExit;
-			    	  }
-	
-	    		if // Handling pause complete if it is.
-		    		(statisticsTimerInput.getInputArrivedB()) 
-		    		{ // Handling pause complete by changing state. 
-	    				statisticsTimerInput.cancelingV();
-	    			  retryTimeOutMsL=   // Initializing retry time-out.
-	    			  		retransmitDelayMsNamedLong.getValueL();
-	    			  theStateI= SENDING_AND_WAITING;
-	    			  //appLogger.debug("handlingPauseB() pause end input arrived.");
-			    		break beforeExit;
-	    			  }
-	
-	    		{ runningB= false; // Indicate state machine is waiting.
-	  				//appLogger.debug("handlingPauseB() pause end input scheduled.");
-		    		break beforeExit;
-		    	  }
-	
-	  	  } // beforeExit:
-	  		  return runningB; 
-	  		}
-	
-	  private boolean handleSendingAndWaiting() throws IOException
-	  	// This state method handles the PS-PA handshakes, and retrying.
-	  	{
-	  	  	boolean runningB= true;
-	  	  beforeExit: { 
-	  	  beforeStartPausing: { 
-	
-	    		if // Doing state entry operations if this is state entry.
-	    		  (! statisticsTimerInput.getInputScheduledB())
-		    		{ // Sending PS and scheduling time-out, if not done yet.
-	    			  statisticsTimerInput.scheduleV(retryTimeOutMsL);
-		    			//appLogger.debug("handleSendingAndWaiting() scheduling "+retryTimeOutMsL);
-			    		sendingSequenceNumberV();
-			    		break beforeExit;
-				    	}
-	      	if  // Processing acknowledgement PA if received.
-	      	  (acknowledgementReceivedB) 
-	        	{ // Handling received PA.
-	        		//appLogger.debug("handleSendingAndWaiting() PA acknowledgement and resets.");
-	        		acknowledgementReceivedB= false;  // Resetting PS input,
-	        		statisticsTimerInput.cancelingV(); // Resetting timer state.
-			    		break beforeStartPausing; // Going to Pausing state.
-				    	}
-	    		if // Handling PA reply timer time-out if it happened.
-	    			(statisticsTimerInput.getInputArrivedB()) 
-		    		{ // Handling PA reply timer time-out.   
-			    		//appLogger.debug("handleSendingAndWaiting() time-out occurred.");
-	    				statisticsTimerInput.cancelingV(); // Resetting timer.
-	    			  if  // Handling maximum time-out interval not reached yet.
-	    			  	( retryTimeOutMsL <= Config.maxTimeOut5000MsL )
-	    				  { retryTimeOutMsL*=2;  // Doubling time limit for retrying.
-		    					break beforeExit; // Going to send PS again.
-		  					  }
-	    			  //appLogger.debug("handleSendingAndWaiting() last time-out.");
-	    			  {  // Handling maximum exponential backoff time-out reached.
-		    			  break beforeStartPausing; // Pausing.
-		    			  }
-		    			}
-	    		{ runningB= false; // Indicate state machine is waiting for input.
-		    	  //appLogger.debug("handleSendingAndWaiting() time-out scheduled.");
-		    		break beforeExit;
-			    	}
-	
-	  	  } // beforeStartPausing:
-			  	theStateI= PAUSING; // Doing state switch to pausing. 
-			  	break beforeExit; 
-	
-	  	  } // beforeExit:
-	  			return runningB;
-	
-	  	  }
-	
-	  protected void sendingSequenceNumberV() throws IOException
-	    /* This method increments and writes the packet ID (sequence) number
-	      to the EpiOutputStream.
-	      It doesn't flush().
-	      */
-	    {
-	    	lastSequenceNumberSentL= 
-	    			theNetcasterOutputStream.getCounterNamedLong().getValueL(); 
-	      appLogger.debug( "sendingSequenceNumberV() " + lastSequenceNumberSentL);
-	      theNetcasterOutputStream.writingTerminatedStringV( "PS" );
-	      theNetcasterOutputStream.writingTerminatedLongV( 
-	      		lastSequenceNumberSentL 
-	      		);
-	      theNetcasterOutputStream.sendingPacketV();
-	  		sentSequenceNumberTimeNsL= System.nanoTime();
-	      }
-	  
-	// Other support code.
+
+
+		class State { // Base class for all states.
+		  
+			public boolean stateHandlerB() throws IOException
+			  /* This is the default state handler. 
+			    It does nothing.
+			    It also returns false to indicate that there is nothing else to do
+			   */
+			  { return false; }
+
+			}  // Base class for all State sub-classes. 
 		
-		private boolean processPacketSequenceNumberB(String keyString) 
-				throws IOException
-		  /* This method processes the packet sequence number that follows "PS",
-		    which comes from the remote peer EpiOutputStreamO packet count.
-		    From this and the local EPIInputStreamI packet count it calculates 
-		    a new value of the local peer's incoming packet loss ratio.
-		    This ratio is accurate when calculated because
-		    the values it uses in the calculation are synchronized.
-	
-		    It also sends an "PA" message back to the remote peer with same numbers
-		    so the remote peer can calculate the same ratio, 
-		    which for the remote peer is called the outgoing packet loss ratio.
-		    By sending and using both numbers the remote peer's calculation is
-		    not affected by variations in Round-Trip-Time (RTT).
-	
-		    Every packet has a sequence number, but 
-		    not every packet needs to contain its sequence number.
-		    The reception of an "PS" message with its sequence number means that
-		    the remote has sent at least that number of packets.
-		    The difference of the highest sequence number received and
-		    the number of packets received is the number of packets lost.
-		    A new difference and a loss ratio average can be calculated
-		    each time a new sequence number is received.
-		    In fact that is how reception of a sequence number can be interpreted.
-	
-	  		//// Sequence numbers and other numbers eventually need to be converted 
-	  		  to use modulo (wrap-around) arithmetic.
-	  	  */
-	  	{
-			  boolean isKeyB= keyString.equals( "PS" ); 
-			  if (isKeyB) {
-	  		  int sequenceNumberI= theNetcasterInputStream.readANumberI(); // Reading # from packet.
-				  newIncomingPacketsSentDefaultLongLike.setValueL( // Recording.
-							sequenceNumberI + 1
-							); // Adding 1 to convert sequence # to remote sent packet count.
-	  			incomingPacketLossAverager.recordPacketsReceivedOrLostV(
-	  					newIncomingPacketsSentDefaultLongLike,
-	  					newIncomingPacketsReceivedNamedLong
-					  );
-	  			theNetcasterOutputStream.writingTerminatedStringV( "PA" );
-	  			theNetcasterOutputStream.writingTerminatedLongV( // The remote sequence number.
-		  				//newIncomingPacketsSentDefaultLongLike.getValueL()
-		  				sequenceNumberI
-		  				);
-	  			long receivedPacketCountL= 
-	  			  newIncomingPacketsReceivedNamedLong.getValueL(); 
-	  			theNetcasterOutputStream.writingTerminatedLongV( // The local received packet count.
-	  					receivedPacketCountL 
-		  				);
-	  			theNetcasterOutputStream.sendingPacketV(); // Sending now for minimum RTT.
-	        appLogger.debug( "processPacketSequenceNumberB(..) PS:"
-		  		  +sequenceNumberI+","
-	        	+receivedPacketCountL
-		  		  );
-					}
-			  return isKeyB;
-	  		}
-	
-		private boolean processPacketAcknowledgementB(String keyString) 
-				throws IOException
-		  /* This method processes the "PA" sequence number 
-		    feedback message, which the remote peer sends
-		    in response to receiving an "PS" sequence number message.
-		    The "PA" is followed by:
-		    * a copy of the sent packet sequence number received by the remote peer,
-		    * the remote peers received packet count.
-		    From these two values it calculates 
-		    the packet loss ratio in the remote peer receiver.
-		    By having "PA" include both values, its calculation is RTT-immune.
-	
-				See processSequenceNumberB(..) about "PS" for more information.
-	  	  */
-	  	{
-	  	  boolean isKeyB= keyString.equals( "PA" ); 
-			  if (isKeyB) {
-			  	long ackReceivedTimeNsL= System.nanoTime();
-		  		int sequenceNumberI=  // Reading echo of sequence #.
-		  				theNetcasterInputStream.readANumberI();
-		  		int packetsReceivedI=  // Reading packets received.
-		  				theNetcasterInputStream.readANumberI();
-	    		acknowledgementReceivedB= true; 
-	    		measurementHandshakesNamedLong.addDeltaL(1);
-	        
-	        newOutgoingPacketsSentEchoedNamedLong.setValueL(
-			    		sequenceNumberI + 1 // Convert sequence # to sent packet count.
-			    		);
-		  		newOutgoingPacketsReceivedNamedLong.setValueL(packetsReceivedI);
-		  		outgoingPacketLossLossAverager.recordPacketsReceivedOrLostV(
-		  				newOutgoingPacketsSentEchoedNamedLong,
-		  				newOutgoingPacketsReceivedNamedLong
-						  );
-		  	  calculateRoundTripTimesV(
-		  	  		sequenceNumberI, ackReceivedTimeNsL, packetsReceivedI
-		  	  		);
+		class LocalMeasurement  extends State 
+
+		  /* This is the local concurrent sub-state 
+		    for doing local measurements.  
+		    */
+
+		  {
+				// The following sub-sub-States may be assigned to theState.
+				PausingState thePausingState= 
+						new PausingState();
+				SendingAndWaitingState theSendingAndWaitingState=
+						new SendingAndWaitingState();
+
+				State theState= thePausingState; // Initialize machine sub-state
+
+				private boolean processPacketAcknowledgementB(String keyString) 
+						throws IOException
+				  /* This input method tries to process the "PA" sequence number 
+				    feedback message, which the remote peer sends
+				    in response to receiving an "PS" sequence number message.
+				    The "PA" is followed by:
+				    * a copy of the sent packet sequence number received by the remote peer,
+				    * the remote peers received packet count.
+				    From these two values it calculates 
+				    the packet loss ratio in the remote peer receiver.
+				    By having "PA" include both values, its calculation is RTT-immune.
+			
+						See processSequenceNumberB(..) about "PS" for more information.
+			  	  */
+			  	{
+			  	  boolean isKeyB= keyString.equals( "PA" ); 
+					  if (isKeyB) {
+					  	long ackReceivedTimeNsL= System.nanoTime();
+				  		int sequenceNumberI=  // Reading echo of sequence #.
+				  				theNetcasterInputStream.readANumberI();
+				  		int packetsReceivedI=  // Reading packets received.
+				  				theNetcasterInputStream.readANumberI();
+			    		acknowledgementReceivedB= true; 
+			    		measurementHandshakesNamedLong.addDeltaL(1);
+			        
+			        newOutgoingPacketsSentEchoedNamedLong.setValueL(
+					    		sequenceNumberI + 1 // Convert sequence # to sent packet count.
+					    		);
+				  		newOutgoingPacketsReceivedNamedLong.setValueL(packetsReceivedI);
+				  		outgoingPacketLossLossAverager.recordPacketsReceivedOrLostV(
+				  				newOutgoingPacketsSentEchoedNamedLong,
+				  				newOutgoingPacketsReceivedNamedLong
+								  );
+				  	  calculateRoundTripTimesV(
+				  	  		sequenceNumberI, ackReceivedTimeNsL, packetsReceivedI
+				  	  		);
+					  	}
+					  return isKeyB;
+			  		}
+				
+				// States.
+			  
+			  public synchronized void cycleMachineV() throws IOException
+			    /* Decodes the state by calling associated handler method,
+			      repeating until a handler returns false,
+			      indicating it is has processed all available inputs
+			      and is waiting for new input.
+			      */
+		 	    { 
+			  		boolean stillGoingB= true;
+			  	  while (stillGoingB) { // Cycling until done.
+		    			stillGoingB= theState.stateHandlerB(); break;
+			  	  	}
+			  		}
+			
+			  // State handler methods.
+			  
+				class PausingState extends State 
+			  
+			  	{
+
+					  public boolean stateHandlerB()
+					    // This state method generates the pause between PS-PA handshakes.
+					  	{ 
+					  	  boolean runningB= true;
+					  	  beforeExit: {
+					
+					  	  	if // Scheduling pause timer if not scheduled yet.
+					  	  		(! statisticsTimerInput.getInputScheduledB()) 
+					    	  	{ statisticsTimerInput.scheduleV( Config.handshakePause5000MsL );
+					    			  //appLogger.debug("handlingPauseB() scheduling pause end input.");
+							    		break beforeExit;
+							    	  }
+					
+					    		if // Handling pause complete if it is.
+						    		(statisticsTimerInput.getInputArrivedB()) 
+						    		{ // Handling pause complete by changing state. 
+					    				statisticsTimerInput.cancelingV();
+					    			  retryTimeOutMsL=   // Initializing retry time-out.
+					    			  		retransmitDelayMsNamedLong.getValueL();
+					    			  theState= theSendingAndWaitingState;
+							    		break beforeExit;
+					    			  }
+					
+					    		{ runningB= false; // Indicate state machine is waiting.
+					  				//appLogger.debug("handlingPauseB() pause end input scheduled.");
+						    		break beforeExit;
+						    	  }
+					
+					  	  } // beforeExit:
+					  		  return runningB; 
+					  		}
+					
 			  	}
-			  return isKeyB;
-	  		}
+
+				class SendingAndWaitingState extends State 
+			  
+			  	{
 	
-	private void calculateRoundTripTimesV(
-			int sequenceNumberI, long ackReceivedTimeNsL, int packetsReceivedI
-			)
-	  /* This method calculates round-trip-time.
-	    It is called when a PA message is received.
-	    */
-		{
-			String rttString= "";
-			if ( sequenceNumberI != lastSequenceNumberSentL )
-				rttString+= "unchanged, wrong number.";
-				else
-				{ 
-					long rawRoundTripTimeNsL= 
-							ackReceivedTimeNsL - sentSequenceNumberTimeNsL; 
-		  	  processRoundTripTimeV(rawRoundTripTimeNsL);
-	  			rttString+= ""+
-	        		rawRoundTripTimeNsAsMsNamedLong.getValueString()+","+
-	        		smoothedMinRoundTripTimeNsAsMsNamedLong.getValueString()+","+
-	        		smoothedMaxRoundTripTimeNsAsMsNamedLong.getValueString()
-			  			;
-					}
-	    appLogger.debug( "calculateRoundTripTimesV(...) PA:"
-			  +sequenceNumberI+","
-	    	+packetsReceivedI+";RTT="
-	    	+rttString
-			  );
-	  	}
+					  public boolean stateHandlerB() throws IOException
+					  	// This state method handles the PS-PA handshakes, and retrying.
+					  	{
+					  	  	boolean runningB= true;
+					  	  beforeExit: { 
+					  	  beforeStartPausing: { 
+					
+					    		if // Doing state entry operations if this is state entry.
+					    		  (! statisticsTimerInput.getInputScheduledB())
+						    		{ // Sending PS and scheduling time-out, if not done yet.
+					    			  statisticsTimerInput.scheduleV(retryTimeOutMsL);
+						    			//appLogger.debug("handleSendingAndWaiting() scheduling "+retryTimeOutMsL);
+							    		sendingSequenceNumberV();
+							    		break beforeExit;
+								    	}
+					      	if  // Processing acknowledgement PA if received.
+					      	  (acknowledgementReceivedB) 
+					        	{ // Handling received PA.
+					        		//appLogger.debug("handleSendingAndWaiting() PA acknowledgement and resets.");
+					        		acknowledgementReceivedB= false;  // Resetting PS input,
+					        		statisticsTimerInput.cancelingV(); // Resetting timer state.
+							    		break beforeStartPausing; // Going to Pausing state.
+								    	}
+					    		if // Handling PA reply timer time-out if it happened.
+					    			(statisticsTimerInput.getInputArrivedB()) 
+						    		{ // Handling PA reply timer time-out.   
+							    		//appLogger.debug("handleSendingAndWaiting() time-out occurred.");
+					    				statisticsTimerInput.cancelingV(); // Resetting timer.
+					    			  if  // Handling maximum time-out interval not reached yet.
+					    			  	( retryTimeOutMsL <= Config.maxTimeOut5000MsL )
+					    				  { retryTimeOutMsL*=2;  // Doubling time limit for retrying.
+						    					break beforeExit; // Going to send PS again.
+						  					  }
+					    			  //appLogger.debug("handleSendingAndWaiting() last time-out.");
+					    			  {  // Handling maximum exponential backoff time-out reached.
+						    			  break beforeStartPausing; // Pausing.
+						    			  }
+						    			}
+					    		{ runningB= false; // Indicate state machine is waiting for input.
+						    	  //appLogger.debug("handleSendingAndWaiting() time-out scheduled.");
+						    		break beforeExit;
+							    	}
+				
+				  	  } // beforeStartPausing:
+							  theState= thePausingState; // Doing state switch to pausing. 
+						  	break beforeExit; 
+				
+				  	  } // beforeExit:
+				  			return runningB;
+				
+				  	  }
+					  
+			  		}
+			
+			  protected void sendingSequenceNumberV() throws IOException
+			    /* This method increments and writes the packet ID (sequence) number
+			      to the EpiOutputStream.
+			      It doesn't flush().
+			      */
+			    {
+			    	lastSequenceNumberSentL= 
+			    			theNetcasterOutputStream.getCounterNamedLong().getValueL(); 
+			      appLogger.debug( "sendingSequenceNumberV() " + lastSequenceNumberSentL);
+			      theNetcasterOutputStream.writingTerminatedStringV( "PS" );
+			      theNetcasterOutputStream.writingTerminatedLongV( 
+			      		lastSequenceNumberSentL 
+			      		);
+			      theNetcasterOutputStream.sendingPacketV();
+			  		sentSequenceNumberTimeNsL= System.nanoTime();
+			      }
+			  
+				// Other support code.
+				
+				private void calculateRoundTripTimesV(
+						int sequenceNumberI, long ackReceivedTimeNsL, int packetsReceivedI
+						)
+				  /* This method calculates round-trip-time.
+				    It is called when a PA message is received.
+				    */
+					{
+						String rttString= "";
+						if ( sequenceNumberI != lastSequenceNumberSentL )
+							rttString+= "unchanged, wrong number.";
+							else
+							{ 
+								long rawRoundTripTimeNsL= 
+										ackReceivedTimeNsL - sentSequenceNumberTimeNsL; 
+					  	  processRoundTripTimeV(rawRoundTripTimeNsL);
+				  			rttString+= ""+
+				        		rawRoundTripTimeNsAsMsNamedLong.getValueString()+","+
+				        		smoothedMinRoundTripTimeNsAsMsNamedLong.getValueString()+","+
+				        		smoothedMaxRoundTripTimeNsAsMsNamedLong.getValueString()
+						  			;
+								}
+				    appLogger.debug( "calculateRoundTripTimesV(...) PA:"
+						  +sequenceNumberI+","
+				    	+packetsReceivedI+";RTT="
+				    	+rttString
+						  );
+				  	}
+				
+				private void processRoundTripTimeV(long rawRoundTripTimeNsL)
+				  /* This method updates various variables which
+				    are dependent on round trip times.
+				    
+				    Integer arithmetic is used for speed.
+				    */
+					{
+				  	rawRoundTripTimeNsAsMsNamedLong.setValueL(
+				    		rawRoundTripTimeNsL
+				    		);
+				
+				  	smoothedRoundTripTimeNsAsMsNamedLong.setValueL(
+				  			( (7 * smoothedRoundTripTimeNsAsMsNamedLong.getValueL()) + 
+				  				rawRoundTripTimeNsL
+				  				)
+				  			/ 
+				  			8
+				  			);
+				
+				  	{ /*  Smoothed maximum and minimum RTT are calculated here.
+					      More extreme values are stored immediately.
+					      A less extreme value is exponentially smoothed in.
+					      The smoothing factor is presently 1/8.
+					      */
+					  	{ // Updating minimum round trip time.
+					  	  long minL= 
+					  	  		smoothedMinRoundTripTimeNsAsMsNamedLong.getValueL();
+					  	  if ( minL > rawRoundTripTimeNsL )
+					  	  	minL= rawRoundTripTimeNsL;
+					  	  	else
+					  	  	minL= minL + ( ( rawRoundTripTimeNsL - minL ) + 7 ) / 8;
+					  	  smoothedMinRoundTripTimeNsAsMsNamedLong.setValueL(minL);
+					  		}
+					  	{ // Updating maximum round trip time.
+					  	  long maxL= 
+					  	  		smoothedMaxRoundTripTimeNsAsMsNamedLong.getValueL();
+					  	  if ( maxL < rawRoundTripTimeNsL )
+					  	  	maxL= rawRoundTripTimeNsL;
+					  	  	else
+					  	  	maxL= maxL - ( ( maxL - rawRoundTripTimeNsL ) + 7 ) / 8;
+				  	  	smoothedMaxRoundTripTimeNsAsMsNamedLong.setValueL(maxL);
+					  		}
+				  		}
+				
+				  	retransmitDelayMsNamedLong.setValueL(
+								(smoothedMaxRoundTripTimeNsAsMsNamedLong.getValueL()/1000000) * 2
+								); // Use double present maximum round-trip-time.
+						}
+		
+		  	} // class LocalMeasurement
+		
 	
-	private void processRoundTripTimeV(long rawRoundTripTimeNsL)
-	  /* This method updates various variables which
-	    are dependent on round trip times.
-	    
-	    Integer arithmetic is used for speed.
-	   */
-		{
-	  	rawRoundTripTimeNsAsMsNamedLong.setValueL(
-	    		rawRoundTripTimeNsL
-	    		);
-	
-	  	smoothedRoundTripTimeNsAsMsNamedLong.setValueL(
-	  			( (7 * smoothedRoundTripTimeNsAsMsNamedLong.getValueL()) + 
-	  				rawRoundTripTimeNsL
-	  				)
-	  			/ 
-	  			8
-	  			);
-	
-	  	{ /*  Smoothed maximum and minimum RTT are calculated here.
-		      More extreme values are stored immediately.
-		      A less extreme value is exponentially smoothed in.
-		      The smoothing factor is presently 1/8.
-		      */
-		  	{ // Updating minimum round trip time.
-		  	  long minL= 
-		  	  		smoothedMinRoundTripTimeNsAsMsNamedLong.getValueL();
-		  	  if ( minL > rawRoundTripTimeNsL )
-		  	  	minL= rawRoundTripTimeNsL;
-		  	  	else
-		  	  	minL= minL + ( ( rawRoundTripTimeNsL - minL ) + 7 ) / 8;
-		  	  smoothedMinRoundTripTimeNsAsMsNamedLong.setValueL(minL);
-		  		}
-		  	{ // Updating maximum round trip time.
-		  	  long maxL= 
-		  	  		smoothedMaxRoundTripTimeNsAsMsNamedLong.getValueL();
-		  	  if ( maxL < rawRoundTripTimeNsL )
-		  	  	maxL= rawRoundTripTimeNsL;
-		  	  	else
-		  	  	maxL= maxL - ( ( maxL - rawRoundTripTimeNsL ) + 7 ) / 8;
-	  	  	smoothedMaxRoundTripTimeNsAsMsNamedLong.setValueL(maxL);
-		  		}
-	  		}
-	
-	  	retransmitDelayMsNamedLong.setValueL(
-					(smoothedMaxRoundTripTimeNsAsMsNamedLong.getValueL()/1000000) * 2
-					); // Use double present maximum round-trip-time.
-			}
-	
+		class RemoteMeasurement {
+
+			  /* This is a sub-state for helping the remote peer makes
+			    measurements about itself.
+			    */
+
+				private boolean processPacketSequenceNumberB(String keyString) 
+						throws IOException
+				  /* This method tries to process the "PS" message from the remote peer.
+				    It keyString is a "PS" then it is processed along with
+				    the packet sequence number that follows "PS",
+				    which comes from the remote peer EpiOutputStreamO packet count.
+				    From this and the local EPIInputStreamI packet count it calculates 
+				    a new value of the local peer's incoming packet loss ratio.
+				    This ratio is accurate when calculated because
+				    the values it uses in the calculation are synchronized.
+
+				    It also sends an "PA" message back to the remote peer with 
+				    the same numbers so the remote peer can calculate the same ratio, 
+				    which for the remote peer is called the outgoing packet loss ratio.
+				    By sending and using both numbers the remote peer's calculation is
+				    not affected by variations in Round-Trip-Time (RTT).
+
+				    Every packet has a sequence number, but 
+				    not every packet needs to contain its sequence number.
+				    The reception of a "PS" message with its sequence number means that
+				    the remote has sent at least that number of packets.
+				    The difference of the highest sequence number received and
+				    the number of packets received is the number of packets lost.
+				    A new difference and a loss ratio average can be calculated
+				    each time a new sequence number is received.  In fact,
+				    that is how reception of a sequence number can be interpreted.
+				
+						//// Sequence numbers and other numbers eventually need to be converted 
+						  to use modulo (wrap-around) arithmetic.
+					  */
+					{
+					  boolean isKeyB= keyString.equals( "PS" ); 
+					  if (isKeyB) {
+						  int sequenceNumberI= theNetcasterInputStream.readANumberI(); // Reading # from packet.
+						  newIncomingPacketsSentDefaultLongLike.setValueL( // Recording.
+									sequenceNumberI + 1
+									); // Adding 1 to convert sequence # to remote sent packet count.
+							incomingPacketLossAverager.recordPacketsReceivedOrLostV(
+									newIncomingPacketsSentDefaultLongLike,
+									newIncomingPacketsReceivedNamedLong
+							  );
+							theNetcasterOutputStream.writingTerminatedStringV( "PA" );
+							theNetcasterOutputStream.writingTerminatedLongV( // The remote sequence number.
+				  				//newIncomingPacketsSentDefaultLongLike.getValueL()
+				  				sequenceNumberI
+				  				);
+							long receivedPacketCountL= 
+							  newIncomingPacketsReceivedNamedLong.getValueL(); 
+							theNetcasterOutputStream.writingTerminatedLongV( // The local received packet count.
+									receivedPacketCountL 
+				  				);
+							theNetcasterOutputStream.sendingPacketV(); // Sending now for minimum RTT.
+				      appLogger.debug( "processPacketSequenceNumberB(..) PS:"
+				  		  +sequenceNumberI+","
+				      	+receivedPacketCountL
+				  		  );
+							}
+					  return isKeyB;
+						}
+				
+					} // class RemoteMeasurement
+
+	  
 		} // class LinkMeasurements
 
