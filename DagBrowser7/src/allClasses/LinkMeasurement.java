@@ -39,10 +39,6 @@ public class LinkMeasurement
 		
 	  // What will be the main state machine.
 	  private LinkMeasurementState theLinkMeasurementState;
-
-	  // Sub-state machine instances.
-	  private RemoteMeasurementState theRemoteMeasurementState;
-	  private LocalMeasurementState theLocalMeasurementState;
 	
 		// Variables for counting measurement handshakes.
 	  private NamedLong measurementHandshakesNamedLong;
@@ -133,10 +129,6 @@ public class LinkMeasurement
 				
 			  // What will be the main state machine.
 	  	  theLinkMeasurementState= new LinkMeasurementState(null);
-	  		
-			  // Orthogonal sub-state machines.
-	  	  theRemoteMeasurementState= new RemoteMeasurementState();
-	  	  theLocalMeasurementState= new LocalMeasurementState(null);
 
 	  	  statisticsTimerInput= 
 			  		new TimerInput(  //// Move to factory.
@@ -144,7 +136,7 @@ public class LinkMeasurement
 			  				new Runnable() {
 					        public void run()
 						        {
-					        	  try { cycleMainMachineV(); }
+					        	  try { theLinkMeasurementState.cycleMainMachineV(); }
 					        	  catch ( IOException theIOException) 
 					        	    { delaydIOException= theIOException; }
 					        	  }
@@ -232,64 +224,27 @@ public class LinkMeasurement
 		  	  		outgoingPacketLossNamedFloat
 		  	  		);
 
-	  	  	cycleMainMachineV(); // Starting the input-producing timer.
+	  	  	theLinkMeasurementState.cycleMainMachineV(); 
+	  	  	  // Starting the input-producing timer.
 	        }
-			
-		  public synchronized void finalizingV() throws IOException
-		    // This method processes any pending loose ends before shutdown.
-			  {
-		  		cycleMainMachineV(); // Throwing any saved IOException from timer.
-	
-		  		statisticsTimerInput.cancelingV(); // Stopping timer.
-	        }
-	
+
 	    public synchronized boolean processMeasurementMessageB(
 	    		String keyString
 	    		) 
 	  		throws IOException
-	  		/* This method is called to process a possible PS or PA message input.
-	  		  It returns true if one of those messages is processed,
-	  		  meaning keyString was one of them and it was consumed.
-	  		  It returns false otherwise.
-
-	  		  It does its processing by calling methods in the sub-machines.
-	  		  It cycles the main machine if input was processed.
-	  		  */
-	      {
-	        boolean successB= true; // Assuming message is one of the two.
-	    	  
-	        beforeExit: {
-
-	        	if  // "PS"
-		          ( theRemoteMeasurementState.processPacketSequenceNumberB(keyString) )
-		        	break beforeExit;
-		        if  // "PA"
-		          ( theLocalMeasurementState.processPacketAcknowledgementB(keyString) )
-		        	break beforeExit;
-		        successB= false;  // Indicating message was neither of the two.
-	        
-	        } // beforeExit:
-	        
-	        if (successB)  // Post-processing input if successful.
-	        	cycleMainMachineV();
-
-	        return successB;
+	  		// This method just passes the input through to theLinkMeasurementState. 
+	  		{
+	    		return theLinkMeasurementState.processMeasurementMessageB(keyString); 
+	    	  }
+			
+		  public synchronized void finalizingV() throws IOException
+		    // This method processes any pending loose ends before shutdown.
+			  {
+		  		theLinkMeasurementState.cycleMainMachineV(); 
+		  		  // Throwing any saved IOException from timer.
+	
+		  		statisticsTimerInput.cancelingV(); // Stopping timer.
 	        }
-
-		  public synchronized void cycleMainMachineV() throws IOException
-		    /* Cycles the main state machine.
-		      It does this by cycling the sub-machines.
-		      It needs to do this only for the local machine.
-		      */
-		    { 
-		  	  if (delaydIOException != null) // Re-throw other thread's exception. 
-		  	  	throw delaydIOException;  
-
-		  		// theRemoteMeasurementState : No remote machine cycling needed.
-
-		  		theLocalMeasurementState.cycleMachineV();
-
-		    	}
 	
 			
 		  private long sentSequenceNumberTimeNsL;
@@ -388,8 +343,66 @@ public class LinkMeasurement
 				
 				{
 
+				  // Sub-state machine instances.
+				  private RemoteMeasurementState theRemoteMeasurementState;
+				  private LocalMeasurementState theLocalMeasurementState;
+
 					LinkMeasurementState( State parentState ) // Constructor.
-						{ super( parentState ); }
+						{ 
+							super( parentState ); 
+
+						  // Orthogonal sub-state machines.
+				  	  theRemoteMeasurementState= new RemoteMeasurementState();
+				  	  theLocalMeasurementState= new LocalMeasurementState(null);
+							}
+
+			    public synchronized boolean processMeasurementMessageB(
+			    		String keyString
+			    		) 
+			  		throws IOException
+			  		/* This method is called to process a possible PS or PA message input.
+			  		  It returns true if one of those messages is processed,
+			  		  meaning keyString was one of them and it was consumed.
+			  		  It returns false otherwise.
+
+			  		  It does its processing by calling methods in the sub-machines.
+			  		  It cycles the main machine if input was processed.
+			  		  */
+			      {
+			        boolean successB= true; // Assuming message is one of the two.
+			    	  
+			        beforeExit: {
+
+			        	if  // "PS"
+				          ( theRemoteMeasurementState.processPacketSequenceNumberB(keyString) )
+				        	break beforeExit;
+				        if  // "PA"
+				          ( theLocalMeasurementState.processPacketAcknowledgementB(keyString) )
+				        	break beforeExit;
+				        successB= false;  // Indicating message was neither of the two.
+			        
+			        } // beforeExit:
+			        
+			        if (successB)  // Post-processing input if successful.
+			        	cycleMainMachineV();
+
+			        return successB;
+			        }
+
+				  public synchronized void cycleMainMachineV() throws IOException
+				    /* Cycles the main state machine.
+				      It does this by cycling the sub-machines.
+				      It needs to do this only for the local machine.
+				      */
+				    { 
+				  	  if (delaydIOException != null) // Re-throw other thread's exception. 
+				  	  	throw delaydIOException;  
+
+				  		// theRemoteMeasurementState : No remote machine cycling needed.
+
+				  		theLocalMeasurementState.cycleMachineV();
+
+				    	}
 					
 					}
 			
