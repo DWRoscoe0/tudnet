@@ -37,6 +37,9 @@ public class LinkMeasurement
 	  private TimerInput statisticsTimerInput; // Used for timing
 	    // both pauses and time-outs. 
 		
+	  // What will be the main state machine.
+	  private LinkMeasurementState theLinkMeasurementState;
+
 	  // Sub-state machine instances.
 	  private RemoteMeasurementState theRemoteMeasurementState;
 	  private LocalMeasurementState theLocalMeasurementState;
@@ -127,8 +130,11 @@ public class LinkMeasurement
 			  this.theNetcasterInputStream= theNetcasterInputStream;
 			  this.theNetcasterOutputStream= theNetcasterOutputStream;
 			  this.retransmitDelayMsNamedLong= retransmitDelayMsNamedLong;
-	
-			  // Orthoginal sub-state machines.
+				
+			  // What will be the main state machine.
+	  	  theLinkMeasurementState= new LinkMeasurementState(null);
+	  		
+			  // Orthogonal sub-state machines.
 	  	  theRemoteMeasurementState= new RemoteMeasurementState();
 	  	  theLocalMeasurementState= new LocalMeasurementState(null);
 
@@ -312,16 +318,24 @@ public class LinkMeasurement
 				protected State parentState= null;
 
 		    private List<State> theListOfSubStates=
-		        new ArrayList<State>(); // Empty list.
+		        new ArrayList<State>(); // Initially empty list.
 
 		    State( State parentState ) // Constructor.
+		      // Constructs the State, including storing the parent State locally.
 					{ this.parentState= parentState; }
 
-		    public void addV(State aSubState)
+		    public void addV(State theSubState)
 		      // This method adds/injects one sub-state to this state.
-		    	{ theListOfSubStates.add( aSubState ); }
+		    	{ 
+		    	  theListOfSubStates.add( theSubState ); // Add theSubState to
+		    	    // this state's list of sub-states.
 
-				void setParentStateV( State parentState )
+		    	  theSubState.setParentStateV( this ); // Store this state as
+		    	    // the sub-state's parent state.
+		    	  }
+
+				private void setParentStateV( State parentState )
+				  // Stores parentState as the parent state of this state.
 					{ this.parentState= parentState; }
 				
 				// State subState; //% = thePausingState; // Initialize machine sub-state
@@ -365,7 +379,20 @@ public class LinkMeasurement
 					{ super( parentState ); }
 
 				}  // AndState 
-		
+
+			class LinkMeasurementState extends State 
+				
+				/* This is is the root State for LinkMeasurement.
+				  Code should be moved from LinkMeasurement to here.
+				  */
+				
+				{
+
+					LinkMeasurementState( State parentState ) // Constructor.
+						{ super( parentState ); }
+					
+					}
+			
 			class LocalMeasurementState extends AndState 
 	
 			  /* This is the local concurrent sub-state 

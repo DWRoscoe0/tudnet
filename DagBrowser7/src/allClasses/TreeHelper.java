@@ -22,26 +22,33 @@ public class TreeHelper
   implements KeyListener, MouseListener, FocusListener
 
   /* This class holds code which is useful for JComponents
-    which implement the TreeAware interface.
+    which implement the TreeAware interface for accessing tree DataNode-s.
     TreeAware JComponents are viewers for various types of tree DataNode-s.
     Including an instance of TreeHelper in a DataNode viewer can make 
     coding a new tree node viewer much easier.
-    The code in this class is here instead of the TreeAware JComponent
+    
+    The code in this class was put here instead of the TreeAware JComponent
     because of Java's lack of multiple inheritance.
 
-    The TreeHelper instance of this class is typically named "aTreeHelper".
-    So TreeHelper code to access the present Part TreePath:
+    In the JComponents that has one, the TreeHelper instance 
+    is typically named "aTreeHelper".
+    So, for example, Helper code to access the present Part TreePath:
     would be "aTreeHelper.getPartTreePath()";
 
-    TreeHelper can be sub-classed.  Within a TreeAware JComponents,
-    a TreeHelper subclass is usually called MyTreeHelper and 
-    is a non-static nested class.
+    TreeHelper can be sub-classed if it needs customized tree-help.  
+    Within a TreeAware JComponent, a TreeHelper subclass is usually called 
+    MyTreeHelper and is a non-static nested class.
+    
+    //// Is it possible to eliminate most aTreeHelper references in JComponents
+    by always having a MyTreeHelper nested non-static class,
+    and moving most of the JComponent code into it?
 
     A TreeHelper object instance typically interacts with 2 other objects:
 
-      * Its owning TreeAware JComponent DataNode viewer, 
-        for example TitledListViewer and TitledTextViewer.
-      * A coordinating JComponent, presently only DagBrowserPanel.
+      * Its owning TreeAware JComponent DataNode viewer. 
+        Examples are TitledListViewer and TitledTextViewer.
+      * A coordinating JComponent, presently only DagBrowserPanel,
+        used to coordinate the simultaneous display of 2 TreeAware JComponents.
 
     These 3 objects interact as follows:
     
