@@ -103,7 +103,7 @@ public class LinkMeasurement
 	  
 		// Other variables.
 		private long retryTimeOutMsL;
-		private IOException delaydIOException= null; /* For re-throwing 
+		private IOException delayedIOException= null; /* For re-throwing 
 			an exception which occurred in one thread which couldn't handle it 
 	    in another thread that can.
 	    */
@@ -138,7 +138,7 @@ public class LinkMeasurement
 						        {
 					        	  try { theLinkMeasurementState.cycleMainMachineV(); }
 					        	  catch ( IOException theIOException) 
-					        	    { delaydIOException= theIOException; }
+					        	    { delayedIOException= theIOException; }
 					        	  }
 					    		}
 			  				);
@@ -272,11 +272,17 @@ public class LinkMeasurement
 
 				protected State parentState= null;
 
-		    private List<State> theListOfSubStates=
+		    protected List<State> theListOfSubStates=
 		        new ArrayList<State>(); // Initially empty list.
 
+		    protected State subState;
+
 		    State( State parentState ) // Constructor.
-		      // Constructs the State, including storing the parent State locally.
+		      /* Constructs the State, including storing the parent State locally.
+		      	
+		      	//// Maybe all eliminate explicit constructors and 
+		      	  use setter injection in the addV(..) method instead?
+		        */
 					{ this.parentState= parentState; }
 
 		    public void addV(State theSubState)
@@ -293,13 +299,15 @@ public class LinkMeasurement
 				  // Stores parentState as the parent state of this state.
 					{ this.parentState= parentState; }
 				
-				// State subState; //% = thePausingState; // Initialize machine sub-state
-			  
 				public boolean stateHandlerB() throws IOException
 				  /* This is the default state handler. 
-				    It does nothing.
-				    It also returns false to indicate that there is nothing else to do
-				   */
+				    It does nothing because this is the superclass of all States.
+				    It also returns false to indicate:
+				    * no computation processing was possible on previous inputs,
+				    * and a test for new inputs found none.
+				    This method should be called repeatedly until it returns false,
+				    though it need not necessarily be called again immediately. 
+				    */
 				  { return false; }
 
 				}  // State class 
@@ -311,11 +319,39 @@ public class LinkMeasurement
 				  only one sub-state can be active at a time.
 
 				  There is no concurrency in an OrState machine,
-				  at least not at the level of its sub-states.
+				  at least not at the immediate level of its sub-states.
 					*/
 
 				OrState( State parentState ) // Constructor.
 					{ super( parentState ); }
+
+        protected void setNextStateV(State nextState)
+          // Changes the state-machine State.
+          {
+        		subState= nextState;
+						}
+
+				public boolean stateHandlerB() throws IOException
+				  /* This handles this OrState by cycling it's machine.
+				    It does this by calling the handler method 
+				    associated with the state-machine's sub-state.
+			      The sub-state might change with each of these calls.
+			      It keeps calling sub-state handlers until a handler returns false,
+			      indicating that it has processed all available inputs
+			      and is waiting for new input.
+				    It returns true if any computational progress was made,
+				    false otherwise.
+			      */
+				  { 
+					  boolean anyProgressMadeB= false;
+			  		boolean substateProgressMadeB;
+			  	  do { // Handle sub-states until done.
+				  	  	substateProgressMadeB= subState.stateHandlerB();
+				  	  	anyProgressMadeB|= substateProgressMadeB;
+				  	  	}
+			  	  	while (substateProgressMadeB);
+						return anyProgressMadeB; 
+						}
 
 				}  // OrState 
 
@@ -333,9 +369,35 @@ public class LinkMeasurement
 				AndState( State parentState ) // Constructor.
 					{ super( parentState ); }
 
+				public boolean stateHandlerB() throws IOException
+				  /* This method handles this AndState by cycling all of it sub-machines
+				    until none of them makes any computational progress.
+			      It keeps going until all sub-state handlers return false,
+			      indicating that it has processed all available inputs
+			      and is waiting for new input.
+				    It returns false to indicate that there is nothing else to do
+			      */
+				  //// rewrite for minimum stateHandlerB() calls.
+				  { 
+					  boolean anythigMadeProgressB= false;
+						boolean cycleMadeProgressB;
+			  	  do  // Cycling until no sub-machine progresses.
+				  	  { // Cycle all sub-state-machines once each.
+					  		cycleMadeProgressB= // Will be true if any machine progressed. 
+					  				false;
+				  	  	for (State aState : theListOfSubStates)
+					  	  	{
+				  	  		  boolean handlerMadeProgressB= aState.stateHandlerB(); 
+					  	  		cycleMadeProgressB|= handlerMadeProgressB; 
+					  	  		}
+			  	  		anythigMadeProgressB|= cycleMadeProgressB; 
+				  	  	} while (cycleMadeProgressB);
+						return anythigMadeProgressB; 
+						}
+
 				}  // AndState 
 
-			class LinkMeasurementState extends State 
+			class LinkMeasurementState extends AndState 
 				
 				/* This is is the root State for LinkMeasurement.
 				  Code should be moved from LinkMeasurement to here.
@@ -351,9 +413,9 @@ public class LinkMeasurement
 						{ 
 							super( parentState ); 
 
-						  // Orthogonal sub-state machines.
-				  	  theRemoteMeasurementState= new RemoteMeasurementState();
-				  	  theLocalMeasurementState= new LocalMeasurementState(null);
+						  // Create and add othogonal sub-state machines.
+				  	  addV(theRemoteMeasurementState= new RemoteMeasurementState(this));
+				  	  addV(theLocalMeasurementState= new LocalMeasurementState(this));
 							}
 
 			    public synchronized boolean processMeasurementMessageB(
@@ -369,64 +431,70 @@ public class LinkMeasurement
 			  		  It cycles the main machine if input was processed.
 			  		  */
 			      {
-			        boolean successB= true; // Assuming message is one of the two.
-			    	  
+			        	boolean successB= true; // Assuming message is one of the two.
 			        beforeExit: {
-
 			        	if  // "PS"
-				          ( theRemoteMeasurementState.processPacketSequenceNumberB(keyString) )
+				          ( theRemoteMeasurementState.processPacketSequenceNumberB(
+				          		keyString
+				          		) 
+				          	)
 				        	break beforeExit;
 				        if  // "PA"
-				          ( theLocalMeasurementState.processPacketAcknowledgementB(keyString) )
+				          ( theLocalMeasurementState.processPacketAcknowledgementB(
+				          		keyString
+				          		) 
+				          	)
 				        	break beforeExit;
 				        successB= false;  // Indicating message was neither of the two.
-			        
 			        } // beforeExit:
-			        
-			        if (successB)  // Post-processing input if successful.
-			        	cycleMainMachineV();
-
-			        return successB;
+				        if (successB)  // Post-processing if input successful.
+				        	cycleMainMachineV();
+				        return successB;
 			        }
 
 				  public synchronized void cycleMainMachineV() throws IOException
-				    /* Cycles the main state machine.
-				      It does this by cycling the sub-machines.
-				      It needs to do this only for the local machine.
+				    /* This method cycles the main state machine.
+				      Its purpose is to make certain that 
+				      machine inputs have been fully processed.
+				      To do this the sub-machines are recursively cycled.
+				      It also re-throws any IOException that might have occurred
+				      earlier when the machine was cycled by a timer thread.
+				      
+				      This method is called by the Unicaster thread and 
+				      the timer thread, both of which provide state-machine inputs.
+				      
+				      //// It needs to do this only for the local machine.
 				      */
 				    { 
-				  	  if (delaydIOException != null) // Re-throw other thread's exception. 
-				  	  	throw delaydIOException;  
+				  	  if  // Re-throw saved exception from other thread, if any.
+				  	    (delayedIOException != null) 
+				  	  	throw delayedIOException;
 
-				  		// theRemoteMeasurementState : No remote machine cycling needed.
-
-				  		theLocalMeasurementState.cycleMachineV();
-
+				  	  stateHandlerB(); // Calling state handler to cycle machine.
 				    	}
-					
+
 					}
 			
-			class LocalMeasurementState extends AndState 
+			class LocalMeasurementState extends OrState 
 	
 			  /* This is the local concurrent sub-state 
 			    for doing local measurements.  
 			    */
 	
 			  {
-					// The following sub-sub-States may be assigned to subState.
+					// The following States may be referenced and assigned to subState.
 					PausingState thePausingState= 
 							new PausingState(this);
 					SendingAndWaitingState theSendingAndWaitingState=
 							new SendingAndWaitingState(this);
 	
-					State subState; //% = thePausingState; // Initialize machine sub-state
-	
 					LocalMeasurementState( State parentState ) // Constructor.
 						{ 
-							super( parentState ); 
-							subState= thePausingState; // Initialize machine sub-state
+							super( parentState );
+
+							setNextStateV( thePausingState ); // Initialize machine sub-state.
 							}
-					
+          
 					private boolean processPacketAcknowledgementB(String keyString) 
 							throws IOException
 					  /* This input method tries to process the "PA" sequence number 
@@ -468,19 +536,6 @@ public class LinkMeasurement
 				  		}
 					
 					// States.
-				  
-				  public synchronized void cycleMachineV() throws IOException
-				    /* Decodes the state by calling associated handler method,
-				      repeating until a handler returns false,
-				      indicating it is has processed all available inputs
-				      and is waiting for new input.
-				      */
-			 	    { 
-				  		boolean stillGoingB= true;
-				  	  while (stillGoingB) { // Cycling until done.
-			    			stillGoingB= subState.stateHandlerB(); //% break;
-				  	  	}
-				  		}
 
 				  // State handler methods.
 
@@ -510,7 +565,7 @@ public class LinkMeasurement
 						    				statisticsTimerInput.cancelingV();
 						    			  retryTimeOutMsL=   // Initializing retry time-out.
 						    			  		retransmitDelayMsNamedLong.getValueL();
-						    			  subState= theSendingAndWaitingState;
+						      	  	setNextStateV(theSendingAndWaitingState);
 								    		break beforeExit;
 						    			  }
 						
@@ -538,7 +593,7 @@ public class LinkMeasurement
 						  	  	boolean runningB= true;
 						  	  beforeExit: { 
 						  	  beforeStartPausing: { 
-						
+
 						    		if // Doing state entry operations if this is state entry.
 						    		  (! statisticsTimerInput.getInputScheduledB())
 							    		{ // Sending PS and scheduling time-out, if not done yet.
@@ -576,7 +631,7 @@ public class LinkMeasurement
 								    	}
 					
 					  	  } // beforeStartPausing:
-								  subState= thePausingState; // Doing state switch to pausing. 
+					  	  	setNextStateV(thePausingState);
 							  	break beforeExit; 
 					
 					  	  } // beforeExit:
@@ -685,16 +740,21 @@ public class LinkMeasurement
 			  	} // class LocalMeasurementState
 			
 		
-			class RemoteMeasurementState {
+			class RemoteMeasurementState extends State {
 	
 				  /* This is a concurrent/orthogonal sub-state 
 				    which helps the remote peer makes measurements.
 				    It does this by responding with "PA" messages to 
 				    "PS" messages sent from the remote peer.
 				    It also records some information that is displayed locally.
-				    This state doesn't have any substates.
+				    This state doesn't have any sub-states.
 				    */
-	
+
+					RemoteMeasurementState( State parentState ) // Constructor.
+						{ 
+							super( parentState );
+							}
+
 					private boolean processPacketSequenceNumberB(String keyString) 
 							throws IOException
 					  /* This method tries to process the "PS" message from the remote peer.
