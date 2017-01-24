@@ -14,7 +14,7 @@ public class NamedList
 
     List<DataNode> theListOfDataNodes;
  
-	    NamedList ( String nameString, DataNode... inDataNodes )  // Constructor.
+    NamedList ( String nameString, DataNode... inDataNodes )  // Constructor.
       /* This constructor creates a NamedList with
         0 or more DataNodes from the array inDataNodes.
         Theoretically it could be used for 

@@ -4,13 +4,22 @@ package allClasses;
 
 public class MutableList 
 
-	/* This class is a NamedList DataNode whose contents can be changed.
+	/* This class is a DataNode which contains a mutable List of child DataNodes
+	  Its superclass, NamedList, contains an immutable List of child DataNodes
+	 * whose contents can be changed.
 
-	  This class includes methods for changing its NamedList.
-	  For thread safety some methods are synchronized and 
-	  switch to the Event Dispatch Thread (EDT) to make changes to the list.
-	  It  calls the TreeModel methods of DataTreeModel 
-	  to inform TreeModelListeners of those changes.
+	  This class includes methods for adding elements to, 
+	  and removing elements from, its List.
+
+	  For thread safety, and because DataNodes are accessed by  
+	  the Event Dispatch Thread (EDT), some methods are synchronized and  
+	  switch to the Event Dispatch Thread (EDT) to do the work of
+	  * changing the list and 
+	  * calling TreeModel methods to inform TreeModelListeners of changes.
+	  
+	  //// A reference to a DataTreeModel is provided by constructor injection
+	    and stored in this object.  This is simple, 
+	    but also inefficient in storage.  Is there a better way>
 	  */
 
   extends NamedList
@@ -40,10 +49,14 @@ public class MutableList
 		  		final DataNode childDataNode 
 		  		)
 		    /* This method adds childDataNode at the end of the List
-		      It does not try to do it on the EDT.
+		      It does not try to do it on the EDT,
+		      so it doesn't need theDataTreeModel.
+		      It is used only in special circumstances.
 		      
-		      ?? This is used and apparently needed by Outline.
-		      Using addB(..) causes a stack overflow.
+		      ?? This is used by the Outline class for lazy construction.
+		      Using addB(..) in this case causes:
+		        Uncaught Exception, AWT-EventQueue-1, java.lang.StackOverflowError
+		      I don't understand why.  Maybe it's TreePath translation.
 		      */
 		    {
 		  		theListOfDataNodes.add( theListOfDataNodes.size(), childDataNode );
@@ -76,7 +89,7 @@ public class MutableList
 		      It does all this in a thread-safe manner using 
 		      safelyReportingChangeV(..).
 		      
-		      //// Replace single element boolean array with a MutableBoolean.
+		      //// Replace addSuccessB array with a MutableBoolean.
 	  	    */
 		    {
         	//appLogger.debug("MutableList.add(..) "+childDataNode+" at "+indexI);

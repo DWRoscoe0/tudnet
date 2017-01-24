@@ -332,7 +332,9 @@ public class Outline
 		            theAid.lineOffsetL,  // for this file offset.
 		            theDataTreeModel
 	            	);
-	            addRawV(childDataNode); // Add to parent List, without EDT??
+	            addRawV(childDataNode); // Add to parent List, not on EDT. 
+	            //addB(childDataNode); // Add to parent List, on EDT.  Fails.
+	              // This causes a StackOverflowError.
           		theAid.theChildCountI++;  // Count it.
               theAid.skipChild( );  // Skip past this child.
               } // process this child.
