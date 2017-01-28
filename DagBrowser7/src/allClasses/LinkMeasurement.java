@@ -4,7 +4,6 @@ import static allClasses.Globals.appLogger;
 
 import java.io.IOException;
 import java.util.ArrayList;
-//%import java.util.Arrays;
 import java.util.List;
 import java.util.Timer;
 
@@ -33,6 +32,7 @@ public class LinkMeasurement
 		private NetcasterInputStream theNetcasterInputStream;
 		private NetcasterOutputStream theNetcasterOutputStream; 
 		private NamedLong retransmitDelayMsNamedLong;
+		private Timer theTimer; 
 
 	  private TimerInput statisticsTimerInput; // Used for timing
 	    // both pauses and time-outs. 
@@ -126,22 +126,7 @@ public class LinkMeasurement
 			  this.theNetcasterInputStream= theNetcasterInputStream;
 			  this.theNetcasterOutputStream= theNetcasterOutputStream;
 			  this.retransmitDelayMsNamedLong= retransmitDelayMsNamedLong;
-				
-			  // What will be the main state machine.
-	  	  theLinkMeasurementState= new LinkMeasurementState(null);
-
-	  	  statisticsTimerInput= 
-			  		new TimerInput(  //// Move to factory.
-			  				theTimer,
-			  				new Runnable() {
-					        public void run()
-						        {
-					        	  try { theLinkMeasurementState.cycleMainMachineV(); }
-					        	  catch ( IOException theIOException) 
-					        	    { delayedIOException= theIOException; }
-					        	  }
-					    		}
-			  				);
+			  this.theTimer= theTimer;
 			  }
 	
 	
@@ -224,8 +209,11 @@ public class LinkMeasurement
 		  	  		outgoingPacketLossNamedFloat
 		  	  		);
 
-	  	  	theLinkMeasurementState.cycleMainMachineV(); 
-	  	  	  // Starting the input-producing timer.
+
+				  // Create and initialize what will be the main state machine.
+				  theLinkMeasurementState= new LinkMeasurementState();
+		  	  theLinkMeasurementState.initializingV(null);
+		  	    // Initializing manually because it's not being added anywhere.
 	        }
 
 	    public synchronized boolean processMeasurementMessageB(
@@ -277,16 +265,30 @@ public class LinkMeasurement
 
 		    protected State subState;
 
-		    State( State parentState ) // Constructor.
-		      /* Constructs the State, including storing the parent State locally.
-		      	
-		      	//// Maybe all eliminate explicit constructors and 
-		      	  use setter injection in the addV(..) method instead?
-		        */
-					{ this.parentState= parentState; }
+		    public void initAndAddV(State theSubState) throws IOException
+		      /* This method does an initialize of theSubState and then
+		        adds it to the sub-state list of this state. 
+		       	*/
+		    	{ 
+		    		theSubState.initializingV( this );
+		    	  addV( theSubState ); // Add theSubState to
+		    	    // this state's list of sub-states.
+		    	  }
+
+		    public void initializingV(State parentState) throws IOException
+		      /* This method initializes this state.
+		    		It only sets the parent of this state to be parentState,
+		    		but it can be overridden.
+		    		*/
+			    {
+			    	//% setParentStateV( parentState );
+			    	}
 
 		    public void addV(State theSubState)
-		      // This method adds/injects one sub-state to this state.
+		      /* This method adds/injects one sub-state to this state.
+		        It adds theSubState to the state's sub-state list.
+		        It also sets the parent of the sub-state to be this state.
+		        */
 		    	{ 
 		    	  theListOfSubStates.add( theSubState ); // Add theSubState to
 		    	    // this state's list of sub-states.
@@ -295,7 +297,7 @@ public class LinkMeasurement
 		    	    // the sub-state's parent state.
 		    	  }
 
-				private void setParentStateV( State parentState )
+				public void setParentStateV( State parentState )
 				  // Stores parentState as the parent state of this state.
 					{ this.parentState= parentState; }
 				
@@ -321,9 +323,6 @@ public class LinkMeasurement
 				  There is no concurrency in an OrState machine,
 				  at least not at the immediate level of its sub-states.
 					*/
-
-				OrState( State parentState ) // Constructor.
-					{ super( parentState ); }
 
         protected void setNextStateV(State nextState)
           // Changes the state-machine State.
@@ -366,9 +365,6 @@ public class LinkMeasurement
 				  The sub-states are said to be orthogonal or concurrent.
 					*/
 
-				AndState( State parentState ) // Constructor.
-					{ super( parentState ); }
-
 				public boolean stateHandlerB() throws IOException
 				  /* This method handles this AndState by cycling all of it sub-machines
 				    until none of them makes any computational progress.
@@ -398,25 +394,44 @@ public class LinkMeasurement
 				}  // AndState 
 
 			class LinkMeasurementState extends AndState 
-				
+
 				/* This is is the root State for LinkMeasurement.
 				  Code should be moved from LinkMeasurement to here.
 				  */
-				
+
 				{
 
 				  // Sub-state machine instances.
 				  private RemoteMeasurementState theRemoteMeasurementState;
 				  private LocalMeasurementState theLocalMeasurementState;
 
-					LinkMeasurementState( State parentState ) // Constructor.
-						{ 
-							super( parentState ); 
+			    public void initializingV(State parentState) throws IOException 
+				    {
+			    		super.initializingV(parentState);
 
-						  // Create and add othogonal sub-state machines.
-				  	  addV(theRemoteMeasurementState= new RemoteMeasurementState(this));
-				  	  addV(theLocalMeasurementState= new LocalMeasurementState(this));
-							}
+			    		// Create and add orthogonal sub-state machines.
+				  	  initAndAddV(
+				  	  		theRemoteMeasurementState= new RemoteMeasurementState()
+				  	  		);
+				  	  initAndAddV(
+				  	  		theLocalMeasurementState= new LocalMeasurementState()
+				  	  		);
+
+				  	  statisticsTimerInput= 
+						  		new TimerInput(  //// Move to factory.
+						  				theTimer,
+						  				new Runnable() {
+								        public void run()
+									        {
+								        	  try { theLinkMeasurementState.cycleMainMachineV(); }
+								        	  catch ( IOException theIOException) 
+								        	    { delayedIOException= theIOException; }
+								        	  }
+								    		}
+						  				);
+			  	  	theLinkMeasurementState.cycleMainMachineV(); 
+			  	  	  // Starting the input-producing timer.
+				    	}
 
 			    public synchronized boolean processMeasurementMessageB(
 			    		String keyString
@@ -482,20 +497,28 @@ public class LinkMeasurement
 			    */
 	
 			  {
+
 					// The following States may be referenced and assigned to subState.
-					PausingState thePausingState= 
-							new PausingState(this);
-					SendingAndWaitingState theSendingAndWaitingState=
-							new SendingAndWaitingState(this);
-	
-					LocalMeasurementState( State parentState ) // Constructor.
-						{ 
-							super( parentState );
+				  // Create and add orthogonal sub-state machines.
+					PausingState thePausingState;
+					SendingAndWaitingState theSendingAndWaitingState;
+
+			    public void initializingV(State parentState) throws IOException 
+				    {
+			    		super.initializingV(parentState);
+
+			    		// Create and add orthogonal sub-state machines.
+				  	  initAndAddV(
+				  	  		thePausingState= new PausingState()
+				  	  		);
+				  	  initAndAddV(
+				  	  		theSendingAndWaitingState= new SendingAndWaitingState()
+				  	  		);
 
 							setNextStateV( thePausingState ); // Initialize machine sub-state.
-							}
-          
-					private boolean processPacketAcknowledgementB(String keyString) 
+				    	}
+
+			    private boolean processPacketAcknowledgementB(String keyString) 
 							throws IOException
 					  /* This input method tries to process the "PA" sequence number 
 					    feedback message, which the remote peer sends
@@ -542,10 +565,6 @@ public class LinkMeasurement
 					class PausingState extends State 
 				  
 				  	{
-
-							PausingState( State parentState ) // Constructor.
-								{ super( parentState ); }
-	
 						  public boolean stateHandlerB()
 						    // This state method generates the pause between PS-PA handshakes.
 						  	{ 
@@ -583,9 +602,6 @@ public class LinkMeasurement
 					class SendingAndWaitingState extends State 
 				  
 				  	{
-
-							SendingAndWaitingState( State parentState ) // Constructor.
-								{ super( parentState ); }
 
 						  public boolean stateHandlerB() throws IOException
 						  	// This state method handles the PS-PA handshakes, and retrying.
@@ -750,11 +766,6 @@ public class LinkMeasurement
 				    This state doesn't have any sub-states.
 				    */
 
-					RemoteMeasurementState( State parentState ) // Constructor.
-						{ 
-							super( parentState );
-							}
-
 					private boolean processPacketSequenceNumberB(String keyString) 
 							throws IOException
 					  /* This method tries to process the "PS" message from the remote peer.
@@ -819,4 +830,3 @@ public class LinkMeasurement
 
 	  
 		} // class LinkMeasurements
-
