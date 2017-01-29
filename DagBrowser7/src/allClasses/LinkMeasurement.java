@@ -209,11 +209,10 @@ public class LinkMeasurement
 		  	  		outgoingPacketLossNamedFloat
 		  	  		);
 
-
-				  // Create and initialize what will be the main state machine.
+				  // Create and initialize the top-level state machine.
 				  theLinkMeasurementState= new LinkMeasurementState();
-		  	  theLinkMeasurementState.initializingV(null);
-		  	    // Initializing manually because it's not being added anywhere.
+		  	  theLinkMeasurementState.initializingV(null); // Initializing manually 
+		  	    // because it's not being added to a sub-state list.
 	        }
 
 	    public synchronized boolean processMeasurementMessageB(
@@ -400,7 +399,6 @@ public class LinkMeasurement
 				  */
 
 				{
-
 				  // Sub-state machine instances.
 				  private RemoteMeasurementState theRemoteMeasurementState;
 				  private LocalMeasurementState theLocalMeasurementState;
@@ -408,29 +406,25 @@ public class LinkMeasurement
 			    public void initializingV(State parentState) throws IOException 
 				    {
 			    		super.initializingV(parentState);
-
-			    		// Create and add orthogonal sub-state machines.
-				  	  initAndAddV(
+				  	  initAndAddV( // Create and add orthogonal sub-state machine 1.
 				  	  		theRemoteMeasurementState= new RemoteMeasurementState()
 				  	  		);
-				  	  initAndAddV(
+				  	  initAndAddV( // Create and add orthogonal sub-state machine 2.
 				  	  		theLocalMeasurementState= new LocalMeasurementState()
 				  	  		);
-
 				  	  statisticsTimerInput= 
 						  		new TimerInput(  //// Move to factory.
 						  				theTimer,
 						  				new Runnable() {
-								        public void run()
-									        {
+								        public void run() {
 								        	  try { theLinkMeasurementState.cycleMainMachineV(); }
 								        	  catch ( IOException theIOException) 
 								        	    { delayedIOException= theIOException; }
 								        	  }
 								    		}
 						  				);
-			  	  	theLinkMeasurementState.cycleMainMachineV(); 
-			  	  	  // Starting the input-producing timer.
+			  	  	theLinkMeasurementState.cycleMainMachineV(); // Now that 
+			  	  	  // everything is ready, start the input-producing timer.
 				    	}
 
 			    public synchronized boolean processMeasurementMessageB(
@@ -488,7 +482,7 @@ public class LinkMeasurement
 				  	  stateHandlerB(); // Calling state handler to cycle machine.
 				    	}
 
-					}
+					} // class LinkMeasurementState
 			
 			class LocalMeasurementState extends OrState 
 	
@@ -756,7 +750,9 @@ public class LinkMeasurement
 			  	} // class LocalMeasurementState
 			
 		
-			class RemoteMeasurementState extends State {
+			class RemoteMeasurementState extends State 
+			
+				{
 	
 				  /* This is a concurrent/orthogonal sub-state 
 				    which helps the remote peer makes measurements.
@@ -828,5 +824,4 @@ public class LinkMeasurement
 					
 						} // class RemoteMeasurementState
 
-	  
 		} // class LinkMeasurements
