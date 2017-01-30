@@ -11,33 +11,32 @@ public class LinkMeasurement
 	
 	extends MutableList
 	
-	/* This class is, or contains, or will contain,
-	  a [hierarchical] state machine that measures and displays 
-	  several performance parameters of a peer-to-peer link.
-	  * Round-Trip-Time.
-	  * Count of packets sent and received, locally and remotely.
-	  * Packet loss ratios.  
-	  
-	  This code is not thread-safe.
-	  It is meant to be called only from the Unicaster thread,
-	  except for a timer which it uses.
-	  
-	  This class make use of internal non-static classes
-	  to separate DataNode code from State code while
-	  allowing the latter to access the former.
+	/* This class contains a [hierarchical] state machine 
+	  that measures and displays several performance parameters 
+	  of a Unicaster peer-to-peer link, including:
+	  * the Round-Trip-Time;
+	  * the count of packets sent and received, locally and remotely; and
+	  * the packet loss ratios.  
+
+	  This code is not thread-safe.  It is meant to be called only from:
+	  * a Unicaster thread, and
+	  * the thread belonging to a timer that it creates and uses.
+
+	  This class make use of an internal non-static class LinkMeasurementState.
+	  This was done as an expedient way for State code to access DataNode code.
+	  ////// Eventually it might be possible to combine a 
+	    State with a DataNode in a single class.  
+	    The tricky part is sharing the DataNode/sub-state list. 
 	 	*/
+
 	{	
-	  
 	  // Injected dependencies.
 		private NetcasterInputStream theNetcasterInputStream;
 		private NetcasterOutputStream theNetcasterOutputStream; 
 		private NamedLong retransmitDelayMsNamedLong;
 		private Timer theTimer; 
-
-	  private TimerInput statisticsTimerInput; // Used for timing
-	    // both pauses and time-outs. 
 		
-	  // What will be the main state machine.
+	  // The main state machine which is a nested non-static class.
 	  private LinkMeasurementState theLinkMeasurementState;
 	
 		// Variables for counting measurement handshakes.
@@ -214,7 +213,7 @@ public class LinkMeasurement
 	    		String keyString
 	    		) 
 	  		throws IOException
-	  		// This method just passes the input through to theLinkMeasurementState. 
+	  		/* This method passes possible inputs to theLinkMeasurementState.*/ 
 	  		{
 	    		return theLinkMeasurementState.processMeasurementMessageB(keyString); 
 	    	  }
@@ -222,10 +221,7 @@ public class LinkMeasurement
 		  public synchronized void finalizingV() throws IOException
 		    // This method processes any pending loose ends before shutdown.
 			  {
-		  		statisticsTimerInput.cancelingV(); // Stopping timer.
-
-		  		theLinkMeasurementState.stateHandlerB(); 
-		  		  // Doing this to throw any saved IOException from timer.
+		  	  theLinkMeasurementState.finalizingV(); // Finalizing state-machine.
 	        }
 
 	  private long sentSequenceNumberTimeNsL;
@@ -234,14 +230,13 @@ public class LinkMeasurement
 
 		private boolean acknowledgementReceivedB= false;
 
-		class LinkMeasurementState extends AndState 
+		private class LinkMeasurementState extends AndState 
 
-			/* This is is the root State for LinkMeasurement.
-			  Code should be moved from LinkMeasurement to here.
-			  */
+			// This is is the root State for LinkMeasurement.
 
 			{
-
+			  private TimerInput statisticsTimerInput; // Used for timing
+			    // both pauses and time-outs. 
 				private IOException delayedIOException= null; /* For re-throwing 
 					an exception which occurred in one thread which couldn't handle it, 
 			    in another thread that can.
@@ -251,17 +246,22 @@ public class LinkMeasurement
 			  private RemoteMeasurementState theRemoteMeasurementState;
 			  private LocalMeasurementState theLocalMeasurementState;
 
-		    public void initializingV(State parentState) throws IOException 
+		    public void initializingV(State parentState) throws IOException
+		      /* This method initializes this state machine.  This includes:
+		        * creating, initializing, and adding to the sub-state list
+		          all of our sub-state-machines, and
+		        * creating and starting our timer.
+		        */
 			    {
-		    		super.initializingV(parentState);
+		    		super.initializingV();
 			  	  initAndAddV( // Create and add orthogonal sub-state machine 1.
 			  	  		theRemoteMeasurementState= new RemoteMeasurementState()
 			  	  		);
 			  	  initAndAddV( // Create and add orthogonal sub-state machine 2.
 			  	  		theLocalMeasurementState= new LocalMeasurementState()
 			  	  		);
-			  	  statisticsTimerInput= 
-					  		new TimerInput(  //// Move to factory.
+			  	  statisticsTimerInput=  // Creating our timer. 
+					  		new TimerInput(  //// Move to factory?
 					  				theTimer,
 					  				new Runnable() {
 							        public void run() {
@@ -271,8 +271,7 @@ public class LinkMeasurement
 							        	  }
 							    		}
 					  				);
-		  	  	theLinkMeasurementState.stateHandlerB(); // Now that 
-		  	  	  // everything is ready, start the input-producing timer.
+		  	  	stateHandlerB(); // Calling the handler once to start timer.
 			    	}
 
 		    public synchronized boolean processMeasurementMessageB(
@@ -309,6 +308,14 @@ public class LinkMeasurement
 			        return successB;
 		        }
 
+		    public synchronized void finalizingV() throws IOException
+		      // This method processes any pending loose ends before shutdown.
+		  	  {
+		    	  super.finalizingV();
+			  		stateHandlerB(); // This throws any saved IOException from timer.
+		    		statisticsTimerInput.cancelingV(); // Stopping our timer.
+		        }
+
 			  public synchronized boolean stateHandlerB() throws IOException
 			    /* The only difference between this handler and its superclass
 			      is that this one re-throws any IOException that might have occurred
@@ -318,14 +325,14 @@ public class LinkMeasurement
 			      the timer thread, both of which provide state-machine inputs.
 			      */
 			    { 
-			  	  if  // Re-throw any previous saved exception.
+			  	  if  // Re-throw any previously saved exception from timer thread.
 			  	    (delayedIOException != null) 
 			  	  	throw delayedIOException;
 
 			  	  return super.stateHandlerB(); // Calling superclass state handler.
 			    	}
 				
-				class LocalMeasurementState extends OrState 
+				private class LocalMeasurementState extends OrState 
 		
 				  /* This is the local concurrent sub-state 
 				    for doing local measurements.  
@@ -338,9 +345,9 @@ public class LinkMeasurement
 						PausingState thePausingState;
 						SendingAndWaitingState theSendingAndWaitingState;
 		
-				    public void initializingV(State parentState) throws IOException 
+				    public void initializingV() throws IOException 
 					    {
-				    		super.initializingV(parentState);
+				    		super.initializingV();
 		
 				    		// Create and add orthogonal sub-state machines.
 					  	  initAndAddV(
@@ -395,9 +402,7 @@ public class LinkMeasurement
 						
 						// States.
 		
-					  // State handler methods.
-		
-						class PausingState extends State 
+				    private class PausingState extends State 
 					  
 					  	{
 							  public boolean stateHandlerB()
@@ -434,7 +439,7 @@ public class LinkMeasurement
 							
 					  	}
 		
-						class SendingAndWaitingState extends State 
+						private class SendingAndWaitingState extends State 
 					  
 					  	{
 							  public boolean stateHandlerB() throws IOException
@@ -591,7 +596,7 @@ public class LinkMeasurement
 				
 				  	} // class LocalMeasurementState
 		
-				class RemoteMeasurementState extends State 
+				private class RemoteMeasurementState extends State 
 				
 					{
 		
@@ -698,12 +703,12 @@ class State {
       adds it to the sub-state list of this state. 
      	*/
   	{ 
-  		theSubState.initializingV( this );
+  		theSubState.initializingV();
   	  addV( theSubState ); // Add theSubState to
   	    // this state's list of sub-states.
   	  }
 
-  public void initializingV(State parentState) throws IOException
+  public void initializingV() throws IOException
     /* This method initializes this state.
   		It only sets the parent of this state to be parentState,
   		but it can be overridden.
@@ -817,4 +822,11 @@ class AndState extends State {
 			return anythigMadeProgressB; 
 			}
 
+  public synchronized void finalizingV() throws IOException
+    /* This method processes any pending loose ends before shutdown.
+      In this case it does nothing.
+      */
+	  {
+      }
+  
 	}  // AndState 
