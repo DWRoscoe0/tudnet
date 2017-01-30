@@ -205,8 +205,8 @@ public class LinkMeasurement
 
 				  // Create and initialize the top-level state machine.
 				  theLinkMeasurementState= new LinkMeasurementState();
-		  	  theLinkMeasurementState.initializingV(null); // Initializing manually 
-		  	    // because it's not being added to a sub-state list.
+		  	  theLinkMeasurementState.initializingV(); // Initializing manually 
+		  	    // because we are not using State.initAndAddV(..).
 	        }
 
 	    public synchronized boolean processMeasurementMessageB(
@@ -246,7 +246,7 @@ public class LinkMeasurement
 			  private RemoteMeasurementState theRemoteMeasurementState;
 			  private LocalMeasurementState theLocalMeasurementState;
 
-		    public void initializingV(State parentState) throws IOException
+		    public void initializingV() throws IOException
 		      /* This method initializes this state machine.  This includes:
 		        * creating, initializing, and adding to the sub-state list
 		          all of our sub-state-machines, and
@@ -701,6 +701,10 @@ class State {
   public void initAndAddV(State theSubState) throws IOException
     /* This method does an initialize of theSubState and then
       adds it to the sub-state list of this state. 
+      This implementation answers the question:
+        Should sub-states be initialized before or after adding to the state
+      with the answer:
+        Before.
      	*/
   	{ 
   		theSubState.initializingV();
@@ -710,11 +714,11 @@ class State {
 
   public void initializingV() throws IOException
     /* This method initializes this state.
-  		It only sets the parent of this state to be parentState,
-  		but it can be overridden.
+      In this case it does nothing.
+      It does not recursively initialize the sub-states because
+      typically that is done by initAndAddV(..) as sub-states are added.
   		*/
     {
-    	//% setParentStateV( parentState );
     	}
 
   public void addV(State theSubState)
@@ -729,6 +733,17 @@ class State {
   	  theSubState.setParentStateV( this ); // Store this state as
   	    // the sub-state's parent state.
   	  }
+
+  public synchronized void finalizingV() throws IOException
+    /* This method processes any pending loose ends before shutdown.
+      In this case it finalizes each of its substates.
+      */
+	  {
+	  	for (State subState : theListOfSubStates)
+		  	{
+	  			subState.finalizingV();
+		  		}
+      }
 
 	public void setParentStateV( State parentState )
 	  // Stores parentState as the parent state of this state.
@@ -797,14 +812,17 @@ class AndState extends State {
 	  */
 
 	public boolean stateHandlerB() throws IOException
-	  /* This method handles this AndState by cycling all of it sub-machines
+	  /* This method handles this AndState by cycling all of its sub-machines
 	    until none of them makes any computational progress.
       It keeps going until all sub-state handlers return false,
-      indicating that it has processed all available inputs
-      and is waiting for new input.
-	    It returns false to indicate that there is nothing else to do
-      */
-	  //// rewrite for minimum sub-state stateHandlerB() calls.
+      indicating that they have processed all available inputs
+      and are waiting for new input.
+	    This method returns true if any computational progress was made, 
+	    false otherwise.
+	    
+    	//// rewrite loops for faster exit for 
+    	 	minimum sub-state stateHandlerB() calls.
+	    */
 	  { 
 		  boolean anythigMadeProgressB= false;
 			boolean cycleMadeProgressB;
@@ -812,21 +830,14 @@ class AndState extends State {
 	  	  { // Cycle all sub-state-machines once each.
 		  		cycleMadeProgressB= // Will be true if any machine progressed. 
 		  				false;
-	  	  	for (State aState : theListOfSubStates)
+	  	  	for (State subState : theListOfSubStates)
 		  	  	{
-	  	  		  boolean handlerMadeProgressB= aState.stateHandlerB(); 
+	  	  		  boolean handlerMadeProgressB= subState.stateHandlerB(); 
 		  	  		cycleMadeProgressB|= handlerMadeProgressB; 
 		  	  		}
   	  		anythigMadeProgressB|= cycleMadeProgressB; 
 	  	  	} while (cycleMadeProgressB);
 			return anythigMadeProgressB; 
 			}
-
-  public synchronized void finalizingV() throws IOException
-    /* This method processes any pending loose ends before shutdown.
-      In this case it does nothing.
-      */
-	  {
-      }
   
 	}  // AndState 
