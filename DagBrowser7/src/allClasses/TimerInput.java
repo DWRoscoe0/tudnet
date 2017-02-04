@@ -3,20 +3,21 @@ package allClasses;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class TimerInput // First developed for PS-PS RTT timing.
-	/* This class functions as an input to processes modeled as threads.
-	  It is not meant to be used with processes modeled as state-machines.
-	  This class uses the LockAndSignal.notifyingV() method
-	  in the run() method of the TimerTask instances that it creates,
-	  so it is guaranteed to be quick.
-	  The presence of an active input can be tested 
-	  with the getInputArrivedB() method.
-	
-	  //// This class's documentation needs better terminology.
-	 */
+public class TimerInput
+	/* This class performs functions similar to java.util.Timer,
+	  such as the ability to call a Runnable's run() method,
+	  but also provides methods with which the state of the timer can be tested.
+	  It's called TimerInput because it is meant to provide inputs to
+	  a thread or a state machine.
+
+		An earlier version of this class used LockAndSignal.notifyingV()
+	  in the run() method of TimerTask instances that it creates for quickness.
+	  This version does not have that guarantee.
+	  The run() method must return quickly or 
+	  other events using the same timer could be delayed. 
+	  */
 	{	
 	  // Injected dependencies.
-		//private LockAndSignal theLockAndSignal; //// no longer needed.
 	  private Timer theTimer;
 	  private Runnable theRunnable;
 	  
@@ -55,7 +56,6 @@ public class TimerInput // First developed for PS-PS RTT timing.
 	          // Activates this as an input and notifies interested thread.
 		        {
 	        		inputArrivedB= true;
-	        	  ////theLockAndSignal.notifyingV();
 	        	  theRunnable.run(); // cycleMachineB();
 		          }
 	    		};

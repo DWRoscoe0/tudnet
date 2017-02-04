@@ -340,7 +340,7 @@ public class LinkMeasurement
 		
 				  {
 		
-						// The following States may be referenced and assigned to subState.
+						// The following States may be referenced and assigned to presentSubState.
 					  // Create and add orthogonal sub-state machines.
 						PausingState thePausingState;
 						SendingAndWaitingState theSendingAndWaitingState;
@@ -405,30 +405,31 @@ public class LinkMeasurement
 				    private class PausingState extends State 
 					  
 					  	{
+					    	public void enterV() throws IOException
+						  	  { 
+					    	  	statisticsTimerInput.scheduleV(Config.handshakePause5000MsL);
+					  				}
+
 							  public boolean stateHandlerB()
-							    // This state method generates the pause between PS-PA handshakes.
+							    /* This state method generates 
+							      the pause between PS-PA handshakes.
+							     	*/
 							  	{ 
 							  	  boolean runningB= true;
 							  	  beforeExit: {
 							
-							  	  	if // Scheduling pause timer if not scheduled yet.
-							  	  		(! statisticsTimerInput.getInputScheduledB()) 
-							    	  	{ statisticsTimerInput.scheduleV( Config.handshakePause5000MsL );
-							    			  //appLogger.debug("handlingPauseB() scheduling pause end input.");
-									    		break beforeExit;
-									    	  }
-							
 							    		if // Handling pause complete if it is.
 								    		(statisticsTimerInput.getInputArrivedB()) 
 								    		{ // Handling pause complete by changing state. 
-							    				statisticsTimerInput.cancelingV();
-							    			  retryTimeOutMsL=   // Initializing retry time-out.
-							    			  		retransmitDelayMsNamedLong.getValueL();
+							    				////statisticsTimerInput.cancelingV();
+							    			  //%retryTimeOutMsL=   // Initializing retry time-out.
+							    			  //%		retransmitDelayMsNamedLong.getValueL();
 							      	  	setNextStateV(theSendingAndWaitingState);
 									    		break beforeExit;
 							    			  }
 							
 							    		{ runningB= false; // Indicate state machine is waiting.
+							    			setNoProgressV();
 							  				//appLogger.debug("handlingPauseB() pause end input scheduled.");
 								    		break beforeExit;
 								    	  }
@@ -436,12 +437,23 @@ public class LinkMeasurement
 							  	  } // beforeExit:
 							  		  return runningB; 
 							  		}
+
+								public void exitV() throws IOException
+								  { 
+										statisticsTimerInput.cancelingV();
+										}
 							
 					  	}
 		
 						private class SendingAndWaitingState extends State 
 					  
 					  	{
+					    	public void enterV() throws IOException
+						  	  { 
+				    			  retryTimeOutMsL=   // Initializing retry time-out.
+				    			  		retransmitDelayMsNamedLong.getValueL();
+					  				}
+
 							  public boolean stateHandlerB() throws IOException
 							  	/* This state method handles the PS-PA handshakes, 
 							  	  and retrying.
@@ -696,8 +708,6 @@ class State {
   protected List<State> theListOfSubStates=
       new ArrayList<State>(); // Initially empty list.
 
-  protected State subState;
-
   public void initAndAddV(State theSubState) throws IOException
     /* This method does an initialize of theSubState and then
       adds it to the sub-state list of this state. 
@@ -748,6 +758,14 @@ class State {
 	public void setParentStateV( State parentState )
 	  // Stores parentState as the parent state of this state.
 		{ this.parentState= parentState; }
+
+	public void enterV() throws IOException
+	  /* This method is called when a sub-state is entered.
+	    This version does nothing.
+	    It should be overridden in subclasses that do anything special.
+	    */
+	  { 
+			}
 	
 	public boolean stateHandlerB() throws IOException
 	  /* This is the default state handler. 
@@ -759,6 +777,14 @@ class State {
 	    though it need not necessarily be called again immediately. 
 	    */
 	  { return false; }
+
+	public void exitV() throws IOException
+	  /* This method is called when a sub-state is exited.
+	    This version does nothing.
+	    It should be overridden in subclasses that do anything special.
+	    */
+	  { 
+			}
 
 	}  // State class 
 
@@ -772,11 +798,12 @@ class OrState extends State {
 	  States active sequentially, one at a time.
 		*/
 
-  protected void setNextStateV(State nextState)
-    // Changes the state-machine State.
-    {
-  		subState= nextState;
-			}
+  private State presentSubState= new State(); // Initial default no-op state.
+  
+  private State nextSubState= null; // Becomes non-null when sub-state changes.
+  
+	private boolean subStateProgressMadeB= true; // Waiting fir input is 
+	  // the exception.
 
 	public boolean stateHandlerB() throws IOException
 	  /* This handles this OrState by cycling it's machine.
@@ -788,18 +815,47 @@ class OrState extends State {
       and is waiting for new input.
 	    It returns true if any computational progress was made,
 	    false otherwise.
+	    
+	    It manipulates subStateProgressMadeB in a way that combines
+	    input from setNoProgress() and handler return values.
       */
 	  { 
 		  boolean anyProgressMadeB= false;
-  		boolean substateProgressMadeB;
-  	  do { // Handle sub-states until done.
-	  	  	substateProgressMadeB= subState.stateHandlerB();
-	  	  	anyProgressMadeB|= substateProgressMadeB;
+  		while (true) { // Cycle sub-states until done.
+  	  		if  // Handling state change, if any.
+  	  		  (presentSubState != nextSubState) 
+	  	  		{ presentSubState.exitV(); 
+	    	  		presentSubState= nextSubState;
+	  	  			presentSubState.enterV(); 
+			  			}
+	  	  	subStateProgressMadeB= true; // Assume progress. 
+	  	  	subStateProgressMadeB&= presentSubState.stateHandlerB();
+	  	  	anyProgressMadeB|= subStateProgressMadeB;
+  	  	  if (!subStateProgressMadeB) // Exiting loop if no progress made. 
+  	  	  	break;
 	  	  	}
-  	  	while (substateProgressMadeB);
-			return anyProgressMadeB; 
+			return anyProgressMadeB; // Returning overall progress result.
 			}
 
+	protected void setNoProgressV() //// this doesn't work.
+	  /* This is an alternate way for stateHandlerB() to indicate
+	    that it made no progress and is waiting for new input.
+	    The other way is for stateHandlerB() to return false.
+	    */
+	  {
+	  	subStateProgressMadeB= false;
+			}
+		
+  protected void setNextStateV(State nextState)
+	  /* This method changes the state-machine State.
+	    Note, though the presentSubState variable changes immediately,
+	    control is not transfered to the new state until
+	    the handler of the present state exits.
+	    */
+	  {
+			nextSubState= nextState;
+			}
+		
 	}  // OrState 
 
 class AndState extends State {

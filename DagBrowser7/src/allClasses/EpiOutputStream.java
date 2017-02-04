@@ -19,26 +19,32 @@ public class EpiOutputStream<
     If used by a Unicaster then the packets are queued for sending.
     If used by a Subcaster then the packets are queued for multiplexing
     before sending. 
-    
-    //// markIndivisibleBlock().
-    Add this method which records the buffer position as the end of the block.
-    If the buffer becomes full, only the bytes up to 
-    the last block mark will be sent in a packet.
-    The remaining bytes will be copied to the front of the buffer
-    and become the beginning of the next packet. 
 
-    ////?? delayedFlush(long delayMsL).
-    Add this variation of flush() which takes a time limitMsL,
-    which is the maximum number of milliseconds before
-    an actual physical flush() happens.  
-    This will allow fuller packets and better bandwidth utilization allowing:
-    * a parent EpiOutputStream to combine data from
-    	child multiplexed streams into larger packets
-    * interactive apps to produce fewer packets.
-    This is a good case for using a single Timer. 
-    Alternatively, a setFlushIntervalV(..) method might be better.
-    It would remain in effect until changed.
-
+    ////// Note, this class contains code which was added to manage
+      indivisible blocks of bytes for output and delayed stream flushing,
+      but this code has not been tested and probably contains bugs!
+      It you see some code that doesn't make sense, that might be why.
+      A good example of this is any code involving a Timer.
+	      
+	    //// markIndivisibleBlock().
+	    Add this method which records the buffer position as the end of the block.
+	    If the buffer becomes full, only the bytes up to 
+	    the last block mark will be sent in a packet.
+	    The remaining bytes will be copied to the front of the buffer
+	    and become the beginning of the next packet. 
+	
+	    ////?? delayedFlush(long delayMsL).
+	    Add this variation of flush() which takes a time limitMsL,
+	    which is the maximum number of milliseconds before
+	    an actual physical flush() happens.  
+	    This will allow fuller packets and better bandwidth utilization allowing:
+	    * a parent EpiOutputStream to combine data from
+	    	child multiplexed streams into larger packets
+	    * interactive apps to produce fewer packets.
+	    This is a good case for using a single Timer. 
+	    Alternatively, a setFlushIntervalV(..) method might be better.
+	    It would remain in effect until changed.
+	
     //// Eventually this will be used with DataOutputStream for writing
     particular types to the stream, as follows:
     * EpiOutputStream extends OutputStream.
@@ -71,7 +77,7 @@ public class EpiOutputStream<
 				Q notifyingQueueQ,
 				M packetManagerM,
 				NamedLong packetCounterNamedLong,
-	  		Timer theTimer,
+	  		Timer unusedTimer, //////
 	  		char delimiterChar
 				)
 			{
