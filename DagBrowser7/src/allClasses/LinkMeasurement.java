@@ -357,7 +357,7 @@ public class LinkMeasurement
 					  	  		theSendingAndWaitingState= new SendingAndWaitingState()
 					  	  		);
 		
-								setNextStateV( thePausingState ); // Initialize sub-state.
+								setNextSubStateV( thePausingState ); // Initialize sub-state.
 					    	}
 		
 				    private boolean processPacketAcknowledgementB(String keyString) 
@@ -421,10 +421,7 @@ public class LinkMeasurement
 							    		if // Handling pause complete if it is.
 								    		(statisticsTimerInput.getInputArrivedB()) 
 								    		{ // Handling pause complete by changing state. 
-							    				////statisticsTimerInput.cancelingV();
-							    			  //%retryTimeOutMsL=   // Initializing retry time-out.
-							    			  //%		retransmitDelayMsNamedLong.getValueL();
-							      	  	setNextStateV(theSendingAndWaitingState);
+							    				setNextStateV(theSendingAndWaitingState);
 									    		break beforeExit;
 							    			  }
 							
@@ -500,7 +497,7 @@ public class LinkMeasurement
 									    	}
 						
 						  	  } // beforeStartPausing:
-						  	  	setNextStateV(thePausingState);
+							  	  setNextStateV(thePausingState);
 								  	break beforeExit; 
 						
 						  	  } // beforeExit:
@@ -688,7 +685,7 @@ public class LinkMeasurement
 
 
 class State {
-	
+
 	/*  This class is the base class for all state objects.
 	  
 	  States are hierarchical, meaning that
@@ -709,17 +706,16 @@ class State {
       new ArrayList<State>(); // Initially empty list.
 
   public void initAndAddV(State theSubState) throws IOException
-    /* This method does an initialize of theSubState and then
-      adds it to the sub-state list of this state. 
-      This implementation answers the question:
-        Should sub-states be initialized before or after adding to the state
-      with the answer:
-        Before.
+    /* This method:
+      * adds theSubState this state's list of sub-states, and 
+      * does an initialize of theSubState.
+      It does them in this order because initialization needs to know 
+      the parent state.
      	*/
   	{ 
+  	  addV( theSubState ); // Add theSubState to list of sub-states.
+  	    // This also sets the theSubState's parent state to be this state. 
   		theSubState.initializingV();
-  	  addV( theSubState ); // Add theSubState to
-  	    // this state's list of sub-states.
   	  }
 
   public void initializingV() throws IOException
@@ -785,6 +781,23 @@ class State {
 	    */
 	  { 
 			}
+	
+	protected void setNextSubStateV(State nextState)
+	  /* This method is meant to be overridden by OrState.
+	    It has no meaning and throws an Error otherwise.
+	    */
+	  {
+			throw new Error();
+			}
+
+	protected void setNextStateV(State nextState)
+		/* This is called to change the parent state's sub-state 
+		  to the sibling state nextState.
+		  Its affect is not immediate.
+		   */
+		{
+			parentState.setNextSubStateV(nextState);
+			}
 
 	}  // State class 
 
@@ -795,7 +808,7 @@ class OrState extends State {
 	  only one sub-state can be active at a time.
 
 	  There is no concurrency in an OrState machine, at least not at this level.
-	  States active sequentially, one at a time.
+	  States are active sequentially, one at a time.
 		*/
 
   private State presentSubState= new State(); // Initial default no-op state.
@@ -806,9 +819,9 @@ class OrState extends State {
 	  // the exception.
 
 	public boolean stateHandlerB() throws IOException
-	  /* This handles this OrState by cycling it's machine.
+	  /* This handles the OrState by cycling it's machine.
 	    It does this by calling the handler method 
-	    associated with the state-machine's sub-state.
+	    associated with the present state-machine's sub-state.
       The sub-state might change with each of these calls.
       It keeps calling sub-state handlers until a handler returns false,
       indicating that it has processed all available inputs
@@ -816,7 +829,7 @@ class OrState extends State {
 	    It returns true if any computational progress was made,
 	    false otherwise.
 	    
-	    It manipulates subStateProgressMadeB in a way that combines
+	    This method manipulates subStateProgressMadeB in a way that combines
 	    input from setNoProgress() and handler return values.
       */
 	  { 
@@ -828,16 +841,16 @@ class OrState extends State {
 	    	  		presentSubState= nextSubState;
 	  	  			presentSubState.enterV(); 
 			  			}
-	  	  	subStateProgressMadeB= true; // Assume progress. 
-	  	  	subStateProgressMadeB&= presentSubState.stateHandlerB();
-	  	  	anyProgressMadeB|= subStateProgressMadeB;
+	  	  	subStateProgressMadeB = true; // Assume progress. 
+	  	  	subStateProgressMadeB &= presentSubState.stateHandlerB();
+	  	  	anyProgressMadeB |= subStateProgressMadeB;
   	  	  if (!subStateProgressMadeB) // Exiting loop if no progress made. 
   	  	  	break;
 	  	  	}
 			return anyProgressMadeB; // Returning overall progress result.
 			}
 
-	protected void setNoProgressV() //// this doesn't work.
+	protected void setNoProgressV() //// this doesn't work yet.
 	  /* This is an alternate way for stateHandlerB() to indicate
 	    that it made no progress and is waiting for new input.
 	    The other way is for stateHandlerB() to return false.
@@ -846,16 +859,19 @@ class OrState extends State {
 	  	subStateProgressMadeB= false;
 			}
 		
-  protected void setNextStateV(State nextState)
-	  /* This method changes the state-machine State.
-	    Note, though the presentSubState variable changes immediately,
-	    control is not transfered to the new state until
-	    the handler of the present state exits.
+  protected void setNextSubStateV(State nextState)
+	  /* This method sets the state-machine state,
+	    which is the same as this state's sub-state.
+	    Note, though the nextSubState variable changes immediately,
+	    control is not transfered to the new sub-state until
+	    the handler of the present sub-state exits.
+
+		  This method is used for state initialization, not state transitions.
 	    */
 	  {
 			nextSubState= nextState;
 			}
-		
+
 	}  // OrState 
 
 class AndState extends State {
@@ -864,7 +880,7 @@ class AndState extends State {
 	  AndState machines have sub-states, but unlike OrStates,
 	  all sub-states are active at the same time.
 	
-	  There is concurrency in an AndState machine, at least not at this level.
+	  There is concurrency in an AndState machine, at least at this level.
 	  */
 
 	public boolean stateHandlerB() throws IOException
