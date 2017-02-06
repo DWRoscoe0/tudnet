@@ -425,8 +425,8 @@ public class LinkMeasurement
 									    		break beforeExit;
 							    			  }
 							
-							    		{ runningB= false; // Indicate state machine is waiting.
-							    			setNoProgressV();
+							    		{ //%runningB= false; // Indicate state machine is waiting.
+							    			setNoProgressInParentV();
 							  				//appLogger.debug("handlingPauseB() pause end input scheduled.");
 								    		break beforeExit;
 								    	  }
@@ -781,22 +781,33 @@ class State {
 	    */
 	  { 
 			}
+
+	protected void setNextStateV(State nextState)
+		/* This is called to change the state of a the state machine.
+		  to the sibling state nextState.
+		  It does this by calling the parent state's setNextSubStateV(..) method. 
+		  Its affect is not immediate.
+		  */
+		{
+			parentState.setNextSubStateV(nextState);
+			}
+
+	protected void setNoProgressInParentV()
+		{
+			((OrState)parentState).setNoProgressV();
+			}
 	
 	protected void setNextSubStateV(State nextState)
-	  /* This method is meant to be overridden by OrState.
-	    It has no meaning and throws an Error otherwise.
+	  /* This method provides a link between setNextStateV(State)
+	    and OrState.setNextSubStateV(State).
+	    It is meaningful only in the OrState class,
+	    and is meant to be overridden by the OrState class.
+	    It has no meaning when inherited by other classes and throws an Error.
+	    This method could be eliminated if setNextStateV(State)
+	    casted parentState to an OrState.
 	    */
 	  {
 			throw new Error();
-			}
-
-	protected void setNextStateV(State nextState)
-		/* This is called to change the parent state's sub-state 
-		  to the sibling state nextState.
-		  Its affect is not immediate.
-		   */
-		{
-			parentState.setNextSubStateV(nextState);
 			}
 
 	}  // State class 
@@ -830,7 +841,7 @@ class OrState extends State {
 	    false otherwise.
 	    
 	    This method manipulates subStateProgressMadeB in a way that combines
-	    input from setNoProgress() and handler return values.
+	    input from setNoProgress() and stateHandlerB() return values.
       */
 	  { 
 		  boolean anyProgressMadeB= false;
@@ -841,8 +852,11 @@ class OrState extends State {
 	    	  		presentSubState= nextSubState;
 	  	  			presentSubState.enterV(); 
 			  			}
-	  	  	subStateProgressMadeB = true; // Assume progress. 
-	  	  	subStateProgressMadeB &= presentSubState.stateHandlerB();
+	  	  	subStateProgressMadeB = true; // Assume progress.
+	  	  	{ // handlerResultB is needed so &= uses latest subStateProgressMadeB. 
+	  	  		boolean handlerResultB= presentSubState.stateHandlerB();
+	  	  		subStateProgressMadeB &= handlerResultB;
+	  	  		}
 	  	  	anyProgressMadeB |= subStateProgressMadeB;
   	  	  if (!subStateProgressMadeB) // Exiting loop if no progress made. 
   	  	  	break;
@@ -862,11 +876,11 @@ class OrState extends State {
   protected void setNextSubStateV(State nextState)
 	  /* This method sets the state-machine state,
 	    which is the same as this state's sub-state.
+	    It overrides State.setNextSubStateV(State nextState) to work.
+	    
 	    Note, though the nextSubState variable changes immediately,
 	    control is not transfered to the new sub-state until
 	    the handler of the present sub-state exits.
-
-		  This method is used for state initialization, not state transitions.
 	    */
 	  {
 			nextSubState= nextState;
