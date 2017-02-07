@@ -342,8 +342,8 @@ public class LinkMeasurement
 		
 						// The following States may be referenced and assigned to presentSubState.
 					  // Create and add orthogonal sub-state machines.
-						PausingState thePausingState;
-						SendingAndWaitingState theSendingAndWaitingState;
+						MeasurementPausedState theMeasurementPausedState;
+						MeasurementHandshakesState theMeasurementHandshakesState;
 		
 				    public void initializingV() throws IOException 
 					    {
@@ -351,13 +351,13 @@ public class LinkMeasurement
 		
 				    		// Create and add orthogonal sub-state machines.
 					  	  initAndAddV(
-					  	  		thePausingState= new PausingState()
+					  	  		theMeasurementPausedState= new MeasurementPausedState()
 					  	  		);
 					  	  initAndAddV(
-					  	  		theSendingAndWaitingState= new SendingAndWaitingState()
+					  	  		theMeasurementHandshakesState= new MeasurementHandshakesState()
 					  	  		);
 		
-								setNextSubStateV( thePausingState ); // Initialize sub-state.
+								requestSubStateV( theMeasurementPausedState ); // Initialize sub-state.
 					    	}
 		
 				    private boolean processPacketAcknowledgementB(String keyString) 
@@ -402,53 +402,45 @@ public class LinkMeasurement
 						
 						// States.
 		
-				    private class PausingState extends State 
+				    private class MeasurementPausedState extends State 
 					  
 					  	{
 					    	public void enterV() throws IOException
+					    	  // Starts timer on state entry.
 						  	  { 
 					    	  	statisticsTimerInput.scheduleV(Config.handshakePause5000MsL);
 					  				}
 
 							  public boolean stateHandlerB()
-							    /* This state method generates 
+							    /* This main state handler generates 
 							      the pause between PS-PA handshakes.
 							     	*/
 							  	{ 
-							  	  boolean runningB= true;
-							  	  beforeExit: {
+							  	  if (statisticsTimerInput.getInputArrivedB()) // Timer done. 
+								  		requestStateV(theMeasurementHandshakesState);
+										else  // Still waiting.
+							    		setNoProgressInParentV();
 							
-							    		if // Handling pause complete if it is.
-								    		(statisticsTimerInput.getInputArrivedB()) 
-								    		{ // Handling pause complete by changing state. 
-							    				setNextStateV(theSendingAndWaitingState);
-									    		break beforeExit;
-							    			  }
-							
-							    		{ //%runningB= false; // Indicate state machine is waiting.
-							    			setNoProgressInParentV();
-							  				//appLogger.debug("handlingPauseB() pause end input scheduled.");
-								    		break beforeExit;
-								    	  }
-							
-							  	  } // beforeExit:
-							  		  return runningB; 
+							  	  return true;
 							  		}
 
 								public void exitV() throws IOException
+								  // Cancels timer on state exit.
 								  { 
 										statisticsTimerInput.cancelingV();
+										
+										//// This will be moved back toSendingAndWaitingState later. 
+				    			  retryTimeOutMsL=   // Initializing retry time-out.
+				    			  		retransmitDelayMsNamedLong.getValueL();
 										}
 							
 					  	}
 		
-						private class SendingAndWaitingState extends State 
+						private class MeasurementHandshakesState extends State 
 					  
 					  	{
 					    	public void enterV() throws IOException
 						  	  { 
-				    			  retryTimeOutMsL=   // Initializing retry time-out.
-				    			  		retransmitDelayMsNamedLong.getValueL();
 					  				}
 
 							  public boolean stateHandlerB() throws IOException
@@ -457,8 +449,8 @@ public class LinkMeasurement
 							  	  */
 							  	{
 							  	  	boolean runningB= true;
-							  	  beforeExit: { 
-							  	  beforeStartPausing: { 
+							  	  beforeExit: while(true) { 
+							  	  beforeStartPausing: while(true) { 
 		
 							    		if // Doing state entry operations if this is state entry.
 							    		  (! statisticsTimerInput.getInputScheduledB())
@@ -466,7 +458,7 @@ public class LinkMeasurement
 							    			  statisticsTimerInput.scheduleV(retryTimeOutMsL);
 								    			//appLogger.debug("handleSendingAndWaiting() scheduling "+retryTimeOutMsL);
 									    		sendingSequenceNumberV();
-									    		break beforeExit;
+									    		//% break beforeExit;
 										    	}
 							      	if  // Processing acknowledgement PA if received.
 							      	  (acknowledgementReceivedB) 
@@ -484,7 +476,8 @@ public class LinkMeasurement
 							    			  if  // Handling maximum time-out interval not reached yet.
 							    			  	( retryTimeOutMsL <= Config.maxTimeOut5000MsL )
 							    				  { retryTimeOutMsL*=2;  // Doubling time limit for retrying.
-								    					break beforeExit; // Going to send PS again.
+						    				    	continue beforeStartPausing;
+								    					//% break beforeExit; // Going to send PS again.
 								  					  }
 							    			  //appLogger.debug("handleSendingAndWaiting() last time-out.");
 							    			  {  // Handling maximum exponential backoff time-out reached.
@@ -497,7 +490,7 @@ public class LinkMeasurement
 									    	}
 						
 						  	  } // beforeStartPausing:
-							  	  setNextStateV(thePausingState);
+							  	  requestStateV(theMeasurementPausedState);
 								  	break beforeExit; 
 						
 						  	  } // beforeExit:
@@ -687,17 +680,24 @@ public class LinkMeasurement
 class State {
 
 	/*  This class is the base class for all state objects.
-	  
+
 	  States are hierarchical, meaning that
 	  states may have child states, or sub-states.
 	  Sub-states may themselves be state machines 
 	  with their own sub-states.
-	  
+
 	  When writing code it is important to distinguish between
 	  * the current State, designated by "this", and
 	  * its current sub-state, or child state, 
 	    designated by "this.subState".
 
+		//// This state and its subclasses AndState and OrState
+		  do not [yet] provide 
+		  * It does not provide behavioral inheritance, which is
+		  	the most important benefit of hierarchical state machines.
+		  * It does not handle synchronous inputs, aka events.
+		    It handles only asynchronous inputs, variable values.
+		  * //// Maybe merge AndState and OrState into State?
 	  */
 
 	protected State parentState= null;
@@ -705,8 +705,24 @@ class State {
   protected List<State> theListOfSubStates=
       new ArrayList<State>(); // Initially empty list.
 
+  
+  /* Methods used to build state objects. */
+  
+  public void initializingV() throws IOException
+    /* This method initializes this state object, 
+      It does actions needed when this state object is being bult.
+      This is not the same as the entryV() method, which
+      does actions needed when the associated state-machine state is entered.
+
+      This version does nothing.
+      It does not recursively initialize the sub-states because
+      typically that is done by initAndAddV(..) as sub-states are added.
+  		*/
+    {
+    	}
+
   public void initAndAddV(State theSubState) throws IOException
-    /* This method:
+    /* This method is used as part of the State building process.  It:
       * adds theSubState this state's list of sub-states, and 
       * does an initialize of theSubState.
       It does them in this order because initialization needs to know 
@@ -714,21 +730,14 @@ class State {
      	*/
   	{ 
   	  addV( theSubState ); // Add theSubState to list of sub-states.
-  	    // This also sets the theSubState's parent state to be this state. 
-  		theSubState.initializingV();
-  	  }
+  	    // This also sets the theSubState's parent state to be this state.
 
-  public void initializingV() throws IOException
-    /* This method initializes this state.
-      In this case it does nothing.
-      It does not recursively initialize the sub-states because
-      typically that is done by initAndAddV(..) as sub-states are added.
-  		*/
-    {
-    	}
+  		theSubState.initializingV(); // Initializing the added sub-state.
+  	  }
 
   public void addV(State theSubState)
     /* This method adds/injects one sub-state to this state.
+			It part of the State building process.  
       It adds theSubState to the state's sub-state list.
       It also sets the parent of the sub-state to be this state.
       */
@@ -742,7 +751,9 @@ class State {
 
   public synchronized void finalizingV() throws IOException
     /* This method processes any pending loose ends before shutdown.
-      In this case it finalizes each of its substates.
+      In this case it finalizes each of its sub-states.
+      This is not the same as the exitV() method, which
+      does actions needed when the associated state-machine state is exited.
       */
 	  {
 	  	for (State subState : theListOfSubStates)
@@ -755,10 +766,16 @@ class State {
 	  // Stores parentState as the parent state of this state.
 		{ this.parentState= parentState; }
 
+	
+	/*  Methods which do actions for previously built State objects.  */
+	
 	public void enterV() throws IOException
-	  /* This method is called when a sub-state is entered.
-	    This version does nothing.
-	    It should be overridden in subclasses that do anything special.
+	  /* This method is called when 
+	    the state associated with this object is entered.
+	    This version does nothing, but it should be overridden 
+	    by subclasses that require entry actions.
+	    This is not the same as initializingV(),
+	    which does actions needed when the State object is being built.
 	    */
 	  { 
 			}
@@ -766,38 +783,44 @@ class State {
 	public boolean stateHandlerB() throws IOException
 	  /* This is the default state handler. 
 	    It does nothing because this is the superclass of all States.
-	    It also returns false to indicate:
-	    * no computation processing was possible on previous inputs,
-	    * and a test for new inputs found none.
-	    This method should be called repeatedly until it returns false,
-	    though it need not necessarily be called again immediately. 
+	    All versions of this method should return 
+	    * true to indicate that some computational input-processing progress 
+	      was made,
+	    * false otherwise.
+
+	    This version does nothing and returns false because 
+	    this is the superclass of all States.
 	    */
-	  { return false; }
+	  { 
+		  return false; 
+		  }
 
 	public void exitV() throws IOException
-	  /* This method is called when a sub-state is exited.
+	  /* This method is called when a state is exited.
+	    It does actions needed when a state is exited.
 	    This version does nothing.
-	    It should be overridden in subclasses that do anything special.
+	    It should be overridden in subclasses that need exit actions.
 	    */
 	  { 
 			}
 
-	protected void setNextStateV(State nextState)
+	
+	/*  Methods which return results from stateHandlerB().  
+	  In addition to these methods, stateHandlerB() returns 
+	  a boolean value which has its own meaning  
+	  */
+
+	protected void requestStateV(State nextState)
 		/* This is called to change the state of a the state machine.
 		  to the sibling state nextState.
 		  It does this by calling the parent state's setNextSubStateV(..) method. 
 		  Its affect is not immediate.
 		  */
 		{
-			parentState.setNextSubStateV(nextState);
-			}
-
-	protected void setNoProgressInParentV()
-		{
-			((OrState)parentState).setNoProgressV();
+			parentState.requestSubStateV(nextState);
 			}
 	
-	protected void setNextSubStateV(State nextState)
+	protected void requestSubStateV(State nextState)
 	  /* This method provides a link between setNextStateV(State)
 	    and OrState.setNextSubStateV(State).
 	    It is meaningful only in the OrState class,
@@ -810,6 +833,11 @@ class State {
 			throw new Error();
 			}
 
+	protected void setNoProgressInParentV()
+		{
+			((OrState)parentState).setNoProgressV();
+			}
+
 	}  // State class 
 
 class OrState extends State {
@@ -819,12 +847,13 @@ class OrState extends State {
 	  only one sub-state can be active at a time.
 
 	  There is no concurrency in an OrState machine, at least not at this level.
-	  States are active sequentially, one at a time.
+	  It sub-states are active one at a time.
 		*/
 
   private State presentSubState= new State(); // Initial default no-op state.
   
-  private State nextSubState= null; // Becomes non-null when sub-state changes.
+  private State requestedSubState= null; // Becomes non-null when 
+    // state-machine initializes and when machine's state changes.
   
 	private boolean subStateProgressMadeB= true; // Waiting fir input is 
 	  // the exception.
@@ -846,17 +875,18 @@ class OrState extends State {
 	  { 
 		  boolean anyProgressMadeB= false;
   		while (true) { // Cycle sub-states until done.
-  	  		if  // Handling state change, if any.
-  	  		  (presentSubState != nextSubState) 
+  	  		if  // Handling state change, if any, doing exit and entry.
+  	  		  (presentSubState != requestedSubState) 
 	  	  		{ presentSubState.exitV(); 
-	    	  		presentSubState= nextSubState;
+	    	  		presentSubState= requestedSubState;
+	    	  		//// Should check for super-state here.
 	  	  			presentSubState.enterV(); 
 			  			}
 	  	  	subStateProgressMadeB = true; // Assume progress.
 	  	  	{ // handlerResultB is needed so &= uses latest subStateProgressMadeB. 
 	  	  		boolean handlerResultB= presentSubState.stateHandlerB();
 	  	  		subStateProgressMadeB &= handlerResultB;
-	  	  		}
+	  	  		} // Is handlerResultB needed if subStateProgressMadeB is volatile?
 	  	  	anyProgressMadeB |= subStateProgressMadeB;
   	  	  if (!subStateProgressMadeB) // Exiting loop if no progress made. 
   	  	  	break;
@@ -873,17 +903,21 @@ class OrState extends State {
 	  	subStateProgressMadeB= false;
 			}
 		
-  protected void setNextSubStateV(State nextState)
+  protected void requestSubStateV(State nextState)
 	  /* This method sets the state-machine state,
 	    which is the same as this state's sub-state.
-	    It overrides State.setNextSubStateV(State nextState) to work.
+	    It overrides State.requestSubStateV(State nextState) to work.
+	    The condition nextState == null has special meaning,
+	    that the present sub-state is to be used.
 	    
-	    Note, though the nextSubState variable changes immediately,
+	    Note, though the requestedSubState variable changes immediately,
 	    control is not transfered to the new sub-state until
 	    the handler of the present sub-state exits.
 	    */
 	  {
-			nextSubState= nextState;
+  	  if (nextState == null)
+  	  	nextState= presentSubState;
+			requestedSubState= nextState;
 			}
 
 	}  // OrState 
