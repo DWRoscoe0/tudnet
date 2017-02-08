@@ -850,13 +850,19 @@ class OrState extends State {
 	  It sub-states are active one at a time.
 		*/
 
-  private State presentSubState= new State(); // Initial default no-op state.
+  private State presentSubState= // State machine's state.
+  		null; //// new State(); // Initial default no-op state.
+        // null means no state is active.  non-null means that state is active.
   
   private State requestedSubState= null; // Becomes non-null when 
-    // state-machine initializes and when machine's state changes.
+    // state-machine initializes and when machine's requests new state.
+    //// ? Change to: null means deactivate state?  non-null means go to state.
   
-	private boolean subStateProgressMadeB= true; // Waiting fir input is 
-	  // the exception.
+	private boolean handlerRecordedProgressB= true; // setNoProgressV() clears.
+	  // true means progress was made and recorded, false means waiting.
+
+	private boolean handlerReturnedProgressB= true; // Returned by handlerB().
+		// Waiting for input, false, is the exception.
 
 	public boolean stateHandlerB() throws IOException
 	  /* This handles the OrState by cycling it's machine.
@@ -869,55 +875,58 @@ class OrState extends State {
 	    It returns true if any computational progress was made,
 	    false otherwise.
 	    
-	    This method manipulates subStateProgressMadeB in a way that combines
+	    This method manipulates handlerRecordedProgressB in a way that combines
 	    input from setNoProgress() and stateHandlerB() return values.
       */
 	  { 
 		  boolean anyProgressMadeB= false;
   		while (true) { // Cycle sub-states until done.
-  	  		if  // Handling state change, if any, doing exit and entry.
-  	  		  (presentSubState != requestedSubState) 
-	  	  		{ presentSubState.exitV(); 
+  	  		if  // Handling state change, if any, by doing exit and entry.
+  	  		  (requestedSubState != null)
+  	  			{ // Exit present state and enter requested one.
+  	  			  if (presentSubState != null)
+  	  			  	presentSubState.exitV(); 
 	    	  		presentSubState= requestedSubState;
-	    	  		//// Should check for super-state here.
-	  	  			presentSubState.enterV(); 
+	    	  		//// Should check for sub-state validity vs. super-state here.
+  	  			  if (presentSubState != null)
+  	  			  	presentSubState.enterV(); 
 			  			}
-	  	  	subStateProgressMadeB = true; // Assume progress.
-	  	  	{ // handlerResultB is needed so &= uses latest subStateProgressMadeB. 
-	  	  		boolean handlerResultB= presentSubState.stateHandlerB();
-	  	  		subStateProgressMadeB &= handlerResultB;
-	  	  		} // Is handlerResultB needed if subStateProgressMadeB is volatile?
-	  	  	anyProgressMadeB |= subStateProgressMadeB;
-  	  	  if (!subStateProgressMadeB) // Exiting loop if no progress made. 
+	  	  	{ // Calling handler and combining its results.
+			  		handlerRecordedProgressB= true; // Assume progress.
+			  		requestedSubState= null; // Preparing for transition request.
+	  			  if (presentSubState != null) // Calling handler if state active.
+	  			  	handlerReturnedProgressB= presentSubState.stateHandlerB();
+	  	  		// handlerReturnedProgressB is needed so &= uses correct values.
+	  	  		// Is this true if handlerRecordedProgressB is volatile?
+	  	  		handlerRecordedProgressB &= handlerReturnedProgressB;
+	  	  		}
+	  	  	anyProgressMadeB |= handlerRecordedProgressB;
+  	  	  if (!handlerRecordedProgressB) // Exiting loop if no progress made. 
   	  	  	break;
 	  	  	}
 			return anyProgressMadeB; // Returning overall progress result.
 			}
 
-	protected void setNoProgressV() //// this doesn't work yet.
+	protected void setNoProgressV()
 	  /* This is an alternate way for stateHandlerB() to indicate
 	    that it made no progress and is waiting for new input.
 	    The other way is for stateHandlerB() to return false.
 	    */
 	  {
-	  	subStateProgressMadeB= false;
+	  	handlerRecordedProgressB= false;
 			}
 		
   protected void requestSubStateV(State nextState)
 	  /* This method sets the state-machine state,
 	    which is the same as this state's sub-state.
 	    It overrides State.requestSubStateV(State nextState) to work.
-	    The condition nextState == null has special meaning,
-	    that the present sub-state is to be used.
 	    
 	    Note, though the requestedSubState variable changes immediately,
 	    control is not transfered to the new sub-state until
 	    the handler of the present sub-state exits.
 	    */
 	  {
-  	  if (nextState == null)
-  	  	nextState= presentSubState;
-			requestedSubState= nextState;
+  	  requestedSubState= nextState;
 			}
 
 	}  // OrState 
