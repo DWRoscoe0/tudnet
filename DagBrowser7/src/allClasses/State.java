@@ -228,6 +228,8 @@ class OrState extends State {
 	  	  		handlerRecordedProgressB &= handlerReturnedProgressB;
 	  	  		}
 	  	  	anyProgressMadeB |= handlerRecordedProgressB;
+  	  		if (requestedSubState != null) // Force progress if state change.
+  	  	  	anyProgressMadeB= true;
   	  	  if (!handlerRecordedProgressB) // Exiting loop if no progress made. 
   	  	  	break;
 	  	  	}
