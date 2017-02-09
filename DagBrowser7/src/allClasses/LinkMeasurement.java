@@ -230,10 +230,12 @@ public class LinkMeasurement
 
 		private class LinkMeasurementState extends AndState 
 
-			// This is is the root State for LinkMeasurement.
+			/* This class is the root State for, and nested within, 
+			  the LinkMeasurement class. 
+			 	*/
 
 			{
-			  private TimerInput statisticsTimerInput; // Used for timing
+			  private TimerInput theTimerInput; // Used for timing
 			    // both pauses and time-outs. 
 				private IOException delayedIOException= null; /* For re-throwing 
 					an exception which occurred in one thread which couldn't handle it, 
@@ -258,7 +260,7 @@ public class LinkMeasurement
 			  	  initAndAddV( // Create and add orthogonal sub-state machine 2.
 			  	  		theLocalMeasurementState= new LocalMeasurementState()
 			  	  		);
-			  	  statisticsTimerInput=  // Creating our timer. 
+			  	  theTimerInput=  // Creating our timer. 
 					  		new TimerInput(  //// Move to factory?
 					  				theTimer,
 					  				new Runnable() {
@@ -311,7 +313,7 @@ public class LinkMeasurement
 		  	  {
 		    	  super.finalizingV();
 			  		stateHandlerB(); // This throws any saved IOException from timer.
-		    		statisticsTimerInput.cancelingV(); // Stopping our timer.
+		    		theTimerInput.cancelingV(); // Stopping our timer.
 		        }
 
 			  public synchronized boolean stateHandlerB() throws IOException
@@ -332,16 +334,16 @@ public class LinkMeasurement
 				
 				private class LocalMeasurementState extends OrState 
 		
-				  /* This is the local concurrent sub-state 
+				  /* This is the local concurrent/orthogonal sub-state 
 				    for doing local measurements.  
+						It partner is orthogonal sub-state RemoteMeasurementState. 
 				    */
 		
 				  {
 		
-						// The following States may be referenced and assigned to presentSubState.
-					  // Create and add orthogonal sub-state machines.
-						MeasurementPausedState theMeasurementPausedState;
-						MeasurementHandshakesState theMeasurementHandshakesState;
+						// sub-states/machines.
+						private MeasurementPausedState theMeasurementPausedState;
+						private MeasurementHandshakesState theMeasurementHandshakesState;
 		
 				    public void initializingV() throws IOException 
 					    {
@@ -355,7 +357,7 @@ public class LinkMeasurement
 					  	  		theMeasurementHandshakesState= new MeasurementHandshakesState()
 					  	  		);
 		
-								requestSubStateV( theMeasurementPausedState ); // Initialize sub-state.
+								requestSubStateV( theMeasurementPausedState ); // Initial state.
 					    	}
 		
 				    private boolean processPacketAcknowledgementB(String keyString) 
@@ -400,32 +402,35 @@ public class LinkMeasurement
 						
 						// States.
 		
-				    private class MeasurementPausedState extends State 
+				    private class MeasurementPausedState extends State
+				    
+				      /* This class does the pause between measurement handshakes.
+				        It finishes by requesting the MeasurementHandshakesState.
+				       	*/
 					  
 					  	{
 					    	public void enterV() throws IOException
-					    	  // Starts timer on state entry.
-						  	  { 
-					    	  	statisticsTimerInput.scheduleV(Config.handshakePause5000MsL);
+					    	  /* Starts timer for the pause interval before 
+					    	    the next handshake.
+					    	   	*/
+						  	  {
+					    	  	theTimerInput.scheduleV(Config.handshakePause5000MsL);
 					  				}
 
 							  public boolean stateHandlerB()
-							    /* This main state handler generates 
-							      the pause between PS-PA handshakes.
+							    /* Waits for the end of the pause interval.
 							     	*/
 							  	{ 
-							  	  if (statisticsTimerInput.getInputArrivedB()) // Timer done. 
+							  	  if (theTimerInput.getInputArrivedB()) // Timer done. 
 								  		requestStateV(theMeasurementHandshakesState);
-										else  // Still waiting.
-							    		setNoProgressInParentV();
-							
-							  	  return true;
+
+							  	  return false;
 							  		}
 
 								public void exitV() throws IOException
-								  // Cancels timer on state exit.
+								  // Cancels timer and initializes the handshake time-out.
 								  { 
-										statisticsTimerInput.cancelingV();
+										theTimerInput.cancelingV();
 										
 										//// This will be moved back toSendingAndWaitingState later. 
 				    			  retryTimeOutMsL=   // Initializing retry time-out.
@@ -435,76 +440,57 @@ public class LinkMeasurement
 					  	}
 		
 						private class MeasurementHandshakesState extends State 
-					  
+					  	/* This state handles the PS-PA handshakes, 
+					  	  including sending the first packet, 
+					  	  processing the acknowledgement, and
+					  	  retrying using a time-doubling exponential back-off.
+								It ends by requesting the MeasurementPausedState.
+					  	  */
+
 					  	{
 					    	public void enterV() throws IOException
+					    	  // Initiates the handshake and starts acknowledgement timer.
 						  	  { 
+				    			  theTimerInput.scheduleV(retryTimeOutMsL);
+						    		sendingSequenceNumberV();
 					  				}
 
 							  public boolean stateHandlerB() throws IOException
-							  	/* This state method handles the PS-PA handshakes, 
-							  	  and retrying.
+							  	/* This method handles handshakes acknowledgement, 
+							  	  initiating a retry using twice the time-out,
+							  	  until the acknowledgement is received,
+							  	  or giving up if the time-out limit is reached.
 							  	  */
 							  	{
-							  	  	boolean runningB= true;
-							  	  beforeExit: while(true) { 
-							  	  beforeStartPausing: while(true) { 
-		
-							    		if // Doing state entry operations if this is state entry.
-							    		  (! statisticsTimerInput.getInputScheduledB())
-								    		{ // Sending PS and scheduling time-out, if not done yet.
-							    			  statisticsTimerInput.scheduleV(retryTimeOutMsL);
-								    			//appLogger.debug("handleSendingAndWaiting() scheduling "+retryTimeOutMsL);
-									    		sendingSequenceNumberV();
-									    		//% break beforeExit;
-										    	}
-							      	if  // Processing acknowledgement PA if received.
-							      	  (acknowledgementReceivedB) 
-							        	{ // Handling received PA.
-							        		//appLogger.debug("handleSendingAndWaiting() PA acknowledgement and resets.");
-							        		acknowledgementReceivedB= false;  // Resetting PS input,
-							        		statisticsTimerInput.cancelingV(); // Resetting timer state.
-									    		break beforeStartPausing; // Going to Pausing state.
-										    	}
-							    		if // Handling PA reply timer time-out if it happened.
-							    			(statisticsTimerInput.getInputArrivedB()) 
-								    		{ // Handling PA reply timer time-out.   
-									    		//appLogger.debug("handleSendingAndWaiting() time-out occurred.");
-							    				statisticsTimerInput.cancelingV(); // Resetting timer.
-							    			  if  // Handling maximum time-out interval not reached yet.
-							    			  	( retryTimeOutMsL <= Config.maxTimeOut5000MsL )
-							    				  { retryTimeOutMsL*=2;  // Doubling time limit for retrying.
-							    				  	requestStateV(this); // Return to this state.
-						    				    	//% continue beforeStartPausing;
-								    					break beforeExit; // Going to send PS again.
-								  					  }
-							    			  //appLogger.debug("handleSendingAndWaiting() last time-out.");
-							    			  {  // Handling maximum exponential backoff time-out reached.
-								    			  break beforeStartPausing; // Pausing.
-								    			  }
-								    			}
-							    		{ runningB= false; // Indicate state machine is waiting for input.
-								    	
-							    		//appLogger.debug("handleSendingAndWaiting() time-out scheduled.");
-								    		break beforeExit;
+						      	if (acknowledgementReceivedB) 
+						        	{ acknowledgementReceivedB= false;  // Resetting input.
+									  	  requestStateV(theMeasurementPausedState);
 									    	}
-						
-						  	  } // beforeStartPausing:
-							  	  requestStateV(theMeasurementPausedState);
-								  	break beforeExit; 
-						
-						  	  } // beforeExit:
-						  			return runningB;
-							  	  //// return false;
-						
-						  	  }
+						      	else if (theTimerInput.getInputArrivedB()) // Time-out. 
+							    		{ if ( retryTimeOutMsL <= Config.maxTimeOut5000MsL )
+						    				  { retryTimeOutMsL*=2;  // Doubling time-out limit.
+						    				  	requestStateV(this); // Retrying by repeating state.
+							  					  }
+						    			  else // Giving up after maximum time-out reached.
+										  	  requestStateV(theMeasurementPausedState);
+							    			}
+						  			return false;
+						  	  	}
 							  
 					  		}
+
+						public void exitV() throws IOException
+						  // Cancels asknowledgement timer.
+						  { 
+								theTimerInput.cancelingV();
+								}
 					
 					  protected void sendingSequenceNumberV() throws IOException
-					    /* This method increments and writes 
-					      the packet ID (sequence) number to the EpiOutputStream.
-					      It doesn't flush().
+					    /* This method, at the beginning of the handshake,
+					      increments and writes the packet ID (sequence) number 
+					      to the EpiOutputStream.  
+					      
+					      //// It doesn't flush().
 					      */
 					    {
 					    	lastSequenceNumberSentL= 
@@ -604,11 +590,13 @@ public class LinkMeasurement
 					{
 		
 					  /* This is a concurrent/orthogonal sub-state 
-					    which helps the remote peer makes measurements.
+					    which helps the remote peer make measurements.
 					    It does this by responding with "PA" messages to 
 					    "PS" messages sent from the remote peer.
 					    It also records some information that is displayed locally.
 					    This state doesn't have any sub-states.
+					    It exists mainly to document its role along with
+					    its orthogonal partner sub-state LocalMeasurementState.
 					    */
 		
 						private boolean processPacketSequenceNumberB(String keyString) 
