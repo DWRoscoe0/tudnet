@@ -27,6 +27,8 @@ public class State {
 		  * //// Maybe merge AndState and OrState into State?
 	  */
 
+	public static State nullState= new State();
+	
 	protected State parentState= null;
 
   protected List<State> theListOfSubStates=
@@ -160,11 +162,6 @@ public class State {
 			throw new Error();
 			}
 
-	protected void setNoProgressInParentV()
-		{
-			((OrState)parentState).setNoProgressV();
-			}
-
 	}  // State class 
 
 class OrState extends State {
@@ -178,18 +175,19 @@ class OrState extends State {
 		*/
 
   private State presentSubState= // State machine's state.
-  		null; //// new State(); // Initial default no-op state.
+  		State.nullState; // null; //// new State(); // Initial default no-op state.
         // null means no state is active.  non-null means that state is active.
   
   private State requestedSubState= null; // Becomes non-null when 
     // state-machine initializes and when machine's requests new state.
     //// ? Change to: null means deactivate state?  non-null means go to state.
-  
-	private boolean handlerRecordedProgressB= true; // setNoProgressV() clears.
-	  // true means progress was made and recorded, false means waiting.
 
-	private boolean handlerReturnedProgressB= true; // Returned by handlerB().
-		// Waiting for input, false, is the exception.
+  boolean substateProgressB= false; // Handler progress accumuator.
+    // This variable accumulates sub-state handler progress, presently from:
+    // * from the sub-state handlerV() method value.  
+    // * requestSubStateV(State nextState)
+    // It is reset to false after each use.
+    //// or before calling the sub-state handler starts.
 
 	public boolean stateHandlerB() throws IOException
 	  /* This handles the OrState by cycling it's machine.
@@ -202,47 +200,27 @@ class OrState extends State {
 	    It returns true if any computational progress was made,
 	    false otherwise.
 	    
-	    This method manipulates handlerRecordedProgressB in a way that combines
-	    input from setNoProgress() and stateHandlerB() return values.
+	    //// Could check for sub-state validity vs. super-state 
+	      when process state change request.
       */
 	  { 
-		  boolean anyProgressMadeB= false;
+		  boolean stateProgressB= false;
   		while (true) { // Cycle sub-states until done.
-  	  		if  // Handling state change, if any, by doing exit and entry.
-  	  		  (requestedSubState != null)
-  	  			{ // Exit present state and enter requested one.
-  	  			  if (presentSubState != null)
-  	  			  	presentSubState.exitV(); 
+  	  		if  (requestedSubState != null) // Handling state change request.
+  	  		  { // Exit present state, enter requested one, and reset request.
+  	  			  presentSubState.exitV(); 
 	    	  		presentSubState= requestedSubState;
-	    	  		//// Should check for sub-state validity vs. super-state here.
-  	  			  if (presentSubState != null)
-  	  			  	presentSubState.enterV(); 
+  	  			  presentSubState.enterV(); 
+  	  				requestedSubState= null;
 			  			}
-	  	  	{ // Calling handler and combining its results.
-			  		handlerRecordedProgressB= true; // Assume progress.
-			  		requestedSubState= null; // Preparing for transition request.
-	  			  if (presentSubState != null) // Calling handler if state active.
-	  			  	handlerReturnedProgressB= presentSubState.stateHandlerB();
-	  	  		// handlerReturnedProgressB is needed so &= uses correct values.
-	  	  		// Is this true if handlerRecordedProgressB is volatile?
-	  	  		handlerRecordedProgressB &= handlerReturnedProgressB;
-	  	  		}
-	  	  	anyProgressMadeB |= handlerRecordedProgressB;
-  	  		if (requestedSubState != null) // Force progress if state change.
-  	  	  	anyProgressMadeB= true;
-  	  	  if (!handlerRecordedProgressB) // Exiting loop if no progress made. 
+		  		if ( presentSubState.stateHandlerB() )
+		  			substateProgressB= true;
+  	  	  if (!substateProgressB) // Exiting loop if no sub-state progress made. 
   	  	  	break;
+	  	  	stateProgressB= true; // Accumulate sub-state progress.
+		  		substateProgressB= false; // Reset for next use.
 	  	  	}
-			return anyProgressMadeB; // Returning overall progress result.
-			}
-
-	protected void setNoProgressV()
-	  /* This is an alternate way for stateHandlerB() to indicate
-	    that it made no progress and is waiting for new input.
-	    The other way is for stateHandlerB() to return false.
-	    */
-	  {
-	  	handlerRecordedProgressB= false;
+			return stateProgressB; // Returning accumulated state progress result.
 			}
 		
   protected void requestSubStateV(State nextState)
@@ -256,6 +234,7 @@ class OrState extends State {
 	    */
 	  {
   	  requestedSubState= nextState;
+			substateProgressB= true;  // Force progress because state changed.
 			}
 
 	}  // OrState 
