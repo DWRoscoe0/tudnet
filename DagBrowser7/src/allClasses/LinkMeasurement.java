@@ -343,6 +343,8 @@ public class LinkMeasurement
 		
 						// sub-states/machines.
 						private MeasurementPausedState theMeasurementPausedState;
+						private MeasurementInitializationState
+						  theMeasurementInitializationState;
 						private MeasurementHandshakesState theMeasurementHandshakesState;
 		
 				    public void initializingV() throws IOException 
@@ -352,6 +354,10 @@ public class LinkMeasurement
 				    		// Create and add orthogonal sub-state machines.
 					  	  initAndAddV(
 					  	  		theMeasurementPausedState= new MeasurementPausedState()
+					  	  		);
+					  	  initAndAddV(
+					  	  		theMeasurementInitializationState= 
+					  	  		  new MeasurementInitializationState()
 					  	  		);
 					  	  initAndAddV(
 					  	  		theMeasurementHandshakesState= new MeasurementHandshakesState()
@@ -422,7 +428,7 @@ public class LinkMeasurement
 							     	*/
 							  	{ 
 							  	  if (theTimerInput.getInputArrivedB()) // Timer done. 
-								  		requestStateV(theMeasurementHandshakesState);
+							  	  	requestStateV(theMeasurementInitializationState);
 
 							  	  return false;
 							  		}
@@ -431,14 +437,31 @@ public class LinkMeasurement
 								  // Cancels timer and initializes the handshake time-out.
 								  { 
 										theTimerInput.cancelingV();
-										
-										//// This will be moved back toSendingAndWaitingState later. 
-				    			  retryTimeOutMsL=   // Initializing retry time-out.
-				    			  		retransmitDelayMsNamedLong.getValueL();
 										}
 							
-					  	}
-		
+					  	} // class MeasurementPausedState
+
+						private class MeasurementInitializationState extends State 
+					  	/* This state does nothing but initializes for the handshake,
+					  	  then moves on to the MeasurementHandshakesState.
+					  	  */
+
+					  	{
+							  public boolean stateHandlerB() throws IOException
+							  	{
+										//// This will be moved back to he
+							  	  //// MeasurementHandshakesState later
+							  	  //// when that state is split into two levels.
+				    			  retryTimeOutMsL=   // Initializing retry time-out.
+				    			  		retransmitDelayMsNamedLong.getValueL();
+
+							  		requestStateV(theMeasurementHandshakesState);
+
+							  		return false;
+						  	  	}
+
+					  		} // class MeasurementInitializationState
+						
 						private class MeasurementHandshakesState extends State 
 					  	/* This state handles the PS-PA handshakes, 
 					  	  including sending the first packet, 
@@ -477,7 +500,7 @@ public class LinkMeasurement
 						  			return false;
 						  	  	}
 							  
-					  		}
+					  		} // class MeasurementHandshakesState 
 
 						public void exitV() throws IOException
 						  // Cancels asknowledgement timer.

@@ -217,8 +217,8 @@ class OrState extends State {
 		  			substateProgressB= true;
   	  	  if (!substateProgressB) // Exiting loop if no sub-state progress made. 
   	  	  	break;
-	  	  	stateProgressB= true; // Accumulate sub-state progress.
-		  		substateProgressB= false; // Reset for next use.
+	  	  	stateProgressB= true; // Accumulate sub-state progress in state.
+		  		substateProgressB= false; // Reset for later use.
 	  	  	}
 			return stateProgressB; // Returning accumulated state progress result.
 			}
