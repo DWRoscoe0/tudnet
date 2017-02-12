@@ -318,8 +318,9 @@ public class LinkMeasurement
 
 			  public synchronized boolean stateHandlerB() throws IOException
 			    /* The only difference between this handler and its superclass
-			      is that this one re-throws any IOException that might have occurred
-			      earlier when the machine was cycled by a timer thread.
+			      is that this one first checks for and re-throws 
+			      any IOException that might have occurred earlier 
+			      when the machine was cycled by a timer thread.
 
 			      This method is called by the Unicaster thread and 
 			      the timer thread, both of which provide state-machine inputs.
@@ -423,14 +424,12 @@ public class LinkMeasurement
 					    	  	theTimerInput.scheduleV(Config.handshakePause5000MsL);
 					  				}
 
-							  public boolean stateHandlerB()
+							  public void stateHandlerV()
 							    /* Waits for the end of the pause interval.
 							     	*/
 							  	{ 
 							  	  if (theTimerInput.getInputArrivedB()) // Timer done. 
 							  	  	requestStateV(theMeasurementInitializationState);
-
-							  	  return false;
 							  		}
 
 								public void exitV() throws IOException
@@ -447,7 +446,7 @@ public class LinkMeasurement
 					  	  */
 
 					  	{
-							  public boolean stateHandlerB() throws IOException
+							  public void stateHandlerV() throws IOException
 							  	{
 										//// This will be moved back to he
 							  	  //// MeasurementHandshakesState later
@@ -456,8 +455,6 @@ public class LinkMeasurement
 				    			  		retransmitDelayMsNamedLong.getValueL();
 
 							  		requestStateV(theMeasurementHandshakesState);
-
-							  		return false;
 						  	  	}
 
 					  		} // class MeasurementInitializationState
@@ -478,7 +475,7 @@ public class LinkMeasurement
 						    		sendingSequenceNumberV();
 					  				}
 
-							  public boolean stateHandlerB() throws IOException
+							  public void stateHandlerV() throws IOException
 							  	/* This method handles handshakes acknowledgement, 
 							  	  initiating a retry using twice the time-out,
 							  	  until the acknowledgement is received,
@@ -496,8 +493,8 @@ public class LinkMeasurement
 							  					  }
 						    			  else // Giving up after maximum time-out reached.
 										  	  requestStateV(theMeasurementPausedState);
+							    		      // Do again after a pause.
 							    			}
-						  			return false;
 						  	  	}
 							  
 					  		} // class MeasurementHandshakesState 
@@ -649,8 +646,8 @@ public class LinkMeasurement
 						    each time a new sequence number is received.  In fact,
 						    that is how reception of a sequence number can be interpreted.
 						
-								//// Sequence numbers and other numbers eventually need to be converted 
-								  to use modulo (wrap-around) arithmetic.
+								//// Sequence numbers and other numbers eventually 
+								  need to be converted to use modulo (wrap-around) arithmetic.
 							  */
 							{
 							  boolean isKeyB= keyString.equals( "PS" ); 

@@ -102,33 +102,59 @@ public class State {
 	  /* This method is called when 
 	    the state associated with this object is entered.
 	    This version does nothing, but it should be overridden 
-	    by subclasses that require entry actions.
+	    by state subclasses that require entry actions.
 	    This is not the same as initializingV(),
 	    which does actions needed when the State object is being built.
 	    */
 	  { 
 			}
 	
+	public void stateHandlerV() throws IOException
+
+	  /* A state class overrides either this method or stateHandlerB()
+	    to control how its state is handled.
+	    Overriding this method instead of stateHandlerB() can result in
+	    more compact code.  An override like this:
+
+				public void stateHandlerV() throws IOException
+				  { 
+				    some-code;
+				    }
+
+			is a more compact version of, but equivalent to, this:
+
+				public boolean stateHandlerB() throws IOException
+				  { 
+				    some-code;
+				    return false;
+				    }
+
+	   */
+
+	  { }
+	
 	public boolean stateHandlerB() throws IOException
-	  /* This is the default state handler. 
-	    It does nothing because this is the superclass of all States.
-	    All versions of this method should return 
+	  /* A state class overrides either this method or stateHandlerV()
+	    to control how its state is handled.
+	    This method does nothing except return false unless overridden.
+	    All overridden versions of this method should return 
 	    * true to indicate that some computational input-processing progress 
 	      was made,
-	    * false otherwise.
-
-	    This version does nothing and returns false because 
-	    this is the superclass of all States.
+	    * false if no computational progress is made, 
+	      or progress was indicated in some other way.
+	    To return false without needing to code a return statement,
+	    override the stateHandlerV() method instead.
 	    */
 	  { 
-		  return false; 
+			stateHandlerV();
+			return false; 
 		  }
 
 	public void exitV() throws IOException
 	  /* This method is called when a state is exited.
 	    It does actions needed when a state is exited.
 	    This version does nothing.
-	    It should be overridden in subclasses that need exit actions.
+	    It should be overridden in state subclasses that need exit actions.
 	    */
 	  { 
 			}
@@ -136,7 +162,9 @@ public class State {
 	
 	/*  Methods which return results from stateHandlerB().  
 	  In addition to these methods, stateHandlerB() returns 
-	  a boolean value which has its own meaning  
+	  a boolean value which has its own meaning.
+	  They, or the methods which override them,
+	  will probably also indicate that computation progress was made.  
 	  */
 
 	protected void requestStateV(State nextState)
