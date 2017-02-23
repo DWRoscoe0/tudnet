@@ -334,7 +334,7 @@ public class Unicaster
 		    * determining which peer should act as the leader when needed.
 		      If the local peer decides to be the LEADER then 
 		      the remote peer decides to be the follower, and vice versa.
-		      This determination is based on the peer's IP addresses.
+		      This determination is based on the peers' IP addresses.
 		    * Ignoring messages other than HELLO.
 		    This method should execute in both peers at approximately
 		    the same time and is called when the local and remote peers
@@ -343,7 +343,7 @@ public class Unicaster
 		    the connection may be considered established.
 		    Returns false otherwise.
 		    
-		    This could be a state machine, but doesn't have to be,
+		    //// This could be a state machine, but doesn't have to be,
 		    because it happens only when a peer-to-peer connection is established.
 		    
 		    //// Replace retry count with a overall time limit?

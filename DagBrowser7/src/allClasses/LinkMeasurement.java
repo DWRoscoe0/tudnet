@@ -285,11 +285,20 @@ public class LinkMeasurement
 
 		  		  It does its processing by calling methods in the sub-machines.
 		  		  It cycles the main machine if input was processed.
+
+		  		  //// If state machines are used more extensively to process
+		  		    messages of this type, it might make sense to:
+		  		    * Cache the State that processes the keyString in a HashMap
+		  		      and use the HashMap to dispatch the message.
+		  		    * Add discrete event processing to State machines and
+		  		      make these keyString messages a subclass of those events.
 		  		  */
 		      {
 		        	boolean successB= true; // Assuming message is one of the two.
 		        beforeExit: {
-		        	if  // "PS"
+		        	//// if ( handleInputB(keyString) ) //// Should process "PA" before below.
+		        	//// 		break beforeExit;
+			        if  // "PS"
 			          ( theRemoteMeasurementState.processPacketSequenceNumberB(
 			          		keyString
 			          		) 
@@ -321,6 +330,8 @@ public class LinkMeasurement
 			      is that this one first checks for and re-throws 
 			      any IOException that might have occurred earlier 
 			      when the machine was cycled by a timer thread.
+			      //// This kluge might not be needed if Timer is replaced by
+			       java.util.concurrent.ScheduledThreadPoolExecutor.
 
 			      This method is called by the Unicaster thread and 
 			      the timer thread, both of which provide state-machine inputs.
@@ -482,10 +493,16 @@ public class LinkMeasurement
 							  	  or giving up if the time-out limit is reached.
 							  	  */
 							  	{
-						      	if (acknowledgementReceivedB) 
-						        	{ acknowledgementReceivedB= false;  // Resetting input.
-									  	  requestStateV(theMeasurementPausedState);
-									    	}
+							  	  //if ( theRemoteMeasurementState.processPacketSequenceNumberB(
+
+									  //% if (tryInputB("PA"))
+									  //% 	{ processPacketAcknowledgementB("PA"); //// temp.
+									  //% 		requestStateV(theMeasurementPausedState);
+								  	//%   	}
+							  		if (acknowledgementReceivedB) 
+								  		{ acknowledgementReceivedB= false;  // Resetting input.
+								  	  requestStateV(theMeasurementPausedState);
+								  		}
 						      	else if (theTimerInput.getInputArrivedB()) // Time-out. 
 							    		{ if ( retryTimeOutMsL <= Config.maxTimeOut5000MsL )
 						    				  { retryTimeOutMsL*=2;  // Doubling time-out limit.

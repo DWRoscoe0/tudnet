@@ -6,24 +6,40 @@ import java.util.List;
 
 public class State {
 
-	/*  This class is the base class for all state objects.
+	/*  This class is the base class for all state objects and state-machines.
 
-	  States are hierarchical, meaning that
-	  states may have child states, or sub-states.
-	  Sub-states may themselves be state machines 
-	  with their own sub-states.
+	  States are hierarchical.  A state can be both:
+	  * a sub-state of a larger state-machines 
+	  * a state-machine with its own sub-states
 
+		State machines run when their handler methods are called.
+		Handler methods produce a success indication, usually a boolean value.
+		The exact interpretation of this value depends on the State sub-class
+		in which the method appears, but the following is always true:
+		* true means that some type of machine progress was made, either:
+		  * computational progress was made, or 
+		  * one or more inputs were processed, or 
+		  * one or more outputs were produced.
+		* false means that:
+			* no machine progress was made, or
+			* progress was made, but was recorded in some other way,
+			  probably in a variable field.
+		
 	  When writing code it is important to distinguish between
 	  * the current State, designated by "this", and
 	  * its current sub-state, or child state, 
 	    designated by "this.subState".
 
+		These classes presently support the processing of only asynchronous inputs, 
+		variable values which can change at any time.
+		
+		//// the processing of synchronous inputs, aka events, 
+		is not yet supported, but it is being added.  
+
 		//// This state and its subclasses AndState and OrState
 		  do not [yet] provide 
 		  * It does not provide behavioral inheritance, which is
 		  	the most important benefit of hierarchical state machines.
-		  * It does not handle synchronous inputs, aka events.
-		    It handles only asynchronous inputs, variable values.
 		  * //// Maybe merge AndState and OrState into State?
 	  */
 
@@ -34,7 +50,9 @@ public class State {
   protected List<State> theListOfSubStates=
       new ArrayList<State>(); // Initially empty list.
 
-  
+  protected String registeredInputString; // Stores an input stream event word,
+    // until a state handler has had the opportunity to check it.
+
   /* Methods used to build state objects. */
   
   public void initializingV() throws IOException
@@ -112,7 +130,7 @@ public class State {
 	public void stateHandlerV() throws IOException
 
 	  /* A state class overrides either this method or stateHandlerB()
-	    to control how its state is handled.
+	    as part of how it controls its behavior.
 	    Overriding this method instead of stateHandlerB() can result in
 	    more compact code.  An override like this:
 
@@ -148,6 +166,54 @@ public class State {
 	  { 
 			stateHandlerV();
 			return false; 
+		  }
+
+	public String getInputString()
+	  {
+			return registeredInputString;
+		  }
+
+	public void setInputV(String inputString)
+	  {
+		  registeredInputString= inputString; // Storing input in field variable.
+		  }
+	
+	public boolean handleInputB(String inputString) throws IOException
+	  /* This method is the state handler when there is a synchronous input.
+	    It stores wordString in a field variable and then 
+	    calls the regular state handler.
+	    
+	    The synchronous input might be processed by that regular handler,
+	    or a sub-state's regular handler, if it calls tryInputB(String). 
+	    Other inputs, specifically asynchronous inputs, might also be processed.
+	    If the handler processes the synchronous input then 
+	    the stored value is replaced with null
+	    and a true is returned, false is returned otherwise.
+	    In either case the stored value is replaced by null before returning.
+	    */
+	  {
+		  registeredInputString= inputString; // Register input in field variable.
+			stateHandlerV(); // Call regular handler to process it.
+			boolean successB= // Word was processed if it's now gone. 
+					(registeredInputString == null);
+			registeredInputString= null; // Unregister input to State machine..
+			return successB; // Returning whether input was processed.
+		  }
+	
+	public boolean tryInputB(String testString) throws IOException
+	  /* This method tries to process an input string.
+	    If inputString is the registered input string then it is consumed
+	    and true is returned, otherwise the registered input string
+	    is not consumed and false is returned.
+	    If true is returned then it is the responsibility of the caller
+	    to process other data associated with testString in the input stream.
+	   	*/
+	  {
+			boolean successB= // Comparing registered input to test input. 
+					(registeredInputString == testString);
+		  if (successB) // Consuming registered input if it matched.
+		  	registeredInputString= null;
+			return successB; // The result of the test.
 		  }
 
 	public void exitV() throws IOException
@@ -210,7 +276,7 @@ class OrState extends State {
     // state-machine initializes and when machine's requests new state.
     //// ? Change to: null means deactivate state?  non-null means go to state.
 
-  boolean substateProgressB= false; // Handler progress accumuator.
+  boolean substateProgressB= false; // Handler progress accumulator.
     // This variable accumulates sub-state handler progress, presently from:
     // * from the sub-state handlerV() method value.  
     // * requestSubStateV(State nextState)
@@ -241,8 +307,17 @@ class OrState extends State {
   	  			  presentSubState.enterV(); 
   	  				requestedSubState= null;
 			  			}
-		  		if ( presentSubState.stateHandlerB() )
-		  			substateProgressB= true;
+  	  		presentSubState.setInputV(getInputString());
+  	  		  // Store input string, if any, in sub-state.
+		  	  if ( presentSubState.stateHandlerB() )
+				  	substateProgressB= true;
+  	  		if // Detect and record whether synchronous input was consumed.
+  	  			( (getInputString() != null) &&
+  	  			  (presentSubState.getInputString() == null)
+  	  				)
+						{ setInputV(null);
+							substateProgressB= true;
+							}
   	  	  if (!substateProgressB) // Exiting loop if no sub-state progress made. 
   	  	  	break;
 	  	  	stateProgressB= true; // Accumulate sub-state progress in state.
@@ -264,7 +339,7 @@ class OrState extends State {
   	  requestedSubState= nextState;
 			substateProgressB= true;  // Force progress because state changed.
 			}
-
+  
 	}  // OrState 
 
 class AndState extends State {
@@ -289,20 +364,32 @@ class AndState extends State {
     	 	minimum sub-state stateHandlerB() calls.
 	    */
 	  { 
-		  boolean anythigMadeProgressB= false;
-			boolean cycleMadeProgressB;
-  	  do  // Cycling until no sub-machine progresses.
-	  	  { // Cycle all sub-state-machines once each.
-		  		cycleMadeProgressB= // Will be true if any machine progressed. 
-		  				false;
+		  boolean anyscanMadeProgressB= false;
+			boolean thisScanMadeProgressB;
+  	  do  // Repeat scanning until no sub-machine progresses.
+	  	  { // Scan all sub-state-machines once each.
+		  		thisScanMadeProgressB= false;
 	  	  	for (State subState : theListOfSubStates)
 		  	  	{
-	  	  		  boolean handlerMadeProgressB= subState.stateHandlerB(); 
-		  	  		cycleMadeProgressB|= handlerMadeProgressB; 
+	  	  		  //% boolean substateProgressB= false;
+			  	  	subState.setInputV(getInputString());
+		  	  		  // Store input string, if any, in sub-state.
+				  	  if ( subState.stateHandlerB() )
+						  	thisScanMadeProgressB= true;
+		  	  		if // Detect and record whether synchronous input was consumed.
+		  	  			( (getInputString() != null) &&
+		  	  			  (subState.getInputString() == null)
+		  	  				)
+								{ setInputV(null);
+									thisScanMadeProgressB= true;
+									}
+	  	  		  //% if (subState.stateHandlerB()) 
+	  	  		  //% 	thisScanMadeProgressB= true; 
 		  	  		}
-  	  		anythigMadeProgressB|= cycleMadeProgressB; 
-	  	  	} while (cycleMadeProgressB);
-			return anythigMadeProgressB; 
+	  	  	if (thisScanMadeProgressB) 
+	  	  		anyscanMadeProgressB= true; 
+	  	  	} while (thisScanMadeProgressB);
+			return anyscanMadeProgressB; 
 			}
   
 	}  // AndState 
