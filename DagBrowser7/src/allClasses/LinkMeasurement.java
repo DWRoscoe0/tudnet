@@ -20,7 +20,7 @@ public class LinkMeasurement
 	  * a Unicaster thread, and
 	  * the thread belonging to a timer that it creates and uses.
 
-	  This class make use of an internal non-static class LinkMeasurementState.
+	  This class makes use of an internal non-static class LinkMeasurementState.
 	  This was done as an expedient way for State code to access DataNode code.
 	  ////// Eventually it might be possible to combine a 
 	    State with a DataNode in a single class.  
@@ -207,13 +207,29 @@ public class LinkMeasurement
 		  	    // because we are not using State.initAndAddV(..).
 	        }
 
-	    public synchronized boolean processMeasurementMessageB(
+	    public synchronized boolean handleInputB(
 	    		String keyString
 	    		) 
 	  		throws IOException
-	  		/* This method passes possible inputs to theLinkMeasurementState.*/ 
+	  		/* This method is called to process a possible PS or PA message input.
+  		  It returns true if one of those messages is processed,
+  		  meaning keyString was one of them and it was consumed.
+  		  It returns false otherwise.
+
+  		  It does its processing by calling methods in the sub-machines.
+  		  It cycles the main machine if input was processed.
+  		  
+  		  This was previously called processMeasurementMessageB(keyString).
+
+  		  //// If state machines are used more extensively to process
+  		    messages of this type, it might make sense to:
+  		    * Cache the State that processes the keyString in a HashMap
+  		      and use the HashMap to dispatch the message.
+  		    * Add discrete event processing to State machines and
+  		      make these keyString messages a subclass of those events.
+  		  */
 	  		{
-	    		return theLinkMeasurementState.processMeasurementMessageB(keyString); 
+	    		return theLinkMeasurementState.handleInputB(keyString);
 	    	  }
 			
 		  public synchronized void finalizingV() throws IOException
@@ -226,8 +242,6 @@ public class LinkMeasurement
 
 		private long lastSequenceNumberSentL;
 
-		private boolean acknowledgementReceivedB= false;
-
 		private class LinkMeasurementState extends AndState 
 
 			/* This class is the root State for, and nested within, 
@@ -235,16 +249,18 @@ public class LinkMeasurement
 			 	*/
 
 			{
-			  private TimerInput theTimerInput; // Used for timing
-			    // both pauses and time-outs. 
+			  private TimerInput theTimerInput; // Used for state machine 
+			    // pauses and time-outs. 
 				private IOException delayedIOException= null; /* For re-throwing 
 					an exception which occurred in one thread which couldn't handle it, 
 			    in another thread that can.
 			    */
 
 				// Sub-state machine instances.
-			  private RemoteMeasurementState theRemoteMeasurementState;
-			  private LocalMeasurementState theLocalMeasurementState;
+				@SuppressWarnings("unused")
+				private RemoteMeasurementState theRemoteMeasurementState;
+				@SuppressWarnings("unused")
+				private LocalMeasurementState theLocalMeasurementState;
 
 		    public void initializingV() throws IOException
 		      /* This method initializes this state machine.  This includes:
@@ -255,7 +271,7 @@ public class LinkMeasurement
 			    {
 		    		super.initializingV();
 			  	  initAndAddV( // Create and add orthogonal sub-state machine 1.
-			  	  		theRemoteMeasurementState= new RemoteMeasurementState()
+			  	  		(theRemoteMeasurementState= new RemoteMeasurementState())
 			  	  		);
 			  	  initAndAddV( // Create and add orthogonal sub-state machine 2.
 			  	  		theLocalMeasurementState= new LocalMeasurementState()
@@ -273,49 +289,6 @@ public class LinkMeasurement
 					  				);
 		  	  	stateHandlerB(); // Calling the handler once to start timer.
 			    	}
-
-		    public synchronized boolean processMeasurementMessageB(
-		    		String keyString
-		    		) 
-		  		throws IOException
-		  		/* This method is called to process a possible PS or PA message input.
-		  		  It returns true if one of those messages is processed,
-		  		  meaning keyString was one of them and it was consumed.
-		  		  It returns false otherwise.
-
-		  		  It does its processing by calling methods in the sub-machines.
-		  		  It cycles the main machine if input was processed.
-
-		  		  //// If state machines are used more extensively to process
-		  		    messages of this type, it might make sense to:
-		  		    * Cache the State that processes the keyString in a HashMap
-		  		      and use the HashMap to dispatch the message.
-		  		    * Add discrete event processing to State machines and
-		  		      make these keyString messages a subclass of those events.
-		  		  */
-		      {
-		        	boolean successB= true; // Assuming message is one of the two.
-		        beforeExit: {
-		        	//// if ( handleInputB(keyString) ) //// Should process "PA" before below.
-		        	//// 		break beforeExit;
-			        if  // "PS"
-			          ( theRemoteMeasurementState.processPacketSequenceNumberB(
-			          		keyString
-			          		) 
-			          	)
-			        	break beforeExit;
-			        if  // "PA"
-			          ( theLocalMeasurementState.processPacketAcknowledgementB(
-			          		keyString
-			          		) 
-			          	)
-			        	break beforeExit;
-			        successB= false;  // Indicating message was neither of the two.
-		        } // beforeExit:
-			        if (successB)  // Post-processing if input successful.
-			        	stateHandlerB();
-			        return successB;
-		        }
 
 		    public synchronized void finalizingV() throws IOException
 		      // This method processes any pending loose ends before shutdown.
@@ -378,44 +351,41 @@ public class LinkMeasurement
 								requestSubStateV( theMeasurementPausedState ); // Initial state.
 					    	}
 		
-				    private boolean processPacketAcknowledgementB(String keyString) 
+				    private void processPacketAcknowledgementV() 
 								throws IOException
-						  /* This input method tries to process the "PA" sequence number 
+						  /* This input method processes the "PA" sequence number 
 						    feedback message, which the remote peer sends
 						    in response to receiving an "PS" sequence number message.
-						    The "PA" is followed by:
+						    The "PA", which is assumed to have already been processed,
+						    is followed by:
 						    * a copy of the sent packet sequence number received by the remote peer,
 						    * the remote peers received packet count.
-						    From these two values it calculates 
+						    From these two values this method calculates 
 						    the packet loss ratio in the remote peer receiver.
-						    By having "PA" include both values, its calculation is RTT-immune.
-					
-								See processSequenceNumberB(..) about "PS" for more information.
-					  	  */
+						    By having "PA" include both values, 
+						    its calculation is RTT-immune.
+
+								See processSequenceNumberB(..) about "PS", for more information.
+								*/
 					  	{
-					  	  boolean isKeyB= keyString.equals( "PA" ); 
-							  if (isKeyB) {
-							  	long ackReceivedTimeNsL= System.nanoTime();
-						  		int sequenceNumberI=  // Reading echo of sequence #.
-						  				theNetcasterInputStream.readANumberI();
-						  		int packetsReceivedI=  // Reading packets received.
-						  				theNetcasterInputStream.readANumberI();
-					    		acknowledgementReceivedB= true; 
-					    		measurementHandshakesNamedLong.addDeltaL(1);
-					        
-					        newOutgoingPacketsSentEchoedNamedLong.setValueL(
-							    		sequenceNumberI + 1 // Convert sequence # to sent packet count.
-							    		);
-						  		newOutgoingPacketsReceivedNamedLong.setValueL(packetsReceivedI);
-						  		outgoingPacketLossLossAverager.recordPacketsReceivedOrLostV(
-						  				newOutgoingPacketsSentEchoedNamedLong,
-						  				newOutgoingPacketsReceivedNamedLong
-										  );
-						  	  calculateRoundTripTimesV(
-						  	  		sequenceNumberI, ackReceivedTimeNsL, packetsReceivedI
-						  	  		);
-							  	}
-							  return isKeyB;
+						  	long ackReceivedTimeNsL= System.nanoTime();
+					  		int sequenceNumberI=  // Reading echo of sequence #.
+					  				theNetcasterInputStream.readANumberI();
+					  		int packetsReceivedI=  // Reading packets received.
+					  				theNetcasterInputStream.readANumberI();
+				    		measurementHandshakesNamedLong.addDeltaL(1);
+				        
+				        newOutgoingPacketsSentEchoedNamedLong.setValueL(
+						    		sequenceNumberI + 1 // Convert sequence # to sent packet count.
+						    		);
+					  		newOutgoingPacketsReceivedNamedLong.setValueL(packetsReceivedI);
+					  		outgoingPacketLossLossAverager.recordPacketsReceivedOrLostV(
+					  				newOutgoingPacketsSentEchoedNamedLong,
+					  				newOutgoingPacketsReceivedNamedLong
+									  );
+					  	  calculateRoundTripTimesV(
+					  	  		sequenceNumberI, ackReceivedTimeNsL, packetsReceivedI
+					  	  		);
 					  		}
 						
 						// States.
@@ -493,16 +463,10 @@ public class LinkMeasurement
 							  	  or giving up if the time-out limit is reached.
 							  	  */
 							  	{
-							  	  //if ( theRemoteMeasurementState.processPacketSequenceNumberB(
-
-									  //% if (tryInputB("PA"))
-									  //% 	{ processPacketAcknowledgementB("PA"); //// temp.
-									  //% 		requestStateV(theMeasurementPausedState);
-								  	//%   	}
-							  		if (acknowledgementReceivedB) 
-								  		{ acknowledgementReceivedB= false;  // Resetting input.
-								  	  requestStateV(theMeasurementPausedState);
-								  		}
+									  if (tryInputB("PA")) // Test and process acknowledgement.
+										  { processPacketAcknowledgementV();
+											  requestStateV(theMeasurementPausedState);
+										  	}
 						      	else if (theTimerInput.getInputArrivedB()) // Time-out. 
 							    		{ if ( retryTimeOutMsL <= Config.maxTimeOut5000MsL )
 						    				  { retryTimeOutMsL*=2;  // Doubling time-out limit.
@@ -532,7 +496,9 @@ public class LinkMeasurement
 					    {
 					    	lastSequenceNumberSentL= 
 					    			theNetcasterOutputStream.getCounterNamedLong().getValueL(); 
-					      appLogger.debug( "sendingSequenceNumberV() " + lastSequenceNumberSentL);
+					      appLogger.debug( 
+					      		"sendingSequenceNumberV() " + lastSequenceNumberSentL
+					      		);
 					      theNetcasterOutputStream.writingTerminatedStringV( "PS" );
 					      theNetcasterOutputStream.writingTerminatedLongV( 
 					      		lastSequenceNumberSentL 
@@ -635,28 +601,41 @@ public class LinkMeasurement
 					    It exists mainly to document its role along with
 					    its orthogonal partner sub-state LocalMeasurementState.
 					    */
+
+				  public void stateHandlerV() throws IOException
+				  	/* This method handles handshakes acknowledgement, 
+				  	  initiating a retry using twice the time-out,
+				  	  until the acknowledgement is received,
+				  	  or giving up if the time-out limit is reached.
+				  	  */
+				  	{
+						  if (tryInputB("PS" )) // Test and process PS message.
+							  processPacketSequenceNumberV(); // Process PS message body.
+						  // Staying in same state.
+							}
 		
-						private boolean processPacketSequenceNumberB(String keyString) 
+						private void processPacketSequenceNumberV() 
 								throws IOException
-						  /* This method tries to process the "PS" message from the remote peer.
-						    It keyString is a "PS" then it is processed along with
-						    the packet sequence number that follows "PS",
-						    which comes from the remote peer EpiOutputStreamO packet count.
-						    From this and the local EPIInputStreamI packet count it calculates 
-						    a new value of the local peer's incoming packet loss ratio.
+						  /* This method processes the "PS" message from the remote peer.
+						    The "PS" is assumed to have been processed already.
+						    It is followed by the packet sequence number which comes from 
+						    the remote peer EpiOutputStreamO packet count.
+						    From this and the local EPIInputStreamI packet count it 
+						    calculates a new value of the 
+						    local peer's incoming packet loss ratio.
 						    This ratio is accurate when calculated because
 						    the values it uses in the calculation are synchronized.
-		
-						    It also sends an "PA" message back to the remote peer with 
-						    the same numbers so the remote peer can calculate the same ratio, 
-						    which for the remote peer is called the outgoing packet loss ratio.
-						    By sending and using both numbers the remote peer's calculation is
-						    not affected by variations in Round-Trip-Time (RTT).
-		
+
+						    This method also sends an "PA" message back with the same 
+						    numbers so the remote peer can calculate the same ratio, which 
+						    for the remote peer is called the outgoing packet loss ratio.
+						    By sending and using both numbers the remote peer's calculation 
+						    is not affected by variations in Round-Trip-Time (RTT).
+
 						    Every packet has a sequence number, but 
 						    not every packet needs to contain its sequence number.
-						    The reception of a "PS" message with its sequence number means that
-						    the remote has sent at least that number of packets.
+						    The reception of a "PS" message with its sequence number 
+						    means that the remote has sent at least that number of packets.
 						    The difference of the highest sequence number received and
 						    the number of packets received is the number of packets lost.
 						    A new difference and a loss ratio average can be calculated
@@ -667,34 +646,31 @@ public class LinkMeasurement
 								  need to be converted to use modulo (wrap-around) arithmetic.
 							  */
 							{
-							  boolean isKeyB= keyString.equals( "PS" ); 
-							  if (isKeyB) {
-								  int sequenceNumberI= theNetcasterInputStream.readANumberI(); // Reading # from packet.
-								  newIncomingPacketsSentDefaultLongLike.setValueL( // Recording.
-											sequenceNumberI + 1
-											); // Adding 1 to convert sequence # to remote sent packet count.
-									incomingPacketLossAverager.recordPacketsReceivedOrLostV(
-											newIncomingPacketsSentDefaultLongLike,
-											newIncomingPacketsReceivedNamedLong
-									  );
-									theNetcasterOutputStream.writingTerminatedStringV( "PA" );
-									theNetcasterOutputStream.writingTerminatedLongV( // The remote sequence number.
-						  				//newIncomingPacketsSentDefaultLongLike.getValueL()
-						  				sequenceNumberI
-						  				);
-									long receivedPacketCountL= 
-									  newIncomingPacketsReceivedNamedLong.getValueL(); 
-									theNetcasterOutputStream.writingTerminatedLongV( // The local received packet count.
-											receivedPacketCountL 
-						  				);
-									theNetcasterOutputStream.sendingPacketV(); // Sending now for minimum RTT.
-						      appLogger.debug( "processPacketSequenceNumberB(..) PS:"
-						  		  +sequenceNumberI+","
-						      	+receivedPacketCountL
-						  		  );
-									}
-							  return isKeyB;
-								}
+							  int sequenceNumberI=  // Reading # from packet.
+							  		theNetcasterInputStream.readANumberI();
+							  newIncomingPacketsSentDefaultLongLike.setValueL( // Recording.
+										sequenceNumberI + 1
+										); // Adding 1 converts sequence # to remote packet count.
+								incomingPacketLossAverager.recordPacketsReceivedOrLostV(
+										newIncomingPacketsSentDefaultLongLike,
+										newIncomingPacketsReceivedNamedLong
+								  );
+								theNetcasterOutputStream.writingTerminatedStringV( "PA" );
+								theNetcasterOutputStream.writingTerminatedLongV(
+					  				sequenceNumberI // The remote sequence number.
+					  				);
+								long receivedPacketCountL= 
+								  newIncomingPacketsReceivedNamedLong.getValueL(); 
+								theNetcasterOutputStream.writingTerminatedLongV(
+										receivedPacketCountL  // The local received packet count.
+					  				);
+								theNetcasterOutputStream.sendingPacketV();
+								  // Sending now for minimum RTT.
+					      appLogger.debug( "processPacketSequenceNumberB(..) PS:"
+					  		  +sequenceNumberI+","
+					      	+receivedPacketCountL
+					  		  );
+							  }
 						
 							} // class RemoteMeasurementState
 

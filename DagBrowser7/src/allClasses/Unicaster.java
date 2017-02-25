@@ -312,7 +312,7 @@ public class Unicaster
 		      //if ( processPacketSequenceNumberB(keyString) ) // "PS"
    			  //	break process;
 		      //if ( processPacketAcknowledgementB(keyString) ) // "PA"
-		      if ( theLinkMeasurement.processMeasurementMessageB(keyString) ) ////
+		      if ( theLinkMeasurement.handleInputB(keyString) ) ////
 		      	break process;
   			  if ( processHelloB( keyString ) ) // "HELLO"
    			  	break process;

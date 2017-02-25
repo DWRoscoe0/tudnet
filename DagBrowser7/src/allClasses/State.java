@@ -32,15 +32,12 @@ public class State {
 
 		These classes presently support the processing of only asynchronous inputs, 
 		variable values which can change at any time.
-		
-		//// the processing of synchronous inputs, aka events, 
-		is not yet supported, but it is being added.  
 
 		//// This state and its subclasses AndState and OrState
 		  do not [yet] provide 
-		  * It does not provide behavioral inheritance, which is
+		  * behavioral inheritance, which is
 		  	the most important benefit of hierarchical state machines.
-		  * //// Maybe merge AndState and OrState into State?
+		* //// Maybe merge AndState and OrState into State?
 	  */
 
 	public static State nullState= new State();
@@ -193,7 +190,8 @@ public class State {
 	    */
 	  {
 		  registeredInputString= inputString; // Register input in field variable.
-			stateHandlerV(); // Call regular handler to process it.
+			stateHandlerB(); // Call regular handler to process it.  Return value 
+			  // is ignored because we are interested in String processing.
 			boolean successB= // Word was processed if it's now gone. 
 					(registeredInputString == null);
 			registeredInputString= null; // Unregister input to State machine..
@@ -210,7 +208,7 @@ public class State {
 	   	*/
 	  {
 			boolean successB= // Comparing registered input to test input. 
-					(registeredInputString == testString);
+					(testString.equals(registeredInputString));
 		  if (successB) // Consuming registered input if it matched.
 		  	registeredInputString= null;
 			return successB; // The result of the test.
@@ -269,19 +267,19 @@ class OrState extends State {
 		*/
 
   private State presentSubState= // State machine's state.
-  		State.nullState; // null; //// new State(); // Initial default no-op state.
+  		State.nullState; // Initial default no-op state.
         // null means no state is active.  non-null means that state is active.
   
   private State requestedSubState= null; // Becomes non-null when 
     // state-machine initializes and when machine's requests new state.
-    //// ? Change to: null means deactivate state?  non-null means go to state.
 
   boolean substateProgressB= false; // Handler progress accumulator.
     // This variable accumulates sub-state handler progress, presently from:
-    // * from the sub-state handlerV() method value.  
+    // * the sub-state handlerV() method value,
+    // * a synchronous input String was processed,
     // * requestSubStateV(State nextState)
-    // It is reset to false after each use.
-    //// or before calling the sub-state handler starts.
+    // It is reset to false after it is aggregated into,
+    // and returned as, a stateProgressB value.
 
 	public boolean stateHandlerB() throws IOException
 	  /* This handles the OrState by cycling it's machine.
@@ -294,8 +292,8 @@ class OrState extends State {
 	    It returns true if any computational progress was made,
 	    false otherwise.
 	    
-	    //// Could check for sub-state validity vs. super-state 
-	      when process state change request.
+	    //// Must check for sub-state validity vs. super-state 
+	      when behavioral inheritance is added.
       */
 	  { 
 		  boolean stateProgressB= false;
@@ -371,7 +369,6 @@ class AndState extends State {
 		  		thisScanMadeProgressB= false;
 	  	  	for (State subState : theListOfSubStates)
 		  	  	{
-	  	  		  //% boolean substateProgressB= false;
 			  	  	subState.setInputV(getInputString());
 		  	  		  // Store input string, if any, in sub-state.
 				  	  if ( subState.stateHandlerB() )
@@ -383,8 +380,6 @@ class AndState extends State {
 								{ setInputV(null);
 									thisScanMadeProgressB= true;
 									}
-	  	  		  //% if (subState.stateHandlerB()) 
-	  	  		  //% 	thisScanMadeProgressB= true; 
 		  	  		}
 	  	  	if (thisScanMadeProgressB) 
 	  	  		anyscanMadeProgressB= true; 
