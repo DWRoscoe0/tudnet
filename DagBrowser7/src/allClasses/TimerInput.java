@@ -26,12 +26,10 @@ public class TimerInput
 		private boolean inputArrivedB= false; 
 	
 	  TimerInput( // Constructor.
-	  		//% LockAndSignal theLockAndSignal,
 	  		Timer theTimer,
 	  		Runnable theRunnable
 	  		)
 	  	{
-		  	//% this.theLockAndSignal= theLockAndSignal;
 		  	this.theTimer= theTimer;
 		  	this.theRunnable= theRunnable;
 		  	}

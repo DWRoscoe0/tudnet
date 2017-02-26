@@ -212,7 +212,6 @@ public class Multicaster
 	                  PacketManager.logMulticastReceiverPacketV(
 	                  		receiverDatagramPacket
 	                  		);
-	                  //%receiverToMulticasterNetcasterQueue.add( // Queuing packet.
 	                  receiverToMulticasterNetcasterQueue.put( // Queuing packet.
                   		receiverNetcasterPacket
                   		);
@@ -389,7 +388,6 @@ public class Multicaster
 	       		//	"Multicaster.processingPossibleNewUnicasterV():\n  queuing: "
 		       	//	+PacketStuff.gettingPacketString(theKeyedPacket.getDatagramPacket())
 	       		//);
-          	//%multicasterToConnectionManagerNetcasterQueue.add( // Passing to CM.
 	      		multicasterToConnectionManagerNetcasterQueue.put( // Passing to CM.
 			    		theNetcasterPacket
 			        );

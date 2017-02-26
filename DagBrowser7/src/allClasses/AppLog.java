@@ -1,8 +1,6 @@
 
 package allClasses;
 
-//%import java.awt.Component;
-//%import java.awt.KeyboardFocusManager;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
@@ -61,10 +59,8 @@ public class AppLog
         { return theAppLog; }
 
     // Variables.
-      ////private boolean theBufferedModeB= false;
       private File logFile;  // Name of log file.
       private int theSessionI= 0;  // App session counter.
-      //%private long startedAtMillisL;  // Time when initialized.
       private long lastMillisL; // Last time measured.
       private PrintWriter thePrintWriter = null; // non-null means file open.
 
@@ -85,7 +81,6 @@ public class AppLog
      */
     
     public static boolean testingForPingB= false;
-    //%private static boolean focusChangeCheckingB= true;
 
     public synchronized void setBufferedModeV( 
     		boolean desiredBufferedModeB 
@@ -107,8 +102,6 @@ public class AppLog
     private void logFileInitializeV()
       throws IOException  // Do-nothing put-off.
       {
-        //%startedAtMillisL=  // Save time when we started.
-    		//%  System.currentTimeMillis();
         logFile=  // Identify log file name.
           AppFolders.resolveFile( "log.txt" );
         theSessionI= getSessionI();  // Get app session number.

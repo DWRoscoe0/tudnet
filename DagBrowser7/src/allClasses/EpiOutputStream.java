@@ -242,7 +242,6 @@ public class EpiOutputStream<
   					packetManagerM.produceDefaultSizeBufferBytes();
 	  	  processing: {
 	  	  	//// Changed this to use sendableI.
-		  	  //%testB= (indexI > 0); // Testing for bytes in buffer.
 	  	  	////testB= (sendableI > 0); // Testing for send-able bytes in buffer.
 			  	if ( sendableI > 0 ) // Outputting packet if any bytes in buffer.
 				  	{

@@ -2,7 +2,6 @@ package allClasses;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
-//% import java.util.TimerTask; 
 import java.util.Timer;
 
 import static allClasses.Globals.appLogger;
@@ -59,15 +58,6 @@ public class Unicaster
   		private Timer theTimer;
 
   		// Other instance variables.
-
-      /*////
-      private long timeToSendNextSequenceNumberMsL= 
-       	System.currentTimeMillis()+1000;  /* Config sending first PS.
-            This is done to let startup logging settle down so
-            it won't interfere with measurement of first Round-Trip-Time. 
-            */ 
-
-  		////private TimerInput theTimerInput;  // For PS-PS RTT timing. 
   		private LinkMeasurement theLinkMeasurement;
   		
 			public Unicaster(  // Constructor. 
@@ -144,13 +134,8 @@ public class Unicaster
 	    {
     		super.initializingWithoutStreamsV(); // We do the streams below.
 
-    		//% theTimer= new Timer(); ////
-    		////theTimerInput=  new TimerInput( theLockAndSignal, theTimer ); ////
-
-    		// Adding measurement count.
 	  	  addB( theLinkMeasurement= new LinkMeasurement( 
 	  		    theDataTreeModel,
-    				//% this, 
     				theTimer, 
     				theEpiInputStreamI,
     				theEpiOutputStreamO, 
@@ -212,7 +197,6 @@ public class Unicaster
 				//appLogger.debug( "Queuing packet with TEST for sending.");
 				writingTerminatedStringV( "TEST" );
 				endingPacketV(); // Forcing send.
-				//%Thread.yield(); // Letting other threads run.
 				EpiThread.interruptableSleepB(100); // Letting other threads run,
 				  // also limiting bandwidth.
 				}
@@ -365,7 +349,6 @@ public class Unicaster
           processingPossibleHelloResponse: while (true) {
             Input theInput=  // Awaiting next input within time interval.
             		waitingForSubnotificationOrIntervalOrInterruptE( 
-            				//%helloSentMsL, 5000
             				helloSentMsL, helloIimeLimitMsL
             				);
             if // Handling possible exit interrupt.

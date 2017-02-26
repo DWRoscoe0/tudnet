@@ -32,7 +32,6 @@ public class Streamcaster<
 	{
   
 	  // Constants.
-		//% private final char delimiterChar= Config.delimiterChar; //////
 		
 	  protected final long PeriodMillisL= // PING-REPLY handshake period.
 	    //4000;   // 4 seconds.
@@ -87,8 +86,6 @@ public class Streamcaster<
 
     protected void initializingV() throws IOException
 	    {
-	  	  //% addB( retransmitDelayMsNamedLong );
-	  	  
         appLogger.info( 
         		"This Streamcaster has been given the role of: "
         		+ (leadingB ? "LEADER" : "FOLLOWER")
@@ -145,7 +142,6 @@ public class Streamcaster<
           replyWaitLoop: while (true) { // Handling echo or other conditions.
             theInput=  // Awaiting next input within reply interval.
             		waitingForSubnotificationOrIntervalOrInterruptE( 
-            				//%pingSentMsL, HalfPeriodMillisL
             				pingSentMsL, retransmitDelayMsL
             				);
             if ( theInput == Input.TIME ) // Exiting echo wait if time-out.
@@ -329,163 +325,6 @@ public class Streamcaster<
     	  return theInput;
 	      }
 
-
-    // String reading methods.
-
-    protected boolean XtryingToGetStringB( String theString ) throws IOException ////
-      /* This method tries to get a particular String theString.
-        It consumes the String and returns true 
-        if the desired string is there, 
-        otherwise it does not consume the String and returns false.
-        The string is considered to be not there if either:
-        * There are no characters available in the input stream buffer.
-        * The characters available in the input stream buffer are
-          not the desired string.
-        */
-      {
-    	  /*  ////
-  			boolean gotStringB= false;
-    		theEpiInputStreamI.mark(0); // Marking stream position.
-    		String inString= theEpiInputStreamI.tryingToGetString();
-		    //appLogger.debug( "tryingToGetStringB(): inString= "+ inString );
-    	  gotStringB=  // Testing for desired string.
-    	  		theString.equals( inString );
-		    if ( ! gotStringB ) // Resetting position if String is not correct.
-    	  	theEpiInputStreamI.reset(); // Putting String back into stream.
-    	  return gotStringB;
-    	  */ ////
-    	  return theEpiInputStreamI.tryingToGetStringB( theString );
-      	}
-
-    protected String XtryingToGetString( ) throws IOException //////
-    /* This method tries to get any String.
-      It returns a String if there is one available, null otherwise.
-      */
-    {
-    	/*////
-			String inString= null;
-			if // Overriding if desired string is able to be read. 
-			  ( theEpiInputStreamI.available() > 0 )
-				{
-	    	  inString= theEpiInputStreamI.readAString();
-	    	  }
-  	  return inString;
-  	  */ ////
-    	return theEpiInputStreamI.tryingToGetString( );
-    	}
-
-		protected int XreadANumberI() //////
-  		throws IOException
-  		/* This method reads and returns one int number 
-  		  converted from a String ending in the delimiterChar.
-  		  from theEpiInputStreamI.
-  		  This means it could not be used for floating point numbers.  
-  		  It blocks if a full number is not available.
-  		 */
-			{
-				//% String numberString= theEpiInputStreamI.readAString();
-				//% int numberI= Integer.parseInt( numberString );
-				//% return numberI;
-			  return theEpiInputStreamI.readANumberI();
-				}
-
-		protected String XreadAString() //////
-  		throws IOException
-  		/* This method reads and returns one String ending in the first
-  		  delimiterChar from theEpiInputStreamI.  
-  		  The String returned does not include the delimiter.
-  		  It does not block.
-				If a complete string, including delimiter is not available,
-				then logs and returns an empty string.
-  		 */
-			{
-			  /*////
-				String readString= "";
-				while (true) { // Reading and accumulating all bytes in string.
-					if ( theEpiInputStreamI.available() <= 0 ) // debug.
-						{
-							readString+="!NO-DATA-AVAILABLE!";
-		          appLogger.error( "readAString(): returning " + readString );
-							break;
-	  					}
-					int byteI= theEpiInputStreamI.read();
-					if ( delimiterChar == byteI ) break; // Exiting if terminator seen.
-					readString+= (char)byteI;
-					}
-				return readString;
-				*/ ////
-				return theEpiInputStreamI.readAString();
-				}
-		
-
-
-    // String writing and packet sending code.
-
-    protected void XwritingAndSendingV( String theString ) throws IOException //////
-      /* This method writes theString to theEpiOutputStream
-        and then sends it and anything else that has been written 
-        to the stream in a packet.
-        */
-      {
-    		//% theEpiOutputStreamO.writingTerminatedStringV( theString );
-    		//% theEpiOutputStreamO.sendingPacketV();
-    		theEpiOutputStreamO.writingAndSendingV( theString );
-        }
-
-    protected void XsendingPacketV() throws IOException //////
-      /* This method forces what has been written to the stream to be sent.
-        It also guarantees a packet boundary at this point in the stream.
-        It is equivalent to endingPacketV( 0 );
-    		*/
-      {
-	  		//%theEpiOutputStreamO.flush(); // Sending it by flushing stream.
-    		//%endingPacketV( 0 );
-    		//% theEpiOutputStreamO.doOrScheduleSendB( 0 );
-  			theEpiOutputStreamO.sendingPacketV();
-        }
-
-    protected void XendingPacketV( long delayMsL ) //% throws IOException  //////
-      /* This method forces what has been written to the stream to be sent
-        within delayMsL milliseconds.
-        It also guarantees a packet boundary at this point in the stream.
-    		*/
-      {
-	  		theEpiOutputStreamO.doOrScheduleSendB( delayMsL );
-        }
-
-    protected void XwritingTerminatedStringV( String theString ) ////// 
-    		throws IOException
-      /* This method writes to the EpiOutputStream 
-        theString followed by the delimiterChar.
-        But it doesn't force a flush().
-        */
-      { 
-    		theEpiOutputStreamO.writingTerminatedStringV( theString );
-	    	//% theEpiOutputStreamO.writingStringV( theString );
-    		//% theEpiOutputStreamO.writingStringV( String.valueOf(delimiterChar) );
-        }
-
-    protected void XwritingTerminatedLongV( long theL ) ////// 
-    		throws IOException
-      /* This method writes theL long int 
-        followed by the delimiterChar to the EpiOutputStream.  
-        But it doesn't force a flush().
-        */
-      { 
-  			//% theEpiOutputStreamO.writingTerminatedStringV( theL + "" ); // Converting to String.
-    		theEpiOutputStreamO.writingTerminatedLongV( theL );
-        }
-
-    protected void XwritingStringV( String theString ) throws IOException //////
-      /* This method writes theString to the EpiOutputStream.
-        But it doesn't force a flush().
-        */
-      { 
-    		///byte[] buf = theString.getBytes(); // Getting byte buffer from String
-        ///theEpiOutputStreamO.write(buf); // Writing it to stream memory.
-        theEpiOutputStreamO.writingStringV(theString);
-        }
-    
     
     // Miscellaneous methods.
 
@@ -497,7 +336,6 @@ public class Streamcaster<
         */
       {
     	  Q theStreamcasterQueueQ= theEpiInputStreamI.getNotifyingQueueQ();
-    	  //%theStreamcasterQueueQ.add(theKeyedPacketE);
     	  theStreamcasterQueueQ.put(theKeyedPacketE);
         }
 

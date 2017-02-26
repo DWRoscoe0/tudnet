@@ -64,7 +64,7 @@ public class NotifyingQueue<E> // Queue inter-thread communication.
 	    // mainly for debugging.
 	    { return consumerThreadLockAndSignal; } 
 	  
-	  public boolean add( E anE ) ///////////
+	  public boolean add( E anE )
 	    /* 
 	      If this method returns true then:
 	      * It added anE to the queue.
