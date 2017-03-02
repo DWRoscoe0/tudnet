@@ -78,7 +78,10 @@ public class TitledTextViewer
         /* This grouping method creates and initializes the JTextArea.  */
         { // CommonInitialization( )
           if ( theTreePath == null )  // prevent null TreePath.
-            theTreePath = new TreePath( new NamedLeaf( "ERROR TreePath" ));
+            //% theTreePath = new TreePath( new NamedLeaf( "ERROR TreePath" ));
+          	theTreePath = new TreePath( 
+          			NamedLeaf.makeNamedLeaf( "ERROR TreePath" )
+          			);
 
           aTreeHelper=  // construct helper class instance.
             new MyTreeHelper( 

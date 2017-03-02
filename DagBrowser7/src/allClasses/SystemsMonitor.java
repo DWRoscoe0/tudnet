@@ -40,42 +40,22 @@ public class SystemsMonitor
 	  private long measurementTimeMsL; // Next time to do measurements.
 
 	  // Detail-containing child sub-objects.
-		  private NamedLong measurementCountNamedLong= 
-		  	new NamedLong( 
-      		theDataTreeModel, "Measurements", 0
-        	);
-      private NamedLong processorsNamedLong= new NamedLong( 
-      		theDataTreeModel, "Processors", -1
-        	);
+		  private NamedLong measurementCountNamedLong;
+      private NamedLong processorsNamedLong;
 		  private long waitEndNsL= -1;
 		  private long waitEndOldNsL= -1;
-		  private NamedLong waitJitterNsNamedLong= new NsAsMsNamedLong( 
-      	theDataTreeModel, "Wait-Jitter (ms)", 0 
-       	);
+		  private NamedLong waitJitterNsNamedLong;
       // No longer measured.
 		  // private long nanoTimeOverheadNsL;
 		  // private NamedLong nanoTimeOverheadNamedInteger= new NamedLong( 
       //		theDataTreeModel, "nanoTime() overhead (ns)", -1 
       //  	);
-		  private NamedLong cpuSpeedNamedLong= new NamedLong( 
-      		theDataTreeModel, "CPU-speed (counts / ms)", -1
-        	);
+		  private NamedLong cpuSpeedNamedLong;
 		  private long endWaitDelayMsL;
-		  private NamedLong endWaitMsNamedLong= new NamedLong( 
-      		theDataTreeModel, "End-Wait (ms)", -1
-        	);
-		  private NsAsMsNamedLong eventQueueInvokeAndWaitNsAsMsNamedLong= 
-		  		new NsAsMsNamedLong( 
-		  				theDataTreeModel, 
-		  				"EventQueue.invokeAndWait(..) (ms)", 
-		  				-1
-		  				);
-		  private NamedLong skippedTimeMsNamedLong= new NamedLong( 
-      		theDataTreeModel, "Skipped-Time (ms)", 0
-        	);
-		  private NamedLong reversedTimeMsNamedLong= new NamedLong( 
-      		theDataTreeModel, "Reversed-Time (ms)", 0
-        	);
+		  private NamedLong endWaitMsNamedLong;
+		  private NsAsMsNamedLong eventQueueInvokeAndWaitNsAsMsNamedLong;
+		  private NamedLong skippedTimeMsNamedLong;
+		  private NamedLong reversedTimeMsNamedLong;
 
 		// Variables for binary search to find CPU speed.
 			private volatile long volatileCounterL;
@@ -94,7 +74,14 @@ public class SystemsMonitor
     		DataTreeModel theDataTreeModel
     		)
       {
-        super(  // Constructing base class.
+      	/*  //%
+    		super(  // Constructing base class.
+          theDataTreeModel, // For receiving tree change notifications.
+          "Systems-Monitor", // DataNode (not thread) name.
+          new DataNode[]{} // Initially empty List of Peers.
+          );
+      	*/  //%
+      	initializeV(  // Constructing base class.
           theDataTreeModel, // For receiving tree change notifications.
           "Systems-Monitor", // DataNode (not thread) name.
           new DataNode[]{} // Initially empty List of Peers.
@@ -116,7 +103,7 @@ public class SystemsMonitor
       {
     		appLogger.info( "SystemsMonitor.run() beginning." );
 
-    		initializeV();  // Do non-dependency-injection initialization.
+    		createAndAddChildrenV();  // Do non-dependency-injection initialization.
 
   		  measurementTimeMsL= // Setting time do first measurement... 
   		  		System.currentTimeMillis(); //  immediately.
@@ -127,9 +114,39 @@ public class SystemsMonitor
         		}
         }
 
-    private void initializeV()
+    private void createAndAddChildrenV()
 	    {
-	    	// Add variables to our displayed list.
+    	  // Assign variables.
+		  	measurementCountNamedLong= 
+			  	new NamedLong( 
+	      		theDataTreeModel, "Measurements", 0
+	        	);
+	      processorsNamedLong= new NamedLong( 
+	      		theDataTreeModel, "Processors", -1
+	        	);
+			  waitJitterNsNamedLong= new NsAsMsNamedLong( 
+	      	theDataTreeModel, "Wait-Jitter (ms)", 0 
+	       	);
+	      cpuSpeedNamedLong= new NamedLong( 
+	      		theDataTreeModel, "CPU-speed (counts / ms)", -1
+	        	);
+			  endWaitMsNamedLong= new NamedLong( 
+	      		theDataTreeModel, "End-Wait (ms)", -1
+	        	);
+			  eventQueueInvokeAndWaitNsAsMsNamedLong= 
+			  		new NsAsMsNamedLong( 
+			  				theDataTreeModel, 
+			  				"EventQueue.invokeAndWait(..) (ms)", 
+			  				-1
+			  				);
+			  skippedTimeMsNamedLong= new NamedLong( 
+	      		theDataTreeModel, "Skipped-Time (ms)", 0
+	        	);
+			  reversedTimeMsNamedLong= new NamedLong( 
+	      		theDataTreeModel, "Reversed-Time (ms)", 0
+	        	);
+
+			  // Add variables to our displayed list.
 	      addB( measurementCountNamedLong );
 	      addB( processorsNamedLong );
 	      //addB( nanoTimeOverheadNamedInteger );

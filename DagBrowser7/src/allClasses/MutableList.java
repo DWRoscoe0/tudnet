@@ -30,14 +30,30 @@ public class MutableList
 			protected DataTreeModel theDataTreeModel; // For reporting List changes.
 
     // Constructors.
-			
+
+			/*  //%
 	    public MutableList (   // Constructor.
 	        DataTreeModel theDataTreeModel,
 	        String nameString, 
 	        DataNode... inDataNodes 
 	        )
 	      {
-	        super( nameString, inDataNodes ); // Constructing base class. 
+	        //% super( nameString, inDataNodes ); // Constructing base class. 
+	    		super.initializeV( nameString, inDataNodes ); 
+	
+	        // Storing injected values stored in this class.
+	        this.theDataTreeModel= theDataTreeModel;
+	        }
+			*/  //%
+			
+	    public void initializeV(
+	        DataTreeModel theDataTreeModel,
+	        String nameString, 
+	        DataNode... inDataNodes 
+	        )
+	      {
+	        //% super( nameString, inDataNodes ); // Constructing base class. 
+	    		super.initializeV( nameString, inDataNodes ); 
 	
 	        // Storing injected values stored in this class.
 	        this.theDataTreeModel= theDataTreeModel;

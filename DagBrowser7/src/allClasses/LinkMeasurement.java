@@ -109,11 +109,18 @@ public class LinkMeasurement
 				NamedLong retransmitDelayMsNamedLong
 				)
 	  	{
-	  	  super( // Constructing MutableList superclass with injections.
-	  		    theDataTreeModel,
-		        "LinkMeasurements",
-	          new DataNode[]{} // Initially empty array of children.
-	      		);
+				/*   //%
+				super( // Constructing MutableList superclass with injections.
+  		    theDataTreeModel,
+	        "LinkMeasurements",
+          new DataNode[]{} // Initially empty array of children.
+      		);
+				*/   //%
+  	  	initializeV(
+  		    theDataTreeModel,
+	        "LinkMeasurements",
+          new DataNode[]{} // Initially empty array of children.
+      		);
 	
 	    // Injected dependencies.
 			  this.theNetcasterInputStream= theNetcasterInputStream;

@@ -20,7 +20,8 @@ public class NamedFloat // A DataNode for tracking floating point things.
         float theF 
         )
 		  {
-		  	super(nameString);
+		  	////////super(nameString);
+	  		super.initializeV( nameString );
         this.theDataTreeModel= theDataTreeModel;
 		  	this.theF= theF;
         }

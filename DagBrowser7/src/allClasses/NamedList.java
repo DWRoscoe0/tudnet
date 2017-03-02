@@ -13,15 +13,37 @@ public class NamedList
   { // class NamedList
 
     List<DataNode> theListOfDataNodes;
- 
+
+    /*  //%
     NamedList ( String nameString, DataNode... inDataNodes )  // Constructor.
       /* This constructor creates a NamedList with
         0 or more DataNodes from the array inDataNodes.
         Theoretically it could be used for 
         many different types of DataNodes.
         */
+    /*  //%
       {
-        super( nameString ); // Constructing the base class.
+        //% super( nameString ); // Constructing the base class.
+    		super.initializeV( nameString );
+
+        theListOfDataNodes= // Creating and storing the DataNode List to be
+          new ArrayList<DataNode>(  // a mutable ArrayList from
+            Arrays.asList(  // an immutable List made from
+              inDataNodes  // the input array.
+              )
+            );  // the input array.
+        }
+    */  //%
+
+    public void initializeV( String nameString, DataNode... inDataNodes )
+      /* This initializes the NamedList with
+        0 or more DataNodes from the array inDataNodes.
+        Theoretically it could be used for 
+        many different types of DataNodes.
+        */
+      {
+        //% super( nameString ); // Constructing the base class.
+    		super.initializeV( nameString );
 
         theListOfDataNodes= // Creating and storing the DataNode List to be
           new ArrayList<DataNode>(  // a mutable ArrayList from

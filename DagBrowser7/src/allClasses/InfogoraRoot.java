@@ -10,10 +10,15 @@ public class InfogoraRoot  extends NamedList {
   
   public InfogoraRoot( DataNode... inDataNodes )  // Constructor.
     {
-      super( // Calling superclass NamedList with...
-        "Infogora-Root", // ...the name for this DataNode and...
-        inDataNodes // ...the array of all child DataNodes.
-        );
+	    /*  //% super( // Calling superclass NamedList with...
+	        "Infogora-Root", // ...the name for this DataNode and...
+	        inDataNodes // ...the array of all child DataNodes.
+	        );
+	    */  //%
+	    initializeV( // Calling superclass NamedList with...
+	        "Infogora-Root", // ...the name for this DataNode and...
+	        inDataNodes // ...the array of all child DataNodes.
+	        );
       }
 
       

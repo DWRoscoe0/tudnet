@@ -1,6 +1,6 @@
 package allClasses;
 
-import static allClasses.Globals.appLogger;
+//% import static allClasses.Globals.appLogger;
 
 
 public abstract class NamedNonLeaf 
@@ -19,17 +19,25 @@ public abstract class NamedNonLeaf
 	
     private String nameString;  // The name associated with this node.
 
+    /*  //%
     NamedNonLeaf ( String nameString )  // Constructor.
       { 
-        super( ); 
+        //% super( ); 
         this.nameString = nameString;  // Store this node's name.
         }
+    */  //%
 
-    public String getNameString( )
-      /* Returns String representing name of this Object.  */
-      {
-        return nameString;  // Simply return the name.
-        }
+    NamedNonLeaf()  // Constructor.
+	    { 
+	    	setNameStringV( // Make default name be class name.
+	    			getClass().getName() 
+	    			);
+	    	}
+    
+    public void initializeV( String nameString )
+	    { 
+	    	setNameStringV( nameString );
+	    	}
 
     public void setNameStringV( String nameString )
       /* Replaces the String representing name of this Object.
@@ -39,6 +47,7 @@ public abstract class NamedNonLeaf
 		    This is used by the class Outline only.
 		    */
       {
+    	  /*  //%
 	  	  if ( // Error checking
 		  	    ( this.nameString != temporaryNameString) // the old name.
 		  	    || ( nameString == temporaryNameString) // and new name.
@@ -50,8 +59,17 @@ public abstract class NamedNonLeaf
 	          +this.nameString
 	          +")."
 	          );
+    	  */  //%
 
         this.nameString= nameString;
+        }
+
+    // Getters.
+
+    public String getNameString( )
+      /* Returns String representing name of this Object.  */
+      {
+        return nameString;  // Simply return the name.
         }
 
 

@@ -31,12 +31,17 @@ public class MutableListWithMap<
         DataNode... inDataNodes 
 	      )
 	    {
-	  		// Superclass injections.
-	      super(
-		        theDataTreeModel,
-		        nameString,
-		        inDataNodes
-	      		);
+      	/*  //%
+	        theDataTreeModel,
+	        nameString,
+	        inDataNodes
+      		);
+      	*/  //%
+      	initializeV(
+	        theDataTreeModel,
+	        nameString,
+	        inDataNodes
+      		);
 	      }
 
     public String getValueString( ) // This is for displaying the List count.

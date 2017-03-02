@@ -10,14 +10,25 @@ public class NamedLeaf
   
   { // class NamedLeaf
 
+	  /*  //%
     NamedLeaf ( String nameString )  // Constructor.
       { 
-        super( nameString );
+        //% super( nameString );
+    		setNameStringV( nameString );
         }
-    
-      public boolean isLeaf( ) 
-        {
-          return true;  // Overriding superclass non-leaf result.
-          }
+	  */  //%
+
+		public static NamedLeaf makeNamedLeaf( String nameString )
+			{
+				NamedLeaf theNamedLeaf= new NamedLeaf();
+				theNamedLeaf.initializeV( nameString );
+
+	  		return theNamedLeaf;
+	  		}
+	
+    public boolean isLeaf( ) 
+      {
+        return true;  // Overriding superclass non-leaf result.
+        }
       
     } // class NamedLeaf

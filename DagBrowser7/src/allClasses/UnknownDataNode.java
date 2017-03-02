@@ -27,7 +27,8 @@ public class UnknownDataNode extends NamedLeaf
         a Part path place holder.
         */
       { 
-        super("!UnknownDataNode"); // Temporary String provided.
+        ////////super("!UnknownDataNode"); // Temporary String provided.
+    		super.initializeV( "!UnknownDataNode" );
         }  // To make debugging easier.
 
     public UnknownDataNode( String inString )
@@ -36,7 +37,8 @@ public class UnknownDataNode extends NamedLeaf
         DataNode tree is missing.
         */
       { 
-        super( inString ); // Store node name.
+        ////////super( inString ); // Store node name.
+    		super.initializeV( inString );
         }  // To make debugging easier.
 
     public static UnknownDataNode newUnknownDataNode( )

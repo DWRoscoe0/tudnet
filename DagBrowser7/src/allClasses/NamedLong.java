@@ -18,7 +18,8 @@ public class NamedLong
         long theL
         )
 		  {
-		  	super(nameString);
+		  	////////super(nameString);
+	  		super.initializeV( nameString );
         this.theDataTreeModel= theDataTreeModel;
 		  	this.theL= theL;
         }
