@@ -141,7 +141,7 @@ public class ConnectionManager
           );
     		*/  //%
 
-      	super.initializeV(  // Constructing base class.
+      	super.initializingV(  // Constructing base class.
           theDataTreeModel, // For receiving tree change notifications.
           "Connection-Manager", // DataNode (not thread) name.
           emptyListOfDataNodes()

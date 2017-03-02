@@ -30,7 +30,9 @@ public abstract class NamedNonLeaf
     NamedNonLeaf()  // Constructor.
 	    { 
 	    	setNameStringV( // Make default name be class name.
-	    			getClass().getName() 
+	    			//% getClass().getName() 
+	    			//% getClass().getCanonicalName()
+	    			getClass().getSimpleName()
 	    			);
 	    	}
     

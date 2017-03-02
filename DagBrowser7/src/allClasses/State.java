@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class State {
+public class State extends MutableList {
 
 	/*  This class is the base class for all state objects and state-machines.
 
@@ -88,6 +88,7 @@ public class State {
   	{ 
   	  theListOfSubStates.add( theSubState ); // Add theSubState to
   	    // this state's list of sub-states.
+  	  addRawV( theSubState ); // Add to this DataNode's list of DataNodes.
 
   	  theSubState.setParentStateV( this ); // Store this state as
   	    // the sub-state's parent state.

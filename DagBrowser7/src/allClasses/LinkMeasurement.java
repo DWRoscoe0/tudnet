@@ -116,7 +116,7 @@ public class LinkMeasurement
           new DataNode[]{} // Initially empty array of children.
       		);
 				*/   //%
-  	  	initializeV(
+  	  	initializingV(
   		    theDataTreeModel,
 	        "LinkMeasurements",
           new DataNode[]{} // Initially empty array of children.
@@ -132,8 +132,12 @@ public class LinkMeasurement
 		// Input code activated or used by inputs.
 			
 		  public synchronized void initializingV() throws IOException
+		    /* This method is called by
+		      the Unicaster thread's initializingV() method.
+		      It creates most of the variable values needed,
+		      including ones added to the DAG for display.
+		      */
 			  {
-
 	  	  	// Adding measurement count.
 		  	  addB( measurementHandshakesNamedLong= new NamedLong(
 		      		theDataTreeModel, "Measurement-Handshakes", 0 
@@ -212,7 +216,8 @@ public class LinkMeasurement
 				  theLinkMeasurementState= new LinkMeasurementState();
 		  	  theLinkMeasurementState.initializingV(); // Initializing manually 
 		  	    // because we are not using State.initAndAddV(..).
-	        }
+		  	  addB( theLinkMeasurementState );
+				  }
 
 	    public synchronized boolean handleInputB(
 	    		String keyString

@@ -12,7 +12,12 @@ public class NamedList
   
   { // class NamedList
 
-    List<DataNode> theListOfDataNodes;
+    List<DataNode> theListOfDataNodes= // Set to empty,
+    		new ArrayList<DataNode>(  // a mutable ArrayList from
+	        Arrays.asList(  // an immutable List made from
+	        		emptyListOfDataNodes() // an empty DataNode list.
+	            )
+	        );
 
     /*  //%
     NamedList ( String nameString, DataNode... inDataNodes )  // Constructor.

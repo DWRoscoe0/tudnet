@@ -37,7 +37,7 @@ public class MutableListWithMap<
 	        inDataNodes
       		);
       	*/  //%
-      	initializeV(
+      	initializingV(
 	        theDataTreeModel,
 	        nameString,
 	        inDataNodes

@@ -142,12 +142,9 @@ public class Unicaster
     				retransmitDelayMsNamedLong 
 	      		)
 	  	  	);
+	  	  theLinkMeasurement.initializingV();
 
 	  	  addB( theSubcasterManager );
-
-	  	  // Everything is constructed.  Now initialize.
-
-	  	  theLinkMeasurement.initializingV();
 	    	}
 
     protected void finalizingV() throws IOException
