@@ -229,6 +229,7 @@ public class AppLog
         It contains the app session number,
         milliseconds since the previous entry, the thread name,
         and finally inString.
+        //// Replace String appends by StringBuilder appends, for speed.
         */
       { 
     	  //appendAnyFocusChangeV();

@@ -33,11 +33,14 @@ public class State extends MutableList {
 		These classes presently support the processing of only asynchronous inputs, 
 		variable values which can change at any time.
 
+		To reduce boilerplate code, constructor source code has been eliminated.
+		There are constructors, but they are the default parameterless constructors.
+		The instance variables are initialized with the initializerV(..) method.
+
 		//// This state and its subclasses AndState and OrState
-		  do not [yet] provide 
-		  * behavioral inheritance, which is
-		  	the most important benefit of hierarchical state machines.
-		* //// Maybe merge AndState and OrState into State?
+		  do not [yet] provide behavioral inheritance, which is
+		  the most important benefit of hierarchical state machines.
+		//// Maybe merge AndState and OrState into State?
 	  */
 
 	public static State nullState= new State();
@@ -54,7 +57,7 @@ public class State extends MutableList {
   
   public void initializingV() throws IOException
     /* This method initializes this state object, 
-      It does actions needed when this state object is being bult.
+      It does actions needed when this state object is being built.
       This is not the same as the entryV() method, which
       does actions needed when the associated state-machine state is entered.
 
@@ -268,11 +271,13 @@ class OrState extends State {
 		*/
 
   private State presentSubState= // State machine's state.
+  			// null means no state is active.  
+  		  // non-null means that state is active.
   		State.nullState; // Initial default no-op state.
-        // null means no state is active.  non-null means that state is active.
-  
-  private State requestedSubState= null; // Becomes non-null when 
-    // state-machine initializes and when machine's requests new state.
+
+  private State requestedSubState= null; // Becomes non-null 
+    // when state-machine initializes and 
+    // when machine's requests new state.
 
   boolean substateProgressB= false; // Handler progress accumulator.
     // This variable accumulates sub-state handler progress, presently from:
@@ -282,7 +287,14 @@ class OrState extends State {
     // It is reset to false after it is aggregated into,
     // and returned as, a stateProgressB value.
 
-	public boolean stateHandlerB() throws IOException
+  public void initializingV( State theState ) throws IOException 
+	  {
+			super.initializingV();
+	
+			requestSubStateV( theState ); // Initial state.
+	  	}
+
+  public boolean stateHandlerB() throws IOException
 	  /* This handles the OrState by cycling it's machine.
 	    It does this by calling the handler method 
 	    associated with the present state-machine's sub-state.
@@ -326,8 +338,8 @@ class OrState extends State {
 			}
 		
   protected void requestSubStateV(State nextState)
-	  /* This method sets the state-machine state,
-	    which is the same as this state's sub-state.
+	  /* This method requests the next state-machine state,
+	    which is the same thing as this state's next sub-state.
 	    It overrides State.requestSubStateV(State nextState) to work.
 	    
 	    Note, though the requestedSubState variable changes immediately,

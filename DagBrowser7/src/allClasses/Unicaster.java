@@ -58,7 +58,9 @@ public class Unicaster
   		private Timer theTimer;
 
   		// Other instance variables.
-  		private LinkMeasurement theLinkMeasurement;
+  		private LinkMeasurementState theLinkMeasurementState;
+			@SuppressWarnings("unused")
+  		private MultiMachineState theMultiMachineState;
   		
 			public Unicaster(  // Constructor. 
 			  UnicasterManager theUnicasterManager,
@@ -132,17 +134,19 @@ public class Unicaster
 
     protected void initializingV() throws IOException
 	    {
-    		super.initializingWithoutStreamsV(); // We do the streams below.
+    		super.initializingWithoutStreamsV(); // We do the stream counts below.
 
-	  	  addB( theLinkMeasurement= new LinkMeasurement( 
+	  	  addB( theLinkMeasurementState= new LinkMeasurementState( 
 	  		    theDataTreeModel,
     				theTimer, 
     				theEpiInputStreamI,
     				theEpiOutputStreamO, 
     				retransmitDelayMsNamedLong 
 	      		)
-	  	  	);
-	  	  theLinkMeasurement.initializingV();
+	  	  	); // This includes stream counts.
+	  	  theLinkMeasurementState.initializingV();
+
+	  	  addB( theMultiMachineState= new MultiMachineState() );
 
 	  	  addB( theSubcasterManager );
 	    	}
@@ -150,7 +154,7 @@ public class Unicaster
     protected void finalizingV() throws IOException
       // This is the opposite of initilizingV().
 	    {
-	    	theLinkMeasurement.finalizingV();
+	    	theLinkMeasurementState.finalizingV();
 	    	theEpiOutputStreamO.close(); // Closing output stream.
 	    	}
 
@@ -176,7 +180,7 @@ public class Unicaster
 		      	if ( theInput != Input.NONE ) break;
 		      	if (processingMessagesFromRemotePeerB()) continue;
 		    		if (multiplexingPacketsFromSubcastersB()) continue;
-		    		////if (theLinkMeasurement.cycleMachineB()) continue;
+		    		////if (theLinkMeasurementState.cycleMachineB()) continue;
 			  	  theInput= // Waiting for at least one new input.
 		    			  theLockAndSignal.waitingForInterruptOrNotificationE();
 			  	  }
@@ -293,7 +297,7 @@ public class Unicaster
 		      //if ( processPacketSequenceNumberB(keyString) ) // "PS"
    			  //	break process;
 		      //if ( processPacketAcknowledgementB(keyString) ) // "PA"
-		      if ( theLinkMeasurement.handleInputB(keyString) ) ////
+		      if ( theLinkMeasurementState.handleInputB(keyString) ) ////
 		      	break process;
   			  if ( processHelloB( keyString ) ) // "HELLO"
    			  	break process;

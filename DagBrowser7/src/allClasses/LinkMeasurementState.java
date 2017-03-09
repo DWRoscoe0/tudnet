@@ -5,9 +5,10 @@ import static allClasses.Globals.appLogger;
 import java.io.IOException;
 import java.util.Timer;
 
-public class LinkMeasurement 
+public class LinkMeasurementState 
 	
-	extends MutableList
+	//// extends MutableList
+	extends State
 	
 	/* This class contains a [hierarchical] state machine 
 	  that measures and displays several performance parameters 
@@ -18,13 +19,13 @@ public class LinkMeasurement
 
 	  This code is not thread-safe.  It is meant to be called only from:
 	  * a Unicaster thread, and
-	  * the thread belonging to a timer that it creates and uses.
+	  * the thread belonging to a timer that this code creates and uses.
 
-	  This class makes use of an internal non-static class LinkMeasurementState.
-	  This was done as an expedient way for State code to access DataNode code.
-	  ////// Eventually it might be possible to combine a 
-	    State with a DataNode in a single class.  
-	    The tricky part is sharing the DataNode/sub-state list. 
+	  ////// This class makes use of an internal non-static class 
+	    called TempMeasurementState.
+		  This was done as an expedient way for State code to access DataNode code.
+		  Work is underway to eliminate this state because 
+		  State is now a subclass of DataNode. 
 	 	*/
 
 	{	
@@ -35,7 +36,7 @@ public class LinkMeasurement
 		private Timer theTimer; 
 		
 	  // The main state machine which is a nested non-static class.
-	  private LinkMeasurementState theLinkMeasurementState;
+	  private TempMeasurementState theTempMeasurementState;
 	
 		// Variables for counting measurement handshakes.
 	  private NamedLong measurementHandshakesNamedLong;
@@ -101,7 +102,7 @@ public class LinkMeasurement
 		// Other variables.
 		private long retryTimeOutMsL;
 	
-		LinkMeasurement(  // Constructor.
+		LinkMeasurementState(  // Constructor.
 		    DataTreeModel theDataTreeModel,
 				Timer theTimer, 
 			  NetcasterInputStream theNetcasterInputStream,
@@ -109,16 +110,9 @@ public class LinkMeasurement
 				NamedLong retransmitDelayMsNamedLong
 				)
 	  	{
-				/*   //%
-				super( // Constructing MutableList superclass with injections.
-  		    theDataTreeModel,
-	        "LinkMeasurements",
-          new DataNode[]{} // Initially empty array of children.
-      		);
-				*/   //%
   	  	initializingV(
   		    theDataTreeModel,
-	        "LinkMeasurements",
+	        "LinkMeasurementState",
           new DataNode[]{} // Initially empty array of children.
       		);
 	
@@ -140,48 +134,33 @@ public class LinkMeasurement
 			  {
 	  	  	// Adding measurement count.
 		  	  addB( measurementHandshakesNamedLong= new NamedLong(
-		      		theDataTreeModel, "Measurement-Handshakes", 0 
-		      		)
-		  	  	);
+		      		theDataTreeModel, "Measurement-Handshakes", 0 ) );
 	
 		  		addB( retransmitDelayMsNamedLong );
 	
 	        // Adding the new round trip time trackers.
 		      addB( smoothedRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
 		      		theDataTreeModel, "Smoothed-Round-Trip-Time (ms)", 
-		      		Config.initialRoundTripTime100MsAsNsL
-		      		)
-		  	  	);
+		      		Config.initialRoundTripTime100MsAsNsL ) );
 		  	  addB( smoothedMinRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
 		      		theDataTreeModel, "Smoothed-Minimum-Round-Trip-Time (ms)", 
-		      		Config.initialRoundTripTime100MsAsNsL
-		      		)
-		  	  	);
+		      		Config.initialRoundTripTime100MsAsNsL ) );
 		  	  addB( smoothedMaxRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
 		      		theDataTreeModel, "Smoothed-Maximum-Round-Trip-Time (ms)", 
-		      		Config.initialRoundTripTime100MsAsNsL
-		      		)
-		  	  	);
+		      		Config.initialRoundTripTime100MsAsNsL ) );
 		      addB( rawRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong( 
 		      		theDataTreeModel, "Raw-Round-Trip-Time (ms)", 
-		      		Config.initialRoundTripTime100MsAsNsL
-		      		)
-		  			);
+		      		Config.initialRoundTripTime100MsAsNsL ) );
 	
 	        // Adding incoming packet statistics children and related trackers.
 		  	  newIncomingPacketsSentDefaultLongLike= new DefaultLongLike(0);
 		  	  addB( oldIncomingPacketsSentNamedLong= new NamedLong(
-		      		theDataTreeModel, "Incoming-Packets-Sent", 0 
-		      		)
-		  			);
+		      		theDataTreeModel, "Incoming-Packets-Sent", 0 ) );
 			    addB( newIncomingPacketsReceivedNamedLong=
-			    		theNetcasterInputStream.getCounterNamedLong()
-			    		);
+			    		theNetcasterInputStream.getCounterNamedLong() );
 		  	  oldIncomingPacketsReceivedDefaultLongLike= new DefaultLongLike(0);
-		  	  addB( incomingPacketLossNamedFloat= new NamedFloat( 
-		      		theDataTreeModel, "Incoming-Packet-Loss", 0.0F  
-		      		)
-		  			);
+		  	  addB( incomingPacketLossNamedFloat= new NamedFloat(  
+		      		theDataTreeModel, "Incoming-Packet-Loss", 0.0F ) );
 		  	  incomingPacketLossAverager= new LossAverager(
 		  	  				oldIncomingPacketsSentNamedLong,
 		  	  				oldIncomingPacketsReceivedDefaultLongLike,
@@ -193,18 +172,12 @@ public class LinkMeasurement
 	    				theNetcasterOutputStream.getCounterNamedLong(); 
 			    addB( newOutgoingPacketsSentNamedLong );
 			    addB( newOutgoingPacketsSentEchoedNamedLong= new NamedLong(
-			    		theDataTreeModel, "Outgoing-Packets-Sent-Echoed", 0 
-			    		)
-			    	); 
+			    		theDataTreeModel, "Outgoing-Packets-Sent-Echoed", 0 ) ); 
 			    oldOutgoingPacketsSentDefaultLongLike= new DefaultLongLike(0);
 			    addB( newOutgoingPacketsReceivedNamedLong= new NamedLong( 
-				      theDataTreeModel, "Outgoing-Packets-Received", 0 
-				      )
-			    	);
+				      theDataTreeModel, "Outgoing-Packets-Received", 0 ) );
 		  	  addB( outgoingPacketLossNamedFloat= new NamedFloat( 
-		      		theDataTreeModel, "Outgoing-Packet-Loss", 0.0f 
-		      		)
-		  			);
+		      		theDataTreeModel, "Outgoing-Packet-Loss", 0.0f ) );
 		  	  oldOutgoingPacketsReceivedDefaultLongLike= new DefaultLongLike(0);
 		  	  outgoingPacketLossLossAverager= new LossAverager(
 		  	  		oldOutgoingPacketsSentDefaultLongLike,
@@ -213,10 +186,7 @@ public class LinkMeasurement
 		  	  		);
 
 				  // Create and initialize the top-level state machine.
-				  theLinkMeasurementState= new LinkMeasurementState();
-		  	  theLinkMeasurementState.initializingV(); // Initializing manually 
-		  	    // because we are not using State.initAndAddV(..).
-		  	  addB( theLinkMeasurementState );
+		  	  initAndAddV( theTempMeasurementState= new TempMeasurementState() );
 				  }
 
 	    public synchronized boolean handleInputB(
@@ -241,23 +211,23 @@ public class LinkMeasurement
   		      make these keyString messages a subclass of those events.
   		  */
 	  		{
-	    		return theLinkMeasurementState.handleInputB(keyString);
+	    		return theTempMeasurementState.handleInputB(keyString);
 	    	  }
 			
 		  public synchronized void finalizingV() throws IOException
 		    // This method processes any pending loose ends before shutdown.
 			  {
-		  	  theLinkMeasurementState.finalizingV(); // Finalizing state-machine.
+		  	  theTempMeasurementState.finalizingV(); // Finalizing state-machine.
 	        }
 
 	  private long sentSequenceNumberTimeNsL;
 
 		private long lastSequenceNumberSentL;
 
-		private class LinkMeasurementState extends AndState 
+		private class TempMeasurementState extends AndState 
 
 			/* This class is the root State for, and nested within, 
-			  the LinkMeasurement class. 
+			  the LinkMeasurementState class. 
 			 	*/
 
 			{
@@ -277,23 +247,22 @@ public class LinkMeasurement
 		    public void initializingV() throws IOException
 		      /* This method initializes this state machine.  This includes:
 		        * creating, initializing, and adding to the sub-state list
-		          all of our sub-state-machines, and
+		          all of our concurrently running sub-state-machines, and
 		        * creating and starting our timer.
 		        */
 			    {
+			  	  initAndAddV( (theRemoteMeasurementState= 
+			  	  		new RemoteMeasurementState()) );
+			  	  initAndAddV( theLocalMeasurementState= 
+			  	  		new LocalMeasurementState() );
 		    		super.initializingV();
-			  	  initAndAddV( // Create and add orthogonal sub-state machine 1.
-			  	  		(theRemoteMeasurementState= new RemoteMeasurementState())
-			  	  		);
-			  	  initAndAddV( // Create and add orthogonal sub-state machine 2.
-			  	  		theLocalMeasurementState= new LocalMeasurementState()
-			  	  		);
-			  	  theTimerInput=  // Creating our timer. 
+
+			  	  theTimerInput=  // Creating our timer.   ////// Move to parent? 
 					  		new TimerInput(  //// Move to factory?
 					  				theTimer,
 					  				new Runnable() {
 							        public void run() {
-							        	  try { theLinkMeasurementState.stateHandlerB(); }
+							        	  try { theTempMeasurementState.stateHandlerB(); }
 							        	  catch ( IOException theIOException) 
 							        	    { delayedIOException= theIOException; }
 							        	  }
@@ -346,21 +315,15 @@ public class LinkMeasurement
 		
 				    public void initializingV() throws IOException 
 					    {
-				    		super.initializingV();
-		
 				    		// Create and add orthogonal sub-state machines.
-					  	  initAndAddV(
-					  	  		theMeasurementPausedState= new MeasurementPausedState()
-					  	  		);
-					  	  initAndAddV(
-					  	  		theMeasurementInitializationState= 
-					  	  		  new MeasurementInitializationState()
-					  	  		);
-					  	  initAndAddV(
-					  	  		theMeasurementHandshakesState= new MeasurementHandshakesState()
-					  	  		);
+					  	  initAndAddV( theMeasurementPausedState= 
+					  	  		new MeasurementPausedState() );
+					  	  initAndAddV( theMeasurementInitializationState= 
+					  	  		new MeasurementInitializationState() );
+					  	  initAndAddV( theMeasurementHandshakesState= 
+					  	  		new MeasurementHandshakesState() );
 		
-								requestSubStateV( theMeasurementPausedState ); // Initial state.
+				    		super.initializingV( theMeasurementPausedState );
 					    	}
 		
 				    private void processPacketAcknowledgementV() 
@@ -493,7 +456,7 @@ public class LinkMeasurement
 					  		} // class MeasurementHandshakesState 
 
 						public void exitV() throws IOException
-						  // Cancels asknowledgement timer.
+						  // Cancels acknowledgement timer.
 						  { 
 								theTimerInput.cancelingV();
 								}
@@ -537,10 +500,11 @@ public class LinkMeasurement
 												ackReceivedTimeNsL - sentSequenceNumberTimeNsL; 
 							  	  processRoundTripTimeV(rawRoundTripTimeNsL);
 						  			rttString+= ""+
-						        		rawRoundTripTimeNsAsMsNamedLong.getValueString()+","+
-						        		smoothedMinRoundTripTimeNsAsMsNamedLong.getValueString()+","+
-						        		smoothedMaxRoundTripTimeNsAsMsNamedLong.getValueString()
-								  			;
+					        		rawRoundTripTimeNsAsMsNamedLong.getValueString()+","+
+					        		smoothedMinRoundTripTimeNsAsMsNamedLong.getValueString()+
+					        		","+
+					        		smoothedMaxRoundTripTimeNsAsMsNamedLong.getValueString()
+							  			;
 										}
 						    appLogger.debug( "calculateRoundTripTimesV(...) PA:"
 								  +sequenceNumberI+","
@@ -686,6 +650,6 @@ public class LinkMeasurement
 						
 							} // class RemoteMeasurementState
 
-				} // class LinkMeasurementState
+				} // class TempMeasurementState
 
-		} // class LinkMeasurements
+		} // class LinkMeasurementState
