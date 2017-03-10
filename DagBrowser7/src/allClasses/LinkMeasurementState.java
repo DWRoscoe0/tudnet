@@ -110,7 +110,7 @@ public class LinkMeasurementState
 				NamedLong retransmitDelayMsNamedLong
 				)
 	  	{
-  	  	initializingV(
+  	  	initializeV(
   		    theDataTreeModel,
 	        "LinkMeasurementState",
           new DataNode[]{} // Initially empty array of children.
@@ -125,9 +125,9 @@ public class LinkMeasurementState
 	
 		// Input code activated or used by inputs.
 			
-		  public synchronized void initializingV() throws IOException
+		  public synchronized void initializeV() throws IOException
 		    /* This method is called by
-		      the Unicaster thread's initializingV() method.
+		      the Unicaster thread's initializeV() method.
 		      It creates most of the variable values needed,
 		      including ones added to the DAG for display.
 		      */
@@ -214,10 +214,10 @@ public class LinkMeasurementState
 	    		return theTempMeasurementState.handleInputB(keyString);
 	    	  }
 			
-		  public synchronized void finalizingV() throws IOException
+		  public synchronized void finalizeV() throws IOException
 		    // This method processes any pending loose ends before shutdown.
 			  {
-		  	  theTempMeasurementState.finalizingV(); // Finalizing state-machine.
+		  	  theTempMeasurementState.finalizeV(); // Finalizing state-machine.
 	        }
 
 	  private long sentSequenceNumberTimeNsL;
@@ -244,7 +244,7 @@ public class LinkMeasurementState
 				@SuppressWarnings("unused")
 				private LocalMeasurementState theLocalMeasurementState;
 
-		    public void initializingV() throws IOException
+		    public void initializeV() throws IOException
 		      /* This method initializes this state machine.  This includes:
 		        * creating, initializing, and adding to the sub-state list
 		          all of our concurrently running sub-state-machines, and
@@ -255,7 +255,7 @@ public class LinkMeasurementState
 			  	  		new RemoteMeasurementState()) );
 			  	  initAndAddV( theLocalMeasurementState= 
 			  	  		new LocalMeasurementState() );
-		    		super.initializingV();
+		    		super.initializeV();
 
 			  	  theTimerInput=  // Creating our timer.   ////// Move to parent? 
 					  		new TimerInput(  //// Move to factory?
@@ -271,10 +271,10 @@ public class LinkMeasurementState
 		  	  	stateHandlerB(); // Calling the handler once to start timer.
 			    	}
 
-		    public synchronized void finalizingV() throws IOException
+		    public synchronized void finalizeV() throws IOException
 		      // This method processes any pending loose ends before shutdown.
 		  	  {
-		    	  super.finalizingV();
+		    	  super.finalizeV();
 			  		stateHandlerB(); // This throws any saved IOException from timer.
 		    		theTimerInput.cancelingV(); // Stopping our timer.
 		        }
@@ -313,7 +313,7 @@ public class LinkMeasurementState
 						  theMeasurementInitializationState;
 						private MeasurementHandshakesState theMeasurementHandshakesState;
 		
-				    public void initializingV() throws IOException 
+				    public void initializeV() throws IOException 
 					    {
 				    		// Create and add orthogonal sub-state machines.
 					  	  initAndAddV( theMeasurementPausedState= 
@@ -323,7 +323,7 @@ public class LinkMeasurementState
 					  	  initAndAddV( theMeasurementHandshakesState= 
 					  	  		new MeasurementHandshakesState() );
 		
-				    		super.initializingV( theMeasurementPausedState );
+				    		super.initializeV( theMeasurementPausedState );
 					    	}
 		
 				    private void processPacketAcknowledgementV() 

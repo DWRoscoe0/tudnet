@@ -188,7 +188,7 @@ public class DagBrowserPanel
           this.theBackgroundEventQueue= theBackgroundEventQueue;
           }
 
-      public void initializingV()
+      public void initializeV()
         /* This method does initialization, excluding dependency injection,
           which is done by the constructor.
           It builds the HTopPanel with all its buttons
@@ -206,7 +206,7 @@ public class DagBrowserPanel
             buildAndAddViewJPanelV();  // Contains data components.
             } // Build and add sub-panels of this Panel.
           { // Define the content in the above panels.
-          	theRootJTree.initializingV( startTreePath );
+          	theRootJTree.initializeV( startTreePath );
 	            // Initializing the RootJTree should trigger a series of events 
 	            // which load all the data-dependent sub-panel components
 	            // and get them ready for display.  

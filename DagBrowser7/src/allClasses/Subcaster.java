@@ -66,7 +66,7 @@ public class Subcaster
     public void run()  // Main Unicaster thread.
     	{
     	  try {
-	    		initializingV();
+	    		initializeV();
 	
 					while (true) // Repeating until thread termination is requested.
 					  {
@@ -86,15 +86,15 @@ public class Subcaster
     		finalizingV();
     		}
 
-    protected void initializingV() throws IOException
+    protected void initializeV() throws IOException
       /* Adds the packet counters for the input and output streams and
         does Streamcaster initializing.
         */
 	    {
-    		appLogger.info("initializingV() at start."); // Needed if thread self-terminates.
+    		appLogger.info("initializeV() at start."); // Needed if thread self-terminates.
 		    addB( 	theSubcasterOutputStream.getCounterNamedLong() );
 		    addB( 	theSubcasterInputStream.getCounterNamedLong() );
-		    super.initializingV();
+		    super.initializeV();
 	    	}
 
     protected void finalizingV()

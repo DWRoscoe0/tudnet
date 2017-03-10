@@ -230,7 +230,7 @@ public class Outline
           new DataNode[]{} // Initially empty List for lazy-loaded children.
 	        );
     		*/  //%
-    		initializingV(
+    		initializeV(
     			theDataTreeModel,
 	        NamedNonLeaf.temporaryNameString, 
           new DataNode[]{} // Initially empty List for lazy-loaded children.

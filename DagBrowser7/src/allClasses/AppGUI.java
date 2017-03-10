@@ -111,7 +111,7 @@ public class AppGUI
             //    getSystemLookAndFeelClassName());
             //  } catch(Exception e) {}
 	        	
-        		theDagBrowserPanel.initializingV();
+        		theDagBrowserPanel.initializeV();
 
         		theJFrame =  // Construct and start the app JFrame.
         				startingJFrame();

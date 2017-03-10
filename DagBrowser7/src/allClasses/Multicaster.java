@@ -247,7 +247,7 @@ public class Multicaster
          	*/
         {
 	      	try { // Operations that might produce an IOException.
-          	initializingV();  // Do non-injection initialization.
+          	initializeV();  // Do non-injection initialization.
   	      	startingMultcastReceiverThreadV();
 
             while (true) // Repeating until thread termination is requested.
@@ -394,7 +394,7 @@ public class Multicaster
        	    }
 	      }
 
-	  protected void initializingV()
+	  protected void initializeV()
 	    throws IOException
 	    {
 		    this.groupInetAddress = theIPAndPort.getInetAddress();
@@ -412,7 +412,7 @@ public class Multicaster
 		    theMulticastSocket.setLoopbackMode( true );  // Disable loopback.
 		    theMulticastSocket.setTimeToLive( ttl );
 
-	  	  super.initializingV();
+	  	  super.initializeV();
 	  	  }
 	  
 	  private boolean multicastActiveB= false;

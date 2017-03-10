@@ -46,7 +46,7 @@ public class MutableList
 	        }
 			*/  //%
 
-	    public void initializingV(
+	    public void initializeV(
 	        DataTreeModel theDataTreeModel,
 	        String nameString, 
 	        DataNode... inDataNodes 

@@ -27,7 +27,7 @@ public class DataNodeWithKey< K >
 	          new DataNode[]{} // Initially empty array of children.
 	      		);
 	  	  */  //%
-	  		initializingV(
+	  		initializeV(
   		    theDataTreeModel,
 	        baseNameString, // Base name but not entire name.
           new DataNode[]{} // Initially empty array of children.

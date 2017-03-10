@@ -54,7 +54,7 @@ public class Netcaster
 			      );
 	      }
 
-    protected void initializingV()
+    protected void initializeV()
 	    throws IOException
 	    /* This initializing method includes stream packet counts.
 	      */
@@ -84,7 +84,7 @@ public class Netcaster
 				    theDataTreeModel, "Port", "" + remoteIPAndPort.getPortI()
 				  	) );
 
-		    super.initializingV();
+		    super.initializeV();
 	    	}
 
     /*///

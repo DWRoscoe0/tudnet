@@ -115,7 +115,7 @@ public class RootJTree
 
         } // Constructor.
 
-    public void initializingV( TreePath selectedTreePath )
+    public void initializeV( TreePath selectedTreePath )
       /* This method initializes the state of the JTree,
         or at least the part that is visible in the JTree pane.
         Most of this is based on the state of the MetaNodes.

@@ -55,7 +55,7 @@ public class State extends MutableList {
 
   /* Methods used to build state objects. */
   
-  public void initializingV() throws IOException
+  public void initializeV() throws IOException
     /* This method initializes this state object, 
       It does actions needed when this state object is being built.
       This is not the same as the entryV() method, which
@@ -66,6 +66,7 @@ public class State extends MutableList {
       typically that is done by initAndAddV(..) as sub-states are added.
   		*/
     {
+  	  //////// super.initializeV(); // ??? Being added and renamed?
     	}
 
   public void initAndAddV(State theSubState) throws IOException
@@ -79,7 +80,7 @@ public class State extends MutableList {
   	  addV( theSubState ); // Add theSubState to list of sub-states.
   	    // This also sets the theSubState's parent state to be this state.
 
-  		theSubState.initializingV(); // Initializing the added sub-state.
+  		theSubState.initializeV(); // Initializing the added sub-state.
   	  }
 
   public void addV(State theSubState)
@@ -97,7 +98,7 @@ public class State extends MutableList {
   	    // the sub-state's parent state.
   	  }
 
-  public synchronized void finalizingV() throws IOException
+  public synchronized void finalizeV() throws IOException
     /* This method processes any pending loose ends before shutdown.
       In this case it finalizes each of its sub-states.
       This is not the same as the exitV() method, which
@@ -106,7 +107,7 @@ public class State extends MutableList {
 	  {
 	  	for (State subState : theListOfSubStates)
 		  	{
-	  			subState.finalizingV();
+	  			subState.finalizeV();
 		  		}
       }
 
@@ -122,7 +123,7 @@ public class State extends MutableList {
 	    the state associated with this object is entered.
 	    This version does nothing, but it should be overridden 
 	    by state subclasses that require entry actions.
-	    This is not the same as initializingV(),
+	    This is not the same as initializeV(),
 	    which does actions needed when the State object is being built.
 	    */
 	  { 
@@ -287,9 +288,9 @@ class OrState extends State {
     // It is reset to false after it is aggregated into,
     // and returned as, a stateProgressB value.
 
-  public void initializingV( State theState ) throws IOException 
+  public void initializeV( State theState ) throws IOException 
 	  {
-			super.initializingV();
+			super.initializeV();
 	
 			requestSubStateV( theState ); // Initial state.
 	  	}

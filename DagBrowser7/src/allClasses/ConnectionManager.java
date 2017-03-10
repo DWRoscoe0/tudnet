@@ -141,7 +141,7 @@ public class ConnectionManager
           );
     		*/  //%
 
-      	super.initializingV(  // Constructing base class.
+      	super.initializeV(  // Constructing base class.
           theDataTreeModel, // For receiving tree change notifications.
           "Connection-Manager", // DataNode (not thread) name.
           emptyListOfDataNodes()
@@ -168,7 +168,7 @@ public class ConnectionManager
         all the threads that use it are recreated if that occurs.
         */
       {
-    		initializingV();  // Doing non-injection initialization.
+    		initializeV();  // Doing non-injection initialization.
 
         processingInputsAndExecutingEventsV(); // Until thread termination...
           // ...is requested.
@@ -176,7 +176,7 @@ public class ConnectionManager
         stoppingAllThreadsV();
         }
 
-    private void initializingV()
+    private void initializeV()
     	// This method does non-injection initialization.
       {
 		    addB( theUnicasterManager ); // Adding UnicasterManager to our list.
@@ -184,7 +184,7 @@ public class ConnectionManager
 				try { // Doing this here is a bit of a kludge.
 					  multicastInetAddress= InetAddress.getByName("239.255.0.0"); }
 				  catch ( UnknownHostException e ) { 
-          	Globals.logAndRethrowAsRuntimeExceptionV( "initializingV()", e );
+          	Globals.logAndRethrowAsRuntimeExceptionV( "initializeV()", e );
 				  }
     		}
 

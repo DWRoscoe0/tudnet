@@ -111,7 +111,7 @@ public class Unicaster
         */
       {
         try { // Operations that might produce an IOException.
-	          initializingV();
+	          initializeV();
 
 	          { // Uncomment only one of the following method calls.
 	          	runWithSubcastersV(); // Code which uses Subcasters.
@@ -132,7 +132,7 @@ public class Unicaster
         appLogger.info("run() exiting."); // Needed if thread self-terminates.
         }
 
-    protected void initializingV() throws IOException
+    protected void initializeV() throws IOException
 	    {
     		super.initializingWithoutStreamsV(); // We do the stream counts below.
 
@@ -144,7 +144,7 @@ public class Unicaster
     				retransmitDelayMsNamedLong 
 	      		)
 	  	  	); // This includes stream counts.
-	  	  theLinkMeasurementState.initializingV();
+	  	  theLinkMeasurementState.initializeV();
 
 	  	  addB( theMultiMachineState= new MultiMachineState() );
 
@@ -154,7 +154,7 @@ public class Unicaster
     protected void finalizingV() throws IOException
       // This is the opposite of initilizingV().
 	    {
-	    	theLinkMeasurementState.finalizingV();
+	    	theLinkMeasurementState.finalizeV();
 	    	theEpiOutputStreamO.close(); // Closing output stream.
 	    	}
 

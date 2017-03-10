@@ -81,7 +81,7 @@ public class SystemsMonitor
           new DataNode[]{} // Initially empty List of Peers.
           );
       	*/  //%
-      	initializingV(  // Constructing base class.
+      	initializeV(  // Constructing base class.
           theDataTreeModel, // For receiving tree change notifications.
           "Systems-Monitor", // DataNode (not thread) name.
           new DataNode[]{} // Initially empty List of Peers.
