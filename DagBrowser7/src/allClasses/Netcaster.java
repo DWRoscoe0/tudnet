@@ -73,6 +73,7 @@ public class Netcaster
 	      It exists so subclass Netcaster can reference it.
 	      */
 	    {
+    		super.initializeV();
     		IPAndPort remoteIPAndPort= getKeyK();
     		addB( 	new NamedMutable( 
 		        theDataTreeModel, 
@@ -83,8 +84,6 @@ public class Netcaster
 		    addB( 	new NamedMutable( 
 				    theDataTreeModel, "Port", "" + remoteIPAndPort.getPortI()
 				  	) );
-
-		    super.initializeV();
 	    	}
 
     /*///

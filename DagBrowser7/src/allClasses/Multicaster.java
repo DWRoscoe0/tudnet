@@ -397,7 +397,9 @@ public class Multicaster
 	  public void initializeWithIOExceptionV()
 	    throws IOException
 	    {
-		    this.groupInetAddress = theIPAndPort.getInetAddress();
+  	  	super.initializeV();
+
+  	  	this.groupInetAddress = theIPAndPort.getInetAddress();
 		    this.multicastPortI = theIPAndPort.getPortI();
 		    this.ttl= 1;  // Set Time-To-Live to 1 to discover LAN peers only.
 		  
@@ -411,8 +413,6 @@ public class Multicaster
 		      );
 		    theMulticastSocket.setLoopbackMode( true );  // Disable loopback.
 		    theMulticastSocket.setTimeToLive( ttl );
-
-	  	  super.initializeV();
 	  	  }
 	  
 	  private boolean multicastActiveB= false;

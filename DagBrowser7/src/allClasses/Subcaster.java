@@ -92,9 +92,9 @@ public class Subcaster
         */
 	    {
     		appLogger.info("initializeV() at start."); // Needed if thread self-terminates.
+		    super.initializeV();
 		    addB( 	theSubcasterOutputStream.getCounterNamedLong() );
 		    addB( 	theSubcasterInputStream.getCounterNamedLong() );
-		    super.initializeV();
 	    	}
 
     protected void finalizingV()
