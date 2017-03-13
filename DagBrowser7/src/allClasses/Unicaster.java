@@ -59,7 +59,7 @@ public class Unicaster
 
   		// Other instance variables.
   		private LinkMeasurementState theLinkMeasurementState;
-			@SuppressWarnings("unused")
+			//% @SuppressWarnings("unused")
   		private MultiMachineState theMultiMachineState;
   		
 			public Unicaster(  // Constructor. 
@@ -111,7 +111,7 @@ public class Unicaster
         */
       {
         try { // Operations that might produce an IOException.
-	          initializeV();
+	          initializeWithIOExceptionV();
 
 	          { // Uncomment only one of the following method calls.
 	          	runWithSubcastersV(); // Code which uses Subcasters.
@@ -132,7 +132,7 @@ public class Unicaster
         appLogger.info("run() exiting."); // Needed if thread self-terminates.
         }
 
-    protected void initializeV() throws IOException
+    protected void initializeWithIOExceptionV() throws IOException
 	    {
     		super.initializingWithoutStreamsV(); // We do the stream counts below.
 
@@ -144,9 +144,11 @@ public class Unicaster
     				retransmitDelayMsNamedLong 
 	      		)
 	  	  	); // This includes stream counts.
-	  	  theLinkMeasurementState.initializeV();
+	  	  theLinkMeasurementState.initializeWithIOExceptionV();
 
-	  	  addB( theMultiMachineState= new MultiMachineState() );
+	  	  theMultiMachineState= new MultiMachineState();
+	  	  theMultiMachineState.initializeWithIOExceptionV();
+	  	  addB( theMultiMachineState );
 
 	  	  addB( theSubcasterManager );
 	    	}

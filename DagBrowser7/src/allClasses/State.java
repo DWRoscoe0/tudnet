@@ -55,32 +55,35 @@ public class State extends MutableList {
 
   /* Methods used to build state objects. */
   
-  public void initializeV() throws IOException
+  public void initializeWithIOExceptionV() throws IOException
     /* This method initializes this state object, 
       It does actions needed when this state object is being built.
       This is not the same as the entryV() method, which
       does actions needed when the associated state-machine state is entered.
 
-      This version does nothing.
-      It does not recursively initialize the sub-states because
-      typically that is done by initAndAddV(..) as sub-states are added.
+			Like constructors, this method should be called first
+			in the sub-class versions of this method.
+
+      This version only calls 
+      the no-IOException superclass initializeV() version.
+      
+      //// Change to return (this) so it can be used as method argument.
   		*/
     {
-  	  //////// super.initializeV(); // ??? Being added and renamed?
+  	  super.initializeV(); // //////??? Being added and renamed?
     	}
 
   public void initAndAddV(State theSubState) throws IOException
     /* This method is used as part of the State building process.  It:
       * adds theSubState this state's list of sub-states, and 
-      * does an initialize of theSubState.
+      * does an initialization of theSubState.
       It does them in this order because initialization needs to know 
       the parent state.
      	*/
   	{ 
+  		theSubState.initializeWithIOExceptionV();
   	  addV( theSubState ); // Add theSubState to list of sub-states.
-  	    // This also sets the theSubState's parent state to be this state.
-
-  		theSubState.initializeV(); // Initializing the added sub-state.
+  	  	// This also sets the theSubState's parent state to be this state.
   	  }
 
   public void addV(State theSubState)
@@ -123,7 +126,7 @@ public class State extends MutableList {
 	    the state associated with this object is entered.
 	    This version does nothing, but it should be overridden 
 	    by state subclasses that require entry actions.
-	    This is not the same as initializeV(),
+	    This is not the same as initialize*V(),
 	    which does actions needed when the State object is being built.
 	    */
 	  { 
@@ -288,12 +291,14 @@ class OrState extends State {
     // It is reset to false after it is aggregated into,
     // and returned as, a stateProgressB value.
 
-  public void initializeV( State theState ) throws IOException 
+  /*  //%
+  public void initializeWithIOExceptionV( State theState ) throws IOException 
 	  {
-			super.initializeV();
+			super.initializeWithIOExceptionV();
 	
 			requestSubStateV( theState ); // Initial state.
 	  	}
+  */  //%
 
   public boolean stateHandlerB() throws IOException
 	  /* This handles the OrState by cycling it's machine.
@@ -362,6 +367,11 @@ class AndState extends State {
 	
 	  There is concurrency in an AndState machine, at least at this level.
 	  */
+
+  public void initializeWithIOExceptionV() throws IOException
+    {
+  		super.initializeWithIOExceptionV();
+    	}
 
 	public boolean stateHandlerB() throws IOException
 	  /* This method handles this AndState by cycling all of its sub-machines

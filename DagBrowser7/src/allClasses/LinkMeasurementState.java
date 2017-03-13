@@ -125,9 +125,9 @@ public class LinkMeasurementState
 	
 		// Input code activated or used by inputs.
 			
-		  public synchronized void initializeV() throws IOException
+		  public synchronized void initializeWithIOExceptionV() throws IOException
 		    /* This method is called by
-		      the Unicaster thread's initializeV() method.
+		      the Unicaster thread's initialization method.
 		      It creates most of the variable values needed,
 		      including ones added to the DAG for display.
 		      */
@@ -244,18 +244,18 @@ public class LinkMeasurementState
 				@SuppressWarnings("unused")
 				private LocalMeasurementState theLocalMeasurementState;
 
-		    public void initializeV() throws IOException
+		    public void initializeWithIOExceptionV() throws IOException
 		      /* This method initializes this state machine.  This includes:
 		        * creating, initializing, and adding to the sub-state list
 		          all of our concurrently running sub-state-machines, and
 		        * creating and starting our timer.
 		        */
 			    {
+		    		super.initializeWithIOExceptionV();
 			  	  initAndAddV( (theRemoteMeasurementState= 
 			  	  		new RemoteMeasurementState()) );
 			  	  initAndAddV( theLocalMeasurementState= 
 			  	  		new LocalMeasurementState() );
-		    		super.initializeV();
 
 			  	  theTimerInput=  // Creating our timer.   ////// Move to parent? 
 					  		new TimerInput(  //// Move to factory?
@@ -313,8 +313,10 @@ public class LinkMeasurementState
 						  theMeasurementInitializationState;
 						private MeasurementHandshakesState theMeasurementHandshakesState;
 		
-				    public void initializeV() throws IOException 
+				    public void initializeWithIOExceptionV() throws IOException 
 					    {
+				    		super.initializeWithIOExceptionV();
+
 				    		// Create and add orthogonal sub-state machines.
 					  	  initAndAddV( theMeasurementPausedState= 
 					  	  		new MeasurementPausedState() );
@@ -322,8 +324,8 @@ public class LinkMeasurementState
 					  	  		new MeasurementInitializationState() );
 					  	  initAndAddV( theMeasurementHandshakesState= 
 					  	  		new MeasurementHandshakesState() );
-		
-				    		super.initializeV( theMeasurementPausedState );
+
+								requestSubStateV( theMeasurementPausedState ); // Initial state.
 					    	}
 		
 				    private void processPacketAcknowledgementV() 

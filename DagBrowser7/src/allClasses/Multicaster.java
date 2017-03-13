@@ -247,7 +247,7 @@ public class Multicaster
          	*/
         {
 	      	try { // Operations that might produce an IOException.
-          	initializeV();  // Do non-injection initialization.
+          	initializeWithIOExceptionV();  // Do non-injection initialization.
   	      	startingMultcastReceiverThreadV();
 
             while (true) // Repeating until thread termination is requested.
@@ -394,7 +394,7 @@ public class Multicaster
        	    }
 	      }
 
-	  protected void initializeV()
+	  public void initializeWithIOExceptionV()
 	    throws IOException
 	    {
 		    this.groupInetAddress = theIPAndPort.getInetAddress();

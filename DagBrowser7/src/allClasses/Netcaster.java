@@ -1,6 +1,6 @@
 package allClasses;
 
-import java.io.IOException;
+//% import java.io.IOException;
 
 //import static allClasses.Globals.*;  // appLogger;
 
@@ -54,8 +54,8 @@ public class Netcaster
 			      );
 	      }
 
-    protected void initializeV()
-	    throws IOException
+    public void initializeV()
+	    //% throws IOException
 	    /* This initializing method includes stream packet counts.
 	      */
 	    {
@@ -67,7 +67,7 @@ public class Netcaster
 		    }
 
     protected void initializingWithoutStreamsV()
-	    throws IOException
+	    //% throws IOException
 	    /* This special version does not include stream packet counts so
 	      they can be place in a different position.
 	      It exists so subclass Netcaster can reference it.

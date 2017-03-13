@@ -176,7 +176,7 @@ public class ConnectionManager
         stoppingAllThreadsV();
         }
 
-    private void initializeV()
+    public void initializeV()
     	// This method does non-injection initialization.
       {
 		    addB( theUnicasterManager ); // Adding UnicasterManager to our list.

@@ -27,7 +27,14 @@ public abstract class NamedNonLeaf
         }
     */  //%
 
-    NamedNonLeaf()  // Constructor.
+    NamedNonLeaf()  // Constructor.  ////// This can go?
+	    { 
+	    	}
+    
+    public void initializeV()
+      /*  //// Change all initializeV(..) methods to return (this)
+        so it can be used as a method parameter. 
+        */
 	    { 
 	    	setNameStringV( // Make default name be class name.
 	    			//% getClass().getName() 
