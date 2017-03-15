@@ -134,16 +134,16 @@ public class Unicaster
 
     protected void initializeWithIOExceptionV() throws IOException
 	    {
-    		super.initializingWithoutStreamsV(); // We do the stream counts below.
+    		super.initializeWithoutStreamsV(); // We do the stream counts below.
 
-	  	  addB( theLinkMeasurementState= new LinkMeasurementState( 
+    		theLinkMeasurementState= new LinkMeasurementState( 
 	  		    theDataTreeModel,
     				theTimer, 
     				theEpiInputStreamI,
     				theEpiOutputStreamO, 
     				retransmitDelayMsNamedLong 
-	      		)
-	  	  	); // This includes stream counts.
+	      		);
+	  	  addB( theLinkMeasurementState ); // This includes stream counts.
 	  	  theLinkMeasurementState.initializeWithIOExceptionV();
 
 	  	  theMultiMachineState= new MultiMachineState();

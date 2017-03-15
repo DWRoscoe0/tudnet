@@ -52,11 +52,18 @@ public class MutableList
 	        DataNode... inDataNodes 
 	        )
 	      {
-	        //% super( nameString, inDataNodes ); // Constructing base class. 
 	    		super.initializeV( nameString, inDataNodes ); 
-	
-	        // Storing injected values stored in this class.
+
 	        this.theDataTreeModel= theDataTreeModel;
+	        }
+
+	    public void initializeV(
+	        DataTreeModel theDataTreeModel
+	        )
+	      {
+	    		super.initializeV(); 
+
+	    		this.theDataTreeModel= theDataTreeModel;
 	        }
 
 	  // DataNode methods which change the node's state.

@@ -109,11 +109,12 @@ public class LinkMeasurementState
 				NetcasterOutputStream theNetcasterOutputStream,
 				NamedLong retransmitDelayMsNamedLong
 				)
+						throws IOException  ////// Experiment.
 	  	{
   	  	initializeV(
-  		    theDataTreeModel,
-	        "LinkMeasurementState",
-          new DataNode[]{} // Initially empty array of children.
+  		    theDataTreeModel ////,
+	        //%"LinkMeasurementState",
+  		  //%new DataNode[]{} // Initially empty array of children.
       		);
 	
 	    // Injected dependencies.
@@ -125,13 +126,15 @@ public class LinkMeasurementState
 	
 		// Input code activated or used by inputs.
 			
-		  public synchronized void initializeWithIOExceptionV() throws IOException
+		  public synchronized void initializeWithIOExceptionV() 
+					throws IOException  ////// Experiment.
 		    /* This method is called by
 		      the Unicaster thread's initialization method.
 		      It creates most of the variable values needed,
 		      including ones added to the DAG for display.
 		      */
 			  {
+		  		super.initializeWithIOExceptionV();
 	  	  	// Adding measurement count.
 		  	  addB( measurementHandshakesNamedLong= new NamedLong(
 		      		theDataTreeModel, "Measurement-Handshakes", 0 ) );
