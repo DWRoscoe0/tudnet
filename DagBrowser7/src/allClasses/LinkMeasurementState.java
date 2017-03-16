@@ -134,7 +134,7 @@ public class LinkMeasurementState
 		      including ones added to the DAG for display.
 		      */
 			  {
-		  		super.initializeWithIOExceptionV();
+		  		super.initializeWithIOExceptionState();
 	  	  	// Adding measurement count.
 		  	  addB( measurementHandshakesNamedLong= new NamedLong(
 		      		theDataTreeModel, "Measurement-Handshakes", 0 ) );
@@ -247,14 +247,14 @@ public class LinkMeasurementState
 				@SuppressWarnings("unused")
 				private LocalMeasurementState theLocalMeasurementState;
 
-		    public void initializeWithIOExceptionV() throws IOException
+		    public State initializeWithIOExceptionState() throws IOException
 		      /* This method initializes this state machine.  This includes:
 		        * creating, initializing, and adding to the sub-state list
 		          all of our concurrently running sub-state-machines, and
 		        * creating and starting our timer.
 		        */
 			    {
-		    		super.initializeWithIOExceptionV();
+		    		super.initializeWithIOExceptionState();
 			  	  initAndAddV( (theRemoteMeasurementState= 
 			  	  		new RemoteMeasurementState()) );
 			  	  initAndAddV( theLocalMeasurementState= 
@@ -272,6 +272,7 @@ public class LinkMeasurementState
 							    		}
 					  				);
 		  	  	stateHandlerB(); // Calling the handler once to start timer.
+		  	  	return this;
 			    	}
 
 		    public synchronized void finalizeV() throws IOException
@@ -316,9 +317,9 @@ public class LinkMeasurementState
 						  theMeasurementInitializationState;
 						private MeasurementHandshakesState theMeasurementHandshakesState;
 		
-				    public void initializeWithIOExceptionV() throws IOException 
+				    public State initializeWithIOExceptionState() throws IOException 
 					    {
-				    		super.initializeWithIOExceptionV();
+				    		super.initializeWithIOExceptionState();
 
 				    		// Create and add orthogonal sub-state machines.
 					  	  initAndAddV( theMeasurementPausedState= 
@@ -329,6 +330,7 @@ public class LinkMeasurementState
 					  	  		new MeasurementHandshakesState() );
 
 								requestSubStateV( theMeasurementPausedState ); // Initial state.
+								return this;
 					    	}
 		
 				    private void processPacketAcknowledgementV() 

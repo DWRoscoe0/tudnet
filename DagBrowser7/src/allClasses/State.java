@@ -55,7 +55,7 @@ public class State extends MutableList {
 
   /* Methods used to build state objects. */
   
-  public void initializeWithIOExceptionV() throws IOException
+  public State initializeWithIOExceptionState() throws IOException
     /* This method initializes this state object, 
       It does actions needed when this state object is being built.
       This is not the same as the entryV() method, which
@@ -71,34 +71,33 @@ public class State extends MutableList {
   		*/
     {
   	  super.initializeV(); // //////??? Being added and renamed?
+  	  return this;
     	}
 
   public void initAndAddV(State theSubState) throws IOException
     /* This method is used as part of the State building process.  It:
-      * adds theSubState this state's list of sub-states, and 
-      * does an initialization of theSubState.
-      It does them in this order because initialization needs to know 
-      the parent state.
+      * does an initialization of theSubState, and
+      * adds theSubState to this state's list of sub-states. 
      	*/
   	{ 
-  		theSubState.initializeWithIOExceptionV();
-  	  addV( theSubState ); // Add theSubState to list of sub-states.
-  	  	// This also sets the theSubState's parent state to be this state.
+  	  addV(  // Initialize and add theSubState to list of sub-states.
+  	  		theSubState.initializeWithIOExceptionState()
+  	  		); // Adding also sets the theSubState's parent state to be this state.
   	  }
 
   public void addV(State theSubState)
     /* This method adds/injects one sub-state to this state.
 			It part of the State building process.  
-      It adds theSubState to the state's sub-state list.
-      It also sets the parent of the sub-state to be this state.
+      It adds theSubState to the state's sub-state list,
+      including setting the parent of the sub-state to be this state.
       */
   	{ 
   	  theListOfSubStates.add( theSubState ); // Add theSubState to
   	    // this state's list of sub-states.
-  	  addRawV( theSubState ); // Add to this DataNode's list of DataNodes.
-
   	  theSubState.setParentStateV( this ); // Store this state as
-  	    // the sub-state's parent state.
+  	  	// the sub-state's parent state.
+
+  	  addRawV( theSubState ); // Add to this DataNode's list of DataNodes.
   	  }
 
   public synchronized void finalizeV() throws IOException
@@ -368,9 +367,10 @@ class AndState extends State {
 	  There is concurrency in an AndState machine, at least at this level.
 	  */
 
-  public void initializeWithIOExceptionV() throws IOException
+  public State initializeWithIOExceptionState() throws IOException
     {
-  		super.initializeWithIOExceptionV();
+  		super.initializeWithIOExceptionState();
+  		return this;
     	}
 
 	public boolean stateHandlerB() throws IOException
