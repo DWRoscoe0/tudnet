@@ -130,9 +130,10 @@ public class DataTreeModel
 	      	  DataNode parentDataNode= (DataNode)parentObject;
 	          TreePath parentTreePath= // Retrieving path of parent from map. 
 	            	translatingToTreePath( parentDataNode );
-	      	  theHashMap.put( // Making and adding child path to map. 
-		      			childDataNode, parentTreePath.pathByAddingChild(childDataNode) 
-		      			);
+	          if ( parentTreePath != null ) // Add child path if path found.
+		      	  theHashMap.put( // Making and adding child path to map. 
+			      			childDataNode, parentTreePath.pathByAddingChild(childDataNode) 
+			      			);
       	  	}
 
       	  return childDataNode; // Returning the child.
@@ -354,18 +355,21 @@ public class DataTreeModel
         {
           TreePath parentTreePath= // Calculating path of parent. 
           	translatingToTreePath( parentDataNode ); // Should be in map.
-          TreeModelEvent theTreeModelEvent= // Construct TreeModelEvent.
-            new TreeModelEvent(
-            	this, 
-            	parentTreePath, 
-            	new int[] {indexI}, 
-            	new Object[] {childDataNode}
-            	);
-          fireTreeNodesInserted( theTreeModelEvent ); // Firing insertion event.
-
-        	theHashMap.put( // Making and adding child to map for later. 
-        			childDataNode, parentTreePath.pathByAddingChild(childDataNode) 
-        			);
+          if ( parentTreePath != null ) // Do these things only if path found.
+	          {
+		          TreeModelEvent theTreeModelEvent= // Construct TreeModelEvent.
+		            new TreeModelEvent(
+		            	this, 
+		            	parentTreePath, 
+		            	new int[] {indexI}, 
+		            	new Object[] {childDataNode}
+		            	);
+		          fireTreeNodesInserted( theTreeModelEvent ); // Fire insertion.
+		
+		        	theHashMap.put( // Making and adding child to map for later. 
+		        			childDataNode, parentTreePath.pathByAddingChild(childDataNode) 
+		        			);
+	          	}
           }
 
       public void reportingRemoveV( 
@@ -380,18 +384,21 @@ public class DataTreeModel
         {
           TreePath parentTreePath= // Calculating path of parent. 
           	translatingToTreePath( parentDataNode );
-          TreeModelEvent theTreeModelEvent= // Constructing TreeModelEvent.
-            new TreeModelEvent(
-            	this, 
-            	parentTreePath, 
-            	new int[] {indexI}, 
-            	new Object[] {childDataNode}
-            	);
-          fireTreeNodesRemoved( theTreeModelEvent ); // Firing as removal event.
-
-        	theHashMap.remove( // Removing entry for removed child from map. 
-        			childDataNode // This won't remove descendants of child?? 
-        			);
+          if ( parentTreePath != null ) // Do this only if path found.
+          	{
+		          TreeModelEvent theTreeModelEvent= // Constructing TreeModelEvent.
+		            new TreeModelEvent(
+		            	this, 
+		            	parentTreePath, 
+		            	new int[] {indexI}, 
+		            	new Object[] {childDataNode}
+		            	);
+		          fireTreeNodesRemoved( theTreeModelEvent ); // Firing removal.
+		
+		        	theHashMap.remove( // Removing entry for removed child from map. 
+		        			childDataNode // This won't remove descendants of child?? 
+		        			);
+		          }
           }
 
       public void safelyReportingChangeV( final DataNode theDataNode )
