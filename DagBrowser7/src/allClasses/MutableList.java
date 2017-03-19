@@ -28,6 +28,7 @@ public class MutableList
 	  // Variables for injected values.
 	
 			protected DataTreeModel theDataTreeModel; // For reporting List changes.
+			  // There are no super-classes that need this.
 
     // Constructors.
 
@@ -132,7 +133,7 @@ public class MutableList
       		    	  	int insertAtI= (indexI < 0) ? // Converting index < 0 
 			              		theListOfDataNodes.size() : // to mean end of list,
 			              	  indexI; // otherwise use raw index.
-		                theListOfDataNodes.add( insertAtI, childDataNode );
+		                addWithIndexPropagationV( insertAtI, childDataNode );
 		                theDataTreeModel.reportingInsertV( 
 		    		      		parentDataNode, insertAtI, childDataNode 
 		    		      		);
@@ -145,6 +146,17 @@ public class MutableList
               } 
             );
 		  		return addSuccessB[0]; // Returning whether add succeeded.
+		      }
+
+		  public void addWithIndexPropagationV(
+		  		final int indexI, final DataNode childDataNode 
+		  		)
+		    /* This method adds childDataNode to the list,
+		      but also [eventually ////// propagates theDataTreeModel
+		      into the childDataNode and its descendants.
+		      */
+		    {
+          theListOfDataNodes.add( indexI, childDataNode );
 		      }
 	
 		  public synchronized boolean removeB( final DataNode childDataNode )

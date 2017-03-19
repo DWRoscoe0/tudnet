@@ -6,19 +6,24 @@ import java.util.List;
 
 public class NamedList 
 
-  extends NamedNonLeaf  // Will override all leafy-ness.
+  extends NamedNonLeaf  // Will override all remaining leaf behavior.
   
-  // This is a utility class that is simply a List with a name.  
+  /* This is a utility class that is simply a List with a name.
+    It is meant to be immutable after construction and initialization, 
+    but misbehaving subclasses could change it.
+    Also, there is nothing preventing changes in
+    its children or other descendants.
+    */
   
   { // class NamedList
 
-    List<DataNode> theListOfDataNodes= // Set to empty,
+    protected List<DataNode> theListOfDataNodes= // Set to empty,
     		new ArrayList<DataNode>(  // a mutable ArrayList from
 	        Arrays.asList(  // an immutable List made from
 	        		emptyListOfDataNodes() // an empty DataNode list.
 	            )
-	        );
-
+	        ); // This might be replaced with a SelfReturningListOrNode.
+    
     /*  //%
     NamedList ( String nameString, DataNode... inDataNodes )  // Constructor.
       /* This constructor creates a NamedList with

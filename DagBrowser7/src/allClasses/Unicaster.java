@@ -143,8 +143,8 @@ public class Unicaster
     				theEpiOutputStreamO, 
     				retransmitDelayMsNamedLong 
 	      		);
-	  	  addB( theLinkMeasurementState ); // This includes stream counts.
 	  	  theLinkMeasurementState.initializeWithIOExceptionV();
+	  	  addB( theLinkMeasurementState ); // This includes stream counts.
 
 	  	  theMultiMachineState= new MultiMachineState();
 	  	  theMultiMachineState.initializeWithIOExceptionV();

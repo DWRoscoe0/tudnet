@@ -25,12 +25,12 @@ public class DataTreeModel
   implements TreeModel, Serializable
   
   /* This class implements an extended TreeModel 
-    used for browsing the Infogora hierarchy.
+    used for browsing the Infogora hierarchy DAG.
     It implements, or will implement, the following extensions beyond
-    the basic capabilities needed by the JTree class.
+    the basic TreeModel capabilities needed by the JTree class.
 	
 	  * The method getDataJComponent( TreePath inTreePath )
-	    returns a JComponent capable of displaying the node.
+	    which returns a JComponent capable of displaying the node.
 
 	  * This class will eventually maintain a 2-way association between 
 	    a DataNode and the TreePath (or TreePaths in the case of DAGs)
@@ -44,12 +44,15 @@ public class DataTreeModel
 	    so a solution needs to be found.
 	    It will probably be done with a HashMap.
 
+			?? Maybe add a parent list to nodes.
+			Maybe create a dual role (node and node-list) object.
+			 
     Because this class will be used with JTree as part of a user interface,
     there are some threading considerations:
     * The notification methods, the ones which fire TreeModelListeners,
       must be called only within the EDT (Event Dispatch Thread).
       This is what is done now, using the invokeAndWaitV(..) method.
-    * Simply synchronizing its methods might not be sufficient
+    ? Simply synchronizing its methods might not be sufficient
       to make the model thread-safe because values read by the tree reader
       methods can change at any time.
 
