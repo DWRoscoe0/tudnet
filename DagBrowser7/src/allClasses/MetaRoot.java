@@ -201,7 +201,8 @@ public class MetaRoot {
             DataNode theDataNode= // Get associated DataNode.
               childMetaNode.getDataNode();
             if // DataNode is an UnknownDataNode.
-              ( ! AbDataNode.isUsableB( theDataNode ) )
+              //% ( ! AbDataNode.isUsableB( theDataNode ) )
+            	( ! DataNode.isUsableB( theDataNode ) )
               break scanner;  // Exit Processor.
             scanTreePath=  // Add DataNode to TreePath.
               scanTreePath.pathByAddingChild( theDataNode );

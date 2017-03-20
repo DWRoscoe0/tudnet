@@ -2,7 +2,8 @@ package allClasses;
 
 public class SingleChildDataNode
 
-  extends AbDataNode
+  extends //% AbDataNode
+  DataNode
   
   /* This class is a DataNode that has only a single child DataNode.
     It serves as a parent of the root of the DataNode DAG.

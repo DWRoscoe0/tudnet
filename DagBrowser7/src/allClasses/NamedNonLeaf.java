@@ -5,7 +5,8 @@ package allClasses;
 
 public abstract class NamedNonLeaf 
 
-  extends AbDataNode
+  extends //% AbDataNode
+  DataNode
 
   /* This class is the base class for all named MetaNodes.
     It has a name.  The name can be changed, but this should happen only

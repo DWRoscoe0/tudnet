@@ -15,7 +15,8 @@ import javax.swing.tree.TreePath;
 
 public class IFile 
 
-  extends AbDataNode
+  extends //% AbDataNode
+  DataNode
 
   { // class IFile
   

@@ -4,7 +4,8 @@ import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
 
 public class Infinitree 
-  extends AbDataNode
+  extends //% AbDataNode
+  DataNode
   /* The purpose of this class is to create a an infinite subtree
     for testing the Infogora browser.
     */
