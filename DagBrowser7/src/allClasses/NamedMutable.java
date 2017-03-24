@@ -15,7 +15,6 @@ public class NamedMutable
 	  		final Object newObject
 	  		)
 		  {
-		  	////////super(nameString); // Constructing base class. 
 	  		super.initializeV( nameString );
 
         // Storing injected values stored in this class.

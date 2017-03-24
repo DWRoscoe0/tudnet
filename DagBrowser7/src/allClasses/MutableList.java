@@ -30,22 +30,9 @@ public class MutableList
 			protected DataTreeModel theDataTreeModel; // For reporting List changes.
 			  // There are no super-classes that need this.
 
-    // Constructors.
+	    // Constructors, none.
 
-			/*  //%
-	    public MutableList (   // Constructor.
-	        DataTreeModel theDataTreeModel,
-	        String nameString, 
-	        DataNode... inDataNodes 
-	        )
-	      {
-	        //% super( nameString, inDataNodes ); // Constructing base class. 
-	    		super.initializeV( nameString, inDataNodes ); 
-	
-	        // Storing injected values stored in this class.
-	        this.theDataTreeModel= theDataTreeModel;
-	        }
-			*/  //%
+	    // Initilization methods.
 
 	    public void initializeV(
 	        DataTreeModel theDataTreeModel,

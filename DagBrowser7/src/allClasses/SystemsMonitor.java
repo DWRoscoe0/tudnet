@@ -74,20 +74,11 @@ public class SystemsMonitor
     		DataTreeModel theDataTreeModel
     		)
       {
-      	/*  //%
-    		super(  // Constructing base class.
-          theDataTreeModel, // For receiving tree change notifications.
-          "Systems-Monitor", // DataNode (not thread) name.
-          new DataNode[]{} // Initially empty List of Peers.
-          );
-      	*/  //%
       	initializeV(  // Constructing base class.
           theDataTreeModel, // For receiving tree change notifications.
           "Systems-Monitor", // DataNode (not thread) name.
           new DataNode[]{} // Initially empty List of Peers.
           );
-
-        // Storing other dependencies injected into this class.
         }
 
     public void run()

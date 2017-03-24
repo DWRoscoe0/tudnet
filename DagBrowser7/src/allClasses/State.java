@@ -70,7 +70,7 @@ public class State extends MutableList {
       //// Change to return (this) so it can be used as method argument.
   		*/
     {
-  	  super.initializeV(); // //////??? Being added and renamed?
+  	  super.initializeV(); // IOExceptions are not thrown in super-classes.
   	  return this;
     	}
 
@@ -289,15 +289,6 @@ class OrState extends State {
     // * requestSubStateV(State nextState)
     // It is reset to false after it is aggregated into,
     // and returned as, a stateProgressB value.
-
-  /*  //%
-  public void initializeWithIOExceptionV( State theState ) throws IOException 
-	  {
-			super.initializeWithIOExceptionV();
-	
-			requestSubStateV( theState ); // Initial state.
-	  	}
-  */  //%
 
   public boolean stateHandlerB() throws IOException
 	  /* This handles the OrState by cycling it's machine.

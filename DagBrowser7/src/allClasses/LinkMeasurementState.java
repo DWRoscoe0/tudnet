@@ -109,15 +109,11 @@ public class LinkMeasurementState
 				NetcasterOutputStream theNetcasterOutputStream,
 				NamedLong retransmitDelayMsNamedLong
 				)
-						throws IOException  ////// Experiment.
+						throws IOException
 	  	{
-  	  	initializeV(
-  		    theDataTreeModel ////,
-	        //%"LinkMeasurementState",
-  		  //%new DataNode[]{} // Initially empty array of children.
-      		);
+  	  	initializeV( theDataTreeModel );
 	
-	    // Injected dependencies.
+  	  	// Injected dependencies.
 			  this.theNetcasterInputStream= theNetcasterInputStream;
 			  this.theNetcasterOutputStream= theNetcasterOutputStream;
 			  this.retransmitDelayMsNamedLong= retransmitDelayMsNamedLong;
@@ -127,7 +123,7 @@ public class LinkMeasurementState
 		// Input code activated or used by inputs.
 			
 		  public synchronized void initializeWithIOExceptionV() 
-					throws IOException  ////// Experiment.
+					throws IOException
 		    /* This method is called by
 		      the Unicaster thread's initialization method.
 		      It creates most of the variable values needed,

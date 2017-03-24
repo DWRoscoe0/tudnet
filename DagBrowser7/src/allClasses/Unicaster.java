@@ -59,7 +59,6 @@ public class Unicaster
 
   		// Other instance variables.
   		private LinkMeasurementState theLinkMeasurementState;
-			//% @SuppressWarnings("unused")
   		private MultiMachineState theMultiMachineState;
   		
 			public Unicaster(  // Constructor. 

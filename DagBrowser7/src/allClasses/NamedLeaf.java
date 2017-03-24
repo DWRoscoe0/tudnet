@@ -10,14 +10,6 @@ public class NamedLeaf
   
   { // class NamedLeaf
 
-	  /*  //%
-    NamedLeaf ( String nameString )  // Constructor.
-      { 
-        //% super( nameString );
-    		setNameStringV( nameString );
-        }
-	  */  //%
-
 		public static NamedLeaf makeNamedLeaf( String nameString )
 			{
 				NamedLeaf theNamedLeaf= new NamedLeaf();

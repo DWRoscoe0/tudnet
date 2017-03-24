@@ -1,8 +1,5 @@
 package allClasses;
 
-//% import java.io.IOException;
-
-//import static allClasses.Globals.*;  // appLogger;
 
 public class Netcaster 
 
@@ -55,27 +52,25 @@ public class Netcaster
 	      }
 
     public void initializeV()  // standard.
-	    //% throws IOException
 	    /* This initializing method includes stream packet counts.
 	      This is called by Multicaster.
 	      */
 	    {
 		    this.initializeWithoutStreamsV();
 		    
-		    // Initializing stream monitors.
+		    // Also do initializing of stream monitors.
 		    addB( 	theEpiOutputStreamO.getCounterNamedLong() );
 		    addB( 	theEpiInputStreamI.getCounterNamedLong());
 		    }
 
     protected void initializeWithoutStreamsV() // non-standard.
-	    //% throws IOException
 	    /* This special version does not include stream packet counts so
 	      they can be place in a different position.
 	      It exists so subclass Netcaster can reference it.
 	      This is called by Unicaster.
 	      */
 	    {
-    		super.initializeV();  ////// This should probably not be here.
+    		super.initializeV();
     		IPAndPort remoteIPAndPort= getKeyK();
     		addB( 	new NamedMutable( 
 		        theDataTreeModel, 

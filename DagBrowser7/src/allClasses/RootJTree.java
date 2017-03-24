@@ -162,7 +162,6 @@ public class RootJTree
           DataNode childDataNode= // Get associated DataNode.
             childMetaNode.getDataNode();
           if // DataNode is an UnknownDataNode.
-            //% ( ! AbDataNode.isUsableB( childDataNode ) )
           	( ! DataNode.isUsableB( childDataNode ) )
             break scanner;  // Exit Processor.
           TreePath childTreePath=  // Add DataNode to TreePath.

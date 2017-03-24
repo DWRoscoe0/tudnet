@@ -86,7 +86,7 @@ public class Subcaster
     		finalizingV();
     		}
 
-    public void initializeV() //% throws IOException
+    public void initializeV()
       /* Adds the packet counters for the input and output streams and
         does Streamcaster initializing.
         */

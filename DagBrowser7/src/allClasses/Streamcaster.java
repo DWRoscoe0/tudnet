@@ -84,7 +84,7 @@ public class Streamcaster<
         this.retransmitDelayMsNamedLong= retransmitDelayMsNamedLong;
 	    	}
 
-    public void initializeV() //% throws IOException
+    public void initializeV()
 	    {
         appLogger.info( 
         		"This Streamcaster has been given the role of: "

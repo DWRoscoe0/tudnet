@@ -5,10 +5,7 @@ import java.io.File;
 import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
 
-public class FileRoots
-
-  extends //% AbDataNode
-  DataNode
+public class FileRoots extends DataNode
 
   /* This class is the root of the Infogora user's file system.  */
 

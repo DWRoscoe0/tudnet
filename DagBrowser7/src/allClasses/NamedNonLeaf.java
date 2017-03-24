@@ -1,12 +1,9 @@
 package allClasses;
 
-//% import static allClasses.Globals.appLogger;
-
 
 public abstract class NamedNonLeaf 
 
-  extends //% AbDataNode
-  DataNode
+  extends DataNode
 
   /* This class is the base class for all named MetaNodes.
     It has a name.  The name can be changed, but this should happen only
@@ -19,27 +16,13 @@ public abstract class NamedNonLeaf
 				"NamedNonLeaf.temporaryNameString";
 	
     private String nameString;  // The name associated with this node.
-
-    /*  //%
-    NamedNonLeaf ( String nameString )  // Constructor.
-      { 
-        //% super( ); 
-        this.nameString = nameString;  // Store this node's name.
-        }
-    */  //%
-
-    NamedNonLeaf()  // Constructor.  ////// This can go?
-	    { 
-	    	}
     
     public void initializeV()
-      /*  //// Change all initializeV(..) methods to return (this)
+      /* ////// Change all initializeV(..) methods to return (this)
         so it can be used as a method parameter. 
         */
 	    { 
 	    	setNameStringV( // Make default name be class name.
-	    			//% getClass().getName() 
-	    			//% getClass().getCanonicalName()
 	    			getClass().getSimpleName()
 	    			);
 	    	}
@@ -57,20 +40,6 @@ public abstract class NamedNonLeaf
 		    This is used by the class Outline only.
 		    */
       {
-    	  /*  //%
-	  	  if ( // Error checking
-		  	    ( this.nameString != temporaryNameString) // the old name.
-		  	    || ( nameString == temporaryNameString) // and new name.
-		  	    )
-	        appLogger.error(
-	          "NamedNonLeaf.setNameStringV("
-	          +nameString
-	          +") with old value=("
-	          +this.nameString
-	          +")."
-	          );
-    	  */  //%
-
         this.nameString= nameString;
         }
 

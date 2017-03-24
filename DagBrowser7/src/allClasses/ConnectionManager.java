@@ -133,14 +133,6 @@ public class ConnectionManager
     		NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue
     		)
       {
-    		/*  //%
-    		super(  // Constructing base class.
-    		  theDataTreeModel, // For receiving tree change notifications.
-          "Connection-Manager", // DataNode (not thread) name.
-          emptyListOfDataNodes()
-          );
-    		*/  //%
-
       	super.initializeV(  // Constructing base class.
           theDataTreeModel, // For receiving tree change notifications.
           "Connection-Manager", // DataNode (not thread) name.
