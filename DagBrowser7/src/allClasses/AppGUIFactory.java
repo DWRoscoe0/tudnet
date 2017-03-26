@@ -86,7 +86,8 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
       EpiThread theCPUMonitorEpiThread=
         AppGUIFactory.makeEpiThread( theSystemsMonitor, "SystemsMonitor" );
       DataNode theInitialRootDataNode=  // Building DataNode tree.
-        new InfogoraRoot( 
+        new InfogoraRoot(
+          theDataTreeModel,
           new DataNode[] { // An array of all of the child DataNodes.
             new FileRoots(),
             new Outline( 0, theDataTreeModel ),

@@ -27,32 +27,34 @@ public class MutableList
   {
 	  // Variables for injected values.
 	
-			protected DataTreeModel theDataTreeModel; // For reporting List changes.
+			//% protected DataTreeModel theDataTreeModel; // For reporting List changes.
 			  // There are no super-classes that need this.
 
 	    // Constructors, none.
 
-	    // Initilization methods.
+	    // Initialization methods.
 
+			/*  //%
 	    public void initializeV(
 	        DataTreeModel theDataTreeModel,
 	        String nameString, 
 	        DataNode... inDataNodes 
 	        )
 	      {
-	    		super.initializeV( nameString, inDataNodes ); 
+	    		super.initializeV( theDataTreeModel, nameString, inDataNodes ); 
 
-	        this.theDataTreeModel= theDataTreeModel;
+	        //% this.theDataTreeModel= theDataTreeModel;
 	        }
 
 	    public void initializeV(
 	        DataTreeModel theDataTreeModel
 	        )
 	      {
-	    		super.initializeV(); 
+	    		super.initializeV( theDataTreeModel ); 
 
-	    		this.theDataTreeModel= theDataTreeModel;
+	    		//% this.theDataTreeModel= theDataTreeModel;
 	        }
+			*/  //%
 
 	  // DataNode methods which change the node's state.
 

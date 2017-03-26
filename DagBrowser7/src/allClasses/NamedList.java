@@ -16,15 +16,23 @@ public class NamedList
     */
   
   { // class NamedList
-
-    protected List<DataNode> theListOfDataNodes= // Set to empty,
-    		new ArrayList<DataNode>(  // a mutable ArrayList from
-	        Arrays.asList(  // an immutable List made from
-	        		emptyListOfDataNodes() // an empty DataNode list.
-	            )
-	        ); // This might be replaced with a SelfReturningListOrNode.
-
-    public void initializeV( String nameString, DataNode... inDataNodes )
+	
+		// Instance variables.
+	
+			protected DataTreeModel theDataTreeModel; // For reporting DAG changes.
+	
+	    protected List<DataNode> theListOfDataNodes= // Set to empty,
+	    		new ArrayList<DataNode>(  // a mutable ArrayList from
+		        Arrays.asList(  // an immutable List made from
+		        		emptyListOfDataNodes() // an empty DataNode list.
+		            )
+		        ); // This might be replaced with a SelfReturningListOrNode.
+	
+    public void initializeV(
+        DataTreeModel theDataTreeModel,
+        String nameString, 
+        DataNode... inDataNodes 
+        )
       /* This initializes the NamedList with
         0 or more DataNodes from the array inDataNodes.
         Theoretically it could be used for 
@@ -39,6 +47,17 @@ public class NamedList
               inDataNodes  // the input array.
               )
             );  // the input array.
+
+        this.theDataTreeModel= theDataTreeModel;
+        }
+
+    public void initializeV(
+        DataTreeModel theDataTreeModel
+        )
+      {
+    		super.initializeV(); 
+
+    		this.theDataTreeModel= theDataTreeModel;
         }
 
 

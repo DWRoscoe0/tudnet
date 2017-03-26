@@ -8,9 +8,12 @@ public class InfogoraRoot  extends NamedList {
     makes debugging easier.
     */
   
-  public InfogoraRoot( DataNode... inDataNodes )  // Constructor.
+  public InfogoraRoot(   // Constructor. 
+  		DataTreeModel theDataTreeModel, DataNode... inDataNodes 
+  		)
     {
 	    initializeV( // Calling superclass NamedList with...
+	    		theDataTreeModel, 
 	        "Infogora-Root", // ...the name for this DataNode and...
 	        inDataNodes // ...the array of all child DataNodes.
 	        );
