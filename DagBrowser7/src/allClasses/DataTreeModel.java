@@ -75,9 +75,12 @@ public class DataTreeModel
 
     // Injected dependency variables.
 
-        private DataRoot theDataRoot;
-        private MetaRoot theMetaRoot;
+        private DataRoot theDataRoot; // Root of data tree.
+        
+        private MetaRoot theMetaRoot; // Root of meta-data tree.
+        
         private MetaFileManager.Finisher theMetaFileManagerFinisher; 
+        
         private Shutdowner theShutdowner;
 
     // Other variables.
@@ -187,8 +190,9 @@ public class DataTreeModel
 
           First it initializes injected variables:
 	        * It initializes the DataRoot.
-	        * It tries to load the MetaRoot from external file(s).
-	        * theMetaFileManagerFinisher is set a shutdown listener in 
+	        * It initializes the MetaRoot by loading it from external file(s),
+	          or at least, trying to.
+	        * theMetaFileManagerFinisher is set to be a shutdown listener in 
 	          theShutdowner for later writing MetaRoot back to disk if changed.
 
           Then finally theHashMap is seeded with 
@@ -196,7 +200,7 @@ public class DataTreeModel
           which is used as a base for tree exploration and growth. 
           */
         {
-          theDataRoot.setRootV( theInitialDataNode ); 
+          theDataRoot.initializeV( theInitialDataNode, this ); 
           theMetaRoot.initializeV( );
           theShutdowner.addShutdownerListener( theMetaFileManagerFinisher );
 

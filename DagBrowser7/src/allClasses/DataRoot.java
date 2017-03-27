@@ -34,8 +34,10 @@ public class DataRoot {
 
   // Injector methods.
 
-    public void setRootV( DataNode rootDataNode )
-      /* This method sets the root Data node to rootDataNode and
+    public void initializeV( 
+    		DataNode rootDataNode, DataTreeModel theDataTreeModel 
+    		)
+      /* This method sets the root data node to rootDataNode and
 				adjusts all dependent variables.
 				Doing this correctly is tricky and a little confusing because:
 	      * DataNode-s are built right to left, 
@@ -46,20 +48,29 @@ public class DataRoot {
 	        * Some of the TreePath constructors provided by Java which
 	          could make the following code more self-documenting
 	          are not public and can not be used here.
+	      This method also propagates theDataTree model into the structure
+	      starting with the parent of the root, so that all present nodes
+	      and all nodes added to the tree later, will have it.
 				*/
 	    { 
 		    this.rootDataNode= rootDataNode;  // Setting root DataNode.
-		
+
 		    parentOfRootDataNode= // Calculating parent of root node...
 		      new SingleChildDataNode(   // to be single child parent of...
 		        rootDataNode // ..root node.
 		        );
-		
+
+		    // Use propagateDownV(..) to store theDataTreeModel in structure.
+		    parentOfRootDataNode.propagateDownV(  
+		    		theDataTreeModel,  // This is for all list nodes.
+		    		null  // This (parent of) root node has no parent.
+		    		); 
+
 		    parentOfRootTreePath= // Calculating path to parent...
 		      new TreePath(   // ...to be TreePath consisting of only...
 		        parentOfRootDataNode  // ...the parent node.
 		        );
-		
+
 		    rootTreePath= // Calculating path to root...
 		      parentOfRootTreePath.  // ...to be the TreePath to parent...
 		        pathByAddingChild(  // ...and adding...
