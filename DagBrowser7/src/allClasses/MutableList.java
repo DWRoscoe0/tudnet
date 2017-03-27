@@ -90,14 +90,16 @@ public class MutableList
 		  public synchronized boolean addB(  // Add at index. 
 		  		final int indexI, final DataNode childDataNode 
 		  		)
-		    /* If childDataNode is already in the List 
-		      then it does nothing and returns false,
+		    /* This method adds childDataNode to the list.
+
+		      If childDataNode is already in the List 
+		      then this method does nothing and returns false,
 		      otherwise it adds childDataNode to the List and returns true. 
 		      It adds childDataNode at index position indexI,
 		      or the end of the list if indexI<0. 
-		      
+
 		      It also informs theDataTreeModel about any insertion
-		      so that TreeModelListeners can be fired.
+		      so that TreeModelListeners can be notified.
 		      
 		      It does all this in a thread-safe manner using 
 		      safelyReportingChangeV(..).
@@ -108,7 +110,7 @@ public class MutableList
         	//appLogger.debug("MutableList.add(..) "+childDataNode+" at "+indexI);
 		  		final boolean addSuccessB[]= new boolean[1]; // Array for result.
 		  		final DataNode parentDataNode= this; // Because vars must be final.
-		  		theDataTreeModel.runOrInvokeAndWaitV( // Queuing add to AWT queue. 
+		  		DataTreeModel.runOrInvokeAndWaitV( // Queuing add to AWT queue. 
         		new Runnable() {
         			@Override  
               public void run() {
@@ -122,13 +124,16 @@ public class MutableList
       		    	  	int insertAtI= (indexI < 0) ? // Converting index < 0 
 			              		theListOfDataNodes.size() : // to mean end of list,
 			              	  indexI; // otherwise use raw index.
-		                addWithIndexPropagationV( insertAtI, childDataNode );
-		                theDataTreeModel.reportingInsertV( 
-		    		      		parentDataNode, insertAtI, childDataNode 
-		    		      		);
-		                theDataTreeModel.reportingChangeV( 
-		    		      		parentDataNode 
-		    		      		); // In case # of children changes parent's appearance.
+		                addWithDownPropagationV( insertAtI, childDataNode );
+		                if // Notify TreeModel only if there is one referenced. 
+		                  ( theDataTreeModel != null ) {
+			                theDataTreeModel.reportingInsertV( 
+			    		      		parentDataNode, insertAtI, childDataNode 
+			    		      		);
+			                theDataTreeModel.reportingChangeV( 
+			    		      		parentDataNode 
+			    		      		); // In case # of children changes parent's appearance.
+		                	}
     		    	  		addSuccessB[0]= true; // Returning add success.
     		    	  	  }
                 }
@@ -137,14 +142,17 @@ public class MutableList
 		  		return addSuccessB[0]; // Returning whether add succeeded.
 		      }
 
-		  public void addWithIndexPropagationV(
+		  public void addWithDownPropagationV(
 		  		final int indexI, final DataNode childDataNode 
 		  		)
-		    /* This method adds childDataNode to the list,
-		      but also [eventually ////// propagates theDataTreeModel
-		      into the childDataNode and its descendants.
+		    /* This method adds childDataNode to this nodes list of children,
+		      but also propagates information into that child:
+		      * theDataTreeModel, into the childDataNode,
+		        and its descendants if necessary.
+		      * this NamedList, as the child's parent node.
 		      */
 		    {
+		  		childDataNode.propagateDownV( theDataTreeModel, this );
           theListOfDataNodes.add( indexI, childDataNode );
 		      }
 	
@@ -164,7 +172,7 @@ public class MutableList
 		    {
 		  	  final DataNode parentDataNode= this;
 		  		final boolean removedB[]= new boolean[1]; // Array element for result.
-		  	  theDataTreeModel.runOrInvokeAndWaitV( // Queuing removal of Unicaster from List.
+		  	  DataTreeModel.runOrInvokeAndWaitV( // Queuing removal of Unicaster from List.
         		new Runnable() {
               @Override  
               public void run() { 

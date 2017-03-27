@@ -41,7 +41,11 @@ public class DataNode
 	      This would be used by DataTreeModel.translatingToTreePath( .. ).
 	
 	    */
-
+	
+	  // Instance variables
+	
+			protected NamedList parentNamedList= null; // My parent node. 
+	
     // Static methods.
 
 		  static DataNode[] emptyListOfDataNodes()
@@ -75,6 +79,20 @@ public class DataNode
           }
       
     // Other instance methods.
+
+  	  protected void propagateDownV(
+  	  		DataTreeModel theDataTreeModel, NamedList parentNamedList 
+  	  		)
+  	    /* This method is called when a DataNode is added to a NamedList
+  	      or one of its subclasses.  This method:
+  	      * Ignores theDataTreeModel, because leaf nodes don't need it.
+  	        List nodes that do need it will override this method.
+  	      * Stores parentNamedList, because every node has a parent
+  	        and needs access to it.
+  	      */
+  		  {
+  	  	  this.parentNamedList= parentNamedList;
+  		  	}
 
       public String toString()
         // Returns a meaningful and useful String representation.

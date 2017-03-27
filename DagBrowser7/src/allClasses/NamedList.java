@@ -20,6 +20,10 @@ public class NamedList
 		// Instance variables.
 	
 			protected DataTreeModel theDataTreeModel; // For reporting DAG changes.
+			  // This also doubles as a flag for the propagateDownV(..) method.
+			  // theDataTreeModel != null means down-propagation into this node
+			  // and all its descendants has already occurred and 
+			  // need not be done again, except for new added children. 
 	
 	    protected List<DataNode> theListOfDataNodes= // Set to empty,
 	    		new ArrayList<DataNode>(  // a mutable ArrayList from
@@ -60,6 +64,30 @@ public class NamedList
     		this.theDataTreeModel= theDataTreeModel;
         }
 
+	  protected void propagateDownV( 
+	  		DataTreeModel theDataTreeModel, NamedList parentNamedList 
+	  		)
+	    /* This method propagates into this node and any of its descendants
+	      which need it. 
+	      */
+		  {
+		  	if // Propagate into children DataTreeModel only if 
+		  	  ( ( theDataTreeModel != null ) // input TreeModel is not null but 
+		  	  	&& ( this.theDataTreeModel == null )  // our TreeModel is null.
+		  	  	)
+			  	{
+			  		for ( DataNode theDataNode : theListOfDataNodes)  // For each child
+			  			theDataNode.propagateDownV(  // recursively propagate into child  
+			  					theDataTreeModel, // the TreeModel 
+			  					this  // and this node as child's parent.
+			  					);
+			  	  super.propagateDownV( // Propagate parentNamedList into super-class. 
+			  	  		theDataTreeModel, parentNamedList 
+			  	  		);
+		  		  this.theDataTreeModel=  // Finally, store into this instance
+		  		  		theDataTreeModel; // the TreeModel.
+			  		}
+		  	}
 
 	  // interface DataNode methods.
  

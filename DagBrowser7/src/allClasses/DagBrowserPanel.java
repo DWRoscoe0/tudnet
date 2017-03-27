@@ -645,7 +645,7 @@ public class DagBrowserPanel
     	  					periodicTargetTimeMsL, periodMsL ///)
       					); // Waiting for next mark.
     	  			periodicTargetTimeMsL+= periodMsL; // Advancing target.
-		        	theDataTreeModel.invokeAndWaitV( // Executing on EDT...
+		        	DataTreeModel.invokeAndWaitV( // Executing on EDT...
 	              new Runnable() {
 	                @Override  
 	                public void run() { 

@@ -585,7 +585,7 @@ public class DataTreeModel
       
       // EDT (Event Dispatch Thread) safety routines.
       
-      protected void runOrInvokeAndWaitV( Runnable jobRunnable )
+      protected static void runOrInvokeAndWaitV( Runnable jobRunnable )
         /* This helper method runs jobRunnable on the EDT thread.
           one way or another.
           It already running on the EDT thread then it just calls run().
@@ -598,7 +598,7 @@ public class DataTreeModel
   	        invokeAndWaitV( jobRunnable );
   	    	}
 
-      protected void invokeAndWaitV( Runnable jobRunnable )
+      protected static void invokeAndWaitV( Runnable jobRunnable )
         /* This method calls SwingUtilities.invokeAndWait(..) 
           to execute jobRunnable.run().
           It also handles any exceptions invokeAndWait(..) might throw.

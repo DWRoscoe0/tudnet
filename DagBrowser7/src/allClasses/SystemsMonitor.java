@@ -274,7 +274,7 @@ public class SystemsMonitor
     				Runtime.getRuntime().availableProcessors() 
     				); // Keep measuring because this could change.
       	final long beforeEDTDispatchNsL= System.nanoTime();
-      	theDataTreeModel.invokeAndWaitV( // Dispatching on EDT...
+      	DataTreeModel.invokeAndWaitV( // Dispatching on EDT...
           new Runnable() {
             @Override  
             public void run() { 

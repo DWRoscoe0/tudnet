@@ -111,7 +111,9 @@ public class LinkMeasurementState
 				)
 						throws IOException
 	  	{
-  	  	initializeV( theDataTreeModel );
+  	  	initializeV( theDataTreeModel ); ////// This can't be removed yet
+  	  	  // because some miscellaneous classes, such as NamedLong,
+  	  	  // store theDataTreeModel.
 	
   	  	// Injected dependencies.
 			  this.theNetcasterInputStream= theNetcasterInputStream;
