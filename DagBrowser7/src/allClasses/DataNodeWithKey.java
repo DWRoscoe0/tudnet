@@ -20,13 +20,6 @@ public class DataNodeWithKey< K >
 	  		K theKeyK
 	      )
 	    {
-	  	  /*  //%
-	  	  super( // Constructing MutableList superclass with injections.
-	  		    theDataTreeModel,
-		        baseNameString, // Base name but not entire name.
-	          new DataNode[]{} // Initially empty array of children.
-	      		);
-	  	  */  //%
 	  		initializeV(
   		    theDataTreeModel,
 	        baseNameString, // Base name but not entire name.

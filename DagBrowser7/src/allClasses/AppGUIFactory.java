@@ -143,7 +143,6 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 
       NamedLong multicasterTimeOutMsNamedLong= 
 					new NamedLong( 
-							theDataTreeModel, 
 							"Retransmit-Delay(Ms)",
 							Config.initialRoundTripTime100MsL * 2
 							);
@@ -283,7 +282,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 	  {
 			NamedLong packetsReceivedNamedLong=  
 					new NamedLong( 
-							theDataTreeModel, "Incoming-Packets-Received", 0 
+							"Incoming-Packets-Received", 0 
 							);
 	  	return new NetcasterInputStream(
 	  	  receiverToNetcasterNetcasterQueue, 
@@ -298,7 +297,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 	  {
 		  NamedLong packetsSentNamedLong= 
 					new NamedLong( 
-							theDataTreeModel, "Outgoing-Packets-Sent", 0 
+							"Outgoing-Packets-Sent", 0 
 							);
 		  return new NetcasterOutputStream(
 		  	netcasterToSenderNetcasterQueue,

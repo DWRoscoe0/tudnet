@@ -94,6 +94,17 @@ public class DataNode
   	  	  this.parentNamedList= parentNamedList;
   		  	}
 
+      protected void reportChangeOfSelfV()
+        /* This method reports a change of this node.
+          It does this by calling a parent method,
+          because it is more convenient for a parent to
+          notify the TreeModel about changes in its children
+          that for the children to do it.
+         */
+      	{
+      		parentNamedList.reportChangeInChildV( this );
+      		}
+
       public String toString()
         // Returns a meaningful and useful String representation.
         { 

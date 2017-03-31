@@ -56,7 +56,6 @@ public class UnicasterFactory {
 		  SubcasterManager theSubcasterManager= 
 					new SubcasterManager( theDataTreeModel, theAppGUIFactory, this );
       NamedLong retransmitDelayMsNamedLong= new NamedLong( 
-					theDataTreeModel, 
 					"Retransmit-Delay (ms)",
 					Config.initialRoundTripTime100MsL * 2
 					);
@@ -141,7 +140,7 @@ public class UnicasterFactory {
   		  )
   	  {
   		  NamedLong packetsSentNamedLong= 
-  					new NamedLong( theDataTreeModel, "Outgoing-Packets-Sent", 0 );
+  					new NamedLong( "Outgoing-Packets-Sent", 0 );
   		  return new SubcasterOutputStream(
   		  	subcasterToUnicasterSubcasterQueue,
   		  	theSubcasterPacketManager,
@@ -157,7 +156,7 @@ public class UnicasterFactory {
 				)
   	  {
   			NamedLong packetsReceivedNamedLong=  
-  					new NamedLong( theDataTreeModel, "Incoming-Packets-Received", 0 );
+  					new NamedLong( "Incoming-Packets-Received", 0 );
   	  	return new SubcasterInputStream(
   	  	  receiverToSubcasterSubcasterQueue, 
   	  	  packetsReceivedNamedLong, 

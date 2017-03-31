@@ -8,18 +8,15 @@ public class NamedLong
   implements LongLike
 
   {
-	  private DataTreeModel theDataTreeModel; // For reporting changes.
-
 	  private long theL;
 
 	  public NamedLong( // Constructor. 
-        DataTreeModel theDataTreeModel,
         String nameString, 
         long theL
         )
 		  {
 	  		super.initializeV( nameString );
-        this.theDataTreeModel= theDataTreeModel;
+
 		  	this.theL= theL;
         }
 
@@ -28,7 +25,7 @@ public class NamedLong
         return Long.toString( theL );
         }
 
-    public long getValueL( )
+    public synchronized long getValueL( )
       {
         return theL;
         }
@@ -62,13 +59,22 @@ public class NamedLong
 		    It also fires any associated change listeners.
 		    */
 	    {
-	  	  long oldL= this.theL; // Saving present value as old one.
-	  	  if ( newL != theL ) // Setting new value if it's different.
-	  	    {
-						theL= newL; // Setting new value.
-		        theDataTreeModel.safelyReportingChangeV( this );
-		  	  	}
-				return oldL; // Returning old unchanged value.
+    	  boolean changedB;
+	  	  long resultL;
+	  	  
+    	  synchronized (this) { // Set the new value if different from old one.
+		  	  resultL= theL; // Saving present value for returning.
+		  	  changedB= newL != theL;
+		  	  if ( changedB ) // Setting new value if it's different.
+		  	    {
+							theL= newL; // Setting new value.
+							}
+    	  	}
+    	  
+    	  if (changedB) {
+	        reportChangeOfSelfV(); // Reporting change of this node.
+    	  	}
+				return resultL; // Returning old before-changed value.
 		  	}
 
     }

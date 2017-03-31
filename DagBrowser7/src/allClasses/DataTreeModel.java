@@ -18,7 +18,7 @@ import javax.swing.tree.TreeModel;
 
 import static allClasses.Globals.*;  // appLogger;
 
-public class DataTreeModel 
+public class DataTreeModel
 
   extends AbstractTreeModel
 
@@ -48,13 +48,16 @@ public class DataTreeModel
 			Maybe create a dual role (node and node-list) object.
 			 
     Because this class will be used with JTree as part of a user interface,
-    there are some threading considerations:
-    * The notification methods, the ones which fire TreeModelListeners,
-      must be called only within the EDT (Event Dispatch Thread).
+    there are some threading restrictions:
+    * Changes to the data managed by this model, as well as
+    	notifications about changes to that data, 
+    	the ones which fire TreeModelListeners,
+      must happen in the EDT (Event Dispatch Thread).
       This is what is done now, using the invokeAndWaitV(..) method.
-    ? Simply synchronizing its methods might not be sufficient
-      to make the model thread-safe because values read by the tree reader
-      methods can change at any time.
+    * //// Unfortunately using the EDT each time makes data changes inefficient.
+      Using synchronization combined with HierarchicalUpPropagation
+      might be sufficient to make change notification
+      both efficient and thread-safe.
 
     ?? Use ObjectInterning to use less memory and to run faster.
 
@@ -178,8 +181,12 @@ public class DataTreeModel
       public void valueForPathChanged( 
           TreePath theTreePath, Object newValueObject 
           )
-        /* Do-nothing stub to satisfy interface.  */
-        { }
+        /* Unimplemented.  Throws an error.  
+          //// This could be converted to a call to another method.
+          */
+        { 
+      	  throw new Error("DataTreeModel.valueForPathChanged(..) called"); 
+      	  } 
 
     // Setter methods which are not part of AbstractTreeModel.
 
@@ -229,7 +236,7 @@ public class DataTreeModel
 			        }
       		}
       
-      // Getter methods which are not part of AbstractTreeModel.
+    // Getter methods which are not part of AbstractTreeModel.
 
       public MetaRoot getMetaRoot()
         {
@@ -340,14 +347,19 @@ public class DataTreeModel
           }
 
 
-      /* Reporting methods for reporting changes to the TreeModel data.
-        This is tricky for 2 reasons:
-        * It must be done on the Event Dispatch Thread (EDT),
-          and must be done in real time.  It is done using invokeAndWaitV(..).
-	      * The TreeModel is used to report changes, but it doesn't make changes.
-	        But both changes and their reporting must be protected using
-	        invokeAndWaitV(..). 
-        */
+    /* Reporting methods and their support methods for 
+      reporting changes of the TreeModel data.
+        
+      Reporting changes is tricky for 2 reasons:
+      * The TreeModel is used to report changes, 
+        but the TreeModel itself doesn't make changes.
+      * It must be done on the Event Dispatch Thread (EDT),
+        and must be done in real time.  
+        This is done using invokeAndWaitV(..).
+
+      All of these methods should be called only in the Event Dispatch Thread 
+      (EDT), and so should the changes that those calls report.
+      */
 
       public void reportingInsertV( 
           DataNode parentDataNode, 
@@ -426,11 +438,11 @@ public class DataTreeModel
 
       public void reportingChangeV( DataNode theDataNode )
       	/* This method creates and fires a single-child TreeModelEvent
-          for the change of a single child DataNode, theDataNode,
-          whose position is indexI, into parentDataNode.
+          for the change of a single child DataNode, theDataNode.
+		      This method must be running on the EDT.
           */
         {
-	        TreePath theTreePath= // Calculating path of the DataNode. 
+	      	TreePath theTreePath= // Calculating path of the DataNode. 
 	          	translatingToTreePath( theDataNode );
 	        if ( theTreePath == null ) {
 	        	appLogger.error( 
@@ -441,6 +453,19 @@ public class DataTreeModel
 	        	}
 	        TreePath parentTreePath= // Calculating path of the parent DataNode. 
 	            theTreePath.getParentPath();
+	        reportingChangeV( parentTreePath, theDataNode );
+        	}
+	       
+      public void reportingChangeV( 
+      		TreePath parentTreePath, DataNode theDataNode 
+      		)
+	    	/* This method creates and fires a single-child TreeModelEvent
+		      for the change of a single child DataNode, theDataNode,
+		      and whose parent has tree path parentTreePath.
+		      This method must be running on the EDT.
+   	      */
+        {
+	      	if ( checkNotRunningEDTB() ) return;
 	        DataNode parentDataNode= // Calculating parent DataNode.
 	        		(DataNode)parentTreePath.getLastPathComponent();
 	        int indexI= getIndexOfChild( // Calculating index of the DataNode.
@@ -459,7 +484,7 @@ public class DataTreeModel
           fireTreeNodesChanged( theTreeModelEvent );  // Firing as change event.
           }
 
-      private TreePath translatingToTreePath( DataNode targetDataNode )
+      public TreePath translatingToTreePath( DataNode targetDataNode )
 	      /* This method returns a TreePath of targetDataNode,
   	      or null if node can not be found in the DataNode tree.
   	      It tries to return a value from theHashMap first.
@@ -496,12 +521,15 @@ public class DataTreeModel
       	  }
 
       private TreePath searchingForTreePath( DataNode targetDataNode )
-        /* This method might never be called anymore because
-          its only caller, translatingToTreePath(..),
-          now checks theHashMap first.  So this method is a backup.
-          The one exception is startup when initial selection path
-          is longer than maximum depth.  It will cause error.
-          Seeding cache with selection path might fix this.
+        /*  //// This method might not be needed anymore, because:
+          * It might never be called anymore because
+	          its only caller, translatingToTreePath(..),
+	          now checks theHashMap first.  So this method is a backup.
+	          The one exception is startup when initial selection path
+	          is longer than maximum depth.  It will cause error.
+	          Seeding cache with selection path might fix this.
+	        * When DataNodes store references to their parent nodes,
+	          searching will no longer be necessary.
 
           This method returns a TreePath of targetDataNode,
           or null if node can not be found in the DataNode tree.
@@ -587,7 +615,7 @@ public class DataTreeModel
           }
 
       
-      // EDT (Event Dispatch Thread) safety routines.
+    // EDT (Event Dispatch Thread) safety routines.
       
       protected static void runOrInvokeAndWaitV( Runnable jobRunnable )
         /* This helper method runs jobRunnable on the EDT thread.
@@ -600,6 +628,17 @@ public class DataTreeModel
   	        jobRunnable.run();
   	      else
   	        invokeAndWaitV( jobRunnable );
+  	    	}
+      
+      protected static boolean checkNotRunningEDTB()
+        /* This method returns whether we are running the EDT thread.
+          Returns true if not on EDT thread, false otherwise.
+          If not on EDT thread it logs an error.
+         */
+  	    {
+  	      boolean isNotEDTB= ! SwingUtilities.isEventDispatchThread();
+  	      if ( isNotEDTB ) appLogger.error(" checkNotRunningEDTB() true");
+  	      return isNotEDTB;
   	    	}
 
       protected static void invokeAndWaitV( Runnable jobRunnable )

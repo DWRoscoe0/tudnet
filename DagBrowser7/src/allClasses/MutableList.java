@@ -25,36 +25,11 @@ public class MutableList
   extends NamedList
 
   {
-	  // Variables for injected values.
+	  // Variables for injected values, none.
 	
-			//% protected DataTreeModel theDataTreeModel; // For reporting List changes.
-			  // There are no super-classes that need this.
+    // Constructors, none.
 
-	    // Constructors, none.
-
-	    // Initialization methods.
-
-			/*  //%
-	    public void initializeV(
-	        DataTreeModel theDataTreeModel,
-	        String nameString, 
-	        DataNode... inDataNodes 
-	        )
-	      {
-	    		super.initializeV( theDataTreeModel, nameString, inDataNodes ); 
-
-	        //% this.theDataTreeModel= theDataTreeModel;
-	        }
-
-	    public void initializeV(
-	        DataTreeModel theDataTreeModel
-	        )
-	      {
-	    		super.initializeV( theDataTreeModel ); 
-
-	    		//% this.theDataTreeModel= theDataTreeModel;
-	        }
-			*/  //%
+    // Initialization methods, none.
 
 	  // DataNode methods which change the node's state.
 

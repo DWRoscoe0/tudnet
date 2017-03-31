@@ -111,10 +111,6 @@ public class LinkMeasurementState
 				)
 						throws IOException
 	  	{
-  	  	initializeV( theDataTreeModel ); ////// This can't be removed yet
-  	  	  // because some miscellaneous classes, such as NamedLong,
-  	  	  // store theDataTreeModel.
-	
   	  	// Injected dependencies.
 			  this.theNetcasterInputStream= theNetcasterInputStream;
 			  this.theNetcasterOutputStream= theNetcasterOutputStream;
@@ -135,28 +131,28 @@ public class LinkMeasurementState
 		  		super.initializeWithIOExceptionState();
 	  	  	// Adding measurement count.
 		  	  addB( measurementHandshakesNamedLong= new NamedLong(
-		      		theDataTreeModel, "Measurement-Handshakes", 0 ) );
+		      		"Measurement-Handshakes", 0 ) );
 	
 		  		addB( retransmitDelayMsNamedLong );
 	
 	        // Adding the new round trip time trackers.
 		      addB( smoothedRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
-		      		theDataTreeModel, "Smoothed-Round-Trip-Time (ms)", 
+		      		"Smoothed-Round-Trip-Time (ms)", 
 		      		Config.initialRoundTripTime100MsAsNsL ) );
 		  	  addB( smoothedMinRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
-		      		theDataTreeModel, "Smoothed-Minimum-Round-Trip-Time (ms)", 
+		      		"Smoothed-Minimum-Round-Trip-Time (ms)", 
 		      		Config.initialRoundTripTime100MsAsNsL ) );
 		  	  addB( smoothedMaxRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
-		      		theDataTreeModel, "Smoothed-Maximum-Round-Trip-Time (ms)", 
+		      		"Smoothed-Maximum-Round-Trip-Time (ms)", 
 		      		Config.initialRoundTripTime100MsAsNsL ) );
 		      addB( rawRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong( 
-		      		theDataTreeModel, "Raw-Round-Trip-Time (ms)", 
+		      		"Raw-Round-Trip-Time (ms)", 
 		      		Config.initialRoundTripTime100MsAsNsL ) );
 	
 	        // Adding incoming packet statistics children and related trackers.
 		  	  newIncomingPacketsSentDefaultLongLike= new DefaultLongLike(0);
 		  	  addB( oldIncomingPacketsSentNamedLong= new NamedLong(
-		      		theDataTreeModel, "Incoming-Packets-Sent", 0 ) );
+		      		"Incoming-Packets-Sent", 0 ) );
 			    addB( newIncomingPacketsReceivedNamedLong=
 			    		theNetcasterInputStream.getCounterNamedLong() );
 		  	  oldIncomingPacketsReceivedDefaultLongLike= new DefaultLongLike(0);
@@ -173,10 +169,10 @@ public class LinkMeasurementState
 	    				theNetcasterOutputStream.getCounterNamedLong(); 
 			    addB( newOutgoingPacketsSentNamedLong );
 			    addB( newOutgoingPacketsSentEchoedNamedLong= new NamedLong(
-			    		theDataTreeModel, "Outgoing-Packets-Sent-Echoed", 0 ) ); 
+			    		"Outgoing-Packets-Sent-Echoed", 0 ) ); 
 			    oldOutgoingPacketsSentDefaultLongLike= new DefaultLongLike(0);
 			    addB( newOutgoingPacketsReceivedNamedLong= new NamedLong( 
-				      theDataTreeModel, "Outgoing-Packets-Received", 0 ) );
+				      "Outgoing-Packets-Received", 0 ) );
 		  	  addB( outgoingPacketLossNamedFloat= new NamedFloat( 
 		      		theDataTreeModel, "Outgoing-Packet-Loss", 0.0f ) );
 		  	  oldOutgoingPacketsReceivedDefaultLongLike= new DefaultLongLike(0);

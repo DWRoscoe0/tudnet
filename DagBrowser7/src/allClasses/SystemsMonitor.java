@@ -110,31 +110,30 @@ public class SystemsMonitor
     	  // Assign variables.
 		  	measurementCountNamedLong= 
 			  	new NamedLong( 
-	      		theDataTreeModel, "Measurements", 0
+	      		"Measurements", 0
 	        	);
 	      processorsNamedLong= new NamedLong( 
-	      		theDataTreeModel, "Processors", -1
+	      		"Processors", -1
 	        	);
 			  waitJitterNsNamedLong= new NsAsMsNamedLong( 
-	      	theDataTreeModel, "Wait-Jitter (ms)", 0 
+	      	"Wait-Jitter (ms)", 0 
 	       	);
 	      cpuSpeedNamedLong= new NamedLong( 
-	      		theDataTreeModel, "CPU-speed (counts / ms)", -1
+	      		"CPU-speed (counts / ms)", -1
 	        	);
 			  endWaitMsNamedLong= new NamedLong( 
-	      		theDataTreeModel, "End-Wait (ms)", -1
+	      		"End-Wait (ms)", -1
 	        	);
 			  eventQueueInvokeAndWaitNsAsMsNamedLong= 
 			  		new NsAsMsNamedLong( 
-			  				theDataTreeModel, 
 			  				"EventQueue.invokeAndWait(..) (ms)", 
 			  				-1
 			  				);
 			  skippedTimeMsNamedLong= new NamedLong( 
-	      		theDataTreeModel, "Skipped-Time (ms)", 0
+	      		"Skipped-Time (ms)", 0
 	        	);
 			  reversedTimeMsNamedLong= new NamedLong( 
-	      		theDataTreeModel, "Reversed-Time (ms)", 0
+	      		"Reversed-Time (ms)", 0
 	        	);
 
 			  // Add variables to our displayed list.

@@ -4,6 +4,8 @@ import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.tree.TreePath;
+
 public class NamedList 
 
   extends NamedNonLeaf  // Will override all remaining leaf behavior.
@@ -88,6 +90,28 @@ public class NamedList
 		  		  		theDataTreeModel; // the TreeModel.
 			  		}
 		  	}
+
+    protected void reportChangeInChildV( final DataNode childDataNode )
+      /* This method reports a change of childDataNode,
+        which must be one of this node's children.
+        */
+    	{
+    		//// parentNamedList.reportChangeOfChildV( this );
+    	  final DataNode parentDataNode= this;
+    		DataTreeModel.runOrInvokeAndWaitV( // Do following on EDT thread. 
+		    		new Runnable() {
+		    			@Override  
+		          public void run() {
+		  	      	TreePath parentTreePath= // Calculating path of the this parent. 
+		  	          	theDataTreeModel.translatingToTreePath( parentDataNode );
+		    				theDataTreeModel.reportingChangeV( 
+		    						parentTreePath, childDataNode 
+		    						);
+		            }
+		          }
+		    		);
+		        
+    		}
 
 	  // interface DataNode methods.
  

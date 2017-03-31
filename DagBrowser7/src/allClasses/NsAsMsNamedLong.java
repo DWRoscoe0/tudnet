@@ -11,12 +11,11 @@ public class NsAsMsNamedLong
 	
 	{
 	  public NsAsMsNamedLong( // Constructor. 
-        DataTreeModel theDataTreeModel,
         String nameString, 
         long theL
         )
 		  {
-		  	super( theDataTreeModel, nameString, theL );
+		  	super( nameString, theL );
         }
 
     public String getValueString( ) // DataNode interface method.
