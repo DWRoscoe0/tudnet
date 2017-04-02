@@ -62,7 +62,7 @@ public class DataRoot {
 
 		    // Use propagateDownV(..) to store theDataTreeModel in structure.
 		    parentOfRootDataNode.propagateDownV(  
-		    		theDataTreeModel,  // This is for all list nodes.
+		    		theDataTreeModel,  // This will be copied to all non-leaf nodes.
 		    		null  // This (parent of) root node has no parent.
 		    		); 
 

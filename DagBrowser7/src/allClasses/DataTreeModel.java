@@ -105,6 +105,8 @@ public class DataTreeModel
             this.theShutdowner= theShutdowner;
             }
 
+        //// public void initializeV(..) should be moved to here. 
+
     // AbstractTreeModel/TreeModel interface methods.
 
       /* The following getter methods simply delegate to 
