@@ -69,28 +69,24 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 	      new NetcasterQueue(cmThreadLockAndSignal, Config.QUEUE_SIZE);
 	    NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue=
 	      new NetcasterQueue(cmThreadLockAndSignal, Config.QUEUE_SIZE);
-      UnicasterManager theUnicasterManager= new UnicasterManager( 
-        	theDataTreeModel, this
-       		);
+      UnicasterManager theUnicasterManager= new UnicasterManager( this );
 	    ConnectionManager theConnectionManager= new ConnectionManager(
         this, // the AppGuiFactory.
         theUnicasterManager,
-        theDataTreeModel,
   	    cmThreadLockAndSignal,
   	    multicasterToConnectionManagerNetcasterQueue,
   	    unconnectedReceiverToConnectionManagerNetcasterQueue
   	    );
       EpiThread theConnectionManagerEpiThread=
         AppGUIFactory.makeEpiThread( theConnectionManager, "ConnMgr" );
-      SystemsMonitor theSystemsMonitor= new SystemsMonitor(theDataTreeModel);
+      SystemsMonitor theSystemsMonitor= new SystemsMonitor();
       EpiThread theCPUMonitorEpiThread=
         AppGUIFactory.makeEpiThread( theSystemsMonitor, "SystemsMonitor" );
       DataNode theInitialRootDataNode=  // Building DataNode tree.
         new InfogoraRoot(
-          theDataTreeModel,
           new DataNode[] { // An array of all of the child DataNodes.
             new FileRoots(),
-            new Outline( 0, theDataTreeModel ),
+            new Outline( 0 ),
             theSystemsMonitor,
             theConnectionManager,
             new Infinitree( null, 0 )
@@ -350,7 +346,6 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 				this,
 				theUnicasterManager,
 				peerIPAndPort,
-				theDataTreeModel, 
 				theShutdowner, 
 				Config.QUEUE_SIZE,
 	  		theTimer

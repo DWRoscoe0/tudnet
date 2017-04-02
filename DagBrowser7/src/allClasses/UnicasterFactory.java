@@ -12,7 +12,6 @@ public class UnicasterFactory {
     */
 
   // Injected dependencies that need saving for later.
-	private final DataTreeModel theDataTreeModel;
 	public final AppGUIFactory theAppGUIFactory;
 	private final Shutdowner theShutdowner;
 	private final int queueCapacityI;
@@ -28,7 +27,6 @@ public class UnicasterFactory {
   		AppGUIFactory theAppGUIFactory,
   		UnicasterManager theUnicasterManager,
   		IPAndPort unicasterIPAndPort,
-  		DataTreeModel theDataTreeModel,
   		Shutdowner theShutdowner,
   		int queueCapacityI,
   		Timer theTimer
@@ -54,7 +52,7 @@ public class UnicasterFactory {
 			subcasterToUnicasterSubcasterQueue= 
 					new SubcasterQueue( unicasterLockAndSignal, queueCapacityI );
 		  SubcasterManager theSubcasterManager= 
-					new SubcasterManager( theDataTreeModel, theAppGUIFactory, this );
+		  		new SubcasterManager( theAppGUIFactory, this );
       NamedLong retransmitDelayMsNamedLong= new NamedLong( 
 					"Retransmit-Delay (ms)",
 					Config.initialRoundTripTime100MsL * 2
@@ -66,7 +64,6 @@ public class UnicasterFactory {
       		unicasterNetcasterInputStream,
 		  		unicasterNetcasterOutputStream,
 		  		unicasterIPAndPort,
-			  	theDataTreeModel,
 			   	theShutdowner,
 			   	subcasterToUnicasterSubcasterQueue,
 			   	theTimer,
@@ -78,7 +75,6 @@ public class UnicasterFactory {
 
       // Save in instance variables injected objects that are needed later.
   		this.theAppGUIFactory= theAppGUIFactory;
-	  	this.theDataTreeModel= theDataTreeModel;
 	  	this.theShutdowner= theShutdowner;
   		this.queueCapacityI= queueCapacityI;
   		this.theTimer= theTimer;
@@ -123,7 +119,6 @@ public class UnicasterFactory {
   	  		subcasterLockAndSignal,
   	  		theSubcasterInputStream,
   				theSubcasterOutputStream,
-  	      theDataTreeModel,
   	      keyString,
   	      theShutdowner,
   	      leadingB,

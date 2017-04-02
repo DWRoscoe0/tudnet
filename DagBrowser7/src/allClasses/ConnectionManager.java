@@ -127,14 +127,12 @@ public class ConnectionManager
     public ConnectionManager(  // Constructor.
     		AppGUIFactory theAppGUIFactory,
     		UnicasterManager theUnicasterManager,
-        DataTreeModel theDataTreeModel,
     		LockAndSignal cmThreadLockAndSignal,
     		NetcasterQueue multicasterToConnectionManagerNetcasterQueue,
     		NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue
     		)
       {
       	super.initializeV(  // Constructing base class.
-          theDataTreeModel, // For receiving tree change notifications.
           "Connection-Manager", // DataNode (not thread) name.
           emptyListOfDataNodes()
           );

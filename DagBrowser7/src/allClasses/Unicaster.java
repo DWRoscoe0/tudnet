@@ -68,7 +68,6 @@ public class Unicaster
 	      NetcasterInputStream theNetcasterInputStream,
 	      NetcasterOutputStream theNetcasterOutputStream,
 	      IPAndPort remoteIPAndPort,
-        DataTreeModel theDataTreeModel,
         Shutdowner theShutdowner,
         SubcasterQueue subcasterToUnicasterSubcasterQueue,
     		Timer theTimer,
@@ -89,7 +88,6 @@ public class Unicaster
 	  	      theNetcasterInputStream,
 	  	      theNetcasterOutputStream,
 	          theShutdowner,
-  	        theDataTreeModel,
   	        remoteIPAndPort,
         		"Unicaster", 
             retransmitDelayMsNamedLong 

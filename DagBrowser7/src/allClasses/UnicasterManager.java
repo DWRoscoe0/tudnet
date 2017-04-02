@@ -21,13 +21,11 @@ public class UnicasterManager
   {
 	
 		public UnicasterManager(  // Constructor. 
-	      DataTreeModel theDataTreeModel
-	      ,AppGUIFactory theAppGUIFactory
+	      AppGUIFactory theAppGUIFactory
 	      )
 	    {
 	  		// Superclass's injections.
 	      super( // Constructing MutableListWithMap superclass.
-		        theDataTreeModel,
 		        "Unicasters",
 		        theAppGUIFactory,
 			  		new DataNode[]{} // Initially empty of children.

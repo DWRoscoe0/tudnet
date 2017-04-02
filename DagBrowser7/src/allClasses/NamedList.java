@@ -35,7 +35,6 @@ public class NamedList
 		        ); // This might be replaced with a SelfReturningListOrNode.
 	
     public void initializeV(
-        DataTreeModel theDataTreeModel, //////
         String nameString, 
         DataNode... inDataNodes 
         )
@@ -53,8 +52,6 @@ public class NamedList
               inDataNodes  // the input array.
               )
             );  // the input array.
-
-        //% this.theDataTreeModel= theDataTreeModel;
         }
 
 	  protected void propagateDownV( 

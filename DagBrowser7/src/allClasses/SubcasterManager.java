@@ -22,14 +22,12 @@ public class SubcasterManager
 	    // should be leaders or followers.
 	  
 		public SubcasterManager(  // Injecting constructor. 
-	      DataTreeModel theDataTreeModel,
 	      AppGUIFactory theAppGUIFactory,
 	      UnicasterFactory theUnicasterFactory
 	      )
 	    {
 	  		// Superclass's injections.
 	      super( // Constructing MutableListWithMap superclass.
-		        theDataTreeModel,
 		        "Subcasters",
 			      theAppGUIFactory,
 	          new DataNode[]{} // Initially empty of children.

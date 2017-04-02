@@ -217,14 +217,15 @@ public class Outline
     
       } // class Aid
 
-    public Outline( long offsetInL, DataTreeModel theDataTreeModel ) // Constructor.
+    public Outline( 
+    		long offsetInL 
+    		) // Constructor.
       /* Constructs an Outline node whose source can be found
         in Outline file at offset offsetInL.
         Normally the root node is constructed with Outline( 0 ).
         */
       { // Outline(.)
     		initializeV(
-    			theDataTreeModel,
 	        NamedNonLeaf.temporaryNameString, 
           new DataNode[]{} // Initially empty List for lazy-loaded children.
 	        );
@@ -329,8 +330,7 @@ public class Outline
             ( theAid.lineIndentI > theAid.nodeIndentI )
             { // process this child.
 	            DataNode childDataNode= new Outline( // Constructing child node
-		            theAid.lineOffsetL,  // for this file offset.
-		            theDataTreeModel
+		            theAid.lineOffsetL //,  // for this file offset.
 	            	);
 	            addRawV(childDataNode); // Add to parent List, not on EDT. 
 	            //addB(childDataNode); // Add to parent List, on EDT.  Fails.

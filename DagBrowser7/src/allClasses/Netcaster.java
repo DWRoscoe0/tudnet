@@ -31,7 +31,6 @@ public class Netcaster
 	      NetcasterInputStream theNetcasterInputStream,
 	      NetcasterOutputStream theNetcasterOutputStream,
         Shutdowner theShutdowner,
-	      DataTreeModel theDataTreeModel,
 	      IPAndPort  remoteIPAndPort, 
 	      String nameString,
 	      NamedLong retransmitDelayMsNamedLong
@@ -39,7 +38,6 @@ public class Netcaster
 	    {
 	  		// Superclass's injections.
 	  	  super( // Constructing Streamcaster DataNodeWithKey superclass.
-			      theDataTreeModel,
 			      nameString,
 		        theShutdowner,
 		        false,

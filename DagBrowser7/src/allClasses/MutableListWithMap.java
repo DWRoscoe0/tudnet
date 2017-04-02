@@ -26,13 +26,11 @@ public class MutableListWithMap<
 		    new ConcurrentHashMap<K,V>(); // Initializing map to empty.
 
     public MutableListWithMap (   // Constructor.
-	      DataTreeModel theDataTreeModel,
 	      String nameString,
         DataNode... inDataNodes 
 	      )
 	    {
       	initializeV(
-	        theDataTreeModel,
 	        nameString,
 	        inDataNodes
       		);

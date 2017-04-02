@@ -58,7 +58,6 @@ public class Streamcaster<
     protected boolean leadingB= false; // Used to settle race conditions.
       
 	  public Streamcaster(  // Constructor.
-	      DataTreeModel theDataTreeModel,
 	      String nameString,
         Shutdowner theShutdowner,
         boolean leadingB,
@@ -71,7 +70,6 @@ public class Streamcaster<
 	    {
 	  		// Superclass's injections.
 	      super( // Constructing MutableList superclass.
-		        theDataTreeModel,
 		        nameString, // Type name but not entire name.
 		        theKeyK
 	      		);

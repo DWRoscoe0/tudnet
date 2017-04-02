@@ -33,7 +33,6 @@ public class StreamcasterManager<
 		protected final AppGUIFactory theAppGUIFactory;
 
 	  public StreamcasterManager(   // Constructor.
-	      DataTreeModel theDataTreeModel,
 	      String nameString,
 	      AppGUIFactory theAppGUIFactory,
 	  		DataNode... inDataNodes 
@@ -41,7 +40,6 @@ public class StreamcasterManager<
 	    {
 	  		// Superclass injections.
 	      super(
-		        theDataTreeModel,
 		        nameString,
 		        inDataNodes
 	      		);

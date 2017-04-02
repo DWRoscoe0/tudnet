@@ -39,7 +39,6 @@ public class Subcaster
 	      LockAndSignal streamcasterLockAndSignal,
 	      SubcasterInputStream theSubcasterInputStream,
 	      SubcasterOutputStream theSubcasterOutputStream,
-	      DataTreeModel theDataTreeModel,
 	      String keyString,
 	      Shutdowner theShutdowner,
         boolean leadingB,
@@ -47,7 +46,6 @@ public class Subcaster
 	      )
 	    {
 	      super( // Superclass's constructor injections.
-		        theDataTreeModel,
 		      	"Subcaster",
 		        theShutdowner,
 		        leadingB,

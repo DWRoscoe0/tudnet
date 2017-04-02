@@ -15,13 +15,11 @@ public class DataNodeWithKey< K >
 	  private K theKeyK;
 	  
 	  public DataNodeWithKey(  // Constructor.
-	      DataTreeModel theDataTreeModel,
 	      String baseNameString,
 	  		K theKeyK
 	      )
 	    {
 	  		initializeV(
-  		    theDataTreeModel,
 	        baseNameString, // Base name but not entire name.
           new DataNode[]{} // Initially empty array of children.
       		);

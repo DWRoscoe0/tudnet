@@ -70,12 +70,9 @@ public class SystemsMonitor
 
     Random theRandom= new Random(0);  // Initialize random # generator.
 
-    public SystemsMonitor(   // Constructor.
-    		DataTreeModel theDataTreeModel
-    		)
+    public SystemsMonitor()   // Constructor.
       {
       	initializeV(  // Constructing base class.
-          theDataTreeModel, // For receiving tree change notifications.
           "Systems-Monitor", // DataNode (not thread) name.
           new DataNode[]{} // Initially empty List of Peers.
           );

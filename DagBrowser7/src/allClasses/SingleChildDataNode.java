@@ -2,7 +2,6 @@ package allClasses;
 
 public class SingleChildDataNode
 
-  //% extends DataNode
 	extends NamedList
   
   /* This class is a DataNode that has only a single child DataNode.
@@ -20,43 +19,17 @@ public class SingleChildDataNode
 
   { // class SingleChildDataNode
 
-    // Variables.
-      //% private DataNode ChildDataNode;  // It's only child DataNode.
+    // Variables.  None.
       
     // Constructor.
 
       public SingleChildDataNode( DataNode InDataNode )
-        { // SingleChildDataNode( DataNode InDataNode )
-          //% ChildDataNode= InDataNode;  // Save DataNode as child.
+        {
       		super.initializeV(
-            null, //// DataTreeModel theDataTreeModel,
             "PARENT-OF:" +  // ...this and...
             	InDataNode.getNameString( ),
             new DataNode[] { InDataNode }
             );
-          } // SingleChildDataNode( DataNode InDataNode )
-    
-    // A subset of delegated AbstractTreeModel methods.
-
-      /*  //%
-      public DataNode getChild( int IndexI ) 
-        /* This returns the child with index IndexI.  */
-      /*  //%
-        {
-          switch ( IndexI ) {
-            case 0: return ChildDataNode;
-            }
-          return null;  // anything else returns null.
           }
-
-      public String getNameString( )
-        /* Returns String representing name of this Object.  */
-      /*  //%
-        {
-          return // Return name which is composite of...
-            "PARENT-OF:" +  // ...this and...
-            ChildDataNode.getNameString( );  // ...this.
-          }
-        */  //%
 
     } // class SingleChildDataNode
