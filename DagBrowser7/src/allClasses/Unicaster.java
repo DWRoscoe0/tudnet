@@ -134,7 +134,6 @@ public class Unicaster
     		super.initializeWithoutStreamsV(); // We do the stream counts below.
 
     		theLinkMeasurementState= new LinkMeasurementState( 
-	  		    theDataTreeModel,
     				theTimer, 
     				theEpiInputStreamI,
     				theEpiOutputStreamO, 

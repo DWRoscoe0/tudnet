@@ -52,8 +52,6 @@ public class RootJTree
     // Variables.
       private static final long serialVersionUID = 1L;
 
-      // private DataTreeModel theDataTreeModel;  // Defines Tree data.
-
       // Injected dependencies.
       private JScrollPane theJScrollPane;  // Associated JScrollPane.
       private MetaRoot theMetaRoot;

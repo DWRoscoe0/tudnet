@@ -85,7 +85,7 @@ public class MutableList
         	//appLogger.debug("MutableList.add(..) "+childDataNode+" at "+indexI);
 		  		final boolean addSuccessB[]= new boolean[1]; // Array for result.
 		  		final DataNode parentDataNode= this; // Because vars must be final.
-		  		DataTreeModel.runOrInvokeAndWaitV( // Queuing add to AWT queue. 
+		  		EDTUtilities.runOrInvokeAndWaitV( // Queuing add to AWT queue. 
         		new Runnable() {
         			@Override  
               public void run() {
@@ -147,7 +147,7 @@ public class MutableList
 		    {
 		  	  final DataNode parentDataNode= this;
 		  		final boolean removedB[]= new boolean[1]; // Array element for result.
-		  	  DataTreeModel.runOrInvokeAndWaitV( // Queuing removal of Unicaster from List.
+		  		EDTUtilities.runOrInvokeAndWaitV( // Queuing removal of Unicaster from List.
         		new Runnable() {
               @Override  
               public void run() { 

@@ -52,9 +52,9 @@ public class NamedLong
         }
 
     public long setValueL( final long newL )
-	    /* This method does nothing if deltaL is the same value 
+	    /* This method does nothing if the new value newL is the same value 
 	      as the present value of this NamedLong.
-		    Otherwise it sets sets deltaL as the new value 
+		    Otherwise it sets sets newL as the new value 
 		    and returns the old unchanged value.
 		    It also fires any associated change listeners.
 		    */
@@ -71,7 +71,7 @@ public class NamedLong
 							}
     	  	}
     	  
-    	  if (changedB) {
+    	  if (changedB) { // Firing change listeners.
 	        reportChangeOfSelfV(); // Reporting change of this node.
     	  	}
 				return resultL; // Returning old before-changed value.

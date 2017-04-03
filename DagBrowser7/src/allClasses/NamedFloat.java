@@ -10,18 +10,14 @@ public class NamedFloat // A DataNode for tracking floating point things.
   extends NamedLeaf
 
   {
-	  private DataTreeModel theDataTreeModel; // For reporting changes.
-
 	  private float theF;
 
 	  public NamedFloat( // Constructor. 
-        DataTreeModel theDataTreeModel,
         String nameString, 
         float theF 
         )
 		  {
 	  		super.initializeV( nameString );
-        this.theDataTreeModel= theDataTreeModel;
 		  	this.theF= theF;
         }
 
@@ -55,21 +51,30 @@ public class NamedFloat // A DataNode for tracking floating point things.
 	  	  return theF; // Returning possibly different value.
         }
 
-    public float setValueF( final float newL )
-	    /* This method does nothing if deltaF is the same value 
-	      as the present value of this NamedLong.
-		    Otherwise it sets sets deltaF as the new value 
+    public float setValueF( final float newF )
+	    /* This method does nothing if the new value newF is the same value 
+		    as the present value of this NamedFloat.
+		    Otherwise it sets sets newF as the new value 
 		    and returns the old unchanged value.
 		    It also fires any associated change listeners.
 		    */
-	    {
-	  	  float oldF= this.theF; // Saving present value as old one.
-	  	  if ( newL != theF ) // Setting new value if it's different.
+    {
+  	  boolean changedB;
+  	  float resultF;
+  	  
+  	  synchronized (this) { // Set the new value if different from old one.
+	  	  resultF= theF; // Saving present value for returning.
+	  	  changedB= newF != theF;
+	  	  if ( changedB ) // Setting new value if it's different.
 	  	    {
-						theF= newL; // Setting new value.
-		        theDataTreeModel.safelyReportingChangeV( this );
-		  	  	}
-				return oldF; // Returning old unchanged value.
-		  	}
+						theF= newF; // Setting new value.
+						}
+  	  	}
+  	  
+  	  if (changedB) { // Firing change listeners.
+        reportChangeOfSelfV(); // Reporting change of this node.
+  	  	}
+			return resultF; // Returning old before-changed value.
+	  	}
 
     }

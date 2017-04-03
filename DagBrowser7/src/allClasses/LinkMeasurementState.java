@@ -103,7 +103,6 @@ public class LinkMeasurementState
 		private long retryTimeOutMsL;
 	
 		LinkMeasurementState(  // Constructor.
-		    DataTreeModel theDataTreeModel,
 				Timer theTimer, 
 			  NetcasterInputStream theNetcasterInputStream,
 				NetcasterOutputStream theNetcasterOutputStream,
@@ -157,7 +156,7 @@ public class LinkMeasurementState
 			    		theNetcasterInputStream.getCounterNamedLong() );
 		  	  oldIncomingPacketsReceivedDefaultLongLike= new DefaultLongLike(0);
 		  	  addB( incomingPacketLossNamedFloat= new NamedFloat(  
-		      		theDataTreeModel, "Incoming-Packet-Loss", 0.0F ) );
+		  	  		"Incoming-Packet-Loss", 0.0F ) );
 		  	  incomingPacketLossAverager= new LossAverager(
 		  	  				oldIncomingPacketsSentNamedLong,
 		  	  				oldIncomingPacketsReceivedDefaultLongLike,
@@ -174,7 +173,7 @@ public class LinkMeasurementState
 			    addB( newOutgoingPacketsReceivedNamedLong= new NamedLong( 
 				      "Outgoing-Packets-Received", 0 ) );
 		  	  addB( outgoingPacketLossNamedFloat= new NamedFloat( 
-		      		theDataTreeModel, "Outgoing-Packet-Loss", 0.0f ) );
+		  	  		"Outgoing-Packet-Loss", 0.0f ) );
 		  	  oldOutgoingPacketsReceivedDefaultLongLike= new DefaultLongLike(0);
 		  	  outgoingPacketLossLossAverager= new LossAverager(
 		  	  		oldOutgoingPacketsSentDefaultLongLike,

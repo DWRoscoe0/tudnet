@@ -38,7 +38,6 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
   private final LockAndSignal senderLockAndSignal;
   private final NetcasterQueue netcasterToSenderNetcasterQueue;
   private final NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue;
-  private final DataTreeModel theDataTreeModel;
   private final AppGUI theAppGUI;
   private final NetcasterPacketManager receiverNetcasterPacketManager;
 	private final Timer theTimer;
@@ -152,7 +151,6 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
       this.netcasterToSenderNetcasterQueue= netcasterToSenderNetcasterQueue;
       this.unconnectedReceiverToConnectionManagerNetcasterQueue=
       		unconnectedReceiverToConnectionManagerNetcasterQueue;
-      this.theDataTreeModel= theDataTreeModel;
       this.theAppGUI= theAppGUI;
   		this.theTimer= theTimer;
   		this.multicasterFixedTimeOutMsNamedLong= 
@@ -328,7 +326,6 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 	  				),
 	  		makeNetcasterOutputStream( theNetcasterPacketManager ),
         theShutdowner,
-	  		theDataTreeModel,
 	  		theIPAndPort,
 	  		theMulticastSocket,
 	      multicasterToConnectionManagerNetcasterQueue,

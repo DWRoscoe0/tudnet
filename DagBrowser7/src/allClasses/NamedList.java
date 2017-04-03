@@ -86,7 +86,7 @@ public class NamedList
     	{
     		//// parentNamedList.reportChangeOfChildV( this );
     	  final DataNode parentDataNode= this;
-    		DataTreeModel.runOrInvokeAndWaitV( // Do following on EDT thread. 
+    	  EDTUtilities.runOrInvokeAndWaitV( // Do following on EDT thread. 
 		    		new Runnable() {
 		    			@Override  
 		          public void run() {

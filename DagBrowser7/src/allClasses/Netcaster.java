@@ -71,13 +71,12 @@ public class Netcaster
     		super.initializeV();
     		IPAndPort remoteIPAndPort= getKeyK();
     		addB( 	new NamedMutable( 
-		        theDataTreeModel, 
 		        "IP-Address", 
 		        "" + remoteIPAndPort.getInetAddress()
 		      	)
 					);
 		    addB( 	new NamedMutable( 
-				    theDataTreeModel, "Port", "" + remoteIPAndPort.getPortI()
+		    		"Port", "" + remoteIPAndPort.getPortI()
 				  	) );
 	    	}
 

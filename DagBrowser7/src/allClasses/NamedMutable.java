@@ -5,12 +5,9 @@ public class NamedMutable
   {
 
 	  // Injected dependencies.
-		protected DataTreeModel theDataTreeModel; // For reporting changes.
-
 	  private Object valueObject;
 
 	  public NamedMutable( // Constructor. 
-        DataTreeModel theDataTreeModel,
 	  		String nameString,
 	  		final Object newObject
 	  		)
@@ -18,7 +15,6 @@ public class NamedMutable
 	  		super.initializeV( nameString );
 
         // Storing injected values stored in this class.
-        this.theDataTreeModel= theDataTreeModel;
 				valueObject= newObject; // Setting new value.
         }
 
@@ -26,17 +22,31 @@ public class NamedMutable
       {
         return valueObject.toString();
         }
-	  
-	  public Object setValueObject( final Object newObject )
-	    /* This method sets a new value and returns the old one.
-	      The old one is returned to simplify 
-	      possible future object pooling and recycling.
-  	    */
-		  {
-	  	  Object oldObject= this.valueObject; // Saving present value. 
-				valueObject= newObject; // Setting new value.
-	  	  theDataTreeModel.safelyReportingChangeV( this );
-	  	  return oldObject; // Returning old value.
+
+    public Object setValueObject( final Object newObject )
+	    /* This method does nothing if the new value newObject is the same value 
+	      as the present value of this NamedMuteable.
+		    Otherwise it sets sets newObject as the new value 
+		    and returns the old unchanged value.
+		    It also fires any associated change listeners.
+		    */
+	    {
+    	  boolean changedB;
+	  	  Object resultObject;
+	  	  
+    	  synchronized (this) { // Set the new value if different from old one.
+		  	  resultObject= valueObject; // Saving present value for returning.
+		  	  changedB= newObject != valueObject;
+		  	  if ( changedB ) // Setting new value if it's different.
+		  	    {
+		  	  		valueObject= newObject; // Setting new value.
+							}
+    	  	}
+    	  
+    	  if (changedB) { // Firing change listeners.
+	        reportChangeOfSelfV(); // Reporting change of this node.
+    	  	}
+				return resultObject; // Returning old before-changed value.
 		  	}
 
     public Object getValueObject( )

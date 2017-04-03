@@ -48,7 +48,7 @@ public class SystemsMonitor
       // No longer measured.
 		  // private long nanoTimeOverheadNsL;
 		  // private NamedLong nanoTimeOverheadNamedInteger= new NamedLong( 
-      //		theDataTreeModel, "nanoTime() overhead (ns)", -1 
+      //		"nanoTime() overhead (ns)", -1 
       //  	);
 		  private NamedLong cpuSpeedNamedLong;
 		  private long endWaitDelayMsL;
@@ -270,7 +270,7 @@ public class SystemsMonitor
     				Runtime.getRuntime().availableProcessors() 
     				); // Keep measuring because this could change.
       	final long beforeEDTDispatchNsL= System.nanoTime();
-      	DataTreeModel.invokeAndWaitV( // Dispatching on EDT...
+      	EDTUtilities.invokeAndWaitV( // Dispatching on EDT...
           new Runnable() {
             @Override  
             public void run() { 

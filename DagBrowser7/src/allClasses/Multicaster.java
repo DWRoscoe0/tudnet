@@ -108,7 +108,6 @@ public class Multicaster
 	      NetcasterInputStream theNetcasterInputStream,
 	  		NetcasterOutputStream theNetcasterOutputStream,
         Shutdowner theShutdowner,
-	  		DataTreeModel theDataTreeModel,
 	  		IPAndPort theIPAndPort,
 	  		MulticastSocket theMulticastSocket,
 	      NetcasterQueue multicasterToConnectionManagerNetcasterQueue,

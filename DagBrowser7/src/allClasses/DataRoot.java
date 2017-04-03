@@ -48,7 +48,7 @@ public class DataRoot {
 	        * Some of the TreePath constructors provided by Java which
 	          could make the following code more self-documenting
 	          are not public and can not be used here.
-	      This method also propagates theDataTree model into the structure
+	      This method also propagates theDataTreeModel into the structure
 	      starting with the parent of the root, so that all present nodes
 	      and all nodes added to the tree later, will have it.
 				*/
