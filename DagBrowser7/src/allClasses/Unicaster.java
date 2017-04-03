@@ -141,6 +141,7 @@ public class Unicaster
 	      		);
 	  	  theLinkMeasurementState.initializeWithIOExceptionV();
 	  	  addB( theLinkMeasurementState ); // This includes stream counts.
+	  	  theLinkMeasurementState.stateHandlerB(); // To start theTimer.
 
 	  	  theMultiMachineState= new MultiMachineState();
 	  	  theMultiMachineState.initializeWithIOExceptionV();

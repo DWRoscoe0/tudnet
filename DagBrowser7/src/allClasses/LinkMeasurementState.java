@@ -264,7 +264,6 @@ public class LinkMeasurementState
 							        	  }
 							    		}
 					  				);
-		  	  	stateHandlerB(); // Calling the handler once to start timer.
 		  	  	return this;
 			    	}
 
