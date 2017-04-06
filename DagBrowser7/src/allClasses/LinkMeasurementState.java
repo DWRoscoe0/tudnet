@@ -7,8 +7,7 @@ import java.util.Timer;
 
 public class LinkMeasurementState 
 	
-	//// extends MutableList
-	extends State
+	extends AndState
 	
 	/* This class contains a [hierarchical] state machine 
 	  that measures and displays several performance parameters 
@@ -108,7 +107,7 @@ public class LinkMeasurementState
 				NetcasterOutputStream theNetcasterOutputStream,
 				NamedLong retransmitDelayMsNamedLong
 				)
-						throws IOException
+			throws IOException
 	  	{
   	  	// Injected dependencies.
 			  this.theNetcasterInputStream= theNetcasterInputStream;
@@ -185,37 +184,6 @@ public class LinkMeasurementState
 		  	  initAndAddV( theTempMeasurementState= new TempMeasurementState() );
 				  }
 
-	    public synchronized boolean handleInputB(
-	    		String keyString
-	    		) 
-	  		throws IOException
-	  		/* This method is called to process a possible PS or PA message input.
-  		  It returns true if one of those messages is processed,
-  		  meaning keyString was one of them and it was consumed.
-  		  It returns false otherwise.
-
-  		  It does its processing by calling methods in the sub-machines.
-  		  It cycles the main machine if input was processed.
-  		  
-  		  This was previously called processMeasurementMessageB(keyString).
-
-  		  //// If state machines are used more extensively to process
-  		    messages of this type, it might make sense to:
-  		    * Cache the State that processes the keyString in a HashMap
-  		      and use the HashMap to dispatch the message.
-  		    * Add discrete event processing to State machines and
-  		      make these keyString messages a subclass of those events.
-  		  */
-	  		{
-	    		return theTempMeasurementState.handleInputB(keyString);
-	    	  }
-			
-		  public synchronized void finalizeV() throws IOException
-		    // This method processes any pending loose ends before shutdown.
-			  {
-		  	  theTempMeasurementState.finalizeV(); // Finalizing state-machine.
-	        }
-
 	  private long sentSequenceNumberTimeNsL;
 
 		private long lastSequenceNumberSentL;
@@ -245,6 +213,7 @@ public class LinkMeasurementState
 		        * creating, initializing, and adding to the sub-state list
 		          all of our concurrently running sub-state-machines, and
 		        * creating and starting our timer.
+
 		        */
 			    {
 		    		super.initializeWithIOExceptionState();
@@ -264,6 +233,7 @@ public class LinkMeasurementState
 							        	  }
 							    		}
 					  				);
+
 		  	  	return this;
 			    	}
 
@@ -304,10 +274,12 @@ public class LinkMeasurementState
 				  {
 		
 						// sub-states/machines.
-						private MeasurementPausedState theMeasurementPausedState;
+						private MeasurementPausedState 
+						  theMeasurementPausedState;
 						private MeasurementInitializationState
 						  theMeasurementInitializationState;
-						private MeasurementHandshakesState theMeasurementHandshakesState;
+						private MeasurementHandshakesState 
+						  theMeasurementHandshakesState;
 		
 				    public State initializeWithIOExceptionState() throws IOException 
 					    {
@@ -572,22 +544,22 @@ public class LinkMeasurementState
 					    It does this by responding with "PA" messages to 
 					    "PS" messages sent from the remote peer.
 					    It also records some information that is displayed locally.
-					    This state doesn't have any sub-states.
+					    This state doesn't have any sub-states of its own.
 					    It exists mainly to document its role along with
-					    its orthogonal partner sub-state LocalMeasurementState.
+					    its orthogonal partner sub-state named LocalMeasurementState.
 					    */
 
-				  public void stateHandlerV() throws IOException
-				  	/* This method handles handshakes acknowledgement, 
-				  	  initiating a retry using twice the time-out,
-				  	  until the acknowledgement is received,
-				  	  or giving up if the time-out limit is reached.
-				  	  */
-				  	{
-						  if (tryInputB("PS" )) // Test and process PS message.
-							  processPacketSequenceNumberV(); // Process PS message body.
-						  // Staying in same state.
-							}
+					  public void stateHandlerV() throws IOException
+					  	/* This method handles handshakes acknowledgement, 
+					  	  initiating a retry using twice the time-out,
+					  	  until the acknowledgement is received,
+					  	  or giving up if the time-out limit is reached.
+					  	  */
+					  	{
+							  if (tryInputB("PS" )) // Test and process PS message.
+								  processPacketSequenceNumberV(); // Process PS message body.
+							  // Staying in same state.
+								}
 		
 						private void processPacketSequenceNumberV() 
 								throws IOException
@@ -647,7 +619,7 @@ public class LinkMeasurementState
 					  		  );
 							  }
 						
-							} // class RemoteMeasurementState
+						} // class RemoteMeasurementState
 
 				} // class TempMeasurementState
 

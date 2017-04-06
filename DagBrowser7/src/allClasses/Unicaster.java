@@ -58,7 +58,6 @@ public class Unicaster
   		private Timer theTimer;
 
   		// Other instance variables.
-  		private LinkMeasurementState theLinkMeasurementState;
   		private MultiMachineState theMultiMachineState;
   		
 			public Unicaster(  // Constructor. 
@@ -133,17 +132,12 @@ public class Unicaster
 	    {
     		super.initializeWithoutStreamsV(); // We do the stream counts below.
 
-    		theLinkMeasurementState= new LinkMeasurementState( 
-    				theTimer, 
-    				theEpiInputStreamI,
-    				theEpiOutputStreamO, 
-    				retransmitDelayMsNamedLong 
-	      		);
-	  	  theLinkMeasurementState.initializeWithIOExceptionV();
-	  	  addB( theLinkMeasurementState ); // This includes stream counts.
-	  	  theLinkMeasurementState.stateHandlerB(); // To start theTimer.
-
-	  	  theMultiMachineState= new MultiMachineState();
+	  	  theMultiMachineState= new MultiMachineState(
+	  				theTimer, 
+	  			  theEpiInputStreamI,
+	  				theEpiOutputStreamO,
+	  				retransmitDelayMsNamedLong
+	  	  		);
 	  	  theMultiMachineState.initializeWithIOExceptionV();
 	  	  addB( theMultiMachineState );
 
@@ -151,9 +145,9 @@ public class Unicaster
 	    	}
 
     protected void finalizingV() throws IOException
-      // This is the opposite of initilizingV().
+	    // This is the opposite of initilizingV().
 	    {
-	    	theLinkMeasurementState.finalizeV();
+	    	theMultiMachineState.finalizeV();
 	    	theEpiOutputStreamO.close(); // Closing output stream.
 	    	}
 
@@ -291,12 +285,7 @@ public class Unicaster
 		      if // Passing remainder of message to associated Subcaster.
 		        ( theSubcaster != null )
 		        { processMessageToSubcasterV( theSubcaster ); break process; }
-
-		      // Process non-Subcaster message.
-		      //if ( processPacketSequenceNumberB(keyString) ) // "PS"
-   			  //	break process;
-		      //if ( processPacketAcknowledgementB(keyString) ) // "PA"
-		      if ( theLinkMeasurementState.handleInputB(keyString) ) ////
+		      if ( theMultiMachineState.handleSynchronousInputB(keyString) ) ////
 		      	break process;
   			  if ( processHelloB( keyString ) ) // "HELLO"
    			  	break process;

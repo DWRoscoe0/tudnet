@@ -30,7 +30,7 @@ public class State extends MutableList {
 	  * its current sub-state, or child state, 
 	    designated by "this.subState".
 
-		These classes presently support the processing of only asynchronous inputs, 
+		////// These classes presently support the processing of only asynchronous inputs, 
 		variable values which can change at any time.
 
 		To reduce boilerplate code, constructor source code has been eliminated.
@@ -50,7 +50,7 @@ public class State extends MutableList {
   protected List<State> theListOfSubStates=
       new ArrayList<State>(); // Initially empty list.
 
-  protected String registeredInputString; // Stores an input stream event word,
+  private String synchronousInputString; // Stores an input stream event word,
     // until a state handler has had the opportunity to check it.
 
   /* Methods used to build state objects. */
@@ -172,17 +172,17 @@ public class State extends MutableList {
 			return false; 
 		  }
 
-	public String getInputString()
+	protected String getSynchronousInputString()
 	  {
-			return registeredInputString;
+			return synchronousInputString;
 		  }
 
-	public void setInputV(String inputString)
+	public void setSynchronousInputV(String synchronousInputString)
 	  {
-		  registeredInputString= inputString; // Storing input in field variable.
+		  this.synchronousInputString= synchronousInputString;
 		  }
 	
-	public boolean handleInputB(String inputString) throws IOException
+	public boolean handleSynchronousInputB(String inputString) throws IOException
 	  /* This method is the state handler when there is a synchronous input.
 	    It stores wordString in a field variable and then 
 	    calls the regular state handler.
@@ -194,14 +194,21 @@ public class State extends MutableList {
 	    the stored value is replaced with null
 	    and a true is returned, false is returned otherwise.
 	    In either case the stored value is replaced by null before returning.
+	
+		  //// If state machines are used more extensively to process
+		    messages of this type, it might make sense to:
+		    * Cache the State that processes the keyString in a HashMap
+		      and use the HashMap to dispatch the message.
+		    * Add discrete event processing to State machines and
+		      make these keyString messages a subclass of those events.
 	    */
 	  {
-		  registeredInputString= inputString; // Register input in field variable.
+		  synchronousInputString= inputString; // Register input in field variable.
 			stateHandlerB(); // Call regular handler to process it.  Return value 
 			  // is ignored because we are interested in String processing.
 			boolean successB= // Word was processed if it's now gone. 
-					(registeredInputString == null);
-			registeredInputString= null; // Unregister input to State machine..
+					(synchronousInputString == null);
+			synchronousInputString= null; // Unregister input to State machine..
 			return successB; // Returning whether input was processed.
 		  }
 	
@@ -215,9 +222,9 @@ public class State extends MutableList {
 	   	*/
 	  {
 			boolean successB= // Comparing registered input to test input. 
-					(testString.equals(registeredInputString));
+					(testString.equals(synchronousInputString));
 		  if (successB) // Consuming registered input if it matched.
-		  	registeredInputString= null;
+		  	synchronousInputString= null;
 			return successB; // The result of the test.
 		  }
 
@@ -314,15 +321,15 @@ class OrState extends State {
   	  			  presentSubState.enterV(); 
   	  				requestedSubState= null;
 			  			}
-  	  		presentSubState.setInputV(getInputString());
+  	  		presentSubState.setSynchronousInputV(getSynchronousInputString());
   	  		  // Store input string, if any, in sub-state.
 		  	  if ( presentSubState.stateHandlerB() )
 				  	substateProgressB= true;
   	  		if // Detect and record whether synchronous input was consumed.
-  	  			( (getInputString() != null) &&
-  	  			  (presentSubState.getInputString() == null)
+  	  			( (getSynchronousInputString() != null) &&
+  	  			  (presentSubState.getSynchronousInputString() == null)
   	  				)
-						{ setInputV(null);
+						{ setSynchronousInputV(null);
 							substateProgressB= true;
 							}
   	  	  if (!substateProgressB) // Exiting loop if no sub-state progress made. 
@@ -384,15 +391,15 @@ class AndState extends State {
 		  		thisScanMadeProgressB= false;
 	  	  	for (State subState : theListOfSubStates)
 		  	  	{
-			  	  	subState.setInputV(getInputString());
+			  	  	subState.setSynchronousInputV(getSynchronousInputString());
 		  	  		  // Store input string, if any, in sub-state.
 				  	  if ( subState.stateHandlerB() )
 						  	thisScanMadeProgressB= true;
 		  	  		if // Detect and record whether synchronous input was consumed.
-		  	  			( (getInputString() != null) &&
-		  	  			  (subState.getInputString() == null)
+		  	  			( (getSynchronousInputString() != null) &&
+		  	  			  (subState.getSynchronousInputString() == null)
 		  	  				)
-								{ setInputV(null);
+								{ setSynchronousInputV(null);
 									thisScanMadeProgressB= true;
 									}
 		  	  		}
