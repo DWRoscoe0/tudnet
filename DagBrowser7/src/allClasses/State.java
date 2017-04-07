@@ -76,8 +76,14 @@ public class State extends MutableList {
 
   public void initAndAddV(State theSubState) throws IOException
     /* This method is used as part of the State building process.  It:
-      * does an initialization of theSubState, and
-      * adds theSubState to this state's list of sub-states. 
+      * does an initialization of theSubState using 
+        the method initializeWithIOExceptionState(),
+      * next it adds theSubState to this state's list of sub-states.
+      This can save a little code when adding states that
+      can use the default initializer method initializeWithIOExceptionState().
+      In cases where initialization with parameters is needed,
+      it should be done by calling a special initializer method,
+      followed by a call to the addV(..) method. 
      	*/
   	{ 
   	  addV(  // Initialize and add theSubState to list of sub-states.
@@ -86,7 +92,7 @@ public class State extends MutableList {
   	  }
 
   public void addV(State theSubState)
-    /* This method adds/injects one sub-state to this state.
+    /* This method adds one sub-state to this state.
 			It part of the State building process.  
       It adds theSubState to the state's sub-state list,
       including setting the parent of the sub-state to be this state.
@@ -97,7 +103,7 @@ public class State extends MutableList {
   	  theSubState.setParentStateV( this ); // Store this state as
   	  	// the sub-state's parent state.
 
-  	  addRawV( theSubState ); // Add to this DataNode's list of DataNodes.
+  	  addB( theSubState ); // Add to this DataNode's list of DataNodes.
   	  }
 
   public synchronized void finalizeV() throws IOException
