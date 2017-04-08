@@ -7,19 +7,22 @@ public class TimerInput
 	/* This class performs functions similar to java.util.Timer,
 	  such as the ability to call a Runnable's run() method,
 	  but also provides methods with which the state of the timer can be tested.
+	  It can time only one interval at a time, but it can be reused.
 	  It's called TimerInput because it is meant to provide inputs to
 	  a thread or a state machine.
+
+	  This class uses a  java.util.Timer to do the timing.
+	  The run() method that is triggered must return quickly or 
+	  other events using the same Timer could be delayed.
 
 		An earlier version of this class used LockAndSignal.notifyingV()
 	  in the run() method of TimerTask instances that it creates for quickness.
 	  This version does not have that guarantee.
-	  The run() method must return quickly or 
-	  other events using the same timer could be delayed. 
 	  */
 	{	
 	  // Injected dependencies.
 	  private Timer theTimer;
-	  private Runnable theRunnable;
+	  private Runnable userRunnable;
 	  
 		// Other variables.
 		private TimerTask theTimerTask= null;
@@ -31,7 +34,7 @@ public class TimerInput
 	  		)
 	  	{
 		  	this.theTimer= theTimer;
-		  	this.theRunnable= theRunnable;
+		  	this.userRunnable= theRunnable;
 		  	}
 	
 	  public boolean getInputArrivedB() 
@@ -43,18 +46,18 @@ public class TimerInput
 	    { return theTimerTask != null; }
 	
 	  public synchronized void scheduleV( long delayMsL )
-	    /* Schedules this timer for input activation after delayML milliseconds.
+	    /* Schedules this timer for input activation after delayMsL milliseconds.
 	      If this timer object is already scheduled or active 
 	      then the old scheduled activation is cancelled first.
 	     */
 	    {
-	  		cancelingV(); // Canceling any older input.
+	  		cancelingV(); // Canceling any previous input.
 	    	theTimerTask= new TimerTask() {
 	        public void run()
-	          // Activates this as an input and notifies interested thread.
+	          // Our Runnable method to process triggering of the timer.
 		        {
-	        		inputArrivedB= true;
-	        	  theRunnable.run(); // cycleMachineB();
+	        		inputArrivedB= true;  // Record that end time has arrived.
+	        	  userRunnable.run(); // Run user handler Runnable.
 		          }
 	    		};
 	    	theTimer.schedule(theTimerTask, delayMsL);

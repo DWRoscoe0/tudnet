@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.util.Timer;
 
 public class LinkMeasurementState 
-	
+
 	extends AndState
 	
 	/* This class contains a [hierarchical] state machine 
@@ -18,7 +18,7 @@ public class LinkMeasurementState
 
 	  This code is not thread-safe.  It is meant to be called only from:
 	  * a Unicaster thread, and
-	  * the thread belonging to a timer that this code creates and uses.
+	  * the thread belonging to a timer that this code uses.
 
 	  ////// This class makes use of an internal non-static class 
 	    called TempMeasurementState.
@@ -33,70 +33,12 @@ public class LinkMeasurementState
 		private NetcasterOutputStream theNetcasterOutputStream; 
 		private NamedLong retransmitDelayMsNamedLong;
 		private Timer theTimer; 
-	
-		// Variables for counting measurement handshakes.
-	  private NamedLong measurementHandshakesNamedLong;
-
-	  // Variables for managing incoming packets and 
-	  // their sequence numbers.  They all start at 0.
-	  private DefaultLongLike newIncomingPacketsSentDefaultLongLike;
-	  	// This is set to the value of the sequence number argument of the
-		  // most recently received "PS" message plus 1.  
-		  // When sent this argument was the remote end's 
-		  // EpiOutputStream packet counter.
-	  	// This value usually increases, but can decrease 
-	    // if an "PS" is carried by an out-of-order packets.
-	  private NamedLong oldIncomingPacketsSentNamedLong;
-	  	// A difference between this and newIncomingPacketsSentDefaultLongLike 
-	    // indicates a new received sequence number needs to be processed.
-	  private NamedLong newIncomingPacketsReceivedNamedLong;
-	  	// This is a copy of the local EpiInputStream packet counter.
-	  	// It represents the latest count of locally received packets.
-	  	// This value can only increase.
-		private DefaultLongLike oldIncomingPacketsReceivedDefaultLongLike;
-			// A difference between this and newIncomingPacketsReceivedNamedLong 
-			// indicates a new packet has been received and needs to be processed.
-		private NamedFloat incomingPacketLossNamedFloat;
-	    // Floating representation of the fraction of incoming packets lost.
-	  LossAverager incomingPacketLossAverager;
 		
-	  // Variables for managing outgoing packets and their acknowledgement.
-	  private NamedLong newOutgoingPacketsSentNamedLong;
-	  	// This is a copy of the local EpiOutputStreamO packet counter.
-	  	// This value can only increase.
-	  private NamedLong newOutgoingPacketsSentEchoedNamedLong;
-	  	// This is the local EpiOutputStreamO packet counter after 
-	    // being returned from remote.  It might lag the real counter by RTT.
-	  	// This value can only increase.
-	  private DefaultLongLike oldOutgoingPacketsSentDefaultLongLike;
-	  	// A difference between this and newOutgoingPacketsSentNamedLong 
-	    // indicates new packets have been sent and need to be processed.
-	  private NamedLong newOutgoingPacketsReceivedNamedLong;
-	  	// This value comes from the most recently received "PA" message.  
-		  // When sent this argument was the remote end's 
-		  // EpiInputStream packet counter, 
-	    // counting the number of packets recevied.
-	  	// This value normally increases, but can decrease because of 
-	    // out-of-order "PA" packets. 
-	  private DefaultLongLike oldOutgoingPacketsReceivedDefaultLongLike;
-	  	// A difference between this and newOutgoingPacketsReceivedNamedLong 
-	    // indicates a new packet has been acknowledged and 
-			// needs to be processed.
-		private NamedFloat outgoingPacketLossNamedFloat;
-	  	// Floating representation of the fraction of outgoing packets lost.
-	  private LossAverager outgoingPacketLossLossAverager;
-	
-		// Variables for managing round trip time.
-	  protected NsAsMsNamedLong rawRoundTripTimeNsAsMsNamedLong;
-	    // This is an important value.  It can be used to determine
-	    // how long to wait for a message acknowledgement before
-	    // re-sending a message.  Initial value of 1/10 second.
-	  private NsAsMsNamedLong smoothedRoundTripTimeNsAsMsNamedLong;
-	  private NsAsMsNamedLong smoothedMinRoundTripTimeNsAsMsNamedLong; // Minimum.
-	  private NsAsMsNamedLong smoothedMaxRoundTripTimeNsAsMsNamedLong; // Maximum.
-	  
-		// Other variables.
-		private long retryTimeOutMsL;
+		// Sub-state machine instances.
+		@SuppressWarnings("unused")
+		private RemoteMeasurementState theRemoteMeasurementState;
+		@SuppressWarnings("unused")
+		private LocalMeasurementState theLocalMeasurementState;
 
 		LinkMeasurementState(  // Constructor.
 				Timer theTimer, 
@@ -112,102 +54,71 @@ public class LinkMeasurementState
 			  this.retransmitDelayMsNamedLong= retransmitDelayMsNamedLong;
 			  this.theTimer= theTimer;
 			  }
-	
-		// Input code activated or used by inputs.
 			
-		  public synchronized void initializeWithIOExceptionV() 
-					throws IOException
-		    /* This method is called by
-		      the Unicaster thread's initialization method.
-		      It creates most of the variable values needed,
-		      including ones added to the DAG for display.
-		      */
-			  {
-		  		super.initializeWithIOExceptionState();
-	  	  	// Adding measurement count.
-		  	  addB( measurementHandshakesNamedLong= new NamedLong(
-		      		"Measurement-Handshakes", 0 ) );
-	
-		  		addB( retransmitDelayMsNamedLong );
-	
-	        // Adding the new round trip time trackers.
-		      addB( smoothedRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
-		      		"Smoothed-Round-Trip-Time (ms)", 
-		      		Config.initialRoundTripTime100MsAsNsL ) );
-		  	  addB( smoothedMinRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
-		      		"Smoothed-Minimum-Round-Trip-Time (ms)", 
-		      		Config.initialRoundTripTime100MsAsNsL ) );
-		  	  addB( smoothedMaxRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
-		      		"Smoothed-Maximum-Round-Trip-Time (ms)", 
-		      		Config.initialRoundTripTime100MsAsNsL ) );
-		      addB( rawRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong( 
-		      		"Raw-Round-Trip-Time (ms)", 
-		      		Config.initialRoundTripTime100MsAsNsL ) );
-	
-	        // Adding incoming packet statistics children and related trackers.
-		  	  newIncomingPacketsSentDefaultLongLike= new DefaultLongLike(0);
-		  	  addB( oldIncomingPacketsSentNamedLong= new NamedLong(
-		      		"Incoming-Packets-Sent", 0 ) );
-			    addB( newIncomingPacketsReceivedNamedLong=
-			    		theNetcasterInputStream.getCounterNamedLong() );
-		  	  oldIncomingPacketsReceivedDefaultLongLike= new DefaultLongLike(0);
-		  	  addB( incomingPacketLossNamedFloat= new NamedFloat(  
-		  	  		"Incoming-Packet-Loss", 0.0F ) );
-		  	  incomingPacketLossAverager= new LossAverager(
-		  	  				oldIncomingPacketsSentNamedLong,
-		  	  				oldIncomingPacketsReceivedDefaultLongLike,
-		  	  				incomingPacketLossNamedFloat
-		  	  				);
-	
-		  	  // Adding outgoing packet statistics children and related trackers.
-	    		newOutgoingPacketsSentNamedLong=
-	    				theNetcasterOutputStream.getCounterNamedLong(); 
-			    addB( newOutgoingPacketsSentNamedLong );
-			    addB( newOutgoingPacketsSentEchoedNamedLong= new NamedLong(
-			    		"Outgoing-Packets-Sent-Echoed", 0 ) ); 
-			    oldOutgoingPacketsSentDefaultLongLike= new DefaultLongLike(0);
-			    addB( newOutgoingPacketsReceivedNamedLong= new NamedLong( 
-				      "Outgoing-Packets-Received", 0 ) );
-		  	  addB( outgoingPacketLossNamedFloat= new NamedFloat( 
-		  	  		"Outgoing-Packet-Loss", 0.0f ) );
-		  	  oldOutgoingPacketsReceivedDefaultLongLike= new DefaultLongLike(0);
-		  	  outgoingPacketLossLossAverager= new LossAverager(
-		  	  		oldOutgoingPacketsSentDefaultLongLike,
-		  	  		oldOutgoingPacketsReceivedDefaultLongLike,
-		  	  		outgoingPacketLossNamedFloat
-		  	  		);
-
-	    		initializeWithIOExceptionState(); //// For TempMeasurementState code.
-				  }
-
-	  private long sentSequenceNumberTimeNsL;
-
-		private long lastSequenceNumberSentL;
-		
-		//////// Beginning of code moved from TempMeasurementState.
-
-	  private TimerInput theTimerInput; // Used for state machine 
-    // pauses and time-outs. 
-		private IOException delayedIOException= null; /* For re-throwing 
-			an exception which occurred in one thread which couldn't handle it, 
-	    in another thread that can.
-	    */
-	
-		// Sub-state machine instances.
-		@SuppressWarnings("unused")
-		private RemoteMeasurementState theRemoteMeasurementState;
-		@SuppressWarnings("unused")
-		private LocalMeasurementState theLocalMeasurementState;
-	
-	  public State initializeWithIOExceptionState() throws IOException
-	    /* This method initializes this state machine.  This includes:
-	      * creating, initializing, and adding to the sub-state list
-	        all of our concurrently running sub-state-machines, and
-	      * creating and starting our timer.
-	
+	  public synchronized void initializeWithIOExceptionV() 
+				throws IOException
+	    /* This method is the initializer for LinkMeasurementState.  It:
+	      * initializes many variable values.
+	      * add some of those variables to the DAG.
+	      * creates sub-states and adds them to the DAG.
 	      */
-	    {
+		  {
 	  		super.initializeWithIOExceptionState();
+
+	  		// Adding measurement count.
+	  	  addB( measurementHandshakesNamedLong= new NamedLong(
+	      		"Measurement-Handshakes", 0 ) );
+
+	  		addB( retransmitDelayMsNamedLong );
+
+        // Adding the new round trip time trackers.
+	      addB( smoothedRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
+	      		"Smoothed-Round-Trip-Time (ms)", 
+	      		Config.initialRoundTripTime100MsAsNsL ) );
+	  	  addB( smoothedMinRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
+	      		"Smoothed-Minimum-Round-Trip-Time (ms)", 
+	      		Config.initialRoundTripTime100MsAsNsL ) );
+	  	  addB( smoothedMaxRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
+	      		"Smoothed-Maximum-Round-Trip-Time (ms)", 
+	      		Config.initialRoundTripTime100MsAsNsL ) );
+	      addB( rawRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong( 
+	      		"Raw-Round-Trip-Time (ms)", 
+	      		Config.initialRoundTripTime100MsAsNsL ) );
+
+        // Adding incoming packet statistics children and related trackers.
+	  	  newIncomingPacketsSentDefaultLongLike= new DefaultLongLike(0);
+	  	  addB( oldIncomingPacketsSentNamedLong= new NamedLong(
+	      		"Incoming-Packets-Sent", 0 ) );
+		    addB( newIncomingPacketsReceivedNamedLong=
+		    		theNetcasterInputStream.getCounterNamedLong() );
+	  	  oldIncomingPacketsReceivedDefaultLongLike= new DefaultLongLike(0);
+	  	  addB( incomingPacketLossNamedFloat= new NamedFloat(  
+	  	  		"Incoming-Packet-Loss", 0.0F ) );
+	  	  incomingPacketLossAverager= new LossAverager(
+	  	  				oldIncomingPacketsSentNamedLong,
+	  	  				oldIncomingPacketsReceivedDefaultLongLike,
+	  	  				incomingPacketLossNamedFloat
+	  	  				);
+
+	  	  // Adding outgoing packet statistics children and related trackers.
+    		newOutgoingPacketsSentNamedLong=
+    				theNetcasterOutputStream.getCounterNamedLong(); 
+		    addB( newOutgoingPacketsSentNamedLong );
+		    addB( newOutgoingPacketsSentEchoedNamedLong= new NamedLong(
+		    		"Outgoing-Packets-Sent-Echoed", 0 ) ); 
+		    oldOutgoingPacketsSentDefaultLongLike= new DefaultLongLike(0);
+		    addB( newOutgoingPacketsReceivedNamedLong= new NamedLong( 
+			      "Outgoing-Packets-Received", 0 ) );
+	  	  addB( outgoingPacketLossNamedFloat= new NamedFloat( 
+	  	  		"Outgoing-Packet-Loss", 0.0f ) );
+	  	  oldOutgoingPacketsReceivedDefaultLongLike= new DefaultLongLike(0);
+	  	  outgoingPacketLossLossAverager= new LossAverager(
+	  	  		oldOutgoingPacketsSentDefaultLongLike,
+	  	  		oldOutgoingPacketsReceivedDefaultLongLike,
+	  	  		outgoingPacketLossNamedFloat
+	  	  		);
+
+    		// Create and add to DAG the sub-states of this state machine.
 	  	  initAndAddV( (theRemoteMeasurementState= 
 	  	  		new RemoteMeasurementState()) );
 	  	  initAndAddV( theLocalMeasurementState= 
@@ -226,8 +137,7 @@ public class LinkMeasurementState
 					    		}
 			  				);
 
-		  	return this;
-	    	}
+			  }
 	
 	  public synchronized void finalizeV() throws IOException
 	    // This method processes any pending loose ends before shutdown.
@@ -614,5 +524,80 @@ public class LinkMeasurementState
 				//// End of code moved from TempMeasurementState.
 			
 			} // class RemoteMeasurementState
+		
+		// Variables for counting measurement handshakes.
+	  private NamedLong measurementHandshakesNamedLong;
+
+	  // Variables for managing incoming packets and 
+	  // their sequence numbers.  They all start at 0.
+	  private DefaultLongLike newIncomingPacketsSentDefaultLongLike;
+	  	// This is set to the value of the sequence number argument of the
+		  // most recently received "PS" message plus 1.  
+		  // When sent this argument was the remote end's 
+		  // EpiOutputStream packet counter.
+	  	// This value usually increases, but can decrease 
+	    // if an "PS" is carried by an out-of-order packets.
+	  private NamedLong oldIncomingPacketsSentNamedLong;
+	  	// A difference between this and newIncomingPacketsSentDefaultLongLike 
+	    // indicates a new received sequence number needs to be processed.
+	  private NamedLong newIncomingPacketsReceivedNamedLong;
+	  	// This is a copy of the local EpiInputStream packet counter.
+	  	// It represents the latest count of locally received packets.
+	  	// This value can only increase.
+		private DefaultLongLike oldIncomingPacketsReceivedDefaultLongLike;
+			// A difference between this and newIncomingPacketsReceivedNamedLong 
+			// indicates a new packet has been received and needs to be processed.
+		private NamedFloat incomingPacketLossNamedFloat;
+	    // Floating representation of the fraction of incoming packets lost.
+	  LossAverager incomingPacketLossAverager;
+		
+	  // Variables for managing outgoing packets and their acknowledgement.
+	  private NamedLong newOutgoingPacketsSentNamedLong;
+	  	// This is a copy of the local EpiOutputStreamO packet counter.
+	  	// This value can only increase.
+	  private NamedLong newOutgoingPacketsSentEchoedNamedLong;
+	  	// This is the local EpiOutputStreamO packet counter after 
+	    // being returned from remote.  It might lag the real counter by RTT.
+	  	// This value can only increase.
+	  private DefaultLongLike oldOutgoingPacketsSentDefaultLongLike;
+	  	// A difference between this and newOutgoingPacketsSentNamedLong 
+	    // indicates new packets have been sent and need to be processed.
+	  private NamedLong newOutgoingPacketsReceivedNamedLong;
+	  	// This value comes from the most recently received "PA" message.  
+		  // When sent this argument was the remote end's 
+		  // EpiInputStream packet counter, 
+	    // counting the number of packets recevied.
+	  	// This value normally increases, but can decrease because of 
+	    // out-of-order "PA" packets. 
+	  private DefaultLongLike oldOutgoingPacketsReceivedDefaultLongLike;
+	  	// A difference between this and newOutgoingPacketsReceivedNamedLong 
+	    // indicates a new packet has been acknowledged and 
+			// needs to be processed.
+		private NamedFloat outgoingPacketLossNamedFloat;
+	  	// Floating representation of the fraction of outgoing packets lost.
+	  private LossAverager outgoingPacketLossLossAverager;
+	
+		// Variables for managing round trip time.
+	  protected NsAsMsNamedLong rawRoundTripTimeNsAsMsNamedLong;
+	    // This is an important value.  It can be used to determine
+	    // how long to wait for a message acknowledgement before
+	    // re-sending a message.  Initial value of 1/10 second.
+	  private NsAsMsNamedLong smoothedRoundTripTimeNsAsMsNamedLong;
+	  private NsAsMsNamedLong smoothedMinRoundTripTimeNsAsMsNamedLong; // Minimum.
+	  private NsAsMsNamedLong smoothedMaxRoundTripTimeNsAsMsNamedLong; // Maximum.
+	  
+		// Other variables.
+		private long retryTimeOutMsL;
+
+	  private long sentSequenceNumberTimeNsL;
+
+		private long lastSequenceNumberSentL;
+
+	  private TimerInput theTimerInput; // Used for state machine 
+    // pauses and time-outs. 
+		private IOException delayedIOException= null; /* For re-throwing 
+			an exception which occurred in one thread which couldn't handle it, 
+	    in another thread that can.
+	    */
 
 		} // class LinkMeasurementState

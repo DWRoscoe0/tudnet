@@ -132,6 +132,7 @@ public class Unicaster
 	    {
     		super.initializeWithoutStreamsV(); // We do the stream counts below.
 
+    		// Create and start the state machines.
 	  	  theMultiMachineState= new MultiMachineState(
 	  				theTimer, 
 	  			  theEpiInputStreamI,

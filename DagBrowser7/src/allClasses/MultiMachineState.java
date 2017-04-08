@@ -41,7 +41,7 @@ public class MultiMachineState extends AndState
     				retransmitDelayMsNamedLong 
 	      		);
 	  	  theLinkMeasurementState.initializeWithIOExceptionV();
-	  	  addB( theLinkMeasurementState ); // This includes stream counts.
+	  	  addB( theLinkMeasurementState );
 	  	  theLinkMeasurementState.stateHandlerB(); // To start theTimer.
 		  	}
 		
