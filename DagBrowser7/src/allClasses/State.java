@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class State extends MutableList {
+public class State extends MutableList implements Runnable {
 
 	/*  This class is the base class for all state objects and state-machines.
 
@@ -53,7 +53,12 @@ public class State extends MutableList {
   private String synchronousInputString; // Stores an input stream event word,
     // until a state handler has had the opportunity to check it.
 
-  /* Methods used to build state objects. */
+	private IOException delayedIOException= null; /* For re-throwing 
+		an exception which occurred in one thread, such as a Timer thread,
+		which couldn't handle it, in another thread that can.
+	  */
+
+	/* Methods used to build state objects. */
   
   public State initializeWithIOExceptionState() throws IOException
     /* This method initializes this state object, 
@@ -138,7 +143,6 @@ public class State extends MutableList {
 			}
 	
 	public void stateHandlerV() throws IOException
-
 	  /* A state class overrides either this method or stateHandlerB()
 	    as part of how it controls its behavior.
 	    Overriding this method instead of stateHandlerB() can result in
@@ -156,10 +160,9 @@ public class State extends MutableList {
 				    some-code;
 				    return false;
 				    }
-
-	   */
-
-	  { }
+	    */
+	  { 
+	    }
 	
 	public boolean stateHandlerB() throws IOException
 	  /* A state class overrides either this method or stateHandlerV()
@@ -176,6 +179,26 @@ public class State extends MutableList {
 	  { 
 			stateHandlerV();
 			return false; 
+		  }
+
+	public void delayedExceptionCheckV() throws IOException
+		/* 	This method re-throws any delayedIOException that
+			might have occurred in a handler running on a Timer thread. 
+		  */
+		{ 
+		  if  // Re-throw any previously saved exception from timer thread.
+		    (delayedIOException != null) 
+		  	throw delayedIOException;
+		  }
+
+	public void delayExceptionV( IOException theIOException )
+		/* 	This method records an IOException that 
+		  occurred in a handler running on a Timer thread
+		  needs to be re-throw later on the normal thread
+		  by calling delayedExceptionCheckV(). 
+		  */
+		{ 
+		  delayedIOException= theIOException;
 		  }
 
 	protected String getSynchronousInputString()
@@ -273,6 +296,22 @@ public class State extends MutableList {
 	  {
 			throw new Error();
 			}
+	
+	public void run()
+	  /* This method is run by TimerInput when it triggers
+	    to run the stateHandlerB() method to respond to the timer.
+	    It catches and saves for later any IOException that might happen.
+	    */
+		{
+			try { 
+				stateHandlerB(); // Try to process timer event with state handler. 
+				}
+		  catch ( IOException theIOException) { 
+		    delayExceptionV( // Postpone exception to another thread.
+		    		theIOException
+		    		); 
+		    }
+		}
 
 	}  // State class 
 
@@ -318,7 +357,8 @@ class OrState extends State {
 	      when behavioral inheritance is added.
       */
 	  { 
-		  boolean stateProgressB= false;
+  		delayedExceptionCheckV();
+	  	boolean stateProgressB= false;
   		while (true) { // Cycle sub-states until done.
   	  		if  (requestedSubState != null) // Handling state change request.
   	  		  { // Exit present state, enter requested one, and reset request.
@@ -342,7 +382,7 @@ class OrState extends State {
   	  	  	break;
 	  	  	stateProgressB= true; // Accumulate sub-state progress in state.
 		  		substateProgressB= false; // Reset for later use.
-	  	  	}
+	  	  	} // while
 			return stateProgressB; // Returning accumulated state progress result.
 			}
 		
@@ -390,6 +430,7 @@ class AndState extends State {
     	 	minimum sub-state stateHandlerB() calls.
 	    */
 	  { 
+			delayedExceptionCheckV();
 		  boolean anyscanMadeProgressB= false;
 			boolean thisScanMadeProgressB;
   	  do  // Repeat scanning until no sub-machine progresses.
@@ -414,5 +455,5 @@ class AndState extends State {
 	  	  	} while (thisScanMadeProgressB);
 			return anyscanMadeProgressB; 
 			}
-  
+
 	}  // AndState 

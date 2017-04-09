@@ -124,17 +124,10 @@ public class LinkMeasurementState
 	  	  initAndAddV( theLocalMeasurementState= 
 	  	  		new LocalMeasurementState() );
 	
-	  	  theTimerInput=  // Creating our timer.   ////// Move to parent? 
-			  		new TimerInput(  //// Move to factory?
+	  	  measurementTimerInput= // Creating our timer and linking to this state. 
+			  		new TimerInput(  //// Move to factory or parent?
 			  				theTimer,
-			  				new Runnable() {
-					        public void run() {
-					        	  //// try { theTempMeasurementState.stateHandlerB(); }
-					        		try { stateHandlerB(); }
-					        	  catch ( IOException theIOException) 
-					        	    { delayedIOException= theIOException; }
-					        	  }
-					    		}
+			  				this
 			  				);
 
 			  }
@@ -144,7 +137,7 @@ public class LinkMeasurementState
 		  {
 	  	  super.finalizeV();
 	  		stateHandlerB(); // This throws any saved IOException from timer.
-	  		theTimerInput.cancelingV(); // Stopping our timer.
+	  		measurementTimerInput.cancelingV(); // Stopping our timer.
 	      }
 	
 	  public synchronized boolean stateHandlerB() throws IOException
@@ -159,10 +152,6 @@ public class LinkMeasurementState
 	      the timer thread, both of which provide state-machine inputs.
 	      */
 	    { 
-	  	  if  // Re-throw any previously saved exception from timer thread.
-	  	    (delayedIOException != null) 
-	  	  	throw delayedIOException;
-	
 	  	  return super.stateHandlerB(); // Calling superclass state handler.
 	    	}
 		
@@ -250,21 +239,21 @@ public class LinkMeasurementState
 			    	    the next handshake.
 			    	   	*/
 				  	  {
-			    	  	theTimerInput.scheduleV(Config.handshakePause5000MsL);
+			    	  	measurementTimerInput.scheduleV(Config.handshakePause5000MsL);
 			  				}
 	
 					  public void stateHandlerV()
 					    /* Waits for the end of the pause interval.
 					     	*/
 					  	{ 
-					  	  if (theTimerInput.getInputArrivedB()) // Timer done. 
+					  	  if (measurementTimerInput.getInputArrivedB()) // Timer done. 
 					  	  	requestStateV(theMeasurementInitializationState);
 					  		}
 	
 						public void exitV() throws IOException
 						  // Cancels timer and initializes the handshake time-out.
 						  { 
-								theTimerInput.cancelingV();
+								measurementTimerInput.cancelingV();
 								}
 					
 			  	} // class MeasurementPausedState
@@ -300,7 +289,7 @@ public class LinkMeasurementState
 			    	public void enterV() throws IOException
 			    	  // Initiates the handshake and starts acknowledgement timer.
 				  	  { 
-		    			  theTimerInput.scheduleV(retryTimeOutMsL);
+		    			  measurementTimerInput.scheduleV(retryTimeOutMsL);
 				    		sendingSequenceNumberV();
 			  				}
 	
@@ -315,7 +304,7 @@ public class LinkMeasurementState
 								  { processPacketAcknowledgementV();
 									  requestStateV(theMeasurementPausedState);
 								  	}
-				      	else if (theTimerInput.getInputArrivedB()) // Time-out. 
+				      	else if (measurementTimerInput.getInputArrivedB()) // Time-out. 
 					    		{ if ( retryTimeOutMsL <= Config.maxTimeOut5000MsL )
 				    				  { retryTimeOutMsL*=2;  // Doubling time-out limit.
 				    				  	requestStateV(this); // Retrying by repeating state.
@@ -331,7 +320,7 @@ public class LinkMeasurementState
 				public void exitV() throws IOException
 				  // Cancels acknowledgement timer.
 				  { 
-						theTimerInput.cancelingV();
+						measurementTimerInput.cancelingV();
 						}
 			
 			  protected void sendingSequenceNumberV() throws IOException
@@ -593,11 +582,7 @@ public class LinkMeasurementState
 
 		private long lastSequenceNumberSentL;
 
-	  private TimerInput theTimerInput; // Used for state machine 
+	  private TimerInput measurementTimerInput; // Used for state machine 
     // pauses and time-outs. 
-		private IOException delayedIOException= null; /* For re-throwing 
-			an exception which occurred in one thread which couldn't handle it, 
-	    in another thread that can.
-	    */
 
 		} // class LinkMeasurementState
