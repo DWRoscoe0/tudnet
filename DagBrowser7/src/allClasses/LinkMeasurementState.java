@@ -119,9 +119,9 @@ public class LinkMeasurementState
 	  	  		);
 
     		// Create and add to DAG the sub-states of this state machine.
-	  	  initAndAddV( (theRemoteMeasurementState= 
-	  	  		new RemoteMeasurementState()) );
-	  	  initAndAddV( theLocalMeasurementState= 
+	  	  initAndAddStateV( theRemoteMeasurementState= 
+	  	  		new RemoteMeasurementState() );
+	  	  initAndAddStateV( theLocalMeasurementState= 
 	  	  		new LocalMeasurementState() );
 	
 	  	  measurementTimerInput= // Creating our timer and linking to this state. 
@@ -137,25 +137,10 @@ public class LinkMeasurementState
 		  {
 	  	  super.finalizeV();
 	  		stateHandlerB(); // This throws any saved IOException from timer.
-	  		measurementTimerInput.cancelingV(); // Stopping our timer.
+	  		measurementTimerInput.cancelingV(); // To stop our timer.
 	      }
-	
-	  public synchronized boolean stateHandlerB() throws IOException
-	    /* The only difference between this handler and its superclass
-	      is that this one first checks for and re-throws 
-	      any IOException that might have occurred earlier 
-	      when the machine was cycled by a timer thread.
-	      //// This kluge might not be needed if Timer is replaced by
-	       java.util.concurrent.ScheduledThreadPoolExecutor.
-	
-	      This method is called by the Unicaster thread and 
-	      the timer thread, both of which provide state-machine inputs.
-	      */
-	    { 
-	  	  return super.stateHandlerB(); // Calling superclass state handler.
-	    	}
 		
-		private class LocalMeasurementState extends OrState 
+	  private class LocalMeasurementState extends OrState 
 	
 		  /* This is the local concurrent/orthogonal sub-state 
 		    for doing local measurements.  
@@ -177,20 +162,20 @@ public class LinkMeasurementState
 		    		super.initializeWithIOExceptionState();
 	
 		    		// Create and add orthogonal sub-state machines.
-			  	  initAndAddV( theMeasurementPausedState= 
+			  	  initAndAddStateV( theMeasurementPausedState= 
 			  	  		new MeasurementPausedState() );
-			  	  initAndAddV( theMeasurementInitializationState= 
+			  	  initAndAddStateV( theMeasurementInitializationState= 
 			  	  		new MeasurementInitializationState() );
-			  	  initAndAddV( theMeasurementHandshakesState= 
+			  	  initAndAddStateV( theMeasurementHandshakesState= 
 			  	  		new MeasurementHandshakesState() );
 	
 						requestSubStateV( theMeasurementPausedState ); // Initial state.
 						return this;
 			    	}
 	
-		    private void processPacketAcknowledgementV() 
+		    private boolean processPacketAcknowledgementB() //////// 
 						throws IOException
-				  /* This input method processes the "PA" sequence number 
+				  /* This input method finishes processing the "PA" sequence number 
 				    feedback message, which the remote peer sends
 				    in response to receiving an "PS" sequence number message.
 				    The "PA", which is assumed to have already been processed,
@@ -201,29 +186,38 @@ public class LinkMeasurementState
 				    the packet loss ratio in the remote peer receiver.
 				    By having "PA" include both values, 
 				    its calculation is RTT-immune.
+				    
+				    It returns true if it succeeds, false otherwise.
 	
 						See processSequenceNumberB(..) about "PS", for more information.
 						*/
 			  	{
-				  	long ackReceivedTimeNsL= System.nanoTime();
-			  		int sequenceNumberI=  // Reading echo of sequence #.
-			  				theNetcasterInputStream.readANumberI();
-			  		int packetsReceivedI=  // Reading packets received.
-			  				theNetcasterInputStream.readANumberI();
-		    		measurementHandshakesNamedLong.addDeltaL(1);
-		        
-		        newOutgoingPacketsSentEchoedNamedLong.setValueL(
-				    		sequenceNumberI + 1 // Convert sequence # to sent packet count.
-				    		);
-			  		newOutgoingPacketsReceivedNamedLong.setValueL(packetsReceivedI);
-			  		outgoingPacketLossLossAverager.recordPacketsReceivedOrLostV(
-			  				newOutgoingPacketsSentEchoedNamedLong,
-			  				newOutgoingPacketsReceivedNamedLong
-							  );
-			  	  calculateRoundTripTimesV(
-			  	  		sequenceNumberI, ackReceivedTimeNsL, packetsReceivedI
-			  	  		);
-			  		}
+		    	  boolean successB= true;
+		    	  try {
+					  	long ackReceivedTimeNsL= System.nanoTime();
+				  		int sequenceNumberI=  // Reading echo of sequence #.
+				  				theNetcasterInputStream.readANumberI();
+				  		int packetsReceivedI=  // Reading packets received.
+				  				theNetcasterInputStream.readANumberI();
+			    		measurementHandshakesNamedLong.addDeltaL(1);
+			        
+			        newOutgoingPacketsSentEchoedNamedLong.setValueL(
+					    		sequenceNumberI + 1 // Convert sequence # to sent packet count.
+					    		);
+				  		newOutgoingPacketsReceivedNamedLong.setValueL(packetsReceivedI);
+				  		outgoingPacketLossLossAverager.recordPacketsReceivedOrLostV(
+				  				newOutgoingPacketsSentEchoedNamedLong,
+				  				newOutgoingPacketsReceivedNamedLong
+								  );
+				  	  calculateRoundTripTimesV(
+				  	  		sequenceNumberI, ackReceivedTimeNsL, packetsReceivedI
+				  	  		);
+		    	  	}
+		    	  catch ( BadReceivedDataException theBadReceivedDataException ) {
+		    	  	successB= false; //////// 
+		    	  	}
+		    	  return successB;
+		    	  }
 				
 				// States.
 	
@@ -301,8 +295,8 @@ public class LinkMeasurementState
 					  	  */
 					  	{
 							  if (tryInputB("PA")) // Test and process acknowledgement.
-								  { processPacketAcknowledgementV();
-									  requestStateV(theMeasurementPausedState);
+								  { if ( processPacketAcknowledgementB() )
+									  	requestStateV(theMeasurementPausedState);
 								  	}
 				      	else if (measurementTimerInput.getInputArrivedB()) // Time-out. 
 					    		{ if ( retryTimeOutMsL <= Config.maxTimeOut5000MsL )
@@ -441,21 +435,20 @@ public class LinkMeasurementState
 			    */
 	
 			  public void stateHandlerV() throws IOException
-			  	/* This method handles handshakes acknowledgement, 
-			  	  initiating a retry using twice the time-out,
-			  	  until the acknowledgement is received,
-			  	  or giving up if the time-out limit is reached.
+			  	/* This method processes the "PS" message if it is received.
+			  	  It does this forever.  This state is never inactive.
 			  	  */
 			  	{
 					  if (tryInputB("PS" )) // Test and process PS message.
-						  processPacketSequenceNumberV(); // Process PS message body.
-					  // Staying in same state.
+						  processPacketSequenceNumberB(); // Process PS message body.
+
+					  // Staying in same state, whether message is processed or not.
 						}
 	
-				private void processPacketSequenceNumberV() 
+		    private boolean processPacketSequenceNumberB() //////// 
 						throws IOException
-				  /* This method processes the "PS" message from the remote peer.
-				    The "PS" is assumed to have been processed already.
+				  /* This method finishes processing the "PS" message.
+				    The "PS" header is assumed to have been processed already.
 				    It is followed by the packet sequence number which comes from 
 				    the remote peer EpiOutputStreamO packet count.
 				    From this and the local EPIInputStreamI packet count it 
@@ -469,7 +462,9 @@ public class LinkMeasurementState
 				    for the remote peer is called the outgoing packet loss ratio.
 				    By sending and using both numbers the remote peer's calculation 
 				    is not affected by variations in Round-Trip-Time (RTT).
-	
+
+						If it succeeds then it returns true, otherwise false.
+
 				    Every packet has a sequence number, but 
 				    not every packet needs to contain its sequence number.
 				    The reception of a "PS" message with its sequence number 
@@ -483,33 +478,40 @@ public class LinkMeasurementState
 						//// Sequence numbers and other numbers eventually 
 						  need to be converted to use modulo (wrap-around) arithmetic.
 					  */
-					{
-					  int sequenceNumberI=  // Reading # from packet.
-					  		theNetcasterInputStream.readANumberI();
-					  newIncomingPacketsSentDefaultLongLike.setValueL( // Recording.
-								sequenceNumberI + 1
-								); // Adding 1 converts sequence # to remote packet count.
-						incomingPacketLossAverager.recordPacketsReceivedOrLostV(
-								newIncomingPacketsSentDefaultLongLike,
-								newIncomingPacketsReceivedNamedLong
-						  );
-						theNetcasterOutputStream.writingTerminatedStringV( "PA" );
-						theNetcasterOutputStream.writingTerminatedLongV(
-			  				sequenceNumberI // The remote sequence number.
-			  				);
-						long receivedPacketCountL= 
-						  newIncomingPacketsReceivedNamedLong.getValueL(); 
-						theNetcasterOutputStream.writingTerminatedLongV(
-								receivedPacketCountL  // The local received packet count.
-			  				);
-						theNetcasterOutputStream.sendingPacketV();
-						  // Sending now for minimum RTT.
-			      appLogger.debug( "processPacketSequenceNumberB(..) PS:"
-			  		  +sequenceNumberI+","
-			      	+receivedPacketCountL
-			  		  );
-					  }
-				
+			  	{
+		    	  boolean successB= true;
+		    	  try {
+						  int sequenceNumberI=  // Reading # from packet.
+						  		theNetcasterInputStream.readANumberI();
+						  newIncomingPacketsSentDefaultLongLike.setValueL( // Recording.
+									sequenceNumberI + 1
+									); // Adding 1 converts sequence # to remote packet count.
+							incomingPacketLossAverager.recordPacketsReceivedOrLostV(
+									newIncomingPacketsSentDefaultLongLike,
+									newIncomingPacketsReceivedNamedLong
+							  );
+							theNetcasterOutputStream.writingTerminatedStringV( "PA" );
+							theNetcasterOutputStream.writingTerminatedLongV(
+				  				sequenceNumberI // The remote sequence number.
+				  				);
+							long receivedPacketCountL= 
+							  newIncomingPacketsReceivedNamedLong.getValueL(); 
+							theNetcasterOutputStream.writingTerminatedLongV(
+									receivedPacketCountL  // The local received packet count.
+				  				);
+							theNetcasterOutputStream.sendingPacketV();
+							  // Sending now for minimum RTT.
+				      appLogger.debug( "processPacketSequenceNumberB(..) PS:"
+				  		  +sequenceNumberI+","
+				      	+receivedPacketCountL
+				  		  );
+	    	  		}
+		    	  catch ( BadReceivedDataException theBadReceivedDataException ) {
+		    	  	successB= false; //////// 
+	    	  		}
+		    	  return successB;
+						}
+
 				//// End of code moved from TempMeasurementState.
 			
 			} // class RemoteMeasurementState

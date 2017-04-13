@@ -125,15 +125,22 @@ public class EpiInputStream<
     	}
 
 		protected int readANumberI()
-  		throws IOException
+  		throws IOException, BadReceivedDataException
   		/* This method reads and returns one int number 
   		  converted from a String ending in the delimiterChar.
   		  This means it could not be used for floating point numbers.  
   		  It blocks if a full number is not available.
-  		 */
+  		  It converts NumberFormatExceptions to a BadReceivedDataExceptions. 
+  		  */
 			{
 				String numberString= readAString();
-	      int numberI= Integer.parseInt( numberString );
+	      int numberI;
+	      try { 
+	      	numberI= Integer.parseInt( numberString ); 
+	      	}
+	      catch ( NumberFormatException theNumberFormatException ) {
+	      	throw new BadReceivedDataException();
+	      	}
 			  return numberI;
 				}
 

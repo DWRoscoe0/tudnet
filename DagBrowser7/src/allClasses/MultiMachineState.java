@@ -3,7 +3,14 @@ package allClasses;
 import java.io.IOException;
 import java.util.Timer;
 
-public class MultiMachineState extends AndState 
+public class MultiMachineState extends AndState
+
+  /* This is the root of a hierarchical state machine for Unicaster.
+    The Unicaster deals exclusively with this state machine.
+    This state machine manages concurrent sub-state machines.
+    They can be of any type.
+    More sub-state machines can be added as needed.
+    */
 
 	{
 	  // Injected dependencies.
@@ -12,7 +19,7 @@ public class MultiMachineState extends AndState
 		private NamedLong retransmitDelayMsNamedLong;
 		private Timer theTimer; 
 
-		// Other instance variables.
+		// Sub-state machines.
 		private LinkMeasurementState theLinkMeasurementState;
 		
 		MultiMachineState (  // Constructor.
@@ -31,6 +38,10 @@ public class MultiMachineState extends AndState
 			  }
 	
 		public void initializeWithIOExceptionV() throws IOException
+		  /* This initializer method creates the sub-state machines
+		    and adds them to this machine.
+		    Then it calls the handler method to start machine timers.
+		    */
 		  {
 				super.initializeWithIOExceptionState();
 
@@ -41,22 +52,9 @@ public class MultiMachineState extends AndState
     				retransmitDelayMsNamedLong 
 	      		);
 	  	  theLinkMeasurementState.initializeWithIOExceptionV();
-	  	  addB( theLinkMeasurementState );
-	  	  theLinkMeasurementState.stateHandlerB(); // To start theTimer.
+	  	  addStateV( theLinkMeasurementState );
+
+	  	  //% stateHandlerB(); // Do this to start sub-state machine timers.
 		  	}
 		
-    protected void finalizingV() throws IOException
-	    // This is the opposite of initilizingV().
-	    {
-    		theLinkMeasurementState.finalizeV();
-	    	}
-
-    public synchronized boolean handleSynchronousInputB( String keyString ) 
-  		throws IOException
-  		/* This method passes the input to the sub-state.
-				*/
-  		{
-    		return theLinkMeasurementState.handleSynchronousInputB(keyString);
-    	  }
-
 		}

@@ -79,7 +79,7 @@ public class State extends MutableList implements Runnable {
   	  return this;
     	}
 
-  public void initAndAddV(State theSubState) throws IOException
+  public void initAndAddStateV(State theSubState) throws IOException
     /* This method is used as part of the State building process.  It:
       * does an initialization of theSubState using 
         the method initializeWithIOExceptionState(),
@@ -91,12 +91,12 @@ public class State extends MutableList implements Runnable {
       followed by a call to the addV(..) method. 
      	*/
   	{ 
-  	  addV(  // Initialize and add theSubState to list of sub-states.
+  	  addStateV(  // Initialize and add theSubState to list of sub-states.
   	  		theSubState.initializeWithIOExceptionState()
   	  		); // Adding also sets the theSubState's parent state to be this state.
   	  }
 
-  public void addV(State theSubState)
+  public void addStateV(State theSubState)
     /* This method adds one sub-state to this state.
 			It part of the State building process.  
       It adds theSubState to the state's sub-state list,

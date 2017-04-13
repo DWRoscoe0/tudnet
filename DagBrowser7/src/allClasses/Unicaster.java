@@ -141,7 +141,9 @@ public class Unicaster
 	  	  		);
 	  	  theMultiMachineState.initializeWithIOExceptionV();
 	  	  addB( theMultiMachineState );
-
+	  	  theMultiMachineState.stateHandlerB(); // Start the machines,
+	  	    // by starting their timers, by callin the main handler.
+	  	  
 	  	  addB( theSubcasterManager );
 	    	}
 
