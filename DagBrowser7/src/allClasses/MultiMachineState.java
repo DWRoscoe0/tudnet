@@ -53,8 +53,6 @@ public class MultiMachineState extends AndState
 	      		);
 	  	  theLinkMeasurementState.initializeWithIOExceptionV();
 	  	  addStateV( theLinkMeasurementState );
-
-	  	  //% stateHandlerB(); // Do this to start sub-state machine timers.
 		  	}
 		
 		}

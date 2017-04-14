@@ -30,17 +30,14 @@ public class State extends MutableList implements Runnable {
 	  * its current sub-state, or child state, 
 	    designated by "this.subState".
 
-		////// These classes presently support the processing of only asynchronous inputs, 
-		variable values which can change at any time.
-
 		To reduce boilerplate code, constructor source code has been eliminated.
 		There are constructors, but they are the default parameterless constructors.
 		The instance variables are initialized with the initializerV(..) method.
 
-		//// This state and its subclasses AndState and OrState
+		//// State and its subclasses AndState and OrState
 		  do not [yet] provide behavioral inheritance, which is
 		  the most important benefit of hierarchical state machines.
-		//// Maybe merge AndState and OrState into State?
+		  Add it?
 	  */
 
 	public static State nullState= new State();

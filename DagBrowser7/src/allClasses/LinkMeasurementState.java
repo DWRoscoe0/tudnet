@@ -19,12 +19,6 @@ public class LinkMeasurementState
 	  This code is not thread-safe.  It is meant to be called only from:
 	  * a Unicaster thread, and
 	  * the thread belonging to a timer that this code uses.
-
-	  ////// This class makes use of an internal non-static class 
-	    called TempMeasurementState.
-		  This was done as an expedient way for State code to access DataNode code.
-		  Work is underway to eliminate this state because 
-		  State is now a subclass of DataNode. 
 	 	*/
 
 	{	
@@ -173,7 +167,7 @@ public class LinkMeasurementState
 						return this;
 			    	}
 	
-		    private boolean processPacketAcknowledgementB() //////// 
+		    private boolean processPacketAcknowledgementB() 
 						throws IOException
 				  /* This input method finishes processing the "PA" sequence number 
 				    feedback message, which the remote peer sends
@@ -214,7 +208,7 @@ public class LinkMeasurementState
 				  	  		);
 		    	  	}
 		    	  catch ( BadReceivedDataException theBadReceivedDataException ) {
-		    	  	successB= false; //////// 
+		    	  	successB= false; 
 		    	  	}
 		    	  return successB;
 		    	  }
@@ -445,7 +439,7 @@ public class LinkMeasurementState
 					  // Staying in same state, whether message is processed or not.
 						}
 	
-		    private boolean processPacketSequenceNumberB() //////// 
+		    private boolean processPacketSequenceNumberB() 
 						throws IOException
 				  /* This method finishes processing the "PS" message.
 				    The "PS" header is assumed to have been processed already.
@@ -507,12 +501,10 @@ public class LinkMeasurementState
 				  		  );
 	    	  		}
 		    	  catch ( BadReceivedDataException theBadReceivedDataException ) {
-		    	  	successB= false; //////// 
+		    	  	successB= false; 
 	    	  		}
 		    	  return successB;
 						}
-
-				//// End of code moved from TempMeasurementState.
 			
 			} // class RemoteMeasurementState
 		
