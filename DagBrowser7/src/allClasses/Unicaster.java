@@ -369,12 +369,12 @@ public class Unicaster
   	    which means parsing the IP address which follows and determining
   	    which peer, the local or remote, will be leader,
   	    by comparing the IP addresses, and setting 
-  	    the value for leadingB.
+  	    the value for leadingleadingDefaultBooleanLikeB.
   	    It does not send a reply "HELLO".  
   	    This is assumed to have been done simultaneously elsewhere.
   	    It returns true if HELLO was processed, false otherwise.
   	    The first time this method is called is the only one that counts.
-  	    Later calls might redundant retransmissions, 
+  	    Later calls might produce redundant retransmissions, 
   	    but should have no other effect.
   	   */
 	  	{
@@ -382,14 +382,14 @@ public class Unicaster
   		  if (isKeyB) { // Decoding argument if key is "HELLO".
 					String localIpString= theEpiInputStreamI.readAString();
 					String remoteIpString= getKeyK().getInetAddress().getHostAddress();
-					leadingB= localIpString.compareTo(remoteIpString) > 0;
-					//leadingB= !leadingB; // Reverse roles for debug test. 
+					leadingleadingDefaultBooleanLikeB.setValueB( localIpString.compareTo(remoteIpString) > 0 );
+					//leadingleadingDefaultBooleanLikeB= !leadingleadingDefaultBooleanLikeB; // Reverse roles for debug test. 
 					// Note, the particular ordering of IP address Strings
 					// doesn't matter.  What matters is that the ordering is consistent.
-					theSubcasterManager.setLeadingV( leadingB );
+					theSubcasterManager.setLeadingV( leadingleadingDefaultBooleanLikeB );
 	        appLogger.info( 
 	        		"HELLO received.  Overriding role to be: "
-	        		+ (leadingB ? "LEADER" : "FOLLOWER")
+	        		+ (leadingleadingDefaultBooleanLikeB.getValueB() ? "LEADER" : "FOLLOWER")
 	        		);
 				  }
   		  return isKeyB;

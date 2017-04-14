@@ -40,7 +40,7 @@ public class Netcaster
 	  	  super( // Constructing Streamcaster DataNodeWithKey superclass.
 			      nameString,
 		        theShutdowner,
-		        false,
+		        new DefaultBooleanLike(false),
 			      remoteIPAndPort, // key K
 			      netcasterLockAndSignal,
 			      theNetcasterInputStream,

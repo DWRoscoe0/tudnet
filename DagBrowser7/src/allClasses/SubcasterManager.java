@@ -18,8 +18,9 @@ public class SubcasterManager
 
 	  // Injected dependency variables.
 	  private final UnicasterFactory theUnicasterFactory;
-	  private boolean leadingB= false; // Controls whether Subcasters
-	    // should be leaders or followers.
+	  private DefaultBooleanLike leadingleadingDefaultBooleanLikeB= 
+	  		new DefaultBooleanLike(false); 	// Determines leaders vs. followers.
+
 	  
 		public SubcasterManager(  // Injecting constructor. 
 	      AppGUIFactory theAppGUIFactory,
@@ -38,9 +39,10 @@ public class SubcasterManager
 	      }
 
     public synchronized void setLeadingV( // Injecting setter. 
-    		boolean leadingB )
+    		DefaultBooleanLike leadingleadingDefaultBooleanLikeB )
     	{ 
-    	  this.leadingB= leadingB; 
+    	  this.leadingleadingDefaultBooleanLikeB= 
+    	  		leadingleadingDefaultBooleanLikeB; 
     	  }
 
     public synchronized Subcaster getOrBuildAddAndStartSubcaster(
@@ -58,7 +60,7 @@ public class SubcasterManager
 	    	  	//appLogger.info( "Creating new Subcaster." );
 			      resultSubcasterValue=  // Making the Subcaster. 
 			      	theUnicasterFactory.makeSubcasterValue( 
-			      			keyString, leadingB
+			      			keyString, leadingleadingDefaultBooleanLikeB
 			      			);
 			      addingV( // Adding new Subcaster to data structures.
 			          keyString, resultSubcasterValue

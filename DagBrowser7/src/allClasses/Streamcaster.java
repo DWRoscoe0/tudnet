@@ -55,12 +55,14 @@ public class Streamcaster<
     // Detail-containing child sub-objects.  None.
 
     // Other variables.
-    protected boolean leadingB= false; // Used to settle race conditions.
+    //% protected boolean leadingleadingDefaultBooleanLikeB= false; // Used to settle race conditions.
+    protected DefaultBooleanLike leadingleadingDefaultBooleanLikeB=
+    		new DefaultBooleanLike(false);  // Used to settle race conditions.
       
 	  public Streamcaster(  // Constructor.
 	      String nameString,
         Shutdowner theShutdowner,
-        boolean leadingB,
+        DefaultBooleanLike leadingleadingDefaultBooleanLikeB,
 	  		K theKeyK,
 	  		LockAndSignal theLockAndSignal,
 	      I theEpiInputStreamI,
@@ -78,7 +80,7 @@ public class Streamcaster<
 	      this.theEpiInputStreamI= theEpiInputStreamI;
 	      this.theEpiOutputStreamO= theEpiOutputStreamO;
         this.theShutdowner= theShutdowner;
-        this.leadingB= leadingB;
+        this.leadingleadingDefaultBooleanLikeB= leadingleadingDefaultBooleanLikeB;
         this.retransmitDelayMsNamedLong= retransmitDelayMsNamedLong;
 	    	}
 
@@ -86,7 +88,7 @@ public class Streamcaster<
 	    {
         appLogger.info( 
         		"This Streamcaster has been given the role of: "
-        		+ (leadingB ? "LEADER" : "FOLLOWER")
+        		+ (leadingleadingDefaultBooleanLikeB.getValueB() ? "LEADER" : "FOLLOWER")
         		);
 		    }
 
@@ -98,7 +100,7 @@ public class Streamcaster<
         Control stays within it until Unicaster termination.
        */
 	    {
-	  	  if (! leadingB) // Start with ping-receive if not leading. 
+	  	  if (! leadingleadingDefaultBooleanLikeB.getValueB()) // Start with ping-receive if not leading. 
 	  	  	tryingPingReceiveV();
 	      while (true) // Repeating until thread termination is requested.
 	        {
@@ -160,7 +162,7 @@ public class Streamcaster<
         		if ( inString.equals( "PING" ) ) // Handling ping conflict, maybe.
               { // Handling ping conflict.
                 appLogger.info( "PING-PING conflict." );
-              	if ( ! leadingB ) // Arbitrating ping-ping conflict.
+              	if ( ! leadingleadingDefaultBooleanLikeB.getValueB() ) // Arbitrating ping-ping conflict.
                   { // Yielding ping processing to other peer.
                     appLogger.info( "PING ping yield: "+triesI );
                     theEpiInputStreamI.reset(); // Putting message back.

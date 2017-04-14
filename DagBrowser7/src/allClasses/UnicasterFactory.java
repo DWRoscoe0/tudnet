@@ -98,7 +98,7 @@ public class UnicasterFactory {
 
   public SubcasterValue makeSubcasterValue( 
   		String keyString,
-  		boolean leadingB
+  		DefaultBooleanLike leadingleadingDefaultBooleanLikeB
       )
 	  { 
 		  LockAndSignal subcasterLockAndSignal= new LockAndSignal();
@@ -121,7 +121,7 @@ public class UnicasterFactory {
   				theSubcasterOutputStream,
   	      keyString,
   	      theShutdowner,
-  	      leadingB,
+  	      leadingleadingDefaultBooleanLikeB,
   	      retransmitDelayMsNamedLong 
   	  		);
 	    SubcasterValue unicasterSubcasterValue=  
