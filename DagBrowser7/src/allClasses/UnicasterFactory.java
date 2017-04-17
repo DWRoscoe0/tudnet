@@ -51,8 +51,11 @@ public class UnicasterFactory {
 						);
 			subcasterToUnicasterSubcasterQueue= 
 					new SubcasterQueue( unicasterLockAndSignal, queueCapacityI );
-		  SubcasterManager theSubcasterManager= 
-		  		new SubcasterManager( theAppGUIFactory, this );
+      DefaultBooleanLike leadingDefaultBooleanLike= ////
+      		new DefaultBooleanLike(false);  // Used to settle race conditions.
+		  SubcasterManager theSubcasterManager= new SubcasterManager( 
+		  		theAppGUIFactory, this, leadingDefaultBooleanLike 
+		  		);
       NamedLong retransmitDelayMsNamedLong= new NamedLong( 
 					"Retransmit-Delay (ms)",
 					Config.initialRoundTripTime100MsL * 2
@@ -67,9 +70,11 @@ public class UnicasterFactory {
 			   	theShutdowner,
 			   	subcasterToUnicasterSubcasterQueue,
 			   	theTimer,
-		      retransmitDelayMsNamedLong 
+		      retransmitDelayMsNamedLong,
+		      leadingDefaultBooleanLike
 			  	);
   	
+	    
 	    UnicasterValue unicasterUnicasterValue=  
   				new UnicasterValue( unicasterIPAndPort, theUnicaster );
 
@@ -98,7 +103,7 @@ public class UnicasterFactory {
 
   public SubcasterValue makeSubcasterValue( 
   		String keyString,
-  		DefaultBooleanLike leadingleadingDefaultBooleanLikeB
+  		DefaultBooleanLike leadingDefaultBooleanLike
       )
 	  { 
 		  LockAndSignal subcasterLockAndSignal= new LockAndSignal();
@@ -121,7 +126,7 @@ public class UnicasterFactory {
   				theSubcasterOutputStream,
   	      keyString,
   	      theShutdowner,
-  	      leadingleadingDefaultBooleanLikeB,
+  	      leadingDefaultBooleanLike,
   	      retransmitDelayMsNamedLong 
   	  		);
 	    SubcasterValue unicasterSubcasterValue=  

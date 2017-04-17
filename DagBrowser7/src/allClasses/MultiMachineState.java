@@ -8,8 +8,8 @@ public class MultiMachineState extends AndState
   /* This is the root of a hierarchical state machine for Unicaster.
     The Unicaster deals exclusively with this state machine.
     This state machine manages concurrent sub-state machines.
-    They can be of any type.
-    More sub-state machines can be added as needed.
+    Those sub-machines can be of any type.
+    More sub-machines can be added as needed.
     */
 
 	{
@@ -18,15 +18,25 @@ public class MultiMachineState extends AndState
 		private NetcasterOutputStream theNetcasterOutputStream; 
 		private NamedLong retransmitDelayMsNamedLong;
 		private Timer theTimer; 
+		private Unicaster theUniaster;
 
-		// Sub-state machines.
+		/* Sub-state-machines.
+		  Though theHelloMachineState receives input first, 
+		  it normally receives little, 
+		  and only during connection establishment,
+		  so for efficiency it is placed last.
+		  */
+		@SuppressWarnings("unused")
 		private LinkMeasurementState theLinkMeasurementState;
+		@SuppressWarnings("unused")
+		private HelloMachineState theHelloMachineState;
 		
 		MultiMachineState (  // Constructor.
 				Timer theTimer, 
 			  NetcasterInputStream theNetcasterInputStream,
 				NetcasterOutputStream theNetcasterOutputStream,
-				NamedLong retransmitDelayMsNamedLong
+				NamedLong retransmitDelayMsNamedLong,
+				Unicaster theUniaster
 				)
 			throws IOException
 	  	{
@@ -35,6 +45,7 @@ public class MultiMachineState extends AndState
 			  this.theNetcasterOutputStream= theNetcasterOutputStream;
 			  this.retransmitDelayMsNamedLong= retransmitDelayMsNamedLong;
 			  this.theTimer= theTimer;
+			  this.theUniaster= theUniaster;
 			  }
 	
 		public void initializeWithIOExceptionV() throws IOException
@@ -45,14 +56,26 @@ public class MultiMachineState extends AndState
 		  {
 				super.initializeWithIOExceptionState();
 
-    		theLinkMeasurementState= new LinkMeasurementState( 
-    				theTimer, 
-    				theNetcasterInputStream,
-    				theNetcasterOutputStream, 
-    				retransmitDelayMsNamedLong 
-	      		);
-	  	  theLinkMeasurementState.initializeWithIOExceptionV();
-	  	  addStateV( theLinkMeasurementState );
+				// Construct, initialize, and add sub-states to this machine.
+	  	  addStateV( 
+	  	  		( theLinkMeasurementState= new LinkMeasurementState( 
+		    				theTimer, 
+		    				theNetcasterInputStream,
+		    				theNetcasterOutputStream, 
+		    				retransmitDelayMsNamedLong 
+			      		) 
+	  	  			).initializeWithIOExceptionState() 
+	  	  		);
+
+	  	  addStateV( 
+	  	  		( theHelloMachineState= new HelloMachineState( 
+		    				theTimer, 
+		    				theNetcasterInputStream,
+		    				theNetcasterOutputStream, 
+		    				retransmitDelayMsNamedLong,
+		    				theUniaster )
+	  	  			).initializeWithIOExceptionState() 
+	  	  		);
 		  	}
 		
 		}

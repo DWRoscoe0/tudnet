@@ -70,8 +70,9 @@ public class Unicaster
         Shutdowner theShutdowner,
         SubcasterQueue subcasterToUnicasterSubcasterQueue,
     		Timer theTimer,
-    		NamedLong retransmitDelayMsNamedLong
-        )
+    		NamedLong retransmitDelayMsNamedLong,
+    		DefaultBooleanLike leadingDefaultBooleanLike
+    		)
       /* This constructor constructs a Unicaster for the purpose of
         communicating with the node at remoteInetSocketAddress,
         but no response has yet been made.
@@ -89,8 +90,9 @@ public class Unicaster
 	          theShutdowner,
   	        remoteIPAndPort,
         		"Unicaster", 
-            retransmitDelayMsNamedLong 
-        		);
+            retransmitDelayMsNamedLong, 
+            leadingDefaultBooleanLike ////////
+            );
 
         // Storing injected dependency arguments not stored in superclass.
   			  this.theUnicasterManager= theUnicasterManager;
@@ -137,7 +139,8 @@ public class Unicaster
 	  				theTimer, 
 	  			  theEpiInputStreamI,
 	  				theEpiOutputStreamO,
-	  				retransmitDelayMsNamedLong
+	  				retransmitDelayMsNamedLong,
+	  				this
 	  	  		);
 	  	  theMultiMachineState.initializeWithIOExceptionV();
 	  	  addB( theMultiMachineState );
@@ -173,7 +176,7 @@ public class Unicaster
 				  while (true) { // Repeating until termination is requested.
 				  	LockAndSignal.Input theInput= 
 			  				theLockAndSignal.testingForInterruptE();
-		      	if ( theInput != Input.NONE ) break;
+		      	if ( theInput != Input.NONE ) break; // Exit if interrupted.
 		      	if (processingMessagesFromRemotePeerB()) continue;
 		    		if (multiplexingPacketsFromSubcastersB()) continue;
 		    		////if (theLinkMeasurementState.cycleMachineB()) continue;
@@ -369,7 +372,7 @@ public class Unicaster
   	    which means parsing the IP address which follows and determining
   	    which peer, the local or remote, will be leader,
   	    by comparing the IP addresses, and setting 
-  	    the value for leadingleadingDefaultBooleanLikeB.
+  	    the value for leadingDefaultBooleanLike.
   	    It does not send a reply "HELLO".  
   	    This is assumed to have been done simultaneously elsewhere.
   	    It returns true if HELLO was processed, false otherwise.
@@ -382,14 +385,14 @@ public class Unicaster
   		  if (isKeyB) { // Decoding argument if key is "HELLO".
 					String localIpString= theEpiInputStreamI.readAString();
 					String remoteIpString= getKeyK().getInetAddress().getHostAddress();
-					leadingleadingDefaultBooleanLikeB.setValueB( localIpString.compareTo(remoteIpString) > 0 );
-					//leadingleadingDefaultBooleanLikeB= !leadingleadingDefaultBooleanLikeB; // Reverse roles for debug test. 
+					leadingDefaultBooleanLike.setValueB( localIpString.compareTo(remoteIpString) > 0 );
+					//leadingDefaultBooleanLike= !leadingDefaultBooleanLike; // Reverse roles for debug test. 
 					// Note, the particular ordering of IP address Strings
 					// doesn't matter.  What matters is that the ordering is consistent.
-					theSubcasterManager.setLeadingV( leadingleadingDefaultBooleanLikeB );
+					//% theSubcasterManager.setLeadingV( leadingDefaultBooleanLike );
 	        appLogger.info( 
 	        		"HELLO received.  Overriding role to be: "
-	        		+ (leadingleadingDefaultBooleanLikeB.getValueB() ? "LEADER" : "FOLLOWER")
+	        		+ (leadingDefaultBooleanLike.getValueB() ? "LEADER" : "FOLLOWER")
 	        		);
 				  }
   		  return isKeyB;

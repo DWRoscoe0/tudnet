@@ -51,18 +51,19 @@ public class Streamcaster<
 		protected final I theEpiInputStreamI;
     protected final Shutdowner theShutdowner;
     protected NamedLong retransmitDelayMsNamedLong;
+    protected DefaultBooleanLike leadingDefaultBooleanLike;
 
     // Detail-containing child sub-objects.  None.
 
     // Other variables.
-    //% protected boolean leadingleadingDefaultBooleanLikeB= false; // Used to settle race conditions.
-    protected DefaultBooleanLike leadingleadingDefaultBooleanLikeB=
-    		new DefaultBooleanLike(false);  // Used to settle race conditions.
+    //% protected boolean leadingDefaultBooleanLike= false; // Used to settle race conditions.
+    //% protected DefaultBooleanLike leadingDefaultBooleanLike=
+    //% 		new DefaultBooleanLike(false);  // Used to settle race conditions.
       
 	  public Streamcaster(  // Constructor.
 	      String nameString,
         Shutdowner theShutdowner,
-        DefaultBooleanLike leadingleadingDefaultBooleanLikeB,
+        DefaultBooleanLike leadingDefaultBooleanLike,
 	  		K theKeyK,
 	  		LockAndSignal theLockAndSignal,
 	      I theEpiInputStreamI,
@@ -80,7 +81,7 @@ public class Streamcaster<
 	      this.theEpiInputStreamI= theEpiInputStreamI;
 	      this.theEpiOutputStreamO= theEpiOutputStreamO;
         this.theShutdowner= theShutdowner;
-        this.leadingleadingDefaultBooleanLikeB= leadingleadingDefaultBooleanLikeB;
+        this.leadingDefaultBooleanLike= leadingDefaultBooleanLike;
         this.retransmitDelayMsNamedLong= retransmitDelayMsNamedLong;
 	    	}
 
@@ -88,7 +89,7 @@ public class Streamcaster<
 	    {
         appLogger.info( 
         		"This Streamcaster has been given the role of: "
-        		+ (leadingleadingDefaultBooleanLikeB.getValueB() ? "LEADER" : "FOLLOWER")
+        		+ (leadingDefaultBooleanLike.getValueB() ? "LEADER" : "FOLLOWER")
         		);
 		    }
 
@@ -100,7 +101,7 @@ public class Streamcaster<
         Control stays within it until Unicaster termination.
        */
 	    {
-	  	  if (! leadingleadingDefaultBooleanLikeB.getValueB()) // Start with ping-receive if not leading. 
+	  	  if (! leadingDefaultBooleanLike.getValueB()) // Start with ping-receive if not leading. 
 	  	  	tryingPingReceiveV();
 	      while (true) // Repeating until thread termination is requested.
 	        {
@@ -162,7 +163,7 @@ public class Streamcaster<
         		if ( inString.equals( "PING" ) ) // Handling ping conflict, maybe.
               { // Handling ping conflict.
                 appLogger.info( "PING-PING conflict." );
-              	if ( ! leadingleadingDefaultBooleanLikeB.getValueB() ) // Arbitrating ping-ping conflict.
+              	if ( ! leadingDefaultBooleanLike.getValueB() ) // Arbitrating ping-ping conflict.
                   { // Yielding ping processing to other peer.
                     appLogger.info( "PING ping yield: "+triesI );
                     theEpiInputStreamI.reset(); // Putting message back.

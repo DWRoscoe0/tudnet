@@ -49,7 +49,8 @@ public class LinkMeasurementState
 			  this.theTimer= theTimer;
 			  }
 			
-	  public synchronized void initializeWithIOExceptionV() 
+	  //% public synchronized void initializeWithIOExceptionV() 
+	  public synchronized State initializeWithIOExceptionState() 
 				throws IOException
 	    /* This method is the initializer for LinkMeasurementState.  It:
 	      * initializes many variable values.
@@ -124,6 +125,7 @@ public class LinkMeasurementState
 			  				this
 			  				);
 
+			  return this;
 			  }
 	
 	  public synchronized void finalizeV() throws IOException
@@ -248,15 +250,16 @@ public class LinkMeasurementState
 	
 				private class MeasurementInitializationState extends State 
 			  	/* This state does nothing but initializes for the handshake,
-			  	  then moves on to the MeasurementHandshakesState.
+			  	  then instantly moves on to the MeasurementHandshakesState.
+					  
+					  //// This initialization could be moved to either:
+					    * enterV() of MeasurementHandshakesState if
+					      that state was split into two levels.
+					    * exitV() of MeasurementPausedState.
 			  	  */
-	
 			  	{
 					  public void stateHandlerV() throws IOException
 					  	{
-								//// This will be moved back to he
-					  	  //// MeasurementHandshakesState later
-					  	  //// when that state is split into two levels.
 		    			  retryTimeOutMsL=   // Initializing retry time-out.
 		    			  		retransmitDelayMsNamedLong.getValueL();
 	
@@ -288,11 +291,12 @@ public class LinkMeasurementState
 					  	  or giving up if the time-out limit is reached.
 					  	  */
 					  	{
-							  if (tryInputB("PA")) // Test and process acknowledgement.
+							  if (tryInputB("PA")) // Try processing acknowledgement received.
 								  { if ( processPacketAcknowledgementB() )
 									  	requestStateV(theMeasurementPausedState);
 								  	}
-				      	else if (measurementTimerInput.getInputArrivedB()) // Time-out. 
+				      	else  if // Try processing time-out.
+				      		(measurementTimerInput.getInputArrivedB()) 
 					    		{ if ( retryTimeOutMsL <= Config.maxTimeOut5000MsL )
 				    				  { retryTimeOutMsL*=2;  // Doubling time-out limit.
 				    				  	requestStateV(this); // Retrying by repeating state.

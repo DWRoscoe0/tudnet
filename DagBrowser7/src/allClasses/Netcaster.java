@@ -33,14 +33,16 @@ public class Netcaster
         Shutdowner theShutdowner,
 	      IPAndPort  remoteIPAndPort, 
 	      String nameString,
-	      NamedLong retransmitDelayMsNamedLong
+	      NamedLong retransmitDelayMsNamedLong,
+        DefaultBooleanLike leadingDefaultBooleanLike
 	      )
 	    {
 	  		// Superclass's injections.
 	  	  super( // Constructing Streamcaster DataNodeWithKey superclass.
 			      nameString,
 		        theShutdowner,
-		        new DefaultBooleanLike(false),
+		        leadingDefaultBooleanLike,
+		        //% new DefaultBooleanLike(false),
 			      remoteIPAndPort, // key K
 			      netcasterLockAndSignal,
 			      theNetcasterInputStream,

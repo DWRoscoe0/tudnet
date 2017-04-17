@@ -41,14 +41,14 @@ public class Subcaster
 	      SubcasterOutputStream theSubcasterOutputStream,
 	      String keyString,
 	      Shutdowner theShutdowner,
-        DefaultBooleanLike leadingleadingDefaultBooleanLikeB,
+        DefaultBooleanLike leadingDefaultBooleanLike,
         NamedLong retransmitDelayMsNamedLong
 	      )
 	    {
 	      super( // Superclass's constructor injections.
 		      	"Subcaster",
 		        theShutdowner,
-		        leadingleadingDefaultBooleanLikeB,
+		        leadingDefaultBooleanLike,
 	      	  keyString,
 	      	  streamcasterLockAndSignal,
 	      	  theSubcasterInputStream,

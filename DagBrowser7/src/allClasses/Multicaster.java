@@ -128,7 +128,8 @@ public class Multicaster
 	          theShutdowner,
 	  	  		theIPAndPort,
 		        "Multicaster",
-			      retransmitDelayMsNamedLong
+			      retransmitDelayMsNamedLong,
+			      new DefaultBooleanLike(false) //// Not used by Multicaster.
 	      		);
 
 	  		// Store remaining injected dependencies.

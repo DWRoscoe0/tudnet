@@ -84,8 +84,8 @@ public class State extends MutableList implements Runnable {
       This can save a little code when adding states that
       can use the default initializer method initializeWithIOExceptionState().
       In cases where initialization with parameters is needed,
-      it should be done by calling a special initializer method,
-      followed by a call to the addV(..) method. 
+      it should be done by doing what this method does but
+      using the initializer with parameters instead of the default one.
      	*/
   	{ 
   	  addStateV(  // Initialize and add theSubState to list of sub-states.
