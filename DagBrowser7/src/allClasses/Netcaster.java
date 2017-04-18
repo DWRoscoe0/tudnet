@@ -42,7 +42,6 @@ public class Netcaster
 			      nameString,
 		        theShutdowner,
 		        leadingDefaultBooleanLike,
-		        //% new DefaultBooleanLike(false),
 			      remoteIPAndPort, // key K
 			      netcasterLockAndSignal,
 			      theNetcasterInputStream,

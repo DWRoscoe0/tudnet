@@ -39,15 +39,6 @@ public class SubcasterManager
     	  this.leadingDefaultBooleanLike= leadingDefaultBooleanLike; 
 	      }
 
-		/*  //%
-    public synchronized void setLeadingV( // Injecting setter. 
-    		DefaultBooleanLike leadingDefaultBooleanLike )
-    	{ 
-    	  this.leadingDefaultBooleanLike= 
-    	  		leadingDefaultBooleanLike; 
-    	  }
-		*/  //%
-
     public synchronized Subcaster getOrBuildAddAndStartSubcaster(
     		String keyString
 	  		)

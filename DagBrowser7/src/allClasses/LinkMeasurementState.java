@@ -49,7 +49,6 @@ public class LinkMeasurementState
 			  this.theTimer= theTimer;
 			  }
 			
-	  //% public synchronized void initializeWithIOExceptionV() 
 	  public synchronized State initializeWithIOExceptionState() 
 				throws IOException
 	    /* This method is the initializer for LinkMeasurementState.  It:

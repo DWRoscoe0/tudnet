@@ -56,9 +56,6 @@ public class Streamcaster<
     // Detail-containing child sub-objects.  None.
 
     // Other variables.
-    //% protected boolean leadingDefaultBooleanLike= false; // Used to settle race conditions.
-    //% protected DefaultBooleanLike leadingDefaultBooleanLike=
-    //% 		new DefaultBooleanLike(false);  // Used to settle race conditions.
       
 	  public Streamcaster(  // Constructor.
 	      String nameString,

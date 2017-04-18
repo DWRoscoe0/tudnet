@@ -91,7 +91,7 @@ public class Unicaster
   	        remoteIPAndPort,
         		"Unicaster", 
             retransmitDelayMsNamedLong, 
-            leadingDefaultBooleanLike ////////
+            leadingDefaultBooleanLike
             );
 
         // Storing injected dependency arguments not stored in superclass.
@@ -385,11 +385,12 @@ public class Unicaster
   		  if (isKeyB) { // Decoding argument if key is "HELLO".
 					String localIpString= theEpiInputStreamI.readAString();
 					String remoteIpString= getKeyK().getInetAddress().getHostAddress();
-					leadingDefaultBooleanLike.setValueB( localIpString.compareTo(remoteIpString) > 0 );
+					leadingDefaultBooleanLike.setValueB( 
+							localIpString.compareTo(remoteIpString) > 0 
+							);
 					//leadingDefaultBooleanLike= !leadingDefaultBooleanLike; // Reverse roles for debug test. 
 					// Note, the particular ordering of IP address Strings
 					// doesn't matter.  What matters is that the ordering is consistent.
-					//% theSubcasterManager.setLeadingV( leadingDefaultBooleanLike );
 	        appLogger.info( 
 	        		"HELLO received.  Overriding role to be: "
 	        		+ (leadingDefaultBooleanLike.getValueB() ? "LEADER" : "FOLLOWER")
@@ -407,6 +408,7 @@ public class Unicaster
 				if (isKeyB) {
 	        appLogger.info( "SHUTTING-DOWN message received.");
 	        Thread.currentThread().interrupt(); // Interrupting this thread.
+	          // This will cause thread termination.
 					}
 				return isKeyB;
         }
