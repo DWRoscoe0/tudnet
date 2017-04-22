@@ -54,27 +54,27 @@ public class MultiMachineState extends AndState
 		    Then it calls the handler method to start machine timers.
 		    */
 		  {
-				super.initializeWithIOExceptionState();
+				super.initializeWithIOExceptionStateList();
 
 				// Construct, initialize, and add sub-states to this machine.
-	  	  addStateV( 
+	  	  addStateListV( 
 	  	  		( theLinkMeasurementState= new LinkMeasurementState( 
 		    				theTimer, 
 		    				theNetcasterInputStream,
 		    				theNetcasterOutputStream, 
 		    				retransmitDelayMsNamedLong 
 			      		) 
-	  	  			).initializeWithIOExceptionState() 
+	  	  			).initializeWithIOExceptionStateList() 
 	  	  		);
 
-	  	  addStateV( 
+	  	  addStateListV( 
 	  	  		( theHelloMachineState= new HelloMachineState( 
 		    				theTimer, 
 		    				theNetcasterInputStream,
 		    				theNetcasterOutputStream, 
 		    				retransmitDelayMsNamedLong,
 		    				theUniaster )
-	  	  			).initializeWithIOExceptionState() 
+	  	  			).initializeWithIOExceptionStateList() 
 	  	  		);
 		  	}
 		

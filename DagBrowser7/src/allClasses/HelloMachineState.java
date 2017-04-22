@@ -46,10 +46,10 @@ public class HelloMachineState
 			  this.theTimer= theTimer;
 			  }
 			
-	  public synchronized State initializeWithIOExceptionState() 
+	  public synchronized StateList initializeWithIOExceptionStateList() 
 				throws IOException
 		  {
-	  		super.initializeWithIOExceptionState();
+	  		super.initializeWithIOExceptionStateList();
 
 	  		// Adding measurement count.
 
@@ -91,7 +91,7 @@ public class HelloMachineState
 	  private TimerInput helloTimerInput;
 		private long retryTimeOutMsL;
 
-		private class ProcessingFirstHelloState extends State 
+		private class ProcessingFirstHelloState extends StateList 
 
 	  	/* This class exchanges HELLO messages with the remote peer
 	  	  to decide which peer will lead and which will follow.
@@ -115,7 +115,7 @@ public class HelloMachineState
 			  	  */
 			  	{
 			  		if (tryProcessingReceivedHelloB()) // Try to process first HELLO.
-			  			requestStateV( // Success.  Go handle any later HELLOs.
+			  			requestStateListV( // Success.  Go handle any later HELLOs.
 					  			theProcessingLaterHellosState
 					  			);
 		      	else if (helloTimerInput.getInputArrivedB()) // Failure.  Time-out? 
@@ -126,13 +126,13 @@ public class HelloMachineState
 			      				( retryTimeOutMsL > Config.maxTimeOut5000MsL )
 			    			  	retryTimeOutMsL= Config.maxTimeOut5000MsL;
 			      			}
-		    			  requestStateV(this); // Now retry by requesting this state again.
+		    			  requestStateListV(this); // Now retry by requesting this state again.
 		  			  	}
 		  	  	}
 	
 		  		} // class ProcessingFirstHelloState
 		
-		private class ProcessingLaterHellosState extends State
+		private class ProcessingLaterHellosState extends StateList
 
 	  	/* This state handles the reception of extra HELLO messages,
 	  	  which are HELLO messages received after the first one.

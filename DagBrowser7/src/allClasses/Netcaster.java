@@ -38,7 +38,7 @@ public class Netcaster
 	      )
 	    {
 	  		// Superclass's injections.
-	  	  super( // Constructing Streamcaster DataNodeWithKey superclass.
+	  	  super( // Constructing Streamcaster KeyedStateList superclass.
 			      nameString,
 		        theShutdowner,
 		        leadingDefaultBooleanLike,

@@ -4,17 +4,17 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class State extends MutableList implements Runnable {
+public class StateList extends MutableList implements Runnable {
 
 	/*  This class is the base class for all state objects and state-machines.
 
 	  States are hierarchical.  A state can be both:
-	  * a sub-state of a larger state-machines 
+	  * a sub-state of a larger state-machine 
 	  * a state-machine with its own sub-states
 
 		State machines run when their handler methods are called.
 		Handler methods produce a success indication, usually a boolean value.
-		The exact interpretation of this value depends on the State sub-class
+		The exact interpretation of this value depends on the StateList sub-class
 		in which the method appears, but the following is always true:
 		* true means that some type of machine progress was made, either:
 		  * computational progress was made, or 
@@ -27,25 +27,24 @@ public class State extends MutableList implements Runnable {
 		
 	  When writing code it is important to distinguish between
 	  * the current State, designated by "this", and
-	  * its current sub-state, or child state, 
-	    designated by "this.subState".
+	  * its current sub-state, or child state, designated by "this.subState".
 
 		To reduce boilerplate code, constructor source code has been eliminated.
 		There are constructors, but they are the default parameterless constructors.
 		The instance variables are initialized with the initializerV(..) method.
 
-		//// State and its subclasses AndState and OrState
+		//// StateList and its subclasses AndState and OrState
 		  do not [yet] provide behavioral inheritance, which is
 		  the most important benefit of hierarchical state machines.
 		  Add it?
 	  */
 
-	public static State nullState= new State();
+	public static StateList nullStateList= new StateList();
 	
-	protected State parentState= null;
+	protected StateList parentStateList= null;
 
-  protected List<State> theListOfSubStates=
-      new ArrayList<State>(); // Initially empty list.
+  protected List<StateList> theListOfSubStateLists=
+      new ArrayList<StateList>(); // Initially empty list.
 
   private String synchronousInputString; // Stores an input stream event word,
     // until a state handler has had the opportunity to check it.
@@ -57,7 +56,7 @@ public class State extends MutableList implements Runnable {
 
 	/* Methods used to build state objects. */
   
-  public State initializeWithIOExceptionState() throws IOException
+  public StateList initializeWithIOExceptionStateList() throws IOException
     /* This method initializes this state object, 
       It does actions needed when this state object is being built.
       This is not the same as the entryV() method, which
@@ -76,8 +75,8 @@ public class State extends MutableList implements Runnable {
   	  return this;
     	}
 
-  public void initAndAddStateV(State theSubState) throws IOException
-    /* This method is used as part of the State building process.  It:
+  public void initAndAddStateListV(StateList theSubStateList) throws IOException
+    /* This method is used as part of the StateList building process.  It:
       * does an initialization of theSubState using 
         the method initializeWithIOExceptionState(),
       * next it adds theSubState to this state's list of sub-states.
@@ -88,24 +87,24 @@ public class State extends MutableList implements Runnable {
       using the initializer with parameters instead of the default one.
      	*/
   	{ 
-  	  addStateV(  // Initialize and add theSubState to list of sub-states.
-  	  		theSubState.initializeWithIOExceptionState()
+  	  addStateListV(  // Initialize and add theSubState to list of sub-states.
+  	  		theSubStateList.initializeWithIOExceptionStateList()
   	  		); // Adding also sets the theSubState's parent state to be this state.
   	  }
 
-  public void addStateV(State theSubState)
+  public void addStateListV(StateList theSubStateList)
     /* This method adds one sub-state to this state.
-			It part of the State building process.  
+			It part of the StateList building process.  
       It adds theSubState to the state's sub-state list,
       including setting the parent of the sub-state to be this state.
       */
   	{ 
-  	  theListOfSubStates.add( theSubState ); // Add theSubState to
+  	  theListOfSubStateLists.add( theSubStateList ); // Add theSubState to
   	    // this state's list of sub-states.
-  	  theSubState.setParentStateV( this ); // Store this state as
+  	  theSubStateList.setParentStateListV( this ); // Store this state as
   	  	// the sub-state's parent state.
 
-  	  addB( theSubState ); // Add to this DataNode's list of DataNodes.
+  	  addB( theSubStateList ); // Add to this DataNode's list of DataNodes.
   	  }
 
   public synchronized void finalizeV() throws IOException
@@ -115,18 +114,18 @@ public class State extends MutableList implements Runnable {
       does actions needed when the associated state-machine state is exited.
       */
 	  {
-	  	for (State subState : theListOfSubStates)
+	  	for (StateList subStateList : theListOfSubStateLists)
 		  	{
-	  			subState.finalizeV();
+	  			subStateList.finalizeV();
 		  		}
       }
 
-	public void setParentStateV( State parentState )
-	  // Stores parentState as the parent state of this state.
-		{ this.parentState= parentState; }
+	public void setParentStateListV( StateList parentStateList )
+	  // Stores parentStateList as the parent state of this state.
+		{ this.parentStateList= parentStateList; }
 
 	
-	/*  Methods which do actions for previously built State objects.  */
+	/*  Methods which do actions for previously built StateList objects.  */
 	
 	public void enterV() throws IOException
 	  /* This method is called when 
@@ -134,7 +133,7 @@ public class State extends MutableList implements Runnable {
 	    This version does nothing, but it should be overridden 
 	    by state subclasses that require entry actions.
 	    This is not the same as initialize*V(),
-	    which does actions needed when the State object is being built.
+	    which does actions needed when the StateList object is being built.
 	    */
 	  { 
 			}
@@ -223,7 +222,7 @@ public class State extends MutableList implements Runnable {
 	
 		  //// If state machines are used more extensively to process
 		    messages of this type, it might make sense to:
-		    * Cache the State that processes the keyString in a HashMap
+		    * Cache the StateList that processes the keyString in a HashMap
 		      and use the HashMap to dispatch the message.
 		    * Add discrete event processing to State machines and
 		      make these keyString messages a subclass of those events.
@@ -271,24 +270,24 @@ public class State extends MutableList implements Runnable {
 	  will probably also indicate that computation progress was made.  
 	  */
 
-	protected void requestStateV(State nextState)
+	protected void requestStateListV(StateList nextStateList)
 		/* This is called to change the state of a the state machine.
 		  to the sibling state nextState.
 		  It does this by calling the parent state's setNextSubStateV(..) method. 
 		  Its affect is not immediate.
 		  */
 		{
-			parentState.requestSubStateV(nextState);
+			parentStateList.requestSubStateListV(nextStateList);
 			}
 	
-	protected void requestSubStateV(State nextState)
-	  /* This method provides a link between setNextStateV(State)
-	    and OrState.setNextSubStateV(State).
+	protected void requestSubStateListV(StateList nextStateList)
+	  /* This method provides a link between setNextStateV(StateList)
+	    and OrState.setNextSubStateV(StateList).
 	    It is meaningful only in the OrState class,
 	    and is meant to be overridden by the OrState class.
 	    It has no meaning when inherited by other classes and throws an Error.
-	    This method could be eliminated if setNextStateV(State)
-	    casted parentState to an OrState.
+	    This method could be eliminated if setNextStateV(StateList)
+	    casted parentStateList to an OrState.
 	    */
 	  {
 			throw new Error();
@@ -310,9 +309,9 @@ public class State extends MutableList implements Runnable {
 		    }
 		}
 
-	}  // State class 
+	}  // StateList class 
 
-class OrState extends State {
+class OrState extends StateList {
 
 	/*  This class is the base class for all "or" state machine objects.
 	  OrState machines have sub-states, but unlike AndStates,
@@ -322,12 +321,12 @@ class OrState extends State {
 	  It sub-states are active one at a time.
 		*/
 
-  private State presentSubState= // State machine's state.
+  private StateList presentSubStateList= // StateList machine's state.
   			// null means no state is active.  
   		  // non-null means that state is active.
-  		State.nullState; // Initial default no-op state.
+  		StateList.nullStateList; // Initial default no-op state.
 
-  private State requestedSubState= null; // Becomes non-null 
+  private StateList requestedSubStateList= null; // Becomes non-null 
     // when state-machine initializes and 
     // when machine's requests new state.
 
@@ -335,7 +334,7 @@ class OrState extends State {
     // This variable accumulates sub-state handler progress, presently from:
     // * the sub-state handlerV() method value,
     // * a synchronous input String was processed,
-    // * requestSubStateV(State nextState)
+    // * requestSubStateV(StateList nextState)
     // It is reset to false after it is aggregated into,
     // and returned as, a stateProgressB value.
 
@@ -357,20 +356,20 @@ class OrState extends State {
   		delayedExceptionCheckV();
 	  	boolean stateProgressB= false;
   		while (true) { // Cycle sub-states until done.
-  	  		if  (requestedSubState != null) // Handling state change request.
+  	  		if  (requestedSubStateList != null) // Handling state change request.
   	  		  { // Exit present state, enter requested one, and reset request.
-  	  			  presentSubState.exitV(); 
-	    	  		presentSubState= requestedSubState;
-  	  			  presentSubState.enterV(); 
-  	  				requestedSubState= null;
+  	  			  presentSubStateList.exitV(); 
+	    	  		presentSubStateList= requestedSubStateList;
+  	  			  presentSubStateList.enterV(); 
+  	  				requestedSubStateList= null;
 			  			}
-  	  		presentSubState.setSynchronousInputV(getSynchronousInputString());
+  	  		presentSubStateList.setSynchronousInputV(getSynchronousInputString());
   	  		  // Store input string, if any, in sub-state.
-		  	  if ( presentSubState.stateHandlerB() )
+		  	  if ( presentSubStateList.stateHandlerB() )
 				  	substateProgressB= true;
   	  		if // Detect and record whether synchronous input was consumed.
   	  			( (getSynchronousInputString() != null) &&
-  	  			  (presentSubState.getSynchronousInputString() == null)
+  	  			  (presentSubStateList.getSynchronousInputString() == null)
   	  				)
 						{ setSynchronousInputV(null);
 							substateProgressB= true;
@@ -383,23 +382,23 @@ class OrState extends State {
 			return stateProgressB; // Returning accumulated state progress result.
 			}
 		
-  protected void requestSubStateV(State nextState)
+  protected void requestSubStateListV(StateList nextStateList)
 	  /* This method requests the next state-machine state,
 	    which is the same thing as this state's next sub-state.
-	    It overrides State.requestSubStateV(State nextState) to work.
+	    It overrides StateList.requestSubStateV(StateList nextState) to work.
 	    
-	    Note, though the requestedSubState variable changes immediately,
+	    Note, though the requestedSubStateList variable changes immediately,
 	    control is not transfered to the new sub-state until
 	    the handler of the present sub-state exits.
 	    */
 	  {
-  	  requestedSubState= nextState;
+  	  requestedSubStateList= nextStateList;
 			substateProgressB= true;  // Force progress because state changed.
 			}
   
 	}  // OrState 
 
-class AndState extends State {
+class AndState extends StateList {
 
 	/* This class is the base class for all "and" state machine objects.
 	  AndState machines have sub-states, but unlike OrStates,
@@ -408,9 +407,9 @@ class AndState extends State {
 	  There is concurrency in an AndState machine, at least at this level.
 	  */
 
-  public State initializeWithIOExceptionState() throws IOException
+  public StateList initializeWithIOExceptionStateList() throws IOException
     {
-  		super.initializeWithIOExceptionState();
+  		super.initializeWithIOExceptionStateList();
   		return this;
     	}
 
@@ -433,15 +432,15 @@ class AndState extends State {
   	  do  // Repeat scanning until no sub-machine progresses.
 	  	  { // Scan all sub-state-machines once each.
 		  		thisScanMadeProgressB= false;
-	  	  	for (State subState : theListOfSubStates)
+	  	  	for (StateList subStateList : theListOfSubStateLists)
 		  	  	{
-			  	  	subState.setSynchronousInputV(getSynchronousInputString());
+			  	  	subStateList.setSynchronousInputV(getSynchronousInputString());
 		  	  		  // Store input string, if any, in sub-state.
-				  	  if ( subState.stateHandlerB() )
+				  	  if ( subStateList.stateHandlerB() )
 						  	thisScanMadeProgressB= true;
 		  	  		if // Detect and record whether synchronous input was consumed.
 		  	  			( (getSynchronousInputString() != null) &&
-		  	  			  (subState.getSynchronousInputString() == null)
+		  	  			  (subStateList.getSynchronousInputString() == null)
 		  	  				)
 								{ setSynchronousInputV(null);
 									thisScanMadeProgressB= true;

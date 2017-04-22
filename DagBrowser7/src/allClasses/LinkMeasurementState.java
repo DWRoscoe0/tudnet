@@ -49,7 +49,7 @@ public class LinkMeasurementState
 			  this.theTimer= theTimer;
 			  }
 			
-	  public synchronized State initializeWithIOExceptionState() 
+	  public synchronized StateList initializeWithIOExceptionStateList() 
 				throws IOException
 	    /* This method is the initializer for LinkMeasurementState.  It:
 	      * initializes many variable values.
@@ -57,7 +57,7 @@ public class LinkMeasurementState
 	      * creates sub-states and adds them to the DAG.
 	      */
 		  {
-	  		super.initializeWithIOExceptionState();
+	  		super.initializeWithIOExceptionStateList();
 
 	  		// Adding measurement count.
 	  	  addB( measurementHandshakesNamedLong= new NamedLong(
@@ -113,9 +113,9 @@ public class LinkMeasurementState
 	  	  		);
 
     		// Create and add to DAG the sub-states of this state machine.
-	  	  initAndAddStateV( theRemoteMeasurementState= 
+	  	  initAndAddStateListV( theRemoteMeasurementState= 
 	  	  		new RemoteMeasurementState() );
-	  	  initAndAddStateV( theLocalMeasurementState= 
+	  	  initAndAddStateListV( theLocalMeasurementState= 
 	  	  		new LocalMeasurementState() );
 	
 	  	  measurementTimerInput= // Creating our timer and linking to this state. 
@@ -152,19 +152,19 @@ public class LinkMeasurementState
 				private MeasurementHandshakesState 
 				  theMeasurementHandshakesState;
 	
-		    public State initializeWithIOExceptionState() throws IOException 
+		    public StateList initializeWithIOExceptionStateList() throws IOException 
 			    {
-		    		super.initializeWithIOExceptionState();
+		    		super.initializeWithIOExceptionStateList();
 	
 		    		// Create and add orthogonal sub-state machines.
-			  	  initAndAddStateV( theMeasurementPausedState= 
+			  	  initAndAddStateListV( theMeasurementPausedState= 
 			  	  		new MeasurementPausedState() );
-			  	  initAndAddStateV( theMeasurementInitializationState= 
+			  	  initAndAddStateListV( theMeasurementInitializationState= 
 			  	  		new MeasurementInitializationState() );
-			  	  initAndAddStateV( theMeasurementHandshakesState= 
+			  	  initAndAddStateListV( theMeasurementHandshakesState= 
 			  	  		new MeasurementHandshakesState() );
 	
-						requestSubStateV( theMeasurementPausedState ); // Initial state.
+						requestSubStateListV( theMeasurementPausedState ); // Initial state.
 						return this;
 			    	}
 	
@@ -216,7 +216,7 @@ public class LinkMeasurementState
 				
 				// States.
 	
-		    private class MeasurementPausedState extends State
+		    private class MeasurementPausedState extends StateList
 		    
 		      /* This class does the pause between measurement handshakes.
 		        It finishes by requesting the MeasurementHandshakesState.
@@ -236,7 +236,7 @@ public class LinkMeasurementState
 					     	*/
 					  	{ 
 					  	  if (measurementTimerInput.getInputArrivedB()) // Timer done. 
-					  	  	requestStateV(theMeasurementInitializationState);
+					  	  	requestStateListV(theMeasurementInitializationState);
 					  		}
 	
 						public void exitV() throws IOException
@@ -247,7 +247,7 @@ public class LinkMeasurementState
 					
 			  	} // class MeasurementPausedState
 	
-				private class MeasurementInitializationState extends State 
+				private class MeasurementInitializationState extends StateList 
 			  	/* This state does nothing but initializes for the handshake,
 			  	  then instantly moves on to the MeasurementHandshakesState.
 					  
@@ -262,12 +262,12 @@ public class LinkMeasurementState
 		    			  retryTimeOutMsL=   // Initializing retry time-out.
 		    			  		retransmitDelayMsNamedLong.getValueL();
 	
-					  		requestStateV(theMeasurementHandshakesState);
+					  		requestStateListV(theMeasurementHandshakesState);
 				  	  	}
 	
 			  		} // class MeasurementInitializationState
 				
-				private class MeasurementHandshakesState extends State 
+				private class MeasurementHandshakesState extends StateList 
 			  	/* This state handles the PS-PA handshakes, 
 			  	  including sending the first packet, 
 			  	  processing the acknowledgement, and
@@ -292,16 +292,16 @@ public class LinkMeasurementState
 					  	{
 							  if (tryInputB("PA")) // Try processing acknowledgement received.
 								  { if ( processPacketAcknowledgementB() )
-									  	requestStateV(theMeasurementPausedState);
+									  	requestStateListV(theMeasurementPausedState);
 								  	}
 				      	else  if // Try processing time-out.
 				      		(measurementTimerInput.getInputArrivedB()) 
 					    		{ if ( retryTimeOutMsL <= Config.maxTimeOut5000MsL )
 				    				  { retryTimeOutMsL*=2;  // Doubling time-out limit.
-				    				  	requestStateV(this); // Retrying by repeating state.
+				    				  	requestStateListV(this); // Retrying by repeating state.
 					  					  }
 				    			  else // Giving up after maximum time-out reached.
-								  	  requestStateV(theMeasurementPausedState);
+								  	  requestStateListV(theMeasurementPausedState);
 					    		      // Do again after a pause.
 					    			}
 				  	  	}
@@ -417,7 +417,7 @@ public class LinkMeasurementState
 		
 		  	} // class LocalMeasurementState
 	
-		private class RemoteMeasurementState extends State 
+		private class RemoteMeasurementState extends StateList 
 		
 			{
 	

@@ -70,7 +70,7 @@ public class DagBrowserPanel
     * Keyboard input, indirectly handled with translation into
       other events by JComponent TreeHelpers or Java library code.
 
-    State and outputs which are adjusted and coordinated include:
+    StateList and outputs which are adjusted and coordinated include:
     * Which major sub-panel Component contains the Component with focus.
     * What container JComponent is displayed in the right sub-panel.
     * Which Objects within sub-panel container JComponents are selected.

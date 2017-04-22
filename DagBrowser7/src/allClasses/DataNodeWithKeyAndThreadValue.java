@@ -2,7 +2,7 @@ package allClasses;
 
 public class DataNodeWithKeyAndThreadValue< 
 	//D extends DataNode, // DataNode type. 
-	D extends DataNodeWithKey< K >, // DataNode type. 
+	D extends KeyedStateList< K >, // DataNode type. 
 	K // Key type in and returned by DataNode.
 	>
 //public class DataNodeWithKeyAndThreadValue< D extends DataNode >

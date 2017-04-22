@@ -5,7 +5,7 @@ import java.util.Iterator;
 
 public class StreamcasterManager<
     K, // Key for map entry.
-		D extends DataNodeWithKey< K >,
+		D extends KeyedStateList< K >,
     V extends DataNodeWithKeyAndThreadValue<D,K>
     >
 
@@ -49,8 +49,8 @@ public class StreamcasterManager<
 	      }
 
   	public synchronized D tryingToGetDataNodeWithKeyD( K theKeyK )
-	    /* This method returns the DataNodeWithKey associated with theKeyK,
-	      if such a DataNodeWithKey exists.
+	    /* This method returns the KeyedStateList associated with theKeyK,
+	      if such a KeyedStateList exists.
 		    If it doesn't exist then it returns null.
 		    */
       {

@@ -1,20 +1,25 @@
 package allClasses;
 
-public class DataNodeWithKey< K > 
+public class KeyedStateList< K > 
 
-  extends MutableList 
+	extends AndState  //// was MutableList. 
   
-  /* This class adds a Key value to a MutableList.
+  /* This class adds a Key value to an AndState StateList.
     The Key is typically used for two things:
     * As an extension of the base name when 
       forming the full name String of this node.
     * As the key for a hash table lookup.
-   */
+
+    Because sub-classes of this class typically do more than simply hold data,
+    this class extends AndState, so it can itself be 
+    a state-machine and have sub-states.
+
+    */
   
   {
 	  private K theKeyK;
 	  
-	  public DataNodeWithKey(  // Constructor.
+	  public KeyedStateList(  // Constructor.
 	      String baseNameString,
 	  		K theKeyK
 	      )

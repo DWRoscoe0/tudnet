@@ -15,7 +15,7 @@ public class Streamcaster<
     O extends EpiOutputStream<K,E,Q,M>
 		>
 
-	extends DataNodeWithKey< K >
+	extends KeyedStateList< K >
 
   /* 
     This is the base class DataNode for UDP packet streaming.

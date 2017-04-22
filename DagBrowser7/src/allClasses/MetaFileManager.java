@@ -370,7 +370,7 @@ public class MetaFileManager {
         MetaFile theMetaFile= makeMetaFile(
           RwStructure.NESTED, 
           "Debug.txt", 
-          "Debug-State",
+          "Debug-StateList",
           Mode.WRITING
           );
         theMetaFile.writeRootedFileV( inMetaNode );  // Do the actual write.

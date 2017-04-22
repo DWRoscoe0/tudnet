@@ -11,7 +11,7 @@ public class MutableListWithMap<
     	D, // The DataNode part of value. 
       K  //The key part of value.
       >, 
-		D extends DataNodeWithKey< K > // DataNode within map entry value.
+		D extends KeyedStateList< K > // DataNode within map entry value.
     >
 
   extends MutableList
