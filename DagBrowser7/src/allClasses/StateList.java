@@ -156,24 +156,29 @@ public class StateList extends MutableList implements Runnable {
 	  { 
 			}
 	
-	public void stateHandlerV() throws IOException
-	  /* A state class overrides either this method or stateHandlerB()
+	public synchronized void stateHandlerV() throws IOException
+	  /* This is a code-saving method.
+	    A state class overrides either this method or stateHandlerB()
 	    as part of how it controls its behavior.
 	    Overriding this method instead of stateHandlerB() can result in
 	    more compact code.  An override like this:
 
-				public void stateHandlerV() throws IOException
+				public synchronized void stateHandlerV() throws IOException
 				  { 
 				    some-code;
 				    }
 
 			is a more compact version of, but equivalent to, this:
 
-				public boolean stateHandlerB() throws IOException
+				public synchronized boolean stateHandlerB() throws IOException
 				  { 
 				    some-code;
 				    return false;
 				    }
+
+			As with stateHandlerB(), because this method can be called from
+			multiple threads, such as timer threads, it and all sub-class overrides
+			should be synchronized.
 
 		  See stateHandlerB() .
 	    */
@@ -181,7 +186,7 @@ public class StateList extends MutableList implements Runnable {
 		  // This default version does nothing.
 	    }
 	
-	public boolean stateHandlerB() throws IOException
+	public synchronized boolean stateHandlerB() throws IOException
 	  /* A state class overrides either this method or stateHandlerV()
 	    to control how its state is handled.
 
@@ -202,6 +207,10 @@ public class StateList extends MutableList implements Runnable {
 	    * All changes to extended state variables have been made.
 	    * A request for a state transition to the qualitative state 
 	      has been made if it is possible.
+
+			Because this method can be called from multiple threads, 
+			such as timer threads, it and all sub-class overrides
+			should be synchronized.
 	    
 	    */
 	  { 
@@ -211,7 +220,7 @@ public class StateList extends MutableList implements Runnable {
 
 	public void delayedExceptionCheckV() throws IOException
 		/* 	This method re-throws any delayedIOException that
-			might have occurred in a handler running on a Timer thread. 
+			might have occurred in a handler running on an earlier Timer thread. 
 		  */
 		{ 
 		  if  // Re-throw any previously saved exception from timer thread.
@@ -221,8 +230,9 @@ public class StateList extends MutableList implements Runnable {
 
 	public void delayExceptionV( IOException theIOException )
 		/* 	This method records an IOException that 
-		  occurred in a handler running on a Timer thread
-		  needs to be re-throw later on the normal thread
+		  occurred in a handler that couldn't handle it,
+		  such as a Timer thread.
+		  It can be re-thrown later on a thread that can handle it,
 		  by calling delayedExceptionCheckV(). 
 		  */
 		{ 
@@ -241,7 +251,8 @@ public class StateList extends MutableList implements Runnable {
 		  this.synchronousInputString= synchronousInputString;
 		  }
 	
-	public boolean handleSynchronousInputB(String inputString) throws IOException
+	public synchronized boolean handleSynchronousInputB(String inputString) 
+			throws IOException
 	  /* This method should be used as the state handler 
 	    when there is a synchronous input to be processed.
 	    It stores wordString in a field variable and then 
@@ -376,7 +387,7 @@ class OrState extends StateList {
     // This variable is reset to false after it is aggregated into,
     // and returned as, a stateHandlerB() stateProgressB value.
 
-  public boolean stateHandlerB() throws IOException
+  public synchronized boolean stateHandlerB() throws IOException
 	  /* This handles the OrState by cycling it's machine.
 	    It does this by calling the handler method 
 	    associated with the present state-machine's sub-state.
@@ -450,30 +461,28 @@ class AndState extends StateList {
   		return this;
     	}
 
-	public boolean stateHandlerB() throws IOException
+	public synchronized boolean stateHandlerB() throws IOException
 	  /* This method handles this AndState by cycling all of its sub-machines
 	    until none of them makes any computational progress.
-      It keeps going until all sub-state handlers return false,
-      indicating that they have stopped reporting progress.
+	    It scans the sub-machine in order until one makes computational progress.
+	    Then it restarts the scan.
+	    It is done this way to prioritized the sub-machines.
+	    If one sub-machine produces something for which an earlier machine waits,
+	    that earlier machine will be run next.
+      It keeps scanning until none of the sub-machines in a scan make progress.
 	    This method returns true if any computational progress was made
-	    in any sub-state, false otherwise.
-
-    	//// rewrite loops for faster exit for 
-    	 	minimum sub-state stateHandlerB() calls.
+	    by any sub-machine, false otherwise.
 	    */
 	  { 
 			delayedExceptionCheckV(); // Throw exception if one was saved.
-		  boolean anyscanMadeProgressB= false;
+		  boolean anyProgressMadeB= false;
 			boolean thisScanMadeProgressB;
-  	  do  // Repeat scanning until no sub-machine progresses.
-	  	  { // Scan all sub-state-machines once each.
+  	  substateScansUntilNoProgress: while(true) {
 		  		thisScanMadeProgressB= false;
-	  	  	for (StateList subStateList : theListOfSubStateLists)
-		  	  	{
+   	  		for (StateList subStateList : theListOfSubStateLists) {
 			  	  	subStateList.setSynchronousInputV(getSynchronousInputString());
-		  	  		  // Store input string, if any, in sub-state.
-				  	  if ( subStateList.stateHandlerB() )
-						  	thisScanMadeProgressB= true;
+		  	  		  // Store synchronous input, if any, in sub-state.
+				  	  if ( subStateList.stateHandlerB() ) thisScanMadeProgressB= true;
 		  	  		if // Detect and record whether synchronous input was consumed.
 		  	  			( (getSynchronousInputString() != null) &&
 		  	  			  (subStateList.getSynchronousInputString() == null)
@@ -481,11 +490,14 @@ class AndState extends StateList {
 								{ setSynchronousInputV(null);
 									thisScanMadeProgressB= true;
 									}
-		  	  		}
-	  	  	if (thisScanMadeProgressB) 
-	  	  		anyscanMadeProgressB= true; 
-	  	  	} while (thisScanMadeProgressB);
-			return anyscanMadeProgressB; 
+			  	  	if (thisScanMadeProgressB) {
+			  	  		anyProgressMadeB= true;
+			  	  		continue substateScansUntilNoProgress; // Restart scan.
+			  	  		}
+		  	  		} // scanSubstatesUntilAnyProgresses:
+   	  		break substateScansUntilNoProgress;
+	  	  	} // substateScansUntilNoProgress:
+			return anyProgressMadeB; 
 			}
 
 	}  // AndState 

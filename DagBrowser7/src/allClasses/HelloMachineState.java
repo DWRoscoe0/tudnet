@@ -126,7 +126,7 @@ public class HelloMachineState
 			      				( retryTimeOutMsL > Config.maxTimeOut5000MsL )
 			    			  	retryTimeOutMsL= Config.maxTimeOut5000MsL;
 			      			}
-		    			  requestStateListV(this); // Now retry by requesting this state again.
+		    			  requestStateListV(this); // Now retry using this state again.
 		  			  	}
 		  	  	}
 	
@@ -154,7 +154,7 @@ public class HelloMachineState
 			  		if (tryProcessingReceivedHelloB()) // Try to process first HELLO.
 			  			if  // If we received a HELLO 
 			  			  ( respondB^= true ) // and we didn't respond last time
-			  				sendHelloV(); // send a response HELLO this time.
+			  				sendHelloV(); // send a response HELLO response this time.
 					  }
 
 	  		} // class ProcessingLaterHellosState 
@@ -184,7 +184,7 @@ public class HelloMachineState
 				Note, the particular ordering of IP address Strings doesn't matter.  
 				What matters is that the ordering is consistent.
   	    This method does not send a reply "HELLO".
-  	    This is assumed to have been done elsewhere.
+  	    Sending is assumed to be done elsewhere.
   	    This method returns true if HELLO was processed, false otherwise.
   	    This method may be called multiple times, 
   	    but it should produce the same result each time.

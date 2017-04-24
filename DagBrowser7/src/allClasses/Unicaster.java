@@ -6,7 +6,6 @@ import java.util.Timer;
 
 import static allClasses.Globals.appLogger;
 
-
 import allClasses.LockAndSignal.Input;
 
 public class Unicaster
@@ -14,6 +13,8 @@ public class Unicaster
 	extends Netcaster
 
   implements Runnable 
+
+  //////UnicasterStatification (conversion to a state-machine) is underway.
 
   /* Each instance of this class manages a a single Datagram connection with
     one of the peer nodes of which the ConnectionManager is aware.
@@ -59,80 +60,55 @@ public class Unicaster
 
   		// Other instance variables.
   		private MultiMachineState theMultiMachineState;
-  		
-			public Unicaster(  // Constructor. 
+  		////// private UnicasterOrState theUnicasterOrState;
+		
+		public Unicaster(  // Constructor. 
 			  UnicasterManager theUnicasterManager,
 			  SubcasterManager theSubcasterManager,
 	    	LockAndSignal theLockAndSignal,
 	      NetcasterInputStream theNetcasterInputStream,
 	      NetcasterOutputStream theNetcasterOutputStream,
 	      IPAndPort remoteIPAndPort,
-        Shutdowner theShutdowner,
-        SubcasterQueue subcasterToUnicasterSubcasterQueue,
-    		Timer theTimer,
-    		NamedLong retransmitDelayMsNamedLong,
-    		DefaultBooleanLike leadingDefaultBooleanLike
-    		)
-      /* This constructor constructs a Unicaster for the purpose of
-        communicating with the node at remoteInetSocketAddress,
-        but no response has yet been made.
-        Fields are defined in a way to cause an initial response.
-        
-        ?? Add parameter which controls whether thread first waits for
-        a PING or an REPLY, to reduce or eliminate ping-ping conflicts.
-        Implement protocol with a state-machine.
-        */
-      {
-        super(
-        		theLockAndSignal,
+	      Shutdowner theShutdowner,
+	      SubcasterQueue subcasterToUnicasterSubcasterQueue,
+	  		Timer theTimer,
+	  		NamedLong retransmitDelayMsNamedLong,
+	  		DefaultBooleanLike leadingDefaultBooleanLike
+	  		)
+	    /* This constructor constructs a Unicaster for the purpose of
+	      communicating with the node at remoteInetSocketAddress,
+	      but no response has yet been made.
+	      Fields are defined in a way to cause an initial response.
+	      
+	      ?? Add parameter which controls whether thread first waits for
+	      a PING or an REPLY, to reduce or eliminate ping-ping conflicts.
+	      Implement protocol with a state-machine.
+	      */
+	    {
+	      super(
+	      		theLockAndSignal,
 	  	      theNetcasterInputStream,
 	  	      theNetcasterOutputStream,
 	          theShutdowner,
-  	        remoteIPAndPort,
-        		"Unicaster", 
-            retransmitDelayMsNamedLong, 
-            leadingDefaultBooleanLike
-            );
-
-        // Storing injected dependency arguments not stored in superclass.
-  			  this.theUnicasterManager= theUnicasterManager;
-  			  this.theSubcasterManager= theSubcasterManager;
-  			  this.subcasterToUnicasterSubcasterQueue= 
-  			  		subcasterToUnicasterSubcasterQueue;
-  	  		this.theTimer= theTimer;
-
-        }
-
-
-    public void run()  // Main Unicaster thread.
-      /* This method contains the main thread logic.
-        */
-      {
-        try { // Operations that might produce an IOException.
-	          initializeWithIOExceptionV();
-
-	          { // Uncomment only one of the following method calls.
-	          	runWithSubcastersV(); // Code which uses Subcasters.
-	          	//runWithoutSubcastersV(); // Original code without Subcasters.
-		          }
-	          
-	          finalizingV();
-          	}
-          catch( IOException e ) {
-          	Globals.logAndRethrowAsRuntimeExceptionV( 
-          			"run() IOException", e 
-          			);
-            }
-
-        theSubcasterManager.stoppingEntryThreadsV();
-	    	theUnicasterManager.removingV( this ); // Removing self from manager.
-
-        appLogger.info("run() exiting."); // Needed if thread self-terminates.
-        }
+		        remoteIPAndPort,
+	      		"Unicaster", 
+	          retransmitDelayMsNamedLong, 
+	          leadingDefaultBooleanLike
+	          );
+	
+	      // Storing injected dependency arguments not stored in superclass.
+				  this.theUnicasterManager= theUnicasterManager;
+				  this.theSubcasterManager= theSubcasterManager;
+				  this.subcasterToUnicasterSubcasterQueue= 
+				  		subcasterToUnicasterSubcasterQueue;
+		  		this.theTimer= theTimer;
+	
+	      }
 
     protected void initializeWithIOExceptionV() throws IOException
 	    {
-    		super.initializeWithoutStreamsV(); // We do the stream counts below.
+    		super.initializeWithoutStreamsV(); // Stream counts are added below in
+    		  // one of the sub-state machines.
 
     		// Create and start the state machines.
 	  	  theMultiMachineState= new MultiMachineState(
@@ -157,7 +133,44 @@ public class Unicaster
 	    	theEpiOutputStreamO.close(); // Closing output stream.
 	    	}
 
-    public void runWithSubcastersV() throws IOException
+    public void run()  // Main Unicaster thread.
+      /* This method contains the main thread logic.
+        */
+      {
+        try { // Operations that might produce an IOException.
+	          initializeWithIOExceptionV();
+
+	          { // Uncomment only one of the following method calls.
+	          	stateHandlerV(); // Handle things as a state-machine.
+	          	//// runWithSubcastersV(); // Code which uses Subcasters.
+	          	//% runWithoutSubcastersV(); // Original code without Subcasters.
+		          }
+	          
+	          finalizingV();
+	  	    	theUnicasterManager.removingV( this ); // Removing self from manager.
+          	}
+          catch( IOException e ) {
+          	Globals.logAndRethrowAsRuntimeExceptionV( 
+          			"run() IOException", e 
+          			);
+            }
+
+        appLogger.info("run() exiting."); // Needed if thread self-terminates.
+        }
+
+    /*  //////
+	  private class UnicasterOrState extends OrState 
+		
+	  	// Temporary machine for sequential Unicaster process. 
+		
+		  {
+	
+				// sub-states/machines.
+				}
+    */  //////
+
+    //// public void runWithSubcastersV() throws IOException
+    public void stateHandlerV() throws IOException
       /* This method does, or will do itself, or will delegate to Subcasters, 
         all protocols of a Unicaster.  This might include:
         * Doing full PING-REPLY protocol by letting a Subcaster do it, 
@@ -188,6 +201,7 @@ public class Unicaster
 		    		{ theEpiOutputStreamO.writingAndSendingV("SHUTTING-DOWN"); // Informing peer.
 		          appLogger.info( "SHUTTING-DOWN message sent.");
 		    			}
+          theSubcasterManager.stoppingEntryThreadsV();
     			} // processing:
 	    	}
 	  
@@ -454,12 +468,14 @@ public class Unicaster
 					} //processing:
 	      }
 
+		/*  //%
 		public void runWithoutSubcastersV()  //// Needn't be public. 
 			throws IOException
       // Does PING-REPLY protocol in this thread, not in a Subcaster.
 	    {
 				pingReplyProtocolV();
 		    }
+		*/  //%
 
 
 
