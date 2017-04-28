@@ -2,7 +2,7 @@ package allClasses;
 
 public class KeyedStateList< K > 
 
-	extends AndState  //// was MutableList. 
+	extends StateList  //// AndState  //// was MutableList. 
   
   /* This class adds a Key value to an AndState StateList.
     The Key is typically used for two things:

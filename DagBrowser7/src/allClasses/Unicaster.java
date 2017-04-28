@@ -14,7 +14,8 @@ public class Unicaster
 
   implements Runnable 
 
-  //////UnicasterStatification (conversion to a state-machine) is underway.
+  ////// UnicasterStatification (conversion to a state-machine) is underway.
+  ////// Maybe have KeyedStateList extend StateList instead of AndState. 
 
   /* Each instance of this class manages a a single Datagram connection with
     one of the peer nodes of which the ConnectionManager is aware.
@@ -140,11 +141,14 @@ public class Unicaster
         try { // Operations that might produce an IOException.
 	          initializeWithIOExceptionV();
 
-	          { // Uncomment only one of the following method calls.
-	          	stateHandlerV(); // Handle things as a state-machine.
-	          	//// runWithSubcastersV(); // Code which uses Subcasters.
-	          	//% runWithoutSubcastersV(); // Original code without Subcasters.
-		          }
+					  while (true) { // Repeating until termination is requested.
+					  	LockAndSignal.Input theInput= 
+				  				theLockAndSignal.testingForInterruptE();
+			      	if ( theInput != Input.NONE ) break; // Exit if interrupted.
+            	stateHandlerV(); // Handle things as a state-machine.
+				  	  theInput= // Waiting for at least one new input.
+			    			  theLockAndSignal.waitingForInterruptOrNotificationE();
+				  	  }
 	          
 	          finalizingV();
 	  	    	theUnicasterManager.removingV( this ); // Removing self from manager.

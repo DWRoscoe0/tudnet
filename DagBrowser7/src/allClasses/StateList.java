@@ -1,5 +1,7 @@
 package allClasses;
 
+import static allClasses.Globals.appLogger;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,16 +49,17 @@ public class StateList extends MutableList implements Runnable {
 		  Add it?
 	  */
 
-	public static StateList nullStateList= new StateList();
 	
-	protected StateList parentStateList= null;
+	/* Variables used for all states.  */
 
-  protected List<StateList> theListOfSubStateLists=
+	protected StateList parentStateList= null; // Our parent state.
+
+  protected List<StateList> theListOfSubStateLists= // Our sub-states.
       new ArrayList<StateList>(); // Initially empty list.
 
-  private String synchronousInputString; /* Stores an input stream event word,
-    for the purpose of giving the state handler 
-    the opportunity to process it.
+  private String synchronousInputString; /* Temporarily stores an input event.
+    It is the one place this state checks for synchronous input.
+    Asynchronous input can appear in any number of other variables.
     This variable is set to:
     * a non-null reference to the input String by the handler's caller
       immediately before the handler is called to try to process it
@@ -71,6 +74,20 @@ public class StateList extends MutableList implements Runnable {
 	  thrown in a thread, such as a Timer thread which can't handle it,
 	  for re-throwing later in a thread that can handle it. 
 	  */
+
+	/* Variables used only for OrState behavior.. */
+
+	private static StateList nullStateList= new StateList(); // no-op state.
+	  // Yse if this as a non-null initial state simplifies other code. 
+
+  protected StateList presentSubStateList= // Machine's qualitative state.
+  		StateList.nullStateList; // Initial default no-op state.
+      //// This should be null in AndStates.
+
+  protected StateList requestedSubStateList= null; // Becomes non-null when 
+  	// machine requests a new qualitative state, 
+    // even if it is the same as the present state.
+
 
 	/* Methods used to build state objects. */
   
@@ -93,7 +110,8 @@ public class StateList extends MutableList implements Runnable {
   	  return this;
     	}
 
-  public void initAndAddStateListV(StateList theSubStateList) throws IOException
+  public void initAndAddStateListV(StateList theSubStateList) 
+      throws IOException
     /* This method is used as part of the StateList building process.  It:
       * does an initialization of theSubState using 
         the method initializeWithIOExceptionState(),
@@ -143,7 +161,105 @@ public class StateList extends MutableList implements Runnable {
 		{ this.parentStateList= parentStateList; }
 
 	
-	/*  Methods which do actions for previously built StateList objects.  */
+	/*  Methods for AndState behavior.  */ ////// Maybe add initialization.
+
+	public synchronized boolean andStateHandlerB() throws IOException
+	  /* This method handles AndState and 
+	    state-machines that want to behave like AndState 
+	    by cycling all of its sub-machines
+	    until none of them makes any computational progress.
+	    It scans the sub-machine in order until one makes computational progress.
+	    Then it restarts the scan.
+	    It is done this way to prioritized the sub-machines.
+	    If one sub-machine produces something for which an earlier machine waits,
+	    that earlier machine will be run next.
+      It keeps scanning until none of the sub-machines in a scan make progress.
+	    This method returns true if any computational progress was made
+	    by any sub-machine, false otherwise.
+	    */
+	  { 
+			throwDelayedExceptionV(); // Throw exception if one was saved.
+		  boolean progressMadeB= false;
+  	  substateScansUntilNoProgress: while(true) {
+ 	  		for (StateList subStateList : theListOfSubStateLists) 
+	  	  	if (handleWithSynchronousInputB(subStateList))
+		  	  	{
+		  	  		progressMadeB= true;
+		  	  		continue substateScansUntilNoProgress; // Restart scan.
+		  	  		}
+ 	  		break substateScansUntilNoProgress; // No progress in this, final scan.
+  	  	} // substateScansUntilNoProgress:
+			return progressMadeB; 
+			}
+
+
+	/* Methods for implementing OrState behavior.. */ ////// Maybe add initialization.
+
+  public synchronized boolean orStateHandlerB() throws IOException
+	  /* This handles the OrState by cycling it's machine.
+	    It does this by calling the handler method 
+	    associated with the present state-machine's sub-state.
+      The sub-state might change with each of these calls.
+      It keeps calling sub-state handlers until no computation progress is made.
+      It returns true if computational progress was made by at least one state.
+	    It returns false otherwise.
+	    Each sub-state handler gets a chance to process the synchronous input,
+	    if one is available, until it is consumed. 
+	    
+	    //// Must check for sub-state validity vs. super-state 
+	      when behavioral inheritance is added.
+      */
+	  { 
+			throwDelayedExceptionV(); // Throw exception if one was saved.
+	  	boolean stateProgressB= false;
+			while (true) { // Cycle sub-states until done.
+	  	    boolean substateProgressB= 
+	  	    		handleWithSynchronousInputB(presentSubStateList);
+		  		if (requestedSubStateList != null) // Handling state change request.
+		  		  { presentSubStateList.exitV(); 
+	    	  		presentSubStateList= requestedSubStateList;
+		  			  presentSubStateList.enterV(); 
+		  				requestedSubStateList= null;
+							substateProgressB= true; // Count this as progress.
+			  			}
+		  	  if (!substateProgressB) // Exiting loop if no sub-state progress made. 
+		  	  	break;
+	  	  	stateProgressB= true; // Accumulate sub-state progress in this state.
+	  	  	} // while
+			return stateProgressB; // Returning accumulated state progress result.
+			}
+
+	protected void requestStateListV(StateList nextStateList)
+		/* This is called to change the state of a the state machine
+		  that contains this state to the sibling state nextStateList.  
+		  It does this by calling the parent state's 
+		  setNextSubStateListV(..) method. 
+		  It does not fully take affect until the present state handler exits.
+		  */
+		{
+			parentStateList.requestSubStateListV(nextStateList);
+			}
+
+  protected void requestSubStateListV(StateList nextStateList)
+	  /* This method requests the next state-machine state,
+	    which is the same thing as this state's next sub-state.
+	    
+	    Note, though the requestedSubStateList variable changes immediately,
+	    control is not transfered to the new sub-state until
+	    the handler of the present sub-state exits.
+	    
+	    ////// Change to use presentSubStateList instead of requestedSubStateList. 
+	    */
+	  {
+			if (requestedSubStateList != null) // Report excess request.
+        appLogger.error(
+        		"StateList.requestSubStateListV(..), excess state change request"
+        	  );
+  	  requestedSubStateList= nextStateList;
+			//% substateProgressB= true;  // Force state change as sub-state progress.
+			}
+
+	/*  Methods for entry and exit of OrState or their sub-states.  */
 	
 	public void enterV() throws IOException
 	  /* This method is called when 
@@ -151,10 +267,26 @@ public class StateList extends MutableList implements Runnable {
 	    This version does nothing, but it should be overridden 
 	    by state subclasses that require entry actions.
 	    This is not the same as initialize*V(),
-	    which does actions needed when the StateList object is being built.
+	    which does actions needed when the StateList object is being built
+	    and is being prepared for providing its services.
 	    */
 	  { 
 			}
+
+	public void exitV() throws IOException
+	  /* This method is called when a state is exited.
+	    It does actions needed when a state is exited.
+	    This version does nothing.
+	    It should be overridden in state subclasses that need exit actions.
+	    This is not the same as finalizeV(),
+	    called when the StateList object has finished providing its services.
+	    and is about to be destroyed or freed
+	    */
+	  { 
+			}
+
+
+	/* Methods containing general state handler code. */
 	
 	public synchronized void stateHandlerV() throws IOException
 	  /* This is a code-saving method.
@@ -193,8 +325,11 @@ public class StateList extends MutableList implements Runnable {
 	    This method does nothing except return false unless 
 	    it or stateHandlerV() is overridden.
 	    All overridden versions of this method should return 
-	    * true to indicate that some computational input-processing progress 
-	      was made,
+	    * true to indicate that some computational progress was made, including:
+		    * one or more sub-state's stateHandlerB() returned true,
+		    * a synchronous input String was processed,
+		    * requestSubStateListV(StateList nextState) was called
+		      to request a new qualitative sub-state.
 	    * false if no computational progress is made, 
 	      or progress made was indicated in some other way.
 	    To return false without needing to code a return statement,
@@ -218,15 +353,8 @@ public class StateList extends MutableList implements Runnable {
 			return false; // This default version returns false.
 		  }
 
-	public void delayedExceptionCheckV() throws IOException
-		/* 	This method re-throws any delayedIOException that
-			might have occurred in a handler running on an earlier Timer thread. 
-		  */
-		{ 
-		  if  // Re-throw any previously saved exception from timer thread.
-		    (delayedIOException != null) 
-		  	throw delayedIOException;
-		  }
+
+	/* Methods for exception handling.  */
 
 	public void delayExceptionV( IOException theIOException )
 		/* 	This method records an IOException that 
@@ -239,17 +367,52 @@ public class StateList extends MutableList implements Runnable {
 		  delayedIOException= theIOException;
 		  }
 
-	protected String getSynchronousInputString()
-	  // See handleSynchronousInputB(..).
-	  {
-			return synchronousInputString;
+	public void throwDelayedExceptionV() throws IOException
+		/* 	This method re-throws any delayedIOException that
+			might have occurred in a handler running on an earlier Timer thread. 
+		  */
+		{ 
+		  if  // Re-throw any previously saved exception from timer thread.
+		    (delayedIOException != null) 
+		  	throw delayedIOException;
 		  }
 
-	public void setSynchronousInputV(String synchronousInputString)
-		// See handleSynchronousInputB(..).
-	  {
-		  this.synchronousInputString= synchronousInputString;
-		  }
+
+	/* Methods for dealing with synchronous input to state-machines.  */
+	
+	protected synchronized boolean handleWithSynchronousInputB( 
+					StateList subStateList
+					) 
+		  throws IOException
+		/* This method calls subStateList's handler while passing
+		  any available synchronous input to it.
+		  It returns true if the sub-state's handler returned true 
+		    or a synchronous input was consumed by the sub-state.
+			It returns false otherwise.
+			If a synchronous input was consumed by the sub-state,
+			then it is erased from this StateList also so that 
+			it will not be processed by any other states.
+			
+			///////////// Use handleSynchronousInputB()?
+		 	*/
+		{
+			boolean madeProgressB;
+			String inputString= getSynchronousInputString();
+			if ( inputString == null ) // Synchronous input not present.
+				madeProgressB= subStateList.stateHandlerB();
+				else // Synchronous input is present.
+				{
+					subStateList.setSynchronousInputV(inputString);
+				  	// Store copy of synchronous input, if any, in sub-state.
+					madeProgressB= subStateList.stateHandlerB();
+					if // Process consumption of synchronous input, if it happened.
+						(subStateList.getSynchronousInputString() == null)
+						{ setSynchronousInputV(null); // Remove input from this state.
+							madeProgressB= true; // Treat input consumption as progress.
+							}
+					}
+			return madeProgressB;
+			}
 	
 	public synchronized boolean handleSynchronousInputB(String inputString) 
 			throws IOException
@@ -284,7 +447,7 @@ public class StateList extends MutableList implements Runnable {
 			synchronousInputString= null; // Remove input to from field variable.
 			return successB; // Returning whether input was processed.
 		  }
-	
+
 	public boolean tryInputB(String testString) throws IOException
 	  /* This method tries to process a synchronous input string.
 	    If inputString is the stored input string then it is consumed
@@ -301,48 +464,21 @@ public class StateList extends MutableList implements Runnable {
 			return successB; // The result of the test.
 		  }
 
-	public void exitV() throws IOException
-	  /* This method is called when a state is exited.
-	    It does actions needed when a state is exited.
-	    This version does nothing.
-	    It should be overridden in state subclasses that need exit actions.
-	    */
-	  { 
-			}
-
-	
-	/*  Methods which return results from stateHandlerB().  
-	  In addition to these methods, stateHandlerB() returns 
-	  a boolean value which has its own meaning.
-	  They, or the methods which override them,
-	  will probably also indicate that computation progress was made.  
-	  */
-
-	protected void requestStateListV(StateList nextStateList)
-		/* This is called to change the state of a the state machine.
-		  to the sibling state nextStateList.  It does this by 
-		  calling the parent state's setNextSubStateListV(..) method. 
-		  Its affect is not immediate.
-		  */
-		{
-			parentStateList.requestSubStateListV(nextStateList);
-			}
-	
-	protected void requestSubStateListV(StateList nextStateList)
-	  /* This method provides a link between setNextStateListV(StateList)
-	    and OrState.setNextSubStateListV(StateList).
-	    It is meaningful only in the OrState class in which
-	    it is used to select a new active sub-state.
-	    In the AndState class, all sub-states are active at the same time.
-	    It is overridden by the OrState class.
-	    It has no meaning when inherited by other classes and throws an Error.
-	    This method could be eliminated if setNextStateV(StateList)
-	    casted parentStateList to an OrState.
-	    */
+	protected String getSynchronousInputString()
+	  // See handleSynchronousInputB(..).
 	  {
-			throw new Error("requestSubStateListV(..) not overridden.");
-			}
+			return synchronousInputString;
+		  }
+
+	public void setSynchronousInputV(String synchronousInputString)
+		// See handleSynchronousInputB(..).
+	  {
+		  this.synchronousInputString= synchronousInputString;
+		  }
 	
+
+	/* Method for dealing with timer input.  */
+
 	public void run()
 	  /* This method is run by TimerInput to run 
 	    the stateHandlerB() method when the timer is triggered.
@@ -364,7 +500,10 @@ public class StateList extends MutableList implements Runnable {
 
 class OrState extends StateList {
 
-	/*  This class is the base class for all "or" state machine objects.
+	/* There are two ways to get "or" state-machine behavior.
+	  * Extend this class.
+	  * Extend StateList but call the "or" state handler method.
+	  
 	  OrState machines have sub-states, but unlike AndStates,
 	  only one sub-state can be active at a time.
 
@@ -372,84 +511,20 @@ class OrState extends StateList {
 	  Its sub-states are active one at a time.
 		*/
 
-  private StateList presentSubStateList= // Machine's qualitative state.
-  		StateList.nullStateList; // Initial default no-op state.
-
-  private StateList requestedSubStateList= null; // Becomes non-null when 
-  	// machine requests a new state, even if the same as the present state.
-
-  boolean substateProgressB= false; // Handler progress accumulator.
-    // This variable accumulates sub-state handler progress, 
-    // presently the "or" of:
-    // * the sub-state stateHandlerB() function value,
-    // * if a synchronous input String was processed,
-    // * if requestSubStateV(StateList nextState) was called
-    // This variable is reset to false after it is aggregated into,
-    // and returned as, a stateHandlerB() stateProgressB value.
-
   public synchronized boolean stateHandlerB() throws IOException
-	  /* This handles the OrState by cycling it's machine.
-	    It does this by calling the handler method 
-	    associated with the present state-machine's sub-state.
-      The sub-state might change with each of these calls.
-      It keeps calling sub-state handlers until no computation progress is made.
-      It returns true if computational progress was made by at least one state.
-	    It returns false otherwise.
-	    Each sub-state handler gets a chance to process the synchronous input,
-	    if one is available, until it is consumed. 
-	    
-	    //// Must check for sub-state validity vs. super-state 
-	      when behavioral inheritance is added.
-      */
+	  /* This method calls the default OrState handler.  */
 	  { 
-  		delayedExceptionCheckV(); // Throw exception if one was saved.
-	  	boolean stateProgressB= false;
-  		while (true) { // Cycle sub-states until done.
-  	  		if  (requestedSubStateList != null) // Handling state change request.
-  	  		  { // Exit present state, enter requested one, and reset request.
-  	  			  presentSubStateList.exitV(); 
-	    	  		presentSubStateList= requestedSubStateList;
-  	  			  presentSubStateList.enterV(); 
-  	  				requestedSubStateList= null;
-			  			}
-  	  		presentSubStateList.setSynchronousInputV(getSynchronousInputString());
-  	  		  // Store input string, if any, in sub-state.
-		  	  if ( presentSubStateList.stateHandlerB() )
-				  	substateProgressB= true;
-  	  		if // Detect and record whether synchronous input was consumed.
-  	  			( (getSynchronousInputString() != null) &&
-  	  			  (presentSubStateList.getSynchronousInputString() == null)
-  	  				)
-						{ setSynchronousInputV(null);
-							substateProgressB= true;
-							}
-  	  	  if (!substateProgressB) // Exiting loop if no sub-state progress made. 
-  	  	  	break;
-	  	  	stateProgressB= true; // Accumulate sub-state progress in this state.
-		  		substateProgressB= false; // Reset for later use.
-	  	  	} // while
-			return stateProgressB; // Returning accumulated state progress result.
-			}
-		
-  protected void requestSubStateListV(StateList nextStateList)
-	  /* This method requests the next state-machine state,
-	    which is the same thing as this state's next sub-state.
-	    It overrides StateList.requestSubStateV(StateList nextState) to work.
-	    
-	    Note, though the requestedSubStateList variable changes immediately,
-	    control is not transfered to the new sub-state until
-	    the handler of the present sub-state exits.
-	    */
-	  {
-  	  requestedSubStateList= nextStateList;
-			substateProgressB= true;  // Force state change as sub-state progress.
-			}
-  
+  		return orStateHandlerB(); 
+  		}
+
 	}  // OrState 
 
 class AndState extends StateList {
 
-	/* This class is the base class for all "and" state machine objects.
+	/* There are two ways to get "and" state-machine behavior.
+	  * Extend this class.
+	  * Extend StateList but call the "and" state handler method.
+
 	  AndState machines have sub-states, but unlike OrStates,
 	  all AndState sub-states are active at the same time.
 	  There is concurrency in an AndState machine, at least at this level.
@@ -462,42 +537,8 @@ class AndState extends StateList {
     	}
 
 	public synchronized boolean stateHandlerB() throws IOException
-	  /* This method handles this AndState by cycling all of its sub-machines
-	    until none of them makes any computational progress.
-	    It scans the sub-machine in order until one makes computational progress.
-	    Then it restarts the scan.
-	    It is done this way to prioritized the sub-machines.
-	    If one sub-machine produces something for which an earlier machine waits,
-	    that earlier machine will be run next.
-      It keeps scanning until none of the sub-machines in a scan make progress.
-	    This method returns true if any computational progress was made
-	    by any sub-machine, false otherwise.
-	    */
-	  { 
-			delayedExceptionCheckV(); // Throw exception if one was saved.
-		  boolean anyProgressMadeB= false;
-			boolean thisScanMadeProgressB;
-  	  substateScansUntilNoProgress: while(true) {
-		  		thisScanMadeProgressB= false;
-   	  		for (StateList subStateList : theListOfSubStateLists) {
-			  	  	subStateList.setSynchronousInputV(getSynchronousInputString());
-		  	  		  // Store synchronous input, if any, in sub-state.
-				  	  if ( subStateList.stateHandlerB() ) thisScanMadeProgressB= true;
-		  	  		if // Detect and record whether synchronous input was consumed.
-		  	  			( (getSynchronousInputString() != null) &&
-		  	  			  (subStateList.getSynchronousInputString() == null)
-		  	  				)
-								{ setSynchronousInputV(null);
-									thisScanMadeProgressB= true;
-									}
-			  	  	if (thisScanMadeProgressB) {
-			  	  		anyProgressMadeB= true;
-			  	  		continue substateScansUntilNoProgress; // Restart scan.
-			  	  		}
-		  	  		} // scanSubstatesUntilAnyProgresses:
-   	  		break substateScansUntilNoProgress;
-	  	  	} // substateScansUntilNoProgress:
-			return anyProgressMadeB; 
-			}
+		{ 
+		  return andStateHandlerB(); 
+		  }
 
 	}  // AndState 
