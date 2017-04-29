@@ -7,7 +7,7 @@ import java.util.Timer;
 
 public class HelloMachineState
 
-	extends AndState
+	extends OrState
 	
 	/* This class contains a [hierarchical] state machine 
 	  that processes the HELLO handshake that is supposed to happen

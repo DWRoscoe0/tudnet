@@ -90,7 +90,11 @@ public class StateList extends MutableList implements Runnable {
 
 
 	/* Methods used to build state objects. */
-  
+  protected void initializeWithIOExceptionV() throws IOException
+	  {
+	  	initializeWithIOExceptionStateList();
+		  }
+
   public StateList initializeWithIOExceptionStateList() throws IOException
     /* This method initializes this state object, 
       It does actions needed when this state object is being built.

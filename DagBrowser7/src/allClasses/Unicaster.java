@@ -62,8 +62,10 @@ public class Unicaster
   		// Other instance variables.
   		private MultiMachineState theMultiMachineState;
   		////// private UnicasterOrState theUnicasterOrState;
-		
-		public Unicaster(  // Constructor. 
+  		private IgnoreAllSubstatesState theIgnoreAllSubstatesState;
+  		private TemporaryMainState theTemporaryMainState;
+
+  	public Unicaster(  // Constructor. 
 			  UnicasterManager theUnicasterManager,
 			  SubcasterManager theSubcasterManager,
 	    	LockAndSignal theLockAndSignal,
@@ -112,6 +114,13 @@ public class Unicaster
     		  // one of the sub-state machines.
 
     		// Create and start the state machines.
+
+	  	  theTemporaryMainState= new TemporaryMainState();
+	  	  theTemporaryMainState.initializeWithIOExceptionV();
+	  	  
+	  	  theIgnoreAllSubstatesState= new IgnoreAllSubstatesState();
+	  	  theIgnoreAllSubstatesState.initializeWithIOExceptionV();
+
 	  	  theMultiMachineState= new MultiMachineState(
 	  				theTimer, 
 	  			  theEpiInputStreamI,
@@ -120,7 +129,13 @@ public class Unicaster
 	  				this
 	  	  		);
 	  	  theMultiMachineState.initializeWithIOExceptionV();
+
+	  	  theIgnoreAllSubstatesState.addB( theMultiMachineState );
+
+	  	  addB( theTemporaryMainState );
 	  	  addB( theMultiMachineState );
+	  	  addB( theIgnoreAllSubstatesState );
+
 	  	  theMultiMachineState.stateHandlerB(); // Start the machines,
 	  	    // by starting their timers, by callinG the main machine handler.
 	  	  
@@ -187,6 +202,7 @@ public class Unicaster
 	    {
     	  processing: {
 	    		if (!processingHellosB()) break processing;
+
 		      theSubcasterManager.getOrBuildAddAndStartSubcaster(
 					  "PING-REPLY" //// Hard wired creation at first.  Fix later.
 					  ); // Adding Subcaster.
@@ -208,7 +224,31 @@ public class Unicaster
           theSubcasterManager.stoppingEntryThreadsV();
     			} // processing:
 	    	}
-	  
+
+    class TemporaryMainState extends StateList 
+	    {
+
+		    public void stateHandlerV() 
+		      /// Does nothing, thereby ignoring all sub-states.
+		      {}
+
+		    }
+
+    class IgnoreAllSubstatesState extends StateList
+      /* This class holds, but does not activate, 
+        any states or machines it holds.
+        It is for holding states which either are not finished,
+        or are finished but their handlers are 
+        being temporarily called in a non-standard way.
+       */
+	    {
+
+		    public void stateHandlerV() 
+		      /// Does nothing, thereby not calling any of the sub-states.
+		      {}
+
+		    }
+    
     /*////
 		private void sendTestPacketV() throws IOException
 			{
