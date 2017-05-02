@@ -47,6 +47,15 @@ public class DirectoryTableCellRenderer
         Component RenderComponent= super.getTableCellRendererComponent( 
           table, value, isSelected, hasFocus, row, column );
 
+        UIColor.setColorsV( // Override its colors in renderer.
+        		RenderComponent,
+            Color.RED, // kluge, cachedBackgroundColor not used for directories.
+            (DataNode)value,
+            isSelected,
+            hasFocus
+            );
+
+        /*  //%
         Color FocusDependentSelectionColor;
           if (table.isFocusOwner())  // and base color on focus.
             FocusDependentSelectionColor= UIColor.activeColor;
@@ -57,6 +66,7 @@ public class DirectoryTableCellRenderer
             else
             RenderComponent.setBackground(table.getBackground());
         // RenderComponent.setBackground(Color.RED);
+        */  //%
 
         return RenderComponent;
         } // getTableCellRendererComponent(.)
