@@ -45,7 +45,9 @@ public class IJTree
 
       public void focusGained(FocusEvent TheFocusEvent)
         { 
-          theDefaultTreeCellRenderer.setBackgroundSelectionColor(Color.GREEN);
+          theDefaultTreeCellRenderer.setBackgroundSelectionColor(
+          		UIColor.activeColor
+          		);
           repaint();
           }
 

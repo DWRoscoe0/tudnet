@@ -19,11 +19,12 @@ import java.awt.event.FocusListener;
 
 import javax.swing.BorderFactory;
 //import javax.swing.BoxLayout;
-import javax.swing.DefaultListCellRenderer;
+//% import javax.swing.DefaultListCellRenderer;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.ListCellRenderer;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 import javax.swing.border.Border;
@@ -63,10 +64,11 @@ public class TitledListViewer // adapted from TitledListViewer.
 
       private JLabel titleJLabel;  // Label with the title.
 
-      private JList<Object> theJList;  // Component with the content.
-        private TreeListModel theTreeListModel;  // Model with the content.
+      //% private JList<Object> theJList;  // Component with the content.
+      private JList<DataNode> theJList;  // Component with the content.
+      private TreeListModel theTreeListModel;  // Model with the content.
 
-      private Color backgroundColor;
+      private Color cachedJListBackgroundColor;
 
     // constructor and constructed-related methods.
 
@@ -165,7 +167,7 @@ public class TitledListViewer // adapted from TitledListViewer.
   	      */
 	    	{ // initializeHelpeeV(..).
 	  	  	{ // Final initialization.
-		        backgroundColor= getBackground();  // Saving background for later use.
+		        cachedJListBackgroundColor= getBackground();  // Saving background for later use.
 		        setLayout( new BorderLayout() );
 		        
 		        titleJLabelInitializationV(); // Initializing titleJLabel.
@@ -217,7 +219,8 @@ public class TitledListViewer // adapted from TitledListViewer.
         /* This grouping method creates and initializes the JList.  
           */
         { // theJListInitializationV( )
-	        theJList= new JList<Object>();  // Construct JList.
+	        //% theJList= new JList<Object>();  // Construct JList.
+      		theJList= new JList<DataNode>();  // Construct JList.
 	        add(theJList,BorderLayout.CENTER); // Adding it to main JPanel.
 	        //add(theJList); // Adding it to main JPanel.
           { // Set ListModel for the proper type of elements.
@@ -230,7 +233,7 @@ public class TitledListViewer // adapted from TitledListViewer.
             } // Set ListModel for the proper type of elements.
           theJList.setSelectionMode( ListSelectionModel.SINGLE_SELECTION );
           theJList.setCellRenderer(   // Setting custom rendering.
-            TheListCellRenderer 
+            theTitledListCellRenderer 
             );
           } // theJListInitializationV( )
 
@@ -426,47 +429,42 @@ public class TitledListViewer // adapted from TitledListViewer.
 
     // List cell rendering.
 
-      private ListCellRenderer TheListCellRenderer=
-        new ListCellRenderer(); // for custom cell rendering.
-    
-      public class ListCellRenderer
-        extends DefaultListCellRenderer
-        /* This small helper class extends the method 
-          getTableCellRendererComponent() which is 
-          used for rendering JList cells.
-          The main purpose of this is to give the selected cell
-          a different color when the Component has focus.
-          */
-        { // class ListCellRenderer
-          private static final long serialVersionUID = 1L;
+      ////////private TitledListCellRenderer theTitledListCellRenderer=
+      ////////  new TitledListCellRenderer(); // for custom cell rendering.
+      private ListCellRenderer<? super DataNode> theTitledListCellRenderer=
+      		new TitledListCellRendererOfDataNodes(); // for custom cell rendering.
+        //// setCellRenderer(..) incompatible with this.  super keyword.
 
+      public class TitledListCellRendererOfDataNodes
+        extends JLabel
+        implements ListCellRenderer<DataNode>
+        ////// This will replace TitledListCellRenderer.
+        {
+      	  public TitledListCellRendererOfDataNodes() // Constructor.
+	      	  {
+	        		setOpaque(true);  // To display normally transparent background.
+	      	  	}
+      	  
           public Component getListCellRendererComponent
-            ( JList<?> list,
-              Object value,
-              int index,
-              boolean isSelected,
-              boolean hasFocus
+            ( JList<? extends DataNode> theJListOfDataNodes,
+              DataNode theDataNode,
+              int indexI,
+              boolean isSelectedB,
+              boolean hasFocusB
               )
+            /* Returns a JLabel for displaying a DataNode in a JList. */
             {
-              Component RenderComponent=  // Getting the superclass version.
-                super.getListCellRendererComponent(
-                  list, value, index, isSelected, hasFocus 
-                  );
-              { // Making color adjustments based on various state.
-                if ( ! isSelected )  // cell not selected.
-                  //RenderComponent.setBackground(list.getBackground());
-                    // This returns white!
-                  RenderComponent.setBackground( backgroundColor );
-                  //RenderComponent.setBackground( Color.YELLOW );
-                else if ( ! list.isFocusOwner() )  // selected but not focused.
-                  RenderComponent.setBackground( list.getSelectionBackground() );
-                else  // both selected and focused.
-                  RenderComponent.setBackground( Color.GREEN ); // be distinctive.
-                  //RenderComponent.setBackground( Color.PINK); // for developing.
-                }
-              return RenderComponent;
+          		setText( theDataNode.toString() );
+              UIColor.setColorsV(
+                this,
+                cachedJListBackgroundColor,
+              	theDataNode,
+                isSelectedB,
+                hasFocusB
+                );
+              return this;
               }
 
-        } // class ListCellRenderer    
+        } // class TitledListCellRendererOfDataNodes    
 
     } // TitledListViewer

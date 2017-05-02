@@ -1,5 +1,4 @@
 package allClasses;
-import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
@@ -81,7 +80,7 @@ public class IJButton
 
       public void focusGained(FocusEvent TheFocusEvent)
         { 
-          setBackground(Color.GREEN);  // use GREEN as background color when focused.
+          setBackground(UIColor.activeColor);
           repaint();
           }
 

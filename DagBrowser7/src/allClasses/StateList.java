@@ -2,6 +2,7 @@ package allClasses;
 
 import static allClasses.Globals.appLogger;
 
+import java.awt.Color;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -500,6 +501,16 @@ public class StateList extends MutableList implements Runnable {
 		    }
 		}
 
+	/* Method for UI coloring.  */
+
+  Color getBackgroundColor( Color defaultBackgroundColor )
+    /* This method returns the background color 
+      which should be used to display this State.
+     */
+    {
+    	return UIColor.stateColor;
+    	}
+
 	}  // StateList class 
 
 class OrState extends StateList {
@@ -520,6 +531,11 @@ class OrState extends StateList {
 	  { 
   		return orStateHandlerB(); 
   		}
+
+  Color getBackgroundColor( Color defaultBackgroundColor )
+    {
+    	return UIColor.orStateColor;
+    	}
 
 	}  // OrState 
 
@@ -544,5 +560,10 @@ class AndState extends StateList {
 		{ 
 		  return andStateHandlerB(); 
 		  }
+
+  Color getBackgroundColor( Color defaultBackgroundColor )
+    {
+    	return UIColor.andStateColor;
+    	}
 
 	}  // AndState 

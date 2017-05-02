@@ -1,5 +1,7 @@
 package allClasses;
 
+import java.awt.Color;
+
 import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
 
@@ -323,5 +325,16 @@ public class DataNode
 
         return childDataNode;  // Return DataNode.
         }
-    
+
+    Color getBackgroundColor( Color defaultBackgroundColor )
+      /* This method returns the background color 
+        which should be used to display this DataNode.
+        The default is input parameter defaultBackgroundColor,
+        but this method may be overridden to return 
+        any class-dependent or data-dependent color desired.
+       */
+	    {
+	    	return defaultBackgroundColor;
+	    	}
+
   } // interface DataNode.

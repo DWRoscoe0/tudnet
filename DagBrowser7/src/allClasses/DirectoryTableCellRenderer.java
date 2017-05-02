@@ -49,7 +49,7 @@ public class DirectoryTableCellRenderer
 
         Color FocusDependentSelectionColor;
           if (table.isFocusOwner())  // and base color on focus.
-            FocusDependentSelectionColor= Color.GREEN;
+            FocusDependentSelectionColor= UIColor.activeColor;
             else
             FocusDependentSelectionColor= table.getSelectionBackground();
         if (isSelected)  // override color if selected.

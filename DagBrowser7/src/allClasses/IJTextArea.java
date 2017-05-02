@@ -77,7 +77,7 @@ public class IJTextArea
       @Override
       public void focusGained(FocusEvent arg0) 
         {
-          setBackground(Color.GREEN);
+          setBackground(UIColor.activeColor);
           }
     
       @Override

@@ -343,7 +343,7 @@ public class DagBrowserPanel
           treeJScrollPane.setMinimumSize( new Dimension( 0, 0 ) );
           treeJScrollPane.setPreferredSize( new Dimension( 400, 400 ) );
           treeJScrollPane.getViewport().setOpaque( true );
-          treeJScrollPane.getViewport().setBackground( Color.GREEN );
+          treeJScrollPane.getViewport().setBackground( UIColor.activeColor );
           { // Build the JTree view for the JScrollPane.
             theRootJTree= new RootJTree(  // Construct the JTree with...
               theDataTreeModel,  // ...this model for tree data and...
