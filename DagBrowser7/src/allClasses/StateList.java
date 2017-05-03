@@ -261,7 +261,6 @@ public class StateList extends MutableList implements Runnable {
         		"StateList.requestSubStateListV(..), excess state change request"
         	  );
   	  requestedSubStateList= nextStateList;
-			//% substateProgressB= true;  // Force state change as sub-state progress.
 			}
 
 	/*  Methods for entry and exit of OrState or their sub-states.  */
@@ -397,9 +396,7 @@ public class StateList extends MutableList implements Runnable {
 			If a synchronous input was consumed by the sub-state,
 			then it is erased from this StateList also so that 
 			it will not be processed by any other states.
-			
-			///////////// Use handleSynchronousInputB()?
-		 	*/
+			*/
 		{
 			boolean madeProgressB;
 			String inputString= getSynchronousInputString();

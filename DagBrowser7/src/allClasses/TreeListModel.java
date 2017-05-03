@@ -11,7 +11,6 @@ import javax.swing.tree.TreePath;
 
 public class TreeListModel
 
-  //% extends AbstractListModel<Object> 
 	extends AbstractListModel<DataNode>
 
   implements TreeModelListener
@@ -26,16 +25,14 @@ public class TreeListModel
   { // class TreeListModel
 
 	  // Injected dependency variables.
-    //% private final Object theListDataNode;  //Node in tree with source data.
-		private final DataNode theListDataNode;  //Node in tree with list data. //////
+		private final DataNode theListDataNode;  //Node in tree with list data.
 	  private final TreePath theTreePath;  // Path to that node.
 
 	  // Other instance variables.
 	  private DataTreeModel theDataTreeModel;  // Model of tree containing node.
 
     TreeListModel(  // Constructor.
-    		//% Object theListDataNode, TreePath theTreePath
-    		DataNode theListDataNode, TreePath theTreePath  //////
+    		DataNode theListDataNode, TreePath theTreePath
     		)
       {
 	      this.theListDataNode= theListDataNode;
@@ -73,10 +70,9 @@ public class TreeListModel
     // ListModel interface methods.
 	    
 	    @Override
-	    //% public Object getElementAt(int indexI) 
 	    public DataNode getElementAt(int indexI)
 	      {
-	        return (DataNode) theDataTreeModel.getChild( theListDataNode, indexI ); ////////
+	        return (DataNode) theDataTreeModel.getChild( theListDataNode, indexI );
 	        }
 	
 	    @Override

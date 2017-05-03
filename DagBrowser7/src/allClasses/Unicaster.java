@@ -14,9 +14,6 @@ public class Unicaster
 
   implements Runnable 
 
-  ////// UnicasterStatification (conversion to a state-machine) is underway.
-  ////// Maybe have KeyedStateList extend StateList instead of AndState. 
-
   /* Each instance of this class manages a a single Datagram connection with
     one of the peer nodes of which the ConnectionManager is aware.
     It uses unicast packets, not multicast packets.
@@ -61,7 +58,6 @@ public class Unicaster
 
   		// Other instance variables.
   		private MultiMachineState theMultiMachineState;
-  		////// private UnicasterOrState theUnicasterOrState;
   		private IgnoreAllSubstatesState theIgnoreAllSubstatesState;
   		private TemporaryMainState theTemporaryMainState;
 
@@ -177,18 +173,6 @@ public class Unicaster
         appLogger.info("run() exiting."); // Needed if thread self-terminates.
         }
 
-    /*  //////
-	  private class UnicasterOrState extends OrState 
-		
-	  	// Temporary machine for sequential Unicaster process. 
-		
-		  {
-	
-				// sub-states/machines.
-				}
-    */  //////
-
-    //// public void runWithSubcastersV() throws IOException
     public void stateHandlerV() throws IOException
       /* This method does, or will do itself, or will delegate to Subcasters, 
         all protocols of a Unicaster.  This might include:
@@ -212,7 +196,6 @@ public class Unicaster
 		      	if ( theInput != Input.NONE ) break; // Exit if interrupted.
 		      	if (processingMessagesFromRemotePeerB()) continue;
 		    		if (multiplexingPacketsFromSubcastersB()) continue;
-		    		////if (theLinkMeasurementState.cycleMachineB()) continue;
 			  	  theInput= // Waiting for at least one new input.
 		    			  theLockAndSignal.waitingForInterruptOrNotificationE();
 			  	  }
@@ -304,7 +287,6 @@ public class Unicaster
 						theDatagramPacket.getOffset(),
 						theDatagramPacket.getLength()
 						);
-			  ///theEpiOutputStreamO.flush(); // Flushing to send it as a packet.
 				theEpiOutputStreamO.sendingPacketV(); //// Could this be delayed?
 				}
 
@@ -349,7 +331,7 @@ public class Unicaster
 		      if // Passing remainder of message to associated Subcaster.
 		        ( theSubcaster != null )
 		        { processMessageToSubcasterV( theSubcaster ); break process; }
-		      if ( theMultiMachineState.handleSynchronousInputB(keyString) ) ////
+		      if ( theMultiMachineState.handleSynchronousInputB(keyString) )
 		      	break process;
   			  if ( processHelloB( keyString ) ) // "HELLO"
    			  	break process;
@@ -511,16 +493,6 @@ public class Unicaster
 		      		);
 					} //processing:
 	      }
-
-		/*  //%
-		public void runWithoutSubcastersV()  //// Needn't be public. 
-			throws IOException
-      // Does PING-REPLY protocol in this thread, not in a Subcaster.
-	    {
-				pingReplyProtocolV();
-		    }
-		*/  //%
-
 
 
 	} // Unicaster.

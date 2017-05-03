@@ -13,7 +13,6 @@ public class DirectoryTableCellRenderer
     since the rendering is not directory-specific.  ??
     */
   { // class DirectoryTableCellRenderer
-	  private static final long serialVersionUID = 1L;
 
 	  public Component getTableCellRendererComponent
       ( JTable table, 
@@ -54,19 +53,6 @@ public class DirectoryTableCellRenderer
             isSelected,
             hasFocus
             );
-
-        /*  //%
-        Color FocusDependentSelectionColor;
-          if (table.isFocusOwner())  // and base color on focus.
-            FocusDependentSelectionColor= UIColor.activeColor;
-            else
-            FocusDependentSelectionColor= table.getSelectionBackground();
-        if (isSelected)  // override color if selected.
-            RenderComponent.setBackground(FocusDependentSelectionColor);
-            else
-            RenderComponent.setBackground(table.getBackground());
-        // RenderComponent.setBackground(Color.RED);
-        */  //%
 
         return RenderComponent;
         } // getTableCellRendererComponent(.)

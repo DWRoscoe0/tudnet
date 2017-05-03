@@ -7,19 +7,11 @@ package allClasses;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
-//import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-//import java.awt.event.MouseEvent;
-
-
-
-
 
 import javax.swing.BorderFactory;
-//import javax.swing.BoxLayout;
-//% import javax.swing.DefaultListCellRenderer;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -34,6 +26,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreePath;
+
 
 public class TitledListViewer // adapted from TitledListViewer.
 
@@ -64,7 +57,6 @@ public class TitledListViewer // adapted from TitledListViewer.
 
       private JLabel titleJLabel;  // Label with the title.
 
-      //% private JList<Object> theJList;  // Component with the content.
       private JList<DataNode> theJList;  // Component with the content.
       private TreeListModel theTreeListModel;  // Model with the content.
 
@@ -219,10 +211,8 @@ public class TitledListViewer // adapted from TitledListViewer.
         /* This grouping method creates and initializes the JList.  
           */
         { // theJListInitializationV( )
-	        //% theJList= new JList<Object>();  // Construct JList.
       		theJList= new JList<DataNode>();  // Construct JList.
 	        add(theJList,BorderLayout.CENTER); // Adding it to main JPanel.
-	        //add(theJList); // Adding it to main JPanel.
           { // Set ListModel for the proper type of elements.
             theTreeListModel= new TreeListModel(
           		aTreeHelper.getWholeDataNode( ),
@@ -429,16 +419,12 @@ public class TitledListViewer // adapted from TitledListViewer.
 
     // List cell rendering.
 
-      ////////private TitledListCellRenderer theTitledListCellRenderer=
-      ////////  new TitledListCellRenderer(); // for custom cell rendering.
       private ListCellRenderer<? super DataNode> theTitledListCellRenderer=
       		new TitledListCellRendererOfDataNodes(); // for custom cell rendering.
-        //// setCellRenderer(..) incompatible with this.  super keyword.
 
       public class TitledListCellRendererOfDataNodes
         extends JLabel
         implements ListCellRenderer<DataNode>
-        ////// This will replace TitledListCellRenderer.
         {
       	  public TitledListCellRendererOfDataNodes() // Constructor.
 	      	  {
