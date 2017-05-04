@@ -17,7 +17,10 @@ public class IFile
 
   extends DataNode
 
-  // test change.
+  /* This class extends DataNode to represent files and directories.
+    It does not distinguish duplicate links to files and directories from 
+    full copies of files and directories
+    */
   
   { // class IFile
   
