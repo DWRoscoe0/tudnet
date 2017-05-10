@@ -5,14 +5,24 @@ import java.awt.Component;
 
 public class UIColor {
 
-	public static final Color activeColor= Color.YELLOW;
+	public static final Color activeColor= Color.YELLOW; //// Phase out.
+	
 	public static final Color selectedBackgroundColor= Color.BLACK;
 	public static final Color selectedForegroundColor= Color.WHITE;
-
-	public static final Color stateColor= Color.CYAN;
-	public static final Color andStateColor= Color.MAGENTA;
-	public static final Color orStateColor= Color.ORANGE;
 	public static final Color normalForgroundColor= Color.BLACK;
+
+  // Color set by State class initializer.
+	public static final Color initializerStateColor= Color.WHITE;
+  // Colors set by class initializer methods.
+	public static final Color initialStateColor= Color.BLUE;
+	public static final Color initialAndStateColor= Color.MAGENTA;
+	public static final Color initialOrStateColor= Color.ORANGE;
+  // Colors set by class handler methods.
+	public static final Color runningStateColor= Color.GREEN;
+	public static final Color runnableStateColor= new Color(255,127,127); 
+			// LIGHT_GREEN, was Color.CYAN;
+	public static final Color inactiveStateColor= Color.CYAN; // was LGHT_GRAY;
+	public static final Color waitingStateColor= Color.PINK;
 
 
   public static void setColorsV
@@ -22,9 +32,8 @@ public class UIColor {
       boolean isSelectedB,
       boolean hasFocusB
       )
-    /* Sets theRenderComponent for displaying theDataNode,
-      using the other parameters as context.
-      It sets text and colors. 
+    /* Sets appropriate forground and background colors in theRenderComponent 
+      for displaying theDataNode, using the other parameters as context.
       */
     {
   		Color backgroundColor, foregroundColor;

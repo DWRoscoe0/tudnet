@@ -68,7 +68,7 @@ public class HelloMachineState
 	    // This method processes any pending loose ends before shutdown.
 		  {
 	  	  super.finalizeV();
-	  		stateHandlerB(); // This throws any saved IOException from timer.
+	  		overrideStateHandlerB(); // This throws any saved IOException from timer.
 	  		helloTimerInput.cancelingV(); // To stop our timer.
 	      }
 		
@@ -85,6 +85,7 @@ public class HelloMachineState
 		  // Cancels acknowledgement timer.
 		  { 
 				helloTimerInput.cancelingV();
+				super.exitV();
 				}
 
 		// Other variables.

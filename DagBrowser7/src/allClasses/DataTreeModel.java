@@ -464,10 +464,11 @@ public class DataTreeModel
 		      This method must be running on the EDT.
    	      */
         {
-	      	if ( EDTUtilities.checkNotRunningEDTB() ) return;
+	      	if ( EDTUtilities.checkNotRunningEDTB() ) return; //tmpcheck
+	      	if ( parentTreePath == null ) return; //tmpcheck
 	        DataNode parentDataNode= // Calculating parent DataNode.
 	        		(DataNode)parentTreePath.getLastPathComponent();
-	        int indexI= getIndexOfChild( // Calculating index of the DataNode.
+	      	int indexI= getIndexOfChild( // Calculating index of the DataNode.
 	        		parentDataNode, 
 	        		theDataNode 
 	        		); 

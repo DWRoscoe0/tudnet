@@ -131,7 +131,7 @@ public class LinkMeasurementState
 	    // This method processes any pending loose ends before shutdown.
 		  {
 	  	  super.finalizeV();
-	  		stateHandlerB(); // This throws any saved IOException from timer.
+	  		overrideStateHandlerB(); // This throws any saved IOException from timer.
 	  		measurementTimerInput.cancelingV(); // To stop our timer.
 	      }
 		
@@ -149,8 +149,8 @@ public class LinkMeasurementState
 				  theMeasurementPausedState;
 				private MeasurementInitializationState
 				  theMeasurementInitializationState;
-				private MeasurementHandshakesState 
-				  theMeasurementHandshakesState;
+				private MeasurementHandshakingState
+				  theMeasurementHandshakingState;
 	
 		    public StateList initializeWithIOExceptionStateList() throws IOException 
 			    {
@@ -161,8 +161,8 @@ public class LinkMeasurementState
 			  	  		new MeasurementPausedState() );
 			  	  initAndAddStateListV( theMeasurementInitializationState= 
 			  	  		new MeasurementInitializationState() );
-			  	  initAndAddStateListV( theMeasurementHandshakesState= 
-			  	  		new MeasurementHandshakesState() );
+			  	  initAndAddStateListV( theMeasurementHandshakingState= 
+			  	  		new MeasurementHandshakingState() );
 	
 						requestSubStateListV( theMeasurementPausedState ); // Initial state.
 						return this;
@@ -219,7 +219,7 @@ public class LinkMeasurementState
 		    private class MeasurementPausedState extends StateList
 		    
 		      /* This class does the pause between measurement handshakes.
-		        It finishes by requesting the MeasurementHandshakesState.
+		        It finishes by requesting the MeasurementHandshakingState.
 		       	*/
 			  
 			  	{
@@ -243,16 +243,17 @@ public class LinkMeasurementState
 						  // Cancels timer and initializes the handshake time-out.
 						  { 
 								measurementTimerInput.cancelingV();
+								super.exitV();
 								}
 					
 			  	} // class MeasurementPausedState
 	
 				private class MeasurementInitializationState extends StateList 
 			  	/* This state does nothing but initializes for the handshake,
-			  	  then instantly moves on to the MeasurementHandshakesState.
+			  	  then instantly moves on to the MeasurementHandshakingState.
 					  
 					  //// This initialization could be moved to either:
-					    * enterV() of MeasurementHandshakesState if
+					    * enterV() of MeasurementHandshakingState if
 					      that state was split into two levels.
 					    * exitV() of MeasurementPausedState.
 			  	  */
@@ -262,12 +263,12 @@ public class LinkMeasurementState
 		    			  retryTimeOutMsL=   // Initializing retry time-out.
 		    			  		retransmitDelayMsNamedLong.getValueL();
 	
-					  		requestStateListV(theMeasurementHandshakesState);
+					  		requestStateListV(theMeasurementHandshakingState);
 				  	  	}
 	
 			  		} // class MeasurementInitializationState
 				
-				private class MeasurementHandshakesState extends StateList 
+				private class MeasurementHandshakingState extends StateList 
 			  	/* This state handles the PS-PA handshakes, 
 			  	  including sending the first packet, 
 			  	  processing the acknowledgement, and
@@ -306,12 +307,13 @@ public class LinkMeasurementState
 					    			}
 				  	  	}
 					  
-			  		} // class MeasurementHandshakesState 
+			  		} // class MeasurementHandshakingState 
 	
 				public void exitV() throws IOException
 				  // Cancels acknowledgement timer.
 				  { 
 						measurementTimerInput.cancelingV();
+						super.exitV();
 						}
 			
 			  protected void sendingSequenceNumberV() throws IOException

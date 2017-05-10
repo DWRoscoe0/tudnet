@@ -55,6 +55,8 @@ public class StateList extends MutableList implements Runnable {
 
 	protected StateList parentStateList= null; // Our parent state.
 
+	protected Color theColor= UIColor.initializerStateColor;
+
   protected List<StateList> theListOfSubStateLists= // Our sub-states.
       new ArrayList<StateList>(); // Initially empty list.
 
@@ -78,12 +80,12 @@ public class StateList extends MutableList implements Runnable {
 
 	/* Variables used only for OrState behavior.. */
 
-	private static StateList nullStateList= new StateList(); // no-op state.
-	  // Yse if this as a non-null initial state simplifies other code. 
+	private static SentinelState theSentinelState= new SentinelState();
+	  // This is used as an initial sentinel state which simplifies other code. 
 
   protected StateList presentSubStateList= // Machine's qualitative state.
-  		StateList.nullStateList; // Initial default no-op state.
-      //// This should be null in AndStates.
+  		StateList.theSentinelState; // Initial default no-op state.
+      //// This could be null in AndStates.
 
   protected StateList requestedSubStateList= null; // Becomes non-null when 
   	// machine requests a new qualitative state, 
@@ -107,11 +109,10 @@ public class StateList extends MutableList implements Runnable {
 
       This version only calls 
       the no-IOException superclass initializeV() version.
-      
-      //// Change to return (this) so it can be used as method argument.
   		*/
     {
   	  super.initializeV(); // IOExceptions are not thrown in super-classes.
+  	  theColor= UIColor.initialStateColor;
   	  return this;
     	}
 
@@ -171,7 +172,7 @@ public class StateList extends MutableList implements Runnable {
 	public synchronized boolean andStateHandlerB() throws IOException
 	  /* This method handles AndState and 
 	    state-machines that want to behave like AndState 
-	    by cycling all of its sub-machines
+	    by cycling all of their sub-machines
 	    until none of them makes any computational progress.
 	    It scans the sub-machine in order until one makes computational progress.
 	    Then it restarts the scan.
@@ -192,6 +193,8 @@ public class StateList extends MutableList implements Runnable {
 		  	  		progressMadeB= true;
 		  	  		continue substateScansUntilNoProgress; // Restart scan.
 		  	  		}
+		  	  	else
+		  				setBackgroundColorV( UIColor.runnableStateColor );
  	  		break substateScansUntilNoProgress; // No progress in this, final scan.
   	  	} // substateScansUntilNoProgress:
 			return progressMadeB; 
@@ -227,8 +230,12 @@ public class StateList extends MutableList implements Runnable {
 		  				requestedSubStateList= null;
 							substateProgressB= true; // Count this as progress.
 			  			}
-		  	  if (!substateProgressB) // Exiting loop if no sub-state progress made. 
-		  	  	break;
+		  	  if (!substateProgressB) // Exiting loop if no sub-state progress made.
+			  	  { presentSubStateList.setBackgroundColorV( 
+			  	  		UIColor.waitingStateColor 
+			  	  		);
+			  	  	break;
+			  	  	}
 	  	  	stateProgressB= true; // Accumulate sub-state progress in this state.
 	  	  	} // while
 			return stateProgressB; // Returning accumulated state progress result.
@@ -275,6 +282,7 @@ public class StateList extends MutableList implements Runnable {
 	    and is being prepared for providing its services.
 	    */
 	  { 
+			setBackgroundColorV( UIColor.runningStateColor );
 			}
 
 	public void exitV() throws IOException
@@ -287,6 +295,7 @@ public class StateList extends MutableList implements Runnable {
 	    and is about to be destroyed or freed
 	    */
 	  { 
+			setBackgroundColorV( UIColor.inactiveStateColor );
 			}
 
 
@@ -322,7 +331,7 @@ public class StateList extends MutableList implements Runnable {
 		  // This default version does nothing.
 	    }
 	
-	public synchronized boolean stateHandlerB() throws IOException
+	public synchronized boolean overrideStateHandlerB() throws IOException
 	  /* A state class overrides either this method or stateHandlerV()
 	    to control how its state is handled.
 
@@ -356,6 +365,18 @@ public class StateList extends MutableList implements Runnable {
 			stateHandlerV(); // Call this in case it is overridden instead.
 			return false; // This default version returns false.
 		  }
+	
+	public synchronized final boolean finalStateHandlerB() throws IOException
+	  /* This is the method that should be called to invoke a state's handler.
+	    It can not be overridden.  
+	    It calls override-able handler methods which state sub-classes override.
+	    */
+	  { 
+			setBackgroundColorV( UIColor.runningStateColor );
+			boolean successB= overrideStateHandlerB();
+			colorBySuccessV( successB );
+			return successB;
+		  }
 
 
 	/* Methods for exception handling.  */
@@ -383,7 +404,7 @@ public class StateList extends MutableList implements Runnable {
 
 
 	/* Methods for dealing with synchronous input to state-machines.  */
-	
+
 	protected synchronized boolean handleWithSynchronousInputB( 
 					StateList subStateList
 					) 
@@ -401,22 +422,28 @@ public class StateList extends MutableList implements Runnable {
 			boolean madeProgressB;
 			String inputString= getSynchronousInputString();
 			if ( inputString == null ) // Synchronous input not present.
-				madeProgressB= subStateList.stateHandlerB();
+				madeProgressB= subStateList.finalStateHandlerB();
 				else // Synchronous input is present.
 				{
 					subStateList.setSynchronousInputV(inputString);
 				  	// Store copy of synchronous input, if any, in sub-state.
-					madeProgressB= subStateList.stateHandlerB();
+					madeProgressB= subStateList.finalStateHandlerB();
 					if // Process consumption of synchronous input, if it happened.
 						(subStateList.getSynchronousInputString() == null)
 						{ setSynchronousInputV(null); // Remove input from this state.
 							madeProgressB= true; // Treat input consumption as progress.
 							}
 					}
+			if ( madeProgressB )
+				setBackgroundColorV( UIColor.runnableStateColor );
+				else
+				setBackgroundColorV( UIColor.waitingStateColor );
 			return madeProgressB;
 			}
 	
-	public synchronized boolean handleSynchronousInputB(String inputString) 
+	public final synchronized boolean finalHandleSynchronousInputB(
+				String inputString
+				) 
 			throws IOException
 	  /* This method should be used as the state handler 
 	    when there is a synchronous input to be processed.
@@ -441,13 +468,22 @@ public class StateList extends MutableList implements Runnable {
 	    */
 	  {
 		  synchronousInputString= inputString; // Store input in field variable.
+			setBackgroundColorV( UIColor.runningStateColor );
 			boolean successB=  // Call regular handler to process it.  Return value
-					stateHandlerB(); 
+					overrideStateHandlerB(); 
 			  // is ignored because we are interested in String processing.
 			successB|= // Combine success with result of synchronous input processing. 
 					(synchronousInputString == null);
 			synchronousInputString= null; // Remove input to from field variable.
+			colorBySuccessV( successB );
 			return successB; // Returning whether input was processed.
+		  }
+
+	private void colorBySuccessV( boolean successB )
+		{ if ( successB )
+			setBackgroundColorV( UIColor.runnableStateColor );
+			else
+			setBackgroundColorV( UIColor.waitingStateColor );
 		  }
 
 	public boolean tryInputB(String testString) throws IOException
@@ -489,7 +525,7 @@ public class StateList extends MutableList implements Runnable {
 	    */
 		{
 			try { 
-				stateHandlerB(); // Try to process timer event with state handler. 
+				finalStateHandlerB(); // Try to process timer event with handler. 
 				}
 		  catch ( IOException theIOException) { 
 		    delayExceptionV( // Postpone exception processing to other thread.
@@ -498,19 +534,51 @@ public class StateList extends MutableList implements Runnable {
 		    }
 		}
 
-	/* Method for UI coloring.  */
-
+	/* Methods for UI coloring.  */
+	
+  void setBackgroundColorV( Color theColor )
+    /* This method sets the background color 
+      which should be used to display this State.
+      If the color changes then it also displays it.
+     */
+    {
+		  boolean colorChangingB= ( this.theColor != theColor );
+		  if ( colorChangingB ) {
+			  this.theColor= theColor; // Change color.
+		  	reportChangeOfSelfV(); // Display change.
+		  	}
+  	  }
+	
   Color getBackgroundColor( Color defaultBackgroundColor )
     /* This method returns the background color 
       which should be used to display this State.
+      Presently it is the value stored in variable theColor.
      */
     {
-    	return UIColor.stateColor;
-    	}
+  		return theColor;
+  	  }
 
 	}  // StateList class 
 
-class OrState extends StateList {
+
+	class SentinelState extends StateList {
+		
+		/* This class overrides enough non-no-op methods in StateList
+		  that need to be no-ops so that this class can be used
+		  as an initial sentinel-state for OrState state machines.
+		  By doing this the actual desired first state 
+		  can be requested in normal way,
+		  after being requested with requestStateListV(..).
+		 	*/
+
+    protected void reportChangeOfSelfV()
+	  	{
+	  		// Do nothing because this state is not part of display-able DAG.
+	  		}
+
+		} // class SentinelState
+
+	class OrState extends StateList {
 
 	/* There are two ways to get "or" state-machine behavior.
 	  * Extend this class.
@@ -523,16 +591,18 @@ class OrState extends StateList {
 	  Its sub-states are active one at a time.
 		*/
 
-  public synchronized boolean stateHandlerB() throws IOException
+  public StateList initializeWithIOExceptionStateList() throws IOException
+    {
+  	  super.initializeWithIOExceptionStateList();
+  	  theColor= UIColor.initialOrStateColor;
+  	  return this;
+    	}
+
+  public synchronized boolean overrideStateHandlerB() throws IOException
 	  /* This method calls the default OrState handler.  */
 	  { 
   		return orStateHandlerB(); 
   		}
-
-  Color getBackgroundColor( Color defaultBackgroundColor )
-    {
-    	return UIColor.orStateColor;
-    	}
 
 	}  // OrState 
 
@@ -549,18 +619,14 @@ class AndState extends StateList {
 
   public StateList initializeWithIOExceptionStateList() throws IOException
     {
-  		super.initializeWithIOExceptionStateList();
-  		return this;
+  	  super.initializeWithIOExceptionStateList();
+  	  theColor= UIColor.initialAndStateColor;
+  	  return this;
     	}
 
-	public synchronized boolean stateHandlerB() throws IOException
+	public synchronized boolean overrideStateHandlerB() throws IOException
 		{ 
 		  return andStateHandlerB(); 
 		  }
-
-  Color getBackgroundColor( Color defaultBackgroundColor )
-    {
-    	return UIColor.andStateColor;
-    	}
 
 	}  // AndState 

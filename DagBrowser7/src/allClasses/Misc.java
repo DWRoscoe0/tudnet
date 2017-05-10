@@ -11,11 +11,12 @@ public class Misc
     The code here is usually either temporary or
     code useful for debugging and logging.
     
-    /////////////////////////////////// Need a better way of
-    noting and prioritizing things-to-do in the code.
-    ? //% to mark old code to be deleted.
-    ? //.... to mark other things to do,
-      with the number of slashes indicating the priority.
+    Here are some notes to mark possible work to do:
+    //tmpcheck : a kluge check to prevent an exception.
+    //fix : something to fix.
+    //enh : an enhancement. 
+    //% : marks old code to be deleted.
+    /// (3 or more slashes) : something else to do.
     */
 
   { // class Misc 

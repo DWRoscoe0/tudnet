@@ -132,7 +132,7 @@ public class Unicaster
 	  	  addB( theMultiMachineState );
 	  	  addB( theIgnoreAllSubstatesState );
 
-	  	  theMultiMachineState.stateHandlerB(); // Start the machines,
+	  	  theMultiMachineState.overrideStateHandlerB(); // Start the machines,
 	  	    // by starting their timers, by callinG the main machine handler.
 	  	  
 	  	  addB( theSubcasterManager );
@@ -331,7 +331,7 @@ public class Unicaster
 		      if // Passing remainder of message to associated Subcaster.
 		        ( theSubcaster != null )
 		        { processMessageToSubcasterV( theSubcaster ); break process; }
-		      if ( theMultiMachineState.handleSynchronousInputB(keyString) )
+		      if ( theMultiMachineState.finalHandleSynchronousInputB(keyString) )
 		      	break process;
   			  if ( processHelloB( keyString ) ) // "HELLO"
    			  	break process;
