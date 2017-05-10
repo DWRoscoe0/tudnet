@@ -104,7 +104,6 @@ public class DataNode
           that for the children to do it.
          */
       	{
-      		//// parentNamedList.reportChangeInChildV( this );
       		(Nulls.fastFailNullCheckT( 
       				parentNamedList 
       				)).reportChangeInChildV( this );

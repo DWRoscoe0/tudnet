@@ -5,7 +5,7 @@ import static allClasses.Globals.appLogger;
 
 public class NamedFloat // A DataNode for tracking floating point things.
 
-  //// Change this and NamedInt to use generic NamedNumber.
+  ///? Change this and NamedInt to use generic NamedNumber.
 
   extends NamedLeaf
 

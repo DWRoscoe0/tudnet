@@ -30,7 +30,7 @@ public abstract class PacketManager<
       received data and the Streamcaster to which the packet is destined
       has been determined.
       
-    ////Add and use a pool ability to allow recycle and reuse packets.
+    ///enh Add and use a pool for ability to allow recycle and reuse packets.
     */
   {
 	  abstract E produceKeyedPacketE(DatagramPacket theDatagramPacket );
@@ -98,40 +98,40 @@ public abstract class PacketManager<
 				DatagramPacket theDatagramPacket 
 				)
 			{
-			  /////* 
+			  ///* 
 			  appLogger.debug(
 	      		PacketManager.gettingDirectedPacketString(
 	      				theDatagramPacket, false
 	      				)
 	      		);
-			  ////*/
+			  //*/
 	    	}
 
 		public static void logSenderPacketV( 
 				DatagramPacket theDatagramPacket 
 				)
 			{
-			  /////*
-	    	////if ( ! theDatagramPacket.getAddress().isMulticastAddress() )
+			  ///*
+	    	///if ( ! theDatagramPacket.getAddress().isMulticastAddress() )
 				  appLogger.debug(
 		      		PacketManager.gettingDirectedPacketString(
 		      				theDatagramPacket, true
 		      				)
 		      		);
-	    	////*/
+	    	///*/
 	    	}
 
 		public static void logMulticastReceiverPacketV( 
 				DatagramPacket theDatagramPacket 
 				)
 			{
-			  /////* 
+			  ///* 
 			  appLogger.debug(
 	      		PacketManager.gettingDirectedPacketString(
 	      				theDatagramPacket, false
 	      				)
 	      		);
-			  ////*/
+			  //*/
 	    	}
 
 	  // Methods for converting packets to Strings for display.

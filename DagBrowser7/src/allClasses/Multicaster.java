@@ -129,7 +129,7 @@ public class Multicaster
 	  	  		theIPAndPort,
 		        "Multicaster",
 			      retransmitDelayMsNamedLong,
-			      new DefaultBooleanLike(false) //// Not used by Multicaster.
+			      new DefaultBooleanLike(false) ///elim Not used by Multicaster.
 	      		);
 
 	  		// Store remaining injected dependencies.

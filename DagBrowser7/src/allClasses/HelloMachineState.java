@@ -26,7 +26,6 @@ public class HelloMachineState
 		@SuppressWarnings("unused")
 		private ProcessingFirstHelloState
 		  theProcessingFirstHelloState;
-		//// @SuppressWarnings("unused")
 		private ProcessingLaterHellosState
 		  theProcessingLaterHellosState;
 		
@@ -56,7 +55,7 @@ public class HelloMachineState
     		// Create and add to DAG the sub-states of this state machine.
 	
 	  	  helloTimerInput= // Creating our timer and linking to this state. 
-			  		new TimerInput(  //// Move to factory or parent?
+			  		new TimerInput(  ///? Move to factory or parent?
 			  				theTimer,
 			  				this
 			  				);
@@ -78,8 +77,8 @@ public class HelloMachineState
 			  		retransmitDelayMsNamedLong.getValueL();
 				}
 
-	  public void stateHandlerV() throws IOException {}  ////// temp. NOP to prevent action.
-  	// The default OrState.stateHandlerV() is used.
+	  public void stateHandlerV() throws IOException {}  ///tmp NOP to prevent action.
+  	// The default OrState.stateHandlerV() will be used.
 
 		public void exitV() throws IOException
 		  // Cancels acknowledgement timer.

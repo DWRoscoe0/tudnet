@@ -28,8 +28,6 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 
     */
 
-	////private final int Config.QUEUE_SIZE= 5;
-	
   // Injected dependencies that need saving for later.
   private final Shutdowner theShutdowner;
 
@@ -129,7 +127,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
         theShutdowner
         );
 
-      receiverNetcasterPacketManager=  //// use local? 
+      receiverNetcasterPacketManager=  //? use local? 
       		new NetcasterPacketManager( (IPAndPort)null );
 
   		Timer theTimer= new Timer(  // Single timer for entire app.

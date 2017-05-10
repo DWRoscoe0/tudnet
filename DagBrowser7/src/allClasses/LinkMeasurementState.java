@@ -119,7 +119,7 @@ public class LinkMeasurementState
 	  	  		new LocalMeasurementState() );
 	
 	  	  measurementTimerInput= // Creating our timer and linking to this state. 
-			  		new TimerInput(  //// Move to factory or parent?
+			  		new TimerInput(  ///? Move to factory or parent?
 			  				theTimer,
 			  				this
 			  				);
@@ -252,7 +252,7 @@ public class LinkMeasurementState
 			  	/* This state does nothing but initializes for the handshake,
 			  	  then instantly moves on to the MeasurementHandshakingState.
 					  
-					  //// This initialization could be moved to either:
+					  ///? This initialization could be moved to either:
 					    * enterV() of MeasurementHandshakingState if
 					      that state was split into two levels.
 					    * exitV() of MeasurementPausedState.
@@ -321,7 +321,7 @@ public class LinkMeasurementState
 			      increments and writes the packet ID (sequence) number 
 			      to the EpiOutputStream.  
 			      
-			      //// It doesn't flush().
+			      ///? It doesn't flush().
 			      */
 			    {
 			    	lastSequenceNumberSentL= 
@@ -474,7 +474,7 @@ public class LinkMeasurementState
 				    each time a new sequence number is received.  In fact,
 				    that is how reception of a sequence number can be interpreted.
 				
-						//// Sequence numbers and other numbers eventually 
+						///? Sequence numbers and other numbers eventually 
 						  need to be converted to use modulo (wrap-around) arithmetic.
 					  */
 			  	{

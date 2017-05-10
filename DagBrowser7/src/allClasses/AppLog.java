@@ -26,7 +26,7 @@ public class AppLog
 
     This class is under development.
 
-    //// Slowing of speed-sensitive parts of the app might happen because of:
+    ///fix: Slowing of speed-sensitive parts of the app might happen because of:
       * Anti-malware Service Executable  
       * Microsoft Windows Search Indexer
       * File io.
@@ -39,7 +39,7 @@ public class AppLog
       * Closing less often so most logging would be to buffer.
       * Always write to open files which are copied to main file in background.
 
-    //// MakeMultiprocessSafe: 
+    ///enh MakeMultiprocessSafe: 
       It might fail if multiple app instances try to log simultaneously.
       Make log file be share-able in case two app instances
       try to write to it at the same time.  See createOrAppendToFileV(..).
@@ -229,7 +229,7 @@ public class AppLog
         It contains the app session number,
         milliseconds since the previous entry, the thread name,
         and finally inString.
-        //// Replace String appends by StringBuilder appends, for speed.
+        ///enh Replace String appends by StringBuilder appends, for speed.
         */
       { 
     	  //appendAnyFocusChangeV();

@@ -12,11 +12,17 @@ public class Misc
     code useful for debugging and logging.
     
     Here are some notes to mark possible work to do:
-    //tmpcheck : a kluge check to prevent an exception.
-    //fix : something to fix.
-    //enh : an enhancement. 
-    //% : marks old code to be deleted.
-    /// (3 or more slashes) : something else to do.
+    ///tmp : a temporary kluge, possible to prevent an Exception.
+    ///dbg : code used for debugging.
+    ///fix : something to fix.
+    ///org : an organizational enhancement.
+    ///err : error checking enhancement
+    ///opt : an optimization change.
+    ///enh : other miscellaneous enhancement.
+    ///elim : code that might not be needed and may be eliminated. 
+    //% : marks old code to be deleted.  Old.
+    //? : unspecified change.
+    //// (r or more slashes) : very temporary something else to do.
     */
 
   { // class Misc 

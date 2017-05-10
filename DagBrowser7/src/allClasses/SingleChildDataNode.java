@@ -10,7 +10,7 @@ public class SingleChildDataNode
     it doesn't need to handle the root DataNode as 
     a special case.  
 
-    //// This is used by only DataRoot, it might be appropriate to:
+    ///org This is used by only DataRoot, it might be appropriate to:
     * Change the name to RootDataNode.
     * Add another method isAncestorOfRootB() to to DataNode
       which only this class returns as true to make

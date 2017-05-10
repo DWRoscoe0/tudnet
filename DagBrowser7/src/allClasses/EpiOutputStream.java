@@ -20,20 +20,20 @@ public class EpiOutputStream<
     If used by a Subcaster then the packets are queued for multiplexing
     before sending. 
 
-    ////// Note, this class contains code which was added to manage
+    ///? Note, this class contains code which was added to manage
       indivisible blocks of bytes for output and delayed stream flushing,
       but this code has not been tested and probably contains bugs!
       It you see some code that doesn't make sense, that might be why.
       A good example of this is any code involving a Timer.
 	      
-	    //// markIndivisibleBlock().
+	    ///enh markIndivisibleBlock().
 	    Add this method which records the buffer position as the end of the block.
 	    If the buffer becomes full, only the bytes up to 
 	    the last block mark will be sent in a packet.
 	    The remaining bytes will be copied to the front of the buffer
 	    and become the beginning of the next packet. 
 	
-	    ////?? delayedFlush(long delayMsL).
+	    ///enh delayedFlush(long delayMsL).
 	    Add this variation of flush() which takes a time limitMsL,
 	    which is the maximum number of milliseconds before
 	    an actual physical flush() happens.  
@@ -45,7 +45,7 @@ public class EpiOutputStream<
 	    Alternatively, a setFlushIntervalV(..) method might be better.
 	    It would remain in effect until changed.
 	
-    //// Eventually this will be used with DataOutputStream for writing
+    ///? Eventually this will be used with DataOutputStream for writing
     particular types to the stream, as follows:
     * EpiOutputStream extends OutputStream.
     * NetDataOutputStream(EpiOutputStream) extends 
@@ -77,7 +77,7 @@ public class EpiOutputStream<
 				Q notifyingQueueQ,
 				M packetManagerM,
 				NamedLong packetCounterNamedLong,
-	  		Timer unusedTimer, //////
+	  		Timer unusedTimer, ///elim
 	  		char delimiterChar
 				)
 			{
@@ -133,7 +133,7 @@ public class EpiOutputStream<
 
 		public void write(int value) throws IOException
 		  // This writes one byte to the stream.
-		  //// Because this is UDP, it should never flush here.  Make Exception?
+		  ///? Because this is UDP, it should never flush here.  Make Exception?
 			{
 				if (indexI >= bufferSizeI) // Flushing buffer if no more room there. 
 				  	flush();
@@ -165,7 +165,6 @@ public class EpiOutputStream<
 		    It is equivalent to a doOrScheduleSendB( 0 ), with no delay.
 		    */
 	    { 
-	  		////delayedBlockflushV( 0 ); 
 	  		doOrScheduleSendB( 0 );
 	  		}
 
@@ -236,16 +235,12 @@ public class EpiOutputStream<
 	      and copies any unsendable bytes from the old buffer to the new one.
 	      */
 	  	{
-	  	  ////boolean testB;
 	  		// Allocating new buffer because old one will be queued.
   			byte[] newBufferBytes= 
   					packetManagerM.produceDefaultSizeBufferBytes();
 	  	  processing: {
-	  	  	//// Changed this to use sendableI.
-	  	  	////testB= (sendableI > 0); // Testing for send-able bytes in buffer.
 			  	if ( sendableI > 0 ) // Outputting packet if any bytes in buffer.
 				  	{
-							///indexI = 0; // Resetting buffer index.
 				  		E keyedPacketE= packetManagerM.produceKeyedPacketE(
 			        		bufferBytes, indexI // Using buffer containing bytes.
 						  		);
@@ -257,8 +252,6 @@ public class EpiOutputStream<
 				  		queuingForSendV( keyedPacketE ); // Queuing old buffer.
 						  break processing; // Exiting with new buffer needed.
 				  		}
-					////testB=  // Testing whether initial buffer allocation needed.
-			  	////		(bufferSizeI==0);
 	  	  	}
 	  		bufferBytes= newBufferBytes; // Start using new buffer.
 	    	bufferSizeI= newBufferBytes.length; // Caching its length. 
@@ -268,7 +261,6 @@ public class EpiOutputStream<
 	  private void queuingForSendV( E theKeyedPacketE )
 		  // This method queues a packet and counts it.
 			{
-		    ///notifyingQueueQ.add( theKeyedPacketE ); // Adding packet to queue.
 	  		notifyingQueueQ.put( theKeyedPacketE ); // Adding packet to queue.
 				packetCounterNamedLong.addDeltaL( 1 ); // Counting the packet.
 				}

@@ -39,7 +39,7 @@ public class TreeHelper
     Within a TreeAware JComponent, a TreeHelper subclass is usually called 
     MyTreeHelper and is a non-static nested class.
     
-    //// Is it possible to eliminate most aTreeHelper references in JComponents
+    ///? Is it possible to eliminate most aTreeHelper references in JComponents
     by always having a MyTreeHelper nested non-static class,
     and moving most of the JComponent code into it?
 

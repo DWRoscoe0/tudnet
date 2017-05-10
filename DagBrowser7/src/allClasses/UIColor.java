@@ -5,7 +5,7 @@ import java.awt.Component;
 
 public class UIColor {
 
-	public static final Color activeColor= Color.YELLOW; //// Phase out.
+	public static final Color activeColor= Color.YELLOW; ///? Phase out.
 	
 	public static final Color selectedBackgroundColor= Color.BLACK;
 	public static final Color selectedForegroundColor= Color.WHITE;
@@ -20,7 +20,7 @@ public class UIColor {
   // Colors set by class handler methods.
 	public static final Color runningStateColor= Color.GREEN;
 	public static final Color runnableStateColor= new Color(255,127,127); 
-			// LIGHT_GREEN, was Color.CYAN;
+			// LIGHT_GREEN, was using Color.CYAN;
 	public static final Color inactiveStateColor= Color.CYAN; // was LGHT_GRAY;
 	public static final Color waitingStateColor= Color.PINK;
 

@@ -57,11 +57,11 @@ public class EDTUtilities {
         because using the EDT (Event Dispatch Thread) 
         was thought to be safe if shutdown is underway.  
         
-        //// ?? Rewrite to make a single loop do both
+        ///? ?? Rewrite to make a single loop do both
         the jobRunnable and any possible null Runnables 
         if InterruptedException happens.
 
-        //// ?? Or rewrite to reflect that thread interrupt probably means
+        ///? ?? Or rewrite to reflect that thread interrupt probably means
         abort and jobRunnable need not or can not be completed.
         */
       {

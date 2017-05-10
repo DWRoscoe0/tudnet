@@ -17,7 +17,7 @@ public class MutableList
 	  * changing the list and 
 	  * calling TreeModel methods to inform TreeModelListeners of changes.
 	  
-	  //// A reference to a DataTreeModel is provided by constructor injection
+	  ///? A reference to a DataTreeModel is provided by constructor injection
 	    and stored in this object.  This is simple, 
 	    but also inefficient in storage.  Is there a better way>
 	  */
@@ -79,7 +79,7 @@ public class MutableList
 		      It does all this in a thread-safe manner using 
 		      safelyReportingChangeV(..).
 		      
-		      //// Replace addSuccessB array with a MutableBoolean.
+		      ///org Replace addSuccessB array with a MutableBoolean.
 	  	    */
 		    {
         	//appLogger.debug("MutableList.add(..) "+childDataNode+" at "+indexI);
@@ -142,7 +142,7 @@ public class MutableList
 		      It does all this in a thread-safe manner using 
 		      safelyReportingChangeV(..).
 		      
-		      //// Replace single element boolean array with a MutableBoolean.
+		      ///org Replace single element boolean array with a MutableBoolean.
 			    */
 		    {
 		  	  final DataNode parentDataNode= this;

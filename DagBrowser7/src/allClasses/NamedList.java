@@ -84,7 +84,6 @@ public class NamedList
         which must be one of this node's children.
         */
     	{
-    		//// parentNamedList.reportChangeOfChildV( this );
     	  final DataNode parentDataNode= this;
     	  EDTUtilities.runOrInvokeAndWaitV( // Do following on EDT thread. 
 		    		new Runnable() {

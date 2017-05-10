@@ -26,8 +26,8 @@ public abstract class TreeModelSupport
       new Vector<TreeModelListener>();   // Listener storage.
 
     public void addTreeModelListener( TreeModelListener theTreeModelListener )
-      /* //// Note, I have had to increase the vector size limit several times.
-        I suspect I have a Listener leak, and some type of command mode
+      /* ///? Note, I have had to increase the vector size limit several times.
+        I suspect I had a Listener leak, and some type of command mode
         is causing it, but I haven't figured out what that is yet.
         */
       {

@@ -50,7 +50,7 @@ public class DataTreeModel
     	the ones which fire TreeModelListeners,
       must happen in the EDT (Event Dispatch Thread).
       This is what is done now, using the invokeAndWaitV(..) method.
-    * //// Unfortunately using the EDT each time makes data changes inefficient.
+    * ///ehn Unfortunately using the EDT each time makes data changes inefficient.
       Using synchronization combined with HierarchicalUpPropagation
       might be sufficient to make change notification
       both efficient and thread-safe.
@@ -101,7 +101,7 @@ public class DataTreeModel
             this.theShutdowner= theShutdowner;
             }
 
-        //// public void initializeV(..) should be moved to here. 
+        ///org public void initializeV(..) should be moved to here. 
 
     // AbstractTreeModel/TreeModel interface methods.
 
@@ -180,7 +180,7 @@ public class DataTreeModel
           TreePath theTreePath, Object newValueObject 
           )
         /* Unimplemented.  Throws an error.  
-          //// This could be converted to a call to another method.
+          ///? This could be converted to a call to another method.
           */
         { 
       	  throw new Error("DataTreeModel.valueForPathChanged(..) called"); 
@@ -422,7 +422,6 @@ public class DataTreeModel
         /* This is a thread-safe version of reportingChangeV( theDataNode ).
           It's mainly to save code needed to report appearance changes
           by eliminating need to make lengthy calls to runOrInvokeAndWaitV(..).
-          //// This might be eliminated if and when no longer needed. 
           */
 	      {
       		EDTUtilities.runOrInvokeAndWaitV( // Do following on EDT thread. 
@@ -464,8 +463,8 @@ public class DataTreeModel
 		      This method must be running on the EDT.
    	      */
         {
-	      	if ( EDTUtilities.checkNotRunningEDTB() ) return; //tmpcheck
-	      	if ( parentTreePath == null ) return; //tmpcheck
+	      	if ( EDTUtilities.checkNotRunningEDTB() ) return; ///tmp
+	      	if ( parentTreePath == null ) return; ///tmp
 	        DataNode parentDataNode= // Calculating parent DataNode.
 	        		(DataNode)parentTreePath.getLastPathComponent();
 	      	int indexI= getIndexOfChild( // Calculating index of the DataNode.
@@ -521,7 +520,7 @@ public class DataTreeModel
       	  }
 
       private TreePath searchingForTreePath( DataNode targetDataNode )
-        /*  //// This method might not be needed anymore, because:
+        /*  ///elim This method might not be needed anymore, because:
           * It might never be called anymore because
 	          its only caller, translatingToTreePath(..),
 	          now checks theHashMap first.  So this method is a backup.

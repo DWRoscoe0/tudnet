@@ -93,7 +93,7 @@ public class LockAndSignal  // Combination lock and signal class.
     or number of source threads that are providing those inputs.  
     In fact it makes no sense to have more than one LockAndSignal instance.
 
-    //// It might make sense to add a LockAndSignal instance
+    ///? It might make sense to add a LockAndSignal instance
     to the EpiThread class??
 
     This class was originally created because 
@@ -127,7 +127,7 @@ public class LockAndSignal  // Combination lock and signal class.
         theLockAndSignal: ref:theLockAndSignal
           // Used by input wait loop.  
 
-    //// It might be worthwhile to use an object reference, or a null,
+    ///? It might be worthwhile to use an object reference, or a null,
     instead of a boolean, to be the signal.
     Additional versions of the doWait() and notifyingV() methods
     could pass these values.  This would allow passing of
@@ -265,7 +265,7 @@ public class LockAndSignal  // Combination lock and signal class.
 			  Note, testing for queued input this way puts NOTIFICATION
 			  at a higher priority than INTERRUPTION.
 
-		  //// Change wait methods to use await() instead of wait() ??
+		  ///? Change wait methods to use await() instead of wait() ??
 
 			*/
 

@@ -14,7 +14,7 @@ public class SystemsMonitor
   
   /* This class measures and displays various performance parameters.
 
-	  //// Maybe completely rewrite to measure everything in 2 ms periods,
+	  ///? Maybe completely rewrite to measure everything in 2 ms periods,
 	  without binary search, as follows:
 	  * in first ms
 	    * Start with a wait for ms boundary.
@@ -167,7 +167,7 @@ public class SystemsMonitor
 		    With a measuremet cycle of 1000 ms.
 		    the execution overhead is only about 0.1%.
 
-        //// Maybe prevent overshoot in displayed values,
+        ///enh Maybe prevent overshoot in displayed values,
         which can happen during expanding parts of binary search.
         */
     	{
@@ -253,12 +253,12 @@ public class SystemsMonitor
         a method which does a binary search to measure CPU speed
         in terms of how far the CPU can count in 1 ms. 
 		    
-        //// Do only simple measurements and stores in Runnable.
-        //// To truly measure EDT dispatch time.
+        ///ehn? Do only simple measurements and stores in Runnable.
+        ///enh? To truly measure EDT dispatch time.
           call invokeLater(..) to queue 2 Runnables which save nanoTime()
           in 2 seperate variables.  Use those to measure dispatch time.
 
-        //// Maybe randomize the measurement delays to get better measurements.
+        ///enh? Maybe randomize the measurement delays to get better measurements.
         * Pick an period p, for example, 1 second.
         * Generate wait delays evenly distributed between 0 and 2p.
         * 
@@ -327,7 +327,7 @@ public class SystemsMonitor
 
   	/* No longer used.
 
-  	private long measureNanoTimeOverheadNsL() //// archive this?
+  	private long measureNanoTimeOverheadNsL() ///elim archive this?
 	    /* This method measures the execution time in ns of System.nanoTime().
 	      It can return strange values, depending on what else is running.
 	      On my laptop computer I observed the following: 

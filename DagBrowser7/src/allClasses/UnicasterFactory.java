@@ -51,7 +51,7 @@ public class UnicasterFactory {
 						);
 			subcasterToUnicasterSubcasterQueue= 
 					new SubcasterQueue( unicasterLockAndSignal, queueCapacityI );
-      DefaultBooleanLike leadingDefaultBooleanLike= ////
+      DefaultBooleanLike leadingDefaultBooleanLike=
       		new DefaultBooleanLike(false);  // Used to settle race conditions.
 		  SubcasterManager theSubcasterManager= new SubcasterManager( 
 		  		theAppGUIFactory, this, leadingDefaultBooleanLike 

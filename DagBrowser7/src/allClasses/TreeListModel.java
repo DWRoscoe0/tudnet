@@ -18,7 +18,7 @@ public class TreeListModel
   /* This class implements a ListModel which gets its data from
     a DataNode using context from a DataTreeModel.
     
-    ////// Should this class be generic on <Object> like its base class?
+    ///? Should this class be generic on <Object> like its base class?
       Class AbstractListModel<E> is parameterized.
     */
 

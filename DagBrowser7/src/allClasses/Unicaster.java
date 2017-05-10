@@ -188,7 +188,7 @@ public class Unicaster
 	    		if (!processingHellosB()) break processing;
 
 		      theSubcasterManager.getOrBuildAddAndStartSubcaster(
-					  "PING-REPLY" //// Hard wired creation at first.  Fix later.
+					  "PING-REPLY" ///tmp Hard wired creation at first.  Fix later.
 					  ); // Adding Subcaster.
 				  while (true) { // Repeating until termination is requested.
 				  	LockAndSignal.Input theInput= 
@@ -232,7 +232,7 @@ public class Unicaster
 
 		    }
     
-    /*////
+    /*  ///dbg
 		private void sendTestPacketV() throws IOException
 			{
 				//appLogger.debug( "Queuing packet with TEST for sending.");
@@ -241,7 +241,7 @@ public class Unicaster
 				EpiThread.interruptableSleepB(100); // Letting other threads run,
 				  // also limiting bandwidth.
 				}
-    */ ////
+    */ ///dbg
 	  
 		private boolean multiplexingPacketsFromSubcastersB() throws IOException
 		  /* This method tries to input forward one message packet from 
@@ -268,7 +268,7 @@ public class Unicaster
 				throws IOException
 		  /* This method forwards theSubcasterPacket to the remote peer.
 		    It prepends the Subcaster key as a multiplex/demultiplex header.
-			  //// Improve efficiency by passing a buffer window instead of 
+			  ///opt Improve efficiency by passing a buffer window instead of 
 			    doing write(..)?
 		    */
 			{
@@ -287,7 +287,7 @@ public class Unicaster
 						theDatagramPacket.getOffset(),
 						theDatagramPacket.getLength()
 						);
-				theEpiOutputStreamO.sendingPacketV(); //// Could this be delayed?
+				theEpiOutputStreamO.sendingPacketV(); ///opt? Could this be delayed?
 				}
 
 		private boolean processingMessagesFromRemotePeerB() throws IOException
@@ -362,10 +362,10 @@ public class Unicaster
 		    the connection may be considered established.
 		    Returns false otherwise.
 		    
-		    //// This could be a state machine, but doesn't have to be,
+		    ///enh This could be a state machine, but doesn't have to be,
 		    because it happens only when a peer-to-peer connection is established.
 		    
-		    //// Replace retry count with a overall time limit?
+		    ///enh Replace retry count with a overall time limit?
 		    */
 			{
 				int triesRemainingI= 3; // 3 tries then we give up.
@@ -460,7 +460,7 @@ public class Unicaster
 			  The message key string is assumed to have already been read
 			  and decoded to mean theSubcaster.
 
-			  //// Improve efficiency by passing a buffer window instead of 
+			  ///opt Improve efficiency by passing a buffer window instead of 
 			    doing a read(..) into a new buffer.
 				*/
       {

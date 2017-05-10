@@ -91,7 +91,7 @@ public class NotifyingQueue<E> // Queue inter-thread communication.
 	      * It does not wait for anE to be processed by the destination thread.
 	      It ignores but maintains Thread interrupt status for testing later.
 	      
-	      //// Test for full queue and log message if so before putting?
+	      ///err Test for full queue and log message if so before putting?
 	     	*/
 	    {
 	  	  boolean interruptedB= false; // Assume no interruption will happen.

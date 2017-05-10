@@ -17,9 +17,9 @@ public class Sender // Uunicast and multicast sender thread.
     via a queue from other threads and sends them
     though a DatagramSocket.
     
-    //// Limit queue size.  Block queuers when full.
+    ///? Limit queue size.  Block queuers when full.
     
-    //// Change this or callers to gracefully finish sending queued packets 
+    ///? Change this or callers to gracefully finish sending queued packets 
     before closing socket and terminating.
       
     ?? Add congestion control and fair queuing.
@@ -51,7 +51,7 @@ public class Sender // Uunicast and multicast sender thread.
 		
 		// Other variables.
 		private ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor=
-				new ScheduledThreadPoolExecutor(1); ////// Inject this dependency.
+				new ScheduledThreadPoolExecutor(1); ///? Inject this dependency.
 		//private Random theRandom= new Random(1);
 		  // Seed is not zero so first DISCOVER packet is sent.  
 
@@ -133,7 +133,7 @@ public class Sender // Uunicast and multicast sender thread.
 			    if  // Debug: drop a fraction of packets to test retries logics.
 			    	( testingForDropOfPacketB( theDatagramPacket ) )
 			    	break beforeReturn;
-			    //// add Timer delay logic here.
+			    ///? add Timer delay logic here.
           if ( Config.packetSendDelayMsL == 0L )
           	sendingDatagramPacketV( theDatagramPacket );
           	else

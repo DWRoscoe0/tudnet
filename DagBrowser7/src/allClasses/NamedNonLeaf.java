@@ -18,8 +18,8 @@ public abstract class NamedNonLeaf
     private String nameString;  // The name associated with this node.
     
     public void initializeV()
-      /* ////// Change all initializeV(..) methods to return (this)
-        so it can be used as a method parameter. 
+      /* ///? Change all initializeV(..) methods to return (this)
+        so it can be used later by caller as a method parameter. 
         */
 	    { 
 	    	setNameStringV( // Make default name be class name.

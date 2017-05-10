@@ -44,7 +44,7 @@ public class StateList extends MutableList implements Runnable {
 		There are constructors, but they are the default parameterless constructors.
 		Instance variables are initialized using the initializerV(..) method.
 
-		//// StateList and its subclasses AndState and OrState
+		///enh StateList and its subclasses AndState and OrState
 		  do not [yet] provide behavioral inheritance, which is
 		  the most important benefit of hierarchical state machines.
 		  Add it?
@@ -85,7 +85,7 @@ public class StateList extends MutableList implements Runnable {
 
   protected StateList presentSubStateList= // Machine's qualitative state.
   		StateList.theSentinelState; // Initial default no-op state.
-      //// This could be null in AndStates.
+      ///? This could be null in AndStates.
 
   protected StateList requestedSubStateList= null; // Becomes non-null when 
   	// machine requests a new qualitative state, 
@@ -167,7 +167,7 @@ public class StateList extends MutableList implements Runnable {
 		{ this.parentStateList= parentStateList; }
 
 	
-	/*  Methods for AndState behavior.  */ ////// Maybe add initialization.
+	/*  Methods for AndState behavior.  */ ///? Maybe add initialization.
 
 	public synchronized boolean andStateHandlerB() throws IOException
 	  /* This method handles AndState and 
@@ -201,7 +201,7 @@ public class StateList extends MutableList implements Runnable {
 			}
 
 
-	/* Methods for implementing OrState behavior.. */ ////// Maybe add initialization.
+	/* Methods for implementing OrState behavior.. */ ///? Maybe add initialization.
 
   public synchronized boolean orStateHandlerB() throws IOException
 	  /* This handles the OrState by cycling it's machine.
@@ -214,7 +214,7 @@ public class StateList extends MutableList implements Runnable {
 	    Each sub-state handler gets a chance to process the synchronous input,
 	    if one is available, until it is consumed. 
 	    
-	    //// Must check for sub-state validity vs. super-state 
+	    ///enh Must check for sub-state validity vs. super-state 
 	      when behavioral inheritance is added.
       */
 	  { 
@@ -259,8 +259,6 @@ public class StateList extends MutableList implements Runnable {
 	    Note, though the requestedSubStateList variable changes immediately,
 	    control is not transfered to the new sub-state until
 	    the handler of the present sub-state exits.
-	    
-	    ////// Change to use presentSubStateList instead of requestedSubStateList. 
 	    */
 	  {
 			if (requestedSubStateList != null) // Report excess request.
@@ -459,11 +457,11 @@ public class StateList extends MutableList implements Runnable {
 	    False is returned otherwise.
 	    In any case the stored value is replaced by null before returning.
 
-		  //// If state machines are used more extensively to process
+		  ///opt If state machines are used more extensively to process
 		    messages of this type, it might make sense to:
 		    * Cache the StateList that processes the keyString in a HashMap
 		      and use the HashMap to dispatch the message.
-		    * Add discrete event processing to State machines and
+		    * Add a special discrete event class for State machines and
 		      make these keyString messages a subclass of those events.
 	    */
 	  {

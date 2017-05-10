@@ -3,7 +3,7 @@ package allClasses;
 public class Config
   {
 	  // Delays, for adjustments and slowing the entire app for debugging.
-		//// Add additive and multiplicative adjustments for debugging.
+		///enh Add additive and multiplicative adjustments for debugging.
 	
 		public static final long maxTimeOut5000MsL= 5000;
 		public static final long handshakePause5000MsL= 5000;
