@@ -6,6 +6,7 @@ import java.util.Timer;
 
 import static allClasses.Globals.appLogger;
 
+//// import allClasses.HelloMachineState.ProcessingFirstHelloState;
 import allClasses.LockAndSignal.Input;
 
 public class Unicaster
@@ -55,12 +56,14 @@ public class Unicaster
       private final SubcasterManager theSubcasterManager;
       private final SubcasterQueue subcasterToUnicasterSubcasterQueue;
   		private Timer theTimer;
-
+  		
   		// Other instance variables.
+  		private BeforeHelloExchangeState theBeforeHelloExchangeState;
+  		private AfterHelloExchangedState theAfterHelloExchangedState;
   		private MultiMachineState theMultiMachineState;
   		private IgnoreAllSubstatesState theIgnoreAllSubstatesState;
   		private TemporaryMainState theTemporaryMainState;
-
+  		
   	public Unicaster(  // Constructor. 
 			  UnicasterManager theUnicasterManager,
 			  SubcasterManager theSubcasterManager,
@@ -101,7 +104,6 @@ public class Unicaster
 				  this.subcasterToUnicasterSubcasterQueue= 
 				  		subcasterToUnicasterSubcasterQueue;
 		  		this.theTimer= theTimer;
-	
 	      }
 
     protected void initializeWithIOExceptionV() throws IOException
@@ -109,7 +111,16 @@ public class Unicaster
     		super.initializeWithoutStreamsV(); // Stream counts are added below in
     		  // one of the sub-state machines.
 
-    		// Create and start the state machines.
+	  		// Create and start the sub-state machines.
+
+    		// Create and add actual sub-states.
+	  	  theBeforeHelloExchangeState= new BeforeHelloExchangeState();
+	  	  theBeforeHelloExchangeState.initializeWithIOExceptionV(); //////
+	  	  addStateListV( theBeforeHelloExchangeState );
+	  	  theAfterHelloExchangedState= new AfterHelloExchangedState();
+	  	  theAfterHelloExchangedState.initializeWithIOExceptionV(); //////
+	  	  addStateListV( theAfterHelloExchangedState );
+	  	  requestSubStateListV( theBeforeHelloExchangeState ); // Initial state.
 
 	  	  theTemporaryMainState= new TemporaryMainState();
 	  	  theTemporaryMainState.initializeWithIOExceptionV();
@@ -132,7 +143,7 @@ public class Unicaster
 	  	  addB( theMultiMachineState );
 	  	  addB( theIgnoreAllSubstatesState );
 
-	  	  theMultiMachineState.overrideStateHandlerB(); // Start the machines,
+	  	  theMultiMachineState.finalStateHandlerB(); // Start the machines,
 	  	    // by starting their timers, by callinG the main machine handler.
 	  	  
 	  	  addB( theSubcasterManager );
@@ -152,11 +163,12 @@ public class Unicaster
         try { // Operations that might produce an IOException.
 	          initializeWithIOExceptionV();
 
+	          enterV(); 
 					  while (true) { // Repeating until termination is requested.
 					  	LockAndSignal.Input theInput= 
 				  				theLockAndSignal.testingForInterruptE();
 			      	if ( theInput != Input.NONE ) break; // Exit if interrupted.
-            	stateHandlerV(); // Handle things as a state-machine.
+            	finalStateHandlerB(); // Handle things as a state-machine.
 				  	  theInput= // Waiting for at least one new input.
 			    			  theLockAndSignal.waitingForInterruptOrNotificationE();
 				  	  }
@@ -173,7 +185,7 @@ public class Unicaster
         appLogger.info("run() exiting."); // Needed if thread self-terminates.
         }
 
-    public void stateHandlerV() throws IOException
+    public void overrideStateHandlerV() throws IOException
       /* This method does, or will do itself, or will delegate to Subcasters, 
         all protocols of a Unicaster.  This might include:
         * Doing full PING-REPLY protocol by letting a Subcaster do it, 
@@ -183,39 +195,69 @@ public class Unicaster
         * Doing simple received message decoding.
         * Connection/Hello handshake state machine cycling.
         */
-	    {
-    	  processing: {
-	    		if (!processingHellosB()) break processing;
-
-		      theSubcasterManager.getOrBuildAddAndStartSubcaster(
-					  "PING-REPLY" ///tmp Hard wired creation at first.  Fix later.
-					  ); // Adding Subcaster.
-				  while (true) { // Repeating until termination is requested.
-				  	LockAndSignal.Input theInput= 
-			  				theLockAndSignal.testingForInterruptE();
-		      	if ( theInput != Input.NONE ) break; // Exit if interrupted.
-		      	if (processingMessagesFromRemotePeerB()) continue;
-		    		if (multiplexingPacketsFromSubcastersB()) continue;
-			  	  theInput= // Waiting for at least one new input.
-		    			  theLockAndSignal.waitingForInterruptOrNotificationE();
-			  	  }
-	    		if  // Informing remote end whether app is doing a Shutdown.
-	    			( theShutdowner.isShuttingDownB() ) 
-		    		{ theEpiOutputStreamO.writingAndSendingV("SHUTTING-DOWN"); // Informing peer.
-		          appLogger.info( "SHUTTING-DOWN message sent.");
-		    			}
-          theSubcasterManager.stoppingEntryThreadsV();
-    			} // processing:
+	    { super.orStateHandlerB(); // Behave as an OrState.
 	    	}
 
-    class TemporaryMainState extends StateList 
+		private class BeforeHelloExchangeState extends StateList 
+	  	/* This class is active before HELLO messages have been exchanged.
+	  	  It tries to exchange HELLO messages with the remote peer
+	  	  to decide which peer will lead and which will follow.
+	  	  It retries using exponential back-off 
+	  	  until the acknowledgement is received.
+			  */
+	  	{
+			  public void overrideStateHandlerV() throws IOException ////// Not used yet.
+			  	{ if (!processingHellosB()) 
+			  			requestStateListV( finalSentinelState ); //// break processing;
+			  		requestStateListV( theAfterHelloExchangedState );
+			  		}
+		  		} // class BeforeHelloExchangeState
+
+		private class AfterHelloExchangedState extends StateList 
+			/* This state class is active after HELLO messages are exchanged.
+			  It responds to late HELLO messages and enables the other protocols.
+			  */
+	  	{
+		  	public void enterV() throws IOException
+				  { super.enterV(); // This is mainly to set background color.
+			      theSubcasterManager.getOrBuildAddAndStartSubcaster(
+						  "PING-REPLY" ///tmp Hard wired creation at first.  Fix later.
+						  ); // Adding Subcaster.
+						}
+			  public void overrideStateHandlerV() throws IOException ////// Not used yet.
+			  	{ while (true) { // Repeating until termination interrupt occurs.
+					  	LockAndSignal.Input theInput= 
+				  				theLockAndSignal.testingForInterruptE();
+			      	if ( theInput != Input.NONE ) break; // Exit if interrupted.
+			      	if (tryProcessingOneRemoteMessageB()) continue;
+			    			//////// Eventually need this to not ignore + consume.
+			      	if // Input and ignore any other message from peer.
+			      	  ( theEpiInputStreamI.tryingToGetString() != null ) continue;
+			    		if (multiplexingPacketsFromSubcastersB()) continue;
+				  	  theInput= // Waiting for at least one new input.
+			    			  theLockAndSignal.waitingForInterruptOrNotificationE();
+				  	  }
+		  	  	} 
+				public void exitV() throws IOException
+				  { if  // Informing remote end whether app is doing a Shutdown.
+		    			( theShutdowner.isShuttingDownB() ) 
+			    		{ theEpiOutputStreamO.writingAndSendingV("SHUTTING-DOWN"); // Informing peer.
+			          appLogger.info( "SHUTTING-DOWN message sent.");
+			    			}
+		    		theSubcasterManager.stoppingEntryThreadsV();
+						super.exitV(); // This is mainly to set background color.
+						}
+
+		  		} // class AfterHelloExchangedState
+
+		class TemporaryMainState extends StateList 
 	    {
 
-		    public void stateHandlerV() 
+		    public void overrideStateHandlerV() 
 		      /// Does nothing, thereby ignoring all sub-states.
 		      {}
 
-		    }
+		    } // TemporaryMainState
 
     class IgnoreAllSubstatesState extends StateList
       /* This class holds, but does not activate, 
@@ -226,11 +268,11 @@ public class Unicaster
        */
 	    {
 
-		    public void stateHandlerV() 
+		    public void overrideStateHandlerV() 
 		      /// Does nothing, thereby not calling any of the sub-states.
 		      {}
 
-		    }
+		    } // IgnoreAllSubstatesState 
     
     /*  ///dbg
 		private void sendTestPacketV() throws IOException
@@ -290,7 +332,7 @@ public class Unicaster
 				theEpiOutputStreamO.sendingPacketV(); ///opt? Could this be delayed?
 				}
 
-		private boolean processingMessagesFromRemotePeerB() throws IOException
+		private boolean tryProcessingOneRemoteMessageB() throws IOException
 		  /* This method tries to input and processes 
 		    one message from the remote peer.
 		    A message might be in a single packet or several packets.
@@ -298,30 +340,40 @@ public class Unicaster
 		    the body of the message is forwarded to 
 		    the associated Subcaster as a new nested packet. 
 		    Otherwise the message is decoded locally.
-		    This method returns true if success, false otherwise.
+		    This method returns true if it consumes a message, false otherwise.
+		    //// If it encounters a message that it doesn't understand,
+		    //// then it consumes the message but also ignores it.
+		    //// Make it not such messages.
 		    */
 		  {
-			  boolean gotInputB= (theEpiInputStreamI.available() > 0);
-			  if ( gotInputB ) { // Processing some input.
+			  boolean successB= (theEpiInputStreamI.available() > 0);
+			  if ( successB ) { // Processing some input.
 		  	  try 
-			  	  { processingRemoteMessageV(); } // Doing only one.
+			  	  { successB= processingRemotePeerMessageB(); }
 			    	catch (IllegalArgumentException anIllegalArgumentException)
 				    { // Handling any parse errors.
 		        	appLogger.warning(
 		        			"Packet parsing error: " + anIllegalArgumentException
 		        			);
 			    		theEpiInputStreamI.emptyingBufferV(); // Consuming remaining 
-			    		  // bytes in buffer because interpretation is impossible.
+			    		  // bytes in buffer because using them is impossible.
 					    }
 			  	} // Processing some input
-			  return gotInputB;
+			  return successB;
 				}
 
-		private void processingRemoteMessageV() throws IOException
+		private boolean processingRemotePeerMessageB() throws IOException
 		  /* This method processes the next available message.
+		    One is assumed to be available.
 		    Most will be demultiplexed and passed to Subcasters.
+		    Some will be processed in this thread.
+		    If the message is recognized and processed then true is returned.
+		    If the message is not recognized then 
+		    it is returned to the input stream and true is returned.
 		   */
 			{
+			  boolean successB= true;
+				theEpiInputStreamI.mark(0); // Prepare to back up if message not known.
 				String keyString=  // Reading message key string
 						theEpiInputStreamI.readAString();
 
@@ -340,8 +392,13 @@ public class Unicaster
     		  if ( keyString.equals( "TEST" ) ) // "TEST" packet.
    			  	break process; // Accepting by breaking.
 
-          appLogger.warning( "Ignoring remote message: " + keyString );
+    		  ////theEpiInputStreamI.reset();
+    		  appLogger.warning( 
+    		  	"processingRemoteMessageB(): Ignoring unknown remote message: " 
+    		  	+ keyString 
+    		  	);
 					} // process:
+				  return successB;
 				}
 
 		public boolean processingHellosB()

@@ -9,7 +9,12 @@ public class HelloMachineState
 
 	extends OrState
 	
-	/* This class contains a [hierarchical] state machine 
+	/* This class has not been tested and is not being used.
+	  After its creation it was decided that its code 
+	  should be added incrementally to Unicaster and tested there
+	  before being made into its own class, if ever.  ////  
+	   
+	  This class contains a [hierarchical] state machine 
 	  that processes the HELLO handshake that is supposed to happen
 	  at the beginning of a Unicaster connection.
 	  */
@@ -24,10 +29,10 @@ public class HelloMachineState
 		
 		// Sub-state-machine instances.
 		@SuppressWarnings("unused")
-		private ProcessingFirstHelloState
-		  theProcessingFirstHelloState;
-		private ProcessingLaterHellosState
-		  theProcessingLaterHellosState;
+		private BeforeHelloExchangeState
+		  theBeforeHelloExchangeState;
+		private AfterHelloExchangeState
+		  theAfterHelloExchangeState;
 		
 		HelloMachineState(  // Constructor.
 				Timer theTimer, 
@@ -70,15 +75,15 @@ public class HelloMachineState
 	  		overrideStateHandlerB(); // This throws any saved IOException from timer.
 	  		helloTimerInput.cancelingV(); // To stop our timer.
 	      }
-		
+
   	public void enterV() throws IOException
 		  { 
 			  retryTimeOutMsL=   // Initializing retry time-out.
 			  		retransmitDelayMsNamedLong.getValueL();
 				}
 
-	  public void stateHandlerV() throws IOException {}  ///tmp NOP to prevent action.
-  	// The default OrState.stateHandlerV() will be used.
+	  public void overrideStateHandlerV() throws IOException {}  ///tmp NOP to prevent action.
+  	// The default OrState.overrideStateHandlerV() will be used.
 
 		public void exitV() throws IOException
 		  // Cancels acknowledgement timer.
@@ -91,7 +96,7 @@ public class HelloMachineState
 	  private TimerInput helloTimerInput;
 		private long retryTimeOutMsL;
 
-		private class ProcessingFirstHelloState extends StateList 
+		private class BeforeHelloExchangeState extends StateList 
 
 	  	/* This class exchanges HELLO messages with the remote peer
 	  	  to decide which peer will lead and which will follow.
@@ -108,7 +113,7 @@ public class HelloMachineState
 					  helloTimerInput.scheduleV(retryTimeOutMsL);
 						}
 		
-			  public void stateHandlerV() throws IOException
+			  public void overrideStateHandlerV() throws IOException
 			  	/* This method handles handshakes acknowledgement, 
 			  	  initiating a retry using twice the time-out,
 			  	  until the acknowledgement is received.
@@ -116,7 +121,7 @@ public class HelloMachineState
 			  	{
 			  		if (tryProcessingReceivedHelloB()) // Try to process first HELLO.
 			  			requestStateListV( // Success.  Go handle any later HELLOs.
-					  			theProcessingLaterHellosState
+					  			theAfterHelloExchangeState
 					  			);
 		      	else if (helloTimerInput.getInputArrivedB()) // Failure.  Time-out? 
 			    		{ // Time-out occurred  Setup for retry.
@@ -130,9 +135,9 @@ public class HelloMachineState
 		  			  	}
 		  	  	}
 	
-		  		} // class ProcessingFirstHelloState
+		  		} // class BeforeHelloExchangeState
 		
-		private class ProcessingLaterHellosState extends StateList
+		private class AfterHelloExchangeState extends StateList
 
 	  	/* This state handles the reception of extra HELLO messages,
 	  	  which are HELLO messages received after the first one.
@@ -144,7 +149,7 @@ public class HelloMachineState
 	  	{
 				private boolean respondB= false; // Flag to prevent HELLO storms.
 				
-			  public void stateHandlerV() throws IOException
+			  public void overrideStateHandlerV() throws IOException
 			  	/* This method sends HELLO messages 
 			  	  in response to received HELLO messages.
 			  	  To prevent HELLO storms, response is made to only
@@ -157,8 +162,8 @@ public class HelloMachineState
 			  				sendHelloV(); // send a response HELLO response this time.
 					  }
 
-	  		} // class ProcessingLaterHellosState 
-		
+	  		} // class AfterHelloExchangeState 
+
   	private void sendHelloV()
   			throws IOException
   	  /* This method sends a HELLO message to the remote peer
@@ -172,7 +177,7 @@ public class HelloMachineState
 						);
 		    theNetcasterOutputStream.sendingPacketV(); // Forcing send.
 	  		}
-  	
+
   	private boolean tryProcessingReceivedHelloB() 
   			throws IOException
   	  /* This method tries to process the Hello message and its arguments.
@@ -210,4 +215,4 @@ public class HelloMachineState
   		  return isKeyB;
 	  		}
 
-		} // class LinkMeasurementState
+		} // class HelloMachineState

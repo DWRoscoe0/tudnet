@@ -15,6 +15,44 @@ public class StateList extends MutableList implements Runnable {
 	  * a sub-state of a larger state-machine 
 	  * a state-machine with its own sub-states
 
+    Classes in this file:
+    
+    This file defines several state-machine classes:
+    * StateList: This is the base class of all states.
+      It is also typically used as machine states with no children.
+    * SentinelState: This class is used as an initial sentinel-state 
+      for OrState state machines to reduce the number of null checks needed.
+    * OrState: OrState machines have sub-states, only one of which 
+      can be active at a time.  A state-machine based on this class
+      behaves like a classical finite state machine,
+      unless some of it sub-states have sub-states of their own.
+    * AndState: AndState machines also have sub-states, but unlike OrStates,
+	  	all AndState sub-states are active at the same time.
+	  	There is concurrency in an AndState machine, at least at this level.
+
+		Threads:
+
+		State machines don't have threads of their own. 
+		State machine code is executed by external threads.
+		At least one thread calls state-machine handler methods when it has
+		something for the machine to do, 
+		which is usually to process a new input which has become available.
+		There might be many threads calling the handler methods of a state-machine,
+		but state-machine handler methods are synchronized,
+		so only one thread may execute state handler code at one time.
+		Typically one thread receives one or more different types of 
+		ordinary inputs and passes them to an associated state-machine handler,
+		and one or more additional threads are used to pass timer inputs.
+
+		State machines normally do not wait for things,
+		or do other time-consuming activities such as executing long loops. 
+		Their handler methods must return quickly, because
+		not doing so could disable other parts of the hierarchical state machine.
+		It's okay to break this rule temporarily,
+		while thread code is being translated to state-machine code.
+
+    Handler Methods:
+
 		State machines run when their handler methods are called.
 		Handler methods produce a success indication, usually a boolean value.
 		The exact interpretation of this value depends on the StateList sub-class
@@ -28,21 +66,37 @@ public class StateList extends MutableList implements Runnable {
 			* progress was made, but was recorded in some other way,
 			  probably in a variable field.
 
-		State machines normally do not wait for things,
-		or do other time-consuming activities such as long loops. 
-		Their handler methods return quickly, especially if they need input.
-		It's okay to break this rule temporarily,
-		while private thread code is being translated to state-machine code,
-		if it is understood that doing so could disable other parts 
-		of the hierarchical state machine.
+		Exception Handling:
+		
+		It is common for a state-machine to receive input from InputStreams,
+		and InputStreams produce IOExceptions.  These exceptions must be handled.
+		Most state-machine handler methods handle IOExceptions by 
+		declaring that they may throw them.
+		But not all threads that execute state-machine code can handle exceptions.
+		An example of this is the Timer thread.
+		To accommodate such threads, methods are provided that,
+		instead of throwing an IOException, they record the IOException,
+		so it can be re-thrown later in a thread that can handle it,
+		
+   	Handler Methods:
+   	
+   	There are two sets of state-machine handler methods:
+   	
+   	* Final handler methods are the methods called to execute 
+   	  a state's code.  These may not be overriden.x
+   	
+   	* Override handler methods may be overridden by state subclasses.
+   	  These methods are called by the non-override-able final handler methods.
 
 	  When writing state-machine code it is important to distinguish between
 	  * the current State, designated by "this", and
-	  * its current sub-state, or child state, designated by "this.subState".
+	  * its current sub-state, or child state, 
+	    designated by "this.presentSubStateList".
 
-		To reduce boilerplate code, constructor source code has been eliminated.
+		To reduce boilerplate code in low-level states, 
+		constructor source code has been eliminated.
 		There are constructors, but they are the default parameterless constructors.
-		Instance variables are initialized using the initializerV(..) method.
+		Instance variables are initialized using various initialize methods.
 
 		///enh StateList and its subclasses AndState and OrState
 		  do not [yet] provide behavioral inheritance, which is
@@ -80,16 +134,20 @@ public class StateList extends MutableList implements Runnable {
 
 	/* Variables used only for OrState behavior.. */
 
-	private static SentinelState theSentinelState= new SentinelState();
-	  // This is used as an initial sentinel state which simplifies other code. 
+	// Sentinel states which can simplify other code.
+	protected static SentinelState initialSentinelState= new SentinelState();
+    // This is used as an initial sentinel state for OrState machiens. 
+	protected static SentinelState finalSentinelState= new SentinelState();
+    // This is used as a final sentinel state for OrState machiens. 
 
   protected StateList presentSubStateList= // Machine's qualitative state.
-  		StateList.theSentinelState; // Initial default no-op state.
-      ///? This could be null in AndStates.
+  		StateList.initialSentinelState; // Initial default no-op state.
+      ///? This could be null in AndStates because it should never be used.
 
   protected StateList requestedSubStateList= null; // Becomes non-null when 
-  	// machine requests a new qualitative state, 
-    // even if it is the same as the present state.
+  	// machine requests a new qualitative state.  
+    // It could become the present state, 
+    // which would cause state exit and re-entry.
 
 
 	/* Methods used to build state objects. */
@@ -226,8 +284,8 @@ public class StateList extends MutableList implements Runnable {
 		  		if (requestedSubStateList != null) // Handling state change request.
 		  		  { presentSubStateList.exitV(); 
 	    	  		presentSubStateList= requestedSubStateList;
-		  			  presentSubStateList.enterV(); 
 		  				requestedSubStateList= null;
+		  			  presentSubStateList.enterV(); 
 							substateProgressB= true; // Count this as progress.
 			  			}
 		  	  if (!substateProgressB) // Exiting loop if no sub-state progress made.
@@ -263,7 +321,7 @@ public class StateList extends MutableList implements Runnable {
 	  {
 			if (requestedSubStateList != null) // Report excess request.
         appLogger.error(
-        		"StateList.requestSubStateListV(..), excess state change request"
+        		"StateList.requestSubStateListV(..), state already requested."
         	  );
   	  requestedSubStateList= nextStateList;
 			}
@@ -299,54 +357,54 @@ public class StateList extends MutableList implements Runnable {
 
 	/* Methods containing general state handler code. */
 	
-	public synchronized void stateHandlerV() throws IOException
+	public synchronized void overrideStateHandlerV() throws IOException
 	  /* This is a code-saving method.
-	    A state class overrides either this method or stateHandlerB()
-	    as part of how it controls its behavior.
-	    Overriding this method instead of stateHandlerB() can result in
+	    A state class overrides either this method or overrideStateHandlerB(), 
+	    but not both, as part of how it controls its behavior.
+	    Overriding this method instead of overrideStateHandlerB() can result in
 	    more compact code.  An override like this:
 
-				public synchronized void stateHandlerV() throws IOException
+				public synchronized void overrideStateHandlerV() throws IOException
 				  { 
 				    some-code;
 				    }
 
 			is a more compact version of, but equivalent to, this:
 
-				public synchronized boolean stateHandlerB() throws IOException
+				public synchronized boolean overrideStateHandlerB() throws IOException
 				  { 
 				    some-code;
 				    return false;
 				    }
 
-			As with stateHandlerB(), because this method can be called from
+			As with overrideStateHandlerB(), because this method can be called from
 			multiple threads, such as timer threads, it and all sub-class overrides
 			should be synchronized.
 
-		  See stateHandlerB() .
+		  See overrideStateHandlerB() .
 	    */
 	  { 
 		  // This default version does nothing.
 	    }
 	
 	public synchronized boolean overrideStateHandlerB() throws IOException
-	  /* A state class overrides either this method or stateHandlerV()
-	    to control how its state is handled.
+	  /* A state class overrides either this method or overrideStateHandlerV(),
+	    but not both, as part of how it controls its behavior.
 
 	    This method does nothing except return false unless 
-	    it or stateHandlerV() is overridden.
+	    it or overrideStateHandlerV() is overridden.
 	    All overridden versions of this method should return 
 	    * true to indicate that some computational progress was made, including:
-		    * one or more sub-state's stateHandlerB() returned true,
+		    * one or more sub-state's overrideStateHandlerB() returned true,
 		    * a synchronous input String was processed,
 		    * requestSubStateListV(StateList nextState) was called
 		      to request a new qualitative sub-state.
 	    * false if no computational progress is made, 
 	      or progress made was indicated in some other way.
 	    To return false without needing to code a return statement,
-	    override the stateHandlerV() method instead.
+	    override the overrideStateHandlerV() method instead.
 	    
-	    A stateHandlerB() method does not return until
+	    A overrideStateHandlerB() method does not return until
 	    everything that can possibly be done has been done, meaning:
 	    * All available inputs that it can process have been processed.
 	    * All outputs that it can produce have been been produced.
@@ -360,14 +418,15 @@ public class StateList extends MutableList implements Runnable {
 	    
 	    */
 	  { 
-			stateHandlerV(); // Call this in case it is overridden instead.
+			overrideStateHandlerV(); // Call this in case it is overridden instead.
 			return false; // This default version returns false.
 		  }
 	
 	public synchronized final boolean finalStateHandlerB() throws IOException
 	  /* This is the method that should be called to invoke a state's handler.
 	    It can not be overridden.  
-	    It calls override-able handler methods which state sub-classes override.
+	    It calls override-able handler methods which 
+	    state sub-classes may override.
 	    */
 	  { 
 			setBackgroundColorV( UIColor.runningStateColor );
@@ -377,27 +436,38 @@ public class StateList extends MutableList implements Runnable {
 		  }
 
 
-	/* Methods for exception handling.  */
+	/* Methods for delaying and re-throwing exceptions.  */
 
 	public void delayExceptionV( IOException theIOException )
-		/* 	This method records an IOException that 
-		  occurred in a handler that couldn't handle it,
+		/* 	This method is used to save an IOException that 
+		  occurred in a thread that couldn't handle it,
 		  such as a Timer thread.
 		  It can be re-thrown later on a thread that can handle it,
-		  by calling delayedExceptionCheckV(). 
+		  by calling throwDelayedExceptionV().
+		  If there is already a saved exception then it is logged first. 
 		  */
 		{ 
-		  delayedIOException= theIOException;
+		  if  // Log any previously saved exception.
+	    	(delayedIOException != null) 
+		  	appLogger.exception(
+		  			"StateList.delayExceptionV(..), previously saved exception: ",
+		  			theIOException
+		  			);
+			delayedIOException= theIOException;  // Save the new exception.
 		  }
 
 	public void throwDelayedExceptionV() throws IOException
-		/* 	This method re-throws any delayedIOException that
-			might have occurred in a handler running on an earlier Timer thread. 
+		/* 	This method re-throws any IOException 
+		  that occurred and was saved earlier
+		  in a thread which could not fully process it, 
+		  such as a Timer thread.
+		  If there is no such saved exception then it simply returns. 
 		  */
 		{ 
-		  if  // Re-throw any previously saved exception from timer thread.
-		    (delayedIOException != null) 
-		  	throw delayedIOException;
+		  if  (delayedIOException != null) // There is a saved exception. 
+		  	throw delayedIOException; // Re-throw it.
+		  else
+		  	return;
 		  }
 
 
@@ -468,8 +538,8 @@ public class StateList extends MutableList implements Runnable {
 		  synchronousInputString= inputString; // Store input in field variable.
 			setBackgroundColorV( UIColor.runningStateColor );
 			boolean successB=  // Call regular handler to process it.  Return value
+						// is ignored because we are interested in String processing.
 					overrideStateHandlerB(); 
-			  // is ignored because we are interested in String processing.
 			successB|= // Combine success with result of synchronous input processing. 
 					(synchronousInputString == null);
 			synchronousInputString= null; // Remove input to from field variable.
@@ -517,7 +587,7 @@ public class StateList extends MutableList implements Runnable {
 
 	public void run()
 	  /* This method is run by TimerInput to run 
-	    the stateHandlerB() method when the timer is triggered.
+	    the finalStateHandlerB() method when the timer is triggered.
 	    If an IOException occurs then it is saved for processing later by
 	    a non-Timer thread.
 	    */
@@ -560,7 +630,7 @@ public class StateList extends MutableList implements Runnable {
 
 
 	class SentinelState extends StateList {
-		
+
 		/* This class overrides enough non-no-op methods in StateList
 		  that need to be no-ops so that this class can be used
 		  as an initial sentinel-state for OrState state machines.
@@ -571,7 +641,7 @@ public class StateList extends MutableList implements Runnable {
 
     protected void reportChangeOfSelfV()
 	  	{
-	  		// Do nothing because this state is not part of display-able DAG.
+	  		// Do nothing because the SentinelState is not part of display-able DAG.
 	  		}
 
 		} // class SentinelState

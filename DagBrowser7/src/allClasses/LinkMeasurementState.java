@@ -58,6 +58,18 @@ public class LinkMeasurementState
 	      */
 		  {
 	  		super.initializeWithIOExceptionStateList();
+	  		
+	  	  measurementTimerInput= // Creating our timer and linking to this state. 
+			  		new TimerInput(  ///? Move to factory or parent?
+			  				theTimer,
+			  				this
+			  				);
+
+    		// Create and add to DAG the sub-states of this state machine.
+	  	  initAndAddStateListV( theRemoteMeasurementState= 
+	  	  		new RemoteMeasurementState() );
+	  	  initAndAddStateListV( theLocalMeasurementState= 
+	  	  		new LocalMeasurementState() );
 
 	  		// Adding measurement count.
 	  	  addB( measurementHandshakesNamedLong= new NamedLong(
@@ -111,18 +123,6 @@ public class LinkMeasurementState
 	  	  		oldOutgoingPacketsReceivedDefaultLongLike,
 	  	  		outgoingPacketLossNamedFloat
 	  	  		);
-
-    		// Create and add to DAG the sub-states of this state machine.
-	  	  initAndAddStateListV( theRemoteMeasurementState= 
-	  	  		new RemoteMeasurementState() );
-	  	  initAndAddStateListV( theLocalMeasurementState= 
-	  	  		new LocalMeasurementState() );
-	
-	  	  measurementTimerInput= // Creating our timer and linking to this state. 
-			  		new TimerInput(  ///? Move to factory or parent?
-			  				theTimer,
-			  				this
-			  				);
 
 			  return this;
 			  }
@@ -231,7 +231,7 @@ public class LinkMeasurementState
 			    	  	measurementTimerInput.scheduleV(Config.handshakePause5000MsL);
 			  				}
 	
-					  public void stateHandlerV()
+					  public void overrideStateHandlerV()
 					    /* Waits for the end of the pause interval.
 					     	*/
 					  	{ 
@@ -258,7 +258,7 @@ public class LinkMeasurementState
 					    * exitV() of MeasurementPausedState.
 			  	  */
 			  	{
-					  public void stateHandlerV() throws IOException
+					  public void overrideStateHandlerV() throws IOException
 					  	{
 		    			  retryTimeOutMsL=   // Initializing retry time-out.
 		    			  		retransmitDelayMsNamedLong.getValueL();
@@ -284,7 +284,7 @@ public class LinkMeasurementState
 				    		sendingSequenceNumberV();
 			  				}
 	
-					  public void stateHandlerV() throws IOException
+					  public void overrideStateHandlerV() throws IOException
 					  	/* This method handles handshakes acknowledgement, 
 					  	  initiating a retry using twice the time-out,
 					  	  until the acknowledgement is received,
@@ -433,7 +433,7 @@ public class LinkMeasurementState
 			    its orthogonal partner sub-state named LocalMeasurementState.
 			    */
 	
-			  public void stateHandlerV() throws IOException
+			  public void overrideStateHandlerV() throws IOException
 			  	/* This method processes the "PS" message if it is received.
 			  	  It does this forever.  This state is never inactive.
 			  	  */

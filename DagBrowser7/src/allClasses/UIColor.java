@@ -11,9 +11,9 @@ public class UIColor {
 	public static final Color selectedForegroundColor= Color.WHITE;
 	public static final Color normalForgroundColor= Color.BLACK;
 
-  // Color set by State class initializer.
-	public static final Color initializerStateColor= Color.WHITE;
-  // Colors set by class initializer methods.
+  // Color set by StateList class initializer code.
+	public static final Color initializerStateColor= Color.YELLOW; // Color.WHITE;
+  // Colors set by the different class initializer methods.
 	public static final Color initialStateColor= Color.BLUE;
 	public static final Color initialAndStateColor= Color.MAGENTA;
 	public static final Color initialOrStateColor= Color.ORANGE;
