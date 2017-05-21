@@ -131,7 +131,7 @@ public class LinkMeasurementState
 	    // This method processes any pending loose ends before shutdown.
 		  {
 	  	  super.finalizeV();
-	  		overrideStateHandlerB(); // This throws any saved IOException from timer.
+	  		overrideProcessInputsB(); // This throws any saved IOException from timer.
 	  		measurementTimerInput.cancelingV(); // To stop our timer.
 	      }
 		
@@ -231,7 +231,7 @@ public class LinkMeasurementState
 			    	  	measurementTimerInput.scheduleV(Config.handshakePause5000MsL);
 			  				}
 	
-					  public void overrideStateHandlerV()
+					  public void overrideProcessInputsV()
 					    /* Waits for the end of the pause interval.
 					     	*/
 					  	{ 
@@ -258,7 +258,7 @@ public class LinkMeasurementState
 					    * exitV() of MeasurementPausedState.
 			  	  */
 			  	{
-					  public void overrideStateHandlerV() throws IOException
+					  public void overrideProcessInputsV() throws IOException
 					  	{
 		    			  retryTimeOutMsL=   // Initializing retry time-out.
 		    			  		retransmitDelayMsNamedLong.getValueL();
@@ -284,7 +284,7 @@ public class LinkMeasurementState
 				    		sendingSequenceNumberV();
 			  				}
 	
-					  public void overrideStateHandlerV() throws IOException
+					  public void overrideProcessInputsV() throws IOException
 					  	/* This method handles handshakes acknowledgement, 
 					  	  initiating a retry using twice the time-out,
 					  	  until the acknowledgement is received,
@@ -433,7 +433,7 @@ public class LinkMeasurementState
 			    its orthogonal partner sub-state named LocalMeasurementState.
 			    */
 	
-			  public void overrideStateHandlerV() throws IOException
+			  public void overrideProcessInputsV() throws IOException
 			  	/* This method processes the "PS" message if it is received.
 			  	  It does this forever.  This state is never inactive.
 			  	  */

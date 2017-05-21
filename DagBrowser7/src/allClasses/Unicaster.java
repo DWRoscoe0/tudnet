@@ -143,7 +143,7 @@ public class Unicaster
 	  	  addB( theMultiMachineState );
 	  	  addB( theIgnoreAllSubstatesState );
 
-	  	  theMultiMachineState.finalStateHandlerB(); // Start the machines,
+	  	  theMultiMachineState.finalProcessInputsB(); // Start the machines,
 	  	    // by starting their timers, by callinG the main machine handler.
 	  	  
 	  	  addB( theSubcasterManager );
@@ -168,7 +168,7 @@ public class Unicaster
 					  	LockAndSignal.Input theInput= 
 				  				theLockAndSignal.testingForInterruptE();
 			      	if ( theInput != Input.NONE ) break; // Exit if interrupted.
-            	finalStateHandlerB(); // Handle things as a state-machine.
+            	finalProcessInputsB(); // Handle things as a state-machine.
 				  	  theInput= // Waiting for at least one new input.
 			    			  theLockAndSignal.waitingForInterruptOrNotificationE();
 				  	  }
@@ -185,7 +185,7 @@ public class Unicaster
         appLogger.info("run() exiting."); // Needed if thread self-terminates.
         }
 
-    public void overrideStateHandlerV() throws IOException
+    public void overrideProcessInputsV() throws IOException
       /* This method does, or will do itself, or will delegate to Subcasters, 
         all protocols of a Unicaster.  This might include:
         * Doing full PING-REPLY protocol by letting a Subcaster do it, 
@@ -195,7 +195,7 @@ public class Unicaster
         * Doing simple received message decoding.
         * Connection/Hello handshake state machine cycling.
         */
-	    { super.orStateHandlerB(); // Behave as an OrState.
+	    { super.orStateProcessInputsB(); // Behave as an OrState.
 	    	}
 
 		private class BeforeHelloExchangeState extends StateList 
@@ -206,7 +206,7 @@ public class Unicaster
 	  	  until the acknowledgement is received.
 			  */
 	  	{
-			  public void overrideStateHandlerV() throws IOException ////// Not used yet.
+			  public void overrideProcessInputsV() throws IOException ////// Not used yet.
 			  	{ if (!processingHellosB()) 
 			  			requestStateListV( finalSentinelState ); //// break processing;
 			  		requestStateListV( theAfterHelloExchangedState );
@@ -224,7 +224,7 @@ public class Unicaster
 						  "PING-REPLY" ///tmp Hard wired creation at first.  Fix later.
 						  ); // Adding Subcaster.
 						}
-			  public void overrideStateHandlerV() throws IOException ////// Not used yet.
+			  public void overrideProcessInputsV() throws IOException ////// Not used yet.
 			  	{ while (true) { // Repeating until termination interrupt occurs.
 					  	LockAndSignal.Input theInput= 
 				  				theLockAndSignal.testingForInterruptE();
@@ -253,7 +253,7 @@ public class Unicaster
 		class TemporaryMainState extends StateList 
 	    {
 
-		    public void overrideStateHandlerV() 
+		    public void overrideProcessInputsV() 
 		      /// Does nothing, thereby ignoring all sub-states.
 		      {}
 
@@ -268,7 +268,7 @@ public class Unicaster
        */
 	    {
 
-		    public void overrideStateHandlerV() 
+		    public void overrideProcessInputsV() 
 		      /// Does nothing, thereby not calling any of the sub-states.
 		      {}
 
@@ -383,7 +383,7 @@ public class Unicaster
 		      if // Passing remainder of message to associated Subcaster.
 		        ( theSubcaster != null )
 		        { processMessageToSubcasterV( theSubcaster ); break process; }
-		      if ( theMultiMachineState.finalHandleSynchronousInputB(keyString) )
+		      if ( theMultiMachineState.finalProcessSynchronousInputB(keyString) )
 		      	break process;
   			  if ( processHelloB( keyString ) ) // "HELLO"
    			  	break process;

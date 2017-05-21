@@ -72,7 +72,7 @@ public class HelloMachineState
 	    // This method processes any pending loose ends before shutdown.
 		  {
 	  	  super.finalizeV();
-	  		overrideStateHandlerB(); // This throws any saved IOException from timer.
+	  		overrideProcessInputsB(); // This throws any saved IOException from timer.
 	  		helloTimerInput.cancelingV(); // To stop our timer.
 	      }
 
@@ -82,7 +82,7 @@ public class HelloMachineState
 			  		retransmitDelayMsNamedLong.getValueL();
 				}
 
-	  public void overrideStateHandlerV() throws IOException {}  ///tmp NOP to prevent action.
+	  public void overrideProcessInputsV() throws IOException {}  ///tmp NOP to prevent action.
   	// The default OrState.overrideStateHandlerV() will be used.
 
 		public void exitV() throws IOException
@@ -113,7 +113,7 @@ public class HelloMachineState
 					  helloTimerInput.scheduleV(retryTimeOutMsL);
 						}
 		
-			  public void overrideStateHandlerV() throws IOException
+			  public void overrideProcessInputsV() throws IOException
 			  	/* This method handles handshakes acknowledgement, 
 			  	  initiating a retry using twice the time-out,
 			  	  until the acknowledgement is received.
@@ -149,7 +149,7 @@ public class HelloMachineState
 	  	{
 				private boolean respondB= false; // Flag to prevent HELLO storms.
 				
-			  public void overrideStateHandlerV() throws IOException
+			  public void overrideProcessInputsV() throws IOException
 			  	/* This method sends HELLO messages 
 			  	  in response to received HELLO messages.
 			  	  To prevent HELLO storms, response is made to only
