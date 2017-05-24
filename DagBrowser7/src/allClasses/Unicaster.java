@@ -114,19 +114,16 @@ public class Unicaster
 	  		// Create and start the sub-state machines.
 
     		// Create and add actual sub-states.
-	  	  theBeforeHelloExchangeState= new BeforeHelloExchangeState();
-	  	  theBeforeHelloExchangeState.initializeWithIOExceptionV(); //////
-	  	  addStateListV( theBeforeHelloExchangeState );
-	  	  theAfterHelloExchangedState= new AfterHelloExchangedState();
-	  	  theAfterHelloExchangedState.initializeWithIOExceptionV(); //////
-	  	  addStateListV( theAfterHelloExchangedState );
+    		initAndAddStateListV(
+    				theBeforeHelloExchangeState= new BeforeHelloExchangeState());
+    		initAndAddStateListV(
+    				theAfterHelloExchangedState= new AfterHelloExchangedState());
 	  	  requestSubStateListV( theBeforeHelloExchangeState ); // Initial state.
 
-	  	  theTemporaryMainState= new TemporaryMainState();
-	  	  theTemporaryMainState.initializeWithIOExceptionV();
+	  	  initAndAddStateListV(theTemporaryMainState= new TemporaryMainState());
 	  	  
-	  	  theIgnoreAllSubstatesState= new IgnoreAllSubstatesState();
-	  	  theIgnoreAllSubstatesState.initializeWithIOExceptionV();
+	  	  initAndAddStateListV(theIgnoreAllSubstatesState= 
+	  	  		new IgnoreAllSubstatesState());
 
 	  	  theMultiMachineState= new MultiMachineState(
 	  				theTimer, 
@@ -137,13 +134,13 @@ public class Unicaster
 	  	  		);
 	  	  theMultiMachineState.initializeWithIOExceptionV();
 
+	  	  //// Note, the following are added but not as States.
 	  	  theIgnoreAllSubstatesState.addB( theMultiMachineState );
-
 	  	  addB( theTemporaryMainState );
 	  	  addB( theMultiMachineState );
 	  	  addB( theIgnoreAllSubstatesState );
 
-	  	  theMultiMachineState.finalProcessInputsB(); // Start the machines,
+	  	  theMultiMachineState.finalProcessInputsB(); // Start the multi-machines,
 	  	    // by starting their timers, by callinG the main machine handler.
 	  	  
 	  	  addB( theSubcasterManager );
@@ -195,8 +192,17 @@ public class Unicaster
         * Doing simple received message decoding.
         * Connection/Hello handshake state machine cycling.
         */
-	    { super.orStateProcessInputsB(); // Behave as an OrState.
-	    	}
+	    { 
+	    	appLogger.debug( "Unicaster.overrideProcessInputsV() starting." );
+	    	
+	    	if ( super.orStateProcessInputsB() )  // Try being an OrState first. 
+	    		;
+      	else if // Input and ignore any unprocessed message.
+	    	  ( theEpiInputStreamI.tryingToGetString() != null ) 
+      		;
+	    	
+	    	appLogger.debug( "Unicaster.overrideProcessInputsV() ending." );
+				}
 
 		private class BeforeHelloExchangeState extends StateList 
 	  	/* This class is active before HELLO messages have been exchanged.
@@ -207,13 +213,18 @@ public class Unicaster
 			  */
 	  	{
 			  public void overrideProcessInputsV() throws IOException ////// Not used yet.
-			  	{ if (!processingHellosB()) 
-			  			requestStateListV( finalSentinelState ); //// break processing;
-			  		requestStateListV( theAfterHelloExchangedState );
+			  	{ appLogger.debug( "BeforeHelloExchangeState.overrideProcessInputsV() entry.");
+			  		if (!processingHellosB()) { 
+			  			////requestStateListV( finalSentinelState ); //// break processing;
+			  			appLogger.debug( 
+			  					"BeforeHelloExchangeState.overrideProcessInputsV() switching."
+			  					);
+			  			requestStateListV( theAfterHelloExchangedState );
+			  			}
 			  		}
 		  		} // class BeforeHelloExchangeState
 
-		private class AfterHelloExchangedState extends StateList 
+		private class AfterHelloExchangedState extends StateList //// AndState 
 			/* This state class is active after HELLO messages are exchanged.
 			  It responds to late HELLO messages and enables the other protocols.
 			  */
@@ -224,20 +235,17 @@ public class Unicaster
 						  "PING-REPLY" ///tmp Hard wired creation at first.  Fix later.
 						  ); // Adding Subcaster.
 						}
-			  public void overrideProcessInputsV() throws IOException ////// Not used yet.
-			  	{ while (true) { // Repeating until termination interrupt occurs.
-					  	LockAndSignal.Input theInput= 
-				  				theLockAndSignal.testingForInterruptE();
-			      	if ( theInput != Input.NONE ) break; // Exit if interrupted.
-			      	if (tryProcessingOneRemoteMessageB()) continue;
-			    			//////// Eventually need this to not ignore + consume.
-			      	if // Input and ignore any other message from peer.
-			      	  ( theEpiInputStreamI.tryingToGetString() != null ) continue;
-			    		if (multiplexingPacketsFromSubcastersB()) continue;
-				  	  theInput= // Waiting for at least one new input.
-			    			  theLockAndSignal.waitingForInterruptOrNotificationE();
-				  	  }
-		  	  	} 
+			  public boolean overrideProcessInputsB() throws IOException ////// Not used yet.
+			  	{ boolean successB= true;
+    				appLogger.debug( "AfterHelloExchangedState.overrideProcessInputsB() entry.");
+			  		if (tryProcessingOneRemoteMessageB()) ;
+		      	else if (multiplexingPacketsFromSubcastersB()) ;
+		      	else 
+		      		{ appLogger.warning( "AfterHelloExchangedState.overrideProcessInputsB() failure.");
+		      		  successB= false;
+		      			}
+				  	return successB;
+				  	}
 				public void exitV() throws IOException
 				  { if  // Informing remote end whether app is doing a Shutdown.
 		    			( theShutdowner.isShuttingDownB() ) 

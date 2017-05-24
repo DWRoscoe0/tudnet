@@ -187,9 +187,8 @@ public class StateList extends MutableList implements Runnable {
       using the initializer with parameters instead of the default one.
      	*/
   	{ 
-  	  addStateListV(  // Initialize and add theSubState to list of sub-states.
-  	  		theSubStateList.initializeWithIOExceptionStateList()
-  	  		); // Adding also sets the theSubState's parent state to be this state.
+  		theSubStateList.initializeWithIOExceptionStateList();
+  	  addStateListV( theSubStateList);
   	  }
 
   public void addStateListV(StateList theSubStateList)
