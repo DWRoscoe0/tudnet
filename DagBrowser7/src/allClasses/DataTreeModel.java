@@ -2,7 +2,8 @@ package allClasses;
 
 import java.io.File;
 import java.io.Serializable;
-
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -509,18 +510,51 @@ public class DataTreeModel
 	        if ( targetTreePath == null ) // Doing a search if not in cache.
 		        {
 	        		appLogger.warning( 
-	        				"DataTreeModel.translatingToTreePath(), cache miss." 
+	        				"DataTreeModel.translatingToTreePath( "
+	        				+ targetDataNode 
+	        				+ " ), cache miss." 
 	        				);
-			        targetTreePath= // Generating path using a search. 
-			        		searchingForTreePath( targetDataNode );
+			        targetTreePath= // Generating path using a search.   //// 
+			        		////searchingForTreePath( targetDataNode );
+			        		buildTreePath( targetDataNode );
 			        if ( targetTreePath != null ) // Caching search result, if any.
 			        	theHashMap.put( targetDataNode, targetTreePath );
 			        }
       	  return targetTreePath;   
       	  }
 
-      private TreePath searchingForTreePath( DataNode targetDataNode )
-        /*  ///elim This method might not be needed anymore, because:
+      private TreePath buildTreePath( DataNode theDataNode )
+        /*  //////// This method replaces searchingForTreePath(..).
+          This method returns a TreePath of targetDataNode.
+          To do this it follows the trail of parentNamedList links 
+          back to the root and builds a TreePath from that.
+          //// This could be made more efficient by recursing using
+          translatingToTreePath(..) on the parent node, a simple expression.
+          This separate method might not be needed at all.
+          */
+        {
+      		appLogger.warning( "DataTreeModel.buildTreePath(..) called.");
+      	  Deque<DataNode> stackDeque= new ArrayDeque<DataNode>(10); 
+      	  while (true) { // Stack all nodes in path to root.
+      	  	if ( theDataNode == null ) break;
+      	  	stackDeque.addFirst( theDataNode );
+      	  	theDataNode= theDataNode.parentNamedList;
+      	  	}
+      		TreePath theTreePath= null;  // Defaulting result to null.
+      	  { // Build TreePath from stacked nodes.
+	      	  theTreePath= new TreePath(stackDeque.removeFirst());
+	      	  while (true) {
+	      	  	if ( stackDeque.peekFirst() == null ) break;
+	      	  	theTreePath= 
+	      	  			theTreePath.pathByAddingChild( stackDeque.removeFirst());
+	      	  	}
+      	  	}
+          return theTreePath;
+          }
+
+      @SuppressWarnings("unused") ////
+			private TreePath searchingForTreePath( DataNode targetDataNode )
+        /*  ///elim This method is not needed anymore, because:
           * It might never be called anymore because
 	          its only caller, translatingToTreePath(..),
 	          now checks theHashMap first.  So this method is a backup.
@@ -567,7 +601,7 @@ public class DataTreeModel
           and TreePaths are required by JTree.
           */
         {
-      		appLogger.warning( "DataTreeModel.translatingToTreePath() called.");
+      		appLogger.warning( "DataTreeModel.searchingForTreePath(..) called.");
       		TreePath resultTreePath= null;  // Defaulting result to null.
       		Queue<TreePath> queueOfTreePath = new LinkedList<TreePath>();
           queueOfTreePath.add(theDataRoot.getParentOfRootTreePath( ));
@@ -612,5 +646,5 @@ public class DataTreeModel
               }
           return resultTreePath;
           }
-      
+
     } // class DataTreeModel.
