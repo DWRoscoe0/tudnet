@@ -165,7 +165,12 @@ public class Unicaster
 					  	LockAndSignal.Input theInput= 
 				  				theLockAndSignal.testingForInterruptE();
 			      	if ( theInput != Input.NONE ) break; // Exit if interrupted.
-            	finalProcessInputsB(); // Handle things as a state-machine.
+			      	
+			      	//////// Transfer message from stream to machines, if possible.
+			      	if (theEpiInputStreamI.available() > 0) 
+			      		setSynchronousInputV( theEpiInputStreamI.readAString() );
+
+            	finalProcessInputsB(); // Handle notification as a state-machine.
 				  	  theInput= // Waiting for at least one new input.
 			    			  theLockAndSignal.waitingForInterruptOrNotificationE();
 				  	  }
@@ -229,17 +234,34 @@ public class Unicaster
 			  It responds to late HELLO messages and enables the other protocols.
 			  */
 	  	{
+				private ProcessingOfReceivedRemotePeerMessagesState 
+				  theProcessingOfReceivedRemotePeerMessagesState;
+				private MultiplexingPacketsFromSubcastersState 
+				  theMultiplexingPacketsFromSubcastersState;
+		    public StateList initializeWithIOExceptionStateList() 
+		    		throws IOException
+			    {
+		    		super.initializeWithIOExceptionStateList();
+		    		initAndAddStateListV(
+		    				theProcessingOfReceivedRemotePeerMessagesState= 
+		    					new ProcessingOfReceivedRemotePeerMessagesState());
+		    		initAndAddStateListV(
+		    				theMultiplexingPacketsFromSubcastersState= 
+		    					new MultiplexingPacketsFromSubcastersState());
+		    		return this;
+			    	}
 		  	public void enterV() throws IOException
 				  { super.enterV(); // This is mainly to set background color.
 			      theSubcasterManager.getOrBuildAddAndStartSubcaster(
 						  "PING-REPLY" ///tmp Hard wired creation at first.  Fix later.
 						  ); // Adding Subcaster.
 						}
-			  public boolean overrideProcessInputsB() throws IOException ////// Not used yet.
+			  public boolean overrideProcessInputsB() throws IOException
 			  	{ boolean successB= true;
     				appLogger.debug( "AfterHelloExchangedState.overrideProcessInputsB() entry.");
-			  		if (tryProcessingOneRemoteMessageB()) ;
-		      	else if (multiplexingPacketsFromSubcastersB()) ;
+    				////if (processingRemotePeerMessageB() ) ;
+    				if ( super.andStateProcessInputsB() ) ; // Process sub-states.
+		      	////else if (multiplexingPacketsFromSubcastersB()) ;
 		      	else 
 		      		{ appLogger.warning( "AfterHelloExchangedState.overrideProcessInputsB() failure.");
 		      		  successB= false;
@@ -257,6 +279,26 @@ public class Unicaster
 						}
 
 		  		} // class AfterHelloExchangedState
+
+		class ProcessingOfReceivedRemotePeerMessagesState extends StateList 
+	    {
+
+				public boolean overrideProcessInputsB() throws IOException
+			  	{
+			  	  return processingRemotePeerMessageB();
+			  		}
+
+		    } // ProcessingOfReceivedRemotePeerMessagesState 
+
+		class MultiplexingPacketsFromSubcastersState extends StateList 
+	    {
+
+				public boolean overrideProcessInputsB() throws IOException
+			  	{
+			  	  return multiplexingPacketsFromSubcastersB();
+			  		}
+
+		    } // MultiplexingPacketsFromSubcastersState 
 
 		class TemporaryMainState extends StateList 
 	    {
@@ -340,36 +382,6 @@ public class Unicaster
 				theEpiOutputStreamO.sendingPacketV(); ///opt? Could this be delayed?
 				}
 
-		private boolean tryProcessingOneRemoteMessageB() throws IOException
-		  /* This method tries to input and processes 
-		    one message from the remote peer.
-		    A message might be in a single packet or several packets.
-		    If a message begins with a Subcaster key then 
-		    the body of the message is forwarded to 
-		    the associated Subcaster as a new nested packet. 
-		    Otherwise the message is decoded locally.
-		    This method returns true if it consumes a message, false otherwise.
-		    //// If it encounters a message that it doesn't understand,
-		    //// then it consumes the message but also ignores it.
-		    //// Make it not such messages.
-		    */
-		  {
-			  boolean successB= (theEpiInputStreamI.available() > 0);
-			  if ( successB ) { // Processing some input.
-		  	  try 
-			  	  { successB= processingRemotePeerMessageB(); }
-			    	catch (IllegalArgumentException anIllegalArgumentException)
-				    { // Handling any parse errors.
-		        	appLogger.warning(
-		        			"Packet parsing error: " + anIllegalArgumentException
-		        			);
-			    		theEpiInputStreamI.emptyingBufferV(); // Consuming remaining 
-			    		  // bytes in buffer because using them is impossible.
-					    }
-			  	} // Processing some input
-			  return successB;
-				}
-
 		private boolean processingRemotePeerMessageB() throws IOException
 		  /* This method processes the next available message.
 		    One is assumed to be available.
@@ -380,33 +392,33 @@ public class Unicaster
 		    it is returned to the input stream and true is returned.
 		   */
 			{
-			  boolean successB= true;
-				theEpiInputStreamI.mark(0); // Prepare to back up if message not known.
-				String keyString=  // Reading message key string
-						theEpiInputStreamI.readAString();
-
-				process: {
+			  	boolean successB;
+				beforeReturn: { ////////
+				  successB= false;
+					String keyString=  // Reading message key string
+							getSynchronousInputString();
+					if ( keyString == null ) break beforeReturn; // Exit if no input.
+				  successB= true;
 		      Subcaster theSubcaster= // Getting associated Subcaster, if any.
 		        theSubcasterManager.tryingToGetDataNodeWithKeyD( keyString );
 		      if // Passing remainder of message to associated Subcaster.
 		        ( theSubcaster != null )
-		        { processMessageToSubcasterV( theSubcaster ); break process; }
+		        { processMessageToSubcasterV( theSubcaster ); break beforeReturn; }
 		      if ( theMultiMachineState.finalProcessSynchronousInputB(keyString) )
-		      	break process;
+		      	break beforeReturn;
   			  if ( processHelloB( keyString ) ) // "HELLO"
-   			  	break process;
+   			  	break beforeReturn;
    			  if ( processShuttingDownB(keyString) ) // "SHUTTING-DOWN"
-   			  	break process;
+   			  	break beforeReturn;
     		  if ( keyString.equals( "TEST" ) ) // "TEST" packet.
-   			  	break process; // Accepting by breaking.
-
-    		  ////theEpiInputStreamI.reset();
+   			  	break beforeReturn; // Accepting by breaking.
     		  appLogger.warning( 
     		  	"processingRemoteMessageB(): Ignoring unknown remote message: " 
     		  	+ keyString 
     		  	);
-					} // process:
-				  return successB;
+					} // beforeReturn:
+				setSynchronousInputV( null ); // Consume any unconsumed input message.
+				return successB;
 				}
 
 		public boolean processingHellosB()
@@ -524,39 +536,37 @@ public class Unicaster
         to theSubcaster for processing.
 			  The message key string is assumed to have already been read
 			  and decoded to mean theSubcaster.
+			  Any errors cause the input buffer data to be discarded. 
 
 			  ///opt Improve efficiency by passing a buffer window instead of 
 			    doing a read(..) into a new buffer.
 				*/
       {
-			  processing: {
-					String lengthString= // Reading Subcaster message length String. 
-							theEpiInputStreamI.readAString();
-					int lengthI= Integer.parseInt( lengthString );
-	        SubcasterPacketManager theSubcasterPacketManager= 
-	        		theSubcaster.getPacketManagerM();
-	        byte[] bufferBytes= // Allocating Subcaster packet buffer. 
-	        		theSubcasterPacketManager.produceBufferBytes( lengthI );
-	        if // Reading Subcaster message bytes into buffer, or exiting.
-	          ( theEpiInputStreamI.read( bufferBytes, 0, lengthI ) < lengthI )
-				    { // Handling failure to fit error.
-		        	appLogger.error(
-		        			"Subcaster packet repacking error: length: "
-		        			);
-			    		break processing; // Exiting.
-					    }
-	        //appLogger.debug(
-	        //		"processMessageToSubcasterV(): " + 
-	        //	new String( bufferBytes, 0, lengthI )
-	        //	);
-					SubcasterPacket theSubcasterPacket= // Repackaging buffer. 
-						theSubcasterPacketManager.produceKeyedPacketE(
-									bufferBytes, lengthI
-									);
-		      theSubcaster.puttingKeyedPacketV( // Passing to Subcaster. 
-		      		theSubcasterPacket 
-		      		);
-					} //processing:
+			  beforeReturn: {
+			  beforeErrorHandler: {
+					try {
+						String lengthString= theEpiInputStreamI.readAString();
+						int subcasterMessageLengthI= Integer.parseInt( lengthString );
+		        SubcasterPacketManager theSubcasterPacketManager= 
+		        		theSubcaster.getPacketManagerM();
+		        byte[] subcasterPacketBufferBytes= theSubcasterPacketManager.
+		        		produceBufferBytes( subcasterMessageLengthI );
+		        if ( ! theEpiInputStreamI.tryReadB(
+		        		  subcasterPacketBufferBytes, 0, subcasterMessageLengthI ) )
+			    		break beforeErrorHandler;
+						SubcasterPacket theSubcasterPacket= // Repackaging buffer. 
+							theSubcasterPacketManager.produceKeyedPacketE(
+								subcasterPacketBufferBytes,subcasterMessageLengthI);
+			      theSubcaster.puttingKeyedPacketV( theSubcasterPacket );
+			      break beforeReturn; // It appears we were successful.
+					} catch ( NumberFormatException e ) {
+						break beforeErrorHandler;
+					}
+				} //beforeErrorHandler:
+					appLogger.error( "Subcaster packet repacking error" );
+					theEpiInputStreamI.emptyingBufferV(); // Flush bad data.
+				} //beforeReturn:
+					return;
 	      }
 
 

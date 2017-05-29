@@ -219,6 +219,23 @@ public class EpiInputStream<
 			  packetIndexI++;
 			  return value;
 			  }
+	  
+	  public boolean tryReadB(byte[] bufferBytes, int offsetI, int lengthI)
+	  		throws IOException
+	    /* This method tries to read lengthI bytes into buffer bufferBytes
+	  	  starting at offset offsetI.
+	  	  Returns true if the read is successful.
+	  	  Return false if there were not enough bytes to fill the request,
+	  	    and the stream is reset to before the read.
+	  	  */
+		  {
+		  	mark(0); // Mark in case we need to undo a bad read.
+		    int bytesReadI= read( bufferBytes, offsetI, lengthI );
+		    boolean successB= // Sufficient bytes read means a success. 
+		    		( bytesReadI >= lengthI );
+		    if ( ! successB ) reset(); // Undo read if not successful.
+		    return successB;
+		    }
 
 	  public void emptyingBufferV()
 		  {

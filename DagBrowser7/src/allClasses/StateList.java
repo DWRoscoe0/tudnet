@@ -64,7 +64,12 @@ public class StateList extends MutableList implements Runnable {
    	* Override handler methods may be overridden by state subclasses.
    	  These methods are called by the non-override-able final handler methods.
 
-		Handler methods produce a success indication, usually a boolean value.
+		Handler status values:
+		
+		The purpose of maintaining these values is to help decide whether
+		it is worthwhile to call the handler or call it again.
+		
+	  Now handler methods produce a success indication, usually a boolean value.
 		The exact interpretation of this value depends on the StateList sub-class
 		in which the method appears, but the following is always true:
 		* true means that some type of machine progress was made, either:
@@ -75,6 +80,13 @@ public class StateList extends MutableList implements Runnable {
 			* no machine progress was made, or
 			* progress was made, but was recorded in some other way,
 			  probably in a variable field.
+
+    //// It might be better to change the meaning of these values slightly, to:
+    * true means [more] computation progress is possible (not impossible),
+      whether or not some progress was recently made.
+    * false means no computation progress is possible at this time,
+      unless a new input has arrived since the last time the handler ran.
+    A single return value might be insufficient to represent this status. 
 
 		Exception Handling:
 		
@@ -117,7 +129,7 @@ public class StateList extends MutableList implements Runnable {
   private String synchronousInputString; /* Temporarily stores an input event.
     It is the one place this state checks for synchronous input.
     Asynchronous input can appear in any number of other variables.
-    This variable is set to:
+    This variable is special and is set according to the following protocol:
     * a non-null reference to the input String by the handler's caller
       immediately before the handler is called to try to process it
     * null 
@@ -134,7 +146,7 @@ public class StateList extends MutableList implements Runnable {
 
 	/* Variables used only for OrState behavior.. */
 
-	// Sentinel states which can simplify other code.
+	// Sentinel states which can simplify other code by eliminating null checks.
 	protected static SentinelState initialSentinelState= new SentinelState();
     // This is used as an initial sentinel state for OrState machiens. 
 	protected static SentinelState finalSentinelState= new SentinelState();
@@ -142,7 +154,10 @@ public class StateList extends MutableList implements Runnable {
 
   protected StateList presentSubStateList= // Machine's qualitative state.
   		StateList.initialSentinelState; // Initial default no-op state.
-      ///? This could be null in AndStates because it should never be used.
+      /* ///enh? This could be null in AndStates because it should never be used.
+        This could be used to select between and-state and or-state behavior
+        at run-time, including enterV(), overrideProcessInputsV(), and exitV().
+        */
 
   protected StateList requestedSubStateList= null; // Becomes non-null when 
   	// machine requests a new qualitative state.  
@@ -151,10 +166,12 @@ public class StateList extends MutableList implements Runnable {
 
 
 	/* Methods used to build state objects. */
+  /*  ////
   protected void initializeWithIOExceptionV() throws IOException
 	  {
 	  	initializeWithIOExceptionStateList();
 		  }
+  */  ////
 
   public StateList initializeWithIOExceptionStateList() throws IOException
     /* This method initializes this state object, 
@@ -228,15 +245,15 @@ public class StateList extends MutableList implements Runnable {
 
 	public synchronized boolean andStateProcessInputsB() throws IOException
 	  /* This method handles AndState and 
-	    state-machines that want to behave like AndState 
+	    state-machines that want to behave like an AndState machine 
 	    by cycling all of their sub-machines
 	    until none of them makes any computational progress.
-	    It scans the sub-machine in order until one makes computational progress.
+	    It scans the sub-machines in order until one makes computational progress.
 	    Then it restarts the scan.
 	    It is done this way to prioritized the sub-machines.
 	    If one sub-machine produces something for which an earlier machine waits,
-	    that earlier machine will be run next.
-      It keeps scanning until none of the sub-machines in a scan make progress.
+	    then that earlier machine can be run next.
+      It keeps scanning until none of the sub-machines in a scan makes progress.
 	    This method returns true if any computational progress was made
 	    by any sub-machine, false otherwise.
 	    */
@@ -265,8 +282,8 @@ public class StateList extends MutableList implements Runnable {
 	    It does this by calling the handler method 
 	    associated with the present state-machine's sub-state.
       The sub-state might change with each of these calls.
-      It keeps calling sub-state handlers until no computation progress is made.
-      It returns true if computational progress was made by at least one state.
+      It calls sub-state handlers until no computational progress is made.
+      It returns true if at least one sub-state made computational progress.
 	    It returns false otherwise.
 	    Each sub-state handler gets a chance to process the synchronous input,
 	    if one is available, until it is consumed. 
@@ -294,7 +311,7 @@ public class StateList extends MutableList implements Runnable {
 			  	  	break;
 			  	  	}
 	  	  	stateProgressB= true; // Accumulate sub-state progress in this state.
-	  	  	} // while
+	  	  	} // while (true)
 			return stateProgressB; // Returning accumulated state progress result.
 			}
 
@@ -335,6 +352,9 @@ public class StateList extends MutableList implements Runnable {
 	    This is not the same as initialize*V(),
 	    which does actions needed when the StateList object is being built
 	    and is being prepared for providing its services.
+	    
+	    //enh: Presently this is called from orStateProcessInputsB() only.
+	    	Maybe it should be called when andStateProcessInputsB() is called?
 	    */
 	  { 
 			setBackgroundColorV( UIColor.runningStateColor );
@@ -470,20 +490,45 @@ public class StateList extends MutableList implements Runnable {
 		  }
 
 
-	/* Methods for dealing with synchronous input to state-machines.  */
+	/* Methods for dealing with synchronous input to state-machines.
+
+	  Synchronous input is input that arrives as discrete packets,
+	  though not packets in the network sense,
+	  as opposed to level-type inputs, represented by values in variables
+	  which can change at any time.
+	  
+	  Presently a synchronous input is a String which identifies a message, 
+	  parsed from the network input stream,
+	  followed by additional data associated that that message
+	  that follows the String in the same input stream.
+
+	  The arrival of a synchronous input is signaled 
+	  by the variable SynchronousInputString being set 
+	  by the handler's caller to the String input value.
+	  If the state machine processes the input then 
+	  it sets the variable to null, thereby consuming that input.
+	  If it does not process it then the caller withdraws the input
+	  by setting the variable to null so that the input
+	  may be presented to other sub-state machines,
+	  or discarded if no machine processes it.
+	  */
 
 	protected synchronized boolean processInputsWithSynchronousInputB( 
 					StateList subStateList
 					) 
 		  throws IOException
-		/* This method calls subStateList's handler while passing
-		  any available synchronous input to it.
-		  It returns true if the sub-state's handler returned true 
+		/* This method calls subStateList's handler finalProcessInputsB()
+		  while passing any synchronous input stored here by the caller.
+		  It returns true if finalProcessInputsB() returned true 
 		    or a synchronous input was consumed by the sub-state.
 			It returns false otherwise.
 			If a synchronous input was consumed by the sub-state,
 			then it is erased from this StateList also so that 
 			it will not be processed by any other states.
+			If a synchronous input remains stored in this state machine,
+			it is the responsibility of the caller to deal with it,
+			either by removal, or by calling this method until 
+			the input is consumed.
 			*/
 		{
 			boolean madeProgressB;
@@ -496,23 +541,23 @@ public class StateList extends MutableList implements Runnable {
 				  	// Store copy of synchronous input, if any, in sub-state.
 					madeProgressB= subStateList.finalProcessInputsB();
 					if // Process consumption of synchronous input, if it happened.
-						(subStateList.getSynchronousInputString() == null)
+						(subStateList.getSynchronousInputString() == null) // Consumed.
 						{ setSynchronousInputV(null); // Remove input from this state.
-							madeProgressB= true; // Treat input consumption as progress.
+							madeProgressB= true; // Treat this input consumption as progress.
 							}
+						else // Not consumed.
+						subStateList.setSynchronousInputV(null);
+					    // Remove input from sub-state.
 					}
-			if ( madeProgressB )
-				setBackgroundColorV( UIColor.runnableStateColor );
-				else
-				setBackgroundColorV( UIColor.waitingStateColor );
+			colorBySuccessV( madeProgressB );
 			return madeProgressB;
 			}
 	
 	public final synchronized boolean finalProcessSynchronousInputB(
 				String inputString
-				) 
+				)  ////// only temporary use.  loses non-sync info.  phase out.
 			throws IOException
-	  /* This method should be used as the state handler 
+	  /* This method should be called as the state handler 
 	    when there is a synchronous input to be processed.
 	    It stores wordString in a field variable and then 
 	    calls the regular state handler.
@@ -539,46 +584,61 @@ public class StateList extends MutableList implements Runnable {
 			boolean successB=  // Call regular handler to process it.  Return value
 						// is ignored because we are interested in String processing.
 					overrideProcessInputsB(); 
-			successB|= // Combine success with result of synchronous input processing. 
+			////successB|= // Combine success with result of synchronous input processing. 
+			successB= // Override success with result of synchronous input processing.
 					(synchronousInputString == null);
-			synchronousInputString= null; // Remove input to from field variable.
+			synchronousInputString= null; // Remove input from field variable.
 			colorBySuccessV( successB );
 			return successB; // Returning whether input was processed.
 		  }
 
-	private void colorBySuccessV( boolean successB )
-		{ if ( successB )
-			setBackgroundColorV( UIColor.runnableStateColor );
-			else
-			setBackgroundColorV( UIColor.waitingStateColor );
-		  }
-
 	public boolean tryInputB(String testString) throws IOException
 	  /* This method tries to process a synchronous input string.
-	    If inputString is the stored input string then it is consumed
-	    and true is returned, otherwise the stored input string
+	    This means that if testString equals the stored input string 
+	    then it is consumed and true is returned, 
+	    otherwise the stored input string
 	    is not consumed and false is returned.
 	    If true is returned then it is the responsibility of the caller
-	    to process other data associated with testString in the input stream.
+	    to process other data associated with testString 
+	    which follows it in the input stream.
 	   	*/
 	  {
 			boolean successB= // Comparing requested synchronous input to test input. 
 					(testString.equals(synchronousInputString));
 		  if (successB) // Consuming stored input if it matched.
 		  	synchronousInputString= null;
-			return successB; // The result of the test.
+			return successB; // Returning result of the comparison.
+		  }
+
+	public String setAndGetSynchronousInputString(String synchronousInputString)
+		/* This method both stores synchronousInputString in this state
+		  and returns the previously stored value.
+		  */
+	  {
+		  String oldSynchronousInputString= getSynchronousInputString(); 
+		  setSynchronousInputV( synchronousInputString );
+			return oldSynchronousInputString;
 		  }
 
 	protected String getSynchronousInputString()
-	  // See ProcessSynchronousInputB(..).
+	  // This method gets the synchronous input string stored in this state.
 	  {
 			return synchronousInputString;
 		  }
 
 	public void setSynchronousInputV(String synchronousInputString)
-		// See ProcessSynchronousInputB(..).
+		// This method stores synchronousInputString within this state.
 	  {
-		  this.synchronousInputString= synchronousInputString;
+		  if ( this.synchronousInputString != null 
+		  		&& synchronousInputString != null 
+		  		)
+		  	appLogger.error(
+		  			"unconsumed synchronous input in "
+		  			+getNameString( )
+		  			+"= "
+		  			+this.synchronousInputString
+		  			);
+			this.synchronousInputString= synchronousInputString;
 		  }
 	
 
@@ -602,6 +662,13 @@ public class StateList extends MutableList implements Runnable {
 		}
 
 	/* Methods for UI coloring.  */
+
+	private void colorBySuccessV( boolean successB )
+		{ if ( successB )
+				setBackgroundColorV( UIColor.runnableStateColor );
+				else
+				setBackgroundColorV( UIColor.waitingStateColor );
+		  }
 	
   void setBackgroundColorV( Color theColor )
     /* This method sets the background color 
