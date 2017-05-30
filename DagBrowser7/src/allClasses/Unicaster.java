@@ -234,8 +234,10 @@ public class Unicaster
 			  It responds to late HELLO messages and enables the other protocols.
 			  */
 	  	{
+				@SuppressWarnings("unused")
 				private ProcessingOfReceivedRemotePeerMessagesState 
 				  theProcessingOfReceivedRemotePeerMessagesState;
+				@SuppressWarnings("unused")
 				private MultiplexingPacketsFromSubcastersState 
 				  theMultiplexingPacketsFromSubcastersState;
 		    public StateList initializeWithIOExceptionStateList() 

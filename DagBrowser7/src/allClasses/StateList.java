@@ -152,26 +152,22 @@ public class StateList extends MutableList implements Runnable {
 	protected static SentinelState finalSentinelState= new SentinelState();
     // This is used as a final sentinel state for OrState machiens. 
 
-  protected StateList presentSubStateList= // Machine's qualitative state.
-  		StateList.initialSentinelState; // Initial default no-op state.
+  protected StateList presentSubStateList= null; // Machine's qualitative state.
+  		////StateList.initialSentinelState; // Initial default no-op state.
       /* ///enh? This could be null in AndStates because it should never be used.
         This could be used to select between and-state and or-state behavior
         at run-time, including enterV(), overrideProcessInputsV(), and exitV().
+        See AndOrState.
         */
 
-  protected StateList requestedSubStateList= null; // Becomes non-null when 
-  	// machine requests a new qualitative state.  
-    // It could become the present state, 
-    // which would cause state exit and re-entry.
+  protected StateList requestedSubStateList= null; /* Becomes non-null when 
+  	machine requests a new qualitative state.  
+    It could become the present state, 
+    which would cause state exit and re-entry.
+    */
 
 
 	/* Methods used to build state objects. */
-  /*  ////
-  protected void initializeWithIOExceptionV() throws IOException
-	  {
-	  	initializeWithIOExceptionStateList();
-		  }
-  */  ////
 
   public StateList initializeWithIOExceptionStateList() throws IOException
     /* This method initializes this state object, 
@@ -337,13 +333,17 @@ public class StateList extends MutableList implements Runnable {
 	  {
 			if (requestedSubStateList != null) // Report excess request.
         appLogger.error(
-        		"StateList.requestSubStateListV(..), state already requested."
+        		"StateList.requestSubStateListV(..), next state already requested."
         	  );
   	  requestedSubStateList= nextStateList;
-			}
+
+  	  if // Behave like an an OrState by defining the present state.
+			  ( presentSubStateList == null)
+	  		presentSubStateList= StateList.initialSentinelState;
+	  }
 
 	/*  Methods for entry and exit of OrState or their sub-states.  */
-	
+
 	public void enterV() throws IOException
 	  /* This method is called when 
 	    the state associated with this object is entered.
@@ -695,24 +695,92 @@ public class StateList extends MutableList implements Runnable {
 	}  // StateList class 
 
 
-	class SentinelState extends StateList {
+class SentinelState extends StateList {
 
-		/* This class overrides enough non-no-op methods in StateList
-		  that need to be no-ops so that this class can be used
-		  as an initial sentinel-state for OrState state machines.
-		  By doing this the actual desired first state 
-		  can be requested in normal way,
-		  after being requested with requestStateListV(..).
+	/* This class overrides enough non-no-op methods in StateList
+	  that need to be no-ops so that this class can be used
+	  as an initial sentinel-state for OrState state machines.
+	  By doing this the actual desired first state 
+	  can be requested in normal way,
+	  after being requested with requestStateListV(..),
+	  and null checks can be avoided.
+	 	*/
+
+  protected void reportChangeOfSelfV()
+		/* This method does nothing because SentinelStates
+		  are never part of display-able DAG.
 		 	*/
+  	{
+  		}
 
-    protected void reportChangeOfSelfV()
-	  	{
-	  		// Do nothing because the SentinelState is not part of display-able DAG.
-	  		}
+	} // class SentinelState
 
-		} // class SentinelState
+class AndOrState extends StateList {
+	
+	/* The methods in class use the value of the variable presentSubStateList
+	  to determine at run-time whether this state 
+	  should act as an AndState or an OrState.
+	  It acts as an AndState until and unless setAsOrStateV(..) is called.
+	  
+	  This includes the following methods:
+	    enterV(), overrideProcessInputsV(), and exitV().
+    */
 
-	class OrState extends StateList {
+  private boolean isAndStateB()
+    /* This method returns true is this state is behaving as an AndState,
+      false otherwise.
+      */
+  	{ 
+  		return ( presentSubStateList == null) ; 
+  		}
+  
+  protected void setAsOrStateV(StateList firstStateList)
+	  /* This method sets this state to behave as an OrState
+	    and requests the first state-machine state to be firstStateLis. 
+	    */
+	  {
+  		requestSubStateListV( firstStateList );
+  	  presentSubStateList= StateList.initialSentinelState;
+	  }
+
+	public void enterV() throws IOException
+	  /* This method recursively enters each of the concurrent sub-states
+	    if we are acting as an AndState.
+	    */
+	  { 
+			super.enterV();
+			if ( isAndStateB() )
+				for (StateList subStateList : theListOfSubStateLists) 
+	  	  	subStateList.enterV();
+			}
+	
+	public synchronized boolean overrideProcessInputsB() throws IOException
+	  /* This method acts as an AndState handler if presentSubStateList == null,
+	    otherwise it aces as an OrState handler.
+	    */
+	  { 
+		  boolean successB;
+			if ( isAndStateB() )
+		  	successB= andStateProcessInputsB();
+		  	else
+		  	successB= orStateProcessInputsB();
+			return successB;
+		  }
+
+	public void exitV() throws IOException
+	  /* This method recursively exits each of the concurrent sub-states
+	    if this state is acting as an AndState.
+	    */
+	  { 
+			if ( isAndStateB() )
+	  		for (StateList subStateList : theListOfSubStateLists) 
+	  	  	subStateList.exitV();
+			super.exitV();
+			}
+	
+		}
+
+class OrState extends AndOrState { //// StateList {
 
 	/* There are two ways to get "or" state-machine behavior.
 	  * Extend this class.
@@ -728,19 +796,24 @@ public class StateList extends MutableList implements Runnable {
   public StateList initializeWithIOExceptionStateList() throws IOException
     {
   	  super.initializeWithIOExceptionStateList();
+  		////presentSubStateList= // Setting non-null to make state act like OrState.
+  	  setAsOrStateV( StateList.initialSentinelState );
   	  theColor= UIColor.initialOrStateColor;
   	  return this;
     	}
 
+  /*  ////
   public synchronized boolean overrideProcessInputsB() throws IOException
 	  /* This method calls the default OrState handler.  */
+  /*  ////
 	  { 
   		return orStateProcessInputsB(); 
   		}
+  */  ////
 
 	}  // OrState 
 
-class AndState extends StateList {
+class AndState extends AndOrState { //// StateList {
 
 	/* There are two ways to get "and" state-machine behavior.
 	  * Extend this class.
@@ -758,9 +831,11 @@ class AndState extends StateList {
   	  return this;
     	}
 
+  /*  ////
 	public synchronized boolean overrideProcessInputsB() throws IOException
 		{ 
 		  return andStateProcessInputsB(); 
 		  }
+  */  ////
 
 	}  // AndState 
