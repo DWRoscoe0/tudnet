@@ -6,7 +6,6 @@ import java.util.Timer;
 
 import static allClasses.Globals.appLogger;
 
-//// import allClasses.HelloMachineState.ProcessingFirstHelloState;
 import allClasses.LockAndSignal.Input;
 
 public class Unicaster
@@ -118,7 +117,7 @@ public class Unicaster
     				theBeforeHelloExchangeState= new BeforeHelloExchangeState());
     		initAndAddStateListV(
     				theAfterHelloExchangedState= new AfterHelloExchangedState());
-	  	  requestSubStateListV( theBeforeHelloExchangeState ); // Initial state.
+    		setFirstOrSubStateV( theBeforeHelloExchangeState ); // Initial state.
 
 	  	  initAndAddStateListV(theTemporaryMainState= new TemporaryMainState());
 	  	  
@@ -167,7 +166,10 @@ public class Unicaster
 			      	if ( theInput != Input.NONE ) break; // Exit if interrupted.
 			      	
 			      	//////// Transfer message from stream to machines, if possible.
-			      	if (theEpiInputStreamI.available() > 0) 
+			      	if // Pump input stream events if possible. 
+			      	  ( ( theEpiInputStreamI.available() > 0 )
+			      	  	&& ( getSynchronousInputString() == null )
+			      	  	)
 			      		setSynchronousInputV( theEpiInputStreamI.readAString() );
 
             	finalProcessInputsB(); // Handle notification as a state-machine.
@@ -217,10 +219,15 @@ public class Unicaster
 	  	  until the acknowledgement is received.
 			  */
 	  	{
-			  public void overrideProcessInputsV() throws IOException ////// Not used yet.
-			  	{ appLogger.debug( "BeforeHelloExchangeState.overrideProcessInputsV() entry.");
-			  		if (!processingHellosB()) { 
-			  			////requestStateListV( finalSentinelState ); //// break processing;
+
+		  	public void enterV() throws IOException
+				  { super.enterV(); // This is mainly to set background color.
+			  	  appLogger.debug( "BeforeHelloExchangeState.enterV().");
+						}
+
+	  		public void overrideProcessInputsV() throws IOException
+			  	{ appLogger.debug( "BeforeHelloExchangeState.overrideProcessInputsV().");
+			  		if ( processingHellosB() ) { 
 			  			appLogger.debug( 
 			  					"BeforeHelloExchangeState.overrideProcessInputsV() switching."
 			  					);
@@ -229,78 +236,132 @@ public class Unicaster
 			  		}
 		  		} // class BeforeHelloExchangeState
 
-		private class AfterHelloExchangedState extends StateList //// AndState 
+		private class AfterHelloExchangedState extends AndState //// StateList 
 			/* This state class is active after HELLO messages are exchanged.
 			  It responds to late HELLO messages and enables the other protocols.
 			  */
 	  	{
-				@SuppressWarnings("unused")
-				private ProcessingOfReceivedRemotePeerMessagesState 
-				  theProcessingOfReceivedRemotePeerMessagesState;
-				@SuppressWarnings("unused")
-				private MultiplexingPacketsFromSubcastersState 
-				  theMultiplexingPacketsFromSubcastersState;
-		    public StateList initializeWithIOExceptionStateList() 
+
+	  		public StateList initializeWithIOExceptionStateList() 
 		    		throws IOException
 			    {
 		    		super.initializeWithIOExceptionStateList();
 		    		initAndAddStateListV(
-		    				theProcessingOfReceivedRemotePeerMessagesState= 
 		    					new ProcessingOfReceivedRemotePeerMessagesState());
 		    		initAndAddStateListV(
-		    				theMultiplexingPacketsFromSubcastersState= 
 		    					new MultiplexingPacketsFromSubcastersState());
 		    		return this;
 			    	}
+
 		  	public void enterV() throws IOException
 				  { super.enterV(); // This is mainly to set background color.
 			      theSubcasterManager.getOrBuildAddAndStartSubcaster(
 						  "PING-REPLY" ///tmp Hard wired creation at first.  Fix later.
 						  ); // Adding Subcaster.
 						}
+
+		  	/*  ////
 			  public boolean overrideProcessInputsB() throws IOException
 			  	{ boolean successB= true;
     				appLogger.debug( "AfterHelloExchangedState.overrideProcessInputsB() entry.");
-    				////if (processingRemotePeerMessageB() ) ;
     				if ( super.andStateProcessInputsB() ) ; // Process sub-states.
-		      	////else if (multiplexingPacketsFromSubcastersB()) ;
 		      	else 
 		      		{ appLogger.warning( "AfterHelloExchangedState.overrideProcessInputsB() failure.");
 		      		  successB= false;
 		      			}
 				  	return successB;
 				  	}
+		  	*/  ////
+
 				public void exitV() throws IOException
 				  { if  // Informing remote end whether app is doing a Shutdown.
 		    			( theShutdowner.isShuttingDownB() ) 
-			    		{ theEpiOutputStreamO.writingAndSendingV("SHUTTING-DOWN"); // Informing peer.
+			    		{ ///enh Make this into FastDisconnect using GOODBYE.
+				  	    theEpiOutputStreamO.writingAndSendingV("SHUTTING-DOWN"); // Informing peer.
 			          appLogger.info( "SHUTTING-DOWN message sent.");
 			    			}
 		    		theSubcasterManager.stoppingEntryThreadsV();
 						super.exitV(); // This is mainly to set background color.
 						}
 
-		  		} // class AfterHelloExchangedState
+		  	} // class AfterHelloExchangedState
 
-		class ProcessingOfReceivedRemotePeerMessagesState extends StateList 
+		class ProcessingOfReceivedRemotePeerMessagesState extends AndState 
 	    {
+		    public StateList initializeWithIOExceptionStateList() 
+		    		throws IOException
+			    {
+		    		super.initializeWithIOExceptionStateList();
+		    		////initAndAddStateListV(
+		    		////			new ProcessMessagesToSubcasterState());
+		    		return this;
+			    	}
 
 				public boolean overrideProcessInputsB() throws IOException
 			  	{
-			  	  return processingRemotePeerMessageB();
+			  	  ////return processingRemotePeerMessageB();
+					  	boolean successB;
+						beforeReturn: { 
+						  successB= true;
+					  	if ( super.andStateProcessInputsB() ) // Process sub-states.
+					  	  break beforeReturn;
+						  successB= false;
+							String keyString=  // Reading message key string
+									getSynchronousInputString();
+							if ( keyString == null ) break beforeReturn; // Exit if no input.
+						  successB= true;
+				      Subcaster theSubcaster= // Getting associated Subcaster, if any.
+				        theSubcasterManager.tryingToGetDataNodeWithKeyD( keyString );
+				      if // Passing remainder of message to associated Subcaster.
+				        ( theSubcaster != null )
+				        { processMessageToSubcasterV( theSubcaster ); break beforeReturn; }
+				      if ( theMultiMachineState.finalProcessSynchronousInputB(keyString) )
+				      	break beforeReturn;
+		  			  if ( processHelloB( keyString ) ) // "HELLO"
+		   			  	break beforeReturn;
+		   			  if ( processShuttingDownB(keyString) ) // "SHUTTING-DOWN"
+		   			  	break beforeReturn;
+		    		  if ( keyString.equals( "TEST" ) ) // "TEST" packet.
+		   			  	break beforeReturn; // Accepting by breaking.
+		    		  appLogger.warning( 
+		    		  	"processingRemoteMessageB(): Ignoring unknown remote message: " 
+		    		  	+ keyString 
+		    		  	);
+							} // beforeReturn:
+						setSynchronousInputV( null ); // Consume any unconsumed input message.
+						return successB;
 			  		}
 
 		    } // ProcessingOfReceivedRemotePeerMessagesState 
 
+		class ProcessMessagesToSubcasterState extends StateList 
+    {
+
+			public boolean XoverrideProcessInputsB() throws IOException ////
+		  	{
+					String keyString=  // Reading message key string
+							getSynchronousInputString();
+		      Subcaster theSubcaster= // Getting associated Subcaster, if any.
+			        theSubcasterManager.tryingToGetDataNodeWithKeyD( keyString );
+  	      if // Passing remainder of message to associated Subcaster.
+			        ( theSubcaster != null )
+			        { processMessageToSubcasterV( theSubcaster );
+			        	setSynchronousInputV( null ); // Consume the input.
+			        	}
+		  	  return false;
+		  		}
+
+	    } // ProcessMessagesToSubcasterState 
+
 		class MultiplexingPacketsFromSubcastersState extends StateList 
-	    {
+    {
 
-				public boolean overrideProcessInputsB() throws IOException
-			  	{
-			  	  return multiplexingPacketsFromSubcastersB();
-			  		}
+			public boolean overrideProcessInputsB() throws IOException
+		  	{
+		  	  return multiplexingPacketsFromSubcastersB();
+		  		}
 
-		    } // MultiplexingPacketsFromSubcastersState 
+	    } // MultiplexingPacketsFromSubcastersState 
 
 		class TemporaryMainState extends StateList 
 	    {
@@ -382,45 +443,6 @@ public class Unicaster
 						theDatagramPacket.getLength()
 						);
 				theEpiOutputStreamO.sendingPacketV(); ///opt? Could this be delayed?
-				}
-
-		private boolean processingRemotePeerMessageB() throws IOException
-		  /* This method processes the next available message.
-		    One is assumed to be available.
-		    Most will be demultiplexed and passed to Subcasters.
-		    Some will be processed in this thread.
-		    If the message is recognized and processed then true is returned.
-		    If the message is not recognized then 
-		    it is returned to the input stream and true is returned.
-		   */
-			{
-			  	boolean successB;
-				beforeReturn: { ////////
-				  successB= false;
-					String keyString=  // Reading message key string
-							getSynchronousInputString();
-					if ( keyString == null ) break beforeReturn; // Exit if no input.
-				  successB= true;
-		      Subcaster theSubcaster= // Getting associated Subcaster, if any.
-		        theSubcasterManager.tryingToGetDataNodeWithKeyD( keyString );
-		      if // Passing remainder of message to associated Subcaster.
-		        ( theSubcaster != null )
-		        { processMessageToSubcasterV( theSubcaster ); break beforeReturn; }
-		      if ( theMultiMachineState.finalProcessSynchronousInputB(keyString) )
-		      	break beforeReturn;
-  			  if ( processHelloB( keyString ) ) // "HELLO"
-   			  	break beforeReturn;
-   			  if ( processShuttingDownB(keyString) ) // "SHUTTING-DOWN"
-   			  	break beforeReturn;
-    		  if ( keyString.equals( "TEST" ) ) // "TEST" packet.
-   			  	break beforeReturn; // Accepting by breaking.
-    		  appLogger.warning( 
-    		  	"processingRemoteMessageB(): Ignoring unknown remote message: " 
-    		  	+ keyString 
-    		  	);
-					} // beforeReturn:
-				setSynchronousInputV( null ); // Consume any unconsumed input message.
-				return successB;
 				}
 
 		public boolean processingHellosB()
@@ -521,6 +543,7 @@ public class Unicaster
   	private boolean processShuttingDownB(String keyString)
   	  /* This method sets this thread's interrupt status to cause exit
   	    if keyString is "SHUTTING-DOWN".
+  	    ///enh Make this into FastDisconnect using GOODBYE.
   	   */
       {
 			  boolean isKeyB= keyString.equals( "SHUTTING-DOWN" ); 

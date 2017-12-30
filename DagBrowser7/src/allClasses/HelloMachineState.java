@@ -10,10 +10,10 @@ public class HelloMachineState
 	extends OrState
 	
 	/* This class has not been tested and is not being used.
-	  After its creation it was decided that its code 
-	  should be added incrementally to Unicaster and tested there
+	  After its creation it was decided that its sub-states
+	  should be moved [incrementally] to Unicaster and tested there
 	  before being made into its own class, if ever.  ////  
-	   
+
 	  This class contains a [hierarchical] state machine 
 	  that processes the HELLO handshake that is supposed to happen
 	  at the beginning of a Unicaster connection.
@@ -109,17 +109,17 @@ public class HelloMachineState
 	    	public void enterV() throws IOException
 		  	  // Sends a HELLO and initializes retry timer.
 		  	  {
-		    		sendHelloV();
+		    		newSendHelloV();
 					  helloTimerInput.scheduleV(retryTimeOutMsL);
 						}
 		
 			  public void overrideProcessInputsV() throws IOException
 			  	/* This method handles handshakes acknowledgement, 
 			  	  initiating a retry using twice the time-out,
-			  	  until the acknowledgement is received.
+			  	  until a HELLO is received.
 			  	  */
 			  	{
-			  		if (tryProcessingReceivedHelloB()) // Try to process first HELLO.
+			  		if (newTryProcessingReceivedHelloB()) // Try to process first HELLO.
 			  			requestStateListV( // Success.  Go handle any later HELLOs.
 					  			theAfterHelloExchangeState
 					  			);
@@ -142,13 +142,12 @@ public class HelloMachineState
 	  	/* This state handles the reception of extra HELLO messages,
 	  	  which are HELLO messages received after the first one.
 	  	  Extra HELLO messages means that the remote peer
-	  	  did not receive the HELLO or HELLOs sent by us,
-	  	  or a HELLO message from the remote peer was delayed.
+	  	  did not receive the HELLO or HELLOs sent by us earlier.
 	  	  */
 
 	  	{
-				private boolean respondB= false; // Flag to prevent HELLO storms.
-				
+				private boolean ignoreB= false; // True means previous HELLO ignored.
+
 			  public void overrideProcessInputsV() throws IOException
 			  	/* This method sends HELLO messages 
 			  	  in response to received HELLO messages.
@@ -156,29 +155,18 @@ public class HelloMachineState
 			  	  every other received HELLO. 
 			  	  */
 			  	{
-			  		if (tryProcessingReceivedHelloB()) // Try to process first HELLO.
-			  			if  // If we received a HELLO 
-			  			  ( respondB^= true ) // and we didn't respond last time
-			  				sendHelloV(); // send a response HELLO response this time.
+			  		if (newTryProcessingReceivedHelloB()) // Try to process another HELLO.
+				  		{
+				        appLogger.warning( "Extra HELLO received." );
+				  			if  // If we received a HELLO 
+				  			  ( ignoreB^= true ) // and we ignored it last time
+				  				newSendHelloV(); // send a response HELLO this time.
+				  			}
 					  }
 
 	  		} // class AfterHelloExchangeState 
 
-  	private void sendHelloV()
-  			throws IOException
-  	  /* This method sends a HELLO message to the remote peer
-  	    and logs that it has done so.
-  	    */
-	  	{
-		    appLogger.info( "HelloMachineState sending HELLO." );
-		    theNetcasterOutputStream.writingTerminatedStringV( "HELLO" );
-		    theNetcasterOutputStream.writingTerminatedStringV(  // Writing other peer's IP address. 
-						theUnicaster.getKeyK().getInetAddress().getHostAddress() 
-						);
-		    theNetcasterOutputStream.sendingPacketV(); // Forcing send.
-	  		}
-
-  	private boolean tryProcessingReceivedHelloB() 
+  	private boolean newTryProcessingReceivedHelloB() 
   			throws IOException
   	  /* This method tries to process the Hello message and its arguments.
   	    If the next input String is "HELLO" then it processes,
@@ -191,8 +179,6 @@ public class HelloMachineState
   	    This method does not send a reply "HELLO".
   	    Sending is assumed to be done elsewhere.
   	    This method returns true if HELLO was processed, false otherwise.
-  	    This method may be called multiple times, 
-  	    but it should produce the same result each time.
   	    */
 	  	{
   		  boolean isKeyB= tryInputB("HELLO");
@@ -213,6 +199,20 @@ public class HelloMachineState
 	        		);
 				  }
   		  return isKeyB;
+	  		}
+
+  	private void newSendHelloV()
+  			throws IOException
+  	  /* This method sends a HELLO message to the remote peer
+  	    and logs that it has done so.
+  	    */
+	  	{
+		    appLogger.info( "HelloMachineState sending HELLO." );
+		    theNetcasterOutputStream.writingTerminatedStringV( "HELLO" );
+		    theNetcasterOutputStream.writingTerminatedStringV( 
+						theUnicaster.getKeyK().getInetAddress().getHostAddress() 
+						);  // Writing other peer's IP address.
+		    theNetcasterOutputStream.sendingPacketV(); // Forcing send.
 	  		}
 
 		} // class HelloMachineState

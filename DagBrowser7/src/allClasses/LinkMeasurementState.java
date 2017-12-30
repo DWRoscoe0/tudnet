@@ -164,7 +164,8 @@ public class LinkMeasurementState
 			  	  initAndAddStateListV( theMeasurementHandshakingState= 
 			  	  		new MeasurementHandshakingState() );
 	
-						requestSubStateListV( theMeasurementPausedState ); // Initial state.
+						////requestSubStateListV( theMeasurementPausedState ); // Initial state.
+			  	  setFirstOrSubStateV( theMeasurementPausedState ); // Initial state.
 						return this;
 			    	}
 	

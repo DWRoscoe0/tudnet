@@ -331,7 +331,10 @@ public class StateList extends MutableList implements Runnable {
 	    the handler of the present sub-state exits.
 	    */
 	  {
-			if (requestedSubStateList != null) // Report excess request.
+			if  // Report excess state change request.
+				( (requestedSubStateList != null)
+					&& (requestedSubStateList != StateList.initialSentinelState)
+					)
         appLogger.error(
         		"StateList.requestSubStateListV(..), next state already requested."
         	  );
@@ -734,12 +737,12 @@ class AndOrState extends StateList {
   		return ( presentSubStateList == null) ; 
   		}
   
-  protected void setAsOrStateV(StateList firstStateList)
+  protected void setFirstOrSubStateV(StateList firstSubStateList)
 	  /* This method sets this state to behave as an OrState
-	    and requests the first state-machine state to be firstStateLis. 
+	    and requests the first state-machine state to be firstSubStateList. 
 	    */
 	  {
-  		requestSubStateListV( firstStateList );
+  		requestSubStateListV( firstSubStateList );
   	  presentSubStateList= StateList.initialSentinelState;
 	  }
 
@@ -797,7 +800,7 @@ class OrState extends AndOrState { //// StateList {
     {
   	  super.initializeWithIOExceptionStateList();
   		////presentSubStateList= // Setting non-null to make state act like OrState.
-  	  setAsOrStateV( StateList.initialSentinelState );
+  	  setFirstOrSubStateV( StateList.initialSentinelState );
   	  theColor= UIColor.initialOrStateColor;
   	  return this;
     	}
