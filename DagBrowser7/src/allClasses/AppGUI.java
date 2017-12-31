@@ -1,11 +1,14 @@
 package allClasses;
 
+import java.awt.Font;
 import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.Enumeration;
 
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 
 import static allClasses.Globals.appLogger;  // For appLogger;
 
@@ -24,8 +27,8 @@ public class AppGUI
     private EpiThread theCPUMonitorEpiThread;
     private DataTreeModel theDataTreeModel;
     private DataNode theInitialRootDataNode;
-    private LockAndSignal theGUILockAndSignal;
-    private GUIDefiner theGUIDefiner;
+    //% private LockAndSignal theGUILockAndSignal;
+    private GUIBuilderStarter theGUIBuilderStarter;
     private Shutdowner theShutdowner;
 
     public AppGUI(   // Constructor.
@@ -33,8 +36,8 @@ public class AppGUI
         EpiThread theCPUMonitorEpiThread,
         DataTreeModel theDataTreeModel,
         DataNode theInitialRootDataNode,
-        LockAndSignal theGUILockAndSignal,
-        GUIDefiner theGUIDefiner,
+        //% LockAndSignal theGUILockAndSignal,
+        GUIBuilderStarter theGUIBuilderStarter,
         Shutdowner theShutdowner
         )
       {
@@ -42,12 +45,12 @@ public class AppGUI
 	      this.theCPUMonitorEpiThread= theCPUMonitorEpiThread;
         this.theDataTreeModel= theDataTreeModel;
         this.theInitialRootDataNode= theInitialRootDataNode;
-        this.theGUILockAndSignal= theGUILockAndSignal;
-        this.theGUIDefiner= theGUIDefiner;
+        //% this.theGUILockAndSignal= theGUILockAndSignal;
+        this.theGUIBuilderStarter= theGUIBuilderStarter;
         this.theShutdowner= theShutdowner;
         }
 
-    public static class GUIDefiner // This EDT Runnable starts the GUI. 
+    public static class GUIBuilderStarter // This EDT-Runnable starts GUI. 
       implements Runnable
 
       /* This nested class is used to create and start the app's GUI.
@@ -57,10 +60,10 @@ public class AppGUI
         its instance is constructed.
         */
 
-      { // GUIDefiner
+      { // GUIBuilderStarter
 
     		// Injected dependency variables.
-        private LockAndSignal theGUILockAndSignal;
+        //% private LockAndSignal theGUILockAndSignal;
     		private AppInstanceManager theAppInstanceManager;
     		private DagBrowserPanel theDagBrowserPanel;
     		private AppGUIFactory theAppGUIFactory;
@@ -71,8 +74,8 @@ public class AppGUI
         // Other AppGUI instance variables.
         private JFrame theJFrame;  // App's only JFrame (now).
 
-        GUIDefiner(   // Constructor. 
-        		LockAndSignal theGUILockAndSignal, 
+        GUIBuilderStarter(   // Constructor. 
+        		//% LockAndSignal theGUILockAndSignal, 
         		AppInstanceManager theAppInstanceManager,
         		DagBrowserPanel theDagBrowserPanel,
         		AppGUIFactory theAppGUIFactory,
@@ -81,8 +84,8 @@ public class AppGUI
 	        	BackgroundEventQueue theBackgroundEventQueue
         		)
           {
-            this.theGUILockAndSignal=   // Save lock reference.
-              theGUILockAndSignal;
+            //% this.theGUILockAndSignal=   // Save lock reference.
+        		//%   theGUILockAndSignal;
         		this.theAppInstanceManager= theAppInstanceManager;
         		this.theDagBrowserPanel= theDagBrowserPanel;
         		this.theAppGUIFactory= theAppGUIFactory;
@@ -91,12 +94,13 @@ public class AppGUI
 	        	this.theBackgroundEventQueue= theBackgroundEventQueue;
             }
 
-        public void run() // GUIDefiner.
+        public void run() // GUIBuilderStarter.
           /* This method builds the app's GUI in a new JFrame and starts it.
             This method is run on the AWT thread by startingBrowserGUIV() 
             because AWT GUI code is not thread-safe.
             */
           {
+        		appLogger.info("GUIBuilderStarter.run() beginning.");
         		theTracingEventQueue.initializeV(); // to start monitor thread.
 
 	        	Toolkit.getDefaultToolkit().getSystemEventQueue().push(
@@ -111,6 +115,10 @@ public class AppGUI
             //    getSystemLookAndFeelClassName());
             //  } catch(Exception e) {}
 	        	
+	        	setUIFont( new javax.swing.plaf.FontUIResource(
+	        			Font.MONOSPACED,Font.PLAIN,12
+	        			));
+
         		theDagBrowserPanel.initializeV();
 
         		theJFrame =  // Construct and start the app JFrame.
@@ -121,8 +129,22 @@ public class AppGUI
               ); // For dealing with other running app instances.
 
             //appLogger.info("GUI start-up complete.");
-            theGUILockAndSignal.notifyingV();  // Signal that starting is done.
+            //% theGUILockAndSignal.notifyingV();  // Signal that starting is done.
+        		appLogger.info("GUIBuilderStarter.run() ending.");
             }
+
+        public static void setUIFont(javax.swing.plaf.FontUIResource f)
+          // This method sets the default font for all UI component types.
+          //// Better document.
+	        {
+	          Enumeration<Object> keys = UIManager.getDefaults().keys();
+	          while (keys.hasMoreElements()) {
+	            Object key = keys.nextElement();
+	            Object value = UIManager.get (key);
+	            if (value instanceof javax.swing.plaf.FontUIResource)
+	              UIManager.put (key, f);
+	            }
+	          } 
 
         private JFrame startingJFrame()
           /* This method creates the app's JFrame and starts it.
@@ -153,7 +175,7 @@ public class AppGUI
 	            	});
             theJFrame.setVisible(true);  // Make the window visible.
             appLogger.info(
-              	"GUIDefiner.theJFrame.setVisible(true) done."
+              	"GUIBuilderStarter.theJFrame.setVisible(true) done."
               	);
             SwingUtilities.invokeLater(new Runnable() { // Queue GUI event...
               @Override  
@@ -168,9 +190,9 @@ public class AppGUI
             return theJFrame;
             }
 
-        } //GUIDefiner
+        } //GUIBuilderStarter
 
-    class InstanceCreationRunnable
+    class InstanceCreationRunnable // Listens for other local app instances.
     	implements AppInstanceListener, Runnable
       /* This nested class does 2 things:
 	        
@@ -245,7 +267,9 @@ public class AppGUI
 
         } // class InstanceCreationRunnable
 
-    private void startingBrowserGUIV()
+    /*   //%
+     * private void startingBrowserGUIV() //%
+     */
       /* This method builds and starts the Graphical User Interface (GUI).
         It doesn't return until the GUI has been started.
         This is tricky because:
@@ -256,23 +280,30 @@ public class AppGUI
         ?? Simplify by using invokeAndWait(..) instead of 
         invokeLater(..) and doWaitE().
         */
+    /*   //%
       {
-        appLogger.info("Queuing GUIDefiner.");
+        appLogger.info("Invoking GUIBuilderStarter.");
 
-        java.awt.EventQueue.invokeLater(  // Queue on GUI (AWT) thread...
-        	theGUIDefiner   // ...this Runnable GUIDefiner,...
+        //% java.awt.EventQueue.invokeLater(  // Queue on GUI (AWT) thread...
+        EDTUtilities.invokeAndWaitV(  // Queue on GUI (AWT) thread...
+          theGUIBuilderStarter   // ...this Runnable GUIBuilderStarter,...
           );  //  whose run() method will build and start the app's GUI.
 
-        theGUILockAndSignal.waitingForInterruptOrNotificationE();
-          // which means that the GUIDefiner has finished.
+        //% theGUILockAndSignal.waitingForInterruptOrNotificationE();
+          // which means that the GUIBuilderStarter has finished.
 
-        appLogger.info("GUI/AWT thread signalled GUIDefiner done.");
+        //% appLogger.info("GUI/AWT thread signalled GUIBuilderStarter done.");
+        appLogger.info("GUIBuilderStarter done.");
         }
+      */   //%
 
     public void runV() // This method does the main AppGUI run phase.
       {
         theDataTreeModel.initializeV( theInitialRootDataNode );
-        startingBrowserGUIV();  // Building and displaying GUI on AWT thread.
+        //% startingBrowserGUIV();  // Building and displaying GUI on AWT thread.
+        EDTUtilities.invokeAndWaitV(  // Queue on GUI (AWT) thread...
+            theGUIBuilderStarter   // ...this Runnable GUIBuilderStarter,...
+            );  //  whose run() method will build and start the app's GUI.
         theConnectionManagerEpiThread.startV();
         theCPUMonitorEpiThread.startV();
 

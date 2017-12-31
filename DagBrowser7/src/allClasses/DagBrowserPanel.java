@@ -233,7 +233,7 @@ public class DagBrowserPanel
           buildAndAddIJButtonsV();
 
           { // create and add activityJLabel.
-            activityJLabel= new JLabel("Activity");  // for testing.
+            activityJLabel= new JLabel("Starting");  // for testing.
             activityJLabel.setOpaque(true);  // set opaque for use as activity.
             activityJLabel.setFont( // set different font.
             		new Font("Monospaced",Font.BOLD,16)
@@ -599,7 +599,7 @@ public class DagBrowserPanel
         {
       		long periodicTargetTimeMsL; // Target times for waits.
       		  // Making variable volatile doesn't make any difference.
-      		boolean colorToggleB= false; // For gadget color.
+      		boolean periodicToggleB= false; // For gadget color.
 
       		TimerThread( String nameString )
         		{
@@ -650,10 +650,13 @@ public class DagBrowserPanel
 	                @Override  
 	                public void run() { 
 	                	activityJLabel.setText( "Active" );
-                  	Color activityColor= (colorToggleB^=true) 
+                  	Color activityColor= (periodicToggleB^=true) 
                   			? Color.WHITE
                   		  : getBackground();
                     activityJLabel.setBackground(activityColor);
+                    AppGUI.GUIBuilderStarter.setUIFont( new javax.swing.plaf.FontUIResource(
+        	        			Font.MONOSPACED,Font.PLAIN,24
+        	        			));
                     }  
 	                } 
 	              );

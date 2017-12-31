@@ -107,12 +107,12 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
     			theMetaRoot,
     			theBackgroundEventQueue
 	        );
-      LockAndSignal theGUILockAndSignal= new LockAndSignal();
-      AppGUI.GUIDefiner theGUIDefiner= new AppGUI.GUIDefiner( 
-  		  theGUILockAndSignal, 
+      //% LockAndSignal theGUILockAndSignal= new LockAndSignal();
+      AppGUI.GUIBuilderStarter theGUIBuilderStarter= new AppGUI.GUIBuilderStarter( 
+  		  //% theGUILockAndSignal, 
   		  theAppInstanceManager,
   		  theDagBrowserPanel,
-        this, // GUIDefiner gets to know the factory that made it. 
+        this, // GUIBuilderStarter gets to know the factory that made it. 
         theShutdowner,
     		theTracingEventQueue,
       	theBackgroundEventQueue
@@ -122,8 +122,8 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
         theCPUMonitorEpiThread,
         theDataTreeModel,
         theInitialRootDataNode,
-        theGUILockAndSignal,
-        theGUIDefiner,
+        //% theGUILockAndSignal,
+        theGUIBuilderStarter,
         theShutdowner
         );
 
