@@ -19,7 +19,8 @@ public class Misc
     ///err : error checking enhancement
     ///opt : an optimization change.
     ///enh : other miscellaneous enhancement.
-    ///elim : code that might not be needed and may be eliminated. 
+    ///elim : code that might not be needed and may be eliminated.
+    ///doc : fix documentation. 
     //% : marks old code to be deleted.  Old.
     //? : unspecified change.
     //// (r or more slashes) : very temporary something else to do.

@@ -650,12 +650,16 @@ public class DagBrowserPanel
 	                @Override  
 	                public void run() { 
 	                	activityJLabel.setText( "Active" );
-                  	Color activityColor= (periodicToggleB^=true) 
+	                	periodicToggleB^=true;
+                  	Color activityColor= periodicToggleB 
                   			? Color.WHITE
                   		  : getBackground();
                     activityJLabel.setBackground(activityColor);
-                    AppGUI.GUIBuilderStarter.setUIFont( new javax.swing.plaf.FontUIResource(
-        	        			Font.MONOSPACED,Font.PLAIN,24
+                    PlatformUI.setUIFont( 
+                  		new javax.swing.plaf.FontUIResource(
+                  				Font.MONOSPACED, Font.PLAIN, periodicToggleB 
+	                    			? 12
+	                    		  : 14
         	        			));
                     }  
 	                } 

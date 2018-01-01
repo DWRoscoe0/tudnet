@@ -108,7 +108,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
     			theBackgroundEventQueue
 	        );
       //% LockAndSignal theGUILockAndSignal= new LockAndSignal();
-      AppGUI.GUIBuilderStarter theGUIBuilderStarter= new AppGUI.GUIBuilderStarter( 
+      GUIBuilderStarter theGUIBuilderStarter= new GUIBuilderStarter( 
   		  //% theGUILockAndSignal, 
   		  theAppInstanceManager,
   		  theDagBrowserPanel,

@@ -1,7 +1,10 @@
 package allClasses;
 
+import java.awt.Dialog;
 import java.awt.Font;
+import java.awt.Frame;
 import java.awt.Toolkit;
+import java.awt.Window;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.Enumeration;
@@ -49,149 +52,7 @@ public class AppGUI
         this.theGUIBuilderStarter= theGUIBuilderStarter;
         this.theShutdowner= theShutdowner;
         }
-
-    public static class GUIBuilderStarter // This EDT-Runnable starts GUI. 
-      implements Runnable
-
-      /* This nested class is used to create and start the app's GUI.
-        It's run() method runs in the EDT thread.
-        It signals its completion by executing doNotify() on
-        the LockAndSignal object passed to it when 
-        its instance is constructed.
-        */
-
-      { // GUIBuilderStarter
-
-    		// Injected dependency variables.
-        //% private LockAndSignal theGUILockAndSignal;
-    		private AppInstanceManager theAppInstanceManager;
-    		private DagBrowserPanel theDagBrowserPanel;
-    		private AppGUIFactory theAppGUIFactory;
-    		private Shutdowner theShutdowner;
-    		private TracingEventQueue theTracingEventQueue;
-      	private BackgroundEventQueue theBackgroundEventQueue;
-
-        // Other AppGUI instance variables.
-        private JFrame theJFrame;  // App's only JFrame (now).
-
-        GUIBuilderStarter(   // Constructor. 
-        		//% LockAndSignal theGUILockAndSignal, 
-        		AppInstanceManager theAppInstanceManager,
-        		DagBrowserPanel theDagBrowserPanel,
-        		AppGUIFactory theAppGUIFactory,
-        		Shutdowner theShutdowner,
-        		TracingEventQueue theTracingEventQueue,
-	        	BackgroundEventQueue theBackgroundEventQueue
-        		)
-          {
-            //% this.theGUILockAndSignal=   // Save lock reference.
-        		//%   theGUILockAndSignal;
-        		this.theAppInstanceManager= theAppInstanceManager;
-        		this.theDagBrowserPanel= theDagBrowserPanel;
-        		this.theAppGUIFactory= theAppGUIFactory;
-        		this.theShutdowner= theShutdowner;
-        		this.theTracingEventQueue= theTracingEventQueue;
-	        	this.theBackgroundEventQueue= theBackgroundEventQueue;
-            }
-
-        public void run() // GUIBuilderStarter.
-          /* This method builds the app's GUI in a new JFrame and starts it.
-            This method is run on the AWT thread by startingBrowserGUIV() 
-            because AWT GUI code is not thread-safe.
-            */
-          {
-        		appLogger.info("GUIBuilderStarter.run() beginning.");
-        		theTracingEventQueue.initializeV(); // to start monitor thread.
-
-	        	Toolkit.getDefaultToolkit().getSystemEventQueue().push(
-	        			theTracingEventQueue
-	        			); // For monitoring dispatch times.
-	        	Toolkit.getDefaultToolkit().getSystemEventQueue().push(
-	        			theBackgroundEventQueue
-	        			); // For doing low-priority window creation.
-
-        	  //try { // Change GUI look-and-feel to be OS instead of java.
-            //  UIManager.setLookAndFeel(UIManager.
-            //    getSystemLookAndFeelClassName());
-            //  } catch(Exception e) {}
-	        	
-	        	setUIFont( new javax.swing.plaf.FontUIResource(
-	        			Font.MONOSPACED,Font.PLAIN,12
-	        			));
-
-        		theDagBrowserPanel.initializeV();
-
-        		theJFrame =  // Construct and start the app JFrame.
-        				startingJFrame();
-
-            theAppInstanceManager.setAppInstanceListener(
-              theAppGUIFactory.makeInstanceCreationRunnable(theJFrame)
-              ); // For dealing with other running app instances.
-
-            //appLogger.info("GUI start-up complete.");
-            //% theGUILockAndSignal.notifyingV();  // Signal that starting is done.
-        		appLogger.info("GUIBuilderStarter.run() ending.");
-            }
-
-        public static void setUIFont(javax.swing.plaf.FontUIResource f)
-          // This method sets the default font for all UI component types.
-          //// Better document.
-	        {
-	          Enumeration<Object> keys = UIManager.getDefaults().keys();
-	          while (keys.hasMoreElements()) {
-	            Object key = keys.nextElement();
-	            Object value = UIManager.get (key);
-	            if (value instanceof javax.swing.plaf.FontUIResource)
-	              UIManager.put (key, f);
-	            }
-	          } 
-
-        private JFrame startingJFrame()
-          /* This method creates the app's JFrame and starts it.
-            It is meant to be run on the EDT (Event Dispatching Thread).
-            The JFrame content is set to a DagBrowserPanel 
-            which contains the GUI and other code which does most of the work.
-            It returns the JFrame.  
-            */
-          {
-            JFrame theJFrame =  // Make the main application JFrame.
-              theAppGUIFactory.makeJFrame( 
-                AppName.getAppNameString()
-                +", version "
-                +theAppInstanceManager.thisAppDateString()
-                );
-            theJFrame.setContentPane( theDagBrowserPanel );  // Store content.
-            theJFrame.pack();  // Layout all the content's sub-panels.
-            theJFrame.setLocationRelativeTo(null);  // Center JFrame on screen.
-            theJFrame.setDefaultCloseOperation( // Set the close operation to be
-              JFrame.DO_NOTHING_ON_CLOSE // nothing, so listener can handle. 
-              );
-            theJFrame.addWindowListener( // Set Listener to handle close.
-	            new WindowAdapter() {
-	              public void windowClosing(WindowEvent e) {
-	                appLogger.info("windowClosing(..), will request shutdown.");
-	                theShutdowner.requestAppShutdownV();
-	                }
-	            	});
-            theJFrame.setVisible(true);  // Make the window visible.
-            appLogger.info(
-              	"GUIBuilderStarter.theJFrame.setVisible(true) done."
-              	);
-            SwingUtilities.invokeLater(new Runnable() { // Queue GUI event...
-              @Override  
-              public void run() 
-                {  
-                  theDagBrowserPanel.restoreFocusV(); // Setting initial focus.
-                  }  
-              }); /* Done way because in Java 8 
-                Compoent.requestFocusInWindow() will cause 
-                NullPointerException before the first dispatched message.
-                */
-            return theJFrame;
-            }
-
-        } //GUIBuilderStarter
-
+    
     class InstanceCreationRunnable // Listens for other local app instances.
     	implements AppInstanceListener, Runnable
       /* This nested class does 2 things:
@@ -306,8 +167,8 @@ public class AppGUI
             );  //  whose run() method will build and start the app's GUI.
         theConnectionManagerEpiThread.startV();
         theCPUMonitorEpiThread.startV();
-
         // Now the app is running and interacting with the user.
+
         theShutdowner.waitForAppShutdownUnderwayV();
         // Now the app is shutting down.
         
@@ -318,3 +179,170 @@ public class AppGUI
         }
 
     } // class AppGUI
+
+class GUIBuilderStarter // This EDT-Runnable starts GUI. 
+  implements Runnable
+
+  /* This nested class is used to create and start the app's GUI.
+    It's run() method runs in the EDT thread.
+    It signals its completion by executing doNotify() on
+    the LockAndSignal object passed to it when 
+    its instance is constructed.
+    */
+
+  { // GUIBuilderStarter
+
+		// Injected dependency variables.
+    //% private LockAndSignal theGUILockAndSignal;
+		private AppInstanceManager theAppInstanceManager;
+		private DagBrowserPanel theDagBrowserPanel;
+		private AppGUIFactory theAppGUIFactory;
+		private Shutdowner theShutdowner;
+		private TracingEventQueue theTracingEventQueue;
+  	private BackgroundEventQueue theBackgroundEventQueue;
+
+    // Other AppGUI instance variables.
+    private JFrame theJFrame;  // App's only JFrame (now).
+
+    GUIBuilderStarter(   // Constructor. 
+    		//% LockAndSignal theGUILockAndSignal, 
+    		AppInstanceManager theAppInstanceManager,
+    		DagBrowserPanel theDagBrowserPanel,
+    		AppGUIFactory theAppGUIFactory,
+    		Shutdowner theShutdowner,
+    		TracingEventQueue theTracingEventQueue,
+      	BackgroundEventQueue theBackgroundEventQueue
+    		)
+      {
+        //% this.theGUILockAndSignal=   // Save lock reference.
+    		//%   theGUILockAndSignal;
+    		this.theAppInstanceManager= theAppInstanceManager;
+    		this.theDagBrowserPanel= theDagBrowserPanel;
+    		this.theAppGUIFactory= theAppGUIFactory;
+    		this.theShutdowner= theShutdowner;
+    		this.theTracingEventQueue= theTracingEventQueue;
+      	this.theBackgroundEventQueue= theBackgroundEventQueue;
+        }
+
+    public void run() // GUIBuilderStarter.
+      /* This method builds the app's GUI in a new JFrame and starts it.
+        This method is run on the AWT thread by startingBrowserGUIV() 
+        because AWT GUI code is not thread-safe.
+        */
+      {
+    		appLogger.info("GUIBuilderStarter.run() beginning.");
+    		theTracingEventQueue.initializeV(); // to start monitor thread.
+
+      	Toolkit.getDefaultToolkit().getSystemEventQueue().push(
+      			theTracingEventQueue
+      			); // For monitoring dispatch times.
+      	Toolkit.getDefaultToolkit().getSystemEventQueue().push(
+      			theBackgroundEventQueue
+      			); // For doing low-priority window creation.
+
+    	  //try { // Change GUI look-and-feel to be OS instead of java.
+        //  UIManager.setLookAndFeel(UIManager.
+        //    getSystemLookAndFeelClassName());
+        //  } catch(Exception e) {}
+      	
+      	PlatformUI.setUIFont( new javax.swing.plaf.FontUIResource(
+      			Font.MONOSPACED,Font.PLAIN,12
+      			));
+
+    		theDagBrowserPanel.initializeV();
+
+    		theJFrame =  // Construct and start the app JFrame.
+    				startingJFrame();
+
+        theAppInstanceManager.setAppInstanceListener(
+          theAppGUIFactory.makeInstanceCreationRunnable(theJFrame)
+          ); // For dealing with other running app instances.
+
+        //appLogger.info("GUI start-up complete.");
+        //% theGUILockAndSignal.notifyingV();  // Signal that starting is done.
+    		appLogger.info("GUIBuilderStarter.run() ending.");
+        }
+
+    private JFrame startingJFrame()
+      /* This method creates the app's JFrame and starts it.
+        It is meant to be run on the EDT (Event Dispatching Thread).
+        The JFrame content is set to a DagBrowserPanel 
+        which contains the GUI and other code which does most of the work.
+        It returns the JFrame.  
+        */
+      {
+        JFrame theJFrame =  // Make the main application JFrame.
+          theAppGUIFactory.makeJFrame( 
+            AppName.getAppNameString()
+            +", version "
+            +theAppInstanceManager.thisAppDateString()
+            );
+        theJFrame.setContentPane( theDagBrowserPanel );  // Store content.
+        theJFrame.pack();  // Layout all the content's sub-panels.
+        theJFrame.setLocationRelativeTo(null);  // Center JFrame on screen.
+        theJFrame.setDefaultCloseOperation( // Set the close operation to be
+          JFrame.DO_NOTHING_ON_CLOSE // nothing, so listener can handle. 
+          );
+        theJFrame.addWindowListener( // Set Listener to handle close.
+          new WindowAdapter() {
+            public void windowClosing(WindowEvent e) {
+              appLogger.info("windowClosing(..), will request shutdown.");
+              theShutdowner.requestAppShutdownV();
+              }
+          	});
+        theJFrame.setVisible(true);  // Make the window visible.
+        appLogger.info(
+          	"GUIBuilderStarter.theJFrame.setVisible(true) done."
+          	);
+        SwingUtilities.invokeLater(new Runnable() { // Queue GUI event...
+          @Override  
+          public void run() 
+            {  
+              theDagBrowserPanel.restoreFocusV(); // Setting initial focus.
+              }  
+          }); /* Done way because in Java 8 
+            Compoent.requestFocusInWindow() will cause 
+            NullPointerException before the first dispatched message.
+            */
+        return theJFrame;
+        }
+
+    } //GUIBuilderStarter
+
+
+class PlatformUI { // This is where platform UI code goes.
+	
+  public static void allWindowsUpdateUIV()
+    /* This method updates every component's UI from the look and feel
+      including all descendant components, of every app window.
+      Also, any app windows that are visible are redisplayed
+      using the new UI state.
+      */
+    	//// Better document variable names.
+    {
+    	for (Window w : Window.getWindows()) {
+        SwingUtilities.updateComponentTreeUI(w);
+        if (w.isDisplayable() &&
+            (w instanceof Frame ? !((Frame)w).isResizable() :
+            w instanceof Dialog ? !((Dialog)w).isResizable() :
+            true)) w.pack();
+    		}
+      } 
+	
+  public static void setUIFont(javax.swing.plaf.FontUIResource f)
+    // This method sets the default font for all UI component types.
+  	//
+  	///fix components that use default font.
+  	///doc : Better document variable names.
+    {
+      Enumeration<Object> keys = UIManager.getDefaults().keys();
+      while (keys.hasMoreElements()) {
+        Object key = keys.nextElement();
+        Object value = UIManager.get (key);
+        if (value instanceof javax.swing.plaf.FontUIResource)
+          UIManager.put (key, f);
+        }
+      allWindowsUpdateUIV(); // Make font change take effect.
+      } 
+
+	}
