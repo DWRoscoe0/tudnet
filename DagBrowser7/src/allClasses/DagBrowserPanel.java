@@ -655,12 +655,14 @@ public class DagBrowserPanel
                   			? Color.WHITE
                   		  : getBackground();
                     activityJLabel.setBackground(activityColor);
-                    PlatformUI.setUIFont( 
-                  		new javax.swing.plaf.FontUIResource(
+                    /*  //? //tmp
+                      PlatformUI.setUIFont( 
+                     new javax.swing.plaf.FontUIResource(
                   				Font.MONOSPACED, Font.PLAIN, periodicToggleB 
 	                    			? 12
 	                    		  : 14
         	        			));
+        	        	  */  //?
                     }  
 	                } 
 	              );

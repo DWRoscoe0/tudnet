@@ -3,8 +3,11 @@ package allClasses;
 import java.awt.Dialog;
 import java.awt.Font;
 import java.awt.Frame;
+import java.awt.KeyEventDispatcher;
+import java.awt.KeyboardFocusManager;
 import java.awt.Toolkit;
 import java.awt.Window;
+import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.Enumeration;
@@ -12,6 +15,7 @@ import java.util.Enumeration;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import javax.swing.plaf.FontUIResource;
 
 import static allClasses.Globals.appLogger;  // For appLogger;
 
@@ -181,7 +185,7 @@ public class AppGUI
     } // class AppGUI
 
 class GUIBuilderStarter // This EDT-Runnable starts GUI. 
-  implements Runnable
+  implements Runnable, KeyEventDispatcher 
 
   /* This nested class is used to create and start the app's GUI.
     It's run() method runs in the EDT thread.
@@ -258,10 +262,47 @@ class GUIBuilderStarter // This EDT-Runnable starts GUI.
           theAppGUIFactory.makeInstanceCreationRunnable(theJFrame)
           ); // For dealing with other running app instances.
 
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().
+          addKeyEventDispatcher( this );
+
         //appLogger.info("GUI start-up complete.");
         //% theGUILockAndSignal.notifyingV();  // Signal that starting is done.
     		appLogger.info("GUIBuilderStarter.run() ending.");
         }
+    
+		public boolean dispatchKeyEvent(KeyEvent theKeyEvent)
+		  // Processes KeyEvent keyboard input before being passed to KeyListeners.
+			{ 
+			  boolean processedKeyB= true;
+				int idI= theKeyEvent.getID();
+			  int keyI= theKeyEvent.getKeyCode();
+			  ///dbg char keyC= theKeyEvent.getKeyChar();
+			  boolean controlB= theKeyEvent.isControlDown();
+			  boolean shiftB= theKeyEvent.isShiftDown();
+			  /* ///dbg appLogger.debug( "dispatchKeyEvent(..) "+
+				  idI+" "+
+				  keyI+" "+
+				  keyC+" "+
+				  controlB+" "+
+				  shiftB+" "+
+				  KeyEvent.getKeyModifiersText(theKeyEvent.getModifiers())+" "+
+				  KeyEvent.getKeyText(keyI)
+				  );
+				  */
+				{
+				  if ( (idI==KeyEvent.KEY_PRESSED) && (keyI == KeyEvent.VK_MINUS) &&
+				  		 controlB && !shiftB
+				  		 )
+			  	  PlatformUI.adjustUIFont( -1); // Make font smaller.
+				  if ( (idI==KeyEvent.KEY_PRESSED) && (keyI == KeyEvent.VK_EQUALS) &&
+			  		 controlB && shiftB
+			  		 )
+			  	  PlatformUI.adjustUIFont( +1 ); // Make font bigger.
+			  	else
+			    	processedKeyB= false;
+					}
+	      return processedKeyB;
+				}
 
     private JFrame startingJFrame()
       /* This method creates the app's JFrame and starts it.
@@ -310,39 +351,56 @@ class GUIBuilderStarter // This EDT-Runnable starts GUI.
     } //GUIBuilderStarter
 
 
-class PlatformUI { // This is where platform UI code goes.
-	
-  public static void allWindowsUpdateUIV()
-    /* This method updates every component's UI from the look and feel
-      including all descendant components, of every app window.
-      Also, any app windows that are visible are redisplayed
-      using the new UI state.
-      */
-    	//// Better document variable names.
-    {
-    	for (Window w : Window.getWindows()) {
-        SwingUtilities.updateComponentTreeUI(w);
-        if (w.isDisplayable() &&
-            (w instanceof Frame ? !((Frame)w).isResizable() :
-            w instanceof Dialog ? !((Dialog)w).isResizable() :
-            true)) w.pack();
-    		}
-      } 
-	
-  public static void setUIFont(javax.swing.plaf.FontUIResource f)
-    // This method sets the default font for all UI component types.
-  	//
-  	///fix components that use default font.
-  	///doc : Better document variable names.
-    {
-      Enumeration<Object> keys = UIManager.getDefaults().keys();
-      while (keys.hasMoreElements()) {
-        Object key = keys.nextElement();
-        Object value = UIManager.get (key);
-        if (value instanceof javax.swing.plaf.FontUIResource)
-          UIManager.put (key, f);
-        }
-      allWindowsUpdateUIV(); // Make font change take effect.
-      } 
+class PlatformUI 
+	{ // This is where platform UI code goes.
 
-	}
+		static int fontSizeI= 12;  // Initial font size. 
+		static int minFontSizeI= 3;  // minimum font size. 
+
+	  public static void adjustUIFont(int sizeChangeI)
+	    /* This method adjsts the default font for all UI component types
+	      by changing the font size by sizeChangeI.
+	      */
+	    {
+	  	  fontSizeI+= sizeChangeI;
+	  	  if ( fontSizeI < minFontSizeI ) fontSizeI= minFontSizeI;
+      	FontUIResource newFont= new FontUIResource(
+      			Font.MONOSPACED,Font.PLAIN,fontSizeI
+      			);
+      	PlatformUI.setUIFont( newFont );
+	      } 
+
+	  public static void setUIFont(javax.swing.plaf.FontUIResource f)
+	    // This method sets the default font for all UI component types.
+	  	//
+	  	///fix components that use default font.
+	  	///doc : Better document variable names.
+	    {
+	      Enumeration<Object> keys = UIManager.getDefaults().keys();
+	      while (keys.hasMoreElements()) {
+	        Object key = keys.nextElement();
+	        Object value = UIManager.get (key);
+	        if (value instanceof javax.swing.plaf.FontUIResource)
+	          UIManager.put (key, f);
+	        }
+	      allWindowsUpdateUIV(); // Make font change take effect.
+	      } 
+		
+	  public static void allWindowsUpdateUIV()
+	    /* This method updates every component's UI from the look and feel
+	      including all descendant components, of every app window.
+	      Also, any app windows that are visible are redisplayed
+	      using the new UI state.
+	      */
+	    	//// Better document variable names.
+	    {
+	    	for (Window w : Window.getWindows()) {
+	        SwingUtilities.updateComponentTreeUI(w);
+	        if (w.isDisplayable() &&
+	            (w instanceof Frame ? !((Frame)w).isResizable() :
+	            w instanceof Dialog ? !((Dialog)w).isResizable() :
+	            true)) w.pack();
+	    		}
+	      } 
+	
+		}

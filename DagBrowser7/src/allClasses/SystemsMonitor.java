@@ -253,7 +253,7 @@ public class SystemsMonitor
         a method which does a binary search to measure CPU speed
         in terms of how far the CPU can count in 1 ms. 
 		    
-        ///ehn? Do only simple measurements and stores in Runnable.
+        ///enh? Do only simple measurements and stores in Runnable.
         ///enh? To truly measure EDT dispatch time.
           call invokeLater(..) to queue 2 Runnables which save nanoTime()
           in 2 seperate variables.  Use those to measure dispatch time.

@@ -51,7 +51,7 @@ public class DataTreeModel
     	the ones which fire TreeModelListeners,
       must happen in the EDT (Event Dispatch Thread).
       This is what is done now, using the invokeAndWaitV(..) method.
-    * ///ehn Unfortunately using the EDT each time makes data changes inefficient.
+    * ///enh Unfortunately using the EDT each time makes data changes inefficient.
       Using synchronization combined with HierarchicalUpPropagation
       might be sufficient to make change notification
       both efficient and thread-safe.
