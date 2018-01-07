@@ -318,7 +318,7 @@ public class ConnectionManager
           //  "ConnectionManager.processingUnconnectedSockPacketsB()\n  "
           //  + theKeyedPacket.getSocketAddressesString()
           //  );
-          passToUnicasterV( theNetcasterPacket ); //// disabled for testing.
+          passToUnicasterV( theNetcasterPacket ); ///rev disabled for testing.
 
           packetsProcessedB= true;
           }
@@ -415,11 +415,11 @@ public class ConnectionManager
           theNetcasterPacket= // Try getting next packet from queue.
             multicasterToConnectionManagerNetcasterQueue.poll();
           if (theNetcasterPacket == null) break;  // Exit if no more packets.
-          // /*  //////// disabled for testing.
+          // /*  ///rev disabled for testing.
   				theUnicasterManager.getOrBuildAddAndStartUnicaster( 
 	      		theNetcasterPacket 
 	      		);
-          // */  ////////
+          // */  ///rev
 
           packetsProcessedB= true;
           }

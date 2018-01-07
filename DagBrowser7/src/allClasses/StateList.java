@@ -81,7 +81,7 @@ public class StateList extends MutableList implements Runnable {
 			* progress was made, but was recorded in some other way,
 			  probably in a variable field.
 
-    //// It might be better to change the meaning of these values slightly, to:
+    ///doc It might be better to change the meaning of these values slightly, to:
     * true means [more] computation progress is possible (not impossible),
       whether or not some progress was recently made.
     * false means no computation progress is possible at this time,
@@ -153,8 +153,8 @@ public class StateList extends MutableList implements Runnable {
     // This is used as a final sentinel state for OrState machiens. 
 
   protected StateList presentSubStateList= null; // Machine's qualitative state.
-  		////StateList.initialSentinelState; // Initial default no-op state.
-      /* ///enh? This could be null in AndStates because it should never be used.
+  		//? StateList.initialSentinelState; // Initial default no-op state.
+      /* ///enh doc? This could be null in AndStates because it should never be used.
         This could be used to select between and-state and or-state behavior
         at run-time, including enterV(), overrideProcessInputsV(), and exitV().
         See AndOrState.
@@ -558,7 +558,7 @@ public class StateList extends MutableList implements Runnable {
 	
 	public final synchronized boolean finalProcessSynchronousInputB(
 				String inputString
-				)  ////// only temporary use.  loses non-sync info.  phase out.
+				)  ///tmp only temporary use.  loses non-sync info.  phase out.
 			throws IOException
 	  /* This method should be called as the state handler 
 	    when there is a synchronous input to be processed.
@@ -587,7 +587,7 @@ public class StateList extends MutableList implements Runnable {
 			boolean successB=  // Call regular handler to process it.  Return value
 						// is ignored because we are interested in String processing.
 					overrideProcessInputsB(); 
-			////successB|= // Combine success with result of synchronous input processing. 
+			//?successB|= // Combine success with result of synchronous input processing. 
 			successB= // Override success with result of synchronous input processing.
 					(synchronousInputString == null);
 			synchronousInputString= null; // Remove input from field variable.
@@ -783,7 +783,7 @@ class AndOrState extends StateList {
 	
 		}
 
-class OrState extends AndOrState { //// StateList {
+class OrState extends AndOrState { //? StateList {
 
 	/* There are two ways to get "or" state-machine behavior.
 	  * Extend this class.
@@ -799,24 +799,24 @@ class OrState extends AndOrState { //// StateList {
   public StateList initializeWithIOExceptionStateList() throws IOException
     {
   	  super.initializeWithIOExceptionStateList();
-  		////presentSubStateList= // Setting non-null to make state act like OrState.
+  		//? presentSubStateList= // Setting non-null to make state act like OrState.
   	  setFirstOrSubStateV( StateList.initialSentinelState );
   	  theColor= UIColor.initialOrStateColor;
   	  return this;
     	}
 
-  /*  ////
+  /*  //?
   public synchronized boolean overrideProcessInputsB() throws IOException
 	  /* This method calls the default OrState handler.  */
-  /*  ////
+  /*  //?
 	  { 
   		return orStateProcessInputsB(); 
   		}
-  */  ////
+  */  //?
 
 	}  // OrState 
 
-class AndState extends AndOrState { //// StateList {
+class AndState extends AndOrState { //? StateList {
 
 	/* There are two ways to get "and" state-machine behavior.
 	  * Extend this class.
@@ -834,11 +834,11 @@ class AndState extends AndOrState { //// StateList {
   	  return this;
     	}
 
-  /*  ////
+  /*  //?
 	public synchronized boolean overrideProcessInputsB() throws IOException
 		{ 
 		  return andStateProcessInputsB(); 
 		  }
-  */  ////
+  */  //?
 
 	}  // AndState 

@@ -133,7 +133,7 @@ public class Unicaster
 	  	  		);
 	  	  theMultiMachineState.initializeWithIOExceptionV();
 
-	  	  //// Note, the following are added but not as States.
+	  	  ///tmp Note, the following are added but not as States.
 	  	  theIgnoreAllSubstatesState.addB( theMultiMachineState );
 	  	  addB( theTemporaryMainState );
 	  	  addB( theMultiMachineState );
@@ -165,8 +165,7 @@ public class Unicaster
 				  				theLockAndSignal.testingForInterruptE();
 			      	if ( theInput != Input.NONE ) break; // Exit if interrupted.
 			      	
-			      	//////// Transfer message from stream to machines, if possible.
-			      	if // Pump input stream events if possible. 
+			      	if // Transfer message from stream to machines, if possible.
 			      	  ( ( theEpiInputStreamI.available() > 0 )
 			      	  	&& ( getSynchronousInputString() == null )
 			      	  	)
@@ -236,7 +235,7 @@ public class Unicaster
 			  		}
 		  		} // class BeforeHelloExchangeState
 
-		private class AfterHelloExchangedState extends AndState //// StateList 
+		private class AfterHelloExchangedState extends AndState ///rev StateList 
 			/* This state class is active after HELLO messages are exchanged.
 			  It responds to late HELLO messages and enables the other protocols.
 			  */
@@ -260,7 +259,7 @@ public class Unicaster
 						  ); // Adding Subcaster.
 						}
 
-		  	/*  ////
+		  	/*  ///rev
 			  public boolean overrideProcessInputsB() throws IOException
 			  	{ boolean successB= true;
     				appLogger.debug( "AfterHelloExchangedState.overrideProcessInputsB() entry.");
@@ -271,7 +270,7 @@ public class Unicaster
 		      			}
 				  	return successB;
 				  	}
-		  	*/  ////
+		  	*/  ///rev
 
 				public void exitV() throws IOException
 				  { if  // Informing remote end whether app is doing a Shutdown.
@@ -292,14 +291,14 @@ public class Unicaster
 		    		throws IOException
 			    {
 		    		super.initializeWithIOExceptionStateList();
-		    		////initAndAddStateListV(
-		    		////			new ProcessMessagesToSubcasterState());
+		    		///rev initAndAddStateListV(
+		    		///rev			new ProcessMessagesToSubcasterState());
 		    		return this;
 			    	}
 
 				public boolean overrideProcessInputsB() throws IOException
 			  	{
-			  	  ////return processingRemotePeerMessageB();
+			  	  ///rev return processingRemotePeerMessageB();
 					  	boolean successB;
 						beforeReturn: { 
 						  successB= true;
@@ -337,7 +336,7 @@ public class Unicaster
 		class ProcessMessagesToSubcasterState extends StateList 
     {
 
-			public boolean XoverrideProcessInputsB() throws IOException ////
+			public boolean XoverrideProcessInputsB() throws IOException ///rev
 		  	{
 					String keyString=  // Reading message key string
 							getSynchronousInputString();

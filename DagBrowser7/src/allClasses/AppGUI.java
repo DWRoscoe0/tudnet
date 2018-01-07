@@ -34,7 +34,6 @@ public class AppGUI
     private EpiThread theCPUMonitorEpiThread;
     private DataTreeModel theDataTreeModel;
     private DataNode theInitialRootDataNode;
-    //% private LockAndSignal theGUILockAndSignal;
     private GUIBuilderStarter theGUIBuilderStarter;
     private Shutdowner theShutdowner;
 
@@ -43,7 +42,6 @@ public class AppGUI
         EpiThread theCPUMonitorEpiThread,
         DataTreeModel theDataTreeModel,
         DataNode theInitialRootDataNode,
-        //% LockAndSignal theGUILockAndSignal,
         GUIBuilderStarter theGUIBuilderStarter,
         Shutdowner theShutdowner
         )
@@ -52,7 +50,6 @@ public class AppGUI
 	      this.theCPUMonitorEpiThread= theCPUMonitorEpiThread;
         this.theDataTreeModel= theDataTreeModel;
         this.theInitialRootDataNode= theInitialRootDataNode;
-        //% this.theGUILockAndSignal= theGUILockAndSignal;
         this.theGUIBuilderStarter= theGUIBuilderStarter;
         this.theShutdowner= theShutdowner;
         }
@@ -132,40 +129,9 @@ public class AppGUI
 
         } // class InstanceCreationRunnable
 
-    /*   //%
-     * private void startingBrowserGUIV() //%
-     */
-      /* This method builds and starts the Graphical User Interface (GUI).
-        It doesn't return until the GUI has been started.
-        This is tricky because:
-        * GUI operations must be performed on a different thread, 
-          the AWT thread.  EventQueue.invokeLater(..) is used to do this.
-        * We must wait for those operations to complete before returning.
-        
-        ?? Simplify by using invokeAndWait(..) instead of 
-        invokeLater(..) and doWaitE().
-        */
-    /*   //%
-      {
-        appLogger.info("Invoking GUIBuilderStarter.");
-
-        //% java.awt.EventQueue.invokeLater(  // Queue on GUI (AWT) thread...
-        EDTUtilities.invokeAndWaitV(  // Queue on GUI (AWT) thread...
-          theGUIBuilderStarter   // ...this Runnable GUIBuilderStarter,...
-          );  //  whose run() method will build and start the app's GUI.
-
-        //% theGUILockAndSignal.waitingForInterruptOrNotificationE();
-          // which means that the GUIBuilderStarter has finished.
-
-        //% appLogger.info("GUI/AWT thread signalled GUIBuilderStarter done.");
-        appLogger.info("GUIBuilderStarter done.");
-        }
-      */   //%
-
     public void runV() // This method does the main AppGUI run phase.
       {
         theDataTreeModel.initializeV( theInitialRootDataNode );
-        //% startingBrowserGUIV();  // Building and displaying GUI on AWT thread.
         EDTUtilities.invokeAndWaitV(  // Queue on GUI (AWT) thread...
             theGUIBuilderStarter   // ...this Runnable GUIBuilderStarter,...
             );  //  whose run() method will build and start the app's GUI.
@@ -197,7 +163,6 @@ class GUIBuilderStarter // This EDT-Runnable starts GUI.
   { // GUIBuilderStarter
 
 		// Injected dependency variables.
-    //% private LockAndSignal theGUILockAndSignal;
 		private AppInstanceManager theAppInstanceManager;
 		private DagBrowserPanel theDagBrowserPanel;
 		private AppGUIFactory theAppGUIFactory;
@@ -209,7 +174,6 @@ class GUIBuilderStarter // This EDT-Runnable starts GUI.
     private JFrame theJFrame;  // App's only JFrame (now).
 
     GUIBuilderStarter(   // Constructor. 
-    		//% LockAndSignal theGUILockAndSignal, 
     		AppInstanceManager theAppInstanceManager,
     		DagBrowserPanel theDagBrowserPanel,
     		AppGUIFactory theAppGUIFactory,
@@ -218,8 +182,6 @@ class GUIBuilderStarter // This EDT-Runnable starts GUI.
       	BackgroundEventQueue theBackgroundEventQueue
     		)
       {
-        //% this.theGUILockAndSignal=   // Save lock reference.
-    		//%   theGUILockAndSignal;
     		this.theAppInstanceManager= theAppInstanceManager;
     		this.theDagBrowserPanel= theDagBrowserPanel;
     		this.theAppGUIFactory= theAppGUIFactory;
@@ -266,7 +228,6 @@ class GUIBuilderStarter // This EDT-Runnable starts GUI.
           addKeyEventDispatcher( this );
 
         //appLogger.info("GUI start-up complete.");
-        //% theGUILockAndSignal.notifyingV();  // Signal that starting is done.
     		appLogger.info("GUIBuilderStarter.run() ending.");
         }
     
@@ -392,7 +353,7 @@ class PlatformUI
 	      Also, any app windows that are visible are redisplayed
 	      using the new UI state.
 	      */
-	    	//// Better document variable names.
+	    	///doc Better document variable names.
 	    {
 	    	for (Window w : Window.getWindows()) {
 	        SwingUtilities.updateComponentTreeUI(w);

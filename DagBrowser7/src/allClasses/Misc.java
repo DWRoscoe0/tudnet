@@ -12,18 +12,20 @@ public class Misc
     code useful for debugging and logging.
     
     Here are some notes to mark possible work to do:
-    ///tmp : a temporary kluge, possible to prevent an Exception.
+    ///tmp : a temporary kluge, possibly to prevent an Exception.
     ///dbg : code used for debugging.
-    ///fix : something to fix.
+    ///fix : a problem to fix.
+    ///pla : a planned change.
+    ///pos : possible change.
+    ///opt : an optimization change.
     ///org : an organizational enhancement.
     ///err : error checking enhancement
-    ///opt : an optimization change.
     ///enh : other miscellaneous enhancement.
     ///elim : code that might not be needed and may be eliminated.
-    ///doc : fix documentation. 
+    ///doc : fix documentation.
+    ///rev : to review for correctness. 
     //% : marks old code to be deleted.  Old.
-    //? : unspecified change.
-    //// (r or more slashes) : very temporary something else to do.
+    //// (4 or more slashes) : very temporary something else to do.
     */
 
   { // class Misc 

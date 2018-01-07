@@ -514,8 +514,8 @@ public class DataTreeModel
 	        				+ targetDataNode 
 	        				+ " ), cache miss." 
 	        				);
-			        targetTreePath= // Generating path using a search.   //// 
-			        		////searchingForTreePath( targetDataNode );
+			        targetTreePath= // Generating path using a search.   ///doc 
+			        		///elim searchingForTreePath( targetDataNode );
 			        		buildTreePath( targetDataNode );
 			        if ( targetTreePath != null ) // Caching search result, if any.
 			        	theHashMap.put( targetDataNode, targetTreePath );
@@ -524,11 +524,11 @@ public class DataTreeModel
       	  }
 
       private TreePath buildTreePath( DataNode theDataNode )
-        /*  //////// This method replaces searchingForTreePath(..).
+        /*  ///doc This method replaces searchingForTreePath(..).
           This method returns a TreePath of targetDataNode.
           To do this it follows the trail of parentNamedList links 
           back to the root and builds a TreePath from that.
-          //// This could be made more efficient by recursing using
+          ///ehn? This could be made more efficient by recursing using
           translatingToTreePath(..) on the parent node, a simple expression.
           This separate method might not be needed at all.
           */
@@ -552,7 +552,7 @@ public class DataTreeModel
           return theTreePath;
           }
 
-      @SuppressWarnings("unused") ////
+      @SuppressWarnings("unused") ///elim
 			private TreePath searchingForTreePath( DataNode targetDataNode )
         /*  ///elim This method is not needed anymore, because:
           * It might never be called anymore because

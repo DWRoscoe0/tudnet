@@ -12,7 +12,7 @@ public class HelloMachineState
 	/* This class has not been tested and is not being used.
 	  After its creation it was decided that its sub-states
 	  should be moved [incrementally] to Unicaster and tested there
-	  before being made into its own class, if ever.  ////  
+	  before being made into its own class, if ever.  //?  
 
 	  This class contains a [hierarchical] state machine 
 	  that processes the HELLO handshake that is supposed to happen

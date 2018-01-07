@@ -107,9 +107,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
     			theMetaRoot,
     			theBackgroundEventQueue
 	        );
-      //% LockAndSignal theGUILockAndSignal= new LockAndSignal();
       GUIBuilderStarter theGUIBuilderStarter= new GUIBuilderStarter( 
-  		  //% theGUILockAndSignal, 
   		  theAppInstanceManager,
   		  theDagBrowserPanel,
         this, // GUIBuilderStarter gets to know the factory that made it. 
@@ -122,7 +120,6 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
         theCPUMonitorEpiThread,
         theDataTreeModel,
         theInitialRootDataNode,
-        //% theGUILockAndSignal,
         theGUIBuilderStarter,
         theShutdowner
         );
