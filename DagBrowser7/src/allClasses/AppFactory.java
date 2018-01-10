@@ -16,6 +16,7 @@ public class AppFactory {  // For App class lifetimes.
 	// None.
 
 	// Other objects that will be needed later.
+  private final Data theData;
   private final Shutdowner theShutdowner;
   private final AppInstanceManager theAppInstanceManager;
   private final App theApp;
@@ -25,12 +26,14 @@ public class AppFactory {  // For App class lifetimes.
 
   public AppFactory( String[] argStrings )  // Factory constructor.
     {
-  		Shutdowner theShutdowner= new Shutdowner();
+  	  theData= new Data();
+  		theShutdowner= new Shutdowner();
   		AppInstanceManager theAppInstanceManager= new AppInstanceManager(
       		argStrings, theShutdowner
       		);
   		App theApp= new App(
         this, // The App gets to know the factory that made it. 
+        theData,
         theShutdowner,
         theAppInstanceManager
         );
@@ -39,7 +42,7 @@ public class AppFactory {  // For App class lifetimes.
 	    // None.
   	  
   	  // Save in instance variables other objects that are needed later.
-      this.theShutdowner= theShutdowner;
+      //% this.theShutdowner= theShutdowner;
       this.theAppInstanceManager= theAppInstanceManager;
       this.theApp= theApp;
       }

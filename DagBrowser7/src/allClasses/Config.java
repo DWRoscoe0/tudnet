@@ -1,6 +1,16 @@
 package allClasses;
 
+//import static allClasses.Globals.*;  // appLogger;
+
 public class Config
+  /* This class stores configuration, preferences, and some state state.
+    Some of it is fixed, in the form of constant final values.]
+    
+    Some of it may later be able to be 
+    changed and stored in external text files. 
+   	
+   	//pos Rename to Persist, a ore general and accurate descriptive term.
+   	*/
   {
 	  // Delays, for adjustments and slowing the entire app for debugging.
 		///enh Add additive and multiplicative adjustments for debugging.
@@ -26,4 +36,6 @@ public class Config
 		public static final int QUEUE_SIZE= 5;
 
 		public static final char delimiterChar= '!';
-  }
+		
+		private Config() {} // Private so it can't be constructed.
+    }

@@ -125,7 +125,7 @@ class Infogora  // The root of this app.
 	      // At this point, this thread should be the only non-daemon running.
 	      // When it ends, it should trigger a JVM shutdown,
 	      // unless a JVM shutdown was triggered already, and terminate the app.
-	      // Unfortunately the app doesn't terminate, so we call exit(0).
+	      // Unfortunately the app doesn't terminate, so we call exit(0) below.
 
 	      appLogger.info("Infogora.main() calling exit(0).");
     		appLogger.setBufferedModeV( false ); // Disabling buffered logging.
