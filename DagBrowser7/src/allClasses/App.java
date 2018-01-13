@@ -5,19 +5,19 @@ import static allClasses.Globals.appLogger;
 public class App { // The App, especially pre-GUI stuff.
 
   AppFactory theAppFactory;
-  Data theData;
+  Persistent thePersistent;
   Shutdowner theShutdowner;
   AppInstanceManager theAppInstanceManager;
 
   public App(   // Constructor.  For app creation.
       AppFactory theAppFactory,
-      Data theData,
+      Persistent thePersistent,
       Shutdowner theShutdowner,
       AppInstanceManager theAppInstanceManager
       )
     {
   		this.theAppFactory= theAppFactory;
-  	  this.theData= theData; 
+  	  this.thePersistent= thePersistent; 
       this.theShutdowner= theShutdowner;
       this.theAppInstanceManager= theAppInstanceManager;
       }
@@ -32,7 +32,7 @@ public class App { // The App, especially pre-GUI stuff.
      */
     {
   		//appLogger.info("App beginning.");
-  	  theData.initializeV();
+  	  thePersistent.initializeV();
 			theShutdowner.initializeV();
 			theAppInstanceManager.initializeV();
 
@@ -46,7 +46,7 @@ public class App { // The App, especially pre-GUI stuff.
           	// Network operations happen at this time also.
           }
 
-  	  theData.finalizeV();
+  	  thePersistent.finalizeV();
   		//appLogger.info("App calling Shutdowner.finishV().");
       theShutdowner.finishV();  // Doing final app shutdown jobs.
 

@@ -16,7 +16,7 @@ public class AppFactory {  // For App class lifetimes.
 	// None.
 
 	// Other objects that will be needed later.
-  private final Data theData;
+  private final Persistent thePersistent;
   private final Shutdowner theShutdowner;
   private final AppInstanceManager theAppInstanceManager;
   private final App theApp;
@@ -26,14 +26,14 @@ public class AppFactory {  // For App class lifetimes.
 
   public AppFactory( String[] argStrings )  // Factory constructor.
     {
-  	  theData= new Data();
+  	  thePersistent= new Persistent();
   		theShutdowner= new Shutdowner();
   		AppInstanceManager theAppInstanceManager= new AppInstanceManager(
       		argStrings, theShutdowner
       		);
   		App theApp= new App(
         this, // The App gets to know the factory that made it. 
-        theData,
+        thePersistent,
         theShutdowner,
         theAppInstanceManager
         );
@@ -59,6 +59,7 @@ public class AppFactory {  // For App class lifetimes.
 	    if (theAppGUIFactory == null) // Constructing lazily and only one time.
 	      theAppGUIFactory= new AppGUIFactory(
 	      		this, // AppGUIFactory gets to know this, its factory.
+	      		thePersistent,
 	      		theShutdowner,
 	      		theAppInstanceManager
 	      		);

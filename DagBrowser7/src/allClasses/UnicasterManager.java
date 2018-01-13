@@ -19,9 +19,11 @@ public class UnicasterManager
 	  */
 
   {
-	
+  	private final Persistent thePersistent;
+  
 		public UnicasterManager(  // Constructor. 
-	      AppGUIFactory theAppGUIFactory
+	      AppGUIFactory theAppGUIFactory,
+			  Persistent thePersistent
 	      )
 	    {
 	  		// Superclass's injections.
@@ -30,16 +32,47 @@ public class UnicasterManager
 		        theAppGUIFactory,
 			  		new DataNode[]{} // Initially empty of children.
 	      		);
-	      }
+			  this.thePersistent= thePersistent;
 
-    public synchronized Unicaster getOrBuildAddAndStartUnicaster(
-    		NetcasterPacket theNetcasterPacket 
-    		)
-      /* This method returns a Unicaster associated with
-        the remote peer address in theNetcasterPacket.
-        If a Unicaster doesn't already exist then it creates one.
-        */
-	    { 
+			  updatePeerInfoV( "a" );
+			  updatePeerInfoV( "b" );
+			  updatePeerInfoV( "c" );
+			  }
+
+	    public void updatePeerInfoV( String peerIDString )
+	      /* This method updates information about the peer 
+	        whose ID String is peerIDValueString.
+	        The named peer is always moved to or 
+	        inserted at the front of the list.
+	        The following are all the test cases for processing an entry into
+	        lists of lengths 0, 1, 2, and 3.  These were tested manually.
+	        / (),a -> (a)
+	        / (a),a -> (a)
+	        / (a),b -> (b,a) 
+	        / (b,a),b -> (b,a) 
+	        / (b,a),a -> (a,b)
+	        / (b,a),c -> (c,a,b)
+	        / (c,a,b),c -> (c,a,b)
+	        / (c,a,b),a -> (a,c,b)
+	        / (a,c,b),b -> (b,a,c)
+	       *
+	       */
+		    {	
+	    		String entryIDKeyString= 
+	    				thePersistent.updateEntryString( peerIDString, "peer" );
+          		
+	    		thePersistent.putV( entryIDKeyString + "IP", "IP-test-data" );
+	    		thePersistent.putV( entryIDKeyString + "Port", "Port-test-data" );
+	    		} 
+
+	    public synchronized Unicaster getOrBuildAddAndStartUnicaster(
+      		NetcasterPacket theNetcasterPacket 
+      		)
+        /* This method returns a Unicaster associated with
+          the remote peer address in theNetcasterPacket.
+          If a Unicaster doesn't already exist then it creates one.
+          */
+  	    { 
 	    	Unicaster theUnicaster= // Testing whether Unicaster exists.  
 	    			tryingToGetUnicaster( theNetcasterPacket );
 	    	if ( theUnicaster == null ) // Building one if one doesn't exist.
@@ -97,5 +130,19 @@ public class UnicasterManager
 	      resultUnicasterValue.getEpiThread().startV(); // Start its thread.
 	      return resultUnicasterValue.getDataNodeD();
 	      }
+    
+	  protected synchronized void addingV( 
+	  		IPAndPort peerIPAndPort, UnicasterValue resultUnicasterValue
+	  		)
+	    /* This adds to both ... to the HashMap and this MutableList
+	      and adjusts the persistent Persistent structures.
+	      */
+	    {
+	  		addingV( // Adding new Unicaster to data structures.
+          peerIPAndPort, resultUnicasterValue
+          );
+	  		}
+	  
+	  ////// test actually creating peer.
 
   	}

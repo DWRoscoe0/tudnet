@@ -91,7 +91,9 @@ public class ConnectionManager
 	    
 			private AppGUIFactory theAppGUIFactory;
 	    
-	  	private UnicasterManager theUnicasterManager;
+		  private final Persistent thePersistent;
+
+		  private UnicasterManager theUnicasterManager;
 
 	    private LockAndSignal cmThreadLockAndSignal;  // LockAndSignal for this thread.
       /* This single object is used to synchronize communication between 
@@ -126,6 +128,7 @@ public class ConnectionManager
 
     public ConnectionManager(  // Constructor.
     		AppGUIFactory theAppGUIFactory,
+    	  Persistent thePersistent,
     		UnicasterManager theUnicasterManager,
     		LockAndSignal cmThreadLockAndSignal,
     		NetcasterQueue multicasterToConnectionManagerNetcasterQueue,
@@ -139,6 +142,7 @@ public class ConnectionManager
 
         // Storing other dependencies injected into this class.
   	    this.theAppGUIFactory= theAppGUIFactory;
+  	    this.thePersistent= thePersistent;
   	    this.theUnicasterManager= theUnicasterManager; 
   	    this.cmThreadLockAndSignal= cmThreadLockAndSignal;
   	    this.multicasterToConnectionManagerNetcasterQueue=

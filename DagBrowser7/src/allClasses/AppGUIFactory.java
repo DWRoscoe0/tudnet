@@ -29,6 +29,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
     */
 
   // Injected dependencies that need saving for later.
+  ///elim private final Persistent thePersistent;
   private final Shutdowner theShutdowner;
 
 	// Other objects that will be needed later.
@@ -42,7 +43,8 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
   private final NamedLong multicasterFixedTimeOutMsNamedLong; 
 
   public AppGUIFactory(  // Factory constructor.
-  		AppFactory XtheAppFactory, // Not needed??
+  		AppFactory XtheAppFactory, ///elim 
+  	  Persistent thePersistent,
   		Shutdowner theShutdowner,
   		AppInstanceManager theAppInstanceManager
   		)
@@ -66,9 +68,11 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 	      new NetcasterQueue(cmThreadLockAndSignal, Config.QUEUE_SIZE);
 	    NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue=
 	      new NetcasterQueue(cmThreadLockAndSignal, Config.QUEUE_SIZE);
-      UnicasterManager theUnicasterManager= new UnicasterManager( this );
+      UnicasterManager theUnicasterManager= 
+      		new UnicasterManager( this, thePersistent );
 	    ConnectionManager theConnectionManager= new ConnectionManager(
         this, // the AppGuiFactory.
+    	  thePersistent,
         theUnicasterManager,
   	    cmThreadLockAndSignal,
   	    multicasterToConnectionManagerNetcasterQueue,
@@ -139,7 +143,8 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 
       // Save in instance variables injected objects that are needed later.
   	  this.theShutdowner= theShutdowner;
-  	  
+  	  ///elim this.thePersistent= thePersistent;
+
   	  // Save in instance variables other objects that are needed later.
       this.theUnicasterManager= theUnicasterManager;
       this.senderLockAndSignal= senderLockAndSignal;
