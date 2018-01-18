@@ -86,7 +86,8 @@ public class Persistent {
 	  		  theFileOutputStream= new FileOutputStream(
 	  			  AppFolders.resolveFile( fileString ));
 	  			theProperties.store(
-	  				theFileOutputStream, "---Infogora persistant data file---"
+	  				theFileOutputStream, 
+	  				"---Infogora persistant data file---, PRESENTLY TEST DATA ONLY." //tmp
 	  				);
 		  		} 
 		  	catch (Exception theException) { 
@@ -102,8 +103,24 @@ public class Persistent {
 		  		}
     	}
 
-  public String updateEntryString( 
+  public String entryInsertOrMoveToFrontString( 
   		String entryIDString, String entriesKeyString )
+	  /* This method updates information about the peer 
+		  whose ID String is peerIDValueString.
+		  The named peer is always moved to or 
+		  inserted at the front of the list.
+		  The following are all the test cases for processing an entry into
+		  lists of lengths 0, 1, 2, and 3.  These were tested manually.
+		  / (),a -> (a)
+		  / (a),a -> (a)
+		  / (a),b -> (b,a) 
+		  / (b,a),b -> (b,a) 
+		  / (b,a),a -> (a,b)
+		  / (b,a),c -> (c,a,b)
+		  / (c,a,b),c -> (c,a,b)
+		  / (c,a,b),a -> (a,c,b)
+		  / (a,c,b),b -> (b,a,c)
+		  */
   	{ 
   		String entriesFirstKeyString= entriesKeyString + "/first";
   		String entryIDKeyString= entriesKeyString+"/entry/"+entryIDString+"/";

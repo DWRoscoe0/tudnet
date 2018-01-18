@@ -8,18 +8,24 @@ public class App { // The App, especially pre-GUI stuff.
   Persistent thePersistent;
   Shutdowner theShutdowner;
   AppInstanceManager theAppInstanceManager;
+  TCPCopier.TCPServer theTCPServer;
+  TCPCopier.TCPClient theTCPClient;
 
   public App(   // Constructor.  For app creation.
       AppFactory theAppFactory,
       Persistent thePersistent,
       Shutdowner theShutdowner,
-      AppInstanceManager theAppInstanceManager
+      AppInstanceManager theAppInstanceManager,
+      TCPCopier.TCPServer theTCPServer,
+      TCPCopier.TCPClient theTCPClient
       )
     {
   		this.theAppFactory= theAppFactory;
   	  this.thePersistent= thePersistent; 
       this.theShutdowner= theShutdowner;
       this.theAppInstanceManager= theAppInstanceManager;
+      this.theTCPServer= theTCPServer;
+      this.theTCPClient= theTCPClient;
       }
 
   public void runV()  // This is for app Running.
@@ -32,6 +38,8 @@ public class App { // The App, especially pre-GUI stuff.
      */
     {
   		//appLogger.info("App beginning.");
+			theTCPServer.startV();
+			theTCPClient.startV();
   	  thePersistent.initializeV();
 			theShutdowner.initializeV();
 			theAppInstanceManager.initializeV();

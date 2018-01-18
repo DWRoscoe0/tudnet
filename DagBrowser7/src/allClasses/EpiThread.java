@@ -8,7 +8,7 @@ public class EpiThread
 
   /* This class adds some useful features to Thread.
 
-	  A destination thread needs only one LockAndSignal instance
+	  ///enh A destination thread needs only one LockAndSignal instance
 	  to manage its inputs regardless of the number of source threads
 	  that are providing those inputs.  
 	  In fact it makes no sense to have more than one.
@@ -19,6 +19,15 @@ public class EpiThread
 
   {
 
+	  /* The following constructors vary in the presence or absence of
+	    * nameString: a String to be used as the name of the thread,
+	      otherwise one will be assigned, but these are problematic.
+	    * aRunnable: an instance of a subclass of Runnable to be
+	      associated with the EpiThread.  If a Runnable is not specified,
+	      the EpiThread is probably being subclassed.
+	    These constructors correspond with similar constructors for Thread.
+	    */
+	
     public EpiThread( String nameString ) // Constructor.
       {
         super( nameString ); // Name here because setName() not reliable.

@@ -20,7 +20,9 @@ public class AppFactory {  // For App class lifetimes.
   private final Shutdowner theShutdowner;
   private final AppInstanceManager theAppInstanceManager;
   private final App theApp;
-
+  private final TCPCopier.TCPServer theTCPServer;
+  private final TCPCopier.TCPClient theTCPClient;
+  
   // Storage for conditional (lazy evaluation) singletons.
   private AppGUIFactory theAppGUIFactory= null;
 
@@ -31,16 +33,20 @@ public class AppFactory {  // For App class lifetimes.
   		AppInstanceManager theAppInstanceManager= new AppInstanceManager(
       		argStrings, theShutdowner
       		);
+  		theTCPServer= new TCPCopier.TCPServer( "TCPServer" );
+  		theTCPClient= new TCPCopier.TCPClient( "TCPClient" );
   		App theApp= new App(
         this, // The App gets to know the factory that made it. 
         thePersistent,
         theShutdowner,
-        theAppInstanceManager
+        theAppInstanceManager,
+        theTCPServer,
+        theTCPClient
         );
 
       // Save in instance variables injected objects that are needed later.
 	    // None.
-  	  
+
   	  // Save in instance variables other objects that are needed later.
       //% this.theShutdowner= theShutdowner;
       this.theAppInstanceManager= theAppInstanceManager;

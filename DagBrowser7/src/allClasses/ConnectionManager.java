@@ -91,6 +91,7 @@ public class ConnectionManager
 	    
 			private AppGUIFactory theAppGUIFactory;
 	    
+      @SuppressWarnings("unused") ///elim
 		  private final Persistent thePersistent;
 
 		  private UnicasterManager theUnicasterManager;

@@ -3,6 +3,8 @@ package allClasses;
 import static allClasses.Globals.appLogger;
 
 import java.net.DatagramPacket;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 public class UnicasterManager
 
@@ -34,37 +36,58 @@ public class UnicasterManager
 	      		);
 			  this.thePersistent= thePersistent;
 
-			  updatePeerInfoV( "a" );
-			  updatePeerInfoV( "b" );
-			  updatePeerInfoV( "c" );
+			  testPersistantV();
+			  }
+	
+		
+			private void testPersistantV() {
+				//% updatePeerInfoV( "a" );
+				//% updatePeerInfoV( "b" );
+				//% updatePeerInfoV( "c" );
+
+			  try {
+				  updatePeerInfoV( AppGUIFactory.makeIPAndPort ( 
+				  		InetAddress.getByName( "1.2.3.4" ), 5 ) );
+				  updatePeerInfoV( AppGUIFactory.makeIPAndPort ( 
+				  		InetAddress.getByName( "11.22.33.44" ), 55 ) );
+					}
+			  catch ( UnknownHostException e ) { 
+        	Globals.logAndRethrowAsRuntimeExceptionV( "testPersistantV()", e );
+			  	}
 			  }
 
-	    public void updatePeerInfoV( String peerIDString )
-	      /* This method updates information about the peer 
-	        whose ID String is peerIDValueString.
-	        The named peer is always moved to or 
-	        inserted at the front of the list.
-	        The following are all the test cases for processing an entry into
-	        lists of lengths 0, 1, 2, and 3.  These were tested manually.
-	        / (),a -> (a)
-	        / (a),a -> (a)
-	        / (a),b -> (b,a) 
-	        / (b,a),b -> (b,a) 
-	        / (b,a),a -> (a,b)
-	        / (b,a),c -> (c,a,b)
-	        / (c,a,b),c -> (c,a,b)
-	        / (c,a,b),a -> (a,c,b)
-	        / (a,c,b),b -> (b,a,c)
-	       *
-	       */
+	    public void updatePeerInfoV( IPAndPort theIPAndPort )
 		    {	
-	    		String entryIDKeyString= 
-	    				thePersistent.updateEntryString( peerIDString, "peer" );
-          		
+	    	  String peerIDString= theIPAndPort.toString(); // Calculate peer ID.
+	    	  
+	    	  // Store or update the list structure.
+	    		String entryIDKeyString= thePersistent.entryInsertOrMoveToFrontString( 
+	    				peerIDString, "peer" 
+	    				);
+	        		
+	    	  // Store or update the other fields.
+	    		thePersistent.putV( // IP address.
+	    				entryIDKeyString + "IP", theIPAndPort.getInetAddress().toString()
+	    				);
+	    		thePersistent.putV( // Port.
+	    				entryIDKeyString + "Port", 
+	    				String.valueOf( theIPAndPort.getPortI() ) 
+	    				);
+	    		} 
+
+	    /*//%
+	    public void updatePeerInfoV( String peerIDString )
+		    {	
+	    		String entryIDKeyString= thePersistent.entryInsertOrMoveToFrontString( 
+	    				peerIDString, "peer" 
+	    				);
+	        		
+	    		// Add other fields.
 	    		thePersistent.putV( entryIDKeyString + "IP", "IP-test-data" );
 	    		thePersistent.putV( entryIDKeyString + "Port", "Port-test-data" );
 	    		} 
-
+	    */ //%
+	
 	    public synchronized Unicaster getOrBuildAddAndStartUnicaster(
       		NetcasterPacket theNetcasterPacket 
       		)

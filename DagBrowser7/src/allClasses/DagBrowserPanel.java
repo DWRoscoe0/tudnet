@@ -531,13 +531,14 @@ public class DagBrowserPanel
 	                @Override
 	                public void run() { 
 	                  String helpString= 
+	                  		"<Ctrl++> zooms in, <Ctrl+-> zoom out.\n"+
 	                    	"Use Arrows, in keys or buttons, to navigate folders.\n"+
 	                      "      <Right-arrow> moves to child item.\n"+
 	                      "      <Left-arrow> moves to parent item.\n"+
 	                      "      <Down-arrow> moves to next item.\n"+
 	                      "      <Up-arrow> moves to previous item\n"+
-	                      " <Tab> key selects next window gadget.\n"+
-	                      " <Enter> key manually expands or collapses an item.";
+	                      "<Tab> key selects next window gadget.\n"+
+	                      "<Enter> key manually expands or collapses an item.";
 	                    
                     final JFrame theJFrame =  // Make the Help JFrame.
                         new JFrame( 
