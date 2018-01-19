@@ -215,6 +215,18 @@ public class AppLog
 
         appendEntry( wholeString );  // Send to log. 
         }
+    
+    public void consoleInfo(String inString)
+      /* This method writes an error String inString to a log entry
+        and also to the console error stream.
+        */
+      { 
+        String wholeString= "CONSOLE-INFO: "+inString; // Build error output string.
+
+        System.err.println(wholeString);  // Send one copy to error console.
+
+        appendEntry( wholeString );  // Send one copy to log. 
+        }
   
     public void warning(String inString)
       // This method writes a severe error String inString to a log entry.

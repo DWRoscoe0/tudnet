@@ -1,17 +1,13 @@
 package allClasses;
 
-// imports for TCPClient.
-//?import java.io.*;
-
 // The following code was based on code gotten from
 // https://stackoverflow.com/questions/4687615/how-to-achieve-transfer-file-between-client-and-server-using-java-socket
 
-// imports for TCPServer.
 import java.io.*;
 import java.net.*;
 
-//?import java.net.*;
 import static allClasses.Globals.appLogger;
+
 
 public class TCPCopier {
 	
@@ -20,139 +16,131 @@ public class TCPCopier {
   private final static String inFileString = "TCPCopierIn.txt";
   private final static String outFileString = "TCPCopierOut.txt";
 	
-	//? package filesendtest;
-	
 	static class TCPClient extends EpiThread {
 
-    public TCPClient(String nameString) { // Constructor.
-			super(nameString);
+    public TCPClient(String threadNameString) { // Constructor.
+			super(threadNameString);
 			}
     
-	  private File theFile= null;
+	  private File clientFile= null;
 
     public void run()
       // This is the main method of the Client thread.
       {
-  			appLogger.info("TCPClient.run() beginning.");
-	    	EpiThread.interruptableSleepB(10000); ///tmp Prevent initial error.
-	    	appLogger.info("TCPClient.run() initial delay done.");
+  			appLogger.consoleInfo("TCPClient beginning.");
+	    	EpiThread.interruptableSleepB(10000); ///tmp ///dbg organize log.
 	    	while ( ! EpiThread.exitingB() ) // Repeatedly try getting new file.
 	    		{ 
-	    			appLogger.info("TCPClient.run() loop beginning.");
 	    			tryGettingV();
-						appLogger.info("TCPClient.tryGettingV() sleeping 5s.");
+						appLogger.consoleInfo("TCPClient sleeping 5s before next attempt.");
 				    EpiThread.interruptableSleepB(5000); // Sleep 5s to prevent hogging.
-	    			appLogger.info("TCPClient.run() loop ending.");
 	    			}
-  			appLogger.info("TCPClient.run() ending.");
+  			appLogger.consoleInfo("TCPClient ending.");
 	    	}
     
 		private void tryGettingV()
 			{
-				appLogger.info("TCPClient.tryGettingV() beginning.");
 		    Socket clientSocket = null;
-		    InputStream is = null;
+		    InputStream clientSocketInputStream = null;
 		    try {
-		        clientSocket = new Socket( serverIP , serverPort );
-		        is = clientSocket.getInputStream();
-						if (is != null) tryCopyingFileFromV( is ); 
-		        clientSocket.close();
+	        clientSocket = new Socket( serverIP , serverPort );
+	        clientSocketInputStream = clientSocket.getInputStream();
+					if (clientSocketInputStream != null) { 
+			  		clientFile= // Calculating File name in standard location.
+			      		AppFolders.resolveFile( outFileString );
+				    FileOutputStream clientFileOutputStream= 
+				    		new FileOutputStream( clientFile );
+						clientTransactionV( 
+								clientSocketInputStream, clientFileOutputStream );
+		        clientFileOutputStream.close();
+						}
+	        clientSocket.close();
 		    } catch (ConnectException ex) {
-		  		appLogger.info("TCPClient.run() socket connection."+ex);
+		  		appLogger.consoleInfo("TCPClient socket connection."+ex);
 		    } catch (IOException ex) {
-		  		appLogger.exception("TCPClient.run() socketting.",ex);
+		  		appLogger.exception("TCPClient socketting.",ex);
 		    }
-				
-				appLogger.info("TCPClient.tryGettingV() ending.");
 			}
 	    
-		private void tryCopyingFileFromV( InputStream is )
+		private void clientTransactionV( 
+				InputStream theInputStream, OutputStream theOutputStream )
+		  throws IOException
 			{
-	  		theFile= // Calculating File name in standard location.
-	      		AppFolders.resolveFile( outFileString );
-	      try {
-				    FileOutputStream fos= new FileOutputStream( theFile );
-			      appLogger.info("TCPClient starting byte copy.");
-	          while (true) {
-	          	int byteI= is.read();
-	          	if ( byteI == -1 ) break;
-	          	fos.write(byteI);
-		  		  	appLogger.info("TCPClient copied one byte.");
-	          	}
-	          //fos.flush();
-	          fos.close();
-	        } catch (IOException ex) {
-	      		appLogger.exception("TCPClient.tryCopyingFileFromV() copying.",ex);
-	        }
+	      appLogger.consoleInfo(
+	      		"TCPClient made connection, beginning transaction.");
+        while (true) {
+        	int byteI= theInputStream.read();
+        	if ( byteI == -1 ) break;
+        	theOutputStream.write(byteI);
+        	}
+	      appLogger.consoleInfo(
+	      		"TCPClient transaction ended, breaking connection.");
 	    	}
 
 	}
 
 	
-	//? package filesendtest;
-	
 	static class TCPServer extends EpiThread {
 	
-	  private File theFile= null;
+	  private File serverFile= null;
 
-    public TCPServer(String nameString) { // Constructor.
-			super(nameString);
+    public TCPServer(String threadNameString) { // Constructor.
+			super(threadNameString);
     	}
 
     public void run() {
-  		appLogger.info("TCPServer.run() beginning.");
+  		appLogger.consoleInfo("TCPServer beginning.");
     	EpiThread.interruptableSleepB(5000); ///tmp Prevent initial error.
-    	appLogger.info("TCPServer.run() initial delay done.");
       while (true) {
-    		appLogger.info("TCPServer.run() loop beginning.");
-        ServerSocket theServerSocket = null;
-        Socket theSocket = null;
-        BufferedOutputStream socketOutputStream = null;
+        ServerSocket serverServerSocket = null;
+        Socket serverSocket = null;
+        OutputStream serverSocketOutputStream = null;
         try {
-            theServerSocket = new ServerSocket(serverPort);
-            theSocket = theServerSocket.accept();
-            theServerSocket.close();
-            socketOutputStream = new BufferedOutputStream(theSocket.getOutputStream());
+            serverServerSocket = new ServerSocket(serverPort);
+        		appLogger.consoleInfo("TCPServer trying ServerSocket.accept().");
+            serverSocket = serverServerSocket.accept();
+            serverServerSocket.close();
+            serverSocketOutputStream = serverSocket.getOutputStream();
           } catch (IOException ex) {
-        		appLogger.exception("TCPServer.run() socketting",ex);
+        		appLogger.exception("TCPServer socketting",ex);
           }
-    		appLogger.info("TCPServer.run() request received.");
-        if (socketOutputStream != null) {
-      		appLogger.info("TCPServer.run() processing request.");
-          //% File theFile = new File( inFileString );
-      		theFile= // Calculating File name.
+        if (serverSocketOutputStream != null) {
+      		serverFile= // Calculating File name.
   	      		AppFolders.resolveFile( inFileString );
-          //byte[] mybytearray = new byte[(int) theFile.length()];
-          FileInputStream theFileInputStream = null;
+          FileInputStream serverFileInputStream = null;
           try {
-              theFileInputStream = new FileInputStream(theFile);
+              serverFileInputStream = new FileInputStream(serverFile);
             } catch (FileNotFoundException ex) {
-          		appLogger.exception("TCPServer.run() opening file.",ex);
+          		appLogger.exception("TCPServer opening file.",ex);
             }
-          //BufferedInputStream bis = new BufferedInputStream(fis);
           try { // Send all bytes of file and close.
-          	  while (true) {
-          	  	int byteI= theFileInputStream.read();
-          	  	if (byteI == -1) break;
-          	  	socketOutputStream.write(byteI);
-            		appLogger.info("TCPServer.run() one byte read and sent.");
-	          	  }
-              //bis.read(mybytearray, 0, mybytearray.length);
-              //socketOutputStream.write(mybytearray, 0, mybytearray.length);
-              //socketOutputStream.flush();
-              socketOutputStream.close();
-              theSocket.close();
-              // File sent, exit the main method
-              //return;
+          		serverTransactionV( 
+          				serverFileInputStream, serverSocketOutputStream );
+              serverSocketOutputStream.close();
+              serverSocket.close();
             } catch (IOException ex) {
-          		appLogger.exception("TCPServer.run() reading and closing.",ex);
+          		appLogger.exception("TCPServer reading and closing.",ex);
             }
       		}
-    		appLogger.info("TCPServer.run() request completed, sleeping 10s.");
+    		appLogger.consoleInfo("TCPServer sleeping 10s.");
 		    EpiThread.interruptableSleepB(10000); // Sleep 10s to prevent hogging.
-    		appLogger.info("TCPServer.run() loop ending.");
+    		appLogger.consoleInfo("TCPServer loop ending.");
       	} // while (true)
     	}
+    
+	private void serverTransactionV( 
+			InputStream theInputStream, OutputStream theOutputStream )
+	  throws IOException
+		{
+  		appLogger.consoleInfo("TCPServer made connection, beginnig transaction.");
+  	  while (true) {
+  	  	int byteI= theInputStream.read();
+  	  	if (byteI == -1) break;
+  	  	theOutputStream.write(byteI);
+    	  }
+  		appLogger.consoleInfo("TCPServer transaction ended, breaking connection.");
+    	}
+
 		}
 
 	}
