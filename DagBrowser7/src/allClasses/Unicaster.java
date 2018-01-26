@@ -199,7 +199,7 @@ public class Unicaster
         * Connection/Hello handshake state machine cycling.
         */
 	    { 
-	    	appLogger.debug( "Unicaster.overrideProcessInputsV() starting." );
+	    	appLogger.info( "Unicaster.overrideProcessInputsV() starting." );
 	    	
 	    	if ( super.orStateProcessInputsB() )  // Try being an OrState first. 
 	    		;
@@ -207,7 +207,7 @@ public class Unicaster
 	    	  ( theEpiInputStreamI.tryingToGetString() != null ) 
       		;
 	    	
-	    	appLogger.debug( "Unicaster.overrideProcessInputsV() ending." );
+	    	appLogger.info( "Unicaster.overrideProcessInputsV() ending." );
 				}
 
 		private class BeforeHelloExchangeState extends StateList 
@@ -221,13 +221,13 @@ public class Unicaster
 
 		  	public void enterV() throws IOException
 				  { super.enterV(); // This is mainly to set background color.
-			  	  appLogger.debug( "BeforeHelloExchangeState.enterV().");
+			  	  appLogger.info( "BeforeHelloExchangeState.enterV().");
 						}
 
 	  		public void overrideProcessInputsV() throws IOException
-			  	{ appLogger.debug( "BeforeHelloExchangeState.overrideProcessInputsV().");
+			  	{ appLogger.info( "BeforeHelloExchangeState.overrideProcessInputsV().");
 			  		if ( processingHellosB() ) { 
-			  			appLogger.debug( 
+			  			appLogger.info( 
 			  					"BeforeHelloExchangeState.overrideProcessInputsV() switching."
 			  					);
 			  			requestStateListV( theAfterHelloExchangedState );
@@ -262,7 +262,7 @@ public class Unicaster
 		  	/*  ///rev
 			  public boolean overrideProcessInputsB() throws IOException
 			  	{ boolean successB= true;
-    				appLogger.debug( "AfterHelloExchangedState.overrideProcessInputsB() entry.");
+    				appLogger.info( "AfterHelloExchangedState.overrideProcessInputsB() entry.");
     				if ( super.andStateProcessInputsB() ) ; // Process sub-states.
 		      	else 
 		      		{ appLogger.warning( "AfterHelloExchangedState.overrideProcessInputsB() failure.");
@@ -389,7 +389,7 @@ public class Unicaster
     /*  ///dbg
 		private void sendTestPacketV() throws IOException
 			{
-				//appLogger.debug( "Queuing packet with TEST for sending.");
+				//appLogger.info( "Queuing packet with TEST for sending.");
 				writingTerminatedStringV( "TEST" );
 				endingPacketV(); // Forcing send.
 				EpiThread.interruptableSleepB(100); // Letting other threads run,

@@ -59,7 +59,7 @@ public abstract class TreeModelSupport
         if ( theTreeModelListener != null )
 	        {
 	          if (vectorOfTreeModelListener.removeElement( theTreeModelListener ))
-		  	      //appLogger.debug(
+		  	      //appLogger.info(
 	          	//		"TreeModelSupport.removeTreeModelListener(..), listeners: "+
 	          	//    vectorOfTreeModelListener.size()+ "\n  "+
 	          	//    theTreeModelListener.getClass().getName() + "@" +
@@ -69,7 +69,7 @@ public abstract class TreeModelSupport
 	          	//    )
 	          	;
   	          else
-		  	      appLogger.debug(
+		  	      appLogger.info(
 		  	      		"TreeModelSupport.removeTreeModelListener(..), not registered:\n   "+
 		      		    theTreeModelListener.getClass().getName() + "@" +
 		      		    Integer.toHexString(
@@ -119,7 +119,7 @@ public abstract class TreeModelSupport
           {
             TreeModelListener theTreeModelListener = 
             	(TreeModelListener)listeners.nextElement();
-  	    		//appLogger.debug(
+  	    		//appLogger.info(
             //		"TreeModelSupport.fireTreeNodesInserted(..) to:\n"+theTreeModelListener
             //    );
             theTreeModelListener.treeNodesInserted( theTreeModelEvent );

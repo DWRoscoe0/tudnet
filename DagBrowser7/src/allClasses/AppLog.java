@@ -26,6 +26,13 @@ public class AppLog
 
     This class is under development.
 
+		///enh: Make the logging routines more orthogonal, in the following
+		  dimensions:
+		  * label on output: info/debug/error/exception
+		  * output includes exception
+		  * copy log file output to console, except time-stamp
+		  * rethrow exception instead of returning
+
     ///fix: Slowing of speed-sensitive parts of the app might happen because of:
       * Anti-malware Service Executable  
       * Microsoft Windows Search Indexer
@@ -64,6 +71,14 @@ public class AppLog
       private long lastMillisL; // Last time measured.
       private PrintWriter thePrintWriter = null; // non-null means file open.
 
+    /* Debug Flags.  These are added or removed as needed during debugging
+      when calls to logging methods should be called in 
+      only very limited conditions. 
+     	*/
+      public static boolean testingForPingB= false;
+      private boolean debugEnabledB= true;
+      private boolean consoledEnabledB= true;
+
     static // static/class initialization for logger.
       // Done here so all subsection variables are created.
       {
@@ -74,13 +89,6 @@ public class AppLog
         catch(IOException e)
           { System.err.println("\nIn AppLog initialization:"+e); }
         }
-
-    /* Debug Flags.  These are added or removed as needed during debugging
-      when calls to logging methods should be called in 
-      only very limited conditions. 
-     */
-    
-    public static boolean testingForPingB= false;
 
     public synchronized void setBufferedModeV( 
     		boolean desiredBufferedModeB 
@@ -171,29 +179,76 @@ public class AppLog
         return sessionI;
         }
   
-    private boolean debugEnabledB= true;
-
     public void debug(String inString)
       /* This method writes a debug String inString to a log entry
         but not to the console.
         It is tagged as for debugging.
         */
       { 
-    	  if (debugEnabledB)
-    	  	appendEntry( "DEBUG: "+inString ); 
+    		if (debugEnabledB) 
+    			{ appendEntry( "DEBUG: "+inString, null, consoledEnabledB ); }
         }
-  
+
+    public void info(String inString, boolean debugB)
+      /* This method writes an information String inString to a log entry
+        but not to the console.
+        If theThrowable is not null then it displays that also.
+        */
+      { 
+    		////String wholeString= inString + " : " + theThrowable ;
+    		////info( wholeString ); 
+        info( inString, null, debugB ); 
+        }
+
+    public void info(String inString, Throwable theThrowable)
+      /* This method writes an information String inString to a log entry
+        but not to the console.
+        If theThrowable is not null then it displays that also.
+        */
+      { 
+    		////String wholeString= inString + " : " + theThrowable ;
+    		info( inString, theThrowable, false ); 
+        }
+
     public void info(String inString)
       /* This method writes an information String inString to a log entry
         but not to the console.
         */
       { 
-        appendEntry( "INFO: "+inString ); 
+        info( inString, null, false); 
         }
-  
+
+    public void info(String inString, Throwable theThrowable, boolean consoleB)
+      /* This method writes an information String inString to a log entry
+        but not to the console.
+        If theThrowable is not null then it displays that also.
+        If consoleB==true then out ismade to console also.
+        */
+      { 
+    		////String wholeString= inString + " : " + theThrowable ;
+        appendEntry( "INFO: "+inString,theThrowable, consoleB ); 
+    		////info( wholeString, theThrowable, consoleB ); 
+        }
+    
+    public void exceptionWithRethrowV(String inString, Exception e)
+      throws Exception
+      /* This method writes a Java exception String inString to a log entry
+        and also to the console error stream for Exception e,
+        then it throws the exception again.
+        
+        //tmp  This method is not usable because of 
+        Exception type incompatibilities.
+        */
+      { 
+	    	exception(inString, e);
+	    	throw e;
+        }
+    
     public void exception(String inString, Exception e)
       /* This method writes a Java exception String inString to a log entry
         and also to the console error stream for Exception e.
+        This is for exceptions that must be caught,
+        but for which there is nothing that can be or needs to be done.
         */
       { 
         String wholeString= "EXCEPTION: " + inString + " : " + e ;
@@ -205,18 +260,20 @@ public class AppLog
         }
     
     public void error(String inString)
-      /* This method writes an error String inString to a log entry
-        and also to the console error stream.
+      /* This method writes an error String inString to a log entry,
+        and also to the console error stream?  Disabled temporarily.
+        An error is something with which the app should not have to deal.
+        Response is to either retry or terminate.
         */
       { 
         String wholeString= "ERROR: "+inString; // Build error output string.
 
-        //System.err.println(wholeString);  // Send to error console.
+        ////System.err.println(wholeString);  // Send to error console? Problem?
 
         appendEntry( wholeString );  // Send to log. 
         }
     
-    public void consoleInfo(String inString)
+    public void consoleInfo(String inString, boolean debugB)
       /* This method writes an error String inString to a log entry
         and also to the console error stream.
         */
@@ -225,7 +282,7 @@ public class AppLog
 
         System.err.println(wholeString);  // Send one copy to error console.
 
-        appendEntry( wholeString );  // Send one copy to log. 
+        appendEntry( wholeString, null, debugB );  // Send one copy to log. 
         }
   
     public void warning(String inString)
@@ -237,11 +294,15 @@ public class AppLog
         }
 
     public void appendEntry( String inString )
+    	{ appendEntry(inString, null, false); }
+
+    public void appendEntry( String inString, Throwable theThrowable, boolean consoleB )
       /* This appends to the log file a new log entry line.
         It contains the app session number,
         milliseconds since the previous entry, the thread name,
         and finally inString.
-        ///enh Replace String appends by StringBuilder appends, for speed.
+       It appends theThrowable if present. 
+        ///enh Replace String appends by StringBuilder appends, for speed?
         */
       { 
     	  //appendAnyFocusChangeV();
@@ -249,17 +310,30 @@ public class AppLog
 
         String aString= ""; // Initialize String to empty, then append...
         aString+= AppLog.getAppLog().theSessionI;  //...the session number,...
-        aString+= ":";  //...and a seperator.
+        aString+= ":";  //...and a separator.
         aString+= String.format(  // ...time since last output,...
         		"%1$5d", nowMillisL - lastMillisL
         		);
         aString+= " ";  //...a space,...
+        
+   	  	if (consoleB) // ...a console flag if called for... 
+   	  		aString+= "CONSOLE-COPIED ";
+   	  	
         aString+= Thread.currentThread().getName(); // the name of thread,
         aString+= " ";  //...a space,...
-        aString+= inString; //...the string to log,...
+   	    aString+= inString; //...the string to log,...
         aString+= "\n";  //...and a line terminator.
 
+        if (theThrowable!=null) { 
+          aString+= theThrowable;
+        	aString+= "\n";  //...and a line terminator.
+        	}
+        
         AppLog.getAppLog().appendV( aString );  // Append it to log file.
+        
+        if (consoleB) // Append to console if called for... 
+     	  	////System.err.println(aString);
+        	System.err.print(aString);
 
         lastMillisL= nowMillisL; // Saving present time as new last time.
         }
@@ -323,7 +397,7 @@ public class AppLog
       }
 
     private void closeFileV()
-      /* This method closes thePrintWriter if it's opn, 
+      /* This method closes thePrintWriter if it's open, 
         which closes everything associated with the log file.  
         */
 	    { 

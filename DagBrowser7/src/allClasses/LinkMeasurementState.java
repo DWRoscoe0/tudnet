@@ -327,7 +327,7 @@ public class LinkMeasurementState
 			    {
 			    	lastSequenceNumberSentL= 
 			    			theNetcasterOutputStream.getCounterNamedLong().getValueL(); 
-			      appLogger.debug( 
+			      appLogger.info( 
 			      		"sendingSequenceNumberV() " + lastSequenceNumberSentL
 			      		);
 			      theNetcasterOutputStream.writingTerminatedStringV( "PS" );
@@ -362,7 +362,7 @@ public class LinkMeasurementState
 			        		smoothedMaxRoundTripTimeNsAsMsNamedLong.getValueString()
 					  			;
 								}
-				    appLogger.debug( "calculateRoundTripTimesV(...) PA:"
+				    appLogger.info( "calculateRoundTripTimesV(...) PA:"
 						  +sequenceNumberI+","
 				    	+packetsReceivedI+";RTT="
 				    	+rttString
@@ -501,7 +501,7 @@ public class LinkMeasurementState
 				  				);
 							theNetcasterOutputStream.sendingPacketV();
 							  // Sending now for minimum RTT.
-				      appLogger.debug( "processPacketSequenceNumberB(..) PS:"
+				      appLogger.info( "processPacketSequenceNumberB(..) PS:"
 				  		  +sequenceNumberI+","
 				      	+receivedPacketCountL
 				  		  );

@@ -286,7 +286,7 @@ public class EpiInputStream<
 	      */
 	    {
 	  		if (AppLog.testingForPingB)
-		  		appLogger.debug("loadNextPacketV() executing.");
+		  		appLogger.info("loadNextPacketV() executing.");
 	  		if // Adjusting saved mark index for buffer replacement. 
 	  		  (markedB) // if stream is marked. 
 	  			markIndexI-= packetIndexI; // Subtracting present index or length ??
@@ -322,7 +322,7 @@ public class EpiInputStream<
 	  	 	This allows only one level of undoing, but this often suffices.
 	  	 	*/
 	  	{
-	  		//appLogger.debug( "NetcasterInputStream.mark(..), "+markIndexI+" "+packetIndexI);
+	  		//appLogger.info( "NetcasterInputStream.mark(..), "+markIndexI+" "+packetIndexI);
 	  		markIndexI= packetIndexI; // Recording present buffer byte index.
 	  		markedB= true; // Recording that stream is marked.
 	      }
@@ -330,7 +330,7 @@ public class EpiInputStream<
 	  public void reset() throws IOException 
 	    // Restores the stream to the state recorded by mark(int).
 	    {
-	  		//appLogger.debug( "NetcasterInputStream.reset(..), "+markIndexI+" "+packetIndexI);
+	  		//appLogger.info( "NetcasterInputStream.reset(..), "+markIndexI+" "+packetIndexI);
 	    	if ( markedB ) // Un-marking if marked
 	    		{
 			      packetIndexI= markIndexI; // Restoring buffer byte index.

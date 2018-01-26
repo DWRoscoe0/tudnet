@@ -99,7 +99,7 @@ public abstract class PacketManager<
 				)
 			{
 			  ///* 
-			  appLogger.debug(
+			  appLogger.info(
 	      		PacketManager.gettingDirectedPacketString(
 	      				theDatagramPacket, false
 	      				)
@@ -113,7 +113,7 @@ public abstract class PacketManager<
 			{
 			  ///*
 	    	///if ( ! theDatagramPacket.getAddress().isMulticastAddress() )
-				  appLogger.debug(
+				  appLogger.info(
 		      		PacketManager.gettingDirectedPacketString(
 		      				theDatagramPacket, true
 		      				)
@@ -126,7 +126,7 @@ public abstract class PacketManager<
 				)
 			{
 			  ///* 
-			  appLogger.debug(
+			  appLogger.info(
 	      		PacketManager.gettingDirectedPacketString(
 	      				theDatagramPacket, false
 	      				)

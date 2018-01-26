@@ -165,7 +165,7 @@ public class Sender // Uunicast and multicast sender thread.
     	  		false;
 		    if ( droppingB )
 			    {
-			      appLogger.debug( // Logging the drop of the packet.
+			      appLogger.info( // Logging the drop of the packet.
 			      		"dropping packet "
 			      		+PacketManager.gettingDirectedPacketString(
 			      				theDatagramPacket,true
@@ -178,7 +178,7 @@ public class Sender // Uunicast and multicast sender thread.
     private void sendingDatagramPacketV( DatagramPacket theDatagramPacket )
       // This method sends theDatagramPacket and handles exceptions.
 	    {
-    		appLogger.debug("sendingDatagramPacketV(..) calling send(..)." );
+    		appLogger.info("sendingDatagramPacketV(..) calling send(..)." );
 	    	try { // Send the packet.
 	        theDatagramSocket.send(   // Send packet.
 	        	theDatagramPacket

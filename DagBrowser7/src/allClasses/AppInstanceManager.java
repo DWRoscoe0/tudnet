@@ -339,7 +339,7 @@ public class AppInstanceManager {
 			                  	  );
 			                  e.printStackTrace();
 			                }
-                		appLogger.debug( 
+                		appLogger.info( 
                 				"AppInstanceManager ShutdownerListener.doMyShutdowner(..), done" 
                 				);
 		                }

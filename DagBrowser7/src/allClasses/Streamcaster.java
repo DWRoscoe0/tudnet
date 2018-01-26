@@ -154,7 +154,7 @@ public class Streamcaster<
         				theEpiInputStreamI.readAString();
         		if ( inString.equals( "REPLY" ) ) // Handling echo, maybe.
               { // Handling echo and exiting.
-      			    //appLogger.debug( "Got REPLY." );
+      			    //appLogger.info( "Got REPLY." );
             		break pingReplyLoop; // Exit everything.
                 }
         		if ( inString.equals( "PING" ) ) // Handling ping conflict, maybe.
@@ -200,7 +200,7 @@ public class Streamcaster<
 		    * It documents with its calls where input is ignored.
 		    */
 			{
-		    appLogger.debug( 
+		    appLogger.info( 
 						"ignoringOrLoggingStringV(..) : "
 					+ inString
 					+ " from "
@@ -241,13 +241,13 @@ public class Streamcaster<
 		            break all;  // Exiting to abort wait.
 		          	}
 	      		// Note, can't readAString() here because it might not be available?
-            //appLogger.debug( "Testing for PING." );
+            //appLogger.info( "Testing for PING." );
             AppLog.testingForPingB= true;
 	          if // Handling a received ping if present.
 	            ( theEpiInputStreamI.tryingToGetStringB( "PING" ) )
 		          {
 	          		AppLog.testingForPingB= false;
-		            //appLogger.debug( "tryingPingReceiveV() got PING." );
+		            //appLogger.info( "tryingPingReceiveV() got PING." );
 		          	break pingWaitLoop;  // Exiting pingWaitLoop only.
 		          	}
         		AppLog.testingForPingB= false;

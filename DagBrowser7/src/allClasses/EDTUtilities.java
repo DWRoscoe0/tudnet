@@ -65,39 +65,39 @@ public class EDTUtilities {
         abort and jobRunnable need not or can not be completed.
         */
       {
-    		//appLogger.debug( "DataTreeModel.invokeAndWaitV(..) begins.");
+    		//appLogger.info( "DataTreeModel.invokeAndWaitV(..) begins.");
 
     	  boolean interruptedB= // Saving and disabling interrupted status. 
     	  		Thread.interrupted(); // (in case it was already true)
 
     	  try  // Processing jobRunnable on EDT thread.
 		  	  { 
-    	  	  //appLogger.debug( "DataTreeModel.invokeAndWaitV(..) before invokeAndWait(jobRunnable).");
+    	  	  //appLogger.info( "DataTreeModel.invokeAndWaitV(..) before invokeAndWait(jobRunnable).");
     	  	  SwingUtilities.invokeAndWait( jobRunnable ); 			  		
-			  		//appLogger.debug( "DataTreeModel.invokeAndWaitV(..) after invokeAndWait(jobRunnable).");
+			  		//appLogger.info( "DataTreeModel.invokeAndWaitV(..) after invokeAndWait(jobRunnable).");
     	  	  }
 		    catch // Handling wait interrupt.  Avoid.  Sometimes hangs?! 
 		    	(InterruptedException e) 
 		      { // Flush: Executing null Runnable to guarantee jobRunnable done.
-	      	  appLogger.debug( "DataTreeModel.invokeAndWaitV(..) jobRunnable interrupted.");
+	      	  appLogger.info( "DataTreeModel.invokeAndWaitV(..) jobRunnable interrupted.");
 	      	  while (true) {  
-  	      	  appLogger.debug( "DataTreeModel.invokeAndWaitV(..) begin loop.");
+  	      	  appLogger.info( "DataTreeModel.invokeAndWaitV(..) begin loop.");
 						  try  // Queuing and waiting for null Runnable on EDT thread.
 					  	  { 
-						  		appLogger.debug( "DataTreeModel.invokeAndWaitV(..) before invokeAndWait(null Runnable).");
+						  		appLogger.info( "DataTreeModel.invokeAndWaitV(..) before invokeAndWait(null Runnable).");
 						  		SwingUtilities.invokeAndWait( new Runnable() { 
 			              @Override  
 			              public void run() { 
-							    	  appLogger.debug( "DataTreeModel.invokeAndWaitV(..) null run()");
+							    	  appLogger.info( "DataTreeModel.invokeAndWaitV(..) null run()");
 			              	} // Doing nothing. 
 						  	    } );  
-						  		appLogger.debug( "DataTreeModel.invokeAndWaitV(..) after invokeAndWait(null Runnable).");
+						  		appLogger.info( "DataTreeModel.invokeAndWaitV(..) after invokeAndWait(null Runnable).");
 						  		break;  // Exiting because wait ended normally.
 					  	  	}
 					    catch // Handling wait interrupt.
 					    	(InterruptedException e1) 
 					      { 
-					    	  appLogger.debug( "DataTreeModel.invokeAndWaitV(..) null run() interrupted.");
+					    	  appLogger.info( "DataTreeModel.invokeAndWaitV(..) null run() interrupted.");
 					    	  
 				      	  interruptedB= true; // Record interrupt for later.
 					      	}
@@ -108,7 +108,7 @@ public class EDTUtilities {
 					  					"DataTreeModel.invokeAndWaitV(..)", e1
 					  					);
 					  			} // wrapping and re-throwing.
-  	      	  appLogger.debug( "DataTreeModel.invokeAndWaitV(..) end loop.");
+  	      	  appLogger.info( "DataTreeModel.invokeAndWaitV(..) end loop.");
 	      	  	}
 		      	}
 		  	catch  // Handling invocation exception by re-throwing.
