@@ -77,7 +77,7 @@ public class AppLog
      	*/
       public static boolean testingForPingB= false;
       private boolean debugEnabledB= true;
-      private boolean consoledEnabledB= true;
+      private boolean consoleModeB= false;
 
     static // static/class initialization for logger.
       // Done here so all subsection variables are created.
@@ -89,6 +89,18 @@ public class AppLog
         catch(IOException e)
           { System.err.println("\nIn AppLog initialization:"+e); }
         }
+
+    public boolean getAndEnableConsoleModeB()
+	    { 
+	    	boolean tmpB= consoleModeB; 
+		    consoleModeB= true;
+		    return tmpB;
+	    	}
+
+    public void restoreConsoleModeV( boolean oldConsoleEnabledB )
+    	{ 
+    		consoleModeB= oldConsoleEnabledB; 
+    		}
 
     public synchronized void setBufferedModeV( 
     		boolean desiredBufferedModeB 
@@ -186,7 +198,7 @@ public class AppLog
         */
       { 
     		if (debugEnabledB) 
-    			{ appendEntry( "DEBUG: "+inString, null, consoledEnabledB ); }
+    			{ appendEntry( "DEBUG: "+inString, null, consoleModeB ); }
         }
 
     public void info(String inString, boolean debugB)
@@ -195,8 +207,6 @@ public class AppLog
         If theThrowable is not null then it displays that also.
         */
       { 
-    		////String wholeString= inString + " : " + theThrowable ;
-    		////info( wholeString ); 
         info( inString, null, debugB ); 
         }
 
@@ -206,7 +216,6 @@ public class AppLog
         If theThrowable is not null then it displays that also.
         */
       { 
-    		////String wholeString= inString + " : " + theThrowable ;
     		info( inString, theThrowable, false ); 
         }
 
@@ -225,9 +234,7 @@ public class AppLog
         If consoleB==true then out ismade to console also.
         */
       { 
-    		////String wholeString= inString + " : " + theThrowable ;
         appendEntry( "INFO: "+inString,theThrowable, consoleB ); 
-    		////info( wholeString, theThrowable, consoleB ); 
         }
     
     public void exceptionWithRethrowV(String inString, Exception e)
@@ -260,6 +267,11 @@ public class AppLog
         }
     
     public void error(String inString)
+      { 
+        error( inString, null); 
+        }
+    
+    public void error(String inString, Throwable theThrowable)
       /* This method writes an error String inString to a log entry,
         and also to the console error stream?  Disabled temporarily.
         An error is something with which the app should not have to deal.
@@ -268,9 +280,7 @@ public class AppLog
       { 
         String wholeString= "ERROR: "+inString; // Build error output string.
 
-        ////System.err.println(wholeString);  // Send to error console? Problem?
-
-        appendEntry( wholeString );  // Send to log. 
+        appendEntry( wholeString, theThrowable, true); 
         }
     
     public void consoleInfo(String inString, boolean debugB)
@@ -303,6 +313,8 @@ public class AppLog
         and finally inString.
        It appends theThrowable if present. 
         ///enh Replace String appends by StringBuilder appends, for speed?
+        ///enh Add stackTraceB which causes displays stack,
+          on console and in log, if true.
         */
       { 
     	  //appendAnyFocusChangeV();
@@ -316,23 +328,23 @@ public class AppLog
         		);
         aString+= " ";  //...a space,...
         
-   	  	if (consoleB) // ...a console flag if called for... 
+   	  	if (consoleB || consoleModeB) // ...a console flag if called for... 
    	  		aString+= "CONSOLE-COPIED ";
    	  	
         aString+= Thread.currentThread().getName(); // the name of thread,
         aString+= " ";  //...a space,...
    	    aString+= inString; //...the string to log,...
-        aString+= "\n";  //...and a line terminator.
+        aString+= " ";  //...and a space...
 
-        if (theThrowable!=null) { 
+        if (theThrowable!=null) { //..and the exception if present... 
           aString+= theThrowable;
-        	aString+= "\n";  //...and a line terminator.
         	}
         
-        AppLog.getAppLog().appendV( aString );  // Append it to log file.
+      	aString+= "\n";  //...and a final line terminator.
+
+      	AppLog.getAppLog().appendV( aString );  // Append it to log file.
         
-        if (consoleB) // Append to console if called for... 
-     	  	////System.err.println(aString);
+   	  	if (consoleB || consoleModeB) // Append to console if called for... 
         	System.err.print(aString);
 
         lastMillisL= nowMillisL; // Saving present time as new last time.
