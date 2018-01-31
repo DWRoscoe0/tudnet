@@ -11,8 +11,6 @@ import static allClasses.Globals.appLogger;
 
 public class TCPCopier {
 
-	///enh PrintWriter might be overkill.  Maybe output to OutputStream.
-	
 	private final static String serverIP = "127.0.0.1";
   private final static int serverPort = 11111;
   private final static String serverFileString = "TCPCopierServer.txt";
@@ -53,12 +51,9 @@ public class TCPCopier {
 				Socket clientSocket = null;
 				File clientFile= null;
 				try {
-		      	clientSocket = new Socket( serverIP , serverPort );
+		      	clientSocket= new Socket( serverIP , serverPort );
 			  		clientFile= AppFolders.resolveFile( clientFileString );
-				    clientTransactionV(
-				    		clientSocket,
-								clientFile
-				    		);
+			  		transactionV( clientSocket, clientFile );
 	        } catch (IOException theIOException) {
 		  			appLogger.info("tryGettingFileV()",theIOException);
 		    	} finally {
@@ -67,35 +62,6 @@ public class TCPCopier {
 					}
 			}
   
-		private void clientTransactionV(
-				Socket clientSocket,
-				File clientFile
-				)
-		  throws IOException
-			{
-	      appLogger.info( "clientTrnsactionV() beginning.");
-	      InputStream clientSocketInputStream= null;
-      	OutputStream clientSocketOutputStream = null;
-	      PrintWriter clientSocketPrintWriter= null;
-	  		FileOutputStream clientFileOutputStream= null;
-	      try {
-	      		clientSocketInputStream= clientSocket.getInputStream();
-		      	clientSocketOutputStream = clientSocket.getOutputStream();
-		      	clientSocketPrintWriter= new PrintWriter(clientSocketOutputStream);
-		      	clientSocketPrintWriter.print( clientFile.lastModified());
-			  		clientSocketPrintWriter.println(); // Terminate previous line of data.
-			  		clientSocketPrintWriter.println(); // Output a blank line.
-			  		clientFileOutputStream= new FileOutputStream( clientFile );
-			  		TCPCopier.copyStreamBytesV( clientSocketInputStream, clientFileOutputStream);
-		      } catch (IOException ex) {
-			  		appLogger.info("clientTransactionV() IOException",ex);
-			    } finally {
-			  		appLogger.info("clientTransactionV() closing resources.");
-			  		Closeables.closeCleanlyV(clientSocketPrintWriter);
-			  		Closeables.closeCleanlyV(clientFileOutputStream);
-			  		}
-		  	appLogger.info( "clientTrnsactionV() ending.");
-		    }
 		}
 	
 	
@@ -135,10 +101,7 @@ public class TCPCopier {
 	            serverServerSocket.close();
 	        		serverFile= // Calculating File name.
 	        				AppFolders.resolveFile( serverFileString );
-          		serverTransactionV(
-          			serverSocket,
-  	        	  serverFile
-	        			);
+	        		transactionV( serverSocket, serverFile );
 	          } catch (IOException ex) {
 	        		appLogger.info("run() IOException",ex);
 			      } finally {
@@ -151,37 +114,42 @@ public class TCPCopier {
       	appLogger.restoreConsoleModeV( oldConsoleModeB );
 	    	}
     
-	private void serverTransactionV(
-			Socket serverSocket,
-			File serverFile
+		}
+  
+	private static void transactionV(
+			Socket theSocket,
+			File localFile
 			)
 	  throws IOException
 		{
-			appLogger.info("serverTransactionV() beginning.");
-			FileInputStream serverFileInputStream = null;
-			PrintWriter serverSocketPrintWriter= null;
-			OutputStream serverSocketOutputStream = null;
+			appLogger.info("transactionV() beginning.");
+      InputStream socketInputStream= null;
+			OutputStream socketOutputStream = null;
+			FileInputStream localFileInputStream = null;
+  		FileOutputStream localFileOutputStream= null;
 	  	try {
-				long localLastModifiedL= serverFile.lastModified();
-	  		serverFileInputStream= new FileInputStream(serverFile);
-	  		serverSocketOutputStream= serverSocket.getOutputStream();
-	  		serverSocketPrintWriter= new PrintWriter(serverSocketOutputStream);
-	  		serverSocketPrintWriter.println( localLastModifiedL );
-	  		serverSocketPrintWriter.flush();
-	  		TCPCopier.copyStreamBytesV( serverFileInputStream, serverSocketOutputStream);
+    		//Marker2
+	  			socketInputStream= theSocket.getInputStream();
+		  		socketOutputStream= theSocket.getOutputStream();
+	      	int compareResultI= TCPCopier.exchangeAndCompareFileTimeStampsI(
+	      			socketInputStream, socketOutputStream, localFile);
+					if ( compareResultI > 0 ) { // for server.
+				  		localFileOutputStream= new FileOutputStream( localFile );
+				  		TCPCopier.copyStreamBytesV( socketInputStream, localFileOutputStream);
+		  			}	else if ( compareResultI < 0 ) { // for server.
+				  		localFileInputStream= new FileInputStream(localFile);
+							TCPCopier.copyStreamBytesV( localFileInputStream, socketOutputStream);
+		  			}
+	  			//Marker1
 		    } catch (IOException ex) {
-		  		appLogger.info("serverTransactionV() IOException",ex);
+		  		appLogger.info("transactionV() IOException",ex);
 		    } finally {
-		  		appLogger.info("serverTransactionV() closing resources.");
-		    	Closeables.closeCleanlyV(serverSocketPrintWriter);
-		  		Closeables.closeCleanlyV(serverSocketOutputStream); ///del?
-		  		Closeables.closeCleanlyV(serverFileInputStream);
-		  		Closeables.closeCleanlyV(serverSocket);
+		  		appLogger.info("transactionV() closing resources.");
+		  		Closeables.closeCleanlyV(localFileInputStream);
+		  		Closeables.closeCleanlyV(localFileOutputStream);
 		  		}
-  	  appLogger.info("serverTransactionV() ending.");
+  	  appLogger.info("transactionV() ending.");
     	}
-
-		}
   
 	private static void copyStreamBytesV( 
 			InputStream theInputStream, OutputStream theOutputStream)
@@ -204,5 +172,70 @@ public class TCPCopier {
       	}
       appLogger.info("copyStreamBytesV() ended.");
     	}
+  
+	private static int exchangeAndCompareFileTimeStampsI( 
+			InputStream socketInputStream, 
+			OutputStream socketOutputStream, 
+			File theFile
+			)
+    /* 
+      Returns result > 0 if remote file is newer than local file.
+      Returns result == 0 if remote file is same age as local file.
+      Returns result < 0 if remote file is older than local file.
+      
+      A file that does not exist will be considered to have
+      a time-stamp of 0, which is considered infinitely old.
+     */
+	  throws IOException
+		{
+  		long localLastModifiedL= theFile.lastModified();
+  		long remoteLastModifiedL= 0; // Initial accumulator value.
+  		{ // Send digits of local file time stamp to remote end, plus terminator.
+  			TCPCopier.sendDigitsOfNumberV( socketOutputStream, localLastModifiedL);
+	  		socketOutputStream.write( (byte)('\n') );
+	  		socketOutputStream.write( (byte)('#') );
+  			socketOutputStream.flush();
+  			}
+  		{ // Receive and decode digits of remote file time stamp.
+    		remoteLastModifiedL= 0;
+    		int socketI= socketInputStream.read(); // Read first byte.
+  			char socketC;
+    		while (true) { // Accumulate all digits of remote file time-stamp.
+    			if (socketI==-1) break; // Exit if end of stream.
+    			socketC= (char)socketI;
+    			if (! Character.isDigit(socketC)) break; // Exit if not digit.
+    			remoteLastModifiedL= // Combine new digit with digit accumulator.  
+    					10*remoteLastModifiedL+Character.digit(socketC, 10); 
+      		socketI= socketInputStream.read(); // Read next byte.
+      		}
+    		while (true) { // Skip characters through '#' or to end of input.
+    			if (socketI==-1) break; // Exit if end of stream.
+    			if (socketI==(int)'#') break; // Exit if terminator found. 
+      		socketI= socketInputStream.read(); // Read next byte.
+      		}
+  			}
+  		int compareResultI= 
+  				Long.compareUnsigned(remoteLastModifiedL, localLastModifiedL);
+  		appLogger.info(
+  				"exchangeAndCompareFileTimeStampsI() returning "+compareResultI);
+			return compareResultI;
+			}
 
-	}
+		private static void sendDigitsOfNumberV( 
+				OutputStream socketOutputStream, long theL)
+		  throws IOException
+		  /* This recursive method sends decimal digits of the long number theL
+		    to socketOutputStream.  The number always begins with a '0'.
+		    
+		    ///fix This will fail in 2038 when the 32-bit signed number overflows.
+		   	*/
+			{	
+			  if ( theL == 0 ) { // Output final [leading] 0 if number is 0.
+			  		socketOutputStream.write( (byte) ((byte)('0') + theL));
+			  	} else { // Use recursion to output earlier other digits.
+			  		TCPCopier.sendDigitsOfNumberV( socketOutputStream, theL / 10 );
+			  		socketOutputStream.write( (byte) ( (byte)('0') + (theL % 10) ) );
+			  	}
+			}
+
+  }
