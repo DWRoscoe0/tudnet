@@ -50,7 +50,7 @@ public class Nulls
 	  		}
 		
 		public static String toString(Object theObject) 
-		  /* This static toString(..) works like the regular instance tpStromg() 
+		  /* This static toString(..) works like the regular instance toString() 
 		    but returns "null" if the object reference is null.
 		    */
 			{
@@ -58,6 +58,16 @@ public class Nulls
 	  				theObject != null // If object reference is not null 
 	  				? theObject.toString() // then use regular toString() method
 	  				: "null"; // otherwise return the word "null".
+	  		}
+
+		public static void throwV( Throwable theThrowable ) 
+		  /* This method works like the "throw" keyword but
+		    throws theThrowable only if theThrowable is not null.
+		    */
+		  throws Throwable
+			{
+	  		if ( theThrowable != null )
+	  			throw theThrowable;
 	  		}
 	
 		}

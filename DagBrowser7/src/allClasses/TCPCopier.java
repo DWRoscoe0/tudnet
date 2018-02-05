@@ -31,25 +31,27 @@ public class TCPCopier {
         */
       {
   			appLogger.info("run() beginning.",true);
-  			
+
 	    	EpiThread.interruptableSleepB(4000); ///tmp ///dbg organize log.
       	boolean oldConsoleModeB= appLogger.getAndEnableConsoleModeB(); ///tmp ///dbg
-      	
-	    	while ( ! EpiThread.exitingB() ) // Repeatedly try getting update file.
-	    		{ 
-	    			tryGettingFileV();
-						///dbg appLogger.info("run() sleeping 5s before next attempt.",true);
-				    EpiThread.interruptableSleepB(8000); // Sleep 8s to prevent hogging.
-	    			}
+
+	    	while ( ! EpiThread.exitingB() ) // Repeat until exit requested.
+	    		{ // Process entire peer list.
+		    		{ 
+		    			tryReceivingFileV();
+							///dbg appLogger.info("run() sleeping 5s before next attempt.",true);
+					    EpiThread.interruptableSleepB(8000); // Sleep 8s to prevent hogging.
+		    			}
+      			}
   			appLogger.info("run() ending.",true);
-  			
+
       	appLogger.restoreConsoleModeV( oldConsoleModeB ); /// tmp ///dbg
 	    	}
-    
-		private void tryGettingFileV()
+
+		private void tryReceivingFileV()
 			{ 
-				Socket clientSocket = null;
 				File clientFile= null;
+				Socket clientSocket = null;
 				try {
 		      	clientSocket= new Socket( serverIP , serverPort );
 			  		clientFile= AppFolders.resolveFile( clientFileString );
@@ -58,8 +60,8 @@ public class TCPCopier {
 		  			appLogger.info("tryGettingFileV()",theIOException);
 		    	} finally {
 		    		///dbg appLogger.info("tryGettingFileV() closing resources.");
-	    		  Closeables.closeCleanlyV(clientSocket);
-					}
+	    		  Closeables.closeWithErrorLoggingB(clientSocket);
+	    		}
 			}
   
 		}
@@ -91,36 +93,38 @@ public class TCPCopier {
 	    	///dbg EpiThread.interruptableSleepB(5000); ///tmp Prevent initial error.
 	    	EpiThread.interruptableSleepB(2000); // Organize log.
     		boolean oldConsoleModeB= appLogger.getAndEnableConsoleModeB();
-        ServerSocket serverServerSocket = null;
-        Socket serverSocket = null;
 	    	while ( ! EpiThread.exitingB() ) {  // Repeatedly try providing file. 
 	    		///dbg appLogger.info("run() loop beginning.");
-		    	try {
-	            serverServerSocket = new ServerSocket(serverPort);
-	        		///dbg appLogger.info("run() trying ServerSocket.accept().");
-	            serverSocket = serverServerSocket.accept();
-	            serverServerSocket.close();
-	        		serverFile= // Calculating File name.
-	        				AppFolders.resolveFile( serverFileString );
-	        		transactionV( serverSocket, serverFile );
-	          } catch (IOException ex) {
-	        		appLogger.info("run() IOException",ex);
-			      } finally {
-			    		///dbg appLogger.info("run() closing resources.");
-              Closeables.closeCleanlyV(serverSocket);
-			    		}
+	    		trySendingFileV();
 	    		///dbg appLogger.info("run() loop ending with 10s sleep.");
 			    EpiThread.interruptableSleepB(4000); // Sleep 4s to prevent hogging.
 	    		} // while...
       	appLogger.restoreConsoleModeV( oldConsoleModeB );
 	    	}
-    
+
+		private void trySendingFileV()
+			{
+		    ServerSocket serverServerSocket= null;
+		    Socket serverSocket= null;
+		  	try {
+		        serverServerSocket = new ServerSocket(serverPort);
+		    		///dbg appLogger.info("run() trying ServerSocket.accept().");
+		        serverSocket = serverServerSocket.accept();
+		    		serverFile= // Calculating File name.
+		    				AppFolders.resolveFile( serverFileString );
+		    		transactionV( serverSocket, serverFile );
+		      } catch (IOException ex) {
+		    		appLogger.info("run() IOException",ex);
+		      } finally {
+		    		///dbg appLogger.info("run() closing resources.");
+		      	Closeables.closeWithErrorLoggingB(serverSocket);
+		      	Closeables.closeWithErrorLoggingB(serverServerSocket);
+		        }
+				}
+		
 		}
   
-	private static void transactionV(
-			Socket theSocket,
-			File localFile
-			)
+	private static void transactionV( Socket theSocket, File localFile )
 	  throws IOException
 	  /*///fix To prevent race condition while updating local files,
 	      might need to write to temporary file and then rename with 
@@ -130,34 +134,66 @@ public class TCPCopier {
 			///dbg appLogger.info("transactionV() beginning.");
       InputStream socketInputStream= null;
 			OutputStream socketOutputStream = null;
-			FileInputStream localFileInputStream = null;
-  		FileOutputStream localFileOutputStream= null;
+			////FileInputStream localFileInputStream = null;
+  		////FileOutputStream localFileOutputStream= null;
 	  	try {
 	  			socketInputStream= theSocket.getInputStream();
 		  		socketOutputStream= theSocket.getOutputStream();
-	      	long timeStampResultL= TCPCopier.exchangeAndCompareFileTimeStampsL(
-	      			socketInputStream, socketOutputStream, localFile);
-					if ( timeStampResultL > 0 ) { // for server.
-				  		localFileOutputStream= new FileOutputStream( localFile );
-				  		TCPCopier.copyStreamBytesV( socketInputStream, localFileOutputStream);
-				  		Closeables.closeCleanlyV(localFileOutputStream);
-				  		localFile.setLastModified(timeStampResultL);
-							appLogger.info("transactionV() file received.");
-		  			}	else if ( timeStampResultL < 0 ) { // for server.
-				  		localFileInputStream= new FileInputStream(localFile);
-							TCPCopier.copyStreamBytesV( localFileInputStream, socketOutputStream);
-							appLogger.info("transactionV() file sent.");
-		  			} else ; // Do nothing because files are same age.
+	      	long timeStampResultL= 
+	      			TCPCopier.exchangeAndCompareTimeStampsRemoteToLocalL(
+	      				socketInputStream, socketOutputStream, localFile);
+					if ( timeStampResultL > 0 ) receiveNewerRemoteFileV(
+							localFile,  socketInputStream, timeStampResultL );
+		  			else if ( timeStampResultL < 0 ) sendNewerLocalFileV(
+		  				localFile, socketOutputStream );
+		  			else ; // Do nothing because files are same age.
 		    } catch (IOException ex) {
 		  		appLogger.info("transactionV() IOException",ex);
 		    } finally {
 		  		///dbg appLogger.info("transactionV() closing resources.");
-		  		Closeables.closeCleanlyV(localFileInputStream);
-		  		Closeables.closeCleanlyV(localFileOutputStream);
 		  		}
   	  ///dbg appLogger.info("transactionV() ending.");
     	}
-  
+
+	private static void sendNewerLocalFileV(
+			File localFile,
+			OutputStream socketOutputStream
+			)
+		throws IOException
+	  ///fix close cleanly.
+		{ // Local file newer.
+			FileInputStream localFileInputStream= null;
+			try { 
+					localFileInputStream= new FileInputStream(localFile);
+					TCPCopier.copyStreamBytesV( localFileInputStream, socketOutputStream);
+				} finally {
+		  		Closeables.closeWithErrorLoggingB(localFileInputStream);
+					appLogger.info("sendNewerLocalFileV() file sent.");
+				}
+			}
+	
+	private static void receiveNewerRemoteFileV(
+			File localFile, 
+			InputStream socketInputStream, 
+			long timeStampToSetL
+			)
+		throws IOException
+		{
+			FileOutputStream localFileOutputStream= null;
+			boolean fileWriteCompleteB= false;
+			try { 
+					localFileOutputStream= new FileOutputStream( localFile );
+					TCPCopier.copyStreamBytesV( socketInputStream, localFileOutputStream);
+					fileWriteCompleteB= true;
+				} finally { 
+					Closeables.closeWithErrorLoggingB(localFileOutputStream);
+			  }
+			if (fileWriteCompleteB) { // Set time stamp and log if write completed. 
+				localFile.setLastModified(timeStampToSetL);
+				appLogger.info("receiveNewerRemoteFileV() file received.");
+				}
+			}
+
 	private static void copyStreamBytesV( 
 			InputStream theInputStream, OutputStream theOutputStream)
 	  throws IOException
@@ -180,7 +216,7 @@ public class TCPCopier {
       ///dbg appLogger.info("copyStreamBytesV() ended.");
     	}
   
-	private static long exchangeAndCompareFileTimeStampsL( 
+	private static long exchangeAndCompareTimeStampsRemoteToLocalL( 
 			InputStream socketInputStream, 
 			OutputStream socketOutputStream, 
 			File theFile
