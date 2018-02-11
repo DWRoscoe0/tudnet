@@ -59,16 +59,18 @@ public class Closeables
       */
     {
   	  boolean errorOccurredB= false;
-  	  if (theCloseable == null)
-  	  	errorOccurredB= true;
-	  	  try { 
-		  	  	theCloseable.close(); 
-		  	  } catch (Exception theException) {
-		  	  	errorOccurredB= true;
-		  			appLogger.exception(
-			  				"closeWithErrorLoggingB(..): ", theException
-			  				);		  	  	
-		  	  }
+  	  if (theCloseable == null) {
+  	  		errorOccurredB= true;
+  	  	} else {
+		  	  try { 
+			  	  	theCloseable.close(); 
+			  	  } catch (Exception theException) {
+			  	  	errorOccurredB= true;
+			  			appLogger.exception(
+				  				"closeWithErrorLoggingB(..): ", theException
+				  				);		  	  	
+			  	  }
+  	  	}
 	  	return errorOccurredB;
 	    }
 

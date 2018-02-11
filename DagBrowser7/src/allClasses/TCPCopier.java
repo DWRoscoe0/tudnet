@@ -11,15 +11,21 @@ import static allClasses.Globals.appLogger;
 
 public class TCPCopier {
 
-	private final static String serverIP = "127.0.0.1";
-  private final static int serverPort = 11111;
-  private final static String serverFileString = "TCPCopierServer.txt";
-  private final static String clientFileString = "TCPCopierClient.txt";
+	//private final static String testServerIPString = "127.0.0.1";
+  private final static int testServerPortI = 11111;
+  private final static String testServerFileString = "TCPCopierServer.txt";
+  private final static String testClientFileString = "TCPCopierClient.txt";
 
 	static class TCPClient extends EpiThread {
 
-    public TCPClient(String threadNameString) { // Constructor.
+	  private final Persistent thePersistent;
+
+    public TCPClient(  // Constructor.
+  			String threadNameString, Persistent thePersistent) 
+    {
 			super(threadNameString);
+
+		  this.thePersistent= thePersistent;
 			}
     
     public void run()
@@ -32,13 +38,16 @@ public class TCPCopier {
       {
   			appLogger.info("run() beginning.",true);
 
-	    	EpiThread.interruptableSleepB(4000); ///tmp ///dbg organize log.
+	    	EpiThread.interruptableSleepB(4000); ///dbg delay to organize log.
       	boolean oldConsoleModeB= appLogger.getAndEnableConsoleModeB(); ///tmp ///dbg
 
+      	PersistentCursor thePersistentCursor= 
+      			new PersistentCursor( thePersistent );
+      	thePersistentCursor.setListNameStringV("peer");
 	    	while ( ! EpiThread.exitingB() ) // Repeat until exit requested.
 	    		{ // Process entire peer list.
 		    		{ 
-		    			tryReceivingFileV();
+		    			tryExchangingFileWithNextPeerString(thePersistentCursor);
 							///dbg appLogger.info("run() sleeping 5s before next attempt.",true);
 					    EpiThread.interruptableSleepB(8000); // Sleep 8s to prevent hogging.
 		    			}
@@ -48,24 +57,39 @@ public class TCPCopier {
       	appLogger.restoreConsoleModeV( oldConsoleModeB ); /// tmp ///dbg
 	    	}
 
-		private void tryReceivingFileV()
-			{ 
-				File clientFile= null;
+		private void tryExchangingFileWithNextPeerString( 
+				PersistentCursor thePersistentCursor)
+		  /* Tries to exchange a file with next peer in present list.
+		   */
+			{
+			  if ( thePersistentCursor.getEntryIDNameString().isEmpty() ) { 
+			      ; // Do nothing because peer list is wrapping-around.
+			  	} else { // Process peer list element.
+						String serverIPString= thePersistentCursor.getFieldString("IP");
+						String serverPortString= thePersistentCursor.getFieldString("Port");
+			  		tryExchangingFileWithPeerV(serverIPString,serverPortString);
+				  }
+			  thePersistentCursor.nextString();
+				}
+
+		private void tryExchangingFileWithPeerV(
+				String serverIPString, String serverPortString)
+			{
 				Socket clientSocket = null;
+				File clientFile= AppFolders.resolveFile( testClientFileString );
+				int serverPortI= Integer.parseUnsignedInt( serverPortString );
 				try {
-		      	clientSocket= new Socket( serverIP , serverPort );
-			  		clientFile= AppFolders.resolveFile( clientFileString );
+						clientSocket= new Socket( serverIPString, serverPortI );
 			  		transactionV( clientSocket, clientFile );
-	        } catch (IOException theIOException) {
-		  			appLogger.info("tryGettingFileV()",theIOException);
-		    	} finally {
-		    		///dbg appLogger.info("tryGettingFileV() closing resources.");
-	    		  Closeables.closeWithErrorLoggingB(clientSocket);
-	    		}
-			}
-  
-		}
-	
+			    } catch (IOException theIOException) {
+						appLogger.info("tryGettingFileV()",theIOException);
+			  	} finally {
+					  Closeables.closeWithErrorLoggingB(clientSocket);
+					}
+				}
+
+	}
+
 	
 	static class TCPServer extends EpiThread {
 	
@@ -107,11 +131,11 @@ public class TCPCopier {
 		    ServerSocket serverServerSocket= null;
 		    Socket serverSocket= null;
 		  	try {
-		        serverServerSocket = new ServerSocket(serverPort);
+		        serverServerSocket = new ServerSocket(testServerPortI);
 		    		///dbg appLogger.info("run() trying ServerSocket.accept().");
 		        serverSocket = serverServerSocket.accept();
 		    		serverFile= // Calculating File name.
-		    				AppFolders.resolveFile( serverFileString );
+		    				AppFolders.resolveFile( testServerFileString );
 		    		transactionV( serverSocket, serverFile );
 		      } catch (IOException ex) {
 		    		appLogger.info("run() IOException",ex);
@@ -134,8 +158,6 @@ public class TCPCopier {
 			///dbg appLogger.info("transactionV() beginning.");
       InputStream socketInputStream= null;
 			OutputStream socketOutputStream = null;
-			////FileInputStream localFileInputStream = null;
-  		////FileOutputStream localFileOutputStream= null;
 	  	try {
 	  			socketInputStream= theSocket.getInputStream();
 		  		socketOutputStream= theSocket.getOutputStream();
@@ -258,7 +280,6 @@ public class TCPCopier {
       		}
   			}
   		long compareResultL= remoteLastModifiedL -  localLastModifiedL;
-  				////Long.compareUnsigned(remoteLastModifiedL, localLastModifiedL);
   		if (compareResultL > 0 ) 
   			  compareResultL= remoteLastModifiedL;
   			else if (compareResultL < 0 ) 

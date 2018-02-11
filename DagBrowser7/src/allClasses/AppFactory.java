@@ -34,7 +34,7 @@ public class AppFactory {  // For App class lifetimes.
       		argStrings, theShutdowner
       		);
   		theTCPServer= new TCPCopier.TCPServer( "TCPServer" );
-  		theTCPClient= new TCPCopier.TCPClient( "TCPClient" );
+  		theTCPClient= new TCPCopier.TCPClient( "TCPClient", thePersistent );
   		App theApp= new App(
         this, // The App gets to know the factory that made it. 
         thePersistent,

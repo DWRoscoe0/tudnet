@@ -3,8 +3,6 @@ package allClasses;
 import static allClasses.Globals.appLogger;
 
 import java.net.DatagramPacket;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 public class UnicasterManager
 
@@ -36,58 +34,41 @@ public class UnicasterManager
 	      		);
 			  this.thePersistent= thePersistent;
 
-			  testPersistantV();
+			  testPersistentV(); ///dbg
 			  }
 	
 		
-			private void testPersistantV() {
+			private void testPersistentV() {
 				//% updatePeerInfoV( "a" );
 				//% updatePeerInfoV( "b" );
 				//% updatePeerInfoV( "c" );
 
-			  try {
-				  updatePeerInfoV( AppGUIFactory.makeIPAndPort ( 
-				  		InetAddress.getByName( "1.2.3.4" ), 5 ) );
-				  updatePeerInfoV( AppGUIFactory.makeIPAndPort ( 
-				  		InetAddress.getByName( "11.22.33.44" ), 55 ) );
-					}
-			  catch ( UnknownHostException e ) { 
-        	Globals.logAndRethrowAsRuntimeExceptionV( "testPersistantV()", e );
-			  	}
+				updatePeerInfoV( "IDTest1", "1.2.3.4", "5" );
+				updatePeerInfoV( "IDTest2", "11.22.33.44", "55" );
+
+				// This is the important one for test TCPCopier.
+				updatePeerInfoV( "IDLocalHost", "127.0.0.1", "11111" );
 			  }
 
-	    public void updatePeerInfoV( IPAndPort theIPAndPort )
+	    public void updatePeerInfoV( 
+	    		String peerIDString, String ipString, String portString)
 		    {	
-	    	  String peerIDString= theIPAndPort.toString(); // Calculate peer ID.
-	    	  
-	    	  // Store or update the list structure.
+	    	  //// String peerIDString= theIPAndPort.toString(); // Calculate peer ID.
+
+			  	// Store or update the list structure.
 	    		String entryIDKeyString= thePersistent.entryInsertOrMoveToFrontString( 
 	    				peerIDString, "peer" 
 	    				);
-	        		
+
 	    	  // Store or update the other fields.
 	    		thePersistent.putV( // IP address.
-	    				entryIDKeyString + "IP", theIPAndPort.getInetAddress().toString()
+	    				entryIDKeyString + "IP", ipString
 	    				);
 	    		thePersistent.putV( // Port.
-	    				entryIDKeyString + "Port", 
-	    				String.valueOf( theIPAndPort.getPortI() ) 
+	    				entryIDKeyString + "Port", portString
 	    				);
 	    		} 
 
-	    /*//%
-	    public void updatePeerInfoV( String peerIDString )
-		    {	
-	    		String entryIDKeyString= thePersistent.entryInsertOrMoveToFrontString( 
-	    				peerIDString, "peer" 
-	    				);
-	        		
-	    		// Add other fields.
-	    		thePersistent.putV( entryIDKeyString + "IP", "IP-test-data" );
-	    		thePersistent.putV( entryIDKeyString + "Port", "Port-test-data" );
-	    		} 
-	    */ //%
-	
 	    public synchronized Unicaster getOrBuildAddAndStartUnicaster(
       		NetcasterPacket theNetcasterPacket 
       		)
