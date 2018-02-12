@@ -2,8 +2,6 @@ package allClasses;
 
 import static allClasses.Globals.appLogger;
 
-import java.util.Random;
-
 //import static allClasses.Globals.*;  // appLogger;
 
 public class SystemsMonitor 
@@ -67,8 +65,6 @@ public class SystemsMonitor
 
 		private LockAndSignal theLockAndSignal= new LockAndSignal();
 		  // Used for waiting.
-
-    Random theRandom= new Random(0);  // Initialize random # generator.
 
     public SystemsMonitor()   // Constructor.
       {

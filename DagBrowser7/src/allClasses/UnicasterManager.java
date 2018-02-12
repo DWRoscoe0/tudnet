@@ -57,7 +57,7 @@ public class UnicasterManager
 
 			  	// Store or update the list structure.
 	    		String entryIDKeyString= thePersistent.entryInsertOrMoveToFrontString( 
-	    				peerIDString, "peer" 
+	    				peerIDString, "peers" 
 	    				);
 
 	    	  // Store or update the other fields.

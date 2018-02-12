@@ -32,7 +32,6 @@ public class PersistentCursor
 		private String listFirstKeyString= null; 
 		private String listScanKeyString= null;
 		private String listScanValueString= null;
-		private String listEntryNameString= null;
 		
 		public PersistentCursor( Persistent thePersistent ) // constructor
 			{
@@ -62,14 +61,13 @@ public class PersistentCursor
 	  				thePersistent.getDefaultingToEmptyString( listScanKeyString );
 	  		setPiteratorValueV( listScanValueString );
 				}
-			
+
 		private void setPiteratorValueV( String listEntryNameString )
 			/* This method sets the list piterator value and dependencies.
 		    The list name must have been set already.
 		   */
 			{
 			  if (listEntryNameString == null) listEntryNameString= "";
-				this.listEntryNameString= listEntryNameString;
 				if (listEntryNameString.isEmpty())
 						listEntryPrefixString= null;
 					else

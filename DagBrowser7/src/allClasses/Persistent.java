@@ -152,7 +152,7 @@ public class Persistent
 		    			break searchAndUnlinkIfPresent;
 		    			}
 	    		scanIDEntryKeyString= // Get link to next entry to check.
-	    				"peer/entry/"+scanIDEntryValueString+"/next";
+	    				"peers/entry/"+scanIDEntryValueString+"/next";
 	  			} while (true);
 	  		putV( // Attach chain to entry being moved to front. 
 	  				entryIDKeyString + "next",

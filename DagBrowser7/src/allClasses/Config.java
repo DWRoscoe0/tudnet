@@ -3,14 +3,15 @@ package allClasses;
 //import static allClasses.Globals.*;  // appLogger;
 
 public class Config
+
   /* This class stores configuration, preferences, and some state state.
-    Some of it is fixed, in the form of constant final values.]
+    Most of it is fixed, in the form of constant final values.]
     
     Some of it may later be able to be 
-    changed and stored in external text files. 
-   	
-   	//pos Rename to Persist, a ore general and accurate descriptive term.
+    changed and stored in external text files, such as
+    the files used by the class Persist. 
    	*/
+
   {
 	  // Delays, for adjustments and slowing the entire app for debugging.
 		///enh Add additive and multiplicative adjustments for debugging.
@@ -30,7 +31,7 @@ public class Config
 		public static final long initialRoundTripTime100MsAsNsL= 
 				initialRoundTripTime100MsL * 1000000;
 
-		// Not final to prevent a "Comparing identical" warning.
+		// Not final to prevent a "Comparing identical" warning where used.
 		public static long packetSendDelayMsL= 0; // 500; // 1000;
 
 		public static final int QUEUE_SIZE= 5;
