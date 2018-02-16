@@ -65,7 +65,7 @@ public class App { // The App, especially pre-GUI stuff.
      	*/
 	  {
 	    String nodeIdentyString= 
-	    		thePersistent.getDefaultingToEmptyString("NodeIdentity");
+	    		thePersistent.getDefaultingToBlankString("NodeIdentity");
 	    if ( ! nodeIdentyString.isEmpty() ) {
 	    	  ; // Do nothing because identity is already defined.
 	    	} else { // Define and store identity.

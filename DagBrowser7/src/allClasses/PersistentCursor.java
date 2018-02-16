@@ -58,7 +58,7 @@ public class PersistentCursor
 			{
 	  		listScanKeyString= piteratorKeyString;
 	  		listScanValueString= 
-	  				thePersistent.getDefaultingToEmptyString( listScanKeyString );
+	  				thePersistent.getDefaultingToBlankString( listScanKeyString );
 	  		setPiteratorValueV( listScanValueString );
 				}
 
@@ -96,7 +96,7 @@ public class PersistentCursor
 		
 		public String getFieldString( String fieldNameString )
 			{ 
-				return thePersistent.getDefaultingToEmptyString( 
+				return thePersistent.getDefaultingToBlankString( 
 						listEntryPrefixString + fieldNameString 
 						);
 				}

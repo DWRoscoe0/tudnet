@@ -140,14 +140,14 @@ public class Persistent
 	  		String scanIDEntryValueString;
 	  		searchAndUnlinkIfPresent: do {
 	    		scanIDEntryValueString= 
-	    				getDefaultingToEmptyString( scanIDEntryKeyString );
+	    				getDefaultingToBlankString( scanIDEntryKeyString );
 	    		if (scanIDEntryValueString.isEmpty()) // Exit because search failed.
 	    			break searchAndUnlinkIfPresent;
 	    		if // Search succeeded.  Unlink entry and exit.
 	    		  (scanIDEntryValueString.equals(entryIDString))
 	    			{ putV( // Link list around peer being removed. 
 			    				scanIDEntryKeyString, 
-			    				getDefaultingToEmptyString( getListEntryNextKeyString( 
+			    				getDefaultingToBlankString( getListEntryNextKeyString( 
 			    						listNameString, entryIDString ) ) );
 		    			break searchAndUnlinkIfPresent;
 		    			}
@@ -156,7 +156,7 @@ public class Persistent
 	  			} while (true);
 	  		putV( // Attach chain to entry being moved to front. 
 	  				entryIDKeyString + "next",
-	  				getDefaultingToEmptyString( listFirstKeyString ) 
+	  				getDefaultingToBlankString( listFirstKeyString ) 
 	  				);
 	  		putV( listFirstKeyString, entryIDString );
 	  		  // Set chain pointer to entry moved to front.
@@ -237,7 +237,7 @@ public class Persistent
 				return prefixString + "/";
 			  }
 	
-		public String getDefaultingToEmptyString( String keyString )
+		public String getDefaultingToBlankString( String keyString )
 		  /* Returns the value String associated with keyString,
 		    or the empty string if there is none.
 		   	*/

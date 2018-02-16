@@ -108,7 +108,7 @@ public class Closeables
 		  			appLogger.exception(
 			  				"closeDuringCatchB(..): ", newIOException
 			  				);
-		  			if ( earlierIOException == null ) ; ////
+		  			if ( earlierIOException == null ) // Create first exception if none.
 		  				earlierIOException= new IOException( "while closing" );
 		  			earlierIOException.addSuppressed(newIOException);
 		  	  }

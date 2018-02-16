@@ -5,6 +5,9 @@ package allClasses;
 
 import java.io.*;
 import java.net.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
 import static allClasses.Globals.appLogger;
 
@@ -215,18 +218,26 @@ public class TCPCopier
 				)
 			throws IOException
 			{
-				FileOutputStream localFileOutputStream= null;
+				FileOutputStream temporaryFileOutputStream= null;
 				boolean fileWriteCompleteB= false;
+				File temporaryFile= null;
 				try { 
-						localFileOutputStream= new FileOutputStream( localFile );
-						TCPCopier.copyStreamBytesV( socketInputStream, localFileOutputStream);
+						temporaryFile= AppFolders.resolveFile( "Temporary.txt" );
+						temporaryFileOutputStream= new FileOutputStream( temporaryFile );
+						TCPCopier.copyStreamBytesV( 
+								socketInputStream, temporaryFileOutputStream);
 						fileWriteCompleteB= true;
 					} finally { 
-						Closeables.closeWithErrorLoggingB(localFileOutputStream);
+						Closeables.closeWithErrorLoggingB(temporaryFileOutputStream);
 				  }
-				if (fileWriteCompleteB) { // Set time stamp and log if write completed. 
-					localFile.setLastModified(timeStampToSetL);
-					appLogger.info("receiveNewerRemoteFileV() file received.");
+				if (fileWriteCompleteB) { // More processing if write completed. 
+						localFile.setLastModified(timeStampToSetL); // Update time.
+						Path temporaryPath= temporaryFile.toPath(); //convert to Path.
+						Path localPath = localFile.toPath(); //convert to Path.
+						Files.move( // Rename file, replacing existing file with same name.
+								temporaryPath, localPath, StandardCopyOption.REPLACE_EXISTING, 
+								StandardCopyOption.ATOMIC_MOVE);
+						appLogger.info("receiveNewerRemoteFileV() file received.");
 					}
 				}
 	
