@@ -68,11 +68,12 @@ public class AppGUI
 				it can do anything its parent, the AppInstanceManager, can do.
 				
         Presently the only thing the run() method does is
-        try to move the app's main JFrame to the front.
+        try to move the app's main JFrame to the front and display a dialog.
         Other actions might be appropriate if the UI were different, 
         such as there being multiple tabs and/or multiple JFrames.
 
-        Note, in some Windows versions, move-to-front works only once,
+        Note, move-to-front can be problematic.
+        In some Windows versions, move-to-front works only once,
         or only highlights the app's task-bar button, or both.
         The following code was moving the first time, 
         and highlighting after that.  Now it only highlights.
@@ -116,15 +117,6 @@ public class AppGUI
             appLogger.info("Trying move-to-front.");
             theJFrame.toFront();
             theJFrame.repaint();
-
-            /* This broke already partially broken move-to-front.
-            JOptionPane.showMessageDialog(
-              null, // this, // null, 
-              "The app is already running.",
-              "Info",
-              JOptionPane.INFORMATION_MESSAGE
-              );
-            */
             }
 
         } // class InstanceCreationRunnable
@@ -137,9 +129,11 @@ public class AppGUI
             );  //  whose run() method will build and start the app's GUI.
         theConnectionManagerEpiThread.startV();
         theCPUMonitorEpiThread.startV();
+
         // Now the app is running and interacting with the user.
 
         theShutdowner.waitForAppShutdownUnderwayV();
+
         // Now the app is shutting down.
         
         theDataTreeModel.logListenersV(); // [for debugging]

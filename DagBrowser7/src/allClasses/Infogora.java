@@ -110,7 +110,7 @@ class Infogora  // The root of this app.
 				this app's high-level structure.
 			  */
       { // main(..)
-	      appLogger.setBufferedModeV( true ); // Enabling buffered logging.
+	      ////appLogger.setBufferedModeV( true ); // Enabling buffered logging.
 	      appLogger.info("Infogora.main() beginning.");
 
 	      setDefaultExceptionHandlerV(); // Preparing for exceptions 

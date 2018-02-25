@@ -79,7 +79,12 @@ public class App { // The App, especially pre-GUI stuff.
 	    	}
 	  	}
 
-  private void doAppStuff() 
+  private void doAppStuff()
+    /* This method checks with theAppInstanceManager.
+      If theAppInstanceManager says it's okay then
+      this method starts the app GUI and does user and network interactions.
+      Otherwise it exits immediately.
+     */
   	{
 		  if ( ! theAppInstanceManager.managingInstancesWithExitB( ) ) 
 		

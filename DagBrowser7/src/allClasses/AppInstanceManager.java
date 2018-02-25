@@ -15,54 +15,79 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 
+import javax.swing.JOptionPane;
+
 import static allClasses.Globals.*;  // appLogger;
 
 public class AppInstanceManager {
 
-  /* This class detects, communicates, and manages 
-    running instances of the app and file instances of the app.
+  /* This class detects and manages instances of app, and 
+    sine if the communication between them.  
+    
+    ///org : Though this works and works well, it is difficult to understand.
+      Fix this by reorganizing it.
+    
+    There are 2 types of instances:
+    
+    * file instances, which are copies of 
+      some version of the app stored in a disk file.
+    * running instances, which are copies of 
+      some version of the app running on a CPU
 
-    It tries to maintain the following conditions true:
+    The app tries to maintain the following conditions about its instances:
     * There should be a maximum of one running instance at any given moment.
+      Extra instances are terminated.
+    * The file instance in the standard folder should be the newest one known.  
+      If it is not then any newer one will be copied to the standard folder.
     * The running instance should have been run from the standard folder.
-    * The file instance in the standard folder should be 
-      the newest one known. 
+      If it was not then the one in the standard folder
+      will be run and the present one will be terminated.
 
-    It maintains these conditions by following a protocol:
+    The app maintains these conditions by following a protocol:
     The protocol happens when all running instances follow
     the following procedure: 
-    * When first run, if it detects another running instance then
-      it communicates its presence and its identity to
-      the other running instance, and then terminates itself.
-    * When first run if it does not detect another running instance,
-      and it was not run from the standard folder, 
-      and there is not a file instance in the standard folder
-      that is at least as new as its own file instance,
-      then it copies its file instance to the standard folder,
-      then runs that file instance in the standard folder,
-      and then terminates itself.
-      This does an install or update depending on standard folder contents.
-    * If while running it receives a message indicating
-      the presence and identity of a new running instance 
-      that is not a newer version,
-      then it does a move-to-front of its own window to signal the user.
-    * If while running it receives a message indicating
-      the presence and identity of a new running instance 
-      that is a newer version,
-      then it runs that one and terminates itself.
-    * If while running it detects the existence of a newer file instance,
-      then it runs that one and terminates itself.
+    * When first run:
+      * If the app detects another running instance then
+	      it communicates its presence and its identity (folder) to
+	      the other running instance, and then terminates itself.
+	    * If the app does not detect another running instance,
+	      but it was not run from the standard folder, 
+	      and there is not a file instance in the standard folder
+	      that is at least as new as its own file instance,
+	      then it copies its file instance to the standard folder,
+	      runs that file instance from the standard folder,
+	      and then terminates itself.  This effectively
+	      does an install or update.
+    * While the app is running (in the standard folder):
+      * If the app receives a message indicating
+	      the presence and identity of a new running instance 
+	      that is not a newer version and therefore will terminate,
+	      it informs the user about this, otherwise it does nothing.
+l    * If the app receives a message indicating
+	      the presence and identity of a new running instance 
+	      that is a newer version, then it informs the user, 
+	      reruns the newer version, which by now
+      	has terminated itself, and then terminates itself.
+	    * If the app detects the existence of a newer file instance,
+	      then it runs that one and terminates itself.
 
 		The code which does all this is in methods:
-	  	* managingInstancesWithExitB( )
-	  	* tryUpdateFromNewerFileInstanceV()
+	  	* managingInstancesWithExitB( ) which is called at startup.
+	  	* tryUpdateFromNewerFileInstanceV() which is called periodically
+	  	  from by a timer.
 
-    The running instance code in this class was originally based on code at 
-    http://www.rbgrn.net/content/43-java-single-application-instance
+    It also pauses to display dialogs informing the user what is happening.
+    
+    The running instance detection code in this class was originally based on 
+    code at http://www.rbgrn.net/content/43-java-single-application-instance
 
-    ?? Write a state-machine description summarizing the entire process.
+		The app is interested in 2 folders:
+		* The standard folder.
+		* The possibly different folder where the app was originally run.
+		
+    ///doc?? Write a state-machine description summarizing the entire process.
 
-    ?? The network code should  be more robust.
+    ///enh?? The network code should be more robust.
     It needs to handle when the socket link is not working.
     Maybe if indications are that there is no older app instance
     it launches another instance of itself, 
@@ -71,6 +96,7 @@ public class AppInstanceManager {
     To be extra safe against intentional errors as well as
     unintentional ones, it might make sense to have a special
     configuration file used only for instance [and update] management.
+
     */
 
   // Private injected dependency variables, initialized during construction.
@@ -80,18 +106,23 @@ public class AppInstanceManager {
 
   // Internal dependency variables, set after construction.
 
+    // File names.  Some of these might be equal.
+	  private File standardAppFile=  // Preferred standard folder app File name. 
+	  		null; // Once set to non-null, this never changes.
+    private File thisAppFile= null;  // File name of this running app.
+      // Once set to non-null, this never changes.
     private File otherAppFile= null;  // File name of other app in protocol.
-	    // This might come from arg[0] when this app is first run,
-	    // or from a packet received from another running instance 
-	    // when that first runs.
+      // This might changes multiple times during execution. 
+      // It might come from either:
+      // * arg[0], once, when this app is first run, or
+	    // * a packet received from other running instances 
+	    // 	 when they first runs.
 
-    private String[] inputStrings= null;  // Array of String inputs to app.
+    private String[] inputStrings= null;  // Storage for String inputs to app
+      // from multiple sources.
       // inputStrings[0] is normally the path to the other app file instance 
       // that ran the running app.
-	  private File thisAppFile= null;  // File name of this running app.
-	  private File standardAppFile=  // File name of app in standard folder. 
-	  		null;
-	  private ServerSocket instanceServerSocket = null;
+	  private ServerSocket instanceServerSocket = null; // For receiving messages.
 
   // Public initialization code.
 	  
@@ -108,7 +139,6 @@ public class AppInstanceManager {
 	    // Does all initialization except constructor injection.
 	    {
 	  		setInputsV( theArgStrings );  // Setting app arg string[s] as inputs.
-
 	      { // Calculating File name of this app's file instance.
 		      URI thisAppURI = null;
 		      try {
@@ -121,8 +151,9 @@ public class AppInstanceManager {
 		        }
 		      thisAppFile= new File( thisAppURI );
 	      	}
-	      standardAppFile= // Calculating app's File name in standard location.
+	      standardAppFile= // Calculating File name of app in standard location.
 	      		AppFolders.resolveFile( "Infogora.jar" );
+	      logInputsV();
 	      }
 	
 
@@ -145,26 +176,31 @@ public class AppInstanceManager {
 	        except possibly for calling another instance at shutdown
 	        to continue the management protocol.
 	      It returns false if this app instance should continue with 
-	        normal start-up, because no other running instance was detected.
+	        normal start-up, run its GUI, etc.,
+	        because no other running instance was detected.
 	      */
 	    {
 	  		appLogger.info( "App path is:\n  " + thisAppFile.getAbsolutePath() );
 		  	appLogger.info( "App time-tamp is: " + thisAppDateString() );
 	    	
-	      boolean appShouldExitB= true;  // Setting default return for app exit.
+	      boolean appShouldExitB= true;  // Setting default result for app exit.
 	
 	      if ( tryARunningInstanceActionB( ) )
 	        ; // Leave appShouldExitB == true to cause exit.
 	      else if ( tryAFileInstanceActionB( ) )
 	        ; // Leave appShouldExitB == true to cause exit.
 	      else // App instance management actions failed.
-	        appShouldExitB= false; // Setting return to prevent exit.
+		      { // Cause app exit.
+			  		appLogger.info( 
+			  				"!!!!   This instance staying.  GUI will be started.   !!!!" );
+		        appShouldExitB= false; // Setting return result to prevent app exit.
+		        }
 	
 	      return appShouldExitB;  // Return whether app should exit.
 	      }
-	
+
 	  private boolean updateTriggeredB= false; // For re-trigger detection.
-	  
+
 	  public void tryUpdateFromNewerFileInstanceV()
 	    /* This method is meant be called periodically by a timer
 	      to check for the appearance of a new version of the otherAppFile
@@ -195,6 +231,20 @@ public class AppInstanceManager {
 		            appLogger.info(
 		            		"Detected an approved updater file.  Preparing it"
 		            		);
+			      		EDTUtilities.runOrInvokeAndWaitV( // Do following on EDT thread. 
+			  		    		new Runnable() {
+			  		    			@Override  
+			  		          public void run() {
+			  		            JOptionPane.showMessageDialog(
+			  		                null, // this, // null, 
+			  		                "A file containing an update of this app was detected.\n"
+			  		                + "It will now replace this one because it is newer.",
+			  		                "Infogora Info",
+			  		                JOptionPane.INFORMATION_MESSAGE
+			  		                );
+			  		    				}
+			  		          } 
+			  		        );
 		            setForJavaCommandAndExitB(  // Chain to other app to do copy.
 		              otherAppFile.getAbsolutePath() 
 		              );
@@ -275,7 +325,6 @@ public class AppInstanceManager {
 			      otherAppFile=  // Convert arg0 to File name.
 			      		new File(inputStrings[0]);
 		      	}
-	      logInputsV();
 	      }
 	
 	  // Code that manages running instances.
@@ -433,11 +482,29 @@ public class AppInstanceManager {
 		                  	+"Received a newer app signal-packet:" + readString
 		                    );
 		                  setInputsV( new String[] {readString} ) ;
+		                  logInputsV();
 		                  if // Exiting or firing event depending on other instance.
 		                    (tryAFileInstanceActionB( ))
-		                    theShutdowner.requestAppShutdownV(); // Triggering app exit.
+		                    theShutdowner.requestAppShutdownV(); // App exit.
 		                    else
-		                    fireNewInstance(); // Triggering AppInstanceListener action.
+		                    {
+		        		      		EDTUtilities.runOrInvokeAndWaitV( // Do following on EDT thread. 
+		        		  		    		new Runnable() {
+		        		  		    			@Override  
+		        		  		          public void run() {
+		    		                      JOptionPane.showMessageDialog(
+		    		                        null, // this, // null, 
+		    		                        "Another running instance of this app was detected briefly.\n"
+		    		                        + "No further action was taken because it was not newer "
+		    		                        + "than this one.",
+		    		                        "Infogora Info",
+		    		                        JOptionPane.INFORMATION_MESSAGE
+		    		                        );
+		        		  		    				}
+		        		  		          } 
+		        		  		        );
+			                    fireNewInstance(); // AppInstanceListener action.
+			                    }
 		                  inBufferedReader.close();
 		                  clientSocket.close();
 		                	} 
@@ -585,6 +652,20 @@ public class AppInstanceManager {
 	          ( updateApprovedB() )
 	          {
 	            // User approval or authenticity checks would go here.
+		      		EDTUtilities.runOrInvokeAndWaitV( // Do following on EDT thread. 
+		  		    		new Runnable() {
+		  		    			@Override  
+		  		          public void run() {
+		  		            JOptionPane.showMessageDialog(
+		  		                null, // this, // null, 
+		  		                "Another file instance of this app was detected.\n"
+		  		                + "It will now replace this one because it is newer.",
+		  		                "Infogora Info",
+		  		                JOptionPane.INFORMATION_MESSAGE
+		  		                );
+		  		    				}
+		  		          } 
+		  		        );
 	            appLogger.info("An approved updater has signalled.");
 	        	  appShouldExitB=   // Chain to arg app to do the copy.
 		            setForJavaCommandAndExitB(
@@ -695,9 +776,10 @@ public class AppInstanceManager {
 	        String logStriing= "";  //Declare and initialize string to be logged.
 	        { // Add parts to the string to be logged.
 	          logStriing+= "Inputs: ";
-	          logStriing+= "\n  Standard: " + standardAppFile;
-	          logStriing+= "\n  This:     " + thisAppFile;
-	          logStriing+= "\n  Arguments: ";
+	          logStriing+= "\n  standardAppFile: " + standardAppFile;
+	          logStriing+= "\n  thisAppFile:     " + thisAppFile;
+	          logStriing+= "\n  otherAppFile:    " + otherAppFile;
+	          logStriing+= "\n  inputStrings: ";
 	          for ( String argString : inputStrings )
 	            logStriing+= "\n    " + argString;
 	          }
