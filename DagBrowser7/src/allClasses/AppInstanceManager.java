@@ -171,7 +171,7 @@ l    * If the app receives a message indicating
 		      runningAppFile= new File( thisAppURI );
 	      	}
 	      standardAppFile= // Calculating File name of app in standard location.
-	      		AppFolders.resolveFile( "Infogora.jar" );
+	      		Config.resolveFile( "Infogora.jar" );
 	      logInputsV(); // Report inputs received in start up.
 	      }
 	

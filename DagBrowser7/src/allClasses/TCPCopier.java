@@ -81,7 +81,7 @@ public class TCPCopier
 	      {
 	  			appLogger.info("run() beginning.",true);
 	
-					File clientFile= AppFolders.resolveFile( clientFileString );
+					File clientFile= Config.resolveFile( clientFileString );
 		  		localLastModifiedL= // Saved time stamp of local file copy.
 		  				clientFile.lastModified(); 
 
@@ -129,7 +129,7 @@ public class TCPCopier
 			    */
 				{
 					Socket clientSocket = null;
-					File clientFile= AppFolders.resolveFile( clientFileString );
+					File clientFile= Config.resolveFile( clientFileString );
 					int serverPortI= Integer.parseUnsignedInt( serverPortString );
 					try {
 							clientSocket= new Socket( serverIPString, serverPortI );
@@ -184,7 +184,7 @@ public class TCPCopier
 			    		///dbg appLogger.info("run() trying ServerSocket.accept().");
 			        serverSocket = serverServerSocket.accept();
 			    		serverFile= // Calculating File name.
-			    				AppFolders.resolveFile( serverFileString );
+			    				Config.resolveFile( serverFileString );
 				  		long serverFileLastModifiedL= serverFile.lastModified();
 			    		tryTransferingFileL( 
 			    				serverSocket, serverFile, serverFile, serverFileLastModifiedL );
@@ -284,9 +284,9 @@ public class TCPCopier
 				boolean fileWriteCompleteB= false;
 				File temporaryFile= null;
 				try { 
-					temporaryFile= AppFolders.resolveFile( "TCPCopier" );
+					temporaryFile= Config.resolveFile( "TCPCopier" );
 					temporaryFile.mkdir();  // Create folder if needed.
-					temporaryFile= AppFolders.resolveFile( "TCPCopier/Temporary.txt" );
+					temporaryFile= Config.resolveFile( "TCPCopier/Temporary.txt" );
 						temporaryFileOutputStream= new FileOutputStream( temporaryFile );
 						TCPCopier.copyStreamBytesV( 
 								socketInputStream, temporaryFileOutputStream);

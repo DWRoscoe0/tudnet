@@ -1,5 +1,7 @@
 package allClasses;
 
+import java.io.File;
+
 //import static allClasses.Globals.*;  // appLogger;
 
 public class Config
@@ -13,7 +15,43 @@ public class Config
    	*/
 
   {
-	  // Delays, for adjustments and slowing the entire app for debugging.
+
+
+  /* This section defines the app's name.  */
+  
+	private static final String AppNameString= "Infogora";
+
+  public static String getAppNameString()
+    { return AppNameString; }
+
+	
+  /* This section defines all the folders where this app stores its data.  
+  It does some run-time initialization with static initializers.  
+  */
+
+	private static File homeFolderFile;  // User home directory.
+
+  static
+  /* This class static code block initializes some static variables.  */
+  { // Initialize MetaFile static fields.
+    String homeFolderString= System.getProperty("user.home");
+    // System.out.println( HomeFolderString );
+    homeFolderFile= new File( 
+      new File( homeFolderString ), 
+      Config.getAppNameString()
+      );
+    homeFolderFile.mkdirs();  // Create home folder if it doesn't exist.
+    } // Initialize MetaFile static fields.
+
+  static public File resolveFile( String FileNameString )
+    /* This method creates a File name object for 
+      a file named FileNameString in the app folder.  */
+    {
+      return new File( homeFolderFile, FileNameString) ;
+      }
+
+  
+  	// Delays, for adjustments and slowing the entire app for debugging.
 		///enh Add additive and multiplicative adjustments for debugging.
 	
 		public static final long maxTimeOut5000MsL= 5000;
@@ -39,4 +77,6 @@ public class Config
 		public static final char delimiterChar= '!';
 		
 		private Config() {} // Private so it can't be constructed.
+
+
     }

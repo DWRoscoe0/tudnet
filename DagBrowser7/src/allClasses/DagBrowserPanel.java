@@ -542,7 +542,7 @@ public class DagBrowserPanel
 	                    
                     final JFrame theJFrame =  // Make the Help JFrame.
                         new JFrame( 
-                          AppName.getAppNameString()
+                          Config.getAppNameString()
                           +" Help"
                           );
                     

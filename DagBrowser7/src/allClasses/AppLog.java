@@ -123,7 +123,7 @@ public class AppLog
       throws IOException  // Do-nothing put-off.
       {
         logFile=  // Identify log file name.
-          AppFolders.resolveFile( "log.txt" );
+        		Config.resolveFile( "log.txt" );
         theSessionI= getSessionI();  // Get app session number.
         if (theSessionI == 0)  // If this is session 0...
           logFile.delete();  //...then empty log file by deleting.
@@ -153,7 +153,7 @@ public class AppLog
         //logFile.delete(); // DO THIS TO CLEAR LOG AND RESET SESSION COUNT!
         
         File sessionFile=  // Identify session file name.
-          AppFolders.resolveFile( "session.txt" );
+        		Config.resolveFile( "session.txt" );
         if ( ! logFile.exists() )  // If log file doesn't exist...
           sessionFile.delete();  // ...delete session file also.
         int sessionI= 0;

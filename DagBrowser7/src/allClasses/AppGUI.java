@@ -269,7 +269,7 @@ class GUIBuilderStarter // This EDT-Runnable starts GUI.
       {
         JFrame theJFrame =  // Make the main application JFrame.
           theAppGUIFactory.makeJFrame( 
-            AppName.getAppNameString()
+            Config.getAppNameString()
             +", version "
             +theAppInstanceManager.thisAppDateString()
             );
