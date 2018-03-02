@@ -53,8 +53,6 @@ public class UnicasterManager
 	    public void updatePeerInfoV( 
 	    		String peerIDString, String ipString, String portString)
 		    {	
-	    	  //// String peerIDString= theIPAndPort.toString(); // Calculate peer ID.
-
 			  	// Store or update the list structure.
 	    		String entryIDKeyString= thePersistent.entryInsertOrMoveToFrontString( 
 	    				peerIDString, "peers" 

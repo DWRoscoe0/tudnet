@@ -531,7 +531,7 @@ public class DagBrowserPanel
 	                @Override
 	                public void run() { 
 	                  String helpString= 
-	                  		"<Ctrl++> zooms in, <Ctrl+-> zoom out.\n"+
+	                  		"<Ctrl++> zooms in, <Ctrl+-> zooms out.\n"+
 	                    	"Use Arrows, in keys or buttons, to navigate folders.\n"+
 	                      "      <Right-arrow> moves to child item.\n"+
 	                      "      <Left-arrow> moves to parent item.\n"+

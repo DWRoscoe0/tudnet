@@ -306,7 +306,8 @@ public class AppLog
     public void appendEntry( String inString )
     	{ appendEntry(inString, null, false); }
 
-    public void appendEntry( String inString, Throwable theThrowable, boolean consoleB )
+    public synchronized void appendEntry( 
+    		String inString, Throwable theThrowable, boolean consoleB )
       /* This appends to the log file a new log entry line.
         It contains the app session number,
         milliseconds since the previous entry, the thread name,

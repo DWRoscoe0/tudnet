@@ -178,12 +178,12 @@ public class Sender // Uunicast and multicast sender thread.
     private void sendingDatagramPacketV( DatagramPacket theDatagramPacket )
       // This method sends theDatagramPacket and handles exceptions.
 	    {
-    		appLogger.info("sendingDatagramPacketV(..) calling send(..)." );
+    		// appLogger.debug("sendingDatagramPacketV(..) calling send(..)." );
 	    	try { // Send the packet.
 	        theDatagramSocket.send(   // Send packet.
 	        	theDatagramPacket
 	          );
-	    		PacketManager.logSenderPacketV(theDatagramPacket);
+	        ///dbg PacketManager.logSenderPacketV(theDatagramPacket);
     		  	// Was logging before sending so log would make sense.
 	      } catch (IOException e) { // Handle exception by dropping packet.
 	        appLogger.error(

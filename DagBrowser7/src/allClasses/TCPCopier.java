@@ -40,12 +40,16 @@ public class TCPCopier
 
 		//private final static String testServerIPString = "127.0.0.1";
 	  private final static int testServerPortI = 11111;
-	  private final static String testFileString = "TCPCopier.txt";
-	  //private final static String testServerFileString = "TCPCopierServer.txt";
-	  private final static String testServerFileString = testFileString;
-	  //private final static String testClientFileString = "TCPCopierClient.txt";
-	  private final static String testClientFileString = testFileString;
+	  //private final static String fileString = "TCPCopier.txt";
+	  private final static String fileString = "Infogora.jar";
+	  //private final static String serverFileString = "TCPCopierServer.txt";
+	  private final static String serverFileString = fileString;
+	  //private final static String clientFileString = "TCPCopierClient.txt";
+	  ////private final static String clientSourceFileString = fileString;
+	  ////private final static String clientDestinationFileString = fileString;
+	  private final static String clientFileString = "TCPCopier/"+fileString;
 
+	  /////// Have separate source and destination FileStrings.
 
 	  static class TCPClient extends EpiThread {
 	
@@ -77,7 +81,7 @@ public class TCPCopier
 	      {
 	  			appLogger.info("run() beginning.",true);
 	
-					File clientFile= AppFolders.resolveFile( testClientFileString );
+					File clientFile= AppFolders.resolveFile( clientFileString );
 		  		localLastModifiedL= // Saved time stamp of local file copy.
 		  				clientFile.lastModified(); 
 
@@ -125,14 +129,14 @@ public class TCPCopier
 			    */
 				{
 					Socket clientSocket = null;
-					File clientFile= AppFolders.resolveFile( testClientFileString );
+					File clientFile= AppFolders.resolveFile( clientFileString );
 					int serverPortI= Integer.parseUnsignedInt( serverPortString );
 					try {
 							clientSocket= new Socket( serverIPString, serverPortI );
 				  		long clientFileLastModifiedL= localLastModifiedL;
-				  		long newLastModifiedL= tryTransferingFileL( 
-				  				clientSocket, clientFile, clientFileLastModifiedL );
-				  		if ( newLastModifiedL != 0 ) // Update copy of local  time-stamp.
+				  		long newLastModifiedL= tryTransferingFileL(
+				  				clientSocket, clientFile, clientFile, clientFileLastModifiedL );
+				  		if ( newLastModifiedL != 0 ) // Update copy of local time-stamp.
 				  			localLastModifiedL= newLastModifiedL;
 				    } catch (IOException theIOException) {
 							appLogger.info("tryGettingFileV()",theIOException);
@@ -180,10 +184,10 @@ public class TCPCopier
 			    		///dbg appLogger.info("run() trying ServerSocket.accept().");
 			        serverSocket = serverServerSocket.accept();
 			    		serverFile= // Calculating File name.
-			    				AppFolders.resolveFile( testServerFileString );
+			    				AppFolders.resolveFile( serverFileString );
 				  		long serverFileLastModifiedL= serverFile.lastModified();
 			    		tryTransferingFileL( 
-			    				serverSocket, serverFile, serverFileLastModifiedL );
+			    				serverSocket, serverFile, serverFile, serverFileLastModifiedL );
 			      } catch (IOException ex) {
 			    		appLogger.info("run() IOException",ex);
 			      } finally {
@@ -196,17 +200,20 @@ public class TCPCopier
 			} // TCPServer 
 	  
 		private static long tryTransferingFileL(
-				Socket theSocket, File localFile, long localLastModifiedL)
+				Socket theSocket, 
+				File localSourceFile, 
+				File localDestinationFile, 
+				long localLastModifiedL)
 		  throws IOException
 		  /* This method communicates with the peer on the other end of
 		    the connection on theSocket and compares
 		    the LastModefied TimeStamp of the remote file to localLastModifiedL
-		    which is the LastModefied TimeStamp of the local file.
+		    which should be the LastModefied TimeStamp of the local file.
 		    If they are not equal then the newer file with its newer TimeStamp
-		    is copied across the connection and replaces the older file.
-		    If the file replaced is the local file then 
-		    this method returns that file's new time-stamp,
-		    otherwise it returns 0. 
+		    is copied across the connection to replaces the older file.
+		    If the file data is received then it replaces localDestinationFile and
+		    this method returns the received file's newer time-stamp,
+		    otherwise this method returns 0. 
 		   */
 			{
 				///dbg appLogger.info("transactionV() beginning.");
@@ -221,11 +228,11 @@ public class TCPCopier
 		      				socketInputStream, socketOutputStream, localLastModifiedL);
 						if ( timeStampResultL > 0 ) { // Remote file is newer.
 								if ( receiveNewerRemoteFileB(
-										localFile, socketInputStream, timeStampResultL ) )
+										localSourceFile, socketInputStream, timeStampResultL ) )
 									receivedLastModifiedL= timeStampResultL;
 						  } else if ( timeStampResultL < 0 ) { // Local file is newer.
 						  		sendNewerLocalFileV(
-			  				localFile, socketOutputStream );
+			  				localSourceFile, socketOutputStream );
 						  } else ; // Files are same age, so do nothing.
 			    } catch (IOException ex) {
 			  		appLogger.info("transactionV() IOException",ex);
@@ -277,7 +284,9 @@ public class TCPCopier
 				boolean fileWriteCompleteB= false;
 				File temporaryFile= null;
 				try { 
-						temporaryFile= AppFolders.resolveFile( "Temporary.txt" );
+					temporaryFile= AppFolders.resolveFile( "TCPCopier" );
+					temporaryFile.mkdir();  // Create folder if needed.
+					temporaryFile= AppFolders.resolveFile( "TCPCopier/Temporary.txt" );
 						temporaryFileOutputStream= new FileOutputStream( temporaryFile );
 						TCPCopier.copyStreamBytesV( 
 								socketInputStream, temporaryFileOutputStream);
@@ -286,7 +295,7 @@ public class TCPCopier
 						Closeables.closeWithErrorLoggingB(temporaryFileOutputStream);
 				  }
 				if (fileWriteCompleteB) { // More processing if write completed. 
-						localFile.setLastModified(timeStampToSetL); // Update time stamp.
+						temporaryFile.setLastModified(timeStampToSetL); // Set time stamp.
 						Path temporaryPath= temporaryFile.toPath(); //convert to Path.
 						Path localPath = localFile.toPath(); //convert to Path.
 						Files.move( // Rename file, replacing existing file with same name.

@@ -126,6 +126,7 @@ class Infogora  // The root of this app.
 	      // When it ends, it should trigger a JVM shutdown,
 	      // unless a JVM shutdown was triggered already, and terminate the app.
 	      // Unfortunately the app doesn't terminate, so we call exit(0) below.
+	      ///fix so exit() doesn't need to be called.
 
 	      appLogger.info("Infogora.main() calling exit(0).");
     		appLogger.setBufferedModeV( false ); // Disabling buffered logging.
