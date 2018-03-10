@@ -66,7 +66,7 @@ public class Persistent
 
 		  	try { 
 		  		  configFileInputStream = 
-		  		  		new FileInputStream(Config.resolveFile( fileString ));
+		  		  		new FileInputStream(Config.makeRelativeToAppFolderFile( fileString ));
 				  	theProperties.load(configFileInputStream);
 			  		} 
 			  	catch (FileNotFoundException theFileNotFoundException) { 
@@ -94,7 +94,7 @@ public class Persistent
 		  	FileOutputStream theFileOutputStream = null;
 		  	try { 
 		  		  theFileOutputStream= new FileOutputStream(
-		  		  		Config.resolveFile( fileString ));
+		  		  		Config.makeRelativeToAppFolderFile( fileString ));
 		  			theProperties.store(
 		  				theFileOutputStream, 
 		  				"---Infogora persistent data file---, PRESENTLY TEST DATA ONLY." //tmp

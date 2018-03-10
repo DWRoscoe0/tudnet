@@ -46,8 +46,8 @@ public class RootJTree
     */
 
   {
-	  final static String ExpandedAttributeString= "Expanded"; 
-	  final static String autoExpandedAttributeString= "AutoExpanded"; 
+		static final String ExpandedAttributeString= "Expanded"; 
+		static final String autoExpandedAttributeString= "AutoExpanded"; 
 
     // Variables.
       private static final long serialVersionUID = 1L;

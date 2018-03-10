@@ -542,7 +542,7 @@ public class DagBrowserPanel
 	                    
                     final JFrame theJFrame =  // Make the Help JFrame.
                         new JFrame( 
-                          Config.getAppNameString()
+                          Config.appString
                           +" Help"
                           );
                     
@@ -616,7 +616,7 @@ public class DagBrowserPanel
               		//appLogger.info("in loop.");
               		doDelayMeasurementsV();
                   theAppInstanceManager. // Executing updater if present.
-                    tryUpdateFromNewerFileInstanceV();
+                    thingsToDoPeriodicallyV();
                   }
               appLogger.info("ending.");
               }

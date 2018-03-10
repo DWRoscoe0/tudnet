@@ -59,9 +59,9 @@ class TracingEventQueueMonitor extends Thread {
 
 	private long thresholdDelay;
 
-	public final static long PERIOD= 100;  // was 100
-	public final static long LIMIT= 500; // was 500
-	private final static boolean displayStackB= false;
+	public static final long PERIOD= 100;  // was 100
+	public static final long LIMIT= 500; // was 500
+	private static final boolean displayStackB= false;
 	
 	class EventValue { 
 		long startTimeL; 

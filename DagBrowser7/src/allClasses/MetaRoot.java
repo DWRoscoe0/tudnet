@@ -166,7 +166,7 @@ public class MetaRoot {
       Now it's stored in MetaNode attributes with key "SelectionPath".
       */
 
-    final static String selectionAttributeString= // Key String to use.
+    static final String selectionAttributeString= // Key String to use.
         "SelectionPath"; 
 
     // Getter methods.  These read from the MetaNode DAG.

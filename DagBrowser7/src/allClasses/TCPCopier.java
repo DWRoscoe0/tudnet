@@ -12,7 +12,7 @@ import java.nio.file.StandardCopyOption;
 import static allClasses.Globals.appLogger;
 
 
-public class TCPCopier 
+public class TCPCopier
 
   /* This class is supposed to be a simple software updater
     which can run in spite of other app malfunctions.
@@ -26,8 +26,16 @@ public class TCPCopier
     
     The code is [to be] written so that if a file to be update is replaced,
     it will trigger an update even to the same node, i.e., localhost.
-    This is done by saving the LastModified TimeStamp of the local file
-    and using it for comparisons.
+    This is done by defining 2 folders.
+    They are different folders for testing.
+    They are the same folder for production.
+    
+    There are 2 threads.
+    * The server thread only services requests,
+      and pauses for a while after each one to mitigate request spam.
+    * The client thread attempts both 
+    	* file updating across a socket connection and
+    	* local inter-folder file updating.
 
     ///enh Eventually it should maintain its own data file.
       Any peers with which it communicates for updating may be added
@@ -38,24 +46,31 @@ public class TCPCopier
 
 	{
 
-		//private final static String testServerIPString = "127.0.0.1";
-	  private final static int testServerPortI = 11111;
-	  //private final static String fileString = "TCPCopier.txt";
-	  private final static String fileString = "Infogora.jar";
-	  //private final static String serverFileString = "TCPCopierServer.txt";
-	  private final static String serverFileString = fileString;
-	  //private final static String clientFileString = "TCPCopierClient.txt";
-	  ////private final static String clientSourceFileString = fileString;
-	  ////private final static String clientDestinationFileString = fileString;
-	  private final static String clientFileString = "TCPCopier/"+fileString;
-
+		//private static final String testServerIPString = "127.0.0.1";
+	  private static final int testServerPortI = 11111;
+	  
+	  /* File name and path definitions.
+	    2 file names are used, one for the client and done for the server.
+	    This is done to for testing with localhost and 2 separate folder.
+	    During normal operations there will be only one folder and file name.
+	   	*/
+	  //private static final String fileToUpdateString = "TCPCopier.txt";
+	  private static final String fileToUpdateString= Config.appJarString;
+	  //private static final String serverFileString = "TCPCopierServer.txt";
+	  //private static final String serverFileString = fileToUpdateString;
+	  private static final String serverFileString = 
+	  		Config.tcpCopierInputFolder + File.separator + fileToUpdateString;
+	  //private static final String clientFileString = "TCPCopierClient.txt";
+	  private static final String clientFileString = // sub-folder and file.
+	  		Config.tcpCopierOutputFolder + File.separator + fileToUpdateString;
+	  
 	  /////// Have separate source and destination FileStrings.
 
 	  static class TCPClient extends EpiThread {
 	
 		  private final Persistent thePersistent; // External data.
 			
-		  private static long localLastModifiedL= 0; /* This is where the time-stamp
+		  /*///// private static long localLastModifiedL= 0; /* This is where the time-stamp
 		    of the local copy of the update file is stored until the next update.
 		    If the file is replaced then this variable will be updated,
 		    but it might not happen immediately.
@@ -70,7 +85,7 @@ public class TCPCopier
 	
 			  this.thePersistent= thePersistent;
 				}
-	    
+
 	    public void run()
 	      /* This is the main method of the Client thread.
 	        It repeatedly tries to connect to various peer nodes,
@@ -81,9 +96,10 @@ public class TCPCopier
 	      {
 	  			appLogger.info("run() beginning.",true);
 	
-					File clientFile= Config.resolveFile( clientFileString );
-		  		localLastModifiedL= // Saved time stamp of local file copy.
-		  				clientFile.lastModified(); 
+					//// File clientFile= 
+	  			//// 		Config.makeRelativeToAppFolderFile( clientFileString );
+		  		//// localLastModifiedL= // Saved time stamp of local file copy.
+					//// 		clientFile.lastModified(); 
 
 		  		EpiThread.interruptableSleepB(4000); ///dbg delay to organize log.
 	      	boolean oldConsoleModeB= appLogger.getAndEnableConsoleModeB(); ///tmp ///dbg
@@ -94,9 +110,19 @@ public class TCPCopier
 		    	while ( ! EpiThread.exitingB() ) // Repeat until exit requested.
 		    		{ // Process an element of list.
 			    		{ 
-			    			tryExchangingFileWithNextServerV(thePersistentCursor);
+			    			//////// for playing.
+			  	  		Misc.updateFromToV(
+    							Config.userAppJarFile,
+				      		Config.makeRelativeToAppFolderFile( 
+				      				Config.tcpCopierInputFolder 
+				      				+ File.separator 
+				      				+ Config.appJarString 
+				      				)
+				      		);
+				        ////////////
+			    			tryExchangingFilesWithNextServerV(thePersistentCursor);
 								///dbg appLogger.info("run() sleeping 5s before next attempt.",true);
-						    EpiThread.interruptableSleepB(8000); // Prevent hogging.
+						    EpiThread.interruptableSleepB(8000); // Wait a while.
 			    			}
 	      			}
 	  			appLogger.info("run() ending.",true);
@@ -104,9 +130,9 @@ public class TCPCopier
 	      	appLogger.restoreConsoleModeV( oldConsoleModeB ); /// tmp ///dbg
 		    	}
 	
-			private void tryExchangingFileWithNextServerV( 
+			private void tryExchangingFilesWithNextServerV( 
 					PersistentCursor thePersistentCursor)
-			  /* Tries to exchange a file with next server peer node based on 
+			  /* Tries to exchange files with next server peer node based on 
 			    the state of thePersistentCursor into the peer list.
 			   */
 				{
@@ -117,35 +143,42 @@ public class TCPCopier
 									thePersistentCursor.getFieldString("IP");
 							String serverPortString= 
 									thePersistentCursor.getFieldString("Port");
-				  		tryExchangingFileWithServerV(serverIPString,serverPortString);
+				  		tryExchangingFilesWithServerV(serverIPString,serverPortString);
 					  }
 				  thePersistentCursor.nextString(); // Go to next element.
 					}
 	
-			private void tryExchangingFileWithServerV(
+			private void tryExchangingFilesWithServerV(
 					String serverIPString, String serverPortString)
-			  /* Tries to exchange a file with the peer node that is   
+			  /* Tries to exchange files with the peer node that is   
 			    at IPAddress serverIPString is listening on port serverPortString.
 			    */
 				{
 					Socket clientSocket = null;
-					File clientFile= Config.resolveFile( clientFileString );
+					File clientFile= 
+							Config.makeRelativeToAppFolderFile( clientFileString );
 					int serverPortI= Integer.parseUnsignedInt( serverPortString );
 					try {
-							clientSocket= new Socket( serverIPString, serverPortI );
-				  		long clientFileLastModifiedL= localLastModifiedL;
-				  		long newLastModifiedL= tryTransferingFileL(
+							////clientSocket= new Socket( serverIPString, serverPortI );
+						 	InetSocketAddress theInetSocketAddress= 
+								new InetSocketAddress( serverIPString, serverPortI );
+							clientSocket= new Socket();
+							clientSocket.connect(theInetSocketAddress, 5000);
+				  		long clientFileLastModifiedL= //// localLastModifiedL;
+				  				clientFile.lastModified(); 
+				  		//// long newLastModifiedL= 
+				  		tryTransferingFilesL(
 				  				clientSocket, clientFile, clientFile, clientFileLastModifiedL );
-				  		if ( newLastModifiedL != 0 ) // Update copy of local time-stamp.
-				  			localLastModifiedL= newLastModifiedL;
+				  		//// if ( newLastModifiedL != 0 ) // Update copy of local time-stamp.
+				  		//// 	localLastModifiedL= newLastModifiedL;
 				    } catch (IOException theIOException) {
-							appLogger.info("tryGettingFileV()",theIOException);
+							appLogger.info("tryExchangingFileWithServerV()",theIOException);
 				  	} finally {
 						  Closeables.closeWithErrorLoggingB(clientSocket);
 						}
 					}
 	
-		} // TCPClient 
+		} // TCPClient
 	
 		
 		static class TCPServer extends EpiThread {
@@ -166,16 +199,21 @@ public class TCPCopier
 		    	///dbg EpiThread.interruptableSleepB(5000); ///tmp Prevent initial error.
 		    	EpiThread.interruptableSleepB(2000); // Organize log.
 	    		boolean oldConsoleModeB= appLogger.getAndEnableConsoleModeB();
-		    	while ( ! EpiThread.exitingB() ) {  // Repeatedly try providing file. 
-		    		///dbg appLogger.info("run() loop beginning.");
-		    		tryExchangingFileWithClientV();
-		    		///dbg appLogger.info("run() loop ending with 10s sleep.");
-				    EpiThread.interruptableSleepB(4000); // Sleep 4s to prevent hogging.
-		    		} // while...
+		    	while  // Repeatedly service one client request. 
+		    		( ! EpiThread.exitingB() ) 
+			    	{ 
+			    		serviceOneRequestFromClientV();
+			    	  EpiThread.interruptableSleepB(4000); // Sleep to prevent hogging.
+			    		} // while...
 	      	appLogger.restoreConsoleModeV( oldConsoleModeB );
 		    	}
 	
-			private void tryExchangingFileWithClientV()
+			private void serviceOneRequestFromClientV()
+			  /* This method waits for and processes one request from a client.
+			    This might result in a file being send to the client,
+			    a file being received from the client,
+			    or no file transfered at all.
+ 			    */
 				{
 			    ServerSocket serverServerSocket= null;
 			    Socket serverSocket= null;
@@ -184,9 +222,9 @@ public class TCPCopier
 			    		///dbg appLogger.info("run() trying ServerSocket.accept().");
 			        serverSocket = serverServerSocket.accept();
 			    		serverFile= // Calculating File name.
-			    				Config.resolveFile( serverFileString );
+			    				Config.makeRelativeToAppFolderFile( serverFileString );
 				  		long serverFileLastModifiedL= serverFile.lastModified();
-			    		tryTransferingFileL( 
+			    		tryTransferingFilesL(
 			    				serverSocket, serverFile, serverFile, serverFileLastModifiedL );
 			      } catch (IOException ex) {
 			    		appLogger.info("run() IOException",ex);
@@ -199,21 +237,29 @@ public class TCPCopier
 			
 			} // TCPServer 
 	  
-		private static long tryTransferingFileL(
-				Socket theSocket, 
+		private static long tryTransferingFilesL(
+				Socket theSocket,
+				
 				File localSourceFile, 
 				File localDestinationFile, 
-				long localLastModifiedL)
+				long localLastModifiedL
+				)
 		  throws IOException
 		  /* This method communicates with the peer on the other end of
 		    the connection on theSocket and compares
 		    the LastModefied TimeStamp of the remote file to localLastModifiedL
 		    which should be the LastModefied TimeStamp of the local file.
 		    If they are not equal then the newer file with its newer TimeStamp
-		    is copied across the connection to replaces the older file.
-		    If the file data is received then it replaces localDestinationFile and
+		    is copied across the connection to replaced the older file.
+		    If a file is received then it replaces localDestinationFile and
 		    this method returns the received file's newer time-stamp,
-		    otherwise this method returns 0. 
+		    If a file is sent or no file is transfered at all then 0 is returned. 
+		    This method is called by both the client and the server.
+
+				localSourceFile and localDestinationFile are normally the same file.
+				Using two parameters instead of one made testing easier.
+				Also localLastModifiedL is normally the time-stamp of that same file,
+				and could be eliminated, but exists, again, to make testing easier.
 		   */
 			{
 				///dbg appLogger.info("transactionV() beginning.");
@@ -228,7 +274,7 @@ public class TCPCopier
 		      				socketInputStream, socketOutputStream, localLastModifiedL);
 						if ( timeStampResultL > 0 ) { // Remote file is newer.
 								if ( receiveNewerRemoteFileB(
-										localSourceFile, socketInputStream, timeStampResultL ) )
+										localDestinationFile, socketInputStream, timeStampResultL ) )
 									receivedLastModifiedL= timeStampResultL;
 						  } else if ( timeStampResultL < 0 ) { // Local file is newer.
 						  		sendNewerLocalFileV(
@@ -256,12 +302,15 @@ public class TCPCopier
 			{ // Local file newer.
 				FileInputStream localFileInputStream= null;
 				try { 
+						appLogger.info("sendNewerLocalFileV() sending file "
+								+ Misc.fileDataString(localFile));
 						localFileInputStream= new FileInputStream(localFile);
 						TCPCopier.copyStreamBytesV( 
 								localFileInputStream, socketOutputStream);
 					} finally {
+						appLogger.info("sendNewerLocalFileV() sent file "
+								+ Misc.fileDataString(localFile));
 			  		Closeables.closeWithErrorLoggingB(localFileInputStream);
-						appLogger.info("sendNewerLocalFileV() file sent.");
 					}
 				}
 		
@@ -280,13 +329,17 @@ public class TCPCopier
 			  it must set the files LastModified value and do an atomic rename.
 			 	*/
 			{
+			  appLogger.info("receiveNewerRemoteFileB() receiving file "
+			  		+ Misc.fileDataString(localFile));
 				FileOutputStream temporaryFileOutputStream= null;
 				boolean fileWriteCompleteB= false;
 				File temporaryFile= null;
 				try { 
-					temporaryFile= Config.resolveFile( "TCPCopier" );
+					temporaryFile= Config.makeRelativeToAppFolderFile( 
+							Config.tcpCopierOutputFolder );
 					temporaryFile.mkdir();  // Create folder if needed.
-					temporaryFile= Config.resolveFile( "TCPCopier/Temporary.txt" );
+					temporaryFile= Config.makeRelativeToAppFolderFile( 
+							Config.tcpCopierOutputFolder + File.separator + "Temporary.file" );
 						temporaryFileOutputStream= new FileOutputStream( temporaryFile );
 						TCPCopier.copyStreamBytesV( 
 								socketInputStream, temporaryFileOutputStream);
@@ -301,7 +354,8 @@ public class TCPCopier
 						Files.move( // Rename file, replacing existing file with same name.
 								temporaryPath, localPath, StandardCopyOption.REPLACE_EXISTING, 
 								StandardCopyOption.ATOMIC_MOVE);
-					  appLogger.info("receiveNewerRemoteFileB() file received.");
+					  appLogger.info("receiveNewerRemoteFileB() received file "
+					  		+ Misc.fileDataString(localFile));
 					}
 				return fileWriteCompleteB;
 				}
@@ -313,10 +367,11 @@ public class TCPCopier
 		    from theInputStream to theOutputStream.
 		   	*/
 			{
-	      ///dbg appLogger.info("copyStreamBytesV() beginning.");
+	      appLogger.info("copyStreamBytesV() beginning.");
+	      int byteCountI= 0;
 	  		while (true) { int byteI;
-	      	try { byteI= theInputStream.read(); } // Receive byte. 
-			    catch (IOException theIOException) { 
+	      	try { byteI= theInputStream.read(); } // Read byte. 
+			    catch (IOException theIOException) {
 			    	appLogger.info("copyStreamBytesV() reading",theIOException);
 			    	throw theIOException; // Re-throw.
 			    	}
@@ -327,8 +382,10 @@ public class TCPCopier
 			    	appLogger.info("copyStreamBytesV() writing",theIOException);
 			    	throw theIOException; // Re-throw.
 			    	}
+	      	byteCountI++;
 	      	}
-	      ///dbg appLogger.info("copyStreamBytesV() ended.");
+	      appLogger.info(
+	      		"copyStreamBytesV() ended.  Bytes transfered: " + byteCountI);
 	    	}
 	  
 		private static long exchangeAndCompareFileTimeStampsRemoteToLocalL( 
@@ -336,20 +393,24 @@ public class TCPCopier
 				OutputStream socketOutputStream, 
 	  		long localLastModifiedL
 				)
-	    /* 
-	  		Returns +lastModified time of remote file 
-	  		if it is newer than local file.
-	  		Returns -lastModified time of local file 
-	  		if it is newer than remote file.
-	  		Returns 0 if the two files have the same lastModified time.
-	  		
+	    /* This method compares the time-stamps of the remote and local files.
+
 	  		localLastModified is used as the time-stamp of the local file.
-	  		It is also sent to the remote peer.
-	  		The time-stamp of the remote file is received from the remote peer.
+	  		It is also sent to the remote peer via socketOutputStream.
+	  		The time-stamp of the remote file is received 
+	  		from the remote peer via socketInputStream.
+
+	      This method returns a value indicating the result of the comparison.
+	  		If the returned value == 0 then the two files 
+	  		have the same lastModified time-stamps and are equally old.
+	  		If the returned value > 0 then the remote file is newer
+	  		and the returned value is the remote time-stamp. 
+	  		If the returned value < 0 then the local file is newer
+	  		and the returned value is negative the value of the local time-stamp. 
 	      
 	      A file that does not exist is considered to have
 	      a lastModified time-stamp of 0, which is considered infinitely old.
-	     */
+	      */
 		  throws IOException
 			{
 	  		long remoteLastModifiedL= 0; // Initial accumulator value.
@@ -368,7 +429,7 @@ public class TCPCopier
 	    			socketC= (char)socketByteI;
 	    			if (! Character.isDigit(socketC)) break; // Exit if not digit.
 	    			remoteLastModifiedL= // Combine new digit with digit accumulator.  
-	    					10*remoteLastModifiedL+Character.digit(socketC, 10); 
+	    					10 * remoteLastModifiedL + Character.digit(socketC, 10); 
 	      		socketByteI= socketInputStream.read(); // Read next byte.
 	      		}
 	    		while (true) { // Skip characters through '#' or to end of input.
@@ -377,13 +438,22 @@ public class TCPCopier
 	      		socketByteI= socketInputStream.read(); // Read next byte.
 	      		}
 	  			}
-	  		long compareResultL= remoteLastModifiedL -  localLastModifiedL;
+	  		long compareResultL= remoteLastModifiedL - localLastModifiedL;
 	  		if (compareResultL > 0 ) 
 	  			  compareResultL= remoteLastModifiedL;
 	  			else if (compareResultL < 0 ) 
 	  			  compareResultL= -localLastModifiedL;
-	  		appLogger.info(
-	  				"exchangeAndCompareFileTimeStampsL() returning "+compareResultL);
+	  		appLogger.info( // Log result of comparison.
+	  				"exchangeAndCompareFileTimeStampsRemoteToLocalL() returning "
+	  				+ ( ( compareResultL == 0 )
+	  						? "0 meaning equal"
+	  					  : "unequal: " + 
+	  						  ( ( compareResultL >= 0 ) 
+			  						? Misc.dateString( compareResultL ) 
+			  				    : "-" + Misc.dateString( -compareResultL )
+			  				    )
+	  				    )
+	  				);
 				return compareResultL;
 				}
 	

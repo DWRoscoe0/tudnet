@@ -13,7 +13,6 @@ import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.text.SimpleDateFormat;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -86,8 +85,7 @@ l    * If the app receives a message indicating
 
 		The code which does all this is in methods:
 	  	* managingInstancesWithExitB( ) which is called at startup.
-	  	* tryUpdateFromNewerFileInstanceV() which is called periodically
-	  	  from by a timer.
+	  	* thingsToDoPeriodicallyV() which is called periodically from by a timer.
 
     It also pauses to display dialogs informing the user what is happening.
     
@@ -99,6 +97,21 @@ l    * If the app receives a message indicating
 		* The possibly different folder where the app was originally run.
 		
     ///doc?? Write a state-machine description summarizing the entire process.
+
+    ///enh?? Maybe simplify the process of replacing an app file.
+      * This class was written based on the assumption that
+	      the app file which is running can not be deleted or replaced
+	      until the app has terminated.  Replacing an app file is done
+	      by running an the executable .jar file of the newer version,
+	      terminating the old app, terminating the old version,
+	      running the app file at the copied destination,
+	      and terminating the app file at the copied source. 
+	    * It might be possible to simplify this process by 
+	      replacing the running app file while it it running.
+	      It can be done with Windows .exe files by 
+	      moving the old file instead of deleting it, as described at:
+	        https://www.codeproject.com/questions/621666/download-and-replace-running-exe
+				This will work on Linux also, though a simple delete will also work.
 
     ///enh?? The network code should be more robust.
     It needs to handle when the socket link is not working.
@@ -119,22 +132,24 @@ l    * If the app receives a message indicating
 
   // Lock
     private static Lock theReentrantLock= new ReentrantLock();
+      // This is used to prevent more than one thread starting an update.
     
   // Internal dependency variables, set after construction.
 
     // File names.  Some of these might be equal.
-	  private File standardAppFile=  // Preferred standard folder app File name. 
-	  		null; // Once set to non-null, this never changes.
-    private File runningAppFile= null;  // File name of this running app.
-      // Once set to non-null, this never changes.
-    private File nonStandardAppFile= null;  // App File not in standard folder.
-      // This might changes multiple times during execution. 
+	  private final File standardAppFile=  // App File name in standard folder.
+    		Config.userAppJarFile;
+    private File runningAppFile; // App File name of running app.
+    private File inputAppFile= null;  // App File name input to this app.
+      // This might change multiple times during execution. 
       // It might come from either:
       // * arg[0], once, when this app is first run, or
-	    // * a packet received from other running instances 
-	    // 	 when they first runs.
-    private File tcpCopierAppFile= null;  // App File in TCPCopier folder.
+	    // * one packet received from each of other running instances 
+	    // 	 when they first run.
+    private File tcpCopierAppFile= null;  // App File in 
+      // TCPCopier folder.
       ///tmp This is how files gotten by TCPCopier files update the app.
+      // TCPCopier creates new versions of app here.
 
     // Other variables.
     private String[] inputStrings= null;  // Storage for String inputs to app
@@ -143,6 +158,11 @@ l    * If the app receives a message indicating
       // that ran the running app.
 	  private ServerSocket instanceServerSocket = null; // For receiving messages.
 
+	  static {
+      ////standardAppFile= // Calculating File name of app in standard location.
+      		////Config.userAppJarFile;
+      		////Config.makeRelativeToAppFolderFile( Config.appJarString );
+	  }
   // Public initialization code.
 	  
 	  public AppInstanceManager(  // Constructor.
@@ -157,7 +177,6 @@ l    * If the app receives a message indicating
 	  public void initializeV()
 	    // Does all initialization except constructor injection.
 	    {
-	  		setInputsV( theArgStrings );  // Setting app arg string[s] as inputs.
 	      { // Calculating File name of this app's file instance.
 		      URI thisAppURI = null;
 		      try {
@@ -165,14 +184,19 @@ l    * If the app receives a message indicating
 		            getCodeSource().getLocation().toURI();
 		        } catch (URISyntaxException e1) {
 		          // TODO Auto-generated catch block
-              appLogger.error("AppInstaneManager.initializeV" + e1);
+		          appLogger.error("AppInstaneManager.initializeV" + e1);
 		          e1.printStackTrace();
 		        }
 		      runningAppFile= new File( thisAppURI );
 	      	}
-	      standardAppFile= // Calculating File name of app in standard location.
-	      		Config.resolveFile( "Infogora.jar" );
-	      logInputsV(); // Report inputs received in start up.
+	      tcpCopierAppFile= // Calculating File name of TCPCopier target file.
+	      		Config.makeRelativeToAppFolderFile( 
+	      				Config.tcpCopierOutputFolder 
+	      				+ File.separator 
+	      				+ Config.appJarString 
+	      				);
+	  		setInputsV( theArgStrings );  // Setting app arg string[s] as inputs.
+	      logInputsV(); // Log start up inputs.
 	      }
 	
 
@@ -201,7 +225,8 @@ l    * If the app receives a message indicating
 	    {
 	  		appLogger.info( "managingInstancesWithExitB() begins." );
 	  		appLogger.info( "App path is:\n  " + runningAppFile.getAbsolutePath() );
-		  	appLogger.info( "App time-tamp is: " + thisAppDateString() );
+		  	appLogger.info( "App time-stamp is " + runningAppFile.lastModified() 
+		  	  + " or " + thisAppDateString() );
 	    	
 	      boolean appShouldExitB= true;  // Setting default result for app exit.
 	
@@ -224,9 +249,9 @@ l    * If the app receives a message indicating
 	  private boolean updateTriggeredB= false; // For re-trigger detection.
 	    ///elim Might not be needed with Lock being used.
 
-	  public void tryUpdateFromNewerFileInstanceV()
+	  public void thingsToDoPeriodicallyV()
 	    /* This method is meant be called periodically by a timer
-	      to check for the appearance of a new version of the nonStandardAppFile
+	      to check for the appearance of a new version of the inputAppFile
 	      and to do an update with it if a newer version appears.
 	
 	      It works as follows:
@@ -237,17 +262,17 @@ l    * If the app receives a message indicating
 	      */
 	    {
 	  	  boolean updatingB= true;  // Assume updating.
-	  	  if ( theReentrantLock.tryLock() ) // Act only if not locked.
+	  	  if ( theReentrantLock.tryLock() ) // Act now only if not locked.
 					{
-				    try {
+	  	  		try {
 								if (updateTriggeredB) // Preventing re-triggering of update. 
 					  	  	{ appLogger.warning(
-					  	  	  		"tryUpdateFromNewerFileInstanceV(): re-triggered."
+					  	  	  		"thingsToDoPeriodicallyV(): re-triggered."
 					  	  	  		);
 					  	  		return;
 					      	  }
-					      //appLogger.debug("tryUpdateFromNewerFileInstanceV().");
-					  	  if ( tryUpdateFromNewerFileInstancesB( nonStandardAppFile ) )
+					      //appLogger.debug("thingsToDoPeriodicallyV().");
+					  	  if ( tryUpdateFromNewerFileInstancesB( inputAppFile ) )
 					  	  	;
 					  	  else if ( tryUpdateFromNewerFileInstancesB( tcpCopierAppFile ) )
 					  	  	;
@@ -270,10 +295,10 @@ l    * If the app receives a message indicating
 	     */
 		  {
 			  boolean appShouldExitB= false;
-		    if ( otherAppFile != null )  // nonStandardAppFile has been defined.
+		    if ( otherAppFile != null )  // inputAppFile has been defined.
 		      {
 		        if   // Other app is approved to update app in standard folder.
-		          ( updateApprovedB( otherAppFile ) )
+		          ( isUpdateApprovedB( otherAppFile ) )
 		          {
 		        		updateTriggeredB= true;  // Preventing update re-trigger.
 		            // User approval or authenticity checks would go here.
@@ -283,13 +308,15 @@ l    * If the app receives a message indicating
 		          	displayUpdateDialogV( 
 		                "A file containing an update of this app was detected.\n"
 		                + "It will now replace this one because it is newer.",
-		                nonStandardAppFile
+		                inputAppFile
 		          			);
 			      		appShouldExitB= // Chain to other app to do copy and run.
 			      			requestForJavaCommandAndExitB( 
 			      					otherAppFile.getAbsolutePath() );
 		            }
 		        }
+	      ////appLogger.debug("tryUpdateFromNewerFileInstancesB() exit, "
+	      ////		+ otherAppFile + ", " + appShouldExitB );
 		    return appShouldExitB;
 			  }
 
@@ -305,11 +332,7 @@ l    * If the app receives a message indicating
 		    then it is the time-stamp of the main class file.
  		    */
       {
-        SimpleDateFormat aSimpleDateFormat= 
-          new SimpleDateFormat("yyyyMMdd.HHmmss");
-        String appModifiedString= 
-          aSimpleDateFormat.format(runningAppFile.lastModified());
-        return appModifiedString;
+        return Misc.dateString( runningAppFile );
         }
 
     public static final int getInstancePortI() 
@@ -329,7 +352,7 @@ l    * If the app receives a message indicating
 
 	// Private support code.
 	  
-	  private boolean updateApprovedB(File otherAppFile)
+	  private boolean isUpdateApprovedB(File otherAppFile)
 	    /* If this app is the app File in the standard folder.
 	      and otherAppFile is newer than this app File,
 	      then return true, otherwise return false.
@@ -339,16 +362,22 @@ l    * If the app receives a message indicating
 	      if // This app is the app in the standard folder.
 	        ( runningAppFile.equals( standardAppFile ) )
 	        {
-	          long otherAppFileLastModifiedL= nonStandardAppFile.lastModified();
-	          long thisAppFileLastModifiedL= runningAppFile.lastModified();
+	          long otherAppFileLastModifiedL= inputAppFile.lastModified();
+	          long standardAppFileLastModifiedL= standardAppFile.lastModified();
 	
 	          if // The other app is newer than this app.
-	            ( otherAppFileLastModifiedL > thisAppFileLastModifiedL )
-	            resultB= true;  // Override result.
+	            ( otherAppFileLastModifiedL > standardAppFileLastModifiedL )
+		          {
+		            resultB= true;  // Override default false result.
+			  	      appLogger.debug("isUpdateApprovedB() " + resultB + 
+			  	      		"\n    otherAppFile:    " + Misc.fileDataString(otherAppFile) + 
+			  	      		"\n    standardAppFile: " + Misc.fileDataString(standardAppFile)
+			  	      		);
+		          	}
 	          }
 	      return resultB;
 	      }
-	    
+
 	  private void setInputsV( String[] inArgStrings )
 	    /* This method saves inArgStrings as inputs to this app.
 	      By convention 
@@ -363,7 +392,7 @@ l    * If the app receives a message indicating
 	      if  // Calculating File name of other app if arg0 is present.
 	        (inputStrings.length>0) // There is at least one argument.
 		      {
-			      nonStandardAppFile=  // Convert arg0 to File name.
+			      inputAppFile=  // Convert arg0 to File name.
 			      		new File(inputStrings[0]);
 		      	}
 	      }
@@ -501,7 +530,7 @@ l    * If the app receives a message indicating
 	            announcing their presence, and processes those messages.
 	            Processing includes:
 	            * Parsing the received message and storing the result
-	              into nonStandardAppFile.
+	              into inputAppFile.
 	            * Depending on circumstances:
 		            * firing any associated Listener, or  
 		            * trigger an app shutdown to allow a software update to happen.
@@ -549,18 +578,18 @@ l    * If the app receives a message indicating
 		      setInputsV( new String[] {readString} ) ;
 		      logInputsV(); // Report inputs received through socket connection.
 		      if // Exiting or firing event depending on other instance.
-		      	( updateApprovedB( nonStandardAppFile ) )
+		      	( isUpdateApprovedB( inputAppFile ) )
 		        { // Report pending update.
 		         	displayUpdateDialogV( 
 		        			"A newer running instance of this app "
 		        			+ "has been detected.\n"
 		              + "It will be used in a software update because "
 		              + "it is newer than this app instance.",
-		              nonStandardAppFile
+		              inputAppFile
 		        			);
 		      		// Chain to other app to do copy and run.
 			      			requestForJavaCommandAndExitB( 
-			      					nonStandardAppFile.getAbsolutePath() );
+			      					inputAppFile.getAbsolutePath() );
 		         	theShutdowner.requestAppShutdownV(); // App exit.
 		        	}
 		        else
@@ -570,7 +599,7 @@ l    * If the app receives a message indicating
 		        			+ "was detected briefly.\n"
 		              + "It was not used in a software update because "
 		              + "it was not newer than this app instance.",
-		              nonStandardAppFile
+		              inputAppFile
 		        			);
 		          fireNewInstance(); // AppInstanceListener action.
 		          }
@@ -582,6 +611,9 @@ l    * If the app receives a message indicating
     	    which should be a string about a software update that succeeded,
     	    and appFile, which is the file that contained the potential update.
     	    This method takes care of switching to the EDT thread, etc.
+    	    
+    	    ///enh Change to allow user to reject update, return response,
+    	    and have caller use that value to skip update.
     	   */
 	    	{
 	    		final String outString= 
@@ -631,7 +663,7 @@ l    * If the app receives a message indicating
 	
 	        toReturn: { // The block after which all returns will go.
 		        if // The app command was without arguments.
-		        	( nonStandardAppFile == null ) 
+		        	( inputAppFile == null ) 
 		          { // Handle the arg-less command possibilities.
 		            if (runningAppIsStandardAppB())  // Was from standard folder.
 		              { // Prepare for normal startup.
@@ -738,18 +770,18 @@ l    * If the app receives a message indicating
 	      {
 	    	  boolean appShouldExitB= false;
 	        if   // Arg app approved to update app in standard folder.
-	          ( updateApprovedB( nonStandardAppFile ) )
+	          ( isUpdateApprovedB( inputAppFile ) )
 	          {
 	            // User approval or authenticity checks would go here.
 	          	displayUpdateDialogV( 
 	                "Another file instance of this app was detected.\n"
 	                + "It will now replace this one because it is newer.",
-	                nonStandardAppFile
+	                inputAppFile
 	          			);
 	            appLogger.info("An approved updater has been detected.");
 	        	  appShouldExitB=   // Chain to arg app to do the copy.
 		            requestForJavaCommandAndExitB(
-		              nonStandardAppFile.getAbsolutePath() 
+		              inputAppFile.getAbsolutePath() 
 		              );
 	            }
 	    	  return appShouldExitB;
@@ -782,6 +814,7 @@ l    * If the app receives a message indicating
 	                      ,standardAppFile.toPath()
 	                      ,StandardCopyOption.COPY_ATTRIBUTES
 	                      ,StandardCopyOption.REPLACE_EXISTING
+	                      ////,StandardCopyOption.ATOMIC_MOVE
 	                      );
 	                  appLogger.info( "Copying successful." );
 	              	  copySuccessB= requestForJavaCommandAndExitB( 
@@ -808,7 +841,7 @@ l    * If the app receives a message indicating
 	        setJavaCommandForExitV( argString )
 	        followed by requesting shutdown of this app.
 	        It always returns true to simplify caller code and 
-	        to indicate that app should exit.
+	        to indicate that the app should exit.
 	        */
 	      {
 	        setJavaCommandForExitV( argString );  // Setting up command.
@@ -851,15 +884,19 @@ l    * If the app receives a message indicating
 	  // Other miscellaneous code.
 	
 	    private void logInputsV()
-	      // Logs all the file arguments.
+	      // Logs all the file arguments and their time-stamps.
 	      {
 	        String logStriing= "";  //Declare and initialize string to be logged.
 	        { // Add parts to the string to be logged.
-	          logStriing+= "Inputs: ";
-	          logStriing+= "\n  standardAppFile:    " + standardAppFile;
-	          logStriing+= "\n  runningAppFile:     " + runningAppFile;
-	          logStriing+= "\n  nonStandardAppFile: " + nonStandardAppFile;
-	          logStriing+= "\n  tcpCopierAppFile:   " + tcpCopierAppFile;
+	          logStriing+= "Inputs: (variable-name: time-stamp, path-name)";
+	          logStriing+= "\n  standardAppFile:    " 
+	          		+ Misc.fileDataString( standardAppFile );
+	          logStriing+= "\n  runningAppFile:     " 
+	          		+ Misc.fileDataString( runningAppFile );
+	          logStriing+= "\n  inputAppFile:       " 
+	          		+ Misc.fileDataString( inputAppFile );
+	          logStriing+= "\n  tcpCopierAppFile:   " 
+	          		+ Misc.fileDataString( tcpCopierAppFile );
 	           
 	          logStriing+= "\n  inputStrings: ";
 	          for ( String argString : inputStrings )
@@ -868,5 +905,5 @@ l    * If the app receives a message indicating
 	        
 	        appLogger.info( logStriing );  // Log the completed String.
 	        }
-	
+		    
 	}
