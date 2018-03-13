@@ -197,7 +197,7 @@ public class Misc
 						      ,thatFile.toPath()
 						      ,StandardCopyOption.COPY_ATTRIBUTES
 						      ,StandardCopyOption.REPLACE_EXISTING
-						      ////,StandardCopyOption.ATOMIC_MOVE is illegal.
+						      //,StandardCopyOption.ATOMIC_MOVE is illegal.
 						      );
 							  appLogger.info( "updateFromToV(..) Copying finished." );
 					  } catch (Exception e) { 

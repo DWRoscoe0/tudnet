@@ -130,9 +130,10 @@ l    * If the app receives a message indicating
 		private Shutdowner theShutdowner;
     private String[] theArgStrings;  // Array of app start arguments.
 
-  // Lock
+  // Locks and guards.
     private static Lock theReentrantLock= new ReentrantLock();
       // This is used to prevent more than one thread starting an update.
+      // Poller thingsToDoPeriodicallyV() reads it.  Others write it.
     
   // Internal dependency variables, set after construction.
 
@@ -156,13 +157,12 @@ l    * If the app receives a message indicating
       // from multiple sources.
       // inputStrings[0] is normally the path to the other app file instance 
       // that ran the running app.
+    private long newestAppLastModifiedL= 0; // For ignoring older updates.
+      ///enh There might be cases when this is inadequate,
+      // and there be a per-file newest value, 
+      // or maybe something completely different.
 	  private ServerSocket instanceServerSocket = null; // For receiving messages.
 
-	  static {
-      ////standardAppFile= // Calculating File name of app in standard location.
-      		////Config.userAppJarFile;
-      		////Config.makeRelativeToAppFolderFile( Config.appJarString );
-	  }
   // Public initialization code.
 	  
 	  public AppInstanceManager(  // Constructor.
@@ -246,9 +246,6 @@ l    * If the app receives a message indicating
 	      return appShouldExitB;  // Return whether app should exit.
 	      }
 
-	  private boolean updateTriggeredB= false; // For re-trigger detection.
-	    ///elim Might not be needed with Lock being used.
-
 	  public void thingsToDoPeriodicallyV()
 	    /* This method is meant be called periodically by a timer
 	      to check for the appearance of a new version of the inputAppFile
@@ -265,12 +262,6 @@ l    * If the app receives a message indicating
 	  	  if ( theReentrantLock.tryLock() ) // Act now only if not locked.
 					{
 	  	  		try {
-								if (updateTriggeredB) // Preventing re-triggering of update. 
-					  	  	{ appLogger.warning(
-					  	  	  		"thingsToDoPeriodicallyV(): re-triggered."
-					  	  	  		);
-					  	  		return;
-					      	  }
 					      //appLogger.debug("thingsToDoPeriodicallyV().");
 					  	  if ( tryUpdateFromNewerFileInstancesB( inputAppFile ) )
 					  	  	;
@@ -298,25 +289,25 @@ l    * If the app receives a message indicating
 		    if ( otherAppFile != null )  // inputAppFile has been defined.
 		      {
 		        if   // Other app is approved to update app in standard folder.
-		          ( isUpdateApprovedB( otherAppFile ) )
+		          ( isUpdateValidB( otherAppFile ) )
 		          {
-		        		updateTriggeredB= true;  // Preventing update re-trigger.
 		            // User approval or authenticity checks would go here.
 		            appLogger.info(
 		            		"Detected an approved updater file.  Preparing it"
 		            		);
-		          	displayUpdateDialogV( 
+		            if ( displayUpdateApprovalDialogB(
+		          			false, // Get approval.
 		                "A file containing an update of this app was detected.\n"
 		                + "It will now replace this one because it is newer.",
-		                inputAppFile
-		          			);
-			      		appShouldExitB= // Chain to other app to do copy and run.
-			      			requestForJavaCommandAndExitB( 
-			      					otherAppFile.getAbsolutePath() );
+		                otherAppFile
+		          			) )
+			            {
+					      		appShouldExitB= // Chain to other app to do copy and run.
+					      			requestForJavaCommandAndExitTrueB( 
+					      					otherAppFile.getAbsolutePath() );
+				            }
 		            }
 		        }
-	      ////appLogger.debug("tryUpdateFromNewerFileInstancesB() exit, "
-	      ////		+ otherAppFile + ", " + appShouldExitB );
 		    return appShouldExitB;
 			  }
 
@@ -352,29 +343,33 @@ l    * If the app receives a message indicating
 
 	// Private support code.
 	  
-	  private boolean isUpdateApprovedB(File otherAppFile)
+	  private boolean isUpdateValidB(File otherAppFile)
 	    /* If this app is the app File in the standard folder.
-	      and otherAppFile is newer than this app File,
+	      and otherAppFile's time-stamp has changed 
+	      since this method was last called,
+	      and otherAppFile's time-stamp is newer than this app File,
 	      then return true, otherwise return false.
+	      It assigns
+          newestAppLastModifiedL= otherAppLastModifiedL;
 	      */
 	    {
 	      boolean resultB= false;  // Assume false.
-	      if // This app is the app in the standard folder.
-	        ( runningAppFile.equals( standardAppFile ) )
-	        {
-	          long otherAppFileLastModifiedL= inputAppFile.lastModified();
-	          long standardAppFileLastModifiedL= standardAppFile.lastModified();
-	
-	          if // The other app is newer than this app.
-	            ( otherAppFileLastModifiedL > standardAppFileLastModifiedL )
-		          {
-		            resultB= true;  // Override default false result.
-			  	      appLogger.debug("isUpdateApprovedB() " + resultB + 
-			  	      		"\n    otherAppFile:    " + Misc.fileDataString(otherAppFile) + 
-			  	      		"\n    standardAppFile: " + Misc.fileDataString(standardAppFile)
-			  	      		);
-		          	}
-	          }
+	      validation: {
+		      if ( ! runningAppFile.equals( standardAppFile ) )
+		      	break validation;  // This app is not in standard folder, so exit.
+          long otherAppLastModifiedL= otherAppFile.lastModified();
+          if ( otherAppLastModifiedL <= newestAppLastModifiedL )
+		      	break validation; // Same time-stamp, so already rejected, so exit.
+          newestAppLastModifiedL= otherAppLastModifiedL;
+          long standardAppLastModifiedL= standardAppFile.lastModified();
+          if ( otherAppLastModifiedL <= standardAppLastModifiedL )
+           	break validation; // File not newer, so exit
+          resultB= true;  // Override default false result.
+  	      appLogger.debug("isUpdateApprovedB() " + resultB + 
+  	      		"\n    otherAppFile:    " + Misc.fileDataString(otherAppFile) + 
+  	      		"\n    standardAppFile: " + Misc.fileDataString(standardAppFile)
+  	      		);
+	        } // validation
 	      return resultB;
 	      }
 
@@ -546,11 +541,11 @@ l    * If the app receives a message indicating
 		                try {
 		                  Socket clientSocket = instanceServerSocket.accept();
 		                  {
-			                    theReentrantLock.lock();  // Block until okay to proceed.
+			                    theReentrantLock.lock();  // Block until okay to go.
 			                    try {
 					                  processSocketConnectionV( clientSocket );
 					                } finally {
-			                      theReentrantLock.unlock(); // End blocking of other threads.
+			                      theReentrantLock.unlock(); // End blocking.
 			                    }
 		                  	}
 		                  clientSocket.close();
@@ -578,23 +573,27 @@ l    * If the app receives a message indicating
 		      setInputsV( new String[] {readString} ) ;
 		      logInputsV(); // Report inputs received through socket connection.
 		      if // Exiting or firing event depending on other instance.
-		      	( isUpdateApprovedB( inputAppFile ) )
+		      	( isUpdateValidB( inputAppFile ) )
 		        { // Report pending update.
-		         	displayUpdateDialogV( 
+		         	if ( displayUpdateApprovalDialogB( 
+	          			false, // Get approval.
 		        			"A newer running instance of this app "
 		        			+ "has been detected.\n"
 		              + "It will be used in a software update because "
 		              + "it is newer than this app instance.",
 		              inputAppFile
-		        			);
-		      		// Chain to other app to do copy and run.
-			      			requestForJavaCommandAndExitB( 
+		        			) ) 
+		         	  {
+		         			// Chain to other app to do copy and run.
+		         				requestForJavaCommandAndExitTrueB( 
 			      					inputAppFile.getAbsolutePath() );
-		         	theShutdowner.requestAppShutdownV(); // App exit.
+			      			theShutdowner.requestAppShutdownV(); // App exit.
+		         			}
 		        	}
 		        else
 		        {
-		        	displayUpdateDialogV( 
+		        	displayUpdateApprovalDialogB( 
+	          			true, // Just inform.  Don't request approval.
 		        			"Another running instance of this app "
 		        			+ "was detected briefly.\n"
 		              + "It was not used in a software update because "
@@ -606,34 +605,57 @@ l    * If the app receives a message indicating
 		      inBufferedReader.close();
 		      }
 		      
-    	private void displayUpdateDialogV( String messageString, File appFile )
+    	private boolean displayUpdateApprovalDialogB( 
+    			final boolean informDontApproveB, String messageString, File appFile )
     	  /* This method displays a dialog box containing messageString
-    	    which should be a string about a software update that succeeded,
+    	    which should be a string about a software update,
     	    and appFile, which is the file that contained the potential update.
     	    This method takes care of switching to the EDT thread, etc.
+    	    If informDontApproveB is true, it only informs the user.
+    	    If informDontApproveB is false, it asks for the user's approval
+    	    and returns the approval as the function value.
     	    
     	    ///enh Change to allow user to reject update, return response,
     	    and have caller use that value to skip update.
     	   */
 	    	{
+    			appLogger.info("displayUpdateApprovalDialogB(..) begins.");
 	    		final String outString= 
 	    				messageString
 	    				+ "\nThe file that contains the other app is: "
-	    				+ appFile.toString();
-		  		EDTUtilities.runOrInvokeAndWaitV( // Do following on EDT thread. 
+	    				+ appFile.toString()
+	    				+ "\nIt's creation time is: "
+	    				+ Misc.dateString(appFile)
+	    				+ ( informDontApproveB ? "" : "\nDo you approve?");
+		  		final boolean resultB[]= new boolean[1]; // True means approve.
+    			resultB[0]= true; // Default return of approval.
+		  		EDTUtilities.runOrInvokeAndWaitV( // Run following on EDT thread. 
 			    		new Runnable() {
 			    			@Override  
 			          public void run() {
-		              JOptionPane.showMessageDialog(
-		                null, // this, // null, 
-		                outString,
-		                "Infogora Info",
-		                JOptionPane.INFORMATION_MESSAGE
-		                );
+			    				if (!informDontApproveB) { // Approving.
+			    				 	int answerI= JOptionPane.showConfirmDialog(
+			    				 		null, // No parent component. 
+			                outString,
+			                "Infogora Info",
+			                JOptionPane.OK_CANCEL_OPTION
+			                );
+	    		    	  	resultB[0]= (answerI == JOptionPane.OK_OPTION);
+			    					}
+			    				else // Informing only.
+				    				JOptionPane.showMessageDialog(
+			    						null, // No parent component. 
+			                outString,
+			                "Infogora Info",
+			                JOptionPane.INFORMATION_MESSAGE
+			                );
 			    				}
 			          } 
 			        );
-		    	}
+    			appLogger.info(
+    					"displayUpdateApprovalDialogB(..) ends, value= " + resultB[0] );
+		  		return resultB[0];
+		  		}
 
 	  // Code that does file instance management.
 	
@@ -754,7 +776,7 @@ l    * If the app receives a message indicating
 	            {
 	              appLogger.info("Running identical app in standard folder.");
 	          	  appShouldExitB= 
-	          	    requestForJavaCommandAndExitB( 
+	          	    requestForJavaCommandAndExitTrueB( 
 	          	    		standardAppFile.getAbsolutePath() );
 	              }
 	        return appShouldExitB;
@@ -770,19 +792,22 @@ l    * If the app receives a message indicating
 	      {
 	    	  boolean appShouldExitB= false;
 	        if   // Arg app approved to update app in standard folder.
-	          ( isUpdateApprovedB( inputAppFile ) )
+	          ( isUpdateValidB( inputAppFile ) )
 	          {
 	            // User approval or authenticity checks would go here.
-	          	displayUpdateDialogV( 
+	          	if ( displayUpdateApprovalDialogB( 
+	          			false, // Get approval.
 	                "Another file instance of this app was detected.\n"
 	                + "It will now replace this one because it is newer.",
 	                inputAppFile
-	          			);
-	            appLogger.info("An approved updater has been detected.");
-	        	  appShouldExitB=   // Chain to arg app to do the copy.
-		            requestForJavaCommandAndExitB(
-		              inputAppFile.getAbsolutePath() 
-		              );
+	          			) )
+		          	{
+			            appLogger.info("An approved updater has been detected.");
+			        	  appShouldExitB=   // Chain to arg app to do the copy.
+				            requestForJavaCommandAndExitTrueB(
+				              inputAppFile.getAbsolutePath() 
+				              );
+		          		}
 	            }
 	    	  return appShouldExitB;
 	        }
@@ -800,6 +825,7 @@ l    * If the app receives a message indicating
 	          (! runningAppFile.getName().endsWith(".jar"))
 	          { // Probably a class file running in Eclipse.  Do normal startup.
 	            appLogger.info( "App not jar file, so not copying or exiting.");
+	            ///fix Use standard method-name log format.
 	            }
 	          else
 	            while  // Keep trying until copy success and exit.
@@ -814,10 +840,9 @@ l    * If the app receives a message indicating
 	                      ,standardAppFile.toPath()
 	                      ,StandardCopyOption.COPY_ATTRIBUTES
 	                      ,StandardCopyOption.REPLACE_EXISTING
-	                      ////,StandardCopyOption.ATOMIC_MOVE
 	                      );
 	                  appLogger.info( "Copying successful." );
-	              	  copySuccessB= requestForJavaCommandAndExitB( 
+	              	  copySuccessB= requestForJavaCommandAndExitTrueB( 
 	              	  		standardAppFile.getAbsolutePath() 
 	              	  		);
 	                  }
@@ -836,7 +861,7 @@ l    * If the app receives a message indicating
 	        return copySuccessB;
 	        }
 	    
-	    private boolean requestForJavaCommandAndExitB( String argString ) 
+	    private boolean requestForJavaCommandAndExitTrueB( String argString ) 
 	      /* This method is equivalent to a 
 	        setJavaCommandForExitV( argString )
 	        followed by requesting shutdown of this app.

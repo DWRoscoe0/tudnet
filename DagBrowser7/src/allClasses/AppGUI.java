@@ -123,6 +123,7 @@ public class AppGUI
 
     public void runV() // This method does the main AppGUI run phase.
       {
+    		appLogger.info("AppGUI.run() begins.");
         theDataTreeModel.initializeV( theInitialRootDataNode );
         EDTUtilities.invokeAndWaitV(  // Queue on GUI (AWT) thread...
             theGUIBuilderStarter   // ...this Runnable GUIBuilderStarter,...
@@ -140,6 +141,7 @@ public class AppGUI
         // theCPUMonitorEpiThread.stopAndJoinV( ); ?? 
         theConnectionManagerEpiThread.stopAndJoinV( ); 
           // Stopping ConnectionManager thread, ending all connections.
+    		appLogger.info("AppGUI.run() ends.");
         }
 
     } // class AppGUI

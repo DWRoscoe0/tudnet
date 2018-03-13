@@ -64,20 +64,10 @@ public class TCPCopier
 	  private static final String clientFileString = // sub-folder and file.
 	  		Config.tcpCopierOutputFolder + File.separator + fileToUpdateString;
 	  
-	  /////// Have separate source and destination FileStrings.
-
 	  static class TCPClient extends EpiThread {
 	
 		  private final Persistent thePersistent; // External data.
 			
-		  /*///// private static long localLastModifiedL= 0; /* This is where the time-stamp
-		    of the local copy of the update file is stored until the next update.
-		    If the file is replaced then this variable will be updated,
-		    but it might not happen immediately.
-		    The client uses this variables as the local file time-stamp.
-		    The server uses the actual file time-stamp as the file time-stamp.
-		    */
-	
 	    public TCPClient(  // Constructor.
 	  			String threadNameString, Persistent thePersistent) 
 	    {
@@ -96,11 +86,6 @@ public class TCPCopier
 	      {
 	  			appLogger.info("run() beginning.",true);
 	
-					//// File clientFile= 
-	  			//// 		Config.makeRelativeToAppFolderFile( clientFileString );
-		  		//// localLastModifiedL= // Saved time stamp of local file copy.
-					//// 		clientFile.lastModified(); 
-
 		  		EpiThread.interruptableSleepB(4000); ///dbg delay to organize log.
 	      	boolean oldConsoleModeB= appLogger.getAndEnableConsoleModeB(); ///tmp ///dbg
 	
@@ -110,8 +95,7 @@ public class TCPCopier
 		    	while ( ! EpiThread.exitingB() ) // Repeat until exit requested.
 		    		{ // Process an element of list.
 			    		{ 
-			    			//////// for playing.
-			  	  		Misc.updateFromToV(
+			  	  		Misc.updateFromToV( // Update staging area from standard folder.
     							Config.userAppJarFile,
 				      		Config.makeRelativeToAppFolderFile( 
 				      				Config.tcpCopierInputFolder 
@@ -119,9 +103,7 @@ public class TCPCopier
 				      				+ Config.appJarString 
 				      				)
 				      		);
-				        ////////////
 			    			tryExchangingFilesWithNextServerV(thePersistentCursor);
-								///dbg appLogger.info("run() sleeping 5s before next attempt.",true);
 						    EpiThread.interruptableSleepB(8000); // Wait a while.
 			    			}
 	      			}
@@ -159,18 +141,14 @@ public class TCPCopier
 							Config.makeRelativeToAppFolderFile( clientFileString );
 					int serverPortI= Integer.parseUnsignedInt( serverPortString );
 					try {
-							////clientSocket= new Socket( serverIPString, serverPortI );
 						 	InetSocketAddress theInetSocketAddress= 
 								new InetSocketAddress( serverIPString, serverPortI );
 							clientSocket= new Socket();
 							clientSocket.connect(theInetSocketAddress, 5000);
-				  		long clientFileLastModifiedL= //// localLastModifiedL;
-				  				clientFile.lastModified(); 
-				  		//// long newLastModifiedL= 
+							  // Connect with time-out.
+				  		long clientFileLastModifiedL= clientFile.lastModified(); 
 				  		tryTransferingFilesL(
 				  				clientSocket, clientFile, clientFile, clientFileLastModifiedL );
-				  		//// if ( newLastModifiedL != 0 ) // Update copy of local time-stamp.
-				  		//// 	localLastModifiedL= newLastModifiedL;
 				    } catch (IOException theIOException) {
 							appLogger.info("tryExchangingFileWithServerV()",theIOException);
 				  	} finally {
@@ -443,17 +421,18 @@ public class TCPCopier
 	  			  compareResultL= remoteLastModifiedL;
 	  			else if (compareResultL < 0 ) 
 	  			  compareResultL= -localLastModifiedL;
-	  		appLogger.info( // Log result of comparison.
-	  				"exchangeAndCompareFileTimeStampsRemoteToLocalL() returning "
-	  				+ ( ( compareResultL == 0 )
-	  						? "0 meaning equal"
-	  					  : "unequal: " + 
-	  						  ( ( compareResultL >= 0 ) 
-			  						? Misc.dateString( compareResultL ) 
-			  				    : "-" + Misc.dateString( -compareResultL )
-			  				    )
-	  				    )
-	  				);
+	  		if ( compareResultL != 0 ) // Log only if not 0.
+		  		appLogger.info( // Log result of comparison.
+		  				"exchangeAndCompareFileTimeStampsRemoteToLocalL() returning "
+		  				+ ( ( compareResultL == 0 )
+		  						? "0 meaning equal"
+		  					  : "unequal: " + 
+		  						  ( ( compareResultL >= 0 ) 
+				  						? Misc.dateString( compareResultL ) 
+				  				    : "-" + Misc.dateString( -compareResultL )
+				  				    )
+		  				    )
+		  				);
 				return compareResultL;
 				}
 	
