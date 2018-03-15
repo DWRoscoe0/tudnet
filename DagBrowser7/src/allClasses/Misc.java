@@ -180,7 +180,9 @@ public class Misc
 		      The time-stamp of the written file is updated
 		      In the end, thisFile will equal thatFile,
 		      in all ways except for their path-names.
-		      ///fix Does copy need to be atomic?
+		      NoSuchFileException happens if the destination folder does not exist.
+		      
+		      ///fix Does copy need to be atomic?  It is not.
 		      */
 		    {
 	        long thisFileLastModifiedL= thisFile.lastModified();
@@ -189,8 +191,8 @@ public class Misc
 	          ( thisFileLastModifiedL > thatFileLastModifiedL )
 				    try {
 					      appLogger.info( "updateFromToV(..) Copying started."
-					      		+ "\nThis file = " + thisFile
-					      		+ "\nThat file = " + thatFile
+					      		+ "\n  This file = " + thisFile
+					      		+ "\n  That file = " + thatFile
 					      		);
 					      Files.copy(
 						      thisFile.toPath()

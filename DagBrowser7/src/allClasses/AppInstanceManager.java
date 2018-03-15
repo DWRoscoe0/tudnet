@@ -191,7 +191,7 @@ l    * If the app receives a message indicating
 	      	}
 	      tcpCopierAppFile= // Calculating File name of TCPCopier target file.
 	      		Config.makeRelativeToAppFolderFile( 
-	      				Config.tcpCopierOutputFolder 
+	      				Config.tcpCopierOutputFolderString 
 	      				+ File.separator 
 	      				+ Config.appJarString 
 	      				);
@@ -365,7 +365,7 @@ l    * If the app receives a message indicating
           if ( otherAppLastModifiedL <= standardAppLastModifiedL )
            	break validation; // File not newer, so exit
           resultB= true;  // Override default false result.
-  	      appLogger.debug("isUpdateApprovedB() " + resultB + 
+  	      appLogger.debug("isUpdateValidB() " + resultB + 
   	      		"\n    otherAppFile:    " + Misc.fileDataString(otherAppFile) + 
   	      		"\n    standardAppFile: " + Misc.fileDataString(standardAppFile)
   	      		);

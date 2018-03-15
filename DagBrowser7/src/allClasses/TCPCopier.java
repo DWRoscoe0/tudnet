@@ -59,10 +59,10 @@ public class TCPCopier
 	  //private static final String serverFileString = "TCPCopierServer.txt";
 	  //private static final String serverFileString = fileToUpdateString;
 	  private static final String serverFileString = 
-	  		Config.tcpCopierInputFolder + File.separator + fileToUpdateString;
+	  		Config.tcpCopierInputFolderString + File.separator + fileToUpdateString;
 	  //private static final String clientFileString = "TCPCopierClient.txt";
 	  private static final String clientFileString = // sub-folder and file.
-	  		Config.tcpCopierOutputFolder + File.separator + fileToUpdateString;
+	  		Config.tcpCopierOutputFolderString + File.separator + fileToUpdateString;
 	  
 	  static class TCPClient extends EpiThread {
 	
@@ -95,13 +95,19 @@ public class TCPCopier
 		    	while ( ! EpiThread.exitingB() ) // Repeat until exit requested.
 		    		{ // Process an element of list.
 			    		{ 
+								File thatFolderFile= Config.makeRelativeToAppFolderFile( 
+										Config.tcpCopierInputFolderString );
+								thatFolderFile.mkdir();  // Create destination folder if needed.
 			  	  		Misc.updateFromToV( // Update staging area from standard folder.
     							Config.userAppJarFile,
-				      		Config.makeRelativeToAppFolderFile( 
-				      				Config.tcpCopierInputFolder 
-				      				+ File.separator 
-				      				+ Config.appJarString 
-				      				)
+    							new File( thatFolderFile, Config.appJarString )
+				      		/*  ////
+				      		  Config.makeRelativeToAppFolderFile( 
+				      		  Config.tcpCopierInputFolderString
+				      			+ File.separator 
+				      			+ Config.appJarString 
+				      			)
+				      			*/  ////
 				      		);
 			    			tryExchangingFilesWithNextServerV(thePersistentCursor);
 						    EpiThread.interruptableSleepB(8000); // Wait a while.
@@ -140,17 +146,21 @@ public class TCPCopier
 					File clientFile= 
 							Config.makeRelativeToAppFolderFile( clientFileString );
 					int serverPortI= Integer.parseUnsignedInt( serverPortString );
+				 	InetSocketAddress theInetSocketAddress= null; 
 					try {
-						 	InetSocketAddress theInetSocketAddress= 
+						 	theInetSocketAddress= 
 								new InetSocketAddress( serverIPString, serverPortI );
 							clientSocket= new Socket();
 							clientSocket.connect(theInetSocketAddress, 5000);
 							  // Connect with time-out.
 				  		long clientFileLastModifiedL= clientFile.lastModified(); 
 				  		tryTransferingFilesL(
-				  				clientSocket, clientFile, clientFile, clientFileLastModifiedL );
+				  			clientSocket, clientFile, clientFile, clientFileLastModifiedL );
 				    } catch (IOException theIOException) {
-							appLogger.info("tryExchangingFileWithServerV()",theIOException);
+							appLogger.info(
+									"tryExchangingFileWithServerV() at "+ theInetSocketAddress,
+									theIOException
+									);
 				  	} finally {
 						  Closeables.closeWithErrorLoggingB(clientSocket);
 						}
@@ -314,10 +324,10 @@ public class TCPCopier
 				File temporaryFile= null;
 				try { 
 					temporaryFile= Config.makeRelativeToAppFolderFile( 
-							Config.tcpCopierOutputFolder );
+							Config.tcpCopierOutputFolderString );
 					temporaryFile.mkdir();  // Create folder if needed.
 					temporaryFile= Config.makeRelativeToAppFolderFile( 
-							Config.tcpCopierOutputFolder + File.separator + "Temporary.file" );
+							Config.tcpCopierOutputFolderString + File.separator + "Temporary.file" );
 						temporaryFileOutputStream= new FileOutputStream( temporaryFile );
 						TCPCopier.copyStreamBytesV( 
 								socketInputStream, temporaryFileOutputStream);

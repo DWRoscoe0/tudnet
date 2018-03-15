@@ -509,16 +509,22 @@ public class DataTreeModel
       	  		theHashMap.get( targetDataNode );
 	        if ( targetTreePath == null ) // Doing a search if not in cache.
 		        {
-	        		appLogger.warning( 
-	        				"DataTreeModel.translatingToTreePath( "
-	        				+ targetDataNode 
-	        				+ " ), cache miss." 
-	        				);
+	        		////appLogger.warning( 
+			        ////		"DataTreeModel.translatingToTreePath( "
+			        ////		+ targetDataNode 
+			        ////	+ " ), cache miss." 
+			        ////		);
 			        targetTreePath= // Generating path using a search.   ///doc 
 			        		///elim searchingForTreePath( targetDataNode );
 			        		buildTreePath( targetDataNode );
 			        if ( targetTreePath != null ) // Caching search result, if any.
 			        	theHashMap.put( targetDataNode, targetTreePath );
+	        		appLogger.warning( 
+	        				"DataTreeModel.translatingToTreePath( "
+	        				+ targetDataNode 
+	        				+ " ), cache miss, resolves to\n  "
+	        				+ targetTreePath
+	        				);
 			        }
       	  return targetTreePath;   
       	  }
@@ -530,10 +536,11 @@ public class DataTreeModel
           back to the root and builds a TreePath from that.
           ///ehn? This could be made more efficient by recursing using
           translatingToTreePath(..) on the parent node, a simple expression.
-          This separate method might not be needed at all.
+          ///elim This separate method might not be needed at all.
+            See its only caller, translatingToTreePath(..)
           */
         {
-      		appLogger.warning( "DataTreeModel.buildTreePath(..) called.");
+      		////appLogger.warning( "DataTreeModel.buildTreePath(..) called.");
       	  Deque<DataNode> stackDeque= new ArrayDeque<DataNode>(10); 
       	  while (true) { // Stack all nodes in path to root.
       	  	if ( theDataNode == null ) break;

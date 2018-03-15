@@ -45,8 +45,9 @@ public class Config
 		public static final String appString= "Infogora";
 	  public static final String appJarString= appString + ".jar";
 
-	  public static final String tcpCopierInputFolder= "TCPCopierTmp";
-	  public static final String tcpCopierOutputFolder= "TCPCopierStaging";
+	  ////public static final String tcpCopierInputFolderString= "TCPCopierTmp";
+	  public static final String tcpCopierInputFolderString= "TCPCopierStaging";
+	  public static final String tcpCopierOutputFolderString= "TCPCopierStaging";
 
 		private static final File userAppFolderFile;
 
