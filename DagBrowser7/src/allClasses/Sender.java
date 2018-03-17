@@ -183,7 +183,7 @@ public class Sender // Uunicast and multicast sender thread.
 	        theDatagramSocket.send(   // Send packet.
 	        	theDatagramPacket
 	          );
-	        ///dbg PacketManager.logSenderPacketV(theDatagramPacket);
+	        PacketManager.logSenderPacketV(theDatagramPacket);
     		  	// Was logging before sending so log would make sense.
 	      } catch (IOException e) { // Handle exception by dropping packet.
 	        appLogger.error(

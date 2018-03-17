@@ -120,6 +120,8 @@ public class StateList extends MutableList implements Runnable {
 	/* Variables used for all states.  */
 
 	protected StateList parentStateList= null; // Our parent state.
+	  ///opt It might be worthwhile combining this field 
+	  // with DataNode.parentNamedList.
 
 	protected Color theColor= UIColor.initializerStateColor;
 
@@ -545,12 +547,13 @@ public class StateList extends MutableList implements Runnable {
 					madeProgressB= subStateList.finalProcessInputsB();
 					if // Process consumption of synchronous input, if it happened.
 						(subStateList.getSynchronousInputString() == null) // Consumed.
-						{ setSynchronousInputV(null); // Remove input from this state.
+						{ ////setSynchronousInputV(null); // Remove input from this state.
+							consumeSynchronousInputV(); // Remove input from this state.
 							madeProgressB= true; // Treat this input consumption as progress.
 							}
 						else // Not consumed.
-						subStateList.setSynchronousInputV(null);
-					    // Remove input from sub-state.
+						//// subStateList.setSynchronousInputV(null);
+						consumeSynchronousInputV(); // Remove input from sub-state.
 					}
 			colorBySuccessV( madeProgressB );
 			return madeProgressB;
@@ -561,13 +564,13 @@ public class StateList extends MutableList implements Runnable {
 				)  ///tmp only temporary use.  loses non-sync info.  phase out.
 			throws IOException
 	  /* This method should be called as the state handler 
-	    when there is a synchronous input to be processed.
-	    It stores wordString in a field variable and then 
-	    calls the regular state handler.
+	    when there is a particular synchronous input to be processed.
+	    It stores inputString in the state as an input 
+	    and then calls the regular state handler.
 	    The synchronous input might be processed by that regular handler,
 	    or a sub-state's regular handler, if it calls tryInputB(String). 
 	    Other inputs, specifically asynchronous inputs, might also be processed.
-	    
+
 	    If any handler processes the synchronous input then 
 	    the stored value is replaced with null and a true is returned.
 	    True is also returned if other handler progress is made.
@@ -596,8 +599,8 @@ public class StateList extends MutableList implements Runnable {
 		  }
 
 	public boolean tryInputB(String testString) throws IOException
-	  /* This method tries to process a synchronous input string.
-	    This means that if testString equals the stored input string 
+	  /* This method tries to process a specific synchronous input string.
+	    If testString equals the stored input string 
 	    then it is consumed and true is returned, 
 	    otherwise the stored input string
 	    is not consumed and false is returned.
@@ -609,18 +612,16 @@ public class StateList extends MutableList implements Runnable {
 			boolean successB= // Comparing requested synchronous input to test input. 
 					(testString.equals(synchronousInputString));
 		  if (successB) // Consuming stored input if it matched.
-		  	synchronousInputString= null;
+			  {
+			  	appLogger.debug(
+			  			"StateList.tryInputB(..), \""
+					  	+ this.synchronousInputString
+			  			+ "\" consumed by"
+			  			+ getFormattedStatePathString()
+			  			);
+			  	synchronousInputString= null;
+			  	}
 			return successB; // Returning result of the comparison.
-		  }
-
-	public String setAndGetSynchronousInputString(String synchronousInputString)
-		/* This method both stores synchronousInputString in this state
-		  and returns the previously stored value.
-		  */
-	  {
-		  String oldSynchronousInputString= getSynchronousInputString(); 
-		  setSynchronousInputV( synchronousInputString );
-			return oldSynchronousInputString;
 		  }
 
 	protected String getSynchronousInputString()
@@ -630,19 +631,71 @@ public class StateList extends MutableList implements Runnable {
 		  }
 
 	public void setSynchronousInputV(String synchronousInputString)
-		// This method stores synchronousInputString within this state.
+		/* This method stores synchronousInputString within this state
+		  for possible input by the state.
+		 	*/
 	  {
-		  if ( this.synchronousInputString != null 
-		  		&& synchronousInputString != null 
-		  		)
-		  	appLogger.error(
-		  			"unconsumed synchronous input in "
-		  			+getNameString( )
-		  			+"= "
-		  			+this.synchronousInputString
-		  			);
-			this.synchronousInputString= synchronousInputString;
+			{ // Log anomalous behavior first.
+				String anomalyString= null;
+			  if ( synchronousInputString == null )
+			  	anomalyString= 
+			  	  synchronousInputString + " value is ILLEGAL input to";
+			  else if ( this.synchronousInputString != null ) 
+				  	anomalyString= 
+				  		this.synchronousInputString + " was NOT consumed by";
+			  ///dbg else
+				///dbg 	detailString= 
+				///dbg synchronousInputString + " input to";
+			  if ( anomalyString != null ) // Log if anomaly produced.
+			  	appLogger.debug(
+			  			"StateList.setSynchronousInputV..), "
+					  	+ anomalyString
+			  			+ getFormattedStatePathString()
+			  			);
+				}
+
+			this.synchronousInputString= synchronousInputString; // Store new input.
 		  }
+
+	public void consumeSynchronousInputV()
+		/* This method clears the synchronousInputString within this state,
+		  by setting it to null.
+		 	*/
+		{
+		  if ( this.synchronousInputString == null )
+		  	appLogger.error(
+		  			"StateList.clearSynchronousInputV(), input already consumed in"
+		  			+ getFormattedStatePathString()
+		  			);
+		  
+			this.synchronousInputString= null;
+		  }
+
+	private String getFormattedStatePathString()
+	  /* Returns string with "state:" on first line, 
+	    and "  (state path)" on the second.
+	   */
+	  {
+		  return " state:\n  " + getStatePathString();
+	    }
+
+	private String getStatePathString()
+	  /* Recursively calculates and returns a comma-separated list of state names
+	    from the root of the hierarchical state machine to this state.
+	   */
+	  {
+		  String resultString;
+		  
+		  if ( parentStateList == null )
+		  	resultString= getNameString();
+		  else
+		    resultString= 
+		  		parentStateList.getStatePathString()
+		  		+ ", "
+		  		+ getNameString(); 
+
+		  return resultString;
+	  	}
 	
 
 	/* Method for dealing with timer input.  */

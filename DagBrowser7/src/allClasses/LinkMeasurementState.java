@@ -327,9 +327,9 @@ public class LinkMeasurementState
 			    {
 			    	lastSequenceNumberSentL= 
 			    			theNetcasterOutputStream.getCounterNamedLong().getValueL(); 
-			      appLogger.info( 
-			      		"sendingSequenceNumberV() " + lastSequenceNumberSentL
-			      		);
+			      ////appLogger.info( 
+				    ////		"sendingSequenceNumberV() " + lastSequenceNumberSentL
+				    ////	);
 			      theNetcasterOutputStream.writingTerminatedStringV( "PS" );
 			      theNetcasterOutputStream.writingTerminatedLongV( 
 			      		lastSequenceNumberSentL 

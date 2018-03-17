@@ -517,7 +517,7 @@ public class DataTreeModel
 			        targetTreePath= // Generating path using a search.   ///doc 
 			        		///elim searchingForTreePath( targetDataNode );
 			        		buildTreePath( targetDataNode );
-			        if ( targetTreePath != null ) // Caching search result, if any.
+			        if ( targetTreePath != null ) // Caching build result, if any.
 			        	theHashMap.put( targetDataNode, targetTreePath );
 	        		appLogger.warning( 
 	        				"DataTreeModel.translatingToTreePath( "
@@ -534,7 +534,7 @@ public class DataTreeModel
           This method returns a TreePath of targetDataNode.
           To do this it follows the trail of parentNamedList links 
           back to the root and builds a TreePath from that.
-          ///ehn? This could be made more efficient by recursing using
+          ///enh? This could be made more efficient by recursing using
           translatingToTreePath(..) on the parent node, a simple expression.
           ///elim This separate method might not be needed at all.
             See its only caller, translatingToTreePath(..)

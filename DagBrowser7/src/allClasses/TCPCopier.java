@@ -84,10 +84,10 @@ public class TCPCopier
 	        it executes the file update/exchange protocol.
 	        */
 	      {
-	  			appLogger.info("run() beginning.",true);
+	  			appLogger.info("run() beginning.");
 	
 		  		EpiThread.interruptableSleepB(4000); ///dbg delay to organize log.
-	      	boolean oldConsoleModeB= appLogger.getAndEnableConsoleModeB(); ///tmp ///dbg
+	      	////boolean oldConsoleModeB= appLogger.getAndEnableConsoleModeB(); ///tmp ///dbg
 	
 	      	PersistentCursor thePersistentCursor= 
 	      			new PersistentCursor( thePersistent );
@@ -115,7 +115,7 @@ public class TCPCopier
 	      			}
 	  			appLogger.info("run() ending.",true);
 	
-	      	appLogger.restoreConsoleModeV( oldConsoleModeB ); /// tmp ///dbg
+	      	////appLogger.restoreConsoleModeV( oldConsoleModeB ); /// tmp ///dbg
 		    	}
 	
 			private void tryExchangingFilesWithNextServerV( 
@@ -183,17 +183,17 @@ public class TCPCopier
 		      by executing the file update/exchange protocol.
 			    */
 		    {
-		  		appLogger.info("run() beginning.",true);
+		  		appLogger.info("run() beginning.");
 		    	///dbg EpiThread.interruptableSleepB(5000); ///tmp Prevent initial error.
 		    	EpiThread.interruptableSleepB(2000); // Organize log.
-	    		boolean oldConsoleModeB= appLogger.getAndEnableConsoleModeB();
+	    		////boolean oldConsoleModeB= appLogger.getAndEnableConsoleModeB();
 		    	while  // Repeatedly service one client request. 
 		    		( ! EpiThread.exitingB() ) 
 			    	{ 
 			    		serviceOneRequestFromClientV();
 			    	  EpiThread.interruptableSleepB(4000); // Sleep to prevent hogging.
 			    		} // while...
-	      	appLogger.restoreConsoleModeV( oldConsoleModeB );
+	      	////appLogger.restoreConsoleModeV( oldConsoleModeB );
 		    	}
 	
 			private void serviceOneRequestFromClientV()

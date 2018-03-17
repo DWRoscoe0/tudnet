@@ -313,7 +313,9 @@ public class Unicaster
 				        theSubcasterManager.tryingToGetDataNodeWithKeyD( keyString );
 				      if // Passing remainder of message to associated Subcaster.
 				        ( theSubcaster != null )
-				        { processMessageToSubcasterV( theSubcaster ); break beforeReturn; }
+				        { processMessageToSubcasterV( theSubcaster ); 
+				          break beforeReturn; 
+				          }
 				      if ( theMultiMachineState.finalProcessSynchronousInputB(keyString) )
 				      	break beforeReturn;
 		  			  if ( processHelloB( keyString ) ) // "HELLO"
@@ -327,7 +329,8 @@ public class Unicaster
 		    		  	+ keyString 
 		    		  	);
 							} // beforeReturn:
-						setSynchronousInputV( null ); // Consume any unconsumed input message.
+				  	////setSynchronousInputV( null ); // Consume any unconsumed input message.
+				  	///dbg consumeSynchronousInputV(); // Consume any unconsumed input message.
 						return successB;
 			  		}
 
