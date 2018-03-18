@@ -8,14 +8,16 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-public class AppLog 
+public class AppLog extends EpiThread
 
   /* This class is for logging information from an app.  
     It is of a special design to provide the following features:
     * Logs strings provided by the application.
-    * Multiple app instances can log to the same file
+    * Thread-safe so multiple app threads may log to the same file
       and their log entries will be interleaved.
-    * Output from different app instances 
+    ? Multiple app process instances may log to the same file
+      and their log entries will be interleaved.
+      Output from different app instances 
       are identified by different session numbers.
     * Log entries are stamped with the relative times since
       the previous entry of the same session.
@@ -24,32 +26,44 @@ public class AppLog
 		* As an Exception occurrence reported to the err stream
 		* As an error count later to the log, if possible.
 
-    This class is under development.
+    Logging, an logging intensive parts of the app that uses,
+    can be slow a times because of:
+    * Anti-malware Service Executable  
+    * Microsoft Windows Search Indexer
+    * File io.
+    The app can run much slower when the log file is long.
+    This might be because of the above-mentioned processes.
+    Apparently they scan the log.txt file after every file close.
+    When the file is short it causes little delay,
+    but if file is big it slows progress of the program.
+    This has been fixed some by the use of buffered mode,
+    which doesn't close the log file after every log entry
+    but buffered mode is still a bit of a kludge.
+
+    ///enh: Begin the transition to a logger 
+      that doesn't need to be a static singleton and can be injected.
+      Allow both static and injected-non-static, at least for a while.
+      
+    ///fix? MakeMultiprocessSafe: 
+	    ///fix: When the presently kludgy buffered mode is enabled,
+	      interleaving of log entries might not work correctly
+	      when there are two running instances on the same computer,
+	      as during updates, etc.  Might need to use separate files
+	      which are combined and interleaved later.
+	    ///fix? It might fail if multiple app instances try to log simultaneously.
+	      Make log file be share-able in case two app instances
+	      try to write to it at the same time.  See createOrAppendToFileV(..).
+	    The best way to do this might be to give this class to use its own thread
+	    which keeps open log files available for fast logging,
+	    but atomically replaces these and copies/merges them together
+	    periodically for convenient real-time viewing and debugging.
 
 		///enh: Make the logging routines more orthogonal, in the following
 		  dimensions:
 		  * label on output: info/debug/error/exception
-		  * output includes exception
-		  * copy log file output to console, except time-stamp
-		  * rethrow exception instead of returning
-
-    ///fix: Slowing of speed-sensitive parts of the app might happen because of:
-      * Anti-malware Service Executable  
-      * Microsoft Windows Search Indexer
-      * File io.
-      App can run much slower when the log file is long.
-      This might be because of these tasks.
-      Apparently it scans the log.txt file after every file close
-      because when the file is short it causes little delay,
-      but if file is big it slows progress of the program.
-      Fix by:
-      * Closing less often so most logging would be to buffer.
-      * Always write to open files which are copied to main file in background.
-
-    ///enh MakeMultiprocessSafe: 
-      It might fail if multiple app instances try to log simultaneously.
-      Make log file be share-able in case two app instances
-      try to write to it at the same time.  See createOrAppendToFileV(..).
+		  * output includes/does-not-include exception
+		  * copy log file output to console, or not, except time-stamp
+		  * re-throw exception and return vs. not returning
     */
 
   {
@@ -57,11 +71,36 @@ public class AppLog
     // Singleton code.
     
       private AppLog()  // Private constructor prevents external instantiation.
-        {}
+        {
+      	  super( "AppLog");
+        	}
 
       private static final AppLog theAppLog=  // Internal singleton builder.
         new AppLog();
+      private static LockAndSignal theLockAndSignal= new LockAndSignal(); 
+    	private volatile boolean thereHasBeenOutputB= false;
 
+      static { 
+      	theAppLog.setDaemon( true ); // Make thread the daemon type. 
+      	theAppLog.start();  // Start the associated thread. 
+      	}
+
+      public void run()
+        /* This method closes the file periodically so that
+          new output is visible to developers for debugging and testing.
+         	*/
+      	{
+      	  while (true) {
+    	  	  if ( thePrintWriter != null ) // Temporarily close file if open.
+    	  	  	if (thereHasBeenOutputB) // and there has been new output.
+		  		    	synchronized(this) { // Act only when it's safe. 
+	    	  	  		closeFileV(); // This will flush.
+			  		    	openFileV(); // Prepare for next output.
+					    	  }
+    	  	  theLockAndSignal.testingRemainingDelayE(5000); // Pause 5 seconds.
+      	  	}
+      		}
+      
       public static AppLog getAppLog()   // Returns singleton logger.
         { return theAppLog; }
 
@@ -417,6 +456,7 @@ public class AppLog
 	      if (thePrintWriter != null) {  // Closing file if open.
 	        thePrintWriter.close(); // Close file.
 	        thePrintWriter= null; // Indicate file is closed.
+	        thereHasBeenOutputB= false; // Reset unflushed output flag.
 	        }
 	      }
 
@@ -424,6 +464,7 @@ public class AppLog
       /* This method writes to thePrintWriter, which must be open.  */
 	    { 
 	    	thePrintWriter.print( inString );  // Append inString to file.
+	    	thereHasBeenOutputB= true;
 	      }
 
   }  
