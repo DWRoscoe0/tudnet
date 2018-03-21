@@ -225,8 +225,8 @@ l    * If the app receives a message indicating
 	    {
 	  		appLogger.info( "managingInstancesWithExitB() begins." );
 	  		appLogger.info( "App path is:\n  " + runningAppFile.getAbsolutePath() );
-		  	appLogger.info( "App time-stamp is " + runningAppFile.lastModified() 
-		  	  + " or " + thisAppDateString() );
+		  	appLogger.info( 
+		  			"App time-stamp is " + Misc.dateString( runningAppFile ) );
 	    	
 	      boolean appShouldExitB= true;  // Setting default result for app exit.
 	

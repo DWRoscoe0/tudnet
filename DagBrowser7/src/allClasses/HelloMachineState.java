@@ -72,24 +72,24 @@ public class HelloMachineState
 	    // This method processes any pending loose ends before shutdown.
 		  {
 	  	  super.finalizeV();
-	  		overrideProcessInputsB(); // This throws any saved IOException from timer.
+	  		onInputsB(); // This throws any saved IOException from timer.
 	  		helloTimerInput.cancelingV(); // To stop our timer.
 	      }
 
-  	public void enterV() throws IOException
+  	public void onEntryV() throws IOException
 		  { 
 			  retryTimeOutMsL=   // Initializing retry time-out.
 			  		retransmitDelayMsNamedLong.getValueL();
 				}
 
-	  public void overrideProcessInputsV() throws IOException {}  ///tmp NOP to prevent action.
+	  public void onInputsV() throws IOException {}  ///tmp NOP to prevent action.
   	// The default OrState.overrideStateHandlerV() will be used.
 
-		public void exitV() throws IOException
+		public void onExitV() throws IOException
 		  // Cancels acknowledgement timer.
 		  { 
 				helloTimerInput.cancelingV();
-				super.exitV();
+				super.onExitV();
 				}
 
 		// Other variables.
@@ -106,14 +106,14 @@ public class HelloMachineState
 
 	  	{
 
-	    	public void enterV() throws IOException
+	    	public void onEntryV() throws IOException
 		  	  // Sends a HELLO and initializes retry timer.
 		  	  {
 		    		newSendHelloV();
 					  helloTimerInput.scheduleV(retryTimeOutMsL);
 						}
 		
-			  public void overrideProcessInputsV() throws IOException
+			  public void onInputsV() throws IOException
 			  	/* This method handles handshakes acknowledgement, 
 			  	  initiating a retry using twice the time-out,
 			  	  until a HELLO is received.
@@ -148,7 +148,7 @@ public class HelloMachineState
 	  	{
 				private boolean ignoreB= false; // True means previous HELLO ignored.
 
-			  public void overrideProcessInputsV() throws IOException
+			  public void onInputsV() throws IOException
 			  	/* This method sends HELLO messages 
 			  	  in response to received HELLO messages.
 			  	  To prevent HELLO storms, response is made to only

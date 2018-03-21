@@ -81,7 +81,8 @@ public class StateList extends MutableList implements Runnable {
 			* progress was made, but was recorded in some other way,
 			  probably in a variable field.
 
-    ///doc It might be better to change the meaning of these values slightly, to:
+    ///doc It might be better to change the meaning of these values slightly, 
+    to:
     * true means [more] computation progress is possible (not impossible),
       whether or not some progress was recently made.
     * false means no computation progress is possible at this time,
@@ -156,9 +157,10 @@ public class StateList extends MutableList implements Runnable {
 
   protected StateList presentSubStateList= null; // Machine's qualitative state.
   		//? StateList.initialSentinelState; // Initial default no-op state.
-      /* ///enh doc? This could be null in AndStates because it should never be used.
+      /* ///enh doc? This could be null in AndStates 
+        because it should never be used.
         This could be used to select between and-state and or-state behavior
-        at run-time, including enterV(), overrideProcessInputsV(), and exitV().
+        at run-time, including onEntryV(), onInputsV(), and onExitV().
         See AndOrState.
         */
 
@@ -224,7 +226,7 @@ public class StateList extends MutableList implements Runnable {
   public synchronized void finalizeV() throws IOException
     /* This method processes any pending loose ends before shutdown.
       In this case it finalizes each of its sub-states.
-      This is not the same as the exitV() method, which
+      This is not the same as the onExitV() method, which
       does actions needed when the associated state-machine state is exited.
       */
 	  {
@@ -241,7 +243,7 @@ public class StateList extends MutableList implements Runnable {
 	
 	/*  Methods for AndState behavior.  */ ///? Maybe add initialization.
 
-	public synchronized boolean andStateProcessInputsB() throws IOException
+	public synchronized boolean andStateOnInputsB() throws IOException
 	  /* This method handles AndState and 
 	    state-machines that want to behave like an AndState machine 
 	    by cycling all of their sub-machines
@@ -260,7 +262,7 @@ public class StateList extends MutableList implements Runnable {
 		  boolean progressMadeB= false;
   	  substateScansUntilNoProgress: while(true) {
  	  		for (StateList subStateList : theListOfSubStateLists) 
-	  	  	if (processInputsWithSynchronousInputB(subStateList))
+	  	  	if (onInputsToSubstateB(subStateList))
 		  	  	{
 		  	  		progressMadeB= true;
 		  	  		continue substateScansUntilNoProgress; // Restart scan.
@@ -275,7 +277,7 @@ public class StateList extends MutableList implements Runnable {
 
 	/* Methods for implementing OrState behavior.. */ ///? Maybe add initialization.
 
-  public synchronized boolean orStateProcessInputsB() throws IOException
+  public synchronized boolean orStateOnInputsB() throws IOException
 	  /* This handles the OrState by cycling it's machine.
 	    It does this by calling the handler method 
 	    associated with the present state-machine's sub-state.
@@ -294,12 +296,16 @@ public class StateList extends MutableList implements Runnable {
 	  	boolean stateProgressB= false;
 			while (true) { // Cycle sub-states until done.
 	  	    boolean substateProgressB= 
-	  	    		processInputsWithSynchronousInputB(presentSubStateList);
+	  	    		onInputsToSubstateB(presentSubStateList);
 		  		if (requestedSubStateList != null) // Handling state change request.
-		  		  { presentSubStateList.exitV(); 
+		  		  { presentSubStateList.onExitV(); 
 	    	  		presentSubStateList= requestedSubStateList;
 		  				requestedSubStateList= null;
-		  			  presentSubStateList.enterV(); 
+		  			  appLogger.debug(
+					  			"StateList.orStateOnInputsB() entering"
+							  	+ presentSubStateList.getFormattedStatePathString()
+					  			);
+		  			  presentSubStateList.onEntryV();
 							substateProgressB= true; // Count this as progress.
 			  			}
 		  	  if (!substateProgressB) // Exiting loop if no sub-state progress made.
@@ -349,7 +355,7 @@ public class StateList extends MutableList implements Runnable {
 
 	/*  Methods for entry and exit of OrState or their sub-states.  */
 
-	public void enterV() throws IOException
+	public void onEntryV() throws IOException
 	  /* This method is called when 
 	    the state associated with this object is entered.
 	    This version does nothing, but it should be overridden 
@@ -358,14 +364,14 @@ public class StateList extends MutableList implements Runnable {
 	    which does actions needed when the StateList object is being built
 	    and is being prepared for providing its services.
 	    
-	    //enh: Presently this is called from orStateProcessInputsB() only.
-	    	Maybe it should be called when andStateProcessInputsB() is called?
+	    //enh: Presently this is called from orStateOnInputsB() only.
+	    	Maybe it should be called when andStateOnInputsB() is called?
 	    */
 	  { 
 			setBackgroundColorV( UIColor.runningStateColor );
 			}
 
-	public void exitV() throws IOException
+	public void onExitV() throws IOException
 	  /* This method is called when a state is exited.
 	    It does actions needed when a state is exited.
 	    This version does nothing.
@@ -381,54 +387,54 @@ public class StateList extends MutableList implements Runnable {
 
 	/* Methods containing general state handler code. */
 	
-	public synchronized void overrideProcessInputsV() throws IOException
+	public synchronized void onInputsV() throws IOException
 	  /* This is a code-saving method.
-	    A state class overrides either this method or overrideProcessInputsB(), 
+	    A state class overrides either this method or onInputsB(), 
 	    but not both, as part of how it controls its behavior.
-	    Overriding this method instead of overrideProcessInputsB() can result in
+	    Overriding this method instead of onInputsB() can result in
 	    more compact code.  An override like this:
 
-				public synchronized void overrideProcessInputsV() throws IOException
+				public synchronized void onInputsV() throws IOException
 				  { 
 				    some-code;
 				    }
 
 			is a more compact version of, but equivalent to, this:
 
-				public synchronized boolean overrideProcessInputsB() throws IOException
+				public synchronized boolean onInputsB() throws IOException
 				  { 
 				    some-code;
 				    return false;
 				    }
 
-			As with overrideProcessInputsB(), because this method can be called from
+			As with onInputsB(), because this method can be called from
 			multiple threads, such as timer threads, it and all sub-class overrides
 			should be synchronized.
 
-		  See overrideProcessInputsB() .
+		  See onInputsB() .
 	    */
 	  { 
 		  // This default version does nothing.
 	    }
 	
-	public synchronized boolean overrideProcessInputsB() throws IOException
-	  /* A state class overrides either this method or overrideProcessInputsV(),
+	public synchronized boolean onInputsB() throws IOException
+	  /* A state class overrides either this method or onInputsV(),
 	    but not both, as part of how it controls its behavior.
 
 	    This method does nothing except return false unless 
-	    it or overrideProcessInputsV() is overridden.
+	    it or onInputsV() is overridden.
 	    All overridden versions of this method should return 
 	    * true to indicate that some computational progress was made, including:
-		    * one or more sub-state's overrideProcessInputsB() returned true,
+		    * one or more sub-state's onInputsB() returned true,
 		    * a synchronous input String was processed,
 		    * requestSubStateListV(StateList nextState) was called
 		      to request a new qualitative sub-state.
 	    * false if no computational progress is made, 
 	      or progress made was indicated in some other way.
 	    To return false without needing to code a return statement,
-	    override the overrideProcessInputsV() method instead.
+	    override the onInputsV() method instead.
 	    
-	    A overrideProcessInputsB() method does not return until
+	    A onInputsB() method does not return until
 	    everything that can possibly be done has been done, meaning:
 	    * All available inputs that it can process have been processed.
 	    * All outputs that it can produce have been been produced.
@@ -442,11 +448,11 @@ public class StateList extends MutableList implements Runnable {
 	    
 	    */
 	  { 
-			overrideProcessInputsV(); // Call this in case it is overridden instead.
+			onInputsV(); // Call this in case it is overridden instead.
 			return false; // This default version returns false.
 		  }
 	
-	public synchronized final boolean finalProcessInputsB() throws IOException
+	public synchronized final boolean doOnInputsB() throws IOException
 	  /* This is the method that should be called to invoke a state's handler.
 	    It can not be overridden.  
 	    It calls override-able handler methods which 
@@ -454,7 +460,7 @@ public class StateList extends MutableList implements Runnable {
 	    */
 	  { 
 			setBackgroundColorV( UIColor.runningStateColor );
-			boolean successB= overrideProcessInputsB();
+			boolean successB= onInputsB();
 			colorBySuccessV( successB );
 			return successB;
 		  }
@@ -518,48 +524,47 @@ public class StateList extends MutableList implements Runnable {
 	  or discarded if no machine processes it.
 	  */
 
-	protected synchronized boolean processInputsWithSynchronousInputB( 
-					StateList subStateList
-					) 
+	protected synchronized boolean onInputsToSubstateB( StateList subStateList )
 		  throws IOException
-		/* This method calls subStateList's handler finalProcessInputsB()
-		  while passing any synchronous input stored here by the caller.
-		  It returns true if finalProcessInputsB() returned true 
+		/* This method calls subStateList's handler doOnInputsB().
+		  Because it is sub-state processing,
+		  it copies any synchronous input to the sub-state first.
+		  It returns true if the sub-state's handler returned true 
 		    or a synchronous input was consumed by the sub-state.
 			It returns false otherwise.
 			If a synchronous input was consumed by the sub-state,
 			then it is erased from this StateList also so that 
 			it will not be processed by any other states.
-			If a synchronous input remains stored in this state machine,
-			it is the responsibility of the caller to deal with it,
-			either by removal, or by calling this method until 
-			the input is consumed.
+			If an existing synchronous input was not consumed,
+			then it will remain stored in this state machine,
+			and it is the responsibility of the caller to deal with it,
+			either by removing it, trying to process it in a sibling state, 
+			or by calling this method until the input is consumed.
 			*/
 		{
 			boolean madeProgressB;
 			String inputString= getSynchronousInputString();
 			if ( inputString == null ) // Synchronous input not present.
-				madeProgressB= subStateList.finalProcessInputsB();
+				madeProgressB= // Process only non-synchronous inputs.
+					subStateList.doOnInputsB();
 				else // Synchronous input is present.
 				{
 					subStateList.setSynchronousInputV(inputString);
 				  	// Store copy of synchronous input, if any, in sub-state.
-					madeProgressB= subStateList.finalProcessInputsB();
+					madeProgressB= subStateList.doOnInputsB();
 					if // Process consumption of synchronous input, if it happened.
 						(subStateList.getSynchronousInputString() == null) // Consumed.
-						{ ////setSynchronousInputV(null); // Remove input from this state.
-							consumeSynchronousInputV(); // Remove input from this state.
-							madeProgressB= true; // Treat this input consumption as progress.
+						{ resetSynchronousInputV(); // Remove input from this state also.
+							madeProgressB= true; // Treat input consumption as progress.
 							}
-						else // Not consumed.
-						//// subStateList.setSynchronousInputV(null);
-						consumeSynchronousInputV(); // Remove input from sub-state.
+						else // Synchronous input was not consumed by sub-state.
+						subStateList.resetSynchronousInputV(); // Remove it from sub-state.
 					}
 			colorBySuccessV( madeProgressB );
 			return madeProgressB;
 			}
 	
-	public final synchronized boolean finalProcessSynchronousInputB(
+	public final synchronized boolean doOnSynchronousInputB(
 				String inputString
 				)  ///tmp only temporary use.  loses non-sync info.  phase out.
 			throws IOException
@@ -589,7 +594,7 @@ public class StateList extends MutableList implements Runnable {
 			setBackgroundColorV( UIColor.runningStateColor );
 			boolean successB=  // Call regular handler to process it.  Return value
 						// is ignored because we are interested in String processing.
-					overrideProcessInputsB(); 
+					onInputsB(); 
 			//?successB|= // Combine success with result of synchronous input processing. 
 			successB= // Override success with result of synchronous input processing.
 					(synchronousInputString == null);
@@ -657,21 +662,24 @@ public class StateList extends MutableList implements Runnable {
 			this.synchronousInputString= synchronousInputString; // Store new input.
 		  }
 
-	public void consumeSynchronousInputV()
+	public void resetSynchronousInputV()
 		/* This method clears the synchronousInputString within this state,
 		  by setting it to null.
+		  It should be used on a state and all its ancestors
+		  when the input is processed and consumed,
+		  and on a single state that processes the input but doesn't consume it.  
 		 	*/
 		{
 		  if ( this.synchronousInputString == null )
 		  	appLogger.error(
-		  			"StateList.clearSynchronousInputV(), input already consumed in"
+		  			"StateList.resetSynchronousInputV(), input already consumed in"
 		  			+ getFormattedStatePathString()
 		  			);
 		  
 			this.synchronousInputString= null;
 		  }
 
-	private String getFormattedStatePathString()
+	protected String getFormattedStatePathString()
 	  /* Returns string with "state:" on first line, 
 	    and "  (state path)" on the second.
 	   */
@@ -702,13 +710,13 @@ public class StateList extends MutableList implements Runnable {
 
 	public void run()
 	  /* This method is run by TimerInput to run 
-	    the finalProcessInputsB() method when the timer is triggered.
+	    the doOnInputsB() method when the timer is triggered.
 	    If an IOException occurs then it is saved for processing later by
 	    a non-Timer thread.
 	    */
 		{
 			try { 
-				finalProcessInputsB(); // Try to process timer event with handler. 
+				doOnInputsB(); // Try to process timer event with handler. 
 				}
 		  catch ( IOException theIOException) { 
 		    delayExceptionV( // Postpone exception processing to other thread.
@@ -779,7 +787,7 @@ class AndOrState extends StateList {
 	  It acts as an AndState until and unless setAsOrStateV(..) is called.
 	  
 	  This includes the following methods:
-	    enterV(), overrideProcessInputsV(), and exitV().
+	    onEntryV(), onInputsV(), and onExitV().
     */
 
   private boolean isAndStateB()
@@ -799,39 +807,45 @@ class AndOrState extends StateList {
   	  presentSubStateList= StateList.initialSentinelState;
 	  }
 
-	public void enterV() throws IOException
+	public void onEntryV() throws IOException
 	  /* This method recursively enters each of the concurrent sub-states
 	    if we are acting as an AndState.
 	    */
 	  { 
-			super.enterV();
+			super.onEntryV();
 			if ( isAndStateB() )
 				for (StateList subStateList : theListOfSubStateLists) 
-	  	  	subStateList.enterV();
+					{
+	  			  appLogger.debug(
+				  			"AndOrState.onEntryV() entering sub"
+						  	+ subStateList.getFormattedStatePathString()
+				  			);
+		  	  	subStateList.onEntryV();
+						}
 			}
 	
-	public synchronized boolean overrideProcessInputsB() throws IOException
+	public synchronized boolean onInputsB() throws IOException
 	  /* This method acts as an AndState handler if presentSubStateList == null,
 	    otherwise it aces as an OrState handler.
 	    */
 	  { 
 		  boolean successB;
 			if ( isAndStateB() )
-		  	successB= andStateProcessInputsB();
+		  	successB= andStateOnInputsB();
 		  	else
-		  	successB= orStateProcessInputsB();
+		  	successB= orStateOnInputsB();
 			return successB;
 		  }
 
-	public void exitV() throws IOException
+	public void onExitV() throws IOException
 	  /* This method recursively exits each of the concurrent sub-states
 	    if this state is acting as an AndState.
 	    */
 	  { 
 			if ( isAndStateB() )
 	  		for (StateList subStateList : theListOfSubStateLists) 
-	  	  	subStateList.exitV();
-			super.exitV();
+	  	  	subStateList.onExitV();
+			super.onExitV();
 			}
 	
 		}
@@ -859,11 +873,11 @@ class OrState extends AndOrState { //? StateList {
     	}
 
   /*  //?
-  public synchronized boolean overrideProcessInputsB() throws IOException
+  public synchronized boolean onInputsB() throws IOException
 	  /* This method calls the default OrState handler.  */
   /*  //?
 	  { 
-  		return orStateProcessInputsB(); 
+  		return orStateOnInputsB(); 
   		}
   */  //?
 
@@ -888,9 +902,9 @@ class AndState extends AndOrState { //? StateList {
     	}
 
   /*  //?
-	public synchronized boolean overrideProcessInputsB() throws IOException
+	public synchronized boolean onInputsB() throws IOException
 		{ 
-		  return andStateProcessInputsB(); 
+		  return andStateOnInputsB(); 
 		  }
   */  //?
 

@@ -139,7 +139,7 @@ public class Unicaster
 	  	  addB( theMultiMachineState );
 	  	  addB( theIgnoreAllSubstatesState );
 
-	  	  theMultiMachineState.finalProcessInputsB(); // Start the multi-machines,
+	  	  theMultiMachineState.doOnInputsB(); // Start the multi-machines,
 	  	    // by starting their timers, by callinG the main machine handler.
 	  	  
 	  	  addB( theSubcasterManager );
@@ -159,7 +159,7 @@ public class Unicaster
         try { // Operations that might produce an IOException.
 	          initializeWithIOExceptionV();
 
-	          enterV(); 
+	          onEntryV(); 
 					  while (true) { // Repeating until termination is requested.
 					  	LockAndSignal.Input theInput= 
 				  				theLockAndSignal.testingForInterruptE();
@@ -171,7 +171,7 @@ public class Unicaster
 			      	  	)
 			      		setSynchronousInputV( theEpiInputStreamI.readAString() );
 
-            	finalProcessInputsB(); // Handle notification as a state-machine.
+            	doOnInputsB(); // Handle notification as a state-machine.
 				  	  theInput= // Waiting for at least one new input.
 			    			  theLockAndSignal.waitingForInterruptOrNotificationE();
 				  	  }
@@ -188,7 +188,7 @@ public class Unicaster
         appLogger.info("run() exiting."); // Needed if thread self-terminates.
         }
 
-    public void overrideProcessInputsV() throws IOException
+    public void onInputsV() throws IOException
       /* This method does, or will do itself, or will delegate to Subcasters, 
         all protocols of a Unicaster.  This might include:
         * Doing full PING-REPLY protocol by letting a Subcaster do it, 
@@ -201,7 +201,7 @@ public class Unicaster
 	    { 
 	    	appLogger.info( "Unicaster.overrideProcessInputsV() starting." );
 	    	
-	    	if ( super.orStateProcessInputsB() )  // Try being an OrState first. 
+	    	if ( super.orStateOnInputsB() )  // Try being an OrState first. 
 	    		;
       	else if // Input and ignore any unprocessed message.
 	    	  ( theEpiInputStreamI.tryingToGetString() != null ) 
@@ -219,12 +219,12 @@ public class Unicaster
 			  */
 	  	{
 
-		  	public void enterV() throws IOException
-				  { super.enterV(); // This is mainly to set background color.
+		  	public void onEntryV() throws IOException
+				  { super.onEntryV(); // This is mainly to set background color.
 			  	  appLogger.info( "BeforeHelloExchangeState.enterV().");
 						}
 
-	  		public void overrideProcessInputsV() throws IOException
+	  		public void onInputsV() throws IOException
 			  	{ appLogger.info( "BeforeHelloExchangeState.overrideProcessInputsV().");
 			  		if ( processingHellosB() ) { 
 			  			appLogger.info( 
@@ -252,8 +252,8 @@ public class Unicaster
 		    		return this;
 			    	}
 
-		  	public void enterV() throws IOException
-				  { super.enterV(); // This is mainly to set background color.
+		  	public void onEntryV() throws IOException
+				  { super.onEntryV(); // This is mainly to set background color.
 			      theSubcasterManager.getOrBuildAddAndStartSubcaster(
 						  "PING-REPLY" ///tmp Hard wired creation at first.  Fix later.
 						  ); // Adding Subcaster.
@@ -272,7 +272,7 @@ public class Unicaster
 				  	}
 		  	*/  ///rev
 
-				public void exitV() throws IOException
+				public void onExitV() throws IOException
 				  { if  // Informing remote end whether app is doing a Shutdown.
 		    			( theShutdowner.isShuttingDownB() ) 
 			    		{ ///enh Make this into FastDisconnect using GOODBYE.
@@ -280,7 +280,7 @@ public class Unicaster
 			          appLogger.info( "SHUTTING-DOWN message sent.");
 			    			}
 		    		theSubcasterManager.stoppingEntryThreadsV();
-						super.exitV(); // This is mainly to set background color.
+						super.onExitV(); // This is mainly to set background color.
 						}
 
 		  	} // class AfterHelloExchangedState
@@ -296,13 +296,13 @@ public class Unicaster
 		    		return this;
 			    	}
 
-				public boolean overrideProcessInputsB() throws IOException
+				public boolean onInputsB() throws IOException
 			  	{
 			  	  ///rev return processingRemotePeerMessageB();
 					  	boolean successB;
 						beforeReturn: { 
 						  successB= true;
-					  	if ( super.andStateProcessInputsB() ) // Process sub-states.
+					  	if ( super.andStateOnInputsB() ) // Process sub-states.
 					  	  break beforeReturn;
 						  successB= false;
 							String keyString=  // Reading message key string
@@ -316,7 +316,7 @@ public class Unicaster
 				        { processMessageToSubcasterV( theSubcaster ); 
 				          break beforeReturn; 
 				          }
-				      if ( theMultiMachineState.finalProcessSynchronousInputB(keyString) )
+				      if ( theMultiMachineState.doOnSynchronousInputB(keyString) )
 				      	break beforeReturn;
 		  			  if ( processHelloB( keyString ) ) // "HELLO"
 		   			  	break beforeReturn;
@@ -358,7 +358,7 @@ public class Unicaster
 		class MultiplexingPacketsFromSubcastersState extends StateList 
     {
 
-			public boolean overrideProcessInputsB() throws IOException
+			public boolean onInputsB() throws IOException
 		  	{
 		  	  return multiplexingPacketsFromSubcastersB();
 		  		}
@@ -368,7 +368,7 @@ public class Unicaster
 		class TemporaryMainState extends StateList 
 	    {
 
-		    public void overrideProcessInputsV() 
+		    public void onInputsV() 
 		      /// Does nothing, thereby ignoring all sub-states.
 		      {}
 
@@ -383,7 +383,7 @@ public class Unicaster
        */
 	    {
 
-		    public void overrideProcessInputsV() 
+		    public void onInputsV() 
 		      /// Does nothing, thereby not calling any of the sub-states.
 		      {}
 
