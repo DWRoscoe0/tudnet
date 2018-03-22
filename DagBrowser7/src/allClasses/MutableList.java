@@ -2,7 +2,7 @@ package allClasses;
 
 //import static allClasses.Globals.appLogger;
 
-public class MutableList 
+public class MutableList extends NamedList
 
 	/* This class is a DataNode which contains a mutable List of child DataNodes
 	  Its superclass, NamedList, contains an immutable List of child DataNodes
@@ -21,8 +21,6 @@ public class MutableList
 	    and stored in this object.  This is simple, 
 	    but also inefficient in storage.  Is there a better way>
 	  */
-
-  extends NamedList
 
   {
 	  // Variables for injected values, none.

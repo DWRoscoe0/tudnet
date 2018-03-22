@@ -22,6 +22,7 @@ public class StateList extends MutableList implements Runnable {
       It is also typically used as machine states with no children.
     * SentinelState: This class is used as an initial sentinel-state 
       for OrState state machines to reduce the number of null checks needed.
+		* AndOrState: a superclass of the OrState and AndState classes.
     * OrState: OrState machines have sub-states, only one of which 
       can be active at a time.  A state-machine based on this class
       behaves like a classical finite state machine,
@@ -150,17 +151,19 @@ public class StateList extends MutableList implements Runnable {
 	/* Variables used only for OrState behavior.. */
 
 	// Sentinel states which can simplify other code by eliminating null checks.
-	protected static SentinelState initialSentinelState= new SentinelState();
-    // This is used as an initial sentinel state for OrState machiens. 
-	protected static SentinelState finalSentinelState= new SentinelState();
-    // This is used as a final sentinel state for OrState machiens. 
+  // Sentinel states are used by OrState machines. 
+	protected static final SentinelState initialSentinelState;
+	///elim protected static SentinelState finalSentinelState= new SentinelState();
 
-  protected StateList presentSubStateList= null; // Machine's qualitative state.
-  		//? StateList.initialSentinelState; // Initial default no-op state.
-      /* ///enh doc? This could be null in AndStates 
-        because it should never be used.
-        This could be used to select between and-state and or-state behavior
-        at run-time, including onEntryV(), onInputsV(), and onExitV().
+	static { 
+		initialSentinelState= new SentinelState(); 
+		initialSentinelState.initializeV();
+		}
+	
+  protected StateList presentSubStateList= null; /* Machine's qualitative state.
+        This is used to select between and-state and or-state behavior
+        This will be null when the state is behaving as an and-state.
+        When it is not null then is the or-state's active sub-state. 
         See AndOrState.
         */
 
@@ -173,22 +176,28 @@ public class StateList extends MutableList implements Runnable {
 
 	/* Methods used to build state objects. */
 
-  public StateList initializeWithIOExceptionStateList() throws IOException
+  private StateList initializeWithIOExceptionStateList() throws IOException {
+  	return null;
+  	}
+
+  public void initializeV() //// throws IOException
     /* This method initializes this state object, 
       It does actions needed when this state object is being built.
       This is not the same as the entryV() method, which
       does actions needed when the associated state-machine state is entered.
 
 			Like constructors, this method should be called first
-			in the sub-class versions of this method.
+			from the sub-class versions of this method.
 
       This version only calls 
       the no-IOException superclass initializeV() version.
+      However it still declares that it throws IOException
+      for compatibility with its superclass.
   		*/
     {
   	  super.initializeV(); // IOExceptions are not thrown in super-classes.
   	  theColor= UIColor.initialStateColor;
-  	  return this;
+  	  ////return this;
     	}
 
   public void initAndAddStateListV(StateList theSubStateList) 
@@ -222,6 +231,18 @@ public class StateList extends MutableList implements Runnable {
 
   	  addB( theSubStateList ); // Add to this DataNode's list of DataNodes.
   	  }
+
+  public void startRootMachineV() throws IOException
+    /* This method is used to start a root state machine.
+      It does this by entering the state and attempting to process inputs once.
+      It doesn't need to be called after startup because
+      normal state transitions call doOnEntryV() 
+      as needed during normal state changes. 
+      */
+	  {
+	  	doOnEntryV(); // Enter state of machine.
+	  	doOnInputsB(); // Start machines, usually used to start timers.
+		  }
 
   public synchronized void finalizeV() throws IOException
     /* This method processes any pending loose ends before shutdown.
@@ -301,11 +322,11 @@ public class StateList extends MutableList implements Runnable {
 		  		  { presentSubStateList.onExitV(); 
 	    	  		presentSubStateList= requestedSubStateList;
 		  				requestedSubStateList= null;
-		  			  appLogger.debug(
-					  			"StateList.orStateOnInputsB() entering"
-							  	+ presentSubStateList.getFormattedStatePathString()
-					  			);
-		  			  presentSubStateList.onEntryV();
+		  			  ////appLogger.debug(
+			  			////		"StateList.orStateOnInputsB() entering"
+			  			////	+ presentSubStateList.getFormattedStatePathString()
+			  			////	);
+		  			  presentSubStateList.doOnEntryV();
 							substateProgressB= true; // Count this as progress.
 			  			}
 		  	  if (!substateProgressB) // Exiting loop if no sub-state progress made.
@@ -355,6 +376,27 @@ public class StateList extends MutableList implements Runnable {
 
 	/*  Methods for entry and exit of OrState or their sub-states.  */
 
+	public final void doOnEntryV() throws IOException
+	  /* This method is called when 
+		  the state associated with this object is entered.
+		  It is final so it can not be overridden.
+		  It calls onEntryV() which may be overridden.
+		  This version does nothing, but it should be overridden 
+		  by state subclasses that require entry actions.
+		  This is not the same as initialize*V(),
+		  which does actions needed when the StateList object is being built
+		  and is being prepared for providing its services.
+		  
+		  //enh: Presently this is called from orStateOnInputsB() only.
+		  	Maybe it should be called when andStateOnInputsB() is called?
+		  */
+		{ 
+		  appLogger.debug(
+	  			"StateList.doOnEntryV() to"+ getFormattedStatePathString() );
+			setBackgroundColorV( UIColor.runningStateColor );
+			onEntryV(); 
+			}
+
 	public void onEntryV() throws IOException
 	  /* This method is called when 
 	    the state associated with this object is entered.
@@ -368,7 +410,6 @@ public class StateList extends MutableList implements Runnable {
 	    	Maybe it should be called when andStateOnInputsB() is called?
 	    */
 	  { 
-			setBackgroundColorV( UIColor.runningStateColor );
 			}
 
 	public void onExitV() throws IOException
@@ -702,6 +743,7 @@ public class StateList extends MutableList implements Runnable {
 		  		+ ", "
 		  		+ getNameString(); 
 
+		  Nulls.fastFailNullCheckT(resultString);
 		  return resultString;
 	  	}
 	
@@ -772,7 +814,7 @@ class SentinelState extends StateList {
 
   protected void reportChangeOfSelfV()
 		/* This method does nothing because SentinelStates
-		  are never part of display-able DAG.
+		  should never be part of display-able DAG.
 		 	*/
   	{
   		}
@@ -781,9 +823,9 @@ class SentinelState extends StateList {
 
 class AndOrState extends StateList {
 	
-	/* The methods in class use the value of the variable presentSubStateList
-	  to determine at run-time whether this state 
-	  should act as an AndState or an OrState.
+	/* The methods in this class use the value of 
+	  the variable presentSubStateList to determine at run-time whether 
+	  this state should act as an AndState or an OrState.
 	  It acts as an AndState until and unless setAsOrStateV(..) is called.
 	  
 	  This includes the following methods:
@@ -791,7 +833,7 @@ class AndOrState extends StateList {
     */
 
   private boolean isAndStateB()
-    /* This method returns true is this state is behaving as an AndState,
+    /* This method returns true if this state is behaving as an AndState,
       false otherwise.
       */
   	{ 
@@ -816,11 +858,11 @@ class AndOrState extends StateList {
 			if ( isAndStateB() )
 				for (StateList subStateList : theListOfSubStateLists) 
 					{
-	  			  appLogger.debug(
-				  			"AndOrState.onEntryV() entering sub"
-						  	+ subStateList.getFormattedStatePathString()
-				  			);
-		  	  	subStateList.onEntryV();
+	  			  ////appLogger.debug(
+						////		"AndOrState.onEntryV() entering sub"
+						////  	+ subStateList.getFormattedStatePathString()
+						////	);
+		  	  	subStateList.doOnEntryV();
 						}
 			}
 	
@@ -865,7 +907,8 @@ class OrState extends AndOrState { //? StateList {
 
   public StateList initializeWithIOExceptionStateList() throws IOException
     {
-  	  super.initializeWithIOExceptionStateList();
+  	  ////super.initializeWithIOExceptionStateList();
+  		super.initializeV();
   		//? presentSubStateList= // Setting non-null to make state act like OrState.
   	  setFirstOrSubStateV( StateList.initialSentinelState );
   	  theColor= UIColor.initialOrStateColor;
@@ -896,7 +939,8 @@ class AndState extends AndOrState { //? StateList {
 
   public StateList initializeWithIOExceptionStateList() throws IOException
     {
-  	  super.initializeWithIOExceptionStateList();
+  	  ////super.initializeWithIOExceptionStateList();
+  		super.initializeV();
   	  theColor= UIColor.initialAndStateColor;
   	  return this;
     	}

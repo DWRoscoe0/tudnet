@@ -139,7 +139,7 @@ public class Unicaster
 	  	  addB( theMultiMachineState );
 	  	  addB( theIgnoreAllSubstatesState );
 
-	  	  theMultiMachineState.doOnInputsB(); // Start the multi-machines,
+	  	  theMultiMachineState.startRootMachineV(); // Start the multi-machines,
 	  	    // by starting their timers, by callinG the main machine handler.
 	  	  
 	  	  addB( theSubcasterManager );

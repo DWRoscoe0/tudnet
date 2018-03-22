@@ -40,12 +40,13 @@ public abstract class NamedNonLeaf
 		    This is used by the class Outline only.
 		    */
       {
+    		Nulls.fastFailNullCheckT(nameString);
         this.nameString= nameString;
         }
 
     // Getters.
 
-    public String getNameString( )
+    public String getNameString()
       /* Returns String representing name of this Object.  */
       {
         return nameString;  // Simply return the name.

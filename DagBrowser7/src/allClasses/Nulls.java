@@ -14,7 +14,7 @@ public class Nulls
 	    {
 			  if ( testT == null ) // Doing fast-fail construction check.
 				  {
-			  		appLogger.error("fastFailNullCheckT( T testT ):");
+			  		appLogger.error("fastFailNullCheckT( T testT ): null value!");
 				  	throw new NullPointerException();
 				  	}
 			  return testT;
