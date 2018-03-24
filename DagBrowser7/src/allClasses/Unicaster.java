@@ -154,18 +154,23 @@ public class Unicaster
 
     public void run()  // Main Unicaster thread.
       /* This method contains the main thread logic.
+        It basically just reads event messages from the input stream
+        and passes them to its state machine
+        until it receives as signal to exit.
+        Most state-machines only need to read from the input stream
+        for event data, not the main event message itself.
         */
       {
         try { // Operations that might produce an IOException.
 	          initializeWithIOExceptionV();
 
-	          onEntryV(); 
+	          onEntryV(); // Simulate an actual state entry. 
 					  while (true) { // Repeating until termination is requested.
 					  	LockAndSignal.Input theInput= 
 				  				theLockAndSignal.testingForInterruptE();
 			      	if ( theInput != Input.NONE ) break; // Exit if interrupted.
 			      	
-			      	if // Transfer message from stream to machines, if possible.
+			      	if // Transfer event message from stream to machine, if possible.
 			      	  ( ( theEpiInputStreamI.available() > 0 )
 			      	  	&& ( getSynchronousInputString() == null )
 			      	  	)
@@ -199,15 +204,25 @@ public class Unicaster
         * Connection/Hello handshake state machine cycling.
         */
 	    { 
-	    	appLogger.info( "Unicaster.overrideProcessInputsV() starting." );
-	    	
-	    	if ( super.orStateOnInputsB() )  // Try being an OrState first. 
-	    		;
-      	else if // Input and ignore any unprocessed message.
-	    	  ( theEpiInputStreamI.tryingToGetString() != null ) 
-      		;
-	    	
-	    	appLogger.info( "Unicaster.overrideProcessInputsV() ending." );
+	    	////appLogger.info( "Unicaster.onInputsV() starting." );
+	    	process: {
+		    	if ( super.orStateOnInputsB() ) // Try processing by sub-states first. 
+		    		break process;
+		    	String eventMessageString= theEpiInputStreamI.tryingToGetString();
+	      	if ( eventMessageString != null ) // There is an unprocessed message.
+		      	{ // Log and ignore the message.
+		  	    	appLogger.info( 
+		  	    			"Unicaster.onInputsV() unprocessed message: "
+		  	    			+ eventMessageString 
+		  	    			);
+			    		break process;
+		      		}
+	      	appLogger.info( 
+  	    			"Unicaster.onInputsV() no message to process!"
+  	    			+ eventMessageString 
+  	    			);
+	    		} // process:
+	    	////appLogger.info( "Unicaster.onInputsV() ending." );
 				}
 
 		private class BeforeHelloExchangeState extends StateList 
@@ -225,11 +240,11 @@ public class Unicaster
 						}
 
 	  		public void onInputsV() throws IOException
-			  	{ appLogger.info( "BeforeHelloExchangeState.overrideProcessInputsV().");
+			  	{ ////appLogger.info( "BeforeHelloExchangeState.onInputsV().");
 			  		if ( processingHellosB() ) { 
-			  			appLogger.info( 
-			  					"BeforeHelloExchangeState.overrideProcessInputsV() switching."
-			  					);
+			  			////appLogger.info( 
+				  		////		"BeforeHelloExchangeState.onInputsV() switching."
+				  		////	);
 			  			requestStateListV( theAfterHelloExchangedState );
 			  			}
 			  		}
@@ -237,7 +252,8 @@ public class Unicaster
 
 		private class AfterHelloExchangedState extends AndState ///rev StateList 
 			/* This state class is active after HELLO messages are exchanged.
-			  It responds to late HELLO messages and enables the other protocols.
+			  It responds to late HELLO messages and enables the other protocols
+			  in their own state machines.
 			  */
 	  	{
 

@@ -49,6 +49,7 @@ public abstract class NamedNonLeaf
     public String getNameString()
       /* Returns String representing name of this Object.  */
       {
+    		Nulls.fastFailNullCheckT(nameString);
         return nameString;  // Simply return the name.
         }
 

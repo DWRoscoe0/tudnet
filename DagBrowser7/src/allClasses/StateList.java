@@ -116,6 +116,21 @@ public class StateList extends MutableList implements Runnable {
 		  do not [yet] provide behavioral inheritance, which is
 		  the most important benefit of hierarchical state machines.
 		  Add it?
+		  
+		///opt Presently a synchronous input is never passed up from a state
+		  unless it was passed down and went unprocessed.
+		  This can be inefficient if a nested state processes much input
+		  because it must be passed down through its ancestors first.
+		  Maybe synchronous input can be made to originate in any state
+		  and be passed either up or down as conditions change.
+		  This would assume a model in which input can be consumed by
+		  any state designed to handle it.
+		  An extra input loops could be added to any state that inputs a lot.
+		  Maybe input looping could be made part of StateList.
+		  
+		  The only complication I see is synchronized sections.
+		  A message loop should use timers.
+		  It should use LockAndSignal timing.
 	  */
 
 	
@@ -176,23 +191,28 @@ public class StateList extends MutableList implements Runnable {
 
 	/* Methods used to build state objects. */
 
-  private StateList initializeWithIOExceptionStateList() throws IOException {
-  	return null;
-  	}
+  private StateList initializeWithIOExceptionStateList() throws IOException
+    /* This method can also be used to initialize this state object.
+      See initializeV() for details.
+
+      This version only calls 
+      the no-IOException superclass initializeV() version.
+      However it still declares that it throws IOException
+      for compatibility with its superclass.
+     	*/
+	  {
+  	  initializeV(); // Make use of other initialize method.
+	  	return null; //? Shouldn't value be this instead of null?
+	  	}
 
   public void initializeV() //// throws IOException
-    /* This method initializes this state object, 
+    /* This method initializes this state object.
       It does actions needed when this state object is being built.
       This is not the same as the entryV() method, which
       does actions needed when the associated state-machine state is entered.
 
 			Like constructors, this method should be called first
 			from the sub-class versions of this method.
-
-      This version only calls 
-      the no-IOException superclass initializeV() version.
-      However it still declares that it throws IOException
-      for compatibility with its superclass.
   		*/
     {
   	  super.initializeV(); // IOExceptions are not thrown in super-classes.
