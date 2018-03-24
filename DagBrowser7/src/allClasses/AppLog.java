@@ -77,7 +77,6 @@ public class AppLog extends EpiThread
 
       private static final AppLog theAppLog=  // Internal singleton builder.
         new AppLog();
-      private static LockAndSignal theLockAndSignal= new LockAndSignal(); 
     	private volatile boolean thereHasBeenOutputB= false;
 
       static { 
@@ -97,7 +96,13 @@ public class AppLog extends EpiThread
 	    	  	  		closeFileV(); // This will flush.
 			  		    	openFileV(); // Prepare for next output.
 					    	  }
-    	  	  theLockAndSignal.testingRemainingDelayE(5000); // Pause 5 seconds.
+	    	  	  try {
+	    	  	    	Thread.sleep(5000); // 5 second pause.
+			    	  	} catch(InterruptedException ex) {
+			    	  	  Thread.currentThread().interrupt();
+			    	  	} finally {
+			    	  		closeFileV();
+			    	  	}
       	  	}
       		}
       
