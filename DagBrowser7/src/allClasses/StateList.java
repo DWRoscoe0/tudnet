@@ -252,7 +252,7 @@ public class StateList extends MutableList implements Runnable {
   	  addB( theSubStateList ); // Add to this DataNode's list of DataNodes.
   	  }
 
-  public void startRootMachineV() throws IOException
+  public void startRootMachineV() throws IOException ///elim?
     /* This method is used to start a root state machine.
       It does this by entering the state and attempting to process inputs once.
       It doesn't need to be called after startup because
@@ -303,7 +303,7 @@ public class StateList extends MutableList implements Runnable {
 		  boolean progressMadeB= false;
   	  substateScansUntilNoProgress: while(true) {
  	  		for (StateList subStateList : theListOfSubStateLists) 
-	  	  	if (onInputsToSubstateB(subStateList))
+	  	  	if (doOnInputsToSubstateB(subStateList))
 		  	  	{
 		  	  		progressMadeB= true;
 		  	  		continue substateScansUntilNoProgress; // Restart scan.
@@ -337,7 +337,7 @@ public class StateList extends MutableList implements Runnable {
 	  	boolean stateProgressB= false;
 			while (true) { // Cycle sub-states until done.
 	  	    boolean substateProgressB= 
-	  	    		onInputsToSubstateB(presentSubStateList);
+	  	    		doOnInputsToSubstateB(presentSubStateList);
 		  		if (requestedSubStateList != null) // Handling state change request.
 		  		  { presentSubStateList.onExitV(); 
 	    	  		presentSubStateList= requestedSubStateList;
@@ -360,39 +360,61 @@ public class StateList extends MutableList implements Runnable {
 			return stateProgressB; // Returning accumulated state progress result.
 			}
 
-	protected void requestStateListV(StateList nextStateList)
+	protected void requestSiblingStateListV(StateList requestedStateList)
 		/* This is called to change the state of a the state machine
-		  that contains this state to the sibling state nextStateList.  
+		  that contains this state to the sibling state requestedStateList.  
 		  It does this by calling the parent state's 
 		  setNextSubStateListV(..) method. 
 		  It does not fully take affect until the present state handler exits.
 		  */
 		{
-			parentStateList.requestSubStateListV(nextStateList);
+			parentStateList.requestSubStateListV(requestedStateList);
 			}
 
-  protected void requestSubStateListV(StateList nextStateList)
+  protected boolean requestSubStateListB(StateList requestedStateList)
+	  /* This method does the same as requestSubStateListV(..) except that
+	    if will reject the state=change request and return false if 
+	    the present sub-state is the same as requestedStateList. 
+	    In this case the sub-state will not be exited and reentered.
+	    This method will return true if the request is accepted.
+	    */
+	  {
+  	  boolean progressB= // Calculate whether the state will actually change. 
+  	  		( presentSubStateList != requestedStateList );
+	  	if ( progressB ) // If it will
+	  		requestSubStateListV(requestedStateList); // call this to do the work.
+	  	return progressB; // Return whether we accomplished anything.
+	  }	
+
+  protected void requestSubStateListV(StateList requestedStateList)
 	  /* This method requests the next state-machine state,
 	    which is the same thing as this state's next sub-state.
 	    
-	    Note, though the requestedSubStateList variable changes immediately,
+	    Though the requestedSubStateList variable changes immediately,
 	    control is not transfered to the new sub-state until
 	    the handler of the present sub-state exits.
+	    
+	    Requesting a state changing is considered progress
+	    for purposes of deciding whether to retry a states doOnInputsB().
+	    
+	    If the machine is already in the requested sub-state,
+	    the sub-state will be exited and reentered.
 	    */
 	  {
-			if  // Report excess state change request.
+		  if ///tmp Behave like an OrState by defining the present state.
+			  ( presentSubStateList == null)
+	  		presentSubStateList= StateList.initialSentinelState;
+
+	  	if  // Report excess state change request.
 				( (requestedSubStateList != null)
 					&& (requestedSubStateList != StateList.initialSentinelState)
 					)
         appLogger.error(
         		"StateList.requestSubStateListV(..), next state already requested."
         	  );
-  	  requestedSubStateList= nextStateList;
 
-  	  if // Behave like an an OrState by defining the present state.
-			  ( presentSubStateList == null)
-	  		presentSubStateList= StateList.initialSentinelState;
-	  }
+	  	requestedSubStateList= requestedStateList;
+	  	}	
 
 	/*  Methods for entry and exit of OrState or their sub-states.  */
 
@@ -513,14 +535,19 @@ public class StateList extends MutableList implements Runnable {
 			return false; // This default version returns false.
 		  }
 	
-	public synchronized final boolean doOnInputsB() throws IOException
+	public final synchronized boolean doOnInputsB() throws IOException
 	  /* This is the method that should be called to invoke a state's handler.
 	    It can not be overridden.  
 	    It calls override-able handler methods which 
 	    state sub-classes may override.
 	    */
 	  { 
-			setBackgroundColorV( UIColor.runningStateColor );
+		  ////appLogger.debug(
+			////	"StateList.doOnInputsB() of "
+		  ////	+ synchronousInputString 
+			////+ " to"
+		  ////	+ getFormattedStatePathString() );
+		  setBackgroundColorV( UIColor.runningStateColor );
 			boolean successB= onInputsB();
 			colorBySuccessV( successB );
 			return successB;
@@ -585,7 +612,8 @@ public class StateList extends MutableList implements Runnable {
 	  or discarded if no machine processes it.
 	  */
 
-	protected synchronized boolean onInputsToSubstateB( StateList subStateList )
+	protected final synchronized boolean doOnInputsToSubstateB( 
+			  StateList subStateList )
 		  throws IOException
 		/* This method calls subStateList's handler doOnInputsB().
 		  Because it is sub-state processing,
@@ -777,6 +805,8 @@ public class StateList extends MutableList implements Runnable {
 	    a non-Timer thread.
 	    */
 		{
+			appLogger.debug(
+  			"StateList.run() beginning of Timer tick to"+ getFormattedStatePathString() );
 			try { 
 				doOnInputsB(); // Try to process timer event with handler. 
 				}
@@ -785,6 +815,8 @@ public class StateList extends MutableList implements Runnable {
 		    		theIOException
 		    		); 
 		    }
+			appLogger.debug(
+	  			"StateList.run() end of Timer tick to"+ getFormattedStatePathString() );
 		}
 
 	/* Methods for UI coloring.  */

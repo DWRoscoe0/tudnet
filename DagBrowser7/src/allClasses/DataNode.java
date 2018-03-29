@@ -1,5 +1,7 @@
 package allClasses;
 
+import static allClasses.Globals.appLogger;
+
 import java.awt.Color;
 
 import javax.swing.JComponent;
@@ -104,9 +106,11 @@ public class DataNode
           that for the children to do it.
          */
       	{
-      		(Nulls.fastFailNullCheckT( 
-      				parentNamedList 
-      				)).reportChangeInChildV( this );
+      	  if ( parentNamedList == null )
+      	  	appLogger.warning(
+      	  			"reportChangeOfSelfV(): parentNamedList == null!");
+      	  	else
+      			parentNamedList.reportChangeInChildV( this );
       		}
 
       public String toString()

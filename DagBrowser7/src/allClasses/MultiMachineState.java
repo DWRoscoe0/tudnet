@@ -68,13 +68,14 @@ public class MultiMachineState extends AndState
 	  	  		);
 
 	  	  addStateListV( 
-	  	  		( theHelloMachineState= new HelloMachineState( 
-		    				theTimer, 
-		    				theNetcasterInputStream,
-		    				theNetcasterOutputStream, 
-		    				retransmitDelayMsNamedLong,
-		    				theUniaster )
-	  	  			).initializeWithIOExceptionStateList() 
+	  	  		( theHelloMachineState= new HelloMachineState()
+	  	  			).initializeWithIOExceptionHelloMachineState(
+	  	  					theTimer, 
+			    				theNetcasterInputStream,
+			    				theNetcasterOutputStream, 
+			    				retransmitDelayMsNamedLong,
+			    				theUniaster 
+			    				) 
 	  	  		);
 		  	}
 		

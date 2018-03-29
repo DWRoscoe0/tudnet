@@ -132,7 +132,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
       		new NetcasterPacketManager( (IPAndPort)null );
 
   		Timer theTimer= new Timer(  // Single timer for entire app.
-  				"app-timer", true
+  				"AppTimer", true
   				);
 
       NamedLong multicasterTimeOutMsNamedLong= 

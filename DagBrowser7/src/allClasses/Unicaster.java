@@ -54,14 +54,16 @@ public class Unicaster
       private final UnicasterManager theUnicasterManager;
       private final SubcasterManager theSubcasterManager;
       private final SubcasterQueue subcasterToUnicasterSubcasterQueue;
+      //// @SuppressWarnings("unused") ///elim
   		private Timer theTimer;
   		
   		// Other instance variables.
-  		private BeforeHelloExchangeState theBeforeHelloExchangeState;
+  		//// private BeforeHelloExchangeState theBeforeHelloExchangeState;
   		private AfterHelloExchangedState theAfterHelloExchangedState;
   		private MultiMachineState theMultiMachineState;
-  		private IgnoreAllSubstatesState theIgnoreAllSubstatesState;
-  		private TemporaryMainState theTemporaryMainState;
+  		//// private IgnoreAllSubstatesState theIgnoreAllSubstatesState;
+  		//// private TemporaryMainState theTemporaryMainState;
+  		private HelloMachineState theHelloMachineState;
   		
   	public Unicaster(  // Constructor. 
 			  UnicasterManager theUnicasterManager,
@@ -112,43 +114,57 @@ public class Unicaster
 
 	  		// Create and start the sub-state machines.
 
-    		// Create and add actual sub-states.
-    		initAndAddStateListV(
-    				theBeforeHelloExchangeState= new BeforeHelloExchangeState());
-    		initAndAddStateListV(
-    				theAfterHelloExchangedState= new AfterHelloExchangedState());
-    		setFirstOrSubStateV( theBeforeHelloExchangeState ); // Initial state.
+    		{ // Create and add actual sub-states.
+    			/*  ////
+	    		initAndAddStateListV(
+	    				theBeforeHelloExchangeState= new BeforeHelloExchangeState());
+	    		initAndAddStateListV(
+	    				theAfterHelloExchangedState= new AfterHelloExchangedState());
+	    		setFirstOrSubStateV( theBeforeHelloExchangeState ); // Initial state.
+	
+		  	  initAndAddStateListV(theTemporaryMainState= new TemporaryMainState());
+		  	  
+		  	  initAndAddStateListV(theIgnoreAllSubstatesState= 
+		  	  		new IgnoreAllSubstatesState());
+	
+		  	  theMultiMachineState= new MultiMachineState(
+		  				theTimer, 
+		  			  theEpiInputStreamI,
+		  				theEpiOutputStreamO,
+		  				retransmitDelayMsNamedLong,
+		  				this
+		  	  		);
+		  	  theMultiMachineState.initializeWithIOExceptionV();
 
-	  	  initAndAddStateListV(theTemporaryMainState= new TemporaryMainState());
-	  	  
-	  	  initAndAddStateListV(theIgnoreAllSubstatesState= 
-	  	  		new IgnoreAllSubstatesState());
+	
+		  	  ///tmp Note, the following are added but not as States.
+		  	  theIgnoreAllSubstatesState.addB( theMultiMachineState );
+		  	  addB( theTemporaryMainState );
+		  	  addB( theMultiMachineState );
+		  	  addB( theIgnoreAllSubstatesState );
+		  	  */   ////
 
-	  	  theMultiMachineState= new MultiMachineState(
-	  				theTimer, 
-	  			  theEpiInputStreamI,
-	  				theEpiOutputStreamO,
-	  				retransmitDelayMsNamedLong,
-	  				this
-	  	  		);
-	  	  theMultiMachineState.initializeWithIOExceptionV();
+    				theHelloMachineState= new HelloMachineState();
+    				theHelloMachineState.initializeWithIOExceptionHelloMachineState(
+			  				theTimer, 
+			  			  theEpiInputStreamI,
+			  				theEpiOutputStreamO,
+			  				retransmitDelayMsNamedLong,
+			  				this
+			  	  		);
+    				addStateListV( theHelloMachineState );
+    			} // Create and add actual sub-states.
 
-	  	  ///tmp Note, the following are added but not as States.
-	  	  theIgnoreAllSubstatesState.addB( theMultiMachineState );
-	  	  addB( theTemporaryMainState );
-	  	  addB( theMultiMachineState );
-	  	  addB( theIgnoreAllSubstatesState );
-
-	  	  theMultiMachineState.startRootMachineV(); // Start the multi-machines,
+	  	  //// theMultiMachineState.startRootMachineV(); // Start the multi-machines,
 	  	    // by starting their timers, by callinG the main machine handler.
-	  	  
+
 	  	  addB( theSubcasterManager );
 	    	}
 
     protected void finalizingV() throws IOException
 	    // This is the opposite of initilizingV().
 	    {
-	    	theMultiMachineState.finalizeV();
+	    	//// theMultiMachineState.finalizeV();
 	    	theEpiOutputStreamO.close(); // Closing output stream.
 	    	}
 
@@ -156,30 +172,33 @@ public class Unicaster
       /* This method contains the main thread logic.
         It basically just reads event messages from the input stream
         and passes them to its state machine
-        until it receives as signal to exit.
+        until it receives a signal to exit.
         Most state-machines only need to read from the input stream
         for event data, not the main event message itself.
         */
       {
+    		appLogger.info("run() begins.");
         try { // Operations that might produce an IOException.
 	          initializeWithIOExceptionV();
+	          doOnEntryV(); // Simulate an actual state entry. 
 
-	          onEntryV(); // Simulate an actual state entry. 
-					  while (true) { // Repeating until termination is requested.
-					  	LockAndSignal.Input theInput= 
-				  				theLockAndSignal.testingForInterruptE();
-			      	if ( theInput != Input.NONE ) break; // Exit if interrupted.
-			      	
-			      	if // Transfer event message from stream to machine, if possible.
-			      	  ( ( theEpiInputStreamI.available() > 0 )
-			      	  	&& ( getSynchronousInputString() == null )
+	          while (true) { // Repeating until termination is requested.
+            	doOnInputsB(); // Process inputs in this state-machine.
+            	  // This will start the state machine timers the first time.
+					  	LockAndSignal.Input theInput= // Waiting for a new input.
+			    			  theLockAndSignal.waitingForInterruptOrNotificationE();
+			      	if ( theInput == Input.INTERRUPTION ) // Process exit input. 
+				      	{ // Inform state machine of pending exit, then do so.
+				      		Thread.currentThread().interrupt(); // Restore interrupt.
+		            	while (doOnInputsB()) ; // Make state machine process it.
+		            	break;
+					      	}
+			      	if // Transfer any synchronous input from stream to machine.
+			      	  ( ( theEpiInputStreamI.available() > 0 ) // New is available.
+			      	  	&& ( getSynchronousInputString() == null ) // Old is consumed.
 			      	  	)
 			      		setSynchronousInputV( theEpiInputStreamI.readAString() );
-
-            	doOnInputsB(); // Handle notification as a state-machine.
-				  	  theInput= // Waiting for at least one new input.
-			    			  theLockAndSignal.waitingForInterruptOrNotificationE();
-				  	  }
+		 	      	} // while (true)
 	          
 	          finalizingV();
 	  	    	theUnicasterManager.removingV( this ); // Removing self from manager.
@@ -189,8 +208,7 @@ public class Unicaster
           			"run() IOException", e 
           			);
             }
-
-        appLogger.info("run() exiting."); // Needed if thread self-terminates.
+        appLogger.info("run() ends.");
         }
 
     public void onInputsV() throws IOException
@@ -225,6 +243,7 @@ public class Unicaster
 	    	////appLogger.info( "Unicaster.onInputsV() ending." );
 				}
 
+    @SuppressWarnings("unused") ///elim
 		private class BeforeHelloExchangeState extends StateList 
 	  	/* This class is active before HELLO messages have been exchanged.
 	  	  It tries to exchange HELLO messages with the remote peer
@@ -245,7 +264,7 @@ public class Unicaster
 			  			////appLogger.info( 
 				  		////		"BeforeHelloExchangeState.onInputsV() switching."
 				  		////	);
-			  			requestStateListV( theAfterHelloExchangedState );
+			  			requestSiblingStateListV( theAfterHelloExchangedState );
 			  			}
 			  		}
 		  		} // class BeforeHelloExchangeState
