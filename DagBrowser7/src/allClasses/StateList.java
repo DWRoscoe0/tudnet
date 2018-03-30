@@ -100,7 +100,7 @@ public class StateList extends MutableList implements Runnable {
 		An example of this is the Timer thread.
 		To accommodate such threads, methods are provided that,
 		instead of throwing an IOException, they record the IOException,
-		so it can be re-thrown later in a thread that can handle it,
+		so it can be re-thrown later by a thread that can handle it,
 
 	  When writing state-machine code it is important to distinguish between
 	  * the current State, designated by "this", and
@@ -116,21 +116,25 @@ public class StateList extends MutableList implements Runnable {
 		  do not [yet] provide behavioral inheritance, which is
 		  the most important benefit of hierarchical state machines.
 		  Add it?
-		  
+
 		///opt Presently a synchronous input is never passed up from a state
 		  unless it was passed down and went unprocessed.
 		  This can be inefficient if a nested state processes much input
 		  because it must be passed down through its ancestors first.
 		  Maybe synchronous input can be made to originate in any state
-		  and be passed either up or down as conditions change.
+		  and be passed either up or down as conditions require it.
 		  This would assume a model in which input can be consumed by
 		  any state designed to handle it.
-		  An extra input loops could be added to any state that inputs a lot.
-		  Maybe input looping could be made part of StateList.
-		  
+		  An extra input loop could be added to any state that inputs a lot.
+		  Maybe an input looping method could be added to StateList.
+
 		  The only complication I see is synchronized sections.
-		  A message loop should use timers.
-		  It should use LockAndSignal timing.
+		  A message loop would use the timer associated with 
+		  a LockAndSignal instance.  Normally the wait() unlocks
+		  to allow entry to another synchronized method containing a notify() call.  
+		  Unfortunately this would allow entry by other threads also.
+		  Maybe for those classes, the timer thread could call notify().
+
 	  */
 
 	
@@ -138,7 +142,8 @@ public class StateList extends MutableList implements Runnable {
 
 	protected StateList parentStateList= null; // Our parent state.
 	  ///opt It might be worthwhile combining this field 
-	  // with DataNode.parentNamedList.
+	  // with DataNode.parentNamedList, but we would need a way to
+	  // identify State children during state operations.
 
 	protected Color theColor= UIColor.initializerStateColor;
 
@@ -205,7 +210,7 @@ public class StateList extends MutableList implements Runnable {
 	  	return null; //? Shouldn't value be this instead of null?
 	  	}
 
-  public void initializeV() //// throws IOException
+  public void initializeV()
     /* This method initializes this state object.
       It does actions needed when this state object is being built.
       This is not the same as the entryV() method, which
@@ -217,7 +222,6 @@ public class StateList extends MutableList implements Runnable {
     {
   	  super.initializeV(); // IOExceptions are not thrown in super-classes.
   	  theColor= UIColor.initialStateColor;
-  	  ////return this;
     	}
 
   public void initAndAddStateListV(StateList theSubStateList) 
@@ -252,18 +256,6 @@ public class StateList extends MutableList implements Runnable {
   	  addB( theSubStateList ); // Add to this DataNode's list of DataNodes.
   	  }
 
-  public void startRootMachineV() throws IOException ///elim?
-    /* This method is used to start a root state machine.
-      It does this by entering the state and attempting to process inputs once.
-      It doesn't need to be called after startup because
-      normal state transitions call doOnEntryV() 
-      as needed during normal state changes. 
-      */
-	  {
-	  	doOnEntryV(); // Enter state of machine.
-	  	doOnInputsB(); // Start machines, usually used to start timers.
-		  }
-
   public synchronized void finalizeV() throws IOException
     /* This method processes any pending loose ends before shutdown.
       In this case it finalizes each of its sub-states.
@@ -282,7 +274,7 @@ public class StateList extends MutableList implements Runnable {
 		{ this.parentStateList= parentStateList; }
 
 	
-	/*  Methods for AndState behavior.  */ ///? Maybe add initialization.
+	/*  Methods for AndState behavior.  */
 
 	public synchronized boolean andStateOnInputsB() throws IOException
 	  /* This method handles AndState and 
@@ -316,7 +308,7 @@ public class StateList extends MutableList implements Runnable {
 			}
 
 
-	/* Methods for implementing OrState behavior.. */ ///? Maybe add initialization.
+	/* Methods for implementing OrState behavior.. */
 
   public synchronized boolean orStateOnInputsB() throws IOException
 	  /* This handles the OrState by cycling it's machine.
@@ -330,7 +322,7 @@ public class StateList extends MutableList implements Runnable {
 	    if one is available, until it is consumed. 
 	    
 	    ///enh Must check for sub-state validity vs. super-state 
-	      when behavioral inheritance is added.
+	      when and if behavioral inheritance is added.
       */
 	  { 
 			throwDelayedExceptionV(); // Throw exception if one was saved.
@@ -342,10 +334,10 @@ public class StateList extends MutableList implements Runnable {
 		  		  { presentSubStateList.onExitV(); 
 	    	  		presentSubStateList= requestedSubStateList;
 		  				requestedSubStateList= null;
-		  			  ////appLogger.debug(
-			  			////		"StateList.orStateOnInputsB() entering"
-			  			////	+ presentSubStateList.getFormattedStatePathString()
-			  			////	);
+		  			  ///dbg  appLogger.debug(
+			  			///dbg  		"StateList.orStateOnInputsB() entering"
+			  			///dbg  	+ presentSubStateList.getFormattedStatePathString()
+			  			///dbg  	);
 		  			  presentSubStateList.doOnEntryV();
 							substateProgressB= true; // Count this as progress.
 			  			}
@@ -401,10 +393,10 @@ public class StateList extends MutableList implements Runnable {
 	    the sub-state will be exited and reentered.
 	    */
 	  {
-		  if ///tmp Behave like an OrState by defining the present state.
-			  ( presentSubStateList == null)
-	  		presentSubStateList= StateList.initialSentinelState;
-
+		  ///elim  if ///tmp Behave like an OrState by defining the present state.
+		  ///elim( presentSubStateList == null)
+		  ///elim		presentSubStateList= StateList.initialSentinelState;
+		  ///elim
 	  	if  // Report excess state change request.
 				( (requestedSubStateList != null)
 					&& (requestedSubStateList != StateList.initialSentinelState)
@@ -542,11 +534,11 @@ public class StateList extends MutableList implements Runnable {
 	    state sub-classes may override.
 	    */
 	  { 
-		  ////appLogger.debug(
-			////	"StateList.doOnInputsB() of "
-		  ////	+ synchronousInputString 
-			////+ " to"
-		  ////	+ getFormattedStatePathString() );
+		  ///dbg  appLogger.debug(
+			///dbg  	"StateList.doOnInputsB() of "
+		  ///dbg  	+ synchronousInputString 
+			///dbg  + " to"
+		  ///dbg  	+ getFormattedStatePathString() );
 		  setBackgroundColorV( UIColor.runningStateColor );
 			boolean successB= onInputsB();
 			colorBySuccessV( successB );
@@ -910,10 +902,10 @@ class AndOrState extends StateList {
 			if ( isAndStateB() )
 				for (StateList subStateList : theListOfSubStateLists) 
 					{
-	  			  ////appLogger.debug(
-						////		"AndOrState.onEntryV() entering sub"
-						////  	+ subStateList.getFormattedStatePathString()
-						////	);
+	  			  ///dbg  appLogger.debug(
+						///dbg  		"AndOrState.onEntryV() entering sub"
+						///dbg    	+ subStateList.getFormattedStatePathString()
+						///dbg  	);
 		  	  	subStateList.doOnEntryV();
 						}
 			}
@@ -959,9 +951,7 @@ class OrState extends AndOrState { //? StateList {
 
   public StateList initializeWithIOExceptionStateList() throws IOException
     {
-  	  ////super.initializeWithIOExceptionStateList();
   		super.initializeV();
-  		//? presentSubStateList= // Setting non-null to make state act like OrState.
   	  setFirstOrSubStateV( StateList.initialSentinelState );
   	  theColor= UIColor.initialOrStateColor;
   	  return this;
@@ -991,7 +981,6 @@ class AndState extends AndOrState { //? StateList {
 
   public StateList initializeWithIOExceptionStateList() throws IOException
     {
-  	  ////super.initializeWithIOExceptionStateList();
   		super.initializeV();
   	  theColor= UIColor.initialAndStateColor;
   	  return this;

@@ -21,7 +21,7 @@ public class MultiMachineState extends AndState
 		private Unicaster theUniaster;
 
 		/* Sub-state-machines.
-		  Though theHelloMachineState receives input first, 
+		  Though theLinkedMachineState receives input first, 
 		  it normally receives little, 
 		  and only during connection establishment,
 		  so for efficiency it is placed last.
@@ -29,7 +29,7 @@ public class MultiMachineState extends AndState
 		@SuppressWarnings("unused")
 		private LinkMeasurementState theLinkMeasurementState;
 		@SuppressWarnings("unused")
-		private HelloMachineState theHelloMachineState;
+		private LinkedMachineState theLinkedMachineState;
 		
 		MultiMachineState (  // Constructor.
 				Timer theTimer, 
@@ -68,7 +68,7 @@ public class MultiMachineState extends AndState
 	  	  		);
 
 	  	  addStateListV( 
-	  	  		( theHelloMachineState= new HelloMachineState()
+	  	  		( theLinkedMachineState= new LinkedMachineState()
 	  	  			).initializeWithIOExceptionHelloMachineState(
 	  	  					theTimer, 
 			    				theNetcasterInputStream,

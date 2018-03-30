@@ -5,7 +5,7 @@ import static allClasses.Globals.appLogger;
 import java.io.IOException;
 import java.util.Timer;
 
-public class HelloMachineState
+public class LinkedMachineState
 
 	extends OrState
 	
@@ -16,7 +16,8 @@ public class HelloMachineState
 
 	  This class contains a [hierarchical] state machine 
 	  that processes the HELLO handshake that is supposed to happen
-	  at the beginning of a Unicaster connection.
+	  at the beginning of a Unicaster connection,
+	  and the GOODBYE message that ends a Unicaster connection.
 	  */
 
 	{	
@@ -24,16 +25,15 @@ public class HelloMachineState
 		private NetcasterInputStream theNetcasterInputStream;
 		private NetcasterOutputStream theNetcasterOutputStream; 
 		private NamedLong retransmitDelayMsNamedLong;
-		@SuppressWarnings("unused")  ////
-		private Timer theTimer; 
+		private Timer theTimer; ///elim.  use function parameter only. 
 		private Unicaster theUnicaster;
 		
 		// Sub-state-machine instances.
-		private BeforeHelloExchangedState theBeforeHelloExchangedState;
-		private AfterHelloExchangedState theAfterHelloExchangedState;
-		private GoodbyesSentState theGoodbyesSentState;
+		private PreHelloState thePreHelloState;
+		private LinkedState theLinkedState;
+		private PostGoodbyeState thePostGoodbyeState;
 		
-		HelloMachineState(  // Constructor.
+		LinkedMachineState(  // Constructor.
 				)
 			throws IOException
 	  	{
@@ -60,17 +60,14 @@ public class HelloMachineState
 	  		// Adding measurement count.
 
     		// Create and add to DAG the sub-states of this state machine.
-    		initAndAddStateListV(
-    				theBeforeHelloExchangedState= new BeforeHelloExchangedState());
-    		initAndAddStateListV(
-    				theAfterHelloExchangedState= new AfterHelloExchangedState());
-    		initAndAddStateListV(
-    				theGoodbyesSentState= new GoodbyesSentState());
-    		setFirstOrSubStateV( theBeforeHelloExchangedState ); // Initial state.
+    		initAndAddStateListV(thePreHelloState= new PreHelloState());
+    		initAndAddStateListV(theLinkedState= new LinkedState());
+    		initAndAddStateListV(thePostGoodbyeState= new PostGoodbyeState());
+    		setFirstOrSubStateV( thePreHelloState ); // Initial state.
 
 	  	  helloTimerInput= // Creating our timer and linking to this state. 
 			  		new TimerInput(  ///? Move to factory or parent?
-			  				theTimer,
+			  				this.theTimer,
 			  				this
 			  				);
 
@@ -81,7 +78,7 @@ public class HelloMachineState
 	    // This method processes any pending loose ends before shutdown.
 		  {
 	  	  super.finalizeV();
-	  		///elim onInputsB(); // This throws any saved IOException from timer.
+	  		///elim? onInputsB(); // This rethrows any saved IOException from timer.
 	  		helloTimerInput.cancelingV(); // To stop our timer.
 	      }
 
@@ -98,7 +95,7 @@ public class HelloMachineState
 	      It responding to the thread termination signal by
 	      sending GOODBYEs to the peer.
 	      In both cases, it transitions the sub-state machine
-	      to the the GoodbyesSentState.
+	      to the the PostGoodbyeState.
 	     */
 		  {
 	  		boolean progressB= true; // Assume progress will be made.
@@ -107,14 +104,14 @@ public class HelloMachineState
 		  			break beforeReturn; // Return with progress.
 		  		if ( tryInputB("GOODBYE") ) { // Did peer tell us it's disconnecting?
 	          Thread.currentThread().interrupt(); // Yes, initiate our disconnect.
-	        	requestSubStateListV( theGoodbyesSentState );
+	        	requestSubStateListV( thePostGoodbyeState );
 		  			break beforeReturn; // Return with progress.
 		  			}
 		  		if // Process local disconnect request, if present.
 		  		  ( Thread.currentThread().isInterrupted() ) 
 			  		{ // Process local disconnect request.
 		        	Thread.currentThread().interrupt(); // Reestablish interrupted.
-		        	progressB= requestSubStateListB( theGoodbyesSentState );
+		        	progressB= requestSubStateListB( thePostGoodbyeState );
 		        	if (progressB) // Send GOODBYEs if state change was accepted.
 				  			for (int i=0; i<3; i++) { // Send 3 GOODBYE packets.
 				  		    theNetcasterOutputStream.writingTerminatedStringV( "GOODBYE" );
@@ -123,7 +120,7 @@ public class HelloMachineState
 			  			break beforeReturn; // Return with the progress calculated above.
 			  			}
 		  		progressB= false; // If we got this far, everything failed.  Override.
-		  		} /// beforeReturn: 
+		  		} // beforeReturn: 
 		  	return progressB;
 		  	}
 
@@ -138,7 +135,7 @@ public class HelloMachineState
 	  private TimerInput helloTimerInput;
 		private long retryTimeOutMsL;
 
-		private class BeforeHelloExchangedState extends StateList 
+		private class PreHelloState extends StateList 
 
 	  	/* This class exchanges HELLO messages with the remote peer
 	  	  to decide which peer will lead and which will follow.
@@ -151,7 +148,7 @@ public class HelloMachineState
 	    	public void onEntryV() throws IOException
 		  	  // Sends a HELLO and initializes retry timer.
 		  	  {
-		    		newSendHelloV(this);
+		    		sendHelloV(this);
 					  helloTimerInput.scheduleV(retryTimeOutMsL);
 						}
 		
@@ -162,9 +159,9 @@ public class HelloMachineState
 			  	  */
 			  	{
 			  		if // Try to process first HELLO.
-			  		  (newTryProcessingReceivedHelloB(this))
+			  		  (tryProcessingReceivedHelloB(this))
 			  			requestSiblingStateListV( // Success.  Request after-hello state.
-			  					theAfterHelloExchangedState
+			  					theLinkedState
 					  			);
 		      	else if (helloTimerInput.getInputArrivedB()) // Failure.  Time-out? 
 			    		{ // Time-out occurred  Setup for retry.
@@ -178,9 +175,9 @@ public class HelloMachineState
 		  			  	}
 		  	  	}
 	
-		  		} // class BeforeHelloExchangedState
+		  		} // class PreHelloState
 		
-		private class AfterHelloExchangedState extends StateList
+		private class LinkedState extends StateList
 
 	  	/* This state handles the reception of extra HELLO messages,
 	  	  which are HELLO messages received after the first one.
@@ -200,18 +197,18 @@ public class HelloMachineState
 			  	  */
 			  	{
 			  		if // Try to process an extra HELLO.
-			  		  (newTryProcessingReceivedHelloB(this))
+			  		  (tryProcessingReceivedHelloB(this))
 				  		{
 				        appLogger.warning( "Extra HELLO received." );
 				  			if  // If we received a HELLO and 
 				  			  ( sentHelloB^= true ) // we didn't send one last time,
-				  				newSendHelloV(this); // send a HELLO this time.
+				  				sendHelloV(this); // send a HELLO this time.
 				  			}
 					  }
 
-	  		} // class AfterHelloExchangedState
+	  		} // class LinkedState
 		
-		private class GoodbyesSentState extends StateList
+		private class PostGoodbyeState extends StateList
 
 	  	/* This state is a termination state, entered after
 	  	  GOODBYE has been sent and the Unicaster is disconnected.
@@ -219,10 +216,9 @@ public class HelloMachineState
 	  	  */
 
 	  	{
-	  		} // class GoodbyesSentState
+	  		} // class PostGoodbyeState
 
-  	private boolean newTryProcessingReceivedHelloB(
-  			  StateList subStateList) 
+  	private boolean tryProcessingReceivedHelloB(StateList subStateList) 
   			throws IOException
   	  /* This method tries to process the Hello message and its arguments.
   	    Because it is called not by this state, but by sub-states,
@@ -259,14 +255,14 @@ public class HelloMachineState
   		  return isKeyB;
 	  		}
 
-  	private void newSendHelloV(StateList subStateList)
+  	private void sendHelloV(StateList subStateList)
   			throws IOException
   	  /* This method sends a HELLO message to the remote peer
   	    from state subStateList, and logs that it has done so.
   	    */
 	  	{
 		    appLogger.debug( 
-		    		"HelloMachineState.newSendHelloV(..) sending HELLO from"
+		    		"LinkedMachineState.sendHelloV(..) sending HELLO from"
 		  			+ subStateList.getFormattedStatePathString()
 		  			);
 		    theNetcasterOutputStream.writingTerminatedStringV( "HELLO" );
@@ -276,4 +272,4 @@ public class HelloMachineState
 		    theNetcasterOutputStream.sendingPacketV(); // Forcing send.
 	  		}
 
-		} // class HelloMachineState
+		} // class LinkedMachineState

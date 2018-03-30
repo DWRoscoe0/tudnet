@@ -1,6 +1,6 @@
 package allClasses;
 
-import static allClasses.Globals.appLogger;
+///dbg import static allClasses.Globals.appLogger;
 
 import java.awt.Color;
 

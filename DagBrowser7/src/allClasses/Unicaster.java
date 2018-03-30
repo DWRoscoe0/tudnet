@@ -54,7 +54,6 @@ public class Unicaster
       private final UnicasterManager theUnicasterManager;
       private final SubcasterManager theSubcasterManager;
       private final SubcasterQueue subcasterToUnicasterSubcasterQueue;
-      //// @SuppressWarnings("unused") ///elim
   		private Timer theTimer;
   		
   		// Other instance variables.
@@ -63,7 +62,7 @@ public class Unicaster
   		private MultiMachineState theMultiMachineState;
   		//// private IgnoreAllSubstatesState theIgnoreAllSubstatesState;
   		//// private TemporaryMainState theTemporaryMainState;
-  		private HelloMachineState theHelloMachineState;
+  		private LinkedMachineState theLinkedMachineState;
   		
   	public Unicaster(  // Constructor. 
 			  UnicasterManager theUnicasterManager,
@@ -144,15 +143,15 @@ public class Unicaster
 		  	  addB( theIgnoreAllSubstatesState );
 		  	  */   ////
 
-    				theHelloMachineState= new HelloMachineState();
-    				theHelloMachineState.initializeWithIOExceptionHelloMachineState(
+    				theLinkedMachineState= new LinkedMachineState();
+    				theLinkedMachineState.initializeWithIOExceptionHelloMachineState(
 			  				theTimer, 
 			  			  theEpiInputStreamI,
 			  				theEpiOutputStreamO,
 			  				retransmitDelayMsNamedLong,
 			  				this
 			  	  		);
-    				addStateListV( theHelloMachineState );
+    				addStateListV( theLinkedMachineState );
     			} // Create and add actual sub-states.
 
 	  	  //// theMultiMachineState.startRootMachineV(); // Start the multi-machines,
@@ -374,7 +373,7 @@ public class Unicaster
 		class ProcessMessagesToSubcasterState extends StateList 
     {
 
-			public boolean XoverrideProcessInputsB() throws IOException ///rev
+			public boolean XoverrideProcessInputsB() throws IOException ///rev ///elim
 		  	{
 					String keyString=  // Reading message key string
 							getSynchronousInputString();
