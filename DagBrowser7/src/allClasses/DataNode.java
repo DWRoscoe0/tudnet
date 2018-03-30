@@ -107,8 +107,11 @@ public class DataNode
          */
       	{
       	  if ( parentNamedList == null )
-      	  	appLogger.warning(
-      	  			"reportChangeOfSelfV(): parentNamedList == null!");
+      	  	{
+	      	  	///tmp appLogger.warning(
+	      	  	///tmp 		"reportChangeOfSelfV(): parentNamedList == null!");
+      	  	  ///tmp Eventually replace variable or link it to DAG.
+	      	  	}
       	  	else
       			parentNamedList.reportChangeInChildV( this );
       		}

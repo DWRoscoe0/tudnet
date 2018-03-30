@@ -30,7 +30,7 @@ public class Config
 		public static final long systemsMonitorPeriod1000MsL= 1000;
 	
 		public static final long initialRoundTripTime100MsL= 1000;
-		  ///tmp High for testing.  Was 25;
+		  ///tmp High to allow response before time-out for testing.  Was 25;
 	
 		public static final long initialRoundTripTime100MsAsNsL= 
 				initialRoundTripTime100MsL * 1000000;
