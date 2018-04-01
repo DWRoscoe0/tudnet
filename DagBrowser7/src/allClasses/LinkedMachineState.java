@@ -27,7 +27,8 @@ public class LinkedMachineState
 		private NamedLong retransmitDelayMsNamedLong;
 		private Timer theTimer; ///elim.  use function parameter only. 
 		private Unicaster theUnicaster;
-		
+		private StateList[] theLinkedStateLists;
+
 		// Sub-state-machine instances.
 		private PreHelloState thePreHelloState;
 		private LinkedState theLinkedState;
@@ -39,12 +40,13 @@ public class LinkedMachineState
 	  	{
 			  }
 			
-	  public synchronized StateList initializeWithIOExceptionHelloMachineState(
+	  public synchronized StateList initializeWithIOExceptionHelloMachineState(  /////// rename.
 					Timer theTimer, 
 				  NetcasterInputStream theNetcasterInputStream,
 					NetcasterOutputStream theNetcasterOutputStream,
 					NamedLong retransmitDelayMsNamedLong,
-					Unicaster theUnicaster
+					Unicaster theUnicaster,
+					StateList[] theLinkedStateLists
 		  		)
 				throws IOException
 		  {
@@ -56,12 +58,17 @@ public class LinkedMachineState
 			  this.theNetcasterOutputStream= theNetcasterOutputStream;
 			  this.retransmitDelayMsNamedLong= retransmitDelayMsNamedLong;
 				this.theUnicaster= theUnicaster;
+				this.theLinkedStateLists= theLinkedStateLists;
 
 	  		// Adding measurement count.
 
     		// Create and add to DAG the sub-states of this state machine.
+				//// addStateListV()
     		initAndAddStateListV(thePreHelloState= new PreHelloState());
-    		initAndAddStateListV(theLinkedState= new LinkedState());
+    		addStateListV(
+    				(theLinkedState= new LinkedState())
+    				  .initializeWithIOExceptionStateList(this.theLinkedStateLists)
+    				);
     		initAndAddStateListV(thePostGoodbyeState= new PostGoodbyeState());
     		setFirstOrSubStateV( thePreHelloState ); // Initial state.
 
@@ -171,13 +178,13 @@ public class LinkedMachineState
 			      				( retryTimeOutMsL > Config.maxTimeOut5000MsL )
 			    			  	retryTimeOutMsL= Config.maxTimeOut5000MsL;
 			      			}
-		    			  requestSiblingStateListV(this); // Now retry using this state again.
+		    			  requestSiblingStateListV(this); // Now retry, reusing this state.
 		  			  	}
 		  	  	}
 	
 		  		} // class PreHelloState
 		
-		private class LinkedState extends StateList
+		private class LinkedState extends AndState
 
 	  	/* This state handles the reception of extra HELLO messages,
 	  	  which are HELLO messages received after the first one.
@@ -186,6 +193,19 @@ public class LinkedMachineState
 	  	  */
 
 	  	{
+				public StateList initializeWithIOExceptionStateList(
+						StateList[] theLinkedStateLists)
+			    throws IOException
+					{
+						super.initializeWithIOExceptionStateList();
+						
+						for // Add each child state from array.
+						  ( StateList theStateList : theLinkedStateLists ) 
+							addStateListV(theStateList);
+						
+						return this;
+						}
+			
 				private boolean sentHelloB= true; 
 				  // True means previous HELLO was sent, not received.
 

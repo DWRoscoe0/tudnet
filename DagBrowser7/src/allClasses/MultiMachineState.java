@@ -74,7 +74,8 @@ public class MultiMachineState extends AndState
 			    				theNetcasterInputStream,
 			    				theNetcasterOutputStream, 
 			    				retransmitDelayMsNamedLong,
-			    				theUniaster 
+			    				theUniaster,
+			    				null 
 			    				) 
 	  	  		);
 		  	}

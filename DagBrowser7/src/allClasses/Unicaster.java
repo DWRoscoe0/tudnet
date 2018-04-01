@@ -44,6 +44,11 @@ public class Unicaster
     Instead all packets are received by one unconnected DatagramSocket, 
     and those packets are de-multiplexed and forwarded to 
     the appropriate peer thread.
+    
+    ///tmp This class contains a lot of disabled code,
+      versions of which are being reimplemented, 
+      starting with LinkedMachineState.
+      Eventually this disabled code must be all be reimplemented or deleted.
     */
 
   { // Unicaster.
@@ -142,16 +147,28 @@ public class Unicaster
 		  	  addB( theMultiMachineState );
 		  	  addB( theIgnoreAllSubstatesState );
 		  	  */   ////
+  	  	  //// addStateListV( 
+    			
+    			LinkMeasurementState theLinkMeasurementState= 
+    				 new LinkMeasurementState( 
+  		    				theTimer, 
+  		    				theEpiInputStreamI,
+  			  				theEpiOutputStreamO,
+  			  				retransmitDelayMsNamedLong 
+  			      		);
+    			theLinkMeasurementState.initializeWithIOExceptionStateList();
 
-    				theLinkedMachineState= new LinkedMachineState();
-    				theLinkedMachineState.initializeWithIOExceptionHelloMachineState(
-			  				theTimer, 
-			  			  theEpiInputStreamI,
-			  				theEpiOutputStreamO,
-			  				retransmitDelayMsNamedLong,
-			  				this
-			  	  		);
-    				addStateListV( theLinkedMachineState );
+  				theLinkedMachineState= new LinkedMachineState();
+  				theLinkedMachineState.initializeWithIOExceptionHelloMachineState(
+		  				theTimer, 
+		  			  theEpiInputStreamI,
+		  				theEpiOutputStreamO,
+		  				retransmitDelayMsNamedLong,
+		  				this,
+		  				new StateList[] { theLinkMeasurementState }
+		  	  		);
+  				addStateListV( theLinkedMachineState );
+
     			} // Create and add actual sub-states.
 
 	  	  //// theMultiMachineState.startRootMachineV(); // Start the multi-machines,

@@ -94,13 +94,19 @@ public class StateList extends MutableList implements Runnable {
 		
 		It is common for a state-machine to receive input from InputStreams,
 		and InputStreams produce IOExceptions.  These exceptions must be handled.
-		Most state-machine handler methods handle IOExceptions by 
-		declaring that they may throw them.
-		But not all threads that execute state-machine code can handle exceptions.
-		An example of this is the Timer thread.
-		To accommodate such threads, methods are provided that,
-		instead of throwing an IOException, they record the IOException,
-		so it can be re-thrown later by a thread that can handle it,
+		* Most state-machine handler methods handle IOExceptions by 
+			declaring that they may throw them.
+			But not all threads that execute state-machine code can handle exceptions.
+			An example of this is the Timer thread.
+			To accommodate such threads, methods are provided that,
+			instead of throwing an IOException, they record the IOException,
+			so it can be re-thrown later by a thread that can handle it,
+		* Originally it was thought that IOExceptions must be handled
+		  when a state object is constructed, but this is difficult to do.
+		  If initialization is moved from constructors to initialization methods
+		  the handling of exception becomes more manageable.
+		  initializeWithIOExceptionStateList() was created for this purpose.
+		  However it might be possible to eliminate this eventually.
 
 	  When writing state-machine code it is important to distinguish between
 	  * the current State, designated by "this", and
@@ -196,22 +202,30 @@ public class StateList extends MutableList implements Runnable {
 
 	/* Methods used to build state objects. */
 
-  private StateList initializeWithIOExceptionStateList() throws IOException
+  public StateList initializeWithIOExceptionStateList() throws IOException
     /* This method can also be used to initialize this state object.
-      See initializeV() for details.
+      It calls initializeV() and it also returns a reference to this StateList.
+      This method difference from ordinary initialization methods because:
+      * It throws an IOException and makes this clear in its name.
+      * It returns a reference to this object which can be used to
+        simplifier code in the caller.
 
-      This version only calls 
-      the no-IOException superclass initializeV() version.
-      However it still declares that it throws IOException
-      for compatibility with its superclass.
+      ///elim? This method throws IOException.
+        It was originally done for compatibility with its superclass
+        or because it called a method that threw IOException.
+        Now this is apparently no longer true, and
+        many of its callers also do not throw IOException.
+        If this continues to be true as this app matures,
+        remove the throwing of IOException and the inclusion in 
+        the method names. 
      	*/
 	  {
-  	  initializeV(); // Make use of other initialize method.
-	  	return null; //? Shouldn't value be this instead of null?
+  	  initializeV(); // Use the other initialization method to do the work.
+  	  return this;
 	  	}
 
   public void initializeV()
-    /* This method initializes this state object.
+    /* This method initializes this state object and its superclasses.
       It does actions needed when this state object is being built.
       This is not the same as the entryV() method, which
       does actions needed when the associated state-machine state is entered.
@@ -220,7 +234,7 @@ public class StateList extends MutableList implements Runnable {
 			from the sub-class versions of this method.
   		*/
     {
-  	  super.initializeV(); // IOExceptions are not thrown in super-classes.
+  	  super.initializeV();
   	  theColor= UIColor.initialStateColor;
     	}
 
@@ -237,13 +251,12 @@ public class StateList extends MutableList implements Runnable {
       using the initializer with parameters instead of the default one.
      	*/
   	{ 
-  		theSubStateList.initializeWithIOExceptionStateList();
-  	  addStateListV( theSubStateList);
+  	  addStateListV( theSubStateList.initializeWithIOExceptionStateList() );
   	  }
 
   public void addStateListV(StateList theSubStateList)
     /* This method adds one sub-state to this state.
-			It part of the StateList building process.  
+			It is part of the StateList building process.  
       It adds theSubState to the state's sub-state list,
       including setting the parent of the sub-state to be this state.
       */
