@@ -26,8 +26,8 @@ public class AppLog extends EpiThread
 		* As an Exception occurrence reported to the err stream
 		* As an error count later to the log, if possible.
 
-    Logging, an logging intensive parts of the app that uses,
-    can be slow a times because of:
+    When executing logging-intensive parts of the can cause
+    the app to run slowly because of:
     * Anti-malware Service Executable  
     * Microsoft Windows Search Indexer
     * File io.
@@ -53,8 +53,9 @@ public class AppLog extends EpiThread
 	    ///fix? It might fail if multiple app instances try to log simultaneously.
 	      Make log file be share-able in case two app instances
 	      try to write to it at the same time.  See createOrAppendToFileV(..).
-	    The best way to do this might be to give this class to use its own thread
-	    which keeps open log files available for fast logging,
+	    The best way to do this might be to make this class to use 
+	    a separate temporary open log file 
+	    for each thread its own thread for fast logging,
 	    but atomically replaces these and copies/merges them together
 	    periodically for convenient real-time viewing and debugging.
 
@@ -64,6 +65,22 @@ public class AppLog extends EpiThread
 		  * output includes/does-not-include exception
 		  * copy log file output to console, or not, except time-stamp
 		  * re-throw exception and return vs. not returning
+		 
+		///ehn: To limit unwanted logging, it might make sense to have 
+			logging methods associated with classes of interest whose purpose is 
+			to limit logging associated with those classes by instance.
+			Some support code would be required in this class,
+			but much of it would be in the target classes themselves.  For example:
+			* DataNode: logging is controlled by a DataNode variable
+			  in ancestor DataNode Lit instances.  Subclasses:
+				* StateList: logging is controlled by a StateList variable
+				  in ancestor StateLit instances. 
+			* EpiThread: 
+			  * If logging is only for EpiThreads then 
+			    it can be controlled by an EpiThread variable.
+			  * If logging is to work for any Threads then 
+			    it the control variables must be in a table or map.
+ 
     */
 
   {
@@ -77,47 +94,39 @@ public class AppLog extends EpiThread
 
       private static final AppLog theAppLog=  // Internal singleton builder.
         new AppLog();
-    	private volatile boolean thereHasBeenOutputB= false;
 
       static { 
       	theAppLog.setDaemon( true ); // Make thread the daemon type. 
       	theAppLog.start();  // Start the associated thread. 
       	}
-
-      public void run()
-        /* This method closes the file periodically so that
-          new output is visible to developers for debugging and testing.
-         	*/
-      	{
-      	  while (true) {
-    	  	  if ( thePrintWriter != null ) // Temporarily close file if open.
-    	  	  	if (thereHasBeenOutputB) // and there has been new output.
-		  		    	synchronized(this) { // Act only when it's safe. 
-	    	  	  		closeFileV(); // This will flush.
-			  		    	openFileV(); // Prepare for next output.
-					    	  }
-	    	  	  try {
-	    	  	    	Thread.sleep(5000); // 5 second pause.
-			    	  	} catch(InterruptedException ex) {
-			    	  	  Thread.currentThread().interrupt();
-			    	  	} finally {
-			    	  		closeFileV();
-			    	  	}
-      	  	}
-      		}
       
       public static AppLog getAppLog()   // Returns singleton logger.
         { return theAppLog; }
 
     // Variables.
-      private File logFile;  // Name of log file.
+    	
+    	// Logging levels.
+    	public static final int OFF= 0;
+    	public static final int FATAL= 1;
+    	public static final int ERROR= 2;
+    	public static final int WARN= 3;
+    	public static final int INFO= 4;
+    	public static final int DEBUG= 5;
+    	public static final int TRACE= 6;
+
+    	private static int levelLimitI= WARN; // Logging level limit.
+    	////private static int levelLogI; // Logging level from log operations 
+    	
+    	private volatile boolean thereHasBeenOutputB= false;
+    	
+    	private File logFile;  // Name of log file.
       private int theSessionI= 0;  // App session counter.
       private long lastMillisL; // Last time measured.
       private PrintWriter thePrintWriter = null; // non-null means file open.
 
     /* Debug Flags.  These are added or removed as needed during debugging
       when calls to logging methods should be called in 
-      only very limited conditions. 
+      only very limited conditions.  //? 
      	*/
       public static boolean testingForPingB= false;
       private boolean debugEnabledB= true;
@@ -134,6 +143,28 @@ public class AppLog extends EpiThread
           { System.err.println("\nIn AppLog initialization:"+e); }
         }
 
+    public void run()
+      /* This method closes the file periodically so that
+        new output is visible to developers for debugging and testing.
+       	*/
+    	{
+    	  while (true) {
+  	  	  if ( thePrintWriter != null ) // Temporarily close file if open
+  	  	  	if (thereHasBeenOutputB) // and there has been new output.
+	  		    	synchronized(this) { // Act only when it's safe. 
+    	  	  		closeFileV(); // This will cause flush.
+		  		    	openFileV(); // Prepare for next output.
+				    	  }
+    	  	  try {
+    	  	    	Thread.sleep(5000); // 5 second pause.
+		    	  	} catch(InterruptedException ex) {
+		    	  	  Thread.currentThread().interrupt();
+		    	  	} finally {
+		    	  		closeFileV();
+		    	  	}
+    	  	}
+    		}
+    
     public boolean getAndEnableConsoleModeB()
 	    { 
 	    	boolean tmpB= consoleModeB; 
@@ -176,7 +207,9 @@ public class AppLog extends EpiThread
         		); 
         appendEntry( "" ); 
         appendEntry( 
-        		"=================== NEW LOG FILE SESSION ==================="
+        		"=================== LOG FILE SESSION #"
+        		+ theSessionI
+        		+ " BEGINS ==================="
         		);
         appendEntry( "" ); 
         }
@@ -234,6 +267,12 @@ public class AppLog extends EpiThread
         }
         return sessionI;
         }
+
+    public void setLevelLimitV( int theLevelLimitI )
+    	{ levelLimitI= theLevelLimitI; }
+
+    public void setLevelLogV( int theLevelLogI )
+    	{ levelLimitI= theLevelLogI; }
   
     public void debug(String inString)
       /* This method writes a debug String inString to a log entry
@@ -242,7 +281,9 @@ public class AppLog extends EpiThread
         */
       { 
     		if (debugEnabledB) 
-    			{ appendEntry( "DEBUG: "+inString, null, consoleModeB ); }
+    			//{ appendEntry( "DEBUG: "+inString, null, consoleModeB ); }
+    			levelLimitedAppendEntry( 
+    					DEBUG, "DEBUG: "+inString, null, consoleModeB );
         }
 
     public void info(String inString, boolean debugB)
@@ -278,7 +319,8 @@ public class AppLog extends EpiThread
         If consoleB==true then out ismade to console also.
         */
       { 
-        appendEntry( "INFO: "+inString,theThrowable, consoleB ); 
+				levelLimitedAppendEntry( 
+						INFO, "INFO: "+inString, theThrowable, consoleB ); 
         }
     
     public void exceptionWithRethrowV(String inString, Exception e)
@@ -307,7 +349,8 @@ public class AppLog extends EpiThread
         System.err.println(wholeString);  // Send to error console.
         e.printStackTrace();
 
-        appendEntry( wholeString );  // Send to log. 
+        ////appendEntry( wholeString );  // Send to log. 
+        error( wholeString );
         }
     
     public void error(String inString)
@@ -322,9 +365,19 @@ public class AppLog extends EpiThread
         Response is to either retry or terminate.
         */
       { 
-        String wholeString= "ERROR: "+inString; // Build error output string.
-
-        appendEntry( wholeString, theThrowable, true); 
+        ////String wholeString= "ERROR: "+inString; // Build error output string.
+        ////appendEntry( wholeString, theThrowable, true);
+    		levelLimitedAppendEntry( 
+    				ERROR, "ERROR: "+inString, theThrowable, true);
+        }
+    
+    public void warning(String inString)
+      // This method writes a severe error String inString to a log entry.
+      { 
+        ////String wholeString= "WARNING: "+inString;
+        ////appendEntry( wholeString );  // Send to log. 
+    		levelLimitedAppendEntry( 
+    				WARN, "WARN: "+inString, null, true);
         }
     
     public void consoleInfo(String inString, boolean debugB)
@@ -338,21 +391,24 @@ public class AppLog extends EpiThread
 
         appendEntry( wholeString, null, debugB );  // Send one copy to log. 
         }
-  
-    public void warning(String inString)
-      // This method writes a severe error String inString to a log entry.
-      { 
-        String wholeString= "WARNING: "+inString;
-
-        appendEntry( wholeString );  // Send to log. 
-        }
 
     public void appendEntry( String inString )
     	{ appendEntry(inString, null, false); }
 
+    public synchronized void levelLimitedAppendEntry(
+    		int logLevelI, String inString, Throwable theThrowable, boolean consoleB )
+      /* This is like appendEntry(..) except if logs only if
+        logLevelI >= levelLimitI.
+        */
+      {
+      	if ( logLevelI >= levelLimitI )
+      		appendEntry( inString, theThrowable, consoleB );
+      	}
+
     public synchronized void appendEntry(
     		String inString, Throwable theThrowable, boolean consoleB )
       /* This appends to the log file a new log entry line.
+        It could be multiple lines if inString contains newlines.
         It contains the app session number,
         milliseconds since the previous entry, the thread name,
         and finally inString.
@@ -366,7 +422,7 @@ public class AppLog extends EpiThread
     		long nowMillisL= System.currentTimeMillis(); // Saving present time.
 
         String aString= ""; // Initialize String to empty, then append...
-        aString+= AppLog.getAppLog().theSessionI;  //...the session number,...
+        aString+= theSessionI;  //...the session number,...
         aString+= ":";  //...and a separator.
         aString+= String.format(  // ...time since last output,...
         		"%1$5d", nowMillisL - lastMillisL
