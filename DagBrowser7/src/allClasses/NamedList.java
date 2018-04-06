@@ -1,5 +1,7 @@
 package allClasses;
 
+import static allClasses.Globals.appLogger;
+
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
@@ -74,11 +76,46 @@ public class NamedList
 			  	  super.propagateDownV( // Propagate parentNamedList into super-class. 
 			  	  		theDataTreeModel, parentNamedList 
 			  	  		);
-		  		  this.theDataTreeModel=  // Finally, store into this instance
-		  		  		theDataTreeModel; // the TreeModel.
+		  		  this.theDataTreeModel=  // Finally set TreeModel last because
+		  		  		theDataTreeModel; // it is the controlling flag.
 			  		}
 		  	}
 
+	  protected void setAndPropagateDownLogLevelV( int theLogLevelLimitI )
+		  {
+		  	if // Propagate into children only new level limit is different.
+	  	    ( this.theLogLevelLimitI != theLogLevelLimitI )
+			  	{
+			  		for ( DataNode theDataNode : theListOfDataNodes)  // For each child
+			  			theDataNode.setAndPropagateDownLogLevelV( // propagate into child  
+			  					theLogLevelLimitI); // the new level.
+			  	  super.setAndPropagateDownLogLevelV( // Propagate into super-class. 
+		  					theLogLevelLimitI); // the new level.  This eliminates
+  			  	      // the difference which allowed this propagation.
+			  		}
+		  	}
+
+	  protected boolean logB( int theLogLevelI )
+	  	{
+	  		return theLogLevelI >= theLogLevelLimitI;
+	  		}
+
+	  protected void logV( int theLogLevelI, String theLogString )
+	  	{
+		  	logV( theLogLevelI, theLogString, null, false );
+	  		}
+
+	  protected void logV( 
+	  		int theLogLevelI, 
+	  		String theLogString, 
+	  		Throwable theThrowable, 
+	  		boolean consoleB )
+  	{
+  		if ( logB(theLogLevelI) )
+	      appLogger.logLabeledEntryV( 
+	      		theLogLevelI, theLogString, theThrowable, consoleB );
+  	  }
+	  
     protected void reportChangeInChildV( final DataNode childDataNode )
       /* This method reports a change of childDataNode,
         which must be one of this node's children.

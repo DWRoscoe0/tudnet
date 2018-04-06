@@ -49,7 +49,8 @@ public class DataNode
 	  // Instance variables
 	
 			protected NamedList parentNamedList= null; // My parent node. 
-	
+			int theLogLevelLimitI; 
+			
     // Static methods.
 
 		  static DataNode[] emptyListOfDataNodes()
@@ -82,7 +83,7 @@ public class DataNode
 
           }
       
-    // Other instance methods.
+    // Instance methods.
 
   	  protected void propagateDownV(
   	  		DataTreeModel theDataTreeModel, NamedList parentNamedList 
@@ -96,6 +97,11 @@ public class DataNode
   	      */
   		  {
   	  	  this.parentNamedList= parentNamedList;
+  		  	}
+
+  	  protected void setAndPropagateDownLogLevelV( int theLogLevelLimitI )
+  		  {
+  	  	  this.theLogLevelLimitI= theLogLevelLimitI;
   		  	}
 
       protected void reportChangeOfSelfV()
@@ -206,7 +212,7 @@ public class DataNode
         }
 
     public String getValueString( )
-	    /* Returns the value of the DataNode as a String.  
+	    /* Returns the value of the D+ataNode as a String.  
 	      This is meant to be a very short string that
 	      might be appended to the name to represent a title. 
 	      */

@@ -75,7 +75,7 @@ public class Misc
         { 
 	        if ( dbgEventDoneB )
 	          {
-	            appLogger.appendEntry( "Writing Debug.txt disabled." ); 
+	            appLogger.logEntryV( "Writing Debug.txt disabled." ); 
 	            //MetaFileManager.writeDebugFileV( MetaRoot.getRootMetaNode( ));
 	            noOp( );
 	            }
