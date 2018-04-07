@@ -8,6 +8,8 @@ import java.util.List;
 
 import javax.swing.tree.TreePath;
 
+import allClasses.AppLog.LogLevel;
+
 public class NamedList 
 
   extends NamedNonLeaf  // Will override all remaining leaf behavior.
@@ -81,39 +83,39 @@ public class NamedList
 			  		}
 		  	}
 
-	  protected void setAndPropagateDownLogLevelV( int theLogLevelLimitI )
+	  protected void setAndPropagateDownLogLevelV( LogLevel theMaxLogLevel )
 		  {
 		  	if // Propagate into children only new level limit is different.
-	  	    ( this.theLogLevelLimitI != theLogLevelLimitI )
+	  	    ( this.theMaxLogLevel != theMaxLogLevel )
 			  	{
 			  		for ( DataNode theDataNode : theListOfDataNodes)  // For each child
 			  			theDataNode.setAndPropagateDownLogLevelV( // propagate into child  
-			  					theLogLevelLimitI); // the new level.
+			  					theMaxLogLevel); // the new level.
 			  	  super.setAndPropagateDownLogLevelV( // Propagate into super-class. 
-		  					theLogLevelLimitI); // the new level.  This eliminates
+		  					theMaxLogLevel); // the new level.  This eliminates
   			  	      // the difference which allowed this propagation.
 			  		}
 		  	}
 
-	  protected boolean logB( int theLogLevelI )
+	  protected boolean logB( LogLevel theLogLevel )
 	  	{
-	  		return theLogLevelI >= theLogLevelLimitI;
+	  		return ( theLogLevel.compareTo( theMaxLogLevel ) <= 0 ) ;
 	  		}
 
-	  protected void logV( int theLogLevelI, String theLogString )
+	  protected void logV( LogLevel theLogLevel, String theLogString )
 	  	{
-		  	logV( theLogLevelI, theLogString, null, false );
+		  	logV( theLogLevel, theLogString, null, false );
 	  		}
 
 	  protected void logV( 
-	  		int theLogLevelI, 
+	  		LogLevel theLogLevel, 
 	  		String theLogString, 
 	  		Throwable theThrowable, 
 	  		boolean consoleB )
   	{
-  		if ( logB(theLogLevelI) )
+  		if ( logB(theLogLevel) )
 	      appLogger.logLabeledEntryV( 
-	      		theLogLevelI, theLogString, theThrowable, consoleB );
+	      		theLogLevel, theLogString, theThrowable, consoleB );
   	  }
 	  
     protected void reportChangeInChildV( final DataNode childDataNode )

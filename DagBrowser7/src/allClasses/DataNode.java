@@ -7,6 +7,8 @@ import java.awt.Color;
 import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
 
+import allClasses.AppLog.LogLevel;
+
 public class DataNode 
   {
 	
@@ -49,7 +51,7 @@ public class DataNode
 	  // Instance variables
 	
 			protected NamedList parentNamedList= null; // My parent node. 
-			int theLogLevelLimitI; 
+			LogLevel theMaxLogLevel; 
 			
     // Static methods.
 
@@ -99,9 +101,9 @@ public class DataNode
   	  	  this.parentNamedList= parentNamedList;
   		  	}
 
-  	  protected void setAndPropagateDownLogLevelV( int theLogLevelLimitI )
+  	  protected void setAndPropagateDownLogLevelV( LogLevel theLogLevel )
   		  {
-  	  	  this.theLogLevelLimitI= theLogLevelLimitI;
+  	  	  this.theMaxLogLevel= theLogLevel;
   		  	}
 
       protected void reportChangeOfSelfV()

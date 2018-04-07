@@ -8,6 +8,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+import static allClasses.AppLog.LogLevel.*;
+
 public class AppLog extends EpiThread
 
   /* This class is for logging information from an app.  
@@ -106,16 +108,19 @@ public class AppLog extends EpiThread
     // Variables.
     	
     	// Logging levels.
-    	public static final int UNDEFINED= 0;
-    	public static final int OFF= 1;
-    	public static final int FATAL= 2;
-    	public static final int ERROR= 3;
-    	public static final int WARN= 4;
-    	public static final int INFO= 5;
-    	public static final int DEBUG= 6;
-    	public static final int TRACE= 7;
 
-    	private static int defaultMaxLevelI=  // logging level maximum 
+      public enum LogLevel {
+      	UNDEFINED,
+	    	OFF,
+	    	FATAL,
+	    	ERROR,
+	    	WARN,
+	    	INFO,
+	    	DEBUG,
+	    	TRACE
+	  		}	
+
+    	private static LogLevel defaultMaxLogLevel=  // logging level maximum 
     			DEBUG; // and its initial/default value.
     	  // The app may create and use their own maximum variables,
     	  // or set this variable and call methods which use it.
@@ -273,8 +278,8 @@ public class AppLog extends EpiThread
         return sessionI;
         }
 
-    public void setLevelLimitV( int theLevelLimitI )
-    	{ defaultMaxLevelI= theLevelLimitI; }
+    public void setLevelLimitV( LogLevel limitLogLevel )
+    	{ defaultMaxLogLevel= limitLogLevel; }
   
     public void debug(String inString)
       /* This method writes a debug String inString to a log entry
@@ -405,36 +410,36 @@ public class AppLog extends EpiThread
 
     //////// Log methods.  Some are still called Append and include Entry.  
 
-    public synchronized boolean testLogB( int logLevelI)
+    public synchronized boolean testLogB( LogLevel theLogLevel )
       /* This method returns true if logging at logLevelI is okay,
         false otherwise..
         */
       {
-      	return ( logLevelI <= defaultMaxLevelI );
+      	return ( theLogLevel.compareTo( defaultMaxLogLevel ) <= 0 );
       	}
 
     public synchronized void logGuardedEntryV(
-    		int logLevelI, String inString, Throwable theThrowable, boolean consoleB )
+    		LogLevel theLogLevel, String inString, Throwable theThrowable, boolean consoleB )
       /* This is like logEntry(..) except 
         it produces a log entry only if logLevelI is okay.
         */
       {
-      	if ( testLogB(logLevelI) )
+      	if ( testLogB(theLogLevel) )
       		logEntryV( inString, theThrowable, consoleB );
       	}
 
     public synchronized void logGuardedLabeledEntryV(
-    		int logLevelI, String inString, Throwable theThrowable, boolean consoleB )
+    		LogLevel theLogLevel, String inString, Throwable theThrowable, boolean consoleB )
       /* This is like logLabeledEntryV(..) except 
         it produces a log entry only if logLevelI is okay.
         */
       {
-      	if ( testLogB(logLevelI) )
-      		logLabeledEntryV( logLevelI, inString, theThrowable, consoleB );
+      	if ( testLogB(theLogLevel) )
+      		logLabeledEntryV( theLogLevel, inString, theThrowable, consoleB );
       	}
 
     public synchronized void logLabeledEntryV(
-    		int levelI, String inString, Throwable theThrowable, boolean consoleB )
+    		LogLevel theLogLevel, String inString, Throwable theThrowable, boolean consoleB )
       /* This is like logEntry(..) except that 
         the requested log level levelI is prepended to inString.
         Every call produces a log entry.
@@ -442,7 +447,7 @@ public class AppLog extends EpiThread
         It is assumed that any desired blocking has already been done.
         */
       { 
-	    	logEntryV( levelI + " " + inString, theThrowable, consoleB );
+	    	logEntryV( theLogLevel + " " + inString, theThrowable, consoleB );
 	      }
 
       public synchronized void logEntryV( ////// "Entry" redundant?
