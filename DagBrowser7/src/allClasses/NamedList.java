@@ -58,9 +58,7 @@ public class NamedList
             );  // the input array.
         }
 
-	  protected void propagateDownV( 
-	  		DataTreeModel theDataTreeModel, NamedList parentNamedList 
-	  		)
+	  protected void propagateIntoSubtreeV( DataTreeModel theDataTreeModel )
 	    /* This method propagates into this node and any of its descendants
 	      which need it. 
 	      */
@@ -70,28 +68,27 @@ public class NamedList
 		  	  	&& ( this.theDataTreeModel == null )  // our TreeModel is null.
 		  	  	)
 			  	{
-			  		for ( DataNode theDataNode : theListOfDataNodes)  // For each child
-			  			theDataNode.propagateDownV(  // recursively propagate into child  
-			  					theDataTreeModel, // the TreeModel 
-			  					this  // and this node as child's parent.
+			  		for ( DataNode theDataNode : theListOfDataNodes) // For each child
+			  			theDataNode.propagateIntoSubtreeV(  // recursively propagate
+			  					theDataTreeModel // the TreeModel 
 			  					);
-			  	  super.propagateDownV( // Propagate parentNamedList into super-class. 
-			  	  		theDataTreeModel, parentNamedList 
+			  	  super.propagateIntoSubtreeV( // Propagate List into super-class. 
+			  	  		theDataTreeModel 
 			  	  		);
 		  		  this.theDataTreeModel=  // Finally set TreeModel last because
 		  		  		theDataTreeModel; // it is the controlling flag.
 			  		}
 		  	}
 
-	  protected void setAndPropagateDownLogLevelV( LogLevel theMaxLogLevel )
+	  protected void setAndPropagateDownLogMaxLevelV( LogLevel theMaxLogLevel )
 		  {
 		  	if // Propagate into children only new level limit is different.
 	  	    ( this.theMaxLogLevel != theMaxLogLevel )
 			  	{
 			  		for ( DataNode theDataNode : theListOfDataNodes)  // For each child
-			  			theDataNode.setAndPropagateDownLogLevelV( // propagate into child  
+			  			theDataNode.setAndPropagateDownLogMaxLevelV( // propagate  
 			  					theMaxLogLevel); // the new level.
-			  	  super.setAndPropagateDownLogLevelV( // Propagate into super-class. 
+			  	  super.setAndPropagateDownLogMaxLevelV( // Propagate into super-class. 
 		  					theMaxLogLevel); // the new level.  This eliminates
   			  	      // the difference which allowed this propagation.
 			  		}

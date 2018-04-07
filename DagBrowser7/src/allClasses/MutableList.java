@@ -1,5 +1,7 @@
 package allClasses;
 
+import javax.swing.SwingUtilities;
+
 //import static allClasses.Globals.appLogger;
 
 public class MutableList extends NamedList
@@ -71,11 +73,11 @@ public class MutableList extends NamedList
 		      It adds childDataNode at index position indexI,
 		      or the end of the list if indexI<0. 
 
-		      It also informs theDataTreeModel about any insertion
+		      If childDataNode is actually added then
+		      it also informs theDataTreeModel about it
 		      so that TreeModelListeners can be notified.
-		      
-		      It does all this in a thread-safe manner using 
-		      safelyReportingChangeV(..).
+		      These notifications are done in a thread-safe manner 
+		      on the EDT using SwingUtilities.invokeAndWait(Runnable).
 		      
 		      ///org Replace addSuccessB array with a MutableBoolean.
 	  	    */
@@ -97,16 +99,9 @@ public class MutableList extends NamedList
       		    	  	int insertAtI= (indexI < 0) ? // Converting index < 0 
 			              		theListOfDataNodes.size() : // to mean end of list,
 			              	  indexI; // otherwise use raw index.
-		                addWithDownPropagationV( insertAtI, childDataNode );
-		                if // Notify TreeModel only if there is one referenced. 
-		                  ( theDataTreeModel != null ) {
-			                theDataTreeModel.reportingInsertV( 
-			    		      		parentDataNode, insertAtI, childDataNode 
-			    		      		);
-			                theDataTreeModel.reportingChangeV( 
-			    		      		parentDataNode 
-			    		      		); // In case # of children changes parent's appearance.
-		                	}
+		                addPhysicallyV( insertAtI, childDataNode );
+		                notifyGUITreeModelAboutAdditionV(
+		                		parentDataNode, insertAtI, childDataNode );
     		    	  		addSuccessB[0]= true; // Returning add success.
     		    	  	  }
                 }
@@ -115,7 +110,21 @@ public class MutableList extends NamedList
 		  		return addSuccessB[0]; // Returning whether add succeeded.
 		      }
 
-		  public void addWithDownPropagationV(
+      private void notifyGUITreeModelAboutAdditionV(
+      		DataNode parentDataNode, int insertAtI, DataNode childDataNode )
+		    {
+		      if // Notify TreeModel only if there is one referenced. 
+		        ( theDataTreeModel != null ) {
+		        theDataTreeModel.reportingInsertV( 
+		      		parentDataNode, insertAtI, childDataNode 
+		      		); // Done for showing the addition.
+		        theDataTreeModel.reportingChangeV( 
+		      		parentDataNode 
+		      		); // Done in case # of children changes parent's appearance.
+		      	}
+		      }
+
+		  private void addPhysicallyV(
 		  		final int indexI, final DataNode childDataNode 
 		  		)
 		    /* This method adds childDataNode to this nodes list of children,
@@ -125,12 +134,15 @@ public class MutableList extends NamedList
 		      * this NamedList, as the child's parent node.
 		      */
 		    {
-		  		childDataNode.propagateDownV( theDataTreeModel, this );
-          theListOfDataNodes.add( indexI, childDataNode );
+		  		childDataNode.propagateIntoSubtreeV( theDataTreeModel );
+		  		
+		  		childDataNode.setParentToV( this ); // Link child to this node.
+          theListOfDataNodes.add( // Link this node to child. 
+          		indexI, childDataNode );
 		      }
 	
 		  public synchronized boolean removeB( final DataNode childDataNode )
-		    /* If childDataNode not in the List 
+		    /* If childDataNode is not in the List 
 		      then it does nothing and returns false,
 		      otherwise it removes childDataNode from the List and returns true. 
 
@@ -145,7 +157,7 @@ public class MutableList extends NamedList
 		    {
 		  	  final DataNode parentDataNode= this;
 		  		final boolean removedB[]= new boolean[1]; // Array element for result.
-		  		EDTUtilities.runOrInvokeAndWaitV( // Queuing removal of Unicaster from List.
+		  		EDTUtilities.runOrInvokeAndWaitV( // Queuing removal of Unicaster.
         		new Runnable() {
               @Override  
               public void run() { 
@@ -164,7 +176,7 @@ public class MutableList extends NamedList
 	    				  		theListOfDataNodes.remove( indexI );
 	    				      theDataTreeModel.reportingRemoveV( 
 	    				      	parentDataNode, indexI, childDataNode 
-	    				      	);
+	    				      	); // To actually remove child from display.
 		                theDataTreeModel.reportingChangeV( 
 		    		      		parentDataNode 
 		    		      		); // In case # of children changes parent's appearance.

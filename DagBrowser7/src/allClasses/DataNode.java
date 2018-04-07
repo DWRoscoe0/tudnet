@@ -1,6 +1,6 @@
 package allClasses;
 
-///dbg import static allClasses.Globals.appLogger;
+import static allClasses.Globals.appLogger;
 
 import java.awt.Color;
 
@@ -51,7 +51,7 @@ public class DataNode
 	  // Instance variables
 	
 			protected NamedList parentNamedList= null; // My parent node. 
-			LogLevel theMaxLogLevel; 
+			protected LogLevel theMaxLogLevel; 
 			
     // Static methods.
 
@@ -87,13 +87,20 @@ public class DataNode
       
     // Instance methods.
 
-  	  protected void propagateDownV(
-  	  		DataTreeModel theDataTreeModel, NamedList parentNamedList 
-  	  		)
+  	  protected void propagateIntoSubtreeV( DataTreeModel theDataTreeModel )
+  	    /* This method is called when a DataNode is added to a NamedList
+  	      or one of its subclasses.  This method ignores theDataTreeModel, 
+  	      because this is a leaf node and leaves it don't need it.
+  	      So the propigation ends here.
+	        List nodes that do need it will override this method.
+	        See NamedList.
+  	      */
+  		  {
+  		  	}
+
+  	  protected void setParentToV( NamedList parentNamedList )
   	    /* This method is called when a DataNode is added to a NamedList
   	      or one of its subclasses.  This method:
-  	      * Ignores theDataTreeModel, because leaf nodes don't need it.
-  	        List nodes that do need it will override this method.
   	      * Stores parentNamedList, because every node has a parent
   	        and needs access to it.
   	      */
@@ -101,9 +108,9 @@ public class DataNode
   	  	  this.parentNamedList= parentNamedList;
   		  	}
 
-  	  protected void setAndPropagateDownLogLevelV( LogLevel theLogLevel )
+  	  protected void setAndPropagateDownLogMaxLevelV( LogLevel theMaxLogLevel )
   		  {
-  	  	  this.theMaxLogLevel= theLogLevel;
+  	  	  this.theMaxLogLevel= theMaxLogLevel;
   		  	}
 
       protected void reportChangeOfSelfV()
@@ -116,9 +123,9 @@ public class DataNode
       	{
       	  if ( parentNamedList == null )
       	  	{
-	      	  	///tmp appLogger.warning(
-	      	  	///tmp 		"reportChangeOfSelfV(): parentNamedList == null!");
-      	  	  ///tmp Eventually replace variable or link it to DAG.
+	      	  	appLogger.debug(
+	      	  	"reportChangeOfSelfV(): parentNamedList == null!");
+      	  	  /// Eventually replace variable or link it to DAG.
 	      	  	}
       	  	else
       			parentNamedList.reportChangeInChildV( this );
