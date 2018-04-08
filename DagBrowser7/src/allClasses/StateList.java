@@ -1,6 +1,7 @@
 package allClasses;
 
 import static allClasses.Globals.appLogger;
+import static allClasses.AppLog.LogLevel.*;
 
 import java.awt.Color;
 import java.io.IOException;
@@ -438,8 +439,9 @@ public class StateList extends MutableList implements Runnable {
 		  	Maybe it should be called when andStateOnInputsB() is called?
 		  */
 		{ 
-		  appLogger.debug(
-	  			"StateList.doOnEntryV() to"+ getFormattedStatePathString() );
+		  ////appLogger.debug(
+			if ( logB(TRACE)) logV( 
+					TRACE, "StateList.doOnEntryV() to"+ getFormattedStatePathString() );
 			setBackgroundColorV( UIColor.runningStateColor );
 			onEntryV(); 
 			}
@@ -470,6 +472,8 @@ public class StateList extends MutableList implements Runnable {
 	    */
 	  { 
 			setBackgroundColorV( UIColor.inactiveStateColor );
+			if ( logB(TRACE)) logV( 
+					TRACE, "StateList.onExitV() from"+ getFormattedStatePathString() );
 			}
 
 

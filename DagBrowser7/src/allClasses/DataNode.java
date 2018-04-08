@@ -1,13 +1,12 @@
 package allClasses;
 
 import static allClasses.Globals.appLogger;
+import allClasses.AppLog.LogLevel;
 
 import java.awt.Color;
 
 import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
-
-import allClasses.AppLog.LogLevel;
 
 public class DataNode 
   {
@@ -51,7 +50,7 @@ public class DataNode
 	  // Instance variables
 	
 			protected NamedList parentNamedList= null; // My parent node. 
-			protected LogLevel theMaxLogLevel; 
+			protected LogLevel theMaxLogLevel= AppLog.defaultMaxLogLevel;
 			
     // Static methods.
 
@@ -108,11 +107,6 @@ public class DataNode
   	  	  this.parentNamedList= parentNamedList;
   		  	}
 
-  	  protected void setAndPropagateDownLogMaxLevelV( LogLevel theMaxLogLevel )
-  		  {
-  	  	  this.theMaxLogLevel= theMaxLogLevel;
-  		  	}
-
       protected void reportChangeOfSelfV()
         /* This method reports a change of this node.
           It does this by calling a parent method,
@@ -131,6 +125,63 @@ public class DataNode
       			parentNamedList.reportChangeInChildV( this );
       		}
 
+      // Customized logging methods.
+
+  	  protected void propagateIntoSubtreeV( LogLevel theMaxLogLevel )
+  	    /* This and its subclass overrides are used to propagate
+  	      maximum LogLevel values into subtrees for 
+  	      customized DataNode logging.
+  	      */
+  		  {
+  	  	  this.theMaxLogLevel= theMaxLogLevel;
+  		  	}
+
+  	  protected boolean logB( LogLevel theLogLevel )
+  	  	{
+  	  		return ( theLogLevel.compareTo( theMaxLogLevel ) <= 0 ) ;
+  	  		}
+
+  	  protected boolean logB( LogLevel theLogLevel, String theLogString )
+  	  	{
+  		  	return logB( theLogLevel, theLogString, null, false );
+  	  		}
+
+  	  protected void logV( LogLevel theLogLevel, String theLogString )
+  	  	{
+  		  	logV( theLogLevel, theLogString, null, false );
+  	  		}
+
+  	  protected boolean logB( 
+  	  		LogLevel theLogLevel, 
+  	  		String theLogString, 
+  	  		Throwable theThrowable, 
+  	  		boolean consoleB )
+  	    /* This method logs if theLogLevel is 
+  	      lower than or equal to maxLogLevel.
+  	      It returns true if it logged, false otherwise.
+  	     	*/
+  	    {
+  	  		boolean loggingB= logB(theLogLevel);
+  	  		if ( loggingB )
+  		      appLogger.logLabeledEntryV( 
+  		      		theLogLevel, theLogString, theThrowable, consoleB );
+  	  		return loggingB;
+  	  	  }
+
+  	  protected void logV( 
+  	  		LogLevel theLogLevel, 
+  	  		String theLogString, 
+  	  		Throwable theThrowable, 
+  	  		boolean consoleB )
+  	    /* This method logs unconditionally. */
+  	    {
+		      appLogger.logLabeledEntryV( 
+		      		theLogLevel, theLogString, theThrowable, consoleB );
+  	  	  }
+
+  	  
+  	  // Other instance methods.
+  	  
       public String toString()
         // Returns a meaningful and useful String representation.
         { 

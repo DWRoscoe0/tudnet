@@ -1,6 +1,6 @@
 package allClasses;
 
-import static allClasses.Globals.appLogger;
+//// import static allClasses.Globals.appLogger;
 
 import java.util.Arrays;
 import java.util.ArrayList;
@@ -59,8 +59,8 @@ public class NamedList
         }
 
 	  protected void propagateIntoSubtreeV( DataTreeModel theDataTreeModel )
-	    /* This method propagates into this node and any of its descendants
-	      which need it. 
+	    /* This method propagates theDataTreeModel into 
+	      this node and any of its descendants which need it. 
 	      */
 		  {
 		  	if // Propagate into children DataTreeModel only if 
@@ -80,44 +80,27 @@ public class NamedList
 			  		}
 		  	}
 
-	  protected void setAndPropagateDownLogMaxLevelV( LogLevel theMaxLogLevel )
+	  protected void propagateIntoSubtreeV( LogLevel theMaxLogLevel )
+	    /* This method propagates theMaxLogLevel into 
+		    this node and any of its descendants which need it. 
+		    */
 		  {
-		  	if // Propagate into children only new level limit is different.
+		  	if // Propagate into children only if new level limit is different.
 	  	    ( this.theMaxLogLevel != theMaxLogLevel )
 			  	{
 			  		for ( DataNode theDataNode : theListOfDataNodes)  // For each child
-			  			theDataNode.setAndPropagateDownLogMaxLevelV( // propagate  
+			  			theDataNode.propagateIntoSubtreeV( // recursively propagate  
 			  					theMaxLogLevel); // the new level.
-			  	  super.setAndPropagateDownLogMaxLevelV( // Propagate into super-class. 
+			  	  super.propagateIntoSubtreeV( // Propagate into super-class. 
 		  					theMaxLogLevel); // the new level.  This eliminates
-  			  	      // the difference which allowed this propagation.
+  			  	      // the difference LogLevel which allowed propagation.
 			  		}
 		  	}
-
-	  protected boolean logB( LogLevel theLogLevel )
-	  	{
-	  		return ( theLogLevel.compareTo( theMaxLogLevel ) <= 0 ) ;
-	  		}
-
-	  protected void logV( LogLevel theLogLevel, String theLogString )
-	  	{
-		  	logV( theLogLevel, theLogString, null, false );
-	  		}
-
-	  protected void logV( 
-	  		LogLevel theLogLevel, 
-	  		String theLogString, 
-	  		Throwable theThrowable, 
-	  		boolean consoleB )
-  	{
-  		if ( logB(theLogLevel) )
-	      appLogger.logLabeledEntryV( 
-	      		theLogLevel, theLogString, theThrowable, consoleB );
-  	  }
 	  
     protected void reportChangeInChildV( final DataNode childDataNode )
       /* This method reports a change of childDataNode,
-        which must be one of this node's children.
+        which must be one of this node's children, to theDataTreeModel,
+        which will update the user display to show the change if needed.
         */
     	{
     	  final DataNode parentDataNode= this;
@@ -136,6 +119,7 @@ public class NamedList
 		        
     		}
 
+	  
 	  // interface DataNode methods.
  
     public DataNode getChild( int indexI ) 

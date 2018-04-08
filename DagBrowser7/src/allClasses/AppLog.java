@@ -42,10 +42,12 @@ public class AppLog extends EpiThread
     which doesn't close the log file after every log entry
     but buffered mode is still a bit of a kludge.
 
+		///org: Rename logging methods to be similar to ones in DataNode.
+
     ///enh: Begin the transition to a logger 
       that doesn't need to be a static singleton and can be injected.
       Allow both static and injected-non-static, at least for a while.
-      
+
     ///fix? MakeMultiprocessSafe: 
 	    ///fix: When the presently kludgy buffered mode is enabled,
 	      interleaving of log entries might not work correctly
@@ -120,12 +122,11 @@ public class AppLog extends EpiThread
 	    	TRACE
 	  		}	
 
-    	private static LogLevel defaultMaxLogLevel=  // logging level maximum 
-    			DEBUG; // and its initial/default value.
+    	public static final LogLevel defaultMaxLogLevel= INFO;
+    	private static LogLevel maxLogLevel= defaultMaxLogLevel;
     	  // The app may create and use their own maximum variables,
     	  // or set this variable and call methods which use it.
     	  // Calls to those methods must use this level or less for log output.
-    	////private static int levelLogI; // Logging level from log operations 
     	
     	private volatile boolean thereHasBeenOutputB= false;
     	
@@ -279,7 +280,7 @@ public class AppLog extends EpiThread
         }
 
     public void setLevelLimitV( LogLevel limitLogLevel )
-    	{ defaultMaxLogLevel= limitLogLevel; }
+    	{ maxLogLevel= limitLogLevel; }
   
     public void debug(String inString)
       /* This method writes a debug String inString to a log entry
@@ -384,10 +385,7 @@ public class AppLog extends EpiThread
     public void warning(String inString)
       // This method writes a severe error String inString to a log entry.
       { 
-        ////String wholeString= "WARNING: "+inString;
-        ////logEntry( wholeString );  // Send to log. 
-    		logGuardedEntryV( 
-    				WARN, "WARN: "+inString, null, true);
+    		logGuardedLabeledEntryV( WARN, inString, null, false );
         }
     
     public void consoleInfo(String inString, boolean debugB)
@@ -415,7 +413,7 @@ public class AppLog extends EpiThread
         false otherwise..
         */
       {
-      	return ( theLogLevel.compareTo( defaultMaxLogLevel ) <= 0 );
+      	return ( theLogLevel.compareTo( maxLogLevel ) <= 0 );
       	}
 
     public synchronized void logGuardedEntryV(
@@ -461,6 +459,7 @@ public class AppLog extends EpiThread
           ///enh Replace String appends by StringBuilder appends, for speed?
           ///enh Add stackTraceB which displays stack,
             on console and in log, if true.
+          ///enh Add theLogLevel argument and put it before Thread.
           */
         { 
 	    		long nowMillisL= System.currentTimeMillis(); // Saving present time.

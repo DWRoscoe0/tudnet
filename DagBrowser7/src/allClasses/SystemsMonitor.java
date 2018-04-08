@@ -1,6 +1,7 @@
 package allClasses;
 
 import static allClasses.Globals.appLogger;
+import static allClasses.AppLog.LogLevel.*;
 
 //import static allClasses.Globals.*;  // appLogger;
 
@@ -89,8 +90,8 @@ public class SystemsMonitor
 
     		createAndAddChildrenV();  // Do non-dependency-injection initialization.
 
-  		  measurementTimeMsL= // Setting time do first measurement... 
-  		  		System.currentTimeMillis(); //  immediately.
+  		  measurementTimeMsL= // Setting time to do first measurement... 
+  		  		System.currentTimeMillis(); //  to be immediately.
         while // Repeating measurement and display... 
           ( !EpiThread.exitingB() ) // until termination is requested.
           {
@@ -215,7 +216,6 @@ public class SystemsMonitor
       /* This method is called by the binary search routine.
         It displays cpuSpeedCountL, and measures and returns
         the number of ns needed to count to cpuSpeedCountL.
-        
        */
 	    {
 	    	cpuSpeedNamedLong.setValueL(  // Update display of CPU speed. 
@@ -312,7 +312,10 @@ public class SystemsMonitor
 	  			reversedTimeMsNamedLong.addDeltaAndLogNonzeroL( -shiftInTimeMsL );
 	  		measurementTimeMsL+= // Adjusting base time for discontinuity, if any.
 	  				shiftInTimeMsL; 
-	  		
+
+    		//// appLogger.info(
+	  		logB( DEBUG, //// INFO,
+    				"SystemsMonitor.waitForNextMeasurementTimeV() before wait." );
   			theLockAndSignal.waitingForInterruptOrDelayOrNotificationE(
   					theLockAndSignal.periodCorrectedDelayMsL( 
   							measurementTimeMsL, periodMsL 

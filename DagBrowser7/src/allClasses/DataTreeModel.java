@@ -509,13 +509,7 @@ public class DataTreeModel
       	  		theHashMap.get( targetDataNode );
 	        if ( targetTreePath == null ) // Doing a search if not in cache.
 		        {
-	        		////appLogger.warning( 
-			        ////		"DataTreeModel.translatingToTreePath( "
-			        ////		+ targetDataNode 
-			        ////	+ " ), cache miss." 
-			        ////		);
-			        targetTreePath= // Generating path using a search.   ///doc 
-			        		///elim searchingForTreePath( targetDataNode );
+			        targetTreePath= // Building a path by tracing ancestors nodes. ///doc 
 			        		buildTreePath( targetDataNode );
 			        if ( targetTreePath != null ) // Caching build result, if any.
 			        	theHashMap.put( targetDataNode, targetTreePath );
@@ -559,7 +553,7 @@ public class DataTreeModel
           return theTreePath;
           }
 
-      @SuppressWarnings("unused") ///elim
+      @SuppressWarnings("unused") ///elim No longer used.
 			private TreePath searchingForTreePath( DataNode targetDataNode )
         /*  ///elim This method is not needed anymore, because:
           * It might never be called anymore because
