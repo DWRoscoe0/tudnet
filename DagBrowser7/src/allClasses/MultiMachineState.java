@@ -69,7 +69,7 @@ public class MultiMachineState extends AndState
 
 	  	  addStateListV( 
 	  	  		( theLinkedMachineState= new LinkedMachineState()
-	  	  			).initializeWithIOExceptionHelloMachineState(
+	  	  			).initializeWithIOExceptionLinkedMachineState(
 	  	  					theTimer, 
 			    				theNetcasterInputStream,
 			    				theNetcasterOutputStream, 

@@ -313,8 +313,7 @@ public class SystemsMonitor
 	  		measurementTimeMsL+= // Adjusting base time for discontinuity, if any.
 	  				shiftInTimeMsL; 
 
-    		//// appLogger.info(
-	  		logB( DEBUG, //// INFO,
+	  		logB( DEBUG,
     				"SystemsMonitor.waitForNextMeasurementTimeV() before wait." );
   			theLockAndSignal.waitingForInterruptOrDelayOrNotificationE(
   					theLockAndSignal.periodCorrectedDelayMsL( 

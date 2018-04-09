@@ -159,7 +159,7 @@ public class Unicaster
     			theLinkMeasurementState.initializeWithIOExceptionStateList();
 
   				theLinkedMachineState= new LinkedMachineState();
-  				theLinkedMachineState.initializeWithIOExceptionHelloMachineState(
+  				theLinkedMachineState.initializeWithIOExceptionLinkedMachineState(
 		  				theTimer, 
 		  			  theEpiInputStreamI,
 		  				theEpiOutputStreamO,

@@ -13,6 +13,7 @@ import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeModel;
 
+import static allClasses.AppLog.LogLevel.*;
 import static allClasses.Globals.*;  // appLogger;
 
 public class DataTreeModel
@@ -534,7 +535,7 @@ public class DataTreeModel
             See its only caller, translatingToTreePath(..)
           */
         {
-      		////appLogger.warning( "DataTreeModel.buildTreePath(..) called.");
+      		appLogger.logV(TRACE, "DataTreeModel.buildTreePath(..) called.");
       	  Deque<DataNode> stackDeque= new ArrayDeque<DataNode>(10); 
       	  while (true) { // Stack all nodes in path to root.
       	  	if ( theDataNode == null ) break;

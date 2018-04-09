@@ -1,4 +1,3 @@
-
 package allClasses;
 
 import java.io.BufferedWriter;
@@ -42,9 +41,7 @@ public class AppLog extends EpiThread
     which doesn't close the log file after every log entry
     but buffered mode is still a bit of a kludge.
 
-		///org: Rename logging methods to be similar to ones in DataNode.
-
-    ///enh: Begin the transition to a logger 
+		///enh: Begin the transition to a logger 
       that doesn't need to be a static singleton and can be injected.
       Allow both static and injected-non-static, at least for a while.
 
@@ -75,15 +72,15 @@ public class AppLog extends EpiThread
 			to limit logging associated with those classes by instance.
 			Some support code would be required in this class,
 			but much of it would be in the target classes themselves.  For example:
-			* DataNode: logging is controlled by a DataNode variable
+			* DataNode: done.
+			  logging is controlled by a DataNode LogLevel variable
 			  in ancestor DataNode Lit instances.  Subclasses:
-				* StateList: logging is controlled by a StateList variable
-				  in ancestor StateLit instances. 
 			* EpiThread: 
 			  * If logging is only for EpiThreads then 
 			    it can be controlled by an EpiThread variable.
 			  * If logging is to work for any Threads then 
-			    it the control variables must be in a table or map.
+			    it the control variables must be in a table or map,
+			    probably in this class.
  
     */
 
@@ -213,16 +210,16 @@ public class AppLog extends EpiThread
         theSessionI= getSessionI();  // Get app session number.
         if (theSessionI == 0)  // If this is session 0...
           logFile.delete();  //...then empty log file by deleting.
-        logEntryV( 
+        logV( 
         		"<--< This is an absolute time.  Later ones are relative times."
         		); 
-        logEntryV( "" ); 
-        logEntryV( 
+        logV( "" ); 
+        logV( 
         		"=================== LOG FILE SESSION #"
         		+ theSessionI
         		+ " BEGINS ==================="
         		);
-        logEntryV( "" ); 
+        logV( "" ); 
         }
   
     private int getSessionI()
@@ -289,9 +286,7 @@ public class AppLog extends EpiThread
         */
       { 
     		if (debugEnabledB) 
-    			//{ logEntry( "DEBUG: "+inString, null, consoleModeB ); }
-    			logGuardedEntryV( 
-    					DEBUG, "DEBUG: "+inString, null, consoleModeB );
+    			logB( DEBUG, inString, null, consoleModeB );
         }
 
     public void info(String inString, boolean debugB)
@@ -327,11 +322,7 @@ public class AppLog extends EpiThread
         If consoleB==true then out ismade to console also.
         */
       { 
-				////logGuardedLabeledEntryV( 
-    		////		INFO, inString, theThrowable, consoleB );
-				logGuardedEntryV( 
-    				INFO, "INFO: "+inString, theThrowable, consoleB );
-        //////// convert to use self-labeling and testing methods.
+				logB( INFO, inString, theThrowable, consoleB );
         }
     
     public void exceptionWithRethrowV(String inString, Exception e)
@@ -360,7 +351,6 @@ public class AppLog extends EpiThread
         System.err.println(wholeString);  // Send to error console.
         e.printStackTrace();
 
-        ////logEntry( wholeString );  // Send to log. 
         error( wholeString );
         }
     
@@ -376,16 +366,13 @@ public class AppLog extends EpiThread
         Response is to either retry or terminate.
         */
       { 
-        ////String wholeString= "ERROR: "+inString; // Build error output string.
-        ////logEntry( wholeString, theThrowable, true);
-    		logGuardedEntryV( 
-    				ERROR, "ERROR: "+inString, theThrowable, true);
+    		logB( ERROR, inString, theThrowable, true);
         }
     
     public void warning(String inString)
       // This method writes a severe error String inString to a log entry.
       { 
-    		logGuardedLabeledEntryV( WARN, inString, null, false );
+    		logB( WARN, inString, null, false );
         }
     
     public void consoleInfo(String inString, boolean debugB)
@@ -397,103 +384,124 @@ public class AppLog extends EpiThread
 
         System.err.println(wholeString);  // Send one copy to error console.
 
-        logEntryV( wholeString, null, debugB );  // Send one copy to log. 
+        logV( null, wholeString, null, debugB );  // Send one copy to log. 
         }
 
-    public void logEntryV( String inString )
-      // This is equivalent to logEntry(..) with some default arguments.
-    	{ 
-    		logEntryV(inString, null, false); 
-    		}
 
-    //////// Log methods.  Some are still called Append and include Entry.  
+    /* LogB(..) and logV(..) family methods.
 
-    public synchronized boolean testLogB( LogLevel theLogLevel )
-      /* This method returns true if logging at logLevelI is okay,
-        false otherwise..
+      * logB( theLogLevel ) returns true if theLogLevelis less than maxLogLevel.
+        This displays nothing.  It is used to control what is displayed.
+      * logB( theLogLevel, ... ) returns true and creates a log entry with
+       	theLogLevel and the remaining parameters if theLogLevel 
+       	is less than maxLogLevel.  Otherwise it just returns false.
+      * logV( ... ) creates a log entry from the parameters unconditionally.
+   
+      Various combinations of parameters are possible from the following set:
+    	* LogLevel theLogLevel: used for filtering and is displayed. 
+    	* String inString: message to be displayed.
+    	* Throwable theThrowable: an exception to be displayed, of not null.
+    	* boolean consoleB: controls whether a copy of the entry goes to console.
+    		
+      */
+
+    public synchronized boolean logB(
+    		LogLevel theLogLevel, 
+    		String inString, 
+    		Throwable theThrowable, 
+    		boolean consoleB )
+	    {
+	  		boolean loggingB= logB(theLogLevel);
+	  		if ( loggingB )
+	      		logV( theLogLevel, inString, theThrowable, consoleB );
+	  		return loggingB;
+      	}
+
+    public synchronized boolean logB( LogLevel theLogLevel )
+      /* This method doesn't actually log anything, but
+        it is used to decide whether anything should be logged.
+        It returns true if logging should be done, false otherwise. 
         */
       {
       	return ( theLogLevel.compareTo( maxLogLevel ) <= 0 );
       	}
+    
+    public void logV( LogLevel theLogLevel, String inString )
+    	{ 
+    		logV(theLogLevel, inString, null, false); 
+    		}
+    
+    public void logV( String inString )
+    	{ 
+    		logV(null, inString, null, false); 
+    		}
 
-    public synchronized void logGuardedEntryV(
-    		LogLevel theLogLevel, String inString, Throwable theThrowable, boolean consoleB )
-      /* This is like logEntry(..) except 
-        it produces a log entry only if logLevelI is okay.
-        */
-      {
-      	if ( testLogB(theLogLevel) )
-      		logEntryV( inString, theThrowable, consoleB );
-      	}
+    public synchronized void logV(
+    		LogLevel theLogLevel, 
+    		String inString, 
+    		Throwable theThrowable, 
+    		boolean consoleB )
+      /* This is the most capable logging methods.
+        It contains all possible parameters.
+        All the logging methods eventually call this one.
 
-    public synchronized void logGuardedLabeledEntryV(
-    		LogLevel theLogLevel, String inString, Throwable theThrowable, boolean consoleB )
-      /* This is like logLabeledEntryV(..) except 
-        it produces a log entry only if logLevelI is okay.
-        */
-      {
-      	if ( testLogB(theLogLevel) )
-      		logLabeledEntryV( theLogLevel, inString, theThrowable, consoleB );
-      	}
+        This method create one log entry and appends it to the log file.
+        It could be multiple lines if any of the parameters
+        evaluate to Strings which contain newlines.
+        The log entry always begins with
+        * the app session number,
+        * milliseconds since the previous entry,
+        * theLogLevel if not null, 
+        * the thread name,
+        * theThrowable if not null.
 
-    public synchronized void logLabeledEntryV(
-    		LogLevel theLogLevel, String inString, Throwable theThrowable, boolean consoleB )
-      /* This is like logEntry(..) except that 
-        the requested log level levelI is prepended to inString.
-        Every call produces a log entry.
-        No blocking is done based on the levelI parameter.
-        It is assumed that any desired blocking has already been done.
+        This method also sends a copy to the console if consoleB is true.
+
+        ///enh Replace String appends by StringBuilder appends, for speed?
+        ///enh Add stackTraceB which displays stack,
+          on console and in log, if true.
         */
       { 
-	    	logEntryV( theLogLevel + " " + inString, theThrowable, consoleB );
-	      }
+    		long nowMillisL= System.currentTimeMillis(); // Saving present time.
 
-      public synchronized void logEntryV( ////// "Entry" redundant?
-      		String inString, Throwable theThrowable, boolean consoleB )
-        /* This appends to the log file a new log entry line.
-          It could be multiple lines if inString contains newlines.
-          It contains the app session number,
-          milliseconds since the previous entry, the thread name,
-          and finally inString and theThrowable if not null.
-          It sends a copy to the console if consoleB is true.
-          ///enh Replace String appends by StringBuilder appends, for speed?
-          ///enh Add stackTraceB which displays stack,
-            on console and in log, if true.
-          ///enh Add theLogLevel argument and put it before Thread.
-          */
-        { 
-	    		long nowMillisL= System.currentTimeMillis(); // Saving present time.
-	
-	        String aString= ""; // Initialize String to empty, then append...
-	        aString+= theSessionI;  //...the session number,...
-	        aString+= ":";  //...and a separator.
-	        aString+= String.format(  // ...time since last output,...
-	        		"%1$5d", nowMillisL - lastMillisL
-	        		);
+        String aString= ""; // Initialize String to empty, then append...
+        aString+= theSessionI;  //...the session number,...
+        aString+= ":";  //...and a separator.
+        aString+= String.format(  // ...time since last output,...
+        		"%1$5d", nowMillisL - lastMillisL
+        		);
+        aString+= " ";  //...a space,...
+        
+   	  	if (consoleB || consoleModeB) // ...a console flag if called for... 
+   	  		aString+= "CONSOLE-COPIED ";
+   	  	
+        if ( theLogLevel != null ) { //..and the log level if present... 
+	   	  	aString+= theLogLevel; // ...the log level,...
 	        aString+= " ";  //...a space,...
-	        
-	   	  	if (consoleB || consoleModeB) // ...a console flag if called for... 
-	   	  		aString+= "CONSOLE-COPIED ";
-	   	  	
-	        aString+= Thread.currentThread().getName(); // the name of thread,
-	        aString+= " ";  //...a space,...
-	   	    aString+= inString; //...the string to log,...
-	        aString+= " ";  //...and a space...
-	
-	        if (theThrowable!=null) { //..and the exception if present... 
-	          aString+= theThrowable;
-	        	}
-	        
-	      	aString+= "\n";  //...and a final line terminator.
-	
-	      	AppLog.getAppLog().appendV( aString );  // Append it to log file.
-	        
-	   	  	if (consoleB || consoleModeB) // Append to console if called for... 
-	        	System.err.print(aString);
-	
-	        lastMillisL= nowMillisL; // Saving present time as new last time.
 	        }
+   	  	
+   	  	aString+= Thread.currentThread().getName(); // the name of thread,
+        aString+= " ";  //...a space,...
+   	    aString+= inString; //...the string to log,...
+        aString+= " ";  //...and a space...
 
+        if ( theThrowable != null ) { //..and the exception if present... 
+          aString+= theThrowable;
+        	}
+        
+      	aString+= "\n";  //...and a final line terminator.
+
+      	AppLog.getAppLog().appendV( aString );  // Append it to log file.
+        
+   	  	if (consoleB || consoleModeB) // Append to console if called for... 
+        	System.err.print(aString);
+
+        lastMillisL= nowMillisL; // Saving present time as new last time.
+        }
+
+    
+    // Raw log file manipulation methods.
+    
     public synchronized void appendV(String inString)
       /* Appends a raw string to the log file.
         It can be used to append as little as a single character.

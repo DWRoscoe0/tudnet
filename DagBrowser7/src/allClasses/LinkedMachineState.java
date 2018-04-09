@@ -40,7 +40,8 @@ public class LinkedMachineState
 	  	{
 			  }
 			
-	  public synchronized StateList initializeWithIOExceptionHelloMachineState(  /////// rename.
+	  public synchronized LinkedMachineState 
+	  	initializeWithIOExceptionLinkedMachineState(
 					Timer theTimer, 
 				  NetcasterInputStream theNetcasterInputStream,
 					NetcasterOutputStream theNetcasterOutputStream,
@@ -63,7 +64,6 @@ public class LinkedMachineState
 	  		// Adding measurement count.
 
     		// Create and add to DAG the sub-states of this state machine.
-				//// addStateListV()
     		initAndAddStateListV(thePreHelloState= new PreHelloState());
     		addStateListV(
     				(theLinkedState= new LinkedState())

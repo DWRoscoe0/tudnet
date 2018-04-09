@@ -163,7 +163,7 @@ public class DataNode
   	    {
   	  		boolean loggingB= logB(theLogLevel);
   	  		if ( loggingB )
-  		      appLogger.logLabeledEntryV( 
+  		      appLogger.logV( 
   		      		theLogLevel, theLogString, theThrowable, consoleB );
   	  		return loggingB;
   	  	  }
@@ -175,7 +175,7 @@ public class DataNode
   	  		boolean consoleB )
   	    /* This method logs unconditionally. */
   	    {
-		      appLogger.logLabeledEntryV( 
+		      appLogger.logV( 
 		      		theLogLevel, theLogString, theThrowable, consoleB );
   	  	  }
 

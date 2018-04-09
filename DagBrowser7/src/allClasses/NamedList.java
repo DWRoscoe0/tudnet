@@ -1,7 +1,5 @@
 package allClasses;
 
-//// import static allClasses.Globals.appLogger;
-
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;

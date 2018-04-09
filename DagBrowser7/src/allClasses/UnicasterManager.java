@@ -133,21 +133,5 @@ public class UnicasterManager
 	      return resultUnicasterValue.getDataNodeD();
 	      }
     
-    /*  ////
-	  protected synchronized void addingV( 
-	  		IPAndPort peerIPAndPort, UnicasterValue resultUnicasterValue
-	  		)
-	    /* This adds to both ... to the HashMap and this MutableList
-	      and adjusts the persistent Persistent structures.
-	      */
-    /*  ////
-	    {
-	  		addingV( // Adding new Unicaster to data structures.
-          peerIPAndPort, resultUnicasterValue
-          );
-	  		}
-    */  ////
-	  
-	  ////// test actually creating peer.
 
   	}
