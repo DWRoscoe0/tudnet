@@ -1,5 +1,7 @@
 package allClasses;
 
+//// import java.util.concurrent.atomic.AtomicBoolean;
+
 /// import javax.swing.SwingUtilities;
 
 //import static allClasses.Globals.appLogger;
@@ -48,97 +50,6 @@ public class MutableList extends NamedList
 		      */
 		    {
 		  		theListOfDataNodes.add( theListOfDataNodes.size(), childDataNode );
-		      }
-
-		  public boolean addB(  // Add child at end of List.
-		  		final DataNode childDataNode 
-		  		)
-		    /* This method uses addB( indexI , childDataNode ) to add
-		      childDataNode at the end of the List.  Otherwise it's identical.
-		      */
-		    {
-		  	  return addB(  // Adding with index == -1 which means end of list.
-		  	  		-1, childDataNode 
-		  	  		);
-		      }
-	
-		  public synchronized boolean addB(  // Add at index. 
-		  		final int indexI, final DataNode childDataNode 
-		  		)
-		    /* This method adds childDataNode to the list.
-
-		      If childDataNode is already in the List 
-		      then this method does nothing and returns false,
-		      otherwise it adds childDataNode to the List and returns true. 
-		      It adds childDataNode at index position indexI,
-		      or the end of the list if indexI<0. 
-
-		      If childDataNode is actually added then
-		      it also informs theDataTreeModel about it
-		      so that TreeModelListeners can be notified.
-		      These notifications are done in a thread-safe manner 
-		      on the EDT using SwingUtilities.invokeAndWait(Runnable).
-		      
-		      ///org Replace addSuccessB array with a MutableBoolean.
-	  	    */
-		    {
-        	//appLogger.debug("MutableList.add(..) "+childDataNode+" at "+indexI);
-		  		final boolean addSuccessB[]= new boolean[1]; // Array for result.
-		  		final DataNode parentDataNode= this; // Because vars must be final.
-		  		EDTUtilities.runOrInvokeAndWaitV( // Queuing add to AWT queue. 
-        		new Runnable() {
-        			@Override  
-              public void run() {
-      		  	  int searchIndexI=  // Searching for child by getting its index. 
-      			    	  getIndexOfChild( childDataNode );
-    		    	  if  // Removing and reporting change if child found. 
-	  		    	    ( searchIndexI != -1)
-    		    	  	addSuccessB[0]= false; // Returning failure, already there.
-    		    	  	else
-	    		    	  { // Adding to List because it's not there yet.
-      		    	  	int insertAtI= (indexI < 0) ? // Converting index < 0 
-			              		theListOfDataNodes.size() : // to mean end of list,
-			              	  indexI; // otherwise use raw index.
-		                addPhysicallyV( insertAtI, childDataNode );
-		                notifyGUITreeModelAboutAdditionV(
-		                		parentDataNode, insertAtI, childDataNode );
-    		    	  		addSuccessB[0]= true; // Returning add success.
-    		    	  	  }
-                }
-              } 
-            );
-		  		return addSuccessB[0]; // Returning whether add succeeded.
-		      }
-
-      private void notifyGUITreeModelAboutAdditionV(
-      		DataNode parentDataNode, int insertAtI, DataNode childDataNode )
-		    {
-		      if // Notify TreeModel only if there is one referenced. 
-		        ( theDataTreeModel != null ) {
-		        theDataTreeModel.reportingInsertV( 
-		      		parentDataNode, insertAtI, childDataNode 
-		      		); // Done for showing the addition.
-		        theDataTreeModel.reportingChangeV( 
-		      		parentDataNode 
-		      		); // Done in case # of children changes parent's appearance.
-		      	}
-		      }
-
-		  private void addPhysicallyV(
-		  		final int indexI, final DataNode childDataNode 
-		  		)
-		    /* This method adds childDataNode to this nodes list of children,
-		      but also propagates information into that child:
-		      * theDataTreeModel, into the childDataNode,
-		        and its descendants if necessary.
-		      * this NamedList, as the child's parent node.
-		      */
-		    {
-		  		childDataNode.propagateIntoSubtreeV( theDataTreeModel );
-		  		
-		  		childDataNode.setParentToV( this ); // Link child to this node.
-          theListOfDataNodes.add( // Link this node to child. 
-          		indexI, childDataNode );
 		      }
 	
 		  public synchronized boolean removeB( final DataNode childDataNode )

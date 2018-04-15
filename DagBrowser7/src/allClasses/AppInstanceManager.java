@@ -136,7 +136,11 @@ l    * If the app receives a message indicating
       // Poller thingsToDoPeriodicallyV() reads it.  Others write it.
     
   // Internal dependency variables, set after construction.
-
+    int inputAppFileDelaySI= 60;  // Delay in seconds before checking begins.
+      // This is used to allow updating from 
+      // the tcpCopierAppFile to happen first.
+      ///////tmp For testing.
+    
     // File names.  Some of these might be equal.
 	  private final File standardAppFile=  // App File name in standard folder.
     		Config.userAppJarFile;
@@ -247,10 +251,10 @@ l    * If the app receives a message indicating
 	      }
 
 	  public void thingsToDoPeriodicallyV()
-	    /* This method is meant be called periodically by a timer
+	    /* This method is meant be called periodically by a timer thread
 	      to check for the appearance of a new version of the inputAppFile
 	      and to do an update with it if a newer version appears.
-	
+
 	      It works as follows:
 		      If this app is the app in the standard folder.
 		      and the new arg app is an approved later version updater app,
@@ -263,7 +267,8 @@ l    * If the app receives a message indicating
 					{
 	  	  		try {
 					      //appLogger.debug("thingsToDoPeriodicallyV().");
-					  	  if ( tryUpdateFromNewerFileInstancesB( inputAppFile ) )
+					  	  if ( (--inputAppFileDelaySI < 0) && 
+					  	  		tryUpdateFromNewerFileInstancesB( inputAppFile ) )
 					  	  	;
 					  	  else if ( tryUpdateFromNewerFileInstancesB( tcpCopierAppFile ) )
 					  	  	;

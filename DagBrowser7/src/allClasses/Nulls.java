@@ -4,20 +4,35 @@ import static allClasses.Globals.*;  // appLogger;
 
 public class Nulls
 
-  // Contains static methods which do meaningful things with null arguments. 
+  /* Contains static methods which do helpful and meaningful things 
+    with null arguments.
+    */
 
 	{
-	
+		
 	  public static <T> T fastFailNullCheckT( T testT )
-	    // Throws a NullPointerException if testT == null, 
-	    // Otherwise returns testT.
+	    /* Logs an error and throws a NullPointerException if testT == null, 
+	      Otherwise returns testT.
+	      */
 	    {
-			  if ( testT == null ) // Doing fast-fail construction check.
+			  if ( testAndLogIfNullB( testT ) )
 				  {
-			  		appLogger.error("fastFailNullCheckT( T testT ): null value!");
 				  	throw new NullPointerException();
 				  	}
 			  return testT;
+	      }
+
+	  public static <T> boolean testAndLogIfNullB( T testT )
+	    /* If testT is null then an error is logged and true is returned.
+	      Otherwise false is returned.
+	      */
+	    {
+	  	  boolean isNullB= ( testT == null );
+			  if ( isNullB )
+				  {
+			  		appLogger.error("testAndLogIfNullB( T testT ): null value!");
+				  	}
+			  return isNullB;
 	      }
 	
 		public static boolean equals(Object the1stObject, Object the2ndObject) 

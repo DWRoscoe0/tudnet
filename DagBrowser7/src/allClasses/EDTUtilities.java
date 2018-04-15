@@ -121,14 +121,15 @@ public class EDTUtilities {
     	  	Thread.currentThread().interrupt(); 
       	}
     
-    protected static boolean checkNotRunningEDTB()
+    protected static boolean testAndLogIfNotRunningEDTB()
       /* This method returns whether we are running the EDT thread.
         Returns true if not on EDT thread, false otherwise.
         If not on EDT thread it logs an error.
        */
 	    {
 	      boolean isNotEDTB= ! SwingUtilities.isEventDispatchThread();
-	      if ( isNotEDTB ) appLogger.error(" checkNotRunningEDTB() true");
+	      if ( isNotEDTB ) 
+	      	appLogger.error(" checkNotRunningEDTB() true");
 	      return isNotEDTB;
 	    	}
 

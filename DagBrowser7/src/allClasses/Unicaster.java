@@ -174,7 +174,7 @@ public class Unicaster
 	  	  //// theMultiMachineState.startRootMachineV(); // Start the multi-machines,
 	  	    // by starting their timers, by callinG the main machine handler.
 
-	  	  addB( theSubcasterManager );
+	  	  addAtEndB( theSubcasterManager );
 	    	}
 
     protected void finalizingV() throws IOException

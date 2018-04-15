@@ -267,7 +267,7 @@ public class StateList extends MutableList implements Runnable {
   	  theSubStateList.setParentStateListV( this ); // Store this state as
   	  	// the sub-state's parent state.
 
-  	  addB( theSubStateList ); // Add to this DataNode's list of DataNodes.
+  	  addAtEndB( theSubStateList ); // Add to this DataNode's list of DataNodes.
   	  }
 
   public synchronized void finalizeV() throws IOException

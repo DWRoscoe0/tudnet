@@ -58,8 +58,8 @@ public class Netcaster
 		    this.initializeWithoutStreamsV();
 		    
 		    // Also do initializing of stream monitors.
-		    addB( 	theEpiOutputStreamO.getCounterNamedLong() );
-		    addB( 	theEpiInputStreamI.getCounterNamedLong());
+		    addAtEndB( 	theEpiOutputStreamO.getCounterNamedLong() );
+		    addAtEndB( 	theEpiInputStreamI.getCounterNamedLong());
 		    }
 
     protected void initializeWithoutStreamsV() // non-standard.
@@ -71,12 +71,12 @@ public class Netcaster
 	    {
     		super.initializeV();
     		IPAndPort remoteIPAndPort= getKeyK();
-    		addB( 	new NamedMutable( 
+    		addAtEndB( 	new NamedMutable( 
 		        "IP-Address", 
 		        "" + remoteIPAndPort.getInetAddress()
 		      	)
 					);
-		    addB( 	new NamedMutable( 
+		    addAtEndB( 	new NamedMutable( 
 		    		"Port", "" + remoteIPAndPort.getPortI()
 				  	) );
 	    	}

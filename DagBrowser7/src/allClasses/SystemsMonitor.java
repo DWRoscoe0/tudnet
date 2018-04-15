@@ -131,15 +131,15 @@ public class SystemsMonitor
 	        	);
 
 			  // Add variables to our displayed list.
-	      addB( measurementCountNamedLong );
-	      addB( processorsNamedLong );
+	      addAtEndB( measurementCountNamedLong );
+	      addAtEndB( processorsNamedLong );
 	      //addB( nanoTimeOverheadNamedInteger );
-	      addB( cpuSpeedNamedLong );
-	      addB( waitJitterNsNamedLong );
-	      addB( endWaitMsNamedLong );
-	      addB( eventQueueInvokeAndWaitNsAsMsNamedLong );
-	      addB( skippedTimeMsNamedLong );
-	      addB( reversedTimeMsNamedLong );
+	      addAtEndB( cpuSpeedNamedLong );
+	      addAtEndB( waitJitterNsNamedLong );
+	      addAtEndB( endWaitMsNamedLong );
+	      addAtEndB( eventQueueInvokeAndWaitNsAsMsNamedLong );
+	      addAtEndB( skippedTimeMsNamedLong );
+	      addAtEndB( reversedTimeMsNamedLong );
 	      }
 
     private long doBinarySearchOfCPUSpeedAndDoOtherStuffL()

@@ -194,10 +194,10 @@ public class AppLog extends EpiThread
 	    {
 	    	if ( desiredBufferedModeB )
 		    	{ openFileV();
-		    	  info("setBufferedModeV(..), enabled.");
+		    	  info("AppLog.setBufferedModeV(..), enabled.");
 		    		}
 		    	else
-		      { info("setBufferedModeV(..), disabled.");
+		      { info("AppLog.setBufferedModeV(..), disabled.");
 		    	  closeFileV();
 		      	}
 	    	}
@@ -425,12 +425,20 @@ public class AppLog extends EpiThread
       {
       	return ( theLogLevel.compareTo( maxLogLevel ) <= 0 );
       	}
+
+    public boolean logB( LogLevel theLogLevel, String inString )
+	    {
+	  		boolean loggingB= logB(theLogLevel);
+	  		if ( loggingB )
+	      		logV( theLogLevel, inString );
+	  		return loggingB;
+      	}
     
     public void logV( LogLevel theLogLevel, String inString )
     	{ 
     		logV(theLogLevel, inString, null, false); 
     		}
-    
+
     public void logV( String inString )
     	{ 
     		logV(null, inString, null, false); 

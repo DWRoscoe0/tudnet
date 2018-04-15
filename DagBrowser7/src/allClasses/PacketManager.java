@@ -1,9 +1,11 @@
 package allClasses;
 
-import static allClasses.Globals.appLogger;
+import static allClasses.Globals.*;
 
 import java.net.DatagramPacket;
 import java.net.InetAddress;
+
+import static allClasses.AppLog.LogLevel.*;
 
 public abstract class PacketManager< 
     K, // Key.
@@ -98,40 +100,39 @@ public abstract class PacketManager<
 				DatagramPacket theDatagramPacket 
 				)
 			{
-			  ///* 
-			  appLogger.info(
+			  if (appLogger.logB(TRACE)) 
+			  	appLogger.logV(
+			  		TRACE,
 	      		PacketManager.gettingDirectedPacketString(
 	      				theDatagramPacket, false
 	      				)
-	      		);
-			  //*/
+			  		);
 	    	}
 
 		public static void logSenderPacketV( 
 				DatagramPacket theDatagramPacket 
 				)
 			{
-			  ///*
-	    	///if ( ! theDatagramPacket.getAddress().isMulticastAddress() )
-				  appLogger.info(
-		      		PacketManager.gettingDirectedPacketString(
-		      				theDatagramPacket, true
-		      				)
-		      		);
-	    	///*/
+			  if (appLogger.logB(TRACE)) 
+			  	appLogger.logV(
+			  		TRACE,
+	      		PacketManager.gettingDirectedPacketString(
+	      				theDatagramPacket, true
+	      				)
+	      		);
 	    	}
 
 		public static void logMulticastReceiverPacketV( 
 				DatagramPacket theDatagramPacket 
 				)
 			{
-			  ///* 
-			  appLogger.info(
+			  if (appLogger.logB(TRACE)) 
+			  	appLogger.logV(
+			  		TRACE,
 	      		PacketManager.gettingDirectedPacketString(
 	      				theDatagramPacket, false
 	      				)
 	      		);
-			  //*/
 	    	}
 
 	  // Methods for converting packets to Strings for display.

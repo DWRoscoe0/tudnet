@@ -197,7 +197,7 @@ public class DagBrowserPanel
         {
           startTreePath= // Initialize startTreePath for browsing with...
             theMetaRoot.buildAttributeTreePath( );  // ...selection state.
-          theDataTreeModel.cachePathInMapV( startTreePath );
+          theDataTreeModel.cachePathInMapB( startTreePath );
 
           setOpaque( true ); // ??
           setLayout(new BorderLayout());  // use BorderLayout manager.

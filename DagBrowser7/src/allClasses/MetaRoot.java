@@ -261,7 +261,7 @@ public class MetaRoot {
 
       public TreePath buildAttributeTreePath( )
         /* This method returns a TreePath of DataNodes which 
-          identifies the current DataNode selection.
+          identifies the user's current DataNode selection.
           The path is built from the sequence of DataNodes
           associated with the MetaNode's which have attributes 
           with key == "SelectionPath" and value == "IS",

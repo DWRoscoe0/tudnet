@@ -5,8 +5,8 @@ import java.io.Serializable;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Queue;
+////import java.util.LinkedList;
+////import java.util.Queue;
 
 import javax.swing.event.TreeModelEvent;
 import javax.swing.JComponent;
@@ -86,9 +86,10 @@ public class DataTreeModel
 
     // Other variables.
 
-      HashMap<DataNode,TreePath> theHashMap= new HashMap<DataNode,TreePath>();
-    
-    // constructor methods.
+      private HashMap<DataNode,TreePath> nodeToPathHashMap= // For cache because 
+      		new HashMap<DataNode,TreePath>(); // TreeModels need node TreePaths. 
+
+    // constructor and initialization methods.
 
         public DataTreeModel( 
             DataRoot theDataRoot, 
@@ -103,12 +104,37 @@ public class DataTreeModel
             this.theShutdowner= theShutdowner;
             }
 
-        ///org public void initializeV(..) should be moved to here. 
+        public void initializeV( 
+        		DataNode theInitialDataNode 
+        		)
+          /* This is code that couldn't [easily] be done at injection time.
+
+            First it initializes injected variables:
+  	        * It initializes the DataRoot.
+  	        * It initializes the MetaRoot by loading it from external file(s),
+  	          or at least, trying to.
+  	        * theMetaFileManagerFinisher is set to be a shutdown listener in 
+  	          theShutdowner for later writing MetaRoot back to disk if changed.
+
+            Then finally nodeToPathHashMap is seeded with 
+            an entry for the sentinel parent of the root tree node
+            which is used as a base for tree exploration and growth. 
+            */
+          {
+            theDataRoot.initializeV( theInitialDataNode, this ); 
+            theMetaRoot.initializeV( );
+            theShutdowner.addShutdownerListener( theMetaFileManagerFinisher );
+
+            nodeToPathHashMap.put( // Making and adding root path to our cache. 
+        	  		theDataRoot.getParentOfRootDataNode( ), 
+        	  		theDataRoot.getParentOfRootTreePath( ) 
+  	      			); // From this root path, descendant node paths will be made.
+            }
 
     // AbstractTreeModel/TreeModel interface methods.
 
-      /* The following getter methods simply delegate to 
-        the parentObject, which is assumed to be a DataNode,
+      /* The following getter methods simply delegate to the parentObject, 
+        which is assumed to be a DataNode,
         and can perform the operation context-free.
         This is because this TreeModel does no filtering.
         If and when filtering is done then 
@@ -140,7 +166,7 @@ public class DataTreeModel
 	          TreePath parentTreePath= // Retrieving path of parent from map. 
 	            	translatingToTreePath( parentDataNode );
 	          if ( parentTreePath != null ) // Add child path if path found.
-		      	  theHashMap.put( // Making and adding child path to map. 
+		      	  nodeToPathHashMap.put( // Making and adding child path to map. 
 			      			childDataNode, parentTreePath.pathByAddingChild(childDataNode) 
 			      			);
       	  	}
@@ -181,60 +207,15 @@ public class DataTreeModel
       public void valueForPathChanged( 
           TreePath theTreePath, Object newValueObject 
           )
-        /* Unimplemented.  Throws an error.  
-          ///? This could be converted to a call to another method.
+        /* Unimplemented because Infogora doesn't edit the DAG/tree, yet
+          Simply logs an error and returns.
+          //// and throws an Error.  
           */
         { 
-      	  throw new Error("DataTreeModel.valueForPathChanged(..) called"); 
+      	  String messageString= "DataTreeModel.valueForPathChanged(..) called";
+	      	appLogger.error( messageString );
+      	  ///elim   throw new Error(messageString); 
       	  } 
-
-    // Setter methods which are not part of AbstractTreeModel.
-
-      public void initializeV( 
-      		DataNode theInitialDataNode 
-      		)
-        /* This is code that couldn't [easily] be done at injection time.
-
-          First it initializes injected variables:
-	        * It initializes the DataRoot.
-	        * It initializes the MetaRoot by loading it from external file(s),
-	          or at least, trying to.
-	        * theMetaFileManagerFinisher is set to be a shutdown listener in 
-	          theShutdowner for later writing MetaRoot back to disk if changed.
-
-          Then finally theHashMap is seeded with 
-          an entry for the sentinel parent of the root tree node
-          which is used as a base for tree exploration and growth. 
-          */
-        {
-          theDataRoot.initializeV( theInitialDataNode, this ); 
-          theMetaRoot.initializeV( );
-          theShutdowner.addShutdownerListener( theMetaFileManagerFinisher );
-
-          theHashMap.put( // Making and adding root path to our map. 
-      	  		theDataRoot.getParentOfRootDataNode( ), 
-      	  		theDataRoot.getParentOfRootTreePath( ) 
-	      			);
-          }
-
-      public void cachePathInMapV( TreePath theTreePath )
-        /* This method caches an entire path theTreePath.
-          It was created to prevent a cache miss and a long search
-          if the selection at startup is a very long path.
-          Seeding the cache with the initial selection path prevents this.
-          */
-      	{
-      	  DataNode theDataNode= // Getting last element of path.
-      	  		(DataNode)theTreePath.getLastPathComponent();
-	    	  TreePath targetTreePath= // Testing whether present in cache.
-	    	  		theHashMap.get( theDataNode );
-	        if ( targetTreePath == null ) // Caching if not already present.
-		        {
-	        		cachePathInMapV( theTreePath.getParentPath() ); // Caching parent.
-	        		  // This is a recursive call.
-			        theHashMap.put( theDataNode, theTreePath ); // Caching child.
-			        }
-      		}
       
     // Getter methods which are not part of AbstractTreeModel.
 
@@ -385,7 +366,7 @@ public class DataTreeModel
 		            	);
 		          fireTreeNodesInserted( theTreeModelEvent ); // Fire insertion.
 		
-		        	theHashMap.put( // Making and adding child to map for later. 
+		        	nodeToPathHashMap.put( // Making and adding child to map for later. 
 		        			childDataNode, parentTreePath.pathByAddingChild(childDataNode) 
 		        			);
 	          	}
@@ -414,16 +395,20 @@ public class DataTreeModel
 		            	);
 		          fireTreeNodesRemoved( theTreeModelEvent ); // Firing removal.
 		
-		        	theHashMap.remove( // Removing entry for removed child from map. 
-		        			childDataNode // This won't remove descendants of child?? 
+		        	nodeToPathHashMap.remove( // Removing entry for removed child from map. 
+		        			childDataNode // This won't remove descendants of child??
+		        			  // Hopefully descendants were already removed.
+		        			  ///fix Recursively remove active children to prevent leak.
 		        			);
 		          }
           }
 
       public void safelyReportingChangeV( final DataNode theDataNode )
         /* This is a thread-safe version of reportingChangeV( theDataNode ).
-          It's mainly to save code needed to report appearance changes
-          by eliminating need to make lengthy calls to runOrInvokeAndWaitV(..).
+          It uses EDTUtilities.runOrInvokeAndWaitV(..) to switch to
+          the EDT (Event Dispatch Thread) if that thread is not already active,
+          then it calls reportingChangeV( theDataNode ).
+          ///dbg ///enh Add AtomicBoolean and pass back error results.
           */
 	      {
       		EDTUtilities.runOrInvokeAndWaitV( // Do following on EDT thread. 
@@ -453,20 +438,24 @@ public class DataTreeModel
 	        	}
 	        TreePath parentTreePath= // Calculating path of the parent DataNode. 
 	            theTreePath.getParentPath();
-	        reportingChangeV( parentTreePath, theDataNode );
+	        reportingChangeB( parentTreePath, theDataNode );
         	}
 	       
-      public void reportingChangeV( 
+      public boolean reportingChangeB( 
       		TreePath parentTreePath, DataNode theDataNode 
       		)
 	    	/* This method creates and fires a single-child TreeModelEvent
-		      for the change of a single child DataNode, theDataNode,
-		      and whose parent has tree path parentTreePath.
+		      for the change of a single child DataNode, theDataNode.
+		      parentTreePath is assumed to be the TreePath
+		      of the parent of theDataNode.
 		      This method must be running on the EDT.
+		      It returns true if all this succeeds.
+		      It returns false if there was a failure, such as caused by
+	      	  the current thread not being the EDT or parentTreePath == null.
    	      */
         {
-	      	if ( EDTUtilities.checkNotRunningEDTB() ) return; ///tmp
-	      	if ( parentTreePath == null ) return; ///tmp
+	      	if ( EDTUtilities.testAndLogIfNotRunningEDTB() ) return true; ///tmp
+	      	if ( Nulls.testAndLogIfNullB(parentTreePath) ) return true; ///tmp
 	        DataNode parentDataNode= // Calculating parent DataNode.
 	        		(DataNode)parentTreePath.getLastPathComponent();
 	      	int indexI= getIndexOfChild( // Calculating index of the DataNode.
@@ -483,83 +472,127 @@ public class DataTreeModel
             	);
 
           fireTreeNodesChanged( theTreeModelEvent );  // Firing as change event.
+          return false;
           }
+
+    // Path and cache manipulation methods.
+
+      public boolean cachePathInMapB( TreePath theTreePath )
+        /* This method caches an entire path theTreePath.
+          It was created to prevent a cache miss and a long search
+          if the selection at startup is a very long path.
+          Using this method to seed the cache with 
+          the initial selection path prevents this.
+          Returns true if theTreePath was cached or was already in the cache.
+          Returns false if theTreePath was not already in the cache
+            and could not be added because the first DataNode was not the root.
+            
+          ///elim This might not be needed now that 
+            searches from root are no longer done.
+          */
+      	{
+      	  boolean inCacheB;
+      	  process: {
+		        if ( theTreePath == null ) // Invalid TreePath.
+		        	{ inCacheB= false; break process; } // Fail.
+	      	  DataNode theDataNode= // Getting last element node of path.
+	      	  		(DataNode)theTreePath.getLastPathComponent();
+		    	  TreePath targetTreePath= // Testing whether that node is in cache.
+		    	  		nodeToPathHashMap.get( theDataNode );
+		        if ( targetTreePath != null ) // Already cached.
+		        	{ inCacheB= true; break process; } // Succeed.  
+        	  TreePath theParentTreePath= theTreePath.getParentPath();
+        	  inCacheB= cachePathInMapB(  // Try caching parent.
+        				theParentTreePath ); // This is a recursive call.
+	        	if ( ! inCacheB ) // Parent path is not cached.
+	        		break process; // So exit with fail, inCachedB==false for child.  
+		        nodeToPathHashMap.put(  // Caching child path.
+		        		theDataNode, theTreePath );
+		        // Exit with success, inCachedB==true.
+      	  	} // process:
+	        return inCacheB;
+      		}
 
       public TreePath translatingToTreePath( DataNode targetDataNode )
 	      /* This method returns a TreePath of targetDataNode,
   	      or null if node can not be found in the DataNode tree.
-  	      It tries to return a value from theHashMap first.
-  	      If that fails then tries returning TreePath from a search
-  	        and caches the result.
-  	      If that fails then it returns null.
-  	      
-  	      ?? Consider storing parentsObject in AbDataNode.
-  	      This would contain TreePath or parent DataNode information
-  	      caching of explosively computationally intensive searches 
-  	      can be eliminated.
-  	        * TreePaths would still be cached, but they would be TreePaths
-  	          that are constructed by following parent links,
-  	          not by searching huge sections of the DataNode tree.
-  	        * TreePath building could use cached TreePaths of parent DataNodes,
-  	          and TreePath interning, to increase speed and reduce memory use.
-  	        ? At first there could be a single parent link stored.
-  	        ? Later a list of multiple parent links might be needed.
+  	      It tries to return a value from nodeToPathHashMap first.
+  	      If that fails then tries to build the TreePath 
+  	        and then caches the result.
+  	      It returns the resultant TreePath or null if 
+  	      it was unable to find or build the TreePath.
   	      */
       	{ 
       	  TreePath targetTreePath= // Looking in cache first.
-      	  		theHashMap.get( targetDataNode );
-	        if ( targetTreePath == null ) // Doing a search if not in cache.
+      	  		nodeToPathHashMap.get( targetDataNode );
+	        if ( targetTreePath == null ) // Building the path if not in cache.
 		        {
 			        targetTreePath= // Building a path by tracing ancestors nodes. ///doc 
 			        		buildTreePath( targetDataNode );
 			        if ( targetTreePath != null ) // Caching build result, if any.
-			        	theHashMap.put( targetDataNode, targetTreePath );
+			        	nodeToPathHashMap.put( targetDataNode, targetTreePath );
+			        /*   ////
 	        		appLogger.warning( 
 	        				"DataTreeModel.translatingToTreePath( "
 	        				+ targetDataNode 
 	        				+ " ), cache miss, resolves to\n  "
 	        				+ targetTreePath
 	        				);
+			        */   ////
 			        }
       	  return targetTreePath;   
       	  }
 
       private TreePath buildTreePath( DataNode theDataNode )
-        /*  ///doc This method replaces searchingForTreePath(..).
-          This method returns a TreePath of targetDataNode.
-          To do this it follows the trail of parentNamedList links 
-          back to the root and builds a TreePath from that.
+        /* This method returns the TreePath of theDataNode, if it exists.
+          To do this it follows the trail of DataNode.parentNamedList links 
+          back to the root, then builds a TreePath in reverse from that.
+          It is unable to reach the root of the tree then it returns null.
+
           ///enh? This could be made more efficient by recursing using
           translatingToTreePath(..) on the parent node, a simple expression.
           ///elim This separate method might not be needed at all.
             See its only caller, translatingToTreePath(..)
           */
         {
-      		appLogger.logV(TRACE, "DataTreeModel.buildTreePath(..) called.");
+      		appLogger.logB(TRACE, "DataTreeModel.buildTreePath(..) called.");
       	  Deque<DataNode> stackDeque= new ArrayDeque<DataNode>(10); 
       	  while (true) { // Stack all nodes in path to root.
       	  	if ( theDataNode == null ) break;
       	  	stackDeque.addFirst( theDataNode );
       	  	theDataNode= theDataNode.parentNamedList;
       	  	}
-      		TreePath theTreePath= null;  // Defaulting result to null.
+      		TreePath theTreePath;
+      	  boolean unrootedBranchB; 
+    	  	DataNode firstDataNode;
       	  { // Build TreePath from stacked nodes.
-	      	  theTreePath= new TreePath(stackDeque.removeFirst());
+      	  	firstDataNode= stackDeque.removeFirst();
+	      	  unrootedBranchB= // Rooted branch error check. 
+	      	  		(firstDataNode != theDataRoot.getParentOfRootDataNode( ) );
+    	  	  theTreePath= new TreePath(firstDataNode);
 	      	  while (true) {
 	      	  	if ( stackDeque.peekFirst() == null ) break;
 	      	  	theTreePath= 
 	      	  			theTreePath.pathByAddingChild( stackDeque.removeFirst());
 	      	  	}
       	  	}
+  	  	  if ( unrootedBranchB ) // Handle possible branch rooting error.
+	  	  	  { appLogger.warning( 
+	        				"DataTreeModel.buildTreePath(..) unrooted branch\n"
+	        				+ theTreePath
+	        				);
+	      	  	theTreePath= null; // Set result to null to signal error.
+	  	  	  	}
           return theTreePath;
           }
 
+    /*  ///elim  Maybe save this somewhere in case I need a DepthFirstSearch.
       @SuppressWarnings("unused") ///elim No longer used.
 			private TreePath searchingForTreePath( DataNode targetDataNode )
         /*  ///elim This method is not needed anymore, because:
           * It might never be called anymore because
 	          its only caller, translatingToTreePath(..),
-	          now checks theHashMap first.  So this method is a backup.
+	          now checks nodeToPathHashMap first.  So this method is a backup.
 	          The one exception is startup when initial selection path
 	          is longer than maximum depth.  It will cause error.
 	          Seeding cache with selection path might fix this.
@@ -602,6 +635,7 @@ public class DataTreeModel
           It is used because DataNodes don't know their TreePaths,
           and TreePaths are required by JTree.
           */
+      /*  ///elim
         {
       		appLogger.warning( "DataTreeModel.searchingForTreePath(..) called.");
       		TreePath resultTreePath= null;  // Defaulting result to null.
@@ -648,5 +682,6 @@ public class DataTreeModel
               }
           return resultTreePath;
           }
+      */   ///elim
 
     } // class DataTreeModel.

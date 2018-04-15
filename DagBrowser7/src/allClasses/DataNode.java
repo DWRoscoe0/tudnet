@@ -55,7 +55,7 @@ public class DataNode
     // Static methods.
 
 		  static DataNode[] emptyListOfDataNodes()
-		  	// This method returns an empty DataNode list.
+		  	// This method returns a new empty DataNode list.
 		    { 
 		      return new DataNode[]{}; 
 		      }
@@ -90,7 +90,7 @@ public class DataNode
   	    /* This method is called when a DataNode is added to a NamedList
   	      or one of its subclasses.  This method ignores theDataTreeModel, 
   	      because this is a leaf node and leaves it don't need it.
-  	      So the propigation ends here.
+  	      So the propagation ends here.
 	        List nodes that do need it will override this method.
 	        See NamedList.
   	      */
@@ -122,7 +122,7 @@ public class DataNode
       	  	  /// Eventually replace variable or link it to DAG.
 	      	  	}
       	  	else
-      			parentNamedList.reportChangeInChildV( this );
+      			parentNamedList.reportChangeInChildB( this );
       		}
 
       // Customized logging methods.

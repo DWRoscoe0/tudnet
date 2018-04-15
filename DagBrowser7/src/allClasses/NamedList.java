@@ -3,6 +3,7 @@ package allClasses;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.tree.TreePath;
 
@@ -35,7 +36,9 @@ public class NamedList
 		        		emptyListOfDataNodes() // an empty DataNode list.
 		            )
 		        ); // This might be replaced with a SelfReturningListOrNode.
-	
+	        ///enh Distinguish between active children and lazy children.
+	        // See MetaFileManager for ideas.
+
     public void initializeV(
         String nameString, 
         DataNode... inDataNodes 
@@ -44,17 +47,120 @@ public class NamedList
         0 or more DataNodes from the array inDataNodes.
         Theoretically it could be used for 
         many different types of DataNodes.
+        
+        ///fix This needs to initialize parent references.
         */
       {
     		super.initializeV( nameString );
 
+	  	  /*  ////
         theListOfDataNodes= // Creating and storing the DataNode List to be
           new ArrayList<DataNode>(  // a mutable ArrayList from
             Arrays.asList(  // an immutable List made from
               inDataNodes  // the input array.
               )
             );  // the input array.
+	  	  */  ////
+
+	  		for ( DataNode theDataNode : inDataNodes) // For each new child
+	  			addAtEndB( theDataNode );
         }
+
+	  public boolean addAtEndB(  // Add child at end of List.
+	  		final DataNode childDataNode 
+	  		)
+	    /* This method uses addB( indexI , childDataNode ) to add
+	      childDataNode at the end of the List.  Otherwise it's identical.
+	      */
+	    {
+	  	  return addB(  // Adding with index == -1 which means end of list.
+	  	  		-1, childDataNode 
+	  	  		);
+	      }
+
+	  public synchronized boolean addB(  // Add at index. 
+	  		final int requestedIndexI, final DataNode childDataNode 
+	  		)
+	    /* This method adds childDataNode to the list.
+
+	      If childDataNode is already in the List 
+	      then this method does nothing and returns false,
+	      otherwise it adds childDataNode to the List and returns true. 
+	      It adds childDataNode at index position requestedIndexI,
+	      or the end of the list if requestedIndexI < 0. 
+
+	      If childDataNode is actually added then
+	      it also informs theDataTreeModel about it
+	      so that TreeModelListeners can be notified.
+
+	      These operations are done in a thread-safe manner 
+	      on the EDT using SwingUtilities.invokeAndWait(Runnable).
+	      
+	      ///org Replace addSuccessB array with a MutableBoolean.
+  	    */
+	    {
+      	//appLogger.debug("MutableList.add(..) "+childDataNode+" at "+indexI);
+	  		//// final boolean addSuccessB[]= new boolean[1]; // Array for result.
+	  		final AtomicBoolean successAtomicBoolean= new AtomicBoolean(false); 
+	  		final DataNode parentDataNode= this; // Because vars must be final.
+	  		EDTUtilities.runOrInvokeAndWaitV( // Queuing operations to AWT queue. 
+      		new Runnable() {
+      			@Override  
+            public void run() {
+    		  	  int searchIndexI=  // Searching for child by getting its index. 
+    			    	  getIndexOfChild( childDataNode );
+  		    	  if ( searchIndexI != -1) // Child already in list.
+  		    	  	successAtomicBoolean.set(false); // Returning add failure.
+  		    	  	else // Child was not found in list.
+    		    	  { // Adding to List because it's not there yet.
+    		    	  	int actualIndexI= // Converting 
+    		    	  			(requestedIndexI < 0) // requested index < 0 
+		              		? theListOfDataNodes.size() // to mean end of list,
+		              	  : requestedIndexI; // otherwise use requested index.
+	                addPhysicallyV( actualIndexI, childDataNode );
+	                notifyTreeModelAboutAdditionV(
+	                		parentDataNode, actualIndexI, childDataNode );
+	                successAtomicBoolean.set(true); // Returning add success.
+  		    	  	  }
+              }
+            } 
+          );
+	  		return successAtomicBoolean.get(); // Returning whether add succeeded.
+	      }
+
+    private void notifyTreeModelAboutAdditionV(
+    		DataNode parentDataNode, int insertAtI, DataNode childDataNode )
+	    {
+	      if // Notify TreeModel only if there is one referenced. 
+	        ( theDataTreeModel != null ) 
+		      {
+		        theDataTreeModel.reportingInsertV( 
+		      		parentDataNode, insertAtI, childDataNode 
+		      		); // For showing the addition.
+		        theDataTreeModel.reportingChangeV( 
+		      		parentDataNode 
+		      		); // In case # of children changes parent's appearance.
+		      	}
+	      }
+
+	  private void addPhysicallyV(
+	  		final int indexI, final DataNode childDataNode 
+	  		)
+	    /* This method adds childDataNode to this node's list of children,
+	      but into that child it propagates the following information:
+	      * theDataTreeModel, into the childDataNode,
+	        and its descendants if necessary.
+	      * this NamedList, as the child's parent node.
+	      However, it does not do TreeModel notifications.
+	      */
+	    {
+	  		childDataNode.propagateIntoSubtreeV( theDataTreeModel );
+	  		
+	  		childDataNode.setParentToV( this ); // Link child to this node.
+
+	  		theListOfDataNodes.add( // Link this node to child. 
+        		indexI, childDataNode );
+	      }
 
 	  protected void propagateIntoSubtreeV( DataTreeModel theDataTreeModel )
 	    /* This method propagates theDataTreeModel into 
@@ -95,27 +201,34 @@ public class NamedList
 			  		}
 		  	}
 	  
-    protected void reportChangeInChildV( final DataNode childDataNode )
+    protected boolean reportChangeInChildB( final DataNode childDataNode )
       /* This method reports a change of childDataNode,
         which must be one of this node's children, to theDataTreeModel,
         which will update the user display to show the change if needed.
+        IT returns true if success, false if there was an error,
+          such as a null parameter or the the DataNode tree root
+          not being reachable from the child. 
         */
     	{
     	  final DataNode parentDataNode= this;
+    		final AtomicBoolean successAtomicBoolean= new AtomicBoolean(true); 
     	  EDTUtilities.runOrInvokeAndWaitV( // Do following on EDT thread. 
 		    		new Runnable() {
 		    			@Override  
 		          public void run() {
 		  	      	TreePath parentTreePath= // Calculating path of the this parent. 
 		  	          	theDataTreeModel.translatingToTreePath( parentDataNode );
-		    				theDataTreeModel.reportingChangeV( 
+		    				if ( theDataTreeModel.reportingChangeB( 
 		    						parentTreePath, childDataNode 
-		    						);
+		    						) )
+		              successAtomicBoolean.set(false); // Returning reporting error.
 		            }
 		          }
 		    		);
-		        
-    		}
+    	  if ( ! successAtomicBoolean.get() )
+    	  	Misc.noOp(); ///dbg  For inter-thread error breakpoints
+				return successAtomicBoolean.get(); // Returning whether add succeeded.
+				}
 
 	  
 	  // interface DataNode methods.

@@ -51,7 +51,7 @@ public class MutableListWithMap<
 	    	childHashMap.put( childK, childV );  // Adding value to HashMap.
 
 	    	if  // Adding DataNode only to MutableList unless it's there already.
-	      	( ! addB( childDataNode ) )
+	      	( ! addAtEndB( childDataNode ) )
 	      	appLogger.error( // Logging error if already in list.
 	      			"MutableListWithMap.addingV(..): Already present."
 	      			);

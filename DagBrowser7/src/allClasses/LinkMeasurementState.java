@@ -1,5 +1,6 @@
 package allClasses;
 
+import static allClasses.AppLog.LogLevel.TRACE;
 import static allClasses.Globals.appLogger;
 
 import java.io.IOException;
@@ -72,33 +73,33 @@ public class LinkMeasurementState
 	  	  		new LocalMeasurementState() );
 
 	  		// Adding measurement count.
-	  	  addB( measurementHandshakesNamedLong= new NamedLong(
+	  	  addAtEndB( measurementHandshakesNamedLong= new NamedLong(
 	      		"Measurement-Handshakes", 0 ) );
 
-	  		addB( retransmitDelayMsNamedLong );
+	  		addAtEndB( retransmitDelayMsNamedLong );
 
         // Adding the new round trip time trackers.
-	      addB( smoothedRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
+	      addAtEndB( smoothedRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
 	      		"Smoothed-Round-Trip-Time (ms)", 
 	      		Config.initialRoundTripTime100MsAsNsL ) );
-	  	  addB( smoothedMinRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
+	  	  addAtEndB( smoothedMinRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
 	      		"Smoothed-Minimum-Round-Trip-Time (ms)", 
 	      		Config.initialRoundTripTime100MsAsNsL ) );
-	  	  addB( smoothedMaxRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
+	  	  addAtEndB( smoothedMaxRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
 	      		"Smoothed-Maximum-Round-Trip-Time (ms)", 
 	      		Config.initialRoundTripTime100MsAsNsL ) );
-	      addB( rawRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong( 
+	      addAtEndB( rawRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong( 
 	      		"Raw-Round-Trip-Time (ms)", 
 	      		Config.initialRoundTripTime100MsAsNsL ) );
 
         // Adding incoming packet statistics children and related trackers.
 	  	  newIncomingPacketsSentDefaultLongLike= new DefaultLongLike(0);
-	  	  addB( oldIncomingPacketsSentNamedLong= new NamedLong(
+	  	  addAtEndB( oldIncomingPacketsSentNamedLong= new NamedLong(
 	      		"Incoming-Packets-Sent", 0 ) );
-		    addB( newIncomingPacketsReceivedNamedLong=
+		    addAtEndB( newIncomingPacketsReceivedNamedLong=
 		    		theNetcasterInputStream.getCounterNamedLong() );
 	  	  oldIncomingPacketsReceivedDefaultLongLike= new DefaultLongLike(0);
-	  	  addB( incomingPacketLossNamedFloat= new NamedFloat(  
+	  	  addAtEndB( incomingPacketLossNamedFloat= new NamedFloat(  
 	  	  		"Incoming-Packet-Loss", 0.0F ) );
 	  	  incomingPacketLossAverager= new LossAverager(
 	  	  				oldIncomingPacketsSentNamedLong,
@@ -109,13 +110,13 @@ public class LinkMeasurementState
 	  	  // Adding outgoing packet statistics children and related trackers.
     		newOutgoingPacketsSentNamedLong=
     				theNetcasterOutputStream.getCounterNamedLong(); 
-		    addB( newOutgoingPacketsSentNamedLong );
-		    addB( newOutgoingPacketsSentEchoedNamedLong= new NamedLong(
+		    addAtEndB( newOutgoingPacketsSentNamedLong );
+		    addAtEndB( newOutgoingPacketsSentEchoedNamedLong= new NamedLong(
 		    		"Outgoing-Packets-Sent-Echoed", 0 ) ); 
 		    oldOutgoingPacketsSentDefaultLongLike= new DefaultLongLike(0);
-		    addB( newOutgoingPacketsReceivedNamedLong= new NamedLong( 
+		    addAtEndB( newOutgoingPacketsReceivedNamedLong= new NamedLong( 
 			      "Outgoing-Packets-Received", 0 ) );
-	  	  addB( outgoingPacketLossNamedFloat= new NamedFloat( 
+	  	  addAtEndB( outgoingPacketLossNamedFloat= new NamedFloat( 
 	  	  		"Outgoing-Packet-Loss", 0.0f ) );
 	  	  oldOutgoingPacketsReceivedDefaultLongLike= new DefaultLongLike(0);
 	  	  outgoingPacketLossLossAverager= new LossAverager(
@@ -363,10 +364,12 @@ public class LinkMeasurementState
 			        		smoothedMaxRoundTripTimeNsAsMsNamedLong.getValueString()
 					  			;
 								}
-				    appLogger.info( "calculateRoundTripTimesV(...) PA:"
-						  +sequenceNumberI+","
-				    	+packetsReceivedI+";RTT="
-				    	+rttString
+					  if (appLogger.logB(TRACE)) appLogger.logV(
+				  		TRACE,
+				  		"calculateRoundTripTimesV(...) PA:"
+							  +sequenceNumberI+","
+					    	+packetsReceivedI+";RTT="
+					    	+rttString
 						  );
 				  	}
 				
@@ -502,9 +505,11 @@ public class LinkMeasurementState
 				  				);
 							theNetcasterOutputStream.sendingPacketV();
 							  // Sending now for minimum RTT.
-				      appLogger.info( "processPacketSequenceNumberB(..) PS:"
-				  		  +sequenceNumberI+","
-				      	+receivedPacketCountL
+						  if (appLogger.logB(TRACE)) appLogger.logV(
+					  		TRACE,
+					  		"processPacketSequenceNumberB(..) PS:"
+					  		  +sequenceNumberI+","
+					      	+receivedPacketCountL
 				  		  );
 	    	  		}
 		    	  catch ( BadReceivedDataException theBadReceivedDataException ) {
