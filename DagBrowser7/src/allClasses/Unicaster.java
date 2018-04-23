@@ -64,7 +64,7 @@ public class Unicaster
   		// Other instance variables.
   		//// private BeforeHelloExchangeState theBeforeHelloExchangeState;
   		private AfterHelloExchangedState theAfterHelloExchangedState;
-  		private MultiMachineState theMultiMachineState;
+  		private MultiMachineState theMultiMachineState; ///elim
   		//// private IgnoreAllSubstatesState theIgnoreAllSubstatesState;
   		//// private TemporaryMainState theTemporaryMainState;
   		private LinkedMachineState theLinkedMachineState;

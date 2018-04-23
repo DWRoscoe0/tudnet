@@ -617,6 +617,7 @@ public class DagBrowserPanel
               		doDelayMeasurementsV();
                   theAppInstanceManager. // Executing updater if present.
                     thingsToDoPeriodicallyV();
+                  theDataTreeModel.displayTreeModelChangesV();
                   }
               appLogger.info("ending.");
               }

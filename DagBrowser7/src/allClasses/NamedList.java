@@ -134,12 +134,17 @@ public class NamedList
 	      if // Notify TreeModel only if there is one referenced. 
 	        ( theDataTreeModel != null ) 
 		      {
+		      	theDataTreeModel.signalInsertionV( 
+		      			parentDataNode, insertAtI, childDataNode 
+			      		);
+		      	/*  ////
 		        theDataTreeModel.reportingInsertV( 
 		      		parentDataNode, insertAtI, childDataNode 
 		      		); // For showing the addition.
 		        theDataTreeModel.reportingChangeV( 
 		      		parentDataNode 
 		      		); // In case # of children changes parent's appearance.
+		      	*/  ////
 		      	}
 	      }
 
@@ -210,6 +215,9 @@ public class NamedList
           not being reachable from the child. 
         */
     	{
+    		theDataTreeModel.signalChangeV( childDataNode );
+    	  return true;
+    		/*  ////
     	  final DataNode parentDataNode= this;
     		final AtomicBoolean successAtomicBoolean= new AtomicBoolean(true); 
     	  EDTUtilities.runOrInvokeAndWaitV( // Do following on EDT thread. 
@@ -228,6 +236,7 @@ public class NamedList
     	  if ( ! successAtomicBoolean.get() )
     	  	Misc.noOp(); ///dbg  For inter-thread error breakpoints
 				return successAtomicBoolean.get(); // Returning whether add succeeded.
+				*/  ////
 				}
 
 	  

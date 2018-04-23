@@ -11,6 +11,9 @@ import java.util.HashMap;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
+
+import allClasses.DataNode.UpdateLevel;
+
 import javax.swing.tree.TreeModel;
 
 import static allClasses.AppLog.LogLevel.*;
@@ -21,50 +24,61 @@ public class DataTreeModel
   extends AbstractTreeModel
 
   implements TreeModel, Serializable
-  
+
   /* This class implements an extended TreeModel 
-    used for browsing the Infogora hierarchy DAG.
-    It implements, or will implement, the following extensions beyond
-    the basic TreeModel capabilities needed by the JTree class.
+    used for browsing the Infogora hierarchy tree (eventually DAG).
+    It's purpose is to provide link Infogora hierarchy to
+    Java GUI components, especially the Java JTree.
+    Because of this, most of the code, including extensions,
+    is meant to be run on the Event Dispatch Thread (EDT).
+    This should be true of all methods unless stated otherwise.
+     
+    This class implements, or will implement, the following extensions 
+    beyond the basic TreeModel capabilities needed by the JTree class.
 	
 	  * The method getDataJComponent( TreePath inTreePath )
 	    which returns a JComponent capable of displaying the node.
 
-	  * This class will eventually maintain a 2-way association between 
+	  * This class maintains a 2-way association between 
 	    a DataNode and the TreePath (or TreePaths in the case of DAGs)
 	    that can be followed to get to them.
+	    This relationship is cached in nodeToPathHashMap.
 
-	    ?? One understandable drawback of the superclass TreeModel is
-	    its inability to deal with the general Directed Graph,
-	    or even the Directed Acyclic Graph, in which
-	    a node can have multiple parents.
-	    This is  desirable feature of the Infogora Hierarchy
-	    so a solution needs to be found.
-	    It will probably be done with a HashMap.
-
-			?? Maybe add a parent list to nodes.
-			Maybe create a dual role (node and node-list) object.
+    ///enh One understandable drawback of the superclass TreeModel is
+    its inability to deal with the general Directed Graph,
+    or even the Directed Acyclic Graph (DAG), in which
+    a node can have multiple parents.
+    This is  desirable feature of the Infogora Hierarchy
+    so a solution needs to be found.
+    * It will probably be done with a HashMap.
+    * It might be done by changing the present node parent link to
+      a list of parent nodes, or maybe create 
+      a dual role (node and node-list) object.
 			 
-    Because this class will be used with JTree as part of a user interface,
-    there are some threading restrictions:
-    * Changes to the data managed by this model, as well as
-    	notifications about changes to that data, 
-    	the ones which fire TreeModelListeners,
-      must happen in the EDT (Event Dispatch Thread).
-      This is what is done now, using the invokeAndWaitV(..) method.
-    * ///enh Unfortunately using the EDT each time makes data changes inefficient.
-      Using synchronization combined with HierarchicalUpPropagation
-      might be sufficient to make change notification
-      both efficient and thread-safe.
+    * Threading Restrictions:
+      Because this class will be used with JTree as part of a user interface,
+    	there are some threading restrictions:
+	    * Changes to the data managed by this model, as well as
+	    	notifications about changes to that data, 
+	    	the ones which fire TreeModelListeners,
+	      must happen in the EDT (Event Dispatch Thread).
+	      This is what is done now, using the invokeAndWaitV(..) method.
+	    * ///enh Unfortunately using the EDT each time 
+	      makes data changes inefficient.
+	      Using synchronization combined with HierarchicalUpPropagation
+	      might be sufficient to make change notification
+	      both efficient and thread-safe.
+	      This change is underway.
 
-    ?? Use ObjectInterning to use less memory and to run faster.
+    ///pos Use ObjectInterning to use less memory and to run faster.
 
-    ?? Repeat what was done with 
+    ///pos Repeat what was done with 
     	TitledListViewer and TreeListModel to report ConnectionManager changes
     	with DirectoryTableViewer and DirectoryTableModel to report
 	    file-system changes using Java Watchable, WatchService, WatchEvent, 
 	    and WatchKey.  Unfortunately to watch sub-directories, each
 	    individual directory must be registered separately.
+	    
     */
 
   { // class DataTreeModel.
@@ -151,25 +165,27 @@ public class DataTreeModel
           return theDataRoot.getParentOfRootDataNode();
           }
 
-      public Object getChild( Object parentObject, int IndexI ) 
+      public Object getChild( Object parentObject, int childIndexI ) 
         /* Returns the Object which is the child of parentObject
-          whose index is IndexI.  The child must exist.
+          whose child index is childIndexI.  The child must exist.
           This operation is delegated to parentObject which
           is assumed to satisfy the DataNode interface.
           */
         {
       	  DataNode childDataNode= // Getting the child from parent.
-      	  		((DataNode)parentObject).getChild( IndexI ); 
+      	  		((DataNode)parentObject).getChild( childIndexI ); 
 
-      	  { // Calculating and adding to map the TreePath of child for later.  
-	      	  DataNode parentDataNode= (DataNode)parentObject;
-	          TreePath parentTreePath= // Retrieving path of parent from map. 
-	            	translatingToTreePath( parentDataNode );
-	          if ( parentTreePath != null ) // Add child path if path found.
-		      	  nodeToPathHashMap.put( // Making and adding child path to map. 
-			      			childDataNode, parentTreePath.pathByAddingChild(childDataNode) 
-			      			);
-      	  	}
+      	  if ( childDataNode != null )
+	      	  { // Calculating and adding to map the TreePath of child for later.  
+		      	  DataNode parentDataNode= (DataNode)parentObject;
+		          TreePath parentTreePath= // Try retrieving path of parent from map. 
+		            	translatingToTreePath( parentDataNode );
+		          if ( parentTreePath != null ) // Add child path if path found.
+			      	  nodeToPathHashMap.put( // Making and adding child path to map. 
+				      			childDataNode, 
+				      			parentTreePath.pathByAddingChild(childDataNode) 
+				      			);
+	      	  	}
 
       	  return childDataNode; // Returning the child.
           }
@@ -365,10 +381,11 @@ public class DataTreeModel
 		            	new Object[] {childDataNode}
 		            	);
 		          fireTreeNodesInserted( theTreeModelEvent ); // Fire insertion.
-		
-		        	nodeToPathHashMap.put( // Making and adding child to map for later. 
-		        			childDataNode, parentTreePath.pathByAddingChild(childDataNode) 
-		        			);
+		          TreePath childTreePath= 
+		          		parentTreePath.pathByAddingChild(childDataNode);
+		        	nodeToPathHashMap.put( // Making and adding child to cache. 
+		        			childDataNode, childTreePath );
+		        	cacheDescendantsInMapB( childTreePath );
 	          	}
           }
 
@@ -394,7 +411,11 @@ public class DataTreeModel
 		            	new Object[] {childDataNode}
 		            	);
 		          fireTreeNodesRemoved( theTreeModelEvent ); // Firing removal.
-		
+
+		          appLogger.debug( 
+	        				"DataTreeModel.reportingRemoveV(..) uncaching "
+	        				+ childDataNode 
+	        				);
 		        	nodeToPathHashMap.remove( // Removing entry for removed child from map. 
 		        			childDataNode // This won't remove descendants of child??
 		        			  // Hopefully descendants were already removed.
@@ -403,7 +424,7 @@ public class DataTreeModel
 		          }
           }
 
-      public void safelyReportingChangeV( final DataNode theDataNode )
+      public void safelyReportingChangeV( final DataNode theDataNode ) ///elim
         /* This is a thread-safe version of reportingChangeV( theDataNode ).
           It uses EDTUtilities.runOrInvokeAndWaitV(..) to switch to
           the EDT (Event Dispatch Thread) if that thread is not already active,
@@ -440,7 +461,7 @@ public class DataTreeModel
 	            theTreePath.getParentPath();
 	        reportingChangeB( parentTreePath, theDataNode );
         	}
-	       
+
       public boolean reportingChangeB( 
       		TreePath parentTreePath, DataNode theDataNode 
       		)
@@ -449,8 +470,8 @@ public class DataTreeModel
 		      parentTreePath is assumed to be the TreePath
 		      of the parent of theDataNode.
 		      This method must be running on the EDT.
-		      It returns true if all this succeeds.
-		      It returns false if there was a failure, such as caused by
+		      It returns false if all this succeeds.
+		      It returns true if there was a failure, such as caused by
 	      	  the current thread not being the EDT or parentTreePath == null.
    	      */
         {
@@ -475,12 +496,36 @@ public class DataTreeModel
           return false;
           }
 
-    // Path and cache manipulation methods.
+      public boolean reportingStructuralChangeB( TreePath parentTreePath )
+	    	/* This method creates and fires a TreeModelEvent
+		      for the structural change of a subtree identified by parentTreePath.
+		      This method must be running on the EDT.
+		      It returns false if all this succeeds.
+		      It returns true if there was a failure, such as caused by
+	      	  the current thread not being the EDT or parentTreePath == null.
+   	      */
+        {
+	      	if ( EDTUtilities.testAndLogIfNotRunningEDTB() ) return true; ///tmp
+	      	if ( Nulls.testAndLogIfNullB(parentTreePath) ) return true; ///tmp
+          
+          TreeModelEvent theTreeModelEvent= // Constructing TreeModelEvent.
+            new TreeModelEvent(
+            	this, 
+            	parentTreePath, 
+            	new int[] {}, // Child indexes are ignored.
+            	new Object[] {} // Child references are ignored.
+            	);
+
+          fireTreeStructureChanged( theTreeModelEvent );
+          return false;
+          }
+
+    // Path and path cache manipulation methods.
 
       public boolean cachePathInMapB( TreePath theTreePath )
         /* This method caches an entire path theTreePath.
-          It was created to prevent a cache miss and a long search
-          if the selection at startup is a very long path.
+          It was created to prevent a cache miss and a long node search
+          if the selection at startup is a very long MetaPath path.
           Using this method to seed the cache with 
           the initial selection path prevents this.
           Returns true if theTreePath was cached or was already in the cache.
@@ -500,7 +545,7 @@ public class DataTreeModel
 		    	  TreePath targetTreePath= // Testing whether that node is in cache.
 		    	  		nodeToPathHashMap.get( theDataNode );
 		        if ( targetTreePath != null ) // Already cached.
-		        	{ inCacheB= true; break process; } // Succeed.  
+		        	{ inCacheB= true; break process; } // Exit with success.  
         	  TreePath theParentTreePath= theTreePath.getParentPath();
         	  inCacheB= cachePathInMapB(  // Try caching parent.
         				theParentTreePath ); // This is a recursive call.
@@ -513,7 +558,72 @@ public class DataTreeModel
 	        return inCacheB;
       		}
 
+      public boolean cacheDescendantsInMapB( TreePath theTreePath ) ///tmp
+        /* This method caches the TreePaths of
+          all descendants of the node named by theTreePath.
+          theTreePath should already be cached.
+          Returns true if any descendants were cached.
+          Returns false if no descendants were cached.
+          */
+      	{
+	    	  DataNode theDataNode= // Getting last element node of path.
+	    	  		(DataNode)theTreePath.getLastPathComponent();
+      	  boolean somethingWasCacheB= false; // Assume nothing will be cached.
+			    int childIndexI= 0;  // Initialize child scan index.
+			    while ( true ) // Process all children.
+			      { // Process one child.
+			        DataNode childDataNode=  // Get the child.
+			           (DataNode)getChild( theDataNode, childIndexI );
+			        if ( childDataNode == null )  // Null means no more children.
+			            break;  // so exit while loop.
+			    	  TreePath childTreePath= // Testing whether child is in cache.
+			    	  		nodeToPathHashMap.get( childDataNode );
+			        if ( childTreePath == null ) // Cache if not cached.
+			        	{ nodeToPathHashMap.put(  // Caching child and its path.
+					        		childDataNode, childTreePath );
+					        cacheDescendantsInMapB( // Caching its descendants. 
+					        		childTreePath );  // This is recursive call.
+					        somethingWasCacheB= true;
+			        		}
+			        childIndexI++;  // Increment index for processing next child.
+			        }
+        return somethingWasCacheB;
+      	}
+
       public TreePath translatingToTreePath( DataNode targetDataNode )
+	      /* This method returns the TreePath of targetDataNode,
+  	      or null if node can not be found in the DataNode tree.
+  	      It tries to return a value from nodeToPathHashMap first.
+  	      If that fails then tries to build the TreePath recursively
+  	      from the targetDataNode and the translated TreePath of its parent.
+  	      TreePaths that are built are cached in the nodeToPathHashMap.
+  	      It returns the resultant TreePath or null if 
+  	      it was unable to find or build the TreePath.
+  	      */
+      	{ 
+      	  TreePath targetTreePath= // Looking in cache first.
+      	  		nodeToPathHashMap.get( targetDataNode );
+	        if ( targetTreePath == null ) // Building the path if not in cache.
+		        {
+      	  		DataNode parentDataNode= targetDataNode.parentNamedList;
+          	  TreePath parentTreePath= translatingToTreePath(parentDataNode);
+			        if ( parentTreePath != null ) // Caching build result, if any.
+				        {
+			      	  	targetTreePath= 
+			      	  			parentTreePath.pathByAddingChild( targetDataNode );
+				        	nodeToPathHashMap.put( targetDataNode, targetTreePath );
+				        	}
+	        		appLogger.warning( 
+	        				"DataTreeModel.translatingToTreePath( "
+	        				+ targetDataNode 
+	        				+ " ), cache miss, resolves to\n  "
+	        				+ targetTreePath
+	        				); // Indicates an incorrect child node addition.
+			        }
+      	  return targetTreePath;   
+      	  }
+
+      public TreePath OLDtranslatingToTreePath( DataNode targetDataNode )
 	      /* This method returns a TreePath of targetDataNode,
   	      or null if node can not be found in the DataNode tree.
   	      It tries to return a value from nodeToPathHashMap first.
@@ -527,18 +637,16 @@ public class DataTreeModel
       	  		nodeToPathHashMap.get( targetDataNode );
 	        if ( targetTreePath == null ) // Building the path if not in cache.
 		        {
-			        targetTreePath= // Building a path by tracing ancestors nodes. ///doc 
+			        targetTreePath= // Build path manually by tracing ancestors. 
 			        		buildTreePath( targetDataNode );
 			        if ( targetTreePath != null ) // Caching build result, if any.
 			        	nodeToPathHashMap.put( targetDataNode, targetTreePath );
-			        /*   ////
 	        		appLogger.warning( 
 	        				"DataTreeModel.translatingToTreePath( "
 	        				+ targetDataNode 
 	        				+ " ), cache miss, resolves to\n  "
 	        				+ targetTreePath
-	        				);
-			        */   ////
+	        				); // Indicates an incorrect child node addition.
 			        }
       	  return targetTreePath;   
       	  }
@@ -585,6 +693,229 @@ public class DataTreeModel
 	  	  	  	}
           return theTreePath;
           }
+
+
+    /* The following code is used to aggregate changes to the
+      Infogora hierarchy for later and more efficient display.
+      The displaying is done with the firing of notification events 
+      to GUI components such as JTrees. 
+      These methods do not need to be called on the Event Dispatch Thread (EDT).
+      
+      This is not a general-purpose up-propagation system.
+      It is highly customized for Java, its JTree class, and its GUI.
+      */
+
+      public void signalChangeV( DataNode theDataNode )
+	      /* This method signals the change of a single DataNode, 
+		      theDataNode.
+		      */
+        {
+	    	  signalSubtreeChangeV( // Convert to a subtree change. 
+	    	  		theDataNode );
+        	}
+
+      public void signalInsertionV( 
+          DataNode parentDataNode, 
+          int indexI, 
+          DataNode childDataNode 
+          )
+        /* This method signals the insertion of a single child DataNode, 
+          childDataNode, into parentDataNode at child position indexI.
+          */
+        {
+       	  signalStructureChangeInV( parentDataNode );
+          }
+
+      public void signalRemovalV( 
+          DataNode parentDataNode, 
+          int indexI, 
+          DataNode childDataNode 
+          )
+	      /* This method signals the removal of a single child DataNode, 
+		      childDataNode, from parentDataNode at child position indexI.
+		      */
+		    {
+      	  signalStructureChangeInV( parentDataNode );
+		      }
+
+      private void signalStructureChangeInV( 
+		      DataNode parentDataNode
+		      )
+        /* This method is used to signal a parentDataNode about 
+          the insertion or deletion of an unnamed child node.
+          This should work but it could be slow if
+          parentDataNode has a lot of child nodes.
+          */
+        {
+	  	  	switch ( parentDataNode.theUpdateLevel ) {
+			  		case NONE:
+			  		case SUBTREE_CHANGED:
+		      	  parentDataNode.theUpdateLevel= // Mark structure changed. 
+		      	  	DataNode.UpdateLevel.STRUCTURE_CHANGED;
+		      	  signalSubtreeChangeV( // Propagate as ordinary change to parent. 
+		      	  		parentDataNode.parentNamedList  );
+			  			break;
+			  			
+			  		case STRUCTURE_CHANGED:
+			  	  	; // Desired status is already set, so do nothing.
+			  	  	break;
+			  		}
+          }
+
+      private void signalSubtreeChangeV( 
+		      DataNode theDataNode
+		      )
+        /* This method signals that a change happened
+          in this node or one of its subtrees.
+          If it needs to change the update status of theDataNode then
+          it will also propagate the change to the node's parent if needed.
+          */
+        {
+      	  if ( theDataNode == null ) // No node to update. 
+      	  	; // Do nothing.
+      	  else // Update this node and its not updated ancestors.
+		  	  	switch ( theDataNode.theUpdateLevel ) {
+				  		case NONE:
+			      	  theDataNode.theUpdateLevel= // Mark node changed. 
+			      	  	DataNode.UpdateLevel.SUBTREE_CHANGED;
+			      	  signalSubtreeChangeV( // Propagate to parent, if any. 
+			      	  		theDataNode.parentNamedList );
+				  			break;
+				  			
+		  	  		case STRUCTURE_CHANGED:
+				  		case SUBTREE_CHANGED:
+				  	  	; // Anything else means no new changes are needed.
+				  	  	break;
+				  		}
+          }
+
+      public void displayTreeModelChangesV()
+        /* This method switches to the EDT 
+          and calls displayUpdatedNodesFromRootV(). 
+          */
+        {
+	    		EDTUtilities.runOrInvokeAndWaitV( // Do following on EDT thread. 
+		    		new Runnable() {
+		    			@Override  
+		          public void run() {
+		    				displayUpdatedNodesFromRootV();
+		            }
+		          } 
+		        );
+        	}
+
+      private void displayUpdatedNodesFromRootV()
+        /* This method displays any nodes 
+          that need displaying starting with 
+          the root of the Infogora hierarchy.
+          */
+        {
+	      	displayUpdatedNodesFromV( // Display from...
+	      			theDataRoot.getParentOfRootTreePath( ), 
+	      			theDataRoot.getRootDataNode( ) 
+	        		);
+        	}
+
+      private void displayUpdatedNodesFromV(
+      		TreePath parentTreePath, DataNode theDataNode 
+      		)
+        /* This method displays any nodes 
+          that need displaying starting with theDataNode.  
+          The TreePath of its parent is parentTreePath.
+          */
+        {
+    	  if ( theDataNode == null ) // Nothing to display. 
+    	  	; // Do nothing.
+    	  else { // Check this subtree.
+    	  	// Display this node any updated descendants.
+	  	  	switch ( theDataNode.theUpdateLevel ) {
+			  		case NONE:
+			  	  	; // Nothing in this subtree needs displaying.
+			  	  	break;
+		  	  	case STRUCTURE_CHANGED: 
+			  			displayStructuralChangeV( parentTreePath, theDataNode );
+		  	  		break;
+			  		case SUBTREE_CHANGED:
+			  			displayChangedSubtreeV( parentTreePath, theDataNode );
+			  	  	break;
+			  		}
+    	  	}
+        }
+
+  		private void displayStructuralChangeV( 
+  				TreePath parentTreePath, DataNode theDataNode 
+      		)
+  		  /* This method displays a subtree rooted at theDataNode,
+          a subtree which is known to have changed.
+          The TreePath of its parent is parentTreePath.
+          The descendants are displayed recursively first.
+          */
+	      {
+  			  TreePath theTreePath= parentTreePath.pathByAddingChild(theDataNode);
+    			reportingStructuralChangeB( theTreePath ); // Display by reporting
+    			  // to the listeners.
+
+    			resetUpdatesInSubtreeV( theDataNode );
+	      	}
+
+  		private void displayChangedSubtreeV(
+      		TreePath parentTreePath, DataNode theDataNode 
+      		)
+        /* This method displays a subtree rooted at theDataNode,
+          a subtree which is known to have changed,
+          The TreePath of its parent is parentTreePath.
+          The descendants are displayed recursively first.
+          The update status of all the nodes of any subtree display is reset. 
+          */
+	      {
+      		TreePath theTreePath= parentTreePath.pathByAddingChild(theDataNode); 
+			    int childIndexI= 0;  // Initialize child scan index.
+			    while ( true ) // Recursively display any updated descendants.
+			      { // Process one descendant subtree.
+			        DataNode childDataNode=  // Get the child, the descendant root.
+			           (DataNode)getChild( theDataNode, childIndexI );
+			        if ( childDataNode == null )  // Null means no more children.
+			            break;  // so exit while loop.
+			        displayUpdatedNodesFromV( // Recursively display descendant. 
+			        		theTreePath, childDataNode ); 
+			        childIndexI++;  // Increment index for processing next child.
+			      	}
+					reportingChangeB(  // Display possible appearance change of root node.
+							parentTreePath, theDataNode );
+			    theDataNode.theUpdateLevel= // Reset root update status. 
+			    		UpdateLevel.NONE;
+	      	}
+
+  		private void resetUpdatesInSubtreeV( DataNode theDataNode )
+        /* This method resets the update status of 
+          all the nodes in a subtree rooted at theDataNode.
+          The node's descendants that need resetting 
+          are reset recursively first.
+          All nodes that need resetting 
+          are assumed to be connected to theDataNode.
+          */
+	      {
+	  	  	switch ( theDataNode.theUpdateLevel ) {
+			  		case NONE:
+			  	  	; // Do nothing.
+			  	  	break;
+			  	  default: 
+			  	  	int childIndexI= 0;  // Initialize child scan index.
+					    while ( true ) // Recursively reset appropriate descendants.
+					      { // Process one child subtree.
+					        DataNode childDataNode=  // Get the child.
+					           (DataNode)getChild( theDataNode, childIndexI );
+					        if ( childDataNode == null )  // Null means no more children.
+					            break;  // so exit while loop.
+					        resetUpdatesInSubtreeV( // Recursively reset child subtree. 
+					        		childDataNode ); 
+					        childIndexI++;  // Increment index for processing next child.
+					      	}
+					    theDataNode.theUpdateLevel= // Reset root node update status. 
+					    		UpdateLevel.NONE;
+			  	  	break;
+			  		}
+	      	}
 
     /*  ///elim  Maybe save this somewhere in case I need a DepthFirstSearch.
       @SuppressWarnings("unused") ///elim No longer used.

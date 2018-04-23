@@ -48,7 +48,36 @@ public class DataNode
 	    */
 	
 	  // Instance variables
-	
+
+		  public enum UpdateLevel  
+		    /* This constants are used to delay and manage
+		      the firing of notification events to GUI components
+		      such as JTrees. 
+		      */
+			  {
+			  	//// UNDEFINED,    // the field has not yet been defined
+
+			  	// Minimum needed for correct operation.
+			  	NONE, 									// No changes here or in descendants.
+					// This subtree may be ignored.
+			  	STRUCTURE_CHANGED,			// This subtree contains major changes. 
+																	// Requires structure change event.
+			  	SUBTREE_CHANGED,				// This node or its descendants have changed.
+			  													// Requires child checking and change event.
+
+			  	// Others for optimizations.  Unused.
+			  	/*   ////
+			  	INSERTED,			// this node or subtree has been inserted
+			  	INSERTED_DESCENDANTS,		// one or more children have been inserted
+			  	CHANGED,
+
+			  	NODE,					// this node changed
+			  	CHILDREN,			// one or more of this node's children
+			  	REMOVALS,			// one or more children have been removed
+			  	*/  ////
+					}
+
+		  public UpdateLevel theUpdateLevel= UpdateLevel.NONE;
 			protected NamedList parentNamedList= null; // My parent node. 
 			protected LogLevel theMaxLogLevel= AppLog.defaultMaxLogLevel;
 			

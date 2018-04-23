@@ -202,7 +202,7 @@ public class LinkedMachineState
 						
 						for // Add each child state from array.
 						  ( StateList theStateList : theLinkedStateLists ) 
-							addStateListV(theStateList);
+							addStateListV(theStateList); // Add it as sub-state.
 						
 						return this;
 						}
