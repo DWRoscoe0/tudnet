@@ -358,7 +358,7 @@ public class DataTreeModel
       (EDT), and so should the changes that those calls report.
       */
 
-      public void reportingInsertV( 
+      private void reportingInsertV(
           DataNode parentDataNode, 
           int indexI, 
           DataNode childDataNode 
@@ -424,7 +424,7 @@ public class DataTreeModel
 		          }
           }
 
-      public void safelyReportingChangeV( final DataNode theDataNode ) ///elim
+      private void safelyReportingChangeV( final DataNode theDataNode ) ///elim
         /* This is a thread-safe version of reportingChangeV( theDataNode ).
           It uses EDTUtilities.runOrInvokeAndWaitV(..) to switch to
           the EDT (Event Dispatch Thread) if that thread is not already active,
@@ -516,6 +516,9 @@ public class DataTreeModel
             	new Object[] {} // Child references are ignored.
             	);
 
+  				appLogger.debug( "DataTreeModel.reportingStructuralChangeB() "
+  						+ ((DataNode)parentTreePath.getLastPathComponent()).
+  							getNodePathString() );
           fireTreeStructureChanged( theTreeModelEvent );
           return false;
           }
@@ -721,9 +724,10 @@ public class DataTreeModel
           )
         /* This method signals the insertion of a single child DataNode, 
           childDataNode, into parentDataNode at child position indexI.
+		      ///opt Implement without StructuralChange.
           */
         {
-       	  signalStructureChangeInV( parentDataNode );
+      	  signalStructureChangeInV( parentDataNode, indexI, childDataNode );
           }
 
       public void signalRemovalV( 
@@ -733,21 +737,25 @@ public class DataTreeModel
           )
 	      /* This method signals the removal of a single child DataNode, 
 		      childDataNode, from parentDataNode at child position indexI.
+		      ///opt Implement without StructuralChange.
 		      */
 		    {
-      	  signalStructureChangeInV( parentDataNode );
+      	  signalStructureChangeInV( parentDataNode, indexI, childDataNode );
 		      }
 
-      private void signalStructureChangeInV( 
-		      DataNode parentDataNode
+      private void signalStructureChangeInV(
+          DataNode parentDataNode, 
+          int indexI, 
+          DataNode childDataNode 
 		      )
         /* This method is used to signal a parentDataNode about 
           the insertion or deletion of an unnamed child node.
-          This should work but it could be slow if
-          parentDataNode has a lot of child nodes.
           */
         {
-	  	  	switch ( parentDataNode.theUpdateLevel ) {
+						appLogger.debug( "DataTreeModel.signalStructureChangeInV() "
+							+ childDataNode.getNodePathString() + " at position " + indexI );
+						
+						switch ( parentDataNode.theUpdateLevel ) {
 			  		case NONE:
 			  		case SUBTREE_CHANGED:
 		      	  parentDataNode.theUpdateLevel= // Mark structure changed. 
@@ -794,6 +802,7 @@ public class DataTreeModel
           and calls displayUpdatedNodesFromRootV(). 
           */
         {
+      		appLogger.trace( "DataTreeModel.displayTreeModelChangesV()" );
 	    		EDTUtilities.runOrInvokeAndWaitV( // Do following on EDT thread. 
 		    		new Runnable() {
 		    			@Override  
@@ -810,6 +819,7 @@ public class DataTreeModel
           the root of the Infogora hierarchy.
           */
         {
+      		appLogger.trace( "DataTreeModel.displayUpdatedNodesFromRootV()" );
 	      	displayUpdatedNodesFromV( // Display from...
 	      			theDataRoot.getParentOfRootTreePath( ), 
 	      			theDataRoot.getRootDataNode( ) 
@@ -824,22 +834,24 @@ public class DataTreeModel
           The TreePath of its parent is parentTreePath.
           */
         {
-    	  if ( theDataNode == null ) // Nothing to display. 
-    	  	; // Do nothing.
-    	  else { // Check this subtree.
-    	  	// Display this node any updated descendants.
-	  	  	switch ( theDataNode.theUpdateLevel ) {
-			  		case NONE:
-			  	  	; // Nothing in this subtree needs displaying.
-			  	  	break;
-		  	  	case STRUCTURE_CHANGED: 
-			  			displayStructuralChangeV( parentTreePath, theDataNode );
-		  	  		break;
-			  		case SUBTREE_CHANGED:
-			  			displayChangedSubtreeV( parentTreePath, theDataNode );
-			  	  	break;
-			  		}
-    	  	}
+	  	    if ( theDataNode == null ) // Nothing to display. 
+	    	  	; // Do nothing.
+	    	  else { // Check this subtree.
+		    		appLogger.trace( "DataTreeModel.displayUpdatedNodesFromV() "
+		            + theDataNode.getNodePathString() );
+	    	  	// Display this node any updated descendants.
+		  	  	switch ( theDataNode.theUpdateLevel ) {
+				  		case NONE:
+				  	  	; // Nothing in this subtree needs displaying.
+				  	  	break;
+			  	  	case STRUCTURE_CHANGED: 
+				  			displayStructuralChangeV( parentTreePath, theDataNode );
+			  	  		break;
+				  		case SUBTREE_CHANGED:
+				  			displayChangedSubtreeV( parentTreePath, theDataNode );
+				  	  	break;
+				  		}
+	    	  	}
         }
 
   		private void displayStructuralChangeV( 
@@ -851,6 +863,8 @@ public class DataTreeModel
           The descendants are displayed recursively first.
           */
 	      {
+  				appLogger.debug( "DataTreeModel.displayStructuralChangeV() "
+  						+theDataNode.getNodePathString() );
   			  TreePath theTreePath= parentTreePath.pathByAddingChild(theDataNode);
     			reportingStructuralChangeB( theTreePath ); // Display by reporting
     			  // to the listeners.
@@ -868,6 +882,8 @@ public class DataTreeModel
           The update status of all the nodes of any subtree display is reset. 
           */
 	      {
+  				appLogger.trace( "DataTreeModel.displayChangedSubtreeV() "
+  						+ theDataNode.getNodePathString() );
       		TreePath theTreePath= parentTreePath.pathByAddingChild(theDataNode); 
 			    int childIndexI= 0;  // Initialize child scan index.
 			    while ( true ) // Recursively display any updated descendants.

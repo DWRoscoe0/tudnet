@@ -129,10 +129,12 @@ public class EpiThread
         causing the current thread to sleep for msI milliseconds,
         except that it does not throw an InterruptedException 
         if it was interrupted while sleeping.
-        Instead, if that happens then the method simply returns with
-        the thread's interrupt status set.
-        It can be processed by the caller.
-        It returns true if the sleep was interrupted, false otherwise.  
+        Instead, if that happens then the method returns immediately with
+        the thread's interrupt status set and the sleep delay incomplete.
+        The interrupt status can be sensed and processed by the caller.
+        Also it returns true if the sleep was interrupted, false otherwise,
+        but because the interrupt status can be sensed,
+        this is probably not very useful.
         */
       {
     	  boolean interruptedB= false;
@@ -146,6 +148,37 @@ public class EpiThread
           }
         
         return interruptedB;
+        }
+
+    public static boolean uninterruptableSleepB( long msL )
+      /* This method works exactly like interruptableSleepB(..)
+        except instead of returning immediately 
+        if sleep is sleep is interrupted, it sleeps again, 
+        repeatedly if needed, until the thread has slept the full delay of msL.
+        Because this can delay a thread for long periods of time,
+        it should only be used for debugging and testing
+        or when it is certain that the delay will not cause a problem.
+        */
+      {
+		  	long beginTimeMsL= // Recording beginning of sleep interval. 
+			  		System.currentTimeMillis();
+		  	long endTimeMsL=  // Calculating end of sleep interval.
+		  			beginTimeMsL + msL;
+    	  boolean interruptedB= false;
+
+    	  while (true) { // repeatedly sleep until full delay passes.
+    	  	if // Record and clear thread interrupt status.
+    	  	  (Thread.currentThread().isInterrupted())
+    	  		interruptedB= true;
+    	  	long remainingMsL= // Calculate time in ms remaining to sleep. 
+    	  			endTimeMsL - System.currentTimeMillis();
+    	  	if ( remainingMsL <= 0L ) break; // Exit if there's no remaining time. 
+    	  	interruptableSleepB( remainingMsL ); // Try sleeping for that time.
+    	  	}
+
+    	  if ( interruptedB ) // IF an interruption happened at any time
+    	  	Thread.currentThread().interrupt(); // reestablish interrupt status.
+      	return interruptedB;
         }
 
 		public static boolean exitingB()

@@ -290,6 +290,26 @@ public class DataNode
 
   // Methods which return Strings about the node.
 
+	  	protected String getNodePathString()
+	  	  /* Recursively calculates and returns 
+	  	    a comma-separated list of node names
+	  	    from the root of the hierarchy to this state.
+	  	   */
+	  	  {
+	  		  String resultString;
+	  		  
+	  		  if ( parentNamedList == null )
+	  		  	resultString= getNameString();
+	  		  else
+	  		    resultString= 
+	  		    	parentNamedList.getNodePathString()
+	  		  		+ ", "
+	  		  		+ getNameString(); 
+
+	  		  Nulls.fastFailNullCheckT(resultString);
+	  		  return resultString;
+	  	  	}
+	  	
     public String getNameString( )
 	    /* Returns the name of the DataNode as a String.  
 	      his should be a unique (identifying) String.

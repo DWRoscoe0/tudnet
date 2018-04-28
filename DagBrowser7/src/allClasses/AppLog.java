@@ -119,7 +119,7 @@ public class AppLog extends EpiThread
 	    	TRACE
 	  		}	
 
-    	public static final LogLevel defaultMaxLogLevel= INFO;
+    	public static final LogLevel defaultMaxLogLevel= DEBUG; // INFO;
     	private static LogLevel maxLogLevel= defaultMaxLogLevel;
     	  // The app may create and use their own maximum variables,
     	  // or set this variable and call methods which use it.
@@ -278,6 +278,13 @@ public class AppLog extends EpiThread
 
     public void setLevelLimitV( LogLevel limitLogLevel )
     	{ maxLogLevel= limitLogLevel; }
+
+    public void trace(String inString)
+      /* This method is for tracing.  It writes only inString.
+        */
+      { 
+				logB( TRACE, inString, null, false );
+        }
   
     public void debug(String inString)
       /* This method writes a debug String inString to a log entry

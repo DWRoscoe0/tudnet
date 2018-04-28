@@ -47,7 +47,8 @@ public class TitledListViewer // adapted from TitledListViewer.
     This class provides a simple titled DagNodeViewer that 
     displays and browses List-s using a JList.
     It was created based on code from DirectoryTableViewer.
-    Eventually it might be a good idea to create 
+
+    ///enh Eventually it might be a good idea to create 
     a static or intermediate base class that handles common operations.
     */
     

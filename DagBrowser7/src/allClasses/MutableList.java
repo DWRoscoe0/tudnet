@@ -85,12 +85,17 @@ public class MutableList extends NamedList
 	    		    	  {
 	  		          	//appLogger.debug("MutableList.remove(..): removing.");
 	    				  		theListOfDataNodes.remove( indexI );
+	    				  		theDataTreeModel.signalRemovalV( 
+	    				      		parentDataNode, indexI, childDataNode 
+	  	    				      );
+	    				      /*  ////
 	    				      theDataTreeModel.reportingRemoveV( 
 	    				      	parentDataNode, indexI, childDataNode 
 	    				      	); // To actually remove child from display.
 		                theDataTreeModel.reportingChangeV( 
 		    		      		parentDataNode 
 		    		      		); // In case # of children changes parent's appearance.
+	    				      */  ////
 	    		    	  	removedB[0]= true; // Returning indication of removal.
 	    		    	  	}
                 }  

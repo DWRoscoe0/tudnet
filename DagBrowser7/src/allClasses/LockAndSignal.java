@@ -268,121 +268,121 @@ public class LockAndSignal  // Combination lock and signal class.
 		  ///? Change wait methods to use await() instead of wait() ??
 
 			*/
-
-    public Input waitingForInterruptOrNotificationE()
-	    /* This method, called by a destination thread,
-		    waits for an input from the following list.
-		     If more than one input type is available when the method is called 
-		    then it returns the one that appears first.
-		      Input.INTERRUPTION: 
-		        The interrupt status set by Thread.currentThread().interrupt()
-		        was true, and was then cleared by this method.
-		      Input.NOTIFICATION: 
-		        An input signal notification occurred.
-		        This condition is cleared when the notification is returned.
-	     	*/
-		  {
-		    Input theInput;  // For type of Input that will be returned.
-		    while (true) { // Looping until there is an input.
-	      	theInput= testingForInterruptE();
-	      	if ( theInput != Input.NONE ) break;
-	      	theInput= testingForNotificationE();
-	      	if ( theInput != Input.NONE ) break;
-		      waitingForInterruptOrDelayOrNotificationV( // Waiting for input.
-	      		0 // This means waiting with no time limit.
-	      		);
-		      } // while(true)
-		    return theInput;  // Returning why the wait loop ended.
-		    }
-
-    public Input waitingForNotificationOrInterruptE()
-	    /* This method, called by a destination thread,
-		    waits for an input from the following list.
-		     If more than one input type is available when the method is called 
-		    then it returns the one that appears first.
-		      Input.NOTIFICATION: 
-		        An input signal notification occurred.
-		        This condition is cleared when the notification is returned.
-		      Input.INTERRUPTION: 
-		        The interrupt status set by Thread.currentThread().interrupt()
-		        was true, and was then cleared by this method.
-	     	*/
-		  {
-		    Input theInput;  // For type of Input that will be returned.
-		    while (true) { // Looping until there is an input.
-	      	theInput= testingForNotificationE();
-	      	if ( theInput != Input.NONE ) break;
-	      	theInput= testingForInterruptE();
-	      	if ( theInput != Input.NONE ) break;
-		      waitingForInterruptOrDelayOrNotificationV( // Waiting for input.
-	      		0 // This means waiting with no time limit.
-	      		);
-		      } // while(true)
-		    return theInput;  // Returning why the wait loop ended.
-		    }
-		    
-		public synchronized Input waitingForInterruptOrDelayOrNotificationE( 
-    		long delayMsL 
-    		)
-	    /* This method, called by a destination thread,
-		    waits for an input from the following list.
-		    If more than one input type is available when the method is called 
-		    then it returns the one that appears first in the list.
-          Input.INTERRUPTION: 
-	          The interrupt status set by Thread.currentThread().interrupt()
-	          was true, and was then cleared by this method.
-		      Input.TIME.
-		        Time is outside the interval that begins at the time of call
-		        and ends delayMs milliseconds later. 
-		      Input.NOTIFICATION: 
-		        An input signal notification occurred.
-		        This condition is cleared when the notification is returned.
-		    */
-      {
-		    return // Convert to call with time delay converted to time interval. 
-	    		waitingForInterruptOrIntervalOrNotificationE( 
-			      System.currentTimeMillis(),
-			      delayMsL 
-			      );
-        }
-
-    public synchronized Input waitingForInterruptOrIntervalOrNotificationE(
-    		long startMsL, long lengthMsL 
-    		)
-	    /* This method, called by a destination thread,
-		    waits for an input from the following list.
-		    If more than one input type is available when the method is called 
-		    then it returns the one that appears first.
-          Input.INTERRUPTION: 
-	          The interrupt status set by Thread.currentThread().interrupt()
-	          was true, and was then cleared by this method.
-		      Input.TIME.
-		        Time is outside the interval that begins at startMsL
-		        and ends delayMs milliseconds later. 
-		      Input.NOTIFICATION: 
-		        An input signal notification occurred.
-		        This condition is cleared when the notification is returned.
-
-	      Use this when reaching a time limit will terminate a protocol loop.
-	      */
-	    {
-	      Input theInput;  // For type of Input that will be returned.
-	      while (true) { // Looping until there is an input.
-	        final long remainingInIntervalMsL= // [Re]calculating remaining time.
-        		timeCheckedDelayMsL( startMsL, lengthMsL ); 
-	      	theInput= // Testing whether any input is available. 
-      			testingForInterruptOrDelayOrNotificationE( 
-      					remainingInIntervalMsL 
-      					);
-	        if  // Exiting with input type unless...
-	          ( theInput != Input.NONE ) // ...there is no input available. 
-	        	break; // Exiting.
-	        waitingForInterruptOrDelayOrNotificationV( // Waiting for any input.
-		      		remainingInIntervalMsL
+	
+	    public Input waitingForInterruptOrNotificationE()
+		    /* This method, called by a destination thread,
+			    waits for an input from the following list.
+			     If more than one input type is available when the method is called 
+			    then it returns the one that appears first.
+			      Input.INTERRUPTION: 
+			        The interrupt status set by Thread.currentThread().interrupt()
+			        was true, and was then cleared by this method.
+			      Input.NOTIFICATION: 
+			        An input signal notification occurred.
+			        This condition is cleared when the notification is returned.
+		     	*/
+			  {
+			    Input theInput;  // For type of Input that will be returned.
+			    while (true) { // Looping until there is an input.
+		      	theInput= testingForInterruptE();
+		      	if ( theInput != Input.NONE ) break;
+		      	theInput= testingForNotificationE();
+		      	if ( theInput != Input.NONE ) break;
+			      waitingForInterruptOrDelayOrNotificationV( // Waiting for input.
+		      		0 // This means waiting with no time limit.
 		      		);
-	        } // while(true)
-	      return theInput;  // Returning why the wait loop ended.
-	      }
+			      } // while(true)
+			    return theInput;  // Returning why the wait loop ended.
+			    }
+	
+	    public Input waitingForNotificationOrInterruptE()
+		    /* This method, called by a destination thread,
+			    waits for an input from the following list.
+			     If more than one input type is available when the method is called 
+			    then it returns the one that appears first.
+			      Input.NOTIFICATION: 
+			        An input signal notification occurred.
+			        This condition is cleared when the notification is returned.
+			      Input.INTERRUPTION: 
+			        The interrupt status set by Thread.currentThread().interrupt()
+			        was true, and was then cleared by this method.
+		     	*/
+			  {
+			    Input theInput;  // For type of Input that will be returned.
+			    while (true) { // Looping until there is an input.
+		      	theInput= testingForNotificationE();
+		      	if ( theInput != Input.NONE ) break;
+		      	theInput= testingForInterruptE();
+		      	if ( theInput != Input.NONE ) break;
+			      waitingForInterruptOrDelayOrNotificationV( // Waiting for input.
+		      		0 // This means waiting with no time limit.
+		      		);
+			      } // while(true)
+			    return theInput;  // Returning why the wait loop ended.
+			    }
+			    
+			public synchronized Input waitingForInterruptOrDelayOrNotificationE( 
+	    		long delayMsL 
+	    		)
+		    /* This method, called by a destination thread,
+			    waits for an input from the following list.
+			    If more than one input type is available when the method is called 
+			    then it returns the one that appears first in the list.
+	          Input.INTERRUPTION: 
+		          The interrupt status set by Thread.currentThread().interrupt()
+		          was true, and was then cleared by this method.
+			      Input.TIME.
+			        Time is outside the interval that begins at the time of call
+			        and ends delayMs milliseconds later. 
+			      Input.NOTIFICATION: 
+			        An input signal notification occurred.
+			        This condition is cleared when the notification is returned.
+			    */
+	      {
+			    return // Convert to call with time delay converted to time interval. 
+		    		waitingForInterruptOrIntervalOrNotificationE( 
+				      System.currentTimeMillis(),
+				      delayMsL 
+				      );
+	        }
+	
+	    public synchronized Input waitingForInterruptOrIntervalOrNotificationE(
+	    		long startMsL, long lengthMsL 
+	    		)
+		    /* This method, called by a destination thread,
+			    waits for an input from the following list.
+			    If more than one input type is available when the method is called 
+			    then it returns the one that appears first.
+	          Input.INTERRUPTION: 
+		          The interrupt status set by Thread.currentThread().interrupt()
+		          was true, and was then cleared by this method.
+			      Input.TIME.
+			        Time is outside the interval that begins at startMsL
+			        and ends delayMs milliseconds later. 
+			      Input.NOTIFICATION: 
+			        An input signal notification occurred.
+			        This condition is cleared when the notification is returned.
+	
+		      Use this when reaching a time limit will terminate a protocol loop.
+		      */
+		    {
+		      Input theInput;  // For type of Input that will be returned.
+		      while (true) { // Looping until there is an input.
+		        final long remainingInIntervalMsL= // [Re]calculating remaining time.
+	        		timeCheckedDelayMsL( startMsL, lengthMsL ); 
+		      	theInput= // Testing whether any input is available. 
+	      			testingForInterruptOrDelayOrNotificationE( 
+	      					remainingInIntervalMsL 
+	      					);
+		        if  // Exiting with input type unless...
+		          ( theInput != Input.NONE ) // ...there is no input available. 
+		        	break; // Exiting.
+		        waitingForInterruptOrDelayOrNotificationV( // Waiting for any input.
+			      		remainingInIntervalMsL
+			      		);
+		        } // while(true)
+		      return theInput;  // Returning why the wait loop ended.
+		      }
     
     
 	  /* Methods that test for various types of Input:
@@ -403,215 +403,219 @@ public class LockAndSignal  // Combination lock and signal class.
 
 	   	*/
 		
-		    public synchronized Input testingForInterruptTimeOrNotificationE( 
-		    		long startMsL, long lengthMsL 
-		    		)
-			    /* This method, called by a destination thread,
-				    tests for an input from the following list.
-				    If more than one input type is available when the method is called 
-				    then it returns the one that appears first.
-		
-		          Input.INTERRUPTION: 
-			          The interrupt status set by Thread.currentThread().interrupt()
-			          was true, and was then cleared by this method.
-				      Input.TIME.
-				        Time is outside the interval that begins at startMsL
-				        and ends lengthMs milliseconds later. 
-				      Input.NOTIFICATION: 
-				        An input signal notification occurred.
-				        This condition is cleared when the notification is returned.
-		
-			     	  Input.NONE: None of the above inputs was available.
-		
-		        */
-			    {
-					  final long delayMsL= // Converting time interval to time delay.
-					  		timeCheckedDelayMsL( startMsL, lengthMsL );
-		
-					  return testingForInterruptOrDelayOrNotificationE( delayMsL );
-				    }
+	    public synchronized Input testingForInterruptTimeOrNotificationE( 
+	    		long startMsL, long lengthMsL 
+	    		)
+		    /* This method, called by a destination thread,
+			    tests for an input from the following list.
+			    If more than one input type is available when the method is called 
+			    then it returns the one that appears first.
 	
-	      public synchronized Input testingForInterruptOrDelayOrNotificationE( 
-	      		long delayMsL 
-	      		)
-			    /* This method, called by a destination thread,
-				    tests for an input from the following list.
-				    If more than one input type is available when the method is called 
-				    then it returns the one that appears first.
-		
-		          Input.INTERRUPTION: 
-			          The interrupt status set by Thread.currentThread().interrupt()
-			          was true, and was then cleared by this method.
-				      Input.TIME.
-				        Time is outside the interval that begins now
-				        and ends delayMs milliseconds later. 
-				      Input.NOTIFICATION: 
-				        An input signal notification occurred.
-				        This condition is cleared when the notification is returned.
-		
-			     	  Input.NONE: None of the above inputs was available.
-		
-		        */
-	  	    {
-			      Input theInput;  // For return value.
-			      process: {
-			      	theInput= testingForInterruptE();
-			      	if ( theInput != Input.NONE ) break process;
-						  theInput= testingRemainingDelayE( delayMsL );
-			      	if ( theInput != Input.NONE ) break process;
-			      	theInput= testingForNotificationE();
-			      	// No need to test final result.  Just drop through.
-			      	} // process:
-			    return theInput;
+	          Input.INTERRUPTION: 
+		          The interrupt status set by Thread.currentThread().interrupt()
+		          was true, and was then cleared by this method.
+			      Input.TIME.
+			        Time is outside the interval that begins at startMsL
+			        and ends lengthMs milliseconds later. 
+			      Input.NOTIFICATION: 
+			        An input signal notification occurred.
+			        This condition is cleared when the notification is returned.
+	
+		     	  Input.NONE: None of the above inputs was available.
+	
+	        */
+		    {
+				  final long delayMsL= // Converting time interval to time delay.
+				  		timeCheckedDelayMsL( startMsL, lengthMsL );
+	
+				  return testingForInterruptOrDelayOrNotificationE( delayMsL );
 			    }
 
+      public synchronized Input testingForInterruptOrDelayOrNotificationE( 
+      		long delayMsL 
+      		)
+		    /* This method, called by a destination thread,
+			    tests for an input from the following list.
+			    If more than one input type is available when the method is called 
+			    then it returns the one that appears first.
+	
+	          Input.INTERRUPTION: 
+		          The interrupt status set by Thread.currentThread().interrupt()
+		          was true, and was then cleared by this method.
+			      Input.TIME.
+			        Time is outside the interval that begins now
+			        and ends delayMs milliseconds later. 
+			      Input.NOTIFICATION: 
+			        An input signal notification occurred.
+			        This condition is cleared when the notification is returned.
+	
+		     	  Input.NONE: None of the above inputs was available.
+	
+	        */
+  	    {
+		      Input theInput;  // For return value.
+		      process: {
+		      	theInput= testingForInterruptE();
+		      	if ( theInput != Input.NONE ) break process;
+					  theInput= testingRemainingDelayE( delayMsL );
+		      	if ( theInput != Input.NONE ) break process;
+		      	theInput= testingForNotificationE();
+		      	// No need to test final result.  Just drop through.
+		      	} // process:
+		    return theInput;
+		    }
 
-	    /* Building block methods:
-	      From these methods, other test and wait methods can be built
-	      to test or wait for any combination of inputs.
-	      
-	      There are 3 test methods.
-	      Each test method tests for one, and only one, type of input.
-	      In some cases it also clears the condition for which it tests.
-	      In most cases, this is what the caller desired.
-	      If this is not true then the caller can reestablish the condition.  
-	      
-	      There are 2 wait methods.  
-	      The methods differ only in how they treat
-	      pre-existing Thread interrupted status.
-	      
-	      For examples of users of these methods,
-	      see their callers above this point in this file.
-	      */
 
-	      public synchronized Input testingForInterruptE() 
-			    /* This method, called by a destination thread,
-				    tests for the thread interrupt status input only.  
-				    It returns results as follows:
-				    
-		          Input.INTERRUPTION: 
-			          The interrupt status set by Thread.currentThread().interrupt()
-			          was true, and was then cleared by this method.
-		
-			     	  Input.NONE: None of the above inputs was available.
-		
-		        */
-		      {
-		 	      if // Testing and clearing thread interruption status.
-		 	        ( Thread.currentThread().isInterrupted() )
-		 	      	return Input.INTERRUPTION;
-		 	      	else
-		 	      	return Input.NONE;
-		      	}
+    /* Building block methods:
+      From these methods, other test and wait methods can be built
+      to test or wait for any combination of inputs.
+      
+      There are 3 test methods.
+      Each test method tests for one, and only one, type of input.
+      In some cases it also clears the condition for which it tests.
+      In most cases, this is what the caller desired.
+      If this is not true then the caller can reestablish the condition.  
+      
+      There are 2 wait methods.  
+      The methods differ only in how they treat
+      pre-existing Thread interrupted status.
+      
+      For examples of users of these methods,
+      see their callers above this point in this file.
+      */
 
-	      public synchronized Input testingRemainingDelayE( long delayMsL )
-			    /* This method, called by a destination thread,
-				    tests for a time input only.
-				    It returns results as follows:
-		
-				      Input.TIME.
-				        delayMs equals 0, meaning no delay remains.
-				        delayMs should have been returned by timeCheckedDelayMsL().
-		
-			     	  Input.NONE: None of the above inputs was available.
-		
-		        */
-		      {
-					  if ( delayMsL == 0 )
-		 	      	return Input.TIME;
-		 	      	else
-		 	      	return Input.NONE;
-		      	}
-	      
-	      public synchronized Input testingForNotificationE()
-			    /* This method, called by a destination thread,
-				    tests for notification inputs only.
-				    It returns results as follows:
-		
-				      Input.NOTIFICATION: 
-				        An input signal notification occurred,
-				        and was then cleared by this method.
-		
-			     	  Input.NONE: None of the above inputs was available.
-		
-		        */
-		      {
-					  if ( getB() ) // Testing flag indicating that notifyingV() called.
-					    {
-					  	  setV(false); // Resetting condition for next inputs.
-			 	      	return Input.NOTIFICATION; 
-					  	  }
-			 	      else
-			 	      return Input.NONE;
-		      	}
-
-	      public synchronized void waitingForInterruptOrDelayOrNotificationV(
-	      		long waitTimeMsL
-	      		)
-	  	    /* This method, called by a destination thread,
-	  		    waits for any of the following:
-	  		    * a thread interrupt, either a pre-existing interrupt status 
-	  		      one an interrupt that happens during the wait().
-	  		    * A call to notify() during the wait().
-	  		    * The passage of waitTimeMsL time.
-
-	  		    It does all of this with a call to Object.wait(waitTimeMsL).
-	  		    waitTimeMsL equaling 0 means that
-	  		    the passage of no amount of time will terminate the wait().
-
-	  		    This method does not loop and returns no results.
-	  		    It is the responsibility of the caller 
-	  		    to loop and test whether a desired input actually happened,
-	  		    and if not, to wait again, possibly with a reduced wait time.
-	  	      */
-	  	    {
-  	        try { // Waiting for new notify(), wait time, or interrupt().
-  	          wait( waitTimeMsL );
-  	          } 
-  	        catch (InterruptedException e) { // Handling thread wait interrupt.
-  	          Thread.currentThread().interrupt(); 
-  	          } // Re-establishing thread interrupt status for later tests.
-	  	      }
-
-	      public synchronized void waitingForDelayOrNotificationV(
-	      		long waitTimeMsL
-	      		)
-	  	    /* This method, called by a destination thread,
-	  		    waits for any of the following:
-	  		    * A call to notify() during the wait().
-	  		    * The passage of waitTimeMsL time.
-	  		    It ignores, but preserves, thread interrupts.
-
-	  		    It does this with a call to Object.wait(waitTimeMsL).
-	  		    waitTimeMsL equaling 0 means that
-	  		    the passage of no amount of time will terminate the wait().
-
-	  		    It partially ignores, but preserves thread interrupts.
-	  		    If the thread's interrupted status is true when
-	  		    this method is called, it is ignored, but kept true.
-	  		    If the thread's interrupted status becomes true while
-	  		    while this method is blocked executing Object.wait(..),
-	  		    then the block ends, and the method returns
-	  		    with the thread's interrupted status true.
-
-	  		    This method does not loop or return any results.  
-	  		    It is the responsibility of the caller 
-	  		    to loop and test whether a desired input happened, 
-	  		    and if not, to wait again, possibly with a reduced wait time.
-	  	      */
+      public synchronized Input testingForInterruptE() 
+		    /* This method, called by a destination thread,
+			    tests for the thread interrupt status input only.  
+			    It returns results as follows:
+			    
+	          Input.INTERRUPTION: 
+		          The interrupt status set by Thread.currentThread().interrupt()
+		          was true, and was then cleared by this method.
+	
+		     	  Input.NONE: None of the above inputs was available.
+	
+	        */
 	      {
-	    	  boolean interruptedB= // Saving and clearing interruption status. 
-	    	  		Thread.currentThread().isInterrupted();
+	 	      if // Testing and clearing thread interruption status.
+	 	        ( Thread.currentThread().isInterrupted() )
+	 	      	return Input.INTERRUPTION;
+	 	      	else
+	 	      	return Input.NONE;
+	      	}
 
-	        try {
-	          wait( waitTimeMsL ); // Waiting for new notify() or wait time.
-		        if (interruptedB) // Restoring interrupt status to what it was.
-		        	Thread.currentThread().interrupt(); 
+      public synchronized Input testingRemainingDelayE( long delayMsL )
+		    /* This method, called by a destination thread,
+			    tests for a time input only.
+			    It returns results as follows:
+	
+			      Input.TIME.
+			        delayMs equals 0, meaning no delay remains.
+			        delayMs should have been returned by timeCheckedDelayMsL().
+	
+		     	  Input.NONE: None of the above inputs was available.
+	
+	        */
+	      {
+				  if ( delayMsL == 0 )
+	 	      	return Input.TIME;
+	 	      	else
+	 	      	return Input.NONE;
+	      	}
+      
+      public synchronized Input testingForNotificationE()
+		    /* This method, called by a destination thread,
+			    tests for notification inputs only.
+			    It returns results as follows:
+	
+			      Input.NOTIFICATION: 
+			        An input signal notification occurred,
+			        and was then cleared by this method.
+	
+		     	  Input.NONE: None of the above inputs was available.
+	
+	        */
+	      {
+				  if ( getB() ) // Testing flag indicating that notifyingV() called.
+				    {
+				  	  setV(false); // Resetting condition for next inputs.
+		 	      	return Input.NOTIFICATION; 
+				  	  }
+		 	      else
+		 	      return Input.NONE;
+	      	}
+
+      public synchronized void waitingForInterruptOrDelayOrNotificationV(
+      		long waitTimeMsL
+      		)
+  	    /* This method, called by a destination thread,
+  		    waits for any of the following:
+  		    * a thread interrupt, either a pre-existing interrupt status 
+  		      one an interrupt that happens during the wait().
+  		    * A call to notify() during the wait().
+  		    * The passage of waitTimeMsL time.
+
+  		    It does all of this with a call to Object.wait(waitTimeMsL).
+  		    waitTimeMsL equaling 0 means that
+  		    the passage of no amount of time will terminate the wait().
+
+  		    This method does not loop and returns no results.
+  		    It is the responsibility of the caller 
+  		    to loop and test whether a desired input actually happened,
+  		    and if not, to wait again, possibly with a reduced wait time.
+  	      */
+  	    {
+	        try { // Waiting for new notify(), wait time, or interrupt().
+	          wait( waitTimeMsL );
 	          } 
-	        catch (InterruptedException e) { // Handling thread wait() interrupt.
+	        catch (InterruptedException e) { // Handling thread wait interrupt.
 	          Thread.currentThread().interrupt(); 
-	          } // Re-establishing interrupt status which terminated wait.
-	        }
+	          } // Re-establishing thread interrupt status for later tests.
+  	      }
+
+      public synchronized void waitingForDelayOrNotificationV(
+      		long waitTimeMsL
+      		)
+  	    /* This method, called by a destination thread,
+  		    waits for any of the following:
+  		    * A call to notify() during the wait().
+  		    * The passage of waitTimeMsL time.
+  		    It ignores, but preserves, thread interrupts.
+
+  		    It does this with a call to Object.wait(waitTimeMsL).
+  		    waitTimeMsL equaling 0 means that
+  		    the passage of no amount of time will terminate the wait().
+
+  		    It partially ignores, but preserves thread interrupts.
+  		    If the thread's interrupted status is true when
+  		    this method is called, it is ignored, but kept true.
+  		    If the thread's interrupted status becomes true while
+  		    while this method is blocked executing Object.wait(..),
+  		    then the block ends, and the method returns
+  		    with the thread's interrupted status true.
+
+  		    This method does not loop or return any results.  
+  		    It is the responsibility of the caller 
+  		    to loop and test whether a desired input happened, 
+  		    and if not, to wait again, possibly with a reduced wait time.
+  		    
+  		    ///fix It ignores an interrupt active on entry,
+  		      but responds to an interrupt during wait(..).
+  		      This method is not presently used.
+  	      */
+      {
+    	  boolean interruptedB= // Saving and clearing interruption status. 
+    	  		Thread.currentThread().isInterrupted();
+
+        try {
+          wait( waitTimeMsL ); // Waiting for new notify() or wait time.
+	        if (interruptedB) // Restoring interrupt status to what it was.
+	        	Thread.currentThread().interrupt(); 
+          } 
+        catch (InterruptedException e) { // Handling thread wait() interrupt.
+          Thread.currentThread().interrupt(); 
+          } // Re-establishing interrupt status which terminated wait.
+        }
 
 	      
     /* Time calculation methods.
@@ -634,91 +638,91 @@ public class LockAndSignal  // Combination lock and signal class.
       ??? new method to shift a time using shiftCorrectionMsL()?
      */
 
-      public long periodCorrectedShiftMsL( 
-      		long targetTimeMsL, long limitAndPeriodMsL 
-      		)
-        /* This method returns how much targetTimeMsL should be shifted
-          in order to put the present time in the interval
-          that begins at targetTimeMsL and is limitAndPeriodMsL long.
-          Most calls to this method return 0, but sometimes it will return
-          positive or negative multiples of lengthMsL,
-          depending on whether system time System.currentTimeMillis() 
-          has been advanced or retarded by amounts greater than lengthMsL.
-          */
-  		{
-      	long shiftMsL= 0;
-      	long delayMsL;
-  			final long currentTimeMsL= System.currentTimeMillis();
-      	while (true) { // Advancing target and shift until time-out positive.
-      		targetTimeMsL+= limitAndPeriodMsL; // Advancing target time.
-    			delayMsL= targetTimeMsL - currentTimeMsL;
-      	  if // Exiting loop if needed delay is positive.
-      	    ( delayMsL > 0 ) 
-      	  	break;
-      	  shiftMsL+= limitAndPeriodMsL;
-  				}
-      	while (true) { // Retarding target and shift while time-out excessive.
-      		if // Exiting loop if needed delay not above period. 
-      			( delayMsL <= limitAndPeriodMsL ) 
-      			break; 
-      		targetTimeMsL-= limitAndPeriodMsL; // Retarding target time.
-    			delayMsL= targetTimeMsL - currentTimeMsL;
-    			shiftMsL-= limitAndPeriodMsL;
-       	  }
-      	return shiftMsL; // Returning how much shift was needed.
-  			}
-
-    public long periodCorrectedDelayMsL( long targetTimeMsL, long lengthMsL )
-      /* This method returns a value to be used as 
-        a time-out interval parameter to terminate a wait 
-        at time targetTimeMsL plus lengthMsL.
-        The value returned will be greater than 0 
-        but not greater than lengthMsL,
-        and the time-out will occur on 
-        a multiple of lengthMsL from the targetTimeMsL.
-        Specifying a time-out time this way makes it possible to avoid
-        problems caused by large sudden changes in System.currentTimeMillis().
-        The process is similar to what is done in correctionMsL(..).
-        */
-		{
-    	long delayMsL= // Calculating tentative time-out delay. 
-    			(targetTimeMsL + lengthMsL) - System.currentTimeMillis();
-    	while ( delayMsL <= 0 ) // Shifting up while too low. 
-    		delayMsL+= lengthMsL;
-    	while ( delayMsL > lengthMsL ) // Shifting down while too high.
-    		delayMsL-= lengthMsL;
-    	return delayMsL;
-			}
-
-    public long timeCheckedDelayMsL( long startMsL, long lengthMsL )
-      /* This method produces a real-time-checked delay from
-        the time interval that begins at startMsl and is lengthMsL long.
-	      * It returns 0 if System.currentTimeMillis() 
-	        is either before or after the interval.
-	      * It returns the number of milliseconds to the end of the interval
-	        if the present time is within the interval.
-        The returned value, if used immediately, can be used as 
-        a delayMsL argument or any of this class's methods which takes it.
-        However it may NOT be used an a time-out delay argument to 
-        the Object.wait(..) method because 0 means an infinite time-out delay. 
-        This method helps threads avoid being blocked for long intervals
-        if the real time clock is set and changes by a large amount.  
-        */
+	    public long periodCorrectedShiftMsL( 
+	    		long targetTimeMsL, long limitAndPeriodMsL 
+	    		)
+	      /* This method returns how much targetTimeMsL should be shifted
+	        in order to put the present time in the interval
+	        that begins at targetTimeMsL and is limitAndPeriodMsL long.
+	        Most calls to this method return 0, but sometimes it will return
+	        positive or negative multiples of lengthMsL,
+	        depending on whether system time System.currentTimeMillis() 
+	        has been advanced or retarded by amounts greater than lengthMsL.
+	        */
 			{
-    	  long delayMsL= 0; // Assuming time now is outside interval.
-    	  process: {
-	    	  final long nowMsL= System.currentTimeMillis(); // Getting now time.
-	    	  final long endMsL= startMsL + lengthMsL; // Calculating end time.
-	    	  if ( nowMsL-endMsL >= 0) // Exiting with 0 if after interval end.
-	    	  	break process;
-	    	  if ( nowMsL-startMsL < 0) // Exiting with 0 if before interval start.
-	    	  	break process;
-	    	  // Time is within interval.  
-	    	  delayMsL= // Set delay to be the time to the end of the interval.
-	    	  		endMsL - nowMsL;
-    	  	} // process:
-		    return delayMsL;
-		    }
+	    	long shiftMsL= 0;
+	    	long delayMsL;
+				final long currentTimeMsL= System.currentTimeMillis();
+	    	while (true) { // Advancing target and shift until time-out positive.
+	    		targetTimeMsL+= limitAndPeriodMsL; // Advancing target time.
+	  			delayMsL= targetTimeMsL - currentTimeMsL;
+	    	  if // Exiting loop if needed delay is positive.
+	    	    ( delayMsL > 0 ) 
+	    	  	break;
+	    	  shiftMsL+= limitAndPeriodMsL;
+					}
+	    	while (true) { // Retarding target and shift while time-out excessive.
+	    		if // Exiting loop if needed delay not above period. 
+	    			( delayMsL <= limitAndPeriodMsL ) 
+	    			break; 
+	    		targetTimeMsL-= limitAndPeriodMsL; // Retarding target time.
+	  			delayMsL= targetTimeMsL - currentTimeMsL;
+	  			shiftMsL-= limitAndPeriodMsL;
+	     	  }
+	    	return shiftMsL; // Returning how much shift was needed.
+				}
+	
+	    public long periodCorrectedDelayMsL( long targetTimeMsL, long lengthMsL )
+	      /* This method returns a value to be used as 
+	        a time-out interval parameter to terminate a wait 
+	        at time targetTimeMsL plus lengthMsL.
+	        The value returned will be greater than 0 
+	        but not greater than lengthMsL,
+	        and the time-out will occur on 
+	        a multiple of lengthMsL from the targetTimeMsL.
+	        Specifying a time-out time this way makes it possible to avoid
+	        problems caused by large sudden changes in System.currentTimeMillis().
+	        The process is similar to what is done in correctionMsL(..).
+	        */
+			{
+	    	long delayMsL= // Calculating tentative time-out delay. 
+	    			(targetTimeMsL + lengthMsL) - System.currentTimeMillis();
+	    	while ( delayMsL <= 0 ) // Shifting up while too low. 
+	    		delayMsL+= lengthMsL;
+	    	while ( delayMsL > lengthMsL ) // Shifting down while too high.
+	    		delayMsL-= lengthMsL;
+	    	return delayMsL;
+				}
+	
+	    public long timeCheckedDelayMsL( long startMsL, long lengthMsL )
+	      /* This method produces a real-time-checked delay from
+	        the time interval that begins at startMsl and is lengthMsL long.
+		      * It returns 0 if System.currentTimeMillis() 
+		        is either before or after the interval.
+		      * It returns the number of milliseconds to the end of the interval
+		        if the present time is within the interval.
+	        The returned value, if used immediately, can be used as 
+	        a delayMsL argument or any of this class's methods which takes it.
+	        However it may NOT be used an a time-out delay argument to 
+	        the Object.wait(..) method because 0 means an infinite time-out delay. 
+	        This method helps threads avoid being blocked for long intervals
+	        if the real time clock is set and changes by a large amount.  
+	        */
+				{
+	    	  long delayMsL= 0; // Assuming time now is outside interval.
+	    	  process: {
+		    	  final long nowMsL= System.currentTimeMillis(); // Getting now time.
+		    	  final long endMsL= startMsL + lengthMsL; // Calculating end time.
+		    	  if ( nowMsL-endMsL >= 0) // Exiting with 0 if after interval end.
+		    	  	break process;
+		    	  if ( nowMsL-startMsL < 0) // Exiting with 0 if before interval start.
+		    	  	break process;
+		    	  // Time is within interval.  
+		    	  delayMsL= // Set delay to be the time to the end of the interval.
+		    	  		endMsL - nowMsL;
+	    	  	} // process:
+			    return delayMsL;
+			    }
 
     
     // Input notification methods.

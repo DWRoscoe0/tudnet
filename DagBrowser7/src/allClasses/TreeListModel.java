@@ -17,7 +17,12 @@ public class TreeListModel
   
   /* This class implements a ListModel which gets its data from
     a DataNode using context from a DataTreeModel.
+    It also listens for TreeModelEvents and translates them to
+    an equivalent sequence of ListModelEvents.
     
+    Because this is a Java GUI class,
+    its methods should only be called on EDT thread. 
+
     ///? Should this class be generic on <Object> like its base class?
       Class AbstractListModel<E> is parameterized.
     */
@@ -26,10 +31,11 @@ public class TreeListModel
 
 	  // Injected dependency variables.
 		private final DataNode theListDataNode;  //Node in tree with list data.
-	  private final TreePath theTreePath;  // Path to that node.
+	  private final TreePath theTreePath;  // TreePath to that node.
 
 	  // Other instance variables.
 	  private DataTreeModel theDataTreeModel;  // Model of tree containing node.
+	  private int lastSizeI; // For implementing StructuralChange events.
 
     TreeListModel(  // Constructor.
     		DataNode theListDataNode, TreePath theTreePath
@@ -37,6 +43,7 @@ public class TreeListModel
       {
 	      this.theListDataNode= theListDataNode;
 	      this.theTreePath= theTreePath;
+	  		saveSizeV();
         }
 
     // Initialization/setter methods.
@@ -64,6 +71,7 @@ public class TreeListModel
 
 	    	  this.theDataTreeModel= newDataTreeModel;
 
+		  		saveSizeV();
 	        return oldDataTreeModel;
 	    	  }
 
@@ -77,10 +85,10 @@ public class TreeListModel
 	
 	    @Override
 	    public int getSize()
-	      /* ?? This is being called from the EDT when theDataTreeModel is null,
-	       * apparently after it is finalized.
-	       * For now catch it and return 0.
-	       * Eventually figure out why it's happening.
+	      /* This is being called from the EDT when theDataTreeModel is null,
+	        apparently after it is finalized.
+	        For now catch it and return 0.
+	        ///fix Eventually figure out why it's happening.
 	       */
 	      {
 	    	  if ( theDataTreeModel == null )
@@ -96,7 +104,7 @@ public class TreeListModel
       a TreeModelListener method call with a TreeModelEvent into
       a ListDataListener method call with a ListDataEvent,
       but only when the TreeModelEvent is about the subset of nodes
-      covered by this TreeListModel.
+      covered by this (Tree)ListModel.
       */
 
 	    public void treeNodesInserted(TreeModelEvent theTreeModelEvent)
@@ -119,6 +127,7 @@ public class TreeListModel
 		    	  		  	);
 	    	  		  }
 	    	  		}
+		  		saveSizeV();
 	    	  }
 
 	    public void treeNodesRemoved(TreeModelEvent theTreeModelEvent)
@@ -141,6 +150,7 @@ public class TreeListModel
 		    	  		  	);
 	    	  		  }
 	    	  		}
+		  		saveSizeV();
 	    	  }
 
 	    public void treeNodesChanged(TreeModelEvent theTreeModelEvent) 
@@ -163,12 +173,34 @@ public class TreeListModel
 		    	  		  	);
 	    	  		  }
 	    	  		}
+		  		saveSizeV();
 	    	  }
 
 	    public void treeStructureChanged(TreeModelEvent theTreeModelEvent) 
-	      /* This method is ignored because there is 
-	        no ListDataListener equivalent.
+	      /* This method is implemented by calling fireContentsChanged(..)
+	        for the entire List interval. 
+	        
+	        ///fix Implement by signaling removal of all elements,
+	         then inserting all new ones.
 	        */
-	       {}
+	      {
+		  		fireContentsChanged(
+	  				ListDataEvent.CONTENTS_CHANGED,
+	  		  	0,
+	  		  	lastSizeI - 1
+	  		  	);
+		  		saveSizeV();
+	     		}
+
+	    private void saveSizeV()
+	      /* This method is used to save the size of the List so that
+	        treeStructureChanged(..) will know how big an interval to use
+	        when it calls fireContentsChanges(..).
+	        Unfortunately it needs to be called from every place where
+	        the number of elements in the list might have changed. 
+	       	*/
+		    {
+		    	lastSizeI= getSize(); 
+		    	}
 
     } // class TreeListModel
