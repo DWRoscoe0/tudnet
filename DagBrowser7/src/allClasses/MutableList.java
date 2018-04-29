@@ -60,48 +60,31 @@ public class MutableList extends NamedList
 			    It also informs theDataTreeModel of the removal, if any,
 			    so TreeModelListeners can be informed.
 
-		      It does all this in a thread-safe manner using 
-		      safelyReportingChangeV(..).
+		      It does all this in a thread-safe manner using synchronization.
 		      
-		      ///org Replace single element boolean array with a MutableBoolean.
+		      Note, this method's counterpart, addB(..), is in class NamedList.
 			    */
 		    {
 		  	  final DataNode parentDataNode= this;
-		  		final boolean removedB[]= new boolean[1]; // Array element for result.
-		  		EDTUtilities.runOrInvokeAndWaitV( // Queuing removal of Unicaster.
-        		new Runnable() {
-              @Override  
-              public void run() { 
-		          	//appLogger.debug("MutableList.remove(..): run() starting.");
-      		  	  int indexI=  // Searching for child by getting its index. 
-      			    	  getIndexOfChild( childDataNode );
-    		    	  if  // Removing and reporting change if child found. 
-    		    	    ( indexI == -1)
-	    		    	  {
-	  		          	//appLogger.debug("MutableList.remove(..): not present.");
-	    		    	  	removedB[0]= false; // Returning indication of not in List.
-	    		    	  	}
-    		    	  	else
-	    		    	  {
-	  		          	//appLogger.debug("MutableList.remove(..): removing.");
-	    				  		theListOfDataNodes.remove( indexI );
-	    				  		theDataTreeModel.signalRemovalV( 
-	    				      		parentDataNode, indexI, childDataNode 
-	  	    				      );
-	    				      /*  ////
-	    				      theDataTreeModel.reportingRemoveV( 
-	    				      	parentDataNode, indexI, childDataNode 
-	    				      	); // To actually remove child from display.
-		                theDataTreeModel.reportingChangeV( 
-		    		      		parentDataNode 
-		    		      		); // In case # of children changes parent's appearance.
-	    				      */  ////
-	    		    	  	removedB[0]= true; // Returning indication of removal.
-	    		    	  	}
-                }  
-              } 
-            );
-		  		return removedB[0]; // return indication of success of remove().
+		  		boolean removedB;
+		  	  int indexI=  // Searching for child by getting its index. 
+			    	  getIndexOfChild( childDataNode );
+	    	  if  // Removing and reporting change if child found. 
+	    	    ( indexI == -1)
+		    	  {
+	          	//appLogger.debug("MutableList.remove(..): not present.");
+		    	  	removedB= false; // Returning indication of not in List.
+		    	  	}
+	    	  	else
+		    	  {
+	          	//appLogger.debug("MutableList.remove(..): removing.");
+				  		theListOfDataNodes.remove( indexI );
+				  		theDataTreeModel.signalRemovalV( 
+				      		parentDataNode, indexI, childDataNode 
+    				      );
+		    	  	removedB= true; // Returning indication of removal.
+		    	  	}
+		  		return removedB; // return indication of success of remove().
 		      }
 
     } // MutableList 

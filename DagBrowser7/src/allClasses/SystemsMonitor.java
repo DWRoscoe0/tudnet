@@ -1,6 +1,9 @@
 package allClasses;
 
 import static allClasses.Globals.appLogger;
+
+import java.util.concurrent.atomic.AtomicLong;
+
 import static allClasses.AppLog.LogLevel.*;
 
 //import static allClasses.Globals.*;  // appLogger;
@@ -52,7 +55,8 @@ public class SystemsMonitor
 		  private NamedLong cpuSpeedNamedLong;
 		  private long endWaitDelayMsL;
 		  private NamedLong endWaitMsNamedLong;
-		  private NsAsMsNamedLong eventQueueInvokeAndWaitNsAsMsNamedLong;
+		  private NsAsMsNamedLong eventQueueInvokeAndWaitEntryNsAsMsNamedLong;
+		  private NsAsMsNamedLong eventQueueInvokeAndWaitExitNsAsMsNamedLong;
 		  private NamedLong skippedTimeMsNamedLong;
 		  private NamedLong reversedTimeMsNamedLong;
 
@@ -118,9 +122,14 @@ public class SystemsMonitor
 			  endWaitMsNamedLong= new NamedLong( 
 	      		"End-Wait (ms)", -1
 	        	);
-			  eventQueueInvokeAndWaitNsAsMsNamedLong= 
+			  eventQueueInvokeAndWaitEntryNsAsMsNamedLong= 
 			  		new NsAsMsNamedLong( 
-			  				"EventQueue.invokeAndWait(..) (ms)", 
+			  				"EventQueue.invokeAndWait(..) entry (ms)", 
+			  				-1
+			  				);
+			  eventQueueInvokeAndWaitExitNsAsMsNamedLong= 
+			  		new NsAsMsNamedLong( 
+			  				"EventQueue.invokeAndWait(..) exit (ms)", 
 			  				-1
 			  				);
 			  skippedTimeMsNamedLong= new NamedLong( 
@@ -137,7 +146,8 @@ public class SystemsMonitor
 	      addAtEndB( cpuSpeedNamedLong );
 	      addAtEndB( waitJitterNsNamedLong );
 	      addAtEndB( endWaitMsNamedLong );
-	      addAtEndB( eventQueueInvokeAndWaitNsAsMsNamedLong );
+	      addAtEndB( eventQueueInvokeAndWaitEntryNsAsMsNamedLong );
+	      addAtEndB( eventQueueInvokeAndWaitExitNsAsMsNamedLong );
 	      addAtEndB( skippedTimeMsNamedLong );
 	      addAtEndB( reversedTimeMsNamedLong );
 	      }
@@ -263,23 +273,22 @@ public class SystemsMonitor
 	    {
     		measurementCountNamedLong.addDeltaL(1);
     		processorsNamedLong.setValueL( // Displaying processor count. 
-    				Runtime.getRuntime().availableProcessors() 
-    				); // Keep measuring because this could change.
-      	final long beforeEDTDispatchNsL= System.nanoTime();
-      	EDTUtilities.invokeAndWaitV( // Dispatching on EDT...
-          new Runnable() {
-            @Override  
-            public void run() { 
-            	eventQueueInvokeAndWaitNsAsMsNamedLong.setValueL( 
-            			System.nanoTime() - beforeEDTDispatchNsL
-            			); // Displaying time for EDT to dispatch this Runnable job. 
-        		  }  
-            } 
-          );
+    				Runtime.getRuntime().availableProcessors() ); // This could change.
+      	final AtomicLong inEDTNsAtomicLong= new AtomicLong(); 
+      	final long beforeEDTNsL= System.nanoTime();
+      	EDTUtilities.invokeAndWaitV( // Dispatching on EDT
+          new Runnable() { // a Runnable which just records the time.
+            @Override
+            public void run() { inEDTNsAtomicLong.set( System.nanoTime() ); }  
+            } );
+      	final long afterEDTNsL= System.nanoTime();
+      	eventQueueInvokeAndWaitEntryNsAsMsNamedLong.setValueL( 
+      			inEDTNsAtomicLong.get() - beforeEDTNsL ); 
+      	eventQueueInvokeAndWaitExitNsAsMsNamedLong.setValueL(
+      			afterEDTNsL - inEDTNsAtomicLong.get() );
       	//nanoTimeOverheadNamedInteger.setValueL( nanoTimeOverheadNsL  );
       	waitJitterNsNamedLong.setValueL( 
-      			(waitEndNsL - waitEndOldNsL) - oneSecondOfNsL
-      			);
+      			(waitEndNsL - waitEndOldNsL) - oneSecondOfNsL );
       	waitEndOldNsL= waitEndNsL;
       	endWaitMsNamedLong.setValueL( endWaitDelayMsL );
 
@@ -322,40 +331,5 @@ public class SystemsMonitor
   					); // Waiting for next measurement time.
   			measurementTimeMsL+= periodMsL; // Incrementing variable to match it.
         }
-
-  	/* No longer used.
-
-  	private long measureNanoTimeOverheadNsL() ///elim archive this?
-	    /* This method measures the execution time in ns of System.nanoTime().
-	      It can return strange values, depending on what else is running.
-	      On my laptop computer I observed the following: 
-	      * Some times, such as when Firefox is running and has many windows
-	        and tabs open, it returns 540 or 1080.
-	        At other times, when Firefox is not running, 
-	        it returns mostly 0 or 540.
-	        More Firefox windows and tabs means longer times.
-	        Once in a while it returns outside values of 0 or 1080.
-	      * Sometimes it returns 541 or 1081 instead of 540 or 1080.
-	      * Rarely it returns a number in the many thousands. 
-	      * Very rarely it returns negative values.
-	        This usually happens after the app has been running a while.
-        I think nanoTime() actually takes between 0 and 540 ns,
-        but sometimes interrupt service routines cause it to take longer.
-	      I suspect that nanoTime() is calculated by 
-        scaling a clock with a period of close to 540 ns,
-        but not exactly, so 1 must be added sometimes.
-        */
-  	/* No longer used.
-	    {
-	  		long startNsL= System.nanoTime();
-	  		long stopNsL= System.nanoTime();
-	  		long differenceNsL= stopNsL - startNsL;
-	  		if ( differenceNsL < 0 )  // This should never happen.
-	    		appLogger.error( 
-	    				"SystemsMonitor.measureNanoTimeL()="+stopNsL+"-"+startNsL 
-	    				);
-	  		return differenceNsL;
-	    	}
-  	*/// No longer used.
 
     } // class SystemsMonitor

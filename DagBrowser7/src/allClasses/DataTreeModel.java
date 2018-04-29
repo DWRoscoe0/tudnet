@@ -5,8 +5,6 @@ import java.io.Serializable;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
-////import java.util.LinkedList;
-////import java.util.Queue;
 
 import javax.swing.event.TreeModelEvent;
 import javax.swing.JComponent;
@@ -225,12 +223,10 @@ public class DataTreeModel
           )
         /* Unimplemented because Infogora doesn't edit the DAG/tree, yet
           Simply logs an error and returns.
-          //// and throws an Error.  
           */
         { 
       	  String messageString= "DataTreeModel.valueForPathChanged(..) called";
 	      	appLogger.error( messageString );
-      	  ///elim   throw new Error(messageString); 
       	  } 
       
     // Getter methods which are not part of AbstractTreeModel.
@@ -343,185 +339,6 @@ public class DataTreeModel
           return lastDataNode.getInfoString();
           }
 
-
-    /* Reporting methods and their support methods for 
-      reporting changes of the TreeModel data.
-        
-      Reporting changes is tricky for 2 reasons:
-      * The TreeModel is used to report changes, 
-        but the TreeModel itself doesn't make changes.
-      * It must be done on the Event Dispatch Thread (EDT),
-        and must be done in real time.  
-        This is done using invokeAndWaitV(..).
-
-      All of these methods should be called only in the Event Dispatch Thread 
-      (EDT), and so should the changes that those calls report.
-      */
-
-      private void reportingInsertV(
-          DataNode parentDataNode, 
-          int indexI, 
-          DataNode childDataNode 
-          )
-        /* This method creates and fires a single-child TreeModelEvent
-          for the insertion of a single child DataNode, childDataNode,
-          into parentDataNode at position indexI.
-          It also adds the path of the new child to the map for user later.
-          */
-        {
-          TreePath parentTreePath= // Calculating path of parent. 
-          	translatingToTreePath( parentDataNode ); // Should be in map.
-          if ( parentTreePath != null ) // Do these things only if path found.
-	          {
-		          TreeModelEvent theTreeModelEvent= // Construct TreeModelEvent.
-		            new TreeModelEvent(
-		            	this, 
-		            	parentTreePath, 
-		            	new int[] {indexI}, 
-		            	new Object[] {childDataNode}
-		            	);
-		          fireTreeNodesInserted( theTreeModelEvent ); // Fire insertion.
-		          TreePath childTreePath= 
-		          		parentTreePath.pathByAddingChild(childDataNode);
-		        	nodeToPathHashMap.put( // Making and adding child to cache. 
-		        			childDataNode, childTreePath );
-		        	cacheDescendantsInMapB( childTreePath );
-	          	}
-          }
-
-      public void reportingRemoveV( 
-          DataNode parentDataNode, 
-          int indexI, 
-          DataNode childDataNode 
-          )
-      	/* This method creates and fires a single-child TreeModelEvent
-          for the removal of a single child DataNode, childDataNode,
-          whose previous position was indexI, into parentDataNode.
-          */
-        {
-          TreePath parentTreePath= // Calculating path of parent. 
-          	translatingToTreePath( parentDataNode );
-          if ( parentTreePath != null ) // Do this only if path found.
-          	{
-		          TreeModelEvent theTreeModelEvent= // Constructing TreeModelEvent.
-		            new TreeModelEvent(
-		            	this, 
-		            	parentTreePath, 
-		            	new int[] {indexI}, 
-		            	new Object[] {childDataNode}
-		            	);
-		          fireTreeNodesRemoved( theTreeModelEvent ); // Firing removal.
-
-		          appLogger.debug( 
-	        				"DataTreeModel.reportingRemoveV(..) uncaching "
-	        				+ childDataNode 
-	        				);
-		        	nodeToPathHashMap.remove( // Removing entry for removed child from map. 
-		        			childDataNode // This won't remove descendants of child??
-		        			  // Hopefully descendants were already removed.
-		        			  ///fix Recursively remove active children to prevent leak.
-		        			);
-		          }
-          }
-
-      private void safelyReportingChangeV( final DataNode theDataNode ) ///elim
-        /* This is a thread-safe version of reportingChangeV( theDataNode ).
-          It uses EDTUtilities.runOrInvokeAndWaitV(..) to switch to
-          the EDT (Event Dispatch Thread) if that thread is not already active,
-          then it calls reportingChangeV( theDataNode ).
-          ///dbg ///enh Add AtomicBoolean and pass back error results.
-          */
-	      {
-      		EDTUtilities.runOrInvokeAndWaitV( // Do following on EDT thread. 
-		    		new Runnable() {
-		    			@Override  
-		          public void run() {
-		    				reportingChangeV( theDataNode );
-		            }
-		          } 
-		        );
-		      }
-
-      public void reportingChangeV( DataNode theDataNode )
-      	/* This method creates and fires a single-child TreeModelEvent
-          for the change of a single child DataNode, theDataNode.
-		      This method must be running on the EDT.
-          */
-        {
-	      	TreePath theTreePath= // Calculating path of the DataNode. 
-	          	translatingToTreePath( theDataNode );
-	        if ( theTreePath == null ) {
-	        	appLogger.error( 
-	        	  "DataTreeModel.reportingChangeV(..): failure in\n"+
-	        	    "  translatingToTreePath(..) "+theDataNode 
-	        	  );
-	        	return;
-	        	}
-	        TreePath parentTreePath= // Calculating path of the parent DataNode. 
-	            theTreePath.getParentPath();
-	        reportingChangeB( parentTreePath, theDataNode );
-        	}
-
-      public boolean reportingChangeB( 
-      		TreePath parentTreePath, DataNode theDataNode 
-      		)
-	    	/* This method creates and fires a single-child TreeModelEvent
-		      for the change of a single child DataNode, theDataNode.
-		      parentTreePath is assumed to be the TreePath
-		      of the parent of theDataNode.
-		      This method must be running on the EDT.
-		      It returns false if all this succeeds.
-		      It returns true if there was a failure, such as caused by
-	      	  the current thread not being the EDT or parentTreePath == null.
-   	      */
-        {
-	      	if ( EDTUtilities.testAndLogIfNotRunningEDTB() ) return true; ///tmp
-	      	if ( Nulls.testAndLogIfNullB(parentTreePath) ) return true; ///tmp
-	        DataNode parentDataNode= // Calculating parent DataNode.
-	        		(DataNode)parentTreePath.getLastPathComponent();
-	      	int indexI= getIndexOfChild( // Calculating index of the DataNode.
-	        		parentDataNode, 
-	        		theDataNode 
-	        		); 
-          
-          TreeModelEvent theTreeModelEvent= // Constructing TreeModelEvent.
-            new TreeModelEvent(
-            	this, 
-            	parentTreePath, 
-            	new int[] {indexI}, 
-            	new Object[] {theDataNode}
-            	);
-
-          fireTreeNodesChanged( theTreeModelEvent );  // Firing as change event.
-          return false;
-          }
-
-      public boolean reportingStructuralChangeB( TreePath parentTreePath )
-	    	/* This method creates and fires a TreeModelEvent
-		      for the structural change of a subtree identified by parentTreePath.
-		      This method must be running on the EDT.
-		      It returns false if all this succeeds.
-		      It returns true if there was a failure, such as caused by
-	      	  the current thread not being the EDT or parentTreePath == null.
-   	      */
-        {
-	      	if ( EDTUtilities.testAndLogIfNotRunningEDTB() ) return true; ///tmp
-	      	if ( Nulls.testAndLogIfNullB(parentTreePath) ) return true; ///tmp
-          
-          TreeModelEvent theTreeModelEvent= // Constructing TreeModelEvent.
-            new TreeModelEvent(
-            	this, 
-            	parentTreePath, 
-            	new int[] {}, // Child indexes are ignored.
-            	new Object[] {} // Child references are ignored.
-            	);
-
-  				appLogger.debug( "DataTreeModel.reportingStructuralChangeB() "
-  						+ ((DataNode)parentTreePath.getLastPathComponent()).
-  							getNodePathString() );
-          fireTreeStructureChanged( theTreeModelEvent );
-          return false;
-          }
 
     // Path and path cache manipulation methods.
 
@@ -698,10 +515,31 @@ public class DataTreeModel
           }
 
 
+    /* The following 3 sections comprise the display aggregation system.
+      The purpose is to reduce the number of TreeModel events fired
+      and the number of times the Event Dispatch Thread (EDT) is activated.
+      
+      This is done by storing in the DataNodes information about
+      whether any changes have occurred since the previous display,
+      and propagating this information to the root of the tree.
+      When it is time to display, the changes nodes are traversed
+      in a depth-first order, and every node that was changes
+      is communicated to the appropriate TreeModel listeners.
+      At the same time, the change information is cleared.
+      
+      Displaying is done by calling a single method when display is desired.
+      Normally this would be called periodically and immediately after 
+      any important changes which should be displayed immediately.
+
+	    ///opt: Limit listener notification and change record clearing to
+	    only nodes that are displayed in any part of the displayed GUI.
+	    This means the node is displayed in either the JTree or JList panes.
+	    Unfortunately this is difficult because it involves 
+	    doing ScrollPane Rectangle intersections.
+      */
+
     /* The following code is used to aggregate changes to the
-      Infogora hierarchy for later and more efficient display.
-      The displaying is done with the firing of notification events 
-      to GUI components such as JTrees. 
+      Infogora hierarchy for later and more efficient display to the user.
       These methods do not need to be called on the Event Dispatch Thread (EDT).
       
       This is not a general-purpose up-propagation system.
@@ -713,7 +551,8 @@ public class DataTreeModel
 		      theDataNode.
 		      */
         {
-	    	  signalSubtreeChangeV( // Convert to a subtree change. 
+	      	EDTUtilities.testAndLogIfRunningEDTB();
+	      	signalSubtreeChangeV( // Convert to a subtree change. 
 	    	  		theDataNode );
         	}
 
@@ -727,7 +566,8 @@ public class DataTreeModel
 		      ///opt Implement without StructuralChange.
           */
         {
-      	  signalStructureChangeInV( parentDataNode, indexI, childDataNode );
+      		EDTUtilities.testAndLogIfRunningEDTB();
+      	  signalStructuralChangeInV( parentDataNode, indexI, childDataNode );
           }
 
       public void signalRemovalV( 
@@ -740,10 +580,11 @@ public class DataTreeModel
 		      ///opt Implement without StructuralChange.
 		      */
 		    {
-      	  signalStructureChangeInV( parentDataNode, indexI, childDataNode );
+      		EDTUtilities.testAndLogIfRunningEDTB();
+      	  signalStructuralChangeInV( parentDataNode, indexI, childDataNode );
 		      }
 
-      private void signalStructureChangeInV(
+      private void signalStructuralChangeInV(
           DataNode parentDataNode, 
           int indexI, 
           DataNode childDataNode 
@@ -752,10 +593,9 @@ public class DataTreeModel
           the insertion or deletion of an unnamed child node.
           */
         {
-						appLogger.debug( "DataTreeModel.signalStructureChangeInV() "
-							+ childDataNode.getNodePathString() + " at position " + indexI );
-						
-						switch ( parentDataNode.theUpdateLevel ) {
+      		EDTUtilities.testAndLogIfRunningEDTB();
+
+					switch ( parentDataNode.theUpdateLevel ) {
 			  		case NONE:
 			  		case SUBTREE_CHANGED:
 		      	  parentDataNode.theUpdateLevel= // Mark structure changed. 
@@ -779,7 +619,8 @@ public class DataTreeModel
           it will also propagate the change to the node's parent if needed.
           */
         {
-      	  if ( theDataNode == null ) // No node to update. 
+	      	EDTUtilities.testAndLogIfRunningEDTB();
+	      	if ( theDataNode == null ) // No node to update. 
       	  	; // Do nothing.
       	  else // Update this node and its not updated ancestors.
 		  	  	switch ( theDataNode.theUpdateLevel ) {
@@ -796,6 +637,17 @@ public class DataTreeModel
 				  	  	break;
 				  		}
           }
+	
+	  /* The following code is used to display to the user
+	      previously aggregated changes in the Infogora hierarchy.
+
+	      The displaying is done with the firing of notification events 
+        to GUI components such as JTrees and JLists which
+        are displaying parts of the Infogora hierarchy, so with one exception,
+        these methods must be called on the Event Dispatch Thread (EDT).
+        The one exception is displayTreeModelChangesV(),
+        which is the only public method in this group.
+        */
 
       public void displayTreeModelChangesV()
         /* This method switches to the EDT 
@@ -863,8 +715,6 @@ public class DataTreeModel
           The descendants are displayed recursively first.
           */
 	      {
-  				appLogger.debug( "DataTreeModel.displayStructuralChangeV() "
-  						+theDataNode.getNodePathString() );
   			  TreePath theTreePath= parentTreePath.pathByAddingChild(theDataNode);
     			reportingStructuralChangeB( theTreePath ); // Display by reporting
     			  // to the listeners.
@@ -933,10 +783,151 @@ public class DataTreeModel
 			  		}
 	      	}
 
+    /* Reporting methods and their support methods for 
+      reporting changes of the TreeModel data.
+        
+      Reporting changes is tricky for 2 reasons:
+      * The TreeModel is used to report changes, 
+        but the TreeModel itself doesn't make changes.
+      * It must be done on the Event Dispatch Thread (EDT),
+        and must be done in real time.  
+        This is done using invokeAndWaitV(..).
+
+      All of these methods should be called only in the Event Dispatch Thread 
+      (EDT), and so should the changes that those calls report.
+      */
+
+        @SuppressWarnings("unused") ///opt Might need later.
+        private void reportingInsertV(
+            DataNode parentDataNode, 
+            int indexI, 
+            DataNode childDataNode 
+            )
+          /* This method creates and fires a single-child TreeModelEvent
+            for the insertion of a single child DataNode, childDataNode,
+            into parentDataNode at position indexI.
+            It also adds the path of the new child to the map for user later.
+            */
+          {
+        		appLogger.error( "THIS IS SUPPOSED TO BE UNUSED CODE!" ); 
+            TreePath parentTreePath= // Calculating path of parent. 
+            	translatingToTreePath( parentDataNode ); // Should be in map.
+            if ( parentTreePath != null ) // Do these things only if path found.
+  	          {
+  		          TreeModelEvent theTreeModelEvent= // Construct TreeModelEvent.
+  		            new TreeModelEvent(
+  		            	this, 
+  		            	parentTreePath, 
+  		            	new int[] {indexI}, 
+  		            	new Object[] {childDataNode}
+  		            	);
+  		          fireTreeNodesInserted( theTreeModelEvent ); // Fire insertion.
+  		          TreePath childTreePath= 
+  		          		parentTreePath.pathByAddingChild(childDataNode);
+  		        	nodeToPathHashMap.put( // Making and adding child to cache. 
+  		        			childDataNode, childTreePath );
+  		        	cacheDescendantsInMapB( childTreePath );
+  	          	}
+            }
+
+        @SuppressWarnings("unused") ///opt Might need later.
+        private void reportingRemoveV( 
+            DataNode parentDataNode, 
+            int indexI, 
+            DataNode childDataNode 
+            )
+        	/* This method creates and fires a single-child TreeModelEvent
+            for the removal of a single child DataNode, childDataNode,
+            whose previous position was indexI, into parentDataNode.
+            */
+          {
+        		appLogger.error( "THIS IS SUPPOSED TO BE UNUSED CODE!" ); 
+            TreePath parentTreePath= // Calculating path of parent. 
+            	translatingToTreePath( parentDataNode );
+            if ( parentTreePath != null ) // Do this only if path found.
+            	{
+  		          TreeModelEvent theTreeModelEvent= // Constructing TreeModelEvent.
+  		            new TreeModelEvent(
+  		            	this, 
+  		            	parentTreePath, 
+  		            	new int[] {indexI}, 
+  		            	new Object[] {childDataNode}
+  		            	);
+  		          fireTreeNodesRemoved( theTreeModelEvent ); // Firing removal.
+
+  		          appLogger.debug( 
+  	        				"DataTreeModel.reportingRemoveV(..) uncaching "
+  	        				+ childDataNode 
+  	        				);
+  		        	nodeToPathHashMap.remove( // Removing entry for removed child from map. 
+  		        			childDataNode // This won't remove descendants of child??
+  		        			  // Hopefully descendants were already removed.
+  		        			  ///fix Recursively remove active children to prevent leak.
+  		        			);
+  		          }
+            }
+
+        private boolean reportingChangeB( 
+        		TreePath parentTreePath, DataNode theDataNode 
+        		)
+  	    	/* This method creates and fires a single-child TreeModelEvent
+  		      for the change of a single child DataNode, theDataNode.
+  		      parentTreePath is assumed to be the TreePath
+  		      of the parent of theDataNode.
+  		      This method must be running on the EDT.
+  		      It returns false if all this succeeds.
+  		      It returns true if there was a failure, such as caused by
+  	      	  the current thread not being the EDT or parentTreePath == null.
+     	      */
+          {
+  	      	if ( EDTUtilities.testAndLogIfNotRunningEDTB() ) return true; ///tmp
+  	      	if ( Nulls.testAndLogIfNullB(parentTreePath) ) return true; ///tmp
+  	        DataNode parentDataNode= // Calculating parent DataNode.
+  	        		(DataNode)parentTreePath.getLastPathComponent();
+  	      	int indexI= getIndexOfChild( // Calculating index of the DataNode.
+  	        		parentDataNode, 
+  	        		theDataNode 
+  	        		); 
+            
+            TreeModelEvent theTreeModelEvent= // Constructing TreeModelEvent.
+              new TreeModelEvent(
+              	this, 
+              	parentTreePath, 
+              	new int[] {indexI}, 
+              	new Object[] {theDataNode}
+              	);
+
+            fireTreeNodesChanged( theTreeModelEvent );  // Firing as change event.
+            return false;
+            }
+
+        public boolean reportingStructuralChangeB( TreePath parentTreePath )
+  	    	/* This method creates and fires a TreeModelEvent
+  		      for the structural change of a subtree identified by parentTreePath.
+  		      This method must be running on the EDT.
+  		      It returns false if all this succeeds.
+  		      It returns true if there was a failure, such as caused by
+  	      	  the current thread not being the EDT or parentTreePath == null.
+     	      */
+          {
+  	      	if ( EDTUtilities.testAndLogIfNotRunningEDTB() ) return true; ///tmp
+  	      	if ( Nulls.testAndLogIfNullB(parentTreePath) ) return true; ///tmp
+            
+            TreeModelEvent theTreeModelEvent= // Constructing TreeModelEvent.
+              new TreeModelEvent(
+              	this, 
+              	parentTreePath, 
+              	new int[] {}, // Child indexes are ignored.
+              	new Object[] {} // Child references are ignored.
+              	);
+
+            fireTreeStructureChanged( theTreeModelEvent );
+            return false;
+            }
+
     /*  ///elim  Maybe save this somewhere in case I need a DepthFirstSearch.
-      @SuppressWarnings("unused") ///elim No longer used.
 			private TreePath searchingForTreePath( DataNode targetDataNode )
-        /*  ///elim This method is not needed anymore, because:
+        /* This method is not needed anymore, because:
           * It might never be called anymore because
 	          its only caller, translatingToTreePath(..),
 	          now checks nodeToPathHashMap first.  So this method is a backup.
@@ -982,7 +973,7 @@ public class DataTreeModel
           It is used because DataNodes don't know their TreePaths,
           and TreePaths are required by JTree.
           */
-      /*  ///elim
+      /*
         {
       		appLogger.warning( "DataTreeModel.searchingForTreePath(..) called.");
       		TreePath resultTreePath= null;  // Defaulting result to null.
@@ -1029,6 +1020,6 @@ public class DataTreeModel
               }
           return resultTreePath;
           }
-      */   ///elim
+      */
 
     } // class DataTreeModel.

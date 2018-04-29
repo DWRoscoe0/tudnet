@@ -407,10 +407,6 @@ public class StateList extends MutableList implements Runnable {
 	    the sub-state will be exited and reentered.
 	    */
 	  {
-		  ///elim  if ///tmp Behave like an OrState by defining the present state.
-		  ///elim( presentSubStateList == null)
-		  ///elim		presentSubStateList= StateList.initialSentinelState;
-		  ///elim
 	  	if  // Report excess state change request.
 				( (requestedSubStateList != null)
 					&& (requestedSubStateList != StateList.initialSentinelState)

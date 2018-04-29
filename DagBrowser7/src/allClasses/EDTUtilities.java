@@ -120,17 +120,29 @@ public class EDTUtilities {
     	  if (interruptedB) // Setting interrupted status if interrupt occurred. 
     	  	Thread.currentThread().interrupt(); 
       	}
-    
+
     protected static boolean testAndLogIfNotRunningEDTB()
-      /* This method returns whether we are running the EDT thread.
+      /* This method returns whether we are not running the EDT thread.
         Returns true if not on EDT thread, false otherwise.
         If not on EDT thread it logs an error.
        */
 	    {
 	      boolean isNotEDTB= ! SwingUtilities.isEventDispatchThread();
 	      if ( isNotEDTB ) 
-	      	appLogger.error(" checkNotRunningEDTB() true");
+	      	appLogger.error(" testAndLogIfNotRunningEDTB() true");
 	      return isNotEDTB;
+	    	}
+
+    protected static boolean testAndLogIfRunningEDTB()
+      /* This method returns whether we are running the EDT thread.
+        Returns true if on EDT thread, false otherwise.
+        If on EDT thread it logs an error.
+       */
+	    {
+	      boolean isEDTB= SwingUtilities.isEventDispatchThread();
+	      if ( isEDTB ) 
+	      	appLogger.error(" testAndLogIfRunningEDTB() true");
+	      return isEDTB;
 	    	}
 
 }

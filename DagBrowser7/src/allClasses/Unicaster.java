@@ -6,7 +6,7 @@ import java.util.Timer;
 
 import static allClasses.Globals.appLogger;
 
-import allClasses.AppLog.LogLevel;
+//// import allClasses.AppLog.LogLevel;
 import allClasses.LockAndSignal.Input;
 
 public class Unicaster
@@ -198,19 +198,18 @@ public class Unicaster
         try { // Operations that might produce an IOException.
 	          initializeWithIOExceptionV();
 	          doOnEntryV(); // Simulate an actual state entry. 
+	      		theDataTreeModel.displayTreeModelChangesV(); // Display our arrival.
 
 	          while (true) { // Repeating until termination is requested.
             	doOnInputsB(); // Process inputs in this state-machine.
             	  // This will start the state machine timers the first time.
 					  	LockAndSignal.Input theInput= // Waiting for a new input.
 			    			  theLockAndSignal.waitingForInterruptOrNotificationE();
-			      	if ( theInput == Input.INTERRUPTION ) // Process exit input. 
+			      	if ( theInput == Input.INTERRUPTION ) // Process exit request. 
 				      	{ // Inform state machine of pending exit, then do so.
-			      			appLogger.debug("run() interrupted.");
+			      			appLogger.info("run() interrupted, exiting.");
 				      		Thread.currentThread().interrupt(); // Restore interrupt.
-				      		appLogger.debug("run() before flush.");
 		            	while (doOnInputsB()) ; // Make state machine process it.
-		          		appLogger.debug("run() exiting loop.");
 		            	break;
 					      	}
 			      	if // Transfer any synchronous input from stream to machine.
@@ -221,18 +220,16 @@ public class Unicaster
 		 	      	} // while (true)
 	          
 	          finalizingV();
-	  	    	theUnicasterManager.removingV( this ); // Removing self from manager.
-	      		appLogger.debug("run() after remove, before sleep.");
-	      		////appLogger.setLevelLimitV( LogLevel.TRACE );
-	        	EpiThread.uninterruptableSleepB( 5000 ); ///dbg
+	  	    	theUnicasterManager.removingV( this ); // Removing self from tree.
+	      		appLogger.info("run() after remove and before final display.");
+	      		theDataTreeModel.displayTreeModelChangesV(); // Display removal.
           	}
           catch( IOException e ) {
           	Globals.logAndRethrowAsRuntimeExceptionV( 
           			"run() IOException", e 
           			);
             }
-    		appLogger.debug("run() ends.");
-        appLogger.info("run() ends.");
+    		appLogger.info("run() ends.");
         }
 
     public void onInputsV() throws IOException
