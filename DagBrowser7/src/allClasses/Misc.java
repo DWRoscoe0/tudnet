@@ -182,12 +182,14 @@ public class Misc
 		      in all ways except for their path-names.
 		      NoSuchFileException happens if the destination folder does not exist.
 		      
+		      This method does not update in the reverse direction.
+		      
 		      ///fix Does copy need to be atomic?  It is not.
 		      */
 		    {
 	        long thisFileLastModifiedL= thisFile.lastModified();
 	        long thatFileLastModifiedL= thatFile.lastModified();
-	        if // This file is newer than that file replace that with this.
+	        if // This file is newer than that file then replace that with this.
 	          ( thisFileLastModifiedL > thatFileLastModifiedL )
 				    try {
 					      appLogger.info( "updateFromToV(..) Copying started."

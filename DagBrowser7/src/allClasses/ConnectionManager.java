@@ -225,13 +225,17 @@ public class ConnectionManager
         }
 
     private void stoppingAllThreadsV()
-      // Possibly use a different stop order??
+      /* This method stops all the threads started by the ConnectionManager.
+        It is called at shutdown time.
+        The order is important so that new threads will not be started.
+      	///org Possibly use a different stop order??
+       	*/
       {
-        theUnicasterManager.stoppingEntryThreadsV();
-
+    		stoppingMulticasterThreadV(); 
+        theUnicasterManager.stoppingEntryThreadsV(); // Stop Unicasters threads.
         stoppingUnicastReceiverThreadV();
-        stoppingMulticasterThreadV(); 
-    	  stoppingSenderThreadV();
+
+        stoppingSenderThreadV();
         }
 
 	  private void maintainingDatagramSocketAndDependentThreadsV( )
@@ -340,6 +344,9 @@ public class ConnectionManager
 	      }
 
     private void stoppingSenderThreadV()
+      /* This method stops the sender thread by closing its socket.
+       * 
+       */
 	    {
 	  		EpiDatagramSocket.closeIfNotNullV(  // Causing unblock and termination.
 	  				unconnectedDatagramSocket
@@ -436,7 +443,7 @@ public class ConnectionManager
 	    {
 				EpiDatagramSocket.closeIfNotNullV(  // Causing unblock and termination.
 						theMulticastSocket
-						);
+						); ///org could this be moved to multicasterEpiThread?
 				EpiThread.stopAndJoinIfNotNullV(multicasterEpiThread);
 		    }
 

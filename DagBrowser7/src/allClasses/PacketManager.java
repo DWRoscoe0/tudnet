@@ -5,7 +5,7 @@ import static allClasses.Globals.*;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 
-import static allClasses.AppLog.LogLevel.*;
+////import static allClasses.AppLog.LogLevel.*;
 
 public abstract class PacketManager< 
     K, // Key.
@@ -100,9 +100,9 @@ public abstract class PacketManager<
 				DatagramPacket theDatagramPacket 
 				)
 			{
-			  if (appLogger.logB(TRACE)) 
+			  if (appLogger.logB(appLogger.packetLogLevel)) 
 			  	appLogger.logV(
-			  		TRACE,
+			  			appLogger.packetLogLevel,
 	      		PacketManager.gettingDirectedPacketString(
 	      				theDatagramPacket, false
 	      				)
@@ -113,9 +113,9 @@ public abstract class PacketManager<
 				DatagramPacket theDatagramPacket 
 				)
 			{
-			  if (appLogger.logB(TRACE)) 
+			  if (appLogger.logB(appLogger.packetLogLevel)) 
 			  	appLogger.logV(
-			  		TRACE,
+			  	  appLogger.packetLogLevel,
 	      		PacketManager.gettingDirectedPacketString(
 	      				theDatagramPacket, true
 	      				)
@@ -126,9 +126,9 @@ public abstract class PacketManager<
 				DatagramPacket theDatagramPacket 
 				)
 			{
-			  if (appLogger.logB(TRACE)) 
+			  if (appLogger.logB(appLogger.packetLogLevel)) 
 			  	appLogger.logV(
-			  		TRACE,
+			  		appLogger.packetLogLevel,
 	      		PacketManager.gettingDirectedPacketString(
 	      				theDatagramPacket, false
 	      				)

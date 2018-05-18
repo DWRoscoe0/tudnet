@@ -92,6 +92,7 @@ public class LinkedMachineState
   	public void onEntryV() throws IOException
 		  { 
   			//elim propagateIntoSubtreeV( AppLog.LogLevel.TRACE );
+  			appLogger.warning( "LinkedMachineState.onEntryV() state being used." );
 			  retryTimeOutMsL=   // Initializing retry time-out.
 			  		retransmitDelayMsNamedLong.getValueL();
 				}

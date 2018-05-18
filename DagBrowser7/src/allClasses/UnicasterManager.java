@@ -44,10 +44,10 @@ public class UnicasterManager
 				//% updatePeerInfoV( "c" );
 
 				//updatePeerInfoV( "IDTest1", "1.2.3.4", "5" );
-				updatePeerInfoV( "IDTest2", "11.22.33.44", "55" );
+				//updatePeerInfoV( "IDTest2", "11.22.33.44", "55" );
 
 				// This is the important one for test TCPCopier.
-				updatePeerInfoV( "IDLocalHost", "127.0.0.1", "11111" );
+				//updatePeerInfoV( "IDLocalHost", "127.0.0.1", "11111" );
 			  }
 
 	    public void updatePeerInfoV( 

@@ -16,6 +16,10 @@ public class Sender // Uunicast and multicast sender thread.
   /* This simple thread repeatedly receives DatagramPackets 
     via a queue from other threads and sends them
     though a DatagramSocket.
+
+    There is no attempt at error recovery.
+    If an IOException happens when attempting to send a packet,
+    the packet is dropped.
     
     ///? Limit queue size.  Block queuers when full.
     
@@ -63,28 +67,28 @@ public class Sender // Uunicast and multicast sender thread.
       { 
         this.netcasterToSenderNetcasterQueue= netcasterToSenderNetcasterQueue;
         this.theDatagramSocket= theDatagramSocket;
-        this.senderLockAndSignal=  senderLockAndSignal;
+        this.senderLockAndSignal= senderLockAndSignal;
         }
 
     @Override
     public void run() 
-      /* This method repeatedly waits for and inputs 
-        DatagramPackets from the queue and sends them
-        through the DatagramSocket.
+      /* This method repeatedly waits for and inputs of:
+        * DatagramPackets from the queue, 
+          which it sends them through the DatagramSocket.
+        * Exit requests, which causes this method to exit.
         */
       {
 	  	  beforeReturn: while (true) { // Processing packets until terminated.
+          if ( tryingToProcessOneQueuedSockPacketB() ) // Try sending one. 
+          	continue beforeReturn; // Looping if success.
+
       		if // Exiting loop if thread termination is requested.
       		  ( EpiThread.exitingB() ) 
       			break beforeReturn;
 
-          if ( tryingToProcessOneQueuedSockPacketB() ) 
-          	continue beforeReturn; // Looping if success.
-
           senderLockAndSignal.waitingForInterruptOrNotificationE();
 	        } // while (true) beforeReturn:
         }
-
 
     private boolean tryingToProcessOneQueuedSockPacketB()
       /* This method tries to send one SockPacket stored in the send queue.
@@ -147,7 +151,7 @@ public class Sender // Uunicast and multicast sender thread.
           				Config.packetSendDelayMsL,
           				TimeUnit.MILLISECONDS
           				);
-            	sendingDatagramPacketV( theDatagramPacket );
+            	sendingDatagramPacketV( theDatagramPacket ); ///elim?
           		}
     			} // beforeReturn:
 	    	}
@@ -178,7 +182,7 @@ public class Sender // Uunicast and multicast sender thread.
     private void sendingDatagramPacketV( DatagramPacket theDatagramPacket )
       // This method sends theDatagramPacket and handles exceptions.
 	    {
-    		// appLogger.debug("sendingDatagramPacketV(..) calling send(..)." );
+    		//appLogger.debug("sendingDatagramPacketV(..) calling send(..)." );
 	    	try { // Send the packet.
 	        theDatagramSocket.send(   // Send packet.
 	        	theDatagramPacket
@@ -187,8 +191,10 @@ public class Sender // Uunicast and multicast sender thread.
     		  	// Was logging before sending so log would make sense.
 	      } catch (IOException e) { // Handle exception by dropping packet.
 	        appLogger.error(
-	          "Sendre.sendingDatagramPacketV(),"
-	          +e
+	          "Sender.sendingDatagramPacketV(), " 
+	          + e + ", " 
+	          + PacketManager.gettingDirectedPacketString( 
+	          		theDatagramPacket,true )  
 	          );
 	      }
 	    }

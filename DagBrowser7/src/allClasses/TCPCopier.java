@@ -110,7 +110,7 @@ public class TCPCopier
 				      			*/  ////
 				      		);
 			    			tryExchangingFilesWithNextServerV(thePersistentCursor);
-						    EpiThread.interruptableSleepB(8000); // Wait a while.
+						    EpiThread.interruptableSleepB(8000); // Pause a while.
 			    			}
 	      			}
 	  			appLogger.info("run() ending.",true);
@@ -150,6 +150,8 @@ public class TCPCopier
 					try {
 						 	theInetSocketAddress= 
 								new InetSocketAddress( serverIPString, serverPortI );
+							appLogger.info(
+									"tryExchangingFilesWithServerV() at "+ theInetSocketAddress);
 							clientSocket= new Socket();
 							clientSocket.connect(theInetSocketAddress, 5000);
 							  // Connect with time-out.
@@ -158,7 +160,7 @@ public class TCPCopier
 				  			clientSocket, clientFile, clientFile, clientFileLastModifiedL );
 				    } catch (IOException theIOException) {
 							appLogger.info(
-									"tryExchangingFileWithServerV() at "+ theInetSocketAddress,
+									"tryExchangingFilesWithServerV() at "+ theInetSocketAddress,
 									theIOException
 									);
 				  	} finally {
@@ -261,13 +263,17 @@ public class TCPCopier
 		      			TCPCopier.exchangeAndCompareFileTimeStampsRemoteToLocalL(
 		      				socketInputStream, socketOutputStream, localLastModifiedL);
 						if ( timeStampResultL > 0 ) { // Remote file is newer.
+				  			appLogger.info("tryTransferingFilesL(..) Remote file is newer.");
 								if ( receiveNewerRemoteFileB(
 										localDestinationFile, socketInputStream, timeStampResultL ) )
 									receivedLastModifiedL= timeStampResultL;
 						  } else if ( timeStampResultL < 0 ) { // Local file is newer.
-						  		sendNewerLocalFileV(
-			  				localSourceFile, socketOutputStream );
-						  } else ; // Files are same age, so do nothing.
+				  			appLogger.info("tryTransferingFilesL(..) Local file is newer.");
+						  	sendNewerLocalFileV(
+						  			localSourceFile, socketOutputStream );
+						  } else { ; // Files are same age, so do nothing. 
+				  			appLogger.info("tryTransferingFilesL(..) Files are same age.");
+						  }
 			    } catch (IOException ex) {
 			  		appLogger.info("transactionV() IOException",ex);
 			    } finally {
@@ -431,7 +437,7 @@ public class TCPCopier
 	  			  compareResultL= remoteLastModifiedL;
 	  			else if (compareResultL < 0 ) 
 	  			  compareResultL= -localLastModifiedL;
-	  		if ( compareResultL != 0 ) // Log only if not 0.
+	  		////if ( compareResultL != 0 ) // Log only if not 0.
 		  		appLogger.info( // Log result of comparison.
 		  				"exchangeAndCompareFileTimeStampsRemoteToLocalL() returning "
 		  				+ ( ( compareResultL == 0 )
@@ -442,11 +448,13 @@ public class TCPCopier
 				  				    : "-" + Misc.dateString( -compareResultL )
 				  				    )
 		  				    )
+		  				+ ", localLastModifiedL=" + Misc.dateString(localLastModifiedL)
+		  				+ ", remoteLastModifiedL=" + Misc.dateString(remoteLastModifiedL)
 		  				);
 				return compareResultL;
 				}
 	
-			private static void sendDigitsOfNumberV( 
+		private static void sendDigitsOfNumberV( 
 					OutputStream socketOutputStream, long theL)
 			  throws IOException
 			  /* This recursive method sends decimal digits of the long number theL

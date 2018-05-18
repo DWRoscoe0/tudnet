@@ -119,7 +119,7 @@ public class AppLog extends EpiThread
 	    	TRACE
 	  		}	
 
-    	public static final LogLevel defaultMaxLogLevel= DEBUG; // INFO;
+    	public static final LogLevel defaultMaxLogLevel= INFO; // DEBUG; // INFO;
     	private static LogLevel maxLogLevel= defaultMaxLogLevel;
     	  // The app may create and use their own maximum variables,
     	  // or set this variable and call methods which use it.
@@ -139,6 +139,7 @@ public class AppLog extends EpiThread
       public static boolean testingForPingB= false;
       private boolean debugEnabledB= true;
       private boolean consoleModeB= false;
+      public LogLevel packetLogLevel= INFO; // DEBUG; 
 
     static // static/class initialization for logger.
       // Done here so all subsection variables are created.
@@ -215,9 +216,10 @@ public class AppLog extends EpiThread
         		); 
         logV( "" ); 
         logV( 
-        		"=================== LOG FILE SESSION #"
+        		"======== LOG FILE SESSION #"
         		+ theSessionI
-        		+ " BEGINS ==================="
+        		+ " at " + Misc.dateString(lastMillisL)
+        		+ " BEGINS ========"
         		);
         logV( "" ); 
         }

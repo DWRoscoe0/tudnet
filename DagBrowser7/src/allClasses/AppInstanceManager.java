@@ -13,10 +13,11 @@ import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import javax.swing.JOptionPane;
+////  import javax.swing.JOptionPane;
 
 import static allClasses.Globals.*;  // appLogger;
 
@@ -624,7 +625,10 @@ l    * If the app receives a message indicating
     	    and have caller use that value to skip update.
     	   */
 	    	{
-    			appLogger.info("displayUpdateApprovalDialogB(..) begins.");
+    			java.awt.Toolkit.getDefaultToolkit().beep(); // Beep.
+	        appLogger.info("displayUpdateApprovalDialogB(..) begins.");
+		  		final AtomicBoolean resultAtomicBoolean= new AtomicBoolean(true);
+		  		/*  ///tmp ///dbg
 	    		final String outString= 
 	    				messageString
 	    				+ "\nThe file that contains the other app is: "
@@ -632,8 +636,6 @@ l    * If the app receives a message indicating
 	    				+ "\nIt's creation time is: "
 	    				+ Misc.dateString(appFile)
 	    				+ ( informDontApproveB ? "" : "\nDo you approve?");
-		  		final boolean resultB[]= new boolean[1]; // True means approve.
-    			resultB[0]= true; // Default return of approval.
 		  		EDTUtilities.runOrInvokeAndWaitV( // Run following on EDT thread. 
 			    		new Runnable() {
 			    			@Override  
@@ -645,7 +647,8 @@ l    * If the app receives a message indicating
 			                "Infogora Info",
 			                JOptionPane.OK_CANCEL_OPTION
 			                );
-	    		    	  	resultB[0]= (answerI == JOptionPane.OK_OPTION);
+	    		    	  	resultAtomicBoolean.set(
+	    		    	  			(answerI == JOptionPane.OK_OPTION) );
 			    					}
 			    				else // Informing only.
 				    				JOptionPane.showMessageDialog(
@@ -657,9 +660,11 @@ l    * If the app receives a message indicating
 			    				}
 			          } 
 			        );
+		  		*/  ///tmp ///dbg
     			appLogger.info(
-    					"displayUpdateApprovalDialogB(..) ends, value= " + resultB[0] );
-		  		return resultB[0];
+    					"displayUpdateApprovalDialogB(..) ends, value= " 
+    					+ resultAtomicBoolean.get() );
+		  		return resultAtomicBoolean.get();
 		  		}
 
 	  // Code that does file instance management.
@@ -916,7 +921,7 @@ l    * If the app receives a message indicating
 	    private void logInputsV()
 	      // Logs all the file arguments and their time-stamps.
 	      {
-	        String logStriing= "";  //Declare and initialize string to be logged.
+	        String logStriing= "AppInstanceManager.logInputsV()\n";
 	        { // Add parts to the string to be logged.
 	          logStriing+= "Inputs: (variable-name: time-stamp, path-name)";
 	          logStriing+= "\n  standardAppFile:    " 
