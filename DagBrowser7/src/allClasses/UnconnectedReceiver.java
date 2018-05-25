@@ -18,10 +18,21 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
     Most packets will be queued to an associated Unicaster thread.
     The packets that don't have associated Unicaster threads
     will be queued to the ConnectionManager.
-    This thread is kept simple because the only known way to guarantee
-    fast termination of the receive(..) operation
-    is for another thread to close its DatagramSocket.
-    Doing this will also cause this thread to terminate.
+    
+    Terminating this thread is tricky because of
+    its linkage to the Sender thread through their common DatagramSocket.
+    This thread can be terminated in 2 ways:
+    * This thread's interrupt status can be set.
+      This status is checked between received packets.
+    * A close operation is performed on the DatagramSocket.
+      This causes an IOException on the DatagramSocket.receive(..) operation.
+      Receiving a packet and the occurrence of an IOException
+      are the only 2 ways to terminate the DatagramSocket.receive(..) operation.
+      Unfortunately closing the DatagramSocket can cause 
+      the Sender thread to terminate at the same time.
+    Triggering and waiting for termination (joining) of these 2 threads
+    may need to be done in a coordinated manner to prevent loss of
+    important packets.
     */
 
   {

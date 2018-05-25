@@ -234,7 +234,7 @@ public class LinkMeasurementState
 			    	  	measurementTimerInput.scheduleV(Config.handshakePause5000MsL);
 			  				}
 	
-					  public void onInputsV()
+					  public void onInputsForLeafStatesV()
 					    /* Waits for the end of the pause interval.
 					     	*/
 					  	{ 
@@ -261,7 +261,7 @@ public class LinkMeasurementState
 					    * exitV() of MeasurementPausedState.
 			  	  */
 			  	{
-					  public void onInputsV() throws IOException
+					  public void onInputsForLeafStatesV() throws IOException
 					  	{
 		    			  retryTimeOutMsL=   // Initializing retry time-out.
 		    			  		retransmitDelayMsNamedLong.getValueL();
@@ -287,7 +287,7 @@ public class LinkMeasurementState
 				    		sendingSequenceNumberV();
 			  				}
 	
-					  public void onInputsV() throws IOException
+					  public void onInputsForLeafStatesV() throws IOException
 					  	/* This method handles handshakes acknowledgement, 
 					  	  initiating a retry using twice the time-out,
 					  	  until the acknowledgement is received,
@@ -438,7 +438,7 @@ public class LinkMeasurementState
 			    its orthogonal partner sub-state named LocalMeasurementState.
 			    */
 	
-			  public void onInputsV() throws IOException
+			  public void onInputsForLeafStatesV() throws IOException
 			  	/* This method processes the "PS" message if it is received.
 			  	  It does this forever.  This state is never inactive.
 			  	  */

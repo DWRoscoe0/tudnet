@@ -12,7 +12,7 @@ public class KeyedStateList< K >
     * As the key for a hash table lookup.
 
     Because sub-classes of this class typically do more than simply hold data,
-    this class extends AndState, so it can itself be 
+    this class extends AndOrState, so it can itself be 
     a state-machine and have sub-states.
 
     */

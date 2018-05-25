@@ -115,35 +115,6 @@ public class Unicaster
 	  		// Create and start the sub-state machines.
 
     		{ // Create and add actual sub-states.
-    			/*  ////
-	    		initAndAddStateListV(
-	    				theBeforeHelloExchangeState= new BeforeHelloExchangeState());
-	    		initAndAddStateListV(
-	    				theAfterHelloExchangedState= new AfterHelloExchangedState());
-	    		setFirstOrSubStateV( theBeforeHelloExchangeState ); // Initial state.
-	
-		  	  initAndAddStateListV(theTemporaryMainState= new TemporaryMainState());
-		  	  
-		  	  initAndAddStateListV(theIgnoreAllSubstatesState= 
-		  	  		new IgnoreAllSubstatesState());
-	
-		  	  theMultiMachineState= new MultiMachineState(
-		  				theTimer, 
-		  			  theEpiInputStreamI,
-		  				theEpiOutputStreamO,
-		  				retransmitDelayMsNamedLong,
-		  				this
-		  	  		);
-		  	  theMultiMachineState.initializeWithIOExceptionV();
-
-	
-		  	  ///tmp Note, the following are added but not as States.
-		  	  theIgnoreAllSubstatesState.addB( theMultiMachineState );
-		  	  addB( theTemporaryMainState );
-		  	  addB( theMultiMachineState );
-		  	  addB( theIgnoreAllSubstatesState );
-		  	  */   ////
-  	  	  //// addStateListV( 
     			
     			LinkMeasurementState theLinkMeasurementState= 
     				 new LinkMeasurementState( 
@@ -165,10 +136,7 @@ public class Unicaster
 		  	  		);
   				addStateListV( theLinkedMachineState );
 
-    			} // Create and add actual sub-states.
-
-	  	  //// theMultiMachineState.startRootMachineV(); // Start the multi-machines,
-	  	    // by starting their timers, by callinG the main machine handler.
+  				} // Create and add actual sub-states.
 
 	  	  addAtEndB( theSubcasterManager );
 	    	}
@@ -182,11 +150,9 @@ public class Unicaster
 
     public void run()  // Main Unicaster thread.
       /* This method contains the main thread logic.
-        It basically just reads event messages from the input stream
-        and passes them to its state machine
-        until it receives a signal to exit.
-        Most state-machines only need to read from the input stream
-        for event data, not the main event message itself.
+        It contains initialization, finalization, with
+        a mesaage processing loop in between.
+        It also contains an IOException handler.
         */
       {
     		appLogger.info("run() begins.");
@@ -195,26 +161,9 @@ public class Unicaster
 	          doOnEntryV(); // Simulate an actual state entry. 
 	      		theDataTreeModel.displayTreeModelChangesV(); // Display our arrival.
 
-	          while (true) { // Repeating until termination is requested.
-            	doOnInputsB(); // Process inputs in this state-machine.
-            	  // This will start the state machine timers the first time.
-					  	LockAndSignal.Input theInput= // Waiting for a new input.
-			    			  theLockAndSignal.waitingForInterruptOrNotificationE();
-			      	if ( theInput == Input.INTERRUPTION ) // Process exit request. 
-				      	{ // Inform state machine of pending exit, then do so.
-			      			appLogger.info("run() interrupted, exiting.");
-				      		Thread.currentThread().interrupt(); // Restore interrupt.
-		            	while (doOnInputsB()) ; // Make state machine process it.
-		            	break;
-					      	}
-			      	if // Transfer any synchronous input from stream to machine.
-			      	  ( ( theEpiInputStreamI.available() > 0 ) // New is available.
-			      	  	&& ( getSynchronousInputString() == null ) // Old is consumed.
-			      	  	)
-			      		setSynchronousInputV( theEpiInputStreamI.readAString() );
-		 	      	} // while (true)
-	          
-	          finalizingV();
+	      	  runLoop(); // Do actual input processing in a loop.
+
+	      	  finalizingV();
 	  	    	theUnicasterManager.removingV( this ); // Removing self from tree.
 	      		appLogger.info("run() after remove and before final display.");
 	      		theDataTreeModel.displayTreeModelChangesV(); // Display removal.
@@ -227,7 +176,41 @@ public class Unicaster
     		appLogger.info("run() ends.");
         }
 
-    public void onInputsV() throws IOException
+	  private void runLoop() throws IOException
+	    /* This method contains the message processing loop.
+		    It basically just reads event messages from the input stream
+		    and passes them to its state machine
+		    until it receives a signal to exit.
+		    */
+			{
+		    processUntilTerminated: while (true) {
+			    processAllAvailableInput: while (true) {
+			    	while (doOnInputsB()) ; // Process inputs in this state-machine.
+			    	  // This will also start the state machine timers the first time.
+			    	if ( getDiscreteInputString() != null ) { ////dbg
+			  			appLogger.warning("runLoop() unconsumed input= "+getDiscreteInputString());
+			  			resetDiscreteInputV();  // consume it.
+			    		}
+		    		if ( theEpiInputStreamI.available() <= 0 ) // No input available. 
+		    			break processAllAvailableInput; // Exit available input loop.
+	    	  	String inString=  // Get next stream string.
+	    	  			theEpiInputStreamI.readAString();
+	      		setDiscreteInputV( inString );
+		      	} // processAllAvailableInput:
+					///dbg appLogger.warning("runLoop() before wait.");
+			  	LockAndSignal.Input theInput= // Waiting for new input.
+		  			  theLockAndSignal.waitingForInterruptOrNotificationE();
+					///dbg appLogger.warning("runLoop() after wait.");
+		    	if ( theInput == Input.INTERRUPTION ) break processUntilTerminated; 
+		     	} // processUntilTerminated: 
+      	{ // Inform state machine of termination request.
+    			appLogger.info("runLoop() loop interrupted.  Terminating.");
+      		Thread.currentThread().interrupt(); // Restore interrupt.
+        	while (doOnInputsB()) ; // Let state machine run until processed.
+	      	}
+				}
+	  
+    public void onInputsForLeafStatesV() throws IOException
       /* This method does, or will do itself, or will delegate to Subcasters, 
         all protocols of a Unicaster.  This might include:
         * Doing full PING-REPLY protocol by letting a Subcaster do it, 

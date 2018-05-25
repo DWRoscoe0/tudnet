@@ -154,15 +154,41 @@ public class DataNode
       			parentNamedList.reportChangeInChildB( this );
       		}
 
-      // Customized logging methods.
+      
+      /* Customized logging methods.
+        These methods, along with this.theMaxLogLevel and class AppLog,
+        are used to control what is logged from this class and its subclasses.
+        this.theMaxLogLevel works in a way similar to AppLog.maxLogLevel,
+        to determine which log statements are executed.
+        this.theMaxLogLevel is usually changed at the same time as
+        theMaxLogLevel of child DataNodes.
+        The method propagateIntoSubtreeB(..) makes 
+        the control of logging of entire subtrees possible.  
+       */
 
-  	  protected void propagateIntoSubtreeV( LogLevel theMaxLogLevel )
-  	    /* This and its subclass overrides are used to propagate
-  	      maximum LogLevel values into subtrees for 
-  	      customized DataNode logging.
-  	      */
-  		  {
-  	  	  this.theMaxLogLevel= theMaxLogLevel;
+  	  protected boolean propagateIntoSubtreeB( LogLevel theMaxLogLevel )
+		    /* This method propagates theMaxLogLevel into this node.
+		      It acts only if the present level is different from theMaxLogLevel.
+			   	Subclasses with descendants should propagate into those also.
+			   	
+			   	Unlike propagateIntoSubtreeV( DataTreeModel ),
+			   	this method is called only when changes to the default logging
+			   	are needed for debugging purposes.
+			   	This method can be called whenever it is determined that
+			   	special logging would be helpful.
+			   	
+			   	///elim The checking whether a change is needed
+			   	  is probably not needed, and should eventually be eliminated.
+			   	  Meanwhile, it shouldn't cause any harm. 
+			   	*/
+			  {
+		  	  boolean changeNeededB= ( this.theMaxLogLevel != theMaxLogLevel ); 
+			  	if // Make change only if new level limit is different.
+		  	    ( changeNeededB )
+				  	{
+			  			this.theMaxLogLevel= theMaxLogLevel;
+				  		}
+			  	return changeNeededB;
   		  	}
 
   	  protected boolean logB( LogLevel theLogLevel )

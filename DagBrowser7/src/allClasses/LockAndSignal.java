@@ -12,86 +12,107 @@ public class LockAndSignal  // Combination lock and signal class.
 	      and synchronized code blocks.
 	    * As an associated boolean signal flag variable.
 
-    An instance of this class may be used by a destination thread 
-    to manage and process several types of inputs to the thread,
-    arriving on potentially many different input ports, 
+    An instance of this class may be used by 
+    a single consumer thread and one or more producer threads 
+    to manage and process several types of signals,
+    using potentially many different ports, 
     without using busy-waiting.
 
-    The Input type designations and descriptions, 
-    listed in preferred decreasing priority order, are:
+    Each consumer thread needs only one instance of this class
+    to manage all its inputs regardless of the number of input paths, ports,
+    or number of producer threads that are providing those inputs.  
+    In fact it makes no sense to have more than one LockAndSignal instance.
 
-      INTERRUPTION: The thread's isInterrupted() status is true.
+    The Input type, listed in preferred decreasing priority order, are:
+
+      INTERRUPTION: The thread's isInterrupted() status was set true.
         This is commonly used to request thread termination.
       TIME: A time event has occurred.  
         This is commonly used to generate delays and for time-outs.
-      NOTIFICATION: Object.notify() [or notifyAll()} was called at least once.
-        This is commonly used to indicate the placement by other threads
-        of input data at pre-designated input ports of this thread.  
+      NOTIFICATION: notifyingV() was called at least once.
+        This is commonly used to indicate the placement by producer threads
+        of input data at pre-arranged input ports of the consumer thread.  
 
-    	NONE: This means that there has been no recognized input.
+    	NONE: This means that there have been none of the above recognized inputs.
 
-      SUBNOTIFICATION // This is a special value for use by the caller only.
+      SUBNOTIFICATION // This is a special value for use by other classes.
         This class defines it, but does not reference it anywhere.
-        It is meant to be used indicate that an input datum, 
+        It is meant to be used to indicate that an input datum, 
         a group of which might have been signaled by a NOTIFICATION input, 
         is available.
 
-    A thread can make use of any one, two, or all three input types.
+    A thread can make use of any one, two, or all three types of inputs.
 
-    If inputs occur one at a time, and the destination thread 
-    can process each input before the next input appears,
-    then it doesn't matter the order in which the thread tests the inputs.
-    In the end the thread will process them in the order they appear.
+    If inputs occur to the consumer thread one at a time,  
+    and it can process each input before the next input appears,
+    then it doesn't matter the order in which the thread tests the inputs,
+    because the thread will process them in the order they appeared.
 
-    But if the thread can't keep up then
-    more than one input type can appear simultaneously.
-    In this case the order of input availability testing may be important.
+    But if, as is more common, the thread can't keep up with its inputs, 
+    then more than one input type can appear simultaneously.
+    In this case the order of input testing may be important.
     Therefore each wait method and each test method
     has a well documented priority ordering of Input types, 
     which is also the order of Input testing that the method uses. 
 
-    Several priority orderings are possible.
-    This class's wait and test methods do not provide all of them,
+    Several priority orderings of input types are possible.
+    This class's wait and test methods do not provide all orderings,
     but it does support several useful ones.
     It also provides building block methods from which
-    new methods which use any desired order can be built.
+    new methods which use any desired priority order can be built.
 
-		An example of how different input priorities might be desired,
+		As an example of why different input priorities might be desired,
 		consider the INTERRUPT Input, which is commonly used 
 		to request thread termination.
-			* If the termination is of the ABORT type then it should probably have 
-			  top priority, otherwise other inputs might prevent it being noticed. 
-			* If the termination is NOT of the ABORT type, it is only
-			  a request to terminate eventually at a convenient time,
+			* If the termination request is of the ABORT type 
+			  then it should probably have top priority, 
+			  otherwise other inputs might prevent it being noticed. 
+			* If the termination request is NOT of the ABORT type, 
+			  meaning it is a request to terminate eventually at a convenient time,
 			  then it should probably have a lower priority, 
 			  which would allow the thread to finish processing
-			  other inputs cleanly before terminating. 
+			  other pending inputs properly before terminating. 
 
     Though this class is thread-safe, 
     the objects used to pass NOTIFICATION data between threads, 
     queues for example, must be guaranteed thread-safe by other means. 
+    For an example see the NotifyingQueue class.
 
-		This class's notifyingV() method is called by source threads
+		This class's notifyingV() method is called by the producer threads
     to indicate the readiness of new NOTIFICATION inputs.
+    In fact, it is the only method called by producer threads.
     It sets a signal variable and calls Object.notify().
     It can be called directly by the thread generating input data,
     or indirectly by objects being used as Input.NOTIFICATION ports.
     For an example see the add(..) method of the NotifyingQueue class.
 
-    This class's Wait methods are called by the destination thread
+    This class's Wait methods are called by the consumer thread
     to wait until at least one of the 3 Input types has appeared.
     If none of them has appeared before the time of call
     then it calls Object.wait() to block the thread until one does.
-    Typically the destination thread will have a loop containing:
+    Typically the consumer thread will have a loop containing:
+    * A call to one of these Wait methods.
+    * The processing of all of the inputs represented by the return value
+      from the Wait method.
 
-	    * A call to one of this class's Wait methods.
+    This class's Test methods are similar to the Wait methods except that
+    the Test methods always return immediately and
+    might return the value Input.NONE,
+    meaning that none of the desired input types has occurred, yet. 
 
-	    * The processing of at least one of the inputs that became available.
-
-    Each destination thread needs only one LockAndSignal instance
-    to manage all its inputs regardless of the number of input paths, ports,
-    or number of source threads that are providing those inputs.  
-    In fact it makes no sense to have more than one LockAndSignal instance.
+    To prevent failure to process inputs in a timely manner,
+    all inputs associated with an input type returned by
+    either a test method or a wait method must be processed
+    before a call is made to a test method or wait method
+    which can return the same input type.
+    For example, all entries on all input queues associated with
+    Input.NOTIFICATION must be processed before calling a method
+    which can return Input.NOTIFICATION.
+    For details on the various Input types, and how to process them,
+    see the documentation of:
+    * Input testingForInterruptE() 
+    * Input testingRemainingDelayE( long delayMsL )
+    * Input testingForNotificationE()
 
     ///? It might make sense to add a LockAndSignal instance
     to the EpiThread class??
@@ -135,6 +156,7 @@ public class LockAndSignal  // Combination lock and signal class.
     but only from one specific object to another.
     Or maybe it would be better to have a different class for this.
     */
+
   {
 
     public enum Input { // Types of inputs.
@@ -148,11 +170,11 @@ public class LockAndSignal  // Combination lock and signal class.
       }
       
     private boolean signalB= false;  // NOTIFICATION flag.
-      // Set to true when source thread notifies of a new input.
-      // Set to false when destinations thread receives notification.
+      // Set to true when any producer thread notifies of a new input.
+      // Set to false when the consumer thread receives notification.
 
 
-	  /* Methods that wait for various types of Input:
+	  /* Consumer thread methods that wait for various types of Input:
 
 	    There are several wait methods.
 	    Each one waits for one out of several possible 
@@ -165,7 +187,7 @@ public class LockAndSignal  // Combination lock and signal class.
 
 	    Each wait method returns a value indicating the type of the Input
 	    that it discovered available.  
-      If inputs occur one at a time, and the destination thread 
+      If inputs occur one at a time, and the consumer thread 
       can process each input before the next input arrives,
       then it doesn't matter the order in which 
       the wait method checks the inputs.
@@ -173,9 +195,9 @@ public class LockAndSignal  // Combination lock and signal class.
       Because more than one Input might be available, 
       each wait method has a priority ordering of Input types, 
       which is the order of Input checking.
-	    Any priority ordering is possible, but 
-	    there is a very common ordering:
-	    
+	    The following is a list of of input types, 
+	    in common priority ordering, but others are possible.
+
 	      * Input.INTERRUPTION, which means the thread has been interrupted.
 	        Because this is Java, it probably also means that 
 	        thread termination has been requested.
@@ -185,9 +207,6 @@ public class LockAndSignal  // Combination lock and signal class.
 	      * Input.NOTIFICATION, which means that one or more normal data inputs
 	        has become available and should eventually be processed. 
 	        These generally have the lowest priority. 
-
-			The above list of Input types shows a commonly used priority ordering,
-			but others are possible.
 			
       If a different priority ordering is desired than the method provide,
       there might be another one that uses a different order.
@@ -270,7 +289,7 @@ public class LockAndSignal  // Combination lock and signal class.
 			*/
 	
 	    public Input waitingForInterruptOrNotificationE()
-		    /* This method, called by a destination thread,
+		    /* This method, called by a consumer thread,
 			    waits for an input from the following list.
 			     If more than one input type is available when the method is called 
 			    then it returns the one that appears first.
@@ -296,7 +315,7 @@ public class LockAndSignal  // Combination lock and signal class.
 			    }
 	
 	    public Input waitingForNotificationOrInterruptE()
-		    /* This method, called by a destination thread,
+		    /* This method, called by a consumer thread,
 			    waits for an input from the following list.
 			     If more than one input type is available when the method is called 
 			    then it returns the one that appears first.
@@ -324,7 +343,7 @@ public class LockAndSignal  // Combination lock and signal class.
 			public synchronized Input waitingForInterruptOrDelayOrNotificationE( 
 	    		long delayMsL 
 	    		)
-		    /* This method, called by a destination thread,
+		    /* This method, called by a consumer thread,
 			    waits for an input from the following list.
 			    If more than one input type is available when the method is called 
 			    then it returns the one that appears first in the list.
@@ -349,7 +368,7 @@ public class LockAndSignal  // Combination lock and signal class.
 	    public synchronized Input waitingForInterruptOrIntervalOrNotificationE(
 	    		long startMsL, long lengthMsL 
 	    		)
-		    /* This method, called by a destination thread,
+		    /* This method, called by a consumer thread,
 			    waits for an input from the following list.
 			    If more than one input type is available when the method is called 
 			    then it returns the one that appears first.
@@ -385,7 +404,7 @@ public class LockAndSignal  // Combination lock and signal class.
 		      }
     
     
-	  /* Methods that test for various types of Input:
+	  /* Consumer thread methods that test for various types of Input:
 	
 			These methods are similar to the methods that wait for inputs,
 			but instead of waiting they return immediately.
@@ -406,7 +425,7 @@ public class LockAndSignal  // Combination lock and signal class.
 	    public synchronized Input testingForInterruptTimeOrNotificationE( 
 	    		long startMsL, long lengthMsL 
 	    		)
-		    /* This method, called by a destination thread,
+		    /* This method, called by a consumer thread,
 			    tests for an input from the following list.
 			    If more than one input type is available when the method is called 
 			    then it returns the one that appears first.
@@ -434,7 +453,7 @@ public class LockAndSignal  // Combination lock and signal class.
       public synchronized Input testingForInterruptOrDelayOrNotificationE( 
       		long delayMsL 
       		)
-		    /* This method, called by a destination thread,
+		    /* This method, called by a consumer thread,
 			    tests for an input from the following list.
 			    If more than one input type is available when the method is called 
 			    then it returns the one that appears first.
@@ -466,7 +485,8 @@ public class LockAndSignal  // Combination lock and signal class.
 		    }
 
 
-    /* Building block methods:
+    /* Consumer thread building block test and wait methods:
+
       From these methods, other test and wait methods can be built
       to test or wait for any combination of inputs.
       
@@ -485,16 +505,28 @@ public class LockAndSignal  // Combination lock and signal class.
       */
 
       public synchronized Input testingForInterruptE() 
-		    /* This method, called by a destination thread,
-			    tests for the thread interrupt status input only.  
+		    /* This method, called by a consumer thread,
+			    tests for and resets the thread interrupt status input only.  
 			    It returns results as follows:
 			    
 	          Input.INTERRUPTION: 
-		          The interrupt status set by Thread.currentThread().interrupt()
-		          was true, and was then cleared by this method.
+		          The current thread's interrupt status was found to be true,
+		          and was then set to false.
 	
 		     	  Input.NONE: None of the above inputs was available.
+		     	    This means current thread's interrupt status 
+		     	    was found to be false, and was not changed.
 	
+					This method always tries to return with interrupt status false.
+					If it was false then it stays false.
+					If it was true then it is set false by the call to
+					Thread.currentThread().isInterrupted() used to test it.
+					If the caller wants the interrupt status to be true again
+					then it must call Thread.currentThread().interrupt().
+					It is also possible that another thread could set it true again
+					by calling Thread.interrupt().
+					This protocol is necessary to prevent loss of the signal
+					that the interrupt status represents.
 	        */
 	      {
 	 	      if // Testing and clearing thread interruption status.
@@ -505,15 +537,19 @@ public class LockAndSignal  // Combination lock and signal class.
 	      	}
 
       public synchronized Input testingRemainingDelayE( long delayMsL )
-		    /* This method, called by a destination thread,
+		    /* This method, called by a consumer thread,
 			    tests for a time input only.
-			    It returns results as follows:
+          delayMs should be a value previously returned by timeCheckedDelayMsL().
+			    This method returns results as follows:
 	
 			      Input.TIME.
-			        delayMs equals 0, meaning no delay remains.
-			        delayMs should have been returned by timeCheckedDelayMsL().
+			        delayMs equals 0, meaning no delay remains,
+		     	    so the associated delayed action should happen now,
+		     	    or the action should be queued and done soon.
 	
 		     	  Input.NONE: None of the above inputs was available.
+		     	    This means that some of the delay remains and
+		     	    the associated delayed action should not happen yet.
 	
 	        */
 	      {
@@ -522,23 +558,31 @@ public class LockAndSignal  // Combination lock and signal class.
 	 	      	else
 	 	      	return Input.NONE;
 	      	}
-      
+
       public synchronized Input testingForNotificationE()
-		    /* This method, called by a destination thread,
+		    /* This method, called by a consumer thread,
 			    tests for notification inputs only.
 			    It returns results as follows:
 	
 			      Input.NOTIFICATION: 
 			        An input signal notification occurred,
 			        and was then cleared by this method.
+			        This means that inputs have arrived on at least one of
+			        the input ports that accompanied by calls to notifyingV().
+			        All of these input ports should be tested and processed
+			        before calling this method again.
 	
 		     	  Input.NONE: None of the above inputs was available.
+		     	    This means that no notification inputs 
+		     	    arrived since the last time this method was called.
 	
+					This protocol is necessary to prevent failure to process
+					inputs in a timely manner.
 	        */
-	      {
+        {
 				  if ( getB() ) // Testing flag indicating that notifyingV() called.
 				    {
-				  	  setV(false); // Resetting condition for next inputs.
+				  	  setV(false); // Reset condition in preparation for next inputs.
 		 	      	return Input.NOTIFICATION; 
 				  	  }
 		 	      else
@@ -548,7 +592,7 @@ public class LockAndSignal  // Combination lock and signal class.
       public synchronized void waitingForInterruptOrDelayOrNotificationV(
       		long waitTimeMsL
       		)
-  	    /* This method, called by a destination thread,
+  	    /* This method, called by a consumer thread,
   		    waits for any of the following:
   		    * a thread interrupt, either a pre-existing interrupt status 
   		      one an interrupt that happens during the wait().
@@ -576,7 +620,7 @@ public class LockAndSignal  // Combination lock and signal class.
       public synchronized void waitingForDelayOrNotificationV(
       		long waitTimeMsL
       		)
-  	    /* This method, called by a destination thread,
+  	    /* This method, called by a consumer thread,
   		    waits for any of the following:
   		    * A call to notify() during the wait().
   		    * The passage of waitTimeMsL time.
@@ -618,7 +662,7 @@ public class LockAndSignal  // Combination lock and signal class.
         }
 
 	      
-    /* Time calculation methods.
+    /* Consumer thread time calculation methods.
 
       These methods help threads safely deal 
       with real-time events with the possibility that time, 
@@ -724,13 +768,15 @@ public class LockAndSignal  // Combination lock and signal class.
 			    return delayMsL;
 			    }
 
-    
-    // Input notification methods.
-	
+
+    // Producer thread input notification method.
+
 	    public synchronized void notifyingV()
-	      /* This method is called by threads which are data sources.
+	      /* This method is called by producer threads,
+	        the threads which are data producers.
 	        It delivers notification that new input has been provided 
-	        to the destination thread by a source thread on a pre-arranged port.
+	        to the consumer thread by the producer thread on 
+	        one or more pre-arranged ports.
 	        */
 	      {
 	        setV(true);  // Set signal which will become Input.NOTIFICATION.
@@ -740,9 +786,9 @@ public class LockAndSignal  // Combination lock and signal class.
 
     // Getter and setter methods.
 
-	    public boolean getB()  // Get mutable boolean value.
+	    private boolean getB()  // Get mutable boolean value.
 	      { return signalB ; }
-	
+
 	    private void setV( boolean theB )  // Set mutable boolean value.
 	      { signalB= theB; }
 

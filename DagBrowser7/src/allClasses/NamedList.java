@@ -161,21 +161,35 @@ public class NamedList
 			  		}
 		  	}
 
-	  protected void propagateIntoSubtreeV( LogLevel theMaxLogLevel )
+	  protected boolean propagateIntoSubtreeB( LogLevel theMaxLogLevel )  ///enh Make boolean.
 	    /* This method propagates theMaxLogLevel into 
-		    this node and any of its descendants which need it. 
+		    this node and any of its descendants which need it.
+		    It acts only if the present level is different from theMaxLogLevel.
 		    */
 		  {
+	  		boolean changeNeededB= ( this.theMaxLogLevel != theMaxLogLevel ); 
 		  	if // Propagate into children only if new level limit is different.
-	  	    ( this.theMaxLogLevel != theMaxLogLevel )
+	  	    ( changeNeededB )
 			  	{
-			  		for ( DataNode theDataNode : theListOfDataNodes)  // For each child
-			  			theDataNode.propagateIntoSubtreeV( // recursively propagate  
-			  					theMaxLogLevel); // the new level.
-			  	  super.propagateIntoSubtreeV( // Propagate into super-class. 
-		  					theMaxLogLevel); // the new level.  This eliminates
-  			  	      // the difference LogLevel which allowed propagation.
+		  			propagateIntoDescendantsV(theMaxLogLevel);
+			  		////for ( DataNode theDataNode : theListOfDataNodes)  // For each child
+				  	////	theDataNode.propagateIntoSubtreeB( // recursively propagate  
+				  	////			theMaxLogLevel); // the new level.
+				  	super.propagateIntoSubtreeB( // Propagate into super-class. 
+				  			theMaxLogLevel); // the new level.  This eliminates
+				  			// the difference LogLevel which allowed propagation.
 			  		}
+		  	return changeNeededB;
+		  	}
+
+	  protected void propagateIntoDescendantsV( LogLevel theMaxLogLevel )
+	    /* This method propagates theMaxLogLevel into the descendants,
+	      but not into this node.  It remains unchanged.
+		    */
+		  {
+	  		for ( DataNode theDataNode : theListOfDataNodes)  // For each child
+	  			theDataNode.propagateIntoSubtreeB( // recursively propagate  
+	  					theMaxLogLevel); // the new level into child subtree.
 		  	}
 	  
     protected boolean reportChangeInChildB( final DataNode childDataNode )

@@ -17,8 +17,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-////  import javax.swing.JOptionPane;
-
 import static allClasses.Globals.*;  // appLogger;
 
 public class AppInstanceManager {
@@ -140,7 +138,7 @@ l    * If the app receives a message indicating
     int inputAppFileDelaySI= 60;  // Delay in seconds before checking begins.
       // This is used to allow updating from 
       // the tcpCopierAppFile to happen first.
-      ///////tmp For testing.
+      ///tmp For testing.
     
     // File names.  Some of these might be equal.
 	  private final File standardAppFile=  // App File name in standard folder.

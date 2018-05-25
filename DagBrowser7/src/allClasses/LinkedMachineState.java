@@ -5,6 +5,8 @@ import static allClasses.Globals.appLogger;
 import java.io.IOException;
 import java.util.Timer;
 
+import allClasses.AppLog.LogLevel;
+
 public class LinkedMachineState
 
 	extends OrState
@@ -30,9 +32,9 @@ public class LinkedMachineState
 		private StateList[] theLinkedStateLists;
 
 		// Sub-state-machine instances.
-		private PreHelloState thePreHelloState;
-		private LinkedState theLinkedState;
-		private PostGoodbyeState thePostGoodbyeState;
+		private ConnectingState theConnectingState;
+		private ConnectedState theConnectedState;
+		private UnconnectedState theUnconnectedState;
 		
 		LinkedMachineState(  // Constructor.
 				)
@@ -64,19 +66,26 @@ public class LinkedMachineState
 	  		// Adding measurement count.
 
     		// Create and add to DAG the sub-states of this state machine.
-    		initAndAddStateListV(thePreHelloState= new PreHelloState());
+    		initAndAddStateListV(theConnectingState= new ConnectingState());
     		addStateListV(
-    				(theLinkedState= new LinkedState())
+    				(theConnectedState= new ConnectedState())
     				  .initializeWithIOExceptionStateList(this.theLinkedStateLists)
     				);
-    		initAndAddStateListV(thePostGoodbyeState= new PostGoodbyeState());
-    		setFirstOrSubStateV( thePreHelloState ); // Initial state.
+    		initAndAddStateListV(theUnconnectedState= new UnconnectedState());
+    		setFirstOrSubStateV( theConnectingState ); // Set initial state.
 
 	  	  helloTimerInput= // Creating our timer and linking to this state. 
 			  		new TimerInput(  ///? Move to factory or parent?
 			  				this.theTimer,
 			  				this
 			  				);
+
+	  	  /*  ////
+	  	  { ///dbg ///tmp adjust logging for debugging.
+					propagateIntoSubtreeB( LogLevel.TRACE );
+					theConnectedState.propagateIntoDescendantsV(LogLevel.INFO);
+		  	  }
+	  	  */  ////
 
 	  	  return this;
 			  }
@@ -100,27 +109,21 @@ public class LinkedMachineState
 	  public boolean onInputsB() throws IOException 
 	    /* This input handler method is mainly concerned with
 	      disconnecting its Unicaster from the one running on the peer node.
-	      It processes the GOODBYE message by initiating thread termination.
-	      It responding to the thread termination signal by
+	      It responds to the thread termination interrupt by
 	      sending GOODBYEs to the peer.
 	      In both cases, it transitions the sub-state machine
-	      to the the PostGoodbyeState.
+	      to the the UnconnectedState.
 	     */
 		  {
 	  		boolean progressB= true; // Assume progress will be made.
 	  		beforeReturn: {
 		  		if ( super.onInputsB() ) // Try processing in sub-state machine.
 		  			break beforeReturn; // Return with progress.
-		  		if ( tryInputB("GOODBYE") ) { // Did peer tell us it's disconnecting?
-	          Thread.currentThread().interrupt(); // Yes, initiate our disconnect.
-	        	requestSubStateListV( thePostGoodbyeState );
-		  			break beforeReturn; // Return with progress.
-		  			}
 		  		if // Process local disconnect request, if present.
 		  		  ( Thread.currentThread().isInterrupted() ) 
 			  		{ // Process local disconnect request.
 		        	Thread.currentThread().interrupt(); // Reestablish interrupted.
-		        	progressB= requestSubStateListB( thePostGoodbyeState );
+		        	progressB= requestSubStateListB( theUnconnectedState );
 		        	if (progressB) // Send GOODBYEs if state change was accepted.
 				  			for (int i=0; i<3; i++) { // Send 3 GOODBYE packets.
 				  		    theNetcasterOutputStream.writingTerminatedStringV( "GOODBYE" );
@@ -144,7 +147,7 @@ public class LinkedMachineState
 	  private TimerInput helloTimerInput;
 		private long retryTimeOutMsL;
 
-		private class PreHelloState extends StateList 
+		private class ConnectingState extends StateList 
 
 	  	/* This class exchanges HELLO messages with the remote peer
 	  	  to decide which peer will lead and which will follow.
@@ -161,16 +164,16 @@ public class LinkedMachineState
 					  helloTimerInput.scheduleV(retryTimeOutMsL);
 						}
 		
-			  public void onInputsV() throws IOException
+			  public void onInputsForLeafStatesV() throws IOException
 			  	/* This method handles HELLO handshakes acknowledgement, 
 			  	  initiating a retry using twice the time-out,
 			  	  until a HELLO is received.
 			  	  */
 			  	{
 			  		if // Try to process first HELLO.
-			  		  (tryProcessingReceivedHelloB(this))
+			  		  (tryReceivingHelloB(this))
 			  			requestSiblingStateListV( // Success.  Request after-hello state.
-			  					theLinkedState
+			  					theConnectedState
 					  			);
 		      	else if (helloTimerInput.getInputArrivedB()) // Failure.  Time-out? 
 			    		{ // Time-out occurred  Setup for retry.
@@ -184,9 +187,9 @@ public class LinkedMachineState
 		  			  	}
 		  	  	}
 	
-		  		} // class PreHelloState
+		  		} // class ConnectingState
 		
-		private class LinkedState extends AndState
+		private class ConnectedState extends AndState
 
 	  	/* This state handles the reception of extra HELLO messages,
 	  	  which are HELLO messages received after the first one.
@@ -203,7 +206,10 @@ public class LinkedMachineState
 						
 						for // Add each child state from array.
 						  ( StateList theStateList : theLinkedStateLists ) 
-							addStateListV(theStateList); // Add it as sub-state.
+							{ 
+								addStateListV(theStateList); // Add it as sub-state.
+								theStateList.propagateIntoSubtreeB( LogLevel.INFO ); ///dbg /// tmp
+								}
 						
 						return this;
 						}
@@ -211,26 +217,37 @@ public class LinkedMachineState
 				private boolean sentHelloB= true; 
 				  // True means previous HELLO was sent, not received.
 
-			  public void onInputsV() throws IOException
+			  public boolean onInputsB() throws IOException
 			  	/* This method sends HELLO messages 
 			  	  in response to extra unnecessary received HELLO messages.
 			  	  To prevent HELLO storms, response is made to only
-			  	  every other received HELLO. 
+			  	  every other received HELLO.
+			  	  It also handles the GOODBYE message by disconnecting. 
 			  	  */
 			  	{
-			  		if // Try to process an extra HELLO.
-			  		  (tryProcessingReceivedHelloB(this))
-				  		{
-				        appLogger.warning( "Extra HELLO received." );
-				  			if  // If we received a HELLO and 
-				  			  ( sentHelloB^= true ) // we didn't send one last time,
-				  				sendHelloV(this); // send a HELLO this time.
-				  			}
+			  		boolean progressB= true; // Assume progress will be made.
+			  		beforeReturn: {
+				  		if ( super.onInputsB() ) // Try processing in sub-state machine.
+				  			break beforeReturn; // Return with progress.
+				  		if (tryReceivingHelloB(this)) { // Try to process an extra HELLO.
+					        appLogger.warning( "Extra HELLO received." );
+					  			if  // If we received a HELLO and 
+					  			  ( sentHelloB^= true ) // we didn't send one last time,
+					  				sendHelloV(this); // send a HELLO this time.
+					  			break beforeReturn; // Return with progress.
+					  			}
+				  		if ( tryInputB("GOODBYE") ) { // Did peer disconnect?
+		    			  	requestSiblingStateListV( theUnconnectedState ); // Us also.
+					  			break beforeReturn; // Return with progress.
+					  			}
+				  		progressB= false; // Everything failed.  Set no progress.
+			  			} // beforeReturn: 
+			  		return progressB;
 					  }
 
-	  		} // class LinkedState
+	  		} // class ConnectedState
 		
-		private class PostGoodbyeState extends StateList
+		private class UnconnectedState extends StateList
 
 	  	/* This state is a termination state, entered after
 	  	  GOODBYE has been sent and the Unicaster is disconnected.
@@ -238,14 +255,30 @@ public class LinkedMachineState
 	  	  */
 
 	  	{
-	  		} // class PostGoodbyeState
 
-  	private boolean tryProcessingReceivedHelloB(StateList subStateList) 
+			  public void onInputsForLeafStatesV() throws IOException
+			  	/* This method does nothing except test for HELLO messages.
+			  	  If it receives one then it transitions to the ConnectedState. 
+			  	  */
+			  	{
+			  		if (tryReceivingHelloB(this))
+				  		{
+			  				sendHelloV(this); // send a response HELLO.
+				  			requestSiblingStateListV( // Switch to ConnectedState.
+				  					theConnectedState
+				  					);
+				  			}
+					  }
+	
+		  	} // class UnconnectedState
+
+  	private boolean tryReceivingHelloB(StateList subStateList) 
   			throws IOException
   	  /* This method tries to process the Hello message and its arguments.
-  	    Because it is called not by this state, but by sub-states,
-  	    it is specified as the parameter subStateList.
-  	    If the next input String is "HELLO" then it processes,
+  	    This method is part of this state, but is not called its code.
+  	    It is called by various sub-states. 
+  	    specified with the parameter subStateList.
+  	    If the next input to the sub-state is "HELLO" then it processes it,
   	    which means parsing the IP address which follows and determining
   	    which peer, the local or remote, will be leader,
   	    by comparing the IP addresses, and setting 
@@ -254,11 +287,12 @@ public class LinkedMachineState
 				What matters is that the ordering is consistent.
   	    This method does not send a reply "HELLO".
   	    Sending is assumed to be done elsewhere.
-  	    This method returns true if HELLO was processed, false otherwise.
+  	    This method returns true if HELLO was received and processed, 
+  	    false otherwise.
   	    */
 	  	{
-  		  boolean isKeyB= subStateList.tryInputB("HELLO");
-  		  if (isKeyB) { // Decoding argument if input is "HELLO".
+  		  boolean gotKeyB= subStateList.tryInputB("HELLO");
+  		  if (gotKeyB) { // Decoding argument if input is "HELLO".
 					String localIpString= theNetcasterInputStream.readAString();
 					String remoteIpString= 
 							theUnicaster.getKeyK().getInetAddress().getHostAddress();
@@ -274,7 +308,7 @@ public class LinkedMachineState
 	        				)
 	        		);
 				  }
-  		  return isKeyB;
+  		  return gotKeyB;
 	  		}
 
   	private void sendHelloV(StateList subStateList)

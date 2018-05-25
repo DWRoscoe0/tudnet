@@ -27,7 +27,7 @@ public class AppLog extends EpiThread
 		* As an Exception occurrence reported to the err stream
 		* As an error count later to the log, if possible.
 
-    When executing logging-intensive parts of the can cause
+    When executing logging-intensive parts of the app can cause
     the app to run slowly because of:
     * Anti-malware Service Executable  
     * Microsoft Windows Search Indexer
@@ -74,7 +74,8 @@ public class AppLog extends EpiThread
 			but much of it would be in the target classes themselves.  For example:
 			* DataNode: done.
 			  logging is controlled by a DataNode LogLevel variable
-			  in ancestor DataNode Lit instances.  Subclasses:
+			  in ancestor DataNode Lit instances.  
+			  Methods are in DataNode and subclass NamedList.
 			* EpiThread: 
 			  * If logging is only for EpiThreads then 
 			    it can be controlled by an EpiThread variable.
@@ -215,12 +216,14 @@ public class AppLog extends EpiThread
         		"<--< This is an absolute time.  Later ones are relative times."
         		); 
         logV( "" ); 
+        logV( "" ); 
         logV( 
         		"======== LOG FILE SESSION #"
         		+ theSessionI
         		+ " at " + Misc.dateString(lastMillisL)
         		+ " BEGINS ========"
         		);
+        logV( "" ); 
         logV( "" ); 
         }
   

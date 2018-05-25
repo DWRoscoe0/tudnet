@@ -16,11 +16,24 @@ public class Sender // Uunicast and multicast sender thread.
   /* This simple thread repeatedly receives DatagramPackets 
     via a queue from other threads and sends them
     though a DatagramSocket.
+    
+    This thread can be terminated in 1 way:
+    * This thread's interrupt status can be set.
+      This status is checked only after all queued packets have been sent.
 
+    Operation of this thread is tricky because of
+    its linkage to the UnconnectedReceiver thread 
+    through their common DatagramSocket.
+    If the socket is closed to terminate the Sender thread, 
+    attempting to send packets will produce IOExceptions.
     There is no attempt at error recovery.
     If an IOException happens when attempting to send a packet,
-    the packet is dropped.
-    
+    the packet is dropped, but the thread continues to run.
+      
+    Triggering and waiting for termination (joining) of these 2 threads
+    may need to be done in a coordinated manner to prevent loss of
+    important packets.
+
     ///? Limit queue size.  Block queuers when full.
     
     ///? Change this or callers to gracefully finish sending queued packets 
@@ -76,6 +89,9 @@ public class Sender // Uunicast and multicast sender thread.
         * DatagramPackets from the queue, 
           which it sends them through the DatagramSocket.
         * Exit requests, which causes this method to exit.
+        Processing queued packets has priority over termination.
+        All queued packets will be transmitted before
+        the thread will terminate.
         */
       {
 	  	  beforeReturn: while (true) { // Processing packets until terminated.

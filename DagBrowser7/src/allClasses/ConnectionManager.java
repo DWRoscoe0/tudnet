@@ -233,9 +233,9 @@ public class ConnectionManager
       {
     		stoppingMulticasterThreadV(); 
         theUnicasterManager.stoppingEntryThreadsV(); // Stop Unicasters threads.
-        stoppingUnicastReceiverThreadV();
 
-        stoppingSenderThreadV();
+        stoppingSenderThreadV(); // Stops only after queued packets are sent.
+        stoppingUnicastReceiverThreadV();
         }
 
 	  private void maintainingDatagramSocketAndDependentThreadsV( )
@@ -348,9 +348,6 @@ public class ConnectionManager
        * 
        */
 	    {
-	  		EpiDatagramSocket.closeIfNotNullV(  // Causing unblock and termination.
-	  				unconnectedDatagramSocket
-	  				);
     		EpiThread.stopAndJoinIfNotNullV(theSenderEpiThread);
 		  	}
 
