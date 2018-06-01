@@ -28,7 +28,12 @@ public class Persistent
 		private Properties theProperties= null;
 		
 	  public void initializeV()
-	    /* This method loads the configuration from external files.  */
+	    /* This method loads the configuration from external files.
+	      It is possible to eliminate this method, and triggered by lazy loading,
+	      triggered by the first call that needs theProperties variable defined.
+	      But because finalizeV() must be called to write any changes,
+	      we might as well just call initializeV() as well.
+	      */
 	    {
 	  	  theProperties= loadPropertiesV( theFileString );
 	  	  

@@ -128,6 +128,7 @@ l    * If the app receives a message indicating
 
 		private Shutdowner theShutdowner;
     private String[] theArgStrings;  // Array of app start arguments.
+    private PortManager thePortManager;
 
   // Locks and guards.
     private static Lock theReentrantLock= new ReentrantLock();
@@ -170,11 +171,13 @@ l    * If the app receives a message indicating
 	  
 	  public AppInstanceManager(  // Constructor.
 	      String[] theArgStrings,
-	      Shutdowner theShutdowner
+	      Shutdowner theShutdowner,
+	      PortManager thePortManager
 	      )
 	    {
 		    this.theShutdowner= theShutdowner;
 		    this.theArgStrings= theArgStrings;
+		    this.thePortManager= thePortManager;
 		    }
 
 	  public void initializeV()
@@ -330,9 +333,9 @@ l    * If the app receives a message indicating
         return Misc.dateString( runningAppFile );
         }
 
-    public static final int getInstancePortI() 
-    	// Returns port to be used for peer discovery.
-      { return PortManager.getDiscoveryPortI(); }
+    private final int getInstancePortI() 
+    	// Returns port to be used for local app instance discovery.
+      { return thePortManager.getDiscoveryPortI(); }
     
     public void setAppInstanceListener(AppInstanceListener listener) 
       {

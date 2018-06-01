@@ -17,6 +17,7 @@ public class AppFactory {  // For App class lifetimes.
 
 	// Other objects that will be needed later.
   private final Persistent thePersistent;
+	private PortManager thePortManager;
   private final Shutdowner theShutdowner;
   private final AppInstanceManager theAppInstanceManager;
   private final App theApp;
@@ -29,9 +30,10 @@ public class AppFactory {  // For App class lifetimes.
   public AppFactory( String[] argStrings )  // Factory constructor.
     {
   	  thePersistent= new Persistent();
+  		thePortManager= new PortManager( thePersistent );
   		theShutdowner= new Shutdowner();
   		AppInstanceManager theAppInstanceManager= new AppInstanceManager(
-      		argStrings, theShutdowner
+      		argStrings, theShutdowner, thePortManager
       		);
   		theTCPServer= new TCPCopier.TCPServer( "TCPServer" );
   		theTCPClient= new TCPCopier.TCPClient( "TCPClient", thePersistent );
@@ -66,6 +68,7 @@ public class AppFactory {  // For App class lifetimes.
 	      theAppGUIFactory= new AppGUIFactory(
 	      		this, // AppGUIFactory gets to know this, its factory.
 	      		thePersistent,
+	      	  thePortManager,
 	      		theShutdowner,
 	      		theAppInstanceManager
 	      		);

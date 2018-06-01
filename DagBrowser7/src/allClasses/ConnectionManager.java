@@ -94,7 +94,9 @@ public class ConnectionManager
       @SuppressWarnings("unused") ///elim
 		  private final Persistent thePersistent;
 
-		  private UnicasterManager theUnicasterManager;
+    	private PortManager thePortManager;
+
+    	private UnicasterManager theUnicasterManager;
 
 	    private LockAndSignal cmThreadLockAndSignal;  // LockAndSignal for this thread.
       /* This single object is used to synchronize communication between 
@@ -130,7 +132,8 @@ public class ConnectionManager
     public ConnectionManager(  // Constructor.
     		AppGUIFactory theAppGUIFactory,
     	  Persistent thePersistent,
-    		UnicasterManager theUnicasterManager,
+    	  PortManager thePortManager,
+    	  UnicasterManager theUnicasterManager,
     		LockAndSignal cmThreadLockAndSignal,
     		NetcasterQueue multicasterToConnectionManagerNetcasterQueue,
     		NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue
@@ -144,6 +147,7 @@ public class ConnectionManager
         // Storing other dependencies injected into this class.
   	    this.theAppGUIFactory= theAppGUIFactory;
   	    this.thePersistent= thePersistent;
+      	this.thePortManager= thePortManager;
   	    this.theUnicasterManager= theUnicasterManager; 
   	    this.cmThreadLockAndSignal= cmThreadLockAndSignal;
   	    this.multicasterToConnectionManagerNetcasterQueue=
@@ -273,7 +277,7 @@ public class ConnectionManager
 		      unconnectedDatagramSocket.setReuseAddress(true);
 		      unconnectedDatagramSocket.bind( // Binding socket to...
 		      	AppGUIFactory.makeInetSocketAddress(
-		          PortManager.getLocalPortI()  // ...app's local port.
+		          thePortManager.getLocalPortI()  // ...app's local port.
 		          ) // Note, the IP is not defined.
 		        );
 		      }
@@ -378,7 +382,7 @@ public class ConnectionManager
 	  {
 	    try { // Creating a new unconnected DatagramSocket and using it.
 	    	theMulticastSocket= theAppGUIFactory.makeMulticastSocket(
-		      PortManager.getDiscoveryPortI()  // ...bound to Discovery port.
+		      thePortManager.getDiscoveryPortI()  // ...bound to Discovery port.
 		      );
 	      }
 	    catch ( IOException e ) { // Handling SocketException.

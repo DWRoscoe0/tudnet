@@ -31,6 +31,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
   // Injected dependencies that need saving for later.
   ///elim private final Persistent thePersistent;
   private final Shutdowner theShutdowner;
+  private final PortManager thePortManager;
 
 	// Other objects that will be needed later.
   private final UnicasterManager theUnicasterManager;
@@ -40,11 +41,12 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
   private final AppGUI theAppGUI;
   private final NetcasterPacketManager receiverNetcasterPacketManager;
 	private final Timer theTimer;
-  private final NamedLong multicasterFixedTimeOutMsNamedLong; 
+  private final NamedLong multicasterFixedTimeOutMsNamedLong;
 
   public AppGUIFactory(  // Factory constructor.
   		AppFactory XtheAppFactory, ///elim 
   	  Persistent thePersistent,
+  	  PortManager thePortManager,
   		Shutdowner theShutdowner,
   		AppInstanceManager theAppInstanceManager
   		)
@@ -73,6 +75,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 	    ConnectionManager theConnectionManager= new ConnectionManager(
         this, // the AppGuiFactory.
     	  thePersistent,
+    	  thePortManager,
         theUnicasterManager,
   	    cmThreadLockAndSignal,
   	    multicasterToConnectionManagerNetcasterQueue,
@@ -143,7 +146,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 
       // Save in instance variables injected objects that are needed later.
   	  this.theShutdowner= theShutdowner;
-  	  ///elim this.thePersistent= thePersistent;
+  	  this.thePortManager= thePortManager;
 
   	  // Save in instance variables other objects that are needed later.
       this.theUnicasterManager= theUnicasterManager;
@@ -311,7 +314,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 		  LockAndSignal multicasterLockAndSignal= new LockAndSignal();  
 		  NetcasterQueue multicastReceiverToMulticasterNetcasterQueue= 
 		  		new NetcasterQueue(multicasterLockAndSignal, Config.QUEUE_SIZE);
-			int multicastPortI= PortManager.getDiscoveryPortI();
+			int multicastPortI= thePortManager.getDiscoveryPortI();
 			IPAndPort theIPAndPort= AppGUIFactory.makeIPAndPort(
   				multicastInetAddress, multicastPortI 
   				);

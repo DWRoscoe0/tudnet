@@ -40,7 +40,7 @@ public class App { // The App, especially pre-GUI stuff.
      */
     {
   		//appLogger.info("App beginning.");
-  		thePersistent.initializeV();
+  		thePersistent.initializeV();  // Load app properties.
   	  defineNodeIdentifyV();
 			theTCPServer.startV();
 			theTCPClient.startV();
@@ -49,7 +49,7 @@ public class App { // The App, especially pre-GUI stuff.
 
 			doAppStuff();
 
-  	  thePersistent.finalizeV();
+  	  thePersistent.finalizeV();  // Write any new or changed app properties.
   		//appLogger.info("App calling Shutdowner.finishV().");
       theShutdowner.finishV();  // Doing final app shutdown jobs.
 
@@ -72,7 +72,7 @@ public class App { // The App, especially pre-GUI stuff.
 	    		Random theRandom= new Random();  // Construct random # generator.
 	    		theRandom.setSeed( System.currentTimeMillis() ); // Seed with time.
 	    		int skipCountI= 8 + theRandom.nextInt(8);
-	    		while ( --skipCountI >= 0 ) // Randomly skip 8 to 16 values. 
+	    		while ( --skipCountI >= 0 ) // Randomly skip 8 to 16 generated values. 
 	    			theRandom.nextInt();
 	    		int identityI= theRandom.nextInt();
 	    		thePersistent.putV("NodeIdentity", ""+identityI);
