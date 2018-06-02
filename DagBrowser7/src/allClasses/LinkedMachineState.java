@@ -146,6 +146,14 @@ public class LinkedMachineState
 		// Other variables.
 	  private TimerInput helloTimerInput;
 		private long retryTimeOutMsL;
+		
+		public boolean isConnectedB()
+		  /* This method returns true if this Unicaster is connected to its peer,
+		    false otherwise.
+		   	*/
+			{
+				return (getpresentSubStateList() == theConnectedState) ;
+				}
 
 		private class ConnectingState extends StateList 
 

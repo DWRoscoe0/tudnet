@@ -943,6 +943,14 @@ class AndOrState extends StateList {
   	{ 
   		return ( presentSubStateList == null) ; 
   		}
+
+  public StateList getpresentSubStateList()
+    /* This method returns the present machine substate.
+      It is meaningful only for AndStates.
+      */
+  	{ 
+  		return presentSubStateList; 
+  		}
   
   protected void setFirstOrSubStateV(StateList firstSubStateList)
 	  /* This method sets this state to behave as an OrState

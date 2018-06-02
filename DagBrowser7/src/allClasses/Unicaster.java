@@ -242,6 +242,22 @@ public class Unicaster
 	    	////appLogger.info( "Unicaster.onInputsV() ending." );
 				}
 
+    public String getValueString( )
+      /* Returns a string indicating whether 
+        this Unicaster is presently connected or disconnected.
+       	*/
+      {
+    	  return isConnectedB() ? "Connected" : "Disconnected"; 
+        }
+		
+		public boolean isConnectedB()
+		  /* This method returns true if this Unicaster is connected to its peer,
+		    false otherwise.
+		   	*/
+			{
+				return theLinkedMachineState.isConnectedB(); 
+				}
+
 
 
 	} // Unicaster.

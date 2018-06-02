@@ -1,6 +1,7 @@
 package allClasses;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,13 +9,17 @@ import allClasses.AppLog.LogLevel;
 
 public class NamedList 
 
-  extends NamedNonLeaf  // Will override all remaining leaf behavior.
+	extends NamedNonLeaf  // Will override all remaining leaf behavior.
+
+	implements Iterable<DataNode>
   
   /* This is a utility class that is simply a List with a name.
-    It is meant to be immutable after construction and initialization, 
-    but misbehaving subclasses could change it.
+    It is is immutable after construction and initialization, 
+    but subclasses could add mutation abilities.
     Also, there is nothing preventing changes in
     its children or other descendants.
+    
+    ///enh Make generic, NamedList<T> and Iterable<T>.
     */
   
   { // class NamedList
@@ -35,7 +40,7 @@ public class NamedList
 		        ); // This might be replaced with a SelfReturningListOrNode.
 	        ///enh Distinguish between active children and lazy children.
 	        // See MetaFileManager for ideas.
-
+    
     public void initializeV(
         String nameString, 
         DataNode... inDataNodes 
@@ -226,5 +231,10 @@ public class NamedList
 
         return resultDataNode;
         }
+    
+	  public Iterator<DataNode> iterator() 
+		  {
+		    return theListOfDataNodes.iterator();
+		  	}
 
     } // class NamedList

@@ -367,11 +367,13 @@ public class DataNode
 
     public String getLineSummaryString( )  
     /* Returns a one-line summary of
-      the contents of this DataNode as a String, 
-      usually the name followed maybe by something else.  
+      the contents of this DataNode as a String.
+      The line consists of the name of the node,
+      and sometimes followed by something else,
+      such as a child count, or some other type of summary information.  
       */
       {
-    	  String nameString= getNameString();  // Caching name.
+    	  String nameString= getNameString();  // Caching name of node.
     	  String summaryString= getValueString(); // Initializing summary.
     	  process: {
     	  	if ( summaryString == "-UNDEFINED-" )

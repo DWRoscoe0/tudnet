@@ -132,6 +132,21 @@ public class UnicasterManager
 	      resultUnicasterValue.getEpiThread().startV(); // Start its thread.
 	      return resultUnicasterValue.getDataNodeD();
 	      }
-    
+
+    public String getValueString( )
+	    /* Returns a string indicating 
+	      the numbers of Unicasters connected and disconnected.
+       	*/
+      {
+    	  int connectedI= 0;
+    	  int disconnectedI= 0;
+    	  for ( DataNode childDataNode: this)
+    	  	if (((Unicaster)childDataNode).isConnectedB())
+    	  		connectedI++; 
+    	  		else 
+    	  		disconnectedI++;
+    	  return "("+connectedI+" connected, "+disconnectedI+" disconnected)";
+        }
+
 
   	}

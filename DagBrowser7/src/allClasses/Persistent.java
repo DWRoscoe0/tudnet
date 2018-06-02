@@ -102,7 +102,7 @@ public class Persistent
 		  		  		Config.makeRelativeToAppFolderFile( fileString ));
 		  			theProperties.store(
 		  				theFileOutputStream, 
-		  				"---Infogora persistent data file---, PRESENTLY TEST DATA ONLY." //tmp
+		  				"---Infogora persistent data file---"
 		  				);
 			  		} 
 			  	catch (Exception theException) { 
