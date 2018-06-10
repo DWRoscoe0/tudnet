@@ -27,6 +27,7 @@ public class LinkedMachineState
 		private NetcasterInputStream theNetcasterInputStream;
 		private NetcasterOutputStream theNetcasterOutputStream; 
 		private NamedLong retransmitDelayMsNamedLong;
+		private TCPCopier.TCPClient theTCPClient;
 		private Timer theTimer; ///elim.  use function parameter only. 
 		private Unicaster theUnicaster;
 		private StateList[] theLinkedStateLists;
@@ -48,6 +49,7 @@ public class LinkedMachineState
 				  NetcasterInputStream theNetcasterInputStream,
 					NetcasterOutputStream theNetcasterOutputStream,
 					NamedLong retransmitDelayMsNamedLong,
+					TCPCopier.TCPClient theTCPClient,
 					Unicaster theUnicaster,
 					StateList[] theLinkedStateLists
 		  		)
@@ -60,6 +62,7 @@ public class LinkedMachineState
 			  this.theNetcasterInputStream= theNetcasterInputStream;
 			  this.theNetcasterOutputStream= theNetcasterOutputStream;
 			  this.retransmitDelayMsNamedLong= retransmitDelayMsNamedLong;
+				this.theTCPClient= theTCPClient;
 				this.theUnicaster= theUnicaster;
 				this.theLinkedStateLists= theLinkedStateLists;
 
@@ -224,6 +227,15 @@ public class LinkedMachineState
 			
 				private boolean sentHelloB= true; 
 				  // True means previous HELLO was sent, not received.
+
+	    	public void onEntryV() throws IOException
+		  	  /* Informs TCPClient about new connection,
+		  	    which means a possible TCPServer.
+		  	    */
+		  	  {
+	    			IPAndPort remoteIPAndPort= theUnicaster.getKeyK();
+		    		theTCPClient.reportPeerConnectionV(remoteIPAndPort);
+		    		}
 
 			  public boolean onInputsB() throws IOException
 			  	/* This method sends HELLO messages 

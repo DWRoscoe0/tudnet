@@ -7,7 +7,7 @@ public class PersistentCursor
     It implements a pitererator (an iterator with pointer semantics).
     Presently it assumes that persistent storage is 
     a named collection of linked lists which are not nested.
-    A liked list looks like this:
+    A linked list looks like this:
 
 		ListName/first=EntryName1
 		

@@ -20,11 +20,13 @@ public class UnicasterManager
 
   {
   	private final Persistent thePersistent;
+  	private final TCPCopier.TCPClient theTCPClient; 
   
 		public UnicasterManager(  // Constructor. 
 	      AppGUIFactory theAppGUIFactory,
-			  Persistent thePersistent
-	      )
+			  Persistent thePersistent,
+			  TCPCopier.TCPClient theTCPClient
+			  )
 	    {
 	  		// Superclass's injections.
 	      super( // Constructing MutableListWithMap superclass.
@@ -33,7 +35,8 @@ public class UnicasterManager
 			  		new DataNode[]{} // Initially empty of children.
 	      		);
 			  this.thePersistent= thePersistent;
-
+			  this.theTCPClient= theTCPClient; 
+			  
 			  testPersistentV(); ///dbg
 			  }
 	
@@ -122,8 +125,9 @@ public class UnicasterManager
         */
 	    { 
     	  appLogger.info( "Creating new Unicaster." );
-    	  UnicasterFactory theUnicasterFactory=
-    	  		theAppGUIFactory.makeUnicasterFactory( peerIPAndPort );
+    	  UnicasterFactory theUnicasterFactory= 
+    	  		theAppGUIFactory.makeUnicasterFactory( 
+    	  				peerIPAndPort, theTCPClient );
 	      final UnicasterValue resultUnicasterValue=  // Getting the Unicaster. 
 	      	theUnicasterFactory.getUnicasterValue();
 	      addingV( // Adding new Unicaster to data structures.

@@ -60,7 +60,8 @@ public class Unicaster
       private final UnicasterManager theUnicasterManager;
       private final SubcasterManager theSubcasterManager;
       ////private final SubcasterQueue subcasterToUnicasterSubcasterQueue;
-  		private Timer theTimer;
+      private final TCPCopier.TCPClient theTCPClient;
+      private final Timer theTimer;
   		
   		// Other instance variables.
   		private LinkedMachineState theLinkedMachineState;
@@ -72,6 +73,7 @@ public class Unicaster
 	      NetcasterInputStream theNetcasterInputStream,
 	      NetcasterOutputStream theNetcasterOutputStream,
 	      IPAndPort remoteIPAndPort,
+	      TCPCopier.TCPClient theTCPClient,
 	      Shutdowner theShutdowner,
 	      SubcasterQueue subcasterToUnicasterSubcasterQueue, ///elim Subcasters?
 	  		Timer theTimer,
@@ -104,6 +106,7 @@ public class Unicaster
 				  this.theSubcasterManager= theSubcasterManager;
 				  ////this.subcasterToUnicasterSubcasterQueue= 
 				  ////		subcasterToUnicasterSubcasterQueue;
+				  this.theTCPClient= theTCPClient;
 		  		this.theTimer= theTimer;
 	      }
 
@@ -131,6 +134,7 @@ public class Unicaster
 		  			  theEpiInputStreamI,
 		  				theEpiOutputStreamO,
 		  				retransmitDelayMsNamedLong,
+		  				theTCPClient,
 		  				this,
 		  				new StateList[] { theLinkMeasurementState }
 		  	  		);

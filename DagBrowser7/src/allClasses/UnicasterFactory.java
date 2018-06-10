@@ -27,6 +27,7 @@ public class UnicasterFactory {
   		AppGUIFactory theAppGUIFactory,
   		UnicasterManager theUnicasterManager,
   		IPAndPort unicasterIPAndPort,
+  		TCPCopier.TCPClient theTCPClient,
   		Shutdowner theShutdowner,
   		int queueCapacityI,
   		Timer theTimer
@@ -67,6 +68,7 @@ public class UnicasterFactory {
       		unicasterNetcasterInputStream,
 		  		unicasterNetcasterOutputStream,
 		  		unicasterIPAndPort,
+		  		theTCPClient,
 			   	theShutdowner,
 			   	subcasterToUnicasterSubcasterQueue,
 			   	theTimer,

@@ -70,7 +70,8 @@ public class AppFactory {  // For App class lifetimes.
 	      		thePersistent,
 	      	  thePortManager,
 	      		theShutdowner,
-	      		theAppInstanceManager
+	      		theAppInstanceManager,
+	      		theTCPClient
 	      		);
 	    return theAppGUIFactory;
 	    }

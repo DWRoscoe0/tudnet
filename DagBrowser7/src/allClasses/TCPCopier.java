@@ -8,6 +8,7 @@ import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static allClasses.Globals.appLogger;
 
@@ -63,9 +64,20 @@ public class TCPCopier
 	  //private static final String clientFileString = "TCPCopierClient.txt";
 	  private static final String clientFileString = // sub-folder and file.
 	  		Config.tcpCopierOutputFolderString + File.separator + fileToUpdateString;
-	  
+
+    private static final Object tcpCopyLockObject= new Object();
+    private static final Object serverLockObject= tcpCopyLockObject;
+    private static final Object clientLockObject= tcpCopyLockObject;
+      // Presently a single lock object prevents simultaneous client and server.
+      // They would need to be different if doing local-only testing.
+
 	  static class TCPClient extends EpiThread {
-	
+
+	  	private ConcurrentLinkedQueue<IPAndPort> peerQueueOfIPAndPort=
+	  			new ConcurrentLinkedQueue<IPAndPort>();
+	  			///opt ConcurrentLinkedQueue might be overkill 
+	  			// given other synchronization in use.
+
 		  private final Persistent thePersistent; // External data.
 			
 	    public TCPClient(  // Constructor.
@@ -76,56 +88,147 @@ public class TCPCopier
 			  this.thePersistent= thePersistent;
 				}
 
-	    public void run()
+	    public synchronized void run()
 	      /* This is the main method of the Client thread.
-	        It repeatedly tries to connect to various peer nodes,
-	        all of which should be acting as servers.
-	        When a connection is made, 
-	        it executes the file update/exchange protocol.
+	        It does some initialization, then
+	        calls a method to repeatedly attempt updates with TCPServers.
 	        */
 	      {
 	  			appLogger.info("run() beginning.");
-	
 		  		EpiThread.interruptableSleepB(4000); ///dbg delay to organize log.
-	      	////boolean oldConsoleModeB= appLogger.getAndEnableConsoleModeB(); ///tmp ///dbg
-	
+
+		  		updateTCPCopyStagingAreaV();
 	      	PersistentCursor thePersistentCursor= 
 	      			new PersistentCursor( thePersistent );
 	      	thePersistentCursor.setListNameStringV("peers");
-		    	while ( ! EpiThread.exitingB() ) // Repeat until exit requested.
-		    		{ // Process an element of list.
-			    		{ 
-								File thatFolderFile= Config.makeRelativeToAppFolderFile( 
-										Config.tcpCopierInputFolderString );
-								thatFolderFile.mkdir();  // Create destination folder if needed.
-			  	  		Misc.updateFromToV( // Update staging area from standard folder.
-    							Config.userAppJarFile,
-    							new File( thatFolderFile, Config.appJarString )
-				      		/*  ////
-				      		  Config.makeRelativeToAppFolderFile( 
-				      		  Config.tcpCopierInputFolderString
-				      			+ File.separator 
-				      			+ Config.appJarString 
-				      			)
-				      			*/  ////
-				      		);
-			    			tryExchangingFilesWithNextServerV(thePersistentCursor);
-						    EpiThread.interruptableSleepB(8000); // Pause a while.
-			    			}
-	      			}
+	      	interactWithTCPServersV(thePersistentCursor);
 	  			appLogger.info("run() ending.",true);
-	
-	      	////appLogger.restoreConsoleModeV( oldConsoleModeB ); /// tmp ///dbg
 		    	}
-	
-			private void tryExchangingFilesWithNextServerV( 
+
+
+	    private void interactWithTCPServersV(PersistentCursor thePersistentCursor)
+	      /* This method repeatedly tries to connect to TCPServers
+	        of various peer nodes.
+	        When a connection is made, 
+	        it executes the file update/exchange protocol.
+	        If an app file can be updated then it will be updated.
+	        It does this in a way that it is impossible for rogue nodes
+	        to cause the hogging of resources.
+	        It initially looks a new connected peer
+	        and tries to do updates with it first.
+	        This is to reduce the debug cycle time.
+	        Later new peers and saved peers are given approximately equal weight.
+	        
+	        ////// Update first, and immediately, from new recent connections.
+
+	        ////// When there are no new recent connections,
+	        update by scanning saved peer IDs.
+	        
+	        ///enh Eventually it needs to be very careful about always working,
+	        because it will be used as a backup update mechanism.
+	        Ideally it should respond quickly to a new connection,
+	        which is probably one being used for testing and debugging,
+	        but won't do it again until after pausing for several seconds.
+	        Instead it will concentrate on saved peer IDs.
+				  */
+		    {
+		    	while ( ! EpiThread.exitingB() ) // Repeat until exit requested.
+		    		{ // Try one update.
+			        try {  // Pause a while, but resume if an input arrives.
+			    			tryExchangingFilesWithServerFromQueueB(
+			    					8000 // 8 second maximum delay.
+			    					); // This also serves and the main loop delay.
+			    			tryExchangingFilesWithNextSavedServerV(thePersistentCursor);
+			          }
+			        catch (InterruptedException e) { // Handling thread interrupt.
+			          Thread.currentThread().interrupt(); // Reestablish it.
+			          }
+		      		}
+			    }
+
+	    private void updateTCPCopyStagingAreaV()
+	      /* This method updates the app file 
+	        from the standard folder to the TCP copy staging area folder. 
+	       	*/
+		    {
+					File thatFolderFile= Config.makeRelativeToAppFolderFile( 
+							Config.tcpCopierInputFolderString );
+					thatFolderFile.mkdir();  // Create destination folder if needed.
+		  		Misc.updateFromToV( // Update staging area from standard folder.
+						Config.userAppJarFile,
+						new File( thatFolderFile, Config.appJarString )
+		    		);
+			    }
+
+			private boolean tryExchangingFilesWithServerFromQueueB(long maxWaitMSL)
+	        throws InterruptedException
+			  /* Tries to exchange files with next server peer node 
+			    on the peer input queue.
+			   */
+				{
+				  IPAndPort theIPAndPort= waitForPeerIPAndPort( maxWaitMSL );
+				  boolean gotPeerB= (theIPAndPort != null);
+					if (gotPeerB) 
+						{ // Try update.
+							appLogger.info(
+									"tryExchangingFilesWithServerFromQueueB() at "+theIPAndPort);
+							String serverIPString= theIPAndPort.getInetAddress().toString(); 
+							String serverPortString= 
+									Integer.toString(theIPAndPort.getPortI());
+							tryExchangingFilesWithServerV(serverIPString, serverPortString);
+							///fix Add to saved peers.
+							}
+				  return gotPeerB;
+					}
+
+	    public synchronized void reportPeerConnectionV( 
+	    		IPAndPort remoteIPAndPort )
+	      /* This method adds remoteIPAndPort to the peer queue.
+	        This is a way to learn about new peers which might be used as
+	        sources or destinations of software updates.
+
+	        ///org Maybe add Unicaster instead of IPAndPort?
+	       	*/
+		    {
+	    		////////////// peerQueueOfIPAndPort.add(remoteIPAndPort); // Add peer to queue.
+			    notify(); // Wake up the client thread.
+			    }
+
+	    public synchronized IPAndPort waitForPeerIPAndPort(long maxWaitMSL)
+	        throws InterruptedException
+	      /* This method tests whether a peer is available.
+	        Returns the next peer as soon as it is available,
+	        but doesn't remove it from the queue.
+	        If no peer is available for a maximum of maxWaitMSL,
+	        then it returns null.
+	        It also returns null if a spurious wake up or an interrupt happens
+	        before a peer becomes available.
+
+	        ///org Maybe add Unicaster instead of IPAndPort?
+	       	*/
+		    {
+	        if (peerQueueOfIPAndPort.peek() == null) // Wait if peer not ready. 
+		        { if ( maxWaitMSL == 0 ) // Wait appropriate amount of time.  
+			        		;// Don't wait at all if max wait is 0.
+			        		else
+			        		wait( maxWaitMSL );
+		        	}
+	    		return peerQueueOfIPAndPort.peek();
+			    }
+
+			private void tryExchangingFilesWithNextSavedServerV( 
 					PersistentCursor thePersistentCursor)
 			  /* Tries to exchange files with next server peer node based on 
 			    the state of thePersistentCursor into the peer list.
+			    If there is an element saved in the list, it will be processed,
+			    even if wrapping around to the beginning is necessary.
 			   */
 				{
 				  if ( thePersistentCursor.getEntryIDNameString().isEmpty() ) { 
-				      ; // Do nothing this time because peer list is wrapping-around.
+					  thePersistentCursor.nextString(); // Wrapping to list beginning.
+				  	}
+				  if ( thePersistentCursor.getEntryIDNameString().isEmpty() ) { 
+			      ; // Do nothing because peer list must be empty.
 				  	} else { // Process peer list element.
 							String serverIPString= 
 									thePersistentCursor.getFieldString("IP");
@@ -142,35 +245,42 @@ public class TCPCopier
 			    at IPAddress serverIPString is listening on port serverPortString.
 			    */
 				{
-					Socket clientSocket = null;
-					File clientFile= 
-							Config.makeRelativeToAppFolderFile( clientFileString );
-					int serverPortI= Integer.parseUnsignedInt( serverPortString );
-				 	InetSocketAddress theInetSocketAddress= null; 
-					try {
-						 	theInetSocketAddress= 
-								new InetSocketAddress( serverIPString, serverPortI );
-							appLogger.info(
-									"tryExchangingFilesWithServerV() at "+ theInetSocketAddress);
-							clientSocket= new Socket();
-							clientSocket.connect(theInetSocketAddress, 5000);
-							  // Connect with time-out.
-				  		long clientFileLastModifiedL= clientFile.lastModified(); 
-				  		tryTransferingFilesL(
-				  			clientSocket, clientFile, clientFile, clientFileLastModifiedL );
-				    } catch (IOException theIOException) {
-							appLogger.info(
-									"tryExchangingFilesWithServerV() at "+ theInetSocketAddress,
-									theIOException
-									);
-				  	} finally {
-						  Closeables.closeWithErrorLoggingB(clientSocket);
-						}
+					appLogger.debug(
+							"tryExchangingFilesWithServerV() synchronized (clientLockObject)");
+	        ////synchronized (clientLockObject) 
+					 { 
+		      	Socket clientSocket = null;
+						File clientFile= 
+								Config.makeRelativeToAppFolderFile( clientFileString );
+						int serverPortI= Integer.parseUnsignedInt( serverPortString );
+					 	InetSocketAddress theInetSocketAddress= null; 
+						try {
+							 	theInetSocketAddress= 
+									new InetSocketAddress( serverIPString, serverPortI );
+								appLogger.info(
+										"tryExchangingFilesWithServerV() at "+ theInetSocketAddress);
+								clientSocket= new Socket();
+								clientSocket.connect(theInetSocketAddress, 5000);
+								  // Connect with time-out.
+					  		long clientFileLastModifiedL= clientFile.lastModified();
+					  		long resultL= tryTransferingFilesL(
+					  			clientSocket, clientFile, clientFile, clientFileLastModifiedL );
+					  		if (resultL != 0)
+									appLogger.info( 
+											"tryExchangingFilesWithServerV() copied using "
+											+ clientSocket);
+					    } catch (IOException theIOException) {
+								appLogger.info(
+									"tryExchangingFilesWithServerV() using "
+									+ theInetSocketAddress, theIOException);
+					  	} finally {
+							  Closeables.closeWithErrorLoggingB(clientSocket);
+							}
+	        	} // synchronized (clientLockObject) 
 					}
 	
 		} // TCPClient
-	
-		
+
 		static class TCPServer extends EpiThread {
 		
 		  private File serverFile= null;
@@ -179,7 +289,7 @@ public class TCPCopier
 				super(threadNameString);
 	    	}
 	
-	    public void run() 
+	    public void run()
 		    /* This is the main method of the Server thread.
 		      It repeatedly waits for client connections and processes them
 		      by executing the file update/exchange protocol.
@@ -187,7 +297,7 @@ public class TCPCopier
 		    {
 		  		appLogger.info("run() beginning.");
 		    	///dbg EpiThread.interruptableSleepB(5000); ///tmp Prevent initial error.
-		    	EpiThread.interruptableSleepB(2000); // Organize log.
+		    	EpiThread.interruptableSleepB(2000); // Delay to organize log.
 	    		////boolean oldConsoleModeB= appLogger.getAndEnableConsoleModeB();
 		    	while  // Repeatedly service one client request. 
 		    		( ! EpiThread.exitingB() ) 
@@ -211,25 +321,38 @@ public class TCPCopier
 			        serverServerSocket = new ServerSocket(testServerPortI);
 			    		///dbg appLogger.info("run() trying ServerSocket.accept().");
 			        serverSocket = serverServerSocket.accept();
-			    		serverFile= // Calculating File name.
-			    				Config.makeRelativeToAppFolderFile( serverFileString );
-				  		long serverFileLastModifiedL= serverFile.lastModified();
-			    		tryTransferingFilesL(
-			    				serverSocket, serverFile, serverFile, serverFileLastModifiedL );
+							appLogger.debug(
+									"serviceOneRequestFromClientV() synchronized (serverLockObject)");
+							////synchronized (serverLockObject) 
+			        	{ processServerConnectionV(serverSocket); } 
+			        //// serverLockObject.lock();
+						   //// try { processServerConnectionV(serverSocket); } 
+						   //// 	finally { serverLockObject.unlock(); }
 			      } catch (IOException ex) {
-			    		appLogger.info("run() IOException",ex);
+			    		appLogger.info( "serviceOneRequestFromClientV() using "
+			    				+serverServerSocket, ex );
 			      } finally {
-			    		///dbg appLogger.info("run() closing resources.");
 			      	Closeables.closeWithErrorLoggingB(serverSocket);
 			      	Closeables.closeWithErrorLoggingB(serverServerSocket);
 			        }
 					}
-			
+
+      private void processServerConnectionV( Socket serverSocket) throws IOException
+	      {
+		  		serverFile= // Calculating File name.
+		  				Config.makeRelativeToAppFolderFile( serverFileString );
+		  		long serverFileLastModifiedL= serverFile.lastModified();
+		  		long resultL= tryTransferingFilesL(
+			  		serverSocket, serverFile, serverFile, serverFileLastModifiedL );
+			  	if (resultL != 0)
+						appLogger.info( "serviceOneRequestFromClientV() copied using " 
+								+serverSocket);
+		      }
+
 			} // TCPServer 
 	  
 		private static long tryTransferingFilesL(
 				Socket theSocket,
-				
 				File localSourceFile, 
 				File localDestinationFile, 
 				long localLastModifiedL
@@ -241,19 +364,22 @@ public class TCPCopier
 		    which should be the LastModefied TimeStamp of the local file.
 		    If they are not equal then the newer file with its newer TimeStamp
 		    is copied across the connection to replaced the older file.
+
 		    If a file is received then it replaces localDestinationFile and
 		    this method returns the received file's newer time-stamp,
-		    If a file is sent or no file is transfered at all then 0 is returned. 
-		    This method is called by both the client and the server.
-
+		    If a file is sent then it returns the negative of the remote time-stamp.
+		    If a file is neither sent nor received,
+		    because their time-stamps are equal, then 0 is returned. 
+				This method is called by both the client and the server.
+		    
 				localSourceFile and localDestinationFile are normally the same file.
-				Using two parameters instead of one made testing easier.
+				Using two parameters instead of one made earlier testing easier.
 				Also localLastModifiedL is normally the time-stamp of that same file,
 				and could be eliminated, but exists, again, to make testing easier.
 		   */
 			{
 				///dbg appLogger.info("transactionV() beginning.");
-			  long receivedLastModifiedL= 0;
+			  long transferResultL= 0;
 	      InputStream socketInputStream= null;
 				OutputStream socketOutputStream = null;
 		  	try {
@@ -266,21 +392,23 @@ public class TCPCopier
 				  			appLogger.info("tryTransferingFilesL(..) Remote file is newer.");
 								if ( receiveNewerRemoteFileB(
 										localDestinationFile, socketInputStream, timeStampResultL ) )
-									receivedLastModifiedL= timeStampResultL;
+									transferResultL= timeStampResultL;
 						  } else if ( timeStampResultL < 0 ) { // Local file is newer.
 				  			appLogger.info("tryTransferingFilesL(..) Local file is newer.");
 						  	sendNewerLocalFileV(
 						  			localSourceFile, socketOutputStream );
+								transferResultL= timeStampResultL;
 						  } else { ; // Files are same age, so do nothing. 
 				  			appLogger.info("tryTransferingFilesL(..) Files are same age.");
 						  }
 			    } catch (IOException ex) {
-			  		appLogger.info("transactionV() IOException",ex);
+			  		appLogger.info("tryTransferingFilesL(..) IOException",ex);
 			    } finally {
-			  		///dbg appLogger.info("transactionV() closing resources.");
 			  		}
+		  	if (transferResultL != 0)
+		  		appLogger.info("tryTransferingFilesL(..) exchanged using "+theSocket);
 	  	  ///dbg appLogger.info("transactionV() ending.");
-		  	return receivedLastModifiedL;
+		  	return transferResultL;
 	    	}
 	
 		private static void sendNewerLocalFileV(
@@ -318,9 +446,13 @@ public class TCPCopier
 			  via socketInputStream. and replaces the localFile.
 			  The new file has its TimeStamp set to timeStampToSet.
 			  It does this in a two-step process using an intermediate temporary file.
+			  Returns true if the file transfer completed, false otherwise.
 			  
 			  This method is longer than sendNewerLocalFileV(..) because
 			  it must set the files LastModified value and do an atomic rename.
+			  
+			  ///org Don't return value.  Use IOException to indicate failure.
+			  
 			 	*/
 			{
 			  appLogger.info("receiveNewerRemoteFileB() receiving file "
@@ -333,12 +465,13 @@ public class TCPCopier
 							Config.tcpCopierOutputFolderString );
 					temporaryFile.mkdir();  // Create folder if needed.
 					temporaryFile= Config.makeRelativeToAppFolderFile( 
-							Config.tcpCopierOutputFolderString + File.separator + "Temporary.file" );
-						temporaryFileOutputStream= new FileOutputStream( temporaryFile );
-						TCPCopier.copyStreamBytesV( 
-								socketInputStream, temporaryFileOutputStream);
-						fileWriteCompleteB= true;
-					} finally { 
+							Config.tcpCopierOutputFolderString 
+							+ File.separator + "Temporary.file" );
+					temporaryFileOutputStream= new FileOutputStream( temporaryFile );
+					TCPCopier.copyStreamBytesV( 
+							socketInputStream, temporaryFileOutputStream);
+					fileWriteCompleteB= true;
+					} finally {
 						Closeables.closeWithErrorLoggingB(temporaryFileOutputStream);
 				  }
 				if (fileWriteCompleteB) { // More processing if write completed. 
@@ -359,6 +492,7 @@ public class TCPCopier
 		  throws IOException
 		  /* This method copies all [remaining] file bytes
 		    from theInputStream to theOutputStream.
+		    Any IOException encountered is re-thrown and terminate the copy.
 		   	*/
 			{
 	      appLogger.info("copyStreamBytesV() beginning.");
