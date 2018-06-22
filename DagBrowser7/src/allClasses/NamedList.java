@@ -198,10 +198,11 @@ public class NamedList
 		  	}
 	  
     protected boolean reportChangeInChildB( final DataNode childDataNode )
-      /* This method reports a change of childDataNode,
-        which must be one of this node's children, to theDataTreeModel,
-        which will update the user display to show the change if needed.
-        IT returns true if success, false if there was an error,
+      /* This method reports a change to the DataTreeModel of 
+        a change in childDataNode, which must be one of this node's children.
+        This will cause an update of the user display 
+        to show that change if needed.
+        This method returns true if successful, false if there was an error,
           such as a null parameter or the the DataNode tree root
           not being reachable from the child. 
         */

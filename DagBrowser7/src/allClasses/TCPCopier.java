@@ -65,9 +65,9 @@ public class TCPCopier
 	  private static final String clientFileString = // sub-folder and file.
 	  		Config.tcpCopierOutputFolderString + File.separator + fileToUpdateString;
 
-    private static final Object tcpCopyLockObject= new Object();
-    private static final Object serverLockObject= tcpCopyLockObject;
-    private static final Object clientLockObject= tcpCopyLockObject;
+    //// private static final Object tcpCopyLockObject= new Object();
+    //// private static final Object serverLockObject= tcpCopyLockObject;
+    //// private static final Object clientLockObject= tcpCopyLockObject;
       // Presently a single lock object prevents simultaneous client and server.
       // They would need to be different if doing local-only testing.
 

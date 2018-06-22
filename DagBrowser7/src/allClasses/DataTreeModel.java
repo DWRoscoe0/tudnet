@@ -10,7 +10,7 @@ import javax.swing.event.TreeModelEvent;
 import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
 
-import allClasses.DataNode.UpdateLevel;
+import allClasses.DataNode.ChangeFlag;
 
 import javax.swing.tree.TreeModel;
 
@@ -514,16 +514,21 @@ public class DataTreeModel
           return theTreePath;
           }
 
+      
 
     /* The following 3 sections comprise the display aggregation system.
       The purpose is to reduce the number of TreeModel events fired
       and the number of times the Event Dispatch Thread (EDT) is activated.
       
-      This is done by storing in the DataNodes information about
+      Alternatively, this could be viewed as a hybrid data cache system,
+      with the change of a node invalidating both
+      the rendering of that node and all its descendants.
+      
+      The way this works is by storing in the DataNodes information about
       whether any changes have occurred since the previous display,
       and propagating this information to the root of the tree.
-      When it is time to display, the changes nodes are traversed
-      in a depth-first order, and every node that was changes
+      When it is time to display, the changed nodes are traversed
+      in a depth-first order, and every node that was changed
       is communicated to the appropriate TreeModel listeners.
       At the same time, the change information is cleared.
       
@@ -542,6 +547,8 @@ public class DataTreeModel
       Infogora hierarchy for later and more efficient display to the user.
       These methods do not need to be called on the Event Dispatch Thread (EDT).
       
+      This is in implementation of up-propagation of
+      the affect of changes on the appearance of ancestor nodes.
       This is not a general-purpose up-propagation system.
       It is highly customized for Java, its JTree class, and its GUI.
       */
@@ -595,11 +602,11 @@ public class DataTreeModel
         {
       		EDTUtilities.testAndLogIfRunningEDTB();
 
-					switch ( parentDataNode.theUpdateLevel ) {
+					switch ( parentDataNode.theChangeFlag ) {
 			  		case NONE:
 			  		case SUBTREE_CHANGED:
-		      	  parentDataNode.theUpdateLevel= // Mark structure changed. 
-		      	  	DataNode.UpdateLevel.STRUCTURE_CHANGED;
+		      	  parentDataNode.theChangeFlag= // Mark structure changed. 
+		      	  	DataNode.ChangeFlag.STRUCTURE_CHANGED;
 		      	  signalSubtreeChangeV( // Propagate as ordinary change to parent. 
 		      	  		parentDataNode.parentNamedList  );
 			  			break;
@@ -622,18 +629,18 @@ public class DataTreeModel
 	      	EDTUtilities.testAndLogIfRunningEDTB();
 	      	if ( theDataNode == null ) // No node to update. 
       	  	; // Do nothing.
-      	  else // Update this node and its not updated ancestors.
-		  	  	switch ( theDataNode.theUpdateLevel ) {
+      	  else // Mark as changed this node and its unmarked ancestors.
+		  	  	switch ( theDataNode.theChangeFlag ) {
 				  		case NONE:
-			      	  theDataNode.theUpdateLevel= // Mark node changed. 
-			      	  	DataNode.UpdateLevel.SUBTREE_CHANGED;
+			      	  theDataNode.theChangeFlag= // Mark node changed. 
+			      	  	DataNode.ChangeFlag.SUBTREE_CHANGED;
 			      	  signalSubtreeChangeV( // Propagate to parent, if any. 
 			      	  		theDataNode.parentNamedList );
 				  			break;
 				  			
 		  	  		case STRUCTURE_CHANGED:
 				  		case SUBTREE_CHANGED:
-				  	  	; // Anything else means no new changes are needed.
+				  	  	; // Anything else means no new changes need recording.
 				  	  	break;
 				  		}
           }
@@ -651,7 +658,7 @@ public class DataTreeModel
 
       public void displayTreeModelChangesV()
         /* This method switches to the EDT 
-          and calls displayUpdatedNodesFromRootV(). 
+          and calls displayChangedNodesFromRootV(). 
           */
         {
       		appLogger.trace( "DataTreeModel.displayTreeModelChangesV()" );
@@ -659,26 +666,26 @@ public class DataTreeModel
 		    		new Runnable() {
 		    			@Override  
 		          public void run() {
-		    				displayUpdatedNodesFromRootV();
+		    				displayChangedNodesFromRootV();
 		            }
 		          } 
 		        );
         	}
 
-      private void displayUpdatedNodesFromRootV()
+      private void displayChangedNodesFromRootV()
         /* This method displays any nodes 
           that need displaying starting with 
           the root of the Infogora hierarchy.
           */
         {
-      		appLogger.trace( "DataTreeModel.displayUpdatedNodesFromRootV()" );
-	      	displayUpdatedNodesFromV( // Display from...
+      		appLogger.trace( "DataTreeModel.displayChangedNodesFromRootV()" );
+	      	displayChangedNodesFromV( // Display from...
 	      			theDataRoot.getParentOfRootTreePath( ), 
 	      			theDataRoot.getRootDataNode( ) 
 	        		);
         	}
 
-      private void displayUpdatedNodesFromV(
+      private void displayChangedNodesFromV(
       		TreePath parentTreePath, DataNode theDataNode 
       		)
         /* This method displays any nodes 
@@ -689,10 +696,10 @@ public class DataTreeModel
 	  	    if ( theDataNode == null ) // Nothing to display. 
 	    	  	; // Do nothing.
 	    	  else { // Check this subtree.
-		    		appLogger.trace( "DataTreeModel.displayUpdatedNodesFromV() "
+		    		appLogger.trace( "DataTreeModel.displayChangedNodesFromV() "
 		            + theDataNode.getNodePathString() );
 	    	  	// Display this node any updated descendants.
-		  	  	switch ( theDataNode.theUpdateLevel ) {
+		  	  	switch ( theDataNode.theChangeFlag ) {
 				  		case NONE:
 				  	  	; // Nothing in this subtree needs displaying.
 				  	  	break;
@@ -709,17 +716,23 @@ public class DataTreeModel
   		private void displayStructuralChangeV( 
   				TreePath parentTreePath, DataNode theDataNode 
       		)
-  		  /* This method displays a subtree rooted at theDataNode,
-          a subtree which is known to have changed.
+  		  /* This method displays a structural change of
+  		    a subtree rooted at theDataNode.
           The TreePath of its parent is parentTreePath.
-          The descendants are displayed recursively first.
+
+          ///fix?  It is presently assumed that displaying a structural change
+          will be handled by displaying the entire subtree.
+          If this is not true then it might be necessary
+          to report which nodes have changed also,
+          probably after the structure change has been reported.
+          It shouldn't do any harm, except maybe take extra time.
           */
 	      {
   			  TreePath theTreePath= parentTreePath.pathByAddingChild(theDataNode);
     			reportingStructuralChangeB( theTreePath ); // Display by reporting
     			  // to the listeners.
 
-    			resetUpdatesInSubtreeV( theDataNode );
+    			resetChangesInSubtreeV( theDataNode );
 	      	}
 
   		private void displayChangedSubtreeV(
@@ -727,9 +740,10 @@ public class DataTreeModel
       		)
         /* This method displays a subtree rooted at theDataNode,
           a subtree which is known to have changed,
-          The TreePath of its parent is parentTreePath.
+          It does this by reporting changes to the Java GUI.
+          The TreePath of the subtree's parent is parentTreePath.
           The descendants are displayed recursively first.
-          The update status of all the nodes of any subtree display is reset. 
+          The ChangeFlag of all the nodes of any subtree display is reset. 
           */
 	      {
   				appLogger.trace( "DataTreeModel.displayChangedSubtreeV() "
@@ -742,18 +756,18 @@ public class DataTreeModel
 			           (DataNode)getChild( theDataNode, childIndexI );
 			        if ( childDataNode == null )  // Null means no more children.
 			            break;  // so exit while loop.
-			        displayUpdatedNodesFromV( // Recursively display descendant. 
+			        displayChangedNodesFromV( // Recursively display descendant. 
 			        		theTreePath, childDataNode ); 
 			        childIndexI++;  // Increment index for processing next child.
 			      	}
 					reportingChangeB(  // Display possible appearance change of root node.
 							parentTreePath, theDataNode );
-			    theDataNode.theUpdateLevel= // Reset root update status. 
-			    		UpdateLevel.NONE;
+			    theDataNode.theChangeFlag= // Reset root update status. 
+			    		ChangeFlag.NONE;
 	      	}
 
-  		private void resetUpdatesInSubtreeV( DataNode theDataNode )
-        /* This method resets the update status of 
+  		private void resetChangesInSubtreeV( DataNode theDataNode )
+        /* This method resets the change status of 
           all the nodes in a subtree rooted at theDataNode.
           The node's descendants that need resetting 
           are reset recursively first.
@@ -761,7 +775,7 @@ public class DataTreeModel
           are assumed to be connected to theDataNode.
           */
 	      {
-	  	  	switch ( theDataNode.theUpdateLevel ) {
+	  	  	switch ( theDataNode.theChangeFlag ) {
 			  		case NONE:
 			  	  	; // Do nothing.
 			  	  	break;
@@ -773,12 +787,12 @@ public class DataTreeModel
 					           (DataNode)getChild( theDataNode, childIndexI );
 					        if ( childDataNode == null )  // Null means no more children.
 					            break;  // so exit while loop.
-					        resetUpdatesInSubtreeV( // Recursively reset child subtree. 
+					        resetChangesInSubtreeV( // Recursively reset child subtree. 
 					        		childDataNode ); 
 					        childIndexI++;  // Increment index for processing next child.
 					      	}
-					    theDataNode.theUpdateLevel= // Reset root node update status. 
-					    		UpdateLevel.NONE;
+					    theDataNode.theChangeFlag= // Reset root node update status. 
+					    		ChangeFlag.NONE;
 			  	  	break;
 			  		}
 	      	}

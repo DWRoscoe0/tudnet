@@ -10,18 +10,18 @@ import javax.swing.tree.TreePath;
 
 public class DataNode 
   {
-	
+
 	  /* This class forms the basis of the classes 
 	    which represent the DAG (Directed Acyclic Graph). 
 	    Many of its methods are similar to methods in 
 	    the DataTreeModel interface.
-	  
+
 	    All these methods work, but some of them do so by counting and searching.
 	    They should be used only by subclasses which 
 	    do not have a lot of children so they will run quickly.
 	    For nodes with many children,
-	    this method should be optimized or cached or both.
-	   
+	    these methods should be optimized or cached in the subclass, or both
+
 	    ?? Possible new subclasses:
 	
 	      ?? Maybe create a subclass CachedDataNode.
@@ -49,23 +49,58 @@ public class DataNode
 	
 	  // Instance variables
 
-		  public enum UpdateLevel  
-		    /* This constants are used to delay and manage
-		      the firing of notification events to GUI components
-		      such as JTrees. 
+	    /* Variables for a hybrid computing cache using
+	      lazy evaluation by up-propagation of 
+	      properties DataNode in the DataNode hierarchy.
+	      Changes in a DataNode can affect the properties,
+	      including the displayed appearance, of ancestor DataNodes.
+	      They are used mainly for deciding when to repaint
+	      cells representing DataNodes in JTrees, JLists, and JLabels.
+	     	*/
+			public ChangeFlag theChangeFlag= ChangeFlag.NONE;
+		  public enum ChangeFlag  
+		    /* These constants are used to delay and manage the firing of 
+		      node appearance change notification events to GUI components.
+		      It is based on the theory that if the appearance of a node changes,
+		      then it might affect the appearance of the node's ancestors,
+		      and the GUI display of those nodes should happen soon.
+
+		      Besides NONE and SUBTREE_CHANGED, which would be sufficient for
+		      node value changes in a static tree, 
+		      there is also STRUCTURE_CHANGED,
+		      which helps in dealing with changes in branching structure.
+		      STRUCTURE_CHANGED is interpreted as a need to reevaluate
+		      and display the entire subtree that contains it.
+		      
+		      //// To better match the way caches are invalidated,
+		      theChaneFlag field should probably be converted into two fields:
+		      * a field to indicate subtree changes
+		      * a field to indicate structure changes
+		      SUBTREE_CHANGED and STRUCTURE_CHANGED 
+		      are associated with value invalidation.
+		      NONE is associated with value invalidation.
+		      
+		      //// A more scalable solution would be 
+		      to not propagate general changes 
+		      which might cause a GUI appearance change,
+		      but propagate node field change dependencies between nodes,
+		      then propagate fields locally into the node's GUI appearance.
+		      This way, invalidations would be limited to only
+		      attributes in nodes that were actually being displayed. 
 		      */
 			  {
-			  	//// UNDEFINED,    // the field has not yet been defined
-
 			  	// Minimum needed for correct operation.
 			  	NONE, 									// No changes here or in descendants.
+			  													// The cell is correct as displayed.
 					// This subtree may be ignored.
 			  	STRUCTURE_CHANGED,			// This subtree contains major changes. 
-																	// Requires structure change event.
-			  	SUBTREE_CHANGED,				// This node or its descendants have changed.
-			  													// Requires child checking and change event.
+																	// Requires structure change event.  The node 
+			  													// and its descendants need redisplay.
+			  	SUBTREE_CHANGED,				// This node and some of its descendants 
+			  													// have changed and should be redisplayed.
+			  													// Requires child checking and change events.
 
-			  	// Others for optimizations.  Unused.
+			  	///opt Other values for possible later optimizations.  Unused.
 			  	/*   ////
 			  	INSERTED,			// this node or subtree has been inserted
 			  	INSERTED_DESCENDANTS,		// one or more children have been inserted
@@ -76,9 +111,9 @@ public class DataNode
 			  	REMOVALS,			// one or more children have been removed
 			  	*/  ////
 					}
-
-		  public UpdateLevel theUpdateLevel= UpdateLevel.NONE;
-			protected NamedList parentNamedList= null; // My parent node. 
+		  
+			protected NamedList parentNamedList= null; // My parent node.
+			
 			protected LogLevel theMaxLogLevel= AppLog.defaultMaxLogLevel;
 			
     // Static methods.
@@ -137,11 +172,12 @@ public class DataNode
   		  	}
 
       protected void reportChangeOfSelfV()
-        /* This method reports a change of this node.
+        /* This method reports a change of this node 
+          which might affect it appearance.
           It does this by calling a parent method,
           because it is more convenient for a parent to
           notify the TreeModel about changes in its children
-          that for the children to do it.
+          than for the children to do it.
          */
       	{
       	  if ( parentNamedList == null )
@@ -365,38 +401,59 @@ public class DataNode
     		return getValueString( );
     		}
 
-    public String getLineSummaryString( )  
+    public String getLineSummaryString()  
     /* Returns a one-line summary of
       the contents of this DataNode as a String.
       The line consists of the name of the node,
       and sometimes followed by something else,
-      such as a child count, or some other type of summary information.  
+      such as a child count, or some other type of value summary information.  
       */
       {
-    	  String nameString= getNameString();  // Caching name of node.
-    	  String summaryString= getValueString(); // Initializing summary.
-    	  process: {
-    	  	if ( summaryString == "-UNDEFINED-" )
-    	  	  { summaryString= ""; break process; }
-    	    int indexOfNewLineI= summaryString.indexOf("\n");
-      	  if // Trimming extra lines if there are any in value string.
-      	    ( indexOfNewLineI >= 0 )
-      	  	summaryString= // Replacing value string with only its first line. 
-      	  	  summaryString.substring(0,indexOfNewLineI);
-      	  }
+    	  String nameString= processedNameString();
+    	  String valueString= processedValueString();
+    	  
+    	  // Combine name with value.
+    	  String resultString;
     	  if // Combining with name if value not nil or same as name.
-    	  	( ( summaryString != "" ) && 
-    	  		( ! nameString.equals(summaryString) ) 
+    	  	( ( valueString != "" ) && 
+    	  		( ! nameString.equals(valueString) ) 
     	  		)
-      	  summaryString= // Using
+      	  resultString= // Using
       	  		nameString // the name,
 	        		+ " : " // a separator,
-	        		+summaryString // and the trimmed value.
+	        		+valueString // and the value.
 	        		;
     	  	else
-	      	  summaryString= getNameString(); // Using only the name.
-    	  return summaryString; 
+      	  resultString= nameString; // Using only the name.
+    	  
+    	  return resultString; 
         }
+
+	  public String processedNameString()
+	    /* This method returns a name String which is might have been decorated
+	      with other characters, but still viewable as a name.
+	      This version returns the ordinary name,
+	      but subclasses could decorated the name as desired.
+	     	*/
+  		{
+		  	return getNameString();
+		  	}
+
+	  private String processedValueString()
+	    // This method returns a value String which is okay to display in a cell.
+	  	{
+	  		String valueString= getValueString(); // Initializing process value.
+	  		process: {
+			  	if ( valueString == "-UNDEFINED-" ) // Convert undefined to blank.
+			  	  { valueString= ""; break process; }
+			    int indexOfNewLineI= valueString.indexOf("\n");
+		  	  if // Trimming extra lines if there are any in value string.
+		  	    ( indexOfNewLineI >= 0 )
+		  	  	valueString= // Replacing value string with only its first line. 
+		  	  	  valueString.substring(0,indexOfNewLineI);
+		  	  } // process:
+			  return valueString;
+			  }
 
     public String getInfoString( )
     	// Returns additional attributes about this DataNode as a String.

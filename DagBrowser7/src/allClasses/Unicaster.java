@@ -194,6 +194,7 @@ public class Unicaster
 			    	if ( getDiscreteInputString() != null ) { ////dbg
 			  			appLogger.warning("runLoop() unconsumed input= "+getDiscreteInputString());
 			  			resetDiscreteInputV();  // consume it.
+			  			///fix  Legitimate input sometimes unconsumed!  Fix.
 			    		}
 		    		if ( theEpiInputStreamI.available() <= 0 ) // No input available. 
 		    			break processAllAvailableInput; // Exit available input loop.

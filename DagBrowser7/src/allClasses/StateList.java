@@ -230,6 +230,8 @@ public class StateList extends MutableList implements Runnable {
 	  ///opt It might be worthwhile combining this field 
 	  // with DataNode.parentNamedList, but we would need a way to
 	  // identify State children during state operations.
+	  //
+	  ///opt To eliminate null checks, make this be be a Sentinel state.
 
 	protected Color theColor= UIColor.initializerStateColor;
 
@@ -279,6 +281,7 @@ public class StateList extends MutableList implements Runnable {
     which would cause state exit and re-entry.
     */
 
+  private Boolean isActiveBoolean= null; // Activity value, Initially invalid. 
 
 	/* Methods used to build state objects. */
 
@@ -366,6 +369,14 @@ public class StateList extends MutableList implements Runnable {
 	  // Stores parentStateList as the parent state of this state.
 		{ this.parentStateList= parentStateList; }
 
+  public StateList getpresentSubStateList()
+    /* This method returns the present machine substate.
+      It is meaningful only for OrStates.
+      */
+  	{ 
+  		return presentSubStateList; 
+  		}
+
 	
 	/*  Methods for AndState behavior.  */
 
@@ -424,8 +435,10 @@ public class StateList extends MutableList implements Runnable {
 	  	    boolean substateProgressB= 
 	  	    		doOnInputsToSubstateB(presentSubStateList);
 		  		if (requestedSubStateList != null) // Handling state change request.
-		  		  { presentSubStateList.onExitV(); 
-	    	  		presentSubStateList= requestedSubStateList;
+		  		  { presentSubStateList.onExitV();
+		  		  	presentSubStateList.invalidateActiveV();
+	    	  		presentSubStateList= requestedSubStateList; // Change sub-state.
+		  		  	presentSubStateList.invalidateActiveV();
 		  				requestedSubStateList= null;
 		  			  ///dbg  appLogger.debug(
 			  			///dbg  		"StateList.orStateOnInputsB() entering"
@@ -871,7 +884,26 @@ public class StateList extends MutableList implements Runnable {
 	  			"StateList.run() end of Timer tick to"+ getFormattedStatePathString() );
 		}
 
-	/* Methods for UI coloring.  */
+
+  /* Methods for UI cell rendering.  */
+
+	public String processedNameString()
+    /* This method returns a decorated name String.
+      The decorations indicate that this node is a state,
+      and whether the state is active.
+      */
+		{
+			String resultString;
+			if ( (parentStateList != null)
+					&& (parentStateList.getpresentSubStateList() == this)
+					)
+				resultString= "*-" + getNameString();
+				else
+				resultString= " -" + getNameString();
+	  	return resultString;
+	  	}
+
+  /* Methods for UI coloring.  */
 
 	private void colorBySuccessV( boolean successB )
 		{ if ( successB )
@@ -883,7 +915,7 @@ public class StateList extends MutableList implements Runnable {
   void setBackgroundColorV( Color theColor )
     /* This method sets the background color 
       which should be used to display this State.
-      If the color changes then it also displays it.
+      If the color changes then it also displays the State cell.
      */
     {
 		  boolean colorChangingB= ( this.theColor != theColor );
@@ -896,12 +928,86 @@ public class StateList extends MutableList implements Runnable {
   Color getBackgroundColor( Color defaultBackgroundColor )
     /* This method returns the background color 
       which should be used to display this State.
-      Presently it is the value stored in variable theColor.
+      Presently it is simply the value stored in variable theColor.
+      This is being changed.
+      
+      This is being changed to display
+      * pink for inactive states
+      * light green for active states
+      
      */
     {
-  		return theColor;
+  		//// return theColor;  ///elim theColor?
+  	  return ( getActiveB() ? Color.GREEN : Color.PINK);
   	  }
 
+  private void invalidateActiveV()
+    /* This method recursively invalidates the active status of 
+      this state and any descendant states that depend on it.
+      It doesn't check descendants if state is already invalidated.
+      This direction of invalidation matches the down-propagation
+      of the isActiveBoolean attribute.
+      This method should be called whenever the state,
+      or one of its ancestors,
+      becomes an active sub-state or stops being an active sub-state.
+      */
+	  { 
+			if ( isActiveBoolean != null ) // Invalidate if a value is now valid. 
+				{ // Invalidate the value in this state and its descendants.
+					for // Invalidate descendants first.
+						(StateList subStateList : theListOfSubStateLists) // All of them. 
+						{
+			  	  	subStateList.invalidateActiveV(); // Invalidate in one subtree.
+			  	  	}
+					isActiveBoolean= null; // Invalidate in this state by assigning null.
+					reportChangeOfSelfV(); // Trigger eventual GUI redisplay.
+					}
+			}
+
+  private boolean getActiveB()
+    /* This method returns true if this state is active, false otherwise.
+      A state is considered active if:
+      * it is a root state, or
+      * it is any sub-state of an active AndState, or
+      * it is the single active sub-state of an active OrState.
+      The calculation done implements the down-propagation
+      of the isActiveBoolean attribute.
+      It returns the cached value of this calculation if it is present.
+      */
+  	{ 
+			if ( isActiveBoolean != null ) // Reevaluate activity value if needed.
+				; // Do nothing because we can return the cached evaluation.
+	  		else
+	  		{ // Evaluate activity value and cache it.
+		  			boolean activeB;
+					evaluation: {
+		  		  StateList parentStateList= this.parentStateList;
+						if // There is no parent state so this is a root state.
+							(parentStateList == null)
+							{ activeB= true; break evaluation; } // Roots are always active.
+						if // Parent is an AndState and it is active.
+						  ( parentStateList.isAndStateB()
+								&& parentStateList.getActiveB() )
+							{ activeB= true; break evaluation; } // So this state is active.
+					  if // Parent is an OrState, active, and this is its sub-state.
+					    ( this == (parentStateList.getpresentSubStateList() )
+					    	&& parentStateList.getActiveB() )
+					  	{ activeB= true; break evaluation; } // So this state is active.
+					  activeB= false; // Anything else means this state is not active.
+			  		} // evaluation:
+		  		isActiveBoolean= Boolean.valueOf(activeB); // Cache the evaluation.
+		  		}
+			return isActiveBoolean; 
+		  }
+
+  protected boolean isAndStateB()
+    /* This method returns true if this state is behaving as an AndState,
+      false otherwise.
+      */
+  	{ 
+  		return ( presentSubStateList == null) ; 
+  		}
+  
 	}  // StateList class 
 
 
@@ -935,22 +1041,6 @@ class AndOrState extends StateList {
 	  This includes the following methods:
 	    onEntryV(), onInputsB(), and onExitV().
     */
-
-  private boolean isAndStateB()
-    /* This method returns true if this state is behaving as an AndState,
-      false otherwise.
-      */
-  	{ 
-  		return ( presentSubStateList == null) ; 
-  		}
-
-  public StateList getpresentSubStateList()
-    /* This method returns the present machine substate.
-      It is meaningful only for AndStates.
-      */
-  	{ 
-  		return presentSubStateList; 
-  		}
   
   protected void setFirstOrSubStateV(StateList firstSubStateList)
 	  /* This method sets this state to behave as an OrState
