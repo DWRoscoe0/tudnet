@@ -5,33 +5,23 @@ import java.awt.Component;
 
 public class UIColor {
 
-	// Selected item colors.  ///elim?
-	public static final Color selectedBackgroundColor= Color.BLACK;
-	public static final Color selectedForegroundColor= Color.WHITE;
-	
 	// Non-selected item colors.
+	
 	  // Non-selected foreground colors.
-		public static final Color normalForgroundColor= Color.BLACK;
+			public static final Color normalForgroundColor= Color.BLACK;
 
 		// Non-selected background colors.
 			public static final Color activeColor= Color.YELLOW; // Active, non-State.
 
   	// Non-selected background state colors, used in StateList class.
-		  // Color set by StateList class initializer code.
-			public static final Color initializerStateColor= Color.YELLOW; // Color.WHITE;
-		  // Colors set by the different class initializer methods.
-			public static final Color initialStateColor= new Color(127,127,255);
-					// LIGHT_BLUE.  wAS Color.BLUE;
-			  // This is a state that has not yet been entered.
-			public static final Color initialAndStateColor= Color.MAGENTA;
-			public static final Color initialOrStateColor= Color.ORANGE;
-		  // Colors set by class handler methods.
-			public static final Color runningStateColor= Color.GREEN;
-			public static final Color runnableStateColor= new Color(255,127,127); 
-					// LIGHT_GREEN, was using Color.CYAN;
-			public static final Color inactiveStateColor= Color.CYAN; // was LGHT_GRAY;
-			public static final Color waitingStateColor= Color.PINK;
-
+			public static final Color activeStateColor= 
+					new Color(127,255,127); // LIGHT_GREEN, was Color.GREEN;
+			public static final Color inactiveStateColor= 
+					Color.PINK;
+			
+	// Non-selected item colors.
+			
+		// Selection is done by swapping foreground and background colors.
 
   public static void setColorsV
     ( Component theRenderComponent,

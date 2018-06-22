@@ -233,14 +233,14 @@ public class StateList extends MutableList implements Runnable {
 	  //
 	  ///opt To eliminate null checks, make this be be a Sentinel state.
 
-	protected Color theColor= UIColor.initializerStateColor;
+	/// elim protected Color theColor= UIColor.initializerStateColor;
 
   protected List<StateList> theListOfSubStateLists= // Our sub-states.
       new ArrayList<StateList>(); // Initially empty list.
 
   private String discreteInputString; /* Temporarily stores an input event.
     It is the one place this state checks for discrete input.
-    Adiscrete input can appear in any number of other variables.
+    A discrete input can appear in any number of other variables.
     This variable is special and is set according to the following protocol:
     * a non-null reference to the input String by the handler's caller
       immediately before the handler is called to try to process it
@@ -261,7 +261,6 @@ public class StateList extends MutableList implements Runnable {
 	// Sentinel states which can simplify other code by eliminating null checks.
   // Sentinel states are used by OrState machines. 
 	protected static final SentinelState initialSentinelState;
-	///elim protected static SentinelState finalSentinelState= new SentinelState();
 
 	static { 
 		initialSentinelState= new SentinelState(); 
@@ -308,7 +307,7 @@ public class StateList extends MutableList implements Runnable {
 	  	}
 
   public void initializeV()
-    /* This method initializes this state object and its superclasses.
+    /* This method initializes this state object and its super-classes.
       It does actions needed when this state object is being built.
       This is not the same as the entryV() method, which
       does actions needed when the associated state-machine state is entered.
@@ -318,7 +317,7 @@ public class StateList extends MutableList implements Runnable {
   		*/
     {
   	  super.initializeV();
-  	  theColor= UIColor.initialStateColor;
+  	  //// theColor= UIColor.initialStateColor;
     	}
 
   public void initAndAddStateListV(StateList theSubStateList) 
@@ -405,7 +404,7 @@ public class StateList extends MutableList implements Runnable {
 		  	  		continue substateScansUntilNoProgress; // Restart scan.
 		  	  		}
 		  	  	else
-		  				setBackgroundColorV( UIColor.runnableStateColor );
+		  				;  ////elim
  	  		break substateScansUntilNoProgress; // No progress in this, final scan.
   	  	} // substateScansUntilNoProgress:
 			return progressMadeB; 
@@ -448,11 +447,7 @@ public class StateList extends MutableList implements Runnable {
 							substateProgressB= true; // Count this as progress.
 			  			}
 		  	  if (!substateProgressB) // Exiting loop if no sub-state progress made.
-			  	  { presentSubStateList.setBackgroundColorV( 
-			  	  		UIColor.waitingStateColor 
-			  	  		);
-			  	  	break;
-			  	  	}
+			  	  { break; }
 	  	  	stateProgressB= true; // Accumulate sub-state progress in this state.
 	  	  	} // while (true)
 			return stateProgressB; // Returning accumulated state progress result.
@@ -530,7 +525,6 @@ public class StateList extends MutableList implements Runnable {
 		  ////appLogger.debug(
 			if ( logB(TRACE)) logV( 
 					TRACE, "StateList.doOnEntryV() to"+ getFormattedStatePathString() );
-			setBackgroundColorV( UIColor.runningStateColor );
 			onEntryV(); 
 			}
 
@@ -559,7 +553,6 @@ public class StateList extends MutableList implements Runnable {
 	    and is about to be destroyed or freed
 	    */
 	  { 
-			setBackgroundColorV( UIColor.inactiveStateColor );
 			if ( logB(TRACE)) logV( 
 					TRACE, "StateList.onExitV() from"+ getFormattedStatePathString() );
 			}
@@ -648,9 +641,7 @@ public class StateList extends MutableList implements Runnable {
 		  ///dbg  	+ discreteInputString 
 			///dbg  + " to"
 		  ///dbg  	+ getFormattedStatePathString() );
-		  setBackgroundColorV( UIColor.runningStateColor );
 			boolean successB= onInputsB();
-			colorBySuccessV( successB );
 			return successB;
 		  }
 
@@ -751,7 +742,6 @@ public class StateList extends MutableList implements Runnable {
 						else // Discrete input was not consumed by sub-state.
 						subStateList.resetDiscreteInputV(); // Remove it from sub-state.
 					}
-			colorBySuccessV( madeProgressB );
 			return madeProgressB;
 			}
 
@@ -905,26 +895,6 @@ public class StateList extends MutableList implements Runnable {
 
   /* Methods for UI coloring.  */
 
-	private void colorBySuccessV( boolean successB )
-		{ if ( successB )
-				setBackgroundColorV( UIColor.runnableStateColor );
-				else
-				setBackgroundColorV( UIColor.waitingStateColor );
-		  }
-	
-  void setBackgroundColorV( Color theColor )
-    /* This method sets the background color 
-      which should be used to display this State.
-      If the color changes then it also displays the State cell.
-     */
-    {
-		  boolean colorChangingB= ( this.theColor != theColor );
-		  if ( colorChangingB ) {
-			  this.theColor= theColor; // Change color.
-		  	reportChangeOfSelfV(); // Display change.
-		  	}
-  	  }
-	
   Color getBackgroundColor( Color defaultBackgroundColor )
     /* This method returns the background color 
       which should be used to display this State.
@@ -937,8 +907,10 @@ public class StateList extends MutableList implements Runnable {
       
      */
     {
-  		//// return theColor;  ///elim theColor?
-  	  return ( getActiveB() ? Color.GREEN : Color.PINK);
+  	  return ( getActiveB() 
+  	  		? UIColor.activeStateColor 
+  	  		: UIColor.inactiveStateColor
+  	  		);
   	  }
 
   private void invalidateActiveV()
@@ -1111,7 +1083,7 @@ class OrState extends AndOrState { //? StateList {
     {
   		super.initializeV();
   	  setFirstOrSubStateV( StateList.initialSentinelState );
-  	  theColor= UIColor.initialOrStateColor;
+  	  /// elim theColor= UIColor.initialOrStateColor;
   	  return this;
     	}
 
@@ -1140,7 +1112,6 @@ class AndState extends AndOrState { //? StateList {
   public StateList initializeWithIOExceptionStateList() throws IOException
     {
   		super.initializeV();
-  	  theColor= UIColor.initialAndStateColor;
   	  return this;
     	}
 
