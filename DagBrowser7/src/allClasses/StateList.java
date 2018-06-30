@@ -18,9 +18,19 @@ public class StateList extends MutableList implements Runnable {
 
     Classes in this file:
     
-    This file defines several state-machine classes:
+    Here are the classes in this file and their relationships:
+      * StateList
+		    * SentinelState
+		    * LeafState   ///org to be added?
+		    * AndOrState
+			    * OrState 
+			    * AndState
+	    
+    Here are descriptions of the classes in this file.
     * StateList: This is the base class of all states.
       It is also typically used as machine states with no children.
+      ///org Add LeafState for leaf states so run-time code can be replaced be
+        faster code organized by subclasses.
     * SentinelState: This class is used as an initial sentinel-state 
       for OrState state machines to reduce the number of null checks needed.
 		* AndOrState: a superclass of the OrState and AndState classes.
@@ -31,6 +41,39 @@ public class StateList extends MutableList implements Runnable {
     * AndState: AndState machines also have sub-states, but unlike OrStates,
 	  	all AndState sub-states are active at the same time.
 	  	There is concurrency in an AndState machine, at least at this level.
+
+
+		Machine Initialization:
+
+		To reduce boilerplate code in low-level state machine states, 
+		constructor source code has been eliminated.
+		There are constructors, but they are the default parameterless constructors.
+		Instance variables are initialized using various initialize methods,
+		such as initializeV(..) and initializeWithIOExceptionStateList(..).
+		
+		Initialization now uses a combination of 
+		eager-evaluation and lazy-evaluation.
+		For each root state machine, initialization should proceed as follows:
+		
+		* State machine constructors are called, lower levels first.
+			Lower level machines objects are used 
+			as argument to higher level machines.
+			The arguments are stored in each machine.  
+			This is constructor dependency injection.
+			This is done for each independent machine.
+			
+	  * The state machine's initialization method is called.
+	    This method recursively calls the initialization method of sub-machines.
+	    The initialization methods do initialization that can not be done
+	    by constructors, such as initialization that can cause exceptions.
+	    * Some initialization methods have parameters.
+				This is method dependency injection.
+			* It the machine is an OrState machine,
+			  setFirstOrSubStateV(..) is called to set the machine's initial state.
+
+	  * The state machine's doOnEntry(..) method is called.
+	    This recursively calls the doOnEntry(..) method of sub-machines is called.
+	    This activates all state machines that should be active.
 
 
 		Threads:
@@ -49,7 +92,7 @@ public class StateList extends MutableList implements Runnable {
 		inputs triggered by timers.
 
 		State machines normally do not wait for things, except for the next event.
-		or do other time-consuming activities such as executing long loops. 
+		no do they do time-consuming activities such as executing long loops. 
 		Their handler methods must return quickly, because
 		not doing so could disable other parts of the hierarchical state machine.
 		It's okay to break this rule temporarily, but only while 
@@ -59,7 +102,7 @@ public class StateList extends MutableList implements Runnable {
     Handler Methods:
 
 		State machines run when their handler methods are called.
-		A handler's main job is to process events.
+		A handler's main job is to process events, usually inputs.
 		In doing so they might change the machine's state
 		or produce some output, or both. 
    	
@@ -67,7 +110,8 @@ public class StateList extends MutableList implements Runnable {
    	* Final handler methods are the methods called to execute 
    	  a state's code.  These may not be overridden.
    	* Override handler methods may be overridden by state subclasses.
-   	  These methods are called by the non-override-able final handler methods.
+   	  These methods are called by the 
+   	  above-mentioned non-override-able final handler methods.
 
 
     Major states: 
@@ -184,19 +228,17 @@ public class StateList extends MutableList implements Runnable {
 		* Originally it was thought that IOExceptions must be handled
 		  when a state object is constructed, but this is difficult to do.
 		  If initialization is moved from constructors to initialization methods
-		  the handling of exception becomes more manageable.
+		  the handling of exceptions becomes more manageable.
 		  initializeWithIOExceptionStateList() was created for this purpose.
 		  However it might be possible to eliminate this eventually.
+
+
+		Other Notes:
 
 	  When writing state-machine code it is important to distinguish between
 	  * the current State, designated by "this", and
 	  * its current sub-state, or child state, 
 	    designated by "this.presentSubStateList".
-
-		To reduce boilerplate code in low-level state machine states, 
-		constructor source code has been eliminated.
-		There are constructors, but they are the default parameterless constructors.
-		Instance variables are initialized using various initialize methods.
 
 		///enh StateList and its subclasses AndState and OrState
 		  do not [yet] provide behavioral inheritance, which is
@@ -276,11 +318,13 @@ public class StateList extends MutableList implements Runnable {
 
   protected StateList requestedSubStateList= null; /* Becomes non-null when 
   	machine requests a new qualitative state.  
-    It could become the present state, 
-    which would cause state exit and re-entry.
+    It will eventually become the present state also, 
+    which would cause state exit and re-entry when that happens.
     */
 
-  private Boolean isActiveBoolean= null; // Activity value, Initially invalid. 
+  private Boolean isActiveBoolean= null; /* Activity value, initially invalid.
+    Maybe a better value would be isEnteredBoolean?  Null means dirty.
+  	*/
 
 	/* Methods used to build state objects. */
 
@@ -292,7 +336,7 @@ public class StateList extends MutableList implements Runnable {
       * It returns a reference to this object which can be used to
         simplifier code in the caller.
 
-      ///elim? This method throws IOException.
+      ///org? This method throws IOException.
         It was originally done for compatibility with its superclass
         or because it called a method that threw IOException.
         Now this is apparently no longer true, and
@@ -317,7 +361,6 @@ public class StateList extends MutableList implements Runnable {
   		*/
     {
   	  super.initializeV();
-  	  //// theColor= UIColor.initialStateColor;
     	}
 
   public void initAndAddStateListV(StateList theSubStateList) 
@@ -403,8 +446,6 @@ public class StateList extends MutableList implements Runnable {
 		  	  		progressMadeB= true;
 		  	  		continue substateScansUntilNoProgress; // Restart scan.
 		  	  		}
-		  	  	else
-		  				;  ////elim
  	  		break substateScansUntilNoProgress; // No progress in this, final scan.
   	  	} // substateScansUntilNoProgress:
 			return progressMadeB; 
@@ -434,15 +475,11 @@ public class StateList extends MutableList implements Runnable {
 	  	    boolean substateProgressB= 
 	  	    		doOnInputsToSubstateB(presentSubStateList);
 		  		if (requestedSubStateList != null) // Handling state change request.
-		  		  { presentSubStateList.onExitV();
+		  		  { presentSubStateList.doOnExitV();
 		  		  	presentSubStateList.invalidateActiveV();
 	    	  		presentSubStateList= requestedSubStateList; // Change sub-state.
 		  		  	presentSubStateList.invalidateActiveV();
 		  				requestedSubStateList= null;
-		  			  ///dbg  appLogger.debug(
-			  			///dbg  		"StateList.orStateOnInputsB() entering"
-			  			///dbg  	+ presentSubStateList.getFormattedStatePathString()
-			  			///dbg  	);
 		  			  presentSubStateList.doOnEntryV();
 							substateProgressB= true; // Count this as progress.
 			  			}
@@ -512,55 +549,70 @@ public class StateList extends MutableList implements Runnable {
 		  the state associated with this object is entered.
 		  It is final so it can not be overridden.
 		  It calls onEntryV() which may be overridden.
-		  This version does nothing, but it should be overridden 
-		  by state subclasses that require entry actions.
-		  This is not the same as initialize*V(),
-		  which does actions needed when the StateList object is being built
-		  and is being prepared for providing its services.
 		  
 		  //enh: Presently this is called from orStateOnInputsB() only.
 		  	Maybe it should be called when andStateOnInputsB() is called?
 		  */
 		{ 
-		  ////appLogger.debug(
 			if ( logB(TRACE)) logV( 
 					TRACE, "StateList.doOnEntryV() to"+ getFormattedStatePathString() );
+
 			onEntryV(); 
 			}
 
 	public void onEntryV() throws IOException
-	  /* This method is called when 
-	    the state associated with this object is entered.
-	    This version does nothing, but it should be overridden 
-	    by state subclasses that require entry actions.
-	    This is not the same as initialize*V(),
-	    which does actions needed when the StateList object is being built
-	    and is being prepared for providing its services.
-	    
-	    //enh: Presently this is called from orStateOnInputsB() only.
-	    	Maybe it should be called when andStateOnInputsB() is called?
+	  /* This method recursively enters each of its relevant sub-states.
+
+	    It may be overridden, but if it is, it should end with:
+
+			  super.onEntryV();
+			  
 	    */
 	  { 
+			/// super.onEntryV();
+			
+			if ( ! isAndStateB() ) // This is an OrState.
+				presentSubStateList.doOnEntryV(); // Enter its only active sub-state.
+			else // This is an AndState.
+				for  // Enter all of its sub-states.
+				  (StateList subStateList : theListOfSubStateLists) 
+					{
+		  	  	subStateList.doOnEntryV();
+						}
+			}
+
+	public final void doOnExitV() throws IOException
+	  /* This method is called when a state is exited.
+	    It does actions needed when a state is exited.
+		  It is final so it can not be overridden.
+		  It calls onExitV() which may be overridden.
+	    */
+	  { 
+			onExitV();
+			if ( logB(TRACE)) logV( // Log that exit took place. 
+					TRACE, "StateList.doOnExitV() from"+ getFormattedStatePathString() );
 			}
 
 	public void onExitV() throws IOException
-	  /* This method is called when a state is exited.
-	    It does actions needed when a state is exited.
-	    This version does nothing.
-	    It should be overridden in state subclasses that need exit actions.
-	    This is not the same as finalizeV(),
-	    called when the StateList object has finished providing its services.
-	    and is about to be destroyed or freed
+	  /* This method recursively exits each of this states active sub-states.
+	    It handles bot AndState and OrState cases.
 	    */
 	  { 
-			if ( logB(TRACE)) logV( 
-					TRACE, "StateList.onExitV() from"+ getFormattedStatePathString() );
+			if ( ! isAndStateB() ) // this is an OrState.
+				presentSubStateList.doOnExitV(); // Exit its single active sub-state.
+			else // this is an AndState.
+	  		for // Exit all its active concurrent sub-states. 
+	  		  (StateList subStateList : theListOfSubStateLists) 
+	  	  	subStateList.doOnExitV();
+			
+			/// super.onExitV();
 			}
 
 
 	/* Methods containing general state handler code. */
 	
 	public synchronized void onInputsForLeafStatesV() throws IOException
+	  ///org rename to onInputsReturnsFalseV()
 	  /* This is a code-saving method.
 	    A state class overrides either this method or onInputsB(), 
 	    but not both, as part of how it controls its behavior.
@@ -861,7 +913,8 @@ public class StateList extends MutableList implements Runnable {
 	    */
 		{
 			appLogger.debug(
-  			"StateList.run() beginning of Timer tick to"+ getFormattedStatePathString() );
+  			"StateList.run() beginning of Timer tick to"
+  			+ getFormattedStatePathString() );
 			try { 
 				doOnInputsB(); // Try to process timer event with handler. 
 				}
@@ -1019,26 +1072,11 @@ class AndOrState extends StateList {
 	    and requests the first state-machine state to be firstSubStateList. 
 	    */
 	  {
-  		requestSubStateListV( firstSubStateList );
-  	  presentSubStateList= StateList.initialSentinelState;
-	  }
-
-	public void onEntryV() throws IOException
-	  /* This method recursively enters each of the concurrent sub-states
-	    if we are acting as an AndState.
-	    */
-	  { 
-			super.onEntryV();
-			if ( isAndStateB() )
-				for (StateList subStateList : theListOfSubStateLists) 
-					{
-	  			  ///dbg  appLogger.debug(
-						///dbg  		"AndOrState.onEntryV() entering sub"
-						///dbg    	+ subStateList.getFormattedStatePathString()
-						///dbg  	);
-		  	  	subStateList.doOnEntryV();
-						}
-			}
+			//requestSubStateListV( firstSubStateList );
+		  //presentSubStateList= StateList.initialSentinelState;
+  	
+		  presentSubStateList= firstSubStateList; // Assign present state.
+	  	}
 	
 	public synchronized boolean onInputsB() throws IOException
 	  /* This method acts as an AndState handler if presentSubStateList == null,
@@ -1052,17 +1090,6 @@ class AndOrState extends StateList {
 		  	successB= orStateOnInputsB();
 			return successB;
 		  }
-
-	public void onExitV() throws IOException
-	  /* This method recursively exits each of the concurrent sub-states
-	    if this state is acting as an AndState.
-	    */
-	  { 
-			if ( isAndStateB() )
-	  		for (StateList subStateList : theListOfSubStateLists) 
-	  	  	subStateList.onExitV();
-			super.onExitV();
-			}
 	
 		}
 

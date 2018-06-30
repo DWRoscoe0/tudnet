@@ -200,11 +200,11 @@ public class Sender // Uunicast and multicast sender thread.
 	    {
     		//appLogger.debug("sendingDatagramPacketV(..) calling send(..)." );
 	    	try { // Send the packet.
+	        PacketManager.logSenderPacketV(theDatagramPacket);
+    		  	// Logging before sending so log order is always correct.
 	        theDatagramSocket.send(   // Send packet.
 	        	theDatagramPacket
 	          );
-	        PacketManager.logSenderPacketV(theDatagramPacket);
-    		  	// Was logging before sending so log would make sense.
 	      } catch (IOException e) { // Handle exception by dropping packet.
 	        appLogger.error(
 	          "Sender.sendingDatagramPacketV(), " 

@@ -231,6 +231,7 @@ public class LinkMeasurementState
 			    	    the next handshake.
 			    	   	*/
 				  	  {
+			    			//// appLogger.debug( "MeasurementPausedState.onEntryV() ");
 			    	  	measurementTimerInput.scheduleV(Config.handshakePause5000MsL);
 			  				}
 	
@@ -261,6 +262,15 @@ public class LinkMeasurementState
 					    * exitV() of MeasurementPausedState.
 			  	  */
 			  	{
+			    	public void onEntryV() throws IOException
+			    	  /* Starts timer for the pause interval before 
+			    	    the next handshake.
+			    	   	*/
+				  	  {
+			    			//// appLogger.debug( "MeasurementInitializationState.onEntryV() ");
+			    	  	measurementTimerInput.scheduleV(Config.handshakePause5000MsL);
+			  				}
+			    	
 					  public void onInputsForLeafStatesV() throws IOException
 					  	{
 		    			  retryTimeOutMsL=   // Initializing retry time-out.
@@ -283,6 +293,7 @@ public class LinkMeasurementState
 			    	public void onEntryV() throws IOException
 			    	  // Initiates the handshake and starts acknowledgement timer.
 				  	  { 
+				      	//// appLogger.debug( "MeasurementHandshakingState.onEntryV() ");
 		    			  measurementTimerInput.scheduleV(retryTimeOutMsL);
 				    		sendingSequenceNumberV();
 			  				}

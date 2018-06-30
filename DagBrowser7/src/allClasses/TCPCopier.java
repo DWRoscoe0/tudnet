@@ -37,7 +37,7 @@ public class TCPCopier
     * The client thread attempts both 
     	* file updating across a socket connection and
     	* local inter-folder file updating.
-
+		
     ///enh Eventually it should maintain its own data file.
       Any peers with which it communicates for updating may be added
       only by it and only after it tests them for operability.
@@ -65,10 +65,18 @@ public class TCPCopier
 	  private static final String clientFileString = // sub-folder and file.
 	  		Config.tcpCopierOutputFolderString + File.separator + fileToUpdateString;
 
-    //// private static final Object tcpCopyLockObject= new Object();
-    //// private static final Object serverLockObject= tcpCopyLockObject;
-    //// private static final Object clientLockObject= tcpCopyLockObject;
-      // Presently a single lock object prevents simultaneous client and server.
+
+		/* Synchronization is used in 2 places:
+			* Once to control shared access between the TCPClient and
+			  another thread providing notification about a new connection.
+			* Once to prevent TCPClient and TCPServer trying to 
+			  communicate at the same time.
+			*/
+    private static final Object tcpCopyLockObject= new Object();
+    private static final Object serverLockObject= tcpCopyLockObject;
+    private static final Object clientLockObject= tcpCopyLockObject;
+      // Presently a single lock object prevents 
+      // some simultaneous client and server.
       // They would need to be different if doing local-only testing.
 
 	  static class TCPClient extends EpiThread {
@@ -77,6 +85,7 @@ public class TCPCopier
 	  			new ConcurrentLinkedQueue<IPAndPort>();
 	  			///opt ConcurrentLinkedQueue might be overkill 
 	  			// given other synchronization in use.
+	  			///org Maybe add Unicaster instead of IPAndPort?
 
 		  private final Persistent thePersistent; // External data.
 			
@@ -88,14 +97,16 @@ public class TCPCopier
 			  this.thePersistent= thePersistent;
 				}
 
-	    public synchronized void run()
+	    public void run()
 	      /* This is the main method of the Client thread.
-	        It does some initialization, then
-	        calls a method to repeatedly attempt updates with TCPServers.
+	        After a delay and some initialization,
+	        it calls a method to repeatedly attempt updates 
+	        by contacting TCPServers.
 	        */
 	      {
 	  			appLogger.info("run() beginning.");
-		  		EpiThread.interruptableSleepB(4000); ///dbg delay to organize log.
+		  		EpiThread.interruptableSleepB(Config.tcpClientRunDelayMsL);
+	  			appLogger.info("run() delay done.");
 
 		  		updateTCPCopyStagingAreaV();
 	      	PersistentCursor thePersistentCursor= 
@@ -114,7 +125,7 @@ public class TCPCopier
 	        If an app file can be updated then it will be updated.
 	        It does this in a way that it is impossible for rogue nodes
 	        to cause the hogging of resources.
-	        It initially looks a new connected peer
+	        It initially looks for a new connected peer
 	        and tries to do updates with it first.
 	        This is to reduce the debug cycle time.
 	        Later new peers and saved peers are given approximately equal weight.
@@ -135,11 +146,14 @@ public class TCPCopier
 		    	while ( ! EpiThread.exitingB() ) // Repeat until exit requested.
 		    		{ // Try one update.
 			        try {  // Pause a while, but resume if an input arrives.
-			    			tryExchangingFilesWithServerFromQueueB(
-			    					8000 // 8 second maximum delay.
-			    					); // This also serves and the main loop delay.
-			    			tryExchangingFilesWithNextSavedServerV(thePersistentCursor);
-			          }
+			    			appLogger.info("interactWithTCPServersV(..) try begin.");
+								tryExchangingFilesWithServerFromQueueB(
+										Config.tcpClientMaxPeriodMsL
+										); // This also serves as the main loop delay.
+								appLogger.info("interactWithTCPServersV(..) try middle.");
+				    			tryExchangingFilesWithNextSavedServerV(thePersistentCursor);
+				    		appLogger.info("interactWithTCPServersV(..) try end.");
+					    	}
 			        catch (InterruptedException e) { // Handling thread interrupt.
 			          Thread.currentThread().interrupt(); // Reestablish it.
 			          }
@@ -179,6 +193,8 @@ public class TCPCopier
 							///fix Add to saved peers.
 							}
 				  return gotPeerB;
+				  ////wait(maxWaitMSL);
+					////return false;
 					}
 
 	    public synchronized void reportPeerConnectionV( 
@@ -186,32 +202,30 @@ public class TCPCopier
 	      /* This method adds remoteIPAndPort to the peer queue.
 	        This is a way to learn about new peers which might be used as
 	        sources or destinations of software updates.
-
-	        ///org Maybe add Unicaster instead of IPAndPort?
 	       	*/
 		    {
-	    		////////////// peerQueueOfIPAndPort.add(remoteIPAndPort); // Add peer to queue.
-			    notify(); // Wake up the client thread.
+	    		////// peerQueueOfIPAndPort.add(remoteIPAndPort); // Add peer to queue.
+			    ////notify(); // Wake up the client thread.
 			    }
 
 	    public synchronized IPAndPort waitForPeerIPAndPort(long maxWaitMSL)
 	        throws InterruptedException
-	      /* This method tests whether a peer is available.
+	      /* This method tests whether a peer 
+	        is available in new connections queue.
 	        Returns the next peer as soon as it is available,
 	        but doesn't remove it from the queue.
 	        If no peer is available for a maximum of maxWaitMSL,
 	        then it returns null.
 	        It also returns null if a spurious wake up or an interrupt happens
 	        before a peer becomes available.
-
-	        ///org Maybe add Unicaster instead of IPAndPort?
 	       	*/
 		    {
 	        if (peerQueueOfIPAndPort.peek() == null) // Wait if peer not ready. 
 		        { if ( maxWaitMSL == 0 ) // Wait appropriate amount of time.  
 			        		;// Don't wait at all if max wait is 0.
 			        		else
-			        		wait( maxWaitMSL );
+			        		wait( maxWaitMSL ); // Wait for time, notification, 
+		        				// or interrupt.
 		        	}
 	    		return peerQueueOfIPAndPort.peek();
 			    }
@@ -246,9 +260,11 @@ public class TCPCopier
 			    */
 				{
 					appLogger.debug(
-							"tryExchangingFilesWithServerV() synchronized (clientLockObject)");
-	        ////synchronized (clientLockObject) 
+							"tryExchangingFilesWithServerV() before synchronized block.");
+					synchronized (clientLockObject) 
 					 { 
+						appLogger.debug(
+								"tryExchangingFilesWithServerV() begin synchronized block.");
 		      	Socket clientSocket = null;
 						File clientFile= 
 								Config.makeRelativeToAppFolderFile( clientFileString );
@@ -276,7 +292,11 @@ public class TCPCopier
 					  	} finally {
 							  Closeables.closeWithErrorLoggingB(clientSocket);
 							}
-	        	} // synchronized (clientLockObject) 
+						appLogger.debug(
+								"tryExchangingFilesWithServerV() end synchronized block.");
+					 	} // synchronized (clientLockObject) 
+					appLogger.debug(
+							"tryExchangingFilesWithServerV() after synchronized block.");
 					}
 	
 		} // TCPClient
@@ -303,7 +323,8 @@ public class TCPCopier
 		    		( ! EpiThread.exitingB() ) 
 			    	{ 
 			    		serviceOneRequestFromClientV();
-			    	  EpiThread.interruptableSleepB(4000); // Sleep to prevent hogging.
+			    	  EpiThread.interruptableSleepB(4000); 
+			    	    // Sleep to prevent [malicious] hogging.
 			    		} // while...
 	      	////appLogger.restoreConsoleModeV( oldConsoleModeB );
 		    	}
@@ -322,9 +343,17 @@ public class TCPCopier
 			    		///dbg appLogger.info("run() trying ServerSocket.accept().");
 			        serverSocket = serverServerSocket.accept();
 							appLogger.debug(
-									"serviceOneRequestFromClientV() synchronized (serverLockObject)");
-							////synchronized (serverLockObject) 
-			        	{ processServerConnectionV(serverSocket); } 
+									"serviceOneRequestFromClientV() before synchronized block.");
+							synchronized (serverLockObject) 
+			        	{ 
+									appLogger.debug(
+										"serviceOneRequestFromClientV() begin synchronized block.");
+									processServerConnectionV(serverSocket); 
+									appLogger.debug(
+											"serviceOneRequestFromClientV() end synchronized block.");
+									} 
+							appLogger.debug(
+										"serviceOneRequestFromClientV() after synchronized block.");
 			        //// serverLockObject.lock();
 						   //// try { processServerConnectionV(serverSocket); } 
 						   //// 	finally { serverLockObject.unlock(); }

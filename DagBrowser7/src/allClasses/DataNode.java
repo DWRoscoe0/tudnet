@@ -72,7 +72,7 @@ public class DataNode
 		      STRUCTURE_CHANGED is interpreted as a need to reevaluate
 		      and display the entire subtree that contains it.
 		      
-		      //// To better match the way caches are invalidated,
+		      ///org To better match the way caches are invalidated,
 		      theChaneFlag field should probably be converted into two fields:
 		      * a field to indicate subtree changes
 		      * a field to indicate structure changes
@@ -80,7 +80,7 @@ public class DataNode
 		      are associated with value invalidation.
 		      NONE is associated with value invalidation.
 		      
-		      //// A more scalable solution would be 
+		      ///org A more scalable solution would be 
 		      to not propagate general changes 
 		      which might cause a GUI appearance change,
 		      but propagate node field change dependencies between nodes,
@@ -101,7 +101,7 @@ public class DataNode
 			  													// Requires child checking and change events.
 
 			  	///opt Other values for possible later optimizations.  Unused.
-			  	/*   ////
+			  	/*   ///opt
 			  	INSERTED,			// this node or subtree has been inserted
 			  	INSERTED_DESCENDANTS,		// one or more children have been inserted
 			  	CHANGED,
@@ -109,7 +109,7 @@ public class DataNode
 			  	NODE,					// this node changed
 			  	CHILDREN,			// one or more of this node's children
 			  	REMOVALS,			// one or more children have been removed
-			  	*/  ////
+			  	*/  ///opt
 					}
 		  
 			protected NamedList parentNamedList= null; // My parent node.

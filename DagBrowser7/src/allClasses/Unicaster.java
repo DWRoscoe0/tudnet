@@ -1,12 +1,11 @@
 package allClasses;
 
 import java.io.IOException;
-////import java.net.DatagramPacket;
 import java.util.Timer;
 
 import static allClasses.Globals.appLogger;
 
-//// import allClasses.AppLog.LogLevel;
+import allClasses.AppLog.LogLevel;
 import allClasses.LockAndSignal.Input;
 
 public class Unicaster
@@ -59,7 +58,6 @@ public class Unicaster
       // Injected dependency instance variables
       private final UnicasterManager theUnicasterManager;
       private final SubcasterManager theSubcasterManager;
-      ////private final SubcasterQueue subcasterToUnicasterSubcasterQueue;
       private final TCPCopier.TCPClient theTCPClient;
       private final Timer theTimer;
   		
@@ -104,8 +102,6 @@ public class Unicaster
 	      // Storing injected dependency arguments not stored in superclass.
 				  this.theUnicasterManager= theUnicasterManager;
 				  this.theSubcasterManager= theSubcasterManager;
-				  ////this.subcasterToUnicasterSubcasterQueue= 
-				  ////		subcasterToUnicasterSubcasterQueue;
 				  this.theTCPClient= theTCPClient;
 		  		this.theTimer= theTimer;
 	      }
@@ -143,12 +139,14 @@ public class Unicaster
   				} // Create and add actual sub-states.
 
 	  	  addAtEndB( theSubcasterManager );
-	    	}
+	  	  
+	  	  propagateIntoSubtreeB( LogLevel.TRACE ); ///dbg /// tmp
+	  	  }
 
     protected void finalizingV() throws IOException
 	    // This is the opposite of initilizingV().
 	    {
-	    	//// theMultiMachineState.finalizeV();
+	    	///elim theMultiMachineState.finalizeV();
 	    	theEpiOutputStreamO.close(); // Closing output stream.
 	    	}
 
@@ -161,8 +159,11 @@ public class Unicaster
       {
     		appLogger.info("run() begins.");
         try { // Operations that might produce an IOException.
+        		appLogger.info("run() initializing root state machine.");
 	          initializeWithIOExceptionV();
-	          doOnEntryV(); // Simulate an actual state entry. 
+	      		appLogger.info("run() init done, activating root state machine.");
+	          doOnEntryV(); // Recursively activate all states that should be. 
+        		appLogger.info("run() machine activated, doing first display.");
 	      		theDataTreeModel.displayTreeModelChangesV(); // Display our arrival.
 
 	      	  runLoop(); // Do actual input processing in a loop.
@@ -187,11 +188,12 @@ public class Unicaster
 		    until it receives a signal to exit.
 		    */
 			{
+	  		appLogger.warning("runLoop() begins.");
 		    processUntilTerminated: while (true) {
 			    processAllAvailableInput: while (true) {
 			    	while (doOnInputsB()) ; // Process inputs in this state-machine.
 			    	  // This will also start the state machine timers the first time.
-			    	if ( getDiscreteInputString() != null ) { ////dbg
+			    	if ( getDiscreteInputString() != null ) { ///dbg
 			  			appLogger.warning("runLoop() unconsumed input= "+getDiscreteInputString());
 			  			resetDiscreteInputV();  // consume it.
 			  			///fix  Legitimate input is sometimes not consumed!  Fix.
@@ -215,7 +217,7 @@ public class Unicaster
 	      	}
 				}
 	  
-    public void onInputsForLeafStatesV() throws IOException
+    public boolean onInputsV() throws IOException
       /* This method does, or will do itself, or will delegate to Subcasters, 
         all protocols of a Unicaster.  This might include:
         * Doing full PING-REPLY protocol by letting a Subcaster do it, 
@@ -226,7 +228,6 @@ public class Unicaster
         * Connection/Hello handshake state machine cycling.
         */
 	    { 
-	    	////appLogger.info( "Unicaster.onInputsV() starting." );
 	    	process: {
 		    	if ( super.orStateOnInputsB() ) // Try processing by sub-states first. 
 		    		break process;
@@ -244,7 +245,7 @@ public class Unicaster
   	    			+ eventMessageString 
   	    			);
 	    		} // process:
-	    	////appLogger.info( "Unicaster.onInputsV() ending." );
+        return false;
 				}
 
     public String getValueString( )

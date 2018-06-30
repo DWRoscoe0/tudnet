@@ -15,10 +15,24 @@ public class Config
    	*/
 
   {
+	
+		/* Startup behavior. */
+		
+	    /* The following are used to delay some activities, most at startup.
+	      Their purpose might be for debugging or controlling the organization
+	      of the beginning of the app's log file. */
+				public static final int localUpdateDelaySI=0;
+				public static final int tcpUpdateDelaySI= 30;
+				public static final long tcpClientRunDelayMsL=4*1000; //delay logging.
+				
+		  /* Log file.  */
+				public static final boolean clearLogFileB= true;
   
 		// Delays, for adjustments and slowing the entire app for debugging.
 		///enh Add additive and multiplicative adjustments for debugging.
-	
+
+		public static final long tcpClientMaxPeriodMsL= 8000;
+				
 		public static final long maxTimeOut5000MsL= 5000;
 		public static final long handshakePause5000MsL= 5000;
 		public static final long fileCopyRetryPause1000MsL= 1000;
@@ -54,7 +68,7 @@ public class Config
 
 		public static final File userAppJarFile;
 
-
+				
 	  static { // static run-time initialization.
 	    String homeFolderPathString= System.getProperty("user.home");
 	    userAppFolderFile= 

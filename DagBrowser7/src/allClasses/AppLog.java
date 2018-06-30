@@ -120,7 +120,7 @@ public class AppLog extends EpiThread
 	    	TRACE
 	  		}	
 
-    	public static final LogLevel defaultMaxLogLevel= INFO; // DEBUG; // INFO;
+    	public static final LogLevel defaultMaxLogLevel= DEBUG; // INFO;
     	private static LogLevel maxLogLevel= defaultMaxLogLevel;
     	  // The app may create and use their own maximum variables,
     	  // or set this variable and call methods which use it.
@@ -240,7 +240,8 @@ public class AppLog extends EpiThread
         ?? This method is messy and long.  Fix.
         */
       { 
-        //logFile.delete(); // DO THIS TO CLEAR LOG AND RESET SESSION COUNT!
+    	  if (Config.clearLogFileB)
+    	  	logFile.delete(); // DO THIS TO CLEAR LOG AND RESET SESSION COUNT!
         
         File sessionFile=  // Identify session file name.
         		Config.makeRelativeToAppFolderFile( "session.txt" );

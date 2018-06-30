@@ -5,8 +5,6 @@ import static allClasses.Globals.appLogger;
 import java.io.IOException;
 import java.util.Timer;
 
-import allClasses.AppLog.LogLevel;
-
 public class LinkedMachineState
 
 	extends OrState
@@ -83,12 +81,12 @@ public class LinkedMachineState
 			  				this
 			  				);
 
-	  	  /*  ////
+	  	  /*  ///dbg
 	  	  { ///dbg ///tmp adjust logging for debugging.
 					propagateIntoSubtreeB( LogLevel.TRACE );
 					theConnectedState.propagateIntoDescendantsV(LogLevel.INFO);
 		  	  }
-	  	  */  ////
+	  	  */  ///dbg
 
 	  	  return this;
 			  }
@@ -107,6 +105,8 @@ public class LinkedMachineState
   			appLogger.warning( "LinkedMachineState.onEntryV() state being used." );
 			  retryTimeOutMsL=   // Initializing retry time-out.
 			  		retransmitDelayMsNamedLong.getValueL();
+
+			  super.onEntryV();
 				}
 
 	  public boolean onInputsB() throws IOException 
@@ -219,7 +219,7 @@ public class LinkedMachineState
 						  ( StateList theStateList : theLinkedStateLists ) 
 							{ 
 								addStateListV(theStateList); // Add it as sub-state.
-								theStateList.propagateIntoSubtreeB( LogLevel.INFO ); ///dbg /// tmp
+								///dbg theStateList.propagateIntoSubtreeB( LogLevel.INFO ); ///dbg /// tmp
 								}
 						
 						return this;
@@ -235,7 +235,9 @@ public class LinkedMachineState
 		  	  {
 	    			IPAndPort remoteIPAndPort= theUnicaster.getKeyK();
 		    		theTCPClient.reportPeerConnectionV(remoteIPAndPort);
-		    		}
+
+		  	  	super.onEntryV();
+		  	  	}
 
 			  public boolean onInputsB() throws IOException
 			  	/* This method sends HELLO messages 

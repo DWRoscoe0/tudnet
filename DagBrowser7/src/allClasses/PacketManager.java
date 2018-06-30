@@ -5,8 +5,6 @@ import static allClasses.Globals.*;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 
-////import static allClasses.AppLog.LogLevel.*;
-
 public abstract class PacketManager< 
     K, // Key.
     E extends KeyedPacket<K> // Packets it manages. 
@@ -148,7 +146,7 @@ public abstract class PacketManager<
 		  {
 		    String resultString= sentB ? "  to " : "from ";
 	    	resultString+= gettingPacketAddressString(theDatagramPacket);
-	    	resultString+= sentB ? " went " : " came ";
+	    	resultString+= sentB ? " send " : " recv ";
 	    	resultString+= new String(
 		          theDatagramPacket.getData()
 		          ,theDatagramPacket.getOffset()
