@@ -5,7 +5,7 @@ import java.util.Timer;
 
 import static allClasses.Globals.appLogger;
 
-import allClasses.AppLog.LogLevel;
+//// import allClasses.AppLog.LogLevel;
 import allClasses.LockAndSignal.Input;
 
 public class Unicaster
@@ -140,7 +140,7 @@ public class Unicaster
 
 	  	  addAtEndB( theSubcasterManager );
 	  	  
-	  	  propagateIntoSubtreeB( LogLevel.TRACE ); ///dbg /// tmp
+	  	  // propagateIntoSubtreeB( LogLevel.TRACE ); ///dbg /// tmp
 	  	  }
 
     protected void finalizingV() throws IOException
@@ -188,7 +188,7 @@ public class Unicaster
 		    until it receives a signal to exit.
 		    */
 			{
-	  		appLogger.warning("runLoop() begins.");
+	  		appLogger.info("runLoop() begins.");
 		    processUntilTerminated: while (true) {
 			    processAllAvailableInput: while (true) {
 			    	while (doOnInputsB()) ; // Process inputs in this state-machine.

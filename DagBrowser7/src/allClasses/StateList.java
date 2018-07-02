@@ -813,6 +813,7 @@ public class StateList extends MutableList implements Runnable {
 					(testString.equals(discreteInputString));
 		  if (successB) // Consuming stored input if it matched.
 			  {
+		  	  /*  ///dbg
 					if ( logB(DEBUG)) logV( 
 							DEBUG,
 							"StateList.tryInputB(..), \""
@@ -820,6 +821,7 @@ public class StateList extends MutableList implements Runnable {
 			  			+ "\" consumed by"
 			  			+ getFormattedStatePathString()
 			  			);
+			    */  ///dbg
 			  	discreteInputString= null;
 			  	}
 			return successB; // Returning result of the comparison.
@@ -912,9 +914,9 @@ public class StateList extends MutableList implements Runnable {
 	    a non-Timer thread.
 	    */
 		{
-			appLogger.debug(
-  			"StateList.run() beginning of Timer tick to"
-  			+ getFormattedStatePathString() );
+			// appLogger.debug(  ///dbg
+  		//	"StateList.run() beginning of Timer tick to"
+  		//	+ getFormattedStatePathString() );
 			try { 
 				doOnInputsB(); // Try to process timer event with handler. 
 				}
@@ -923,8 +925,8 @@ public class StateList extends MutableList implements Runnable {
 		    		theIOException
 		    		); 
 		    }
-			appLogger.debug(
-	  			"StateList.run() end of Timer tick to"+ getFormattedStatePathString() );
+			// appLogger.debug( ///dbg
+	  	//		"StateList.run() end of Timer tick to"+ getFormattedStatePathString() );
 		}
 
 

@@ -26,13 +26,15 @@ public class PersistentCursor
 
 	{
 		private final Persistent thePersistent;
-		
-		private String listNameString= null;
-		private String listEntryPrefixString= null;
-		private String listFirstKeyString= null; 
-		private String listScanKeyString= null;
-		private String listScanValueString= null;
-		
+
+		private final String EMPTY_STRING= "";
+
+		private String listNameString= EMPTY_STRING;
+		private String listEntryPrefixString= EMPTY_STRING;
+		private String listFirstKeyString= EMPTY_STRING;
+		private String listScanKeyString= EMPTY_STRING;
+		private String listScanValueString= EMPTY_STRING;
+
 		public PersistentCursor( Persistent thePersistent ) // constructor
 			{
 				this.thePersistent= thePersistent;
@@ -67,7 +69,6 @@ public class PersistentCursor
 		    The list name must have been set already.
 		   */
 			{
-			  if (listEntryNameString == null) listEntryNameString= "";
 				if (listEntryNameString.isEmpty())
 						listEntryPrefixString= null;
 					else
@@ -79,7 +80,7 @@ public class PersistentCursor
 		public String nextString()
 		  // Advances the piterator and returns the name of the next element.
 			{
-			  if ( getEntryIDNameString() == null)
+			  if ( getEntryIDNameString().isEmpty() )
 			  		setPiteratorKeyV( listFirstKeyString ); // Point to first element.
 			  	else
 			  		setPiteratorKeyV( // Point to next element.

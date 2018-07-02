@@ -279,12 +279,13 @@ class GUIBuilderStarter // This EDT-Runnable starts GUI.
         theJFrame.pack();  // Layout all the content's sub-panels.
         theJFrame.setLocationRelativeTo(null);  // Center JFrame on screen.
         theJFrame.setDefaultCloseOperation( // Set the close operation to be
-          JFrame.DO_NOTHING_ON_CLOSE // nothing, so listener can handle. 
+          JFrame.DO_NOTHING_ON_CLOSE // nothing, so listener can handle it all. 
           );
-        theJFrame.addWindowListener( // Set Listener to handle close.
+        theJFrame.addWindowListener( // Set Listener to handle close events
           new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
-              appLogger.info("windowClosing(..), will request shutdown.");
+              appLogger.info(
+             		"windowClosing(..) ======== REQUESTING APP SHUTDOWN =========");
               theShutdowner.requestAppShutdownV();
               }
           	});
@@ -298,7 +299,7 @@ class GUIBuilderStarter // This EDT-Runnable starts GUI.
             {  
               theDagBrowserPanel.restoreFocusV(); // Setting initial focus.
               }  
-          }); /* Done way because in Java 8 
+          }); /* Done this way because in Java 8 
             Compoent.requestFocusInWindow() will cause 
             NullPointerException before the first dispatched message.
             */

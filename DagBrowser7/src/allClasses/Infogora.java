@@ -108,6 +108,16 @@ class Infogora  // The root of this app.
 	
 				See the AppFactory for information about 
 				this app's high-level structure.
+	      
+	      At the end of this method, 
+	      this thread should be the only non-daemon running.
+	      When it returns, it should trigger a JVM shutdown,
+	      unless a JVM shutdown was triggered already, and terminate the app.
+	      Unfortunately the app doesn't terminate, 
+	      so we call exit(0) to terminate.
+	      ///fix so exit() doesn't need to be called.
+	        As first step, list all remaining active ,,threads.
+
 			  */
       { // main(..)
 	      appLogger.setBufferedModeV( true ); // Enabling buffered logging.
@@ -121,12 +131,6 @@ class Infogora  // The root of this app.
 	      App theApp=  // Getting the App from the factory.
       		theAppFactory.getApp();
 	      theApp.runV();  // Running the app until it finishes.
-	      
-	      // At this point, this thread should be the only non-daemon running.
-	      // When it ends, it should trigger a JVM shutdown,
-	      // unless a JVM shutdown was triggered already, and terminate the app.
-	      // Unfortunately the app doesn't terminate, so we call exit(0) below.
-	      ///fix so exit() doesn't need to be called.
 
 	      appLogger.info("Infogora.main() calling exit(0).");
     		appLogger.setBufferedModeV( false ); // Disabling buffered logging.

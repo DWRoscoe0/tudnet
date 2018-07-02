@@ -102,7 +102,7 @@ public class LinkedMachineState
   	public void onEntryV() throws IOException
 		  { 
   			//elim propagateIntoSubtreeV( AppLog.LogLevel.TRACE );
-  			appLogger.warning( "LinkedMachineState.onEntryV() state being used." );
+  			///dbg appLogger.warning( "LinkedMachineState.onEntryV() state being used." );
 			  retryTimeOutMsL=   // Initializing retry time-out.
 			  		retransmitDelayMsNamedLong.getValueL();
 
@@ -339,10 +339,10 @@ public class LinkedMachineState
   	    from state subStateList, and logs that it has done so.
   	    */
 	  	{
-		    appLogger.debug( 
-		    		"LinkedMachineState.sendHelloV(..) sending HELLO from"
-		  			+ subStateList.getFormattedStatePathString()
-		  			);
+		    //// appLogger.debug( ///dbg 
+				//// 		"LinkedMachineState.sendHelloV(..) sending HELLO from"
+				//// 			+ subStateList.getFormattedStatePathString()
+				//// 		);
 		    theNetcasterOutputStream.writingTerminatedStringV( "HELLO" );
 		    theNetcasterOutputStream.writingTerminatedStringV( 
 						theUnicaster.getKeyK().getInetAddress().getHostAddress() 
