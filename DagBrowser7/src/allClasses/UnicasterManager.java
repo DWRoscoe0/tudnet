@@ -2,6 +2,7 @@ package allClasses;
 
 import static allClasses.Globals.appLogger;
 
+import java.io.IOException;
 import java.net.DatagramPacket;
 
 public class UnicasterManager
@@ -122,6 +123,7 @@ public class UnicasterManager
         It should be called only if the Unicaster does not exist.
         Is not synchronized because it is called only from 
         other synchronized local methods.
+        addingV(..) to tree is done last because it could trigger display.
         */
 	    { 
     	  appLogger.info( "Creating new Unicaster." );
@@ -130,11 +132,17 @@ public class UnicasterManager
     	  				peerIPAndPort, theTCPClient );
 	      final UnicasterValue resultUnicasterValue=  // Getting the Unicaster. 
 	      	theUnicasterFactory.getUnicasterValue();
-	      addingV( // Adding new Unicaster to data structures.
-	          peerIPAndPort, resultUnicasterValue
-	          );
 	      resultUnicasterValue.getEpiThread().startV(); // Start its thread.
-	      return resultUnicasterValue.getDataNodeD();
+	      Unicaster theUnicaster= resultUnicasterValue.getDataNodeD(); 
+    		appLogger.info("run() initializing root state machine.");
+        try { // Operations that might produce an IOException.
+      			theUnicaster.initializeWithIOExceptionV();
+        	} catch( IOException e ) {
+        		Globals.logAndRethrowAsRuntimeExceptionV( "run() IOException", e );
+          }
+	      addingV( // Adding the new Unicaster to data structures.
+	          peerIPAndPort, resultUnicasterValue );
+	      return theUnicaster;
 	      }
 
     public String getValueString( )

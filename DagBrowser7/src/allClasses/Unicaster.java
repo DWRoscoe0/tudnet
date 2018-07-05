@@ -159,9 +159,7 @@ public class Unicaster
       {
     		appLogger.info("run() begins.");
         try { // Operations that might produce an IOException.
-        		appLogger.info("run() initializing root state machine.");
-	          initializeWithIOExceptionV();
-	      		appLogger.info("run() init done, activating root state machine.");
+	      		appLogger.info("run() activating root state machine.");
 	          doOnEntryV(); // Recursively activate all states that should be. 
         		appLogger.info("run() machine activated, doing first display.");
 	      		theDataTreeModel.displayTreeModelChangesV(); // Display our arrival.

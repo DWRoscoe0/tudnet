@@ -277,7 +277,7 @@ public class ConnectionManager
 		      unconnectedDatagramSocket.setReuseAddress(true);
 		      unconnectedDatagramSocket.bind( // Binding socket to...
 		      	AppGUIFactory.makeInetSocketAddress(
-		          thePortManager.getLocalPortI()  // ...app's local port.
+		          thePortManager.getNormalPortI()  // ...app's local port.
 		          ) // Note, the IP is not defined.
 		        );
 		      }

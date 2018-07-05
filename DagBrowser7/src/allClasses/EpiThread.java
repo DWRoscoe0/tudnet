@@ -129,6 +129,8 @@ public class EpiThread
         causing the current thread to sleep for msI milliseconds,
         except that it does not throw an InterruptedException 
         if it was interrupted while sleeping.
+        Also if msL is less than 0 it returns immediately
+        instead of producing an illegal argument exception.
         Instead, if that happens then the method returns immediately with
         the thread's interrupt status set and the sleep delay incomplete.
         The interrupt status can be sensed and processed by the caller.
@@ -140,7 +142,8 @@ public class EpiThread
     	  boolean interruptedB= false;
     	  
         try {
-          Thread.sleep( msL ); // Try to sleep for desired time.
+        	if ( msL >= 0 ) // Skip if less than 0.
+        		Thread.sleep( msL ); // Try to sleep for desired time.
           } 
         catch( InterruptedException ex ) { // Handling interruption.
           Thread.currentThread().interrupt(); // Reestablish interrupted.
@@ -153,7 +156,7 @@ public class EpiThread
     public static boolean uninterruptableSleepB( long msL )
       /* This method works exactly like interruptableSleepB(..)
         except instead of returning immediately 
-        if sleep is sleep is interrupted, it sleeps again, 
+        if sleep is interrupted, it sleeps again, 
         repeatedly if needed, until the thread has slept the full delay of msL.
         Because this can delay a thread for long periods of time,
         it should only be used for debugging and testing

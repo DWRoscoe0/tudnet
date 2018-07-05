@@ -32,15 +32,20 @@ public class PortManager {
   public int getDiscoveryPortI()
     /* Get port to be used for peer discoveries.  
       This same port will be used as:
-      * TCP port for discovering other local running app instances.
-      * UDP multicast port for discovering remote/peer running app instances.
-     */
+      * TCP for local peer app discovery.
+        * server local port, for incoming path strings from updater app.
+        * client remote port, for sending paths of local updater app.
+      * UDP multicast for remote peer app discovery using
+        DISCOVERY query packets and ALIVE response packets.
+        The server port is this discovery port.
+        The client port is the local port.
+s     */
     {
       return 44444;
       }
   
-  public int getLocalPortI()
-    /* This method returns a value to be used as this node's local port.
+  public int getNormalPortI()
+    /* This method returns a value to be used as this node's normal local port.
       First it tries reading a previously stored value.
       If that fails then it generates a new value and stores it for later.
       The value is generated randomly in the interval 32768 to 65535.
@@ -54,29 +59,30 @@ public class PortManager {
       other services on the network if it is behind a firewall.
       In these cases a new port might need to be generated. 
       */
-    {
-	  	  int localPortI= 0;
+    {  
+	  	  int NormalPortI= 0;
    	  toReturnValue: {
   	 	toGenerateNewValue: {
 		    String localPortString= 
-		    		thePersistent.getDefaultingToBlankString("LocalPort");
+		    		thePersistent.getDefaultingToBlankString("NormalPort");
 		    if ( localPortString.isEmpty() ) break toGenerateNewValue; 
 	      try { 
-	  	    localPortI= Integer.parseInt( localPortString );
+	  	    NormalPortI= Integer.parseInt( localPortString );
 	      	}
 	      catch ( NumberFormatException theNumberFormatException ) {
 	        appLogger.error(
-	        		"getLocalPortI() corrupted port property="+localPortString);
+	        		"getNormalPortI() corrupted port property="+localPortString);
 	      	break toGenerateNewValue;
 	      	}
-        appLogger.info("getLocalPortI() reusing port="+localPortI);
+        appLogger.info("getNormalPortI() reusing port: "+NormalPortI);
       	break toReturnValue;
 	  	} // toGenerateNewValue:
-	  	  localPortI= (int)(System.currentTimeMillis()) & 32767 | 32768;
-        appLogger.info("getLocalPortI() generated new random port="+localPortI);
-    		thePersistent.putV("LocalPort", ""+localPortI); // Save it.
+	  	  NormalPortI= (int)(System.currentTimeMillis()) & 32767 | 32768;
+        appLogger.info(
+        		"getNormalPortI() generated new random port: "+NormalPortI);
+    		thePersistent.putV("NormalPort", ""+NormalPortI); // Make it persist.
 			} // toReturnValue:
-	  	  return localPortI;
+	  	  return NormalPortI;
       }
 
   }

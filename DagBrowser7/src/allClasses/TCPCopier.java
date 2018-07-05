@@ -48,8 +48,8 @@ public class TCPCopier
 
 	{
 
-		//private static final String testServerIPString = "127.0.0.1";
-	  private static final int testServerPortI = 11111;
+		//// private static final String testServerIPString = "127.0.0.1";
+	  //// private static final int testServerPortI = 11111;
 	  
 	  /* File name and path definitions.
 	    2 file names are used, one for the client and done for the server.
@@ -136,12 +136,7 @@ public class TCPCopier
 	        and tries to do updates with it first.
 	        This is to reduce the debug cycle time.
 	        Later new peers and saved peers are given approximately equal weight.
-	        
-	        ////// Update first, and immediately, from new recent connections.
 
-	        ////// When there are no new recent connections,
-	        update by scanning saved peer IDs.
-	        
 	        ///enh Eventually it needs to be very careful about always working,
 	        because it will be used as a backup update mechanism.
 	        Ideally it should respond quickly to a new connection,
@@ -150,16 +145,21 @@ public class TCPCopier
 	        Instead it will concentrate on saved peer IDs.
 				  */
 		    {
+	    		long targetMsL= System.currentTimeMillis(); // Getting now time.
 		    	while ( ! EpiThread.exitingB() ) // Repeat until exit requested.
 		    		{ // Try one update.
-			        try {  // Pause a while, but resume if an input arrives.
-			    			appLogger.info("interactWithTCPServersV(..) try begin.");
+		    			targetMsL+= Config.tcpClientPeriodMsL;
+		    				///fix Make this immune to skipped time.
+			        try {  // Wait for and process a queue entry up to period length.
+			    			appLogger.info("interactWithTCPServersV(..) from queued peers.");
 								tryExchangingFilesWithServerFromQueueB(
-										Config.tcpClientMaxPeriodMsL
+										targetMsL - System.currentTimeMillis()
 										); // This also serves as the main loop delay.
-								appLogger.info("interactWithTCPServersV(..) try middle.");
+								appLogger.info("interactWithTCPServersV(..) from saved peers.");
 				    			tryExchangingFilesWithNextSavedServerV(thePersistentCursor);
-				    		appLogger.info("interactWithTCPServersV(..) try end.");
+				    		appLogger.info("interactWithTCPServersV(..) wait remaing period.");
+				    		EpiThread.interruptableSleepB( // Wait any remainder of period. 
+				    				targetMsL - System.currentTimeMillis() );
 					    	}
 			        catch (InterruptedException e) { // Handling thread interrupt.
 			          Thread.currentThread().interrupt(); // Reestablish it.
@@ -185,6 +185,9 @@ public class TCPCopier
 	        throws InterruptedException
 			  /* Tries to exchange files with next server peer node 
 			    on the peer input queue.
+			    It will wait for a maximum of maxWaitMSL milliseconds.
+			    It returns true if it tried to process a peer from the queue,
+			    false otherwise.
 			   */
 				{
 				  IPAndPort theIPAndPort= waitForPeerIPAndPort( maxWaitMSL );
@@ -193,15 +196,14 @@ public class TCPCopier
 						{ // Try update.
 							appLogger.info(
 									"tryExchangingFilesWithServerFromQueueB() at "+theIPAndPort);
-							String serverIPString= theIPAndPort.getInetAddress().toString(); 
+							String serverIPString= 
+									 theIPAndPort.getInetAddress().getHostAddress(); 
 							String serverPortString= 
 									Integer.toString(theIPAndPort.getPortI());
 							tryExchangingFilesWithServerV(serverIPString, serverPortString);
 							///fix Add to saved peers.
 							}
 				  return gotPeerB;
-				  ////wait(maxWaitMSL);
-					////return false;
 					}
 
 	    public synchronized void reportPeerConnectionV( 
@@ -211,8 +213,9 @@ public class TCPCopier
 	        sources or destinations of software updates.
 	       	*/
 		    {
-	    		////// peerQueueOfIPAndPort.add(remoteIPAndPort); // Add peer to queue.
-			    ////notify(); // Wake up the client thread.
+					appLogger.debug( "reportPeerConnectionV(..): queuing peer." );
+	    		peerQueueOfIPAndPort.add(remoteIPAndPort); // Add peer to queue.
+			    notify(); // Wake up the TCPClient thread.
 			    }
 
 	    public synchronized IPAndPort waitForPeerIPAndPort(long maxWaitMSL)
@@ -225,16 +228,18 @@ public class TCPCopier
 	        then it returns null.
 	        It also returns null if a spurious wake up or an interrupt happens
 	        before a peer becomes available.
+	        ///fix  rewrite as loop?
 	       	*/
 		    {
-	        if (peerQueueOfIPAndPort.peek() == null) // Wait if peer not ready. 
+	    	  IPAndPort resultIPAndPort= peerQueueOfIPAndPort.peek();
+	        if ( resultIPAndPort == null) // Wait if peer not ready. 
 		        { if ( maxWaitMSL == 0 ) // Wait appropriate amount of time.  
 			        		;// Don't wait at all if max wait is 0.
 			        		else
 			        		wait( maxWaitMSL ); // Wait for time, notification, 
 		        				// or interrupt.
 		        	}
-	    		return peerQueueOfIPAndPort.peek();
+	    		return peerQueueOfIPAndPort.poll();
 			    }
 
 			private void tryExchangingFilesWithNextSavedServerV( 
@@ -265,41 +270,50 @@ public class TCPCopier
 	
 			private void tryExchangingFilesWithServerV(
 					String serverIPString, String serverPortString)
-			  /* Tries to exchange files with the peer node that is   
-			    at IPAddress serverIPString is listening on port serverPortString.
+			  /* Tries to exchange files with the peer node TCPServer 
+			    that might or might not be listening 
+			    at IPAddress serverIPString and at port serverPortString.
 			    */
 				{
 					synchronized (clientLockObject) { 
 						appLogger.debug(
 								"tryExchangingFilesWithServerV() begin synchronized block.");
+						appLogger.debug(
+								"tryExchangingFilesWithServerV()"
+								+ ", serverIPString= " + serverIPString
+								+ ", serverPortString= " + serverPortString);
 		      	Socket clientSocket = null;
 						File clientFile= 
 								Config.makeRelativeToAppFolderFile( clientFileString );
+						serverPortString= "11111"; ///dbg
 						int serverPortI= Integer.parseUnsignedInt( serverPortString );
 					 	InetSocketAddress theInetSocketAddress= null; 
 						try {
 							 	theInetSocketAddress= 
 									new InetSocketAddress( serverIPString, serverPortI );
+								appLogger.debug(
+										"tryExchangingFilesWithServerV() theInetSocketAddress= "
+										+ theInetSocketAddress);
 								clientSocket= new Socket();
 								appLogger.debug(
-										"tryExchangingFilesWithServerV() before connect to "
-										+ theInetSocketAddress);
+										"tryExchangingFilesWithServerV() before connect"
+										+ ",\n  clientSocket= " + clientSocket
+										+ ",\n  theInetSocketAddress= " + theInetSocketAddress);
 								clientSocket.connect(  // Connect with time-out.
 										theInetSocketAddress, Config.tcpConnectTimeoutMsI); 
 								appLogger.debug(
-										"tryExchangingFilesWithServerV() after connect to "
-										+ theInetSocketAddress);
+										"tryExchangingFilesWithServerV() after successful connect"
+										+ ",\n  clientSocket= " + clientSocket);
 					  		long clientFileLastModifiedL= clientFile.lastModified();
 					  		long resultL= tryTransferingFileL(
 					  			clientSocket, clientFile, clientFile, clientFileLastModifiedL );
 					  		if (resultL != 0)
 									appLogger.info( 
-											"tryExchangingFilesWithServerV() copied using "
-											+ clientSocket);
+											"tryExchangingFilesWithServerV() copied using"
+											+ "\n  clientSocket= " + clientSocket);
 					    } catch (IOException theIOException) {
 								appLogger.info(
-									"tryExchangingFilesWithServerV() using "
-									+ theInetSocketAddress, theIOException);
+									"tryExchangingFilesWithServerV() error "+ theIOException);
 					  	} finally {
 							  Closeables.closeWithErrorLoggingB(clientSocket);
 							}
@@ -313,10 +327,16 @@ public class TCPCopier
 		static class TCPServer extends EpiThread {
 		
 		  private File serverFile= null;
-	
-	    public TCPServer(String threadNameString) { // Constructor.
-				super(threadNameString);
-	    	}
+
+		  //// private final PortManager thePortManager; // External data.
+			
+	    public TCPServer( // Constructor.
+	  			String threadNameString )  ////, PortManager thePortManager) 
+		    {
+					super(threadNameString);
+		
+				  //// this.thePortManager= thePortManager;
+					}
 	
 	    public void run()
 		    /* This is the main method of the Server thread.
@@ -327,7 +347,6 @@ public class TCPCopier
 		  		appLogger.info("run() beginning.");
 		    	///dbg EpiThread.interruptableSleepB(5000); ///tmp Prevent initial error.
 		    	EpiThread.interruptableSleepB(2000); // Delay to organize log.
-	    		////boolean oldConsoleModeB= appLogger.getAndEnableConsoleModeB();
 		    	while  // Repeatedly service one client request. 
 		    		( ! EpiThread.exitingB() ) 
 			    	{ 
@@ -335,7 +354,6 @@ public class TCPCopier
 			    	  EpiThread.interruptableSleepB(4000); 
 			    	    // Sleep to prevent [malicious] hogging.
 			    		} // while...
-	      	////appLogger.restoreConsoleModeV( oldConsoleModeB );
 		    	}
 	
 			private void serviceOneRequestFromClientV()
@@ -348,7 +366,9 @@ public class TCPCopier
 			    ServerSocket serverServerSocket= null;
 			    Socket serverSocket= null;
 			  	try {
-			        serverServerSocket = new ServerSocket(testServerPortI);
+			        serverServerSocket= 
+			        		//// new ServerSocket(thePortManager.getNormalPortI());
+			        		new ServerSocket( 11111 );
 			    		appLogger.debug(
 			    				"serviceOneRequestFromClientV()() trying ServerSocket.accept() to "
 			    				+ serverServerSocket);
@@ -617,8 +637,8 @@ public class TCPCopier
 	  			  compareResultL= remoteLastModifiedL;
 	  			else if (compareResultL < 0 ) 
 	  			  compareResultL= -localLastModifiedL;
-	  		////if ( compareResultL != 0 ) // Log only if not 0.
-		  		appLogger.info( // Log result of comparison.
+	  			////if ( compareResultL != 0 ) // Log only if not 0.
+		  			appLogger.info( // Log result of comparison.
 		  				"exchangeAndCompareFileTimeStampsRemoteToLocalL() returning "
 		  				+ ( ( compareResultL == 0 )
 		  						? "0 meaning equal"
