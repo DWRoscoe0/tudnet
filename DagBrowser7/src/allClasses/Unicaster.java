@@ -108,6 +108,8 @@ public class Unicaster
 
     protected void initializeWithIOExceptionV() throws IOException
 	    {
+    		appLogger.debug("Unicsaster.initializeWithIOExceptionV() begins."); ///dbg
+
     		super.initializeWithoutStreamsV(); // Stream counts are added below in
     		  // one of the sub-state machines.
 
@@ -140,6 +142,7 @@ public class Unicaster
 
 	  	  addAtEndB( theSubcasterManager );
 	  	  
+    		appLogger.debug("Unicsaster.initializeWithIOExceptionV() ends."); ///dbg
 	  	  // propagateIntoSubtreeB( LogLevel.TRACE ); ///dbg /// tmp
 	  	  }
 

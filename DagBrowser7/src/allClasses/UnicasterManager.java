@@ -126,22 +126,27 @@ public class UnicasterManager
         addingV(..) to tree is done last because it could trigger display.
         */
 	    { 
-    	  appLogger.info( "Creating new Unicaster." );
+    	  appLogger.info( 
+    	  		"buildAddAndStartUnicaster(..) Creating new Unicaster." );
     	  UnicasterFactory theUnicasterFactory= 
     	  		theAppGUIFactory.makeUnicasterFactory( 
     	  				peerIPAndPort, theTCPClient );
 	      final UnicasterValue resultUnicasterValue=  // Getting the Unicaster. 
 	      	theUnicasterFactory.getUnicasterValue();
-	      resultUnicasterValue.getEpiThread().startV(); // Start its thread.
 	      Unicaster theUnicaster= resultUnicasterValue.getDataNodeD(); 
-    		appLogger.info("run() initializing root state machine.");
+    		appLogger.info(
+    				"buildAddAndStartUnicaster(..) initializing root state machine.");
         try { // Operations that might produce an IOException.
       			theUnicaster.initializeWithIOExceptionV();
         	} catch( IOException e ) {
-        		Globals.logAndRethrowAsRuntimeExceptionV( "run() IOException", e );
+        		appLogger.debug( ///dbg
+        				"buildAddAndStartUnicaster(..) IOException" + e );
+        		Globals.logAndRethrowAsRuntimeExceptionV( 
+        				"buildAddAndStartUnicaster(..) IOException", e );
           }
 	      addingV( // Adding the new Unicaster to data structures.
 	          peerIPAndPort, resultUnicasterValue );
+	      resultUnicasterValue.getEpiThread().startV(); // Start its thread.
 	      return theUnicaster;
 	      }
 

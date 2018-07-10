@@ -285,7 +285,7 @@ public class TCPCopier
 		      	Socket clientSocket = null;
 						File clientFile= 
 								Config.makeRelativeToAppFolderFile( clientFileString );
-						serverPortString= "11111"; ///dbg
+						//// serverPortString= "11111"; ///dbg
 						int serverPortI= Integer.parseUnsignedInt( serverPortString );
 					 	InetSocketAddress theInetSocketAddress= null; 
 						try {
@@ -332,14 +332,14 @@ public class TCPCopier
 		
 		  private File serverFile= null;
 
-		  //// private final PortManager thePortManager; // External data.
+		  private final PortManager thePortManager; // External data.
 			
 	    public TCPServer( // Constructor.
-	  			String threadNameString )  ////, PortManager thePortManager) 
+	  			String threadNameString, PortManager thePortManager) 
 		    {
 					super(threadNameString);
 		
-				  //// this.thePortManager= thePortManager;
+				  this.thePortManager= thePortManager;
 					}
 	
 	    public void run()
@@ -372,8 +372,8 @@ public class TCPCopier
 			    Socket serverSocket= null;
 			  	try {
 			        serverServerSocket= 
-			        		//// new ServerSocket(thePortManager.getNormalPortI());
-			        		new ServerSocket( 11111 );
+			        		new ServerSocket(thePortManager.getNormalPortI());
+			        		//// new ServerSocket( 11111 ); ///dbg
 			    		appLogger.debug(
 			    				"serviceOneRequestFromClientV()() trying ServerSocket.accept() to "
 			    				+ serverServerSocket);
