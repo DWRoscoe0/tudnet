@@ -31,8 +31,10 @@ public class Config
 
 	  /* TCPCopier parameters.  */
 		public static final int tcpUpdateDelaySI= 30;
-		public static final long tcpClientRunDelayMsL=4*1000; //delay logging.
+		public static final long tcpClientRunDelayMsL=4000; //delay logging.
 		public static final long tcpClientPeriodMsL= 8000;
+		public static final long tcpServerCyclePauseMsL= 4000;
+		public static final long tcpServerRunDelayMsL=10000;
  		public static final int tcpCopierTimeoutMsI= 5000;
  		public static final int tcpConnectTimeoutMsI= 5000;
 	  ///dbg public static final String tcpCopierInputFolderString= "TCPCopierTmp";

@@ -111,9 +111,9 @@ public class TCPCopier
 	        by contacting TCPServers.
 	        */
 	      {
-	  			appLogger.info("run() beginning.");
+	  			appLogger.info("run() client initial delay beginning.");
 		  		EpiThread.interruptableSleepB(Config.tcpClientRunDelayMsL);
-	  			appLogger.info("run() delay done.");
+	  			appLogger.info("run() client delay done.");
 
 		  		updateTCPCopyStagingAreaV();
 	      	PersistentCursor thePersistentCursor= 
@@ -222,8 +222,7 @@ public class TCPCopier
 	        throws InterruptedException
 	      /* This method tests whether a peer 
 	        is available in new connections queue.
-	        Returns the next peer as soon as it is available,
-	        but doesn't remove it from the queue.
+	        Returns the next peer as soon as it is available.
 	        If no peer is available for a maximum of maxWaitMSL,
 	        then it returns null.
 	        It also returns null if a spurious wake up or an interrupt happens
@@ -231,15 +230,19 @@ public class TCPCopier
 	        ///fix  rewrite as loop?
 	       	*/
 		    {
-	    	  IPAndPort resultIPAndPort= peerQueueOfIPAndPort.peek();
-	        if ( resultIPAndPort == null) // Wait if peer not ready. 
-		        { if ( maxWaitMSL == 0 ) // Wait appropriate amount of time.  
-			        		;// Don't wait at all if max wait is 0.
-			        		else
-			        		wait( maxWaitMSL ); // Wait for time, notification, 
-		        				// or interrupt.
-		        	}
-	    		return peerQueueOfIPAndPort.poll();
+	    	  long targetMsL= System.currentTimeMillis()+maxWaitMSL;
+	    	  IPAndPort resultIPAndPort;
+	    	  while (true)
+			    	{
+			    	  resultIPAndPort= peerQueueOfIPAndPort.poll();
+			        if ( resultIPAndPort != null) break; // Exit if got peer.
+			        long waitMsL= // Calculate remaining time to wait. 
+			        		targetMsL - System.currentTimeMillis();
+				      if ( waitMsL <= 0 ) break; // Exit if time limit reached.
+					    wait( waitMsL ); // Wait for time or notification, 
+				        				// Interrupt will cause exception.
+		    	  	}
+	    		return resultIPAndPort;
 			    }
 
 			private void tryExchangingFilesWithNextSavedServerV( 
@@ -275,9 +278,6 @@ public class TCPCopier
 			    at IPAddress serverIPString and at port serverPortString.
 			    */
 				{
-					synchronized (clientLockObject) { 
-						appLogger.debug(
-								"tryExchangingFilesWithServerV() begin synchronized block.");
 						appLogger.debug(
 								"tryExchangingFilesWithServerV()"
 								+ ", serverIPString= " + serverIPString
@@ -305,8 +305,15 @@ public class TCPCopier
 										"tryExchangingFilesWithServerV() after successful connect"
 										+ ",\n  clientSocket= " + clientSocket);
 					  		long clientFileLastModifiedL= clientFile.lastModified();
-					  		long resultL= tryTransferingFileL(
-					  			clientSocket, clientFile, clientFile, clientFileLastModifiedL );
+					  		long resultL;
+								synchronized (clientLockObject) { 
+									appLogger.debug(
+											"tryExchangingFilesWithServerV() begin synchronized block.");
+						  		resultL= tryTransferingFileL(
+						  			clientSocket, clientFile, clientFile, clientFileLastModifiedL );
+									appLogger.debug(
+											"tryExchangingFilesWithServerV() end synchronized block.");
+								 	} // synchronized (clientLockObject) 
 					  		if (resultL != 0)
 									appLogger.info( 
 											"tryExchangingFilesWithServerV() copied using"
@@ -317,9 +324,6 @@ public class TCPCopier
 					  	} finally {
 							  Closeables.closeWithErrorLoggingB(clientSocket);
 							}
-						appLogger.debug(
-								"tryExchangingFilesWithServerV() end synchronized block.");
-					 	} // synchronized (clientLockObject) 
 					}
 	
 		} // TCPClient
@@ -344,19 +348,20 @@ public class TCPCopier
 		      by executing the file update/exchange protocol.
 			    */
 		    {
-		  		appLogger.info("run() beginning.");
-		    	///dbg EpiThread.interruptableSleepB(5000); ///tmp Prevent initial error.
-		    	EpiThread.interruptableSleepB(2000); // Delay to organize log.
+		  		appLogger.info("run() initial delay begins.");
+		    	EpiThread.interruptableSleepB(  // Delay to organize log and to give
+		    			Config.tcpServerRunDelayMsL );  // connection advantage to client.
+		  		appLogger.info("run() delay done.");
 		    	while  // Repeatedly service one client request. 
 		    		( ! EpiThread.exitingB() ) 
 			    	{ 
-			    		serviceOneRequestFromClientV();
-			    	  EpiThread.interruptableSleepB(4000); 
+			    		serviceOneRequestFromAnyClientV();
+			    	  EpiThread.interruptableSleepB(Config.tcpServerCyclePauseMsL); 
 			    	    // Sleep to prevent [malicious] hogging.
 			    		} // while...
 		    	}
 	
-			private void serviceOneRequestFromClientV()
+			private void serviceOneRequestFromAnyClientV()
 			  /* This method waits for and processes one request from a client.
 			    This might result in a file being send to the client,
 			    a file being received from the client,
@@ -388,12 +393,15 @@ public class TCPCopier
 			    		appLogger.info( "serviceOneRequestFromClientV() using "
 			    				+serverServerSocket, ex );
 			      } finally {
+			    		appLogger.info( "serviceOneRequestFromClientV() closing begins.");
 			      	Closeables.closeWithErrorLoggingB(serverSocket);
 			      	Closeables.closeWithErrorLoggingB(serverServerSocket);
+			    		appLogger.info( "serviceOneRequestFromClientV() closing ends.");
 			        }
 					}
 
-      private void processServerConnectionV( Socket serverSocket) throws IOException
+      private void processServerConnectionV( Socket serverSocket) 
+      	throws IOException
 	      {
 		  		serverFile= // Calculating File name.
 		  				Config.makeRelativeToAppFolderFile( serverFileString );
@@ -460,10 +468,12 @@ public class TCPCopier
 						  } else { ; // Files are same age, so do nothing. 
 				  			appLogger.info("tryTransferingFileL(..) Files are same age.");
 						  }
-			    } catch (IOException ex) {
+						theSocket.shutdownOutput(); // Prevent reset at Socket close.
+				} catch (IOException ex) {
 			  		appLogger.info("tryTransferingFileL(..) aborted because of ",ex);
-			  		EpiThread.uninterruptableSleepB( // Delay up to 2 seconds.
-			  				theRandom.nextInt(2000));
+			  		EpiThread.uninterruptableSleepB( // Random delay of up to 2 seconds.
+			  				theRandom.nextInt(2000)); ///fix make interruptable.
+			  		appLogger.info("tryTransferingFileL(..) end of random delay.");
 			    } finally {
 			  		}
 		  	if (transferResultL != 0)
@@ -604,7 +614,8 @@ public class TCPCopier
 	      */
 		  throws IOException
 			{
-	  		appLogger.debug( "exchangeAndCompareFileTimeStampsRemoteToLocalL() begins.");
+	  		appLogger.debug( 
+	  				"exchangeAndCompareFileTimeStampsRemoteToLocalL() begins.");
 	  		long remoteLastModifiedL= 0; // Initial accumulator value.
 	  		{ // Send digits of local file time stamp and terminator to remote end.
 	  			TCPCopier.sendDigitsOfNumberV(socketOutputStream, localLastModifiedL);
@@ -612,7 +623,9 @@ public class TCPCopier
 		  		socketOutputStream.write( (byte)('#') );
 	  			socketOutputStream.flush();
 	  			}
-	  		appLogger.debug( "exchangeAndCompareFileTimeStampsRemoteToLocalL() after sending digits.");
+	  		appLogger.debug( 
+	  				"exchangeAndCompareFileTimeStampsRemoteToLocalL() "
+	  				+"after sending digits.");
 	  		{ // Receive and decode similar digits of remote file time stamp.
 	    		remoteLastModifiedL= 0;
 	    		int socketByteI= socketInputStream.read(); // Read first byte.
@@ -631,7 +644,8 @@ public class TCPCopier
 	      		socketByteI= socketInputStream.read(); // Read next byte.
 	      		}
 	  			}
-	  		appLogger.debug( "exchangeAndCompareFileTimeStampsRemoteToLocalL() after receiving digits.");
+	  		appLogger.debug( "exchangeAndCompareFileTimeStampsRemoteToLocalL() "
+	  				+"after receiving digits.");
 	  		long compareResultL= remoteLastModifiedL - localLastModifiedL;
 	  		if (compareResultL > 0 ) 
 	  			  compareResultL= remoteLastModifiedL;

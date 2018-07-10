@@ -2,6 +2,9 @@ package allClasses;
 
 import java.util.Arrays;
 import java.util.Iterator;
+
+import static allClasses.Globals.appLogger;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -237,5 +240,35 @@ public class NamedList
 		  {
 		    return theListOfDataNodes.iterator();
 		  	}
+
+	  
+	  ///dbg methods.
+	  
+  	protected void logNullDataTreeModelsV()  ///dbg
+  	  /* Recursively checks for null TreeModel in node and ancestors.
+  	   */
+  	  {
+  		  toReturn: {
+	  		  if (theDataTreeModel != null) {
+			  		appLogger.debug(
+			  				"checkForNullDataTreeModelV() theDataTreeModel != null in:\n"
+			  				+ this);
+	  		  	break toReturn;
+	  		  	}
+	  		  
+	  		  if ( parentNamedList == null ) { 
+			  		appLogger.debug(
+			  				"checkForNullDataTreeModelV() parentNamedList == null in:\n"
+			  				+ this);
+	  		  	break toReturn;
+		  		  }
+
+		  		appLogger.debug(
+		  				"checkForNullDataTreeModelV() "
+		  				+ "theDataTreeModel == null and  parentNamedList != null in:\n"
+		  				+ this);
+	  		  parentNamedList.logNullDataTreeModelsV(); // Recurs for ancestors.
+  				} // toReturn:
+  	  	}
 
     } // class NamedList

@@ -39,13 +39,15 @@ public class Closeables
       */
     {
   	  boolean errorOccurredB= false;
-  	  if (theCloseable == null)
-  	  	errorOccurredB= true;
-	  	  try { 
-		  	  	theCloseable.close(); 
-		  	  } catch (Exception theException) {
-		  	  	errorOccurredB= true;
-		  	  }
+  	  if (theCloseable == null) {
+	  	  	errorOccurredB= true;
+	  	  } else {
+		  	  try { 
+			  	  	theCloseable.close(); 
+			  	  } catch (Exception theException) {
+			  	  	errorOccurredB= true;
+			  	  }
+	  	  }
 	  	return errorOccurredB;
 	    }
 
@@ -60,6 +62,9 @@ public class Closeables
     {
   	  boolean errorOccurredB= false;
   	  if (theCloseable == null) {
+	  			appLogger.error(
+		  				"closeWithErrorLoggingB(..): null closeble resource pointer." 
+		  				);		  	  	
   	  		errorOccurredB= true;
   	  	} else {
 		  	  try { 

@@ -162,13 +162,15 @@ public class Unicaster
 	      		appLogger.info("run() activating root state machine.");
 	          doOnEntryV(); // Recursively activate all states that should be. 
         		appLogger.info("run() machine activated, doing first display.");
-	      		theDataTreeModel.displayTreeModelChangesV(); // Display our arrival.
+        		logNullDataTreeModelsV(); ///dbg
+        		theDataTreeModel.displayTreeModelChangesV(); // Display our arrival.
 
 	      	  runLoop(); // Do actual input processing in a loop.
 
 	      	  finalizingV();
 	  	    	theUnicasterManager.removingV( this ); // Removing self from tree.
 	      		appLogger.info("run() after remove and before final display.");
+	      		Nulls.fastFailNullCheckT(theDataTreeModel);
 	      		theDataTreeModel.displayTreeModelChangesV(); // Display removal.
           	}
           catch( IOException e ) {
