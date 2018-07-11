@@ -74,7 +74,6 @@ public class PersistentCursor
 					else
 						listEntryPrefixString=
 								listNameString+"/entries/"+listEntryNameString+"/";
-				Misc.noOp(); ///dbg
 				}
 
 		public String nextString()

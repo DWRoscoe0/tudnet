@@ -352,7 +352,7 @@ public class DataTreeModel
           Returns false if theTreePath was not already in the cache
             and could not be added because the first DataNode was not the root.
             
-          ///elim This might not be needed now that 
+          ///opt This might not be needed now that 
             searches from root are no longer done.
           */
       	{
@@ -477,9 +477,9 @@ public class DataTreeModel
           back to the root, then builds a TreePath in reverse from that.
           It is unable to reach the root of the tree then it returns null.
 
-          ///enh? This could be made more efficient by recursing using
+          ///opt? This could be made more efficient by recursing using
           translatingToTreePath(..) on the parent node, a simple expression.
-          ///elim This separate method might not be needed at all.
+          ///opt This separate method might not be needed at all.
             See its only caller, translatingToTreePath(..)
           */
         {
@@ -894,25 +894,27 @@ public class DataTreeModel
   	      	  the current thread not being the EDT or parentTreePath == null.
      	      */
           {
-  	      	if ( EDTUtilities.testAndLogIfNotRunningEDTB() ) return true; ///tmp
-  	      	if ( Nulls.testAndLogIfNullB(parentTreePath) ) return true; ///tmp
-  	        DataNode parentDataNode= // Calculating parent DataNode.
-  	        		(DataNode)parentTreePath.getLastPathComponent();
-  	      	int indexI= getIndexOfChild( // Calculating index of the DataNode.
-  	        		parentDataNode, 
-  	        		theDataNode 
-  	        		); 
-            
-            TreeModelEvent theTreeModelEvent= // Constructing TreeModelEvent.
-              new TreeModelEvent(
-              	this, 
-              	parentTreePath, 
-              	new int[] {indexI}, 
-              	new Object[] {theDataNode}
-              	);
-
-            fireTreeNodesChanged( theTreeModelEvent );  // Firing as change event.
-            return false;
+        	  boolean resultB= true; // Assume result for failure.
+        	  toReturn: {
+	  	      	if ( EDTUtilities.testAndLogIfNotRunningEDTB() ) break toReturn;
+	  	      	if ( Nulls.testAndLogIfNullB(parentTreePath) ) break toReturn;
+	  	        DataNode parentDataNode= // Calculating parent DataNode.
+	  	        		(DataNode)parentTreePath.getLastPathComponent();
+	  	      	int indexI= getIndexOfChild( // Calculating index of the DataNode.
+	  	        		parentDataNode, 
+	  	        		theDataNode 
+	  	        		); 
+	            TreeModelEvent theTreeModelEvent= // Constructing TreeModelEvent.
+	              new TreeModelEvent(
+	              	this, 
+	              	parentTreePath, 
+	              	new int[] {indexI}, 
+	              	new Object[] {theDataNode}
+	              	);
+	            fireTreeNodesChanged( theTreeModelEvent );  // Firing as change event.
+	            resultB= false; // Indicate success if we got this far.
+        	  	} // toReturn:
+            return resultB;
             }
 
         public boolean reportingStructuralChangeB( TreePath parentTreePath )
@@ -924,22 +926,24 @@ public class DataTreeModel
   	      	  the current thread not being the EDT or parentTreePath == null.
      	      */
           {
-  	      	if ( EDTUtilities.testAndLogIfNotRunningEDTB() ) return true; ///tmp
-  	      	if ( Nulls.testAndLogIfNullB(parentTreePath) ) return true; ///tmp
-            
-            TreeModelEvent theTreeModelEvent= // Constructing TreeModelEvent.
-              new TreeModelEvent(
-              	this, 
-              	parentTreePath, 
-              	new int[] {}, // Child indexes are ignored.
-              	new Object[] {} // Child references are ignored.
-              	);
-
-            fireTreeStructureChanged( theTreeModelEvent );
-            return false;
+	      	  boolean resultB= true; // Assume result for failure.
+	      	  toReturn: {
+	  	      	if ( EDTUtilities.testAndLogIfNotRunningEDTB() ) break toReturn;
+	  	      	if ( Nulls.testAndLogIfNullB(parentTreePath) ) break toReturn;
+	            TreeModelEvent theTreeModelEvent= // Constructing TreeModelEvent.
+	              new TreeModelEvent(
+	              	this, 
+	              	parentTreePath, 
+	              	new int[] {}, // Child indexes are ignored.
+	              	new Object[] {} // Child references are ignored.
+	              	);
+	            fireTreeStructureChanged( theTreeModelEvent );
+		      	  resultB= false; // Override result for achieved success.
+	      	  	} // goReturn:
+            return resultB;
             }
 
-    /*  ///elim  Maybe save this somewhere in case I need a DepthFirstSearch.
+    /*  ///opt  Maybe save this somewhere in case I need a DepthFirstSearch.
 			private TreePath searchingForTreePath( DataNode targetDataNode )
         /* This method is not needed anymore, because:
           * It might never be called anymore because

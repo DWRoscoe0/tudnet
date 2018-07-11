@@ -73,7 +73,7 @@ public class Unicaster
 	      IPAndPort remoteIPAndPort,
 	      TCPCopier.TCPClient theTCPClient,
 	      Shutdowner theShutdowner,
-	      SubcasterQueue subcasterToUnicasterSubcasterQueue, ///elim Subcasters?
+	      SubcasterQueue subcasterToUnicasterSubcasterQueue, ///opt Subcasters?
 	  		Timer theTimer,
 	  		NamedLong retransmitDelayMsNamedLong,
 	  		DefaultBooleanLike leadingDefaultBooleanLike
@@ -108,7 +108,7 @@ public class Unicaster
 
     protected void initializeWithIOExceptionV() throws IOException
 	    {
-    		appLogger.debug("Unicsaster.initializeWithIOExceptionV() begins."); ///dbg
+    		//// appLogger.debug("Unicsaster.initializeWithIOExceptionV() begins."); ///dbg
 
     		super.initializeWithoutStreamsV(); // Stream counts are added below in
     		  // one of the sub-state machines.
@@ -142,15 +142,15 @@ public class Unicaster
 
 	  	  addAtEndB( theSubcasterManager );
 	  	  
-    		appLogger.debug("Unicsaster.initializeWithIOExceptionV() ends."); ///dbg
+    		//// appLogger.debug("Unicsaster.initializeWithIOExceptionV() ends."); ///dbg
 	  	  // propagateIntoSubtreeB( LogLevel.TRACE ); ///dbg /// tmp
 	  	  }
 
     protected void finalizingV() throws IOException
 	    // This is the opposite of initilizingV().
 	    {
-	    	///elim theMultiMachineState.finalizeV();
 	    	theEpiOutputStreamO.close(); // Closing output stream.
+	    	super.finalizeV();
 	    	}
 
     public void run()  // Main Unicaster thread.
@@ -165,7 +165,7 @@ public class Unicaster
 	      		appLogger.info("run() activating root state machine.");
 	          doOnEntryV(); // Recursively activate all states that should be. 
         		appLogger.info("run() machine activated, doing first display.");
-        		logNullDataTreeModelsV(); ///dbg
+        		//// logNullDataTreeModelsV(); ///dbg
         		theDataTreeModel.displayTreeModelChangesV(); // Display our arrival.
 
 	      	  runLoop(); // Do actual input processing in a loop.

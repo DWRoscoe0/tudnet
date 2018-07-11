@@ -151,13 +151,14 @@ public class TCPCopier
 		    			targetMsL+= Config.tcpClientPeriodMsL;
 		    				///fix Make this immune to skipped time.
 			        try {  // Wait for and process a queue entry up to period length.
-			    			appLogger.info("interactWithTCPServersV(..) from queued peers.");
+			    			appLogger.debug("interactWithTCPServersV(..) from queued peers.");
 								tryExchangingFilesWithServerFromQueueB(
 										targetMsL - System.currentTimeMillis()
 										); // This also serves as the main loop delay.
-								appLogger.info("interactWithTCPServersV(..) from saved peers.");
-				    			tryExchangingFilesWithNextSavedServerV(thePersistentCursor);
-				    		appLogger.info("interactWithTCPServersV(..) wait remaing period.");
+								appLogger.debug("interactWithTCPServersV(..) from saved peers.");
+				    		tryExchangingFilesWithNextSavedServerV(thePersistentCursor);
+				    		appLogger.debug(
+				    				"interactWithTCPServersV(..) wait remainder period.");
 				    		EpiThread.interruptableSleepB( // Wait any remainder of period. 
 				    				targetMsL - System.currentTimeMillis() );
 					    	}
@@ -285,7 +286,7 @@ public class TCPCopier
 		      	Socket clientSocket = null;
 						File clientFile= 
 								Config.makeRelativeToAppFolderFile( clientFileString );
-						//// serverPortString= "11111"; ///dbg
+						//// serverPortString= "11111"; ///tmp
 						int serverPortI= Integer.parseUnsignedInt( serverPortString );
 					 	InetSocketAddress theInetSocketAddress= null; 
 						try {
@@ -373,7 +374,7 @@ public class TCPCopier
 			  	try {
 			        serverServerSocket= 
 			        		new ServerSocket(thePortManager.getNormalPortI());
-			        		//// new ServerSocket( 11111 ); ///dbg
+			        		//// new ServerSocket( 11111 ); ///tmp
 			    		appLogger.debug(
 			    				"serviceOneRequestFromClientV()() trying ServerSocket.accept() to "
 			    				+ serverServerSocket);
@@ -651,7 +652,7 @@ public class TCPCopier
 	  			  compareResultL= remoteLastModifiedL;
 	  			else if (compareResultL < 0 ) 
 	  			  compareResultL= -localLastModifiedL;
-	  			////if ( compareResultL != 0 ) // Log only if not 0.
+	  			////if ( compareResultL != 0 ) // Log only if not 0. ///tmp
 		  			appLogger.info( // Log result of comparison.
 		  				"exchangeAndCompareFileTimeStampsRemoteToLocalL() returning "
 		  				+ ( ( compareResultL == 0 )

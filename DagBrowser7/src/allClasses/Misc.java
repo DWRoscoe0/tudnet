@@ -16,8 +16,8 @@ public class Misc
     code useful for debugging and logging.
     
     Here are some notes to mark possible work to do:
-    ///tmp : a temporary kluge, possibly to prevent an Exception.
-    ///dbg : code used for debugging.
+    ///tmp : temporary code, for debugging or a development kluge.
+    ///dbg : code used for debugging, for code or comment disabling code.
     ///fix : a problem to fix.
     ///pla : a planned change.
     ///pos : possible change.

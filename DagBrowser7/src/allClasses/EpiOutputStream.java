@@ -77,7 +77,7 @@ public class EpiOutputStream<
 				Q notifyingQueueQ,
 				M packetManagerM,
 				NamedLong packetCounterNamedLong,
-	  		Timer unusedTimer, ///elim
+	  		Timer unusedTimer, ///opt remove?
 	  		char delimiterChar
 				)
 			{

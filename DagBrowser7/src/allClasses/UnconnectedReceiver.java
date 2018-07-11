@@ -79,7 +79,6 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
                 		theNetcasterPacketManager.produceKeyedPacket();
                 DatagramPacket theDatagramPacket= 
                 		theNetcasterPacket.getDatagramPacket();
-                ////appLogger.info("run(): calling receive(..)");
                 receiverDatagramSocket.receive(theDatagramPacket);
                 PacketManager.logUnconnectedReceiverPacketV(
                 		theDatagramPacket

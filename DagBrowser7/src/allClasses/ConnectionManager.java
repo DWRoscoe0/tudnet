@@ -91,8 +91,8 @@ public class ConnectionManager
 	    
 			private AppGUIFactory theAppGUIFactory;
 	    
-      @SuppressWarnings("unused") ///elim
-		  private final Persistent thePersistent;
+      @SuppressWarnings("unused")
+		  private final Persistent thePersistent; ///tmp
 
     	private PortManager thePortManager;
 

@@ -29,7 +29,6 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
     */
 
   // Injected dependencies that need saving for later.
-  ///elim private final Persistent thePersistent;
   private final Shutdowner theShutdowner;
   private final PortManager thePortManager;
 
@@ -44,7 +43,6 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
   private final NamedLong multicasterFixedTimeOutMsNamedLong;
 
   public AppGUIFactory(  // Factory constructor.
-  		AppFactory XtheAppFactory, ///elim 
   	  Persistent thePersistent,
   	  PortManager thePortManager,
   		Shutdowner theShutdowner,

@@ -150,14 +150,14 @@ public class Sender // Uunicast and multicast sender thread.
        	*/
 	    {
     	  beforeReturn: {
-			    if  // Debug: drop a fraction of packets to test retries logics.
+			    if  // Debug: drop a fraction of packets to test retry logic.
 			    	( testingForDropOfPacketB( theDatagramPacket ) )
-			    	break beforeReturn;
+			    	break beforeReturn; // Drop this packet.
 			    ///? add Timer delay logic here.
           if ( Config.packetSendDelayMsL == 0L )
-          	sendingDatagramPacketV( theDatagramPacket );
+          	sendingDatagramPacketV( theDatagramPacket ); // Send immediately.
           	else
-          	{
+          	{ // Send after delay.
           		theScheduledThreadPoolExecutor.schedule(
           				new Runnable() { 
           					public void run() {
@@ -167,7 +167,6 @@ public class Sender // Uunicast and multicast sender thread.
           				Config.packetSendDelayMsL,
           				TimeUnit.MILLISECONDS
           				);
-            	sendingDatagramPacketV( theDatagramPacket ); ///elim?
           		}
     			} // beforeReturn:
 	    	}

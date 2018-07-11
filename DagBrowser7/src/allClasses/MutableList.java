@@ -1,8 +1,5 @@
 package allClasses;
 
-//// import java.util.concurrent.atomic.AtomicBoolean;
-
-/// import javax.swing.SwingUtilities;
 
 //import static allClasses.Globals.appLogger;
 

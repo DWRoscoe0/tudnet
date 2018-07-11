@@ -180,9 +180,6 @@ public class NamedList
 	  	    ( changeNeededB )
 			  	{
 		  			propagateIntoDescendantsV(theMaxLogLevel);
-			  		////for ( DataNode theDataNode : theListOfDataNodes)  // For each child
-				  	////	theDataNode.propagateIntoSubtreeB( // recursively propagate  
-				  	////			theMaxLogLevel); // the new level.
 				  	super.propagateIntoSubtreeB( // Propagate into super-class. 
 				  			theMaxLogLevel); // the new level.  This eliminates
 				  			// the difference LogLevel which allowed propagation.

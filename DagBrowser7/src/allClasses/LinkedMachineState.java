@@ -26,7 +26,7 @@ public class LinkedMachineState
 		private NetcasterOutputStream theNetcasterOutputStream; 
 		private NamedLong retransmitDelayMsNamedLong;
 		private TCPCopier.TCPClient theTCPClient;
-		private Timer theTimer; ///elim.  use function parameter only. 
+		private Timer theTimer; ///opt.  use function parameter only. 
 		private Unicaster theUnicaster;
 		private StateList[] theLinkedStateLists;
 
@@ -82,7 +82,7 @@ public class LinkedMachineState
 			  				);
 
 	  	  /*  ///dbg
-	  	  { ///dbg ///tmp adjust logging for debugging.
+	  	  { ///dbg adjust logging for debugging.
 					propagateIntoSubtreeB( LogLevel.TRACE );
 					theConnectedState.propagateIntoDescendantsV(LogLevel.INFO);
 		  	  }
@@ -95,14 +95,11 @@ public class LinkedMachineState
 	    // This method processes any pending loose ends before shutdown.
 		  {
 	  	  super.finalizeV();
-	  		///elim? onInputsB(); // This rethrows any saved IOException from timer.
 	  		helloTimerInput.cancelingV(); // To stop our timer.
 	      }
 
   	public void onEntryV() throws IOException
 		  { 
-  			//elim propagateIntoSubtreeV( AppLog.LogLevel.TRACE );
-  			///dbg appLogger.warning( "LinkedMachineState.onEntryV() state being used." );
 			  retryTimeOutMsL=   // Initializing retry time-out.
 			  		retransmitDelayMsNamedLong.getValueL();
 
@@ -219,7 +216,6 @@ public class LinkedMachineState
 						  ( StateList theStateList : theLinkedStateLists ) 
 							{ 
 								addStateListV(theStateList); // Add it as sub-state.
-								///dbg theStateList.propagateIntoSubtreeB( LogLevel.INFO ); ///dbg /// tmp
 								}
 						
 						return this;
@@ -339,10 +335,6 @@ public class LinkedMachineState
   	    from state subStateList, and logs that it has done so.
   	    */
 	  	{
-		    //// appLogger.debug( ///dbg 
-				//// 		"LinkedMachineState.sendHelloV(..) sending HELLO from"
-				//// 			+ subStateList.getFormattedStatePathString()
-				//// 		);
 		    theNetcasterOutputStream.writingTerminatedStringV( "HELLO" );
 		    theNetcasterOutputStream.writingTerminatedStringV( 
 						theUnicaster.getKeyK().getInetAddress().getHostAddress() 

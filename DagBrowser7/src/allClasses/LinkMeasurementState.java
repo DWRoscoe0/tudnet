@@ -231,7 +231,7 @@ public class LinkMeasurementState
 			    	    the next handshake.
 			    	   	*/
 				  	  {
-			    			//// appLogger.debug( "MeasurementPausedState.onEntryV() ");
+			    			///dbg appLogger.debug( "MeasurementPausedState.onEntryV() ");
 			    	  	measurementTimerInput.scheduleV(Config.handshakePause5000MsL);
 			  				}
 	
@@ -267,7 +267,7 @@ public class LinkMeasurementState
 			    	    the next handshake.
 			    	   	*/
 				  	  {
-			    			//// appLogger.debug( "MeasurementInitializationState.onEntryV() ");
+			    			///dbg appLogger.debug( "MeasurementInitializationState.onEntryV() ");
 			    	  	measurementTimerInput.scheduleV(Config.handshakePause5000MsL);
 			  				}
 			    	
@@ -293,7 +293,7 @@ public class LinkMeasurementState
 			    	public void onEntryV() throws IOException
 			    	  // Initiates the handshake and starts acknowledgement timer.
 				  	  { 
-				      	//// appLogger.debug( "MeasurementHandshakingState.onEntryV() ");
+				      	///dbg appLogger.debug( "MeasurementHandshakingState.onEntryV() ");
 		    			  measurementTimerInput.scheduleV(retryTimeOutMsL);
 				    		sendingSequenceNumberV();
 			  				}
@@ -340,9 +340,9 @@ public class LinkMeasurementState
 			    {
 			    	lastSequenceNumberSentL= 
 			    			theNetcasterOutputStream.getCounterNamedLong().getValueL(); 
-			      ////appLogger.info( 
-				    ////		"sendingSequenceNumberV() " + lastSequenceNumberSentL
-				    ////	);
+			      ///dbg appLogger.info( 
+				    ///dbg 		"sendingSequenceNumberV() " + lastSequenceNumberSentL
+				    ///dbg 	);
 			      theNetcasterOutputStream.writingTerminatedStringV( "PS" );
 			      theNetcasterOutputStream.writingTerminatedLongV( 
 			      		lastSequenceNumberSentL 

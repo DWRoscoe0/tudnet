@@ -153,7 +153,7 @@ l    * If the app receives a message indicating
 	    // 	 when they first run.
     private File tcpCopierAppFile= null;  // App File in 
       // TCPCopier folder.
-      ///tmp This is how files gotten by TCPCopier files update the app.
+      // This is how files gotten by TCPCopier files update the app.
       // TCPCopier creates new versions of app here.
 
     // Other variables.

@@ -66,7 +66,7 @@ public class AppFactory {  // For App class lifetimes.
 	  {
 	    if (theAppGUIFactory == null) // Constructing lazily and only one time.
 	      theAppGUIFactory= new AppGUIFactory(
-	      		this, // AppGUIFactory gets to know this, its factory.
+	      		//// this, // AppGUIFactory gets to know this, its factory.
 	      		thePersistent,
 	      	  thePortManager,
 	      		theShutdowner,

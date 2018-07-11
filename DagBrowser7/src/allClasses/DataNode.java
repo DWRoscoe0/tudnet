@@ -213,7 +213,7 @@ public class DataNode
 			   	This method can be called whenever it is determined that
 			   	special logging would be helpful.
 			   	
-			   	///elim The checking whether a change is needed
+			   	///opt The checking whether a change is needed
 			   	  is probably not needed, and should eventually be eliminated.
 			   	  Meanwhile, it shouldn't cause any harm. 
 			   	*/

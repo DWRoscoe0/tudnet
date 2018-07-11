@@ -395,7 +395,8 @@ public class StateList extends MutableList implements Runnable {
   	  }
 
   public synchronized void finalizeV() throws IOException
-    /* This method processes any pending loose ends before shutdown.
+    /* This method processes any pending loose ends 
+      before shutdown and object destruction.
       In this case it finalizes each of its sub-states.
       This is not the same as the onExitV() method, which
       does actions needed when the associated state-machine state is exited.
@@ -688,11 +689,6 @@ public class StateList extends MutableList implements Runnable {
 	    state sub-classes may override.
 	    */
 	  { 
-		  ///dbg  appLogger.debug(
-			///dbg  	"StateList.doOnInputsB() of "
-		  ///dbg  	+ discreteInputString 
-			///dbg  + " to"
-		  ///dbg  	+ getFormattedStatePathString() );
 			boolean successB= onInputsB();
 			return successB;
 		  }
@@ -846,9 +842,6 @@ public class StateList extends MutableList implements Runnable {
 			  else if ( this.discreteInputString != null ) 
 				  	anomalyString= 
 				  		this.discreteInputString + " was NOT consumed by";
-			  ///dbg else
-				///dbg 	detailString= 
-				///dbg discreteInputString + " input to";
 			  if ( anomalyString != null ) // Log if anomaly produced.
 			  	appLogger.warning(
 			  			"StateList.setDiscreteInputV..), "

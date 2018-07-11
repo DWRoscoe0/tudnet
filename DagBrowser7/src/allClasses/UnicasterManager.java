@@ -139,8 +139,6 @@ public class UnicasterManager
         try { // Operations that might produce an IOException.
       			theUnicaster.initializeWithIOExceptionV();
         	} catch( IOException e ) {
-        		appLogger.debug( ///dbg
-        				"buildAddAndStartUnicaster(..) IOException" + e );
         		Globals.logAndRethrowAsRuntimeExceptionV( 
         				"buildAddAndStartUnicaster(..) IOException", e );
           }
