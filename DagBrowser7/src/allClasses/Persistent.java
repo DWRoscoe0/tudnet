@@ -18,6 +18,9 @@ public class Persistent
 	  using property path names whose components are separated by "/".
 	  So "key" is synonymous with "full path".
 	  A key does not end in a slash.  A prefix ends in a slash.
+	  
+	  There is also some support for linked lists.
+	  ///org Maybe that should be provided by the PersistentCursor class only?
 	 	*/
 	
 	{
@@ -158,7 +161,7 @@ public class Persistent
 		    			}
 	    		scanIDEntryKeyString= // Get link to next entry to check.
 	    				"peers/entry/"+scanIDEntryValueString+"/next";
-	  			} while (true);
+	  			} while (true); // searchAndUnlinkIfPresent: 
 	  		putV( // Attach chain to entry being moved to front. 
 	  				entryIDKeyString + "next",
 	  				getDefaultingToBlankString( listFirstKeyString ) 
@@ -168,27 +171,12 @@ public class Persistent
 	  		return entryIDKeyString; 
 	  		}
 	
-		public String getListEntryPrefixString( String listNameString )
-		  {
-				return keyToPrefixString( listNameString ) + "entries/";
-			  }
-	
-		public String getListFirstKeyString( String listNameString )
+	  private String getListFirstKeyString( String listNameString )
 		  {
 				return keyToPrefixString( listNameString ) + "first";
 			  }
 	
-		public String getListEntryIDFieldValueString( 
-				String listNameString, String entryIDString, String fieldNameString )
-			{
-				return getString( 
-						getListEntryIDFieldKeyString( 
-								listNameString, entryIDString, fieldNameString 
-								)
-						);
-			  }
-	
-		public String getListEntryNextKeyString( 
+	  private String getListEntryNextKeyString( 
 				String listNameString, String entryIDString )
 		  {
 				return getListEntryIDFieldKeyString( 
@@ -196,7 +184,7 @@ public class Persistent
 						);
 			  }
 	
-		public String getListEntryIDFieldKeyString( 
+	  private String getListEntryIDFieldKeyString( 
 				String listNameString, String entryIDString, String fieldNameString )
 			{
 				return 
@@ -204,7 +192,7 @@ public class Persistent
 						+ fieldNameString ;
 			  }
 
-		public String getListEntryIDPrefixString( 
+	  private String getListEntryIDPrefixString( 
 				String listNameString, String entryIDString )
 		  /* This method returns a prefix for the list entry whose
 		    list name is listNameString and whose entry name is entryIDString.
@@ -216,25 +204,7 @@ public class Persistent
 						+ "/";
 			  }
 
-		public String extendPrefixString( 
-				String prefixString, String fieldNameString )
-		  /* Converts prefixString to a key by appending fieldNameString
-		    and a separator character.
-		    */
-		  {
-				return keyToPrefixString(
-						prefixToKeyString( prefixString, fieldNameString)
-						);
-			  }
-
-		public String prefixToKeyString( 
-				String prefixString, String fieldNameString )
-		  // Converts prefixString to a key by appending fieldNameString.
-		  {
-				return prefixString + fieldNameString ;
-			  }
-
-		public String keyToPrefixString( String prefixString )
+	  private String keyToPrefixString( String prefixString )
 		  /* Makes a prefix from a key by appending the separator character,
 		    which is the slash.
 		    */
@@ -242,7 +212,7 @@ public class Persistent
 				return prefixString + "/";
 			  }
 	
-		public String getDefaultingToBlankString( String keyString )
+	  public String getDefaultingToBlankString( String keyString )
 		  /* Returns the value String associated with keyString,
 		    or the empty string if there is none.
 		   	*/
@@ -250,15 +220,7 @@ public class Persistent
 				return getString( keyString, "" );
 			  }
 	
-		public String getString( String keyString )
-			/* Returns the value String associated with keyString,
-		    or null if there is none.
-		   	*/
-		  {
-				return theProperties.getProperty( keyString );
-			  }
-	
-		public String getString( String keyString, String defaultValueString )
+	  private String getString( String keyString, String defaultValueString )
 			/* Returns the value String associated with keyString,
 		    or defaultValueString if there is none.
 		   	*/
@@ -266,7 +228,7 @@ public class Persistent
 				return theProperties.getProperty( keyString, defaultValueString );
 			  }
 	
-		public void putV( String keyString, String valueString )
+	  public void putV( String keyString, String valueString )
 		  // Stores valuesString as the value associated with keyStrig.
 		  {
 				theProperties.setProperty( keyString, valueString );

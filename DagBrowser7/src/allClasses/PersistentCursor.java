@@ -25,79 +25,108 @@ public class PersistentCursor
    	*/
 
 	{
-		private final Persistent thePersistent;
 
 		private final String EMPTY_STRING= "";
+		
+		
+		// State, generally from most significant to least significant.
+		
+		private final Persistent thePersistent; // Underlying storage structure.
 
 		private String listNameString= EMPTY_STRING;
-		private String listEntryPrefixString= EMPTY_STRING;
-		private String listFirstKeyString= EMPTY_STRING;
-		private String listScanKeyString= EMPTY_STRING;
-		private String listScanValueString= EMPTY_STRING;
+			// Name of list of interest.
+		private String entryPrefixString= EMPTY_STRING;
+			// Prefix of all entries in list of interest.
+		private String firstKeyString= EMPTY_STRING;
+			// Key of name of first entry in list of interest.
+		private String positionKeyString= EMPTY_STRING;
+			// Key of name of current entry in list of interest.
+		private String positionValueString= EMPTY_STRING; 
+		  // Value which is name of current entry in list of interest.
 
 		public PersistentCursor( Persistent thePersistent ) // constructor
 			{
 				this.thePersistent= thePersistent;
 				}
 
-		public void setListNameStringV( String listNameString )
-		  /* This method sets the list to be scanned by
+		public void setListNameV( String listNameString )
+		  /* This method sets the name of the list to be scanned by
 		    adding the ListNameString to the base path,
 		    which is presently always the empty string for the root.
-		    It also initializes variables used to scan the list,
-		    starting with the first element, if any. 
+		    It also initializes other variables used to scan the list,
+		    a scan starting with the first element, if there is one. 
 		   	*/
 			{
 				this.listNameString= listNameString;
-	  		listFirstKeyString= listNameString + "/first";
-	  		setPiteratorKeyV(listFirstKeyString);
-				}
-		
-		private void setPiteratorKeyV( String piteratorKeyString )
-		  /* This method sets the list piterator key and dependencies.
-		    The list name must have been set already.
-		   */
-			{
-	  		listScanKeyString= piteratorKeyString;
-	  		listScanValueString= 
-	  				thePersistent.getDefaultingToBlankString( listScanKeyString );
-	  		setPiteratorValueV( listScanValueString );
+	  		firstKeyString= listNameString + "/first";
+	  		setPositionKeyV(firstKeyString);
 				}
 
-		private void setPiteratorValueV( String listEntryNameString )
-			/* This method sets the list piterator value and dependencies.
+		private void setPositionKeyV( String keyString )
+		  /* This method sets the list position key and dependencies.
+		   */
+			{
+	  		positionKeyString= keyString; // Store position key.
+	  		positionValueString= // Cache the position value which is its name.
+	  				thePersistent.getDefaultingToBlankString( positionKeyString );
+	  		setEntriesPrefixFromV( positionValueString );
+				}
+
+		private void setEntriesPrefixFromV( String positionNameString )
+			/* This method calculates and stores the prefix of all list entries.
 		    The list name must have been set already.
 		   */
 			{
-				if (listEntryNameString.isEmpty())
-						listEntryPrefixString= null;
+				if (positionNameString.isEmpty())
+						entryPrefixString= null;
 					else
-						listEntryPrefixString=
-								listNameString+"/entries/"+listEntryNameString+"/";
+						entryPrefixString=
+								listNameString+"/entries/"+positionNameString+"/";
 				}
 
-		public String nextString()
-		  // Advances the piterator and returns the name of the next element.
+		public String nextWithWrapElementIDString()
+		  /* This does the same as nextElementIDString() but 
+		    only returns the empty string if the list is empty.
+	      */
 			{
-			  if ( getEntryIDNameString().isEmpty() )
-			  		setPiteratorKeyV( listFirstKeyString ); // Point to first element.
-			  	else
-			  		setPiteratorKeyV( // Point to next element.
-			  				listEntryPrefixString + "next"
+				String idString= nextElementIDString(); // Try moving to next and getting ID. 
+				if ( idString.isEmpty() ) // If at end of list
+					idString= nextElementIDString(); // try moving one more time.
+			  return idString; // Return name of this position.
+			    // If it's still empty then list must be empty.
+				}
+
+		public String nextElementIDString()
+		  /* Advances the piterator and returns the ID of the next list entry.
+		    If the result is null then the piterator is positioned
+		    on the last element.
+		   	*/
+			{
+			  if ( getElementIDString().isEmpty() ) // At end of list.
+			  		setPositionKeyV( firstKeyString ); // Point to first element.
+			  	else // Not at end of list.
+			  		setPositionKeyV( // Point to next element.
+			  				entryPrefixString + "next"
 								);
-			  return getEntryIDNameString();
+			  return getElementIDString(); // Return name of the new position.
 				}
 
-		public String getEntryIDNameString()
-		  // This is a window into the piterator.
+		public String getElementIDString()
+		  /* Returns the ID of the present list element.
+				Returns the empty String if the piterator is positioned
+				at the end of the list, or if the list is empty
+				*/
 			{
-				return listScanValueString;
+				return positionValueString;
 				}
 		
 		public String getFieldString( String fieldNameString )
+		  /* Returns the value of the field whose name is fieldNameString
+		    in the present list element.
+		    */
 			{ 
 				return thePersistent.getDefaultingToBlankString( 
-						listEntryPrefixString + fieldNameString 
+						entryPrefixString + fieldNameString 
 						);
 				}
 		

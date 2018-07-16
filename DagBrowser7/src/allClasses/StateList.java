@@ -750,6 +750,13 @@ public class StateList extends MutableList implements Runnable {
 	  by setting the variable to null so that the input
 	  may be presented to other sub-state machines,
 	  or discarded if no machine processes it.
+	  
+	  ///enh Create a better way of doing discrete input 
+	  so less copying is needed and kludges such as 
+	  passing sub-states into common state methods, such as
+	  LinkedMachineState.tryReceivingHelloB(StateList subStateList).
+	  Make it work with current state and controlling ancestor states?
+	  Maybe tie to InputStream?
 	  */
 	
 

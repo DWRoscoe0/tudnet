@@ -30,7 +30,9 @@ public class UnicasterFactory {
   		TCPCopier.TCPClient theTCPClient,
   		Shutdowner theShutdowner,
   		int queueCapacityI,
-  		Timer theTimer
+  		Timer theTimer,
+  		Persistent thePersistent
+
   		)
   	/* This builds all objects that are or comprise 
   	  unconditional singletons relative to their Unicaster.
@@ -72,6 +74,7 @@ public class UnicasterFactory {
 			   	theShutdowner,
 			   	subcasterToUnicasterSubcasterQueue,
 			   	theTimer,
+			   	thePersistent,
 		      retransmitDelayMsNamedLong,
 		      leadingDefaultBooleanLike
 			  	);

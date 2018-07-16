@@ -111,14 +111,14 @@ public class TCPCopier
 	        by contacting TCPServers.
 	        */
 	      {
-	  			appLogger.info("run() client initial delay beginning.");
+	  			appLogger.info("run() client start delay beginning.");
 		  		EpiThread.interruptableSleepB(Config.tcpClientRunDelayMsL);
-	  			appLogger.info("run() client delay done.");
+	  			appLogger.info("run() client start delay done.");
 
 		  		updateTCPCopyStagingAreaV();
 	      	PersistentCursor thePersistentCursor= 
 	      			new PersistentCursor( thePersistent );
-	      	thePersistentCursor.setListNameStringV("peers");
+	      	thePersistentCursor.setListNameV("peers");
 	      	interactWithTCPServersV(thePersistentCursor);
 	  			appLogger.info("run() ending.",true);
 		    	}
@@ -239,7 +239,7 @@ public class TCPCopier
 			        if ( resultIPAndPort != null) break; // Exit if got peer.
 			        long waitMsL= // Calculate remaining time to wait. 
 			        		targetMsL - System.currentTimeMillis();
-				      if ( waitMsL <= 0 ) break; // Exit if time limit reached.
+				      if ( waitMsL <= 0 ) break; // Exit if time limit has been reached.
 					    wait( waitMsL ); // Wait for time or notification, 
 				        				// Interrupt will cause exception.
 		    	  	}
@@ -254,13 +254,7 @@ public class TCPCopier
 			    even if wrapping around to the beginning is necessary.
 			   */
 				{
-				  if ( thePersistentCursor.getEntryIDNameString().isEmpty() ) { 
-					  thePersistentCursor.nextString(); // Wrapping to list beginning.
-				  	}
-					appLogger.debug(
-							"tryExchangingFilesWithNextSavedServerV(): " 
-							+ thePersistentCursor.getEntryIDNameString());
-				  if ( thePersistentCursor.getEntryIDNameString().isEmpty() ) { 
+				  if ( thePersistentCursor.getElementIDString().isEmpty() ) { 
 			      ; // Do nothing because peer list must be empty.
 				  	} else { // Process peer list element.
 							String serverIPString= 
@@ -269,7 +263,7 @@ public class TCPCopier
 									thePersistentCursor.getFieldString("Port");
 				  		tryExchangingFilesWithServerV(serverIPString,serverPortString);
 					  }
-				  thePersistentCursor.nextString(); // Go to next element.
+				  thePersistentCursor.nextWithWrapElementIDString(); // Advance cursor.
 					}
 	
 			private void tryExchangingFilesWithServerV(
@@ -314,7 +308,8 @@ public class TCPCopier
 						  			clientSocket, clientFile, clientFile, clientFileLastModifiedL );
 									appLogger.debug(
 											"tryExchangingFilesWithServerV() end synchronized block.");
-								 	} // synchronized (clientLockObject) 
+								 	} // synchronized (clientLockObject)
+								addPeerInfoV( serverIPString, serverPortString);
 					  		if (resultL != 0)
 									appLogger.info( 
 											"tryExchangingFilesWithServerV() copied using"
@@ -326,8 +321,28 @@ public class TCPCopier
 							  Closeables.closeWithErrorLoggingB(clientSocket);
 							}
 					}
+
+	    public void addPeerInfoV(String ipString, String portString)
+	      /* Add peer list the peer whose IP and port are ipString and portString.
+	        */
+		    {	
+	    		String peerIDString= ipString+"-"+portString; // Calculate ID string.
+	    		
+			  	// Store or update the list structure.
+	    		String entryIDKeyString= thePersistent.entryInsertOrMoveToFrontString( 
+	    				peerIDString, "peers" 
+	    				);
+
+	    	  // Store or update the other fields.
+	    		thePersistent.putV( // IP address.
+	    				entryIDKeyString + "IP", ipString
+	    				);
+	    		thePersistent.putV( // Port.
+	    				entryIDKeyString + "Port", portString
+	    				);
+	    		} 
 	
-		} // TCPClient
+			} // TCPClient
 
 		static class TCPServer extends EpiThread {
 		
@@ -349,10 +364,10 @@ public class TCPCopier
 		      by executing the file update/exchange protocol.
 			    */
 		    {
-		  		appLogger.info("run() initial delay begins.");
+		  		appLogger.info("run() server start delay begins.");
 		    	EpiThread.interruptableSleepB(  // Delay to organize log and to give
 		    			Config.tcpServerRunDelayMsL );  // connection advantage to client.
-		  		appLogger.info("run() delay done.");
+		  		appLogger.info("run() server start delay done.");
 		    	while  // Repeatedly service one client request. 
 		    		( ! EpiThread.exitingB() ) 
 			    	{ 

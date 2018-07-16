@@ -20,6 +20,7 @@ public class UnicasterManager
 	  */
 
   {
+		@SuppressWarnings("unused") ///tmp
   	private final Persistent thePersistent;
   	private final TCPCopier.TCPClient theTCPClient; 
   
@@ -40,60 +41,42 @@ public class UnicasterManager
 			  
 			  testPersistentV(); ///dbg
 			  }
-	
-		
-			private void testPersistentV() {
-				//% updatePeerInfoV( "a" );
-				//% updatePeerInfoV( "b" );
-				//% updatePeerInfoV( "c" );
 
-				//updatePeerInfoV( "IDTest1", "1.2.3.4", "5" );
-				//updatePeerInfoV( "IDTest2", "11.22.33.44", "55" );
+		private void testPersistentV() {
+			//% updatePeerInfoV( "a" );
+			//% updatePeerInfoV( "b" );
+			//% updatePeerInfoV( "c" );
 
-				// This is the important one for test TCPCopier.
-				//updatePeerInfoV( "IDLocalHost", "127.0.0.1", "11111" );
-			  }
+			//updatePeerInfoV( "IDTest1", "1.2.3.4", "5" );
+			//updatePeerInfoV( "IDTest2", "11.22.33.44", "55" );
 
-	    public void updatePeerInfoV( 
-	    		String peerIDString, String ipString, String portString)
-		    {	
-			  	// Store or update the list structure.
-	    		String entryIDKeyString= thePersistent.entryInsertOrMoveToFrontString( 
-	    				peerIDString, "peers" 
-	    				);
+			// This is the important one for test TCPCopier.
+			//updatePeerInfoV( "IDLocalHost", "127.0.0.1", "11111" );
+		  }
 
-	    	  // Store or update the other fields.
-	    		thePersistent.putV( // IP address.
-	    				entryIDKeyString + "IP", ipString
-	    				);
-	    		thePersistent.putV( // Port.
-	    				entryIDKeyString + "Port", portString
-	    				);
-	    		} 
-
-	    public synchronized Unicaster getOrBuildAddAndStartUnicaster(
-      		NetcasterPacket theNetcasterPacket 
-      		)
-        /* This method returns a Unicaster associated with
-          the remote peer address in theNetcasterPacket.
-          If a Unicaster doesn't already exist then it creates one.
-          */
-  	    { 
-	    	Unicaster theUnicaster= // Testing whether Unicaster exists.  
-	    			tryingToGetUnicaster( theNetcasterPacket );
-	    	if ( theUnicaster == null ) // Building one if one doesn't exist.
-	    		{ // Building a new Unicaster.
-	        	DatagramPacket theDatagramPacket=  // Getting DatagramPacket.
-	            theNetcasterPacket.getDatagramPacket();
-	        	IPAndPort peerIPAndPort= // Building its remote address.
-		          AppGUIFactory.makeIPAndPort(		
-		              theDatagramPacket.getAddress(), // IP and
-		              theDatagramPacket.getPort()  // port #.
-		          		);
-	          theUnicaster= buildAddAndStartUnicaster( peerIPAndPort );
-	    		}
-		    return theUnicaster;
-		    }
+    public synchronized Unicaster getOrBuildAddAndStartUnicaster(
+    		NetcasterPacket theNetcasterPacket 
+    		)
+      /* This method returns a Unicaster associated with
+        the remote peer address in theNetcasterPacket.
+        If a Unicaster doesn't already exist then it creates one.
+        */
+	    { 
+    	Unicaster theUnicaster= // Testing whether Unicaster exists.  
+    			tryingToGetUnicaster( theNetcasterPacket );
+    	if ( theUnicaster == null ) // Building one if one doesn't exist.
+    		{ // Building a new Unicaster.
+        	DatagramPacket theDatagramPacket=  // Getting DatagramPacket.
+            theNetcasterPacket.getDatagramPacket();
+        	IPAndPort peerIPAndPort= // Building its remote address.
+	          AppGUIFactory.makeIPAndPort(		
+	              theDatagramPacket.getAddress(), // IP and
+	              theDatagramPacket.getPort()  // port #.
+	          		);
+          theUnicaster= buildAddAndStartUnicaster( peerIPAndPort );
+    		}
+	    return theUnicaster;
+	    }
 
     public synchronized Unicaster tryingToGetUnicaster( 
     		NetcasterPacket theNetcasterPacket 

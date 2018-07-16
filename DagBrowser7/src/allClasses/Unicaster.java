@@ -60,6 +60,7 @@ public class Unicaster
       private final SubcasterManager theSubcasterManager;
       private final TCPCopier.TCPClient theTCPClient;
       private final Timer theTimer;
+      private final Persistent thePersistent;
   		
   		// Other instance variables.
   		private LinkedMachineState theLinkedMachineState;
@@ -75,6 +76,7 @@ public class Unicaster
 	      Shutdowner theShutdowner,
 	      SubcasterQueue subcasterToUnicasterSubcasterQueue, ///opt Subcasters?
 	  		Timer theTimer,
+	  		Persistent thePersistent,
 	  		NamedLong retransmitDelayMsNamedLong,
 	  		DefaultBooleanLike leadingDefaultBooleanLike
 	  		)
@@ -104,6 +106,7 @@ public class Unicaster
 				  this.theSubcasterManager= theSubcasterManager;
 				  this.theTCPClient= theTCPClient;
 		  		this.theTimer= theTimer;
+		  		this.thePersistent= thePersistent;
 	      }
 
     protected void initializeWithIOExceptionV() throws IOException
@@ -134,6 +137,7 @@ public class Unicaster
 		  				retransmitDelayMsNamedLong,
 		  				theTCPClient,
 		  				this,
+		  				thePersistent,
 		  				new StateList[] { theLinkMeasurementState }
 		  	  		);
   				addStateListV( theLinkedMachineState );

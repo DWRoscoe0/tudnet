@@ -41,6 +41,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
   private final NetcasterPacketManager receiverNetcasterPacketManager;
 	private final Timer theTimer;
   private final NamedLong multicasterFixedTimeOutMsNamedLong;
+  private final Persistent thePersistent;
 
   public AppGUIFactory(  // Factory constructor.
   	  Persistent thePersistent,
@@ -146,6 +147,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
       // Save in instance variables injected objects that are needed later.
   	  this.theShutdowner= theShutdowner;
   	  this.thePortManager= thePortManager;
+  	  this.thePersistent= thePersistent;
 
   	  // Save in instance variables other objects that are needed later.
       this.theUnicasterManager= theUnicasterManager;
@@ -348,7 +350,8 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 				theTCPClient,
 				theShutdowner, 
 				Config.QUEUE_SIZE,
-	  		theTimer
+	  		theTimer,
+	  		thePersistent
 				);
 	  	}
 

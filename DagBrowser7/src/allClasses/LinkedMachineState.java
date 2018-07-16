@@ -29,6 +29,7 @@ public class LinkedMachineState
 		private Timer theTimer; ///opt.  use function parameter only. 
 		private Unicaster theUnicaster;
 		private StateList[] theLinkedStateLists;
+		private Persistent thePersistent; 
 
 		// Sub-state-machine instances.
 		private ConnectingState theConnectingState;
@@ -49,6 +50,7 @@ public class LinkedMachineState
 					NamedLong retransmitDelayMsNamedLong,
 					TCPCopier.TCPClient theTCPClient,
 					Unicaster theUnicaster,
+					Persistent thePersistent, 
 					StateList[] theLinkedStateLists
 		  		)
 				throws IOException
@@ -63,6 +65,7 @@ public class LinkedMachineState
 				this.theTCPClient= theTCPClient;
 				this.theUnicaster= theUnicaster;
 				this.theLinkedStateLists= theLinkedStateLists;
+				this.thePersistent= thePersistent; 
 
 	  		// Adding measurement count.
 
@@ -293,9 +296,10 @@ public class LinkedMachineState
   	private boolean tryReceivingHelloB(StateList subStateList) 
   			throws IOException
   	  /* This method tries to process the Hello message and its arguments.
-  	    This method is part of this state, but is not called its code.
-  	    It is called by various sub-states. 
+  	    This method is part of this state, but is not called by its own code.
+  	    It is called by its sub-states, which is also 
   	    specified with the parameter subStateList.
+
   	    If the next input to the sub-state is "HELLO" then it processes it,
   	    which means parsing the IP address which follows and determining
   	    which peer, the local or remote, will be leader,
@@ -303,15 +307,21 @@ public class LinkedMachineState
   	    the value for leadingDefaultBooleanLike.
 				Note, the particular ordering of IP address Strings doesn't matter.  
 				What matters is that the ordering is consistent.
+				One peer will decide it is the leader; the other peer, the follower.
+  	    
   	    This method does not send a reply "HELLO".
-  	    Sending is assumed to be done elsewhere.
+  	    A "HELLO" is assumed to have been sent already from elsewhere.
   	    This method returns true if HELLO was received and processed, 
   	    false otherwise.
+  	    
+  	    This method could also select a leader based on NodeIdentity
+  	    instead of IP address.  Presently NodeIdentity is read but discarded.
   	    */
 	  	{
   		  boolean gotKeyB= subStateList.tryInputB("HELLO");
   		  if (gotKeyB) { // Decoding argument if input is "HELLO".
 					String localIpString= theNetcasterInputStream.readAString();
+					theNetcasterInputStream.readAString(); // Discard NodeIdentity. 
 					String remoteIpString= 
 							theUnicaster.getKeyK().getInetAddress().getHostAddress();
 					theUnicaster.leadingDefaultBooleanLike.setValueB( // Decide who leads.
@@ -333,12 +343,15 @@ public class LinkedMachineState
   			throws IOException
   	  /* This method sends a HELLO message to the remote peer
   	    from state subStateList, and logs that it has done so.
+  	    The HELLO message includes the IP address of the remote peer.
   	    */
 	  	{
 		    theNetcasterOutputStream.writingTerminatedStringV( "HELLO" );
 		    theNetcasterOutputStream.writingTerminatedStringV( 
 						theUnicaster.getKeyK().getInetAddress().getHostAddress() 
-						);  // Writing other peer's IP address.
+						);  // Writing IP address of remote peer.
+		    theNetcasterOutputStream.writingTerminatedStringV( 
+						thePersistent.getDefaultingToBlankString("NodeIdentity")); 
 		    theNetcasterOutputStream.sendingPacketV(); // Forcing send.
 	  		}
 
