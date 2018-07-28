@@ -8,6 +8,7 @@ public class Config
 
   /* This class stores configuration, preferences, and some dependent state.
     Most of it is fixed, in the form of constant final values.
+    But there are some methods that must be called to be used.
     
     Some of it may later be able to be 
     changed and stored in external text files, such as

@@ -78,7 +78,7 @@ public class PersistentCursor
 		   */
 			{
 				if (positionNameString.isEmpty())
-						entryPrefixString= null;
+						entryPrefixString= null; // This should never happen.
 					else
 						entryPrefixString=
 								listNameString+"/entries/"+positionNameString+"/";
@@ -89,16 +89,17 @@ public class PersistentCursor
 		    only returns the empty string if the list is empty.
 	      */
 			{
-				String idString= nextElementIDString(); // Try moving to next and getting ID. 
+				String idString=  // Try moving to next and getting element ID.
+						nextElementIDString();
 				if ( idString.isEmpty() ) // If at end of list
 					idString= nextElementIDString(); // try moving one more time.
 			  return idString; // Return name of this position.
-			    // If it's still empty then list must be empty.
+			    // If string is still empty then list must be empty.
 				}
 
 		public String nextElementIDString()
 		  /* Advances the piterator and returns the ID of the next list entry.
-		    If the result is null then the piterator is positioned
+		    If the result is the empty string then the piterator is positioned
 		    on the last element.
 		   	*/
 			{

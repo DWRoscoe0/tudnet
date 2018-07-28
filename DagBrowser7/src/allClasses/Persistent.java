@@ -5,8 +5,10 @@ import static allClasses.Globals.appLogger;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Enumeration;
+//// import java.util.Map;
 import java.util.Properties;
 import java.util.TreeSet;
 
@@ -29,6 +31,7 @@ public class Persistent
 		
 		// Internal state.
 		private Properties theProperties= null;
+  	private FileOutputStream theFileOutputStream = null;
 		
 	  public void initializeV()
 	    /* This method loads the configuration from external files.
@@ -38,7 +41,7 @@ public class Persistent
 	      we might as well just call initializeV() as well.
 	      */
 	    {
-	  	  theProperties= loadPropertiesV( theFileString );
+	  	  loadPropertiesV( theFileString );
 	  	  
 	  		///dbg storePairV( "kayX", "valueX" );
 		  	///dbg storePairV( "kayY", "valueY" );
@@ -53,16 +56,16 @@ public class Persistent
 		  storePropertiesV( theFileString );
 	  	}
 	  
-	  private Properties loadPropertiesV( String fileString )
-	    /* This method creates and returns a Properties instance
+	  private void loadPropertiesV( String fileString )
+	    /* This method creates a Properties instance
 	      from the contents of the external properties file
-	      whose name is fileString.  
+	      whose name is fileString and stores it in theProperties field.  
 	      If no properties were read then the result will be empty.
 	      If some properties were read then the result will contain them.
 	      The result will never be null.
 	      */
 	    {
-	  		Properties theProperties= // Adapt to write properties alphabetically.
+	  		theProperties= // Adapt to write properties alphabetically.
 					new Properties() { 
 						@Override
 		  	    public synchronized Enumeration<Object> keys() {
@@ -75,7 +78,8 @@ public class Persistent
 		  	try { 
 		  		  configFileInputStream = 
 		  		  		new FileInputStream(Config.makeRelativeToAppFolderFile( fileString ));
-				  	theProperties.load(configFileInputStream);
+				  	////theProperties.load(configFileInputStream);
+		  		  loadV(configFileInputStream);
 			  		} 
 			  	catch (FileNotFoundException theFileNotFoundException) { 
 			  		appLogger.warning("Config.loadPropertiesV(..)"+theFileNotFoundException);
@@ -91,22 +95,61 @@ public class Persistent
 				  		appLogger.exception("Config.loadPropertiesV(..)", theException);
 				  		}
 			  		}
-		  	return theProperties;
 	    	}
+
+	  private void loadV( FileInputStream configFileInputStream )
+	    throws IOException
+	    {
+		  	//// theProperties.load(configFileInputStream);
+	  	  byte[] lineAB= new byte[1024];
+	  	  int CI= configFileInputStream.read();
+		  	while (true) { // Process all lines.
+		  		if (CI==-1) break; // Exit loop if end of file.
+		  		int offsetI= 0;
+		  	  while (true) // Read, convert, and store a line of characters.
+		  	  	{
+		  	  	  if  // Exit loop if end of line character, or end of file.
+		  	  	    ((CI=='\n') || (CI=='\r') || (CI==-1)) 
+		  	  	  	break;
+		  	  	  lineAB[offsetI++]= (byte)(0xff & CI); // Store converted byte.
+		  		  	CI= configFileInputStream.read(); // Read next byte.
+		  	  		}
+		  	  String lineString= // Convert to String.
+		  	  		new String(lineAB, 0, offsetI);
+		  	  processLineV(lineString); // Process appropriately.
+  		  	CI= configFileInputStream.read(); // Read next byte.
+		  		}
+	    	}
+
+	  private void processLineV(String lineString)
+		  { 
+	  		goReturn: {
+	  		goFail: {
+		  	    if (lineString.isEmpty())  // Empty line. 
+		  	    	break goReturn; // Ignore and success.
+		  	    if (lineString.charAt(0) == '#') // Comment line.
+		  	    	break goReturn; // Ignore and success.
+		  	    int offsetOfEqualsI= lineString.indexOf('=', 0); // First '='.
+		  	    if ( offsetOfEqualsI < 1) // No '=' in line or it's at beginning
+		  	    	break goFail; // Fail.
+		  	    String keyString= lineString.substring(0, offsetOfEqualsI);
+		  	    String valueString= lineString.substring(offsetOfEqualsI+1);
+		  	    theProperties.put(keyString,valueString);
+		  	    break goReturn;
+		  	} // goFail:
+		  		appLogger.warning("processLineV(..) failed, line=\""+lineString+"\"");
+		  	} // goReturn:
+		  }
 	  
 	  private void storePropertiesV( String fileString )
 	    /* This method stores the configuration properties
 	      to the external properties file whose name is fileString.  
 	      */
 	    {
-		  	FileOutputStream theFileOutputStream = null;
 		  	try { 
 		  		  theFileOutputStream= new FileOutputStream(
 		  		  		Config.makeRelativeToAppFolderFile( fileString ));
-		  			theProperties.store(
-		  				theFileOutputStream, 
-		  				"---Infogora persistent data file---"
-		  				);
+		  			storeV( theFileOutputStream );
 			  		} 
 			  	catch (Exception theException) { 
 			  		appLogger.exception("Config.storePropertiesV(..)", theException);
@@ -120,7 +163,42 @@ public class Persistent
 				  		}
 			  		}
 	    	}
-	
+
+	  private void storeV( FileOutputStream theFileOutputStream)
+	    throws IOException
+		  {
+		  	/*  ////
+		  	theProperties.store(
+		  	  theFileOutputStream, 
+					null//// "---Infogora persistent data file---"
+					);
+				*/  ////
+	  		writingStringV("#---NEW Infogora persistent data file---\n");
+		  	for // Write all elements in the map. 
+		  	  (Enumeration<?> e = theProperties.keys(); 
+		  			e.hasMoreElements();) // Enumeration has been sorted.
+			  	{ // Write one element.
+	          String key = (String)e.nextElement();
+		  			//// writingStringV("key=" + key + "\n");
+	          String val = (String)theProperties.get(key);
+		  			//// writingStringV("val=" + val + "\n");
+	          //// key = saveConvert(key, true, escUnicode);
+	          /* No need to escape embedded and trailing spaces for value, hence
+	           * pass false to flag.
+	           */
+	          //// val = saveConvert(val, false, escUnicode);
+	          writingStringV(key + "=" + val + "\n"); // Write in a line.
+	          //// bw.newLine();
+			  		}
+		  	}
+
+    public void writingStringV( String theString ) throws IOException
+      // This method writes theString but it doesn't force a flush().
+      {
+    		byte[] buf = theString.getBytes(); // Getting byte buffer from String
+    		theFileOutputStream.write(buf); // Writing it to stream memory.
+        }
+
 	  public String entryInsertOrMoveToFrontString( 
 	  		String entryIDString, String listNameString )
 		  /* This method updates information about the linked list entry
