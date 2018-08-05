@@ -302,7 +302,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 		  	theNetcasterPacketManager,
 		  	packetsSentNamedLong,
 	  		theTimer,
-	  		Config.delimiterChar
+	  		Config.delimiterC
 	      );
 	    }
 	
@@ -326,7 +326,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 		  	multicasterLockAndSignal,
 	  		makeNetcasterInputStream( 
 	  				multicastReceiverToMulticasterNetcasterQueue, 
-	  	  		Config.delimiterChar
+	  	  		Config.delimiterC
 	  				),
 	  		makeNetcasterOutputStream( theNetcasterPacketManager ),
         theShutdowner,

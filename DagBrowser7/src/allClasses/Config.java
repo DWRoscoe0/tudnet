@@ -65,7 +65,8 @@ public class Config
 
 		public static final int QUEUE_SIZE= 5;
 
-		public static final char delimiterChar= '!';
+		public static final char delimiterC= '!';
+		public static final char pathSeperatorC= '/'; 
 
 		public static final String appString= "Infogora";
 	  public static final String appJarString= appString + ".jar";

@@ -40,8 +40,8 @@ public class App { // The App, especially pre-GUI stuff.
      */
     {
   		//appLogger.info("App beginning.");
-  		thePersistent.initializeV();  // Load app properties.
-  	  defineNodeIdentifyV();
+  		thePersistent.initializeV();  // Prepare access to persistent data.
+  	  defineNodeIdentityV();
 			theTCPServer.startV();
 			theTCPClient.startV();
 			theShutdowner.initializeV();
@@ -59,7 +59,7 @@ public class App { // The App, especially pre-GUI stuff.
       } // runV().
 
 
-  private void defineNodeIdentifyV()
+  private void defineNodeIdentityV()
     /* This method creates a node identity number for this peer
       if it does not already exist.
      	*/

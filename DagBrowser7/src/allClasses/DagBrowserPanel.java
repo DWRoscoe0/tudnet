@@ -120,7 +120,7 @@ public class DagBrowserPanel
           private JLabel activityJLabel; // window monitor status.
           
         private JPanel viewJPanel; // JPanel where desired data is displayed.
-          private JLabel directoryJLabel; // a place to display directory path.
+          private JLabel treePathJLabel; // a place to display directory path.
 
           private JSplitPane theSplitPane;  // horizontally split content panel
             private JScrollPane treeJScrollPane;  // left scroller sub-panel...
@@ -291,15 +291,15 @@ public class DagBrowserPanel
           { // build viewJPanel.
             viewJPanel= new JPanel();  // construct viewJPanel.
             viewJPanel.setLayout(new BorderLayout());  // set layout manager.
-            { // Build and add Current Working directoryJLabel.
-              directoryJLabel= new JLabel();  // create CWD JLabel.
-              directoryJLabel.setAlignmentX(Component.LEFT_ALIGNMENT);  // align it.
-              directoryJLabel.setBorder(
+            { // Build and add Current Working treePathJLabel.
+              treePathJLabel= new JLabel();  // create CWD JLabel.
+              treePathJLabel.setAlignmentX(Component.LEFT_ALIGNMENT);  // align it.
+              treePathJLabel.setBorder(
                 BorderFactory.createEtchedBorder(EtchedBorder.RAISED)
                 );
               // ?? Use left or center elipsis, not right, when truncating.
-              viewJPanel.add(directoryJLabel,BorderLayout.NORTH);  // add as north sub-panel.
-              } // Build and add Current Working directoryJLabel.
+              viewJPanel.add(treePathJLabel,BorderLayout.NORTH);  // add as north sub-panel.
+              } // Build and add Current Working treePathJLabel.
             buildAndAddJSplitPane();  // Contains left and right sub-panels.
               // It is added to the center sub-panel.
             { // Build and add infoJLabel for displaying file information.
@@ -750,7 +750,7 @@ public class DagBrowserPanel
                 be created and placed in the right sub-panel 
                 to display the node identified by the TreePath.  
                 
-                The directoryJLabel and infoJLabel are updated with information 
+                The treePathJLabel and infoJLabel are updated with information 
                 based on any new selection in the MasterPane.
 
                 This method might be re-entered.
@@ -989,10 +989,10 @@ public class DagBrowserPanel
 		          }
 
           private void displayPathAndInfoV(TreePath inTreePath)
-            /* This method Updates directoryJLabel and infoJLabel, 
+            /* This method Updates treePathJLabel and infoJLabel, 
               which appear as two lines above and below the two main sub-panels.
               It displays the string representation of inTreePath 
-              in directoryJLabel, and various attributes of 
+              in treePathJLabel, and various attributes of 
               the final DataNode of that path in infoJLabel.
               This method is meant to be called whenever:
               * the TreeSelection changes
@@ -1006,7 +1006,7 @@ public class DagBrowserPanel
               if (inTreePath == null) // Handling no path provided.
                 { // display null info.
                   //appLogger.info("DagBrowserPanel.displayPathAndInfoV( null )");
-                  directoryJLabel.setText("NO PATH");
+                  treePathJLabel.setText("NO PATH");
                   infoJLabel.setText("NO INFORMATION AVAILABLE");
                   } // display null info.
                 else  // Handling path provided.
@@ -1014,7 +1014,7 @@ public class DagBrowserPanel
                   while // Strip all error nodes from tail of TreePath.
                     ( UnknownDataNode.isOneB( inTreePath.getLastPathComponent() ))
                     inTreePath= inTreePath.getParentPath();  // Strip the node.
-                  directoryJLabel.setText(  // in directoryJLabel display set...
+                  treePathJLabel.setText(  // in treePathJLabel display set...
                     theDataTreeModel.  // ...DataTreeModel's calculation of...
                       getAbsolutePathString(  // ...String representation of...
                         inTreePath  // ...of inTreePath.

@@ -6,8 +6,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.TreeMap;
 import java.util.Iterator;
+import java.util.TreeMap;
 
 public class Persistent 
 
@@ -27,7 +27,8 @@ public class Persistent
 		private final String theFileString= "PersistentData.txt";
 		
 		// Internal state.
-		private TreeMap<Object,Object> theMap= null;
+		private PersistingNode rootPersistingNode= null;
+		//// private TreeMap<String,PersistingNode> theMap= null;
 		  // TreeMap provides alphabetically sorted output to text file.
   	private FileOutputStream theFileOutputStream = null;
 		
@@ -46,8 +47,7 @@ public class Persistent
 		  	///dbg storePairV( "keyZ", "valueZ" );
 	  	  
 	    	}
-		
-	  
+
 	  public void finalizeV()
 	  /* This method stores the persistent data to the external file.  */
 	  {
@@ -63,27 +63,30 @@ public class Persistent
 	      The result will never be null.
 	      */
 	    {
-	  		theMap= new TreeMap<Object,Object>(); // Create empty Map. 
+	  		//// theMap= new TreeMap<String,PersistingNode>(); // Create empty Map. 
+	  		rootPersistingNode= 
+	  				new PersistingNode("this-is-root"); // Create empty Map. 
 
 	  		FileInputStream configFileInputStream= null;
 
 		  	try { 
-		  		  configFileInputStream = 
-		  		  		new FileInputStream(Config.makeRelativeToAppFolderFile( fileString ));
-		  		  loadV(configFileInputStream);
+		  		  configFileInputStream= // Prepare file containing persistent data.
+		  		  		new FileInputStream(
+		  		  				Config.makeRelativeToAppFolderFile( fileString ));
+		  		  loadV(configFileInputStream); // Load data from file.
 			  		} 
 			  	catch (FileNotFoundException theFileNotFoundException) { 
-			  		appLogger.warning("Config.loadDataV(..)"+theFileNotFoundException);
+			  		appLogger.warning("Persistent.loadDataV(..)"+theFileNotFoundException);
 			  		}
 			  	catch (Exception theException) { 
-			  		appLogger.exception("Config.loadDataV(..)", theException);
+			  		appLogger.exception("Persistent.loadDataV(..)", theException);
 			  		}
 			  	finally { 
 			  		try { 
 			  			if ( configFileInputStream != null ) configFileInputStream.close(); 
 			  			}
 				  	catch (Exception theException) { 
-				  		appLogger.exception("Config.loadDataV(..)", theException);
+				  		appLogger.exception("Persistent.loadDataV(..)", theException);
 				  		}
 			  		}
 	    	}
@@ -96,7 +99,7 @@ public class Persistent
 		  	while (true) { // Process all lines.
 		  		if (CI==-1) break; // Exit loop if end of file.
 		  		int offsetI= 0;
-		  	  while (true) // Read, convert, and store a line in characters array.
+		  	  while (true) // Read, convert, and store a line in character array.
 		  	  	{
 		  	  	  if  // Exit loop if end of line character, or end of file.
 		  	  	    ((CI=='\n') || (CI=='\r') || (CI==-1)) 
@@ -104,50 +107,70 @@ public class Persistent
 		  	  	  lineAB[offsetI++]= (byte)(0xff & CI); // Store converted byte.
 		  		  	CI= configFileInputStream.read(); // Read next byte.
 		  	  		}
-		  	  String lineString= // Convert char array to a String.
+		  	  String lineString= // Convert line char array to a String.
 		  	  		new String(lineAB, 0, offsetI);
-		  	  processLineV(lineString); // Process string appropriately.
+		  	  processLineV(lineString); // Process line appropriately.
   		  	CI= configFileInputStream.read(); // Read next byte.
 		  		}
 	    	}
 
 	  private void processLineV(String lineString)
-	    /* Reads lineString and saves any key-value entry present.  */
+	    /* Reads lineString and saves any key-value entry present.  
+	      This is called "process" and not "load" because
+	      some lines, such as comments, are ignored.
+	      */
 		  { 
-	  		goReturn: {
-	  		goFail: {
-		  	    if (lineString.isEmpty())  // Empty line. 
-		  	    	break goReturn; // Ignore with success.
-		  	    if (lineString.charAt(0) == '#') // Comment line.
-		  	    	break goReturn; // Ignore with success.
-		  	    int offsetOfEqualsI= lineString.indexOf('=', 0); // First '='.
-		  	    if ( offsetOfEqualsI < 1) // No '=' in line or it's at beginning
-		  	    	break goFail; // Fail.
-		  	    // All is well.  Extract key and value and save them.
-		  	    String keyString= lineString.substring(0, offsetOfEqualsI);
-		  	    String valueString= lineString.substring(offsetOfEqualsI+1);
-		  	    theMap.put(keyString,valueString);
-		  	    break goReturn; // Return with success.
+	  		toReturn: {
+	  		toFail: {
+	  	    if (lineString.isEmpty())  // Empty line. 
+	  	    	break toReturn; // Ignore with success.
+	  	    if (lineString.charAt(0) == '#') // Comment line.
+	  	    	break toReturn; // Ignore with success.
+	  	    int offsetOfEqualsI= lineString.indexOf('=', 0); // First '='.
+	  	    if (offsetOfEqualsI < 1) // '=' absent or at beginning of line.
+	  	    	break toFail; // Fail.
+	  	    // All is well.  Extract key and value and save them.
+	  	    loadValidLineV(lineString,offsetOfEqualsI);
+	  	    break toReturn; // Return with success.
 		  	} // goFail:
 		  		appLogger.warning("processLineV(..) failed, line=\""+lineString+"\"");
 		  	} // goReturn:
 		  }
-	  
+
+    private void loadValidLineV(String lineString, int offsetOfEqualsI)
+      /* Processes a line which has already been determined to be correct.
+        offsetOfEqualsI of the offset of the "=" within the line lineString.
+        Presently it saves the line only in the rootPersistingNode,
+        with path separators in the keyString if there.
+        */
+	    {
+		    String keyPathString= lineString.substring(0, offsetOfEqualsI);
+		    String valueString= lineString.substring(offsetOfEqualsI+1);
+
+		    multilevelPutB(keyPathString,valueString);
+	    	  // Store in nested levels.
+		    }
+		  
 	  private void storeDataV( String fileString )
 	    /* This method stores the Map data to 
 	      the external text file whose name is fileString.  
 	      */
 	    {
-		  	try { 
+		  	try {
 		  		  theFileOutputStream= new FileOutputStream(
 		  		  		Config.makeRelativeToAppFolderFile( fileString ));
-		  			storeV( theFileOutputStream );
-			  		} 
+			  		writingV(
+			  				"#---Infogora persistent data, single level only---\n");
+		  			storeNodeV("", rootPersistingNode);
+			  		writingV(
+			  				"#---EXPERIMENTAL multilevel data output follows---\n");
+		  			multilevelStoreNodeV("", rootPersistingNode);
+			  		}
 			  	catch (Exception theException) { 
 			  		appLogger.exception("Config.storeDataV(..)", theException);
 			  		}
-			  	finally { 
-			  		try { 
+			  	finally {
+			  		try {
 			  			if ( theFileOutputStream != null ) theFileOutputStream.close(); 
 			  			}
 			  		catch ( Exception theException ) { 
@@ -156,26 +179,101 @@ public class Persistent
 			  		}
 	    	}
 
-	  private void storeV( FileOutputStream theFileOutputStream)
+	  private void storeNodeV(
+	  		String prefixString, PersistingNode thePersistingNode)
 	    throws IOException
+	    /* Recursively stores thePersistingNode to the file stream.
+	      If there is a valueString in thePersistingNode then
+	      a line is output of the form: "prefixString=valueString".
+	      If thePersistingNode has any children then
+	      this method is called recursively with 
+	      Key Strings are appended to prefixString.
+	      prefixString becomes longer with each level of recursion.
+	      */
 		  {
-	  		writingStringV("#---NEW Infogora persistent data file---\n");
-	  		Iterator<?> theIterator = theMap.keySet().iterator();
-	  		while (theIterator.hasNext())
-			  	{ // Write one element.
-	  				String keyString = (String)theIterator.next();
-	          String valueString = (String)theMap.get(keyString);
-	          writingStringV(keyString + "=" + valueString + "\n"); // Write line.
+	  		Iterator<String> theIterator= 
+	  				thePersistingNode.getChildrenTreeMap().keySet().iterator();
+	  		while (theIterator.hasNext()) // Iterate over all children.
+			  	{ // Write one child element.
+	  				String childKeyString= theIterator.next();
+	  				PersistingNode childPersistingNode= 
+	  						thePersistingNode.getChildrenTreeMap().get(childKeyString);  
+	          String childValueString= childPersistingNode.getValueString();
+	  				String lineString= prefixString;
+	  				if (! lineString.isEmpty()) lineString+= Config.pathSeperatorC;
+	  				lineString+= childKeyString + "=" + childValueString;
+	  				writingLineV(lineString); // Write a line containing value.
 			  		}
 		  	}
 
-    public void writingStringV( String theString ) throws IOException
-      // This method writes theString to the text file OutputStream.
+	  private void multilevelStoreNodeV(
+	  		String prefixString, PersistingNode thePersistingNode)
+	    throws IOException
+	    /* This recursive method stores thePersistingNode 
+	      by writing to the stream.
+	      thePersistingNode is assumed to be a descendant of rootPersistingNode,
+	      with prefixString describing the path from
+	      rootPersistingNode to thePersistingNode.
+	     */
+		  {
+		  	{ // Store this node's value, if present.
+		  	  String valueString= thePersistingNode.getValueString();
+		  	  if (valueString==null) valueString= "";
+		  	  if (! prefixString.isEmpty() 
+		  	  		//// && valueString!=null && ! valueString.isEmpty()
+		  	  		)
+	  		  	////writingStringV(prefixString + "=" + valueString + "\n");
+		  	  	writingLineV(prefixString + "=" + valueString);
+		  		}
+		  	{ // Store child nodes, if present.
+			  	Iterator<String> theIterator= // Make iterator for the children. 
+		  				thePersistingNode.getChildrenTreeMap().keySet().iterator();
+		  		while (theIterator.hasNext()) // Store all children.
+				  	{ // Write one child node.
+		  				String childKeyString= theIterator.next();
+		  				String childPrefixString= prefixString;
+		  				if (! childPrefixString.isEmpty()) 
+		  					childPrefixString+= Config.pathSeperatorC;
+		  				childPrefixString+= childKeyString;
+		  				TreeMap<String,PersistingNode> childTreeMap=
+		  						thePersistingNode.getChildrenTreeMap();
+		  				////writingCommentStringV("experimentalStoreNodeV(..) recursing.");
+		  				multilevelStoreNodeV(
+		  						childPrefixString,childTreeMap.get(childKeyString));
+				  		}
+		  			}
+		  	}
+
+    public void writingCommentLineV( String commentString ) 
+    	throws IOException
+      /* This method writes theString followed by a newline
+        to the text file OutputStream.
+        */
       {
-    		byte[] buf = theString.getBytes(); // Getting byte buffer from String
-    		theFileOutputStream.write(buf); // Writing it to stream memory.
+    		theFileOutputStream.write('#'); // Write comment character.
+    		writingLineV(commentString); // Write comment content as line.
         }
 
+    public void writingLineV( String lineString ) throws IOException
+      /* This method writes theString followed by a newline
+        to the text file OutputStream.
+        */
+      {
+    		writingV(lineString); // Write string.
+    		theFileOutputStream.write('\n'); // Terminate line.
+        }
+
+    public void writingV( String theString ) throws IOException
+      // This method writes theString to the text file OutputStream.
+      {
+    		byte[] buf= // Getting byte buffer equivalent of String
+    				theString.getBytes();
+    		theFileOutputStream.write(buf); // Writing it to stream.
+        }
+
+    
+    // Link list kludge methods.
+    
 	  public String entryInsertOrMoveToFrontString( 
 	  		String entryIDString, String listNameString )
 		  /* This method updates information about the linked list entry
@@ -266,6 +364,72 @@ public class Persistent
 		  {
 				return prefixString + "/";
 			  }
+		
+	  
+	  // Basic get and put methods.
+	  
+	  public void putV( String keyString, String valueString )
+		  /* Stores valuesString as the value associated with keyStrig.
+		    It does this only on a single level, in the rootPersistingNode.
+		   	*/
+		  {
+	  		rootPersistingNode.getChildrenTreeMap().
+	  		  put( keyString, new PersistingNode(valueString));
+			  }
+
+	  private boolean multilevelPutB(String keyString,String valueString)
+	    {
+		  	return multilevelPutB(rootPersistingNode,keyString,valueString);
+		    }
+
+	  private boolean multilevelPutB(
+	  		PersistingNode thePersistingNode,String keyString,String valueString)
+	    /* This recursive method stores valueString into thePersistingNode
+	      or one of its descendants, based on keyString.
+	      It uses recursion to reach or create the needed descendants.
+	      If keyString contains no path separator then 
+	      the entire keyString is used to get or create
+	      the child node into which valueString is stored directly.
+	      If keyString contains a path separator then 
+	      the part before the separator is used to get or create
+	      the child node into which valueString is stored
+	      by calling this method recursively on that child node
+	      using the remainder of keyString as the new keyString.
+	      If the key or any of its parts is empty then an error is logged and 
+	      true is returned, otherwise false is returned.
+	      
+	      ///opt Could this be converted to not recurse?
+	     	*/
+	    {
+	  		appLogger.debug("multiSetValueB(..) begins.");
+	  			boolean resultB= false; // Set default return value to be success.
+	  		toReturn: {
+	  		toFail: {
+			    int offsetOfSeparatorI= // Offset of first key/path separator. 
+			    		keyString.indexOf(Config.pathSeperatorC, 0);
+			    if (offsetOfSeparatorI < 0) // There is no path separator in key.
+				    { // Store value in this node's child for this key, return success.
+				    	thePersistingNode.setChildValueV(keyString, valueString);
+					    break toReturn;
+				    	}
+			    if (offsetOfSeparatorI < 1) // Separator is at beginning of key.
+				    break toFail; // Key head would be empty.
+			    String keyHeadString= keyString.substring(0, offsetOfSeparatorI);
+			    if (offsetOfSeparatorI >= keyString.length()) // Separator is at end.
+				    break toFail; // Key tail would be empty.
+			    String keyTailString= keyString.substring(offsetOfSeparatorI+1);
+	    		PersistingNode childPersistingNode= // Get or make appropriate child. 
+		    			thePersistingNode.getOrMakeChildPersistingNode(keyHeadString);
+	    		resultB= // Recurse using tail of key as new key.
+	    				multilevelPutB(
+	    						childPersistingNode,keyTailString,valueString);
+	    		break toReturn;
+		  	} // toFail:
+		  		appLogger.warning("multiSetValueB(..) failed.");
+		  		resultB= true;  // Set failure return value
+		  	} // toReturn:
+	  			return resultB;
+		  	}
 	
 	  public String getDefaultingToBlankString( String keyString )
 		  /* Returns the value String associated with keyString,
@@ -274,22 +438,111 @@ public class Persistent
 		  {
 				return getString( keyString, "" );
 			  }
-	
+		
 	  private String getString( String keyString, String defaultValueString )
 			/* Returns the value String associated with keyString,
-		    or defaultValueString if there is none.
+		    or defaultValueString if there is no value String stored.
+		    It does not try to interpret path separator characters in the key.
+		    It does a single-level lookup only.
 		   	*/
 		  {
-	  	  String valueString= (String)theMap.get(keyString);
-	  	  if (valueString == null)
-	  	  	valueString= defaultValueString;
-	  	  return valueString;
-			  }
-	
-	  public void putV( String keyString, String valueString )
-		  // Stores valuesString as the value associated with keyStrig.
-		  {
-	  		theMap.put( keyString, valueString );
-			  }
+  			String childValueString= getString(keyString); 
+	  	  if (childValueString == null) 
+	  	  	childValueString= defaultValueString;
+				return childValueString;
+		  }
 		
+	  private String getString( String keyString)
+			/* Returns the value String associated with keyString,
+		    or null if there is no value String stored.
+		    It does not try to interpret path separator characters in the key.
+		    It does a single-level lookup only.
+		   	*/
+		  {
+					String childValueString= null;
+			  goReturn: {
+			  goReturnNull: {
+		  	  PersistingNode childPersistingNode= 
+		  	  		rootPersistingNode.getChildrenTreeMap().get(keyString);
+		  	  if (childPersistingNode == null) break goReturnNull;
+		  	  childValueString= childPersistingNode.getValueString();
+		  	  if (childValueString == null) break goReturnNull;
+		  	  break goReturn; // Use retrieved valueString.
+			  } // goUseDefault:
+					childValueString= null;
+				  break goReturn;
+		  	} // goReturn:
+					return childValueString;
+			  }
+
+	  private String multilevelGetString(
+	  		String pathString, String defaultValueString)
+			/* This is like multilevelGetString(String pathString) but
+			  instead of returning null if no value is found,
+			  it returns defaultValueString.
+			 */
+		  {
+				String resultValueString= multilevelGetString(pathString); 
+	  	  if (resultValueString == null) 
+	  	  	resultValueString= defaultValueString;
+				return resultValueString;
+			  }
+
+	  private String multilevelGetString(String pathString)
+			/* Returns the value String associated with pathString, 
+			  or null if there is no value String stored.
+		    It interprets pathString as a path from the root PersistingNode
+		    to the node that contains the desired value.
+		    Each path element is used as a key to select 
+		    the next child in the PersistingNode hierarchy.
+		    It does one key lookup for every element of the path.
+		    If any key lookup fails or a value is not found in the final node
+		    then null is returned.
+		   	*/
+		  {
+	  			String resultValueString; // Storage for result value.
+	  			PersistingNode scanPersistingNode= // Start scan at root node. 
+	  					rootPersistingNode;
+			    int scanKeyOffsetI= 0; // Offset of beginning of separator search. 
+	  	  goReturn: {
+	  	  goReturnNull: {
+			  goLogError: {
+				  while (true) { // Select child nodes until one with value is reached.
+				    int separatorKeyOffsetI= // Offset of next key/path separator. 
+				    		pathString.indexOf(Config.pathSeperatorC, scanKeyOffsetI);
+				    if (separatorKeyOffsetI < 0) // There is no path separator in path..
+				    	{	// So this is final node.  Return value from appropriate child.
+				    	  String keyString= // Key is entire remainder of path.
+				    	  		pathString.substring(scanKeyOffsetI, pathString.length());
+				    	  if (keyString.isEmpty()) break goLogError;
+			    			PersistingNode childPersistingNode= // Get associated child. 
+				    		  scanPersistingNode.getChildrenTreeMap().get(keyString);
+					  	  if (childPersistingNode == null) // If no child with this key.. 
+					  	  	break goReturnNull;
+					  	  resultValueString= childPersistingNode.getValueString();
+					  	  if (resultValueString == null) // If the child has no value..
+					  	  	break goReturnNull;
+					  	  break goReturn; // Use the value from the child.
+				    		}
+				    if (separatorKeyOffsetI >= scanKeyOffsetI) // Separator is at start.
+					    break goLogError; // So there is no key to select a child.
+		    	  String keyString= // Extract key from path.
+		    	  		pathString.substring(scanKeyOffsetI, separatorKeyOffsetI);
+	    			PersistingNode childPersistingNode= // Get associated child. 
+			    		  scanPersistingNode.getChildrenTreeMap().get(keyString);
+			  	  if (childPersistingNode == null) // If no child node with this key.. 
+			  	  	break goReturnNull;
+			  	  scanPersistingNode= childPersistingNode; // Select next node.
+			  	  scanKeyOffsetI= separatorKeyOffsetI+1; // Select next key offset.
+				  } // while (true)... Loop to test next descendant node.
+			  } // goLogError:
+		  		appLogger.error("Persistent.multiGetString(..), error getting value.");
+	  	  	break goReturnNull;
+				} // goReturnNull:
+					resultValueString= null;
+				  break goReturn;
+		  	} // goReturn:
+	  			return resultValueString;
+		  }
+
 		}

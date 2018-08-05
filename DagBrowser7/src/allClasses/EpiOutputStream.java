@@ -107,7 +107,7 @@ public class EpiOutputStream<
     protected void writingTerminatedLongV( long theL ) 
     		throws IOException
       /* This method writes theL long int 
-        followed by the delimiterChar to the stream,  
+        followed by the delimiterC to the stream,  
         but it doesn't force a flush().
         */
       { 
@@ -116,7 +116,7 @@ public class EpiOutputStream<
 
     public void writingTerminatedStringV( String theString ) 
     		throws IOException
-      /* This method writes theString followed by the delimiterChar.
+      /* This method writes theString followed by the delimiterC.
         But it doesn't force a flush().
         */
       { 

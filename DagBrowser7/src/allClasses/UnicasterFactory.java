@@ -44,7 +44,7 @@ public class UnicasterFactory {
 			NetcasterInputStream unicasterNetcasterInputStream=
 					theAppGUIFactory.makeNetcasterInputStream( 
 							receiverToUnicasterNetcasterQueue, 
-				  		Config.delimiterChar
+				  		Config.delimiterC
 							);
 		  NetcasterPacketManager theNetcasterPacketManager=
 		  		new NetcasterPacketManager( unicasterIPAndPort );
@@ -119,7 +119,7 @@ public class UnicasterFactory {
 			SubcasterInputStream theSubcasterInputStream= 
 			  	makeSubcasterInputStream( 
 			  			unicasterToSubcasterSubcasterQueue, 
-				  		Config.delimiterChar
+				  		Config.delimiterC
 			  			);
 			SubcasterOutputStream theSubcasterOutputStream= 
 					makeSubcasterOutputStream( 
@@ -151,7 +151,7 @@ public class UnicasterFactory {
   		  	theSubcasterPacketManager,
   		  	packetsSentNamedLong,
   	  		theTimer,
-  	  		Config.delimiterChar
+  	  		Config.delimiterC
   	      );
   	    }
 

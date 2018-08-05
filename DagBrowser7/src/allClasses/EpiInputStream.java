@@ -127,7 +127,7 @@ public class EpiInputStream<
 		protected int readANumberI()
   		throws IOException, BadReceivedDataException
   		/* This method reads and returns one int number 
-  		  converted from a String ending in the delimiterChar.
+  		  converted from a String ending in the delimiterC.
   		  This means it could not be used for floating point numbers.  
   		  It blocks if a full number is not available.
   		  It converts NumberFormatExceptions to a BadReceivedDataExceptions. 
@@ -146,7 +146,7 @@ public class EpiInputStream<
 
 		protected String readAString() throws IOException
   		/* This method reads and returns one String ending in the first
-  		  delimiterChar from stream, 
+  		  delimiterC from stream, 
   		  but the String returned does not include the delimiter.
   		  This method does not block.
 				If a complete string, including delimiter, is not available,

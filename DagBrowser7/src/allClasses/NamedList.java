@@ -40,9 +40,10 @@ public class NamedList
 		        Arrays.asList(  // an immutable List made from
 		        		emptyListOfDataNodes() // an empty DataNode list.
 		            )
-		        ); // This might be replaced with a SelfReturningListOrNode.
-	        ///enh Distinguish between active children and lazy children.
-	        // See MetaFileManager for ideas.
+		        ); 
+	      ///opt This could be replaced with a SelfReturningNodeOrNodes class.
+        ///enh Distinguish between active children and lazy children?
+        // See MetaFileManager for ideas.
     
     public void initializeV(
         String nameString, 

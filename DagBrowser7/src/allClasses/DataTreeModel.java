@@ -1,6 +1,5 @@
 package allClasses;
 
-import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -83,8 +82,8 @@ public class DataTreeModel
 
     // Constants.
 
-        private static final String spacyFileSeperator= 
-          " "+File.separator+" ";
+      private static final String spacyPathSeperator= 
+          " "+Config.pathSeperatorC+" ";
 
     // Injected dependency variables.
 
@@ -316,7 +315,7 @@ public class DataTreeModel
             if  // Appending separator to headString if needed,...
               ( resultString.length() != 0)  // ...if result String is not empty...
               headString+=  // ...by appending to the head String...
-                spacyFileSeperator; // ...the File separator string.
+                spacyPathSeperator; // ...the path separator string.
             resultString=  // Prepending...
               headString +  // ...the head String...
               resultString;  // ...to the resultString.
