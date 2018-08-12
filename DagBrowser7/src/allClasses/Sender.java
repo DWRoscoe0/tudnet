@@ -195,7 +195,9 @@ public class Sender // Uunicast and multicast sender thread.
 	    	}
 
     private void sendingDatagramPacketV( DatagramPacket theDatagramPacket )
-      // This method sends theDatagramPacket and handles exceptions.
+      /* This method sends theDatagramPacket 
+        and handles IOExceptions by logging them.
+       	*/
 	    {
     		//appLogger.debug("sendingDatagramPacketV(..) calling send(..)." );
 	    	try { // Send the packet.
@@ -211,6 +213,10 @@ public class Sender // Uunicast and multicast sender thread.
 	          + PacketManager.gettingDirectedPacketString( 
 	          		theDatagramPacket,true )  
 	          );
+	        ///fix Skipped time has caused: java.net.SocketException: 
+	        //		No buffer space available (maximum connections reached?): 
+	        //    	Datagram send failed 
+	        // It seems able to recover and send again.
 	      }
 	    }
     

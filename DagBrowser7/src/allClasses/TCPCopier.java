@@ -118,7 +118,7 @@ public class TCPCopier
 		  		updateTCPCopyStagingAreaV();
 	      	PersistentCursor thePersistentCursor= 
 	      			new PersistentCursor( thePersistent );
-	      	thePersistentCursor.setListNameV("peers");
+	      	thePersistentCursor.setListPathV("peers");
 	      	interactWithTCPServersV(thePersistentCursor);
 	  			appLogger.info("run() ending.",true);
 		    	}
@@ -323,7 +323,10 @@ public class TCPCopier
 					}
 
 	    public void addPeerInfoV(String ipString, String portString)
-	      /* Add peer list the peer whose IP and port are ipString and portString.
+	      /* Add to peer list the peer whose IP and port 
+	        are ipString and portString.
+	        This should only be called when a TCP connection
+	        has actually been made.
 	        */
 		    {	
 	    		String peerIDString= ipString+"-"+portString; // Calculate ID string.

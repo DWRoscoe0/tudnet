@@ -74,6 +74,16 @@ public class Nulls
 	  				? theObject.toString() // then use regular toString() method
 	  				: "null"; // otherwise return the word "null".
 	  		}
+		
+		public static String toEmptyString(String theString) 
+		  /* Returns theString, or "" if theString == null.
+		    */
+			{
+	  		return 
+	  				theString != null // If String reference is not null 
+	  				? theString // return it unchanged
+	  				: ""; // otherwise return the empty String.
+	  		}
 
 		public static void throwV( Throwable theThrowable ) 
 		  /* This method works like the "throw" keyword but

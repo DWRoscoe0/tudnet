@@ -24,9 +24,10 @@ public abstract class TreeModelSupport
   {
     private Vector<TreeModelListener> vectorOfTreeModelListener =
       new Vector<TreeModelListener>();   // Listener storage.
-
+    private int maxListenersI= 0;
+    
     public void addTreeModelListener( TreeModelListener theTreeModelListener )
-      /* ///? Note, I have had to increase the vector size limit several times.
+      /* ///fix Note, I have had to increase the vector size limit several times.
         I suspect I had a Listener leak, and some type of command mode
         is causing it, but I haven't figured out what that is yet.
         */
@@ -37,15 +38,17 @@ public abstract class TreeModelSupport
         		  )
 	        { 
 	        	vectorOfTreeModelListener.addElement( theTreeModelListener );
-		        if ( vectorOfTreeModelListener.size() > 12)
-			    		appLogger.error(
-			      			"TreeModelSupport.addTreeModelListener(..), listeners: "+
+		        if ( vectorOfTreeModelListener.size() > maxListenersI) {
+			    		appLogger.warning( // Change to error to see these interactively.
+			      			"TreeModelSupport.addTreeModelListener(..), maxListenersI: "+
 		      		    vectorOfTreeModelListener.size()+ "\n  "+
 		      		    theTreeModelListener.getClass().getName() + "@" +
 		      		    Integer.toHexString(
 		      		    		System.identityHashCode(theTreeModelListener)
 		      		    		)
 			            );
+			    		maxListenersI++; // Increment maximum listeners so far.
+			    		}
   	        }
         	else
 	    		appLogger.error(
