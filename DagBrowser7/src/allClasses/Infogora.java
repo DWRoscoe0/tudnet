@@ -85,8 +85,8 @@ class Infogora  // The root of this app.
             public void uncaughtException(Thread t, Throwable e) {
               System.out.println( "Uncaught Exception, "+t.getName()+", "+e);
 
+          		appLogger.setBufferedModeV( false ); // Disabling buffering.
               appLogger.error( "Uncaught Exception: "+e );
-
               StringWriter aStringWriter= new StringWriter();
               PrintWriter aPrintWriter= new PrintWriter(aStringWriter);
               e.printStackTrace(aPrintWriter);

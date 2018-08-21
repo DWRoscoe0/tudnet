@@ -75,7 +75,7 @@ public class App { // The App, especially pre-GUI stuff.
 	    		while ( --skipCountI >= 0 ) // Randomly skip 8 to 16 generated values. 
 	    			theRandom.nextInt();
 	    		int identityI= theRandom.nextInt();
-	    		thePersistent.putV("NodeIdentity", ""+identityI);
+	    		thePersistent.putB("NodeIdentity", ""+identityI);
 	    	}
 	  	}
 

@@ -118,7 +118,7 @@ public class TCPCopier
 		  		updateTCPCopyStagingAreaV();
 	      	PersistentCursor thePersistentCursor= 
 	      			new PersistentCursor( thePersistent );
-	      	thePersistentCursor.setListPathV("peers");
+	      	thePersistentCursor.setListV("peers");
 	      	interactWithTCPServersV(thePersistentCursor);
 	  			appLogger.info("run() ending.",true);
 		    	}
@@ -254,16 +254,16 @@ public class TCPCopier
 			    even if wrapping around to the beginning is necessary.
 			   */
 				{
-				  if ( thePersistentCursor.getElementIDString().isEmpty() ) { 
+				  if ( thePersistentCursor.getEntryKeyString().isEmpty() ) { 
 			      ; // Do nothing because peer list must be empty.
-				  	} else { // Process peer list element.
+				  	} else { // Process one peer list element.
 							String serverIPString= 
 									thePersistentCursor.getFieldString("IP");
 							String serverPortString= 
 									thePersistentCursor.getFieldString("Port");
 				  		tryExchangingFilesWithServerV(serverIPString,serverPortString);
 					  }
-				  thePersistentCursor.nextWithWrapElementIDString(); // Advance cursor.
+				  thePersistentCursor.nextWithWrapKeyString(); // Advance cursor.
 					}
 	
 			private void tryExchangingFilesWithServerV(
@@ -324,25 +324,23 @@ public class TCPCopier
 
 	    public void addPeerInfoV(String ipString, String portString)
 	      /* Add to peer list the peer whose IP and port 
-	        are ipString and portString.
-	        This should only be called when a TCP connection
-	        has actually been made.
-	        */
+		      are ipString and portString respectively.
+		      This should only be called when a TCP connection
+		      has actually been made.
+		      */
 		    {	
-	    		String peerIDString= ipString+"-"+portString; // Calculate ID string.
-	    		
-			  	// Store or update the list structure.
-	    		String entryIDKeyString= thePersistent.entryInsertOrMoveToFrontString( 
-	    				peerIDString, "peers" 
-	    				);
+	    		appLogger.debug( "addPeerInfoV() begins." );
 
-	    	  // Store or update the other fields.
-	    		thePersistent.putV( // IP address.
-	    				entryIDKeyString + "IP", ipString
-	    				);
-	    		thePersistent.putV( // Port.
-	    				entryIDKeyString + "Port", portString
-	    				);
+	    		String peerKeyString= ipString+"-"+portString; // Calculate peer key.
+
+	    		PersistentCursor thePersistentCursor= new PersistentCursor(
+	    				thePersistent);
+   				thePersistentCursor.setListAndEntryV( "peers", peerKeyString );
+
+	    	  // Store or update the fields.
+   				thePersistentCursor.putFieldV( "IP", ipString );
+	    		thePersistentCursor.putFieldV( "Port", portString );
+
 	    		} 
 	
 			} // TCPClient

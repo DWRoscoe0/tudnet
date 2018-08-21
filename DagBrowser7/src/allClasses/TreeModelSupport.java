@@ -39,7 +39,7 @@ public abstract class TreeModelSupport
 	        { 
 	        	vectorOfTreeModelListener.addElement( theTreeModelListener );
 		        if ( vectorOfTreeModelListener.size() > maxListenersI) {
-			    		appLogger.warning( // Change to error to see these interactively.
+			    		appLogger.error( // Change warn to error to see interactively.
 			      			"TreeModelSupport.addTreeModelListener(..), maxListenersI: "+
 		      		    vectorOfTreeModelListener.size()+ "\n  "+
 		      		    theTreeModelListener.getClass().getName() + "@" +
