@@ -10,28 +10,43 @@ import static allClasses.Globals.*;  // appLogger;
 
 public abstract class TreeModelSupport 
   /* This class acts as a base class for 
-     classes which implement the TreeModel interface.
-     It provides fields and methods which every TreeModel needs,
-     but which can be the same for every TreeModel.
-     These are the fields and methods for 
-     managing a TreeModelListener list
-     and for firing TreeModelEvent-s and
-     sending them to the TreeModelListener-s.
-     
-     Combine this with AbstractTreeModel ??
+    classes which implement the TreeModel interface.
+    It provides fields and methods which every TreeModel needs,
+    but which can be the same for every TreeModel.
+    These are the fields and methods for 
+    managing a TreeModelListener list
+    and for firing TreeModelEvent-s and
+    sending them to the TreeModelListener-s.
 
-     */
+    The TreeModelListeners processed by this interface process
+    changes to the content or structure of a tree being displayed.
+    Compare this with TreePathListener, 
+    which processes changes to the selection 
+    within a tree that is being displayed.
+     
+    ///org Combine this with AbstractTreeModel ??
+
+    */
   {
     private Vector<TreeModelListener> vectorOfTreeModelListener =
       new Vector<TreeModelListener>();   // Listener storage.
-    private int maxListenersI= 0;
+    private int maxListenersI= 7; // It should never, or rarely, exceed this.
     
     public void addTreeModelListener( TreeModelListener theTreeModelListener )
-      /* ///fix Note, I have had to increase the vector size limit several times.
-        I suspect I had a Listener leak, and some type of command mode
-        is causing it, but I haven't figured out what that is yet.
+      /* ///fix Note, I suspect I have a Listener leak, 
+        because I had to increase the vector size limit several times
+        to prevent error messages.
+        When I made the limit variable, maxListenersI,
+        increment each time it was exceeded,
+        and logging only when it was increased, I noticed:
+        * It always seems to become 5 when the app starts.
+        * It increments only when the cursor in the JTree window changes,
+          though it doesn't happen all the time.
+          It might not if the change is to an adjacent child node.
         */
       {
+	  		// appLogger.debug(
+	    	//		"TreeModelSupport.addTreeModelListener(..) begins with "+theTreeModelListener);
         if ( 
         		  theTreeModelListener != null && 
         		  !vectorOfTreeModelListener.contains( theTreeModelListener ) 
@@ -55,10 +70,14 @@ public abstract class TreeModelSupport
       			"TreeModelSupport.addTreeModelListener(..) rejecting duplicate listener "+
       		    "\n  "+theTreeModelListener
             );
+	  		// appLogger.debug(
+	    	//		"TreeModelSupport.addTreeModelListener(..) ends with "+theTreeModelListener);
         }
 
     public void removeTreeModelListener(TreeModelListener theTreeModelListener) 
       {
+	  		// appLogger.debug(
+    		// 		"TreeModelSupport.removeTreeModelListener(..) begins with "+theTreeModelListener);
         if ( theTreeModelListener != null )
 	        {
 	          if (vectorOfTreeModelListener.removeElement( theTreeModelListener ))
@@ -80,6 +99,8 @@ public abstract class TreeModelSupport
 		      		    		)
 			            );
 	          }
+		    // appLogger.debug(
+		    // 		"TreeModelSupport.removeTreeModelListener(..) ends with "+theTreeModelListener);
         }
 
     public void logListenersV()

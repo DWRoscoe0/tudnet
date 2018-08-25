@@ -1,5 +1,7 @@
 package allClasses;
 
+// import static allClasses.Globals.appLogger;
+
 //import static allClasses.Globals.appLogger;
 
 //import static allClasses.Globals.appLogger;
@@ -113,6 +115,7 @@ public class TitledListViewer // adapted from TitledListViewer.
 		      	  not including what should be very simple construction. 
 		      	  */
             {
+          		// appLogger.debug("TitledListViewer.MyTreeHelper.initializeHelperV(.) begins");
         	    initializeHelpeeV( theDataTreeModel );
 
             	super.initializeHelperV( // This links the common listeners.
@@ -125,12 +128,15 @@ public class TitledListViewer // adapted from TitledListViewer.
     		      setTitleTextV();
               setJListSelection();
               setJListScrollState();
+              // appLogger.debug("TitledListViewer.MyTreeHelper.initializeHelperV(.) ends.");
             	}
             	  
           public void finalizeHelperV() 
     	      {
+          		// appLogger.debug("TitledListViewer.MyTreeHelper.finalizeHelperV(.) begins.");
           		finalizeHelpeeV( theDataTreeModel );
         			super.finalizeHelperV();
+        			// appLogger.debug("TitledListViewer.MyTreeHelper.finalizeHelperV(.) ends.");
     	        }
 
           public void setDataTreeModelV(DataTreeModel newDataTreeModel)
@@ -143,12 +149,12 @@ public class TitledListViewer // adapted from TitledListViewer.
   		       * * and once with newDataTreeModel == null during finalization,
   		       * but it should be able to work with any null combination.
              */
-            {
+            { 
+          		// appLogger.debug("TitledListViewer.setDataTreeModel(.) begins with "+theDataTreeModel);
           		super.setDataTreeModelV( newDataTreeModel ); // Needed??
 
-  		    		//appLogger.debug("TitledListViewer.setDataTreeModel()\n  theTreeListModel: "+theTreeListModel);
-
           	  theTreeListModel.setDataTreeModel( newDataTreeModel );
+          	  // appLogger.debug("TitledListViewer.setDataTreeModel(.) ends with "+theDataTreeModel);
           	  }
 
           } // MyTreeHelper
@@ -189,7 +195,7 @@ public class TitledListViewer // adapted from TitledListViewer.
 
   		public void finalizeHelpeeV( DataTreeModel theDataTreeModel )
 	  		{
-	      	// A listener registration that must be undone to prevent leak.
+	      	// A previous listener registration is undone to prevent leak.
 	        theDataTreeModel.  // For displaying changing title.
 	          removeTreeModelListener(this); // Remove what was previously added.
 	  			

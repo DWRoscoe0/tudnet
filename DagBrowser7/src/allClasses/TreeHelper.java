@@ -1,5 +1,7 @@
 package allClasses;
 
+import static allClasses.Globals.appLogger;
+
 //import static allClasses.Globals.appLogger;
 
 import java.awt.Component;
@@ -175,6 +177,7 @@ public class TreeHelper
     	  It also does listener registrations.
     	  */
       {
+    		// appLogger.debug("TreeHelper.initializeHelperV(.) begins.");
     		// Doing final common listener registrations.
 	      owningJComponent.addFocusListener(this); // Making this TreeHelper 
 	        // be a FocusListener of its owning JComponent.
@@ -183,6 +186,7 @@ public class TreeHelper
     	  
     	  // Setting the TreeModel.
         setDataTreeModelV(theDataTreeModel); // Needed??
+        // appLogger.debug("TreeHelper.initializeHelperV(.) ends.");
       	}
     
     public void finalizeHelperV() 

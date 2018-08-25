@@ -212,7 +212,7 @@ public class DagBrowserPanel
 	            // and get them ready for display.  
             } // Define the content in the above panels.
 
-          miscellaneousInitializationV();  // Odds and end.
+          miscellaneousInitializationV();  // Odds and ends.
 
           //appLogger.info("DagBrowserPanel constructor End.(");
           }
@@ -855,11 +855,13 @@ public class DagBrowserPanel
             Then it replaces in the right sub-panel JScrollPane 
             the old JComponent and TreeAware alias with the new ones.
 
-            During this process it also does 
-            registration and unregistration of objects as TreeModelListeners 
-            to prevent TreeModelListener leakage.
+            During this process it also does registration and unregistration of 
+            objects such as TreeModelListeners to prevent 
+            TreeModelListener leakage.  It does this with 
+            TreeHelper.initializeHelperV and TreeHelper.finalizeHelperV().
             */
-          { // replaceRightPanelContent(.)
+          {
+        		// appLogger.debug("DagBrowserPanel.replaceRightPanelContentWithV(.) begins.");
         	  TreeAware oldTreeAware=  // Saving  (alias of) present JComponent. 
         	  		dataTreeAware;
 
@@ -889,7 +891,8 @@ public class DagBrowserPanel
               ( oldTreeAware != null ) // if it exists, using
             	oldTreeAware.getTreeHelper().finalizeHelperV(); // its TreeHelper.
                 // This is done to prevent Listener leaks.
-            } // replaceRightPanelContent(.)
+            // appLogger.debug("DagBrowserPanel.replaceRightPanelContentWithV(.) ends.");
+            }
 
 
         // Key and Action bindings (KeyboardFocusManager ).  Experimental/Unused??

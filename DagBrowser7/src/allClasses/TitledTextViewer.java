@@ -1,5 +1,7 @@
 package allClasses;
 
+// import static allClasses.Globals.appLogger;
+
 import java.awt.BorderLayout;
 import java.awt.Font;
 
@@ -97,10 +99,12 @@ public class TitledTextViewer
           //titleJLabel.setBackground( Color.RED );
           titleJLabel.setOpaque( true );
           Font labelFont= titleJLabel.getFont();
-          titleJLabel.setFont( labelFont.deriveFont( labelFont.getSize() * 1.5f) );
+          titleJLabel.setFont( 
+          		labelFont.deriveFont( labelFont.getSize() * 1.5f) );
           //titleJLabel.setAlignmentX( Component.CENTER_ALIGNMENT );
           titleJLabel.setHorizontalAlignment( SwingConstants.CENTER );
-          Border raisedetched = BorderFactory.createEtchedBorder(EtchedBorder.RAISED);
+          Border raisedetched= 
+          		BorderFactory.createEtchedBorder(EtchedBorder.RAISED);
           titleJLabel.setBorder(raisedetched);
           add(titleJLabel,BorderLayout.NORTH); // Adding it to main JPanel.
 
@@ -189,17 +193,18 @@ public class TitledTextViewer
 		       * but it should be able to work with any null combination.
            */
           {
+        		// appLogger.debug("TitledTextViewer.setDataTreeModel(.) begins with "+newDataTreeModel);
         		DataTreeModel oldDataTreeModel= theDataTreeModel;
-      	  
-        	  if ( oldDataTreeModel != null )
+      	    if ( oldDataTreeModel != null )
   	          oldDataTreeModel.removeTreeModelListener(
   	    	  	  (TitledTextViewer)owningJComponent 
   	    	  	  );
-
   	    	  if ( newDataTreeModel != null )
   	    	  	newDataTreeModel.addTreeModelListener(
 	    	  	  (TitledTextViewer)owningJComponent 
 	    	  	  );
+  	    	  theDataTreeModel= newDataTreeModel;
+        		// appLogger.debug("TitledTextViewer.setDataTreeModel(.) ends with "+newDataTreeModel);
         	  }
 
         } // MyTreeHelper

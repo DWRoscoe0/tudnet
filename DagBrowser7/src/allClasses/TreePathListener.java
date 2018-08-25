@@ -7,7 +7,12 @@ public interface TreePathListener
   /* Classes that need to know when a TreeAware's Part TreePath has changed
     should implement this Listener.
 
-    ?? The TreePathEvent received by this listener
+    This Listener processes changes to the selection 
+    within a tree that is being displayed.
+    Compare this with TreeModelListener, which process
+    changes to the content or structure of a tree being displayed.
+
+    ///rev The TreePathEvent received by this listener
     doesn't actually need to have a TreePath in it
     because that information could be gotten by interrogating
     the TreeHelper that is the source of the Event.
