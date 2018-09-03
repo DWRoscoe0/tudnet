@@ -137,8 +137,8 @@ public class MetaNode extends IDNumber
         {
           inMetaFile.rwIndentedWhiteSpace( );  // Go to MetaFile.indentLevelI.
           inMetaFile.rwListBegin( );  // RW the beginning of the list.
-          IDNumber.rwIDNumber( inMetaFile, this );  // Rw the ID #.
-          inMetaFile.rwIndentedLiteral( "MetaNode" );  // Label as MetaNode list.
+          IDNumber.rwIDNumber( inMetaFile, this );  // Rw this node's ID #.
+          inMetaFile.rwIndentedLiteral( "MetaNode" ); // Label as MetaNode list.
           theDataNode= DataRw.rwDataNode(  // Rw...
             inMetaFile,  // ...with MetaFile inMetaFile...
             theDataNode,  // ...theDataNode using...
@@ -147,7 +147,7 @@ public class MetaNode extends IDNumber
           AttributesHashMap=  // Rw the attributes.
             Attributes.rwAttributesHashMap( inMetaFile, AttributesHashMap );
           theMetaChildren=  // Rw...
-            theMetaFileManager.rwGroupMetaChildren(  // ...the children hash map...
+            theMetaFileManager.rwGroupMetaChildren( // ...the children hash map...
               inMetaFile, 
               theMetaChildren, 
               this.getDataNode()  // ...using this's DataNode for lookups.
@@ -177,7 +177,7 @@ public class MetaNode extends IDNumber
       		)
         /* This method makes and returns a KeyMetaPiteratorOfMetaNode
           for iterating through the attributes of this MetaNode
-          seaching for an attribute with key inKeyString.
+          searching for an attribute with key inKeyString.
           */
         {
           return 

@@ -6,7 +6,7 @@ public class SubcasterPacket
 
 	extends KeyedPacket< String >
 
-  // These are packets associated with particular Subcaster.
+  // These are packets associated with particular protocol Subcaster.
 
 	{
 

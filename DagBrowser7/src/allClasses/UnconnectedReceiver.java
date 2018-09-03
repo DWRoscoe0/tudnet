@@ -73,35 +73,33 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
         try { // Doing operations that might produce an IOException.
           while  // Receiving and queuing packets unless termination is
             ( ! EpiThread.exitingB() ) // requested.
-            { // Receiving and queuing one packet.
+            { // Receiving and queuing one packet appropriately.
               try {
-                NetcasterPacket theNetcasterPacket= 
+                NetcasterPacket theNetcasterPacket= // Get empty keyed packet.
                 		theNetcasterPacketManager.produceKeyedPacket();
-                DatagramPacket theDatagramPacket= 
+                DatagramPacket theDatagramPacket= // Get DatagramPacket from it.
                 		theNetcasterPacket.getDatagramPacket();
-                receiverDatagramSocket.receive(theDatagramPacket);
+                receiverDatagramSocket.receive(theDatagramPacket); // Receive.
                 PacketManager.logUnconnectedReceiverPacketV(
                 		theDatagramPacket
                 		);
-                Unicaster theUnicaster= // Testing for existing Unicaster.
-                		theUnicasterManager.tryingToGetUnicaster( 
+                Unicaster theUnicaster= // Lookup matching Unicaster.
+                		theUnicasterManager.tryingToGetUnicaster(
                 				theNetcasterPacket 
                 				);
-                if ( theUnicaster != null )  // Queuing packet to...
-          	      theUnicaster.puttingKeyedPacketV( // Queuing to Unicaster.  
-          	      		theNetcasterPacket
-          	      		);
-                	else
+                if ( theUnicaster != null )  // If found, queue to Unicaster.
+          	      theUnicaster.puttingKeyedPacketV( theNetcasterPacket );
+                	else // Not found
                 	unconnectedReceiverToConnectionManagerNetcasterQueue.put(
                 			theNetcasterPacket
-                			); // Queuing to ConnectionManager to let it decide.
+                			); // Delegate by queuing to ConnectionManager.
                 }
               catch( SocketException soe ) {
                 appLogger.info("run(): " + soe );
                 Thread.currentThread().interrupt(); // Translating 
                   // exception into request to terminate this thread.
                 }
-              } // Receiving and queuing one packet.
+              } // Receiving and queuing one packet appropriately.
           }
           catch( IOException e ) {
 		  			Globals.logAndRethrowAsRuntimeExceptionV( 

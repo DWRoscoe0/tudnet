@@ -23,14 +23,14 @@ public class MetaChildren
 
       private MetaFileManager theMetaFileManager;
 
-      private ArrayList< IDNumber > TheArrayList;  // Container for children.
+      private ArrayList< IDNumber > theArrayList;  // Container for children.
 
     MetaChildren( MetaFileManager theMetaFileManager ) // Constructor.
       // This constructor creates an empty MetaChildren instance.
       {
         this.theMetaFileManager= theMetaFileManager;
 
-        TheArrayList=  // Construct the child MetaNode container as...
+        theArrayList=  // Construct the child MetaNode container as...
           new ArrayList< IDNumber >( ); // ...an ArrayList of IDNumbe-s.
         }
 
@@ -147,13 +147,13 @@ public class MetaChildren
             or does loading of their own.
             */
           { 
-            return TheArrayList.listIterator();
+            return theArrayList.listIterator();
             }
 
     // rw (Read/Write) processors.
 
-      public void add( IDNumber InIDNumber )
-        /* This method adds child InIDNumber to this MetaChildren instance.
+      public void add( IDNumber inIDNumber )
+        /* This method adds child inIDNumber to this MetaChildren instance.
           IDNumber is the superclass of MetaNode,
           and might be added as a MetaNode place-holder 
           during reading from disk.
@@ -161,7 +161,7 @@ public class MetaChildren
           already be a MetaNode child with the same DataNode.
           */
         { 
-          TheArrayList.add( InIDNumber );  // Add the child object.
+          theArrayList.add( inIDNumber );  // Add the child object.
           }
 
       public void rwRecurseFlatV( 
@@ -203,30 +203,23 @@ public class MetaChildren
           */
         {
           //Misc.DbgOut( "MetaChildren.rwRecurseFlatV(..)" );
-          ListIterator < IDNumber > ChildListIterator=   // Get iterator.
+          ListIterator < IDNumber > childListIterator=   // Get iterator.
             getListIteratorOfIDNumber();
             
           while // rw-process all the children.
-            ( ChildListIterator.hasNext() ) // There is a next child.
+            ( childListIterator.hasNext() ) // There is a next child.
             { // Process this child.
-              IDNumber TheIDNumber=   // Get the child.
-                ChildListIterator.next();
+              IDNumber theIDNumber=   // Get the child.
+                childListIterator.next();
               if // Process according to direction.
                 ( inMetaFile.getMode() == MetaFileManager.Mode.WRITING )  // Writing.
-                if ( TheIDNumber instanceof MetaNode )  // Is MetaNode.
+                if ( theIDNumber instanceof MetaNode )  // Is MetaNode.
                   theMetaFileManager.rwFlatOrNestedMetaNode(   // Write MetaNode.
-                    inMetaFile, (MetaNode)TheIDNumber, (DataNode)null 
+                    inMetaFile, (MetaNode)theIDNumber, (DataNode)null 
                     );
                   else  // Is IDNumber.
                   IDNumber.rwIDNumber(    // Write IDNumber.
-                    inMetaFile, TheIDNumber );
-                else  // Reading.
-                ChildListIterator.set( // Replace the child by the...
-                  inMetaFile.readAndConvertIDNumber( // ...MetaNode equivalent...
-                    TheIDNumber,  // ...of IDNumber using...
-                    parentDataNode  // ...provided parent for lookup.
-                    )
-                  ); // read.
+                    inMetaFile, theIDNumber );
               } // Process this child.
             }
 
@@ -245,26 +238,26 @@ public class MetaChildren
             whether is has any of it's own attributes or not.
           */
         {
-          boolean childrenPurgedB=  // Set default result of purge failure.
-            false;
-          Processor: {
-            Iterator < MetaNode > ChildIterator= 
+      			boolean childrenPurgedB=  // Set default result of purge failure.
+      					false;
+          toReturn: {
+            Iterator < MetaNode > childIterator= 
               getLoadingListIteratorOfMetaNode( 
                 inParentDataNode
                 );
-            Scanner: while (true) { // Try scanning all  children for purging. 
-              if ( ! ChildIterator.hasNext() )  //  There are no more children.
-                break Scanner;  // Exit child scanner loop.
-              MetaNode ChildMetaNode=  // Get a reference to...
+          toSuccess: while (true) { // Try scanning all  children for purging. 
+              if ( ! childIterator.hasNext() )  //  There are no more children.
+                break toSuccess;  // Exit child scanner loop.
+              MetaNode childMetaNode=  // Get a reference to...
                 (MetaNode)  // ...the child MetaNode which is...
-                ChildIterator.next();  // ...the next one.
-              if ( ! ChildMetaNode.purgeTryB() )  // The child is not purgable.
-                break Processor;  // Exit with default no-purge indication.
-              ChildIterator.remove();  // Remove child from MetaChildren.
-              } // Try scanning all  children for purging. 
+                childIterator.next();  // ...the next one.
+              if ( ! childMetaNode.purgeTryB() )  // The child is not purgable.
+                break toReturn;  // Exit with default no-purge indication.
+              childIterator.remove();  // Remove child from MetaChildren.
+          } // toSuccess:  and end loop.
             childrenPurgedB= true; // Override result for purge success.
-            } // Processor.
-          return childrenPurgedB;  // Return whether all children were purged.
+          } // toReturn.
+      			return childrenPurgedB;  // Return whether all children were purged.
           }
 
     } // class MetaChildren 

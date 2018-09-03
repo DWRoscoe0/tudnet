@@ -18,18 +18,19 @@ public class ConnectionManager
 
   implements Runnable
 
-  /* This class manages connections, both Unicast and Multicast,
+  /* This class manages connections, both Unicast and Multicast connections,
     with other Infogora peer nodes.
     It makes use of the class UnicasterManager as a helper.
 
-    It extends MutableList to manage its list of connected peers.
+    It extends MutableList to manage what it displays.
     Because this list is accessed by a TreeModel for a GUI JTree,
-    the List is synchronously on the Event Dispatch Thread (EDT).
+    the List is accessed synchronously on the Event Dispatch Thread (EDT).
 
     ?? This class makes use of other threads 
-    to manage the individual connections.
-    It receives inputs from those threads via thread-safe queues.
-    Some work is needed to better manage these threads,
+    to manage sending and receiving of network packets
+    and the individual connections receiving or sending those packets.
+    Packets are passed between threads via thread-safe queues.
+    ///org Some work is needed to better manage these threads,
     because DatagramSockets must be closed to terminate these threads,
     and recovery from an IOException on these sockets is troublesome.
 
@@ -40,37 +41,37 @@ public class ConnectionManager
     UDP uses only the local (IP,port) pair when it demultiplexes.
     So to prevent BindExceptions on sockets bound to
     the same local ports, each peer of a given node would need 
-    to connect to the remote peer using a different remote number.
+    to connect to the remote peer using a different remote port number.
     This is an unacceptable complication.
     
     So, only 2 Datagram sockets are used: 
     * one socket for multicast receiving and 
-    * another socket for unicast receiving and all sending.
-    Their ports must be different/unique.
+    * another socket for unicast receiving and 
+      both multicast and unicast sending.
+    Their ports of these 2 sockets must be different.
 
     There are several types of thread classes defined in this file
     or in other java files.
     * ConnectionManager: the main thread for this class.
       It manages everything.  
-    * UnconnectedReceiver: receives packets for ConnectionManager.
-    * Unicaster: manages one connection.  
-      ? Maybe rename to ConnectionManager?
+    * UnconnectedReceiver: receives unicast packets for ConnectionManager.
+    * Unicaster: there is one of these for each peer connection.  
     * MulticastReceiver: used to receive multicast packets for Multicaster.
-    * Multicaster: sends and receives multicast packets
-      used for discovering other peers on the LAN.
+    * Multicaster: sends and receives multicast packets.
+      This is used for discovering other peers on LANs.
     * Sender: does the actual calls to send(..) to send all packets.
 
     An IOException can be caused by external events,
-    such as a link going down, the computer going to sleep, etc.
+    such as a link going down, the computer going to sleep and waking up, etc.
     These are handled by closing the socket, opening another,
     and retrying the operation.
     In the case of the MulticastReceiver and UnconnectedReceiver,
     new DatagramSockets are passed to the constructors because
     closing the socket is the only way to terminate receive() operations. 
-    There should be a better way of doing this so 
+    ///org There should be a better way of doing this so 
     the threads don't need to be completely reconstructed ??
 
-    ?? Presently the unconnected unicast receiver and multicast receiver
+    ///org Presently the unconnected unicast receiver and multicast receiver
     threads can not recover from an IOException.
     This is related to the fact that their sockets are created by
     other threads and injected so that closing the socket by
@@ -91,8 +92,7 @@ public class ConnectionManager
 	    
 			private AppGUIFactory theAppGUIFactory;
 	    
-      @SuppressWarnings("unused")
-		  private final Persistent thePersistent; ///tmp
+		  private final Persistent thePersistent;
 
     	private PortManager thePortManager;
 
@@ -108,6 +108,7 @@ public class ConnectionManager
         The old way of synchronizing inputs used 
         an Objects for a lock and a separate boolean signal.
         */
+
 	    private NetcasterQueue multicasterToConnectionManagerNetcasterQueue; 
       // Queue of multicast packets received from Multicaster.
 
@@ -169,6 +170,8 @@ public class ConnectionManager
       {
     		initializeV();  // Doing non-injection initialization.
 
+    		restartPreviousUnicastersV();
+
         processingInputsAndExecutingEventsV(); // Until thread termination...
           // ...is requested.
 
@@ -228,6 +231,39 @@ public class ConnectionManager
         return;
         }
 
+		private void restartPreviousUnicastersV()
+			/* This method attempts to restore restore Unicaster peer connections
+			  which existed immediately before the previous shutdown.
+			  
+			  ///fix Presently it simply tries to restore 
+			  all the peers connections in Persistant storage.  
+			  Eventually it should indicate which peers were actually connected 
+			  at shutdown time.
+			 	*/
+			{
+      	// appLogger.debug(
+				// 	"ConnectionManager.Unica restartPreviousUnicastersV() begins.");
+	    	PersistentCursor thePersistentCursor= // Used for iteration. 
+	    			new PersistentCursor( thePersistent );
+	    	thePersistentCursor.setListV("peers"); // Point to peer list.
+			  while // Process all peers in peer list. 
+			  	( ! thePersistentCursor.getEntryKeyString().isEmpty() ) 
+			  	{ // Process one peer in peer list.
+		    		String peerIPString= 
+								thePersistentCursor.getFieldString("IP");
+						String peerPortString= 
+								thePersistentCursor.getFieldString("Port");
+				  	appLogger.info( 
+		        		"ConnectionManager.restartPreviousUnicastersV(), IP="
+				  			+ peerIPString + ", port=" + peerPortString );
+					  theUnicasterManager.getOrBuildAddAndStartUnicaster(
+				    		peerIPString , peerPortString ); // Restore Unicaster.
+					  thePersistentCursor.nextKeyString(); // Advance cursor.
+					  }
+      	// appLogger.debug(
+			  // 		"ConnectionManager.Unica restartPreviousUnicastersV() ends.");
+				}
+
     private void stoppingAllThreadsV()
       /* This method stops all the threads started by the ConnectionManager.
         It is called at shutdown time.
@@ -244,9 +280,10 @@ public class ConnectionManager
 
 	  private void maintainingDatagramSocketAndDependentThreadsV( )
       /* This method creates the DatagramSocket and 
-        the threads which depend on it
-        if the socket has not been opened yet.
-        It does this again if the socket was open but has been closed.  
+        the threads which depend on it.  It does this when either
+        * the socket has not been opened yet, or
+        * the socket had been open but was closed for some reason,
+          such as an IOException.  
        */
 	    { 
     	  if // Preparing socket and dependencies if socket not working.

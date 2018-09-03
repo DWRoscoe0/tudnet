@@ -11,8 +11,8 @@ public abstract class PacketManager<
 		>
 
   /* The class manages KeyedPackets.
-    Presently it only allocates them and their buffers.
-    It might eventually manage a pool of recycled packets and buffers.
+    Presently it allocates them and their buffers from the heap.
+    It might eventually allocate them from pools.
 
     This class can be used in two different ways, depending on
     whether a non-null K key is provided.
@@ -49,17 +49,6 @@ public abstract class PacketManager<
 			  this.theKeyK= theK;
 				}
 
-		
-		// Buffer array producers.
-		
-	  public byte[] produceDefaultSizeBufferBytes()
-	    // Produces a byte buffer array of the default size.
-	    { return produceBufferBytes( DEFAULT_BUFFER_SIZE ); }
-
-	  public byte[] produceBufferBytes( int sizeI )
-	  	// Produces a byte buffer array of size sizeI.
-	    { return new byte[ sizeI ]; }
-
 
 	  // KeyedPacket producers.
 
@@ -74,10 +63,7 @@ public abstract class PacketManager<
 			  return theKeyedPacketE;
 	  	  }
 
-	  public E produceKeyedPacketE(
-	  		byte[] bufferBytes, 
-	  		int sizeI
-	  		)
+	  public E produceKeyedPacketE( byte[] bufferBytes, int sizeI )
 	    /* Produces a KeyedPacket with a buffer bufferBytes 
 	       with only the first sizeI bytes significant.
 	       The buffer might or might not be empty, depending on context.
@@ -90,6 +76,17 @@ public abstract class PacketManager<
 			  		produceKeyedPacketE( theDatagramPacket );
 			  return theKeyedPacketE;
 	  	  }
+
+		
+		// Buffer array producers.
+		
+	  public byte[] produceDefaultSizeBufferBytes()
+	    // Produces a byte buffer array of the default size.
+	    { return produceBufferBytes( DEFAULT_BUFFER_SIZE ); }
+
+	  public byte[] produceBufferBytes( int sizeI )
+	  	// Produces a byte buffer array of size sizeI.
+	    { return new byte[ sizeI ]; }
 
 
 	  // Methods for packet logging, mostly for debugging.
@@ -177,49 +174,49 @@ public abstract class PacketManager<
 		      } // calculatingString: 
 		  	return resultString; // Returning present and final value.
 		    }
+	 
+		private static String gettingPacketAddressString( 
+				DatagramPacket theDatagramPacket 
+				)
+		  /* This method returns a String representation of 
+		    theDatagramPacket IP and port.
+		    If theDatagramPacket is null then null is returned.
+		    */
+		  {
+		    String resultString= null; // Setting default null value.
+		    calculatingString: {
+		    	if ( theDatagramPacket == null) // Exiting if there is no packet.
+		    		break calculatingString;// Exiting to use default value.
+		    	resultString= "";
+		    	resultString+= gettingString(theDatagramPacket.getAddress());
+		    	resultString+= ":";
+		    	resultString+= theDatagramPacket.getPort();
+		      } // calculatingString: 
+		  	return resultString; // Returning present and final value.
+		    }
 		 
-			private static String gettingPacketAddressString( 
-					DatagramPacket theDatagramPacket 
-					)
-			  /* This method returns a String representation of 
-			    theDatagramPacket IP and port.
-			    If theDatagramPacket is null then null is returned.
-			    */
-			  {
-			    String resultString= null; // Setting default null value.
-			    calculatingString: {
-			    	if ( theDatagramPacket == null) // Exiting if there is no packet.
-			    		break calculatingString;// Exiting to use default value.
-			    	resultString= "";
-			    	resultString+= gettingString(theDatagramPacket.getAddress());
-			    	resultString+= ":";
-			    	resultString+= theDatagramPacket.getPort();
-			      } // calculatingString: 
-			  	return resultString; // Returning present and final value.
-			    }
-			 
-			private static String gettingString( 
-					InetAddress theInetAddress 
-					)
-			  /* This method returns a String representation of theInetAddress.
-			    This address representation is fixed for columnar alignment.
-			    */
-			  {
-					String resultString= "";
-					if ( theInetAddress == null )
-						resultString+= "!null-InetAddress!";
-					else
-						{
-							byte[] addressBytes= theInetAddress.getAddress();
-					    for (int indexI= 0; indexI < addressBytes.length; indexI++)
-						    {
-						    	if (indexI != 0) resultString+= ".";
-						    	resultString+= String.format(
-						    			"%03d", addressBytes[indexI] & 0xFF
-						    			);
-						    	}
-							}
-			  	return resultString; // Returning present and final value.
-			    }
+		private static String gettingString( 
+				InetAddress theInetAddress 
+				)
+		  /* This method returns a String representation of theInetAddress.
+		    This address representation is fixed for columnar alignment.
+		    */
+		  {
+				String resultString= "";
+				if ( theInetAddress == null )
+					resultString+= "!null-InetAddress!";
+				else
+					{
+						byte[] addressBytes= theInetAddress.getAddress();
+				    for (int indexI= 0; indexI < addressBytes.length; indexI++)
+					    {
+					    	if (indexI != 0) resultString+= ".";
+					    	resultString+= String.format(
+					    			"%03d", addressBytes[indexI] & 0xFF
+					    			);
+					    	}
+						}
+		  	return resultString; // Returning present and final value.
+		    }
 
   	}

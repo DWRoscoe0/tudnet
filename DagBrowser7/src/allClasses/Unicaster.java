@@ -5,7 +5,6 @@ import java.util.Timer;
 
 import static allClasses.Globals.appLogger;
 
-//// import allClasses.AppLog.LogLevel;
 import allClasses.LockAndSignal.Input;
 
 public class Unicaster
@@ -111,8 +110,6 @@ public class Unicaster
 
     protected void initializeWithIOExceptionV() throws IOException
 	    {
-    		//// appLogger.debug("Unicsaster.initializeWithIOExceptionV() begins."); ///dbg
-
     		super.initializeWithoutStreamsV(); // Stream counts are added below in
     		  // one of the sub-state machines.
 
@@ -146,7 +143,6 @@ public class Unicaster
 
 	  	  addAtEndB( theSubcasterManager );
 	  	  
-    		//// appLogger.debug("Unicsaster.initializeWithIOExceptionV() ends."); ///dbg
 	  	  // propagateIntoSubtreeB( LogLevel.TRACE ); ///dbg /// tmp
 	  	  }
 
@@ -169,7 +165,6 @@ public class Unicaster
 	      		appLogger.info("run() activating root state machine.");
 	          doOnEntryV(); // Recursively activate all states that should be. 
         		appLogger.info("run() machine activated, doing first display.");
-        		//// logNullDataTreeModelsV(); ///dbg
         		theDataTreeModel.displayTreeModelChangesV(); // Display our arrival.
 
 	      	  runLoop(); // Do actual input processing in a loop.

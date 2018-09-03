@@ -1,6 +1,9 @@
 package allClasses;
 
 import java.net.InetAddress;
+import java.net.UnknownHostException;
+
+import static allClasses.Globals.*;  // appLogger;
 
 public class IPAndPort 
 
@@ -10,21 +13,43 @@ public class IPAndPort
    It's main purpose is to make Unicaster lookup by 
    remote address from a DatagramPacket faster by reducing
    the number of new-operators performed.
-   Unfortunately it doesn't eliminate them because
+
+   /// opt Unfortunately it doesn't eliminate them because
    DatagramPacket.getAddress() returns a [new] InetAddress, and
    there doesn't appear to be a way to return the IP address another way.
+	   ///fix A possible solution is to put 
+	     an identifier at beginning of all packets?
+	     Unfortunately this would need to be negotiated if it to be kept short.
+
    */
 
   {
 		private InetAddress netcasterInetAddress;
 		private int netcasterPortI;
 
+		
+		// Constructors.
+		
 		public IPAndPort( InetAddress netcasterInetAddress, int netcasterPortI )
 			{
 				this.netcasterInetAddress= netcasterInetAddress;
 				this.netcasterPortI= netcasterPortI;
 				}
+		public IPAndPort( String IPString , String portString )
+		  /* This constructor creates an IPAndPort from Strings. */
+			{
+				try { // Doing this here is a bit of a kludge.
+						this.netcasterInetAddress= InetAddress.getByName(IPString);
+						this.netcasterPortI= Integer.parseUnsignedInt(portString);
+					} catch ( UnknownHostException | NumberFormatException e ) { 
+				    appLogger.warning( // Log warning.
+		      			"IPAndPort.IPAndPort("+IPString+", "+portString+")"+e );
+						this.netcasterInetAddress= InetAddress.getLoopbackAddress();
+						this.netcasterPortI= Integer.parseUnsignedInt(portString);
+					}
+				}
 
+		
 		// Getters.
 		public InetAddress getInetAddress() 
 	  	{ return netcasterInetAddress; }

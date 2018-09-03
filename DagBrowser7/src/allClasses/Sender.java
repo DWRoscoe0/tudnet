@@ -136,39 +136,38 @@ public class Sender // Uunicast and multicast sender thread.
           theDatagramPacket.setAddress(theIPAndPort.getInetAddress());
           theDatagramPacket.setPort(theIPAndPort.getPortI());
 
-         	processingDatagramPacketV( theDatagramPacket );
+         	sendDropOrDelayPacketV( theDatagramPacket );
           } // beforeReturn: 
         return packetsProcessedB;
         }
 
-    private void processingDatagramPacketV( 
-    		final DatagramPacket theDatagramPacket 
-    		)
-      /* This method processes theDatagramPacket.
-        Generally that means sending it, but depending on Debug state,
+    private void sendDropOrDelayPacketV(final DatagramPacket theDatagramPacket)
+      /* This method processes theDatagramPacket which is ready to send.
+        Generally that means sending it, but depending on conditions,
         it might mean dropping it, or delaying it.
        	*/
 	    {
-    	  beforeReturn: {
-			    if  // Debug: drop a fraction of packets to test retry logic.
+    	  goReturn: {
+			    if  // If dropping a fraction of packets to test retry logic.
 			    	( testingForDropOfPacketB( theDatagramPacket ) )
-			    	break beforeReturn; // Drop this packet.
-			    ///? add Timer delay logic here.
-          if ( Config.packetSendDelayMsL == 0L )
-          	sendingDatagramPacketV( theDatagramPacket ); // Send immediately.
-          	else
-          	{ // Send after delay.
-          		theScheduledThreadPoolExecutor.schedule(
-          				new Runnable() { 
-          					public void run() {
-	          					sendingDatagramPacketV( theDatagramPacket );
-	          					} 
-          					},
-          				Config.packetSendDelayMsL,
-          				TimeUnit.MILLISECONDS
-          				);
-          		}
-    			} // beforeReturn:
+				    { ; // Drop this packet by doing nothing.
+				    	break goReturn;
+				    	}
+	        if ( Config.packetSendDelayMsL == 0L ) // Send immediately if 0 delay.
+	          { sendingDatagramPacketV( theDatagramPacket ); // Send immediately.
+				    	break goReturn;
+	          	}
+        	{ theScheduledThreadPoolExecutor.schedule( // Send after delay.
+          		new Runnable() { 
+        					public void run() {
+          					sendingDatagramPacketV( theDatagramPacket );
+          					} 
+        					},
+        				Config.packetSendDelayMsL,
+        				TimeUnit.MILLISECONDS
+        				);
+        		}
+  				} // goReturn:
 	    	}
 
     boolean testingForDropOfPacketB( DatagramPacket theDatagramPacket )

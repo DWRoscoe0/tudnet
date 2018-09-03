@@ -4,10 +4,13 @@ import java.net.DatagramPacket;
 
 public class EpiPacket 
 
+  /* This purpose of this class was to be an extendible DatagramPacket.
+    The DatagramPacket class is final so it is not extendible.
+   	*/
+
   {
 
 		private final DatagramPacket theDatagramPacket; // The packet.
-	  // It might or might not IP and port.
 
     public EpiPacket(  // Constructor.
         DatagramPacket theDatagramPacket

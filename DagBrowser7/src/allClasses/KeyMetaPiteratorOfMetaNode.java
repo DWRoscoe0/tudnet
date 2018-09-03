@@ -5,12 +5,15 @@ import java.util.Collection;
 
 
 public class KeyMetaPiteratorOfMetaNode
-  extends MetaPiteratorOfMetaNode
+  extends PiteratorOfMetaNode
   
-  /* This is a Piterator for searching.
+  /* This is a Piterator specialized for searching for
+    MetaNodes containing attributes with particular keys.
     It iterates over the MetaNode children of 
     the MetaChildren of a MetaNode,
     but only the subset with a particular attribute Key.
+    Normally it is used to find only the first and only MetaNode
+    with that particular desired key.
     */
 
   { // class KeyMetaPiteratorOfMetaNode.

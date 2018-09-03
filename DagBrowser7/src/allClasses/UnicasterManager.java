@@ -4,6 +4,7 @@ import static allClasses.Globals.appLogger;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
+//// import java.net.InetAddress;
 
 public class UnicasterManager
 
@@ -55,6 +56,18 @@ public class UnicasterManager
 		  }
 
     public synchronized Unicaster getOrBuildAddAndStartUnicaster(
+    		String IPString , String portString )
+    	/* This method returns a Unicaster associated with
+        the remote peer address in theNetcasterPacket.
+        If a Unicaster doesn't already exist then it creates one.
+        */
+	    { 
+    		IPAndPort theIPAndPort= new IPAndPort(IPString, portString);
+	    	Unicaster theUnicaster= getOrBuildAddAndStartUnicaster( theIPAndPort );
+		    return theUnicaster;
+		    }
+
+    public synchronized Unicaster getOrBuildAddAndStartUnicaster(
     		NetcasterPacket theNetcasterPacket 
     		)
       /* This method returns a Unicaster associated with
@@ -62,58 +75,84 @@ public class UnicasterManager
         If a Unicaster doesn't already exist then it creates one.
         */
 	    { 
-    	Unicaster theUnicaster= // Testing whether Unicaster exists.  
-    			tryingToGetUnicaster( theNetcasterPacket );
-    	if ( theUnicaster == null ) // Building one if one doesn't exist.
-    		{ // Building a new Unicaster.
-        	DatagramPacket theDatagramPacket=  // Getting DatagramPacket.
-            theNetcasterPacket.getDatagramPacket();
-        	IPAndPort peerIPAndPort= // Building its remote address.
-	          AppGUIFactory.makeIPAndPort(		
-	              theDatagramPacket.getAddress(), // IP and
-	              theDatagramPacket.getPort()  // port #.
-	          		);
-          theUnicaster= buildAddAndStartUnicaster( peerIPAndPort );
-    		}
-	    return theUnicaster;
-	    }
+    		IPAndPort theIPAndPort= makeIPAndPort(theNetcasterPacket);
+	    	Unicaster theUnicaster= getOrBuildAddAndStartUnicaster( theIPAndPort );
+		    return theUnicaster;
+		    }
+
+    public synchronized Unicaster getOrBuildAddAndStartUnicaster(
+    		IPAndPort theIPAndPort 
+    		)
+      /* This method returns a Unicaster associated with
+        the remote peer whose address in theIPAndPort.
+        If a Unicaster doesn't already exist then it creates one.
+        */
+	    { 
+	    	Unicaster theUnicaster= // Testing whether Unicaster exists.  
+	    			tryingToGetUnicaster( theIPAndPort );
+	    	if ( theUnicaster == null ) // Building one if one doesn't exist.
+	    		{ // Building a new Unicaster.
+	          theUnicaster= buildAddAndStartUnicaster( theIPAndPort );
+	    			}
+		    return theUnicaster;
+		    }
 
     public synchronized Unicaster tryingToGetUnicaster( 
-    		NetcasterPacket theNetcasterPacket 
+    		NetcasterPacket theNetcasterPacket
     		)
       /* This method returns the Unicaster associated with the
-        address in theKeyedPacket, if such a Unicaster exists.
+        address in theNetcasterPacket, if such a Unicaster exists.
         If it doesn't exist then it returns null.
+        This method is called to direct incoming UDP packets to
+        the appropriate Unicasters, so it should be reasonably fast.
         
-        ?? Rewrite for speed for the case of the Unicaster existing.  
+        ///opt ? Rewrite for speed for the case of the Unicaster existing.  
         Increasing speed will probably require using something other than
 				using the new-operator to create a new IPAndPort.
         */
       {
+    		IPAndPort theIPAndPort= makeIPAndPort(theNetcasterPacket);
+        return tryingToGetUnicaster( theIPAndPort );
+        }
+
+    public IPAndPort makeIPAndPort( 
+    		NetcasterPacket theNetcasterPacket
+    		)
+      /* This method returns IPAndPort associated with theNetcasterPacket.  */
+      {
         DatagramPacket theDatagramPacket=  // Getting DatagramPacket.
           theNetcasterPacket.getDatagramPacket();
-        IPAndPort peerIPAndPort= // Building its remote address keyK
+        IPAndPort theIPAndPort= // Building its remote address keyK
 	          AppGUIFactory.makeIPAndPort(		
 	              theDatagramPacket.getAddress(), // IP and
 	              theDatagramPacket.getPort()  // port #.
 	          		);
-        return tryingToGetDataNodeWithKeyD( peerIPAndPort );
+        return theIPAndPort;
         }
 
-    private Unicaster buildAddAndStartUnicaster( IPAndPort peerIPAndPort )
+    private synchronized Unicaster tryingToGetUnicaster(IPAndPort theIPAndPort)
+      /* This method returns the Unicaster associated with the
+        address in theKeyedPacket, if such a Unicaster exists.
+        If it doesn't exist then it returns null.
+        */
+      {
+        return tryingToGetDataNodeWithKeyD( theIPAndPort );
+        }
+
+    private Unicaster buildAddAndStartUnicaster( IPAndPort theIPAndPort )
       /* This method builds a Unicaster to handle 
-        communications with a peer at address peerIPAndPort.
+        communications with a peer at address theIPAndPort.
         It should be called only if the Unicaster does not exist.
         Is not synchronized because it is called only from 
         other synchronized local methods.
-        addingV(..) to tree is done last because it could trigger display.
+        addingV(..) to tree is done last because it could trigger displaying.
         */
 	    { 
     	  appLogger.info( 
     	  		"buildAddAndStartUnicaster(..) Creating new Unicaster." );
     	  UnicasterFactory theUnicasterFactory= 
     	  		theAppGUIFactory.makeUnicasterFactory( 
-    	  				peerIPAndPort, theTCPClient );
+    	  				theIPAndPort, theTCPClient );
 	      final UnicasterValue resultUnicasterValue=  // Getting the Unicaster. 
 	      	theUnicasterFactory.getUnicasterValue();
 	      Unicaster theUnicaster= resultUnicasterValue.getDataNodeD(); 
@@ -126,14 +165,14 @@ public class UnicasterManager
         				"buildAddAndStartUnicaster(..) IOException", e );
           }
 	      addingV( // Adding the new Unicaster to data structures.
-	          peerIPAndPort, resultUnicasterValue );
+	          theIPAndPort, resultUnicasterValue );
 	      resultUnicasterValue.getEpiThread().startV(); // Start its thread.
 	      return theUnicaster;
 	      }
 
     public String getValueString( )
-	    /* Returns a string indicating 
-	      the numbers of Unicasters connected and disconnected.
+	    /* Returns a string indicating the numbers of Unicasters being managed,
+				both connected and disconnected.
        	*/
       {
     	  int connectedI= 0;

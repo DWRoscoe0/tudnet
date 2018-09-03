@@ -329,7 +329,7 @@ public class TCPCopier
 		      has actually been made.
 		      */
 		    {	
-	    		appLogger.debug( "addPeerInfoV() begins." );
+	    		appLogger.debug( "addPeerInfoV() called." );
 
 	    		String peerKeyString= ipString+"-"+portString; // Calculate peer key.
 

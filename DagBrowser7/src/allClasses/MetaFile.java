@@ -13,21 +13,28 @@ import java.io.RandomAccessFile;
 public class MetaFile { // For app's meta-data files.
 
   /* This class helps to manage the file(s) that contains the external 
-    representation of this app's meta-data.
+    representation of this app's DataNode meta-data.
     Related classes are MetaFileManager and MetaFileManager.Finisher.
 
     An instance of this class maintains state for one file,
     and provides some low level routines from which 
     file read and write operations can be built.
+
+    ///enh Fix error handling.
+    Errors in the external file meta-data text don't appear to cause crashes,
+    but sometimes it can loss of non-corrupted meta-data,
+    generally nodes that appear after the point of the error in the file.
+
     */
 
   // Injection instance variables.
 
     private MetaFileManager theMetaFileManager;
 
-    private MetaFileManager.RwStructure TheRwStructure;  // File's text structure.
-    private String FileNameString;  // Name of associated external file.
-    private String HeaderTokenString;  // First token in file.
+    private MetaFileManager.RwStructure theRwStructure;  // Text structure
+      // of File.
+    private String fileNameString;  // Name of associated external file.
+    private String headerTokenString;  // First token in file.
     private MetaFileManager.Mode theMode;  // read/write/lazy-load.
 
   // Other instance variables.
@@ -36,25 +43,27 @@ public class MetaFile { // For app's meta-data files.
       null;
     private int indentLevelI; // Indent level of cursor in text file.
     private int columnI;  // Column of cursor  in text file.
+	  private int linesI= 0; // Number of lines.
 
     /* Saved stream state.  This is used for rewinding the file 
       in lazy-load node searches.  */
       private long savedFileOffsetLI;  // Saved offset of MetaNodes.
       private int savedIndentLevelI; // Saved indent level.
       private int savedColumnI;  // Saved column.
+      private int savedLinesI; // Save line #.
 
   public MetaFile( // Constructor.
       MetaFileManager theMetaFileManager,
       MetaFileManager.RwStructure theRwStructure, 
-      String FileNameString, 
-      String HeaderTokenString,
+      String fileNameString, 
+      String headerTokenString,
       MetaFileManager.Mode theMode
-      ) 
+      )
     {
       this.theMetaFileManager= theMetaFileManager;
-      this.TheRwStructure= theRwStructure;
-      this.FileNameString= FileNameString;
-      this.HeaderTokenString= HeaderTokenString;
+      this.theRwStructure= theRwStructure;
+      this.fileNameString= fileNameString;
+      this.headerTokenString= headerTokenString;
       this.theMode= theMode;
       }
 
@@ -75,11 +84,11 @@ public class MetaFile { // For app's meta-data files.
 
         try { // Read state.
           if  //  Read state from file if...
-            ( (Config.makeRelativeToAppFolderFile( FileNameString )).exists() )  // ...the file exists.
+            ( (Config.makeRelativeToAppFolderFile( fileNameString )).exists() )  // ...the file exists.
             { //  Read state from file.
               theRandomAccessFile=  // Open random access file.
                 new RandomAccessFile( 
-                 Config.makeRelativeToAppFolderFile( FileNameString ), 
+                 Config.makeRelativeToAppFolderFile( fileNameString ), 
                  "r" 
                  );
               loadedMetaNode=   // Immediately read root node.
@@ -100,54 +109,71 @@ public class MetaFile { // For app's meta-data files.
         return loadedMetaNode;
         }
 
-    public IDNumber readAndConvertIDNumber( 
+    public IDNumber readAndConvertIDNumber(
         IDNumber inIDNumber, DataNode parentDataNode
         )
       throws IOException
       /* This method is used in the loading of flat meta files,
-        both lazy loading and greedy loading.
-        It converts an IDNumber node into an equivalent MetaNode 
+        for both lazy loading and greedy loading.
+        It tries to convert the inIDNumber node into an equivalent MetaNode,
+        a MetaNode with the same ID number, 
         by looking up the ID number in the FLAT text file
         and building a MetaNode from the text it finds there.
-        It should be called only if ( TheRwStructure == RwStructure.FLAT ).
+        It should be called only if ( theRwStructure == RwStructure.FLAT ).
 
-        It is called by special iterators that do lazy loading 
-        by replacing IDNumber List elements by returned MetaNodes.
+        It is called by special iterators that do lazy loading by replacing 
+        references to IDNumber List elements by returned MetaNodes references.
         It is also called by other load routines that do greedy loading.
 
         If doing lazy loading then only one MetaNode is returned
-        with no children attached, but maybe other IDNumbers instances.
+        with only children that are IDNumber objects.
         If doing greedy loading then the MetaNode is returned
-        with all its children and other descendants attached.
+        with all its children and other descendants which are also MetaNodes.
 
-        A RepeatDetector is used to detect repeating nodes because
-        the node reader has flag MetaFile wrap-around.
+        A RepeatDetector instance is used to prevent infinite loops
+        while searching for MetaNode text for particular ID numbers,
+        because the node reader wraps around to the beginning of the MetaFile
+        if it reaches the end before finding the text for the desired node.
+        A detected repeat indicates a corrupted file is considered an error.
 
         parentDataNode is used for DataNode name lookup.
+        
+        Returns 
+        * a reference to a MetaNode with the same ID number as inIDNumber
+          if one was found in the text file.  
+          One or more descendants might be IDNodes instead of MetaNodes,
+          depending on loading type and loading errors.
+        * the original inIDNumber node if the ID number
+          could not be found in the text file.
+          This is considered a loading error. 
+
         */
       {
-        RepeatDetector theRepeatDetector=  // Preparing repeat detector.
-          new RepeatDetector();
-        IDNumber resultIDNumber= null;
-        int desiredI= inIDNumber.getTheI();
-        //Misc.DbgOut( "MetaFile.readAndConvertIDNumber("+desiredI+") begin");  // Debug.
-        while (true) { // Searching state file for desired MetaNode.
-          resultIDNumber=  // Setting tentative result to be next MetaNode.
-            readFlatWithWrapMetaNode( inIDNumber, parentDataNode 
-            );
-          if ( resultIDNumber == null )  // Exitting if no MetaNode readable.
-            break; 
-          if  // Exitting if node with desired ID number found.
-            ( desiredI == resultIDNumber.getTheI() )
-            { 
-              break;
-              }
-          if  // Exitting if read ID numbers are repeating. 
-            ( theRepeatDetector.testB( resultIDNumber.getTheI() ) ) 
-            break;
-          } // Search state file for desired MetaNode.
-        if ( resultIDNumber == null ) // Did not find matching MetaNode.
+	        RepeatDetector theRepeatDetector=  // Preparing repeat detector.
+	          new RepeatDetector();
+	        IDNumber resultIDNumber= null;
+	        int desiredI= inIDNumber.getTheI();
+	        //Misc.DbgOut( "MetaFile.readAndConvertIDNumber("+desiredI+") begin");  // Debug.
+        goReturn: {
+        goFail: {
+	        while (true) { // Searching state file for desired MetaNode.
+	          resultIDNumber=  // Setting tentative result to be next MetaNode.
+	            readFlatWithWrapMetaNode( inIDNumber, parentDataNode );
+	          if ( resultIDNumber == null )  // Exiting if no MetaNode readable.
+	            break goFail; 
+	          if  // Exiting if node with desired ID number found.
+	            ( desiredI == resultIDNumber.getTheI() )
+              break goReturn;
+	          if  // Exiting if every node in file was checked at least once. 
+	            ( theRepeatDetector.repeatedB( resultIDNumber.getTheI() ) )
+		          { appLogger.error(
+		          		"MetaFile.readAndConvertIDNumber(.) repeat detected.");
+		            break goFail;
+		          	}
+	          } // while (true) Searching state file for desired MetaNode.
+      	} // goFail:
           resultIDNumber= inIDNumber;  // Return original IDNumber node.
+      	} // goReturn:
         return resultIDNumber;
         }
 
@@ -195,8 +221,9 @@ public class MetaFile { // For app's meta-data files.
       {
         savedFileOffsetLI= // Save file offset.
           theRandomAccessFile.getFilePointer();
-        savedIndentLevelI= indentLevelI; // Saved indent level.
-        savedColumnI= columnI;  // Saved column.
+        savedIndentLevelI= indentLevelI; // Save indent level.
+        savedColumnI= columnI;  // Save column.
+        savedLinesI= linesI; // Save line #.
         }
   
     private void restoreStreamStateV( )
@@ -210,10 +237,11 @@ public class MetaFile { // For app's meta-data files.
         */
       {
         theRandomAccessFile.seek(  // Move file pointer back to...
-          savedFileOffsetLI  // ...previosly saved point.
+          savedFileOffsetLI  // ...previously saved point.
           );
         indentLevelI= savedIndentLevelI; // Restore indent level.
         columnI= savedColumnI;  // Restore column.
+        linesI= savedLinesI; // Restore line #.
         }
   
     public void closeV( )
@@ -235,26 +263,31 @@ public class MetaFile { // For app's meta-data files.
       /* This method reads or writes the Meta state file,
         which is assumed to have already been opened.
         It will read or write depending on context,
-        the values of Mode and inRootMetaNode.
+        the values of theMode and inRootMetaNode.
         If Writing then inRootMetaNode provides the
         MetaNode which is the root of the Meta state to be output,
         unless inRootMetaNode is null which results in no operation.
-        IF Reading then inRootMetaNode is ignored.
+        If Reading then inRootMetaNode is ignored.
         Returns the root MetaNode, either the one which was written
         or the one which was read.
         */
       {
+	      appLogger.info("MetaFile.rwFileMetaNode(.) begins, "
+	      		+theMode+", "+getRwStructure());
         if // Do nothing or process depending on conditions.
           ( ( theMode == MetaFileManager.Mode.WRITING ) &&
             ( inRootMetaNode == null )
             ) 
-          ;  // Do nothing because there is nothing to write.
+	        { // Do nothing because there is nothing to write.
+        		appLogger.info("MetaFile.rwFileMetaNode(.) null operation.");
+	          }
           else
-          { // Read or write process.
+          { // Read or write.
             indentLevelI= 0;  // Initialize indent level of text in file.
             columnI= 0;  // Initialize column of text in file.
+            linesI= 0; // Initialize line number.
 
-            rwLiteral( HeaderTokenString ); // Begin file with header token.
+            rwLiteral( headerTokenString ); // Begin file with header token.
             rwIndentedWhiteSpace( );  // reset column to 0.
             saveStreamStateV( );  // Save stream state at 1st MetaNode.
 
@@ -267,6 +300,7 @@ public class MetaFile { // For app's meta-data files.
                 );
             } // Read or write process.
 
+	      appLogger.info("MetaFile.rwFileMetaNode(.) ends, linesI="+linesI);
         return inRootMetaNode;  // Return the new or old root.
         }
 
@@ -284,8 +318,10 @@ public class MetaFile { // For app's meta-data files.
           ; // Do nothing.
           else // There IS a MetaNode to process.
           { // Write the data rooted at inMetaNode.
-            File inputFile = Config.makeRelativeToAppFolderFile( FileNameString );
-            File outFile = Config.makeRelativeToAppFolderFile( FileNameString+".~" );
+            File inputFile= 
+            		Config.makeRelativeToAppFolderFile( fileNameString );
+            File outFile= 
+            		Config.makeRelativeToAppFolderFile( fileNameString+".~" );
 
             try { // Try opening or creating file.
               theRandomAccessFile=  // For open random access text file.
@@ -320,7 +356,7 @@ public class MetaFile { // For app's meta-data files.
         */
       {
         MetaNode loadedMetaNode= null;  // Set null root because we are reading.
-        File FileNameFile= Config.makeRelativeToAppFolderFile( FileNameString );
+        File FileNameFile= Config.makeRelativeToAppFolderFile( fileNameString );
         try { // Read state.
           if  //  Read state from file if...
             ( FileNameFile.exists() )  // ...the file exists.
@@ -328,7 +364,7 @@ public class MetaFile { // For app's meta-data files.
               theRandomAccessFile=  // Open random access file.
                 new RandomAccessFile( FileNameFile, "r" );
               loadedMetaNode= rwFileMetaNode( loadedMetaNode );  // Read all state.
-              DumpRemainder( );  // Output any file remainder for debugging.
+              dumpRemainder( );  // Output any file remainder for debugging.
               theRandomAccessFile.close( );  // Close the input file.
               } //  Read state from file.
           } // Read state.
@@ -354,51 +390,51 @@ public class MetaFile { // For app's meta-data files.
         Maybe prevent empty result ??
         */
       { // readTokenString( String InString )
-        String TokenString= "";  // Set token character accumulator to empty.
+        String tokenString= "";  // Set token character accumulator to empty.
         try {
-          long StartingOffsetLI= // Save offset of beginning of token.
+          long startingOffsetLI= // Save offset of beginning of token.
             theRandomAccessFile.getFilePointer();
-          int ByteI= theRandomAccessFile.read( );  // Try reading first byte.
-          if ( (char)ByteI == '\"') // Handle quoted string.
+          int byteI= theRandomAccessFile.read( );  // Try reading first byte.
+          if ( (char)byteI == '\"') // Handle quoted string.
             while (true) { // Process entire token, if any.
-              ByteI= theRandomAccessFile.read( );  // Try reading token byte.
-              if ( ByteI == -1 || ByteI == '\"' )  // End of token.
+              byteI= theRandomAccessFile.read( );  // Try reading token byte.
+              if ( byteI == -1 || byteI == '\"' )  // End of token.
                 break;  // Exit loop. 
-              TokenString+= (char)ByteI;  // Append byte to string.
+              tokenString+= (char)byteI;  // Append byte to string.
               } // Process entire token, if any.
             else  // Handle white-space delimited string.
             while (true) { // Process entire token, if any.
-              if ( ByteI == -1 || ByteI == ' ' || ByteI == '\n' )  // End of token.
+              if ( byteI == -1 || byteI == ' ' || byteI == '\n' )  // End of token.
                 { // Back up file offset and exit.
                   theRandomAccessFile.seek( // Move file pointer back to...
-                    StartingOffsetLI + TokenString.length() ); // ...end of token.
+                    startingOffsetLI + tokenString.length() ); // ...end of token.
                   break;  // Exit loop. 
                   } // Back up file offset and exit.
-              TokenString+= (char)ByteI;  // Append byte to string.
-              ByteI= theRandomAccessFile.read( );  // Try reading next byte.
+              tokenString+= (char)byteI;  // Append byte to string.
+              byteI= theRandomAccessFile.read( );  // Try reading next byte.
               } // Process entire token, if any.
           columnI+= // Adjust columnI for file offset movement.
-            ( theRandomAccessFile.getFilePointer() - StartingOffsetLI );
+            ( theRandomAccessFile.getFilePointer() - startingOffsetLI );
           }
         catch ( IOException e ) {
           e.printStackTrace();
           }
-        return TokenString.intern( );  // Return string or an older equal one.
+        return tokenString.intern( );  // Return string or an older equal one.
         } // readTokenString( String InString )
   
-    public void writeToken( String InTokenString )
+    public void writeToken( String inTokenString )
       /* Outputs InTokenString using the appropriate delimiters.  */
       { // writeToken(..)
-        int InStringLengthI= InTokenString.length();
+        int inStringLengthI= inTokenString.length();
 
         try {
-          if ( InTokenString.indexOf( ' ' ) >= 0 )  // Token contains space.
+          if ( inTokenString.indexOf( ' ' ) >= 0 )  // Token contains space.
             theRandomAccessFile.writeByte( '\"' );  // Write double-quote.
           { // Write litterl string.
-            theRandomAccessFile.writeBytes( InTokenString );
-            columnI+= InStringLengthI;  // Adjust columnI for string length.
+            theRandomAccessFile.writeBytes( inTokenString );
+            columnI+= inStringLengthI;  // Adjust columnI for string length.
             } // Write litterl string.
-          if ( InTokenString.indexOf( ' ' ) >= 0 )  // Token contains space.
+          if ( inTokenString.indexOf( ' ' ) >= 0 )  // Token contains space.
             {
               theRandomAccessFile.writeByte( '\"' );  // Write double-quote.
               columnI+= 2; // Adjust columnI double-quotes.
@@ -412,6 +448,7 @@ public class MetaFile { // For app's meta-data files.
     public void rwIndentedWhiteSpace( )
       /* Goes to a new line if needed, and indents to the correct level.  */
       { 
+    	  linesI++; // Increment number of lines.
         if // Go to a new line if...
           ( columnI > indentLevelI )  // ...past indent level.
           { // Go to a new line.
@@ -446,8 +483,8 @@ public class MetaFile { // For app's meta-data files.
         rwLiteral( InString );  // rw-process string.
         }
 
-    public boolean rwLiteral( String InString )
-      /* If wrriting then it writes the literal InString to the file 
+    public boolean rwLiteral( String inString )
+      /* If writing then it writes the literal InString to the file 
         If reading then it reads a literal String from the file and
         verifies that it equals InString.
         It also handles IOException-s.  
@@ -456,43 +493,43 @@ public class MetaFile { // For app's meta-data files.
         The return value is used mainly to prevent infinite loops.
         */
       { // rwLiteral( String InString )
-        boolean ErrorB= false;  // Assume no error.
-        int InStringLengthI= InString.length();
+        boolean errorB= false;  // Assume no error.
+        int inStringLengthI= inString.length();
 
         try {
           if ( theMode == MetaFileManager.Mode.WRITING )  // Writing state.
             { // Write literal string.
-              theRandomAccessFile.writeBytes( InString );
-              columnI+= InStringLengthI;  // Adjust columnI for string length.
+              theRandomAccessFile.writeBytes( inString );
+              columnI+= inStringLengthI;  // Adjust columnI for string length.
               } // Write litterl string.
             else  // Reading state.
             { // Read and verify String.
-              if ( testLiteralB( InString ))
+              if ( testLiteralB( inString ))
                 {
-                  theRandomAccessFile.skipBytes( InStringLengthI );
-                  columnI+= InStringLengthI;  // Adjust columnI for string length.
+                  theRandomAccessFile.skipBytes( inStringLengthI );
+                  columnI+= inStringLengthI;  // Adjust columnI for string length.
                   }
                 else
                 {
-                  ErrorB= true;  // Set error return value.
+                  errorB= true;  // Set error return value.
                   System.out.print( 
                     "\nrwLiteral( '"+
-                    InString+
+                    inString+
                     "' ) MISMATCH!!!"
                     );
-                  DumpRemainder( );  // Output anything that remains.
+                  dumpRemainder( );  // Output anything that remains.
                   }
               } // Read and verify String.
           }
         catch ( IOException e ) {
           e.printStackTrace();
           }
-        return ErrorB;  // Return error value.
+        return errorB;  // Return error value.
         } // rwLiteral( String InString )
 
-    public int testTerminatorI( String DesiredString )
+    public int testTerminatorI( String desiredString )
       /* Tests whether a terminator is next in the file.
-        A terminator is either the literal String DesiredString 
+        A terminator is either the literal String desiredString 
         or the EndOfFile.
         If DesiredString is there then it returns an int > 0.
         If EndOfFile is there then it returns an int < 0.
@@ -500,50 +537,50 @@ public class MetaFile { // For app's meta-data files.
         In any case the stream position is unchanged.
         It also handles IOException-s.  */
       { // testTerminatorI( String DesiredString )
-        int ResultI= 1;  // Set default result to indicate terminator found.
+        int resultI= 1;  // Set default result to indicate terminator found.
         try {
-          long StartingOffsetLI= // Save offset of beginning of token.
+          long startingOffsetLI= // Save offset of beginning of token.
             theRandomAccessFile.getFilePointer();
-          int ByteI;  // Place for bytes input.
-          int IndexI= 0; 
+          int byteI;  // Place for bytes input.
+          int indexI= 0; 
           while ( true ) // Process all characters if possible.
             { // Process one character or exit loop.
-              if ( IndexI >= DesiredString.length() )  // String exhausted.
+              if ( indexI >= desiredString.length() )  // String exhausted.
                 break;  // Exit loop with ResultI indicating terminator-found.
-              ByteI= // Try reading a byte.
+              byteI= // Try reading a byte.
                 theRandomAccessFile.read( );
-              if ( ByteI != DesiredString.charAt( IndexI ) )
+              if ( byteI != desiredString.charAt( indexI ) )
                 { // Exit loop with either string found or End-Of-File.
-                  ResultI= 0;  // Set result Indicating terminator-not-found.
-                  if ( ByteI < 0 ) // If End-Of-File encountered...
-                    ResultI= -1;  // ...override for End-Of-File result.
+                  resultI= 0;  // Set result Indicating terminator-not-found.
+                  if ( byteI < 0 ) // If End-Of-File encountered...
+                    resultI= -1;  // ...override for End-Of-File result.
                   break;  // Exit loop.
                   } // Exit loop with either string found or End-Of-File.
-              IndexI++;  // Advance index.
+              indexI++;  // Advance index.
               } // Process one character or exit loop.
           theRandomAccessFile.seek( // Move file pointer...
-            StartingOffsetLI );  // ... back to original position.
+            startingOffsetLI );  // ... back to original position.
           }
         catch ( IOException e ) {
           e.printStackTrace();
           }
-        return ResultI;  // Return result calculated above.
+        return resultI;  // Return result calculated above.
         } // testTerminatorI( String DesiredString )
   
-    public boolean testLiteralB( String DesiredString )
-      /* Tests whether the literal String DesiredString 
+    public boolean testLiteralB( String desiredString )
+      /* Tests whether the literal String desiredString 
         is next in the file.
-        If DesiredString is there then it returns true.
-        If DesiredString is not read then it returns false.
+        If desiredString is there then it returns true.
+        If desiredString is not read then it returns false.
         In either case the stream position is unchanged.
         It also handles IOException-s.  */
       { // testLiteral( String DesiredString )
-        return testTerminatorI( DesiredString ) != 0;
+        return testTerminatorI( desiredString ) != 0;
         } // testLiteral( String DesiredString )
 
   // Miscellaneous instance methods.
   
-    private void DumpRemainder( ) throws IOException
+    private void dumpRemainder( ) throws IOException
       /* This method is used to help debug MetaFile code.
         It dumps the remainder of the text file to System.out.
         If there is no remaining text then it outputs nothing.
@@ -553,22 +590,22 @@ public class MetaFile { // For app's meta-data files.
         and when a file appears to be completely parsed.
         */
       { // DumpRemainder( )
-        int ByteI= theRandomAccessFile.read( );  // Try to read first byte.
-        if ( ByteI != -1 ) // If success then output it and remainder.
+        int byteI= theRandomAccessFile.read( );  // Try to read first byte.
+        if ( byteI != -1 ) // If success then output it and remainder.
           { // Output header and all file bytes.
             //Misc.DbgOut( "MetaFile.DumpRemainder( ) ");  // Debug.
             System.out.print( // Introduce the data which will follow.
               "  Unread file bytes follow arrow ->" 
               );
             do { // Display bytes until done.
-              System.out.print( (char)ByteI );  // Display the byte already read.
-              ByteI= theRandomAccessFile.read( );  // Try to read next byte.
-              } while ( ByteI != -1 ); // Display bytes until done.
+              System.out.print( (char)byteI );  // Display the byte already read.
+              byteI= theRandomAccessFile.read( );  // Try to read next byte.
+              } while ( byteI != -1 ); // Display bytes until done.
             System.out.print( // Introduce the data which will follow.
               "<- Unread file bytes precede the arrow." 
               );
             } // Output header and all file bytes.
-        } // DumpRemainder( )
+        } // dumpRemainder( )
 
   // Getter instance methods for access to useful modes and values.
   
@@ -576,7 +613,6 @@ public class MetaFile { // For app's meta-data files.
       { return theMode; }
 
     public MetaFileManager.RwStructure getRwStructure()
-      { return TheRwStructure; }
+      { return theRwStructure; }
 
   } // class MetaFile.
-    

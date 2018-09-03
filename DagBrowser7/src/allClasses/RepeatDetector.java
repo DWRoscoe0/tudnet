@@ -1,36 +1,50 @@
 package allClasses;
 
-public class RepeatDetector 
-  {
-    private int countI= 1;  // This will trigger a rescale immediately.
-    private int SizeI= 1;  // Initial minimum size.
-    private int savedValueI= 0;
+public class RepeatDetector
 
-    RepeatDetector()
-      // Constructor.  All initialization is done above.
-      {}
-      
-    public boolean testB( int inValueI )
-      /* This method tests whether valueI occurred and was recorded before.
-        It returns true if it has, false otherwise.
+  /* This is a class designed to eventually detect repeated use of integers
+    but do so without storing a lot of them.
+    It works best on non-sparse ranges of integers.
+   */
+
+	{
+		private int previousValueI= Integer.MIN_VALUE;
+    private int minimumI= Integer.MAX_VALUE;
+    private int maximumI= Integer.MIN_VALUE;
+    private int downCountI= 1000;
+
+    RepeatDetector() {} // Constructor.  All initialization is done above.
+
+    public boolean repeatedB( int inValueI )
+      /* This method tests whether there must have been a repeat,
+        not necessarily of the present invalueI, maybe,
+        but possibly a previous inValueI.
+        It returns true if there must have been a repeat,
+        false if it's possible there might not have been a repeat.
+        
+        ///fix  This method is disable.  
+        It always returns false because its caller doesn't respond well
+        to true
         */
-      { // Repeat loop test.
-        boolean RepeatedB= false;   // Set default result.
-        if ( savedValueI == inValueI )  // Value is last recorded value?
-          RepeatedB= true;  // Yes, set true result.
-          else  // Value is not last recorded value.
-          { // Count and maybe expand interval.
-            //System.out.print( "." );  // Dbg: iteration iIndicator.
-            --countI;  // Decrement search count for recorded value.
-            if ( countI == 0 )  // Time to record new value and expand count.
-              { // Record new value and expand interval.
-                SizeI*=2;  // Double the search test limit.
-                countI= SizeI;  // Reset counter to new limit.
-                savedValueI= inValueI;  // Save new repeat target.
-                } // Record new value and expand interval.
-            } // Count and maybe expand interval.
+      {
+        	boolean RepeatedB= false;   // Set default result.
+        goReturn: {
+        goExpandInterval: {
+	        if ( previousValueI == inValueI )  // Quick check for previous value.
+	        	{ RepeatedB= true; break goReturn; } // Yes, return true result.
+	        if (inValueI > maximumI)
+	        	{ maximumI= inValueI; break goExpandInterval; }
+	        if (inValueI < minimumI)
+	        	{ minimumI= inValueI; break goExpandInterval; }
+          if ( downCountI == 0 ) // There must have been a repeat.
+          	{ RepeatedB= true; break goReturn; } // Yes, return true result.
+          --downCountI;  // Decrement search count for recorded value.
+          previousValueI= inValueI;  // Save new repeat target.
+          break goReturn;
+          } // goExpandInterval:
+        downCountI= maximumI-minimumI;
+	        } // goReturn:
         return RepeatedB;
-        } // Repeat loop test.
-    
-    }
+        }
 
+    }

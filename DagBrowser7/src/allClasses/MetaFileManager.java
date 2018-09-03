@@ -14,12 +14,13 @@ public class MetaFileManager {
 
     This meta-data is stored internally in MetaNode-s 
     organized as a tree rooted at MetaRoot.
-    Each MetaNode is associated with, and contains meta-data about, a DataNode.  
+    Each MetaNode is associated with, 
+    and contains meta-data about, one DataNode.  
     DataNodes are organized as a tree rooted at the DataRoot.
     The application reads from the file(s) after the application starts,
     and it writes to the file(s) before the application terminates.
 
-    Normally when a MetaNode is created from external meta-data,
+    Normally when an internal MetaNode is created from external meta-data text,
     it contains a reference to the DataNode with which it is associated.
     Sometime this can't happen, because that DataNode has not been created yet,
     for example the DataNode associated with a P2P connection which
@@ -27,26 +28,27 @@ public class MetaFileManager {
     a special DataNode subclass, an UnknownDataNode is used in its place.
     That reference should be replaced when the corrected DataNode is created.
 
-    This class came after MetaFile from which it got most of its code.
+    This class got most of its code from 
+    an earlier version of the MetaFile class.
 
-    ?? Might need to put finish() in a separate class to avoid
+    ///org Might need to put finish() in a separate class to avoid
     infinite recursion from finish() to MetaRoot to start().
     This might not be possible because call to finish() is
     in a Listener referenced in start().
 
-    ?? Refactor to eliminate the many public members added during
+    ///org Refactor to eliminate the many public members added during
     division for dependency injection.
 
     */
 
   // Constants.
 
-    private static final String FlatFileNameString= "Flat.txt";
-    private static final String NestedFileNameString= "Nested.txt";
+    private static final String flatFileNameString= "Flat.txt";
+    private static final String nestedFileNameString= "Nested.txt";
 
-    private static final String FlatHeaderTokenString= 
+    private static final String flatHeaderTokenString= 
       "Infogora-Flat-Meta-Data-File";
-    private static final String NestedHeaderTokenString= 
+    private static final String nestedHeaderTokenString= 
       "Infogora-Nested-Meta-Data-File";
       
   // Instance variables injected through constructor.
@@ -171,7 +173,7 @@ public class MetaFileManager {
         ?? This should probably be renamed to saveV().
         */
       { // finish()
-        appLogger.info( "MetaFile.finish() begin.  This could take a while.");
+        appLogger.info( "MetaFileManager.finish() begin.  This could take a while.");
 
         forcedLoadingEnabledB= true;  // Turn on forced loading.
 
@@ -180,13 +182,13 @@ public class MetaFileManager {
           );  // This simultaneously 
           // causes the lazy loading of all unloaded nodes, and
           // provides a convenient human-readable dump of all MetaNodes.
-        //appLogger.debug( "MetaFile.finish() nested file written.");
+        //appLogger.debug( "MetaFileManager.finish() nested file written.");
 
         if   // Closing lazy-loading file if open.
           ( lazyLoadMetaFile != null )
           try { // Closing it.
           	lazyLoadMetaFile.closeV( );
-            //appLogger.debug( "MetaFile.finish() lazyLoadMetaFile closed.");
+            //appLogger.debug( "MetaFileManager.finish() lazyLoadMetaFile closed.");
             }
           catch ( IOException e ) {  // Processing any errors.
             e.printStackTrace();
@@ -196,7 +198,7 @@ public class MetaFileManager {
           theMetaRoot.getRootMetaNode( ) 
           );  // This file is what will be lazy-loaded during next run.
 
-        appLogger.info( "MetaFile.finish() end.");
+        appLogger.info( "MetaFileManager.finish() end.");
         } // finish()
 
   public static class Finisher implements ShutdownerListener {
@@ -232,11 +234,11 @@ public class MetaFileManager {
   // Factory methods.
 
     public SingleChildMetaNode makeSingleChildMetaNode(
-        MetaNode InChildMetaNode, 
-        DataNode InDataNode 
+        MetaNode inChildMetaNode, 
+        DataNode inDataNode 
         )
       {
-        return new SingleChildMetaNode( this, InChildMetaNode, InDataNode );
+        return new SingleChildMetaNode( this, inChildMetaNode, inDataNode );
         }
 
     public ListLiteratorOfIDNumber makeListLiteratorOfIDNumber( 
@@ -245,7 +247,6 @@ public class MetaFileManager {
         )
       {
         return new ListLiteratorOfIDNumber( 
-          //theMetaFileManager,
           this,
           theListIteratorOfIDNumber, 
           theParentDataNode
@@ -269,16 +270,16 @@ public class MetaFileManager {
 
     private MetaFile makeMetaFile( 
         MetaFileManager.RwStructure theRwStructure, 
-        String FileNameString, 
-        String HeaderTokenString,
+        String fileNameString, 
+        String headerTokenString,
         MetaFileManager.Mode theMode
         ) 
       {
         return new MetaFile( 
           this,
           theRwStructure, 
-          FileNameString, 
-          HeaderTokenString,
+          fileNameString, 
+          headerTokenString,
           theMode
           );
         }
@@ -298,8 +299,8 @@ public class MetaFileManager {
       {
         MetaFile theMetaFile= makeMetaFile(
           RwStructure.FLAT,
-          FlatFileNameString,
-          FlatHeaderTokenString,
+          flatFileNameString,
+          flatHeaderTokenString,
           Mode.READING
           );
 
@@ -317,8 +318,8 @@ public class MetaFileManager {
       {
         MetaFile theMetaFile= makeMetaFile(
           RwStructure.NESTED,
-          NestedFileNameString,
-          NestedHeaderTokenString,
+          nestedFileNameString,
+          nestedHeaderTokenString,
           Mode.READING
           );
 
@@ -338,8 +339,8 @@ public class MetaFileManager {
       {
         MetaFile theMetaFile= makeMetaFile(
           RwStructure.FLAT, 
-          FlatFileNameString, 
-          FlatHeaderTokenString,
+          flatFileNameString, 
+          flatHeaderTokenString,
           Mode.WRITING
           );
         theMetaFile.writeRootedFileV( inMetaNode );
@@ -353,8 +354,8 @@ public class MetaFileManager {
       {
         MetaFile theMetaFile= makeMetaFile(
           RwStructure.NESTED, 
-          NestedFileNameString, 
-          NestedHeaderTokenString,
+          nestedFileNameString, 
+          nestedHeaderTokenString,
           Mode.WRITING
           );
         theMetaFile.writeRootedFileV( inMetaNode );
@@ -388,8 +389,8 @@ public class MetaFileManager {
       {
         MetaFile theMetaFile= makeMetaFile(
           RwStructure.FLAT, 
-          FlatFileNameString, 
-          FlatHeaderTokenString,
+          flatFileNameString, 
+          flatHeaderTokenString,
           Mode.LAZY_LOADING
           );
         lazyLoadMetaFile= theMetaFile;  // Save this for later.
@@ -601,20 +602,20 @@ public class MetaFileManager {
         while // Write all the children.
           ( theIteratorOfIDNumber.hasNext() ) // There is a next child.
           { // Write one child.
-            IDNumber TheIDNumber=   // Get the child.
+            IDNumber theIDNumber=   // Get the child.
               theIteratorOfIDNumber.next();
             switch // Write child based on RwStructure.
               ( inMetaFile.getRwStructure() )
               {
                 case FLAT:
-                  TheIDNumber.rw( inMetaFile );  // Write ID # only.
+                  theIDNumber.rw( inMetaFile );  // Write ID # only.
                   break;
                 case NESTED:
-                  if (TheIDNumber instanceof MetaNode)
+                  if (theIDNumber instanceof MetaNode)
                     rwFlatOrNestedMetaNode(   // Write MetaNode.
-                      inMetaFile, (MetaNode)TheIDNumber, (DataNode)null );
+                      inMetaFile, (MetaNode)theIDNumber, (DataNode)null );
                     else
-                    IDNumber.rwIDNumber( inMetaFile, TheIDNumber );
+                    IDNumber.rwIDNumber( inMetaFile, theIDNumber );
                   break;
                 }
             } // Write one child.

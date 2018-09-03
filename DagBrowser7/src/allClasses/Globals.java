@@ -28,6 +28,7 @@ public class Globals
 	  		)
 	    /* Writes an error to the log, then
         Throws a RuntimeException wrapped around theThrowaable.
+        This method should never be called, except maybe during debugging.
         */
 	    {
 		    appLogger.error( aString + ": " + theThrowable );

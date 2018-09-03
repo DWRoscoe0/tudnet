@@ -6,7 +6,7 @@ public class NetcasterPacket
 
   extends KeyedPacket< IPAndPort >
 
-  // These are packets associated with particular addresses.
+  // These are packets associated with particular peer Unicaster.
 
 	{
 
