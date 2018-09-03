@@ -66,61 +66,6 @@ public class ListLiteratorOfIDNumber
     
     // Method that does the node checking and loading.
 
-    private IDNumber checkLoadAndReplaceIDNumber( IDNumber inIDNumber )
-      /* This method checks the inIDNumber and loads it unless
-        it has already been loaded.
-        It also replaces the current iterator element,
-        assuming it to be the last read.
-        If inIDNumber is a MetaNode instance then it returns inIDNumber.
-        If it is an IDNumber instance then it goes to the MetaFile, 
-        finds the MetaNode text associated with that IDNumber, 
-        loads it into a MetaNode, and replaces the IDNumber reference
-        in the ListIterator by a reference to the new MetaNode.
-        */
-      {
-        IDNumber returnIDNumber=  // Set default result to raw input.
-          inIDNumber; 
-
-        { // Decoding all the pertinant conditions.
-          if   // Doing nothing if already converted from IDNumber.
-            ( inIDNumber.getClass() != IDNumber.class )
-            ; // Doing nothing.
-          /*
-          else if  // Doing nothing if lazy loading disabled.
-            ( ! MetaFile.getLazyLoadingEnabledB() ) 
-            ; // Doing nothing.
-          */
-          else  // Doing conversion loading of IDNumber.
-            returnIDNumber= convertIDNumber( inIDNumber );
-          } // Decode all the pertinant conditions.
-        return returnIDNumber;
-        }
-
-    private IDNumber convertIDNumber( IDNumber inIDNumber )
-      /* This helper method tries to replace inIDNumber with 
-        a lazy-loaded MetaNode equivalent.
-        If it succeeds then it returns the loaded replacement value,
-        otherwise it returns the original inIDNumber value.
-        */
-      { // Try to replace IDNumber with loaded MetaNode equivalent.
-        try {
-          inIDNumber=  // ...MetaNode equivalent...
-            theMetaFileManager.getLazyLoadMetaFile().readAndConvertIDNumber(  // ...
-              inIDNumber,  // ...of IDNumber using...
-              theParentDataNode  // ...provided parent for lookup.
-              );
-          }
-        catch ( IOException TheIOException ) {
-          appLogger.error( "ListLiteratorOfIDNumber.IOException." );
-          // returnIDNumber already set to inIDNumber.
-            // ?? Use error MetaNode instead?
-          };
-        set( // Replace the child by the result hopefully loaded MetaNode.
-          inIDNumber
-          );
-        return inIDNumber;
-        } // Try to replace IDNumber with loaded MetaNode.
-
     private IDNumber tryLoadingIDNumber( IDNumber inIDNumber )
       /* This helper method tries to replace inIDNumber with 
         a lazy-loaded MetaNode equivalent.
@@ -198,13 +143,6 @@ public class ListLiteratorOfIDNumber
 	    				cachedIDNumber;
 	  			cachedIDNumber= null; // Clear cache.
 	        return resultIDNumber;
-        }  
-
-    public IDNumber OLDnext() 
-      {
-        IDNumber outIDNumber= theListIteratorOfIDNumber.next();
-        outIDNumber= checkLoadAndReplaceIDNumber( outIDNumber );
-        return outIDNumber;
         }  
 
     public int nextIndex()

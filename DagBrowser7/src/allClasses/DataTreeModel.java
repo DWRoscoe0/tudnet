@@ -442,7 +442,7 @@ public class DataTreeModel
       	  return targetTreePath;   
       	  }
 
-      public TreePath OLDtranslatingToTreePath( DataNode targetDataNode )
+      private TreePath OLDtranslatingToTreePath( DataNode targetDataNode )
 	      /* This method returns a TreePath of targetDataNode,
   	      or null if node can not be found in the DataNode tree.
   	      It tries to return a value from nodeToPathHashMap first.
