@@ -4,7 +4,6 @@ import static allClasses.Globals.appLogger;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
-//// import java.net.InetAddress;
 
 public class UnicasterManager
 
@@ -142,7 +141,7 @@ public class UnicasterManager
     private Unicaster buildAddAndStartUnicaster( IPAndPort theIPAndPort )
       /* This method builds a Unicaster to handle 
         communications with a peer at address theIPAndPort.
-        It should be called only if the Unicaster does not exist.
+        It should be called only if the Unicaster does not already exist.
         Is not synchronized because it is called only from 
         other synchronized local methods.
         addingV(..) to tree is done last because it could trigger displaying.

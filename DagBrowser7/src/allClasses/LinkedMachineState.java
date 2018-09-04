@@ -234,7 +234,7 @@ public class LinkedMachineState
 		  	  {
 	    			IPAndPort remoteIPAndPort= theUnicaster.getKeyK();
 		    		theTCPClient.reportPeerConnectionV(remoteIPAndPort);
-
+		    		IPAndPort.addPeerInfoV(thePersistent, remoteIPAndPort);
 		  	  	super.onEntryV();
 		  	  	}
 

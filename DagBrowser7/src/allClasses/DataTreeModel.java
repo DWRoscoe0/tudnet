@@ -1,8 +1,6 @@
 package allClasses;
 
 import java.io.Serializable;
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.HashMap;
 
 import javax.swing.event.TreeModelEvent;
@@ -13,7 +11,6 @@ import allClasses.DataNode.ChangeFlag;
 
 import javax.swing.tree.TreeModel;
 
-import static allClasses.AppLog.LogLevel.*;
 import static allClasses.Globals.*;  // appLogger;
 
 public class DataTreeModel
@@ -441,79 +438,6 @@ public class DataTreeModel
 			        }
       	  return targetTreePath;   
       	  }
-
-      private TreePath OLDtranslatingToTreePath( DataNode targetDataNode )
-	      /* This method returns a TreePath of targetDataNode,
-  	      or null if node can not be found in the DataNode tree.
-  	      It tries to return a value from nodeToPathHashMap first.
-  	      If that fails then tries to build the TreePath 
-  	        and then caches the result.
-  	      It returns the resultant TreePath or null if 
-  	      it was unable to find or build the TreePath.
-  	      */
-      	{ 
-      	  TreePath targetTreePath= // Looking in cache first.
-      	  		nodeToPathHashMap.get( targetDataNode );
-	        if ( targetTreePath == null ) // Building the path if not in cache.
-		        {
-			        targetTreePath= // Build path manually by tracing ancestors. 
-			        		buildTreePath( targetDataNode );
-			        if ( targetTreePath != null ) // Caching build result, if any.
-			        	nodeToPathHashMap.put( targetDataNode, targetTreePath );
-	        		appLogger.warning( 
-	        				"DataTreeModel.translatingToTreePath( "
-	        				+ targetDataNode 
-	        				+ " ), cache miss, resolves to\n  "
-	        				+ targetTreePath
-	        				); // Indicates an incorrect child node addition.
-			        }
-      	  return targetTreePath;   
-      	  }
-
-      private TreePath buildTreePath( DataNode theDataNode )
-        /* This method returns the TreePath of theDataNode, if it exists.
-          To do this it follows the trail of DataNode.parentNamedList links 
-          back to the root, then builds a TreePath in reverse from that.
-          It is unable to reach the root of the tree then it returns null.
-
-          ///opt? This could be made more efficient by recursing using
-          translatingToTreePath(..) on the parent node, a simple expression.
-          ///opt This separate method might not be needed at all.
-            See its only caller, translatingToTreePath(..)
-          */
-        {
-      		appLogger.logB(TRACE, "DataTreeModel.buildTreePath(..) called.");
-      	  Deque<DataNode> stackDeque= new ArrayDeque<DataNode>(10); 
-      	  while (true) { // Stack all nodes in path to root.
-      	  	if ( theDataNode == null ) break;
-      	  	stackDeque.addFirst( theDataNode );
-      	  	theDataNode= theDataNode.parentNamedList;
-      	  	}
-      		TreePath theTreePath;
-      	  boolean unrootedBranchB; 
-    	  	DataNode firstDataNode;
-      	  { // Build TreePath from stacked nodes.
-      	  	firstDataNode= stackDeque.removeFirst();
-	      	  unrootedBranchB= // Rooted branch error check. 
-	      	  		(firstDataNode != theDataRoot.getParentOfRootDataNode( ) );
-    	  	  theTreePath= new TreePath(firstDataNode);
-	      	  while (true) {
-	      	  	if ( stackDeque.peekFirst() == null ) break;
-	      	  	theTreePath= 
-	      	  			theTreePath.pathByAddingChild( stackDeque.removeFirst());
-	      	  	}
-      	  	}
-  	  	  if ( unrootedBranchB ) // Handle possible branch rooting error.
-	  	  	  { appLogger.warning( 
-	        				"DataTreeModel.buildTreePath(..) unrooted branch\n"
-	        				+ theTreePath
-	        				);
-	      	  	theTreePath= null; // Set result to null to signal error.
-	  	  	  	}
-          return theTreePath;
-          }
-
-      
 
     /* The following 3 sections comprise the display aggregation system.
       The purpose is to reduce the number of TreeModel events fired

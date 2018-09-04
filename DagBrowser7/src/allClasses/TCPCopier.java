@@ -329,18 +329,8 @@ public class TCPCopier
 		      has actually been made.
 		      */
 		    {	
-	    		appLogger.debug( "addPeerInfoV() called." );
-
-	    		String peerKeyString= ipString+"-"+portString; // Calculate peer key.
-
-	    		PersistentCursor thePersistentCursor= new PersistentCursor(
-	    				thePersistent);
-   				thePersistentCursor.setListAndEntryV( "peers", peerKeyString );
-
-	    	  // Store or update the fields.
-   				thePersistentCursor.putFieldV( "IP", ipString );
-	    		thePersistentCursor.putFieldV( "Port", portString );
-
+	    		appLogger.debug( "TCPCopier..addPeerInfoV() called." );
+	    		IPAndPort.addPeerInfoV(thePersistent, ipString, portString);
 	    		} 
 	
 			} // TCPClient

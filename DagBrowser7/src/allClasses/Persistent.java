@@ -21,13 +21,13 @@ public class Persistent
 	  the operations that involve long paths, can be slow.
 	  Methods that do these long operations generally begin with "multilevel".
 	  If many repeated operations are to be done, deep within the structure,
-	  at the end of a long path, then a PersistentCursor should be used.
+	  at the end of a long path, then a PersistentCursor should be used instead.
 
 		A path can be:
 		* relative to a given PersistingNode, or
 		* absolute, meaning relative to the root PersistingNode.
 
-		A path expessed as a String is a list of elements separated by a "/".
+		A path expressed as a String is a list of elements separated by a "/".
 		A path can contain 0, 1, 2, or more elements.
 
 	  In earlier versions of this class, "key" was synonymous with "full path".
@@ -424,7 +424,7 @@ public class Persistent
 		  		  theFileOutputStream= new FileOutputStream(
 		  		  		Config.makeRelativeToAppFolderFile( fileString ));
 			  		writingV(
-			  				"#---EXPERIMENTAL multilevel data output follows---\n");
+			  				"#---multi-element path and data output follows---\n");
 		  			multilevelStoreNodeV("", rootPersistingNode);
 			  		}
 			  	catch (Exception theException) { 

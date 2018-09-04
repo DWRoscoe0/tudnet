@@ -232,13 +232,12 @@ public class ConnectionManager
         }
 
 		private void restartPreviousUnicastersV()
-			/* This method attempts to restore restore Unicaster peer connections
-			  which existed immediately before the previous shutdown.
+			/* This method attempts to restore Unicaster peer connections
+			  which were active immediately before the previous shutdown.
 			  
 			  ///fix Presently it simply tries to restore 
-			  all the peers connections in Persistant storage.  
-			  Eventually it should indicate which peers were actually connected 
-			  at shutdown time.
+			  all the peers connections in Persistent storage.  
+			  Fix to restore only the previously active ones.
 			 	*/
 			{
       	// appLogger.debug(
@@ -257,7 +256,7 @@ public class ConnectionManager
 		        		"ConnectionManager.restartPreviousUnicastersV(), IP="
 				  			+ peerIPString + ", port=" + peerPortString );
 					  theUnicasterManager.getOrBuildAddAndStartUnicaster(
-				    		peerIPString , peerPortString ); // Restore Unicaster.
+				    		peerIPString , peerPortString ); // Restore peer with Unicaster.
 					  thePersistentCursor.nextKeyString(); // Advance cursor.
 					  }
       	// appLogger.debug(
