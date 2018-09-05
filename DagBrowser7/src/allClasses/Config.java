@@ -50,7 +50,8 @@ public class Config
 		public static final long activityBlinkerPeriod1000MsL= 1000;
 		public static final long multicastPeriod10000MsL= 10000;
 		public static final long pingReplyHandshakePeriod2000MsL= 2000;
-	
+		public static final long reconnectTimeOutMsL= 30000;
+		
 		public static final long systemsMonitorPeriod1000MsL= 1000;
 	
 		public static final long initialRoundTripTime100MsL= 1000;
