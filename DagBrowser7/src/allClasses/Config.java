@@ -50,11 +50,11 @@ public class Config
 		public static final long activityBlinkerPeriod1000MsL= 1000;
 		public static final long multicastPeriod10000MsL= 10000;
 		public static final long pingReplyHandshakePeriod2000MsL= 2000;
-		public static final long reconnectTimeOutMsL= 30000;
+		public static final long reconnectTimeOutMsL= 10000; ///dbg 30000;
 		
 		public static final long systemsMonitorPeriod1000MsL= 1000;
 	
-		public static final long initialRoundTripTime100MsL= 1000;
+		public static final long initialRoundTripTime100MsL= 1000; ///dbg 100
 		  ///dbg High to allow response before time-out for testing.  Was 25;
 	
 		public static final long initialRoundTripTime100MsAsNsL= 

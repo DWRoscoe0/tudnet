@@ -80,13 +80,7 @@ public class LinkedMachineState
     				theUnconnectedWaitingState= new UnconnectedWaitingState());
     		setFirstOrSubStateV( theTryingToConnectState ); // Set initial state.
 
-	  	  helloTimerInput= // Creating our timer and linking to this state. 
-			  		new TimerInput(  ///? Move to factory or parent?
-			  				this.theTimer,
-			  				this
-			  				);
-
-	  	  reconnectTimerInput= // Creating our timer and linking to this state. 
+	  	  theTimerInput= // Creating our timer and linking to this state. 
 			  		new TimerInput(  ///? Move to factory or parent?
 			  				this.theTimer,
 			  				this
@@ -106,7 +100,7 @@ public class LinkedMachineState
 	    // This method processes any pending loose ends before shutdown.
 		  {
 	  	  super.finalizeV();
-	  		helloTimerInput.cancelingV(); // To stop our timer.
+	  		theTimerInput.cancelingV(); // To stop our timer.
 	      }
 
   	public void onEntryV() throws IOException
@@ -150,14 +144,13 @@ public class LinkedMachineState
 		public void onExitV() throws IOException
 		  // Cancels acknowledgement timer.
 		  { 
-				helloTimerInput.cancelingV();
+				theTimerInput.cancelingV();
 				super.onExitV();
 				}
 
 		// Other variables.
-	  private TimerInput helloTimerInput;
-	  private TimerInput reconnectTimerInput;
-		private long retryTimeOutMsL;
+	  private TimerInput theTimerInput;
+	  private long retryTimeOutMsL;
 		
 		public boolean isConnectedB()
 		  /* This method returns true if this Unicaster is connected to its peer,
@@ -181,7 +174,7 @@ public class LinkedMachineState
 		  	  // Sends a HELLO and initializes retry timer.
 		  	  {
 		    		sendHelloV(this);
-					  helloTimerInput.scheduleV(retryTimeOutMsL);
+					  theTimerInput.scheduleV(retryTimeOutMsL);
 						}
 		
 			  public void onInputsForLeafStatesV() throws IOException
@@ -193,9 +186,18 @@ public class LinkedMachineState
 			  		if (tryReceivingHelloB(this)) // Try to process first HELLO.
 			  			requestSiblingStateListV( // Success.  Request connected state.
 			  					theConnectedState );
-		      	else if (helloTimerInput.getInputArrivedB()) // Try Time-out? 
+		      	else if (theTimerInput.getInputArrivedB()) // Try Time-out? 
+			      	{
+				    		sendHelloV(this); // Resent hello.
+							  if // Reschedule time-out with exponential back-off. 
+							    (theTimerInput.rescheduleB(Config.maxTimeOut5000MsL))
+							    requestSiblingStateListV( // Give up if max delay reached.
+			    			  		theUnconnectedWaitingState); //   Go to unconnected.
+			    			}
+
+			    		/*  ////
 			    		{ // Time-out occurred.  Retry or give up.
-		      		  retryTimeOutMsL*=2;  // Doubling time-out limit.
+			    		  retryTimeOutMsL*=2;  // Doubling time-out limit.
 			    			if // but stop if above maximum.
 		      				( retryTimeOutMsL > Config.maxTimeOut5000MsL )
 				    			{
@@ -207,6 +209,7 @@ public class LinkedMachineState
 			    			  requestSiblingStateListV( // Retry by reentering this state.
 			    			  		this);
 			      		}
+			      	*/  ////
 		  	  	}
 	
 		  		} // class TryingToConnectState
@@ -294,7 +297,7 @@ public class LinkedMachineState
 	    	public void onEntryV() throws IOException
 		  	  // Sends a HELLO and initializes retry timer.
 		  	  {
-					  reconnectTimerInput.scheduleV(Config.reconnectTimeOutMsL);
+					  theTimerInput.scheduleV(Config.reconnectTimeOutMsL);
 						}
 
 			  public void onInputsForLeafStatesV() throws IOException
@@ -310,7 +313,7 @@ public class LinkedMachineState
 				  					theConnectedState
 				  					);
 				  			}
-		      	else if (reconnectTimerInput.getInputArrivedB()) // Try Time-out? 
+		      	else if (theTimerInput.getInputArrivedB()) // Try Time-out? 
 			    		{ // Time-out occurred.  Retry initiating connection.
 		    			  requestSiblingStateListV(theTryingToConnectState);
 			      		}
@@ -319,7 +322,7 @@ public class LinkedMachineState
 				public void onExitV() throws IOException
 				  // Cancels timer.
 				  { 
-						reconnectTimerInput.cancelingV();
+						theTimerInput.cancelingV();
 						super.onExitV();
 						}
 

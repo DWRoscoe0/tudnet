@@ -314,7 +314,7 @@ public class LinkMeasurementState
 					    		{ if ( retryTimeOutMsL <= Config.maxTimeOut5000MsL )
 				    				  { retryTimeOutMsL*=2;  // Doubling time-out limit.
 				    				  	requestSiblingStateListV(this); // Retrying by repeating state.
-					  					  }
+					  					  } ///opt Use TimerInput.rescheduleB(.) instead. 
 				    			  else // Giving up after maximum time-out reached.
 								  	  requestSiblingStateListV(theMeasurementPausedState);
 					    		      // Do again after a pause.

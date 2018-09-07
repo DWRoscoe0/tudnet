@@ -10,11 +10,15 @@ public class TimerInput
 	  It can time only one interval at a time, but it can be reused.
 	  It's called TimerInput because it is meant to provide inputs to
 	  a thread or a state machine.
+	  There is a rescheduleB(.) method for doing exponential back-off.
+	  
+	  ///ehn Add ability to track total schedule and reschedule time
+	    since previous cancel so it can trigger on both retry interval times
+	    and interval total times.
 
 	  This class uses a  java.util.Timer to do the timing.
 	  The run() method that is triggered must return quickly or 
 	  other events using the same Timer could be delayed.
-
 		An earlier version of this class used LockAndSignal.notifyingV()
 	  in the run() method of TimerTask instances that it creates for quickness.
 	  This version does not have that guarantee.
@@ -27,6 +31,7 @@ public class TimerInput
 		// Other variables.
 		private TimerTask theTimerTask= null;
 		private boolean inputArrivedB= false; 
+    private long lastDelayUsedMsL= 0;
 	
 	  TimerInput( // Constructor.
 	  		Timer theTimer,
@@ -44,7 +49,7 @@ public class TimerInput
 	  public boolean getInputScheduledB() 
 	    // Returns whether or not the timer input has been scheduled.
 	    { return theTimerTask != null; }
-	
+		
 	  public synchronized void scheduleV( long delayMsL )
 	    /* Schedules this timer for input activation after delayMsL milliseconds.
 	      If this timer object is already scheduled or active 
@@ -60,7 +65,25 @@ public class TimerInput
 	        	  userRunnable.run(); // Run user handler Runnable.
 		          }
 	    		};
+	      lastDelayUsedMsL= delayMsL;
 	    	theTimer.schedule(theTimerTask, delayMsL);
+	    	}
+
+	  public synchronized boolean rescheduleB( long maxDelayMsL )
+	    /* Reschedules this timer for input activation using 
+	      exponential back-off, doubling the previous delay used,
+	      but not greater than maxDelayMsl.
+	      Otherwise, it works like scheduleV(.).
+	      Returns true if maximum delay was exceeded, false otherwise. 
+	     */
+	    {
+	  	  long theDelayMsL= 2 * lastDelayUsedMsL; // Double previous delay.
+	  	  boolean resultB= // Calculate whether maximum exceeded.
+	  	  		(theDelayMsL > maxDelayMsL);
+	  	  if (resultB) // Limit time-out delay to maximum allowed. 
+	  	  	theDelayMsL= maxDelayMsL;
+	  	  scheduleV(theDelayMsL); // Schedule using result.
+	  	  return resultB;
 	    	}
 	
 	  public synchronized void cancelingV()
