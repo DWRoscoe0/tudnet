@@ -1,0 +1,4 @@
+# This directory is for building the app's Windows launcher from .class files.
+# Ignore various types of binary files.
+*.jar
+*.exe
