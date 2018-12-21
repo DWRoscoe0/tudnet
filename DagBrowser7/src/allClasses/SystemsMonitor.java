@@ -44,6 +44,7 @@ public class SystemsMonitor
 	  // Detail-containing child sub-objects.
 		  private NamedLong measurementCountNamedLong;
       private NamedLong processorsNamedLong;
+      private NamedMutable javaVersionNamedMutable; 
 		  private long waitEndNsL= -1;
 		  private long waitEndOldNsL= -1;
 		  private NamedLong waitJitterNsNamedLong;
@@ -91,9 +92,9 @@ public class SystemsMonitor
        */
       {
     		appLogger.info( "SystemsMonitor.run() beginning." );
-
+  
     		createAndAddChildrenV();  // Do non-dependency-injection initialization.
-
+  
   		  measurementTimeMsL= // Setting time to do first measurement... 
   		  		System.currentTimeMillis(); //  to be immediately.
         while // Repeating measurement and display... 
@@ -106,13 +107,16 @@ public class SystemsMonitor
     private void createAndAddChildrenV()
 	    {
     	  // Assign variables.
-		  	measurementCountNamedLong= 
-			  	new NamedLong( 
+		  	measurementCountNamedLong= new NamedLong( 
 	      		"Measurements", 0
 	        	);
 	      processorsNamedLong= new NamedLong( 
 	      		"Processors", -1
 	        	);
+	      final String javaVersionString= "java.version"; 
+	      javaVersionNamedMutable= new NamedMutable(
+	          javaVersionString, System.getProperty(javaVersionString)
+	          );
 			  waitJitterNsNamedLong= new NsAsMsNamedLong( 
 	      	"Wait-Jitter (ms)", 0 
 	       	);
@@ -142,6 +146,7 @@ public class SystemsMonitor
 			  // Add variables to our displayed list.
 	      addAtEndB( measurementCountNamedLong );
 	      addAtEndB( processorsNamedLong );
+	      addAtEndB( javaVersionNamedMutable );
 	      //addB( nanoTimeOverheadNamedInteger );
 	      addAtEndB( cpuSpeedNamedLong );
 	      addAtEndB( waitJitterNsNamedLong );
