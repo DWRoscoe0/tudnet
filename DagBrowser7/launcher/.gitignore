@@ -1,7 +1,12 @@
 # This directory is for building the app's Windows launcher from .class files.
 
-# Ignore various types of binary files.
+# Ignore the executable jar file we will create.
 *.jar
+
+# Ignore the JRE to be bundled with jar file.
+jre1.8.0_191/**
+
+# Ignore the executable exe file we will create.
 *.exe
 
 * Ignore temporary UI file.
