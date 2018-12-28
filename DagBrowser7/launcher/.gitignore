@@ -9,5 +9,5 @@ jre1.8.0_191/**
 # Ignore the executable exe file we will create.
 *.exe
 
-* Ignore temporary UI file.
+* Ignore temporary UI file that jar file creates.
 Outline.tmp
