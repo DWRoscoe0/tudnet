@@ -6,8 +6,9 @@
 # Ignore the JRE to be bundled with jar file.
 jre1.8.0_191/**
 
-# Ignore the executable exe file we will create.
+# Ignore the executable 7z and exe files we will create.
+*.7z
 *.exe
 
-* Ignore temporary UI file that jar file creates.
+* Ignore temporary UI file that jar file creates when executed.
 Outline.tmp
