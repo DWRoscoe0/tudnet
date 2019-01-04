@@ -1,0 +1,7 @@
+;!@Install@!UTF-8!
+Title="testTitle"
+ExtractDialogText="testExtractDialogText"
+ExtractTitle="testExtractTitle"
+FinishMessage="testFinishMessage"
+RunProgram="setup.exe"
+;!@InstallEnd@!

@@ -6,9 +6,15 @@
 # Ignore the JRE to be bundled with jar file.
 jre1.8.0_191/**
 
+# Ignore the .sfx file(s) we will use.
+*.sfx
+
 # Ignore the executable 7z and exe files we will create.
 *.7z
 *.exe
+
+# Ignore the SDK from which we are getting our files.
+lzma1805/**
 
 * Ignore temporary UI file that jar file creates when executed.
 Outline.tmp
