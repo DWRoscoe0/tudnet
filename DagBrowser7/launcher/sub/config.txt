@@ -1,4 +1,5 @@
 ;!@Install@!UTF-8!
+; This is a 7Zip configuration file.
 Title="7zr b install test"
 BeginPrompt="Do you want to extract and run 7zr b install test?"
 RunProgram="7zr.exe b"
