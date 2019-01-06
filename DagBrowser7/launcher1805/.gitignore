@@ -1,0 +1,4 @@
+# Ignore binary file(s) we will use or create 
+*.sfx
+*.7z
+*.exe
