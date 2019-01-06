@@ -1,0 +1,5 @@
+# This is for the mutating version of the launcher1805 example.
+# Ignore binary file(s) we will use or create 
+*.sfx
+*.7z
+*.exe
