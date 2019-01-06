@@ -1,5 +1,6 @@
 ;!@Install@!UTF-8!
-Title="Software 7.00"
-BeginPrompt="Do you want to install the Software 7.00?"
+; Test comment.
+Title="launcher1805m test" ; Test tail comment.
+BeginPrompt="Run test?"
 RunProgram="7zr.exe b"
 ;!@InstallEnd@!
