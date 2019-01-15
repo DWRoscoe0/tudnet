@@ -31,18 +31,19 @@ import static allClasses.Globals.appLogger;  // For appLogger;
   The factories above may not be the only factories in the app,
   but they are the top levels.  Factories serve 2 purposes:
 
-  * They contain, or eventually will contain,  all the new-operators, 
-    except for 2 uses in the top level Infogora class.
+  * Factories contain, or eventually will contain,  all the new-operators, 
+    except for 2 or 3 uses in the top level Infogora class,
+    immutable constants, and initially empty containers.
     This will, in theory, make unit testing easier.
 
-  * Their code shows how classes relate to each other in the app
-    by showing all dependency injections, usually with constructor injection, 
+  * Factory code shows how objects relate to each other in the app
+    by showing all dependencies, usually with constructor injection, 
     but occasionally with setter injection.
 
-  * Factory fields are:
+  * All factory fields are one of the following.
     * Singleton variable fields, preferably private.
-    * One constructor, which creates all the non-lazy singletons.
-    * Lazy singleton getters methods, 
+    * The factory's one constructor, which creates all the non-lazy singletons.
+    * Lazy singleton getter methods, 
       whose constructions are delayed until needed.
     * Maker methods, which construct a new object each time called.
     ! There should be no non-lazy getters, except for the top level,
@@ -62,8 +63,10 @@ class Infogora  // The root of this app.
 	    default handler for uncaught exceptions.
 
 		Both these methods use the new-operator.
-		Except for factories, these should [eventually] be 
-		the only places where the new-operator is used.
+		Except for factories, immutable constants, 
+		and initially empty containers,
+		these should [eventually] be the only places 
+		where the new-operator is used.
 		This can make unit testing much easier.
 	  */
 
@@ -126,8 +129,9 @@ class Infogora  // The root of this app.
 	      setDefaultExceptionHandlerV(); // Preparing for exceptions 
 	        // before doing anything else.
 	
+        CommandArgs theCommandArgs= new CommandArgs(argStrings);
 	      AppFactory theAppFactory=  // Constructing AppFactory.
-	        new AppFactory(argStrings);
+	        new AppFactory(argStrings, theCommandArgs);
 	      App theApp=  // Getting the App from the factory.
       		theAppFactory.getApp();
 	      theApp.runV();  // Running the app until it finishes.

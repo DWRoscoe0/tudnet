@@ -128,6 +128,7 @@ l    * If the app receives a message indicating
 
 		private Shutdowner theShutdowner;
     private String[] theArgStrings;  // Array of app start arguments.
+    private CommandArgs theCommandArgs; // Same args, in different form.
     private PortManager thePortManager;
 
   // Locks and guards.
@@ -171,12 +172,14 @@ l    * If the app receives a message indicating
 	  
 	  public AppInstanceManager(  // Constructor.
 	      String[] theArgStrings,
+	      CommandArgs theCommandArgs,
 	      Shutdowner theShutdowner,
 	      PortManager thePortManager
 	      )
 	    {
 		    this.theShutdowner= theShutdowner;
 		    this.theArgStrings= theArgStrings;
+        this.theCommandArgs= theCommandArgs;
 		    this.thePortManager= thePortManager;
 		    }
 

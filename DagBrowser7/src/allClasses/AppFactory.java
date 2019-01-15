@@ -27,13 +27,14 @@ public class AppFactory {  // For App class lifetimes.
   // Storage for conditional (lazy evaluation) singletons.
   private AppGUIFactory theAppGUIFactory= null;
 
-  public AppFactory( String[] argStrings )  // Factory constructor.
+  public AppFactory(   // Factory constructor.
+      String[] argStrings, CommandArgs theCommandArgs )
     {
   	  thePersistent= new Persistent();
   		thePortManager= new PortManager( thePersistent );
   		theShutdowner= new Shutdowner();
   		AppInstanceManager theAppInstanceManager= new AppInstanceManager(
-      		argStrings, theShutdowner, thePortManager
+      		argStrings, theCommandArgs, theShutdowner, thePortManager
       		);
   		theTCPServer= new TCPCopier.TCPServer( "TCPServer", thePortManager );
   		theTCPClient= new TCPCopier.TCPClient( "TCPClient", thePersistent );
