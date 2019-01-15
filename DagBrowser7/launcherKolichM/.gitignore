@@ -1,0 +1,12 @@
+*.class
+*.sfx
+*.7z
+*.exe
+
+# Package Files #
+*.jar
+*.war
+*.ear
+
+7zip/**
+jre1.8.0_191/**

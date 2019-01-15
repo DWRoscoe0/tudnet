@@ -1,0 +1,11 @@
+;!@Install@!UTF-8!
+; launcherKolichM tests.
+Title="7ZIP Java Launch test"
+ExtractDialogText="Program will start in a moment."
+GUIFlags="32"
+ExtractTitle="Extracting program."
+FinishMessage="The program has terminated."
+; javaw.exe stopped working? Using java.exe instead.
+; RunProgram="jre1.8.0_191\bin\java.exe -jar Infogora.jar"
+RunProgram="subTest.bat \"%%S\" \"%%T\" ."
+;!@InstallEnd@!

@@ -139,7 +139,8 @@ public class AppLog extends EpiThread
      	*/
       public static boolean testingForPingB= false;
       private boolean debugEnabledB= true;
-      private boolean consoleModeB= false;
+      private boolean consoleModeB= false; // When true, logging goes to console
+        // as well as log file.  
       public LogLevel packetLogLevel= INFO; // DEBUG; 
 
     static // static/class initialization for logger.
@@ -156,6 +157,7 @@ public class AppLog extends EpiThread
     public void run()
       /* This method closes the file periodically so that
         new output is visible to developers for debugging and testing.
+        ///fix this is a kludge.
        	*/
     	{
     	  while (true) {
@@ -165,13 +167,13 @@ public class AppLog extends EpiThread
     	  	  		closeFileV(); // This will cause flush.
 		  		    	openFileV(); // Prepare for next output.
 				    	  }
-    	  	  try {
-    	  	    	Thread.sleep(5000); // 5 second pause.
-		    	  	} catch(InterruptedException ex) {
-		    	  	  Thread.currentThread().interrupt();
-		    	  	} finally {
-		    	  		closeFileV();
-		    	  	}
+  	  	  try {
+  	  	    	Thread.sleep(5000); // 5 second pause.
+	    	  	} catch(InterruptedException ex) {
+	    	  	  Thread.currentThread().interrupt();
+	    	  	} finally {
+	    	  		closeFileV(); ///fix Should this be here?
+	    	  	}
     	  	}
     		}
     
@@ -187,11 +189,11 @@ public class AppLog extends EpiThread
     		consoleModeB= oldConsoleEnabledB; 
     		}
 
-    public synchronized void setBufferedModeV( 
-    		boolean desiredBufferedModeB 
-    		) 
+    public synchronized void setBufferedModeV( boolean desiredBufferedModeB ) 
     	/* This method opens the file for buffered mode,
     	  and closes it for non-buffered mode.
+        File-open means buffering will happen on any output.
+        File-closed means any buffer has been flushed.
     	  */
 	    {
 	    	if ( desiredBufferedModeB )
@@ -284,6 +286,9 @@ public class AppLog extends EpiThread
 
     public void setLevelLimitV( LogLevel limitLogLevel )
     	{ maxLogLevel= limitLogLevel; }
+
+
+    // Actual log method start here.
 
     public void trace(String inString)
       /* This method is for tracing.  It writes only inString.
@@ -403,14 +408,15 @@ public class AppLog extends EpiThread
 
     /* LogB(..) and logV(..) family methods.
 
-      * logB( theLogLevel ) returns true if theLogLevelis less than maxLogLevel.
+      * logB( theLogLevel ) returns true if theLogLevel is less than maxLogLevel.
         This displays nothing.  It is used to control what is displayed.
       * logB( theLogLevel, ... ) returns true and creates a log entry with
        	theLogLevel and the remaining parameters if theLogLevel 
        	is less than maxLogLevel.  Otherwise it just returns false.
       * logV( ... ) creates a log entry from the parameters unconditionally.
-   
-      Various combinations of parameters are possible from the following set:
+
+      The following methods take various combinations of parameters 
+      from the following set:
     	* LogLevel theLogLevel: used for filtering and is displayed. 
     	* String inString: message to be displayed.
     	* Throwable theThrowable: an exception to be displayed, of not null.
@@ -462,9 +468,12 @@ public class AppLog extends EpiThread
     		String inString, 
     		Throwable theThrowable, 
     		boolean consoleB )
-      /* This is the most capable logging methods.
-        It contains all possible parameters.
-        All the logging methods eventually call this one.
+      /* The buck stops here.  This method does not delegate to
+        another method is the family.
+
+        This is also the most capable logging method.
+        It can process all possible parameters.
+        All the above logging methods in the family eventually call this one.
 
         This method create one log entry and appends it to the log file.
         It could be multiple lines if any of the parameters
@@ -476,7 +485,8 @@ public class AppLog extends EpiThread
         * the thread name,
         * theThrowable if not null.
 
-        This method also sends a copy to the console if consoleB is true.
+        This method also sends a copy of the log entry
+        to the console if consoleB is true.
 
         ///enh Replace String appends by StringBuilder appends, for speed?
         ///enh Add stackTraceB which displays stack,
@@ -485,7 +495,7 @@ public class AppLog extends EpiThread
       { 
     		long nowMillisL= System.currentTimeMillis(); // Saving present time.
 
-        String aString= ""; // Initialize String to empty, then append...
+        String aString= ""; // Initialize String to empty, then append to it...
         aString+= theSessionI;  //...the session number,...
         aString+= ":";  //...and a separator.
         aString+= String.format(  // ...time since last output,...
@@ -528,9 +538,12 @@ public class AppLog extends EpiThread
         It can be used to append as little as a single character.
         If inString is a log entry then it must be complete,
         including session #, time-stamp, and newlines.
+
         If the file doesn't exist or exists but is closed
-        then it calls createOrAppendToFileV(..).
-        If the file exists and is open then it calls writeToOpenFileV(..).
+        then it calls createOrAppendToFileV(..), which leaves the file closed.
+        
+        If the file exists and is open then it calls writeToOpenFileV(..),
+        leaving the file open.
         */
       { 
     	  if ( thePrintWriter == null ) // Acting based on whether file is open.
