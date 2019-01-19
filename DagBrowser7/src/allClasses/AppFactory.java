@@ -28,13 +28,15 @@ public class AppFactory {  // For App class lifetimes.
   private AppGUIFactory theAppGUIFactory= null;
 
   public AppFactory(   // Factory constructor.
-      String[] argStrings, CommandArgs theCommandArgs )
+      //// String[] argStrings, CommandArgs theCommandArgs )
+      CommandArgs theCommandArgs )
     {
   	  thePersistent= new Persistent();
   		thePortManager= new PortManager( thePersistent );
   		theShutdowner= new Shutdowner();
   		AppInstanceManager theAppInstanceManager= new AppInstanceManager(
-      		argStrings, theCommandArgs, theShutdowner, thePortManager
+      		//// argStrings, theCommandArgs, theShutdowner, thePortManager
+  		    theCommandArgs, theShutdowner, thePortManager
       		);
   		theTCPServer= new TCPCopier.TCPServer( "TCPServer", thePortManager );
   		theTCPClient= new TCPCopier.TCPClient( "TCPClient", thePersistent );

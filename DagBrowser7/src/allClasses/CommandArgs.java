@@ -1,6 +1,8 @@
 package allClasses; // original package was com.jenkov.cliargs;
 
 
+import static allClasses.Globals.appLogger;
+
 import java.lang.reflect.Field;
 //// import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,6 +16,18 @@ public class CommandArgs {
     created by Jakob Jenkov, published at
     https://github.com/jjenkov/cli-args and described at
     http://tutorials.jenkov.com/java-howto/java-command-line-argument-parser.html
+
+    Note, switch strings must always included the '-' character.
+
+    ///enh Presently it provides mostly ways to return 
+    target and switch states statically.
+    Later it might also provide ways to do this sequential.
+    There is one exception.  Switches that can values 
+    must be interrogated for their values
+    using a variation of the switchValue(..) method 
+    before String[] targets() is called to 
+    prevent switch values being returned as targets.
+
    */
 
   private String[] args = null;
@@ -34,8 +48,11 @@ public class CommandArgs {
       takenIndexes.clear();
       for(int i=0; i < args.length; i++) {
           if(args[i].startsWith("-") ){
-              switchIndexes.put(args[i], i);
-              takenIndexes.add(i);
+            appLogger.debug( "CommandArgs.parse(..) switch "+args[i] );
+            switchIndexes.put(args[i], i);
+            takenIndexes.add(i);
+          } else {
+            appLogger.debug( "CommandArgs.parse(..) target "+args[i] );
           }
       }
   }
@@ -108,7 +125,17 @@ public class CommandArgs {
       return values;
   }
 
-  public <T> T switchPojo(Class<T> pojoClass){
+  public <T> T switchPojo(Class<T> pojoClass)
+    /* This method tries to create an object of type pojoClass and
+      load all its fields with values from the switch values whose switch names
+      match the field names in the pojoClass object,
+      matching except for replacing '_' with '-' and prepending a '-'.
+      If a switch is not present, 
+      the default value in field in the pojoClass object is not overridden.
+      This method eliminates the need for the app 
+      to test for individual switches and read their values.
+     */
+    {
       try {
           T pojo = pojoClass.newInstance();
 

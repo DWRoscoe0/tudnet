@@ -234,12 +234,17 @@ public class ConnectionManager
 		private void restartPreviousUnicastersV()
 			/* This method attempts to restore Unicaster peer connections
 			  which were active immediately before the previous shutdown.
-			  
+
 			  ///fix Presently it simply tries to restore 
 			  all the peers connections in Persistent storage.  
 			  Fix to restore only the previously active ones.
 			 	*/
 			{
+        if (Config.testAndLogDisabledB( Config.unicasterThreadsDisableB, 
+            "restartPreviousUnicastersV()") 
+            )
+          return;
+        
       	// appLogger.debug(
 				// 	"ConnectionManager.Unica restartPreviousUnicastersV() begins.");
 	    	PersistentCursor thePersistentCursor= // Used for iteration. 
@@ -495,6 +500,11 @@ public class ConnectionManager
         either the unicast receiver or the multicast receiver. 
         */
       {
+        if (Config.testAndLogDisabledB( Config.unicasterThreadsDisableB, 
+            "passToUnicasterV(..)") 
+            )
+          return;
+
         //appLogger.info(
         //  "ConnectionManager.createAndPassToUnicasterV(..)\n  "
         //  + theKeyedPacket.getSocketAddressesString()

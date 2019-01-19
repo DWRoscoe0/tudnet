@@ -160,6 +160,11 @@ public class Unicaster
         It also contains an IOException handler.
         */
       {
+        if (Config.testAndLogDisabledB( Config.unicasterThreadsDisableB, 
+            "run() unicasters") 
+            )
+          return;
+
     		appLogger.info("run() begins.");
         try { // Operations that might produce an IOException.
 	      		appLogger.info("run() activating root state machine.");

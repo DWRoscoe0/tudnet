@@ -1,5 +1,7 @@
 package allClasses;
 
+import static allClasses.Globals.appLogger;
+
 import java.io.File;
 
 //import static allClasses.Globals.*;  // appLogger;
@@ -16,7 +18,20 @@ public class Config
    	*/
 
   {
+    /* Disabling for debugging. */
+      public static boolean tcpThreadsDisableB= true;  //// false;
+      public static boolean multicasterThreadsDisableB= true;  //// false;
+      public static boolean unicasterThreadsDisableB= true;  //// false;
 	
+      public static boolean testAndLogDisabledB(
+          boolean disabledB, String logString)
+      {
+        if (disabledB) { 
+          appLogger.debug(logString + "; code is disabled.");
+          }
+        return disabledB;
+        }
+        
 		/* Miscellaneous startup behavior. */
 		
 	    /* The following are used to delay some activities, most at startup.
@@ -26,7 +41,7 @@ public class Config
 				public static final int localUpdateDelaySI=0;
 				
 		  /* Log file.  */
-				public static final boolean clearLogFileB= true;
+				public static final boolean clearLogFileB= false;  //// true;
   
 		// Delays, for adjustments and slowing the entire app for debugging.
 

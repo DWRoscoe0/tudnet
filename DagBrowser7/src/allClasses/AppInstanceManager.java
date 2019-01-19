@@ -126,10 +126,15 @@ l    * If the app receives a message indicating
 
   // Private injected dependency variables, initialized during construction.
 
+    // Constructure injections.
 		private Shutdowner theShutdowner;
-    private String[] theArgStrings;  // Array of app start arguments.
-    private CommandArgs theCommandArgs; // Same args, in different form.
+    //// private String[] theArgStrings;  // Array of app start arguments.
+    private CommandArgs startCommandArgs; // args from command line.
     private PortManager thePortManager;
+
+    // Network input injections.
+    private CommandArgs networkCommandArgs= null; // args from other app instance.
+      // This can change multiple times.
 
   // Locks and guards.
     private static Lock theReentrantLock= new ReentrantLock();
@@ -137,21 +142,21 @@ l    * If the app receives a message indicating
       // Poller thingsToDoPeriodicallyV() reads it.  Others write it.
     
   // Internal dependency variables, set after construction.
-    int inputAppFileDelaySI= Config.localUpdateDelaySI; 
+    int inputCheckFileDelaySI= Config.localUpdateDelaySI; 
     	// Delay in seconds before checking for a local update file begins.
-    int tcpAppFileDelaySI= Config.tcpUpdateDelaySI;
+    int tcpCheckFileDelaySI= Config.tcpUpdateDelaySI;
       // Same for TCP update.
     
     // File names.  Some of these might be equal.
 	  private final File standardAppFile=  // App File name in standard folder.
     		Config.userAppJarFile;
     private File runningAppFile; // App File name of running app.
-    private File inputAppFile= null;  // App File name input to this app.
-      // This might change multiple times during execution. 
-      // It might come from either:
-      // * arg[0], once, when this app is first run, or
-	    // * one packet received from each of other running instances 
-	    // 	 when they first run.
+    private File otherAppFile= null;  // File name of another instance.
+      // It can come from either:
+      // * a command line argument from 
+      //   an earlier app instance that started this app instance, or
+	    // * a tcp packet from an app instance run after this app instance. 
+      //   This can happen multiple times during execution. 
     private File tcpCopierAppFile= null;  // App File in 
       // TCPCopier folder.
       // This is how files gotten by TCPCopier files update the app.
@@ -171,15 +176,15 @@ l    * If the app receives a message indicating
   // Public initialization code.
 	  
 	  public AppInstanceManager(  // Constructor.
-	      String[] theArgStrings,
-	      CommandArgs theCommandArgs,
+	      //// String[] theArgStrings,
+	      CommandArgs startCommandArgs,
 	      Shutdowner theShutdowner,
 	      PortManager thePortManager
 	      )
 	    {
 		    this.theShutdowner= theShutdowner;
-		    this.theArgStrings= theArgStrings;
-        this.theCommandArgs= theCommandArgs;
+		    //// this.theArgStrings= theArgStrings;
+        this.startCommandArgs= startCommandArgs;
 		    this.thePortManager= thePortManager;
 		    }
 
@@ -204,7 +209,8 @@ l    * If the app receives a message indicating
 	      				+ File.separator 
 	      				+ Config.appJarString 
 	      				);
-	  		setInputsV( theArgStrings );  // Setting app arg string[s] as inputs.
+	  		///setInputsV( theArgStrings );  // Setting app arg string[s] as inputs.
+	      setInputsV( startCommandArgs );  // Setting app args as inputs.
 	      logInputsV(); // Log start up inputs.
 	      }
 	
@@ -257,7 +263,7 @@ l    * If the app receives a message indicating
 
 	  public void thingsToDoPeriodicallyV()
 	    /* This method is meant be called once per second by a timer thread
-	      to check for the appearance of a new version of the inputAppFile
+	      to check for the appearance of a new version of the otherAppFile
 	      and to do an update with it if a newer version appears.
 
 	      It works as follows:
@@ -272,10 +278,10 @@ l    * If the app receives a message indicating
 					{
 	  	  		try {
 					      //appLogger.debug("thingsToDoPeriodicallyV().");
-				  	  if ( (--inputAppFileDelaySI < 0) && 
-					  	  		tryUpdateFromNewerFileInstancesB( inputAppFile ) )
+				  	  if ( (--inputCheckFileDelaySI < 0) && 
+					  	  		tryUpdateFromNewerFileInstancesB( otherAppFile ) )
 					  	  	;
-					  	  else if ( (--tcpAppFileDelaySI < 0) && 
+					  	  else if ( (--tcpCheckFileDelaySI < 0) && 
 					  	  		tryUpdateFromNewerFileInstancesB( tcpCopierAppFile ) )
 					  	  	;
 					  	  else
@@ -297,7 +303,7 @@ l    * If the app receives a message indicating
 	     */
 		  {
 			  boolean appShouldExitB= false;
-		    if ( otherAppFile != null )  // inputAppFile has been defined.
+		    if ( otherAppFile != null )  // otherAppFile has been defined.
 		      {
 		        if   // Other app is approved to update app in standard folder.
 		          ( isUpdateValidB( otherAppFile ) )
@@ -384,9 +390,45 @@ l    * If the app receives a message indicating
 	      return resultB;
 	      }
 
-	  private void setInputsV( String[] inArgStrings )
-	    /* This method saves inArgStrings as inputs to this app.
-	      By convention 
+    private void setInputsV( CommandArgs theCommandsArgs )
+      /* This method extracts and saves the inputs this module needs
+        from theCommandsArgs.  By convention 
+        * arg0 is the path to the file instance of another Java app instance,
+          either the running instance that started this app, 
+          or a running instance that will be started by this app,
+          or both. 
+        Other args are not presently used.
+        */
+      {
+        appLogger.debug( "AppInstanceManager setInputsV(..), starting." );
+        inputStrings= theCommandsArgs.args();
+        if ( theCommandsArgs.switchPresent("-otherAppIs"))
+          { 
+            otherAppFile=  // Convert value string File name.
+                new File(theCommandsArgs.switchValue("-otherAppIs"));
+            }
+        else { // Do it the old way.
+          appLogger.debug( "AppInstanceManager setInputsV(..), do it the old way." );
+          ////inputStrings= theCommandsArgs.args();
+          if  // Calculating File name of other app if arg0 is present.
+            (inputStrings.length==1) // There is only one argument.
+            {
+              otherAppFile=  // Convert arg0 to File name.
+                  new File(inputStrings[0]);
+              }
+            else
+            if (inputStrings.length>1)
+              appLogger.error(
+                  "AppInstanceManager setInputsV(..), invalid inputs:"
+                  + argsOnLinesString(theCommandsArgs.args())
+                  );
+          }
+        }
+
+    @SuppressWarnings("unused")  ////
+    private void XsetInputsV( String[] inArgStrings )
+	    /* This method extracts and saves the inputs this module needs
+	      from inArgStrings.  By convention 
 	      * arg0 is the path to the file instance of another Java app instance,
 	        either the running instance that started this app, 
 	        or a running instance that will be started by this app,
@@ -398,7 +440,7 @@ l    * If the app receives a message indicating
 	      if  // Calculating File name of other app if arg0 is present.
 	        (inputStrings.length>0) // There is at least one argument.
 		      {
-			      inputAppFile=  // Convert arg0 to File name.
+			      otherAppFile=  // Convert arg0 to File name.
 			      		new File(inputStrings[0]);
 		      	}
 	      }
@@ -536,7 +578,7 @@ l    * If the app receives a message indicating
 	            announcing their presence, and processes those messages.
 	            Processing includes:
 	            * Parsing the received message and storing the result
-	              into inputAppFile.
+	              into otherAppFile.
 	            * Depending on circumstances:
 		            * firing any associated Listener, or  
 		            * trigger an app shutdown to allow a software update to happen.
@@ -581,10 +623,14 @@ l    * If the app receives a message indicating
 		      appLogger.info(
 		      	"Received the following newer app signal-packet: " + readString
 		        );
-		      setInputsV( new String[] {readString} ) ;
+		      networkCommandArgs= new CommandArgs(new String[] {readString});
+		      //// setInputsV( new String[] {readString} ) ; ///fix Doesn't parse arg[0].
+		        // Assumes only a single string argument.
+		      setInputsV( networkCommandArgs ) ;
+          // Assumes only a single string argument.
 		      logInputsV(); // Report inputs received through socket connection.
 		      if // Exiting or firing event depending on other instance.
-		      	( isUpdateValidB( inputAppFile ) )
+		      	( isUpdateValidB( otherAppFile ) )
 		        { // Report pending update.
 		         	if ( displayUpdateApprovalDialogB( 
 	          			false, // Get approval.
@@ -592,12 +638,12 @@ l    * If the app receives a message indicating
 		        			+ "has been detected.\n"
 		              + "It will be used in a software update because "
 		              + "it is newer than this app instance.",
-		              inputAppFile
+		              otherAppFile
 		        			) ) 
 		         	  {
 		         			// Chain to other app to do copy and run.
 		         				requestForJavaCommandAndExitTrueB( 
-			      					inputAppFile.getAbsolutePath() );
+			      					otherAppFile.getAbsolutePath() );
 			      			theShutdowner.requestAppShutdownV(); // App exit.
 		         			}
 		        	}
@@ -609,7 +655,7 @@ l    * If the app receives a message indicating
 		        			+ "was detected briefly.\n"
 		              + "It was not used in a software update because "
 		              + "it was not newer than this app instance.",
-		              inputAppFile
+		              otherAppFile
 		        			);
 		          fireNewInstance(); // AppInstanceListener action.
 		          }
@@ -700,7 +746,7 @@ l    * If the app receives a message indicating
 	
 	        toReturn: { // The block after which all returns will go.
 		        if // The app command was without arguments.
-		        	( inputAppFile == null ) 
+		        	( otherAppFile == null ) 
 		          { // Handle the arg-less command possibilities.
 		            if (runningAppIsStandardAppB())  // Was from standard folder.
 		              { // Prepare for normal startup.
@@ -807,20 +853,20 @@ l    * If the app receives a message indicating
 	      {
 	    	  boolean appShouldExitB= false;
 	        if   // Arg app approved to update app in standard folder.
-	          ( isUpdateValidB( inputAppFile ) )
+	          ( isUpdateValidB( otherAppFile ) )
 	          {
 	            // User approval or authenticity checks would go here.
 	          	if ( displayUpdateApprovalDialogB( 
 	          			false, // Get approval.
 	                "Another file instance of this app was detected.\n"
 	                + "It will now replace this one because it is newer.",
-	                inputAppFile
+	                otherAppFile
 	          			) )
 		          	{
 			            appLogger.info("An approved updater has been detected.");
 			        	  appShouldExitB=   // Chain to arg app to do the copy.
 				            requestForJavaCommandAndExitTrueB(
-				              inputAppFile.getAbsolutePath() 
+				              otherAppFile.getAbsolutePath() 
 				              );
 		          		}
 	            }
@@ -901,6 +947,7 @@ l    * If the app receives a message indicating
 	          new String [
 	            2  // java -jar
 	            +1 // (.jar file to run)
+	            ////  +1 // -otherAppIs
 	            +1 // (.jar file of this app)
 	            ] ;
 	
@@ -909,11 +956,12 @@ l    * If the app receives a message indicating
 	          File.separator + 
 	          "bin" + 
 	          File.separator + 
-	          "java";
+	          "java.exe";
 	        commandOrArgStrings[1]= "-jar";  // Store java -jar option.
 	        commandOrArgStrings[2]=  // Store path of .jar file to run
 	          argString;
-	        commandOrArgStrings[3]=  // Store path of this app's .jar.
+          commandOrArgStrings[3]= /* ///// "-otherAppIs";   // Store Infogora -otherAppIs option.
+	        commandOrArgStrings[4]= */  /////  // Store path of this app's .jar.
 	          runningAppFile.getAbsolutePath();  
 	
 	        theShutdowner.setCommandV(  // Setting String as command to run later.
@@ -933,17 +981,25 @@ l    * If the app receives a message indicating
 	          		+ Misc.fileDataString( standardAppFile );
 	          logStriing+= "\n  runningAppFile:     " 
 	          		+ Misc.fileDataString( runningAppFile );
-	          logStriing+= "\n  inputAppFile:       " 
-	          		+ Misc.fileDataString( inputAppFile );
+	          logStriing+= "\n  otherAppFile:       " 
+	          		+ Misc.fileDataString( otherAppFile );
 	          logStriing+= "\n  tcpCopierAppFile:   " 
 	          		+ Misc.fileDataString( tcpCopierAppFile );
 	           
-	          logStriing+= "\n  inputStrings: ";
-	          for ( String argString : inputStrings )
-	            logStriing+= "\n    " + argString;
+	          logStriing+= "\n  inputStrings: " + argsOnLinesString(inputStrings);
+	          ////for ( String argString : inputStrings )
+	          ////  logStriing+= "\n    " + argString;
 	          }
 	        
 	        appLogger.info( logStriing );  // Log the completed String.
 	        }
 		    
+	    private String argsOnLinesString( String inputStrings[]) 
+	      { 
+  	      String logStriing= "\n    " + "n   String";
+  	      for (int i=0; i < inputStrings.length; i++) {
+            logStriing+= "\n    " + i + "   " + inputStrings[i];
+  	        }
+	        return logStriing; 
+	        }
 	}

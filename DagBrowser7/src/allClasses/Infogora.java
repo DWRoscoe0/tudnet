@@ -123,7 +123,8 @@ class Infogora  // The root of this app.
 
 			  */
       { // main(..)
-	      appLogger.setBufferedModeV( true ); // Enabling buffered logging.
+	      ////appLogger.setBufferedModeV( true ); // Enabling buffered logging.
+	      appLogger.setBufferedModeV( false ); // Slower disabled buffered logging.
 	      appLogger.info("Infogora.main() beginning.");
 
 	      setDefaultExceptionHandlerV(); // Preparing for exceptions 
@@ -131,7 +132,8 @@ class Infogora  // The root of this app.
 	
         CommandArgs theCommandArgs= new CommandArgs(argStrings);
 	      AppFactory theAppFactory=  // Constructing AppFactory.
-	        new AppFactory(argStrings, theCommandArgs);
+	        //// new AppFactory(argStrings, theCommandArgs);
+	        new AppFactory(theCommandArgs);
 	      App theApp=  // Getting the App from the factory.
       		theAppFactory.getApp();
 	      theApp.runV();  // Running the app until it finishes.

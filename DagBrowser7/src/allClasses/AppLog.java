@@ -141,7 +141,7 @@ public class AppLog extends EpiThread
       private boolean debugEnabledB= true;
       private boolean consoleModeB= false; // When true, logging goes to console
         // as well as log file.  
-      public LogLevel packetLogLevel= INFO; // DEBUG; 
+      public LogLevel packetLogLevel= DEBUG;  // INFO; // DEBUG; 
 
     static // static/class initialization for logger.
       // Done here so all subsection variables are created.
@@ -215,8 +215,8 @@ public class AppLog extends EpiThread
         if (theSessionI == 0)  // If this is session 0...
           logFile.delete();  //...then empty log file by deleting.
         logV( 
-        		"<--< This is an absolute time.  Later ones are relative times."
-        		); 
+        	"<--< This is an absolute time.  Later times are relative times."
+        	); 
         logV( "" ); 
         logV( "" ); 
         logV( 

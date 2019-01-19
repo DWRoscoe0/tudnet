@@ -111,7 +111,12 @@ public class TCPCopier
 	        by contacting TCPServers.
 	        */
 	      {
-	  			appLogger.info("run() client start delay beginning.");
+          if (Config.testAndLogDisabledB( Config.tcpThreadsDisableB,
+              "run() tcp client thread") 
+              )
+            return;
+
+          appLogger.info("run() client start delay beginning.");
 		  		EpiThread.interruptableSleepB(Config.tcpClientRunDelayMsL);
 	  			appLogger.info("run() client start delay done.");
 
@@ -355,6 +360,10 @@ public class TCPCopier
 		      by executing the file update/exchange protocol.
 			    */
 		    {
+          if (Config.testAndLogDisabledB( Config.tcpThreadsDisableB,
+            "run() tcp server thread"))
+            return;
+
 		  		appLogger.info("run() server start delay begins.");
 		    	EpiThread.interruptableSleepB(  // Delay to organize log and to give
 		    			Config.tcpServerRunDelayMsL );  // connection advantage to client.

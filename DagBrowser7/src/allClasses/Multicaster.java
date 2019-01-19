@@ -245,6 +245,12 @@ public class Multicaster
           but for small networks it works fine.
          	*/
         {
+          if (Config.testAndLogDisabledB( 
+              Config.multicasterThreadsDisableB, 
+              "\"run() multicaster") 
+              )
+            return;
+      
 	      	try { // Operations that might produce an IOException.
           	initializeWithIOExceptionV();  // Do non-injection initialization.
   	      	startingMultcastReceiverThreadV();
