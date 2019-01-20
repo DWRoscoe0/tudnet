@@ -151,7 +151,7 @@ public class Shutdowner
 	      		  // App code might have done this already.
 
 	      	  appShutdownDoneLockAndSignal.waitingForInterruptOrNotificationE();
-	      		appLogger.info( "ShutdownHook.run() app shutdown done, ending." );
+	      		appLogger.info( "ShutdownHook.run() ending. ======== APP SHUTDOWN DONE ========");
 	          }
 	
 	      } // ShutdownHook

@@ -125,7 +125,7 @@ class Infogora  // The root of this app.
       { // main(..)
 	      ////appLogger.setBufferedModeV( true ); // Enabling buffered logging.
 	      appLogger.setBufferedModeV( false ); // Slower disabled buffered logging.
-	      appLogger.info("Infogora.main() beginning.");
+	      appLogger.info("Infogora.main() beginning. ======== APP IS STARTING ========");
 
 	      setDefaultExceptionHandlerV(); // Preparing for exceptions 
 	        // before doing anything else.
@@ -138,7 +138,7 @@ class Infogora  // The root of this app.
       		theAppFactory.getApp();
 	      theApp.runV();  // Running the app until it finishes.
 
-	      appLogger.info("Infogora.main() calling exit(0).");
+	      appLogger.info("Infogora.main() calling exit(0). ======== APP IS ENDING ========");
     		appLogger.setBufferedModeV( false ); // Disabling buffered logging.
 	      System.exit(0); // Will kill any remaining unknown threads running??
 	      } // main(..)
