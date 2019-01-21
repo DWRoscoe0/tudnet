@@ -288,7 +288,6 @@ l    * If the app receives a message indicating
 					  	  	updatingB= false; // Neither update is happening.
 					    } finally {
 					    	if (updatingB) { // Log effect of timer input if updating.
-		              appLogger.info("======== NEWER APP INSTANCE FILE DETECTED ========");
 					    		logInputsV();
 					    	  }
 					    	theReentrantLock.unlock();
@@ -384,7 +383,7 @@ l    * If the app receives a message indicating
           if ( otherAppLastModifiedL <= standardAppLastModifiedL )
            	break validation; // File not newer, so exit
           resultB= true;  // Override default false result.
-  	      appLogger.debug("isUpdateValidB() " + resultB + 
+  	      appLogger.debug("isUpdateValidB() ======== NEWER APP FILE DETECTED ========" +  
   	      		"\n    otherAppFile:    " + Misc.fileDataString(otherAppFile) + 
   	      		"\n    standardAppFile: " + Misc.fileDataString(standardAppFile)
   	      		);
@@ -892,7 +891,7 @@ l    * If the app receives a message indicating
 	              try 
 	                {
 	                  appLogger.info( 
-	                    "Copying jar file to standard folder."
+	                    "======== COPYING JAR FILE TO STANDARD FOLDER ======== "
 	                    );
 	                  Files.copy(
 	                      runningAppFile.toPath()
@@ -941,28 +940,19 @@ l    * If the app receives a message indicating
 	        It will execute as the last step in the app shutdown process.
 	        */
 	      {
-	        String [] commandOrArgStrings=  // Allocating space for for all args. 
-	          new String [
-	            2  // java -jar
-	            +1 // (.jar file to run)
-	            +1 // -otherAppIs
-	            +1 // (.jar file of this app)
-	            ] ;
-	
-          int i= 0;
-	        commandOrArgStrings[i++]= // Storing path of java command in array.
-	          System.getProperty("java.home") + 
-	          File.separator + 
-	          "bin" + 
-	          File.separator + 
-	          "java.exe";
-	        commandOrArgStrings[i++]= "-jar";  // Store java -jar option.
-	        commandOrArgStrings[i++]=  // Store path of .jar file to run
-	          argString;
-          commandOrArgStrings[i++]= "-otherAppIs"; // Store Infogora -otherAppIs option.
-	        commandOrArgStrings[i++]= // Store path of this app's .jar.
-	          runningAppFile.getAbsolutePath();  
-	
+	        String [] commandOrArgStrings= new String[] {
+            ( // Path of java command in array.
+              System.getProperty("java.home") + 
+              File.separator + 
+              "bin" + 
+              File.separator + 
+              "java.exe"
+              ),
+            "-jar", // java.exe -jar option.
+            argString, // Path of .jar file to run
+            "-otherAppIs", // Infogora -otherAppIs option.
+            runningAppFile.getAbsolutePath() // Path of this app's file. 
+	          };
 	        theShutdowner.setCommandV(  // Setting String as command to run later.
 	          commandOrArgStrings
 	          );
