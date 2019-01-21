@@ -128,7 +128,6 @@ l    * If the app receives a message indicating
 
     // Constructure injections.
 		private Shutdowner theShutdowner;
-    //// private String[] theArgStrings;  // Array of app start arguments.
     private CommandArgs startCommandArgs; // args from command line.
     private PortManager thePortManager;
 
@@ -176,14 +175,12 @@ l    * If the app receives a message indicating
   // Public initialization code.
 	  
 	  public AppInstanceManager(  // Constructor.
-	      //// String[] theArgStrings,
 	      CommandArgs startCommandArgs,
 	      Shutdowner theShutdowner,
 	      PortManager thePortManager
 	      )
 	    {
 		    this.theShutdowner= theShutdowner;
-		    //// this.theArgStrings= theArgStrings;
         this.startCommandArgs= startCommandArgs;
 		    this.thePortManager= thePortManager;
 		    }
@@ -209,7 +206,6 @@ l    * If the app receives a message indicating
 	      				+ File.separator 
 	      				+ Config.appJarString 
 	      				);
-	  		////setInputsV( theArgStrings );  // Setting app arg string[s] as inputs.
 	      setInputsV( startCommandArgs );  // Setting app args as inputs.
 	      logInputsV(); // Log start up inputs.
 	      }
@@ -252,11 +248,10 @@ l    * If the app receives a message indicating
 	      else // App instance management actions failed.
 		      { // Set appShouldExitB == Cause to cause app exit.
 			  		appLogger.info( 
-			  				"!!!!   This instance staying.  GUI will be started.   !!!!" );
+			  				"======== THIS INSTANCE STAYING, GUI WILL START ========" );
 		        appShouldExitB= false; // Setting return result to prevent app exit.
 		        }
 	
-	      //// logInputsV(); // Report final inputs.  //// No, shouldn't change.
 		  	appLogger.info( "managingInstancesWithExitB() ending." );
 	      return appShouldExitB;  // Return whether app should exit.
 	      }
@@ -408,44 +403,13 @@ l    * If the app receives a message indicating
             otherAppFile=  // Convert value string File name.
                 new File(theCommandsArgs.switchValue("-otherAppIs"));
             }
-        else { // Do it the old way.
-          appLogger.debug( "AppInstanceManager setInputsV(..), do it the old way." );
-          ////inputStrings= theCommandsArgs.args();
-          if  // Calculating File name of other app if arg0 is present.
-            (inputStrings.length==1) // There is only one argument.
-            {
-              otherAppFile=  // Convert arg0 to File name.
-                  new File(inputStrings[0]);
-              }
-            else
-            if (inputStrings.length>1)
-              appLogger.error(
-                  "AppInstanceManager setInputsV(..), invalid inputs:"
-                  + argsOnLinesString(theCommandsArgs.args())
-                  );
+        else if (inputStrings.length == 0) ; // Nothing is okay.
+        else { // Anything else is an error.
+          appLogger.error( "AppInstanceManager setInputsV(..), illegal input.  \n  "
+              + inputStrings );
           }
         }
 
-    @SuppressWarnings("unused")  ////
-    private void XsetInputsV( String[] inArgStrings )
-	    /* This method extracts and saves the inputs this module needs
-	      from inArgStrings.  By convention 
-	      * arg0 is the path to the file instance of another Java app instance,
-	        either the running instance that started this app, 
-	        or a running instance that will be started by this app,
-	        or both. 
-	      Other args are not presently used.
-	      */
-	    {
-	      inputStrings= inArgStrings;
-	      if  // Calculating File name of other app if arg0 is present.
-	        (inputStrings.length>0) // There is at least one argument.
-		      {
-			      otherAppFile=  // Convert arg0 to File name.
-			      		new File(inputStrings[0]);
-		      	}
-	      }
-	
 	  // Code that manages running instances.
 	
 	    private AppInstanceListener theAppInstanceListener= // Single listener ...
@@ -526,16 +490,16 @@ l    * If the app receives a message indicating
 	        } catch (IOException e) { // This error means port # already in use.
 	          appLogger.info( "TCP Port "+getInstancePortI()+" is listening." );
 			      appShouldExitB=  // Set exit to the result of...
-	            connectAndSendPathInPacketB( );  // ...sending packet to port.
+	            connectAndSendToAppHoldingSocketB( );  // ...sending to it.
 	        }
 	      return appShouldExitB;  // Return whether or not app should exit.
 	      }
 	
-	    private boolean connectAndSendPathInPacketB( )
+	    private boolean connectAndSendToAppHoldingSocketB( )
 	      /* This tryARunningInstanceActionB(..) sub-method 
-	        tries to send this app's path
-	        to an existing older running app instance via the socket
-	        to which that app is listening.
+	        tries to inform the app listening on the busy socket
+	        that this app exists and is available 
+	        as a source for possible updates. 
 	        It returns true if it succeeds and to indicate that
 	          this app should exit to let the other app handle things.
 	        It return false to indicate a sending error,
@@ -543,24 +507,25 @@ l    * If the app receives a message indicating
 	        */
 	      {
 	        boolean successB= false; // Assume failure.
-	        String outputString= runningAppFile.getAbsolutePath();
+	        String outputString= // Make input string to be used in packet. 
+	            "-otherAppIs " + // Infogora -otherAppIs option.
+	            runningAppFile.getAbsolutePath(); // Path of this app's file. 
 	        try {
 	            Socket clientSocket =  // Create socket for send.
 	              new Socket(InetAddress.getLoopbackAddress(), getInstancePortI());
 	            OutputStream out = clientSocket.getOutputStream();  // Get its stream.
-	            //// appLogger.info("Sending: "+outputString);
-	            out.write(  // Send path to other app via stream.
+	            out.write(  // Send output string to other app via stream.
 	              outputString.getBytes());
 	            out.close();  // Close stream.
 	            clientSocket.close();  // Close socket.
 	            appLogger.info(
 	              "======== SUCCESS SENDING TCP INSTANCE-PACKET ======== :\n  "
 	              +outputString );
-	            successB= true;  // Packet sent, meaning success and exit.
+	            successB= true;  // Packet sent, meaning success and should exit.
 	          } catch (IOException e1) {
 	            appLogger.error(
-	                "======== FAILED SENDING INSTANCE-PACKET ======== :\n  " 
-	                + outputString+ "\n  ", e1);
+                "======== FAILED SENDING INSTANCE-PACKET ======== :\n  " 
+                + outputString+ "\n  ", e1);
 	          }
           return successB;
 	        }
@@ -965,28 +930,30 @@ l    * If the app receives a message indicating
 	        file arguments, logged with their time-stamps.
 	        */
 	      {
-	        String logStriing= "AppInstanceManager.logInputsV()";
+	        String logString= "AppInstanceManager.logInputsV()";
 	        { // Add parts to the string to be logged.
-            logStriing+= "\n  raw inputs:"; 
-            logStriing+= argsOnLinesString(inputStrings);
-            ////for ( String argString : inputStrings )
-            ////  logStriing+= "\n    " + argString;
+            logString+= "\n  raw inputs:"; 
+            logString+= argsOnLinesString(inputStrings);
 
-            logStriing+= "\n  parsed inputs: (variable-name: time-stamp, path-name)";
-	          logStriing+= "\n    standardAppFile:    " 
+            logString+= "\n  parsed inputs: (variable-name: time-stamp, path-name)";
+	          logString+= "\n    standardAppFile:    " 
 	          		+ Misc.fileDataString( standardAppFile );
-	          logStriing+= "\n    runningAppFile:     " 
+	          logString+= "\n    runningAppFile:     " 
 	          		+ Misc.fileDataString( runningAppFile );
-	          logStriing+= "\n    otherAppFile:       " 
+	          logString+= "\n    otherAppFile:       " 
 	          		+ Misc.fileDataString( otherAppFile );
-	          logStriing+= "\n    tcpCopierAppFile:   " 
+	          logString+= "\n    tcpCopierAppFile:   " 
 	          		+ Misc.fileDataString( tcpCopierAppFile );
 	          }
 	        
-	        appLogger.info( logStriing );  // Log the completed String.
+	        appLogger.info( logString );  // Log the completed String.
 	        }
 		    
-	    private String argsOnLinesString( String inputStrings[]) 
+	    private String argsOnLinesString( String inputStrings[])
+	      /* This method returns a String which is the concatenation of lines,
+	        each line consisting of 4 spaces, the element index, and the string.
+	        The first line is a heading line. 
+	        */
 	      { 
   	      String logStriing= "\n    " + "n   String";
   	      for (int i=0; i < inputStrings.length; i++) {

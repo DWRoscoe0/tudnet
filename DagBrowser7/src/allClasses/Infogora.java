@@ -132,7 +132,6 @@ class Infogora  // The root of this app.
 	
         CommandArgs theCommandArgs= new CommandArgs(argStrings);
 	      AppFactory theAppFactory=  // Constructing AppFactory.
-	        //// new AppFactory(argStrings, theCommandArgs);
 	        new AppFactory(theCommandArgs);
 	      App theApp=  // Getting the App from the factory.
       		theAppFactory.getApp();

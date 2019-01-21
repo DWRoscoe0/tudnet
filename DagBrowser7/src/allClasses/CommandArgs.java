@@ -4,9 +4,7 @@ package allClasses; // original package was com.jenkov.cliargs;
 import static allClasses.Globals.appLogger;
 
 import java.lang.reflect.Field;
-//// import java.util.ArrayList;
 import java.util.HashMap;
-//// import java.util.List;
 import java.util.TreeSet;
 
 
@@ -34,8 +32,6 @@ public class CommandArgs {
 
   private HashMap<String, Integer> switchIndexes = new HashMap<String, Integer>();
   private TreeSet<Integer>         takenIndexes  = new TreeSet<Integer>();
-
-  //// private List<String> targets = new ArrayList<String>();
 
   public CommandArgs(String[] args){
       parse(args);
@@ -141,7 +137,7 @@ public class CommandArgs {
 
           Field[] fields = pojoClass.getFields();
           for(Field field : fields) {
-              Class<?> fieldType = field.getType(); //// added <?> to Class.
+              Class<?> fieldType = field.getType(); /// added <?> to Class.
               String fieldName = "-" + field.getName().replace('_', '-');
 
               if(fieldType.equals(Boolean.class) || fieldType.equals(boolean.class)){
