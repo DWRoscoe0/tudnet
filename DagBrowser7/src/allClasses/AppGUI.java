@@ -121,7 +121,11 @@ public class AppGUI
 
         } // class InstanceCreationRunnable
 
-    public void runV() // This method does the main AppGUI run phase.
+    public void runV() 
+      /* This method does the main AppGUI run phase.
+        It does not return until a Shutdown is requested
+        and it has shutdown the things for which it is responsible.
+        */
       {
     		appLogger.info("AppGUI.run() begins.");
         theDataTreeModel.initializeV( theInitialRootDataNode );
@@ -132,15 +136,13 @@ public class AppGUI
         theCPUMonitorEpiThread.startV();
 
         // Now the app is running and interacting with the user.
-
-        theShutdowner.waitForAppShutdownUnderwayV();
+        theShutdowner.waitForAppShutdownRequestedV(); // Wait for shutdown request.
 
         // Now the app is shutting down.
-        
-        theDataTreeModel.logListenersV(); // [for debugging]
-        // theCPUMonitorEpiThread.stopAndJoinV( ); ?? 
-        theConnectionManagerEpiThread.stopAndJoinV( ); 
-          // Stopping ConnectionManager thread, ending all connections.
+        theDataTreeModel.logListenersV(); ///dbg
+        ///fix? theCPUMonitorEpiThread.stopAndJoinV( ); 
+        theConnectionManagerEpiThread.stopAndJoinV( ); // Terminate ConnectionManager 
+          // thread, all connections, and all related threads.
     		appLogger.info("AppGUI.run() ends.");
         }
 

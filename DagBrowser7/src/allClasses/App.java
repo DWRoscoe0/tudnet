@@ -47,11 +47,11 @@ public class App { // The App, especially pre-GUI stuff.
 			theShutdowner.initializeV();
 			theAppInstanceManager.initializeV();
 
-			doAppStuff();
+			doAppStuff(); // This runs until an app shutdown is underway.
 
   	  thePersistent.finalizeV();  // Write any new or changed app properties.
   		//appLogger.info("App calling Shutdowner.finishV().");
-      theShutdowner.finishV();  // Doing final app shutdown jobs.
+      theShutdowner.finishAppShutdownV();  // Doing final app shutdown jobs.
 
   		appLogger.info("App exiting.");
       
@@ -81,10 +81,10 @@ public class App { // The App, especially pre-GUI stuff.
 
   private void doAppStuff()
     /* This method checks with theAppInstanceManager.
-      If theAppInstanceManager says it's okay then
-      this method starts the app GUI and does user and network interactions.
-      Otherwise it exits immediately.
-     */
+      If theAppInstanceManager wants to terminate the app then it returns immediately.
+      Otherwise it starts the app GUI and does user and network interactions
+      until a shutdown is requested, then it returns.
+      */
   	{
 		  if ( ! theAppInstanceManager.managingInstancesWithExitB( ) ) 
 		

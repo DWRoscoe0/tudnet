@@ -534,7 +534,7 @@ l    * If the app receives a message indicating
 	      /* This class contains the run() method which waits for
 	        messages from other running app instances and processes them.  */
 	      {
-	        public void run() 
+	        public void run()
 	          /* This method, for as long as the instanceServerSocket is open,
 	            waits for messages from other running app instances 
 	            announcing their presence, and processes those messages.
@@ -612,7 +612,7 @@ l    * If the app receives a message indicating
 		        else
 		        {
 		        	displayUpdateApprovalDialogB( 
-	          			true, // Just inform.  Don't request approval.
+	          			true, // Just inform user.  Don't request approval.
 		        			"Another running instance of this app "
 		        			+ "was detected briefly.\n"
 		              + "It was not used in a software update because "
@@ -817,8 +817,8 @@ l    * If the app receives a message indicating
 	        if   // Arg app approved to update app in standard folder.
 	          ( isUpdateValidB( otherAppFile ) )
 	          {
-	            // User approval or authenticity checks would go here.
-	          	if ( displayUpdateApprovalDialogB( 
+	            // User approval and authenticity checks would go here.
+	          	if ( displayUpdateApprovalDialogB( // Inform user but don't get approval. 
 	          			false, // Get approval.
 	                "Another file instance of this app was detected.\n"
 	                + "It will now replace this one because it is newer.",
@@ -892,11 +892,11 @@ l    * If the app receives a message indicating
 	        to indicate that the app should exit.
 	        */
 	      {
-	        setJavaCommandForExitV( argString );  // Setting up command.
-	
-	        theShutdowner.requestAppShutdownV(); // Triggering controlled exit.
-	        
-	        return true;  // Returning to simplify caller code.
+	        setJavaCommandForExitV( argString );  // Setting up command to execute at exit.
+
+	        theShutdowner.requestAppShutdownV(); // Triggering app shutdown.
+
+	        return true;  // Returning true to simplify caller code.
 	        }
 	    
 	    private void setJavaCommandForExitV( String argString )
