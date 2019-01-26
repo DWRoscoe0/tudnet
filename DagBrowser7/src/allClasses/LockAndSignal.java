@@ -21,9 +21,10 @@ public class LockAndSignal  // Combination lock and signal class.
     Each consumer thread needs only one instance of this class
     to manage all its inputs regardless of the number of input paths, ports,
     or number of producer threads that are providing those inputs.  
-    In fact it makes no sense to have more than one LockAndSignal instance.
+    In fact it makes no sense to have more than one LockAndSignal instance
+    per consumer thread.
 
-    The Input type, listed in preferred decreasing priority order, are:
+    The Input types, listed in preferred decreasing priority order, are:
 
       INTERRUPTION: The thread's isInterrupted() status was set true.
         This is commonly used to request thread termination.
@@ -57,7 +58,7 @@ public class LockAndSignal  // Combination lock and signal class.
 
     Several priority orderings of input types are possible.
     This class's wait and test methods do not provide all orderings,
-    but it does support several useful ones.
+    but they do provide several useful ones.
     It also provides building block methods from which
     new methods which use any desired priority order can be built.
 
@@ -114,7 +115,7 @@ public class LockAndSignal  // Combination lock and signal class.
     * Input testingRemainingDelayE( long delayMsL )
     * Input testingForNotificationE()
 
-    ///? It might make sense to add a LockAndSignal instance
+    ///enh It might make sense to add a LockAndSignal instance
     to the EpiThread class??
 
     This class was originally created because 
@@ -148,7 +149,7 @@ public class LockAndSignal  // Combination lock and signal class.
         theLockAndSignal: ref:theLockAndSignal
           // Used by input wait loop.  
 
-    ///? It might be worthwhile to use an object reference, or a null,
+    ///enh It might be worthwhile to use an object reference, or a null,
     instead of a boolean, to be the signal.
     Additional versions of the doWait() and notifyingV() methods
     could pass these values.  This would allow passing of
@@ -169,9 +170,10 @@ public class LockAndSignal  // Combination lock and signal class.
       SUBNOTIFICATION // Special value for use by caller.
       }
       
-    private boolean signalB= false;  // NOTIFICATION flag.
+    private boolean signalB= false;  // NOTIFICATION status flag.
       // Set to true when any producer thread notifies of a new input.
       // Set to false when the consumer thread receives notification.
+        // This can come from either a Test method or a Wait method.
 
 
 	  /* Consumer thread methods that wait for various types of Input:
@@ -186,7 +188,7 @@ public class LockAndSignal  // Combination lock and signal class.
       is already available when the method is called.
 
 	    Each wait method returns a value indicating the type of the Input
-	    that it discovered available.  
+	    that it discovered to be available.  
       If inputs occur one at a time, and the consumer thread 
       can process each input before the next input arrives,
       then it doesn't matter the order in which 
@@ -203,17 +205,17 @@ public class LockAndSignal  // Combination lock and signal class.
 	        thread termination has been requested.
 	        Termination is rare but is usually considered important.  
 	      * Input.TIME, which means that time has satisfied 
-	        a condition of interest and something needs to be done now.
+	        a condition of interest and something should be done now.
 	      * Input.NOTIFICATION, which means that one or more normal data inputs
-	        has become available and should eventually be processed. 
+	        has become available and should be processed. 
 	        These generally have the lowest priority. 
-			
-      If a different priority ordering is desired than the method provide,
+
+      If a different priority ordering is desired than a method provide,
       there might be another one that uses a different order.
       If not then one of those methods can be preceded by 
       the test or tests that should be first.
       For an example see Streamcaster.testWaitInIntervalE(..).
-      There are also building-block methods from which new new wait methods
+      There are also building-block methods from which new wait methods
       can be constructed.
 
 	    When control is returned from any of the wait or test methods,

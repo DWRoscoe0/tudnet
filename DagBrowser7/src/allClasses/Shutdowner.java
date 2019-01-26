@@ -121,14 +121,15 @@ public class Shutdowner
   {
 
     private boolean shutdownRequestedB= false;
-      ///org This might be replaced and appShutdownRequestedLockAndSignal used instead.
-        // See LockAndSignal.testingForNotificationE().
-
+      // This is needed to detect re-entry because testing and waiting 
+      // clear the appShutdownRequestedLockAndSignal notification flag.
+    
 	  private LockAndSignal appShutdownRequestedLockAndSignal=
 	  		new LockAndSignal(); // This is signaled when a shutdown is requested.
 	      // It is signaled by Shutdowner.requestAppShutdownV()
 	      // It is waited-for by Shutdowner.waitForAppShutdownUnderwayV()
-	      // A shutdown can be triggered by either the JVM shutdown hook or an app request.
+	      // A shutdown can be triggered by either the JVM shutdown hook or 
+	      // an app request.
 	  
 	  private LockAndSignal appShutdownDoneLockAndSignal= 
 	  		new LockAndSignal(); // This is signaled when shutdown actions are complete.
@@ -172,7 +173,8 @@ public class Shutdowner
 	
 	      } // ShutdownHook
 
-    public boolean isShuttingDownB()
+    @SuppressWarnings("unused") ////
+    private boolean isShuttingDownB() // Not referenced anywhere.
       /* This method returns a boolean indication of whether
         the app's shutdown process has begun.
         This method is used to control conditional code.
@@ -191,15 +193,15 @@ public class Shutdowner
 	      */
 	    { 
 	  	  if ( shutdownRequestedB )
-		  		appLogger.info(  // Log re-entry.
+	      	appLogger.info(  // Log re-entry.
 		  				"Shutdowner.requestAppShutdownV(), called again." 
 		  				);
-		  	  else
-		  	  {
-			  		shutdownRequestedB= true; // Recording that shutdown is underway.
-			  		appLogger.info( "Shutdowner.requestAppShutdownV() called." ); // Log it.
-			  	  appShutdownRequestedLockAndSignal.notifyingV();
-		  	    }
+	  	  else
+  	  	  {
+            shutdownRequestedB= true; // Recording that shutdown is underway.
+  		  		appLogger.info( "Shutdowner.requestAppShutdownV() called." ); // Log it.
+  		  	  appShutdownRequestedLockAndSignal.notifyingV();
+  	  	    }
 	  	  }
 
     public void waitForAppShutdownRequestedV()
@@ -208,11 +210,11 @@ public class Shutdowner
         * this thread's isInterrupted() is true. 
        */
       { 
-        //appLogger.info( "Shutdowner.waitForAppShutdownStartedV()." );
         appShutdownRequestedLockAndSignal.waitingForInterruptOrNotificationE(); 
+        appLogger.info( "Shutdowner.waitForAppShutdownRequestedV() done." );
         }
 
-    private boolean finishVCalledB= false; // For detecting reentry.
+    private boolean finishVCalledB= false; // For detecting re-entry.
 
     public void finishAppShutdownV()
       /* This method performs the last of an app's shutdown operations,
