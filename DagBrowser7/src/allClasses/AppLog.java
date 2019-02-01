@@ -2,7 +2,6 @@ package allClasses;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -157,7 +156,7 @@ public class AppLog extends EpiThread
     public void run()
       /* This method closes the file periodically so that
         new output is visible to developers for debugging and testing.
-        ///fix this is a kludge.
+        ///fix This is a kludge.
        	*/
     	{
     	  while (true) {
@@ -238,49 +237,25 @@ public class AppLog extends EpiThread
         then the session number will be 0.
         Otherwise the session number will be 
         the number stored in the session file incremented by one.
-        
-        ?? This method is messy and long.  Fix.
         */
       { 
     	  if (Config.clearLogFileB)
     	  	logFile.delete(); // DO THIS TO CLEAR LOG AND RESET SESSION COUNT!
-        
+
+    	  String sessionNameString= "session";
         File sessionFile=  // Identify session file name.
-        		Config.makeRelativeToAppFolderFile( "session.txt" );
+        		Config.makeRelativeToAppFolderFile( sessionNameString+".txt" );
         if ( ! logFile.exists() )  // If log file doesn't exist...
           sessionFile.delete();  // ...delete session file also.
         int sessionI= 0;
-        String sessionString = "0";
+        String sessionString = Confingleton.getValueString(sessionNameString);
 
-        if ( ! sessionFile.exists() )  // If session file doesn't exist...
-          {
-            sessionI= 0;  // Start at session # 0.
-            }
+        if ( sessionString == null )  // If session file doesn't exist...
+          sessionI= 0;  // Start at session # 0.
           else
-          try // Get session number from file and increment it.
-            {
-              FileReader sessionFileReader = 
-                new FileReader(sessionFile);
-              char[] chars = new char[(int) sessionFile.length()];
-              sessionFileReader.read(chars);
-              sessionString = new String(chars);
-              sessionFileReader.close();
-              sessionI= Integer.parseInt(sessionString)+1;
-            } catch (IOException e) {
-                e.printStackTrace();
-                }
-        FileWriter theFileWriter = null;
+          sessionI= Integer.parseInt(sessionString)+1;
         sessionString= sessionI + "";  // Convert int to string.
-        try { // Write [new] session # string to session file.
-            theFileWriter = new FileWriter(sessionFile);
-            theFileWriter.write(sessionString);
-        }catch (IOException e) {
-            System.err.println(e);
-        }finally{
-            if(theFileWriter != null){
-                theFileWriter.close();
-            }
-        }
+        Confingleton.putValueV(sessionNameString, sessionString);
         return sessionI;
         }
 
