@@ -11,8 +11,6 @@ public class Confingleton
     The name is the name of the file minus the ".txt" extension.
     It is assumed to be in the app's standard directory
     which is known to the Config class.
-    
-    ///enh Use try-with clauses to simplify closing problems.
     */
   {
 
@@ -23,7 +21,6 @@ public class Confingleton
 
     
     public static String getValueString( String keyNameString )
-        throws IOException
       /* This method returns the string stored in the file.
         If the file doesn't exist, or there are any read errors,
         then null is returned.
@@ -46,23 +43,18 @@ public class Confingleton
         }
     
     public static void putValueV( String keyNameString, String valueString )
-        throws IOException
       /* This method stores valueString stored in the file.
 
         ///enh Make this an atomic operation. 
         */
       {
         File theFile= makeFile(keyNameString);
-        FileWriter theFileWriter = null;
-        try { // Write [new] value string to file.
-              theFileWriter = new FileWriter(theFile);
+        
+        try ( FileWriter theFileWriter = new FileWriter(theFile ) ) 
+          { // Write [new] value string to file.
               theFileWriter.write(valueString);
           } catch (IOException e) {
               System.err.println(e);
-          } finally {
-              if(theFileWriter != null){
-                  theFileWriter.close();
-                }
           }
         }
   
