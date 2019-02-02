@@ -315,7 +315,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 		  LockAndSignal multicasterLockAndSignal= new LockAndSignal();  
 		  NetcasterQueue multicastReceiverToMulticasterNetcasterQueue= 
 		  		new NetcasterQueue(multicasterLockAndSignal, Config.QUEUE_SIZE);
-			int multicastPortI= thePortManager.getDiscoveryPortI();
+			int multicastPortI= thePortManager.getMulticastPortI();
 			IPAndPort theIPAndPort= AppGUIFactory.makeIPAndPort(
   				multicastInetAddress, multicastPortI 
   				);

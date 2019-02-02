@@ -247,13 +247,11 @@ public class AppLog extends EpiThread
         		Config.makeRelativeToAppFolderFile( sessionNameString+".txt" );
         if ( ! logFile.exists() )  // If log file doesn't exist...
           sessionFile.delete();  // ...delete session file also.
-        int sessionI= 0;
         String sessionString = Confingleton.getValueString(sessionNameString);
-
-        if ( sessionString == null )  // If session file doesn't exist...
-          sessionI= 0;  // Start at session # 0.
-          else
-          sessionI= Integer.parseInt(sessionString)+1;
+        int sessionI= 0; // Default if Confingleton unreadable or unparseable.
+        if ( sessionString != null )  // If session file exists...
+          try { sessionI= Integer.parseInt(sessionString)+1; }
+            catch ( NumberFormatException e ) { /* Ignore, using default. */ }
         sessionString= sessionI + "";  // Convert int to string.
         Confingleton.putValueV(sessionNameString, sessionString);
         return sessionI;

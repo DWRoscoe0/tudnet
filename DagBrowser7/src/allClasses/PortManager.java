@@ -6,8 +6,11 @@ public class PortManager {
 
   /* This class manages network port numbers used by the app.
     It provides port numbers when requested.
-    It avoids allowing opening the same port for multiple simultaneous uses,
-    such as Multicast and Unicast uses
+    It tries to avoid allowing the opening of the same port for 
+    multiple simultaneous uses, such as Multicast and Unicast uses.
+    This might not be practical in the end, and
+    conflicts between ports will need to be detected by
+    the modules that need the ports.
 
     ///enh? Figure out how to makes this deal with multiple NetworkInterface-s.
       Should it have a different port on each interface?
@@ -29,19 +32,44 @@ public class PortManager {
 	  	this.thePersistent= thePersistent;
 		  }
 
-  public int getDiscoveryPortI()
-    /* Get port to be used for peer discoveries.  
-      This same port will be used as:
-      * TCP for local peer app discovery.
-        * server local port, for incoming path strings from updater app.
-        * client remote port, for sending paths of local updater app.
-      * UDP multicast for remote peer app discovery using
-        DISCOVERY query packets and ALIVE response packets.
-        The server port is this discovery port.
-        The client port is the local port.
+  public int getMulticastPortI()
+    /* Get port to be used for peer discovery.  
+      This port will be used for
+      UDP multicast for remote peer app discovery using
+      DISCOVERY query packets and ALIVE response packets.
+      The server port is this discovery port.
+      The client port is the local port.
 s     */
     {
       return 44444;
+      }
+
+  private int instancePortI= -1; // Less than 0 means undefined.
+  
+  public int getInstancePortI()
+    /* Get port to be used for local instance management.  
+      This port will be used for TCP local app instance discovery
+      and communication:
+      * for checking for server socket port binding.
+      * for server local port, for incoming path strings from updater app.
+      * for client remote port, for sending paths of local updater app.
+s     */
+    {
+      if ( instancePortI < 0 ) // Undefined.
+        { // Define it.
+          String instancePortNameString= "instancePort";
+          String portString= 
+              Confingleton.getValueString(instancePortNameString);
+          instancePortI= 44444; // Default port if Confingleton unreadable.
+          if ( portString != null )  // If port file exists...
+            try { instancePortI= Integer.parseInt(portString); } // .. parse it.
+              catch ( NumberFormatException e ) { /* Ignore, using default. */ }
+          portString= instancePortI + "";  // Convert int to string.
+          Confingleton.putValueV(instancePortNameString, portString);
+
+          appLogger.debug("PortManager.getInstancePortI() port="+instancePortI);
+          }
+      return instancePortI;
       }
   
   public int getNormalPortI()

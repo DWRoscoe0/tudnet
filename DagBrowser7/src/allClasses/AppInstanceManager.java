@@ -339,9 +339,13 @@ l    * If the app receives a message indicating
         return Misc.dateString( runningAppFile );
         }
 
-    private final int getInstancePortI() 
-    	// Returns port to be used for local app instance discovery.
-      { return thePortManager.getDiscoveryPortI(); }
+    private final int getInstancePortI()
+    	/* Returns port to be used for local app instance discovery.
+        ///enh Write file only if its contents must change.
+          Use the code from thePortManager.getInstancePortI().
+        ///enh Generate random port if none defined.
+        */
+      { return thePortManager.getInstancePortI(); }
     
     public void setAppInstanceListener(AppInstanceListener listener) 
       {

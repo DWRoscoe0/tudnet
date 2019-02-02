@@ -423,7 +423,7 @@ public class ConnectionManager
 	  {
 	    try { // Creating a new unconnected DatagramSocket and using it.
 	    	theMulticastSocket= theAppGUIFactory.makeMulticastSocket(
-		      thePortManager.getDiscoveryPortI()  // ...bound to Discovery port.
+		      thePortManager.getMulticastPortI()  // ...bound to Discovery port.
 		      );
 	      }
 	    catch ( IOException e ) { // Handling SocketException.
