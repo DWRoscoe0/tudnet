@@ -125,12 +125,14 @@ public class AppLog extends EpiThread
     	  // or set this variable and call methods which use it.
     	  // Calls to those methods must use this level or less for log output.
     	
+      private boolean initializationStartedB= false;
     	private volatile boolean thereHasBeenOutputB= false;
     	
     	private File logFile;  // Name of log file.
       private int theSessionI= 0;  // App session counter.
       private long lastMillisL; // Last time measured.
       private PrintWriter thePrintWriter = null; // non-null means file open.
+      private String processIDString= "";
 
     /* Debug Flags.  These are added or removed as needed during debugging
       when calls to logging methods should be called in 
@@ -142,20 +144,13 @@ public class AppLog extends EpiThread
         // as well as log file.  
       public LogLevel packetLogLevel= DEBUG;  // INFO; // DEBUG; 
 
-    static // static/class initialization for logger.
-      // Done here so all subsection variables are created.
-      {
-        try 
-          { 
-	        	AppLog.getAppLog().logFileInitializeV(); 
-	          }
-        catch(IOException e)
-          { System.err.println("\nIn AppLog initialization:"+e); }
-        }
+    public void setIDProcessV( String processIDString )
+    { this.processIDString= processIDString; }
 
     public void run()
       /* This method closes the file periodically so that
         new output is visible to developers for debugging and testing.
+        Initially it will do nothing because thePrintWriter == null. 
         ///fix This is a kludge.
        	*/
     	{
@@ -163,15 +158,15 @@ public class AppLog extends EpiThread
   	  	  if ( thePrintWriter != null ) // Temporarily close file if open
   	  	  	if (thereHasBeenOutputB) // and there has been new output.
 	  		    	synchronized(this) { // Act only when it's safe. 
-    	  	  		closeFileV(); // This will cause flush.
-		  		    	openFileV(); // Prepare for next output.
+    	  	  		closeFileIfOpenV(); // This will cause flush.
+		  		    	openFileIfClosedV(); // Prepare for next output.
 				    	  }
   	  	  try {
   	  	    	Thread.sleep(5000); // 5 second pause.
 	    	  	} catch(InterruptedException ex) {
 	    	  	  Thread.currentThread().interrupt();
 	    	  	} finally {
-	    	  		closeFileV(); ///fix Should this be here?
+	    	  		closeFileIfOpenV(); ///fix Should this be here?
 	    	  	}
     	  	}
     		}
@@ -195,41 +190,64 @@ public class AppLog extends EpiThread
         File-closed means any buffer has been flushed.
     	  */
 	    {
+        initializeIfNeededV();
 	    	if ( desiredBufferedModeB )
-		    	{ openFileV();
+		    	{ openFileIfClosedV();
 		    	  info("AppLog.setBufferedModeV(..), enabled.");
 		    		}
 		    	else
 		      { info("AppLog.setBufferedModeV(..), disabled.");
-		    	  closeFileV();
+		    	  closeFileIfOpenV();
 		      	}
 	    	}
     
-    private void logFileInitializeV()
-      throws IOException  // Do-nothing put-off.
+    private synchronized void initializeIfNeededV()
+      /* This method does initialization, 
+        but only if it hasn't been done yet.
+        */
+      { 
+        if (! initializationStartedB) 
+          { 
+            initializationStartedB= true; // Prevent re-initialization. 
+            initializeV(); // Do actual initialization. 
+            }
+        }
+    
+    private void initializeV()
+      /* This method does initialization, unconditionally.
+        It should be called only once.
+        */
       {
         logFile=  // Identify log file name.
         		Config.makeRelativeToAppFolderFile( "log.txt" );
         theSessionI= getSessionI();  // Get app session number.
         if (theSessionI == 0)  // If this is session 0...
           logFile.delete();  //...then empty log file by deleting.
-        logV( 
-        	"<--< This is an absolute time.  Later times are relative times."
-        	); 
-        logV( "" ); 
-        logV( "" ); 
-        logV( 
-        		"======== LOG FILE SESSION #"
-        		+ theSessionI
-        		+ " at " + Misc.dateString(lastMillisL)
-        		+ " BEGINS ========"
-        		);
-        logV( "" ); 
-        logV( "" ); 
+        logHeaderLinesV(); // Append the session header lines.
         }
-  
+
+    private void logHeaderLinesV()
+      /* This initialization helper method outputs header lines 
+        at the beginning of a new log file session.
+        It is the last part of the initialization.
+        */
+      {
+        logV( 
+          "<--< This is an absolute time.  Later times are relative times."
+          ); 
+        logV( "" ); // Blank line.
+        logV( "" ); // Blank line.
+        logV( 
+            "======== LOG FILE SESSION #"
+            + theSessionI
+            + " at " + Misc.dateString(lastMillisL)
+            + " BEGINS ========"
+            );
+        logV( "" ); // Blank line.
+        logV( "" ); // Blank line.
+        }
+
     private int getSessionI()
-      throws IOException  // Do-nothing put-off.
       /* This method calculates what the app session number should be,
         records it in the file session.txt,
         and returns that session number.
@@ -261,7 +279,7 @@ public class AppLog extends EpiThread
     	{ maxLogLevel= limitLogLevel; }
 
 
-    // Actual log method start here.
+    // Actual log methods start here.
 
     public void trace(String inString)
       /* This method is for tracing.  It writes only inString.
@@ -448,11 +466,12 @@ public class AppLog extends EpiThread
         It can process all possible parameters.
         All the above logging methods in the family eventually call this one.
 
-        This method create one log entry and appends it to the log file.
+        This method creates one log entry and appends it to the log file.
         It could be multiple lines if any of the parameters
         evaluate to Strings which contain newlines.
         The log entry always begins with
         * the app session number,
+        * processIDString, if any,
         * milliseconds since the previous entry,
         * theLogLevel if not null, 
         * the thread name,
@@ -461,15 +480,17 @@ public class AppLog extends EpiThread
         This method also sends a copy of the log entry
         to the console if consoleB is true.
 
-        ///enh Replace String appends by StringBuilder appends, for speed?
+        ///opt Replace String appends by StringBuilder appends, for speed?
         ///enh Add stackTraceB which displays stack,
           on console and in log, if true.
         */
-      { 
+      {
+        initializeIfNeededV(); 
     		long nowMillisL= System.currentTimeMillis(); // Saving present time.
 
         String aString= ""; // Initialize String to empty, then append to it...
         aString+= theSessionI;  //...the session number,...
+        aString+= processIDString;
         aString+= ":";  //...and a separator.
         aString+= String.format(  // ...time since last output,...
         		"%1$5d", nowMillisL - lastMillisL
@@ -542,12 +563,12 @@ public class AppLog extends EpiThread
           concurrent apps can access the log file.
         */
       {
-	    	openFileV();
+	    	openFileIfClosedV();
         writeToOpenFileV( inString ); // Appending string to output.
-      	closeFileV();
+      	closeFileIfOpenV();
         }
 
-    private void openFileV()
+    private void openFileIfClosedV()
       /* This method opens thePrintWriter and 
         everything else associated with the log file.  
         */
@@ -569,7 +590,7 @@ public class AppLog extends EpiThread
         }
       }
 
-    private void closeFileV()
+    private void closeFileIfOpenV()
       /* This method closes thePrintWriter if it's open, 
         which closes everything associated with the log file.  
         */
