@@ -61,7 +61,7 @@ public class Misc
           to verify that code is being executed.  
           */
         { 
-          appLogger.appendV( "!" );  // Debug. 
+          appLogger.appendToFileV( "!" );  // Debug. 
           }
       
       private static boolean dbgEventDoneB= false;  // Set true to output Debug.txt.

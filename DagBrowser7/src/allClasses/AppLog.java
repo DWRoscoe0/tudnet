@@ -132,6 +132,8 @@ public class AppLog extends EpiThread
       private int theSessionI= 0;  // App session counter.
       private long lastMillisL; // Last time measured.
       private PrintWriter thePrintWriter = null; // non-null means file open.
+        // Open means buffered mode enabled.
+        // Closed means buffered mode disabled.
       private String processIDString= "";
 
     /* Debug Flags.  These are added or removed as needed during debugging
@@ -191,12 +193,20 @@ public class AppLog extends EpiThread
     	  */
 	    {
         initializeIfNeededV();
+        String bufferedModeLogString= "AppLog.setBufferedModeV(..), ";
+        boolean actualBufferedModeB= ( thePrintWriter != null );
+        bufferedModeLogString+= // Calculate whether mode is changing.
+            ( desiredBufferedModeB == actualBufferedModeB )
+            ? "already " // not changing
+            : "being "; // is changing
 	    	if ( desiredBufferedModeB )
-		    	{ openFileIfClosedV();
-		    	  info("AppLog.setBufferedModeV(..), enabled.");
+		    	{ 
+	    	    openFileIfClosedV();
+		    	  info(bufferedModeLogString+"enabled.");
 		    		}
 		    	else
-		      { info("AppLog.setBufferedModeV(..), disabled.");
+		      { 
+            info(bufferedModeLogString+"disabled.");
 		    	  closeFileIfOpenV();
 		      	}
 	    	}
@@ -215,7 +225,8 @@ public class AppLog extends EpiThread
     
     private void initializeV()
       /* This method does initialization, unconditionally.
-        It should be called only once.
+        It should be called only once.  It includes the following:
+        * Determining the session number.
         */
       {
         logFile=  // Identify log file name.
@@ -223,6 +234,7 @@ public class AppLog extends EpiThread
         theSessionI= getSessionI();  // Get app session number.
         if (theSessionI == 0)  // If this is session 0...
           logFile.delete();  //...then empty log file by deleting.
+        openFileIfClosedV(); // Open file for use.
         logHeaderLinesV(); // Append the session header lines.
         }
 
@@ -516,7 +528,7 @@ public class AppLog extends EpiThread
         
       	aString+= "\n";  //...and a final line terminator.
 
-      	AppLog.getAppLog().appendV( aString );  // Append it to log file.
+      	getAppLog().appendToFileV( aString );  // Append it to log file.
         
    	  	if (consoleB || consoleModeB) // Append to console if called for... 
         	System.err.print(aString);
@@ -527,50 +539,44 @@ public class AppLog extends EpiThread
     
     // Raw log file manipulation methods.
     
-    public synchronized void appendV(String inString)
+    public synchronized void appendToFileV(String inString)
       /* Appends a raw string to the log file.
         It can be used to append as little as a single character.
-        If inString is a log entry then it must be complete,
+        If inString is a log entry then it must be a complete entry,
         including session #, time-stamp, and newlines.
 
-        If the file doesn't exist or exists but is closed
-        then it calls createOrAppendToFileV(..), which leaves the file closed.
+
+        If the log file is closed on entry, it will be closed again on exit.
         
-        If the file exists and is open then it calls writeToOpenFileV(..),
-        leaving the file open.
+        If the log file is open on entry, it will still be closed on exit.
         */
       { 
-    	  if ( thePrintWriter == null ) // Acting based on whether file is open.
-    	  	createOrAppendToFileV( inString ); // File not open.
-    	  	else
-          writeToOpenFileV( inString ); // File open.
+    	  if  // Acting based on whether file is open (buffered) or closed (not).
+    	    ( thePrintWriter == null ) // File is closed.
+    	  	appendToClosedFileV( inString ); // Open, append to it, and close it.
+    	  	else // File is open.
+          appendToOpenFileV( inString ); // Just write to it, leaving it open.
     	  }
       
-    private synchronized void createOrAppendToFileV( String inString )
-      /* This method creates the log file if it doesn't exist.
-        Then it appends inString to the file.
-        If the file already exists then it must be closed.
-        The file will be closed when the method exits.
-        
-        If there is an error appending to the file then it is supposed to 
-        insert an error message into the file before writing inString.  
-        For example, this might happen if another program,
-        such as another instance of this app, is accessing the file.
-        I don't recall ever seeing this happen.
+    private synchronized void appendToClosedFileV( String inString )
+      /* This method appends inString to the closed log file.
+        If the log file doesn't exist then it is created first.
+        The file will be closed again before the method exits.
 
-        ///ehn MakeMultiprocessSafe: Maybe it is now.  
+        ///enh MakeMultiprocessSafe: Maybe it is now.  
           If not then it should be made multiprocess safe so 
           concurrent apps can access the log file.
         */
       {
 	    	openFileIfClosedV();
-        writeToOpenFileV( inString ); // Appending string to output.
+        appendToOpenFileV( inString ); // Appending string to output.
       	closeFileIfOpenV();
         }
 
     private void openFileIfClosedV()
       /* This method opens thePrintWriter and 
-        everything else associated with the log file.  
+        everything else associated with the log file.
+        If the log file is already open then it does nothing.
         */
     {
       if (thePrintWriter == null) {  // Opening file if closed.
@@ -593,6 +599,7 @@ public class AppLog extends EpiThread
     private void closeFileIfOpenV()
       /* This method closes thePrintWriter if it's open, 
         which closes everything associated with the log file.  
+        If the log file is already closed then it does nothing.
         */
 	    { 
 	      if (thePrintWriter != null) {  // Closing file if open.
@@ -602,7 +609,7 @@ public class AppLog extends EpiThread
 	        }
 	      }
 
-    private void writeToOpenFileV(String inString)
+    private void appendToOpenFileV(String inString)
       /* This method writes to thePrintWriter, which must be open.  */
 	    { 
 	    	thePrintWriter.print( inString );  // Append inString to file.
