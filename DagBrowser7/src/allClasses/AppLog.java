@@ -134,6 +134,7 @@ public class AppLog extends EpiThread
       private PrintWriter thePrintWriter = null; // non-null means file open.
         // Open means buffered mode enabled.
         // Closed means buffered mode disabled.
+      private int openSleepDelayMsI= 0;
       private String processIDString= "";
 
     /* Debug Flags.  These are added or removed as needed during debugging
@@ -496,6 +497,26 @@ public class AppLog extends EpiThread
         ///enh Add stackTraceB which displays stack,
           on console and in log, if true.
         */
+    { 
+      if  // Acting based on whether file is open (buffered) or closed (not).
+        ( thePrintWriter == null ) // File is closed.
+        //// appendToClosedFileV( inString ); // Open, append to it, and close it.
+        { 
+          openFileIfClosedV();
+          //// appendToOpenFileV( inString ); // Appending string to output.
+          logToOpenFileV(theLogLevel,inString,theThrowable,consoleB );
+          closeFileIfOpenV();
+          }
+        else // File is open.
+        ////appendToOpenFileV( inString ); // Just write to it, leaving it open.
+        logToOpenFileV(theLogLevel,inString,theThrowable,consoleB );
+      }
+
+    public synchronized void logToOpenFileV( //// convert to use open file.
+        LogLevel theLogLevel, 
+        String inString, 
+        Throwable theThrowable, 
+        boolean consoleB )
       {
         initializeIfNeededV(); 
     		long nowMillisL= System.currentTimeMillis(); // Saving present time.
@@ -528,7 +549,8 @@ public class AppLog extends EpiThread
         
       	aString+= "\n";  //...and a final line terminator.
 
-      	getAppLog().appendToFileV( aString );  // Append it to log file.
+      	//// getAppLog().appendToFileV( aString );  // Append it to log file.
+        appendToOpenFileV(aString);  // Append it to log file.
         
    	  	if (consoleB || consoleModeB) // Append to console if called for... 
         	System.err.print(aString);
@@ -539,7 +561,8 @@ public class AppLog extends EpiThread
     
     // Raw log file manipulation methods.
     
-    public synchronized void appendToFileV(String inString)
+    /*  ////
+    private synchronized void appendToFileV(String inString)
       /* Appends a raw string to the log file.
         It can be used to append as little as a single character.
         If inString is a log entry then it must be a complete entry,
@@ -550,6 +573,7 @@ public class AppLog extends EpiThread
         
         If the log file is open on entry, it will still be closed on exit.
         */
+    /*  ////
       { 
     	  if  // Acting based on whether file is open (buffered) or closed (not).
     	    ( thePrintWriter == null ) // File is closed.
@@ -557,7 +581,9 @@ public class AppLog extends EpiThread
     	  	else // File is open.
           appendToOpenFileV( inString ); // Just write to it, leaving it open.
     	  }
+    */  ////
       
+    /*  ////
     private synchronized void appendToClosedFileV( String inString )
       /* This method appends inString to the closed log file.
         If the log file doesn't exist then it is created first.
@@ -567,10 +593,19 @@ public class AppLog extends EpiThread
           If not then it should be made multiprocess safe so 
           concurrent apps can access the log file.
         */
+    /*  ////
       {
 	    	openFileIfClosedV();
         appendToOpenFileV( inString ); // Appending string to output.
       	closeFileIfOpenV();
+        }
+    */  ////
+
+    private void appendToOpenFileV(String inString)
+      /* This method writes to thePrintWriter, which must be open.  */
+      { 
+        thePrintWriter.print( inString );  // Append inString to file.
+        thereHasBeenOutputB= true;
         }
 
     private void openFileIfClosedV()
@@ -584,17 +619,43 @@ public class AppLog extends EpiThread
           thePrintWriter =  // Prepare...
             new PrintWriter(  // ...a character output stream..
               new BufferedWriter(  // ...with buffering to...
-                new FileWriter(  // ...a writable file...
-                  logFile,   // ...with this name...
-                  true  // ...and write to end of file, not the beginning.
-                  )
+                openFileWriter()  // ...a FileWriter to opened log file.
                 )
-              );
+            );
         } catch (IOException e) {
-          System.err.println("AppLog error opening file: "+e);
+          System.err.println("AppLog error opening PrintWriter...: "+e);
           }
+	      if (openSleepDelayMsI != 0) { // Log open failures.
+	        debug("openFileIfClosedV() opened after "
+	          +openSleepDelayMsI
+	          +" failures and 1 ms sleeps");
+	        openSleepDelayMsI= 0; // Reset for later.
+	        }
         }
       }
+    
+    private FileWriter openFileWriter()
+      throws IOException
+      /* This method opens a FileWriter for the log file.
+        If the open fails, it sleeps for 1 ms, and tries again.
+        It repeats until the open succeeds.
+        */
+      { 
+        FileWriter resultFileWriter;
+        while (true) {
+          try {
+              resultFileWriter= new FileWriter(  // Open log file for writing...
+                logFile,   // ...with this name...
+                true  // ...and write to end of file, not the beginning.
+                );
+              break; // Exit if open succeeded.
+            } catch (IOException e) { // Open failed.
+              uninterruptableSleepB( 1 ); // Pause 1 ms.
+              openSleepDelayMsI++; //* Count the pause and the time.
+            }
+          }
+        return resultFileWriter;
+        }
 
     private void closeFileIfOpenV()
       /* This method closes thePrintWriter if it's open, 
@@ -607,13 +668,6 @@ public class AppLog extends EpiThread
 	        thePrintWriter= null; // Indicate file is closed.
 	        thereHasBeenOutputB= false; // Reset unflushed output flag.
 	        }
-	      }
-
-    private void appendToOpenFileV(String inString)
-      /* This method writes to thePrintWriter, which must be open.  */
-	    { 
-	    	thePrintWriter.print( inString );  // Append inString to file.
-	    	thereHasBeenOutputB= true;
 	      }
 
   }  
