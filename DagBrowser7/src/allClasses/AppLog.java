@@ -6,6 +6,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+import allClasses.LockAndSignal.Input;
+
 import static allClasses.AppLog.LogLevel.*;
 
 public class AppLog extends EpiThread
@@ -44,7 +46,7 @@ public class AppLog extends EpiThread
       that doesn't need to be a static singleton and can be injected.
       Allow both static and injected-non-static, at least for a while.
 
-    ///fix? MakeMultiprocessSafe: 
+    ///fix? MakeMultiprocessSafe:  Ready for testing, with InfogoraStarter. 
 	    ///fix: When the presently kludgy buffered mode is enabled,
 	      interleaving of log entries might not work correctly
 	      when there are two running instances on the same computer,
@@ -53,12 +55,16 @@ public class AppLog extends EpiThread
 	    ///fix? It might fail if multiple app instances try to log simultaneously.
 	      Make log file be share-able in case two app instances
 	      try to write to it at the same time.  See createOrAppendToFileV(..).
-	    The best way to do this might be to make this class to use 
-	    a separate temporary open log file 
-	    for each thread its own thread for fast logging,
-	    but atomically replaces these and copies/merges them together
-	    periodically for convenient real-time viewing and debugging.
 
+    ///ehn: Eliminate thread blocking caused by closed file pausing.
+      Though this logger is probably now multiprocess-safe,
+      it does this by using brief mandatory 10 ms pauses 
+      each time it closes the log file.
+      This inhibits logging, and prevents the proceeding of
+      any threads that need to log something during that time.
+      It might be necessary to use alternating temporary output files 
+      to receive logging data to prevent this.
+      
 		///enh: Make the logging routines more orthogonal, in the following
 		  dimensions:
 		  * label on output: info/debug/error/exception
@@ -127,6 +133,7 @@ public class AppLog extends EpiThread
     	
       private boolean initializationStartedB= false;
     	private volatile boolean thereHasBeenOutputB= false;
+    	private LockAndSignal theLockAndSignal= new LockAndSignal();
     	
     	private File logFile;  // Name of log file.
       private int theSessionI= 0;  // App session counter.
@@ -134,6 +141,11 @@ public class AppLog extends EpiThread
       private PrintWriter thePrintWriter = null; // non-null means file open.
         // Open means buffered mode enabled.
         // Closed means buffered mode disabled.
+      private long openedAtNsL; // Time file was last opened.
+      private long closedAtNsL; // Time file was last closed.
+      private long appendedAtNsL; // Time file received it last output.
+
+      private boolean bufferedModeB= true; // Initially buffering.
       private int openSleepDelayMsI= 0;
       private String processIDString= "";
 
@@ -151,28 +163,48 @@ public class AppLog extends EpiThread
     { this.processIDString= processIDString; }
 
     public void run()
-      /* This method closes the file periodically so that
-        new output is visible to developers for debugging and testing.
-        Initially it will do nothing because thePrintWriter == null. 
-        ///fix This is a kludge.
+      /* This method closes the log file at times appropriate for
+        achieving the following goals:
+        * keeping the file mostly open when the app is producing log entries,
+        * closing it if not being used,
+        * not leaving it open too long, so other apps can access log file.
+        It does this with the following approximate delays:
+        * 1 ms between open file retries.  See openWithDelayFileWriter().
+        * 10 ms minimum time file it is closed after 
+          it is closed for any reason.  See closeFileAndDelayV().
+        * 200 ms maximum time file is open with no output.
+        * 300 ms maximum time file is open with or without output.
+
        	*/
     	{
-    	  while (true) {
-  	  	  if ( thePrintWriter != null ) // Temporarily close file if open
-  	  	  	if (thereHasBeenOutputB) // and there has been new output.
-	  		    	synchronized(this) { // Act only when it's safe. 
-    	  	  		closeFileIfOpenV(); // This will cause flush.
-		  		    	openFileIfClosedV(); // Prepare for next output.
-				    	  }
-  	  	  try {
-  	  	    	Thread.sleep(5000); // 5 second pause.
-	    	  	} catch(InterruptedException ex) {
-	    	  	  Thread.currentThread().interrupt();
-	    	  	} finally {
-	    	  		closeFileIfOpenV(); ///fix Should this be here?
-	    	  	}
-    	  	}
-    		}
+        openedAtNsL= closedAtNsL= appendedAtNsL= System.nanoTime(); 
+        LockAndSignal.Input theInput= Input.NONE;
+    	  loop: while (true) {
+      	  process: synchronized (this) {
+            if ( theInput == Input.INTERRUPTION ) // Signal to terminate.
+              break loop; // Exit thread loop.
+            if (! bufferedModeB) // Not buffering.  Ignore everything.
+              break process;
+            if  (thePrintWriter == null) // Log file closed
+              break process;
+            long nowNsL= System.nanoTime(); // Measure present time.
+            if ( ( nowNsL - appendedAtNsL ) > 200000000L)
+              { // Too long since last log file output.
+                debug("run() closing log file because of inactivity.");
+                closeFileAndDelayV();
+                break process;
+                }
+            if ( ( nowNsL - openedAtNsL ) > 300000000)
+              { // Too long since log file opened.
+                debug("run() closing log file to allow access by others.");
+                closeFileAndDelayV();
+                break process;
+                }
+            } // process:
+          theInput= // Wait for next significant event. 
+              theLockAndSignal.waitingForInterruptOrDelayOrNotificationE(0);
+          } // loop:
+    		} // run()
     
     public boolean getAndEnableConsoleModeB()
 	    { 
@@ -195,21 +227,23 @@ public class AppLog extends EpiThread
 	    {
         initializeIfNeededV();
         String bufferedModeLogString= "AppLog.setBufferedModeV(..), ";
-        boolean actualBufferedModeB= ( thePrintWriter != null );
+        boolean actualBufferedModeB= bufferedModeB;
         bufferedModeLogString+= // Calculate whether mode is changing.
             ( desiredBufferedModeB == actualBufferedModeB )
             ? "already " // not changing
             : "being "; // is changing
 	    	if ( desiredBufferedModeB )
 		    	{ 
-	    	    openFileIfClosedV();
+	    	    openFileWithRetryDelayIfClosedV();
 		    	  info(bufferedModeLogString+"enabled.");
 		    		}
 		    	else
 		      { 
             info(bufferedModeLogString+"disabled.");
-		    	  closeFileIfOpenV();
+		    	  closeFileAndDelayIfOpenV();
 		      	}
+	    	bufferedModeB= desiredBufferedModeB;
+	    	theLockAndSignal.notifyingV(); 
 	    	}
     
     private synchronized void initializeIfNeededV()
@@ -235,12 +269,12 @@ public class AppLog extends EpiThread
         theSessionI= getSessionI();  // Get app session number.
         if (theSessionI == 0)  // If this is session 0...
           logFile.delete();  //...then empty log file by deleting.
-        openFileIfClosedV(); // Open file for use.
+        openFileWithRetryDelayIfClosedV(); // Open file for use.
         logHeaderLinesV(); // Append the session header lines.
         }
 
     private void logHeaderLinesV()
-      /* This initialization helper method outputs header lines 
+      /* This initialization helper method is used to output header lines 
         at the beginning of a new log file session.
         It is the last part of the initialization.
         */
@@ -294,6 +328,8 @@ public class AppLog extends EpiThread
 
     // Actual log methods start here.
 
+    // Non-delegating logging methods.
+    
     public void trace(String inString)
       /* This method is for tracing.  It writes only inString.
         */
@@ -467,13 +503,15 @@ public class AppLog extends EpiThread
     		logV(null, inString, null, false); 
     		}
 
+    // Non-delegating logging methods.
+    
     public synchronized void logV(
     		LogLevel theLogLevel, 
     		String inString, 
     		Throwable theThrowable, 
     		boolean consoleB )
-      /* The buck stops here.  This method does not delegate to
-        another method is the family.
+      /* The buck stops here.  
+        This logging method does not delegate to another method is the family.
 
         This is also the most capable logging method.
         It can process all possible parameters.
@@ -498,27 +536,29 @@ public class AppLog extends EpiThread
           on console and in log, if true.
         */
     { 
+      initializeIfNeededV(); 
       if  // Acting based on whether file is open (buffered) or closed (not).
-        ( thePrintWriter == null ) // File is closed.
-        //// appendToClosedFileV( inString ); // Open, append to it, and close it.
+        ( ( ! bufferedModeB ) // Buffered mode disabled.
+          &&( thePrintWriter == null ) // and file is closed.
+          )
         { 
-          openFileIfClosedV();
-          //// appendToOpenFileV( inString ); // Appending string to output.
+          openFileWithRetryDelayIfClosedV();
           logToOpenFileV(theLogLevel,inString,theThrowable,consoleB );
-          closeFileIfOpenV();
+          closeFileV();
           }
-        else // File is open.
-        ////appendToOpenFileV( inString ); // Just write to it, leaving it open.
-        logToOpenFileV(theLogLevel,inString,theThrowable,consoleB );
+        else // Buffered mode enabled or file is open.
+        {
+          openFileWithRetryDelayIfClosedV(); ///opt  needed?
+          logToOpenFileV(theLogLevel,inString,theThrowable,consoleB );
+          }
       }
 
-    public synchronized void logToOpenFileV( //// convert to use open file.
+    public synchronized void logToOpenFileV(
         LogLevel theLogLevel, 
         String inString, 
         Throwable theThrowable, 
         boolean consoleB )
       {
-        initializeIfNeededV(); 
     		long nowMillisL= System.currentTimeMillis(); // Saving present time.
 
         String aString= ""; // Initialize String to empty, then append to it...
@@ -549,8 +589,7 @@ public class AppLog extends EpiThread
         
       	aString+= "\n";  //...and a final line terminator.
 
-      	//// getAppLog().appendToFileV( aString );  // Append it to log file.
-        appendToOpenFileV(aString);  // Append it to log file.
+      	appendToOpenFileV(aString);  // Append it to log file.
         
    	  	if (consoleB || consoleModeB) // Append to console if called for... 
         	System.err.print(aString);
@@ -558,57 +597,16 @@ public class AppLog extends EpiThread
         lastMillisL= nowMillisL; // Saving present time as new last time.
         }
 
-    
-    // Raw log file manipulation methods.
-    
-    /*  ////
-    private synchronized void appendToFileV(String inString)
-      /* Appends a raw string to the log file.
-        It can be used to append as little as a single character.
-        If inString is a log entry then it must be a complete entry,
-        including session #, time-stamp, and newlines.
-
-
-        If the log file is closed on entry, it will be closed again on exit.
-        
-        If the log file is open on entry, it will still be closed on exit.
-        */
-    /*  ////
-      { 
-    	  if  // Acting based on whether file is open (buffered) or closed (not).
-    	    ( thePrintWriter == null ) // File is closed.
-    	  	appendToClosedFileV( inString ); // Open, append to it, and close it.
-    	  	else // File is open.
-          appendToOpenFileV( inString ); // Just write to it, leaving it open.
-    	  }
-    */  ////
-      
-    /*  ////
-    private synchronized void appendToClosedFileV( String inString )
-      /* This method appends inString to the closed log file.
-        If the log file doesn't exist then it is created first.
-        The file will be closed again before the method exits.
-
-        ///enh MakeMultiprocessSafe: Maybe it is now.  
-          If not then it should be made multiprocess safe so 
-          concurrent apps can access the log file.
-        */
-    /*  ////
-      {
-	    	openFileIfClosedV();
-        appendToOpenFileV( inString ); // Appending string to output.
-      	closeFileIfOpenV();
-        }
-    */  ////
-
     private void appendToOpenFileV(String inString)
       /* This method writes to thePrintWriter, which must be open.  */
       { 
         thePrintWriter.print( inString );  // Append inString to file.
         thereHasBeenOutputB= true;
+        appendedAtNsL= System.nanoTime(); // Record time of close.
+        theLockAndSignal.notifyingV(); 
         }
 
-    private void openFileIfClosedV()
+    private synchronized void openFileWithRetryDelayIfClosedV()
       /* This method opens thePrintWriter and 
         everything else associated with the log file.
         If the log file is already open then it does nothing.
@@ -616,25 +614,29 @@ public class AppLog extends EpiThread
     {
       if (thePrintWriter == null) {  // Opening file if closed.
 	      try {
-          thePrintWriter =  // Prepare...
-            new PrintWriter(  // ...a character output stream..
-              new BufferedWriter(  // ...with buffering to...
-                openFileWriter()  // ...a FileWriter to opened log file.
-                )
-            );
-        } catch (IOException e) {
-          System.err.println("AppLog error opening PrintWriter...: "+e);
+            thePrintWriter =  // Prepare...
+              new PrintWriter(  // ...a character output stream..
+                new BufferedWriter(  // ...with buffering to...
+                  openWithRetryDelayFileWriter()  // ...a FileWriter...
+                  ) // ...to opened log file.
+                );
+            openedAtNsL= System.nanoTime(); // Record time of open.
+          } catch (IOException e) {
+            System.err.println("AppLog error opening PrintWriter...: "+e);
           }
-	      if (openSleepDelayMsI != 0) { // Log open failures.
-	        debug("openFileIfClosedV() opened after "
-	          +openSleepDelayMsI
-	          +" failures and 1 ms sleeps");
-	        openSleepDelayMsI= 0; // Reset for later.
-	        }
+	      if (openSleepDelayMsI != 0) 
+  	      { // Log any open failures.
+  	        debug("openFileIfClosedV() opened after "
+  	          +openSleepDelayMsI
+  	          +" retries after 1 ms sleep each");
+  	        openSleepDelayMsI= 0; // Reset for later.
+  	        }
+	        else
+	        ; // debug("openFileIfClosedV() opened log file.");
         }
       }
     
-    private FileWriter openFileWriter()
+    private synchronized FileWriter openWithRetryDelayFileWriter()
       throws IOException
       /* This method opens a FileWriter for the log file.
         If the open fails, it sleeps for 1 ms, and tries again.
@@ -650,24 +652,45 @@ public class AppLog extends EpiThread
                 );
               break; // Exit if open succeeded.
             } catch (IOException e) { // Open failed.
-              uninterruptableSleepB( 1 ); // Pause 1 ms.
+              uninterruptableSleepB( 1 ); // Pause-block 1 ms.
               openSleepDelayMsI++; //* Count the pause and the time.
             }
           }
         return resultFileWriter;
         }
 
-    private void closeFileIfOpenV()
-      /* This method closes thePrintWriter if it's open, 
-        which closes everything associated with the log file.  
-        If the log file is already closed then it does nothing.
+    private synchronized void closeFileAndDelayIfOpenV()
+      /* This method is like closeFileAndDelayV() 
+        but acts only if the log file is open.
         */
 	    { 
-	      if (thePrintWriter != null) {  // Closing file if open.
-	        thePrintWriter.close(); // Close file.
-	        thePrintWriter= null; // Indicate file is closed.
-	        thereHasBeenOutputB= false; // Reset unflushed output flag.
-	        }
+	      if (thePrintWriter != null)  // Closing file if open. 
+	        closeFileAndDelayV(); 
 	      }
 
-  }  
+    private synchronized void closeFileAndDelayV()
+      /* This method closes thePrintWriter if it's open, 
+        which closes everything associated with the log file.
+        Note, because the delay happens in a synchronized method,
+        it will prevent any output by this app to the log file 
+        for that period, allowing other apps to do so.
+        */
+      { 
+        closeFileV();
+        uninterruptableSleepB( 10 ); // Pause-block 10 ms.
+        }
+
+    private synchronized void closeFileV()
+      /* This method closes thePrintWriter, 
+        which closes everything associated with the log file.  
+        */
+      {
+        thePrintWriter.close(); // Close file.
+        thePrintWriter= null; // Indicate file is closed.
+        
+        thereHasBeenOutputB= false; // Reset unflushed output flag.
+        closedAtNsL= System.nanoTime(); // Record time of close.
+        }
+      
+
+   }  

@@ -123,8 +123,8 @@ class Infogora  // The root of this app.
 
 			  */
       { // main(..)
-	      ////appLogger.setBufferedModeV( true ); // Enabling buffered logging.
-	      appLogger.setBufferedModeV( false ); // Slower disabled buffered logging.
+	      appLogger.setBufferedModeV( true ); // Enabling buffered logging.
+	      ////appLogger.setBufferedModeV( false ); // Slower disabled buffered logging.
 	      appLogger.info("Infogora.main() beginning. ======== APP IS STARTING ========");
 	      System.out.println(
 	        "Infogora.main() beginning. ======== APP IS STARTING ========");

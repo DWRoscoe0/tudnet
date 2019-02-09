@@ -156,6 +156,12 @@ public class LockAndSignal  // Combination lock and signal class.
     more complex information as if through a single element queue,
     but only from one specific object to another.
     Or maybe it would be better to have a different class for this.
+    
+    ///enh Maybe subclass this to do synchronous communication with
+    one or more threads?  This can be done now with an additional
+    LockAndSignal for each thread in the opposite direction.  
+    But would it make sense to create a special class for this?
+    
     */
 
   {
