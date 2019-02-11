@@ -42,6 +42,10 @@ public class AppLog extends EpiThread
     which doesn't close the log file after every log entry
     but buffered mode is still a bit of a kludge.
 
+    ///fix  Sometimes when the app is terminated from 
+      the Windows Task Manager, the log file is truncated,
+      though judging from Console output, the app exits normally.
+
 		///enh: Begin the transition to a logger 
       that doesn't need to be a static singleton and can be injected.
       Allow both static and injected-non-static, at least for a while.

@@ -47,11 +47,12 @@ public class App { // The App, especially pre-GUI stuff.
 			theShutdowner.initializeV();
 			theAppInstanceManager.initializeV();
 
-			doAppStuff(); // This runs until an app shutdown is underway.
+			doAppStuff(); // This runs until app shutdown is underway.
 
   	  thePersistent.finalizeV();  // Write any new or changed app properties.
   		//appLogger.info("App calling Shutdowner.finishV().");
       theShutdowner.finishAppShutdownV();  // Doing final app shutdown jobs.
+        // This might not return if shutdown began in the JVM. 
 
   		appLogger.info("App exiting.");
       
@@ -92,7 +93,7 @@ public class App { // The App, especially pre-GUI stuff.
 		  	  AppGUIFactory theAppGUIFactory= 
 		  	  		theAppFactory.lazyGetAppGUIFactory();
 		      AppGUI theAppGUI= theAppGUIFactory.getAppGUI();
-		      theAppGUI.runV(); // Running GUI until finished.
+		      theAppGUI.runV(); // Running GUI until it has shut down.
 		      	// Network operations happen at this time also.
 		      }
 	  	}

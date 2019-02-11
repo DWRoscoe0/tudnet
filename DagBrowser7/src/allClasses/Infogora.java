@@ -72,35 +72,6 @@ class Infogora  // The root of this app.
 
 	{ // Infogora
 
-	  private static void setDefaultExceptionHandlerV()
-      /* This helper method for the main(..) method
-        sets the default handler for uncaught exceptions.
-        The purpose of this is to guarantee that every Exception
-        will be handled by this application and
-        at least produce a log message.
-        The handler sends a message about the exception to
-        both the log file and to the console.
-        */
-      {
-        Thread.setDefaultUncaughtExceptionHandler(
-          new Thread.UncaughtExceptionHandler() {
-            @Override 
-            public void uncaughtException(Thread t, Throwable e) {
-              System.out.println( "Uncaught Exception, "+t.getName()+", "+e);
-
-          		appLogger.setBufferedModeV( false ); // Disabling buffering.
-              appLogger.error( "Uncaught Exception: "+e );
-              StringWriter aStringWriter= new StringWriter();
-              PrintWriter aPrintWriter= new PrintWriter(aStringWriter);
-              e.printStackTrace(aPrintWriter);
-              appLogger.info( "Stack trace: "+aStringWriter.toString() );
-              }
-            }
-          );
-
-        //throw new NullPointerException(); // Uncomment to test handler.
-        }
-
 	  public static void main(String[] argStrings)
 			/* This method is the app's entry point.  It does the following:
 	
@@ -125,23 +96,24 @@ class Infogora  // The root of this app.
       { // main(..)
 	      appLogger.setBufferedModeV( true ); // Enabling buffered logging.
 	      ////appLogger.setBufferedModeV( false ); // Slower disabled buffered logging.
+        DefaultExceptionHandler.setDefaultExceptionHandlerV(); 
+          // Preparing for exceptions before doing anything else.
 	      appLogger.info("Infogora.main() beginning. ======== APP IS STARTING ========");
 	      System.out.println(
 	        "Infogora.main() beginning. ======== APP IS STARTING ========");
-	      setDefaultExceptionHandlerV(); // Preparing for exceptions 
-	        // before doing anything else.
 	
         CommandArgs theCommandArgs= new CommandArgs(argStrings);
 	      AppFactory theAppFactory=  // Constructing AppFactory.
 	        new AppFactory(theCommandArgs);
 	      App theApp=  // Getting the App from the factory.
       		theAppFactory.getApp();
-	      theApp.runV();  // Running the app until it finishes.
+	      theApp.runV();  // Running the app until it has shutdown.
+	        // This might not return if shutdown began in the JVM. 
 
         System.out.println(
           "Infogora.main() calling exit(0). ======== APP IS ENDING ========");
         appLogger.info("Infogora.main() calling exit(0). ======== APP IS ENDING ========");
-    		appLogger.setBufferedModeV( false ); // Disabling buffered logging.
+    		appLogger.setBufferedModeV( false ); // Final close of log file.
 	      System.exit(0); // Will kill any remaining unknown threads running??
 	      } // main(..)
 	
