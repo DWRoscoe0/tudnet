@@ -136,7 +136,6 @@ public class AppLog extends EpiThread
     	  // Calls to those methods must use this level or less for log output.
     	
       private boolean initializationStartedB= false;
-    	private volatile boolean thereHasBeenOutputB= false;
     	private LockAndSignal theLockAndSignal= new LockAndSignal();
     	
     	private File logFile;  // Name of log file.
@@ -146,7 +145,6 @@ public class AppLog extends EpiThread
         // Open means buffered mode enabled.
         // Closed means buffered mode disabled.
       private long openedAtNsL; // Time file was last opened.
-      private long closedAtNsL; // Time file was last closed.
       private long appendedAtNsL; // Time file received it last output.
 
       private boolean bufferedModeB= true; // Initially buffering.
@@ -181,7 +179,8 @@ public class AppLog extends EpiThread
 
        	*/
     	{
-        openedAtNsL= closedAtNsL= appendedAtNsL= System.nanoTime(); 
+        // closedAtNsL= 
+        openedAtNsL= appendedAtNsL= System.nanoTime();
         LockAndSignal.Input theInput= Input.NONE;
     	  loop: while (true) {
       	  process: synchronized (this) {
@@ -605,7 +604,6 @@ public class AppLog extends EpiThread
       /* This method writes to thePrintWriter, which must be open.  */
       { 
         thePrintWriter.print( inString );  // Append inString to file.
-        thereHasBeenOutputB= true;
         appendedAtNsL= System.nanoTime(); // Record time of close.
         theLockAndSignal.notifyingV(); 
         }
@@ -691,9 +689,6 @@ public class AppLog extends EpiThread
       {
         thePrintWriter.close(); // Close file.
         thePrintWriter= null; // Indicate file is closed.
-        
-        thereHasBeenOutputB= false; // Reset unflushed output flag.
-        closedAtNsL= System.nanoTime(); // Record time of close.
         }
       
 

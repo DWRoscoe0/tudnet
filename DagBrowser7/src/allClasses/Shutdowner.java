@@ -1,16 +1,9 @@
 package allClasses;
 
-import java.io.IOException;
-//import java.util.ArrayList;
-import java.util.Arrays;
-//import java.util.Enumeration;
-//import java.util.Vector;
-
-
-
 import javax.swing.event.EventListenerList;
 
 import static allClasses.Globals.*;  // appLogger;
+
 
 public class Shutdowner
 
@@ -18,7 +11,7 @@ public class Shutdowner
 
    Shutting down a Java app is tricky.  
    Java uses threads a lot, maybe too much.
-   Knowing when app termination has been requested requires
+   Knowing when app termination has been requested externally requires
    creating a thread and registering it as a shutdown hook.
    Shutdown hook threads are started shortly after JVM termination begins.
 
@@ -26,14 +19,14 @@ public class Shutdowner
    This is suggested indirectly by the documentation.
 
    In practice, it is probably better for a shutdown hook to simply
-   signal one or more other app threads to do their shutdowns
+   signal one or more other app threads to do their shutdown operations
    and then wait for them to finish those operations.
    This is the approach taken by this Shutdowner class.  
 
    This class does the following:
 
     1. Except in the case of severe system errors,
-      it makes it provides the ability to guarantee
+      it provides the ability to guarantee
       that app shutdown completes before JVM shutdown does,
       regardless of which one starts to shutdown first.
       It does this by creating, initializing, and registering with the JVM,
@@ -47,8 +40,8 @@ public class Shutdowner
       This is similar to what Java's Runtime shutdown hook threads do,
       but with a well-defined order.  
 
-    3. It provides the ability to create and start 
-      a user-defined executable Process just before this app terminates.
+    3. It provides the ability to start a user-defined executable Process 
+      just before this app terminates.
       The new process is often a different instance or version
       of this same app.  It is intended to be used for 
       instance management and software updating.
@@ -218,8 +211,7 @@ public class Shutdowner
 	
 	      } // ShutdownHook
 
-    @SuppressWarnings("unused") ////
-    private boolean isShuttingDownB() // Not referenced anywhere.
+    public boolean isShuttingDownB() ///opt Not referenced anywhere.
       /* This method returns a boolean indication of whether
         the app's shutdown process has begun.
         This method is used to control conditional code.
@@ -308,8 +300,8 @@ public class Shutdowner
             }
 	        appLogger.info( "Shutdowner.finishAppShutdownV() beginning, calling ShutdownerListeners." );
 	        reverseFireShutdownerListeners(); // Calling all listeners in reverse.
-	        if (argStrings != null) // Act based on whether this process exit is final exit.
-	          startProcess(argStrings); // No, start other process before exiting.
+	        if (ProcessStarter.argStrings != null) // Act based on whether this process exit is final exit.
+	          ProcessStarter.startProcess(ProcessStarter.argStrings); // No, start other process before exiting.
   	        else { // Yes, signal Infogora starter process by deleting flag file.
   	          appLogger.info("Shutdowner.finishAppShutdownV() deleting InfogoraAppActiveFlag.txt.");
   	          Config.makeRelativeToAppFolderFile("InfogoraAppActiveFlag.txt").delete();
@@ -367,63 +359,7 @@ public class Shutdowner
               }
         }
 
-    // Code for defining and starting other processes and ending this one.
-
-      private String[] argStrings = null; // Command to be executed at exit.
-        // If null then no command is to be executed.
-
-	    public void setCommandV( String... inArgStrings )
-	      /* This method sets to inArgStrings the array of Strings which
-	        defines the command Process to be created and executed 
-	        at shut-down time by ProcessBuilder.
-	        If at shutdown time inArgStrings is null 
-          then no command will be executed.
-	        */
-	      {
-          appLogger.info( 
-          	"Shutdowner.setCommandV(..): " 
-            + Arrays.toString(inArgStrings)
-            );
-          
-	    	  argStrings = inArgStrings; 
-	    	  }
-
-      public Process startProcess(String... inArgStrings)
-        /* This method calls a Process built with 
-          a ProessBuilder operating on 
-          the String argument array inArgStrings.
-          It does nothing if inArgStrings is null.
-
-          ?? This could use some work.
-          In previous version it redirected 
-          the Process's stdout and stderr to 
-          this Process's stdout.
-          Until this redirection ended it could cause an access violation
-          which would prevent replacement of the file from which 
-          this Process was loaded!
-          */
-        {
-          Process resultProcess= null;
-	        if  // Executing an external command if
-		        ( ( inArgStrings != null )  // command arguments were defined
-		           && ( inArgStrings.length > 0 ) // and there is at least one.
-		           )
-            try {
-	              appLogger.info( 
-	                "Shutdowner.startAProcessV(..) w: " 
-	                + Arrays.toString(inArgStrings)
-	                );
-	              ProcessBuilder myProcessBuilder= // Build the process. 
-	                new ProcessBuilder(inArgStrings);
-	              
-	              resultProcess= // Start the process.
-	                  myProcessBuilder.start();
-	
-	              appLogger.info( "Shutdowner.startAProcessV(..): succeeded." ); 
-              } catch (IOException e1) {
-                appLogger.error( "Shutdowner.startAProcessV(..): FAILED." ); 
-              }
-          return resultProcess;
-          }
+    /* Code for defining and starting other processes and ending this one
+      was moved to class ProcessStarter.  */
 
     }

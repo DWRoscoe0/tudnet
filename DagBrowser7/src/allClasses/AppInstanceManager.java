@@ -922,7 +922,7 @@ l    * If the app receives a message indicating
             "-otherAppIs", // Infogora -otherAppIs option.
             runningAppFile.getAbsolutePath() // Path of this app's file. 
 	          };
-	        theShutdowner.setCommandV(  // Setting String as command to run later.
+	        ProcessStarter.setCommandV(  // Setting String as command to run later.
 	          commandOrArgStrings
 	          );
 	        }

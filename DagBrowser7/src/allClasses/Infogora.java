@@ -1,8 +1,5 @@
 package allClasses;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-
 import static allClasses.Globals.appLogger;  // For appLogger;
 
 
@@ -94,8 +91,7 @@ class Infogora  // The root of this app.
 
 			  */
       { // main(..)
-	      appLogger.setBufferedModeV( true ); // Enabling buffered logging.
-	      ////appLogger.setBufferedModeV( false ); // Slower disabled buffered logging.
+	      appLogger.setBufferedModeV(true); // Enabling fast buffered logging.
         DefaultExceptionHandler.setDefaultExceptionHandlerV(); 
           // Preparing for exceptions before doing anything else.
 	      appLogger.info("Infogora.main() beginning. ======== APP IS STARTING ========");

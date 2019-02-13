@@ -16,8 +16,7 @@ public class InfogoraStarter
       */
     { // main(..)
       appLogger.setIDProcessV("Starter");
-      appLogger.setBufferedModeV( true ); // Enabling buffered logging.
-      ////appLogger.setBufferedModeV( false ); // Slower disabled buffered logging.
+      appLogger.setBufferedModeV( true ); // Enabling fast buffered logging.
       DefaultExceptionHandler.setDefaultExceptionHandlerV(); 
         // Preparing for exceptions before doing anything else.
       String aString=
@@ -40,11 +39,11 @@ public class InfogoraStarter
           "allClasses.InfogoraStarter" // entry point.
           };
       ///fix? add argStrings at end?
-      theShutdowner.setCommandV(  // Setting String as command to run later.
+      ProcessStarter.setCommandV(  // Setting String as command to run later.
         commandOrArgStrings
         );
       appLogger.debug("InfogoraStarter.main() starting Infogora process.");
-      Process theProcess= theShutdowner.startProcess(commandOrArgStrings);
+      Process theProcess= ProcessStarter.startProcess(commandOrArgStrings);
       if (theProcess == null)
         appLogger.error("InfogoraStarter.main() start failed.");
         else 
