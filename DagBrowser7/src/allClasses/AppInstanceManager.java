@@ -1,12 +1,9 @@
 package allClasses;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.InetAddress;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -131,14 +128,16 @@ l    * If the app receives a message indicating
     private CommandArgs startCommandArgs; // args from command line.
     private PortManager thePortManager;
 
-    // Network input injections.
-    private CommandArgs networkCommandArgs= null; // args from other app instance.
-      // This can change multiple times.
-
   // Locks and guards.
-    private static Lock theReentrantLock= new ReentrantLock();
-      // This is used to prevent more than one thread starting an update.
-      // Poller thingsToDoPeriodicallyV() reads it.  Others write it.
+    private static Lock updaterReentrantLock= new ReentrantLock();
+      /* This is Lock variable is used 
+       to prevent more than one thread starting an update.
+       It is locked when an update check is being attempted.
+       A periodic update check can be abandoned with a failing tryLock(), 
+       because it will be attempted again shortly.
+       Update checks triggered by messages containing a specific path 
+       to a discovered file must wait for lock() to succeed. 
+       */
     
   // Internal dependency variables, set after construction.
     int inputCheckFileDelaySI= Config.localUpdateDelaySI; 
@@ -170,7 +169,8 @@ l    * If the app receives a message indicating
       ///enh There might be cases when this is inadequate,
       // and there be a per-file newest value, 
       // or maybe something completely different.
-	  private ServerSocket instanceServerSocket = null; // For receiving messages.
+    private LocalSocket theLocalSocket= null; // Used for 
+      // instance existence testing and communication. 
 
   // Public initialization code.
 	  
@@ -189,6 +189,7 @@ l    * If the app receives a message indicating
 	    // Does all initialization except constructor injection.
 	    {
 	      { // Calculating File name of this app's file instance.
+	        theLocalSocket= new LocalSocket();
 		      URI thisAppURI = null;
 		      try {
 		          thisAppURI = Infogora.class.getProtectionDomain().
@@ -259,7 +260,7 @@ l    * If the app receives a message indicating
 	  public void thingsToDoPeriodicallyV()
 	    /* This method is meant be called once per second by a timer thread
 	      to check for the appearance of a new version of the otherAppFile
-	      and to do an update with it if a newer version appears.
+	      and to do an update with it if it is a newer version.
 
 	      It works as follows:
 		      If this app is the app in the standard folder.
@@ -269,7 +270,7 @@ l    * If the app receives a message indicating
 	      */
 	    {
 	  	  boolean updatingB= true;  // Assume updating.
-	  	  if ( theReentrantLock.tryLock() ) // Act now only if not locked.
+	  	  if ( updaterReentrantLock.tryLock() ) // Act now only if not locked.
 					{
 	  	  		try {
 					      //appLogger.debug("thingsToDoPeriodicallyV().");
@@ -285,7 +286,7 @@ l    * If the app receives a message indicating
 					    	if (updatingB) { // Log effect of timer input if updating.
 					    		logInputsV();
 					    	  }
-					    	theReentrantLock.unlock();
+					    	updaterReentrantLock.unlock();
 					    }
 					}
 	      }
@@ -407,7 +408,7 @@ l    * If the app receives a message indicating
             otherAppFile=  // Convert value string File name.
                 new File(theCommandsArgs.switchValue("-otherAppIs"));
             }
-        else if (inputStrings.length == 0) ; // Nothing is okay.
+        else if (inputStrings.length == 0) ; // Nothing is an acceptable input.
         else { // Anything else is an error.
           appLogger.error( "AppInstanceManager setInputsV(..), illegal input.  \n  "
               + inputStrings );
@@ -445,20 +446,16 @@ l    * If the app receives a message indicating
 	        boolean appShouldExitB= false;  // Set default return for no app exit.
 	
 	        try { // Try to start listening, indicating no other instances.
-	        	
-	          appLogger.info(
+	        	appLogger.info(
 	            "Local Host IP: " + 
 	            InetAddress.getLocalHost().getHostAddress() // Logging real IP. 
 	            );
-	        	
 	          //appLogger.info(
 	          //  "About to listen for a later app packets on port " + 
 	          //  getInstancePortI()
 	          //  );
-	          instanceServerSocket =  // Try opening listener socket.
-	            new ServerSocket(
-	              getInstancePortI(), 10, InetAddress.getLoopbackAddress() 
-	              );
+
+	          theLocalSocket.initializeV(getInstancePortI());
 	          { // Setup InstanceManagerThread to monitor the socket.
 	            InstanceManagerThread theInstanceManagerThread=
 	              new InstanceManagerThread();
@@ -468,20 +465,13 @@ l    * If the app receives a message indicating
 	
 	          theShutdowner.addShutdownerListener( // Adding this listener.
 	            new ShutdownerListener() {
-	              public void doMyShutdown() 
+	              public void doMyShutdown()
+	                // This will cause IOException and terminate thread.
 		              {
-		                try {  // Terminating monitor thread by closing its socket.
-		                		appLogger.info(
-		                				"AppInstanceManager ShutdownerListener.doMyShutdowner(..),"
-		                				+" closing socket.");
-			                  instanceServerSocket.close();
-			                } catch (IOException e) {
-			                  appLogger.error(
-			                  		"AppInstanceManager ShutdownerListener.doMyShutdowner(..),"
-			                  		+"Error closing instanceServerSocket: " + e
-			                  	  );
-			                  e.printStackTrace();
-			                }
+                    appLogger.info(
+                        "AppInstanceManager ShutdownerListener.doMyShutdowner(..),"
+                        +" closing socket.");
+                    theLocalSocket.closeAllV();
                 		appLogger.info( 
                 				"AppInstanceManager ShutdownerListener.doMyShutdowner(..), done" 
                 				);
@@ -540,9 +530,9 @@ l    * If the app receives a message indicating
 	      {
 	        public void run()
 	          /* This method, for as long as the instanceServerSocket is open,
-	            waits for messages from other running app instances 
-	            announcing their presence, and processes those messages.
-	            Processing includes:
+	            waits for connections from other running app instances 
+	            announcing their presence, and processes a single line message
+	            and processes it.  Processing includes:
 	            * Parsing the received message and storing the result
 	              into otherAppFile.
 	            * Depending on circumstances:
@@ -551,82 +541,72 @@ l    * If the app receives a message indicating
 	            */
 	          {
 		          appLogger.info(Thread.currentThread().getName()+": beginning.");
-	            boolean socketClosed = false;
-	            while (!socketClosed) {
-	              if (instanceServerSocket.isClosed()) 
-	                { socketClosed = true; } 
-	              	else 
-	              	{
-		                try {
-		                  Socket clientSocket = instanceServerSocket.accept();
-		                  {
-			                    theReentrantLock.lock();  // Block until okay to go.
-			                    try {
-					                  processSocketConnectionV( clientSocket );
-					                } finally {
-			                      theReentrantLock.unlock(); // End blocking.
-			                    }
-		                  	}
-		                  clientSocket.close();
-		                	} 
-		                catch (IOException e) 
-		                  { socketClosed = true; }
-	              		}
-	              }
+	            while (!theLocalSocket.isClosedB()) {
+                try {
+                  theLocalSocket.acceptV(); // Wait for connection or exception.
+                  { // Do an update check using data from the socket.
+                    updaterReentrantLock.lock(); // Wait until we have lock.
+                    try {
+                        theLocalSocket.inputFromConnectionV();
+			                  processConnectionDataV(
+			                      theLocalSocket.getCommandArgs());
+			                } finally {
+	                      updaterReentrantLock.unlock(); // Release the lock.
+	                    }
+                  	}
+                  theLocalSocket.closeConnectionV();
+                	} 
+                catch (IOException e) // Accept connection failed.
+                  { // We must be terminating.
+                    theLocalSocket.closeAllV(); // Make certain all is closed.
+	                  }
+                }
 		          appLogger.info("Socket closed, ending.");
 	            }
-	        }
-
-      private void processSocketConnectionV( Socket theSocket )
-        throws IOException
-	      {
-		      BufferedReader inBufferedReader = 
-		        new BufferedReader(
-		          new InputStreamReader(theSocket.getInputStream()
-		          )
-		        );
-		      String readString = inBufferedReader.readLine();
-		      appLogger.info(
-		      	"======== RECEIVED INSTANCE-PACKET FROM ANOTHER APP. ======== :\n  " 
-		      	+ readString
-		        );
-		      networkCommandArgs= // Parse string into separate string arguments using
-		          new CommandArgs(readString.split("\\s")); // white-space as delimiters.
-		      setInputsV( networkCommandArgs ) ;
-          // Assumes only a single string argument.
-		      logInputsV(); // Report inputs received through socket connection.
-		      if // Exiting or firing event depending on other instance.
-		      	( isUpdateValidB( otherAppFile ) )
-		        { // Report pending update.
-		         	if ( displayUpdateApprovalDialogB( 
-	          			false, // Get approval.
-		        			"A newer running instance of this app "
-		        			+ "has been detected.\n"
-		              + "It will be used in a software update because "
-		              + "it is newer than this app instance.",
-		              otherAppFile
-		        			) ) 
-		         	  {
-		         			// Chain to other app to do copy and run.
-		         				requestForJavaCommandAndExitTrueB( 
-			      					otherAppFile.getAbsolutePath() );
-			      			theShutdowner.requestAppShutdownV(); // App exit.
-		         			}
-		        	}
-		        else
-		        {
-		        	displayUpdateApprovalDialogB( 
-	          			true, // Just inform user.  Don't request approval.
-		        			"Another running instance of this app "
-		        			+ "was detected briefly.\n"
-		              + "It was not used in a software update because "
-		              + "it was not newer than this app instance.",
-		              otherAppFile
-		        			);
-		          fireNewInstance(); // AppInstanceListener action.
-		          }
-		      inBufferedReader.close();
-		      }
+	        
+	        } // class InstanceManagerThread
+  
+        private void processConnectionDataV(CommandArgs theCommandArgs)
+          throws IOException
+          /* This method processes the input gotten by processLineFromSocketV().
+            It tries to interpret that input as 
+            a path to a file which is a possible software update. 
+            */
+          {
+  		      setInputsV(theCommandArgs);
+              // Assumes only a single string argument.
+  		      logInputsV(); // Report inputs received through socket connection.
+  		      if // Exiting or firing event depending on other instance.
+  		      	( isUpdateValidB( otherAppFile ) )
+  		        { // Report pending update.
+  		         	if ( displayUpdateApprovalDialogB( 
+  	          			false, // Get approval.
+  		        			"A newer running instance of this app "
+  		        			+ "has been detected.\n"
+  		              + "It will be used in a software update because "
+  		              + "it is newer than this app instance.",
+  		              otherAppFile
+  		        			) ) 
+  		         	  {
+  		         			// Chain to other app to do copy and run.
+  		         				requestForJavaCommandAndExitTrueB( 
+  			      					otherAppFile.getAbsolutePath() );
+  			      			theShutdowner.requestAppShutdownV(); // App exit.
+  		         			}
+  		        	}
+  		        else
+  		        {
+  		        	displayUpdateApprovalDialogB( 
+  	          			true, // Just inform user.  Don't request approval.
+  		        			"Another running instance of this app "
+  		        			+ "was detected briefly.\n"
+  		              + "It was not used in a software update because "
+  		              + "it was not newer than this app instance.",
+  		              otherAppFile
+  		        			);
+  		          fireNewInstance(); // AppInstanceListener action.
+  		          }
+  		      }
 		      
     	private boolean displayUpdateApprovalDialogB( 
     			final boolean informDontApproveB, String messageString, File appFile )

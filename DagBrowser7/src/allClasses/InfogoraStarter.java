@@ -2,7 +2,7 @@ package allClasses;
 
 import static allClasses.Globals.appLogger;
 
-import java.io.File;
+//// import java.io.File;
 
 public class InfogoraStarter 
 
@@ -24,19 +24,20 @@ public class InfogoraStarter
       appLogger.info(aString);
       System.out.println(aString);
   
-      Shutdowner theShutdowner= new Shutdowner();
-      theShutdowner.initializeV();
+      //// Shutdowner theShutdowner= new Shutdowner();
+      //// theShutdowner.initializeV();
       String [] commandOrArgStrings= new String[] {
           ( // Path of java command in array.
-            "." +
+            "jre1.8.0_191\\bin\\java.exe"
+            /*   //// "." +
             File.separator +
             "bin" +
             File.separator + 
-            "java.exe"
+            "java.exe" */   ////
             ),
           "-cp", // java.exe -cp (classpath) option.
           "Infogora.jar", // Path of .jar file to run
-          "allClasses.InfogoraStarter" // entry point.
+          "allClasses.Infogora" // entry point.
           };
       ///fix? add argStrings at end?
       ProcessStarter.setCommandV(  // Setting String as command to run later.
