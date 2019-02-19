@@ -16,20 +16,20 @@ public class Confingleton
     */
   {
 
-    private static File makeFile( String keyNameString )
+    private static File makeFile( String keyString )
       {
-        return Config.makeRelativeToAppFolderFile( keyNameString + ".txt" );
+        return Config.makeRelativeToAppFolderFile( keyString + ".txt" );
         }
 
     
-    public static String getValueString( String keyNameString )
+    public static String getValueString( String keyString )
       /* This method returns the string stored in the file.
         If the file doesn't exist, or there are any read errors,
         then null is returned.
        */
       {
         String valueString= null;
-        File theFile= makeFile(keyNameString);
+        File theFile= makeFile(keyString);
         try {
           FileReader sessionFileReader = 
             new FileReader(theFile);
@@ -41,21 +41,21 @@ public class Confingleton
             // Ignore errors.  These are treated as no file or bad data.
             // null will be returned.
             }
-        appLogger.debug("Confinglton.getValueString(..) keyNameString="
-            +keyNameString+" port="+valueString);
+        appLogger.debug("Confingleton.getValueString(..) keyString="
+            +keyString+" valueString="+valueString);
         return valueString;
         }
     
-    public static void putValueV( String keyNameString, String valueString )
+    public static void putValueV( String keyString, String valueString )
       /* This method stores valueString stored in the file.
 
         ///enh Make this an atomic operation. 
         */
       {
-        appLogger.debug("Confinglton.putValueString(..) keyNameString="
-            +keyNameString+" port="+valueString);
+        appLogger.debug("Confingleton.putValueString(..) keyString="
+            +keyString+" valueString="+valueString);
 
-        File theFile= makeFile(keyNameString);
+        File theFile= makeFile(keyString);
         
         try ( FileWriter theFileWriter = new FileWriter(theFile ) ) 
           { // Write [new] value string to file.
