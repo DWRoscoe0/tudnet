@@ -205,7 +205,8 @@ public class AppLog extends EpiThread
                 }
             } // process:
           theInput= // Wait for next significant event. 
-              theLockAndSignal.waitingForInterruptOrDelayOrNotificationE(0);
+              // theLockAndSignal.waitingForInterruptOrDelayOrNotificationE(0);
+              theLockAndSignal.waitingForNotificationOrInterruptE();
           } // loop:
     		} // run()
     
