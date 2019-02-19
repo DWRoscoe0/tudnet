@@ -1,5 +1,7 @@
 package allClasses;
 
+import static allClasses.Globals.appLogger;
+
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -39,6 +41,8 @@ public class Confingleton
             // Ignore errors.  These are treated as no file or bad data.
             // null will be returned.
             }
+        appLogger.debug("Confinglton.getValueString(..) keyNameString="
+            +keyNameString+" port="+valueString);
         return valueString;
         }
     
@@ -48,6 +52,9 @@ public class Confingleton
         ///enh Make this an atomic operation. 
         */
       {
+        appLogger.debug("Confinglton.putValueString(..) keyNameString="
+            +keyNameString+" port="+valueString);
+
         File theFile= makeFile(keyNameString);
         
         try ( FileWriter theFileWriter = new FileWriter(theFile ) ) 

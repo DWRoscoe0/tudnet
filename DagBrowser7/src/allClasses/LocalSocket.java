@@ -11,10 +11,21 @@ import java.net.Socket;
 
 public class LocalSocket
 
-  /* This class encapsulates a TCP server socket.
-    It can be used to accept connections from,
-    and receive command lines from other apps,
-    or more likely, other instances of the same app. 
+  /* This class performs the following functions:
+    * Some of the functions of a TCP server socket,
+      such as binding to a port that is not already bound elsewhere.
+    * Is limited to use on the LocalHost loopback network interface.
+    * It has a couple of options for specifying the port to use.
+    * It can accept connections on the ServerSocket,
+      create a socket, and process data received on it. 
+    * If a port is already bound elsewhere,
+      it can open a Socket for the purpose of sending command
+      to the process that bound the port. 
+    
+    It can be used for 2 things:
+    * To signal the existence of an older running instance of an app.
+    * To communicate commands from one running app instance to another,
+      or between different apps.
  
     This Socket code originally came from AppInstanceManager.
 
@@ -27,27 +38,49 @@ public class LocalSocket
 
     private CommandArgs theCommandArgs = null; // For message output.
 
-    public void initializeV( int portI )
+    public synchronized boolean bindB( int portI )
       throws IOException
+      /* Tries to opens theServerSocket,
+        binding the ServerSocket to portI,
+         in preparation for receiving connections.
+        It tries to bind the ServerSocket to portI.
+        It catches IOException, meaning the bind fails,
+        and interprets this as portI already being bound elsewhere.
+       */
       {
-        theServerSocket =  // Try opening listener socket.
-            new ServerSocket(
-              portI, 10, InetAddress.getLoopbackAddress() 
-              );
+        appLogger.info("bindB(..) begins, portI= "+portI);
+        boolean successB= false; // Set default value indicating bind failure.
+        try {
+            theServerSocket=  // Try opening listener socket.
+              new ServerSocket(
+                portI, 10, InetAddress.getLoopbackAddress() 
+                );
+            successB= true; // Indicate bind success.
+            appLogger.info("bindB(..) success.");
+          } catch (IOException e) {
+            appLogger.info("bindB(..) failure.  Port probably in use.");
+            throw e;
+          }
+        return successB;
         }
 
-    // Beginning of methods that appear in a loop.
+    // Beginning of methods that normally appear in a loop.
     
     public void acceptV()
       throws IOException
+      /* Waits for and accepts a connection request,
+        It throws an exception if there is an Error.
+        */
       {
         clientSocket= // Wait until accept or exception. 
             theServerSocket.accept();
         }
 
-    public void inputFromConnectionV()
+    public synchronized void inputFromConnectionV()
       throws IOException
-      /* This method processes a line from just opened socket theSocket.
+      /* This method processes a line from the just-opened socket theSocket.
+        The line is parsed and the results stored in theCommandArgs.
+        It throws an exception if there is an Error.
         */
       {
         BufferedReader inBufferedReader= 
@@ -65,13 +98,13 @@ public class LocalSocket
          inBufferedReader.close();
          }
     
-    public CommandArgs getCommandArgs()
+    public synchronized CommandArgs getCommandArgs()
       /* This method returns the previously parsed CommandArgs,
-        set stored by processLineFromSocketV(..). 
+        stored by processLineFromSocketV(..). 
         */
       { return theCommandArgs; }
     
-    public void closeConnectionV()
+    public synchronized void closeConnectionV()
       /* This method closes the clentSocket connection 
         that was created by accepting a connection on theServerSocket.
         Once this is done, another connection can be accepted and processed.
@@ -85,9 +118,9 @@ public class LocalSocket
         clientSocket= null;
         }
 
-    // End of methods that appear in a loop.
+    // End of methods that normally appear in a loop.
 
-    public boolean isClosedB()
+    public synchronized boolean isClosedB()
       /* This method returns true if the ServerSocket is closed,
         false otherwise.
         */
@@ -96,7 +129,7 @@ public class LocalSocket
         }
       
 
-      public void closeAllV()
+    public synchronized void closeAllV()
         /* This method closes theServerSocket.
           It is commonly used to end a wait for acceptance of 
           connections to that server socket,
@@ -106,7 +139,8 @@ public class LocalSocket
         {
           closeConnectionV(); // Close the single associated socket connection.
           try {
-              theServerSocket.close();
+              if (theServerSocket != null) 
+                theServerSocket.close();
             } catch (IOException e) {
               appLogger.error(
                   "LocalSocket.closeV(),"

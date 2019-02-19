@@ -57,19 +57,34 @@ s     */
     {
       if ( instancePortI < 0 ) // Undefined.
         { // Define it.
-          String instancePortNameString= "instancePort";
-          String portString= 
-              Confingleton.getValueString(instancePortNameString);
-          instancePortI= 44444; // Default port if Confingleton unreadable.
-          if ( portString != null )  // If port file exists...
-            try { instancePortI= Integer.parseInt(portString); } // .. parse it.
-              catch ( NumberFormatException e ) { /* Ignore, using default. */ }
-          portString= instancePortI + "";  // Convert int to string.
-          Confingleton.putValueV(instancePortNameString, portString);
-
+          instancePortI= getConfingletonPortI("instancePort");
           appLogger.debug("PortManager.getInstancePortI() port="+instancePortI);
           }
       return instancePortI;
+      }
+  
+  public int getConfingletonPortI(String fileNameString)
+    /* Get port to be used for network communication.
+      fileNameString contains the name of the Confingleton file
+      where a numeric string is stored.
+s     */
+    {
+      int resultPortI= 44444; // Default port if Confingleton unreadable.
+      String portString= 
+          Confingleton.getValueString(fileNameString);
+      if ( portString != null )  // If port file exists...
+        try 
+          { resultPortI=  // .. parse it for value.
+              Integer.parseInt(portString); 
+            }
+          catch ( NumberFormatException e ) // Parse error.
+          { /* Ignore, using default value. */ }
+      portString= resultPortI + "";  // Convert int to string.
+      Confingleton.putValueV(fileNameString, portString); // Save in file.
+
+      appLogger.debug(
+          "PortManager.getConfingletonPortI() port="+instancePortI);
+      return resultPortI;
       }
   
   public int getNormalPortI()

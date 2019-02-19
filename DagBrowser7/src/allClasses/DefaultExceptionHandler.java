@@ -9,7 +9,7 @@ public class DefaultExceptionHandler {
 
   public static void setDefaultExceptionHandlerV()
     /* This helper method for the main(..) method
-      sets the default handler for uncaught exceptions.
+      sets the default handler for uncaught exceptions for all threads.
       The purpose of this is to guarantee that every Exception
       will be handled by this application and
       at least produce a log message.
@@ -33,7 +33,7 @@ public class DefaultExceptionHandler {
           }
         );
 
-      appLogger.info( "setDefaultExceptionHandlerV() done." );
+      appLogger.info( "setDefaultExceptionHandlerV() run." );
       //throw new NullPointerException(); // Uncomment to test handler.
       }
 

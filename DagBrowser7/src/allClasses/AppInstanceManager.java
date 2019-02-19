@@ -423,17 +423,17 @@ l    * If the app receives a message indicating
 	    private boolean tryARunningInstanceActionB( )
 	      /* Normally this method is called at app start-up.
 	        It detects whether there is a previously run running instance
-	        by trying to open a particular network socket.
+	        by trying to bind a network ServerSocket on a particular port.
 
-          If this app can open the socket then it means that
+          If this app can bind the socket then it means that
           no other running app instance has done so.
           In this case it starts an InstanceManagerThread
-          to monitor the socket it for future connections and messages from 
+          to monitor the socket for future connections and messages from 
           later running instances of this app.
           Then it returns false to indicate that this app instance
           should continue with normal GUI start-up, etc.
 
-	        If this app can't open the socket it is probably because 
+	        If this app can't bind the socket then it is probably because 
 	        an earlier app instance is running and already did that.
 	        In this case it connects to the socket and tries to send through it
 	        to the other earlier app instance the path of this app's jar file.
@@ -455,7 +455,7 @@ l    * If the app receives a message indicating
 	          //  getInstancePortI()
 	          //  );
 
-	          theLocalSocket.initializeV(getInstancePortI());
+	          theLocalSocket.bindB(getInstancePortI());
 	          { // Setup InstanceManagerThread to monitor the socket.
 	            InstanceManagerThread theInstanceManagerThread=
 	              new InstanceManagerThread();
@@ -496,7 +496,7 @@ l    * If the app receives a message indicating
 	        as a source for possible updates. 
 	        It returns true if it succeeds and to indicate that
 	          this app should exit to let the other app handle things.
-	        It return false to indicate a sending error,
+	        It returns false to indicate a sending error,
 	          and this app should not exit.
 	        */
 	      {
@@ -505,9 +505,10 @@ l    * If the app receives a message indicating
 	            "-otherAppIs " + // Infogora -otherAppIs option.
 	            runningAppFile.getAbsolutePath(); // Path of this app's file. 
 	        try {
-	            Socket clientSocket =  // Create socket for send.
+	            Socket clientSocket= // Create socket for send.
 	              new Socket(InetAddress.getLoopbackAddress(), getInstancePortI());
-	            OutputStream out = clientSocket.getOutputStream();  // Get its stream.
+	            OutputStream out= // Get its stream.
+	                clientSocket.getOutputStream();
 	            out.write(  // Send output string to other app via stream.
 	              outputString.getBytes());
 	            out.close();  // Close stream.
