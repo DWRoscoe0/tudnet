@@ -57,6 +57,7 @@ public class ProcessStarter
                 );
               ProcessBuilder myProcessBuilder= // Build the process. 
                 new ProcessBuilder(inArgStrings);
+              myProcessBuilder.inheritIO(); // Inherit standard IO streams.
               
               resultProcess= // Start the process.
                   myProcessBuilder.start();
