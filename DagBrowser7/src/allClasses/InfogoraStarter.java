@@ -17,6 +17,7 @@ public class InfogoraStarter
 
         */
       { // main(..)
+        Process theProcess= null;
         appLogger.setIDProcessV("Starter");
         appLogger.setBufferedModeV( true ); // Enabling fast buffered logging.
         DefaultExceptionHandler.setDefaultExceptionHandlerV(); 
@@ -46,7 +47,7 @@ public class InfogoraStarter
           commandOrArgStrings
           );
         appLogger.debug("InfogoraStarter.main() starting Infogora process.");
-        Process theProcess= ProcessStarter.startProcess(commandOrArgStrings);
+        theProcess= ProcessStarter.startProcess(commandOrArgStrings);
         if (theProcess == null)
           appLogger.error("InfogoraStarter.main() app start failed.");
           else 

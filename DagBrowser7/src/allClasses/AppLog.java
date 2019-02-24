@@ -3,11 +3,11 @@ package allClasses;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 
 import allClasses.LockAndSignal.Input;
@@ -166,8 +166,8 @@ public class AppLog extends EpiThread
      	*/
       public static boolean testingForPingB= false;
       private boolean debugEnabledB= true;
-      private boolean consoleCopyModeB= false; // When true, logging goes to console
-        // as well as log file.  
+      private boolean consoleCopyModeB= false; // When true, logging goes to 
+        // console as well as log file.  
       public LogLevel packetLogLevel= DEBUG;  // INFO; // DEBUG; 
 
     public void setIDProcessV( String processIDString )
@@ -592,7 +592,7 @@ public class AppLog extends EpiThread
         aString+= " ";  //...a space,...
         
    	  	if (consoleCopyEntryB || consoleCopyModeB) // ...a console flag if called for... 
-   	  		aString+= "CONSOLE-COPIED ";
+   	  		aString+= "CON ";
    	  	
         if ( theLogLevel != null ) { //..and the log level if present... 
 	   	  	aString+= theLogLevel; // ...the log level,...
@@ -656,30 +656,6 @@ public class AppLog extends EpiThread
         }
       }
     
-    private synchronized FileWriter oldOpenWithRetryDelayFileWriter()
-      throws IOException
-      /* This method opens a FileWriter for the log file.
-        If the open fails, it sleeps for 1 ms, and tries again.
-        It repeats until the open succeeds.
-        It returns the open FileWriter.
-        */
-      { 
-        FileWriter resultFileWriter= null;
-        while (true) { // Keep trying to open until it succeeds.
-          try {
-              resultFileWriter= new FileWriter(  // Open log file for writing...
-                  logFile,   // ...with this name...
-                  true  // ...and write to end of file, not the beginning.
-                  );
-              break; // Exit if open succeeded.
-            } catch (IOException e) { // Open failed.
-              uninterruptableSleepB(Config.LOG_OPEN_RETRY_TIME); // Pause.
-              openSleepDelayMsI++; //* Count the pause and the time.
-            }
-          }
-        return resultFileWriter;
-        }
-    
     private synchronized Writer openWithRetryDelayFileWriter()
       throws IOException
       /* This method opens a FileWriter for the log file.
@@ -699,7 +675,9 @@ public class AppLog extends EpiThread
                   logFile,   // ...log file with this name...
                   true  // ...and write to end of file, not the beginning.
                   );
-              theLogFileLock= theFileOutputStream.getChannel().lock();
+              FileChannel theFileChannel= theFileOutputStream.getChannel();
+              theLogFileLock= theFileChannel.lock();
+              theFileChannel.position(theFileChannel.size()); // Set for append.
               resultWriter= new OutputStreamWriter(theFileOutputStream);
               break; // Exit if open succeeded.
             } catch (IOException e) { // Open failed.
@@ -742,13 +720,14 @@ public class AppLog extends EpiThread
         which closes everything associated with the log file.  
         */
       {
-        debug("closeFileV() closing log file.");
-        if (theLogFileLock != null)
+        debug("closeFileV() flushing, unlocking, and closing log file.");
+        thePrintWriter.flush();  // Flush buffers to file.
+        if (theLogFileLock != null) // Unlock file if locked.
           try {
             theLogFileLock.release(); // Unlock first.
             theLogFileLock= null;
           } catch (IOException e){
-            System.out.println("close... 3 catch");
+            System.out.println("closeFileV() during release(), "+e);
           }
         thePrintWriter.close(); // Close file.
         thePrintWriter= null; // Indicate file is closed.
