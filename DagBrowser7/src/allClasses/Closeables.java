@@ -20,7 +20,7 @@ public class Closeables
 	  * Is the close being done as part of recovery from an error
 	    that has occurred on the same resource?
 
-	  ///ehn: maybe add methods which takes an array... of Closeables
+	  ///enh: maybe add methods which takes an array... of Closeables
 	    instead of a single Closable.
 
 	 	*/

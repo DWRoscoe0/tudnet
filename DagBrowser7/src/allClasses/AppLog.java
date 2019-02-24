@@ -16,23 +16,30 @@ import static allClasses.AppLog.LogLevel.*;
 
 public class AppLog extends EpiThread
 
-  /* This class is for logging information from an app.  
+  /* This class is for logging information from application programs.  
     It is of a special design to provide the following features:
     * Logs strings provided by the application.
-    * Thread-safe so multiple app threads may log to the same file
+    * Thread-safe any app thread may log.
+      There entries are appended to the same file
       and their log entries will be interleaved.
-    ? Multiple app process instances may log to the same file
+      Entries contain the name of the thread that logged it.
+    ? Multiple app process instances may log.
+      There entries are appended to the same file
       and their log entries will be interleaved.
-      Output from different app instances 
-      are identified by different session numbers.
+      Entries contain a session number,
+      which should be unique for each logging process.
     * Log entries are stamped with the relative times since
-      the previous entry of the same session.
+      the previous entry of the same process session.
 
+    Multiple thread safety is achieved using synchronized Java code.
+    Multiple process safety is achieved using file locking.
+    ///tst : process safety needs to be [better] tested.
+    
 		If any errors occur during logging they will be reported:
 		* As an Exception occurrence reported to the err stream
 		* As an error count later to the log, if possible.
 
-    When executing logging-intensive parts of the app can cause
+    Executing logging-intensive parts of the app can cause
     the app to run slowly because of:
     * Anti-malware Service Executable  
     * Microsoft Windows Search Indexer
@@ -54,7 +61,7 @@ public class AppLog extends EpiThread
       that doesn't need to be a static singleton and can be injected.
       Allow both static and injected-non-static, at least for a while.
 
-    ///fix? MakeMultiprocessSafe:  Ready for testing, with InfogoraStarter. 
+    ///tst? MakeMultiprocessSafe:  Ready for testing, with InfogoraStarter. 
 	    ///fix: When the presently kludgy buffered mode is enabled,
 	      interleaving of log entries might not work correctly
 	      when there are two running instances on the same computer,
@@ -64,14 +71,11 @@ public class AppLog extends EpiThread
 	      Make log file be share-able in case two app instances
 	      try to write to it at the same time.  See createOrAppendToFileV(..).
 
-    ///ehn: Eliminate thread blocking caused by closed file pausing.
-      Though this logger is probably now multiprocess-safe,
-      it does this by using brief mandatory 10 ms pauses 
-      each time it closes the log file.
-      This inhibits logging, and prevents the proceeding of
-      any threads that need to log something during that time.
+    ///enh: Eliminate thread blocking caused by pausing after closing file.
+      This presently allows other processes to open the log file
+      and log if they are quick enough.
       It might be necessary to use alternating temporary output files 
-      to receive logging data to prevent this.
+      to receive logging data to prevent blocking.
       
 		///enh: Make the logging routines more orthogonal, in the following
 		  dimensions:
@@ -80,7 +84,7 @@ public class AppLog extends EpiThread
 		  * copy log file output to console, or not, except time-stamp
 		  * re-throw exception and return vs. not returning
 		 
-		///ehn: To limit unwanted logging, it might make sense to have 
+		///enh: To limit unwanted logging, it might make sense to have 
 			logging methods associated with classes of interest whose purpose is 
 			to limit logging associated with those classes by instance.
 			Some support code would be required in this class,
@@ -111,10 +115,8 @@ public class AppLog extends EpiThread
         new AppLog();
 
       static { 
-        System.out.println("AppLog static initialization begins.");
       	theAppLog.setDaemon( true ); // Make thread the daemon type. 
       	theAppLog.start();  // Start the associated thread. 
-        System.out.println("AppLog static initialization ends.");
       	}
       
       public static AppLog getAppLog()   // Returns singleton logger.
@@ -218,7 +220,6 @@ public class AppLog extends EpiThread
           theInput= // Wait for next significant event or timeout. 
             theLockAndSignal.waitingForInterruptOrDelayOrNotificationE(
               delayMsL);
-              //// theLockAndSignal.waitingForNotificationOrInterruptE();
           } // loop:
     		} // run()
     
@@ -245,7 +246,6 @@ public class AppLog extends EpiThread
         to allow output by other processes.
     	  */
 	    {
-        System.out.println("AppLog.setBufferedModeV(..) begins.");
         initializeIfNeededV();
         String bufferedModeLogString= "AppLog.setBufferedModeV(..), ";
         boolean actualBufferedModeB= bufferedModeB;
@@ -265,7 +265,6 @@ public class AppLog extends EpiThread
 		      	}
 	    	bufferedModeB= desiredBufferedModeB;
 	    	theLockAndSignal.notifyingV(); 
-        System.out.println("AppLog.setBufferedModeV(..) ends.");
 	    	}
     
     private synchronized void initializeIfNeededV()
@@ -286,7 +285,6 @@ public class AppLog extends EpiThread
         * Determining the session number.
         */
       {
-        System.out.println("AppLog.initializeV() begins.");
         logFile=  // Identify log file name.
         		Config.makeRelativeToAppFolderFile( "log.txt" );
         theSessionI= getSessionI();  // Get app session number.
@@ -294,7 +292,6 @@ public class AppLog extends EpiThread
           logFile.delete();  //...then empty log file by deleting.
         openFileWithRetryDelayIfClosedV(); // Open file for use.
         logHeaderLinesV(); // Append the session header lines.
-        System.out.println("AppLog.initializeV() ends.");
         }
 
     private void logHeaderLinesV()
@@ -616,8 +613,7 @@ public class AppLog extends EpiThread
       	appendToOpenFileV(aString);  // Append it to log file.
         
    	  	if (consoleCopyEntryB || consoleCopyModeB) // Append to console if called for... 
-        	//// System.err.print(aString);
-   	  	 System.out.print(aString);
+   	  	  System.out.print(aString);
 
         lastMillisL= nowMillisL; // Saving present time as new last time.
         }
@@ -660,7 +656,7 @@ public class AppLog extends EpiThread
         }
       }
     
-    private synchronized FileWriter openWithRetryDelayFileWriter()
+    private synchronized FileWriter oldOpenWithRetryDelayFileWriter()
       throws IOException
       /* This method opens a FileWriter for the log file.
         If the open fails, it sleeps for 1 ms, and tries again.
@@ -684,7 +680,7 @@ public class AppLog extends EpiThread
         return resultFileWriter;
         }
     
-    private synchronized Writer newOpenWithRetryDelayFileWriter()
+    private synchronized Writer openWithRetryDelayFileWriter()
       throws IOException
       /* This method opens a FileWriter for the log file.
         If the open fails, it sleeps for 1 ms, and tries again.
@@ -694,23 +690,17 @@ public class AppLog extends EpiThread
       { 
         FileOutputStream theFileOutputStream= null;
         Writer resultWriter= null;
-        System.out.println("open... 1 enter");
         while (true) { // Keep trying to open until it succeeds.
           try {
               theFileOutputStream= null;
               resultWriter= null;
               theLogFileLock= null;
-              System.out.println("open... 2 try");
               theFileOutputStream= new FileOutputStream( // Open for writing...
                   logFile,   // ...log file with this name...
                   true  // ...and write to end of file, not the beginning.
                   );
-              System.out.println("open... 3 try");
-              //// theLogFileLock= theFileOutputStream.getChannel().lock();
-                // This will block until lock is acquired.
-              System.out.println("open... 4 try");
+              theLogFileLock= theFileOutputStream.getChannel().lock();
               resultWriter= new OutputStreamWriter(theFileOutputStream);
-              System.out.println("open... 5 try");
               break; // Exit if open succeeded.
             } catch (IOException e) { // Open failed.
               System.out.println("open... 6 catch begin");
@@ -722,7 +712,6 @@ public class AppLog extends EpiThread
               System.out.println("open... 7 catch end");
             }
           }
-        System.out.println("open... 7 exit");
         return resultWriter;
         }
 
@@ -753,20 +742,16 @@ public class AppLog extends EpiThread
         which closes everything associated with the log file.  
         */
       {
-        //// System.out.println("close... 1 enter");
         debug("closeFileV() closing log file.");
-        /*  ////
+        if (theLogFileLock != null)
           try {
             theLogFileLock.release(); // Unlock first.
             theLogFileLock= null;
-            System.out.println("close... 2 try end");
           } catch (IOException e){
             System.out.println("close... 3 catch");
           }
-        */ ////
         thePrintWriter.close(); // Close file.
         thePrintWriter= null; // Indicate file is closed.
-        //// System.out.println("close... 4 exit");
         }
       
 
