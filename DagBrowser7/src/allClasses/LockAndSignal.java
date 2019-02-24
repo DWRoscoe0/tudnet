@@ -161,7 +161,29 @@ public class LockAndSignal  // Combination lock and signal class.
     one or more threads?  This can be done now with an additional
     LockAndSignal for each thread in the opposite direction.  
     But would it make sense to create a special class for this?
-    
+
+    Notes on time variables and parameters.
+    * All time values end in "MsL", "Ms" for milliseconds, "L" for long.
+    * long waitDelayMsL: 
+      * The value 0 means 0 (no) delay.  Return immediately
+      * Positive values are the number of milliseconds to wait.
+        The maximum is Long.MAX_VALUE milliseconds.
+        Although not infinite, it is quite long, and can be repeated.
+      * Negative values are illegal.
+    * long waitFlagMsL: 
+      This is like waitDelayMsL except that
+      the value 0, instead of meaning no waiting, means an infinite wait.
+      It has the same meaning as the parameter for Object.wait(long).
+      The wait must be terminated by another condition such as 
+      a notification or an interrupt.
+    * Interval ( long startMsL, long lengthMsL )
+      * long startMsL: This is the time of the start of the interval.
+        Often this is time now, returned by System.currentTimeMillis().  
+      * long lengthMsL: This is the length of the interval.
+    * long shiftMsL: 
+      This is a quantity of time to be added to point in time
+      to put it in a desired interval.
+
     */
 
   {
@@ -296,6 +318,7 @@ public class LockAndSignal  // Combination lock and signal class.
 
 			*/
 	
+    //// documented.
 	    public Input waitingForInterruptOrNotificationE()
 		    /* This method, called by a consumer thread,
 			    waits for an input from the following list.
@@ -322,10 +345,11 @@ public class LockAndSignal  // Combination lock and signal class.
 			    return theInput;  // Returning why the wait loop ended.
 			    }
 	
+      //// documented.
 	    public Input waitingForNotificationOrInterruptE()
 		    /* This method, called by a consumer thread,
 			    waits for an input from the following list.
-			     If more than one input type is available when the method is called 
+          If more than one input type is available when the method is called 
 			    then it returns the one that appears first.
 			      Input.NOTIFICATION: 
 			        An input signal notification occurred.
@@ -348,8 +372,9 @@ public class LockAndSignal  // Combination lock and signal class.
 			    return theInput;  // Returning why the wait loop ended.
 			    }
 			    
+      //// documented.
 			public synchronized Input waitingForInterruptOrDelayOrNotificationE( 
-	    		long delayMsL 
+	    		long lengthMsL 
 	    		)
 		    /* This method, called by a consumer thread,
 			    waits for an input from the following list.
@@ -369,12 +394,13 @@ public class LockAndSignal  // Combination lock and signal class.
 			    return // Convert to call with time delay converted to time interval. 
 		    		waitingForInterruptOrIntervalOrNotificationE( 
 				      System.currentTimeMillis(),
-				      delayMsL 
+				      lengthMsL 
 				      );
 	        }
 	
+      //// documented.
 	    public synchronized Input waitingForInterruptOrIntervalOrNotificationE(
-	    		long startMsL, long lengthMsL 
+	    		long startMsL, long lengthMsL
 	    		)
 		    /* This method, called by a consumer thread,
 			    waits for an input from the following list.
@@ -383,10 +409,10 @@ public class LockAndSignal  // Combination lock and signal class.
 	          Input.INTERRUPTION: 
 		          The interrupt status set by Thread.currentThread().interrupt()
 		          was true, and was then cleared by this method.
-			      Input.TIME.
+			      Input.TIME:
 			        Time is outside the interval that begins at startMsL
-			        and ends delayMs milliseconds later. 
-			      Input.NOTIFICATION: 
+			        and ends lengthMsL milliseconds later. 
+			      Input.NOTIFICATION:
 			        An input signal notification occurred.
 			        This condition is cleared when the notification is returned.
 	
@@ -395,17 +421,17 @@ public class LockAndSignal  // Combination lock and signal class.
 		    {
 		      Input theInput;  // For type of Input that will be returned.
 		      while (true) { // Looping until there is an input.
-		        final long remainingInIntervalMsL= // [Re]calculating remaining time.
-	        		timeCheckedDelayMsL( startMsL, lengthMsL ); 
+		        final long delayMsL= // [Re]calculating remaining time.
+	        		realTimeWaitDelayMsL( startMsL, lengthMsL ); 
 		      	theInput= // Testing whether any input is available. 
 	      			testingForInterruptOrDelayOrNotificationE( 
-	      					remainingInIntervalMsL 
+	      					delayMsL 
 	      					);
 		        if  // Exiting with input type unless...
 		          ( theInput != Input.NONE ) // ...there is no input available. 
 		        	break; // Exiting.
 		        waitingForInterruptOrDelayOrNotificationV( // Waiting for any input.
-			      		remainingInIntervalMsL
+			      		delayMsL
 			      		);
 		        } // while(true)
 		      return theInput;  // Returning why the wait loop ended.
@@ -430,6 +456,7 @@ public class LockAndSignal  // Combination lock and signal class.
 
 	   	*/
 		
+      //// documented.
 	    public synchronized Input testingForInterruptTimeOrNotificationE( 
 	    		long startMsL, long lengthMsL 
 	    		)
@@ -452,14 +479,15 @@ public class LockAndSignal  // Combination lock and signal class.
 	
 	        */
 		    {
-				  final long delayMsL= // Converting time interval to time delay.
-				  		timeCheckedDelayMsL( startMsL, lengthMsL );
+				  final long waitDelayMsL= // Converting time interval to time delay.
+				  		realTimeWaitDelayMsL( startMsL, lengthMsL );
 	
-				  return testingForInterruptOrDelayOrNotificationE( delayMsL );
+				  return testingForInterruptOrDelayOrNotificationE( waitDelayMsL );
 			    }
 
+      //// documented.
       public synchronized Input testingForInterruptOrDelayOrNotificationE( 
-      		long delayMsL 
+      		long lengthMsL
       		)
 		    /* This method, called by a consumer thread,
 			    tests for an input from the following list.
@@ -471,7 +499,8 @@ public class LockAndSignal  // Combination lock and signal class.
 		          was true, and was then cleared by this method.
 			      Input.TIME.
 			        Time is outside the interval that begins now
-			        and ends delayMs milliseconds later. 
+			        and ends lengthMsL milliseconds later, in other words, 
+			        no delay remains, in other words, lengthMsL is 0.  
 			      Input.NOTIFICATION: 
 			        An input signal notification occurred.
 			        This condition is cleared when the notification is returned.
@@ -484,7 +513,7 @@ public class LockAndSignal  // Combination lock and signal class.
 		      process: {
 		      	theInput= testingForInterruptE();
 		      	if ( theInput != Input.NONE ) break process;
-					  theInput= testingRemainingDelayE( delayMsL );
+					  theInput= testingRemainingDelayE( lengthMsL );
 		      	if ( theInput != Input.NONE ) break process;
 		      	theInput= testingForNotificationE();
 		      	// No need to test final result.  Just drop through.
@@ -512,19 +541,20 @@ public class LockAndSignal  // Combination lock and signal class.
       see their callers above this point in this file.
       */
 
+      //// documented.
       public synchronized Input testingForInterruptE() 
 		    /* This method, called by a consumer thread,
 			    tests for and resets the thread interrupt status input only.  
 			    It returns results as follows:
-			    
+
 	          Input.INTERRUPTION: 
 		          The current thread's interrupt status was found to be true,
 		          and was then set to false.
-	
+
 		     	  Input.NONE: None of the above inputs was available.
 		     	    This means current thread's interrupt status 
 		     	    was found to be false, and was not changed.
-	
+
 					This method always tries to return with interrupt status false.
 					If it was false then it stays false.
 					If it was true then it is set false by the call to
@@ -544,10 +574,12 @@ public class LockAndSignal  // Combination lock and signal class.
 	 	      	return Input.NONE;
 	      	}
 
-      public synchronized Input testingRemainingDelayE( long delayMsL )
+      //// documented.
+      public synchronized Input testingRemainingDelayE( long waitDelayMsL )
 		    /* This method, called by a consumer thread,
 			    tests for a time input only.
-          delayMs should be a value previously returned by timeCheckedDelayMsL().
+          waitDelayMsL should be a value 
+          previously returned by realTimeWaitDelayMsL().
 			    This method returns results as follows:
 	
 			      Input.TIME.
@@ -561,12 +593,13 @@ public class LockAndSignal  // Combination lock and signal class.
 	
 	        */
 	      {
-				  if ( delayMsL == 0 )
+				  if ( waitDelayMsL == 0 )
 	 	      	return Input.TIME;
 	 	      	else
 	 	      	return Input.NONE;
 	      	}
 
+      //// documented.
       public synchronized Input testingForNotificationE()
 		    /* This method, called by a consumer thread,
 			    tests for notification inputs only.
@@ -597,46 +630,47 @@ public class LockAndSignal  // Combination lock and signal class.
 		 	      return Input.NONE;
 	      	}
 
+      //// documented.
       public synchronized void waitingForInterruptOrDelayOrNotificationV(
-      		long waitTimeMsL
+      		long waitFlagMsL
       		)
   	    /* This method, called by a consumer thread,
   		    waits for any of the following:
   		    * a thread interrupt, either a pre-existing interrupt status 
   		      one an interrupt that happens during the wait().
   		    * A call to notify() during the wait().
-  		    * The passage of waitTimeMsL time.
+  		    * The passage of waitFlagMsL time.  
 
-  		    It does all of this with a call to Object.wait(waitTimeMsL).
-  		    waitTimeMsL equaling 0 means that
-  		    the passage of no amount of time will terminate the wait().
+  		    It does all of this with a call to Object.wait(waitFlagMsL).
+  		    waitFlagMsL must be positive.  
+  		    If waitFlagMsL == 0 it is treated as an infinite time.
 
-  		    This method does not loop and returns no results.
+  		    This method does not loop and does not return a value.
   		    It is the responsibility of the caller 
   		    to loop and test whether a desired input actually happened,
   		    and if not, to wait again, possibly with a reduced wait time.
   	      */
   	    {
 	        try { // Waiting for new notify(), wait time, or interrupt().
-	          wait( waitTimeMsL );
+	          wait( waitFlagMsL );
 	          } 
 	        catch (InterruptedException e) { // Handling thread wait interrupt.
 	          Thread.currentThread().interrupt(); 
 	          } // Re-establishing thread interrupt status for later tests.
   	      }
 
+      //// documented.
       public synchronized void waitingForDelayOrNotificationV(
-      		long waitTimeMsL
+      		long waitFlagMsL
       		)
   	    /* This method, called by a consumer thread,
   		    waits for any of the following:
   		    * A call to notify() during the wait().
-  		    * The passage of waitTimeMsL time.
+  		    * The passage of waitFlagMsL time.
   		    It ignores, but preserves, thread interrupts.
 
-  		    It does this with a call to Object.wait(waitTimeMsL).
-  		    waitTimeMsL equaling 0 means that
-  		    the passage of no amount of time will terminate the wait().
+  		    It does this with a call to Object.wait(waitFlagMsL).
+          If waitFlagMsL == 0 it is treated as an infinite time.
 
   		    It partially ignores, but preserves thread interrupts.
   		    If the thread's interrupted status is true when
@@ -660,7 +694,7 @@ public class LockAndSignal  // Combination lock and signal class.
     	  		Thread.currentThread().isInterrupted();
 
         try {
-          wait( waitTimeMsL ); // Waiting for new notify() or wait time.
+          wait( waitFlagMsL ); // Waiting for new notify() or wait time.
 	        if (interruptedB) // Restoring interrupt status to what it was.
 	        	Thread.currentThread().interrupt(); 
           } 
@@ -690,55 +724,57 @@ public class LockAndSignal  // Combination lock and signal class.
       ??? new method to shift a time using shiftCorrectionMsL()?
      */
 
+      //// documented.
 	    public long periodCorrectedShiftMsL( 
-	    		long targetTimeMsL, long limitAndPeriodMsL 
+	    		long startMsL, long periodLengthMsL 
 	    		)
 	      /* This method returns how much targetTimeMsL should be shifted
 	        in order to put the present time in the interval
-	        that begins at targetTimeMsL and is limitAndPeriodMsL long.
+	        that begins at startTimeMsL and is periodLengthMsL long.
 	        Most calls to this method return 0, but sometimes it will return
-	        positive or negative multiples of lengthMsL,
-	        depending on whether system time System.currentTimeMillis() 
-	        has been advanced or retarded by amounts greater than lengthMsL.
+	        positive or negative multiples of periodLengthMsL,
+	        depending on whether System.currentTimeMillis() has been 
+	        advanced or retarded by amounts greater than periodLengthMsL.
 	        */
 			{
 	    	long shiftMsL= 0;
 	    	long delayMsL;
 				final long currentTimeMsL= System.currentTimeMillis();
 	    	while (true) { // Advancing target and shift until time-out positive.
-	    		targetTimeMsL+= limitAndPeriodMsL; // Advancing target time.
-	  			delayMsL= targetTimeMsL - currentTimeMsL;
+	    		startMsL+= periodLengthMsL; // Advancing target time.
+	  			delayMsL= startMsL - currentTimeMsL;
 	    	  if // Exiting loop if needed delay is positive.
 	    	    ( delayMsL > 0 ) 
 	    	  	break;
-	    	  shiftMsL+= limitAndPeriodMsL;
+	    	  shiftMsL+= periodLengthMsL;
 					}
 	    	while (true) { // Retarding target and shift while time-out excessive.
 	    		if // Exiting loop if needed delay not above period. 
-	    			( delayMsL <= limitAndPeriodMsL ) 
+	    			( delayMsL <= periodLengthMsL ) 
 	    			break; 
-	    		targetTimeMsL-= limitAndPeriodMsL; // Retarding target time.
-	  			delayMsL= targetTimeMsL - currentTimeMsL;
-	  			shiftMsL-= limitAndPeriodMsL;
+	    		startMsL-= periodLengthMsL; // Retarding target time.
+	  			delayMsL= startMsL - currentTimeMsL;
+	  			shiftMsL-= periodLengthMsL;
 	     	  }
 	    	return shiftMsL; // Returning how much shift was needed.
 				}
 	
-	    public long periodCorrectedDelayMsL( long targetTimeMsL, long lengthMsL )
-	      /* This method returns a value to be used as 
+      //// documented.
+	    public long periodCorrectedDelayMsL( long startMsL, long lengthMsL )
+	      /* This method makes it possible to avoid problems caused by 
+	        large sudden changes in System.currentTimeMillis().
+          The process is similar to what is done in realTimeWaitDelayMsL(..).
+          
+          This method returns a value to be used as 
 	        a time-out interval parameter to terminate a wait 
-	        at time targetTimeMsL plus lengthMsL.
+	        at time startMsL plus lengthMsL.
 	        The value returned will be greater than 0 
 	        but not greater than lengthMsL,
-	        and the time-out will occur on 
-	        a multiple of lengthMsL from the targetTimeMsL.
-	        Specifying a time-out time this way makes it possible to avoid
-	        problems caused by large sudden changes in System.currentTimeMillis().
-	        The process is similar to what is done in correctionMsL(..).
+	        and the time-out will occur on a multiple of lengthMsL from startMsL.
 	        */
 			{
 	    	long delayMsL= // Calculating tentative time-out delay. 
-	    			(targetTimeMsL + lengthMsL) - System.currentTimeMillis();
+	    			(startMsL + lengthMsL) - System.currentTimeMillis();
 	    	while ( delayMsL <= 0 ) // Shifting up while too low. 
 	    		delayMsL+= lengthMsL;
 	    	while ( delayMsL > lengthMsL ) // Shifting down while too high.
@@ -746,22 +782,25 @@ public class LockAndSignal  // Combination lock and signal class.
 	    	return delayMsL;
 				}
 	
-	    public long timeCheckedDelayMsL( long startMsL, long lengthMsL )
-	      /* This method produces a real-time-checked delay from
-	        the time interval that begins at startMsl and is lengthMsL long.
+	    //// documented.
+	    public long realTimeWaitDelayMsL( long startMsL, long lengthMsL )
+	      /* This method produces a wait-delay expressed in milliseconds
+	        based on the interval that begins at startMsL and is lengthMsL long.
 		      * It returns 0 if System.currentTimeMillis() 
-		        is either before or after the interval.
+		        is either before or after the interval,
+		        which causes an immediate return when used as a wait delay.
 		      * It returns the number of milliseconds to the end of the interval
 		        if the present time is within the interval.
 	        The returned value, if used immediately, can be used as 
-	        a delayMsL argument or any of this class's methods which takes it.
-	        However it may NOT be used an a time-out delay argument to 
-	        the Object.wait(..) method because 0 means an infinite time-out delay. 
+	        a waitDelayMsL argument in any methods that takes one.
+	        Note that it may NOT be used an a time-out delay argument to 
+	        the Object.wait(..) method, or as a waitFlagMsL argument,
+	        because in these cases 0 means an infinite time-out delay. 
 	        This method helps threads avoid being blocked for long intervals
-	        if the real time clock is set and changes by a large amount.  
+	        if the real time clock is set, causing it to change by a large amount.  
 	        */
 				{
-	    	  long delayMsL= 0; // Assuming time now is outside interval.
+	    	  long waitFlagMsL= 0; // Assuming time now is outside interval.
 	    	  process: {
 		    	  final long nowMsL= System.currentTimeMillis(); // Getting now time.
 		    	  final long endMsL= startMsL + lengthMsL; // Calculating end time.
@@ -770,15 +809,16 @@ public class LockAndSignal  // Combination lock and signal class.
 		    	  if ( nowMsL-startMsL < 0) // Exiting with 0 if before interval start.
 		    	  	break process;
 		    	  // Time is within interval.  
-		    	  delayMsL= // Set delay to be the time to the end of the interval.
+		    	  waitFlagMsL= // Set delay to be the time to the end of the interval.
 		    	  		endMsL - nowMsL;
 	    	  	} // process:
-			    return delayMsL;
+			    return waitFlagMsL;
 			    }
 
 
     // Producer thread input notification method.
 
+	    //// documented.
 	    public synchronized void notifyingV()
 	      /* This method is called by producer threads,
 	        the threads which are data producers.
@@ -794,9 +834,11 @@ public class LockAndSignal  // Combination lock and signal class.
 
     // Getter and setter methods.
 
+	    //// documented.
 	    private boolean getB()  // Get mutable boolean value.
 	      { return signalB ; }
 
+	    //// documented.
 	    private void setV( boolean theB )  // Set mutable boolean value.
 	      { signalB= theB; }
 

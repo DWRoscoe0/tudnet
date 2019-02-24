@@ -91,7 +91,9 @@ class Infogora  // The root of this app.
 
 			  */
       { // main(..)
-	      appLogger.setBufferedModeV(true); // Enabling fast buffered logging.
+	      //// appLogger.getAndEnableConsoleModeB(); //// For debugging.
+        appLogger.setBufferedModeV(false); //// Disabling for debugging.
+        appLogger.setBufferedModeV(true); // Enabling fast buffered logging.
         DefaultExceptionHandler.setDefaultExceptionHandlerV(); 
           // Preparing for exceptions before doing anything else.
 	      appLogger.info("Infogora.main() beginning. ======== APP IS STARTING ========");

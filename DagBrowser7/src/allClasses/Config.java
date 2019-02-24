@@ -75,6 +75,11 @@ public class Config
 		public static final long initialRoundTripTime100MsAsNsL= 
 				initialRoundTripTime100MsL * 1000000;
 	
+		// AppLog configuration times, in ms.
+    public static final long LOG_OPEN_RETRY_TIME= 1;
+		public static final long LOG_MIN_CLOSE_TIME= 10; 
+    public static final long LOG_PAUSE_TIMEOUT= 200; 
+    public static final long LOG_OUTPUT_TIMEOUT= 400; 
 
 		// Not final to prevent a "Comparing identical" warning where used.
 		public static long packetSendDelayMsL= 0; // 500; // 1000;

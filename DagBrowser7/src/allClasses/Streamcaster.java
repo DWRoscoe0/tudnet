@@ -306,7 +306,7 @@ public class Streamcaster<
 	          ( theEpiInputStreamI.available() > 0 )
 		        { theInput= Input.SUBNOTIFICATION; break loopWithoutResult; }
 	        loopWithoutNotification: while (true) {
-		        final long remainingMsL= theLockAndSignal.timeCheckedDelayMsL( 
+		        final long remainingMsL= theLockAndSignal.realTimeWaitDelayMsL( 
           		startMsL, lengthMsL 
           		);
 					  theInput= theLockAndSignal.testingRemainingDelayE( remainingMsL );

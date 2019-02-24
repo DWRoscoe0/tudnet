@@ -38,7 +38,7 @@ public class LocalSocket
 
     private CommandArgs theCommandArgs = null; // For message output.
 
-    public synchronized boolean bindB( int portI )
+    public synchronized void bindV( int portI )
       throws IOException
       /* Tries to opens theServerSocket,
         binding the ServerSocket to portI,
@@ -49,19 +49,19 @@ public class LocalSocket
        */
       {
         appLogger.info("bindB(..) begins, portI= "+portI);
-        boolean successB= false; // Set default value indicating bind failure.
+        //// boolean successB= false; // Set default value indicating bind failure.
         try {
             theServerSocket=  // Try opening listener socket.
               new ServerSocket(
                 portI, 10, InetAddress.getLoopbackAddress() 
                 );
-            successB= true; // Indicate bind success.
+            //// successB= true; // Indicate bind success.
             appLogger.info("bindB(..) success.");
           } catch (IOException e) {
             appLogger.info("bindB(..) failure.  Port probably in use.");
             throw e;
           }
-        return successB;
+        //// return successB;
         }
 
     // Beginning of methods that normally appear in a loop.
@@ -90,12 +90,18 @@ public class LocalSocket
            );
          String readString = inBufferedReader.readLine();
          appLogger.info(
-           "======== RECEIVED LINE VIA TCP FROM ANOTHER APP. ======== :\n  " 
-           + readString
-           );
+             "inputFromConnectionV() 1 ======== RECEIVED LINE VIA TCP FROM ANOTHER APP. ======== :\n  " 
+             + readString
+             );
+         appLogger.info(
+             "inputFromConnectionV() 2 ======== RECEIVED LINE VIA TCP FROM ANOTHER APP. ======== :\n  " 
+             + readString
+             );
          theCommandArgs= // Parse string into separate string arguments using
              new CommandArgs(readString.split("\\s")); // white-space as delimiters.
+         appLogger.debug("inputFromConnectionV(): theCommandArgs created.");
          inBufferedReader.close();
+         appLogger.debug("inputFromConnectionV(): inBufferedReader.closeed.");
          }
     
     public synchronized CommandArgs getCommandArgs()

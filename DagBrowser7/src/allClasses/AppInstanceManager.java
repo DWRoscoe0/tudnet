@@ -455,7 +455,7 @@ l    * If the app receives a message indicating
 	          //  getInstancePortI()
 	          //  );
 
-	          theLocalSocket.bindB(getInstancePortI());
+	          theLocalSocket.bindV(getInstancePortI());
 	          { // Setup InstanceManagerThread to monitor the socket.
 	            InstanceManagerThread theInstanceManagerThread=
 	              new InstanceManagerThread();
@@ -466,7 +466,7 @@ l    * If the app receives a message indicating
 	          theShutdowner.addShutdownerListener( // Adding this listener.
 	            new ShutdownerListener() {
 	              public void doMyShutdown()
-	                // This will cause IOException and terminate thread.
+	                // This will cause IOException and terminate InstcMgr thread.
 		              {
                     appLogger.info(
                         "AppInstanceManager ShutdownerListener.doMyShutdowner(..),"
@@ -542,13 +542,14 @@ l    * If the app receives a message indicating
 	            */
 	          {
 		          appLogger.info(Thread.currentThread().getName()+": beginning.");
-	            while (!theLocalSocket.isClosedB()) {
+	            while (! theLocalSocket.isClosedB()) {
                 try {
                   theLocalSocket.acceptV(); // Wait for connection or exception.
-                  { // Do an update check using data from the socket.
+                  { // Do a software update check using data from the socket.
                     updaterReentrantLock.lock(); // Wait until we have lock.
                     try {
                         theLocalSocket.inputFromConnectionV();
+                        appLogger.debug("run(): got data.");
 			                  processConnectionDataV(
 			                      theLocalSocket.getCommandArgs());
 			                } finally {
@@ -557,11 +558,11 @@ l    * If the app receives a message indicating
                   	}
                   theLocalSocket.closeConnectionV();
                 	} 
-                catch (IOException e) // Accept connection failed.
+                catch (IOException e) // Accepting of connection failed.
                   { // We must be terminating.
-                    theLocalSocket.closeAllV(); // Make certain all is closed.
+                    theLocalSocket.closeAllV(); // Make certain all are closed.
 	                  }
-                }
+                } // while
 		          appLogger.info("Socket closed, ending.");
 	            }
 	        
