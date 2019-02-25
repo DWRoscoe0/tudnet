@@ -11,23 +11,28 @@ import java.net.Socket;
 
 public class LocalSocket
 
-  /* This class performs the following functions:
-    * Some of the functions of a TCP server socket,
-      such as binding to a port that is not already bound elsewhere.
-    * Is limited to use on the LocalHost loopback network interface.
-    * It has a couple of options for specifying the port to use.
-    * It can accept connections on the ServerSocket,
-      create a socket, and process data received on it. 
-    * If a port is already bound elsewhere,
-      it can open a Socket for the purpose of sending command
-      to the process that bound the port. 
+  /* This class is used for simple communication between
+    processes on the local computer.  
+    It does this using a TCP server socket.
     
     It can be used for 2 things:
-    * To signal the existence of an older running instance of an app.
-    * To communicate commands from one running app instance to another,
-      or between different apps.
+    * To signal the existence of a process to other processes.
+    * To communicate commands from one process to another,
+    It is typically used to coordinate multiprocess applications,
+    including multiple instances of the same process.
+
+    It has the following attributes:
+    * It performs some of the functions of a TCP server socket,
+      such as binding to a port that is not already bound elsewhere.
+    * Is limited to use on the LocalHost loopback network interface.
+    * It has a couple of options for specifying what port to use.
+    * It can accept connections on the ServerSocket,
+      create a socket, and process data received on that socket. 
+    * If a port is already bound by another process,
+      it can open a Socket for the purpose of sending commands
+      to that process. 
  
-    This Socket code originally came from AppInstanceManager.
+    Much of this Socket code originally came from AppInstanceManager.
 
     */
 
@@ -156,4 +161,5 @@ public class LocalSocket
             }
           theServerSocket= null; // Indicate closed no matter what.
           }
-  }
+    
+    }

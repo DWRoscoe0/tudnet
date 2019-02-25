@@ -52,7 +52,7 @@ public class ProcessStarter
              )
           try {
               appLogger.info( 
-                "ProcessStarter.startAProcessV(..) w: " 
+                "ProcessStarter.startAProcessV(..):\n  " 
                 + Arrays.toString(inArgStrings)
                 );
               ProcessBuilder myProcessBuilder= // Build the process. 

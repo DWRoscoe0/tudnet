@@ -147,7 +147,7 @@ public class AppLog extends EpiThread
     	private LockAndSignal theLockAndSignal= new LockAndSignal();
     	
     	private File logFile;  // Name of log file.
-      private int theSessionI= 0;  // App session counter.
+      private int theSessionI= -1;  // App session counter.
       private long lastMillisL; // Last time measured.
       private PrintWriter thePrintWriter = null; // non-null means file open.
         // Open means buffered mode enabled.
@@ -329,17 +329,17 @@ public class AppLog extends EpiThread
     	  	logFile.delete(); // DO THIS TO CLEAR LOG AND RESET SESSION COUNT!
 
     	  String sessionNameString= "session";
-        File sessionFile=  // Identify session file name.
-        		Config.makeRelativeToAppFolderFile( sessionNameString+".txt" );
-        if ( ! logFile.exists() )  // If log file doesn't exist...
-          sessionFile.delete();  // ...delete session file also.
-        String sessionString = Confingleton.getValueString(sessionNameString);
-        int sessionI= 0; // Default if Confingleton unreadable or unparseable.
-        if ( sessionString != null )  // If session file exists...
-          try { sessionI= Integer.parseInt(sessionString)+1; }
-            catch ( NumberFormatException e ) { /* Ignore, using default. */ }
-        sessionString= sessionI + "";  // Convert int to string.
-        Confingleton.putValueV(sessionNameString, sessionString);
+         //// File sessionFile=  // Identify session file name.
+         //// 	Config.makeRelativeToAppFolderFile( sessionNameString+".txt" );
+        //// if ( ! logFile.exists() )  // If log file doesn't exist...
+        //// sessionFile.delete();  // ...delete session file also.
+        //// String sessionString = Confingleton.getValueString(sessionNameString);
+        int sessionI= Confingleton.getValueI(sessionNameString);
+        if (sessionI < 0) sessionI= 0; // If no or bad value, change to zero
+          else sessionI++; // otherwise, increment gotten value.
+        if ( ! logFile.exists()) // If log file does exist
+          sessionI= 0;  // reset session to 0.
+        Confingleton.putValueV(sessionNameString, sessionI);
         return sessionI;
         }
 
@@ -425,7 +425,7 @@ public class AppLog extends EpiThread
         but for which there is nothing that can be or needs to be done.
         */
       { 
-        String wholeString= "EXCEPTION: " + inString + " : " + e ;
+        String wholeString= "EXCEPTION: " + inString + " :\n  " + e ;
 
         System.err.println(wholeString);  // Send to error console.
         e.printStackTrace();
