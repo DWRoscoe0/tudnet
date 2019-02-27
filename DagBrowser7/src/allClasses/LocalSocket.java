@@ -13,7 +13,7 @@ public class LocalSocket
 
   /* This class is used for simple communication between
     processes on the local computer.  
-    It does this using a TCP server socket.
+    It does this using a TCP server socket on the loopback interface.
     
     It can be used for 2 things:
     * To signal the existence of a process to other processes.
@@ -43,30 +43,47 @@ public class LocalSocket
 
     private CommandArgs theCommandArgs = null; // For message output.
 
-    public synchronized void bindV( int portI )
-      throws IOException
-      /* Tries to opens theServerSocket,
-        binding the ServerSocket to portI,
-         in preparation for receiving connections.
-        It tries to bind the ServerSocket to portI.
-        It catches IOException, meaning the bind fails,
-        and interprets this as portI already being bound elsewhere.
+    public synchronized boolean bindB( int portI )
+      /* This is like bindV(..) except that 
+        instead of throwing an exception if the bind fails,
+        it returns false.  It returns true if the bind succeeds. 
        */
       {
         appLogger.info("bindB(..) begins, portI= "+portI);
-        //// boolean successB= false; // Set default value indicating bind failure.
+        boolean successB= false; // Set default value indicating bind failure.
+        try {
+          bindV(portI);
+            successB= true; // Indicate bind success.
+            appLogger.info("bindB(..) success.");
+          } catch (IOException e) {
+            appLogger.info("bindB(..) failure.  Port probably in use.");
+          }
+        return successB;
+        }
+
+    public synchronized void bindV( int portI )
+      throws IOException
+      /* Tries to open theServerSocket, 
+        binding the ServerSocket to portI on the loopback interface,
+        in preparation for receiving connections.
+        It tries to bind the ServerSocket to portI.
+        It catches IOException, meaning the bind fails,
+        and interprets this as portI already being bound.
+        If portI=0 then an ephemeral port is used,
+        in which case the bind should succeed.
+       */
+      {
+        appLogger.info("bindV(..) begins, portI= "+portI);
         try {
             theServerSocket=  // Try opening listener socket.
               new ServerSocket(
                 portI, 10, InetAddress.getLoopbackAddress() 
                 );
-            //// successB= true; // Indicate bind success.
-            appLogger.info("bindB(..) success.");
+            appLogger.info("bindV(..) success.");
           } catch (IOException e) {
-            appLogger.info("bindB(..) failure.  Port probably in use.");
-            throw e;
+            appLogger.info("bindV(..) failure.  Port probably in use.");
+            throw e; // Rethrow exception.
           }
-        //// return successB;
         }
 
     // Beginning of methods that normally appear in a loop.

@@ -39,6 +39,7 @@ public class App { // The App, especially pre-GUI stuff.
       do any final shutdown jobs.
      */
     {
+      // App initialization.
   		//appLogger.info("App beginning.");
   		thePersistent.initializeV();  // Prepare access to persistent data.
   	  defineNodeIdentityV();
@@ -47,13 +48,13 @@ public class App { // The App, especially pre-GUI stuff.
 			theShutdowner.initializeV();
 			theAppInstanceManager.initializeV();
 
-			doAppStuff(); // This runs until app shutdown is underway.
+			delegateOrDoV(); // Actually do some work.
 
+      // App shutdown.
   	  thePersistent.finalizeV();  // Write any new or changed app properties.
   		//appLogger.info("App calling Shutdowner.finishV().");
       theShutdowner.finishAppShutdownV();  // Doing final app shutdown jobs.
         // This might not return if shutdown began in the JVM. 
-
   		appLogger.info("App exiting.");
       
       // After this method returns, the main thread of this app should exit.
@@ -80,16 +81,19 @@ public class App { // The App, especially pre-GUI stuff.
 	    	}
 	  	}
 
-  private void doAppStuff()
-    /* This method checks with theAppInstanceManager.
-      If theAppInstanceManager wants to terminate the app then it returns immediately.
-      Otherwise it starts the app GUI and does user and network interactions
-      until a shutdown is requested, then it returns.
+  private void delegateOrDoV()
+    /* This method checks with theAppInstanceManager,
+      trying to delegate actions to another app instance.
+      If delegation succeeds then its work is done and it exits.
+      If delegation fails then it starts and runs the GUI
+      to interact with the user and do various other things
+      until a shutdown is requested, then it exits.
       */
   	{
-		  if ( ! theAppInstanceManager.managingInstancesWithExitB( ) ) 
-		
-		    { // Presenting GUI to user and interacting.
+		  if ( theAppInstanceManager.tryDelegatingToAnotherAppInstanceB() )
+		    ; // Delegation succeeded.  Do nothing except exit.
+		    else
+		    { // Delegation failed.  Presenting GUI to user and interacting.
 		  	  AppGUIFactory theAppGUIFactory= 
 		  	  		theAppFactory.lazyGetAppGUIFactory();
 		      AppGUI theAppGUI= theAppGUIFactory.getAppGUI();

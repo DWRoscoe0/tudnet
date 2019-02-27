@@ -44,21 +44,22 @@ s     */
       return 44444;
       }
 
-  private int instancePortI= -1; // Less than 0 means undefined.
-  
-  public int getInstancePortI()
-    /* Get port to be used for local instance management.  
+  private final String instancePortNameString= "instancePort";
+  private int instancePortI= -1; /* Less than 0 means undefined.
       This port will be used for TCP local app instance discovery
       and communication:
       * for checking for server socket port binding.
       * for server local port, for incoming path strings from updater app.
       * for client remote port, for sending paths of local updater app.
-s     */
+      */
+  
+  public int getInstancePortI()
     {
       if ( instancePortI < 0 ) // Undefined.
         { // Define it.
-          instancePortI= getConfingletonPortI("instancePort");
-          appLogger.debug("PortManager.getInstancePortI() port="+instancePortI);
+          instancePortI= getConfingletonPortI(instancePortNameString);
+          appLogger.debug(
+              "PortManager.getInstancePortI() read port="+instancePortI);
           }
       return instancePortI;
       }
@@ -67,8 +68,17 @@ s     */
     /* Get port to be used for network communication.
       fileNameString contains the name of the Confingleton file
       where a numeric string is stored.
-s     */
+      */
     {
+      String nameString= fileNameString;
+      int portI= Confingleton.getValueI(nameString);
+      if (portI < 0) 
+        portI= 44444; // If no or bad value, change to default value.
+        else 
+        ; // otherwise, use as is.
+      Confingleton.putValueV(nameString, portI);
+  
+      /*  ////
       int resultPortI= 44444; // Default port if Confingleton unreadable.
       String portString= 
           Confingleton.getValueString(fileNameString);
@@ -78,13 +88,16 @@ s     */
               Integer.parseInt(portString); 
             }
           catch ( NumberFormatException e ) // Parse error.
-          { /* Ignore, using default value. */ }
+          {} /* Ignore, using default value. */ 
+      /*  ////
       portString= resultPortI + "";  // Convert int to string.
       Confingleton.putValueV(fileNameString, portString); // Save in file.
 
       appLogger.debug(
           "PortManager.getConfingletonPortI() port="+instancePortI);
       return resultPortI;
+      */  ////
+      return portI;
       }
   
   public int getNormalPortI()

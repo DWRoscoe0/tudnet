@@ -41,7 +41,7 @@ public class Config
 				public static final int localUpdateDelaySI=0;
 				
 		  /* Log file.  */
-				public static final boolean clearLogFileB= false;  //// true;
+				public static boolean clearLogFileB= false;  //// true;
   
 		// Delays, for adjustments and slowing the entire app for debugging.
 

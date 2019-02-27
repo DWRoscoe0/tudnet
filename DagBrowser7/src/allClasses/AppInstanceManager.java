@@ -214,47 +214,43 @@ l    * If the app receives a message indicating
 
 	// Public service-providing code.
 
-	  public boolean managingInstancesWithExitB( )
-	    /* This method manages running instances and file instances of 
-	      this app.  This method is called at app start-up.
+	  public boolean tryDelegatingToAnotherAppInstanceB()
+	    /* This method tries to delegate its work to another app instance.
+        This method is called at app start-up.
 	
-		    It detects whether there is another running instance
-		    by trying to open a particular network socket.
-		    * If it can't open the socket it is because 
-		      another running instance did.
-		    	In this case it communicates its presence to the other instance 
-		    	by connecting to the socket and sending this instance's path to it.
-		    * If it could open the socket then it sets up a Listener on it
-		      for messages from instances of the app which might be run later.
+		    First it tries to delegate to a non-running instance
+        of the app file in the standard folder.
+		    If this happens then execution of that file will be started
+		    before this process terminates.
+		    
+		    If that fails then it tries to delegate to a running instance
+		    of the app file in the standard folder.
 	
-	      It returns true if this app should exit because its job is done,
-	        except possibly for calling another instance at shutdown
-	        to continue the management protocol.
+	      It returns true if this app instance should exit because 
+	        delegation was a success.
 	      It returns false if this app instance should continue with 
-	        normal start-up, run its GUI, etc.,
-	        because no other running instance was detected.
+	        normal start-up, run its GUI, etc..
+	        This should happen only if this app instance 
+	        was run from the app's standard folder,
+	        and there is no other app instance running already.
 	      */
 	    {
-	  		appLogger.info( "managingInstancesWithExitB() begins." );
-	  		appLogger.info( "App path is:\n  " + runningAppFile.getAbsolutePath() );
+	  		appLogger.info( "tryDelegatingToAnotherAppInstanceB() begins."
+	  		    + "\n  App path is:\n  " + runningAppFile.getAbsolutePath()
+	  		    + "\n  App time-stamp is " + Misc.dateString( runningAppFile ) );
+
+	      boolean successB= true;  // Assume delegation will succeed.
+	      tryDelegation: {
+  	      if ( tryDelegationToRunningInstanceB( ) ) break tryDelegation;
+  	      if ( tryDelegationToFileInstanceB( ) ) break tryDelegation;
+	    		appLogger.info( "tryDelegatingToAnotherAppInstanceB() "
+		  				+"======== DELEGATION FAILED, GUI WILL START ========" );
+	        successB= false; // Setting return result to prevent app exit.
+  		    } // tryDelegation:
+	
 		  	appLogger.info( 
-		  			"App time-stamp is " + Misc.dateString( runningAppFile ) );
-	    	
-	      boolean appShouldExitB= true;  // Setting default result for app exit.
-	
-	      if ( tryARunningInstanceActionB( ) )
-	        ; // Leave appShouldExitB == true to cause app exit.
-	      else if ( tryAFileInstanceActionB( ) )
-	        ; // Leave appShouldExitB == true to cause app exit.
-	      else // App instance management actions failed.
-		      { // Set appShouldExitB == Cause to cause app exit.
-			  		appLogger.info( 
-			  				"======== THIS INSTANCE STAYING, GUI WILL START ========" );
-		        appShouldExitB= false; // Setting return result to prevent app exit.
-		        }
-	
-		  	appLogger.info( "managingInstancesWithExitB() ending." );
-	      return appShouldExitB;  // Return whether app should exit.
+		  	    "tryDelegatingToAnotherAppInstanceB() ending: "+successB );
+	      return successB;  // Return whether app should exit.
 	      }
 
 	  public void thingsToDoPeriodicallyV()
@@ -339,14 +335,6 @@ l    * If the app receives a message indicating
       {
         return Misc.dateString( runningAppFile );
         }
-
-    private final int getInstancePortI()
-    	/* Returns port to be used for local app instance discovery.
-        ///enh Write file only if its contents must change.
-          Use the code from thePortManager.getInstancePortI().
-        ///enh Generate random port if none defined.
-        */
-      { return thePortManager.getInstancePortI(); }
     
     public void setAppInstanceListener(AppInstanceListener listener) 
       {
@@ -371,7 +359,7 @@ l    * If the app receives a message indicating
           newestAppLastModifiedL= otherAppLastModifiedL;
 	      */
 	    {
-	      boolean resultB= false;  // Assume update is not valid.
+	      boolean successB= false;  // Assume update is not valid.
 	      validation: {
 		      if ( ! runningAppFile.equals( standardAppFile ) )
 		      	break validation;  // This app is not in standard folder, so exit.
@@ -382,13 +370,13 @@ l    * If the app receives a message indicating
           long standardAppLastModifiedL= standardAppFile.lastModified();
           if ( otherAppLastModifiedL <= standardAppLastModifiedL )
            	break validation; // File not newer, so exit
-          resultB= true;  // Override default false result.
+          successB= true;  // Override default false result.
   	      appLogger.debug("isUpdateValidB() ======== NEWER APP FILE DETECTED ========" +  
   	      		"\n    otherAppFile:    " + Misc.fileDataString(otherAppFile) + 
   	      		"\n    standardAppFile: " + Misc.fileDataString(standardAppFile)
   	      		);
 	        } // validation
-	      return resultB;
+	      return successB;
 	      }
 
     private void setInputsV( CommandArgs theCommandsArgs )
@@ -419,77 +407,95 @@ l    * If the app receives a message indicating
 	
 	    private AppInstanceListener theAppInstanceListener= // Single listener ...
 	      null;  // ...to perform an action if desired.
-	    
-	    private boolean tryARunningInstanceActionB( )
-	      /* Normally this method is called at app start-up.
-	        It detects whether there is a previously run running instance
-	        by trying to bind a network ServerSocket on a particular port.
+      
+      private boolean tryDelegationToRunningInstanceB( )
+        /* Normally this method is called at app start-up.
+          It tries to delegate to a running instance of this app.
 
+          It tests for delegation by trying to bind
+          the app's instance port on the loopback interface.
+          
           If this app can bind the socket then it means that
           no other running app instance has done so.
           In this case it starts an InstanceManagerThread
           to monitor the socket for future connections and messages from 
           later running instances of this app.
-          Then it returns false to indicate that this app instance
-          should continue with normal GUI start-up, etc.
+          Then it returns false to indicate delegation failure and that 
+          this app instance should continue with normal GUI start-up, etc.
 
-	        If this app can't bind the socket then it is probably because 
-	        an earlier app instance is running and already did that.
-	        In this case it connects to the socket and tries to send through it
-	        to the other earlier app instance the path of this app's jar file.
-	        If this succeeds then it returns true to indicate that 
-	        this app should exit.  The other running instance 
-	        will take its own action if appropriate, based on file time-stamps.
+          If this app can't bind the socket then it is [probably] because 
+          an earlier app instance is running and already did that.
+          In this case it connects to the socket and tries to send through it
+          to the other earlier app instance the path of this app's jar file.
+          If this succeeds then it returns true to indicate that 
+          delegation succeeded and that this app should exit.  
+          The other running instance will then take appropriate action.
 
-	        */
-	      { 
-	        boolean appShouldExitB= false;  // Set default return for no app exit.
-	
-	        try { // Try to start listening, indicating no other instances.
-	        	appLogger.info(
-	            "Local Host IP: " + 
-	            InetAddress.getLocalHost().getHostAddress() // Logging real IP. 
-	            );
-	          //appLogger.info(
-	          //  "About to listen for a later app packets on port " + 
-	          //  getInstancePortI()
-	          //  );
+          */
+        { 
+          logLocalHostV();
 
-	          theLocalSocket.bindV(getInstancePortI());
-	          { // Setup InstanceManagerThread to monitor the socket.
-	            InstanceManagerThread theInstanceManagerThread=
-	              new InstanceManagerThread();
-	            theInstanceManagerThread.setName("InstcMgr");
-	            theInstanceManagerThread.start();
-	            } // Setup InstanceManagerThread to monitor the socket.
-	
-	          theShutdowner.addShutdownerListener( // Adding this listener.
-	            new ShutdownerListener() {
-	              public void doMyShutdown()
-	                // This will cause IOException and terminate InstcMgr thread.
-		              {
-                    appLogger.info(
-                        "AppInstanceManager ShutdownerListener.doMyShutdowner(..),"
-                        +" closing socket.");
-                    theLocalSocket.closeAllV();
-                		appLogger.info( 
-                				"AppInstanceManager ShutdownerListener.doMyShutdowner(..), done" 
-                				);
-		                }
-	              });
-	          ; // Leaving appShouldExitB false for no app exit.
-	        } catch (UnknownHostException e) { // Error.  What produces this??
-	          appLogger.error( e.getMessage()+ e );
-	          ; // Leaving appShouldExitB false for no app exit.
-	        } catch (IOException e) { // This error means port # already in use.
-	          appLogger.info( "TCP Port "+getInstancePortI()+" is listening." );
-			      appShouldExitB=  // Set exit to the result of...
-	            connectAndSendToAppHoldingSocketB( );  // ...sending to it.
-	        }
-	      return appShouldExitB;  // Return whether or not app should exit.
-	      }
-	
-	    private boolean connectAndSendToAppHoldingSocketB( )
+          boolean successB= false;  // Set default for delegation failure.
+          if (theLocalSocket.bindB(thePortManager.getInstancePortI())) 
+            {
+              setupMonitoringThreadV();
+              ; // Leaving succeededB false.
+              }
+            else
+            {
+              appLogger.info( "TCP Port "+thePortManager.getInstancePortI()+" is listening." );
+              successB=  // Set success to the result of...
+                connectAndSendToAppHoldingSocketB( );  // ...sending to it.
+              }
+          return successB;  // Return whether or not app should exit.
+          }
+
+      private void setupMonitoringThreadV()
+        /* This method sets up a thread for monitoring
+          the now bound LocalSocket for connections and input.
+          It also sets up termination of that thread using
+          theShutdownerListener.
+         */
+        {
+          { // Setup InstanceManagerThread to monitor the socket.
+            InstanceManagerThread theInstanceManagerThread=
+              new InstanceManagerThread();
+            theInstanceManagerThread.setName("InstcMgr");
+            theInstanceManagerThread.start();
+            } // Setup InstanceManagerThread to monitor the socket.
+          theShutdowner.addShutdownerListener( // Adding this listener.
+              theShutdownerListener
+              );
+          }
+
+	    private void logLocalHostV()
+        {
+          try { // Log localhost IP.
+              appLogger.info(
+                "logLocalHostV() IP= " + 
+                InetAddress.getLocalHost().getHostAddress() // IP. 
+                );
+            } catch (UnknownHostException e) {
+              appLogger.exception("logLocalHostV()",e);
+            }
+          }
+
+      private ShutdownerListener theShutdownerListener=
+        new ShutdownerListener() {
+          public void doMyShutdown()
+            // This will cause IOException and terminate InstcMgr thread.
+            {
+              appLogger.info(
+                  "AppInstanceManager ShutdownerListener.doMyShutdowner(..),"
+                  +" closing socket.");
+              theLocalSocket.closeAllV();
+              appLogger.info( 
+                  "AppInstanceManager ShutdownerListener.doMyShutdowner(..), done" 
+                  );
+              }
+          };
+
+      private boolean connectAndSendToAppHoldingSocketB( )
 	      /* This tryARunningInstanceActionB(..) sub-method 
 	        tries to inform the app listening on the busy socket
 	        that this app exists and is available 
@@ -506,7 +512,8 @@ l    * If the app receives a message indicating
 	            runningAppFile.getAbsolutePath(); // Path of this app's file. 
 	        try {
 	            Socket clientSocket= // Create socket for send.
-	              new Socket(InetAddress.getLoopbackAddress(), getInstancePortI());
+	              new Socket(InetAddress.getLoopbackAddress(), 
+	                  thePortManager.getInstancePortI());
 	            OutputStream out= // Get its stream.
 	                clientSocket.getOutputStream();
 	            out.write(  // Send output string to other app via stream.
@@ -581,6 +588,8 @@ l    * If the app receives a message indicating
   		      if // Exiting or firing event depending on other instance.
   		      	( isUpdateValidB( otherAppFile ) )
   		        { // Report pending update.
+                appLogger.info("processConnectionDataV(..), "
+                    + "Offered app file is newer and is valid.");
   		         	if ( displayUpdateApprovalDialogB( 
   	          			false, // Get approval.
   		        			"A newer running instance of this app "
@@ -598,6 +607,8 @@ l    * If the app receives a message indicating
   		        	}
   		        else
   		        {
+  		          appLogger.info("processConnectionDataV(..), "
+  		              + "Offered app file is not newer or is invalid.");
   		        	displayUpdateApprovalDialogB( 
   	          			true, // Just inform user.  Don't request approval.
   		        			"Another running instance of this app "
@@ -668,7 +679,7 @@ l    * If the app receives a message indicating
 
 	  // Code that does file instance management.
 	
-	    private boolean tryAFileInstanceActionB( )
+	    private boolean tryDelegationToFileInstanceB( )
 	      /* Normally this method is called at app start-up,
 	        before the GUI has been activated.
 	        It begins the process of checking for and installing or updating

@@ -148,7 +148,7 @@ public class AppLog extends EpiThread
     	
     	private File logFile;  // Name of log file.
       private int theSessionI= -1;  // App session counter.
-      private long lastMillisL; // Last time measured.
+      private long lastMillisL= 0; // Last time measured.
       private PrintWriter thePrintWriter = null; // non-null means file open.
         // Open means buffered mode enabled.
         // Closed means buffered mode disabled.
@@ -289,8 +289,14 @@ public class AppLog extends EpiThread
         		Config.makeRelativeToAppFolderFile( "log.txt" );
         theSessionI= getSessionI();  // Get app session number.
         if (theSessionI == 0)  // If this is session 0...
-          logFile.delete();  //...then empty log file by deleting.
-        openFileWithRetryDelayIfClosedV(); // Open file for use.
+          { // Reset various stuff.
+            closeFileAndSleepIfOpenV(); // Be certain log file is closed.
+            logFile.delete();  //...then empty log file by deleting it.
+            logV(
+              "=== THIS LOGGER WAS RECENTLY RESET FOR DEBUGGING PURPOSES ===");
+            lastMillisL= 0; // Do this so absolute time is displayed first.
+            }
+        // openFileWithRetryDelayIfClosedV(); // Open file for use.
         logHeaderLinesV(); // Append the session header lines.
         }
 
@@ -325,20 +331,14 @@ public class AppLog extends EpiThread
         the number stored in the session file incremented by one.
         */
       { 
-    	  if (Config.clearLogFileB)
-    	  	logFile.delete(); // DO THIS TO CLEAR LOG AND RESET SESSION COUNT!
-
     	  String sessionNameString= "session";
-         //// File sessionFile=  // Identify session file name.
-         //// 	Config.makeRelativeToAppFolderFile( sessionNameString+".txt" );
-        //// if ( ! logFile.exists() )  // If log file doesn't exist...
-        //// sessionFile.delete();  // ...delete session file also.
-        //// String sessionString = Confingleton.getValueString(sessionNameString);
         int sessionI= Confingleton.getValueI(sessionNameString);
-        if (sessionI < 0) sessionI= 0; // If no or bad value, change to zero
-          else sessionI++; // otherwise, increment gotten value.
-        if ( ! logFile.exists()) // If log file does exist
-          sessionI= 0;  // reset session to 0.
+        if (sessionI < 0) 
+          sessionI= 0; // If no or bad value, change to zero
+          else 
+          sessionI++; // otherwise, increment gotten value.
+        if (Config.clearLogFileB) // If debugging with clean log file,
+          sessionI= 0;  // reset session to 0.  This will reset log also.
         Confingleton.putValueV(sessionNameString, sessionI);
         return sessionI;
         }

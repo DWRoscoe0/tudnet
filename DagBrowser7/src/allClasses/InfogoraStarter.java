@@ -17,6 +17,7 @@ public class InfogoraStarter
 
         */
       { // main(..)
+        Config.clearLogFileB= true;
         Process theProcess= null;
         appLogger.setIDProcessV("Starter");
         appLogger.setBufferedModeV( true ); // Enabling fast buffered logging.
