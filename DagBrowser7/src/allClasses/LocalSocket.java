@@ -30,7 +30,7 @@ public class LocalSocket
       create a socket, and process data received on that socket. 
     * If a port is already bound by another process,
       it can open a Socket for the purpose of sending commands
-      to that process. 
+      to that other process. 
  
     Much of this Socket code originally came from AppInstanceManager.
 
@@ -52,7 +52,7 @@ public class LocalSocket
         appLogger.info("bindB(..) begins, portI= "+portI);
         boolean successB= false; // Set default value indicating bind failure.
         try {
-          bindV(portI);
+            bindV(portI);
             successB= true; // Indicate bind success.
             appLogger.info("bindB(..) success.");
           } catch (IOException e) {
@@ -112,15 +112,11 @@ public class LocalSocket
            );
          String readString = inBufferedReader.readLine();
          appLogger.info(
-             "inputFromConnectionV() 1 ======== RECEIVED LINE VIA TCP FROM ANOTHER APP. ======== :\n  " 
-             + readString
-             );
-         appLogger.info(
-             "inputFromConnectionV() 2 ======== RECEIVED LINE VIA TCP FROM ANOTHER APP. ======== :\n  " 
+             "inputFromConnectionV() ======== RECEIVED DATA LINE VIA TCP FROM ANOTHER APP. ======== :\n  " 
              + readString
              );
          theCommandArgs= // Parse string into separate string arguments using
-             new CommandArgs(readString.split("\\s")); // white-space as delimiters.
+           new CommandArgs(readString.split("\\s")); // white-space delimiters.
          appLogger.debug("inputFromConnectionV(): theCommandArgs created.");
          inBufferedReader.close();
          appLogger.debug("inputFromConnectionV(): inBufferedReader.closeed.");
@@ -142,6 +138,7 @@ public class LocalSocket
           if (clientSocket != null)
             clientSocket.close(); 
           } catch (IOException e) {
+            appLogger.exception("closeConnectionV()",e);
           } 
         clientSocket= null;
         }
@@ -158,25 +155,21 @@ public class LocalSocket
       
 
     public synchronized void closeAllV()
-        /* This method closes theServerSocket.
-          It is commonly used to end a wait for acceptance of 
-          connections to that server socket,
-          ending a loop, and ending the thread that contains that loop.
-          If the connection is open, it is closed first.
-          */
-        {
-          closeConnectionV(); // Close the single associated socket connection.
-          try {
-              if (theServerSocket != null) 
-                theServerSocket.close();
-            } catch (IOException e) {
-              appLogger.error(
-                  "LocalSocket.closeV(),"
-                  +"Error closing instanceServerSocket: " + e
-                  );
-              e.printStackTrace();
-            }
-          theServerSocket= null; // Indicate closed no matter what.
+      /* This method closes theServerSocket.
+        It is commonly used to end a wait for acceptance of 
+        connections to that server socket,
+        ending a loop, and ending the thread that contains that loop.
+        If the connection is open, it is closed first.
+        */
+      {
+        closeConnectionV(); // Close any single associated socket connection.
+        try { // Close the server socket.
+            if (theServerSocket != null) 
+              theServerSocket.close();
+          } catch (IOException e) {
+            appLogger.exception("LocalSocket.closeV()",e);
           }
+        theServerSocket= null; // Indicate closed no matter what.
+        }
     
     }
