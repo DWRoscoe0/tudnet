@@ -172,6 +172,10 @@ public class Shutdowner
 	      // It means all app shutdown actions, excluding JVM, are done.
 	      // It is signaled by Shutdowner.finishAppShutdownV().
 	      // It is waited-for by ShutdownHook.run().
+
+	  private String[] exitProcessStrings= null; // To execute before exit.
+
+    private Long starterPortLong= 0L; // For feedback to our starter process. 
 	  
 	  public void initializeV() // Prepares ShutdownHook as shutdown hook.
 		  {
@@ -211,6 +215,10 @@ public class Shutdowner
 	
 	      } // ShutdownHook
 
+    public void injectStarterPortV(Long starterPortLong)
+      {
+        this.starterPortLong= starterPortLong; 
+        }
     public boolean isShuttingDownB() ///opt Not referenced anywhere.
       /* This method returns a boolean indication of whether
         the app's shutdown process has begun.
@@ -298,22 +306,53 @@ public class Shutdowner
           		}
   	        finishVCalledB= true; // Do this in case this method is re-entered.
             }
-	        appLogger.info( "Shutdowner.finishAppShutdownV() beginning, calling ShutdownerListeners." );
-	        reverseFireShutdownerListeners(); // Calling all listeners in reverse.
-	        if (ProcessStarter.argStrings != null) // Act based on whether this process exit is final exit.
-	          ProcessStarter.startProcess(ProcessStarter.argStrings); // No, start other process before exiting.
-  	        else { // Yes, signal Infogora starter process by deleting flag file.
-  	          appLogger.info("Shutdowner.finishAppShutdownV() deleting InfogoraAppActiveFlag.txt.");
-  	          Config.makeRelativeToAppFolderFile("InfogoraAppActiveFlag.txt").delete();
-  	          }
+	        reverseFireShutdownerListeners(); // Calling listeners in reverse.
+          delegationDependentFinishingV();
 	        appLogger.info( 
 	        	"Shutdowner.finishAppShutdownV() notify shutdown hook that shutdown is done, ending.");
-          appLogger.setBufferedModeV( false ); // This closes log file.
+          appLogger.setBufferedModeV( false ); // This closes log file because
+            // shutdown hook might abruptly terminate this thread next.
 	    	  appShutdownDoneLockAndSignal.notifyingV(); // Signal shutdown hook.
 	    	    // Flow might end here if JVM initiated shutdown.
   			} // toReturn:
         }
-    
+
+    public void delegationDependentFinishingV()
+      /* This method does that part of shutdown finishing that is dependent on 
+        whether delegation to another instance is happening.
+        */
+      {
+        if (exitProcessStrings != null) // Delegating or not?
+          { // Delegating.
+            ProcessStarter.startProcess(
+                exitProcessStrings); // No, start other process before exiting.
+            appLogger.info("Shutdowner deleting InfogoraAppActiveFlag.txt.");
+            Config.makeRelativeToAppFolderFile(
+                "InfogoraAppActiveFlag.txt").delete();
+            sendFeedbackMessageToStarterV("-delegatorExiting");
+            }
+          else 
+          { // Not delegating.
+            sendFeedbackMessageToStarterV("-delegateeExiting");
+            }
+        }
+
+    public void sendFeedbackMessageToStarterV(String messageString)
+      /* This method does that part of shutdown finishing that is dependent on 
+        whether delegation to another instance is happening.
+        */
+      { 
+        appLogger.debug("sendFeedbackMessageToStarterV(..) called.");
+        if ((starterPortLong != null) && (starterPortLong != 0))
+          LocalSocket.localSendToPortB(
+              messageString, starterPortLong.intValue());
+        }
+
+    public void setExitStringsV(String[] exitProcessStrings)
+      { 
+        this.exitProcessStrings= exitProcessStrings;
+        }
+
     // ShutdownerListener code.  Maintains and calls our ShutdownListeners.
     
       private EventListenerList theEventListenerList= new EventListenerList();
@@ -346,6 +385,7 @@ public class Shutdowner
       private synchronized void reverseFireShutdownerListeners( ) 
         // Fire listeners in the reverse of the order they were added.
         {
+          appLogger.info( "Shutdowner.reverseFireShutdownerListeners() called");
           ShutdownerListener theShutdownerListeners[]=
             theEventListenerList.getListeners(ShutdownerListener.class);
           for (int i = theShutdownerListeners.length-1; i>=0; i-=1)

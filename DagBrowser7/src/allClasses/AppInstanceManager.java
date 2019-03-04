@@ -2,14 +2,15 @@ package allClasses;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
+//// import java.io.OutputStream;
 import java.net.InetAddress;
-import java.net.Socket;
+////import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -19,7 +20,8 @@ import static allClasses.Globals.*;  // appLogger;
 public class AppInstanceManager {
 
   /* This class detects and manages instances of app, and 
-    some if the communication between them.  
+    some if the communication between them.
+    It is also responsible for communicating with the app launcher, if any.  
     
     ///org : Though this works and works well, it is difficult to understand.
       Fix this by reorganizing it.
@@ -165,6 +167,7 @@ l    * If the app receives a message indicating
       // from multiple sources.
       // inputStrings[0] is normally the path to the other app file instance 
       // that ran the running app.
+    private Long starterPortLong= 0L; // For feedback to our starter process. 
     private long newestAppLastModifiedL= 0; // For ignoring older updates.
       ///enh There might be cases when this is inadequate,
       // and there be a per-file newest value, 
@@ -188,8 +191,8 @@ l    * If the app receives a message indicating
 	  public void initializeV()
 	    // Does all initialization except constructor injection.
 	    {
+	      theLocalSocket= new LocalSocket();
 	      { // Calculating File name of this app's file instance.
-	        theLocalSocket= new LocalSocket();
 		      URI thisAppURI = null;
 		      try {
 		          thisAppURI = Infogora.class.getProtectionDomain().
@@ -207,14 +210,11 @@ l    * If the app receives a message indicating
 	      				+ File.separator 
 	      				+ Config.appJarString 
 	      				);
-	      setInputsV( startCommandArgs );  // Setting app args as inputs.
-	      logInputsV(); // Log start up inputs.
-	      }
-	
+	      } // initializeV()
 
 	// Public service-providing code.
 
-	  public boolean tryDelegatingToAnotherAppInstanceB()
+	  public boolean tryDelegatingToAnotherAppInstanceB() // Called at start.
 	    /* This method tries to delegate its work to another app instance.
         This method is called at app start-up.
 	
@@ -238,6 +238,8 @@ l    * If the app receives a message indicating
 	  		appLogger.info( "tryDelegatingToAnotherAppInstanceB() begins."
 	  		    + "\n  App path is:\n  " + runningAppFile.getAbsolutePath()
 	  		    + "\n  App time-stamp is " + Misc.dateString( runningAppFile ) );
+        processCommandArgsV( startCommandArgs ); // Setting app args as inputs.
+        logInputsV(); // Log start up inputs.
 
 	      boolean successB= true;  // Assume delegation will succeed.
 	      tryDelegation: {
@@ -253,7 +255,7 @@ l    * If the app receives a message indicating
 	      return successB;  // Return whether app should exit.
 	      }
 
-	  public void thingsToDoPeriodicallyV()
+	  public void thingsToDoPeriodicallyV() // Called by timer.
 	    /* This method is meant be called once per second by a timer thread
 	      to check for the appearance of a new version of the otherAppFile
 	      and to do an update with it if it is a newer version.
@@ -287,40 +289,6 @@ l    * If the app receives a message indicating
 					}
 	      }
 
-	  private boolean tryUpdateFromNewerFileInstancesB( File otherAppFile )
-	    /* This method, which is meant to be be called periodically,
-	      tests whether otherAppFile is a valid update.
-	      If it is, it displays a message and 
-	      initiates the performance of the update.
-	      It returns true if an update was processed, false otherwise.
-	     */
-		  {
-			  boolean appShouldExitB= false;
-		    if ( otherAppFile != null )  // otherAppFile has been defined.
-		      {
-		        if   // Other app is approved to update app in standard folder.
-		          ( isUpdateValidB( otherAppFile ) )
-		          {
-		            // User approval or authenticity checks would go here.
-		            appLogger.info(
-		            		"Detected an approved updater file.  Preparing it"
-		            		);
-		            if ( displayUpdateApprovalDialogB(
-		          			false, // Get approval.
-		                "A file containing an update of this app was detected.\n"
-		                + "It will now replace this one because it is newer.",
-		                otherAppFile
-		          			) )
-			            {
-					      		appShouldExitB= // Chain to other app to do copy and run.
-					      			requestForJavaCommandAndExitTrueB( 
-					      					otherAppFile.getAbsolutePath() );
-				            }
-		            }
-		        }
-		    return appShouldExitB;
-			  }
-
     public String thisAppDateString()
       /* This method returns the time-stamp String associated with
         the file instance of this app.
@@ -348,6 +316,40 @@ l    * If the app receives a message indicating
         }
 
 	// Private support code.
+
+    private boolean tryUpdateFromNewerFileInstancesB( File otherAppFile )
+      /* This method, which is meant to be be called periodically,
+        tests whether otherAppFile is a valid update.
+        If it is, it displays a message and 
+        initiates the performance of the update.
+        It returns true if an update was processed, false otherwise.
+       */
+      {
+        boolean appShouldExitB= false;
+        if ( otherAppFile != null )  // otherAppFile has been defined.
+          {
+            if   // Other app is approved to update app in standard folder.
+              ( isUpdateValidB( otherAppFile ) )
+              {
+                // User approval or authenticity checks would go here.
+                appLogger.info(
+                    "Detected an approved updater file.  Preparing it"
+                    );
+                if ( displayUpdateApprovalDialogB(
+                    false, // Get approval.
+                    "A file containing an update of this app was detected.\n"
+                    + "It will now replace this one because it is newer.",
+                    otherAppFile
+                    ) )
+                  {
+                    appShouldExitB= // Chain to other app to do copy and run.
+                      requestForJavaCommandAndExitTrueB( 
+                          otherAppFile.getAbsolutePath() );
+                    }
+                }
+            }
+        return appShouldExitB;
+        }
 	  
 	  private boolean isUpdateValidB(File otherAppFile)
 	    /* If this app is the app File in the standard folder.
@@ -379,29 +381,34 @@ l    * If the app receives a message indicating
 	      return successB;
 	      }
 
-    private void setInputsV( CommandArgs theCommandsArgs )
-      /* This method extracts and saves the inputs this module needs
-        from theCommandsArgs.  By convention 
-        * arg0 is the path to the file instance of another Java app instance,
-          either the running instance that started this app, 
-          or a running instance that will be started by this app,
-          or both. 
-        Other args are not presently used.
+    private void processCommandArgsV( CommandArgs theCommandArgs )
+      /* This method extracts and saves various input arguments 
+        from theCommandArgs, which is assumed to have already 
+        been loaded with data.
+        It does some actual command execution also.
+        
+        ///fix Command argument processing should probably depend on context.
+          One set of commands are valid at startup.
+          A different set is valid when received on the loopback port.
+          So divide this method?
         */
       {
-        appLogger.debug( "AppInstanceManager setInputsV(..), starting." );
-        inputStrings= theCommandsArgs.args();
-        if ( theCommandsArgs.switchPresent("-otherAppIs"))
-          { 
-            otherAppFile=  // Convert value string File name.
-                new File(theCommandsArgs.switchValue("-otherAppIs"));
-            }
-        else if (inputStrings.length == 0) ; // Nothing is an acceptable input.
-        else { // Anything else is an error.
-          appLogger.error( "AppInstanceManager setInputsV(..), illegal input.  \n  "
-              + inputStrings );
+        appLogger.debug( 
+            "AppInstanceManager processCommandArgsV(..), starting." );
+        inputStrings= theCommandArgs.args(); // Save a copy of arg array.
+        
+        tryFeedbackPortV(theCommandArgs);
+        tryUpdateCommandsV(theCommandArgs); // Try the update subset.
+        
+        { // Log any unprocessed/ungotten arguments.
+          String[] targetStrings= // Get remaining arguments.
+              theCommandArgs.targets(); 
+          if (targetStrings.length>0) // If there are any then
+            appLogger.error( // log them as errors.
+              "AppInstanceManager processCommandArgsV(..), unused arguments:\n  "
+              + Arrays.toString(targetStrings));
           }
-        }
+        } // processCommandArgsV(..)
 
 	  // Code that manages running instances.
 	
@@ -420,7 +427,7 @@ l    * If the app receives a message indicating
           In this case it starts an InstanceManagerThread
           to monitor the socket for future connections and messages from 
           later running instances of this app.
-          Then it returns false to indicate delegation failure and that 
+          Then it returns false to indicate delegation failure, meaning that 
           this app instance should continue with normal GUI start-up, etc.
 
           If this app can't bind the socket then it is [probably] because 
@@ -506,10 +513,12 @@ l    * If the app receives a message indicating
 	          and this app should not exit.
 	        */
 	      {
-	        boolean successB= false; // Assume failure.
 	        String outputString= // Make input string to be used in packet. 
 	            "-otherAppIs " + // Infogora -otherAppIs option.
-	            runningAppFile.getAbsolutePath(); // Path of this app's file. 
+	            runningAppFile.getAbsolutePath(); // Path of this app's file.
+          boolean successB= LocalSocket.localSendToPortB(
+	            outputString, thePortManager.getInstancePortI());
+	        /*  ////
 	        try {
 	            Socket clientSocket= // Create socket for send.
 	              new Socket(InetAddress.getLoopbackAddress(), 
@@ -529,6 +538,7 @@ l    * If the app receives a message indicating
                 "======== FAILED SENDING INSTANCE-PACKET ======== :\n  " 
                 + outputString+ "\n  ", e1);
 	          }
+	        */  ////
           return successB;
 	        }
 	
@@ -557,8 +567,7 @@ l    * If the app receives a message indicating
                     try {
                         theLocalSocket.inputFromConnectionV();
                         appLogger.debug("run(): got data.");
-			                  processConnectionDataV(
-			                      theLocalSocket.getCommandArgs());
+                        processCommandArgsV(theLocalSocket.getCommandArgs());
 			                } finally {
 	                      updaterReentrantLock.unlock(); // Release the lock.
 	                    }
@@ -574,53 +583,64 @@ l    * If the app receives a message indicating
 	            }
 	        
 	        } // class InstanceManagerThread
-  
-        private void processConnectionDataV(CommandArgs theCommandArgs)
-          throws IOException
-          /* This method processes the input gotten by processLineFromSocketV().
-            It tries to interpret that input as 
-            a path to a file which is a possible software update. 
-            */
-          {
-  		      setInputsV(theCommandArgs);
-              // Assumes only a single string argument.
-  		      logInputsV(); // Report inputs received through socket connection.
-  		      if // Exiting or firing event depending on other instance.
-  		      	( isUpdateValidB( otherAppFile ) )
-  		        { // Report pending update.
-                appLogger.info("processConnectionDataV(..), "
-                    + "Offered app file is newer and is valid.");
-  		         	if ( displayUpdateApprovalDialogB( 
-  	          			false, // Get approval.
-  		        			"A newer running instance of this app "
-  		        			+ "has been detected.\n"
-  		              + "It will be used in a software update because "
-  		              + "it is newer than this app instance.",
-  		              otherAppFile
-  		        			) ) 
-  		         	  {
-  		         			// Chain to other app to do copy and run.
-  		         				requestForJavaCommandAndExitTrueB( 
-  			      					otherAppFile.getAbsolutePath() );
-  			      			theShutdowner.requestAppShutdownV(); // App exit.
-  		         			}
-  		        	}
-  		        else
-  		        {
-  		          appLogger.info("processConnectionDataV(..), "
-  		              + "Offered app file is not newer or is invalid.");
-  		        	displayUpdateApprovalDialogB( 
-  	          			true, // Just inform user.  Don't request approval.
-  		        			"Another running instance of this app "
-  		        			+ "was detected briefly.\n"
-  		              + "It was not used in a software update because "
-  		              + "it was not newer than this app instance.",
-  		              otherAppFile
-  		        			);
-  		          fireNewInstance(); // AppInstanceListener action.
-  		          }
-  		      }
-		      
+
+	    private void tryFeedbackPortV(CommandArgs theCommandArgs)
+        /* This method tries to read the feedbackPort value from
+          theCommandArgs and inject it into the Shutdowner
+          for notifying the starter process at exit time.
+          */
+  	    {
+          starterPortLong=  // Try the feedback port saving subset.
+              theCommandArgs.switchLongValue("-starterPort",starterPortLong);
+          theShutdowner.injectStarterPortV(starterPortLong);
+          }
+
+      private void tryUpdateCommandsV(CommandArgs theCommandArgs)
+        /* This method tries to do a software update based on theCommandArgs.
+          It is called after receiving command arguments, either
+          from the TCP loopback port, or from the command line.
+          */
+        {
+          if ( !theCommandArgs.switchPresent("-otherAppIs")) return;
+          otherAppFile= // Read other app path from switch value. 
+              new File(theCommandArgs.switchValue("-otherAppIs"));
+		      logInputsV(); // Report [path] inputs relevant to us.
+		      if // Exiting or firing event depending on other instance.
+		      	( isUpdateValidB( otherAppFile ) )
+		        { // Report pending update.
+              appLogger.info("processConnectionDataV(..), "
+                  + "Offered app file is newer and is valid.");
+		         	if ( displayUpdateApprovalDialogB( 
+	          			false, // Get approval.
+		        			"A newer running instance of this app "
+		        			+ "has been detected.\n"
+		              + "It will be used in a software update because "
+		              + "it is newer than this app instance.",
+		              otherAppFile
+		        			) ) 
+		         	  {
+		         			// Chain to other app to do copy and run.
+		         				requestForJavaCommandAndExitTrueB( 
+			      					otherAppFile.getAbsolutePath() );
+			      			theShutdowner.requestAppShutdownV(); // App exit.
+		         			}
+		        	}
+		        else
+		        {
+		          appLogger.info("processConnectionDataV(..), "
+		              + "Offered app file is not newer or is invalid.");
+		        	displayUpdateApprovalDialogB( 
+	          			true, // Just inform user.  Don't request approval.
+		        			"Another running instance of this app "
+		        			+ "was detected briefly.\n"
+		              + "It was not used in a software update because "
+		              + "it was not newer than this app instance.",
+		              otherAppFile
+		        			);
+		          fireNewInstance(); // AppInstanceListener action.
+		          }
+		      }
+	      
     	private boolean displayUpdateApprovalDialogB( 
     			final boolean informDontApproveB, String messageString, File appFile )
     	  /* This method displays a dialog box containing messageString
@@ -913,11 +933,13 @@ l    * If the app receives a message indicating
             "-jar", // java.exe -jar option.
             argString, // Path of .jar file to run
             "-otherAppIs", // Infogora -otherAppIs option.
-            runningAppFile.getAbsolutePath() // Path of this app's file. 
+            runningAppFile.getAbsolutePath(), // Path of this app's file.
+            "-starterPort", // For later exit notifications
+            ""+starterPortLong, // to use this port on loopback interface.
+            "-illegalSwitch",
+            "illegalTarget"
 	          };
-	        ProcessStarter.setCommandV(  // Setting String as command to run later.
-	          commandOrArgStrings
-	          );
+	        theShutdowner.setExitStringsV(commandOrArgStrings);
 	        }
 	
 	  // Other miscellaneous code.

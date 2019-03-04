@@ -55,6 +55,8 @@ public class App { // The App, especially pre-GUI stuff.
   		//appLogger.info("App calling Shutdowner.finishV().");
       theShutdowner.finishAppShutdownV();  // Doing final app shutdown jobs.
         // This might not return if shutdown began in the JVM. 
+      appLogger.setBufferedModeV( 
+          true ); // Because finishAppShutdownV() disables it for JVM exit. 
   		appLogger.info("App exiting.");
       
       // After this method returns, the main thread of this app should exit.

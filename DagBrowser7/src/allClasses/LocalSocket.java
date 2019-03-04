@@ -5,6 +5,7 @@ import static allClasses.Globals.appLogger;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -16,10 +17,10 @@ public class LocalSocket
     It does this using a TCP server socket on the loopback interface.
     
     It can be used for 2 things:
-    * To signal the existence of a process to other processes.
-    * To communicate commands from one process to another,
+    * To signal the existence of this process to other processes.
+    * To communicate commands from other processes to this process.
     It is typically used to coordinate multiprocess applications,
-    including multiple instances of the same process.
+    including the case of multiple instances of the same process.
 
     It has the following attributes:
     * It performs some of the functions of a TCP server socket,
@@ -37,11 +38,16 @@ public class LocalSocket
     */
 
   {
-    private ServerSocket theServerSocket = null;
+    private ServerSocket theServerServerSocket = null;
+      /* The Java ServerSocket should have been called something else.
+        It is less a socket than it is a socket factory. 
+        */
 
-    private Socket clientSocket= null; 
+    private Socket theServerSocket= null; 
 
     private CommandArgs theCommandArgs = null; // For message output.
+
+    //// private Socket theClientSocket= null; 
 
     public synchronized boolean bindB( int portI )
       /* This is like bindV(..) except that 
@@ -75,7 +81,7 @@ public class LocalSocket
       {
         appLogger.info("bindV(..) begins, portI= "+portI);
         try {
-            theServerSocket=  // Try opening listener socket.
+            theServerServerSocket=  // Try opening listener socket.
               new ServerSocket(
                 portI, 10, InetAddress.getLoopbackAddress() 
                 );
@@ -86,6 +92,14 @@ public class LocalSocket
           }
         }
 
+    public synchronized ServerSocket getServerSocket()
+      /* This method returns the ServerSocket.  */
+      { return theServerServerSocket; }
+
+    public synchronized Socket getSocket()
+      /* This method returns the ServerSocket.  */
+      { return theServerSocket; }
+ 
     // Beginning of methods that normally appear in a loop.
     
     public void acceptV()
@@ -94,8 +108,8 @@ public class LocalSocket
         It throws an exception if there is an Error.
         */
       {
-        clientSocket= // Wait until accept or exception. 
-            theServerSocket.accept();
+        theServerSocket= // Wait until accept or exception. 
+            theServerServerSocket.accept();
         }
 
     public synchronized void inputFromConnectionV()
@@ -107,7 +121,7 @@ public class LocalSocket
       {
         BufferedReader inBufferedReader= 
           new BufferedReader(
-             new InputStreamReader(clientSocket.getInputStream()
+             new InputStreamReader(theServerSocket.getInputStream()
              )
            );
          String readString = inBufferedReader.readLine();
@@ -129,18 +143,18 @@ public class LocalSocket
       { return theCommandArgs; }
     
     public synchronized void closeConnectionV()
-      /* This method closes the clentSocket connection 
+      /* This method closes the Socket connection 
         that was created by accepting a connection on theServerSocket.
         Once this is done, another connection can be accepted and processed.
         */
       { 
         try { 
-          if (clientSocket != null)
-            clientSocket.close(); 
+          if (theServerSocket != null)
+            theServerSocket.close(); 
           } catch (IOException e) {
             appLogger.exception("closeConnectionV()",e);
           } 
-        clientSocket= null;
+        theServerSocket= null;
         }
 
     // End of methods that normally appear in a loop.
@@ -150,9 +164,8 @@ public class LocalSocket
         false otherwise.
         */
       {
-        return (theServerSocket == null);
+        return (theServerServerSocket == null);
         }
-      
 
     public synchronized void closeAllV()
       /* This method closes theServerSocket.
@@ -164,12 +177,44 @@ public class LocalSocket
       {
         closeConnectionV(); // Close any single associated socket connection.
         try { // Close the server socket.
-            if (theServerSocket != null) 
-              theServerSocket.close();
+            if (theServerServerSocket != null) 
+              theServerServerSocket.close();
           } catch (IOException e) {
             appLogger.exception("LocalSocket.closeV()",e);
           }
-        theServerSocket= null; // Indicate closed no matter what.
+        theServerServerSocket= null; // Indicate closed no matter what.
         }
+
+    
+
+    public static synchronized boolean localSendToPortB(
+        String outputString, int portI)
+      /* This method sends dataString to portI on the loopback interface.
+        It sends only a single line, then closes the socket.
+        Returns true if the send succeeded, false otherwise.
+        */
+      {
+        boolean successB= false;
+        String commonString= "\n  data=\""+outputString+"\", port= "+portI;
+        try {
+          Socket theClientSocket= // Create socket for send.
+            new Socket(InetAddress.getLoopbackAddress(), portI);
+          OutputStream theOutputStream= // Get its stream.
+              theClientSocket.getOutputStream();
+          theOutputStream.write(  // Send output string to other app via stream.
+            outputString.getBytes());
+          theOutputStream.close();  // Close stream.
+          theClientSocket.close();  // Close socket.
+          appLogger.info(
+            "======== SUCCESS SENDING TCP LOOPBACK PACKET ========"
+            +commonString);
+          successB= true;  // Packet sent, meaning success and should exit.
+        } catch (IOException e1) {
+          appLogger.exception(
+            "======== FAILED SENDING LOOPBACK PACKET ========" 
+            + commonString, e1);
+        }
+      return successB;
+      }
     
     }

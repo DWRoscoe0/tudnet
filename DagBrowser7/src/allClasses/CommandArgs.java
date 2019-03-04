@@ -41,6 +41,11 @@ public class CommandArgs {
       arguments that are targets because they
       were not processed earlier as switches or switch values. 
 
+
+    ///enh Don't take switch indexes until the switch is actually processed.
+      This will allow targets() to return any arguments, switch or otherwise,
+      which was not processed.  Note this as a significant change.
+
     ///enh Presently only the presence of switches is significant.
       Their order is not.  It might be worthwhile to provides 
       a way to process arguments sequentially,
@@ -53,7 +58,9 @@ public class CommandArgs {
   private HashMap<String, Integer> switchIndexes= 
       new HashMap<String, Integer>(); // Found switches and their positions.
   private TreeSet<Integer> takenIndexes= 
-      new TreeSet<Integer>(); // Positions of switches that have been gotten.
+      new TreeSet<Integer>(); /* Positions of switches that have been gotten.
+        Originally switch indexes were at parse() time.
+        Now they are added only when particular switches are asked for.  */
 
   
   public CommandArgs(String[] args){ // Constructor.
@@ -75,7 +82,7 @@ public class CommandArgs {
           if(args[i].startsWith("-") ){
             appLogger.debug( "CommandArgs.parse(..) switch "+args[i] );
             switchIndexes.put(args[i], i);
-            takenIndexes.add(i);
+            //// takenIndexes.add(i);  Don't do this now.
           } else {
             appLogger.debug( "CommandArgs.parse(..) target "+args[i] );
           }
@@ -94,8 +101,15 @@ public class CommandArgs {
     { return args[indexI]; }
 
   public boolean switchPresent(String switchName)
-    // Returns true if the switch switchName was parsed, false otherwise.
-    { return switchIndexes.containsKey(switchName); }
+    /* Returns true if the switch switchName was parsed, false otherwise.
+      Also records the switch argument as taken.
+      */
+    { 
+      boolean isPresentB= switchIndexes.containsKey(switchName);
+      if (isPresentB) 
+        takenIndexes.add(switchIndexes.get(switchName));
+      return isPresentB;
+      }
 
   public String switchValue(String switchName) 
     /* Returns the String value of switchName.
@@ -111,7 +125,9 @@ public class CommandArgs {
       then defaultValue is returned.
       */
     {
-      if(!switchIndexes.containsKey(switchName)) return defaultValue;
+      //// if(!switchIndexes.containsKey(switchName)) return defaultValue;
+      if(!switchPresent(switchName)) // Take switch if present. 
+        return defaultValue; // Return default value if not.
 
       int switchIndex = switchIndexes.get(switchName);
       if(switchIndex + 1 < args.length){
