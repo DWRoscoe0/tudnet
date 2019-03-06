@@ -935,9 +935,9 @@ l    * If the app receives a message indicating
             "-otherAppIs", // Infogora -otherAppIs option.
             runningAppFile.getAbsolutePath(), // Path of this app's file.
             "-starterPort", // For later exit notifications
-            ""+starterPortLong, // to use this port on loopback interface.
-            "-illegalSwitch",
-            "illegalTarget"
+            ""+starterPortLong // to use this port on loopback interface.
+            //// "-illegalSwitch",
+            //// "illegalTarget"
 	          };
 	        theShutdowner.setExitStringsV(commandOrArgStrings);
 	        }

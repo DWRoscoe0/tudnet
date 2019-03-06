@@ -161,9 +161,9 @@ public class InfogoraStarter
           {
             appLogger.info("processConnectionDataV(..)"+theCommandArgs);
             
-            if ( theCommandArgs.switchPresent("-delegaterExiting"))
+            if ( theCommandArgs.switchPresent("-delegatorExiting"))
               appLogger.info(
-                  "processConnectionDataV(..) -delegaterExiting received");
+                  "processConnectionDataV(..) -delegatorExiting received");
             if ( theCommandArgs.switchPresent("-delegateeExiting")) {
               theLocalSocket.closeAllV(); // Close all to exit loop and thread.
               }
