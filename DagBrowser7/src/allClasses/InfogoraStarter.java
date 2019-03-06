@@ -30,7 +30,8 @@ public class InfogoraStarter
         Process theProcess= null;
         appLogger.setIDProcessV("Starter");
         appLogger.setBufferedModeV( true ); // Enabling fast buffered logging.
-
+        SystemState.logSystemStateV();
+        
         DefaultExceptionHandler.setDefaultExceptionHandlerV(); 
         String aString=
           "InfogoraStarter.main() beginning. ======== STARTER IS STARTING ========";

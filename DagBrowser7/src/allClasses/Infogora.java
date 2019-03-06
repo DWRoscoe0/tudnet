@@ -99,6 +99,7 @@ class Infogora  // The root of this app.
 	      appLogger.info("Infogora.main() beginning. ======== APP IS STARTING ========");
 	      System.out.println(
 	        "Infogora.main() beginning. ======== APP IS STARTING ========");
+        SystemState.logSystemStateV();
 	
         CommandArgs theCommandArgs= new CommandArgs(argStrings);
 	      AppFactory theAppFactory=  // Constructing AppFactory.
