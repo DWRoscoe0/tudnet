@@ -2,6 +2,8 @@ package allClasses;
 
 import static allClasses.Globals.appLogger;
 
+import java.util.Arrays;
+
 public class SystemState
   /* This class is for reading and logging various system state variables.
     
@@ -10,8 +12,11 @@ public class SystemState
    */
   {
 
-    public static void logSystemStateV()
+    public static void logSystemStateV(String[] argStrings)
       {
+      appLogger.debug(
+          "logSystemStateV(..) argStrings="+Arrays.toString(argStrings));
+      
       logSystemPropertyV("java.class.path"); // class directories and JAR archives.
       logSystemPropertyV("java.home"); // Installation directory for JRE.
       logSystemPropertyV("java.version"); // JRE version number.

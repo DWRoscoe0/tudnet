@@ -125,7 +125,7 @@ public class TCPCopier
 	      			new PersistentCursor( thePersistent );
 	      	thePersistentCursor.setListV("peers");
 	      	interactWithTCPServersV(thePersistentCursor);
-	  			appLogger.info("run() ending.",true);
+	  			appLogger.info(true, "run() ending.");
 		    	}
 
 
@@ -406,8 +406,8 @@ public class TCPCopier
 											"serviceOneRequestFromClientV() end synchronized block.");
 									} 
 			      } catch (IOException ex) {
-			    		appLogger.info( "serviceOneRequestFromClientV() using "
-			    				+serverServerSocket, ex );
+			    		appLogger.info(ex,
+			    		    "serviceOneRequestFromClientV() using "+serverServerSocket );
 			      } finally {
 			    		appLogger.info( "serviceOneRequestFromClientV() closing begins.");
 			      	Closeables.closeWithErrorLoggingB(serverSocket);
@@ -486,7 +486,7 @@ public class TCPCopier
 						  }
 						theSocket.shutdownOutput(); // Prevent reset at Socket close.
 				} catch (IOException ex) {
-			  		appLogger.info("tryTransferingFileL(..) aborted because of ",ex);
+			  		appLogger.info(ex, "tryTransferingFileL(..) aborted because of ");
 			  		EpiThread.uninterruptableSleepB( // Random delay of up to 2 seconds.
 			  				theRandom.nextInt(2000)); ///fix make interruptable.
 			  		appLogger.info("tryTransferingFileL(..) end of random delay.");
@@ -587,14 +587,14 @@ public class TCPCopier
 	  		while (true) { int byteI;
 	      	try { byteI= theInputStream.read(); } // Read byte. 
 			    catch (IOException theIOException) {
-			    	appLogger.info("copyStreamBytesV() reading",theIOException);
+			    	appLogger.info(theIOException, "copyStreamBytesV() reading");
 			    	throw theIOException; // Re-throw.
 			    	}
 	  	  	///dbg appLogger.info("copyStreamBytesV() byteI="+byteI+" "+(char)byteI);
 	      	if ( byteI == -1 ) break;
 	      	try { theOutputStream.write(byteI); } // Write byte.
 			    catch (IOException theIOException) { 
-			    	appLogger.info("copyStreamBytesV() writing",theIOException);
+			    	appLogger.info(theIOException, "copyStreamBytesV() writing");
 			    	throw theIOException; // Re-throw.
 			    	}
 	      	byteCountI++;

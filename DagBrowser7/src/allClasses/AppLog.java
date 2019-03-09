@@ -167,7 +167,8 @@ public class AppLog extends EpiThread
       public static boolean testingForPingB= false;
       private boolean debugEnabledB= true;
       private boolean consoleCopyModeB= false; // When true, logging goes to 
-        // console as well as log file.  
+        // console as well as log file.
+        ///ehn change to Enum for generality and better self-documentation.
       public LogLevel packetLogLevel= DEBUG;  // INFO; // DEBUG; 
 
     public void setIDProcessV( String processIDString )
@@ -226,7 +227,7 @@ public class AppLog extends EpiThread
     public boolean getAndEnableConsoleModeB()
 	    { 
         System.out.println("AppLog.getAndEnableConsoleModeB(..) begins.");
-	    	boolean tmpB= consoleCopyModeB; 
+	    	boolean tmpB= consoleCopyModeB;
 		    consoleCopyModeB= true;
         System.out.println("AppLog.getAndEnableConsoleModeB(..) end.");
 		    return tmpB;
@@ -355,7 +356,7 @@ public class AppLog extends EpiThread
       /* This method is for tracing.  It writes only inString.
         */
       { 
-				logB( TRACE, inString, null, false );
+				logB( TRACE, false, null, inString );
         }
   
     public void debug(String inString)
@@ -365,25 +366,25 @@ public class AppLog extends EpiThread
         */
       { 
     		if (debugEnabledB) 
-    			logB( DEBUG, inString, null, consoleCopyModeB );
+    			logB( DEBUG, consoleCopyModeB, null, inString );
         }
 
-    public void info(String inString, boolean debugB)
+    public void info(boolean debugB, String inString)
       /* This method writes an information String inString to a log entry
         but not to the console.
         If theThrowable is not null then it displays that also.
         */
       { 
-        info( inString, null, debugB ); 
+        info(debugB, null, inString); 
         }
 
-    public void info(String inString, Throwable theThrowable)
+    public void info(Throwable theThrowable, String inString)
       /* This method writes an information String inString to a log entry
         but not to the console.
         If theThrowable is not null then it displays that also.
         */
       { 
-    		info( inString, theThrowable, false ); 
+    		info(false, theThrowable, inString ); 
         }
 
     public void info(String inString)
@@ -391,17 +392,18 @@ public class AppLog extends EpiThread
         but not to the console.
         */
       { 
-        info( inString, null, false); 
+        info(false, null, inString); 
         }
 
-    public void info(String inString, Throwable theThrowable, boolean consoleCopyEntryB)
+    public void info(
+        boolean consoleCopyEntryB, Throwable theThrowable, String inString)
       /* This method writes an information String inString to a log entry
         but not to the console.
         If theThrowable is not null then it displays that also.
         If consoleCopyEntryB==true then out ismade to console also.
         */
       { 
-				logB( INFO, inString, theThrowable, consoleCopyEntryB );
+				logB(INFO, consoleCopyEntryB, theThrowable, inString);
         }
     
     public void exceptionWithRethrowV(String inString, Exception e)
@@ -435,23 +437,23 @@ public class AppLog extends EpiThread
     
     public void error(String inString)
       { 
-        error( inString, null); 
+        error( null, inString); 
         }
     
-    public void error(String inString, Throwable theThrowable)
+    public void error(Throwable theThrowable, String inString)
       /* This method writes an error String inString to a log entry,
         and also to the console error stream?  Disabled temporarily.
         An error is something with which the app should not have to deal.
         Response is to either retry or terminate.
         */
       { 
-    		logB( ERROR, inString, theThrowable, true);
+    		logB( ERROR, true, theThrowable, inString);
         }
     
     public void warning(String inString)
       // This method writes a severe error String inString to a log entry.
       { 
-    		logB( WARN, inString, null, false );
+    		logB( WARN, false, null, inString );
         }
     
     public void consoleInfo(String inString, boolean debugB)
@@ -479,17 +481,18 @@ public class AppLog extends EpiThread
       The following methods take various combinations of parameters 
       from the following set:
     	* LogLevel theLogLevel: used for filtering and is displayed. 
+      * boolean consoleCopyEntryB: controls whether a copy of the entry goes to console.
+      * Throwable theThrowable: an exception to be displayed, of not null.
     	* String inString: message to be displayed.
-    	* Throwable theThrowable: an exception to be displayed, of not null.
-    	* boolean consoleCopyEntryB: controls whether a copy of the entry goes to console.
     		
       */
 
     public synchronized boolean logB(
     		LogLevel theLogLevel, 
-    		String inString, 
+    		boolean consoleCopyEntryB,
     		Throwable theThrowable, 
-    		boolean consoleCopyEntryB )
+        String inString
+    		)
 	    {
 	  		boolean loggingB= logB(theLogLevel);
 	  		if ( loggingB )
@@ -564,21 +567,22 @@ public class AppLog extends EpiThread
           )
         { 
           openFileWithRetryDelayIfClosedV();
-          logToOpenFileV(theLogLevel,inString,theThrowable,consoleCopyEntryB );
+          logToOpenFileV(theLogLevel,consoleCopyEntryB,theThrowable,inString);
           closeFileV();
           }
         else // Buffered mode enabled or file is open.
         {
           openFileWithRetryDelayIfClosedV(); ///opt  needed?
-          logToOpenFileV(theLogLevel,inString,theThrowable,consoleCopyEntryB );
+          logToOpenFileV(theLogLevel,consoleCopyEntryB,theThrowable,inString);
           }
       }
 
     public synchronized void logToOpenFileV(
         LogLevel theLogLevel, 
-        String inString, 
+        boolean consoleCopyEntryB,
         Throwable theThrowable, 
-        boolean consoleCopyEntryB )
+        String inString
+        )
       {
     		long nowMillisL= System.currentTimeMillis(); // Saving present time.
 

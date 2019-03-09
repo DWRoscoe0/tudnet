@@ -30,13 +30,15 @@ public class InfogoraStarter
         Process theProcess= null;
         appLogger.setIDProcessV("Starter");
         appLogger.setBufferedModeV( true ); // Enabling fast buffered logging.
-        SystemState.logSystemStateV();
         
         DefaultExceptionHandler.setDefaultExceptionHandlerV(); 
-        String aString=
-          "InfogoraStarter.main() beginning. ======== STARTER IS STARTING ========";
-        appLogger.info(aString);
-        System.out.println(aString);
+         //// String aString=
+         ////   "InfogoraStarter.main() beginning. ======== STARTER IS STARTING ========";
+         //// appLogger.info(aString);
+         //// System.out.println(aString);
+        appLogger.info(true,
+            "InfogoraStarter.main() beginning. ======== STARTER IS STARTING ========");
+        SystemState.logSystemStateV(argStrings);
     
         setupLoopbackPortB();
         long starterPortL=
@@ -72,11 +74,12 @@ public class InfogoraStarter
                 "InfogoraStarter.main() Infogora process has terminated.");
             }
         
-        aString=
-          "InfogoraStarter.main() calling exit(0). "
-          + "======== STARTER WILL END AFTER 1S OF SAFETY SLEEP ========";
-        System.out.println(aString);
-        appLogger.info(aString);
+        //// String aString=
+         ////     "InfogoraStarter.main() calling exit(0). "
+         ////     + "======== STARTER WILL END AFTER 1S OF SAFETY SLEEP ========";
+         ////   System.out.println(aString);
+        appLogger.info(true, "InfogoraStarter.main() calling exit(0). "
+            + "======== STARTER WILL END AFTER 1S OF SAFETY SLEEP ========");
         appLogger.setBufferedModeV( false ); // Disabling buffered logging.
         EpiThread.uninterruptableSleepB( 1000 ); // Extra time for safety.
         System.exit(0); // Will kill any remaining unknown threads running??

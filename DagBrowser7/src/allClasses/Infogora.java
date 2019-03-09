@@ -96,10 +96,9 @@ class Infogora  // The root of this app.
         appLogger.setBufferedModeV(true); // Enabling fast buffered logging.
         DefaultExceptionHandler.setDefaultExceptionHandlerV(); 
           // Preparing for exceptions before doing anything else.
-	      appLogger.info("Infogora.main() beginning. ======== APP IS STARTING ========");
-	      System.out.println(
-	        "Infogora.main() beginning. ======== APP IS STARTING ========");
-        SystemState.logSystemStateV();
+	      appLogger.info(true,
+	          "Infogora.main() beginning. ======== APP IS STARTING ========");
+        SystemState.logSystemStateV(argStrings);
 	
         CommandArgs theCommandArgs= new CommandArgs(argStrings);
 	      AppFactory theAppFactory=  // Constructing AppFactory.
@@ -109,9 +108,8 @@ class Infogora  // The root of this app.
 	      theApp.runV();  // Running the app until it has shutdown.
 	        // This might not return if shutdown began in the JVM. 
 
-        System.out.println(
+        appLogger.info(true,
           "Infogora.main() calling exit(0). ======== APP IS ENDING ========");
-        appLogger.info("Infogora.main() calling exit(0). ======== APP IS ENDING ========");
     		appLogger.setBufferedModeV( false ); // Final close of log file.
 	      System.exit(0); // Will kill any remaining unknown threads running??
 	      } // main(..)
