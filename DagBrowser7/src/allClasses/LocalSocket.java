@@ -126,14 +126,14 @@ public class LocalSocket
            );
          String readString = inBufferedReader.readLine();
          appLogger.info(
-             "inputFromConnectionV() ======== RECEIVED DATA LINE VIA TCP FROM ANOTHER APP. ======== :\n  " 
+             "inputFromConnectionV() ======== RECEIVED DATA VIA TCP FROM ANOTHER APP. ======== :\n  " 
              + readString
              );
          theCommandArgs= // Parse string into separate string arguments using
            new CommandArgs(readString.split("\\s")); // white-space delimiters.
          appLogger.debug("inputFromConnectionV(): theCommandArgs created.");
          inBufferedReader.close();
-         appLogger.debug("inputFromConnectionV(): inBufferedReader.closeed.");
+         appLogger.debug("inputFromConnectionV(): inBufferedReader.closed.");
          }
     
     public synchronized CommandArgs getCommandArgs()

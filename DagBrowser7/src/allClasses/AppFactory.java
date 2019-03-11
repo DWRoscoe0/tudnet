@@ -28,11 +28,13 @@ public class AppFactory {  // For App class lifetimes.
   private AppGUIFactory theAppGUIFactory= null;
 
   public AppFactory(   // Factory constructor.
-      CommandArgs theCommandArgs )
+      ////  CommandArgs theCommandArgs )
+      String[] argStrings)
     {
   	  thePersistent= new Persistent();
   		thePortManager= new PortManager( thePersistent );
   		theShutdowner= new Shutdowner();
+  		CommandArgs theCommandArgs= new CommandArgs(argStrings);
   		AppInstanceManager theAppInstanceManager= new AppInstanceManager(
   		    theCommandArgs, theShutdowner, thePortManager
       		);

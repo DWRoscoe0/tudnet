@@ -8,21 +8,43 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 
-public class InfogoraStarter 
+public class InfogoraStarter
+
+  /* This class is used as a process to start the Infogora app process.
+    It is in the same jar file as the Infogora class.
+    Both this class and the Infogora class have their own main(..) methods.
+    
+    This cless was created because of the characteristics of the
+    7Zip SFX Modules used as an decompressor and launcher.
+    It decompresses the app into a temporary directory,
+    starts the specified app process, waits for that process to terminate,
+    and then deletes the temporary directory and its contents.
+    It doesn't understand that the process that it starts
+    might start other processes just as dependent on that temporary directory.
+    This class, by waiting for all child processes to terminate
+    before terminating itself, guarantees that the temporary directory
+    is deleted only when it is safe to do so.  
+    
+    ///enh Maybe generalize to use different termination conditions.
+      Instead of using -delegateeExiting and -delegatorExiting,
+      use -StartingProcess and -processExiting, and keep a count.
+      When the count reaches 0, this process may exit.
+   */
 
   {
 
-    // Locks and guards.
     private static Lock theReentrantLock= new ReentrantLock();
       /* This is Lock variable is used for thread safety.  */
     private static LoopbackMonitorThread theLoopbackMonitorThread;
 
     public static void main(String[] argStrings)
-      /* This method is the app starter's entry point.  It does the following:
+      /* This method is the app starter's entry point.  
+        It does the following, in the following order:
         * It sets a default Exception handler.
-        * It starts the Infogora app.
-        * It waits for that Infogora app to terminate.
-        * It waits for any other instances of the Infogora app to terminate.
+        * It starts the Infogora app as another process.
+        * It waits for that Infogora app process to terminate.
+        * It waits for all of the Infogora app's child processes to terminate.
+        * It terminates itself.
 
         */
       { // main(..)
@@ -32,10 +54,6 @@ public class InfogoraStarter
         appLogger.setBufferedModeV( true ); // Enabling fast buffered logging.
         
         DefaultExceptionHandler.setDefaultExceptionHandlerV(); 
-         //// String aString=
-         ////   "InfogoraStarter.main() beginning. ======== STARTER IS STARTING ========";
-         //// appLogger.info(aString);
-         //// System.out.println(aString);
         appLogger.info(true,
             "InfogoraStarter.main() beginning. ======== STARTER IS STARTING ========");
         SystemState.logSystemStateV(argStrings);
@@ -57,31 +75,31 @@ public class InfogoraStarter
             "Infogora.jar", // Path of .jar file to run
             "allClasses.Infogora" // entry point.
             ///fix? add argStrings at end?
-            ,"-starterPort" // For exit notifications
+            ,"-starterPort" // For exit notifications which 
             ,""+starterPortL // use this port on loopback interface.
             };
         appLogger.debug("InfogoraStarter.main() starting Infogora process.");
         theProcess= ProcessStarter.startProcess(commandOrArgStrings);
         if (theProcess == null)
-          appLogger.error("InfogoraStarter.main() app start failed.");
+          appLogger.error("InfogoraStarter.main() Process start failed.");
           else 
-          { appLogger.debug(
-              "InfogoraStarter.main() waiting for Infogora process termination.");
-            //// try {theProcess.waitFor();} catch (InterruptedException e) {}
+          { // Wait for termination of process and all its descendants.
+            appLogger.info(
+              "InfogoraStarter.main() waiting for process termination.");
+            try {theProcess.waitFor();} catch (InterruptedException e) {}
+            appLogger.info(
+                "InfogoraStarter.main() First child process has terminated.");
             try {theLoopbackMonitorThread.join();} 
               catch (InterruptedException e) {}
-            appLogger.debug(
-                "InfogoraStarter.main() Infogora process has terminated.");
+            appLogger.info(
+                "InfogoraStarter.main() Last child process is terminating.  "
+                + "Waiting 1 second before exiting.");
+            EpiThread.uninterruptableSleepB( 1000 ); // Extra time for safety.
             }
         
-        //// String aString=
-         ////     "InfogoraStarter.main() calling exit(0). "
-         ////     + "======== STARTER WILL END AFTER 1S OF SAFETY SLEEP ========";
-         ////   System.out.println(aString);
         appLogger.info(true, "InfogoraStarter.main() calling exit(0). "
-            + "======== STARTER WILL END AFTER 1S OF SAFETY SLEEP ========");
+            + "======== STARTER IS ENDING ========");
         appLogger.setBufferedModeV( false ); // Disabling buffered logging.
-        EpiThread.uninterruptableSleepB( 1000 ); // Extra time for safety.
         System.exit(0); // Will kill any remaining unknown threads running??
         } // main(..)
 

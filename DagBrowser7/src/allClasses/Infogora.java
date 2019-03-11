@@ -5,13 +5,18 @@ import static allClasses.Globals.appLogger;  // For appLogger;
 
 /* This file is the root of this application.  
   If you want to understand this application then
-  this is where you should start reading.  
+  this is where you should start reading.
+  It by using, to a large extent, by using 
+  the Dependency-Injection software pattern.  
  
   This file defines the Infogora class: 
-  This is the class that contains the main(..) method
+  This class contains a main(..) method
   which is the entry point of the application.
-  It constructs the AppFactory, uses it to construct the App,
-  and runs that.
+  Other classes might have main methods, InfogoraStarter for example.
+  
+  The main(..) method constructs the AppFactory, 
+  uses it to construct the single App instance, 
+  and runs a method in that instance.
   
   Much about the structure of this can be obtained by
   examining the high-level factory classes.  They are:
@@ -20,32 +25,37 @@ import static allClasses.Globals.appLogger;  // For appLogger;
 	  It wires together the first level of the app.
 
 	* AppGUIFactory: This is the factory for all classes with 
-	  app GUI lifetime.  It wires together the second level of the app.
+	  app GUI lifetime, which is shorter than app lifetime.  
+	  It wires together the second level of the app.
 
   * UnicasterFactory: This is the factory for all classes with
     lifetimes of a connection.
 
   The factories above may not be the only factories in the app,
-  but they are the top levels.  Factories serve 2 purposes:
+  but they are the top levels.  Factories have the following attributes:
 
-  * Factories contain, or eventually will contain,  all the new-operators, 
-    except for 2 or 3 uses in the top level Infogora class,
-    immutable constants, and initially empty containers.
+  * Factories contain, or eventually will contain
+    all the new-operators, except for new-operators that create 
+    * objects in the top level static Infogora.main(..) method,
+    * immutable constant objects, and 
+    * initially empty container objects.
     This will, in theory, make unit testing easier.
 
-  * Factory code shows how objects relate to each other in the app
-    by showing all dependencies, usually with constructor injection, 
-    but occasionally with setter injection.
+  * Factory code, and code in the main(..) method,
+    shows how objects relate to each other in the app
+    by concentrating and documenting all dependencies, 
+    usually with constructor injection, but occasionally with setter injection.
+    This will, in theory, make code easier to understand.
 
   * All factory fields are one of the following.
-    * Singleton variable fields, preferably private.
+    * Non-lazy final variable singleton fields, preferably private.
     * The factory's one constructor, which creates all the non-lazy singletons.
-    * Lazy singleton getter methods, 
-      whose constructions are delayed until needed.
-    * Maker methods, which construct a new object each time called.
-    ! There should be no non-lazy getters, except for the top level,
-      or the helper classes for each scope,
+    * Lazy singleton getter methods, each of which 
+      constructs its singleton only when first needed.
+      There should be no non-lazy getters, except one at the top level,
+      or the helper classes for each factory scope,
       because non-lazy singletons should be constructor-injected. 
+    * Maker methods, which construct a new object each time called.
     
   */
 
@@ -100,9 +110,10 @@ class Infogora  // The root of this app.
 	          "Infogora.main() beginning. ======== APP IS STARTING ========");
         SystemState.logSystemStateV(argStrings);
 	
-        CommandArgs theCommandArgs= new CommandArgs(argStrings);
+        //// CommandArgs theCommandArgs= new CommandArgs(argStrings);
 	      AppFactory theAppFactory=  // Constructing AppFactory.
-	        new AppFactory(theCommandArgs);
+	        //// new AppFactory(theCommandArgs);
+	          new AppFactory(argStrings);
 	      App theApp=  // Getting the App from the factory.
       		theAppFactory.getApp();
 	      theApp.runV();  // Running the app until it has shutdown.
