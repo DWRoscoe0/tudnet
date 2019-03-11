@@ -16,7 +16,7 @@ public class SystemsMonitor
   
   /* This class measures and displays various performance parameters.
 
-	  ///? Maybe completely rewrite to measure everything in 2 ms periods,
+	  ///enh? Maybe completely rewrite to measure everything in 2 ms periods,
 	  without binary search, as follows:
 	  * in first ms
 	    * Start with a wait for ms boundary.
@@ -27,6 +27,9 @@ public class SystemsMonitor
 	    * do a simple CPU counting loop to measure CPU performance. 
 	    * Loop if reading ms time shows next ms boundary not reached yet.
 	  
+	  ///enh Measure and display CPU and memory usage using 
+	    https://github.com/jezhumble/javasysmon/ or something similar.
+	    
 	  */
 
   { // class SystemsMonitor
