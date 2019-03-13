@@ -56,7 +56,7 @@ public class InfogoraStarter
         DefaultExceptionHandler.setDefaultExceptionHandlerV(); 
         appLogger.info(true,
             "InfogoraStarter.main() beginning. ======== STARTER IS STARTING ========");
-        SystemState.logSystemStateV(argStrings);
+        SystemState.logSystemStateV(InfogoraStarter.class, argStrings);
     
         setupLoopbackPortB();
         long starterPortL=
