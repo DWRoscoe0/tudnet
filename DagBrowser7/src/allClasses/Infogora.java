@@ -108,12 +108,14 @@ class Infogora  // The root of this app.
           // Preparing for exceptions before doing anything else.
 	      appLogger.info(true,
 	          "Infogora.main() beginning. ======== APP IS STARTING ========");
-        SystemState.logSystemStateV(Infogora.class, argStrings);
-	
-        //// CommandArgs theCommandArgs= new CommandArgs(argStrings);
+        //// SystemState.logSystemStateV(Infogora.class, argStrings);
+	      CommandArgs theCommandArgs= new CommandArgs(argStrings);
+        SystemState.initializeV(
+            //// Infogora.class, new CommandArgs(argStrings));
+            Infogora.class, theCommandArgs);
 	      AppFactory theAppFactory=  // Constructing AppFactory.
-	        //// new AppFactory(theCommandArgs);
-	          new AppFactory(argStrings);
+	        new AppFactory(theCommandArgs);
+	        //// new AppFactory(argStrings);
 	      App theApp=  // Getting the App from the factory.
       		theAppFactory.getApp();
 	      theApp.runV();  // Running the app until it has shutdown.

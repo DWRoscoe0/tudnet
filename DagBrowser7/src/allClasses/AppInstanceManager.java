@@ -2,11 +2,7 @@ package allClasses;
 
 import java.io.File;
 import java.io.IOException;
-//// import java.io.OutputStream;
 import java.net.InetAddress;
-////import java.net.Socket;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
@@ -150,7 +146,7 @@ l    * If the app receives a message indicating
     // File names.  Some of these might be equal.
 	  private final File standardAppFile=  // App File name in standard folder.
     		Config.userAppJarFile;
-    private File runningAppFile; // App File name of running app.
+    private File runningAppFile= null; // App File name of running app.
     private File otherAppFile= null;  // File name of another instance.
       // It can come from either:
       // * a command line argument from 
@@ -192,6 +188,9 @@ l    * If the app receives a message indicating
 	    // Does all initialization except constructor injection.
 	    {
 	      theLocalSocket= new LocalSocket();
+        runningAppFile= SystemState.initiatorFile;
+
+        /*  ////
 	      { // Calculating File name of this app's file instance.
 		      URI thisAppURI = null;
 		      try {
@@ -204,6 +203,7 @@ l    * If the app receives a message indicating
 		        }
 		      runningAppFile= new File( thisAppURI );
 	      	}
+        */  ////
 	      tcpCopierAppFile= // Calculating File name of TCPCopier target file.
 	      		Config.makeRelativeToAppFolderFile( 
 	      				Config.tcpCopierOutputFolderString 

@@ -48,6 +48,9 @@ public class InfogoraStarter
 
         */
       { // main(..)
+        System.out.println(
+            "main(..) DISCOVER CAUSE OF DISPLAY OF CONSOLE WINDOW.");
+        
         Config.clearLogFileB= true;
         Process theProcess= null;
         appLogger.setIDProcessV("Starter");
@@ -56,8 +59,9 @@ public class InfogoraStarter
         DefaultExceptionHandler.setDefaultExceptionHandlerV(); 
         appLogger.info(true,
             "InfogoraStarter.main() beginning. ======== STARTER IS STARTING ========");
-        SystemState.logSystemStateV(InfogoraStarter.class, argStrings);
-    
+        SystemState.initializeV(
+            InfogoraStarter.class, new CommandArgs(argStrings));
+
         setupLoopbackPortB();
         long starterPortL=
             theLocalSocket.getServerSocket().getLocalPort();
