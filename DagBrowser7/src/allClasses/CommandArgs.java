@@ -82,7 +82,7 @@ public class CommandArgs {
           if(args[i].startsWith("-") ){
             appLogger.debug( "CommandArgs.parse(..) switch "+args[i] );
             switchIndexes.put(args[i], i);
-            //// takenIndexes.add(i);  Don't do this now.
+            // takenIndexes.add(i);  Stopped doing this.
           } else {
             appLogger.debug( "CommandArgs.parse(..) target "+args[i] );
           }
@@ -125,7 +125,6 @@ public class CommandArgs {
       then defaultValue is returned.
       */
     {
-      //// if(!switchIndexes.containsKey(switchName)) return defaultValue;
       if(!switchPresent(switchName)) // Take switch if present. 
         return defaultValue; // Return default value if not.
 
@@ -214,7 +213,7 @@ public class CommandArgs {
 
         Field[] fields= pojoClass.getFields(); // Get pojo fields.
         for(Field field : fields) { // Iterate over all pojo fields.
-          Class<?> fieldType= field.getType(); ///// I added <?> to Class.
+          Class<?> fieldType= field.getType(); /// I added <?> after Class.
           String fieldName= // Calculate switch associated with field. 
               "-" + field.getName().replace('_', '-');
 

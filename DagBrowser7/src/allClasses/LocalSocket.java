@@ -47,8 +47,6 @@ public class LocalSocket
 
     private CommandArgs theCommandArgs = null; // For message output.
 
-    //// private Socket theClientSocket= null; 
-
     public synchronized boolean bindB( int portI )
       /* This is like bindV(..) except that 
         instead of throwing an exception if the bind fails,

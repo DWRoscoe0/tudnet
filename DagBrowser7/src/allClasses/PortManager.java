@@ -77,26 +77,6 @@ s     */
         else 
         ; // otherwise, use as is.
       Confingleton.putValueV(nameString, portI);
-  
-      /*  ////
-      int resultPortI= 44444; // Default port if Confingleton unreadable.
-      String portString= 
-          Confingleton.getValueString(fileNameString);
-      if ( portString != null )  // If port file exists...
-        try 
-          { resultPortI=  // .. parse it for value.
-              Integer.parseInt(portString); 
-            }
-          catch ( NumberFormatException e ) // Parse error.
-          {} /* Ignore, using default value. */ 
-      /*  ////
-      portString= resultPortI + "";  // Convert int to string.
-      Confingleton.putValueV(fileNameString, portString); // Save in file.
-
-      appLogger.debug(
-          "PortManager.getConfingletonPortI() port="+instancePortI);
-      return resultPortI;
-      */  ////
       return portI;
       }
   

@@ -190,20 +190,6 @@ l    * If the app receives a message indicating
 	      theLocalSocket= new LocalSocket();
         runningAppFile= SystemState.initiatorFile;
 
-        /*  ////
-	      { // Calculating File name of this app's file instance.
-		      URI thisAppURI = null;
-		      try {
-		          thisAppURI = Infogora.class.getProtectionDomain().
-		            getCodeSource().getLocation().toURI();
-		        } catch (URISyntaxException e1) {
-		          // TODO Auto-generated catch block
-		          appLogger.error("AppInstaneManager.initializeV" + e1);
-		          e1.printStackTrace();
-		        }
-		      runningAppFile= new File( thisAppURI );
-	      	}
-        */  ////
 	      tcpCopierAppFile= // Calculating File name of TCPCopier target file.
 	      		Config.makeRelativeToAppFolderFile( 
 	      				Config.tcpCopierOutputFolderString 
@@ -518,27 +504,6 @@ l    * If the app receives a message indicating
 	            runningAppFile.getAbsolutePath(); // Path of this app's file.
           boolean successB= LocalSocket.localSendToPortB(
 	            outputString, thePortManager.getInstancePortI());
-	        /*  ////
-	        try {
-	            Socket clientSocket= // Create socket for send.
-	              new Socket(InetAddress.getLoopbackAddress(), 
-	                  thePortManager.getInstancePortI());
-	            OutputStream out= // Get its stream.
-	                clientSocket.getOutputStream();
-	            out.write(  // Send output string to other app via stream.
-	              outputString.getBytes());
-	            out.close();  // Close stream.
-	            clientSocket.close();  // Close socket.
-	            appLogger.info(
-	              "======== SUCCESS SENDING TCP INSTANCE-PACKET ======== :\n  "
-	              +outputString );
-	            successB= true;  // Packet sent, meaning success and should exit.
-	          } catch (IOException e1) {
-	            appLogger.error(
-                "======== FAILED SENDING INSTANCE-PACKET ======== :\n  " 
-                + outputString+ "\n  ", e1);
-	          }
-	        */  ////
           return successB;
 	        }
 	
@@ -936,8 +901,6 @@ l    * If the app receives a message indicating
             runningAppFile.getAbsolutePath(), // Path of this app's file.
             "-starterPort", // For later exit notifications
             ""+starterPortLong // to use this port on loopback interface.
-            //// "-illegalSwitch",
-            //// "illegalTarget"
 	          };
 	        theShutdowner.setExitStringsV(commandOrArgStrings);
 	        }

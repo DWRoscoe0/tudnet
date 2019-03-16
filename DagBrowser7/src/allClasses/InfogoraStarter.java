@@ -69,11 +69,11 @@ public class InfogoraStarter
         String [] commandOrArgStrings= new String[] {
             ( // Path of java command in array.
               "jre1.8.0_191\\bin\\java.exe"
-              /*   //// "." +
+              /*   /// "." +
               File.separator +
               "bin" +
               File.separator + 
-              "java.exe" */   ////
+              "java.exe" */   ///
               ),
             "-cp", // java.exe -cp (classpath) option.
             "Infogora.jar", // Path of .jar file to run
@@ -124,7 +124,7 @@ public class InfogoraStarter
           {
             appLogger.error("setupLoopbackPortB() no ports available.");
             }
-        return false;   //////////
+        return false;   ///
         }
 
     private static void setupMonitoringThreadV()
