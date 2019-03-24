@@ -1,7 +1,7 @@
 package allClasses; // original package was com.jenkov.cliargs;
 
 
-import static allClasses.Globals.appLogger;
+//// import static allClasses.Globals.appLogger;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
@@ -80,11 +80,11 @@ public class CommandArgs {
       takenIndexes.clear();
       for(int i=0; i < args.length; i++) {
           if(args[i].startsWith("-") ){
-            appLogger.debug( "CommandArgs.parse(..) switch "+args[i] );
+            /// appLogger.debug( "CommandArgs.parse(..) switch "+args[i] );
             switchIndexes.put(args[i], i);
             // takenIndexes.add(i);  Stopped doing this.
           } else {
-            appLogger.debug( "CommandArgs.parse(..) target "+args[i] );
+            /// appLogger.debug( "CommandArgs.parse(..) target "+args[i] );
           }
       }
   }

@@ -6,6 +6,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
@@ -159,11 +160,11 @@ l    * If the app receives a message indicating
       // TCPCopier creates new versions of app here.
 
     // Other variables.
-    private String[] inputStrings= null;  // Storage for String inputs to app
+    private String[] argStrings= null;  // Storage for String inputs to app
       // from multiple sources.
       // inputStrings[0] is normally the path to the other app file instance 
       // that ran the running app.
-    private Long starterPortLong= 0L; // For feedback to our starter process. 
+    //// private Long starterPortLong= 0L; // For feedback to our starter process. 
     private long newestAppLastModifiedL= 0; // For ignoring older updates.
       ///enh There might be cases when this is inadequate,
       // and there be a per-file newest value, 
@@ -222,7 +223,7 @@ l    * If the app receives a message indicating
 	      */
 	    {
 	  		appLogger.info( "tryDelegatingToAnotherAppInstanceB() begins."
-	  		    + "\n  App path is:\n  " + runningAppFile.getAbsolutePath()
+	  		    + "\n  App path is: " + runningAppFile.getAbsolutePath()
 	  		    + "\n  App time-stamp is " + Misc.dateString( runningAppFile ) );
         processCommandArgsV( startCommandArgs ); // Setting app args as inputs.
         logInputsV(); // Log start up inputs.
@@ -381,9 +382,9 @@ l    * If the app receives a message indicating
       {
         appLogger.debug( 
             "AppInstanceManager processCommandArgsV(..), starting." );
-        inputStrings= theCommandArgs.args(); // Save a copy of arg array.
+        argStrings= theCommandArgs.args(); // Save a copy of arg array.
         
-        tryFeedbackPortV(theCommandArgs);
+        processFeedbackPortV(theCommandArgs);
         tryUpdateCommandsV(theCommandArgs); // Try the update subset.
         
         { // Log any unprocessed/ungotten arguments.
@@ -549,15 +550,17 @@ l    * If the app receives a message indicating
 	        
 	        } // class InstanceManagerThread
 
-	    private void tryFeedbackPortV(CommandArgs theCommandArgs)
+	    private void processFeedbackPortV(CommandArgs theCommandArgs)
         /* This method tries to read the feedbackPort value from
-          theCommandArgs and inject it into the Shutdowner
+          theCommandArgs and injects it into the Shutdowner
           for notifying the starter process at exit time.
           */
   	    {
-          starterPortLong=  // Try the feedback port saving subset.
-              theCommandArgs.switchLongValue("-starterPort",starterPortLong);
-          theShutdowner.injectStarterPortV(starterPortLong);
+          //// starterPortLong=  // Try the feedback port saving subset.
+              //// theCommandArgs.switchLongValue("-starterPort",starterPortLong);
+          //// theShutdowner.injectStarterPortV(starterPortLong);
+          theShutdowner.injectStarterPortV(
+              startCommandArgs.switchLongValue("-starterPort",0L));
           }
 
       private void tryUpdateCommandsV(CommandArgs theCommandArgs)
@@ -866,45 +869,45 @@ l    * If the app receives a message indicating
 	        return copySuccessB;
 	        }
 	    
-	    private boolean requestForJavaCommandAndExitTrueB( String argString ) 
+	    private boolean requestForJavaCommandAndExitTrueB( String commandString ) 
 	      /* This method is equivalent to a 
-	        setJavaCommandForExitV( argString )
+	        setJavaCommandForExitV( commandString )
 	        followed by requesting shutdown of this app.
 	        It always returns true to simplify caller code and 
 	        to indicate that the app should exit.
 	        */
 	      {
-	        setJavaCommandForExitV( argString );  // Setting up command to execute at exit.
+	        setJavaCommandForExitV( commandString ); // command to execute at exit.
 
 	        theShutdowner.requestAppShutdownV(); // Triggering app shutdown.
 
 	        return true;  // Returning true to simplify caller code.
 	        }
-	    
-	    private void setJavaCommandForExitV( String argString )
-	      /* This method sets up the execution of a runnable jar file 
-	        whose name is argString as a Process.  
-	        It will execute as the last step in the app shutdown process.
-	        */
-	      {
-	        String [] commandOrArgStrings= new String[] {
-            ( // Path of java command in array.
-              System.getProperty("java.home") + 
-              File.separator + 
-              "bin" + 
-              File.separator + 
-              "java.exe"
-              ),
-            "-jar", // java.exe -jar option.
-            argString, // Path of .jar file to run
-            "-otherAppIs", // Infogora -otherAppIs option.
-            runningAppFile.getAbsolutePath(), // Path of this app's file.
-            "-starterPort", // For later exit notifications
-            ""+starterPortLong // to use this port on loopback interface.
-	          };
-	        theShutdowner.setExitStringsV(commandOrArgStrings);
-	        }
-	
+      
+      private void setJavaCommandForExitV( String commandString )
+        /* This method sets up the execution of a runnable jar file 
+          whose name is argString as a Process.  
+          It will execute as the last step in the app shutdown process.
+          */
+        {
+          ArrayList<String> theArrayListOfStrings= new ArrayList<String>();
+          
+          theArrayListOfStrings.add(System.getProperty("java.home") + 
+              File.separator + "bin" + File.separator + "java.exe");
+          theArrayListOfStrings.add("-jar"); // java.exe -jar option.
+          theArrayListOfStrings.add(commandString); // Path of .jar file.
+          theArrayListOfStrings.add("-otherAppIs"); // -otherAppIs option.
+          theArrayListOfStrings.add(runningAppFile.getAbsolutePath()); // app.
+          theArrayListOfStrings.add("-starterPort"); // For feedback...
+          //// theArrayListOfStrings.add(""+starterPortLong); // ...using this port.
+          theArrayListOfStrings.add( // ...using this port.
+              ""+startCommandArgs.switchLongValue("-starterPort",0L));
+          theArrayListOfStrings.add("SENTINEL"); // ///dbg
+
+          theShutdowner.setExitStringsV( // Set command String from array.
+              theArrayListOfStrings.toArray(new String[0]));
+          }
+  
 	  // Other miscellaneous code.
 	
 	    private void logInputsV()
@@ -914,10 +917,11 @@ l    * If the app receives a message indicating
 	      {
 	        String logString= "AppInstanceManager.logInputsV()";
 	        { // Add parts to the string to be logged.
-            logString+= "\n  raw inputs:"; 
-            logString+= argsOnLinesString(inputStrings);
+            logString+= "\n  raw argStrings:"; 
+            //// logString+= argsOnLinesString(inputStrings);
+            logString+= Arrays.toString(argStrings);
 
-            logString+= "\n  parsed inputs: (variable-name: time-stamp, path-name)";
+            logString+= "\n  app Files: (variable-name: time-stamp, path-name)";
 	          logString+= "\n    standardAppFile:    " 
 	          		+ Misc.fileDataString( standardAppFile );
 	          logString+= "\n    runningAppFile:     " 
@@ -931,7 +935,8 @@ l    * If the app receives a message indicating
 	        appLogger.info( logString );  // Log the completed String.
 	        }
 		    
-	    private String argsOnLinesString( String inputStrings[])
+	    @SuppressWarnings("unused") ///
+      private String argsOnLinesString( String inputStrings[])
 	      /* This method returns a String which is the concatenation of lines,
 	        each line consisting of 4 spaces, the element index, and the string.
 	        The first line is a heading line. 

@@ -2,7 +2,9 @@ package allClasses;
 
 import static allClasses.Globals.appLogger;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -48,59 +50,62 @@ public class InfogoraStarter
 
         */
       { // main(..)
-        System.out.println(
-            "main(..) DISCOVER CAUSE OF DISPLAY OF CONSOLE WINDOW.");
-        
-        Config.clearLogFileB= true;
-        Process theProcess= null;
-        appLogger.setIDProcessV("Starter");
-        appLogger.setBufferedModeV( true ); // Enabling fast buffered logging.
-        
-        DefaultExceptionHandler.setDefaultExceptionHandlerV(); 
-        appLogger.info(true,
-            "InfogoraStarter.main() beginning. ======== STARTER IS STARTING ========");
-        SystemState.initializeV(
-            InfogoraStarter.class, new CommandArgs(argStrings));
-
-        setupLoopbackPortB();
-        long starterPortL=
-            theLocalSocket.getServerSocket().getLocalPort();
-        appLogger.info("run(): starterPortL="+starterPortL);
-        String [] commandOrArgStrings= new String[] {
-            ( // Path of java command in array.
-              "jre1.8.0_191\\bin\\java.exe"
-              /*   /// "." +
-              File.separator +
-              "bin" +
-              File.separator + 
-              "java.exe" */   ///
-              ),
-            "-cp", // java.exe -cp (classpath) option.
-            "Infogora.jar", // Path of .jar file to run
-            "allClasses.Infogora" // entry point.
-            ///fix? add argStrings at end?
-            ,"-starterPort" // For exit notifications which 
-            ,""+starterPortL // use this port on loopback interface.
-            };
-        appLogger.debug("InfogoraStarter.main() starting Infogora process.");
-        theProcess= ProcessStarter.startProcess(commandOrArgStrings);
-        if (theProcess == null)
-          appLogger.error("InfogoraStarter.main() Process start failed.");
-          else 
-          { // Wait for termination of process and all its descendants.
-            appLogger.info(
-              "InfogoraStarter.main() waiting for process termination.");
-            try {theProcess.waitFor();} catch (InterruptedException e) {}
-            appLogger.info(
-                "InfogoraStarter.main() First child process has terminated.");
-            try {theLoopbackMonitorThread.join();} 
-              catch (InterruptedException e) {}
-            appLogger.info(
-                "InfogoraStarter.main() Last child process is terminating.  "
-                + "Waiting 1 second before exiting.");
-            EpiThread.uninterruptableSleepB( 1000 ); // Extra time for safety.
+        toExit: {
+          System.out.println(
+              "main(..) DISCOVER CAUSE OF DISPLAY OF CONSOLE WINDOW.");
+          
+          Config.clearLogFileB= true;
+          Process theProcess= null;
+          appLogger.setIDProcessV("Starter");
+          appLogger.setBufferedModeV( true ); // Enabling fast buffered logging.
+          
+          DefaultExceptionHandler.setDefaultExceptionHandlerV(); 
+          appLogger.info(true,
+              "InfogoraStarter.main() beginning. ======== STARTER IS STARTING ========");
+          CommandArgs theCommandArgs= new CommandArgs(argStrings); 
+          SystemState.initializeV(InfogoraStarter.class, theCommandArgs);
+          if (theCommandArgs.switchValue("-userDir") == null) {
+            appLogger.error("InfogoraStarter.main() Not an exe file launch!");
+            break toExit;
             }
-        
+          setupLoopbackPortB();
+          long starterPortL=
+              theLocalSocket.getServerSocket().getLocalPort();
+          appLogger.info("run(): starterPortL="+starterPortL);
+          
+          ArrayList<String> theArrayListOfStrings= new ArrayList<String>();
+          theArrayListOfStrings.add(System.getProperty("java.home") + 
+              File.separator + "bin" + File.separator + "java.exe");
+          theArrayListOfStrings.add("-cp"); // java.exe -cp (classpath) option.
+          theArrayListOfStrings.add("Infogora.jar"); // Path of .jar file to run
+          theArrayListOfStrings.add("allClasses.Infogora"); // entry point.
+          theArrayListOfStrings.add("-starterPort"); // For feedback...
+            theArrayListOfStrings.add(""+starterPortL); // ...using this port.
+          theArrayListOfStrings.add("-userDir"); // Pass userDir switch.
+            theArrayListOfStrings.add(theCommandArgs.switchValue("-userDir"));
+          theArrayListOfStrings.add("-tempDir"); // Pass tempDir switch.
+            theArrayListOfStrings.add(theCommandArgs.switchValue("-tempDir"));
+          theArrayListOfStrings.add("SENTINEL"); // ///dbg
+  
+          appLogger.debug("InfogoraStarter.main() starting Infogora process.");
+          theProcess= ProcessStarter.startProcess(
+              theArrayListOfStrings.toArray(new String[0]));
+          if (theProcess == null) { // Handle start failure.
+            appLogger.error("InfogoraStarter.main() Process start failed.");
+            break toExit;
+            }
+          appLogger.info(
+            "InfogoraStarter.main() waiting for process termination.");
+          try {theProcess.waitFor();} catch (InterruptedException e) {}
+          appLogger.info(
+              "InfogoraStarter.main() First child process has terminated.");
+          try {theLoopbackMonitorThread.join();} 
+            catch (InterruptedException e) {}
+          appLogger.info(
+              "InfogoraStarter.main() Last child process is terminating.  "
+              + "Waiting 1 second before exiting.");
+          EpiThread.uninterruptableSleepB( 1000 ); // Extra time for safety.
+          } // toExit:
         appLogger.info(true, "InfogoraStarter.main() calling exit(0). "
             + "======== STARTER IS ENDING ========");
         appLogger.setBufferedModeV( false ); // Disabling buffered logging.

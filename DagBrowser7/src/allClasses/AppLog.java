@@ -308,7 +308,7 @@ public class AppLog extends EpiThread
         */
       {
         logV( 
-          "<--< This is an absolute time.  Later times are relative times."
+          "<--< First time is an absolute time.  Later times are relative times."
           ); 
         logV( "" ); // Blank line.
         logV( "" ); // Blank line.

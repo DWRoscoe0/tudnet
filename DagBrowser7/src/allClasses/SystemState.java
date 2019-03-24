@@ -23,17 +23,16 @@ public class SystemState
   {
 
     public static File initiatorFile= new File("UNDEFINED");
-      /* This names the file was the initiator of this app:
+      /* This names the file that was the initiator of this app:
         It can have the following values and meanings:
         * Path ending in .exe : copy-able 7ZipSFXModule-based launcher
           which uncompresses the JRE and the jar file to a temporary directory
-          and then runs the JRE java.exe and the jar file app.
-        * Path ending in .jar : copy-able executable jar file 
-          with manifest entry point.
+          and then runs the JRE java.exe on the jar file app.
+        * Path ending in .jar : copy-able executable jar file. 
         * Some other path : probably the directory containing
           the class file containing the main(..) method,
           such as the Eclipse bin directory.
-        * "UNDEFINED" : initializeV(..) has not executed yet.
+        * "UNDEFINED" : value before this method has executed.
   
         */
 
@@ -43,11 +42,11 @@ public class SystemState
         It does some value calculations, and it does a lot of value logging.
         */
       {
-        appLogger.info("logSystemStateV(..) argStrings="
+        appLogger.info("SystemState.initializeV(..) argStrings=\n  "
             +Arrays.toString(theCommandArgs.args()));
-        appLogger.info("logSystemStateV(..) entryPointClass="+
+        appLogger.info("SystemState.initializeV(..) entryPointClass="+
             entryPointClass.getCanonicalName());
-        calculateInitiatorFileV(entryPointClass);
+        calculateInitiatorFileV(entryPointClass, theCommandArgs);
         
         logSystemPropertyV("java.class.path"); // class directories and JAR archives.
         logSystemPropertyV("java.home"); // Installation directory for JRE.
@@ -60,24 +59,41 @@ public class SystemState
         logSystemPropertyV("user.name"); // User account name
         }
 
-    private static void calculateInitiatorFileV(Class<?> entryPointClass) 
-      /* This method defines the value of the initiatorFile
-        from entryPointClass.
+    private static void calculateInitiatorFileV(
+        Class<?> entryPointClass, CommandArgs theCommandArgs) 
+      /* This method defines the value of the initiatorFile variable.
+        It will be:
+        * exe file if a self-extracting exe launcher was the first execution.
+        * jar file if jave.exe was the first execution and it ran a jar file.
+        * UNDEFINED if jave.exe was the first execution and it ran 
+          a class file. This last case happens when running from Eclipse.
+          The initiator might be considered to be a class file.
         */
       {
-        try {
-            initiatorFile= new File( 
-                entryPointClass.getProtectionDomain().
-                getCodeSource().getLocation().toURI());
-            appLogger.info(
-                  "SystemState.calculateAppFileV(), appFile=\n  "+initiatorFile);
-          } catch (URISyntaxException e1) {
-            appLogger.exception("SystemState.calculateAppFileV()", e1);
+        process: {
+          { // Test for exe initiator file.
+            String pathString= theCommandArgs.switchValue("-userDir");
+            if (pathString != null) {
+              initiatorFile= new File(pathString,"Infogora.exe");
+              break process;
+              }
+            }
+          // Not exe file.
+          try { // Test for jar initiator file.
+              initiatorFile= new File( 
+                  entryPointClass.getProtectionDomain().
+                  getCodeSource().getLocation().toURI());
+              break process;
+            } catch (URISyntaxException e1) {
+              appLogger.exception("SystemState.calculateAppFileV()", e1);
+            }
           }
-        if (initiatorFile.getName().endsWith(".jar"))
-          appLogger.info(
-              "SystemState.calculateAppFileV(), executable jar file found.");
-        ///enh Add test for exe file.
+        appLogger.info(
+            "SystemState.calculateAppFileV(), appFile=\n  "+initiatorFile);
+        if (initiatorFile.getName().endsWith(".jar")) appLogger.info(
+            "SystemState.calculateAppFileV(), executable jar file found.");
+        if (initiatorFile.getName().endsWith(".exe")) appLogger.info(
+            "SystemState.calculateAppFileV(), executable exe file found.");
         }
 
     private static void logSystemPropertyV(String nameString) 

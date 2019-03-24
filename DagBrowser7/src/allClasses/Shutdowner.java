@@ -175,7 +175,8 @@ public class Shutdowner
 
 	  private String[] exitProcessStrings= null; // To execute before exit.
 
-    private Long starterPortLong= 0L; // For feedback to our starter process. 
+    private Long starterPortLong= 0L; // For feedback to our starter process.
+      ///ehn Is this needed?  Not if CommandArgs are preserved.
 	  
 	  public void initializeV() // Prepares ShutdownHook as shutdown hook.
 		  {

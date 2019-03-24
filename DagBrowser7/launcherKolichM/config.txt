@@ -8,5 +8,5 @@ ExtractTitle="Extracting program."
 ; javaw.exe stopped working? Using java.exe instead.
 ; RunProgram="jre1.8.0_191\bin\java.exe -jar Infogora.jar"
 ; RunProgram="subTest.bat \"%%S\" \"%%T\" ."
-RunProgram="jre1.8.0_191\bin\java.exe -cp Infogora.jar allClasses.InfogoraStarter"
+RunProgram="jre1.8.0_191\bin\java.exe -cp Infogora.jar allClasses.InfogoraStarter -userDir \"%%S\" -tempDir \"%%T\""
 ;!@InstallEnd@!
