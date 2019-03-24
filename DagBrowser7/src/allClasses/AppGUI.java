@@ -72,7 +72,8 @@ public class AppGUI
         Other actions might be appropriate if the UI were different, 
         such as there being multiple tabs and/or multiple JFrames.
 
-        Note, move-to-front can be problematic.
+        ///enh
+        Note, move-to-front is problematic.
         In some Windows versions, move-to-front works only once,
         or only highlights the app's task-bar button, or both.
         The following code was moving the first time, 
