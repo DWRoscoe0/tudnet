@@ -130,9 +130,7 @@ public class AppGUI
       {
     		appLogger.info("AppGUI.run() begins.");
         theDataTreeModel.initializeV( theInitialRootDataNode );
-        EDTUtilities.invokeAndWaitV(  // Queue on GUI (AWT) thread...
-            theGUIBuilderStarter   // ...this Runnable GUIBuilderStarter,...
-            );  //  whose run() method will build and start the app's GUI.
+        theGUIBuilderStarter.initializeV();
         theConnectionManagerEpiThread.startV();
         theCPUMonitorEpiThread.startV();
 
@@ -144,6 +142,7 @@ public class AppGUI
         ///fix? theCPUMonitorEpiThread.stopAndJoinV( ); 
         theConnectionManagerEpiThread.stopAndJoinV( ); // Terminate ConnectionManager 
           // thread, all connections, and all related threads.
+        theGUIBuilderStarter.finalizeV();
     		appLogger.info("AppGUI.run() ends.");
         }
 
@@ -189,10 +188,32 @@ class GUIBuilderStarter // This EDT-Runnable starts GUI.
       	this.theBackgroundEventQueue= theBackgroundEventQueue;
         }
 
+    public void initializeV()
+      /* This method does the initialization that 
+        could not be done with constructor dependency injection.
+        It runs the run() method on the AWT thread,
+        which does all the GUI code that must be executed on that thread.
+        */
+      {
+        EDTUtilities.invokeAndWaitV(  // Queue on GUI (AWT) thread...
+            this // ...this Runnable GUIBuilderStarter,...
+            );  //  whose run() method will build and start the app's GUI.
+        }
+    
+    public void finalizeV()
+      /* This method does finalization.
+        The only thing that needs doing is terminating the timer thread.
+        It does this by calling the DagBrowserPanel finalize method.
+        */
+      { 
+        theDagBrowserPanel.finalizationV(); // To terminate ActivityTimer.
+        }
+
     public void run() // GUIBuilderStarter.
       /* This method builds the app's GUI in a new JFrame and starts it.
         This method is run on the AWT thread by startingBrowserGUIV() 
         because AWT GUI code is not thread-safe.
+        This method is called by invokeAndWaitV(..).
         */
       {
     		appLogger.info("GUIBuilderStarter.run() beginning.");

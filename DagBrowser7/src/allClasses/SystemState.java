@@ -75,7 +75,7 @@ public class SystemState
             String pathString= theCommandArgs.switchValue("-userDir");
             if (pathString != null) {
               initiatorFile= new File(pathString,"Infogora.exe");
-              break process;
+              //break process;   //// Disable until exe support is better.
               }
             }
           // Not exe file.

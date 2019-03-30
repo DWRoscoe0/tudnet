@@ -102,6 +102,7 @@ class Infogora  // The root of this app.
 			  */
       { // main(..)
 	      /// appLogger.getAndEnableConsoleModeB(); // For debugging.
+	      //// Config.clearLogFileB= true; ///dbg
         appLogger.setBufferedModeV(false); /// Disabling for debugging.
         appLogger.setBufferedModeV(true); // Enabling fast buffered logging.
         DefaultExceptionHandler.setDefaultExceptionHandlerV(); 

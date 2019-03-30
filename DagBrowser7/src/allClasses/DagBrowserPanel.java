@@ -392,8 +392,8 @@ public class DagBrowserPanel
           It also queues the display of the Help dialogue. 
           */
         { // miscellaneousInitializationV()
-          theTimerThread.setDaemon(true); // ?? temporary so I needn't terminate it.
-          theTimerThread.start();  // Start backup TimerThread.
+          //// theTimerThread.setDaemon(true); // ?? temporary so I needn't terminate it.
+          theTimerThread.startV();  // Start backup TimerThread.
 
           { // Create key mapping initialization.  Experimental and incomplete.
             bindKeys();  
@@ -406,6 +406,9 @@ public class DagBrowserPanel
           buttonEnableScanV( );  // Updating button graying.
           queueCommandHelpV();  // Queuing display of Help dialog.
           } // miscellaneousInitializationV()
+
+      public void finalizationV()
+        { theTimerThread.stopAndJoinV(); }
 
     // Listener methods and their helper methods.
   
@@ -585,7 +588,7 @@ public class DagBrowserPanel
 	              );
             } // queueCommandHelpV()
 
-      class TimerThread extends Thread
+      class TimerThread extends EpiThread
 
 	      /* This class does does some tasks once every second:
 	        * Thread wake delay measurement and display.
@@ -593,8 +596,6 @@ public class DagBrowserPanel
 	        * Software update file check.
 
           In the past it called java.awt.Toolkit.getDefaultToolkit().beep().
-
-	        ?? Make into an EpiThread and start and stop in the normal way.
 	        */
 
         {
@@ -609,17 +610,14 @@ public class DagBrowserPanel
       		
           public void run()
             {
-              appLogger.info("begun.");
               periodicTargetTimeMsL= System.currentTimeMillis();
-        			while (! EpiThread.exitingB() )
+        			while (! exitingB())
                 {
-              		//appLogger.info("in loop.");
               		doDelayMeasurementsV();
                   theAppInstanceManager. // Executing updater if present.
                     thingsToDoPeriodicallyV();
                   theDataTreeModel.displayTreeModelChangesV();
                   }
-              appLogger.info("ending.");
               }
 
       		private void doDelayMeasurementsV()
@@ -643,8 +641,7 @@ public class DagBrowserPanel
     				    		);
     				  periodicTargetTimeMsL+= shiftInTimeMsL; // Adjusting target time for shift.
     	  			activityLockAndSignal.waitingForInterruptOrIntervalOrNotificationE(
-  	  					///activityLockAndSignal.timeOutForMsL( 
-    	  					periodicTargetTimeMsL, periodMsL ///)
+    	  					periodicTargetTimeMsL, periodMsL
       					); // Waiting for next mark.
     	  			periodicTargetTimeMsL+= periodMsL; // Advancing target.
     	  			EDTUtilities.invokeAndWaitV( // Executing on EDT...
@@ -657,14 +654,6 @@ public class DagBrowserPanel
                   			? Color.WHITE
                   		  : getBackground();
                     activityJLabel.setBackground(activityColor);
-                    /*  //? //tmp
-                      PlatformUI.setUIFont( 
-                     new javax.swing.plaf.FontUIResource(
-                  				Font.MONOSPACED, Font.PLAIN, periodicToggleB 
-	                    			? 12
-	                    		  : 14
-        	        			));
-        	        	  */  //?
                     }  
 	                } 
 	              );

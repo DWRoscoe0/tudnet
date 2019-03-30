@@ -137,7 +137,8 @@ l    * If the app receives a message indicating
        Update checks triggered by messages containing a specific path 
        to a discovered file must wait for lock() to succeed. 
        */
-    
+    private boolean updatingB= false;  // Set when update underway.
+        
   // Internal dependency variables, set after construction.
     int inputCheckFileDelaySI= Config.localUpdateDelaySI; 
     	// Delay in seconds before checking for a local update file begins.
@@ -226,7 +227,7 @@ l    * If the app receives a message indicating
 	  		    + "\n  App path is: " + runningAppFile.getAbsolutePath()
 	  		    + "\n  App time-stamp is " + Misc.dateString( runningAppFile ) );
         processCommandArgsV( startCommandArgs ); // Setting app args as inputs.
-        logInputsV(); // Log start up inputs.
+        logInputsV("tryDelegatingToAnotherAppInstanceB()");
 
 	      boolean successB= true;  // Assume delegation will succeed.
 	      tryDelegation: {
@@ -248,35 +249,40 @@ l    * If the app receives a message indicating
 	      and to do an update with it if it is a newer version.
 
 	      It works as follows:
-		      If this app is the app in the standard folder.
-		      and the new arg app is an approved later version updater app,
-		      then setup to run the arg app, which will do the update,
-		      and trigger a shutdown of this app.
-	      */
+	      If this app is the app in the standard folder.
+	      and one of the apps discovered is 
+	      an approved later version updater app,
+	      then setup to run that second app, which will do the update,
+	      and then trigger a shutdown of this app.
+	      If an update is triggered in this way,
+	      a lock will remain to prevent another update until this app exits.
+        */
 	    {
-	  	  boolean updatingB= true;  // Assume updating.
-	  	  if ( updaterReentrantLock.tryLock() ) // Act now only if not locked.
-					{
-	  	  		try {
-					      //appLogger.debug("thingsToDoPeriodicallyV().");
-				  	  if ( (--inputCheckFileDelaySI < 0) && 
-					  	  		tryUpdateFromNewerFileInstancesB( otherAppFile ) )
-					  	  	;
-					  	  else if ( (--tcpCheckFileDelaySI < 0) && 
-					  	  		tryUpdateFromNewerFileInstancesB( tcpCopierAppFile ) )
-					  	  	;
-					  	  else
-					  	  	updatingB= false; // Neither update is happening.
-					    } finally {
-					    	if (updatingB) { // Log effect of timer input if updating.
-					    		logInputsV();
-					    	  }
-					    	updaterReentrantLock.unlock();
-					    }
-					}
-	      }
+	      //// appLogger.debug("thingsToDoPeriodicallyV() triggered.");
+	      tryUpdate: {
+          if (updatingB) break tryUpdate;
+          updaterReentrantLock.lock(); 
+          try { 
+      		    updatingB= true;  // Assume updating.
+  	  		    if ( (--inputCheckFileDelaySI < 0) && 
+  			  	  		tryUpdateFromNewerFileInstancesB( otherAppFile ) )
+  			  	  	break tryUpdate;
+          	  if ( (--tcpCheckFileDelaySI < 0) && 
+  			  	  		tryUpdateFromNewerFileInstancesB( tcpCopierAppFile ) )
+                break tryUpdate;
+          	  updatingB= false; // Neither update is happening.
+  	  		  } finally {
+              updaterReentrantLock.unlock();
+  			    }
+  				} // tryUpdate:
+      if (updatingB) 
+        appLogger.info("thingsToDoPeriodicallyV() updating is [still] underway.");
+      }
 
-    public String thisAppDateString()
+	  //// private void x(String aString)
+	  //// { appLogger.debug("thingsToDoPeriodicallyV():"+aString); }
+    
+	  public String thisAppDateString()
       /* This method returns the time-stamp String associated with
         the file instance of this app.
         This may be used to append to names of old versions of files
@@ -572,7 +578,7 @@ l    * If the app receives a message indicating
           if ( !theCommandArgs.switchPresent("-otherAppIs")) return;
           otherAppFile= // Read other app path from switch value. 
               new File(theCommandArgs.switchValue("-otherAppIs"));
-		      logInputsV(); // Report [path] inputs relevant to us.
+		      logInputsV("tryUpdateCommandsV"); // Report relevant [path] inputs.
 		      if // Exiting or firing event depending on other instance.
 		      	( isUpdateValidB( otherAppFile ) )
 		        { // Report pending update.
@@ -667,7 +673,7 @@ l    * If the app receives a message indicating
 
 	  // Code that does file instance management.
 	
-	    private boolean tryDelegationToFileInstanceB( )
+	    private boolean tryDelegationToFileInstanceB()
 	      /* Normally this method is called at app start-up,
 	        before the GUI has been activated.
 	        It begins the process of checking for and installing or updating
@@ -689,35 +695,45 @@ l    * If the app receives a message indicating
 	        a copy of an app file to the standard folder.
 	        */
 	      { 
+	        appLogger.info("tryDelegationToFileInstanceB() enter");
 	        boolean appShouldExitB= true;  // Set default return app exit.
 	
 	        toReturn: { // The block after which all returns will go.
+            appLogger.debug("tryDelegationToFileInstanceB() 1");
 		        if // The app command was without arguments.
 		        	( otherAppFile == null ) 
 		          { // Handle the arg-less command possibilities.
+		          appLogger.debug("tryDelegationToFileInstanceB() 2");
 		            if (runningAppIsStandardAppB())  // Was from standard folder.
 		              { // Prepare for normal startup.
-		                appLogger.info("Starting app from standard folder.");
+                    appLogger.info("Starting app from standard folder.");
 		                appShouldExitB= false;  // For normal startup.
 		                } // Prepare for normal startup.
 		              else  // Is arg-less but not from standard folder.
 		              { // Try processing a plain app command without arguments.
+		                appLogger.debug("tryDelegationToFileInstanceB() 3");
 		                if (tryInstallToStandardFolderB()) break toReturn;
+		                appLogger.debug("tryDelegationToFileInstanceB() 4");
 		  	            if (tryUpdateToStandardFolderB()) break toReturn;
+		  	            appLogger.debug("tryDelegationToFileInstanceB() 5");
 		                if (trySwitchingToAppInStandardFolderB()) break toReturn;
 		                //appLogger.info("Exhausted without-arg possibilities.");
+		                appLogger.debug("tryDelegationToFileInstanceB() 6");
 		                appShouldExitB= false;  // For normal startup.
 		                } // Try processing a plain app command without arguments.
 		            } // Handle the arg-less command possibilities.
 		          else  // The app command has one (or more?) arguments.
 		          { // Try processing an app command with argument[s].
+		            appLogger.debug("tryDelegationToFileInstanceB() 7");
 		            if (tryRunningApprovedUpdaterB()) break toReturn;
+		            appLogger.debug("tryDelegationToFileInstanceB() 8");
 		            if (tryUpdateToStandardFolderB()) break toReturn;
 		            // Others to be added?
 		            appLogger.info("Exhausted with-arg possibilities.");
 		            appShouldExitB= false;  // For normal startup.
 		            } // Handle app commands with argument[s].
 	          } // toReturn
+          appLogger.info("tryDelegationToFileInstanceB() exit");
 	        return appShouldExitB;  // Return whether or not app should exit.
 	        }
 	
@@ -819,56 +835,60 @@ l    * If the app receives a message indicating
 	            }
 	    	  return appShouldExitB;
 	        }
-	
-	    private boolean copyAppToStandardFolderAndPrepareToRunB()
-	      /* This method tries to copy this app's jar file to the standard folder, 
-	        and prepare it to be run as a Process on exit. 
-	        It keeps trying until copying succeeds, or the thread is interrupted.
-	        If copying succeeds then it requests an app shutdown and returns true.
-	        If the thread is interrupted then it returns false.
-	        */
-	      {
-		  	  boolean copySuccessB= false;
-	        if  // This app is not from a jar file.
-	          (! runningAppFile.getName().endsWith(".jar"))
-	          { // Probably a class file running in Eclipse.  Do normal startup.
-	            appLogger.info( "App not jar file, so not copying or exiting.");
-	            ///fix Use standard method-name log format.
-	            }
-	          else
-	            while  // Keep trying until copy success and exit.
-	              (!EpiThread.exitingB() && !copySuccessB)
-	              try 
-	                {
-	                  appLogger.info( 
-	                    "======== COPYING JAR FILE TO STANDARD FOLDER ======== "
-	                    );
-	                  Files.copy(
-	                      runningAppFile.toPath()
-	                      ,standardAppFile.toPath()
-	                      ,StandardCopyOption.COPY_ATTRIBUTES
-	                      ,StandardCopyOption.REPLACE_EXISTING
-	                      );
-	                  appLogger.info( "Copying successful." );
-	              	  copySuccessB= requestForJavaCommandAndExitTrueB( 
-	              	  		standardAppFile.getAbsolutePath() 
-	              	  		);
-	                  }
-	                catch (Exception e)  // Other instance probably still running.
-	                  { 
-	                    appLogger.info( 
-	                      "copyAppToStandardFolderAndPrepareToRunB().\n  "
-	                      +e.toString()
-	                      +"  Will retry after 1 second." 
-	                      ); 
-	                    (new LockAndSignal()).
-	                      waitingForInterruptOrDelayOrNotificationE(
-	                      		Config.fileCopyRetryPause1000MsL
-	                      		); // Wait 1 second.
-	                    }
-	        return copySuccessB;
-	        }
-	    
+      
+      private boolean copyAppToStandardFolderAndPrepareToRunB()
+        /* This method tries to this running app's jar file to 
+          the standard folder, and prepare it to be run as a Process on exit. 
+          It keeps trying until copying succeeds, or the thread is interrupted.
+          If copying succeeds then it requests an app shutdown and returns true.
+          If the thread is interrupted then it returns false.
+          */
+        {
+            appLogger.debug("copyAppToStandardFolderAndPrepareToRunB() begin");
+            boolean copySuccessB= false;
+          toExit: { toCopy: {
+            String nameString= runningAppFile.getName(); 
+            appLogger.debug(
+                "copyAppToStandardFolderAndPrepareToRunB() name="+nameString);
+            if (nameString.endsWith(".jar")) break toCopy;
+            if (nameString.endsWith(".exe")) break toCopy;
+            appLogger.info("copyAppToStandardFolderAndPrepareToRunB() "
+                +"Not executable .jar or .exe file. Not copying.");
+            break toExit;
+          } // toCopy:
+            appLogger.debug(
+                "copyAppToStandardFolderAndPrepareToRunB() copying.");
+            while  // Keep trying until copy success and exit.
+              (!EpiThread.exitingB() && !copySuccessB)
+              try {
+                  appLogger.info("copyAppToStandardFolderAndPrepareToRunB() " 
+                    +"======== COPYING EXECUTABLE TO STANDARD FOLDER ======== "
+                    );
+                  Files.copy(
+                      runningAppFile.toPath()
+                      ,standardAppFile.toPath()
+                      ,StandardCopyOption.COPY_ATTRIBUTES
+                      ,StandardCopyOption.REPLACE_EXISTING
+                      );
+                  appLogger.info( "copyAppToStandardFolderAndPrepareToRunB() Copying successful." );
+                  copySuccessB= requestForJavaCommandAndExitTrueB( 
+                      standardAppFile.getAbsolutePath() 
+                      );
+                  }
+                catch (Exception e) { // Other instance probably still running.
+                    appLogger.info( 
+                      "copyAppToStandardFolderAndPrepareToRunB().\n  "
+                      +e.toString()
+                      +"  Will retry after 1 second." 
+                      ); 
+                    EpiThread.interruptableSleepB(
+                        Config.fileCopyRetryPause1000MsL); // Wait 1 second.
+                  }
+          } // toExit:
+            appLogger.debug("copyAppToStandardFolderAndPrepareToRunB() ends.");
+            return copySuccessB;
+          }
+
 	    private boolean requestForJavaCommandAndExitTrueB( String commandString ) 
 	      /* This method is equivalent to a 
 	        setJavaCommandForExitV( commandString )
@@ -910,14 +930,16 @@ l    * If the app receives a message indicating
   
 	  // Other miscellaneous code.
 	
-	    private void logInputsV()
+	    private void logInputsV(String callerString)
 	      /* Logs all inputs, raw, and parsed into
 	        file arguments, logged with their time-stamps.
 	        */
 	      {
-	        String logString= "AppInstanceManager.logInputsV()";
+	        String logString= "AppInstanceManager.logInputsV(";
+	        
 	        { // Add parts to the string to be logged.
-            logString+= "\n  raw argStrings:"; 
+            logString+= callerString;
+            logString+= ")\n  raw argStrings:"; 
             //// logString+= argsOnLinesString(inputStrings);
             logString+= Arrays.toString(argStrings);
 
