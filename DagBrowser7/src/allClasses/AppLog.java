@@ -53,13 +53,13 @@ public class AppLog extends EpiThread
     which doesn't close the log file after every log entry
     but buffered mode is still a bit of a kludge.
 
+    ///enh: Underway.  Begin the transition to a logger 
+      that doesn't need to be a static singleton and can be injected.
+      Allow both static and injected-non-static, at least for a while.
+
     ///fix  Sometimes when the app is terminated from 
       the Windows Task Manager, the log file is truncated,
       though judging from Console output, the app exits normally.
-
-		///enh: Begin the transition to a logger 
-      that doesn't need to be a static singleton and can be injected.
-      Allow both static and injected-non-static, at least for a while.
 
     ///tst? MakeMultiprocessSafe:  Ready for testing, with InfogoraStarter. 
 	    ///fix: When the presently kludgy buffered mode is enabled,
@@ -103,25 +103,15 @@ public class AppLog extends EpiThread
     */
 
   {
-  
-    // Singleton code.
-    
-      private AppLog()  // Private constructor prevents external instantiation.
-        {
-      	  super( "AppLog");
-        	}
 
-      private static final AppLog theAppLog=  // Internal singleton builder.
-        new AppLog();
+    File appDirectoryFile;
 
-      static { 
-      	theAppLog.setDaemon( true ); // Make thread the daemon type. 
-      	theAppLog.start();  // Start the associated thread. 
+    public AppLog(File appDirectoryFile)  // Constructor.
+      {
+    	  super( "AppLog");
+    	  this.appDirectoryFile= appDirectoryFile;
       	}
       
-      public static AppLog getAppLog()   // Returns singleton logger.
-        { return theAppLog; }
-
     // Variables.
     	
     	// Logging levels.
@@ -153,6 +143,7 @@ public class AppLog extends EpiThread
         // Open means buffered mode enabled.
         // Closed means buffered mode disabled.
       private FileLock theLogFileLock= null; // For locking while file is open.
+        // This facilitates multiple processes logging to the same file.
       private long openedAtMsL; // Time file was last opened.
       private long appendedAtMsL; // Time file received it last output.
 
@@ -245,6 +236,9 @@ public class AppLog extends EpiThread
         File-closed means any buffer has been flushed.
         File closing is followed by a brief sleep 
         to allow output by other processes.
+        There isn't much need to change this, because of
+        the creation of the run() thread which auto-closes.
+        ///opt Eliminate outside callers of this?
     	  */
 	    {
         initializeIfNeededV();
@@ -284,10 +278,11 @@ public class AppLog extends EpiThread
       /* This method does initialization, unconditionally.
         It should be called only once.  It includes the following:
         * Determining the session number.
+        * Starting this classes thread.
         */
       {
         logFile=  // Identify log file name.
-        		Config.makeRelativeToAppFolderFile( "log.txt" );
+            new File(appDirectoryFile, "log.txt" );
         theSessionI= getSessionI();  // Get app session number.
         if (theSessionI == 0)  // If this is session 0...
           { // Reset various stuff.
@@ -297,8 +292,13 @@ public class AppLog extends EpiThread
               "=== THIS LOGGER WAS RECENTLY RESET FOR DEBUGGING PURPOSES ===");
             lastMillisL= 0; // Do this so absolute time is displayed first.
             }
+
+        setDaemon( true ); // Make thread the daemon type. 
+        start();  // Start the associated thread. 
+
         // openFileWithRetryDelayIfClosedV(); // Open file for use.
         logHeaderLinesV(); // Append the session header lines.
+
         }
 
     private void logHeaderLinesV()
@@ -662,7 +662,8 @@ public class AppLog extends EpiThread
     
     private synchronized Writer openWithRetryDelayFileWriter()
       throws IOException
-      /* This method opens a FileWriter for the log file.
+      /* This method opens a FileWriter for the log file unconditionally.
+        It should be called only if the log file is closed.  
         If the open fails, it sleeps for 1 ms, and tries again.
         It repeats until the open succeeds.
         It returns the open FileWriter.
@@ -697,14 +698,25 @@ public class AppLog extends EpiThread
         return resultWriter;
         }
 
-    private synchronized void closeFileAndSleepIfOpenV()
+    public synchronized void closeFileAndSleepIfOpenV()
       /* This method is like closeFileAndDelayV() 
         but acts only if the log file is open.
         */
-	    { 
-	      if (thePrintWriter != null)  // Closing file if open. 
-	        closeFileAndSleepV(); 
-	      }
+      { 
+        if (closeFileIfOpenB())  // Closing file if open. 
+          postCloseSleepV();
+        }
+
+    public synchronized boolean closeFileIfOpenB()
+      /* This method is like closeFileAndSleepV() 
+        but acts only if the log file is open.
+        */
+      { 
+        boolean wasOpenB= (thePrintWriter != null); 
+        if (wasOpenB)  // Closing file if open. 
+          closeFileAndSleepV(); 
+        return wasOpenB;
+        }
 
     private synchronized void closeFileAndSleepV()
       /* This method closes thePrintWriter if it's open, 
@@ -716,12 +728,22 @@ public class AppLog extends EpiThread
         */
       { 
         closeFileV();
+        postCloseSleepV();
+        }
+
+    private void postCloseSleepV()
+      /*
+        Used to give other processes time to open for their output.
+        It is called after some log file closings. 
+         */
+      {
         uninterruptableSleepB(Config.LOG_MIN_CLOSE_TIME); // Block and pause.
         }
 
     private synchronized void closeFileV()
-      /* This method closes thePrintWriter, 
-        which closes everything associated with the log file.  
+      /* This method closes thePrintWriter unconditionally,
+        which closes everything associated with the log file.
+        It should be called only if the log file is open.  
         */
       {
         debug("closeFileV() flushing, unlocking, and closing log file.");

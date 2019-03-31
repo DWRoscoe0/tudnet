@@ -165,7 +165,6 @@ l    * If the app receives a message indicating
       // from multiple sources.
       // inputStrings[0] is normally the path to the other app file instance 
       // that ran the running app.
-    //// private Long starterPortLong= 0L; // For feedback to our starter process. 
     private long newestAppLastModifiedL= 0; // For ignoring older updates.
       ///enh There might be cases when this is inadequate,
       // and there be a per-file newest value, 
@@ -258,7 +257,6 @@ l    * If the app receives a message indicating
 	      a lock will remain to prevent another update until this app exits.
         */
 	    {
-	      //// appLogger.debug("thingsToDoPeriodicallyV() triggered.");
 	      tryUpdate: {
           if (updatingB) break tryUpdate;
           updaterReentrantLock.lock(); 
@@ -279,9 +277,6 @@ l    * If the app receives a message indicating
         appLogger.info("thingsToDoPeriodicallyV() updating is [still] underway.");
       }
 
-	  //// private void x(String aString)
-	  //// { appLogger.debug("thingsToDoPeriodicallyV():"+aString); }
-    
 	  public String thisAppDateString()
       /* This method returns the time-stamp String associated with
         the file instance of this app.
@@ -562,9 +557,6 @@ l    * If the app receives a message indicating
           for notifying the starter process at exit time.
           */
   	    {
-          //// starterPortLong=  // Try the feedback port saving subset.
-              //// theCommandArgs.switchLongValue("-starterPort",starterPortLong);
-          //// theShutdowner.injectStarterPortV(starterPortLong);
           theShutdowner.injectStarterPortV(
               startCommandArgs.switchLongValue("-starterPort",0L));
           }
@@ -699,11 +691,9 @@ l    * If the app receives a message indicating
 	        boolean appShouldExitB= true;  // Set default return app exit.
 	
 	        toReturn: { // The block after which all returns will go.
-            appLogger.debug("tryDelegationToFileInstanceB() 1");
 		        if // The app command was without arguments.
 		        	( otherAppFile == null ) 
 		          { // Handle the arg-less command possibilities.
-		          appLogger.debug("tryDelegationToFileInstanceB() 2");
 		            if (runningAppIsStandardAppB())  // Was from standard folder.
 		              { // Prepare for normal startup.
                     appLogger.info("Starting app from standard folder.");
@@ -711,22 +701,16 @@ l    * If the app receives a message indicating
 		                } // Prepare for normal startup.
 		              else  // Is arg-less but not from standard folder.
 		              { // Try processing a plain app command without arguments.
-		                appLogger.debug("tryDelegationToFileInstanceB() 3");
 		                if (tryInstallToStandardFolderB()) break toReturn;
-		                appLogger.debug("tryDelegationToFileInstanceB() 4");
 		  	            if (tryUpdateToStandardFolderB()) break toReturn;
-		  	            appLogger.debug("tryDelegationToFileInstanceB() 5");
 		                if (trySwitchingToAppInStandardFolderB()) break toReturn;
 		                //appLogger.info("Exhausted without-arg possibilities.");
-		                appLogger.debug("tryDelegationToFileInstanceB() 6");
 		                appShouldExitB= false;  // For normal startup.
 		                } // Try processing a plain app command without arguments.
 		            } // Handle the arg-less command possibilities.
 		          else  // The app command has one (or more?) arguments.
 		          { // Try processing an app command with argument[s].
-		            appLogger.debug("tryDelegationToFileInstanceB() 7");
 		            if (tryRunningApprovedUpdaterB()) break toReturn;
-		            appLogger.debug("tryDelegationToFileInstanceB() 8");
 		            if (tryUpdateToStandardFolderB()) break toReturn;
 		            // Others to be added?
 		            appLogger.info("Exhausted with-arg possibilities.");
@@ -919,7 +903,6 @@ l    * If the app receives a message indicating
           theArrayListOfStrings.add("-otherAppIs"); // -otherAppIs option.
           theArrayListOfStrings.add(runningAppFile.getAbsolutePath()); // app.
           theArrayListOfStrings.add("-starterPort"); // For feedback...
-          //// theArrayListOfStrings.add(""+starterPortLong); // ...using this port.
           theArrayListOfStrings.add( // ...using this port.
               ""+startCommandArgs.switchLongValue("-starterPort",0L));
           theArrayListOfStrings.add("SENTINEL"); // ///dbg
@@ -940,7 +923,6 @@ l    * If the app receives a message indicating
 	        { // Add parts to the string to be logged.
             logString+= callerString;
             logString+= ")\n  raw argStrings:"; 
-            //// logString+= argsOnLinesString(inputStrings);
             logString+= Arrays.toString(argStrings);
 
             logString+= "\n  app Files: (variable-name: time-stamp, path-name)";

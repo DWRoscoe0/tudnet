@@ -50,6 +50,9 @@ public class InfogoraStarter
 
         */
       { // main(..)
+          appLogger= new AppLog(new File( // Constructing logger.
+              new File(System.getProperty("user.home") ),Config.appString));
+          // AppLog should now be able to do logging.
         toExit: {
           System.out.println(
               "main(..) DISCOVER CAUSE OF DISPLAY OF CONSOLE WINDOW.");
@@ -104,11 +107,11 @@ public class InfogoraStarter
           appLogger.info(
               "InfogoraStarter.main() Last child process is terminating.  "
               + "Waiting 1 second before exiting.");
-          EpiThread.uninterruptableSleepB( 1000 ); // Extra time for safety.
+          EpiThread.uninterruptableSleepB(1000); // Wait extra time for safety.
           } // toExit:
         appLogger.info(true, "InfogoraStarter.main() calling exit(0). "
             + "======== STARTER IS ENDING ========");
-        appLogger.setBufferedModeV( false ); // Disabling buffered logging.
+        appLogger.closeFileIfOpenB(); // Close log for exit.
         System.exit(0); // Will kill any remaining unknown threads running??
         } // main(..)
 

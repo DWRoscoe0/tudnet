@@ -2,6 +2,8 @@ package allClasses;
 
 import static allClasses.Globals.appLogger;  // For appLogger;
 
+import java.io.File;
+
 
 /* This file is the root of this application.  
   If you want to understand this application then
@@ -101,27 +103,26 @@ class Infogora  // The root of this app.
 
 			  */
       { // main(..)
-	      /// appLogger.getAndEnableConsoleModeB(); // For debugging.
-	      //// Config.clearLogFileB= true; ///dbg
-        appLogger.setBufferedModeV(false); /// Disabling for debugging.
-        appLogger.setBufferedModeV(true); // Enabling fast buffered logging.
-        DefaultExceptionHandler.setDefaultExceptionHandlerV(); 
+	      appLogger= new AppLog(new File( // Constructing logger.
+	          new File(System.getProperty("user.home") ),Config.appString));
+	      // AppLog should now be able to do logging.
+        /// appLogger.getAndEnableConsoleModeB(); ///dbg
+	      /// Config.clearLogFileB= true; ///dbg
+	      DefaultExceptionHandler.setDefaultExceptionHandlerV(); 
           // Preparing for exceptions before doing anything else.
-	      appLogger.info(true,
+
+        appLogger.info(true,
 	          "Infogora.main() beginning. ======== APP IS STARTING ========");
 	      CommandArgs theCommandArgs= new CommandArgs(argStrings);
-        SystemState.initializeV(
-            Infogora.class, theCommandArgs);
-	      AppFactory theAppFactory=  // Constructing AppFactory.
-	        new AppFactory(theCommandArgs);
-	      App theApp=  // Getting the App from the factory.
-      		theAppFactory.getApp();
-	      theApp.runV();  // Running the app until it has shutdown.
-	        // This might not return if shutdown began in the JVM. 
+        SystemState.initializeV(Infogora.class, theCommandArgs);
+	      AppFactory theAppFactory= new AppFactory(theCommandArgs);
+	      App theApp= theAppFactory.getApp();  // Getting App from factory.
+	      theApp.runV();  // Running the app until shutdown.
+	        // This might not return if a shutdown is initiated by the JVM. 
 
         appLogger.info(true,
           "Infogora.main() calling exit(0). ======== APP IS ENDING ========");
-    		appLogger.setBufferedModeV( false ); // Final close of log file.
+        appLogger.closeFileIfOpenB(); // Close log for exit.
 	      System.exit(0); // Will kill any remaining unknown threads running??
 	      } // main(..)
 	

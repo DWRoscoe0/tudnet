@@ -9,19 +9,15 @@ public class Globals
     the need for fully qualified names, for example:
       import static allClasses.Globals.*;  // For appLogger;
 
-    Often groups of methods start here, but are eventually moved
-    to their own class.
+    Often methods start here, but are eventually moved to their own classes.
 
-    WARNING: Globals (public statics) should be used as little as possible,
-    global storage anyway.
-    Dependency Injection should be used instead.
+    WARNING: Use of globals (public statics) should be minimized,
+    global storage anyway.  Dependency Injection should be used instead.
     When globals are used, they should be for things which
     do not change the state of the program, such as logging.
     */
   {
-		//public static Logger appLogger= Logger.getAnonymousLogger();
-    //public static Misc appLogger= Misc.getMisc();  // Emulate Logger subset.
-    public static AppLog appLogger= AppLog.getAppLog();
+    public static AppLog appLogger;
 
 	  public static void logAndRethrowAsRuntimeExceptionV( 
 	  		String aString, Throwable theThrowable 
