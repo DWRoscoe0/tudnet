@@ -70,12 +70,12 @@ public class SystemState
           The initiator might be considered to be a class file.
         */
       {
-        process: {
+        toFound: {
           { // Test for exe initiator file.
             String pathString= theCommandArgs.switchValue("-userDir");
             if (pathString != null) {
               initiatorFile= new File(pathString,"Infogora.exe");
-              //break process;   //// Disable until exe support is better.
+              break toFound;   //// Disabled until exe support is better.
               }
             }
           // Not exe file.
@@ -83,11 +83,11 @@ public class SystemState
               initiatorFile= new File( 
                   entryPointClass.getProtectionDomain().
                   getCodeSource().getLocation().toURI());
-              break process;
+              break toFound;
             } catch (URISyntaxException e1) {
               appLogger.exception("SystemState.calculateAppFileV()", e1);
             }
-          }
+          } // toFound:
         appLogger.info(
             "SystemState.calculateAppFileV(), appFile=\n  "+initiatorFile);
         if (initiatorFile.getName().endsWith(".jar")) appLogger.info(

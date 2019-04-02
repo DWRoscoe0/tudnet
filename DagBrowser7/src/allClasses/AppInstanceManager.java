@@ -840,39 +840,45 @@ l    * If the app receives a message indicating
                 +"Not executable .jar or .exe file. Not copying.");
             break toExit;
           } // toCopy:
-            appLogger.debug(
-                "copyAppToStandardFolderAndPrepareToRunB() copying.");
-            while  // Keep trying until copy success and exit.
-              (!EpiThread.exitingB() && !copySuccessB)
-              try {
-                  appLogger.info("copyAppToStandardFolderAndPrepareToRunB() " 
-                    +"======== COPYING EXECUTABLE TO STANDARD FOLDER ======== "
-                    );
-                  Files.copy(
-                      runningAppFile.toPath()
-                      ,standardAppFile.toPath()
-                      ,StandardCopyOption.COPY_ATTRIBUTES
-                      ,StandardCopyOption.REPLACE_EXISTING
-                      );
-                  appLogger.info( "copyAppToStandardFolderAndPrepareToRunB() Copying successful." );
-                  copySuccessB= requestForJavaCommandAndExitTrueB( 
-                      standardAppFile.getAbsolutePath() 
-                      );
-                  }
-                catch (Exception e) { // Other instance probably still running.
-                    appLogger.info( 
-                      "copyAppToStandardFolderAndPrepareToRunB().\n  "
-                      +e.toString()
-                      +"  Will retry after 1 second." 
-                      ); 
-                    EpiThread.interruptableSleepB(
-                        Config.fileCopyRetryPause1000MsL); // Wait 1 second.
-                  }
+            copyFileV(runningAppFile, standardAppFile);
           } // toExit:
             appLogger.debug("copyAppToStandardFolderAndPrepareToRunB() ends.");
+            copySuccessB= requestForJavaCommandAndExitTrueB( 
+                standardAppFile.getAbsolutePath() 
+                );
             return copySuccessB;
           }
 
+      private void copyFileV(File sourceFile, File destinationFile)
+      {
+        appLogger.info("copyFileV(..) ======== COPYING FILE ======== "
+            +"\n  sourceFile= "+sourceFile
+            +"\n  destinationFile= "+destinationFile
+            );
+        boolean copySuccessB= false;
+        int attemptsI= 0;
+        while  // Keep trying until copy success and exit.
+          (!EpiThread.exitingB() && !copySuccessB)
+          try {
+              attemptsI++;
+              Files.copy(
+                  sourceFile.toPath()
+                  ,destinationFile.toPath()
+                  ,StandardCopyOption.COPY_ATTRIBUTES
+                  ,StandardCopyOption.REPLACE_EXISTING
+                  );
+              appLogger.info( "copyFileV(..) "
+                  + "Copying successful after "+attemptsI+" attempts.");
+              copySuccessB= true;
+              }
+          catch (Exception e) { // Other instance probably still running.
+              appLogger.info("copyFileV(..) failed attempt "+attemptsI+".\n  "
+                +e.toString()+"\n  Will retry after 1 second."); 
+              EpiThread.interruptableSleepB(
+                  Config.fileCopyRetryPause1000MsL); // Wait 1 second.
+          }
+        }
+      
 	    private boolean requestForJavaCommandAndExitTrueB( String commandString ) 
 	      /* This method is equivalent to a 
 	        setJavaCommandForExitV( commandString )

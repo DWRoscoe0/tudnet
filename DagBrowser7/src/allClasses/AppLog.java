@@ -197,14 +197,14 @@ public class AppLog extends EpiThread
             long timeFromLastOutputTimeOutMsL= 
                 Config.LOG_PAUSE_TIMEOUT - (nowMsL - appendedAtMsL);
             if (timeFromLastOutputTimeOutMsL <= 0) { // log file output timeout.
-                debug("run() closing log file because of pause in output.");
+                /// debug("run() closing log file because of pause in output.");
                 closeFileAndSleepV(); // Give other processes a chance.
                 break decodeInput; }
             delayMsL= Math.min(delayMsL, timeFromLastOutputTimeOutMsL);
             long timeFromLastOpenTimeOutMsL= 
                 Config.LOG_OUTPUT_TIMEOUT - (nowMsL - openedAtMsL);
             if (timeFromLastOpenTimeOutMsL <= 0) { // log file open timeout.
-                debug("run() closing log file because of excessive output.");
+                /// debug("run() closing log file because of excessive output.");
                 closeFileAndSleepV(); // Give other processes a chance.
                 break decodeInput; }
             delayMsL= Math.min(delayMsL, timeFromLastOpenTimeOutMsL);
@@ -656,7 +656,7 @@ public class AppLog extends EpiThread
   	        openSleepDelayMsI= 0; // Reset for later.
   	        }
 	        else
-	        debug("openFileIfClosedV() opened log file.");
+	        ; /// debug("openFileIfClosedV() opened log file.");
         }
       }
     
@@ -746,7 +746,7 @@ public class AppLog extends EpiThread
         It should be called only if the log file is open.  
         */
       {
-        debug("closeFileV() flushing, unlocking, and closing log file.");
+        info("closeFileV() flushing, unlocking, and closing log file.");
         thePrintWriter.flush();  // Flush buffers to file.
         if (theLogFileLock != null) // Unlock file if locked.
           try {

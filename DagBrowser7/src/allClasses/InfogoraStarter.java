@@ -52,16 +52,14 @@ public class InfogoraStarter
       { // main(..)
           appLogger= new AppLog(new File( // Constructing logger.
               new File(System.getProperty("user.home") ),Config.appString));
+          Config.clearLogFileB= true;
+          appLogger.setIDProcessV("Starter");
           // AppLog should now be able to do logging.
         toExit: {
           System.out.println(
               "main(..) DISCOVER CAUSE OF DISPLAY OF CONSOLE WINDOW.");
           
-          Config.clearLogFileB= true;
           Process theProcess= null;
-          appLogger.setIDProcessV("Starter");
-          appLogger.setBufferedModeV( true ); // Enabling fast buffered logging.
-          
           DefaultExceptionHandler.setDefaultExceptionHandlerV(); 
           appLogger.info(true,
               "InfogoraStarter.main() beginning. ======== STARTER IS STARTING ========");
@@ -99,15 +97,25 @@ public class InfogoraStarter
             }
           appLogger.info(
             "InfogoraStarter.main() waiting for process termination.");
-          try {theProcess.waitFor();} catch (InterruptedException e) {}
-          appLogger.info(
-              "InfogoraStarter.main() First child process has terminated.");
-          try {theLoopbackMonitorThread.join();} 
-            catch (InterruptedException e) {}
-          appLogger.info(
-              "InfogoraStarter.main() Last child process is terminating.  "
-              + "Waiting 1 second before exiting.");
-          EpiThread.uninterruptableSleepB(1000); // Wait extra time for safety.
+          try { // Waiting for terminations.
+            int exitCodeI= theProcess.waitFor();
+            if (exitCodeI != 0 ) { // Handle termination error.
+              appLogger.error(
+                "InfogoraStarter.main() child process exit code="+exitCodeI);
+              break toExit;
+              }
+            appLogger.info(
+                "InfogoraStarter.main() First child process has terminated.");
+            theLoopbackMonitorThread.join();
+            appLogger.info(
+                "InfogoraStarter.main() Last child process is terminating.  "
+                + "Waiting 1 second before exiting.");
+            Thread.sleep( 1000); // Wait extra time for safety.
+          } catch (InterruptedException e) {
+            appLogger.info("InfogoraStarter.main() "
+                + "wait for process termination was interrupted.");
+            break toExit;
+          } // Waiting for terminations.
           } // toExit:
         appLogger.info(true, "InfogoraStarter.main() calling exit(0). "
             + "======== STARTER IS ENDING ========");
@@ -195,9 +203,11 @@ public class InfogoraStarter
             appLogger.info("processConnectionDataV(..)"+theCommandArgs);
             
             if ( theCommandArgs.switchPresent("-delegatorExiting"))
-              appLogger.info(
-                  "processConnectionDataV(..) -delegatorExiting received");
+              appLogger.info( "processConnectionDataV(..) "
+                  + "-delegatorExiting received, ignoring.");
             if ( theCommandArgs.switchPresent("-delegateeExiting")) {
+              appLogger.info("processConnectionDataV(..) "
+                  + "-delegateeExiting received, will exit.");
               theLocalSocket.closeAllV(); // Close all to exit loop and thread.
               }
             { // Log any unprocessed arguments.

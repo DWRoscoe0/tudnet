@@ -53,7 +53,7 @@ public class LocalSocket
         it returns false.  It returns true if the bind succeeds. 
        */
       {
-        appLogger.info("bindB(..) begins, portI= "+portI);
+        /// appLogger.debug("bindB(..) begins, portI= "+portI);
         boolean successB= false; // Set default value indicating bind failure.
         try {
             bindV(portI);
@@ -77,7 +77,7 @@ public class LocalSocket
         in which case the bind should succeed.
        */
       {
-        appLogger.info("bindV(..) begins, portI= "+portI);
+        /// appLogger.debug("bindV(..) begins, portI= "+portI);
         try {
             theServerServerSocket=  // Try opening listener socket.
               new ServerSocket(

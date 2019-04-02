@@ -4,6 +4,8 @@ import javax.swing.event.EventListenerList;
 
 import static allClasses.Globals.*;  // appLogger;
 
+import java.util.Arrays;
+
 
 public class Shutdowner
 
@@ -327,7 +329,8 @@ public class Shutdowner
           { // Delegating.
             ProcessStarter.startProcess(
                 exitProcessStrings); // No, start other process before exiting.
-            appLogger.info("Shutdowner deleting InfogoraAppActiveFlag.txt.");
+            appLogger.info("Shutdowner.delegationDependentFinishingV() "
+                + "deleting InfogoraAppActiveFlag.txt.");
             Config.makeRelativeToAppFolderFile(
                 "InfogoraAppActiveFlag.txt").delete();
             sendFeedbackMessageToStarterV("-delegatorExiting");
@@ -351,6 +354,8 @@ public class Shutdowner
 
     public void setExitStringsV(String[] exitProcessStrings)
       { 
+        appLogger.info("Shutdowner.setExitStringsV(..)\n  "+
+            Arrays.toString(exitProcessStrings));
         this.exitProcessStrings= exitProcessStrings;
         }
 
@@ -361,7 +366,7 @@ public class Shutdowner
       public synchronized void addShutdownerListener
         ( ShutdownerListener listener ) 
         {
-          appLogger.debug("addShutdownerListener("+listener+")"); 
+          appLogger.debug("Shutdowner.addShutdownerListener("+listener+")"); 
           theEventListenerList.add(ShutdownerListener.class, listener);
           }
 
@@ -393,9 +398,8 @@ public class Shutdowner
             { 
               ShutdownerListener aShutdownerListener= 
                 theShutdownerListeners[i];
-              appLogger.debug( 
-              	"reverseFireShutdownerListeners( ): calling ShutdownerListener: "
-              	+ aShutdownerListener ); 
+              appLogger.debug( "Shutdowner.reverseFireShutdownerListeners( ): "
+                  + "calling ShutdownerListener: " + aShutdownerListener ); 
               aShutdownerListener.doMyShutdown( );
               }
         }
