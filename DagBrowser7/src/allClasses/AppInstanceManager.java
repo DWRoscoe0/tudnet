@@ -331,7 +331,7 @@ l    * If the app receives a message indicating
                     ) )
                   {
                     appShouldExitB= // Chain to other app to do copy and run.
-                      requestForJavaCommandAndExitTrueB( 
+                      requestProcessStartAndShutdownTrueB( 
                           otherAppFile.getAbsolutePath() );
                     }
                 }
@@ -392,7 +392,7 @@ l    * If the app receives a message indicating
           String[] targetStrings= // Get remaining arguments.
               theCommandArgs.targets(); 
           if (targetStrings.length>0) // If there are any then
-            appLogger.error( // log them as errors.
+            appLogger.warning( // log them as errors.
               "AppInstanceManager processCommandArgsV(..), unused arguments:\n  "
               + Arrays.toString(targetStrings));
           }
@@ -586,7 +586,7 @@ l    * If the app receives a message indicating
 		        			) ) 
 		         	  {
 		         			// Chain to other app to do copy and run.
-		         				requestForJavaCommandAndExitTrueB( 
+		         				requestProcessStartAndShutdownTrueB( 
 			      					otherAppFile.getAbsolutePath() );
 			      			theShutdowner.requestAppShutdownV(); // App exit.
 		         			}
@@ -672,24 +672,22 @@ l    * If the app receives a message indicating
 	        the app file in the Infogora standard folder to make it
 	        the latest version, and then runs it.
 	        It returns true if this app instance should shutdown
-	          because its job is done but is to be continued
-	          by another running instance which will be run to replace it.
+	          because further work has been delegated to
+	          another running instance which will be run to replace it.
 	        It returns false if this app instance should 
-	          continue with normal start-up, 
-	          because it has been determined that no further work is needed.
-	        The logic in the code below can result in as few as 
-	        1 app command to be run,
+	          continue with normal GUI start-up because 
+	          no [further] delegation is to be done.
+	        The logic in the code below can result in 
+	        action by as few as 1 running app instance,
 	        in the case of a normal start-up from the standard folder,
-	        to as many as 4 app commands run, 
-	        for the case when a new app version is run
-	        outside the standard folder,
-	        which requires control transfers and 
-	        a copy of an app file to the standard folder.
+	        to action by as many as 4 running app instances,
+	        for the case when a new app version is run 
+	        outside the standard folder when 
+	        an instance is already running from the standard.
 	        */
 	      { 
-	        appLogger.info("tryDelegationToFileInstanceB() enter");
-	        boolean appShouldExitB= true;  // Set default return app exit.
-	
+  	        appLogger.info("tryDelegationToFileInstanceB() enter");
+  	        boolean appShouldExitB= true;  // Set default return app exit.
 	        toReturn: { // The block after which all returns will go.
 		        if // The app command was without arguments.
 		        	( otherAppFile == null ) 
@@ -716,9 +714,9 @@ l    * If the app receives a message indicating
 		            appLogger.info("Exhausted with-arg possibilities.");
 		            appShouldExitB= false;  // For normal startup.
 		            } // Handle app commands with argument[s].
-	          } // toReturn
-          appLogger.info("tryDelegationToFileInstanceB() exit");
-	        return appShouldExitB;  // Return whether or not app should exit.
+	        } // toReturn
+            appLogger.info("tryDelegationToFileInstanceB() exit");
+  	        return appShouldExitB;  // Return whether or not app should exit.
 	        }
 	
 	    private boolean runningAppIsStandardAppB()
@@ -733,8 +731,9 @@ l    * If the app receives a message indicating
 	    private boolean tryInstallToStandardFolderB()
 	      /* If the standard folder has no app in it then this method 
 	        copies the jar file of the running app to the standard folder,
-	        prepares to run it on exit, and returns true to cause exit.
-	        Otherwise it returns false.
+	        and returns true to indicate that this app should exit
+          and run the copied app.
+          Otherwise it returns false.
 	        */
 	      {
 	    	  boolean appShouldExitB= false;
@@ -742,7 +741,7 @@ l    * If the app receives a message indicating
 	          ( ! standardAppFile.exists() )  // The file doesn't exist.
 	          {
 	            appLogger.info("Trying to install.");
-	            copyAppToStandardFolderAndPrepareToRunB();
+	            copyAndPrepareToRunB();
 	            appShouldExitB= true;
 	            }
 	        return appShouldExitB;
@@ -752,20 +751,23 @@ l    * If the app receives a message indicating
 	      /* If the standard folder has an app jar file in it,
 	        but it is older than the running app,
 	        then this method updates it by replacing 
-	        the jar file in the standard folder
-	        with the jar file for this app,
-	        exits this app, and runs the updated app.
-	        Otherwise it returns.
+	        the jar file in the standard folder with the jar file for this app,
+	        and returns true to indicate that this app should exit
+	        and run the copied app.
+	        Otherwise it returns false.
 	        */
 	      {
-	    	  boolean appShouldExitB= false;
-	        if // This apps file is newer that the one in standard folder.
-	          ( runningAppFile.lastModified() > standardAppFile.lastModified() )
-	          {
-	            //appLogger.info("Updating by copying this app file to standard folder.");
-	        	  appShouldExitB= copyAppToStandardFolderAndPrepareToRunB();
-	            }
-	        return appShouldExitB;
+	          boolean appShouldExitB= false; // Default of no app exit.
+	    	  toReturn: {
+  	        if // This apps file is not newer that the one in standard folder.
+  	          ( runningAppFile.lastModified() <= standardAppFile.lastModified() )
+  	          break toReturn;
+            appShouldExitB= true; // App exits in the following cases.
+            if (copyAndPrepareToRunB()) break toReturn; // Successful copy.
+            appLogger.error("Copy failed.  Waiting, then exiting.");
+            EpiThread.interruptableSleepB(5000); // Wait 5s.
+          } // toReturn:
+	          return appShouldExitB;
 	        }
 	
 	    private boolean trySwitchingToAppInStandardFolderB()
@@ -784,7 +786,7 @@ l    * If the app receives a message indicating
 	            {
 	              appLogger.info("Running identical app in standard folder.");
 	          	  appShouldExitB= 
-	          	    requestForJavaCommandAndExitTrueB( 
+	          	    requestProcessStartAndShutdownTrueB( 
 	          	    		standardAppFile.getAbsolutePath() );
 	              }
 	        return appShouldExitB;
@@ -812,7 +814,7 @@ l    * If the app receives a message indicating
 		          	{
 			            appLogger.info("An approved updater has been detected.");
 			        	  appShouldExitB=   // Chain to arg app to do the copy.
-				            requestForJavaCommandAndExitTrueB(
+				            requestProcessStartAndShutdownTrueB(
 				              otherAppFile.getAbsolutePath() 
 				              );
 		          		}
@@ -820,7 +822,7 @@ l    * If the app receives a message indicating
 	    	  return appShouldExitB;
 	        }
       
-      private boolean copyAppToStandardFolderAndPrepareToRunB()
+      private boolean copyAndPrepareToRunB()
         /* This method tries to this running app's jar file to 
           the standard folder, and prepare it to be run as a Process on exit. 
           It keeps trying until copying succeeds, or the thread is interrupted.
@@ -828,58 +830,103 @@ l    * If the app receives a message indicating
           If the thread is interrupted then it returns false.
           */
         {
-            appLogger.debug("copyAppToStandardFolderAndPrepareToRunB() begin");
-            boolean copySuccessB= false;
+            appLogger.debug("copyAndPrepareToRunB() begin");
+            boolean successB= false;
           toExit: { toCopy: {
             String nameString= runningAppFile.getName(); 
             appLogger.debug(
-                "copyAppToStandardFolderAndPrepareToRunB() name="+nameString);
+                "copyAndPrepareToRunB() name="+nameString);
             if (nameString.endsWith(".jar")) break toCopy;
             if (nameString.endsWith(".exe")) break toCopy;
-            appLogger.info("copyAppToStandardFolderAndPrepareToRunB() "
+            appLogger.info("copyAndPrepareToRunB() "
                 +"Not executable .jar or .exe file. Not copying.");
             break toExit;
           } // toCopy:
-            copyFileV(runningAppFile, standardAppFile);
-          } // toExit:
-            appLogger.debug("copyAppToStandardFolderAndPrepareToRunB() ends.");
-            copySuccessB= requestForJavaCommandAndExitTrueB( 
+            if (! copyExecutableFileB(runningAppFile, standardAppFile))
+              break toExit; // Exit if copying of executable failed.
+            successB= requestProcessStartAndShutdownTrueB( 
                 standardAppFile.getAbsolutePath() 
                 );
-            return copySuccessB;
+          } // toExit:
+            appLogger.debug("copyAndPrepareToRunB() ends= "+successB);
+            return successB;
+          }
+
+      private boolean copyExecutableFileB( //////// READY FOR TEST.
+          File sourceFile, File destinationFile)
+        /* This method tries to copy the executable 
+          sourceFile to the destinationFile.
+          First it does some tests on the file name extensions.
+          They must both be either .jar or .exe.
+          If they are not then the method returns false.
+          If they are then it copies the file and returns true.
+          */
+        {
+            boolean successB= false;
+            String sourceNameString; 
+          toExit: { toCopy: { toEqualityTest: {
+            sourceNameString= sourceFile.getName(); 
+            if (sourceNameString.endsWith(".jar")) break toEqualityTest;
+            if (sourceNameString.endsWith(".exe")) break toEqualityTest;
+            appLogger.error("copyExecutableFileB() Not exe or jar file."
+              +twoFilesString(sourceFile, destinationFile));
+            break toExit;
+          } // toEqualityTest:
+            if (sourceNameString.equals(destinationFile.getName())) 
+              break toCopy;
+            appLogger.error("copyExecutableFileB() File extension mismatch."
+                +twoFilesString(sourceFile, destinationFile));
+            break toExit;
+          } // toCopy:
+            copyFileV(sourceFile, destinationFile);
+            successB= true;
+          } // toExit:
+            appLogger.debug("copyExecutableFileB()= "+successB);
+            return successB;
           }
 
       private void copyFileV(File sourceFile, File destinationFile)
-      {
-        appLogger.info("copyFileV(..) ======== COPYING FILE ======== "
-            +"\n  sourceFile= "+sourceFile
-            +"\n  destinationFile= "+destinationFile
-            );
-        boolean copySuccessB= false;
-        int attemptsI= 0;
-        while  // Keep trying until copy success and exit.
-          (!EpiThread.exitingB() && !copySuccessB)
-          try {
-              attemptsI++;
-              Files.copy(
-                  sourceFile.toPath()
-                  ,destinationFile.toPath()
-                  ,StandardCopyOption.COPY_ATTRIBUTES
-                  ,StandardCopyOption.REPLACE_EXISTING
-                  );
-              appLogger.info( "copyFileV(..) "
-                  + "Copying successful after "+attemptsI+" attempts.");
-              copySuccessB= true;
-              }
-          catch (Exception e) { // Other instance probably still running.
-              appLogger.info("copyFileV(..) failed attempt "+attemptsI+".\n  "
-                +e.toString()+"\n  Will retry after 1 second."); 
-              EpiThread.interruptableSleepB(
-                  Config.fileCopyRetryPause1000MsL); // Wait 1 second.
+        /* This method copies the sourceFile to the destinationFile.
+          It does not return until the copy succeeds.
+           */
+        {
+          ///enh create function to make double file path string.
+          appLogger.info("copyFileV(..) ======== COPYING FILE ======== ");
+          boolean copySuccessB= false;
+          int attemptsI= 0;
+          while  // Keep trying until copy success and exit.
+            (!EpiThread.exitingB() && !copySuccessB)
+            try {
+                attemptsI++;
+                Files.copy(
+                    sourceFile.toPath()
+                    ,destinationFile.toPath()
+                    ,StandardCopyOption.COPY_ATTRIBUTES
+                    ,StandardCopyOption.REPLACE_EXISTING
+                    );
+                appLogger.info( "copyFileV(..) "
+                  + "Copying successful after "+attemptsI+" attempts:"
+                  + twoFilesString(sourceFile, destinationFile));
+                copySuccessB= true;
+                }
+            catch (Exception e) { // Other instance probably still running.
+                appLogger.info("copyFileV(..) failed attempt "+attemptsI+".\n  "
+                  +e.toString()+"\n  Will retry after 1 second."); 
+                EpiThread.interruptableSleepB(
+                    Config.fileCopyRetryPause1000MsL); // Wait 1 second.
+            }
           }
+        
+      private String twoFilesString(
+          File sourceFile, File destinationFile)
+      {
+        return 
+          "\n  sourceFile= "+sourceFile
+          +"\n  destinationFile= "+destinationFile
+          ;
         }
-      
-	    private boolean requestForJavaCommandAndExitTrueB( String commandString ) 
+          
+	    private boolean requestProcessStartAndShutdownTrueB( String commandString ) 
 	      /* This method is equivalent to a 
 	        setJavaCommandForExitV( commandString )
 	        followed by requesting shutdown of this app.
