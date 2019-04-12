@@ -52,7 +52,7 @@ public class InfogoraStarter
       { // main(..)
           appLogger= new AppLog(new File( // Constructing logger.
               new File(System.getProperty("user.home") ),Config.appString));
-          Config.clearLogFileB= true;
+          //// appLogger.clearLogFileB= true; ///dbg
           appLogger.setIDProcessV("Starter");
           // AppLog should now be able to do logging.
         toExit: {
@@ -64,7 +64,7 @@ public class InfogoraStarter
           appLogger.info(true,
               "InfogoraStarter.main() beginning. ======== STARTER IS STARTING ========");
           CommandArgs theCommandArgs= new CommandArgs(argStrings); 
-          SystemState.initializeV(InfogoraStarter.class, theCommandArgs);
+          AppSettings.initializeV(InfogoraStarter.class, theCommandArgs);
           if (theCommandArgs.switchValue("-userDir") == null) {
             appLogger.error("InfogoraStarter.main() Not an exe file launch!");
             break toExit;

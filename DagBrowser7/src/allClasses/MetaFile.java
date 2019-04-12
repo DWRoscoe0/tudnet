@@ -84,11 +84,11 @@ public class MetaFile { // For app's meta-data files.
 
         try { // Read state.
           if  //  Read state from file if...
-            ( (Config.makeRelativeToAppFolderFile( fileNameString )).exists() )  // ...the file exists.
+            ( (AppSettings.makeRelativeToAppFolderFile( fileNameString )).exists() )  // ...the file exists.
             { //  Read state from file.
               theRandomAccessFile=  // Open random access file.
                 new RandomAccessFile( 
-                 Config.makeRelativeToAppFolderFile( fileNameString ), 
+                    AppSettings.makeRelativeToAppFolderFile( fileNameString ), 
                  "r" 
                  );
               loadedMetaNode=   // Immediately read root node.
@@ -319,9 +319,9 @@ public class MetaFile { // For app's meta-data files.
           else // There IS a MetaNode to process.
           { // Write the data rooted at inMetaNode.
             File inputFile= 
-            		Config.makeRelativeToAppFolderFile( fileNameString );
+                AppSettings.makeRelativeToAppFolderFile( fileNameString );
             File outFile= 
-            		Config.makeRelativeToAppFolderFile( fileNameString+".~" );
+                AppSettings.makeRelativeToAppFolderFile( fileNameString+".~" );
 
             try { // Try opening or creating file.
               theRandomAccessFile=  // For open random access text file.
@@ -356,7 +356,8 @@ public class MetaFile { // For app's meta-data files.
         */
       {
         MetaNode loadedMetaNode= null;  // Set null root because we are reading.
-        File FileNameFile= Config.makeRelativeToAppFolderFile( fileNameString );
+        File FileNameFile= 
+            AppSettings.makeRelativeToAppFolderFile( fileNameString );
         try { // Read state.
           if  //  Read state from file if...
             ( FileNameFile.exists() )  // ...the file exists.

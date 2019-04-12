@@ -75,7 +75,7 @@ public class Persistent
 		  	try { 
 		  		  configFileInputStream= // Prepare file containing persistent data.
 		  		  		new FileInputStream(
-		  		  				Config.makeRelativeToAppFolderFile( fileString ));
+		  		  		    AppSettings.makeRelativeToAppFolderFile( fileString ));
 		  		  loadV(configFileInputStream); // Load data from file.
 			  		} 
 			  	catch (FileNotFoundException theFileNotFoundException) { 
@@ -422,7 +422,7 @@ public class Persistent
 	    {
 		  	try {
 		  		  theFileOutputStream= new FileOutputStream(
-		  		  		Config.makeRelativeToAppFolderFile( fileString ));
+		  		      AppSettings.makeRelativeToAppFolderFile( fileString ));
 			  		writingV(
 			  				"#---multi-element path and data output follows---\n");
 		  			multilevelStoreNodeV("", rootPersistingNode);

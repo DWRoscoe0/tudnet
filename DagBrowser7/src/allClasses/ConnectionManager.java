@@ -240,7 +240,7 @@ public class ConnectionManager
 			  Fix to restore only the previously active ones.
 			 	*/
 			{
-        if (Config.testAndLogDisabledB( Config.unicasterThreadsDisableB, 
+        if (appLogger.testAndLogDisabledB( Config.unicasterThreadsDisableB, 
             "restartPreviousUnicastersV()") 
             )
           return;
@@ -500,7 +500,7 @@ public class ConnectionManager
         either the unicast receiver or the multicast receiver. 
         */
       {
-        if (Config.testAndLogDisabledB( Config.unicasterThreadsDisableB, 
+        if (appLogger.testAndLogDisabledB( Config.unicasterThreadsDisableB, 
             "passToUnicasterV(..)") 
             )
           return;

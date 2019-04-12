@@ -57,7 +57,9 @@ public class TCPCopier
 	    During normal operations there will be only one folder and file name.
 	   	*/
 	  //private static final String fileToUpdateString = "TCPCopier.txt";
-	  private static final String fileToUpdateString= Config.appJarString;
+    //// private static final String fileToUpdateString= Config.appJarString;
+    private static final String fileToUpdateString= 
+        AppSettings.initiatorNameString;
 	  //private static final String serverFileString = "TCPCopierServer.txt";
 	  //private static final String serverFileString = fileToUpdateString;
 	  private static final String serverFileString = 
@@ -111,7 +113,7 @@ public class TCPCopier
 	        by contacting TCPServers.
 	        */
 	      {
-          if (Config.testAndLogDisabledB( Config.tcpThreadsDisableB,
+          if (appLogger.testAndLogDisabledB( Config.tcpThreadsDisableB,
               "run() tcp client thread") 
               )
             return;
@@ -178,12 +180,13 @@ public class TCPCopier
 	        from the standard folder to the TCP copy staging area folder. 
 	       	*/
 		    {
-					File thatFolderFile= Config.makeRelativeToAppFolderFile( 
+					File thatFolderFile= AppSettings.makeRelativeToAppFolderFile( 
 							Config.tcpCopierInputFolderString );
 					thatFolderFile.mkdir();  // Create destination folder if needed.
 		  		Misc.updateFromToV( // Update staging area from standard folder.
-						Config.userAppJarFile,
-						new File( thatFolderFile, Config.appJarString )
+		  		  AppSettings.userAppJarFile,
+            //// new File( thatFolderFile, Config.appJarString )
+            new File( thatFolderFile, AppSettings.initiatorNameString)
 		    		);
 			    }
 
@@ -284,7 +287,7 @@ public class TCPCopier
 								+ ", serverPortString= " + serverPortString);
 		      	Socket clientSocket = null;
 						File clientFile= 
-								Config.makeRelativeToAppFolderFile( clientFileString );
+						    AppSettings.makeRelativeToAppFolderFile( clientFileString );
 						//// serverPortString= "11111"; ///tmp
 						int serverPortI= Integer.parseUnsignedInt( serverPortString );
 					 	InetSocketAddress theInetSocketAddress= null; 
@@ -360,7 +363,7 @@ public class TCPCopier
 		      by executing the file update/exchange protocol.
 			    */
 		    {
-          if (Config.testAndLogDisabledB( Config.tcpThreadsDisableB,
+          if (appLogger.testAndLogDisabledB( Config.tcpThreadsDisableB,
             "run() tcp server thread"))
             return;
 
@@ -420,7 +423,7 @@ public class TCPCopier
       	throws IOException
 	      {
 		  		serverFile= // Calculating File name.
-		  				Config.makeRelativeToAppFolderFile( serverFileString );
+		  		    AppSettings.makeRelativeToAppFolderFile( serverFileString );
 		  		long serverFileLastModifiedL= serverFile.lastModified();
 		  		long resultL= tryTransferingFileL(
 			  		serverSocket, serverFile, serverFile, serverFileLastModifiedL );
@@ -548,10 +551,10 @@ public class TCPCopier
 				boolean fileWriteCompleteB= false;
 				File temporaryFile= null;
 				try { 
-					temporaryFile= Config.makeRelativeToAppFolderFile( 
+					temporaryFile= AppSettings.makeRelativeToAppFolderFile( 
 							Config.tcpCopierOutputFolderString );
 					temporaryFile.mkdir();  // Create folder if needed.
-					temporaryFile= Config.makeRelativeToAppFolderFile( 
+					temporaryFile= AppSettings.makeRelativeToAppFolderFile( 
 							Config.tcpCopierOutputFolderString 
 							+ File.separator + "Temporary.file" );
 					temporaryFileOutputStream= new FileOutputStream( temporaryFile );

@@ -1,20 +1,19 @@
 package allClasses;
 
-import static allClasses.Globals.appLogger;
-
-import java.io.File;
+//// import static allClasses.Globals.appLogger;
 
 //import static allClasses.Globals.*;  // appLogger;
 
 public class Config
 
-  /* This class stores configuration, preferences, and some dependent state.
-    Most of it is fixed, in the form of constant final values.
-    But there are some methods that must be called to be used.
+  /* This class stores configuration and preferences.
+    Some are for development.  Some are for normal production use.
+    Most of the values are constant, in the form of final values.
     
-    Some of it may later be able to be 
-    changed and stored in external text files, such as
-    the files used by the class Persist. 
+    ///enh Any values that are not final should be set as early as possible.
+    
+    Some of these values may later be able to be changed and stored in 
+    external text files, such as the files used by the class Persist. 
    	*/
 
   {
@@ -22,15 +21,6 @@ public class Config
       public static boolean tcpThreadsDisableB= true;  //// false;
       public static boolean multicasterThreadsDisableB= true;  //// false;
       public static boolean unicasterThreadsDisableB= true;  //// false;
-	
-      public static boolean testAndLogDisabledB(
-          boolean disabledB, String logString)
-      {
-        if (disabledB) { 
-          appLogger.debug(logString + "; code is disabled.");
-          }
-        return disabledB;
-        }
         
 		/* Miscellaneous startup behavior. */
 		
@@ -41,7 +31,7 @@ public class Config
 				public static final int localUpdateDelaySI=0;
 				
 		  /* Log file.  */
-				public static boolean clearLogFileB= false;  //// true;
+				///// public static boolean clearLogFileB= false;  //// true;
   
 		// Delays, for adjustments and slowing the entire app for debugging.
 
@@ -81,8 +71,8 @@ public class Config
     public static final long LOG_PAUSE_TIMEOUT= 200; 
     public static final long LOG_OUTPUT_TIMEOUT= 400; 
 
-		// Not final to prevent a "Comparing identical" warning where used.
-		public static long packetSendDelayMsL= 0; // 500; // 1000;
+		// Following was not final to prevent a "Comparing identical".
+		public static final long packetSendDelayMsL= 0; // 500; // 1000;
 
 		public static final int QUEUE_SIZE= 5;
 
@@ -92,35 +82,6 @@ public class Config
 		public static final String appString= "Infogora";
 	  public static final String appJarString= appString + ".jar";
 
-		private static final File userAppFolderFile;
-
-		public static final File userAppJarFile;
-
-				
-	  static { // static run-time initialization.
-	    String homeFolderPathString= System.getProperty("user.home");
-	    userAppFolderFile= 
-	    		new File( new File( homeFolderPathString ), appString );
-	    userAppJarFile= makeRelativeToAppFolderFile( appJarString ); 
-	  	initializeV();
-	    }
-
-  	private static void initializeV() // Should be called only once.
-  	  // Cannot initialize final variables from here.
-	  	{ 
-		    userAppFolderFile.mkdirs();  // Create home folder if it doesn't exist.
-	  		}
-
   	private Config() {} // Constructor is private so it can't be constructed.
-
-	  static public File makeRelativeToAppFolderFile( 
-	  		String fileRelativePathString )
-	    /* This method creates a File name object for 
-	      a file named by the fileRelativePathString 
-	      relative to the app folder.  */
-	    {
-	      return new File( userAppFolderFile, fileRelativePathString );
-	      }
-	
 	
   	}

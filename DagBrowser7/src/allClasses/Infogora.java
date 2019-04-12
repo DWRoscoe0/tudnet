@@ -114,7 +114,7 @@ class Infogora  // The root of this app.
         appLogger.info(true,
 	          "Infogora.main() beginning. ======== APP IS STARTING ========");
 	      CommandArgs theCommandArgs= new CommandArgs(argStrings);
-        SystemState.initializeV(Infogora.class, theCommandArgs);
+        AppSettings.initializeV(Infogora.class, theCommandArgs);
 	      AppFactory theAppFactory= new AppFactory(theCommandArgs);
 	      App theApp= theAppFactory.getApp();  // Getting App from factory.
 	      theApp.runV();  // Running the app until shutdown.

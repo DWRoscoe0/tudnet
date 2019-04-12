@@ -331,7 +331,7 @@ public class Shutdowner
                 exitProcessStrings); // No, start other process before exiting.
             appLogger.info("Shutdowner.delegationDependentFinishingV() "
                 + "deleting InfogoraAppActiveFlag.txt.");
-            Config.makeRelativeToAppFolderFile(
+            AppSettings.makeRelativeToAppFolderFile(
                 "InfogoraAppActiveFlag.txt").delete();
             sendFeedbackMessageToStarterV("-delegatorExiting");
             }

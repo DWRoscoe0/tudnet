@@ -18,7 +18,7 @@ public class Confingleton
 
     private static File makeFile( String keyString )
       {
-        return Config.makeRelativeToAppFolderFile( keyString + ".txt" );
+        return AppSettings.makeRelativeToAppFolderFile( keyString + ".txt" );
         }
 
 

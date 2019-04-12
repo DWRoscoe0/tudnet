@@ -146,8 +146,8 @@ l    * If the app receives a message indicating
       // Same for TCP update.
     
     // File names.  Some of these might be equal.
-	  private final File standardAppFile=  // App File name in standard folder.
-    		Config.userAppJarFile;
+	  private File standardAppFile=  null; // App File name in standard folder.
+	      //// AppSettings.userAppJarFile;
     private File runningAppFile= null; // App File name of running app.
     private File otherAppFile= null;  // File name of another instance.
       // It can come from either:
@@ -189,13 +189,22 @@ l    * If the app receives a message indicating
 	    // Does all initialization except constructor injection.
 	    {
 	      theLocalSocket= new LocalSocket();
-        runningAppFile= SystemState.initiatorFile;
+	      
+        //// runningAppFile= AppSettings.initiatorFile;
+	      runningAppFile= 
+	        AppSettings.initiatorFile;
+	      
+	      standardAppFile=
+	          AppSettings.makeRelativeToAppFolderFile( 
+              AppSettings.initiatorNameString
+              );
 
 	      tcpCopierAppFile= // Calculating File name of TCPCopier target file.
-	      		Config.makeRelativeToAppFolderFile( 
+	      		AppSettings.makeRelativeToAppFolderFile( 
 	      				Config.tcpCopierOutputFolderString 
 	      				+ File.separator 
-	      				+ Config.appJarString 
+	      				//// + Config.appJarString 
+	      				+ AppSettings.initiatorNameString
 	      				);
 	      } // initializeV()
 
@@ -926,33 +935,41 @@ l    * If the app receives a message indicating
           ;
         }
           
-	    private boolean requestProcessStartAndShutdownTrueB( String commandString ) 
+	    private boolean requestProcessStartAndShutdownTrueB( 
+	        String commandPathString ) 
 	      /* This method is equivalent to a 
-	        setJavaCommandForExitV( commandString )
+	        setCommandForExitV( commandString )
 	        followed by requesting shutdown of this app.
 	        It always returns true to simplify caller code and 
 	        to indicate that the app should exit.
 	        */
 	      {
-	        setJavaCommandForExitV( commandString ); // command to execute at exit.
+	        setCommandForExitV(  // Set command to execute at exit.
+	            commandPathString );
 
 	        theShutdowner.requestAppShutdownV(); // Triggering app shutdown.
 
 	        return true;  // Returning true to simplify caller code.
 	        }
       
-      private void setJavaCommandForExitV( String commandString )
-        /* This method sets up the execution of a runnable jar file 
-          whose name is argString as a Process.  
+      private void setCommandForExitV( String commandPathString )
+        /* This method sets up the execution of a runnable file 
+          whose name is commandString as a Process.  
           It will execute as the last step in the app shutdown process.
+          It adds command switches appropriate to the present context.
+           
+          Presently it handles:
+          * Java jar file commands.
+          It is being modified to also handle non-jar file commands.
           */
         {
           ArrayList<String> theArrayListOfStrings= new ArrayList<String>();
-          
-          theArrayListOfStrings.add(System.getProperty("java.home") + 
-              File.separator + "bin" + File.separator + "java.exe");
-          theArrayListOfStrings.add("-jar"); // java.exe -jar option.
-          theArrayListOfStrings.add(commandString); // Path of .jar file.
+          if (commandPathString.endsWith(".jar")) { // Add Java if jar file.
+            theArrayListOfStrings.add(System.getProperty("java.home") + 
+                File.separator + "bin" + File.separator + "java.exe");
+            theArrayListOfStrings.add("-jar"); // java.exe -jar option.
+            }
+          theArrayListOfStrings.add(commandPathString); // Path of command.
           theArrayListOfStrings.add("-otherAppIs"); // -otherAppIs option.
           theArrayListOfStrings.add(runningAppFile.getAbsolutePath()); // app.
           theArrayListOfStrings.add("-starterPort"); // For feedback...

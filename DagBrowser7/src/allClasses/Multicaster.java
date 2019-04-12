@@ -245,9 +245,9 @@ public class Multicaster
           but for small networks it works fine.
          	*/
         {
-          if (Config.testAndLogDisabledB( 
+          if (appLogger.testAndLogDisabledB( 
               Config.multicasterThreadsDisableB, 
-              "\"run() multicaster") 
+              "run() multicaster") 
               )
             return;
       

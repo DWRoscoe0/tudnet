@@ -153,7 +153,8 @@ public class Sender // Uunicast and multicast sender thread.
 				    { ; // Drop this packet by doing nothing.
 				    	break goReturn;
 				    	}
-	        if ( Config.packetSendDelayMsL == 0L ) // Send immediately if 0 delay.
+			    long zeroL= 0L; // Prevent "Comparing identical" warning in next if...
+	        if ( Config.packetSendDelayMsL == zeroL ) // Send immediately if 0 delay.
 	          { sendingDatagramPacketV( theDatagramPacket ); // Send immediately.
 				    	break goReturn;
 	          	}

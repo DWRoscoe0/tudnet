@@ -160,7 +160,7 @@ public class Unicaster
         It also contains an IOException handler.
         */
       {
-        if (Config.testAndLogDisabledB( Config.unicasterThreadsDisableB, 
+        if (appLogger.testAndLogDisabledB( Config.unicasterThreadsDisableB, 
             "run() unicasters") 
             )
           return;
