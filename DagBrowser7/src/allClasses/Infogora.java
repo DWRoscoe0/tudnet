@@ -88,7 +88,7 @@ class Infogora  // The root of this app.
 			  * It creates the AppFactory object.
 			  * It uses the AppFactory to create the App object.
 			  * It calls the App object's runV() method.
-	
+    
 				See the AppFactory for information about 
 				this app's high-level structure.
 	      
@@ -100,6 +100,33 @@ class Infogora  // The root of this app.
 	      so we call exit(0) to terminate.
 	      ///fix so exit() doesn't need to be called.
 	        As first step, list all remaining active ,,threads.
+
+        Legal switches input on the command line from the InfogoraStarter are;
+        -starterPort : followed by port number to be used
+          to send messages back to the InfogoraStarter process.
+        -userDir : see InfogoraStarter.
+        -tempDir : see InfogoraStarter.
+
+        Legal switches output from a parent Infogora app process
+        to a new child Infogora app process:
+        -otherAppIs : followed by the full path to 
+          the parent processes initiator file.
+        -starterPort : passed through, see above.
+
+        Legal switches output by an Infogora app instance which is starting
+        to the InstancePort of an already running Infogora app instance:
+        -otherAppIs : followed by the full path to 
+          the starting apps initiator file.
+
+        Legal switches output from an descendant Infogora app to 
+        the TCP socket -starterPort of an its ancestor InfogoraStarter app:
+        -delegatorExiting : indicates that this descendant process which
+          delegated its job to its own descendant, is exiting.
+          Its descendant might still need the temporary directory to exist. 
+        -delegateeExiting : indicates that a descendant process which
+          did not delegate its job to its own descendant, is exiting.
+          Therefore it chould be safe for the ancestor InfogoraStarter app
+          to exit, which would cause the temporary directory to be deleted.
 
 			  */
       { // main(..)

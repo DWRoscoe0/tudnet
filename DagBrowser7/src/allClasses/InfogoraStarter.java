@@ -17,16 +17,45 @@ public class InfogoraStarter
     Both this class and the Infogora class have their own main(..) methods.
     
     This cless was created because of the characteristics of the
-    7Zip SFX Modules used as an decompressor and launcher.
+    7Zip SFX Modules used as a decompressor and launcher.
     It decompresses the app into a temporary directory,
     starts the specified app process, waits for that process to terminate,
     and then deletes the temporary directory and its contents.
     It doesn't understand that the process that it starts
     might start other processes just as dependent on that temporary directory.
-    This class, by waiting for all child processes to terminate
+    This class, by waiting for all descendant child processes to terminate
     before terminating itself, guarantees that the temporary directory
-    is deleted only when it is safe to do so.  
-    
+    is deleted only when everything has stopped using it.
+
+    Legal switches input in the command line from the 7zip SFX launcher are;
+    -userDir : followed by user directory from which 
+      the 7zip SFX launcher command was run.
+    -tempDir : followed by the directory into which 
+      this app was placed before running it.
+    If these switches are not present, 
+    the starter was not run from the 7zip SFX launcher. 
+    In this case, presently, execution is aborted.
+
+    Switches output in command line to 
+    a descendant Infogora app process that is being started:
+    -starterPort : followed by port number descendant processes should use
+      to send messages back to this process.
+    -userDir : passed through, see above.
+    -tempDir : passed through, see above.
+
+    Legal switches input through the -starterPort TCP socket from
+    descendant Infogora app processes are;
+    -delegatorExiting : indicates that a descendant process which
+      delegated its job to its own descendant, is exiting.
+      Its descendant might still need the temporary directory to exist. 
+    -delegateeExiting : indicates that a descendant process which
+      did not delegate its job to its own descendant, is exiting.
+      Therefore it should be safe for the temporary directory to be deleted. 
+
+    ///fix When Infogora.exe delegates to another Infogora.exe,
+      the temporary directory doesn't needs to be preserved.
+      Figure out a different logic for this.
+      
     ///enh Maybe generalize to use different termination conditions.
       Instead of using -delegateeExiting and -delegatorExiting,
       use -StartingProcess and -processExiting, and keep a count.
