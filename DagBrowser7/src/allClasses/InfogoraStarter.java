@@ -12,7 +12,18 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class InfogoraStarter
 
-  /* This class is used as a process to start the Infogora app process.
+  /* ///enh: Remove this class?  
+    It is no longer being used since discovering that
+    if there is no mixing of exe and jar processes then
+    each exe process has its own temporary directory.
+    
+    ///fix: The 7ZipSFXModule seem to leave empty temporary directories
+      if more than one folder is active at a time.  
+      It seems to be holding other temporary directories that it isn't using.
+      Have app delete any empty temporary directories on exit
+      to prevent their number growing beyond a few.
+    
+    This class is used as a process to start the Infogora app process.
     It is in the same jar file as the Infogora class.
     Both this class and the Infogora class have their own main(..) methods.
     

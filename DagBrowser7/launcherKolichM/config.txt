@@ -7,6 +7,7 @@ ExtractTitle="Extracting program."
 ; FinishMessage="The program has terminated."
 ; javaw.exe stopped working? Using java.exe instead.
 ; RunProgram="jre1.8.0_191\bin\java.exe -jar Infogora.jar"
+; RunProgram="jre1.8.0_191\bin\java.exe -cp Infogora.jar allClasses.InfogoraStarter -userDir \"%%S\" -tempDir \"%%T\""
 ; RunProgram="subTest.bat \"%%S\" \"%%T\" ."
-RunProgram="jre1.8.0_191\bin\java.exe -cp Infogora.jar allClasses.InfogoraStarter -userDir \"%%S\" -tempDir \"%%T\""
+RunProgram="jre1.8.0_191\bin\java.exe -cp Infogora.jar allClasses.Infogora -userDir \"%%S\" -tempDir \"%%T\""
 ;!@InstallEnd@!
