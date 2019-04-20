@@ -208,6 +208,32 @@ l    * If the app receives a message indicating
 	      				);
 	      } // initializeV()
 
+	  public void finalizeV()
+	    /* This method is called to do things needed at app exit.
+	     
+	      It was created to delete empty temporary directories that
+	      are apparently not deleted by the 7zip SFX launcher does not delete.
+	      It doesn't delete them all, but seems to delete all but one.
+	      */
+	  {
+	    String tempDirString= startCommandArgs.switchValue("-tempDir");
+        //// Example: "C:\\Users\\PCUser\\AppData\\Local\\Temp\\7ZipSfx.003";
+	    if (tempDirString != null) { // Act only if temporary directory in use.
+	      int positionI= // Position of extension, is after the dot.
+	          tempDirString.lastIndexOf(".")+1;
+	      String headString= tempDirString.substring(0, positionI);
+	      String extensionString= tempDirString.substring(positionI);
+	      int extensionI= Integer.parseInt(extensionString);
+	      while (--extensionI >= 0) { // For all lower extensions down to 0...
+  	      String dirString= headString + String.format ("%03d", extensionI);
+  	      File toDeleteFile= new File(dirString); 
+  	      boolean successB= toDeleteFile.delete();  // delete directory.
+          appLogger.info("AppInstanceManager.finalizeV() deleting "
+  	        + dirString + ", successB=" + successB); 
+  	      }
+	    }
+	  }
+    
 	// Public service-providing code.
 
 	  public boolean tryDelegatingToAnotherAppInstanceB() // Called at start.

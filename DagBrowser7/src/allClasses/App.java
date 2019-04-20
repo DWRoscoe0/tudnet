@@ -51,6 +51,7 @@ public class App { // The App, especially pre-GUI stuff.
 			delegateOrDoV(); // Actually do some work.
 
       // App shutdown.
+      theAppInstanceManager.finalizeV();
   	  thePersistent.finalizeV();  // Write any new or changed app properties.
   		//appLogger.info("App calling Shutdowner.finishV().");
       theShutdowner.finishAppShutdownV();  // Doing final app shutdown jobs.
