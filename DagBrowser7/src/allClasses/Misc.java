@@ -56,17 +56,6 @@ public class Misc
       */
 
       public static void noOp( ) {} // Convenience for setting breakpoints.
-
-      /*  ////
-      public static void dbgProgress() 
-        /* Use this method line to display a single character
-          to verify that code is being executed.  
-          */
-      /*  ////
-        { 
-          appLogger.appendToFileV( "!" );  // Debug. 
-          }
-      */  ////
       
       private static boolean dbgEventDoneB= false;  // Set true to output Debug.txt.
       

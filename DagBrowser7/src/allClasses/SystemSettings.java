@@ -1,7 +1,5 @@
 package allClasses;
 
-//// import java.io.File;
-
 public class SystemSettings
 
   /* This class is for reading and logging various system settings.

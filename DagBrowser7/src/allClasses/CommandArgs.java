@@ -1,8 +1,6 @@
 package allClasses; // original package was com.jenkov.cliargs;
 
 
-//// import static allClasses.Globals.appLogger;
-
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.TreeSet;

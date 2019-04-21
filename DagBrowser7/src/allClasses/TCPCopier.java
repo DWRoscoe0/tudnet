@@ -48,16 +48,12 @@ public class TCPCopier
 
 	{
 
-		//// private static final String testServerIPString = "127.0.0.1";
-	  //// private static final int testServerPortI = 11111;
-	  
 	  /* File name and path definitions.
 	    2 file names are used, one for the client and done for the server.
 	    This is done to for testing with localhost and 2 separate folder.
 	    During normal operations there will be only one folder and file name.
 	   	*/
 	  //private static final String fileToUpdateString = "TCPCopier.txt";
-    //// private static final String fileToUpdateString= Config.appJarString;
     private static final String fileToUpdateString= 
         AppSettings.initiatorNameString;
 	  //private static final String serverFileString = "TCPCopierServer.txt";
@@ -180,13 +176,13 @@ public class TCPCopier
 	        from the standard folder to the TCP copy staging area folder. 
 	       	*/
 		    {
-					File thatFolderFile= AppSettings.makeRelativeToAppFolderFile( 
+					File tcpFolderFile= AppSettings.makeRelativeToAppFolderFile( 
 							Config.tcpCopierInputFolderString );
-					thatFolderFile.mkdir();  // Create destination folder if needed.
+					tcpFolderFile.mkdir();  // Create destination folder if needed.
 		  		Misc.updateFromToV( // Update staging area from standard folder.
-		  		  AppSettings.userAppJarFile,
-            //// new File( thatFolderFile, Config.appJarString )
-            new File( thatFolderFile, AppSettings.initiatorNameString)
+		  		  AppSettings.makeRelativeToAppFolderFile(
+		  		      Config.appString + AppSettings.initiatorExtensionString),
+            new File( tcpFolderFile, AppSettings.initiatorNameString)
 		    		);
 			    }
 
@@ -288,7 +284,6 @@ public class TCPCopier
 		      	Socket clientSocket = null;
 						File clientFile= 
 						    AppSettings.makeRelativeToAppFolderFile( clientFileString );
-						//// serverPortString= "11111"; ///tmp
 						int serverPortI= Integer.parseUnsignedInt( serverPortString );
 					 	InetSocketAddress theInetSocketAddress= null; 
 						try {
@@ -392,7 +387,6 @@ public class TCPCopier
 			  	try {
 			        serverServerSocket= 
 			        		new ServerSocket(thePortManager.getNormalPortI());
-			        		//// new ServerSocket( 11111 ); ///tmp
 			    		appLogger.debug(
 			    				"serviceOneRequestFromClientV()() trying ServerSocket.accept() to "
 			    				+ serverServerSocket);
@@ -670,7 +664,6 @@ public class TCPCopier
 	  			  compareResultL= remoteLastModifiedL;
 	  			else if (compareResultL < 0 ) 
 	  			  compareResultL= -localLastModifiedL;
-	  			////if ( compareResultL != 0 ) // Log only if not 0. ///tmp
 		  			appLogger.info( // Log result of comparison.
 		  				"exchangeAndCompareFileTimeStampsRemoteToLocalL() returning "
 		  				+ ( ( compareResultL == 0 )

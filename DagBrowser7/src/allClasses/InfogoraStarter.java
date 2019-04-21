@@ -92,7 +92,6 @@ public class InfogoraStarter
       { // main(..)
           appLogger= new AppLog(new File( // Constructing logger.
               new File(System.getProperty("user.home") ),Config.appString));
-          //// appLogger.clearLogFileB= true; ///dbg
           appLogger.setIDProcessV("Starter");
           // AppLog should now be able to do logging.
         toExit: {

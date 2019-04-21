@@ -392,7 +392,6 @@ public class DagBrowserPanel
           It also queues the display of the Help dialogue. 
           */
         { // miscellaneousInitializationV()
-          //// theTimerThread.setDaemon(true); // ?? temporary so I needn't terminate it.
           theTimerThread.startV();  // Start backup TimerThread.
 
           { // Create key mapping initialization.  Experimental and incomplete.

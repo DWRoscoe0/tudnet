@@ -191,25 +191,9 @@ public class LinkedMachineState
 				    		sendHelloV(this); // Resent hello.
 							  if // Reschedule time-out with exponential back-off. 
 							    (theTimerInput.rescheduleB(Config.maxTimeOut5000MsL))
-							    requestSiblingStateListV( // Give up if max delay reached.
-			    			  		theUnconnectedWaitingState); //   Go to unconnected.
+							    requestSiblingStateListV( // Give up if max delay reached by
+			    			  		theUnconnectedWaitingState); // going to unconnected.
 			    			}
-
-			    		/*  ////
-			    		{ // Time-out occurred.  Retry or give up.
-			    		  retryTimeOutMsL*=2;  // Doubling time-out limit.
-			    			if // but stop if above maximum.
-		      				( retryTimeOutMsL > Config.maxTimeOut5000MsL )
-				    			{
-			    			  	retryTimeOutMsL= Config.maxTimeOut5000MsL; // Cap time-out.
-				    			  requestSiblingStateListV( // Give up.  Go to unconnected.
-				    			  		theUnconnectedWaitingState);
-				    				}
-			    				else
-			    			  requestSiblingStateListV( // Retry by reentering this state.
-			    			  		this);
-			      		}
-			      	*/  ////
 		  	  	}
 	
 		  		} // class TryingToConnectState

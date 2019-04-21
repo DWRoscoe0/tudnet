@@ -104,7 +104,7 @@ public class AppLog extends EpiThread
 
   {
 
-    public boolean clearLogFileB= false;  //// true;
+    public boolean clearLogFileB= false;  // true;
       // If this is set, the log file is cleared on first output.
 
     File appDirectoryFile;
@@ -341,7 +341,6 @@ public class AppLog extends EpiThread
           sessionI= 0; // If no or bad value, change to zero
           else 
           sessionI++; // otherwise, increment gotten value.
-        //// if (Config.clearLogFileB) // If debugging with clean log file,
         if (clearLogFileB) // If debugging with clean log file,
           sessionI= 0;  // reset session to 0.  This will reset log also.
         Confingleton.putValueV(sessionNameString, sessionI);
@@ -354,8 +353,12 @@ public class AppLog extends EpiThread
 
     // Actual log methods start here.
     
-    public boolean testAndLogDisabledB( ////
-        boolean disabledB, String logString)
+    public boolean testAndLogDisabledB(boolean disabledB, String logString)
+      /* This method is used to log a special message about disabled code.
+        If disabledB is true then it logs a DEBUG message that
+        code identified with the string logString is disabled.
+        It returns the value of disabledB.
+        */
       {
         if (disabledB) { 
           debug(logString + "; code is disabled.");

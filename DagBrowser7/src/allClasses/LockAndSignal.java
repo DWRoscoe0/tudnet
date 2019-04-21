@@ -318,7 +318,6 @@ public class LockAndSignal  // Combination lock and signal class.
 
 			*/
 	
-    //// documented.
 	    public Input waitingForInterruptOrNotificationE()
 		    /* This method, called by a consumer thread,
 			    waits for an input from the following list.
@@ -345,7 +344,6 @@ public class LockAndSignal  // Combination lock and signal class.
 			    return theInput;  // Returning why the wait loop ended.
 			    }
 	
-      //// documented.
 	    public Input waitingForNotificationOrInterruptE()
 		    /* This method, called by a consumer thread,
 			    waits for an input from the following list.
@@ -372,7 +370,6 @@ public class LockAndSignal  // Combination lock and signal class.
 			    return theInput;  // Returning why the wait loop ended.
 			    }
 			    
-      //// documented.
 			public synchronized Input waitingForInterruptOrDelayOrNotificationE( 
 	    		long lengthMsL 
 	    		)
@@ -398,7 +395,6 @@ public class LockAndSignal  // Combination lock and signal class.
 				      );
 	        }
 	
-      //// documented.
 	    public synchronized Input waitingForInterruptOrIntervalOrNotificationE(
 	    		long startMsL, long lengthMsL
 	    		)
@@ -456,7 +452,6 @@ public class LockAndSignal  // Combination lock and signal class.
 
 	   	*/
 		
-      //// documented.
 	    public synchronized Input testingForInterruptTimeOrNotificationE( 
 	    		long startMsL, long lengthMsL 
 	    		)
@@ -485,7 +480,6 @@ public class LockAndSignal  // Combination lock and signal class.
 				  return testingForInterruptOrDelayOrNotificationE( waitDelayMsL );
 			    }
 
-      //// documented.
       public synchronized Input testingForInterruptOrDelayOrNotificationE( 
       		long lengthMsL
       		)
@@ -541,7 +535,6 @@ public class LockAndSignal  // Combination lock and signal class.
       see their callers above this point in this file.
       */
 
-      //// documented.
       public synchronized Input testingForInterruptE() 
 		    /* This method, called by a consumer thread,
 			    tests for and resets the thread interrupt status input only.  
@@ -574,7 +567,6 @@ public class LockAndSignal  // Combination lock and signal class.
 	 	      	return Input.NONE;
 	      	}
 
-      //// documented.
       public synchronized Input testingRemainingDelayE( long waitDelayMsL )
 		    /* This method, called by a consumer thread,
 			    tests for a time input only.
@@ -599,7 +591,6 @@ public class LockAndSignal  // Combination lock and signal class.
 	 	      	return Input.NONE;
 	      	}
 
-      //// documented.
       public synchronized Input testingForNotificationE()
 		    /* This method, called by a consumer thread,
 			    tests for notification inputs only.
@@ -630,7 +621,6 @@ public class LockAndSignal  // Combination lock and signal class.
 		 	      return Input.NONE;
 	      	}
 
-      //// documented.
       public synchronized void waitingForInterruptOrDelayOrNotificationV(
       		long waitFlagMsL
       		)
@@ -659,7 +649,6 @@ public class LockAndSignal  // Combination lock and signal class.
 	          } // Re-establishing thread interrupt status for later tests.
   	      }
 
-      //// documented.
       public synchronized void waitingForDelayOrNotificationV(
       		long waitFlagMsL
       		)
@@ -724,7 +713,6 @@ public class LockAndSignal  // Combination lock and signal class.
       ??? new method to shift a time using shiftCorrectionMsL()?
      */
 
-      //// documented.
 	    public long periodCorrectedShiftMsL( 
 	    		long startMsL, long periodLengthMsL 
 	    		)
@@ -759,7 +747,6 @@ public class LockAndSignal  // Combination lock and signal class.
 	    	return shiftMsL; // Returning how much shift was needed.
 				}
 	
-      //// documented.
 	    public long periodCorrectedDelayMsL( long startMsL, long lengthMsL )
 	      /* This method makes it possible to avoid problems caused by 
 	        large sudden changes in System.currentTimeMillis().
@@ -782,7 +769,6 @@ public class LockAndSignal  // Combination lock and signal class.
 	    	return delayMsL;
 				}
 	
-	    //// documented.
 	    public long realTimeWaitDelayMsL( long startMsL, long lengthMsL )
 	      /* This method produces a wait-delay expressed in milliseconds
 	        based on the interval that begins at startMsL and is lengthMsL long.
@@ -818,7 +804,6 @@ public class LockAndSignal  // Combination lock and signal class.
 
     // Producer thread input notification method.
 
-	    //// documented.
 	    public synchronized void notifyingV()
 	      /* This method is called by producer threads,
 	        the threads which are data producers.
@@ -834,11 +819,9 @@ public class LockAndSignal  // Combination lock and signal class.
 
     // Getter and setter methods.
 
-	    //// documented.
 	    private boolean getB()  // Get mutable boolean value.
 	      { return signalB ; }
 
-	    //// documented.
 	    private void setV( boolean theB )  // Set mutable boolean value.
 	      { signalB= theB; }
 

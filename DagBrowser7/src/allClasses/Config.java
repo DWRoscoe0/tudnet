@@ -1,9 +1,5 @@
 package allClasses;
 
-//// import static allClasses.Globals.appLogger;
-
-//import static allClasses.Globals.*;  // appLogger;
-
 public class Config
 
   /* This class stores configuration and preferences.
@@ -29,9 +25,6 @@ public class Config
 	      of the beginning of the app's log file. */
 				///enh Add additive and multiplicative adjustments for debugging.
 				public static final int localUpdateDelaySI=0;
-				
-		  /* Log file.  */
-				///// public static boolean clearLogFileB= false;  //// true;
   
 		// Delays, for adjustments and slowing the entire app for debugging.
 
