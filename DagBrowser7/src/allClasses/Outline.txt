@@ -173,7 +173,7 @@
       
       [ This is for managing the lists of publications 
       to which you are subscribed, and all of your
-      persistant/background searches.
+      persistent/background searches.
       
       These are all the things that interest you
       that the Infogora is monitoring for you, 
