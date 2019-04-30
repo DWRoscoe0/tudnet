@@ -61,7 +61,7 @@ public class Multicaster
 
 	extends Netcaster
 	
-	implements Runnable
+	//// implements Runnable
 	
 	{
 	  // Injected dependencies.

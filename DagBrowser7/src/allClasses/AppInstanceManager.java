@@ -774,8 +774,9 @@ l    * If the app receives a message indicating
 	          ( ! standardAppFile.exists() )  // The file doesn't exist.
 	          {
 	            appLogger.info("Trying to install.");
-	            copyAndPrepareToRunB();
-	            appShouldExitB= true;
+              //// copyAndPrepareToRunB();
+              //// appShouldExitB= true;
+	            appShouldExitB= copyAndPrepareToRunB();
 	            }
 	        return appShouldExitB;
 	        }
