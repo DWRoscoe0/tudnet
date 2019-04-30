@@ -253,6 +253,7 @@ l    * If the app receives a message indicating
 	        This should happen only if this app instance 
 	        was run from the app's standard folder,
 	        and there is no other app instance running already.
+
 	      */
 	    {
 	  		appLogger.info( "tryDelegatingToAnotherAppInstanceB() begins."
@@ -717,11 +718,17 @@ l    * If the app receives a message indicating
 	        for the case when a new app version is run 
 	        outside the standard folder when 
 	        an instance is already running from the standard.
+          
+          ///org : simplify by adding labels: toReturnTrue and toReturnFalse.
 	        */
 	      { 
   	        appLogger.info("tryDelegationToFileInstanceB() enter");
   	        boolean appShouldExitB= true;  // Set default return app exit.
 	        toReturn: { // The block after which all returns will go.
+            if (! endsWithJarOrExeB(runningAppFile)) {
+              appShouldExitB= false;  // For normal startup, in Eclipse.
+              break toReturn;
+              }
 		        if // The app command was without arguments.
 		        	( otherAppFile == null ) 
 		          { // Handle the arg-less command possibilities.
@@ -805,25 +812,28 @@ l    * If the app receives a message indicating
 	        }
 	
 	    private boolean trySwitchingToAppInStandardFolderB()
-	      /* If the running app is not in the standard folder,
+	      /* If the running app file is not in the standard folder,
 	        but it appears identical to the one in the standard folder,
-	        then this method exits this app, 
-	        and runs the app in the standard folder.
-	        Otherwise it returns.
+	        then this method requests that the standard folder file be run
+	        and returns true to indicate that this app should exit. 
+	        Otherwise it returns false to indicate this app should continue.
 	        */
 	      {
-	    		boolean appShouldExitB= false;
-	        if // This app is in the standard folder.
-	          ( ! runningAppFile.equals( standardAppFile ) )
-	          if // The date stamps are equal.
-	            ( runningAppFile.lastModified() == standardAppFile.lastModified() )
-	            {
-	              appLogger.info("Running identical app in standard folder.");
-	          	  appShouldExitB= 
-	          	    requestProcessStartAndShutdownTrueB( 
-	          	    		standardAppFile.getAbsolutePath() );
-	              }
-	        return appShouldExitB;
+	          boolean appShouldExitB= false;
+	    		toExit: {
+            if (! endsWithJarOrExeB(runningAppFile)) break toExit;
+  	        if // This app is already in the standard folder.
+  	          ( runningAppFile.equals( standardAppFile ) )
+  	          break toExit;
+	          if // The date stamps are not equal.
+	            (runningAppFile.lastModified() != standardAppFile.lastModified())
+	            break toExit;
+            appLogger.info("Will run identical app in standard folder.");
+        	  appShouldExitB= 
+        	    requestProcessStartAndShutdownTrueB( 
+        	    		standardAppFile.getAbsolutePath() );
+	    		} // toExit:
+	    		  return appShouldExitB;
 	        }
 	
 	    private boolean tryRunningApprovedUpdaterB()
@@ -857,23 +867,30 @@ l    * If the app receives a message indicating
 	        }
       
       private boolean copyAndPrepareToRunB()
-        /* This method tries to this running app's jar file to 
+        /* This method tries to copy this running app's executable file to 
           the standard folder, and prepare it to be run as a Process on exit. 
-          It keeps trying until copying succeeds, or the thread is interrupted.
-          If copying succeeds then it requests an app shutdown and returns true.
-          If the thread is interrupted then it returns false.
+          It keeps trying until copying succeeds, 
+          or the thread is interrupted.
+          If copying succeeds then it requests an app shutdown 
+            and returns true.
+          If the copy fails for any reason,
+            including the thread being interrupted,
+            then it returns false.
           */
         {
             appLogger.debug("copyAndPrepareToRunB() begin");
             boolean successB= false;
           toExit: { toCopy: {
-            String nameString= runningAppFile.getName(); 
-            appLogger.debug(
-                "copyAndPrepareToRunB() name="+nameString);
-            if (nameString.endsWith(".jar")) break toCopy;
-            if (nameString.endsWith(".exe")) break toCopy;
-            appLogger.info("copyAndPrepareToRunB() "
-                +"Not executable .jar or .exe file. Not copying.");
+            if (endsWithJarOrExeB(runningAppFile)) break toCopy;
+            //// String nameString= runningAppFile.getName(); 
+            //// appLogger.debug("copyAndPrepareToRunB() name="+nameString);
+            //// if (nameString.endsWith(".jar")) break toCopy;
+            //// if (nameString.endsWith(".exe")) break toCopy;
+            //// if (endsWithJarOrExeB( nameString )) break toCopy;
+            //// appLogger.info("copyAndPrepareToRunB() "
+            ////  +"Not executable .jar or .exe file. Not copying.");
+            appLogger.info("copyAndPrepareToRunB() Not copying.  "
+                + "Not executable .jar or .exe file:\n  " + runningAppFile);
             break toExit;
           } // toCopy:
             if (! copyExecutableFileB(runningAppFile, standardAppFile))
@@ -884,6 +901,24 @@ l    * If the app receives a message indicating
           } // toExit:
             appLogger.debug("copyAndPrepareToRunB() ends= "+successB);
             return successB;
+          }
+
+      private boolean endsWithJarOrExeB( File theFile ) 
+        {
+          return endsWithJarOrExeB( theFile.getName() ); 
+          }
+
+      private boolean endsWithJarOrExeB( String theString ) 
+        {
+            boolean resultB= true;
+          toExit: {
+            if (theString.endsWith(".jar")) break toExit;
+            if (theString.endsWith(".exe")) break toExit;
+            appLogger.warning(
+                "endsWithJarOrExeB() Not exe or jar file:" + theString);
+            resultB= false;
+          } // toExit:
+            return resultB;
           }
 
       private boolean copyExecutableFileB(
@@ -900,8 +935,9 @@ l    * If the app receives a message indicating
             String sourceNameString; 
           toExit: { toCopy: { toEqualityTest: {
             sourceNameString= sourceFile.getName(); 
-            if (sourceNameString.endsWith(".jar")) break toEqualityTest;
-            if (sourceNameString.endsWith(".exe")) break toEqualityTest;
+            //// if (sourceNameString.endsWith(".jar")) break toEqualityTest;
+            //// if (sourceNameString.endsWith(".exe")) break toEqualityTest;
+            if (endsWithJarOrExeB(sourceNameString)) break toEqualityTest;
             appLogger.error("copyExecutableFileB() Not exe or jar file."
               +twoFilesString(sourceFile, destinationFile));
             break toExit;
