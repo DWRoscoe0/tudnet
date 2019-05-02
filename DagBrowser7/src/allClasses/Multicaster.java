@@ -2,8 +2,10 @@ package allClasses;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Properties;
 
@@ -197,7 +199,7 @@ public class Multicaster
             for consumption by another thread.
             */
           {
-        		//appLogger.debug("run() begin.");
+        		appLogger.debug("run() begin.");
 	          try { // Operations that might produce an IOException.
 	            while  // Receiving and queuing packets unless termination is
 	              ( ! EpiThread.exitingB() ) // requested.
@@ -227,7 +229,7 @@ public class Multicaster
 				  					"run() IOException: ", e
 				  					);
 	            }
-        		//appLogger.debug("run() end.");
+        		appLogger.debug("run() end.");
             }
 
         } // MulticastReceiver
@@ -326,7 +328,8 @@ public class Multicaster
       {
     		long delayMsL= // Minimum time between multicasts. 
     				// 3600000; // 1 hour for testing to disable multicasting.
-    				Config.multicastPeriod10000MsL;
+    				//Config.multicastPeriod10000MsL;
+    		    2000; //// for debugging.
     		    // 40000; // 40 seconds for normal use.
     		LockAndSignal.Input theInput;  // Type of input that ends waits.
       	long querySentMsL= System.currentTimeMillis();
@@ -404,6 +407,8 @@ public class Multicaster
 	    {
   	  	super.initializeV();
 
+  	  	NetworkInterface gatewayNetworkInterface=
+  	  	  determineGatewayNetworkInterface();
   	  	this.groupInetAddress = theIPAndPort.getInetAddress();
 		    this.multicastPortI = theIPAndPort.getPortI();
 		    this.ttl= 1;  // Set Time-To-Live to 1 to discover LAN peers only.
@@ -413,13 +418,53 @@ public class Multicaster
 		      props.setProperty( "java.net.preferIPv4Stack", "true" );
 		      System.setProperties( props );
 		      }
-		    theMulticastSocket.joinGroup(  // To receive multicast packets, join...
-		      groupInetAddress  // ...this group IPAddress.
-		      );
 		    theMulticastSocket.setLoopbackMode( true );  // Disable loopback.
 		    theMulticastSocket.setTimeToLive( ttl );
-	  	  }
-	  
+		    theMulticastSocket.setNetworkInterface(gatewayNetworkInterface);
+        appLogger.debug(
+            "initializeWithIOExceptionV()\n  "
+            + ", gatewayNetworkInterface= " + gatewayNetworkInterface 
+            );
+		    theMulticastSocket.joinGroup( // To receive multicast packets, join...
+	          groupInetAddress  // ...this group IPAddress.
+	          );
+	        }
+
+    private NetworkInterface determineGatewayNetworkInterface()
+      /* This method tries to determine the single best NetworkInterface
+        on which to do multicasting.  This is assumed to be the interface
+        through which a packet would be routed to an Internet routeable 
+        IP-address.
+        
+        ///fix  Make multicasting more general.
+          It should be able to discover nodes on all NetworkInterfaces.
+        ///org Note, AppInstanceManager.logLocalHostV() 
+          does not do the same thing.  
+          What constitutes the local host is not clear.
+       */
+      {
+        NetworkInterface theNetworkInterface= null;
+        InetAddress theInetAddress= null;
+        try {
+          try ( DatagramSocket theDatagramSocket= new DatagramSocket(); )
+            {
+              theDatagramSocket.connect(InetAddress.getByAddress(
+                  new byte[]{1,1,1,1}), 0); // Internet route-able address.
+              theInetAddress= theDatagramSocket.getLocalAddress();
+              theNetworkInterface= 
+                  NetworkInterface.getByInetAddress(theInetAddress);
+              }
+        } catch (Exception e) {
+          appLogger.exception( "determineGatewayNetworkInterfaceV(): ", e);
+        }
+        appLogger.info(
+            "determineGatewayNetworkInterfaceV()\n  "
+            + "theInetAddress= " + theInetAddress 
+            + ", theNetworkInterface= " + theNetworkInterface 
+            );
+        return theNetworkInterface;
+        }
+
 	  private boolean multicastActiveB= false;
 	  
     private void multicastConnectionLoggerV( boolean activeB )
