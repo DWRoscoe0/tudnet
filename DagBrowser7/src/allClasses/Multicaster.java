@@ -11,49 +11,92 @@ import java.util.Properties;
 
 import static allClasses.Globals.*;  // appLogger;
 
-/* Each peer node used this class to use UDP multicast to:
-  * announce its arrival on a LAN; and
-  * to discover other peers already on the LAN.
-  It does these things by sending and receiving query and response packets.
-  It receives query packets and generates responses.
-  It informs the ConnectionManager of new peers that it discovers.
+/*
+  This class implements IP multicast.
+   
+  From https://en.wikipedia.org/wiki/IP_multicast
+    IP multicast is a method of sending Internet Protocol (IP) datagrams 
+    to a group of interested receivers in a single transmission. 
+    It is the IP-specific form of multicast and is used for 
+    streaming media and other network applications. 
+    It uses specially reserved multicast address blocks in IPv4 and IPv6.
+    
+  The two primary applications of IPMulticast are:
+  * Distributing data to multiple interested receivers,
+    thereby saving a lot of bandwidth when there are many receivers.
+  * Creating a distributed virtual server for the purpose of
+    communicating the existence of resources on a network.
+    An example is SSDP used by UniversalPlugAndPlay aka UPnP protocol.
+
+  This class presently uses multicast for only peer service discovery.
+  Presently this is done with 2 types of packets:
+  * A DISCOVERY packet is multicast periodically to request
+    the IDs of peers on the LAN. 
+  * An ALIVE packets are multicast in response to
+    to receipt of a DISCOVERY packet.
 
   After construction and initialization, 
-  data for this thread passes through the following:
+  packets processed by this class pass through the following Queues:
   * receiverToMulticasterNetcasterQueue: packets from the MulticastReceiver.
   * multicasterToConnectionManagerNetcasterQueue: packets to ConnectionManager.
   * netcasterToSenderPacketQueue: packets to the network Sender.
-  
-  This was originally based on Multicaster.java at 
+
+  This class was originally based on Multicaster.java at 
     http://homepages.inf.ed.ac.uk/rmcnally/peerDiscover/Multicaster.java
   but it has changed a lot since then.
   This originally worked using either multicast or broadcast.
-  Now it does only multicast.
+  Now it uses only multicast.
 
-  ?? Changes to make.  No rush until # nodes on a LAN becomes large.
+  ///enh Multicast on all non-loopback NetworkInterfaces,
+  not only the one from which the default gateway can be reached.
+   
+  ///enh Changes to reduce packet traffic.  No rush on these items
+    until # of nodes on a LAN becomes large.
 
-	  ?? RoundRobin beaconing and sharing the role of
-	  responder to new arrivees.
+	  ///enh Reduce rate of beacons and responses by some combination of:
+	     * round-robin role changing?
+	     * delaying by delay time times number of nodes
+	     * doing in random time slot divided by number of nodes
 
-  	?? Make more SSDP-like.
-  	   = ALIVE on startup and end of sleep mode. 
-  	   = BYEBYE, on shutdown or sleep mode (might be detectable).
-  	   = DISCOVERY, might be needed, even if above 2 are used,
-  	     * If neighbors disappear, unless new neighbors can be found in cache.
-  	     * If ALIVE message become lost.
-  	   ? Add time parameter for updates since BYEBYE.
-  	   ? Storms will not be a problem because:
-  	     * Of interchangeability of nodes, because neighboring is the service.
-  	     *  Replies are multicast, so replies can be aborte after some are seen.
+  	///enh Make more like Simple Service Discovery Protocol (SSDP).
+  	   = ALIVE sent on device-app startup and end of sleep mode. 
+  	   = BYEBYE sent on shutdown, entering sleep mode, or any service termination.
+  	   Because nodes are peers, both clients and servers,
+  	   the above two should be enough to function.
+  	   = DISCOVERY, might be needed, even if above 2 are used for cases when
+  	     * a neighbor disappears and a replacement is needed, 
+  	       unless new neighbors can be found in cache.
+  	     * an ALIVE message was lost.
+  	   ? Add a time parameter to query message to allow
+  	     receiving only updates since the node's most recent BYEBYE.
+  	   ? Storms will not be a problem because
+  	     * Neighboring is the service and neighbors are interchangeable. 
+  	     * Replies are multicast, so pending replies by later replying nodes
+  	       can be aborted after some replies are sent.
 
-    ?? MulticastLoadDistribution.  Goals, eventual:
-    * at least 3 immediate connection-available responses to every query,
-      if available, so new peers can get merged/connected quickly.
-    * if there is no other activity then beacon packets are sent.
-    * peers with fewer connections should be quicker to send.
-    * packets may include info about other peers, especially
+    ///enh Or, a more general solution:
+      Instead of having separate command packets, have a single one,
+      such as MULTICAST-PACKET, and have internal parameters:
+      * HELLO: announces arrival.
+      * WANT-PEERS
+        * number-of-peers-wanted
+      * PEER-LIST (cached peers)
+        * peer1
+        * peer2
+        * ...
+        * peerN
+      * BYEBYE: announces departure.
+
+    ///enh MulticastLoadDistribution.  Goals, eventual:
+    * A peer can respond to a query with its own ID plus
+      the peers that it has already cached, 
+      and maybe their number of connections.
+    * If there is no other activity then beacon packets may be sent.
+      Beacon packets may contain cached peer data. 
+    * Peers with fewer connections should be quicker to send.
+    * Packets may include info about other peers, especially
       those that want new neighbors.
-    * peers might want new neighbors because:
+    * Peers might want new neighbors because:
       * they need more.
       * they want different ones.
     
