@@ -238,8 +238,8 @@ public class Multicaster
 
         public void run() 
           /* This method repeatedly waits for and reads 
-            DatagramPackets and queues them 
-            for consumption by another thread.
+            multicast DatagramPackets and queues them 
+            for consumption by the main multicaster thread.
             */
           {
         		appLogger.debug("run() begin.");
@@ -279,15 +279,20 @@ public class Multicaster
       
     public void run()  // Main Multicaster thread.
         /* This method contains the main thread logic.
-          It announces the presence of this peer node on the LAN
-          by sending multicast packets.
-          It also processes packets queued to it 
+          On start up it announces the presence of 
+          this peer node on the LAN by sending multicast packets.
+          It will repeat this if no multicast packets 
+          are received within the multicast period. 
+          It processes received packets queued to it 
           by the MulticastReceiver thread.
-          Some of the received packets are forwarded to the ConnectionManager
-          which uses them to create or activate Unicasters.
+          Received packets are forwarded to the ConnectionManager
+          which uses them to create or activate associated Unicasters.
+          The period timer is reset each time a packet is sent or received.
+          After the system settles down,
+          it should send and receive one multicast packet per period. 
 
           ?? This thread will probably be extensively changed,
-          but for small networks it works fine.
+          but for now, for development on  small networks, it works fine.
          	*/
         {
           if (appLogger.testAndLogDisabledB( 
@@ -311,8 +316,7 @@ public class Multicaster
                 	( ! EpiThread.exitingB() )
     	            { // Send and receive multicast packets.
     	              try {
-    		      				///writingNumberedPacketV("DISCOVERY"); // Sending query.
-    	              	theEpiOutputStreamO.writingAndSendingV("DISCOVERY"); // Sending query.
+    		      	    	theEpiOutputStreamO.writingAndSendingV("DISCOVERY"); // Sending query.
     	                receivingPacketsV( ); // Receiving packets until done.
     	                }
     	              catch( SocketException soe ) {
@@ -328,7 +332,9 @@ public class Multicaster
     	          theMulticastSocket.close();  // Freeing associated OS resource.
     	          stoppingMulticastReceiverThreadV();
     	          }
-
+            for(int i=3; i>0; i--){ // Say goodbye 3 times...
+              theEpiOutputStreamO.writingAndSendingV("MULTICAST-GOODBY");
+              }
             }
           catch( IOException e ) {
             appLogger.error(Thread.currentThread().getName()+"run(): " + e );
@@ -358,59 +364,62 @@ public class Multicaster
 	        // theMulticastReceiver thread.
 	      }
 
-    private void receivingPacketsV( ) 
+    private void receivingPacketsV() 
       throws IOException 
       /* This helper method receives and processes multicast message packets,
         both query packets and response packets to a previously sent query,
-        until no more packets are received for a timeout interval
+        until either no more packets are received for a timeout interval
         or a thread exit is requested.
+        This method sends no query packets of its own.
+        Those must be sent by a caller of this method.
+        But if any received packets are query packets then
+        this method sends multicast response packets.
         It reports all received packets to the ConnectionManager.
-        If any received packets are query packets then
-        it sends multicast response packets.
         */
       {
     		long delayMsL= // Minimum time between multicasts. 
     				// 3600000; // 1 hour for testing to disable multicasting.
-    				//Config.multicastPeriod10000MsL;
-    		    2000; //// for debugging.
+    				Config.multicastPeriodMsL;
+    		    // 2000; //// for debugging.
+    		    // 10000; //// for debugging.
     		    // 40000; // 40 seconds for normal use.
     		LockAndSignal.Input theInput;  // Type of input that ends waits.
-      	long querySentMsL= System.currentTimeMillis();
+      	//// long querySentMsL= System.currentTimeMillis();
         processorLoop: while (true) { // Processing messages until exit request.
         	{ // Processing messages or exiting.
-          	theInput=  // Awaiting next input within reply interval.
-          			waitingForSubnotificationOrIntervalOrInterruptE( 
-          					querySentMsL, delayMsL 
-          					);
-	          inputDecoder: switch ( theInput ) {  // Decoding the input type.
+        	  long baseTimeMsL= System.currentTimeMillis();
+          	theInput=  // Awaiting next input.
+          	  waitingForSubnotificationOrIntervalOrInterruptE(
+          	    //// querySentMsL, delayMsL);
+          	    baseTimeMsL, delayMsL);
+	          inputDecoder: switch ( theInput ) { // Decoding the input type.
 	          	case TIME: // Handling a time-out.
-	              multicastConnectionLoggerV( false ); // Comm. ended.
+	              multicastConnectionLoggerV( false );
 	              break processorLoop;  // Exiting loop.
 	            case INTERRUPTION: // Handling a thread exit request.
 	              break processorLoop;  // Exiting loop.
 	            case SUBNOTIFICATION:  // Handling a message.
-	            	messageDecpder: {
+	            	messageDecoder: {
 	            		String inString= 
 	            				theEpiInputStreamI.readAString(); // Reading message.
-	            		if ( inString.equals( "DISCOVERY" ) ) // Handling query, maybe.
-			        			{ ///writingNumberedPacketV("ALIVE"); // Sending response.
-	            				theEpiOutputStreamO.writingAndSendingV("ALIVE"); // Sending response.
-				              processingPossibleNewUnicasterV();
-				              break messageDecpder;
+	            		if (inString.equals( "DISCOVERY" )) // Handling query, maybe.
+			        			{ theEpiOutputStreamO.writingAndSendingV(
+	            				    "ALIVE"); // Sending response.
+			        			  processingPossibleNewUnicasterV(); 
+			        			  multicastConnectionLoggerV(true);
+                      break messageDecoder;
 				              }
-			        		//if ( testingMessageB( "ALIVE" ) ) // Handling response, maybe.
-			        		if ( inString.equals( "ALIVE" ) ) // Handling response, maybe.
-				            { processingPossibleNewUnicasterV(); break messageDecpder; }
+			        		if (inString.equals( "ALIVE" )) // Handling response, maybe.
+				            { processingPossibleNewUnicasterV(); 
+  				            multicastConnectionLoggerV(true);
+                      break messageDecoder; 
+                      }
 		          		// Ignoring anything else.
-			            //appLogger.warning(
-			        		//		"receivingPacketsV(): unexpected: "
-			        		// //+ getAndConsumeOneMessageString()
-			        		//  + inString 
-			        		//+ " from "
-			        		//+ PacketStuff.gettingPacketAddressString( 
-			        		//		theNetcasterInputStream.getSockPacket().getDatagramPacket()
-			        		//	  )
-			        		//);
+			            //appLogger.warning( "receivingPacketsV(): unexpected: "
+			        		//  + getAndConsumeOneMessageString() + inString + " from "
+			        		//  + PacketStuff.gettingPacketAddressString( 
+			        		//	theNetcasterInputStream.getSockPacket().getDatagramPacket()
+			        		//	) );
 	            		} // messageDecpder: 
 	            	break inputDecoder;
 	            default: // Handling anything else as an error.
@@ -419,21 +428,23 @@ public class Multicaster
 		            		);
 		            break inputDecoder;
 	            } // inputDecoder: 
+          	  appLogger.debug("receivingPacketsV() exiting inputDecoder.");
             } // Processing packets until exit.
         	} // processorLoop:  // Processing packet or exiting.
+      	  appLogger.debug("receivingPacketsV() exiting processorLoop.");
         }
 
     private void processingPossibleNewUnicasterV( ) throws IOException
       /* This method passes the present packet of theNetcasterInputStream
-       to the ConnectionManager if there isn't a Unicaster
+       to the ConnectionManager if there isn't already a Unicaster
        associated with the packet's remote address.
        */
 	    {
 	      NetcasterPacket theNetcasterPacket= // Copying packet from queue.
 	      		theEpiInputStreamI.getKeyedPacketE();
-	      Unicaster theUnicaster= // Testing for associated Unicaster.
+	      Unicaster theUnicaster= // Testing for associated an Unicaster.
 	      		theUnicasterManager.tryingToGetUnicaster( theNetcasterPacket );
-	      if ( theUnicaster == null )  // Processing if Unicaster does not exists.
+	      if ( theUnicaster == null ) // Processing if Unicaster does not exists.
 	       	{ // Informing ConnectionManager.
        			//appLogger.debug(
 	       		//	"Multicaster.processingPossibleNewUnicasterV():\n  queuing: "
@@ -465,8 +476,8 @@ public class Multicaster
 		    theMulticastSocket.setTimeToLive( ttl );
 		    theMulticastSocket.setNetworkInterface(gatewayNetworkInterface);
         appLogger.debug(
-            "initializeWithIOExceptionV()\n  "
-            + ", gatewayNetworkInterface= " + gatewayNetworkInterface 
+            "initializeWithIOExceptionV()\n"
+            + "  gatewayNetworkInterface= " + gatewayNetworkInterface 
             );
 		    theMulticastSocket.joinGroup( // To receive multicast packets, join...
 	          groupInetAddress  // ...this group IPAddress.
@@ -518,7 +529,8 @@ public class Multicaster
     	{
     	  if ( multicastActiveB != activeB ) {
     	  	multicastActiveB= activeB;
-          appLogger.info("multicastActiveB= " + multicastActiveB );
+          appLogger.info( "multicastConnectionLoggerV(..) multicastActiveB= " 
+              + multicastActiveB );
           }
     	  }
     
