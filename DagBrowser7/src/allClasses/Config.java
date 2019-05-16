@@ -4,7 +4,7 @@ public class Config
 
   /* This class stores configuration and preferences.
     Some are for development.  Some are for normal production use.
-    Most of the values are constant, in the form of final values.
+    Most of the values are constant, expressed as Java final values.
     
     ///enh Any values that are not final should be set as early as possible.
     
@@ -16,7 +16,7 @@ public class Config
     /* Disabling for debugging. */
       public static boolean tcpThreadsDisableB= true;  //// false;
       public static boolean multicasterThreadsDisableB= false;
-      public static boolean unicasterThreadsDisableB= true;  //// false;
+      public static boolean unicasterThreadsDisableB= false;
         
 		/* Miscellaneous startup behavior. */
 		
