@@ -130,7 +130,9 @@ public class AppLog extends EpiThread
 	    	TRACE
 	  		}	
 
-    	public static final LogLevel defaultMaxLogLevel= DEBUG; // INFO;
+      public static final LogLevel defaultMaxLogLevel= DEBUG; // For testing.
+      // public static final LogLevel defaultMaxLogLevel= INFO;  // For production.
+      
     	private static LogLevel maxLogLevel= defaultMaxLogLevel;
     	  // The app may create and use their own maximum variables,
     	  // or set this variable and call methods which use it.
@@ -163,7 +165,6 @@ public class AppLog extends EpiThread
       private boolean consoleCopyModeB= false; // When true, logging goes to 
         // console as well as log file.
         ///ehn change to Enum for generality and better self-documentation.
-      public LogLevel packetLogLevel= DEBUG;  // INFO; // DEBUG; 
 
     public void setIDProcessV( String processIDString )
     { this.processIDString= processIDString; }
@@ -348,6 +349,7 @@ public class AppLog extends EpiThread
         }
 
     public void setLevelLimitV( LogLevel limitLogLevel )
+      // This method is used to override the default log level at run time.
     	{ maxLogLevel= limitLogLevel; }
 
 
@@ -491,16 +493,19 @@ public class AppLog extends EpiThread
 
       * logB( theLogLevel ) returns true if theLogLevel is less than maxLogLevel.
         This displays nothing.  It is used to control what is displayed.
+        If it returns true, logging should be done.
       * logB( theLogLevel, ... ) returns true and creates a log entry with
-       	theLogLevel and the remaining parameters if theLogLevel 
-       	is less than maxLogLevel.  Otherwise it just returns false.
-      * logV( ... ) creates a log entry from the parameters unconditionally.
+       	theLogLevel displayed in the entry and the remaining parameters 
+       	if theLogLevel is less than maxLogLevel.  
+       	Otherwise it just returns false.
+      * logV( ... ) creates a log entry from its parameters unconditionally.
 
       The following methods take various combinations of parameters 
       from the following set:
     	* LogLevel theLogLevel: used for filtering and is displayed. 
-      * boolean consoleCopyEntryB: controls whether a copy of the entry goes to console.
-      * Throwable theThrowable: an exception to be displayed, of not null.
+      * boolean consoleCopyEntryB: controls whether a copy of the entry 
+        goes to the console.
+      * Throwable theThrowable: an exception to be displayed, if it is not null.
     	* String inString: message to be displayed.
     		
       */
@@ -520,8 +525,10 @@ public class AppLog extends EpiThread
 
     public synchronized boolean logB( LogLevel theLogLevel )
       /* This method doesn't actually log anything, but
-        it is used to decide whether anything should be logged.
-        It returns true if logging should be done, false otherwise. 
+        it is used to decide whether something should be logged.
+        It returns true if theLogLevel is less than or equal to maxLogLevel,
+        meaning that the associated logging should be done.
+        It returns false otherwise. 
         */
       {
       	return ( theLogLevel.compareTo( maxLogLevel ) <= 0 );

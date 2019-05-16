@@ -1,5 +1,7 @@
 package allClasses;
 
+import allClasses.AppLog.LogLevel;
+
 public class Config
 
   /* This class stores configuration and preferences.
@@ -14,7 +16,7 @@ public class Config
 
   {
     /* Disabling for debugging. */
-      public static boolean tcpThreadsDisableB= true;  //// false;
+      public static boolean tcpThreadsDisableB= true; // false;
       public static boolean multicasterThreadsDisableB= false;
       public static boolean unicasterThreadsDisableB= false;
         
@@ -71,6 +73,11 @@ public class Config
 
 		// Following was not final to prevent a "Comparing identical".
 		public static final long packetSendDelayMsL= 0; // 500; // 1000;
+
+    public static LogLevel packetLogLevel= AppLog.LogLevel.TRACE;  // INFO; // DEBUG;
+      // By setting this to TRACE, packets sent and received
+      // will be logged only when the app is being traced,
+      // and maxLogLevel is also TRACE.
 
 		public static final int QUEUE_SIZE= 5;
 

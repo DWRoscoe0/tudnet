@@ -95,9 +95,9 @@ public abstract class PacketManager<
 				DatagramPacket theDatagramPacket 
 				)
 			{
-			  if (appLogger.logB(appLogger.packetLogLevel)) 
+			  if (appLogger.logB(Config.packetLogLevel)) 
 			  	appLogger.logV(
-			  			appLogger.packetLogLevel,
+			  			Config.packetLogLevel,
 	      		PacketManager.gettingDirectedPacketString(
 	      				theDatagramPacket, false
 	      				)
@@ -108,9 +108,9 @@ public abstract class PacketManager<
 				DatagramPacket theDatagramPacket 
 				)
 			{
-			  if (appLogger.logB(appLogger.packetLogLevel)) 
+			  if (appLogger.logB(Config.packetLogLevel)) 
 			  	appLogger.logV(
-			  	  appLogger.packetLogLevel,
+			  	  Config.packetLogLevel,
 	      		PacketManager.gettingDirectedPacketString(
 	      				theDatagramPacket, true
 	      				)
@@ -121,9 +121,9 @@ public abstract class PacketManager<
 				DatagramPacket theDatagramPacket 
 				)
 			{
-			  if (appLogger.logB(appLogger.packetLogLevel)) 
+			  if (appLogger.logB(Config.packetLogLevel)) 
 			  	appLogger.logV(
-			  		appLogger.packetLogLevel,
+			  		Config.packetLogLevel,
 	      		PacketManager.gettingDirectedPacketString(
 	      				theDatagramPacket, false
 	      				)
