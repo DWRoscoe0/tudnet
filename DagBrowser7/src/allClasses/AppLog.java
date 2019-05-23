@@ -560,7 +560,7 @@ public class AppLog extends EpiThread
     		Throwable theThrowable, 
     		boolean consoleCopyEntryB )
       /* The buck stops here.  
-        This logging method does not delegate to another method is the family.
+        This logging method does not delegate to another method in the family.
 
         This is also the most capable logging method.
         It can process all possible parameters.
@@ -585,7 +585,8 @@ public class AppLog extends EpiThread
           on console and in log, if true.
         */
     { 
-      initializeIfNeededV(); 
+      initializeIfNeededV();
+      logTriggeredPollerV(); 
       if  // Acting based on whether file is open (buffered) or closed (not).
         ( ( ! bufferedModeB ) // Buffered mode disabled.
           &&( thePrintWriter == null ) // and file is closed.
@@ -601,6 +602,27 @@ public class AppLog extends EpiThread
           logToOpenFileV(theLogLevel,consoleCopyEntryB,theThrowable,inString);
           }
       }
+
+    private boolean pollingB= true; // false;
+    
+    private void logTriggeredPollerV()
+      /* This method provides the means to call 
+        a developer-provided method every time something is logged.
+        It can be useful for finding when 
+        particular events occur relative to other logged events.
+        The developer-provided method typically
+        examines one or more program variables
+        and logs information when conditions are met.
+        */
+      {
+        if (pollingB) // Prevent [recursive] calls to poller.
+          {
+            pollingB= false;
+            //debug("log polling test output.");
+            Persistent.debugPollerV(); // Call external poller.
+            pollingB= true;
+            }
+      } 
 
     public synchronized void logToOpenFileV(
         LogLevel theLogLevel, 
@@ -660,30 +682,30 @@ public class AppLog extends EpiThread
         everything else associated with the log file.
         If the log file is already open then it does nothing.
         */
-    {
-      if (thePrintWriter == null) {  // Opening file if closed.
-	      try {
-            thePrintWriter =  // Prepare...
-              new PrintWriter(  // ...a character output stream..
-                new BufferedWriter(  // ...with buffering to...
-                  openWithRetryDelayFileWriter()  // ...a FileWriter...
-                  ) // ...to opened log file.
-                );
-            openedAtMsL= System.currentTimeMillis(); // Record time of open.
-          } catch (IOException e) {
-            System.err.println("AppLog error opening PrintWriter...: "+e);
+      {
+        if (thePrintWriter == null) {  // Opening file if closed.
+  	      try {
+              thePrintWriter =  // Prepare...
+                new PrintWriter(  // ...a character output stream..
+                  new BufferedWriter(  // ...with buffering to...
+                    openWithRetryDelayFileWriter()  // ...a FileWriter...
+                    ) // ...to opened log file.
+                  );
+              openedAtMsL= System.currentTimeMillis(); // Record time of open.
+            } catch (IOException e) {
+              System.err.println("AppLog error opening PrintWriter...: "+e);
+            }
+  	      if (openSleepDelayMsI != 0) 
+    	      { // Log any open failures.
+    	        debug("openFileIfClosedV() opened after "
+    	          +openSleepDelayMsI
+    	          +" retries after 1 ms sleep each");
+    	        openSleepDelayMsI= 0; // Reset for later.
+    	        }
+  	        else
+  	        ; /// debug("openFileIfClosedV() opened log file.");
           }
-	      if (openSleepDelayMsI != 0) 
-  	      { // Log any open failures.
-  	        debug("openFileIfClosedV() opened after "
-  	          +openSleepDelayMsI
-  	          +" retries after 1 ms sleep each");
-  	        openSleepDelayMsI= 0; // Reset for later.
-  	        }
-	        else
-	        ; /// debug("openFileIfClosedV() opened log file.");
         }
-      }
     
     private synchronized Writer openWithRetryDelayFileWriter()
       throws IOException
@@ -692,6 +714,9 @@ public class AppLog extends EpiThread
         If the open fails, it sleeps for 1 ms, and tries again.
         It repeats until the open succeeds.
         It returns the open FileWriter.
+        
+        ///fix Add recovery for FileLockInterruptException,
+        which now causes infinite loop.
         */
       { 
         FileOutputStream theFileOutputStream= null;
@@ -711,13 +736,14 @@ public class AppLog extends EpiThread
               resultWriter= new OutputStreamWriter(theFileOutputStream);
               break; // Exit if open succeeded.
             } catch (IOException e) { // Open failed.
-              System.out.println("open... 6 catch begin");
+              System.out.println("openWithRetryDelayFileWriter() fail begin.");
+              System.out.println("openWithRetryDelayFileWriter() "+e);
               if (theLogFileLock!=null) theLogFileLock.release();
               Closeables.closeWithoutErrorLoggingB(theFileOutputStream);
               Closeables.closeWithoutErrorLoggingB(resultWriter);
               uninterruptableSleepB( 1 ); // Pause 1 ms.
               openSleepDelayMsI++; //* Count the pause and the time.
-              System.out.println("open... 7 catch end");
+              System.out.println("openWithRetryDelayFileWriter() fail end.");
             }
           }
         return resultWriter;

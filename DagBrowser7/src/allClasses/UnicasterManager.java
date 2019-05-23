@@ -147,16 +147,16 @@ public class UnicasterManager
         addingV(..) to tree is done last because it could trigger displaying.
         */
 	    { 
-    	  appLogger.info( 
-    	  		"buildAddAndStartUnicaster(..) Creating new Unicaster." );
+    	  //// appLogger.info( 
+        //// 		"buildAddAndStartUnicaster(..) Creating new Unicaster." );
     	  UnicasterFactory theUnicasterFactory= 
     	  		theAppGUIFactory.makeUnicasterFactory( 
     	  				theIPAndPort, theTCPClient );
 	      final UnicasterValue resultUnicasterValue=  // Getting the Unicaster. 
 	      	theUnicasterFactory.getUnicasterValue();
 	      Unicaster theUnicaster= resultUnicasterValue.getDataNodeD(); 
-    		appLogger.info(
-    				"buildAddAndStartUnicaster(..) initializing root state machine.");
+    		appLogger.info("buildAddAndStartUnicaster(..) "
+    		    + "initializing root state machine of new Unicaster.");
         try { // Operations that might produce an IOException.
       			theUnicaster.initializeWithIOExceptionV();
         	} catch( IOException e ) {

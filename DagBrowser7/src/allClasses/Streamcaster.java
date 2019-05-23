@@ -84,10 +84,10 @@ public class Streamcaster<
 
     public void initializeV()
 	    {
-        appLogger.info( 
-        		"This Streamcaster has been given the role of: "
-        		+ (leadingDefaultBooleanLike.getValueB() ? "LEADER" : "FOLLOWER")
-        		);
+        //// appLogger.info( 
+        //// 		"This Streamcaster has been given the role of: "
+        ////   		+ (leadingDefaultBooleanLike.getValueB() ? "LEADER" : "FOLLOWER")
+        //// 		);
 		    }
 
 		public void pingReplyProtocolV() throws IOException

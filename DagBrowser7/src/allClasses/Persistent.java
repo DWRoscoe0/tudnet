@@ -11,9 +11,9 @@ import java.util.NavigableMap;
 
 public class Persistent 
 
-	/* This class implements persistent data for an app.
-	  It is stored on non-volatile storage as a text file.
-	  It is stored in main memory as a tree of PersistingNode instances.
+	/* This class implements persistent data for an app.  It is stored in 2 ways:
+	  * It is stored on non-volatile external storage as a text file.
+	  * It is stored in main memory as a tree of PersistingNode instances.
 
 	  Unlike PersistingNode, which does not understand 
 	  paths within a tree, this class does.
@@ -56,7 +56,29 @@ public class Persistent
 	      */
 	    {
 	  	  loadDataV( theFileString );
+	      pollerPersistent= this;
 	  	  }
+
+    private static Persistent pollerPersistent= null;
+    private static int oldSizeI= -1;
+    public static void debugPollerV()
+      /* This method is a debugging method for looking for 
+        particular Persistent state changes and log them.
+        */
+      {
+        if (pollerPersistent == null) return;
+        PersistentCursor thePersistentCursor= // Used for iteration. 
+            new PersistentCursor( pollerPersistent );
+        thePersistentCursor.setListV("peers"); // Point to peer list.
+        NavigableMap<String, PersistingNode> theNavigableMap= 
+            thePersistentCursor.getNavigableMap();
+        int newSizeI= theNavigableMap.size();
+        if (oldSizeI != newSizeI) {
+          appLogger.debug("Persistent.debugPollerV(), oldSizeI="+ oldSizeI + 
+              ", newSizeI=" + newSizeI);
+          oldSizeI= newSizeI;
+          }
+        }
 	  
 	  private void loadDataV( String fileString )
 	    /* This method creates a Map 

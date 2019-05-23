@@ -258,8 +258,8 @@ public class ConnectionManager
 						String peerPortString= 
 								thePersistentCursor.getFieldString("Port");
 				  	appLogger.info( 
-		        		"ConnectionManager.restartPreviousUnicastersV(), IP="
-				  			+ peerIPString + ", port=" + peerPortString );
+		        		"ConnectionManager.restartPreviousUnicastersV(), Unicastger at "
+		        		+ "IP=" + peerIPString + ", port=" + peerPortString );
 					  theUnicasterManager.getOrBuildAddAndStartUnicaster(
 				    		peerIPString , peerPortString ); // Restore peer with Unicaster.
 					  thePersistentCursor.nextKeyString(); // Advance cursor.

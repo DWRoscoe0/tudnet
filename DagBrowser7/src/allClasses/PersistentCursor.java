@@ -1,20 +1,24 @@
 package allClasses;
 
+import java.util.NavigableMap;
+
 // import static allClasses.Globals.appLogger;
 
 public class PersistentCursor 
 
   /* This class acts like a cursor into a Persistent data structure.
     It is a convenient way to iterate through and access parts of
-    the Persistent data structure.
+    a Persistent data structure.
     It combines the ability to use paths,
-    with fast local access relative to a PersistingNode. 
+    with fast local access relative to an existing PersistingNode. 
     The iterator it implements is a pitererator,
     which is an iterator with pointer semantics.
+    It also contains logic for dealing with lists of similar child nodes
+    called entries.
 
     ///org The use of the term "persistent" is unfortunate.
       According to Wikipedia, that term is used to describe data structures
-      which, when they are changes, retain 
+      which, when they are changed, retain 
       previous versions of the data structure.
       These are used extensively in applicative languages. 
 	  ///pos Should this be changed to support unsorted keys?
@@ -41,7 +45,9 @@ public class PersistentCursor
 
 		// The following are for the new TreeMap node-based lists.
 		private PersistingNode entriesPersistingNode;
-		  // Persisting node whose NavigableMap contains the list entries. 
+		  // Persisting node whose NavigableMap contains the list entries.
+		  // A NavigableMap provides both fast lookup and 
+		  // the ability to be iterated.
     private String entryKeyString;
 		private PersistingNode entryPersistingNode;
 			// Persisting node of present list entry. 
@@ -55,16 +61,22 @@ public class PersistentCursor
 
 		// Service code.
 
-	  public void setListAndEntryV(  
-	  		String listPathString, String entryKeyString )
-			{
-				// appLogger.debug(
-		  	// "PersistentCursor.setListAndEntryV("
-		  	// 		+listPathString+", "+entryKeyString+") begins.");
-		  	setListV( listPathString ); // First define list. 
-		  	
-		  	setEntryKeyV( entryKeyString ); // Next define position in list.
-				}
+    public void setListAndEntryV(  
+        String listPathString, String entryKeyString )
+      {
+        // appLogger.debug(
+        // "PersistentCursor.setListAndEntryV("
+        //    +listPathString+", "+entryKeyString+") begins.");
+        setListV( listPathString ); // First define list. 
+        
+        setEntryKeyV( entryKeyString ); // Next define position in list.
+        }
+
+    public NavigableMap<String, PersistingNode> getNavigableMap()
+      {
+        NavigableMap<String, PersistingNode> theNavigableMap= entriesPersistingNode.getNavigableMap();
+        return theNavigableMap;
+      }
 
 		public void setListV( String listPathString )
 		  /* This method sets the list to be scanned.  It does this in 2 ways:

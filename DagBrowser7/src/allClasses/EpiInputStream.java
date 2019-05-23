@@ -32,10 +32,11 @@ public class EpiInputStream<
 	  This code uses IOException and InterruptedException, but
 	  exactly how they interact has not been completely determined ??
 	
-	  ?? Eventually this will be used with DataInputStream for reading
+	  ///enh Eventually this will be used with DataInputStream for reading
 	  particular types from the stream, as follows:
 	  * NetcasterInputStream extends InputStream.
-	  * NetDataInputStream(NetcasterInputStream) extends DataInputStream(InputStream).
+	  * NetDataInputStream(NetcasterInputStream) extends 
+	    DataInputStream(InputStream).
 		NetFilterInputStream is probably not needed, but could be added?
 	  
 	  ?? Add close() which causes IOException which can signal termination.
