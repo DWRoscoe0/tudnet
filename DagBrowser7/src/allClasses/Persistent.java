@@ -4,8 +4,8 @@ import static allClasses.Globals.appLogger;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Iterator;
 import java.util.NavigableMap;
 
@@ -42,7 +42,10 @@ public class Persistent
 		private final String theFileString= "PersistentData.txt";
 		  // This is where the data is stored on disk.
 		private PersistingNode rootPersistingNode= null; // Root of tree.
-  	private FileOutputStream theFileOutputStream= null;
+    private PrintWriter thePrintWriter= null; ////
+      ///org : This class uses a FileInputStream to read the data file,
+      // but a PrintWriter to write the data file.
+      // For symmetry, eventually switch to using a Scanner for reading. 
 
   	
   	// Initialization methods.
@@ -443,8 +446,8 @@ public class Persistent
 	      */
 	    {
 		  	try {
-		  		  theFileOutputStream= new FileOutputStream(
-		  		      AppSettings.makeRelativeToAppFolderFile( fileString ));
+            thePrintWriter= new PrintWriter(
+                AppSettings.makeRelativeToAppFolderFile(fileString));
 			  		writingV(
 			  				"#---multi-element path and data output follows---\n");
 		  			multilevelStoreNodeV("", rootPersistingNode);
@@ -454,7 +457,7 @@ public class Persistent
 			  		}
 			  	finally {
 			  		try {
-			  			if ( theFileOutputStream != null ) theFileOutputStream.close(); 
+              if ( thePrintWriter != null ) thePrintWriter.close(); 
 			  			}
 			  		catch ( Exception theException ) { 
 				  		appLogger.exception("Config.storeDataV(..)", theException);
@@ -502,7 +505,7 @@ public class Persistent
 	      to the text file OutputStream.
 	      */
 	    {
-	  		theFileOutputStream.write('#'); // Write comment character.
+        thePrintWriter.print('#'); // Write comment character.
 	  		writingLineV(commentString); // Write comment content as line.
 	      }
 	
@@ -512,15 +515,13 @@ public class Persistent
 	      */
 	    {
 	  		writingV(lineString); // Write string.
-	  		theFileOutputStream.write('\n'); // Terminate line.
+        thePrintWriter.println(); // Terminate line.
 	      }
 	
 	  public void writingV( String theString ) throws IOException
 	    // This method writes theString to the text file OutputStream.
 	    {
-	  		byte[] buf= // Getting byte buffer equivalent of String
-	  				theString.getBytes();
-	  		theFileOutputStream.write(buf); // Writing it to stream.
+	  		thePrintWriter.print(theString);
 	      }
 	  
 		}
