@@ -110,7 +110,8 @@ public class IPAndPort
     		appLogger.debug( "IPAndPort.addPeerInfoV() called for "+theIPAndPort );
       	addPeerInfoV(
       			thePersistent, 
-      			theIPAndPort.netcasterInetAddress.toString(),
+      			//// theIPAndPort.netcasterInetAddress.toString(),
+      			theIPAndPort.getIPString(),
       			String.valueOf(theIPAndPort.netcasterPortI)
       			);
       	}
@@ -137,5 +138,14 @@ public class IPAndPort
     		thePersistentCursor.putFieldV( "Port", portString );
     		} 
 
+    public String getIPString()
+      /* This method returns only the numeric portion of
+        the IP address part, without any hostname or separating slash.
+       */
+      {
+        String rawString= netcasterInetAddress.toString();
+        int slashOffsetI= rawString.lastIndexOf('/');
+        return rawString.substring(slashOffsetI+1); 
+        }
     
 		} // class IPAndPort

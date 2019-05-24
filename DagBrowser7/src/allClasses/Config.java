@@ -48,7 +48,8 @@ public class Config
 		public static final long fileCopyRetryPause1000MsL= 1000;
 		public static final long errorRetryPause1000MsL= 1000;
 		public static final long activityBlinkerPeriod1000MsL= 1000;
-		public static final long multicastPeriodMsL=
+    public static final long multicastDelayMsL= 5000;
+    public static final long multicastPeriodMsL=
   		600000; // 10 minutes.
   		// 3600000; // 1 hour for testing to disable multicasting.
       // 2000; //// for debugging.

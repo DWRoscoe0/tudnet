@@ -300,7 +300,8 @@ public class Multicaster
               "run() multicaster") 
               )
             return;
-      
+          EpiThread.interruptableSleepB( Config.multicastDelayMsL );
+            // Initial delay to allow reconnection of Unicast peers.
 	      	try { // Operations that might produce an IOException.
           	initializeWithIOExceptionV();  // Do non-injection initialization.
   	      	startingMultcastReceiverThreadV();

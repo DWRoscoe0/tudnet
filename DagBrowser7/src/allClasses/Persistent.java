@@ -61,27 +61,6 @@ public class Persistent
 	  	  loadDataV( theFileString );
 	      pollerPersistent= this;
 	  	  }
-
-    private static Persistent pollerPersistent= null;
-    private static int oldSizeI= -1;
-    public static void debugPollerV()
-      /* This method is a debugging method for looking for 
-        particular Persistent state changes and log them.
-        */
-      {
-        if (pollerPersistent == null) return;
-        PersistentCursor thePersistentCursor= // Used for iteration. 
-            new PersistentCursor( pollerPersistent );
-        thePersistentCursor.setListV("peers"); // Point to peer list.
-        NavigableMap<String, PersistingNode> theNavigableMap= 
-            thePersistentCursor.getNavigableMap();
-        int newSizeI= theNavigableMap.size();
-        if (oldSizeI != newSizeI) {
-          appLogger.debug("Persistent.debugPollerV(), oldSizeI="+ oldSizeI + 
-              ", newSizeI=" + newSizeI);
-          oldSizeI= newSizeI;
-          }
-        }
 	  
 	  private void loadDataV( String fileString )
 	    /* This method creates a Map 
@@ -241,7 +220,9 @@ public class Persistent
 	    						childPersistingNode,keyTailString,valueString);
 	    		break toReturn;
 		  	} // toFail:
-		  		appLogger.warning("multiSetValueB(..) failed.");
+		  		appLogger.warning( "multiSetValueB(..) failed,\n"
+		  		    + "  pathString="+pathString+"\n"
+		  		    + "  valueString="+valueString );
 		  		resultB= true;  // Set failure return value
 		  	} // toReturn:
 	  			return resultB;
@@ -427,6 +408,31 @@ public class Persistent
 		  }
 
 
+	  // Debug polling code.
+	  
+    private static Persistent pollerPersistent= null;
+    private static int oldSizeI= -1;
+    public static void debugPollerV()
+      /* This method is a debugging method for looking for 
+        particular Persistent state changes and log them.
+        */
+      {
+        if (pollerPersistent == null) return;
+        PersistentCursor thePersistentCursor= // Used for iteration. 
+            new PersistentCursor( pollerPersistent );
+        thePersistentCursor.setListV("peers"); // Point to peer list.
+        NavigableMap<String, PersistingNode> theNavigableMap= 
+            thePersistentCursor.getNavigableMap();
+        int newSizeI= theNavigableMap.size();
+        if (oldSizeI != newSizeI) {
+          appLogger.debug("Persistent.debugPollerV(), oldSizeI="+ oldSizeI + 
+              ", newSizeI=" + newSizeI + ", data follows:");
+          oldSizeI= newSizeI;
+          pollerPersistent.multilevelStoreNodeV(appLogger.getPrintWriter(),
+              "  Peers: ", thePersistentCursor.getEntryPersistingNode());
+          }
+        }
+
 	  // Finalization methods not called by initialization or service sections.
 	  
 	  public void finalizeV()
@@ -442,15 +448,18 @@ public class Persistent
 	      * The data only in the root node.
 	      * The data in all nodes of the tree.
 	      So some information appears twice in the file,
-	      but when reloaded it should go to the same place.  
+	      but when reloaded it should go to the same place.
+	      
+	      The exception handling in this method is not required,
+	      but it does no harm.
 	      */
 	    {
 		  	try {
             thePrintWriter= new PrintWriter(
                 AppSettings.makeRelativeToAppFolderFile(fileString));
-			  		writingV(
+			  		writingV(thePrintWriter,
 			  				"#---multi-element path and data output follows---\n");
-		  			multilevelStoreNodeV("", rootPersistingNode);
+		  			multilevelStoreNodeV(thePrintWriter, "", rootPersistingNode);
 			  		}
 			  	catch (Exception theException) { 
 			  		appLogger.exception("Config.storeDataV(..)", theException);
@@ -465,9 +474,9 @@ public class Persistent
 			  		}
 	    	}
 	
-	  private void multilevelStoreNodeV(
+	  private void multilevelStoreNodeV(PrintWriter thePrintWriter, 
 	  		String prefixString, PersistingNode thePersistingNode)
-	    throws IOException
+	    ////throws IOException
 	    /* This recursive method stores thePersistingNode 
 	      by writing to the stream.
 	      thePersistingNode is assumed to be a descendant of rootPersistingNode,
@@ -479,7 +488,7 @@ public class Persistent
 		  	  String valueString= thePersistingNode.getString();
 		  	  if (valueString==null) valueString= "";
 		  	  if (! prefixString.isEmpty())
-		  	  	writingLineV(prefixString + "=" + valueString);
+		  	  	writingLineV(thePrintWriter, prefixString + "=" + valueString);
 		  		}
 		  	{ // Store child nodes, if present.
 			  	Iterator<String> theIterator= // Make iterator for the children. 
@@ -493,32 +502,35 @@ public class Persistent
 		  				childPrefixString+= childKeyString;
 		  				NavigableMap<String,PersistingNode> childNavigableMap=
 		  						thePersistingNode.getNavigableMap();
-		  				multilevelStoreNodeV(
+		  				multilevelStoreNodeV(thePrintWriter, 
 		  						childPrefixString,childNavigableMap.get(childKeyString));
 				  		}
 		  			}
 		  	}
 	
-	  public void writingCommentLineV( String commentString ) 
+	  public void writingCommentLineV( 
+	      PrintWriter thePrintWriter, String commentString ) 
 	  	throws IOException
 	    /* This method writes theString followed by a newline
 	      to the text file OutputStream.
 	      */
 	    {
         thePrintWriter.print('#'); // Write comment character.
-	  		writingLineV(commentString); // Write comment content as line.
+	  		writingLineV(thePrintWriter, commentString); // Write comment content as line.
 	      }
 	
-	  public void writingLineV( String lineString ) throws IOException
+	  public void writingLineV( PrintWriter thePrintWriter, String lineString ) 
+	    //// throws IOException
 	    /* This method writes theString followed by a newline
 	      to the text file OutputStream.
 	      */
 	    {
-	  		writingV(lineString); // Write string.
+	  		writingV(thePrintWriter, lineString); // Write string.
         thePrintWriter.println(); // Terminate line.
 	      }
 	
-	  public void writingV( String theString ) throws IOException
+	  public void writingV( PrintWriter thePrintWriter, String theString ) 
+	    //// throws IOException
 	    // This method writes theString to the text file OutputStream.
 	    {
 	  		thePrintWriter.print(theString);

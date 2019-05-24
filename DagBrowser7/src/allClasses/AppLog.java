@@ -603,6 +603,18 @@ public class AppLog extends EpiThread
           }
       }
 
+    
+    public synchronized PrintWriter getPrintWriter()
+      /* Returns an open PrintWriter for outputting to the log file.  
+        This method is for temporary use during debugging.
+        It does not preserve buffered mode.  
+        */
+      {
+        openFileWithRetryDelayIfClosedV();
+        return thePrintWriter;
+        }
+
+
     private boolean pollingB= true; // false;
     
     private void logTriggeredPollerV()

@@ -164,6 +164,12 @@ public class PersistentCursor
 				// 		"PersistentCursor.getEntryKeyString() returning:"+entryKeyString);
 				return entryKeyString;
 				}
+
+    public PersistingNode getEntryPersistingNode()
+      /* Returns PersistingNode associated with the list. */
+      {
+        return entriesPersistingNode;
+        }
 		
 		public String getFieldString( String fieldKeyString )
 		  /* Returns the value of the field whose key is fieldKeyString
