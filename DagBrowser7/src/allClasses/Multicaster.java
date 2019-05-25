@@ -338,7 +338,7 @@ public class Multicaster
               }
             }
           catch( IOException e ) {
-            appLogger.error(Thread.currentThread().getName()+"run(): " + e );
+            appLogger.warning("run(): theMulticastSocket not [yet] open:" + e );
             }
 
           //appLogger.info( Thread.currentThread().getName()+": run() ending." );

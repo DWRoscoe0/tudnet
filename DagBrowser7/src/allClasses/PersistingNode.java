@@ -1,5 +1,6 @@
 package allClasses;
 
+import static allClasses.Globals.appLogger;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 
@@ -106,6 +107,9 @@ public class PersistingNode {
 	    This method is used for recursion in a PersistingNode structure.
 	   */
 		{
+	    if ( keyString == null || keyString.isEmpty())
+	      appLogger.error("getOrMakePersistingNode() Missing keyString.");
+
 			PersistingNode childPersistingNode= getPersistingNode(keyString);
 			if (childPersistingNode == null) // No value exists for the key.
 				{ // Create an empty child node and store in map.

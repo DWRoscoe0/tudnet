@@ -7,14 +7,16 @@ import java.util.NavigableMap;
 public class PersistentCursor 
 
   /* This class acts like a cursor into a Persistent data structure.
-    It is a convenient way to iterate through and access parts of
-    a Persistent data structure.
+    It provides a means for
+    * iterating through parts of a list of similar named items
+      represented by a NavigableMap.
+    * accessing the named parts (fields) within the list elements.
+
     It combines the ability to use paths,
     with fast local access relative to an existing PersistingNode. 
-    The iterator it implements is a pitererator,
+
+    The iterator this class implements is a pitererator,
     which is an iterator with pointer semantics.
-    It also contains logic for dealing with lists of similar child nodes
-    called entries.
 
     ///org The use of the term "persistent" is unfortunate.
       According to Wikipedia, that term is used to describe data structures
@@ -43,14 +45,14 @@ public class PersistentCursor
 
 		private final Persistent thePersistent; // Underlying storage structure.
 
-		// The following are for the new TreeMap node-based lists.
 		private PersistingNode entriesPersistingNode;
-		  // Persisting node whose NavigableMap contains the list entries.
-		  // A NavigableMap provides both fast lookup and 
-		  // the ability to be iterated.
-    private String entryKeyString;
-		private PersistingNode entryPersistingNode;
-			// Persisting node of present list entry. 
+		  // PersistingNode which contains the NavigableMap which
+		  // represents the list of interest.
+    private String entryKeyString; // Key name String of 
+      // presently selected NavigableMap entry, 
+      // or null if no entry is selected. 
+		private PersistingNode entryPersistingNode; // Cached value 
+		  // PersistingNode in presently selected NavigableMap entry. 
 
 
 		public PersistentCursor( Persistent thePersistent ) // constructor
@@ -130,14 +132,14 @@ public class PersistentCursor
 		    on no element.
 		   	*/
 			{
-		  	entryKeyString= // Advance to next position.
+		    String nextEntryKeyString= // Get next position key.
 			  	  Nulls.toEmptyString( // Convert null to empty string.
 			  	  		entriesPersistingNode.getNavigableMap().higherKey(
 			  	  				entryKeyString));
-				setEntryKeyV( entryKeyString ); // Set dependencies.
-				// appLogger.debug( "PersistentCursor.nextKeyString() returning:"
-				// 	+entryKeyString);
-		  	return entryKeyString; // Return name of the new position.
+		  	if (! entryKeyString.isEmpty()) // There is a next...
+          //// entryKeyString= nextEntryKeyString;
+  		    setEntryKeyV( nextEntryKeyString ); // cache it.
+        return entryKeyString; // Return name of the new position.
 				}
 
 		public void setEntryKeyV( String entryKeyString )
