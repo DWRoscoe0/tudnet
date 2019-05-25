@@ -106,8 +106,6 @@ public class Multicaster
 
 	extends Netcaster
 	
-	//// implements Runnable
-	
 	{
 	  // Injected dependencies.
 	  private MulticastSocket theMulticastSocket; /* For receiving multicast 
@@ -381,17 +379,12 @@ public class Multicaster
     		long delayMsL= // Minimum time between multicasts. 
     				// 3600000; // 1 hour for testing to disable multicasting.
     				Config.multicastPeriodMsL;
-    		    // 2000; //// for debugging.
-    		    // 10000; //// for debugging.
-    		    // 40000; // 40 seconds for normal use.
     		LockAndSignal.Input theInput;  // Type of input that ends waits.
-      	//// long querySentMsL= System.currentTimeMillis();
         processorLoop: while (true) { // Processing messages until exit request.
         	{ // Processing messages or exiting.
         	  long baseTimeMsL= System.currentTimeMillis();
           	theInput=  // Awaiting next input.
           	  waitingForSubnotificationOrIntervalOrInterruptE(
-          	    //// querySentMsL, delayMsL);
           	    baseTimeMsL, delayMsL);
 	          inputDecoder: switch ( theInput ) { // Decoding the input type.
 	          	case TIME: // Handling a time-out.

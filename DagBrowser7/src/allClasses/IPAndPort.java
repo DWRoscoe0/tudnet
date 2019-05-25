@@ -110,7 +110,6 @@ public class IPAndPort
     		appLogger.debug( "IPAndPort.addPeerInfoV() called for "+theIPAndPort );
       	addPeerInfoV(
       			thePersistent, 
-      			//// theIPAndPort.netcasterInetAddress.toString(),
       			theIPAndPort.getIPString(),
       			String.valueOf(theIPAndPort.netcasterPortI)
       			);

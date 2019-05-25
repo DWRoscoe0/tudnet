@@ -147,8 +147,6 @@ public class UnicasterManager
         addingV(..) to tree is done last because it could trigger displaying.
         */
 	    { 
-    	  //// appLogger.info( 
-        //// 		"buildAddAndStartUnicaster(..) Creating new Unicaster." );
     	  UnicasterFactory theUnicasterFactory= 
     	  		theAppGUIFactory.makeUnicasterFactory( 
     	  				theIPAndPort, theTCPClient );

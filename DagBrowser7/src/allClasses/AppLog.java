@@ -615,8 +615,8 @@ public class AppLog extends EpiThread
         }
 
 
-    private boolean pollingB= true; // false;
-    
+    private boolean pollingB= false; // Make true to enable polling.
+
     private void logTriggeredPollerV()
       /* This method provides the means to call 
         a developer-provided method every time something is logged.
@@ -630,8 +630,7 @@ public class AppLog extends EpiThread
         if (pollingB) // Prevent [recursive] calls to poller.
           {
             pollingB= false;
-            //debug("log polling test output.");
-            Persistent.debugPollerV(); // Call external poller.
+            //debug("Call to polling method goes here.");
             pollingB= true;
             }
       } 

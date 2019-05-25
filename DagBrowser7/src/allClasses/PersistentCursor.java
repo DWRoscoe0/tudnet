@@ -94,7 +94,7 @@ public class PersistentCursor
 				// 		"PersistentCursor.setListPathV("+listPathString+") begins.");
 	  		entriesPersistingNode= 
 	  				thePersistent.getOrMakePersistingNode(
-	  						listPathString + Config.pathSeperatorC + "entries");
+	  						listPathString); /// + Config.pathSeperatorC + "entries");
 	  		moveToFirstV();
 				}
 
@@ -137,7 +137,6 @@ public class PersistentCursor
 			  	  		entriesPersistingNode.getNavigableMap().higherKey(
 			  	  				entryKeyString));
 		  	if (! entryKeyString.isEmpty()) // There is a next...
-          //// entryKeyString= nextEntryKeyString;
   		    setEntryKeyV( nextEntryKeyString ); // cache it.
         return entryKeyString; // Return name of the new position.
 				}

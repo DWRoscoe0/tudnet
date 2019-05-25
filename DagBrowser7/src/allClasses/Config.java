@@ -51,10 +51,7 @@ public class Config
     public static final long multicastDelayMsL= 5000;
     public static final long multicastPeriodMsL=
   		600000; // 10 minutes.
-  		// 3600000; // 1 hour for testing to disable multicasting.
-      // 2000; //// for debugging.
-      // 10000; //// for debugging.
-      // 40000; // 40 seconds for normal use.
+  		// 3600000; // 1 hour for testing by effectively disabling multicasting.
 		public static final long pingReplyHandshakePeriod2000MsL= 2000;
 		public static final long reconnectTimeOutMsL= 10000; ///dbg 30000;
 		

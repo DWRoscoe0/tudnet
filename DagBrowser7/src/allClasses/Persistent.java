@@ -42,7 +42,7 @@ public class Persistent
 		private final String theFileString= "PersistentData.txt";
 		  // This is where the data is stored on disk.
 		private PersistingNode rootPersistingNode= null; // Root of tree.
-    private PrintWriter thePrintWriter= null; ////
+    private PrintWriter thePrintWriter= null;
       ///org : This class uses a FileInputStream to read the data file,
       // but a PrintWriter to write the data file.
       // For symmetry, eventually switch to using a Scanner for reading. 
@@ -59,7 +59,7 @@ public class Persistent
 	      */
 	    {
 	  	  loadDataV( theFileString );
-	      pollerPersistent= this;
+	      //// pollerPersistent= this;
 	  	  }
 	  
 	  private void loadDataV( String fileString )
@@ -408,14 +408,15 @@ public class Persistent
 		  }
 
 
-	  // Debug polling code.
+	  /* //// Debug polling code.
 	  
-    private static Persistent pollerPersistent= null;
+    //// private static Persistent pollerPersistent= null;
     private static int oldSizeI= -1;
     public static void debugPollerV()
       /* This method is a debugging method for looking for 
         particular Persistent state changes and log them.
         */
+	  /* ////
       {
         if (pollerPersistent == null) return;
         PersistentCursor thePersistentCursor= // Used for iteration. 
@@ -432,6 +433,7 @@ public class Persistent
               "  Peers: ", thePersistentCursor.getEntryPersistingNode());
           }
         }
+    */ ////
 
 	  // Finalization methods not called by initialization or service sections.
 	  
@@ -476,7 +478,6 @@ public class Persistent
 	
 	  private void multilevelStoreNodeV(PrintWriter thePrintWriter, 
 	  		String prefixString, PersistingNode thePersistingNode)
-	    ////throws IOException
 	    /* This recursive method stores thePersistingNode 
 	      by writing to the stream.
 	      thePersistingNode is assumed to be a descendant of rootPersistingNode,
@@ -520,7 +521,6 @@ public class Persistent
 	      }
 	
 	  public void writingLineV( PrintWriter thePrintWriter, String lineString ) 
-	    //// throws IOException
 	    /* This method writes theString followed by a newline
 	      to the text file OutputStream.
 	      */
@@ -530,7 +530,6 @@ public class Persistent
 	      }
 	
 	  public void writingV( PrintWriter thePrintWriter, String theString ) 
-	    //// throws IOException
 	    // This method writes theString to the text file OutputStream.
 	    {
 	  		thePrintWriter.print(theString);
