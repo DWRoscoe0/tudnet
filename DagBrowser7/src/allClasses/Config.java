@@ -33,7 +33,7 @@ public class Config
 	  /* TCPCopier parameters.  */
 		public static final int tcpUpdateDelaySI= 30;
 		public static final long tcpClientRunDelayMsL=4000; //delay logging.
-		public static final long tcpClientPeriodMsL= 8000;
+		public static final long tcpClientPeriodMsL= 5*60000; // 5 minutes.
 		public static final long tcpServerCyclePauseMsL= 4000;
 		public static final long tcpServerRunDelayMsL=15000;
  		public static final int tcpCopierTimeoutMsI= 5000;
@@ -43,8 +43,8 @@ public class Config
 	  public static final String tcpCopierOutputFolderString= "TCPCopierStaging";
 
 	  
-	  public static final long maxTimeOut5000MsL= 5000;
-		public static final long handshakePause5000MsL= 5000;
+	  public static final long maxTimeOutMsL= 5000;
+		public static final long measurementPauseMsL= 60000; 
 		public static final long fileCopyRetryPause1000MsL= 1000;
 		public static final long errorRetryPause1000MsL= 1000;
 		public static final long activityBlinkerPeriod1000MsL= 1000;

@@ -232,7 +232,7 @@ public class LinkMeasurementState
 			    	   	*/
 				  	  {
 			    			///dbg appLogger.debug( "MeasurementPausedState.onEntryV() ");
-			    	  	measurementTimerInput.scheduleV(Config.handshakePause5000MsL);
+			    	  	measurementTimerInput.scheduleV(Config.measurementPauseMsL);
 			  				}
 	
 					  public void onInputsForLeafStatesV()
@@ -268,7 +268,8 @@ public class LinkMeasurementState
 			    	   	*/
 				  	  {
 			    			///dbg appLogger.debug( "MeasurementInitializationState.onEntryV() ");
-			    	  	measurementTimerInput.scheduleV(Config.handshakePause5000MsL);
+			    	  	measurementTimerInput.scheduleV(Config.measurementPauseMsL);
+			    	  	  ////////////// has no effect?  Delete.
 			  				}
 			    	
 					  public void onInputsForLeafStatesV() throws IOException
@@ -311,7 +312,7 @@ public class LinkMeasurementState
 								  	}
 				      	else  if // Try processing time-out.
 				      		(measurementTimerInput.getInputArrivedB()) 
-					    		{ if ( retryTimeOutMsL <= Config.maxTimeOut5000MsL )
+					    		{ if ( retryTimeOutMsL <= Config.maxTimeOutMsL )
 				    				  { retryTimeOutMsL*=2;  // Doubling time-out limit.
 				    				  	requestSiblingStateListV(this); // Retrying by repeating state.
 					  					  } ///opt Use TimerInput.rescheduleB(.) instead. 

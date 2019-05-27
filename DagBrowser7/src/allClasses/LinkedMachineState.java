@@ -190,7 +190,7 @@ public class LinkedMachineState
 			      	{
 				    		sendHelloV(this); // Resent hello.
 							  if // Reschedule time-out with exponential back-off. 
-							    (theTimerInput.rescheduleB(Config.maxTimeOut5000MsL))
+							    (theTimerInput.rescheduleB(Config.maxTimeOutMsL))
 							    requestSiblingStateListV( // Give up if max delay reached by
 			    			  		theUnconnectedWaitingState); // going to unconnected.
 			    			}
