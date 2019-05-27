@@ -3,6 +3,7 @@ package allClasses;
 import static allClasses.Globals.appLogger;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 
@@ -15,17 +16,40 @@ public class AppSettings {
     Initialization is in 2 parts:
     * Static initialization when this class is loaded.
     * Initialization done when the method initializeV(..) is called.
+      This method uses setter-injection.
     */
+
+  // Load-time static initialization.
   
   private static File userAppFolderFile= new File( 
       new File( SystemSettings.homeFolderPathString ), Config.appString );
-  public static File userAppJarFile= //// Remove and replace this.  
-      makeRelativeToAppFolderFile( Config.appJarString ); //// 
+  
+  static {
+    String errorString= null;
+
+    makeDir: { // Make directory for the user's app, with full error checking.
+      try {
+        if (AppSettings.userAppFolderFile.exists())
+          break makeDir; // Do nothing if directory already exists.
+        if (! AppSettings.userAppFolderFile.mkdirs())
+          errorString= 
+            "AppSettings loader: "+userAppFolderFile+" mkdirs() failed.";
+        } catch (Exception e){
+          errorString= 
+            "AppSettings loader: "+userAppFolderFile+" mkdirs() "+e;
+        } // Many things, such as Logging, fail without this directory.
+      } // makeDir:
+    
+      if (errorString != null) { // Handle error by displaying and exiting.
+        System.out.println(errorString);
+        System.exit(1);
+        }
+    }
 
   
   // Methods that calculate and return values which depend on app settings.
   
-  static public File makeRelativeToAppFolderFile( 
+  public static File makeRelativeToAppFolderFile( 
       String fileRelativePathString )
     /* This method creates a File name object from fileRelativePathString.
       fileRelativePathString is a String representing the relative path
@@ -40,18 +64,15 @@ public class AppSettings {
   
   public static void initializeV(
       Class<?> entryPointClass, CommandArgs theCommandArgs)
-    /* This method initializes this class.
-      It does some value calculations and some logging.
+    /* This method does post-load initialization of this class.
+      It also does some logging of settings.
 
-      This method can not called from a static block because
-      it has a CommandArgs dependency which comes from
-      the main(..) entry point.
+      This method can not be called from a static block because
+      it has a CommandArgs dependency which comes from the main(..) entry point.
+
       ///enh In theory it could be made not-static with constructor injection. 
       */
     {
-      AppSettings.userAppFolderFile.mkdirs();  // Create home folder if needed.
-        // Many things, such as Logging below, fails without this folder.
-
       appLogger.info("AppSettings.initializeV(..) argStrings=\n  "
           +Arrays.toString(theCommandArgs.args()));
       appLogger.info("AppSettings.initializeV(..) entryPointClass="+
@@ -61,9 +82,9 @@ public class AppSettings {
       SystemSettings.logSystemPropertiesV(appLogger);
       }
     
+  
   /* The initiator file is the first file which is both
-    * executed, and
-    * is considered to be part of the application.
+    * executed, and is considered to be part of the application.
   
     The initiator file can be either
     * an .exe file, a self-extracting file, containing the app's 
