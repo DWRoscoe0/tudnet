@@ -136,8 +136,7 @@ public class PersistentCursor
 			  	  Nulls.toEmptyString( // Convert null to empty string.
 			  	  		entriesPersistingNode.getNavigableMap().higherKey(
 			  	  				entryKeyString));
-		  	if (! entryKeyString.isEmpty()) // There is a next...
-  		    setEntryKeyV( nextEntryKeyString ); // cache it.
+		    setEntryKeyV( nextEntryKeyString ); // Set cursor to this position.
         return entryKeyString; // Return name of the new position.
 				}
 
@@ -150,9 +149,10 @@ public class PersistentCursor
 			{
 				// appLogger.debug(
 				// 		"PersistentCursor.setEntryKeyV( "+entryKeyString+" )" );
-				this.entryKeyString= entryKeyString; // Store position.
-				this.entryPersistingNode= // Cache node at that position. 
-						entriesPersistingNode.getOrMakePersistingNode(entryKeyString);
+				this.entryKeyString= entryKeyString; // Store position key.
+        if (! entryKeyString.isEmpty()) // If there is a node there
+  				this.entryPersistingNode= // cache node at that position. 
+  						entriesPersistingNode.getOrMakePersistingNode(entryKeyString);
 				}
 
 		public String getEntryKeyString()
