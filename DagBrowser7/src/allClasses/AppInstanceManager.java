@@ -207,10 +207,17 @@ l    * If the app receives a message indicating
 	  public void finalizeV()
 	    /* This method is called to do things needed at app exit.
 	     
-	      It was created to delete empty temporary directories that
+	      Presently it only deletes empty temporary directories that
 	      are apparently not deleted by the 7zip SFX launcher.
-	      It doesn't delete them all, but seems to delete all but one.
-	      It logs the directories it tries to delete, and whether successful.
+	      This seems to happen when an app instance starts 
+	      a second instance of itself as a subprocess, 
+	      and exits before the second instance exits.
+	      
+	      The following code doesn't delete all the temporary directories, 
+	      but seems to delete all but one unless something interrupts it,
+	      and prevents the accumulation of folders unless other errors occur.
+	      It also logs the directories it tries to delete, 
+	      and whether it was successful.
 	      */
   	  {
   	    String tempDirString= // Get temporary directory if it is in use. 
@@ -226,7 +233,7 @@ l    * If the app receives a message indicating
     	      String dirString= headString + String.format ("%03d", extensionI);
     	      File toDeleteFile= new File(dirString); 
     	      boolean successB= toDeleteFile.delete();  // delete directory.
-            appLogger.info("AppInstanceManager.finalizeV(): deletion of  "
+            appLogger.info("AppInstanceManager.finalizeV(): deleting  "
     	        + dirString + ", success=" + successB); 
     	      }
   	    }

@@ -1,6 +1,6 @@
 ;!@Install@!UTF-8!
 ; launcherKolichM tests.
-Title="7ZIP Java Launch test"
+Title="Infogora Launcher"
 ExtractDialogText="Program will start in a moment."
 GUIFlags="32"
 ExtractTitle="Extracting program."
