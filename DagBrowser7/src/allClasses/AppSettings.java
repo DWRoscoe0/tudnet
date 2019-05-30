@@ -3,7 +3,6 @@ package allClasses;
 import static allClasses.Globals.appLogger;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 

@@ -32,10 +32,12 @@ public class LinkedMachineState
 		private Persistent thePersistent; 
 
 		// Sub-state-machine instances.
-		private TryingToConnectState theTryingToConnectState;
+    private InitiatingConnectionState theInitiatingConnectionState;
+		private CompletingConnectionState theCompletingConnectionState;
 		private ConnectedState theConnectedState;
-		private UnconnectedWaitingState theUnconnectedWaitingState;
-
+    private DisconnectedState theDisconnectedState;
+    private BrokenConnectionState theBrokenConnectionState;
+    
 		LinkedMachineState(  // Constructor.
 				)
 			throws IOException
@@ -70,16 +72,21 @@ public class LinkedMachineState
 	  		// Adding measurement count.
 
     		// Create and add to DAG the sub-states of this state machine.
-    		initAndAddStateListV(theTryingToConnectState= 
-    				new TryingToConnectState());
+        initAndAddStateListV(theInitiatingConnectionState= 
+            new InitiatingConnectionState());
+        initAndAddStateListV(theCompletingConnectionState= 
+            new CompletingConnectionState());
     		addStateListV(
     				(theConnectedState= new ConnectedState())
     				  .initializeWithIOExceptionStateList(this.theLinkedStateLists)
     				);
     		initAndAddStateListV(
-    				theUnconnectedWaitingState= new UnconnectedWaitingState());
-    		setFirstOrSubStateV( theTryingToConnectState ); // Set initial state.
-
+            theDisconnectedState= new DisconnectedState());
+    		initAndAddStateListV(
+    		    theBrokenConnectionState= new BrokenConnectionState());
+        
+    		setFirstOrSubStateV( theInitiatingConnectionState );
+    		
 	  	  theTimerInput= // Creating our timer and linking to this state. 
 			  		new TimerInput(  ///? Move to factory or parent?
 			  				this.theTimer,
@@ -97,7 +104,7 @@ public class LinkedMachineState
 			  }
 	
 	  public synchronized void finalizeV() throws IOException
-	    // This method processes any pending loose ends before shutdown.
+	    // This method processes any pending loose ends before app shutdown.
 		  {
 	  	  super.finalizeV();
 	  		theTimerInput.cancelingV(); // To stop our timer.
@@ -117,18 +124,18 @@ public class LinkedMachineState
 	      It responds to the thread termination interrupt by
 	      sending GOODBYEs to the peer.
 	      In both cases, it transitions the sub-state machine
-	      to the the UnconnectedWaitingState.
+	      to the the DisconnectedState.
 	     */
 		  {
 	  		boolean progressB= true; // Assume progress will be made.
 	  		goReturn: {
 		  		if ( super.onInputsB() ) // Try processing in sub-state machine.
-		  			break goReturn; // Return with progress.
+		  			break goReturn; // Return because progress was made.
 		  		if // Process local disconnect request, if present.
 		  		  ( Thread.currentThread().isInterrupted() ) 
 			  		{ // Process local disconnect request.
 		        	Thread.currentThread().interrupt(); // Reestablish interrupted.
-		        	progressB= requestSubStateListB( theUnconnectedWaitingState );
+		        	progressB= requestSubStateListB( theDisconnectedState );
 		        	if (progressB) // Send GOODBYEs if state change was accepted.
 				  			for (int i=0; i<3; i++) { // Send 3 GOODBYE packets.
 				  		    theNetcasterOutputStream.writingTerminatedStringV( "GOODBYE" );
@@ -136,7 +143,7 @@ public class LinkedMachineState
 				  				}
 			  			break goReturn; // Return with the progress calculated above.
 			  			}
-		  		progressB= false; // If we got this far, everything failed.  Override.
+		  		progressB= false; // Everything failed to progress, so return same.
 		  		} // goReturn: 
 		  	return progressB;
 		  	}
@@ -160,43 +167,64 @@ public class LinkedMachineState
 				return (getpresentSubStateList() == theConnectedState) ;
 				}
 
-		private class TryingToConnectState extends StateList 
+    private class InitiatingConnectionState extends StateList 
 
-	  	/* This class exchanges HELLO messages with the remote peer
-	  	  to decide which peer will lead and which will follow.
-	  	  It retries using exponential back-off 
-	  	  until the acknowledgement HELLO is received.
-			  */
+      /* This state is used to initiate a new connection.
+        It sends a HELLO message to the remote peer
+        and then transitions to the CompletingConnectionState.
+        */
 
-	  	{
+      {
+    
+        public void onInputsForLeafStatesV() throws IOException
+          {
+            sendHelloV(this);
+            requestSiblingStateListV(theCompletingConnectionState);
+            }
+  
+        } // class InitiatingConnectionState
 
-	    	public void onEntryV() throws IOException
-		  	  // Sends a HELLO and initializes retry timer.
-		  	  {
-		    		sendHelloV(this);
-					  theTimerInput.scheduleV(retryTimeOutMsL);
-						}
-		
-			  public void onInputsForLeafStatesV() throws IOException
-			  	/* This method handles HELLO handshake acknowledgement, 
-			  	  initiating a retry using twice the time-out,
-			  	  until a HELLO is received.
-			  	  */
-			  	{
-			  		if (tryReceivingHelloB(this)) // Try to process first HELLO.
-			  			requestSiblingStateListV( // Success.  Request connected state.
-			  					theConnectedState );
-		      	else if (theTimerInput.getInputArrivedB()) // Try Time-out? 
-			      	{
-				    		sendHelloV(this); // Resent hello.
-							  if // Reschedule time-out with exponential back-off. 
-							    (theTimerInput.rescheduleB(Config.maxTimeOutMsL))
-							    requestSiblingStateListV( // Give up if max delay reached by
-			    			  		theUnconnectedWaitingState); // going to unconnected.
-			    			}
-		  	  	}
-	
-		  		} // class TryingToConnectState
+    private class CompletingConnectionState extends StateList 
+
+      /* Being in this state means that the other peer
+        is believed to be on-line and ready for a connection.
+        This class sends a HELLO message to the remote peer
+        and tries to receive one from the remote peer.
+        It retransmits HELLO if a HELLO is not received,
+        using exponential back-off.
+        It will give up trying if no HELLO is received. 
+        It compares IP addresses to decide
+        which peer will lead and which will follow.
+        */
+
+      {
+
+        public void onEntryV() throws IOException
+          {
+            theTimerInput.scheduleV(retryTimeOutMsL);
+            }
+    
+        public void onInputsForLeafStatesV() throws IOException
+          /* This method completes the HELLO handshake, 
+            retransmitting the initial HELLO if needed,
+            using twice the previous time-out,
+            until a HELLO is received, or eventually giving up.
+            */
+          {
+            if (tryReceivingHelloB(this)) // Try to process first HELLO.
+              requestSiblingStateListV( // Success.  Request connected state.
+                  theConnectedState );
+            else if (theTimerInput.getInputArrivedB()) // Try Time-out? 
+              {
+                sendHelloV(this); // Resent hello.
+                if // Reschedule time-out with exponential back-off. 
+                  (theTimerInput.rescheduleB(Config.maxTimeOutMsL))
+                  requestSiblingStateListV( // Give up if max delay reached by
+                      theBrokenConnectionState); // going to unconnected.
+                }
+            }
+  
+          } // class CompletingConnectionState
 		
 		private class ConnectedState extends AndState
 
@@ -211,6 +239,7 @@ public class LinkedMachineState
 				public StateList initializeWithIOExceptionStateList(
 						StateList[] theLinkedStateLists)
 			    throws IOException
+			    /* This method initializes the sub-states.  */
 					{
 						super.initializeWithIOExceptionStateList();
 						
@@ -225,6 +254,7 @@ public class LinkedMachineState
 			
 				private boolean sentHelloB= true; 
 				  // True means previous HELLO was sent by us, not received by us.
+				  // It is used to prevent HELLO message storms.
 
 	    	public void onEntryV() throws IOException
 		  	  /* Informs TCPClient about this new connection,
@@ -258,9 +288,9 @@ public class LinkedMachineState
 					  				sendHelloV(this); // send a HELLO this time.
 					  			break goReturn; // Return with progress.
 					  			}
-				  		if ( tryInputB("GOODBYE") ) { // Did peer disconnect?
+				  		if ( tryInputB("GOODBYE") ) { // Did peer disconnect itself?
 		    			  	requestSiblingStateListV( // Do the same here.
-		    			  			theUnconnectedWaitingState);
+		    			  			theDisconnectedState);
 					  			break goReturn; // Return with progress.
 					  			}
 				  		progressB= false; // Everything failed.  Set no progress.
@@ -269,48 +299,69 @@ public class LinkedMachineState
 					  }
 
 	  		} // class ConnectedState
-		
-		private class UnconnectedWaitingState extends StateList
+    
+    private class DisconnectedState extends StateList
 
-	  	/* This state is entered when a disconnect occurs.
-	  	  It will exit this state if a HELLO message is received.
-	  	  */
+      /* This state is entered when a controlled disconnect occurs,
+        for example when a GOODBYE message is received.
+        It will exit this state only when HELLO message is received.
+        */
 
-	  	{
+      {
 
-	    	public void onEntryV() throws IOException
-		  	  // Sends a HELLO and initializes retry timer.
-		  	  {
-					  theTimerInput.scheduleV(Config.reconnectTimeOutMsL);
-						}
+        public void onInputsForLeafStatesV() throws IOException
+          /* This method does nothing except test for HELLO messages.
+            If it receives one then it sends a HELLO in response
+            and transitions to the ConnectedState. 
+            */
+          {
+            if (tryReceivingHelloB(this))
+              {
+                sendHelloV(this); // Send a response HELLO.
+                requestSiblingStateListV( // Switch to ConnectedState.
+                    theConnectedState
+                    );
+                }
+            }
 
-			  public void onInputsForLeafStatesV() throws IOException
-			  	/* This method does nothing except test for HELLO messages.
-			  	  If it receives one then it sends a HELLO in response
-			  	  and transitions to the ConnectedState. 
-			  	  */
-			  	{
-			  		if (tryReceivingHelloB(this))
-				  		{
-			  				sendHelloV(this); // send a response HELLO.
-				  			requestSiblingStateListV( // Switch to ConnectedState.
-				  					theConnectedState
-				  					);
-				  			}
-		      	else if (theTimerInput.getInputArrivedB()) // Try Time-out? 
-			    		{ // Time-out occurred.  Retry initiating connection.
-		    			  requestSiblingStateListV(theTryingToConnectState);
-			      		}
-					  }
+        } // class DisconnectedState
+    
+    private class BrokenConnectionState extends StateList
 
-				public void onExitV() throws IOException
-				  // Cancels timer.
-				  { 
-						theTimerInput.cancelingV();
-						super.onExitV();
-						}
+      /* This state is entered when a connection fails
+        because packets could not be exchanged by the two peers.
+        It will go to the ConnectedState when a HELLO message is received.
+        It will go to the InitiatingConnectionState
+        if the reconnect period passes.
+        */
 
-		  	} // class UnconnectedWaitingState
+      {
+
+        public void onEntryV() throws IOException
+          // Initializes reconnect timer.
+          {
+            theTimerInput.scheduleV(Config.reconnectTimeOutMsL);
+            }
+
+        public void onInputsForLeafStatesV() throws IOException
+          {
+            if (tryReceivingHelloB(this))
+              {
+                sendHelloV(this); // Send a response HELLO.
+                requestSiblingStateListV(theConnectedState);
+                }
+            else if (theTimerInput.getInputArrivedB()) // Time to try again? 
+              requestSiblingStateListV(theInitiatingConnectionState);
+            }
+
+        public void onExitV() throws IOException
+          // Cancels timer.
+          { 
+            theTimerInput.cancelingV();
+            super.onExitV();
+            }
+
+        } // class BrokenConnectionState
 
   	private boolean tryReceivingHelloB(StateList subStateList) 
   			throws IOException
