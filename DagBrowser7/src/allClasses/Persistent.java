@@ -100,6 +100,7 @@ public class Persistent
 
 	  private void loadV( FileInputStream configFileInputStream )
 	    throws IOException
+	    ///fix Array bounds exception causes loss of most file data!  Prevent.
 	    {
 	  	  byte[] lineAB= new byte[1024];
 	  	  int CI= configFileInputStream.read();
