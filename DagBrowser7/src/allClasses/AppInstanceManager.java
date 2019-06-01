@@ -788,8 +788,6 @@ l    * If the app receives a message indicating
 	          ( ! standardAppFile.exists() )  // The file doesn't exist.
 	          {
 	            appLogger.info("Trying to install.");
-              //// copyAndPrepareToRunB();
-              //// appShouldExitB= true;
 	            appShouldExitB= copyAndPrepareToRunB();
 	            }
 	        return appShouldExitB;
@@ -889,13 +887,6 @@ l    * If the app receives a message indicating
             boolean successB= false;
           toExit: { toCopy: {
             if (endsWithJarOrExeB(runningAppFile)) break toCopy;
-            //// String nameString= runningAppFile.getName(); 
-            //// appLogger.debug("copyAndPrepareToRunB() name="+nameString);
-            //// if (nameString.endsWith(".jar")) break toCopy;
-            //// if (nameString.endsWith(".exe")) break toCopy;
-            //// if (endsWithJarOrExeB( nameString )) break toCopy;
-            //// appLogger.info("copyAndPrepareToRunB() "
-            ////  +"Not executable .jar or .exe file. Not copying.");
             appLogger.info("copyAndPrepareToRunB() Not copying.  "
                 + "Not executable .jar or .exe file:\n  " + runningAppFile);
             break toExit;
@@ -942,8 +933,6 @@ l    * If the app receives a message indicating
             String sourceNameString; 
           toExit: { toCopy: { toEqualityTest: {
             sourceNameString= sourceFile.getName(); 
-            //// if (sourceNameString.endsWith(".jar")) break toEqualityTest;
-            //// if (sourceNameString.endsWith(".exe")) break toEqualityTest;
             if (endsWithJarOrExeB(sourceNameString)) break toEqualityTest;
             appLogger.error("copyExecutableFileB() Not exe or jar file."
               +twoFilesString(sourceFile, destinationFile));
@@ -975,12 +964,16 @@ l    * If the app receives a message indicating
             (!EpiThread.exitingB() && !copySuccessB)
             try {
                 attemptsI++;
-                Files.copy(
-                    sourceFile.toPath()
-                    ,destinationFile.toPath()
+                File tmpFile= File.createTempFile( // Creates empty file.
+                    "Infogora",null,AppSettings.userAppFolderFile);
+                Files.copy( sourceFile.toPath()
+                    ,tmpFile.toPath()
                     ,StandardCopyOption.COPY_ATTRIBUTES
                     ,StandardCopyOption.REPLACE_EXISTING
                     );
+                appLogger.info( "copyFileV(..) atomically renaming temp file.");
+                Files.move(tmpFile.toPath(), destinationFile.toPath() 
+                    ,StandardCopyOption.ATOMIC_MOVE);  
                 appLogger.info( "copyFileV(..) "
                   + "Copying successful after "+attemptsI+" attempts:"
                   + twoFilesString(sourceFile, destinationFile));

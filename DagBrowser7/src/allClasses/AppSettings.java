@@ -20,7 +20,7 @@ public class AppSettings {
 
   // Load-time static initialization.
   
-  private static File userAppFolderFile= new File( 
+  public static File userAppFolderFile= new File( 
       new File( SystemSettings.homeFolderPathString ), Config.appString );
   
   static {
