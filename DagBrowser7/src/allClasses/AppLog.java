@@ -9,6 +9,7 @@ import java.io.PrintWriter;
 import java.io.Writer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
+import java.nio.channels.FileLockInterruptionException;
 
 import allClasses.LockAndSignal.Input;
 
@@ -717,8 +718,65 @@ public class AppLog extends EpiThread
   	        ; /// debug("openFileIfClosedV() opened log file.");
           }
         }
-    
+
     private synchronized Writer openWithRetryDelayFileWriter()
+      throws IOException
+      /* This method opens a FileWriter for the log file unconditionally.
+        It should be called only if the log file is closed.  
+        If the open fails, it sleeps for 1 ms, and tries again.
+        It repeats until the open succeeds.
+        It returns the open FileWriter.
+        
+        ///fix Add recovery for FileLockInterruptException,
+        which now causes infinite loop.
+        */
+      { 
+        boolean interruptedB= false;
+        FileOutputStream theFileOutputStream= null;
+        Writer resultWriter= null;
+        while (true) { // Keep trying to open until it succeeds.
+          try {
+              theFileOutputStream= null;
+              resultWriter= null;
+              theLogFileLock= null;
+              theFileOutputStream= new FileOutputStream( // Open for writing...
+                  logFile,   // ...log file with this name...
+                  true  // ...and write to end of file, not the beginning.
+                  );
+              FileChannel theFileChannel= theFileOutputStream.getChannel();
+              while (true) // Keep trying to acquire lock without interruption.
+                try {
+                  // System.out.println("openWithRetryDelayFileWriter() before lock().");
+                  theLogFileLock= theFileChannel.lock();
+                  // System.out.println("openWithRetryDelayFileWriter() after lock().");
+                  break; // Lock acquired, so break out of loop.
+                  }
+                catch( FileLockInterruptionException ex ) { // Interrupted.
+                  Thread.currentThread().isInterrupted(); // Clear interrupt
+                  interruptedB= true; // but record it for restoring later.
+                  System.out.println("openWithRetryDelayFileWriter() lock() interrupted.");
+                  }
+              theFileChannel.position(theFileChannel.size()); // Set for append.
+              resultWriter= new OutputStreamWriter(theFileOutputStream);
+              break; // Exit if open succeeded.
+            } catch (IOException e) { // Open failed.
+              System.out.println("openWithRetryDelayFileWriter() fail begin.");
+              System.out.println("openWithRetryDelayFileWriter() "+e);
+              if (theLogFileLock!=null) theLogFileLock.release();
+              Closeables.closeWithoutErrorLoggingB(theFileOutputStream);
+              Closeables.closeWithoutErrorLoggingB(resultWriter);
+              uninterruptableSleepB( 1 ); // Pause 1 ms.
+              openSleepDelayMsI++; //* Count the pause and the time.
+              System.out.println("openWithRetryDelayFileWriter() fail end.");
+              // System.exit(1); ////
+            }
+          }
+        if ( interruptedB ) // If an interruption happened
+          Thread.currentThread().interrupt(); // reestablish interrupt status.
+        return resultWriter;
+        }
+
+    private synchronized Writer OLDopenWithRetryDelayFileWriter()
       throws IOException
       /* This method opens a FileWriter for the log file unconditionally.
         It should be called only if the log file is closed.  

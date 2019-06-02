@@ -4,8 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -935,66 +933,21 @@ l    * If the app receives a message indicating
             sourceNameString= sourceFile.getName(); 
             if (endsWithJarOrExeB(sourceNameString)) break toEqualityTest;
             appLogger.error("copyExecutableFileB() Not exe or jar file."
-              +twoFilesString(sourceFile, destinationFile));
+              +Misc.twoFilesString(sourceFile, destinationFile));
             break toExit;
           } // toEqualityTest:
             if (sourceNameString.equals(destinationFile.getName())) 
               break toCopy;
             appLogger.error("copyExecutableFileB() File extension mismatch."
-                +twoFilesString(sourceFile, destinationFile));
+                +Misc.twoFilesString(sourceFile, destinationFile));
             break toExit;
           } // toCopy:
-            copyFileV(sourceFile, destinationFile);
+            Misc.copyFileWithRetryV(sourceFile, destinationFile);
             successB= true;
           } // toExit:
             appLogger.debug("copyExecutableFileB()= "+successB);
             return successB;
           }
-
-      private void copyFileV(File sourceFile, File destinationFile)
-        /* This method copies the sourceFile to the destinationFile.
-          It does not return until the copy succeeds.
-           */
-        {
-          ///enh create function to make double file path string.
-          appLogger.info("copyFileV(..) ======== COPYING FILE ======== ");
-          boolean copySuccessB= false;
-          int attemptsI= 0;
-          while  // Keep trying until copy success and exit.
-            (!EpiThread.exitingB() && !copySuccessB)
-            try {
-                attemptsI++;
-                File tmpFile= File.createTempFile( // Creates empty file.
-                    "Infogora",null,AppSettings.userAppFolderFile);
-                Files.copy( sourceFile.toPath()
-                    ,tmpFile.toPath()
-                    ,StandardCopyOption.COPY_ATTRIBUTES
-                    ,StandardCopyOption.REPLACE_EXISTING
-                    );
-                appLogger.info( "copyFileV(..) atomically renaming temp file.");
-                Files.move(tmpFile.toPath(), destinationFile.toPath() 
-                    ,StandardCopyOption.ATOMIC_MOVE);  
-                appLogger.info( "copyFileV(..) "
-                  + "Copying successful after "+attemptsI+" attempts:"
-                  + twoFilesString(sourceFile, destinationFile));
-                copySuccessB= true;
-                }
-            catch (Exception e) { // Other instance probably still running.
-                appLogger.info("copyFileV(..) failed attempt "+attemptsI+".\n  "
-                  +e.toString()+"\n  Will retry after 1 second."); 
-                EpiThread.interruptableSleepB(
-                    Config.fileCopyRetryPause1000MsL); // Wait 1 second.
-            }
-          }
-        
-      private String twoFilesString(
-          File sourceFile, File destinationFile)
-      {
-        return 
-          "\n  sourceFile= "+sourceFile
-          +"\n  destinationFile= "+destinationFile
-          ;
-        }
           
 	    private boolean requestProcessStartAndShutdownTrueB( 
 	        String commandPathString ) 

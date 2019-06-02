@@ -3,6 +3,7 @@ package allClasses;
 import static allClasses.Globals.appLogger;  // For appLogger;
 
 import java.io.File;
+import java.util.Set;
 
 
 /* This file is the root of this application.  
@@ -147,12 +148,32 @@ class Infogora  // The root of this app.
 	      theApp.runV();  // Running the app until shutdown.
 	        // This might not return if a shutdown is initiated by the JVM. 
 
-        appLogger.info(true,
+        logThreadsV();
+	      appLogger.info(true,
           "Infogora.main() calling exit(0). ======== APP IS ENDING ========");
         appLogger.closeFileIfOpenB(); // Close log for exit.
 	      System.exit(0); // Will kill any remaining unknown threads running??
 	      } // main(..)
-	
+
+    private static void logThreadsV()
+      /* Logs active threads, of which there should be very few.
+        All non-daemon app threads should have been terminated.
+        This was based on code from a web article.
+        */
+      {
+        appLogger.info("Infogora.logThreadsV(), remaining active threads:"); 
+        Set<Thread> threadsSet= Thread.getAllStackTraces().keySet();
+        for (Thread t : threadsSet) {
+            String nameString= t.getName();
+            Thread.State threadState= t.getState();
+            int priorityI= t.getPriority();
+            String typeString= t.isDaemon() ? "Daemon" : "Normal";
+            appLogger.getPrintWriter().printf("    %-25s  %-13s %2d  %s\n", 
+                nameString, threadState, priorityI, typeString);
+        }
+      
+  }
+
 		} // Infogora
 
 // End of file.

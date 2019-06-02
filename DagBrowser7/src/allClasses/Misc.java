@@ -14,6 +14,8 @@ public class Misc
   /* This Singleton class contains miscellaneous useful code.
     The code here is usually either temporary or
     code useful for debugging and logging.
+    Temporary code sometimes becomes permanent and
+    is moved to its own classes.
     
     Here are some notes to mark possible work to do:
     ///tmp : temporary code, for debugging or a development kluge.
@@ -138,22 +140,36 @@ public class Misc
 		    		  }
 	  			}
 
-	    public static String fileDataString( File theFile )
-	    	{ 
-	    	  return ( theFile == null )
-	    	  		? "null" 
-	    	  		: dateString( theFile ) + ", " + theFile.toString()
-	    	  		;
-	    		}
-
-	    public static String dateString( File theFile )
-	      /* This method returns the time-stamp String associated with
-	        the file theFile in an easy to read format.
-	        */
-	      {
-	    		return dateString( theFile.lastModified() );
-	        }
-
+      public static boolean tryCopyFileB(File sourceFile, File destinationFile)
+        /* This method tries to copy the sourceFile to the destinationFile.
+          It returns true the copy succeeds, false otherwise.
+          It logs any exception which causes failure.
+          */
+        {
+          boolean copySuccessB= false; // Assume we will be successful.
+          while  // Keep trying until copy success and exit.
+            (!EpiThread.exitingB() && !copySuccessB)
+            try {
+                File tmpFile= File.createTempFile( // Creates empty file.
+                    "Infogora",null,AppSettings.userAppFolderFile);
+                Files.copy( sourceFile.toPath()
+                    ,tmpFile.toPath()
+                    ,StandardCopyOption.COPY_ATTRIBUTES
+                    ,StandardCopyOption.REPLACE_EXISTING
+                    );
+                appLogger.info(
+                    "tryCopyFileB(..) atomically renaming temp file.");
+                Files.move(tmpFile.toPath(), destinationFile.toPath() 
+                    ,StandardCopyOption.ATOMIC_MOVE);  
+                copySuccessB= true;
+                }
+            catch (Exception e) { // Other instance probably still running.
+                appLogger.exception("tryCopyFileB(..) ",e); 
+                copySuccessB= false; // Record failure for return.
+                }
+          appLogger.info("tryCopyFileB(..) copySuccessB="+copySuccessB);
+          return copySuccessB;
+          }
 
 	    public static String dateString( long theL )
 	      /* This method returns the a time-stamp theL converted to a String.
@@ -167,6 +183,8 @@ public class Misc
 	        return resultDateString;
 	        }
 
+	    // File copying and updating.
+	    
 		  public static void updateFromToV(File thisFile, File thatFile)
 		    /* If thisFile is newer than thatFile, then
 		      thatFile is replaced by thisFile by copying.
@@ -184,6 +202,8 @@ public class Misc
 	        long thatFileLastModifiedL= thatFile.lastModified();
 	        if // This file is newer than that file then replace that with this.
 	          ( thisFileLastModifiedL > thatFileLastModifiedL )
+	          copyFileWithRetryV(thisFile, thatFile);
+	          /*  ////
 				    try {
 					      appLogger.info( "updateFromToV(..) Copying started."
 					      		+ "\n  This file = " + thisFile
@@ -203,6 +223,60 @@ public class Misc
 					      +e.toString()
 					      ); 
 					    }
+            */  ////
 					}
 
-  	} // class Misc 
+      public static void copyFileWithRetryV(
+          File sourceFile, File destinationFile)
+        /* This method copies the sourceFile to the destinationFile.
+          It does not return until the copy succeeds.
+           */
+        {
+          ///enh create function to make double file path string.
+          appLogger.info("copyFileWithRetryV(..) "
+            + "======== COPYING FILE ======== "
+            + twoFilesString(sourceFile, destinationFile));
+          boolean copySuccessB= false;
+          int attemptsI= 0;
+          while (!EpiThread.exitingB()) { 
+            attemptsI++;
+            copySuccessB= Misc.tryCopyFileB(sourceFile, destinationFile);
+            if (copySuccessB) break;
+            appLogger.info("copyFileWithRetryV(..) failed attempt "+attemptsI
+              +".  Will retry after 1 second."); 
+            EpiThread.interruptableSleepB(
+                Config.fileCopyRetryPause1000MsL); // Wait 1 second.
+            }
+          appLogger.info( "copyFileWithRetryV(..) "
+              + "Copying successful after "+attemptsI+" attempts:"
+              + twoFilesString(sourceFile, destinationFile));
+          }
+      
+    public static String twoFilesString(
+        File sourceFile, File destinationFile)
+    {
+      return 
+         //// "\n  sourceFile= "+sourceFile
+         //// +"\n  destinationFile= "+destinationFile
+          "\n    sourceFile:      " + Misc.fileDataString(sourceFile) + 
+          "\n    destinationFile: " + Misc.fileDataString(destinationFile)
+          ;
+      }
+
+    public static String fileDataString( File theFile )
+      { 
+        return ( theFile == null )
+            ? "null" 
+            : dateString( theFile ) + ", " + theFile.toString()
+            ;
+        }
+
+    public static String dateString( File theFile )
+      /* This method returns the time-stamp String associated with
+        the file theFile in an easy to read format.
+        */
+      {
+        return dateString( theFile.lastModified() );
+        }
+
+  } // class Misc 
