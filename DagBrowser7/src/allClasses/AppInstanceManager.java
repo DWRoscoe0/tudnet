@@ -226,12 +226,13 @@ l    * If the app receives a message indicating
   	          tempDirString.lastIndexOf(".")+1;
   	      String headString= tempDirString.substring(0, positionI);
   	      String extensionString= tempDirString.substring(positionI);
-  	      int extensionI= Integer.parseInt(extensionString);
+  	      int extensionI= // Parse hexadecimal file-name extension. 
+  	          Integer.parseInt(extensionString,16);
   	      while (--extensionI >= 0) { // For all lower extensions down to 0...
-    	      String dirString= headString + String.format ("%03d", extensionI);
+  	        String dirString= headString + String.format ("%03x", extensionI);
     	      File toDeleteFile= new File(dirString); 
     	      boolean successB= toDeleteFile.delete();  // delete directory.
-            appLogger.info("AppInstanceManager.finalizeV(): deleting  "
+            appLogger.info("AppInstanceManager.finalizeV(): deleting DISABLED! "
     	        + dirString + ", success=" + successB); 
     	      }
   	    }
