@@ -55,9 +55,10 @@ public class Closeables
     /* This method is for closing a resource with a minimum of fuss.
       It assumes that if an exception occurs during the close,
       then simply logging that exception is sufficient handling.
+      It also logs a successful close.
       
-      It returns true if either theCloseable is null or there was an exception,
-      false otherwise.
+      It returns true if either theCloseable is null 
+      or there was an exception, false otherwise.
       */
     {
   	  boolean errorOccurredB= false;
@@ -68,7 +69,10 @@ public class Closeables
   	  		errorOccurredB= true;
   	  	} else {
 		  	  try { 
-			  	  	theCloseable.close(); 
+			  	  	theCloseable.close();
+		          appLogger.info(
+		              "closeWithErrorLoggingB(..): closed "+theCloseable 
+		              );            
 			  	  } catch (Exception theException) {
 			  	  	errorOccurredB= true;
 			  			appLogger.exception(

@@ -114,11 +114,12 @@ public class TCPCopier
               )
             return;
 
-          appLogger.info("run() client start delay beginning.");
+          appLogger.info("run() start delay beginning.");
 		  		EpiThread.interruptableSleepB(Config.tcpClientRunDelayMsL);
-	  			appLogger.info("run() client start delay done.");
-
+	  			appLogger.info("run() start delay done.");
 		  		updateTCPCopyStagingAreaV();
+          appLogger.debug("run() staging area update done.");
+
 	      	PersistentCursor thePersistentCursor= 
 	      			new PersistentCursor( thePersistent );
 	      	thePersistentCursor.setListV("peers");
@@ -173,7 +174,8 @@ public class TCPCopier
 
 	    private void updateTCPCopyStagingAreaV()
 	      /* This method updates the app file 
-	        from the standard folder to the TCP copy staging area folder. 
+	        from the standard folder to the TCP copy staging area folder.
+	        It needs to be called only once, at app start. 
 	       	*/
 		    {
 					File tcpFolderFile= AppSettings.makeRelativeToAppFolderFile( 
@@ -341,8 +343,8 @@ public class TCPCopier
 		static class TCPServer extends EpiThread {
 		
 		  private File serverFile= null;
-
 		  private final PortManager thePortManager; // External data.
+      private ServerSocket serverServerSocket= null;
 			
 	    public TCPServer( // Constructor.
 	  			String threadNameString, PortManager thePortManager) 
@@ -382,34 +384,32 @@ public class TCPCopier
 			    or no file transfered at all.
  			    */
 				{
-			    ServerSocket serverServerSocket= null;
 			    Socket serverSocket= null;
 			  	try {
 			        serverServerSocket= 
 			        		new ServerSocket(thePortManager.getNormalPortI());
 			    		appLogger.debug(
-			    				"serviceOneRequestFromClientV()() trying ServerSocket.accept() to "
+			    				"serviceOneRequestFromAnyClientV()() trying ServerSocket.accept() to "
 			    				+ serverServerSocket);
 			        serverSocket = serverServerSocket.accept();
 							appLogger.debug(
-									"serviceOneRequestFromClientV() accepted connection from "
+									"serviceOneRequestFromAnyClientV() accepted connection from "
 									+ serverSocket );
 							synchronized (serverLockObject) 
 			        	{ 
 									appLogger.debug(
-										"serviceOneRequestFromClientV() begin synchronized block.");
+										"serviceOneRequestFromAnyClientV() begin synchronized block.");
 									processServerConnectionV(serverSocket); 
 									appLogger.debug(
-											"serviceOneRequestFromClientV() end synchronized block.");
+											"serviceOneRequestFromAnyClientV() end synchronized block.");
 									} 
 			      } catch (IOException ex) {
-			    		appLogger.info(ex,
-			    		    "serviceOneRequestFromClientV() using "+serverServerSocket );
+			    		appLogger.info(ex, "serviceOneRequestFromAnyClientV()");
 			      } finally {
-			    		appLogger.info( "serviceOneRequestFromClientV() closing begins.");
+			    		appLogger.info( "serviceOneRequestFromAnyClientV() closing begins.");
 			      	Closeables.closeWithErrorLoggingB(serverSocket);
 			      	Closeables.closeWithErrorLoggingB(serverServerSocket);
-			    		appLogger.info( "serviceOneRequestFromClientV() closing ends.");
+			    		appLogger.info( "serviceOneRequestFromAnyClientV() closing ends.");
 			        }
 					}
 
@@ -422,11 +422,18 @@ public class TCPCopier
 		  		long resultL= tryTransferingFileL(
 			  		serverSocket, serverFile, serverFile, serverFileLastModifiedL );
 			  	if (resultL != 0)
-						appLogger.info( "serviceOneRequestFromClientV() copied using " 
+						appLogger.info( "serviceOneRequestFromAnyClientV() copied using " 
 								+serverSocket);
 		      }
 
-			} // TCPServer 
+      public void stopV()
+        {
+          Closeables.closeWithErrorLoggingB(serverServerSocket);
+            // Terminate possibly blocked ServerSocket.accept().
+          super.stopV(); // Also signal termination desired.
+          }
+
+			} // TCPServer
 	  
 		private static long tryTransferingFileL(
 				Socket theSocket,

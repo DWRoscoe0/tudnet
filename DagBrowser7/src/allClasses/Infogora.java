@@ -157,19 +157,19 @@ class Infogora  // The root of this app.
 
     private static void logThreadsV()
       /* Logs active threads, of which there should be very few.
-        All non-daemon app threads should have been terminated.
+        All non-daemon app threads should have been terminated.f
         This was based on code from a web article.
         */
       {
         appLogger.info("Infogora.logThreadsV(), remaining active threads:"); 
         Set<Thread> threadsSet= Thread.getAllStackTraces().keySet();
         for (Thread t : threadsSet) {
-            String nameString= t.getName();
             Thread.State threadState= t.getState();
             int priorityI= t.getPriority();
             String typeString= t.isDaemon() ? "Daemon" : "Normal";
-            appLogger.getPrintWriter().printf("    %-25s  %-13s %2d  %s\n", 
-                nameString, threadState, priorityI, typeString);
+            String nameString= t.getName();
+            appLogger.getPrintWriter().printf("    %-13s %2d  %s  %-25s  \n", 
+                threadState, priorityI, typeString, nameString);
         }
       
   }

@@ -97,6 +97,7 @@ public class EpiThread
         this.stopV() should already have been called.
         This method will not return until the this's EpiThread terminates.
         It uses this.join() to wait until that termination completes.
+        It also logs the termination.
         
         When this method returns, Thread.currentThread()'s interrupt status 
         will set if it was set when the method began or became set
@@ -104,24 +105,29 @@ public class EpiThread
         Otherwise Thread.currentThread()'s interrupt status will be false.
         */
       {
+        appLogger.debug("joinV(" + getName() + ") begins.");
     	  boolean currentThreadInteruptStatusB= false;
         for  // Looping until this's thread has terminated.
           ( boolean thisThreadTerminatedB= false ; 
         		!thisThreadTerminatedB ; 
         		)
           try { // Calling blocking join() and handling how it ends.
+              appLogger.debug("joinV(" + getName() + ") before join().");
               join();  // Trying to wait for this's thread to terminate.
+              appLogger.debug("joinV(" + getName() + ") after join().");
               // Being here means this's thread terminated.
               thisThreadTerminatedB= true;  // Setting flag to terminate loop.
               }
             catch (InterruptedException e) {  // Handling interrupt of join().
               // Being here means current thread's interrupt status was set.
+              appLogger.debug("joinV(" + getName() + ") interrupted.");
             	currentThreadInteruptStatusB= true; // Recording it for later.
               }
         if  // Restoring current thread's interrupt status if recorded earlier.
           ( currentThreadInteruptStatusB )
           Thread.currentThread().interrupt(); // Setting interrupt status.
         appLogger.info("EpiThread(" + getName() + ").joinV(): stopped.");
+        appLogger.debug("joinV(" + getName() + ") ends.");
         }
 
     public static boolean interruptableSleepB( long msL )
@@ -184,11 +190,30 @@ public class EpiThread
       	return interruptedB;
         }
 
-		public static boolean exitingB()
-		  /* This is a method to save a little typing.
-		    Like the Thread method that it calls,
-		    it clears this thread's interrupted status.
-		    */
-			{ return Thread.currentThread().isInterrupted(); }
+    public static boolean exitingB()
+      /* This is a method to save a little typing.
+        Like the Thread method that it calls,
+        it clears this thread's interrupted status.
+        
+        ///org Rename to testAndClearInterruptB() ?
+        */
+      { 
+        return Thread.currentThread().isInterrupted(); 
+        }
+
+    public static boolean interruptingB()
+      /* This tests the interrupt status but does not clear it
+        so that it it can be used to easilly exit 
+        multiple levels of methods and loops.
+        
+        ///org Rename to testInterruptB() ?
+        */
+      { 
+        boolean interruptingB= // Test and clear interrupt status normally. 
+            Thread.currentThread().isInterrupted();
+        if (interruptingB) // Interrupt status was set so
+          Thread.currentThread().interrupt(); // reestablish it.
+        return interruptingB;
+        }
 		
 		}

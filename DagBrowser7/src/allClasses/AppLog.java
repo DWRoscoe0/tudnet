@@ -776,7 +776,7 @@ public class AppLog extends EpiThread
         return resultWriter;
         }
 
-    private synchronized Writer OLDopenWithRetryDelayFileWriter()
+    private synchronized Writer OLDopenWithRetryDelayFileWriter() ////
       throws IOException
       /* This method opens a FileWriter for the log file unconditionally.
         It should be called only if the log file is closed.  

@@ -46,12 +46,15 @@ public class App { // The App, especially pre-GUI stuff.
 			theTCPServer.startV();
 			theTCPClient.startV();
 			theShutdowner.initializeV();
+
 			theAppInstanceManager.initializeV();
 
 			delegateOrDoV(); // Actually do some work.
 
       // App shutdown.
       theAppInstanceManager.finalizeV();
+      theTCPClient.stopAndJoinV();
+      theTCPServer.stopAndJoinV();
   	  thePersistent.finalizeV();  // Write any new or changed app properties.
   		//appLogger.info("App calling Shutdowner.finishV().");
       theShutdowner.finishAppShutdownV();  // Doing final app shutdown jobs.
