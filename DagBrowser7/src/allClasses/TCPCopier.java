@@ -124,7 +124,7 @@ public class TCPCopier
 	      			new PersistentCursor( thePersistent );
 	      	thePersistentCursor.setListV("peers");
 	      	interactWithTCPServersV(thePersistentCursor);
-	  			appLogger.info(true, "run() ending.");
+	  			appLogger.info("run() ending.");
 		    	}
 
 
@@ -407,8 +407,8 @@ public class TCPCopier
 			    		appLogger.info(ex, "serviceOneRequestFromAnyClientV()");
 			      } finally {
 			    		appLogger.info( "serviceOneRequestFromAnyClientV() closing begins.");
-			      	Closeables.closeWithErrorLoggingB(serverSocket);
-			      	Closeables.closeWithErrorLoggingB(serverServerSocket);
+			      	Closeables.closeWithoutErrorLoggingB(serverSocket);
+			      	Closeables.closeWithoutErrorLoggingB(serverServerSocket);
 			    		appLogger.info( "serviceOneRequestFromAnyClientV() closing ends.");
 			        }
 					}
@@ -428,7 +428,7 @@ public class TCPCopier
 
       public void stopV()
         {
-          Closeables.closeWithErrorLoggingB(serverServerSocket);
+          Closeables.closeWithoutErrorLoggingB(serverServerSocket);
             // Terminate possibly blocked ServerSocket.accept().
           super.stopV(); // Also signal termination desired.
           }
