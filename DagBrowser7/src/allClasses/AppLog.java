@@ -727,8 +727,12 @@ public class AppLog extends EpiThread
         It repeats until the open succeeds.
         It returns the open FileWriter.
         
-        ///fix Add recovery for FileLockInterruptException,
-        which now causes infinite loop.
+        ///fix Add recovery for FileLockInterruptException
+          and ClosedChannelException, which now causes infinite loop,
+          which looks something like this in the log file:
+            openWithRetryDelayFileWriter() fail begin.
+            openWithRetryDelayFileWriter() java.nio.channels.ClosedChannelException
+            openWithRetryDelayFileWriter() fail end.
         */
       { 
         boolean interruptedB= false;
