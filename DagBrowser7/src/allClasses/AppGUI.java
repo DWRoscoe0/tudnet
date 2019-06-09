@@ -138,6 +138,7 @@ public class AppGUI
         theShutdowner.waitForAppShutdownRequestedV(); // Wait for shutdown request.
 
         // Now the app is shutting down.
+        theCPUMonitorEpiThread.stopAndJoinV();
         theDataTreeModel.logListenersV(); ///dbg
         ///fix? theCPUMonitorEpiThread.stopAndJoinV( ); 
         theConnectionManagerEpiThread.stopAndJoinV( ); // Terminate ConnectionManager 
