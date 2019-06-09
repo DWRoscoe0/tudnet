@@ -232,7 +232,7 @@ l    * If the app receives a message indicating
   	        String dirString= headString + String.format ("%03x", extensionI);
     	      File toDeleteFile= new File(dirString); 
     	      boolean successB= toDeleteFile.delete();  // delete directory.
-            appLogger.info("AppInstanceManager.finalizeV(): deleting DISABLED! "
+            appLogger.info("AppInstanceManager.finalizeV(): deleting "
     	        + dirString + ", success=" + successB); 
     	      }
   	    }

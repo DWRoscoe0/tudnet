@@ -114,7 +114,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
     			theMetaRoot,
     			theBackgroundEventQueue
 	        );
-      GUIBuilderStarter theGUIBuilderStarter= new GUIBuilderStarter( 
+      GUIManager theGUIBuilderStarter= new GUIManager( 
   		  theAppInstanceManager,
   		  theDagBrowserPanel,
         this, // GUIBuilderStarter gets to know the factory that made it. 

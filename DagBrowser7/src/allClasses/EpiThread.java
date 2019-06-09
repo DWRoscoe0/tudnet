@@ -105,17 +105,17 @@ public class EpiThread
         Otherwise Thread.currentThread()'s interrupt status will be false.
         */
       {
-        appLogger.debug("joinV(" + getName() + ") begins.");
+        // appLogger.debug("joinV(" + getName() + ") begins.");
     	  boolean currentThreadInteruptStatusB= false;
         for  // Looping until this's thread has terminated.
           ( boolean thisThreadTerminatedB= false ; 
         		!thisThreadTerminatedB ; 
         		)
           try { // Calling blocking join() and handling how it ends.
-              appLogger.debug("joinV(" + getName() + ") before join().");
+              /// appLogger.debug("joinV(" + getName() + ") before join().");
               join();  // Trying to wait for this's thread to terminate.
-              appLogger.debug("joinV(" + getName() + ") after join().");
-              // Being here means this's thread terminated.
+              /// appLogger.debug("joinV(" + getName() + ") after join().");
+              // Being here means this's thread has terminated.
               thisThreadTerminatedB= true;  // Setting flag to terminate loop.
               }
             catch (InterruptedException e) {  // Handling interrupt of join().
@@ -127,7 +127,7 @@ public class EpiThread
           ( currentThreadInteruptStatusB )
           Thread.currentThread().interrupt(); // Setting interrupt status.
         appLogger.info("EpiThread(" + getName() + ").joinV(): stopped.");
-        appLogger.debug("joinV(" + getName() + ") ends.");
+        /// appLogger.debug("joinV(" + getName() + ") ends.");
         }
 
     public static boolean interruptableSleepB( long msL )

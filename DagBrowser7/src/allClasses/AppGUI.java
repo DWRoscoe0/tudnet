@@ -34,7 +34,7 @@ public class AppGUI
     private EpiThread theCPUMonitorEpiThread;
     private DataTreeModel theDataTreeModel;
     private DataNode theInitialRootDataNode;
-    private GUIBuilderStarter theGUIBuilderStarter;
+    private GUIManager theGUIManager;
     private Shutdowner theShutdowner;
 
     public AppGUI(   // Constructor.
@@ -42,7 +42,7 @@ public class AppGUI
         EpiThread theCPUMonitorEpiThread,
         DataTreeModel theDataTreeModel,
         DataNode theInitialRootDataNode,
-        GUIBuilderStarter theGUIBuilderStarter,
+        GUIManager theGUIManager,
         Shutdowner theShutdowner
         )
       {
@@ -50,7 +50,7 @@ public class AppGUI
 	      this.theCPUMonitorEpiThread= theCPUMonitorEpiThread;
         this.theDataTreeModel= theDataTreeModel;
         this.theInitialRootDataNode= theInitialRootDataNode;
-        this.theGUIBuilderStarter= theGUIBuilderStarter;
+        this.theGUIManager= theGUIManager;
         this.theShutdowner= theShutdowner;
         }
     
@@ -122,44 +122,42 @@ public class AppGUI
 
         } // class InstanceCreationRunnable
 
-    public void runV() 
+    public void runV()
       /* This method does the main AppGUI run phase.
         It does not return until a Shutdown is requested
         and it has shutdown the things for which it is responsible.
         */
       {
-    		appLogger.info("AppGUI.run() begins.");
+    		appLogger.info("AppGUI.runV() begins.");
         theDataTreeModel.initializeV( theInitialRootDataNode );
-        theGUIBuilderStarter.initializeV();
+        theGUIManager.initializeV();
         theConnectionManagerEpiThread.startV();
         theCPUMonitorEpiThread.startV();
 
         // Now the app is running and interacting with the user.
-        theShutdowner.waitForAppShutdownRequestedV(); // Wait for shutdown request.
+        theShutdowner.waitForAppShutdownRequestedV(); // Wait for shutdown.
 
         // Now the app is shutting down.
         theCPUMonitorEpiThread.stopAndJoinV();
         theDataTreeModel.logListenersV(); ///dbg
-        ///fix? theCPUMonitorEpiThread.stopAndJoinV( ); 
-        theConnectionManagerEpiThread.stopAndJoinV( ); // Terminate ConnectionManager 
-          // thread, all connections, and all related threads.
-        theGUIBuilderStarter.finalizeV();
-    		appLogger.info("AppGUI.run() ends.");
+        theConnectionManagerEpiThread.stopAndJoinV( );
+          // Terminate ConnectionManager connections and all related threads.
+        theGUIManager.finalizeV();
+    		appLogger.info("AppGUI.runV() ends.");
         }
 
     } // class AppGUI
 
-class GUIBuilderStarter // This EDT-Runnable starts GUI. 
-  implements Runnable, KeyEventDispatcher 
+class GUIManager 
+  implements KeyEventDispatcher 
 
-  /* This nested class is used to create and start the app's GUI.
-    It's run() method runs in the EDT thread.
+  /* This nested class is used to manage the app's GUI.
     It signals its completion by executing doNotify() on
     the LockAndSignal object passed to it when 
     its instance is constructed.
     */
 
-  { // GUIBuilderStarter
+  { // GUIManager
 
 		// Injected dependency variables.
 		private AppInstanceManager theAppInstanceManager;
@@ -172,7 +170,7 @@ class GUIBuilderStarter // This EDT-Runnable starts GUI.
     // Other AppGUI instance variables.
     private JFrame theJFrame;  // App's only JFrame (now).
 
-    GUIBuilderStarter(   // Constructor. 
+    GUIManager(   // Constructor. 
     		AppInstanceManager theAppInstanceManager,
     		DagBrowserPanel theDagBrowserPanel,
     		AppGUIFactory theAppGUIFactory,
@@ -192,32 +190,22 @@ class GUIBuilderStarter // This EDT-Runnable starts GUI.
     public void initializeV()
       /* This method does the initialization that 
         could not be done with constructor dependency injection.
-        It runs the run() method on the AWT thread,
-        which does all the GUI code that must be executed on that thread.
+        It does this by running initializeOnEDTV()on the AWT thread.
         */
       {
-        EDTUtilities.invokeAndWaitV(  // Queue on GUI (AWT) thread...
-            this // ...this Runnable GUIBuilderStarter,...
-            );  //  whose run() method will build and start the app's GUI.
-        }
-    
-    public void finalizeV()
-      /* This method does finalization.
-        The only thing that needs doing is terminating the timer thread.
-        It does this by calling the DagBrowserPanel finalize method.
-        */
-      { 
-        theDagBrowserPanel.finalizationV(); // To terminate ActivityTimer.
+        EDTUtilities.invokeAndWaitV( // Dispatching on EDT
+            new Runnable() {
+              @Override
+              public void run() { initializeOnEDTV(); }  
+              } );
         }
 
-    public void run() // GUIBuilderStarter.
-      /* This method builds the app's GUI in a new JFrame and starts it.
-        This method is run on the AWT thread by startingBrowserGUIV() 
-        because AWT GUI code is not thread-safe.
-        This method is called by invokeAndWaitV(..).
+    public void initializeOnEDTV() // GUIManager.
+      /* This method does initialization.  It must be run on the EDT. 
+        It builds the app's GUI in a new JFrame and starts it.
         */
       {
-    		appLogger.info("GUIBuilderStarter.run() beginning.");
+    		appLogger.info("GUIManager.initializeOnEDTV() begins.");
     		theTracingEventQueue.initializeV(); // to start monitor thread.
 
       	Toolkit.getDefaultToolkit().getSystemEventQueue().push(
@@ -248,8 +236,41 @@ class GUIBuilderStarter // This EDT-Runnable starts GUI.
         KeyboardFocusManager.getCurrentKeyboardFocusManager().
           addKeyEventDispatcher( this );
 
-        //appLogger.info("GUI start-up complete.");
-    		appLogger.info("GUIBuilderStarter.run() ending.");
+    		appLogger.info("GUIManager.initializeOnEDTV() ends.");
+        }
+
+    public void finalizeV()
+      /* This method does finalization.  
+        It does this by running finalizeOnEDTV()on the AWT thread.
+        */
+      {
+        appLogger.info("GUIManager.finalizeOnV() called.");
+        theDagBrowserPanel.finalizationV(); // To terminate ActivityTimer.
+          ////fix For some reason, this fails when run on EDT!
+        EDTUtilities.invokeAndWaitV( // Dispatching on EDT
+            new Runnable() {
+              @Override
+              public void run() { 
+                //// appLogger.info("GUIManager.finalizeOnV() invokeAndWaitV() run() begins.");
+                finalizeOnEDTV();  
+                //// appLogger.info("GUIManager.finalizeOnV() invokeAndWaitV() run() ends.");
+                } } );
+        //// appLogger.info("GUIManager.finalizeOnV() ends.");
+        }
+    
+    public void finalizeOnEDTV()
+      /* This method does finalization.  It must be run on the EDT.
+        */
+      { 
+         //// appLogger.info("GUIManager.finalizeOnEDTV() begins.");
+         //// appLogger.info("GUIManager.finalizeOnEDTV() after theDagBrowserPanel.finalizationV().");
+        for (Window aWindow : Window.getWindows()) {
+          appLogger.info(
+              "GUIManager.finalizeOnEDTV() disposing Window titled: "
+              +((Frame)aWindow).getTitle());
+          aWindow.dispose(); // Do this so Event Dispatch Thread terminates.
+          }
+        //// appLogger.info("GUIManager.finalizeOnEDTV() ends.");
         }
     
 		public boolean dispatchKeyEvent(KeyEvent theKeyEvent)
@@ -258,7 +279,6 @@ class GUIBuilderStarter // This EDT-Runnable starts GUI.
 			  boolean processedKeyB= true;
 				int idI= theKeyEvent.getID();
 			  int keyI= theKeyEvent.getKeyCode();
-			  ///dbg char keyC= theKeyEvent.getKeyChar();
 			  boolean controlB= theKeyEvent.isControlDown();
 			  boolean shiftB= theKeyEvent.isShiftDown();
 			  /* ///dbg appLogger.debug( "dispatchKeyEvent(..) "+
@@ -316,7 +336,7 @@ class GUIBuilderStarter // This EDT-Runnable starts GUI.
           	});
         theJFrame.setVisible(true);  // Make the window visible.
         appLogger.info(
-          	"GUIBuilderStarter.theJFrame.setVisible(true) done."
+          	"GUIManager.theJFrame.setVisible(true) done."
           	);
         SwingUtilities.invokeLater(new Runnable() { // Queue GUI event...
           @Override  
@@ -331,7 +351,7 @@ class GUIBuilderStarter // This EDT-Runnable starts GUI.
         return theJFrame;
         }
 
-    } //GUIBuilderStarter
+    } // GUIManager
 
 
 class PlatformUI 

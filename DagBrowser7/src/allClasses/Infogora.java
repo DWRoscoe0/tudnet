@@ -100,7 +100,10 @@ class Infogora  // The root of this app.
 	      Unfortunately the app doesn't terminate, 
 	      so we call exit(0) to terminate.
 	      ///fix so exit() doesn't need to be called.
-	        As first step, list all remaining active ,,threads.
+	        List all remaining active threads seems to show that
+	        the only non-daemon threads are Java or UI related,
+	        except possibly EventQueue-1 which might be or be related to
+	        the TracingEventQueueMonitor thread.
 
         Legal switches input on the command line from the InfogoraStarter are;
         -starterPort : followed by port number to be used
@@ -148,31 +151,41 @@ class Infogora  // The root of this app.
 	      theApp.runV();  // Running the app until shutdown.
 	        // This might not return if a shutdown is initiated by the JVM. 
 
-        logThreadsV();
+        logThreadsV(); // Record threads that are still active.
 	      appLogger.info(true,
-          "Infogora.main() calling exit(0). ======== APP IS ENDING ========");
+          "Infogora.main() ======== APP IS ENDING ========"
+          + "\n    by closing log file and exiting the main(..) method.");
         appLogger.closeFileIfOpenB(); // Close log for exit.
-	      System.exit(0); // Will kill any remaining unknown threads running??
+	      //// System.exit(0) is no longer needed.
 	      } // main(..)
 
     private static void logThreadsV()
-      /* Logs active threads, of which there should be very few.
-        All non-daemon app threads should have been terminated.f
-        This was based on code from a web article.
+      /* Logs active threads, of which there should be very few,
+        because when this method is called,
+        all non-daemon app threads should have been terminated,
+        and all active windows should have been dispose()-ed.             
+        
+        This method was based on code from a web article.
+        
+        Although the output from this method might contain 
+        some still active Normal threads other than "main", for example 
+          TIMED_WAITING  5  Normal  AWT-Shutdown
+          WAITING        6  Normal  AWT-EventQueue-1
+        their termination in the near future should be quite certain. 
         */
       {
         appLogger.info("Infogora.logThreadsV(), remaining active threads:"); 
-        Set<Thread> threadsSet= Thread.getAllStackTraces().keySet();
-        for (Thread t : threadsSet) {
+        Set<Thread> threadSet= Thread.getAllStackTraces().keySet();
+        for (Thread t : threadSet) {
             Thread.State threadState= t.getState();
             int priorityI= t.getPriority();
             String typeString= t.isDaemon() ? "Daemon" : "Normal";
             String nameString= t.getName();
             appLogger.getPrintWriter().printf("    %-13s %2d  %s  %-25s  \n", 
                 threadState, priorityI, typeString, nameString);
-        }
+            }
       
-  }
+        }
 
 		} // Infogora
 
