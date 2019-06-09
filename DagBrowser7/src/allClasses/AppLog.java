@@ -780,48 +780,6 @@ public class AppLog extends EpiThread
         return resultWriter;
         }
 
-    private synchronized Writer OLDopenWithRetryDelayFileWriter() ////
-      throws IOException
-      /* This method opens a FileWriter for the log file unconditionally.
-        It should be called only if the log file is closed.  
-        If the open fails, it sleeps for 1 ms, and tries again.
-        It repeats until the open succeeds.
-        It returns the open FileWriter.
-        
-        ///fix Add recovery for FileLockInterruptException,
-        which now causes infinite loop.
-        */
-      { 
-        FileOutputStream theFileOutputStream= null;
-        Writer resultWriter= null;
-        while (true) { // Keep trying to open until it succeeds.
-          try {
-              theFileOutputStream= null;
-              resultWriter= null;
-              theLogFileLock= null;
-              theFileOutputStream= new FileOutputStream( // Open for writing...
-                  logFile,   // ...log file with this name...
-                  true  // ...and write to end of file, not the beginning.
-                  );
-              FileChannel theFileChannel= theFileOutputStream.getChannel();
-              theLogFileLock= theFileChannel.lock();
-              theFileChannel.position(theFileChannel.size()); // Set for append.
-              resultWriter= new OutputStreamWriter(theFileOutputStream);
-              break; // Exit if open succeeded.
-            } catch (IOException e) { // Open failed.
-              System.out.println("openWithRetryDelayFileWriter() fail begin.");
-              System.out.println("openWithRetryDelayFileWriter() "+e);
-              if (theLogFileLock!=null) theLogFileLock.release();
-              Closeables.closeWithoutErrorLoggingB(theFileOutputStream);
-              Closeables.closeWithoutErrorLoggingB(resultWriter);
-              uninterruptableSleepB( 1 ); // Pause 1 ms.
-              openSleepDelayMsI++; //* Count the pause and the time.
-              System.out.println("openWithRetryDelayFileWriter() fail end.");
-            }
-          }
-        return resultWriter;
-        }
-
     public synchronized void closeFileAndSleepIfOpenV()
       /* This method is like closeFileAndDelayV() 
         but acts only if the log file is open.
