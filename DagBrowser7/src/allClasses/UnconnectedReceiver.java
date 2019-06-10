@@ -70,7 +70,7 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
         another thread should close the receiverDatagramSocket. 
         */
       {
-        appLogger.debug("run(): begins");
+        appLogger.info("run(): begins");
         try { // Doing operations that might produce an IOException.
           while  // Receiving and queuing packets unless termination is
             ////( ! EpiThread.exitingB() ) // requested.
@@ -108,7 +108,7 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
 		  					"run() IOException: ", e
 		  					);
           }
-        appLogger.debug("run(): ends");
+        appLogger.info("run(): ends");
         }
 
     } // UnconnectedReceiver

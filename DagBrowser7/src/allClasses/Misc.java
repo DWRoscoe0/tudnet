@@ -296,10 +296,13 @@ public class Misc
               int lengthI;
               while (true) {
                 lengthI= theInputStream.read(bufferAB);
-                if (lengthI <=  0) break; // Copy done.
+                if (lengthI <= 0) break; // Copy done.
                 theOutputStream.write(bufferAB, 0, lengthI);
-                if (EpiThread.interruptingB()) 
+                if (EpiThread.interruptingB()) {
+                  appLogger.logV(AppLog.LogLevel.DEBUG,
+                      "interruptableTryCopyFileV(..) interrupted.",null,true);
                   throw new InterruptedException("copy interrupted");
+                  }
                 }
             } finally {
               Closeables.closeWithErrorLoggingB(theInputStream);

@@ -118,7 +118,7 @@ public class TCPCopier
 		  		EpiThread.interruptableSleepB(Config.tcpClientRunDelayMsL);
 	  			appLogger.info("run() start delay done.");
 		  		updateTCPCopyStagingAreaV();
-          appLogger.debug("run() staging area update done.");
+          appLogger.debug("run() after staging area update attempt.");
 
 	      	PersistentCursor thePersistentCursor= 
 	      			new PersistentCursor( thePersistent );

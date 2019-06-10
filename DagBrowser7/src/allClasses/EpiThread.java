@@ -120,7 +120,7 @@ public class EpiThread
               }
             catch (InterruptedException e) {  // Handling interrupt of join().
               // Being here means current thread's interrupt status was set.
-              appLogger.debug("joinV(" + getName() + ") interrupted.");
+              /// appLogger.debug("joinV(" + getName() + ") interrupted.");
             	currentThreadInteruptStatusB= true; // Recording it for later.
               }
         if  // Restoring current thread's interrupt status if recorded earlier.

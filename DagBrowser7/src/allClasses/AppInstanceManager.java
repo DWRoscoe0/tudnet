@@ -421,7 +421,7 @@ l    * If the app receives a message indicating
           So divide this method?
         */
       {
-        appLogger.debug( 
+        appLogger.info( 
             "AppInstanceManager processCommandArgsV(..), starting." );
         argStrings= theCommandArgs.args(); // Save a copy of arg array.
         

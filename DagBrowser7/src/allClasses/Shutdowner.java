@@ -346,7 +346,7 @@ public class Shutdowner
         whether delegation to another instance is happening.
         */
       { 
-        appLogger.debug("sendFeedbackMessageToStarterV(..) called.");
+        appLogger.info("Shutdowner.sendFeedbackMessageToStarterV(..) called.");
         if ((starterPortLong != null) && (starterPortLong != 0))
           LocalSocket.localSendToPortB(
               messageString, starterPortLong.intValue());
@@ -366,7 +366,7 @@ public class Shutdowner
       public synchronized void addShutdownerListener
         ( ShutdownerListener listener ) 
         {
-          appLogger.debug("Shutdowner.addShutdownerListener("+listener+")"); 
+          appLogger.info("Shutdowner.addShutdownerListener("+listener+")"); 
           theEventListenerList.add(ShutdownerListener.class, listener);
           }
 
@@ -398,7 +398,7 @@ public class Shutdowner
             { 
               ShutdownerListener aShutdownerListener= 
                 theShutdownerListeners[i];
-              appLogger.debug( "Shutdowner.reverseFireShutdownerListeners( ): "
+              appLogger.info( "Shutdowner.reverseFireShutdownerListeners( ): "
                   + "calling ShutdownerListener: " + aShutdownerListener ); 
               aShutdownerListener.doMyShutdown( );
               }

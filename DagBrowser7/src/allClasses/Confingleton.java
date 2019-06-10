@@ -41,7 +41,7 @@ public class Confingleton
             // Ignore errors.  These are treated as no file or bad data.
             // null will be returned.
             }
-        appLogger.debug("Confingleton.getValueString(..) keyString="
+        appLogger.info("Confingleton.getValueString(..) keyString="
             +keyString+" valueString="+valueString);
         return valueString;
         }
@@ -52,7 +52,7 @@ public class Confingleton
         ///enh Make this an atomic operation. 
         */
       {
-        appLogger.debug("Confingleton.putValueV(..) keyString="
+        appLogger.info("Confingleton.putValueV(..) keyString="
             +keyString+" valueString="+valueString);
 
         File theFile= makeFile(keyString);

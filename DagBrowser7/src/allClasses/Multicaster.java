@@ -240,7 +240,7 @@ public class Multicaster
             for consumption by the main multicaster thread.
             */
           {
-        		appLogger.debug("run() begin.");
+        		appLogger.info("run() begin.");
 	          try { // Operations that might produce an IOException.
 	            while  // Receiving and queuing packets unless termination is
 	              ( ! EpiThread.exitingB() ) // requested.
@@ -270,7 +270,7 @@ public class Multicaster
 				  					"run() IOException: ", e
 				  					);
 	            }
-        		appLogger.debug("run() end.");
+        		appLogger.info("run() end.");
             }
 
         } // MulticastReceiver
@@ -422,10 +422,10 @@ public class Multicaster
 		            		);
 		            break inputDecoder;
 	            } // inputDecoder: 
-          	  appLogger.debug("receivingPacketsV() exiting inputDecoder.");
+          	  /// appLogger.debug("receivingPacketsV() exiting inputDecoder.");
             } // Processing packets until exit.
         	} // processorLoop:  // Processing packet or exiting.
-      	  appLogger.debug("receivingPacketsV() exiting processorLoop.");
+      	  /// appLogger.debug("receivingPacketsV() exiting processorLoop.");
         }
 
     private void processingPossibleNewUnicasterV( ) throws IOException
