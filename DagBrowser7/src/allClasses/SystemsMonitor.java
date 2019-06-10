@@ -91,20 +91,22 @@ public class SystemsMonitor
         a binary search method that determines CPU speed.
         A method it calls to do a search test also
         measures and displays other performances parameters
-        and does a wait that determines the measurement cycle time.
+        and does a wait that determines the measurement period time.
        */
       {
-    		appLogger.info( "SystemsMonitor.run() beginning." );
+    		appLogger.info( "run() begins." );
   
-    		createAndAddChildrenV();  // Do non-dependency-injection initialization.
+    		createAndAddChildrenV(); // Do non-dependency-injection initialization.
   
   		  measurementTimeMsL= // Setting time to do first measurement... 
   		  		System.currentTimeMillis(); //  to be immediately.
         while // Repeating measurement and display... 
-          ( !EpiThread.exitingB() ) // until termination is requested.
+          ( !EpiThread.interruptingB() ) // until termination is requested.
           {
         		doBinarySearchOfCPUSpeedAndDoOtherStuffL();
         		}
+        
+        appLogger.info( "run() ends." );
         }
 
     private void createAndAddChildrenV()
@@ -166,9 +168,10 @@ public class SystemsMonitor
         which is expressed as the count value that produces
         a 1 ms delay using the method measureCPUDelayNsL(long countL).
         It calls cpuMeasureAndDisplayAndDelayNsL(..) to make that measurement,
-        but that method also measure and display other performance parameters
+        but that method also measures and displays other performance parameters
         and does a wait to create the measurement cycle.
         It returns how far the CPU can count in a loop for 1 ms.
+        It aborts the search if the thread is interrupted.
 
         The CPU speed can be affected by several factors, such as:
         * Variation of the processor clock speed by power management systems.
@@ -179,7 +182,7 @@ public class SystemsMonitor
           instruction sequencing logic.
           
 		    CPU speed measurement takes approximately 1 ms.
-		    With a measuremet cycle of 1000 ms.
+		    With a measurement cycle of 1000 ms.
 		    the execution overhead is only about 0.1%.
 
         ///enh Maybe prevent overshoot in displayed values,
@@ -188,7 +191,7 @@ public class SystemsMonitor
     	{
     	  final long targetNsL= 1000000; // # of ns in the 1 ms target interval. 
 	
-        while (true) // Expand interval up while possible.
+        while (!EpiThread.interruptingB()) // Expand interval up while possible.
           { 
         		final long maxNsL= cpuMeasureAndDisplayAndDelayNsL( maxCountL );
         		if ( targetNsL <= maxNsL ) break;		              	  
@@ -196,7 +199,7 @@ public class SystemsMonitor
             minCountL+= intervalL;
             maxCountL+= (intervalL*2);
           	}
-        while (true) // Expand interval down while possible.
+        while (!EpiThread.interruptingB()) // Expand interval down while possible.
           { 
         		final long minNsL= cpuMeasureAndDisplayAndDelayNsL( minCountL );
           	if ( targetNsL >= minNsL ) break;
@@ -204,8 +207,10 @@ public class SystemsMonitor
             minCountL-= (intervalL*2);
             maxCountL-= intervalL;
           	}
-        while (maxCountL > minCountL) // Divide interval until its one point.
-	        { // Divide the interval.
+        while  // Divide interval until its one point.
+          (!EpiThread.interruptingB())
+          {
+            if (maxCountL <= minCountL) break; // Interval is single point.
 	          midCountL= (maxCountL - minCountL)/2 + minCountL; // Use shift?
         		final long midNsL= cpuMeasureAndDisplayAndDelayNsL( midCountL );
 	          if ( targetNsL < midNsL ) // Select half-interval based on result.
@@ -229,6 +234,8 @@ public class SystemsMonitor
     	  }
 
     private int cpuInitCountDownI= 50; // While non-0 we update only CPU speed.
+      ///enh Maybe replace this fast search with 
+        // storing and retrieving previous value in Persistent storage.
 
     private long cpuMeasureAndDisplayAndDelayNsL( long cpuSpeedCountL )
       /* This method is called by the binary search routine.
