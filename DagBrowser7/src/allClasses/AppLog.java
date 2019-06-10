@@ -730,16 +730,23 @@ public class AppLog extends EpiThread
         ///fix Add recovery for FileLockInterruptException
           and ClosedChannelException, which now causes infinite loop,
           which looks something like this in the log file:
+            openWithRetryDelayFileWriter() lock() interrupted.
             openWithRetryDelayFileWriter() fail begin.
             openWithRetryDelayFileWriter() java.nio.channels.ClosedChannelException
             openWithRetryDelayFileWriter() fail end.
+          This seems to happen when app is being terminated,
+          possibly because this method can be called by various threads,
+          all of which are being terminated when the app is being terminated.
+
         */
       { 
         boolean interruptedB= false;
         FileOutputStream theFileOutputStream= null;
         Writer resultWriter= null;
+        FileChannel theFileChannel= null;
         while (true) { // Keep trying to open until it succeeds.
           try {
+              theFileChannel= null;
               theFileOutputStream= null;
               resultWriter= null;
               theLogFileLock= null;
@@ -747,7 +754,7 @@ public class AppLog extends EpiThread
                   logFile,   // ...log file with this name...
                   true  // ...and write to end of file, not the beginning.
                   );
-              FileChannel theFileChannel= theFileOutputStream.getChannel();
+              theFileChannel= theFileOutputStream.getChannel();
               while (true) // Keep trying to acquire lock without interruption.
                 try {
                   // System.out.println("openWithRetryDelayFileWriter() before lock().");
@@ -767,6 +774,7 @@ public class AppLog extends EpiThread
               System.out.println("openWithRetryDelayFileWriter() fail begin.");
               System.out.println("openWithRetryDelayFileWriter() "+e);
               if (theLogFileLock!=null) theLogFileLock.release();
+              Closeables.closeWithoutErrorLoggingB(theFileChannel);
               Closeables.closeWithoutErrorLoggingB(theFileOutputStream);
               Closeables.closeWithoutErrorLoggingB(resultWriter);
               uninterruptableSleepB( 1 ); // Pause 1 ms.
@@ -774,7 +782,7 @@ public class AppLog extends EpiThread
               System.out.println("openWithRetryDelayFileWriter() fail end.");
               // System.exit(1); ////
             }
-          }
+          } // while (true)
         if ( interruptedB ) // If an interruption happened
           Thread.currentThread().interrupt(); // reestablish interrupt status.
         return resultWriter;
