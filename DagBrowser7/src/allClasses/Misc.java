@@ -164,8 +164,6 @@ public class Misc
 		      In that case the threads Interrupted status will be set.
 		      
 		      This method does not update in the reverse direction.
-		      
-		      ////fix Does copy need to be atomic?  It is not.
 		      */
 		    {
 	        long thisFileLastModifiedL= thisFile.lastModified();
@@ -173,33 +171,13 @@ public class Misc
 	        if // This file is newer than that file then replace that with this.
 	          ( thisFileLastModifiedL > thatFileLastModifiedL )
 	          copyFileWithRetryV(thisFile, thatFile);
-	          /*  ////
-				    try {
-					      appLogger.info( "updateFromToV(..) Copying started."
-					      		+ "\n  This file = " + thisFile
-					      		+ "\n  That file = " + thatFile
-					      		);
-					      Files.copy(
-						      thisFile.toPath()
-						      ,thatFile.toPath()
-						      ,StandardCopyOption.COPY_ATTRIBUTES
-						      ,StandardCopyOption.REPLACE_EXISTING
-						      //,StandardCopyOption.ATOMIC_MOVE is illegal.
-						      );
-							  appLogger.info( "updateFromToV(..) Copying finished." );
-					  } catch (Exception e) { 
-					    appLogger.info( 
-					      "updateFromToV(..) failed, \n  "
-					      +e.toString()
-					      ); 
-					    }
-            */  ////
 					}
 
       public static void copyFileWithRetryV(
           File sourceFile, File destinationFile)
         /* This method copies the sourceFile to the destinationFile.
-          It does not return until the copy succeeds.
+          It does not return until the copy succeeds or 
+          thread termination is requested.
           It assumes that a copy failure due to an IOException
           was caused by a temporary condition such as 
           the destination file being open for reading. 
@@ -213,18 +191,18 @@ public class Misc
           int attemptsI= 0;
           while (true) {
             if (EpiThread.testInterruptB()) { // Termination requested.
-              appLogger.info( "copyFileWithRetryV(..) terminated.");
+              appLogger.info( "copyFileWithRetryV(..) terminating.");
               break; }
             attemptsI++;
             copySuccessB= Misc.tryCopyFileB(sourceFile, destinationFile);
             if (copySuccessB) { // Copy completed.
               appLogger.info( "copyFileWithRetryV(..) "
-                  + "Copying successful after "+attemptsI+" attempts:"
+                  + "Copying successful on attempt #"+attemptsI+" "
                   + twoFilesString(sourceFile, destinationFile));
               break; }
-            appLogger.info("copyFileWithRetryV(..) failed attempt "+attemptsI
+            appLogger.info("copyFileWithRetryV(..) failed attempt #"+attemptsI
               +".  Will retry after 1 second."); 
-            EpiThread.interruptableSleepB(
+            EpiThread.interruptibleSleepB(
                 Config.fileCopyRetryPause1000MsL); // Wait 1 second.
             }
           }
@@ -238,61 +216,82 @@ public class Misc
         {
           File tmpFile= null;
           boolean copySuccessB= false; // Assume we will not be successful.
-          try {
-              tmpFile= File.createTempFile( // Creates empty file.
-                "Infogora",null,AppSettings.userAppFolderFile);
-              Path sourcePath= sourceFile.toPath();
-              Path tmpPath= tmpFile.toPath();
-              interruptableTryCopyFileV(sourceFile,tmpFile);
-              copyTimeAttributesV(sourcePath,tmpPath);
-              appLogger.info(
-                  "tryCopyFileB(..) atomically renaming temp file.");
-              Files.move(tmpFile.toPath(), destinationFile.toPath() 
-                  ,StandardCopyOption.ATOMIC_MOVE);  
-              copySuccessB= true;
-              }
+          toReturn: try {
+            tmpFile= createTemporaryFile("Infogora");
+            if (tmpFile == null) break toReturn;
+            Path sourcePath= sourceFile.toPath();
+            Path tmpPath= tmpFile.toPath();
+            if (!interruptibleTryCopyFileB(sourceFile,tmpFile)) 
+              break toReturn;
+            if (!copyTimeAttributesB(sourcePath,tmpPath)) 
+              break toReturn;
+            if (!atomicRenameB(tmpFile.toPath(), destinationFile.toPath())) 
+              break toReturn;
+            copySuccessB= true;
+            }
           catch (Exception e) { // Other instance probably still running.
-              appLogger.exception("tryCopyFileB(..) ",e); 
-              copySuccessB= false; // Record failure to cause retry.
-              deleteDeleteable(tmpFile); // Delete lost temporary file.
-              }
+            appLogger.exception("tryCopyFileB(..) ",e); 
+            copySuccessB= false; // Record failure.
+            }
+          finally {
+            deleteDeleteable(tmpFile); // Delete possible temporary file debris.
+            } // toReturn:
           appLogger.info("tryCopyFileB(..) copySuccessB="+copySuccessB);
           return copySuccessB;
           }
 
-      public static void touchV(File theFile, long timeStampL) 
-        /* This method sets theFile's LastModified time to timeStampL. 
-          It was created mainly to trigger update file copies for testing.  */
-        {
-          theFile.setLastModified(timeStampL);
-          }   
-
-      public static void touchV(File theFile)
-        /* This method sets theFile's LastModified time to the present time. 
-          It was created mainly to trigger update file copies for testing.  */
-        {
-          long timestamp = System.currentTimeMillis();
-          theFile.setLastModified(timestamp);
-          }   
-
-      private static void deleteDeleteable(File tmpFile)
-        {
-          if (tmpFile != null) tmpFile.delete();
-          }
-
-      private static void interruptableTryCopyFileV(
-          File sourcesourceFile, File destinationFile) 
-        throws InterruptedException, IOException
-        /* This method tries to copy the sourceFile to the destinationFile.
-          If the copy is interrupted, the copy fails,
-          and an InterruptedException is thrown.
-          If there is an error, the copy fails,
-          and an IOException is thrown.
+      
+      public static boolean atomicRenameB(
+          Path sourcePath, Path destinationPath)
+        /* This method atomically rename a file.
+          It is what is used to safely replace one file with another.
           */
         {
-          appLogger.info("interruptableTryCopyFileV(..) begins.");
+          boolean successB= false;
+          appLogger.info(
+              "atomicRenameB(..) atomically renaming file.");
+          try {
+              Files.move(sourcePath, destinationPath,
+                  StandardCopyOption.ATOMIC_MOVE);
+              successB= true;
+            } catch (IOException theIOException) {
+              appLogger.exception(
+                  "atomicRenameB(..) failed with ",theIOException); 
+            }
+          return successB;
+          }
+
+      private static File createTemporaryFile(String nameString)
+        /* This method tries to create a temporary file which contains
+          nameString as part of the name and in the app folder.
+          It logs any exceptions produced.
+          It returns the File of the temporary file created if successful,
+          or null if it failed for any reason.
+          */
+        {
+          File tmpFile= null;
+          try {
+              tmpFile= File.createTempFile( // Creates empty file.
+                nameString,null,AppSettings.userAppFolderFile);
+            } catch (IOException theIOException) {
+              appLogger.exception(
+                  "createTemporaryFile(..) failed with",theIOException); 
+            }
+          return tmpFile;
+          }
+
+      private static boolean interruptibleTryCopyFileB(
+          File sourcesourceFile, File destinationFile) 
+        /* This method tries to copy the sourceFile to the destinationFile.
+          If there is an error, the copy fails.
+          If the copy is interrupted, the copy fails.
+          This method returns true if the copy succeeds, false otherwise.
+          */
+        {
+          appLogger.info("interruptibleTryCopyFileB(..) begins.");
           InputStream theInputStream= null;
           OutputStream theOutputStream= null;
+          boolean successB= false;
           try {
               theInputStream= new FileInputStream(sourcesourceFile);
               theOutputStream= new FileOutputStream(destinationFile);
@@ -300,28 +299,30 @@ public class Misc
               int lengthI;
               while (true) {
                 lengthI= theInputStream.read(bufferAB);
-                if (lengthI <= 0) break; // Copy done.
+                if (lengthI <= 0) 
+                  { successB= true; break; }// Copy done.
                 theOutputStream.write(bufferAB, 0, lengthI);
-                if (EpiThread.testInterruptB()) {
-                  appLogger.logV(AppLog.LogLevel.DEBUG,
-                      "interruptableTryCopyFileV(..) interrupted.",null,true);
-                  throw new InterruptedException("copy interrupted");
-                  }
+                if (EpiThread.testInterruptB()) // Interruption. 
+                  break;
                 }
-            } finally {
+            } catch (Exception e) {
+                appLogger.exception("interruptibleTryCopyFileB(..)",e); 
+            } finally { // Close things, error or not.
               Closeables.closeWithErrorLoggingB(theInputStream);
               Closeables.closeWithErrorLoggingB(theOutputStream);
-              appLogger.info("interruptableTryCopyFileV(..) finally ends.");
+              appLogger.info("interruptibleTryCopyFileB(..) finally ends.");
             }
+          return successB;
           }
 
-    public static void copyTimeAttributesV(
+    public static boolean copyTimeAttributesB(
         Path sourcePath, Path destinationPath)
-      throws IOException
       /* This method copies the 3 time attributes from the source file
         to the destination file.
+        It returns true if successful, false otherwise.
         */
       {
+        boolean successB= false;
         try {
           BasicFileAttributeView sourceBasicFileAttributeView= 
               Files.getFileAttributeView(
@@ -338,29 +339,44 @@ public class Misc
           appLogger.info( "copyTimeAttributesV(..): "
               +theLastModifiedTime+", "+theLastAccessTime+", "+theCreateTime);
 
-          //// System.out.format("Size:%s bytes %n", sourceBasicFileAttributes.size());
-          //// System.out.format("Creation  Time:%s %n", sourceBasicFileAttributes.creationTime());
-          //// System.out.format("Last Access  Time:%s %n", sourceBasicFileAttributes.lastAccessTime());
-
           BasicFileAttributeView destinationBasicFileAttributeView= 
               Files.getFileAttributeView(
                   destinationPath,BasicFileAttributeView.class);
-          //// BasicFileAttributes destinationBasicFileAttributes= 
-          ////     destinationBasicFileAttributeView.readAttributes();
 
           destinationBasicFileAttributeView.setTimes(
               theLastModifiedTime, theLastAccessTime, theCreateTime);
-        } finally { ////  catch (IOException e) {
-          //// e.printStackTrace();
-        }        
-      } /////
+          successB= true;
+        } catch (IOException theIOException) {
+          appLogger.exception(
+              "copyTimeAttributesB(..) failed with",theIOException); 
+        }
+      return successB;
+      }
+
+    public static void touchV(File theFile, long timeStampL) 
+      /* This method sets theFile's LastModified time to timeStampL. 
+        It was created mainly to trigger update file copies for testing.  */
+      {
+        theFile.setLastModified(timeStampL);
+        }   
+
+    public static void touchV(File theFile)
+      /* This method sets theFile's LastModified time to the present time. 
+        It was created mainly to trigger update file copies for testing.  */
+      {
+        long timestamp = System.currentTimeMillis();
+        theFile.setLastModified(timestamp);
+        }   
+
+    private static void deleteDeleteable(File tmpFile)
+      {
+        if (tmpFile != null) tmpFile.delete();
+        }
     
     public static String twoFilesString(
         File sourceFile, File destinationFile)
     {
       return 
-         //// "\n  sourceFile= "+sourceFile
-         //// +"\n  destinationFile= "+destinationFile
           "\n    sourceFile:      " + Misc.fileDataString(sourceFile) + 
           "\n    destinationFile: " + Misc.fileDataString(destinationFile)
           ;

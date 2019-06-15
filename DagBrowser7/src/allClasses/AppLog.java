@@ -792,7 +792,7 @@ public class AppLog extends EpiThread
                 if (theLogFileLock!=null) theLogFileLock.release();
                 Closeables.closeWithoutErrorLoggingB(theFileChannel);
                 Closeables.closeWithoutErrorLoggingB(theFileOutputStream);
-                uninterruptableSleepB( 1 ); // Pause 1 ms.
+                uninterruptibleSleepB( 1 ); // Pause 1 ms.
                 openSleepDelayMsI++; //* Count the pause and the time.
                 //// System.err.println("openWithRetryDelayFileWriter() fail end.");
                 //// while (loopLimiterI == 0) ; // Hang when loop limiter reaches 0.
@@ -846,7 +846,7 @@ public class AppLog extends EpiThread
         It is called after some log file closings. 
          */
       {
-        uninterruptableSleepB(Config.LOG_MIN_CLOSE_TIME); // Block and pause.
+        uninterruptibleSleepB(Config.LOG_MIN_CLOSE_TIME); // Block and pause.
         }
 
     private synchronized void closeFileV()

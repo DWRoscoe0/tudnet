@@ -326,7 +326,7 @@ public class ConnectionManager
 		      appLogger.error("unconnectedDatagramSocket:"+e);
 		      if ( unconnectedDatagramSocket != null )
 		        unconnectedDatagramSocket.close();
-		      EpiThread.interruptableSleepB(  // Don't hog CPU in error loop.
+		      EpiThread.interruptibleSleepB(  // Don't hog CPU in error loop.
 		      	Config.errorRetryPause1000MsL
 		      	);
 		      }
@@ -386,7 +386,9 @@ public class ConnectionManager
     		EpiDatagramSocket.closeIfNotNullV(  // Causing unblock and termination.
     				unconnectedDatagramSocket
     				); // Strangely, closing can require 2 to 3 seconds.
-        appLogger.debug("ConnectionManager.stoppingUnicastReceiverThreadV() middle.");
+        appLogger.debug(
+            "ConnectionManager.stoppingUnicastReceiverThreadV() middle."
+            +"\n  Strangely this sometimes takes several seconds to get here.");
     		EpiThread.stopAndJoinIfNotNullV(theUnconnectedReceiverEpiThread);
         appLogger.debug("ConnectionManager.stoppingUnicastReceiverThreadV() ends.");
 	      }
@@ -433,7 +435,7 @@ public class ConnectionManager
 	      appLogger.error("theMulticastSocket:"+e);
 	      if ( theMulticastSocket != null )
 	      	theMulticastSocket.close();
-	      EpiThread.interruptableSleepB(  // Don't hog CPU in error loop.
+	      EpiThread.interruptibleSleepB(  // Don't hog CPU in error loop.
 	      		Config.errorRetryPause1000MsL
 	      		);
 	      }

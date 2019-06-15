@@ -810,7 +810,7 @@ l    * If the app receives a message indicating
             appShouldExitB= true; // App exits in the following cases.
             if (copyAndPrepareToRunB()) break toReturn; // Successful copy.
             appLogger.error("Copy failed.  Waiting, then exiting.");
-            EpiThread.interruptableSleepB(5000); // Wait 5s.
+            EpiThread.interruptibleSleepB(5000); // Wait 5s.
           } // toReturn:
 	          return appShouldExitB;
 	        }

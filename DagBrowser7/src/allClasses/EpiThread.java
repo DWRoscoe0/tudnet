@@ -143,7 +143,7 @@ public class EpiThread
         /// appLogger.debug("joinV(" + getName() + ") ends.");
         }
 
-    public static boolean interruptableSleepB( long msL )
+    public static boolean interruptibleSleepB( long msL )
       /* This method works like Thread.sleep( msI ),
         causing the current thread to sleep for msI milliseconds,
         except that it does not throw an InterruptedException 
@@ -172,8 +172,8 @@ public class EpiThread
         return interruptedB;
         }
 
-    public static boolean uninterruptableSleepB( long msL )
-      /* This method works exactly like interruptableSleepB(..)
+    public static boolean uninterruptibleSleepB( long msL )
+      /* This method works exactly like interruptibleSleepB(..)
         except instead of returning immediately 
         if sleep is interrupted, it sleeps again, 
         repeatedly if needed, until the thread has slept the full delay of msL.
@@ -195,7 +195,7 @@ public class EpiThread
     	  	long remainingMsL= // Calculate time in ms remaining to sleep. 
     	  			endTimeMsL - System.currentTimeMillis();
     	  	if ( remainingMsL <= 0L ) break; // Exit if there's no remaining time. 
-    	  	interruptableSleepB( remainingMsL ); // Try sleeping for that time.
+    	  	interruptibleSleepB( remainingMsL ); // Try sleeping for that time.
     	  	}
 
     	  if ( interruptedB ) // IF an interruption happened at any time

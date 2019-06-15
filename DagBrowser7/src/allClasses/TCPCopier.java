@@ -115,7 +115,7 @@ public class TCPCopier
             return;
 
           appLogger.info("run() start delay beginning.");
-		  		EpiThread.interruptableSleepB(Config.tcpClientRunDelayMsL);
+		  		EpiThread.interruptibleSleepB(Config.tcpClientRunDelayMsL);
 	  			appLogger.info("run() start delay done.");
 		  		updateTCPCopyStagingAreaV();
           appLogger.debug("run() after staging area update attempt.");
@@ -163,7 +163,7 @@ public class TCPCopier
 				    		tryExchangingFilesWithNextSavedServerV(thePersistentCursor);
 				    		appLogger.debug(
 				    				"interactWithTCPServersV(..) wait remainder period.");
-				    		EpiThread.interruptableSleepB( // Wait any remainder of period. 
+				    		EpiThread.interruptibleSleepB( // Wait any remainder of period. 
 				    				targetMsL - System.currentTimeMillis() );
 					    	}
 			        catch (InterruptedException e) { // Handling thread interrupt.
@@ -365,14 +365,14 @@ public class TCPCopier
             return;
 
 		  		appLogger.info("run() server start delay begins.");
-		    	EpiThread.interruptableSleepB(  // Delay to organize log and to give
+		    	EpiThread.interruptibleSleepB(  // Delay to organize log and to give
 		    			Config.tcpServerRunDelayMsL );  // connection advantage to client.
 		  		appLogger.info("run() server start delay done.");
 		    	while  // Repeatedly service one client request. 
 		    		( ! EpiThread.testInterruptB() ) 
 			    	{ 
 			    		serviceOneRequestFromAnyClientV();
-			    	  EpiThread.interruptableSleepB(Config.tcpServerCyclePauseMsL); 
+			    	  EpiThread.interruptibleSleepB(Config.tcpServerCyclePauseMsL); 
 			    	    // Sleep to prevent [malicious] hogging.
 			    		} // while...
 		    	}
@@ -493,7 +493,7 @@ public class TCPCopier
 						theSocket.shutdownOutput(); // Prevent reset at Socket close.
 				} catch (IOException ex) {
 			  		appLogger.info(ex, "tryTransferingFileL(..) aborted because of ");
-			  		EpiThread.uninterruptableSleepB( // Random delay of up to 2 seconds.
+			  		EpiThread.uninterruptibleSleepB( // Random delay of up to 2 seconds.
 			  				theRandom.nextInt(2000)); ///fix make interruptible.
 			  		appLogger.info("tryTransferingFileL(..) end of random delay.");
 			    } finally {
@@ -534,7 +534,6 @@ public class TCPCopier
 				InputStream socketInputStream,
 				long timeStampToSetL
 				)
-			////  throws IOException
 			/* This method receives the remote counterpart of file localFile,
 			  via socketInputStream. and replaces the localFile.
 			  The new file has its TimeStamp set to timeStampToSet.
@@ -587,7 +586,6 @@ public class TCPCopier
 	
 		private static boolean copyStreamBytesB( 
 				InputStream theInputStream, OutputStream theOutputStream)
-		  //// throws IOException
 		  /* This method copies all [remaining] file bytes
 		    from theInputStream to theOutputStream.
 		    The streams are assumed to be open at entry 

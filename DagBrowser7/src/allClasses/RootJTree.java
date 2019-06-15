@@ -1046,7 +1046,7 @@ public class RootJTree
           */
         {
           if ( animationDelayI != 0 )  // Config if desired.
-            EpiThread.interruptableSleepB( animationDelayI );
+            EpiThread.interruptibleSleepB( animationDelayI );
           }
 
     // Debugging logging code.  Much of this might eventually be deleted.
