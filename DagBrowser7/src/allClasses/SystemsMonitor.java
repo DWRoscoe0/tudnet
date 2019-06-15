@@ -101,7 +101,7 @@ public class SystemsMonitor
   		  measurementTimeMsL= // Setting time to do first measurement... 
   		  		System.currentTimeMillis(); //  to be immediately.
         while // Repeating measurement and display... 
-          ( !EpiThread.interruptingB() ) // until termination is requested.
+          ( !EpiThread.testInterruptB() ) // until termination is requested.
           {
         		doBinarySearchOfCPUSpeedAndDoOtherStuffL();
         		}
@@ -191,7 +191,7 @@ public class SystemsMonitor
     	{
     	  final long targetNsL= 1000000; // # of ns in the 1 ms target interval. 
 	
-        while (!EpiThread.interruptingB()) // Expand interval up while possible.
+        while (!EpiThread.testInterruptB()) // Expand interval up while possible.
           { 
         		final long maxNsL= cpuMeasureAndDisplayAndDelayNsL( maxCountL );
         		if ( targetNsL <= maxNsL ) break;		              	  
@@ -199,7 +199,7 @@ public class SystemsMonitor
             minCountL+= intervalL;
             maxCountL+= (intervalL*2);
           	}
-        while (!EpiThread.interruptingB()) // Expand interval down while possible.
+        while (!EpiThread.testInterruptB()) // Expand interval down while possible.
           { 
         		final long minNsL= cpuMeasureAndDisplayAndDelayNsL( minCountL );
           	if ( targetNsL >= minNsL ) break;
@@ -208,7 +208,7 @@ public class SystemsMonitor
             maxCountL-= intervalL;
           	}
         while  // Divide interval until its one point.
-          (!EpiThread.interruptingB())
+          (!EpiThread.testInterruptB())
           {
             if (maxCountL <= minCountL) break; // Interval is single point.
 	          midCountL= (maxCountL - minCountL)/2 + minCountL; // Use shift?

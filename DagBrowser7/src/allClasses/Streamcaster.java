@@ -98,9 +98,9 @@ public class Streamcaster<
 	  	  	tryingPingReceiveV();
 	      while (true) // Repeating until thread termination is requested.
 	        {
-	      		if ( EpiThread.exitingB() ) break;  // Exiting if requested.
+	      		if ( EpiThread.testInterruptB() ) break;  // Exiting if requested.
 	  	      tryingPingSendV();
-	  	  		if ( EpiThread.exitingB() ) break;  // Exiting if requested.
+	  	  		if ( EpiThread.testInterruptB() ) break;  // Exiting if requested.
 	  	    	tryingPingReceiveV();
 	          } // while(true)
 	    	}

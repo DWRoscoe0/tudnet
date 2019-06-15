@@ -212,7 +212,7 @@ public class Misc
           boolean copySuccessB= false;
           int attemptsI= 0;
           while (true) {
-            if (EpiThread.exitingB()) { // Termination requested.
+            if (EpiThread.testInterruptB()) { // Termination requested.
               appLogger.info( "copyFileWithRetryV(..) terminated.");
               break; }
             attemptsI++;
@@ -302,7 +302,7 @@ public class Misc
                 lengthI= theInputStream.read(bufferAB);
                 if (lengthI <= 0) break; // Copy done.
                 theOutputStream.write(bufferAB, 0, lengthI);
-                if (EpiThread.interruptingB()) {
+                if (EpiThread.testInterruptB()) {
                   appLogger.logV(AppLog.LogLevel.DEBUG,
                       "interruptableTryCopyFileV(..) interrupted.",null,true);
                   throw new InterruptedException("copy interrupted");

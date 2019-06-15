@@ -7,6 +7,19 @@ public class EpiThread
   extends Thread
 
   /* This class adds some useful features to Thread.
+   
+    When dealing with threads, it is important to distinguish between
+    "this thread" and the "current thread".
+    * "This thread", within an instance method or a constructor,
+      refers to the current object, an object in the conventional sense,
+      which happens to be a Thread object.
+      "This thread" is meaningful only within a Thread 
+      instance method or constructor. 
+    * "Current thread" refers to the thread which is currently executing.
+      There is always a current thread. 
+      It might be the same as "this thread", if there is one,
+      but they might be different, for example when executing the
+      start() and join() methods. 
 
 	  ///enh A destination thread needs only one LockAndSignal instance
 	  to manage its inputs regardless of the number of source threads
@@ -190,33 +203,14 @@ public class EpiThread
       	return interruptedB;
         }
 
-    public static boolean exitingB()
-      /* This is a method to save a little typing.
-        Like the Thread method that it calls,
-        it clears this thread's interrupted status
-        but returns what it was before clearing.
-        
-        ///doc FALEE!!!  The interrupt is not cleared.
-        
-        ///org Rename to testAndClearInterruptB() ?
-        */
-      { 
-        return Thread.currentThread().isInterrupted(); 
-        }
-
-    public static boolean interruptingB()
+    public static boolean testInterruptB()
       /* This tests the current thread's interrupt status 
-        but does not clear it so that it it can be used 
-        to exit multiple levels of methods and loops.
-        
-        ///org Rename to testInterruptB() ?
+        but it does not clear it or change it in any other way.
+        This means it it can be used to exit 
+        multiple levels of methods and loops.
         */
       { 
-        boolean interruptingB= // Test and clear interrupt status normally. 
-            Thread.currentThread().isInterrupted();
-        if (interruptingB) // Interrupt status was set so
-          Thread.currentThread().interrupt(); // reestablish it.
-        return interruptingB; // Return its value.
+        return Thread.currentThread().isInterrupted(); // Just return status.
         }
 		
 		}

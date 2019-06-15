@@ -150,7 +150,7 @@ public class TCPCopier
 				  */
 		    {
 	    		long targetMsL= System.currentTimeMillis(); // Getting now time.
-		    	while ( ! EpiThread.exitingB() ) // Repeat until exit requested.
+		    	while ( ! EpiThread.testInterruptB() ) // Repeat until exit requested.
 		    		{ // Try one update.
 		    			targetMsL+= Config.tcpClientPeriodMsL;
 		    				///fix Make this immune to skipped time.
@@ -369,7 +369,7 @@ public class TCPCopier
 		    			Config.tcpServerRunDelayMsL );  // connection advantage to client.
 		  		appLogger.info("run() server start delay done.");
 		    	while  // Repeatedly service one client request. 
-		    		( ! EpiThread.exitingB() ) 
+		    		( ! EpiThread.testInterruptB() ) 
 			    	{ 
 			    		serviceOneRequestFromAnyClientV();
 			    	  EpiThread.interruptableSleepB(Config.tcpServerCyclePauseMsL); 
@@ -610,7 +610,7 @@ public class TCPCopier
   	      	if ( byteI == -1 ) break; // -1 means end of stream, so exit.
   	      	theOutputStream.write(byteI); // Write byte.
   	      	byteCountI++;
-  	      	if (EpiThread.interruptingB()) break; // Exit if interrupted.
+  	      	if (EpiThread.testInterruptB()) break; // Exit if interrupted.
   	      	}
           completedB= true;
   	      appLogger.info(

@@ -99,7 +99,7 @@ public class Sender // Uunicast and multicast sender thread.
           	continue beforeReturn; // Looping if success.
 
       		if // Exiting loop if thread termination is requested.
-      		  ( EpiThread.exitingB() ) 
+      		  ( EpiThread.testInterruptB() ) 
       			break beforeReturn;
 
           senderLockAndSignal.waitingForInterruptOrNotificationE();

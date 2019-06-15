@@ -296,7 +296,7 @@ public class ConnectionManager
         	  stoppingSenderThreadV();
             stoppingUnicastReceiverThreadV();
     	    	preparingSocketLoop: while (true) {
-              if ( EpiThread.exitingB() )
+              if ( EpiThread.testInterruptB() )
               	break preparingAll;
     	  	  	prepareDatagramSocketV();
     	  	  	if ( ! EpiDatagramSocket.isNullOrClosedB( 
@@ -411,7 +411,7 @@ public class ConnectionManager
 	    	  preparingAll: { // Preparing socket and dependencies. 
             stoppingMulticasterThreadV();
     	    	preparingSocketLoop: while (true) {
-              if ( EpiThread.exitingB() )
+              if ( EpiThread.testInterruptB() )
               	break preparingAll;
     	  	  	prepareMulcicastSocketV();
     	  	  	if ( ! EpiDatagramSocket.isNullOrClosedB( theMulticastSocket ) )

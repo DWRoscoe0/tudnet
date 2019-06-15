@@ -68,7 +68,7 @@ public class Subcaster
 	
 					while (true) // Repeating until thread termination is requested.
 					  {
-							if ( EpiThread.exitingB() ) ///org rename to exitRequestedB()? 
+							if ( EpiThread.testInterruptB() ) ///org rename to exitRequestedB()? 
 								break; // Exiting if requested. 
 							///tmp pingReplyProtocolV();
 			    		theLockAndSignal.waitingForInterruptOrNotificationE(); // Waiting for any input.

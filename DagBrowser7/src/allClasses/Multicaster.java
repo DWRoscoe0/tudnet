@@ -243,7 +243,7 @@ public class Multicaster
         		appLogger.info("run() begin.");
 	          try { // Operations that might produce an IOException.
 	            while  // Receiving and queuing packets unless termination is
-	              ( ! EpiThread.exitingB() ) // requested.
+	              ( ! EpiThread.testInterruptB() ) // requested.
 	              { // Receiving and queuing one packet.
 	                try {
 	                  NetcasterPacket receiverNetcasterPacket=
@@ -307,12 +307,12 @@ public class Multicaster
             while (true) // Repeating until thread termination is requested.
               {
                 if   // Exiting if requested.
-                  ( EpiThread.exitingB() ) 
+                  ( EpiThread.testInterruptB() ) 
                   break;
                 // Code to be repeated goes here.
               	
                 while  // Processing while thread termination is not requested...
-                	( ! EpiThread.exitingB() )
+                	( ! EpiThread.testInterruptB() )
     	            { // Send and receive multicast packets.
     	              try {
     		      	    	theEpiOutputStreamO.writingAndSendingV("DISCOVERY"); // Sending query.

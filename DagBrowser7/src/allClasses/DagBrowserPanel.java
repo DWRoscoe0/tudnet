@@ -610,7 +610,7 @@ public class DagBrowserPanel
           public void run()
             {
               periodicTargetTimeMsL= System.currentTimeMillis();
-        			while (! exitingB())
+        			while (! testInterruptB())
                 {
               		doDelayMeasurementsV();
                   theAppInstanceManager. // Executing updater if present.

@@ -74,7 +74,7 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
         try { // Doing operations that might produce an IOException.
           while  // Receiving and queuing packets unless termination is
             ////( ! EpiThread.exitingB() ) // requested.
-            ( ! EpiThread.interruptingB() ) // requested.
+            ( ! EpiThread.testInterruptB() ) // requested.
             { // Receiving and queuing one packet appropriately.
               try {
                 NetcasterPacket theNetcasterPacket= // Get empty keyed packet.
