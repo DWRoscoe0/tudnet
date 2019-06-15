@@ -200,7 +200,10 @@ public class Misc
           File sourceFile, File destinationFile)
         /* This method copies the sourceFile to the destinationFile.
           It does not return until the copy succeeds.
-           */
+          It assumes that a copy failure due to an IOException
+          was caused by a temporary condition such as 
+          the destination file being open for reading. 
+          */
         {
           ///enh create function to make double file path string.
           appLogger.info("copyFileWithRetryV(..) "
@@ -231,45 +234,46 @@ public class Misc
         /* This method tries to copy the sourceFile to the destinationFile.
           It returns true if the copy succeeds, false otherwise.
           It logs any exception which causes failure.
-          
-          ///fix It uses Files.copy(..), which unfortunately 
-            is not interruptible.  A replacement is being created.
           */
         {
           File tmpFile= null;
           boolean copySuccessB= false; // Assume we will not be successful.
-          while  // Keep trying until copy success or exit requested.
-            (!EpiThread.exitingB() && !copySuccessB)
-            try {
-                tmpFile= File.createTempFile( // Creates empty file.
-                  "Infogora",null,AppSettings.userAppFolderFile);
-                Path sourcePath= sourceFile.toPath();
-                Path tmpPath= tmpFile.toPath();
-                //// copyTimeAttributesV(sourceFile.toPath(),tmpFile.toPath());
-                //// Files.copy( sourceFile.toPath()
-                 ////     ,tmpFile.toPath()
-                 ////     ,StandardCopyOption.COPY_ATTRIBUTES
-                 ////     ,StandardCopyOption.REPLACE_EXISTING
-                 ////     );
-                interruptableTryCopyFileV(sourceFile,tmpFile);
-                copyTimeAttributesV(sourcePath,tmpPath);
-                appLogger.info(
-                    "tryCopyFileB(..) atomically renaming temp file.");
-                Files.move(tmpFile.toPath(), destinationFile.toPath() 
-                    ,StandardCopyOption.ATOMIC_MOVE);  
-                copySuccessB= true;
-                }
-            //// catch (InterruptedException e) {
-             ////   Thread.currentThread().interrupt();
-             ////     }
-            catch (Exception e) { // Other instance probably still running.
-                appLogger.exception("tryCopyFileB(..) ",e); 
-                copySuccessB= false; // Record failure to cause retry.
-                deleteDeleteable(tmpFile); // Delete lost temporary file.
-                }
+          try {
+              tmpFile= File.createTempFile( // Creates empty file.
+                "Infogora",null,AppSettings.userAppFolderFile);
+              Path sourcePath= sourceFile.toPath();
+              Path tmpPath= tmpFile.toPath();
+              interruptableTryCopyFileV(sourceFile,tmpFile);
+              copyTimeAttributesV(sourcePath,tmpPath);
+              appLogger.info(
+                  "tryCopyFileB(..) atomically renaming temp file.");
+              Files.move(tmpFile.toPath(), destinationFile.toPath() 
+                  ,StandardCopyOption.ATOMIC_MOVE);  
+              copySuccessB= true;
+              }
+          catch (Exception e) { // Other instance probably still running.
+              appLogger.exception("tryCopyFileB(..) ",e); 
+              copySuccessB= false; // Record failure to cause retry.
+              deleteDeleteable(tmpFile); // Delete lost temporary file.
+              }
           appLogger.info("tryCopyFileB(..) copySuccessB="+copySuccessB);
           return copySuccessB;
           }
+
+      public static void touchV(File theFile, long timeStampL) 
+        /* This method sets theFile's LastModified time to timeStampL. 
+          It was created mainly to trigger update file copies for testing.  */
+        {
+          theFile.setLastModified(timeStampL);
+          }   
+
+      public static void touchV(File theFile)
+        /* This method sets theFile's LastModified time to the present time. 
+          It was created mainly to trigger update file copies for testing.  */
+        {
+          long timestamp = System.currentTimeMillis();
+          theFile.setLastModified(timestamp);
+          }   
 
       private static void deleteDeleteable(File tmpFile)
         {

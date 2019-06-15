@@ -446,14 +446,17 @@ public class AppLog extends EpiThread
         and also to the console error stream for Exception e.
         This is for exceptions that must be caught,
         but for which there is nothing that can be or needs to be done.
+        
+        ///enh Make this display a StackTrace with exception.
         */
       { 
         String wholeString= "EXCEPTION: " + inString + " :\n  " + e ;
 
-        System.err.println(wholeString);  // Send to error console.
-        e.printStackTrace();
+        System.err.println(wholeString); // Send intro string to error console.
+        e.printStackTrace(); // Send StackTrae to error console.
 
-        error( wholeString );
+        error( wholeString ); // Send intro string to log file.
+        e.printStackTrace(getPrintWriter()); // Send StackTrae to log file. 
         }
     
     public void error(String inString)
@@ -744,6 +747,7 @@ public class AppLog extends EpiThread
         FileOutputStream theFileOutputStream= null;
         Writer resultWriter= null;
         FileChannel theFileChannel= null;
+        //// int loopLimiterI= 3;
         while (true) { // Keep trying to open until it succeeds.
           try {
               theFileChannel= null;
@@ -755,32 +759,47 @@ public class AppLog extends EpiThread
                   true  // ...and write to end of file, not the beginning.
                   );
               theFileChannel= theFileOutputStream.getChannel();
-              while (true) // Keep trying to acquire lock without interruption.
-                try {
+              //// while (true) // Keep trying to acquire lock without interruption.
+              ////   try {
                   // System.out.println("openWithRetryDelayFileWriter() before lock().");
-                  theLogFileLock= theFileChannel.lock();
-                  // System.out.println("openWithRetryDelayFileWriter() after lock().");
-                  break; // Lock acquired, so break out of loop.
-                  }
-                catch( FileLockInterruptionException ex ) { // Interrupted.
-                  Thread.currentThread().isInterrupted(); // Clear interrupt
-                  interruptedB= true; // but record it for restoring later.
-                  System.out.println("openWithRetryDelayFileWriter() lock() interrupted.");
-                  }
+              theLogFileLock= theFileChannel.lock();
+                  // System.err.println("openWithRetryDelayFileWriter() after lock().");
+              ////     break; // Lock acquired, so break out of loop.
+              //// }
+              //// catch( FileLockInterruptionException ex ) { // Interrupted.
+              ////      System.err.println(
+              ////     "openWithRetryDelayFileWriter() lock() interrupted:"+ex);
+              //// ex.printStackTrace();
+              //// Thread.currentThread().isInterrupted(); // Clear interrupt
+              //// interruptedB= true; // but record it for restoring later.
+              //// }
               theFileChannel.position(theFileChannel.size()); // Set for append.
               resultWriter= new OutputStreamWriter(theFileOutputStream);
               break; // Exit if open succeeded.
-            } catch (IOException e) { // Open failed.
-              System.out.println("openWithRetryDelayFileWriter() fail begin.");
-              System.out.println("openWithRetryDelayFileWriter() "+e);
-              if (theLogFileLock!=null) theLogFileLock.release();
-              Closeables.closeWithoutErrorLoggingB(theFileChannel);
-              Closeables.closeWithoutErrorLoggingB(theFileOutputStream);
-              Closeables.closeWithoutErrorLoggingB(resultWriter);
-              uninterruptableSleepB( 1 ); // Pause 1 ms.
-              openSleepDelayMsI++; //* Count the pause and the time.
-              System.out.println("openWithRetryDelayFileWriter() fail end.");
-              // System.exit(1); ////
+            } catch (IOException e) {
+              //// System.err.println("openWithRetryDelayFileWriter() fail begin.");
+              if ( e instanceof FileLockInterruptionException ) {
+                //// System.err.println(
+                 ////     "openWithRetryDelayFileWriter() lock() interrupted with "+e);
+                 //// e.printStackTrace();
+                Thread.interrupted(); // Clear interrupt
+                interruptedB= true; // but record it for restoring later.
+                }
+              else {
+                System.err.println("openWithRetryDelayFileWriter() common exception "+e);
+                //// e.printStackTrace();
+                Closeables.closeWithoutErrorLoggingB(resultWriter);
+                if (theLogFileLock!=null) theLogFileLock.release();
+                Closeables.closeWithoutErrorLoggingB(theFileChannel);
+                Closeables.closeWithoutErrorLoggingB(theFileOutputStream);
+                uninterruptableSleepB( 1 ); // Pause 1 ms.
+                openSleepDelayMsI++; //* Count the pause and the time.
+                //// System.err.println("openWithRetryDelayFileWriter() fail end.");
+                //// while (loopLimiterI == 0) ; // Hang when loop limiter reaches 0.
+                //// loopLimiterI--; // Otherwise decrement loop limiter.
+                //// while (true) ;
+                // System.exit(1); ////
+                }
             }
           } // while (true)
         if ( interruptedB ) // If an interruption happened

@@ -40,7 +40,7 @@ public class App { // The App, especially pre-GUI stuff.
      */
     {
       // App initialization.
-  		//appLogger.info("App beginning.");
+  		appLogger.info("App.run() begins.");
   		thePersistent.initializeV();  // Prepare access to persistent data.
   	  defineNodeIdentityV();
 			theTCPServer.startV();
@@ -52,6 +52,7 @@ public class App { // The App, especially pre-GUI stuff.
 			delegateOrDoV(); // Actually do some work.
 
       // App shutdown.
+      appLogger.info("App.run() shutting down.");
       theAppInstanceManager.finalizeV();
       theTCPClient.stopAndJoinV();
       theTCPServer.stopAndJoinV();
@@ -61,7 +62,7 @@ public class App { // The App, especially pre-GUI stuff.
         // This might not return if shutdown began in the JVM. 
       appLogger.setBufferedModeV( 
           true ); // Because finishAppShutdownV() disables it for JVM exit. 
-  		appLogger.info("App exiting.");
+      appLogger.info("App.run() ends.");
       
       // After this method returns, the main thread of this app should exit.
       } // runV().

@@ -81,6 +81,7 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
                 		theNetcasterPacketManager.produceKeyedPacket();
                 DatagramPacket theDatagramPacket= // Get DatagramPacket from it.
                 		theNetcasterPacket.getDatagramPacket();
+                appLogger.debug("run(): before receive(..)");
                 receiverDatagramSocket.receive(theDatagramPacket); // Receive.
                 PacketManager.logUnconnectedReceiverPacketV(
                 		theDatagramPacket
@@ -97,7 +98,7 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
                 			); // Delegate by queuing to ConnectionManager.
                 }
               catch( SocketException soe ) {
-                appLogger.info("run(): " + soe );
+                appLogger.info("run(): interrupted by " + soe );
                 Thread.currentThread().interrupt(); // Translating 
                   // exception into request to terminate this thread.
                 }

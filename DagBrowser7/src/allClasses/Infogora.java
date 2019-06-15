@@ -172,6 +172,9 @@ class Infogora  // The root of this app.
           TIMED_WAITING  5  Normal  AWT-Shutdown
           WAITING        6  Normal  AWT-EventQueue-1
         their termination in the near future should be quite certain. 
+        
+        ///fix Prevent log entry fragmentation because it presently uses
+          multiple calls to appLogger.
         */
       {
         appLogger.info("Infogora.logThreadsV(), remaining active threads:"); 

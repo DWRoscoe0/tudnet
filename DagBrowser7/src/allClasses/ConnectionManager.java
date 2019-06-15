@@ -382,10 +382,13 @@ public class ConnectionManager
 
     private void stoppingUnicastReceiverThreadV()
 	    {
+        appLogger.debug("ConnectionManager.stoppingUnicastReceiverThreadV() begins.");
     		EpiDatagramSocket.closeIfNotNullV(  // Causing unblock and termination.
     				unconnectedDatagramSocket
-    				);
+    				); // Strangely, closing can require 2 to 3 seconds.
+        appLogger.debug("ConnectionManager.stoppingUnicastReceiverThreadV() middle.");
     		EpiThread.stopAndJoinIfNotNullV(theUnconnectedReceiverEpiThread);
+        appLogger.debug("ConnectionManager.stoppingUnicastReceiverThreadV() ends.");
 	      }
 
     private void stoppingSenderThreadV()

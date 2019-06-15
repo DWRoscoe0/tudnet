@@ -86,7 +86,7 @@ public class EpiThread
         closing the socket or stream which might be blocking the thread. 
         */
       {
-        //appLogger.info("EpiThread(" + getName() + ").stopV(): stopping.");
+        appLogger.info("EpiThread(" + getName() + ").stopV(): stopping.");
 
         interrupt(); // Requesting termination of EpiThread thread.
         }
@@ -100,7 +100,7 @@ public class EpiThread
         It also logs the termination.
         
         When this method returns, Thread.currentThread()'s interrupt status 
-        will set if it was set when the method began or became set
+        will be set if it was set when the method began or became set
         while the method was executing.  
         Otherwise Thread.currentThread()'s interrupt status will be false.
         */
@@ -193,7 +193,10 @@ public class EpiThread
     public static boolean exitingB()
       /* This is a method to save a little typing.
         Like the Thread method that it calls,
-        it clears this thread's interrupted status.
+        it clears this thread's interrupted status
+        but returns what it was before clearing.
+        
+        ///doc FALEE!!!  The interrupt is not cleared.
         
         ///org Rename to testAndClearInterruptB() ?
         */
@@ -202,9 +205,9 @@ public class EpiThread
         }
 
     public static boolean interruptingB()
-      /* This tests the interrupt status but does not clear it
-        so that it it can be used to easilly exit 
-        multiple levels of methods and loops.
+      /* This tests the current thread's interrupt status 
+        but does not clear it so that it it can be used 
+        to exit multiple levels of methods and loops.
         
         ///org Rename to testInterruptB() ?
         */
@@ -213,7 +216,7 @@ public class EpiThread
             Thread.currentThread().isInterrupted();
         if (interruptingB) // Interrupt status was set so
           Thread.currentThread().interrupt(); // reestablish it.
-        return interruptingB;
+        return interruptingB; // Return its value.
         }
 		
 		}

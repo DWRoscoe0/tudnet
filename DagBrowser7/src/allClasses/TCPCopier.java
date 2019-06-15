@@ -442,7 +442,9 @@ public class TCPCopier
 				long localLastModifiedL
 				)
 		  throws IOException
-		  /* This method communicates with the peer on the other end of
+		  /* This method transfers a file through theSocket.
+		    The direction depends on the file time-stamps on each end.
+		    This node communicates with the peer on the other end of
 		    the connection on theSocket and compares
 		    the LastModefied TimeStamp of the remote file to localLastModifiedL
 		    which should be the LastModefied TimeStamp of the local file.
@@ -454,8 +456,8 @@ public class TCPCopier
 		    If a file is sent then it returns the negative of the remote time-stamp.
 		    If a file is neither sent nor received,
 		    because their time-stamps are equal, then 0 is returned. 
-				This method is called by both the client and the server.
-		    
+				This method is used by both the client and the server.
+
 				localSourceFile and localDestinationFile are normally the same file.
 				Using two parameters instead of one made earlier testing easier.
 				Also localLastModifiedL is normally the time-stamp of that same file,
@@ -492,7 +494,7 @@ public class TCPCopier
 				} catch (IOException ex) {
 			  		appLogger.info(ex, "tryTransferingFileL(..) aborted because of ");
 			  		EpiThread.uninterruptableSleepB( // Random delay of up to 2 seconds.
-			  				theRandom.nextInt(2000)); ///fix make interruptable.
+			  				theRandom.nextInt(2000)); ///fix make interruptible.
 			  		appLogger.info("tryTransferingFileL(..) end of random delay.");
 			    } finally {
 			  		}
@@ -518,7 +520,7 @@ public class TCPCopier
 						appLogger.info("sendNewerLocalFileV() sending file "
 								+ Misc.fileDataString(localFile));
 						localFileInputStream= new FileInputStream(localFile);
-						TCPCopier.copyStreamBytesV( 
+						TCPCopier.copyStreamBytesB( 
 								localFileInputStream, socketOutputStream);
 					} finally {
 						appLogger.info("sendNewerLocalFileV() sent file "
@@ -532,18 +534,18 @@ public class TCPCopier
 				InputStream socketInputStream,
 				long timeStampToSetL
 				)
-			throws IOException
+			////  throws IOException
 			/* This method receives the remote counterpart of file localFile,
 			  via socketInputStream. and replaces the localFile.
 			  The new file has its TimeStamp set to timeStampToSet.
-			  It does this in a two-step process using an intermediate temporary file.
-			  Returns true if the file transfer completed, false otherwise.
+			  The above operations are done in a two-step process 
+			  using an intermediate temporary file.
+			  This method returns true if the file transfer completed, 
+			  false otherwise.
 			  
 			  This method is longer than sendNewerLocalFileV(..) because
 			  it must set the files LastModified value and do an atomic rename.
-			  
-			  ///org Don't return value.  Use IOException to indicate failure.
-			  
+
 			 	*/
 			{
 			  appLogger.info("receiveNewerRemoteFileB() receiving file "
@@ -559,9 +561,10 @@ public class TCPCopier
 							Config.tcpCopierOutputFolderString 
 							+ File.separator + "Temporary.file" );
 					temporaryFileOutputStream= new FileOutputStream( temporaryFile );
-					TCPCopier.copyStreamBytesV( 
-							socketInputStream, temporaryFileOutputStream);
-					fileWriteCompleteB= true;
+					fileWriteCompleteB= TCPCopier.copyStreamBytesB(
+              socketInputStream, temporaryFileOutputStream);
+  				} catch ( FileNotFoundException e ) {
+  				  appLogger.exception("open failure", e);
 					} finally {
 						Closeables.closeWithErrorLoggingB(temporaryFileOutputStream);
 				  }
@@ -569,43 +572,55 @@ public class TCPCopier
 						temporaryFile.setLastModified(timeStampToSetL); // Set time stamp.
 						Path temporaryPath= temporaryFile.toPath(); //convert to Path.
 						Path localPath = localFile.toPath(); //convert to Path.
-						Files.move( // Rename file, replacing existing file with same name.
-								temporaryPath, localPath, StandardCopyOption.REPLACE_EXISTING, 
-								StandardCopyOption.ATOMIC_MOVE);
+						try {
+  						Files.move( // Rename file, replacing existing file with same name.
+  								temporaryPath, localPath, StandardCopyOption.REPLACE_EXISTING, 
+  								StandardCopyOption.ATOMIC_MOVE);
+  						} catch ( IOException e ) {
+                appLogger.exception("rename failure", e);
+              }
 					  appLogger.info("receiveNewerRemoteFileB() received file "
 					  		+ Misc.fileDataString(localFile));
 					}
 				return fileWriteCompleteB;
 				}
 	
-		private static void copyStreamBytesV( 
+		private static boolean copyStreamBytesB( 
 				InputStream theInputStream, OutputStream theOutputStream)
-		  throws IOException
+		  //// throws IOException
 		  /* This method copies all [remaining] file bytes
 		    from theInputStream to theOutputStream.
-		    Any IOException encountered is re-thrown and terminate the copy.
+		    The streams are assumed to be open at entry 
+		    and they will remain open at exit.
+		    It returns true if the copy of all data finished, 
+		    false if it does not finish for any reason.
+		    Thread.currentThread().interrupt() will interrupt the copy,
+		    but the status will remain set after exit.
+
+		    ///opt Copy more than 1 byte at a time.
 		   	*/
 			{
-	      appLogger.info("copyStreamBytesV() beginning.");
+	      appLogger.info("copyStreamBytesV() begins.");
 	      int byteCountI= 0;
-	  		while (true) { int byteI;
-	      	try { byteI= theInputStream.read(); } // Read byte. 
-			    catch (IOException theIOException) {
-			    	appLogger.info(theIOException, "copyStreamBytesV() reading");
-			    	throw theIOException; // Re-throw.
-			    	}
-	  	  	///dbg appLogger.info("copyStreamBytesV() byteI="+byteI+" "+(char)byteI);
-	      	if ( byteI == -1 ) break;
-	      	try { theOutputStream.write(byteI); } // Write byte.
-			    catch (IOException theIOException) { 
-			    	appLogger.info(theIOException, "copyStreamBytesV() writing");
-			    	throw theIOException; // Re-throw.
-			    	}
-	      	byteCountI++;
-	      	}
-	      appLogger.info(
-	      		"copyStreamBytesV() ended.  Bytes transfered: " + byteCountI);
-	    	}
+	      boolean completedB= false;
+	      try {
+  	  		while (true) { // Copy bytes as long as possible. 
+  	  		  int byteI;
+  	      	byteI= theInputStream.read(); // Read byte. 
+  	      	if ( byteI == -1 ) break; // -1 means end of stream, so exit.
+  	      	theOutputStream.write(byteI); // Write byte.
+  	      	byteCountI++;
+  	      	if (EpiThread.interruptingB()) break; // Exit if interrupted.
+  	      	}
+          completedB= true;
+  	      appLogger.info(
+  	      		"copyStreamBytesV() success, bytes transfered: " + byteCountI);
+	        } 
+	      catch (IOException theIOException) {
+          appLogger.exception("copyStreamBytesV() failed",theIOException);
+	        }
+	      return completedB;
+	      }
 	  
 		private static long exchangeAndCompareFileTimeStampsRemoteToLocalL( 
 				InputStream socketInputStream, 
