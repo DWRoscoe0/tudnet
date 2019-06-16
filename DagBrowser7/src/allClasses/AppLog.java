@@ -54,9 +54,16 @@ public class AppLog extends EpiThread
     which doesn't close the log file after every log entry
     but buffered mode is still a bit of a kludge.
 
-    ///enh: Underway.  Begin the transition to a logger 
-      that doesn't need to be a static singleton and can be injected.
-      Allow both static and injected-non-static, at least for a while.
+    Note, to output several lines iteratively to this log's PrintWriter
+    in a way that will not be interrupted by output from other threads,
+    use the method getPrintWriter() to get the PrintWriter,
+    and puts all of the code inside a block synchronized on this log object.
+    Like all synchronized code, this code should complete quickly.
+    See the method Infogora.logThreadsV() for an example of doing this.
+
+    ///enh: Transition to a logger that doesn't need to be 
+      a static singleton and can be injected.  Allow both 
+      static and injected-non-static, at least for a while.
 
     ///fix  Sometimes when the app is terminated from 
       the Windows Task Manager, the log file is truncated,
@@ -455,8 +462,10 @@ public class AppLog extends EpiThread
         System.err.println(wholeString); // Send intro string to error console.
         e.printStackTrace(); // Send StackTrae to error console.
 
-        error( wholeString ); // Send intro string to log file.
-        e.printStackTrace(getPrintWriter()); // Send StackTrae to log file. 
+        synchronized(this) { // Must synchronized on AppLog object so 
+          error( wholeString ); // error header line and
+          e.printStackTrace(getPrintWriter()); // stack-trace are together.
+          }
         }
     
     public void error(String inString)
@@ -729,25 +738,12 @@ public class AppLog extends EpiThread
         If the open fails, it sleeps for 1 ms, and tries again.
         It repeats until the open succeeds.
         It returns the open FileWriter.
-        
-        ///fix Add recovery for FileLockInterruptException
-          and ClosedChannelException, which now causes infinite loop,
-          which looks something like this in the log file:
-            openWithRetryDelayFileWriter() lock() interrupted.
-            openWithRetryDelayFileWriter() fail begin.
-            openWithRetryDelayFileWriter() java.nio.channels.ClosedChannelException
-            openWithRetryDelayFileWriter() fail end.
-          This seems to happen when app is being terminated,
-          possibly because this method can be called by various threads,
-          all of which are being terminated when the app is being terminated.
-
         */
       { 
         boolean interruptedB= false;
         FileOutputStream theFileOutputStream= null;
         Writer resultWriter= null;
         FileChannel theFileChannel= null;
-        //// int loopLimiterI= 3;
         while (true) { // Keep trying to open until it succeeds.
           try {
               theFileChannel= null;
@@ -759,46 +755,23 @@ public class AppLog extends EpiThread
                   true  // ...and write to end of file, not the beginning.
                   );
               theFileChannel= theFileOutputStream.getChannel();
-              //// while (true) // Keep trying to acquire lock without interruption.
-              ////   try {
-                  // System.out.println("openWithRetryDelayFileWriter() before lock().");
               theLogFileLock= theFileChannel.lock();
-                  // System.err.println("openWithRetryDelayFileWriter() after lock().");
-              ////     break; // Lock acquired, so break out of loop.
-              //// }
-              //// catch( FileLockInterruptionException ex ) { // Interrupted.
-              ////      System.err.println(
-              ////     "openWithRetryDelayFileWriter() lock() interrupted:"+ex);
-              //// ex.printStackTrace();
-              //// Thread.currentThread().isInterrupted(); // Clear interrupt
-              //// interruptedB= true; // but record it for restoring later.
-              //// }
               theFileChannel.position(theFileChannel.size()); // Set for append.
               resultWriter= new OutputStreamWriter(theFileOutputStream);
               break; // Exit if open succeeded.
             } catch (IOException e) {
-              //// System.err.println("openWithRetryDelayFileWriter() fail begin.");
               if ( e instanceof FileLockInterruptionException ) {
-                //// System.err.println(
-                 ////     "openWithRetryDelayFileWriter() lock() interrupted with "+e);
-                 //// e.printStackTrace();
                 Thread.interrupted(); // Clear interrupt
                 interruptedB= true; // but record it for restoring later.
                 }
               else {
                 System.err.println("openWithRetryDelayFileWriter() common exception "+e);
-                //// e.printStackTrace();
                 Closeables.closeWithoutErrorLoggingB(resultWriter);
                 if (theLogFileLock!=null) theLogFileLock.release();
                 Closeables.closeWithoutErrorLoggingB(theFileChannel);
                 Closeables.closeWithoutErrorLoggingB(theFileOutputStream);
                 uninterruptibleSleepB( 1 ); // Pause 1 ms.
                 openSleepDelayMsI++; //* Count the pause and the time.
-                //// System.err.println("openWithRetryDelayFileWriter() fail end.");
-                //// while (loopLimiterI == 0) ; // Hang when loop limiter reaches 0.
-                //// loopLimiterI--; // Otherwise decrement loop limiter.
-                //// while (true) ;
-                // System.exit(1); ////
                 }
             }
           } // while (true)

@@ -177,17 +177,18 @@ class Infogora  // The root of this app.
           multiple calls to appLogger.
         */
       {
-        appLogger.info("Infogora.logThreadsV(), remaining active threads:"); 
-        Set<Thread> threadSet= Thread.getAllStackTraces().keySet();
-        for (Thread t : threadSet) {
-            Thread.State threadState= t.getState();
-            int priorityI= t.getPriority();
-            String typeString= t.isDaemon() ? "Daemon" : "Normal";
-            String nameString= t.getName();
-            appLogger.getPrintWriter().printf("    %-13s %2d  %s  %-25s  \n", 
-                threadState, priorityI, typeString, nameString);
-            }
-      
+        synchronized (appLogger) { // Output thread list as single log entry.
+          appLogger.info("Infogora.logThreadsV(), remaining active threads:"); 
+          Set<Thread> threadSet= Thread.getAllStackTraces().keySet();
+          for (Thread t : threadSet) {
+              Thread.State threadState= t.getState();
+              int priorityI= t.getPriority();
+              String typeString= t.isDaemon() ? "Daemon" : "Normal";
+              String nameString= t.getName();
+              appLogger.getPrintWriter().printf("    %-13s %2d  %s  %-25s  \n", 
+                  threadState, priorityI, typeString, nameString);
+              }
+          }
         }
 
 		} // Infogora
