@@ -99,7 +99,7 @@ public class EpiThread
         closing the socket or stream which might be blocking the thread. 
         */
       {
-        appLogger.info("EpiThread(" + getName() + ").stopV(): stopping.");
+        /// appLogger.info("EpiThread(" + getName() + ").stopV(): stopping.");
 
         interrupt(); // Requesting termination of EpiThread thread.
         }
