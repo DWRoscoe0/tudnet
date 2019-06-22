@@ -48,7 +48,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
   	  PortManager thePortManager,
   		Shutdowner theShutdowner,
   		AppInstanceManager theAppInstanceManager,
-  		TCPCopier.TCPClient theTCPClient
+  		TCPCopier theTCPCopier
   		)
   	// This builds all objects that are or comprise unconditional singletons.
     // Note, no non-static maker methods are called from here.
@@ -71,7 +71,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 	    NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue=
 	      new NetcasterQueue(cmThreadLockAndSignal, Config.QUEUE_SIZE);
       UnicasterManager theUnicasterManager= 
-      		new UnicasterManager( this, thePersistent, theTCPClient );
+      		new UnicasterManager( this, thePersistent, theTCPCopier );
 	    ConnectionManager theConnectionManager= new ConnectionManager(
         this, // the AppGuiFactory.
     	  thePersistent,
@@ -340,14 +340,14 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 	    }
 	
 	public UnicasterFactory makeUnicasterFactory(
-	    IPAndPort peerIPAndPort, TCPCopier.TCPClient theTCPClient
+	    IPAndPort peerIPAndPort, TCPCopier theTCPCopier
 	    )
 	  {
 			return new UnicasterFactory( 
 				this,
 				theUnicasterManager,
 				peerIPAndPort,
-				theTCPClient,
+				theTCPCopier,
 				theShutdowner, 
 				Config.QUEUE_SIZE,
 	  		theTimer,

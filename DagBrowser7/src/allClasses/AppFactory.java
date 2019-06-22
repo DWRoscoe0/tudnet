@@ -21,8 +21,8 @@ public class AppFactory {  // For App class lifetimes.
   private final Shutdowner theShutdowner;
   private final AppInstanceManager theAppInstanceManager;
   private final App theApp;
-  private final TCPCopier.TCPServer theTCPServer;
-  private final TCPCopier.TCPClient theTCPClient;
+  //// private final TCPCopier.TCPServer theTCPServer;
+  private final TCPCopier theTCPCopier;
   
   // Storage for conditional (lazy evaluation) singletons.
   private AppGUIFactory theAppGUIFactory= null;
@@ -36,15 +36,15 @@ public class AppFactory {  // For App class lifetimes.
   		AppInstanceManager theAppInstanceManager= new AppInstanceManager(
   		    theCommandArgs, theShutdowner, thePortManager
       		);
-  		theTCPServer= new TCPCopier.TCPServer( "TCPServer", thePortManager );
-  		theTCPClient= new TCPCopier.TCPClient( "TCPClient", thePersistent );
+  		//// theTCPServer= new TCPCopier.TCPServer( "TCPServer", thePortManager );
+  		theTCPCopier= new TCPCopier( "TCPCopier", thePersistent, thePortManager );
   		App theApp= new App(
         this, // The App gets to know the factory that made it. 
         thePersistent,
         theShutdowner,
         theAppInstanceManager,
-        theTCPServer,
-        theTCPClient
+        //// theTCPServer,
+        theTCPCopier
         );
 
       // Save in instance variables injected objects that are needed later.
@@ -71,7 +71,7 @@ public class AppFactory {  // For App class lifetimes.
 	      	  thePortManager,
 	      		theShutdowner,
 	      		theAppInstanceManager,
-	      		theTCPClient
+	      		theTCPCopier
 	      		);
 	    return theAppGUIFactory;
 	    }

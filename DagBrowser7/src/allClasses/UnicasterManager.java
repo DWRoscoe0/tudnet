@@ -22,12 +22,12 @@ public class UnicasterManager
   {
 		@SuppressWarnings("unused") ///tmp
   	private final Persistent thePersistent;
-  	private final TCPCopier.TCPClient theTCPClient; 
+  	private final TCPCopier theTCPCopier; 
   
 		public UnicasterManager(  // Constructor. 
 	      AppGUIFactory theAppGUIFactory,
 			  Persistent thePersistent,
-			  TCPCopier.TCPClient theTCPClient
+			  TCPCopier theTCPCopier
 			  )
 	    {
 	  		// Superclass's injections.
@@ -37,7 +37,7 @@ public class UnicasterManager
 			  		new DataNode[]{} // Initially empty of children.
 	      		);
 			  this.thePersistent= thePersistent;
-			  this.theTCPClient= theTCPClient; 
+			  this.theTCPCopier= theTCPCopier; 
 			  
 			  testPersistentV(); ///dbg
 			  }
@@ -149,7 +149,7 @@ public class UnicasterManager
 	    { 
     	  UnicasterFactory theUnicasterFactory= 
     	  		theAppGUIFactory.makeUnicasterFactory( 
-    	  				theIPAndPort, theTCPClient );
+    	  				theIPAndPort, theTCPCopier );
 	      final UnicasterValue resultUnicasterValue=  // Getting the Unicaster. 
 	      	theUnicasterFactory.getUnicasterValue();
 	      Unicaster theUnicaster= resultUnicasterValue.getDataNodeD(); 

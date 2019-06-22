@@ -10,24 +10,24 @@ public class App { // The App, especially pre-GUI stuff.
   Persistent thePersistent;
   Shutdowner theShutdowner;
   AppInstanceManager theAppInstanceManager;
-  TCPCopier.TCPServer theTCPServer;
-  TCPCopier.TCPClient theTCPClient;
+  //// TCPCopier.TCPServer theTCPServer;
+  TCPCopier theTCPCopier;
 
   public App(   // Constructor.  For app creation.
       AppFactory theAppFactory,
       Persistent thePersistent,
       Shutdowner theShutdowner,
       AppInstanceManager theAppInstanceManager,
-      TCPCopier.TCPServer theTCPServer,
-      TCPCopier.TCPClient theTCPClient
+      //// TCPCopier.TCPServer theTCPServer,
+      TCPCopier theTCPCopier
       )
     {
   		this.theAppFactory= theAppFactory;
   	  this.thePersistent= thePersistent; 
       this.theShutdowner= theShutdowner;
       this.theAppInstanceManager= theAppInstanceManager;
-      this.theTCPServer= theTCPServer;
-      this.theTCPClient= theTCPClient;
+      ////this.theTCPServer= theTCPServer;
+      this.theTCPCopier= theTCPCopier;
       }
 
   public void runV()  // This is for app Running.
@@ -43,8 +43,8 @@ public class App { // The App, especially pre-GUI stuff.
   		appLogger.info("App.run() begins.");
   		thePersistent.initializeV();  // Prepare access to persistent data.
   	  defineNodeIdentityV();
-			theTCPServer.startV();
-			theTCPClient.startV();
+			//// theTCPServer.startV();
+			theTCPCopier.startV();
 			theShutdowner.initializeV();
 
 			theAppInstanceManager.initializeV();
@@ -54,8 +54,8 @@ public class App { // The App, especially pre-GUI stuff.
       // App shutdown.
       appLogger.info("App.run() shutting down.");
       theAppInstanceManager.finalizeV();
-      theTCPClient.stopAndJoinV();
-      theTCPServer.stopAndJoinV();
+      theTCPCopier.stopAndJoinV();
+      //// theTCPServer.stopAndJoinV();
   	  thePersistent.finalizeV();  // Write any new or changed app properties.
   		//appLogger.info("App calling Shutdowner.finishV().");
       theShutdowner.finishAppShutdownV();  // Doing final app shutdown jobs.

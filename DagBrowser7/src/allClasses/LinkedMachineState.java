@@ -25,7 +25,7 @@ public class LinkedMachineState
 		private NetcasterInputStream theNetcasterInputStream;
 		private NetcasterOutputStream theNetcasterOutputStream; 
 		private NamedLong retransmitDelayMsNamedLong;
-		private TCPCopier.TCPClient theTCPClient;
+		private TCPCopier theTCPCopier;
 		private Timer theTimer; ///opt.  use function parameter only. 
 		private Unicaster theUnicaster;
 		private StateList[] theLinkedStateLists;
@@ -50,7 +50,7 @@ public class LinkedMachineState
 				  NetcasterInputStream theNetcasterInputStream,
 					NetcasterOutputStream theNetcasterOutputStream,
 					NamedLong retransmitDelayMsNamedLong,
-					TCPCopier.TCPClient theTCPClient,
+					TCPCopier theTCPCopier,
 					Unicaster theUnicaster,
 					Persistent thePersistent, 
 					StateList[] theLinkedStateLists
@@ -64,7 +64,7 @@ public class LinkedMachineState
 			  this.theNetcasterInputStream= theNetcasterInputStream;
 			  this.theNetcasterOutputStream= theNetcasterOutputStream;
 			  this.retransmitDelayMsNamedLong= retransmitDelayMsNamedLong;
-				this.theTCPClient= theTCPClient;
+				this.theTCPCopier= theTCPCopier;
 				this.theUnicaster= theUnicaster;
 				this.theLinkedStateLists= theLinkedStateLists;
 				this.thePersistent= thePersistent; 
@@ -257,14 +257,14 @@ public class LinkedMachineState
 				  // It is used to prevent HELLO message storms.
 
 	    	public void onEntryV() throws IOException
-		  	  /* Informs TCPClient about this new connection,
+		  	  /* Informs TCPCopier about this new connection,
 		  	    which means a possible TCPServer to try.
 		  	    It also records peer information in the Persistent storage
 		  	    for faster connecting after app restart.
 		  	    */
 		  	  {
 	    			IPAndPort remoteIPAndPort= theUnicaster.getKeyK();
-		    		theTCPClient.reportPeerConnectionV(remoteIPAndPort);
+		    		theTCPCopier.queuePeerConnectionV(remoteIPAndPort);
 		    		IPAndPort.addPeerInfoV(thePersistent, remoteIPAndPort);
 		  	  	super.onEntryV();
 		  	  	}

@@ -57,7 +57,7 @@ public class Unicaster
       // Injected dependency instance variables
       private final UnicasterManager theUnicasterManager;
       private final SubcasterManager theSubcasterManager;
-      private final TCPCopier.TCPClient theTCPClient;
+      private final TCPCopier theTCPCopier;
       private final Timer theTimer;
       private final Persistent thePersistent;
   		
@@ -71,7 +71,7 @@ public class Unicaster
 	      NetcasterInputStream theNetcasterInputStream,
 	      NetcasterOutputStream theNetcasterOutputStream,
 	      IPAndPort remoteIPAndPort,
-	      TCPCopier.TCPClient theTCPClient,
+	      TCPCopier theTCPCopier,
 	      Shutdowner theShutdowner,
 	      SubcasterQueue subcasterToUnicasterSubcasterQueue, ///opt Subcasters?
 	  		Timer theTimer,
@@ -103,7 +103,7 @@ public class Unicaster
 	      // Storing injected dependency arguments not stored in superclass.
 				  this.theUnicasterManager= theUnicasterManager;
 				  this.theSubcasterManager= theSubcasterManager;
-				  this.theTCPClient= theTCPClient;
+				  this.theTCPCopier= theTCPCopier;
 		  		this.theTimer= theTimer;
 		  		this.thePersistent= thePersistent;
 	      }
@@ -132,7 +132,7 @@ public class Unicaster
 		  			  theEpiInputStreamI,
 		  				theEpiOutputStreamO,
 		  				retransmitDelayMsNamedLong,
-		  				theTCPClient,
+		  				theTCPCopier,
 		  				this,
 		  				thePersistent,
 		  				new StateList[] { theLinkMeasurementState }

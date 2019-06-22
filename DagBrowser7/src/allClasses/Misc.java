@@ -168,8 +168,10 @@ public class Misc
 		    {
 	        long thisFileLastModifiedL= thisFile.lastModified();
 	        long thatFileLastModifiedL= thatFile.lastModified();
-	        if // This file is newer than that file then replace that with this.
-	          ( thisFileLastModifiedL > thatFileLastModifiedL )
+          boolean updatingB= // Is this file is newer than that file?
+              ( thisFileLastModifiedL > thatFileLastModifiedL );
+          appLogger.info("updateFromToV((..), updatingB="+updatingB);
+	        if ( updatingB )  // Then replace that with this.
 	          copyFileWithRetryV(thisFile, thatFile);
 					}
 
@@ -191,7 +193,7 @@ public class Misc
           int attemptsI= 0;
           while (true) {
             if (EpiThread.testInterruptB()) { // Termination requested.
-              appLogger.info( "copyFileWithRetryV(..) terminating.");
+              appLogger.info( true,"copyFileWithRetryV(..) terminating.");
               break; }
             attemptsI++;
             copySuccessB= Misc.tryCopyFileB(sourceFile, destinationFile);
@@ -215,9 +217,9 @@ public class Misc
           */
         {
           File tmpFile= null;
-          boolean copySuccessB= false; // Assume we will not be successful.
-          toReturn: try {
-            tmpFile= createTemporaryFile("Infogora");
+          boolean successB= false; // Assume we will not be successful.
+          toReturn: {
+            tmpFile= createTemporaryFile("DiskUpdate");
             if (tmpFile == null) break toReturn;
             Path sourcePath= sourceFile.toPath();
             Path tmpPath= tmpFile.toPath();
@@ -227,17 +229,11 @@ public class Misc
               break toReturn;
             if (!atomicRenameB(tmpFile.toPath(), destinationFile.toPath())) 
               break toReturn;
-            copySuccessB= true;
-            }
-          catch (Exception e) { // Other instance probably still running.
-            appLogger.exception("tryCopyFileB(..) ",e); 
-            copySuccessB= false; // Record failure.
-            }
-          finally {
-            deleteDeleteable(tmpFile); // Delete possible temporary file debris.
+            successB= true;
             } // toReturn:
-          appLogger.info("tryCopyFileB(..) copySuccessB="+copySuccessB);
-          return copySuccessB;
+          deleteDeleteable(tmpFile); // Delete possible temporary file debris.
+          appLogger.info("tryCopyFileB(..) copySuccessB="+successB);
+          return successB;
           }
 
       
@@ -261,7 +257,7 @@ public class Misc
           return successB;
           }
 
-      private static File createTemporaryFile(String nameString)
+      public static File createTemporaryFile(String nameString)
         /* This method tries to create a temporary file which contains
           nameString as part of the name and in the app folder.
           It logs any exceptions produced.
@@ -302,16 +298,20 @@ public class Misc
                 if (lengthI <= 0) 
                   { successB= true; break; }// Copy done.
                 theOutputStream.write(bufferAB, 0, lengthI);
-                if (EpiThread.testInterruptB()) // Interruption. 
+                if (EpiThread.testInterruptB()) { // Interruption.
+                  appLogger.info(true, 
+                      "interruptibleTryCopyFileB(..) interrupted");
                   break;
+                  }
                 }
             } catch (Exception e) {
                 appLogger.exception("interruptibleTryCopyFileB(..)",e); 
             } finally { // Close things, error or not.
               Closeables.closeWithErrorLoggingB(theInputStream);
               Closeables.closeWithErrorLoggingB(theOutputStream);
-              appLogger.info("interruptibleTryCopyFileB(..) finally ends.");
             }
+          appLogger.info(
+              "interruptibleTryCopyFileB(..) ends, successB="+successB);
           return successB;
           }
 
@@ -368,7 +368,7 @@ public class Misc
         theFile.setLastModified(timestamp);
         }   
 
-    private static void deleteDeleteable(File tmpFile)
+    public static void deleteDeleteable(File tmpFile)
       {
         if (tmpFile != null) tmpFile.delete();
         }

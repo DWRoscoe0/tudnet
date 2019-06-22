@@ -28,13 +28,17 @@ public class Config
 				///enh Add additive and multiplicative adjustments for debugging.
 				public static final int localUpdateDelaySI=0;
   
+    public static final long antiCPUHogLoopDelayMsL=1000;
+				
 		// Delays, for adjustments and slowing the entire app for debugging.
 
 	  /* TCPCopier parameters.  */
+		public static final long tcpCopierRunDelayMsL=4000; //delay logging.
 		public static final int tcpUpdateDelaySI= 30;
-		public static final long tcpClientRunDelayMsL=4000; //delay logging.
+    public static final long tcpClientRunDelayMsL=4000; //delay logging.
 		public static final long tcpClientPeriodMsL= 5*60000; // 5 minutes.
-		public static final long tcpServerCyclePauseMsL= 4000;
+    public static final long tcpServerCyclePauseMsL= 4000;
+    public static final long tcpServerMaximumWaitMsL= 30000;
 		public static final long tcpServerRunDelayMsL=15000;
  		public static final int tcpCopierTimeoutMsI= 5000;
  		public static final int tcpConnectTimeoutMsI= 5000;
