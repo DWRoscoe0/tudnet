@@ -8,6 +8,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -219,7 +220,7 @@ public class Misc
           File tmpFile= null;
           boolean successB= false; // Assume we will not be successful.
           toReturn: {
-            tmpFile= createTemporaryFile("DiskUpdate");
+            tmpFile= createTemporaryFile("Copy");
             if (tmpFile == null) break toReturn;
             Path sourcePath= sourceFile.toPath();
             Path tmpPath= tmpFile.toPath();
@@ -239,21 +240,38 @@ public class Misc
       
       public static boolean atomicRenameB(
           Path sourcePath, Path destinationPath)
-        /* This method atomically rename a file.
+        /* This method atomically renames a file.
           It is what is used to safely replace one file with another.
+          It returns true if the rename succeeds, false otherwise.
+          If it encounters an AccessDeniedException, it will retry,
+          assuming the exception was caused by the destination file
+          being protected because it is temporarily open for reading.
+          
+          ///fix Somehow eliminate retry-polling on rename failure.
           */
         {
           boolean successB= false;
-          appLogger.info(
-              "atomicRenameB(..) atomically renaming file.");
-          try {
-              Files.move(sourcePath, destinationPath,
-                  StandardCopyOption.ATOMIC_MOVE);
-              successB= true;
-            } catch (IOException theIOException) {
-              appLogger.exception(
-                  "atomicRenameB(..) failed with ",theIOException); 
-            }
+          appLogger.info( "atomicRenameB(..) begins"
+              + twoFilesString(sourcePath.toFile(), destinationPath.toFile()));
+          while (!EpiThread.testInterruptB()) { // Retry some failure types. 
+            try {
+                Files.move(sourcePath, destinationPath,
+                    StandardCopyOption.ATOMIC_MOVE);
+                successB= true;
+                break;
+              } catch (AccessDeniedException theAccessDeniedException) {
+                appLogger.warning(
+                    "atomicRenameB(..) retrying, "+theAccessDeniedException); 
+              } catch (IOException theIOException) {
+                appLogger.exception(
+                    "atomicRenameB(..) failed with ",theIOException); 
+                break;
+              }
+            EpiThread.interruptibleSleepB( // Don't hog CPU in retry loop.
+                Config.errorRetryPause1000MsL
+                );
+            } // while
+          appLogger.info("atomicRenameB(..) ends, successB="+successB);
           return successB;
           }
 
