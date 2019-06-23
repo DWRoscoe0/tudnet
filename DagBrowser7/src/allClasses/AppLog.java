@@ -368,13 +368,15 @@ public class AppLog extends EpiThread
         If disabledB is true then it logs a DEBUG message that
         code identified with the string logString is disabled.
         It returns the value of disabledB.
+        If disabled is false then it logs nothing.
         
         ///fix  This probably belongs in a different class.
           It could be changed to get the disabledB parameter from
           a configuration file.
         */
       {
-        debug(logString + ": " + (disabledB ? "disabled" : "enabled"));
+        if (disabledB)
+          debug(logString + ": DISABLED");
         return disabledB;
         }
 
