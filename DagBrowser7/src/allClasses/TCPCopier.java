@@ -373,10 +373,8 @@ public class TCPCopier extends EpiThread
           } catch (IOException ex) { // Handle thrown exceptions.
             appLogger.exception("serviceOneRequestFromAnyClientV()",ex);
           } finally {
-            appLogger.info( "serviceOneRequestFromAnyClientV() closing begins.");
-            Closeables.closeWithoutErrorLoggingB(serverSocket);
-            Closeables.closeWithoutErrorLoggingB(serverServerSocket);
-            appLogger.info( "serviceOneRequestFromAnyClientV() closing ends.");
+            Closeables.closeWithErrorLoggingB(serverSocket);
+            Closeables.closeWithErrorLoggingB(serverServerSocket);
             }
         return successB;
         }
@@ -510,7 +508,8 @@ public class TCPCopier extends EpiThread
 						appLogger.info("sendNewerLocalFileV() sending file "
 								+ Misc.fileDataString(localFile));
 						localFileInputStream= new FileInputStream(localFile);
-						TCPCopier.copyStreamBytesB( 
+						//// TCPCopier.copyStreamBytesB( 
+						Misc.copyStreamBytesB(
 								localFileInputStream, socketOutputStream);
 					} finally {
 						appLogger.info("sendNewerLocalFileV() sent file "
@@ -551,7 +550,7 @@ public class TCPCopier extends EpiThread
               appLogger.exception("open failure", e);
               break toReturn;
             }
-          if (!TCPCopier.copyStreamBytesB( // Copy stream to file or
+          if (!Misc.copyStreamBytesB( // Copy stream to file or
               socketInputStream, tmpFileOutputStream))
             break toReturn; // terminate if failure.
           tmpFile.setLastModified(timeStampToSetL); // Set time stamp.
@@ -564,44 +563,6 @@ public class TCPCopier extends EpiThread
         appLogger.info("receiveNewerRemoteFileB(..) successB="+successB);
         return successB;
         }
-	
-		private static boolean copyStreamBytesB( 
-				InputStream theInputStream, OutputStream theOutputStream)
-		  /* This method copies all [remaining] file bytes
-		    from theInputStream to theOutputStream.
-		    The streams are assumed to be open at entry 
-		    and they will remain open at exit.
-		    It returns true if the copy of all data finished, 
-		    false if it does not finish for any reason.
-		    A Thread interrupt will interrupt the copy.
-		   	*/
-			{
-	      appLogger.info("copyStreamBytesV(..) begins.");
-	      int byteCountI= 0;
-	      boolean successB= false; // Assume we fill fail.
-	      try {
-          byte[] bufferAB= new byte[1024];
-          int lengthI;
-          while (true) {
-            lengthI= theInputStream.read(bufferAB);
-            if (lengthI <= 0) // Transfer completed.
-              { successB= true; break; } // Indicate success and exit loop.
-            theOutputStream.write(bufferAB, 0, lengthI);
-            byteCountI+= lengthI;
-            if (EpiThread.testInterruptB()) { // Thread interruption.
-              appLogger.info(true, 
-                  "copyStreamBytesV(..) interrupted");
-              break; // Exit loop without success.
-              }
-            }
-	        } 
-	      catch (IOException theIOException) {
-          appLogger.exception("copyStreamBytesV(..)",theIOException);
-	        }
-        appLogger.info( "copyStreamBytesV() successB="+successB
-            +", bytes transfered=" + byteCountI);
-	      return successB;
-	      }
 	  
 		private static long exchangeAndCompareFileTimeStampsRemoteToLocalL( 
 				InputStream socketInputStream, 

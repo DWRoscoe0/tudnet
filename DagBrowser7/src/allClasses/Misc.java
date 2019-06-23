@@ -217,6 +217,7 @@ public class Misc
           It logs any exception which causes failure.
           */
         {
+          appLogger.debug("tryCopyFileB(..) begins");
           File tmpFile= null;
           boolean successB= false; // Assume we will not be successful.
           toReturn: {
@@ -309,27 +310,56 @@ public class Misc
           try {
               theInputStream= new FileInputStream(sourcesourceFile);
               theOutputStream= new FileOutputStream(destinationFile);
-              byte[] bufferAB= new byte[1024];
-              int lengthI;
-              while (true) {
-                lengthI= theInputStream.read(bufferAB);
-                if (lengthI <= 0) 
-                  { successB= true; break; }// Copy done.
-                theOutputStream.write(bufferAB, 0, lengthI);
-                if (EpiThread.testInterruptB()) { // Interruption.
-                  appLogger.info(true, 
-                      "interruptibleTryCopyFileB(..) interrupted");
-                  break;
-                  }
-                }
+              successB= copyStreamBytesB(theInputStream,theOutputStream);
             } catch (Exception e) {
                 appLogger.exception("interruptibleTryCopyFileB(..)",e); 
             } finally { // Close things, error or not.
               Closeables.closeWithErrorLoggingB(theInputStream);
               Closeables.closeWithErrorLoggingB(theOutputStream);
+                // Closing the OutputStream can block temporarily.
             }
           appLogger.info(
               "interruptibleTryCopyFileB(..) ends, successB="+successB);
+          return successB;
+          }
+      
+      public static boolean copyStreamBytesB( 
+          InputStream theInputStream, OutputStream theOutputStream)
+        /* This method copies all [remaining] bytes
+          from theInputStream to theOutputStream.
+          The streams are assumed to be open at entry 
+          and they will remain open at exit.
+          It returns true if the copy of all data finished, 
+          false if it does not finish for any reason.
+          A Thread interrupt will interrupt the copy.
+          */
+        {
+          appLogger.info("copyStreamBytesV(..) begins.");
+          long startTimeMsL= System.currentTimeMillis();
+          int byteCountI= 0;
+          boolean successB= false; // Assume we fill fail.
+          try {
+            byte[] bufferAB= new byte[1024];
+            int lengthI;
+            while (true) {
+              lengthI= theInputStream.read(bufferAB);
+              if (lengthI <= 0) // Transfer completed.
+                { successB= true; break; } // Indicate success and exit loop.
+              theOutputStream.write(bufferAB, 0, lengthI);
+              byteCountI+= lengthI;
+              if (EpiThread.testInterruptB()) { // Thread interruption.
+                appLogger.info(true, 
+                    "copyStreamBytesV(..) interrupted");
+                break; // Exit loop without success.
+                }
+              }
+            } 
+          catch (IOException theIOException) {
+            appLogger.exception("copyStreamBytesV(..)",theIOException);
+            }
+          appLogger.info( "copyStreamBytesV() successB="+successB
+              +", bytes transfered=" + byteCountI
+              +", elapsed ms=" + (System.currentTimeMillis()-startTimeMsL));
           return successB;
           }
 

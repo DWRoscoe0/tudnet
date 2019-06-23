@@ -29,11 +29,11 @@ public class Closeables
 
   public static boolean closeWithoutErrorLoggingB(Closeable theCloseable)
     /* This method is for closing a resource with a minimum of fuss.
-      It doesn't even do logging or exceptions.
-      
+      It doesn't even do logging of exceptions.
+
       This method does nothing if theCloseable == null.
       Otherwise it closes theClosable but does not log any exception.
-      
+
       It returns true if either theCloseable is null or there was an exception,
       false otherwise.
       */
@@ -55,10 +55,12 @@ public class Closeables
     /* This method is for closing a resource with a minimum of fuss.
       It assumes that if an exception occurs during the close,
       then simply logging that exception is sufficient handling.
-      It also logs a successful close.
-      
+      theCloseable==null is considered an error and is also logged.
+
       It returns true if either theCloseable is null 
       or there was an exception, false otherwise.
+
+      It does not log a successful close.
       */
     {
   	  boolean errorOccurredB= false;
@@ -70,9 +72,6 @@ public class Closeables
   	  	} else {
 		  	  try { 
 			  	  	theCloseable.close();
-		          appLogger.info(
-		              "closeWithErrorLoggingB(..): closed "+theCloseable 
-		              );            
 			  	  } catch (Exception theException) {
 			  	  	errorOccurredB= true;
 			  			appLogger.exception(
