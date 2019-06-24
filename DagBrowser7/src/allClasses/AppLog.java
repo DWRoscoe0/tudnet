@@ -480,20 +480,31 @@ public class AppLog extends EpiThread
         and also to the console error stream?  Disabled temporarily. ////
         An error is something with which the app should not have to deal.
         Response is to either retry or terminate.
+        It also includes a stack trace.
         */
       { 
         synchronized(this) { // Must synchronized on AppLog object so 
           logB( ERROR, true, theThrowable, inString);
-          if (theThrowable == null)
-            theThrowable= new Throwable("for method stack trace");
-          theThrowable.printStackTrace(getPrintWriter());
+          doStackTraceV(theThrowable);
           }
         }
     
     public void warning(String inString)
-      // This method writes a severe error String inString to a log entry.
+      /* This method writes a warning error String inString to a log entry.
+        It also includes a stack trace.
+        */
       { 
-    		logB( WARN, false, null, inString );
+        synchronized(this) { // Must synchronized on AppLog object so 
+      		logB( WARN, false, null, inString );
+          doStackTraceV(null);
+          }
+        }
+    
+    private void doStackTraceV(Throwable theThrowable)
+      {
+        if (theThrowable == null)
+          theThrowable= new Throwable("for method stack trace");
+        theThrowable.printStackTrace(getPrintWriter());
         }
     
     public void consoleInfo(String inString, boolean debugB)
