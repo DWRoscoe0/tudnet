@@ -990,7 +990,7 @@ l    * If the app receives a message indicating
           theArrayListOfStrings.add("-starterPort"); // For feedback...
           theArrayListOfStrings.add( // ...using this port.
               ""+startCommandArgs.switchLongValue("-starterPort",0L));
-          theArrayListOfStrings.add("SENTINEL"); // ///dbg
+          //// theArrayListOfStrings.add("SENTINEL"); // ///dbg
 
           theShutdowner.setExitStringsV( // Set command String from array.
               theArrayListOfStrings.toArray(new String[0]));
