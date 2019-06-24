@@ -29,26 +29,16 @@ public class Closeables
 
   public static boolean closeWithoutErrorLoggingB(Closeable theCloseable)
     /* This method is for closing a resource with a minimum of fuss.
-      It doesn't even do logging of exceptions.
+      It doesn't even do logging of errors.
 
       This method does nothing if theCloseable == null.
       Otherwise it closes theClosable but does not log any exception.
 
-      It returns true if either theCloseable is null or there was an exception,
-      false otherwise.
+      It returns false if either theCloseable is null or there was an exception,
+      true otherwise.
       */
     {
-  	  boolean errorOccurredB= false;
-  	  if (theCloseable == null) {
-	  	  	errorOccurredB= true;
-	  	  } else {
-		  	  try { 
-			  	  	theCloseable.close(); 
-			  	  } catch (Exception theException) {
-			  	  	errorOccurredB= true;
-			  	  }
-	  	  }
-	  	return errorOccurredB;
+      return closeAndLogMaybeB(theCloseable, false);
 	    }
 
   public static boolean closeWithErrorLoggingB(Closeable theCloseable)
@@ -57,30 +47,62 @@ public class Closeables
       then simply logging that exception is sufficient handling.
       theCloseable==null is considered an error and is also logged.
 
-      It returns true if either theCloseable is null 
-      or there was an exception, false otherwise.
+      It returns false if either theCloseable is null 
+      or there was an exception, true otherwise.
 
       It does not log a successful close.
       */
     {
-  	  boolean errorOccurredB= false;
-  	  if (theCloseable == null) {
-	  			appLogger.error(
-		  				"closeWithErrorLoggingB(..): null closeble resource pointer." 
-		  				);		  	  	
-  	  		errorOccurredB= true;
-  	  	} else {
-		  	  try { 
-			  	  	theCloseable.close();
-			  	  } catch (Exception theException) {
-			  	  	errorOccurredB= true;
-			  			appLogger.exception(
-				  				"closeWithErrorLoggingB(..): ", theException
-				  				);		  	  	
-			  	  }
-  	  	}
-	  	return errorOccurredB;
-	    }
+      return closeAndLogMaybeB(theCloseable, true);
+      }
+
+  public static boolean closeIfNotNullWithLoggingB(Closeable theCloseable)
+    /* This method closes theCloseable if it is non-null
+      It also logs any exception that occurs during the closing.
+
+      It returns false if there was an exception during the close, 
+      true otherwise.
+      */
+    {
+      boolean successB= true;
+      if (theCloseable != null)
+        successB= closeAndLogMaybeB(theCloseable, true);
+      return successB;
+      }
+
+  public static boolean closeAndLogMaybeB(
+      Closeable theCloseable, boolean logB)
+    /* This method is for closing resources.
+      It also logs an error that occurs if logB is true.
+      It returns true if the close completes without error, 
+      false if there was an error, meaning either 
+      theCloseable reference was null or there was an exception.
+      
+      This method can be used in the finally clause of a block
+      with logB= the success of the code above.  This is because:
+      * If that code was successful, theCloseable should be non null
+        and be in a condition to close without errors.
+      * Otherwise there was an error, and errors during closing may be ignored.
+      
+      */
+    {
+      boolean successB= true;
+      if (theCloseable == null) {
+          if (logB) 
+            appLogger.error(
+              "closeAndWarnMaybeB(..): null closeble resource pointer.");            
+          successB= false;
+        } else {
+          try { 
+              theCloseable.close();
+            } catch (Exception theException) {
+              if (logB) 
+                appLogger.exception("closeAndWarnMaybeB(..): ", theException);            
+              successB= false;
+            }
+        }
+      return successB;
+      }
 
   public static IOException closeAndAccumulateIOException(
   			Closeable theCloseable, IOException earlierIOException)

@@ -477,12 +477,17 @@ public class AppLog extends EpiThread
     
     public void error(Throwable theThrowable, String inString)
       /* This method writes an error String inString to a log entry,
-        and also to the console error stream?  Disabled temporarily.
+        and also to the console error stream?  Disabled temporarily. ////
         An error is something with which the app should not have to deal.
         Response is to either retry or terminate.
         */
       { 
-    		logB( ERROR, true, theThrowable, inString);
+        synchronized(this) { // Must synchronized on AppLog object so 
+          logB( ERROR, true, theThrowable, inString);
+          if (theThrowable == null)
+            theThrowable= new Throwable("for method stack trace");
+          theThrowable.printStackTrace(getPrintWriter());
+          }
         }
     
     public void warning(String inString)

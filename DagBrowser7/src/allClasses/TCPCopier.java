@@ -145,9 +145,12 @@ public class TCPCopier extends EpiThread
           } catch (Exception theException) {
             appLogger.exception("TCPCopier.stopV()(..): ", theException);            
           }
-        Closeables.closeWithErrorLoggingB(clientSocket); // and client Socket
-        Closeables.closeWithErrorLoggingB(serverSocket); // and server Socket.
-        appLogger.info("TCPCopier.stopV(): closes done.");
+        
+        // Also close the Sockets of
+        Closeables.closeIfNotNullWithLoggingB(clientSocket); // the client
+        Closeables.closeIfNotNullWithLoggingB(serverSocket); // and server.
+
+        appLogger.debug("TCPCopier.stopV(): closes done.");
         }
 
     private void updateTCPCopyStagingAreaV()
@@ -373,8 +376,8 @@ public class TCPCopier extends EpiThread
           } catch (IOException ex) { // Handle thrown exceptions.
             appLogger.exception("serviceOneRequestFromAnyClientV()",ex);
           } finally {
-            Closeables.closeWithErrorLoggingB(serverSocket);
-            Closeables.closeWithErrorLoggingB(serverServerSocket);
+            Closeables.closeIfNotNullWithLoggingB(serverSocket);
+            Closeables.closeIfNotNullWithLoggingB(serverServerSocket);
             }
         return successB;
         }
