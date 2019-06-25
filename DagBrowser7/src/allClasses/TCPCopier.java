@@ -132,18 +132,20 @@ public class TCPCopier extends EpiThread
       appLogger.info("run() ending.");
       }
 
-    public void stopV()
-      /* This is a subclass method stopV() or stopping the thread.
-        In addition to interrupting the thread in the usual way,
-        it closes the Sockets and the ServerSocket which might be blocked.
+    public synchronized void stopV()
+      /* This is a subclass method stopV() for stopping the thread.
+        In addition to interrupting the thread in the usual way
+        using Thread.interrupt(),
+        it closes the Sockets and the ServerSocket 
+        which might have blocked methods.
         */
       {
-        super.stopV(); // Try termination the default way.
+        super.stopV(); // Terminate the default way by interrupting thread.
         
-        try { // Also close the server ServerSocket 
+        try { // Also close the server ServerSocket.
             if (serverServerSocket!= null) serverServerSocket.close();
           } catch (Exception theException) {
-            appLogger.exception("TCPCopier.stopV()(..): ", theException);            
+            appLogger.exception("TCPCopier.stopV(): closing", theException);            
           }
         
         // Also close the Sockets of
@@ -354,18 +356,23 @@ public class TCPCopier extends EpiThread
         or no file transfered at all.
         It returns true if a request was processed, 
         false if not for any reason.
-        The method will return early if the thread is interrupted.
+        The method will return early if the thread is terminated,
+        either by being interrupted or by another thread closing a socket.
+        See stopV().
         */
       {
         boolean successB= false;
-        try {
-            serverServerSocket= 
-                new ServerSocket(thePortManager.getNormalPortI());
+        toReturn: try {
+            int tcpPortI=thePortManager.getNormalPortI();
+            synchronized(this) { // Do this for unblocking of accept() ahead.
+              if (EpiThread.testInterruptB()) break toReturn;
+              serverServerSocket= new ServerSocket(tcpPortI);
+              }
             serverServerSocket.setSoTimeout( Config.tcpCopierTimeoutMsI );
             appLogger.debug(
                 "serviceOneRequestFromAnyClientV()() trying ServerSocket.accept() to "
                 + serverServerSocket);
-            serverSocket = serverServerSocket.accept();
+            serverSocket= serverServerSocket.accept();
             appLogger.debug(
                 "serviceOneRequestFromAnyClientV() accepted connection on "
                 + serverSocket );
@@ -378,7 +385,7 @@ public class TCPCopier extends EpiThread
           } finally {
             Closeables.closeIfNotNullWithLoggingB(serverSocket);
             Closeables.closeIfNotNullWithLoggingB(serverServerSocket);
-            }
+            } // toReturn: 
         return successB;
         }
 
