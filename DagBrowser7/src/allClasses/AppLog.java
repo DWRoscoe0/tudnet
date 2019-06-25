@@ -173,6 +173,7 @@ public class AppLog extends EpiThread
       private boolean consoleCopyModeB= false; // When true, logging goes to 
         // console as well as log file.
         ///ehn change to Enum for generality and better self-documentation.
+      private boolean closeLoggingB= true;
 
     public void setIDProcessV( String processIDString )
     { this.processIDString= processIDString; }
@@ -241,6 +242,15 @@ public class AppLog extends EpiThread
     		consoleCopyModeB= oldConsoleEnabledB; 
     		}
 
+    public synchronized void enableCloseLoggingV( boolean enabledB ) 
+      /* This method controls whether 
+        the closing of the log file will be logged.
+        */
+      {
+        info("enableCloseLoggingV(" + enabledB + ")");
+        closeLoggingB= enabledB;
+        }
+    
     public synchronized void setBufferedModeV( boolean desiredBufferedModeB ) 
     	/* This method opens the file for buffered mode,
     	  and closes it for non-buffered mode.
@@ -846,7 +856,8 @@ public class AppLog extends EpiThread
         It should be called only if the log file is open.  
         */
       {
-        info("closeFileV() flushing, unlocking, and closing log file.");
+        if (closeLoggingB)
+          info("closeFileV() flushing, unlocking, and closing log file.");
         thePrintWriter.flush();  // Flush buffers to file.
         if (theLogFileLock != null) // Unlock file if locked.
           try {

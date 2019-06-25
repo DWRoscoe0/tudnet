@@ -137,7 +137,8 @@ class Infogora  // The root of this app.
 	      appLogger= new AppLog(new File( // Constructing logger.
 	          new File(System.getProperty("user.home") ),Config.appString));
 	      // AppLog should now be able to do logging.
-        /// appLogger.getAndEnableConsoleModeB(); ///dbg
+	      appLogger.enableCloseLoggingV( false );
+	      /// appLogger.getAndEnableConsoleModeB(); ///dbg
 	      /// Config.clearLogFileB= true; ///dbg
 	      DefaultExceptionHandler.setDefaultExceptionHandlerV(); 
           // Preparing for exceptions before doing anything else.
