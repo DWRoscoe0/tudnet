@@ -9,15 +9,18 @@ public class LinkedMachineState
 
 	extends OrState
 	
-	/* This class has not been tested and is not being used.
-	  After its creation it was decided that its sub-states
-	  should be moved [incrementally] to Unicaster and tested there
-	  before being made into its own class, if ever.  //?  
-
-	  This class contains a [hierarchical] state machine 
+	/* This class contains a [hierarchical] state machine 
 	  that processes the HELLO handshake that is supposed to happen
 	  at the beginning of a Unicaster connection,
 	  and the GOODBYE message that ends a Unicaster connection.
+	  
+	  This state machine needs redesign to be general enough
+	  to handle all of the following inputs:
+	  * HELLO
+	  * GOODBYE
+    * Any unicaster packet from the remote peer.
+    * Any multicaster packet from the remote peer.
+    
 	  */
 
 	{	
@@ -351,7 +354,12 @@ public class LinkedMachineState
                 requestSiblingStateListV(theConnectedState);
                 }
             else if (theTimerInput.getInputArrivedB()) // Time to try again? 
-              requestSiblingStateListV(theInitiatingConnectionState);
+              //// requestSiblingStateListV(theInitiatingConnectionState);
+              {
+                sendHelloV(this); // Send a greeting HELLO.
+                requestSiblingStateListV(theBrokenConnectionState);
+                  // But stay in this state.  A kludge.
+                }
             }
 
         public void onExitV() throws IOException
