@@ -108,13 +108,29 @@ public class TCPCopier extends EpiThread
       this.thePortManager= thePortManager;
       }
 
-    public void initializeV() {
-      startV();
-      }
+    public void initializeV()
+      /* Call this method to start things. 
+        First it updates the TCP update staging area if possible.
+        Then it starts this thread.
+        */
+      {
+        appLogger.debug("TCPCopier.initializeV() begins.");
+        if (!appLogger.testAndLogDisabledB(
+            Config.tcpThreadsDisableB,"TCPCopier"))
+          { // Prepare for and start thread.
+            updateTCPCopyStagingAreaV();
+            startV();
+            }
+        appLogger.debug("TCPCopier.initializeV() ends.");
+        }
 
-    public void finalizeV() {
-      stopAndJoinV();
-      }
+    public void finalizeV() 
+      /* Call this method to stop things. 
+        It initiates thread termination and waits for completion.
+        */
+      {
+        stopAndJoinV();
+        }
 
     public void run()
     /* This is the main method of the thread.
@@ -124,15 +140,8 @@ public class TCPCopier extends EpiThread
       The method will return early if the thread is interrupted.
       */
     {
-      if (appLogger.testAndLogDisabledB( Config.tcpThreadsDisableB,
-          "run() TCPCopier thread") 
-          )
-        return;
-
       EpiThread.interruptibleSleepB(Config.tcpCopierRunDelayMsL);
       appLogger.info("run() start delay done.");
-      updateTCPCopyStagingAreaV();
-      appLogger.debug("run() after staging area update attempt.");
 
       thePersistentCursor= new PersistentCursor( thePersistent );
       thePersistentCursor.setListV("peers");
@@ -328,7 +337,7 @@ public class TCPCopier extends EpiThread
                   + "\n  clientSocket= " + clientSocket);
           } catch (IOException theIOException) {
             appLogger.info(
-              "tryExchangingFilesWithServerV() error "+ theIOException);
+              "tryExchangingFilesWithServerV() failed\n  "+ theIOException);
           } finally {
             Closeables.closeWithErrorLoggingB(clientSocket);
           }

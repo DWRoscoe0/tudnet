@@ -318,8 +318,8 @@ public class Misc
               Closeables.closeWithErrorLoggingB(theOutputStream);
                 // Closing the OutputStream can block temporarily.
             }
-          appLogger.info(
-              "interruptibleTryCopyFileB(..) ends, successB="+successB);
+          appLogger.info("interruptibleTryCopyFileB(..) ends, "
+              +"closes done, successB="+successB);
           return successB;
           }
       
