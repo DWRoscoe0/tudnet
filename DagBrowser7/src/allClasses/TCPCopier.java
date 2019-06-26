@@ -108,6 +108,14 @@ public class TCPCopier extends EpiThread
       this.thePortManager= thePortManager;
       }
 
+    public void initializeV() {
+      startV();
+      }
+
+    public void finalizeV() {
+      stopAndJoinV();
+      }
+
     public void run()
     /* This is the main method of the thread.
       After a delay and some initialization,
@@ -152,7 +160,7 @@ public class TCPCopier extends EpiThread
         Closeables.closeIfNotNullWithLoggingB(clientSocket); // the client
         Closeables.closeIfNotNullWithLoggingB(serverSocket); // and server.
 
-        appLogger.debug("TCPCopier.stopV(): closes done.");
+        appLogger.debug("TCPCopier.stopV(): interrupt and socket closes done.");
         }
 
     private void updateTCPCopyStagingAreaV()
@@ -381,7 +389,10 @@ public class TCPCopier extends EpiThread
           } catch (SocketTimeoutException ex) { // Treat time-out as normal.
             ; // Do nothing.
           } catch (IOException ex) { // Handle thrown exceptions.
-            appLogger.exception("serviceOneRequestFromAnyClientV()",ex);
+            if (EpiThread.testInterruptB()) 
+              appLogger.info("serviceOneRequestFromAnyClientV() termination.");
+              else
+              appLogger.exception("serviceOneRequestFromAnyClientV()",ex);
           } finally {
             Closeables.closeIfNotNullWithLoggingB(serverSocket);
             Closeables.closeIfNotNullWithLoggingB(serverServerSocket);

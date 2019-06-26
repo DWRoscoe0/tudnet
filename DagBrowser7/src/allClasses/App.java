@@ -43,8 +43,7 @@ public class App { // The App, especially pre-GUI stuff.
   		appLogger.info("App.run() begins.");
   		thePersistent.initializeV();  // Prepare access to persistent data.
   	  defineNodeIdentityV();
-			//// theTCPServer.startV();
-			theTCPCopier.startV();
+      theTCPCopier.initializeV();
 			theShutdowner.initializeV();
 
 			theAppInstanceManager.initializeV();
@@ -54,7 +53,7 @@ public class App { // The App, especially pre-GUI stuff.
       // App shutdown.
       appLogger.info("App.run() shutting down.");
       theAppInstanceManager.finalizeV();
-      theTCPCopier.stopAndJoinV();
+      theTCPCopier.finalizeV();
       //// theTCPServer.stopAndJoinV();
   	  thePersistent.finalizeV();  // Write any new or changed app properties.
   		//appLogger.info("App calling Shutdowner.finishV().");
