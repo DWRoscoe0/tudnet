@@ -140,13 +140,14 @@ public class TCPCopier extends EpiThread
       The method will return early if the thread is interrupted.
       */
     {
+      appLogger.info("run() begins.");
       EpiThread.interruptibleSleepB(Config.tcpCopierRunDelayMsL);
       appLogger.info("run() start delay done.");
 
       thePersistentCursor= new PersistentCursor( thePersistent );
       thePersistentCursor.setListV("peers");
       loopAlternatingRolesV();
-      appLogger.info("run() ending.");
+      appLogger.info("run() ends.");
       }
 
     public synchronized void stopV()
@@ -193,22 +194,23 @@ public class TCPCopier extends EpiThread
     private void loopAlternatingRolesV()
       /* This method loops until thread termination is requested.
         In that loop it alternately
-        * acts as a client, by trying to connect to a peer 
-          to do an update with it, or
         * acts as a server, by accepting connections from other peers
           to do an update with each of them.
-        It starts acting as a client.
+        * acts as a client, by trying to connect to a peer 
+          to do an update with it, or
         It spends most of its time as a server waiting for connections.
 
         The method will return early if the thread is interrupted.
         */
       {
-        while ( ! EpiThread.testInterruptB() ) // Repeat until exit requested.
+        while (true)  // Repeat until exit requested.
           {
-            actAsAClientB();
+            if ( EpiThread.testInterruptB() ) break;
             actAsAServerB();
+            if ( EpiThread.testInterruptB() ) break;
+            actAsAClientB();
             EpiThread.interruptibleSleepB(Config.antiCPUHogLoopDelayMsL); 
-              // Brief sleep to prevent [malicious] hogging.
+              // Brief sleep to prevent [malicious] CPU hogging by this loop.
             }
         }
 
@@ -225,11 +227,11 @@ public class TCPCopier extends EpiThread
         The method will return early if the thread is interrupted.
         */
       { 
-        boolean successB= true; // Assume something will succeed.
+        boolean successB= false;
         toReturn: {
-          if (tryExchangeWithServerFromQueueB()) break toReturn;
-          if (tryExchangeWithServerFromPersisentDataB()) break toReturn;
-          successB= false; // All failed.  Return failure.
+          if (tryExchangeWithServerFromQueueB()) successB= true;
+          if ( EpiThread.testInterruptB() ) break toReturn;
+          if (tryExchangeWithServerFromPersisentDataB()) successB= true;
           } // toReturn:
         return successB; 
         }
@@ -281,6 +283,8 @@ public class TCPCopier extends EpiThread
           if (resultL == 0) break toReturn; // No file data was transfered.
         } // toReturn:
           thePersistentCursor.nextWithWrapKeyString(); // Advance cursor.
+          appLogger.info(
+              "tryExchangeWithServerFromPersisentDataB() successB="+successB);
           return successB;
         }
 
@@ -385,7 +389,7 @@ public class TCPCopier extends EpiThread
               if (EpiThread.testInterruptB()) break toReturn;
               serverServerSocket= new ServerSocket(tcpPortI);
               }
-            serverServerSocket.setSoTimeout( Config.tcpCopierTimeoutMsI );
+            serverServerSocket.setSoTimeout( Config.tcpCopierServerTimeoutMsI );
             appLogger.debug(
                 "serviceOneRequestFromAnyClientV()() trying ServerSocket.accept() to "
                 + serverServerSocket);
@@ -396,7 +400,7 @@ public class TCPCopier extends EpiThread
             processServerConnectionV(serverSocket); 
             successB= true; // Completed without thrown exceptions.
           } catch (SocketTimeoutException ex) { // Treat time-out as normal.
-            ; // Do nothing.
+            appLogger.info("serviceOneRequestFromAnyClientV() time-out.");
           } catch (IOException ex) { // Handle thrown exceptions.
             if (EpiThread.testInterruptB()) 
               appLogger.info("serviceOneRequestFromAnyClientV() termination.");
@@ -518,7 +522,7 @@ public class TCPCopier extends EpiThread
 			  		}
 		  	if (transferResultL != 0)
 		  		appLogger.info("tryTransferingFileL(..) exchanged using "+theSocket);
-	  	  ///dbg appLogger.info("transactionV() ending.");
+	  	  ///dbg appLogger.info("transactionV() ends.");
 		  	return transferResultL;
 	    	}
 	
