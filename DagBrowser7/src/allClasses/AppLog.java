@@ -460,7 +460,7 @@ public class AppLog extends EpiThread
 	    	throw e;
         }
     
-    public void exception(String inString, Exception e)
+    public void exception(String inString, Throwable e)
       /* This method writes a Java exception String inString to a log entry
         and also to the console error stream for Exception e.
         This is for exceptions that must be caught,
@@ -472,7 +472,7 @@ public class AppLog extends EpiThread
         String wholeString= "EXCEPTION: " + inString + " :\n  " + e ;
 
         System.err.println(wholeString); // Send intro string to error console.
-        e.printStackTrace(); // Send StackTrae to error console.
+        e.printStackTrace(); // Send StackTrace to error console.
 
         synchronized(this) { // Must synchronized on AppLog object so 
           error( wholeString ); // error header line and
@@ -513,7 +513,7 @@ public class AppLog extends EpiThread
     private void doStackTraceV(Throwable theThrowable)
       {
         if (theThrowable == null)
-          theThrowable= new Throwable("for method stack trace");
+          theThrowable= new Throwable("created to display stack trace");
         theThrowable.printStackTrace(getPrintWriter());
         }
     
