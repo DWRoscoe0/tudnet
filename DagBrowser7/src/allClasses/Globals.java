@@ -27,8 +27,8 @@ public class Globals
         This method should never be called, except maybe during debugging.
         */
 	    {
-		    appLogger.error( "Globals.logAndRethrowAsRuntimeExceptionV(..)"
-		        + aString + ":\n  " + theThrowable );
+		    appLogger.exception( "Globals.logAndRethrowAsRuntimeExceptionV(..)"
+		        + aString + ":\n  ", theThrowable );
 		    throw new RuntimeException( theThrowable );
 		    }
   	
