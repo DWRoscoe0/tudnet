@@ -260,8 +260,11 @@ public class ConnectionManager
 				  	appLogger.info( 
 		        		"ConnectionManager.restartPreviousUnicastersV(), Unicastger at "
 		        		+ "IP=" + peerIPString + ", port=" + peerPortString );
-					  theUnicasterManager.getOrBuildAddAndStartUnicaster(
+					  Unicaster theUnicaster= 
+					    theUnicasterManager.getOrBuildAddAndStartUnicaster(
 				    		peerIPString , peerPortString ); // Restore peer with Unicaster.
+            theUnicaster.connectOrReconnectV(true);
+            //// theUnicaster.startV();
 					  thePersistentCursor.nextKeyString(); // Advance cursor.
 					  }
       	// appLogger.debug(

@@ -35,9 +35,11 @@ public class LinkedMachineState
 		private Persistent thePersistent; 
 
 		// Sub-state-machine instances.
-    private InitiatingConnectionState theInitiatingConnectionState;
-		private CompletingConnectionState theCompletingConnectionState;
-		private ConnectedState theConnectedState;
+    private InitiatingConnectState theInitiatingConnectState;
+    private CompletingConnectState theCompletingConnectState;
+    private InitiatingReconnectState theInitiatingReconnectState;
+    private CompletingReconnectState theCompletingReconnectState;
+    private ConnectedState theConnectedState;
     private DisconnectedState theDisconnectedState;
     private BrokenConnectionState theBrokenConnectionState;
     
@@ -75,10 +77,14 @@ public class LinkedMachineState
 	  		// Adding measurement count.
 
     		// Create and add to DAG the sub-states of this state machine.
-        initAndAddStateListV(theInitiatingConnectionState= 
-            new InitiatingConnectionState());
-        initAndAddStateListV(theCompletingConnectionState= 
-            new CompletingConnectionState());
+        initAndAddStateListV(theInitiatingConnectState= 
+            new InitiatingConnectState());
+        initAndAddStateListV(theCompletingConnectState= 
+            new CompletingConnectState());
+        initAndAddStateListV(theInitiatingReconnectState= 
+            new InitiatingReconnectState());
+        initAndAddStateListV(theCompletingReconnectState= 
+            new CompletingReconnectState());
     		addStateListV(
     				(theConnectedState= new ConnectedState())
     				  .initializeWithIOExceptionStateList(this.theLinkedStateLists)
@@ -87,8 +93,8 @@ public class LinkedMachineState
             theDisconnectedState= new DisconnectedState());
     		initAndAddStateListV(
     		    theBrokenConnectionState= new BrokenConnectionState());
-        
-    		setFirstOrSubStateV( theInitiatingConnectionState );
+
+    		setFirstOrSubStateV( theInitiatingConnectState );
     		
 	  	  theTimerInput= // Creating our timer and linking to this state. 
 			  		new TimerInput(  ///? Move to factory or parent?
@@ -106,7 +112,14 @@ public class LinkedMachineState
 	  	  return this;
 			  }
 	
-	  public synchronized void finalizeV() throws IOException
+    public void connectOrReconnectV(boolean connectB)
+      { 
+        setFirstOrSubStateV( connectB 
+          ? theInitiatingConnectState 
+          : theInitiatingReconnectState );
+        }
+
+    public synchronized void finalizeV() throws IOException
 	    // This method processes any pending loose ends before app shutdown.
 		  {
 	  	  super.finalizeV();
@@ -170,11 +183,24 @@ public class LinkedMachineState
 				return (getpresentSubStateList() == theConnectedState) ;
 				}
 
-    private class InitiatingConnectionState extends StateList 
+		
+		/* The following are the states used for managing Unicaster connecting. 
+		  There are 2 states worthy of note
+		  * InitiatingConnectState: The machine is put into this state
+		    when a Unicaster is created for the first time,
+		    in response to a multicast message from the peer.
+		    It makes use of an aggressive exponential back-off of
+		    HELLO messages in an effort to connect to the other peer.
+		  * 
+		 * */
 
-      /* This state is used to initiate a new connection.
+    private class InitiatingConnectState extends StateList 
+
+      /* This state is used to initiate a new connection,
+        which means a connection to a peer for the first time,
+        and that peer is believed to be on-line now. 
         It sends a HELLO message to the remote peer
-        and then transitions to the CompletingConnectionState.
+        and then transitions to the CompletingConnectState.
         */
 
       {
@@ -182,18 +208,17 @@ public class LinkedMachineState
         public void onInputsForLeafStatesV() throws IOException
           {
             sendHelloV(this);
-            requestSiblingStateListV(theCompletingConnectionState);
+            requestSiblingStateListV(theCompletingConnectState);
             }
   
-        } // class InitiatingConnectionState
+        } // class InitiatingConnectState
 
-    private class CompletingConnectionState extends StateList 
+    private class CompletingConnectState extends StateList 
 
-      /* Being in this state means that the other peer
-        is believed to be on-line and ready for a connection.
-        This class sends a HELLO message to the remote peer
+      /* This class assumes that a HELLO message 
+        has already been sent to the remote peer
         and tries to receive one from the remote peer.
-        It retransmits HELLO if a HELLO is not received,
+        It retransmits HELLOs if a HELLO is not received,
         using exponential back-off.
         It will give up trying if no HELLO is received. 
         It compares IP addresses to decide
@@ -208,33 +233,75 @@ public class LinkedMachineState
             }
     
         public void onInputsForLeafStatesV() throws IOException
-          /* This method completes the HELLO handshake, 
-            retransmitting the initial HELLO if needed,
-            using twice the previous time-out,
-            until a HELLO is received, or eventually giving up.
-            */
           {
             if (tryReceivingHelloB(this)) // Try to process first HELLO.
               requestSiblingStateListV( // Success.  Request connected state.
                   theConnectedState );
             else if (theTimerInput.getInputArrivedB()) // Try Time-out? 
               {
-                sendHelloV(this); // Resent hello.
+                sendHelloV(this); // Resend hello.
                 if // Reschedule time-out with exponential back-off. 
                   (theTimerInput.rescheduleB(Config.maxTimeOutMsL))
                   requestSiblingStateListV( // Give up if max delay reached by
-                      theBrokenConnectionState); // going to unconnected.
+                    theBrokenConnectionState); // going to broken connection.
                 }
             }
   
-          } // class CompletingConnectionState
+          } // class CompletingConnectState
+
+    private class InitiatingReconnectState extends StateList 
+
+      /* This state is used to restore an old connection.
+        It sends a HELLO message to the remote peer
+        and then transitions to the CompletingReconnectState.
+        */
+
+      {
+    
+        public void onInputsForLeafStatesV() throws IOException
+          {
+            sendHelloV(this);
+            requestSiblingStateListV(theCompletingReconnectState);
+            }
+  
+        } // class InitiatingReconnectState
+
+    private class CompletingReconnectState extends StateList 
+
+      /* This class assumes that a HELLO message 
+        has already been sent to the remote peer
+        and tries to receive one from the remote peer.
+        It does not retransmit HELLOs if a HELLO is not received.
+        It will give up trying if no HELLO is received. 
+        */
+
+      {
+
+        public void onEntryV() throws IOException
+          {
+            theTimerInput.scheduleV(Config.maxTimeOutMsL);
+            }
+    
+        public void onInputsForLeafStatesV() throws IOException
+          {
+            if (tryReceivingHelloB(this)) // Try to process HELLO.
+              requestSiblingStateListV( // Success.  Request connected state.
+                  theConnectedState );
+            else if (theTimerInput.getInputArrivedB()) // Try Time-out? 
+              {
+                requestSiblingStateListV( // Give up by
+                    theBrokenConnectionState); // going to broken connection.
+                }
+            }
+  
+          } // class CompletingConnectState
 		
 		private class ConnectedState extends AndState
 
 	  	/* This state means we are connected to the peer node.
 	  	  This state handles the reception of any extra HELLO messages,
 	  	  which are HELLO messages received after the first one.
-	  	  Extra HELLO messages means that the remote peer
+	  	  Receiving HELLO messages here means that the remote peer
 	  	  did not receive the HELLO or HELLOs sent by us earlier.
 	  	  */
 
@@ -242,7 +309,8 @@ public class LinkedMachineState
 				public StateList initializeWithIOExceptionStateList(
 						StateList[] theLinkedStateLists)
 			    throws IOException
-			    /* This method initializes the sub-states.  */
+			    /* This method initializes the sub-states,
+			      building the sub-state-machine.  */
 					{
 						super.initializeWithIOExceptionStateList();
 						
@@ -277,7 +345,7 @@ public class LinkedMachineState
 			  	  in response to extra received HELLO messages.
 			  	  To prevent HELLO storms, response is made to only
 			  	  every other received HELLO.
-			  	  It also handles the GOODBYE message by disconnecting. 
+			  	  It also handles reception of the GOODBYE message by disconnecting. 
 			  	  */
 			  	{
 			  			boolean progressB= true; // Assume progress will be made.
@@ -292,7 +360,7 @@ public class LinkedMachineState
 					  			break goReturn; // Return with progress.
 					  			}
 				  		if ( tryInputB("GOODBYE") ) { // Did peer disconnect itself?
-		    			  	requestSiblingStateListV( // Do the same here.
+		    			  	requestSiblingStateListV( // Yes, so we do the same.
 		    			  			theDisconnectedState);
 					  			break goReturn; // Return with progress.
 					  			}
@@ -305,7 +373,7 @@ public class LinkedMachineState
     
     private class DisconnectedState extends StateList
 
-      /* This state is entered when a controlled disconnect occurs,
+      /* This state is entered when a voluntary disconnect occurs,
         for example when a GOODBYE message is received.
         It will exit this state only when HELLO message is received.
         */
@@ -331,10 +399,10 @@ public class LinkedMachineState
     
     private class BrokenConnectionState extends StateList
 
-      /* This state is entered when a connection fails
+      /* This state is entered when a connection involuntarily fails
         because packets could not be exchanged by the two peers.
         It will go to the ConnectedState when a HELLO message is received.
-        It will go to the InitiatingConnectionState
+        It will go to the InitiatingConnectState
         if the reconnect period passes.
         */
 
@@ -354,7 +422,7 @@ public class LinkedMachineState
                 requestSiblingStateListV(theConnectedState);
                 }
             else if (theTimerInput.getInputArrivedB()) // Time to try again? 
-              //// requestSiblingStateListV(theInitiatingConnectionState);
+              //// requestSiblingStateListV(theInitiatingConnectState);
               {
                 sendHelloV(this); // Send a greeting HELLO.
                 requestSiblingStateListV(theBrokenConnectionState);
@@ -373,7 +441,7 @@ public class LinkedMachineState
 
   	private boolean tryReceivingHelloB(StateList subStateList) 
   			throws IOException
-  	  /* This method tries to read and process the Hello message,
+  	  /* This method tries to receive and process the Hello message,
   	    including its arguments.
   	    This method is part of this state class, 
   	    but is not called by its own code.

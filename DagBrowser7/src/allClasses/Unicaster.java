@@ -146,6 +146,9 @@ public class Unicaster
 	  	  // propagateIntoSubtreeB( LogLevel.TRACE ); ///dbg /// tmp
 	  	  }
 
+    public void connectOrReconnectV(boolean connectB) //// Not fully used yet.
+      { theLinkedMachineState.connectOrReconnectV(connectB); }
+
     protected void finalizingV() throws IOException
 	    // This is the opposite of initilizingV().
 	    {
