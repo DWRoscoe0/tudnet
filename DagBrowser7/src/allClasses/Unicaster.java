@@ -17,6 +17,11 @@ public class Unicaster
     one of the peer nodes of which the ConnectionManager is aware.
     It uses unicast packets, not multicast packets.
     
+    Each Unicaster is associated with a remote IPAndPort
+    which can be retrieved with the superclass method getKeyK().
+    The UnicasterManager maintains a map from IPAndPort to Unicaster.
+    So the reference to IPAndPort is duplicated.
+    
     This class is not a Thread, but is a Runnable on which to base a Thread.
     The Runnable contains a loop which:
     * Receives packets from the remote peer.
@@ -25,7 +30,8 @@ public class Unicaster
       * Establishing and shutting down a connection.
 	    * Exchanging sequence numbers to measure packet loss and round-trip-time. 
 	    * Multiplexing packets from and de-multiplexing packets to other threads
-	      which implement their own protocols.
+	      which implement their own protocols.  This is not presently used.
+
     
     Originally it was planned for each Unicaster thread to 
     send and receive packets using a connected DatagramSocket.
@@ -179,6 +185,7 @@ public class Unicaster
 
 	      	  finalizingV();
 	  	    	theUnicasterManager.removingV( this ); // Removing self from tree.
+	  	    	  // This isn't really needed, but is a good test of display logic.
 	      		appLogger.info("run() after remove and before final display.");
 	      		Nulls.fastFailNullCheckT(theDataTreeModel);
 	      		theDataTreeModel.displayTreeModelChangesV(); // Display removal.

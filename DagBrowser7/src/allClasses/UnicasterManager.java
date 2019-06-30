@@ -80,7 +80,7 @@ public class UnicasterManager
 		    }
 
     public synchronized Unicaster getOrBuildAddAndStartUnicaster(
-    		IPAndPort theIPAndPort 
+    		IPAndPort theIPAndPort
     		)
       /* This method returns a Unicaster associated with
         the remote peer whose address in theIPAndPort.

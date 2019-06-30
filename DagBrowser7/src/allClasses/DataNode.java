@@ -13,23 +13,18 @@ public class DataNode
 
 	  /* This class forms the basis of the classes 
 	    which represent the DAG (Directed Acyclic Graph). 
-	    Many of its methods are similar to methods in 
-	    the DataTreeModel interface.
+	    All subclasses of this class add non-DAG-essential capabilities.
 
-	    All these methods work, but some of them do so by counting and searching.
-	    They should be used only by subclasses which 
-	    do not have a lot of children so they will run quickly.
-	    For nodes with many children,
-	    these methods should be optimized or cached in the subclass, or both
+	    Many of methods in this class are similar to 
+	    methods in the DataTreeModel interface.
+	    
+	    Some of the methods in this class are 
+	    non working stubs and MUST be overridden.
+	    Other methods in this class work as is,
+	    but might be inefficient in nodes with large numbers of children, 
+	    and SHOULD be overridden. 
 
-	    ?? Possible new subclasses:
-	
-	      ?? Maybe create a subclass CachedDataNode.
-			    * It maintains an array of all names of all its children,
-			      for fast counts and name searches.
-			    * It caches the actual child nodes for fast child getChild(..).
-	
-	    ?? Possible methods to add:
+	    ///enh Possible methods to add:
 	
 				?? Add getEpiThread() which returns the EpiThread associated with
 				  this DataNode, or null if there is none, which is the default.
@@ -40,6 +35,7 @@ public class DataNode
 			    at least with the name, but possibly also with a summary value,
 			    can be used as a part of its parent DataJComponent.
 			    See getSummaryString() which returns a String.
+			    This might be able to be temporary, like a Render component.
 	
 	    ?? Maybe add a field, parentsObject, which contains references to
 	      DataNodes which parents of this node.
@@ -66,9 +62,9 @@ public class DataNode
 		      and the GUI display of those nodes should happen soon.
 
 		      Besides NONE and SUBTREE_CHANGED, which would be sufficient for
-		      node value changes in a static tree, 
+		      node value changes in a tree with unchanging size and shape, 
 		      there is also STRUCTURE_CHANGED,
-		      which helps in dealing with changes in branching structure.
+		      which helps in dealing with changes in a tree's branching structure.
 		      STRUCTURE_CHANGED is interpreted as a need to reevaluate
 		      and display the entire subtree that contains it.
 		      
@@ -92,7 +88,7 @@ public class DataNode
 			  	// Minimum needed for correct operation.
 			  	NONE, 									// No changes here or in descendants.
 			  													// The cell is correct as displayed.
-					// This subtree may be ignored.
+					                        // This subtree may be ignored.
 			  	STRUCTURE_CHANGED,			// This subtree contains major changes. 
 																	// Requires structure change event.  The node 
 			  													// and its descendants need redisplay.
@@ -111,11 +107,13 @@ public class DataNode
 			  	REMOVALS,			// one or more children have been removed
 			  	*/  ///opt
 					}
-		  
+
 			protected NamedList parentNamedList= null; // My parent node.
-			
+			  // If there is a parent, it must be a list.
+
 			protected LogLevel theMaxLogLevel= AppLog.defaultMaxLogLevel;
-			
+			  // Used to determine logging from this node.
+
     // Static methods.
 
 		  static DataNode[] emptyListOfDataNodes()
@@ -151,10 +149,13 @@ public class DataNode
     // Instance methods.
 
   	  protected void propagateIntoSubtreeV( DataTreeModel theDataTreeModel )
-  	    /* This method is called when a DataNode is added to a NamedList
-  	      or one of its subclasses.  This method ignores theDataTreeModel, 
-  	      because this is a leaf node and leaves it don't need it.
-  	      So the propagation ends here.
+  	    /* This method is called to propagate theDataTreeModel
+  	      into the nodes which needed it when 
+  	      a DataNode is added to a NamedList or one of its subclasses.
+  	        
+  	      This method ignores theDataTreeModel and does nothing 
+  	      because this is a leaf node and leaves have no subtrees,
+  	      so the propagation ends here.
 	        List nodes that do need it will override this method.
 	        See NamedList.
   	      */
@@ -374,21 +375,21 @@ public class DataNode
 	  	
     public String getNameString( )
 	    /* Returns the name of the DataNode as a String.  
-	      his should be a unique (identifying) String.
+	      This should be a unique String among its siblings.
 	      It will be used as part of a path-name and which
-	      identifies this DataNode distinctly from its siblings.
+	      identifies this DataNode distinctly from all other tree nodes.
 	      */
       {
-    	  return "-NAME-UNDEFINED-";
+    	  return "-UNDEFINED-NAME-"; // Base class has no name.
         }
 
     public String getValueString( )
-	    /* Returns the value of the D+ataNode as a String.  
-	      This is meant to be a very short string that
+	    /* Returns the value of the DataNode as a String.  
+	      This is meant to be a very short summary string that
 	      might be appended to the name to represent a title. 
 	      */
       {
-    		return "-UNDEFINED-";
+    		return "-UNDEFINED-VALUE-"; // Base class has no value.
     		}
 
     public String getContentString( )
@@ -406,7 +407,8 @@ public class DataNode
       the contents of this DataNode as a String.
       The line consists of the name of the node,
       and sometimes followed by something else,
-      such as a child count, or some other type of value summary information.  
+      such as a child count, or some other type of value summary information.
+      This is not meant to be a unique identifier.  
       */
       {
     	  String nameString= processedNameString();
@@ -432,8 +434,11 @@ public class DataNode
 	  public String processedNameString()
 	    /* This method returns a name String which is might have been decorated
 	      with other characters, but still viewable as a name.
+	      This method should not be used to get a unique identifying name,
+	      because the decorations could change.
+	      getNameString() should be used for that.
 	      This version returns the ordinary name,
-	      but subclasses could decorated the name as desired.
+	      but subclasses could decorate the name as desired.
 	     	*/
   		{
 		  	return getNameString();
@@ -444,7 +449,8 @@ public class DataNode
 	  	{
 	  		String valueString= getValueString(); // Initializing process value.
 	  		process: {
-			  	if ( valueString == "-UNDEFINED-" ) // Convert undefined to blank.
+			  	if // Convert undefined to blank.
+			  	  ( valueString == "-UNDEFINED-VALUE-" )
 			  	  { valueString= ""; break process; }
 			    int indexOfNewLineI= valueString.indexOf("\n");
 		  	  if // Trimming extra lines if there are any in value string.

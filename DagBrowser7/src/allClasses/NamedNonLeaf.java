@@ -6,7 +6,10 @@ public abstract class NamedNonLeaf
   extends DataNode
 
   /* This class is the base class for all named MetaNodes.
-    It has a name.  The name can be changed, but this should happen only
+    It adds a name and methods to manipulate that name
+    to the base DataNode.  
+
+    The name can be changed, but this should happen only
     very shortly after construction, and only to replace
     a temporary value set to enable lazy loading of
     the remainder of the node.

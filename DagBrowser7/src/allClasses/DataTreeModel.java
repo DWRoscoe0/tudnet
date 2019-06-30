@@ -161,7 +161,8 @@ public class DataTreeModel
 
       public Object getChild( Object parentObject, int childIndexI ) 
         /* Returns the Object which is the child of parentObject
-          whose child index is childIndexI.  The child must exist.
+          whose child index is childIndexI, or null if child does not exist.
+
           This operation is delegated to parentObject which
           is assumed to satisfy the DataNode interface.
           */
@@ -169,10 +170,11 @@ public class DataTreeModel
       	  DataNode childDataNode= // Getting the child from parent.
       	  		((DataNode)parentObject).getChild( childIndexI ); 
 
-      	  if ( childDataNode != null )
-	      	  { // Calculating and adding to map the TreePath of child for later.  
+      	  if // Add child to path map 
+      	    ( childDataNode != null ) // if child is present.
+	      	  { // Calculating and adding to map the TreePath of this child.  
 		      	  DataNode parentDataNode= (DataNode)parentObject;
-		          TreePath parentTreePath= // Try retrieving path of parent from map. 
+		          TreePath parentTreePath= // Try retrieving parent path from map. 
 		            	translatingToTreePath( parentDataNode );
 		          if ( parentTreePath != null ) // Add child path if path found.
 			      	  nodeToPathHashMap.put( // Making and adding child path to map. 
@@ -219,10 +221,12 @@ public class DataTreeModel
           )
         /* Unimplemented because Infogora doesn't edit the DAG/tree, yet
           Simply logs an error and returns.
+          
+          Actually this might no longer be true.  
+          See DataNode.ChangeFlag.SUBTREE_CHANGED and related code.
           */
         { 
-      	  String messageString= "DataTreeModel.valueForPathChanged(..) called";
-	      	appLogger.error( messageString );
+	      	appLogger.error( "DataTreeModel.valueForPathChanged(..) called" );
       	  } 
       
     // Getter methods which are not part of AbstractTreeModel.
@@ -415,6 +419,8 @@ public class DataTreeModel
   	      TreePaths that are built are cached in the nodeToPathHashMap.
   	      It returns the resultant TreePath or null if 
   	      it was unable to find or build the TreePath.
+  	      
+  	      ///opt This may no longer be needed.
   	      */
       	{ 
       	  TreePath targetTreePath= // Looking in cache first.
@@ -743,7 +749,7 @@ public class DataTreeModel
           /* This method creates and fires a single-child TreeModelEvent
             for the insertion of a single child DataNode, childDataNode,
             into parentDataNode at position indexI.
-            It also adds the path of the new child to the map for user later.
+            It also adds the path of the new child to the map for use later.
             */
           {
         		appLogger.error( "THIS IS SUPPOSED TO BE UNUSED CODE!" ); 

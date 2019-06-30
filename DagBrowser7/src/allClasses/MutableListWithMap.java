@@ -6,19 +6,21 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class MutableListWithMap< 
-    K, // Key for map entry.
+    K, // Key for the map entries.
     V extends DataNodeWithKeyAndThreadValue< // Value for map entry. 
     	D, // The DataNode part of value. 
-      K  //The key part of value.
+      K  //The key stored within DataNode.
       >, 
 		D extends KeyedStateList< K > // DataNode within map entry value.
     >
 
   extends MutableList
   
-  // This class extends MutableList with a HashMap for fast child lookup.
-  // It also has some support for EpiThreads associated with the child values.
-  // The HashMap and List are kept synchronized.
+  /* This class extends MutableList with a HashMap for 
+    fast child lookup based on key.
+    The HashMap and List should be kept synchronized.
+    It also has some support for EpiThreads associated with the child values.
+    */
   
   {
 
@@ -42,7 +44,8 @@ public class MutableListWithMap<
         }
     
 	  protected synchronized void addingV( K childK, V childV )
-	    /* This adds childV to both the HashMap and this MutableList.
+	    /* This adds childV to the HashMap and the DataNode part
+	      to this MutableList, keeping them synchronized.
 	      The entry added to the HashMap has childK as its key.
 	      */
 	    {
@@ -58,7 +61,10 @@ public class MutableListWithMap<
 	      }
 
 	  public synchronized void removingV( D childD )
-      // This method removes childV from both the HashMap and this MutableList.
+      /* This method removes childV and its key from the HashMap 
+        and the childD DataNode part from this MutableList, 
+        keeping them synchronized.
+        */
 	    {
 	    	if  // Removing from this DataNode's List if it's there.
 	    		( ! removeB( childD ) )

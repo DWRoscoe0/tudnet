@@ -2,14 +2,13 @@ package allClasses;
 
 public class KeyedStateList< K > 
 
-	// extends StateList  // was AndState and MutableList before that. 
 	extends AndOrState  // was StateList, AndState and MutableList before that.
   
-  /* This class adds a Key value to an AndState StateList.
+  /* This class adds a Key value to an AndOrState StateList.
     The Key is typically used for two things:
     * As an extension of the base name when 
       forming the full name String of this node.
-    * As the key for a hash table lookup.
+    * As the key for external hash tables for fast lookup.
 
     Because sub-classes of this class typically do more than simply hold data,
     this class extends AndOrState, so it can itself be 
