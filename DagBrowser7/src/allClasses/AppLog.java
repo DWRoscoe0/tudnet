@@ -466,18 +466,23 @@ public class AppLog extends EpiThread
         This is for exceptions that must be caught,
         but for which there is nothing that can be or needs to be done.
         
+        Note, console output is all done to System.out, not System.err.
+        This is done to avoid console output which is out of order.
         ///enh Make this display a StackTrace with exception.
         */
       { 
         String wholeString= "EXCEPTION: " + inString + " :\n  " + e ;
 
-        System.err.println(wholeString); // Send intro string to error console.
-        e.printStackTrace(); // Send StackTrace to error console.
+        synchronized(this) { // Must synchronize on AppLog object so 
+          System.out.println(wholeString); // intro string and
+          e.printStackTrace(System.out); // stack trace
+          } // are together on console.
 
         synchronized(this) { // Must synchronized on AppLog object so 
-          error( wholeString ); // error header line and
-          e.printStackTrace(getPrintWriter()); // stack-trace are together.
-          }
+          logB( ERROR, true, e, wholeString); // log entry intro and
+          doStackTraceV(e); // stack trace
+          } // are together in log file.
+
         }
     
     public void error(String inString)
@@ -487,7 +492,7 @@ public class AppLog extends EpiThread
     
     public void error(Throwable theThrowable, String inString)
       /* This method writes an error String inString to a log entry,
-        and also to the console error stream?  Disabled temporarily. ////
+        and also to the console stream.
         An error is something with which the app should not have to deal.
         Response is to either retry or terminate.
         It also includes a stack trace.

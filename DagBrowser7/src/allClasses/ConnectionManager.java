@@ -235,6 +235,10 @@ public class ConnectionManager
 			/* This method attempts to restore Unicaster peer connections
 			  which were active immediately before the previous shutdown.
 
+        Because an app start up it triggering these events,
+        the Unicaster is started in a state to cause 
+        its state machine to do a reconnect and not a connect.
+
 			  ///fix Presently it simply tries to restore 
 			  all the peers connections in Persistent storage.  
 			  Fix to restore only the previously active ones.
@@ -261,10 +265,10 @@ public class ConnectionManager
 		        		"ConnectionManager.restartPreviousUnicastersV(), Unicastger at "
 		        		+ "IP=" + peerIPString + ", port=" + peerPortString );
 					  Unicaster theUnicaster= 
-					    theUnicasterManager.getOrBuildAddAndStartUnicaster(
-				    		peerIPString , peerPortString ); // Restore peer with Unicaster.
-            theUnicaster.connectOrReconnectV(true);
-            //// theUnicaster.startV();
+					    theUnicasterManager.getOrBuildAndAddUnicaster(
+				    		peerIPString, peerPortString ); // Restore peer with Unicaster.
+            theUnicaster.setForReconnectV(true); // Inject connection action.
+					  theUnicasterManager.startV(theUnicaster); // Start its thread.
 					  thePersistentCursor.nextKeyString(); // Advance cursor.
 					  }
       	// appLogger.debug(
@@ -478,7 +482,7 @@ public class ConnectionManager
             multicasterToConnectionManagerNetcasterQueue.poll();
           if (theNetcasterPacket == null) break;  // Exit if no more packets.
           // /*  ///rev disabled for testing.
-  				theUnicasterManager.getOrBuildAddAndStartUnicaster( 
+  				theUnicasterManager.getOrBuildAddAndReconnectUnicaster( 
 	      		theNetcasterPacket 
 	      		);
           // */  ///rev
@@ -518,7 +522,7 @@ public class ConnectionManager
         //  + theKeyedPacket.getSocketAddressesString()
         //  );
     		Unicaster theUnicaster=  // Getting the appropriate Unicaster.
-    				theUnicasterManager.getOrBuildAddAndStartUnicaster( 
+    				theUnicasterManager.getOrBuildAddAndReconnectUnicaster( 
 		      		theNetcasterPacket 
 		      		);
 	      theUnicaster.puttingKeyedPacketV( // Giving to it its first packet.  

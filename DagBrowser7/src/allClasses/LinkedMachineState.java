@@ -112,11 +112,11 @@ public class LinkedMachineState
 	  	  return this;
 			  }
 	
-    public void connectOrReconnectV(boolean connectB)
+    public void setForReconnectV(boolean connectB)
       { 
         setFirstOrSubStateV( connectB 
-          ? theInitiatingConnectState 
-          : theInitiatingReconnectState );
+          ? theInitiatingReconnectState
+          : theInitiatingConnectState );
         }
 
     public synchronized void finalizeV() throws IOException
@@ -422,12 +422,7 @@ public class LinkedMachineState
                 requestSiblingStateListV(theConnectedState);
                 }
             else if (theTimerInput.getInputArrivedB()) // Time to try again? 
-              //// requestSiblingStateListV(theInitiatingConnectState);
-              {
-                sendHelloV(this); // Send a greeting HELLO.
-                requestSiblingStateListV(theBrokenConnectionState);
-                  // But stay in this state.  A kludge.
-                }
+              requestSiblingStateListV(theInitiatingReconnectState);
             }
 
         public void onExitV() throws IOException

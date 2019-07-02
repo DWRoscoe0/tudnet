@@ -54,44 +54,56 @@ public class UnicasterManager
 			//updatePeerInfoV( "IDLocalHost", "127.0.0.1", "11111" );
 		  }
 
-    public synchronized Unicaster getOrBuildAddAndStartUnicaster(
+    public synchronized Unicaster getOrBuildAndAddUnicaster(
     		String IPString , String portString )
     	/* This method returns a Unicaster associated with
         the remote peer address in theNetcasterPacket.
         If a Unicaster doesn't already exist then it creates one.
+        It does not start the Unicaster thread.
         */
 	    { 
     		IPAndPort theIPAndPort= new IPAndPort(IPString, portString);
-	    	Unicaster theUnicaster= getOrBuildAddAndStartUnicaster( theIPAndPort );
+	    	Unicaster theUnicaster= getOrBuildAndAddUnicaster( theIPAndPort );
 		    return theUnicaster;
 		    }
 
-    public synchronized Unicaster getOrBuildAddAndStartUnicaster(
+    public synchronized Unicaster getOrBuildAddAndReconnectUnicaster(
     		NetcasterPacket theNetcasterPacket 
     		)
       /* This method returns a Unicaster associated with
         the remote peer address in theNetcasterPacket.
-        If a Unicaster doesn't already exist then it creates one.
+        If a Unicaster doesn't already exist then this method 
+        creates one and starts its thread.
+        Because a packet it triggering these events,
+        the Unicaster is started in a state to cause 
+        its state machine to do a connect and not a reconnect.
         */
 	    { 
     		IPAndPort theIPAndPort= makeIPAndPort(theNetcasterPacket);
-	    	Unicaster theUnicaster= getOrBuildAddAndStartUnicaster( theIPAndPort );
+        Unicaster theUnicaster= tryingToGetUnicaster( theIPAndPort );
+        if ( theUnicaster == null ) {
+          theUnicaster= buildAndAddUnicaster( theIPAndPort );
+          theUnicaster.setForReconnectV(false); // Inject connect action.
+          startV(theUnicaster); // Start the Unicaster thread.
+          }
 		    return theUnicaster;
 		    }
 
-    public synchronized Unicaster getOrBuildAddAndStartUnicaster(
+    public synchronized Unicaster getOrBuildAndAddUnicaster(
     		IPAndPort theIPAndPort
     		)
       /* This method returns a Unicaster associated with
         the remote peer whose address in theIPAndPort.
-        If a Unicaster doesn't already exist then it creates one.
+        If a Unicaster doesn't already exist then it creates 
+        and mostly initializes one and adds it to the tree.
+        It does not start the Unicaster.
         */
 	    { 
 	    	Unicaster theUnicaster= // Testing whether Unicaster exists.  
 	    			tryingToGetUnicaster( theIPAndPort );
 	    	if ( theUnicaster == null ) // Building one if one doesn't exist.
-	    		{ // Building a new Unicaster.
-	          theUnicaster= buildAddAndStartUnicaster( theIPAndPort );
+	    		{ // Building a new Unicaster and adding it to tree.
+	          theUnicaster= buildAndAddUnicaster( theIPAndPort );
 	    			}
 		    return theUnicaster;
 		    }
@@ -138,13 +150,15 @@ public class UnicasterManager
         return tryingToGetDataNodeWithKeyD( theIPAndPort );
         }
 
-    private Unicaster buildAddAndStartUnicaster( IPAndPort theIPAndPort )
-      /* This method builds a Unicaster to handle 
-        communications with a peer at address theIPAndPort.
+    private Unicaster buildAndAddUnicaster( IPAndPort theIPAndPort )
+      /* This method builds and mostly initializes a Unicaster 
+        to handle communications with a peer at address theIPAndPort.
         It should be called only if the Unicaster does not already exist.
         Is not synchronized because it is called only from 
         other synchronized local methods.
         addingV(..) to tree is done last because it could trigger displaying.
+        This is the lowest level method for building a Unicaster.
+        It does not start the Unicaster.
         */
 	    { 
     	  UnicasterFactory theUnicasterFactory= 
@@ -153,19 +167,29 @@ public class UnicasterManager
 	      final UnicasterValue resultUnicasterValue=  // Getting the Unicaster. 
 	      	theUnicasterFactory.getUnicasterValue();
 	      Unicaster theUnicaster= resultUnicasterValue.getDataNodeD(); 
-    		appLogger.info("buildAddAndStartUnicaster(..) "
+    		appLogger.info("buildAndAddUnicaster(..) "
     		    + "initializing root state machine of new Unicaster.");
         try { // Operations that might produce an IOException.
-      			theUnicaster.initializeWithIOExceptionV();
+      			theUnicaster.initializeWithIOExceptionV(
+      			    resultUnicasterValue.getEpiThread());
         	} catch( IOException e ) {
         		Globals.logAndRethrowAsRuntimeExceptionV( 
-        				"buildAddAndStartUnicaster(..) IOException", e );
+        				"buildAndAddUnicaster(..) IOException", e );
           }
 	      addingV( // Adding the new Unicaster to data structures.
 	          theIPAndPort, resultUnicasterValue );
-	      resultUnicasterValue.getEpiThread().startV(); // Start its thread.
 	      return theUnicaster;
 	      }
+
+    public void startV(Unicaster theUnicaster)
+      /* This method starts the thread associated with theUnicaster.  */
+      {
+        IPAndPort theIPAndPort= theUnicaster.getKeyK();
+        UnicasterValue theUnicasterValue= childHashMap.get(theIPAndPort);
+        EpiThread theEpiThread= theUnicasterValue.getEpiThread();
+        theEpiThread.startV(); // Start the actual thread.
+        }
+
 
     public String getValueString( )
 	    /* Returns a string indicating the numbers of Unicasters being managed,

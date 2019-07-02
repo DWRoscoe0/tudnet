@@ -68,6 +68,7 @@ public class Unicaster
       private final Persistent thePersistent;
   		
   		// Other instance variables.
+      private EpiThread theEpiThread;
   		private LinkedMachineState theLinkedMachineState;
   		
   	public Unicaster(  // Constructor. 
@@ -114,11 +115,14 @@ public class Unicaster
 		  		this.thePersistent= thePersistent;
 	      }
 
-    protected void initializeWithIOExceptionV() throws IOException
+    protected void initializeWithIOExceptionV( EpiThread theEpiThread ) 
+        throws IOException
 	    {
     		super.initializeWithoutStreamsV(); // Stream counts are added below in
     		  // one of the sub-state machines.
 
+    		this.theEpiThread= theEpiThread;
+    		
 	  		// Create and start the sub-state machines.
 
     		{ // Create and add actual sub-states.
@@ -150,10 +154,27 @@ public class Unicaster
 	  	  addAtEndB( theSubcasterManager );
 	  	  
 	  	  // propagateIntoSubtreeB( LogLevel.TRACE ); ///dbg /// tmp
+	  	  
 	  	  }
 
-    public void connectOrReconnectV(boolean connectB) //// Not fully used yet.
-      { theLinkedMachineState.connectOrReconnectV(connectB); }
+    public EpiThread getEpiThread()
+      {
+        return theEpiThread;
+        }
+    
+    public void setForReconnectV(boolean connectB)
+      /* This method is called to determine the initial state
+        when the Unicaster is started.
+        connectB == true means do an initial connect.
+        connectB == false means do a reconnect.
+        Initial connects do more retries.
+        
+        This method does nothing but pass connectB to theLinkedMachineState, 
+        where the real connecting log is.
+        */
+      { 
+        theLinkedMachineState.setForReconnectV(connectB); 
+        }
 
     protected void finalizingV() throws IOException
 	    // This is the opposite of initilizingV().

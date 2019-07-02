@@ -61,7 +61,17 @@ public class EpiThread
       {
       	appLogger.info("EpiThread(" + getName() + ").startV(): starting.");
 
-        start();
+      	try { 
+        	    start();
+        	    } 
+      	catch 
+    	    (IllegalThreadStateException theIllegalThreadStateException) 
+    	    {
+            appLogger.exception(
+                "EpiThread.startV() already started",
+                theIllegalThreadStateException
+                );
+    	      }
         }
 
     public static void stopAndJoinIfNotNullV( EpiThread theEpiThread )
