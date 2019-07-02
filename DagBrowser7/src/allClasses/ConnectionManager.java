@@ -395,7 +395,7 @@ public class ConnectionManager
     				); // Strangely, closing can require 2 to 3 seconds.
         appLogger.debug(
             "ConnectionManager.stoppingUnicastReceiverThreadV() middle."
-            +"\n  Strangely this sometimes takes several seconds to get here.");
+            +"\n  This may require several seconds if Socket closes.");
     		EpiThread.stopAndJoinIfNotNullV(theUnconnectedReceiverEpiThread);
         appLogger.debug("ConnectionManager.stoppingUnicastReceiverThreadV() ends.");
 	      }

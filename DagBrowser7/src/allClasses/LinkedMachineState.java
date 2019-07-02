@@ -152,11 +152,6 @@ public class LinkedMachineState
 			  		{ // Process local disconnect request.
 		        	Thread.currentThread().interrupt(); // Reestablish interrupted.
 		        	progressB= requestSubStateListB( theDisconnectedState );
-		        	if (progressB) // Send GOODBYEs if state change was accepted.
-				  			for (int i=0; i<3; i++) { // Send 3 GOODBYE packets.
-				  		    theNetcasterOutputStream.writingTerminatedStringV( "GOODBYE" );
-				  				theNetcasterOutputStream.sendingPacketV(); // Forcing send.
-				  				}
 			  			break goReturn; // Return with the progress calculated above.
 			  			}
 		  		progressB= false; // Everything failed to progress, so return same.
@@ -369,6 +364,18 @@ public class LinkedMachineState
 			  			return progressB;
 					  }
 
+		    public void onExitV() throws IOException
+		      /* Informs the peer that we are disconnecting by 
+		        sending 3 GOODBYE messages.
+		        */
+		      { 
+		        for (int i=0; i<3; i++) { // Send 3 GOODBYE packets.
+              theNetcasterOutputStream.writingTerminatedStringV( "GOODBYE" );
+              theNetcasterOutputStream.sendingPacketV(); // Forcing send.
+              }
+		        super.onExitV();
+		        }
+		    
 	  		} // class ConnectedState
     
     private class DisconnectedState extends StateList
