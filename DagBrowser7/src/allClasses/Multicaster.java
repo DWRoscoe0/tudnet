@@ -328,7 +328,7 @@ public class Multicaster
     	              } // Send and receive multicast packets.
     	
     	          theMulticastSocket.disconnect();  // Stopping filtering?  Filtering?
-    	          theMulticastSocket.close();  // Freeing associated OS resource.
+    	          //// theMulticastSocket.close();  // Freeing associated OS resource.
     	          stoppingMulticastReceiverThreadV();
     	          }
             for(int i=3; i>0; i--){ // Say goodbye 3 times...
@@ -336,7 +336,7 @@ public class Multicaster
               }
             }
           catch( IOException e ) {
-            appLogger.warning("run(): theMulticastSocket not [yet] open:" + e );
+            appLogger.exception("run(): theMulticastSocket not [yet] open:",e);
             }
 
           //appLogger.info( Thread.currentThread().getName()+": run() ending." );
@@ -469,7 +469,7 @@ public class Multicaster
 		    theMulticastSocket.setLoopbackMode( true );  // Disable loopback.
 		    theMulticastSocket.setTimeToLive( ttl );
 		    theMulticastSocket.setNetworkInterface(gatewayNetworkInterface);
-        appLogger.debug(
+        appLogger.info(
             "initializeWithIOExceptionV()\n"
             + "  gatewayNetworkInterface= " + gatewayNetworkInterface 
             );

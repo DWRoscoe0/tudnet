@@ -58,8 +58,6 @@ s     */
       if ( instancePortI < 0 ) // Undefined.
         { // Define it.
           instancePortI= getConfingletonPortI(instancePortNameString);
-          appLogger.debug(
-              "PortManager.getInstancePortI() read port="+instancePortI);
           }
       return instancePortI;
       }

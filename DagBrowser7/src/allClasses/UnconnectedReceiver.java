@@ -81,7 +81,7 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
                 		theNetcasterPacketManager.produceKeyedPacket();
                 DatagramPacket theDatagramPacket= // Get DatagramPacket from it.
                 		theNetcasterPacket.getDatagramPacket();
-                appLogger.debug("run(): before receive(..)");
+                /// appLogger.debug("run(): before receive(..)");
                 receiverDatagramSocket.receive(theDatagramPacket); // Receive.
                 PacketManager.logUnconnectedReceiverPacketV(
                 		theDatagramPacket

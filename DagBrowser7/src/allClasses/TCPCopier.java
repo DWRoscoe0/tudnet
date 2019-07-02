@@ -114,14 +114,14 @@ public class TCPCopier extends EpiThread
         Then it starts this thread.
         */
       {
-        appLogger.debug("TCPCopier.initializeV() begins.");
+        appLogger.info("TCPCopier.initializeV() begins.");
         if (!appLogger.testAndLogDisabledB(
             Config.tcpThreadsDisableB,"TCPCopier"))
           { // Prepare for and start thread.
             updateTCPCopyStagingAreaV();
             startV();
             }
-        appLogger.debug("TCPCopier.initializeV() ends.");
+        appLogger.info("TCPCopier.initializeV() ends.");
         }
 
     public void finalizeV() 
@@ -170,7 +170,7 @@ public class TCPCopier extends EpiThread
         Closeables.closeIfNotNullWithLoggingB(clientSocket); // the client
         Closeables.closeIfNotNullWithLoggingB(serverSocket); // and server.
 
-        appLogger.debug("TCPCopier.stopV(): interrupt and socket closes done.");
+        appLogger.info("TCPCopier.stopV(): interrupt and socket closes done.");
         }
 
     private void updateTCPCopyStagingAreaV()
