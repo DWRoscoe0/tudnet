@@ -39,7 +39,8 @@ public class Config
     //// public static final long tcpServerCyclePauseMsL= 4000;
     //// public static final long tcpServerMaximumWaitMsL= 30000;
 		//// public static final long tcpServerRunDelayMsL=15000;
- 		public static final int tcpCopierServerTimeoutMsI= 2*60000;
+ 		public static final int tcpCopierServerTimeoutMsI= 4*60000;
+ 		  // This is most of the main TCPCopier run() loop.
  		public static final int tcpConnectTimeoutMsI= 5000;
 	  ///dbg public static final String tcpCopierInputFolderString= "TCPCopierTmp";
 	  public static final String tcpCopierInputFolderString= "TCPCopierStaging";
