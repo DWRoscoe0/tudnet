@@ -249,8 +249,8 @@ public class ConnectionManager
             )
           return;
         
-      	// appLogger.debug(
-				// 	"ConnectionManager.Unica restartPreviousUnicastersV() begins.");
+      	appLogger.info(
+      	    "ConnectionManager.Unica restartPreviousUnicastersV() begins.");
 	    	PersistentCursor thePersistentCursor= // Used for iteration. 
 	    			new PersistentCursor( thePersistent );
 	    	thePersistentCursor.setListV("peers"); // Point to peer list.
@@ -261,9 +261,9 @@ public class ConnectionManager
 								thePersistentCursor.getFieldString("IP");
 						String peerPortString= 
 								thePersistentCursor.getFieldString("Port");
-				  	appLogger.info( 
-		        		"ConnectionManager.restartPreviousUnicastersV(), Unicastger at "
-		        		+ "IP=" + peerIPString + ", port=" + peerPortString );
+				  	/// appLogger.info( 
+  					/// 		"ConnectionManager.restartPreviousUnicastersV(), Unicastger at "
+  					/// 	+ "IP=" + peerIPString + ", port=" + peerPortString );
 					  Unicaster theUnicaster= 
 					    theUnicasterManager.getOrBuildAndAddUnicaster(
 				    		peerIPString, peerPortString ); // Restore peer with Unicaster.

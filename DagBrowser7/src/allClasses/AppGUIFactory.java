@@ -128,7 +128,8 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
         theDataTreeModel,
         theInitialRootDataNode,
         theGUIBuilderStarter,
-        theShutdowner
+        theShutdowner,
+        theTCPCopier
         );
 
       receiverNetcasterPacketManager=  //? use local? 

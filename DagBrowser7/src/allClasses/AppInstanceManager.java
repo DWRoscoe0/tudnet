@@ -140,7 +140,7 @@ l    * If the app receives a message indicating
   // Internal dependency variables, set after construction.
     int inputCheckFileDelaySI= Config.localUpdateDelaySI; 
     	// Delay in seconds before checking for a local update file begins.
-    int tcpCheckFileDelaySI= Config.tcpUpdateDelaySI;
+    int tcpCheckFileDelaySI= Config.tcpFileUpdateDelaySI;
       // Same for TCP update.
     
     // File names.  Some of these might be equal.
@@ -218,6 +218,7 @@ l    * If the app receives a message indicating
 	      and whether it was successful.
 	      */
   	  {
+        appLogger.info("AppInstanceManager.finalizeV() deleter begins. ");
   	    String tempDirString= // Get temporary directory if it is in use. 
   	      startCommandArgs.switchValue("-tempDir");
           // Example: "C:\\Users\\PCUser\\AppData\\Local\\Temp\\7ZipSfx.003";
@@ -298,7 +299,7 @@ l    * If the app receives a message indicating
         */
 	    {
 	      tryUpdate: {
-          if (updatingB) break tryUpdate;
+          if (updatingB) break tryUpdate; // Prevent reentry block.
           updaterReentrantLock.lock(); 
           try { 
       		    updatingB= true;  // Assume updating.

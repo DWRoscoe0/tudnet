@@ -36,6 +36,7 @@ public class AppGUI
     private DataNode theInitialRootDataNode;
     private GUIManager theGUIManager;
     private Shutdowner theShutdowner;
+    private TCPCopier theTCPCopier;
 
     public AppGUI(   // Constructor.
         EpiThread theConnectionManagerEpiThread,
@@ -43,7 +44,8 @@ public class AppGUI
         DataTreeModel theDataTreeModel,
         DataNode theInitialRootDataNode,
         GUIManager theGUIManager,
-        Shutdowner theShutdowner
+        Shutdowner theShutdowner,
+        TCPCopier theTCPCopier
         )
       {
 	      this.theConnectionManagerEpiThread= theConnectionManagerEpiThread;
@@ -52,6 +54,7 @@ public class AppGUI
         this.theInitialRootDataNode= theInitialRootDataNode;
         this.theGUIManager= theGUIManager;
         this.theShutdowner= theShutdowner;
+        this.theTCPCopier= theTCPCopier;
         }
     
     class InstanceCreationRunnable // Listens for other local app instances.
@@ -133,11 +136,14 @@ public class AppGUI
         theGUIManager.initializeV();
         theConnectionManagerEpiThread.startV();
         theCPUMonitorEpiThread.startV();
+        theTCPCopier.initializeV();
 
         // Now the app is running and interacting with the user.
         theShutdowner.waitForAppShutdownRequestedV(); // Wait for shutdown.
 
         // Now the app is shutting down.
+        theTCPCopier.finalizeV();
+        //// theTCPServer.stopAndJoinV();
         theCPUMonitorEpiThread.stopAndJoinV();
         theDataTreeModel.logListenersV(); ///dbg
         theConnectionManagerEpiThread.stopAndJoinV( );

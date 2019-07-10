@@ -194,10 +194,10 @@ public class TCPCopier extends EpiThread
     private void loopAlternatingRolesV()
       /* This method loops until thread termination is requested.
         In that loop it alternately
-        * acts as a server, by accepting connections from other peers
-          to do an update with each of them.
         * acts as a client, by trying to connect to a peer 
           to do an update with it, or
+        * acts as a server, by accepting connections from other peers
+          to do an update with each of them.
         It spends most of its time as a server waiting for connections.
 
         The method will return early if the thread is interrupted.
@@ -206,11 +206,9 @@ public class TCPCopier extends EpiThread
         while (true)  // Repeat until exit requested.
           {
             if ( EpiThread.testInterruptB() ) break;
-            actAsAServerB();
-            if ( EpiThread.testInterruptB() ) break;
             actAsAClientB();
-            EpiThread.interruptibleSleepB(Config.antiCPUHogLoopDelayMsL); 
-              // Brief sleep to prevent [malicious] CPU hogging by this loop.
+            if ( EpiThread.testInterruptB() ) break;
+            actAsAServerV();
             }
         }
 
@@ -281,6 +279,7 @@ public class TCPCopier extends EpiThread
           long resultL= 
               tryExchangingFilesWithServerL(serverIPString,serverPortString);
           if (resultL == 0) break toReturn; // No file data was transfered.
+          successB= true; // Everything worked.
         } // toReturn:
           thePersistentCursor.nextWithWrapKeyString(); // Advance cursor.
           appLogger.info(
@@ -308,7 +307,7 @@ public class TCPCopier extends EpiThread
       {
         long resultL= 0;
         appLogger.debug(
-              "tryExchangingFilesWithServerV()"
+              "tryExchangingFilesWithServerL()"
               + ", serverIPString= " + serverIPString
               + ", serverPortString= " + serverPortString);
         File clientFile= 
@@ -319,17 +318,17 @@ public class TCPCopier extends EpiThread
             theInetSocketAddress= 
               new InetSocketAddress( serverIPString, serverPortI );
             appLogger.debug(
-                "tryExchangingFilesWithServerV() theInetSocketAddress= "
+                "tryExchangingFilesWithServerL() theInetSocketAddress= "
                 + theInetSocketAddress);
             clientSocket= new Socket();
             appLogger.debug(
-                "tryExchangingFilesWithServerV() before connect"
+                "tryExchangingFilesWithServerL() before connect"
                 + ",\n  clientSocket= " + clientSocket
                 + ",\n  theInetSocketAddress= " + theInetSocketAddress);
             clientSocket.connect(  // Connect with time-out.
                 theInetSocketAddress, Config.tcpConnectTimeoutMsI); 
             appLogger.debug(
-                "tryExchangingFilesWithServerV() after successful connect"
+                "tryExchangingFilesWithServerL() after successful connect"
                 + ",\n  clientSocket= " + clientSocket);
             long clientFileLastModifiedL= clientFile.lastModified();
             resultL= tryTransferingFileL(
@@ -337,46 +336,55 @@ public class TCPCopier extends EpiThread
             addPeerInfoV( serverIPString, serverPortString);
             if (resultL != 0)
               appLogger.info( 
-                  "tryExchangingFilesWithServerV() copied using"
+                  "tryExchangingFilesWithServerL() copied using"
                   + "\n  clientSocket= " + clientSocket);
           } catch (IOException theIOException) {
             appLogger.info(
-              "tryExchangingFilesWithServerV() failed\n  "+ theIOException);
+              "tryExchangingFilesWithServerL() failed\n  "+ theIOException);
           } finally {
             Closeables.closeWithErrorLoggingB(clientSocket);
           }
         return resultL;
         }
     
-    private boolean actAsAServerB()
-      /* This method is presently a do-nothing routine that 
-        does nothing except call tryServicingOneRequestFromAnyClientB().
-
-        This method waits for and tries for a maximum of 
-        tcpServerMaximumWaitMsL to process one request from a client.
-        This might result in an update file being send to the client,
+    private void actAsAServerV()
+      /* This method acts as a server for a maximum of tcpServerMaximumWaitMsL.
+        During that time it waits for and processes requests from clients.
+        A request might result in an update file being sent to the client,
         an update file being received from the client,
         or no file transfered at all.
-        If no request is received within a limited amount of time
-        then it gives up.
-        It returns true if a file was transfered, false otherwise.
-        The method will return early if the thread is interrupted.
+        It will process as many requests as it receives in the time available.
+        If no request is received within that time then it returns.
+        The method will return early if the thread is terminated,
+        either by being interrupted or by another thread closing a socket.
+        See stopV().
         */
       { 
         appLogger.info("actAsAServerB() begins.");
-        boolean successB= true; // Assume something will succeed.
-        successB= tryServicingOneRequestFromAnyClientB();
+        long endMsL= // Calculate when time as server will exit.
+            System.currentTimeMillis() + Config.tcpCopierServerTimeoutMsI;
+        while (true) { // Looping until server time has expired.
+          if ( EpiThread.testInterruptB() ) break;
+          final long nowMsL= System.currentTimeMillis();
+          final int remainingMsI= (int)(endMsL-nowMsL);
+          if ( remainingMsI <= 0) // Exiting if server time has expired.
+            break;
+          tryServicingOneRequestFromAnyClientB(
+              remainingMsI); // Use remaining time as time-out.
+          EpiThread.interruptibleSleepB(Config.antiCPUHogLoopDelayMsL); 
+          // Brief sleep to prevent [malicious] CPU hogging by this loop.
+          } // while(true)
         appLogger.info("actAsAServerB() ends.");
-        return successB; 
         }
 
-    private boolean tryServicingOneRequestFromAnyClientB()
-      /* This method waits for and processes one request from a client.
+    private boolean tryServicingOneRequestFromAnyClientB(int maximumWaitMsI) ////
+      /* This method waits for a maximum of maximumWaitMsI for
+        a request from a client, and processes that request. 
         This might result in a file being sent to the client,
         a file being received from the client,
         or no file transfered at all.
         It returns true if a request was processed, 
-        false if not for any reason.
+        false if a request was not processed for any reason.
         The method will return early if the thread is terminated,
         either by being interrupted or by another thread closing a socket.
         See stopV().
@@ -389,7 +397,7 @@ public class TCPCopier extends EpiThread
               if (EpiThread.testInterruptB()) break toReturn;
               serverServerSocket= new ServerSocket(tcpPortI);
               }
-            serverServerSocket.setSoTimeout( Config.tcpCopierServerTimeoutMsI );
+            serverServerSocket.setSoTimeout( maximumWaitMsI );
             appLogger.debug(
                 "serviceOneRequestFromAnyClientV()() trying ServerSocket.accept() to "
                 + serverServerSocket);
@@ -581,12 +589,19 @@ public class TCPCopier extends EpiThread
           if (tmpFile == null) break toReturn;
           try { tmpFileOutputStream= new FileOutputStream( tmpFile ); 
             } catch ( FileNotFoundException e ) {
-              appLogger.exception("open failure", e);
+              appLogger.exception(
+                  "receiveNewerRemoteFileB() open failure", e);
               break toReturn;
             }
           if (!Misc.copyStreamBytesB( // Copy stream to file or
               socketInputStream, tmpFileOutputStream))
             break toReturn; // terminate if failure.
+          try { tmpFileOutputStream.close(); // Close output file.
+            } catch ( IOException e ) {
+              appLogger.exception(
+                  "receiveNewerRemoteFileB() close failure", e);
+              break toReturn;
+            }
           tmpFile.setLastModified(timeStampToSetL); // Set time stamp.
           if (!Misc.atomicRenameB(tmpFile.toPath(), localFile.toPath())) 
             break toReturn;

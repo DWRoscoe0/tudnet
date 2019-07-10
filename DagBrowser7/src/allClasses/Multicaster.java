@@ -300,7 +300,8 @@ public class Multicaster
             return;
           EpiThread.interruptibleSleepB( Config.multicastDelayMsL );
             // Initial delay to allow reconnection of Unicast peers.
-	      	try { // Operations that might produce an IOException.
+          appLogger.info( "run() initial delay ends." );
+	      	try { // Operations that might produce an IOException requiring redo.
           	initializeWithIOExceptionV();  // Do non-injection initialization.
   	      	startingMultcastReceiverThreadV();
 
@@ -336,7 +337,7 @@ public class Multicaster
               }
             }
           catch( IOException e ) {
-            appLogger.exception("run(): theMulticastSocket not [yet] open:",e);
+            appLogger.debug("run(): theMulticastSocket not [yet] open:"+e);
             }
 
           //appLogger.info( Thread.currentThread().getName()+": run() ending." );
@@ -394,8 +395,9 @@ public class Multicaster
 	              break processorLoop;  // Exiting loop.
 	            case SUBNOTIFICATION:  // Handling a message.
 	            	messageDecoder: {
-	            		String inString= 
+	            		String inString=
 	            				theEpiInputStreamI.readAString(); // Reading message.
+                  appLogger.debug("receivingPacketsV() decoding:"+ inString);
 	            		if (inString.equals( "DISCOVERY" )) // Handling query, maybe.
 			        			{ theEpiOutputStreamO.writingAndSendingV(
 	            				    "ALIVE"); // Sending response.
@@ -414,7 +416,7 @@ public class Multicaster
 			        		//  + PacketStuff.gettingPacketAddressString( 
 			        		//	theNetcasterInputStream.getSockPacket().getDatagramPacket()
 			        		//	) );
-	            		} // messageDecpder: 
+	            		} 
 	            	break inputDecoder;
 	            default: // Handling anything else as an error.
 		            appLogger.error( 

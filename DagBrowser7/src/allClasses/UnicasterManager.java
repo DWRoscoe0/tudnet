@@ -1,6 +1,6 @@
 package allClasses;
 
-import static allClasses.Globals.appLogger;
+//// import static allClasses.Globals.appLogger;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -167,8 +167,8 @@ public class UnicasterManager
 	      final UnicasterValue resultUnicasterValue=  // Getting the Unicaster. 
 	      	theUnicasterFactory.getUnicasterValue();
 	      Unicaster theUnicaster= resultUnicasterValue.getDataNodeD(); 
-    		appLogger.info("buildAndAddUnicaster(..) "
-    		    + "initializing root state machine of new Unicaster.");
+    		/// appLogger.info("buildAndAddUnicaster(..) "
+	      ///     + "initializing root state machine of new Unicaster.");
         try { // Operations that might produce an IOException.
       			theUnicaster.initializeWithIOExceptionV(
       			    resultUnicasterValue.getEpiThread());

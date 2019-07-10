@@ -195,11 +195,11 @@ public class Unicaster
             )
           return;
 
-    		appLogger.info("run() begins.");
+        /// appLogger.info("run() begins.");
         try { // Operations that might produce an IOException.
-	      		appLogger.info("run() activating root state machine.");
+            /// appLogger.info("run() activating root state machine.");
 	          doOnEntryV(); // Recursively activate all states that should be. 
-        		appLogger.info("run() machine activated, doing first display.");
+	          /// appLogger.info("run() machine activated, doing first display.");
         		theDataTreeModel.displayTreeModelChangesV(); // Display our arrival.
 
 	      	  runLoop(); // Do actual input processing in a loop.
@@ -207,7 +207,7 @@ public class Unicaster
 	      	  finalizingV();
 	  	    	theUnicasterManager.removingV( this ); // Removing self from tree.
 	  	    	  // This isn't really needed, but is a good test of display logic.
-	      		appLogger.info("run() after remove and before final display.");
+	  	    	/// appLogger.info("run() after remove and before final display.");
 	      		Nulls.fastFailNullCheckT(theDataTreeModel);
 	      		theDataTreeModel.displayTreeModelChangesV(); // Display removal.
           	}
@@ -216,7 +216,7 @@ public class Unicaster
           			"run() IOException", e 
           			);
             }
-    		appLogger.info("run() ends.");
+        /// appLogger.info("run() ends.");
         }
 
 	  private void runLoop() throws IOException
@@ -249,9 +249,9 @@ public class Unicaster
 		    	if ( theInput == Input.INTERRUPTION ) break processUntilTerminated; 
 		     	} // processUntilTerminated: 
       	{ // Inform state machine of termination request.
-    			appLogger.info("runLoop() loop interrupted.  Terminating.");
+    			appLogger.info("runLoop() loop interrupted, stopping state machine.");
       		Thread.currentThread().interrupt(); // Restore interrupt.
-        	while (doOnInputsB()) ; // Let state machine run until processed.
+        	while (doOnInputsB()) ; // Cycle state machine run until it stops.
 	      	}
 				}
 	  
