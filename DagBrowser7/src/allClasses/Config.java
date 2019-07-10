@@ -28,7 +28,7 @@ public class Config
 				///enh Add additive and multiplicative adjustments for debugging.
 				public static final int localUpdateDelaySI=0;
   
-    public static final long antiCPUHogLoopDelayMsL=1000;
+    public static final int antiCPUHogLoopDelayMsI=2000;
 				
 		// Delays, for adjustments and slowing the entire app for debugging.
 

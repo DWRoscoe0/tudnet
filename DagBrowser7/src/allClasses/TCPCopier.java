@@ -209,6 +209,10 @@ public class TCPCopier extends EpiThread
             actAsAClientB();
             if ( EpiThread.testInterruptB() ) break;
             actAsAServerV();
+            EpiThread.interruptibleSleepB( // Random delay to prevent hogging.
+                theRandom.nextInt(Config.antiCPUHogLoopDelayMsI));
+            appLogger.info(
+                "loopAlternatingRolesV() looping after random delay.");
             }
         }
 
@@ -225,12 +229,14 @@ public class TCPCopier extends EpiThread
         The method will return early if the thread is interrupted.
         */
       { 
+        appLogger.info("actAsAClientB() begins.");
         boolean successB= false;
         toReturn: {
           if (tryExchangeWithServerFromQueueB()) successB= true;
           if ( EpiThread.testInterruptB() ) break toReturn;
           if (tryExchangeWithServerFromPersisentDataB()) successB= true;
           } // toReturn:
+        appLogger.info("actAsAClientB() ends.");
         return successB; 
         }
 
@@ -360,7 +366,7 @@ public class TCPCopier extends EpiThread
         See stopV().
         */
       { 
-        appLogger.info("actAsAServerB() begins.");
+        appLogger.info("actAsAServerV() begins.");
         long endMsL= // Calculate when time as server will exit.
             System.currentTimeMillis() + Config.tcpCopierServerTimeoutMsI;
         while (true) { // Looping until server time has expired.
@@ -371,10 +377,11 @@ public class TCPCopier extends EpiThread
             break;
           tryServicingOneRequestFromAnyClientB(
               remainingMsI); // Use remaining time as time-out.
-          EpiThread.interruptibleSleepB(Config.antiCPUHogLoopDelayMsL); 
-          // Brief sleep to prevent [malicious] CPU hogging by this loop.
+          EpiThread.interruptibleSleepB( // Random delay to prevent hogging.
+              theRandom.nextInt(Config.antiCPUHogLoopDelayMsI));
+          appLogger.info("actAsAServerV() looping after random delay.");
           } // while(true)
-        appLogger.info("actAsAServerB() ends.");
+        appLogger.info("actAsAServerV() ends.");
         }
 
     private boolean tryServicingOneRequestFromAnyClientB(int maximumWaitMsI) ////
@@ -483,8 +490,8 @@ public class TCPCopier extends EpiThread
 		    is copied across the connection to replace the older file.
 
 		    If a file is received then it replaces localDestinationFile and
-		    this method returns the received file's newer time-stamp,
-		    If a file is sent then it returns the negative of the remote time-stamp.
+		    this method returns the received file's newer time-stamp.
+		    If a file is sent, it returns the negative of the remote time-stamp.
 		    If a file is neither sent nor received,
 		    because their time-stamps are equal, then 0 is returned. 
 				This method is used by both the client and the server.
@@ -523,9 +530,6 @@ public class TCPCopier extends EpiThread
 						theSocket.shutdownOutput(); // Prevent reset at Socket close.
 				} catch (IOException ex) {
 			  		appLogger.info(ex, "tryTransferingFileL(..) aborted because of ");
-			  		EpiThread.uninterruptibleSleepB( // Random delay of up to 2 seconds.
-			  				theRandom.nextInt(2000)); ///fix make interruptible.
-			  		appLogger.info("tryTransferingFileL(..) end of random delay.");
 			    } finally {
 			  		}
 		  	if (transferResultL != 0)
