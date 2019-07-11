@@ -333,7 +333,7 @@ public class Multicaster
     	          stoppingMulticastReceiverThreadV();
     	          }
             for(int i=3; i>0; i--){ // Say goodbye 3 times...
-              theEpiOutputStreamO.writingAndSendingV("MULTICAST-GOODBY");
+              theEpiOutputStreamO.writingAndSendingV("MULTICAST-GOODBYE");
               }
             }
           catch( IOException e ) {
