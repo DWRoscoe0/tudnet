@@ -232,7 +232,8 @@ public class Unicaster
 			    	while (doOnInputsB()) ; // Process inputs in this state-machine.
 			    	  // This will also start the state machine timers the first time.
 			    	if ( getDiscreteInputString() != null ) { ///dbg
-			  			appLogger.warning("runLoop() unconsumed input= "+getDiscreteInputString());
+			  			appLogger.info(
+			  			    "runLoop() unconsumed input= "+getDiscreteInputString());
 			  			resetDiscreteInputV();  // consume it.
 			  			///fix  Legitimate input is sometimes not consumed!  Fix.
 			    		}
