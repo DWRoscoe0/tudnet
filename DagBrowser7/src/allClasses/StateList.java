@@ -1,5 +1,8 @@
 package allClasses;
 
+///org Scan for all uses of "signal", previously called "progress",
+//   and make it make sense.
+
 import static allClasses.Globals.appLogger;
 import static allClasses.AppLog.LogLevel.*;
 
@@ -7,6 +10,8 @@ import java.awt.Color;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+//// import allClasses.AppLog.LogLevel;
 
 public class StateList extends MutableList implements Runnable {
 
@@ -46,8 +51,8 @@ public class StateList extends MutableList implements Runnable {
 		Machine Initialization:
 
 		To reduce boilerplate code in low-level state machine states, 
-		constructor source code has been eliminated.
-		There are constructors, but they are the default parameterless constructors.
+		constructor source code has been eliminated.  There are constructors, 
+		but they are the default parameterless constructors.
 		Instance variables are initialized using various initialize methods,
 		such as initializeV(..) and initializeWithIOExceptionStateList(..).
 		
@@ -68,35 +73,30 @@ public class StateList extends MutableList implements Runnable {
 	    by constructors, such as initialization that can cause exceptions.
 	    * Some initialization methods have parameters.
 				This is method dependency injection.
-			* It the machine is an OrState machine,
+			* If the machine is an OrState machine,
 			  setFirstOrSubStateV(..) is called to set the machine's initial state.
 
 	  * The state machine's doOnEntry(..) method is called.
-	    This recursively calls the doOnEntry(..) method of sub-machines is called.
+	    This recursively calls the doOnEntry(..) method of sub-machines 
+	    to be called.
 	    This activates all state machines that should be active.
 
 
 		Threads:
 
-		State machines don't have threads of their own. 
-		State machine code is executed by external threads.
-		At least one thread calls state-machine handler methods when it has
-		something for the machine to do, 
-		which is usually to process a new input which has become available.
-		There might be many threads calling the handler methods of a state-machine,
-		but state-machine handler methods are synchronized,
-		so only one thread may execute state handler code at one time.
-		Typically one thread receives one or more different types of 
-		ordinary inputs and passes them to an associated state-machine handler,
-		and one or more additional threads are used to deliver 
-		inputs triggered by timers.
+		These state machines don't have threads of their own. 
+		Their code is executed by external threads.  There are 2 types:
+		* Each hierarchical state machine has one thread which
+      waits for and receives one or more different types of ordinary inputs 
+      and passes them to an associated state-machine handler.
+    * There can be zero or more additional threads are used to deliver 
+      inputs triggered by timers.
+    State-machine handler methods are synchronized,
+		so only one thread may execute state's handler code at one time.
 
-		State machines normally do not wait for things, except for the next event.
-		no do they do time-consuming activities such as executing long loops. 
-		Their handler methods must return quickly, because
-		not doing so could disable other parts of the hierarchical state machine.
-		It's okay to break this rule temporarily, but only while 
-		thread code is being translated to state-machine code.
+		State machines should not do busy-waits, or very long loops,
+    because doing so could disable other parts of 
+    the hierarchical state machine.
 
 
     Handler Methods:
@@ -114,18 +114,30 @@ public class StateList extends MutableList implements Runnable {
    	  above-mentioned non-override-able final handler methods.
 
 
-    Major states: 
+    State machine major states: 
 
-    A hierarchical state machine has two major states.  They are:
-    * Waiting for the next input.
-    * Processing inputs.  It processes events until there are no more.
+    A hierarchical state machine has two major states,
+    not to be confused with the states that comprise the state machine.  
+    These major states are:
+    * Waiting for the next input event.  
+      In this major state, no handler methods are active.
+      All threads that provide inputs to the machine are waiting. 
+    * Processing input events.  
+      In this major state, one or more handler methods are active.
+      They are processing one or more input events.
+      During processing, handlers might cause one or more events
+      which are inputs to other parts of the hierarchical state machine.
+      Processing should be quick.
+      When all processing is finished, all handlers will return,
+      and the machine will return to the major state: 
+      waiting for the next input event.
 
 
-		Signals:
+		Signals, also known as events:
 
     Signals carry information between parts of the hierarchical state machine,
     and between the state machine and the external world.
-    Signals can be of various types.
+    Signals can be of several types.
 
 	  * Continuous time vs. discrete time:
 	  	* A continuous time signal can change at any time,
@@ -136,7 +148,7 @@ public class StateList extends MutableList implements Runnable {
 	  	  depending on when and how often it is examined.
 	  	  An example of a continuous time signal is a thermometer reading.
 	  	* A discrete time signal is a sequence of data values
-	  	  that become available at at known times.
+	  	  that become available at known times.
 	  	  Every datum is accompanied by a notification of its arrival.
 	  	  If makes no sense to read it more than once per notification.
 	  	  An example of a discrete time signal is 
@@ -144,17 +156,19 @@ public class StateList extends MutableList implements Runnable {
 
     * Input signals vs. output signals: 
     	* An input signal is one that is produced outside of a machine,
-    	  and consumed inside of the machine.
+    	  and read or consumed inside of the machine.
 	 		* An output signal is one that is produced inside of a machine,
-    	  and consumed outside of the machine.
+    	  and read or consumed outside of the machine.
     	This property is contextual.  A signal which is
     	an output of one machine might be an input to another machine.
 
 		
-    Signals of special interest to these state machines:
+    Signals of interest to these state machines,
+    and how they should be handled:
   	* A state change request: 
   	  A state machine can make this request to its parent state machine.
-  	  The parent responds by changing it state to the sub-state requested.
+  	  The parent responds by changing it state to the sub-state requested,
+  	  and calling its handler.
     * A timer being triggered.  
       The affected state handler will take an appropriate action.
     * Discrete data objects.  These can be:
@@ -162,7 +176,7 @@ public class StateList extends MutableList implements Runnable {
     	* strings or other objects parsed from those packets, 
     	* bytes in those strings.
     	An affected state handler will take an appropriate action.
-    	Very possible it will read additional data from the same input stream
+    	Very possibly it will read additional data from the same input stream
     	and act on the entire sequence as a whole.
     * Handler return codes.  See the additional information below about
       handler methods and return code.
@@ -203,7 +217,7 @@ public class StateList extends MutableList implements Runnable {
 		    it might try to process the discrete input itself.
 		* return code:  A handler may return a boolean value, 
 		  with the following meanings: 
-		  * false: No continuous outputs changes happened.
+		  * false: No continuous output changes happened.
 		    Either all continuous signal changes were internal, or there were none.
 		    So there is no need for the caller to activate a sibling state handler
 		    or do any other processing itself.
@@ -236,8 +250,8 @@ public class StateList extends MutableList implements Runnable {
 		Other Notes:
 
 	  When writing state-machine code it is important to distinguish between
-	  * the current State, designated by "this", and
-	  * its current sub-state, or child state, 
+	  * the current State object, designated by "this", and
+	  * its current sub-state object, or child state, 
 	    designated by "this.presentSubStateList".
 
 		///enh StateList and its subclasses AndState and OrState
@@ -275,12 +289,20 @@ public class StateList extends MutableList implements Runnable {
 	  //
 	  ///opt To eliminate null checks, make this be be a Sentinel state.
 
+	private int pathLevelI; // Distance from root node.
+	  // This, along with the link to the parent node,
+	  // is used to speed the finding of Lowest Common Ancestors (LCAs),
+	  // without needing to traverse the tree from the root.
+	  // Presently these values are only globally down-propagated.
+	  ///opt This could be cached, but it wouldn't save much.
+	  //  If it was, down-invalidation would be setting it to -MAXINT.
+
 	/// elim protected Color theColor= UIColor.initializerStateColor;
 
   protected List<StateList> theListOfSubStateLists= // Our sub-states.
       new ArrayList<StateList>(); // Initially empty list.
 
-  private String discreteInputString; /* Temporarily stores an input event.
+  private String offeredInputString; /* Temporarily stores an input event.
     It is the one place this state checks for discrete input.
     A discrete input can appear in any number of other variables.
     This variable is special and is set according to the following protocol:
@@ -384,15 +406,46 @@ public class StateList extends MutableList implements Runnable {
 			It is part of the StateList building process.  
       It adds theSubState to the state's sub-state list,
       including setting the parent of the sub-state to be this state.
+
+      It also adds this state as a child DataNode to 
+      this state's DataNode subclass's list of child DataNodes.
       */
   	{ 
-  	  theListOfSubStateLists.add( theSubStateList ); // Add theSubState to
-  	    // this state's list of sub-states.
-  	  theSubStateList.setParentStateListV( this ); // Store this state as
-  	  	// the sub-state's parent state.
-
-  	  addAtEndB( theSubStateList ); // Add to this DataNode's list of DataNodes.
+      appLogger.debug( 
+          "addStateListV(StateList theSubStateList) begins with "+pathLevelI);
+      { // Add as StateList child.
+    	  theListOfSubStateLists.add( theSubStateList ); // Add theSubState to
+    	    // this state's list of sub-states.
+        theSubStateList.propagateIntoSubtreeB( pathLevelI );
+    	  theSubStateList.setParentStateListV( this ); // Store this state as
+    	  	// the sub-state's parent state.
+        } // Add as StateList child.
+  	  
+  	  addAtEndB( theSubStateList ); // Add as DataNode child.
   	  }
+
+  protected boolean propagateIntoSubtreeB( int pathLevelI )
+    /* This method propagates pathLevelI into 
+      this node and any of its descendants which need it,
+      incrementing its value with each additional descendant level. 
+      It acts only if the present level is not
+      one more than the input pathLevel.
+      
+      ///opt  return value might not be needed.
+      */
+    {
+      pathLevelI++; // Increment because we have gone down 1 level. 
+      boolean changeB= ( this.pathLevelI != pathLevelI ); 
+      if ( changeB ) // Store pathLevelI if its value is not already correct.
+        {
+          for (StateList subStateList : theListOfSubStateLists)
+            subStateList.propagateIntoSubtreeB( // recursively propagate  
+              pathLevelI ); // the new level into child subtree.
+          this.pathLevelI= pathLevelI; // Update this node.  This eliminates
+              // the incorrectness which caused this storing.
+          }
+      return changeB;
+      }
 
   public synchronized void finalizeV() throws IOException
     /* This method processes any pending loose ends 
@@ -427,29 +480,30 @@ public class StateList extends MutableList implements Runnable {
 	  /* This method handles AndState and 
 	    state-machines that want to behave like an AndState machine 
 	    by cycling all of their sub-machines
-	    until none of them makes any computational progress.
-	    It scans the sub-machines in order until one makes computational progress.
+	    until none of them produces an internal signal.
+	    It scans the sub-machines in order until one does.
 	    Then it restarts the scan.
 	    It is done this way to prioritized the sub-machines.
-	    If one sub-machine produces something for which an earlier machine waits,
-	    then that earlier machine can be run next.
-      It keeps scanning until none of the sub-machines in a scan makes progress.
-	    This method returns true if any computational progress was made
-	    by any sub-machine, false otherwise.
+	    If one sub-machine produces a signal for which an earlier machine waits,
+	    then that earlier machine can be run next and process it.
+      It keeps scanning until none of the sub-machines 
+      produces an internal signal.
+	    This method returns true if any internal signal
+	    was produced by any sub-machine, false otherwise.
 	    */
 	  { 
-			throwDelayedExceptionV(); // Throw exception if one was saved.
-		  boolean progressMadeB= false;
-  	  substateScansUntilNoProgress: while(true) {
+			throwDelayedExceptionV(); // Throw exception if one was saved earlier.
+		  boolean signalB= false;
+  	  substateScansUntilNoSignal: while(true) {
  	  		for (StateList subStateList : theListOfSubStateLists) 
 	  	  	if (doOnInputsToSubstateB(subStateList))
 		  	  	{
-		  	  		progressMadeB= true;
-		  	  		continue substateScansUntilNoProgress; // Restart scan.
+		  	  		signalB= true;
+		  	  		continue substateScansUntilNoSignal; // Restart scan.
 		  	  		}
- 	  		break substateScansUntilNoProgress; // No progress in this, final scan.
-  	  	} // substateScansUntilNoProgress:
-			return progressMadeB; 
+ 	  		break substateScansUntilNoSignal; // No signal in this, final scan.
+  	  	} // substateScansUntilNoSignal:
+			return signalB; 
 			}
 
 
@@ -460,8 +514,8 @@ public class StateList extends MutableList implements Runnable {
 	    It does this by calling the handler method 
 	    associated with the present state-machine's sub-state.
       The sub-state might change with each of these calls.
-      It calls sub-state handlers until no computational progress is made.
-      It returns true if at least one sub-state made computational progress.
+      It calls sub-state handlers until no computational signal is made.
+      It returns true if at least one sub-state made computational signal.
 	    It returns false otherwise.
 	    Each sub-state handler gets a chance to process the discrete input,
 	    if one is available, until it is consumed. 
@@ -471,27 +525,41 @@ public class StateList extends MutableList implements Runnable {
       */
 	  { 
 			throwDelayedExceptionV(); // Throw exception if one was saved.
-	  	boolean stateProgressB= false;
-			while (true) { // Cycle sub-states until done.
-	  	    boolean substateProgressB= 
+	  	boolean stateSignalB= false;
+			while (true) { // Keep calling sub-state handlers until done.
+	  	    boolean substateSignalB= // Call sub-state handler.
 	  	    		doOnInputsToSubstateB(presentSubStateList);
-		  		if (requestedSubStateList != null) // Handling state change request.
-		  		  { presentSubStateList.doOnExitV();
-		  		  	presentSubStateList.invalidateActiveV();
-	    	  		presentSubStateList= requestedSubStateList; // Change sub-state.
-		  		  	presentSubStateList.invalidateActiveV();
-		  				requestedSubStateList= null;
-		  			  presentSubStateList.doOnEntryV();
-							substateProgressB= true; // Count this as progress.
-			  			}
-		  	  if (!substateProgressB) // Exiting loop if no sub-state progress made.
+		  		if // Processing possible state change request.
+		  		  (requestedSubStateList != null)
+            { // Processing state change request.
+  		  		  processStateChangeRequestV();
+              substateSignalB= true; // Count this as signal. ////?
+            }
+		  	  if (!substateSignalB) // Exiting loop if no sub-state signal made.
 			  	  { break; }
-	  	  	stateProgressB= true; // Accumulate sub-state progress in this state.
+	  	  	stateSignalB= true; // Accumulate sub-state signal in this state.
 	  	  	} // while (true)
-			return stateProgressB; // Returning accumulated state progress result.
+			return stateSignalB; // Returning accumulated state signal result.
 			}
 
-	protected void requestSiblingStateListV(StateList requestedStateList)
+  private void processStateChangeRequestV() throws IOException
+    /* This method processes a state request.
+      It assumes the request has already been made and
+      requestedSubStateList contains the requested state.
+      
+      ///enh Presently the requested state must be sibling of the present state
+        and have the same parent.  This is being changed.
+     */
+  {
+    presentSubStateList.doOnExitV(); // Exit old sub-state.
+    presentSubStateList.invalidateActiveV();
+    presentSubStateList= requestedSubStateList; // Change sub-state.
+    presentSubStateList.invalidateActiveV();
+    requestedSubStateList= null; // Consume state-change request.
+    presentSubStateList.doOnEntryV(); // Enter new sub-state.
+    }
+
+  protected void requestSiblingStateListV(StateList requestedStateList)
 		/* This is called to change the state of a the state machine
 		  that contains this state to the sibling state requestedStateList.  
 		  It does this by calling the parent state's 
@@ -510,11 +578,11 @@ public class StateList extends MutableList implements Runnable {
 	    This method will return true if the request is accepted.
 	    */
 	  {
-  	  boolean progressB= // Calculate whether the state will actually change. 
+  	  boolean signalB= // Calculate whether the state will actually change. 
   	  		( presentSubStateList != requestedStateList );
-	  	if ( progressB ) // If it will
+	  	if ( signalB ) // If it will
 	  		requestSubStateListV(requestedStateList); // call this to do the work.
-	  	return progressB; // Return whether we accomplished anything.
+	  	return signalB; // Return whether we accomplished anything.
 	  }	
 
   protected void requestSubStateListV(StateList requestedStateList)
@@ -525,7 +593,7 @@ public class StateList extends MutableList implements Runnable {
 	    control is not transfered to the new sub-state until
 	    the handler of the present sub-state exits.
 	    
-	    Requesting a state changing is considered progress
+	    Requesting a state changing is considered signal
 	    for purposes of deciding whether to retry a states doOnInputsB().
 	    
 	    If the machine is already in the requested sub-state,
@@ -596,7 +664,7 @@ public class StateList extends MutableList implements Runnable {
 
 	public void onExitV() throws IOException
 	  /* This method recursively exits each of this states active sub-states.
-	    It handles bot AndState and OrState cases.
+	    It handles both AndState and OrState cases.
 	    */
 	  { 
 			if ( ! isAndStateB() ) // this is an OrState.
@@ -612,15 +680,14 @@ public class StateList extends MutableList implements Runnable {
 
 	/* Methods containing general state handler code. */
 	
-	public synchronized void onInputsForLeafStatesV() throws IOException
-	  ///org rename to onInputsReturnsFalseV()
+	public synchronized void onInputsToReturnFalseV() throws IOException
 	  /* This is a code-saving method.
 	    A state class overrides either this method or onInputsB(), 
-	    but not both, as part of how it controls its behavior.
+	    but not both, as part of how it controls its handler's behavior.
 	    Overriding this method instead of onInputsB() can result in
 	    more compact code.  An override like this:
 
-				public synchronized void onInputsForLeafStatesV() throws IOException
+				public synchronized void onInputsReturnsFalseV() throws IOException
 				  { 
 				    some-code;
 				    }
@@ -633,9 +700,13 @@ public class StateList extends MutableList implements Runnable {
 				    return false;
 				    }
 
-			WARNING: This method should only be used in state which extend StateList,
-			or other states which are leaves, to avoid confusion
-			with states which have an onInputsB().
+			WARNING: Some states such as AndState, OrState, and their subclasses
+			already override the onInputsB() method.
+			In these cases, overriding the onInputsToReturnFalseV() method
+			will have no effect.
+			This method should only be overridden in state 
+			which extend the class StateList,
+			or other state classes which are leaves.
 
 			As with onInputsB(), because this method can be called from
 			multiple threads, such as timer threads, it and all sub-class overrides
@@ -648,29 +719,25 @@ public class StateList extends MutableList implements Runnable {
 	    }
 	
 	public synchronized boolean onInputsB() throws IOException
-	  /* A state class overrides either this method or onInputsForLeafStatesV(),
+	  /* A state class overrides either this method or onInputsToReturnFalseV(),
 	    but not both, as part of how it controls its behavior.
 
 	    This method does nothing except return false unless 
-	    it or onInputsForLeafStatesV() is overridden.
+	    it or onInputsToReturnFalseV() is overridden.
 	    All overridden versions of this method should return 
-	    * true to indicate that some computational progress was made, including:
-		    * one or more sub-state's onInputsB() returned true,
-		    * a discrete input String was processed,
-		    * requestSubStateListV(StateList nextState) was called
-		      to request a new qualitative sub-state.
-	    * false if no computational progress is made, 
-	      or progress made was indicated in some other way.
+	    * true to indicate that some computational signal was produced.
+	    * false otherwise.
 	    To return false without needing to code a return statement,
-	    override the onInputsForLeafStatesV() method instead.
-	    
+	    override the onInputsToReturnFalseV() method instead.
+
 	    A onInputsB() method does not return until
 	    everything that can possibly be done has been done, meaning:
 	    * All available inputs that it can process have been processed.
 	    * All outputs that it can produce have been been produced.
-	    * All changes to extended state variables have been made.
+	    * All changes to extended state variables that can be made
+	      have been made.
 	    * A request for a state transition to the qualitative state 
-	      has been made if it is possible.
+	      has been made if that is appropriate.
 
 			Because this method can be called from multiple threads, 
 			such as timer threads, it and all sub-class overrides
@@ -678,19 +745,19 @@ public class StateList extends MutableList implements Runnable {
 	    
 	    */
 	  { 
-			onInputsForLeafStatesV(); // Call this in case it is overridden instead.
+			onInputsToReturnFalseV(); // Call this in case it is overridden instead.
 			return false; // This default version returns false.
 		  }
 	
 	public final synchronized boolean doOnInputsB() throws IOException
 	  /* This is the method that should be called to invoke a state's handler.
 	    It can not be overridden.  
-	    It calls override-able handler methods which 
+	    It calls the override-able handler methods which 
 	    state sub-classes may override.
 	    */
 	  { 
-			boolean successB= onInputsB();
-			return successB;
+			boolean signalB= onInputsB();
+			return signalB;
 		  }
 
 
@@ -742,7 +809,7 @@ public class StateList extends MutableList implements Runnable {
 	  that follows the String in the same input stream.
 
 	  The arrival of a discrete input is signaled 
-	  by the variable discreteInputString being set 
+	  by the variable offeredInputString being set 
 	  by the handler's caller to the String input value.
 	  If the state machine processes the input then 
 	  it sets the variable to null, thereby consuming that input.
@@ -779,33 +846,33 @@ public class StateList extends MutableList implements Runnable {
 			or by calling this method until the input is consumed.
 			*/
 		{
-			boolean madeProgressB;
-			String inputString= getDiscreteInputString();
-			if ( inputString == null ) // Discrete input not present.
-				madeProgressB= // Process only non-discrete inputs.
+			boolean signalB;
+			String offeredString= getOfferedInputString();
+			if ( offeredString == null ) // Discrete input not present.
+				signalB= // Process without passing the offered input.
 					subStateList.doOnInputsB();
-				else // Discrete input is present.
+				else // Offered input is present.
 				{
-					subStateList.setDiscreteInputV(inputString);
+					subStateList.setOfferedInputV(offeredString);
 				  	// Store copy of discrete input, if any, in sub-state.
-					madeProgressB= subStateList.doOnInputsB();
-					if // Process consumption of discrete input, if it happened.
-						(subStateList.getDiscreteInputString() == null) // Consumed.
-						{ resetDiscreteInputV(); // Remove input from this state also.
-							madeProgressB= true; // Treat input consumption as progress.
+					signalB= subStateList.doOnInputsB(); // Process with offered input.
+					if // Process consumption of input by substate, if it happened.
+						(subStateList.getOfferedInputString() == null) // It was consumed.
+						{ resetOfferedInputV(); // Remove input from this state also.
+							signalB= true; // Treat input consumption as a return signal.
 							}
 						else // Discrete input was not consumed by sub-state.
-						subStateList.resetDiscreteInputV(); // Remove it from sub-state.
+						subStateList.resetOfferedInputV(); // Remove it from sub-state.
 					}
-			return madeProgressB;
+			return signalB;
 			}
 
 
 	public boolean tryInputB(String testString) throws IOException
 	  /* This method tries to process a specific discrete input string.
-	    If testString equals the stored input string 
-	    then it is consumed and true is returned, 
-	    otherwise the stored input string
+	    If testString equals the offered input string then 
+	    the offered input string is consumed and true is returned, 
+	    otherwise the offered input string
 	    is not consumed and false is returned.
 	    If true is returned then it is the responsibility of the caller
 	    to process other data associated with testString 
@@ -813,42 +880,42 @@ public class StateList extends MutableList implements Runnable {
 	   	*/
 	  {
 			boolean successB= // Comparing requested discrete input to test input. 
-					(testString.equals(discreteInputString));
-		  if (successB) // Consuming stored input if it matched.
+					(testString.equals(offeredInputString));
+		  if (successB) // Consuming offered input if it matched.
 			  {
 		  	  /*  ///dbg
 					if ( logB(DEBUG)) logV( 
 							DEBUG,
 							"StateList.tryInputB(..), \""
-					  	+ this.discreteInputString
+					  	+ this.offeredInputString
 			  			+ "\" consumed by"
 			  			+ getFormattedStatePathString()
 			  			);
 			    */  ///dbg
-			  	discreteInputString= null;
+			  	offeredInputString= null; // Consume input string.
 			  	}
 			return successB; // Returning result of the comparison.
 		  }
 
-	protected String getDiscreteInputString()
+	protected String getOfferedInputString()
 	  // This method returns the discrete input string stored in this state.
 	  {
-			return discreteInputString;
+			return offeredInputString;
 		  }
 
-	public void setDiscreteInputV(String discreteInputString)
-		/* This method stores discreteInputString within this state
+	public void setOfferedInputV(String offeredInputString)
+		/* This method stores offeredInputString within this state
 		  for possible input by the state.
 		 	*/
 	  {
 			{ // Log anomalous behavior first.
 				String anomalyString= null;
-			  if ( discreteInputString == null )
+			  if ( offeredInputString == null )
 			  	anomalyString= 
-			  	  discreteInputString + " value is ILLEGAL input to";
-			  else if ( this.discreteInputString != null ) 
+			  	  offeredInputString + " value is ILLEGAL input to";
+			  else if ( this.offeredInputString != null ) 
 				  	anomalyString= 
-				  		this.discreteInputString + " was NOT consumed by";
+				  		this.offeredInputString + " was NOT consumed by";
 			  if ( anomalyString != null ) // Log if anomaly produced.
 			  	appLogger.warning(
 			  			"StateList.setDiscreteInputV..), "
@@ -857,24 +924,24 @@ public class StateList extends MutableList implements Runnable {
 			  			);
 				}
 
-			this.discreteInputString= discreteInputString; // Store new input.
+			this.offeredInputString= offeredInputString; // Store new input.
 		  }
 
-	public void resetDiscreteInputV()
-		/* This method clears the discreteInputString within this state,
+	public void resetOfferedInputV()
+		/* This method clears the offeredInputString within this state,
 		  by setting it to null.
 		  It should be used on a state and all its ancestors
 		  when the input is processed and consumed,
 		  and on a single state that processes the input but doesn't consume it.  
 		 	*/
 		{
-		  if ( this.discreteInputString == null )
+		  if ( this.offeredInputString == null )
 		  	appLogger.error(
-		  			"StateList.resetDiscreteInputV(), input already consumed in"
+		  			"StateList.resetOfferedInputV(), input already consumed in"
 		  			+ getFormattedStatePathString()
 		  			);
 		  
-			this.discreteInputString= null;
+			this.offeredInputString= null;
 		  }
 
 	protected String getFormattedStatePathString()
@@ -1085,12 +1152,12 @@ class AndOrState extends StateList {
 	    otherwise it aces as an OrState handler.
 	    */
 	  { 
-		  boolean successB;
+		  boolean signalB;
 			if ( isAndStateB() )
-		  	successB= andStateOnInputsB();
+		  	signalB= andStateOnInputsB();
 		  	else
-		  	successB= orStateOnInputsB();
-			return successB;
+		  	signalB= orStateOnInputsB();
+			return signalB;
 		  }
 	
 		}

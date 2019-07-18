@@ -110,6 +110,9 @@ public class DataNode
 
 			protected NamedList parentNamedList= null; // My parent node.
 			  // If there is a parent, it must be a list.
+        ///opt If we eliminate StateList.parentStateList then
+        // this would need to be changed to a StateList,
+        // unless we allow casting of the variable.
 
 			protected LogLevel theMaxLogLevel= AppLog.defaultMaxLogLevel;
 			  // Used to determine logging from this node.

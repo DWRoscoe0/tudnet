@@ -183,7 +183,7 @@ public class NamedList
 		  			propagateIntoDescendantsV(theMaxLogLevel);
 				  	super.propagateIntoSubtreeB( // Propagate into super-class. 
 				  			theMaxLogLevel); // the new level.  This eliminates
-				  			// the difference LogLevel which allowed propagation.
+				  			// the difference in LogLevel which enabled propagation.
 			  		}
 		  	return changeNeededB;
 		  	}

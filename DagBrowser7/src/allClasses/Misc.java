@@ -355,7 +355,11 @@ public class Misc
               }
             } 
           catch (IOException theIOException) {
-            appLogger.exception("copyStreamBytesV(..)",theIOException);
+            if (EpiThread.testInterruptB()) // Thread interruption.
+              appLogger.info(
+                "copyStreamBytesV(..) interrupted with "+theIOException);
+              else
+                appLogger.exception("copyStreamBytesV(..)",theIOException);
             }
           appLogger.info( "copyStreamBytesV() successB="+successB
               +", bytes transfered=" + byteCountI

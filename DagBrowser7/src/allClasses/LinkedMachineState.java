@@ -200,7 +200,7 @@ public class LinkedMachineState
 
       {
     
-        public void onInputsForLeafStatesV() throws IOException
+        public void onInputsToReturnFalseV() throws IOException
           {
             sendHelloV(this);
             requestSiblingStateListV(theCompletingConnectState);
@@ -227,7 +227,7 @@ public class LinkedMachineState
             theTimerInput.scheduleV(retryTimeOutMsL);
             }
     
-        public void onInputsForLeafStatesV() throws IOException
+        public void onInputsToReturnFalseV() throws IOException
           {
             if (tryReceivingHelloB(this)) // Try to process first HELLO.
               requestSiblingStateListV( // Success.  Request connected state.
@@ -253,7 +253,7 @@ public class LinkedMachineState
 
       {
     
-        public void onInputsForLeafStatesV() throws IOException
+        public void onInputsToReturnFalseV() throws IOException
           {
             sendHelloV(this);
             requestSiblingStateListV(theCompletingReconnectState);
@@ -277,7 +277,7 @@ public class LinkedMachineState
             theTimerInput.scheduleV(Config.maxTimeOutMsL);
             }
     
-        public void onInputsForLeafStatesV() throws IOException
+        public void onInputsToReturnFalseV() throws IOException
           {
             if (tryReceivingHelloB(this)) // Try to process HELLO.
               requestSiblingStateListV( // Success.  Request connected state.
@@ -387,7 +387,7 @@ public class LinkedMachineState
 
       {
 
-        public void onInputsForLeafStatesV() throws IOException
+        public void onInputsToReturnFalseV() throws IOException
           /* This method does nothing except test for HELLO messages.
             If it receives one then it sends a HELLO in response
             and transitions to the ConnectedState. 
@@ -421,7 +421,7 @@ public class LinkedMachineState
             theTimerInput.scheduleV(Config.reconnectTimeOutMsL);
             }
 
-        public void onInputsForLeafStatesV() throws IOException
+        public void onInputsToReturnFalseV() throws IOException
           {
             if (tryReceivingHelloB(this))
               {

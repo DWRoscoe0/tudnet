@@ -231,17 +231,17 @@ public class Unicaster
 			    processAllAvailableInput: while (true) {
 			    	while (doOnInputsB()) ; // Process inputs in this state-machine.
 			    	  // This will also start the state machine timers the first time.
-			    	if ( getDiscreteInputString() != null ) { ///dbg
+			    	if ( getOfferedInputString() != null ) { ///dbg
 			  			appLogger.info(
-			  			    "runLoop() unconsumed input= "+getDiscreteInputString());
-			  			resetDiscreteInputV();  // consume it.
+			  			    "runLoop() unconsumed input= "+getOfferedInputString());
+			  			resetOfferedInputV();  // consume it.
 			  			///fix  Legitimate input is sometimes not consumed!  Fix.
 			    		}
 		    		if ( theEpiInputStreamI.available() <= 0 ) // No input available. 
 		    			break processAllAvailableInput; // Exit available input loop.
 	    	  	String inString=  // Get next stream string.
 	    	  			theEpiInputStreamI.readAString();
-	      		setDiscreteInputV( inString );
+	      		setOfferedInputV( inString );
 		      	} // processAllAvailableInput:
 					///dbg appLogger.warning("runLoop() before wait.");
 			  	LockAndSignal.Input theInput= // Waiting for new input.
