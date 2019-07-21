@@ -240,7 +240,7 @@ public class LinkMeasurementState
 					     	*/
 					  	{ 
 					  	  if (measurementTimerInput.getInputArrivedB()) // Timer done. 
-					  	  	requestSiblingStateListV(theMeasurementInitializationState);
+					  	  	requestAncestorSubStateV(theMeasurementInitializationState);
 					  		}
 	
 						public void onExitV() throws IOException
@@ -277,7 +277,7 @@ public class LinkMeasurementState
 		    			  retryTimeOutMsL=   // Initializing retry time-out.
 		    			  		retransmitDelayMsNamedLong.getValueL();
 	
-					  		requestSiblingStateListV(theMeasurementHandshakingState);
+					  		requestAncestorSubStateV(theMeasurementHandshakingState);
 				  	  	}
 	
 			  		} // class MeasurementInitializationState
@@ -308,16 +308,16 @@ public class LinkMeasurementState
 					  	{
 							  if (tryInputB("PA")) // Try processing acknowledgement received.
 								  { if ( processPacketAcknowledgementB() )
-									  	requestSiblingStateListV(theMeasurementPausedState);
+									  	requestAncestorSubStateV(theMeasurementPausedState);
 								  	}
 				      	else  if // Try processing time-out.
 				      		(measurementTimerInput.getInputArrivedB()) 
 					    		{ if ( retryTimeOutMsL <= Config.maxTimeOutMsL )
 				    				  { retryTimeOutMsL*=2;  // Doubling time-out limit.
-				    				  	requestSiblingStateListV(this); // Retrying by repeating state.
+				    				  	requestAncestorSubStateV(this); // Retrying by repeating state.
 					  					  } ///opt Use TimerInput.rescheduleB(.) instead. 
 				    			  else // Giving up after maximum time-out reached.
-								  	  requestSiblingStateListV(theMeasurementPausedState);
+								  	  requestAncestorSubStateV(theMeasurementPausedState);
 					    		      // Do again after a pause.
 					    			}
 				  	  	}

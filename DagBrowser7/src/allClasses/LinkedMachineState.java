@@ -20,6 +20,7 @@ public class LinkedMachineState
 	  * GOODBYE
     * Any unicaster packet from the remote peer.
     * Any multicaster packet from the remote peer.
+    * interrupt() request used to terminate it.
     
 	  */
 
@@ -143,20 +144,23 @@ public class LinkedMachineState
 	      to the the DisconnectedState.
 	     */
 		  {
-	  		boolean progressB= true; // Assume progress will be made.
+	  		boolean signalB= true; // Assume signal will be produced.
 	  		goReturn: {
 		  		if ( super.onInputsB() ) // Try processing in sub-state machine.
-		  			break goReturn; // Return because progress was made.
+		  			break goReturn; // Return because signal was produced.
 		  		if // Process local disconnect request, if present.
-		  		  ( Thread.currentThread().isInterrupted() ) 
+		  		  //// ( Thread.currentThread().isInterrupted() )
+		  		  (EpiThread.testInterruptB())
 			  		{ // Process local disconnect request.
-		        	Thread.currentThread().interrupt(); // Reestablish interrupted.
-		        	progressB= requestSubStateListB( theDisconnectedState );
-			  			break goReturn; // Return with the progress calculated above.
+		        	//// Thread.currentThread().interrupt(); // Reestablish interrupt.
+		        	//// signalB= requestSubStateListB( theDisconnectedState );
+		  		    //// requestSubStateListV( theDisconnectedState );
+		  		    if (requestSubStateChangeIfNeededB( theDisconnectedState ))
+			  			  break goReturn; // Return with the signal true.
 			  			}
-		  		progressB= false; // Everything failed to progress, so return same.
+		  		signalB= false; // Everything failed, so no signal.
 		  		} // goReturn: 
-		  	return progressB;
+		  	return signalB;
 		  	}
 
 		public void onExitV() throws IOException
@@ -203,7 +207,7 @@ public class LinkedMachineState
         public void onInputsToReturnFalseV() throws IOException
           {
             sendHelloV(this);
-            requestSiblingStateListV(theCompletingConnectState);
+            requestAncestorSubStateV(theCompletingConnectState);
             }
   
         } // class InitiatingConnectState
@@ -230,14 +234,14 @@ public class LinkedMachineState
         public void onInputsToReturnFalseV() throws IOException
           {
             if (tryReceivingHelloB(this)) // Try to process first HELLO.
-              requestSiblingStateListV( // Success.  Request connected state.
+              requestAncestorSubStateV( // Success.  Request connected state.
                   theConnectedState );
             else if (theTimerInput.getInputArrivedB()) // Try Time-out? 
               {
                 sendHelloV(this); // Resend hello.
                 if // Reschedule time-out with exponential back-off. 
                   (theTimerInput.rescheduleB(Config.maxTimeOutMsL))
-                  requestSiblingStateListV( // Give up if max delay reached by
+                  requestAncestorSubStateV( // Give up if max delay reached by
                     theBrokenConnectionState); // going to broken connection.
                 }
             }
@@ -256,7 +260,7 @@ public class LinkedMachineState
         public void onInputsToReturnFalseV() throws IOException
           {
             sendHelloV(this);
-            requestSiblingStateListV(theCompletingReconnectState);
+            requestAncestorSubStateV(theCompletingReconnectState);
             }
   
         } // class InitiatingReconnectState
@@ -280,11 +284,11 @@ public class LinkedMachineState
         public void onInputsToReturnFalseV() throws IOException
           {
             if (tryReceivingHelloB(this)) // Try to process HELLO.
-              requestSiblingStateListV( // Success.  Request connected state.
+              requestAncestorSubStateV( // Success.  Request connected state.
                   theConnectedState );
             else if (theTimerInput.getInputArrivedB()) // Try Time-out? 
               {
-                requestSiblingStateListV( // Give up by
+                requestAncestorSubStateV( // Give up by
                     theBrokenConnectionState); // going to broken connection.
                 }
             }
@@ -343,25 +347,25 @@ public class LinkedMachineState
 			  	  It also handles reception of the GOODBYE message by disconnecting. 
 			  	  */
 			  	{
-			  			boolean progressB= true; // Assume progress will be made.
+			  			boolean signalB= true; // Assume signal will be produced.
 			  		goReturn: {
 				  		if ( super.onInputsB() ) // Try processing in sub-state machine.
-				  			break goReturn; // Return with progress.
+				  			break goReturn; // Return with signal true.
 				  		if (tryReceivingHelloB(this)) { // Try to process an extra HELLO.
 					        appLogger.warning( "Extra HELLO received." );
 					  			if  // If we received a HELLO and 
 					  			  ( sentHelloB^= true ) // we didn't send one last time,
 					  				sendHelloV(this); // send a HELLO this time.
-					  			break goReturn; // Return with progress.
+					  			break goReturn; // Return with signal true.
 					  			}
 				  		if ( tryInputB("GOODBYE") ) { // Did peer disconnect itself?
-		    			  	requestSiblingStateListV( // Yes, so we do the same.
+		    			  	requestAncestorSubStateV( // Yes, so we do the same.
 		    			  			theDisconnectedState);
-					  			break goReturn; // Return with progress.
+					  			break goReturn; // Return with signal true.
 					  			}
-				  		progressB= false; // Everything failed.  Set no progress.
+				  		signalB= false; // Everything failed.  Set no signal.
 			  		} // goReturn: 
-			  			return progressB;
+			  			return signalB;
 					  }
 
 		    public void onExitV() throws IOException
@@ -396,7 +400,7 @@ public class LinkedMachineState
             if (tryReceivingHelloB(this))
               {
                 sendHelloV(this); // Send a response HELLO.
-                requestSiblingStateListV( // Switch to ConnectedState.
+                requestAncestorSubStateV( // Switch to ConnectedState.
                     theConnectedState
                     );
                 }
@@ -426,10 +430,10 @@ public class LinkedMachineState
             if (tryReceivingHelloB(this))
               {
                 sendHelloV(this); // Send a response HELLO.
-                requestSiblingStateListV(theConnectedState);
+                requestAncestorSubStateV(theConnectedState);
                 }
             else if (theTimerInput.getInputArrivedB()) // Time to try again? 
-              requestSiblingStateListV(theInitiatingReconnectState);
+              requestAncestorSubStateV(theInitiatingReconnectState);
             }
 
         public void onExitV() throws IOException

@@ -411,8 +411,8 @@ public class StateList extends MutableList implements Runnable {
       this state's DataNode subclass's list of child DataNodes.
       */
   	{ 
-      appLogger.debug( 
-          "addStateListV(StateList theSubStateList) begins with "+pathLevelI);
+      /// appLogger.debug( 
+      ///    "addStateListV(StateList theSubStateList) begins with "+pathLevelI);
       { // Add as StateList child.
     	  theListOfSubStateLists.add( theSubStateList ); // Add theSubState to
     	    // this state's list of sub-states.
@@ -547,10 +547,15 @@ public class StateList extends MutableList implements Runnable {
       It assumes the request has already been made and
       requestedSubStateList contains the requested state.
       
-      ///enh Presently the requested state must be sibling of the present state
-        and have the same parent.  This is being changed.
+      ///enh Presently the requested state must be 
+        sibling of the present state and have the same parent.  
+        This is being changed so that the requested state
+        could be a sibling of any ancestor.
      */
   {
+    if ( presentSubStateList.parentStateList 
+         != requestedSubStateList.parentStateList )
+      appLogger.error("requested state is not sibling");
     presentSubStateList.doOnExitV(); // Exit old sub-state.
     presentSubStateList.invalidateActiveV();
     presentSubStateList= requestedSubStateList; // Change sub-state.
@@ -559,7 +564,7 @@ public class StateList extends MutableList implements Runnable {
     presentSubStateList.doOnEntryV(); // Enter new sub-state.
     }
 
-  protected void requestSiblingStateListV(StateList requestedStateList)
+  protected void XrequestSiblingStateListV(StateList requestedStateList) ////
 		/* This is called to change the state of a the state machine
 		  that contains this state to the sibling state requestedStateList.  
 		  It does this by calling the parent state's 
@@ -567,13 +572,17 @@ public class StateList extends MutableList implements Runnable {
 		  It does not fully take affect until the present state handler exits.
 		  */
 		{
+      if ( parentStateList != requestedStateList.parentStateList )
+        appLogger.error(
+            "requestSiblingStateListV(..) requested state is not sibling");
 			parentStateList.requestSubStateListV(requestedStateList);
 			}
 
-  protected boolean requestSubStateListB(StateList requestedStateList)
+  protected boolean requestSubStateChangeIfNeededB(
+      StateList requestedStateList)
 	  /* This method does the same as requestSubStateListV(..) except that
-	    if will reject the state=change request and return false if 
-	    the present sub-state is the same as requestedStateList. 
+	    if will reject the state-change request and return false if 
+	    the present sub-state is the same as the requested state. 
 	    In this case the sub-state will not be exited and reentered.
 	    This method will return true if the request is accepted.
 	    */
@@ -582,8 +591,36 @@ public class StateList extends MutableList implements Runnable {
   	  		( presentSubStateList != requestedStateList );
 	  	if ( signalB ) // If it will
 	  		requestSubStateListV(requestedStateList); // call this to do the work.
-	  	return signalB; // Return whether we accomplished anything.
+	  	return signalB; // Return whether state change request occurred.
 	  }	
+
+  ////protected void requestAncestorSubStateV(StateList requestedStateList)
+  protected void requestAncestorSubStateV(StateList requestedStateList)
+    /* This method requests a state change to requestedStateList,
+      which must be a sub-state of an ancestor of this StateList.
+      If it is not, it logs an error, and does nothing else.
+      A StateList is not considered an ancestor of itself.
+      */
+  {  
+    StateList scanStateList= this; // Start scanning with this StateList.
+    while (true) { // Request state change in the appropriate ancestor.
+      StateList scanParentStateList=  // Get scan state's parent.
+          scanStateList.parentStateList;
+      if (scanParentStateList == null) // There are no more ancestors.
+      {
+        appLogger.error("requestAncestorSubStateV(..) "
+            + "requested state is not a substate of any ancestor.");
+        break;
+        }
+      if  // Requested state is acceptable.  It has same parent as scan state.
+        ( scanParentStateList == requestedStateList.parentStateList )
+        { // Request state as sub-state of common parent state.
+          scanParentStateList.requestSubStateListV(requestedStateList);
+          break;
+          }
+      scanStateList= scanParentStateList; // Advance scan to parent state.
+      }
+  }
 
   protected void requestSubStateListV(StateList requestedStateList)
 	  /* This method requests the next state-machine state,
@@ -593,22 +630,28 @@ public class StateList extends MutableList implements Runnable {
 	    control is not transfered to the new sub-state until
 	    the handler of the present sub-state exits.
 	    
-	    Requesting a state changing is considered signal
-	    for purposes of deciding whether to retry a states doOnInputsB().
+	    Requesting a state change is considered a signal
+	    for purposes of deciding whether to retry a state's doOnInputsB().
 	    
 	    If the machine is already in the requested sub-state,
 	    the sub-state will be exited and reentered.
+	    ///org Is this a good idea?
+	    
+	    ///enh Being modified to request state changes 
+	      in ancestor state machines.
+	       
 	    */
 	  {
-	  	if  // Report excess state change request.
+      if  // Report excess state change request.
 				( (requestedSubStateList != null)
 					&& (requestedSubStateList != StateList.initialSentinelState)
 					)
         appLogger.error(
-        		"StateList.requestSubStateListV(..), next state already requested."
-        	  );
+          "StateList.requestSubStateListV(..), a next state already requested."
+        	);
 
-	  	requestedSubStateList= requestedStateList;
+	  	requestedSubStateList= // Make the now validated state request. 
+	  	    requestedStateList;
 	  	}	
 
 	/*  Methods for entry and exit of OrState or their sub-states.  */
