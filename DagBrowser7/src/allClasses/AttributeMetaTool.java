@@ -13,7 +13,7 @@ abstract class AttributeMetaTool
     Values for attributes handled by this class are as follows:
 
     * "" (blank): default value, and all descendants have the same value.
-    * "$NESTED$": default value (same meaning as above) but some descendants 
+    * "$MIXED$": default value (same meaning as above) but some descendants 
       do not have the default value.
     * (anything else): all other values, with various meanings.
 
@@ -23,7 +23,7 @@ abstract class AttributeMetaTool
 
     // Constants.
 
-      private final String PlaceHolderValueString= "$NESTED$";
+      private final String PlaceHolderValueString= "$MIXED$";
         /* This attribute Map special value is used to indicate that
           the MetaNode has a null/default value for this attribute 
           but at least one of its descendants MetaNodes do not.

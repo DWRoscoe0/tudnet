@@ -14,7 +14,7 @@ class BooleanAttributeMetaTool
 
     * "" (blank) : default value, which is FALSE.  
       All descendants have the same value.
-    * "$NESTED$" : default value, FALSE, 
+    * "$MIXED$" : default value, FALSE, 
       and at least some descendants do not have the same value.
     * "T": TRUE.
     * (anything else) : illegal value.
