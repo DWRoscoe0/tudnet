@@ -32,7 +32,8 @@ public class LinkedMachineState
 		private TCPCopier theTCPCopier;
 		private Timer theTimer; ///opt.  use function parameter only. 
 		private Unicaster theUnicaster;
-		private StateList[] theLinkedStateLists;
+		//// private StateList[] theLinkedStateLists;
+		//// private LinkMeasurementState theLinkMeasurementState;
 		private Persistent thePersistent; 
 
 		// Sub-state-machine instances.
@@ -59,7 +60,8 @@ public class LinkedMachineState
 					TCPCopier theTCPCopier,
 					Unicaster theUnicaster,
 					Persistent thePersistent, 
-					StateList[] theLinkedStateLists
+					//// StateList[] theLinkedStateLists
+					LinkMeasurementState theLinkMeasurementState
 		  		)
 				throws IOException
 		  {
@@ -72,32 +74,39 @@ public class LinkedMachineState
 			  this.retransmitDelayMsNamedLong= retransmitDelayMsNamedLong;
 				this.theTCPCopier= theTCPCopier;
 				this.theUnicaster= theUnicaster;
-				this.theLinkedStateLists= theLinkedStateLists;
+				//// this.theLinkedStateLists= theLinkedStateLists;
+				//// this.theLinkMeasurementState= theLinkMeasurementState;
 				this.thePersistent= thePersistent; 
 
 	  		// Adding measurement count.
 
-    		// Create and add to DAG the sub-states of this state machine.
-        initAndAddStateListV(theInitiatingConnectState= 
-            new InitiatingConnectState());
-        initAndAddStateListV(theCompletingConnectState= 
-            new CompletingConnectState());
-        initAndAddStateListV(theInitiatingReconnectState= 
-            new InitiatingReconnectState());
-        initAndAddStateListV(theCompletingReconnectState= 
-            new CompletingReconnectState());
-    		addStateListV(
-    				(theConnectedState= new ConnectedState())
-    				  .initializeWithIOExceptionStateList(this.theLinkedStateLists)
-    				);
-    		initAndAddStateListV(
-            theDisconnectedState= new DisconnectedState());
-    		initAndAddStateListV(
-    		    theBrokenConnectionState= new BrokenConnectionState());
+    		// Construct all sub-states of this state machine.
+				theInitiatingConnectState= new InitiatingConnectState();
+        theCompletingConnectState= new CompletingConnectState();
+        theInitiatingReconnectState= new InitiatingReconnectState();
+        theCompletingReconnectState= new CompletingReconnectState();
+        theConnectedState= new ConnectedState();
+        theDisconnectedState= new DisconnectedState();
+        theBrokenConnectionState= new BrokenConnectionState();
+
+        // Initialize add to DAG all sub-states of this state machine.
+        // Not all sub-states get default initialization.
+        initAndAddStateListV(theInitiatingConnectState);
+        initAndAddStateListV(theCompletingConnectState);
+        initAndAddStateListV(theInitiatingReconnectState);
+        initAndAddStateListV(theCompletingReconnectState);
+        //// addStateListV(theConnectedState.initializeWithIOExceptionStateList(
+        //// this.theLinkedStateLists));
+        addStateListV(theConnectedState.initializeWithIOExceptionStateList(
+            theLinkMeasurementState));
+        initAndAddStateListV(theDisconnectedState);
+        initAndAddStateListV(theBrokenConnectionState);
+        
+        theConnectedState.setTargetDisconnectStateV(theBrokenConnectionState);
 
     		setFirstOrSubStateV( theInitiatingConnectState );
     		
-	  	  theTimerInput= // Creating our timer and linking to this state. 
+	  	  theTimerInput= // Creating our timer and linking it to this state. 
 			  		new TimerInput(  ///? Move to factory or parent?
 			  				this.theTimer,
 			  				this
@@ -305,24 +314,40 @@ public class LinkedMachineState
 	  	  */
 
 	  	{
+		    private LinkMeasurementState theLinkMeasurementState;
+		    
 				public StateList initializeWithIOExceptionStateList(
-						StateList[] theLinkedStateLists)
+						//// StateList[] theLinkedStateLists)
+				    LinkMeasurementState theLinkMeasurementState)
 			    throws IOException
 			    /* This method initializes the sub-states,
-			      building the sub-state-machine.  */
+			      building the sub-state-machine.  
+			      Presently there is only one.  */
 					{
+				    this.theLinkMeasurementState= theLinkMeasurementState;
+
 						super.initializeWithIOExceptionStateList();
 						
+            addStateListV(this.theLinkMeasurementState);
+            /*  ////
 						for // Add each child state from array.
 						  ( StateList theStateList : theLinkedStateLists ) 
 							{ 
 								addStateListV(theStateList); // Add it as sub-state.
 								}
+					  */  ////
 						
 						return this;
 						}
 			
-				private boolean sentHelloB= true; 
+				public void setTargetDisconnectStateV(
+				    BrokenConnectionState theBrokenConnectionState) 
+    			{
+				    theLinkMeasurementState.setTargetDisconnectStateV(
+	            theBrokenConnectionState);
+				    }
+   
+        private boolean sentHelloB= true; 
 				  // True means previous HELLO was sent by us, not received by us.
 				  // It is used to prevent HELLO message storms.
 

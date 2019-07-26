@@ -145,7 +145,8 @@ public class Unicaster
 		  				theTCPCopier,
 		  				this,
 		  				thePersistent,
-		  				new StateList[] { theLinkMeasurementState }
+		  				//// new StateList[] { theLinkMeasurementState }
+		  				theLinkMeasurementState
 		  	  		);
   				addStateListV( theLinkedMachineState );
 
@@ -170,7 +171,7 @@ public class Unicaster
         Initial connects do more retries.
         
         This method does nothing but pass connectB to theLinkedMachineState, 
-        where the real connecting log is.
+        where the real connecting logic is.
         */
       { 
         theLinkedMachineState.setForReconnectV(connectB); 

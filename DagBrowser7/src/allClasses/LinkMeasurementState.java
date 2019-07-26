@@ -32,7 +32,7 @@ public class LinkMeasurementState
 		// Sub-state machine instances.
 		@SuppressWarnings("unused")
 		private RemoteMeasurementState theRemoteMeasurementState;
-		@SuppressWarnings("unused")
+		//// @SuppressWarnings("unused")
 		private LocalMeasurementState theLocalMeasurementState;
 
 		LinkMeasurementState(  // Constructor.
@@ -66,7 +66,7 @@ public class LinkMeasurementState
 			  				this
 			  				);
 
-    		// Create and add to DAG the sub-states of this state machine.
+    		// Create and add to DAG the sub-states of this and-state-machine.
 	  	  initAndAddStateListV( theRemoteMeasurementState= 
 	  	  		new RemoteMeasurementState() );
 	  	  initAndAddStateListV( theLocalMeasurementState= 
@@ -127,6 +127,14 @@ public class LinkMeasurementState
 
 			  return this;
 			  }
+    
+    public void setTargetDisconnectStateV(
+        StateList theBrokenConnectionState) 
+      {
+
+        theLocalMeasurementState.theBrokenConnectionState= theBrokenConnectionState; 
+
+        }
 	
 	  public synchronized void finalizeV() throws IOException
 	    // This method processes any pending loose ends before shutdown.
@@ -153,6 +161,8 @@ public class LinkMeasurementState
 				private MeasurementHandshakingState
 				  theMeasurementHandshakingState;
 	
+		    private StateList theBrokenConnectionState; 
+
 		    public StateList initializeWithIOExceptionStateList() throws IOException 
 			    {
 		    		super.initializeWithIOExceptionStateList();
@@ -317,9 +327,14 @@ public class LinkMeasurementState
 				    				  	requestAncestorSubStateV(this); // Retrying by repeating state.
 					  					  } ///opt Use TimerInput.rescheduleB(.) instead. 
 				    			  else // Giving up after maximum time-out reached.
-								  	  requestAncestorSubStateV(theMeasurementPausedState);
-					    		      // Do again after a pause.
-					    			}
+				    			  { // Trigger breaking of connection.
+                      appLogger.info("MeasurementHandshakingState time-out.");
+								  	  //// requestAncestorSubStateV(theMeasurementPausedState);
+				    			    ////   // Do again after a pause.
+				    			    requestAncestorSubStateV(theBrokenConnectionState);
+					    		      // Break the connection.
+				    			    }
+  					    		}
 				  	  	}
 					  
 			  		} // class MeasurementHandshakingState 

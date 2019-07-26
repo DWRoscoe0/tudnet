@@ -21,8 +21,6 @@ public class StateList extends MutableList implements Runnable {
 	  * a sub-state of a larger state-machine 
 	  * a state-machine with its own sub-states
 
-    Classes in this file:
-    
     Here are the classes in this file and their relationships:
       * StateList
 		    * SentinelState
@@ -50,74 +48,86 @@ public class StateList extends MutableList implements Runnable {
 
 		Machine Initialization:
 
-		To reduce boilerplate code in low-level state machine states, 
-		constructor source code has been eliminated.  There are constructors, 
-		but they are the default parameterless constructors.
-		Instance variables are initialized using various initialize methods,
+    Many, maybe most, state-machine states are simple leaf states.
+    Many have few, if any, dependency inputs at construction time.
+		To reduce boilerplate code in these low-level states, 
+		constructor source code has been eliminated.  
+		There are constructors, but they are the default constructors.
+		
+		For the states which require dependency inputs, setter injection is used.
+		Instance variables are initialized using various initialization methods,
 		such as initializeV(..) and initializeWithIOExceptionStateList(..).
+		This avoid the difficulties of exceptions thrown within constructors.
 		
-		Initialization now uses a combination of 
-		eager-evaluation and lazy-evaluation.
-		For each root state machine, initialization should proceed as follows:
+		Initialization uses a combination of eager-evaluation and lazy-evaluation.
+		For each [root?] state machine, initialization should proceed as follows:
 		
-		* State machine constructors are called, lower levels first.
-			Lower level machines objects are used 
-			as argument to higher level machines.
-			The arguments are stored in each machine.  
-			This is constructor dependency injection.
-			This is done for each independent machine.
-			
-	  * The state machine's initialization method is called.
-	    This method recursively calls the initialization method of sub-machines.
-	    The initialization methods do initialization that can not be done
-	    by constructors, such as initialization that can cause exceptions.
-	    * Some initialization methods have parameters.
-				This is method dependency injection.
-			* If the machine is an OrState machine,
-			  setFirstOrSubStateV(..) is called to set the machine's initial state.
+		* The state-machine's default 0-argument constructor is called.
 
-	  * The state machine's doOnEntry(..) method is called.
-	    This recursively calls the doOnEntry(..) method of sub-machines 
-	    to be called.
-	    This activates all state machines that should be active.
+	  * The state machine's initialization method is called.  
+	    It does the following.
+	    * It assigns all instance variables that need assigning.
+	    * If the state-machine has sub-states then 
+	      it constructs, initializes, and adds them to the state-machine.
+			* If the machine is an OrState machine subclass,
+			  the machine's initial sub-state is set.
+			* If a sub-state needs references to another sub-state
+			  which wasn't created until later, the reference is injected now. 
+
+	  At this point the state-machine is fully constructed and ready to go.
+    Machine activation is all that remains.
+    The doOnEntry(..) method of the state-machine is called.
+    This recursively calls the doOnEntry(..) method of sub-machines 
+    that should be active.
+    doOnEntry(..) is called manually only in 
+    the root machine of a state-machine hierarchy.
 
 
 		Threads:
 
-		These state machines don't have threads of their own. 
-		Their code is executed by external threads.  There are 2 types:
-		* Each hierarchical state machine has one thread which
-      waits for and receives one or more different types of ordinary inputs 
-      and passes them to an associated state-machine handler.
+		Most state machines don't have threads of their own. 
+		Their handler code is called by external threads.  
+		The exception is the single root state of a hierarchical state machine.
+		
+		There are 2 types of state machine threads:
+		* The thread that drives the root machine of a hierarchical state machine.
+		  It is similar to a dispatch loop.
+		  It waits for and receives one or more 
+		  different types of ordinary inputs 
+      and passes them to the root state-machine handler.
+      The handler returns when those inputs, 
+      and possibly some newly arriving ones, have been handled.
     * There can be zero or more additional threads are used to deliver 
       inputs triggered by timers.
-    State-machine handler methods are synchronized,
-		so only one thread may execute state's handler code at one time.
+      These timers are created or called-upon by states as needed.
 
-		State machines should not do busy-waits, or very long loops,
-    because doing so could disable other parts of 
-    the hierarchical state machine.
+    State-machine handler methods are synchronized,
+		so only one thread at one time may execute state's handler code.
+
+		State machine handler code should not do busy-waits, 
+		or run very long loops, because doing so could disable 
+		other parts of the hierarchical state machine of which it is a part.
 
 
     Handler Methods:
 
 		State machines run when their handler methods are called.
 		A handler's main job is to process events, usually inputs.
-		In doing so they might change the machine's state
-		or produce some output, or both. 
+		In doing so they might change the machine's [sub]state
+		or produce some outputs, or both. 
    	
-   	There are two sets of state-machine handler methods:
+   	There are two sets of state-machine handler methods in this file.
    	* Final handler methods are the methods called to execute 
    	  a state's code.  These may not be overridden.
-   	* Override handler methods may be overridden by state subclasses.
+   	* Override-able handler methods may be overridden by state subclasses.
    	  These methods are called by the 
    	  above-mentioned non-override-able final handler methods.
 
 
-    State machine major states: 
+    Hierarchical state machine major states: 
 
     A hierarchical state machine has two major states,
-    not to be confused with the states that comprise the state machine.  
+    not to be confused with the sub-states that comprise the state machine.  
     These major states are:
     * Waiting for the next input event.  
       In this major state, no handler methods are active.
@@ -127,9 +137,9 @@ public class StateList extends MutableList implements Runnable {
       They are processing one or more input events.
       During processing, handlers might cause one or more events
       which are inputs to other parts of the hierarchical state machine.
-      Processing should be quick.
+      Processing inputs should be quick.
       When all processing is finished, all handlers will return,
-      and the machine will return to the major state: 
+      and the machine will return to the other major state: 
       waiting for the next input event.
 
 
@@ -162,16 +172,16 @@ public class StateList extends MutableList implements Runnable {
     	This property is contextual.  A signal which is
     	an output of one machine might be an input to another machine.
 
-		
-    Signals of interest to these state machines,
+    Some signals of interest to these state machines,
     and how they should be handled:
   	* A state change request: 
-  	  A state machine can make this request to its parent state machine.
-  	  The parent responds by changing it state to the sub-state requested,
-  	  and calling its handler.
+  	  A state machine can make this request to its ancestor state machines.
+  	  In most cases, the ancestor state that should respond is the parent.
+  	  The appropriate ancestor state responds by changing it state 
+  	  to the sub-state requested, and calling its handler.
     * A timer being triggered.  
       The affected state handler will take an appropriate action.
-    * Discrete data objects.  These can be:
+    * Discrete data objects inputs.  These can be:
       * queued objects such as received network packets,
     	* strings or other objects parsed from those packets, 
     	* bytes in those strings.
@@ -184,7 +194,7 @@ public class StateList extends MutableList implements Runnable {
 
 		Handler methods and their protocol (return status values):
 
-		The purpose of a state machine handler method 
+		To review, the purpose of a state machine handler method 
 		is to process one or more inputs to its state machine.
 		A state machine's handler method is called whenever it is possible that 
 		one or more of the state machine's inputs has changed or appeared.
@@ -193,8 +203,8 @@ public class StateList extends MutableList implements Runnable {
 		and/or the production of one or more outputs.
 
 		The handler method should not return until
-		it has processed all available state machine inputs,
-		which means that, for the moment, 
+		it has finished processing all available state machine inputs,
+		which means that, for the moment at least, 
 		there is nothing remaining for it to do.
 
 		It's possible that the handler was called by 
@@ -202,7 +212,7 @@ public class StateList extends MutableList implements Runnable {
 		There are several ways that a handler 
 		can pass information back to the parent machine.
 		* state change request: This is a signal from the state machine
-		  to its parent OrState machine.  The parent responds by
+		  to an ancestor OrState machine.  The ancestor responds by
 		  changing its sub-state to the requested child sub-state.
 		* discrete input consumption: There are two cases:
 		  * If the state's handler accepts and processes a discrete input, 
@@ -215,17 +225,19 @@ public class StateList extends MutableList implements Runnable {
 		    the input register of another sub-state and calls its handler,
 		    or if there is no other sub-state then 
 		    it might try to process the discrete input itself.
-		* return code:  A handler may return a boolean value, 
+		* signal return code:  A handler may return a boolean value, 
 		  with the following meanings: 
-		  * false: No continuous output changes happened.
-		    Either all continuous signal changes were internal, or there were none.
-		    So there is no need for the caller to activate a sibling state handler
-		    or do any other processing itself.
-		  * true: Possible continuous outputs were produced.
-		    So the caller should call sibling sub-state handlers,
-		    to check for possible processing of those outputs itself.
-		    If it is unable to completely process the outputs then
-		    it should return true to its caller to continue processing.
+      * true: the state's handler, or a sub-handler, did something that
+        might be of interest to the parent state, 
+        or if the parent is an AndState, of interest to a sibling state.
+        So the caller should call the sibling sub-state handlers,
+        and the parent handler should check for possible work also.
+		  * false: the state's handler, or a sub-handler, did nothing that
+        might be of interest to the parent state, 
+        or if the parent is an AndState, of interest to a sibling state,
+        except for something that was already reported by other means,
+        such as a state-change request.  So there is no need for the caller 
+        to activate a sibling state handler or do any other processing itself.
 
 
 		Exception Handling:
@@ -233,16 +245,15 @@ public class StateList extends MutableList implements Runnable {
 		It is common for a state-machine to receive input from InputStreams,
 		and InputStreams produce IOExceptions.  These exceptions must be handled.
 		* Most state-machine handler methods handle IOExceptions by 
-			declaring that they may throw them.
-			But not all threads that execute state-machine code can handle exceptions.
+			declaring that they may throw them.  But not all threads 
+			that execute state-machine code can handle exceptions.
 			An example of this is the Timer thread.
 			To accommodate such threads, methods are provided that,
 			instead of throwing an IOException, they record the IOException,
 			so it can be re-thrown later by a different thread that can handle it.
 		* Originally it was thought that IOExceptions must be handled
 		  when a state object is constructed, but this is difficult to do.
-		  If initialization is moved from constructors to initialization methods
-		  the handling of exceptions becomes more manageable.
+		  So initialization was moved from constructors to initialization methods.
 		  initializeWithIOExceptionStateList() was created for this purpose.
 		  However it might be possible to eliminate this eventually.
 
@@ -254,10 +265,10 @@ public class StateList extends MutableList implements Runnable {
 	  * its current sub-state object, or child state, 
 	    designated by "this.presentSubStateList".
 
-		///enh StateList and its subclasses AndState and OrState
+		///enh At first, StateList and its subclasses AndState and OrState
 		  do not [yet] provide behavioral inheritance, which is
 		  the most important benefit of hierarchical state machines.
-		  Add it?
+		  Note, this is now being added.
 
 		///opt Presently a discrete input is never passed up from a state
 		  unless it was passed down and went unprocessed.
@@ -306,9 +317,9 @@ public class StateList extends MutableList implements Runnable {
     It is the one place this state checks for discrete input.
     A discrete input can appear in any number of other variables.
     This variable is special and is set according to the following protocol:
-    * a non-null reference to the input String by the handler's caller
+    * set to a non-null reference to the input String by the handler's caller
       immediately before the handler is called to try to process it
-    * null 
+    * set to null 
   	  * by the handler immediately after successfully processing the input, 
         thereby consuming the input
       * by the handler's caller immediately after 
@@ -344,10 +355,8 @@ public class StateList extends MutableList implements Runnable {
     which would cause state exit and re-entry when that happens.
     */
 
-  private Boolean isActiveBoolean= null; /* Activity value, initially invalid.
-    Maybe a better value would be isEnteredBoolean?  Null means dirty.
-  	*/
-
+  private Boolean cachedActiveBoolean= null; // Initially invalid.
+  
 	/* Methods used to build state objects. */
 
   public StateList initializeWithIOExceptionStateList() throws IOException
@@ -356,7 +365,7 @@ public class StateList extends MutableList implements Runnable {
       This method difference from ordinary initialization methods because:
       * It throws an IOException and makes this clear in its name.
       * It returns a reference to this object which can be used to
-        simplifier code in the caller.
+        simplify code in the caller.
 
       ///org? This method throws IOException.
         It was originally done for compatibility with its superclass
@@ -466,7 +475,7 @@ public class StateList extends MutableList implements Runnable {
 		{ this.parentStateList= parentStateList; }
 
   public StateList getpresentSubStateList()
-    /* This method returns the present machine substate.
+    /* This method returns the present machine sub-state.
       It is meaningful only for OrStates.
       */
   	{ 
@@ -574,7 +583,7 @@ public class StateList extends MutableList implements Runnable {
 		{
       if ( parentStateList != requestedStateList.parentStateList )
         appLogger.error(
-            "requestSiblingStateListV(..) requested state is not sibling");
+            "requestSiblingStateListV(..) requested state is not a sibling");
 			parentStateList.requestSubStateListV(requestedStateList);
 			}
 
@@ -1079,24 +1088,24 @@ public class StateList extends MutableList implements Runnable {
   	  }
 
   private void invalidateActiveV()
-    /* This method recursively invalidates the active status of 
+    /* This method recursively invalidates the cached active status of 
       this state and any descendant states that depend on it.
       It doesn't check descendants if state is already invalidated.
       This direction of invalidation matches the down-propagation
-      of the isActiveBoolean attribute.
+      of the cachedActiveBoolean attribute.
       This method should be called whenever the state,
       or one of its ancestors,
       becomes an active sub-state or stops being an active sub-state.
       */
 	  { 
-			if ( isActiveBoolean != null ) // Invalidate if a value is now valid. 
+			if ( cachedActiveBoolean != null ) // Invalidate if a value is now valid. 
 				{ // Invalidate the value in this state and its descendants.
 					for // Invalidate descendants first.
 						(StateList subStateList : theListOfSubStateLists) // All of them. 
 						{
 			  	  	subStateList.invalidateActiveV(); // Invalidate in one subtree.
 			  	  	}
-					isActiveBoolean= null; // Invalidate in this state by assigning null.
+					cachedActiveBoolean= null; // Invalidate here by assigning null.
 					reportChangeOfSelfV(); // Trigger eventual GUI redisplay.
 					}
 			}
@@ -1109,10 +1118,10 @@ public class StateList extends MutableList implements Runnable {
       * it is the single active sub-state of an active OrState.
       The calculation done implements the down-propagation
       of the isActiveBoolean attribute.
-      It returns the cached value of this calculation if it is present.
+      It caches the value if it was not cached already.
       */
   	{ 
-			if ( isActiveBoolean != null ) // Reevaluate activity value if needed.
+			if ( cachedActiveBoolean != null ) // Reevaluate value if needed.
 				; // Do nothing because we can return the cached evaluation.
 	  		else
 	  		{ // Evaluate activity value and cache it.
@@ -1132,9 +1141,9 @@ public class StateList extends MutableList implements Runnable {
 					  	{ activeB= true; break evaluation; } // So this state is active.
 					  activeB= false; // Anything else means this state is not active.
 			  		} // evaluation:
-		  		isActiveBoolean= Boolean.valueOf(activeB); // Cache the evaluation.
+		  		cachedActiveBoolean= Boolean.valueOf(activeB); // Cache evaluation.
 		  		}
-			return isActiveBoolean; 
+			return cachedActiveBoolean; 
 		  }
 
   protected boolean isAndStateB()
