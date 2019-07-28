@@ -11,8 +11,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-//// import allClasses.AppLog.LogLevel;
-
 public class StateList extends MutableList implements Runnable {
 
 	/*  This class is the base class for all state objects and state-machines.
@@ -172,7 +170,8 @@ public class StateList extends MutableList implements Runnable {
     	This property is contextual.  A signal which is
     	an output of one machine might be an input to another machine.
 
-    Some signals of interest to these state machines,
+    Here are some signals of interest to these state machines,
+    signals that are checked by the base state-machine infrastructure, 
     and how they should be handled:
   	* A state change request: 
   	  A state machine can make this request to its ancestor state machines.
@@ -188,7 +187,10 @@ public class StateList extends MutableList implements Runnable {
     	An affected state handler will take an appropriate action.
     	Very possibly it will read additional data from the same input stream
     	and act on the entire sequence as a whole.
-    * Handler return codes.  See the additional information below about
+    * Handler return codes.
+      When a return code is true, it means that 
+      some other otherwise undocumented signal has been produced.  
+      See the additional information below about 
       handler methods and return code.
 
 
@@ -349,7 +351,7 @@ public class StateList extends MutableList implements Runnable {
         See AndOrState.
         */
 
-  protected StateList requestedSubStateList= null; /* Becomes non-null when 
+  protected StateList nextSubStateList= null; /* Becomes non-null when 
   	machine requests a new qualitative state.  
     It will eventually become the present state also, 
     which would cause state exit and re-entry when that happens.
@@ -538,54 +540,51 @@ public class StateList extends MutableList implements Runnable {
 			while (true) { // Keep calling sub-state handlers until done.
 	  	    boolean substateSignalB= // Call sub-state handler.
 	  	    		doOnInputsToSubstateB(presentSubStateList);
-		  		if // Processing possible state change request.
-		  		  (requestedSubStateList != null)
-            { // Processing state change request.
-  		  		  processStateChangeRequestV();
-              substateSignalB= true; // Count this as signal. ////?
-            }
-		  	  if (!substateSignalB) // Exiting loop if no sub-state signal made.
-			  	  { break; }
-	  	  	stateSignalB= true; // Accumulate sub-state signal in this state.
+          if (substateSignalB)
+            stateSignalB= true; // Accumulate sub-state signal in this state.
+          boolean continueB= tryPreparingNextStateB();
+          if (!continueB) break; // No next state, we're done. 
 	  	  	} // while (true)
 			return stateSignalB; // Returning accumulated state signal result.
 			}
 
-  private void processStateChangeRequestV() throws IOException
-    /* This method processes a state request.
-      It assumes the request has already been made and
-      requestedSubStateList contains the requested state.
-      
-      ///enh Presently the requested state must be 
+  private boolean tryPreparingNextStateB() throws IOException
+    /* This method prepares to processes the next sibling state,
+      if there is one.
+      * It returns true if there is a requested next sibling state,
+        and preparations, such as exiting the present state,
+        and entering the new state, have been done.
+      * It returns false if either there is no requested next state,
+        or there is but it is not a sibling state.
+        In this case the request must be passed to a different parent
+        for processing.
+
+      ////enh Presently the requested state must be 
         sibling of the present state and have the same parent.  
         This is being changed so that the requested state
         could be a sibling of any ancestor.
      */
   {
-    if ( presentSubStateList.parentStateList 
-         != requestedSubStateList.parentStateList )
-      appLogger.error("requested state is not sibling");
-    presentSubStateList.doOnExitV(); // Exit old sub-state.
-    presentSubStateList.invalidateActiveV();
-    presentSubStateList= requestedSubStateList; // Change sub-state.
-    presentSubStateList.invalidateActiveV();
-    requestedSubStateList= null; // Consume state-change request.
-    presentSubStateList.doOnEntryV(); // Enter new sub-state.
+    boolean changedB= false; // Assume the state will not be changing.
+    toReturn: {
+      if ((nextSubStateList == null)) // No change is requested.
+        break toReturn;
+      if ( // Present state and desired state are not siblings. 
+          presentSubStateList.parentStateList 
+          != nextSubStateList.parentStateList )
+        break toReturn; // Present state-machine's state can not change.
+      { // Changing state is okay.  Make the change.
+        presentSubStateList.doOnExitV(); // Exit old sub-state.
+        presentSubStateList.invalidateActiveV();
+        presentSubStateList= nextSubStateList; // Change sub-state.
+        presentSubStateList.invalidateActiveV();
+        presentSubStateList.doOnEntryV(); // Enter new sub-state.
+        nextSubStateList= null; // Consume state-change request.
+        }
+      changedB= true;
+      } // toReturn:
+    return changedB;
     }
-
-  protected void XrequestSiblingStateListV(StateList requestedStateList) ////
-		/* This is called to change the state of a the state machine
-		  that contains this state to the sibling state requestedStateList.  
-		  It does this by calling the parent state's 
-		  setNextSubStateListV(..) method. 
-		  It does not fully take affect until the present state handler exits.
-		  */
-		{
-      if ( parentStateList != requestedStateList.parentStateList )
-        appLogger.error(
-            "requestSiblingStateListV(..) requested state is not a sibling");
-			parentStateList.requestSubStateListV(requestedStateList);
-			}
 
   protected boolean requestSubStateChangeIfNeededB(
       StateList requestedStateList)
@@ -603,7 +602,6 @@ public class StateList extends MutableList implements Runnable {
 	  	return signalB; // Return whether state change request occurred.
 	  }	
 
-  ////protected void requestAncestorSubStateV(StateList requestedStateList)
   protected void requestAncestorSubStateV(StateList requestedStateList)
     /* This method requests a state change to requestedStateList,
       which must be a sub-state of an ancestor of this StateList.
@@ -611,25 +609,10 @@ public class StateList extends MutableList implements Runnable {
       A StateList is not considered an ancestor of itself.
       */
   {  
-    StateList scanStateList= this; // Start scanning with this StateList.
-    while (true) { // Request state change in the appropriate ancestor.
-      StateList scanParentStateList=  // Get scan state's parent.
-          scanStateList.parentStateList;
-      if (scanParentStateList == null) // There are no more ancestors.
-      {
-        appLogger.error("requestAncestorSubStateV(..) "
-            + "requested state is not a substate of any ancestor.");
-        break;
-        }
-      if  // Requested state is acceptable.  It has same parent as scan state.
-        ( scanParentStateList == requestedStateList.parentStateList )
-        { // Request state as sub-state of common parent state.
-          scanParentStateList.requestSubStateListV(requestedStateList);
-          break;
-          }
-      scanStateList= scanParentStateList; // Advance scan to parent state.
-      }
-  }
+    parentStateList.requestSubStateListV(requestedStateList);
+      // Request a sub-state change in parent.
+      // Validity of request will be tested later.
+    }
 
   protected void requestSubStateListV(StateList requestedStateList)
 	  /* This method requests the next state-machine state,
@@ -651,16 +634,14 @@ public class StateList extends MutableList implements Runnable {
 	       
 	    */
 	  {
-      if  // Report excess state change request.
-				( (requestedSubStateList != null)
-					&& (requestedSubStateList != StateList.initialSentinelState)
+      if  // Detect and report if this is an excess state change request.
+				( (nextSubStateList != null)
+					&& (nextSubStateList != StateList.initialSentinelState)
 					)
-        appLogger.error(
-          "StateList.requestSubStateListV(..), a next state already requested."
+        appLogger.error("StateList.requestSubStateListV(..), "
+            + "a next state is already requested."
         	);
-
-	  	requestedSubStateList= // Make the now validated state request. 
-	  	    requestedStateList;
+      nextSubStateList= requestedStateList; // Record the request.
 	  	}	
 
 	/*  Methods for entry and exit of OrState or their sub-states.  */
@@ -782,7 +763,7 @@ public class StateList extends MutableList implements Runnable {
 	    To return false without needing to code a return statement,
 	    override the onInputsToReturnFalseV() method instead.
 
-	    A onInputsB() method does not return until
+	    An onInputsB() method should not return until
 	    everything that can possibly be done has been done, meaning:
 	    * All available inputs that it can process have been processed.
 	    * All outputs that it can produce have been been produced.
@@ -1037,7 +1018,7 @@ public class StateList extends MutableList implements Runnable {
   		//	"StateList.run() beginning of Timer tick to"
   		//	+ getFormattedStatePathString() );
 			try { 
-				doOnInputsB(); // Try to process timer event with handler. 
+				downAndUpDoOnInputsB(); // Try to process timer event with handler. 
 				}
 		  catch ( IOException theIOException) { 
 		    delayExceptionV( // Postpone exception processing to other thread.
@@ -1047,6 +1028,42 @@ public class StateList extends MutableList implements Runnable {
 			// appLogger.debug( ///dbg
 	  	//		"StateList.run() end of Timer tick to"+ getFormattedStatePathString() );
 		}
+
+
+  private synchronized boolean downAndUpDoOnInputsB() throws IOException
+    /* This method is functionally similar to doOnInputs(),
+      processing inputs in the current state and its descendants, but has,
+      ///enh or will have, the additional ability 
+      to process particular signals passed to 
+      the handler methods of ancestors.
+      
+      This method is presently called only when a Timer is triggered.
+      ///enh It might eventually be called by the state-machine threads also.
+      */
+    { 
+      boolean signalB= false;
+      boolean thereAreLeftOversB= false;
+      StateList scanStateList= this;
+      while (true)  // Process inputs and left-over to ancestors. 
+        { // Process one level.
+          if (scanStateList.doOnInputsB()) // First, process inputs normally.
+            signalB= true; 
+          stateChange: { // Detect and prepare left-over state change request.
+            if ((scanStateList.nextSubStateList == null)) // Not requested.
+              break stateChange;
+            {
+              requestAncestorSubStateV(nextSubStateList); // Pass request
+                // to our parent.
+              nextSubStateList= null; // Consume our state-change request.
+              thereAreLeftOversB= true;
+              }
+            }
+          if (! thereAreLeftOversB) // No signals to pass to our parent.
+            break;
+          scanStateList= scanStateList.parentStateList; // Go to parent.
+          } // while (therAreLeftOverSignalsB);
+      return signalB; 
+      } 
 
 
   /* Methods for UI cell rendering.  */
