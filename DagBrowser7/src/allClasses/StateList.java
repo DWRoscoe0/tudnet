@@ -786,10 +786,21 @@ public class StateList extends MutableList implements Runnable {
 	  /* This is the method that should be called to invoke a state's handler.
 	    It can not be overridden.  
 	    It calls the override-able handler methods which 
-	    state sub-classes may override.
+	    StateList sub-classes may override.
 	    */
 	  { 
 			boolean signalB= onInputsB();
+			/*  ////
+      stateChange: { // Detect and prepare left-over state change request.
+        if ((nextSubStateList == null)) // Not requested.
+          break stateChange;
+        {
+          requestAncestorSubStateV(nextSubStateList); // Pass request
+            // to our parent.
+          nextSubStateList= null; // Consume our state-change request.
+          }
+        } // stateChange: 
+      */  ////
 			return signalB;
 		  }
 
@@ -1048,6 +1059,7 @@ public class StateList extends MutableList implements Runnable {
         { // Process one level.
           if (scanStateList.doOnInputsB()) // First, process inputs normally.
             signalB= true; 
+          /*  ////
           stateChange: { // Detect and prepare left-over state change request.
             if ((scanStateList.nextSubStateList == null)) // Not requested.
               break stateChange;
@@ -1057,7 +1069,8 @@ public class StateList extends MutableList implements Runnable {
               nextSubStateList= null; // Consume our state-change request.
               thereAreLeftOversB= true;
               }
-            }
+            } // stateChange:
+          */  //// 
           if (! thereAreLeftOversB) // No signals to pass to our parent.
             break;
           scanStateList= scanStateList.parentStateList; // Go to parent.
