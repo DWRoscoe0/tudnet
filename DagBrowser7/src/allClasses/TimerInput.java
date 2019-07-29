@@ -6,7 +6,8 @@ import java.util.TimerTask;
 public class TimerInput
 	/* This class performs functions similar to java.util.Timer,
 	  such as the ability to call a Runnable's run() method,
-	  but also provides methods with which the state of the timer can be tested.
+	  but also provides methods with which 
+	  the state of the timer can be tested.
 	  It can time only one interval at a time, but it can be reused.
 	  It's called TimerInput because it is meant to provide inputs to
 	  a thread or a state machine.
@@ -32,7 +33,8 @@ public class TimerInput
 		private TimerTask theTimerTask= null;
 		private boolean inputArrivedB= false; 
     private long lastDelayUsedMsL= 0;
-	
+    private boolean enabledB= true;
+    
 	  TimerInput( // Constructor.
 	  		Timer theTimer,
 	  		Runnable theRunnable
@@ -41,6 +43,12 @@ public class TimerInput
 		  	this.theTimer= theTimer;
 		  	this.userRunnable= theRunnable;
 		  	}
+
+    public void disableV()
+      /* This is used for disabling the timer when doing debug traces.  */
+      { 
+        enabledB= false; 
+        }
 	
 	  public boolean getInputArrivedB() 
 	    // Returns whether or not the timer input has been activated.
@@ -51,7 +59,8 @@ public class TimerInput
 	    { return theTimerTask != null; }
 		
 	  public synchronized void scheduleV( long delayMsL )
-	    /* Schedules this timer for input activation after delayMsL milliseconds.
+	    /* Schedules this timer for input activation 
+	      after delayMsL milliseconds.
 	      If this timer object is already scheduled or active 
 	      then the old scheduled activation is cancelled first.
 	     */
@@ -61,8 +70,11 @@ public class TimerInput
 	        public void run()
 	          // Our Runnable method to process triggering of the timer.
 		        {
-	        		inputArrivedB= true;  // Record that end time has arrived.
-	        	  userRunnable.run(); // Run user handler Runnable.
+	        		if (enabledB) // Unless disabled for debug tracing,...
+  	        		{ // Take appropriate triggered action.
+	        		    inputArrivedB= true;  // Record that end time has arrived.
+  	        		  userRunnable.run(); // Run user handler Runnable's run().
+  	        		  }
 		          }
 	    		};
 	      lastDelayUsedMsL= delayMsL;
