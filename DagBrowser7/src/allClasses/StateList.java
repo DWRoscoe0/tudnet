@@ -143,8 +143,9 @@ public class StateList extends MutableList implements Runnable {
 
 		Signals, also known as events:
 
-    Signals carry information between parts of the hierarchical state machine,
-    and between the state machine and the external world.
+    Signals carry information between parts of 
+    the hierarchical state machine, and between 
+    the state machine and the external world.
     Signals can be of several types.
 
 	  * Continuous time vs. discrete time:
@@ -187,7 +188,7 @@ public class StateList extends MutableList implements Runnable {
     	An affected state handler will take an appropriate action.
     	Very possibly it will read additional data from the same input stream
     	and act on the entire sequence as a whole.
-    * Handler return codes.
+    * Handler method return codes.
       When a return code is true, it means that 
       some other otherwise undocumented signal has been produced.  
       See the additional information below about 
@@ -204,42 +205,51 @@ public class StateList extends MutableList implements Runnable {
 		passing of signals between internal sub-machines,
 		and/or the production of one or more outputs.
 
-		The handler method should not return until
-		it has finished processing all available state machine inputs,
-		which means that, for the moment at least, 
-		there is nothing remaining for it to do.
+		A state handler method may return at any time.
+		The way the caller responds to a return depends on
+		the handler method's return code.
+		For more information see below.
 
-		It's possible that the handler was called by 
-		the handler of another state machine, the parent state machine.
-		There are several ways that a handler 
-		can pass information back to the parent machine.
-		* state change request: This is a signal from the state machine
-		  to an ancestor OrState machine.  The ancestor responds by
-		  changing its sub-state to the requested child sub-state.
-		* discrete input consumption: There are two cases:
-		  * If the state's handler accepts and processes a discrete input, 
-		    it clears the input register variable.
-		    In this case the caller does not try to pass the input
-		    to another sub-state's handler.
+		There are several ways that a state can pass information/signals.
+		* state [change] request: This is a signal requesting that
+		  the state machine activate a particular state.
+		  Usually it is a request from one state to its parent
+		  to change the parent's sub-state to be
+		  a sibling of the requesting state,
+		  but other requests are possible.
+		* discrete object inputs:
+		  * A discrete object input is passed by 
+		    setting a state input variable for that purpose to contain
+		    a reference to that object, and calling the state's handler.
+		  * If the state's handler accepts and processes the discrete input, 
+		    it sets the input variable to null. 
+		    The setter of the variable interprets this to mean
+		    that the input was processed.
 		  * If the state's handler does not accept and process a discrete input, 
 		    the input datum remains in the state's input register variable.
-		    In this case the caller moves the datum to
-		    the input register of another sub-state and calls its handler,
-		    or if there is no other sub-state then 
-		    it might try to process the discrete input itself.
-		* signal return code:  A handler may return a boolean value, 
-		  with the following meanings: 
-      * true: the state's handler, or a sub-handler, did something that
-        might be of interest to the parent state, 
-        or if the parent is an AndState, of interest to a sibling state.
-        So the caller should call the sibling sub-state handlers,
-        and the parent handler should check for possible work also.
-		  * false: the state's handler, or a sub-handler, did nothing that
-        might be of interest to the parent state, 
-        or if the parent is an AndState, of interest to a sibling state,
-        except for something that was already reported by other means,
-        such as a state-change request.  So there is no need for the caller 
-        to activate a sibling state handler or do any other processing itself.
+		    The setter interprets this to mean that the input was not processed.
+		    In this case the setter will set the variable to null
+		    and one-at-a-time store the value to the input variable of 
+		    other sub-states and call their handlers until it is processed.
+		    If the input was not processed it may 
+		    try to process the input itself.
+		* handler return code:  State handers methods return a boolean value. 
+		  This value has the following meanings.
+      * false: This means that there is nothing left to do 
+        with respect to this signal.  The current state's handler 
+        and the handlers of the current state's descendant states, if any, 
+        examined all available state machine inputs of interest to them,
+        and finished processing them all.
+      * true: This means that at least some input-processing work 
+        remains to be done.  In this case, the following should happen.
+        * The handlers of other states, probably concurrent sibling states, 
+          should be called to process the remaining inputs,
+          and any output signals that might have been produced by 
+          the state handler that just returned. 
+        * The state handler that just returned should be called again
+          to try to finish up its work.
+          If it returns true again, this sequence should be repeated,
+          until it finally returns false indicating its work is done.
 
 
 		Exception Handling:
@@ -504,17 +514,20 @@ public class StateList extends MutableList implements Runnable {
 	    */
 	  { 
 			throwDelayedExceptionV(); // Throw exception if one was saved earlier.
-		  boolean signalB= false;
+		  boolean stateReturnB= false;
   	  substateScansUntilNoSignal: while(true) {
- 	  		for (StateList subStateList : theListOfSubStateLists) 
-	  	  	if (doOnInputsToSubstateB(subStateList))
-		  	  	{
-		  	  		signalB= true;
-		  	  		continue substateScansUntilNoSignal; // Restart scan.
-		  	  		}
+ 	  		for (StateList subStateList : theListOfSubStateLists)
+   	  		{
+   	  		  boolean substateReturnB= doOnInputsToSubstateB(subStateList); 
+  	  	  	if (substateReturnB) 
+  		  	  	{
+  		  	  		stateReturnB= true;
+  		  	  		continue substateScansUntilNoSignal; // Restart scan.
+  		  	  		}
+   	  		  }
  	  		break substateScansUntilNoSignal; // No signal in this, final scan.
   	  	} // substateScansUntilNoSignal:
-			return signalB; 
+			return stateReturnB; 
 			}
 
 
@@ -536,28 +549,28 @@ public class StateList extends MutableList implements Runnable {
       */
 	  { 
 			throwDelayedExceptionV(); // Throw exception if one was saved.
-	  	boolean stateSignalB= false;
-			while (true) { // Keep calling sub-state handlers until done.
-	  	    boolean substateSignalB= // Call sub-state handler.
+	  	boolean stateReturnB= false;
+			while (true) { // Process sub-states until no new next one.
+	  	    boolean substateReturnB= // Call sub-state handler.
 	  	    		doOnInputsToSubstateB(presentSubStateList);
-          if (substateSignalB)
-            stateSignalB= true; // Accumulate sub-state signal in this state.
-          boolean continueB= tryPreparingNextStateB();
-          if (!continueB) break; // No next state, we're done. 
+          if (substateReturnB) // Accumulate its return code
+            stateReturnB= true; // in state return code.
+          boolean stateChangedB= tryPreparingNextStateB();
+          if (!stateChangedB) // If no next state
+            break; // exit, we're done.
 	  	  	} // while (true)
-			return stateSignalB; // Returning accumulated state signal result.
+			return stateReturnB; // Returning accumulated state return code.
 			}
 
   private boolean tryPreparingNextStateB() throws IOException
     /* This method prepares to processes the next sibling state,
       if there is one.
       * It returns true if there is a requested next sibling state,
-        and preparations, such as exiting the present state,
+        and preparations for it, such as exiting the present state,
         and entering the new state, have been done.
       * It returns false if either there is no requested next state,
         or there is but it is not a sibling state.
-        In this case the request must be passed to a different parent
-        for processing.
+        In this case the request must be handled elsewhere.
 
       ////enh Presently the requested state must be 
         sibling of the present state and have the same parent.  
@@ -565,7 +578,7 @@ public class StateList extends MutableList implements Runnable {
         could be a sibling of any ancestor.
      */
   {
-    boolean changedB= false; // Assume the state will not be changing.
+    boolean stateIsChangingB= false; // Assume not changing.
     toReturn: {
       if ((nextSubStateList == null)) // No change is requested.
         break toReturn;
@@ -576,14 +589,14 @@ public class StateList extends MutableList implements Runnable {
       { // Changing state is okay.  Make the change.
         presentSubStateList.doOnExitV(); // Exit old sub-state.
         presentSubStateList.invalidateActiveV();
-        presentSubStateList= nextSubStateList; // Change sub-state.
+        presentSubStateList= nextSubStateList; // Set new sub-state.
         presentSubStateList.invalidateActiveV();
         presentSubStateList.doOnEntryV(); // Enter new sub-state.
         nextSubStateList= null; // Consume state-change request.
         }
-      changedB= true;
+      stateIsChangingB= true;
       } // toReturn:
-    return changedB;
+    return stateIsChangingB;
     }
 
   protected boolean requestSubStateChangeIfNeededB(
@@ -592,14 +605,15 @@ public class StateList extends MutableList implements Runnable {
 	    if will reject the state-change request and return false if 
 	    the present sub-state is the same as the requested state. 
 	    In this case the sub-state will not be exited and reentered.
-	    This method will return true if the request is accepted.
+	    This method will return true if the request actually occurs, false otherwise.
 	    */
 	  {
-  	  boolean signalB= // Calculate whether the state will actually change. 
+  	  boolean changeIsNeededB= // Calculate whether the state needs changing. 
   	  		( presentSubStateList != requestedStateList );
-	  	if ( signalB ) // If it will
-	  		requestSubStateListV(requestedStateList); // call this to do the work.
-	  	return signalB; // Return whether state change request occurred.
+	  	if ( changeIsNeededB )
+	  		requestSubStateListV(requestedStateList); // Request the state change.
+      appLogger.debug( "requestSubStateChangeIfNeededB(..) "+changeIsNeededB);
+	  	return changeIsNeededB; // Return whether request occurred.
 	  }	
 
   protected void requestAncestorSubStateV(StateList requestedStateList)
@@ -790,7 +804,6 @@ public class StateList extends MutableList implements Runnable {
 	    */
 	  { 
 			boolean signalB= onInputsB();
-			/*  ////
       stateChange: { // Detect and prepare left-over state change request.
         if ((nextSubStateList == null)) // Not requested.
           break stateChange;
@@ -800,7 +813,6 @@ public class StateList extends MutableList implements Runnable {
           nextSubStateList= null; // Consume our state-change request.
           }
         } // stateChange: 
-      */  ////
 			return signalB;
 		  }
 

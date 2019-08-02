@@ -35,7 +35,8 @@ public class TimerInput
     private long lastDelayUsedMsL= 0;
     private boolean enabledB= true;
     
-	  TimerInput( // Constructor.
+	  
+    TimerInput( // Constructor.
 	  		Timer theTimer,
 	  		Runnable theRunnable
 	  		)
@@ -48,6 +49,13 @@ public class TimerInput
       /* This is used for disabling the timer when doing debug traces.  */
       { 
         enabledB= false; 
+        }
+
+    public void purgeV()
+      /* This is used to disable pending timer events
+        when doing debug traces.  */
+      { 
+        theTimer.purge(); // Purge pending timer events. 
         }
 	
 	  public boolean getInputArrivedB() 

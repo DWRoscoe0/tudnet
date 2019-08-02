@@ -252,8 +252,8 @@ public class Unicaster
 		     	} // processUntilTerminated: 
       	{ // Inform state machine of termination request.
     			appLogger.info("runLoop() loop interrupted, stopping state machine.");
-      		Thread.currentThread().interrupt(); // Restore interrupt.
-        	while (doOnInputsB()) ; // Cycle state machine run until it stops.
+    			// ? theTimer.cancel(); // Cancel all Timer events for debug tracing, ////dbg
+        	while (doOnInputsB()) ; // Cycle state machine run until nothing remains to do.
 	      	}
 				}
 	  

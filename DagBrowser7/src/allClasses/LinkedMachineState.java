@@ -147,29 +147,20 @@ public class LinkedMachineState
 	  public boolean onInputsB() throws IOException 
 	    /* This input handler method is mainly concerned with
 	      disconnecting its Unicaster from the one running on the peer node.
-	      It responds to the thread termination interrupt by
-	      sending GOODBYEs to the peer.
-	      In both cases, it transitions the sub-state machine
-	      to the the DisconnectedState.
-	     */
+	      It lets its descendant states handle everything else.
+	      It interprets a thread interrupt as a termination request
+	      and responds by requesting a sub-state change to 
+	      theDisconnectedState if that state is not already active.
+	      */
 		  {
-	  		boolean signalB= true; // Assume signal will be produced.
-	  		goReturn: {
-		  		if ( super.onInputsB() ) // Try processing in sub-state machine.
-		  			break goReturn; // Return because signal was produced.
-		  		if // Process local disconnect request, if present.
-		  		  //// ( Thread.currentThread().isInterrupted() )
-		  		  (EpiThread.testInterruptB())
-			  		{ // Process local disconnect request.
-		        	//// Thread.currentThread().interrupt(); // Reestablish interrupt.
-		        	//// signalB= requestSubStateListB( theDisconnectedState );
-		  		    //// requestSubStateListV( theDisconnectedState );
-		  		    if (requestSubStateChangeIfNeededB( theDisconnectedState ))
-			  			  break goReturn; // Return with the signal true.
-			  			}
-		  		signalB= false; // Everything failed, so no signal.
-		  		} // goReturn: 
-		  	return signalB;
+        if // Process local termination request, if present.
+          (EpiThread.testInterruptB())
+          { // Process local termination request by requesting disconnect.
+            requestSubStateChangeIfNeededB( theDisconnectedState );
+            }
+        boolean returnB= // Try processing in OrState machine of superclass.
+          super.onInputsB();
+		  	return returnB;
 		  	}
 
 		public void onExitV() throws IOException
