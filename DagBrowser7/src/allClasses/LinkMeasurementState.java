@@ -32,7 +32,6 @@ public class LinkMeasurementState
 		// Sub-state machine instances.
 		@SuppressWarnings("unused")
 		private RemoteMeasurementState theRemoteMeasurementState;
-		//// @SuppressWarnings("unused")
 		private LocalMeasurementState theLocalMeasurementState;
 
 		LinkMeasurementState(  // Constructor.
@@ -249,7 +248,7 @@ public class LinkMeasurementState
 					    /* Waits for the end of the pause interval.
 					     	*/
 					  	{ 
-					  	  if (measurementTimerInput.getInputArrivedB()) // Timer done. 
+					  	  if (measurementTimerInput.testInputArrivedB()) // Timer done. 
 					  	  	requestAncestorSubStateV(theMeasurementInitializationState);
 					  		}
 	
@@ -279,7 +278,7 @@ public class LinkMeasurementState
 				  	  {
 			    			///dbg appLogger.debug( "MeasurementInitializationState.onEntryV() ");
 			    	  	measurementTimerInput.scheduleV(Config.measurementPauseMsL);
-			    	  	  ////////////// has no effect?  Delete.
+			    	  	  ///opt has no effect?  Delete.
 			  				}
 			    	
 					  public void onInputsToReturnFalseV() throws IOException
@@ -329,8 +328,6 @@ public class LinkMeasurementState
 				    			  else // Giving up after maximum time-out reached.
 				    			  { // Trigger breaking of connection.
                       appLogger.info("MeasurementHandshakingState time-out.");
-								  	  //// requestAncestorSubStateV(theMeasurementPausedState);
-				    			    ////   // Do again after a pause.
 				    			    requestAncestorSubStateV(theBrokenConnectionState);
 					    		      // Break the connection.
 				    			    }

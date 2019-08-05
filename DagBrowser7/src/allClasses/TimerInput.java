@@ -57,10 +57,30 @@ public class TimerInput
       { 
         theTimer.purge(); // Purge pending timer events. 
         }
-	
-	  public boolean getInputArrivedB() 
-	    // Returns whether or not the timer input has been activated.
-	    { return inputArrivedB; }
+    
+    public boolean getInputArrivedB() 
+      /* Tests whether or not the timer input has been activated,
+        and returns the result.
+        If it returns true, then it cancels the timer input before returning,
+        so if it is immediately called again, it will return false.
+       */
+      { 
+        boolean returnB= inputArrivedB;
+        if (returnB) // If input has arrived
+          cancelingV(); // cancel it so it won't be processed again.
+        return returnB; 
+        }
+    
+    public boolean testInputArrivedB() 
+      /* Tests whether or not the timer input has been activated
+        and returns the result.
+
+        It does not cancel the input, so if it returns true,
+        and is immediately called again, it will return true again.
+       */
+      { 
+        return inputArrivedB; 
+        }
 	
 	  public boolean getInputScheduledB() 
 	    // Returns whether or not the timer input has been scheduled.

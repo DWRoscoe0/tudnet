@@ -314,9 +314,10 @@ public class StateList extends MutableList implements Runnable {
 
 	private int pathLevelI; // Distance from root node.
 	  // This, along with the link to the parent node,
-	  // is used to speed the finding of Lowest Common Ancestors (LCAs),
+	  // was added to speed the finding of Lowest Common Ancestors (LCAs),
 	  // without needing to traverse the tree from the root.
-	  // Presently these values are only globally down-propagated.
+	  // But so far it has not been used for that yet.
+	  // Presently this variable is only globally down-propagated.
 	  ///opt This could be cached, but it wouldn't save much.
 	  //  If it was, down-invalidation would be setting it to -MAXINT.
 
@@ -463,7 +464,7 @@ public class StateList extends MutableList implements Runnable {
             subStateList.propagateIntoSubtreeB( // recursively propagate  
               pathLevelI ); // the new level into child subtree.
           this.pathLevelI= pathLevelI; // Update this node.  This eliminates
-              // the incorrectness which caused this storing.
+              // the inequality which triggered this storing.
           }
       return changeB;
       }
@@ -571,11 +572,6 @@ public class StateList extends MutableList implements Runnable {
       * It returns false if either there is no requested next state,
         or there is but it is not a sibling state.
         In this case the request must be handled elsewhere.
-
-      ////enh Presently the requested state must be 
-        sibling of the present state and have the same parent.  
-        This is being changed so that the requested state
-        could be a sibling of any ancestor.
      */
   {
     boolean stateIsChangingB= false; // Assume not changing.
@@ -1061,28 +1057,26 @@ public class StateList extends MutableList implements Runnable {
       the handler methods of ancestors.
       
       This method is presently called only when a Timer is triggered.
-      ///enh It might eventually be called by the state-machine threads also.
+      ///enh It might eventually be called by 
+        the state-machine driver threads also.
       */
     { 
       boolean signalB= false;
-      boolean thereAreLeftOversB= false;
       StateList scanStateList= this;
       while (true)  // Process inputs and left-over to ancestors. 
         { // Process one level.
+          boolean thereAreLeftOversB= false;
           if (scanStateList.doOnInputsB()) // First, process inputs normally.
             signalB= true; 
-          /*  ////
+          StateList parentStateList= scanStateList.parentStateList;
+          if (parentStateList == null) break;
           stateChange: { // Detect and prepare left-over state change request.
-            if ((scanStateList.nextSubStateList == null)) // Not requested.
+            if ((parentStateList.nextSubStateList == null)) // Not requested.
               break stateChange;
             {
-              requestAncestorSubStateV(nextSubStateList); // Pass request
-                // to our parent.
-              nextSubStateList= null; // Consume our state-change request.
               thereAreLeftOversB= true;
               }
             } // stateChange:
-          */  //// 
           if (! thereAreLeftOversB) // No signals to pass to our parent.
             break;
           scanStateList= scanStateList.parentStateList; // Go to parent.

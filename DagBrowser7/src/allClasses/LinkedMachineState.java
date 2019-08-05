@@ -32,8 +32,6 @@ public class LinkedMachineState
 		private TCPCopier theTCPCopier;
 		private Timer theTimer; ///opt.  use function parameter only. 
 		private Unicaster theUnicaster;
-		//// private StateList[] theLinkedStateLists;
-		//// private LinkMeasurementState theLinkMeasurementState;
 		private Persistent thePersistent; 
 
 		// Sub-state-machine instances.
@@ -60,7 +58,6 @@ public class LinkedMachineState
 					TCPCopier theTCPCopier,
 					Unicaster theUnicaster,
 					Persistent thePersistent, 
-					//// StateList[] theLinkedStateLists
 					LinkMeasurementState theLinkMeasurementState
 		  		)
 				throws IOException
@@ -74,8 +71,6 @@ public class LinkedMachineState
 			  this.retransmitDelayMsNamedLong= retransmitDelayMsNamedLong;
 				this.theTCPCopier= theTCPCopier;
 				this.theUnicaster= theUnicaster;
-				//// this.theLinkedStateLists= theLinkedStateLists;
-				//// this.theLinkMeasurementState= theLinkMeasurementState;
 				this.thePersistent= thePersistent; 
 
 	  		// Adding measurement count.
@@ -95,8 +90,6 @@ public class LinkedMachineState
         initAndAddStateListV(theCompletingConnectState);
         initAndAddStateListV(theInitiatingReconnectState);
         initAndAddStateListV(theCompletingReconnectState);
-        //// addStateListV(theConnectedState.initializeWithIOExceptionStateList(
-        //// this.theLinkedStateLists));
         addStateListV(theConnectedState.initializeWithIOExceptionStateList(
             theLinkMeasurementState));
         initAndAddStateListV(theDisconnectedState);
@@ -236,7 +229,7 @@ public class LinkedMachineState
             if (tryReceivingHelloB(this)) // Try to process first HELLO.
               requestAncestorSubStateV( // Success.  Request connected state.
                   theConnectedState );
-            else if (theTimerInput.getInputArrivedB()) // Try Time-out? 
+            else if (theTimerInput.testInputArrivedB()) // Try Time-out? 
               {
                 sendHelloV(this); // Resend hello.
                 if // Reschedule time-out with exponential back-off. 
@@ -286,7 +279,7 @@ public class LinkedMachineState
             if (tryReceivingHelloB(this)) // Try to process HELLO.
               requestAncestorSubStateV( // Success.  Request connected state.
                   theConnectedState );
-            else if (theTimerInput.getInputArrivedB()) // Try Time-out? 
+            else if (theTimerInput.testInputArrivedB()) // Try Time-out? 
               {
                 requestAncestorSubStateV( // Give up by
                     theBrokenConnectionState); // going to broken connection.
@@ -308,7 +301,6 @@ public class LinkedMachineState
 		    private LinkMeasurementState theLinkMeasurementState;
 		    
 				public StateList initializeWithIOExceptionStateList(
-						//// StateList[] theLinkedStateLists)
 				    LinkMeasurementState theLinkMeasurementState)
 			    throws IOException
 			    /* This method initializes the sub-states,
@@ -320,13 +312,6 @@ public class LinkedMachineState
 						super.initializeWithIOExceptionStateList();
 						
             addStateListV(this.theLinkMeasurementState);
-            /*  ////
-						for // Add each child state from array.
-						  ( StateList theStateList : theLinkedStateLists ) 
-							{ 
-								addStateListV(theStateList); // Add it as sub-state.
-								}
-					  */  ////
 						
 						return this;
 						}
@@ -448,7 +433,7 @@ public class LinkedMachineState
                 sendHelloV(this); // Send a response HELLO.
                 requestAncestorSubStateV(theConnectedState);
                 }
-            else if (theTimerInput.getInputArrivedB()) // Time to try again? 
+            else if (theTimerInput.testInputArrivedB()) // Time to try again? 
               requestAncestorSubStateV(theInitiatingReconnectState);
             }
 
