@@ -428,7 +428,8 @@ l    * If the app receives a message indicating
         
         processFeedbackPortV(theCommandArgs);
         tryUpdateCommandsV(theCommandArgs); // Try the update subset.
-        
+        startCommandArgs.switchValue("-tempDir"); //// Use temporary directory switch. 
+
         { // Log any unprocessed/ungotten arguments.
           String[] targetStrings= // Get remaining arguments.
               theCommandArgs.targets(); 
