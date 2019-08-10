@@ -131,7 +131,7 @@ public class Misc
 		  				&& focusedComponent!=null // and there was a focus owner.
 		  				)
 		    		{ // Reporting failure and possible causes.
-							appLogger.warning(
+							appLogger.info(
 									"DagBrowserPanel.requestFocusV() of "+Misc.componentInfoString(
 											theComponent
 											) 
