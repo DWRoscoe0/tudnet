@@ -252,9 +252,11 @@ public class Misc
           */
         {
           boolean successB= false;
+          int attemptsI= 0;
           appLogger.info( "atomicRenameB(..) begins"
               + twoFilesString(sourcePath.toFile(), destinationPath.toFile()));
           while (!EpiThread.testInterruptB()) { // Retry some failure types. 
+            attemptsI++;
             try {
                 Files.move(sourcePath, destinationPath,
                     StandardCopyOption.ATOMIC_MOVE);
@@ -262,7 +264,8 @@ public class Misc
                 break;
               } catch (AccessDeniedException theAccessDeniedException) {
                 appLogger.warning(
-                    "atomicRenameB(..) retrying, "+theAccessDeniedException); 
+                    "atomicRenameB(..) failed attempt "+attemptsI
+                    +", retrying, "+theAccessDeniedException); 
               } catch (IOException theIOException) {
                 appLogger.exception(
                     "atomicRenameB(..) failed with ",theIOException); 
@@ -272,7 +275,8 @@ public class Misc
                 Config.errorRetryPause1000MsL
                 );
             } // while
-          appLogger.info("atomicRenameB(..) ends, successB="+successB);
+          appLogger.info("atomicRenameB(..) ends, successB="+successB
+              +" after "+attemptsI+" attempts.");
           return successB;
           }
 
