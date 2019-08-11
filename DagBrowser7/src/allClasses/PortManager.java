@@ -77,7 +77,9 @@ s     */
       Confingleton.putValueV(nameString, portI);
       return portI;
       }
-  
+
+  private int normalPortI= 0;
+
   public int getNormalPortI()
     /* This method returns a value to be used as this node's normal local port.
       First it tries reading a previously stored value.
@@ -94,29 +96,29 @@ s     */
       In these cases a new port might need to be generated. 
       */
     {  
-	  	  int NormalPortI= 0;
    	  toReturnValue: {
+        if (normalPortI != 0) break toReturnValue; // Exit if already defined.
   	 	toGenerateNewValue: {
 		    String localPortString= 
 		    		thePersistent.getDefaultingToBlankString("NormalPort");
 		    if ( localPortString.isEmpty() ) break toGenerateNewValue; 
 	      try { 
-	  	    NormalPortI= Integer.parseInt( localPortString );
+	  	    normalPortI= Integer.parseInt( localPortString );
 	      	}
 	      catch ( NumberFormatException theNumberFormatException ) {
 	        appLogger.error(
 	        		"getNormalPortI() corrupted port property="+localPortString);
 	      	break toGenerateNewValue;
 	      	}
-        appLogger.info("getNormalPortI() reusing port: "+NormalPortI);
+        appLogger.info("getNormalPortI() reusing port: "+normalPortI);
       	break toReturnValue;
 	  	} // toGenerateNewValue:
-	  	  NormalPortI= (int)(System.currentTimeMillis()) & 32767 | 32768;
+	  	  normalPortI= (int)(System.currentTimeMillis()) & 32767 | 32768;
         appLogger.info(
-        		"getNormalPortI() generated new random port: "+NormalPortI);
-    		thePersistent.putB("NormalPort", ""+NormalPortI); // Make it persist.
+        		"getNormalPortI() generated new random port: "+normalPortI);
+    		thePersistent.putB("normalPort", ""+normalPortI); // Make it persist.
 			} // toReturnValue:
-	  	  return NormalPortI;
+	  	  return normalPortI;
       }
 
   }

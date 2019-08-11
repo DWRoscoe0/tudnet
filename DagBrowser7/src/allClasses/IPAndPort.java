@@ -107,7 +107,7 @@ public class IPAndPort
         identifies the peer using theIPAndPort instead.
         */
 	    {
-    		appLogger.debug( "IPAndPort.addPeerInfoV() called for "+theIPAndPort );
+    		/// appLogger.debug( "IPAndPort.addPeerInfoV() called for "+theIPAndPort );
       	addPeerInfoV(
       			thePersistent, 
       			theIPAndPort.getIPString(),
@@ -123,8 +123,8 @@ public class IPAndPort
     	 	///org do without PersistentCursor?
 	      */
 	    {	
-    		appLogger.debug( "IPAndPort.addPeerInfoV(" 
-    				+ipString+", "+portString+") called." );
+    		/// appLogger.debug( "IPAndPort.addPeerInfoV(" 
+    		/// 		+ipString+", "+portString+") called." );
 
     		String peerKeyString= ipString+"-"+portString; // Calculate peer key.
 
