@@ -1,10 +1,10 @@
 package allClasses;
 
+import static allClasses.AppLog.LogLevel.WARN;
 import static allClasses.Globals.appLogger;  // For appLogger;
 
 import java.io.File;
 import java.util.Set;
-
 
 /* This file is the root of this application.  
   If you want to understand this application then
@@ -93,13 +93,15 @@ class Infogora  // The root of this app.
 				See the AppFactory for information about 
 				this app's high-level structure.
 	      
-	      At the end of this method, 
-	      this thread should be the only non-daemon running.
-	      When it returns, it should trigger a JVM shutdown,
+	      Exiting this method should cause process termination because
+	      all remaining threads should be either terminate-able daemon threads,
+	      or normal threads which will soon terminate themselves.
+	      When all threads terminate, it should trigger a JVM shutdown,
 	      unless a JVM shutdown was triggered already, and terminate the app.
-	      Unfortunately the app doesn't terminate, 
-	      so we call exit(0) to terminate.
-	      ///fix so exit() doesn't need to be called.
+	      Unfortunately the app doesn't also terminate, for unknown reasons, 
+	      so ///fix we use BackupTerminator to handle this possibility.
+
+	      ///fix so exit() in BackupTerminator doesn't need to be called.
 	        List all remaining active threads seems to show that
 	        the only non-daemon threads are Java or UI related,
 	        except possibly EventQueue-1 which might be or be related to
@@ -138,10 +140,9 @@ class Infogora  // The root of this app.
 	          new File(System.getProperty("user.home") ),Config.appString));
 	      // AppLog should now be able to do logging.
 	      appLogger.enableCloseLoggingV( false );
-	      /// appLogger.getAndEnableConsoleModeB(); ///dbg
-	      /// Config.clearLogFileB= true; ///dbg
 	      DefaultExceptionHandler.setDefaultExceptionHandlerV(); 
           // Preparing for exceptions before doing anything else.
+	      BackupTerminator theBackupTerminator= BackupTerminator.makeBackupTerminator();
 
         appLogger.info(true,
 	          "Infogora.main() beginning. ======== APP IS STARTING ========");
@@ -150,15 +151,112 @@ class Infogora  // The root of this app.
 	      AppFactory theAppFactory= new AppFactory(theCommandArgs);
 	      App theApp= theAppFactory.getApp();  // Getting App from factory.
 	      theApp.runV();  // Running the app until shutdown.
-	        // This might not return if a shutdown is initiated by the JVM. 
+	        // This might not return if a shutdown is initiated by the JVM!
 
         logThreadsV(); // Record threads that are still active.
 	      appLogger.info(true,
           "Infogora.main() ======== APP IS ENDING ========"
           + "\n    by closing log file and exiting the main(..) method.");
         appLogger.closeFileIfOpenB(); // Close log for exit.
-	      //// System.exit(0) is no longer needed.
+        theBackupTerminator.setTerminationUnderwayV(); // In case termination fails.
+        // while(true) ; // Use this to test BackupTerminator.
 	      } // main(..)
+
+	  
+	  private static class BackupTerminator extends Thread
+	  
+	    /* This class is used to force termination of the app
+	      if it doesn't terminate on its own after exiting main(..).
+
+	      Forced termination by this class happened successfully in 2 tests:
+	      * I temporarily inserted an infinite loop just before 
+	        the end of main(..).
+	      * When the standard folder app failed to terminate
+	        when starting a new TCPCopierStaging app.
+
+	        I examined the Thread list at the main(..) exit 
+	        and BackupTerminator exit.  The following are
+	        all the differences and all threads that were Normal (non-daemon).
+
+          ? AWT-EventQueue-1 is WAITING 6 Normal first and later.
+          * BackupTerminator is WAITING 5 Daemon first, 
+            RUNNABLE 5 Daemon later.
+          ? AWT-Shutdown is TIMED_WAITING 5 Normal first and later.
+          * main is RUNNABLE 5 Normal first, then missing.
+          * DestroyJavaVM is missing first, then RUNNABLE 5 Normal later.
+            Apparently this is what waits for other non-daemon threads
+            to terminate.
+            
+          Note the two AWT threads.  Research indicates that
+          continuing AWT activity (GUI, events, etc.) might be preventing
+          these non-daemon threads terminating.
+          All windows have been disposed, so something strange 
+          is happening.  ///fix  
+	      */
+	  
+  	  {
+  	    
+  	    boolean terminationUnderwayB=false; // This flag is used 
+  	      // to prevent spurious wake ups.
+  
+  	    public static BackupTerminator makeBackupTerminator()
+  	      // This method makes and returns a ready and running BackupTerminator.
+    	    {
+    	      BackupTerminator theBackupTerminator= new BackupTerminator();
+            theBackupTerminator.setName("BackupTerminator");
+            theBackupTerminator.setDaemon(true); // Don't prevent termination ourselves.
+            theBackupTerminator.start(); // Start its thread.
+    	      return theBackupTerminator;
+    	      }
+  	    
+  	    public synchronized void run() 
+    	    {
+    	      
+            while (true) { // Wait for signal that termination is underway.
+              if (terminationUnderwayB) break; // Done waiting.
+              waitV(0);
+              } // while(true)
+            
+    	      waitV(5000); // Try waiting another 5 seconds.
+    	      
+    	      // If we got this far, timer has expired, and termination probably failed.
+    	      
+            synchronized(appLogger) { // Log the following block as an indivisible block.
+              appLogger.logB( WARN, true, null,
+                  "run() ======== FORCING LATE APP TERMINATION ========");
+              appLogger.doStackTraceV(null);
+              logThreadsV(); // Record threads that are still active.
+              appLogger.debug("run() closing log file and executing System.exit(1)." );
+              appLogger.closeFileIfOpenB(); // Close log before exit.
+              }
+            System.exit(1); // Force process termination with an error code.
+    	      }
+    
+  	    private void waitV(int msI)
+  	      /* This helper method waits and handles any InterruptedException. 
+  	        Waits for msI milliseconds, or an interrupt, or a notification,
+  	        which ever happens first.
+  	        */
+  	      {
+            try {
+              wait(msI);
+              }
+            catch (InterruptedException e) {
+              appLogger.debug("BackupTerminator.waitV() wait(..), interrupted."); 
+              }
+  	      
+  	      }
+  	    
+          public synchronized void setTerminationUnderwayV() 
+            /* This method signals the thread that termination should
+              be imminent.  See run() for what happens next.
+               */
+          {
+            terminationUnderwayB= true;
+            notify(); // Unblock the thread.
+            }
+            
+  	    }
 
     private static void logThreadsV()
       /* Logs active threads, of which there should be very few,

@@ -515,7 +515,7 @@ public class AppLog extends EpiThread
           }
         }
     
-    private void doStackTraceV(Throwable theThrowable)
+    public void doStackTraceV(Throwable theThrowable)
       {
         if (theThrowable == null)
           theThrowable= new Throwable("created to display stack trace");
