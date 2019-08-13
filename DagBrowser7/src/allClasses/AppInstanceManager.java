@@ -819,7 +819,7 @@ l    * If the app receives a message indicating
 	
 	    private boolean trySwitchingToAppInStandardFolderB()
 	      /* If the running app file is not in the standard folder,
-	        but it appears identical to the one in the standard folder,
+	        but it appears identical to or older than the one in the standard folder,
 	        then this method requests that the standard folder file be run
 	        and returns true to indicate that this app should exit. 
 	        Otherwise it returns false to indicate this app should continue.
@@ -831,10 +831,11 @@ l    * If the app receives a message indicating
   	        if // This app is already in the standard folder.
   	          ( runningAppFile.equals( standardAppFile ) )
   	          break toExit;
-	          if // The date stamps are not equal.
-	            (runningAppFile.lastModified() != standardAppFile.lastModified())
+	          if // Running app is not The date stamps are not equal.
+              //// (runningAppFile.lastModified() != standardAppFile.lastModified())
+              (runningAppFile.lastModified() > standardAppFile.lastModified())
 	            break toExit;
-            appLogger.info("Will run identical app in standard folder.");
+            appLogger.info("Will run identical or newer app in standard folder.");
         	  appShouldExitB= 
         	    requestProcessStartAndShutdownTrueB( 
         	    		standardAppFile.getAbsolutePath() );
