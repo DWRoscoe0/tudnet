@@ -409,33 +409,6 @@ public class Persistent
 		  }
 
 
-	  /* //// Debug polling code.
-	  
-    //// private static Persistent pollerPersistent= null;
-    private static int oldSizeI= -1;
-    public static void debugPollerV()
-      /* This method is a debugging method for looking for 
-        particular Persistent state changes and log them.
-        */
-	  /* ////
-      {
-        if (pollerPersistent == null) return;
-        PersistentCursor thePersistentCursor= // Used for iteration. 
-            new PersistentCursor( pollerPersistent );
-        thePersistentCursor.setListV("peers"); // Point to peer list.
-        NavigableMap<String, PersistingNode> theNavigableMap= 
-            thePersistentCursor.getNavigableMap();
-        int newSizeI= theNavigableMap.size();
-        if (oldSizeI != newSizeI) {
-          appLogger.debug("Persistent.debugPollerV(), oldSizeI="+ oldSizeI + 
-              ", newSizeI=" + newSizeI + ", data follows:");
-          oldSizeI= newSizeI;
-          pollerPersistent.multilevelStoreNodeV(appLogger.getPrintWriter(),
-              "  Peers: ", thePersistentCursor.getEntryPersistingNode());
-          }
-        }
-    */ ////
-
 	  // Finalization methods not called by initialization or service sections.
 	  
 	  public void finalizeV()

@@ -251,16 +251,17 @@ public class ConnectionManager
         
       	appLogger.info(
       	    "ConnectionManager.Unica restartPreviousUnicastersV() begins.");
-	    	PersistentCursor thePersistentCursor= // Used for iteration. 
+	    	PersistentCursor peersPersistentCursor= // Used for iteration. 
 	    			new PersistentCursor( thePersistent );
-	    	thePersistentCursor.setListV("peers"); // Point to peer list.
+	    	//// thePersistentCursor.setListV("peers"); // Point to peer list.
+	    	Peer.setToPeersV(peersPersistentCursor);
 			  while // Process all peers in peer list. 
-			  	( ! thePersistentCursor.getEntryKeyString().isEmpty() ) 
+			  	( ! peersPersistentCursor.getEntryKeyString().isEmpty() ) 
 			  	{ // Process one peer in peer list.
 		    		String peerIPString= 
-								thePersistentCursor.getFieldString("IP");
+								peersPersistentCursor.getFieldString("IP");
 						String peerPortString= 
-								thePersistentCursor.getFieldString("Port");
+								peersPersistentCursor.getFieldString("Port");
 				  	/// appLogger.info( 
   					/// 		"ConnectionManager.restartPreviousUnicastersV(), Unicastger at "
   					/// 	+ "IP=" + peerIPString + ", port=" + peerPortString );
@@ -269,7 +270,7 @@ public class ConnectionManager
 				    		peerIPString, peerPortString ); // Restore peer with Unicaster.
             theUnicaster.setForReconnectV(true); // Inject connection action.
 					  theUnicasterManager.startV(theUnicaster); // Start its thread.
-					  thePersistentCursor.nextKeyString(); // Advance cursor.
+					  peersPersistentCursor.nextKeyString(); // Advance cursor.
 					  }
       	// appLogger.debug(
 			  // 		"ConnectionManager.Unica restartPreviousUnicastersV() ends.");

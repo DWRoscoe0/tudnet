@@ -130,7 +130,9 @@ public class IPAndPort
 
     		PersistentCursor thePersistentCursor= new PersistentCursor(
     				thePersistent);
- 				thePersistentCursor.setListAndEntryV( "peers", peerKeyString );
+ 				//// thePersistentCursor.setListAndEntryV( "peers", peerKeyString );
+    		Peer.setToPeersV(thePersistentCursor); // First define list. 
+        thePersistentCursor.setEntryKeyV( peerKeyString ); // Next define position in list.
 
     	  // Store or update the fields.
  				thePersistentCursor.putFieldV( "IP", ipString );

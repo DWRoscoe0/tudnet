@@ -1,5 +1,6 @@
 package allClasses;
 
+import java.math.BigInteger;
 import java.util.Random;
 
 import static allClasses.Globals.appLogger;
@@ -42,7 +43,7 @@ public class App { // The App, especially pre-GUI stuff.
       // App initialization.
   		appLogger.info("App.run() begins.");
   		thePersistent.initializeV();  // Prepare access to persistent data.
-  	  defineNodeIdentityV();
+  	  definePeerIdentityV();
 			theShutdowner.initializeV();
 
 			theAppInstanceManager.initializeV();
@@ -64,23 +65,22 @@ public class App { // The App, especially pre-GUI stuff.
       } // runV().
 
 
-  private void defineNodeIdentityV()
+  private void definePeerIdentityV()
     /* This method creates a node identity number for this peer
       if it does not already exist.
+      Though the id is 256 bits long, it does not have that much entropy.
+      ///fix This is temporary.  This code will eventually be replaced.
      	*/
 	  {
 	    String nodeIdentyString= 
-	    		thePersistent.getDefaultingToBlankString("NodeIdentity");
+	    		thePersistent.getDefaultingToBlankString("PeerIdentity");
 	    if ( ! nodeIdentyString.isEmpty() ) {
 	    	  ; // Do nothing because identity is already defined.
 	    	} else { // Define and store identity.
 	    		Random theRandom= new Random();  // Construct random # generator.
-	    		theRandom.setSeed( System.currentTimeMillis() ); // Seed with time.
-	    		int skipCountI= 8 + theRandom.nextInt(8);
-	    		while ( --skipCountI >= 0 ) // Randomly skip 8 to 16 generated values. 
-	    			theRandom.nextInt();
-	    		int identityI= theRandom.nextInt();
-	    		thePersistent.putB("NodeIdentity", ""+identityI);
+          theRandom.setSeed( System.currentTimeMillis() ); // Seed with time.
+	    		BigInteger identityBigInteger= new BigInteger(256, theRandom);
+	    		thePersistent.putB("PeerIdentity", ""+identityBigInteger);
 	    	}
 	  	}
 

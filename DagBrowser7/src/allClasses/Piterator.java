@@ -11,8 +11,13 @@ public class Piterator<E>
     In a Piterator, the pointer is considered to be on an elements.
     In an Iterator, the pointer is considered to be between elements.
 
-    Piterator adapts the functionality of a regular Java Iterator 
+    This Piterator adapts the functionality of a regular Java Iterator 
     to creates its own functionality.
+    
+    ///org This should probably be divided into 2 modules:
+     * interface Piterator<E>
+     * class IteratorPiterator<E> implements Piterator<E> or
+       class IterPiterator<E> implements Piterator<E>
     */
 
   { // class Piterator<E>

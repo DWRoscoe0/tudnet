@@ -89,7 +89,7 @@ public class TCPCopier extends EpiThread
 			  communicate at the same time.
 			*/
 
-    PersistentCursor thePersistentCursor= null;
+    PersistentCursor peersPersistentCursor= null;
 
     // Random number generator.
 		private static Random theRandom= new Random();
@@ -144,8 +144,9 @@ public class TCPCopier extends EpiThread
       EpiThread.interruptibleSleepB(Config.tcpCopierRunDelayMsL);
       appLogger.info("run() start delay done.");
 
-      thePersistentCursor= new PersistentCursor( thePersistent );
-      thePersistentCursor.setListV("peers");
+      peersPersistentCursor= new PersistentCursor( thePersistent );
+      //// thePersistentCursor.setListV("peers");
+      Peer.setToPeersV(peersPersistentCursor);
       loopAlternatingRolesV();
       appLogger.info("run() ends.");
       }
@@ -278,16 +279,16 @@ public class TCPCopier extends EpiThread
       {
           boolean successB= false;
         toReturn: {
-          if ( thePersistentCursor.getEntryKeyString().isEmpty() )
+          if ( peersPersistentCursor.getEntryKeyString().isEmpty() )
             break toReturn; // Do nothing because peer list is empty.
-          String serverIPString= thePersistentCursor.getFieldString("IP");
-          String serverPortString= thePersistentCursor.getFieldString("Port");
+          String serverIPString= peersPersistentCursor.getFieldString("IP");
+          String serverPortString= peersPersistentCursor.getFieldString("Port");
           long resultL= 
               tryExchangingFilesWithServerL(serverIPString,serverPortString);
           if (resultL == 0) break toReturn; // No file data was transfered.
           successB= true; // Everything worked.
         } // toReturn:
-          thePersistentCursor.nextWithWrapKeyString(); // Advance cursor.
+          peersPersistentCursor.nextWithWrapKeyString(); // Advance cursor.
           /// appLogger.info(
           ///   "tryExchangeWithServerFromPersisentDataB() successB="+successB);
           return successB;

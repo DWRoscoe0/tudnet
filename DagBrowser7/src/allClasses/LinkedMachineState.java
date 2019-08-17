@@ -471,14 +471,14 @@ public class LinkedMachineState
   	    This method returns true if HELLO is received and processed, 
   	    false otherwise.
   	    
-  	    ///pos This method could also select a leader based on NodeIdentity
-  	    instead of IP address.  Presently NodeIdentity is read but discarded.
+  	    ///pos This method could also select a leader based on PeerIdentity
+  	    instead of IP address.  Presently PeerIdentity is read but discarded.
   	    */
 	  	{
   		  boolean gotKeyB= subStateList.tryInputB("HELLO");
   		  if (gotKeyB) { // Decoding argument if input is "HELLO".
 					String localIpString= theNetcasterInputStream.readAString();
-					theNetcasterInputStream.readAString(); // Discard NodeIdentity. 
+					theNetcasterInputStream.readAString(); // Discard PeerIdentity. 
 					String remoteIpString= 
 							theUnicaster.getKeyK().getInetAddress().getHostAddress();
 					theUnicaster.leadingDefaultBooleanLike.setValueB( // Decide who leads.
@@ -508,7 +508,7 @@ public class LinkedMachineState
 						theUnicaster.getKeyK().getInetAddress().getHostAddress() 
 						);  // Writing IP address of remote peer.
 		    theNetcasterOutputStream.writingTerminatedStringV( 
-						thePersistent.getDefaultingToBlankString("NodeIdentity")); 
+						thePersistent.getDefaultingToBlankString("PeerIdentity")); 
 		    theNetcasterOutputStream.sendingPacketV(); // Forcing send.
 	  		}
 
