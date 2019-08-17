@@ -89,7 +89,8 @@ public class TCPCopier extends EpiThread
 			  communicate at the same time.
 			*/
 
-    PersistentCursor peersPersistentCursor= null;
+    //// PersistentCursor peersPersistentCursor= null;
+    PeersCursor thePeersCursor= null;
 
     // Random number generator.
 		private static Random theRandom= new Random();
@@ -144,9 +145,13 @@ public class TCPCopier extends EpiThread
       EpiThread.interruptibleSleepB(Config.tcpCopierRunDelayMsL);
       appLogger.info("run() start delay done.");
 
-      peersPersistentCursor= new PersistentCursor( thePersistent );
+      //// peersPersistentCursor= new PersistentCursor( thePersistent );
+      //// PeersCursor thePeersCursor= // Used for iteration.
+      thePeersCursor=
+          //// new PersistentCursor( thePersistent );
+          PeersCursor.makePeersCursor( thePersistent );
       //// thePersistentCursor.setListV("peers");
-      Peer.setToPeersV(peersPersistentCursor);
+      //// PeersCursor.setToPeersV(peersPersistentCursor);
       loopAlternatingRolesV();
       appLogger.info("run() ends.");
       }
@@ -279,16 +284,16 @@ public class TCPCopier extends EpiThread
       {
           boolean successB= false;
         toReturn: {
-          if ( peersPersistentCursor.getEntryKeyString().isEmpty() )
+          if ( thePeersCursor.getEntryKeyString().isEmpty() )
             break toReturn; // Do nothing because peer list is empty.
-          String serverIPString= peersPersistentCursor.getFieldString("IP");
-          String serverPortString= peersPersistentCursor.getFieldString("Port");
+          String serverIPString= thePeersCursor.getFieldString("IP");
+          String serverPortString= thePeersCursor.getFieldString("Port");
           long resultL= 
               tryExchangingFilesWithServerL(serverIPString,serverPortString);
           if (resultL == 0) break toReturn; // No file data was transfered.
           successB= true; // Everything worked.
         } // toReturn:
-          peersPersistentCursor.nextWithWrapKeyString(); // Advance cursor.
+          thePeersCursor.nextWithWrapKeyString(); // Advance cursor.
           /// appLogger.info(
           ///   "tryExchangeWithServerFromPersisentDataB() successB="+successB);
           return successB;
@@ -340,7 +345,8 @@ public class TCPCopier extends EpiThread
             long clientFileLastModifiedL= clientFile.lastModified();
             resultL= tryTransferingFileL(
               clientSocket, clientFile, clientFile, clientFileLastModifiedL );
-            addPeerInfoV( serverIPString, serverPortString);
+            //// addPeerInfoV( serverIPString, serverPortString);
+            PeersCursor.addPeerInfoV(thePersistent, serverIPString, serverPortString);
             if (resultL != 0)
               appLogger.info( 
                   "tryExchangingFilesWithServerL() copied using"
@@ -453,17 +459,19 @@ public class TCPCopier extends EpiThread
               +serverSocket);
         }
 
-    
+    /*  ////
     public void addPeerInfoV(String ipString, String portString)
       /* Adds to the Persistent peer list the peer whose IP and port 
         are ipString and portString respectively.
         This should only be called when a TCP connection
         has actually been made.
         */
+    /*  ////
       { 
         /// appLogger.debug( "TCPCopier..addPeerInfoV() called." );
-        IPAndPort.addPeerInfoV(thePersistent, ipString, portString);
+        PeersCursor.addPeerInfoV(thePersistent, ipString, portString);
         } 
+    */  ////
 
     public synchronized void queuePeerConnectionV( 
         IPAndPort remoteIPAndPort )

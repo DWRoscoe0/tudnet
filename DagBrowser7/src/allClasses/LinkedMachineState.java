@@ -336,7 +336,7 @@ public class LinkedMachineState
 		  	  {
 	    			IPAndPort remoteIPAndPort= theUnicaster.getKeyK();
 		    		theTCPCopier.queuePeerConnectionV(remoteIPAndPort);
-		    		IPAndPort.addPeerInfoV(thePersistent, remoteIPAndPort);
+		    		PeersCursor.addPeerInfoV(thePersistent, remoteIPAndPort);
 		  	  	super.onEntryV();
 		  	  	}
 
