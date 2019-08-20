@@ -104,18 +104,17 @@ public class PersistingNode {
 	    If there is no such child, one is created containing
 	    * no valueString, and
 	    * a NavigableMap containing no children.
-	    This method is used for recursion in a PersistingNode structure.
 	   */
 		{
 	    if ( keyString == null || keyString.isEmpty())
 	      appLogger.error("getOrMakePersistingNode() Missing keyString.");
 
 			PersistingNode childPersistingNode= getPersistingNode(keyString);
-			if (childPersistingNode == null) // No value exists for the key.
+			if (childPersistingNode == null) // No child PersistingNode exists for the key.
 				{ // Create an empty child node and store in map.
 					childPersistingNode= new PersistingNode(keyString);
 					  // Initial value is the node's associated key.
-					  // This is to help make debugging easier.
+					  // This isn't needed but helps make debugging easier.
 					childrenNavigableMap.put(keyString,childPersistingNode);
 					}
 			return childPersistingNode;

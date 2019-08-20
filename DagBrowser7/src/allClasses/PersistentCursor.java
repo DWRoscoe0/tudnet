@@ -1,19 +1,17 @@
 package allClasses;
 
-import java.util.NavigableMap;
-
 // import static allClasses.Globals.appLogger;
 
 public class PersistentCursor 
 
-  /* This class acts like a cursor into a Persistent data structure.
+  /* This class acts like a cursor into a PersistentNode hierarchy.
     It provides a means for
-    * iterating through parts of a list of similar named items
+    * iterating through parts of the list of similar named items
       represented by a NavigableMap.
-    * accessing the named parts (fields) within the list elements.
+    * accessing the named fields within the individually selected list elements.
 
-    It combines the ability to use paths,
-    with fast local access relative to an existing PersistingNode. 
+    It combines the ability to use paths to name positions within the hierarchy,
+    with fast local access relative to a selected PersistingNode. 
 
     The iterator this class implements is a pitererator,
     which is an iterator with pointer semantics.
@@ -49,10 +47,13 @@ public class PersistentCursor
 		  // PersistingNode which contains the NavigableMap which
 		  // represents the list of interest.
     private String entryKeyString; // Key name String of 
-      // presently selected NavigableMap entry, 
-      // or null if no entry is selected. 
-		private PersistingNode entryPersistingNode; // Cached value 
-		  // PersistingNode in presently selected NavigableMap entry. 
+      // presently selected NavigableMap list entry, 
+      // or null if no entry is selected.
+      // The positions before the beginning of the list and  after the end of the list
+      // are considered equivalent and are represented by the EMPTY_STRING.
+      
+		private PersistingNode entryPersistingNode; // Cached value of the PersistingNode 
+		  // in the presently selected NavigableMap list entry. 
 
 
 		public PersistentCursor( Persistent thePersistent ) // constructor
@@ -63,63 +64,49 @@ public class PersistentCursor
 
 		// Service code.
 
-    public void setListAndEntryV(  
-        String listPathString, String entryKeyString )
-      {
-        // appLogger.debug(
-        // "PersistentCursor.setListAndEntryV("
-        //    +listPathString+", "+entryKeyString+") begins.");
-        setListV( listPathString ); // First define list. 
-        
-        setEntryKeyV( entryKeyString ); // Next define position in list.
-        }
-
-    public NavigableMap<String, PersistingNode> getNavigableMap()
-      {
-        NavigableMap<String, PersistingNode> theNavigableMap= entriesPersistingNode.getNavigableMap();
-        return theNavigableMap;
-      }
-
-		public void setListV( String listPathString )
-		  /* This method sets the list to be scanned.  It does this in 2 ways:
+		public String setListFirstKeyString( String listPathString )
+		  /* This method sets the list to be scanned for 
+		    scanning from the beginning in the forward direction.  
+		    It does this in 2 ways:
 		   	* by adding the ListNameString to the base path,
 			    which is presently always the empty string for the root; and
 			  * by getting ready the interface NavigableMap<K,V>
 			    which holds the list of entries.
 			  It also initializes other variables used to scan the list,
-			  a scan starting with the first element, if there is one. 
+			  a scan starting with the first element, if there is one.
+        It returns the key of the first list entry,
+        or the empty string if the list is empty.
+			  ///org Call general method that can handle absolute or relative path. 
 		   	*/
 			{
 				// appLogger.debug(
 				// 		"PersistentCursor.setListPathV("+listPathString+") begins.");
 	  		entriesPersistingNode= 
-	  				thePersistent.getOrMakePersistingNode(
-	  						listPathString); /// + Config.pathSeperatorC + "entries");
-	  		moveToFirstV();
+	  				thePersistent.getOrMakePersistingNode(listPathString);
+	  		return moveToFirstKeyString();
 				}
 
-		private void moveToFirstV()
-		  /* This method prepares for iterating over the list 
-		    by moving to the beginning.
-		    Presently it just stores a path String.
-		    Later it will reset the PersistingNode TreeMap node-based iterator.
-		   */
+		private String moveToFirstKeyString()
+		  /* This method prepares for iterating over the list from the beginning.
+        It returns the key of the first list entry,
+        or the empty string if the list is empty.
+		    */
 			{
 				// appLogger.debug(
 				// 		"PersistentCursor.moveToFirstV() begins.");
 	  		entryKeyString= EMPTY_STRING; // Set to before first entry.
-	  		nextKeyString(); // Move to first entry unless list is empty.
+	  		return nextKeyString(); // Move to first entry unless list is empty.
 	  		}
 
 		public String nextWithWrapKeyString()
 		  /* This does the same as nextKeyString() but
-		    tries to wrap around to beginning of list if at the end, 
+		    tries to wrap around to beginning of list if the end is reached, 
 		    so it returns the empty string only if the list is empty.
 	      */
 			{
 				String keyString=  // Try moving to next and getting element key.
 						nextKeyString();
-				if ( keyString.isEmpty() ) // If now at end of list then
+				if ( keyString.isEmpty() ) // If now past end of list then
 					keyString= nextKeyString(); // try moving one more time to beginning.
 				// appLogger.debug(
 				// 	"PersistentCursor.nextWithWrapElementIDString(..) returning:"+keyString);
@@ -127,9 +114,10 @@ public class PersistentCursor
 				}
 
 		public String nextKeyString()
-		  /* Advances the piterator and returns the key of the next list entry.
+		  /* Advances the piterator and returns the key of the new list entry.
 		    If the result is the empty string then the piterator is positioned
-		    on no element.
+		    on no element.  Either the position moved past the end of the list,
+		    or the list is empty.
 		   	*/
 			{
 		    String nextEntryKeyString= // Get next position key.
@@ -141,24 +129,28 @@ public class PersistentCursor
 				}
 
 		public void setEntryKeyV( String entryKeyString )
-		  /* Set the key of the present list element/entry
+		  /* Set the key of the present list element/entry to be entryKeyString
 		    and sets the position to that key.
-		    It gets the PersistentNode associated with that key
+		    It also caches the PersistentNode associated with that key
 		    in preparation for accessing the nodes fields.
+		    If entryKeyString is not null and no associated node exists
+		    then an empty one will be created.
 				*/
 			{
 				// appLogger.debug(
 				// 		"PersistentCursor.setEntryKeyV( "+entryKeyString+" )" );
-				this.entryKeyString= entryKeyString; // Store position key.
-        if (! entryKeyString.isEmpty()) // If there is a node there
-  				this.entryPersistingNode= // cache node at that position. 
+				this.entryKeyString= entryKeyString; // Store the position key.
+        if (! entryKeyString.isEmpty()) // If there is supposed to be a node there
+  				this.entryPersistingNode= // cache the node at that position. 
   						entriesPersistingNode.getOrMakePersistingNode(entryKeyString);
 				}
 
 		public String getEntryKeyString()
-		  /* Returns the key of the present list element/entry.
-				Returns the empty String if the piterator is positioned
-				at the end of the list, or if the list is empty
+		  /* This method returns the key of the presently selected list element/entry.
+				It returns the empty String if the piterator is 
+				not positioned on an element, which can be true either
+				after the end of the list or before the beginning of the list
+				or if the list is empty
 				*/
 			{
 				// appLogger.debug(
@@ -167,32 +159,28 @@ public class PersistentCursor
 				}
 
     public PersistingNode getEntryPersistingNode()
-      /* Returns PersistingNode associated with the list. */
+      /* This method returns the parent PersistingNode,
+        the one associated with the list,
+        not the one associated with the presently selected list element.
+        */
       {
         return entriesPersistingNode;
         }
 		
 		public String getFieldString( String fieldKeyString )
-		  /* Returns the value of the field whose key is fieldKeyString
-		    in the present list element.
-		    Though the fields within a list element 
-		    are of the same type of structure as the elements within a list,
-		    we make no attempt to iterate over them.
+		  /* This method returns the value of the field whose key is fieldKeyString
+		    in the present list element's PersistingNode.
 		    */
-			{ 
-				String fieldValueString= 
-						entryPersistingNode.getString(fieldKeyString);
+			{
+				String fieldValueString= entryPersistingNode.getString(fieldKeyString);
 				// appLogger.debug( "PersistentCursor.getFieldString( "
 				// 		+fieldKeyString+" ) returning:"+fieldValueString);
 				return fieldValueString;
 				}
 		
 		public void putFieldV( String fieldKeyString, String fieldValueString )
-		  /* StoresReturns the value of the field whose name is fieldNameString
-		    in the present list element.
-		    Though the fields within a list element 
-		    are of the same type of structure as the elements within a list,
-		    we make no attempt to iterate over them.
+		  /* This method stores fieldValueString into the field whose name is fieldKeyString
+		    in the presently selected list element's PersistingNode.
 		    */
 			{ 
 				entryPersistingNode.putV( fieldKeyString, fieldValueString );

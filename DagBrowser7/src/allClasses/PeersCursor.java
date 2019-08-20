@@ -15,7 +15,7 @@ public class PeersCursor extends PersistentCursor {
   public static PeersCursor makePeersCursor( Persistent thePersistent )
     { 
       PeersCursor thePeersCursor= new PeersCursor(thePersistent);
-      thePeersCursor.setListV("peers"); // Point cursor to peer list.
+      thePeersCursor.setListFirstKeyString("peers"); // Point cursor to peer list.
       return thePeersCursor;
       }
 
@@ -26,8 +26,8 @@ public class PeersCursor extends PersistentCursor {
 
   public PeersCursor addInfoUsingPeersCursor(
       IPAndPort theIPAndPort, String thePeerIdentityString)
-    /* Add the provided information to the current peer.  
-      If there is none, create one.
+    /* This method adds the provided information to the current peer.  
+      If there is none, create one based on that information.
       */
     { 
       String ipString= theIPAndPort.getIPString();
