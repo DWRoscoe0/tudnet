@@ -89,7 +89,6 @@ public class TCPCopier extends EpiThread
 			  communicate at the same time.
 			*/
 
-    //// PersistentCursor peersPersistentCursor= null;
     PeersCursor thePeersCursor= null;
 
     // Random number generator.
@@ -145,13 +144,8 @@ public class TCPCopier extends EpiThread
       EpiThread.interruptibleSleepB(Config.tcpCopierRunDelayMsL);
       appLogger.info("run() start delay done.");
 
-      //// peersPersistentCursor= new PersistentCursor( thePersistent );
-      //// PeersCursor thePeersCursor= // Used for iteration.
       thePeersCursor=
-          //// new PersistentCursor( thePersistent );
           PeersCursor.makePeersCursor( thePersistent );
-      //// thePersistentCursor.setListV("peers");
-      //// PeersCursor.setToPeersV(peersPersistentCursor);
       loopAlternatingRolesV();
       appLogger.info("run() ends.");
       }
@@ -345,8 +339,10 @@ public class TCPCopier extends EpiThread
             long clientFileLastModifiedL= clientFile.lastModified();
             resultL= tryTransferingFileL(
               clientSocket, clientFile, clientFile, clientFileLastModifiedL );
-            //// addPeerInfoV( serverIPString, serverPortString);
-            PeersCursor.addPeerInfoV(thePersistent, serverIPString, serverPortString);
+            
+            PeersCursor.makePeersCursor(thePersistent).
+              addInfoUsingPeersCursor(
+                  new IPAndPort(serverIPString, serverPortString),null);
             if (resultL != 0)
               appLogger.info( 
                   "tryExchangingFilesWithServerL() copied using"
@@ -395,7 +391,7 @@ public class TCPCopier extends EpiThread
         /// appLogger.info("actAsAServerV() ends.");
         }
 
-    private boolean tryServicingOneRequestFromAnyClientB(int maximumWaitMsI) ////
+    private boolean tryServicingOneRequestFromAnyClientB(int maximumWaitMsI)
       /* This method waits for a maximum of maximumWaitMsI for
         a request from a client, and processes that request. 
         This might result in a file being sent to the client,
@@ -458,20 +454,6 @@ public class TCPCopier extends EpiThread
           appLogger.info( "processServerConnectionV() copied using " 
               +serverSocket);
         }
-
-    /*  ////
-    public void addPeerInfoV(String ipString, String portString)
-      /* Adds to the Persistent peer list the peer whose IP and port 
-        are ipString and portString respectively.
-        This should only be called when a TCP connection
-        has actually been made.
-        */
-    /*  ////
-      { 
-        /// appLogger.debug( "TCPCopier..addPeerInfoV() called." );
-        PeersCursor.addPeerInfoV(thePersistent, ipString, portString);
-        } 
-    */  ////
 
     public synchronized void queuePeerConnectionV( 
         IPAndPort remoteIPAndPort )
@@ -567,7 +549,6 @@ public class TCPCopier extends EpiThread
 						appLogger.info("sendNewerLocalFileV() sending file "
 								+ Misc.fileDataString(localFile));
 						localFileInputStream= new FileInputStream(localFile);
-						//// TCPCopier.copyStreamBytesB( 
 						Misc.copyStreamBytesB(
 								localFileInputStream, socketOutputStream);
 					} finally {

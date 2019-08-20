@@ -1,55 +1,48 @@
 package allClasses;
 
 public class PeersCursor extends PersistentCursor {
+  
+  /* This class is a piterator for peer data in the Persistent data structure.
 
-  public PeersCursor( Persistent thePersistent ) // constructor
-  {
-    super( thePersistent ); 
-    }
+    Each type of data should have its own distinguishing type.
+      Presently they are:
+      * Persistent: the data structure
+      * IPAndPort: 2 fields: IP address and port #
+      * String: PeerIdentity ///org makes its own type?
+
+   */
 
   public static PeersCursor makePeersCursor( Persistent thePersistent )
     { 
       PeersCursor thePeersCursor= new PeersCursor(thePersistent);
-      //// PeersCursor.setToPeersV(thePeersCursor); 
       thePeersCursor.setListV("peers"); // Point cursor to peer list.
       return thePeersCursor;
       }
 
-  public static void addPeerInfoV(
-      Persistent thePersistent, IPAndPort theIPAndPort)
-    /* This is like addPeerInfoV(Persistent, ipString, portString) but
-      identifies the peer using theIPAndPort instead.
-      */
-    {
-      /// appLogger.debug( "IPAndPort.addPeerInfoV() called for "+theIPAndPort );
-      addPeerInfoV(
-          thePersistent, 
-          theIPAndPort.getIPString(),
-          String.valueOf(theIPAndPort.getPortI())
-          );
-      }
+  private PeersCursor( Persistent thePersistent ) // constructor
+  {
+    super( thePersistent ); 
+    }
 
-  public static void addPeerInfoV(
-      Persistent thePersistent, String ipString, String portString)
-    /* Add to thePersistent data the peer identified by 
-      ipString and portString.
-      
-      ///org do without PersistentCursor?
+  public PeersCursor addInfoUsingPeersCursor(
+      IPAndPort theIPAndPort, String thePeerIdentityString)
+    /* Add the provided information to the current peer.  
+      If there is none, create one.
       */
     { 
-      /// appLogger.debug( "IPAndPort.addPeerInfoV(" 
-      ///     +ipString+", "+portString+") called." );
-
+      String ipString= theIPAndPort.getIPString();
+      String portString= String.valueOf(theIPAndPort.getPortI());
+      
       String peerKeyString= ipString+"-"+portString; // Calculate peer key.
-
-      PersistentCursor thePersistentCursor= new PersistentCursor(
-          thePersistent);
-      //// thePersistentCursor.setListAndEntryV( "peers", peerKeyString );
-      thePersistentCursor.setEntryKeyV( peerKeyString ); // Next define position in list.
+      setEntryKeyV( peerKeyString ); // Next define position in peer list.
 
       // Store or update the fields.
-      thePersistentCursor.putFieldV( "IP", ipString );
-      thePersistentCursor.putFieldV( "Port", portString );
-      } 
+      putFieldV( "IP", ipString );
+      putFieldV( "Port", portString );
+      if (thePeerIdentityString!=null)
+        putFieldV( "PeerIdentity", thePeerIdentityString );
 
+      return this;
+      } 
+  
   }

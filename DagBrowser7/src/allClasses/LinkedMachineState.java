@@ -34,6 +34,9 @@ public class LinkedMachineState
 		private Unicaster theUnicaster;
 		private Persistent thePersistent; 
 
+		// Other variables.
+		private String thePeerIdentityString= null;
+		
 		// Sub-state-machine instances.
     private InitiatingConnectState theInitiatingConnectState;
     private CompletingConnectState theCompletingConnectState;
@@ -336,7 +339,8 @@ public class LinkedMachineState
 		  	  {
 	    			IPAndPort remoteIPAndPort= theUnicaster.getKeyK();
 		    		theTCPCopier.queuePeerConnectionV(remoteIPAndPort);
-		    		PeersCursor.addPeerInfoV(thePersistent, remoteIPAndPort);
+		    		PeersCursor.makePeersCursor(thePersistent).
+		    		  addInfoUsingPeersCursor(remoteIPAndPort, thePeerIdentityString);
 		  	  	super.onEntryV();
 		  	  	}
 
@@ -478,7 +482,7 @@ public class LinkedMachineState
   		  boolean gotKeyB= subStateList.tryInputB("HELLO");
   		  if (gotKeyB) { // Decoding argument if input is "HELLO".
 					String localIpString= theNetcasterInputStream.readAString();
-					theNetcasterInputStream.readAString(); // Discard PeerIdentity. 
+					thePeerIdentityString= theNetcasterInputStream.readAString(); 
 					String remoteIpString= 
 							theUnicaster.getKeyK().getInetAddress().getHostAddress();
 					theUnicaster.leadingDefaultBooleanLike.setValueB( // Decide who leads.

@@ -103,9 +103,9 @@ public class IPAndPort
 		
 
     public String getIPString()
-      /* This method returns only the numeric portion of
-        the IP address part, without any hostname or separating slash.
-       */
+      /* This method returns only the trailing IP address part of the InetAddress, 
+        without the leading hostname or the separating slash.
+        */
       {
         String rawString= netcasterInetAddress.toString();
         int slashOffsetI= rawString.lastIndexOf('/');
