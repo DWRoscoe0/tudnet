@@ -145,7 +145,7 @@ public class TCPCopier extends EpiThread
       appLogger.info("run() start delay done.");
 
       thePeersCursor=
-          PeersCursor.makePeersCursor( thePersistent );
+          PeersCursor.makeOnFirstEntryPeersCursor( thePersistent );
       loopAlternatingRolesV();
       appLogger.info("run() ends.");
       }
@@ -340,7 +340,7 @@ public class TCPCopier extends EpiThread
             resultL= tryTransferingFileL(
               clientSocket, clientFile, clientFile, clientFileLastModifiedL );
             
-            PeersCursor.makePeersCursor(thePersistent).
+            PeersCursor.makeOnFirstEntryPeersCursor(thePersistent).
               addInfoUsingPeersCursor(
                   new IPAndPort(serverIPString, serverPortString),null);
             if (resultL != 0)

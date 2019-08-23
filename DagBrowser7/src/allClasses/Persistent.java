@@ -59,7 +59,6 @@ public class Persistent
 	      */
 	    {
 	  	  loadDataV( theFileString );
-	      //// pollerPersistent= this;
 	  	  }
 	  
 	  private void loadDataV( String fileString )
@@ -205,7 +204,7 @@ public class Persistent
 			    		pathString.indexOf(Config.pathSeperatorC, 0);
 			    if (offsetOfSeparatorI < 0) // There is no path separator in key.
 				    { // Store value in this node's child for this key, return success.
-				    	thePersistingNode.putV(pathString, valueString);
+				    	thePersistingNode.putChildV(pathString, valueString);
 					    break toReturn;
 				    	}
 			    if (offsetOfSeparatorI < 1) // Separator is at beginning of key.
@@ -215,7 +214,7 @@ public class Persistent
 				    break toFail; // Key tail would be empty.
 			    String keyTailString= pathString.substring(offsetOfSeparatorI+1);
 	    		PersistingNode childPersistingNode= // Get or make appropriate child. 
-		    			thePersistingNode.getOrMakePersistingNode(keyHeadString);
+		    			thePersistingNode.getOrMakeChildPersistingNode(keyHeadString);
 	    		resultB= // Recurse using tail of key as new key.
 	    				putB(
 	    						childPersistingNode,keyTailString,valueString);
@@ -266,7 +265,7 @@ public class Persistent
 		  	  if (valuePersistingNode == null) // If there is no node with this path
 		  	  	break goReturn; // return with default null String.
 		  	  resultValueString= // Get possibly null string value from this node. 
-		  	  		valuePersistingNode.getString();
+		  	  		valuePersistingNode.getValueString();
 		  	} // goReturn:
 	  			return resultValueString;
 		  }
@@ -322,14 +321,14 @@ public class Persistent
 			    	  		pathString.substring(scanKeyOffsetI, pathString.length());
 			    	  if (keyString.isEmpty()) break goLogError;
 			    	  resultPersistingNode= // Get or make associated child node.
-			    	  	resultPersistingNode.getOrMakePersistingNode(keyString);
+			    	  	resultPersistingNode.getOrMakeChildPersistingNode(keyString);
 				  	  break goReturn; // Return with the non-null value.
 			    		}
 			    String keyString= // Extract next key from path up to separator.
 	    	  		pathString.substring(scanKeyOffsetI, separatorKeyOffsetI);
 	    	  if (keyString.isEmpty()) break goLogError;
 	    	  resultPersistingNode= // Get or make associated/next child node.
-		    	  	resultPersistingNode.getOrMakePersistingNode(keyString);
+		    	  	resultPersistingNode.getOrMakeChildPersistingNode(keyString);
 		  	  scanKeyOffsetI= separatorKeyOffsetI+1; // Compute next key offset.
 			  } // while (true)... Loop to select or make next descendant node.
 		  } // goLogError:
@@ -460,7 +459,7 @@ public class Persistent
 	     */
 		  {
 		  	{ // Store this node's value, if present.
-		  	  String valueString= thePersistingNode.getString();
+		  	  String valueString= thePersistingNode.getValueString();
 		  	  if (valueString==null) valueString= "";
 		  	  if (! prefixString.isEmpty())
 		  	  	writingLineV(thePrintWriter, prefixString + "=" + valueString);

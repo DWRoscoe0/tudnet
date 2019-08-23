@@ -57,7 +57,7 @@ public class PersistingNode {
 					new TreeMap<String,PersistingNode>();
 			}
 
-  public void putV(String keyString, String valueString)
+  public void putChildV(String keyString, String valueString)
 	  /* This method stores the value valueString into
 	    the child associated with the key keyString.
 		  It overwrites any value already stored.
@@ -65,7 +65,7 @@ public class PersistingNode {
 		 	*/
 		{
 			PersistingNode childPersistingNode= 
-	  			getOrMakePersistingNode(keyString);
+	  			getOrMakeChildPersistingNode(keyString);
 			childPersistingNode.putV(valueString);
 			}
 
@@ -77,20 +77,20 @@ public class PersistingNode {
 			this.valueString= valueString;
 			}
 
-	public String getString(String keyString)
+	public String getChildString(String keyString)
 	  /* This method returns the value from 
 	    the child associated with the key in keyString. 
 		  If there is no such child value then null is returned.
 		  */
 		{
 		  String valueString= null; // Set default return value of null.
-			PersistingNode childPersistingNode= getPersistingNode(keyString);
+			PersistingNode childPersistingNode= getChildPersistingNode(keyString);
 			if (childPersistingNode != null) // If a child node exists for the key
-				valueString= childPersistingNode.getString(); // read its value.
+				valueString= childPersistingNode.getValueString(); // read its value.
 			return valueString;
 			}
 
-	public String getString()
+	public String getValueString()
 	  /* This method returns the value associated with this node.
 		  If there is no value then it returns null.
 		 	*/
@@ -98,7 +98,7 @@ public class PersistingNode {
 			return valueString;
 			}
 
-	public PersistingNode getOrMakePersistingNode(String keyString)
+	public PersistingNode getOrMakeChildPersistingNode(String keyString)
 	  /* This method returns the child PersistingNode 
 	    that is associated with the key keyString.  
 	    If there is no such child, one is created containing
@@ -109,7 +109,7 @@ public class PersistingNode {
 	    if ( keyString == null || keyString.isEmpty())
 	      appLogger.error("getOrMakePersistingNode() Missing keyString.");
 
-			PersistingNode childPersistingNode= getPersistingNode(keyString);
+			PersistingNode childPersistingNode= getChildPersistingNode(keyString);
 			if (childPersistingNode == null) // No child PersistingNode exists for the key.
 				{ // Create an empty child node and store in map.
 					childPersistingNode= new PersistingNode(keyString);
@@ -120,7 +120,7 @@ public class PersistingNode {
 			return childPersistingNode;
 			}
 
-	private PersistingNode getPersistingNode(String keyString)
+	public PersistingNode getChildPersistingNode(String keyString)
 	  /* This method returns the child PersistingNode 
 	    that is associated with the key keyString.
 	    If there is no such child then null is returned. 

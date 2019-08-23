@@ -252,10 +252,7 @@ public class ConnectionManager
       	appLogger.info(
       	    "ConnectionManager.Unica restartPreviousUnicastersV() begins.");
 	    	PeersCursor thePeersCursor= // Used for iteration. 
-	    			//// new PersistentCursor( thePersistent );
-	    	    PeersCursor.makePeersCursor( thePersistent );
-	    	//// thePersistentCursor.setListV("peers"); // Point to peer list.
-	    	//// PeersCursor.setToPeersV(peersPersistentCursor);
+	    	    PeersCursor.makeOnFirstEntryPeersCursor( thePersistent );
 			  while // Process all peers in peer list. 
 			  	( ! thePeersCursor.getEntryKeyString().isEmpty() ) 
 			  	{ // Process one peer in peer list.
