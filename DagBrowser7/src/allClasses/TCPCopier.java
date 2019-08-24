@@ -115,12 +115,18 @@ public class TCPCopier extends EpiThread
         */
       {
         appLogger.info("TCPCopier.initializeV() begins.");
-        if (!appLogger.testAndLogDisabledB(
-            Config.tcpThreadsDisableB,"TCPCopier"))
-          { // Prepare for and start thread.
+        toReturn: { // Act only if all conditions are true.
+          if (appLogger.testAndLogDisabledB( // Return if manually disabled.
+              Config.tcpThreadsDisableB,"TCPCopier"))
+            break toReturn;
+          if // Don't operate on .class file, which means we are running under Eclipse.
+            (".class".equals(AppSettings.initiatorExtensionString))
+            break toReturn;
+          { // Proceed with TCPCopier operations.
             updateTCPCopyStagingAreaV();
-            startV();
+            startV(); // Start TCPCopier thread.
             }
+          } // toReturn: {
         appLogger.info("TCPCopier.initializeV() ends.");
         }
 
@@ -267,10 +273,11 @@ public class TCPCopier extends EpiThread
         }
       
     private boolean tryExchangeWithServerFromPersisentDataB()
-      /* Tries to exchange files with next server peer node based on 
-        the state of thePersistentCursor into the peer list.
-        If there is an element saved in the list, it will be processed,
-        even if wrapping around to the beginning is necessary.
+      /* Tries to exchange files with the next server peer node based on 
+        the state of thePeersCursor and its peer list.
+        If there is an element saved in the list, 
+        then an attempt will be made to exchange files with it,
+        even if wrapping around to the beginning of the list is necessary.
         Returns true if a file was transfered, false otherwise.
 
         The method will return early if the thread is interrupted.
@@ -287,7 +294,7 @@ public class TCPCopier extends EpiThread
           if (resultL == 0) break toReturn; // No file data was transfered.
           successB= true; // Everything worked.
         } // toReturn:
-          thePeersCursor.nextWithWrapKeyString(); // Advance cursor.
+          thePeersCursor.nextWithWrapKeyString(); // Advance cursor to next peer.
           /// appLogger.info(
           ///   "tryExchangeWithServerFromPersisentDataB() successB="+successB);
           return successB;

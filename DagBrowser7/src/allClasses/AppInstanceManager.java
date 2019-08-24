@@ -354,29 +354,26 @@ l    * If the app receives a message indicating
         It returns true if an update was processed, false otherwise.
        */
       {
-        boolean appShouldExitB= false;
-        if ( otherAppFile != null )  // otherAppFile has been defined.
-          {
-            if   // Other app is approved to update app in standard folder.
-              ( isUpdateValidB( otherAppFile ) )
-              {
-                // User approval or authenticity checks would go here.
-                appLogger.info(
-                    "Detected an approved updater file.  Preparing it"
-                    );
-                if ( displayUpdateApprovalDialogB(
-                    false, // Get approval.
-                    "A file containing an update of this app was detected.\n"
-                    + "It will now replace this one because it is newer.",
-                    otherAppFile
-                    ) )
-                  {
-                    appShouldExitB= // Chain to other app to do copy and run.
-                      requestProcessStartAndShutdownTrueB( 
-                          otherAppFile.getAbsolutePath() );
-                    }
-                }
-            }
+        boolean appShouldExitB= false; // Assume something will fail.
+        toReturn: {
+          if ( otherAppFile == null )  // otherAppFile has not been defined.
+            break toReturn;
+          if // Other app is not approved to update app in standard folder.
+            ( ! isUpdateValidB( otherAppFile ) )
+            break toReturn;
+          // Additional approval or authenticity checks would go here.
+          appLogger.info("Detected an approved updater file.  Preparing it");
+          if ( ! displayUpdateApprovalDialogB( // Not approved by user?
+              false, // Get approval.
+              "A file containing an update of this app was detected.\n"
+              + "It will now replace this one because it is newer.",
+              otherAppFile
+              ) )
+            break toReturn;
+          appShouldExitB= // Chain to other app to do copy and run.
+            requestProcessStartAndShutdownTrueB( 
+                otherAppFile.getAbsolutePath() );
+          } // toReturn:
         return appShouldExitB;
         }
 	  
