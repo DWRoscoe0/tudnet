@@ -225,20 +225,21 @@ public class Unicaster
 		    It basically just reads event messages from the input stream
 		    and passes them to its state machine
 		    until it receives a signal to exit.
+
+        The state machine timers will start with the first calls to doOnInputsB().
+
+        ///fix  Legitimate input is sometimes not consumed!
 		    */
 			{
 	  		appLogger.info("runLoop() begins.");
 		    processUntilTerminated: while (true) {
 			    processAllAvailableInput: while (true) {
-			    	while (doOnInputsB()) ; // Process inputs in this state-machine.
-			    	  // This will also start the state machine timers the first time.
-			    	if ( getOfferedInputString() != null ) { ///dbg
-			  			appLogger.info(
-			  			    "runLoop() unconsumed input= "+getOfferedInputString());
-			  			resetOfferedInputV();  // consume it.
-			  			///fix  Legitimate input is sometimes not consumed!  Fix.
+			    	while (doOnInputsB()) ; // Process until all pending work is done.
+			    	if ( getOfferedInputString() != null ) { // Log and consume unprocessed input.
+			  			appLogger.info("runLoop() unconsumed input= "+getOfferedInputString());
+			  			resetOfferedInputV();  // consume unprocessed input.
 			    		}
-		    		if ( theEpiInputStreamI.available() <= 0 ) // No input available. 
+		    		if ( theEpiInputStreamI.available() <= 0 ) // No more stream input available. 
 		    			break processAllAvailableInput; // Exit available input loop.
 	    	  	String inString=  // Get next stream string.
 	    	  			theEpiInputStreamI.readAString();
