@@ -232,30 +232,27 @@ public class Unicaster
 		    */
 			{
 	  		appLogger.info("runLoop() begins.");
-		    processUntilTerminated: while (true) {
-			    processAllAvailableInput: while (true) {
-			    	while (doOnInputsB()) ; // Process until all pending work is done.
-			    	if ( getOfferedInputString() != null ) { // Log and consume unprocessed input.
-			  			appLogger.info("runLoop() unconsumed input= "+getOfferedInputString());
-			  			resetOfferedInputV();  // consume unprocessed input.
-			    		}
-		    		if ( theEpiInputStreamI.available() <= 0 ) // No more stream input available. 
-		    			break processAllAvailableInput; // Exit available input loop.
-	    	  	String inString=  // Get next stream string.
-	    	  			theEpiInputStreamI.readAString();
-	      		setOfferedInputV( inString );
-		      	} // processAllAvailableInput:
-					///dbg appLogger.warning("runLoop() before wait.");
-			  	LockAndSignal.Input theInput= // Waiting for new input.
-		  			  theLockAndSignal.waitingForInterruptOrNotificationE();
-					///dbg appLogger.warning("runLoop() after wait.");
-		    	if ( theInput == Input.INTERRUPTION ) break processUntilTerminated; 
-		     	} // processUntilTerminated: 
-      	{ // Inform state machine of termination request.
-    			appLogger.info("runLoop() loop interrupted, stopping state machine.");
-    			// ? theTimer.cancel(); // Cancel all Timer events for debug tracing, ////dbg
-        	while (doOnInputsB()) ; // Cycle state machine run until nothing remains to do.
-	      	}
+	      processingLoop: while (true) {
+	        if (EpiThread.testInterruptB()) // Exit loop if thread termination requested. 
+	          break processingLoop;
+          while (doOnInputsB()) // Loop until all pending work is done.
+            continue processingLoop; // Loop to process new token.
+		    	if ( getOfferedInputString() != null ) { // Log and consume unprocessed input.
+		  			appLogger.info("runLoop() unconsumed input= "+getOfferedInputString());
+		  			resetOfferedInputV();  // consume unprocessed input.
+		    		}
+	    		if (theEpiInputStreamI.available() > 0) { // Try parsing more packet stream.
+            String inString= theEpiInputStreamI.readAString(); // Get next token.
+            setOfferedInputV( inString ); // Offer it to state machine.
+	    		  continue processingLoop; // Loop to process offered token.
+	    		  }
+          ///dbg appLogger.warning("runLoop() before wait.");
+          theLockAndSignal.waitingForInterruptOrNotificationE();
+          ///dbg appLogger.warning("runLoop() after wait.");
+	      	} // processingLoop:
+  			appLogger.info("runLoop() loop interrupted, stopping state machine.");
+  			// ? theTimer.cancel(); // Cancel all Timer events for debug tracing, ////dbg
+      	while (doOnInputsB()) ; // Cycle state machine until nothing remains to be done.
 				}
 	  
     public boolean onInputsV() throws IOException
