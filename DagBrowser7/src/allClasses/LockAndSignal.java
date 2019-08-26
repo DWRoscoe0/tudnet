@@ -26,7 +26,7 @@ public class LockAndSignal  // Combination lock and signal class.
 
     The Input types, listed in preferred decreasing priority order, are:
 
-      INTERRUPTION: The thread's isInterrupted() status was set true.
+      INTERRUPTION: The thread's interrupted status was true.
         This is commonly used to request thread termination.
       TIME: A time event has occurred.  
         This is commonly used to generate delays and for time-outs.
@@ -192,7 +192,7 @@ public class LockAndSignal  // Combination lock and signal class.
     	// The order shown is a common priority order, lowest to highest.
     	NONE, // There has been no recognized input.
 
-      INTERRUPTION, // The thread's isInterrupted() status is true.
+      INTERRUPTION, // The thread's interrupted status is true.
       TIME, // Clock time has moved outside a designated interval.
       NOTIFICATION, // notifyingV() was called to signal data input.
       SUBNOTIFICATION // Special value for use by caller.
@@ -266,7 +266,7 @@ public class LockAndSignal  // Combination lock and signal class.
 	    variable signalB.  This can be done in multiple ways:
 		
 		    Here is an example of a loop that processes INTERRUPTION 
-		    and NOTIFICATION inputs.
+		    and NOTIFICATION inputs.  INTERRUPTION is interpreted as an exit request.
 		
 		      LockAndSignal myLockAndSignal= new LockAndSignal();
 		      ...
@@ -314,8 +314,6 @@ public class LockAndSignal  // Combination lock and signal class.
 			  Note, testing for queued input this way puts NOTIFICATION
 			  at a higher priority than INTERRUPTION.
 
-		  ///? Change wait methods to use await() instead of wait() ??
-
 			*/
 	
 	    public Input waitingForInterruptOrNotificationE()
@@ -324,8 +322,7 @@ public class LockAndSignal  // Combination lock and signal class.
 			     If more than one input type is available when the method is called 
 			    then it returns the one that appears first.
 			      Input.INTERRUPTION: 
-			        The interrupt status set by Thread.currentThread().interrupt()
-			        was true, and was then cleared by this method.
+			        The thread's interrupt status was true.
 			      Input.NOTIFICATION: 
 			        An input signal notification occurred.
 			        This condition is cleared when the notification is returned.
@@ -352,9 +349,8 @@ public class LockAndSignal  // Combination lock and signal class.
 			      Input.NOTIFICATION: 
 			        An input signal notification occurred.
 			        This condition is cleared when the notification is returned.
-			      Input.INTERRUPTION: 
-			        The interrupt status set by Thread.currentThread().interrupt()
-			        was true, and was then cleared by this method.
+            Input.INTERRUPTION: 
+              The thread's interrupt status was true.
 		     	*/
 			  {
 			    Input theInput;  // For type of Input that will be returned.
@@ -377,9 +373,8 @@ public class LockAndSignal  // Combination lock and signal class.
 			    waits for an input from the following list.
 			    If more than one input type is available when the method is called 
 			    then it returns the one that appears first in the list.
-	          Input.INTERRUPTION: 
-		          The interrupt status set by Thread.currentThread().interrupt()
-		          was true, and was then cleared by this method.
+            Input.INTERRUPTION: 
+              The thread's interrupt status was true.
 			      Input.TIME.
 			        Time is outside the interval that begins at the time of call
 			        and ends delayMs milliseconds later. 
@@ -402,9 +397,8 @@ public class LockAndSignal  // Combination lock and signal class.
 			    waits for an input from the following list.
 			    If more than one input type is available when the method is called 
 			    then it returns the one that appears first.
-	          Input.INTERRUPTION: 
-		          The interrupt status set by Thread.currentThread().interrupt()
-		          was true, and was then cleared by this method.
+            Input.INTERRUPTION: 
+              The thread's interrupt status was true.
 			      Input.TIME:
 			        Time is outside the interval that begins at startMsL
 			        and ends lengthMsL milliseconds later. 
@@ -460,9 +454,8 @@ public class LockAndSignal  // Combination lock and signal class.
 			    If more than one input type is available when the method is called 
 			    then it returns the one that appears first.
 	
-	          Input.INTERRUPTION: 
-		          The interrupt status set by Thread.currentThread().interrupt()
-		          was true, and was then cleared by this method.
+            Input.INTERRUPTION: 
+              The thread's interrupt status was true.
 			      Input.TIME.
 			        Time is outside the interval that begins at startMsL
 			        and ends lengthMs milliseconds later. 
@@ -488,9 +481,8 @@ public class LockAndSignal  // Combination lock and signal class.
 			    If more than one input type is available when the method is called 
 			    then it returns the one that appears first.
 	
-	          Input.INTERRUPTION: 
-		          The interrupt status set by Thread.currentThread().interrupt()
-		          was true, and was then cleared by this method.
+            Input.INTERRUPTION: 
+              The thread's interrupt status was true.
 			      Input.TIME.
 			        Time is outside the interval that begins now
 			        and ends lengthMsL milliseconds later, in other words, 
@@ -537,30 +529,20 @@ public class LockAndSignal  // Combination lock and signal class.
 
       public synchronized Input testingForInterruptE() 
 		    /* This method, called by a consumer thread,
-			    tests for and resets the thread interrupt status input only.  
+			    tests for the thread interrupt status input only.  
 			    It returns results as follows:
 
 	          Input.INTERRUPTION: 
 		          The current thread's interrupt status was found to be true,
-		          and was then set to false.
+		          and was kept that way.
 
 		     	  Input.NONE: None of the above inputs was available.
 		     	    This means current thread's interrupt status 
-		     	    was found to be false, and was not changed.
+		     	    was found to be false, and was kept that way.
 
-					This method always tries to return with interrupt status false.
-					If it was false then it stays false.
-					If it was true then it is set false by the call to
-					Thread.currentThread().isInterrupted() used to test it.
-					If the caller wants the interrupt status to be true again
-					then it must call Thread.currentThread().interrupt().
-					It is also possible that another thread could set it true again
-					by calling Thread.interrupt().
-					This protocol is necessary to prevent loss of the signal
-					that the interrupt status represents.
 	        */
 	      {
-	 	      if // Testing and clearing thread interruption status.
+	 	      if // Testing and returning thread interruption status.
 	 	        ( Thread.currentThread().isInterrupted() )
 	 	      	return Input.INTERRUPTION;
 	 	      	else
@@ -680,7 +662,7 @@ public class LockAndSignal  // Combination lock and signal class.
   	      */
       {
     	  boolean interruptedB= // Saving and clearing interruption status. 
-    	  		Thread.currentThread().isInterrupted();
+    	  		Thread.currentThread().interrupted();
 
         try {
           wait( waitFlagMsL ); // Waiting for new notify() or wait time.
