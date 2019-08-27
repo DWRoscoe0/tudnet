@@ -65,13 +65,15 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
       DataTreeModel theDataTreeModel= new DataTreeModel( 
         theDataRoot, theMetaRoot, theMetaFileManagerFinisher, theShutdowner 
         );
+      UnicasterManager theUnicasterManager= 
+          new UnicasterManager( this, thePersistent, theTCPCopier );
 	    LockAndSignal cmThreadLockAndSignal= new LockAndSignal();
+      NotifyingQueue<String> toConnectionManagerNotifyingQueueOfStrings=
+          new NotifyingQueue<String>(cmThreadLockAndSignal, Config.QUEUE_SIZE);
 	    NetcasterQueue multicasterToConnectionManagerNetcasterQueue=
 	      new NetcasterQueue(cmThreadLockAndSignal, Config.QUEUE_SIZE);
-	    NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue=
-	      new NetcasterQueue(cmThreadLockAndSignal, Config.QUEUE_SIZE);
-      UnicasterManager theUnicasterManager= 
-      		new UnicasterManager( this, thePersistent, theTCPCopier );
+      NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue=
+          new NetcasterQueue(cmThreadLockAndSignal, Config.QUEUE_SIZE);
 	    ConnectionManager theConnectionManager= new ConnectionManager(
         this, // the AppGuiFactory.
     	  thePersistent,
@@ -79,11 +81,13 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
         theUnicasterManager,
   	    cmThreadLockAndSignal,
   	    multicasterToConnectionManagerNetcasterQueue,
-  	    unconnectedReceiverToConnectionManagerNetcasterQueue
+  	    unconnectedReceiverToConnectionManagerNetcasterQueue,
+  	    toConnectionManagerNotifyingQueueOfStrings
   	    );
       EpiThread theConnectionManagerEpiThread=
         AppGUIFactory.makeEpiThread( theConnectionManager, "ConnMgr" );
-      SystemsMonitor theSystemsMonitor= new SystemsMonitor();
+      SystemsMonitor theSystemsMonitor= 
+        new SystemsMonitor(toConnectionManagerNotifyingQueueOfStrings);
       EpiThread theCPUMonitorEpiThread=
         AppGUIFactory.makeEpiThread( theSystemsMonitor, "SystemsMonitor" );
       DataNode theInitialRootDataNode=  // Building DataNode tree.

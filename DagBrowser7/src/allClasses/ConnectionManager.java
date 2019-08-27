@@ -115,6 +115,7 @@ public class ConnectionManager
 	    // Inputs to the connection manager thread.
 	    private NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue;
 	    	// Queue of unconnected unicast packets received from Unicasters.
+      private NotifyingQueue<String> toConnectionManagerNotifyingQueueOfStrings;
 
     // Other instance variables, all private.
 		  private MulticastSocket theMulticastSocket; // For multicast receiver. 
@@ -137,7 +138,8 @@ public class ConnectionManager
     	  UnicasterManager theUnicasterManager,
     		LockAndSignal cmThreadLockAndSignal,
     		NetcasterQueue multicasterToConnectionManagerNetcasterQueue,
-    		NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue
+    		NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue,
+        NotifyingQueue<String> toConnectionManagerNotifyingQueueOfStrings
     		)
       {
       	super.initializeV(  // Constructing base class.
@@ -155,6 +157,8 @@ public class ConnectionManager
   	    		multicasterToConnectionManagerNetcasterQueue;
   	    this.unconnectedReceiverToConnectionManagerNetcasterQueue=
   	    		unconnectedReceiverToConnectionManagerNetcasterQueue;
+        this.toConnectionManagerNotifyingQueueOfStrings=
+            toConnectionManagerNotifyingQueueOfStrings;
         }
 
 
@@ -223,6 +227,7 @@ public class ConnectionManager
 
           processingUnconnectedSockPacketsB();
           processingMulticasterSockPacketsB();
+          processingLocalStringMessagesB();
 
           /* At this point, at least the inputs that arrived before 
             the last notification signal should have been processed. 
@@ -384,6 +389,32 @@ public class ConnectionManager
           }
           
         return packetsProcessedB;
+        }
+
+    private boolean processingLocalStringMessagesB()
+      /* This method processes local messages that are received by the ConnectionManager
+        and replicated and distributed to each Unicaster by the UnicasterManager.
+        Presently this only the Skipped-Time message
+        It returns true if any messages were processed, false otherwise.
+        */
+      {
+        boolean itemsProcessedB= false;
+        String theMessageString;
+
+        while (true) {  // Process all messages.
+          theMessageString= // Try getting next message from queue.
+              toConnectionManagerNotifyingQueueOfStrings.poll();
+
+          if (theMessageString == null) break;  // Exit if no more messages
+          
+          appLogger.debug(
+            "ConnectionManager.processingLocalStringMessagesB()" + theMessageString);
+          theUnicasterManager.passToUnicastersV( theMessageString ); ///rev disabled for testing.
+
+          itemsProcessedB= true;
+          }
+          
+        return itemsProcessedB;
         }
 
     private void stoppingUnicastReceiverThreadV()

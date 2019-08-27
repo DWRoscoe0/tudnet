@@ -5,8 +5,6 @@ import java.util.Timer;
 
 import static allClasses.Globals.appLogger;
 
-import allClasses.LockAndSignal.Input;
-
 public class Unicaster
 
 	extends Netcaster
@@ -58,7 +56,7 @@ public class Unicaster
 
   { // Unicaster.
 
-    // Fields (constant and variales).
+    // Fields (constants and variables).
     
       // Injected dependency instance variables
       private final UnicasterManager theUnicasterManager;
@@ -66,6 +64,7 @@ public class Unicaster
       private final TCPCopier theTCPCopier;
       private final Timer theTimer;
       private final Persistent thePersistent;
+      private NotifyingQueue<String> unicasterNotifyingQueueOfStrings;
   		
   		// Other instance variables.
       private EpiThread theEpiThread;
@@ -84,7 +83,8 @@ public class Unicaster
 	  		Timer theTimer,
 	  		Persistent thePersistent,
 	  		NamedLong retransmitDelayMsNamedLong,
-	  		DefaultBooleanLike leadingDefaultBooleanLike
+	  		DefaultBooleanLike leadingDefaultBooleanLike,
+	  		NotifyingQueue<String> unicasterNotifyingQueueOfStrings
 	  		)
 	    /* This constructor constructs a Unicaster for the purpose of
 	      communicating with the node at remoteInetSocketAddress,
@@ -113,16 +113,19 @@ public class Unicaster
 				  this.theTCPCopier= theTCPCopier;
 		  		this.theTimer= theTimer;
 		  		this.thePersistent= thePersistent;
+	        this.unicasterNotifyingQueueOfStrings= unicasterNotifyingQueueOfStrings;
 	      }
 
-    protected void initializeWithIOExceptionV( EpiThread theEpiThread ) 
-        throws IOException
+    protected void initializeWithIOExceptionV( 
+        EpiThread theEpiThread
+        ) 
+      throws IOException
 	    {
     		super.initializeWithoutStreamsV(); // Stream counts are added below in
     		  // one of the sub-state machines.
 
     		this.theEpiThread= theEpiThread;
-    		
+
 	  		// Create and start the sub-state machines.
 
     		{ // Create and add actual sub-states.
@@ -223,8 +226,8 @@ public class Unicaster
 	  private void runLoop() throws IOException
 	    /* This method contains the message processing loop.
 		    It basically just reads event messages from the input stream
-		    and passes them to its state machine
-		    until it receives a signal to exit.
+		    and the local message queue,
+		    and passes them to its state machine until it receives a signal to exit.
 
         The state machine timers will start with the first calls to doOnInputsB().
 
@@ -235,8 +238,8 @@ public class Unicaster
 	      processingLoop: while (true) {
 	        if (EpiThread.testInterruptB()) // Exit loop if thread termination requested. 
 	          break processingLoop;
-          while (doOnInputsB()) // Loop until all pending work is done.
-            continue processingLoop; // Loop to process new token.
+          if (doOnInputsB()) // Do some pending state machine work...
+            continue processingLoop; // ...and loop until its all done.
 		    	if ( getOfferedInputString() != null ) { // Log and consume unprocessed input.
 		  			appLogger.info("runLoop() unconsumed input= "+getOfferedInputString());
 		  			resetOfferedInputV();  // consume unprocessed input.
@@ -246,9 +249,15 @@ public class Unicaster
             setOfferedInputV( inString ); // Offer it to state machine.
 	    		  continue processingLoop; // Loop to process offered token.
 	    		  }
-          ///dbg appLogger.warning("runLoop() before wait.");
+	    		String localMessageString= // Try getting local message String. 
+	    		    unicasterNotifyingQueueOfStrings.poll();
+	    		if (localMessageString != null) { // If gotten, process it.
+            setOfferedInputV( localMessageString ); // Offer it to state machine.
+            continue processingLoop; // Loop to process offered message.
+	    		  }
+          ///dbg appLogger.debug("runLoop() before wait.");
           theLockAndSignal.waitingForInterruptOrNotificationE();
-          ///dbg appLogger.warning("runLoop() after wait.");
+          ///dbg appLogger.debug("runLoop() after wait.");
 	      	} // processingLoop:
   			appLogger.info("runLoop() loop interrupted, stopping state machine.");
   			// ? theTimer.cancel(); // Cancel all Timer events for debug tracing, ////dbg
@@ -302,6 +311,12 @@ public class Unicaster
 				return theLinkedMachineState.isConnectedB(); 
 				}
 
-
+		public NotifyingQueue<String> getNotifyingQueueOfStrings()
+		  /* This method returns it NotifyingQueueOfStrings to allow callers
+		    to add strings to it.
+		    */
+		  {
+		    return unicasterNotifyingQueueOfStrings;
+		    }
 
 	} // Unicaster.

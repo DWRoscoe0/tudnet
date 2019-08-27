@@ -41,6 +41,8 @@ public class UnicasterFactory {
   	  LockAndSignal unicasterLockAndSignal= new LockAndSignal();
 			NetcasterQueue receiverToUnicasterNetcasterQueue= 
 					new NetcasterQueue( unicasterLockAndSignal, queueCapacityI );
+      NotifyingQueue<String> unicasterInputQueueOfStrings=
+        new NotifyingQueue<String>(unicasterLockAndSignal, Config.STRING_QUEUE_SIZE);
 			NetcasterInputStream unicasterNetcasterInputStream=
 					theAppGUIFactory.makeNetcasterInputStream( 
 							receiverToUnicasterNetcasterQueue, 
@@ -76,7 +78,8 @@ public class UnicasterFactory {
 			   	theTimer,
 			   	thePersistent,
 		      retransmitDelayMsNamedLong,
-		      leadingDefaultBooleanLike
+		      leadingDefaultBooleanLike,
+		      unicasterInputQueueOfStrings
 			  	);
   	
 	    

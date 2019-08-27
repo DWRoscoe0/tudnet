@@ -35,7 +35,9 @@ public class SystemsMonitor
   { // class SystemsMonitor
   
     // Injected instance variables, all private.
-
+    
+    private final NotifyingQueue<String> toConnectionManagerNotifyingQueueOfStrings;
+    
     // Other instance variables, all private.
 
 	  private final long oneSecondOfNsL=  1000000000L;
@@ -75,12 +77,15 @@ public class SystemsMonitor
 		private LockAndSignal theLockAndSignal= new LockAndSignal();
 		  // Used for waiting.
 
-    public SystemsMonitor()   // Constructor.
+    public SystemsMonitor(
+        NotifyingQueue<String> toConnectionManagerNotifyingQueueOfStrings) // Constructor.
       {
       	initializeV(  // Constructing base class.
           "Systems-Monitor", // DataNode (not thread) name.
           new DataNode[]{} // Initially empty List of Peers.
           );
+      	this.toConnectionManagerNotifyingQueueOfStrings= 
+      	    toConnectionManagerNotifyingQueueOfStrings;
         }
 
     public void run()
@@ -330,8 +335,11 @@ public class SystemsMonitor
 				    theLockAndSignal.periodCorrectedShiftMsL(
 				    		measurementTimeMsL, periodMsL
 				    		);
-  			if (shiftInTimeMsL > 0) // Processing skipped time, if any.
-	  			skippedTimeMsNamedLong.addDeltaAndLogNonzeroL( shiftInTimeMsL );
+  			if (shiftInTimeMsL > 0) { // Processing skipped time, if any.
+	  			skippedTimeMsNamedLong.addDeltaAndLogNonzeroL( shiftInTimeMsL ); // Record it.
+	  			toConnectionManagerNotifyingQueueOfStrings.put( // Passing to CM for Unicasters.
+              "Skipped-Time");
+          }
 	  		if (shiftInTimeMsL < 0) // Processing reversed time, if any.
 	  			reversedTimeMsNamedLong.addDeltaAndLogNonzeroL( -shiftInTimeMsL );
 	  		measurementTimeMsL+= // Adjusting base time for discontinuity, if any.

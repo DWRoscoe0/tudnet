@@ -81,7 +81,8 @@ public class Config
       // will be logged only when the app is being traced,
       // and maxLogLevel is also TRACE.
 
-		public static final int QUEUE_SIZE= 5;
+    public static final int QUEUE_SIZE= 5; // For packet queues.
+    public static final int STRING_QUEUE_SIZE= 1; // For String message queues.
 
 		public static final char delimiterC= '!';
 		public static final char pathSeperatorC= '/'; 

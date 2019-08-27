@@ -662,7 +662,7 @@ public class LockAndSignal  // Combination lock and signal class.
   	      */
       {
     	  boolean interruptedB= // Saving and clearing interruption status. 
-    	  		Thread.currentThread().interrupted();
+    	  		Thread.interrupted();
 
         try {
           wait( waitFlagMsL ); // Waiting for new notify() or wait time.

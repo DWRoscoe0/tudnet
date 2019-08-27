@@ -1,5 +1,7 @@
 package allClasses;
 
+import static allClasses.Globals.appLogger;
+
 //// import static allClasses.Globals.appLogger;
 
 import java.io.IOException;
@@ -158,7 +160,7 @@ public class UnicasterManager
         other synchronized local methods.
         addingV(..) to tree is done last because it could trigger displaying.
         This is the lowest level method for building a Unicaster.
-        It does not start the Unicaster.
+        It does not start the Unicaster thread.
         */
 	    { 
     	  UnicasterFactory theUnicasterFactory= 
@@ -206,5 +208,20 @@ public class UnicasterManager
     	  return "("+connectedI+" connected, "+disconnectedI+" disconnected)";
         }
 
+    
+    public void passToUnicastersV(String messageString)
+      /* This method passes messageString to all Unicasters,
+        each of which is expected to process it with its state machine. 
+        */
+      {
+        appLogger.debug(
+            "passToUnicastersV(..), to all Unicasters, message:"+messageString);
+        for ( DataNode childDataNode: this )  // For every Unicaster 
+          { // [ass message to it.
+            Unicaster theUnicaster= ((Unicaster)childDataNode);
+            theUnicaster.getNotifyingQueueOfStrings().
+              add(messageString);
+            }
+        }
 
   	}
