@@ -363,20 +363,27 @@ public class LinkedMachineState
 					  				sendHelloV(this); // send a HELLO this time.
 					  			break goReturn; // Return with signal true.
 					  			}
-				  		if ( tryInputB("GOODBYE") ) { // Did peer disconnect itself?
-		    			  	requestAncestorSubStateV( // Yes, so we do the same.
-		    			  			theDisconnectedState);
-					  			break goReturn; // Return with signal true.
-					  			}
+              if ( tryInputB("GOODBYE") ) { // Did peer disconnect itself?
+                requestAncestorSubStateV( // Yes, so we do the same.
+                    theDisconnectedState);
+                break goReturn; // Return with signal true.
+                }
+              if ( tryInputB("Skipped-Time") ) { // Did we just wake up from sleep?
+                requestAncestorSubStateV( // Yes, so assume connection broke
+                    theInitiatingReconnectState); // and try to reestablish.
+                break goReturn; // Return with signal true.
+                }
 				  		signalB= false; // Everything failed.  Set no signal.
 			  		} // goReturn: 
 			  			return signalB;
 					  }
 
+			  /*  ////
 		    public void onExitV() throws IOException
 		      /* Informs the peer that we are disconnecting by 
 		        sending 3 GOODBYE messages.
 		        */
+        /*  ////
 		      { 
 		        for (int i=0; i<3; i++) { // Send 3 GOODBYE packets.
               theNetcasterOutputStream.writingTerminatedStringV( "GOODBYE" );
@@ -384,6 +391,7 @@ public class LinkedMachineState
               }
 		        super.onExitV();
 		        }
+        */  ////
 		    
 	  		} // class ConnectedState
     
@@ -395,6 +403,18 @@ public class LinkedMachineState
         */
 
       {
+
+        public void onEntryV() throws IOException
+          /* Informs the peer that we are disconnecting by 
+            sending 3 GOODBYE messages.
+            */
+          { 
+            for (int i=0; i<3; i++) { // Send 3 GOODBYE packets.
+              theNetcasterOutputStream.writingTerminatedStringV( "GOODBYE" );
+              theNetcasterOutputStream.sendingPacketV(); // Forcing send.
+              }
+            super.onExitV();
+            }
 
         public void onInputsToReturnFalseV() throws IOException
           /* This method does nothing except test for HELLO messages.
