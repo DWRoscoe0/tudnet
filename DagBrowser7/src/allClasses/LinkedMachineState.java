@@ -166,11 +166,12 @@ public class LinkedMachineState
 	      theDisconnectedState if that state is not already active.
 	      */
 		  {
-        if // Process local termination request, if present.
+        /*  //// if // Process local termination request, if present.
           (EpiThread.testInterruptB())
           { // Process local termination request by requesting disconnect.
             requestSubStateChangeIfNeededB( theDisconnectedState );
             }
+        */  ////
         boolean returnB= // Try processing in OrState machine of superclass.
           super.onInputsB();
 		  	return returnB;
@@ -354,6 +355,7 @@ public class LinkedMachineState
 		  	    for faster connecting after app restart.
 		  	    */
 		  	  {
+	    	    appLogger.debug( "Entering"+ getFormattedStatePathString() );
 	    			IPAndPort remoteIPAndPort= theUnicaster.getKeyK();
 		    		theTCPCopier.queuePeerConnectionV(remoteIPAndPort);
 		    		PeersCursor.makeOnFirstEntryPeersCursor(thePersistent).
@@ -385,6 +387,12 @@ public class LinkedMachineState
                     theDisconnectedState);
                 break goReturn; // Return with signal true.
                 }
+              if // Process local termination request, if present.
+                (EpiThread.testInterruptB())
+                { // Process local termination request by requesting disconnect.
+                  requestAncestorSubStateV( theDisconnectedState );
+                  break goReturn; // Return with signal true.
+                  }
               if ( tryInputB("Skipped-Time") ) { // Did we just wake up from sleep?
                 requestAncestorSubStateV( // Yes, so assume connection broke
                     //// theInitiatingReconnectState); // and try to reestablish.
@@ -396,20 +404,20 @@ public class LinkedMachineState
 			  			return signalB;
 					  }
 
-			  /*  ////
 		    public void onExitV() throws IOException
 		      /* Informs the peer that we are disconnecting by 
 		        sending 3 GOODBYE messages.
 		        */
-        /*  ////
 		      { 
+            appLogger.debug( "Exiting"+ getFormattedStatePathString() );
+            /*  ////  Moved.
 		        for (int i=0; i<3; i++) { // Send 3 GOODBYE packets.
               theNetcasterOutputStream.writingTerminatedStringV( "GOODBYE" );
               theNetcasterOutputStream.sendingPacketV(); // Forcing send.
               }
+            */  ////
 		        super.onExitV();
 		        }
-        */  ////
 		    
 	  		} // class ConnectedState
     
