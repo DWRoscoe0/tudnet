@@ -283,7 +283,7 @@ public class LinkMeasurementState
 			    	
 					  public void onInputsToReturnFalseV() throws IOException
 					  	{
-		    			  retryTimeOutMsL=   // Initializing retry time-out.
+		    			  exponentialRetryTimeOutMsL=   // Initializing retry time-out.
 		    			  		retransmitDelayMsNamedLong.getValueL();
 	
 					  		requestAncestorSubStateV(theMeasurementHandshakingState);
@@ -296,7 +296,8 @@ public class LinkMeasurementState
 			  	  including sending the first packet, 
 			  	  processing the acknowledgement, and
 			  	  retrying using a time-doubling exponential back-off.
-						It ends by requesting the MeasurementPausedState.
+						If acknowledgement succeeds it requests the MeasurementPausedState.
+						If the maximum time-out is exceeded it requests the BrokenConnectionState.
 			  	  */
 	
 			  	{
@@ -304,15 +305,17 @@ public class LinkMeasurementState
 			    	  // Initiates the handshake and starts acknowledgement timer.
 				  	  { 
 				      	///dbg appLogger.debug( "MeasurementHandshakingState.onEntryV() ");
-		    			  measurementTimerInput.scheduleV(retryTimeOutMsL);
+		    			  measurementTimerInput.scheduleV(exponentialRetryTimeOutMsL);
 				    		sendingSequenceNumberV();
 			  				}
 	
 					  public void onInputsToReturnFalseV() throws IOException
-					  	/* This method handles handshakes acknowledgement, 
+					  	/* This method handles handshakes acknowledgement.
 					  	  initiating a retry using twice the time-out,
 					  	  until the acknowledgement is received,
 					  	  or giving up if the time-out limit is reached.
+					  	  
+					  	  ///opt Simplify by using TimerInput.rescheduleB(.) instead.
 					  	  */
 					  	{
 							  if (tryInputB("PA")) // Try processing acknowledgement received.
@@ -321,10 +324,10 @@ public class LinkMeasurementState
 								  	}
 				      	else  if // Try processing time-out.
 				      		(measurementTimerInput.getInputArrivedB()) 
-					    		{ if ( retryTimeOutMsL <= Config.maxTimeOutMsL )
-				    				  { retryTimeOutMsL*=2;  // Doubling time-out limit.
+					    		{ if ( exponentialRetryTimeOutMsL <= Config.maxTimeOutMsL )
+				    				  { exponentialRetryTimeOutMsL*=2;  // Doubling time-out limit.
 				    				  	requestAncestorSubStateV(this); // Retrying by repeating state.
-					  					  } ///opt Use TimerInput.rescheduleB(.) instead. 
+					  					  } 
 				    			  else // Giving up after maximum time-out reached.
 				    			  { // Trigger breaking of connection.
                       appLogger.info("MeasurementHandshakingState time-out.");
@@ -375,7 +378,7 @@ public class LinkMeasurementState
 					{
 						String rttString= "";
 						if ( sequenceNumberI != lastSequenceNumberSentL )
-							rttString+= "unchanged, wrong number.";
+							rttString+= "unchanged, wrong number."; // Ignore if out of sequence.
 							else
 							{ 
 								long rawRoundTripTimeNsL= 
@@ -400,6 +403,7 @@ public class LinkMeasurementState
 				private void processRoundTripTimeV(long rawRoundTripTimeNsL)
 				  /* This method updates various variables which
 				    are dependent on round trip times.
+				    This include retransmit delay time-out values.
 				    
 				    Integer arithmetic is used for speed.
 				    */
@@ -443,7 +447,7 @@ public class LinkMeasurementState
 				
 				  	retransmitDelayMsNamedLong.setValueL(
 								(smoothedMaxRoundTripTimeNsAsMsNamedLong.getValueL()/1000000) * 2
-								); // Use double present maximum round-trip-time.
+								); // Use double present maximum round-trip-time as initial time-out.
 						}
 		
 		  	} // class LocalMeasurementState
@@ -606,7 +610,8 @@ public class LinkMeasurementState
 	  private NsAsMsNamedLong smoothedMaxRoundTripTimeNsAsMsNamedLong; // Maximum.
 	  
 		// Other variables.
-		private long retryTimeOutMsL;
+		private long exponentialRetryTimeOutMsL; // This is used as an time-out value
+		  // in exponential back off.
 
 	  private long sentSequenceNumberTimeNsL;
 

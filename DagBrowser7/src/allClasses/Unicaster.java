@@ -171,7 +171,7 @@ public class Unicaster
         when the Unicaster is started.
         connectB == true means do an initial connect.
         connectB == false means do a reconnect.
-        Initial connects do more retries.
+        Initial connects do retries.  Reconnects do no retries.
         
         This method does nothing but pass connectB to theLinkedMachineState, 
         where the real connecting logic is.
@@ -240,11 +240,8 @@ public class Unicaster
 	          break processingLoop;
           if (doOnInputsB()) // Do some pending state machine work...
             continue processingLoop; // ...and loop until its all done.
-		    	if ( getOfferedInputString() != null ) { // Log and consume unprocessed input.
-		  			appLogger.info("runLoop() unconsumed input= "+getOfferedInputString());
-		  			resetOfferedInputV();  // consume unprocessed input.
-		    		}
-	    		if (theEpiInputStreamI.available() > 0) { // Try parsing more packet stream.
+          processUnprocessedInputV();
+		    	if (theEpiInputStreamI.available() > 0) { // Try parsing more packet stream.
             String inString= theEpiInputStreamI.readAString(); // Get next token.
             setOfferedInputV( inString ); // Offer it to state machine.
 	    		  continue processingLoop; // Loop to process offered token.
@@ -264,6 +261,26 @@ public class Unicaster
       	while (doOnInputsB()) ; // Cycle state machine until nothing remains to be done.
 				}
 	  
+    
+    private void processUnprocessedInputV() throws IOException
+      /* This method is called to process any offered input that
+        the Unicaster state machine was unable to process.
+        Debug messages are silently ignored.
+        Other messages are logged and ignored.
+       */
+      {
+        toReturn: {
+          String inputString= getOfferedInputString();
+          if ( inputString == null ) break toReturn; // No unprocessed input.
+          if (inputString.equals("DEBUG")) { // Ignore any debug message
+            theEpiInputStreamI.readAString(); // and its message count argument.
+            break toReturn;
+            }
+          appLogger.info("processUnprocessedInputV() input= "+inputString);
+          resetOfferedInputV();  // consume unprocessed input.
+          } // toReturn:
+        }
+
     public boolean onInputsV() throws IOException
       /* This method does, or will do itself, or will delegate to Subcasters, 
         all protocols of a Unicaster.  This might include:

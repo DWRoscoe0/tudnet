@@ -132,6 +132,23 @@ public class LinkedMachineState
 	  		theTimerInput.cancelingV(); // To stop our timer.
 	      }
 
+    private long debugMessageCountL= 0;
+    
+    private void sendDebugCountV()
+        throws IOException
+      /* This method sends a DEBUG message 
+        followed by the debug message count to the remote peer.
+        Its purpose is to make logs of packets easier to interpret during debugging.
+        It does not flush the buffer to send a packet.
+        It should be called before a regular message which does flush the buffer.
+        The receiver should silently ignore this message and its argument.
+        */
+      {
+        theNetcasterOutputStream.writingTerminatedStringV( "DEBUG" );
+        theNetcasterOutputStream.writingTerminatedLongV(debugMessageCountL);
+        debugMessageCountL++;
+        }
+
   	public void onEntryV() throws IOException
 		  { 
 			  retryTimeOutMsL=   // Initializing retry time-out.
@@ -370,7 +387,8 @@ public class LinkedMachineState
                 }
               if ( tryInputB("Skipped-Time") ) { // Did we just wake up from sleep?
                 requestAncestorSubStateV( // Yes, so assume connection broke
-                    theInitiatingReconnectState); // and try to reestablish.
+                    //// theInitiatingReconnectState); // and try to reestablish.
+                    theInitiatingConnectState); // and try to reestablish.
                 break goReturn; // Return with signal true.
                 }
 				  		signalB= false; // Everything failed.  Set no signal.
@@ -438,7 +456,7 @@ public class LinkedMachineState
       /* This state is entered when a connection involuntarily fails
         because packets could not be exchanged by the two peers.
         It will go to the ConnectedState when a HELLO message is received.
-        It will go to the InitiatingConnectState
+        It will go to the theInitiatingReconnectState
         if the reconnect period passes.
         */
 
@@ -527,7 +545,8 @@ public class LinkedMachineState
   	    The HELLO message includes the IP address of the remote peer.
   	    */
 	  	{
-		    theNetcasterOutputStream.writingTerminatedStringV( "HELLO" );
+    	  sendDebugCountV(); ////
+    	  theNetcasterOutputStream.writingTerminatedStringV( "HELLO" );
 		    theNetcasterOutputStream.writingTerminatedStringV( 
 						theUnicaster.getKeyK().getInetAddress().getHostAddress() 
 						);  // Writing IP address of remote peer.

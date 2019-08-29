@@ -143,8 +143,11 @@ public class Sender // Uunicast and multicast sender thread.
 
     private void sendDropOrDelayPacketV(final DatagramPacket theDatagramPacket)
       /* This method processes theDatagramPacket which is ready to send.
-        Generally that means sending it, but depending on conditions,
-        it might mean dropping it, or delaying it.
+        Generally that means only sending it, 
+        but depending on conditions set for debugging or testing
+        it might mean also:
+        * dropping the packet
+        * delaying the packet.
        	*/
 	    {
     	  goReturn: {
@@ -154,20 +157,20 @@ public class Sender // Uunicast and multicast sender thread.
 				    	break goReturn;
 				    	}
 			    long zeroL= 0L; // Prevent "Comparing identical" warning in next if...
-	        if ( Config.packetSendDelayMsL == zeroL ) // Send immediately if 0 delay.
-	          { sendingDatagramPacketV( theDatagramPacket ); // Send immediately.
-				    	break goReturn;
-	          	}
-        	{ theScheduledThreadPoolExecutor.schedule( // Send after delay.
-          		new Runnable() { 
-        					public void run() {
-          					sendingDatagramPacketV( theDatagramPacket );
-          					} 
-        					},
-        				Config.packetSendDelayMsL,
-        				TimeUnit.MILLISECONDS
-        				);
-        		}
+	        if ( Config.packetSendDelayMsL != zeroL ) // Send after delay
+          	{ // Send the packet after a delay.  This need not delay other packets.
+          	  theScheduledThreadPoolExecutor.schedule( // Send after delay.
+            		new Runnable() { 
+          					public void run() {
+            					sendingDatagramPacketV( theDatagramPacket );
+            					} 
+          					},
+          				Config.packetSendDelayMsL,
+          				TimeUnit.MILLISECONDS
+          				);
+          		}
+          sendingDatagramPacketV( theDatagramPacket ); // Send packet immediately.
+            break goReturn;
   				} // goReturn:
 	    	}
 
@@ -195,29 +198,46 @@ public class Sender // Uunicast and multicast sender thread.
 	    	}
 
     private void sendingDatagramPacketV( DatagramPacket theDatagramPacket )
-      /* This method sends theDatagramPacket 
-        and handles IOExceptions by logging them.
-       	*/
+      /* This method tries to send theDatagramPacket.
+        If the send fails because of an IOException then
+        it will retry several times before giving up and discarding the packet.
+        If there were failures it will log a summary of the failures.
+
+        Although this now recovers when
+          Skipped time has caused a java.net.SocketException: 
+            No buffer space available (maximum connections reached?): 
+              Datagram send failed 
+        the packet passed to the send(..) method doesn't reach the remote end.
+        The same thing happens with Later packets for several seconds.
+        Then things begin to work normally again.  
+        This is true under Windows at least.
+        */
 	    {
-    		//appLogger.debug("sendingDatagramPacketV(..) calling send(..)." );
-	    	try { // Send the packet.
-	        PacketManager.logSenderPacketV(theDatagramPacket);
-    		  	// Logging before sending so log order is always correct.
-	        theDatagramSocket.send(   // Send packet.
-	        	theDatagramPacket
-	          );
-	      } catch (IOException e) { // Handle exception by dropping packet.
-	        appLogger.error(
-	          "Sender.sendingDatagramPacketV(), " 
-	          + e + ", " 
-	          + PacketManager.gettingDirectedPacketString( 
-	          		theDatagramPacket,true )  
-	          );
-	        ///fix Skipped time has caused: java.net.SocketException: 
-	        //		No buffer space available (maximum connections reached?): 
-	        //    	Datagram send failed 
-	        // It seems able to recover and send again.
+      		//appLogger.debug("sendingDatagramPacketV(..) calling send(..)." );
+          int failuresI= 0;
+          IOException savedIOException= null; 
+        retryLoop: while (true) {
+  	    	try { // Try sending the packet.
+    	        PacketManager.logSenderPacketV(theDatagramPacket);
+        		  	// Logging before sending so log order is always correct.
+    	        theDatagramSocket.send(theDatagramPacket); // Send packet.
+    	        break retryLoop;
+    	      } catch (IOException theIOException) { // Handle exception.
+              failuresI++;
+    	        savedIOException= theIOException; // Save exception for logging later.
+              if (failuresI>=5) { // Handle failure limit reached.
+                appLogger.debug("Sender.sendingDatagramPacketV() discarding packet.");
+                break retryLoop;
+                }
+              EpiThread.interruptibleSleepB(1000); // Sleep for 1 second.
+              if (EpiThread.testInterruptB()) break retryLoop; // Termination requested.
+    	        }
+          } // retryLoop:
+	    	if (failuresI != 0) // Report exceptions and retries if there were any. 
+          appLogger.debug("Sender.sendingDatagramPacketV(), "
+              + "send failed "+failuresI+" times.\n"
+              + PacketManager.gettingDirectedPacketString(theDatagramPacket,true)  
+              + "\n  last Exception was: "+savedIOException );
 	      }
-	    }
     
     }

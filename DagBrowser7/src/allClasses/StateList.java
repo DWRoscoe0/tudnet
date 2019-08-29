@@ -666,6 +666,7 @@ public class StateList extends MutableList implements Runnable {
 		  	Maybe it should be called when andStateOnInputsB() is called?
 		  */
 		{ 
+      appLogger.debug( "StateList.doOnEntryV() to"+ getFormattedStatePathString() ); ////
 			if ( logB(TRACE)) logV( 
 					TRACE, "StateList.doOnEntryV() to"+ getFormattedStatePathString() );
 
