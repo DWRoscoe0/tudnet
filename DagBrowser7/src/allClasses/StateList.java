@@ -220,19 +220,31 @@ public class StateList extends MutableList implements Runnable {
 		* discrete object inputs:
 		  * A discrete object input is passed by 
 		    setting a state input variable for that purpose to contain
-		    a reference to that object, and calling the state's handler.
-		  * If the state's handler accepts and processes the discrete input, 
-		    it sets the input variable to null. 
+		    a reference to that object, and calling the state's input handler.
+      * The state may act on the input, or may ignore it, 
+        as appropriate to the application.
+      * The state may consume the input, or not consume it, 
+        as appropriate to the application.
+      * Input being consumed means that the input was fully processed 
+        by the state that consumes it and no further action is needed.
+      * Input NOT being consumed means either
+        * that the input was not processed by the state that did not consume it, or
+        * that the input was processed by the state that did not consume it but
+          this is a broadcast type of input that may be processed by multiple states.
+		  * Generally a state will offer the input to one or more of its children
+		    before trying to process the input itself.
+		    This makes it possible for sub-states to override default behavior of their parent. 
+		  * If the state's handler processes and consumes the discrete input, 
+		    it sets the input variable to null to indicate this.
 		    The setter of the variable interprets this to mean
-		    that the input was processed.
-		  * If the state's handler does not accept and process a discrete input, 
+		    that the input was consumed and no further processing of it needed.
+		  * If the state's handler does not consume a discrete input then 
 		    the input datum remains in the state's input register variable.
-		    The setter interprets this to mean that the input was not processed.
+		    The setter interprets this to mean that the input was not consumed.
 		    In this case the setter will set the variable to null
 		    and one-at-a-time store the value to the input variable of 
-		    other sub-states and call their handlers until it is processed.
-		    If the input was not processed it may 
-		    try to process the input itself.
+		    other sub-states that should receive it and call their handlers.
+		    The setter might also try to process the input itself.
 		* handler return code:  State handers methods return a boolean value. 
 		  This value has the following meanings.
       * false: This means that there is nothing left to do 
@@ -326,17 +338,22 @@ public class StateList extends MutableList implements Runnable {
   protected List<StateList> theListOfSubStateLists= // Our sub-states.
       new ArrayList<StateList>(); // Initially empty list.
 
-  private String offeredInputString; /* Temporarily stores an input event.
+  private String offeredInputString; /* Temporarily stores a discrete input event.
     It is the one place this state checks for discrete input.
-    A discrete input can appear in any number of other variables.
-    This variable is special and is set according to the following protocol:
-    * set to a non-null reference to the input String by the handler's caller
-      immediately before the handler is called to try to process it
-    * set to null 
-  	  * by the handler immediately after successfully processing the input, 
-        thereby consuming the input
-      * by the handler's caller immediately after 
-        a handler fails to process the input
+    This variable is set according to the following protocol:
+    * set to a non-null reference to an input String by the state handler's caller
+      immediately before the handler is called to try to process the input
+    * set to null.
+  	  * This is done by the handler immediately after processing the input if
+  	    the input was fully processed.  Setting to null in this case
+  	    indicates to the caller that the input was consumed.
+      * This is done by the handler's caller after a handler returns
+        without setting it to null before returning.
+        This means either that the handler failed to process the input 
+        or succeeded processing it but the message is a broadcast-type message
+        meant to be processed by multiple states.
+        In this case the caller may offer the input to other sub-states
+        and might process the input itself.
     */
 
 	private IOException delayedIOException= null; /* Storage for an exception
