@@ -79,7 +79,7 @@ public class PeersCursor extends PersistentCursor {
       { // Store or update the fields in the found or created element.
         putFieldV( "IP", ipString );
         putFieldV( "Port", portString );
-        putFieldV( "isConnected", ""+isConnectedB);
+        putFieldV( "wasConnected", ""+isConnectedB);
         }
       
       return this;

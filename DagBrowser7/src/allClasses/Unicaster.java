@@ -148,7 +148,6 @@ public class Unicaster
 		  				theTCPCopier,
 		  				this,
 		  				thePersistent,
-		  				//// new StateList[] { theLinkMeasurementState }
 		  				theLinkMeasurementState
 		  	  		);
   				addStateListV( theLinkedMachineState );
@@ -164,20 +163,6 @@ public class Unicaster
     public EpiThread getEpiThread()
       {
         return theEpiThread;
-        }
-    
-    public void setForReconnectV(boolean connectB)
-      /* This method is called to determine the initial state
-        when the Unicaster is started.
-        connectB == true means do an initial connect.
-        connectB == false means do a reconnect.
-        Initial connects do retries.  Reconnects do no retries.
-        
-        This method does nothing but pass connectB to theLinkedMachineState, 
-        where the real connecting logic is.
-        */
-      { 
-        theLinkedMachineState.setForReconnectV(connectB); 
         }
 
     protected void finalizingV() throws IOException
@@ -235,6 +220,7 @@ public class Unicaster
 		    */
 			{
 	  		appLogger.info("runLoop() begins.");
+        processInputB( "Connect" ); // Process connect message.
 	      processingLoop: while (true) {
 	        if (EpiThread.testInterruptB()) // Exit loop if thread termination requested. 
 	          break processingLoop;
@@ -257,9 +243,9 @@ public class Unicaster
           ///dbg appLogger.debug("runLoop() after wait.");
 	      	} // processingLoop:
   			appLogger.info("runLoop() loop interrupted, stopping state machine.");
-  			// ? theTimer.cancel(); // Cancel all Timer events for debug tracing, ////dbg
-        setOfferedInputV( "Shutdown" ); // Set shutdown message.
-      	while (doOnInputsB()) ; // Cycle state machine until nothing remains to be done.
+  			// ? theTimer.cancel(); // Cancel all Timer events for debug tracing, ///dbg
+        while (doOnInputsB()) ; // Cycle state machine until nothing remains to be done.
+  			processInputB( "Shutdown" ); // Process shutdown message.
 				}
 	  
     

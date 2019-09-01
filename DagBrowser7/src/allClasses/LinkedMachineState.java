@@ -100,7 +100,7 @@ public class LinkedMachineState
         
         theConnectedState.setTargetDisconnectStateV(theBrokenConnectionState);
 
-    		setFirstOrSubStateV( theInitiatingConnectState );
+        setFirstOrSubStateV( theDisconnectedState ); // Initial state is Disconnected.
     		
 	  	  theTimerInput= // Creating our timer and linking it to this state. 
 			  		new TimerInput(  ///? Move to factory or parent?
@@ -118,13 +118,6 @@ public class LinkedMachineState
 	  	  return this;
 			  }
 	
-    public void setForReconnectV(boolean connectB)
-      { 
-        setFirstOrSubStateV( connectB 
-          ? theInitiatingReconnectState
-          : theInitiatingConnectState );
-        }
-
     public synchronized void finalizeV() throws IOException
 	    // This method processes any pending loose ends before app shutdown.
 		  {
@@ -167,9 +160,8 @@ public class LinkedMachineState
 	      */
 		  {
         if // Process local termination request, if present.
-          //// (EpiThread.testInterruptB())
           ( tryInputB("Shutdown") )
-          { // Process shutdown request by saving connect status, then disconnecting.
+          { // Process shutdown request by saving connection status, then disconnecting.
             IPAndPort remoteIPAndPort= theUnicaster.getKeyK();
             appLogger.debug( 
                 "LinkedMachineState.onInputsB() isConnectedB()="+ isConnectedB());
@@ -388,10 +380,12 @@ public class LinkedMachineState
 					  			break goReturn; // Return with signal true.
 					  			}
               if ( tryInputB("GOODBYE") ) { // Did peer disconnect itself?
+                sayGoodbyesV();
                 requestAncestorSubStateV( theDisconnectedState); // Yes, so do we.
                 break goReturn; // Return with signal true.
                 }
               if ( tryInputB("Disconnect") ) { // disconnect requested (for shutdown)?
+                sayGoodbyesV();
                 requestAncestorSubStateV( theDisconnectedState );
                 break goReturn; // Return with signal true.
                 }
@@ -406,22 +400,22 @@ public class LinkedMachineState
 					  }
 
 		    public void onExitV() throws IOException
-		      /* Informs the peer that we are disconnecting by 
-		        sending 3 GOODBYE messages.
-		        */
 		      { 
             appLogger.debug( "Exiting"+ getFormattedStatePathString() );
-            /*  ////  Moved.
-		        for (int i=0; i<3; i++) { // Send 3 GOODBYE packets.
-              theNetcasterOutputStream.writingTerminatedStringV( "GOODBYE" );
-              theNetcasterOutputStream.sendingPacketV(); // Forcing send.
-              }
-            */  ////
 		        super.onExitV();
 		        }
 		    
 	  		} // class ConnectedState
-    
+
+    private void sayGoodbyesV() throws IOException
+      /* This method sends 3 GOODBYEs, each in a seperate packet.  */
+      {
+        for (int i=0; i<3; i++) { // Send 3 GOODBYE packets.
+          theNetcasterOutputStream.writingTerminatedStringV( "GOODBYE" );
+          theNetcasterOutputStream.sendingPacketV(); // Forcing send.
+          }
+        }
+
     private class DisconnectedState extends StateList
 
       /* This state is entered when a voluntary disconnect occurs,
@@ -432,14 +426,7 @@ public class LinkedMachineState
       {
 
         public void onEntryV() throws IOException
-          /* Informs the peer that we are disconnecting by 
-            sending 3 GOODBYE messages.
-            */
           { 
-            for (int i=0; i<3; i++) { // Send 3 GOODBYE packets.
-              theNetcasterOutputStream.writingTerminatedStringV( "GOODBYE" );
-              theNetcasterOutputStream.sendingPacketV(); // Forcing send.
-              }
             super.onExitV();
             }
 
@@ -456,6 +443,9 @@ public class LinkedMachineState
                     theConnectedState
                     );
                 }
+            else if ( tryInputB("Connect") ) { // Connect requested, at startup.
+              requestAncestorSubStateV( theInitiatingReconnectState );
+              }
             }
 
         } // class DisconnectedState

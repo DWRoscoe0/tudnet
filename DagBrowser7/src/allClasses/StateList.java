@@ -683,7 +683,7 @@ public class StateList extends MutableList implements Runnable {
 		  	Maybe it should be called when andStateOnInputsB() is called?
 		  */
 		{ 
-      // appLogger.debug( "StateList.doOnEntryV() to"+ getFormattedStatePathString() ); ////
+      // appLogger.debug( "StateList.doOnEntryV() to"+ getFormattedStatePathString() );
 			if ( logB(TRACE)) logV( 
 					TRACE, "StateList.doOnEntryV() to"+ getFormattedStatePathString() );
 
@@ -950,8 +950,10 @@ public class StateList extends MutableList implements Runnable {
       while (doOnInputsB()) ; // Cycle state machine to try processing it.
       boolean successB= // Calculate whether input was consumed.
           (getOfferedInputString() == null);
-      if (!successB) // Reset input variable if value was not consumed.
-        resetOfferedInputV();
+      if (!successB) { // Handle not-consumed input.
+        appLogger.debug( "StateList processInputB(..) unprocessed: "+inputString);
+        resetOfferedInputV(); // Consume the input.
+        }
       return successB; // Returning result of the attempt.
       }
 

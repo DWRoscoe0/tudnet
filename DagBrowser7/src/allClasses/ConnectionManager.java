@@ -271,7 +271,6 @@ public class ConnectionManager
 					  Unicaster theUnicaster= 
 					    theUnicasterManager.getOrBuildAndAddUnicaster(
 				    		peerIPString, peerPortString ); // Restore peer with Unicaster.
-            theUnicaster.setForReconnectV(true); // Inject connection action.
 					  theUnicasterManager.startV(theUnicaster); // Start its thread.
 					  thePeersCursor.nextKeyString(); // Advance cursor.
 					  }

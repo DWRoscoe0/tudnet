@@ -85,7 +85,6 @@ public class UnicasterManager
         Unicaster theUnicaster= tryingToGetUnicaster( theIPAndPort );
         if ( theUnicaster == null ) {
           theUnicaster= buildAndAddUnicaster( theIPAndPort );
-          theUnicaster.setForReconnectV(false); // Inject connect action.
           startV(theUnicaster); // Start the Unicaster thread.
           }
 		    return theUnicaster;
