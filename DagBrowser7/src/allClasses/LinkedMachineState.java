@@ -166,12 +166,17 @@ public class LinkedMachineState
 	      theDisconnectedState if that state is not already active.
 	      */
 		  {
-        /*  //// if // Process local termination request, if present.
-          (EpiThread.testInterruptB())
-          { // Process local termination request by requesting disconnect.
-            requestSubStateChangeIfNeededB( theDisconnectedState );
+        if // Process local termination request, if present.
+          //// (EpiThread.testInterruptB())
+          ( tryInputB("Shutdown") )
+          { // Process shutdown request by saving connect status, then disconnecting.
+            IPAndPort remoteIPAndPort= theUnicaster.getKeyK();
+            appLogger.debug( 
+                "LinkedMachineState.onInputsB() isConnectedB()="+ isConnectedB());
+            PeersCursor.makeOnFirstEntryPeersCursor(thePersistent).
+              addInfoUsingPeersCursor(remoteIPAndPort, isConnectedB());
+            processInputB("Disconnect"); // Now cause disconnect.
             }
-        */  ////
         boolean returnB= // Try processing in OrState machine of superclass.
           super.onInputsB();
 		  	return returnB;
@@ -383,20 +388,16 @@ public class LinkedMachineState
 					  			break goReturn; // Return with signal true.
 					  			}
               if ( tryInputB("GOODBYE") ) { // Did peer disconnect itself?
-                requestAncestorSubStateV( // Yes, so we do the same.
-                    theDisconnectedState);
+                requestAncestorSubStateV( theDisconnectedState); // Yes, so do we.
                 break goReturn; // Return with signal true.
                 }
-              if // Process local termination request, if present.
-                (EpiThread.testInterruptB())
-                { // Process local termination request by requesting disconnect.
-                  requestAncestorSubStateV( theDisconnectedState );
-                  break goReturn; // Return with signal true.
-                  }
+              if ( tryInputB("Disconnect") ) { // disconnect requested (for shutdown)?
+                requestAncestorSubStateV( theDisconnectedState );
+                break goReturn; // Return with signal true.
+                }
               if ( tryInputB("Skipped-Time") ) { // Did we just wake up from sleep?
                 requestAncestorSubStateV( // Yes, so assume connection broke
-                    //// theInitiatingReconnectState); // and try to reestablish.
-                    theInitiatingConnectState); // and try to reestablish.
+                  theInitiatingConnectState); // and try to reestablish.
                 break goReturn; // Return with signal true.
                 }
 				  		signalB= false; // Everything failed.  Set no signal.

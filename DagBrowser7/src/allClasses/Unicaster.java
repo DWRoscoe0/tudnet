@@ -258,6 +258,7 @@ public class Unicaster
 	      	} // processingLoop:
   			appLogger.info("runLoop() loop interrupted, stopping state machine.");
   			// ? theTimer.cancel(); // Cancel all Timer events for debug tracing, ////dbg
+        setOfferedInputV( "Shutdown" ); // Set shutdown message.
       	while (doOnInputsB()) ; // Cycle state machine until nothing remains to be done.
 				}
 	  

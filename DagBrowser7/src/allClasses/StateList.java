@@ -938,34 +938,51 @@ public class StateList extends MutableList implements Runnable {
 			}
 
 
-	public boolean tryInputB(String testString) throws IOException
-	  /* This method tries to process a specific discrete input string.
-	    If testString equals the offered input string then 
-	    the offered input string is consumed and true is returned, 
-	    otherwise the offered input string
-	    is not consumed and false is returned.
-	    If true is returned then it is the responsibility of the caller
-	    to process other data associated with testString 
-	    which follows it in the input stream.
-	   	*/
-	  {
-			boolean successB= // Comparing requested discrete input to test input. 
-					(testString.equals(offeredInputString));
-		  if (successB) // Consuming offered input if it matched.
-			  {
-		  	  /*  ///dbg
-					if ( logB(DEBUG)) logV( 
-							DEBUG,
-							"StateList.tryInputB(..), \""
-					  	+ this.offeredInputString
-			  			+ "\" consumed by"
-			  			+ getFormattedStatePathString()
-			  			);
-			    */  ///dbg
-			  	offeredInputString= null; // Consume input string.
-			  	}
-			return successB; // Returning result of the comparison.
-		  }
+  public boolean processInputB(String inputString) throws IOException
+    /* This method processes a specific discrete input string, inputString,
+      It does this by offering the string and cycling the state machine.
+      If the string is processed by the machine, true is returned,
+      otherwise false is returned.
+      In either case, the offer variable is reset.
+      */
+    {
+      setOfferedInputV(inputString); // Store string in input variable.
+      while (doOnInputsB()) ; // Cycle state machine to try processing it.
+      boolean successB= // Calculate whether input was consumed.
+          (getOfferedInputString() == null);
+      if (!successB) // Reset input variable if value was not consumed.
+        resetOfferedInputV();
+      return successB; // Returning result of the attempt.
+      }
+
+  public boolean tryInputB(String testString) throws IOException
+    /* This method tries to process a specific discrete input string.
+      If testString equals the offered input string then 
+      the offered input string is consumed and true is returned, 
+      otherwise the offered input string
+      is not consumed and false is returned.
+      If true is returned then it is the responsibility of the caller
+      to process other data associated with testString 
+      which follows it in the input stream.
+      */
+    {
+      boolean successB= // Comparing requested discrete input to test input. 
+          (testString.equals(offeredInputString));
+      if (successB) // Consuming offered input if it matched.
+        {
+          /*  ///dbg
+          if ( logB(DEBUG)) logV( 
+              DEBUG,
+              "StateList.tryInputB(..), \""
+              + this.offeredInputString
+              + "\" consumed by"
+              + getFormattedStatePathString()
+              );
+          */  ///dbg
+          offeredInputString= null; // Consume input string.
+          }
+      return successB; // Returning result of the comparison.
+      }
 
 	protected String getOfferedInputString()
 	  // This method returns the discrete input string stored in this state.
