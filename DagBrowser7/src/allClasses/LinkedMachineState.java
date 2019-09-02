@@ -144,10 +144,9 @@ public class LinkedMachineState
 
   	public void onEntryV() throws IOException
 		  { 
+  	    super.onEntryV();
 			  retryTimeOutMsL=   // Initializing retry time-out.
 			  		retransmitDelayMsNamedLong.getValueL();
-
-			  super.onEntryV();
 				}
 
 	  public boolean onInputsB() throws IOException 
@@ -239,6 +238,7 @@ public class LinkedMachineState
 
         public void onEntryV() throws IOException
           {
+            super.onEntryV();
             theTimerInput.scheduleV(retryTimeOutMsL);
             }
     
@@ -289,6 +289,7 @@ public class LinkedMachineState
 
         public void onEntryV() throws IOException
           {
+            super.onEntryV();
             theTimerInput.scheduleV(Config.maxTimeOutMsL);
             }
     
@@ -308,11 +309,21 @@ public class LinkedMachineState
 		
 		private class ConnectedState extends AndState
 
-	  	/* This state means we are connected to the peer node.
+	  	/* This is a special state.
+	  	  Being in this state means we are connected to the peer node.
+	  	  This is the state in which inter-peer communication happens.
+	  	  
 	  	  This state handles the reception of any extra HELLO messages,
 	  	  which are HELLO messages received after the first one.
 	  	  Receiving HELLO messages here means that the remote peer
 	  	  did not receive the HELLO or HELLOs sent by us earlier.
+	  	  
+	  	  This state also contains the sub-state LinkedMeasurementState.
+	  	  This is used to monitor the health of the link to the peer,
+	  	  measuring packet losses and round-trip-time.
+	  	  
+	  	  Finally this state handles several conditions which can cause
+	  	  the state machine to exit this state.
 	  	  */
 
 	  	{
@@ -335,15 +346,13 @@ public class LinkedMachineState
 						}
 			
 				public void setTargetDisconnectStateV(
-				    BrokenConnectionState theBrokenConnectionState) 
+				    BrokenConnectionState theBrokenConnectionState)
+				  /* This method sells the LinkMeasurementState what state to request
+				    it it appears that the communication link to the peer is broken. 
+				     */
     			{
-				    theLinkMeasurementState.setTargetDisconnectStateV(
-	            theBrokenConnectionState);
+				    theLinkMeasurementState.setTargetDisconnectStateV(theBrokenConnectionState);
 				    }
-   
-        private boolean sentHelloB= true; 
-				  // True means previous HELLO was sent by us, not received by us.
-				  // It is used to prevent HELLO message storms.
 
 	    	public void onEntryV() throws IOException
 		  	  /* Informs TCPCopier about this new connection,
@@ -353,19 +362,25 @@ public class LinkedMachineState
 		  	    */
 		  	  {
 	    	    appLogger.debug( "Entering"+ getFormattedStatePathString() );
+            super.onEntryV();
 	    			IPAndPort remoteIPAndPort= theUnicaster.getKeyK();
 		    		theTCPCopier.queuePeerConnectionV(remoteIPAndPort);
 		    		PeersCursor.makeOnFirstEntryPeersCursor(thePersistent).
 		    		  addInfoUsingPeersCursor(remoteIPAndPort, thePeerIdentityString);
-		  	  	super.onEntryV();
 		  	  	}
+	      
+        private boolean sentHelloB= true; 
+          // True means previous HELLO was sent by us, not received by us.
+          // It is used by onInputsB() to prevent HELLO message storms.
 
 			  public boolean onInputsB() throws IOException
 			  	/* This method sends HELLO messages 
 			  	  in response to extra received HELLO messages.
-			  	  To prevent HELLO storms, response is made to only
-			  	  every other received HELLO.
-			  	  It also handles reception of the GOODBYE message by disconnecting. 
+			  	  To prevent HELLO storms because a response is made 
+			  	  to only every other received HELLO.
+			  	  It calls the sub-state handler for message processing.
+			  	  It also decodes various messages such as GOODBYE 
+			  	  that can cause the state machine to exit this state.
 			  	  */
 			  	{
 			  			boolean signalB= true; // Assume signal will be produced.
@@ -379,14 +394,14 @@ public class LinkedMachineState
 					  				sendHelloV(this); // send a HELLO this time.
 					  			break goReturn; // Return with signal true.
 					  			}
-              if ( tryInputB("GOODBYE") ) { // Did peer disconnect itself?
-                sayGoodbyesV();
-                requestAncestorSubStateV( theDisconnectedState); // Yes, so do we.
+              if ( tryInputB("GOODBYE") ) { // Peer disconnected itself by saying goodbye?
+                sayGoodbyesV(); // Respond to peer with our own goodbye.
+                requestAncestorSubStateV( theDisconnectedState); // Disconnect ourselves.
                 break goReturn; // Return with signal true.
                 }
-              if ( tryInputB("Disconnect") ) { // disconnect requested (for shutdown)?
-                sayGoodbyesV();
-                requestAncestorSubStateV( theDisconnectedState );
+              if ( tryInputB("Disconnect") ) { // Disconnect requested (for our shutdown)?
+                sayGoodbyesV(); // Inform peer.
+                requestAncestorSubStateV( theDisconnectedState); // Disconnect ourselves.
                 break goReturn; // Return with signal true.
                 }
               if ( tryInputB("Skipped-Time") ) { // Did we just wake up from sleep?
@@ -418,16 +433,27 @@ public class LinkedMachineState
 
     private class DisconnectedState extends StateList
 
-      /* This state is entered when a voluntary disconnect occurs,
-        for example when a GOODBYE message is received.
-        It will exit this state only when HELLO message is received.
+      /* This is an important state.
+        It is the first state after app startup.
+        It is the last state before app shutdown.
+        
+        This state does not use a timer, 
+        so it make no attempt on its own to end the state.
+        
+        This state will end only when it receives a request to do so,
+        which could be:
+        * A HELLO message received from the peer.
+        * A local Connect request received from ConnectionManager.
+        
+        This state will silently ignore any received GOODBYE message.
         */
 
       {
 
         public void onEntryV() throws IOException
           { 
-            super.onExitV();
+            super.onEntryV();
+            //// super.onExitV();
             }
 
         public void onInputsToReturnFalseV() throws IOException
@@ -445,6 +471,9 @@ public class LinkedMachineState
                 }
             else if ( tryInputB("Connect") ) { // Connect requested, at startup.
               requestAncestorSubStateV( theInitiatingReconnectState );
+              }
+            else if ( tryInputB("GOODBYE") ) { // Ignore any redundant GOODBYE message.
+              appLogger.info("GOODBYE received and ignored while in DisconnectedState.");
               }
             }
 
@@ -464,6 +493,7 @@ public class LinkedMachineState
         public void onEntryV() throws IOException
           // Initializes reconnect timer.
           {
+            super.onEntryV();
             theTimerInput.scheduleV(Config.reconnectTimeOutMsL);
             }
 

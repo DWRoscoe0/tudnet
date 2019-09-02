@@ -183,16 +183,17 @@ public class Unicaster
             "run() unicasters") 
             )
           return;
-
         /// appLogger.info("run() begins.");
         try { // Operations that might produce an IOException.
             /// appLogger.info("run() activating root state machine.");
 	          doOnEntryV(); // Recursively activate all states that should be. 
 	          /// appLogger.info("run() machine activated, doing first display.");
         		theDataTreeModel.displayTreeModelChangesV(); // Display our arrival.
+            processInputB( "Connect" ); // Make state machine process connect message.
 
 	      	  runLoop(); // Do actual input processing in a loop.
 
+	          processInputB( "Shutdown" ); // Make state machine process shutdown message.
 	      	  finalizingV();
 	  	    	theUnicasterManager.removingV( this ); // Removing self from tree.
 	  	    	  // This isn't really needed, but is a good test of display logic.
@@ -220,13 +221,12 @@ public class Unicaster
 		    */
 			{
 	  		appLogger.info("runLoop() begins.");
-        processInputB( "Connect" ); // Process connect message.
 	      processingLoop: while (true) {
 	        if (EpiThread.testInterruptB()) // Exit loop if thread termination requested. 
 	          break processingLoop;
           if (doOnInputsB()) // Do some pending state machine work...
             continue processingLoop; // ...and loop until its all done.
-          processUnprocessedInputV();
+          processUnprocessedInputV(); // Handle any left-over input.
 		    	if (theEpiInputStreamI.available() > 0) { // Try parsing more packet stream.
             String inString= theEpiInputStreamI.readAString(); // Get next token.
             setOfferedInputV( inString ); // Offer it to state machine.
@@ -245,7 +245,6 @@ public class Unicaster
   			appLogger.info("runLoop() loop interrupted, stopping state machine.");
   			// ? theTimer.cancel(); // Cancel all Timer events for debug tracing, ///dbg
         while (doOnInputsB()) ; // Cycle state machine until nothing remains to be done.
-  			processInputB( "Shutdown" ); // Process shutdown message.
 				}
 	  
     
