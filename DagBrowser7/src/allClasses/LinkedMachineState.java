@@ -33,6 +33,7 @@ public class LinkedMachineState
 		private Timer theTimer; ///opt.  use function parameter only. 
 		private Unicaster theUnicaster;
 		private Persistent thePersistent; 
+    private PeersCursor thePeersCursor;
 
 		// Other variables.
 		private String thePeerIdentityString= null;
@@ -61,6 +62,7 @@ public class LinkedMachineState
 					TCPCopier theTCPCopier,
 					Unicaster theUnicaster,
 					Persistent thePersistent, 
+					PeersCursor thePeersCursor,
 					LinkMeasurementState theLinkMeasurementState
 		  		)
 				throws IOException
@@ -75,6 +77,7 @@ public class LinkedMachineState
 				this.theTCPCopier= theTCPCopier;
 				this.theUnicaster= theUnicaster;
 				this.thePersistent= thePersistent; 
+        this.thePeersCursor= thePeersCursor;
 
 	  		// Adding measurement count.
 
@@ -164,8 +167,8 @@ public class LinkedMachineState
             IPAndPort remoteIPAndPort= theUnicaster.getKeyK();
             appLogger.debug( 
                 "LinkedMachineState.onInputsB() isConnectedB()="+ isConnectedB());
-            PeersCursor.makeOnFirstEntryPeersCursor(thePersistent).
-              addInfoUsingPeersCursor(remoteIPAndPort, isConnectedB());
+            //// PeersCursor.makeOnFirstEntryPeersCursor(thePersistent).
+            thePeersCursor.addInfoUsingPeersCursor(remoteIPAndPort, isConnectedB());
             processInputB("Disconnect"); // Now cause disconnect.
             }
         boolean returnB= // Try processing in OrState machine of superclass.
@@ -230,8 +233,6 @@ public class LinkedMachineState
         It retransmits HELLOs if a HELLO is not received,
         using exponential back-off.
         It will give up trying if no HELLO is received. 
-        It compares IP addresses to decide
-        which peer will lead and which will follow.
         */
 
       {
@@ -365,8 +366,9 @@ public class LinkedMachineState
             super.onEntryV();
 	    			IPAndPort remoteIPAndPort= theUnicaster.getKeyK();
 		    		theTCPCopier.queuePeerConnectionV(remoteIPAndPort);
-		    		PeersCursor.makeOnFirstEntryPeersCursor(thePersistent).
-		    		  addInfoUsingPeersCursor(remoteIPAndPort, thePeerIdentityString);
+		    		//// PeersCursor.makeOnFirstEntryPeersCursor(thePersistent).
+		    		thePeersCursor.addInfoUsingPeersCursor(
+		    		    remoteIPAndPort, thePeerIdentityString);
 		  	  	}
 	      
         private boolean sentHelloB= true; 

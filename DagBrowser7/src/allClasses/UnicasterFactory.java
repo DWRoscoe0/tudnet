@@ -65,6 +65,9 @@ public class UnicasterFactory {
 					"Retransmit-Delay (ms)",
 					Config.initialRoundTripTime100MsL * 2
 					);
+      PeersCursor thePeersCursor=
+          PeersCursor.makeOnFirstEntryPeersCursor(thePersistent).
+            addInfoUsingPeersCursor(unicasterIPAndPort, null);
 	    Unicaster theUnicaster= new Unicaster(
 	    		theUnicasterManager,
 	    		theSubcasterManager,
@@ -77,6 +80,7 @@ public class UnicasterFactory {
 			   	subcasterToUnicasterSubcasterQueue,
 			   	theTimer,
 			   	thePersistent,
+			   	thePeersCursor,
 		      retransmitDelayMsNamedLong,
 		      leadingDefaultBooleanLike,
 		      unicasterInputQueueOfStrings

@@ -64,8 +64,9 @@ public class Unicaster
       private final TCPCopier theTCPCopier;
       private final Timer theTimer;
       private final Persistent thePersistent;
+      private PeersCursor thePeersCursor;
       private NotifyingQueue<String> unicasterNotifyingQueueOfStrings;
-  		
+      
   		// Other instance variables.
       private EpiThread theEpiThread;
   		private LinkedMachineState theLinkedMachineState;
@@ -82,6 +83,7 @@ public class Unicaster
 	      SubcasterQueue subcasterToUnicasterSubcasterQueue, ///opt Subcasters?
 	  		Timer theTimer,
 	  		Persistent thePersistent,
+	  		PeersCursor thePeersCursor,
 	  		NamedLong retransmitDelayMsNamedLong,
 	  		DefaultBooleanLike leadingDefaultBooleanLike,
 	  		NotifyingQueue<String> unicasterNotifyingQueueOfStrings
@@ -113,6 +115,7 @@ public class Unicaster
 				  this.theTCPCopier= theTCPCopier;
 		  		this.theTimer= theTimer;
 		  		this.thePersistent= thePersistent;
+		      this.thePeersCursor= thePeersCursor;
 	        this.unicasterNotifyingQueueOfStrings= unicasterNotifyingQueueOfStrings;
 	      }
 
@@ -148,6 +151,7 @@ public class Unicaster
 		  				theTCPCopier,
 		  				this,
 		  				thePersistent,
+		          thePeersCursor,
 		  				theLinkMeasurementState
 		  	  		);
   				addStateListV( theLinkedMachineState );

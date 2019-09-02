@@ -89,7 +89,7 @@ public class TCPCopier extends EpiThread
 			  communicate at the same time.
 			*/
 
-    PeersCursor thePeersCursor= null;
+    PeersCursor thePeersCursor= null; // Used for scanning known peers.
 
     // Random number generator.
 		private static Random theRandom= new Random();
@@ -347,8 +347,8 @@ public class TCPCopier extends EpiThread
             resultL= tryTransferingFileL(
               clientSocket, clientFile, clientFile, clientFileLastModifiedL );
             
-            PeersCursor.makeOnFirstEntryPeersCursor(thePersistent).
-              addInfoUsingPeersCursor(
+            //// PeersCursor.makeOnFirstEntryPeersCursor(thePersistent).
+            thePeersCursor.addInfoUsingPeersCursor(
                   new IPAndPort(serverIPString, serverPortString),null);
             if (resultL != 0)
               appLogger.info( 
@@ -471,7 +471,7 @@ public class TCPCopier extends EpiThread
       {
         /// appLogger.debug( "reportPeerConnectionV(..): queuing peer." );
         peerQueueOfIPAndPort.add(remoteIPAndPort); // Add peer to queue.
-        notify(); // Wake up the TCPClient thread.
+        notify(); // Wake up the Client thread.
         }
 
 	  
