@@ -693,10 +693,13 @@ public class StateList extends MutableList implements Runnable {
 	public void onEntryV() throws IOException
 	  /* This method recursively enters each of its relevant sub-states.
 
-	    It may be overridden, but if it is, it should end with:
-
-			  super.onEntryV();
+	    It may be overridden in subclasses, but if it is, 
+	    those subclass methods should probably begin with a call to 
+	      super.onEntryV();
 			  
+			///opt  This method probably belongs in class AndOrState,
+			  and this method should be an empty method.
+			  Maybe there should be a class LeafState for use by leaf state subclasses.
 	    */
 	  { 
 			/// super.onEntryV();
