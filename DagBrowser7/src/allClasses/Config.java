@@ -57,7 +57,8 @@ public class Config
   		600000; // 10 minutes.
   		// 3600000; // 1 hour for testing by effectively disabling multicasting.
 		public static final long pingReplyHandshakePeriod2000MsL= 2000;
-		public static final long reconnectTimeOutMsL= 120000;
+    public static final long reconnectTimeOutMsL= 120000;
+    public static final long slowPeriodicRetryTimeOutMsL= 60000;
 		
 		public static final long systemsMonitorPeriod1000MsL= 1000;
 	
