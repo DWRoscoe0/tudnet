@@ -62,11 +62,13 @@ public class PeersCursor extends PersistentCursor {
       return this;
       }
 
+  /*  ////
   public PeersCursor addInfoUsingPeersCursor(
       IPAndPort theIPAndPort, boolean isConnectedB)
     /* This method adds the provided information to the current peer.  
       If there is none, create one based on that information.
       */
+  /*  ////
     { 
       String ipString= theIPAndPort.getIPString();
       String portString= String.valueOf(theIPAndPort.getPortI());
@@ -84,6 +86,7 @@ public class PeersCursor extends PersistentCursor {
       
       return this;
       }
+  */  ////
 
   public PeersCursor searchForEntryInPeersCursor(
       String ipString, String portString)

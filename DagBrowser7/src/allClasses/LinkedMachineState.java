@@ -161,11 +161,13 @@ public class LinkedMachineState
         if // Process local termination request, if present.
           ( tryInputB("Shutdown") )
           { // Process shutdown request by saving connection status, then disconnecting.
-            IPAndPort remoteIPAndPort= theUnicaster.getKeyK();
+            //// IPAndPort remoteIPAndPort= theUnicaster.getKeyK();
             appLogger.debug( 
                 "LinkedMachineState.onInputsB() isConnectedB()="+ isConnectedB());
             //// PeersCursor.makeOnFirstEntryPeersCursor(thePersistent).
-            thePeersCursor.addInfoUsingPeersCursor(remoteIPAndPort, isConnectedB());
+            //// thePeersCursor.addInfoUsingPeersCursor(remoteIPAndPort, isConnectedB());
+            thePeersCursor.putFieldV( "wasConnected", isConnectedB());
+
             processInputB("Disconnect"); // Now cause disconnect.
             }
         boolean returnB= // Try processing in OrState machine of superclass.

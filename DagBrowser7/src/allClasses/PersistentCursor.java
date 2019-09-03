@@ -206,26 +206,46 @@ public class PersistentCursor
         return entriesPersistingNode;
         }
 		
-		public String getFieldString( String fieldKeyString )
-		  /* This method returns the value of the field whose key is fieldKeyString
-		    in the present list element's PersistingNode.
-		    */
-			{
-				String fieldValueString= entryPersistingNode.getChildString(fieldKeyString);
-				// appLogger.debug( "PersistentCursor.getFieldString( "
-				// 		+fieldKeyString+" ) returning:"+fieldValueString);
-				return fieldValueString;
-				}
-		
-		public void putFieldV( String fieldKeyString, String fieldValueString )
-		  /* This method stores fieldValueString into the field whose name is fieldKeyString
-		    in the presently selected list element's PersistingNode.
-		    */
-			{ 
-				entryPersistingNode.putChildV( fieldKeyString, fieldValueString );
-				// appLogger.debug(
-				// "PersistentCursor.putFieldV( "+fieldKeyString+"= "+fieldValueString);
-				}
+    
+    // Methods that access fields of selected PersistingNode.
+    
+    public boolean getFieldB( String fieldKeyString )
+      /* This method returns the boolean value of the field whose key is fieldKeyString
+        in the present list element's PersistingNode.
+        */
+      {
+        String fieldValueString= entryPersistingNode.getChildString(fieldKeyString);
+        return Boolean.parseBoolean( fieldValueString );
+        }
+    
+    public String getFieldString( String fieldKeyString )
+      /* This method returns the value of the field whose key is fieldKeyString
+        in the present list element's PersistingNode.
+        */
+      {
+        String fieldValueString= entryPersistingNode.getChildString(fieldKeyString);
+        // appLogger.debug( "PersistentCursor.getFieldString( "
+        //    +fieldKeyString+" ) returning:"+fieldValueString);
+        return fieldValueString;
+        }
+
+    public void putFieldV( String fieldKeyString, boolean fieldValueB )
+      /* This method stores fieldValueB into the field whose name is fieldKeyString
+        in the presently selected list element's PersistingNode.
+        */
+      { 
+        entryPersistingNode.putChildV( fieldKeyString, ""+fieldValueB );
+        }
+
+    public void putFieldV( String fieldKeyString, String fieldValueString )
+      /* This method stores fieldValueString into the field whose name is fieldKeyString
+        in the presently selected list element's PersistingNode.
+        */
+      { 
+        entryPersistingNode.putChildV( fieldKeyString, fieldValueString );
+        // appLogger.debug(
+        // "PersistentCursor.putFieldV( "+fieldKeyString+"= "+fieldValueString);
+        }
 		
 		
 		// Finalization code: none.

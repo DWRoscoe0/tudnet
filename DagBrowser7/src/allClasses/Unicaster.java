@@ -192,8 +192,10 @@ public class Unicaster
             /// appLogger.info("run() activating root state machine.");
 	          doOnEntryV(); // Recursively activate all states that should be. 
 	          /// appLogger.info("run() machine activated, doing first display.");
-        		theDataTreeModel.displayTreeModelChangesV(); // Display our arrival.
-            processInputB( "Connect" ); // Make state machine process connect message.
+        		theDataTreeModel.displayTreeModelChangesV(); // Display tree after arrival.
+        		if // Reconnect if we were connected.
+        		  (thePeersCursor.getFieldB("wasConnected"))
+        		  processInputB( "Connect" ); // Make state machine process connect message.
 
 	      	  runLoop(); // Do actual input processing in a loop.
 
@@ -203,7 +205,7 @@ public class Unicaster
 	  	    	  // This isn't really needed, but is a good test of display logic.
 	  	    	/// appLogger.info("run() after remove and before final display.");
 	      		Nulls.fastFailNullCheckT(theDataTreeModel);
-	      		theDataTreeModel.displayTreeModelChangesV(); // Display removal.
+	      		theDataTreeModel.displayTreeModelChangesV(); // Display tree after removal.
           	}
           catch( IOException e ) {
           	Globals.logAndRethrowAsRuntimeExceptionV( 
