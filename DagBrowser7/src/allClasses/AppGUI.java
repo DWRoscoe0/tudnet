@@ -143,7 +143,6 @@ public class AppGUI
 
         // Now the app is shutting down.
         theTCPCopier.finalizeV();
-        //// theTCPServer.stopAndJoinV();
         theCPUMonitorEpiThread.stopAndJoinV();
         theDataTreeModel.logListenersV(); ///dbg
         theConnectionManagerEpiThread.stopAndJoinV( );
@@ -252,31 +251,31 @@ class GUIManager
       {
         appLogger.info("GUIManager.finalizeOnV() called.");
         theDagBrowserPanel.finalizationV(); // To terminate ActivityTimer.
-          ////fix For some reason, this fails when run on EDT!
+          ///fix For some reason, this fails when run on EDT!
         EDTUtilities.invokeAndWaitV( // Dispatching on EDT
             new Runnable() {
               @Override
               public void run() { 
-                //// appLogger.info("GUIManager.finalizeOnV() invokeAndWaitV() run() begins.");
+                // appLogger.info("GUIManager.finalizeOnV() invokeAndWaitV() run() begins.");
                 finalizeOnEDTV();  
-                //// appLogger.info("GUIManager.finalizeOnV() invokeAndWaitV() run() ends.");
+                // appLogger.info("GUIManager.finalizeOnV() invokeAndWaitV() run() ends.");
                 } } );
-        //// appLogger.info("GUIManager.finalizeOnV() ends.");
+        // appLogger.info("GUIManager.finalizeOnV() ends.");
         }
     
     public void finalizeOnEDTV()
       /* This method does finalization.  It must be run on the EDT.
         */
       { 
-         //// appLogger.info("GUIManager.finalizeOnEDTV() begins.");
-         //// appLogger.info("GUIManager.finalizeOnEDTV() after theDagBrowserPanel.finalizationV().");
+         // appLogger.info("GUIManager.finalizeOnEDTV() begins.");
+         // appLogger.info("GUIManager.finalizeOnEDTV() after theDagBrowserPanel.finalizationV().");
         for (Window aWindow : Window.getWindows()) {
           appLogger.info(
               "GUIManager.finalizeOnEDTV() disposing Window titled: "
               +((Frame)aWindow).getTitle());
           aWindow.dispose(); // Do this so Event Dispatch Thread terminates.
           }
-        //// appLogger.info("GUIManager.finalizeOnEDTV() ends.");
+        // appLogger.info("GUIManager.finalizeOnEDTV() ends.");
         }
     
 		public boolean dispatchKeyEvent(KeyEvent theKeyEvent)

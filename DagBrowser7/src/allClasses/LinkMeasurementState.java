@@ -127,7 +127,7 @@ public class LinkMeasurementState
 			  return this;
 			  }
     
-    public void setTargetDisconnectStateV(StateList theBrokenConnectionState) ////// 
+    public void setTargetDisconnectStateV(StateList theBrokenConnectionState) ///org 
       {
 
         theLocalMeasurementState.theBrokenConnectionState= theBrokenConnectionState; 

@@ -11,7 +11,6 @@ public class App { // The App, especially pre-GUI stuff.
   Persistent thePersistent;
   Shutdowner theShutdowner;
   AppInstanceManager theAppInstanceManager;
-  //// TCPCopier.TCPServer theTCPServer;
   TCPCopier theTCPCopier;
 
   public App(   // Constructor.  For app creation.
@@ -19,7 +18,6 @@ public class App { // The App, especially pre-GUI stuff.
       Persistent thePersistent,
       Shutdowner theShutdowner,
       AppInstanceManager theAppInstanceManager,
-      //// TCPCopier.TCPServer theTCPServer,
       TCPCopier theTCPCopier
       )
     {
@@ -27,7 +25,6 @@ public class App { // The App, especially pre-GUI stuff.
   	  this.thePersistent= thePersistent; 
       this.theShutdowner= theShutdowner;
       this.theAppInstanceManager= theAppInstanceManager;
-      ////this.theTCPServer= theTCPServer;
       this.theTCPCopier= theTCPCopier;
       }
 

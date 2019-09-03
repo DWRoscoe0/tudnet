@@ -2,8 +2,6 @@ package allClasses;
 
 import static allClasses.Globals.appLogger;
 
-//// import static allClasses.Globals.appLogger;
-
 import java.io.IOException;
 import java.net.DatagramPacket;
 

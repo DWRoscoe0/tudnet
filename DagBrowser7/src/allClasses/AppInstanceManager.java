@@ -425,7 +425,7 @@ l    * If the app receives a message indicating
         
         processFeedbackPortV(theCommandArgs);
         tryUpdateCommandsV(theCommandArgs); // Try the update subset.
-        startCommandArgs.switchValue("-tempDir"); //// Use temporary directory switch. 
+        startCommandArgs.switchValue("-tempDir"); /// Use temporary directory switch. 
 
         { // Log any unprocessed/ungotten arguments.
           String[] targetStrings= // Get remaining arguments.
@@ -829,7 +829,6 @@ l    * If the app receives a message indicating
   	          ( runningAppFile.equals( standardAppFile ) )
   	          break toExit;
 	          if // Running app is not The date stamps are not equal.
-              //// (runningAppFile.lastModified() != standardAppFile.lastModified())
               (runningAppFile.lastModified() > standardAppFile.lastModified())
 	            break toExit;
             appLogger.info("Will run identical or newer app in standard folder.");
@@ -990,7 +989,7 @@ l    * If the app receives a message indicating
           theArrayListOfStrings.add("-starterPort"); // For feedback...
           theArrayListOfStrings.add( // ...using this port.
               ""+startCommandArgs.switchLongValue("-starterPort",0L));
-          //// theArrayListOfStrings.add("SENTINEL"); // ///dbg
+          // theArrayListOfStrings.add("SENTINEL"); // ///dbg
 
           theShutdowner.setExitStringsV( // Set command String from array.
               theArrayListOfStrings.toArray(new String[0]));

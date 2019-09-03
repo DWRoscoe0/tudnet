@@ -24,15 +24,6 @@ public class DefaultExceptionHandler {
             System.out.println( headString + e);
             appLogger.exception( headString, e );
             appLogger.closeFileIfOpenB(); // Close log for exit.
-
-            /*  ////
-            appLogger.setBufferedModeV( false ); // Disabling buffering.
-            appLogger.error( "Uncaught Exception: "+e );
-            StringWriter aStringWriter= new StringWriter();
-            PrintWriter aPrintWriter= new PrintWriter(aStringWriter);
-            e.printStackTrace(aPrintWriter);
-            appLogger.info( "Stack trace: "+aStringWriter.toString() );
-            */  ////
             }
           }
         );

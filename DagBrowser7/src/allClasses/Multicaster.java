@@ -329,7 +329,6 @@ public class Multicaster
     	              } // Send and receive multicast packets.
     	
     	          theMulticastSocket.disconnect();  // Stopping filtering?  Filtering?
-    	          //// theMulticastSocket.close();  // Freeing associated OS resource.
     	          stoppingMulticastReceiverThreadV();
     	          }
             for(int i=3; i>0; i--){ // Say goodbye 3 times...

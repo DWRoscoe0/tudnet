@@ -41,10 +41,8 @@ public class LinkedMachineState
 		// Sub-state-machine instances.
     private DisconnectedState theDisconnectedState;
     private ExponentialRetryConnectingState theExponentialRetryConnectingState;
-    //// private InitiatingReconnectState theInitiatingReconnectState;
     private SlowPeriodicRetryConnectingState theSlowPeriodicRetryConnectingState;
     private ConnectedState theConnectedState;
-    //// private BrokenConnectionState theBrokenConnectionState;
     
 		LinkedMachineState(  // Constructor.
 				)
@@ -83,20 +81,16 @@ public class LinkedMachineState
     		// Construct all sub-states of this state machine.
         theDisconnectedState= new DisconnectedState();
 				theExponentialRetryConnectingState= new ExponentialRetryConnectingState();
-        //// theInitiatingReconnectState= new InitiatingReconnectState();
         theSlowPeriodicRetryConnectingState= new SlowPeriodicRetryConnectingState();
         theConnectedState= new ConnectedState();
-        //// theBrokenConnectionState= new BrokenConnectionState();
 
         // Initialize add to DAG all sub-states of this state machine.
         // Not all sub-states get default initialization.
         initAndAddStateListV(theDisconnectedState);
         initAndAddStateListV(theExponentialRetryConnectingState);
-        //// initAndAddStateListV(theInitiatingReconnectState);
         initAndAddStateListV(theSlowPeriodicRetryConnectingState);
         addStateListV(theConnectedState.initializeWithIOExceptionStateList(
             theLinkMeasurementState));
-        //// initAndAddStateListV(theBrokenConnectionState);
         
         theConnectedState.setTargetDisconnectStateV(theSlowPeriodicRetryConnectingState);
 
@@ -161,11 +155,8 @@ public class LinkedMachineState
         if // Process local termination request, if present.
           ( tryInputB("Shutdown") )
           { // Process shutdown request by saving connection status, then disconnecting.
-            //// IPAndPort remoteIPAndPort= theUnicaster.getKeyK();
             appLogger.debug( 
                 "LinkedMachineState.onInputsB() isConnectedB()="+ isConnectedB());
-            //// PeersCursor.makeOnFirstEntryPeersCursor(thePersistent).
-            //// thePeersCursor.addInfoUsingPeersCursor(remoteIPAndPort, isConnectedB());
             thePeersCursor.putFieldV( "wasConnected", isConnectedB());
 
             processInputB("Disconnect"); // Now cause disconnect.
@@ -227,7 +218,6 @@ public class LinkedMachineState
         public void onEntryV() throws IOException
           { 
             super.onEntryV();
-            //// super.onExitV();
             }
 
         public void onInputsToReturnFalseV() throws IOException
@@ -283,33 +273,12 @@ public class LinkedMachineState
                   (theTimerInput.rescheduleB(Config.maxTimeOutMsL))
                   requestAncestorSubStateV( // Switch to different type of retrying.
                       theSlowPeriodicRetryConnectingState);
-                    //// theBrokenConnectionState); // going to broken connection.
                   else
                   sendHelloV(this); // Not at max time-out so resend hello.
                 }
             }
   
           } // class ExponentialRetryConnectingState
-
-    /*  ////
-    private class InitiatingReconnectState extends StateList 
-
-      /* This state is used to restore an old connection.
-        It sends a HELLO message to the remote peer
-        and then transitions to the CompletingReconnectState.
-        */
-    /*  ////
-
-      {
-    
-        public void onInputsToReturnFalseV() throws IOException
-          {
-            sendHelloV(this);
-            requestAncestorSubStateV(theSlowPeriodicRetryConnectingState);
-            }
-  
-        } // class InitiatingReconnectState
-    */  ////
 
     private class SlowPeriodicRetryConnectingState extends StateList 
 
@@ -325,7 +294,6 @@ public class LinkedMachineState
         public void onEntryV() throws IOException
           {
             super.onEntryV();
-            //// theTimerInput.scheduleV(Config.maxTimeOutMsL);
             theTimerInput.scheduleV(Config.slowPeriodicRetryTimeOutMsL);
             }
     
@@ -338,7 +306,6 @@ public class LinkedMachineState
               { // Send another HELLO and keep waiting.
                 sendHelloV(this); // send a HELLO this time.
                 requestAncestorSubStateV( this ); // Continue by requesting this state. 
-                    //// theSlowPeriodicRetryConnectingState );
                 }
             }
   
@@ -403,7 +370,6 @@ public class LinkedMachineState
             super.onEntryV();
 	    			IPAndPort remoteIPAndPort= theUnicaster.getKeyK();
 		    		theTCPCopier.queuePeerConnectionV(remoteIPAndPort);
-		    		//// PeersCursor.makeOnFirstEntryPeersCursor(thePersistent).
 		    		thePeersCursor.addInfoUsingPeersCursor(
 		    		    remoteIPAndPort, thePeerIdentityString);
 		  	  	}
@@ -471,47 +437,6 @@ public class LinkedMachineState
           }
         }
 
-    /*  ////
-    private class BrokenConnectionState extends StateList
-
-      /* This state is entered when a connection involuntarily fails
-        because packets could not be exchanged by the two peers.
-        It will go to the ConnectedState when a HELLO message is received.
-        It will go to the theInitiatingReconnectState
-        if the reconnect period passes.
-        */
-    /*  ////
-
-      {
-
-        public void onEntryV() throws IOException
-          // Initializes reconnect timer.
-          {
-            super.onEntryV();
-            theTimerInput.scheduleV(Config.reconnectTimeOutMsL);
-            }
-
-        public void onInputsToReturnFalseV() throws IOException
-          {
-            if (tryReceivingHelloB(this))
-              {
-                sendHelloV(this); // Send a response HELLO.
-                requestAncestorSubStateV(theConnectedState);
-                }
-            else if (theTimerInput.testInputArrivedB()) // Time to try again? 
-              requestAncestorSubStateV(theInitiatingReconnectState);
-            }
-
-        public void onExitV() throws IOException
-          // Cancels timer.
-          { 
-            theTimerInput.cancelingV();
-            super.onExitV();
-            }
-
-        } // class BrokenConnectionState
-    */  ////
-
   	private boolean tryReceivingHelloB(StateList subStateList) 
   			throws IOException
   	  /* This method tries to receive and process the Hello message,
@@ -569,7 +494,7 @@ public class LinkedMachineState
   	    The HELLO message includes the IP address of the remote peer.
   	    */
 	  	{
-    	  sendDebugCountV(); ////
+    	  sendDebugCountV();
     	  theNetcasterOutputStream.writingTerminatedStringV( "HELLO" );
 		    theNetcasterOutputStream.writingTerminatedStringV( 
 						theUnicaster.getKeyK().getInetAddress().getHostAddress() 

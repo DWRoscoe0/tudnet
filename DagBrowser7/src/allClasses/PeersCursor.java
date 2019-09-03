@@ -62,32 +62,6 @@ public class PeersCursor extends PersistentCursor {
       return this;
       }
 
-  /*  ////
-  public PeersCursor addInfoUsingPeersCursor(
-      IPAndPort theIPAndPort, boolean isConnectedB)
-    /* This method adds the provided information to the current peer.  
-      If there is none, create one based on that information.
-      */
-  /*  ////
-    { 
-      String ipString= theIPAndPort.getIPString();
-      String portString= String.valueOf(theIPAndPort.getPortI());
-      
-      searchForEntryInPeersCursor(ipString, portString);
-      if (getEntryKeyString().isEmpty()) { // Create new element if needed.
-        createEntryInPersistentCursor(); // Create new element.
-        }
-      
-      { // Store or update the fields in the found or created element.
-        putFieldV( "IP", ipString );
-        putFieldV( "Port", portString );
-        putFieldV( "wasConnected", ""+isConnectedB);
-        }
-      
-      return this;
-      }
-  */  ////
-
   public PeersCursor searchForEntryInPeersCursor(
       String ipString, String portString)
     /* This method searches for the entry that matches the arguments.  

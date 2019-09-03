@@ -73,7 +73,6 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
         appLogger.info("run(): begins");
         try { // Doing operations that might produce an IOException.
           while  // Receiving and queuing packets unless termination is
-            ////( ! EpiThread.exitingB() ) // requested.
             ( ! EpiThread.testInterruptB() ) // requested.
             { // Receiving and queuing one packet appropriately.
               try {
