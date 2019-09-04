@@ -683,7 +683,7 @@ public class StateList extends MutableList implements Runnable {
 		  	Maybe it should be called when andStateOnInputsB() is called?
 		  */
 		{ 
-      // appLogger.debug( "StateList.doOnEntryV() to"+ getFormattedStatePathString() );
+      appLogger.debug( "StateList.doOnEntryV() to"+ getFormattedStatePathString() );
 			if ( logB(TRACE)) logV( 
 					TRACE, "StateList.doOnEntryV() to"+ getFormattedStatePathString() );
 
@@ -995,19 +995,19 @@ public class StateList extends MutableList implements Runnable {
 			return offeredInputString;
 		  }
 
-	public void setOfferedInputV(String offeredInputString)
+	public void setOfferedInputV(String newOfferedInputString)
 		/* This method stores offeredInputString within this state
 		  for possible input by the state.
 		 	*/
 	  {
 			{ // Log anomalous behavior first.
 				String anomalyString= null;
-			  if ( offeredInputString == null )
+			  if ( newOfferedInputString == null )
 			  	anomalyString= 
-			  	  offeredInputString + " value is ILLEGAL input to";
+			  	  newOfferedInputString + " value is ILLEGAL input to";
 			  else if ( this.offeredInputString != null ) 
 				  	anomalyString= 
-				  		this.offeredInputString + " was NOT consumed by";
+				  		"Old input '" + this.offeredInputString + "' was NOT consumed by";
 			  if ( anomalyString != null ) // Log if anomaly produced.
 			  	appLogger.warning(
 			  			"StateList.setDiscreteInputV..), "
@@ -1016,7 +1016,7 @@ public class StateList extends MutableList implements Runnable {
 			  			);
 				}
 
-			this.offeredInputString= offeredInputString; // Store new input.
+			this.offeredInputString= newOfferedInputString; // Store new input.
 		  }
 
 	public void resetOfferedInputV()

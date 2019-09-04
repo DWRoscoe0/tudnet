@@ -417,20 +417,23 @@ public class ConnectionManager
         }
 
     private void stoppingUnicastReceiverThreadV()
+      /* This method stops the receiver thread by closing its socket,
+        in addition to the usual way of interrupting the thread.
+        This must be done because the DatagramSocket.receive(DatagramPacket)
+        method is not interruptible by any method except
+        closing the associated socket.
+        */
 	    {
-        EpiDatagramSocket.closeIfNotNullV(  // Causing unblock and termination.
-    				unconnectedDatagramSocket
-    				); // Strangely, closing can require 2 to 3 seconds.
-        appLogger.info(
+        appLogger.info( // Note this special situation in log.
             "ConnectionManager.stoppingUnicastReceiverThreadV()."
-            +"\n  This may require several seconds Socket to close.");
+            +"\n  This may take several seconds for Socket to close.");
+        EpiDatagramSocket.closeIfNotNullV( // Close socket to allow termination.
+    				unconnectedDatagramSocket
+    				); // Strangely, closing can be immediate, take seconds, or even minutes!
     		EpiThread.stopAndJoinIfNotNullV(theUnconnectedReceiverEpiThread);
         }
 
     private void stoppingSenderThreadV()
-      /* This method stops the sender thread by closing its socket.
-       * 
-       */
 	    {
     		EpiThread.stopAndJoinIfNotNullV(theSenderEpiThread);
 		  	}

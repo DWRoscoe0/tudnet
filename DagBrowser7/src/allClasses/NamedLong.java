@@ -37,7 +37,7 @@ public class NamedLong
 	      */
       {
     	  if (deltaL != 0) // Logging deltaL if it's not 0.
-		  		appLogger.warning( this.getNameString( )+" changed by "+deltaL );
+		  		appLogger.debug( this.getNameString( )+" changed by "+deltaL );
 	  	  return addDeltaL( deltaL ); // Doing the add.
         }
 

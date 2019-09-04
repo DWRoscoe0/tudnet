@@ -261,16 +261,19 @@ public class Unicaster
         Other messages are logged and ignored.
        */
       {
-        toReturn: {
           String inputString= getOfferedInputString();
-          if ( inputString == null ) break toReturn; // No unprocessed input.
+        toReturn: { 
+        toConsumeInput: { 
+          if ( inputString == null ) break toReturn;
           if (inputString.equals("DEBUG")) { // Ignore any debug message
             theEpiInputStreamI.readAString(); // and its message count argument.
-            break toReturn;
+            break toConsumeInput;
             }
           appLogger.info("processUnprocessedInputV() input= "+inputString);
+        } // toConsumeInput: 
           resetOfferedInputV();  // consume unprocessed input.
-          } // toReturn:
+        } // toReturn:
+          return;
         }
 
     public boolean onInputsV() throws IOException

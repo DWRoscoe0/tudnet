@@ -264,17 +264,25 @@ public class LinkedMachineState
     
         public void onInputsToReturnFalseV() throws IOException
           {
-            if (tryReceivingHelloB(this)) // Try to process first HELLO.
+            if (tryReceivingHelloB(this)) // Try to process HELLO.
               requestAncestorSubStateV( // Success.  Request connected state.
                   theConnectedState );
             else if (theTimerInput.testInputArrivedB()) // Try Time-out? 
               {
-                if // Reschedule time-out with exponential back-off. 
-                  (theTimerInput.rescheduleB(Config.maxTimeOutMsL))
-                  requestAncestorSubStateV( // Switch to different type of retrying.
-                      theSlowPeriodicRetryConnectingState);
+                boolean limitReachedB= // Reschedule time-out with exponential back-off
+                    (theTimerInput.rescheduleB(
+                        Config.maxTimeOutMsL)); // up to this limit.
+                if (! limitReachedB)
+                  sendHelloV(this); // Not at max time-out so re-send hello and
+                    // stay in this state.
                   else
-                  sendHelloV(this); // Not at max time-out so resend hello.
+                  { // End exponential backup by switching to another state.
+                    appLogger.info(
+                        "Time-out limit reached in"+getFormattedStatePathString());
+                    sendHelloV(this); // Initial HELLO for next state.
+                    requestAncestorSubStateV( // Switch to different type of retrying.
+                        theSlowPeriodicRetryConnectingState);
+                    }
                 }
             }
   
@@ -305,7 +313,9 @@ public class LinkedMachineState
             else if (theTimerInput.testInputArrivedB()) // Time-out? 
               { // Send another HELLO and keep waiting.
                 sendHelloV(this); // send a HELLO this time.
-                requestAncestorSubStateV( this ); // Continue by requesting this state. 
+                theTimerInput.scheduleV( // Restart timer.
+                    Config.slowPeriodicRetryTimeOutMsL);
+                //// requestAncestorSubStateV( this ); // Continue by requesting this state. 
                 }
             }
   
@@ -366,7 +376,7 @@ public class LinkedMachineState
 		  	    for faster connecting after app restart.
 		  	    */
 		  	  {
-	    	    appLogger.debug( "Entering"+ getFormattedStatePathString() );
+	    	    // appLogger.debug( "Entering"+ getFormattedStatePathString() );
             super.onEntryV();
 	    			IPAndPort remoteIPAndPort= theUnicaster.getKeyK();
 		    		theTCPCopier.queuePeerConnectionV(remoteIPAndPort);
@@ -422,7 +432,7 @@ public class LinkedMachineState
 
 		    public void onExitV() throws IOException
 		      { 
-            appLogger.debug( "Exiting"+ getFormattedStatePathString() );
+            // appLogger.debug( "Exiting"+ getFormattedStatePathString() );
 		        super.onExitV();
 		        }
 		    
