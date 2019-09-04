@@ -55,8 +55,10 @@ public class Config
 		public static final long pingReplyHandshakePeriod2000MsL= 2000;
     public static final long reconnectTimeOutMsL= 120000;
     public static final long slowPeriodicRetryTimeOutMsL= 60000;
-		
-		public static final long systemsMonitorPeriod1000MsL= 1000;
+    
+    public static final long threadJoinTimeOutMsL= 5000;
+    
+    public static final long systemsMonitorPeriod1000MsL= 1000;
 	
 		public static final long initialRoundTripTime100MsL= 25;  /// 1000; ///dbg 100
 		  ///dbg High to allow response before time-out for testing.  Was 25;
