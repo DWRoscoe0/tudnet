@@ -43,7 +43,7 @@ public class Config
 	  public static final String tcpCopierOutputFolderString= "TCPCopierStaging";
 
 	  
-	  public static final long maxTimeOutMsL= 5000;
+	  public static final long maxTimeOutMsL= 10000;
 		public static final long measurementPauseMsL= 60000; 
 		public static final long fileCopyRetryPause1000MsL= 1000;
 		public static final long errorRetryPause1000MsL= 1000;
