@@ -238,7 +238,7 @@ public class LinkedMachineState
               requestAncestorSubStateV( theExponentialRetryConnectingState );
               }
             else if ( tryInputB("GOODBYE") ) { // Ignore any redundant GOODBYE message.
-              appLogger.info("GOODBYE received and ignored while in DisconnectedState.");
+              // appLogger.info("GOODBYE received and ignored while in DisconnectedState.");
               }
             }
 
@@ -376,7 +376,7 @@ public class LinkedMachineState
 		  	    for faster connecting after app restart.
 		  	    */
 		  	  {
-	    	    // appLogger.debug( "Entering"+ getFormattedStatePathString() );
+	    	    appLogger.debug( "Entering"+ getFormattedStatePathString() );
             super.onEntryV();
 	    			IPAndPort remoteIPAndPort= theUnicaster.getKeyK();
 		    		theTCPCopier.queuePeerConnectionV(remoteIPAndPort);
@@ -403,10 +403,12 @@ public class LinkedMachineState
 				  		if ( super.onInputsB() ) // Try processing in sub-state machine.
 				  			break goReturn; // Return with signal true.
 				  		if (tryReceivingHelloB(this)) { // Try to process an extra HELLO.
-					        appLogger.warning( "Extra HELLO received." );
+					        appLogger.debug( "Extra HELLO received." );
 					  			if  // If we received a HELLO and 
-					  			  ( sentHelloB^= true ) // we didn't send one last time,
+					  			  ( sentHelloB^= true ) { // we didn't send one last time,
 					  				sendHelloV(this); // send a HELLO this time.
+		                requestAncestorSubStateV(this); // Reenter this to reset sub-states.
+					  			  }
 					  			break goReturn; // Return with signal true.
 					  			}
               if ( tryInputB("GOODBYE") ) { // Peer disconnected itself by saying goodbye?
@@ -419,7 +421,7 @@ public class LinkedMachineState
                 requestAncestorSubStateV( theDisconnectedState); // Disconnect ourselves.
                 break goReturn; // Return with signal true.
                 }
-              if ( tryInputB("Skipped-Time") ) { // We just wake up from sleep.
+              if ( tryInputB("Skipped-Time") ) { // We just woke up from sleep.
                 sendHelloV(this); // send a HELLO to reestablish connection.
                 requestAncestorSubStateV( // Yes, so assume connection broke
                   theExponentialRetryConnectingState); // and try to reestablish.
@@ -432,8 +434,8 @@ public class LinkedMachineState
 
 		    public void onExitV() throws IOException
 		      { 
-            // appLogger.debug( "Exiting"+ getFormattedStatePathString() );
 		        super.onExitV();
+            appLogger.debug( "Exiting"+ getFormattedStatePathString() );
 		        }
 		    
 	  		} // class ConnectedState

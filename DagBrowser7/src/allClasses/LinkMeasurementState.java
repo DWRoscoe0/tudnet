@@ -145,7 +145,7 @@ public class LinkMeasurementState
 	  private class LocalMeasurementState extends OrState 
 	
 		  /* This is the local concurrent/orthogonal sub-state 
-		    for doing local measurements.  
+		    for doing local measurements of the Unicaster link.  
 				It partner is orthogonal sub-state RemoteMeasurementState. 
 		    */
 	
@@ -154,12 +154,12 @@ public class LinkMeasurementState
 				// sub-states/machines.
 				private MeasurementPausedState 
 				  theMeasurementPausedState;
-				private MeasurementInitializationState
-				  theMeasurementInitializationState;
+				//// private MeasurementInitializationState
+				////   theMeasurementInitializationState;
 				private MeasurementHandshakingState
 				  theMeasurementHandshakingState;
 	
-		    private StateList theBrokenConnectionState; 
+		    private StateList theBrokenConnectionState; // State for when the link breaks. 
 
 		    public StateList initializeWithIOExceptionStateList() throws IOException 
 			    {
@@ -168,8 +168,8 @@ public class LinkMeasurementState
 		    		// Create and add orthogonal sub-state machines.
 			  	  initAndAddStateListV( theMeasurementPausedState= 
 			  	  		new MeasurementPausedState() );
-			  	  initAndAddStateListV( theMeasurementInitializationState= 
-			  	  		new MeasurementInitializationState() );
+			  	  //// initAndAddStateListV( theMeasurementInitializationState= 
+			  	  //// 		new MeasurementInitializationState() );
 			  	  initAndAddStateListV( theMeasurementHandshakingState= 
 			  	  		new MeasurementHandshakingState() );
 	
@@ -178,7 +178,7 @@ public class LinkMeasurementState
 						return this;
 			    	}
 	
-		    private boolean processPacketAcknowledgementB() 
+		    private boolean tryProcessingPacketAcknowledgementB() 
 						throws IOException
 				  /* This input method finishes processing the "PA" sequence number 
 				    feedback message, which the remote peer sends
@@ -198,30 +198,36 @@ public class LinkMeasurementState
 						See processSequenceNumberB(..) about "PS", for more information.
 						*/
 			  	{
-		    	  boolean successB= true;
-		    	  try {
-					  	long ackReceivedTimeNsL= System.nanoTime();
-				  		int sequenceNumberI=  // Reading echo of sequence #.
-				  				theNetcasterInputStream.readANumberI();
-				  		int packetsReceivedI=  // Reading packets received.
-				  				theNetcasterInputStream.readANumberI();
-			    		measurementHandshakesNamedLong.addDeltaL(1);
-			        
-			        newOutgoingPacketsSentEchoedNamedLong.setValueL(
-					    		sequenceNumberI + 1 // Convert sequence # to sent packet count.
-					    		);
-				  		newOutgoingPacketsReceivedNamedLong.setValueL(packetsReceivedI);
-				  		outgoingPacketLossLossAverager.recordPacketsReceivedOrLostV(
-				  				newOutgoingPacketsSentEchoedNamedLong,
-				  				newOutgoingPacketsReceivedNamedLong
-								  );
-				  	  calculateRoundTripTimesV(
-				  	  		sequenceNumberI, ackReceivedTimeNsL, packetsReceivedI
-				  	  		);
-		    	  	}
-		    	  catch ( BadReceivedDataException theBadReceivedDataException ) {
-		    	  	successB= false; 
-		    	  	}
+		    	    boolean successB= false;
+		    	  toReturn: {
+  		    	  try {
+  		    	    if (!tryInputB("PA")) // Try getting acknowledgement token.
+  		    	      break toReturn;
+  		    	    long ackReceivedTimeNsL= System.nanoTime();
+  				  		int sequenceNumberI=  // Reading echo of sequence #.
+  				  				theNetcasterInputStream.readANumberI();
+  				  		int packetsReceivedI=  // Reading packets received.
+  				  				theNetcasterInputStream.readANumberI();
+  			    		measurementHandshakesNamedLong.addDeltaL(1);
+  			        
+  			        newOutgoingPacketsSentEchoedNamedLong.setValueL(
+  					    		sequenceNumberI + 1); // Convert sequence # to sent packet count.
+  				  		newOutgoingPacketsReceivedNamedLong.setValueL(packetsReceivedI);
+  				  		outgoingPacketLossLossAverager.recordPacketsReceivedOrLostV(
+  				  				newOutgoingPacketsSentEchoedNamedLong,
+  				  				newOutgoingPacketsReceivedNamedLong
+  								  );
+  				  	  calculateRoundTripTimesV(
+  				  	  		sequenceNumberI, ackReceivedTimeNsL, packetsReceivedI);
+  				  	  successB= true; // Everything succeeded.
+  				  	  }
+  		    	  catch ( BadReceivedDataException theBadReceivedDataException ) {
+  		    	  	////  
+                appLogger.exception( 
+                    "MeasurementHandshakingState.tryProcessingPacketAcknowledgementB() ",
+                    theBadReceivedDataException);
+  		    	  	}
+		    	    } // toReturn:
 		    	  return successB;
 		    	  }
 				
@@ -244,11 +250,11 @@ public class LinkMeasurementState
 			  				}
 	
 					  public void onInputsToReturnFalseV()
-					    /* Waits for the end of the pause interval.
-					     	*/
+					    // Waits for the end of the pause interval.
 					  	{ 
 					  	  if (measurementTimerInput.testInputArrivedB()) // Timer done. 
-					  	  	requestAncestorSubStateV(theMeasurementInitializationState);
+					  	  	//// requestAncestorSubStateV(theMeasurementInitializationState);
+	                requestAncestorSubStateV(theMeasurementHandshakingState);
 					  		}
 	
 						public void onExitV() throws IOException
@@ -260,6 +266,7 @@ public class LinkMeasurementState
 					
 			  	} // class MeasurementPausedState
 	
+		    /*  ////
 				private class MeasurementInitializationState extends StateList 
 			  	/* This state does nothing but initializes for the handshake,
 			  	  then instantly moves on to the MeasurementHandshakingState.
@@ -269,26 +276,29 @@ public class LinkMeasurementState
 					      that state was split into two levels.
 					    * exitV() of MeasurementPausedState.
 			  	  */
+        /*  ////
 			  	{
 			    	public void onEntryV() throws IOException
 			    	  /* Starts timer for the pause interval before 
 			    	    the next handshake.
 			    	   	*/
+        /*  ////
 				  	  {
 			    			///dbg appLogger.debug( "MeasurementInitializationState.onEntryV() ");
-			    	  	measurementTimerInput.scheduleV(Config.measurementPauseMsL);
+			    	  	//// measurementTimerInput.scheduleV(Config.measurementPauseMsL);
 			    	  	  ///opt has no effect?  Delete.
 			  				}
 			    	
 					  public void onInputsToReturnFalseV() throws IOException
 					  	{
-		    			  exponentialRetryTimeOutMsL=   // Initializing retry time-out.
-		    			  		retransmitDelayMsNamedLong.getValueL();
+		    			  //// exponentialRetryTimeOutMsL=   // Initializing retry time-out.
+		    			  ////   		retransmitDelayMsNamedLong.getValueL();
 	
 					  		requestAncestorSubStateV(theMeasurementHandshakingState);
 				  	  	}
 	
 			  		} // class MeasurementInitializationState
+        */  ////
 				
 				private class MeasurementHandshakingState extends StateList 
 			  	/* This state handles the PS-PA handshakes, 
@@ -303,7 +313,11 @@ public class LinkMeasurementState
 			    	public void onEntryV() throws IOException
 			    	  // Initiates the handshake and starts acknowledgement timer.
 				  	  { 
-				      	///dbg appLogger.debug( "MeasurementHandshakingState.onEntryV() ");
+                exponentialRetryTimeOutMsL=   // Initializing retry time-out.
+                    retransmitDelayMsNamedLong.getValueL();
+                //// appLogger.debug( 
+                 ////     "MeasurementHandshakingState.onEntryV() exponentialRetryTimeOutMsL="
+                 ////     +exponentialRetryTimeOutMsL);
 		    			  measurementTimerInput.scheduleV(exponentialRetryTimeOutMsL);
 				    		sendingSequenceNumberV();
 			  				}
@@ -317,16 +331,19 @@ public class LinkMeasurementState
 					  	  ///opt Simplify by using TimerInput.rescheduleB(.) instead.
 					  	  */
 					  	{
-							  if (tryInputB("PA")) // Try processing acknowledgement received.
-								  { if ( processPacketAcknowledgementB() )
-									  	requestAncestorSubStateV(theMeasurementPausedState);
-								  	}
-				      	else  if // Try processing time-out.
-				      		(measurementTimerInput.getInputArrivedB()) 
-					    		{ if ( exponentialRetryTimeOutMsL <= Config.maxTimeOutMsL )
+							  //// if (tryInputB("PA")) // Try processing acknowledgement received.
+								if ( tryProcessingPacketAcknowledgementB() ) {
+									requestAncestorSubStateV(theMeasurementPausedState);
+								  }
+								else if // Try processing time-out.
+				      		(measurementTimerInput.getInputArrivedB()) // Time-out happened? 
+					    		{ // Process time-out.
+								    if ( exponentialRetryTimeOutMsL <= Config.maxTimeOutMsL )
 				    				  { exponentialRetryTimeOutMsL*=2;  // Doubling time-out limit.
-				    				  	requestAncestorSubStateV(this); // Retrying by repeating state.
-					  					  } 
+  			                measurementTimerInput.scheduleV(exponentialRetryTimeOutMsL);
+  			                sendingSequenceNumberV();
+				    				  	//// requestAncestorSubStateV(this); // Retrying by repeating state.
+  	                   } 
 				    			  else // Giving up after maximum time-out reached.
 				    			  { // Trigger breaking of connection.
                       appLogger.info("MeasurementHandshakingState time-out.");
