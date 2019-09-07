@@ -530,7 +530,7 @@ public class TCPCopier extends EpiThread
 						  }
 						theSocket.shutdownOutput(); // Prevent reset at Socket close.
 				} catch (IOException ex) {
-			  		appLogger.info(ex, "tryTransferingFileL(..) aborted because of ");
+			  		appLogger.exception("tryTransferingFileL(..) aborted",ex);
 			    } finally {
 			  		}
 		  	if (transferResultL != 0)
