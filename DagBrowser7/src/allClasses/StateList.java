@@ -1088,6 +1088,19 @@ public class StateList extends MutableList implements Runnable {
 	  	//		"StateList.run() end of Timer tick to"+ getFormattedStatePathString() );
 		}
 
+	
+	/* Method for logging conditionals.  */
+	
+  public boolean testAndLogIfTrueB(boolean theB, String messageString)
+    /* This method logs a message and the current state if theB is true.
+      In either case it also returns theB.
+      */
+    { 
+      if (theB) // Log message with state path if condition true.
+        appLogger.debug( messageString + getFormattedStatePathString() );
+      return theB; 
+      }
+
 
   private synchronized boolean downAndUpDoOnInputsB() throws IOException
     /* This method is functionally similar to doOnInputs(),

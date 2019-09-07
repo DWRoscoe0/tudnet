@@ -335,8 +335,10 @@ public class LinkMeasurementState
 								if ( tryProcessingPacketAcknowledgementB() ) {
 									requestAncestorSubStateV(theMeasurementPausedState);
 								  }
-								else if // Try processing time-out.
-				      		(measurementTimerInput.getInputArrivedB()) // Time-out happened? 
+		            else if // Try handling time-out?
+	                (testAndLogIfTrueB(measurementTimerInput.testInputArrivedB(),
+	                  "exponential PA retry time-out,")) 
+				      		//// (measurementTimerInput.getInputArrivedB()) // Time-out happened? 
 					    		{ // Process time-out.
 								    if ( exponentialRetryTimeOutMsL <= Config.maxTimeOutMsL )
 				    				  { exponentialRetryTimeOutMsL*=2;  // Doubling time-out limit.

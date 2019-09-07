@@ -267,7 +267,9 @@ public class LinkedMachineState
             if (tryReceivingHelloB(this)) // Try to process HELLO.
               requestAncestorSubStateV( // Success.  Request connected state.
                   theConnectedState );
-            else if (theTimerInput.testInputArrivedB()) // Try Time-out? 
+            else if // Try handling time-out?
+              (testAndLogIfTrueB(theTimerInput.testInputArrivedB(),
+                  "exponential HELLO retry time-out,")) 
               {
                 boolean limitReachedB= // Reschedule time-out with exponential back-off
                     (theTimerInput.rescheduleB(
