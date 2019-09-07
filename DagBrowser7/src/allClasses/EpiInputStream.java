@@ -314,30 +314,48 @@ public class EpiInputStream<
 	    {
 		    return true;
 		    }
-	  
-	  public void mark(int readlimit) 
-	  	/* Saves the state of the stream so that it might be restored
-	  	  with the reset() method.  This allows undoing reads after
-	  	  it has been concluded that the bytes read since mark(..)
-	  	  are not what we were looking for.
-	  	 	This allows only one level of undoing, but this often suffices.
-	  	 	*/
-	  	{
-	  		//appLogger.info( "NetcasterInputStream.mark(..), "+markIndexI+" "+packetIndexI);
-	  		markIndexI= packetIndexI; // Recording present buffer byte index.
-	  		markedB= true; // Recording that stream is marked.
-	      }
-	
-	  public void reset() throws IOException 
-	    // Restores the stream to the state recorded by mark(int).
-	    {
-	  		//appLogger.info( "NetcasterInputStream.reset(..), "+markIndexI+" "+packetIndexI);
-	    	if ( markedB ) // Un-marking if marked
-	    		{
-			      packetIndexI= markIndexI; // Restoring buffer byte index.
-			    	markIndexI= -1; // Restoring undefined value.
-			    	markedB= false; // Recording that stream is unmarked.
-		    		}
-	    	}
+    
+    public void mark(int readlimit) 
+      /* Saves the state of the stream so that it might be restored
+        with the reset() method.  This allows undoing reads after
+        it has been concluded that the bytes read since mark(..)
+        are not what we were looking for.
+        This allows only one level of undoing, but this often suffices.
+        */
+      {
+        //appLogger.info( "NetcasterInputStream.mark(..), "+markIndexI+" "+packetIndexI);
+        //// markIndexI= packetIndexI; // Recording present buffer byte index.
+        markIndexI= getPositionI(); // Recording present buffer byte index.
+        markedB= true; // Recording that stream is marked.
+        }
+  
+    public void reset() throws IOException 
+      // Restores the stream to the state recorded by mark(int).
+      {
+        //appLogger.info( "NetcasterInputStream.reset(..), "+markIndexI+" "+packetIndexI);
+        if ( markedB ) // Un-marking if marked
+          {
+            //// packetIndexI= markIndexI; // Restoring buffer byte index.
+            setPositionV(markIndexI); // Restoring buffer byte index.
+            markIndexI= -1; // Restoring undefined value.
+            markedB= false; // Recording that stream is unmarked.
+            }
+        }
+    
+    public int getPositionI() 
+      /* Gets the position in the stream buffer 
+        so that it might be restored later with the setPositionV(int) method later.  
+        This allows undoing nested reads of the stream.
+        It is more general than the not nest-able mark(int) method. 
+        */
+      {
+        return packetIndexI; // Recording present buffer byte index.
+        }
+  
+    public void setPositionV(int oldPositionI) throws IOException 
+      // Restores the stream to the state previously gotten by getPositionI().
+      {
+        packetIndexI= oldPositionI; // Restoring buffer byte index.
+        }
 	
 		}
