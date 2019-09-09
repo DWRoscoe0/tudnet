@@ -34,12 +34,17 @@ public class Sender // Uunicast and multicast sender thread.
     may need to be done in a coordinated manner to prevent loss of
     important packets.
 
-    ///? Limit queue size.  Block queuers when full.
+    ///enh Simplify how the delay and dropping of packets for testing
+    is controlled.
     
-    ///? Change this or callers to gracefully finish sending queued packets 
-    before closing socket and terminating.
+    ///enh Simplify the log format for delayed and dropped packets
+    so that annotations precede the packet data.
       
-    ?? Add congestion control and fair queuing.
+    ///enh Change this or callers to gracefully finish sending queued packets 
+    before closing socket and terminating, but limit the time doing so
+    to a few seconds, in case of IO errors.
+      
+    ///enh Add congestion control and fair queuing.
     It would limit not only total data rate,
     but also data rates to  the individual peers
     on the branches of the tree of paths determined by
@@ -49,7 +54,7 @@ public class Sender // Uunicast and multicast sender thread.
     tracert paths to those peers, and decorated with
     bandwidths of the various edges.
     
-    ?? Record the times that packets are passed to the DatagramSocket
+    ///enh Record the times that packets are passed to the DatagramSocket
     with the send(..) method, to be used for determining round trip time
     as accurately, instead of doing it in Unicaster as it is done now.
     NO, because RTT should include time in queue. 
@@ -151,6 +156,8 @@ public class Sender // Uunicast and multicast sender thread.
        	*/
 	    {
     	  goReturn: {
+          PacketManager.logSenderPacketV(theDatagramPacket);
+            // Logging before sending so log order is always correct.
 			    if  // If dropping a fraction of packets to test retry logic.
 			    	( testingForDropOfPacketB( theDatagramPacket ) )
 				    { ; // Drop this packet by doing nothing.
@@ -219,8 +226,6 @@ public class Sender // Uunicast and multicast sender thread.
           IOException savedIOException= null; 
         retryLoop: while (true) {
   	    	try { // Try sending the packet.
-    	        PacketManager.logSenderPacketV(theDatagramPacket);
-        		  	// Logging before sending so log order is always correct.
     	        theDatagramSocket.send(theDatagramPacket); // Send packet.
     	        break retryLoop;
     	      } catch (IOException theIOException) { // Handle exception.
@@ -230,7 +235,8 @@ public class Sender // Uunicast and multicast sender thread.
                 appLogger.debug("Sender.sendingDatagramPacketV() discarding packet.");
                 break retryLoop;
                 }
-              EpiThread.interruptibleSleepB(1000); // Sleep for 1 second.
+              appLogger.debug("Sender.sendingDatagramPacketV() will retry sending.");
+                     EpiThread.interruptibleSleepB(1000); // Sleep for 1 second.
               if (EpiThread.testInterruptB()) break retryLoop; // Termination requested.
     	        }
           } // retryLoop:
