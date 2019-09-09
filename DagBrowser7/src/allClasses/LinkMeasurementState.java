@@ -187,8 +187,8 @@ public class LinkMeasurementState
             try {
               if (successB)
                 { // Read and ignore the 2 numbers that follow.
-                  appLogger.debug( "MeasurementHandshakingState."
-                      + "tryProcessingOldPacketAcknowledgementB() ignoring rejected PA.");
+                  //// appLogger.debug( "MeasurementHandshakingState."
+                  ////     + "tryProcessingOldPacketAcknowledgementB() ignoring rejected PA.");
                   theNetcasterInputStream.readANumberI();
                   theNetcasterInputStream.readANumberI();
                   }
@@ -247,10 +247,10 @@ public class LinkMeasurementState
   	            if // Reject out-of-sequence sequence number.  ////
   	              ( sequenceNumberI != lastSequenceNumberSentL )
     	            {
-                    appLogger.debug( 
-                      "MeasurementHandshakingState.tryProcessingPacketAcknowledgementB() "
-                      + "wrong sequence # "
-                      +sequenceNumberI+" != "+lastSequenceNumberSentL);
+                    //// appLogger.debug( 
+        	           ////   "MeasurementHandshakingState.tryProcessingPacketAcknowledgementB() "
+          	         ////     + "wrong sequence # "
+          	         ////   +sequenceNumberI+" != "+lastSequenceNumberSentL);
                     break toReturn;
     	              }
   				  		int packetsReceivedI=  // Reading packets received.
@@ -388,15 +388,15 @@ public class LinkMeasurementState
 								if ( tryProcessingExpectedPacketAcknowledgementB() ) {
 									requestAncestorSubStateV(theMeasurementPausedState);
 								  }
-								/*  ////
+								// /*  ////
 								else if ( tryProcessingOldPacketAcknowledgementB() ) {
 	                appLogger.debug( "MeasurementHandshakingState() old PA received");
 	                ; // Ignoring it.
 								  }
-								*/  ////
+								// */  ////
 		            else if // Try handling time-out?
 	                (testAndLogIfTrueB(measurementTimerInput.testInputArrivedB(),
-	                  "exponential PA retry time-out,")) 
+	                  "exponential PA retry receive time-out,")) 
 				      		//// (measurementTimerInput.getInputArrivedB()) // Time-out happened? 
 					    		{ // Process time-out.
 								    if ( exponentialRetryTimeOutMsL <= Config.maxTimeOutMsL )
