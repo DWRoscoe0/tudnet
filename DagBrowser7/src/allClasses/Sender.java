@@ -168,9 +168,10 @@ public class Sender // Uunicast and multicast sender thread.
           				Config.packetSendDelayMsL,
           				TimeUnit.MILLISECONDS
           				);
+              break goReturn;
           		}
           sendingDatagramPacketV( theDatagramPacket ); // Send packet immediately.
-            break goReturn;
+          break goReturn;
   				} // goReturn:
 	    	}
 

@@ -6,4 +6,11 @@ public class BadReceivedDataException extends Exception
     does not conform to its requirements.
    	*/
 
-	{ }
+	{ 
+  
+    public BadReceivedDataException(Throwable theThrowable)
+    {
+      super(theThrowable);
+    }
+    
+	}

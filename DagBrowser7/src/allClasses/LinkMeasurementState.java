@@ -178,7 +178,36 @@ public class LinkMeasurementState
 						return this;
 			    	}
 	
-		    private boolean tryProcessingPacketAcknowledgementB() 
+        
+        private boolean tryProcessingOldPacketAcknowledgementB() 
+            throws IOException
+          {
+            int streamPositionI= theNetcasterInputStream.getPositionI();
+            boolean successB= tryInputB("PA");
+            try {
+              if (successB)
+                { // Read and ignore the 2 numbers that follow.
+                  appLogger.debug( "MeasurementHandshakingState."
+                      + "tryProcessingOldPacketAcknowledgementB() ignoring rejected PA.");
+                  theNetcasterInputStream.readANumberI();
+                  theNetcasterInputStream.readANumberI();
+                  }
+                }
+              catch ( BadReceivedDataException theBadReceivedDataException ) {
+                successB= false;
+                appLogger.exception( "MeasurementHandshakingState."
+                    + "tryProcessingOldPacketAcknowledgementB() ",
+                    theBadReceivedDataException);
+                }
+            //// appLogger.debug( "MeasurementHandshakingState."
+            ////    + "tryProcessingOldPacketAcknowledgementB() successB="+successB);
+            if (!successB) // Rewind input stream if input was not acceptable. 
+              theNetcasterInputStream.setPositionV(streamPositionI);
+            return successB;
+            }
+
+		    
+		    private boolean tryProcessingExpectedPacketAcknowledgementB() 
 						throws IOException
 				  /* This input method finishes processing the "PA" sequence number 
 				    feedback message, which the remote peer sends
@@ -198,14 +227,32 @@ public class LinkMeasurementState
 						See processSequenceNumberB(..) about "PS", for more information.
 						*/
 			  	{
+		          int streamPositionI= theNetcasterInputStream.getPositionI();
+              //// theNetcasterInputStream.bufferLoggerV(
+      		     ////     "MeasurementHandshakingState.tryProcessingPacketAcknowledgementB()"
+      		     ////     + " before try PA", streamPositionI);
 		    	    boolean successB= false;
+		    	    boolean gotPAB= false;
 		    	  toReturn: {
   		    	  try {
-  		    	    if (!tryInputB("PA")) // Try getting acknowledgement token.
-  		    	      break toReturn;
+  		    	    gotPAB= tryInputB("PA"); 
+  		    	    if (!gotPAB) // If acknowledgement token PA not gotten
+  		    	      break toReturn; // exit.
+  		    	    //// theNetcasterInputStream.bufferLoggerV(
+      		    	////     "MeasurementHandshakingState.tryProcessingPacketAcknowledgementB()"
+      		    	////    + " got PA", streamPositionI);
   		    	    long ackReceivedTimeNsL= System.nanoTime();
   				  		int sequenceNumberI=  // Reading echo of sequence #.
   				  				theNetcasterInputStream.readANumberI();
+  	            if // Reject out-of-sequence sequence number.  ////
+  	              ( sequenceNumberI != lastSequenceNumberSentL )
+    	            {
+                    appLogger.debug( 
+                      "MeasurementHandshakingState.tryProcessingPacketAcknowledgementB() "
+                      + "wrong sequence # "
+                      +sequenceNumberI+" != "+lastSequenceNumberSentL);
+                    break toReturn;
+    	              }
   				  		int packetsReceivedI=  // Reading packets received.
   				  				theNetcasterInputStream.readANumberI();
   			    		measurementHandshakesNamedLong.addDeltaL(1);
@@ -222,12 +269,18 @@ public class LinkMeasurementState
   				  	  successB= true; // Everything succeeded.
   				  	  }
   		    	  catch ( BadReceivedDataException theBadReceivedDataException ) {
-  		    	  	////  
+                successB= false; ///? needed?
                 appLogger.exception( 
                     "MeasurementHandshakingState.tryProcessingPacketAcknowledgementB() ",
                     theBadReceivedDataException);
   		    	  	}
 		    	    } // toReturn:
+		    	  if (!successB) // Rewind inputs if any input was not acceptable.
+  		    	  {
+  		    	    theNetcasterInputStream.setPositionV(streamPositionI);
+                if (gotPAB) // If acknowledgement token PA gotten
+                  setOfferedInputV("PA"); // restore it as offered input.
+                }
 		    	  return successB;
 		    	  }
 				
@@ -332,9 +385,15 @@ public class LinkMeasurementState
 					  	  */
 					  	{
 							  //// if (tryInputB("PA")) // Try processing acknowledgement received.
-								if ( tryProcessingPacketAcknowledgementB() ) {
+								if ( tryProcessingExpectedPacketAcknowledgementB() ) {
 									requestAncestorSubStateV(theMeasurementPausedState);
 								  }
+								/*  ////
+								else if ( tryProcessingOldPacketAcknowledgementB() ) {
+	                appLogger.debug( "MeasurementHandshakingState() old PA received");
+	                ; // Ignoring it.
+								  }
+								*/  ////
 		            else if // Try handling time-out?
 	                (testAndLogIfTrueB(measurementTimerInput.testInputArrivedB(),
 	                  "exponential PA retry time-out,")) 
@@ -565,10 +624,8 @@ public class LinkMeasurementState
 						}
 			
 			} // class RemoteMeasurementState
-		
-		// Variables for counting measurement handshakes.
-	  private NamedLong measurementHandshakesNamedLong;
 
+		
 	  // Variables for managing incoming packets and 
 	  // their sequence numbers.  They all start at 0.
 	  private DefaultLongLike newIncomingPacketsSentDefaultLongLike;
@@ -607,7 +664,7 @@ public class LinkMeasurementState
 	  	// This value comes from the most recently received "PA" message.  
 		  // When sent this argument was the remote end's 
 		  // EpiInputStream packet counter, 
-	    // counting the number of packets recevied.
+	    // counting the number of packets received.
 	  	// This value normally increases, but can decrease because of 
 	    // out-of-order "PA" packets. 
 	  private DefaultLongLike oldOutgoingPacketsReceivedDefaultLongLike;
@@ -628,14 +685,21 @@ public class LinkMeasurementState
 	  private NsAsMsNamedLong smoothedMaxRoundTripTimeNsAsMsNamedLong; // Maximum.
 	  
 		// Other variables.
-		private long exponentialRetryTimeOutMsL; // This is used as an time-out value
-		  // in exponential back off.
+		private long exponentialRetryTimeOutMsL; 
+		  // This is used as an time-out value
+		  // in exponential back off for re-sending PSs.
 
 	  private long sentSequenceNumberTimeNsL;
+	    // This is the time last PS message was sent. 
 
 		private long lastSequenceNumberSentL;
+		  // This is the sequence number in the last PS message sent.
 
-	  private TimerInput measurementTimerInput; // Used for state machine 
-    // pauses and time-outs. 
+	  private TimerInput measurementTimerInput;
+	    // This is the timer used by this state machine for pauses and time-outs. 
+
+	  private NamedLong measurementHandshakesNamedLong;
+	    // This counts home many measurement handshakes have occurred,
+	    // which is the number of PA messages received.
 
 		} // class LinkMeasurementState

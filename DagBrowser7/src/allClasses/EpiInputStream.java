@@ -140,7 +140,7 @@ public class EpiInputStream<
 	      	numberI= Integer.parseInt( numberString ); 
 	      	}
 	      catch ( NumberFormatException theNumberFormatException ) {
-	      	throw new BadReceivedDataException();
+	      	throw new BadReceivedDataException(theNumberFormatException);
 	      	}
 			  return numberI;
 				}
@@ -306,7 +306,28 @@ public class EpiInputStream<
 	      packetIndexI= loadedDatagramPacket.getOffset();
 	      packetSizeI= loadedDatagramPacket.getLength();
 		    }
-	
+
+    public void bufferLoggerV(String messageString, int positionI)
+    /* This method log the state of the buffer as a debug message.
+      It is meant for use during debugging.
+      * messageString is a message to be included in the log entry.
+      * positionI is the present position of input from the buffer.
+        This should be <= the buffer scan index.
+        Use 0 if unsure. 
+      */
+    {
+      appLogger.debug(
+          messageString
+          + "; buffer="
+          + new String(bufferBytes,0,positionI)
+          + "-^-"
+          + new String(bufferBytes,positionI,packetIndexI-positionI)
+          + "-^-"
+          + new String(bufferBytes,packetIndexI,packetSizeI-packetIndexI)
+          );
+      }
+      
+
 	  public boolean markSupported()
 	    /* This method reports that mark(..) and reset() are supported.
 	      However it works only within individual packet buffers.

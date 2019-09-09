@@ -73,7 +73,7 @@ public class Config
     public static final long LOG_OUTPUT_TIMEOUT= 400; 
 
 		// Following was not final to prevent a "Comparing identical".
-		public static final long packetSendDelayMsL= 0; // 500; // 1000;
+		public static final long packetSendDelayMsL= 500; // 0; // 500; // 1000;
 
     public static LogLevel packetLogLevel= AppLog.LogLevel.DEBUG; //TRACE;  // INFO; // DEBUG;
       // By setting this to TRACE, packets sent and received
