@@ -528,10 +528,12 @@ public class TCPCopier extends EpiThread
 						  } else { ; // Files are same age, so do nothing. 
 						    /// appLogger.info("tryTransferingFileL(..) Files are same age.");
 						  }
-						theSocket.shutdownOutput(); // Prevent reset at Socket close.
+						theSocket.shutdownOutput(); // Do an output half-close, preventing reset,
+						  // This signals end of data?  ///org Should this be here?
 				} catch (IOException ex) {
-			  		appLogger.exception("tryTransferingFileL(..) aborted",ex);
+			  		appLogger.debug("tryTransferingFileL(..) [non-serious?] abort:" + ex);
 			    } finally {
+			      // Closing is done elsewhere.
 			  		}
 		  	if (transferResultL != 0)
 		  		appLogger.info("tryTransferingFileL(..) exchanged using "+theSocket);
