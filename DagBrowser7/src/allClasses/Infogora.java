@@ -5,6 +5,7 @@ import static allClasses.Globals.appLogger;  // For appLogger;
 
 import java.io.File;
 import java.util.Set;
+import static allClasses.Globals.NL;
 
 /* This file is the root of this application.  
   If you want to understand this application then
@@ -156,7 +157,7 @@ class Infogora  // The root of this app.
         logThreadsV(); // Record threads that are still active.
 	      appLogger.info(true,
           "Infogora.main() ======== APP IS ENDING ========"
-          + "\n    by closing log file and exiting the main(..) method.");
+          + NL + "    by closing log file and exiting the main(..) method.");
         appLogger.closeFileIfOpenB(); // Close log for exit.
         theBackupTerminator.setTerminationUnderwayV(); // In case termination fails.
         // while(true) ; // Use this to test BackupTerminator.
@@ -284,7 +285,7 @@ class Infogora  // The root of this app.
               int priorityI= t.getPriority();
               String typeString= t.isDaemon() ? "Daemon" : "Normal";
               String nameString= t.getName();
-              appLogger.getPrintWriter().printf("    %-13s %2d  %s  %-25s  \n", 
+              appLogger.getPrintWriter().printf("    %-13s %2d  %s  %-25s  " + NL, 
                   threadState, priorityI, typeString, nameString);
               }
           }

@@ -12,6 +12,7 @@ import java.nio.file.Path;
 
 import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
+import static allClasses.Globals.NL;
 
 public class IFile 
 
@@ -241,13 +242,13 @@ public class IFile
                 new BufferedReader(new InputStreamReader(TheFileInputStream));
               
               while ((LineString = TheBufferedReader.readLine()) != null) {
-                  valueString= valueString.concat(LineString + "\n");
+                  valueString= valueString.concat(LineString + NL);
                   }
               }
             catch (Exception ReaderException){
               // System.out.println("error reading file! " + ReaderException);
             	valueString= valueString.concat(
-            			"\nError reading file!\n\n" + ReaderException + "\n"
+            			NL + "Error reading file!" + NL + NL + ReaderException + NL
             			);
               }
             } // Read in file to JTextArea.
@@ -289,7 +290,7 @@ public class IFile
                   new TitledTextViewer( 
                     inTreePath, 
                     inDataTreeModel, 
-                    "\n\n    UNREADABLE AS FILE OR FOLDER\n" 
+                    NL + NL + "    UNREADABLE AS FILE OR FOLDER" + NL 
                     );
                 resultJComponent.setBackground(  // Indicate error with color.
                   Color.PINK

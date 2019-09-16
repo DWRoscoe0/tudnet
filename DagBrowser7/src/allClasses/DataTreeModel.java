@@ -438,7 +438,7 @@ public class DataTreeModel
 	        		appLogger.warning( 
 	        				"DataTreeModel.translatingToTreePath( "
 	        				+ targetDataNode 
-	        				+ " ), cache miss, resolves to\n  "
+	        				+ " ), cache miss, resolves to" + NL + "  "
 	        				+ targetTreePath
 	        				); // Indicates an incorrect child node addition.
 			        }
@@ -956,7 +956,7 @@ public class DataTreeModel
 	              { // Handle tree depth increase.
 	                if (++currentDepthI > 5) 
 	                	{ appLogger.error( "DataTreeModel.translatingToTreePath():"+
-	                			"\n  depth "+currentDepthI+" exceeds maximum, node="+
+	                			NL + "  depth "+currentDepthI+" exceeds maximum, node="+
 	                			targetDataNode.getLineSummaryString( )
 	                			);
 	                	  break queueScanner;

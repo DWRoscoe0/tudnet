@@ -19,6 +19,8 @@ public class Globals
   {
     public static AppLog appLogger;
 
+    public static final String NL= System.getProperty("line.separator");
+    
 	  public static void logAndRethrowAsRuntimeExceptionV( 
 	  		String aString, Throwable theThrowable 
 	  		)

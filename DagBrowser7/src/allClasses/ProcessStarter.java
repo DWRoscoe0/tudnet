@@ -4,6 +4,7 @@ import static allClasses.Globals.appLogger;
 
 import java.io.IOException;
 import java.util.Arrays;
+import static allClasses.Globals.NL;
 
 public class ProcessStarter 
 
@@ -29,7 +30,7 @@ public class ProcessStarter
              )
           try {
               appLogger.info( 
-                "ProcessStarter.startProcessV(..):\n  " 
+                "ProcessStarter.startProcessV(..):" + NL + "  " 
                 + Arrays.toString(inArgStrings)
                 );
               ProcessBuilder myProcessBuilder= // Build the process. 

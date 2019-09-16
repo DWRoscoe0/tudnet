@@ -322,7 +322,7 @@ public class Multicaster
     	              catch( SocketException soe ) {
     	                // Someone may have called disconnect() or closed socket.
     	                appLogger.info( 
-    	                  "Multicaster.run() Terminating loop because of\n  " + soe
+    	                  "Multicaster.run() Terminating loop because of" + NL + "  " + soe
     	                  );
                       Thread.currentThread().interrupt(); // Terminating loop 
     	                }
@@ -442,7 +442,7 @@ public class Multicaster
 	      if ( theUnicaster == null ) // Processing if Unicaster does not exists.
 	       	{ // Informing ConnectionManager.
        			//appLogger.debug(
-	       		//	"Multicaster.processingPossibleNewUnicasterV():\n  queuing: "
+	       		//	"Multicaster.processingPossibleNewUnicasterV():" + NL + "  queuing: "
 		       	//	+PacketStuff.gettingPacketString(theKeyedPacket.getDatagramPacket())
 	       		//);
 	      		multicasterToConnectionManagerNetcasterQueue.put( // Passing to CM.
@@ -471,7 +471,7 @@ public class Multicaster
 		    theMulticastSocket.setTimeToLive( ttl );
 		    theMulticastSocket.setNetworkInterface(gatewayNetworkInterface);
         appLogger.info(
-            "initializeWithIOExceptionV()\n"
+            "initializeWithIOExceptionV()" + NL
             + "  gatewayNetworkInterface= " + gatewayNetworkInterface 
             );
 		    theMulticastSocket.joinGroup( // To receive multicast packets, join...
@@ -507,7 +507,7 @@ public class Multicaster
           appLogger.exception( "determineGatewayNetworkInterfaceV(): ", e);
         }
         appLogger.info(
-            "determineGatewayNetworkInterfaceV()\n  "
+            "determineGatewayNetworkInterfaceV()" + NL + "  "
             + "theInetAddress= " + theInetAddress 
             + ", theNetworkInterface= " + theNetworkInterface 
             );

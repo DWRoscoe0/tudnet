@@ -264,8 +264,8 @@ l    * If the app receives a message indicating
 	      */
 	    {
 	  		appLogger.info( "tryDelegatingToAnotherAppInstanceB() begins."
-	  		    + "\n  App path is: " + runningAppFile.getAbsolutePath()
-	  		    + "\n  App time-stamp is " + Misc.dateString( runningAppFile ) );
+	  		    + NL + "  App path is: " + runningAppFile.getAbsolutePath()
+	  		    + NL + "  App time-stamp is " + Misc.dateString( runningAppFile ) );
         processCommandArgsV( startCommandArgs ); // Setting app args as inputs.
         logInputsV("tryDelegatingToAnotherAppInstanceB()");
 
@@ -365,7 +365,7 @@ l    * If the app receives a message indicating
           appLogger.info("Detected an approved updater file.  Preparing it");
           if ( ! displayUpdateApprovalDialogB( // Not approved by user?
               false, // Get approval.
-              "A file containing an update of this app was detected.\n"
+              "A file containing an update of this app was detected." + NL
               + "It will now replace this one because it is newer.",
               otherAppFile
               ) )
@@ -400,8 +400,8 @@ l    * If the app receives a message indicating
            	break validation; // File not newer, so exit
           successB= true;  // Override default false result.
   	      appLogger.debug("isUpdateValidB() ======== NEWER APP FILE DETECTED ========" +  
-  	      		"\n    otherAppFile:    " + Misc.fileDataString(otherAppFile) + 
-  	      		"\n    standardAppFile: " + Misc.fileDataString(standardAppFile)
+  	      		NL + "    otherAppFile:    " + Misc.fileDataString(otherAppFile) + 
+  	      		NL + "    standardAppFile: " + Misc.fileDataString(standardAppFile)
   	      		);
 	        } // validation
 	      return successB;
@@ -432,7 +432,7 @@ l    * If the app receives a message indicating
               theCommandArgs.targets(); 
           if (targetStrings.length>0) // If there are any then
             appLogger.warning( // log them as errors.
-              "AppInstanceManager processCommandArgsV(..), unused arguments:\n  "
+              "AppInstanceManager processCommandArgsV(..), unused arguments:" + NL + "  "
               + Arrays.toString(targetStrings));
           }
         } // processCommandArgsV(..)
@@ -618,7 +618,7 @@ l    * If the app receives a message indicating
 		         	if ( displayUpdateApprovalDialogB( 
 	          			false, // Get approval.
 		        			"A newer running instance of this app "
-		        			+ "has been detected.\n"
+		        			+ "has been detected." + NL
 		              + "It will be used in a software update because "
 		              + "it is newer than this app instance.",
 		              otherAppFile
@@ -637,7 +637,7 @@ l    * If the app receives a message indicating
 		        	displayUpdateApprovalDialogB( 
 	          			true, // Just inform user.  Don't request approval.
 		        			"Another running instance of this app "
-		        			+ "was detected briefly.\n"
+		        			+ "was detected briefly." + NL
 		              + "It was not used in a software update because "
 		              + "it was not newer than this app instance.",
 		              otherAppFile
@@ -666,11 +666,11 @@ l    * If the app receives a message indicating
 		  		/*  ///tmp ///dbg
 	    		final String outString= 
 	    				messageString
-	    				+ "\nThe file that contains the other app is: "
+	    				+ NL + "The file that contains the other app is: "
 	    				+ appFile.toString()
-	    				+ "\nIt's creation time is: "
+	    				+ NL + "It's creation time is: "
 	    				+ Misc.dateString(appFile)
-	    				+ ( informDontApproveB ? "" : "\nDo you approve?");
+	    				+ ( informDontApproveB ? "" : NL + "Do you approve?");
 		  		EDTUtilities.runOrInvokeAndWaitV( // Run following on EDT thread. 
 			    		new Runnable() {
 			    			@Override  
@@ -854,7 +854,7 @@ l    * If the app receives a message indicating
 	            // User approval and authenticity checks would go here.
 	          	if ( displayUpdateApprovalDialogB( // Inform user but don't get approval. 
 	          			false, // Get approval.
-	                "Another file instance of this app was detected.\n"
+	                "Another file instance of this app was detected." + NL
 	                + "It will now replace this one because it is newer.",
 	                otherAppFile
 	          			) )
@@ -886,7 +886,7 @@ l    * If the app receives a message indicating
           toExit: { toCopy: {
             if (endsWithJarOrExeB(runningAppFile)) break toCopy;
             appLogger.info("copyAndPrepareToRunB() Not copying.  "
-                + "Not executable .jar or .exe file:\n  " + runningAppFile);
+                + "Not executable .jar or .exe file:" + NL + "  " + runningAppFile);
             break toExit;
           } // toCopy:
             if (! copyExecutableFileB(runningAppFile, standardAppFile))
@@ -1006,17 +1006,17 @@ l    * If the app receives a message indicating
 	        
 	        { // Add parts to the string to be logged.
             logString+= callerString;
-            logString+= ")\n  raw argStrings:"; 
+            logString+= ")" + NL + "  raw argStrings:"; 
             logString+= Arrays.toString(argStrings);
 
-            logString+= "\n  app Files: (variable-name: time-stamp, path-name)";
-	          logString+= "\n    standardAppFile:    " 
+            logString+= NL + "  app Files: (variable-name: time-stamp, path-name)";
+	          logString+= NL + "    standardAppFile:    " 
 	          		+ Misc.fileDataString( standardAppFile );
-	          logString+= "\n    runningAppFile:     " 
+	          logString+= NL + "    runningAppFile:     " 
 	          		+ Misc.fileDataString( runningAppFile );
-	          logString+= "\n    otherAppFile:       " 
+	          logString+= NL + "    otherAppFile:       " 
 	          		+ Misc.fileDataString( otherAppFile );
-	          logString+= "\n    tcpCopierAppFile:   " 
+	          logString+= NL + "    tcpCopierAppFile:   " 
 	          		+ Misc.fileDataString( tcpCopierAppFile );
 	          }
 	        
@@ -1030,9 +1030,9 @@ l    * If the app receives a message indicating
 	        The first line is a heading line. 
 	        */
 	      { 
-  	      String logStriing= "\n    " + "n   String";
+  	      String logStriing= NL + "    " + "n   String";
   	      for (int i=0; i < inputStrings.length; i++) {
-            logStriing+= "\n    " + i + "   " + inputStrings[i];
+            logStriing+= NL + "    " + i + "   " + inputStrings[i];
   	        }
 	        return logStriing; 
 	        }

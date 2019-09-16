@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 import java.io.File; // added manually.
 
 import javax.swing.JTextArea;
+import static allClasses.Globals.NL;
 
 
 public class IJTextArea
@@ -50,12 +51,12 @@ public class IJTextArea
                 new BufferedReader(new InputStreamReader(TheFileInputStream));
               
               while ((LineString = TheBufferedReader.readLine()) != null) {
-                  append(LineString + "\n");
+                  append(LineString + NL);
                   }
               }
             catch (Exception ReaderException){
               // System.out.println("error reading file! " + ReaderException);
-            	append("\nError reading file!\n\n" + ReaderException + "\n");
+            	append(NL + "Error reading file!" + NL + NL + ReaderException + NL);
               backgroundColor= Color.PINK;  // Overriding color for error.
               }
             } // Read in file to JTextArea.

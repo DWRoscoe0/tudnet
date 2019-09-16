@@ -379,7 +379,7 @@ public class ConnectionManager
           if (theNetcasterPacket == null) break;  // Exit if no more packets.
           
           //appLogger.info(
-          //  "ConnectionManager.processingUnconnectedSockPacketsB()\n  "
+          //  "ConnectionManager.processingUnconnectedSockPacketsB()" + NL + "  "
           //  + theKeyedPacket.getSocketAddressesString()
           //  );
           passToUnicasterV( theNetcasterPacket ); ///rev disabled for testing.
@@ -426,7 +426,7 @@ public class ConnectionManager
 	    {
         appLogger.info( // Note this special situation in log.
             "ConnectionManager.stoppingUnicastReceiverThreadV()."
-            +"\n  This may take several seconds for Socket to close.");
+            + NL + "  This may take several seconds for Socket to close.");
         EpiDatagramSocket.closeIfNotNullV( // Close socket to allow termination.
     				unconnectedDatagramSocket
     				); // Strangely, closing can be immediate, take seconds, or even minutes!
@@ -548,7 +548,7 @@ public class ConnectionManager
           return;
 
         //appLogger.info(
-        //  "ConnectionManager.createAndPassToUnicasterV(..)\n  "
+        //  "ConnectionManager.createAndPassToUnicasterV(..)" + NL + "  "
         //  + theKeyedPacket.getSocketAddressesString()
         //  );
     		Unicaster theUnicaster=  // Getting the appropriate Unicaster.

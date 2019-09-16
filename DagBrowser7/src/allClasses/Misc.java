@@ -433,8 +433,8 @@ public class Misc
         File sourceFile, File destinationFile)
     {
       return 
-          "\n    sourceFile:      " + Misc.fileDataString(sourceFile) + 
-          "\n    destinationFile: " + Misc.fileDataString(destinationFile)
+          NL + "    sourceFile:      " + Misc.fileDataString(sourceFile) + 
+          NL + "    destinationFile: " + Misc.fileDataString(destinationFile)
           ;
       }
 

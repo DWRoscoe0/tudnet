@@ -354,7 +354,7 @@ public class Shutdowner
 
     public void setExitStringsV(String[] exitProcessStrings)
       { 
-        appLogger.info("Shutdowner.setExitStringsV(..)\n  "+
+        appLogger.info("Shutdowner.setExitStringsV(..)" + NL + "  "+
             Arrays.toString(exitProcessStrings));
         this.exitProcessStrings= exitProcessStrings;
         }

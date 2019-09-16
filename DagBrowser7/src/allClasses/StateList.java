@@ -4,6 +4,7 @@ package allClasses;
 //   and make it make sense.
 
 import static allClasses.Globals.appLogger;
+import static allClasses.Globals.NL;
 import static allClasses.AppLog.LogLevel.*;
 
 import java.awt.Color;
@@ -1041,7 +1042,7 @@ public class StateList extends MutableList implements Runnable {
 	    and "  (state path)" on the second.
 	   */
 	  {
-		  return " state:\n  " + getStatePathString();
+		  return " state:" + NL + "  " + getStatePathString();
 	    }
 
 	private String getStatePathString()

@@ -533,13 +533,13 @@ public class DagBrowserPanel
 	                @Override
 	                public void run() { 
 	                  String helpString= 
-	                  		"<Ctrl++> zooms in, <Ctrl+-> zooms out.\n"+
-	                    	"Use Arrows, in keys or buttons, to navigate folders.\n"+
-	                      "      <Right-arrow> moves to child item.\n"+
-	                      "      <Left-arrow> moves to parent item.\n"+
-	                      "      <Down-arrow> moves to next item.\n"+
-	                      "      <Up-arrow> moves to previous item\n"+
-	                      "<Tab> key selects next window gadget.\n"+
+	                  		"<Ctrl++> zooms in, <Ctrl+-> zooms out." + NL +
+	                    	"Use Arrows, in keys or buttons, to navigate folders." + NL +
+	                      "      <Right-arrow> moves to child item." + NL +
+	                      "      <Left-arrow> moves to parent item." + NL +
+	                      "      <Down-arrow> moves to next item." + NL +
+	                      "      <Up-arrow> moves to previous item" + NL +
+	                      "<Tab> key selects next window gadget." + NL +
 	                      "<Enter> key manually expands or collapses an item.";
 	                    
                     final JFrame theJFrame =  // Make the Help JFrame.
@@ -1059,7 +1059,7 @@ public class DagBrowserPanel
         { 
       		//appLogger.debug(
 		      //  "DagBrowserPanel.focusLost(...),"
-	        //  +"\n  lost by "
+	        //  + NL + "  lost by "
 	        // + Misc.componentInfoString(theFocusEvent.getComponent())
 		      // +", gained by "
 		      //   + Misc.componentInfoString(theFocusEvent.getOppositeComponent())
@@ -1090,7 +1090,7 @@ public class DagBrowserPanel
         { // focusGained(FocusEvent theFocusEvent)
 	    		//appLogger.debug(
 		      //    "DagBrowserPanel.focusGained(...) begin"
-		      //		+"\n  gained by "
+		      //		+ NL + "  gained by "
 		      //   + Misc.componentInfoString(theFocusEvent.getComponent())
 		      //   +", lost by "
 		      //     + Misc.componentInfoString(theFocusEvent.getOppositeComponent())

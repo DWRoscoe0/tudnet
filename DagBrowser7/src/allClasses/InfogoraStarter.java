@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import static allClasses.Globals.NL;
 
 
 public class InfogoraStarter
@@ -253,7 +254,7 @@ public class InfogoraStarter
               String[] targetStrings= theCommandArgs.targets(); 
               if (targetStrings.length>0) // If unprocessed args...
                 appLogger.error( // log them as an error.
-                  "processConnectionDataV(..), unused arguments:\n  "
+                  "processConnectionDataV(..), unused arguments:" + NL + "  "
                   + Arrays.toString(targetStrings));
               }
             }

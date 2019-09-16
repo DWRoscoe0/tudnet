@@ -9,6 +9,7 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import static allClasses.Globals.NL;
 
 public class LocalSocket
 
@@ -124,7 +125,7 @@ public class LocalSocket
            );
          String readString = inBufferedReader.readLine();
          appLogger.info(
-             "inputFromConnectionV() ======== RECEIVED DATA VIA TCP FROM ANOTHER APP. ======== :\n  " 
+             "inputFromConnectionV() ======== RECEIVED DATA VIA TCP FROM ANOTHER APP. ======== :" + NL + "  " 
              + readString
              );
          theCommandArgs= // Parse string into separate string arguments using
@@ -193,7 +194,7 @@ public class LocalSocket
         */
       {
         boolean successB= false;
-        String commonString= "\n  data=\""+outputString+"\", port= "+portI;
+        String commonString= NL + "  data=\""+outputString+"\", port= "+portI;
         try {
           Socket theClientSocket= // Create socket for send.
             new Socket(InetAddress.getLoopbackAddress(), portI);

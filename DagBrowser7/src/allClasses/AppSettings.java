@@ -5,6 +5,7 @@ import static allClasses.Globals.appLogger;
 import java.io.File;
 import java.net.URISyntaxException;
 import java.util.Arrays;
+import static allClasses.Globals.NL;
 
 
 public class AppSettings {
@@ -72,7 +73,7 @@ public class AppSettings {
       ///enh In theory it could be made not-static with constructor injection. 
       */
     {
-      appLogger.info("AppSettings.initializeV(..) argStrings=\n  "
+      appLogger.info("AppSettings.initializeV(..) argStrings=" + NL + "  "
           +Arrays.toString(theCommandArgs.args()));
       appLogger.info("AppSettings.initializeV(..) entryPointClass="+
           entryPointClass.getCanonicalName());
@@ -146,7 +147,7 @@ public class AppSettings {
           appLogger.info("AppSettings.setInitiatorV()"
             + ", initiatorExtensionString= " 
               + AppSettings.initiatorExtensionString
-            + ", initiatorFile=\n  " + AppSettings.initiatorFile);
+            + ", initiatorFile=" + NL + "  " + AppSettings.initiatorFile);
         }
 
     }

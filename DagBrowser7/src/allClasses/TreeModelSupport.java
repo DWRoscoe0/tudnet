@@ -56,7 +56,7 @@ public abstract class TreeModelSupport
 		        if ( vectorOfTreeModelListener.size() > maxListenersI) {
 			    		appLogger.error( // Change warn to error to see interactively.
 			      			"TreeModelSupport.addTreeModelListener(..), maxListenersI: "+
-		      		    vectorOfTreeModelListener.size()+ "\n  "+
+		      		    vectorOfTreeModelListener.size()+ NL + "  "+
 		      		    theTreeModelListener.getClass().getName() + "@" +
 		      		    Integer.toHexString(
 		      		    		System.identityHashCode(theTreeModelListener)
@@ -68,7 +68,7 @@ public abstract class TreeModelSupport
         	else
 	    		appLogger.error(
       			"TreeModelSupport.addTreeModelListener(..) rejecting duplicate listener "+
-      		    "\n  "+theTreeModelListener
+      		    NL + "  "+theTreeModelListener
             );
 	  		// appLogger.debug(
 	    	//		"TreeModelSupport.addTreeModelListener(..) ends with "+theTreeModelListener);
@@ -83,7 +83,7 @@ public abstract class TreeModelSupport
 	          if (vectorOfTreeModelListener.removeElement( theTreeModelListener ))
 		  	      //appLogger.info(
 	          	//		"TreeModelSupport.removeTreeModelListener(..), listeners: "+
-	          	//    vectorOfTreeModelListener.size()+ "\n  "+
+	          	//    vectorOfTreeModelListener.size()+ NL + "  "+
 	          	//    theTreeModelListener.getClass().getName() + "@" +
 	          	//    Integer.toHexString(
 	          	//    		System.identityHashCode(theTreeModelListener)
@@ -92,7 +92,7 @@ public abstract class TreeModelSupport
 	          	;
   	          else
 		  	      appLogger.info(
-		  	      		"TreeModelSupport.removeTreeModelListener(..), not registered:\n   "+
+		  	      		"TreeModelSupport.removeTreeModelListener(..), not registered:" + NL + "   "+
 		      		    theTreeModelListener.getClass().getName() + "@" +
 		      		    Integer.toHexString(
 		      		    		System.identityHashCode(theTreeModelListener)
@@ -144,7 +144,7 @@ public abstract class TreeModelSupport
             TreeModelListener theTreeModelListener = 
             	(TreeModelListener)listeners.nextElement();
   	    		//appLogger.info(
-            //		"TreeModelSupport.fireTreeNodesInserted(..) to:\n"+theTreeModelListener
+            //		"TreeModelSupport.fireTreeNodesInserted(..) to:" + NL + theTreeModelListener
             //    );
             theTreeModelListener.treeNodesInserted( theTreeModelEvent );
             }

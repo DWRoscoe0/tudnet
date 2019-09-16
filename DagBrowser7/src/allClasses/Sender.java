@@ -8,6 +8,7 @@ import java.net.DatagramSocket;
 //import java.util.Random;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import static allClasses.Globals.NL;
 
 public class Sender // Uunicast and multicast sender thread.
 
@@ -242,9 +243,9 @@ public class Sender // Uunicast and multicast sender thread.
           } // retryLoop:
 	    	if (failuresI != 0) // Report exceptions and retries if there were any. 
           appLogger.debug("Sender.sendingDatagramPacketV(), "
-              + "send failed "+failuresI+" times.\n"
+              + "send failed "+failuresI+" times." + NL
               + PacketManager.gettingDirectedPacketString(theDatagramPacket,true)  
-              + "\n  last Exception was: "+savedIOException );
+              + NL + "  last Exception was: "+savedIOException );
 	      }
     
     }

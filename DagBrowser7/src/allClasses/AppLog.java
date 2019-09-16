@@ -14,6 +14,7 @@ import java.nio.channels.FileLockInterruptionException;
 import allClasses.LockAndSignal.Input;
 
 import static allClasses.AppLog.LogLevel.*;
+import static allClasses.Globals.NL;
 
 public class AppLog extends EpiThread
 
@@ -471,7 +472,7 @@ public class AppLog extends EpiThread
         ///enh Make this display a StackTrace with exception.
         */
       { 
-        String wholeString= "EXCEPTION: " + inString + " :\n  " + e ;
+        String wholeString= "EXCEPTION: " + inString + " :" + NL + "  " + e ;
 
         synchronized(this) { // Must synchronize on AppLog object so 
           System.out.println(wholeString); // intro string and
@@ -716,7 +717,8 @@ public class AppLog extends EpiThread
           aString+= theThrowable;
         	}
         
-      	aString+= "\n";  //...and a final line terminator.
+      	//// aString+= "\n";  //...and a final line terminator.
+        aString+= NL;  //// "\n";  //...and a final line terminator.
 
       	appendToOpenFileV(aString);  // Append it to log file.
         

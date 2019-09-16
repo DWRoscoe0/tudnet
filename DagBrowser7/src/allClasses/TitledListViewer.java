@@ -307,22 +307,22 @@ public class TitledListViewer // adapted from TitledListViewer.
 
 		    public void treeStructureChanged(TreeModelEvent theTreeModelEvent)
 		      { 
-		    		//appLogger.debug("TitledListViewer.treeStructureChanged()\n  "+theTreeModelEvent);
+		    		//appLogger.debug("TitledListViewer.treeStructureChanged()" + NL + "  "+theTreeModelEvent);
 			    	}
 
 		    public void treeNodesRemoved(TreeModelEvent theTreeModelEvent) 
 		      { 
-		    		//appLogger.debug("TitledListViewer.treeNodesRemoved()\n  "+theTreeModelEvent);
+		    		//appLogger.debug("TitledListViewer.treeNodesRemoved()" + NL + "  "+theTreeModelEvent);
 		      	}
 		
 		    public void treeNodesInserted(TreeModelEvent theTreeModelEvent) 
 		      { 
-		    		//appLogger.debug("TitledListViewer.treeNodesInserted()\n  "+theTreeModelEvent);
+		    		//appLogger.debug("TitledListViewer.treeNodesInserted()" + NL + "  "+theTreeModelEvent);
 		      	}
 		
 		    public void treeNodesChanged(TreeModelEvent theTreeModelEvent) 
 		      { 
-		        //appLogger.debug("TitledListViewer.treeNodesChanged()\n  "+theTreeModelEvent);
+		        //appLogger.debug("TitledListViewer.treeNodesChanged()" + NL + "  "+theTreeModelEvent);
 		    	  if ( // Ignoring event if parent TreePath doesn't match our List's. 
 	    	      	!aTreeHelper.getWholeTreePath().getParentPath().equals(
 	    	      			theTreeModelEvent.getTreePath()

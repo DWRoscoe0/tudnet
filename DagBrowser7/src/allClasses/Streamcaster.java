@@ -5,6 +5,7 @@ import static allClasses.Globals.appLogger;
 import java.io.IOException;
 
 import allClasses.LockAndSignal.Input;
+import static allClasses.Globals.NL;
 
 public class Streamcaster< 
     K,
@@ -126,7 +127,7 @@ public class Streamcaster<
             { // Terminating thread.
               appLogger.info(
               		"Requesting termination after "
-                	+"\n  "+maxTriesI+" REPLY time-outs."
+                	+NL + "  "+maxTriesI+" REPLY time-outs."
                   );
               Thread.currentThread().interrupt(); // Starting termination.
               break pingReplyLoop;

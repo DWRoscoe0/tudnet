@@ -248,7 +248,7 @@ public class TreeHelper
 		      appLogger.debug(
 		        "TreeHelper.focusGained(...) for "
 		      	+ Misc.componentInfoString(owningJComponent)
-		      	+ " begin,\n  gained by "
+		      	+ " begin," + NL + "  gained by "
 		        + Misc.componentInfoString(theFocusEvent.getComponent())
 		       	+", lost by "
 		        + Misc.componentInfoString(theFocusEvent.getOppositeComponent())
@@ -280,7 +280,7 @@ public class TreeHelper
 		      appLogger.debug(
 		        "TreeHelper.focusLost(...) for "
 		      	+ Misc.componentInfoString(owningJComponent)
-		      	+ " begin,\n  lost by "
+		      	+ " begin," + NL + "  lost by "
 		        + Misc.componentInfoString(theFocusEvent.getComponent())
 		       	+", gained by "
 		        + Misc.componentInfoString(theFocusEvent.getOppositeComponent())
