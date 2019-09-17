@@ -718,6 +718,31 @@ public class StateList extends MutableList implements Runnable {
 						}
 			}
 
+  public boolean logOrSubstatesB()
+    /* This method recursively logs any descendant OrState active sub-states.
+       It returns true if any states were logged, false otherwise.
+       
+       ///opt Don't log ancestors of OrStates already logged.
+     */
+    { 
+      boolean anyStateLoggedB= false;
+      if ( ! isAndStateB() ) // This is an OrState.
+        {
+          if (presentSubStateList.logOrSubstatesB()) anyStateLoggedB= true;
+          ///opt Don't log this state if we logged any sub-states.
+          appLogger.debug( // Log this OrState's sub-state
+              "StateList.logOrSubstatesB()(), "
+              + presentSubStateList.getFormattedStatePathString());
+          }
+      else // This is an AndState.
+        for  // Recurse into all sub-states looking for active OrState sub-states to log.
+          (StateList subStateList : theListOfSubStateLists) 
+          {
+            if (subStateList.logOrSubstatesB()) anyStateLoggedB= true;
+            }
+      return anyStateLoggedB;
+      }
+
 	public final void doOnExitV() throws IOException
 	  /* This method is called when a state is exited.
 	    It does actions needed when a state is exited.

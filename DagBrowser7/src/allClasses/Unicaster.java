@@ -259,6 +259,7 @@ public class Unicaster
         the Unicaster state machine was unable to process.
         Debug messages are silently ignored.
         Other messages are logged and ignored.
+        ///enh Display all OrState state-machine states.
        */
       {
           String inputString= getOfferedInputString();
@@ -269,7 +270,10 @@ public class Unicaster
             theEpiInputStreamI.readAString(); // and its message count argument.
             break toConsumeInput;
             }
-          appLogger.info("processUnprocessedInputV() input= "+inputString);
+          { // Log any other input, plus all OrState states. 
+            appLogger.info("processUnprocessedInputV() input= "+inputString);
+            logOrSubstatesB(); // Log active OrState sub-states.
+            }
         } // toConsumeInput: 
           resetOfferedInputV();  // consume unprocessed input.
         } // toReturn:
