@@ -313,11 +313,13 @@ public class LinkedMachineState
         public void onInputsToReturnFalseV() throws IOException
           {
             if (tryReceivingHelloB(this)) // Try to process HELLO.
-              requestAncestorSubStateV( // Success.  Request connected state.
-                  theConnectedState );
+              { // Success.  Move to ConnectedState.
+                sendHelloV(this); // Send one in case HELLO came from peer in same state.
+                requestAncestorSubStateV( theConnectedState ); // Request connected state.
+                }
             else if (theTimerInput.testInputArrivedB()) // Time-out? 
               { // Send another HELLO and keep waiting.
-                sendHelloV(this); // send a HELLO this time.
+                sendHelloV(this);
                 theTimerInput.scheduleV( // Restart timer.
                     Config.slowPeriodicRetryTimeOutMsL);
                 //// requestAncestorSubStateV( this ); // Continue by requesting this state. 
@@ -396,11 +398,12 @@ public class LinkedMachineState
 			  public boolean onInputsB() throws IOException
 			  	/* This method sends HELLO messages 
 			  	  in response to extra received HELLO messages.
-			  	  To prevent HELLO storms because a response is made 
-			  	  to only every other received HELLO.
 			  	  It calls the sub-state handler for message processing.
 			  	  It also decodes various messages such as GOODBYE 
 			  	  that can cause the state machine to exit this state.
+            To prevent HELLO storms a response is made 
+            to only every other received HELLO.
+            This 1/2 ratio might be overkill.  1/3 or 1/4 might be better.
 			  	  */
 			  	{
 			  			boolean signalB= true; // Assume signal will be produced.
