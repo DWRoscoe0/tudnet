@@ -505,33 +505,35 @@ public class TCPCopier extends EpiThread
 			{
 		    /// appLogger.info("tryTransferingFileL(..) beginning.");
 			  long transferResultL= 0;
-	      InputStream socketInputStream= null;
-				OutputStream socketOutputStream = null;
+	      //// InputStream socketInputStream= null;
+				//// OutputStream socketOutputStream = null;
 		  	try {
-		  			socketInputStream= theSocket.getInputStream();
-			  		socketOutputStream= theSocket.getOutputStream();
+		  			//// socketInputStream= theSocket.getInputStream();
+			  		//// socketOutputStream= theSocket.getOutputStream();
 			  		/// appLogger.info("tryTransferingFileL(..) before exchange...");
-			  		long timeStampResultL= 
+			  		long timeStampResultL=
 		      			TCPCopier.exchangeAndCompareFileTimeStampsRemoteToLocalL(
-		      				socketInputStream, socketOutputStream, localLastModifiedL);
+		      				theSocket, localLastModifiedL);
 			  		/// appLogger.info("tryTransferingFileL(..) after exchange...");
 						if ( timeStampResultL > 0 ) { // Remote file is newer.
 				  			appLogger.info("tryTransferingFileL(..) Remote file is newer.");
 								if ( receiveNewerRemoteFileB(
-										localDestinationFile, socketInputStream, timeStampResultL ) )
+										localDestinationFile, theSocket, timeStampResultL ) )
 									transferResultL= timeStampResultL;
 						  } else if ( timeStampResultL < 0 ) { // Local file is newer.
 				  			appLogger.info("tryTransferingFileL(..) Local file is newer.");
 						  	sendNewerLocalFileV(
-						  			localSourceFile, socketOutputStream );
+						  			localSourceFile, theSocket);
 								transferResultL= timeStampResultL;
 						  } else { ; // Files are same age, so do nothing. 
 						    /// appLogger.info("tryTransferingFileL(..) Files are same age.");
 						  }
-						theSocket.shutdownOutput(); // Prevent reset at Socket close.
+						//// theSocket.shutdownOutput(); // Do an output half-close, preventing reset,
+						  // This signals end of data?  ///org Should this be here?
 				} catch (IOException ex) {
-			  		appLogger.exception("tryTransferingFileL(..) aborted",ex);
+			  		appLogger.debug("tryTransferingFileL(..) [non-serious?] abort:" + ex);
 			    } finally {
+			      // Closing is done elsewhere.
 			  		}
 		  	if (transferResultL != 0)
 		  		appLogger.info("tryTransferingFileL(..) exchanged using "+theSocket);
@@ -541,15 +543,18 @@ public class TCPCopier extends EpiThread
 	
 		private static void sendNewerLocalFileV(
 				File localFile,
-				OutputStream socketOutputStream
+				Socket theSocket
 				)
 			throws IOException
 			/* This method sends the file localFile,
 			  which should be newer that its remote counterpart,
-			  over the socketOutputStream, to replace the remote counterpart.
+			  through theSocket, to replace the remote counterpart.
+			  
+        //////fix close cleanly.  
+        //////fix It could report sent file after exception.
 			 	*/
-		  ///fix close cleanly.
 			{ // Local file newer.
+		    OutputStream socketOutputStream= theSocket.getOutputStream();
 				FileInputStream localFileInputStream= null;
 				try { 
 						appLogger.info("sendNewerLocalFileV() sending file "
@@ -557,26 +562,43 @@ public class TCPCopier extends EpiThread
 						localFileInputStream= new FileInputStream(localFile);
 						Misc.copyStreamBytesB(
 								localFileInputStream, socketOutputStream);
-					} finally {
-						appLogger.info("sendNewerLocalFileV() sent file "
-								+ Misc.fileDataString(localFile));
+            theSocket.shutdownOutput(); // Do an output half-close, signaling EOF.
+              // This signals end of sent data.
+            appLogger.info("sendNewerLocalFileV() output shutdown after sending file."
+                + Misc.fileDataString(localFile));
+            skipToEndOfFileV(theSocket);
+            appLogger.info("sendNewerLocalFileV() remote peer output shutdown.");
+				  } finally {
 			  		Closeables.closeWithErrorLoggingB(localFileInputStream);
 					}
 				}
 
+    private static void skipToEndOfFileV(Socket theSocket) 
+        throws IOException
+      /* This method skips to the end of the theSocket's InputStream, blocking if needed.
+        This can be used as a signal indicating that the remote end
+        has received all sent date and shutdown its output.
+       */
+      {
+        while  // Wait for end of receive data 
+          (0 <= theSocket.getInputStream().read()) 
+          ;
+        }
+
     private static boolean receiveNewerRemoteFileB(
         File localFile,
-        InputStream socketInputStream,
+        Socket theSocket,
         long timeStampToSetL
         )
+      throws IOException
       /* This method receives the remote counterpart of file localFile,
-        via socketInputStream. and replaces the localFile.
+        via theSocket. and replaces the localFile.
         The new file has its TimeStamp set to timeStampToSet.
         The above operations are done in a two-step process 
         using an intermediate temporary file.
         This method returns true if the entire file transfer finished, 
         false otherwise.
-        
+
         This method is longer than sendNewerLocalFileV(..) because
         it must set the files LastModified value and do an atomic rename.
 
@@ -585,6 +607,7 @@ public class TCPCopier extends EpiThread
       {
         appLogger.info("receiveNewerRemoteFileB() receiving file "
             + Misc.fileDataString(localFile));
+        InputStream socketInputStream= theSocket.getInputStream();
         File tmpFile= null;
         FileOutputStream tmpFileOutputStream= null;
         boolean successB= false; // Assume we will not be successful.
@@ -610,24 +633,23 @@ public class TCPCopier extends EpiThread
           if (!Misc.atomicRenameB(tmpFile.toPath(), localFile.toPath())) 
             break toReturn;
           successB= true; // Success because everything finished.
+          // No need to call Socket.shutdownOutput().  close() will do that.
           } // toReturn:
-        Closeables.closeWithErrorLoggingB(tmpFileOutputStream);
+        Closeables.closeWithErrorLoggingB(tmpFileOutputStream); ///opt done needed?
         Misc.deleteDeleteable(tmpFile); // Delete possible temporary debris.
         appLogger.info("receiveNewerRemoteFileB(..) successB="+successB);
         return successB;
         }
 	  
-		private static long exchangeAndCompareFileTimeStampsRemoteToLocalL( 
-				InputStream socketInputStream, 
-				OutputStream socketOutputStream, 
+		private static long exchangeAndCompareFileTimeStampsRemoteToLocalL(
+		    Socket theSocket,
 	  		long localLastModifiedL
 				)
 	    /* This method compares the time-stamps of the remote and local files.
 
 	  		localLastModified is used as the time-stamp of the local file.
-	  		It is also sent to the remote peer via socketOutputStream.
-	  		The time-stamp of the remote file is received 
-	  		from the remote peer via socketInputStream.
+	  		The time-stamps are exchanged with the remote peer using theSocket,
+	  		which is assumed to be open and ready to use.
 
 	      This method returns a value indicating the result of the comparison.
 	  		If the returned value == 0 then the two files 
@@ -637,15 +659,18 @@ public class TCPCopier extends EpiThread
 	  		If the returned value < 0 then the local file is newer
 	  		and the returned value is negative the value of the local time-stamp. 
 	      
-	      A file that does not exist is considered to have
-	      a lastModified time-stamp of 0, which is considered infinitely old.
+	      A file that does not exist is considered infinitely old.
 	      
-	      ///fix Add time-out for receiving time-stamp from remote node.
+	      ///fix Add time-out for receiving time-stamp from remote node.  See:
+	         https://stackoverflow.com/questions/804951/is-it-possible-to-read-from-a-inputstream-with-a-timeout
+	         No, this will busy-wait.  Use Socket.setSoTimeout(int timeout).
 	      */
 		  throws IOException
 			{
     		/// appLogger.debug( 
     		/// 		"exchangeAndCompareFileTimeStampsRemoteToLocalL() begins.");
+        InputStream socketInputStream= theSocket.getInputStream();
+        OutputStream socketOutputStream= theSocket.getOutputStream();
 	  		long remoteLastModifiedL= 0; // Initial accumulator value.
 	  		{ // Send digits of local file time stamp and terminator to remote end.
 	  			TCPCopier.sendDigitsOfNumberV(socketOutputStream, localLastModifiedL);

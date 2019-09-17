@@ -26,6 +26,7 @@ public class Misc
     code useful for debugging and logging.
     Temporary code sometimes becomes permanent and
     is moved to its own classes.
+    ///org Code needs moving now.
     
     Here are some notes to mark possible work to do:
     ///tmp : temporary code, for debugging or a development kluge.

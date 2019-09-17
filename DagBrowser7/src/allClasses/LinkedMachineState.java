@@ -234,6 +234,7 @@ public class LinkedMachineState
                     );
                 }
             else if ( tryInputB("Connect") ) { // Connect requested, at startup.
+              appLogger.info("Connecting to previous connectee.");
               sendHelloV(this); // Send initial HELLO.
               requestAncestorSubStateV( theExponentialRetryConnectingState );
               }
@@ -281,7 +282,7 @@ public class LinkedMachineState
                   { // End exponential backup by switching to another state.
                     appLogger.info(
                         "Time-out limit reached in"+getFormattedStatePathString());
-                    sendHelloV(this); // Initial HELLO for next state.
+                    //// sendHelloV(this); // Initial HELLO for next state.
                     requestAncestorSubStateV( // Switch to different type of retrying.
                         theSlowPeriodicRetryConnectingState);
                     }
@@ -304,6 +305,8 @@ public class LinkedMachineState
         public void onEntryV() throws IOException
           {
             super.onEntryV();
+            sendHelloV(this); // Initial HELLO for this state.  Done here because
+              // some predecessor states (ConnectedState sub-states) can't do it.
             theTimerInput.scheduleV(Config.slowPeriodicRetryTimeOutMsL);
             }
     

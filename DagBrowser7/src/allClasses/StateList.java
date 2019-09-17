@@ -667,8 +667,11 @@ public class StateList extends MutableList implements Runnable {
 					&& (nextSubStateList != StateList.initialSentinelState)
 					)
         appLogger.error("StateList.requestSubStateListV(..), "
-            + "a next state is already requested."
-        	);
+            + "a next state is already requested.  Present"
+            + nextSubStateList.getFormattedStatePathString()
+            + "\n  Requested"
+            + requestedStateList.getFormattedStatePathString()
+          );
       nextSubStateList= requestedStateList; // Record the request.
 	  	}	
 
