@@ -187,10 +187,11 @@ public class LinkMeasurementState
             try {
               if (successB)
                 { // Read and ignore the 2 numbers that follow.
-                  //// appLogger.debug( "MeasurementHandshakingState."
-                  ////     + "tryProcessingOldPacketAcknowledgementB() ignoring rejected PA.");
+                  int sequenceNumberI= theNetcasterInputStream.readANumberI();
                   theNetcasterInputStream.readANumberI();
-                  theNetcasterInputStream.readANumberI();
+                  appLogger.debug( "MeasurementHandshakingState."
+                    + "tryProcessingOldPacketAcknowledgementB() ignoring old PA "
+                    + sequenceNumberI);
                   }
                 }
               catch ( BadReceivedDataException theBadReceivedDataException ) {
@@ -390,15 +391,18 @@ public class LinkMeasurementState
 								  }
 								// /*  ////
 								else if ( tryProcessingOldPacketAcknowledgementB() ) {
-	                appLogger.debug( "MeasurementHandshakingState() old PA received");
+	                //// appLogger.debug( "MeasurementHandshakingState() old PA received");
 	                ; // Ignoring it.
 								  }
 								// */  ////
 		            else if // Try handling time-out?
-	                (testAndLogIfTrueB(measurementTimerInput.testInputArrivedB(),
-	                  "exponential PA retry receive time-out,")) 
+		              (measurementTimerInput.testInputArrivedB())
+                  //// (testAndLogIfTrueB(measurementTimerInput.testInputArrivedB(),
+                   ////   "exponential PA retry receive time-out,"))
 				      		//// (measurementTimerInput.getInputArrivedB()) // Time-out happened? 
 					    		{ // Process time-out.
+		                appLogger.info("exponential PA receive time-out for PS "
+		                    + lastSequenceNumberSentL);
 								    if ( exponentialRetryTimeOutMsL <= Config.maxTimeOutMsL )
 				    				  { exponentialRetryTimeOutMsL*=2;  // Doubling time-out limit.
   			                measurementTimerInput.scheduleV(exponentialRetryTimeOutMsL);
