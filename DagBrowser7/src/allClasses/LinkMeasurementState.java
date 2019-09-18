@@ -189,7 +189,7 @@ public class LinkMeasurementState
                 { // Read and ignore the 2 numbers that follow.
                   int sequenceNumberI= theNetcasterInputStream.readANumberI();
                   theNetcasterInputStream.readANumberI();
-                  appLogger.debug( "MeasurementHandshakingState."
+                  appLogger.debug( "MeasurementHandshakingState "
                     + "tryProcessingOldPacketAcknowledgementB() ignoring old PA "
                     + sequenceNumberI);
                   }
@@ -401,7 +401,8 @@ public class LinkMeasurementState
                    ////   "exponential PA retry receive time-out,"))
 				      		//// (measurementTimerInput.getInputArrivedB()) // Time-out happened? 
 					    		{ // Process time-out.
-		                appLogger.info("exponential PA receive time-out for PS "
+		                appLogger.info("MeasurementHandshakingState "
+		                    + "exponential PA receive time-out for PS "
 		                    + lastSequenceNumberSentL);
 								    if ( exponentialRetryTimeOutMsL <= Config.maxTimeOutMsL )
 				    				  { exponentialRetryTimeOutMsL*=2;  // Doubling time-out limit.
