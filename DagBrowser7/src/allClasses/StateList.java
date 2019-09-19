@@ -642,6 +642,8 @@ public class StateList extends MutableList implements Runnable {
       // Validity of request will be tested later.
     }
 
+  private Throwable oldThrowable= null;
+
   protected void requestSubStateListV(StateList requestedStateList)
 	  /* This method requests the next state-machine state,
 	    which is the same thing as this state's next sub-state.
@@ -662,17 +664,25 @@ public class StateList extends MutableList implements Runnable {
 	       
 	    */
 	  {
-      if  // Detect and report if this is an excess state change request.
+      Throwable newThrowable= new Throwable("stack trace at call");
+      if  // Detect and report if this is an excessive state change request.
 				( (nextSubStateList != null)
 					&& (nextSubStateList != StateList.initialSentinelState)
 					)
-        appLogger.error("StateList.requestSubStateListV(..), "
-            + "a next state is already requested.  Present"
-            + nextSubStateList.getFormattedStatePathString()
-            + "\n  Requested"
-            + requestedStateList.getFormattedStatePathString()
-          );
-      nextSubStateList= requestedStateList; // Record the request.
+        synchronized(appLogger) { // Must synchronize all output on AppLogger object. 
+          appLogger.debug(  // Log entry header, first line.
+              "StateList.requestSubStateListV(..), already requested,");
+          appLogger.appendToOpenFileV(
+              nextSubStateList.getFormattedStatePathString()+NL);
+          appLogger.doStackTraceV(oldThrowable);
+          appLogger.appendToOpenFileV(NL + "new request is");
+          appLogger.appendToOpenFileV(
+              requestedStateList.getFormattedStatePathString()+NL);
+          appLogger.doStackTraceV(newThrowable);
+          }
+      oldThrowable= newThrowable; // Save new Throwable as old for next time.
+
+      nextSubStateList= requestedStateList; // Now, finally, actually record the request.
 	  	}	
 
 	/*  Methods for entry and exit of OrState or their sub-states.  */

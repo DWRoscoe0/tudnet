@@ -519,7 +519,7 @@ public class AppLog extends EpiThread
     public void doStackTraceV(Throwable theThrowable)
       {
         if (theThrowable == null)
-          theThrowable= new Throwable("created to display stack trace");
+          theThrowable= new Throwable("Throwable created to display stack trace");
         theThrowable.printStackTrace(getPrintWriter());
         }
     
@@ -728,11 +728,11 @@ public class AppLog extends EpiThread
         lastMillisL= nowMillisL; // Saving present time as new last time.
         }
 
-    private void appendToOpenFileV(String inString)
+    public void appendToOpenFileV(String inString)
       /* This method writes to thePrintWriter, which must be open.  */
       { 
         thePrintWriter.print( inString );  // Append inString to file.
-        appendedAtMsL= System.currentTimeMillis(); // Record time of close.
+        appendedAtMsL= System.currentTimeMillis(); // Record time of append.
         theLockAndSignal.notifyingV(); 
         }
 
