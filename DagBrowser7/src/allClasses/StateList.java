@@ -666,8 +666,9 @@ public class StateList extends MutableList implements Runnable {
 	  {
       Throwable newThrowable= new Throwable("stack trace at call");
       if  // Detect and report if this is an excessive state change request.
-				( (nextSubStateList != null)
-					&& (nextSubStateList != StateList.initialSentinelState)
+				( (nextSubStateList != null) // There is an old request, it's,
+					&& (nextSubStateList != StateList.initialSentinelState) // not the sentinel,
+		      && (nextSubStateList != requestedStateList) // and it's not a duplicate request.
 					)
         synchronized(appLogger) { // Must synchronize all output on AppLogger object. 
           appLogger.debug(  // Log entry header, first line.
