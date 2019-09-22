@@ -2,13 +2,22 @@ package allClasses;
 
 public class DefaultLongLike
   implements LongLike
-
+  
+  /* This class is useful for passing references to long values,
+    and for passing long values from a method back to its caller.
+    */
+  
   {
 	  private long theL;
 
-	  public DefaultLongLike( long theL ) // Constructor. 
-		  {
-		  	this.theL= theL;
+    public DefaultLongLike() // Constructor. 
+      {
+        this(0);
+        }
+
+    public DefaultLongLike( long theL ) // Constructor. 
+      {
+        this.theL= theL;
         }
 
     public long getValueL( )

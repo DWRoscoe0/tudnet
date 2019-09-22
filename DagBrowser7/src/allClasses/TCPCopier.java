@@ -511,31 +511,25 @@ public class TCPCopier extends EpiThread
 			{
 		    /// appLogger.info("tryTransferingFileL(..) beginning.");
 			  long transferResultL= 0;
-	      //// InputStream socketInputStream= null;
-				//// OutputStream socketOutputStream = null;
 		  	try {
-		  			//// socketInputStream= theSocket.getInputStream();
-			  		//// socketOutputStream= theSocket.getOutputStream();
 			  		/// appLogger.info("tryTransferingFileL(..) before exchange...");
+		  	    LongLike remoteFileSizeLongLike= new DefaultLongLike();
 			  		long timeStampResultL=
-		      			TCPCopier.exchangeAndCompareFileTimeStampsRemoteToLocalL(
-		      				theSocket, localLastModifiedL,localFileSizeL);
+		      			TCPCopier.exchangeAndCompareFileAttributesRemoteToLocalL(
+		      				theSocket, localLastModifiedL, localFileSizeL, remoteFileSizeLongLike);
 			  		/// appLogger.info("tryTransferingFileL(..) after exchange...");
 						if ( timeStampResultL > 0 ) { // Remote file is newer.
 				  			appLogger.info("tryTransferingFileL(..) Remote file is newer.");
-								if ( receiveNewerRemoteFileB(
-										localDestinationFile, theSocket, timeStampResultL ) )
+								if ( receiveNewerRemoteFileB(localDestinationFile, theSocket, 
+								    timeStampResultL, remoteFileSizeLongLike.getValueL() ) )
 									transferResultL= timeStampResultL;
 						  } else if ( timeStampResultL < 0 ) { // Local file is newer.
 				  			appLogger.info("tryTransferingFileL(..) Local file is newer.");
-						  	sendNewerLocalFileV(
-						  			localSourceFile, theSocket);
+						  	sendNewerLocalFileV(localSourceFile, theSocket);
 								transferResultL= timeStampResultL;
 						  } else { ; // Files are same age, so do nothing. 
 						    /// appLogger.info("tryTransferingFileL(..) Files are same age.");
 						  }
-						//// theSocket.shutdownOutput(); // Do an output half-close, preventing reset,
-						  // This signals end of data?  ///org Should this be here?
 				} catch (IOException ex) {
 			  		appLogger.debug("tryTransferingFileL(..) [intentional?] abort with " + ex);
 			    } finally {
@@ -554,10 +548,10 @@ public class TCPCopier extends EpiThread
 			throws IOException
 			/* This method sends the file localFile,
 			  which should be newer that its remote counterpart,
-			  through theSocket, to replace the remote counterpart.
-			  
-        //////fix close cleanly.  
-        //////fix It could report sent file after exception.
+			  through theSocket, to replace its remote counterpart.
+			  It closes the send side of the socket after the last byte of the file.
+			  Then it waits for End-Of-File on the receive side before
+			  closing the localFile and returning.
 			 	*/
 			{ // Local file newer.
 		    OutputStream socketOutputStream= theSocket.getOutputStream();
@@ -569,10 +563,11 @@ public class TCPCopier extends EpiThread
 						Misc.copyStreamBytesB(
 								localFileInputStream, socketOutputStream);
             theSocket.shutdownOutput(); // Do an output half-close, signaling EOF.
-              // This signals end of sent data.
+              // This signals end of file data.
             appLogger.info("sendNewerLocalFileV() output shutdown after sending file."
                 + Misc.fileDataString(localFile));
             skipToEndOfFileV(theSocket);
+              // This signals that remote peer has received all our sent file data.
             appLogger.info("sendNewerLocalFileV() remote peer output shutdown.");
 				  } finally {
 			  		Closeables.closeWithErrorLoggingB(localFileInputStream);
@@ -597,21 +592,20 @@ public class TCPCopier extends EpiThread
     private static boolean receiveNewerRemoteFileB(
         File localFile,
         Socket theSocket,
-        long timeStampToSetL
+        long remoteTimeStampL,
+        long remoteLengthL
         )
       throws IOException
       /* This method receives the remote counterpart of file localFile,
-        via theSocket. and replaces the localFile.
-        The new file has its TimeStamp set to timeStampToSet.
+        via theSocket. and if the number of bytes received is remoteLengthL,
+        then it replaces the localFile with the remote one.
+        The new file has its TimeStamp set to remotetimeStamp.
         The above operations are done in a two-step process 
         using an intermediate temporary file.
+        The final step is an atomic rename of the temporary file to the local file.
+        
         This method returns true if the entire file transfer finished, 
         false otherwise.
-
-        This method is longer than sendNewerLocalFileV(..) because
-        it must set the files LastModified value and do an atomic rename.
-
-        ///org Do complete rewrite using atomic rename, etc.
         */
       {
         appLogger.info("receiveNewerRemoteFileB() receiving file "
@@ -640,13 +634,16 @@ public class TCPCopier extends EpiThread
               tmpFileOutputStream.close(); // Close output file, not the socket.
             } catch ( IOException e ) {
               appLogger.exception("receiveNewerRemoteFileB() close failure", e);
-              break toReturn;
+              break toReturn; // Exit because close failed.
             }
-          tmpFile.setLastModified(timeStampToSetL); // Set time stamp.
+          tmpFile.setLastModified(remoteTimeStampL); // Set time stamp.
+          if (remoteLengthL != tmpFile.length()) {
+            appLogger.info("receiveNewerRemoteFileB(..) wrong file length=");
+            break toReturn; // Exit because received file has wrong length.
+            }
           if (!Misc.atomicRenameB(tmpFile.toPath(), localFile.toPath())) 
-            break toReturn;
+            break toReturn; // Exit because rename failed.
           successB= true; // Success because everything finished.
-          // No need to call Socket.shutdownOutput().  close() will do that.  ////?
           } // toReturn:
         Closeables.closeWithErrorLoggingB(tmpFileOutputStream); ///opt done needed?
         Misc.deleteDeleteable(tmpFile); // Delete possible temporary debris.
@@ -654,25 +651,31 @@ public class TCPCopier extends EpiThread
         return successB;
         }
 	  
-		private static long exchangeAndCompareFileTimeStampsRemoteToLocalL(
+		private static long exchangeAndCompareFileAttributesRemoteToLocalL(
 		    Socket theSocket,
 	  		long localLastModifiedL,
-	  		long localFileSizeL
+	  		long localFileSizeL,
+        LongLike remoteFileSizeLongLike 
 				)
-	    /* This method compares the time-stamps of the remote and local files.
+	    /* This method exchanges attributes of a file on both the local and remote peers
+	      as part of an effort to decide which, if either, of the files is newer
+	      and should be copied to the other peer.
+	      It exchanges the time-stamps and file sizes of the remote and local files.
+	      The parameters are as follows:
 
-	  		localLastModified is used as the time-stamp of the local file.
-	  		The time-stamps are exchanged with the remote peer using theSocket,
-	  		which is assumed to be open and ready to use.
+	      * theSocket is the open Socket over which the exchange of data takes place.
+        * localLastModifiedL is used as the time-stamp of the local file.
+        * localFileSizeL is used as the length of the local file.
+        * remoteFileSizeLongLike is used to return the length of the remote file.
 
 	      This method returns a value indicating the result of the comparison.
 	  		If the returned value == 0 then the two files 
 	  		have the same lastModified time-stamps and are equally old.
 	  		If the returned value > 0 then the remote file is newer
-	  		and the returned value is the remote time-stamp. 
+	  		and the returned value is the remote file time-stamp. 
 	  		If the returned value < 0 then the local file is newer
 	  		and the returned value is negative the value of the local time-stamp. 
-	      
+
 	      A file that does not exist is considered infinitely old.
 	      
 	      ///fix Add time-out for receiving time-stamp from remote node.  See:
@@ -687,8 +690,6 @@ public class TCPCopier extends EpiThread
         OutputStream socketOutputStream= theSocket.getOutputStream();
         
 	  		// Send digits of local file time stamp and terminator to remote end.
-  			//// TCPCopier.sendDigitsOfNumberV(socketOutputStream, localLastModifiedL);
-        //// socketOutputStream.write( (byte)('\n') );
         TCPCopier.sendNumberV(socketOutputStream, localLastModifiedL); // Time-stamp.
         TCPCopier.sendNumberV(socketOutputStream, localFileSizeL); // File size.
 	  		socketOutputStream.write( (byte)('#') ); // File starts after this.
@@ -699,8 +700,7 @@ public class TCPCopier extends EpiThread
 	  		
 	  		// Receive and decode similar digits of remote file time stamp.
         long remoteLastModifiedL= receiveNumberL(socketInputStream);
-        //// long remoteFileSizeL= 
-            receiveNumberL(socketInputStream);
+        remoteFileSizeLongLike.setValueL(receiveNumberL(socketInputStream));
         int socketByteI= socketInputStream.read(); // Read first byte.
     		while (true) { // Skip characters through '#' or to end of input.
     			if (socketByteI==-1) break; // Exit if end of stream.
@@ -748,7 +748,7 @@ public class TCPCopier extends EpiThread
             10 * theL + Character.digit(socketC, 10); 
         socketByteI= socketInputStream.read(); // Read next byte.
         }        /// appLogger.debug( "reportPeerConnectionV(..): queuing peer." );
-      appLogger.debug( "readNumberL(..): "+theL);
+      // appLogger.debug( "readNumberL(..): "+theL);
       return theL;
       }
 
@@ -759,7 +759,7 @@ public class TCPCopier extends EpiThread
         The number consists of digits followed by a new-line.
        */
       {
-        appLogger.debug( "sendNumberL(..): "+theL);
+        // appLogger.debug( "sendNumberL(..): "+theL);
         TCPCopier.sendDigitsOfNumberV(socketOutputStream, theL);
         socketOutputStream.write( (byte)('\n') );
         }
