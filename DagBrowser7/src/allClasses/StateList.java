@@ -368,7 +368,7 @@ public class StateList extends MutableList implements Runnable {
   // Sentinel states are used by OrState machines. 
 	protected static final SentinelState initialSentinelState;
 
-	static { 
+	static { // Static initialization.
 		initialSentinelState= new SentinelState(); 
 		initialSentinelState.initializeV();
 		}

@@ -193,8 +193,7 @@ public class LinkedMachineState
 		    in response to a multicast message from the peer.
 		    It makes use of an aggressive exponential back-off of
 		    HELLO messages in an effort to connect to the other peer.
-		  * 
-		 * */
+		  */
 
     private class DisconnectedState extends StateList
 
@@ -245,6 +244,7 @@ public class LinkedMachineState
 
         } // class DisconnectedState
 
+
     private class ExponentialRetryConnectingState extends StateList 
 
       /* This class assumes that a HELLO message 
@@ -289,7 +289,8 @@ public class LinkedMachineState
                 }
             }
   
-          } // class ExponentialRetryConnectingState
+        } // class ExponentialRetryConnectingState
+
 
     private class SlowPeriodicRetryConnectingState extends StateList 
 
@@ -328,6 +329,7 @@ public class LinkedMachineState
   
           } // class SlowPeriodicRetryConnectingState
 		
+
 		private class ConnectedState extends AndState
 
 	  	/* This is a special state.
@@ -383,7 +385,8 @@ public class LinkedMachineState
 		  	    for faster connecting after app restart.
 		  	    */
 		  	  {
-	    	    appLogger.debug( "Entering"+ getFormattedStatePathString() );
+	    	    //// appLogger.debug( "Entering"+ getFormattedStatePathString() );
+	    	    appLogger.debug( "Connecting" );
             super.onEntryV();
 	    			IPAndPort remoteIPAndPort= theUnicaster.getKeyK();
 		    		theTCPCopier.queuePeerConnectionV(remoteIPAndPort);
@@ -443,10 +446,11 @@ public class LinkedMachineState
 		    public void onExitV() throws IOException
 		      { 
 		        super.onExitV();
-            appLogger.debug( "Exiting"+ getFormattedStatePathString() );
+            appLogger.debug( "Disconnecting" );
 		        }
 		    
 	  		} // class ConnectedState
+
 
     private void sayGoodbyesV() throws IOException
       /* This method sends 3 GOODBYEs, each in a separate packet.  */
@@ -456,6 +460,7 @@ public class LinkedMachineState
           theNetcasterOutputStream.sendingPacketV(); // Forcing send.
           }
         }
+
 
   	private boolean tryReceivingHelloB(StateList subStateList) 
   			throws IOException
@@ -506,6 +511,7 @@ public class LinkedMachineState
 				  }
   		  return gotKeyB;
 	  		}
+
 
   	private void sendHelloV(StateList subStateList)
   			throws IOException

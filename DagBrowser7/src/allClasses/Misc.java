@@ -268,8 +268,7 @@ public class Misc
                     "atomicRenameB(..) failed attempt "+attemptsI
                     +", retrying, "+theAccessDeniedException); 
               } catch (IOException theIOException) {
-                appLogger.exception(
-                    "atomicRenameB(..) failed with ",theIOException); 
+                appLogger.exception("atomicRenameB(..) failed with ",theIOException); 
                 break;
               }
             EpiThread.interruptibleSleepB( // Don't hog CPU in retry loop.
@@ -349,12 +348,12 @@ public class Misc
             while (true) {
               lengthI= theInputStream.read(bufferAB);
               if (lengthI <= 0) // Transfer completed.
-                { successB= true; break; } // Indicate success and exit loop.
+                { successB= true; break; } // Record success and exit loop.
               theOutputStream.write(bufferAB, 0, lengthI);
               byteCountI+= lengthI;
               if (EpiThread.testInterruptB()) { // Thread interruption.
                 appLogger.info(true, 
-                    "copyStreamBytesV(..) interrupted");
+                    "copyStreamBytesV(..) terminated by interrupted");
                 break; // Exit loop without success.
                 }
               }
@@ -362,9 +361,9 @@ public class Misc
           catch (IOException theIOException) {
             if (EpiThread.testInterruptB()) // Thread interruption.
               appLogger.info(
-                "copyStreamBytesV(..) interrupted with "+theIOException);
+                "copyStreamBytesV(..) interrupted plus "+theIOException);
               else
-                appLogger.exception("copyStreamBytesV(..)",theIOException);
+                appLogger.exception("copyStreamBytesV(..) terminated by",theIOException);
             }
           appLogger.info( "copyStreamBytesV() successB="+successB
               +", bytes transfered=" + byteCountI
@@ -374,7 +373,7 @@ public class Misc
 
     public static boolean copyTimeAttributesB(
         Path sourcePath, Path destinationPath)
-      /* This method copies the 3 time attributes from the source file
+     /* This method copies the 3 time attributes from the source file
         to the destination file.
         It returns true if successful, false otherwise.
         */

@@ -167,7 +167,10 @@ public class TCPCopier extends EpiThread
         super.stopV(); // Terminate the default way by interrupting thread.
         
         try { // Also close the server ServerSocket.
-            if (serverServerSocket!= null) serverServerSocket.close();
+            if (serverServerSocket!= null) {
+              appLogger.info("TCPCopier.stopV(): closing serverServerSocket");            
+              serverServerSocket.close();
+              }
           } catch (Exception theException) {
             appLogger.exception("TCPCopier.stopV(): closing", theException);            
           }
@@ -354,7 +357,7 @@ public class TCPCopier extends EpiThread
                   "tryExchangingFilesWithServerL() copied using"
                   + "\n  clientSocket= " + clientSocket);
           } catch (SocketTimeoutException theIOException) {
-            // A timeout is not considered an error.
+            // A timeout is not considered an error, so it is no longer logged.
             /// appLogger.info(
             ///   "tryExchangingFilesWithServerL() failed\n  "+ theIOException);
           } catch (IOException theIOException) {
@@ -426,15 +429,15 @@ public class TCPCopier extends EpiThread
             ///   "serviceOneRequestFromAnyClientV() accepted connection on "
             ///   + serverSocket );
             processServerConnectionV(serverSocket); 
-            successB= true; // Completed without thrown exceptions.
-          } catch (SocketTimeoutException ex) { // Treat time-out as normal.
+            successB= true; // Completed without throwing an exception.
+          } catch (SocketTimeoutException ex) { // Treat time-out as okay way to end.
             /// appLogger.info("serviceOneRequestFromAnyClientV() time-out.");
           } catch (IOException ex) { // Handle thrown exceptions.
-            if (EpiThread.testInterruptB()) 
-              appLogger.info("serviceOneRequestFromAnyClientV() termination.");
+            if (EpiThread.testInterruptB())
+              appLogger.info("serviceOneRequestFromAnyClientV() termination plus "+ex);
               else
               appLogger.exception("serviceOneRequestFromAnyClientV()",ex);
-          } finally {
+          } finally { // Be certain resources are closed.
             Closeables.closeIfNotNullWithLoggingB(serverSocket);
             Closeables.closeIfNotNullWithLoggingB(serverServerSocket);
             } // toReturn: 
@@ -531,7 +534,7 @@ public class TCPCopier extends EpiThread
 						//// theSocket.shutdownOutput(); // Do an output half-close, preventing reset,
 						  // This signals end of data?  ///org Should this be here?
 				} catch (IOException ex) {
-			  		appLogger.debug("tryTransferingFileL(..) [non-serious?] abort:" + ex);
+			  		appLogger.debug("tryTransferingFileL(..) [intentional?] abort with " + ex);
 			    } finally {
 			      // Closing is done elsewhere.
 			  		}
@@ -576,13 +579,16 @@ public class TCPCopier extends EpiThread
     private static void skipToEndOfFileV(Socket theSocket) 
         throws IOException
       /* This method skips to the end of the theSocket's InputStream, blocking if needed.
-        This can be used as a signal indicating that the remote end
+        This can be used to receive a signal indicating that the remote peer
         has received all sent date and shutdown its output.
        */
       {
-        while  // Wait for end of receive data 
-          (0 <= theSocket.getInputStream().read()) 
-          ;
+        while (true) { // Wait for end of receive data 
+          int dataI= theSocket.getInputStream().read();
+          if (0 > dataI) break;
+          appLogger.debug("skipToEndOfFileV(..) byte read = " + dataI);
+          }
+        appLogger.debug("skipToEndOfFileV(..) EOF reached.");
         }
 
     private static boolean receiveNewerRemoteFileB(
@@ -616,24 +622,28 @@ public class TCPCopier extends EpiThread
           if (tmpFile == null) break toReturn;
           try { tmpFileOutputStream= new FileOutputStream( tmpFile ); 
             } catch ( FileNotFoundException e ) {
-              appLogger.exception(
-                  "receiveNewerRemoteFileB() open failure", e);
+              appLogger.exception("receiveNewerRemoteFileB() open failure", e);
               break toReturn;
             }
           if (!Misc.copyStreamBytesB( // Copy stream to file or
               socketInputStream, tmpFileOutputStream))
             break toReturn; // terminate if failure.
-          try { tmpFileOutputStream.close(); // Close output file.
+          theSocket.getOutputStream().write(0); // If this executes without IOException
+            // then peer finished sending its file and hasn't closed the socket.
+          appLogger.debug(
+              "receiveNewerRemoteFileB() 0 byte sent back.  doing shutdownOutput().");
+          theSocket.shutdownOutput(); // Do an output half-close, signaling EOF.
+          try { 
+              tmpFileOutputStream.close(); // Close output file, not the socket.
             } catch ( IOException e ) {
-              appLogger.exception(
-                  "receiveNewerRemoteFileB() close failure", e);
+              appLogger.exception("receiveNewerRemoteFileB() close failure", e);
               break toReturn;
             }
           tmpFile.setLastModified(timeStampToSetL); // Set time stamp.
           if (!Misc.atomicRenameB(tmpFile.toPath(), localFile.toPath())) 
             break toReturn;
           successB= true; // Success because everything finished.
-          // No need to call Socket.shutdownOutput().  close() will do that.
+          // No need to call Socket.shutdownOutput().  close() will do that.  ////?
           } // toReturn:
         Closeables.closeWithErrorLoggingB(tmpFileOutputStream); ///opt done needed?
         Misc.deleteDeleteable(tmpFile); // Delete possible temporary debris.
