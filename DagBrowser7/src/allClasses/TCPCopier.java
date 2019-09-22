@@ -347,8 +347,9 @@ public class TCPCopier extends EpiThread
             ///   "tryExchangingFilesWithServerL() after successful connect"
             ///   + ",\n  clientSocket= " + clientSocket);
             long clientFileLastModifiedL= clientFile.lastModified();
-            resultL= tryTransferingFileL(
-              clientSocket, clientFile, clientFile, clientFileLastModifiedL );
+            long clientFileFizeL= clientFile.length();
+            resultL= tryTransferingFileL( clientSocket, 
+                clientFile, clientFile, clientFileLastModifiedL, clientFileFizeL );
             
             thePeersCursor.addInfoUsingPeersCursor(
                   new IPAndPort(serverIPString, serverPortString),null);
@@ -457,8 +458,9 @@ public class TCPCopier extends EpiThread
         serverFile= // Calculating File name.
             AppSettings.makeRelativeToAppFolderFile( serverFileString );
         long serverFileLastModifiedL= serverFile.lastModified();
+        long serverFileFizeL= serverFile.length();
         long resultL= tryTransferingFileL(
-          serverSocket, serverFile, serverFile, serverFileLastModifiedL );
+          serverSocket, serverFile, serverFile, serverFileLastModifiedL, serverFileFizeL );
         if (resultL != 0)
           appLogger.info( "processServerConnectionV() copied using " 
               +serverSocket);
@@ -481,7 +483,8 @@ public class TCPCopier extends EpiThread
 				Socket theSocket,
 				File localSourceFile, 
 				File localDestinationFile, 
-				long localLastModifiedL
+				long localLastModifiedL,
+				long localFileSizeL
 				)
 		  throws IOException
 		  /* This method transfers a file through theSocket.
@@ -516,7 +519,7 @@ public class TCPCopier extends EpiThread
 			  		/// appLogger.info("tryTransferingFileL(..) before exchange...");
 			  		long timeStampResultL=
 		      			TCPCopier.exchangeAndCompareFileTimeStampsRemoteToLocalL(
-		      				theSocket, localLastModifiedL);
+		      				theSocket, localLastModifiedL,localFileSizeL);
 			  		/// appLogger.info("tryTransferingFileL(..) after exchange...");
 						if ( timeStampResultL > 0 ) { // Remote file is newer.
 				  			appLogger.info("tryTransferingFileL(..) Remote file is newer.");
@@ -580,10 +583,10 @@ public class TCPCopier extends EpiThread
         throws IOException
       /* This method skips to the end of the theSocket's InputStream, blocking if needed.
         This can be used to receive a signal indicating that the remote peer
-        has received all sent date and shutdown its output.
+        has received all sent data and shutdown its output.
        */
       {
-        while (true) { // Wait for end of receive data 
+        while (true) { // Read from stream until -1 received. 
           int dataI= theSocket.getInputStream().read();
           if (0 > dataI) break;
           appLogger.debug("skipToEndOfFileV(..) byte read = " + dataI);
@@ -653,7 +656,8 @@ public class TCPCopier extends EpiThread
 	  
 		private static long exchangeAndCompareFileTimeStampsRemoteToLocalL(
 		    Socket theSocket,
-	  		long localLastModifiedL
+	  		long localLastModifiedL,
+	  		long localFileSizeL
 				)
 	    /* This method compares the time-stamps of the remote and local files.
 
@@ -681,36 +685,31 @@ public class TCPCopier extends EpiThread
     		/// 		"exchangeAndCompareFileTimeStampsRemoteToLocalL() begins.");
         InputStream socketInputStream= theSocket.getInputStream();
         OutputStream socketOutputStream= theSocket.getOutputStream();
-	  		long remoteLastModifiedL= 0; // Initial accumulator value.
-	  		{ // Send digits of local file time stamp and terminator to remote end.
-	  			TCPCopier.sendDigitsOfNumberV(socketOutputStream, localLastModifiedL);
-		  		socketOutputStream.write( (byte)('\n') );
-		  		socketOutputStream.write( (byte)('#') );
-	  			socketOutputStream.flush();
-	  			}
-  	  	/// appLogger.debug( 
+        
+	  		// Send digits of local file time stamp and terminator to remote end.
+  			//// TCPCopier.sendDigitsOfNumberV(socketOutputStream, localLastModifiedL);
+        //// socketOutputStream.write( (byte)('\n') );
+        TCPCopier.sendNumberV(socketOutputStream, localLastModifiedL); // Time-stamp.
+        TCPCopier.sendNumberV(socketOutputStream, localFileSizeL); // File size.
+	  		socketOutputStream.write( (byte)('#') ); // File starts after this.
+  			socketOutputStream.flush(); // Be certain the data is sent.
+  			/// appLogger.debug( 
   	  	/// 	"exchangeAndCompareFileTimeStampsRemoteToLocalL() "
   	  	/// 	+"after sending digits.");
-	  		{ // Receive and decode similar digits of remote file time stamp.
-	    		remoteLastModifiedL= 0;
-	    		int socketByteI= socketInputStream.read(); // Read first byte.
-	  			char socketC;
-	    		while (true) { // Accumulate all digits of remote file time-stamp.
-	    			if (socketByteI==-1) break; // Exit if end of stream.
-	    			socketC= (char)socketByteI;
-	    			if (! Character.isDigit(socketC)) break; // Exit if not digit.
-	    			remoteLastModifiedL= // Combine new digit with digit accumulator.  
-	    					10 * remoteLastModifiedL + Character.digit(socketC, 10); 
-	      		socketByteI= socketInputStream.read(); // Read next byte.
-	      		}
-	    		while (true) { // Skip characters through '#' or to end of input.
-	    			if (socketByteI==-1) break; // Exit if end of stream.
-	    			if (socketByteI==(int)'#') break; // Exit if terminator found. 
-	      		socketByteI= socketInputStream.read(); // Read next byte.
-	      		}
-	  			}
-  	  	/// appLogger.debug( "exchangeAndCompareFileTimeStampsRemoteToLocalL() "
+	  		
+	  		// Receive and decode similar digits of remote file time stamp.
+        long remoteLastModifiedL= receiveNumberL(socketInputStream);
+        //// long remoteFileSizeL= 
+            receiveNumberL(socketInputStream);
+        int socketByteI= socketInputStream.read(); // Read first byte.
+    		while (true) { // Skip characters through '#' or to end of input.
+    			if (socketByteI==-1) break; // Exit if end of stream.
+    			if (socketByteI==(int)'#') break; // Exit if terminator found. 
+      		socketByteI= socketInputStream.read(); // Read next byte.
+      		}
+  			/// appLogger.debug( "exchangeAndCompareFileTimeStampsRemoteToLocalL() "
   	  	/// 	+"after receiving digits.");
+    		
 	  		long compareResultL= remoteLastModifiedL - localLastModifiedL;
 	  		if (compareResultL > 0 ) 
 	  			  compareResultL= remoteLastModifiedL;
@@ -732,7 +731,39 @@ public class TCPCopier extends EpiThread
   	  	/// appLogger.debug( "exchangeAndCompareFileTimeStampsRemoteToLocalL() ends.");
 				return compareResultL;
 				}
-	
+
+    private static long receiveNumberL(InputStream socketInputStream)
+        throws IOException
+      /* This method return a long number from the socketInputSteam.
+        */
+    {
+      char socketC;
+      long theL= 0; // Digit accumulator.
+      int socketByteI= socketInputStream.read(); // Read first byte.
+      while (true) { // Accumulate all digits of remote file time-stamp.
+        if (socketByteI==-1) break; // Exit if end of stream.
+        socketC= (char)socketByteI;
+        if (! Character.isDigit(socketC)) break; // Exit if not digit.
+        theL= // Combine new digit with digit accumulator.  
+            10 * theL + Character.digit(socketC, 10); 
+        socketByteI= socketInputStream.read(); // Read next byte.
+        }        /// appLogger.debug( "reportPeerConnectionV(..): queuing peer." );
+      appLogger.debug( "readNumberL(..): "+theL);
+      return theL;
+      }
+
+    private static void sendNumberV( 
+      OutputStream socketOutputStream, long theL)
+          throws IOException
+      /* This method sends the long number theL to socketOutputStream.
+        The number consists of digits followed by a new-line.
+       */
+      {
+        appLogger.debug( "sendNumberL(..): "+theL);
+        TCPCopier.sendDigitsOfNumberV(socketOutputStream, theL);
+        socketOutputStream.write( (byte)('\n') );
+        }
+
 		private static void sendDigitsOfNumberV( 
 					OutputStream socketOutputStream, long theL)
 			  throws IOException
@@ -740,7 +771,8 @@ public class TCPCopier extends EpiThread
 			    to socketOutputStream.  
 			    For code simplicity, the number always begins with a [leading] '0'.
 			    
-			    ///fix This will fail in 2038 when the 32-bit signed number overflows.
+			    ///fix This will fail when used for sending a time in 2038 
+			      when the 32-bit signed number overflows.
 			   	*/
 				{	
 				  if ( theL == 0 ) { // Output first digit which is always 0.
