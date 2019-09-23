@@ -393,8 +393,16 @@ public class ConnectionManager
     private boolean processingLocalStringMessagesB()
       /* This method processes local messages that are received by the ConnectionManager
         and replicated and distributed to each Unicaster by the UnicasterManager.
-        Presently this only the Skipped-Time message
         It returns true if any messages were processed, false otherwise.
+
+        Presently the only message being passed is the Skipped-Time message.
+        A skipped time period can cause a flurry of retransmissions and log entries
+        when the period starts, apparently because 
+        the network interface is shutdown before the CPU. 
+        Similarly, there will be a flurry of HELLO reconnect message retransmissions 
+        and log entries at the end of the skipped time period
+        in response to the Skipped-Time message sent at that time,
+        apparently because the network interface is restored after the CPU. 
         */
       {
         boolean itemsProcessedB= false;

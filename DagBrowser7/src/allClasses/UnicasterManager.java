@@ -207,17 +207,18 @@ public class UnicasterManager
 
     
     public void passToUnicastersV(String messageString)
-      /* This method passes messageString to all Unicasters,
+      /* This method passes messageString to only connected Unicasters,
         each of which is expected to process it with its state machine. 
         */
       {
-        appLogger.debug(
-            "passToUnicastersV(..), to all Unicasters, message:"+messageString);
+        appLogger.debug("passToUnicastersV(..), to only connected Unicasters, message:"
+          + messageString);
         for ( DataNode childDataNode: this )  // For every Unicaster 
           { // [ass message to it.
             Unicaster theUnicaster= ((Unicaster)childDataNode);
-            theUnicaster.getNotifyingQueueOfStrings().
-              add(messageString);
+            if (theUnicaster.isConnectedB())
+              theUnicaster.getNotifyingQueueOfStrings().
+                add(messageString);
             }
         }
 
