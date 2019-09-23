@@ -30,7 +30,7 @@ public class Globals
         */
 	    {
 		    appLogger.exception( "Globals.logAndRethrowAsRuntimeExceptionV(..)"
-		        + aString + ":\n  ", theThrowable );
+		        + aString + ":" + NL + "  ", theThrowable );
 		    throw new RuntimeException( theThrowable );
 		    }
   	

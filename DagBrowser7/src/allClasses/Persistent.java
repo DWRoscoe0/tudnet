@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Iterator;
 import java.util.NavigableMap;
+import static allClasses.Globals.NL;
 
 public class Persistent 
 
@@ -220,8 +221,8 @@ public class Persistent
 	    						childPersistingNode,keyTailString,valueString);
 	    		break toReturn;
 		  	} // toFail:
-		  		appLogger.warning( "multiSetValueB(..) failed,\n"
-		  		    + "  pathString="+pathString+"\n"
+		  		appLogger.warning( "multiSetValueB(..) failed," + NL
+		  		    + "  pathString="+pathString + NL
 		  		    + "  valueString="+valueString );
 		  		resultB= true;  // Set failure return value
 		  	} // toReturn:

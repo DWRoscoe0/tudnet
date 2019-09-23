@@ -17,6 +17,7 @@ import java.io.RandomAccessFile;
 
 
 import static allClasses.Globals.*;  // appLogger;
+import static allClasses.Globals.NL;
 
 public class Outline
 
@@ -134,7 +135,7 @@ public class Outline
 	            }
 	          catch (IOException e) { // Logging and re-throwing.
 	            appLogger.error(
-	            		"Outline.readLineV() seek() "+fileOffsetL+"\n"+e
+	            		"Outline.readLineV() seek() "+fileOffsetL + NL + e
 	            		);
 	            throw e;
 	            } // Handle errors.
@@ -143,7 +144,7 @@ public class Outline
 		      		lineString = theRandomAccessFile.readLine();  // Reading line.
 		          }
 	          catch (IOException e) { // Logging and re-throwing.
-		          appLogger.error("Outline.readLineV() readline()\n"+e);
+		          appLogger.error("Outline.readLineV() readline()" + NL + e);
 	            throw e;
 		          } // Handle errors.
 	        try 
@@ -152,7 +153,7 @@ public class Outline
 		      	  		theRandomAccessFile.getFilePointer(); 
 		          }
 	          catch (IOException e) { // Logging and re-throwing.
-		          appLogger.error("Outline.readLineV() getFilePointer()\n"+e);
+		          appLogger.error("Outline.readLineV() getFilePointer()" + NL +e);
 	            throw e;
 		          } // Handle errors.
 	        if (lineString == null) // Handling End of file (shouldn't happen).

@@ -9,6 +9,7 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static allClasses.Globals.appLogger;
+import static allClasses.Globals.NL;
 
 
 public class TCPCopier extends EpiThread
@@ -339,13 +340,13 @@ public class TCPCopier extends EpiThread
             clientSocket= new Socket();
             /// appLogger.debug(
             ///   "tryExchangingFilesWithServerL() before connect"
-            ///   + ",\n  clientSocket= " + clientSocket
-            ///   + ",\n  theInetSocketAddress= " + theInetSocketAddress);
+            ///   + "," + NL + "  clientSocket= " + clientSocket
+            ///   + "," + NL + "  theInetSocketAddress= " + theInetSocketAddress);
             clientSocket.connect(  // Connect with time-out.
                 theInetSocketAddress, Config.tcpConnectTimeoutMsI); 
             /// appLogger.debug(
             ///   "tryExchangingFilesWithServerL() after successful connect"
-            ///   + ",\n  clientSocket= " + clientSocket);
+            ///   + "," + NL + "  clientSocket= " + clientSocket);
             long clientFileLastModifiedL= clientFile.lastModified();
             long clientFileFizeL= clientFile.length();
             resultL= tryTransferingFileL( clientSocket, 
@@ -356,14 +357,14 @@ public class TCPCopier extends EpiThread
             if (resultL != 0)
               appLogger.info( 
                   "tryExchangingFilesWithServerL() copied using"
-                  + "\n  clientSocket= " + clientSocket);
+                  + NL + "  clientSocket= " + clientSocket);
           } catch (SocketTimeoutException theIOException) {
             // A timeout is not considered an error, so it is no longer logged.
             /// appLogger.info(
-            ///   "tryExchangingFilesWithServerL() failed\n  "+ theIOException);
+            ///   "tryExchangingFilesWithServerL() failed" + NL + "  "+ theIOException);
           } catch (IOException theIOException) {
             appLogger.info(
-              "tryExchangingFilesWithServerL() failed\n  "+ theIOException);
+              "tryExchangingFilesWithServerL() failed" + NL + "  "+ theIOException);
           } finally {
             Closeables.closeWithErrorLoggingB(clientSocket);
           }

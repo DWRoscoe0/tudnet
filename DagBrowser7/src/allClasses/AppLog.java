@@ -713,12 +713,11 @@ public class AppLog extends EpiThread
    	    aString+= inString; //...the string to log,...
         aString+= " ";  //...and a space...
 
-        if ( theThrowable != null ) { //..and the exception if present... 
+        if ( theThrowable != null ) { //...and the exception if present... 
           aString+= theThrowable;
         	}
         
-      	//// aString+= "\n";  //...and a final line terminator.
-        aString+= NL;  //// "\n";  //...and a final line terminator.
+        aString+= NL; //...and a final line terminator.
 
       	appendToOpenFileV(aString);  // Append it to log file.
         
