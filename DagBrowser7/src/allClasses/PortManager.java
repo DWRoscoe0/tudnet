@@ -1,6 +1,7 @@
 package allClasses;
 
-import static allClasses.Globals.*;  // appLogger;
+import static allClasses.AppLog.theAppLog;
+
 
 public class PortManager {
 
@@ -106,15 +107,15 @@ s     */
 	  	    normalPortI= Integer.parseInt( localPortString );
 	      	}
 	      catch ( NumberFormatException theNumberFormatException ) {
-	        appLogger.error(
+	        theAppLog.error(
 	        		"getNormalPortI() corrupted port property="+localPortString);
 	      	break toGenerateNewValue;
 	      	}
-        appLogger.info("getNormalPortI() reusing port: "+normalPortI);
+        theAppLog.info("getNormalPortI() reusing port: "+normalPortI);
       	break toReturnValue;
 	  	} // toGenerateNewValue:
 	  	  normalPortI= (int)(System.currentTimeMillis()) & 32767 | 32768;
-        appLogger.info(
+        theAppLog.info(
         		"getNormalPortI() generated new random port: "+normalPortI);
     		thePersistent.putB("normalPort", ""+normalPortI); // Make it persist.
 			} // toReturnValue:

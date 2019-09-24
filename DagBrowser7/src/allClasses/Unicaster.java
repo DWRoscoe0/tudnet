@@ -3,7 +3,8 @@ package allClasses;
 import java.io.IOException;
 import java.util.Timer;
 
-import static allClasses.Globals.appLogger;
+import static allClasses.AppLog.theAppLog;
+
 
 public class Unicaster
 
@@ -183,7 +184,7 @@ public class Unicaster
         It also contains an IOException handler.
         */
       {
-        if (appLogger.testAndLogDisabledB( Config.unicasterThreadsDisableB, 
+        if (theAppLog.testAndLogDisabledB( Config.unicasterThreadsDisableB, 
             "run() unicasters") 
             )
           return;
@@ -226,7 +227,7 @@ public class Unicaster
         ///fix  Legitimate input is sometimes not consumed!
 		    */
 			{
-	  		appLogger.info("runLoop() begins.");
+	  		theAppLog.info("runLoop() begins.");
 	      processingLoop: while (true) {
 	        if (EpiThread.testInterruptB()) // Exit loop if thread termination requested. 
 	          break processingLoop;
@@ -248,7 +249,7 @@ public class Unicaster
           theLockAndSignal.waitingForInterruptOrNotificationE();
           ///dbg appLogger.debug("runLoop() after wait.");
 	      	} // processingLoop:
-  			appLogger.info("runLoop() loop interrupted, stopping state machine.");
+  			theAppLog.info("runLoop() loop interrupted, stopping state machine.");
   			// ? theTimer.cancel(); // Cancel all Timer events for debug tracing, ///dbg
         while (doOnInputsB()) ; // Cycle state machine until nothing remains to be done.
 				}
@@ -271,7 +272,7 @@ public class Unicaster
             break toConsumeInput;
             }
           { // Log any other input, plus all OrState states. 
-            appLogger.info("processUnprocessedInputV() input= "+inputString);
+            theAppLog.info("processUnprocessedInputV() input= "+inputString);
             logOrSubstatesB(); // Log active OrState sub-states.
             }
         } // toConsumeInput: 
@@ -297,13 +298,13 @@ public class Unicaster
 		    	String eventMessageString= theEpiInputStreamI.tryingToGetString();
 	      	if ( eventMessageString != null ) // There is an unprocessed message.
 		      	{ // Log and ignore the message.
-		  	    	appLogger.info( 
+		  	    	theAppLog.info( 
 		  	    			"Unicaster.onInputsV() unprocessed message: "
 		  	    			+ eventMessageString 
 		  	    			);
 			    		break process;
 		      		}
-	      	appLogger.info( 
+	      	theAppLog.info( 
   	    			"Unicaster.onInputsV() no message to process!"
   	    			+ eventMessageString 
   	    			);

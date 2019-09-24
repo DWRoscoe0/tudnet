@@ -8,7 +8,7 @@ import java.net.*;
 import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import static allClasses.Globals.appLogger;
+import static allClasses.AppLog.theAppLog;
 import static allClasses.Globals.NL;
 
 
@@ -115,9 +115,9 @@ public class TCPCopier extends EpiThread
         Then it starts this thread.
         */
       {
-        appLogger.info("TCPCopier.initializeV() begins.");
+        theAppLog.info("TCPCopier.initializeV() begins.");
         toReturn: { // Act only if all conditions are true.
-          if (appLogger.testAndLogDisabledB( // Return if manually disabled.
+          if (theAppLog.testAndLogDisabledB( // Return if manually disabled.
               Config.tcpThreadsDisableB,"TCPCopier"))
             break toReturn;
           if // Don't operate on .class file, which means we are running under Eclipse.
@@ -128,7 +128,7 @@ public class TCPCopier extends EpiThread
             startV(); // Start TCPCopier thread.
             }
           } // toReturn: {
-        appLogger.info("TCPCopier.initializeV() ends.");
+        theAppLog.info("TCPCopier.initializeV() ends.");
         }
 
     public void finalizeV() 
@@ -147,14 +147,14 @@ public class TCPCopier extends EpiThread
       The method will return early if the thread is interrupted.
       */
     {
-      appLogger.info("run() begins.");
+      theAppLog.info("run() begins.");
       EpiThread.interruptibleSleepB(Config.tcpCopierRunDelayMsL);
-      appLogger.info("run() start delay done.");
+      theAppLog.info("run() start delay done.");
 
       thePeersCursor=
           PeersCursor.makeOnFirstEntryPeersCursor( thePersistent );
       loopAlternatingRolesV();
-      appLogger.info("run() ends.");
+      theAppLog.info("run() ends.");
       }
 
     public synchronized void stopV()
@@ -169,18 +169,18 @@ public class TCPCopier extends EpiThread
         
         try { // Also close the server ServerSocket.
             if (serverServerSocket!= null) {
-              appLogger.info("TCPCopier.stopV(): closing serverServerSocket");            
+              theAppLog.info("TCPCopier.stopV(): closing serverServerSocket");            
               serverServerSocket.close();
               }
           } catch (Exception theException) {
-            appLogger.exception("TCPCopier.stopV(): closing", theException);            
+            theAppLog.exception("TCPCopier.stopV(): closing", theException);            
           }
         
         // Also close the Sockets of
         Closeables.closeIfNotNullWithLoggingB(clientSocket); // the client
         Closeables.closeIfNotNullWithLoggingB(serverSocket); // and server.
 
-        appLogger.info("TCPCopier.stopV(): interrupt and socket closes done.");
+        theAppLog.info("TCPCopier.stopV(): interrupt and socket closes done.");
         }
 
     private void updateTCPCopyStagingAreaV()
@@ -221,7 +221,7 @@ public class TCPCopier extends EpiThread
             actAsAServerV();
             EpiThread.interruptibleSleepB( // Random delay to prevent hogging.
                 theRandom.nextInt(Config.antiCPUHogLoopDelayMsI));
-            appLogger.info(
+            theAppLog.info(
                 "loopAlternatingRolesV() looping after random delay.");
             }
         }
@@ -355,7 +355,7 @@ public class TCPCopier extends EpiThread
             thePeersCursor.addInfoUsingPeersCursor(
                   new IPAndPort(serverIPString, serverPortString),null);
             if (resultL != 0)
-              appLogger.info( 
+              theAppLog.info( 
                   "tryExchangingFilesWithServerL() copied using"
                   + NL + "  clientSocket= " + clientSocket);
           } catch (SocketTimeoutException theIOException) {
@@ -363,7 +363,7 @@ public class TCPCopier extends EpiThread
             /// appLogger.info(
             ///   "tryExchangingFilesWithServerL() failed" + NL + "  "+ theIOException);
           } catch (IOException theIOException) {
-            appLogger.info(
+            theAppLog.info(
               "tryExchangingFilesWithServerL() failed" + NL + "  "+ theIOException);
           } finally {
             Closeables.closeWithErrorLoggingB(clientSocket);
@@ -436,9 +436,9 @@ public class TCPCopier extends EpiThread
             /// appLogger.info("serviceOneRequestFromAnyClientV() time-out.");
           } catch (IOException ex) { // Handle thrown exceptions.
             if (EpiThread.testInterruptB())
-              appLogger.info("serviceOneRequestFromAnyClientV() termination plus "+ex);
+              theAppLog.info("serviceOneRequestFromAnyClientV() termination plus "+ex);
               else
-              appLogger.exception("serviceOneRequestFromAnyClientV()",ex);
+              theAppLog.exception("serviceOneRequestFromAnyClientV()",ex);
           } finally { // Be certain resources are closed.
             Closeables.closeIfNotNullWithLoggingB(serverSocket);
             Closeables.closeIfNotNullWithLoggingB(serverServerSocket);
@@ -463,7 +463,7 @@ public class TCPCopier extends EpiThread
         long resultL= tryTransferingFileL(
           serverSocket, serverFile, serverFile, serverFileLastModifiedL, serverFileFizeL );
         if (resultL != 0)
-          appLogger.info( "processServerConnectionV() copied using " 
+          theAppLog.info( "processServerConnectionV() copied using " 
               +serverSocket);
         }
 
@@ -520,24 +520,24 @@ public class TCPCopier extends EpiThread
 		      				theSocket, localLastModifiedL, localFileSizeL, remoteFileSizeLongLike);
 			  		/// appLogger.info("tryTransferingFileL(..) after exchange...");
 						if ( timeStampResultL > 0 ) { // Remote file is newer.
-				  			appLogger.info("tryTransferingFileL(..) Remote file is newer.");
+				  			theAppLog.info("tryTransferingFileL(..) Remote file is newer.");
 								if ( receiveNewerRemoteFileB(localDestinationFile, theSocket, 
 								    timeStampResultL, remoteFileSizeLongLike.getValueL() ) )
 									transferResultL= timeStampResultL;
 						  } else if ( timeStampResultL < 0 ) { // Local file is newer.
-				  			appLogger.info("tryTransferingFileL(..) Local file is newer.");
+				  			theAppLog.info("tryTransferingFileL(..) Local file is newer.");
 						  	sendNewerLocalFileV(localSourceFile, theSocket);
 								transferResultL= timeStampResultL;
 						  } else { ; // Files are same age, so do nothing. 
 						    /// appLogger.info("tryTransferingFileL(..) Files are same age.");
 						  }
 				} catch (IOException ex) {
-			  		appLogger.debug("tryTransferingFileL(..) [intentional?] abort with " + ex);
+			  		theAppLog.debug("tryTransferingFileL(..) [intentional?] abort with " + ex);
 			    } finally {
 			      // Closing is done elsewhere.
 			  		}
 		  	if (transferResultL != 0)
-		  		appLogger.info("tryTransferingFileL(..) exchanged using "+theSocket);
+		  		theAppLog.info("tryTransferingFileL(..) exchanged using "+theSocket);
 	  	  ///dbg appLogger.info("transactionV() ends.");
 		  	return transferResultL;
 	    	}
@@ -558,18 +558,18 @@ public class TCPCopier extends EpiThread
 		    OutputStream socketOutputStream= theSocket.getOutputStream();
 				FileInputStream localFileInputStream= null;
 				try { 
-						appLogger.info("sendNewerLocalFileV() sending file "
+						theAppLog.info("sendNewerLocalFileV() sending file "
 								+ FileOps.fileDataString(localFile));
 						localFileInputStream= new FileInputStream(localFile);
 						FileOps.copyStreamBytesB(
 								localFileInputStream, socketOutputStream);
             theSocket.shutdownOutput(); // Do an output half-close, signaling EOF.
               // This signals end of file data.
-            appLogger.info("sendNewerLocalFileV() output shutdown after sending file."
+            theAppLog.info("sendNewerLocalFileV() output shutdown after sending file."
                 + FileOps.fileDataString(localFile));
             skipToEndOfFileV(theSocket);
               // This signals that remote peer has received all our sent file data.
-            appLogger.info("sendNewerLocalFileV() remote peer output shutdown.");
+            theAppLog.info("sendNewerLocalFileV() remote peer output shutdown.");
 				  } finally {
 			  		Closeables.closeWithErrorLoggingB(localFileInputStream);
 					}
@@ -585,9 +585,9 @@ public class TCPCopier extends EpiThread
         while (true) { // Read from stream until -1 received. 
           int dataI= theSocket.getInputStream().read();
           if (0 > dataI) break;
-          appLogger.debug("skipToEndOfFileV(..) byte read = " + dataI);
+          theAppLog.debug("skipToEndOfFileV(..) byte read = " + dataI);
           }
-        appLogger.debug("skipToEndOfFileV(..) EOF reached.");
+        theAppLog.debug("skipToEndOfFileV(..) EOF reached.");
         }
 
     private static boolean receiveNewerRemoteFileB(
@@ -609,7 +609,7 @@ public class TCPCopier extends EpiThread
         false otherwise.
         */
       {
-        appLogger.info("receiveNewerRemoteFileB() receiving file "
+        theAppLog.info("receiveNewerRemoteFileB() receiving file "
             + FileOps.fileDataString(localFile));
         InputStream socketInputStream= theSocket.getInputStream();
         File tmpFile= null;
@@ -620,7 +620,7 @@ public class TCPCopier extends EpiThread
           if (tmpFile == null) break toReturn;
           try { tmpFileOutputStream= new FileOutputStream( tmpFile ); 
             } catch ( FileNotFoundException e ) {
-              appLogger.exception("receiveNewerRemoteFileB() open failure", e);
+              theAppLog.exception("receiveNewerRemoteFileB() open failure", e);
               break toReturn;
             }
           if (!FileOps.copyStreamBytesB( // Copy stream to file or
@@ -628,18 +628,18 @@ public class TCPCopier extends EpiThread
             break toReturn; // terminate if failure.
           theSocket.getOutputStream().write(0); // If this executes without IOException
             // then peer finished sending its file and hasn't closed the socket.
-          appLogger.debug(
+          theAppLog.debug(
               "receiveNewerRemoteFileB() 0 byte sent back.  doing shutdownOutput().");
           theSocket.shutdownOutput(); // Do an output half-close, signaling EOF.
           try { 
               tmpFileOutputStream.close(); // Close output file, not the socket.
             } catch ( IOException e ) {
-              appLogger.exception("receiveNewerRemoteFileB() close failure", e);
+              theAppLog.exception("receiveNewerRemoteFileB() close failure", e);
               break toReturn; // Exit because close failed.
             }
           tmpFile.setLastModified(remoteTimeStampL); // Set time stamp.
           if (remoteLengthL != tmpFile.length()) {
-            appLogger.info("receiveNewerRemoteFileB(..) wrong file length=");
+            theAppLog.info("receiveNewerRemoteFileB(..) wrong file length=");
             break toReturn; // Exit because received file has wrong length.
             }
           if (!FileOps.atomicRenameB(tmpFile.toPath(), localFile.toPath())) 
@@ -648,7 +648,7 @@ public class TCPCopier extends EpiThread
           } // toReturn:
         Closeables.closeWithErrorLoggingB(tmpFileOutputStream); ///opt done needed?
         FileOps.deleteDeleteable(tmpFile); // Delete possible temporary debris.
-        appLogger.info("receiveNewerRemoteFileB(..) successB="+successB);
+        theAppLog.info("receiveNewerRemoteFileB(..) successB="+successB);
         return successB;
         }
 	  

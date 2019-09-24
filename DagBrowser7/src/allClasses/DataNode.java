@@ -1,12 +1,14 @@
 package allClasses;
 
-import static allClasses.Globals.appLogger;
 import allClasses.AppLog.LogLevel;
 
 import java.awt.Color;
 
 import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
+
+import static allClasses.AppLog.theAppLog;
+
 
 public class DataNode 
   {
@@ -186,7 +188,7 @@ public class DataNode
       	{
       	  if ( parentNamedList == null )
       	  	{
-	      	  	appLogger.debug(
+	      	  	theAppLog.debug(
 	      	  	"reportChangeOfSelfV(): parentNamedList == null!");
       	  	  /// Eventually replace variable or link it to DAG.
 	      	  	}
@@ -258,7 +260,7 @@ public class DataNode
   	    {
   	  		boolean loggingB= logB(theLogLevel);
   	  		if ( loggingB )
-  		      appLogger.logV( 
+  		      theAppLog.logV( 
   		      		theLogLevel, theLogString, theThrowable, consoleB );
   	  		return loggingB;
   	  	  }
@@ -270,7 +272,7 @@ public class DataNode
   	  		boolean consoleB )
   	    /* This method logs unconditionally. */
   	    {
-		      appLogger.logV( 
+		      theAppLog.logV( 
 		      		theLogLevel, theLogString, theThrowable, consoleB );
   	  	  }
 

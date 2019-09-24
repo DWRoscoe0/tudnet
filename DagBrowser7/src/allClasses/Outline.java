@@ -5,19 +5,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 
-//import java.nio.channels.FileChannel;
-
-//import javax.swing.JComponent;
-//import javax.swing.tree.TreeModel;
-//import javax.swing.tree.TreePath;
-
-
-
-
-
-
-import static allClasses.Globals.*;  // appLogger;
+import static allClasses.AppLog.theAppLog;
 import static allClasses.Globals.NL;
+
 
 public class Outline
 
@@ -84,7 +74,7 @@ public class Outline
       		synchronized (lockObject) {
 	      		if ( readLineReentryB ) // ?? catch 2nd thread at entrance.
 	      			{ readLineReentryB= false;             
-	      			  appLogger.error( "Outline: readLineV() REENTRY Begin.");
+	      			  theAppLog.error( "Outline: readLineV() REENTRY Begin.");
 	      				}
 	      			else
 	      			readLineReentryB= true;
@@ -94,7 +84,7 @@ public class Outline
 	            if  // Checking and exiting if maximum retries were exceeded.
 	              ( triesI > maxTriesI )  // Maximum attempts exceeded.
 	              { // Terminating thread.
-	                appLogger.error( "Outline.readLineV() retries failed." );
+	                theAppLog.error( "Outline.readLineV() retries failed." );
 	                break readlineRetryLoop; // Exiting with failure.
 	                }
 	            try { 
@@ -103,20 +93,20 @@ public class Outline
 	            	  } 
 	              catch ( IOException e ) {
 	              	try {
-		                appLogger.info( "Outline.readLineV() re-openning file." );
+		                theAppLog.info( "Outline.readLineV() re-openning file." );
 	              		theRandomAccessFile.close(); // Closing bad file.
 	                  theRandomAccessFile=  // Re-opening it.
 	                      new RandomAccessFile( "Outline.tmp", "r" );
 	              		}
 		              catch ( IOException e1 ) {
-		                appLogger.error( "Outline.readLineV() re-open failed." );
+		                theAppLog.error( "Outline.readLineV() re-open failed." );
 		                }
 	              	};
 	    	      triesI++;
 	            } // readlineRetryLoop: 
 	      		if ( ! readLineReentryB ) // ?? catch 1st thread at exit.
 		    			{ readLineReentryB= true;
-		  			  	appLogger.error( "Outline: readLineV() REENTRY End.");
+		  			  	theAppLog.error( "Outline: readLineV() REENTRY End.");
 		    				}
 	      			else
 	      			readLineReentryB= false;
@@ -134,7 +124,7 @@ public class Outline
 	        	  theRandomAccessFile.seek(fileOffsetL);  // Seeking read point.
 	            }
 	          catch (IOException e) { // Logging and re-throwing.
-	            appLogger.error(
+	            theAppLog.error(
 	            		"Outline.readLineV() seek() "+fileOffsetL + NL + e
 	            		);
 	            throw e;
@@ -144,7 +134,7 @@ public class Outline
 		      		lineString = theRandomAccessFile.readLine();  // Reading line.
 		          }
 	          catch (IOException e) { // Logging and re-throwing.
-		          appLogger.error("Outline.readLineV() readline()" + NL + e);
+		          theAppLog.error("Outline.readLineV() readline()" + NL + e);
 	            throw e;
 		          } // Handle errors.
 	        try 
@@ -153,7 +143,7 @@ public class Outline
 		      	  		theRandomAccessFile.getFilePointer(); 
 		          }
 	          catch (IOException e) { // Logging and re-throwing.
-		          appLogger.error("Outline.readLineV() getFilePointer()" + NL +e);
+		          theAppLog.error("Outline.readLineV() getFilePointer()" + NL +e);
 	            throw e;
 		          } // Handle errors.
 	        if (lineString == null) // Handling End of file (shouldn't happen).
@@ -424,7 +414,7 @@ public class Outline
                 new RandomAccessFile( "Outline.tmp", "rw" );
               } // Try creating file.
             catch (FileNotFoundException e) { // Handle any errors.
-              appLogger.error("Outline.createTheRandomAccessFileV(), new "+e);
+              theAppLog.error("Outline.createTheRandomAccessFileV(), new "+e);
               } // Handle any errors.
             } // open random-access file for creation and reading.
           { // copy bytes from ResourceInputStream to theRandomAccessFile.
@@ -435,7 +425,7 @@ public class Outline
                 theRandomAccessFile.write( byteI );
               }
             catch ( IOException e ) {
-              appLogger.error("Outline.createTheRandomAccessFileV(), read() "+e);
+              theAppLog.error("Outline.createTheRandomAccessFileV(), read() "+e);
               }
             }
           } // createTheRandomAccessFileV(..)

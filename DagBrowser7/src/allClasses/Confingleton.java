@@ -1,11 +1,12 @@
 package allClasses;
 
-import static allClasses.Globals.appLogger;
-
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+
+import static allClasses.AppLog.theAppLog;
+
 
 public class Confingleton 
   /* This class manages a text file containing 
@@ -41,7 +42,7 @@ public class Confingleton
             // Ignore errors.  These are treated as no file or bad data.
             // null will be returned.
             }
-        appLogger.info("Confingleton.getValueString(..) keyString="
+        theAppLog.info("Confingleton.getValueString(..) keyString="
             +keyString+" valueString="+valueString);
         return valueString;
         }
@@ -52,7 +53,7 @@ public class Confingleton
         ///enh Make this an atomic operation. 
         */
       {
-        appLogger.info("Confingleton.putValueV(..) keyString="
+        theAppLog.info("Confingleton.putValueV(..) keyString="
             +keyString+" valueString="+valueString);
 
         File theFile= makeFile(keyString);

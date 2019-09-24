@@ -1,10 +1,10 @@
 package allClasses;
 
-import static allClasses.AppLog.LogLevel.TRACE;
-import static allClasses.Globals.appLogger;
-
 import java.io.IOException;
 import java.util.Timer;
+
+import static allClasses.AppLog.LogLevel.TRACE;
+import static allClasses.AppLog.theAppLog;
 
 public class LinkMeasurementState 
 
@@ -189,14 +189,14 @@ public class LinkMeasurementState
                 { // Read and ignore the 2 numbers that follow.
                   int sequenceNumberI= theNetcasterInputStream.readANumberI();
                   theNetcasterInputStream.readANumberI();
-                  appLogger.debug( "MeasurementHandshakingState "
+                  theAppLog.debug( "MeasurementHandshakingState "
                     + "tryProcessingOldPacketAcknowledgementB() ignoring old PA "
                     + sequenceNumberI);
                   }
                 }
               catch ( BadReceivedDataException theBadReceivedDataException ) {
                 successB= false;
-                appLogger.exception( "MeasurementHandshakingState."
+                theAppLog.exception( "MeasurementHandshakingState."
                     + "tryProcessingOldPacketAcknowledgementB() ",
                     theBadReceivedDataException);
                 }
@@ -271,7 +271,7 @@ public class LinkMeasurementState
   				  	  }
   		    	  catch ( BadReceivedDataException theBadReceivedDataException ) {
                 successB= false; ///? needed?
-                appLogger.exception( 
+                theAppLog.exception( 
                     "MeasurementHandshakingState.tryProcessingPacketAcknowledgementB() ",
                     theBadReceivedDataException);
   		    	  	}
@@ -401,7 +401,7 @@ public class LinkMeasurementState
                    ////   "exponential PA retry receive time-out,"))
 				      		//// (measurementTimerInput.getInputArrivedB()) // Time-out happened? 
 					    		{ // Process time-out.
-		                appLogger.info("MeasurementHandshakingState "
+		                theAppLog.info("MeasurementHandshakingState "
 		                    + "exponential PA receive time-out for PS "
 		                    + lastSequenceNumberSentL);
 								    if ( exponentialRetryTimeOutMsL <= Config.maxTimeOutMsL )
@@ -412,7 +412,7 @@ public class LinkMeasurementState
   	                   } 
 				    			  else // Giving up after maximum time-out reached.
 				    			  { // Trigger breaking of connection.
-                      appLogger.info("MeasurementHandshakingState time-out.");
+                      theAppLog.info("MeasurementHandshakingState time-out.");
 				    			    requestAncestorSubStateV(theBrokenConnectionState);
 					    		      // Break the connection.
 				    			    }
@@ -473,7 +473,7 @@ public class LinkMeasurementState
 			        		smoothedMaxRoundTripTimeNsAsMsNamedLong.getValueString()
 					  			;
 								}
-					  if (appLogger.logB(TRACE)) appLogger.logV(
+					  if (theAppLog.logB(TRACE)) theAppLog.logV(
 				  		TRACE,
 				  		"calculateRoundTripTimesV(...) PA:"
 							  +sequenceNumberI+","
@@ -615,7 +615,7 @@ public class LinkMeasurementState
 				  				);
 							theNetcasterOutputStream.sendingPacketV();
 							  // Sending now for minimum RTT.
-						  if (appLogger.logB(TRACE)) appLogger.logV(
+						  if (theAppLog.logB(TRACE)) theAppLog.logV(
 					  		TRACE,
 					  		"processPacketSequenceNumberB(..) PS:"
 					  		  +sequenceNumberI+","

@@ -10,7 +10,8 @@ import java.net.UnknownHostException;
 
 import allClasses.LockAndSignal.Input;
 
-import static allClasses.Globals.*;  // appLogger;
+import static allClasses.Globals.NL;
+import static allClasses.AppLog.theAppLog;
 
 public class ConnectionManager 
 
@@ -249,12 +250,12 @@ public class ConnectionManager
 			  Fix to restore only the previously active ones.
 			 	*/
 			{
-        if (appLogger.testAndLogDisabledB( Config.unicasterThreadsDisableB, 
+        if (theAppLog.testAndLogDisabledB( Config.unicasterThreadsDisableB, 
             "restartPreviousUnicastersV()") 
             )
           return;
         
-      	appLogger.info(
+      	theAppLog.info(
       	    "ConnectionManager.Unica restartPreviousUnicastersV() begins.");
 	    	PeersCursor thePeersCursor= // Used for iteration. 
 	    	    PeersCursor.makeOnFirstEntryPeersCursor( thePersistent );
@@ -333,7 +334,7 @@ public class ConnectionManager
 		        );
 		      }
 		    catch ( SocketException e ) { // Handling SocketException.
-		      appLogger.error("unconnectedDatagramSocket:"+e);
+		      theAppLog.error("unconnectedDatagramSocket:"+e);
 		      if ( unconnectedDatagramSocket != null )
 		        unconnectedDatagramSocket.close();
 		      EpiThread.interruptibleSleepB(  // Don't hog CPU in error loop.
@@ -414,7 +415,7 @@ public class ConnectionManager
 
           if (theMessageString == null) break;  // Exit if no more messages
           
-          appLogger.debug(
+          theAppLog.debug(
             "ConnectionManager.processingLocalStringMessagesB()" + theMessageString);
           theUnicasterManager.passToUnicastersV( theMessageString ); ///rev disabled for testing.
 
@@ -432,7 +433,7 @@ public class ConnectionManager
         closing the associated socket.
         */
 	    {
-        appLogger.info( // Note this special situation in log.
+        theAppLog.info( // Note this special situation in log.
             "ConnectionManager.stoppingUnicastReceiverThreadV()."
             + NL + "  This may take several seconds for Socket to close.");
         EpiDatagramSocket.closeIfNotNullV( // Close socket to allow termination.
@@ -477,7 +478,7 @@ public class ConnectionManager
 		      );
 	      }
 	    catch ( IOException e ) { // Handling SocketException.
-	      appLogger.error("theMulticastSocket:"+e);
+	      theAppLog.error("theMulticastSocket:"+e);
 	      if ( theMulticastSocket != null )
 	      	theMulticastSocket.close();
 	      EpiThread.interruptibleSleepB(  // Don't hog CPU in error loop.
@@ -550,7 +551,7 @@ public class ConnectionManager
         either the unicast receiver or the multicast receiver. 
         */
       {
-        if (appLogger.testAndLogDisabledB( Config.unicasterThreadsDisableB, 
+        if (theAppLog.testAndLogDisabledB( Config.unicasterThreadsDisableB, 
             "passToUnicasterV(..)") 
             )
           return;

@@ -1,12 +1,10 @@
 package allClasses;
 
-import static allClasses.Globals.appLogger;
-
 import java.util.concurrent.atomic.AtomicLong;
 
+import static allClasses.AppLog.theAppLog;
 import static allClasses.AppLog.LogLevel.*;
 
-//import static allClasses.Globals.*;  // appLogger;
 
 public class SystemsMonitor 
 
@@ -99,7 +97,7 @@ public class SystemsMonitor
         and does a wait that determines the measurement period time.
        */
       {
-    		appLogger.info( "run() begins." );
+    		theAppLog.info( "run() begins." );
   
     		createAndAddChildrenV(); // Do non-dependency-injection initialization.
   
@@ -111,7 +109,7 @@ public class SystemsMonitor
         		doBinarySearchOfCPUSpeedAndDoOtherStuffL();
         		}
         
-        appLogger.info( "run() ends." );
+        theAppLog.info( "run() ends." );
         }
 
     private void createAndAddChildrenV()

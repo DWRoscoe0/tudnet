@@ -1,6 +1,6 @@
 package allClasses;
 
-import static allClasses.Globals.appLogger;
+import static allClasses.AppLog.theAppLog;
 
 
 public class NamedLong
@@ -37,7 +37,7 @@ public class NamedLong
 	      */
       {
     	  if (deltaL != 0) // Logging deltaL if it's not 0.
-		  		appLogger.debug( this.getNameString( )+" changed by "+deltaL );
+		  		theAppLog.debug( this.getNameString( )+" changed by "+deltaL );
 	  	  return addDeltaL( deltaL ); // Doing the add.
         }
 

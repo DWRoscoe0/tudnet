@@ -112,6 +112,7 @@ public class AppLog extends EpiThread
     */
 
   {
+    public static AppLog theAppLog; // Variable through which classes can access logger.
 
     public boolean clearLogFileB= false;  // true;
       // If this is set, the log file is cleared on first output.

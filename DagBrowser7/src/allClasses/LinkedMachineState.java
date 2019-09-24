@@ -1,9 +1,10 @@
 package allClasses;
 
-import static allClasses.Globals.appLogger;
-
 import java.io.IOException;
 import java.util.Timer;
+
+import static allClasses.AppLog.theAppLog;
+
 
 public class LinkedMachineState
 
@@ -155,7 +156,7 @@ public class LinkedMachineState
         if // Process local termination request, if present.
           ( tryInputB("Shutdown") )
           { // Process shutdown request by saving connection status, then disconnecting.
-            appLogger.debug( 
+            theAppLog.debug( 
                 "LinkedMachineState.onInputsB() isConnectedB()="+ isConnectedB());
             thePeersCursor.putFieldV( "wasConnected", isConnectedB());
 
@@ -233,7 +234,7 @@ public class LinkedMachineState
                     );
                 }
             else if ( tryInputB("Connect") ) { // Connect requested, at startup.
-              appLogger.info("Connecting to previous connectee.");
+              theAppLog.info("Connecting to previous connectee.");
               sendHelloV(this); // Send initial HELLO.
               requestAncestorSubStateV( theExponentialRetryConnectingState );
               }
@@ -280,7 +281,7 @@ public class LinkedMachineState
                     // stay in this state.
                   else
                   { // End exponential backup by switching to another state.
-                    appLogger.info(
+                    theAppLog.info(
                         "Time-out limit reached in"+getFormattedStatePathString());
                     //// sendHelloV(this); // Initial HELLO for next state.
                     requestAncestorSubStateV( // Switch to different type of retrying.
@@ -386,7 +387,7 @@ public class LinkedMachineState
 		  	    */
 		  	  {
 	    	    //// appLogger.debug( "Entering"+ getFormattedStatePathString() );
-	    	    appLogger.debug( "Connecting" );
+	    	    theAppLog.debug( "Connecting" );
             super.onEntryV();
 	    			IPAndPort remoteIPAndPort= theUnicaster.getKeyK();
 		    		theTCPCopier.queuePeerConnectionV(remoteIPAndPort);
@@ -414,7 +415,7 @@ public class LinkedMachineState
 				  		if ( super.onInputsB() ) // Try processing in sub-state machine.
 				  			break goReturn; // Return with signal true.
 				  		if (tryReceivingHelloB(this)) { // Try to process an extra HELLO.
-					        appLogger.debug( "Extra HELLO received." );
+					        theAppLog.debug( "Extra HELLO received." );
 					  			if  // If we received a HELLO and 
 					  			  ( sentHelloB^= true ) { // we didn't send one last time,
 					  				sendHelloV(this); // send a HELLO this time.
@@ -446,7 +447,7 @@ public class LinkedMachineState
 		    public void onExitV() throws IOException
 		      { 
 		        super.onExitV();
-            appLogger.debug( "Disconnecting" );
+            theAppLog.debug( "Disconnecting" );
 		        }
 		    
 	  		} // class ConnectedState
@@ -501,7 +502,7 @@ public class LinkedMachineState
 							localIpString.compareTo(remoteIpString) > 0 
 							);
 					///dbg leadingDefaultBooleanLike= !leadingDefaultBooleanLike; // Reverse roles for debug test. 
-	        appLogger.info( 
+	        theAppLog.info( 
 	        		"HELLO received.  Setting or overriding role to be: "
 	        		+(	theUnicaster.leadingDefaultBooleanLike.getValueB() 
 	        				? "LEADER" 

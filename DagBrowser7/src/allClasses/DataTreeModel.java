@@ -11,7 +11,9 @@ import allClasses.DataNode.ChangeFlag;
 
 import javax.swing.tree.TreeModel;
 
-import static allClasses.Globals.*;  // appLogger;
+import static allClasses.AppLog.theAppLog;
+import static allClasses.Globals.NL;
+
 
 public class DataTreeModel
 
@@ -226,7 +228,7 @@ public class DataTreeModel
           See DataNode.ChangeFlag.SUBTREE_CHANGED and related code.
           */
         { 
-	      	appLogger.error( "DataTreeModel.valueForPathChanged(..) called" );
+	      	theAppLog.error( "DataTreeModel.valueForPathChanged(..) called" );
       	  } 
       
     // Getter methods which are not part of AbstractTreeModel.
@@ -435,7 +437,7 @@ public class DataTreeModel
 			      	  			parentTreePath.pathByAddingChild( targetDataNode );
 				        	nodeToPathHashMap.put( targetDataNode, targetTreePath );
 				        	}
-	        		appLogger.warning( 
+	        		theAppLog.warning( 
 	        				"DataTreeModel.translatingToTreePath( "
 	        				+ targetDataNode 
 	        				+ " ), cache miss, resolves to" + NL + "  "
@@ -590,7 +592,7 @@ public class DataTreeModel
           and calls displayChangedNodesFromRootV(). 
           */
         {
-      		appLogger.trace( "DataTreeModel.displayTreeModelChangesV()" );
+      		theAppLog.trace( "DataTreeModel.displayTreeModelChangesV()" );
 	    		EDTUtilities.runOrInvokeAndWaitV( // Do following on EDT thread. 
 		    		new Runnable() {
 		    			@Override  
@@ -607,7 +609,7 @@ public class DataTreeModel
           the root of the Infogora hierarchy.
           */
         {
-      		appLogger.trace( "DataTreeModel.displayChangedNodesFromRootV()" );
+      		theAppLog.trace( "DataTreeModel.displayChangedNodesFromRootV()" );
 	      	displayChangedNodesFromV( // Display from...
 	      			theDataRoot.getParentOfRootTreePath( ), 
 	      			theDataRoot.getRootDataNode( ) 
@@ -625,7 +627,7 @@ public class DataTreeModel
 	  	    if ( theDataNode == null ) // Nothing to display. 
 	    	  	; // Do nothing.
 	    	  else { // Check this subtree.
-		    		appLogger.trace( "DataTreeModel.displayChangedNodesFromV() "
+		    		theAppLog.trace( "DataTreeModel.displayChangedNodesFromV() "
 		            + theDataNode.getNodePathString() );
 	    	  	// Display this node any updated descendants.
 		  	  	switch ( theDataNode.theChangeFlag ) {
@@ -675,7 +677,7 @@ public class DataTreeModel
           The ChangeFlag of all the nodes of any subtree display is reset. 
           */
 	      {
-  				appLogger.trace( "DataTreeModel.displayChangedSubtreeV() "
+  				theAppLog.trace( "DataTreeModel.displayChangedSubtreeV() "
   						+ theDataNode.getNodePathString() );
       		TreePath theTreePath= parentTreePath.pathByAddingChild(theDataNode); 
 			    int childIndexI= 0;  // Initialize child scan index.
@@ -752,7 +754,7 @@ public class DataTreeModel
             It also adds the path of the new child to the map for use later.
             */
           {
-        		appLogger.error( "THIS IS SUPPOSED TO BE UNUSED CODE!" ); 
+        		theAppLog.error( "THIS IS SUPPOSED TO BE UNUSED CODE!" ); 
             TreePath parentTreePath= // Calculating path of parent. 
             	translatingToTreePath( parentDataNode ); // Should be in map.
             if ( parentTreePath != null ) // Do these things only if path found.
@@ -784,7 +786,7 @@ public class DataTreeModel
             whose previous position was indexI, into parentDataNode.
             */
           {
-        		appLogger.error( "THIS IS SUPPOSED TO BE UNUSED CODE!" ); 
+        		theAppLog.error( "THIS IS SUPPOSED TO BE UNUSED CODE!" ); 
             TreePath parentTreePath= // Calculating path of parent. 
             	translatingToTreePath( parentDataNode );
             if ( parentTreePath != null ) // Do this only if path found.
@@ -798,7 +800,7 @@ public class DataTreeModel
   		            	);
   		          fireTreeNodesRemoved( theTreeModelEvent ); // Firing removal.
 
-  		          appLogger.debug( 
+  		          theAppLog.debug( 
   	        				"DataTreeModel.reportingRemoveV(..) uncaching "
   	        				+ childDataNode 
   	        				);

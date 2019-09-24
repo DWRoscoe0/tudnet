@@ -1,14 +1,14 @@
 package allClasses;
 
-import static allClasses.Globals.appLogger;
-
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-//import java.util.Random;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import static allClasses.AppLog.theAppLog;
 import static allClasses.Globals.NL;
+
 
 public class Sender // Uunicast and multicast sender thread.
 
@@ -196,7 +196,7 @@ public class Sender // Uunicast and multicast sender thread.
     	  		false;
 		    if ( droppingB )
 			    {
-			      appLogger.info( // Logging the drop of the packet.
+			      theAppLog.info( // Logging the drop of the packet.
 			      		"dropping packet "
 			      		+PacketManager.gettingDirectedPacketString(
 			      				theDatagramPacket,true
@@ -233,16 +233,16 @@ public class Sender // Uunicast and multicast sender thread.
               failuresI++;
     	        savedIOException= theIOException; // Save exception for logging later.
               if (failuresI>=5) { // Handle failure limit reached.
-                appLogger.debug("Sender.sendingDatagramPacketV() discarding packet.");
+                theAppLog.debug("Sender.sendingDatagramPacketV() discarding packet.");
                 break retryLoop;
                 }
-              appLogger.debug("Sender.sendingDatagramPacketV() will retry sending.");
+              theAppLog.debug("Sender.sendingDatagramPacketV() will retry sending.");
                      EpiThread.interruptibleSleepB(1000); // Sleep for 1 second.
               if (EpiThread.testInterruptB()) break retryLoop; // Termination requested.
     	        }
           } // retryLoop:
 	    	if (failuresI != 0) // Report exceptions and retries if there were any. 
-          appLogger.debug("Sender.sendingDatagramPacketV(), "
+          theAppLog.debug("Sender.sendingDatagramPacketV(), "
               + "send failed "+failuresI+" times." + NL
               + PacketManager.gettingDirectedPacketString(theDatagramPacket,true)  
               + NL + "  last Exception was: "+savedIOException );

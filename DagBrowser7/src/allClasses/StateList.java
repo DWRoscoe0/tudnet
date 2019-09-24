@@ -3,14 +3,15 @@ package allClasses;
 ///org Scan for all uses of "signal", previously called "progress",
 //   and make it make sense.
 
-import static allClasses.Globals.appLogger;
-import static allClasses.Globals.NL;
-import static allClasses.AppLog.LogLevel.*;
-
 import java.awt.Color;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import static allClasses.AppLog.theAppLog;
+import static allClasses.Globals.NL;
+import static allClasses.AppLog.LogLevel.*;
+
 
 public class StateList extends MutableList implements Runnable {
 
@@ -626,7 +627,7 @@ public class StateList extends MutableList implements Runnable {
   	  		( presentSubStateList != requestedStateList );
 	  	if ( changeIsNeededB )
 	  		requestSubStateListV(requestedStateList); // Request the state change.
-      appLogger.debug( "requestSubStateChangeIfNeededB(..) "+changeIsNeededB);
+      theAppLog.debug( "requestSubStateChangeIfNeededB(..) "+changeIsNeededB);
 	  	return changeIsNeededB; // Return whether request occurred.
 	  }	
 
@@ -670,16 +671,16 @@ public class StateList extends MutableList implements Runnable {
 					&& (nextSubStateList != StateList.initialSentinelState) // not the sentinel,
 		      && (nextSubStateList != requestedStateList) // and it's not a duplicate request.
 					)
-        synchronized(appLogger) { // Must synchronize all output on AppLogger object. 
-          appLogger.debug(  // Log entry header, first line.
+        synchronized(theAppLog) { // Must synchronize all output on AppLogger object. 
+          theAppLog.debug(  // Log entry header, first line.
               "StateList.requestSubStateListV(..), already requested,");
-          appLogger.appendToOpenFileV(
+          theAppLog.appendToOpenFileV(
               nextSubStateList.getFormattedStatePathString()+NL);
-          appLogger.doStackTraceV(oldThrowable);
-          appLogger.appendToOpenFileV(NL + "new request is");
-          appLogger.appendToOpenFileV(
+          theAppLog.doStackTraceV(oldThrowable);
+          theAppLog.appendToOpenFileV(NL + "new request is");
+          theAppLog.appendToOpenFileV(
               requestedStateList.getFormattedStatePathString()+NL);
-          appLogger.doStackTraceV(newThrowable);
+          theAppLog.doStackTraceV(newThrowable);
           }
       oldThrowable= newThrowable; // Save new Throwable as old for next time.
 
@@ -741,7 +742,7 @@ public class StateList extends MutableList implements Runnable {
         {
           if (presentSubStateList.logOrSubstatesB()) anyStateLoggedB= true;
           ///opt Don't log this state if we logged any sub-states.
-          appLogger.debug( // Log this OrState's sub-state
+          theAppLog.debug( // Log this OrState's sub-state
               "StateList.logOrSubstatesB()(), "
               + presentSubStateList.getFormattedStatePathString());
           }
@@ -887,7 +888,7 @@ public class StateList extends MutableList implements Runnable {
 		{ 
 		  if  // Log any previously saved exception.
 	    	(delayedIOException != null) 
-		  	appLogger.exception(
+		  	theAppLog.exception(
 		  			"StateList.delayExceptionV(..), previously saved exception: ",
 		  			theIOException
 		  			);
@@ -994,7 +995,7 @@ public class StateList extends MutableList implements Runnable {
       boolean successB= // Calculate whether input was consumed.
           (getOfferedInputString() == null);
       if (!successB) { // Handle not-consumed input.
-        appLogger.debug( "StateList processInputB(..) unprocessed: "+inputString);
+        theAppLog.debug( "StateList processInputB(..) unprocessed: "+inputString);
         resetOfferedInputV(); // Consume the input.
         }
       return successB; // Returning result of the attempt.
@@ -1049,7 +1050,7 @@ public class StateList extends MutableList implements Runnable {
 				  	anomalyString= 
 				  		"Old input '" + this.offeredInputString + "' was NOT consumed by";
 			  if ( anomalyString != null ) // Log if anomaly produced.
-			  	appLogger.warning(
+			  	theAppLog.warning(
 			  			"StateList.setDiscreteInputV..), "
 					  	+ anomalyString
 			  			+ getFormattedStatePathString()
@@ -1068,7 +1069,7 @@ public class StateList extends MutableList implements Runnable {
 		 	*/
 		{
 		  if ( this.offeredInputString == null )
-		  	appLogger.error(
+		  	theAppLog.error(
 		  			"StateList.resetOfferedInputV(), input already consumed in"
 		  			+ getFormattedStatePathString()
 		  			);
@@ -1137,7 +1138,7 @@ public class StateList extends MutableList implements Runnable {
       */
     { 
       if (theB) // Log message with state path if condition true.
-        appLogger.debug( messageString + getFormattedStatePathString() );
+        theAppLog.debug( messageString + getFormattedStatePathString() );
       return theB; 
       }
 

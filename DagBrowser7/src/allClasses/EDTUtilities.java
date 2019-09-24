@@ -1,10 +1,12 @@
 package allClasses;
 
-import static allClasses.Globals.appLogger;
 
 import java.lang.reflect.InvocationTargetException;
 
 import javax.swing.SwingUtilities;
+
+import static allClasses.AppLog.theAppLog;
+
 
 public class EDTUtilities {
 
@@ -78,7 +80,7 @@ public class EDTUtilities {
                 new Runnable() {
                   @Override
                   public void run() { 
-                    appLogger.info( "EDTUtilities.invokeAndWaitV(..) null run()");
+                    theAppLog.info( "EDTUtilities.invokeAndWaitV(..) null run()");
                     } // Doing nothing. 
                   };  
 			      	}
@@ -89,7 +91,7 @@ public class EDTUtilities {
 			  	      "EDTUtilities.invokeAndWaitV(..) exception", 
 			  	      theInvocationTargetException);
 				  	  }
-      	  appLogger.info( "EDTUtilities.invokeAndWaitV(..) looping.");
+      	  theAppLog.info( "EDTUtilities.invokeAndWaitV(..) looping.");
     	  	}
     	  if (interruptedB) // Setting interrupted status if interrupt occurred. 
     	  	Thread.currentThread().interrupt(); 
@@ -103,7 +105,7 @@ public class EDTUtilities {
 	    {
 	      boolean isNotEDTB= ! SwingUtilities.isEventDispatchThread();
 	      if ( isNotEDTB ) 
-	      	appLogger.error(" testAndLogIfNotRunningEDTB() true");
+	      	theAppLog.error(" testAndLogIfNotRunningEDTB() true");
 	      return isNotEDTB;
 	    	}
 
@@ -115,7 +117,7 @@ public class EDTUtilities {
 	    {
 	      boolean isEDTB= SwingUtilities.isEventDispatchThread();
 	      if ( isEDTB ) 
-	      	appLogger.error(" testAndLogIfRunningEDTB() true");
+	      	theAppLog.error(" testAndLogIfRunningEDTB() true");
 	      return isEDTB;
 	    	}
 

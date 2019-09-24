@@ -1,13 +1,11 @@
 package allClasses;
 
-import static allClasses.Globals.appLogger;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-//import static allClasses.Globals.*;  // For appLogger;
+import static allClasses.AppLog.theAppLog;
 
 
 public class MetaFile { // For app's meta-data files.
@@ -96,12 +94,12 @@ public class MetaFile { // For app's meta-data files.
               } //  Read state from file.
           } // Read state.
         catch ( IOException e ) {
-          appLogger.error(
+          theAppLog.error(
               "lazyLoadFileMetaNode( ) closing theRandomAccessFile : "+e
               );
         	}
         catch ( NumberFormatException e ) {
-          appLogger.error(
+          theAppLog.error(
               "lazyLoadFileMetaNode( ) aborting load : "+e
               );
         	}
@@ -166,7 +164,7 @@ public class MetaFile { // For app's meta-data files.
               break goReturn;
 	          if  // Exiting if every node in file was checked at least once. 
 	            ( theRepeatDetector.repeatedB( resultIDNumber.getTheI() ) )
-		          { appLogger.error(
+		          { theAppLog.error(
 		          		"MetaFile.readAndConvertIDNumber(.) repeat detected.");
 		            break goFail;
 		          	}
@@ -272,14 +270,14 @@ public class MetaFile { // For app's meta-data files.
         or the one which was read.
         */
       {
-	      appLogger.info("MetaFile.rwFileMetaNode(.) begins, "
+	      theAppLog.info("MetaFile.rwFileMetaNode(.) begins, "
 	      		+theMode+", "+getRwStructure());
         if // Do nothing or process depending on conditions.
           ( ( theMode == MetaFileManager.Mode.WRITING ) &&
             ( inRootMetaNode == null )
             ) 
 	        { // Do nothing because there is nothing to write.
-        		appLogger.info("MetaFile.rwFileMetaNode(.) null operation.");
+        		theAppLog.info("MetaFile.rwFileMetaNode(.) null operation.");
 	          }
           else
           { // Read or write.
@@ -300,7 +298,7 @@ public class MetaFile { // For app's meta-data files.
                 );
             } // Read or write process.
 
-	      appLogger.info("MetaFile.rwFileMetaNode(.) ends, linesI="+linesI);
+	      theAppLog.info("MetaFile.rwFileMetaNode(.) ends, linesI="+linesI);
         return inRootMetaNode;  // Return the new or old root.
         }
 

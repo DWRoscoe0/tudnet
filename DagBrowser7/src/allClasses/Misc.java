@@ -4,7 +4,8 @@ import java.awt.Component;
 import java.awt.KeyboardFocusManager;
 import java.text.SimpleDateFormat;
 
-import static allClasses.Globals.*;  // appLogger;
+import static allClasses.AppLog.theAppLog;
+
 
 public class Misc
 
@@ -68,7 +69,7 @@ public class Misc
         { 
 	        if ( dbgEventDoneB )
 	          {
-	            appLogger.logV( "Writing Debug.txt disabled." ); 
+	            theAppLog.logV( "Writing Debug.txt disabled." ); 
 	            //MetaFileManager.writeDebugFileV( MetaRoot.getRootMetaNode( ));
 	            noOp( );
 	            }
@@ -119,7 +120,7 @@ public class Misc
 		  				&& focusedComponent!=null // and there was a focus owner.
 		  				)
 		    		{ // Reporting failure and possible causes.
-							appLogger.info(
+							theAppLog.info(
 									"DagBrowserPanel.requestFocusV() of "+Misc.componentInfoString(
 											theComponent
 											) 
@@ -127,7 +128,7 @@ public class Misc
 									+ " requestFocusInWindow()=" + successB
 									);
 		    			while ( theComponent != null ) {
-		      			appLogger.warning(
+		      			theAppLog.warning(
 		      					"  "+Misc.componentInfoString(theComponent)
 		    		    		+" visible="+theComponent.isVisible() 
 		    		    		+" focusable="+theComponent.isFocusable() 

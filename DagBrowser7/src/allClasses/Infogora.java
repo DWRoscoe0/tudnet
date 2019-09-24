@@ -1,10 +1,10 @@
 package allClasses;
 
-import static allClasses.AppLog.LogLevel.WARN;
-import static allClasses.Globals.appLogger;  // For appLogger;
-
 import java.io.File;
 import java.util.Set;
+
+import static allClasses.AppLog.LogLevel.WARN;
+import static allClasses.AppLog.theAppLog;
 import static allClasses.Globals.NL;
 
 /* This file is the root of this application.  
@@ -137,15 +137,15 @@ class Infogora  // The root of this app.
 
 			  */
       { // main(..)
-	      appLogger= new AppLog(new File( // Constructing logger.
+	      theAppLog= new AppLog(new File( // Constructing logger.
 	          new File(System.getProperty("user.home") ),Config.appString));
 	      // AppLog should now be able to do logging.
-	      appLogger.enableCloseLoggingV( false );
+	      theAppLog.enableCloseLoggingV( false );
 	      DefaultExceptionHandler.setDefaultExceptionHandlerV(); 
           // Preparing for exceptions before doing anything else.
 	      BackupTerminator theBackupTerminator= BackupTerminator.makeBackupTerminator();
 
-        appLogger.info(true,
+        theAppLog.info(true,
 	          "Infogora.main() beginning. ======== APP IS STARTING ========");
 	      CommandArgs theCommandArgs= new CommandArgs(argStrings);
         AppSettings.initializeV(Infogora.class, theCommandArgs);
@@ -155,10 +155,10 @@ class Infogora  // The root of this app.
 	        // This might not return if a shutdown is initiated by the JVM!
 
         logThreadsV(); // Record threads that are still active.
-	      appLogger.info(true,
+	      theAppLog.info(true,
           "Infogora.main() ======== APP IS ENDING ========"
           + NL + "    by closing log file and exiting the main(..) method.");
-        appLogger.closeFileIfOpenB(); // Close log for exit.
+        theAppLog.closeFileIfOpenB(); // Close log for exit.
         theBackupTerminator.setTerminationUnderwayV(); // In case termination fails.
         // while(true) ; // Use this to test BackupTerminator.
 	      } // main(..)
@@ -222,13 +222,13 @@ class Infogora  // The root of this app.
     	      
     	      // If we got this far, timer has expired, and termination probably failed.
     	      
-            synchronized(appLogger) { // Log the following block as an indivisible block.
-              appLogger.logB( WARN, true, null,
+            synchronized(theAppLog) { // Log the following block as an indivisible block.
+              theAppLog.logB( WARN, true, null,
                   "run() ======== FORCING LATE APP TERMINATION ========");
-              appLogger.doStackTraceV(null);
+              theAppLog.doStackTraceV(null);
               logThreadsV(); // Record threads that are still active.
-              appLogger.debug("run() closing log file and executing System.exit(1)." );
-              appLogger.closeFileIfOpenB(); // Close log before exit.
+              theAppLog.debug("run() closing log file and executing System.exit(1)." );
+              theAppLog.closeFileIfOpenB(); // Close log before exit.
               }
             System.exit(1); // Force process termination with an error code.
     	      }
@@ -243,7 +243,7 @@ class Infogora  // The root of this app.
               wait(msI);
               }
             catch (InterruptedException e) {
-              appLogger.debug("BackupTerminator.waitV() wait(..), interrupted."); 
+              theAppLog.debug("BackupTerminator.waitV() wait(..), interrupted."); 
               }
   	      
   	      }
@@ -277,15 +277,15 @@ class Infogora  // The root of this app.
           multiple calls to appLogger.
         */
       {
-        synchronized (appLogger) { // Output thread list as single log entry.
-          appLogger.info("Infogora.logThreadsV(), remaining active threads:"); 
+        synchronized (theAppLog) { // Output thread list as single log entry.
+          theAppLog.info("Infogora.logThreadsV(), remaining active threads:"); 
           Set<Thread> threadSet= Thread.getAllStackTraces().keySet();
           for (Thread t : threadSet) {
               Thread.State threadState= t.getState();
               int priorityI= t.getPriority();
               String typeString= t.isDaemon() ? "Daemon" : "Normal";
               String nameString= t.getName();
-              appLogger.getPrintWriter().printf("    %-13s %2d  %s  %-25s  " + NL, 
+              theAppLog.getPrintWriter().printf("    %-13s %2d  %s  %-25s  " + NL, 
                   threadState, priorityI, typeString, nameString);
               }
           }

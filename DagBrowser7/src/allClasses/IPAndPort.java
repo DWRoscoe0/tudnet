@@ -3,7 +3,8 @@ package allClasses;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-import static allClasses.Globals.*;  // appLogger;
+import static allClasses.AppLog.theAppLog;
+
 
 public class IPAndPort 
 
@@ -42,7 +43,7 @@ public class IPAndPort
 						this.netcasterInetAddress= InetAddress.getByName(IPString);
 						this.netcasterPortI= Integer.parseUnsignedInt(portString);
 					} catch ( UnknownHostException | NumberFormatException e ) { 
-				    appLogger.warning( // Log warning.
+				    theAppLog.warning( // Log warning.
 		      			"IPAndPort.IPAndPort("+IPString+", "+portString+")"+e );
 						this.netcasterInetAddress= InetAddress.getLoopbackAddress();
 						this.netcasterPortI= Integer.parseUnsignedInt(portString);

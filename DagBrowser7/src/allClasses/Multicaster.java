@@ -9,7 +9,9 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Properties;
 
-import static allClasses.Globals.*;  // appLogger;
+import static allClasses.AppLog.theAppLog;
+import static allClasses.Globals.NL;
+
 
 /*
   This class implements IP multicast.
@@ -240,7 +242,7 @@ public class Multicaster
             for consumption by the main multicaster thread.
             */
           {
-        		appLogger.info("run() begin.");
+        		theAppLog.info("run() begin.");
 	          try { // Operations that might produce an IOException.
 	            while  // Receiving and queuing packets unless termination is
 	              ( ! EpiThread.testInterruptB() ) // requested.
@@ -259,7 +261,7 @@ public class Multicaster
                   		);
 	                	}
 	                catch( SocketException soe ) {
-	                  appLogger.info("run(): " + soe );
+	                  theAppLog.info("run(): " + soe );
 	                  Thread.currentThread().interrupt(); // Translating 
 	                    // exception into request to terminate this thread.
 	                  }
@@ -270,7 +272,7 @@ public class Multicaster
 				  					"run() IOException: ", e
 				  					);
 	            }
-        		appLogger.info("run() end.");
+        		theAppLog.info("run() end.");
             }
 
         } // MulticastReceiver
@@ -293,14 +295,14 @@ public class Multicaster
           but for now, for development on  small networks, it works fine.
          	*/
         {
-          if (appLogger.testAndLogDisabledB( 
+          if (theAppLog.testAndLogDisabledB( 
               Config.multicasterThreadsDisableB, 
               "run() multicaster") 
               )
             return;
           EpiThread.interruptibleSleepB( Config.multicastDelayMsL );
             // Initial delay to allow reconnection of Unicast peers.
-          appLogger.info( "run() initial delay ends." );
+          theAppLog.info( "run() initial delay ends." );
 	      	try { // Operations that might produce an IOException requiring redo.
           	initializeWithIOExceptionV();  // Do non-injection initialization.
   	      	startingMultcastReceiverThreadV();
@@ -321,7 +323,7 @@ public class Multicaster
     	                }
     	              catch( SocketException soe ) {
     	                // Someone may have called disconnect() or closed socket.
-    	                appLogger.info( 
+    	                theAppLog.info( 
     	                  "Multicaster.run() Terminating loop because of" + NL + "  " + soe
     	                  );
                       Thread.currentThread().interrupt(); // Terminating loop 
@@ -336,7 +338,7 @@ public class Multicaster
               }
             }
           catch( IOException e ) {
-            appLogger.debug("run(): theMulticastSocket not [yet] open:"+e);
+            theAppLog.debug("run(): theMulticastSocket not [yet] open:"+e);
             }
 
           //appLogger.info( Thread.currentThread().getName()+": run() ending." );
@@ -396,7 +398,7 @@ public class Multicaster
 	            	messageDecoder: {
 	            		String inString=
 	            				theEpiInputStreamI.readAString(); // Reading message.
-                  appLogger.debug("receivingPacketsV() decoding:"+ inString);
+                  theAppLog.debug("receivingPacketsV() decoding:"+ inString);
 	            		if (inString.equals( "DISCOVERY" )) // Handling query, maybe.
 			        			{ theEpiOutputStreamO.writingAndSendingV(
 	            				    "ALIVE"); // Sending response.
@@ -418,7 +420,7 @@ public class Multicaster
 	            		} 
 	            	break inputDecoder;
 	            default: // Handling anything else as an error.
-		            appLogger.error( 
+		            theAppLog.error( 
 		            		"receivingPacketsV(): Unknown LockAndSignal.Input" 
 		            		);
 		            break inputDecoder;
@@ -470,7 +472,7 @@ public class Multicaster
 		    theMulticastSocket.setLoopbackMode( true );  // Disable loopback.
 		    theMulticastSocket.setTimeToLive( ttl );
 		    theMulticastSocket.setNetworkInterface(gatewayNetworkInterface);
-        appLogger.info(
+        theAppLog.info(
             "initializeWithIOExceptionV()" + NL
             + "  gatewayNetworkInterface= " + gatewayNetworkInterface 
             );
@@ -504,9 +506,9 @@ public class Multicaster
                   NetworkInterface.getByInetAddress(theInetAddress);
               }
         } catch (Exception e) {
-          appLogger.exception( "determineGatewayNetworkInterfaceV(): ", e);
+          theAppLog.exception( "determineGatewayNetworkInterfaceV(): ", e);
         }
-        appLogger.info(
+        theAppLog.info(
             "determineGatewayNetworkInterfaceV()" + NL + "  "
             + "theInetAddress= " + theInetAddress 
             + ", theNetworkInterface= " + theNetworkInterface 
@@ -524,7 +526,7 @@ public class Multicaster
     	{
     	  if ( multicastActiveB != activeB ) {
     	  	multicastActiveB= activeB;
-          appLogger.info( "multicastConnectionLoggerV(..) multicastActiveB= " 
+          theAppLog.info( "multicastConnectionLoggerV(..) multicastActiveB= " 
               + multicastActiveB );
           }
     	  }

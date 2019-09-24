@@ -1,6 +1,6 @@
 package allClasses;
 
-import static allClasses.Globals.appLogger;
+import static allClasses.AppLog.theAppLog;
 
 
 public class DefaultExceptionHandler {
@@ -22,13 +22,13 @@ public class DefaultExceptionHandler {
             String headString= "DefaultExceptionHandler.uncaughtException(..): "
                 + "Uncaught Exception in thread "+t.getName();
             System.out.println( headString + e);
-            appLogger.exception( headString, e );
-            appLogger.closeFileIfOpenB(); // Close log for exit.
+            theAppLog.exception( headString, e );
+            theAppLog.closeFileIfOpenB(); // Close log for exit.
             }
           }
         );
 
-      appLogger.info( "setDefaultExceptionHandlerV() run." );
+      theAppLog.info( "setDefaultExceptionHandlerV() run." );
       //throw new NullPointerException(); // Uncomment to test handler.
       }
 

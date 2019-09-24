@@ -2,9 +2,10 @@ package allClasses;
 
 import javax.swing.event.EventListenerList;
 
-import static allClasses.Globals.*;  // appLogger;
-
 import java.util.Arrays;
+
+import static allClasses.AppLog.theAppLog;
+import static allClasses.Globals.NL;
 
 
 public class Shutdowner
@@ -204,7 +205,7 @@ public class Shutdowner
 	      public void run()
 	        // This method runs when the JVM's shutdown hook thread activates. 
 	        {
-	      		appLogger.info( 
+	      		theAppLog.info( 
 	      				"ShutdownHook.run() beginning, "
 	      				+ "calling requestAppShutdownV() on behalf of JVM." 
 	      				);
@@ -213,7 +214,7 @@ public class Shutdowner
 	      	  appShutdownDoneLockAndSignal.
 	      	    waitingForInterruptOrNotificationE(); // Waiting
 	      	      // for app-shutdown to complete.
-	      		appLogger.info( "ShutdownHook.run() ending. ======== APP SHUTDOWN DONE ========");
+	      		theAppLog.info( "ShutdownHook.run() ending. ======== APP SHUTDOWN DONE ========");
 	          }
 	
 	      } // ShutdownHook
@@ -244,13 +245,13 @@ public class Shutdowner
 	      */
 	    { 
 	  	  if ( shutdownRequestedB )
-	      	appLogger.info(  // Log re-entry.
+	      	theAppLog.info(  // Log re-entry.
 		  				"Shutdowner.requestAppShutdownV(), called again, ignored." 
 		  				);
 	  	  else
   	  	  {
             shutdownRequestedB= true; // Recording that shutdown is underway.
-  		  		appLogger.info( "Shutdowner.requestAppShutdownV() called." ); // Log it.
+  		  		theAppLog.info( "Shutdowner.requestAppShutdownV() called." ); // Log it.
   		  	  appShutdownRequestedLockAndSignal.notifyingV();
   	  	    }
 	  	  }
@@ -263,7 +264,7 @@ public class Shutdowner
       { 
         appShutdownRequestedLockAndSignal.
           waitingForInterruptOrNotificationE(); 
-        appLogger.info( "Shutdowner.waitForAppShutdownRequestedV() done." );
+        theAppLog.info( "Shutdowner.waitForAppShutdownRequestedV() done." );
         }
 
     private boolean finishVCalledB= false; // For detecting re-entry.
@@ -304,16 +305,16 @@ public class Shutdowner
     	  toReturn: {
           synchronized (this) {
   	    		if ( finishVCalledB ) { // Exiting if executed before.  This is  re-entry.
-              appLogger.error( "Shutdowner.finishAppShutdownV() finishAppShutdownV() already called." );
+              theAppLog.error( "Shutdowner.finishAppShutdownV() finishAppShutdownV() already called." );
               break toReturn;
           		}
   	        finishVCalledB= true; // Do this in case this method is re-entered.
             }
 	        reverseFireShutdownerListeners(); // Calling listeners in reverse.
           delegationDependentFinishingV();
-	        appLogger.info( 
+	        theAppLog.info( 
 	        	"Shutdowner.finishAppShutdownV() notify shutdown hook that shutdown is done, ending.");
-          appLogger.setBufferedModeV( false ); // This closes log file because
+          theAppLog.setBufferedModeV( false ); // This closes log file because
             // shutdown hook might abruptly terminate this thread next.
 	    	  appShutdownDoneLockAndSignal.notifyingV(); // Signal shutdown hook.
 	    	    // Flow might end here if JVM initiated shutdown.
@@ -329,7 +330,7 @@ public class Shutdowner
           { // Delegating.
             ProcessStarter.startProcess(
                 exitProcessStrings); // No, start other process before exiting.
-            appLogger.info("Shutdowner.delegationDependentFinishingV() "
+            theAppLog.info("Shutdowner.delegationDependentFinishingV() "
                 + "deleting InfogoraAppActiveFlag.txt.");
             AppSettings.makeRelativeToAppFolderFile(
                 "InfogoraAppActiveFlag.txt").delete();
@@ -346,7 +347,7 @@ public class Shutdowner
         whether delegation to another instance is happening.
         */
       { 
-        appLogger.info("Shutdowner.sendFeedbackMessageToStarterV(..) called.");
+        theAppLog.info("Shutdowner.sendFeedbackMessageToStarterV(..) called.");
         if ((starterPortLong != null) && (starterPortLong != 0))
           LocalSocket.localSendToPortB(
               messageString, starterPortLong.intValue());
@@ -354,7 +355,7 @@ public class Shutdowner
 
     public void setExitStringsV(String[] exitProcessStrings)
       { 
-        appLogger.info("Shutdowner.setExitStringsV(..)" + NL + "  "+
+        theAppLog.info("Shutdowner.setExitStringsV(..)" + NL + "  "+
             Arrays.toString(exitProcessStrings));
         this.exitProcessStrings= exitProcessStrings;
         }
@@ -366,7 +367,7 @@ public class Shutdowner
       public synchronized void addShutdownerListener
         ( ShutdownerListener listener ) 
         {
-          appLogger.info("Shutdowner.addShutdownerListener("+listener+")"); 
+          theAppLog.info("Shutdowner.addShutdownerListener("+listener+")"); 
           theEventListenerList.add(ShutdownerListener.class, listener);
           }
 
@@ -391,14 +392,14 @@ public class Shutdowner
       private synchronized void reverseFireShutdownerListeners( ) 
         // Fire listeners in the reverse of the order they were added.
         {
-          appLogger.info( "Shutdowner.reverseFireShutdownerListeners() called");
+          theAppLog.info( "Shutdowner.reverseFireShutdownerListeners() called");
           ShutdownerListener theShutdownerListeners[]=
             theEventListenerList.getListeners(ShutdownerListener.class);
           for (int i = theShutdownerListeners.length-1; i>=0; i-=1)
             { 
               ShutdownerListener aShutdownerListener= 
                 theShutdownerListeners[i];
-              appLogger.info( "Shutdowner.reverseFireShutdownerListeners( ): "
+              theAppLog.info( "Shutdowner.reverseFireShutdownerListeners( ): "
                   + "calling ShutdownerListener: " + aShutdownerListener ); 
               aShutdownerListener.doMyShutdown( );
               }

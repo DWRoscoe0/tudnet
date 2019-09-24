@@ -1,14 +1,14 @@
 package allClasses;
 
-import static allClasses.Globals.appLogger;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
 import static allClasses.Globals.NL;
+import static allClasses.AppLog.theAppLog;
 
 
 public class InfogoraStarter
@@ -91,9 +91,9 @@ public class InfogoraStarter
 
         */
       { // main(..)
-          appLogger= new AppLog(new File( // Constructing logger.
+          theAppLog= new AppLog(new File( // Constructing logger.
               new File(System.getProperty("user.home") ),Config.appString));
-          appLogger.setIDProcessV("Starter");
+          theAppLog.setIDProcessV("Starter");
           // AppLog should now be able to do logging.
         toExit: {
           System.out.println(
@@ -101,18 +101,18 @@ public class InfogoraStarter
           
           Process theProcess= null;
           DefaultExceptionHandler.setDefaultExceptionHandlerV(); 
-          appLogger.info(true,
+          theAppLog.info(true,
               "InfogoraStarter.main() beginning. ======== STARTER IS STARTING ========");
           CommandArgs theCommandArgs= new CommandArgs(argStrings); 
           AppSettings.initializeV(InfogoraStarter.class, theCommandArgs);
           if (theCommandArgs.switchValue("-userDir") == null) {
-            appLogger.error("InfogoraStarter.main() Not an exe file launch!");
+            theAppLog.error("InfogoraStarter.main() Not an exe file launch!");
             break toExit;
             }
           setupLoopbackPortB();
           long starterPortL=
               theLocalSocket.getServerSocket().getLocalPort();
-          appLogger.info("run(): starterPortL="+starterPortL);
+          theAppLog.info("run(): starterPortL="+starterPortL);
           
           ArrayList<String> theArrayListOfStrings= new ArrayList<String>();
           theArrayListOfStrings.add(System.getProperty("java.home") + 
@@ -128,38 +128,38 @@ public class InfogoraStarter
             theArrayListOfStrings.add(theCommandArgs.switchValue("-tempDir"));
           theArrayListOfStrings.add("SENTINEL"); // ///dbg
   
-          appLogger.debug("InfogoraStarter.main() starting Infogora process.");
+          theAppLog.debug("InfogoraStarter.main() starting Infogora process.");
           theProcess= ProcessStarter.startProcess(
               theArrayListOfStrings.toArray(new String[0]));
           if (theProcess == null) { // Handle start failure.
-            appLogger.error("InfogoraStarter.main() Process start failed.");
+            theAppLog.error("InfogoraStarter.main() Process start failed.");
             break toExit;
             }
-          appLogger.info(
+          theAppLog.info(
             "InfogoraStarter.main() waiting for process termination.");
           try { // Waiting for terminations.
             int exitCodeI= theProcess.waitFor();
             if (exitCodeI != 0 ) { // Handle termination error.
-              appLogger.error(
+              theAppLog.error(
                 "InfogoraStarter.main() child process exit code="+exitCodeI);
               break toExit;
               }
-            appLogger.info(
+            theAppLog.info(
                 "InfogoraStarter.main() First child process has terminated.");
             theLoopbackMonitorThread.join();
-            appLogger.info(
+            theAppLog.info(
                 "InfogoraStarter.main() Last child process is terminating.  "
                 + "Waiting 1 second before exiting.");
             Thread.sleep( 1000); // Wait extra time for safety.
           } catch (InterruptedException e) {
-            appLogger.info("InfogoraStarter.main() "
+            theAppLog.info("InfogoraStarter.main() "
                 + "wait for process termination was interrupted.");
             break toExit;
           } // Waiting for terminations.
           } // toExit:
-        appLogger.info(true, "InfogoraStarter.main() calling exit(0). "
+        theAppLog.info(true, "InfogoraStarter.main() calling exit(0). "
             + "======== STARTER IS ENDING ========");
-        appLogger.closeFileIfOpenB(); // Close log for exit.
+        theAppLog.closeFileIfOpenB(); // Close log for exit.
         System.exit(0); // Will kill any remaining unknown threads running??
         } // main(..)
 
@@ -178,7 +178,7 @@ public class InfogoraStarter
             }
           else
           {
-            appLogger.error("setupLoopbackPortB() no ports available.");
+            theAppLog.error("setupLoopbackPortB() no ports available.");
             }
         return false;   ///
         }
@@ -205,7 +205,7 @@ public class InfogoraStarter
             and processes single line messages from them.
             */
           {
-            appLogger.info("run(): beginning.");
+            theAppLog.info("run(): beginning.");
             while (! theLocalSocket.isClosedB()) {
               try {
                 theLocalSocket.acceptV(); // Wait for connection or exception.
@@ -213,7 +213,7 @@ public class InfogoraStarter
                   theReentrantLock.lock(); // Wait until we have lock.
                   try {
                       theLocalSocket.inputFromConnectionV();
-                      appLogger.debug("run(): got data.");
+                      theAppLog.debug("run(): got data.");
                       processConnectionDataV(
                           theLocalSocket.getCommandArgs());
                     } finally {
@@ -227,7 +227,7 @@ public class InfogoraStarter
                   theLocalSocket.closeAllV(); // Make certain all are closed.
                   }
               } // while
-            appLogger.info("Socket closed, ending.");
+            theAppLog.info("Socket closed, ending.");
             }
 
         private void processConnectionDataV(CommandArgs theCommandArgs)
@@ -240,20 +240,20 @@ public class InfogoraStarter
             by this one have or are about to exit, so this process should also. 
             */
           {
-            appLogger.info("processConnectionDataV(..)"+theCommandArgs);
+            theAppLog.info("processConnectionDataV(..)"+theCommandArgs);
             
             if ( theCommandArgs.switchPresent("-delegatorExiting"))
-              appLogger.info( "processConnectionDataV(..) "
+              theAppLog.info( "processConnectionDataV(..) "
                   + "-delegatorExiting received, ignoring.");
             if ( theCommandArgs.switchPresent("-delegateeExiting")) {
-              appLogger.info("processConnectionDataV(..) "
+              theAppLog.info("processConnectionDataV(..) "
                   + "-delegateeExiting received, will exit.");
               theLocalSocket.closeAllV(); // Close all to exit loop and thread.
               }
             { // Log any unprocessed arguments.
               String[] targetStrings= theCommandArgs.targets(); 
               if (targetStrings.length>0) // If unprocessed args...
-                appLogger.error( // log them as an error.
+                theAppLog.error( // log them as an error.
                   "processConnectionDataV(..), unused arguments:" + NL + "  "
                   + Arrays.toString(targetStrings));
               }

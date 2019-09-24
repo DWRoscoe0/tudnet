@@ -1,10 +1,11 @@
 package allClasses;
 
-import static allClasses.Globals.appLogger;
-
 import java.io.IOException;
 import java.util.Arrays;
+
+import static allClasses.AppLog.theAppLog;
 import static allClasses.Globals.NL;
+
 
 public class ProcessStarter 
 
@@ -29,7 +30,7 @@ public class ProcessStarter
              && ( inArgStrings.length > 0 ) // and there is at least one.
              )
           try {
-              appLogger.info( 
+              theAppLog.info( 
                 "ProcessStarter.startProcessV(..):" + NL + "  " 
                 + Arrays.toString(inArgStrings)
                 );
@@ -40,9 +41,9 @@ public class ProcessStarter
               resultProcess= // Start the process.
                   myProcessBuilder.start();
   
-              appLogger.info( "ProcessStarter.startProcessV(..): succeeded." ); 
+              theAppLog.info( "ProcessStarter.startProcessV(..): succeeded." ); 
             } catch (IOException e) {
-              appLogger.exception( "ProcessStarter.startProcessV(..)",e ); 
+              theAppLog.exception( "ProcessStarter.startProcessV(..)",e ); 
             }
         return resultProcess;
         }

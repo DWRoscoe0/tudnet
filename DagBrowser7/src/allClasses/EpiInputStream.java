@@ -1,10 +1,11 @@
 package allClasses;
 
-import static allClasses.Globals.appLogger;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.DatagramPacket;
+
+import static allClasses.AppLog.theAppLog;
+
 
 public class EpiInputStream<
 		K, // Key.
@@ -159,7 +160,7 @@ public class EpiInputStream<
 					if ( available() <= 0 ) // debug.
 						{
 							readString+="!NO-DATA-AVAILABLE!";
-		          appLogger.error( "readAString(): returning " + readString );
+		          theAppLog.error( "readAString(): returning " + readString );
 							break;
 	  					}
 					int byteI= read();
@@ -287,7 +288,7 @@ public class EpiInputStream<
 	      */
 	    {
 	  		if (AppLog.testingForPingB)
-		  		appLogger.info("loadNextPacketV() executing.");
+		  		theAppLog.info("loadNextPacketV() executing.");
 	  		if // Adjusting saved mark index for buffer replacement. 
 	  		  (markedB) // if stream is marked. 
 	  			markIndexI-= packetIndexI; // Subtracting present index or length ??
@@ -316,7 +317,7 @@ public class EpiInputStream<
         Use 0 if unsure. 
       */
     {
-      appLogger.debug(
+      theAppLog.debug(
           messageString
           + "; buffer="
           + new String(bufferBytes,0,positionI)

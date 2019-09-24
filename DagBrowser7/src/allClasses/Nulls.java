@@ -1,6 +1,7 @@
 package allClasses;
 
-import static allClasses.Globals.*;  // appLogger;
+import static allClasses.AppLog.theAppLog;
+
 
 public class Nulls
 
@@ -30,7 +31,7 @@ public class Nulls
 	  	  boolean isNullB= ( testT == null );
 			  if ( isNullB )
 				  {
-			  		appLogger.error("testAndLogIfNullB( T testT ): null value!");
+			  		theAppLog.error("testAndLogIfNullB( T testT ): null value!");
 				  	}
 			  return isNullB;
 	      }

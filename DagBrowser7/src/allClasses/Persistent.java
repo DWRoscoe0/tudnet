@@ -1,7 +1,5 @@
 package allClasses;
 
-import static allClasses.Globals.appLogger;
-
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -9,6 +7,9 @@ import java.io.PrintWriter;
 import java.util.Iterator;
 import java.util.NavigableMap;
 import static allClasses.Globals.NL;
+
+import static allClasses.AppLog.theAppLog;
+
 
 public class Persistent 
 
@@ -83,17 +84,17 @@ public class Persistent
 		  		  loadV(configFileInputStream); // Load data from file.
 			  		} 
 			  	catch (FileNotFoundException theFileNotFoundException) { 
-			  		appLogger.warning("Persistent.loadDataV(..)"+theFileNotFoundException);
+			  		theAppLog.warning("Persistent.loadDataV(..)"+theFileNotFoundException);
 			  		}
 			  	catch (Exception theException) { 
-			  		appLogger.exception("Persistent.loadDataV(..)", theException);
+			  		theAppLog.exception("Persistent.loadDataV(..)", theException);
 			  		}
 			  	finally { 
 			  		try { 
 			  			if ( configFileInputStream != null ) configFileInputStream.close(); 
 			  			}
 				  	catch (Exception theException) { 
-				  		appLogger.exception("Persistent.loadDataV(..)", theException);
+				  		theAppLog.exception("Persistent.loadDataV(..)", theException);
 				  		}
 			  		}
 	    	}
@@ -139,7 +140,7 @@ public class Persistent
 	  	    loadParsedLineV(lineString,offsetOfEqualsI);
 	  	    break toReturn; // Return with success.
 		  	} // goFail:
-		  		appLogger.warning("processLineV(..) failed, line=\""+lineString+"\"");
+		  		theAppLog.warning("processLineV(..) failed, line=\""+lineString+"\"");
 		  	} // goReturn:
 		  }
 
@@ -221,7 +222,7 @@ public class Persistent
 	    						childPersistingNode,keyTailString,valueString);
 	    		break toReturn;
 		  	} // toFail:
-		  		appLogger.warning( "multiSetValueB(..) failed," + NL
+		  		theAppLog.warning( "multiSetValueB(..) failed," + NL
 		  		    + "  pathString="+pathString + NL
 		  		    + "  valueString="+valueString );
 		  		resultB= true;  // Set failure return value
@@ -335,7 +336,7 @@ public class Persistent
 		  } // goLogError:
   			String errorString= "Persistent.getPersistingNode(..), "
 	  				+"error getting value, path="+pathString;
-	  		appLogger.error(errorString); // Log error string.
+	  		theAppLog.error(errorString); // Log error string.
 		    resultPersistingNode= // and return same string in new PersistingNode.
 	  				new PersistingNode(errorString);
 	  	} // goReturn:
@@ -401,7 +402,7 @@ public class Persistent
 			  	  scanKeyOffsetI= separatorKeyOffsetI+1; // Compute next key offset.
 				  } // while (true)... Loop to test next descendant node.
 			  } // goLogError:
-		  		appLogger.error( "Persistent.getPersistigNode(..), "
+		  		theAppLog.error( "Persistent.getPersistigNode(..), "
 		  				+"error getting value, path="+pathString);
 			    resultPersistingNode= null; // Override result with null for error.
 		  	} // goReturn:
@@ -438,14 +439,14 @@ public class Persistent
 		  			multilevelStoreNodeV(thePrintWriter, "", rootPersistingNode);
 			  		}
 			  	catch (Exception theException) { 
-			  		appLogger.exception("Config.storeDataV(..)", theException);
+			  		theAppLog.exception("Config.storeDataV(..)", theException);
 			  		}
 			  	finally {
 			  		try {
               if ( thePrintWriter != null ) thePrintWriter.close(); 
 			  			}
 			  		catch ( Exception theException ) { 
-				  		appLogger.exception("Config.storeDataV(..)", theException);
+				  		theAppLog.exception("Config.storeDataV(..)", theException);
 				  		}
 			  		}
 	    	}

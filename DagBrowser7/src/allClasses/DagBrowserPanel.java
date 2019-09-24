@@ -29,9 +29,8 @@ import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
 
-
-//import allClasses.LockAndSignal.Input;
-import static allClasses.Globals.*;  // appLogger;
+import static allClasses.AppLog.theAppLog;
+import static allClasses.Globals.NL;
 
 public class DagBrowserPanel
 
@@ -940,7 +939,7 @@ public class DagBrowserPanel
                     KeyboardFocusManager.
                     getCurrentKeyboardFocusManager().getFocusOwner();
                   //focusedComponent.transferFocus();  // Move focus forward.
-                  appLogger.info(
+                  theAppLog.info(
                     "ComponentForwardAction(): "+focusedComponent
                     );
                   }
@@ -1122,7 +1121,7 @@ public class DagBrowserPanel
           else 
             { 
             	resultMasterPane= MasterPane.NEITHER_PANE;  // record no pane enum ID.
-                appLogger.info("NEITHER_PANE gained focus.");
+                theAppLog.info("NEITHER_PANE gained focus.");
               }
       	  return resultMasterPane; // Return determined panel ID.
       	  }

@@ -1,6 +1,7 @@
 package allClasses;
 
-import static allClasses.Globals.*;  // appLogger;
+import static allClasses.AppLog.theAppLog;
+
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -89,7 +90,7 @@ public class Closeables
       boolean successB= true;
       if (theCloseable == null) {
           if (logB) 
-            appLogger.error(
+            theAppLog.error(
               "closeAndWarnMaybeB(..): null closeble resource pointer.");            
           successB= false;
         } else {
@@ -97,7 +98,7 @@ public class Closeables
               theCloseable.close();
             } catch (Exception theException) {
               if (logB) 
-                appLogger.exception("closeAndWarnMaybeB(..): ", theException);            
+                theAppLog.exception("closeAndWarnMaybeB(..): ", theException);            
               successB= false;
             }
         }
@@ -135,7 +136,7 @@ public class Closeables
 	  	  try { 
 		  	  	theCloseable.close(); 
 		  	  } catch (IOException newIOException) {
-		  			appLogger.exception(
+		  			theAppLog.exception(
 			  				"closeDuringCatchB(..): ", newIOException
 			  				);
 		  			if ( earlierIOException == null ) // Create first exception if none.

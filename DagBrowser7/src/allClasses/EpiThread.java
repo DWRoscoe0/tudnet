@@ -1,6 +1,7 @@
 package allClasses;
 
-import static allClasses.Globals.*;  // appLogger;
+import static allClasses.AppLog.theAppLog;
+
 
 public class EpiThread
 
@@ -59,7 +60,7 @@ public class EpiThread
     public void startV()
       /* This method writes to the log and calls start().  */
       {
-      	appLogger.info("EpiThread(" + getName() + ").startV(): starting.");
+      	theAppLog.info("EpiThread(" + getName() + ").startV(): starting.");
 
       	try { 
         	    start();
@@ -67,7 +68,7 @@ public class EpiThread
       	catch 
     	    (IllegalThreadStateException theIllegalThreadStateException) 
     	    {
-            appLogger.exception(
+            theAppLog.exception(
                 "EpiThread.startV() already started",
                 theIllegalThreadStateException
                 );
@@ -141,7 +142,7 @@ public class EpiThread
               join( // Trying to wait for this's thread to terminate
                   Config.threadJoinTimeOutMsL); // or a wait time limit.
               if (isAlive()) // Did thread terminate?
-                appLogger.warning("EpiThread(" + getName() // No, report time-out. 
+                theAppLog.warning("EpiThread(" + getName() // No, report time-out. 
                   + ").joinV() time-out of " + Config.threadJoinTimeOutMsL + " ms.");
                 else
                   ; // Yes, being here means this's thread has terminated.
@@ -149,14 +150,14 @@ public class EpiThread
               }
             catch (InterruptedException e) {  // Handling any new thread interrupt.
               // Being here means current thread's interrupt status was set.
-              appLogger.debug("EpiThread(" + getName() 
+              theAppLog.debug("EpiThread(" + getName() 
                 + ").joinV() recording new interrupt.");
             	currentThreadWasInterruptedB= true; // Combine new interrupt with old.
               }
         if  // Setting current thread's interrupt status if it was set earlier.
           ( currentThreadWasInterruptedB )
           Thread.currentThread().interrupt(); // Set interrupt status.
-        appLogger.info("EpiThread(" + getName() + ").joinV() ends.");
+        theAppLog.info("EpiThread(" + getName() + ").joinV() ends.");
         }
 
     public static boolean interruptibleSleepB( long msL )

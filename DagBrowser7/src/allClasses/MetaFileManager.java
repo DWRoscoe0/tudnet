@@ -4,7 +4,8 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.ListIterator;
 
-import static allClasses.Globals.*;  // For appLogger;
+import static allClasses.AppLog.theAppLog;
+
 
 public class MetaFileManager {
 
@@ -130,7 +131,7 @@ public class MetaFileManager {
         	loadedMetaNode= lazyLoadWholeMetaNode( );
         	}
         catch ( NumberFormatException e ) {  // Logging any errors.
-          appLogger.error(
+          theAppLog.error(
               "MetaFileManager.start() Exception: "+e
               );
           }
@@ -173,7 +174,7 @@ public class MetaFileManager {
         ?? This should probably be renamed to saveV().
         */
       { // finish()
-        appLogger.info( "MetaFileManager.finish() begin.  This could take a while.");
+        theAppLog.info( "MetaFileManager.finish() begin.  This could take a while.");
 
         forcedLoadingEnabledB= true;  // Turn on forced loading.
 
@@ -198,7 +199,7 @@ public class MetaFileManager {
           theMetaRoot.getRootMetaNode( ) 
           );  // This file is what will be lazy-loaded during next run.
 
-        appLogger.info( "MetaFileManager.finish() end.");
+        theAppLog.info( "MetaFileManager.finish() end.");
         } // finish()
 
   public static class Finisher implements ShutdownerListener {
@@ -220,7 +221,7 @@ public class MetaFileManager {
         }
         
     public void doMyShutdown() {  // ShutdownerListener method.
-      appLogger.info( 
+      theAppLog.info( 
       		"MetaFileManager.Finisher.doMyShutdown() calling finish()"
       		);
 

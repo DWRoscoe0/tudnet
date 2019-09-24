@@ -1,9 +1,10 @@
 package allClasses;
 
-import static allClasses.Globals.appLogger;
-
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static allClasses.AppLog.theAppLog;
+
 
 public class MutableListWithMap< 
     K, // Key for the map entries.
@@ -55,7 +56,7 @@ public class MutableListWithMap<
 
 	    	if  // Adding DataNode only to MutableList unless it's there already.
 	      	( ! addAtEndB( childDataNode ) )
-	      	appLogger.error( // Logging error if already in list.
+	      	theAppLog.error( // Logging error if already in list.
 	      			"MutableListWithMap.addingV(..): Already present."
 	      			);
 	      }
@@ -68,7 +69,7 @@ public class MutableListWithMap<
 	    {
 	    	if  // Removing from this DataNode's List if it's there.
 	    		( ! removeB( childD ) )
-	      	appLogger.error(
+	      	theAppLog.error(
 	      			"MutableListWithMap..removingV(..): removeB(..) failed"
 	      			);
 

@@ -1,8 +1,8 @@
 package allClasses;
 
-import static allClasses.Globals.appLogger;
-
 import java.io.IOException;
+
+import static allClasses.AppLog.theAppLog;
 
 
 public class Subcaster
@@ -81,7 +81,7 @@ public class Subcaster
 							);
 			    }
 				
-				appLogger.info("run() exiting."); // Needed if thread self-terminates.
+				theAppLog.info("run() exiting."); // Needed if thread self-terminates.
     		finalizingV();
     		}
 
@@ -90,7 +90,7 @@ public class Subcaster
         does Streamcaster initializing.
         */
 	    {
-    		appLogger.info("initializeV() at start."); // Needed if thread self-terminates.
+    		theAppLog.info("initializeV() at start."); // Needed if thread self-terminates.
 		    super.initializeV();
 		    addAtEndB( 	theSubcasterOutputStream.getCounterNamedLong() );
 		    addAtEndB( 	theSubcasterInputStream.getCounterNamedLong() );
@@ -98,7 +98,7 @@ public class Subcaster
 
     protected void finalizingV()
 	    {
-    		appLogger.info("finalizingV() for exit."); // Needed if thread self-terminates.
+    		theAppLog.info("finalizingV() for exit."); // Needed if thread self-terminates.
 	    	}
 
 		}

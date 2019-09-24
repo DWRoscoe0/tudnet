@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static allClasses.AppLog.theAppLog;
 import static allClasses.Globals.*;  // appLogger;
 
 public class AppInstanceManager {
@@ -218,7 +219,7 @@ l    * If the app receives a message indicating
 	      and whether it was successful.
 	      */
   	  {
-        appLogger.info("AppInstanceManager.finalizeV() deleter begins. ");
+        theAppLog.info("AppInstanceManager.finalizeV() deleter begins. ");
   	    String tempDirString= // Get temporary directory if it is in use. 
   	      startCommandArgs.switchValue("-tempDir");
           // Example: "C:\\Users\\PCUser\\AppData\\Local\\Temp\\7ZipSfx.003";
@@ -233,7 +234,7 @@ l    * If the app receives a message indicating
   	        String dirString= headString + String.format ("%03x", extensionI);
     	      File toDeleteFile= new File(dirString); 
     	      boolean successB= toDeleteFile.delete();  // delete directory.
-            appLogger.info("AppInstanceManager.finalizeV(): deleting "
+            theAppLog.info("AppInstanceManager.finalizeV(): deleting "
     	        + dirString + ", success=" + successB); 
     	      }
   	    }
@@ -263,7 +264,7 @@ l    * If the app receives a message indicating
 
 	      */
 	    {
-	  		appLogger.info( "tryDelegatingToAnotherAppInstanceB() begins."
+	  		theAppLog.info( "tryDelegatingToAnotherAppInstanceB() begins."
 	  		    + NL + "  App path is: " + runningAppFile.getAbsolutePath()
 	  		    + NL + "  App time-stamp is " + FileOps.dateString( runningAppFile ) );
         processCommandArgsV( startCommandArgs ); // Setting app args as inputs.
@@ -273,12 +274,12 @@ l    * If the app receives a message indicating
 	      tryDelegation: {
   	      if ( tryDelegationToRunningInstanceB( ) ) break tryDelegation;
   	      if ( tryDelegationToFileInstanceB( ) ) break tryDelegation;
-	    		appLogger.info( "tryDelegatingToAnotherAppInstanceB() "
+	    		theAppLog.info( "tryDelegatingToAnotherAppInstanceB() "
 		  				+"======== DELEGATION FAILED, GUI WILL START ========" );
 	        successB= false; // Setting return result to prevent app exit.
   		    } // tryDelegation:
 	
-		  	appLogger.info( 
+		  	theAppLog.info( 
 		  	    "tryDelegatingToAnotherAppInstanceB() ending: "+successB );
 	      return successB;  // Return whether app should exit.
 	      }
@@ -315,7 +316,7 @@ l    * If the app receives a message indicating
   			    }
   				} // tryUpdate:
       if (updatingB) 
-        appLogger.info("thingsToDoPeriodicallyV() updating is [still] underway.");
+        theAppLog.info("thingsToDoPeriodicallyV() updating is [still] underway.");
       }
 
 	  public String thisAppDateString()
@@ -362,7 +363,7 @@ l    * If the app receives a message indicating
             ( ! isUpdateValidB( otherAppFile ) )
             break toReturn;
           // Additional approval or authenticity checks would go here.
-          appLogger.info("Detected an approved updater file.  Preparing it");
+          theAppLog.info("Detected an approved updater file.  Preparing it");
           if ( ! displayUpdateApprovalDialogB( // Not approved by user?
               false, // Get approval.
               "A file containing an update of this app was detected." + NL
@@ -399,7 +400,7 @@ l    * If the app receives a message indicating
           if ( otherAppLastModifiedL <= standardAppLastModifiedL )
            	break validation; // File not newer, so exit
           successB= true;  // Override default false result.
-  	      appLogger.debug("isUpdateValidB() ======== NEWER APP FILE DETECTED ========" +  
+  	      theAppLog.debug("isUpdateValidB() ======== NEWER APP FILE DETECTED ========" +  
   	      		NL + "    otherAppFile:    " + FileOps.fileDataString(otherAppFile) + 
   	      		NL + "    standardAppFile: " + FileOps.fileDataString(standardAppFile)
   	      		);
@@ -419,7 +420,7 @@ l    * If the app receives a message indicating
           So divide this method?
         */
       {
-        appLogger.info( 
+        theAppLog.info( 
             "AppInstanceManager processCommandArgsV(..), starting." );
         argStrings= theCommandArgs.args(); // Save a copy of arg array.
         
@@ -431,7 +432,7 @@ l    * If the app receives a message indicating
           String[] targetStrings= // Get remaining arguments.
               theCommandArgs.targets(); 
           if (targetStrings.length>0) // If there are any then
-            appLogger.warning( // log them as errors.
+            theAppLog.warning( // log them as errors.
               "AppInstanceManager processCommandArgsV(..), unused arguments:" + NL + "  "
               + Arrays.toString(targetStrings));
           }
@@ -477,7 +478,7 @@ l    * If the app receives a message indicating
               }
             else
             {
-              appLogger.info( "TCP Port "+thePortManager.getInstancePortI()+" is listening." );
+              theAppLog.info( "TCP Port "+thePortManager.getInstancePortI()+" is listening." );
               successB=  // Set success to the result of...
                 connectAndSendToAppHoldingSocketB( );  // ...sending to it.
               }
@@ -505,12 +506,12 @@ l    * If the app receives a message indicating
 	    private void logLocalHostV()
         {
           try { // Log localhost IP.
-              appLogger.info(
+              theAppLog.info(
                 "logLocalHostV() IP= " + 
                 InetAddress.getLocalHost().getHostAddress() // IP. 
                 );
             } catch (UnknownHostException e) {
-              appLogger.exception("logLocalHostV()",e);
+              theAppLog.exception("logLocalHostV()",e);
             }
           }
 
@@ -519,11 +520,11 @@ l    * If the app receives a message indicating
           public void doMyShutdown()
             // This will cause IOException and terminate InstcMgr thread.
             {
-              appLogger.info(
+              theAppLog.info(
                   "AppInstanceManager ShutdownerListener.doMyShutdowner(..),"
                   +" closing socket.");
               theLocalSocket.closeAllV();
-              appLogger.info( 
+              theAppLog.info( 
                   "AppInstanceManager ShutdownerListener.doMyShutdowner(..), done" 
                   );
               }
@@ -564,7 +565,7 @@ l    * If the app receives a message indicating
 		            * trigger an app shutdown to allow a software update to happen.
 	            */
 	          {
-		          appLogger.info(Thread.currentThread().getName()+": beginning.");
+		          theAppLog.info(Thread.currentThread().getName()+": beginning.");
 	            while (! theLocalSocket.isClosedB()) {
                 try {
                   theLocalSocket.acceptV(); // Wait for connection or exception.
@@ -572,7 +573,7 @@ l    * If the app receives a message indicating
                     updaterReentrantLock.lock(); // Wait until we have lock.
                     try {
                         theLocalSocket.inputFromConnectionV();
-                        appLogger.debug("run(): got data.");
+                        theAppLog.debug("run(): got data.");
                         processCommandArgsV(theLocalSocket.getCommandArgs());
 			                } finally {
 	                      updaterReentrantLock.unlock(); // Release the lock.
@@ -585,7 +586,7 @@ l    * If the app receives a message indicating
                     theLocalSocket.closeAllV(); // Make certain all are closed.
 	                  }
                 } // while
-		          appLogger.info("Socket closed, ending.");
+		          theAppLog.info("Socket closed, ending.");
 	            }
 	        
 	        } // class InstanceManagerThread
@@ -613,7 +614,7 @@ l    * If the app receives a message indicating
 		      if // Exiting or firing event depending on other instance.
 		      	( isUpdateValidB( otherAppFile ) )
 		        { // Report pending update.
-              appLogger.info("processConnectionDataV(..), "
+              theAppLog.info("processConnectionDataV(..), "
                   + "Offered app file is newer and is valid.");
 		         	if ( displayUpdateApprovalDialogB( 
 	          			false, // Get approval.
@@ -632,7 +633,7 @@ l    * If the app receives a message indicating
 		        	}
 		        else
 		        {
-		          appLogger.info("processConnectionDataV(..), "
+		          theAppLog.info("processConnectionDataV(..), "
 		              + "Offered app file is not newer or is invalid.");
 		        	displayUpdateApprovalDialogB( 
 	          			true, // Just inform user.  Don't request approval.
@@ -661,7 +662,7 @@ l    * If the app receives a message indicating
     	   */
 	    	{
     			java.awt.Toolkit.getDefaultToolkit().beep(); // Beep.
-	        appLogger.info("displayUpdateApprovalDialogB(..) begins.");
+	        theAppLog.info("displayUpdateApprovalDialogB(..) begins.");
 		  		final AtomicBoolean resultAtomicBoolean= new AtomicBoolean(true);
 		  		/*  ///tmp ///dbg
 	    		final String outString= 
@@ -696,7 +697,7 @@ l    * If the app receives a message indicating
 			          } 
 			        );
 		  		*/  ///tmp ///dbg
-    			appLogger.info(
+    			theAppLog.info(
     					"displayUpdateApprovalDialogB(..) ends, value= " 
     					+ resultAtomicBoolean.get() );
 		  		return resultAtomicBoolean.get();
@@ -727,7 +728,7 @@ l    * If the app receives a message indicating
           ///org : simplify by adding labels: toReturnTrue and toReturnFalse.
 	        */
 	      { 
-  	        appLogger.info("tryDelegationToFileInstanceB() enter");
+  	        theAppLog.info("tryDelegationToFileInstanceB() enter");
   	        boolean appShouldExitB= true;  // Set default return app exit.
 	        toReturn: { // The block after which all returns will go.
             if (! endsWithJarOrExeB(runningAppFile)) {
@@ -739,7 +740,7 @@ l    * If the app receives a message indicating
 		          { // Handle the arg-less command possibilities.
 		            if (runningAppIsStandardAppB())  // Was from standard folder.
 		              { // Prepare for normal startup.
-                    appLogger.info("Starting app from standard folder.");
+                    theAppLog.info("Starting app from standard folder.");
 		                appShouldExitB= false;  // For normal startup.
 		                } // Prepare for normal startup.
 		              else  // Is arg-less but not from standard folder.
@@ -756,11 +757,11 @@ l    * If the app receives a message indicating
 		            if (tryRunningApprovedUpdaterB()) break toReturn;
 		            if (tryUpdateToStandardFolderB()) break toReturn;
 		            // Others to be added?
-		            appLogger.info("Exhausted with-arg possibilities.");
+		            theAppLog.info("Exhausted with-arg possibilities.");
 		            appShouldExitB= false;  // For normal startup.
 		            } // Handle app commands with argument[s].
 	        } // toReturn
-            appLogger.info("tryDelegationToFileInstanceB() exit");
+            theAppLog.info("tryDelegationToFileInstanceB() exit");
   	        return appShouldExitB;  // Return whether or not app should exit.
 	        }
 	
@@ -785,7 +786,7 @@ l    * If the app receives a message indicating
 	        if // A version of this app is not already in standard folder.
 	          ( ! standardAppFile.exists() )  // The file doesn't exist.
 	          {
-	            appLogger.info("Trying to install.");
+	            theAppLog.info("Trying to install.");
 	            appShouldExitB= copyAndPrepareToRunB();
 	            }
 	        return appShouldExitB;
@@ -808,7 +809,7 @@ l    * If the app receives a message indicating
   	          break toReturn;
             appShouldExitB= true; // App exits in the following cases.
             if (copyAndPrepareToRunB()) break toReturn; // Successful copy.
-            appLogger.error("Copy failed.  Waiting, then exiting.");
+            theAppLog.error("Copy failed.  Waiting, then exiting.");
             EpiThread.interruptibleSleepB(5000); // Wait 5s.
           } // toReturn:
 	          return appShouldExitB;
@@ -831,7 +832,7 @@ l    * If the app receives a message indicating
 	          if // Running app is not The date stamps are not equal.
               (runningAppFile.lastModified() > standardAppFile.lastModified())
 	            break toExit;
-            appLogger.info("Will run identical or newer app in standard folder.");
+            theAppLog.info("Will run identical or newer app in standard folder.");
         	  appShouldExitB= 
         	    requestProcessStartAndShutdownTrueB( 
         	    		standardAppFile.getAbsolutePath() );
@@ -859,7 +860,7 @@ l    * If the app receives a message indicating
 	                otherAppFile
 	          			) )
 		          	{
-			            appLogger.info("An approved updater has been detected.");
+			            theAppLog.info("An approved updater has been detected.");
 			        	  appShouldExitB=   // Chain to arg app to do the copy.
 				            requestProcessStartAndShutdownTrueB(
 				              otherAppFile.getAbsolutePath() 
@@ -881,11 +882,11 @@ l    * If the app receives a message indicating
             then it returns false.
           */
         {
-            appLogger.debug("copyAndPrepareToRunB() begin");
+            theAppLog.debug("copyAndPrepareToRunB() begin");
             boolean successB= false;
           toExit: { toCopy: {
             if (endsWithJarOrExeB(runningAppFile)) break toCopy;
-            appLogger.info("copyAndPrepareToRunB() Not copying.  "
+            theAppLog.info("copyAndPrepareToRunB() Not copying.  "
                 + "Not executable .jar or .exe file:" + NL + "  " + runningAppFile);
             break toExit;
           } // toCopy:
@@ -895,7 +896,7 @@ l    * If the app receives a message indicating
                 standardAppFile.getAbsolutePath() 
                 );
           } // toExit:
-            appLogger.debug("copyAndPrepareToRunB() ends= "+successB);
+            theAppLog.debug("copyAndPrepareToRunB() ends= "+successB);
             return successB;
           }
 
@@ -910,7 +911,7 @@ l    * If the app receives a message indicating
           toExit: {
             if (theString.endsWith(".jar")) break toExit;
             if (theString.endsWith(".exe")) break toExit;
-            appLogger.warning(
+            theAppLog.warning(
                 "endsWithJarOrExeB() Not exe or jar file:" + theString);
             resultB= false;
           } // toExit:
@@ -932,20 +933,20 @@ l    * If the app receives a message indicating
           toExit: { toCopy: { toEqualityTest: {
             sourceNameString= sourceFile.getName(); 
             if (endsWithJarOrExeB(sourceNameString)) break toEqualityTest;
-            appLogger.error("copyExecutableFileB() Not exe or jar file."
+            theAppLog.error("copyExecutableFileB() Not exe or jar file."
               +FileOps.twoFilesString(sourceFile, destinationFile));
             break toExit;
           } // toEqualityTest:
             if (sourceNameString.equals(destinationFile.getName())) 
               break toCopy;
-            appLogger.error("copyExecutableFileB() File extension mismatch."
+            theAppLog.error("copyExecutableFileB() File extension mismatch."
                 +FileOps.twoFilesString(sourceFile, destinationFile));
             break toExit;
           } // toCopy:
             FileOps.copyFileWithRetryV(sourceFile, destinationFile);
             successB= true;
           } // toExit:
-            appLogger.debug("copyExecutableFileB()= "+successB);
+            theAppLog.debug("copyExecutableFileB()= "+successB);
             return successB;
           }
           
@@ -1020,7 +1021,7 @@ l    * If the app receives a message indicating
 	          		+ FileOps.fileDataString( tcpCopierAppFile );
 	          }
 	        
-	        appLogger.info( logString );  // Log the completed String.
+	        theAppLog.info( logString );  // Log the completed String.
 	        }
 		    
 	    @SuppressWarnings("unused") ///

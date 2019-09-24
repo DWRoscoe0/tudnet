@@ -17,7 +17,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.plaf.FontUIResource;
 
-import static allClasses.Globals.appLogger;  // For appLogger;
+import static allClasses.AppLog.theAppLog;  // For appLogger;
 
 public class AppGUI
 
@@ -118,7 +118,7 @@ public class AppGUI
 
         public void run() // Method executed by appInstanceCreatedV(). 
           {
-            appLogger.info("Trying move-to-front.");
+            theAppLog.info("Trying move-to-front.");
             theJFrame.toFront();
             theJFrame.repaint();
             }
@@ -131,7 +131,7 @@ public class AppGUI
         and it has shutdown the things for which it is responsible.
         */
       {
-    		appLogger.info("AppGUI.runV() begins.");
+    		theAppLog.info("AppGUI.runV() begins.");
         theDataTreeModel.initializeV( theInitialRootDataNode );
         theGUIManager.initializeV();
         theConnectionManagerEpiThread.startV();
@@ -148,7 +148,7 @@ public class AppGUI
         theConnectionManagerEpiThread.stopAndJoinV( );
           // Terminate ConnectionManager connections and all related threads.
         theGUIManager.finalizeV();
-    		appLogger.info("AppGUI.runV() ends.");
+    		theAppLog.info("AppGUI.runV() ends.");
         }
 
     } // class AppGUI
@@ -210,7 +210,7 @@ class GUIManager
         It builds the app's GUI in a new JFrame and starts it.
         */
       {
-    		appLogger.info("GUIManager.initializeOnEDTV() begins.");
+    		theAppLog.info("GUIManager.initializeOnEDTV() begins.");
     		theTracingEventQueue.initializeV(); // to start monitor thread.
 
       	Toolkit.getDefaultToolkit().getSystemEventQueue().push(
@@ -241,7 +241,7 @@ class GUIManager
         KeyboardFocusManager.getCurrentKeyboardFocusManager().
           addKeyEventDispatcher( this );
 
-    		appLogger.info("GUIManager.initializeOnEDTV() ends.");
+    		theAppLog.info("GUIManager.initializeOnEDTV() ends.");
         }
 
     public void finalizeV()
@@ -249,7 +249,7 @@ class GUIManager
         It does this by running finalizeOnEDTV()on the AWT thread.
         */
       {
-        appLogger.info("GUIManager.finalizeOnV() called.");
+        theAppLog.info("GUIManager.finalizeOnV() called.");
         theDagBrowserPanel.finalizationV(); // To terminate ActivityTimer.
           ///fix For some reason, this fails when run on EDT!
         EDTUtilities.invokeAndWaitV( // Dispatching on EDT
@@ -270,7 +270,7 @@ class GUIManager
          // appLogger.info("GUIManager.finalizeOnEDTV() begins.");
          // appLogger.info("GUIManager.finalizeOnEDTV() after theDagBrowserPanel.finalizationV().");
         for (Window aWindow : Window.getWindows()) {
-          appLogger.info(
+          theAppLog.info(
               "GUIManager.finalizeOnEDTV() disposing Window titled: "
               +((Frame)aWindow).getTitle());
           aWindow.dispose(); // Do this so Event Dispatch Thread terminates.
@@ -334,13 +334,13 @@ class GUIManager
         theJFrame.addWindowListener( // Set Listener to handle close events
           new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
-              appLogger.info(
+              theAppLog.info(
              		"windowClosing(..) ======== REQUESTING APP SHUTDOWN =========");
               theShutdowner.requestAppShutdownV();
               }
           	});
         theJFrame.setVisible(true);  // Make the window visible.
-        appLogger.info(
+        theAppLog.info(
           	"GUIManager.theJFrame.setVisible(true) done."
           	);
         SwingUtilities.invokeLater(new Runnable() { // Queue GUI event...

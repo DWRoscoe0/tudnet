@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
-import static allClasses.Globals.*;  // For appLogger;
+import static allClasses.AppLog.theAppLog;
 
 public class ListLiteratorOfIDNumber
 
@@ -85,7 +85,7 @@ public class ListLiteratorOfIDNumber
                   );
           }
         catch ( IOException theIOException ) {
-          appLogger.error(
+          theAppLog.error(
           	theIOException, "ListLiteratorOfIDNumber.tryLoadingIDNumber().");
       	  resultIDNumber= inIDNumber;
           };

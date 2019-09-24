@@ -1,6 +1,6 @@
 package allClasses;
 
-import static allClasses.Globals.appLogger;
+import static allClasses.AppLog.theAppLog;
 
 
 public class NamedFloat // A DataNode for tracking floating point things.
@@ -37,7 +37,7 @@ public class NamedFloat // A DataNode for tracking floating point things.
 	      */
       {
     	  if (deltaF != 0) // Logging deltaF if it's not 0.
-		  		appLogger.info( this.getNameString( )+" changed by "+deltaF );
+		  		theAppLog.info( this.getNameString( )+" changed by "+deltaF );
 	  	  return addValueL( deltaF ); // Doing the add.
         }
 

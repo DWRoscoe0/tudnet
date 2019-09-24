@@ -1,11 +1,12 @@
 package allClasses;
 
-import static allClasses.Globals.appLogger;
-
 import java.io.IOException;
 
 import allClasses.LockAndSignal.Input;
+
+import static allClasses.AppLog.theAppLog;
 import static allClasses.Globals.NL;
+
 
 public class Streamcaster< 
     K,
@@ -125,7 +126,7 @@ public class Streamcaster<
           if  // Checking and exiting if maximum attempts have been done.
             ( triesI > maxTriesI )  // Maximum attempts exceeded.
             { // Terminating thread.
-              appLogger.info(
+              theAppLog.info(
               		"Requesting termination after "
                 	+NL + "  "+maxTriesI+" REPLY time-outs."
                   );
@@ -140,7 +141,7 @@ public class Streamcaster<
             				pingSentMsL, retransmitDelayMsL
             				);
             if ( theInput == Input.TIME ) // Exiting echo wait if time-out.
-              { appLogger.info( "Time-out waiting for REPLY: "+triesI );
+              { theAppLog.info( "Time-out waiting for REPLY: "+triesI );
                 break replyWaitLoop;  // End wait to send new PING, maybe.
               	}
             if // Handling thread interrupt by exiting.
@@ -156,15 +157,15 @@ public class Streamcaster<
                 }
         		if ( inString.equals( "PING" ) ) // Handling ping conflict, maybe.
               { // Handling ping conflict.
-                appLogger.info( "PING-PING conflict." );
+                theAppLog.info( "PING-PING conflict." );
               	if ( ! leadingDefaultBooleanLike.getValueB() ) // Arbitrating ping-ping conflict.
                   { // Yielding ping processing to other peer.
-                    appLogger.info( "PING ping yield: "+triesI );
+                    theAppLog.info( "PING ping yield: "+triesI );
                     theEpiInputStreamI.reset(); // Putting message back.
                     break pingReplyLoop; // Yielding by exiting main loop.
                     }
               		else
-              		{ appLogger.info( "PING ping not yielding: "+triesI );
+              		{ theAppLog.info( "PING ping not yielding: "+triesI );
               			// Ignoring this PING.
                     break replyWaitLoop;  // End wait to send new PING, maybe.
               			}
@@ -197,7 +198,7 @@ public class Streamcaster<
 		    * It documents with its calls where input is ignored.
 		    */
 			{
-		    appLogger.info( 
+		    theAppLog.info( 
 						"ignoringOrLoggingStringV(..) : "
 					+ inString
 					+ " from "
@@ -234,7 +235,7 @@ public class Streamcaster<
 		    			break all;
 	          if ( theInput == Input.TIME ) // Exiting all if time-out.
 		          {
-		            appLogger.warning( "Time-out waiting for PING." );
+		            theAppLog.warning( "Time-out waiting for PING." );
 		            break all;  // Exiting to abort wait.
 		          	}
 	      		// Note, can't readAString() here because it might not be available?
@@ -264,13 +265,13 @@ public class Streamcaster<
 		          if // Handling a repeat received ping if present.
 		        	  ( theEpiInputStreamI.tryingToGetStringB( "PING" ) )
 			          { 
-			            appLogger.warning( "tryingPingReceiveV(): got repeat PING." );
+			            theAppLog.warning( "tryingPingReceiveV(): got repeat PING." );
 			          	break postReplyPause;  // Exiting pingWaitLoop only.
 			            }
 	        		// Change following to use: ignoringOrLoggingStringV(); // Ignoring any other string.
 	        		String theString=  // Reading message to ignore it.
 	        				theEpiInputStreamI.readAString();
-	            appLogger.warning( 
+	            theAppLog.warning( 
 	        			"tryingPingReceiveV(): unexpected " + theString + ", ignoring"
 	        			);
 	          	} // postReplyPause: 

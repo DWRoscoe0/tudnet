@@ -1,10 +1,10 @@
 package allClasses;
 
-import static allClasses.Globals.appLogger;
-
 import java.io.File;
 import java.net.URISyntaxException;
 import java.util.Arrays;
+
+import static allClasses.AppLog.theAppLog;
 import static allClasses.Globals.NL;
 
 
@@ -73,13 +73,13 @@ public class AppSettings {
       ///enh In theory it could be made not-static with constructor injection. 
       */
     {
-      appLogger.info("AppSettings.initializeV(..) argStrings=" + NL + "  "
+      theAppLog.info("AppSettings.initializeV(..) argStrings=" + NL + "  "
           +Arrays.toString(theCommandArgs.args()));
-      appLogger.info("AppSettings.initializeV(..) entryPointClass="+
+      theAppLog.info("AppSettings.initializeV(..) entryPointClass="+
           entryPointClass.getCanonicalName());
       setInitiatorV(entryPointClass, theCommandArgs);
     
-      SystemSettings.logSystemPropertiesV(appLogger);
+      SystemSettings.logSystemPropertiesV(theAppLog);
       }
     
   
@@ -131,7 +131,7 @@ public class AppSettings {
                   entryPointClass.getProtectionDomain().
                   getCodeSource().getLocation().toURI());
             } catch (URISyntaxException e1) {
-              appLogger.exception("AppSettings.setInitiatorV()", e1);
+              theAppLog.exception("AppSettings.setInitiatorV()", e1);
               iFile= new File("ERROR.ERR"); 
               break toStoreAndExit;
             }
@@ -144,7 +144,7 @@ public class AppSettings {
           int dotIndexI= initiatorNameString.lastIndexOf('.');
           AppSettings.initiatorExtensionString= // Save file extension 
             (dotIndexI < 0) ? "ERR" : initiatorNameString.substring(dotIndexI); 
-          appLogger.info("AppSettings.setInitiatorV()"
+          theAppLog.info("AppSettings.setInitiatorV()"
             + ", initiatorExtensionString= " 
               + AppSettings.initiatorExtensionString
             + ", initiatorFile=" + NL + "  " + AppSettings.initiatorFile);

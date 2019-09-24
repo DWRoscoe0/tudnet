@@ -1,9 +1,10 @@
 package allClasses;
 
-import static allClasses.Globals.*;
-
 import java.net.DatagramPacket;
 import java.net.InetAddress;
+
+import static allClasses.AppLog.theAppLog;
+
 
 public abstract class PacketManager< 
     K, // Key.
@@ -95,8 +96,8 @@ public abstract class PacketManager<
 				DatagramPacket theDatagramPacket 
 				)
 			{
-			  if (appLogger.logB(Config.packetLogLevel)) 
-			  	appLogger.logV(
+			  if (theAppLog.logB(Config.packetLogLevel)) 
+			  	theAppLog.logV(
 			  			Config.packetLogLevel,
 	      		PacketManager.gettingDirectedPacketString(
 	      				theDatagramPacket, false
@@ -108,8 +109,8 @@ public abstract class PacketManager<
 				DatagramPacket theDatagramPacket 
 				)
 			{
-			  if (appLogger.logB(Config.packetLogLevel)) 
-			  	appLogger.logV(
+			  if (theAppLog.logB(Config.packetLogLevel)) 
+			  	theAppLog.logV(
 			  	  Config.packetLogLevel,
 	      		PacketManager.gettingDirectedPacketString(
 	      				theDatagramPacket, true
@@ -121,8 +122,8 @@ public abstract class PacketManager<
 				DatagramPacket theDatagramPacket 
 				)
 			{
-			  if (appLogger.logB(Config.packetLogLevel)) 
-			  	appLogger.logV(
+			  if (theAppLog.logB(Config.packetLogLevel)) 
+			  	theAppLog.logV(
 			  		Config.packetLogLevel,
 	      		PacketManager.gettingDirectedPacketString(
 	      				theDatagramPacket, false

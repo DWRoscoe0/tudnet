@@ -3,7 +3,7 @@ package allClasses;
 import java.math.BigInteger;
 import java.util.Random;
 
-import static allClasses.Globals.appLogger;
+import static allClasses.AppLog.theAppLog;
 
 public class App { // The App, especially pre-GUI stuff.
 
@@ -38,7 +38,7 @@ public class App { // The App, especially pre-GUI stuff.
      */
     {
       // App initialization.
-  		appLogger.info("App.run() begins.");
+  		theAppLog.info("App.run() begins.");
   		thePersistent.initializeV();  // Prepare access to persistent data.
   	  definePeerIdentityV();
 			theShutdowner.initializeV();
@@ -48,15 +48,15 @@ public class App { // The App, especially pre-GUI stuff.
 			delegateOrDoV(); // Actually do some work.
 
       // App shutdown.
-      appLogger.info("App.run() shutting down.");
+      theAppLog.info("App.run() shutting down.");
       theAppInstanceManager.finalizeV();
   	  thePersistent.finalizeV();  // Write any new or changed app properties.
   		//appLogger.info("App calling Shutdowner.finishV().");
       theShutdowner.finishAppShutdownV();  // Doing final app shutdown jobs.
         // This might not return if shutdown began in the JVM. 
-      appLogger.setBufferedModeV( 
+      theAppLog.setBufferedModeV( 
           true ); // Because finishAppShutdownV() disables it for JVM exit. 
-      appLogger.info("App.run() ends.");
+      theAppLog.info("App.run() ends.");
       
       // After this method returns, the main thread of this app should exit.
       } // runV().

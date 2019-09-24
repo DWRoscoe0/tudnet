@@ -1,9 +1,10 @@
 package allClasses;
 
-import static allClasses.Globals.appLogger;
-
 import java.io.IOException;
 import java.net.DatagramPacket;
+
+import static allClasses.AppLog.theAppLog;
+
 
 public class UnicasterManager
 
@@ -211,7 +212,7 @@ public class UnicasterManager
         each of which is expected to process it with its state machine. 
         */
       {
-        appLogger.debug("passToUnicastersV(..), to only connected Unicasters, message:"
+        theAppLog.debug("passToUnicastersV(..), to only connected Unicasters, message:"
           + messageString);
         for ( DataNode childDataNode: this )  // For every Unicaster 
           { // [ass message to it.

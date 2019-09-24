@@ -1,7 +1,5 @@
 package allClasses;
 
-import static allClasses.Globals.appLogger;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -10,6 +8,9 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import static allClasses.Globals.NL;
+
+import static allClasses.AppLog.theAppLog;
+
 
 public class LocalSocket
 
@@ -59,9 +60,9 @@ public class LocalSocket
         try {
             bindV(portI);
             successB= true; // Indicate bind success.
-            appLogger.info("bindB(..) success.");
+            theAppLog.info("bindB(..) success.");
           } catch (IOException e) {
-            appLogger.info("bindB(..) failure.  Port probably in use.");
+            theAppLog.info("bindB(..) failure.  Port probably in use.");
           }
         return successB;
         }
@@ -84,9 +85,9 @@ public class LocalSocket
               new ServerSocket(
                 portI, 10, InetAddress.getLoopbackAddress() 
                 );
-            appLogger.info("bindV(..) success.");
+            theAppLog.info("bindV(..) success.");
           } catch (IOException e) {
-            appLogger.info("bindV(..) failure.  Port probably in use.");
+            theAppLog.info("bindV(..) failure.  Port probably in use.");
             throw e; // Rethrow exception.
           }
         }
@@ -124,15 +125,15 @@ public class LocalSocket
              )
            );
          String readString = inBufferedReader.readLine();
-         appLogger.info(
+         theAppLog.info(
              "inputFromConnectionV() ======== RECEIVED DATA VIA TCP FROM ANOTHER APP. ======== :" + NL + "  " 
              + readString
              );
          theCommandArgs= // Parse string into separate string arguments using
            new CommandArgs(readString.split("\\s")); // white-space delimiters.
-         appLogger.debug("inputFromConnectionV(): theCommandArgs created.");
+         theAppLog.debug("inputFromConnectionV(): theCommandArgs created.");
          inBufferedReader.close();
-         appLogger.debug("inputFromConnectionV(): inBufferedReader.closed.");
+         theAppLog.debug("inputFromConnectionV(): inBufferedReader.closed.");
          }
     
     public synchronized CommandArgs getCommandArgs()
@@ -151,7 +152,7 @@ public class LocalSocket
           if (theServerSocket != null)
             theServerSocket.close(); 
           } catch (IOException e) {
-            appLogger.exception("closeConnectionV()",e);
+            theAppLog.exception("closeConnectionV()",e);
           } 
         theServerSocket= null;
         }
@@ -179,7 +180,7 @@ public class LocalSocket
             if (theServerServerSocket != null) 
               theServerServerSocket.close();
           } catch (IOException e) {
-            appLogger.exception("LocalSocket.closeV()",e);
+            theAppLog.exception("LocalSocket.closeV()",e);
           }
         theServerServerSocket= null; // Indicate closed no matter what.
         }
@@ -204,12 +205,12 @@ public class LocalSocket
             outputString.getBytes());
           theOutputStream.close();  // Close stream.
           theClientSocket.close();  // Close socket.
-          appLogger.info(
+          theAppLog.info(
             "======== SUCCESS SENDING TCP LOOPBACK PACKET ========"
             +commonString);
           successB= true;  // Packet sent, meaning success and should exit.
         } catch (IOException e1) {
-          appLogger.exception(
+          theAppLog.exception(
             "======== FAILED SENDING LOOPBACK PACKET ========" 
             + commonString, e1);
         }

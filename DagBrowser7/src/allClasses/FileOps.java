@@ -14,7 +14,9 @@ import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 
-import static allClasses.Globals.*;  // appLogger;
+import static allClasses.AppLog.theAppLog;
+import static allClasses.Globals.NL;
+
 
 public class FileOps
 
@@ -43,7 +45,7 @@ public class FileOps
         long thatFileLastModifiedL= thatFile.lastModified();
         boolean updatingB= // Is this file is newer than that file?
             ( thisFileLastModifiedL > thatFileLastModifiedL );
-        appLogger.info("updateFromToV((..), updatingB="+updatingB);
+        theAppLog.info("updateFromToV((..), updatingB="+updatingB);
         if ( updatingB )  // Then replace that with this.
           copyFileWithRetryV(thisFile, thatFile);
     		}
@@ -59,23 +61,23 @@ public class FileOps
         */
       {
         ///enh create function to make double file path string.
-        appLogger.info("copyFileWithRetryV(..) "
+        theAppLog.info("copyFileWithRetryV(..) "
           + "======== COPYING FILE ======== "
           + twoFilesString(sourceFile, destinationFile));
         boolean copySuccessB= false;
         int attemptsI= 0;
         while (true) {
           if (EpiThread.testInterruptB()) { // Termination requested.
-            appLogger.info( true,"copyFileWithRetryV(..) terminating.");
+            theAppLog.info( true,"copyFileWithRetryV(..) terminating.");
             break; }
           attemptsI++;
           copySuccessB= tryCopyFileB(sourceFile, destinationFile);
           if (copySuccessB) { // Copy completed.
-            appLogger.info( "copyFileWithRetryV(..) "
+            theAppLog.info( "copyFileWithRetryV(..) "
                 + "Copying successful on attempt #"+attemptsI+" "
                 + twoFilesString(sourceFile, destinationFile));
             break; }
-          appLogger.info("copyFileWithRetryV(..) failed attempt #"+attemptsI
+          theAppLog.info("copyFileWithRetryV(..) failed attempt #"+attemptsI
             +".  Will retry after 1 second."); 
           EpiThread.interruptibleSleepB(
               Config.fileCopyRetryPause1000MsL); // Wait 1 second.
@@ -89,7 +91,7 @@ public class FileOps
         It logs any exception which causes failure.
         */
       {
-        appLogger.debug("tryCopyFileB(..) begins");
+        theAppLog.debug("tryCopyFileB(..) begins");
         File tmpFile= null;
         boolean successB= false; // Assume we will not be successful.
         toReturn: {
@@ -106,7 +108,7 @@ public class FileOps
           successB= true;
           } // toReturn:
         deleteDeleteable(tmpFile); // Delete possible temporary file debris.
-        appLogger.info("tryCopyFileB(..) copySuccessB="+successB);
+        theAppLog.info("tryCopyFileB(..) copySuccessB="+successB);
         return successB;
         }
   
@@ -124,7 +126,7 @@ public class FileOps
       {
         boolean successB= false;
         int attemptsI= 0;
-        appLogger.info( "atomicRenameB(..) begins"
+        theAppLog.info( "atomicRenameB(..) begins"
             + twoFilesString(sourcePath.toFile(), destinationPath.toFile()));
         while (!EpiThread.testInterruptB()) { // Retry some failure types. 
           attemptsI++;
@@ -134,18 +136,18 @@ public class FileOps
               successB= true;
               break;
             } catch (AccessDeniedException theAccessDeniedException) {
-              appLogger.warning(
+              theAppLog.warning(
                   "atomicRenameB(..) failed attempt "+attemptsI
                   +", retrying, "+theAccessDeniedException); 
             } catch (IOException theIOException) {
-              appLogger.exception("atomicRenameB(..) failed with ",theIOException); 
+              theAppLog.exception("atomicRenameB(..) failed with ",theIOException); 
               break;
             }
           EpiThread.interruptibleSleepB( // Don't hog CPU in retry loop.
               Config.errorRetryPause1000MsL
               );
           } // while
-        appLogger.info("atomicRenameB(..) ends, successB="+successB
+        theAppLog.info("atomicRenameB(..) ends, successB="+successB
             +" after "+attemptsI+" attempts.");
         return successB;
         }
@@ -163,7 +165,7 @@ public class FileOps
             tmpFile= File.createTempFile( // Creates empty file.
               nameString,null,AppSettings.userAppFolderFile);
           } catch (IOException theIOException) {
-            appLogger.exception(
+            theAppLog.exception(
                 "createTemporaryFile(..) failed with",theIOException); 
           }
         return tmpFile;
@@ -177,7 +179,7 @@ public class FileOps
         This method returns true if the copy succeeds, false otherwise.
         */
       {
-        appLogger.info("interruptibleTryCopyFileB(..) begins.");
+        theAppLog.info("interruptibleTryCopyFileB(..) begins.");
         InputStream theInputStream= null;
         OutputStream theOutputStream= null;
         boolean successB= false;
@@ -186,13 +188,13 @@ public class FileOps
             theOutputStream= new FileOutputStream(destinationFile);
             successB= copyStreamBytesB(theInputStream,theOutputStream);
           } catch (Exception e) {
-              appLogger.exception("interruptibleTryCopyFileB(..)",e); 
+              theAppLog.exception("interruptibleTryCopyFileB(..)",e); 
           } finally { // Close things, error or not.
             Closeables.closeWithErrorLoggingB(theInputStream);
             Closeables.closeWithErrorLoggingB(theOutputStream);
               // Closing the OutputStream can block temporarily.
           }
-        appLogger.info("interruptibleTryCopyFileB(..) ends, "
+        theAppLog.info("interruptibleTryCopyFileB(..) ends, "
             +"closes done, successB="+successB);
         return successB;
         }
@@ -208,7 +210,7 @@ public class FileOps
         A Thread interrupt will interrupt the copy.
         */
       {
-        appLogger.info("copyStreamBytesV(..) begins.");
+        theAppLog.info("copyStreamBytesV(..) begins.");
         long startTimeMsL= System.currentTimeMillis();
         int byteCountI= 0;
         boolean successB= false; // Assume we fill fail.
@@ -222,7 +224,7 @@ public class FileOps
             theOutputStream.write(bufferAB, 0, lengthI);
             byteCountI+= lengthI;
             if (EpiThread.testInterruptB()) { // Thread interruption.
-              appLogger.info(true, 
+              theAppLog.info(true, 
                   "copyStreamBytesV(..) terminated by interrupted");
               break; // Exit loop without success.
               }
@@ -230,12 +232,12 @@ public class FileOps
           } 
         catch (IOException theIOException) {
           if (EpiThread.testInterruptB()) // Thread interruption.
-            appLogger.info(
+            theAppLog.info(
               "copyStreamBytesV(..) interrupted plus "+theIOException);
             else
-              appLogger.exception("copyStreamBytesV(..) terminated by",theIOException);
+              theAppLog.exception("copyStreamBytesV(..) terminated by",theIOException);
           }
-        appLogger.info( "copyStreamBytesV() successB="+successB
+        theAppLog.info( "copyStreamBytesV() successB="+successB
             +", bytes transfered=" + byteCountI
             +", elapsed ms=" + (System.currentTimeMillis()-startTimeMsL));
         return successB;
@@ -262,7 +264,7 @@ public class FileOps
               sourceBasicFileAttributes.lastAccessTime();
           FileTime theCreateTime= 
               sourceBasicFileAttributes.creationTime();
-          appLogger.info( "copyTimeAttributesV(..): "
+          theAppLog.info( "copyTimeAttributesV(..): "
               +theLastModifiedTime+", "+theLastAccessTime+", "+theCreateTime);
     
           BasicFileAttributeView destinationBasicFileAttributeView= 
@@ -273,7 +275,7 @@ public class FileOps
               theLastModifiedTime, theLastAccessTime, theCreateTime);
           successB= true;
         } catch (IOException theIOException) {
-          appLogger.exception(
+          theAppLog.exception(
               "copyTimeAttributesB(..) failed with",theIOException); 
         }
       return successB;

@@ -6,7 +6,9 @@ import java.util.Vector;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 
-import static allClasses.Globals.*;  // appLogger;
+import static allClasses.AppLog.theAppLog;
+import static allClasses.Globals.NL;
+
 
 public abstract class TreeModelSupport 
   /* This class acts as a base class for 
@@ -54,7 +56,7 @@ public abstract class TreeModelSupport
 	        { 
 	        	vectorOfTreeModelListener.addElement( theTreeModelListener );
 		        if ( vectorOfTreeModelListener.size() > maxListenersI) {
-			    		appLogger.error( // Change warn to error to see interactively.
+			    		theAppLog.error( // Change warn to error to see interactively.
 			      			"TreeModelSupport.addTreeModelListener(..), maxListenersI: "+
 		      		    vectorOfTreeModelListener.size()+ NL + "  "+
 		      		    theTreeModelListener.getClass().getName() + "@" +
@@ -66,7 +68,7 @@ public abstract class TreeModelSupport
 			    		}
   	        }
         	else
-	    		appLogger.error(
+	    		theAppLog.error(
       			"TreeModelSupport.addTreeModelListener(..) rejecting duplicate listener "+
       		    NL + "  "+theTreeModelListener
             );
@@ -91,7 +93,7 @@ public abstract class TreeModelSupport
 	          	//    )
 	          	;
   	          else
-		  	      appLogger.info(
+		  	      theAppLog.info(
 		  	      		"TreeModelSupport.removeTreeModelListener(..), not registered:" + NL + "   "+
 		      		    theTreeModelListener.getClass().getName() + "@" +
 		      		    Integer.toHexString(
@@ -106,7 +108,7 @@ public abstract class TreeModelSupport
     public void logListenersV()
       // Logs the number of registered listeners.
     	{
-	      appLogger.info(
+	      theAppLog.info(
 	      		"TreeModelSupport.logListenersV(), listeners: "+
 	  		    vectorOfTreeModelListener.size()
 	  		    );

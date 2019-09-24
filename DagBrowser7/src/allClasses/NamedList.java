@@ -3,13 +3,14 @@ package allClasses;
 import java.util.Arrays;
 import java.util.Iterator;
 
-import static allClasses.Globals.appLogger;
-
 import java.util.ArrayList;
 import java.util.List;
 
 import allClasses.AppLog.LogLevel;
+
+import static allClasses.AppLog.theAppLog;
 import static allClasses.Globals.NL;
+
 
 public class NamedList 
 
@@ -249,20 +250,20 @@ public class NamedList
   	  {
   		  toReturn: {
 	  		  if (theDataTreeModel != null) {
-			  		appLogger.debug(
+			  		theAppLog.debug(
 			  				"checkForNullDataTreeModelV() theDataTreeModel != null in:" + NL
 			  				+ this);
 	  		  	break toReturn;
 	  		  	}
 	  		  
 	  		  if ( parentNamedList == null ) { 
-			  		appLogger.debug(
+			  		theAppLog.debug(
 			  				"checkForNullDataTreeModelV() parentNamedList == null in:" + NL
 			  				+ this);
 	  		  	break toReturn;
 		  		  }
 
-		  		appLogger.debug(
+		  		theAppLog.debug(
 		  				"checkForNullDataTreeModelV() "
 		  				+ "theDataTreeModel == null and  parentNamedList != null in:" + NL
 		  				+ this);

@@ -1,5 +1,7 @@
-
 package allClasses;
+
+import static allClasses.AppLog.theAppLog;
+
 
 public class Globals 
   /* This class is used for convenient access to
@@ -17,8 +19,6 @@ public class Globals
     do not change the state of the program, such as logging.
     */
   {
-    public static AppLog appLogger;
-
     public static final String NL= System.getProperty("line.separator");
     
 	  public static void logAndRethrowAsRuntimeExceptionV( 
@@ -29,7 +29,7 @@ public class Globals
         This method should never be called, except maybe during debugging.
         */
 	    {
-		    appLogger.exception( "Globals.logAndRethrowAsRuntimeExceptionV(..)"
+		    theAppLog.exception( "Globals.logAndRethrowAsRuntimeExceptionV(..)"
 		        + aString + ":" + NL + "  ", theThrowable );
 		    throw new RuntimeException( theThrowable );
 		    }

@@ -1,8 +1,10 @@
 package allClasses;
 
-import static allClasses.Globals.appLogger;
 import java.util.NavigableMap;
 import java.util.TreeMap;
+
+import static allClasses.AppLog.theAppLog;
+
 
 public class PersistingNode {
 
@@ -107,7 +109,7 @@ public class PersistingNode {
 	   */
 		{
 	    if ( keyString == null || keyString.isEmpty())
-	      appLogger.error("getOrMakePersistingNode() Missing keyString.");
+	      theAppLog.error("getOrMakePersistingNode() Missing keyString.");
 
 			PersistingNode childPersistingNode= getChildPersistingNode(keyString);
 			if (childPersistingNode == null) // No child PersistingNode exists for the key.

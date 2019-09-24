@@ -1,6 +1,6 @@
 package allClasses;
 
-import static allClasses.Globals.appLogger;
+import static allClasses.AppLog.theAppLog;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -70,7 +70,7 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
         another thread should close the receiverDatagramSocket. 
         */
       {
-        appLogger.info("run(): begins");
+        theAppLog.info("run(): begins");
         try { // Doing operations that might produce an IOException.
           while  // Receiving and queuing packets unless termination is
             ( ! EpiThread.testInterruptB() ) // requested.
@@ -97,7 +97,7 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
                 			); // Delegate by queuing to ConnectionManager.
                 }
               catch( SocketException soe ) {
-                appLogger.info("run(): interrupted by " + soe );
+                theAppLog.info("run(): interrupted by " + soe );
                 Thread.currentThread().interrupt(); // Translating 
                   // exception into request to terminate this thread.
                 }
@@ -108,7 +108,7 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
 		  					"run() IOException: ", e
 		  					);
           }
-        appLogger.info("run(): ends");
+        theAppLog.info("run(): ends");
         }
 
     } // UnconnectedReceiver

@@ -1,7 +1,5 @@
 package allClasses;
 
-import static allClasses.Globals.appLogger;
-
 import java.awt.AWTEvent;
 import java.awt.EventQueue;
 import java.lang.management.ManagementFactory;
@@ -9,6 +7,9 @@ import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.util.HashMap;
 import java.util.Map;
+
+import static allClasses.AppLog.theAppLog;
+
 
 public class TracingEventQueue extends EventQueue {
 
@@ -135,7 +136,7 @@ class TracingEventQueueMonitor extends Thread {
 						+ " has taken too much time (" + currProcessingTime
 						+ ")";
 				//System.out.println(outString);
-        appLogger.warning(outString);
+        theAppLog.warning(outString);
 			  }
 			return thresholdExceededB; 
 			}
@@ -147,7 +148,7 @@ class TracingEventQueueMonitor extends Thread {
 	    The report includes a stack trace of the AWT-EventQueue thread.
 			*/
 		{
-    	appLogger.info( "daemon run() starting." );
+    	theAppLog.info( "daemon run() starting." );
     	while (true) { // Repeat periodic tests.
 				long currTime = System.currentTimeMillis();
 				synchronized (this) {
@@ -191,24 +192,24 @@ class TracingEventQueueMonitor extends Thread {
                    Integer.MAX_VALUE);
              if (threadInfo.getThreadName().startsWith("AWT-EventQueue")) {
                 //System.out.println(
-            	  appLogger.warning(
+            	  theAppLog.warning(
                 	   threadInfo.getThreadName() + " / "
                      + threadInfo.getThreadState()
                      );
       					if ( eventDispatchingEndingB ) 
-              	  appLogger.warning("Dispatch already ended.");
+              	  theAppLog.warning("Dispatch already ended.");
               	  else
               	  { // Display stack.
-                	  appLogger.warning("Begin Stack Trace.");
+                	  theAppLog.warning("Begin Stack Trace.");
                 	  // /* ?? Disable stack trace logging.
                     StackTraceElement[] stack = threadInfo.getStackTrace();
                     for (StackTraceElement stackEntry : stack) {
                        //System.out.println(
-                    	 appLogger.warning("\t" + stackEntry.getClassName()
+                    	 theAppLog.warning("\t" + stackEntry.getClassName()
                        + "." + stackEntry.getMethodName() + " ["
                        + stackEntry.getLineNumber() + "]");
                     }
-                	  appLogger.warning("End Stack Trace.");
+                	  theAppLog.warning("End Stack Trace.");
                 	  // ?? Disable stack trace logging. */
         				  	}
              }
