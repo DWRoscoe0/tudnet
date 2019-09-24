@@ -194,7 +194,7 @@ public class TCPCopier extends EpiThread
         File tcpFolderFile= AppSettings.makeRelativeToAppFolderFile( 
             Config.tcpCopierInputFolderString );
         tcpFolderFile.mkdir();  // Create destination folder if needed.
-        Misc.updateFromToV( // Update staging area from standard folder.
+        FileOps.updateFromToV( // Update staging area from standard folder.
           AppSettings.makeRelativeToAppFolderFile(
               Config.appString + AppSettings.initiatorExtensionString),
           new File( tcpFolderFile, AppSettings.initiatorNameString)
@@ -559,14 +559,14 @@ public class TCPCopier extends EpiThread
 				FileInputStream localFileInputStream= null;
 				try { 
 						appLogger.info("sendNewerLocalFileV() sending file "
-								+ Misc.fileDataString(localFile));
+								+ FileOps.fileDataString(localFile));
 						localFileInputStream= new FileInputStream(localFile);
-						Misc.copyStreamBytesB(
+						FileOps.copyStreamBytesB(
 								localFileInputStream, socketOutputStream);
             theSocket.shutdownOutput(); // Do an output half-close, signaling EOF.
               // This signals end of file data.
             appLogger.info("sendNewerLocalFileV() output shutdown after sending file."
-                + Misc.fileDataString(localFile));
+                + FileOps.fileDataString(localFile));
             skipToEndOfFileV(theSocket);
               // This signals that remote peer has received all our sent file data.
             appLogger.info("sendNewerLocalFileV() remote peer output shutdown.");
@@ -610,20 +610,20 @@ public class TCPCopier extends EpiThread
         */
       {
         appLogger.info("receiveNewerRemoteFileB() receiving file "
-            + Misc.fileDataString(localFile));
+            + FileOps.fileDataString(localFile));
         InputStream socketInputStream= theSocket.getInputStream();
         File tmpFile= null;
         FileOutputStream tmpFileOutputStream= null;
         boolean successB= false; // Assume we will not be successful.
         toReturn: {
-          tmpFile= Misc.createTemporaryFile("TCPUpdate");
+          tmpFile= FileOps.createTemporaryFile("TCPUpdate");
           if (tmpFile == null) break toReturn;
           try { tmpFileOutputStream= new FileOutputStream( tmpFile ); 
             } catch ( FileNotFoundException e ) {
               appLogger.exception("receiveNewerRemoteFileB() open failure", e);
               break toReturn;
             }
-          if (!Misc.copyStreamBytesB( // Copy stream to file or
+          if (!FileOps.copyStreamBytesB( // Copy stream to file or
               socketInputStream, tmpFileOutputStream))
             break toReturn; // terminate if failure.
           theSocket.getOutputStream().write(0); // If this executes without IOException
@@ -642,12 +642,12 @@ public class TCPCopier extends EpiThread
             appLogger.info("receiveNewerRemoteFileB(..) wrong file length=");
             break toReturn; // Exit because received file has wrong length.
             }
-          if (!Misc.atomicRenameB(tmpFile.toPath(), localFile.toPath())) 
+          if (!FileOps.atomicRenameB(tmpFile.toPath(), localFile.toPath())) 
             break toReturn; // Exit because rename failed.
           successB= true; // Success because everything finished.
           } // toReturn:
         Closeables.closeWithErrorLoggingB(tmpFileOutputStream); ///opt done needed?
-        Misc.deleteDeleteable(tmpFile); // Delete possible temporary debris.
+        FileOps.deleteDeleteable(tmpFile); // Delete possible temporary debris.
         appLogger.info("receiveNewerRemoteFileB(..) successB="+successB);
         return successB;
         }
@@ -722,12 +722,12 @@ public class TCPCopier extends EpiThread
   	  	/// 					? "0 meaning equal"
   	  	/// 		  : "unequal: " + 
   	  	/// 			  ( ( compareResultL >= 0 ) 
-  	  	/// 					? Misc.dateString( compareResultL ) 
-  	  	/// 			    : "-" + Misc.dateString( -compareResultL )
+  	  	/// 					? FileOps.dateString( compareResultL ) 
+  	  	/// 			    : "-" + FileOps.dateString( -compareResultL )
   	  	/// 			    )
   	  	/// 	    )
-  	  	/// 	+ ", localLastModifiedL=" + Misc.dateString(localLastModifiedL)
-  	  	/// 	+ ", remoteLastModifiedL=" + Misc.dateString(remoteLastModifiedL)
+  	  	/// 	+ ", localLastModifiedL=" + FileOps.dateString(localLastModifiedL)
+  	  	/// 	+ ", remoteLastModifiedL=" + FileOps.dateString(remoteLastModifiedL)
   	  	/// 	);
   	  	/// appLogger.debug( "exchangeAndCompareFileTimeStampsRemoteToLocalL() ends.");
 				return compareResultL;

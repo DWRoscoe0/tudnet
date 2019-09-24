@@ -265,7 +265,7 @@ l    * If the app receives a message indicating
 	    {
 	  		appLogger.info( "tryDelegatingToAnotherAppInstanceB() begins."
 	  		    + NL + "  App path is: " + runningAppFile.getAbsolutePath()
-	  		    + NL + "  App time-stamp is " + Misc.dateString( runningAppFile ) );
+	  		    + NL + "  App time-stamp is " + FileOps.dateString( runningAppFile ) );
         processCommandArgsV( startCommandArgs ); // Setting app args as inputs.
         logInputsV("tryDelegatingToAnotherAppInstanceB()");
 
@@ -330,7 +330,7 @@ l    * If the app receives a message indicating
 		    then it is the time-stamp of the main class file.
  		    */
       {
-        return Misc.dateString( runningAppFile );
+        return FileOps.dateString( runningAppFile );
         }
     
     public void setAppInstanceListener(AppInstanceListener listener) 
@@ -400,8 +400,8 @@ l    * If the app receives a message indicating
            	break validation; // File not newer, so exit
           successB= true;  // Override default false result.
   	      appLogger.debug("isUpdateValidB() ======== NEWER APP FILE DETECTED ========" +  
-  	      		NL + "    otherAppFile:    " + Misc.fileDataString(otherAppFile) + 
-  	      		NL + "    standardAppFile: " + Misc.fileDataString(standardAppFile)
+  	      		NL + "    otherAppFile:    " + FileOps.fileDataString(otherAppFile) + 
+  	      		NL + "    standardAppFile: " + FileOps.fileDataString(standardAppFile)
   	      		);
 	        } // validation
 	      return successB;
@@ -669,7 +669,7 @@ l    * If the app receives a message indicating
 	    				+ NL + "The file that contains the other app is: "
 	    				+ appFile.toString()
 	    				+ NL + "It's creation time is: "
-	    				+ Misc.dateString(appFile)
+	    				+ FileOps.dateString(appFile)
 	    				+ ( informDontApproveB ? "" : NL + "Do you approve?");
 		  		EDTUtilities.runOrInvokeAndWaitV( // Run following on EDT thread. 
 			    		new Runnable() {
@@ -933,16 +933,16 @@ l    * If the app receives a message indicating
             sourceNameString= sourceFile.getName(); 
             if (endsWithJarOrExeB(sourceNameString)) break toEqualityTest;
             appLogger.error("copyExecutableFileB() Not exe or jar file."
-              +Misc.twoFilesString(sourceFile, destinationFile));
+              +FileOps.twoFilesString(sourceFile, destinationFile));
             break toExit;
           } // toEqualityTest:
             if (sourceNameString.equals(destinationFile.getName())) 
               break toCopy;
             appLogger.error("copyExecutableFileB() File extension mismatch."
-                +Misc.twoFilesString(sourceFile, destinationFile));
+                +FileOps.twoFilesString(sourceFile, destinationFile));
             break toExit;
           } // toCopy:
-            Misc.copyFileWithRetryV(sourceFile, destinationFile);
+            FileOps.copyFileWithRetryV(sourceFile, destinationFile);
             successB= true;
           } // toExit:
             appLogger.debug("copyExecutableFileB()= "+successB);
@@ -1011,13 +1011,13 @@ l    * If the app receives a message indicating
 
             logString+= NL + "  app Files: (variable-name: time-stamp, path-name)";
 	          logString+= NL + "    standardAppFile:    " 
-	          		+ Misc.fileDataString( standardAppFile );
+	          		+ FileOps.fileDataString( standardAppFile );
 	          logString+= NL + "    runningAppFile:     " 
-	          		+ Misc.fileDataString( runningAppFile );
+	          		+ FileOps.fileDataString( runningAppFile );
 	          logString+= NL + "    otherAppFile:       " 
-	          		+ Misc.fileDataString( otherAppFile );
+	          		+ FileOps.fileDataString( otherAppFile );
 	          logString+= NL + "    tcpCopierAppFile:   " 
-	          		+ Misc.fileDataString( tcpCopierAppFile );
+	          		+ FileOps.fileDataString( tcpCopierAppFile );
 	          }
 	        
 	        appLogger.info( logString );  // Log the completed String.
