@@ -141,7 +141,7 @@ public class UnicasterManager
         return theIPAndPort;
         }
 
-    private synchronized Unicaster tryingToGetUnicaster(IPAndPort theIPAndPort)
+    public synchronized Unicaster tryingToGetUnicaster(IPAndPort theIPAndPort)
       /* This method returns the Unicaster associated with the
         address in theKeyedPacket, if such a Unicaster exists.
         If it doesn't exist then it returns null.

@@ -241,7 +241,7 @@ public class ConnectionManager
 			/* This method attempts to restore Unicaster peer connections
 			  which were active immediately before the previous shutdown.
 
-        Because an app start up it triggering these events,
+        Because an app start up is triggering these events,
         the Unicaster is started in a state to cause 
         its state machine to do a reconnect and not a connect.
 
@@ -266,13 +266,27 @@ public class ConnectionManager
 								thePeersCursor.getFieldString("IP");
 						String peerPortString= 
 								thePeersCursor.getFieldString("Port");
+		        IPAndPort theIPAndPort= new IPAndPort(peerIPString, peerPortString);
 				  	/// appLogger.info( 
-  					/// 		"ConnectionManager.restartPreviousUnicastersV(), Unicastger at "
+  					/// 		"ConnectionManager.restartPreviousUnicastersV(), Unicaster at "
   					/// 	+ "IP=" + peerIPString + ", port=" + peerPortString );
-					  Unicaster theUnicaster= 
-					    theUnicasterManager.getOrBuildAndAddUnicaster(
-				    		peerIPString, peerPortString ); // Restore peer with Unicaster.
-					  theUnicasterManager.startV(theUnicaster); // Start its thread.
+		        Unicaster theUnicaster= // Testing whether Unicaster exists.  
+		            theUnicasterManager.tryingToGetUnicaster( theIPAndPort );
+		        if ( theUnicaster != null ) // This Unicaster already exists.
+		          { // Report error.
+	              theAppLog.error( 
+	                  "ConnectionManager.restartPreviousUnicastersV(), Unicaster at "
+	                  + NL + "  IP=" + peerIPString + ", port=" + peerPortString 
+	                  + " already exists!");
+		            }
+  		        else
+  		        { // Building a new Unicaster and adding it to tree.
+    					  theUnicaster= 
+    					    theUnicasterManager.getOrBuildAndAddUnicaster(
+    				    		//// peerIPString, peerPortString 
+    					      theIPAndPort); // Restore peer with Unicaster.
+    					  theUnicasterManager.startV(theUnicaster); // Start its thread.
+  		          }
 					  thePeersCursor.nextKeyString(); // Advance cursor.
 					  }
       	// appLogger.debug(
