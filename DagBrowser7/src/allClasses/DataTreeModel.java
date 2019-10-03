@@ -51,20 +51,19 @@ public class DataTreeModel
       a list of parent nodes, or maybe create 
       a dual role (node and node-list) object.
 			 
-    * Threading Restrictions:
-      Because this class will be used with JTree as part of a user interface,
-    	there are some threading restrictions:
-	    * Changes to the data managed by this model, as well as
-	    	notifications about changes to that data, 
-	    	the ones which fire TreeModelListeners,
-	      must happen in the EDT (Event Dispatch Thread).
-	      This is what is done now, using the invokeAndWaitV(..) method.
-	    * ///enh Unfortunately using the EDT each time 
-	      makes data changes inefficient.
-	      Using synchronization combined with HierarchicalUpPropagation
-	      might be sufficient to make change notification
-	      both efficient and thread-safe.
-	      This change is underway.
+    * Threading Considerations:
+      * Some methods in this class are not thread-safe
+        and must execute in the EDT (Event Dispatch Thread).
+        These methods manage data displayed by JTree and other non-tree Components, 
+        as part of the graphical user interface.
+        An example of this is the code which fires TreeModelListeners
+        to update the display with data changes.
+        Switching to the EDT is done by calling the invokeAndWait(..) method
+        and the EDT methods tend to be private ones to limit their access.
+      * Some methods in this class are synchronized, which makes them thread-safe.
+        These methods tend to be public, allowing any thread to access them.
+        They are called often and execute quickly,
+        mostly to aggregate change notifications into DataNode.theChangeFlag,
 
     ///pos Use ObjectInterning to use less memory and to run faster.
 
@@ -114,7 +113,7 @@ public class DataTreeModel
             this.theShutdowner= theShutdowner;
             }
 
-        public void initializeV( 
+        public synchronized void initializeV( 
         		DataNode theInitialDataNode 
         		)
           /* This is code that couldn't [easily] be done at injection time.
@@ -151,7 +150,7 @@ public class DataTreeModel
         other processing will be needed here.
         */
 
-      public Object getRoot() 
+      public synchronized Object getRoot() 
         /* Returns tree root.  
           This is not the Infogora root DataNode.
           It is the parent of the root.
@@ -161,7 +160,7 @@ public class DataTreeModel
           return theDataRoot.getParentOfRootDataNode();
           }
 
-      public Object getChild( Object parentObject, int childIndexI ) 
+      public synchronized Object getChild( Object parentObject, int childIndexI ) 
         /* Returns the Object which is the child of parentObject
           whose child index is childIndexI, or null if child does not exist.
 
@@ -188,7 +187,7 @@ public class DataTreeModel
       	  return childDataNode; // Returning the child.
           }
 
-      public boolean isLeaf( Object NodeObject ) 
+      public synchronized boolean isLeaf( Object NodeObject ) 
         /* Returns an indication whether NodeObject is a leaf.
           This operation is delegated to NodeObject which
           is assumed to satisfy the DataNode interface.
@@ -197,7 +196,7 @@ public class DataTreeModel
           return ((DataNode)NodeObject).isLeaf();
           }
 
-      public int getChildCount( Object parentObject ) 
+      public synchronized int getChildCount( Object parentObject ) 
         /* Returns the number of children of the parentObject.
           This operation is delegated to parentObject which
           is assumed to satisfy the DataNode interface.
@@ -206,7 +205,7 @@ public class DataTreeModel
           return ((DataNode)parentObject).getChildCount();
           }
 
-      public int getIndexOfChild( 
+      public synchronized int getIndexOfChild( 
           Object parentObject, Object childObject 
           ) 
         /* Returns the index of childObject in parentObject.
@@ -218,7 +217,7 @@ public class DataTreeModel
             getIndexOfChild( childObject ); 
           }
 
-      public void valueForPathChanged( 
+      public synchronized void valueForPathChanged( 
           TreePath theTreePath, Object newValueObject 
           )
         /* Unimplemented because Infogora doesn't edit the DAG/tree, yet
@@ -233,12 +232,12 @@ public class DataTreeModel
       
     // Getter methods which are not part of AbstractTreeModel.
 
-      public MetaRoot getMetaRoot()
+      public synchronized MetaRoot getMetaRoot()
         {
           return theMetaRoot;
           }
 
-      public JComponent getDataJComponent( TreePath inTreePath )
+      public synchronized JComponent getDataJComponent( TreePath inTreePath )
         /* Returns a JComponent which is appropriate for 
           viewing and possibly manipulating
           the current tree node specified by inTreePath.  
@@ -262,7 +261,7 @@ public class DataTreeModel
           return ResultJComponent;
           }
 
-      public String getNameString( Object theObject )
+      public synchronized String getNameString( Object theObject )
         /* Returns a String representing the name of theObject,
           or null if theObject is null.
           This operation is delegated to theObject which
@@ -277,7 +276,7 @@ public class DataTreeModel
           return resultString;
           }
 
-      public String getLastComponentNameString(TreePath inTreePath)
+      public synchronized String getLastComponentNameString(TreePath inTreePath)
         /* Returns String representation of the name of 
           the last element of inTreePath.
           */
@@ -289,7 +288,7 @@ public class DataTreeModel
           return TheNameString;
           }
 
-      public String getAbsolutePathString(TreePath inTreePath)
+      public synchronized String getAbsolutePathString(TreePath inTreePath)
         /* Returns String representation of TreePath inTreePath.  
           ?? Maybe rewrite to be recursive so that 
           java-optimized += String operation can be used,
@@ -331,7 +330,7 @@ public class DataTreeModel
           return resultString;  // Return completed resultString.
           } // GetAbsolutePathString(.)
 
-      public String getInfoString(TreePath inTreePath)
+      public synchronized String getInfoString(TreePath inTreePath)
         /* Returns a String representing information about 
           TreePath inTreePath. 
           */
@@ -344,7 +343,7 @@ public class DataTreeModel
 
     // Path and path cache manipulation methods.
 
-      public boolean cachePathInMapB( TreePath theTreePath )
+      public synchronized boolean cachePathInMapB( TreePath theTreePath )
         /* This method caches an entire path theTreePath.
           It was created to prevent a cache miss and a long node search
           if the selection at startup is a very long MetaPath path.
@@ -380,7 +379,7 @@ public class DataTreeModel
 	        return inCacheB;
       		}
 
-      public boolean cacheDescendantsInMapB( TreePath theTreePath ) ///tmp
+      private boolean cacheDescendantsInMapB( TreePath theTreePath ) ///tmp
         /* This method caches the TreePaths of
           all descendants of the node named by theTreePath.
           theTreePath should already be cached.
@@ -412,7 +411,7 @@ public class DataTreeModel
         return somethingWasCacheB;
       	}
 
-      public TreePath translatingToTreePath( DataNode targetDataNode )
+      private TreePath translatingToTreePath( DataNode targetDataNode )
 	      /* This method returns the TreePath of targetDataNode,
   	      or null if node can not be found in the DataNode tree.
   	      It tries to return a value from nodeToPathHashMap first.
@@ -484,7 +483,7 @@ public class DataTreeModel
       It is highly customized for Java, its JTree class, and its GUI.
       */
 
-      public void signalChangeV( DataNode theDataNode )
+      public synchronized void signalChangeV( DataNode theDataNode )
 	      /* This method signals the change of a single DataNode, 
 		      theDataNode.
 		      */
@@ -494,7 +493,7 @@ public class DataTreeModel
 	    	  		theDataNode );
         	}
 
-      public void signalInsertionV( 
+      public synchronized void signalInsertionV( 
           DataNode parentDataNode, 
           int indexI, 
           DataNode childDataNode 
@@ -508,7 +507,7 @@ public class DataTreeModel
       	  signalStructuralChangeInV( parentDataNode, indexI, childDataNode );
           }
 
-      public void signalRemovalV( 
+      public synchronized void signalRemovalV( 
           DataNode parentDataNode, 
           int indexI, 
           DataNode childDataNode 
@@ -597,7 +596,9 @@ public class DataTreeModel
 		    		new Runnable() {
 		    			@Override  
 		          public void run() {
-		    				displayChangedNodesFromRootV();
+		    			  synchronized(this) {
+  		    				displayChangedNodesFromRootV();
+  		    			  }
 		            }
 		          } 
 		        );
@@ -848,7 +849,7 @@ public class DataTreeModel
             return resultB;
             }
 
-        public boolean reportingStructuralChangeB( TreePath parentTreePath )
+        private boolean reportingStructuralChangeB( TreePath parentTreePath )
   	    	/* This method creates and fires a TreeModelEvent
   		      for the structural change of a subtree identified by parentTreePath.
   		      This method must be running on the EDT.
