@@ -843,7 +843,13 @@ public class DataTreeModel
 	              	new int[] {indexI}, 
 	              	new Object[] {theDataNode}
 	              	);
-	            fireTreeNodesChanged( theTreeModelEvent );  // Firing as change event.
+	            try {
+  	              fireTreeNodesChanged( theTreeModelEvent );  // Firing as change event.
+                } catch ( Exception theException  ) {
+                  theAppLog.exception( "DataTreeModel.reportingChangeB((..) to "
+                    + theDataNode + ", ignoring ", theException );
+                  break toReturn;
+                }
 	            resultB= false; // Indicate success if we got this far.
         	  	} // toReturn:
             return resultB;
