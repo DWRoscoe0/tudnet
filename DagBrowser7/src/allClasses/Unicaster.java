@@ -196,7 +196,8 @@ public class Unicaster
         		theDataTreeModel.displayTreeModelChangesV(); // Display tree after arrival.
         		if // Reconnect if we were connected.
         		  (thePeersCursor.getFieldB("wasConnected"))
-        		  processInputB( "Connect" ); // Make state machine process connect message.
+        		  connectToPeerV(); // Tell state-machine to connect.
+        		  ///// processInputB( "Connect" ); // Make state machine process connect message.
 
 	      	  runLoop(); // Do actual input processing in a loop.
 
@@ -208,9 +209,9 @@ public class Unicaster
 	      		Nulls.fastFailNullCheckT(theDataTreeModel);
 	      		theDataTreeModel.displayTreeModelChangesV(); // Display tree after removal.
           	}
-          catch( IOException e ) {
+          catch( IOException theIOException) {
           	Globals.logAndRethrowAsRuntimeExceptionV( 
-          			"run() IOException", e 
+          			"run() IOException", theIOException 
           			);
             }
         /// appLogger.info("run() ends.");
@@ -254,6 +255,18 @@ public class Unicaster
         while (doOnInputsB()) ; // Cycle state machine until nothing remains to be done.
 				}
 	  
+    public void connectToPeerV()
+      // This method tells the state-machine to connect.
+      {
+        theAppLog.info("connectToPeerV() executing.");
+        try {
+          processInputB( "Connect" ); // Make state machine process connect message.
+        } catch( IOException theIOException) {
+          Globals.logAndRethrowAsRuntimeExceptionV( 
+              "Unicaster.connectToPeerV() IOException", theIOException 
+              );
+          }
+        }
     
     private void processUnprocessedInputV() throws IOException
       /* This method is called to process any offered input that

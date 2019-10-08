@@ -234,7 +234,7 @@ public class LinkedMachineState
                     );
                 }
             else if ( tryInputB("Connect") ) { // Connect requested, at startup.
-              theAppLog.info("Connecting to previous connectee.");
+              theAppLog.info("Executing Connect request.");
               sendHelloV(this); // Send initial HELLO.
               requestAncestorSubStateV( theExponentialRetryConnectingState );
               }

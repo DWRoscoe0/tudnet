@@ -68,7 +68,7 @@ public class UnicasterManager
 		    return theUnicaster;
 		    }
 
-    public synchronized Unicaster getOrBuildAddAndReconnectUnicaster(
+    public synchronized Unicaster getOrBuildAddAndStartUnicaster(
     		NetcasterPacket theNetcasterPacket 
     		)
       /* This method returns a Unicaster associated with
@@ -82,8 +82,8 @@ public class UnicasterManager
 	    { 
     		IPAndPort theIPAndPort= makeIPAndPort(theNetcasterPacket);
         Unicaster theUnicaster= tryingToGetUnicaster( theIPAndPort );
-        if ( theUnicaster == null ) {
-          theUnicaster= buildAndAddUnicaster( theIPAndPort );
+        if ( theUnicaster == null ) { // No Unicaster, so build and start it.
+          theUnicaster= buildAndAddUnicaster( theIPAndPort );///
           startV(theUnicaster); // Start the Unicaster thread.
           }
 		    return theUnicaster;

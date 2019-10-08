@@ -518,7 +518,7 @@ public class ConnectionManager
         multicasterEpiThread.startV();
         }
 
-    private boolean processingMulticasterSockPacketsB() 
+    private boolean processingMulticasterSockPacketsB()
       /* This method processes packets received by 
         the Multicaster Thread and forwarded here,
         by adding the nodes that sent them to the known connections.
@@ -535,10 +535,15 @@ public class ConnectionManager
             multicasterToConnectionManagerNetcasterQueue.poll();
           if (theNetcasterPacket == null) break;  // Exit if no more packets.
           // /*  ///rev disabled for testing.
-  				theUnicasterManager.getOrBuildAddAndReconnectUnicaster( 
+  				Unicaster theUnicaster= theUnicasterManager.getOrBuildAddAndStartUnicaster( 
 	      		theNetcasterPacket 
 	      		);
           // */  ///rev
+  				if (! theUnicaster.isConnectedB()) { // Become connected if not already.
+  	        theAppLog.info(
+  	            "processingMulticasterSockPacketsB() connecting to peer.");
+  				  theUnicaster.connectToPeerV();
+  				  }
 
           packetsProcessedB= true;
           }
@@ -575,7 +580,7 @@ public class ConnectionManager
         //  + theKeyedPacket.getSocketAddressesString()
         //  );
     		Unicaster theUnicaster=  // Getting the appropriate Unicaster.
-    				theUnicasterManager.getOrBuildAddAndReconnectUnicaster( 
+    				theUnicasterManager.getOrBuildAddAndStartUnicaster( 
 		      		theNetcasterPacket 
 		      		);
 	      theUnicaster.puttingKeyedPacketV( // Giving to it its first packet.  

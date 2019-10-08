@@ -119,7 +119,8 @@ public class Multicaster
 	  private IPAndPort theIPAndPort;
 	  private final NetcasterQueue // Receive output.
 	    multicasterToConnectionManagerNetcasterQueue;  // SockPackets for ConnectionManager to note.
-  	private UnicasterManager theUnicasterManager;
+
+  	//// private UnicasterManager theUnicasterManager;
   	private final NetcasterPacketManager multicastReceiverNetcasterPacketManager;
 
 	  public InetAddress groupInetAddress; /* Multicast group IPAddress.   
@@ -156,7 +157,7 @@ public class Multicaster
 	  		IPAndPort theIPAndPort,
 	  		MulticastSocket theMulticastSocket,
 	      NetcasterQueue multicasterToConnectionManagerNetcasterQueue,
-		  	UnicasterManager theUnicasterManager,
+		  	//// UnicasterManager theUnicasterManager,
 		  	NetcasterPacketManager multicastReceiverNetcasterPacketManager,
 	      NamedLong retransmitDelayMsNamedLong
 		  	)
@@ -181,7 +182,7 @@ public class Multicaster
 	  		this.theMulticastSocket= theMulticastSocket;
 	  	  this.theIPAndPort= theIPAndPort;
 	      this.multicasterToConnectionManagerNetcasterQueue= multicasterToConnectionManagerNetcasterQueue;
-		  	this.theUnicasterManager= theUnicasterManager;
+		  	//// this.theUnicasterManager= theUnicasterManager;
 		  	this.multicastReceiverNetcasterPacketManager=
 		  			multicastReceiverNetcasterPacketManager;
 	      }
@@ -384,6 +385,7 @@ public class Multicaster
     		LockAndSignal.Input theInput;  // Type of input that ends waits.
         processorLoop: while (true) { // Processing messages until exit request.
         	{ // Processing messages or exiting.
+            theAppLog.debug("receivingPacketsV() processorLoop begins.");
         	  long baseTimeMsL= System.currentTimeMillis();
           	theInput=  // Awaiting next input.
           	  waitingForSubnotificationOrIntervalOrInterruptE(
@@ -412,12 +414,9 @@ public class Multicaster
                       break messageDecoder; 
                       }
 		          		// Ignoring anything else.
-			            //appLogger.warning( "receivingPacketsV(): unexpected: "
-			        		//  + getAndConsumeOneMessageString() + inString + " from "
-			        		//  + PacketStuff.gettingPacketAddressString( 
-			        		//	theNetcasterInputStream.getSockPacket().getDatagramPacket()
-			        		//	) );
-	            		} 
+			           theAppLog.debug( "receivingPacketsV(): unexpected: "
+			        		  + inString);
+	            		}
 	            	break inputDecoder;
 	            default: // Handling anything else as an error.
 		            theAppLog.error( 
@@ -425,19 +424,27 @@ public class Multicaster
 		            		);
 		            break inputDecoder;
 	            } // inputDecoder: 
-          	  /// appLogger.debug("receivingPacketsV() exiting inputDecoder.");
+          	  theAppLog.debug("receivingPacketsV() exiting inputDecoder.");
             } // Processing packets until exit.
         	} // processorLoop:  // Processing packet or exiting.
-      	  /// appLogger.debug("receivingPacketsV() exiting processorLoop.");
+        theAppLog.debug("receivingPacketsV() processorLoop has ended.");
         }
 
-    private void processingPossibleNewUnicasterV( ) throws IOException
+    private void processingPossibleNewUnicasterV() throws IOException
       /* This method passes the present packet of theNetcasterInputStream
-       to the ConnectionManager if there isn't already a Unicaster
+       to the ConnectionManager.
+       
+       //// said also: if there isn't already a Unicaster
        associated with the packet's remote address.
        */
 	    {
-	      NetcasterPacket theNetcasterPacket= // Copying packet from queue.
+        NetcasterPacket theNetcasterPacket= // Copying packet from this InputStream.
+            theEpiInputStreamI.getKeyedPacketE();
+        multicasterToConnectionManagerNetcasterQueue.put( // Passing to CM.
+            theNetcasterPacket
+            );
+        /*  ////
+	      NetcasterPacket theNetcasterPacket= // Copying packet from this InputStream.
 	      		theEpiInputStreamI.getKeyedPacketE();
 	      Unicaster theUnicaster= // Testing for associated an Unicaster.
 	      		theUnicasterManager.tryingToGetUnicaster( theNetcasterPacket );
@@ -451,6 +458,7 @@ public class Multicaster
 			    		theNetcasterPacket
 			        );
        	    }
+        */  ////
 	      }
 
 	  public void initializeWithIOExceptionV()
