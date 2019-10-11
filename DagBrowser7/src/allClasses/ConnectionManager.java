@@ -283,7 +283,6 @@ public class ConnectionManager
   		        { // Building a new Unicaster and adding it to tree.
     					  theUnicaster= 
     					    theUnicasterManager.getOrBuildAndAddUnicaster(
-    				    		//// peerIPString, peerPortString 
     					      theIPAndPort); // Restore peer with Unicaster.
     					  theUnicasterManager.startV(theUnicaster); // Start its thread.
   		          }
@@ -583,7 +582,12 @@ public class ConnectionManager
     				theUnicasterManager.getOrBuildAddAndStartUnicaster( 
 		      		theNetcasterPacket 
 		      		);
-	      theUnicaster.puttingKeyedPacketV( // Giving to it its first packet.  
+        if (! theUnicaster.isConnectedB()) { // Become connected if not already.
+          theAppLog.info(
+              "passToUnicasterV() connecting to peer.");
+          theUnicaster.connectToPeerV();
+          }
+	      theUnicaster.puttingKeyedPacketV( // Giving to it its first? packet.  
 	      		theNetcasterPacket
 	      		);
         }

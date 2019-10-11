@@ -1,7 +1,5 @@
 package allClasses;
 
-import static allClasses.AppLog.theAppLog;
-
 
 public class NamedLong
   extends NamedLeaf
@@ -28,17 +26,6 @@ public class NamedLong
     public synchronized long getValueL( )
       {
         return theL;
-        }
-
-    public long addDeltaAndLogNonzeroL( long deltaL )
-	    /* This method does the same as addDeltaL(deltaL) but
-	      also logs as a warning any deltaL which not 0.
-	      This is for NamedIntegers which are not supposed to change.
-	      */
-      {
-    	  if (deltaL != 0) // Logging deltaL if it's not 0.
-		  		theAppLog.debug( this.getNameString( )+" changed by "+deltaL );
-	  	  return addDeltaL( deltaL ); // Doing the add.
         }
 
     public long addDeltaL( long deltaL )

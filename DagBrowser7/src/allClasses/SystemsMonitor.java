@@ -5,6 +5,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import static allClasses.AppLog.theAppLog;
 import static allClasses.AppLog.LogLevel.*;
 
+import static allClasses.Globals.NL;
+
 
 public class SystemsMonitor 
 
@@ -334,12 +336,12 @@ public class SystemsMonitor
 				    		measurementTimeMsL, periodMsL
 				    		);
   			if (shiftInTimeMsL > 0) { // Processing skipped time, if any.
-	  			skippedTimeMsNamedLong.addDeltaAndLogNonzeroL( shiftInTimeMsL ); // Record it.
+  			  addDeltaAndLogNonzeroL(skippedTimeMsNamedLong, shiftInTimeMsL ); // Record it.
 	  			toConnectionManagerNotifyingQueueOfStrings.put( // Passing to CM for Unicasters.
               "Skipped-Time");
           }
 	  		if (shiftInTimeMsL < 0) // Processing reversed time, if any.
-	  			reversedTimeMsNamedLong.addDeltaAndLogNonzeroL( -shiftInTimeMsL );
+	  		  addDeltaAndLogNonzeroL(reversedTimeMsNamedLong, shiftInTimeMsL );
 	  		measurementTimeMsL+= // Adjusting base time for discontinuity, if any.
 	  				shiftInTimeMsL; 
 
@@ -352,5 +354,22 @@ public class SystemsMonitor
   					); // Waiting for next measurement time.
   			measurementTimeMsL+= periodMsL; // Incrementing variable to match it.
         }
+
+    public long addDeltaAndLogNonzeroL( NamedLong theNamedLong, long deltaL )
+    /* This method does the same as addDeltaL(deltaL) but
+      also logs as a warning any deltaL which not 0.
+      This is for NamedLongs which are not supposed to change.
+      */
+    {
+      if (deltaL != 0) // Logging deltaL if it's not 0.
+        {
+          long timeNowL= System.currentTimeMillis();
+          theAppLog.debug( theNamedLong.getNameString( ) + " changed by " + deltaL
+                + NL + "  time-now  : " + Misc.dateString(timeNowL) 
+                + NL + "  time-then : " + Misc.dateString(timeNowL - deltaL) 
+                );
+          }
+      return theNamedLong.addDeltaL( deltaL ); // Doing the add.
+      }
 
     } // class SystemsMonitor
