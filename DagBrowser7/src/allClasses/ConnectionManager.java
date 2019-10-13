@@ -469,7 +469,10 @@ public class ConnectionManager
 	    { 
     	  if // Preparing socket and dependencies if socket not working.
     	    ( EpiDatagramSocket.isNullOrClosedB( theMulticastSocket ) )
-	    	  preparingAll: { // Preparing socket and dependencies. 
+	    	  preparingAll: { // Building or rebuilding socket and dependencies. 
+            theAppLog.debug(
+                "maintainingMulticastSocketAndDependentThreadsV() "
+                + "building or rebuilding.");
             stoppingMulticasterThreadV();
     	    	preparingSocketLoop: while (true) {
               if ( EpiThread.testInterruptB() )
@@ -477,13 +480,20 @@ public class ConnectionManager
     	  	  	prepareMulcicastSocketV();
     	  	  	if ( ! EpiDatagramSocket.isNullOrClosedB( theMulticastSocket ) )
     	  	  		break preparingSocketLoop;
+    	        EpiThread.interruptibleSleepB(  // Don't hog CPU in error loop.
+    	            Config.errorRetryPause1000MsL
+    	            );
+              theAppLog.debug(
+                  "maintainingMulticastSocketAndDependentThreadsV() loopng.");
     	  	  	} // preparingSocketLoop:
             startingMulticasterThreadV();
 	    	  	} // preparingAll: 
 	    	}
 
 	  private void prepareMulcicastSocketV()
-    // Makes one attempt to create theMulticastSocket.
+    /* Makes one attempt to create theMulticastSocket.
+      If there an error then it closes the socket.
+      */
 	  {
 	    try { // Creating a new unconnected DatagramSocket and using it.
 	    	theMulticastSocket= theAppGUIFactory.makeMulticastSocket(
@@ -494,9 +504,6 @@ public class ConnectionManager
 	      theAppLog.error("theMulticastSocket:"+e);
 	      if ( theMulticastSocket != null )
 	      	theMulticastSocket.close();
-	      EpiThread.interruptibleSleepB(  // Don't hog CPU in error loop.
-	      		Config.errorRetryPause1000MsL
-	      		);
 	      }
 	    finally {
 	      }
@@ -509,6 +516,8 @@ public class ConnectionManager
 		      ,multicasterToConnectionManagerNetcasterQueue // ...receive queue,...
 		      ,multicastInetAddress
 		      );
+        theAppLog.debug(
+            "startingMulticasterThreadV() adding theMulticaster and starting thread.");
     		addAtEndB( theMulticaster );  // Add to DataNode List.
         multicasterEpiThread= AppGUIFactory.makeEpiThread( 
             theMulticaster,
