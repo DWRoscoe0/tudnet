@@ -5,6 +5,7 @@ import java.awt.KeyboardFocusManager;
 import java.text.SimpleDateFormat;
 
 import static allClasses.AppLog.theAppLog;
+import static allClasses.Globals.NL;
 
 
 public class Misc
@@ -106,7 +107,7 @@ public class Misc
   		  /* This is a logging wrapper for requestFocusInWindow(),
   		    added mainly for debugging.  It logs when
   		    Component.requestFocusInWindow() returns false,
-  		    unless the focus owner null before Component.requestFocusInWindow()
+  		    unless the focus owner is null before Component.requestFocusInWindow()
   		    is called, which in this case a false is returned,
   		    even though the call probably will succeed.
   		    */
@@ -120,19 +121,17 @@ public class Misc
 		  				&& focusedComponent!=null // and there was a focus owner.
 		  				)
 		    		{ // Reporting failure and possible causes.
-							theAppLog.info(
-									"DagBrowserPanel.requestFocusV() of "+Misc.componentInfoString(
-											theComponent
-											) 
-					    		+" focus-owner="+Misc.componentInfoString(focusedComponent)
-									+ " requestFocusInWindow()=" + successB
+							theAppLog.warning(
+									"Misc.requestFocusV() of "+Misc.componentInfoString(theComponent) 
+					    		+ NL + "  previous focus-owner="+Misc.componentInfoString(focusedComponent)
+									+ " requestFocusInWindow() successB=" + successB
 									);
 		    			while ( theComponent != null ) {
-		      			theAppLog.warning(
-		      					"  "+Misc.componentInfoString(theComponent)
-		    		    		+" visible="+theComponent.isVisible() 
+		      			theAppLog.debug(
+		    		    		" ancestor: visible="+theComponent.isVisible() 
 		    		    		+" focusable="+theComponent.isFocusable() 
 		    		    		+" enabled="+theComponent.isEnabled()
+                    +" "+Misc.componentInfoString(theComponent)
 		      					);
 		      			theComponent= theComponent.getParent();
 		    				}
