@@ -346,7 +346,6 @@ public class EpiInputStream<
         */
       {
         //appLogger.info( "NetcasterInputStream.mark(..), "+markIndexI+" "+packetIndexI);
-        //// markIndexI= packetIndexI; // Recording present buffer byte index.
         markIndexI= getPositionI(); // Recording present buffer byte index.
         markedB= true; // Recording that stream is marked.
         }
@@ -357,7 +356,6 @@ public class EpiInputStream<
         //appLogger.info( "NetcasterInputStream.reset(..), "+markIndexI+" "+packetIndexI);
         if ( markedB ) // Un-marking if marked
           {
-            //// packetIndexI= markIndexI; // Restoring buffer byte index.
             setPositionV(markIndexI); // Restoring buffer byte index.
             markIndexI= -1; // Restoring undefined value.
             markedB= false; // Recording that stream is unmarked.

@@ -120,7 +120,6 @@ public class Multicaster
 	  private final NetcasterQueue // Receive output.
 	    multicasterToConnectionManagerNetcasterQueue;  // SockPackets for ConnectionManager to note.
 
-  	//// private UnicasterManager theUnicasterManager;
   	private final NetcasterPacketManager multicastReceiverNetcasterPacketManager;
 
 	  public InetAddress groupInetAddress; /* Multicast group IPAddress.   
@@ -157,7 +156,6 @@ public class Multicaster
 	  		IPAndPort theIPAndPort,
 	  		MulticastSocket theMulticastSocket,
 	      NetcasterQueue multicasterToConnectionManagerNetcasterQueue,
-		  	//// UnicasterManager theUnicasterManager,
 		  	NetcasterPacketManager multicastReceiverNetcasterPacketManager,
 	      NamedLong initialRetryTimeOutMsNamedLong
 		  	)
@@ -182,7 +180,6 @@ public class Multicaster
 	  		this.theMulticastSocket= theMulticastSocket;
 	  	  this.theIPAndPort= theIPAndPort;
 	      this.multicasterToConnectionManagerNetcasterQueue= multicasterToConnectionManagerNetcasterQueue;
-		  	//// this.theUnicasterManager= theUnicasterManager;
 		  	this.multicastReceiverNetcasterPacketManager=
 		  			multicastReceiverNetcasterPacketManager;
 	      }
@@ -433,9 +430,6 @@ public class Multicaster
     private void processingPossibleNewUnicasterV() throws IOException
       /* This method passes the present packet of theNetcasterInputStream
        to the ConnectionManager.
-       
-       //// said also: if there isn't already a Unicaster
-       associated with the packet's remote address.
        */
 	    {
         NetcasterPacket theNetcasterPacket= // Copying packet from this InputStream.
@@ -443,22 +437,6 @@ public class Multicaster
         multicasterToConnectionManagerNetcasterQueue.put( // Passing to CM.
             theNetcasterPacket
             );
-        /*  ////
-	      NetcasterPacket theNetcasterPacket= // Copying packet from this InputStream.
-	      		theEpiInputStreamI.getKeyedPacketE();
-	      Unicaster theUnicaster= // Testing for associated an Unicaster.
-	      		theUnicasterManager.tryingToGetUnicaster( theNetcasterPacket );
-	      if ( theUnicaster == null ) // Processing if Unicaster does not exists.
-	       	{ // Informing ConnectionManager.
-       			//appLogger.debug(
-	       		//	"Multicaster.processingPossibleNewUnicasterV():" + NL + "  queuing: "
-		       	//	+PacketStuff.gettingPacketString(theKeyedPacket.getDatagramPacket())
-	       		//);
-	      		multicasterToConnectionManagerNetcasterQueue.put( // Passing to CM.
-			    		theNetcasterPacket
-			        );
-       	    }
-        */  ////
 	      }
 
 	  public void initializeWithIOExceptionV()

@@ -197,7 +197,6 @@ public class Unicaster
         		if // Reconnect if we were connected.
         		  (thePeersCursor.getFieldB("wasConnected"))
         		  connectToPeerV(); // Tell state-machine to connect.
-        		  ///// processInputB( "Connect" ); // Make state machine process connect message.
 
 	      	  runLoop(); // Do actual input processing in a loop.
 

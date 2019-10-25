@@ -44,7 +44,7 @@ public class Config
 
 	  
 	  public static final long maxTimeOutMsL= 10000;
-		public static final long measurementPauseMsL= 10000;  //// 60000; 
+		public static final long measurementPauseMsL= 10000;  // 60000; 
 		public static final long fileCopyRetryPause1000MsL= 1000;
 		public static final long errorRetryPause1000MsL= 1000;
 		public static final long activityBlinkerPeriod1000MsL= 1000;

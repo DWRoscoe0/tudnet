@@ -270,12 +270,10 @@ public class LinkedMachineState
               requestAncestorSubStateV( // Success.  Request connected state.
                   theConnectedState );
             else if // Try handling time-out?
-              //// (testAndLogIfTrueB(theTimerInput.testInputArrivedB(),
-              ////     "exponential HELLO retry time-out,")) 
               (theTimerInput.testInputArrivedB())
               {
                 theAppLog.debug( "exponential time-out of "
-                    + theTimerInput.getLastDelayMsL() + " ms after HELLO in"
+                  + theTimerInput.getLastDelayMsL() + " ms after HELLO in"
                   + getFormattedStatePathString() );
                 boolean limitReachedB= // Reschedule time-out with exponential back-off
                     (theTimerInput.rescheduleB(
@@ -287,7 +285,6 @@ public class LinkedMachineState
                   { // End exponential backup by switching to another state.
                     theAppLog.info(
                         "Time-out limit reached in"+getFormattedStatePathString());
-                    //// sendHelloV(this); // Initial HELLO for next state.
                     requestAncestorSubStateV( // Switch to different type of retrying.
                         theSlowPeriodicRetryConnectingState);
                     }
@@ -328,7 +325,6 @@ public class LinkedMachineState
                 sendHelloV(this);
                 theTimerInput.scheduleV( // Restart timer.
                     Config.slowPeriodicRetryTimeOutMsL);
-                //// requestAncestorSubStateV( this ); // Continue by requesting this state. 
                 }
             }
   
@@ -390,7 +386,6 @@ public class LinkedMachineState
 		  	    for faster connecting after app restart.
 		  	    */
 		  	  {
-	    	    //// appLogger.debug( "Entering"+ getFormattedStatePathString() );
 	    	    theAppLog.debug( "Connecting" );
             super.onEntryV();
 	    			IPAndPort remoteIPAndPort= theUnicaster.getKeyK();
