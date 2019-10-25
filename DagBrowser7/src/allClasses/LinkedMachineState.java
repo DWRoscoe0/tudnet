@@ -270,9 +270,13 @@ public class LinkedMachineState
               requestAncestorSubStateV( // Success.  Request connected state.
                   theConnectedState );
             else if // Try handling time-out?
-              (testAndLogIfTrueB(theTimerInput.testInputArrivedB(),
-                  "exponential HELLO retry time-out,")) 
+              //// (testAndLogIfTrueB(theTimerInput.testInputArrivedB(),
+              ////     "exponential HELLO retry time-out,")) 
+              (theTimerInput.testInputArrivedB())
               {
+                theAppLog.debug( "exponential time-out of "
+                    + theTimerInput.getLastDelayMsL() + " ms after HELLO in"
+                  + getFormattedStatePathString() );
                 boolean limitReachedB= // Reschedule time-out with exponential back-off
                     (theTimerInput.rescheduleB(
                         Config.maxTimeOutMsL)); // up to this limit.

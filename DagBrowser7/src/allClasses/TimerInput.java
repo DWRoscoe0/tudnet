@@ -125,6 +125,13 @@ public class TimerInput
 	  	  scheduleV(theDelayMsL); // Schedule using result.
 	  	  return resultB;
 	    	}
+
+    public synchronized long getLastDelayMsL()
+      /* Returns the last delay set in this timer. 
+       */
+      {
+        return lastDelayUsedMsL;
+        }
 	
 	  public synchronized void cancelingV()
 	    /* Cancels future generation of a timer input.

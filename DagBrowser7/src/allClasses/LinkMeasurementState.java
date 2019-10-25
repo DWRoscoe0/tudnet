@@ -190,8 +190,7 @@ public class LinkMeasurementState
                   int sequenceNumberI= theNetcasterInputStream.readANumberI();
                   theNetcasterInputStream.readANumberI();
                   theAppLog.debug( "MeasurementHandshakingState "
-                    + "tryProcessingOldPacketAcknowledgementB() ignoring old PA "
-                    + sequenceNumberI);
+                    + "ignoring timed-out PA of PS " + sequenceNumberI);
                   }
                 }
               catch ( BadReceivedDataException theBadReceivedDataException ) {
@@ -402,8 +401,9 @@ public class LinkMeasurementState
 				      		//// (measurementTimerInput.getInputArrivedB()) // Time-out happened? 
 					    		{ // Process time-out.
 		                theAppLog.info("MeasurementHandshakingState "
-		                    + "exponential PA receive time-out for PS "
-		                    + lastSequenceNumberSentL);
+		                    + "exponential time-out of " 
+		                    + exponentialRetryTimeOutMsL + " ms for "
+		                    + "PA of PS " + lastSequenceNumberSentL);
 								    if ( exponentialRetryTimeOutMsL <= Config.maxTimeOutMsL )
 				    				  { exponentialRetryTimeOutMsL*=2;  // Doubling time-out limit.
   			                measurementTimerInput.scheduleV(exponentialRetryTimeOutMsL);
