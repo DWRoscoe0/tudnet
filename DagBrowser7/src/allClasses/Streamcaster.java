@@ -52,7 +52,7 @@ public class Streamcaster<
 	  protected final O theEpiOutputStreamO;
 		protected final I theEpiInputStreamI;
     protected final Shutdowner theShutdowner;
-    protected NamedLong retransmitDelayMsNamedLong;
+    protected NamedLong initialRetryTimeOutMsNamedLong;
     protected DefaultBooleanLike leadingDefaultBooleanLike;
 
     // Detail-containing child sub-objects.  None.
@@ -67,7 +67,7 @@ public class Streamcaster<
 	  		LockAndSignal theLockAndSignal,
 	      I theEpiInputStreamI,
 	      O theEpiOutputStreamO,
-	      NamedLong retransmitDelayMsNamedLong
+	      NamedLong initialRetryTimeOutMsNamedLong
 	  		)
 	    {
 	  		// Superclass's injections.
@@ -81,7 +81,7 @@ public class Streamcaster<
 	      this.theEpiOutputStreamO= theEpiOutputStreamO;
         this.theShutdowner= theShutdowner;
         this.leadingDefaultBooleanLike= leadingDefaultBooleanLike;
-        this.retransmitDelayMsNamedLong= retransmitDelayMsNamedLong;
+        this.initialRetryTimeOutMsNamedLong= initialRetryTimeOutMsNamedLong;
 	    	}
 
     public void initializeV()
@@ -121,7 +121,7 @@ public class Streamcaster<
         LockAndSignal.Input theInput;  // Type of input that ends waits.
         int maxTriesI= 5;
         int triesI= 1;
-        long retransmitDelayMsL= retransmitDelayMsNamedLong.getValueL();
+        long retransmitDelayMsL= initialRetryTimeOutMsNamedLong.getValueL();
         pingReplyLoop: while (true) { // Sending PING and receiving REPLY.
           if  // Checking and exiting if maximum attempts have been done.
             ( triesI > maxTriesI )  // Maximum attempts exceeded.

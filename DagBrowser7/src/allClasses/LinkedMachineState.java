@@ -29,7 +29,7 @@ public class LinkedMachineState
 	  // Injected dependencies.
 		private NetcasterInputStream theNetcasterInputStream;
 		private NetcasterOutputStream theNetcasterOutputStream; 
-		private NamedLong retransmitDelayMsNamedLong;
+		private NamedLong initialRetryTimeOutMsNamedLong;
 		private TCPCopier theTCPCopier;
 		private Timer theTimer; ///opt.  use function parameter only. 
 		private Unicaster theUnicaster;
@@ -56,7 +56,7 @@ public class LinkedMachineState
 					Timer theTimer, 
 				  NetcasterInputStream theNetcasterInputStream,
 					NetcasterOutputStream theNetcasterOutputStream,
-					NamedLong retransmitDelayMsNamedLong,
+					NamedLong initialRetryTimeOutMsNamedLong,
 					TCPCopier theTCPCopier,
 					Unicaster theUnicaster,
 					Persistent thePersistent, 
@@ -71,7 +71,7 @@ public class LinkedMachineState
 			  this.theTimer= theTimer;
 			  this.theNetcasterInputStream= theNetcasterInputStream;
 			  this.theNetcasterOutputStream= theNetcasterOutputStream;
-			  this.retransmitDelayMsNamedLong= retransmitDelayMsNamedLong;
+			  this.initialRetryTimeOutMsNamedLong= initialRetryTimeOutMsNamedLong;
 				this.theTCPCopier= theTCPCopier;
 				this.theUnicaster= theUnicaster;
 				this.thePersistent= thePersistent; 
@@ -141,7 +141,7 @@ public class LinkedMachineState
 		  { 
   	    super.onEntryV();
 			  retryTimeOutMsL=   // Initializing retry time-out.
-			  		retransmitDelayMsNamedLong.getValueL();
+			  		initialRetryTimeOutMsNamedLong.getValueL();
 				}
 
 	  public boolean onInputsB() throws IOException 

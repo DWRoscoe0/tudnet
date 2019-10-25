@@ -33,7 +33,7 @@ public class Netcaster
         Shutdowner theShutdowner,
 	      IPAndPort  remoteIPAndPort, 
 	      String nameString,
-	      NamedLong retransmitDelayMsNamedLong,
+	      NamedLong initialRetryTimeOutMsNamedLong,
         DefaultBooleanLike leadingDefaultBooleanLike
 	      )
 	    {
@@ -46,7 +46,7 @@ public class Netcaster
 			      netcasterLockAndSignal,
 			      theNetcasterInputStream,
 			      theNetcasterOutputStream,
-			      retransmitDelayMsNamedLong
+			      initialRetryTimeOutMsNamedLong
 			      );
 	      }
 

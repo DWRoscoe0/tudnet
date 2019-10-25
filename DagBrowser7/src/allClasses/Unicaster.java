@@ -85,7 +85,7 @@ public class Unicaster
 	  		Timer theTimer,
 	  		Persistent thePersistent,
 	  		PeersCursor thePeersCursor,
-	  		NamedLong retransmitDelayMsNamedLong,
+	  		NamedLong initialRetryTimeOutMsNamedLong,
 	  		DefaultBooleanLike leadingDefaultBooleanLike,
 	  		NotifyingQueue<String> unicasterNotifyingQueueOfStrings
 	  		)
@@ -106,7 +106,7 @@ public class Unicaster
 	          theShutdowner,
 		        remoteIPAndPort,
 	      		"Unicaster", 
-	          retransmitDelayMsNamedLong, 
+	          initialRetryTimeOutMsNamedLong, 
 	          leadingDefaultBooleanLike
 	          );
 	
@@ -139,7 +139,7 @@ public class Unicaster
   		    				theTimer, 
   		    				theEpiInputStreamI,
   			  				theEpiOutputStreamO,
-  			  				retransmitDelayMsNamedLong 
+  			  				initialRetryTimeOutMsNamedLong 
   			      		);
     			theLinkMeasurementState.initializeWithIOExceptionStateList();
 
@@ -148,7 +148,7 @@ public class Unicaster
 		  				theTimer, 
 		  			  theEpiInputStreamI,
 		  				theEpiOutputStreamO,
-		  				retransmitDelayMsNamedLong,
+		  				initialRetryTimeOutMsNamedLong,
 		  				theTCPCopier,
 		  				this,
 		  				thePersistent,

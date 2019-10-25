@@ -42,7 +42,7 @@ public class Subcaster
 	      String keyString,
 	      Shutdowner theShutdowner,
         DefaultBooleanLike leadingDefaultBooleanLike,
-        NamedLong retransmitDelayMsNamedLong
+        NamedLong initialRetryTimeOutMsNamedLong
 	      )
 	    {
 	      super( // Superclass's constructor injections.
@@ -53,7 +53,7 @@ public class Subcaster
 	      	  streamcasterLockAndSignal,
 	      	  theSubcasterInputStream,
 			      theSubcasterOutputStream,
-			      retransmitDelayMsNamedLong
+			      initialRetryTimeOutMsNamedLong
 		        );
 
 	      // This class's injections.

@@ -20,7 +20,7 @@ public class UnicasterFactory {
 	// Other objects that will be needed later.
 	private final UnicasterValue unicasterUnicasterValue; 
 	private final SubcasterQueue subcasterToUnicasterSubcasterQueue;
-	private final NamedLong retransmitDelayMsNamedLong;
+	private final NamedLong initialRetryTimeOutMsNamedLong;
 
 	
   public UnicasterFactory(   // Factory constructor. 
@@ -61,9 +61,9 @@ public class UnicasterFactory {
 		  SubcasterManager theSubcasterManager= new SubcasterManager( 
 		  		theAppGUIFactory, this, leadingDefaultBooleanLike 
 		  		);
-      NamedLong retransmitDelayMsNamedLong= new NamedLong( 
-					"Retransmit-Delay (ms)",
-					Config.initialRoundTripTime100MsL * 2
+      NamedLong initialRetryTimeOutMsNamedLong= new NamedLong( 
+					"Initial-Retry-Time-Out (ms)",
+					Config.initialRoundTripTime100MsL * 2 // Unicaster will overwrite this.
 					);
       PeersCursor thePeersCursor=
           PeersCursor.makeOnFirstEntryPeersCursor(thePersistent).
@@ -81,7 +81,7 @@ public class UnicasterFactory {
 			   	theTimer,
 			   	thePersistent,
 			   	thePeersCursor,
-		      retransmitDelayMsNamedLong,
+		      initialRetryTimeOutMsNamedLong,
 		      leadingDefaultBooleanLike,
 		      unicasterInputQueueOfStrings
 			  	);
@@ -98,7 +98,7 @@ public class UnicasterFactory {
 
 	  	// Save in instance variables other objects that are needed later.
       this.unicasterUnicasterValue= unicasterUnicasterValue;
-      this.retransmitDelayMsNamedLong= retransmitDelayMsNamedLong;
+      this.initialRetryTimeOutMsNamedLong= initialRetryTimeOutMsNamedLong;
       }
 
   // Unconditional singleton getters.
@@ -139,7 +139,7 @@ public class UnicasterFactory {
   	      keyString,
   	      theShutdowner,
   	      leadingDefaultBooleanLike,
-  	      retransmitDelayMsNamedLong 
+  	      initialRetryTimeOutMsNamedLong 
   	  		);
 	    SubcasterValue unicasterSubcasterValue=  
   				new SubcasterValue( keyString, unicasterSubcaster );

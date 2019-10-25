@@ -159,7 +159,7 @@ public class Multicaster
 	      NetcasterQueue multicasterToConnectionManagerNetcasterQueue,
 		  	//// UnicasterManager theUnicasterManager,
 		  	NetcasterPacketManager multicastReceiverNetcasterPacketManager,
-	      NamedLong retransmitDelayMsNamedLong
+	      NamedLong initialRetryTimeOutMsNamedLong
 		  	)
 	    /* Constructs a Multicaster object and prepares it for
 	      UDP multicast communications duties.  
@@ -174,7 +174,7 @@ public class Multicaster
 	          theShutdowner,
 	  	  		theIPAndPort,
 		        "Multicaster",
-			      retransmitDelayMsNamedLong,
+			      initialRetryTimeOutMsNamedLong,
 			      new DefaultBooleanLike(false)
 	      		);
 

@@ -26,7 +26,7 @@ public class LinkMeasurementState
 	  // Injected dependencies.
 		private NetcasterInputStream theNetcasterInputStream;
 		private NetcasterOutputStream theNetcasterOutputStream; 
-		private NamedLong retransmitDelayMsNamedLong;
+		private NamedLong initialRetryTimeOutMsNamedLong;
 		private Timer theTimer; 
 		
 		// Sub-state machine instances.
@@ -38,14 +38,14 @@ public class LinkMeasurementState
 				Timer theTimer, 
 			  NetcasterInputStream theNetcasterInputStream,
 				NetcasterOutputStream theNetcasterOutputStream,
-				NamedLong retransmitDelayMsNamedLong
+				NamedLong initialRetryTimeOutMsNamedLong
 				)
 			throws IOException
 	  	{
   	  	// Injected dependencies.
 			  this.theNetcasterInputStream= theNetcasterInputStream;
 			  this.theNetcasterOutputStream= theNetcasterOutputStream;
-			  this.retransmitDelayMsNamedLong= retransmitDelayMsNamedLong;
+			  this.initialRetryTimeOutMsNamedLong= initialRetryTimeOutMsNamedLong;
 			  this.theTimer= theTimer;
 			  }
 			
@@ -75,7 +75,7 @@ public class LinkMeasurementState
 	  	  addAtEndB( measurementHandshakesNamedLong= new NamedLong(
 	      		"Measurement-Handshakes", 0 ) );
 
-	  		addAtEndB( retransmitDelayMsNamedLong );
+	  		addAtEndB( initialRetryTimeOutMsNamedLong );
 
         // Adding the new round trip time trackers.
 	      addAtEndB( smoothedRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
@@ -346,7 +346,7 @@ public class LinkMeasurementState
 					  public void onInputsToReturnFalseV() throws IOException
 					  	{
 		    			  //// exponentialRetryTimeOutMsL=   // Initializing retry time-out.
-		    			  ////   		retransmitDelayMsNamedLong.getValueL();
+		    			  ////   		initialRetryTimeOutMsNamedLong.getValueL();
 	
 					  		requestAncestorSubStateV(theMeasurementHandshakingState);
 				  	  	}
@@ -368,7 +368,7 @@ public class LinkMeasurementState
 			    	  // Initiates the handshake and starts acknowledgement timer.
 				  	  { 
                 exponentialRetryTimeOutMsL=   // Initializing retry time-out.
-                    retransmitDelayMsNamedLong.getValueL();
+                    initialRetryTimeOutMsNamedLong.getValueL();
                 //// appLogger.debug( 
                  ////     "MeasurementHandshakingState.onEntryV() exponentialRetryTimeOutMsL="
                  ////     +exponentialRetryTimeOutMsL);
@@ -527,8 +527,8 @@ public class LinkMeasurementState
 					  		}
 				  		}
 				
-				  	retransmitDelayMsNamedLong.setValueL(
-								(smoothedMaxRoundTripTimeNsAsMsNamedLong.getValueL()/1000000) * 2
+				  	initialRetryTimeOutMsNamedLong.setValueL(
+								(smoothedRoundTripTimeNsAsMsNamedLong.getValueL()/1000000) * 2
 								); // Use double present maximum round-trip-time as initial time-out.
 						}
 		
