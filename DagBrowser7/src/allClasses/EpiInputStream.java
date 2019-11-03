@@ -155,22 +155,59 @@ public class EpiInputStream<
 				then it logs this as an error and returns an empty string.
   		 */
 			{
-				String readString= "";
-				while (true) { // Reading and accumulating all bytes in string.
-					if ( available() <= 0 ) // debug.
-						{
-							readString+="!NO-DATA-AVAILABLE!";
-		          theAppLog.error( "readAString(): returning " + readString );
-							break;
-	  					}
-					int byteI= read();
-					if ( delimiterChar == byteI ) break; // Exiting if terminator seen.
-					readString+= (char)byteI;
-					}
-				return readString;
+  				String accumulatorString= "";
+  				int byteI;
+  			toReturn: { toNoData: {
+          while (true) { // Skipping YAML lead-in characters.
+            if ( available() <= 0 ) break toNoData;
+            byteI= read();
+            if ( ! isLeadDelimiterB(byteI) ) break; // Exiting if non-lead-in seen.
+            // Ignore lead-in character.
+            }
+          while (true) { // Reading and accumulating string bytes until terminator.
+            if ( isDelimiterB(byteI) ) break toReturn; // Exiting if terminator seen.
+            accumulatorString+= (char)byteI; // Append string byte.
+            if ( available() <= 0 ) break toNoData;
+            byteI= read();
+            }
+        } // toNoData: Being here means end of packet reached.
+          accumulatorString+="!NO-DATA-AVAILABLE!";
+          theAppLog.error( "readAString(): returning " + accumulatorString );
+        } // toReturn:
+          return accumulatorString;
 				}
-		
-		public int available() throws IOException 
+    
+		public boolean isLeadDelimiterB(int byteI)
+      /* This method tests byteI for YAML lead-in delimiters.
+        */
+      {
+        boolean delimiterB= true;
+        process: {
+          if ( delimiterChar==byteI ) break process;
+          if ( '['==byteI ) break process;
+          if ( '{'==byteI ) break process; 
+          delimiterB= false;
+          } // process:
+        return delimiterB;
+        }
+
+		public boolean isDelimiterB(int byteI)
+      /* This method tests byteI for either the original delimiterChar (!)
+        or several YAML delimiters.
+        */
+      {
+        boolean delimiterB= true;
+        process: {
+          if ( delimiterChar==byteI ) break process;
+          if ( ','==byteI ) break process; // separator.
+          if ( ']'==byteI ) break process; // terminator.
+          if ( '}'==byteI ) break process; // terminator.
+          delimiterB= false;
+          } // process:
+        return delimiterB;
+        }
+    
+    public int available() throws IOException 
 	    /* This method tests whether there are any bytes available for reading.
 	      If there are bytes in the byte buffer it returns the number of bytes.
 	      If not then it tries to load the byte buffer from 
