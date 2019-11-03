@@ -387,7 +387,7 @@ public class LinkMeasurementState
 			      ///dbg appLogger.info( 
 				    ///dbg 		"sendingSequenceNumberV() " + lastSequenceNumberSentL
 				    ///dbg 	);
-			      theNetcasterOutputStream.writingTerminatedStringV( "PS" );
+			      theNetcasterOutputStream.writingDelimitedStringV( "PS" );
 			      theNetcasterOutputStream.writingTerminatedLongV( 
 			      		lastSequenceNumberSentL 
 			      		);
@@ -550,7 +550,7 @@ public class LinkMeasurementState
 									newIncomingPacketsSentDefaultLongLike,
 									newIncomingPacketsReceivedNamedLong
 							  );
-							theNetcasterOutputStream.writingTerminatedStringV( "PA" );
+							theNetcasterOutputStream.writingDelimitedStringV( "PA" );
 							theNetcasterOutputStream.writingTerminatedLongV(
 				  				sequenceNumberI // The remote sequence number.
 				  				);

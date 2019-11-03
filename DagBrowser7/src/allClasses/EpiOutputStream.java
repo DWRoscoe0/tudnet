@@ -63,7 +63,8 @@ public class EpiOutputStream<
 		  // it is constructed with a value of 0.
 			// It becomes 1 after the packet containing that data is queued.
 		private Timer theTimer; // For delayedBlockFlushV( long delayMsL ).
-		private char delimiterChar;
+		@SuppressWarnings("unused") ////
+    private char delimiterChar;
 		
   	private TimerTask theTimerTask= null;
   	private long sendTimeMsL;
@@ -100,7 +101,7 @@ public class EpiOutputStream<
         to the stream in a packet.
         */
       {
-    		writingTerminatedStringV( theString );
+    		writingDelimitedStringV( theString );
     		sendingPacketV();
         }
 
@@ -111,17 +112,26 @@ public class EpiOutputStream<
         but it doesn't force a flush().
         */
       { 
-    		writingTerminatedStringV( theL + "" ); // Converting to String.
+    		writingDelimitedStringV( theL + "" ); // Converting to String.
         }
 
-    public void writingTerminatedStringV( String theString ) 
+    private boolean YAMLActiveB= false;
+    
+    public void writingDelimitedStringV( String theString ) 
     		throws IOException
       /* This method writes theString followed by the delimiterC.
         But it doesn't force a flush().
         */
       { 
-	    	writingStringV( theString );
-	    	writingStringV( String.valueOf(delimiterChar) );
+        if (! YAMLActiveB) // If no YAML written yet
+          {
+            writingStringV( "[" ); // write YAML sequence introducer
+            YAMLActiveB= true; // and record that YAML is now active.
+            }
+          else
+          writingStringV( "," ); // write YAML sequence element separator.
+        writingStringV( theString ); // Write the sequence element, a simple scalar.
+	    	//// writingStringV( String.valueOf(delimiterChar) );
         }
 
     public void writingStringV( String theString ) throws IOException
@@ -165,7 +175,12 @@ public class EpiOutputStream<
 		    It is equivalent to a doOrScheduleSendB( 0 ), with no delay.
 		    */
 	    { 
-	  		doOrScheduleSendB( 0 );
+        if (YAMLActiveB) // If YAML sequence has been started
+          {
+            writingStringV( "]" ); // write YAML sequence terminator
+            YAMLActiveB= false; // and record that YAML is no longer active.
+            }
+        doOrScheduleSendB( 0 );
 	  		}
 
     public synchronized boolean doOrScheduleSendB( long delayMsL )

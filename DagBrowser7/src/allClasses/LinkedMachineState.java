@@ -132,7 +132,7 @@ public class LinkedMachineState
         The receiver should silently ignore this message and its argument.
         */
       {
-        theNetcasterOutputStream.writingTerminatedStringV( "DEBUG" );
+        theNetcasterOutputStream.writingDelimitedStringV( "DEBUG" );
         theNetcasterOutputStream.writingTerminatedLongV(debugMessageCountL);
         debugMessageCountL++;
         }
@@ -456,7 +456,7 @@ public class LinkedMachineState
       /* This method sends 3 GOODBYEs, each in a separate packet.  */
       {
         for (int i=0; i<3; i++) { // Send 3 GOODBYE packets.
-          theNetcasterOutputStream.writingTerminatedStringV( "GOODBYE" );
+          theNetcasterOutputStream.writingDelimitedStringV( "GOODBYE" );
           theNetcasterOutputStream.sendingPacketV(); // Forcing send.
           }
         }
@@ -521,11 +521,11 @@ public class LinkedMachineState
   	    */
 	  	{
     	  sendDebugCountV();
-    	  theNetcasterOutputStream.writingTerminatedStringV( "HELLO" );
-		    theNetcasterOutputStream.writingTerminatedStringV( 
+    	  theNetcasterOutputStream.writingDelimitedStringV( "HELLO" );
+		    theNetcasterOutputStream.writingDelimitedStringV( 
 						theUnicaster.getKeyK().getInetAddress().getHostAddress() 
 						);  // Writing IP address of remote peer.
-		    theNetcasterOutputStream.writingTerminatedStringV( 
+		    theNetcasterOutputStream.writingDelimitedStringV( 
 						thePersistent.getDefaultingToBlankString("PeerIdentity")); 
 		    theNetcasterOutputStream.sendingPacketV(); // Forcing send.
 	  		}
