@@ -3,6 +3,7 @@ package allClasses;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.DatagramPacket;
+import java.util.ArrayList;
 
 import static allClasses.AppLog.theAppLog;
 
@@ -112,7 +113,7 @@ public class EpiInputStream<
     	  return gotStringB;
       	}
 
-    protected String tryingToGetString( ) throws IOException
+    protected String tryingToGetString() throws IOException
     /* This method tries to get any String.
       It returns a String if there is one available, null otherwise.
       */
@@ -146,28 +147,29 @@ public class EpiInputStream<
 			  return numberI;
 				}
 
-		protected String readAString() throws IOException
-  		/* This method reads and returns one String ending in the first
-  		  delimiterC from stream, 
-  		  but the String returned does not include the delimiter.
-  		  This method does not block.
-				If a complete string, including delimiter, is not available,
-				then it logs this as an error and returns an empty string.
-  		 */
-			{
-  				String accumulatorString= "";
-  				int byteI;
-  			toReturn: { toNoData: {
-          while (true) { // Skipping YAML lead-in characters.
-            if ( available() <= 0 ) break toNoData;
-            byteI= read();
-            if ( ! isLeadDelimiterB(byteI) ) break; // Exiting if non-lead-in seen.
+    protected String readAString() throws IOException
+      /* This method is a kludge.
+        It reads and returns one String from either the old style strings-terminated-by-!, 
+        or the next scalar string from a flow-style YAML sequence.
+        The String returned does not include any delimiters.
+        This method does not block.
+        If a complete string, including terminating delimiter, is not available,
+        then it logs this as an error and returns an empty string.
+       */
+      {
+          String accumulatorString= "";
+          int byteI;
+        toReturn: { toNoData: {
+          while (true) { // Skipping possible YAML lead-in characters.
+            byteI= tryBufferByteI();
+            if ( ! isLeadDelimiterB(byteI) ) break; // Exiting if not lead-in byte.
             // Ignore lead-in character.
             }
           while (true) { // Reading and accumulating string bytes until terminator.
             if ( isDelimiterB(byteI) ) break toReturn; // Exiting if terminator seen.
             accumulatorString+= (char)byteI; // Append string byte.
-            if ( available() <= 0 ) break toNoData;
+            //// if ( available() <= 0 ) break toNoData;
+            if ( bufferByteCountI() <= 0 ) break toNoData;
             byteI= read();
             }
         } // toNoData: Being here means end of packet reached.
@@ -175,7 +177,139 @@ public class EpiInputStream<
           theAppLog.error( "readAString(): returning " + accumulatorString );
         } // toReturn:
           return accumulatorString;
-				}
+        }
+
+    
+    // Parsers of YAML-like language.
+
+    protected ArrayList<String> trySequenceListOfStrings() throws IOException
+      /* This method tries to get a sequence of String scalars.
+        If it succeeds it returns a list of sequence elements 
+        and the input stream position is after all consumed characters. 
+        If it fails it returns null 
+        and the input stream position is unchanged.
+       */
+      {
+          ArrayList<String> resultListOfStrings= null;
+          int inputStreamPositionI= getPositionI(); // Save current position.
+        toReturn: { badSequence: {
+          if (! getByteB('[')) break badSequence; // Fail if bad beginning character.
+          resultListOfStrings= getSequenceElementStrings(); // Always succeeds. 
+          if (! getByteB(']')) break badSequence; // Fail if bad ending character.
+          break toReturn; // Got everything we need, so succeed.
+        } // badSequence: // Coming here means we failed.
+          setPositionV(inputStreamPositionI); // Restore original position.
+          resultListOfStrings= null; // Set to null to indicate failure.
+        } // toReturn:
+          return resultListOfStrings;
+        }
+
+    protected ArrayList<String> getSequenceElementStrings() throws IOException
+      /* This method returns a List of 0 or more elements of 
+        a sequence of String scalars.  It always succeeds.
+        The stream is advanced past all characters that were processed,
+        which might be none if there are no elements.
+        */
+      {
+          ArrayList<String> resultListOfStrings= new ArrayList<String>();
+        toReturn: { 
+          String scalarString= tryScalarString(); // Try getting a first element.
+          if (scalarString == null) break toReturn;
+          while (true) { // Accumulating scalars until sequence ends.
+            resultListOfStrings.add(scalarString); // Append gotten acceptable scalar.
+            int positionI= getPositionI();
+            if (! tryByteB(',')) break toReturn; // No comma, so no more elements. 
+            scalarString= tryScalarString(); // Try getting next element.
+            if (scalarString == null) { // If no element
+              setPositionV(positionI); // restore stream to before unneeded error comma
+              break toReturn; // and exit.
+              }
+            }
+        } // toReturn:
+          return resultListOfStrings;
+        }
+
+    private String tryScalarString() throws IOException
+      /* This method tries to parse a YAML subset scalar string.
+        If successful then it returns the String and the stream is moved past the string,
+        but whatever terminated the string remains to be read.
+        The stream is moved past the last string character, but no further.
+        If not successful then it returns null and the stream position is unchanged.
+        */
+      {
+        int byteI;
+        String accumulatorString= ""; // Clear character accumulator.
+        readLoop: { while (true) {
+            int positionI= getPositionI();
+            toAppendAcceptedChar: {
+              byteI= read();
+              if ( Character.isLetterOrDigit(byteI)) break toAppendAcceptedChar;
+              if ( '-'==byteI ) break toAppendAcceptedChar;
+              setPositionV(positionI); // Restore stream to before rejected character.
+              ///opt Alternative way to reject final character only, outside of loop:
+              //   setPositionV(getPositionI()-1);
+              break readLoop; // Go try to return what's accumulated so far.
+              } // toAppendAcceptedChar:
+            accumulatorString+= (char)byteI; // Append accepted byte to accumulator.
+            }
+          } // readLoop: 
+        if (accumulatorString.length() == 0) // Reject 0-length strings.
+          accumulatorString= null;
+        return accumulatorString; 
+        }
+
+    private String remainingBufferString() throws IOException
+      /* This method returns all available stream bytes in the packet stream buffer.
+        */
+      {
+        int byteI;
+        String accumulatorString= ""; // Clear character accumulator.
+        while (true) {
+            if (bufferByteCountI() <= 0) break;
+            byteI= read();
+            accumulatorString+= (char)byteI;
+            }
+        return " Remaining bytes:"+accumulatorString; 
+        }
+
+    private boolean tryByteB(int desiredByteI) throws IOException
+      /* Tries to read desiredByteI from the stream.
+        This is like getByteB(..) except that the stream position
+        is not changed if desiredByteI is not read from the stream.
+        */
+      {
+        int positionI= getPositionI(); // Save stream position.
+        boolean successB= getByteB(desiredByteI); // Read and check byte.
+        if ( ! successB )
+          setPositionV(positionI); // Restore stream position if failure.
+        return successB;
+        }
+
+    private boolean getByteB(int desiredByteI) throws IOException
+      /* Reads a byte from the input stream and compares it to desiredByteI.
+        If they are equal it returns true, otherwise false.
+        Failure can happen when either the byte read is not the desired byte or
+        if there is no byte available.
+        */
+      {
+        int byteI= tryBufferByteI();
+        boolean successB= // Check byte.   
+            (byteI == desiredByteI); // Fails if -1 or incorrect byte.
+        return successB;
+        }
+
+    private int tryBufferByteI() throws IOException
+      /* Returns the next stream byte if available in the packet buffer, -1 otherwise. 
+        It will not attempt to load the next packet.
+        */
+      {
+        int byteI= bufferByteCountI();
+        if ( byteI > 0 ) // If byte available 
+          byteI= read(); // read the byte
+          else
+          byteI= -1; // otherwise return -1.
+        return byteI;
+        }
     
 		public boolean isLeadDelimiterB(int byteI)
       /* This method tests byteI for YAML lead-in delimiters.
@@ -185,7 +319,7 @@ public class EpiInputStream<
         process: {
           if ( delimiterChar==byteI ) break process;
           if ( '['==byteI ) break process;
-          if ( '{'==byteI ) break process; 
+          //// if ( '{'==byteI ) break process; 
           delimiterB= false;
           } // process:
         return delimiterB;
@@ -217,26 +351,14 @@ public class EpiInputStream<
 	
 	      This method may be used for asynchronous stream input, however
 	      it should not be used to detect packet boundaries in the input,
-	      because delays, such as single-stepping during debugging,
-	      could make this unreliable.
-	     */
+	      For that, use bufferByteCountI().
+	      it returns the number of bytes remaining in the packet buffer.  
+       */
 	    {
 	  		int availableI;
 	  	  while (true) {
-	    	  availableI= packetSizeI - packetIndexI; // Calculating bytes in buffer.
-	    	  /* 
-	    		if (AppLog.testingForPingB)
-	  	  		appLogger.debug(
-	  	  				"available() "+
-	  	  				availableI+" "+packetSizeI+" "+packetIndexI+" "+
-	  	  			  ( bufferBytes == null
-	  	  			    ? ""
-	  	  			    : new String(
-	  	  			    		bufferBytes, packetIndexI, packetSizeI-packetIndexI
-	  	  			    		)
-	  	  			    )
-	  	  				);
-	  	  	*/
+	    	  //// availableI= packetSizeI - packetIndexI; // Calculating bytes in buffer.
+	  	    availableI= bufferByteCountI();
 	    	  if ( availableI > 0) break; // Exiting if any bytes in buffer.
 	    	  if  // Exiting with 0 if no packet in queue to load.
 	    	    ( receiverToStreamcasterNotifyingQueueQ.peek() == null ) 
@@ -246,6 +368,19 @@ public class EpiInputStream<
 		    return availableI;
 		    }
 	
+    protected int bufferByteCountI()
+      /* Returns the number of bytes in the packet buffer.  
+       This should be used instead of the method available() when
+       packet boundaries are significant, 
+       which with unreliable UDP is most of the time.
+       Unlike the method available(),
+       this method will not load the buffer with the next packet
+       if the end of buffer is reached.
+       */
+      { 
+        return packetSizeI - packetIndexI;
+        }
+    
 	  public int read() throws IOException
 	    /* Reads one byte, reading to read one or more packets 
 	      from the input queue if needed, blocking to wait for a packet if needed.
@@ -259,7 +394,8 @@ public class EpiInputStream<
 			  return value;
 			  }
 	  
-	  public boolean tryReadB(byte[] bufferBytes, int offsetI, int lengthI)
+	  @SuppressWarnings("unused") ////
+    private boolean tryReadB(byte[] bufferBytes, int offsetI, int lengthI)
 	  		throws IOException
 	    /* This method tries to read lengthI bytes into buffer bufferBytes
 	  	  starting at offset offsetI.
@@ -410,7 +546,9 @@ public class EpiInputStream<
         }
   
     public void setPositionV(int oldPositionI) throws IOException 
-      // Restores the stream to the state previously gotten by getPositionI().
+      /* Restores the stream to the state previously gotten by getPositionI().
+        It is more general than the not nest-able reset() method.
+        */ 
       {
         packetIndexI= oldPositionI; // Restoring buffer byte index.
         }
