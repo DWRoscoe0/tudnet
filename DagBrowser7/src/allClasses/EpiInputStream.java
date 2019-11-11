@@ -160,6 +160,10 @@ public class EpiInputStream<
           String accumulatorString= "";
           int byteI;
         toReturn: { toNoData: {
+          accumulatorString= tryViaYAMLSequenceString(); // Try string from sequence.
+          if (accumulatorString != null) break toReturn; // Exiting if gotten.
+          theAppLog.debug( "readAString(): trying old !-delimited parsing.");
+          accumulatorString= ""; // Set accumulator to empty string.
           while (true) { // Skipping possible YAML lead-in characters.
             byteI= tryBufferByteI();
             if ( ! isLeadDelimiterB(byteI) ) break; // Exiting if not lead-in byte.
@@ -179,6 +183,32 @@ public class EpiInputStream<
           return accumulatorString;
         }
 
+    private ArrayList<String> packetListOfStrings= null;
+    private int packetListIndexI= 0;
+
+    private String tryViaYAMLSequenceString() throws IOException
+      /* This method tries to get a String by parsing and caching YAMLSequences,
+        then extracting Strings from them.
+        If it succeeds it returns the next String.
+        If it fails it returns null.
+        */
+      { 
+        String elementString= null;
+        while (true) { // Keep trying until no more sequence elements to return.
+          if (packetListOfStrings == null) { // Handle missing sequence if needed.
+            packetListOfStrings= trySequenceListOfStrings(); // Try parsing sequence.
+            if (packetListOfStrings == null) break; // No sequence, so exit with fail.
+            packetListIndexI= 0; // Reset index for scanning sequence elements.
+            }
+          if (packetListIndexI < packetListOfStrings.size()) { 
+            elementString= packetListOfStrings.get(packetListIndexI); 
+            packetListIndexI++;
+            break;  // Exit with success.
+            }
+          packetListOfStrings= null; // Reset to try for another sequence.
+          } // while
+        return elementString;
+        }
     
     // Parsers of YAML-like language.
 
@@ -245,6 +275,7 @@ public class EpiInputStream<
               byteI= read();
               if ( Character.isLetterOrDigit(byteI)) break toAppendAcceptedChar;
               if ( '-'==byteI ) break toAppendAcceptedChar;
+              if ( '.'==byteI ) break toAppendAcceptedChar;
               setPositionV(positionI); // Restore stream to before rejected character.
               ///opt Alternative way to reject final character only, outside of loop:
               //   setPositionV(getPositionI()-1);
@@ -539,7 +570,14 @@ public class EpiInputStream<
       /* Gets the position in the stream buffer 
         so that it might be restored later with the setPositionV(int) method later.  
         This allows undoing nested reads of the stream.
-        It is more general than the not nest-able mark(int) method. 
+        It is more general than the not nest-able mark(int) method.
+        
+        ///enh This method could be replaced by getStreamState(StreamState),
+          and setPositionV(int0 could be similarly replaced,
+          to make stream state saving more general, at least temporarily,
+          while strings are being gotten from YAML-like sequences.
+          StreamState would store additional information, such as
+          list of sequence elements and an index to the next one.
         */
       {
         return packetIndexI; // Recording present buffer byte index.
