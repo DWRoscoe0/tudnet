@@ -132,8 +132,8 @@ public class LinkedMachineState
         The receiver should silently ignore this message and its argument.
         */
       {
-        theNetcasterOutputStream.writingDelimitedStringV( "DEBUG" );
-        theNetcasterOutputStream.writingTerminatedLongV(debugMessageCountL);
+        theNetcasterOutputStream.writeInBlockV( "DEBUG" );
+        theNetcasterOutputStream.writeInBlockV(debugMessageCountL);
         debugMessageCountL++;
         }
 
@@ -456,8 +456,8 @@ public class LinkedMachineState
       /* This method sends 3 GOODBYEs, each in a separate packet.  */
       {
         for (int i=0; i<3; i++) { // Send 3 GOODBYE packets.
-          theNetcasterOutputStream.writingDelimitedStringV( "GOODBYE" );
-          theNetcasterOutputStream.sendingPacketV(); // Forcing send.
+          theNetcasterOutputStream.writeInBlockV( "GOODBYE" );
+          theNetcasterOutputStream.endBlockAndSendPacketV(); // Forcing send.
           }
         }
 
@@ -521,13 +521,13 @@ public class LinkedMachineState
   	    */
 	  	{
     	  sendDebugCountV();
-    	  theNetcasterOutputStream.writingDelimitedStringV( "HELLO" );
-		    theNetcasterOutputStream.writingDelimitedStringV( 
+    	  theNetcasterOutputStream.writeInBlockV( "HELLO" );
+		    theNetcasterOutputStream.writeInBlockV( 
 						theUnicaster.getKeyK().getInetAddress().getHostAddress() 
 						);  // Writing IP address of remote peer.
-		    theNetcasterOutputStream.writingDelimitedStringV( 
+		    theNetcasterOutputStream.writeInBlockV( 
 						thePersistent.getDefaultingToBlankString("PeerIdentity")); 
-		    theNetcasterOutputStream.sendingPacketV(); // Forcing send.
+		    theNetcasterOutputStream.endBlockAndSendPacketV(); // Forcing send.
 	  		}
 
 		} // class LinkedMachineState

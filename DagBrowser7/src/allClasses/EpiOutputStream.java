@@ -1,5 +1,7 @@
 package allClasses;
 
+import static allClasses.AppLog.theAppLog;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Timer;
@@ -14,12 +16,22 @@ public class EpiOutputStream<
 
 	extends OutputStream
 
-  /* This class is a network output stream which 
-    generates UDP packets from a stream of data, mostly bytes.
-    If used by a Unicaster then the packets are queued for sending.
-    If used by a Subcaster then the packets are queued for multiplexing
-    before sending. 
+  /* This class is a network output stream which generates UDP packets 
+    from a stream bytes and other dataand markers.
 
+    Note, because DDP is an unreliable protocol,
+    care should be taken with regard to data which spans packet boundaries.
+    Data should not span packet boundaries.  No block should be longer than a packet.
+    A packet may contain multiple blocks if they fit,
+    but if a given block will not fit in the remaining space,
+    the stream should be flushed, and that block should be carried by the next packet. 
+    
+    Packets produced by this class aren't necessarily sent directly to a network.
+    If used by a Unicaster then they are.
+    If used by a Subcaster then they are queued for multiplexing to other OutputSteams.
+
+    ///fix Synchronize methods to make thread-safe because of use of TimerTask.
+      
     ///? Note, this class contains code which was added to manage
       indivisible blocks of bytes for output and delayed stream flushing,
       but this code has not been tested and probably contains bugs!
@@ -33,7 +45,7 @@ public class EpiOutputStream<
 	    The remaining bytes will be copied to the front of the buffer
 	    and become the beginning of the next packet. 
 	
-	    ///enh delayedFlush(long delayMsL).
+	    ///enh delayedFlush(long latestMsL).
 	    Add this variation of flush() which takes a time limitMsL,
 	    which is the maximum number of milliseconds before
 	    an actual physical flush() happens.  
@@ -62,17 +74,21 @@ public class EpiOutputStream<
 		  // The value is 0 during read of 1st packet data, assuming
 		  // it is constructed with a value of 0.
 			// It becomes 1 after the packet containing that data is queued.
-		private Timer theTimer; // For delayedBlockFlushV( long delayMsL ).
-		@SuppressWarnings("unused") ////
+		private Timer theTimer;
+		@SuppressWarnings("unused") ///opt
     private char delimiterChar;
 		
   	private TimerTask theTimerTask= null;
-  	private long sendTimeMsL;
+  	private long nextPacketSendTimeMsL; // Time at which next packet send will happen.
 
-		private int bufferSizeI= 0; // 0 forces initial flush() to allocate buffer.
-		private byte[] bufferBytes= null;
+  	// Stream state.
+		private byte[] bufferBytes= new byte[0]; // Initial 0-length throw-away buffer.
+    private int bufferSizeI= 0; // Cached buffer size. 
+    // 0 forces initial flush() to allocate buffer.
 		private int indexI= 0; // 0 prevents sending packet during initial flush().
 		private int sendableI= 0; // End of data when packet is sent.
+    private boolean writingBlockB= false; // true when some but not all bytes
+      // of a data node have been written.
 
 		EpiOutputStream(  // Constructor.
 				Q notifyingQueueQ,
@@ -95,142 +111,167 @@ public class EpiOutputStream<
 		  { return packetManagerM; }
 
 
-    protected void writingAndSendingV( String theString ) throws IOException
-      /* This method writes theString to the stream
-        and then sends it and anything else that has been written 
-        to the stream in a packet.
+    protected void writeAndSendInBlockV( String theString ) throws IOException
+      /* This method writes theString to the stream and then 
+        finishes its data block and sends to the stream in a packet 
+        that block and any blocks that has been written previously .
         */
       {
-    		writingDelimitedStringV( theString );
-    		sendingPacketV();
+    		writeInBlockV( theString );
+    		endBlockAndSendPacketV();
         }
 
-    protected void writingTerminatedLongV( long theL ) 
-    		throws IOException
+    protected void writeInBlockV( long theL ) throws IOException
       /* This method writes theL long int 
         followed by the delimiterC to the stream,  
         but it doesn't force a flush().
         */
       { 
-    		writingDelimitedStringV( theL + "" ); // Converting to String.
+    		writeInBlockV( theL + "" ); // Converting to String.
         }
 
-    private boolean YAMLActiveB= false;
-    
-    public void writingDelimitedStringV( String theString ) 
-    		throws IOException
-      /* This method writes theString followed by the delimiterC.
-        But it doesn't force a flush().
+    public void writeInBlockV( String theString ) 
+        throws IOException
+      /* This method writes to the buffer, theString, 
+        preceded by the appropriate block delimiters.
         */
       { 
-        if (! YAMLActiveB) // If no YAML written yet
+        beginOrContinueBlockV();
+        writeV( theString );
+        }
+    
+    public void beginOrContinueBlockV() throws IOException
+      /* This method writes to the buffer the appropriate block delimiters
+        in preparation for writing a string.
+        */
+      { 
+        if (! writingBlockB) // If no partial block has been written yet,
           {
-            writingStringV( "[" ); // write YAML sequence introducer
-            YAMLActiveB= true; // and record that YAML is now active.
+            writeV( "[" ); // write block sequence introducer
+            writingBlockB= true; // and record that the block is now underway.
             }
           else
-          writingStringV( "," ); // write YAML sequence element separator.
-        writingStringV( theString ); // Write the sequence element, a simple scalar.
-	    	//// writingStringV( String.valueOf(delimiterChar) );
+          writeV( "," ); // write block sequence element separator.
         }
 
-    public void writingStringV( String theString ) throws IOException
-      // This method writes theString but it doesn't force a flush().
+    public void endBlockAndSendPacketV() throws IOException
+      /* This method writes any bytes needed to finish the present data node, 
+        if any, then it schedules the packet for immediate sending.
+        */
+      { 
+        endBlockV();
+        sendNowV();
+        }
+
+    public void endBlockV() throws IOException
+      /* This method writes any bytes needed to finish the present block, if any.
+        At that point the packet may be sent, or additional bytes may be written.
+        */
+      { 
+        if (writingBlockB) // If block has been started
+          {
+            writeV( "]" ); // write block terminator
+            writingBlockB= false; // and record that block is no longer active.
+            }
+        sendableI= indexI; // Make all bytes written to buffer be send-able bytes.
+        }
+
+    public void writeV( String theString ) throws IOException
+      /* This method writes theString to the stream buffer.
+        */
       {
-    		byte[] buf = theString.getBytes(); // Getting byte buffer from String
-        write(buf); // Writing it to stream memory.
+    		byte[] buf = theString.getBytes(); // Getting byte buffer from String.
+        write(buf); // Writing it to stream buffer.
         }
 
 		public void write(int value) throws IOException
-		  // This writes one byte to the stream.
-		  ///? Because this is UDP, it should never flush here.  Make Exception?
+		  /* This writes one byte to the stream.
+		    This means writing to the buffer if it is not full.
+		    If the buffer is full then any send-able bytes 
+		    will be written first to make room.
+		   */
 			{
-				if (indexI >= bufferSizeI) // Flushing buffer if no more room there. 
-				  	flush();
-				bufferBytes[indexI]=  // Storing byte in buffer.
-						(byte) (value & 0x0ff);
+				if (indexI >= bufferSizeI) // I there is no more room in buffer 
+	        queueSendableBytesV(); // make room by sending all send-able block bytes.
+				bufferBytes[indexI]= (byte) (value & 0x0ff); // Storing byte in buffer.
 				indexI++; // Advancing buffer index.
 				}
 
-	  public void writeV( E theKeyedPacketE )
+	  @SuppressWarnings("unused")
+    private void writeV( E theKeyedPacketE )
 		  throws IOException
 	    /* This method writes a packet theKeyedPacketE to the stream.
 	      First it queues a packet containing any bytes in the present buffer.
 	      Then it queues theKeyedPacketE.
 	      */
 	    {
-	  		queuingBufferDataV(); // Queuing packet with buffer data if any.
+	  		queueSendableBytesV(); // Queuing packet with buffer data if any.  ///? needed?
 	  	  queuingForSendV( theKeyedPacketE ); // Queuing new data argument packet.
 	    	}
 
-	  public void flush() throws IOException // Synonym for compatibility. 
-	    { sendingPacketV(); } 
-		  
-	  public void sendingPacketV() throws IOException 
-	    /* This outputs any bytes written to the buffer so far, if any,
-		    and prepares another buffer to receive more bytes.
-		    It can be called internally when the buffer becomes full,
-		    or externally when written bytes need to be sent and
-		    thereby create a new packet boundary.
-		    It is equivalent to a doOrScheduleSendB( 0 ), with no delay.
-		    */
+	  public void flush() throws IOException
+	    /* This method attaches the buffer to a UDP packet and sends the packet.
+	      Because UDP is unreliable, this method should be called only when
+	      the buffer contains one or more complete self-contained blocks of data.
+	      It should not be called because an attempt is made to write to a full buffer
+	      unless blocks are actually bytes.
+	      */
 	    { 
-        if (YAMLActiveB) // If YAML sequence has been started
-          {
-            writingStringV( "]" ); // write YAML sequence terminator
-            YAMLActiveB= false; // and record that YAML is no longer active.
-            }
-        doOrScheduleSendB( 0 );
-	  		}
+        sendableI= indexI; // Make all bytes written to buffer be send-able bytes.
+	      sendNowV();
+	      } 
 
-    public synchronized boolean doOrScheduleSendB( long delayMsL )
-    /* This method either queues a packet for sending 
-      containing sendable bytes(), or schedules the send for later.
-      In either case the packet will contain only 
-      the bytes written to the buffer so far,
-      even though more might have been written by the time the send occurs.
-      It returns true if a send was done, false if the send was scheduled.
+    public void sendNowV() throws IOException
+      /* This method schedules a packet to be sent immediately
+        with all send-able bytes.
+        */
+      { 
+        scheduleSendB(0); // Schedule packet to be send with zero delay.
+        }
 
-    	The proper time for sending is the nearer of delayMsL or
-    	the remaining time on the send Timer.
-      The send Timer is cancelled, and reset if necessary, 
-      depending on the circumstances.
+    public synchronized boolean scheduleSendB( long latestMsL ) throws IOException
+    /* This method schedules the sending of all send-able bytes in the buffer
+      at latestMsL ms in the future or earlier.  
+      If latestMsL is 0 then sending happens immediately. 
+      It returns true if the send happened immediately, 
+      false if it will happen in the future.
+
+    	The actual time used for sending will be the earlier of 
+    	latestMsL or the remaining time on the send TimerTask if it exists.
+      The send TimerTask is cancelled, recreated, and set to latestMsL if 
+      latestMsL represents an earlier time.
+
+      The purpose of this method is to allow multiple blocks of data that
+      do not need to be sent immediately to be concatenated in the byte buffer,
+      and sent together, thereby reducing the number of packets that need to be sent.
+      The packet is not sent until the earliest latestMsL times 
+      of all the blocks that the packet contains.
      	*/
     {
-    	boolean queuePacketB;
-    	TimerTask newTimerTask= null;
-
-    	// Defining break goto targets.
-    	beforeExit: {
-    	beforeCancelAndReplaceTimerTask: {
-    	beforeCreateCancelAndReplaceTimerTask: {
-  
-	  		sendableI= indexI; // Marking new end of sendable bytes.
-    		queuePacketB= ( delayMsL == 0 );
-    	  if ( queuePacketB ) { // Queuing send now if no delay requested.
-      		queuingBufferDataV();
-	        break beforeCancelAndReplaceTimerTask;
+        boolean sendNowB= ( latestMsL == 0 );
+      	TimerTask newTimerTask= null;
+    	// Defining break target labels.
+    	toReturn: { 
+    	toCancelAndReplaceTimerTask: {
+    	toCancelReplaceAndCreateNewTimerTask: {
+    	  if ( sendNowB ) { // Queue send now if zero delay requested.
+      		queueSendableBytesV();
+	        break toCancelAndReplaceTimerTask;
     	    }
-    	  if (theTimerTask == null) // Creating new TimerTask if none already. 
-    	  	break beforeCreateCancelAndReplaceTimerTask;
-
+    	  if (theTimerTask == null) // Go create new TimerTask if none exists. 
+    	  	break toCancelReplaceAndCreateNewTimerTask;
     	  { // Exiting if the existing TimerTask will do the job.
-    	  	long newSendTimeMsL= System.currentTimeMillis() + delayMsL;
-    	  	if ( newSendTimeMsL >= sendTimeMsL )
-    	  		break beforeExit; // Exiting because new send would be later.
-    	  }
-
-    	} // beforeCreateCancelAndReplaceTimerTask:
-    		newTimerTask= new TimerTask() { // Creating TimerTask.
-	        public void run()
-	          {
-	        		queuingBufferDataV();
-	        	  }
+    	  	long newSendTimeMsL= System.currentTimeMillis() + latestMsL;
+    	  	if ( newSendTimeMsL >= nextPacketSendTimeMsL )
+    	  		break toReturn; // Exiting because existing TimerTask is good enough.
+    	    }
+    	} // toCancelReplaceAndCreateNewTimerTask:
+    		newTimerTask= new TimerTask() { // Creating new TimerTask.
+	        public void run() { queueSendableBytesV(); }
 	    		};
-	    	theTimer.schedule(newTimerTask, delayMsL); // Scheduling it.
-	    	sendTimeMsL= System.currentTimeMillis() + delayMsL; // Saving the time.
-	    	  
-    	} // beforeCancelAndReplaceTimerTask: 
+	    	nextPacketSendTimeMsL= System.currentTimeMillis() + latestMsL; // Save send time.
+        theTimer.schedule(newTimerTask, latestMsL); // Scheduling send.
+    	} // toCancelAndReplaceTimerTask: 
 	  		if (theTimerTask != null) { // Canceling old TimerTask if it exists.
 	  				theTimerTask.cancel();
 			    	theTimerTask= null; // Recording no longer scheduled.
@@ -239,37 +280,36 @@ public class EpiOutputStream<
 	  			  theTimerTask= newTimerTask;
 	  			  newTimerTask= null;
 	    	  	}
-
-     	} // beforeExit: 
-	      return queuePacketB;
+     	} // toReturn: 
+	      return sendNowB;
     	}
 
-	  public void queuingBufferDataV()
-	    /* Queues a packet containing send-able buffer bytes, if there are any.
-	      It also allocates a new buffer to replace the one queued,
-	      and copies any unsendable bytes from the old buffer to the new one.
+	  private void queueSendableBytesV()
+	    /* Queues for sending a packet containing all send-able buffer bytes, 
+	      if there are any.  If there are none then no packet will be queued.
+	      In either case this method allocates a new byte buffer,
+	      and copies any bytes that are not send-able,, 
+	      from the old buffer to the new buffer, 
+	      to be sent the next time this method is called. 
 	      */
 	  	{
-	  		// Allocating new buffer because old one will be queued.
-  			byte[] newBufferBytes= 
-  					packetManagerM.produceDefaultSizeBufferBytes();
-	  	  processing: {
-			  	if ( sendableI > 0 ) // Outputting packet if any bytes in buffer.
-				  	{
-				  		E keyedPacketE= packetManagerM.produceKeyedPacketE(
-			        		bufferBytes, indexI // Using buffer containing bytes.
-						  		);
-				  		for // Copying unsent bytes to beginning of new buffer.
-						  	( int dstI=0, srcI= sendableI; srcI < indexI ; )
-						  	newBufferBytes[dstI++]= bufferBytes[srcI++];
-						  indexI-= sendableI; // Subtracting sent bytes from buffer index.
-						  sendableI= 0;  // Indicating no bytes are sendable.
-				  		queuingForSendV( keyedPacketE ); // Queuing old buffer.
-						  break processing; // Exiting with new buffer needed.
-				  		}
-	  	  	}
+	      byte[] newBufferBytes= // Always allocate a new byte buffer.
+          packetManagerM.produceDefaultSizeBufferBytes();
+        int bytesToSendI= sendableI; 
+        if (bytesToSendI > 0) // Send packet if there is at least one send-able byte. 
+          { // Send packet containing at least one send-able byte. 
+    	  		E keyedPacketE= packetManagerM.produceKeyedPacketE( // Create packet
+            		bufferBytes, indexI // using old buffer containing send-able bytes.
+    			  		);
+    	  		for // Copy bytes which will not be sent now to beginning of new buffer.
+    			  	( int dstI=0, srcI= bytesToSendI; srcI < indexI ; )
+    			  	newBufferBytes[dstI++]= bufferBytes[srcI++]; ///opt
+    	  		queuingForSendV( keyedPacketE ); // Queue packet with old buffer.
+            }
 	  		bufferBytes= newBufferBytes; // Start using new buffer.
-	    	bufferSizeI= newBufferBytes.length; // Caching its length. 
+	    	bufferSizeI= bufferBytes.length; // Cache the buffer length. 
+        indexI-= bytesToSendI; // Subtracting bytes sent from buffer index.
+        sendableI= 0;  // Reset count of send-able bytes.
 		    }
 	    
 

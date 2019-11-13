@@ -316,7 +316,7 @@ public class Multicaster
                 	( ! EpiThread.testInterruptB() )
     	            { // Send and receive multicast packets.
     	              try {
-    		      	    	theEpiOutputStreamO.writingAndSendingV("DISCOVERY"); // Sending query.
+    		      	    	theEpiOutputStreamO.writeAndSendInBlockV("DISCOVERY"); // Sending query.
     	                receivingPacketsV( ); // Receiving packets until done.
     	                }
     	              catch( SocketException soe ) {
@@ -332,7 +332,7 @@ public class Multicaster
     	          stoppingMulticastReceiverThreadV();
     	          }
             for(int i=3; i>0; i--){ // Say goodbye 3 times...
-              theEpiOutputStreamO.writingAndSendingV("MULTICAST-GOODBYE");
+              theEpiOutputStreamO.writeAndSendInBlockV("MULTICAST-GOODBYE");
               }
             }
           catch( IOException e ) {
@@ -399,7 +399,7 @@ public class Multicaster
 	            				theEpiInputStreamI.readAString(); // Reading message.
                   theAppLog.debug("receivingPacketsV() decoding:"+ inString);
 	            		if (inString.equals( "DISCOVERY" )) // Handling query, maybe.
-			        			{ theEpiOutputStreamO.writingAndSendingV(
+			        			{ theEpiOutputStreamO.writeAndSendInBlockV(
 	            				    "ALIVE"); // Sending response.
 			        			  processingPossibleNewUnicasterV(); 
 			        			  multicastConnectionLoggerV(true);

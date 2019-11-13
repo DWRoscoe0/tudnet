@@ -133,7 +133,7 @@ public class Streamcaster<
               Thread.currentThread().interrupt(); // Starting termination.
               break pingReplyLoop;
               }
-          theEpiOutputStreamO.writingAndSendingV("PING"); // Sending ping packet.
+          theEpiOutputStreamO.writeAndSendInBlockV("PING"); // Sending ping packet.
           long pingSentMsL= System.currentTimeMillis();
           replyWaitLoop: while (true) { // Handling echo or other conditions.
             theInput=  // Awaiting next input within reply interval.
@@ -252,7 +252,7 @@ public class Streamcaster<
         		ignoringOrLoggingStringV(); // Ignoring any other string.
 	          } // pingWaitLoop
 	        while(true) { // Sending and confirming receipt of REPLY.
-	        	theEpiOutputStreamO.writingAndSendingV("REPLY");
+	        	theEpiOutputStreamO.writeAndSendInBlockV("REPLY");
 	          long echoSentMsL= System.currentTimeMillis();
 	          postReplyPause: while (true) {
 	            theInput=  // Awaiting input within the ignore interval.

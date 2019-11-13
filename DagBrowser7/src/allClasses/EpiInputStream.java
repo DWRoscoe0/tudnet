@@ -55,15 +55,20 @@ public class EpiInputStream<
 		private final char delimiterChar;
 		
 	  // Other instance variables.
+		// Whole packet buffer.
 		private E loadedKeyedPacketE= null;
 		private DatagramPacket loadedDatagramPacket = null;
 		private byte[] bufferBytes = null;
+    // Stream scan position: Buffer is empty/consumed when packetIndexI <= packetSizeI.
 		private int packetSizeI = 0;
 		private int packetIndexI = 0;
-	  // Buffer is empty/consumed when packetIndexI <= packetSizeI.
-		private boolean markedB= false;  
-		private int markIndexI= -1; 
-	
+		// Data node parsing state.
+    private ArrayList<String> packetListOfStrings= null;
+    private int packetListIndexI= 0;
+    // Old position marking variables.
+    private boolean markedB= false;  
+    private int markIndexI= -1; 
+
 		public EpiInputStream ( // Constructor. 
 				Q receiverToStreamcasterNotifyingQueueQ, 
 				NamedLong packetCounterNamedLong,
@@ -182,9 +187,6 @@ public class EpiInputStream<
         } // toReturn:
           return accumulatorString;
         }
-
-    private ArrayList<String> packetListOfStrings= null;
-    private int packetListIndexI= 0;
 
     private String tryViaYAMLSequenceString() throws IOException
       /* This method tries to get a String by parsing and caching YAMLSequences,
