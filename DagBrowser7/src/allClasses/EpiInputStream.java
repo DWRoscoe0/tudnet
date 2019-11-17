@@ -3,7 +3,6 @@ package allClasses;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.DatagramPacket;
-import java.util.ArrayList;
 
 import static allClasses.AppLog.theAppLog;
 
@@ -63,7 +62,7 @@ public class EpiInputStream<
 		private int packetSizeI = 0;
 		private int packetIndexI = 0;
 		// Data node parsing state.
-    private ArrayList<String> packetListOfStrings= null;
+    private SequenceEpiNode packetSequenceEpiNode= null;
     private int packetListIndexI= 0;
     // Old position marking variables.
     private boolean markedB= false;  
@@ -167,6 +166,7 @@ public class EpiInputStream<
         toReturn: { toNoData: {
           accumulatorString= tryViaYAMLSequenceString(); // Try string from sequence.
           if (accumulatorString != null) break toReturn; // Exiting if gotten.
+
           theAppLog.debug( "readAString(): trying old !-delimited parsing.");
           accumulatorString= ""; // Set accumulator to empty string.
           while (true) { // Skipping possible YAML lead-in characters.
@@ -177,7 +177,6 @@ public class EpiInputStream<
           while (true) { // Reading and accumulating string bytes until terminator.
             if ( isDelimiterB(byteI) ) break toReturn; // Exiting if terminator seen.
             accumulatorString+= (char)byteI; // Append string byte.
-            //// if ( available() <= 0 ) break toNoData;
             if ( bufferByteCountI() <= 0 ) break toNoData;
             byteI= read();
             }
@@ -195,102 +194,29 @@ public class EpiInputStream<
         If it fails it returns null.
         */
       { 
-        String elementString= null;
+        String elementString= null; // Set default result to indicate failure.
         while (true) { // Keep trying until no more sequence elements to return.
-          if (packetListOfStrings == null) { // Handle missing sequence if needed.
-            packetListOfStrings= trySequenceListOfStrings(); // Try parsing sequence.
-            if (packetListOfStrings == null) break; // No sequence, so exit with fail.
+          if (packetSequenceEpiNode == null) { // Handle missing sequence if needed.
+            packetSequenceEpiNode=  // Try parsing sequence.
+                SequenceEpiNode.trySequenceEpiNode(this); // Try parsing sequence.
+            if (packetSequenceEpiNode == null) break; // No sequence, so exit with fail.
             packetListIndexI= 0; // Reset index for scanning sequence elements.
             }
-          if (packetListIndexI < packetListOfStrings.size()) { 
-            elementString= packetListOfStrings.get(packetListIndexI); 
+          if (packetListIndexI < packetSequenceEpiNode.sizeI()) {
+            ScalarEpiNode theScalarEpiNode=
+                packetSequenceEpiNode.getScalarEpiNode(packetListIndexI); 
+            elementString= theScalarEpiNode.getString();
             packetListIndexI++;
             break;  // Exit with success.
             }
-          packetListOfStrings= null; // Reset to try for another sequence.
+          packetSequenceEpiNode= null; // Reset to try for another sequence.
           } // while
         return elementString;
         }
     
     // Parsers of YAML-like language.
 
-    protected ArrayList<String> trySequenceListOfStrings() throws IOException
-      /* This method tries to get a sequence of String scalars.
-        If it succeeds it returns a list of sequence elements 
-        and the input stream position is after all consumed characters. 
-        If it fails it returns null 
-        and the input stream position is unchanged.
-       */
-      {
-          ArrayList<String> resultListOfStrings= null;
-          int inputStreamPositionI= getPositionI(); // Save current position.
-        toReturn: { badSequence: {
-          if (! getByteB('[')) break badSequence; // Fail if bad beginning character.
-          resultListOfStrings= getSequenceElementStrings(); // Always succeeds. 
-          if (! getByteB(']')) break badSequence; // Fail if bad ending character.
-          break toReturn; // Got everything we need, so succeed.
-        } // badSequence: // Coming here means we failed.
-          setPositionV(inputStreamPositionI); // Restore original position.
-          resultListOfStrings= null; // Set to null to indicate failure.
-        } // toReturn:
-          return resultListOfStrings;
-        }
-
-    protected ArrayList<String> getSequenceElementStrings() throws IOException
-      /* This method returns a List of 0 or more elements of 
-        a sequence of String scalars.  It always succeeds.
-        The stream is advanced past all characters that were processed,
-        which might be none if there are no elements.
-        */
-      {
-          ArrayList<String> resultListOfStrings= new ArrayList<String>();
-        toReturn: { 
-          String scalarString= tryScalarString(); // Try getting a first element.
-          if (scalarString == null) break toReturn;
-          while (true) { // Accumulating scalars until sequence ends.
-            resultListOfStrings.add(scalarString); // Append gotten acceptable scalar.
-            int positionI= getPositionI();
-            if (! tryByteB(',')) break toReturn; // No comma, so no more elements. 
-            scalarString= tryScalarString(); // Try getting next element.
-            if (scalarString == null) { // If no element
-              setPositionV(positionI); // restore stream to before unneeded error comma
-              break toReturn; // and exit.
-              }
-            }
-        } // toReturn:
-          return resultListOfStrings;
-        }
-
-    private String tryScalarString() throws IOException
-      /* This method tries to parse a YAML subset scalar string.
-        If successful then it returns the String and the stream is moved past the string,
-        but whatever terminated the string remains to be read.
-        The stream is moved past the last string character, but no further.
-        If not successful then it returns null and the stream position is unchanged.
-        */
-      {
-        int byteI;
-        String accumulatorString= ""; // Clear character accumulator.
-        readLoop: { while (true) {
-            int positionI= getPositionI();
-            toAppendAcceptedChar: {
-              byteI= read();
-              if ( Character.isLetterOrDigit(byteI)) break toAppendAcceptedChar;
-              if ( '-'==byteI ) break toAppendAcceptedChar;
-              if ( '.'==byteI ) break toAppendAcceptedChar;
-              setPositionV(positionI); // Restore stream to before rejected character.
-              ///opt Alternative way to reject final character only, outside of loop:
-              //   setPositionV(getPositionI()-1);
-              break readLoop; // Go try to return what's accumulated so far.
-              } // toAppendAcceptedChar:
-            accumulatorString+= (char)byteI; // Append accepted byte to accumulator.
-            }
-          } // readLoop: 
-        if (accumulatorString.length() == 0) // Reject 0-length strings.
-          accumulatorString= null;
-        return accumulatorString; 
-        }
-
+    @SuppressWarnings("unused") ///
     private String remainingBufferString() throws IOException
       /* This method returns all available stream bytes in the packet stream buffer.
         */
@@ -305,7 +231,7 @@ public class EpiInputStream<
         return " Remaining bytes:"+accumulatorString; 
         }
 
-    private boolean tryByteB(int desiredByteI) throws IOException
+    public boolean tryByteB(int desiredByteI) throws IOException
       /* Tries to read desiredByteI from the stream.
         This is like getByteB(..) except that the stream position
         is not changed if desiredByteI is not read from the stream.
@@ -318,7 +244,7 @@ public class EpiInputStream<
         return successB;
         }
 
-    private boolean getByteB(int desiredByteI) throws IOException
+    public boolean getByteB(int desiredByteI) throws IOException
       /* Reads a byte from the input stream and compares it to desiredByteI.
         If they are equal it returns true, otherwise false.
         Failure can happen when either the byte read is not the desired byte or
@@ -336,8 +262,8 @@ public class EpiInputStream<
         It will not attempt to load the next packet.
         */
       {
-        int byteI= bufferByteCountI();
-        if ( byteI > 0 ) // If byte available 
+        int byteI;
+        if ( bufferByteCountI() > 0 ) // If byte available 
           byteI= read(); // read the byte
           else
           byteI= -1; // otherwise return -1.
@@ -352,7 +278,6 @@ public class EpiInputStream<
         process: {
           if ( delimiterChar==byteI ) break process;
           if ( '['==byteI ) break process;
-          //// if ( '{'==byteI ) break process; 
           delimiterB= false;
           } // process:
         return delimiterB;
@@ -390,7 +315,6 @@ public class EpiInputStream<
 	    {
 	  		int availableI;
 	  	  while (true) {
-	    	  //// availableI= packetSizeI - packetIndexI; // Calculating bytes in buffer.
 	  	    availableI= bufferByteCountI();
 	    	  if ( availableI > 0) break; // Exiting if any bytes in buffer.
 	    	  if  // Exiting with 0 if no packet in queue to load.
@@ -402,7 +326,7 @@ public class EpiInputStream<
 		    }
 	
     protected int bufferByteCountI()
-      /* Returns the number of bytes in the packet buffer.  
+      /* Returns the number of bytes remaining in the packet buffer.  
        This should be used instead of the method available() when
        packet boundaries are significant, 
        which with unreliable UDP is most of the time.
@@ -427,7 +351,7 @@ public class EpiInputStream<
 			  return value;
 			  }
 	  
-	  @SuppressWarnings("unused") ////
+	  @SuppressWarnings("unused") ///
     private boolean tryReadB(byte[] bufferBytes, int offsetI, int lengthI)
 	  		throws IOException
 	    /* This method tries to read lengthI bytes into buffer bufferBytes
