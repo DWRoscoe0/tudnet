@@ -2,6 +2,7 @@ package allClasses;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 
 public class EpiNode 
 
@@ -10,6 +11,10 @@ public class EpiNode
     Subclasses follow this one.
     */
   {
+    
+    public static EpiNode tryEpiNode(EpiInputStream<?,?,?,?> theEpiInputStream ) 
+      throws IOException
+      { return ScalarEpiNode.tryScalarEpiNode(theEpiInputStream); }
 
     }
 
@@ -23,6 +28,8 @@ class ScalarEpiNode extends EpiNode
         this.scalarString= scalarString;
         }
 
+    public String toString() { return scalarString; }
+      
     public static ScalarEpiNode tryScalarEpiNode( 
           EpiInputStream<?,?,?,?> theEpiInputStream ) 
         throws IOException
@@ -68,26 +75,26 @@ class ScalarEpiNode extends EpiNode
 class SequenceEpiNode extends EpiNode 
 
   {
-    private ArrayList<ScalarEpiNode> theListOfScalarEpiNode; 
+    private ArrayList<EpiNode> theListOfEpiNode; 
     
-    private SequenceEpiNode(ArrayList<ScalarEpiNode> theListOfScalarEpiNode)
+    private SequenceEpiNode(ArrayList<EpiNode> theListOfEpiNode)
       {
-        this.theListOfScalarEpiNode= theListOfScalarEpiNode;
+        this.theListOfEpiNode= theListOfEpiNode;
         }
 
     public int sizeI()
       {
-        return theListOfScalarEpiNode.size();
+        return theListOfEpiNode.size();
         }
     
-    public ScalarEpiNode getScalarEpiNode(int indexI)
+    public EpiNode getEpiNode(int indexI)
       /* This method returns the element at index indexI,
         or null if the index is out of range.
          */
       {
         return 
-            ( (indexI >= 0) && (indexI < theListOfScalarEpiNode.size()))
-            ? theListOfScalarEpiNode.get(indexI)
+            ( (indexI >= 0) && (indexI < theListOfEpiNode.size()))
+            ? theListOfEpiNode.get(indexI)
             : null;
         }
     
@@ -104,15 +111,15 @@ class SequenceEpiNode extends EpiNode
         */
       {
           SequenceEpiNode returnSequenceEpiNode= null; // Set default failure result.
-          ArrayList<ScalarEpiNode> resultListOfScalarEpiNodes= null;
+          ArrayList<EpiNode> resultListOfEpiNodes= null;
           int initialStreamPositionI= theEpiInputStream.getPositionI();
         toReturn: { toNotASequence: {
           if (! theEpiInputStream.getByteB('[')) break toNotASequence;
-          resultListOfScalarEpiNodes=  // Always succeeds.
-              getListOfScalarEpiNodes(theEpiInputStream); 
+          resultListOfEpiNodes=  // Always succeeds.
+              getListOfEpiNodes(theEpiInputStream); 
           if (! theEpiInputStream.getByteB(']')) break toNotASequence;
           returnSequenceEpiNode= // We got everything needed.  Create successful result. 
-              new SequenceEpiNode(resultListOfScalarEpiNodes);
+              new SequenceEpiNode(resultListOfEpiNodes);
           break toReturn;
         } // toNotASequence: // Coming here means we failed to parse a complete sequence.
           theEpiInputStream.setPositionV(initialStreamPositionI); // Restore position.
@@ -120,7 +127,7 @@ class SequenceEpiNode extends EpiNode
           return returnSequenceEpiNode; // Return result.
         }
 
-  protected static ArrayList<ScalarEpiNode> getListOfScalarEpiNodes(
+  protected static ArrayList<EpiNode> getListOfEpiNodes(
       EpiInputStream<?,?,?,?> theEpiInputStream ) 
     throws IOException
   /* This method parsea and returns a List of 
@@ -130,25 +137,32 @@ class SequenceEpiNode extends EpiNode
     which might be none if the returned list is empty.
     */
   {
-      ArrayList<ScalarEpiNode> resultListOfScalarEpiNodes= 
-          new ArrayList<ScalarEpiNode>(); // Create initially empty result list.
+      ArrayList<EpiNode> resultListOfEpiNodes= 
+          new ArrayList<EpiNode>(); // Create initially empty result list.
     toReturn: {
-      ScalarEpiNode theScalarEpiNode=  // Try getting a first list element.
-          ScalarEpiNode.tryScalarEpiNode(theEpiInputStream);
-      if (theScalarEpiNode == null) break toReturn; // Exit if no first element.
+      EpiNode theEpiNode=  // Try getting a first list element.
+          EpiNode.tryEpiNode(theEpiInputStream);
+      if (theEpiNode == null) break toReturn; // Exit if no first element.
       while (true) { // Accumulating list elements until sequence ends.
-        resultListOfScalarEpiNodes.add(theScalarEpiNode); // Append element to list.
+        resultListOfEpiNodes.add(theEpiNode); // Append element to list.
         int preCommaPositionI= theEpiInputStream.getPositionI();
         if (! theEpiInputStream.tryByteB(',')) break toReturn; // Exit if no comma.
-        theScalarEpiNode=  // Got comma. so try getting a next element.
-            ScalarEpiNode.tryScalarEpiNode(theEpiInputStream);
-        if (theScalarEpiNode == null)  { // No next element so restore position and exit.
+        theEpiNode=  // Got comma. so try getting a next element.
+            EpiNode.tryEpiNode(theEpiInputStream);
+        if (theEpiNode == null)  { // No next element so restore position and exit.
           theEpiInputStream.setPositionV(preCommaPositionI);
           break toReturn;
           }
         }
     } // toReturn:
-      return resultListOfScalarEpiNodes;
+      return resultListOfEpiNodes;
     }
 
+    }
+
+class MapEpiNode extends EpiNode //// this class is under construction. 
+
+  {
+    @SuppressWarnings("unused") ////
+    private LinkedHashMap<EpiNode,EpiNode> theMapOfEpiNode; 
     }

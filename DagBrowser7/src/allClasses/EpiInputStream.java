@@ -203,9 +203,9 @@ public class EpiInputStream<
             packetListIndexI= 0; // Reset index for scanning sequence elements.
             }
           if (packetListIndexI < packetSequenceEpiNode.sizeI()) {
-            ScalarEpiNode theScalarEpiNode=
-                packetSequenceEpiNode.getScalarEpiNode(packetListIndexI); 
-            elementString= theScalarEpiNode.getString();
+            EpiNode theEpiNode=
+                packetSequenceEpiNode.getEpiNode(packetListIndexI); 
+            elementString= theEpiNode.toString();
             packetListIndexI++;
             break;  // Exit with success.
             }
