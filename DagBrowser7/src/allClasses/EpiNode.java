@@ -8,6 +8,8 @@ public class EpiNode
 
   /* This is the base class for 
     classes meant to represent YAML-like data.
+    It supports scalars, sequences, and maps.  
+    It does not support null values. 
     Subclasses follow this one.
     */
   {
@@ -76,7 +78,7 @@ class SequenceEpiNode extends EpiNode
 
   {
     private ArrayList<EpiNode> theListOfEpiNode; 
-    
+
     private SequenceEpiNode(ArrayList<EpiNode> theListOfEpiNode)
       {
         this.theListOfEpiNode= theListOfEpiNode;
@@ -127,10 +129,10 @@ class SequenceEpiNode extends EpiNode
           return returnSequenceEpiNode; // Return result.
         }
 
-  protected static ArrayList<EpiNode> getListOfEpiNodes(
+  protected static ArrayList<EpiNode> OLDgetListOfEpiNodes( ////
       EpiInputStream<?,?,?,?> theEpiInputStream ) 
     throws IOException
-  /* This method parsea and returns a List of 
+  /* This method parses and returns a List of 
     0 or more elements of a sequence of scalar nodes.  
     It always succeeds, though it might return an empty list.
     The stream is advanced past all characters that were processed,
@@ -158,11 +160,142 @@ class SequenceEpiNode extends EpiNode
       return resultListOfEpiNodes;
     }
 
+  protected static ArrayList<EpiNode> getListOfEpiNodes(
+      EpiInputStream<?,?,?,?> theEpiInputStream ) 
+    throws IOException
+  /* This method parses and returns a List of 
+    0 or more elements of a sequence of scalar nodes.  
+    It always succeeds, though it might return an empty list.
+    The stream is advanced past all characters that were processed,
+    which might be none if the returned list is empty.
+    */
+  {
+      int preCommaPositionI=0;
+      boolean gotCommaB= false; // Becomes true when comma seen.
+      ArrayList<EpiNode> resultListOfEpiNodes= 
+          new ArrayList<EpiNode>(); // Create initially empty result list.
+    toReturn: {
+      while (true) { // Accumulating list elements until sequence ends.
+        EpiNode theEpiNode=  // Try getting a list element.
+            EpiNode.tryEpiNode(theEpiInputStream);
+        if (! gotCommaB) // Comma not gotten yet so looking for the first element
+          { if (theEpiNode == null) // but there is no first element
+            break toReturn; // so exit now with an empty list.
+            }
+        else // Comma was gotten so we need a non-first element.
+          { if (theEpiNode == null) { // but there was no element so
+              theEpiInputStream.setPositionV( // restore stream position to before comma.
+                  preCommaPositionI);
+              break toReturn; // and exit now with a non-empty list.
+              }
+            }
+        resultListOfEpiNodes.add(theEpiNode); // Append gotten element to list.
+        preCommaPositionI= theEpiInputStream.getPositionI();
+        if (! theEpiInputStream.tryByteB(',')) break toReturn; // Exit if no comma.
+        gotCommaB= true; // Got comma, so record it.
+        } // while(true)
+    } // toReturn:
+      return resultListOfEpiNodes;
+    }
+
     }
 
 class MapEpiNode extends EpiNode //// this class is under construction. 
 
   {
     @SuppressWarnings("unused") ////
-    private LinkedHashMap<EpiNode,EpiNode> theMapOfEpiNode; 
-    }
+    private LinkedHashMap<EpiNode,EpiNode> theLinkedHashMap; 
+  
+    private MapEpiNode(LinkedHashMap<EpiNode,EpiNode> theLinkedHashMap)
+      {
+        this.theLinkedHashMap= theLinkedHashMap;
+        }
+
+    public static MapEpiNode tryMapEpiNode( 
+          EpiInputStream<?,?,?,?> theEpiInputStream ) 
+        throws IOException
+      /* This method tries to parse a MapEpiNode (YAML map) from theEpiInputStream.
+        If successful then it returns the MapEpiNode
+        and the stream is moved past the map characters,
+        but whatever terminated the MapEpiNode remains to be read.
+        If not successful then this method returns null 
+        and the stream position is unchanged.
+        
+        Parsing maps is tricky because, though they contain entries,
+        and entries are always parsed as if a single entrity, 
+        entries do not exist outside of maps.
+        Only their component key and value exist outside of maps.
+        */
+      {
+          MapEpiNode resultMapEpiNode= null; // Set default failure result.
+          LinkedHashMap<EpiNode,EpiNode> theLinkedHashMapOfEpiNode= null;
+          int initialStreamPositionI= theEpiInputStream.getPositionI();
+        toReturn: { toNotAMap: {
+          if (! theEpiInputStream.getByteB('{')) break toNotAMap;
+          theLinkedHashMapOfEpiNode=  // Always succeeds.
+              getLinkedHashMap(theEpiInputStream); 
+          if (! theEpiInputStream.getByteB('}')) break toNotAMap;
+          resultMapEpiNode= // We got everything needed.  Create successful result. 
+              new MapEpiNode(theLinkedHashMapOfEpiNode);
+          break toReturn;
+        } // toNotAMap: // Coming here means we failed to parse a complete map.
+          theEpiInputStream.setPositionV(initialStreamPositionI); // Restore position.
+        } // toReturn:
+          return resultMapEpiNode; // Return result.
+        }
+
+    protected static LinkedHashMap<EpiNode,EpiNode> getLinkedHashMap(
+        EpiInputStream<?,?,?,?> theEpiInputStream ) 
+      throws IOException
+    /* This method parses and returns a LinkedHashMap of  
+      0 or more <MapEpiNode,MapEpiNode> <key,value> map elements.
+      It always succeeds, though it might return an empty map
+      if no parse-able map entry was found.
+      The stream is advanced past all characters 
+      that were processed into the map returned without error.
+      which might be none if the returned map is empty.
+      It allows keys to have null values, which can be used to implement sets. 
+      */
+    {
+        int preCommaPositionI=0;
+        boolean gotCommaB= false; // Becomes true when comma seen.
+        LinkedHashMap<EpiNode,EpiNode> resultLinkedHashMap= 
+            new LinkedHashMap<EpiNode,EpiNode>(); // Create initially empty map.
+      toReturn: {
+        EpiNode keyEpiNode= null; // If not null then map entry is not valid.
+        EpiNode valueEpiNode= null; // Optional value, null for now.
+        while (true) { // Accumulating map entries until they end.
+            int preMapEntryPositionI= theEpiInputStream.getPositionI();
+          toEndEntry: { toNoEntry: {
+            valueEpiNode= null; // Assume no value node unless one provided.
+            keyEpiNode= EpiNode.tryEpiNode(theEpiInputStream); // Try parsing a key node.
+            if (keyEpiNode == null) break toNoEntry; // Got no key so no entry.
+            if (! theEpiInputStream.tryByteB(':')) // No separating colon 
+              break toEndEntry; // so no value, so end map entry now.
+            valueEpiNode= EpiNode.tryEpiNode(theEpiInputStream); // Try parsing value.
+            if (valueEpiNode != null) break toEndEntry; // Got value so complete entry.
+          } // toNoEntry: Being here means unable to parse an acceptable map entry.
+            keyEpiNode= null; // Be certain to indicate map entry parsing failed.
+            theEpiInputStream.setPositionV(preMapEntryPositionI); // Rewind input steam.
+          } // toEndEntry: Being here means entry parsing is done, either pass or fail.
+            if (! gotCommaB) // Comma not gotten yet so we want the first map entry
+              { if (keyEpiNode == null) // but there was no first map entry
+                  break toReturn; // so exit now with an empty map.
+                }
+              else // Comma was gotten so we need a non-first map entry.
+              { if (keyEpiNode == null) { // but there was no map entry so
+                  theEpiInputStream.setPositionV( // restore input stream position 
+                      preCommaPositionI); // to position before comma.
+                  break toReturn; // and exit now with a non-empty map.
+                  }
+                }
+            resultLinkedHashMap.put(keyEpiNode,valueEpiNode); // Append entry to map.
+            preCommaPositionI= theEpiInputStream.getPositionI(); // Save stream position.
+            if (! theEpiInputStream.tryByteB(',')) break toReturn; // Exit if no comma.
+            gotCommaB= true; // Got comma, so record it for earlier map entry processing.
+            } // while(true)  Looping to try for another non-first map entry.
+      } // toReturn:
+        return resultLinkedHashMap;
+      }
+
+  }
