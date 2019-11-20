@@ -218,7 +218,9 @@ public class EpiInputStream<
 
     @SuppressWarnings("unused") ///
     private String remainingBufferString() throws IOException
-      /* This method returns all available stream bytes in the packet stream buffer.
+      /* This method returns a String containing 
+        all stream bytes remaining in the packet stream buffer.
+        The stream position is moved past all those bytes.
         */
       {
         int byteI;
@@ -266,7 +268,7 @@ public class EpiInputStream<
         if ( bufferByteCountI() > 0 ) // If byte available 
           byteI= read(); // read the byte
           else
-          byteI= -1; // otherwise return -1.
+          byteI= -1; // otherwise set return value of -1.
         return byteI;
         }
     
@@ -339,7 +341,7 @@ public class EpiInputStream<
         }
     
 	  public int read() throws IOException
-	    /* Reads one byte, reading to read one or more packets 
+	    /* Reads one byte, reading read one or more packets 
 	      from the input queue if needed, blocking to wait for a packet if needed.
 	      */
 	    {
