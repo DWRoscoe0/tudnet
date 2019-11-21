@@ -190,11 +190,11 @@ public class EpiInputStream<
     // Parsers of YAML-like language.
 
     private String tryFromEpiNodeString() throws IOException
-      /* This method tries to get a String by parsing and caching ,
+      /* This method tries to get a String by parsing and caching EpiNodes,
         then extracting Strings from them.
         If it succeeds it returns the next String.
         If it fails it returns null.
-        Presently the EpiNode must be a SequenceEpiNode.
+        Presently the EpiNode must be a SequenceEpiNode but this is temporary.
         */
       { 
         String elementString= null; // Set default result to indicate failure.
@@ -204,20 +204,17 @@ public class EpiInputStream<
             if (packetEpiNode == null) break; // No node, so exit with fail.
             packetElementIndexI= 0; // Reset index for scanning node elements.
             }
-          //// SequenceEpiNode theSequenceEpiNode= (SequenceEpiNode)packetEpiNode;
-          //// if (packetListIndexI < theSequenceEpiNode.sizeI()) {
-          //// EpiNode theEpiNode= theSequenceEpiNode.getEpiNode(packetListIndexI);
-          EpiNode elementEpiNode= packetEpiNode.getEpiNode(packetElementIndexI);
-          if (elementEpiNode != null) { // If got node, extract string and return it. 
-            elementString= elementEpiNode.toString();
+          elementString= packetEpiNode.extractFromEpiNodeString(packetElementIndexI);
+          if (elementString != null) { // If got string, return it. 
             packetElementIndexI++; // Increment index for next string.
             break; // Exit with success.
             }
-          packetEpiNode= null; // Reset to try for another sequence.
+          packetEpiNode= null; // Reset to try for another node.
           } // while
         return elementString;
         }
 
+    
     @SuppressWarnings("unused") ///
     private String remainingBufferString() throws IOException
       /* This method returns a String containing 

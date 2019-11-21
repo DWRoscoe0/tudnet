@@ -16,9 +16,25 @@ public class EpiNode
     */
   {
 
+  public String extractFromEpiNodeString(int indexI) 
+      throws IOException
+    /* This method tries to extract the String whose index is indexI from this EpiNode. 
+      If it succeeds it returns the String.  
+      If it fails it returns null, meaning the index is out of range.
+      Presently the EpiNode must be a SequenceEpiNode but this is temporary.
+      The mapping between index values and Strings in the EpiNode is complex, 
+      depends on the EpiNode, and may be temporary.  
+      
+      In this base class, it always returns null and logs an error.
+      */
+    { 
+      theAppLog.error( ""
+          + "EpiNode.extractFromEpiNodeString(int): base class should not be called.");
+      return null;
+      }
+
     public EpiNode getEpiNode(int indexI)
-      /* This method returns the element at index indexI,
-        or null if the index is out of range.
+      /* This method returns the element EpiNode at index indexI,
         In this base class, it always returns null and logs an error.
         */
       {
@@ -109,15 +125,26 @@ class SequenceEpiNode extends EpiNode
         this.theListOfEpiNode= theListOfEpiNode;
         }
 
+    public String extractFromEpiNodeString(int indexI) 
+        throws IOException
+      /* See base class for documentation.  */
+      { 
+        String elementString= null; // Set default result to indicate failure.
+        EpiNode elementEpiNode= getEpiNode(indexI);
+        if (elementEpiNode != null) // If got element node, extract string and return it. 
+          elementString= elementEpiNode.toString();
+        return elementString;
+        }
+
     public EpiNode getEpiNode(int indexI)
-      /* This method returns the element at index indexI,
+      /* This method returns the element EpiNode at index indexI,
         or null if the index is out of range.
-         */
+        */
       {
         return 
-            ( (indexI >= 0) && (indexI < theListOfEpiNode.size()))
-            ? theListOfEpiNode.get(indexI)
-            : null;
+          ( (indexI >= 0) && (indexI < theListOfEpiNode.size())) // Test for in range.
+            ? theListOfEpiNode.get(indexI) // Value if in range.
+            : null; // Value if out of range.
         }
     
     public static SequenceEpiNode trySequenceEpiNode( 
