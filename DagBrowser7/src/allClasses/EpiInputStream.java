@@ -61,11 +61,11 @@ public class EpiInputStream<
     // Stream scan position: Buffer is empty/consumed when packetIndexI <= packetSizeI.
 		private int packetSizeI = 0;
 		private int packetIndexI = 0;
-		// Data node parsing state.
-    private SequenceEpiNode packetSequenceEpiNode= null;
-    private int packetListIndexI= 0;
+		// Position of data within packet.
+    private EpiNode packetEpiNode= null; // EpiNode parsed from packet.
+    private int packetElementIndexI= 0; // Index of element within EpiNode.
     // Old position marking variables.
-    private boolean markedB= false;  
+    private boolean markedB= false;
     private int markIndexI= -1; 
 
 		public EpiInputStream ( // Constructor. 
@@ -164,7 +164,7 @@ public class EpiInputStream<
           String accumulatorString= "";
           int byteI;
         toReturn: { toNoData: {
-          accumulatorString= tryViaYAMLSequenceString(); // Try string from sequence.
+          accumulatorString= tryFromEpiNodeString(); // Try string from sequence.
           if (accumulatorString != null) break toReturn; // Exiting if gotten.
 
           theAppLog.debug( "readAString(): trying old !-delimited parsing.");
@@ -186,35 +186,37 @@ public class EpiInputStream<
         } // toReturn:
           return accumulatorString;
         }
+    
+    // Parsers of YAML-like language.
 
-    private String tryViaYAMLSequenceString() throws IOException
-      /* This method tries to get a String by parsing and caching YAMLSequences,
+    private String tryFromEpiNodeString() throws IOException
+      /* This method tries to get a String by parsing and caching ,
         then extracting Strings from them.
         If it succeeds it returns the next String.
         If it fails it returns null.
+        Presently the EpiNode must be a SequenceEpiNode.
         */
       { 
         String elementString= null; // Set default result to indicate failure.
         while (true) { // Keep trying until no more sequence elements to return.
-          if (packetSequenceEpiNode == null) { // Handle missing sequence if needed.
-            packetSequenceEpiNode=  // Try parsing sequence.
-                SequenceEpiNode.trySequenceEpiNode(this); // Try parsing sequence.
-            if (packetSequenceEpiNode == null) break; // No sequence, so exit with fail.
-            packetListIndexI= 0; // Reset index for scanning sequence elements.
+          if (packetEpiNode == null) { // Handle missing sequence if needed.
+            packetEpiNode= EpiNode.tryEpiNode(this); // Try parsing node.
+            if (packetEpiNode == null) break; // No node, so exit with fail.
+            packetElementIndexI= 0; // Reset index for scanning node elements.
             }
-          if (packetListIndexI < packetSequenceEpiNode.sizeI()) {
-            EpiNode theEpiNode=
-                packetSequenceEpiNode.getEpiNode(packetListIndexI); 
-            elementString= theEpiNode.toString();
-            packetListIndexI++;
-            break;  // Exit with success.
+          //// SequenceEpiNode theSequenceEpiNode= (SequenceEpiNode)packetEpiNode;
+          //// if (packetListIndexI < theSequenceEpiNode.sizeI()) {
+          //// EpiNode theEpiNode= theSequenceEpiNode.getEpiNode(packetListIndexI);
+          EpiNode elementEpiNode= packetEpiNode.getEpiNode(packetElementIndexI);
+          if (elementEpiNode != null) { // If got node, extract string and return it. 
+            elementString= elementEpiNode.toString();
+            packetElementIndexI++; // Increment index for next string.
+            break; // Exit with success.
             }
-          packetSequenceEpiNode= null; // Reset to try for another sequence.
+          packetEpiNode= null; // Reset to try for another sequence.
           } // while
         return elementString;
         }
-    
-    // Parsers of YAML-like language.
 
     @SuppressWarnings("unused") ///
     private String remainingBufferString() throws IOException

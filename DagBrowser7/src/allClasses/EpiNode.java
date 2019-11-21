@@ -1,5 +1,7 @@
 package allClasses;
 
+import static allClasses.AppLog.theAppLog;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -13,10 +15,33 @@ public class EpiNode
     Subclasses follow this one.
     */
   {
-    
+
+    public EpiNode getEpiNode(int indexI)
+      /* This method returns the element at index indexI,
+        or null if the index is out of range.
+        In this base class, it always returns null and logs an error.
+        */
+      {
+        theAppLog.error( "EpiNode.getEpiNode(int): base class should not be called.");
+        return null;
+        }
+
     public static EpiNode tryEpiNode(EpiInputStream<?,?,?,?> theEpiInputStream ) 
       throws IOException
-      { return ScalarEpiNode.tryScalarEpiNode(theEpiInputStream); }
+      /* This method tries to parse an EpiNode.
+        It returns the node if the parse successful, null otherwise.
+        It tries parsing node types in the following order:
+        * SequenceEpiNode
+        * ScalarEpiNode
+        * MapEpiNode (to be added)
+       */
+      { 
+        EpiNode resultEpiNode= 
+          SequenceEpiNode.trySequenceEpiNode(theEpiInputStream);
+        if (resultEpiNode == null) 
+          resultEpiNode= ScalarEpiNode.tryScalarEpiNode(theEpiInputStream); 
+        return resultEpiNode;
+        }
 
     }
 
@@ -84,11 +109,6 @@ class SequenceEpiNode extends EpiNode
         this.theListOfEpiNode= theListOfEpiNode;
         }
 
-    public int sizeI()
-      {
-        return theListOfEpiNode.size();
-        }
-    
     public EpiNode getEpiNode(int indexI)
       /* This method returns the element at index indexI,
         or null if the index is out of range.
