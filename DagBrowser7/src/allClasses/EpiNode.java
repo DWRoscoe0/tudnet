@@ -184,37 +184,6 @@ class SequenceEpiNode extends EpiNode
           return returnSequenceEpiNode; // Return result.
         }
 
-  protected static ArrayList<EpiNode> OLDgetListOfEpiNodes( ////
-      EpiInputStream<?,?,?,?> theEpiInputStream ) 
-    throws IOException
-  /* This method parses and returns a List of 
-    0 or more elements of a sequence of scalar nodes.  
-    It always succeeds, though it might return an empty list.
-    The stream is advanced past all characters that were processed,
-    which might be none if the returned list is empty.
-    */
-  {
-      ArrayList<EpiNode> resultListOfEpiNodes= 
-          new ArrayList<EpiNode>(); // Create initially empty result list.
-    toReturn: {
-      EpiNode theEpiNode=  // Try getting a first list element.
-          EpiNode.tryEpiNode(theEpiInputStream);
-      if (theEpiNode == null) break toReturn; // Exit if no first element.
-      while (true) { // Accumulating list elements until sequence ends.
-        resultListOfEpiNodes.add(theEpiNode); // Append element to list.
-        int preCommaPositionI= theEpiInputStream.getPositionI();
-        if (! theEpiInputStream.tryByteB(',')) break toReturn; // Exit if no comma.
-        theEpiNode=  // Got comma. so try getting a next element.
-            EpiNode.tryEpiNode(theEpiInputStream);
-        if (theEpiNode == null)  { // No next element so restore position and exit.
-          theEpiInputStream.setPositionV(preCommaPositionI);
-          break toReturn;
-          }
-        }
-    } // toReturn:
-      return resultListOfEpiNodes;
-    }
-
   protected static ArrayList<EpiNode> getListOfEpiNodes(
       EpiInputStream<?,?,?,?> theEpiInputStream ) 
     throws IOException
@@ -255,13 +224,12 @@ class SequenceEpiNode extends EpiNode
 
     }
 
-class MapEpiNode extends EpiNode //// this class is under construction. 
+class MapEpiNode extends EpiNode 
 
   {
-    @SuppressWarnings("unused") ////
     private LinkedHashMap<EpiNode,EpiNode> theLinkedHashMap; 
 
-    public String extractFromEpiNodeString(int indexI) //// 
+    public String extractFromEpiNodeString(int indexI) 
         throws IOException
       /* See base class for documentation.  */
       { 
@@ -276,7 +244,7 @@ class MapEpiNode extends EpiNode //// this class is under construction.
               }
           MapEpiNode nestedMapEpiNode= // Get nested map which should be 
             (MapEpiNode)firstMapEntry.getValue(); // value of first entry of top map.
-              //// This could produce a ClassCastException, but it's only temporary.
+              ///fix This could produce a ClassCastException, but it's only temporary.
           Map.Entry<EpiNode,EpiNode> nestedMapEntry= // Get desired entry from nested map.
               nestedMapEpiNode.getMapEntry(indexI-1);
           EpiNode valueEpiNode= nestedMapEntry.getValue(); // Get its value, not its name.
