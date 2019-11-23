@@ -4,7 +4,10 @@ import static allClasses.AppLog.theAppLog;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 
 public class EpiNode 
 
@@ -15,23 +18,28 @@ public class EpiNode
     Subclasses follow this one.
     */
   {
-
-  public String extractFromEpiNodeString(int indexI) 
-      throws IOException
-    /* This method tries to extract the String whose index is indexI from this EpiNode. 
-      If it succeeds it returns the String.  
-      If it fails it returns null, meaning the index is out of range.
-      Presently the EpiNode must be a SequenceEpiNode but this is temporary.
-      The mapping between index values and Strings in the EpiNode is complex, 
-      depends on the EpiNode, and may be temporary.  
-      
-      In this base class, it always returns null and logs an error.
-      */
-    { 
-      theAppLog.error( ""
-          + "EpiNode.extractFromEpiNodeString(int): base class should not be called.");
-      return null;
-      }
+  
+    public String extractFromEpiNodeString(int indexI) 
+        throws IOException
+      /* This method tries to extract the String whose index is indexI from this EpiNode. 
+        If it succeeds it returns the String.  
+        If it fails it returns null, meaning the index is out of range.
+        Presently the EpiNode must be a SequenceEpiNode but this is temporary.
+        The mapping between index values and Strings in the EpiNode is complex, 
+        depends on the EpiNode, and may be temporary.  
+        In this base class, it always returns null and logs an error.
+        
+        This method is meant to act as a bridge between 
+        accessing data by position and accessing data by name.
+        Because of this, and the fact that they methods are temporary,
+        error reporting is crude, just enough for debugging and 
+        moving on to the next development phase.
+        */
+      { 
+        theAppLog.error( ""
+            + "EpiNode.extractFromEpiNodeString(int): base class should not be called.");
+        return null;
+        }
 
     public EpiNode getEpiNode(int indexI)
       /* This method returns the element EpiNode at index indexI,
@@ -252,6 +260,54 @@ class MapEpiNode extends EpiNode //// this class is under construction.
   {
     @SuppressWarnings("unused") ////
     private LinkedHashMap<EpiNode,EpiNode> theLinkedHashMap; 
+
+    public String extractFromEpiNodeString(int indexI) //// 
+        throws IOException
+      /* See base class for documentation.  */
+      { 
+        String resultString= null; // Set default function result to indicate failure.
+        toReturn: {
+          Map.Entry<EpiNode,EpiNode> firstMapEntry= getMapEntry(0); // Get first entry.
+          if (indexI == 0) // First string desired. 
+            { // Return first entry key.
+              EpiNode keyEpiNode= firstMapEntry.getKey();
+              resultString= keyEpiNode.toString(); // Return as string.
+              break toReturn;
+              }
+          MapEpiNode nestedMapEpiNode= // Get nested map which should be 
+            (MapEpiNode)firstMapEntry.getValue(); // value of first entry of top map.
+              //// This could produce a ClassCastException, but it's only temporary.
+          Map.Entry<EpiNode,EpiNode> nestedMapEntry= // Get desired entry from nested map.
+              nestedMapEpiNode.getMapEntry(indexI-1);
+          EpiNode valueEpiNode= nestedMapEntry.getValue(); // Get its value, not its name.
+          resultString= valueEpiNode.toString(); // Return as string.
+        } // toReturn:
+          return resultString; // Returned EpiNode converted to String.
+        }
+
+    public  Map.Entry<EpiNode,EpiNode> getMapEntry(int indexI) 
+        throws IOException
+      /* Returns Map.Entry at position indexI, 
+        or null if indexI is out of range, or the entry itself is null.
+        It finds the correct entry by iterating to the desired position 
+        and returning the Map.Entry there.
+        The map order is the insertion order.
+        */
+      { 
+        Map.Entry<EpiNode,EpiNode> resultMapEntry= null; // Assume failure result for now.
+        Set<Map.Entry<EpiNode,EpiNode>> theSetOfMapEntrys= theLinkedHashMap.entrySet();
+        Iterator<Map.Entry<EpiNode,EpiNode>> entryIterator= theSetOfMapEntrys.iterator();
+        while(true) { // Iterate to the desired entry.
+          if (! entryIterator.hasNext()) // No more entries? 
+            break; // Exit with default fail.
+          if (indexI == 0) { // This is the entry we want.
+            resultMapEntry= entryIterator.next(); // Set it as result.
+            break; // Exit, with success, unless entry is null.
+            }
+          indexI--; // Decrement entry down-counter.
+          }
+        return resultMapEntry;
+        }
   
     private MapEpiNode(LinkedHashMap<EpiNode,EpiNode> theLinkedHashMap)
       {
@@ -267,6 +323,7 @@ class MapEpiNode extends EpiNode //// this class is under construction.
         but whatever terminated the MapEpiNode remains to be read.
         If not successful then this method returns null 
         and the stream position is unchanged.
+
         
         Parsing maps is tricky because, though they contain entries,
         and entries are always parsed as if a single entrity, 

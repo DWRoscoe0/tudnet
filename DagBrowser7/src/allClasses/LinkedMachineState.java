@@ -134,6 +134,7 @@ public class LinkedMachineState
       {
         theNetcasterOutputStream.writeInBlockV( "DEBUG" );
         theNetcasterOutputStream.writeInBlockV(debugMessageCountL);
+        theNetcasterOutputStream.endBlockV(); // End EpiNode but do not send packet yet.
         debugMessageCountL++;
         }
 
