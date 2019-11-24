@@ -76,7 +76,7 @@ public class Subcaster
 					theSubcasterOutputStream.close(); // Closing output stream.
 					}
 				catch( IOException e ) {
-					Globals.logAndRethrowAsRuntimeExceptionV( 
+					Misc.logAndRethrowAsRuntimeExceptionV( 
 							"run() IOException", e 
 							);
 			    }

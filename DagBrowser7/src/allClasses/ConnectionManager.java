@@ -191,7 +191,7 @@ public class ConnectionManager
 				try { // Doing this here is a bit of a kludge.
 					  multicastInetAddress= InetAddress.getByName("239.255.0.0"); }
 				  catch ( UnknownHostException e ) { 
-          	Globals.logAndRethrowAsRuntimeExceptionV( "initializeV()", e );
+          	Misc.logAndRethrowAsRuntimeExceptionV( "initializeV()", e );
 				  }
     		}
 

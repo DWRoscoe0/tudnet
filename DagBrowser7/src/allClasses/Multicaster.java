@@ -266,7 +266,7 @@ public class Multicaster
 	                } // Receiving and queuing one packet.
 	            }
 	            catch( IOException e ) {
-				  			Globals.logAndRethrowAsRuntimeExceptionV( 
+				  			Misc.logAndRethrowAsRuntimeExceptionV( 
 				  					"run() IOException: ", e
 				  					);
 	            }

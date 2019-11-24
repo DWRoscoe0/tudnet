@@ -209,7 +209,7 @@ public class Unicaster
 	      		theDataTreeModel.displayTreeModelChangesV(); // Display tree after removal.
           	}
           catch( IOException theIOException) {
-          	Globals.logAndRethrowAsRuntimeExceptionV( 
+          	Misc.logAndRethrowAsRuntimeExceptionV( 
           			"run() IOException", theIOException 
           			);
             }
@@ -261,7 +261,7 @@ public class Unicaster
         try {
           processInputB( "Connect" ); // Make state machine process connect message.
         } catch( IOException theIOException) {
-          Globals.logAndRethrowAsRuntimeExceptionV( 
+          Misc.logAndRethrowAsRuntimeExceptionV( 
               "Unicaster.connectToPeerV() IOException", theIOException 
               );
           }

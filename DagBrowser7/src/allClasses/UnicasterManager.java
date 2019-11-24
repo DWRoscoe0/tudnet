@@ -173,7 +173,7 @@ public class UnicasterManager
       			theUnicaster.initializeWithIOExceptionV(
       			    resultUnicasterValue.getEpiThread());
         	} catch( IOException e ) {
-        		Globals.logAndRethrowAsRuntimeExceptionV( 
+        		Misc.logAndRethrowAsRuntimeExceptionV( 
         				"buildAndAddUnicaster(..) IOException", e );
           }
 	      addingV( // Adding the new Unicaster to data structures.

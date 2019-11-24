@@ -87,7 +87,7 @@ public class EDTUtilities {
 			  	catch  // Unhandled exception occurred on Event Dispatch Thread.
 			  	  (InvocationTargetException theInvocationTargetException)
 			  	  {
-				  	  Globals.logAndRethrowAsRuntimeExceptionV( 
+				  	  Misc.logAndRethrowAsRuntimeExceptionV( 
 			  	      "EDTUtilities.invokeAndWaitV(..) exception", 
 			  	      theInvocationTargetException);
 				  	  }

@@ -104,7 +104,7 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
               } // Receiving and queuing one packet appropriately.
           }
           catch( IOException e ) {
-		  			Globals.logAndRethrowAsRuntimeExceptionV( 
+		  			Misc.logAndRethrowAsRuntimeExceptionV( 
 		  					"run() IOException: ", e
 		  					);
           }

@@ -138,6 +138,22 @@ public class Misc
 		    		  }
 	  			}
 
+  	  
+      // Exception handling and logging.
+
+      public static void logAndRethrowAsRuntimeExceptionV( 
+        String aString, Throwable theThrowable 
+        )
+      /* Writes an error to the log, then
+        Throws a RuntimeException wrapped around theThrowaable.
+        This method should never be called, except maybe during debugging.
+        */
+      {
+        theAppLog.exception( "Globals.logAndRethrowAsRuntimeExceptionV(..)"
+            + aString + ":" + Globals.NL + "  ", theThrowable );
+        throw new RuntimeException( theThrowable );
+        }
+
     
     // Miscellaneous.
     

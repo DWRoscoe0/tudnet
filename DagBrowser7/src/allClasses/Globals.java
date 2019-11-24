@@ -1,8 +1,5 @@
 package allClasses;
 
-import static allClasses.AppLog.theAppLog;
-
-
 public class Globals 
   /* This class is used for convenient access to
     things the app needs to access from many different source files. 
@@ -30,21 +27,6 @@ public class Globals
         any of the characters in the new-line String, false otherwise.
        */ 
        { return (NL.indexOf(CI)>=0) ; }
-  
-    
-    // Exception handling and logging.
-    
-	  public static void logAndRethrowAsRuntimeExceptionV( 
-	  		String aString, Throwable theThrowable 
-	  		)
-	    /* Writes an error to the log, then
-        Throws a RuntimeException wrapped around theThrowaable.
-        This method should never be called, except maybe during debugging.
-        */
-	    {
-		    theAppLog.exception( "Globals.logAndRethrowAsRuntimeExceptionV(..)"
-		        + aString + ":" + NL + "  ", theThrowable );
-		    throw new RuntimeException( theThrowable );
-		    }
+
   	
   	}
