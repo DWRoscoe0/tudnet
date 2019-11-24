@@ -179,7 +179,8 @@ public class Outline
               )
             { // Accumulate line.
               totalString+= lineString;  // Append present line.
-              totalString+= '\n';  // Append newline character.
+              //// totalString+= '\n';  // Append newline character.
+              totalString+= NL;  // Append newline.
               readLineV( );  // Read next line.
               } // Accumulate line.
           return totalString;  // Return final result.

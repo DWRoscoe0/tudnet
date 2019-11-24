@@ -19,7 +19,20 @@ public class Globals
     do not change the state of the program, such as logging.
     */
   {
-    public static final String NL= System.getProperty("line.separator");
+  
+    // Platform-dependent new-line code.
+  
+    public static final String NL= // Defines the new-line String.
+        System.getProperty("line.separator");
+    
+    public static boolean NLTestB(int CI) 
+      /* This method returns true if CI is 
+        any of the characters in the new-line String, false otherwise.
+       */ 
+       { return (NL.indexOf(CI)>=0) ; }
+  
+    
+    // Exception handling and logging.
     
 	  public static void logAndRethrowAsRuntimeExceptionV( 
 	  		String aString, Throwable theThrowable 

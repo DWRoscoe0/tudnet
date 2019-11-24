@@ -6,7 +6,8 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 
 import static allClasses.AppLog.theAppLog;
-
+import static allClasses.Globals.*;
+ 
 
 public class MetaFile { // For app's meta-data files.
 
@@ -403,7 +404,8 @@ public class MetaFile { // For app's meta-data files.
               } // Process entire token, if any.
             else  // Handle white-space delimited string.
             while (true) { // Process entire token, if any.
-              if ( byteI == -1 || byteI == ' ' || byteI == '\n' )  // End of token.
+              //// if ( byteI == -1 || byteI == ' ' || byteI == '\n' )  // End of token.
+              if ( byteI == -1 || byteI == ' ' || NLTestB(byteI) )  // End of token.
                 { // Back up file offset and exit.
                   theRandomAccessFile.seek( // Move file pointer back to...
                     startingOffsetLI + tokenString.length() ); // ...end of token.
@@ -451,7 +453,8 @@ public class MetaFile { // For app's meta-data files.
         if // Go to a new line if...
           ( columnI > indentLevelI )  // ...past indent level.
           { // Go to a new line.
-            rwLiteral( "\n" );  // Go to new line.
+            //// rwLiteral( "\n" );  // Go to new line.
+            rwLiteral( NL );  // Go to new line.
             columnI= 0;  // Reset to column 0.
             } // Go to a new line.
         while  // Add spaces to indent while...
@@ -512,7 +515,7 @@ public class MetaFile { // For app's meta-data files.
                 {
                   errorB= true;  // Set error return value.
                   System.out.print( 
-                    "\nrwLiteral( '"+
+                    NL+"rwLiteral( '"+
                     inString+
                     "' ) MISMATCH!!!"
                     );

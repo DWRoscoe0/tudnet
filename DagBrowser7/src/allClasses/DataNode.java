@@ -8,6 +8,7 @@ import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
 
 import static allClasses.AppLog.theAppLog;
+import static allClasses.Globals.*;
 
 
 public class DataNode 
@@ -457,7 +458,8 @@ public class DataNode
 			  	if // Convert undefined to blank.
 			  	  ( valueString == "-UNDEFINED-VALUE-" )
 			  	  { valueString= ""; break process; }
-			    int indexOfNewLineI= valueString.indexOf("\n");
+			    //// int indexOfNewLineI= valueString.indexOf("\n");
+			  	int indexOfNewLineI= valueString.indexOf(NL);
 		  	  if // Trimming extra lines if there are any in value string.
 		  	    ( indexOfNewLineI >= 0 )
 		  	  	valueString= // Replacing value string with only its first line. 

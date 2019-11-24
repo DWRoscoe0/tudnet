@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Iterator;
 import java.util.NavigableMap;
-import static allClasses.Globals.NL;
+import static allClasses.Globals.*;
 
 import static allClasses.AppLog.theAppLog;
 
@@ -111,7 +111,8 @@ public class Persistent
 		  	  while (true) // Read, convert, and store a line in character array.
 		  	  	{
 		  	  	  if  // Exit loop if end of line character, or end of file.
-		  	  	    ((CI=='\n') || (CI=='\r') || (CI==-1)) 
+		  	  	    //// ((CI=='\n') || (CI=='\r') || (CI==-1)) 
+		  	  	    (NLTestB(CI) || (CI==-1))
 		  	  	  	break;
 		  	  	  lineAB[offsetI++]= (byte)(0xff & CI); // Store converted byte.
 		  		  	CI= configFileInputStream.read(); // Read next byte.
@@ -435,7 +436,7 @@ public class Persistent
             thePrintWriter= new PrintWriter(
                 AppSettings.makeRelativeToAppFolderFile(fileString));
 			  		writingV(thePrintWriter,
-			  				"#---multi-element path and data output follows---\n");
+			  				"#---multi-element path and data output follows---"+NL);
 		  			multilevelStoreNodeV(thePrintWriter, "", rootPersistingNode);
 			  		}
 			  	catch (Exception theException) { 
