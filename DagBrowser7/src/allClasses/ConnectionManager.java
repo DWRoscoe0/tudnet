@@ -10,8 +10,8 @@ import java.net.UnknownHostException;
 
 import allClasses.LockAndSignal.Input;
 
-import static allClasses.Globals.NL;
 import static allClasses.AppLog.theAppLog;
+import static allClasses.SystemSettings.NL;
 
 public class ConnectionManager 
 

@@ -36,4 +36,17 @@ public class SystemSettings
         theAppLog.info( "SystemSettings. "+nameString + "= "+valueString );
         }
 
+
+    // Platform-dependent new-line code.
+
+    public static boolean NLTestB(int CI) 
+    /* This method returns true if CI is 
+      any of the characters in the new-line String, false otherwise.
+     */ 
+     { return (NL.indexOf(CI)>=0) ; }
+  
+    public static final String NL= // Defines the new-line String.
+        System.getProperty("line.separator");
+
+
     }

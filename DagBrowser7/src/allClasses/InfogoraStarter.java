@@ -7,7 +7,7 @@ import java.util.Arrays;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static allClasses.Globals.NL;
+import static allClasses.SystemSettings.NL;
 import static allClasses.AppLog.theAppLog;
 
 

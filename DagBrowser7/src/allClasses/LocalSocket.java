@@ -7,7 +7,7 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import static allClasses.Globals.NL;
+import static allClasses.SystemSettings.NL;
 
 import static allClasses.AppLog.theAppLog;
 

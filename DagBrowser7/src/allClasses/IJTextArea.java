@@ -10,7 +10,7 @@ import java.io.InputStreamReader;
 import java.io.File; // added manually.
 
 import javax.swing.JTextArea;
-import static allClasses.Globals.NL;
+import static allClasses.SystemSettings.NL;
 
 
 public class IJTextArea

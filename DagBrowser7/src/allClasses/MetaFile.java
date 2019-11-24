@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 
 import static allClasses.AppLog.theAppLog;
-import static allClasses.Globals.*;
+import static allClasses.SystemSettings.NL;
  
 
 public class MetaFile { // For app's meta-data files.
@@ -405,7 +405,7 @@ public class MetaFile { // For app's meta-data files.
             else  // Handle white-space delimited string.
             while (true) { // Process entire token, if any.
               //// if ( byteI == -1 || byteI == ' ' || byteI == '\n' )  // End of token.
-              if ( byteI == -1 || byteI == ' ' || NLTestB(byteI) )  // End of token.
+              if ( byteI == -1 || byteI == ' ' || SystemSettings.NLTestB(byteI) )  // End of token.
                 { // Back up file offset and exit.
                   theRandomAccessFile.seek( // Move file pointer back to...
                     startingOffsetLI + tokenString.length() ); // ...end of token.

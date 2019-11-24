@@ -15,7 +15,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 
 import static allClasses.AppLog.theAppLog;
-import static allClasses.Globals.NL;
+import static allClasses.SystemSettings.NL;
 
 
 public class FileOps

@@ -14,7 +14,7 @@ import java.nio.channels.FileLockInterruptionException;
 import allClasses.LockAndSignal.Input;
 
 import static allClasses.AppLog.LogLevel.*;
-import static allClasses.Globals.NL;
+import static allClasses.SystemSettings.NL;
 
 public class AppLog extends EpiThread
 

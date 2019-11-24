@@ -4,8 +4,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static allClasses.AppLog.theAppLog;
 import static allClasses.AppLog.LogLevel.*;
-
-import static allClasses.Globals.NL;
+import static allClasses.SystemSettings.NL;
 
 
 public class SystemsMonitor 

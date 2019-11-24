@@ -5,7 +5,7 @@ import java.util.Set;
 
 import static allClasses.AppLog.LogLevel.WARN;
 import static allClasses.AppLog.theAppLog;
-import static allClasses.Globals.NL;
+import static allClasses.SystemSettings.NL;
 
 /* This file is the root of this application.  
   If you want to understand this application then

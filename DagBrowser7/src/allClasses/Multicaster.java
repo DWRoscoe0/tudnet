@@ -10,7 +10,7 @@ import java.net.SocketException;
 import java.util.Properties;
 
 import static allClasses.AppLog.theAppLog;
-import static allClasses.Globals.NL;
+import static allClasses.SystemSettings.NL;
 
 
 /*

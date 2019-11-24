@@ -12,7 +12,7 @@ import allClasses.DataNode.ChangeFlag;
 import javax.swing.tree.TreeModel;
 
 import static allClasses.AppLog.theAppLog;
-import static allClasses.Globals.NL;
+import static allClasses.SystemSettings.NL;
 
 
 public class DataTreeModel

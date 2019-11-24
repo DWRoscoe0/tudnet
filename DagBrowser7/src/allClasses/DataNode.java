@@ -8,7 +8,7 @@ import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
 
 import static allClasses.AppLog.theAppLog;
-import static allClasses.Globals.*;
+import static allClasses.SystemSettings.NL;
 
 
 public class DataNode 

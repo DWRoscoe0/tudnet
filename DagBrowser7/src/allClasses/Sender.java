@@ -7,7 +7,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import static allClasses.AppLog.theAppLog;
-import static allClasses.Globals.NL;
+import static allClasses.SystemSettings.NL;
 
 
 public class Sender // Uunicast and multicast sender thread.

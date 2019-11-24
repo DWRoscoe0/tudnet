@@ -5,7 +5,7 @@ import java.io.IOException;
 import allClasses.LockAndSignal.Input;
 
 import static allClasses.AppLog.theAppLog;
-import static allClasses.Globals.NL;
+import static allClasses.SystemSettings.NL;
 
 
 public class Streamcaster< 

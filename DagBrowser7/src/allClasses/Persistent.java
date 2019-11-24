@@ -6,9 +6,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Iterator;
 import java.util.NavigableMap;
-import static allClasses.Globals.*;
 
 import static allClasses.AppLog.theAppLog;
+import static allClasses.SystemSettings.NL;
 
 
 public class Persistent 
@@ -112,7 +112,7 @@ public class Persistent
 		  	  	{
 		  	  	  if  // Exit loop if end of line character, or end of file.
 		  	  	    //// ((CI=='\n') || (CI=='\r') || (CI==-1)) 
-		  	  	    (NLTestB(CI) || (CI==-1))
+		  	  	    (SystemSettings.NLTestB(CI) || (CI==-1))
 		  	  	  	break;
 		  	  	  lineAB[offsetI++]= (byte)(0xff & CI); // Store converted byte.
 		  		  	CI= configFileInputStream.read(); // Read next byte.

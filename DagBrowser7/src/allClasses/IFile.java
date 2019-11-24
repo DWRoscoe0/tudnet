@@ -12,7 +12,7 @@ import java.nio.file.Path;
 
 import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
-import static allClasses.Globals.NL;
+import static allClasses.SystemSettings.NL;
 
 public class IFile 
 

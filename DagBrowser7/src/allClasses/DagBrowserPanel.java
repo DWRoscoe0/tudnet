@@ -30,7 +30,7 @@ import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
 
 import static allClasses.AppLog.theAppLog;
-import static allClasses.Globals.NL;
+import static allClasses.SystemSettings.NL;
 
 public class DagBrowserPanel
 

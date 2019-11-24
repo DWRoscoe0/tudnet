@@ -5,7 +5,7 @@ import java.awt.KeyboardFocusManager;
 import java.text.SimpleDateFormat;
 
 import static allClasses.AppLog.theAppLog;
-import static allClasses.Globals.NL;
+import static allClasses.SystemSettings.NL;
 
 
 public class Misc
@@ -149,8 +149,8 @@ public class Misc
         This method should never be called, except maybe during debugging.
         */
       {
-        theAppLog.exception( "Globals.logAndRethrowAsRuntimeExceptionV(..)"
-            + aString + ":" + Globals.NL + "  ", theThrowable );
+        theAppLog.exception( "Misc.logAndRethrowAsRuntimeExceptionV(..)"
+            + aString + ":" + NL + "  ", theThrowable );
         throw new RuntimeException( theThrowable );
         }
 

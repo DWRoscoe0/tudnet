@@ -6,7 +6,7 @@ import java.io.InputStream;
 import java.io.RandomAccessFile;
 
 import static allClasses.AppLog.theAppLog;
-import static allClasses.Globals.NL;
+import static allClasses.SystemSettings.NL;
 
 
 public class Outline

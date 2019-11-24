@@ -9,7 +9,7 @@ import java.util.List;
 import allClasses.AppLog.LogLevel;
 
 import static allClasses.AppLog.theAppLog;
-import static allClasses.Globals.NL;
+import static allClasses.SystemSettings.NL;
 
 
 public class NamedList 

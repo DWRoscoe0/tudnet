@@ -11,7 +11,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static allClasses.AppLog.theAppLog;
-import static allClasses.Globals.*;  // appLogger;
+import static allClasses.SystemSettings.NL;
 
 public class AppInstanceManager {
 
