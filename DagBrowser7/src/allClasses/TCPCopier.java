@@ -751,15 +751,18 @@ public class TCPCopier extends EpiThread
       /* This method return a long number from the socketInputSteam.
         */
     {
-      char socketC;
       long theL= 0; // Digit accumulator.
       int socketByteI= socketInputStream.read(); // Read first byte.
+      while (true) { // Skip all possible non-digit bytes before number.
+        if (socketByteI==-1) break; // Exit if end of stream.
+        if (Character.isDigit(socketByteI)) break; // Exit if digit.
+        socketByteI= socketInputStream.read(); // Read next byte.
+        }
       while (true) { // Accumulate all digits of remote file time-stamp.
         if (socketByteI==-1) break; // Exit if end of stream.
-        socketC= (char)socketByteI;
-        if (! Character.isDigit(socketC)) break; // Exit if not digit.
+        if (! Character.isDigit(socketByteI)) break; // Exit if not digit.
         theL= // Combine new digit with digit accumulator.  
-            10 * theL + Character.digit(socketC, 10); 
+            10 * theL + Character.digit(socketByteI, 10); 
         socketByteI= socketInputStream.read(); // Read next byte.
         }
       // appLogger.debug( "readNumberL(..): "+theL);
@@ -775,7 +778,8 @@ public class TCPCopier extends EpiThread
       {
         // appLogger.debug( "sendNumberL(..): "+theL);
         TCPCopier.sendDigitsOfNumberV(socketOutputStream, theL);
-        socketOutputStream.write( (byte)('\n') );
+        //// socketOutputStream.write( (byte)('\n') );
+        socketOutputStream.write( NL.getBytes() );
         }
 
 		private static void sendDigitsOfNumberV( 
