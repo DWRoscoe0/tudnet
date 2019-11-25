@@ -132,9 +132,10 @@ public class LinkedMachineState
         The receiver should silently ignore this message and its argument.
         */
       {
-        theNetcasterOutputStream.writeInBlockV( "DEBUG" );
-        theNetcasterOutputStream.writeInBlockV(debugMessageCountL);
-        theNetcasterOutputStream.endBlockV(); // End EpiNode but do not send packet yet.
+        //// theNetcasterOutputStream.writeInBlockV( "DEBUG" );
+         //// theNetcasterOutputStream.writeInBlockV(debugMessageCountL);
+         //// theNetcasterOutputStream.endBlockV(); // End EpiNode but do not send packet yet.
+        theNetcasterOutputStream.writeV( "{DEBUG:{N:"+debugMessageCountL+"}}");
         debugMessageCountL++;
         }
 

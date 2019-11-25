@@ -24,14 +24,13 @@ public class EpiNode
       /* This method tries to extract the String whose index is indexI from this EpiNode. 
         If it succeeds it returns the String.  
         If it fails it returns null, meaning the index is out of range.
-        Presently the EpiNode must be a SequenceEpiNode but this is temporary.
         The mapping between index values and Strings in the EpiNode is complex, 
         depends on the EpiNode, and may be temporary.  
         In this base class, it always returns null and logs an error.
         
         This method is meant to act as a bridge between 
         accessing data by position and accessing data by name.
-        Because of this, and the fact that they methods are temporary,
+        Because of this, and the fact that the methods are temporary,
         error reporting is crude, just enough for debugging and 
         moving on to the next development phase.
         */
@@ -56,15 +55,19 @@ public class EpiNode
         It returns the node if the parse successful, null otherwise.
         It tries parsing node types in the following order:
         * SequenceEpiNode
-        * ScalarEpiNode
         * MapEpiNode (to be added)
+        * ScalarEpiNode
        */
       { 
-        EpiNode resultEpiNode= 
-          SequenceEpiNode.trySequenceEpiNode(theEpiInputStream);
-        if (resultEpiNode == null) 
-          resultEpiNode= ScalarEpiNode.tryScalarEpiNode(theEpiInputStream); 
-        return resultEpiNode;
+          EpiNode resultEpiNode= null; 
+        toReturn: {
+          resultEpiNode= SequenceEpiNode.trySequenceEpiNode(theEpiInputStream);
+          if (resultEpiNode != null) break toReturn;
+          resultEpiNode= MapEpiNode.tryMapEpiNode(theEpiInputStream);
+          if (resultEpiNode != null) break toReturn;
+          resultEpiNode= ScalarEpiNode.tryScalarEpiNode(theEpiInputStream);
+        } // toReturn:
+          return resultEpiNode;
         }
 
     }
@@ -233,7 +236,7 @@ class MapEpiNode extends EpiNode
         throws IOException
       /* See base class for documentation.  */
       { 
-        String resultString= null; // Set default function result to indicate failure.
+        String resultString= null; // Set default result to indicate failure.
         toReturn: {
           Map.Entry<EpiNode,EpiNode> firstMapEntry= getMapEntry(0); // Get first entry.
           if (indexI == 0) // First string desired. 
@@ -247,6 +250,8 @@ class MapEpiNode extends EpiNode
               ///fix This could produce a ClassCastException, but it's only temporary.
           Map.Entry<EpiNode,EpiNode> nestedMapEntry= // Get desired entry from nested map.
               nestedMapEpiNode.getMapEntry(indexI-1);
+          if (nestedMapEntry == null) // Any more entries? 
+            break toReturn; // No, so return with fail.
           EpiNode valueEpiNode= nestedMapEntry.getValue(); // Get its value, not its name.
           resultString= valueEpiNode.toString(); // Return as string.
         } // toReturn:
@@ -262,15 +267,17 @@ class MapEpiNode extends EpiNode
         The map order is the insertion order.
         */
       { 
-        Map.Entry<EpiNode,EpiNode> resultMapEntry= null; // Assume failure result for now.
+        Map.Entry<EpiNode,EpiNode> resultMapEntry= null;
+        Map.Entry<EpiNode,EpiNode> scanMapEntry= null;
         Set<Map.Entry<EpiNode,EpiNode>> theSetOfMapEntrys= theLinkedHashMap.entrySet();
         Iterator<Map.Entry<EpiNode,EpiNode>> entryIterator= theSetOfMapEntrys.iterator();
         while(true) { // Iterate to the desired entry.
-          if (! entryIterator.hasNext()) // No more entries? 
-            break; // Exit with default fail.
-          if (indexI == 0) { // This is the entry we want.
-            resultMapEntry= entryIterator.next(); // Set it as result.
-            break; // Exit, with success, unless entry is null.
+          if (! entryIterator.hasNext()) // More entries? 
+            break; // No, so exit with null value.
+          scanMapEntry= entryIterator.next(); // Yes, get current entry.
+          if (indexI == 0) { // Is this the entry we want?
+            resultMapEntry= scanMapEntry; // Yes, set the entry as result
+            break; // and exit.
             }
           indexI--; // Decrement entry down-counter.
           }
