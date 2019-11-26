@@ -22,12 +22,12 @@ public class EpiNode
     public String extractFromEpiNodeString(int indexI) 
         throws IOException
       /* This method tries to extract the String whose index is indexI from this EpiNode. 
-        If it succeeds it returns the String.  
-        If it fails it returns null, meaning the index is out of range.
-        The mapping between index values and Strings in the EpiNode is complex, 
-        depends on the EpiNode, and may be temporary.  
-        In this base class, it always returns null and logs an error.
-        
+        If it succeeds it returns the String.  If it fails it returns null, 
+        meaning there is no data at the index position requested.
+        The mapping between index values and Strings in the EpiNode 
+        is complex, depends on the EpiNode, and may be temporary.  
+        In this base class, this method returns null and logs an error.
+
         This method is meant to act as a bridge between 
         accessing data by position and accessing data by name.
         Because of this, and the fact that the methods are temporary,
@@ -236,26 +236,32 @@ class MapEpiNode extends EpiNode
         throws IOException
       /* See base class for documentation.  */
       { 
-        String resultString= null; // Set default result to indicate failure.
-        toReturn: {
-          Map.Entry<EpiNode,EpiNode> firstMapEntry= getMapEntry(0); // Get first entry.
-          if (indexI == 0) // First string desired. 
-            { // Return first entry key.
-              EpiNode keyEpiNode= firstMapEntry.getKey();
-              resultString= keyEpiNode.toString(); // Return as string.
-              break toReturn;
-              }
+          EpiNode resultEpiNode;
+        toReturn: { toReturnFail: {
+          Map.Entry<EpiNode,EpiNode> firstMapEntry= getMapEntry(0);
+          if (firstMapEntry == null) // First entry exists? 
+            break toReturnFail; // No, so return with fail.
+          if (indexI == 0) { // First string desired? 
+            resultEpiNode= firstMapEntry.getKey(); // So entry key is result.
+            break toReturn;
+            }
           MapEpiNode nestedMapEpiNode= // Get nested map which should be 
-            (MapEpiNode)firstMapEntry.getValue(); // value of first entry of top map.
+            (MapEpiNode)firstMapEntry.getValue(); // value of first entry.
               ///fix This could produce a ClassCastException, but it's only temporary.
-          Map.Entry<EpiNode,EpiNode> nestedMapEntry= // Get desired entry from nested map.
-              nestedMapEpiNode.getMapEntry(indexI-1);
-          if (nestedMapEntry == null) // Any more entries? 
-            break toReturn; // No, so return with fail.
-          EpiNode valueEpiNode= nestedMapEntry.getValue(); // Get its value, not its name.
-          resultString= valueEpiNode.toString(); // Return as string.
+          if (nestedMapEpiNode == null) // Is there a value, itself a map? 
+            break toReturnFail; // No, so return with fail.
+          Map.Entry<EpiNode,EpiNode> nestedMapEntry= // From nested map
+              nestedMapEpiNode.getMapEntry(indexI-1); // get desired entry.
+          if (nestedMapEntry == null) // Is an entry there? 
+            break toReturnFail; // No, so return with fail.
+          resultEpiNode= nestedMapEntry.getValue(); // Get entry value.
+          if (resultEpiNode != null) // Is a value there? 
+            break toReturn; // Yes, so use it.
+        } // toReturnFail: // Come here to return null indicating failure.
+          resultEpiNode= null; // Set result indicating extraction failure.
         } // toReturn:
-          return resultString; // Returned EpiNode converted to String.
+          return  // Returned desiredEpiNode converted to String or null.
+            (resultEpiNode != null) ? resultEpiNode.toString() : null;
         }
 
     public  Map.Entry<EpiNode,EpiNode> getMapEntry(int indexI) 

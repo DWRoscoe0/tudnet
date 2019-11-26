@@ -162,7 +162,8 @@ public class EpiOutputStream<
         }
 
     public void endBlockV() throws IOException
-      /* This method writes any bytes needed to finish the present block, if any.
+      /* This method writes any bytes needed to finish the present block, if any,
+        and marks all bytes written to that point as send-able.
         At that point the packet may be sent, or additional bytes may be written.
         */
       { 
@@ -171,7 +172,8 @@ public class EpiOutputStream<
             writeV( "]" ); // write block terminator
             writingBlockB= false; // and record that block is no longer active.
             }
-        sendableI= indexI; // Make all bytes written to buffer be send-able bytes.
+        //// sendableI= indexI; // Make all bytes written to buffer be send-able bytes.
+        makeAllBufferBytesSendableV();
         }
 
     public void writeV( String theString ) throws IOException
@@ -207,21 +209,30 @@ public class EpiOutputStream<
 	  	  queuingForSendV( theKeyedPacketE ); // Queuing new data argument packet.
 	    	}
 
-	  public void flush() throws IOException
-	    /* This method attaches the buffer to a UDP packet and sends the packet.
-	      Because UDP is unreliable, this method should be called only when
-	      the buffer contains one or more complete self-contained blocks of data.
-	      It should not be called because an attempt is made to write to a full buffer
-	      unless blocks are actually bytes.
-	      */
-	    { 
-        sendableI= indexI; // Make all bytes written to buffer be send-able bytes.
-	      sendNowV();
-	      } 
+    public void flush() throws IOException
+      /* This method attaches the buffer to a UDP packet and sends the packet.
+        Because UDP is unreliable, this method should be called only when
+        the buffer contains one or more complete self-contained blocks of data.
+        It should not be called because an attempt is made to write to a full buffer
+        unless blocks are actually bytes.
+        */
+      { 
+        //// sendableI= indexI; // Make all bytes written to buffer be send-able bytes.
+        makeAllBufferBytesSendableV();
+        sendNowV();
+        } 
+
+    private void makeAllBufferBytesSendableV()
+      { 
+        sendableI= indexI;
+        } 
 
     public void sendNowV() throws IOException
       /* This method schedules a packet to be sent immediately
-        with all send-able bytes.
+        with all send-able bytes, if any.
+        If no bytes in the buffer are send-able, no bytes will be sent.
+        Note, this is different from flush(), 
+        which leaves no buffer bytes unwritten.
         */
       { 
         scheduleSendB(0); // Schedule packet to be send with zero delay.

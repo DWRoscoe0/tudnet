@@ -316,7 +316,9 @@ public class Multicaster
                 	( ! EpiThread.testInterruptB() )
     	            { // Send and receive multicast packets.
     	              try {
-    		      	    	theEpiOutputStreamO.writeAndSendInBlockV("DISCOVERY"); // Sending query.
+    		      	    	//// theEpiOutputStreamO.writeAndSendInBlockV("DISCOVERY"); // Sending query.
+    	                theEpiOutputStreamO.writeV( "{DISCOVERY}" ); // Writing query.
+    	                theEpiOutputStreamO.flush(); // Sending it.
     	                receivingPacketsV( ); // Receiving packets until done.
     	                }
     	              catch( SocketException soe ) {
@@ -332,7 +334,9 @@ public class Multicaster
     	          stoppingMulticastReceiverThreadV();
     	          }
             for(int i=3; i>0; i--){ // Say goodbye 3 times...
-              theEpiOutputStreamO.writeAndSendInBlockV("MULTICAST-GOODBYE");
+              //// theEpiOutputStreamO.writeAndSendInBlockV("MULTICAST-GOODBYE");
+              theEpiOutputStreamO.writeV( "{MULTICAST-GOODBYE}" ); // Writing goodbye.
+              theEpiOutputStreamO.flush(); // Sending it.
               }
             }
           catch( IOException e ) {
@@ -399,8 +403,11 @@ public class Multicaster
 	            				theEpiInputStreamI.readAString(); // Reading message.
                   theAppLog.debug("receivingPacketsV() decoding:"+ inString);
 	            		if (inString.equals( "DISCOVERY" )) // Handling query, maybe.
-			        			{ theEpiOutputStreamO.writeAndSendInBlockV(
-	            				    "ALIVE"); // Sending response.
+			        			{ 
+	            		    //// theEpiOutputStreamO.writeAndSendInBlockV(
+	            				////    "ALIVE"); // Sending response.
+                      theEpiOutputStreamO.writeV( "{ALIVE}" ); // Writing response.
+                      theEpiOutputStreamO.flush(); // Sending it.
 			        			  processingPossibleNewUnicasterV(); 
 			        			  multicastConnectionLoggerV(true);
                       break messageDecoder;

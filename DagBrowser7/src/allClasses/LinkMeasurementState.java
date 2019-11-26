@@ -387,10 +387,14 @@ public class LinkMeasurementState
 			      ///dbg appLogger.info( 
 				    ///dbg 		"sendingSequenceNumberV() " + lastSequenceNumberSentL
 				    ///dbg 	);
+			    	/*  ////
 			      theNetcasterOutputStream.writeInBlockV( "PS" );
 			      theNetcasterOutputStream.writeInBlockV( 
 			      		lastSequenceNumberSentL 
 			      		);
+            */  ////
+            theNetcasterOutputStream.writeV( 
+                "{PS:{SN:" + lastSequenceNumberSentL + "}}" );
 			      theNetcasterOutputStream.endBlockAndSendPacketV();
 			  		sentSequenceNumberTimeNsL= System.nanoTime();
 			      }
@@ -550,15 +554,19 @@ public class LinkMeasurementState
 									newIncomingPacketsSentDefaultLongLike,
 									newIncomingPacketsReceivedNamedLong
 							  );
+              long receivedPacketCountL= 
+                  newIncomingPacketsReceivedNamedLong.getValueL(); 
+              /*  ////
 							theNetcasterOutputStream.writeInBlockV( "PA" );
 							theNetcasterOutputStream.writeInBlockV(
 				  				sequenceNumberI // The remote sequence number.
 				  				);
-							long receivedPacketCountL= 
-							  newIncomingPacketsReceivedNamedLong.getValueL(); 
 							theNetcasterOutputStream.writeInBlockV(
 									receivedPacketCountL  // The local received packet count.
 				  				);
+              */  ////
+              theNetcasterOutputStream.writeV( 
+                  "{PA:{SN:" + sequenceNumberI + ",PC:" + receivedPacketCountL + "}}" );
 							theNetcasterOutputStream.endBlockAndSendPacketV();
 							  // Sending now for minimum RTT.
 						  if (theAppLog.logB(TRACE)) theAppLog.logV(

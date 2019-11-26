@@ -458,8 +458,13 @@ public class LinkedMachineState
       /* This method sends 3 GOODBYEs, each in a separate packet.  */
       {
         for (int i=0; i<3; i++) { // Send 3 GOODBYE packets.
+          /*  /// 
           theNetcasterOutputStream.writeInBlockV( "GOODBYE" );
           theNetcasterOutputStream.endBlockAndSendPacketV(); // Forcing send.
+          */  ////
+          theNetcasterOutputStream.writeV( "{GOODBYE}" );
+          //// theNetcasterOutputStream.sendNowV();
+          theNetcasterOutputStream.flush();
           }
         }
 
@@ -519,17 +524,28 @@ public class LinkedMachineState
   			throws IOException
   	  /* This method sends a HELLO message to the remote peer
   	    from state subStateList, and logs that it has done so.
-  	    The HELLO message includes the IP address of the remote peer.
+  	    The HELLO message includes the IP address of the remote peer
+  	    and the ID of the peer node.
+  	    //// It is being converted to use map syntax.
   	    */
 	  	{
     	  sendDebugCountV();
+    	  /*  ////
     	  theNetcasterOutputStream.writeInBlockV( "HELLO" );
-		    theNetcasterOutputStream.writeInBlockV( 
+    	  theNetcasterOutputStream.writeInBlockV( 
 						theUnicaster.getKeyK().getInetAddress().getHostAddress() 
 						);  // Writing IP address of remote peer.
 		    theNetcasterOutputStream.writeInBlockV( 
-						thePersistent.getDefaultingToBlankString("PeerIdentity")); 
-		    theNetcasterOutputStream.endBlockAndSendPacketV(); // Forcing send.
+						thePersistent.getDefaultingToBlankString("PeerIdentity"));
+				*/  ////
+        theNetcasterOutputStream.writeV( // Write complete HELLO message in map syntax. 
+            "{HELLO:{"
+            + "IP:"+theUnicaster.getKeyK().getInetAddress().getHostAddress() // remote IP
+            + ","
+            + "PeerIdentity:"+thePersistent.getDefaultingToBlankString("PeerIdentity")
+            + "}}"
+            );
+        theNetcasterOutputStream.endBlockAndSendPacketV(); // Forcing send.
 	  		}
 
 		} // class LinkedMachineState
