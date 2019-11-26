@@ -132,9 +132,6 @@ public class LinkedMachineState
         The receiver should silently ignore this message and its argument.
         */
       {
-        //// theNetcasterOutputStream.writeInBlockV( "DEBUG" );
-         //// theNetcasterOutputStream.writeInBlockV(debugMessageCountL);
-         //// theNetcasterOutputStream.endBlockV(); // End EpiNode but do not send packet yet.
         theNetcasterOutputStream.writeV( "{DEBUG:{N:"+debugMessageCountL+"}}");
         debugMessageCountL++;
         }
@@ -458,12 +455,7 @@ public class LinkedMachineState
       /* This method sends 3 GOODBYEs, each in a separate packet.  */
       {
         for (int i=0; i<3; i++) { // Send 3 GOODBYE packets.
-          /*  /// 
-          theNetcasterOutputStream.writeInBlockV( "GOODBYE" );
-          theNetcasterOutputStream.endBlockAndSendPacketV(); // Forcing send.
-          */  ////
           theNetcasterOutputStream.writeV( "{GOODBYE}" );
-          //// theNetcasterOutputStream.sendNowV();
           theNetcasterOutputStream.flush();
           }
         }
@@ -526,18 +518,9 @@ public class LinkedMachineState
   	    from state subStateList, and logs that it has done so.
   	    The HELLO message includes the IP address of the remote peer
   	    and the ID of the peer node.
-  	    //// It is being converted to use map syntax.
   	    */
 	  	{
     	  sendDebugCountV();
-    	  /*  ////
-    	  theNetcasterOutputStream.writeInBlockV( "HELLO" );
-    	  theNetcasterOutputStream.writeInBlockV( 
-						theUnicaster.getKeyK().getInetAddress().getHostAddress() 
-						);  // Writing IP address of remote peer.
-		    theNetcasterOutputStream.writeInBlockV( 
-						thePersistent.getDefaultingToBlankString("PeerIdentity"));
-				*/  ////
         theNetcasterOutputStream.writeV( // Write complete HELLO message in map syntax. 
             "{HELLO:{"
             + "IP:"+theUnicaster.getKeyK().getInetAddress().getHostAddress() // remote IP

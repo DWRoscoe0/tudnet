@@ -404,7 +404,6 @@ public class MetaFile { // For app's meta-data files.
               } // Process entire token, if any.
             else  // Handle white-space delimited string.
             while (true) { // Process entire token, if any.
-              //// if ( byteI == -1 || byteI == ' ' || byteI == '\n' )  // End of token.
               if ( byteI == -1 || byteI == ' ' || SystemSettings.NLTestB(byteI) )  // End of token.
                 { // Back up file offset and exit.
                   theRandomAccessFile.seek( // Move file pointer back to...
@@ -453,7 +452,6 @@ public class MetaFile { // For app's meta-data files.
         if // Go to a new line if...
           ( columnI > indentLevelI )  // ...past indent level.
           { // Go to a new line.
-            //// rwLiteral( "\n" );  // Go to new line.
             rwLiteral( NL );  // Go to new line.
             columnI= 0;  // Reset to column 0.
             } // Go to a new line.

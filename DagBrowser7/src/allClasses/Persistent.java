@@ -111,7 +111,6 @@ public class Persistent
 		  	  while (true) // Read, convert, and store a line in character array.
 		  	  	{
 		  	  	  if  // Exit loop if end of line character, or end of file.
-		  	  	    //// ((CI=='\n') || (CI=='\r') || (CI==-1)) 
 		  	  	    (SystemSettings.NLTestB(CI) || (CI==-1))
 		  	  	  	break;
 		  	  	  lineAB[offsetI++]= (byte)(0xff & CI); // Store converted byte.

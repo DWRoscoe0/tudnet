@@ -172,7 +172,6 @@ public class EpiOutputStream<
             writeV( "]" ); // write block terminator
             writingBlockB= false; // and record that block is no longer active.
             }
-        //// sendableI= indexI; // Make all bytes written to buffer be send-able bytes.
         makeAllBufferBytesSendableV();
         }
 
@@ -217,7 +216,6 @@ public class EpiOutputStream<
         unless blocks are actually bytes.
         */
       { 
-        //// sendableI= indexI; // Make all bytes written to buffer be send-able bytes.
         makeAllBufferBytesSendableV();
         sendNowV();
         } 

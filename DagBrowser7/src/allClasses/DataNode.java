@@ -458,7 +458,6 @@ public class DataNode
 			  	if // Convert undefined to blank.
 			  	  ( valueString == "-UNDEFINED-VALUE-" )
 			  	  { valueString= ""; break process; }
-			    //// int indexOfNewLineI= valueString.indexOf("\n");
 			  	int indexOfNewLineI= valueString.indexOf(NL);
 		  	  if // Trimming extra lines if there are any in value string.
 		  	    ( indexOfNewLineI >= 0 )

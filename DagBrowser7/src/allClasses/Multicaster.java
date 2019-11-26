@@ -316,7 +316,6 @@ public class Multicaster
                 	( ! EpiThread.testInterruptB() )
     	            { // Send and receive multicast packets.
     	              try {
-    		      	    	//// theEpiOutputStreamO.writeAndSendInBlockV("DISCOVERY"); // Sending query.
     	                theEpiOutputStreamO.writeV( "{DISCOVERY}" ); // Writing query.
     	                theEpiOutputStreamO.flush(); // Sending it.
     	                receivingPacketsV( ); // Receiving packets until done.
@@ -334,7 +333,6 @@ public class Multicaster
     	          stoppingMulticastReceiverThreadV();
     	          }
             for(int i=3; i>0; i--){ // Say goodbye 3 times...
-              //// theEpiOutputStreamO.writeAndSendInBlockV("MULTICAST-GOODBYE");
               theEpiOutputStreamO.writeV( "{MULTICAST-GOODBYE}" ); // Writing goodbye.
               theEpiOutputStreamO.flush(); // Sending it.
               }
@@ -404,8 +402,6 @@ public class Multicaster
                   theAppLog.debug("receivingPacketsV() decoding:"+ inString);
 	            		if (inString.equals( "DISCOVERY" )) // Handling query, maybe.
 			        			{ 
-	            		    //// theEpiOutputStreamO.writeAndSendInBlockV(
-	            				////    "ALIVE"); // Sending response.
                       theEpiOutputStreamO.writeV( "{ALIVE}" ); // Writing response.
                       theEpiOutputStreamO.flush(); // Sending it.
 			        			  processingPossibleNewUnicasterV(); 
@@ -480,7 +476,7 @@ public class Multicaster
         through which a packet would be routed to an Internet routeable 
         IP-address.
         
-        ///fix  Make multicasting more general.
+        ///enh  Make multicasting more general.
           It should be able to discover nodes on all NetworkInterfaces.
         ///org Note, AppInstanceManager.logLocalHostV() 
           does not do the same thing.  

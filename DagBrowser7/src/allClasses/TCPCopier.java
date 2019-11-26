@@ -778,7 +778,6 @@ public class TCPCopier extends EpiThread
       {
         // appLogger.debug( "sendNumberL(..): "+theL);
         TCPCopier.sendDigitsOfNumberV(socketOutputStream, theL);
-        //// socketOutputStream.write( (byte)('\n') );
         socketOutputStream.write( NL.getBytes() );
         }
 

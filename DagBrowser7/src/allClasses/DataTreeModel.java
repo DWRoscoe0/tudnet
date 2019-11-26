@@ -846,11 +846,9 @@ public class DataTreeModel
 	            try {
   	              fireTreeNodesChanged( theTreeModelEvent );  // Firing as change event.
                 } catch ( Exception theException  ) {
-                  //// theAppLog.exception( "DataTreeModel.reportingChangeB((..) to "
                   theAppLog.debug( "DataTreeModel.reportingChangeB((..) to "
                     + NL + "  theDataNode=" + theDataNode + " with indexI=" + indexI 
                     + NL + "  in parentDataNode=" + parentDataNode 
-                    //// + ", ignoring Exception", theException );
                     + ", ignoring Exception" + theException );
                   break toReturn;
                 }
