@@ -1,5 +1,7 @@
 package allClasses;
 
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 
@@ -143,5 +145,36 @@ public class PersistingNode {
 		{
 			return childrenNavigableMap;
 			}
+
+  public static MapEpiNode makeMapEpiNode(PersistingNode thePersistingNode)
+    /* This method returns a MapEpiNode containing 
+      all the data in thePersistingNode.
+      It doesn't include a PersistingNode's valueString data if the node has children.   
+      */
+    {
+      LinkedHashMap<EpiNode,EpiNode> resultLinkedHashMap= 
+        new LinkedHashMap<EpiNode,EpiNode>(); // Create initially empty output map.
+      NavigableMap<String,PersistingNode> childrenNavigableMap= 
+          thePersistingNode.getNavigableMap();
+      Iterator<String> childrenIterator= // Make iterator for the PersistingNode children. 
+          childrenNavigableMap.keySet().iterator();
+      while (childrenIterator.hasNext()) // Copy all PersistingNode entries to EpiNode.
+        { // Copy data from one PersistingNode map entry to EpiNode map.
+          String childKeyString= childrenIterator.next();
+          PersistingNode childValuePersistingNode= 
+              childrenNavigableMap.get(childKeyString);
+          NavigableMap<String,PersistingNode> childValueNavigableMap=
+              childValuePersistingNode.getNavigableMap();
+          EpiNode childKeyEpiNode= new ScalarEpiNode(childKeyString);
+          EpiNode childValueEpiNode;
+          if (childValueNavigableMap.isEmpty()) // If there are no children 
+            childValueEpiNode= new ScalarEpiNode(childKeyString);  // use value string as value 
+            else // otherwise
+            childValueEpiNode= // use value of child recursively converted to EpiNode. 
+              makeMapEpiNode(childValuePersistingNode);
+          resultLinkedHashMap.put(childKeyEpiNode,childValueEpiNode); // Append new entry to map.
+          }
+        return new MapEpiNode(resultLinkedHashMap);
+      }
 
 	}

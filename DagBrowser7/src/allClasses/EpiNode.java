@@ -69,7 +69,7 @@ public class EpiNode
         } // toReturn:
           return resultEpiNode;
         }
-
+        
     }
 
 class ScalarEpiNode extends EpiNode 
@@ -290,7 +290,7 @@ class MapEpiNode extends EpiNode
         return resultMapEntry;
         }
   
-    private MapEpiNode(LinkedHashMap<EpiNode,EpiNode> theLinkedHashMap)
+    public MapEpiNode(LinkedHashMap<EpiNode,EpiNode> theLinkedHashMap)
       {
         this.theLinkedHashMap= theLinkedHashMap;
         }
@@ -383,4 +383,4 @@ class MapEpiNode extends EpiNode
         return resultLinkedHashMap;
       }
 
-  }
+    }
