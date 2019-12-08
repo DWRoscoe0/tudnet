@@ -59,7 +59,7 @@ public abstract class EpiNode
         throws IOException;
       /* Writes this EpiNode to theEpiOutputStream.  */
 
-      public static EpiNode tryEpiNode(EpiInputStream<?,?,?,?> theEpiInputStream ) 
+      public static EpiNode tryEpiNode(RandomAccessInputStream theRandomAccessInputStream ) 
         throws IOException
       /* This method tries to parse an EpiNode.
         It returns the node if the parse successful, null otherwise.
@@ -71,11 +71,11 @@ public abstract class EpiNode
       { 
           EpiNode resultEpiNode= null; 
         toReturn: {
-          resultEpiNode= SequenceEpiNode.trySequenceEpiNode(theEpiInputStream);
+          resultEpiNode= SequenceEpiNode.trySequenceEpiNode(theRandomAccessInputStream);
           if (resultEpiNode != null) break toReturn;
-          resultEpiNode= MapEpiNode.tryMapEpiNode(theEpiInputStream);
+          resultEpiNode= MapEpiNode.tryMapEpiNode(theRandomAccessInputStream);
           if (resultEpiNode != null) break toReturn;
-          resultEpiNode= ScalarEpiNode.tryScalarEpiNode(theEpiInputStream);
+          resultEpiNode= ScalarEpiNode.tryScalarEpiNode(theRandomAccessInputStream);
         } // toReturn:
           return resultEpiNode;
         }
@@ -90,6 +90,53 @@ public abstract class EpiNode
           }
         }
     
+
+    public static boolean tryByteB(
+          RandomAccessInputStream theRandomAccessInputStream, int desiredByteI) 
+      throws IOException
+      /* Tries to read desiredByteI from the stream.
+        This is like getByteB(..) except that the stream position
+        is not changed if desiredByteI is not read from the stream.
+        */
+      {
+        int positionI= theRandomAccessInputStream.getPositionI(); // Save stream position.
+        boolean successB= // Read and check byte.
+            getByteB(theRandomAccessInputStream,desiredByteI);
+        if ( ! successB ) //  if failure.
+          theRandomAccessInputStream.setPositionV(positionI); // Restore stream position.
+        return successB;
+        }
+
+    public static boolean getByteB(
+        RandomAccessInputStream theRandomAccessInputStream, int desiredByteI) 
+      throws IOException
+      /* Reads a byte from theRandomAccessInputStream and compares it to desiredByteI.
+        If they are equal it returns true, otherwise false.
+        Failure can happen when either the byte read is not the desired byte or
+        if there is no byte available.
+        */
+      {
+        int byteI= tryBufferByteI(theRandomAccessInputStream);
+        boolean successB= // Check byte.   
+            (byteI == desiredByteI); // Fails if -1 or incorrect byte.
+        return successB;
+        }
+
+    public static int tryBufferByteI(RandomAccessInputStream theRandomAccessInputStream) 
+        throws IOException
+      /* Returns the next stream byte if available in the 
+        theRandomAccessInputStream buffer, -1 otherwise. 
+        It will not attempt to load the next block of data into the buffer.
+        */
+      {
+        int byteI;
+        if ( theRandomAccessInputStream.bufferByteCountI() > 0 ) // If byte available 
+          byteI= theRandomAccessInputStream.read(); // read the byte
+          else
+          byteI= -1; // otherwise set return value of -1.
+        return byteI;
+        }
+
     } // class EpiNode
 
 class ScalarEpiNode extends EpiNode 
@@ -116,10 +163,10 @@ class ScalarEpiNode extends EpiNode
     public String toString() { return scalarString; }
       
     public static ScalarEpiNode tryScalarEpiNode( 
-          EpiInputStream<?,?,?,?> theEpiInputStream ) 
+          RandomAccessInputStream theRandomAccessInputStream ) 
         throws IOException
-      /* This method tries to parse a EpiInputStream (YAML subset scalar string)
-        from theEpiInputStream.
+      /* This method tries to parse a ScalarEpiNode (YAML subset scalar string)
+        from theRandomAccessInputStream.
         If successful then it returns the ScalarEpiNode 
         and the stream is moved past the scalar characters,
         but whatever terminated the scalar remains to be read.
@@ -132,13 +179,13 @@ class ScalarEpiNode extends EpiNode
         int byteI;
         String accumulatorString= ""; // Clear character accumulator.
         readLoop: { while (true) {
-            int positionI= theEpiInputStream.getPositionI();
+            int positionI= theRandomAccessInputStream.getPositionI();
             toAppendAcceptedChar: {
-              byteI= theEpiInputStream.read();
+              byteI= theRandomAccessInputStream.read();
               if ( Character.isLetterOrDigit(byteI)) break toAppendAcceptedChar;
               if ( '-'==byteI ) break toAppendAcceptedChar;
               if ( '.'==byteI ) break toAppendAcceptedChar;
-              theEpiInputStream.setPositionV(positionI); // Restore stream position.
+              theRandomAccessInputStream.setPositionV(positionI); // Restore stream position.
               ///opt Alternative way to reject final character only, outside of loop:
               //   setPositionV(getPositionI()-1);
               break readLoop; // Go try to return what's accumulated so far.
@@ -204,10 +251,10 @@ class SequenceEpiNode extends EpiNode
         }
     
     public static SequenceEpiNode trySequenceEpiNode( 
-          EpiInputStream<?,?,?,?> theEpiInputStream ) 
+        RandomAccessInputStream theRandomAccessInputStream ) 
         throws IOException
       /* This method tries to parse a SequenceEpiNode 
-        (YAML sequence of scalars) from theEpiInputStream.
+        (YAML sequence of scalars) from theRandomAccessInputStream.
         If successful then it returns the SequenceEpiNode
         and the stream is moved past the sequence characters,
         but whatever terminated the SequenceEpiNode remains to be read.
@@ -217,23 +264,23 @@ class SequenceEpiNode extends EpiNode
       {
           SequenceEpiNode returnSequenceEpiNode= null; // Set default failure result.
           ArrayList<EpiNode> resultListOfEpiNodes= null;
-          int initialStreamPositionI= theEpiInputStream.getPositionI();
+          int initialStreamPositionI= theRandomAccessInputStream.getPositionI();
         toReturn: { toNotASequence: {
-          if (! theEpiInputStream.getByteB('[')) break toNotASequence;
+          if (! getByteB(theRandomAccessInputStream, '[')) break toNotASequence;
           resultListOfEpiNodes=  // Always succeeds.
-              getListOfEpiNodes(theEpiInputStream); 
-          if (! theEpiInputStream.getByteB(']')) break toNotASequence;
+              getListOfEpiNodes(theRandomAccessInputStream); 
+          if (! getByteB(theRandomAccessInputStream, ']')) break toNotASequence;
           returnSequenceEpiNode= // We got everything needed.  Create successful result. 
               new SequenceEpiNode(resultListOfEpiNodes);
           break toReturn;
         } // toNotASequence: // Coming here means we failed to parse a complete sequence.
-          theEpiInputStream.setPositionV(initialStreamPositionI); // Restore position.
+          theRandomAccessInputStream.setPositionV(initialStreamPositionI); // Restore position.
         } // toReturn:
           return returnSequenceEpiNode; // Return result.
         }
 
   protected static ArrayList<EpiNode> getListOfEpiNodes(
-      EpiInputStream<?,?,?,?> theEpiInputStream ) 
+      RandomAccessInputStream theRandomAccessInputStream ) 
     throws IOException
   /* This method parses and returns a List of 
     0 or more elements of a sequence of scalar nodes.  
@@ -249,21 +296,21 @@ class SequenceEpiNode extends EpiNode
     toReturn: {
       while (true) { // Accumulating list elements until sequence ends.
         EpiNode theEpiNode=  // Try getting a list element.
-            EpiNode.tryEpiNode(theEpiInputStream);
+            EpiNode.tryEpiNode(theRandomAccessInputStream);
         if (! gotCommaB) // Comma not gotten yet so looking for the first element
           { if (theEpiNode == null) // but there is no first element
             break toReturn; // so exit now with an empty list.
             }
         else // Comma was gotten so we need a non-first element.
           { if (theEpiNode == null) { // but there was no element so
-              theEpiInputStream.setPositionV( // restore stream position to before comma.
+              theRandomAccessInputStream.setPositionV( // restore stream position to before comma.
                   preCommaPositionI);
               break toReturn; // and exit now with a non-empty list.
               }
             }
         resultListOfEpiNodes.add(theEpiNode); // Append gotten element to list.
-        preCommaPositionI= theEpiInputStream.getPositionI();
-        if (! theEpiInputStream.tryByteB(',')) break toReturn; // Exit if no comma.
+        preCommaPositionI= theRandomAccessInputStream.getPositionI();
+        if (! tryByteB(theRandomAccessInputStream,',')) break toReturn; // Exit if no comma.
         gotCommaB= true; // Got comma, so record it.
         } // while(true)
     } // toReturn:
@@ -361,9 +408,9 @@ class MapEpiNode extends EpiNode
         }
 
     public static MapEpiNode tryMapEpiNode( 
-          EpiInputStream<?,?,?,?> theEpiInputStream ) 
+        RandomAccessInputStream theRandomAccessInputStream ) 
         throws IOException
-      /* This method tries to parse a MapEpiNode (YAML map) from theEpiInputStream.
+      /* This method tries to parse a MapEpiNode (YAML map) from theRandomAccessInputStream.
         If successful then it returns the MapEpiNode
         and the stream is moved past the map characters,
         but whatever terminated the MapEpiNode remains to be read.
@@ -379,23 +426,23 @@ class MapEpiNode extends EpiNode
       {
           MapEpiNode resultMapEpiNode= null; // Set default failure result.
           LinkedHashMap<EpiNode,EpiNode> theLinkedHashMapOfEpiNode= null;
-          int initialStreamPositionI= theEpiInputStream.getPositionI();
+          int initialStreamPositionI= theRandomAccessInputStream.getPositionI();
         toReturn: { toNotAMap: {
-          if (! theEpiInputStream.getByteB('{')) break toNotAMap;
+          if (! getByteB(theRandomAccessInputStream, '{')) break toNotAMap;
           theLinkedHashMapOfEpiNode=  // Always succeeds.
-              getLinkedHashMap(theEpiInputStream); 
-          if (! theEpiInputStream.getByteB('}')) break toNotAMap;
+              getLinkedHashMap(theRandomAccessInputStream); 
+          if (! getByteB(theRandomAccessInputStream, '}')) break toNotAMap;
           resultMapEpiNode= // We got everything needed.  Create successful result. 
               new MapEpiNode(theLinkedHashMapOfEpiNode);
           break toReturn;
         } // toNotAMap: // Coming here means we failed to parse a complete map.
-          theEpiInputStream.setPositionV(initialStreamPositionI); // Restore position.
+          theRandomAccessInputStream.setPositionV(initialStreamPositionI); // Restore position.
         } // toReturn:
           return resultMapEpiNode; // Return result.
         }
 
     protected static LinkedHashMap<EpiNode,EpiNode> getLinkedHashMap(
-        EpiInputStream<?,?,?,?> theEpiInputStream ) 
+        RandomAccessInputStream theRandomAccessInputStream ) 
       throws IOException
     /* This method parses and returns a LinkedHashMap of  
       0 or more <MapEpiNode,MapEpiNode> <key,value> map elements.
@@ -415,18 +462,18 @@ class MapEpiNode extends EpiNode
         EpiNode keyEpiNode= null; // If not null then map entry is not valid.
         EpiNode valueEpiNode= null; // Optional value, null for now.
         while (true) { // Accumulating map entries until they end.
-            int preMapEntryPositionI= theEpiInputStream.getPositionI();
+            int preMapEntryPositionI= theRandomAccessInputStream.getPositionI();
           toEndEntry: { toNoEntry: {
             valueEpiNode= null; // Assume no value node unless one provided.
-            keyEpiNode= EpiNode.tryEpiNode(theEpiInputStream); // Try parsing a key node.
+            keyEpiNode= EpiNode.tryEpiNode(theRandomAccessInputStream); // Try parsing a key node.
             if (keyEpiNode == null) break toNoEntry; // Got no key so no entry.
-            if (! theEpiInputStream.tryByteB(':')) // No separating colon 
+            if (! tryByteB(theRandomAccessInputStream,':')) // No separating colon 
               break toEndEntry; // so no value, so end map entry now.
-            valueEpiNode= EpiNode.tryEpiNode(theEpiInputStream); // Try parsing value.
+            valueEpiNode= EpiNode.tryEpiNode(theRandomAccessInputStream); // Try parsing value.
             if (valueEpiNode != null) break toEndEntry; // Got value so complete entry.
           } // toNoEntry: Being here means unable to parse an acceptable map entry.
             keyEpiNode= null; // Be certain to indicate map entry parsing failed.
-            theEpiInputStream.setPositionV(preMapEntryPositionI); // Rewind input steam.
+            theRandomAccessInputStream.setPositionV(preMapEntryPositionI); // Rewind input steam.
           } // toEndEntry: Being here means entry parsing is done, either pass or fail.
             if (! gotCommaB) // Comma not gotten yet so we want the first map entry
               { if (keyEpiNode == null) // but there was no first map entry
@@ -434,14 +481,14 @@ class MapEpiNode extends EpiNode
                 }
               else // Comma was gotten so we need a non-first map entry.
               { if (keyEpiNode == null) { // but there was no map entry so
-                  theEpiInputStream.setPositionV( // restore input stream position 
+                theRandomAccessInputStream.setPositionV( // restore input stream position 
                       preCommaPositionI); // to position before comma.
                   break toReturn; // and exit now with a non-empty map.
                   }
                 }
             resultLinkedHashMap.put(keyEpiNode,valueEpiNode); // Append entry to map.
-            preCommaPositionI= theEpiInputStream.getPositionI(); // Save stream position.
-            if (! theEpiInputStream.tryByteB(',')) break toReturn; // Exit if no comma.
+            preCommaPositionI= theRandomAccessInputStream.getPositionI(); // Save stream position.
+            if (! tryByteB(theRandomAccessInputStream,',')) break toReturn; // Exit if no comma.
             gotCommaB= true; // Got comma, so record it for earlier map entry processing.
             } // while(true)  Looping to try for another non-first map entry.
       } // toReturn:

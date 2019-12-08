@@ -1,7 +1,6 @@
 package allClasses;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.DatagramPacket;
 
 import static allClasses.AppLog.theAppLog;
@@ -14,7 +13,7 @@ public class EpiInputStream<
 		M extends PacketManager<K,E> // Packet manager.
 		>
 	
-	extends InputStream
+	extends RandomAccessInputStream
 
 	/* This class is a network input stream.
 	  It provides methods from InputStream to do normal stream operations,
@@ -232,33 +231,7 @@ public class EpiInputStream<
         return " Remaining bytes:"+accumulatorString; 
         }
 
-    public boolean tryByteB(int desiredByteI) throws IOException
-      /* Tries to read desiredByteI from the stream.
-        This is like getByteB(..) except that the stream position
-        is not changed if desiredByteI is not read from the stream.
-        */
-      {
-        int positionI= getPositionI(); // Save stream position.
-        boolean successB= getByteB(desiredByteI); // Read and check byte.
-        if ( ! successB )
-          setPositionV(positionI); // Restore stream position if failure.
-        return successB;
-        }
-
-    public boolean getByteB(int desiredByteI) throws IOException
-      /* Reads a byte from the input stream and compares it to desiredByteI.
-        If they are equal it returns true, otherwise false.
-        Failure can happen when either the byte read is not the desired byte or
-        if there is no byte available.
-        */
-      {
-        int byteI= tryBufferByteI();
-        boolean successB= // Check byte.   
-            (byteI == desiredByteI); // Fails if -1 or incorrect byte.
-        return successB;
-        }
-
-    private int tryBufferByteI() throws IOException
+    public int tryBufferByteI() throws IOException
       /* Returns the next stream byte if available in the packet buffer, -1 otherwise. 
         It will not attempt to load the next packet.
         */
@@ -510,12 +483,12 @@ public class EpiInputStream<
         return packetIndexI; // Recording present buffer byte index.
         }
   
-    public void setPositionV(int oldPositionI) throws IOException 
+    public void setPositionV(int thePositionI) throws IOException 
       /* Restores the stream to the state previously gotten by getPositionI().
         It is more general than the not nest-able reset() method.
         */ 
       {
-        packetIndexI= oldPositionI; // Restoring buffer byte index.
+        packetIndexI= thePositionI; // Restoring buffer byte index.
         }
 	
 		}
