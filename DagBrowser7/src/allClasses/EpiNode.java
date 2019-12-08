@@ -3,13 +3,15 @@ package allClasses;
 import static allClasses.AppLog.theAppLog;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import static allClasses.SystemSettings.NL;
 
-public class EpiNode 
+public abstract class EpiNode 
 
   /* This is the base class for 
     classes meant to represent YAML-like data.
@@ -19,8 +21,8 @@ public class EpiNode
     */
   {
   
-    public String extractFromEpiNodeString(int indexI) 
-        throws IOException
+    abstract public String extractFromEpiNodeString(int indexI) 
+        throws IOException;
       /* This method tries to extract the String whose index is indexI from this EpiNode. 
         If it succeeds it returns the String.  If it fails it returns null, 
         meaning there is no data at the index position requested.
@@ -34,12 +36,16 @@ public class EpiNode
         error reporting is crude, just enough for debugging and 
         moving on to the next development phase.
         */
+    
+      /*  ////
       { 
         theAppLog.error( ""
             + "EpiNode.extractFromEpiNodeString(int): base class should not be called.");
         return null;
         }
+      */  ////
 
+    
     public EpiNode getEpiNode(int indexI)
       /* This method returns the element EpiNode at index indexI,
         In this base class, it always returns null and logs an error.
@@ -49,8 +55,12 @@ public class EpiNode
         return null;
         }
 
-    public static EpiNode tryEpiNode(EpiInputStream<?,?,?,?> theEpiInputStream ) 
-      throws IOException
+    public abstract void writeV(OutputStream theOutputStream, int indentI ) 
+        throws IOException;
+      /* Writes this EpiNode to theEpiOutputStream.  */
+
+      public static EpiNode tryEpiNode(EpiInputStream<?,?,?,?> theEpiInputStream ) 
+        throws IOException
       /* This method tries to parse an EpiNode.
         It returns the node if the parse successful, null otherwise.
         It tries parsing node types in the following order:
@@ -70,7 +80,17 @@ public class EpiNode
           return resultEpiNode;
         }
         
-    }
+    protected static void newLineAndindentV(OutputStream theOutputStream, int indentI)
+       throws IOException
+      {
+        theOutputStream.write(NL.getBytes()); // Write a newline.
+        while (indentI > 0) {
+          theOutputStream.write(" ".getBytes()); // Write a space.
+          indentI--; // Down count.
+          }
+        }
+    
+    } // class EpiNode
 
 class ScalarEpiNode extends EpiNode 
 
@@ -81,6 +101,17 @@ class ScalarEpiNode extends EpiNode
       {
         this.scalarString= scalarString;
         }
+
+    public void writeV(OutputStream theOutputStream, int indentI ) 
+        throws IOException
+      { 
+        //// EpiNode.newLineAndindentV(theOutputStream, indentI);
+        theOutputStream.write(scalarString.getBytes());
+        }
+    
+    public String extractFromEpiNodeString(int indexI) 
+        throws IOException 
+      { return scalarString; }
 
     public String toString() { return scalarString; }
       
@@ -134,6 +165,20 @@ class SequenceEpiNode extends EpiNode
     private SequenceEpiNode(ArrayList<EpiNode> theListOfEpiNode)
       {
         this.theListOfEpiNode= theListOfEpiNode;
+        }
+
+    public void writeV(OutputStream theOutputStream, int indentI ) 
+        throws IOException
+      { 
+        for (EpiNode elementEpiNode : theListOfEpiNode)
+          {
+            EpiNode.newLineAndindentV(theOutputStream, indentI);
+            theOutputStream.write("- ".getBytes()); // Introduce sequence element.
+            elementEpiNode.writeV( // Output element
+                theOutputStream, 
+                indentI + 2 // with further indenting of any element components.
+                );
+            }
         }
 
     public String extractFromEpiNodeString(int indexI) 
@@ -231,6 +276,26 @@ class MapEpiNode extends EpiNode
 
   {
     private LinkedHashMap<EpiNode,EpiNode> theLinkedHashMap; 
+
+    public void writeV(OutputStream theOutputStream, int indentI ) 
+        throws IOException
+      { 
+        //// theOutputStream.write(scalarString.getBytes());
+        Map.Entry<EpiNode,EpiNode> scanMapEntry= null;
+        Set<Map.Entry<EpiNode,EpiNode>> theSetOfMapEntrys= theLinkedHashMap.entrySet();
+        Iterator<Map.Entry<EpiNode,EpiNode>> entryIterator= theSetOfMapEntrys.iterator();
+        while(true) { // Iterate over all entries.
+          if (! entryIterator.hasNext()) // More entries? 
+            break; // No, so exit.
+          EpiNode.newLineAndindentV(theOutputStream, indentI);
+          scanMapEntry= entryIterator.next(); // Yes, get current entry.
+          scanMapEntry.getKey().writeV(theOutputStream, indentI); // Write key.
+          theOutputStream.write(": ".getBytes()); // Write map key-value separator.
+          scanMapEntry.getValue().writeV( // Write value.
+              theOutputStream, 
+              indentI + 2); // Indent components, if any, here.
+          }
+        }
 
     public String extractFromEpiNodeString(int indexI) 
         throws IOException

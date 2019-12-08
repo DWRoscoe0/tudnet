@@ -197,14 +197,17 @@ public class PersistentCursor
 				return entryKeyString;
 				}
 
+		/*  ////
     public PersistingNode getEntryPersistingNode()
       /* This method returns the parent PersistingNode,
         the one associated with the list,
         not the one associated with the presently selected list element.
         */
+    /*  ////
       {
         return entriesPersistingNode;
         }
+    */  ////
 		
     
     // Methods that access fields of selected PersistingNode.

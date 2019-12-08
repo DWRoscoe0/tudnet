@@ -168,9 +168,10 @@ public class PersistingNode {
           EpiNode childKeyEpiNode= new ScalarEpiNode(childKeyString);
           EpiNode childValueEpiNode;
           if (childValueNavigableMap.isEmpty()) // If there are no children 
-            childValueEpiNode= new ScalarEpiNode(childKeyString);  // use value string as value 
+            childValueEpiNode= // use value string converted to Scalar as value.
+              new ScalarEpiNode(childValuePersistingNode.getValueString()); 
             else // otherwise
-            childValueEpiNode= // use value of child recursively converted to EpiNode. 
+            childValueEpiNode= // use node with children recursively converted to EpiNode. 
               makeMapEpiNode(childValuePersistingNode);
           resultLinkedHashMap.put(childKeyEpiNode,childValueEpiNode); // Append new entry to map.
           }

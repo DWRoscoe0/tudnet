@@ -2,6 +2,7 @@ package allClasses;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Iterator;
@@ -43,7 +44,9 @@ public class Persistent
 	
 		private final String theFileString= "PersistentData.txt";
 		  // This is where the data is stored on disk.
-		private PersistingNode rootPersistingNode= null; // Root of tree.
+		private PersistingNode rootPersistingNode= null; // Root of PersistingNode tree.
+		//// @SuppressWarnings("unused") ////
+    private EpiNode rootEpiNode= null; // Root of EpiNode tree.
     private PrintWriter thePrintWriter= null;
       ///org : This class uses a FileInputStream to read the data file,
       // but a PrintWriter to write the data file.
@@ -60,7 +63,10 @@ public class Persistent
 	      we might as well just call initializeV() as well.
 	      */
 	    {
-	  	  loadDataV( theFileString );
+	  	  loadDataV( theFileString ); // Load PersistingNode data.
+
+	  	  rootEpiNode=  // Translate PersistingNode data to EpiNode data.  ////
+	  	      PersistingNode.makeMapEpiNode(rootPersistingNode);
 	  	  }
 	  
 	  private void loadDataV( String fileString )
@@ -415,41 +421,81 @@ public class Persistent
 	  public void finalizeV()
 	  /* This method stores the persistent data to the external file.  */
 	  {
-		  storeDataV( theFileString );
+		  storeRootPersistingNodeV( theFileString );
+		  storeEpiNodeDataV("PersistentEpiNode.txt");
 	  	}
-		  
-	  private void storeDataV( String fileString )
-	    /* This method stores the Persistent data that is in main memory to 
-	      the external text file whose name is fileString.
-	      Presently it stores twice:
-	      * The data only in the root node.
-	      * The data in all nodes of the tree.
-	      So some information appears twice in the file,
-	      but when reloaded it should go to the same place.
-	      
-	      The exception handling in this method is not required,
-	      but it does no harm.
-	      */
-	    {
-		  	try {
-            thePrintWriter= new PrintWriter(
-                AppSettings.makeRelativeToAppFolderFile(fileString));
-			  		writingV(thePrintWriter,
-			  				"#---multi-element path and data output follows---"+NL);
-		  			multilevelStoreNodeV(thePrintWriter, "", rootPersistingNode);
-			  		}
-			  	catch (Exception theException) { 
-			  		theAppLog.exception("Config.storeDataV(..)", theException);
-			  		}
-			  	finally {
-			  		try {
-              if ( thePrintWriter != null ) thePrintWriter.close(); 
-			  			}
-			  		catch ( Exception theException ) { 
-				  		theAppLog.exception("Config.storeDataV(..)", theException);
-				  		}
-			  		}
-	    	}
+    
+  private void storeRootPersistingNodeV( String fileString )
+    /* This method stores the Persistent data that is in main memory to 
+      the external text file whose name is fileString.
+      Presently it stores twice:
+      * The data only in the root node.
+      * The data in all nodes of the tree.
+      So some information appears twice in the file,
+      but when reloaded it should go to the same place.
+      
+      The exception handling in this method is not required,
+      but it does no harm.
+      */
+    {
+      try {
+          thePrintWriter= new PrintWriter(
+              AppSettings.makeRelativeToAppFolderFile(fileString));
+          writingV(thePrintWriter,
+              "#---multi-element path and data output follows---"+NL);
+          multilevelStoreNodeV(thePrintWriter, "", rootPersistingNode);
+          }
+        catch (Exception theException) { 
+          theAppLog.exception("Persistent.storeRootPersistingNodeV(..)", theException);
+          }
+        finally {
+          try {
+            if ( thePrintWriter != null ) thePrintWriter.close(); 
+            }
+          catch ( Exception theException ) { 
+            theAppLog.exception("Persistent.storeRootPersistingNodeV(..)", theException);
+            }
+          }
+      }
+  
+//// @SuppressWarnings("unused") ////
+private void storeEpiNodeDataV( String fileString ) ////
+  /* This method stores the Persistent data that is in main memory to 
+    the external text file whose name is fileString.
+    Presently it stores twice:
+    * The data only in the root node.
+    * The data in all nodes of the tree.
+    So some information appears twice in the file,
+    but when reloaded it should go to the same place.
+    
+    The exception handling in this method is not required,
+    but it does no harm.
+    */
+  {
+    FileOutputStream theFileOutputStream= null;
+    try {
+        theFileOutputStream= 
+          new FileOutputStream(AppSettings.makeRelativeToAppFolderFile(fileString));  
+        theFileOutputStream.write(
+            "#---YAML-like EpiNode data output follows---".getBytes());
+        rootEpiNode.writeV(theFileOutputStream, // Write all of root EpiNode 
+            0 // starting at indent level 0.
+            );
+        theFileOutputStream.write(
+            (NL+"#--- end of file ---"+NL).getBytes());
+        }
+      catch (Exception theException) { 
+        theAppLog.exception("Persistent.storeEpiNodeDataV(..)", theException);
+        }
+      finally {
+        try {
+          if ( theFileOutputStream != null ) theFileOutputStream.close(); 
+          }
+        catch ( Exception theException ) { 
+          theAppLog.exception("Persistent.storeEpiNodeDataV(..)", theException);
+          }
+        }
+    }
 	
 	  private void multilevelStoreNodeV(PrintWriter thePrintWriter, 
 	  		String prefixString, PersistingNode thePersistingNode)
