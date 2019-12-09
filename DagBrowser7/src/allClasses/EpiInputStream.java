@@ -21,13 +21,20 @@ public class EpiInputStream<
 	  the UDP (Datagram) packets from which the stream data comes.
 	  It gets the packets from a NetcasterQueue.
 	
-	  The read methods in this class block if data is not available.
-	  Time-outs are not supported by these read methods,
-	  but time-outs at the packet level can be done in
-	  the standard way with the thread's LockAndSignal instance,
-	  which should be the same LockAndSignal as the one
-	  in this class's NetcasterQueue.
-	  Use InputStream.available() as the input availability test.
+	  The fact that data comes from UDP Datagram packets has the following consequences.
+  	* The InputStream.read(..) methods in this class do not block.
+  	  If no more bytes are available, the end-of-stream indicator -1 is returned.
+  	* Each packet is treated as a self-contained sub-stream when loaded into a buffer.
+  	  Each one produces its own end-of-stream.
+  	* The InputStream.available() method will clear the end-of-stream condition
+  	  if called when no more buffered bytes are available,
+  	  but at least one received packet is in the packet queue.    
+  	* Time-outs are not supported by these read methods,
+  	  but time-outs at the packet level can be done in
+  	  the standard way with the thread's LockAndSignal instance,
+  	  which should be the same LockAndSignal as the one
+  	  in this class's NetcasterQueue.
+  	  Use InputStream.available() as the input availability test.
 	
 	  This code uses IOException and InterruptedException, but
 	  exactly how they interact has not been completely determined ??
@@ -39,7 +46,7 @@ public class EpiInputStream<
 	    DataInputStream(InputStream).
 		NetFilterInputStream is probably not needed, but could be added?
 	  
-	  ?? Add close() which causes IOException which can signal termination.
+	  ///enh ?? Add close() which causes IOException which can signal termination.
 	  */
 	
 	{
@@ -59,7 +66,7 @@ public class EpiInputStream<
 		private byte[] bufferBytes = null;
     // Stream scan position: Buffer is empty/consumed when packetIndexI <= packetSizeI.
 		private int packetSizeI = 0;
-		private int packetIndexI = 0;
+		private int bufferIndexI = 0;
 		// Position of data within packet.
     private EpiNode packetEpiNode= null; // EpiNode parsed from packet.
     private int packetElementIndexI= 0; // Index of element within EpiNode.
@@ -158,6 +165,8 @@ public class EpiInputStream<
         This method does not block.
         If a complete string, including terminating delimiter, is not available,
         then it logs this as an error and returns an empty string.
+        
+        ///opt  Remove old !-delimited parsing.
        */
       {
           String accumulatorString= "";
@@ -186,7 +195,7 @@ public class EpiInputStream<
           return accumulatorString;
         }
     
-    // Parsers of YAML-like language.
+    // Parsers of YAML-like language. //// temporary
 
     private String tryFromEpiNodeString() throws IOException
       /* This method tries to get a String by parsing and caching EpiNodes,
@@ -275,7 +284,7 @@ public class EpiInputStream<
     
     public int available() throws IOException 
 	    /* This method tests whether there are any bytes available for reading.
-	      If there are bytes in the byte buffer it returns the number of bytes.
+	      If there are bytes in the byte buffer then it returns the number of bytes.
 	      If not then it tries to load the byte buffer from 
 	      the next packet in the queue and checks again.
 	      If there are no bytes in the buffer and no more packets in the queue
@@ -283,12 +292,12 @@ public class EpiInputStream<
 	
 	      This method may be used for asynchronous stream input, however
 	      it should not be used to detect packet boundaries in the input,
-	      For that, use bufferByteCountI().
-	      it returns the number of bytes remaining in the packet buffer.  
+	      For that, use bufferByteCountI(), which returns 
+	      the number of bytes remaining in the packet buffer.  
        */
 	    {
 	  		int availableI;
-	  	  while (true) {
+	  	  while (true) { //While no bytes in buffer but packets in queue, keep loading them.
 	  	    availableI= bufferByteCountI();
 	    	  if ( availableI > 0) break; // Exiting if any bytes in buffer.
 	    	  if  // Exiting with 0 if no packet in queue to load.
@@ -298,7 +307,35 @@ public class EpiInputStream<
 	  	  	}
 		    return availableI;
 		    }
-	
+    
+	  public int read() throws IOException
+	    /* This method returns one byte from the byte buffer, 
+	      or the end-of-stream value -1 if the buffer is exhausted.  
+	      So this method never blocks.
+
+	      Each UDP packet is considered to be one complete stream.
+	      This is because, since UDP is an unreliable protocol,
+	      each UDP packet should contain one or more complete pieces of data.
+	      No piece of data may span multiple packets.
+        The end-of-stream condition can be cleared either
+        * by loading a new packet containing at least one byte,
+          which can be triggered by calling the method available(), or
+        * by calling setPosition(int) to move the buffer pointer 
+          back from the end of the buffer.
+
+	      */
+	    {
+	      int resultByteI;
+        if (bufferByteCountI() <= 0) // No bytes remaining in buffer.
+            resultByteI= -1; // Return end-of-file indication.
+          else // At least one byte remains. 
+          { // Return first byte and update pointer.
+            resultByteI= bufferBytes[bufferIndexI] & 0xff;
+            bufferIndexI++;
+            }
+			  return resultByteI;
+			  }
+	  
     protected int bufferByteCountI()
       /* Returns the number of bytes remaining in the packet buffer.  
        This should be used instead of the method available() when
@@ -309,23 +346,10 @@ public class EpiInputStream<
        if the end of buffer is reached.
        */
       { 
-        return packetSizeI - packetIndexI;
+        return packetSizeI - bufferIndexI;
         }
-    
-	  public int read() throws IOException
-	    /* Reads one byte, reading read one or more packets 
-	      from the input queue if needed, blocking to wait for a packet if needed.
-	      */
-	    {
-	    	while  // Receiving and loading packets until bytes are in buffer.
-	    		(packetIndexI == packetSizeI)
-	        loadNextPacketV();
-			  int value = bufferBytes[packetIndexI] & 0xff;
-			  packetIndexI++;
-			  return value;
-			  }
 	  
-	  @SuppressWarnings("unused") ///
+	  @SuppressWarnings("unused") ///opt
     private boolean tryReadB(byte[] bufferBytes, int offsetI, int lengthI)
 	  		throws IOException
 	    /* This method tries to read lengthI bytes into buffer bufferBytes
@@ -342,11 +366,6 @@ public class EpiInputStream<
 		    if ( ! successB ) reset(); // Undo read if not successful.
 		    return successB;
 		    }
-
-	  public void emptyingBufferV()
-		  {
-	  		packetIndexI= packetSizeI; // Making all bytes appear consumed.
-	  		}
 	  
 	  public E getKeyedPacketE() throws IOException
 	    /* Returns the current KeyedPacket associated with this stream.
@@ -357,7 +376,7 @@ public class EpiInputStream<
 	      The packet and its bytes can still be read.
 	      
 	      This is not the same as reading a packet as any other data type,
-	      which is done by readKeyedPacketE().
+	      which can be done by readKeyedPacketE().
 	      In that case the packet and its data are no longer available
 	      for reading, which makes available()==0.
 				*/
@@ -371,17 +390,22 @@ public class EpiInputStream<
 	      It also prevents the packet or any of its bytes 
 	      being gotten or read later.
 	      
-	      This is not presently used.
+	      ///opt This is not presently used.
 	      */
 	    {
 		  	if // Loading a packet if none loaded.
 		  		(loadedKeyedPacketE == null)
 		      loadNextPacketV();
 	  		E returnKeyedPacketE= loadedKeyedPacketE; // Save reference to packet.
-	  		packetIndexI= packetSizeI; // Preventing any byte reads from packet.
+        emptyingBufferV(); // Preventing any byte reads from packet.
 	  		loadedKeyedPacketE= null; // Preventing packet rereads.
 	  		return returnKeyedPacketE;
 	    	}
+
+    public void emptyingBufferV()
+      {
+        bufferIndexI= packetSizeI; // Making all bytes appear consumed.
+        }
 	
 	  private void loadNextPacketV() throws IOException 
 	    /* This method loads the packet buffers from the 
@@ -395,7 +419,7 @@ public class EpiInputStream<
 		  		theAppLog.info("loadNextPacketV() executing.");
 	  		if // Adjusting saved mark index for buffer replacement. 
 	  		  (markedB) // if stream is marked. 
-	  			markIndexI-= packetIndexI; // Subtracting present index or length ??
+	  			markIndexI-= bufferIndexI; // Subtracting present index or length ??
 	
 	      try {
 	      	loadedKeyedPacketE= receiverToStreamcasterNotifyingQueueQ.take();
@@ -408,7 +432,7 @@ public class EpiInputStream<
 	      // Setting variables for reading from the new packet.
 	  	  loadedDatagramPacket= loadedKeyedPacketE.getDatagramPacket();
 	      bufferBytes= loadedDatagramPacket.getData();
-	      packetIndexI= loadedDatagramPacket.getOffset();
+	      bufferIndexI= loadedDatagramPacket.getOffset();
 	      packetSizeI= loadedDatagramPacket.getLength();
 		    }
 
@@ -426,9 +450,9 @@ public class EpiInputStream<
           + "; buffer="
           + new String(bufferBytes,0,positionI)
           + "-^-"
-          + new String(bufferBytes,positionI,packetIndexI-positionI)
+          + new String(bufferBytes,positionI,bufferIndexI-positionI)
           + "-^-"
-          + new String(bufferBytes,packetIndexI,packetSizeI-packetIndexI)
+          + new String(bufferBytes,bufferIndexI,packetSizeI-bufferIndexI)
           );
       }
       
@@ -480,7 +504,7 @@ public class EpiInputStream<
           list of sequence elements and an index to the next one.
         */
       {
-        return packetIndexI; // Recording present buffer byte index.
+        return bufferIndexI; // Recording present buffer byte index.
         }
   
     public void setPositionV(int thePositionI) throws IOException 
@@ -488,7 +512,7 @@ public class EpiInputStream<
         It is more general than the not nest-able reset() method.
         */ 
       {
-        packetIndexI= thePositionI; // Restoring buffer byte index.
+        bufferIndexI= thePositionI; // Restoring buffer byte index.
         }
 	
 		}
