@@ -38,7 +38,7 @@ public abstract class RandomAccessInputStream
         This method is more general than the not nest-able reset() method.
         */ 
 
-    
+    /*  //// No longer needed.
     protected int bufferByteCountI()
 
       /* Returns the number of bytes remaining in the InputStream buffer, if any.  
@@ -50,7 +50,9 @@ public abstract class RandomAccessInputStream
        if the end of buffer is reached.
        This version returns 0.
        */
+    /*  ////
       
       { return 0; }
+    */  ////
     
     }

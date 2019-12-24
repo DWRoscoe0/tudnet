@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.RandomAccessFile;
 import java.util.Iterator;
 import java.util.NavigableMap;
 
@@ -67,43 +68,81 @@ public class Persistent
 
 	  	  rootEpiNode=  // Translate PersistingNode data to EpiNode data.  ////
 	  	      PersistingNode.makeMapEpiNode(rootPersistingNode);
+	      storeEpiNodeDataV(rootEpiNode, "PersistentEpiNode.txt");
+	      EpiNode duplicateEpiNode= loadEpiNode("PersistentEpiNode.txt");
+        storeEpiNodeDataV(duplicateEpiNode, "DuplicateEpiNode.txt");
 	  	  }
-	  
-	  private void loadDataV( String fileString )
-	    /* This method creates a Map 
-	      from the contents of the external text file
-	      whose name is fileString and stores it in theMap field.  
-	      If no properties were read then the result will be empty.
-	      If some properties were read then the result will contain them.
-	      The result will never be null.
-	      */
-	    {
-	  		rootPersistingNode= 
-	  				new PersistingNode("this-is-root"); // Create empty Map. 
+    
+    private void loadDataV( String fileString )
+      /* This method creates a Map 
+        from the contents of the external text file
+        whose name is fileString and stores it in theMap field.  
+        If no properties were read then the result will be empty.
+        If some properties were read then the result will contain them.
+        The result will never be null.
+        */
+      {
+        rootPersistingNode= 
+            new PersistingNode("this-is-root"); // Create empty Map. 
 
-	  		FileInputStream configFileInputStream= null;
+        FileInputStream configFileInputStream= null;
 
-		  	try { 
-		  		  configFileInputStream= // Prepare file containing persistent data.
-		  		  		new FileInputStream(
-		  		  		    AppSettings.makeRelativeToAppFolderFile( fileString ));
-		  		  loadV(configFileInputStream); // Load data from file.
-			  		} 
-			  	catch (FileNotFoundException theFileNotFoundException) { 
-			  		theAppLog.warning("Persistent.loadDataV(..)"+theFileNotFoundException);
-			  		}
-			  	catch (Exception theException) { 
-			  		theAppLog.exception("Persistent.loadDataV(..)", theException);
-			  		}
-			  	finally { 
-			  		try { 
-			  			if ( configFileInputStream != null ) configFileInputStream.close(); 
-			  			}
-				  	catch (Exception theException) { 
-				  		theAppLog.exception("Persistent.loadDataV(..)", theException);
-				  		}
-			  		}
-	    	}
+        try { 
+            configFileInputStream= // Prepare file containing persistent data.
+                new FileInputStream(
+                    AppSettings.makeRelativeToAppFolderFile( fileString ));
+            loadV(configFileInputStream); // Load data from file.
+            } 
+          catch (FileNotFoundException theFileNotFoundException) { 
+            theAppLog.warning("Persistent.loadDataV(..)"+theFileNotFoundException);
+            }
+          catch (Exception theException) { 
+            theAppLog.exception("Persistent.loadDataV(..)", theException);
+            }
+          finally { 
+            try { 
+              if ( configFileInputStream != null ) configFileInputStream.close(); 
+              }
+            catch (Exception theException) { 
+              theAppLog.exception("Persistent.loadDataV(..)", theException);
+              }
+            }
+        }
+    
+    private EpiNode loadEpiNode( String fileString )
+      /* This method creates an EpiNode from 
+        the contents of the external text file whose name is fileString.  
+        */
+      {
+        EpiNode resultEpiNode= null; 
+
+        RandomAccessInputStream theRandomAccessInputStream= null;
+        RandomAccessFile theRandomAccessFile= null;
+
+        try { 
+            theRandomAccessFile= new RandomAccessFile(
+                AppSettings.makeRelativeToAppFolderFile( fileString ),"r");
+            theRandomAccessInputStream= 
+                new RandomFileInputStream(theRandomAccessFile);
+            resultEpiNode= MapEpiNode.tryBlockMapEpiNode(theRandomAccessInputStream, 0 );
+            } 
+          catch (FileNotFoundException theFileNotFoundException) { 
+            theAppLog.warning("Persistent.loadEpiNodeDataV(..)"+theFileNotFoundException);
+            }
+          catch (Exception theException) { 
+            theAppLog.exception("Persistent.loadEpiNodeDataV(..)", theException);
+            }
+          finally { 
+            try { 
+              if ( theRandomAccessInputStream != null ) theRandomAccessInputStream.close(); 
+              if ( theRandomAccessFile != null ) theRandomAccessFile.close(); 
+              }
+            catch (Exception theException) { 
+              theAppLog.exception("Persistent.loadEpiNodeDataV(..)", theException);
+              }
+            }
+        return resultEpiNode; 
+        }
 
 	  private void loadV( FileInputStream configFileInputStream )
 	    throws IOException
@@ -422,7 +461,6 @@ public class Persistent
 	  /* This method stores the persistent data to the external file.  */
 	  {
 		  storeRootPersistingNodeV( theFileString );
-		  storeEpiNodeDataV("PersistentEpiNode.txt");
 	  	}
     
   private void storeRootPersistingNodeV( String fileString )
@@ -459,7 +497,7 @@ public class Persistent
       }
   
 //// @SuppressWarnings("unused") ////
-private void storeEpiNodeDataV( String fileString ) ////
+private void storeEpiNodeDataV( EpiNode theEpiNode, String fileString ) ////
   /* This method stores the Persistent data that is in main memory to 
     the external text file whose name is fileString.
     Presently it stores twice:
@@ -478,7 +516,7 @@ private void storeEpiNodeDataV( String fileString ) ////
           new FileOutputStream(AppSettings.makeRelativeToAppFolderFile(fileString));  
         theFileOutputStream.write(
             "#---YAML-like EpiNode data output follows---".getBytes());
-        rootEpiNode.writeV(theFileOutputStream, // Write all of root EpiNode 
+          theEpiNode.writeV(theFileOutputStream, // Write all of theEpiNode tree 
             0 // starting at indent level 0.
             );
         theFileOutputStream.write(

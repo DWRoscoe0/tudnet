@@ -17,8 +17,14 @@ public abstract class EpiNode
     classes meant to represent YAML-like data.
     It supports scalars, sequences, and maps.  
     It does not support null values. 
-    Subclasses follow this one.
+    Subclasses follow this class.
+    
+    Most of the code here deals with the Flow syntax style, 
+    which uses braces to indicate structure.  This code is fully working.
+    Some of the code here deals with the Block syntax style, 
+    which uses indentation to indicate structure.  This code is is a work-in-progress.
     */
+
   {
   
     abstract public String extractFromEpiNodeString(int indexI) 
@@ -59,26 +65,49 @@ public abstract class EpiNode
         throws IOException;
       /* Writes this EpiNode to theEpiOutputStream.  */
 
-      public static EpiNode tryEpiNode(RandomAccessInputStream theRandomAccessInputStream ) 
-        throws IOException
-      /* This method tries to parse an EpiNode.
-        It returns the node if the parse successful, null otherwise.
-        It tries parsing node types in the following order:
-        * SequenceEpiNode
-        * MapEpiNode (to be added)
-        * ScalarEpiNode
-       */
-      { 
-          EpiNode resultEpiNode= null; 
-        toReturn: {
-          resultEpiNode= SequenceEpiNode.trySequenceEpiNode(theRandomAccessInputStream);
-          if (resultEpiNode != null) break toReturn;
-          resultEpiNode= MapEpiNode.tryMapEpiNode(theRandomAccessInputStream);
-          if (resultEpiNode != null) break toReturn;
-          resultEpiNode= ScalarEpiNode.tryScalarEpiNode(theRandomAccessInputStream);
-        } // toReturn:
-          return resultEpiNode;
-        }
+    public static EpiNode tryEpiNode(RandomAccessInputStream theRandomAccessInputStream ) 
+      throws IOException
+    /* This method tries to parse an EpiNode.
+      It returns the node if the parse is successful, null otherwise.
+      It tries parsing node types in the following order:
+      * SequenceEpiNode
+      * MapEpiNode (to be added)
+      * ScalarEpiNode
+     */
+    { 
+        EpiNode resultEpiNode= null; 
+      toReturn: {
+        resultEpiNode= SequenceEpiNode.trySequenceEpiNode(theRandomAccessInputStream);
+        if (resultEpiNode != null) break toReturn;
+        resultEpiNode= MapEpiNode.tryMapEpiNode(theRandomAccessInputStream);
+        if (resultEpiNode != null) break toReturn;
+        resultEpiNode= ScalarEpiNode.tryScalarEpiNode(theRandomAccessInputStream);
+      } // toReturn:
+        return resultEpiNode;
+      }
+
+    public static EpiNode tryBlockEpiNode(
+        RandomAccessInputStream theRandomAccessInputStream, int minIndentI ) 
+      throws IOException
+    /* This method tries to parse an EpiNode from theRandomAccessInputStream.
+      It looks for the block aka indented flow syntax.
+      indentI is the minimum indentation level for nested structures, like maps. 
+      This method returns the node if the parse is successful, null otherwise.
+      It tries parsing node types in the following order:
+      * ScalarEpiNode
+      * MapEpiNode (to be added)
+      This method does not support sequences and map keys may be scalars only.
+      */
+    {
+        EpiNode resultEpiNode= null; 
+      toReturn: {
+        resultEpiNode= ScalarEpiNode.tryScalarEpiNode(theRandomAccessInputStream);
+        if (resultEpiNode != null) break toReturn;
+        resultEpiNode= MapEpiNode.tryBlockMapEpiNode(
+            theRandomAccessInputStream, minIndentI);
+      } // toReturn:
+        return resultEpiNode;
+      }
         
     protected static void newLineAndindentV(OutputStream theOutputStream, int indentI)
        throws IOException
@@ -94,16 +123,22 @@ public abstract class EpiNode
     public static boolean tryByteB(
           RandomAccessInputStream theRandomAccessInputStream, int desiredByteI) 
       throws IOException
+      /* Reads a byte from theRandomAccessInputStream and compares it to desiredByteI.
+        If they are equal it returns true, otherwise false.
+        Failure can happen when either the byte read is not the desired byte or
+        if there is no byte available.
+        The stream advances only if a read byte is the desired one.
+        */
       /* Tries to read desiredByteI from the stream.
         This is like getByteB(..) except that the stream position
-        is not changed if desiredByteI is not read from the stream.
+        is not changed if desiredByteI can not be read from the stream.
         */
       {
         int positionI= theRandomAccessInputStream.getPositionI(); // Save stream position.
-        boolean successB= // Read and check byte.
+        boolean successB= // Read and test byte.
             getByteB(theRandomAccessInputStream,desiredByteI);
-        if ( ! successB ) //  if failure.
-          theRandomAccessInputStream.setPositionV(positionI); // Restore stream position.
+        if ( ! successB ) // If failure
+          theRandomAccessInputStream.setPositionV(positionI); // rewind stream position.
         return successB;
         }
 
@@ -114,27 +149,13 @@ public abstract class EpiNode
         If they are equal it returns true, otherwise false.
         Failure can happen when either the byte read is not the desired byte or
         if there is no byte available.
+        The stream advances whether or not a read byte is the desired one.
         */
       {
-        int byteI= tryBufferByteI(theRandomAccessInputStream);
-        boolean successB= // Check byte.   
-            (byteI == desiredByteI); // Fails if -1 or incorrect byte.
+        int byteI= theRandomAccessInputStream.read(); // read the byte
+        boolean successB= // Test byte for correctness.
+            (byteI == desiredByteI); // Fails if byteI is -1 or not desired byte.
         return successB;
-        }
-
-    public static int tryBufferByteI(RandomAccessInputStream theRandomAccessInputStream) 
-        throws IOException
-      /* Returns the next stream byte if available in the 
-        theRandomAccessInputStream buffer, -1 otherwise. 
-        It will not attempt to load the next block of data into the buffer.
-        */
-      {
-        int byteI;
-        if ( theRandomAccessInputStream.bufferByteCountI() > 0 ) // If byte available 
-          byteI= theRandomAccessInputStream.read(); // read the byte
-          else
-          byteI= -1; // otherwise set return value of -1.
-        return byteI;
         }
 
     } // class EpiNode
@@ -419,7 +440,7 @@ class MapEpiNode extends EpiNode
 
         
         Parsing maps is tricky because, though they contain entries,
-        and entries are always parsed as if a single entrity, 
+        and entries are always parsed as if a single entity, 
         entries do not exist outside of maps.
         Only their component key and value exist outside of maps.
         */
@@ -459,13 +480,14 @@ class MapEpiNode extends EpiNode
         LinkedHashMap<EpiNode,EpiNode> resultLinkedHashMap= 
             new LinkedHashMap<EpiNode,EpiNode>(); // Create initially empty map.
       toReturn: {
-        EpiNode keyEpiNode= null; // If not null then map entry is not valid.
+        EpiNode keyEpiNode= null; // If null then map entry is not valid.
         EpiNode valueEpiNode= null; // Optional value, null for now.
         while (true) { // Accumulating map entries until they end.
             int preMapEntryPositionI= theRandomAccessInputStream.getPositionI();
           toEndEntry: { toNoEntry: {
             valueEpiNode= null; // Assume no value node unless one provided.
-            keyEpiNode= EpiNode.tryEpiNode(theRandomAccessInputStream); // Try parsing a key node.
+            keyEpiNode=  // Try parsing a key node.
+                EpiNode.tryEpiNode(theRandomAccessInputStream);
             if (keyEpiNode == null) break toNoEntry; // Got no key so no entry.
             if (! tryByteB(theRandomAccessInputStream,':')) // No separating colon 
               break toEndEntry; // so no value, so end map entry now.
@@ -494,5 +516,253 @@ class MapEpiNode extends EpiNode
       } // toReturn:
         return resultLinkedHashMap;
       }
+
+    public static MapEpiNode tryBlockMapEpiNode( //// 
+        RandomAccessInputStream theRandomAccessInputStream, int minIndentI ) 
+        throws IOException
+      /* This method tries to parse a MapEpiNode (YAML map) 
+        from theRandomAccessInputStream.
+        It looks for the block aka indented flow syntax.
+        minIndentI is the minimum indentation level for map entries. 
+        If successful then it returns the MapEpiNode
+        and the stream is moved past the map characters,
+        but before the newline-indentation that terminated the map.
+        If not successful then this method returns null 
+        and the stream position is unchanged.
+        */
+      {
+          MapEpiNode resultMapEpiNode= null; // Set default failure result.
+          int initialStreamPositionI= theRandomAccessInputStream.getPositionI();
+        toReturn: {
+          int mapEntryIndentI= // Try getting a good newline indentation of first entry. 
+            tryNewlineIndentationI(theRandomAccessInputStream, minIndentI);
+          if (mapEntryIndentI < 0) // If failed to get needed indentation
+            break toReturn; // then exit with failure.
+          LinkedHashMap<EpiNode,EpiNode> theLinkedHashMap= // Try parsing indented entries.
+              tryBlockLinkedHashMap(theRandomAccessInputStream, mapEntryIndentI);
+          if (theLinkedHashMap == null) // If no map entries parsed
+            break toReturn; // then exit with failure.
+          resultMapEpiNode= // We got everything needed so 
+              new MapEpiNode(theLinkedHashMap); // create successful MapEpiNode result.
+        } // toReturn:
+          if (resultMapEpiNode == null) // If no result to return then rewind stream. 
+            theRandomAccessInputStream.setPositionV(initialStreamPositionI);
+          return resultMapEpiNode; // Return result.
+        }
+
+    protected static LinkedHashMap<EpiNode,EpiNode> tryBlockLinkedHashMap( ////
+        RandomAccessInputStream theRandomAccessInputStream, int mapEntryIndentI ) 
+      throws IOException
+      /* This method parses a set of map entries of a map.
+        If successful then it returns a LinkedHashMap of the parsed map entries
+        and the position of the input stream is moved past all parsed entries.
+        There must be at least one entry for success.
+        mapEntryIndentI is the starting indent level.
+        The first entry is assumed to start immediately.
+        Later entries, if any, are assumed to start on later lines at the same indent.
+        A line with a smaller indent level terminates the map.
+        If not successful then this method returns null and 
+        the position of the input stream is unchanged. 
+       */ ////
+      {
+        LinkedHashMap<EpiNode,EpiNode> resultLinkedHashMap= 
+            new LinkedHashMap<EpiNode,EpiNode>(); // Create initially empty map.
+      toReturn: {
+        EpiNode keyScalarEpiNode= null; // Initially null meaning map entry is not valid.
+        EpiNode valueEpiNode= null;
+        while (true) { // Accumulating map entries until they end.
+            int preMapEntryPositionI= theRandomAccessInputStream.getPositionI();
+          toEndEntry: { toNoEntry: {
+            valueEpiNode= null; // Assume no value node unless one provided.
+            keyScalarEpiNode=  // Try parsing a key node, limited to scalars for now.
+                ScalarEpiNode.tryScalarEpiNode(theRandomAccessInputStream);
+            if (keyScalarEpiNode == null) break toNoEntry; // Got no key so no entry.
+            if (! tryByteB(theRandomAccessInputStream,':')) // No separating colon 
+              break toNoEntry; // so no value, so no map entry.
+            trySpacesI(theRandomAccessInputStream); // Skip spaces.
+            valueEpiNode=  // Try parsing value, possibly itself an indented map
+                EpiNode.tryBlockEpiNode(theRandomAccessInputStream,
+                    mapEntryIndentI+1); // using a nigher minimum indentation.
+            if (valueEpiNode != null) break toEndEntry; // Got value so complete entry.
+          } // toNoEntry: Being here means unable to parse an acceptable map entry.
+            keyScalarEpiNode= null; // Be certain to indicate map entry parsing failed.
+            theRandomAccessInputStream.setPositionV(preMapEntryPositionI); // Rewind input steam.
+          } // toEndEntry: Being here means entry parsing is done, either pass or fail.
+            if (keyScalarEpiNode == null) // but there was no first map entry
+                break toReturn; // so exit now with an empty map.
+            resultLinkedHashMap.put(keyScalarEpiNode,valueEpiNode); // Append entry to map.
+            int indentI= // Try getting a good newline indentation of next entry. 
+                tryNewlineIndentationI(theRandomAccessInputStream, mapEntryIndentI);
+            if ( indentI < 0 ) break toReturn; // Exit if insufficient indentation.
+        } // while(true)  Looping to try for another non-first map entry.
+      } // toReturn:
+        if ( resultLinkedHashMap.isEmpty()) // Convert empty map result
+          resultLinkedHashMap= null; // to null map result.
+        return resultLinkedHashMap;
+      }
+
+    private static int tryNewlineIndentationI(
+        RandomAccessInputStream theRandomAccessInputStream, int minIndentI ) 
+      throws IOException
+      /* This method tries to read past newlines and indentation characters
+        in theRandomAccessInputStream.
+        This method is usually called when a node boundary is expected.
+        If only newlines and indentation characters are seen,
+        and the indentation level after the final newline is at least minIndentI,
+        then this method succeeds, and
+        it returns a number > 0 which is the new indentation level,
+        and the stream has been moved past all characters that were processed.
+        If this method fails then it returns -1 and 
+        the stream position is unchanged.
+        
+        //// Being modified to skip over comments.
+        */
+      {
+          int firstStreamPositionI= theRandomAccessInputStream.getPositionI();
+          int resultIndentI= -1;
+        loop: while(true) { // Process newlines and indentations.
+          if (! tryEndLineI(theRandomAccessInputStream)) // Exit if no end of line. 
+            break loop;
+          while (tryEndLineI(theRandomAccessInputStream)) // Skip additional EndLines
+            ; // by doing nothing for each one.
+          //// int testIndentI= tryIndentationI(theRandomAccessInputStream, resultIndentI);
+          resultIndentI= trySpacesI(theRandomAccessInputStream);
+        } // loop:
+          if (resultIndentI < minIndentI) // If indentation too small or nonexistent
+            { // restore stream position and return failure.
+              theRandomAccessInputStream.setPositionV(firstStreamPositionI);
+              resultIndentI= -1;
+              }
+          return resultIndentI; 
+        }
+
+    private static boolean tryEndLineI(
+        RandomAccessInputStream theRandomAccessInputStream ) 
+      throws IOException
+      /* This method tries to read past spaces, a comment, and trailing newline,
+        in theRandomAccessInputStream.
+        It returns true if it succeeds
+        and the stream has been moved past all characters that were processed.
+        If this method fails then it returns false and 
+        the stream position is unchanged.
+        It fails if there is anything other than spaces or a comment before
+        the end of the present line. 
+        */
+      {
+          int firstStreamPositionI= theRandomAccessInputStream.getPositionI();
+          trySpacesI(theRandomAccessInputStream); // Skip optional spaces.
+          tryCommentB(theRandomAccessInputStream); // Skip optional comment.
+          boolean successB= (tryNewlineB(theRandomAccessInputStream)); 
+          if (! successB) // If there w something besides comment before newline
+            { // restore stream position and return failure.
+              theRandomAccessInputStream.setPositionV(firstStreamPositionI);
+              }
+          return successB; 
+        }
+
+    private static boolean tryCommentB(
+        RandomAccessInputStream theRandomAccessInputStream ) 
+      throws IOException
+      /* This method tries to read from theRandomAccessInputStream
+        past a comment, but not past the newline that terminates it.
+        It returns true if successful, false if there was no comment.
+        */
+      {
+          int finalStreamPositionI= theRandomAccessInputStream.getPositionI();
+          boolean successB;
+        toReturn: {
+          successB= tryByteB(theRandomAccessInputStream,'#');
+          if (! successB) break toReturn; // Exit if no comment introducer. 
+          while (true) // Skip all characters to end of line.
+            {
+              finalStreamPositionI= theRandomAccessInputStream.getPositionI();
+              int CI= theRandomAccessInputStream.read(); // Read next byte.
+              if (SystemSettings.NLTestB(CI)) break toReturn; // Exit if newline.
+              }
+        } // toReturn:
+          theRandomAccessInputStream.setPositionV(finalStreamPositionI);
+            // Set stream to last character seen.  Works for success or failure.
+          return successB;
+        }
+
+    private static int trySpacesI( ////
+        RandomAccessInputStream theRandomAccessInputStream ) 
+      throws IOException
+      /* This method tries to read past spaces the next group of spaces
+        in theRandomAccessInputStream.
+        It returns the count of spaces in the group,
+        which might be 0 if there were no spaces before the next non-space.
+        */
+      {
+        int spacesI= 0;
+        int scanStreamPositionI;
+        while (true) // Process all spaces.
+          {
+            scanStreamPositionI= theRandomAccessInputStream.getPositionI();
+            int CI= theRandomAccessInputStream.read(); // Read next byte.
+            if ( CI != ' ' ) { // Restore stream before byte and exit if not space.
+              theRandomAccessInputStream.setPositionV(scanStreamPositionI);
+              break;
+              }
+            spacesI++;
+            }
+        return spacesI; 
+        }
+
+    @SuppressWarnings("unused") ////
+    private static int tryIndentationI( 
+        RandomAccessInputStream theRandomAccessInputStream, int indentLevelI ) 
+      throws IOException
+      /* This method tries to read past indentation characters
+        in theRandomAccessInputStream.
+        It must be called with the stream already in an indented state,
+        which means only indentation characters between 
+        the present stream position and the beginning of the present line.
+        This method is usually called immediately after a newline.
+        The initial indentation level is assumed to be equal to indentLevelI.
+        If this method is successful then 
+        it returns a number > 0 which is the new indentation level,
+        which is the number of spaces to the left to the beginning of the line,
+        and the stream has been moved past all characters that were processed.
+        If this method is not successful then 
+        it returns -1 and the stream position is unchanged.
+        The only way this method is not successful is if encounters no indentation.
+        */
+      {
+        int firstStreamPositionI= theRandomAccessInputStream.getPositionI();
+        int scanStreamPositionI;
+        while (true) // Process all indentation characters.
+          {
+            scanStreamPositionI= theRandomAccessInputStream.getPositionI();
+            int CI= theRandomAccessInputStream.read(); // Read next byte.
+            if ( CI != ' ' ) { // Restore stream before byte and exit if not space.
+              theRandomAccessInputStream.setPositionV(scanStreamPositionI);
+              break;
+              }
+            indentLevelI++; // Otherwise increment indentation level by one.
+            }
+        if (firstStreamPositionI == scanStreamPositionI) // If stream did not advance
+          indentLevelI= -1; // override return value to indicate failure.
+        return indentLevelI; 
+        }
+
+    private static boolean tryNewlineB( 
+        RandomAccessInputStream theRandomAccessInputStream ) 
+      throws IOException
+      /* This method tries to read a single newline from theRandomAccessInputStream.
+        If this method is successful then it returns true
+        and the stream is moved past the newline.
+        If this method is not successful then it returns false 
+        and the stream position is unchanged.
+        To skip all newline characters, call this method in a loop.
+        */
+      {
+        int firstStreamPositionI= theRandomAccessInputStream.getPositionI();
+        int CI= theRandomAccessInputStream.read();
+        boolean successB= SystemSettings.NLTestB(CI); // Test whether we got newline.
+        if (! successB) // If not newline then restore stream position.
+          theRandomAccessInputStream.setPositionV(firstStreamPositionI);
+        return successB;
+        }
 
     }
