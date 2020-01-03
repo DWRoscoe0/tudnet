@@ -77,7 +77,7 @@ public class App { // The App, especially pre-GUI stuff.
 	    		Random theRandom= new Random();  // Construct random # generator.
           theRandom.setSeed( System.currentTimeMillis() ); // Seed with time.
 	    		BigInteger identityBigInteger= new BigInteger(256, theRandom);
-	    		thePersistent.putB("PeerIdentity", ""+identityBigInteger);
+	    		thePersistent.putV("PeerIdentity", ""+identityBigInteger);
 	    	}
 	  	}
 

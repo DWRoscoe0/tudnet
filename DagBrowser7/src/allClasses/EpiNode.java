@@ -27,31 +27,30 @@ public abstract class EpiNode
 
   {
   
-    abstract public String extractFromEpiNodeString(int indexI) 
+    abstract public String extractFromEpiNodeString(int indexI) //// temporary. 
         throws IOException;
       /* This method tries to extract the String whose index is indexI from this EpiNode. 
         If it succeeds it returns the String.  If it fails it returns null, 
         meaning there is no data at the index position requested.
         The mapping between index values and Strings in the EpiNode 
         is complex, depends on the EpiNode, and may be temporary.  
-        In this base class, this method returns null and logs an error.
 
-        This method is meant to act as a bridge between 
+        //// This method is meant to act as a temporary bridge between 
         accessing data by position and accessing data by name.
         Because of this, and the fact that the methods are temporary,
         error reporting is crude, just enough for debugging and 
         moving on to the next development phase.
         */
-    
-      /*  ////
-      { 
-        theAppLog.error( ""
-            + "EpiNode.extractFromEpiNodeString(int): base class should not be called.");
-        return null;
-        }
-      */  ////
 
-    
+
+    public MapEpiNode getMapEpiNode()
+      /* This method returns the (this) reference if this is a MapEpiNode,
+        null otherwise.
+        */
+      {
+        return null; // MapEpiNode will override this returned value.
+        }
+
     public EpiNode getEpiNode(int indexI)
       /* This method returns the element EpiNode at index indexI,
         In this base class, it always returns null and logs an error.
@@ -177,7 +176,7 @@ class ScalarEpiNode extends EpiNode
         theOutputStream.write(scalarString.getBytes());
         }
     
-    public String extractFromEpiNodeString(int indexI) 
+    public String extractFromEpiNodeString(int indexI) //// temporary. 
         throws IOException 
       { return scalarString; }
 
@@ -225,7 +224,12 @@ class ScalarEpiNode extends EpiNode
 
     }
 
-class SequenceEpiNode extends EpiNode 
+class SequenceEpiNode extends EpiNode
+
+  /* This class implements a YAML sequence, flow style only.
+   
+    This class was used for a while to encode packet data, but it is no longer used.
+   */
 
   {
     private ArrayList<EpiNode> theListOfEpiNode; 
@@ -249,7 +253,7 @@ class SequenceEpiNode extends EpiNode
             }
         }
 
-    public String extractFromEpiNodeString(int indexI) 
+    public String extractFromEpiNodeString(int indexI)  //// temporary. 
         throws IOException
       /* See base class for documentation.  */
       { 
@@ -345,6 +349,14 @@ class MapEpiNode extends EpiNode
   {
     private LinkedHashMap<EpiNode,EpiNode> theLinkedHashMap; 
 
+    public MapEpiNode getMapEpiNode()
+      /* This method returns the (this) reference if this is a MapEpiNode,
+        null otherwise.
+        */
+      {
+        return this; // Return non-null this because this is a MapEpiNode.
+        }
+
     public void writeV(OutputStream theOutputStream, int indentI ) 
         throws IOException
       { 
@@ -365,67 +377,16 @@ class MapEpiNode extends EpiNode
           }
         }
 
-    public String extractFromEpiNodeString(int indexI) 
-        throws IOException
-      /* See base class for documentation.  */
-      { 
-          EpiNode resultEpiNode;
-        toReturn: { toReturnFail: {
-          Map.Entry<EpiNode,EpiNode> firstMapEntry= getMapEntry(0);
-          if (firstMapEntry == null) // First entry exists? 
-            break toReturnFail; // No, so return with fail.
-          if (indexI == 0) { // First string desired? 
-            resultEpiNode= firstMapEntry.getKey(); // So entry key is result.
-            break toReturn;
-            }
-          MapEpiNode nestedMapEpiNode= // Get nested map which should be 
-            (MapEpiNode)firstMapEntry.getValue(); // value of first entry.
-              ///fix This could produce a ClassCastException, but it's only temporary.
-          if (nestedMapEpiNode == null) // Is there a value, itself a map? 
-            break toReturnFail; // No, so return with fail.
-          Map.Entry<EpiNode,EpiNode> nestedMapEntry= // From nested map
-              nestedMapEpiNode.getMapEntry(indexI-1); // get desired entry.
-          if (nestedMapEntry == null) // Is an entry there? 
-            break toReturnFail; // No, so return with fail.
-          resultEpiNode= nestedMapEntry.getValue(); // Get entry value.
-          if (resultEpiNode != null) // Is a value there? 
-            break toReturn; // Yes, so use it.
-        } // toReturnFail: // Come here to return null indicating failure.
-          resultEpiNode= null; // Set result indicating extraction failure.
-        } // toReturn:
-          return  // Returned desiredEpiNode converted to String or null.
-            (resultEpiNode != null) ? resultEpiNode.toString() : null;
-        }
-
-    public  Map.Entry<EpiNode,EpiNode> getMapEntry(int indexI) 
-        throws IOException
-      /* Returns Map.Entry at position indexI, 
-        or null if indexI is out of range, or the entry itself is null.
-        It finds the correct entry by iterating to the desired position 
-        and returning the Map.Entry there.
-        The map order is the insertion order.
-        */
-      { 
-        Map.Entry<EpiNode,EpiNode> resultMapEntry= null;
-        Map.Entry<EpiNode,EpiNode> scanMapEntry= null;
-        Set<Map.Entry<EpiNode,EpiNode>> theSetOfMapEntrys= theLinkedHashMap.entrySet();
-        Iterator<Map.Entry<EpiNode,EpiNode>> entryIterator= theSetOfMapEntrys.iterator();
-        while(true) { // Iterate to the desired entry.
-          if (! entryIterator.hasNext()) // More entries? 
-            break; // No, so exit with null value.
-          scanMapEntry= entryIterator.next(); // Yes, get current entry.
-          if (indexI == 0) { // Is this the entry we want?
-            resultMapEntry= scanMapEntry; // Yes, set the entry as result
-            break; // and exit.
-            }
-          indexI--; // Decrement entry down-counter.
-          }
-        return resultMapEntry;
-        }
-  
-    public MapEpiNode(LinkedHashMap<EpiNode,EpiNode> theLinkedHashMap)
+    public MapEpiNode(LinkedHashMap<EpiNode,EpiNode> theLinkedHashMap) // constructor.
       {
         this.theLinkedHashMap= theLinkedHashMap;
+        }
+
+    public MapEpiNode() // constructor.
+      {
+        this( // Call parameter constructor with
+            new LinkedHashMap<EpiNode,EpiNode>() // an initially empty LinkedHashMap.  
+            );
         }
 
     public static MapEpiNode tryMapEpiNode( 
@@ -763,6 +724,179 @@ class MapEpiNode extends EpiNode
         if (! successB) // If not newline then restore stream position.
           theRandomAccessInputStream.setPositionV(firstStreamPositionI);
         return successB;
+        }
+
+    public void putV(String keyString, String valueString)
+      /* This associates valueString with keyString in this MapEpiNode.
+        The strings are converted to ScalarEpiNodes first.
+        */
+      {
+        theLinkedHashMap.put(
+            new ScalarEpiNode(keyString),
+            new ScalarEpiNode(valueString)
+            );
+        }
+
+    public EpiNode getEpiNode(EpiNode keyEpiNode)
+      /* This method returns the value EpiNode associated with keyEpiNode
+        in this MapEpiNode, if it exists.
+        Otherwise it returns null.
+        */
+      {
+        return theLinkedHashMap.get(keyEpiNode);
+        }
+
+    public String extractFromEpiNodeString(int indexI) //// temporary. 
+        throws IOException
+      /* See base abstract class for documentation.  */
+      { 
+          EpiNode resultEpiNode;
+        toReturn: { toReturnFail: {
+          Map.Entry<EpiNode,EpiNode> firstMapEntry= getMapEntry(0);
+          if (firstMapEntry == null) // First entry exists? 
+            break toReturnFail; // No, so return with fail.
+          if (indexI == 0) { // First string desired? 
+            resultEpiNode= firstMapEntry.getKey(); // So entry key is result.
+            break toReturn;
+            }
+          MapEpiNode nestedMapEpiNode= // Get nested map which should be 
+            (MapEpiNode)firstMapEntry.getValue(); // value of first entry.
+              ///fix This could produce a ClassCastException, but it's only temporary.
+          if (nestedMapEpiNode == null) // Is there a value, itself a map? 
+            break toReturnFail; // No, so return with fail.
+          Map.Entry<EpiNode,EpiNode> nestedMapEntry= // From nested map
+              nestedMapEpiNode.getMapEntry(indexI-1); // get desired entry.
+          if (nestedMapEntry == null) // Is an entry there? 
+            break toReturnFail; // No, so return with fail.
+          resultEpiNode= nestedMapEntry.getValue(); // Get entry value.
+          if (resultEpiNode != null) // Is a value there? 
+            break toReturn; // Yes, so use it.
+        } // toReturnFail: // Come here to return null indicating failure.
+          resultEpiNode= null; // Set result indicating extraction failure.
+        } // toReturn:
+          return  // Returned desiredEpiNode converted to String or null.
+            (resultEpiNode != null) ? resultEpiNode.toString() : null;
+        }
+
+    private Map.Entry<EpiNode,EpiNode> getMapEntry(int indexI) 
+        throws IOException
+      /* Returns Map.Entry at position indexI, 
+        or null if indexI is out of range, or the entry itself is null.
+        It finds the correct entry by iterating to the desired position 
+        and returning the Map.Entry there.
+        The map order is the insertion order.
+        */
+      { 
+        Map.Entry<EpiNode,EpiNode> resultMapEntry= null;
+        Map.Entry<EpiNode,EpiNode> scanMapEntry= null;
+        Set<Map.Entry<EpiNode,EpiNode>> theSetOfMapEntrys= theLinkedHashMap.entrySet();
+        Iterator<Map.Entry<EpiNode,EpiNode>> entryIterator= theSetOfMapEntrys.iterator();
+        while(true) { // Iterate to the desired entry.
+          if (! entryIterator.hasNext()) // More entries? 
+            break; // No, so exit with null value.
+          scanMapEntry= entryIterator.next(); // Yes, get current entry.
+          if (indexI == 0) { // Is this the entry we want?
+            resultMapEntry= scanMapEntry; // Yes, set the entry as result
+            break; // and exit.
+            }
+          indexI--; // Decrement entry down-counter.
+          }
+        return resultMapEntry;
+        }
+
+    public String getNextString(String keyString) 
+      /* Returns key String of next entry after the one selected by keyString.
+        or null if we are at end of map and there is no next entry.
+        It finds the correct entry by iterating to the entry with the desired key.
+        */
+      { 
+        String resultString= null;
+        Map.Entry<EpiNode,EpiNode> scanMapEntry= null;
+        Set<Map.Entry<EpiNode,EpiNode>> theSetOfMapEntrys= theLinkedHashMap.entrySet();
+        Iterator<Map.Entry<EpiNode,EpiNode>> entryIterator= theSetOfMapEntrys.iterator();
+        while(true) { // Iterate to the present entry.
+          if (! entryIterator.hasNext()) // More entries? 
+            break; // No, so exit with null value.
+          scanMapEntry= entryIterator.next(); // Yes, get entry here.
+          if  // Is this the selected entry?
+            (keyString.equals(scanMapEntry.getKey().toString()))
+            break; // Yes, exit with this value.
+          }
+        if (entryIterator.hasNext()) // Any entries after present one? 
+          scanMapEntry= entryIterator.next(); // Yes, get next entry as desired entry.
+        if (scanMapEntry != null) // If there is actual entry here
+          resultString= scanMapEntry.getKey().toString(); // get its key string.
+        return resultString;
+        }
+
+    public String getValueString(String keyString) 
+      /* Returns String representation of value associated with
+        a ScalarEpiNode representation of keyString,
+        or null if there is no such value.
+        */
+      { 
+        EpiNode valueEpiNode= getChildEpiNode(keyString); 
+        return valueEpiNode.toString();
+        }
+
+    public int getSizeI()
+      /* This method returns number of elements in the map.  */
+      {
+        return theLinkedHashMap.size();
+        }
+
+    public MapEpiNode getOrMakeChildMapEpiNode(String keyString)
+      /* This method returns the MapEpiNode value 
+        that is associated with the key keyString.  
+        If there is no such MapEpiNode, then an empty one is created,
+        and it is associated in this MepEpiNode with keyString.
+        If this method is called, it is assumed that
+        the associated EpiNode is supposed to be a MapEpiNode, 
+        not something else such as a ScalarEpiNode.
+       */
+      {
+          MapEpiNode valueMapEpiNode; // For function result. 
+          EpiNode valueEpiNode= null;
+        toReturnValue: { 
+        toMakeMap: {
+          valueEpiNode= getChildEpiNode(keyString);
+          if (valueEpiNode == null) // No value EpiNode is associated with this key.
+            break toMakeMap; // so go make one.
+          valueMapEpiNode= valueEpiNode.getMapEpiNode(); // Try converting value to map.
+          if (valueMapEpiNode == null) // The value is not a map
+            break toMakeMap; // so go make a replacement which is a map.
+          break toReturnValue; // Value is a map, so go return it as is.
+        } // toMakeMap: 
+          valueMapEpiNode= new MapEpiNode(); // Make a new empty map.
+          theLinkedHashMap.put( // Associate new map with key as entry in this map.
+              new ScalarEpiNode(keyString),valueMapEpiNode);
+        } // toReturnValue:
+          return valueMapEpiNode;
+        }
+
+    public EpiNode getChildEpiNode(String keyString)
+      /* This method returns the child MapEpiNode 
+        that is associated with the key keyString.
+        If there is no such child then null is returned. 
+       */
+      {
+        if ( keyString == null || keyString.isEmpty()) // Handle bad key.
+          {
+            keyString= "MapEpiNode.getOrMakeMapEpiNode() Missing keyString.";
+            theAppLog.error(keyString);
+            }
+        EpiNode keyEpiNode= new ScalarEpiNode(keyString); // Convert String to EpiNode.
+        EpiNode valueEpiNode= getChildEpiNode(keyEpiNode); // Lookup value of this key.
+        return valueEpiNode;
+        }
+
+    public EpiNode getChildEpiNode(EpiNode keyEpiNode)
+      /* This method returns the value EpiNode 
+        that is associated with the keyEpiNode.
+        If there is no such child then null is returned. 
+       */
+      {
+        return theLinkedHashMap.get(keyEpiNode);
         }
 
     }

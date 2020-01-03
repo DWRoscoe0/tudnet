@@ -170,11 +170,13 @@ public class EpiInputStream<
        */
       {
           String accumulatorString= "";
-          int byteI;
-        toReturn: { toNoData: {
+          //// int byteI;
+        toReturn: { //// toNoData: {
           accumulatorString= tryFromEpiNodeString(); // Try string from sequence.
           if (accumulatorString != null) break toReturn; // Exiting if gotten.
 
+          theAppLog.error( "readAString(): unable to get string from EpiNode.");
+          /*  ////
           theAppLog.debug( "readAString(): trying old !-delimited parsing.");
           accumulatorString= ""; // Set accumulator to empty string.
           while (true) { // Skipping possible YAML lead-in characters.
@@ -188,7 +190,8 @@ public class EpiInputStream<
             if ( bufferByteCountI() <= 0 ) break toNoData;
             byteI= read();
             }
-        } // toNoData: Being here means end of packet reached.
+          */  ////
+        //// } // toNoData: Being here means end of packet reached.
           accumulatorString+="!NO-DATA-AVAILABLE!";
           theAppLog.error( "readAString(): returning " + accumulatorString );
         } // toReturn:

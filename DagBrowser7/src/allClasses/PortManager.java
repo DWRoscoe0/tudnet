@@ -117,7 +117,7 @@ s     */
 	  	  normalPortI= (int)(System.currentTimeMillis()) & 32767 | 32768;
         theAppLog.info(
         		"getNormalPortI() generated new random port: "+normalPortI);
-    		thePersistent.putB("normalPort", ""+normalPortI); // Make it persist.
+    		thePersistent.putV("normalPort", ""+normalPortI); // Make it persist.
 			} // toReturnValue:
 	  	  return normalPortI;
       }
