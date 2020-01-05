@@ -27,7 +27,7 @@ public abstract class EpiNode
 
   {
   
-    abstract public String extractFromEpiNodeString(int indexI) //// temporary. 
+    abstract public String extractFromEpiNodeString(int indexI) 
         throws IOException;
       /* This method tries to extract the String whose index is indexI from this EpiNode. 
         If it succeeds it returns the String.  If it fails it returns null, 
@@ -172,11 +172,10 @@ class ScalarEpiNode extends EpiNode
     public void writeV(OutputStream theOutputStream, int indentI ) 
         throws IOException
       { 
-        //// EpiNode.newLineAndindentV(theOutputStream, indentI);
         theOutputStream.write(scalarString.getBytes());
         }
     
-    public String extractFromEpiNodeString(int indexI) //// temporary. 
+    public String extractFromEpiNodeString(int indexI) 
         throws IOException 
       { return scalarString; }
 
@@ -222,7 +221,33 @@ class ScalarEpiNode extends EpiNode
       /* Returns the String which represents the value of the scalar.  */
       { return scalarString; }
 
-    }
+    public boolean equals(Object otherObject) 
+      // This is the standard equals() method.  
+      {
+        boolean resultB;
+        returnResult: { returnTrue: { returnFalse: {
+          if (this == otherObject) break returnTrue; 
+          if (this.getClass() != otherObject.getClass()) break returnFalse; 
+          ScalarEpiNode otherScalarEpiNode= // Create variable for field-access.
+            (ScalarEpiNode)otherObject;
+          if ( ! this.scalarString.equals(otherScalarEpiNode.scalarString) )
+            break returnFalse;
+          break returnTrue;
+        } // returnFalse: 
+          resultB= false; break returnResult;
+        } // returnTrue: 
+          resultB= true; break returnResult;
+        } // returnResult: 
+          return resultB;
+        }
+
+  public int hashCode() 
+    // This is the standard hashCode() method.  
+    {
+      return  scalarString.hashCode(); // Returning hash of the only field.
+      }
+  
+  }
 
 class SequenceEpiNode extends EpiNode
 
@@ -253,7 +278,7 @@ class SequenceEpiNode extends EpiNode
             }
         }
 
-    public String extractFromEpiNodeString(int indexI)  //// temporary. 
+    public String extractFromEpiNodeString(int indexI) 
         throws IOException
       /* See base class for documentation.  */
       { 
@@ -360,7 +385,6 @@ class MapEpiNode extends EpiNode
     public void writeV(OutputStream theOutputStream, int indentI ) 
         throws IOException
       { 
-        //// theOutputStream.write(scalarString.getBytes());
         Map.Entry<EpiNode,EpiNode> scanMapEntry= null;
         Set<Map.Entry<EpiNode,EpiNode>> theSetOfMapEntrys= theLinkedHashMap.entrySet();
         Iterator<Map.Entry<EpiNode,EpiNode>> entryIterator= theSetOfMapEntrys.iterator();
@@ -478,7 +502,7 @@ class MapEpiNode extends EpiNode
         return resultLinkedHashMap;
       }
 
-    public static MapEpiNode tryBlockMapEpiNode( //// 
+    public static MapEpiNode tryBlockMapEpiNode( 
         RandomAccessInputStream theRandomAccessInputStream, int minIndentI ) 
         throws IOException
       /* This method tries to parse a MapEpiNode (YAML map) 
@@ -511,7 +535,7 @@ class MapEpiNode extends EpiNode
           return resultMapEpiNode; // Return result.
         }
 
-    protected static LinkedHashMap<EpiNode,EpiNode> tryBlockLinkedHashMap( ////
+    protected static LinkedHashMap<EpiNode,EpiNode> tryBlockLinkedHashMap(
         RandomAccessInputStream theRandomAccessInputStream, int mapEntryIndentI ) 
       throws IOException
       /* This method parses a set of map entries of a map.
@@ -576,7 +600,7 @@ class MapEpiNode extends EpiNode
         If this method fails then it returns -1 and 
         the stream position is unchanged.
         
-        //// Being modified to skip over comments.
+        //// Being modified to skip over comments?
         */
       {
           int firstStreamPositionI= theRandomAccessInputStream.getPositionI();
@@ -586,7 +610,6 @@ class MapEpiNode extends EpiNode
             break loop;
           while (tryEndLineI(theRandomAccessInputStream)) // Skip additional EndLines
             ; // by doing nothing for each one.
-          //// int testIndentI= tryIndentationI(theRandomAccessInputStream, resultIndentI);
           resultIndentI= trySpacesI(theRandomAccessInputStream);
         } // loop:
           if (resultIndentI < minIndentI) // If indentation too small or nonexistent
@@ -646,7 +669,7 @@ class MapEpiNode extends EpiNode
           return successB;
         }
 
-    private static int trySpacesI( ////
+    private static int trySpacesI(
         RandomAccessInputStream theRandomAccessInputStream ) 
       throws IOException
       /* This method tries to read past spaces the next group of spaces
@@ -668,43 +691,6 @@ class MapEpiNode extends EpiNode
             spacesI++;
             }
         return spacesI; 
-        }
-
-    @SuppressWarnings("unused") ////
-    private static int tryIndentationI( 
-        RandomAccessInputStream theRandomAccessInputStream, int indentLevelI ) 
-      throws IOException
-      /* This method tries to read past indentation characters
-        in theRandomAccessInputStream.
-        It must be called with the stream already in an indented state,
-        which means only indentation characters between 
-        the present stream position and the beginning of the present line.
-        This method is usually called immediately after a newline.
-        The initial indentation level is assumed to be equal to indentLevelI.
-        If this method is successful then 
-        it returns a number > 0 which is the new indentation level,
-        which is the number of spaces to the left to the beginning of the line,
-        and the stream has been moved past all characters that were processed.
-        If this method is not successful then 
-        it returns -1 and the stream position is unchanged.
-        The only way this method is not successful is if encounters no indentation.
-        */
-      {
-        int firstStreamPositionI= theRandomAccessInputStream.getPositionI();
-        int scanStreamPositionI;
-        while (true) // Process all indentation characters.
-          {
-            scanStreamPositionI= theRandomAccessInputStream.getPositionI();
-            int CI= theRandomAccessInputStream.read(); // Read next byte.
-            if ( CI != ' ' ) { // Restore stream before byte and exit if not space.
-              theRandomAccessInputStream.setPositionV(scanStreamPositionI);
-              break;
-              }
-            indentLevelI++; // Otherwise increment indentation level by one.
-            }
-        if (firstStreamPositionI == scanStreamPositionI) // If stream did not advance
-          indentLevelI= -1; // override return value to indicate failure.
-        return indentLevelI; 
         }
 
     private static boolean tryNewlineB( 
@@ -746,7 +732,7 @@ class MapEpiNode extends EpiNode
         return theLinkedHashMap.get(keyEpiNode);
         }
 
-    public String extractFromEpiNodeString(int indexI) //// temporary. 
+    public String extractFromEpiNodeString(int indexI) 
         throws IOException
       /* See base abstract class for documentation.  */
       { 
@@ -807,23 +793,27 @@ class MapEpiNode extends EpiNode
     public String getNextString(String keyString) 
       /* Returns key String of next entry after the one selected by keyString.
         or null if we are at end of map and there is no next entry.
-        It finds the correct entry by iterating to the entry with the desired key.
+        It finds the correct entry by iterating to the entry with the desired key,
+        then moving one more step.
         */
       { 
         String resultString= null;
         Map.Entry<EpiNode,EpiNode> scanMapEntry= null;
         Set<Map.Entry<EpiNode,EpiNode>> theSetOfMapEntrys= theLinkedHashMap.entrySet();
         Iterator<Map.Entry<EpiNode,EpiNode>> entryIterator= theSetOfMapEntrys.iterator();
-        while(true) { // Iterate to the present entry.
-          if (! entryIterator.hasNext()) // More entries? 
-            break; // No, so exit with null value.
-          scanMapEntry= entryIterator.next(); // Yes, get entry here.
-          if  // Is this the selected entry?
-            (keyString.equals(scanMapEntry.getKey().toString()))
-            break; // Yes, exit with this value.
-          }
-        if (entryIterator.hasNext()) // Any entries after present one? 
+        if (! keyString.isEmpty()) // Search only if there is a key to find.
+          while(true) { // Iterate to the selected key.
+            if (! entryIterator.hasNext()) // More entries? 
+              break; // No, so exit with null value.
+            scanMapEntry= entryIterator.next(); // Yes, get entry here.
+            if  // Is this the selected entry?
+              (keyString.equals(scanMapEntry.getKey().toString()))
+              break; // Yes, exit with this value.
+            }
+        if (entryIterator.hasNext()) // Is there a next entry? 
           scanMapEntry= entryIterator.next(); // Yes, get next entry as desired entry.
+          else
+          scanMapEntry= null; // No, so indicate with null.
         if (scanMapEntry != null) // If there is actual entry here
           resultString= scanMapEntry.getKey().toString(); // get its key string.
         return resultString;

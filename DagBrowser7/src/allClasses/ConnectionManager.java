@@ -256,7 +256,7 @@ public class ConnectionManager
           return;
         
       	theAppLog.info(
-      	    "ConnectionManager.Unica restartPreviousUnicastersV() begins.");
+      	    "ConnectionManager.restartPreviousUnicastersV() begins.");
 	    	PeersCursor thePeersCursor= // Used for iteration. 
 	    	    PeersCursor.makeOnFirstEntryPeersCursor( thePersistent );
 			  while // Process all peers in peer list. 
@@ -288,8 +288,8 @@ public class ConnectionManager
   		          }
 					  thePeersCursor.nextKeyString(); // Advance cursor.
 					  }
-      	// appLogger.debug(
-			  // 		"ConnectionManager.Unica restartPreviousUnicastersV() ends.");
+      	theAppLog.debug(
+			  		"ConnectionManager.restartPreviousUnicastersV() ends.");
 				}
 
     private void stoppingAllThreadsV()

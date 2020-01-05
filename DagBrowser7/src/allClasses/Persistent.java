@@ -58,11 +58,13 @@ public class Persistent
 	
 	{
 
-    public static final boolean usingEpiNodesB= false; /// for switching between representations.
+    public static boolean usingEpiNodesB;
+      { usingEpiNodesB= true; /////  false; ///// temporary for switching representations.
+        }
     
 		private PersistingNode rootPersistingNode= null; // PersistingNode root of tree data.
-		//// @SuppressWarnings("unused") ////
-    private MapEpiNode rootMapEpiNode= null; // EpiNode root of tree data.
+
+		private MapEpiNode rootMapEpiNode= null; // EpiNode root of tree data.
     
     private final String theFileString= "PersistentData.txt";
       // This is where the PersistingNode data is stored on disk.
@@ -77,19 +79,31 @@ public class Persistent
   	
 	  public void initializeV()
 	    /* This method loads the persistent data from an external file.
-	      It is possible to eliminate this method, and triggered by lazy loading,
+	      It also does some temporary data conversions and extra file outputs
+	      as part of the conversion from PersistentNode data to EpiNode data. 
+	     
+	      It is possible to eliminate this method, and trigger things by lazy loading,
 	      triggered by the first call that needs theMap variable defined.
 	      But because finalizeV() must be called to write any changes,
 	      we might as well just call initializeV() as well.
 	      */
 	    {
-	  	  loadDataV( theFileString ); // Load PersistingNode data.
-
-	  	  rootMapEpiNode=  // Translate PersistingNode data to EpiNode data.  ////
-	  	      PersistingNode.makeMapEpiNode(rootPersistingNode);
-	      storeEpiNodeDataV(rootMapEpiNode, "PersistentEpiNode.txt");
-	      EpiNode duplicateEpiNode= loadEpiNode("PersistentEpiNode.txt");
-        storeEpiNodeDataV(duplicateEpiNode, "DuplicateEpiNode.txt");
+	      if (usingEpiNodesB) 
+  	      {
+	          rootMapEpiNode=  // Translate PersistingNode data to EpiNode data.
+	            loadMapEpiNode("PersistentEpiNode.txt"); // Read EpiNode data.
+    	      }
+  	      else
+  	      {
+    	  	  loadDataV( theFileString ); // Read PersistingNode data.
+    	  	  rootMapEpiNode=  // Translate PersistingNode data to EpiNode data.
+    	  	      PersistingNode.makeMapEpiNode(rootPersistingNode);
+    	      storeEpiNodeDataV(rootMapEpiNode, "PersistentEpiNode.txt"); // Write EpiNode data.
+    	      EpiNode duplicateEpiNode= // Read back EpiNode data.
+    	          loadMapEpiNode("PersistentEpiNode.txt");
+            storeEpiNodeDataV( // Write EpiNode data again for comparing.
+                duplicateEpiNode, "DuplicateEpiNode.txt");
+  	        }
 	  	  }
     
     private void loadDataV( String fileString )
@@ -128,12 +142,12 @@ public class Persistent
             }
         }
     
-    private EpiNode loadEpiNode( String fileString )
+    private MapEpiNode loadMapEpiNode( String fileString )
       /* This method creates an EpiNode from 
         the contents of the external text file whose name is fileString.  
         */
       {
-        EpiNode resultEpiNode= null; 
+        MapEpiNode resultMapEpiNode= null; 
 
         RandomAccessInputStream theRandomAccessInputStream= null;
         RandomAccessFile theRandomAccessFile= null;
@@ -143,7 +157,7 @@ public class Persistent
                 AppSettings.makeRelativeToAppFolderFile( fileString ),"r");
             theRandomAccessInputStream= 
                 new RandomFileInputStream(theRandomAccessFile);
-            resultEpiNode= MapEpiNode.tryBlockMapEpiNode(theRandomAccessInputStream, 0 );
+            resultMapEpiNode= MapEpiNode.tryBlockMapEpiNode(theRandomAccessInputStream, 0 );
             } 
           catch (FileNotFoundException theFileNotFoundException) { 
             theAppLog.warning("Persistent.loadEpiNodeDataV(..)"+theFileNotFoundException);
@@ -160,7 +174,7 @@ public class Persistent
               theAppLog.exception("Persistent.loadEpiNodeDataV(..)", theException);
               }
             }
-        return resultEpiNode; 
+        return resultMapEpiNode; 
         }
 
 	  private void loadV( FileInputStream configFileInputStream )
@@ -223,7 +237,6 @@ public class Persistent
 		    String valueString= lineString.substring(offsetOfEqualsI+1);
 
 		    // Store value in the appropriate node based on the path.
-		    //// putB(keyPathString,valueString);
 		    putB(rootPersistingNode, keyPathString, valueString);
 		    }
 
@@ -236,7 +249,7 @@ public class Persistent
 	      though in an earlier version it could be.
 	     	*/
 	    {
-		  	if (usingEpiNodesB) ////
+		  	if (usingEpiNodesB)
 		  	  rootMapEpiNode.putV(keyString, valueString);
 		  	  else
 		  	  putB(rootPersistingNode,keyString,valueString); /// Overkill, single-element path.
@@ -324,7 +337,7 @@ public class Persistent
 		   	*/
 		  {
   	      String resultValueString= null; // Default null result value, to be overridden.
-          if (usingEpiNodesB) ////
+          if (usingEpiNodesB)
             goReturn: {
               EpiNode keyEpiNode= new ScalarEpiNode(pathString);
               EpiNode valueEpiNode= rootMapEpiNode.getEpiNode(keyEpiNode);
@@ -359,7 +372,7 @@ public class Persistent
           rootPersistingNode, pathString);
         }
 
-    public MapEpiNode getOrMakeMapEpiNode(String pathString) ///// done.
+    public MapEpiNode getOrMakeMapEpiNode(String pathString)
       /* This is equivalent to
     
         getOrMakeMapEpiNode(baseMapEpiNode, pathString)
@@ -566,9 +579,18 @@ public class Persistent
 	  // Finalization methods not called by initialization or service sections.
 	  
 	  public void finalizeV()
-	  /* This method stores the persistent data to the external file.  */
+	  /* This method stores the persistent data to the external file.
+	    Temporarily it stores both PersistentNode data and EpiNode data.
+	    Eventually it will store only one.
+	    */
 	  {
-		  storeRootPersistingNodeV( theFileString );
+      if (usingEpiNodesB)
+        storeEpiNodeDataV(rootMapEpiNode, "PersistentEpiNode.txt"); // Write EpiNode data.
+        else
+        {
+    		  storeRootPersistingNodeV( theFileString ); // Write PersistentNode data.
+          storeEpiNodeDataV(rootMapEpiNode, "PersistentEpiNode.txt"); // Write EpiNode data.
+          }
 	  	}
     
   private void storeRootPersistingNodeV( String fileString )
@@ -604,8 +626,7 @@ public class Persistent
           }
       }
   
-//// @SuppressWarnings("unused") ////
-private void storeEpiNodeDataV( EpiNode theEpiNode, String fileString ) ////
+private void storeEpiNodeDataV( EpiNode theEpiNode, String fileString )
   /* This method stores the Persistent data that is in main memory to 
     the external text file whose name is fileString.
     Presently it stores twice:
