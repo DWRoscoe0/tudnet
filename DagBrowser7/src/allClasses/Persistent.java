@@ -60,6 +60,8 @@ public class Persistent
 
     public static boolean usingEpiNodesB;
       { usingEpiNodesB= true; /////  false; ///// temporary for switching representations.
+        // !!! BEWARE, I've started adding code that works with only EpiNode.
+        // If you changes this back to false, expect some things to not work!
         }
     
 		private PersistingNode rootPersistingNode= null; // PersistingNode root of tree data.

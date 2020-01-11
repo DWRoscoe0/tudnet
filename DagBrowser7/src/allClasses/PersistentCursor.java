@@ -252,6 +252,61 @@ public class PersistentCursor
 		
     
     // Methods that access fields of selected PersistingNode.
+
+		/* Methods which update fields, meaning they store a value if it is changing.
+		  They also updated lastModified in that case, but only in that case.
+		  */
+
+    public void updateFieldV( 
+        String fieldKeyString, boolean fieldValueB )
+      /* If fieldValueB is different from the value presently associated with 
+        fieldKeyString, then it replaces the stored value and
+        the field "lastModified" is set to the present time.
+        */
+      { 
+        updateFieldV( fieldKeyString, ""+fieldValueB );
+        }
+
+    private void updateFieldV( String fieldKeyString, String fieldValueString )
+      /* If fieldValueString is different from the value presently associated with 
+        fieldKeyString, then it replaces the stored value and
+        the field "lastModified" is set to the present time.
+        */
+      { 
+        boolean changeNeededB= // Calculate whether field needs to be changed. 
+            ! fieldValueString.equals(getFieldString(fieldKeyString));
+        if (changeNeededB)
+          putFieldWithLastModifiedV( fieldKeyString, fieldValueString );
+        }
+
+    private void putFieldWithLastModifiedV( 
+        String fieldKeyString, String fieldValueString )
+      /* This method stores fieldValueString into the field whose name is fieldKeyString
+        but also updates the field "lastModified" with the present time.
+        */
+      { 
+        putFieldV( fieldKeyString, fieldValueString );
+        putFieldV( "lastModified", ""+System.currentTimeMillis());
+        }
+
+    
+    // Methods which put values in fields.
+
+    public void putFieldV( String fieldKeyString, String fieldValueString )
+      /* This method stores fieldValueString into the field whose name is fieldKeyString
+        in the presently selected list element's map.
+        */
+      { 
+        if (Persistent.usingEpiNodesB) // Act based on type of nodes being used.
+          lowerMapEpiNode.putV( fieldKeyString, fieldValueString );
+          else
+          lowerPersistingNode.putChildV( fieldKeyString, fieldValueString );
+        // appLogger.debug(
+        // "PersistentCursor.putFieldV( "+fieldKeyString+"= "+fieldValueString);
+        }
+
+    
+    // Methods which get fields.
     
     public boolean getFieldB( String fieldKeyString )
       /* This method returns the boolean value of the field whose key is fieldKeyString
@@ -270,32 +325,11 @@ public class PersistentCursor
         String fieldValueString= null;
         if (Persistent.usingEpiNodesB) // Act based on type of nodes being used.
           fieldValueString= lowerMapEpiNode.getValueString(fieldKeyString);
-        else
+          else
           fieldValueString= lowerPersistingNode.getChildString(fieldKeyString);
         // appLogger.debug( "PersistentCursor.getFieldString( "
         //    +fieldKeyString+" ) returning:"+fieldValueString);
         return fieldValueString;
-        }
-
-    public void putFieldV( String fieldKeyString, boolean fieldValueB )
-      /* This method stores fieldValueB into the field whose name is fieldKeyString
-        in the presently selected list element's PersistingNode.
-        */
-      { 
-        putFieldV( fieldKeyString, ""+fieldValueB );
-        }
-
-    public void putFieldV( String fieldKeyString, String fieldValueString )
-      /* This method stores fieldValueString into the field whose name is fieldKeyString
-        in the presently selected list element's map.
-        */
-      { 
-        if (Persistent.usingEpiNodesB) // Act based on type of nodes being used.
-          lowerMapEpiNode.putV( fieldKeyString, fieldValueString );
-          else
-          lowerPersistingNode.putChildV( fieldKeyString, fieldValueString );
-        // appLogger.debug(
-        // "PersistentCursor.putFieldV( "+fieldKeyString+"= "+fieldValueString);
         }
 		
 		

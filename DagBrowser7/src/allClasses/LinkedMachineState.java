@@ -157,7 +157,7 @@ public class LinkedMachineState
           { // Process shutdown request by saving connection status, then disconnecting.
             theAppLog.debug( 
                 "LinkedMachineState.onInputsB() isConnectedB()="+ isConnectedB());
-            thePeersCursor.putFieldV( "wasConnected", isConnectedB());
+            thePeersCursor.updateFieldV( "wasConnected", isConnectedB());
 
             processInputB("Disconnect"); // Now cause disconnect.
             }
