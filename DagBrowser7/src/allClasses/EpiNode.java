@@ -171,8 +171,14 @@ class ScalarEpiNode extends EpiNode
 
     public void writeV(OutputStream theOutputStream, int indentI ) 
         throws IOException
-      { 
+      /* Writes the string to theOutputSteam, enclosed by double quotes if
+        the string contains any spaces. 
+       */
+      {
+        boolean quotesNeededB= (scalarString.indexOf(' ') >= 0);
+        if (quotesNeededB) theOutputStream.write('"');
         theOutputStream.write(scalarString.getBytes());
+        if (quotesNeededB) theOutputStream.write('"');
         }
     
     public String extractFromEpiNodeString(int indexI) 
@@ -180,42 +186,81 @@ class ScalarEpiNode extends EpiNode
       { return scalarString; }
 
     public String toString() { return scalarString; }
-      
-    public static ScalarEpiNode tryScalarEpiNode( 
-          RandomAccessInputStream theRandomAccessInputStream ) 
-        throws IOException
-      /* This method tries to parse a ScalarEpiNode (YAML subset scalar string)
-        from theRandomAccessInputStream.
-        If successful then it returns the ScalarEpiNode 
-        and the stream is moved past the scalar characters,
-        but whatever terminated the scalar remains to be read.
-        The stream is moved past the last scalar character, but no further.
-        If not successful then this method returns null 
-        and the stream position is unchanged.
-        */
-      {
+    
+  public static ScalarEpiNode tryScalarEpiNode( 
+        RandomAccessInputStream theRandomAccessInputStream ) 
+      throws IOException
+    /* This method tries to parse a ScalarEpiNode (YAML subset scalar string)
+      from theRandomAccessInputStream.
+      If successful then it returns the ScalarEpiNode 
+      and the stream is moved past the scalar characters,
+      but whatever terminated the scalar remains to be read.
+      The stream is moved past the last scalar character, but no further.
+      If not successful then this method returns null 
+      and the stream position is unchanged.
+      */
+    {
+        ScalarEpiNode theScalarEpiNode;
+      goReturn: {
+        theScalarEpiNode= tryUnquotedScalarEpiNode( theRandomAccessInputStream );
+        if (theScalarEpiNode != null) break goReturn;
+        theScalarEpiNode= tryQuotedScalarEpiNode( theRandomAccessInputStream );
+      } // goReturn:
+        return theScalarEpiNode; // Return result.
+      }
+  
+  public static ScalarEpiNode tryUnquotedScalarEpiNode( 
+        RandomAccessInputStream theRandomAccessInputStream ) 
+      throws IOException
+    /* This method tries to parse an unquoted ScalarEpiNode.  */
+    {
         ScalarEpiNode theScalarEpiNode= null;
         int byteI;
         String accumulatorString= ""; // Clear character accumulator.
-        readLoop: { while (true) {
-            int positionI= theRandomAccessInputStream.getPositionI();
-            toAppendAcceptedChar: {
-              byteI= theRandomAccessInputStream.read();
-              if ( Character.isLetterOrDigit(byteI)) break toAppendAcceptedChar;
-              if ( '-'==byteI ) break toAppendAcceptedChar;
-              if ( '.'==byteI ) break toAppendAcceptedChar;
-              theRandomAccessInputStream.setPositionV(positionI); // Restore stream position.
-              ///opt Alternative way to reject final character only, outside of loop:
-              //   setPositionV(getPositionI()-1);
-              break readLoop; // Go try to return what's accumulated so far.
-              } // toAppendAcceptedChar:
-            accumulatorString+= (char)byteI; // Append accepted byte to accumulator.
-            }
-          } // readLoop: 
+      readLoop: { while (true) {
+        int positionI= theRandomAccessInputStream.getPositionI();
+        toAppendAcceptedChar: {
+          byteI= theRandomAccessInputStream.read();
+          if ( Character.isLetterOrDigit(byteI)) break toAppendAcceptedChar;
+          if ( '-'==byteI ) break toAppendAcceptedChar;
+          if ( '.'==byteI ) break toAppendAcceptedChar;
+          theRandomAccessInputStream.setPositionV(positionI); // Restore stream position.
+          ///opt Alternative way to reject final character only, outside of loop:
+          //   setPositionV(getPositionI()-1);
+          break readLoop; // Go try to return what's accumulated so far.
+          } // toAppendAcceptedChar:
+        accumulatorString+= (char)byteI; // Append accepted byte to accumulator.
+        }
+      } // readLoop: 
         if (accumulatorString.length() != 0) // Reject 0-length strings.
           theScalarEpiNode= new ScalarEpiNode(accumulatorString); // Override null result.
         return theScalarEpiNode; // Return result.
-        }
+      }
+  
+  public static ScalarEpiNode tryQuotedScalarEpiNode( 
+        RandomAccessInputStream theRandomAccessInputStream ) 
+      throws IOException
+    /* This method tries to parse a quoted ScalarEpiNode.  */
+    {
+        ScalarEpiNode theScalarEpiNode= null;
+        int byteI;
+        int initialPositionI= theRandomAccessInputStream.getPositionI();
+      goReturn: {
+        byteI= theRandomAccessInputStream.read();
+        if ( '"'!=byteI ) break goReturn;
+        String accumulatorString= ""; // Clear character accumulator.
+      readLoop: while (true) {
+          byteI= theRandomAccessInputStream.read();
+          if ( '"'==byteI ) break readLoop; // Exit with what's been accumulated. 
+          accumulatorString+= (char)byteI; // Append accepted byte to accumulator.
+      } // readLoop: 
+        if (accumulatorString.length() == 0) break goReturn; // Reject 0-length strings.
+        theScalarEpiNode= new ScalarEpiNode(accumulatorString); // Override null result.
+      } // goReturn:
+        if (theScalarEpiNode == null)  // Restore initial stream position if no result.
+          theRandomAccessInputStream.setPositionV(initialPositionI);
+        return theScalarEpiNode; // Return result.
+      }
 
     public String getString()
       /* Returns the String which represents the value of the scalar.  */
@@ -241,13 +286,13 @@ class ScalarEpiNode extends EpiNode
           return resultB;
         }
 
-  public int hashCode() 
-    // This is the standard hashCode() method.  
-    {
-      return  scalarString.hashCode(); // Returning hash of the only field.
-      }
-  
-  }
+    public int hashCode() 
+      // This is the standard hashCode() method.  
+      {
+        return  scalarString.hashCode(); // Returning hash of the only field.
+        }
+    
+    }
 
 class SequenceEpiNode extends EpiNode
 
@@ -551,7 +596,8 @@ class MapEpiNode extends EpiNode
        */ ////
       {
         LinkedHashMap<EpiNode,EpiNode> resultLinkedHashMap= 
-            new LinkedHashMap<EpiNode,EpiNode>(); // Create initially empty map.
+          new LinkedHashMap<EpiNode,EpiNode>(); // Create initially empty map.
+          //new LinkedHashMap<EpiNode,EpiNode>(16,0.75F,true); // Create initially empty map.
       toReturn: {
         EpiNode keyScalarEpiNode= null; // Initially null meaning map entry is not valid.
         EpiNode valueEpiNode= null;
