@@ -417,7 +417,8 @@ class SequenceEpiNode extends EpiNode
 class MapEpiNode extends EpiNode 
 
   {
-    private LinkedHashMap<EpiNode,EpiNode> theLinkedHashMap; 
+    private LinkedHashMap<EpiNode,EpiNode> theLinkedHashMap; // Where the data is. 
+      // Will reference map with default of insertion-order.  Rejected access-order map.  
 
     public MapEpiNode getMapEpiNode()
       /* This method returns the (this) reference if this is a MapEpiNode,
@@ -596,8 +597,8 @@ class MapEpiNode extends EpiNode
        */ ////
       {
         LinkedHashMap<EpiNode,EpiNode> resultLinkedHashMap= 
-          new LinkedHashMap<EpiNode,EpiNode>(); // Create initially empty map.
-          //new LinkedHashMap<EpiNode,EpiNode>(16,0.75F,true); // Create initially empty map.
+          ////new LinkedHashMap<EpiNode,EpiNode>(); // Create initially empty map.
+          new LinkedHashMap<EpiNode,EpiNode>(16,0.75F,true); // Create initially empty map.
       toReturn: {
         EpiNode keyScalarEpiNode= null; // Initially null meaning map entry is not valid.
         EpiNode valueEpiNode= null;
