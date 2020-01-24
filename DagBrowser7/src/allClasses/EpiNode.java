@@ -597,8 +597,8 @@ class MapEpiNode extends EpiNode
        */ ////
       {
         LinkedHashMap<EpiNode,EpiNode> resultLinkedHashMap= 
-          ////new LinkedHashMap<EpiNode,EpiNode>(); // Create initially empty map.
-          new LinkedHashMap<EpiNode,EpiNode>(16,0.75F,true); // Create initially empty map.
+          new LinkedHashMap<EpiNode,EpiNode>(); // Create initially empty map.
+          ////new LinkedHashMap<EpiNode,EpiNode>(16,0.75F,true); // Create initially empty map.
       toReturn: {
         EpiNode keyScalarEpiNode= null; // Initially null meaning map entry is not valid.
         EpiNode valueEpiNode= null;
@@ -844,26 +844,40 @@ class MapEpiNode extends EpiNode
         then moving one more step.
         */
       { 
-        String resultString= null;
-        Map.Entry<EpiNode,EpiNode> scanMapEntry= null;
-        Set<Map.Entry<EpiNode,EpiNode>> theSetOfMapEntrys= theLinkedHashMap.entrySet();
-        Iterator<Map.Entry<EpiNode,EpiNode>> entryIterator= theSetOfMapEntrys.iterator();
-        if (! keyString.isEmpty()) // Search only if there is a key to find.
-          while(true) { // Iterate to the selected key.
-            if (! entryIterator.hasNext()) // More entries? 
-              break; // No, so exit with null value.
-            scanMapEntry= entryIterator.next(); // Yes, get entry here.
-            if  // Is this the selected entry?
+          String resultString= null; // Default String result of null.
+          Map.Entry<EpiNode,EpiNode> scanMapEntry= null;
+          Set<Map.Entry<EpiNode,EpiNode>> theSetOfMapEntrys= theLinkedHashMap.entrySet();
+          Iterator<Map.Entry<EpiNode,EpiNode>> entryIterator= theSetOfMapEntrys.iterator();
+        goReturn: {
+          if (keyString.isEmpty()) // On an actual entry now? 
+            { // No, so return first entry if there is one. 
+              if (! entryIterator.hasNext()) // Is there a first entry? 
+                break goReturn; // No, so go return default null result.
+              scanMapEntry=  // Yes, so use first entry as result.
+                  entryIterator.next();
+              break goReturn; // Go return it.
+              }
+          while(true) { // Iterate to entry with keyString and return its successor.
+            if (! entryIterator.hasNext()) { // Is there a first or next entry?
+              scanMapEntry= null; // No, so Clear entry
+              break goReturn; // so we will return null string result.
+              }
+            scanMapEntry= entryIterator.next(); // Yes, get the next entry.
+            if  // Is keyString its key?
               (keyString.equals(scanMapEntry.getKey().toString()))
-              break; // Yes, exit with this value.
+              { // Yes, so return the entry after it if there is one.
+                if (! entryIterator.hasNext()) // Is there a next entry? 
+                  scanMapEntry= null; // No, so set null result.
+                  else
+                  scanMapEntry= entryIterator.next(); // Yes, so get it as result.
+                break goReturn; // Go return result.
+                }
             }
-        if (entryIterator.hasNext()) // Is there a next entry? 
-          scanMapEntry= entryIterator.next(); // Yes, get next entry as desired entry.
-          else
-          scanMapEntry= null; // No, so indicate with null.
-        if (scanMapEntry != null) // If there is actual entry here
-          resultString= scanMapEntry.getKey().toString(); // get its key string.
-        return resultString;
+        } // goReturn:
+          if (scanMapEntry != null) // If we found an actual entry using entryIterator
+            resultString=  // override null result string with entry key string.
+              scanMapEntry.getKey().toString();
+          return resultString;
         }
 
     public String getValueString(String keyString) 
@@ -872,8 +886,11 @@ class MapEpiNode extends EpiNode
         or null if there is no such value.
         */
       { 
-        EpiNode valueEpiNode= getChildEpiNode(keyString); 
-        return valueEpiNode.toString();
+        String resultString= null;
+        EpiNode valueEpiNode= getChildEpiNode(keyString);
+        if (valueEpiNode != null)
+          resultString= valueEpiNode.toString();
+        return resultString;
         }
 
     public int getSizeI()

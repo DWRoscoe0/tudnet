@@ -187,6 +187,11 @@ public class PersistentCursor
 		    If the result is the empty string then the piterator is positioned
 		    on no element.  Either the position moved past the end of the list,
 		    or the list is empty.
+		    
+		    ////opt This could and should be improved by using
+		    an actual Iterator in this class, instead of calling
+		    MapEpiNode.getNextString(..) to using an iterator to
+		    search for the next string position.    
 		   	*/
 			{
         String nextEntryKeyString= null;

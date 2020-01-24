@@ -267,9 +267,9 @@ public class ConnectionManager
 						String peerPortString= 
 								thePeersCursor.getFieldString("Port");
 		        IPAndPort theIPAndPort= new IPAndPort(peerIPString, peerPortString);
-				  	/// appLogger.info( 
-  					/// 		"ConnectionManager.restartPreviousUnicastersV(), Unicaster at "
-  					/// 	+ "IP=" + peerIPString + ", port=" + peerPortString );
+            //// theAppLog.debug( 
+      		  ////     "ConnectionManager.restartPreviousUnicastersV(), "
+      		  ////     + "thePeersCursor.getEntryKeyString()="+thePeersCursor.getEntryKeyString());
 		        Unicaster theUnicaster= // Testing whether Unicaster exists.  
 		            theUnicasterManager.tryingToGetUnicaster( theIPAndPort );
 		        if ( theUnicaster != null ) // This Unicaster already exists.
@@ -600,5 +600,51 @@ public class ConnectionManager
 	      		theNetcasterPacket
 	      		);
         }
+
+    /*  ////
+
+. PeerListExchangeCodeDx Begin
+    
+  PeerTerminology:
+    LocalPeer: The current peer.
+    RemotePeer: A particular other peer with which communication is happening.
+    SubjectPeer: The peer about which LocalPeer and RemotePeer are communicating.
+    
+  peer/Unicaster variables.  All time variables increase monotonically.
+    long lastModifiedTime  Updated with present time when 
+      any of the following variables change: boolean wasConnected.
+    boolean wasConnected // Changes when associated peer connects or disconnects.
+    long lastModifiedSentTime: lastModifiedTime of SubjectPeer 
+      whose data was last sent to the RemotePeer.
+    long lastModifiedSentAcknowledgeTime: lastModifiedTime of SubjectPeer 
+      whose data was last received by the RemotePeer.
+    long lastSendTime: last time data was sent to the RemotePeer.
+      This is used for time out determination.
+
+  while(true) {
+    waitForInput();
+    if (a peer connected to me) updatePeersStatusAndTimeStamp();
+    if (a peer disconnected from me) updatePeersStatusAndTimeStamp();
+    for (all unprocessed updates from connected peers) {
+      if (update is about another connected peer)
+        process update into storage, using unique time-stamps-IDs;
+      acknowledge receipt of update;
+      }
+    subjectPeers= sortByLastModifiedTime(allPeers);
+    for (subjectPeer: subjectPeers) {
+      for (remotePeer: getConnectedPeers()) {
+        if ( ( subjectPeer:.lastModifiedTime 
+               > remotePeer.lastModifiedSentAcknowledgeTime ) &&
+              ( remotePeer.lastSendTime - presentTime > time-out-limit )
+              )
+          sendDataOfTo(subjectPeer,remotePeer);
+        }
+      }
+    
+    }
+    
+* PeerListExchangeCodeDx End
+
+    */  ////    
 
     } // class ConnectionManager.
