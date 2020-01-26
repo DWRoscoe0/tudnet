@@ -9,6 +9,8 @@ public class Config
     Most of the values are constant, expressed as Java final values.
     
     ///enh Any values that are not final should be set as early as possible.
+    ///enh Use better names without values built-in.  For example,
+      change initialRoundTripTime100MsL to initialRoundTripTimeMsL.
     
     Some of these values may later be able to be changed and stored in 
     external text files, such as the files used by the class Persist. 
