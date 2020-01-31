@@ -16,7 +16,7 @@ public class PersistentCursor
       Fields within this structure can be accessed by name.
 
     This class combines the ability to use paths to name positions within the hierarchy,
-    with fast local access relative to a selected PersistingNode. 
+    with fast local access relative to a selected map. 
 
     The iterator that this class implements is a pitererator,
     which is an iterator with pointer semantics.
@@ -55,13 +55,6 @@ public class PersistentCursor
       // before the beginning of the entries or after the end of the entries.
       // These are considered equivalent.
 
-    // PersistingNode data cursor variables.
-    protected PersistingNode upperPersistingNode= null;
-      // PersistingNode which contains the upper map which is being iterated.
-    private PersistingNode lowerPersistingNode= null;
-      // PersistingNode which is the value of the selected entry of the upper map. 
-      // It contains the lower map which contains various data fields of that entry. 
-
     // EpiNode data cursor variables.
     protected MapEpiNode upperMapEpiNode= null;
       // MapEpiNode which is the upper map which is being iterated.
@@ -87,35 +80,18 @@ public class PersistentCursor
 	      */
 	    { 
 	      String trialKeyString;
-        if (Persistent.usingEpiNodesB) // Act based on type of nodes being used.
+        int trialIndexI= // Set trial index to map size + 1; 
+            upperMapEpiNode.getSizeI() + 1;
+        while (true) // Search for a child index key not already in use in map.
           {
-            int trialIndexI= // Set trial index to map size + 1; 
-                upperMapEpiNode.getSizeI() + 1;
-            while (true) // Search for a child index key not already in use in map.
-              {
-                trialKeyString= String.valueOf(trialIndexI); // Convert index to String.
-                ScalarEpiNode keyScalarEpiNode= // Convert String to Scalar.
-                    new ScalarEpiNode(trialKeyString);
-                EpiNode childEpiNode= // Try getting value node at that Scalar key.
-                    upperMapEpiNode.getEpiNode(keyScalarEpiNode);
-                if (null == childEpiNode) // Exit if no node, meaning key is available.
-                  break;
-                trialIndexI--; // Prepare to test next lower key index.
-                }
-            }
-          else
-          {
-            int trialIndexI= // Set trial index to list size + 1; 
-                upperPersistingNode.getNavigableMap().size() + 1;
-            while (true) // Search for a child index key not already in use in list.
-              {
-                trialKeyString= String.valueOf(trialIndexI); // Convert key index to String.
-                PersistingNode childPersistingNode= // Try getting value node at that key.
-                    upperPersistingNode.getChildPersistingNode(trialKeyString);
-                if (null == childPersistingNode) // Exit if no node, meaning key is available.
-                  break;
-                trialIndexI--; // Prepare to test next lower key index.
-                }
+            trialKeyString= String.valueOf(trialIndexI); // Convert index to String.
+            ScalarEpiNode keyScalarEpiNode= // Convert String to Scalar.
+                new ScalarEpiNode(trialKeyString);
+            EpiNode childEpiNode= // Try getting value node at that Scalar key.
+                upperMapEpiNode.getEpiNode(keyScalarEpiNode);
+            if (null == childEpiNode) // Exit if no node, meaning key is available.
+              break;
+            trialIndexI--; // Prepare to test next lower key index.
             }
         setEntryKeyString( trialKeyString ); // Create and store node with selected key.
 	      return this; // This cursor pointing to new node.
@@ -138,11 +114,7 @@ public class PersistentCursor
 			{
 				// appLogger.debug(
 				// 		"PersistentCursor.setListPathV("+listPathString+") begins.");
-		    if (Persistent.usingEpiNodesB) // Act based on type of nodes being used.
-		      upperMapEpiNode= thePersistent.getOrMakeMapEpiNode(listPathString);
-  		    else
-  	  		upperPersistingNode= 
-  	  				thePersistent.getOrMakePersistingNode(listPathString);
+        upperMapEpiNode= thePersistent.getOrMakeMapEpiNode(listPathString);
 	  		return moveToFirstKeyString();
 				}
 
@@ -195,13 +167,8 @@ public class PersistentCursor
 		   	*/
 			{
         String nextEntryKeyString= null;
-        if (Persistent.usingEpiNodesB) /// Act based on node type. 
-          nextEntryKeyString= 
-            upperMapEpiNode.getNextString(entryKeyString);
-		      else
-  		    nextEntryKeyString= // Get next position key.
-		  	  	upperPersistingNode.getNavigableMap().higherKey(
-		  	  		entryKeyString);
+        nextEntryKeyString= 
+          upperMapEpiNode.getNextString(entryKeyString);
 		    setEntryKeyString(  // Set cursor to this position
             Nulls.toEmptyString( // after converting possible null to empty string.
                 nextEntryKeyString ) );
@@ -223,22 +190,11 @@ public class PersistentCursor
 				// appLogger.debug(
 				// 		"PersistentCursor.setEntryKeyV( "+entryKeyString+" )" );
 				this.entryKeyString= entryKeyString; // Store the selection/position key.
-        if (Persistent.usingEpiNodesB) /// Cache node based on node type.
-          {
-            if (! entryKeyString.isEmpty()) // If there is supposed to be a node there
-              this.lowerMapEpiNode= // cache the node at that position. 
-                  upperMapEpiNode.getOrMakeChildMapEpiNode(entryKeyString);
-              else
-                this.lowerMapEpiNode= null;
-              }
+        if (! entryKeyString.isEmpty()) // If there is supposed to be a node there
+          this.lowerMapEpiNode= // cache the node at that position. 
+              upperMapEpiNode.getOrMakeChildMapEpiNode(entryKeyString);
           else
-          {
-            if (! entryKeyString.isEmpty()) // If there is supposed to be a node there
-      				this.lowerPersistingNode= // cache the node at that position. 
-      						upperPersistingNode.getOrMakeChildPersistingNode(entryKeyString);
-              else
-                this.lowerPersistingNode= null;
-              }
+          this.lowerMapEpiNode= null;
         return this.entryKeyString;
 				}
 
@@ -256,7 +212,7 @@ public class PersistentCursor
 				}
 		
     
-    // Methods that access fields of selected PersistingNode.
+    // Methods that access fields of selected map.
 
 		/* Methods which update fields, meaning they store a value if it is changing.
 		  They also updated lastModified in that case, but only in that case.
@@ -302,10 +258,7 @@ public class PersistentCursor
         in the presently selected list element's map.
         */
       { 
-        if (Persistent.usingEpiNodesB) // Act based on type of nodes being used.
-          lowerMapEpiNode.putV( fieldKeyString, fieldValueString );
-          else
-          lowerPersistingNode.putChildV( fieldKeyString, fieldValueString );
+        lowerMapEpiNode.putV( fieldKeyString, fieldValueString );
         // appLogger.debug(
         // "PersistentCursor.putFieldV( "+fieldKeyString+"= "+fieldValueString);
         }
@@ -315,7 +268,7 @@ public class PersistentCursor
     
     public boolean getFieldB( String fieldKeyString )
       /* This method returns the boolean value of the field whose key is fieldKeyString
-        in the present list element's PersistingNode.
+        in the present element's map.
         */
       {
         String fieldValueString= getFieldString(fieldKeyString);
@@ -324,14 +277,11 @@ public class PersistentCursor
     
     public String getFieldString( String fieldKeyString )
       /* This method returns the value of the field whose key is fieldKeyString
-        in the present list element's PersistingNode.
+        in the present element's map.
         */
       {
         String fieldValueString= null;
-        if (Persistent.usingEpiNodesB) // Act based on type of nodes being used.
-          fieldValueString= lowerMapEpiNode.getValueString(fieldKeyString);
-          else
-          fieldValueString= lowerPersistingNode.getChildString(fieldKeyString);
+        fieldValueString= lowerMapEpiNode.getValueString(fieldKeyString);
         // appLogger.debug( "PersistentCursor.getFieldString( "
         //    +fieldKeyString+" ) returning:"+fieldValueString);
         return fieldValueString;

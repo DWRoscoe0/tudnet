@@ -1,13 +1,10 @@
 package allClasses;
 
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
-import java.util.Iterator;
-import java.util.NavigableMap;
 
 import static allClasses.AppLog.theAppLog;
 import static allClasses.SystemSettings.NL;
@@ -17,21 +14,16 @@ public class Persistent
 
 	/* This class implements persistent data for an app.  It is stored in 2 ways:
 
-	  * It is stored in main memory as a tree of either:
-      * PersistingNode instances
-      * EpiNode instances
+	  * It is stored in main memory as a tree of EpiNode instances
 
     * It is stored on non-volatile external storage as a text file.
-      * For PersistingNode data is expresses data with lines of the form
-          path= value 
-      * For EpiNode data is uses a YAML file subset.
+      EpiNode data is expressed in a YAML subset.
 
     Each node can represent either a:
     * scalar value, a simple text string, or
     * a nested map of key-value pairs, with each value being another node.
     
-	  Unlike PersistingNode and EpiNode, which do not understand 
-	  paths within a tree, this class does.
+	  Unlike EpiNode, which does not understand paths within a tree, this class does.
 	  Unfortunately, this means that some operations,
 	  the operations that involve long paths, can be slow.
 	  Methods that do these long operations generally begin with "multilevel".
@@ -43,8 +35,8 @@ public class Persistent
 	  ///opt Paths used internally might eventually be eliminated.
 
 		A path can be:
-		* relative to a given PersistingNode, or
-		* absolute, meaning relative to the root PersistingNode.
+		* relative to a given map node, or
+		* absolute, meaning relative to the root map node.
 
 		A path expressed as a String is a list of elements separated by a "/".
 		A path can contain 0, 1, 2, or more elements.
@@ -58,23 +50,7 @@ public class Persistent
 	
 	{
 
-    public static boolean usingEpiNodesB;
-      { usingEpiNodesB= true; /////  false; ///// temporary for switching representations.
-        // !!! BEWARE, I've started adding code that works with only EpiNode.
-        // If you changes this back to false, expect some things to not work!
-        }
-    
-		private PersistingNode rootPersistingNode= null; // PersistingNode root of tree data.
-
 		private MapEpiNode rootMapEpiNode= null; // EpiNode root of tree data.
-    
-    private final String theFileString= "PersistentData.txt";
-      // This is where the PersistingNode data is stored on disk.
-      // EpiNode data is stored elsewhere in other files.
-    private PrintWriter thePrintWriter= null;
-      ///org : This class uses a FileInputStream to read the data file,
-      // but a PrintWriter to write the data file.
-      // For symmetry, eventually switch to using a Scanner for reading. 
 
   	
   	// Initialization methods.
@@ -90,60 +66,10 @@ public class Persistent
 	      we might as well just call initializeV() as well.
 	      */
 	    {
-	      if (usingEpiNodesB) 
-  	      {
-	          rootMapEpiNode=  // Translate PersistingNode data to EpiNode data.
-	            loadMapEpiNode("PersistentEpiNode.txt"); // Read EpiNode data.
-    	      }
-  	      else
-  	      {
-    	  	  loadDataV( theFileString ); // Read PersistingNode data.
-    	  	  rootMapEpiNode=  // Translate PersistingNode data to EpiNode data.
-    	  	      PersistingNode.makeMapEpiNode(rootPersistingNode);
-    	      storeEpiNodeDataV(rootMapEpiNode, "PersistentEpiNode.txt"); // Write EpiNode data.
-    	      EpiNode duplicateEpiNode= // Read back EpiNode data.
-    	          loadMapEpiNode("PersistentEpiNode.txt");
-            storeEpiNodeDataV( // Write EpiNode data again for comparing.
-                duplicateEpiNode, "DuplicateEpiNode.txt");
-  	        }
+        rootMapEpiNode=  // Translate text file data to EpiNode data.
+          loadMapEpiNode("PersistentEpiNode.txt");
 	  	  }
-    
-    private void loadDataV( String fileString )
-      /* This method creates a Map 
-        from the contents of the external text file
-        whose name is fileString and stores it in theMap field.  
-        If no properties were read then the result will be empty.
-        If some properties were read then the result will contain them.
-        The result will never be null.
-        */
-      {
-        rootPersistingNode= 
-            new PersistingNode("this-is-root"); // Create empty Map. 
-
-        FileInputStream configFileInputStream= null;
-
-        try { 
-            configFileInputStream= // Prepare file containing persistent data.
-                new FileInputStream(
-                    AppSettings.makeRelativeToAppFolderFile( fileString ));
-            loadV(configFileInputStream); // Load data from file.
-            } 
-          catch (FileNotFoundException theFileNotFoundException) { 
-            theAppLog.warning("Persistent.loadDataV(..)"+theFileNotFoundException);
-            }
-          catch (Exception theException) { 
-            theAppLog.exception("Persistent.loadDataV(..)", theException);
-            }
-          finally { 
-            try { 
-              if ( configFileInputStream != null ) configFileInputStream.close(); 
-              }
-            catch (Exception theException) { 
-              theAppLog.exception("Persistent.loadDataV(..)", theException);
-              }
-            }
-        }
-    
+	  
     private MapEpiNode loadMapEpiNode( String fileString )
       /* This method creates an EpiNode from 
         the contents of the external text file whose name is fileString.  
@@ -179,69 +105,6 @@ public class Persistent
         return resultMapEpiNode; 
         }
 
-	  private void loadV( FileInputStream configFileInputStream )
-	    throws IOException
-	    ///fix Array bounds exception causes loss of most file data!  Prevent.
-	    {
-	  	  byte[] lineAB= new byte[1024];
-	  	  int CI= configFileInputStream.read();
-		  	while (true) { // Process all lines.
-		  		if (CI==-1) break; // Exit loop if end of file.
-		  		int offsetI= 0;
-		  	  while (true) // Read, convert, and store a line in character array.
-		  	  	{
-		  	  	  if  // Exit loop if end of line character, or end of file.
-		  	  	    (SystemSettings.NLTestB(CI) || (CI==-1))
-		  	  	  	break;
-		  	  	  lineAB[offsetI++]= (byte)(0xff & CI); // Store converted byte.
-		  		  	CI= configFileInputStream.read(); // Read next byte.
-		  	  		}
-		  	  String lineString= // Convert line char array to a String.
-		  	  		new String(lineAB, 0, offsetI);
-		  	  loadOrIgnoreLineV(lineString); // Process line appropriately.
-  		  	CI= configFileInputStream.read(); // Read next byte.
-		  		}
-	    	}
-
-	  private void loadOrIgnoreLineV(String lineString)
-	    /* Reads lineString and saves any key-value entry present.  
-	      */
-		  { 
-	  		toReturn: {
-	  		toFail: {
-	  	    if (lineString.isEmpty())  // Empty line. 
-	  	    	break toReturn; // Ignore with success.
-	  	    if (lineString.charAt(0) == '#') // Comment line.
-	  	    	break toReturn; // Ignore with success.
-	  	    int offsetOfEqualsI= lineString.indexOf('=', 0); // First '='.
-	  	    if (offsetOfEqualsI < 1) // '=' absent or at beginning of line.
-	  	    	break toFail; // Fail.
-	  	    // All is well.  Extract key and value and save them.
-	  	    loadParsedLineV(lineString,offsetOfEqualsI);
-	  	    break toReturn; // Return with success.
-		  	} // goFail:
-		  		theAppLog.warning("processLineV(..) failed, line=\""+lineString+"\"");
-		  	} // goReturn:
-		  }
-
-    private void loadParsedLineV(String lineString, int offsetOfEqualsI)
-      /* Processes a line which has already been determined to be correct.
-        offsetOfEqualsI of the offset of the "=" within the line lineString.
-        
-        This method has been switched to store into 
-        the multilevel Persistent structure.
-        Previously it stored only in the rootPersistingNode,
-        with path separators in the keyString if they were there.
-        */
-	    {
-    	  // Extract key path and value.
-		    String keyPathString= lineString.substring(0, offsetOfEqualsI);
-		    String valueString= lineString.substring(offsetOfEqualsI+1);
-
-		    // Store value in the appropriate node based on the path.
-		    putB(rootPersistingNode, keyPathString, valueString);
-		    }
-
 
     // Service methods for get and put operations.
 	  
@@ -251,61 +114,7 @@ public class Persistent
 	      though in an earlier version it could be.
 	     	*/
 	    {
-		  	if (usingEpiNodesB)
-		  	  rootMapEpiNode.putV(keyString, valueString);
-		  	  else
-		  	  putB(rootPersistingNode,keyString,valueString); /// Overkill, single-element path.
-		    }
-
-	  private boolean putB(
-	  		PersistingNode thePersistingNode,String pathString,String valueString)
-	    /* This recursive method stores valueString into thePersistingNode
-	      or one of its descendants, based on pathString.
-	      It uses recursion to reach or create the needed descendants.
-	      If pathString contains no path separator then 
-	      the entire pathString is used to get or create
-	      the child node into which valueString is stored directly.
-	      If pathString contains a path separator then 
-	      the part before the separator is used to get or create
-	      the child node into which valueString is stored
-	      by calling this method recursively on that child node
-	      using the remainder of pathString as the new pathString.
-	      If the key or any of its parts is empty then an error is logged and 
-	      true is returned, otherwise false is returned.
-	      Actually, I doubt the return value is used much, if at all.
-	      
-	      ///opt Could this be converted to not recurse?
-	     	*/
-	    {
-	  			boolean resultB= false; // Set default return value to be success.
-	  		toReturn: {
-	  		toFail: {
-			    int offsetOfSeparatorI= // Offset of first key/path separator. 
-			    		pathString.indexOf(Config.pathSeperatorC, 0);
-			    if (offsetOfSeparatorI < 0) // There is no path separator in key.
-				    { // Store value in this node's child for this key, return success.
-				    	thePersistingNode.putChildV(pathString, valueString);
-					    break toReturn;
-				    	}
-			    if (offsetOfSeparatorI < 1) // Separator is at beginning of key.
-				    break toFail; // Key head would be empty.
-			    String keyHeadString= pathString.substring(0, offsetOfSeparatorI);
-			    if (offsetOfSeparatorI >= pathString.length()) // Separator is at end.
-				    break toFail; // Key tail would be empty.
-			    String keyTailString= pathString.substring(offsetOfSeparatorI+1);
-	    		PersistingNode childPersistingNode= // Get or make appropriate child. 
-		    			thePersistingNode.getOrMakeChildPersistingNode(keyHeadString);
-	    		resultB= // Recurse using tail of key as new key.
-	    				putB(
-	    						childPersistingNode,keyTailString,valueString);
-	    		break toReturn;
-		  	} // toFail:
-		  		theAppLog.warning( "multiSetValueB(..) failed," + NL
-		  		    + "  pathString="+pathString + NL
-		  		    + "  valueString="+valueString );
-		  		resultB= true;  // Set failure return value
-		  	} // toReturn:
-	  			return resultB;
+	      rootMapEpiNode.putV(keyString, valueString);
 		  	}
 	
 	  public String getDefaultingToBlankString( String pathString )
@@ -330,8 +139,8 @@ public class Persistent
 		  }
 		
 	  private String getString( String pathString)
-			/* This is like getPersistingNode(pathString) except that
-			  instead of returning a PersistingNode,
+			/* This is like getEpiNode(pathString) except that
+			  instead of returning an EpiNode,
 			  it returns the value String stored there.
 			  If either the node or the value String are not at
 			  the location specified by pathString
@@ -339,40 +148,15 @@ public class Persistent
 		   	*/
 		  {
   	      String resultValueString= null; // Default null result value, to be overridden.
-          if (usingEpiNodesB)
-            goReturn: {
-              EpiNode keyEpiNode= new ScalarEpiNode(pathString);
-              EpiNode valueEpiNode= rootMapEpiNode.getEpiNode(keyEpiNode);
-              if (valueEpiNode == null) // If there is no node with this key
-                break goReturn; // return with default null String.
-              resultValueString= valueEpiNode.toString(); // Get node's string value. 
-            } // goReturn:
-            else
-    	  	  goReturn: {
-        			PersistingNode valuePersistingNode= // Get associated PersistingNode. 
-        					getPersistingNode(pathString);
-    		  	  if (valuePersistingNode == null) // If there is no node with this path
-    		  	  	break goReturn; // return with default null String.
-    		  	  resultValueString= // Get possibly null string value from this node. 
-    		  	  		valuePersistingNode.getValueString();
-    		  	} // goReturn:
+        goReturn: {
+          EpiNode keyEpiNode= new ScalarEpiNode(pathString);
+          EpiNode valueEpiNode= rootMapEpiNode.getEpiNode(keyEpiNode);
+          if (valueEpiNode == null) // If there is no node with this key
+            break goReturn; // return with default null String.
+          resultValueString= valueEpiNode.toString(); // Get node's string value. 
+        } // goReturn:
 	  			return resultValueString;
 		  }
-
-    public PersistingNode getOrMakePersistingNode(String pathString)
-      /* This is equivalent to
-    
-        getOrMakePersistingNode(basePersistingNode, pathString)
-    
-        with basePersistingNode set to rootPersistingNode.
-        
-        Note, dealing with absolute paths, paths starting at rootPersistingNode.
-        So this method should be used infrequently. 
-        */
-      {
-        return getOrMakePersistingNode(
-          rootPersistingNode, pathString);
-        }
 
     public MapEpiNode getOrMakeMapEpiNode(String pathString)
       /* This is equivalent to
@@ -387,66 +171,6 @@ public class Persistent
       {
         return getOrMakeMapEpiNode(
           rootMapEpiNode, pathString);
-        }
-
-    private PersistingNode getOrMakePersistingNode(
-        PersistingNode basePersistingNode, String pathString)
-      /* Returns the PersistingNode associated with pathString.
-        If there is none, then it makes one, along with 
-        all the other PersistingNodes between it and basePersistingNode. 
-        It interprets pathString as a path from basePersistingNode
-        to the desired PersistingNode.
-        Each path element is used as a key to select or create
-        the next child in the PersistingNode hierarchy.
-        It does one key lookup, or new node creation,
-        for every element of the path.
-        An empty pathString is interpreted to mean basePersistingNode.
-        This method never returns null.
-        It returns a new PersistingNode whose value is an error String
-        if there is an error parsing pathString.
-        
-        ///opt Though this method accepts a path, it appears to be called with
-          only single-element paths.
-        */
-      {
-          // appLogger.debug(
-          //    "Persistent.getOrMakePersistingNode("
-          //      +pathString+") begins.");
-          PersistingNode resultPersistingNode= // Initial result value
-              basePersistingNode; // is base node.
-        goReturn: {
-          int separatorKeyOffsetI; // Offset of next key/path separator. 
-        goLogError: {
-          if (pathString.isEmpty()) break goReturn; // return base node.
-          int scanKeyOffsetI= 0; // Starting offset for path separator search.
-          while (true) { // Get/make child nodes until desired one is reached.
-            separatorKeyOffsetI= // Get offset of next key/path separator. 
-                pathString.indexOf(Config.pathSeperatorC, scanKeyOffsetI);
-            if (separatorKeyOffsetI < 0) // There is no next path separator...
-              { // So next node is final node.  Return appropriate child node.
-                String keyString= // Extract final key from path.
-                    pathString.substring(scanKeyOffsetI, pathString.length());
-                if (keyString.isEmpty()) break goLogError;
-                resultPersistingNode= // Get or make associated child node.
-                  resultPersistingNode.getOrMakeChildPersistingNode(keyString);
-                break goReturn; // Return with the non-null value.
-                }
-            //// This code does not appear to be reached.
-            String keyString= // Extract next key from path up to separator.
-                pathString.substring(scanKeyOffsetI, separatorKeyOffsetI);
-            if (keyString.isEmpty()) break goLogError;
-            resultPersistingNode= // Get or make associated/next child node.
-                resultPersistingNode.getOrMakeChildPersistingNode(keyString);
-            scanKeyOffsetI= separatorKeyOffsetI+1; // Compute next key offset.
-          } // while (true)... Loop to select or make next descendant node.
-        } // goLogError:
-          String errorString= "Persistent.getPersistingNode(..), "
-              +"error getting value, path="+pathString;
-          theAppLog.error(errorString); // Log error string.
-          resultPersistingNode= // and return same string in new PersistingNode.
-              new PersistingNode(errorString);
-        } // goReturn:
-          return resultPersistingNode;
         }
 
     private MapEpiNode getOrMakeMapEpiNode(
@@ -507,76 +231,6 @@ public class Persistent
           return resultMapEpiNode;
         }
 
-	  public PersistingNode getPersistingNode(String pathString)
-			/* This is equivalent to
-
-			    	getPersistingNode(basePersistingNode, pathString)
-
-			  with basePersistingNode set to rootPersistingNode.
-	      
-	      Note, dealing with absolute paths, paths starting at rootPersistingNode.
-	      So this method should be used infrequently. 
-			  */
-		  {
-	  	  return getPersistingNode(rootPersistingNode, pathString);
-		  	}
-
-	  private PersistingNode getPersistingNode(
-	  		PersistingNode basePersistingNode, String pathString)
-			/* Returns the PersistingNode associated with pathString, 
-			  or null if there is no PersistingNode stored.
-		    It interprets pathString as a path from basePersistingNode
-		    to the desired PersistingNode.
-		    Each path element is used as a key to select 
-		    the next child in the PersistingNode hierarchy.
-		    It does one key lookup for every element of the path.
-		    An empty pathString is interpreted to mean basePersistingNode.
-		    If any key lookup fails, an error occurs,
-		    or a value is not found in the final node,
-		    then null is returned.
-		    
-		    ///opt Though this method accepts a path, it appears to be called with
-		      only single-element paths.
-		   	*/
-		  {
-				 // appLogger.debug(
-				 // 				"Persistent.getPersistingNode("+pathString+") begins.");
-	  			PersistingNode resultPersistingNode= // Initial result value
-	  					basePersistingNode; // is base node.
-	  	  goReturn: {
-			  goLogError: {
-	    	  if (pathString.isEmpty()) break goReturn; // return base node.
-				  int scanKeyOffsetI= 0; // Starting offset for path separator search.
-				  while (true) { // Select child nodes until desired one is reached.
-				    int separatorKeyOffsetI= // Offset of next key/path separator. 
-				    		pathString.indexOf(Config.pathSeperatorC, scanKeyOffsetI);
-				    if (separatorKeyOffsetI < 0) // There is no next path separator...
-				    	{	// So next node is final node.  Return appropriate child node.
-				    	  String keyString= // Extract final key from path.
-				    	  		pathString.substring(scanKeyOffsetI, pathString.length());
-				    	  if (keyString.isEmpty()) break goLogError;
-				    	  resultPersistingNode= // Get associated child node, if present.
-				    		  resultPersistingNode.getNavigableMap().get(keyString);
-					  	  break goReturn; // Return with the possibly null value.
-				    		}
-	          //// This code does not appear to be reached.
-				    String keyString= // Extract next key from path up to separator.
-		    	  		pathString.substring(scanKeyOffsetI, separatorKeyOffsetI);
-		    	  if (keyString.isEmpty()) break goLogError;
-		    	  resultPersistingNode= // Get associated child node, if present.
-			    		  resultPersistingNode.getNavigableMap().get(keyString);
-			  	  if (resultPersistingNode == null) // If no child node with the key 
-			  	  	break goReturn; // return the null.
-			  	  scanKeyOffsetI= separatorKeyOffsetI+1; // Compute next key offset.
-				  } // while (true)... Loop to test next descendant node.
-			  } // goLogError:
-		  		theAppLog.error( "Persistent.getPersistigNode(..), "
-		  				+"error getting value, path="+pathString);
-			    resultPersistingNode= null; // Override result with null for error.
-		  	} // goReturn:
-	  			return resultPersistingNode;
-		  }
-
 
 	  // Finalization methods not called by initialization or service sections.
 	  
@@ -586,47 +240,8 @@ public class Persistent
 	    Eventually it will store only one.
 	    */
 	  {
-      if (usingEpiNodesB)
-        storeEpiNodeDataV(rootMapEpiNode, "PersistentEpiNode.txt"); // Write EpiNode data.
-        else
-        {
-    		  storeRootPersistingNodeV( theFileString ); // Write PersistentNode data.
-          storeEpiNodeDataV(rootMapEpiNode, "PersistentEpiNode.txt"); // Write EpiNode data.
-          }
+      storeEpiNodeDataV(rootMapEpiNode, "PersistentEpiNode.txt"); // Write EpiNode data.
 	  	}
-    
-  private void storeRootPersistingNodeV( String fileString )
-    /* This method stores the Persistent data that is in main memory to 
-      the external text file whose name is fileString.
-      Presently it stores twice:
-      * The data only in the root node.
-      * The data in all nodes of the tree.
-      So some information appears twice in the file,
-      but when reloaded it should go to the same place.
-      
-      The exception handling in this method is not required,
-      but it does no harm.
-      */
-    {
-      try {
-          thePrintWriter= new PrintWriter(
-              AppSettings.makeRelativeToAppFolderFile(fileString));
-          writingV(thePrintWriter,
-              "#---multi-element path and data output follows---"+NL);
-          multilevelStoreNodeV(thePrintWriter, "", rootPersistingNode);
-          }
-        catch (Exception theException) { 
-          theAppLog.exception("Persistent.storeRootPersistingNodeV(..)", theException);
-          }
-        finally {
-          try {
-            if ( thePrintWriter != null ) thePrintWriter.close(); 
-            }
-          catch ( Exception theException ) { 
-            theAppLog.exception("Persistent.storeRootPersistingNodeV(..)", theException);
-            }
-          }
-      }
   
 private void storeEpiNodeDataV( EpiNode theEpiNode, String fileString )
   /* This method stores the Persistent data that is in main memory to 
@@ -665,39 +280,6 @@ private void storeEpiNodeDataV( EpiNode theEpiNode, String fileString )
           }
         }
     }
-	
-	  private void multilevelStoreNodeV(PrintWriter thePrintWriter, 
-	  		String prefixString, PersistingNode thePersistingNode)
-	    /* This recursive method stores thePersistingNode 
-	      by writing to the stream.
-	      thePersistingNode is assumed to be a descendant of rootPersistingNode,
-	      with prefixString describing the path from
-	      rootPersistingNode to thePersistingNode.
-	     */
-		  {
-		  	{ // Store this node's value, if present.
-		  	  String valueString= thePersistingNode.getValueString();
-		  	  if (valueString==null) valueString= "";
-		  	  if (! prefixString.isEmpty())
-		  	  	writingLineV(thePrintWriter, prefixString + "=" + valueString);
-		  		}
-		  	{ // Store child nodes, if present.
-			  	Iterator<String> theIterator= // Make iterator for the children. 
-		  				thePersistingNode.getNavigableMap().keySet().iterator();
-		  		while (theIterator.hasNext()) // Store all children.
-				  	{ // Write one child node.
-		  				String childKeyString= theIterator.next();
-		  				String childPrefixString= prefixString;
-		  				if (! childPrefixString.isEmpty()) 
-		  					childPrefixString+= Config.pathSeperatorC;
-		  				childPrefixString+= childKeyString;
-		  				NavigableMap<String,PersistingNode> childNavigableMap=
-		  						thePersistingNode.getNavigableMap();
-		  				multilevelStoreNodeV(thePrintWriter, 
-		  						childPrefixString,childNavigableMap.get(childKeyString));
-				  		}
-		  			}
-		  	}
 	
 	  public void writingCommentLineV( 
 	      PrintWriter thePrintWriter, String commentString ) 
