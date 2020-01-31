@@ -117,6 +117,9 @@ public class ConnectionManager
 	    private NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue;
 	    	// Queue of unconnected unicast packets received from Unicasters.
       private NotifyingQueue<String> toConnectionManagerNotifyingQueueOfStrings;
+        // For inputs in the form of Strings.
+      private NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes;
+        // For inputs in the form of MapEpiNodes.
 
     // Other instance variables, all private.
 		  private MulticastSocket theMulticastSocket; // For multicast receiver. 
@@ -140,7 +143,8 @@ public class ConnectionManager
     		LockAndSignal cmThreadLockAndSignal,
     		NetcasterQueue multicasterToConnectionManagerNetcasterQueue,
     		NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue,
-        NotifyingQueue<String> toConnectionManagerNotifyingQueueOfStrings
+        NotifyingQueue<String> toConnectionManagerNotifyingQueueOfStrings,
+        NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes
     		)
       {
       	super.initializeV(  // Constructing base class.
@@ -160,6 +164,8 @@ public class ConnectionManager
   	    		unconnectedReceiverToConnectionManagerNetcasterQueue;
         this.toConnectionManagerNotifyingQueueOfStrings=
             toConnectionManagerNotifyingQueueOfStrings;
+        this.toConnectionManagerNotifyingQueueOfMapEpiNodes=
+            toConnectionManagerNotifyingQueueOfMapEpiNodes;
         }
 
 
@@ -229,6 +235,7 @@ public class ConnectionManager
           processingUnconnectedSockPacketsB();
           processingMulticasterSockPacketsB();
           processingLocalStringMessagesB();
+          processPeerDataExchangesV();
 
           /* At this point, at least the inputs that arrived before 
             the last notification signal should have been processed. 
@@ -601,50 +608,82 @@ public class ConnectionManager
 	      		);
         }
 
+    
     /*  ////
-
-. PeerListExchangeCodeDx Begin
+      PeerDataExchange:
+        
+      PeerTerminology:
+        Peer: any peer.
+        LocalPeer: Self-explanatory.
+        RemotePeer: A second peer that is not the LocalPeer.
+        SubjectPeer: A third peer about which LocalPeer and RemotePeer 
+          communicate.
     
-  PeerTerminology:
-    LocalPeer: The current peer.
-    RemotePeer: A particular other peer with which communication is happening.
-    SubjectPeer: The peer about which LocalPeer and RemotePeer are communicating.
+      RemotePeer/Unicaster variables.  
+        Note, all time variables increase monotonically.
+        * long lastModifiedTime  Updated with present time when 
+          any of the following variables of the same RemotePeer change: 
+          * boolean wasConnected.
+          The lastModifiedTime of no 2 peers will be equal.
+          This uniqueness simplifies coding.
+        * boolean wasConnected // Changes when associated RemotePeer 
+          connects to or disconnects from the LocalPeer.
+        * long sentLastLastModifiedTime: the lastModifiedTime of 
+          the SubjectPeer data packet most recently sent to the RemotePeer.
+          This is also the largest value to be sent.
+        * long acknowledgedLastLastModifiedTime: this is a copy of 
+          the last sentLastLastModifiedTime send by the RemotePeer and
+          received by the LocalPeer.  It, along with lastSendTime,
+          can be used to decide whether to retransmit the previous data.
+          It is always less than or equal to sentLastLastModifiedTime.
+        * long lastSendTime: This is the last real time that
+          data was sent to the RemotePeer.
+          This is used to determine the next time out, if any.
+          
+        */
     
-  peer/Unicaster variables.  All time variables increase monotonically.
-    long lastModifiedTime  Updated with present time when 
-      any of the following variables change: boolean wasConnected.
-    boolean wasConnected // Changes when associated peer connects or disconnects.
-    long lastModifiedSentTime: lastModifiedTime of SubjectPeer 
-      whose data was last sent to the RemotePeer.
-    long lastModifiedSentAcknowledgeTime: lastModifiedTime of SubjectPeer 
-      whose data was last received by the RemotePeer.
-    long lastSendTime: last time data was sent to the RemotePeer.
-      This is used for time out determination.
+    private void processPeerDataExchangesV() 
+      {
+        theAppLog.debug("ConnectionManager.processPeerDataExchangesV() called.");
+        //// boolean itemsProcessedB= false;
+        MapEpiNode theMapEpiNode;
 
-  while(true) {
-    waitForInput();
-    if (a peer connected to me) updatePeersStatusAndTimeStamp();
-    if (a peer disconnected from me) updatePeersStatusAndTimeStamp();
-    for (all unprocessed updates from connected peers) {
-      if (update is about another connected peer)
-        process update into storage, using unique time-stamps-IDs;
-      acknowledge receipt of update;
-      }
-    subjectPeers= sortByLastModifiedTime(allPeers);
-    for (subjectPeer: subjectPeers) {
-      for (remotePeer: getConnectedPeers()) {
-        if ( ( subjectPeer:.lastModifiedTime 
-               > remotePeer.lastModifiedSentAcknowledgeTime ) &&
-              ( remotePeer.lastSendTime - presentTime > time-out-limit )
-              )
-          sendDataOfTo(subjectPeer,remotePeer);
+        while (true) {  // Process all messages.
+          theMapEpiNode= // Try getting next message from queue.
+              toConnectionManagerNotifyingQueueOfMapEpiNodes.poll();
+
+          if (theMapEpiNode == null) break;  // Exit if no more messages
+          
+          theAppLog.debug(
+            "ConnectionManager.processPeerDataExchangesV() MapEpiNode dequeued.");
+
+          //// itemsProcessedB= true;
+          }
+        /*  ////
+        while (a new peer connected to me or disconnected from me) {
+          extract data from its source;
+          updatePeersStatusAndTimeStamp();
+          Update lastModifiedTime with present time;
+          Update wasConnected appropriately;
+          }
+        for (all unprocessed updates from connected peers) {
+          if (update is about another connected peer)
+            process update into storage, using unique time-stamps-IDs;
+          ///enh send acknowledgment of receipt of update;
+          }
+        timeSortedSubjectPeers= sortByLastModifiedTime(allPeers);
+        for (subjectPeer: timeSortedSubjectPeers) {
+          for (remotePeer: getConnectedPeers()) {
+            if ( subjectPeer:.lastModifiedTime 
+                 > remotePeer.sentLastLastModifiedTime)
+                 )
+              { sendDataOfTo(subjectPeer,remotePeer);
+                remotePeer.sentLastLastModifiedTime= subjectPeer:.lastModifiedTime;
+                }
+            }
+          }
+        */  ////
         }
-      }
-    
-    }
-    
-* PeerListExchangeCodeDx End
 
-    */  ////    
 
     } // class ConnectionManager.

@@ -222,14 +222,13 @@ public class LinkedMachineState
             and transitions to the ConnectedState. 
             */
           {
-            if (tryReceivingHelloB(this))
-              {
-                sendHelloV(this); // Send a response HELLO.
-                requestAncestorSubStateV( // Switch to ConnectedState.
-                    theConnectedState
-                    );
-                }
-            else if ( tryInputB("Connect") ) { // Connect requested, at startup.
+            if (tryReceivingHelloB(this)) { // Connect requested from remote peer.
+              sendHelloV(this); // Send a response HELLO.
+              thePeersCursor.updateFieldV( "wasConnected", true ); // Record connection.
+              //// queue to ConnectionManager.
+              requestAncestorSubStateV( theConnectedState ); // Become connected.
+              }
+            else if ( tryInputB("Connect") ) { // Local connect requested, at startup.
               theAppLog.info("Executing Connect request.");
               sendHelloV(this); // Send initial HELLO.
               requestAncestorSubStateV( theExponentialRetryConnectingState );
@@ -420,6 +419,8 @@ public class LinkedMachineState
 					  			}
               if ( tryInputB("GOODBYE") ) { // Peer disconnected itself by saying goodbye?
                 sayGoodbyesV(); // Respond to peer with our own goodbyes.
+                thePeersCursor.updateFieldV("wasConnected", false); // Record disconnect.
+                //// queue to ConnectionManager.
                 requestAncestorSubStateV( theDisconnectedState); // Disconnect ourselves.
                 break goReturn; // Return with signal true.
                 }

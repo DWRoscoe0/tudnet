@@ -485,7 +485,7 @@ public class TCPCopier extends EpiThread
         sources or destinations of software updates.
         */
       {
-        theAppLog.debug( "reportPeerConnectionV(..): queuing peer." );
+        theAppLog.debug( "TCPCopier.reportPeerConnectionV(..): queuing peer." );
         peerQueueOfIPAndPort.add(remoteIPAndPort); // Add peer to queue.
         notify(); // Wake up the Client thread.
         }

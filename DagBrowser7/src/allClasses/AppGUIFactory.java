@@ -70,6 +70,8 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 	    LockAndSignal cmThreadLockAndSignal= new LockAndSignal();
       NotifyingQueue<String> toConnectionManagerNotifyingQueueOfStrings=
           new NotifyingQueue<String>(cmThreadLockAndSignal, Config.QUEUE_SIZE);
+      NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes=
+          new NotifyingQueue<MapEpiNode>(cmThreadLockAndSignal, Config.QUEUE_SIZE);
 	    NetcasterQueue multicasterToConnectionManagerNetcasterQueue=
 	      new NetcasterQueue(cmThreadLockAndSignal, Config.QUEUE_SIZE);
       NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue=
@@ -82,7 +84,8 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
   	    cmThreadLockAndSignal,
   	    multicasterToConnectionManagerNetcasterQueue,
   	    unconnectedReceiverToConnectionManagerNetcasterQueue,
-  	    toConnectionManagerNotifyingQueueOfStrings
+  	    toConnectionManagerNotifyingQueueOfStrings,
+        toConnectionManagerNotifyingQueueOfMapEpiNodes
   	    );
       EpiThread theConnectionManagerEpiThread=
         AppGUIFactory.makeEpiThread( theConnectionManager, "ConnMgr" );
