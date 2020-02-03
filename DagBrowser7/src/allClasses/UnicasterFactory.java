@@ -31,7 +31,8 @@ public class UnicasterFactory {
   		Shutdowner theShutdowner,
   		int queueCapacityI,
   		Timer theTimer,
-  		Persistent thePersistent
+  		Persistent thePersistent,
+      NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes
 
   		)
   	/* This builds all objects that are or comprise 
@@ -83,7 +84,8 @@ public class UnicasterFactory {
 			   	thePeersCursor,
 		      initialRetryTimeOutMsNamedLong,
 		      leadingDefaultBooleanLike,
-		      unicasterInputQueueOfStrings
+		      unicasterInputQueueOfStrings,
+	        toConnectionManagerNotifyingQueueOfMapEpiNodes
 			  	);
   	
 	    

@@ -67,6 +67,7 @@ public class Unicaster
       private final Persistent thePersistent;
       private PeersCursor thePeersCursor;
       private NotifyingQueue<String> unicasterNotifyingQueueOfStrings;
+      private NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes;
       
   		// Other instance variables.
       private EpiThread theEpiThread;
@@ -87,7 +88,8 @@ public class Unicaster
 	  		PeersCursor thePeersCursor,
 	  		NamedLong initialRetryTimeOutMsNamedLong,
 	  		DefaultBooleanLike leadingDefaultBooleanLike,
-	  		NotifyingQueue<String> unicasterNotifyingQueueOfStrings
+	  		NotifyingQueue<String> unicasterNotifyingQueueOfStrings,
+        NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes
 	  		)
 	    /* This constructor constructs a Unicaster for the purpose of
 	      communicating with the node at remoteInetSocketAddress,
@@ -118,6 +120,8 @@ public class Unicaster
 		  		this.thePersistent= thePersistent;
 		      this.thePeersCursor= thePeersCursor;
 	        this.unicasterNotifyingQueueOfStrings= unicasterNotifyingQueueOfStrings;
+          this.toConnectionManagerNotifyingQueueOfMapEpiNodes=
+              toConnectionManagerNotifyingQueueOfMapEpiNodes;
 	      }
 
     protected void initializeWithIOExceptionV( 
@@ -153,7 +157,8 @@ public class Unicaster
 		  				this,
 		  				thePersistent,
 		          thePeersCursor,
-		  				theLinkMeasurementState
+		  				theLinkMeasurementState,
+		  	      toConnectionManagerNotifyingQueueOfMapEpiNodes
 		  	  		);
   				addStateListV( theLinkedMachineState );
 

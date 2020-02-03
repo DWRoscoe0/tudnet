@@ -210,11 +210,12 @@ public class PersistentCursor
 				// 		"PersistentCursor.getEntryKeyString() returning:"+entryKeyString);
 				return entryKeyString;
 				}
-		
-    
-    // Methods that access fields of selected map.
 
-		/* Methods which update fields, meaning they store a value if it is changing.
+
+		// Methods that access fields of selected map.
+
+
+		/* Methods which update fields, meaning they store a value only if it is changing.
 		  They also updated lastModified in that case, but only in that case.
 		  */
 
@@ -251,7 +252,7 @@ public class PersistentCursor
         }
 
     
-    // Methods which put values in fields.
+    // Methods which unconditionally store values in fields.
 
     public void putFieldV( String fieldKeyString, String fieldValueString )
       /* This method stores fieldValueString into the field whose name is fieldKeyString
@@ -264,7 +265,14 @@ public class PersistentCursor
         }
 
     
-    // Methods which get fields.
+    public MapEpiNode getSelectedMapEpiNode()
+      /* Returns the MapEpiNode presently selected by the iterator,
+        or null if no entry is selected.  */
+      { 
+        return lowerMapEpiNode; 
+        }
+    
+    // Methods which get values from fields.
     
     public boolean getFieldB( String fieldKeyString )
       /* This method returns the boolean value of the field whose key is fieldKeyString

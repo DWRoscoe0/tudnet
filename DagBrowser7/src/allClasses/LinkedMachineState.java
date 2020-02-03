@@ -35,6 +35,8 @@ public class LinkedMachineState
 		private Unicaster theUnicaster;
 		private Persistent thePersistent; 
     private PeersCursor thePeersCursor;
+    private NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes;
+      //// For inputs in the form of MapEpiNodes.
 
 		// Other variables.
 		private String thePeerIdentityString= null;
@@ -61,8 +63,9 @@ public class LinkedMachineState
 					Unicaster theUnicaster,
 					Persistent thePersistent, 
 					PeersCursor thePeersCursor,
-					LinkMeasurementState theLinkMeasurementState
-		  		)
+					LinkMeasurementState theLinkMeasurementState,
+		      NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes
+	        )
 				throws IOException
 		  {
 	  		super.initializeWithIOExceptionStateList();
@@ -76,6 +79,8 @@ public class LinkedMachineState
 				this.theUnicaster= theUnicaster;
 				this.thePersistent= thePersistent; 
         this.thePeersCursor= thePeersCursor;
+        this.toConnectionManagerNotifyingQueueOfMapEpiNodes=
+            toConnectionManagerNotifyingQueueOfMapEpiNodes;
 
 	  		// Adding measurement count.
 
@@ -225,6 +230,8 @@ public class LinkedMachineState
             if (tryReceivingHelloB(this)) { // Connect requested from remote peer.
               sendHelloV(this); // Send a response HELLO.
               thePeersCursor.updateFieldV( "wasConnected", true ); // Record connection.
+              toConnectionManagerNotifyingQueueOfMapEpiNodes.put( ////
+                  thePeersCursor.getSelectedMapEpiNode()); // Notify ConnectionManager.
               //// queue to ConnectionManager.
               requestAncestorSubStateV( theConnectedState ); // Become connected.
               }
@@ -420,7 +427,8 @@ public class LinkedMachineState
               if ( tryInputB("GOODBYE") ) { // Peer disconnected itself by saying goodbye?
                 sayGoodbyesV(); // Respond to peer with our own goodbyes.
                 thePeersCursor.updateFieldV("wasConnected", false); // Record disconnect.
-                //// queue to ConnectionManager.
+                toConnectionManagerNotifyingQueueOfMapEpiNodes.put( ////
+                    thePeersCursor.getSelectedMapEpiNode()); // Notify ConnectionManager.
                 requestAncestorSubStateV( theDisconnectedState); // Disconnect ourselves.
                 break goReturn; // Return with signal true.
                 }

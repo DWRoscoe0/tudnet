@@ -42,6 +42,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 	private final Timer theTimer;
   private final NamedLong multicasterFixedTimeOutMsNamedLong;
   private final Persistent thePersistent;
+  private NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes;
 
   public AppGUIFactory(  // Factory constructor.
   	  Persistent thePersistent,
@@ -157,7 +158,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
   	  this.thePortManager= thePortManager;
   	  this.thePersistent= thePersistent;
 
-  	  // Save in instance variables other objects that are needed later.
+  	  // Save in instance variables other non-injected objects that are needed later.
       this.theUnicasterManager= theUnicasterManager;
       this.senderLockAndSignal= senderLockAndSignal;
       this.netcasterToSenderNetcasterQueue= netcasterToSenderNetcasterQueue;
@@ -167,6 +168,8 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
   		this.theTimer= theTimer;
   		this.multicasterFixedTimeOutMsNamedLong= 
   				multicasterTimeOutMsNamedLong;
+      this.toConnectionManagerNotifyingQueueOfMapEpiNodes=
+          toConnectionManagerNotifyingQueueOfMapEpiNodes;
       }
 
   // Unconditional singleton getter methods with null checking.
@@ -182,9 +185,9 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
   // None.
 
   
-  // Maker methods which construct something with new-operator each time called.
-  // These are for classes with multiple instances in space or time.
-  // ?? fastFailNullCheckT(..) might no longer be needed.
+  // Maker methods which construct something with the new-operator each time called.
+  // These are for classes for which there are multiple instances in space or time.
+  ///opt fastFailNullCheckT(..) might no longer be needed.
 
 	public static EpiThread makeEpiThread( Runnable aRunnable, String nameString )
 	  { return new EpiThread( aRunnable, nameString ); }
@@ -358,7 +361,8 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 				theShutdowner, 
 				Config.QUEUE_SIZE,
 	  		theTimer,
-	  		thePersistent
+	  		thePersistent,
+        toConnectionManagerNotifyingQueueOfMapEpiNodes
 				);
 	  	}
 
