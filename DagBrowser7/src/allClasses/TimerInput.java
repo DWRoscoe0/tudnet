@@ -1,5 +1,7 @@
 package allClasses;
 
+import static allClasses.AppLog.theAppLog;
+
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -105,6 +107,8 @@ public class TimerInput
   	        		  }
 		          }
 	    		};
+	      if (delayMsL <= 0)
+          theAppLog.warning( "TimerInput.schedule(..) non-positive delay!" );
 	      lastDelayUsedMsL= delayMsL;
 	    	theTimer.schedule(theTimerTask, delayMsL);
 	    	}

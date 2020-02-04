@@ -193,7 +193,9 @@ public class EpiInputStream<
           */  ////
         //// } // toNoData: Being here means end of packet reached.
           accumulatorString+="!NO-DATA-AVAILABLE!";
-          theAppLog.error( "readAString(): returning " + accumulatorString );
+          // theAppLog.error( // Log this way to debug.
+          theAppLog.warning( // Log this way normally.  
+              "readAString(): returning " + accumulatorString );
         } // toReturn:
           return accumulatorString;
         }
