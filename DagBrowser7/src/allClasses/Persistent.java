@@ -68,6 +68,8 @@ public class Persistent
 	    {
         rootMapEpiNode=  // Translate text file data to EpiNode data.
           loadMapEpiNode("PersistentEpiNode.txt");
+        if (rootMapEpiNode == null) // Define root map to be empty map if load failed. 
+          rootMapEpiNode= new MapEpiNode();
 	  	  }
 	  
     private MapEpiNode loadMapEpiNode( String fileString )
