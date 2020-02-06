@@ -228,20 +228,26 @@ public class LinkedMachineState
             */
           {
             if (tryReceivingHelloB(this)) { // Connect requested from remote peer.
-              sendHelloV(this); // Send a response HELLO.
-              thePeersCursor.updateFieldV( "wasConnected", true ); // Record connection.
-              toConnectionManagerNotifyingQueueOfMapEpiNodes.put( ////
-                  thePeersCursor.getSelectedMapEpiNode()); // Notify ConnectionManager.
-              //// queue to ConnectionManager.
-              requestAncestorSubStateV( theConnectedState ); // Become connected.
+              if (thePeersCursor.getFieldB("ignoreConnectionRequests"))
+                theAppLog.info("LinkedMachineState.onInputsToReturnFalseV() ignoreConnectionRequests:true.");
+                else
+                {
+                  sendHelloV(this); // Send a response HELLO.
+                  thePeersCursor.updateFieldV( "wasConnected", true ); // Record connection.
+                  toConnectionManagerNotifyingQueueOfMapEpiNodes.put( ////
+                      thePeersCursor.getSelectedMapEpiNode()); // Notify ConnectionManager.
+                  //// queue to ConnectionManager.
+                  requestAncestorSubStateV( theConnectedState ); // Become connected.
+                  }
               }
             else if ( tryInputB("Connect") ) { // Local connect requested, at startup.
-              theAppLog.info("Executing Connect request.");
+              theAppLog.info(
+                "LinkedMachineState.onInputsToReturnFalseV() Executing Connect request.");
               sendHelloV(this); // Send initial HELLO.
               requestAncestorSubStateV( theExponentialRetryConnectingState );
               }
             else if ( tryInputB("GOODBYE") ) { // Ignore any redundant GOODBYE message.
-              // appLogger.info("GOODBYE received and ignored while in DisconnectedState.");
+              // appLogger.info("LinkedMachineState.onInputsToReturnFalseV() GOODBYE received and ignored while in DisconnectedState.");
               }
             }
 
