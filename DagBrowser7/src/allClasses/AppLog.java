@@ -518,10 +518,19 @@ public class AppLog extends EpiThread
         }
     
     public void doStackTraceV(Throwable theThrowable)
+      /* This method might log a stack trace, if logStackTraceB is true.
+        If it does, it does it as follows:
+        If theThrowable is not null, it logs a stack trace of it.
+        If theThrowable IS null, it assigns a new Throwable to it.
+        Then it logs a stack trace of it theThrowable
+       */
       {
-        if (theThrowable == null)
-          theThrowable= new Throwable("Throwable created to display stack trace");
-        theThrowable.printStackTrace(getPrintWriter());
+        boolean logStackTraceB= false; // Change this to control stack trace.
+        if (logStackTraceB ) {
+          if (theThrowable == null)
+            theThrowable= new Throwable("Throwable created to display stack trace");
+          theThrowable.printStackTrace(getPrintWriter());
+          }
         }
     
     public void consoleInfo(String inString, boolean debugB)
