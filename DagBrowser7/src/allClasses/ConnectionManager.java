@@ -645,44 +645,41 @@ public class ConnectionManager
     private void processPeerDataExchangesV() 
       {
         theAppLog.debug("ConnectionManager.processPeerDataExchangesV() called.");
-        //// boolean itemsProcessedB= false;
-        MapEpiNode theMapEpiNode;
 
-        while (true) {  // Process all messages.
-          theMapEpiNode= // Try getting next message from queue.
-              toConnectionManagerNotifyingQueueOfMapEpiNodes.poll();
-
-          if (theMapEpiNode == null) break;  // Exit if no more messages
-          
-          theAppLog.debug(
-            "ConnectionManager.processPeerDataExchangesV() MapEpiNode dequeued.");
-
-          //// itemsProcessedB= true;
-          }
-        /*  ////
-        while (a new peer connected to me or disconnected from me) {
-          extract data from its source;
-          updatePeersStatusAndTimeStamp();
-          Update lastModifiedTime with present time;
-          Update wasConnected appropriately;
-          }
-        for (all unprocessed updates from connected peers) {
-          if (update is about another connected peer)
-            process update into storage, using unique time-stamps-IDs;
-          ///enh send acknowledgment of receipt of update;
-          }
-        timeSortedSubjectPeers= sortByLastModifiedTime(allPeers);
-        for (subjectPeer: timeSortedSubjectPeers) {
-          for (remotePeer: getConnectedPeers()) {
-            if ( subjectPeer:.lastModifiedTime 
-                 > remotePeer.sentLastLastModifiedTime)
-                 )
-              { sendDataOfTo(subjectPeer,remotePeer);
-                remotePeer.sentLastLastModifiedTime= subjectPeer:.lastModifiedTime;
-                }
+        { // Process connection and disconnection notifications.
+          // Note, these messages serve only to guarantee thread is awakened.
+          MapEpiNode peerMapEpiNode;
+          while (true) {  // Process all messages.
+            peerMapEpiNode= // Try getting next message from queue.
+                toConnectionManagerNotifyingQueueOfMapEpiNodes.poll();
+            if (peerMapEpiNode == null) break;  // Exit if no more messages
+            theAppLog.debug(
+              "ConnectionManager.processPeerDataExchangesV() MapEpiNode dequeued.");
+            notifyPeersV(peerMapEpiNode);
             }
           }
-        */  ////
+        }
+
+    void notifyPeersV(MapEpiNode peerMapEpiNode)
+      /* This method notifies all connected peers about
+        the connection status of the peer described by peerMapEpiNode.
+        */
+      {
+        PeersCursor thePeersCursor= // Used for iteration. 
+            PeersCursor.makeOnFirstEntryPeersCursor( thePersistent );
+        while // Process all peers in my peer list. 
+          ( ! thePeersCursor.getEntryKeyString().isEmpty() ) 
+          { // Process one peer in peer list.
+            String peerIPString= 
+                thePeersCursor.getFieldString("IP");
+            String peerPortString= 
+                thePeersCursor.getFieldString("Port");
+            //// IPAndPort theIPAndPort= new IPAndPort(peerIPString, peerPortString);
+            theAppLog.debug( 
+                "ConnectionManager.notifyPeersV(), notification stub for "
+                + "  IP=" + peerIPString + ", port=" + peerPortString);
+            thePeersCursor.nextKeyString(); // Advance cursor.
+            }
         }
 
 
