@@ -249,13 +249,15 @@ public class StateList extends MutableList implements Runnable {
 		    The setter might also try to process the input itself.
 		* handler return code:  State handers methods return a boolean value. 
 		  This value has the following meanings.
-      * false: This means that there is nothing left to do 
-        with respect to this signal.  The current state's handler 
-        and the handlers of the current state's descendant states, if any, 
+      * false: This means that no progress was possible.
+        The current state's handler and the handlers of 
+        the current state's descendant states, if any, 
         examined all available state machine inputs of interest to them,
-        and finished processing them all.
-      * true: This means that at least some input-processing work 
-        remains to be done.  In this case, the following should happen.
+        and found no input that could be processed in any way.
+        Previously false this meant that there might or might not have been progress,
+        but no further progress was possible.
+      * true: This means that some computational progress was made processing inputs.
+        In this case, the following should happen.
         * The handlers of other states, probably concurrent sibling states, 
           should be called to process the remaining inputs,
           and any output signals that might have been produced by 
@@ -263,7 +265,9 @@ public class StateList extends MutableList implements Runnable {
         * The state handler that just returned should be called again
           to try to finish up its work.
           If it returns true again, this sequence should be repeated,
-          until it finally returns false indicating its work is done.
+          until it finally returns false indicating no further work is possible.
+	      Previously true meant that that at least some input-processing work 
+        remains to be done.
 
 
 		Exception Handling:
@@ -521,33 +525,33 @@ public class StateList extends MutableList implements Runnable {
 	  /* This method handles AndState and 
 	    state-machines that want to behave like an AndState machine 
 	    by cycling all of their sub-machines
-	    until none of them produces an internal signal.
+	    until none of them makes progress as indicated by its return code.
 	    It scans the sub-machines in order until one does.
 	    Then it restarts the scan.
 	    It is done this way to prioritized the sub-machines.
-	    If one sub-machine produces a signal for which an earlier machine waits,
-	    then that earlier machine can be run next and process it.
-      It keeps scanning until none of the sub-machines 
-      produces an internal signal.
-	    This method returns true if any internal signal
-	    was produced by any sub-machine, false otherwise.
+	    If one sub-machine produces an output signal 
+	    which is an input signal to other sub-machines,
+	    then earlier machines have the first change to process it.
+	    It keeps scanning until none of the sub-machines' handlers return true. 
+	    This method returns true if any sub-machine returned true during any scan, 
+	    false otherwise.
 	    */
 	  { 
 			throwDelayedExceptionV(); // Throw exception if one was saved earlier.
-		  boolean stateReturnB= false;
-  	  substateScansUntilNoSignal: while(true) {
+		  boolean stateProgressB= false;
+  	  substateScansUntilNoProgress: while(true) {
  	  		for (StateList subStateList : theListOfSubStateLists)
    	  		{
-   	  		  boolean substateReturnB= doOnInputsToSubstateB(subStateList); 
-  	  	  	if (substateReturnB) 
+   	  		  boolean substateProgressB= doOnInputsToSubstateB(subStateList); 
+  	  	  	if (substateProgressB) 
   		  	  	{
-  		  	  		stateReturnB= true;
-  		  	  		continue substateScansUntilNoSignal; // Restart scan.
+  		  	  		stateProgressB= true;
+  		  	  		continue substateScansUntilNoProgress; // Restart scan.
   		  	  		}
    	  		  }
- 	  		break substateScansUntilNoSignal; // No signal in this, final scan.
-  	  	} // substateScansUntilNoSignal:
-			return stateReturnB; 
+ 	  		break substateScansUntilNoProgress; // No progress was made in this final scan.
+  	  	} // substateScansUntilNoProgress:
+			return stateProgressB; 
 			}
 
 
@@ -558,8 +562,8 @@ public class StateList extends MutableList implements Runnable {
 	    It does this by calling the handler method 
 	    associated with the present state-machine's sub-state.
       The sub-state might change with each of these calls.
-      It calls sub-state handlers until no computational signal is made.
-      It returns true if at least one sub-state made computational signal.
+      It calls sub-state handlers until no computational progress is made.
+      It returns true if at least one sub-state made computational progress.
 	    It returns false otherwise.
 	    Each sub-state handler gets a chance to process the discrete input,
 	    if one is available, until it is consumed. 
@@ -569,17 +573,17 @@ public class StateList extends MutableList implements Runnable {
       */
 	  { 
 			throwDelayedExceptionV(); // Throw exception if one was saved.
-	  	boolean stateReturnB= false;
+	  	boolean stateProgressB= false;
 			while (true) { // Process sub-states until no new next one.
 	  	    boolean substateReturnB= // Call sub-state handler.
 	  	    		doOnInputsToSubstateB(presentSubStateList);
           if (substateReturnB) // Accumulate its return code
-            stateReturnB= true; // in state return code.
+            stateProgressB= true; // in state return code.
           boolean stateChangedB= tryPreparingNextStateB();
           if (!stateChangedB) // If no next state
             break; // exit, we're done.
 	  	  	} // while (true)
-			return stateReturnB; // Returning accumulated state return code.
+			return stateProgressB; // Returning accumulated state return code.
 			}
 
   private boolean tryPreparingNextStateB() throws IOException
@@ -653,7 +657,7 @@ public class StateList extends MutableList implements Runnable {
 	    control is not transfered to the new sub-state until
 	    the handler of the present sub-state exits.
 	    
-	    Requesting a state change is considered a signal
+	    Requesting a state change is considered making progress
 	    for purposes of deciding whether to retry a state's doOnInputsB().
 	    
 	    If the machine is already in the requested sub-state,
@@ -830,19 +834,17 @@ public class StateList extends MutableList implements Runnable {
 	    This method does nothing except return false unless 
 	    it or onInputsToReturnFalseV() is overridden.
 	    All overridden versions of this method should return 
-	    * true to indicate that some computational signal was produced.
+	    * true if any computational progress was made.
 	    * false otherwise.
 	    To return false without needing to code a return statement,
 	    override the onInputsToReturnFalseV() method instead.
 
-	    An onInputsB() method should not return until
+	    An onInputsB() method should not return false until
 	    everything that can possibly be done has been done, meaning:
-	    * All available inputs that it can process have been processed.
-	    * All outputs that it can produce have been been produced.
-	    * All changes to extended state variables that can be made
-	      have been made.
-	    * A request for a state transition to the qualitative state 
-	      has been made if that is appropriate.
+      * It was unable to process any new inputs or input changes.
+      * It was unable to produce any new outputs or output changes.
+      * It was unable to make a state transition in the qualitative state.
+      * It was unable to change any extended state variables.
 
 			Because this method can be called from multiple threads, 
 			such as timer threads, it and all sub-class overrides
@@ -973,7 +975,7 @@ public class StateList extends MutableList implements Runnable {
 					if // Process consumption of input by substate, if it happened.
 						(subStateList.getOfferedInputString() == null) // It was consumed.
 						{ resetOfferedInputV(); // Remove input from this state also.
-							signalB= true; // Treat input consumption as a return signal.
+							signalB= true; // Treat input consumption as progress.
 							}
 						else // Discrete input was not consumed by sub-state.
 						subStateList.resetOfferedInputV(); // Remove it from sub-state.
