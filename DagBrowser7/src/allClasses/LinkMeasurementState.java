@@ -255,6 +255,8 @@ public class LinkMeasurementState
           {
             int streamPositionI= theNetcasterInputStream.getPositionI();
             boolean successB= tryInputB("PA");
+            /*  //// temporarily ignore addition arguments until
+              parsing EpiNodes instead of bytes. 
             try {
               if (successB)
                 { // Read and ignore the 2 numbers that follow.
@@ -270,6 +272,7 @@ public class LinkMeasurementState
                     + "tryProcessingOldPacketAcknowledgementB() ",
                     theBadReceivedDataException);
                 }
+             */  ////
             if (!successB) // Rewind input stream if input was not acceptable. 
               theNetcasterInputStream.setPositionV(streamPositionI);
             return successB;

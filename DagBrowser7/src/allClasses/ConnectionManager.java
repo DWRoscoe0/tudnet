@@ -279,20 +279,24 @@ public class ConnectionManager
       		  ////     + "thePeersCursor.getEntryKeyString()="+thePeersCursor.getEntryKeyString());
 		        Unicaster theUnicaster= // Testing whether Unicaster exists.  
 		            theUnicasterManager.tryingToGetUnicaster( theIPAndPort );
-		        if ( theUnicaster != null ) // This Unicaster already exists.
-		          { // Report error.
-	              theAppLog.error( 
-	                  "ConnectionManager.restartPreviousUnicastersV(), Unicaster at "
-	                  + NL + "  IP=" + peerIPString + ", port=" + peerPortString 
-	                  + " already exists!");
-		            }
-  		        else
-  		        { // Building a new Unicaster and adding it to tree.
-    					  theUnicaster= 
-    					    theUnicasterManager.getOrBuildAndAddUnicaster(
-    					      theIPAndPort); // Restore peer with Unicaster.
-    					  theUnicasterManager.startV(theUnicaster); // Start its thread.
-  		          }
+		        { 
+  		        if ( theUnicaster != null ) // This Unicaster already exists.
+  		          { // Report error.
+  	              theAppLog.error( 
+  	                  "ConnectionManager.restartPreviousUnicastersV(), Unicaster at "
+  	                  + NL + "  IP=" + peerIPString + ", port=" + peerPortString 
+  	                  + " already exists!");
+  		            }
+    		      else if (thePeersCursor.getFieldB("ignorePeer"))
+    		        ; // Ignoring this peer, meaning not creating Unicaster.
+    		      else
+    		        { // Building a new Unicaster and adding it to tree.
+      					  theUnicaster= 
+      					    theUnicasterManager.getOrBuildAndAddUnicaster(
+      					      theIPAndPort); // Restore peer with Unicaster.
+      					  theUnicasterManager.startV(theUnicaster); // Start its thread.
+    		          }
+		          }
 					  thePeersCursor.nextKeyString(); // Advance cursor.
 					  }
       	theAppLog.debug(

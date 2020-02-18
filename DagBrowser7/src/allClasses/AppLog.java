@@ -526,13 +526,17 @@ public class AppLog extends EpiThread
        */
       {
         boolean logStackTraceB= false; // Change this to control stack trace.
-        if (logStackTraceB ) {
-          if (theThrowable == null)
-            theThrowable= new Throwable("Throwable created to display stack trace");
-          theThrowable.printStackTrace(getPrintWriter());
-          }
+        if (logStackTraceB ) reallyDoStackTraceV(theThrowable);
         }
-    
+
+    public void reallyDoStackTraceV(Throwable theThrowable)
+      // See doStackTrace(..).
+      {
+        if (theThrowable == null)
+          theThrowable= new Throwable("Throwable created to display stack trace");
+        theThrowable.printStackTrace(getPrintWriter());
+        }
+
     public void consoleInfo(String inString, boolean debugB)
       /* This method writes an error String inString to a log entry
         and also to the console error stream.
@@ -737,7 +741,20 @@ public class AppLog extends EpiThread
         lastMillisL= nowMillisL; // Saving present time as new last time.
         }
 
-    public void appendToOpenFileV(String inString)
+    public synchronized void appendToFileV(String inString)
+      /* This method writes to thePrintWriter, 
+        which may be open or closed.
+        It is for temporary logging of short strings during debugging.   
+        because it does not respect buffering protocols.
+        It always leaves the log file open.
+        */
+      { 
+        //openFileWithRetryDelayIfClosedV();
+        //appendToOpenFileV(inString);
+        /// Note, log file remains open.
+        }
+
+    public synchronized void appendToOpenFileV(String inString)
       /* This method writes to thePrintWriter, which must be open.  */
       { 
         thePrintWriter.print( inString );  // Append inString to file.

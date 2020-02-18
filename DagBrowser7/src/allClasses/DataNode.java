@@ -551,8 +551,8 @@ public class DataNode
       /* This method returns the background color 
         which should be used to display this DataNode.
         The default is input parameter defaultBackgroundColor,
-        but this method may be overridden to return 
-        any class-dependent or data-dependent color desired.
+        but this method may be overridden to return any other color 
+        which is a function of class, state, or other data.
        */
 	    {
 	    	return defaultBackgroundColor;

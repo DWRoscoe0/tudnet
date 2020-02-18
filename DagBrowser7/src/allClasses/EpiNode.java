@@ -15,14 +15,16 @@ public abstract class EpiNode
 
   /* This is the base class for 
     classes meant to represent YAML-like data.
-    It supports scalars, sequences, and maps.  
+    It supports scalars, sequences, and maps, though not fully. 
     It does not support null values. 
     Subclasses follow this class.
     
     Most of the code here deals with the Flow syntax style, 
-    which uses braces to indicate structure.  This code is fully working.
+    which uses braces to indicate structure.  This code is mostly working.
     Some of the code here deals with the Block syntax style, 
-    which uses indentation to indicate structure.  This code is is a work-in-progress.
+    which uses indentation to indicate structure.  
+    This code is less complete, but is complete enough to be useful.
+    Flow and Block syntaxes can not be mixed now, but may be later.
     */
 
   {
@@ -62,7 +64,15 @@ public abstract class EpiNode
 
     public abstract void writeV(OutputStream theOutputStream, int indentI ) 
         throws IOException;
-      /* Writes this EpiNode to theEpiOutputStream.  */
+      /* Writes this EpiNode to theEpiOutputStream using Block style.
+        indentI is the indent level.
+        */
+
+    public abstract void writeV(OutputStream theOutputStream) 
+        throws IOException;
+      /* Writes this EpiNode to theEpiOutputStream using Flow style,
+        meaning no new-lines and now indenting.
+        */
 
     public static EpiNode tryEpiNode(RandomAccessInputStream theRandomAccessInputStream ) 
       throws IOException
@@ -108,7 +118,7 @@ public abstract class EpiNode
         return resultEpiNode;
       }
         
-    protected static void newLineAndindentV(OutputStream theOutputStream, int indentI)
+    protected static void newLineAndIndentV(OutputStream theOutputStream, int indentI)
        throws IOException
       {
         theOutputStream.write(NL.getBytes()); // Write a newline.
@@ -169,10 +179,18 @@ class ScalarEpiNode extends EpiNode
         this.scalarString= scalarString;
         }
 
+    public void writeV(OutputStream theOutputStream) 
+        throws IOException
+      /* Same as writeV(theOutputStream,0).  Indent of 0 is ignored.
+       */
+      {
+        writeV(theOutputStream,0);
+        }
+
     public void writeV(OutputStream theOutputStream, int indentI ) 
         throws IOException
       /* Writes the string to theOutputSteam, enclosed by double quotes if
-        the string contains any spaces. 
+        the string contains any spaces.  indentI is ignored. 
        */
       {
         boolean quotesNeededB= (scalarString.indexOf(' ') >= 0);
@@ -309,12 +327,27 @@ class SequenceEpiNode extends EpiNode
         this.theListOfEpiNode= theListOfEpiNode;
         }
 
+    public void writeV(OutputStream theOutputStream) 
+        throws IOException
+      { 
+        boolean afterElementB= false; // Determines when comma must be written.
+        theOutputStream.write("[".getBytes()); // Introduce sequence.
+        for (EpiNode elementEpiNode : theListOfEpiNode) // Write all elements
+          { // Write one element possibly preceded by comma.
+            if (afterElementB) // Has an element been written yet?
+              theOutputStream.write(",".getBytes()); // Yes, write separating comma.
+            elementEpiNode.writeV(theOutputStream); // Output element
+            afterElementB= true;
+            }
+        theOutputStream.write("]".getBytes()); // Terminate sequence.
+        }
+
     public void writeV(OutputStream theOutputStream, int indentI ) 
         throws IOException
       { 
         for (EpiNode elementEpiNode : theListOfEpiNode)
           {
-            EpiNode.newLineAndindentV(theOutputStream, indentI);
+            EpiNode.newLineAndIndentV(theOutputStream, indentI);
             theOutputStream.write("- ".getBytes()); // Introduce sequence element.
             elementEpiNode.writeV( // Output element
                 theOutputStream, 
@@ -428,6 +461,28 @@ class MapEpiNode extends EpiNode
         return this; // Return non-null this because this is a MapEpiNode.
         }
 
+    public void writeV(OutputStream theOutputStream) 
+        throws IOException
+      { 
+        Map.Entry<EpiNode,EpiNode> scanMapEntry= null;
+        Set<Map.Entry<EpiNode,EpiNode>> theSetOfMapEntrys= theLinkedHashMap.entrySet();
+        Iterator<Map.Entry<EpiNode,EpiNode>> entryIterator= theSetOfMapEntrys.iterator();
+        boolean afterElementB= false; // Determines when comma must be written.
+        theOutputStream.write("{".getBytes()); // Introduce map.
+        while(true) { // Iterate over all entries.
+          if (! entryIterator.hasNext()) // More entries? 
+            break; // No, so exit.
+          if (afterElementB) // Has an element been written yet?
+            theOutputStream.write(",".getBytes()); // Yes, write separating comma.
+          scanMapEntry= entryIterator.next(); // Yes, get current entry.
+          scanMapEntry.getKey().writeV(theOutputStream); // Write key.
+          theOutputStream.write(":".getBytes()); // Write map key-value separator.
+          scanMapEntry.getValue().writeV(theOutputStream); // Write value.
+          afterElementB= true;
+          }
+        theOutputStream.write("}".getBytes()); // Terminate sequence.
+        }
+
     public void writeV(OutputStream theOutputStream, int indentI ) 
         throws IOException
       { 
@@ -437,7 +492,7 @@ class MapEpiNode extends EpiNode
         while(true) { // Iterate over all entries.
           if (! entryIterator.hasNext()) // More entries? 
             break; // No, so exit.
-          EpiNode.newLineAndindentV(theOutputStream, indentI);
+          EpiNode.newLineAndIndentV(theOutputStream, indentI);
           scanMapEntry= entryIterator.next(); // Yes, get current entry.
           scanMapEntry.getKey().writeV(theOutputStream, indentI); // Write key.
           theOutputStream.write(": ".getBytes()); // Write map key-value separator.

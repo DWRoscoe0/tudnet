@@ -1053,12 +1053,13 @@ public class StateList extends MutableList implements Runnable {
 				  		"Old input '" + this.offeredInputString + "' was NOT consumed by";
 			  if ( anomalyString != null ) // Log if anomaly produced.
 			  	theAppLog.warning(
-			  			"StateList.setDiscreteInputV..), "
+			  			"StateList.setOfferedInputV(..), "
 					  	+ anomalyString
 			  			+ getFormattedStatePathString()
 			  			);
 				}
 
+      // theAppLog.debug("StateList.setOfferedInputV(..) with "+newOfferedInputString);
 			this.offeredInputString= newOfferedInputString; // Store new input.
 		  }
 
@@ -1204,20 +1205,33 @@ public class StateList extends MutableList implements Runnable {
   Color getBackgroundColor( Color defaultBackgroundColor )
     /* This method returns the background color 
       which should be used to display this State.
-      Presently it is simply the value stored in variable theColor.
-      This is being changed.
+      It overrides the superclass DataNode default.
+      Unless this method is overridden,
+      this method will return one of two colors,
+      depending on whether the state is active or not.
       
-      This is being changed to display
-      * pink for inactive states
-      * light green for active states
+      This is being changed to display different colors depending on states
+      and sub-states.
       
      */
     {
-  	  return ( getActiveB() 
-  	  		? UIColor.activeStateColor 
-  	  		: UIColor.inactiveStateColor
-  	  		);
-  	  }
+      return activityBasedBackgroundColor( UIColor.activeStateColor );
+          //// ( getActiveB() 
+           //// ? UIColor.activeStateColor 
+           //// : UIColor.inactiveStateColor
+           //// );
+      }
+
+  Color activityBasedBackgroundColor( Color activeColor )
+    /* This method returns activeColor if this state is active,
+      the inactive color otherwise.
+      */
+    {
+      return ( getActiveB() 
+          ? activeColor 
+          : UIColor.inactiveStateColor
+          );
+      }
 
   private void invalidateActiveV()
     /* This method recursively invalidates the cached active status of 
@@ -1249,7 +1263,7 @@ public class StateList extends MutableList implements Runnable {
       * it is any sub-state of an active AndState, or
       * it is the single active sub-state of an active OrState.
       The calculation done implements the down-propagation
-      of the isActiveBoolean attribute.
+      of the cachedActiveBoolean attribute.
       It caches the value if it was not cached already.
       */
   	{ 
@@ -1316,8 +1330,12 @@ class AndOrState extends StateList {
 	  this state should act as an AndState or an OrState.
 	  It acts as an AndState until and unless setAsOrStateV(..) is called.
 
-	  This includes the following methods:
+	  This class, or the superclass StateList, includes the following methods:
 	    onEntryV(), onInputsB(), and onExitV().
+	    
+	  ///org, ///opt: Eliminate this class by eliminating references to it,
+	  replacing subclass references to either OrState or AndState,
+	  and moving code to those classes, until there is no code remaining. 
     */
   
   protected void setFirstOrSubStateV(StateList firstSubStateList)
@@ -1375,6 +1393,14 @@ class OrState extends AndOrState { //? StateList {
   		return orStateOnInputsB(); 
   		}
   */  //?
+
+  Color getBackgroundColor( Color defaultBackgroundColor )
+    /* This method returns the background color from the selected sub-state. 
+      In other words, this state takes on the color of its active sub-state.
+     */
+    {
+      return presentSubStateList.getBackgroundColor( defaultBackgroundColor );
+      }
 
 	}  // OrState 
 

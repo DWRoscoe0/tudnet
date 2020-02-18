@@ -166,7 +166,9 @@ public class TitledListViewer // adapted from TitledListViewer.
   	      */
 	    	{ // initializeHelpeeV(..).
 	  	  	{ // Final initialization.
-		        cachedJListBackgroundColor= getBackground();  // Saving background for later use.
+		        cachedJListBackgroundColor= Color.WHITE; 
+		            //// UIColor.inactiveStateColor;
+		          //// getBackground();  // Saving background for later use.
 		        setLayout( new BorderLayout() );
 		        
 		        titleJLabelInitializationV(); // Initializing titleJLabel.

@@ -80,7 +80,7 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
                 		theNetcasterPacketManager.produceKeyedPacket();
                 DatagramPacket theDatagramPacket= // Get DatagramPacket from it.
                 		theNetcasterPacket.getDatagramPacket();
-                /// appLogger.debug("run(): before receive(..)");
+                // theAppLog.debug("run(): before receive(..)");
                 receiverDatagramSocket.receive(theDatagramPacket); // Receive.
                 PacketManager.logUnconnectedReceiverPacketV(
                 		theDatagramPacket
@@ -89,12 +89,13 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
                 		theUnicasterManager.tryingToGetUnicaster(
                 				theNetcasterPacket 
                 				);
-                if ( theUnicaster != null )  // If found, queue to Unicaster.
+                if ( theUnicaster != null ) { // If found, queue to Unicaster.
           	      theUnicaster.puttingKeyedPacketV( theNetcasterPacket );
-                	else // Not found
+                  } else {// Not found
                 	unconnectedReceiverToConnectionManagerNetcasterQueue.put(
                 			theNetcasterPacket
                 			); // Delegate by queuing to ConnectionManager.
+                  }
                 }
               catch( SocketException soe ) {
                 theAppLog.info("run(): interrupted by " + soe );

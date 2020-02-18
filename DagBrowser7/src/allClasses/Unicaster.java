@@ -1,5 +1,6 @@
 package allClasses;
 
+import java.awt.Color;
 import java.io.IOException;
 import java.util.Timer;
 
@@ -72,6 +73,15 @@ public class Unicaster
   		// Other instance variables.
       private EpiThread theEpiThread;
   		private LinkedMachineState theLinkedMachineState;
+
+  	  Color getBackgroundColor( Color defaultBackgroundColor )
+  	    /* This method is a kludge to return the background color from 
+  	      the theLinkedMachineState without needing to add code to 
+  	      AndState or AndOrState.
+  	     */
+  	    {
+  	      return theLinkedMachineState.getBackgroundColor( defaultBackgroundColor );
+  	      }
   		
   	public Unicaster(  // Constructor. 
 			  UnicasterManager theUnicasterManager,
@@ -199,9 +209,9 @@ public class Unicaster
 	          doOnEntryV(); // Recursively activate all states that should be. 
 	          /// appLogger.info("run() machine activated, doing first display.");
         		theDataTreeModel.displayTreeModelChangesV(); // Display tree after arrival.
-        		if // Reconnect if we were connected.
+        		if // Reconnect if we were connected at shutdown.
         		  (thePeersCursor.getFieldB("wasConnected"))
-        		  connectToPeerV(); // Tell state-machine to connect.
+        		  connectToPeerV(); // Command state-machine to connect.
 
 	      	  runLoop(); // Do actual input processing in a loop.
 
@@ -222,47 +232,64 @@ public class Unicaster
         }
 
 	  private void runLoop() throws IOException
-	    /* This method contains the message processing loop.
-		    It basically just reads event messages from the input stream
-		    and the local message queue,
-		    and passes them to its state machine until it receives a signal to exit.
-
-        The state machine timers will start with the first calls to doOnInputsB().
+	    /* This method contains the Unicaster input message processing loop.
+		    It reads event messages from various sources and processes them.
+		    It does this until it receives a signal to exit.
+		    
+		    Input message sources now include:
+		    * The EpiInputStream.  These are passed to the superclass state machine. 
+		    * The String queue.  These are passed to the superclass state machine.
+		    
+		    Input message sources will include:
+        * the EpiNode queue.  
+		      These are serialized to a packet and sent to the remote peer.
 
         ///fix  Legitimate input is sometimes not consumed!
 		    */
 			{
 	  		theAppLog.info("runLoop() begins.");
+        doOnInputsB(); // This first call guarantees that state machine timers start.
 	      processingLoop: while (true) {
-	        if (EpiThread.testInterruptB()) // Exit loop if thread termination requested. 
-	          break processingLoop;
-          if (doOnInputsB()) // Do some pending state machine work...
-            continue processingLoop; // ...and loop until its all done.
-          processUnprocessedInputV(); // Handle any left-over input.
-		    	if (theEpiInputStreamI.available() > 0) { // Try parsing more packet stream.
-            String inString= theEpiInputStreamI.readAString(); // Get next token.
-            setOfferedInputV( inString ); // Offer it to state machine.
-	    		  continue processingLoop; // Loop to process offered token.
-	    		  }
-	    		String localMessageString= // Try getting local message String. 
-	    		    unicasterNotifyingQueueOfStrings.poll();
-	    		if (localMessageString != null) { // If gotten, process it.
-            setOfferedInputV( localMessageString ); // Offer it to state machine.
-            continue processingLoop; // Loop to process offered message.
-	    		  }
-          ///dbg appLogger.debug("runLoop() before wait.");
+	        if (EpiThread.testInterruptB()) break processingLoop; // Exit if requested.
+          // theAppLog.info("runLoop() before processPacketStreamInputV().");
+          processPacketStreamInputV();
+          // theAppLog.info("runLoop() before processNotificationStringInputV().");
+          processNotificationStringInputV();
+          // theAppLog.info("runLoop() before waitingForInterruptOrNotificationE().");
           theLockAndSignal.waitingForInterruptOrNotificationE();
-          ///dbg appLogger.debug("runLoop() after wait.");
 	      	} // processingLoop:
   			theAppLog.info("runLoop() loop interrupted, stopping state machine.");
   			// ? theTimer.cancel(); // Cancel all Timer events for debug tracing, ///dbg
         while (doOnInputsB()) ; // Cycle state machine until nothing remains to be done.
 				}
-	  
+
+    private void processNotificationStringInputV() throws IOException
+      {
+        while (true) {
+          String notificationString= unicasterNotifyingQueueOfStrings.poll();
+          if (notificationString == null) break; // Exit if no string.
+          setOfferedInputV(notificationString); // Offer String to state machine.
+          while (doOnInputsB()) ; // Cycle state machine until nothing remains to be done.
+          }
+        }
+
+    private void processPacketStreamInputV() throws IOException
+      {
+        while (theEpiInputStreamI.available() > 0) { // Try parsing more of packet stream.
+          String inString= theEpiInputStreamI.readAString(); // Get next token.
+          setOfferedInputV( inString ); // Offer it to state machine.
+          while (doOnInputsB()) ; // Cycle state machine until processing stops.
+          processUnprocessedInputV(); // Handle any left-over input.
+          //// continue processingLoop; // Loop to process offered token.
+          }
+        }
+
     public void connectToPeerV()
       // This method tells the state-machine to connect.
       {
-        theAppLog.info("connectToPeerV() executing.");
+        theAppLog.info("connectToPeerV() executing, queuing 'Connect'.");
+        unicasterNotifyingQueueOfStrings.put("Connect");
+        /*  ////
         try {
           processInputB( "Connect" ); // Make state machine process connect message.
         } catch( IOException theIOException) {
@@ -270,13 +297,14 @@ public class Unicaster
               "Unicaster.connectToPeerV() IOException", theIOException 
               );
           }
+        */  ////
         }
     
     private void processUnprocessedInputV() throws IOException
       /* This method is called to process any offered input that
         the Unicaster state machine was unable to process.
-        Debug messages are silently ignored.
-        Other messages are logged and ignored.
+        Unprocessed Debug messages are silently ignored.
+        Other messages are logged but otherwise ignored.
         ///enh Display all OrState state-machine states.
        */
       {

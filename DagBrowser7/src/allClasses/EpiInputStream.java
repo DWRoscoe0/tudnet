@@ -196,6 +196,7 @@ public class EpiInputStream<
           // theAppLog.error( // Log this way to debug.
           theAppLog.warning( // Log this way normally.  
               "readAString(): returning " + accumulatorString );
+          //// theAppLog.reallyDoStackTraceV(null);
         } // toReturn:
           return accumulatorString;
         }

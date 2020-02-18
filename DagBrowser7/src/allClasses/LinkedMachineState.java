@@ -1,5 +1,6 @@
 package allClasses;
 
+import java.awt.Color;
 import java.io.IOException;
 import java.util.Timer;
 
@@ -228,8 +229,8 @@ public class LinkedMachineState
             */
           {
             if (tryReceivingHelloB(this)) { // Connect requested from remote peer.
-              if (thePeersCursor.getFieldB("ignoreConnectionRequests"))
-                theAppLog.info("LinkedMachineState.onInputsToReturnFalseV() ignoreConnectionRequests:true.");
+              if (thePeersCursor.getFieldB("ignorePeer"))
+                theAppLog.info("LinkedMachineState.onInputsToReturnFalseV() ignorePeer:true.");
                 else
                 {
                   sendHelloV(this); // Send a response HELLO.
@@ -249,6 +250,12 @@ public class LinkedMachineState
             else if ( tryInputB("GOODBYE") ) { // Ignore any redundant GOODBYE message.
               // appLogger.info("LinkedMachineState.onInputsToReturnFalseV() GOODBYE received and ignored while in DisconnectedState.");
               }
+            }
+
+        Color getBackgroundColor( Color defaultBackgroundColor )
+          {
+            return activityBasedBackgroundColor( 
+                UIColor.activeWaitingWithoutLimitStateColor );
             }
 
         } // class DisconnectedState
@@ -298,6 +305,12 @@ public class LinkedMachineState
                     }
                 }
             }
+
+        Color getBackgroundColor( Color defaultBackgroundColor )
+          {
+            return activityBasedBackgroundColor( 
+                UIColor.activeAfterTimeOutStateColor );
+            }
   
         } // class ExponentialRetryConnectingState
 
@@ -335,7 +348,13 @@ public class LinkedMachineState
                     Config.slowPeriodicRetryTimeOutMsL);
                 }
             }
-  
+
+        Color getBackgroundColor( Color defaultBackgroundColor )
+          {
+            return activityBasedBackgroundColor( 
+                UIColor.activeInErrorStateColor );
+            }
+
           } // class SlowPeriodicRetryConnectingState
 		
 
@@ -459,6 +478,12 @@ public class LinkedMachineState
 		        super.onExitV();
             theAppLog.debug( "Disconnecting" );
 		        }
+
+        Color getBackgroundColor( Color defaultBackgroundColor )
+          {
+            return activityBasedBackgroundColor( 
+                UIColor.activeBeforeTimeOutStateColor );
+            }
 		    
 	  		} // class ConnectedState
 
