@@ -2,6 +2,7 @@ package allClasses;
 
 import static allClasses.AppLog.theAppLog;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -62,6 +63,38 @@ public abstract class EpiNode
         return null;
         }
 
+    public String toString()
+      /* This method returns the String equivalent of this EpiNode
+        converted to Flow style text.
+        */
+      {
+        ByteArrayOutputStream theByteArrayOutputStream = new ByteArrayOutputStream();
+        try {
+            writeV(theByteArrayOutputStream);
+          } catch(IOException theIOException) {
+            throw new RuntimeException(
+              "Should not happen because writing to storage.", theIOException);
+          }
+        String resultString = new String(theByteArrayOutputStream.toByteArray());
+        return resultString;
+        }
+
+    public String toString(int indentI)
+      /* This method returns the String equivalent of this EpiNode
+        converted to Block style text, starting at indentation indentI.
+        */
+      {
+        ByteArrayOutputStream theByteArrayOutputStream = new ByteArrayOutputStream();
+        try {
+            writeV(theByteArrayOutputStream, indentI);
+          } catch(IOException theIOException) {
+            throw new RuntimeException(
+              "Should not happen because writing to storage.", theIOException);
+          }
+        String resultString = new String(theByteArrayOutputStream.toByteArray());
+        return resultString;
+        }
+    
     public abstract void writeV(OutputStream theOutputStream, int indentI ) 
         throws IOException;
       /* Writes this EpiNode to theEpiOutputStream using Block style.
@@ -205,80 +238,80 @@ class ScalarEpiNode extends EpiNode
 
     public String toString() { return scalarString; }
     
-  public static ScalarEpiNode tryScalarEpiNode( 
-        RandomAccessInputStream theRandomAccessInputStream ) 
-      throws IOException
-    /* This method tries to parse a ScalarEpiNode (YAML subset scalar string)
-      from theRandomAccessInputStream.
-      If successful then it returns the ScalarEpiNode 
-      and the stream is moved past the scalar characters,
-      but whatever terminated the scalar remains to be read.
-      The stream is moved past the last scalar character, but no further.
-      If not successful then this method returns null 
-      and the stream position is unchanged.
-      */
-    {
-        ScalarEpiNode theScalarEpiNode;
-      goReturn: {
-        theScalarEpiNode= tryUnquotedScalarEpiNode( theRandomAccessInputStream );
-        if (theScalarEpiNode != null) break goReturn;
-        theScalarEpiNode= tryQuotedScalarEpiNode( theRandomAccessInputStream );
-      } // goReturn:
-        return theScalarEpiNode; // Return result.
-      }
-  
-  public static ScalarEpiNode tryUnquotedScalarEpiNode( 
-        RandomAccessInputStream theRandomAccessInputStream ) 
-      throws IOException
-    /* This method tries to parse an unquoted ScalarEpiNode.  */
-    {
-        ScalarEpiNode theScalarEpiNode= null;
-        int byteI;
-        String accumulatorString= ""; // Clear character accumulator.
-      readLoop: { while (true) {
-        int positionI= theRandomAccessInputStream.getPositionI();
-        toAppendAcceptedChar: {
-          byteI= theRandomAccessInputStream.read();
-          if ( Character.isLetterOrDigit(byteI)) break toAppendAcceptedChar;
-          if ( '-'==byteI ) break toAppendAcceptedChar;
-          if ( '.'==byteI ) break toAppendAcceptedChar;
-          theRandomAccessInputStream.setPositionV(positionI); // Restore stream position.
-          ///opt Alternative way to reject final character only, outside of loop:
-          //   setPositionV(getPositionI()-1);
-          break readLoop; // Go try to return what's accumulated so far.
-          } // toAppendAcceptedChar:
-        accumulatorString+= (char)byteI; // Append accepted byte to accumulator.
+    public static ScalarEpiNode tryScalarEpiNode( 
+          RandomAccessInputStream theRandomAccessInputStream ) 
+        throws IOException
+      /* This method tries to parse a ScalarEpiNode (YAML subset scalar string)
+        from theRandomAccessInputStream.
+        If successful then it returns the ScalarEpiNode 
+        and the stream is moved past the scalar characters,
+        but whatever terminated the scalar remains to be read.
+        The stream is moved past the last scalar character, but no further.
+        If not successful then this method returns null 
+        and the stream position is unchanged.
+        */
+      {
+          ScalarEpiNode theScalarEpiNode;
+        goReturn: {
+          theScalarEpiNode= tryUnquotedScalarEpiNode( theRandomAccessInputStream );
+          if (theScalarEpiNode != null) break goReturn;
+          theScalarEpiNode= tryQuotedScalarEpiNode( theRandomAccessInputStream );
+        } // goReturn:
+          return theScalarEpiNode; // Return result.
         }
-      } // readLoop: 
-        if (accumulatorString.length() != 0) // Reject 0-length strings.
-          theScalarEpiNode= new ScalarEpiNode(accumulatorString); // Override null result.
-        return theScalarEpiNode; // Return result.
-      }
-  
-  public static ScalarEpiNode tryQuotedScalarEpiNode( 
-        RandomAccessInputStream theRandomAccessInputStream ) 
-      throws IOException
-    /* This method tries to parse a quoted ScalarEpiNode.  */
-    {
-        ScalarEpiNode theScalarEpiNode= null;
-        int byteI;
-        int initialPositionI= theRandomAccessInputStream.getPositionI();
-      goReturn: {
-        byteI= theRandomAccessInputStream.read();
-        if ( '"'!=byteI ) break goReturn;
-        String accumulatorString= ""; // Clear character accumulator.
-      readLoop: while (true) {
-          byteI= theRandomAccessInputStream.read();
-          if ( '"'==byteI ) break readLoop; // Exit with what's been accumulated. 
+    
+    public static ScalarEpiNode tryUnquotedScalarEpiNode( 
+          RandomAccessInputStream theRandomAccessInputStream ) 
+        throws IOException
+      /* This method tries to parse an unquoted ScalarEpiNode.  */
+      {
+          ScalarEpiNode theScalarEpiNode= null;
+          int byteI;
+          String accumulatorString= ""; // Clear character accumulator.
+        readLoop: { while (true) {
+          int positionI= theRandomAccessInputStream.getPositionI();
+          toAppendAcceptedChar: {
+            byteI= theRandomAccessInputStream.read();
+            if ( Character.isLetterOrDigit(byteI)) break toAppendAcceptedChar;
+            if ( '-'==byteI ) break toAppendAcceptedChar;
+            if ( '.'==byteI ) break toAppendAcceptedChar;
+            theRandomAccessInputStream.setPositionV(positionI); // Restore stream position.
+            ///opt Alternative way to reject final character only, outside of loop:
+            //   setPositionV(getPositionI()-1);
+            break readLoop; // Go try to return what's accumulated so far.
+            } // toAppendAcceptedChar:
           accumulatorString+= (char)byteI; // Append accepted byte to accumulator.
-      } // readLoop: 
-        if (accumulatorString.length() == 0) break goReturn; // Reject 0-length strings.
-        theScalarEpiNode= new ScalarEpiNode(accumulatorString); // Override null result.
-      } // goReturn:
-        if (theScalarEpiNode == null)  // Restore initial stream position if no result.
-          theRandomAccessInputStream.setPositionV(initialPositionI);
-        return theScalarEpiNode; // Return result.
-      }
+          }
+        } // readLoop: 
+          if (accumulatorString.length() != 0) // Reject 0-length strings.
+            theScalarEpiNode= new ScalarEpiNode(accumulatorString); // Override null result.
+          return theScalarEpiNode; // Return result.
+        }
+    
+    public static ScalarEpiNode tryQuotedScalarEpiNode( 
+          RandomAccessInputStream theRandomAccessInputStream ) 
+        throws IOException
+      /* This method tries to parse a quoted ScalarEpiNode.  */
+      {
+          ScalarEpiNode theScalarEpiNode= null;
+          int byteI;
+          int initialPositionI= theRandomAccessInputStream.getPositionI();
+        goReturn: {
+          byteI= theRandomAccessInputStream.read();
+          if ( '"'!=byteI ) break goReturn;
+          String accumulatorString= ""; // Clear character accumulator.
+        readLoop: while (true) {
+            byteI= theRandomAccessInputStream.read();
+            if ( '"'==byteI ) break readLoop; // Exit with what's been accumulated. 
+            accumulatorString+= (char)byteI; // Append accepted byte to accumulator.
+        } // readLoop: 
+          if (accumulatorString.length() == 0) break goReturn; // Reject 0-length strings.
+          theScalarEpiNode= new ScalarEpiNode(accumulatorString); // Override null result.
+        } // goReturn:
+          if (theScalarEpiNode == null)  // Restore initial stream position if no result.
+            theRandomAccessInputStream.setPositionV(initialPositionI);
+          return theScalarEpiNode; // Return result.
+        }
 
     public String getString()
       /* Returns the String which represents the value of the scalar.  */
@@ -407,43 +440,43 @@ class SequenceEpiNode extends EpiNode
           return returnSequenceEpiNode; // Return result.
         }
 
-  protected static ArrayList<EpiNode> getListOfEpiNodes(
-      RandomAccessInputStream theRandomAccessInputStream ) 
-    throws IOException
-  /* This method parses and returns a List of 
-    0 or more elements of a sequence of scalar nodes.  
-    It always succeeds, though it might return an empty list.
-    The stream is advanced past all characters that were processed,
-    which might be none if the returned list is empty.
-    */
-  {
-      int preCommaPositionI=0;
-      boolean gotCommaB= false; // Becomes true when comma seen.
-      ArrayList<EpiNode> resultListOfEpiNodes= 
-          new ArrayList<EpiNode>(); // Create initially empty result list.
-    toReturn: {
-      while (true) { // Accumulating list elements until sequence ends.
-        EpiNode theEpiNode=  // Try getting a list element.
-            EpiNode.tryEpiNode(theRandomAccessInputStream);
-        if (! gotCommaB) // Comma not gotten yet so looking for the first element
-          { if (theEpiNode == null) // but there is no first element
-            break toReturn; // so exit now with an empty list.
-            }
-        else // Comma was gotten so we need a non-first element.
-          { if (theEpiNode == null) { // but there was no element so
-              theRandomAccessInputStream.setPositionV( // restore stream position to before comma.
-                  preCommaPositionI);
-              break toReturn; // and exit now with a non-empty list.
+    protected static ArrayList<EpiNode> getListOfEpiNodes(
+        RandomAccessInputStream theRandomAccessInputStream ) 
+      throws IOException
+    /* This method parses and returns a List of 
+      0 or more elements of a sequence of scalar nodes.  
+      It always succeeds, though it might return an empty list.
+      The stream is advanced past all characters that were processed,
+      which might be none if the returned list is empty.
+      */
+    {
+        int preCommaPositionI=0;
+        boolean gotCommaB= false; // Becomes true when comma seen.
+        ArrayList<EpiNode> resultListOfEpiNodes= 
+            new ArrayList<EpiNode>(); // Create initially empty result list.
+      toReturn: {
+        while (true) { // Accumulating list elements until sequence ends.
+          EpiNode theEpiNode=  // Try getting a list element.
+              EpiNode.tryEpiNode(theRandomAccessInputStream);
+          if (! gotCommaB) // Comma not gotten yet so looking for the first element
+            { if (theEpiNode == null) // but there is no first element
+              break toReturn; // so exit now with an empty list.
               }
-            }
-        resultListOfEpiNodes.add(theEpiNode); // Append gotten element to list.
-        preCommaPositionI= theRandomAccessInputStream.getPositionI();
-        if (! tryByteB(theRandomAccessInputStream,',')) break toReturn; // Exit if no comma.
-        gotCommaB= true; // Got comma, so record it.
-        } // while(true)
-    } // toReturn:
-      return resultListOfEpiNodes;
-    }
+          else // Comma was gotten so we need a non-first element.
+            { if (theEpiNode == null) { // but there was no element so
+                theRandomAccessInputStream.setPositionV( // restore stream position to before comma.
+                    preCommaPositionI);
+                break toReturn; // and exit now with a non-empty list.
+                }
+              }
+          resultListOfEpiNodes.add(theEpiNode); // Append gotten element to list.
+          preCommaPositionI= theRandomAccessInputStream.getPositionI();
+          if (! tryByteB(theRandomAccessInputStream,',')) break toReturn; // Exit if no comma.
+          gotCommaB= true; // Got comma, so record it.
+          } // while(true)
+      } // toReturn:
+        return resultListOfEpiNodes;
+      }
 
     }
 

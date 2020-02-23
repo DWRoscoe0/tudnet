@@ -674,6 +674,7 @@ public class ConnectionManager
         while // Process all peers in my peer list. 
           ( ! thePeersCursor.getEntryKeyString().isEmpty() ) 
           { // Process one peer in peer list.
+            /*  ////
             String peerIPString= 
                 thePeersCursor.getFieldString("IP");
             String peerPortString= 
@@ -682,6 +683,11 @@ public class ConnectionManager
             theAppLog.debug( 
                 "ConnectionManager.notifyPeersV(), notification stub for "
                 + "  IP=" + peerIPString + ", port=" + peerPortString);
+            */  ////
+            theAppLog.debug( 
+              "ConnectionManager.notifyPeersV(), notification stub for "
+              + thePeersCursor.getSelectedMapEpiNode().toString(2)
+              );
             thePeersCursor.nextKeyString(); // Advance cursor.
             }
         }
