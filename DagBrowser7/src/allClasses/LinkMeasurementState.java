@@ -28,6 +28,7 @@ public class LinkMeasurementState
 		private NetcasterOutputStream theNetcasterOutputStream; 
 		private NamedLong initialRetryTimeOutMsNamedLong;
 		private Timer theTimer; 
+    private Unicaster theUnicaster;
 		
 		// Sub-state machine instances.
 		@SuppressWarnings("unused")
@@ -38,7 +39,8 @@ public class LinkMeasurementState
 				Timer theTimer, 
 			  NetcasterInputStream theNetcasterInputStream,
 				NetcasterOutputStream theNetcasterOutputStream,
-				NamedLong initialRetryTimeOutMsNamedLong
+				NamedLong initialRetryTimeOutMsNamedLong,
+				Unicaster theUnicaster
 				)
 			throws IOException
 	  	{
@@ -46,7 +48,8 @@ public class LinkMeasurementState
 			  this.theNetcasterInputStream= theNetcasterInputStream;
 			  this.theNetcasterOutputStream= theNetcasterOutputStream;
 			  this.initialRetryTimeOutMsNamedLong= initialRetryTimeOutMsNamedLong;
-			  this.theTimer= theTimer;
+        this.theTimer= theTimer;
+        this.theUnicaster= theUnicaster;
 			  }
 			
 	  public synchronized StateList initializeWithIOExceptionStateList() 
@@ -351,7 +354,7 @@ public class LinkMeasurementState
 		              (measurementTimerInput.testInputArrivedB())
 					    		{ // Process time-out.
 		                theAppLog.info("MeasurementHandshakingState "
-		                    + "exponential time-out of " 
+		                    + theUnicaster.getNameString()+" exponential time-out of " 
 		                    + exponentialRetryTimeOutMsL + " ms for "
 		                    + "PA of PS " + lastSequenceNumberSentL);
 								    if ( exponentialRetryTimeOutMsL <= Config.maxTimeOutMsL )

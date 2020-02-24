@@ -153,7 +153,8 @@ public class Unicaster
   		    				theTimer, 
   		    				theEpiInputStreamI,
   			  				theEpiOutputStreamO,
-  			  				initialRetryTimeOutMsNamedLong 
+  			  				initialRetryTimeOutMsNamedLong,
+  			  				this
   			      		);
     			theLinkMeasurementState.initializeWithIOExceptionStateList();
 
