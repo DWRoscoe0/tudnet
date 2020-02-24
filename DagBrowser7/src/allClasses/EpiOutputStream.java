@@ -1,5 +1,7 @@
 package allClasses;
 
+import static allClasses.AppLog.theAppLog;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Timer;
@@ -303,7 +305,13 @@ public class EpiOutputStream<
 	      byte[] newBufferBytes= // Always allocate a new byte buffer.
           packetManagerM.produceDefaultSizeBufferBytes();
         int bytesToSendI= sendableI; 
-        if (bytesToSendI > 0) // Send packet if there is at least one send-able byte. 
+        if (bytesToSendI <= 0) // There are no bytes to send?
+          { // Report the error and clear the buffer.
+            theAppLog.error("EpiOutputStream.queueSendableBytesV(): no sendable bytes.");
+            ///enh Include bytes discarded in message.
+            indexI= 0; // Discard all bytes stored so far.
+            }
+          else // There are send-able bytes.  Send them in a packet. 
           { // Send packet containing at least one send-able byte. 
     	  		E keyedPacketE= packetManagerM.produceKeyedPacketE( // Create packet
             		bufferBytes, indexI // using old buffer containing send-able bytes.
