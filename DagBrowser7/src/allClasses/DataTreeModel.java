@@ -849,7 +849,7 @@ public class DataTreeModel
                   theAppLog.debug( "DataTreeModel.reportingChangeB((..) to "
                     + NL + "  theDataNode=" + theDataNode + " with indexI=" + indexI 
                     + NL + "  in parentDataNode=" + parentDataNode 
-                    + ", ignoring Exception" + theException );
+                    + ", ignoring Exception " + theException );
                   break toReturn;
                 }
 	            resultB= false; // Indicate success if we got this far.
