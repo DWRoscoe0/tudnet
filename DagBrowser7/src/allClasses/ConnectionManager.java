@@ -664,33 +664,59 @@ public class ConnectionManager
           }
         }
 
-    void notifyPeersV(MapEpiNode peerMapEpiNode)
-      /* This method notifies all connected peers about
-        the connection status of the peer described by peerMapEpiNode.
+    void notifyPeerV(MapEpiNode changedPeerMapEpiNode)
+      /* This method notifies the peer described by changedPeerMapEpiNode
+        about the status of all [other] peers.
         */
       {
-        PeersCursor thePeersCursor= // Used for iteration. 
+        theAppLog.debug( 
+            "ConnectionManager.notifyPeerV(), queuing peers to this changed peer:"
+            + changedPeerMapEpiNode.toString(2)
+            );
+        String peerIPString= 
+            changedPeerMapEpiNode.getValueString("IP");
+        String peerPortString= 
+            changedPeerMapEpiNode.getValueString("Port");
+        IPAndPort theIPAndPort= new IPAndPort(peerIPString, peerPortString);
+        Unicaster theUnicaster= 
+            theUnicasterManager.tryingToGetUnicaster(theIPAndPort);
+      
+        PeersCursor scanningPeersCursor= // Used for iteration. 
             PeersCursor.makeOnFirstEntryPeersCursor( thePersistent );
-        while // Process all peers in my peer list. 
-          ( ! thePeersCursor.getEntryKeyString().isEmpty() ) 
-          { // Process one peer in peer list.
-            /*  ////
-            String peerIPString= 
-                thePeersCursor.getFieldString("IP");
-            String peerPortString= 
-                thePeersCursor.getFieldString("Port");
-            //// IPAndPort theIPAndPort= new IPAndPort(peerIPString, peerPortString);
-            theAppLog.debug( 
-                "ConnectionManager.notifyPeersV(), notification stub for "
-                + "  IP=" + peerIPString + ", port=" + peerPortString);
-            */  ////
-            theAppLog.debug( 
-              "ConnectionManager.notifyPeersV(), notification stub for "
-              + thePeersCursor.getSelectedMapEpiNode().toString(2)
-              );
-            thePeersCursor.nextKeyString(); // Advance cursor.
-            }
+        while // Send all peers to changed peer. 
+          ( ! scanningPeersCursor.getEntryKeyString().isEmpty() ) 
+          processPeer: { // Process one peer.
+            theAppLog.appendToFileV("(peer)");
+            scanningPeersCursor.getSelectedMapEpiNode();
+            scanningPeersCursor.nextKeyString(); // Advance cursor to next peer.
+            } // processPeer: 
         }
 
+    void notifyPeersV(MapEpiNode changedPeerMapEpiNode)
+      /* This method notifies all connected peers about
+        the changed connection status of the peer described by changedPeerMapEpiNode.
+        */
+      {
+        PeersCursor scanningPeersCursor= // Used for iteration. 
+            PeersCursor.makeOnFirstEntryPeersCursor( thePersistent );
+        theAppLog.debug( 
+            "ConnectionManager.notifyPeersV(), queuing changed peer"
+            + changedPeerMapEpiNode.toString(2)
+            );
+        while // Process all peers in my peer list. 
+          ( ! scanningPeersCursor.getEntryKeyString().isEmpty() ) 
+          processPeer: { // Semd data to one peer in peer list.
+            String peerIPString= scanningPeersCursor.getFieldString("IP");
+            String peerPortString= scanningPeersCursor.getFieldString("Port");
+            IPAndPort theIPAndPort= new IPAndPort(peerIPString, peerPortString);
+            Unicaster theUnicaster= 
+                theUnicasterManager.tryingToGetUnicaster(theIPAndPort);
+            if (theUnicaster == null) break processPeer; // Peer Unicaster does not exist.
+            //// if (theUnicaster.isConnectedB()) break processPeer; // It's already connected.
+            theAppLog.appendToFileV("(peer)");
+            theUnicaster.putV(changedPeerMapEpiNode); // Queue changed peer to scan peer.
+            scanningPeersCursor.nextKeyString(); // Advance scan cursor to next peer.
+            } // processPeer: 
+        }
 
     } // class ConnectionManager.

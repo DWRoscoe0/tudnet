@@ -68,6 +68,7 @@ public class Unicaster
       private final Persistent thePersistent;
       private PeersCursor thePeersCursor;
       private NotifyingQueue<String> unicasterNotifyingQueueOfStrings;
+      private NotifyingQueue<MapEpiNode> toUnicasterNotifyingQueueOfMapEpiNodes;
       private NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes;
       
   		// Other instance variables.
@@ -143,6 +144,9 @@ public class Unicaster
     		  // one of the sub-state machines.
 
     		this.theEpiThread= theEpiThread;
+
+        this.toUnicasterNotifyingQueueOfMapEpiNodes= // Make empty EmpNode queue. 
+            new NotifyingQueue<MapEpiNode>(theLockAndSignal, 5);
 
 	  		// Create and start the sub-state machines.
 
@@ -256,6 +260,7 @@ public class Unicaster
           processPacketStreamInputV();
           // theAppLog.info("runLoop() before processNotificationStringInputV().");
           processNotificationStringInputV();
+          processNotificationMapEpiNodeInputV();
           // theAppLog.info("runLoop() before waitingForInterruptOrNotificationE().");
           theLockAndSignal.waitingForInterruptOrNotificationE();
 	      	} // processingLoop:
@@ -263,6 +268,18 @@ public class Unicaster
   			// ? theTimer.cancel(); // Cancel all Timer events for debug tracing, ///dbg
         while (doOnInputsB()) ; // Cycle state machine until nothing remains to be done.
 				}
+
+    private void processNotificationMapEpiNodeInputV() throws IOException
+      {
+        while (true) {
+          MapEpiNode theMapEpiNode= toUnicasterNotifyingQueueOfMapEpiNodes.poll();
+          if (theMapEpiNode == null) break; // Exit if queue empty.
+
+          // Convert queue element to a packet and send.
+          theMapEpiNode.writeV(theEpiOutputStreamO);
+          theEpiOutputStreamO.endBlockAndSendPacketV(); // Forcing send.
+          }
+        }
 
     private void processNotificationStringInputV() throws IOException
       {
@@ -374,12 +391,18 @@ public class Unicaster
 				return theLinkedMachineState.isConnectedB(); 
 				}
 
-		public NotifyingQueue<String> getNotifyingQueueOfStrings()
-		  /* This method returns it NotifyingQueueOfStrings to allow callers
-		    to add strings to it.
-		    */
-		  {
-		    return unicasterNotifyingQueueOfStrings;
-		    }
+    public NotifyingQueue<String> getNotifyingQueueOfStrings()
+      /* This method returns it NotifyingQueueOfStrings to allow callers
+        to add strings to it.
+        */
+      {
+        return unicasterNotifyingQueueOfStrings;
+        }
 
+    public void putV(MapEpiNode theMapEpiNode)
+      /* This method queues theEpiNode for this Unicaster.  */
+      {
+        toUnicasterNotifyingQueueOfMapEpiNodes.put(theMapEpiNode);
+        }
+    
 	} // Unicaster.

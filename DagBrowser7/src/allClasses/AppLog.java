@@ -749,9 +749,9 @@ public class AppLog extends EpiThread
         It always leaves the log file open.
         */
       { 
-        //openFileWithRetryDelayIfClosedV();
-        //appendToOpenFileV(inString);
-        /// Note, log file remains open.
+        openFileWithRetryDelayIfClosedV();
+        appendToOpenFileV(inString);
+        // Note, log file remains open.
         }
 
     public synchronized void appendToOpenFileV(String inString)
