@@ -305,7 +305,7 @@ public class EpiOutputStream<
 	      byte[] newBufferBytes= // Always allocate a new byte buffer.
           packetManagerM.produceDefaultSizeBufferBytes();
         int bytesToSendI= sendableI; 
-        if (bytesToSendI <= 0) // There are no bytes to send?
+        if ((bytesToSendI <= 0) && (bufferSizeI > 0)) // There are no bytes to send?
           { // Report the error and clear the buffer.
             theAppLog.error("EpiOutputStream.queueSendableBytesV(): no sendable bytes.");
             ///enh Include bytes discarded in message.
