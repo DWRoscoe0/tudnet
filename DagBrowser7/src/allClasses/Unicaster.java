@@ -339,11 +339,11 @@ public class Unicaster
             theAppLog.info("processUnprocessedInputV() input= "+inputString);
             logOrSubstatesB(); // Log active OrState sub-states.
             }
-        } // toConsumeInput: 
           MapEpiNode theMapEpiNode= 
               theEpiInputStreamI.tryMapEpiNode(); // Get any left-over EpiNode.
           if (theMapEpiNode != null) // If not null then send to ConnectionManager.
             toConnectionManagerNotifyingQueueOfMapEpiNodes.put(theMapEpiNode);
+        } // toConsumeInput: 
           resetOfferedInputV();  // consume unprocessed state machine String input.
         } // toReturn:
           return;

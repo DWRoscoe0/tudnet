@@ -535,6 +535,9 @@ public class EpiInputStream<
         */ 
       {
         bufferIndexI= thePositionI; // Restoring buffer byte index.
+        
+        packetMapEpiNode= null; //// Kludge: reset EpiNode parser.
+        packetElementIndexI= 0; //// Kludge: reset EpiNode parser.
         }
 	
 		}

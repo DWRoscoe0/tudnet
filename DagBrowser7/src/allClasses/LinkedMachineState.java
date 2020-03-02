@@ -234,10 +234,6 @@ public class LinkedMachineState
                 else
                 {
                   sendHelloV(this); // Send a response HELLO.
-                  thePeersCursor.updateFieldV( "wasConnected", true ); // Record connection.
-                  toConnectionManagerNotifyingQueueOfMapEpiNodes.put( ////
-                      thePeersCursor.getSelectedMapEpiNode()); // Notify ConnectionManager.
-                  //// queue to ConnectionManager.
                   requestAncestorSubStateV( theConnectedState ); // Become connected.
                   }
               }
@@ -413,13 +409,20 @@ public class LinkedMachineState
 		  	    for faster connecting after app restart.
 		  	    */
 		  	  {
-	    	    theAppLog.debug( "Connecting" );
             super.onEntryV();
-	    			IPAndPort remoteIPAndPort= theUnicaster.getKeyK();
-		    		theTCPCopier.queuePeerConnectionV(remoteIPAndPort);
-		    		thePeersCursor.addInfoUsingPeersCursor(
-		    		    remoteIPAndPort, thePeerIdentityString);
-		  	  	}
+            
+            IPAndPort remoteIPAndPort= theUnicaster.getKeyK();
+            thePeersCursor.addInfoUsingPeersCursor( // Add identity if needed.
+                remoteIPAndPort, thePeerIdentityString);
+            thePeersCursor.updateFieldV( "wasConnected", true ); // Record connection.
+	    	    theAppLog.debug( "Connecting, notifying ConnectionManager with: \n  "
+	    	        + thePeersCursor.getSelectedMapEpiNode()
+	    	        );
+            toConnectionManagerNotifyingQueueOfMapEpiNodes.put( ////
+                thePeersCursor.getSelectedMapEpiNode()); // Notify ConnectionManager.
+
+            theTCPCopier.queuePeerConnectionV(remoteIPAndPort);
+		    		}
 	      
         private boolean sentHelloB= true; 
           // True means previous HELLO was sent by us, not received by us.
