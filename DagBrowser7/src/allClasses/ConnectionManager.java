@@ -614,8 +614,9 @@ public class ConnectionManager
 
     
     /*  ////
-      PeerDataExchange:
-        
+      PeerDataExchange: The comments which follow are from a brainstorming session.
+        Not all of the material is being used or will be used.
+
       PeerTerminology:
         Peer: any peer.
         LocalPeer: Self-explanatory.
@@ -683,12 +684,13 @@ public class ConnectionManager
       
         PeersCursor scanningPeersCursor= // Used for iteration. 
             PeersCursor.makeOnFirstEntryPeersCursor( thePersistent );
-        while // Send all peers to changed peer. 
+        while // Send all peer data to changed peer. 
           ( ! scanningPeersCursor.getEntryKeyString().isEmpty() ) 
-          processPeer: { // Process one peer.
+          { // Process one peer.
             theAppLog.appendToFileV("(peer)");
-            scanningPeersCursor.getSelectedMapEpiNode();
-            scanningPeersCursor.nextKeyString(); // Advance cursor to next peer.
+            theUnicaster.putV( // Send to changed peer
+                scanningPeersCursor.getSelectedMapEpiNode()); // data of scanned peer.
+            scanningPeersCursor.nextKeyString(); // Advance scanning cursor to next peer.
             } // processPeer: 
         }
 

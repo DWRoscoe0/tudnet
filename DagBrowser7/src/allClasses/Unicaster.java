@@ -243,11 +243,12 @@ public class Unicaster
 		    
 		    Input message sources now include:
 		    * The EpiInputStream.  These are passed to the superclass state machine. 
+		      //// This is being changed so any leftover is sent as a MapEpiNode
+		      to the ConnectionManager.
 		    * The String queue.  These are passed to the superclass state machine.
-		    
-		    Input message sources will include:
-        * the EpiNode queue.  
-		      These are serialized to a packet and sent to the remote peer.
+		    * the EpiNode queue.  
+		      These come from the ConnectionManager.
+		      They are serialized to a packet and sent to the remote peer.
 
         ///fix  Legitimate input is sometimes not consumed!
 		    */
@@ -339,7 +340,11 @@ public class Unicaster
             logOrSubstatesB(); // Log active OrState sub-states.
             }
         } // toConsumeInput: 
-          resetOfferedInputV();  // consume unprocessed input.
+          MapEpiNode theMapEpiNode= 
+              theEpiInputStreamI.tryMapEpiNode(); // Get any left-over EpiNode.
+          if (theMapEpiNode != null) // If not null then send to ConnectionManager.
+            toConnectionManagerNotifyingQueueOfMapEpiNodes.put(theMapEpiNode);
+          resetOfferedInputV();  // consume unprocessed state machine String input.
         } // toReturn:
           return;
         }

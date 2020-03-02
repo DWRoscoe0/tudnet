@@ -113,7 +113,7 @@ public abstract class EpiNode
       It returns the node if the parse is successful, null otherwise.
       It tries parsing node types in the following order:
       * SequenceEpiNode
-      * MapEpiNode (to be added)
+      * MapEpiNode
       * ScalarEpiNode
      */
     { 

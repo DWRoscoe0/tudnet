@@ -64,13 +64,13 @@ public class EpiInputStream<
 		private E loadedKeyedPacketE= null;
 		private DatagramPacket loadedDatagramPacket = null;
 		private byte[] bufferBytes = null;
-    // Stream scan position: Buffer is empty/consumed when packetIndexI <= packetSizeI.
+    // Stream scan position: Buffer is empty/consumed when packetIndexI >= packetSizeI.
 		private int packetSizeI = 0;
 		private int bufferIndexI = 0;
-		// Position of data within packet.
-    private EpiNode packetEpiNode= null; // EpiNode parsed from packet.
+		// Position of parsed EpiNode data gotten from packet.
+    private MapEpiNode packetMapEpiNode= null; // Cached MapEpiNode parsed from packet.
     private int packetElementIndexI= 0; // Index of element within EpiNode.
-    // Old position marking variables.
+    // Legacy position marking variables.
     private boolean markedB= false;
     private int markIndexI= -1; 
 
@@ -208,24 +208,40 @@ public class EpiInputStream<
         then extracting Strings from them.
         If it succeeds it returns the next String.
         If it fails it returns null.
-        Presently the EpiNode must be a SequenceEpiNode but this is temporary.
         */
       { 
         String elementString= null; // Set default result to indicate failure.
-        while (true) { // Keep trying until no more sequence elements to return.
-          if (packetEpiNode == null) { // Handle missing sequence if needed.
-            packetEpiNode= EpiNode.tryEpiNode(this); // Try parsing node.
-            if (packetEpiNode == null) break; // No node, so exit with fail.
+        while (true) { // Keep trying until no more EpiNode elements to return.
+          if (packetMapEpiNode == null) { // Handle missing EpiNode if needed.
+            //// packetEpiNode= EpiNode.tryEpiNode(this); // Try parsing node.
+            packetMapEpiNode= tryMapEpiNode(); // Try parsing node and caching it.
+            if (packetMapEpiNode == null) break; // No node, so exit with fail.
             packetElementIndexI= 0; // Reset index for scanning node elements.
             }
-          elementString= packetEpiNode.extractFromEpiNodeString(packetElementIndexI);
+          elementString= packetMapEpiNode.extractFromEpiNodeString(packetElementIndexI);
           if (elementString != null) { // If got string, return it. 
             packetElementIndexI++; // Increment index for next string.
             break; // Exit with success.
             }
-          packetEpiNode= null; // Reset to try for another node.
+          packetMapEpiNode= null; // Reset to try for another node.
           } // while
         return elementString;
+        }
+
+    public MapEpiNode tryMapEpiNode() throws IOException
+      /* This method tries to get an EpiNode from this InputStream.
+        If it succeeds it returns the next EpiNode.
+        If it fails it returns null.
+        */
+      { 
+        MapEpiNode resultMapEpiNode= null; // Set default result to indicate failure.
+        if (packetMapEpiNode == null) // If node not ready
+          packetMapEpiNode= MapEpiNode.tryMapEpiNode(this); // try parsing one.
+        if (packetMapEpiNode != null) { // If we have a node now
+          resultMapEpiNode= packetMapEpiNode; // set it for return as result.
+          packetMapEpiNode= null; // Reset since we're taking node away.
+          }
+        return resultMapEpiNode;
         }
 
     
