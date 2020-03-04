@@ -327,26 +327,53 @@ public class Unicaster
         ///enh Display all OrState state-machine states.
        */
       {
-          String inputString= getOfferedInputString();
+          String offeredString= getOfferedInputString();
         toReturn: { 
         toConsumeInput: { 
-          if ( inputString == null ) break toReturn;
-          if (inputString.equals("DEBUG")) { // Ignore any debug message
-            theEpiInputStreamI.readAString(); // and its message count argument.
-            break toConsumeInput;
+          if ( offeredString == null ) break toReturn; // Input string consumed, exit.
+          if (offeredString.equals("DEBUG")) { // Ignore DEBUG messages
+            theEpiInputStreamI.readAString(); // and their message count arguments.
+            break toConsumeInput; // Finished up.
             }
-          { // Log any other input, plus all OrState states. 
-            theAppLog.info("processUnprocessedInputV() input= "+inputString);
+          { // Log any other input and log OrState states. 
+            theAppLog.info("processUnprocessedInputV() input= "+offeredString);
             logOrSubstatesB(); // Log active OrState sub-states.
             }
-          MapEpiNode theMapEpiNode= 
-              theEpiInputStreamI.tryMapEpiNode(); // Get any left-over EpiNode.
-          if (theMapEpiNode != null) // If not null then send to ConnectionManager.
-            toConnectionManagerNotifyingQueueOfMapEpiNodes.put(theMapEpiNode);
+          MapEpiNode theMapEpiNode= // Get any left-over input as a MapEpiNode.
+              theEpiInputStreamI.tryMapEpiNode();
+          if (theMapEpiNode == null) break toConsumeInput; // Clean up if no MapEpiNode.
+          theAppLog.info( // Log the EpiNode.
+              "processUnprocessedInputV() EpiNode= " + theMapEpiNode.toString());
+          if // If theMapEpiNode is not about this Unicaster then...
+            (! isAboutMeB(theMapEpiNode)) 
+            toConnectionManagerNotifyingQueueOfMapEpiNodes.put(theMapEpiNode); // Send...
         } // toConsumeInput: 
           resetOfferedInputV();  // consume unprocessed state machine String input.
         } // toReturn:
           return;
+        }
+
+    private boolean isAboutMeB(MapEpiNode otherMapEpiNode)
+      /* This method returns true if theMapEpiNode contains information about
+        this Unicaster, based on IP, Port, and PeerIdentity.
+        It returns false otherwise.
+        */
+      {
+        boolean resultB= false;
+        goReturn: {
+          MapEpiNode thisMapEpiNode= thePeersCursor.getSelectedMapEpiNode();
+          if (otherMapEpiNode.getChildEpiNode("IP").equals(
+              thisMapEpiNode.getChildEpiNode("IP"))) 
+            break goReturn;
+          if (otherMapEpiNode.getChildEpiNode("Port").equals(
+              thisMapEpiNode.getChildEpiNode("Port"))) 
+            break goReturn;
+          if (otherMapEpiNode.getChildEpiNode("PeerIdentity").equals(
+              thisMapEpiNode.getChildEpiNode("PeerIdentity"))) 
+            break goReturn;
+          resultB= true;
+          } // goReturn:
+        return resultB;
         }
 
     public boolean onInputsV() throws IOException
