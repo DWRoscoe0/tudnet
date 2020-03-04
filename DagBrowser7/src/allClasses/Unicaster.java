@@ -337,7 +337,7 @@ public class Unicaster
             }
           { // Log any other input and log OrState states. 
             theAppLog.info("processUnprocessedInputV() input= "+offeredString);
-            logOrSubstatesB(); // Log active OrState sub-states.
+            logOrSubstatesB("processUnprocessedInputV()"); // Log active sub-states.
             }
           MapEpiNode theMapEpiNode= // Get any left-over input as a MapEpiNode.
               theEpiInputStreamI.tryMapEpiNode();

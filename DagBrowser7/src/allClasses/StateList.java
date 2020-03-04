@@ -734,9 +734,10 @@ public class StateList extends MutableList implements Runnable {
 						}
 			}
 
-  public boolean logOrSubstatesB()
+  public boolean logOrSubstatesB(String callerString)
     /* This method recursively logs any descendant OrState active sub-states.
        It returns true if any states were logged, false otherwise.
+       callerString is made part of the log entry to identify the source.
        
        ///opt Don't log ancestors of OrStates already logged.
      */
@@ -744,17 +745,18 @@ public class StateList extends MutableList implements Runnable {
       boolean anyStateLoggedB= false;
       if ( ! isAndStateB() ) // This is an OrState.
         {
-          if (presentSubStateList.logOrSubstatesB()) anyStateLoggedB= true;
+          if (presentSubStateList.logOrSubstatesB(callerString)) anyStateLoggedB= true;
           ///opt Don't log this state if we logged any sub-states.
           theAppLog.debug( // Log this OrState's sub-state
-              "StateList.logOrSubstatesB()(), "
+              callerString
+              + ": StateList.logOrSubstatesB()(), "
               + presentSubStateList.getFormattedStatePathString());
           }
       else // This is an AndState.
         for  // Recurse into all sub-states looking for active OrState sub-states to log.
           (StateList subStateList : theListOfSubStateLists) 
           {
-            if (subStateList.logOrSubstatesB()) anyStateLoggedB= true;
+            if (subStateList.logOrSubstatesB(callerString)) anyStateLoggedB= true;
             }
       return anyStateLoggedB;
       }
