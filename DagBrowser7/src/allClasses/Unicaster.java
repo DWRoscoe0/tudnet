@@ -337,16 +337,19 @@ public class Unicaster
             }
           { // Log any other input and log OrState states. 
             theAppLog.info("processUnprocessedInputV() input= "+offeredString);
-            logOrSubstatesB("processUnprocessedInputV()"); // Log active sub-states.
+            /// logOrSubstatesB("processUnprocessedInputV()"); // Log active sub-states.
             }
           MapEpiNode theMapEpiNode= // Get any left-over input as a MapEpiNode.
               theEpiInputStreamI.tryMapEpiNode();
           if (theMapEpiNode == null) break toConsumeInput; // Clean up if no MapEpiNode.
           theAppLog.info( // Log the EpiNode.
               "processUnprocessedInputV() EpiNode= " + theMapEpiNode.toString());
-          if // If theMapEpiNode is not about this Unicaster then...
-            (! isAboutMeB(theMapEpiNode)) 
-            toConnectionManagerNotifyingQueueOfMapEpiNodes.put(theMapEpiNode); // Send...
+          if (isAboutMeB(theMapEpiNode)) { // theMapEpiNode is about this Unicaster so...
+            theAppLog.info(
+                "processUnprocessedInputV() ignoring above data about this device.");
+            break toConsumeInput; // Ignoring to prevent self-reference message storm.
+            }
+          toConnectionManagerNotifyingQueueOfMapEpiNodes.put(theMapEpiNode); // Send...
         } // toConsumeInput: 
           resetOfferedInputV();  // consume unprocessed state machine String input.
         } // toReturn:
