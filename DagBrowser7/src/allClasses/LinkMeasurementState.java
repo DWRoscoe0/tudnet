@@ -276,7 +276,10 @@ public class LinkMeasurementState
                     theBadReceivedDataException);
                 }
              */  ////
-            if (!successB) // Rewind input stream if input was not acceptable. 
+            if (successB)
+              theAppLog.debug( "MeasurementHandshakingState ignoring late PA message");
+                ////  + theNetcasterInputStream.tryMapEpiNode().toString());
+              else // Rewind input stream if input was not acceptable.
               theNetcasterInputStream.setPositionV(streamPositionI);
             return successB;
             }

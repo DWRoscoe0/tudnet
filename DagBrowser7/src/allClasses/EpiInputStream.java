@@ -230,8 +230,9 @@ public class EpiInputStream<
 
     public MapEpiNode tryMapEpiNode() throws IOException
       /* This method tries to get an EpiNode from this InputStream.
-        If it succeeds it returns the next EpiNode.
-        If it fails it returns null.
+        If it succeeds it returns the next EpiNode and 
+        the stream has been advanced past whatever terminated it.
+        If it fails it returns null and the stream position is unchanged.
         */
       { 
         MapEpiNode resultMapEpiNode= null; // Set default result to indicate failure.

@@ -668,6 +668,7 @@ public class ConnectionManager
     void notifyPeerV(MapEpiNode changedPeerMapEpiNode)
       /* This method notifies the peer described by changedPeerMapEpiNode
         about the status of all [other] peers.
+        This should be called when a peer connects.
         */
       {
         theAppLog.debug( 
@@ -694,7 +695,7 @@ public class ConnectionManager
             } // processPeer: 
         }
 
-    void notifyPeersV(MapEpiNode changedPeerMapEpiNode)
+    private void notifyPeersV(MapEpiNode changedPeerMapEpiNode)
       /* This method notifies all connected peers about
         the changed connection status of the peer described by changedPeerMapEpiNode.
         */
