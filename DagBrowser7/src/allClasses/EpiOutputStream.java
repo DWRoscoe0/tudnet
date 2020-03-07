@@ -294,7 +294,13 @@ public class EpiOutputStream<
     	}
 
 	  private void queueSendableBytesV()
-	    /* Queues for sending a packet containing all send-able buffer bytes, 
+	    /* This method tries to queue for sending 
+	      a packet containing all send-able buffer bytes,
+	      meaning all leading complete send-able sequences of bytes.
+	      A trailing incomplete sequence is not considered send-able and not sent.
+	      makeAllBufferBytesSendableV() is called to signal
+	      that all previously written bytes are part of a send-able sequence.
+
 	      if there are any.  If there are none then no packet will be queued.
 	      In either case this method allocates a new byte buffer,
 	      and copies any bytes that are not send-able,, 
@@ -302,29 +308,36 @@ public class EpiOutputStream<
 	      to be sent the next time this method is called. 
 	      */
 	  	{
-	      byte[] newBufferBytes= // Always allocate a new byte buffer.
-          packetManagerM.produceDefaultSizeBufferBytes();
-        int bytesToSendI= sendableI; 
-        if ((bytesToSendI <= 0) && (bufferSizeI > 0)) // There are no bytes to send?
-          { // Report the error and clear the buffer.
-            theAppLog.error("EpiOutputStream.queueSendableBytesV(): no sendable bytes.");
-            ///enh Include bytes discarded in message.
-            indexI= 0; // Discard all bytes stored so far.
-            }
-          else // There are send-able bytes.  Send them in a packet. 
-          { // Send packet containing at least one send-able byte. 
-    	  		E keyedPacketE= packetManagerM.produceKeyedPacketE( // Create packet
-            		bufferBytes, indexI // using old buffer containing send-able bytes.
-    			  		);
-    	  		for // Copy bytes which will not be sent now to beginning of new buffer.
-    			  	( int dstI=0, srcI= bytesToSendI; srcI < indexI ; )
-    			  	newBufferBytes[dstI++]= bufferBytes[srcI++]; ///opt
-    	  		queuingForSendV( keyedPacketE ); // Queue packet with old buffer.
-            }
-	  		bufferBytes= newBufferBytes; // Start using new buffer.
-	    	bufferSizeI= bufferBytes.length; // Cache the buffer length. 
-        indexI-= bytesToSendI; // Subtracting bytes sent from buffer index.
-        sendableI= 0;  // Reset count of send-able bytes.
+  	      byte[] newBufferBytes= // Always allocate a new byte buffer.
+            packetManagerM.produceDefaultSizeBufferBytes();
+	      toReturn: {
+  	      if (sendableI > 0) // Send send-able bytes if there are any.
+            { // Send packet containing at least one send-able byte. 
+              for // Copy bytes which will not be sent now to beginning of new buffer.
+                ( int dstI=0, srcI= sendableI; srcI < indexI ; )
+                newBufferBytes[dstI++]= bufferBytes[srcI++]; ///opt
+              E keyedPacketE= packetManagerM.produceKeyedPacketE( // Create packet
+                  bufferBytes, sendableI // using old buffer's send-able bytes.
+                  );
+              queuingForSendV( keyedPacketE ); // Queue packet with old buffer.
+              break toReturn;
+              }
+          if (indexI > 0) // There are non-send-able bytes in buffer. 
+            { // Report the error and clear the buffer.
+              theAppLog.error("EpiOutputStream.queueSendableBytesV(): no sendable bytes.");
+              ///enh Include bytes discarded in logged message.
+              sendableI= indexI; // Make all bytes sendable.
+              E keyedPacketE= packetManagerM.produceKeyedPacketE( // Create packet
+                  bufferBytes, sendableI // using all bytes in buffer.
+                  );
+              queuingForSendV( keyedPacketE ); // Queue packet with old buffer.
+              break toReturn;
+              }
+	      } // toReturn:
+  	  		bufferBytes= newBufferBytes; // Start using new buffer.
+  	    	bufferSizeI= bufferBytes.length; // Cache the buffer length. 
+          indexI-= sendableI; // Subtracting bytes sent from buffer index.
+          sendableI= 0;  // Reset count of send-able bytes.
 		    }
 	    
 
