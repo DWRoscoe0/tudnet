@@ -1,5 +1,7 @@
 package allClasses;
 
+import static allClasses.AppLog.theAppLog;
+
 //import static allClasses.Globals.appLogger;
 
 ///import java.util.Collection;
@@ -96,16 +98,19 @@ public class NotifyingQueue<E> // Queue inter-thread communication.
 	    {
 	  	  boolean interruptedB= false; // Assume no interruption will happen.
 
-	  	  while (true) // Looping until element added to queue.
-		  	  {
-			      try {
-				  		super.put( anE ); // Adding element to queue.  This might block.
-				  		break; // Exiting loop if put finished without interruption.
-			        } 
-			      catch( InterruptedException ex ) { // Block was interrupted.
-			      	interruptedB= true; // Recording interrupt for restoring later.
-			        }
-			  	  }
+	  	  if (! offer(anE)) { // Put on queue, logging block if needed.
+	        theAppLog.info("NotifyingQueue<E>.put(E) queue full, will now block.");
+  	  	  while (true) // Looping until element added to queue, meaning block ends.
+  		  	  {
+  			      try {
+  				  		super.put( anE ); // Adding element to queue.  This might block.
+  				  		break; // Exiting loop if put finished without interruption.
+  			        } 
+  			      catch( InterruptedException ex ) { // Block was interrupted.
+  			      	interruptedB= true; // Recording interrupt for restoring later.
+  			        }
+  			  	  }
+	  	    }
 	      consumerThreadLockAndSignal.notifyingV();
 
       	if // Restoring interrupt status if interrupt happened.
