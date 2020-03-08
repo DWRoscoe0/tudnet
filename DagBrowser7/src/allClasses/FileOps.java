@@ -138,12 +138,16 @@ public class FileOps
             } catch (AccessDeniedException theAccessDeniedException) {
               theAppLog.warning(
                   "atomicRenameB(..) failed attempt "+attemptsI
-                  +", retrying, "+theAccessDeniedException); 
+                  +", "+theAccessDeniedException);
+              if (attemptsI >= 10) {
+                theAppLog.error("atomicRenameB(..) retry limit exceeded, aborting.");
+                break;
+                }
             } catch (IOException theIOException) {
               theAppLog.exception("atomicRenameB(..) failed with ",theIOException); 
               break;
             }
-          EpiThread.interruptibleSleepB( // Don't hog CPU in retry loop.
+          EpiThread.interruptibleSleepB( // Pause thread to prevent CPU hogging.
               Config.errorRetryPause1000MsL
               );
           } // while
