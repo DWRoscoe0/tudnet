@@ -219,7 +219,8 @@ public class UnicasterManager
             Unicaster theUnicaster= ((Unicaster)childDataNode);
             if (theUnicaster.isConnectedB())
               theUnicaster.getNotifyingQueueOfStrings().
-                add(messageString);
+                //// add(messageString);
+                put(messageString);
             }
         }
 

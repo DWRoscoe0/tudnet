@@ -36,5 +36,15 @@ public class KeyedPacket<K>
 
     public K getKeyK()
     	{ return keyK; }
+    
+    public String toString()
+      { 
+        return 
+          "(KeyedPacket:"
+          + Nulls.toString(keyK)
+          + ","
+          + super.toString()
+          + ")"; 
+        }
 
   	}

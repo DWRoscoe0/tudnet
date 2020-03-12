@@ -346,7 +346,7 @@ public class Unicaster
               "processUnprocessedInputV() EpiNode= " + theMapEpiNode.toString());
           if (isAboutMeB(theMapEpiNode)) { // theMapEpiNode is about this Unicaster so...
             theAppLog.info(
-                "processUnprocessedInputV() ignoring above data about this device.");
+                "processUnprocessedInputV() ignoring above data about this Unicaster.");
             break toConsumeInput; // Ignoring to prevent self-reference message storm.
             }
           toConnectionManagerNotifyingQueueOfMapEpiNodes.put(theMapEpiNode); // Send...
@@ -365,13 +365,13 @@ public class Unicaster
         boolean resultB= false;
         goReturn: {
           MapEpiNode thisMapEpiNode= thePeersCursor.getSelectedMapEpiNode();
-          if (otherMapEpiNode.getChildEpiNode("IP").equals(
+          if (! otherMapEpiNode.getChildEpiNode("IP").equals(
               thisMapEpiNode.getChildEpiNode("IP"))) 
             break goReturn;
-          if (otherMapEpiNode.getChildEpiNode("Port").equals(
+          if (! otherMapEpiNode.getChildEpiNode("Port").equals(
               thisMapEpiNode.getChildEpiNode("Port"))) 
             break goReturn;
-          if (otherMapEpiNode.getChildEpiNode("PeerIdentity").equals(
+          if (! otherMapEpiNode.getChildEpiNode("PeerIdentity").equals(
               thisMapEpiNode.getChildEpiNode("PeerIdentity"))) 
             break goReturn;
           resultB= true;

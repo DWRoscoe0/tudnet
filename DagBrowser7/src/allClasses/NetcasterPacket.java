@@ -17,5 +17,10 @@ public class NetcasterPacket
       {
 	    	super( theDatagramPacket, theIPAndPort );
         }
+    
+    public String toString()
+      { 
+        return "(NetcasterPacket:" + super.toString() + ")";
+        }
 
 		}

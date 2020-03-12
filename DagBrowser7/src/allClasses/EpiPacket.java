@@ -24,4 +24,12 @@ public class EpiPacket
         return theDatagramPacket;
         }
 
+    public String toString()
+      { 
+        return 
+            "(EpiPacket:" 
+            + Nulls.toString(PacketManager.gettingPacketString(theDatagramPacket)) 
+            + ")"; 
+        }
+
   	}

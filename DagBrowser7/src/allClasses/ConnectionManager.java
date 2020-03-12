@@ -673,28 +673,32 @@ public class ConnectionManager
         about the status of all [other] peers.
         This should be called when a peer connects.
         This produces a lot of packets, but shouldn't run often.
+        
+        ///// being changed to make a connection if none exists.
         */
       {
-        theAppLog.debug("ConnectionManager.notifyPeerAboutPeersV() called.");
-        String peerIPString= 
-            changedPeerMapEpiNode.getValueString("IP");
-        String peerPortString= 
-            changedPeerMapEpiNode.getValueString("Port");
-        IPAndPort theIPAndPort= new IPAndPort(peerIPString, peerPortString);
-        Unicaster theUnicaster= // Try to get Unicaster of peer to receive data. 
-            theUnicasterManager.tryingToGetUnicaster(theIPAndPort);
-      
-        PeersCursor scanningPeersCursor= // Create cursor to be used for iteration. 
-            PeersCursor.makeOnFirstEntryPeersCursor( thePersistent );
-        while // Send all peer data to changed peer. 
-          ( ! scanningPeersCursor.getEntryKeyString().isEmpty() ) 
-          { // Process one peer.
-            theAppLog.appendToFileV("(to-peer)");
-            theUnicaster.putV( // Send to Unicaster of changed peer
-                scanningPeersCursor.getSelectedMapEpiNode()); // data of scanned peer.
-            scanningPeersCursor.nextKeyString(); // Advance scanning cursor to next peer.
-            } // processPeer: 
-        theAppLog.appendToFileV(NL); // Go to new line after (to-peer) flags.
+        toReturn: {
+          theAppLog.debug("ConnectionManager.notifyPeerAboutPeersV() called.");
+          String peerIPString= 
+              changedPeerMapEpiNode.getValueString("IP");
+          String peerPortString= 
+              changedPeerMapEpiNode.getValueString("Port");
+          IPAndPort theIPAndPort= new IPAndPort(peerIPString, peerPortString);
+          Unicaster theUnicaster= // Try to get Unicaster of peer to receive data. 
+              theUnicasterManager.tryingToGetUnicaster(theIPAndPort);
+          if (theUnicaster== null) break toReturn; // Skip if not neighbor.
+          PeersCursor scanningPeersCursor= // Create cursor to be used for iteration. 
+              PeersCursor.makeOnFirstEntryPeersCursor( thePersistent );
+          while // Send all peer data to changed peer. 
+            ( ! scanningPeersCursor.getEntryKeyString().isEmpty() ) 
+            { // Process one peer.
+              theAppLog.appendToFileV("(to-peer)");
+              theUnicaster.putV( // Send to Unicaster of changed peer
+                  scanningPeersCursor.getSelectedMapEpiNode()); // data of scanned peer.
+              scanningPeersCursor.nextKeyString(); // Advance scanning cursor to next peer.
+              } // processPeer: 
+          theAppLog.appendToFileV(NL); // Go to new line after (to-peer) flags.
+        } // toReturn:
         }
 
     private void notifyPeersAboutPeerV(MapEpiNode changedPeerMapEpiNode)
