@@ -343,7 +343,7 @@ class ScalarEpiNode extends EpiNode
         return  scalarString.hashCode(); // Returning hash of the only field.
         }
     
-    }
+    } // ScalarEpiNode
 
 class SequenceEpiNode extends EpiNode
 
@@ -478,7 +478,7 @@ class SequenceEpiNode extends EpiNode
         return resultListOfEpiNodes;
       }
 
-    }
+    } // SequenceEpiNode 
 
 class MapEpiNode extends EpiNode 
 
@@ -858,15 +858,6 @@ class MapEpiNode extends EpiNode
             );
         }
 
-    public EpiNode getEpiNode(EpiNode keyEpiNode)
-      /* This method returns the value EpiNode associated with keyEpiNode
-        in this MapEpiNode, if it exists.
-        Otherwise it returns null.
-        */
-      {
-        return theLinkedHashMap.get(keyEpiNode);
-        }
-
     public String extractFromEpiNodeString(int indexI) 
         throws IOException
       /* See base abstract class for documentation.  */
@@ -975,7 +966,7 @@ class MapEpiNode extends EpiNode
         */
       { 
         String resultString= null;
-        EpiNode valueEpiNode= getChildEpiNode(keyString);
+        EpiNode valueEpiNode= getEpiNode(keyString);
         if (valueEpiNode != null)
           resultString= valueEpiNode.toString();
         return resultString;
@@ -1001,7 +992,7 @@ class MapEpiNode extends EpiNode
           EpiNode valueEpiNode= null;
         toReturnValue: { 
         toMakeMap: {
-          valueEpiNode= getChildEpiNode(keyString);
+          valueEpiNode= getEpiNode(keyString);
           if (valueEpiNode == null) // No value EpiNode is associated with this key.
             break toMakeMap; // so go make one.
           valueMapEpiNode= valueEpiNode.getMapEpiNode(); // Try converting value to map.
@@ -1016,7 +1007,7 @@ class MapEpiNode extends EpiNode
           return valueMapEpiNode;
         }
 
-    public EpiNode getChildEpiNode(String keyString)
+    public EpiNode getEpiNode(String keyString)
       /* This method returns the child MapEpiNode 
         that is associated with the key keyString.
         If there is no such child then null is returned. 
@@ -1028,11 +1019,11 @@ class MapEpiNode extends EpiNode
             theAppLog.error(keyString);
             }
         EpiNode keyEpiNode= new ScalarEpiNode(keyString); // Convert String to EpiNode.
-        EpiNode valueEpiNode= getChildEpiNode(keyEpiNode); // Lookup value of this key.
+        EpiNode valueEpiNode= getEpiNode(keyEpiNode); // Lookup value of this key.
         return valueEpiNode;
         }
 
-    public EpiNode getChildEpiNode(EpiNode keyEpiNode)
+    public EpiNode getEpiNode(EpiNode keyEpiNode)
       /* This method returns the value EpiNode 
         that is associated with the keyEpiNode.
         If there is no such child then null is returned. 
@@ -1041,4 +1032,4 @@ class MapEpiNode extends EpiNode
         return theLinkedHashMap.get(keyEpiNode);
         }
 
-    }
+    } // MapEpiNode

@@ -271,6 +271,10 @@ public class Unicaster
 				}
 
     private void processNotificationMapEpiNodeInputV() throws IOException
+      /* This method gets all MapEpiNodes, if any,
+        from the toUnicasterNotifyingQueueOfMapEpiNodes,
+        and sends them, 1 packet each, to the remote peer.
+        */
       {
         while (true) {
           MapEpiNode theMapEpiNode= toUnicasterNotifyingQueueOfMapEpiNodes.poll();
@@ -283,6 +287,11 @@ public class Unicaster
         }
 
     private void processNotificationStringInputV() throws IOException
+      /* This method gets all Strings, if any,
+        from the unicasterNotifyingQueueOfStrings,
+        and passes them to the Unicaster state machine,
+        and cycles the machine until each String is fully processed.
+        */
       {
         while (true) {
           String notificationString= unicasterNotifyingQueueOfStrings.poll();
@@ -293,13 +302,18 @@ public class Unicaster
         }
 
     private void processPacketStreamInputV() throws IOException
+      /* This method gets all available Strings, if any,
+        from the theEpiInputStreamI,
+        and passes them to the Unicaster state machine,
+        and cycles the machine until each String is fully processed.
+        Any input that remains, if any, if processed by processUnprocessedInputV().
+        */
       {
         while (theEpiInputStreamI.available() > 0) { // Try parsing more of packet stream.
           String inString= theEpiInputStreamI.readAString(); // Get next token.
           setOfferedInputV( inString ); // Offer it to state machine.
           while (doOnInputsB()) ; // Cycle state machine until processing stops.
           processUnprocessedInputV(); // Handle any left-over input.
-          //// continue processingLoop; // Loop to process offered token.
           }
         }
 
@@ -323,9 +337,11 @@ public class Unicaster
       /* This method is called to process any offered input that
         the Unicaster state machine was unable to process.
         Unprocessed Debug messages are silently ignored.
-        Other messages are logged but otherwise ignored.
-        ///enh Display all OrState state-machine states.
-       */
+        Other messages are logged, converted to MapEpiNodes, 
+        and added to the toConnectionManagerNotifyingQueueOfMapEpiNodes
+        for processing by the ConnectionManager.
+        The ConnectionManager is the processor of last resort.
+        */
       {
           String offeredString= getOfferedInputString();
         toReturn: { 
@@ -365,14 +381,14 @@ public class Unicaster
         boolean resultB= false;
         goReturn: {
           MapEpiNode thisMapEpiNode= thePeersCursor.getSelectedMapEpiNode();
-          if (! otherMapEpiNode.getChildEpiNode("IP").equals(
-              thisMapEpiNode.getChildEpiNode("IP"))) 
+          if (! otherMapEpiNode.getEpiNode("IP").equals(
+              thisMapEpiNode.getEpiNode("IP"))) 
             break goReturn;
-          if (! otherMapEpiNode.getChildEpiNode("Port").equals(
-              thisMapEpiNode.getChildEpiNode("Port"))) 
+          if (! otherMapEpiNode.getEpiNode("Port").equals(
+              thisMapEpiNode.getEpiNode("Port"))) 
             break goReturn;
-          if (! otherMapEpiNode.getChildEpiNode("PeerIdentity").equals(
-              thisMapEpiNode.getChildEpiNode("PeerIdentity"))) 
+          if (! otherMapEpiNode.getEpiNode("PeerIdentity").equals(
+              thisMapEpiNode.getEpiNode("PeerIdentity"))) 
             break goReturn;
           resultB= true;
           } // goReturn:
