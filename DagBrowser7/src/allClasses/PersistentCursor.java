@@ -192,7 +192,7 @@ public class PersistentCursor
 				this.entryKeyString= entryKeyString; // Store the selection/position key.
         if (! entryKeyString.isEmpty()) // If there is supposed to be a node there
           this.lowerMapEpiNode= // cache the node at that position. 
-              upperMapEpiNode.getOrMakeChildMapEpiNode(entryKeyString);
+              upperMapEpiNode.getOrMakeMapEpiNode(entryKeyString);
           else
           this.lowerMapEpiNode= null;
         return this.entryKeyString;

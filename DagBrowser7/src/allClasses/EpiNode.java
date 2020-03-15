@@ -978,7 +978,7 @@ class MapEpiNode extends EpiNode
         return theLinkedHashMap.size();
         }
 
-    public MapEpiNode getOrMakeChildMapEpiNode(String keyString)
+    public MapEpiNode getOrMakeMapEpiNode(String keyString)
       /* This method returns the MapEpiNode value 
         that is associated with the key keyString.  
         If there is no such MapEpiNode, then an empty one is created,
@@ -1008,9 +1008,9 @@ class MapEpiNode extends EpiNode
         }
 
     public EpiNode getEpiNode(String keyString)
-      /* This method returns the child MapEpiNode 
+      /* This method returns the MapEpiNode 
         that is associated with the key keyString.
-        If there is no such child then null is returned. 
+        If there is no such node then null is returned. 
        */
       {
         if ( keyString == null || keyString.isEmpty()) // Handle bad key.
@@ -1026,7 +1026,7 @@ class MapEpiNode extends EpiNode
     public EpiNode getEpiNode(EpiNode keyEpiNode)
       /* This method returns the value EpiNode 
         that is associated with the keyEpiNode.
-        If there is no such child then null is returned. 
+        If there is no such node then null is returned. 
        */
       {
         return theLinkedHashMap.get(keyEpiNode);

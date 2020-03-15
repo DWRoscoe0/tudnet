@@ -213,7 +213,7 @@ public class Persistent
                     pathString.substring(scanKeyOffsetI, pathString.length());
                 if (keyString.isEmpty()) break goLogError;
                 resultMapEpiNode= // Get or make associated child node.
-                  resultMapEpiNode.getOrMakeChildMapEpiNode(keyString);
+                  resultMapEpiNode.getOrMakeMapEpiNode(keyString);
                 break goReturn; // Return with the non-null value.
                 }
             //// This code does not appear to be reached.
@@ -221,7 +221,7 @@ public class Persistent
                 pathString.substring(scanKeyOffsetI, separatorKeyOffsetI);
             if (keyString.isEmpty()) break goLogError;
             resultMapEpiNode= // Get or make associated/next child node.
-                resultMapEpiNode.getOrMakeChildMapEpiNode(keyString);
+                resultMapEpiNode.getOrMakeMapEpiNode(keyString);
             scanKeyOffsetI= separatorKeyOffsetI+1; // Compute next key offset.
           } // while (true)... Loop to select or make next descendant node.
         } // goLogError:
