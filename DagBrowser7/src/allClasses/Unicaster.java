@@ -360,7 +360,7 @@ public class Unicaster
           if (theMapEpiNode == null) break toConsumeInput; // Clean up if no MapEpiNode.
           theAppLog.info( // Log the EpiNode.
               "processUnprocessedInputV() EpiNode= " + theMapEpiNode.toString());
-          if (isAboutMeB(theMapEpiNode)) { // theMapEpiNode is about this Unicaster so...
+          if (isAboutThisUnicasterB(theMapEpiNode)) { // Ignore if about this Unicaster.
             theAppLog.info(
                 "processUnprocessedInputV() ignoring above data about this Unicaster.");
             break toConsumeInput; // Ignoring to prevent self-reference message storm.
@@ -372,27 +372,32 @@ public class Unicaster
           return;
         }
 
-    private boolean isAboutMeB(MapEpiNode otherMapEpiNode)
+    private boolean isAboutThisUnicasterB(MapEpiNode otherMapEpiNode)
       /* This method returns true if theMapEpiNode contains information about
         this Unicaster, based on IP, Port, and PeerIdentity.
         It returns false otherwise.
         */
       {
-        boolean resultB= false;
+          boolean resultB= false; // Assume something is different.
         goReturn: {
           MapEpiNode thisMapEpiNode= thePeersCursor.getSelectedMapEpiNode();
-          if (! otherMapEpiNode.getEpiNode("IP").equals(
-              thisMapEpiNode.getEpiNode("IP"))) 
+
+          EpiNode testEpiNode= otherMapEpiNode.getEpiNode("IP");
+          if (testEpiNode == null) break goReturn;
+          if (! testEpiNode.equals(thisMapEpiNode.getEpiNode("IP"))) break goReturn;
+
+          testEpiNode= otherMapEpiNode.getEpiNode("Port");
+          if (testEpiNode == null) break goReturn;
+          if (! testEpiNode.equals(thisMapEpiNode.getEpiNode("Port"))) break goReturn;
+
+          testEpiNode= otherMapEpiNode.getEpiNode("PeerIdentity"); 
+          if (testEpiNode == null) break goReturn;
+          if (! testEpiNode.equals(thisMapEpiNode.getEpiNode("PeerIdentity"))) 
             break goReturn;
-          if (! otherMapEpiNode.getEpiNode("Port").equals(
-              thisMapEpiNode.getEpiNode("Port"))) 
-            break goReturn;
-          if (! otherMapEpiNode.getEpiNode("PeerIdentity").equals(
-              thisMapEpiNode.getEpiNode("PeerIdentity"))) 
-            break goReturn;
-          resultB= true;
-          } // goReturn:
-        return resultB;
+
+          resultB= true; // All is the same, so return true.
+        } // goReturn:
+          return resultB;
         }
 
     public boolean onInputsV() throws IOException

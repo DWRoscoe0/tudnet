@@ -418,12 +418,11 @@ public class LinkedMachineState
 	    	    theAppLog.debug( "Connecting, notifying ConnectionManager with: \n  "
 	    	        + thePeersCursor.getSelectedMapEpiNode()
 	    	        );
-            toConnectionManagerNotifyingQueueOfMapEpiNodes.put( ////
-                thePeersCursor.getSelectedMapEpiNode()); // Notify ConnectionManager.
+            notifyConnectionManagerOfPeerConnectionChangeV();
 
             theTCPCopier.queuePeerConnectionV(remoteIPAndPort);
 		    		}
-	      
+
         private boolean sentHelloB= true; 
           // True means previous HELLO was sent by us, not received by us.
           // It is used by onInputsB() to prevent HELLO message storms.
@@ -455,8 +454,9 @@ public class LinkedMachineState
               if ( tryInputB("GOODBYE") ) { // Peer disconnected itself by saying goodbye?
                 sayGoodbyesV(); // Respond to peer with our own goodbyes.
                 thePeersCursor.updateFieldV("wasConnected", false); // Record disconnect.
-                toConnectionManagerNotifyingQueueOfMapEpiNodes.put( ////
-                    thePeersCursor.getSelectedMapEpiNode()); // Notify ConnectionManager.
+                notifyConnectionManagerOfPeerConnectionChangeV();
+                //// toConnectionManagerNotifyingQueueOfMapEpiNodes.put( ////
+                ////     thePeersCursor.getSelectedMapEpiNode()); // Notify ConnectionManager.
                 requestAncestorSubStateV( theDisconnectedState); // Disconnect ourselves.
                 break goReturn; // Return with signal true.
                 }
@@ -570,5 +570,20 @@ public class LinkedMachineState
             );
         theNetcasterOutputStream.endBlockAndSendPacketV(); // Forcing send.
 	  		}
+
+    private void notifyConnectionManagerOfPeerConnectionChangeV()
+      /* This method notifies the ConnectionManager about a change in
+        the connectedness status of this Unicaster.
+        It does this by creating a single-entry MapEpiNode 
+        wrapping the MapEpiNode data of the peer connection.
+        */
+      {
+        toConnectionManagerNotifyingQueueOfMapEpiNodes.put( // Add to queue
+          MapEpiNode.makeSingleEntryMapEpiNode( // this wrapped map containing data.
+            "LocalNewState", 
+            thePeersCursor.getSelectedMapEpiNode()
+            )
+          );
+        }
 
 		} // class LinkedMachineState

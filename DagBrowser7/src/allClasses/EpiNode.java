@@ -46,14 +46,6 @@ public abstract class EpiNode
         */
 
 
-    public MapEpiNode getMapEpiNode()
-      /* This method returns the (this) reference if this is a MapEpiNode,
-        null otherwise.
-        */
-      {
-        return null; // MapEpiNode will override this returned value.
-        }
-
     public EpiNode getEpiNode(int indexI)
       /* This method returns the element EpiNode at index indexI,
         In this base class, it always returns null and logs an error.
@@ -161,7 +153,6 @@ public abstract class EpiNode
           }
         }
     
-
     public static boolean tryByteB(
           RandomAccessInputStream theRandomAccessInputStream, int desiredByteI) 
       throws IOException
@@ -198,6 +189,16 @@ public abstract class EpiNode
         boolean successB= // Test byte for correctness.
             (byteI == desiredByteI); // Fails if byteI is -1 or not desired byte.
         return successB;
+        }
+
+    public MapEpiNode getMapEpiNode()
+      /* This method returns the (this) reference if this is a MapEpiNode,
+        null otherwise.  
+        * This method returns null.
+        * MapEpiNode will override the null with its this reference.
+        */
+      {
+        return null;
         }
 
     } // class EpiNode
@@ -486,14 +487,9 @@ class MapEpiNode extends EpiNode
     private LinkedHashMap<EpiNode,EpiNode> theLinkedHashMap; // Where the data is. 
       // Will reference map with default of insertion-order.  Rejected access-order map.  
 
-    public MapEpiNode getMapEpiNode()
-      /* This method returns the (this) reference if this is a MapEpiNode,
-        null otherwise.
-        */
-      {
-        return this; // Return non-null this because this is a MapEpiNode.
-        }
-
+    
+    // Methods that output to OutputStreams.
+    
     public void writeV(OutputStream theOutputStream) 
         throws IOException
       { 
@@ -535,17 +531,8 @@ class MapEpiNode extends EpiNode
           }
         }
 
-    public MapEpiNode(LinkedHashMap<EpiNode,EpiNode> theLinkedHashMap) // constructor.
-      {
-        this.theLinkedHashMap= theLinkedHashMap;
-        }
 
-    public MapEpiNode() // constructor.
-      {
-        this( // Call parameter constructor with
-            new LinkedHashMap<EpiNode,EpiNode>() // an initially empty LinkedHashMap.  
-            );
-        }
+    // Methods that input from InputStreams.
 
     public static MapEpiNode tryMapEpiNode( 
         RandomAccessInputStream theRandomAccessInputStream ) 
@@ -847,16 +834,92 @@ class MapEpiNode extends EpiNode
         return successB;
         }
 
+    
+    // Methods that get or make instances with entries.
+    
+    public MapEpiNode getOrMakeMapEpiNode(String keyString)
+      /* This method returns the MapEpiNode value 
+        that is associated with the key keyString.  
+        If there is no such MapEpiNode, then an empty one is created,
+        and it is associated in this MepEpiNode with keyString.
+        If this method is called, it is assumed that
+        the associated EpiNode is supposed to be a MapEpiNode, 
+        not something else such as a ScalarEpiNode.
+       */
+      {
+          MapEpiNode valueMapEpiNode; // For function result. 
+          EpiNode valueEpiNode= null;
+        toReturnValue: { 
+        toMakeMap: {
+          valueEpiNode= getEpiNode(keyString);
+          if (valueEpiNode == null) // No value EpiNode is associated with this key.
+            break toMakeMap; // so go make one.
+          valueMapEpiNode= valueEpiNode.getMapEpiNode(); // Try converting value to map.
+          if (valueMapEpiNode == null) // The value is not a map
+            break toMakeMap; // so go make a replacement which is a map.
+          break toReturnValue; // Value is a map, so go return it as is.
+        } // toMakeMap: 
+          valueMapEpiNode= new MapEpiNode(); // Make a new empty map.
+          theLinkedHashMap.put( // Associate new map with key as entry in this map.
+              new ScalarEpiNode(keyString),valueMapEpiNode);
+        } // toReturnValue:
+          return valueMapEpiNode;
+        }
+
+    public static MapEpiNode makeSingleEntryMapEpiNode(
+        String keyString, EpiNode valueEpiNode)
+      /* This method returns a new MapEpiNode which contains 
+       * a single entry consisting of keyString and valueEpiNode.
+        */
+      {
+        return makeSingleEntryMapEpiNode(
+            new ScalarEpiNode(keyString), // Convert String to EpiNode.
+            valueEpiNode
+            );
+        }
+
+    public static MapEpiNode makeSingleEntryMapEpiNode(
+        EpiNode keyEpiNode, EpiNode valueEpiNode)
+      /* This method returns a new MapEpiNode which contains 
+       * a single entry consisting of keyEpiNode and valueEpiNode.
+        */
+      {
+        MapEpiNode resultMapEpiNode= // Make a new empty map. 
+            new MapEpiNode();
+        resultMapEpiNode.putV( // Add it's single entry.
+            keyEpiNode,
+            valueEpiNode
+            );
+        return resultMapEpiNode;
+        }
+
+    
+    // Methods that store data in a map.
+    
     public void putV(String keyString, String valueString)
       /* This associates valueString with keyString in this MapEpiNode.
         The strings are converted to ScalarEpiNodes first.
         */
       {
-        theLinkedHashMap.put(
+        putV(
             new ScalarEpiNode(keyString),
             new ScalarEpiNode(valueString)
             );
         }
+
+    public void putV(EpiNode keyEpiNode, EpiNode valueEpiNode)
+      /* This associates valueEpiNode with keyEpiNode in this MapEpiNode.
+        It does this by making an entry in theLinkedHashMap.
+        */
+      {
+        theLinkedHashMap.put(
+            keyEpiNode,
+            valueEpiNode
+            );
+        }
+
+    
+    // Methods that get keys, values, or whole entries from a map.
 
     public String extractFromEpiNodeString(int indexI) 
         throws IOException
@@ -960,8 +1023,7 @@ class MapEpiNode extends EpiNode
         }
 
     public String getValueString(String keyString) 
-      /* Returns String representation of value associated with
-        a ScalarEpiNode representation of keyString,
+      /* Returns String representation of value associated with keyString,
         or null if there is no such value.
         */
       { 
@@ -971,45 +1033,24 @@ class MapEpiNode extends EpiNode
           resultString= valueEpiNode.toString();
         return resultString;
         }
-
-    public int getSizeI()
-      /* This method returns number of elements in the map.  */
-      {
-        return theLinkedHashMap.size();
-        }
-
-    public MapEpiNode getOrMakeMapEpiNode(String keyString)
-      /* This method returns the MapEpiNode value 
-        that is associated with the key keyString.  
-        If there is no such MapEpiNode, then an empty one is created,
-        and it is associated in this MepEpiNode with keyString.
-        If this method is called, it is assumed that
-        the associated EpiNode is supposed to be a MapEpiNode, 
-        not something else such as a ScalarEpiNode.
+    
+    public MapEpiNode getMapEpiNode(String keyString)
+      /* This method returns the MapEpiNode that is associated with the key keyString.
+        If there is no such node then null is returned. 
        */
       {
-          MapEpiNode valueMapEpiNode; // For function result. 
-          EpiNode valueEpiNode= null;
-        toReturnValue: { 
-        toMakeMap: {
-          valueEpiNode= getEpiNode(keyString);
-          if (valueEpiNode == null) // No value EpiNode is associated with this key.
-            break toMakeMap; // so go make one.
-          valueMapEpiNode= valueEpiNode.getMapEpiNode(); // Try converting value to map.
-          if (valueMapEpiNode == null) // The value is not a map
-            break toMakeMap; // so go make a replacement which is a map.
-          break toReturnValue; // Value is a map, so go return it as is.
-        } // toMakeMap: 
-          valueMapEpiNode= new MapEpiNode(); // Make a new empty map.
-          theLinkedHashMap.put( // Associate new map with key as entry in this map.
-              new ScalarEpiNode(keyString),valueMapEpiNode);
-        } // toReturnValue:
-          return valueMapEpiNode;
+        MapEpiNode valueMapEpiNode= null;
+        toReturn: {
+          EpiNode valueEpiNode= getEpiNode(keyString); // Get associated value.
+          if (valueEpiNode == null) break toReturn;
+          valueMapEpiNode=  // Try converting EpiNode to MapEpiNode.
+              valueEpiNode.getMapEpiNode();
+          } // toReturn:
+        return valueMapEpiNode;
         }
-
+    
     public EpiNode getEpiNode(String keyString)
-      /* This method returns the MapEpiNode 
-        that is associated with the key keyString.
+      /* This method returns the EpiNode that is associated with the key keyString.
         If there is no such node then null is returned. 
        */
       {
@@ -1030,6 +1071,38 @@ class MapEpiNode extends EpiNode
        */
       {
         return theLinkedHashMap.get(keyEpiNode);
+        }
+
+
+    // Special getters or calculated values.
+    
+    public MapEpiNode getMapEpiNode()
+      /* This method returns the (this) reference if this is a MapEpiNode,
+        null otherwise.
+        */
+      {
+        return this; // Return non-null this because this is a MapEpiNode.
+        }
+
+    public int getSizeI()
+      /* This method returns number of elements in the map.  */
+      {
+        return theLinkedHashMap.size();
+        }
+
+
+    // Constructors.
+
+    public MapEpiNode(LinkedHashMap<EpiNode,EpiNode> theLinkedHashMap) // constructor.
+      {
+        this.theLinkedHashMap= theLinkedHashMap;
+        }
+
+    public MapEpiNode() // constructor.
+      {
+        this( // Call parameter constructor with
+            new LinkedHashMap<EpiNode,EpiNode>() // an initially empty LinkedHashMap.  
+            );
         }
 
     } // MapEpiNode
