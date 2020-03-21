@@ -666,31 +666,45 @@ public class ConnectionManager
         }
 
     private void decodePeerMapEpiNodeV(MapEpiNode messageMapEpiNode)
-      /* This method decodes peerMapEpiNode, based on the key of
-        the enclosing outer MapEpiNode.
+      /* This method decodes peerMapEpiNode, based on the presence of particular keys,
+        which should be the only key, of the enclosing, outer MapEpiNode.
         */
       {
           MapEpiNode valueMapEpiNode;
         goReturn: {
           valueMapEpiNode= messageMapEpiNode.getMapEpiNode("LocalNewState");
-          if (valueMapEpiNode != null) {
-            processLocalNewStateV(valueMapEpiNode);
-            break goReturn;
-            }
+          if (valueMapEpiNode != null) 
+            { processLocalNewStateV(valueMapEpiNode); break goReturn; }
+          
+          valueMapEpiNode= messageMapEpiNode.getMapEpiNode("RemoteNewState");
+          if (valueMapEpiNode != null) 
+            { processRemoteUpdatedStateV(valueMapEpiNode); break goReturn; }
+          
+          valueMapEpiNode= messageMapEpiNode.getMapEpiNode("RemoteCurrentState");
+          if (valueMapEpiNode != null) 
+            { processRemoteUpdatedStateV(valueMapEpiNode); break goReturn; }
+          
           theAppLog.debug("ConnectionManager.decodePeerMapEpiNodeV(..) ignoring"
             + NL + "  " + messageMapEpiNode); // Report message being ignored.
-              
-          ////notifyPeersAboutPeerV(peerMapEpiNode); // One to many.
-          ////notifyPeerAboutPeersV(peerMapEpiNode); // Many to one.
         } // goReturn:
           return;
+        }
+
+    private void processRemoteUpdatedStateV(MapEpiNode changedPeerMapEpiNode)
+      /* This method does what is needed to process 
+        the RemoteNewState and RemoteCurrentState message.
+        */
+      {
+        //// if changedPeerMapEpiNode indicates peer not active, exit
+        //// Get Persistent storage MapEpiNode of associated peer, if any.
+        //// if we are already connected to peer, exit
+        //// initiate connection to this peer.
         }
 
     private void processLocalNewStateV(MapEpiNode changedPeerMapEpiNode)
       /* This method does what is needed to process the LocalNewState message.
         */
       {
-        // For now, just do this...
         notifyPeersAboutPeerV(changedPeerMapEpiNode);
         notifyPeerAboutPeersV(changedPeerMapEpiNode);
         }
