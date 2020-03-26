@@ -378,20 +378,21 @@ public class Multicaster
         It reports all received packets to the ConnectionManager.
         */
       {
+        theAppLog.debug("receivingPacketsV() begins.");
     		long delayMsL= // Minimum time between multicasts. 
     				// 3600000; // 1 hour for testing to disable multicasting.
     				Config.multicastPeriodMsL;
     		LockAndSignal.Input theInput;  // Type of input that ends waits.
         processorLoop: while (true) { // Processing messages until exit request.
         	{ // Processing messages or exiting.
-            theAppLog.debug("receivingPacketsV() processorLoop begins.");
+            /// theAppLog.debug("receivingPacketsV() at processorLoop beginning.");
         	  long baseTimeMsL= System.currentTimeMillis();
           	theInput=  // Awaiting next input.
           	  waitingForSubnotificationOrIntervalOrInterruptE(
           	    baseTimeMsL, delayMsL);
 	          inputDecoder: switch ( theInput ) { // Decoding the input type.
 	          	case TIME: // Handling a time-out.
-	              multicastConnectionLoggerV( false );
+	              multicastActivityLoggerV( false );
 	              break processorLoop;  // Exiting loop.
 	            case INTERRUPTION: // Handling a thread exit request.
 	              break processorLoop;  // Exiting loop.
@@ -405,16 +406,16 @@ public class Multicaster
                       theEpiOutputStreamO.writeV( "{ALIVE}" ); // Writing response.
                       theEpiOutputStreamO.flush(); // Sending it.
 			        			  processingPossibleNewUnicasterV(); 
-			        			  multicastConnectionLoggerV(true);
+			        			  multicastActivityLoggerV(true);
                       break messageDecoder;
 				              }
 			        		if (inString.equals( "ALIVE" )) // Handling response, maybe.
 				            { processingPossibleNewUnicasterV(); 
-  				            multicastConnectionLoggerV(true);
+  				            multicastActivityLoggerV(true);
                       break messageDecoder; 
                       }
 		          		// Ignoring anything else.
-			           theAppLog.debug( "receivingPacketsV(): unexpected: "
+			           theAppLog.debug( "receivingPacketsV(): ignoring unexpected: "
 			        		  + inString);
 	            		}
 	            	break inputDecoder;
@@ -424,10 +425,10 @@ public class Multicaster
 		            		);
 		            break inputDecoder;
 	            } // inputDecoder: 
-          	  theAppLog.debug("receivingPacketsV() exiting inputDecoder.");
+          	  /// theAppLog.debug("receivingPacketsV() have exited inputDecoder.");
             } // Processing packets until exit.
         	} // processorLoop:  // Processing packet or exiting.
-        theAppLog.debug("receivingPacketsV() processorLoop has ended.");
+        theAppLog.debug("receivingPacketsV() ends.");
         }
 
     private void processingPossibleNewUnicasterV() throws IOException
@@ -507,17 +508,18 @@ public class Multicaster
 
 	  private boolean multicastActiveB= false;
 	  
-    private void multicastConnectionLoggerV( boolean activeB )
+    private void multicastActivityLoggerV( boolean activeB )
       /* This method logs when bidirectional multicast communication
         either begins or ends.  Activity ending is defined as
         no received multicast packets for the multicast period.
        */
     	{
-    	  if ( multicastActiveB != activeB ) {
-    	  	multicastActiveB= activeB;
-          theAppLog.info( "multicastConnectionLoggerV(..) multicastActiveB= " 
-              + multicastActiveB );
-          }
+    	  if ( multicastActiveB != activeB ) // Has activity changed? 
+      	  { // Yes.
+      	  	multicastActiveB= activeB; // Record new activity state.
+            theAppLog.info( // Log new state. 
+                "multicastActivityLoggerV(..) multicastActiveB= " + multicastActiveB );
+            }
     	  }
     
 	  }

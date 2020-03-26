@@ -66,9 +66,8 @@ public class UnicasterFactory {
 					"Initial-Retry-Time-Out (ms)",
 					Config.initialRoundTripTime100MsL * 2 // Unicaster will overwrite this.
 					);
-      PeersCursor thePeersCursor=
-          PeersCursor.makeOnFirstEntryPeersCursor(thePersistent).
-            addInfoUsingPeersCursor(unicasterIPAndPort, null);
+      PeersCursor thePeersCursor= PeersCursor.makeOnFirstEntryPeersCursor(thePersistent);
+      thePeersCursor.findOrAddPeerV(unicasterIPAndPort, null);
 	    Unicaster theUnicaster= new Unicaster(
 	    		theUnicasterManager,
 	    		theSubcasterManager,

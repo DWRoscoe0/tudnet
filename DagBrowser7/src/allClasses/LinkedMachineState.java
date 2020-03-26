@@ -151,7 +151,7 @@ public class LinkedMachineState
 
 	  public boolean onInputsB() throws IOException 
 	    /* This input handler method is mainly concerned with
-	      disconnecting its Unicaster from the one running on the peer node.
+	      disconnecting its Unicaster from the one running on the remote peer node.
 	      It lets its descendant states handle everything else.
 	      It interprets a thread interrupt as a termination request
 	      and responds by requesting a sub-state change to 
@@ -161,7 +161,8 @@ public class LinkedMachineState
         if  ( tryInputB("Shutdown") ) // Process any local termination/shutdown request.
           if ( isConnectedB() ) { // Disconnect if connected.
             theAppLog.debug("LinkedMachineState.onInputsB() disconnecting for shutdown.");
-            thePeersCursor.updateFieldV( "wasConnected", isConnectedB()); //// still needed?
+            thePeersCursor.updateFieldV( // Update persistent data before we go. 
+                "wasConnected", isConnectedB()); //// Is this still needed?
             processInputB("Disconnect"); // Now cause disconnect.
             }
         boolean returnB= // Try processing in OrState machine of superclass.
@@ -229,7 +230,7 @@ public class LinkedMachineState
             */
           {
             if (tryReceivingHelloB(this)) { // Connect requested from remote peer.
-              if (thePeersCursor.getFieldB("ignorePeer"))
+              if (thePeersCursor.testB("ignorePeer"))
                 theAppLog.info("LinkedMachineState.onInputsToReturnFalseV() ignorePeer:true.");
                 else
                 {
@@ -412,9 +413,10 @@ public class LinkedMachineState
             super.onEntryV();
             
             IPAndPort remoteIPAndPort= theUnicaster.getKeyK();
-            thePeersCursor.addInfoUsingPeersCursor( // Add identity if needed.
+            thePeersCursor.findOrAddPeerV( // Add identity if needed.
                 remoteIPAndPort, thePeerIdentityString);
             thePeersCursor.updateFieldV( "wasConnected", true ); // Record connection.
+            thePeersCursor.updateFieldV( "isConnected", true ); // Record connection.
 	    	    theAppLog.debug( "Connecting, notifying ConnectionManager with: \n  "
 	    	        + thePeersCursor.getSelectedMapEpiNode()
 	    	        );
@@ -453,7 +455,8 @@ public class LinkedMachineState
 					  			}
               if ( tryInputB("GOODBYE") ) { // Peer disconnected itself by saying goodbye?
                 sayGoodbyesV(); // Respond to peer with our own goodbyes.
-                thePeersCursor.updateFieldV("wasConnected", false); // Record disconnect.
+                thePeersCursor.updateFieldV( // Record remote intentional disconnect.
+                    "wasConnected", false);
                 notifyConnectionManagerOfPeerConnectionChangeV();
                 //// toConnectionManagerNotifyingQueueOfMapEpiNodes.put( ////
                 ////     thePeersCursor.getSelectedMapEpiNode()); // Notify ConnectionManager.
@@ -478,8 +481,9 @@ public class LinkedMachineState
 
 		    public void onExitV() throws IOException
 		      { 
+		        theAppLog.debug( "ConnectedState.onExitV() Disconnecting" );
+            thePeersCursor.removeFieldV( "isConnected"); // Record disconnection.
 		        super.onExitV();
-            theAppLog.debug( "Disconnecting" );
 		        }
 
         Color getBackgroundColor( Color defaultBackgroundColor )

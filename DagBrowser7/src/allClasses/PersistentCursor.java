@@ -264,7 +264,14 @@ public class PersistentCursor
         // "PersistentCursor.putFieldV( "+fieldKeyString+"= "+fieldValueString);
         }
 
-    
+    public void removeFieldV( String fieldKeyString)
+    /* This method remove the field whose name is fieldKeyString
+      in the presently selected list element's map.
+      */
+    { 
+      lowerMapEpiNode.removeV( fieldKeyString );
+      }
+
     public MapEpiNode getSelectedMapEpiNode()
       /* Returns the MapEpiNode presently selected by the iterator,
         or null if no entry is selected.  */
@@ -272,30 +279,40 @@ public class PersistentCursor
         return lowerMapEpiNode; 
         }
     
-    // Methods which get values from fields.
+    // Methods which test values in fields.
+
+    public boolean testFieldIsB( String testKeyString, String testValueString )
+      /* This method returns true if the field whose key is fieldKeyString
+        equals testValueString, false otherwise.
+        */
+      {
+        String valueString= getFieldString(testKeyString);
+        return testValueString.equals( valueString );
+        }
     
-    public boolean getFieldB( String fieldKeyString )
+    // Methods which get values from fields.
+
+    public boolean testB( String fieldKeyString )
       /* This method returns the boolean value of the field whose key is fieldKeyString
         in the present element's map.
         */
       {
-        String fieldValueString= getFieldString(fieldKeyString);
-        return Boolean.parseBoolean( fieldValueString );
+        return lowerMapEpiNode.testB(fieldKeyString);
         }
-    
+
     public String getFieldString( String fieldKeyString )
       /* This method returns the value of the field whose key is fieldKeyString
         in the present element's map.
         */
       {
         String fieldValueString= null;
-        fieldValueString= lowerMapEpiNode.getValueString(fieldKeyString);
+        fieldValueString= lowerMapEpiNode.getString(fieldKeyString);
         // appLogger.debug( "PersistentCursor.getFieldString( "
         //    +fieldKeyString+" ) returning:"+fieldValueString);
         return fieldValueString;
         }
-		
-		
+
+
 		// Finalization code: none.
-		
+
 		}

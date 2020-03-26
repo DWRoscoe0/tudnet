@@ -214,9 +214,11 @@ public class Unicaster
 	          doOnEntryV(); // Recursively activate all states that should be. 
 	          /// appLogger.info("run() machine activated, doing first display.");
         		theDataTreeModel.displayTreeModelChangesV(); // Display tree after arrival.
+        		/*  ////
         		if // Reconnect if we were connected at shutdown.
-        		  (thePeersCursor.getFieldB("wasConnected"))
+        		  (thePeersCursor.testB("wasConnected"))
         		  connectToPeerV(); // Command state-machine to connect.
+            */  ////
 
 	      	  runLoop(); // Do actual input processing in a loop.
 
@@ -320,17 +322,8 @@ public class Unicaster
     public void connectToPeerV()
       // This method tells the state-machine to connect.
       {
-        theAppLog.info("connectToPeerV() executing, queuing 'Connect'.");
+        theAppLog.info("Unicaster.connectToPeerV() executing, queuing 'Connect'.");
         unicasterNotifyingQueueOfStrings.put("Connect");
-        /*  ////
-        try {
-          processInputB( "Connect" ); // Make state machine process connect message.
-        } catch( IOException theIOException) {
-          Misc.logAndRethrowAsRuntimeExceptionV( 
-              "Unicaster.connectToPeerV() IOException", theIOException 
-              );
-          }
-        */  ////
         }
     
     private void processUnprocessedInputV() throws IOException

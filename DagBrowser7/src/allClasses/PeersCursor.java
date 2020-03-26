@@ -38,47 +38,74 @@ public class PeersCursor extends PersistentCursor {
     super( thePersistent ); 
     }
 
-  public PeersCursor addInfoUsingPeersCursor(
-      IPAndPort theIPAndPort, String thePeerIdentityString)
-    /* This method adds the provided information to the current peer.  
-      If there is none, create one based on that information.
+  public void findOrAddPeerV(MapEpiNode targetMapEpiNode)
+    /* This method positions this iterator on the peer data associated with 
+      the peer with identity elements from targetMapEpiNode.
+      If there is none, it creates one based on that information
+      and positions the iterator to it.
       */
     { 
-      String ipString= theIPAndPort.getIPString();
-      String portString= String.valueOf(theIPAndPort.getPortI());
-      
-      searchForEntryInPeersCursor(ipString, portString);
+      String ipString= // Extract IP.
+          targetMapEpiNode.getString("IP");
+      String portString= // Extract port.
+          targetMapEpiNode.getString("Port");
+      String theIdentityString= // Extract peer ID.
+          targetMapEpiNode.getString("PeerIdentity");
+
+      findOrAddPeerV(ipString, portString, theIdentityString);
+      }
+
+  public void findOrAddPeerV(IPAndPort theIPAndPort, String theIdentityString)
+    /* This method finds the peer data associated with the peer 
+      with the method arguments.
+      If there is none, it creates one based on that information
+      and positions the iterator to it.
+      */
+    { 
+      String ipString= theIPAndPort.getIPString(); // Extract IP.
+      String portString= String.valueOf(theIPAndPort.getPortI()); // Extract port.
+
+      findOrAddPeerV(ipString, portString, theIdentityString);
+      }
+
+  public void findOrAddPeerV(String ipString, String portString, String theIdentityString)
+    /* This method finds the peer data associated with the peer 
+      with the method arguments.
+      If there is none, it creates one based on that information
+      and positions the iterator to it.
+      */
+    { 
+      findPeerV(ipString, portString, theIdentityString);
       if (getEntryKeyString().isEmpty()) { // Create new element if needed.
         createEntryInPersistentCursor(); // Create new element.
         }
-      
       { // Store or update the fields in the found or created element.
         putFieldV( "IP", ipString );
         putFieldV( "Port", portString );
-        if (thePeerIdentityString!=null)
-          putFieldV( "PeerIdentity", thePeerIdentityString );
+        if (theIdentityString!=null)
+          putFieldV( "PeerIdentity", theIdentityString );
         }
-      
-      return this;
       }
 
-  public PeersCursor searchForEntryInPeersCursor(
-      String ipString, String portString)
+  public void findPeerV(String ipString, String portString, String theIdentityString)
     /* This method searches for the entry that matches the arguments.  
-      If there is no such entry, it returns this PeersCursor on that element,
-      otherwise it returns this PeersCursor cursor on no element.
+      If there is such an entry, it returns with this PeersCursor on that element,
+      otherwise it returns with this PeersCursor cursor on no element, 
+      i.e., on the empty element.
       */
     { 
       moveToNoKeyString(); // Move before first element.
       while // Search entire list or until the desired element is found. 
         (! this.nextKeyString().isEmpty()) // Get next element or exit if there is none.
         {
-          if ( (getFieldString("IP").equals(ipString)) &&
-              (getFieldString("Port").equals(portString)) 
-              )
-            break; // Exit loop with match.
+          if (! testFieldIsB("IP",ipString)) continue;
+          if (! testFieldIsB("Port", portString)) continue;
+          if (
+            (theIdentityString != null) // ID present. 
+            && ! testFieldIsB("PeerIdentity", theIdentityString)) 
+              continue;
+          break; // All search parameters matched, exit loop positioned on matching entry.
           }
-      return this;
       } 
   
   }

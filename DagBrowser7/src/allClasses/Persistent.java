@@ -258,6 +258,7 @@ private void storeEpiNodeDataV( EpiNode theEpiNode, String fileString )
     but it does no harm.
     */
   {
+    theAppLog.info("Persistent.storeEpiNodeDataV(..) begins.");
     FileOutputStream theFileOutputStream= null;
     try {
         theFileOutputStream= 
@@ -281,6 +282,7 @@ private void storeEpiNodeDataV( EpiNode theEpiNode, String fileString )
           theAppLog.exception("Persistent.storeEpiNodeDataV(..)", theException);
           }
         }
+    theAppLog.info("Persistent.storeEpiNodeDataV(..) ends.");
     }
 	
 	  public void writingCommentLineV( 

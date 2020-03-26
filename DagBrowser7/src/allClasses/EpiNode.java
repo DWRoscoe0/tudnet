@@ -918,8 +918,15 @@ class MapEpiNode extends EpiNode
             );
         }
 
+    public void removeV( String keyString)
+    /* This method remove the field whose name is fieldKeyString.
+      */
+    { 
+      theLinkedHashMap.remove( new ScalarEpiNode(keyString ));
+      }
+
     
-    // Methods that get keys, values, or whole entries from a map.
+    // Methods that get keys, values, entries, or other functions of the map.
 
     public String extractFromEpiNodeString(int indexI) 
         throws IOException
@@ -1022,7 +1029,26 @@ class MapEpiNode extends EpiNode
           return resultString;
         }
 
-    public String getValueString(String keyString) 
+    public boolean testB( String keyString )
+      /* This method returns true if value of the field whose key is keyString
+        is non-null "true", ignoring case, false otherwise.
+        */
+      {
+        String valueString= getString(keyString);
+        return Boolean.parseBoolean( valueString );
+        }
+
+    public boolean testKeyForValueB(String keyString, String testValueString) 
+      /* Returns true if testValueString is the value associated with keyString,
+        false otherwise.
+        */
+      { 
+        String valueString= getString(keyString);
+        boolean resultB= testValueString.equals(valueString);
+        return resultB;
+        }
+
+    public String getString(String keyString) 
       /* Returns String representation of value associated with keyString,
         or null if there is no such value.
         */
@@ -1033,7 +1059,7 @@ class MapEpiNode extends EpiNode
           resultString= valueEpiNode.toString();
         return resultString;
         }
-    
+
     public MapEpiNode getMapEpiNode(String keyString)
       /* This method returns the MapEpiNode that is associated with the key keyString.
         If there is no such node then null is returned. 
@@ -1048,7 +1074,7 @@ class MapEpiNode extends EpiNode
           } // toReturn:
         return valueMapEpiNode;
         }
-    
+
     public EpiNode getEpiNode(String keyString)
       /* This method returns the EpiNode that is associated with the key keyString.
         If there is no such node then null is returned. 
@@ -1063,6 +1089,7 @@ class MapEpiNode extends EpiNode
         EpiNode valueEpiNode= getEpiNode(keyEpiNode); // Lookup value of this key.
         return valueEpiNode;
         }
+
 
     public EpiNode getEpiNode(EpiNode keyEpiNode)
       /* This method returns the value EpiNode 
@@ -1089,6 +1116,7 @@ class MapEpiNode extends EpiNode
       {
         return theLinkedHashMap.size();
         }
+    
 
 
     // Constructors.
@@ -1097,6 +1125,7 @@ class MapEpiNode extends EpiNode
       {
         this.theLinkedHashMap= theLinkedHashMap;
         }
+    
 
     public MapEpiNode() // constructor.
       {

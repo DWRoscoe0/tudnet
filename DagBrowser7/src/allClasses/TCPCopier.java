@@ -363,7 +363,7 @@ public class TCPCopier extends EpiThread
             resultL= tryTransferingFileL( clientSocket, 
                 clientFile, clientFile, clientFileLastModifiedL, clientFileFizeL );
             
-            thePeersCursor.addInfoUsingPeersCursor(
+            thePeersCursor.findOrAddPeerV(
                   new IPAndPort(serverIPString, serverPortString),null);
             if (resultL != 0)
               theAppLog.info( 
