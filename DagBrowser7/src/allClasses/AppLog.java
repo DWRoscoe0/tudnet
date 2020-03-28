@@ -525,7 +525,7 @@ public class AppLog extends EpiThread
         Then it logs a stack trace of it theThrowable
        */
       {
-        boolean logStackTraceB= false; // Change this to control stack trace.
+        boolean logStackTraceB= true; // false; // Change this to control stack trace.
         if (logStackTraceB ) reallyDoStackTraceV(theThrowable);
         }
 

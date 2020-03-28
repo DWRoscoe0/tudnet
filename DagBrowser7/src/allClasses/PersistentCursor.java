@@ -300,6 +300,25 @@ public class PersistentCursor
         return lowerMapEpiNode.testB(fieldKeyString);
         }
 
+    public String getDefaultingToBlankString( String keyString )
+    /* Returns the value String associated with keyString,
+      or the empty string if there is none.
+      */
+    {
+      return getString( keyString, "" );
+      }
+    
+    private String getString( String keyString, String defaultValueString )
+      /* Returns the value String associated with keyString,
+        or defaultValueString if there is no value String stored.
+        */
+      {
+        String childValueString= getFieldString(keyString); 
+        if (childValueString == null) 
+          childValueString= defaultValueString;
+        return childValueString;
+      }
+
     public String getFieldString( String fieldKeyString )
       /* This method returns the value of the field whose key is fieldKeyString
         in the present element's map.

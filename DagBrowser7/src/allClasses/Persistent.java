@@ -245,45 +245,45 @@ public class Persistent
       storeEpiNodeDataV(rootMapEpiNode, "PersistentEpiNode.txt"); // Write EpiNode data.
 	  	}
   
-private void storeEpiNodeDataV( EpiNode theEpiNode, String fileString )
-  /* This method stores the Persistent data that is in main memory to 
-    the external text file whose name is fileString.
-    Presently it stores twice:
-    * The data only in the root node.
-    * The data in all nodes of the tree.
-    So some information appears twice in the file,
-    but when reloaded it should go to the same place.
-    
-    The exception handling in this method is not required,
-    but it does no harm.
-    */
-  {
-    theAppLog.info("Persistent.storeEpiNodeDataV(..) begins.");
-    FileOutputStream theFileOutputStream= null;
-    try {
-        theFileOutputStream= 
-          new FileOutputStream(AppSettings.makeRelativeToAppFolderFile(fileString));  
-        theFileOutputStream.write(
-            "#---YAML-like EpiNode data output follows---".getBytes());
-          theEpiNode.writeV(theFileOutputStream, // Write all of theEpiNode tree 
-            0 // starting at indent level 0.
-            );
-        theFileOutputStream.write(
-            (NL+"#--- end of file ---"+NL).getBytes());
-        }
-      catch (Exception theException) { 
-        theAppLog.exception("Persistent.storeEpiNodeDataV(..)", theException);
-        }
-      finally {
+    private void storeEpiNodeDataV( EpiNode theEpiNode, String fileString )
+      /* This method stores the Persistent data that is in main memory to 
+        the external text file whose name is fileString.
+        Presently it stores twice:
+        * The data only in the root node.
+        * The data in all nodes of the tree.
+        So some information appears twice in the file,
+        but when reloaded it should go to the same place.
+        
+        The exception handling in this method is not required,
+        but it does no harm.
+        */
+      {
+        theAppLog.info("Persistent.storeEpiNodeDataV(..) begins.");
+        FileOutputStream theFileOutputStream= null;
         try {
-          if ( theFileOutputStream != null ) theFileOutputStream.close(); 
-          }
-        catch ( Exception theException ) { 
-          theAppLog.exception("Persistent.storeEpiNodeDataV(..)", theException);
-          }
+            theFileOutputStream= 
+              new FileOutputStream(AppSettings.makeRelativeToAppFolderFile(fileString));  
+            theFileOutputStream.write(
+                "#---YAML-like EpiNode data output follows---".getBytes());
+              theEpiNode.writeV(theFileOutputStream, // Write all of theEpiNode tree 
+                0 // starting at indent level 0.
+                );
+            theFileOutputStream.write(
+                (NL+"#--- end of file ---"+NL).getBytes());
+            }
+          catch (Exception theException) { 
+            theAppLog.exception("Persistent.storeEpiNodeDataV(..)", theException);
+            }
+          finally {
+            try {
+              if ( theFileOutputStream != null ) theFileOutputStream.close(); 
+              }
+            catch ( Exception theException ) { 
+              theAppLog.exception("Persistent.storeEpiNodeDataV(..)", theException);
+              }
+            }
+        theAppLog.info("Persistent.storeEpiNodeDataV(..) ends.");
         }
-    theAppLog.info("Persistent.storeEpiNodeDataV(..) ends.");
-    }
 	
 	  public void writingCommentLineV( 
 	      PrintWriter thePrintWriter, String commentString ) 

@@ -667,12 +667,17 @@ public class ConnectionManager
         }
 
     private void decodePeerMapEpiNodeV(MapEpiNode messageMapEpiNode)
-      /* This method decodes peerMapEpiNode, based on the presence of particular keys,
-        which should be the only key, of the enclosing, outer MapEpiNode.
+      /* This method decodes the received single-entry messageMapEpiNode, 
+        based on the value of the key of that entry.
+        The value of the entry is another MapEpiNode 
+        containing actual data about a subject peer.
+        The message could be from a local Unicaster about a change in its connection state,
+        or it could be from a remote peer about the possibly changed state
+        of another peer.
         */
       {
-          theAppLog.debug("ConnectionManager.decodePeerMapEpiNodeV(..) begins with:"
-            + NL + "  " + messageMapEpiNode);
+          theAppLog.debug("ConnectionManager.decodePeerMapEpiNodeV(..) begins, "
+            + "messageMapEpiNode=" + NL + "  " + messageMapEpiNode);
           MapEpiNode valueMapEpiNode;
         goReturn: {
           valueMapEpiNode= messageMapEpiNode.getMapEpiNode("LocalNewState");
@@ -681,11 +686,11 @@ public class ConnectionManager
           
           valueMapEpiNode= messageMapEpiNode.getMapEpiNode("RemoteNewState");
           if (valueMapEpiNode != null) 
-            { processRemoteUpdatedStateV(valueMapEpiNode); break goReturn; }
+            { processRemoteStateV(valueMapEpiNode); break goReturn; }
           
           valueMapEpiNode= messageMapEpiNode.getMapEpiNode("RemoteCurrentState");
           if (valueMapEpiNode != null) 
-            { processRemoteUpdatedStateV(valueMapEpiNode); break goReturn; }
+            { processRemoteStateV(valueMapEpiNode); break goReturn; }
           
           theAppLog.debug("ConnectionManager.decodePeerMapEpiNodeV(..) ignoring"
             + NL + "  " + messageMapEpiNode); // Report message being ignored.
@@ -694,17 +699,21 @@ public class ConnectionManager
           return;
         }
 
-    private void processRemoteUpdatedStateV(MapEpiNode messagePeerMapEpiNode)
-      /* This method does what is needed to process 
-        the body of RemoteNewState and RemoteCurrentState messages.
+    private void processRemoteStateV(MapEpiNode subjectPeerMapEpiNode)
+      /* This method does what is needed to process subjectPeerMapEpiNode, 
+        the MapEpiNode body of a RemoteNewState and RemoteCurrentState messages.
         They have slightly different meanings, but are processed the same way.
+        Each node contains data about whether a peer is active and
+        therefore possibly able to accept connections.
+        If it can accept connections, a connection is initiated.
+        This implements a promiscuous connection behavior.
         */
       {
-        theAppLog.debug("ConnectionManager.processRemoteUpdatedStateV(..) begins with:"
-            + NL + "  " + messagePeerMapEpiNode);
+        theAppLog.debug("ConnectionManager.processRemoteUpdatedStateV(..) begins."
+            + NL + "  subjectPeerMapEpiNode=" + subjectPeerMapEpiNode);
         toReturn: {
-          if // Exit if message's subject peer is not connected to remote peer.
-            (! messagePeerMapEpiNode.testB("isConnected")) 
+          if // Exit if subject peer is not connected to the remote peer.
+            (! subjectPeerMapEpiNode.testB("isConnected")) 
             break toReturn;
 
           // Subject peer is active and connected to somebody.  
@@ -712,27 +721,40 @@ public class ConnectionManager
 
           PeersCursor thePeersCursor= // Create piterator for use. 
               PeersCursor.makeOnNoEntryPeersCursor( thePersistent );
-          thePeersCursor.findOrAddPeerV(messagePeerMapEpiNode); // Locate matching peer
+          thePeersCursor.findOrAddPeerV(subjectPeerMapEpiNode); // Locate subject peer
             // data in Persistent storage, or create new data.
-          if (thePeersCursor.testB("isConnected")) // Already connected to subject peer
+          if (thePeersCursor.testB("ignorePeer")) // This peer is supposed to be ignored?
             break toReturn; // so exit.
-          theAppLog.debug( 
-            "ConnectionManager.processRemoteUpdatedStateV("
-            + "MapEpiNode messagePeerMapEpiNode) connected code to be added!!!!!!!!!!!"
-            );
-          //// Unicaster
-          
+          if (thePeersCursor.testB("isConnected")) // Already connected to this peer
+            break toReturn; // so exit.
+          if // Same IDs, so subject peer is actually the local peer
+            ( thePeersCursor.getDefaultingToBlankString("PeerIdentity").equals(
+                thePersistent.getDefaultingToBlankString("PeerIdentity")))
+            break toReturn; // so exit.
+
+          theAppLog.debug("ConnectionManager.processRemoteUpdatedStateV(MapEpiNode) "
+            + "connecting to subject peer!!!!!!!!!!!");
+          String peerIPString= thePeersCursor.getFieldString("IP");
+          String peerPortString= thePeersCursor.getFieldString("Port");
+          IPAndPort theIPAndPort= new IPAndPort(peerIPString, peerPortString);
+          Unicaster theUnicaster= 
+              theUnicasterManager.getOrBuildAddAndStartUnicaster(theIPAndPort);
+          theUnicaster.connectToPeerV(); // Message state-machine to connect.
         } // toReturn:
           theAppLog.debug("ConnectionManager.processRemoteUpdatedStateV(..) ends.");
           return;
         }
 
-    private void processLocalNewStateV(MapEpiNode messagePeerMapEpiNode)
-      /* This method does what is needed to process the LocalNewState message.
+    private void processLocalNewStateV(MapEpiNode subjectPeerMapEpiNode)
+      /* This method does what is needed to process the subjectPeerMapEpiNode
+        received in a LocalNewState message about a subject peer. 
         */
       {
-        notifyPeersAboutPeerV(messagePeerMapEpiNode);
-        notifyPeerAboutPeersV(messagePeerMapEpiNode);
+        notifyPeersAboutPeerV(subjectPeerMapEpiNode); // To our peers,
+          // send information about the status change of the subject peer.
+        
+        notifyPeerAboutPeersV(subjectPeerMapEpiNode); // To the subject peer,
+          // send the statuses of all our [other] peers.
         }
 
     private void notifyPeersAboutPeerV(MapEpiNode messagePeerMapEpiNode)
@@ -740,29 +762,29 @@ public class ConnectionManager
         the changed connection status of the peer described by messagePeerMapEpiNode.
         */
       {
-        theAppLog.debug( "ConnectionManager.notifyPeersAboutPeerV() called");
-        PeersCursor scanningPeersCursor= // Used for iteration. 
-            PeersCursor.makeOnFirstEntryPeersCursor( thePersistent );
-        while // Process all peers in my peer list. 
-          ( ! scanningPeersCursor.getEntryKeyString().isEmpty() ) 
-          processPeer: { // Semd data to one peer in peer list.
-            String peerIPString= scanningPeersCursor.getFieldString("IP");
-            String peerPortString= scanningPeersCursor.getFieldString("Port");
-            IPAndPort theIPAndPort= new IPAndPort(peerIPString, peerPortString);
-            Unicaster theUnicaster= 
-                theUnicasterManager.tryingToGetUnicaster(theIPAndPort);
-            if (theUnicaster == null) break processPeer; // Peer Unicaster does not exist.
-            ////opt if (theUnicaster.isConnectedB()) break processPeer; // It's already connected.
-            theAppLog.appendToFileV("(to-peers)");
-            theUnicaster.putV( // Queue changed peer to scan peer
-                MapEpiNode.makeSingleEntryMapEpiNode( // wrapped in another map.
-                  "RemoteNewState", 
-                  messagePeerMapEpiNode
-                  )
-                );
-            scanningPeersCursor.nextKeyString(); // Advance scan cursor to next peer.
-            } // processPeer: 
-        theAppLog.appendToFileV(NL); // Go to new line after (to-peers) flags.
+          theAppLog.debug( "ConnectionManager.notifyPeersAboutPeerV() called.");
+          PeersCursor scanPeersCursor= // Used for iteration. 
+              PeersCursor.makeOnNoEntryPeersCursor( thePersistent );
+        peerLoop: while (true) { // Process all peers in my peer list. 
+          if (! scanPeersCursor.nextKeyString().isEmpty() ) // Try getting next scan peer. 
+            break peerLoop; // There are no more peers, so exit loop.
+          theAppLog.appendToFileV("(to-peers?)"); // Log that peer is being considered.
+          if (scanPeersCursor.testB("isConnected")) // This peer is already connected 
+            continue peerLoop; // so loop to try next peer.
+          String peerIPString= scanPeersCursor.getFieldString("IP");
+          String peerPortString= scanPeersCursor.getFieldString("Port");
+          IPAndPort theIPAndPort= new IPAndPort(peerIPString, peerPortString);
+          Unicaster scanUnicaster= // Try getting associated Unicaster.
+              theUnicasterManager.tryingToGetUnicaster(theIPAndPort);
+          if (scanUnicaster == null) // Unicaster of scan peer doesn't exist
+            continue peerLoop; // so loop to try next peer.
+          theAppLog.appendToFileV("(YES!)"); // Log that we're sending scan peer's data.
+          scanUnicaster.putV( // Queue scan peer data to Unicaster of scan peer
+            MapEpiNode.makeSingleEntryMapEpiNode( // wrapped in a RemoteNewState map.
+              "RemoteNewState", messagePeerMapEpiNode)
+            );
+        } // processOnePeer: 
+          theAppLog.appendToFileV("(end of peers)"+NL); // Mark end of list with new line.
         }
 
     private void notifyPeerAboutPeersV(MapEpiNode messagePeerMapEpiNode)
@@ -770,35 +792,33 @@ public class ConnectionManager
         about the status of all [other] peers.
         This should be called when a peer connects.
         This produces a lot of packets, but shouldn't run often.
-        
-        ///// being changed to make a connection if none exists.
         */
       {
         toReturn: {
           theAppLog.debug("ConnectionManager.notifyPeerAboutPeersV() called.");
-          String peerIPString= 
-              messagePeerMapEpiNode.getString("IP");
-          String peerPortString= 
-              messagePeerMapEpiNode.getString("Port");
-          IPAndPort theIPAndPort= new IPAndPort(peerIPString, peerPortString);
-          Unicaster theUnicaster= // Try to get Unicaster of peer to receive data. 
+          if (! messagePeerMapEpiNode.testB("isConnected")) // Message peer not connected 
+            break toReturn; // so end processing.
+          String theIPString= messagePeerMapEpiNode.getString("IP");
+          String thePortString= messagePeerMapEpiNode.getString("Port");
+          IPAndPort theIPAndPort= new IPAndPort(theIPString, thePortString);
+          Unicaster messageUnicaster= 
               theUnicasterManager.tryingToGetUnicaster(theIPAndPort);
-          if (theUnicaster== null) break toReturn; // Skip if not neighbor.
-          PeersCursor scanningPeersCursor= // Create cursor to be used for iteration. 
+          if (messageUnicaster== null) // Peer in message has no Unicaster
+            break toReturn; // so end processing.
+          PeersCursor scanPeersCursor= // Create cursor to be used for peer iteration. 
               PeersCursor.makeOnFirstEntryPeersCursor( thePersistent );
-          while // Send all peer data to changed peer. 
-            ( ! scanningPeersCursor.getEntryKeyString().isEmpty() ) 
-            { // Process one peer.
-              theAppLog.appendToFileV("(to-peer)");
-              theUnicaster.putV( // Queue peer data for sending
-                  MapEpiNode.makeSingleEntryMapEpiNode( // wrapped in another map.
-                    "RemoteCurrentState", 
-                    scanningPeersCursor.getSelectedMapEpiNode()
-                    )
-                  ); // data of scanned peer.
-              scanningPeersCursor.nextKeyString(); // Advance scanning cursor to next peer.
-              } // processPeer: 
-          theAppLog.appendToFileV(NL); // Go to new line after (to-peer) flags.
+        peerLoop: while (true) { // Process all peers in my peer list. 
+          if (! scanPeersCursor.nextKeyString().isEmpty() ) // Try getting next scan peer. 
+            break peerLoop; // There are no more peers, so exit loop.
+          theAppLog.appendToFileV("(to-peer?)"); // Log that we're considering peer.
+          if (scanPeersCursor.testB("isConnected")) // This peer is already connected 
+            continue peerLoop; // so loop to try next peer.
+          messageUnicaster.putV( // Queue peer data for sending
+              MapEpiNode.makeSingleEntryMapEpiNode( // wrapped in another map.
+                "RemoteCurrentState", scanPeersCursor.getSelectedMapEpiNode())
+              );
+        } // processOnePeer: 
+          theAppLog.appendToFileV("(end of peers)"+NL); // Mark end of list with new line.
         } // toReturn:
           return;
         }
