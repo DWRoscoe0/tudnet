@@ -65,50 +65,42 @@ public class UnconnectedReceiver // Unconnected-unicast receiver.
     public void run()
       /* This method repeatedly waits for and receives 
         DatagramPackets and queues each of them 
-        for consumption by another appropriate thread.
-        To terminates any pending receive and this thread,
-        another thread should close the receiverDatagramSocket. 
+        for consumption by another appropriate thread,
+        either the a Unicaster thread or the ConnectionManager thread.
+        To terminates any pending receive operation started by this thread
+        and this thread, another thread should close the receiverDatagramSocket. 
         */
       {
         theAppLog.info("run(): begins");
-        try { // Doing operations that might produce an IOException.
-          while  // Receiving and queuing packets unless termination is
-            ( ! EpiThread.testInterruptB() ) // requested.
-            { // Receiving and queuing one packet appropriately.
-              try {
-                NetcasterPacket theNetcasterPacket= // Get empty keyed packet.
-                		theNetcasterPacketManager.produceKeyedPacket();
-                DatagramPacket theDatagramPacket= // Get DatagramPacket from it.
-                		theNetcasterPacket.getDatagramPacket();
-                // theAppLog.debug("run(): before receive(..)");
-                receiverDatagramSocket.receive(theDatagramPacket); // Receive.
-                PacketManager.logUnconnectedReceiverPacketV(
-                		theDatagramPacket
-                		);
-                Unicaster theUnicaster= // Lookup matching Unicaster.
-                		theUnicasterManager.tryingToGetUnicaster(
-                				theNetcasterPacket 
-                				);
-                if ( theUnicaster != null ) { // If found, queue to Unicaster.
-          	      theUnicaster.puttingKeyedPacketV( theNetcasterPacket );
-                  } else {// Not found
-                	unconnectedReceiverToConnectionManagerNetcasterQueue.put(
-                			theNetcasterPacket
-                			); // Delegate by queuing to ConnectionManager.
-                  }
+        while  // Receiving and queuing packets unless termination is
+          ( ! EpiThread.testInterruptB() ) // requested.
+          { // Receiving and queuing one packet appropriately.
+            try {
+              NetcasterPacket theNetcasterPacket= // Get empty keyed packet.
+              		theNetcasterPacketManager.produceKeyedPacket();
+              DatagramPacket theDatagramPacket= // Get DatagramPacket from it.
+              		theNetcasterPacket.getDatagramPacket();
+              // theAppLog.debug("run(): before receive(..)");
+              receiverDatagramSocket.receive(theDatagramPacket); // Receive.
+              PacketManager.logUnconnectedReceiverPacketV(theDatagramPacket);
+              Unicaster theUnicaster= // Lookup matching Unicaster.
+              	theUnicasterManager.tryingToGetUnicaster(theNetcasterPacket);
+              if ( theUnicaster != null ) { // If Unicaster found, queue to it.
+        	      theUnicaster.puttingKeyedPacketV( theNetcasterPacket );
+                } else {// Unicaster n.Not found, so queue to ConnectionManager.
+                  unconnectedReceiverToConnectionManagerNetcasterQueue.put(
+              			theNetcasterPacket);
                 }
-              catch( SocketException soe ) {
-                theAppLog.info("run(): interrupted by " + soe );
-                Thread.currentThread().interrupt(); // Translating 
-                  // exception into request to terminate this thread.
-                }
-              } // Receiving and queuing one packet appropriately.
-          }
-          catch( IOException e ) {
-		  			Misc.logAndRethrowAsRuntimeExceptionV( 
-		  					"run() IOException: ", e
-		  					);
-          }
+              }
+            catch( SocketException soe ) {
+              theAppLog.info("run(): interrupted by " + soe );
+              Thread.currentThread().interrupt(); // Translating 
+                // exception into request to terminate this thread.
+              }
+            catch( IOException e ) {
+              Misc.logAndRethrowAsRuntimeExceptionV("run() IOException: ", e);
+              }
+            } // Receiving and queuing one packet to appropriate destination.
         theAppLog.info("run(): ends");
         }
 
