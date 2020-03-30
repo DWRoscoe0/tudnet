@@ -1,5 +1,7 @@
 package allClasses;
 
+import static allClasses.AppLog.theAppLog;
+
 public class PeersCursor extends PersistentCursor {
   
   /* This class is a piterator for peer data in the Persistent data structure.
@@ -84,6 +86,10 @@ public class PeersCursor extends PersistentCursor {
         putFieldV( "Port", portString );
         if (theIdentityString!=null)
           putFieldV( "PeerIdentity", theIdentityString );
+          else
+          theAppLog.warning(
+              "PeersCursor.findOrAddPeerV(ipString,portString,theIdentityString) "
+              + "theIdentityString==null");
         }
       }
 
