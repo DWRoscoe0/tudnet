@@ -911,7 +911,7 @@ l    * If the app receives a message indicating
           toExit: {
             if (theString.endsWith(".jar")) break toExit;
             if (theString.endsWith(".exe")) break toExit;
-            theAppLog.warning(
+            theAppLog.debug(
                 "endsWithJarOrExeB() Not exe or jar file:" + theString);
             resultB= false;
           } // toExit:
