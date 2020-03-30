@@ -27,6 +27,7 @@ public class UnicasterFactory {
   		AppGUIFactory theAppGUIFactory,
   		UnicasterManager theUnicasterManager,
   		IPAndPort unicasterIPAndPort,
+  		String unicasterIdString,
   		TCPCopier theTCPCopier,
   		Shutdowner theShutdowner,
   		int queueCapacityI,
@@ -67,7 +68,9 @@ public class UnicasterFactory {
 					Config.initialRoundTripTime100MsL * 2 // Unicaster will overwrite this.
 					);
       PeersCursor thePeersCursor= PeersCursor.makeOnFirstEntryPeersCursor(thePersistent);
-      thePeersCursor.findOrAddPeerV(unicasterIPAndPort, null);
+      
+      //// thePeersCursor.findOrAddPeerV(unicasterIPAndPort, null);
+      thePeersCursor.findOrAddPeerV(unicasterIPAndPort, unicasterIdString);
 	    Unicaster theUnicaster= new Unicaster(
 	    		theUnicasterManager,
 	    		theSubcasterManager,

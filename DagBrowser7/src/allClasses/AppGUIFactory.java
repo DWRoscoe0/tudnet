@@ -350,13 +350,14 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 	    }
 	
 	public UnicasterFactory makeUnicasterFactory(
-	    IPAndPort peerIPAndPort, TCPCopier theTCPCopier
+	    IPAndPort peerIPAndPort, String unicasterIdString, TCPCopier theTCPCopier
 	    )
 	  {
 			return new UnicasterFactory( 
 				this,
 				theUnicasterManager,
 				peerIPAndPort,
+	      unicasterIdString,
 				theTCPCopier,
 				theShutdowner, 
 				Config.QUEUE_SIZE,

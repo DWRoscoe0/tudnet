@@ -57,7 +57,7 @@ public class UnicasterManager
 		  }
 
     public synchronized Unicaster getOrBuildAndAddUnicaster(
-    		String IPString , String portString )
+    		String IPString , String portString, String theIdString )
     	/* This method returns a Unicaster associated with
         the remote peer address in theNetcasterPacket.
         If a Unicaster doesn't already exist then it creates one.
@@ -65,7 +65,7 @@ public class UnicasterManager
         */
 	    { 
     		IPAndPort theIPAndPort= new IPAndPort(IPString, portString);
-	    	Unicaster theUnicaster= getOrBuildAddAndStartUnicaster( theIPAndPort );
+	    	Unicaster theUnicaster= getOrBuildAddAndStartUnicaster( theIPAndPort, theIdString );
 		    return theUnicaster;
 		    }
 
@@ -85,12 +85,12 @@ public class UnicasterManager
         ///  "ConnectionManager.getOrBuildAddAndStartUnicaster(NetcasterPacket) called.");
     		IPAndPort theIPAndPort= makeIPAndPort(theNetcasterPacket);
 
-		    return getOrBuildAddAndStartUnicaster(theIPAndPort);
+		    return getOrBuildAddAndStartUnicaster(theIPAndPort,null);
 		    }
 
-    public synchronized Unicaster getOrBuildAddAndStartUnicaster(IPAndPort theIPAndPort)
+    public synchronized Unicaster getOrBuildAddAndStartUnicaster(IPAndPort theIPAndPort, String theIdString)
       /* This method returns a Unicaster associated with
-        the remote peer whose address is theIPAndPort.
+        the remote peer whose address is theIPAndPort and ID is theIdString
         If a Unicaster doesn't already exist then it creates and initializes one, 
         adds it to the tree, and starts its thread.
         */
@@ -100,7 +100,7 @@ public class UnicasterManager
         Unicaster theUnicaster= // Testing whether Unicaster exists.  
             tryingToGetUnicaster( theIPAndPort );
         if ( theUnicaster == null ) // Build, add, and start one if one doesn't exist.
-          theUnicaster= buildAddAndStartUnicaster( theIPAndPort );
+          theUnicaster= buildAddAndStartUnicaster( theIPAndPort, theIdString );
         return theUnicaster;
         }
 
@@ -134,7 +134,8 @@ public class UnicasterManager
 
 
 
-    public synchronized Unicaster buildAddAndStartUnicaster( IPAndPort theIPAndPort )
+    public synchronized Unicaster buildAddAndStartUnicaster( 
+          IPAndPort theIPAndPort, String theIdString )
       /* This method returns a Unicaster to handle communications 
         with a peer at address theIPAndPort.
         It should be called only if the Unicaster does not already exist.
@@ -149,8 +150,8 @@ public class UnicasterManager
         Unicaster theUnicaster= tryGettingAndLoggingPreexistingUnicaster( theIPAndPort );
         if ( theUnicaster == null ) // Unicaster does not yet exist.
           { // So build, add, and start the non-existent Unicaster.
-        	  UnicasterFactory theUnicasterFactory= 
-        	  		theAppGUIFactory.makeUnicasterFactory(theIPAndPort, theTCPCopier);
+        	  UnicasterFactory theUnicasterFactory= theAppGUIFactory.makeUnicasterFactory(
+        	    theIPAndPort, theIdString, theTCPCopier);
     	      final UnicasterValue resultUnicasterValue=  // Getting the Unicaster. 
     	      	theUnicasterFactory.getUnicasterValue();
     	      theUnicaster= resultUnicasterValue.getDataNodeD(); 

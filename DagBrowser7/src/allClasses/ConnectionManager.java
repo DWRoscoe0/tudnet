@@ -286,8 +286,9 @@ public class ConnectionManager
               theUnicasterManager.tryGettingAndLoggingPreexistingUnicaster(theIPAndPort);
           if ( theUnicaster == null ) // Unicaster does not yet exist.
             { // Create it, start it, and maybe connect it.
+              String theIdString= thePeersCursor.getFieldString("PeerIdentity");
               theUnicaster= theUnicasterManager.buildAddAndStartUnicaster(
-                  theIPAndPort); // Restore peer with Unicaster.
+                  theIPAndPort, theIdString); // Restore peer with Unicaster.
               if // Reconnect to peer if it was connected at shutdown.
                 (thePeersCursor.testB("wasConnected"))
                 theUnicaster.connectToPeerV(); // Message state-machine to connect.
@@ -609,7 +610,7 @@ public class ConnectionManager
               "passToUnicasterV() connecting to peer.");
           theUnicaster.connectToPeerV();
           }
-	      theUnicaster.puttingKeyedPacketV( // Giving to it its first? packet.  
+	      theUnicaster.puttingKeyedPacketV( // Giving to Unicaster as its first? packet.  
 	      		theNetcasterPacket
 	      		);
         }
@@ -737,8 +738,9 @@ public class ConnectionManager
           String peerIPString= thePeersCursor.getFieldString("IP");
           String peerPortString= thePeersCursor.getFieldString("Port");
           IPAndPort theIPAndPort= new IPAndPort(peerIPString, peerPortString);
+          String theIdString= thePeersCursor.getFieldString("PeerIdentity");
           Unicaster theUnicaster= 
-              theUnicasterManager.getOrBuildAddAndStartUnicaster(theIPAndPort);
+              theUnicasterManager.getOrBuildAddAndStartUnicaster(theIPAndPort,theIdString);
           theUnicaster.connectToPeerV(); // Message state-machine to connect.
         } // toReturn:
           theAppLog.debug("ConnectionManager.processRemoteUpdatedStateV(..) ends.");
@@ -766,7 +768,7 @@ public class ConnectionManager
           PeersCursor scanPeersCursor= // Used for iteration. 
               PeersCursor.makeOnNoEntryPeersCursor( thePersistent );
         peerLoop: while (true) { // Process all peers in my peer list. 
-          if (! scanPeersCursor.nextKeyString().isEmpty() ) // Try getting next scan peer. 
+          if (scanPeersCursor.nextKeyString().isEmpty() ) // Try getting next scan peer. 
             break peerLoop; // There are no more peers, so exit loop.
           theAppLog.appendToFileV("(to-peers?)"); // Log that peer is being considered.
           if (scanPeersCursor.testB("isConnected")) // This peer is already connected 
@@ -808,7 +810,7 @@ public class ConnectionManager
           PeersCursor scanPeersCursor= // Create cursor to be used for peer iteration. 
               PeersCursor.makeOnFirstEntryPeersCursor( thePersistent );
         peerLoop: while (true) { // Process all peers in my peer list. 
-          if (! scanPeersCursor.nextKeyString().isEmpty() ) // Try getting next scan peer. 
+          if (scanPeersCursor.nextKeyString().isEmpty() ) // Try getting next scan peer. 
             break peerLoop; // There are no more peers, so exit loop.
           theAppLog.appendToFileV("(to-peer?)"); // Log that we're considering peer.
           if (scanPeersCursor.testB("isConnected")) // This peer is already connected 
