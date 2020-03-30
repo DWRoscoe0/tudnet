@@ -483,6 +483,10 @@ class SequenceEpiNode extends EpiNode
 
 class MapEpiNode extends EpiNode 
 
+  /* Note, to avoid ConcurrentModificationException,
+    methods that iterate over or modify the object are synchronized.
+    */
+
   {
     private LinkedHashMap<EpiNode,EpiNode> theLinkedHashMap; // Where the data is. 
       // Will reference map with default of insertion-order.  Rejected access-order map.  
@@ -490,7 +494,7 @@ class MapEpiNode extends EpiNode
     
     // Methods that output to OutputStreams.
     
-    public void writeV(OutputStream theOutputStream) 
+    public synchronized void writeV(OutputStream theOutputStream) 
         throws IOException
       { 
         Map.Entry<EpiNode,EpiNode> scanMapEntry= null;
@@ -512,7 +516,7 @@ class MapEpiNode extends EpiNode
         theOutputStream.write("}".getBytes()); // Terminate sequence.
         }
 
-    public void writeV(OutputStream theOutputStream, int indentI ) 
+    public synchronized void writeV(OutputStream theOutputStream, int indentI ) 
         throws IOException
       { 
         Map.Entry<EpiNode,EpiNode> scanMapEntry= null;
@@ -837,7 +841,7 @@ class MapEpiNode extends EpiNode
     
     // Methods that get or make instances with entries.
     
-    public MapEpiNode getOrMakeMapEpiNode(String keyString)
+    public synchronized MapEpiNode getOrMakeMapEpiNode(String keyString)
       /* This method returns the MapEpiNode value 
         that is associated with the key keyString.  
         If there is no such MapEpiNode, then an empty one is created,
@@ -893,10 +897,10 @@ class MapEpiNode extends EpiNode
         return resultMapEpiNode;
         }
 
-    
+
     // Methods that store data in a map.
-    
-    public void putV(String keyString, String valueString)
+
+    public synchronized void putV(String keyString, String valueString)
       /* This associates valueString with keyString in this MapEpiNode.
         The strings are converted to ScalarEpiNodes first.
         */
@@ -907,7 +911,7 @@ class MapEpiNode extends EpiNode
             );
         }
 
-    public void putV(EpiNode keyEpiNode, EpiNode valueEpiNode)
+    public synchronized void putV(EpiNode keyEpiNode, EpiNode valueEpiNode)
       /* This associates valueEpiNode with keyEpiNode in this MapEpiNode.
         It does this by making an entry in theLinkedHashMap.
         */
@@ -918,7 +922,7 @@ class MapEpiNode extends EpiNode
             );
         }
 
-    public void removeV( String keyString)
+    public synchronized void removeV( String keyString)
     /* This method remove the field whose name is fieldKeyString.
       */
     { 
@@ -986,7 +990,7 @@ class MapEpiNode extends EpiNode
         return resultMapEntry;
         }
 
-    public String getNextString(String keyString) 
+    public synchronized String getNextString(String keyString) 
       /* Returns key String of next entry after the one selected by keyString.
         or null if we are at end of map and there is no next entry.
         It finds the correct entry by iterating to the entry with the desired key,
