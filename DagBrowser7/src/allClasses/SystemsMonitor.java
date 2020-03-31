@@ -355,8 +355,8 @@ public class SystemsMonitor
         }
 
     public long addDeltaAndLogNonzeroL( NamedLong theNamedLong, long deltaL )
-    /* This method does the same as addDeltaL(deltaL) but
-      also logs as a warning any deltaL which not 0.
+    /* This method does the same as addDeltaL(deltaL) 
+      but also logs any deltaL which not 0.
       This is for NamedLongs which are not supposed to change.
       */
     {
@@ -364,8 +364,8 @@ public class SystemsMonitor
         {
           long timeNowL= System.currentTimeMillis();
           theAppLog.debug( theNamedLong.getNameString( ) + " changed by " + deltaL
-                + NL + "  time-now  : " + Misc.dateString(timeNowL) 
                 + NL + "  time-then : " + Misc.dateString(timeNowL - deltaL) 
+                + NL + "  time-now  : " + Misc.dateString(timeNowL) 
                 );
           }
       return theNamedLong.addDeltaL( deltaL ); // Doing the add.
