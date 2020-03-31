@@ -215,7 +215,10 @@ public class EpiInputStream<
           if (packetMapEpiNode == null) { // Handle missing EpiNode if needed.
             //// packetEpiNode= EpiNode.tryEpiNode(this); // Try parsing node.
             packetMapEpiNode= tryMapEpiNode(); // Try parsing node and caching it.
-            if (packetMapEpiNode == null) break; // No node, so exit with fail.
+            if (packetMapEpiNode == null) { // Unable to get another node.
+              emptyingBufferV(); // Make certain buffer is empty to prevent looping.
+              break; // Exit with fail.
+              }
             packetElementIndexI= 0; // Reset index for scanning node elements.
             }
           elementString= packetMapEpiNode.extractFromEpiNodeString(packetElementIndexI);
