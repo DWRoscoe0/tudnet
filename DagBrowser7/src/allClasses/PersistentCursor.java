@@ -97,24 +97,19 @@ public class PersistentCursor
 	      return this; // This cursor pointing to new node.
 	      } 
 
-		public String setListFirstKeyString( String listPathString )
+		public String setListFirstKeyString( String listKeyString )
 		  /* This method sets the list to be scanned for 
-		    scanning from the beginning in the forward direction.  
-		    It does this in 2 ways:
-		   	* by adding the ListPathString to the base path,
-			    which is presently always the empty string for the root; and
-			  * by getting ready the interface NavigableMap<K,V>
-			    which holds the list of entries.
-			  It also initializes other variables used to scan the list,
+		    scanning the list associated with listKeyString
+		    from the beginning in the forward direction.  
+		    It also initializes other variables used to scan the list,
 			  a scan starting with the first element, if there is one.
         It returns the key of the first list entry,
         or the empty string if the list is empty.
-			  ///org Call general method that can handle absolute or relative path. 
-		   	*/
+			  */
 			{
 				// appLogger.debug(
 				// 		"PersistentCursor.setListPathV("+listPathString+") begins.");
-        upperMapEpiNode= thePersistent.getOrMakeMapEpiNode(listPathString);
+        upperMapEpiNode= thePersistent.getOrMakeMapEpiNode(listKeyString);
 	  		return moveToFirstKeyString();
 				}
 

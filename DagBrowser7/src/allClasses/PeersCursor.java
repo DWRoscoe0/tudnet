@@ -93,8 +93,9 @@ public class PeersCursor extends PersistentCursor {
         }
       }
 
-  public void findPeerV(String ipString, String portString, String theIdentityString)
-    /* This method searches for the entry that matches the arguments.  
+  public void findPeerV(String ipString, String portString, String peerIdentityString)
+    /* This method searches for the first entry that matches the arguments.
+      If peerIdentityString is null then that parameter is not checked.  
       If there is such an entry, it returns with this PeersCursor on that element,
       otherwise it returns with this PeersCursor cursor on no element, 
       i.e., on the empty element.
@@ -107,8 +108,8 @@ public class PeersCursor extends PersistentCursor {
           if (! testFieldIsB("IP",ipString)) continue;
           if (! testFieldIsB("Port", portString)) continue;
           if (
-            (theIdentityString != null) // ID present. 
-            && ! testFieldIsB("PeerIdentity", theIdentityString)) 
+            (peerIdentityString != null) // ID present. 
+            && ! testFieldIsB("PeerIdentity", peerIdentityString)) 
               continue;
           break; // All search parameters matched, exit loop positioned on matching entry.
           }

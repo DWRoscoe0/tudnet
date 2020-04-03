@@ -19,32 +19,30 @@ public class Persistent
     * It is stored on non-volatile external storage as a text file.
       EpiNode data is expressed in a YAML subset.
 
-    Each node can represent either a:
-    * scalar value, a simple text string, or
-    * a nested map of key-value pairs, with each value being another node.
+    Each node can be either:
+    * a ScalarEpiNode value, representing a simple text string, or
+    * a MapEpiNode, a nested map of key-value pairs, with each value being another node.
     
-	  Unlike EpiNode, which does not understand paths within a tree, this class does.
-	  Unfortunately, this means that some operations,
-	  the operations that involve long paths, can be slow.
-	  Methods that do these long operations generally begin with "multilevel".
-	  The internal use of paths to identify persistent data is being deprecated. 
-	  If many repeated operations are to be done, deep within the structure,
-	  at the end of a long path, then either
-	  * data should be referenced through a PersistentCursor, or
-	  * a reference should be gotten to the containing data node
-	  ///opt Paths used internally might eventually be eliminated.
+	  Unlike MapEpiNode, which does not understand paths within a tree, this class does.
+	  However the internal use of paths to identify persistent data has been deprecated. 
+    Although some multiple element path capability is present, it is not presently used,
+    meaning that paths parameters are all single element keys.
 
-		A path can be:
-		* relative to a given map node, or
-		* absolute, meaning relative to the root map node.
+    If paths are ever used again:
+    
+		  A path can be:
+  		* relative to a given map node, or
+  		* absolute, meaning relative to the root map node.
+  
+  		A path expressed as a String is a list of elements separated by a "/".
+  		A path can contain 0, 1, 2, or more elements.
+  
+  	  In earlier versions of this class, "key" was synonymous with "full path".
+  	  Now "key" is only a single element of a path.
+  	  
+  	  A path does not end in a slash.  A prefix ends in a slash.
 
-		A path expressed as a String is a list of elements separated by a "/".
-		A path can contain 0, 1, 2, or more elements.
-
-	  In earlier versions of this class, "key" was synonymous with "full path".
-	  Now "key" is only a single element of a path.
-	  
-	  A path does not end in a slash.  A prefix ends in a slash.
+    ////opt Paths used internally might eventually be eliminated completely.
 	  
 	 	*/
 	
@@ -109,49 +107,43 @@ public class Persistent
 
 
     // Service methods for get and put operations.
+    // There are basically wrappers for operations on the rootMapEpiNode.
 	  
 	  public void putV( String keyString, String valueString )
-	    /* This associates valueString with keyString.
-	      keyString should not be a multiple element path, 
-	      though in an earlier version it could be.
-	     	*/
+	    /* This associates valueString with keyString.  */
 	    {
 	      rootMapEpiNode.putV(keyString, valueString);
 		  	}
 	
-	  public String getDefaultingToBlankString( String pathString )
-		  /* Returns the value String associated with pathString,
+	  public String getDefaultingToBlankString( String keyString )
+		  /* Returns the value String associated with keyString,
 		    or the empty string if there is none.
 		   	*/
 		  {
-				return getString( pathString, "" );
+				return getString( keyString, "" );
 			  }
 		
-	  private String getString( String pathString, String defaultValueString )
-			/* Returns the value String associated with pathString,
+	  private String getString( String keyString, String defaultValueString )
+			/* Returns the value String associated with keyString,
 		    or defaultValueString if there is no value String stored.
-		    It does not try to interpret path separator characters in the key.
-		    It does a single-level lookup only.
 		   	*/
 		  {
-  			String childValueString= getString(pathString); 
+  			String childValueString= getString(keyString); 
 	  	  if (childValueString == null) 
 	  	  	childValueString= defaultValueString;
 				return childValueString;
 		  }
 		
-	  private String getString( String pathString)
-			/* This is like getEpiNode(pathString) except that
-			  instead of returning an EpiNode,
-			  it returns the value String stored there.
-			  If either the node or the value String are not at
-			  the location specified by pathString
-			  then null is returned.
+	  private String getString( String keyString)
+			/* This is like getEpiNode(keyString) except that
+			  instead of returning an EpiNode, it returns the value String stored there.
+			  If either the node or the value String are not at 
+			  the location specified by String then null is returned.
 		   	*/
 		  {
   	      String resultValueString= null; // Default null result value, to be overridden.
         goReturn: {
-          EpiNode keyEpiNode= new ScalarEpiNode(pathString);
+          EpiNode keyEpiNode= new ScalarEpiNode(keyString);
           EpiNode valueEpiNode= rootMapEpiNode.getEpiNode(keyEpiNode);
           if (valueEpiNode == null) // If there is no node with this key
             break goReturn; // return with default null String.
@@ -160,23 +152,16 @@ public class Persistent
 	  			return resultValueString;
 		  }
 
-    public MapEpiNode getOrMakeMapEpiNode(String pathString)
+    public MapEpiNode getOrMakeMapEpiNode(String keyString)
       /* This is equivalent to
-    
-        getOrMakeMapEpiNode(baseMapEpiNode, pathString)
-    
+              getOrMakeMapEpiNode(baseMapEpiNode, listKeyString)
         with baseMapEpiNode set to rootMapEpiNode.
-        
-        Note, dealing with absolute paths, paths starting at rootMapEpiNode.
-        So this method should be used infrequently. 
         */
       {
-        return getOrMakeMapEpiNode(
-          rootMapEpiNode, pathString);
+        return getOrMakeMapEpiNode( rootMapEpiNode, keyString );
         }
 
-    private MapEpiNode getOrMakeMapEpiNode(
-        MapEpiNode baseMapEpiNode, String pathString)
+    private MapEpiNode getOrMakeMapEpiNode(MapEpiNode baseMapEpiNode, String pathString)
       /* Returns the MapEpiNodeNode associated with pathString.
         If there is none, then it makes one, along with 
         all the other MapEpiNodeNodes between it and baseMapEpiNodeNode. 
@@ -184,14 +169,12 @@ public class Persistent
         to the desired MapEpiNodeNode.
         Each path element is used as a key to select or create
         the next child in the MapEpiNodeNode hierarchy.
-        It does one key lookup, or new node creation,
-        for every element of the path.
+        It does one key lookup, or new node creation, for every element of the path.
         An empty pathString is interpreted to mean baseMapEpiNodeNode.
-        This method never returns null.
         It returns a null if there is an error parsing pathString.
         
-        ///opt Though this method accepts a path, it appears to be called with
-          only single-element paths.
+        //// Note, it appears that this is never called with 
+          a path of more than one element, in other words, a simple key.
         */
       {
           // appLogger.debug(
@@ -216,7 +199,7 @@ public class Persistent
                   resultMapEpiNode.getOrMakeMapEpiNode(keyString);
                 break goReturn; // Return with the non-null value.
                 }
-            //// This code does not appear to be reached.
+            //// This code does not appear to be reached with single key paths.
             String keyString= // Extract next key from path up to separator.
                 pathString.substring(scanKeyOffsetI, separatorKeyOffsetI);
             if (keyString.isEmpty()) break goLogError;
