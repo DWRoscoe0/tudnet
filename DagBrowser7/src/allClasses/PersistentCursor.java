@@ -175,29 +175,6 @@ public class PersistentCursor
         return entryKeyString; // Return name of the new position.
 				}
 
-		public String setEntryKeyString( String entryKeyString )
-		  /* Set the key of the present list element/entry to be entryKeyString
-		    and sets the position to that key.
-		    It also caches a reference to the node associated with that key
-		    in preparation for accessing the node's fields,
-		    unless the key is EMPTY_STRING, which is valid and means
-		    the iterator is positioned outside of the maps entries.
-		    If entryKeyString is not empty and no associated node exists
-		    then an empty node will be created with that key.
-		    It returns the same entry key String that was input.
-				*/
-			{
-				// appLogger.debug(
-				// 		"PersistentCursor.setEntryKeyV( "+entryKeyString+" )" );
-				this.entryKeyString= entryKeyString; // Store the selection/position key.
-        if (! entryKeyString.isEmpty()) // If there is supposed to be a node there
-          this.lowerMapEpiNode= // cache the node at that position. 
-              upperMapEpiNode.getOrMakeMapEpiNode(entryKeyString);
-          else
-          this.lowerMapEpiNode= null;
-        return this.entryKeyString;
-				}
-
 		public String getEntryKeyString()
 		  /* This method returns the key of the presently selected list element/entry.
 				It returns the empty String if the piterator is 
@@ -210,6 +187,38 @@ public class PersistentCursor
 				// 		"PersistentCursor.getEntryKeyString() returning:"+entryKeyString);
 				return entryKeyString;
 				}
+
+    public void removeEntryV()
+      /* This method removes the presently selected list element/entry.
+        It returns with the cursor not on any element.
+        */
+      {
+        upperMapEpiNode.removeV( entryKeyString ); // Remove present element
+        setEntryKeyString( EMPTY_STRING ); // Set position on no element.
+        }
+
+    public String setEntryKeyString( String entryKeyString )
+      /* Set the key of the present list element/entry to be entryKeyString
+        and sets the position to that key.
+        It also caches a reference to the node associated with that key
+        in preparation for accessing the node's fields,
+        unless the key is EMPTY_STRING, which is valid and means
+        the iterator is positioned outside of the maps entries.
+        If entryKeyString is not empty and no associated node exists
+        then an empty node will be created with that key.
+        It returns the same entry key String that was input.
+        */
+      {
+        // appLogger.debug(
+        //    "PersistentCursor.setEntryKeyV( "+entryKeyString+" )" );
+        this.entryKeyString= entryKeyString; // Store the selection/position key.
+        if (! entryKeyString.isEmpty()) // If there is supposed to be a node there
+          this.lowerMapEpiNode= // cache the node at that position. 
+              upperMapEpiNode.getOrMakeMapEpiNode(entryKeyString);
+          else
+          this.lowerMapEpiNode= null;
+        return this.entryKeyString;
+        }
 
 
 		// Methods that access fields of selected map.
