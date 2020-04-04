@@ -37,10 +37,9 @@ public class LinkedMachineState
 		private Persistent thePersistent; 
     private PeersCursor thePeersCursor;
     private NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes;
-      //// For inputs in the form of MapEpiNodes.
+      // For inputs in the form of MapEpiNodes.
 
-		// Other variables.
-		private String thePeerIdentityString= null;
+		// Other variables: none.
 		
 		// Sub-state-machine instances.
     private DisconnectedState theDisconnectedState;
@@ -162,7 +161,7 @@ public class LinkedMachineState
           if ( isConnectedB() ) { // Disconnect if connected.
             theAppLog.debug("LinkedMachineState.onInputsB() disconnecting for shutdown.");
             thePeersCursor.updateFieldV( // Update persistent data before we go. 
-                "wasConnected", isConnectedB()); //// Is this still needed?
+                "wasConnected", isConnectedB()); /// Is this still needed?
             processInputB("Disconnect"); // Now cause disconnect.
             }
         boolean returnB= // Try processing in OrState machine of superclass.
@@ -413,8 +412,6 @@ public class LinkedMachineState
             super.onEntryV();
             
             IPAndPort remoteIPAndPort= theUnicaster.getKeyK();
-            thePeersCursor.findOrAddPeerV( // Add identity if needed.
-                remoteIPAndPort, thePeerIdentityString);
             thePeersCursor.updateFieldV( "wasConnected", true ); // Record connection.
             thePeersCursor.updateFieldV( "isConnected", true ); // Record connection.
 	    	    theAppLog.debug( "Connecting, notifying ConnectionManager with: \n  "
@@ -458,8 +455,6 @@ public class LinkedMachineState
                 thePeersCursor.updateFieldV( // Record remote intentional disconnect.
                     "wasConnected", false);
                 notifyConnectionManagerOfPeerConnectionChangeV();
-                //// toConnectionManagerNotifyingQueueOfMapEpiNodes.put( ////
-                ////     thePeersCursor.getSelectedMapEpiNode()); // Notify ConnectionManager.
                 requestAncestorSubStateV( theDisconnectedState); // Disconnect ourselves.
                 break goReturn; // Return with signal true.
                 }
@@ -495,20 +490,10 @@ public class LinkedMachineState
 	  		} // class ConnectedState
 
 
-    private void sayGoodbyesV() throws IOException
-      /* This method sends 3 GOODBYEs, each in a separate packet.  */
-      {
-        for (int i=0; i<3; i++) { // Send 3 GOODBYE packets.
-          theNetcasterOutputStream.writeV( "{GOODBYE}" );
-          theNetcasterOutputStream.flush();
-          }
-        }
-
-
   	private boolean tryReceivingHelloB(StateList subStateList) 
   			throws IOException
   	  /* This method tries to receive and process the Hello message,
-  	    including its arguments.
+  	    including its arguments, IP and PeerIdentity.
   	    This method is part of this state class, 
   	    but is not called by its own code.
   	    It is called by one of its sub-states, 
@@ -534,10 +519,15 @@ public class LinkedMachineState
   	    instead of IP address.  Presently PeerIdentity is read but discarded.
   	    */
 	  	{
-  		  boolean gotKeyB= subStateList.tryInputB("HELLO");
-  		  if (gotKeyB) { // Decoding argument if input is "HELLO".
+  	      boolean gotGoodHelloB= false; // Assume default of failure.
+  		  toReturn: {
+    		  if (! subStateList.tryInputB("HELLO")) 
+    		    break toReturn; // Fail if not HELLO.
 					String localIpString= theNetcasterInputStream.readAString();
-					thePeerIdentityString= theNetcasterInputStream.readAString(); 
+          String peerIdentityString= theNetcasterInputStream.readAString(); 
+          
+          if (! processPeerIdentityB(peerIdentityString)) // Process PeerIdendity
+             break toReturn; // or exit if fail.
 					String remoteIpString= 
 							theUnicaster.getKeyK().getInetAddress().getHostAddress();
 					theUnicaster.leadingDefaultBooleanLike.setValueB( // Decide who leads.
@@ -551,17 +541,80 @@ public class LinkedMachineState
 	        				: "FOLLOWER"
 	        				)
 	        		);
-				  }
-  		  return gotKeyB;
+          gotGoodHelloB= true; // Tests passed.  Exit with success.
+  		  } // toReturn:
+  		    return gotGoodHelloB;
 	  		}
+    
+    private boolean processPeerIdentityB(String inIdentityString)
+      /* This method is a kludge to handle the problem of Unicasters being created 
+        before the PeerIdentity of the remote peer is known.
+        The ConnectionManager thread does this when it creates Unicasters.
+        
+        If this Unicaster's PeerIdentity has not yet been defined
+        entries exist with and without peer identity,
+        This method searches the Persistent storage cache for 
+        entries matching this Uniaster.
+        If entries exist with and without peer identity,
+        then it combines them into a single entry.
+        
+        It returns true if an acceptable PeerIdentity was processesd, false otherwise.
+       */
+      {
+          boolean successB= false; /// This is always overriden!
+        goReturn: {
+          if // Same IDs, so subject peer is actually the local peer,
+            ( thePersistent.getDefaultingToBlankString("PeerIdentity").equals(
+                inIdentityString))
+            { // so ignore this HELLO. 
+              theAppLog.warning("LinkedMachineState.processPeerIdentityB(String) "
+                  + "This is local peer, ignoring.");
+              thePeersCursor.putFieldV("ignorePeer","true");
+              thePeersCursor.putFieldV("ID_WARNING","This is local peer");
+              break goReturn; // so exit with failure.
+              }
+          IPAndPort remoteIPAndPort= theUnicaster.getKeyK();     
+          String ipString= remoteIPAndPort.getIPString(); // Extract IP.
+          String portString= String.valueOf(remoteIPAndPort.getPortI()); // Extract port.
+          PeersCursor anotherPeersCursor= 
+              PeersCursor.makeOnNoEntryPeersCursor( thePersistent ); 
+          anotherPeersCursor.findPeerV( // Find match using all 3 values.
+              ipString, portString, inIdentityString);
+          if (anotherPeersCursor.getEntryKeyString().isEmpty())  // Not found. 
+            { // So store identity in this Unicaster's data entry and in easy-access copy. 
+              theAppLog.info(
+                  "LinkedMachineState.processPeerIdentityB(String) Saving identity.");
+              thePeersCursor.putFieldV("PeerIdentity",inIdentityString);
+              successB= true; 
+              break goReturn; 
+              }
+          // Found entry with identity.  No need to store it in entry.
 
+          if // The found entry is not this Unicaster's entry.
+            (! thePeersCursor.getEntryKeyString().equals(
+                anotherPeersCursor.getEntryKeyString())) 
+          { // Eliminate one entry, the newer one without identity.
+            theAppLog.info("LinkedMachineState.processPeerIdentityB(String) "
+                + "replacing Unicasters new peer entry with old one with ID.");
+            thePeersCursor.removeEntryV(); // Delete new entry without ID.
+            thePeersCursor=  // Replace this Unicaster's PeersCursor with 
+              anotherPeersCursor; // the one that found the entry with the identity.
+            successB= true; 
+            break goReturn; 
+            }
+          theAppLog.info("LinkedMachineState.processPeerIdentityB(String) "
+              + "Found entry is Unicaster's entry.  Using  it.");
+          successB= true;
+        } // goReturn:
+          return successB;
+        }
 
   	private void sendHelloV(StateList subStateList)
   			throws IOException
   	  /* This method sends a HELLO message to the remote peer
   	    from state subStateList, and logs that it has done so.
   	    The HELLO message includes the IP address of the remote peer
-  	    and the ID of the peer node.
+  	    and the ID of the local peer.
   	    */
 	  	{
     	  sendDebugCountV();
@@ -574,6 +627,15 @@ public class LinkedMachineState
             );
         theNetcasterOutputStream.endBlockAndSendPacketV(); // Forcing send.
 	  		}
+
+    private void sayGoodbyesV() throws IOException
+      /* This method sends 3 GOODBYEs, each in a separate packet.  */
+      {
+        for (int i=0; i<3; i++) { // Send 3 GOODBYE packets.
+          theNetcasterOutputStream.writeV( "{GOODBYE}" );
+          theNetcasterOutputStream.flush();
+          }
+        }
 
     private void notifyConnectionManagerOfPeerConnectionChangeV()
       /* This method notifies the ConnectionManager about a change in

@@ -616,7 +616,7 @@ public class ConnectionManager
         }
 
     
-    /*  ////
+    /*  ///
       PeerDataExchange: The comments which follow are from a brainstorming session.
         Not all of the material is being used or will be used.
 
@@ -726,7 +726,7 @@ public class ConnectionManager
             // data in Persistent storage, or create new data.
           if (thePeersCursor.testB("ignorePeer")) // This peer is supposed to be ignored?
             break toReturn; // so exit.
-          if (thePeersCursor.testB("isConnected")) // Already connected to this peer
+          if (thePeersCursor.testB("isConnected")) // We're already connected to this peer
             break toReturn; // so exit.
           if // Same IDs, so subject peer is actually the local peer
             ( thePeersCursor.getDefaultingToBlankString("PeerIdentity").equals(
@@ -771,16 +771,19 @@ public class ConnectionManager
           if (scanPeersCursor.nextKeyString().isEmpty() ) // Try getting next scan peer. 
             break peerLoop; // There are no more peers, so exit loop.
           theAppLog.appendToFileV("(to-peers?)"); // Log that peer is being considered.
-          if (scanPeersCursor.testB("isConnected")) // This peer is already connected 
+          if (! scanPeersCursor.testB("isConnected")) // This peer is not connected 
             continue peerLoop; // so loop to try next peer.
           String peerIPString= scanPeersCursor.getFieldString("IP");
           String peerPortString= scanPeersCursor.getFieldString("Port");
           IPAndPort theIPAndPort= new IPAndPort(peerIPString, peerPortString);
           Unicaster scanUnicaster= // Try getting associated Unicaster.
               theUnicasterManager.tryingToGetUnicaster(theIPAndPort);
-          if (scanUnicaster == null) // Unicaster of scan peer doesn't exist
+          if (scanUnicaster == null) { // Unicaster of scan peer doesn't exist
+            theAppLog.error(
+                "ConnectionManager.notifyPeersAboutPeerV() non-existent Unicaster.");
             continue peerLoop; // so loop to try next peer.
-          theAppLog.appendToFileV("(YES!)"); // Log that we're sending scan peer's data.
+            }
+          theAppLog.appendToFileV("(YES!)"); // Log that we're sending data.
           scanUnicaster.putV( // Queue scan peer data to Unicaster of scan peer
             MapEpiNode.makeSingleEntryMapEpiNode( // wrapped in a RemoteNewState map.
               "RemoteNewState", messagePeerMapEpiNode)
@@ -813,8 +816,9 @@ public class ConnectionManager
           if (scanPeersCursor.nextKeyString().isEmpty() ) // Try getting next scan peer. 
             break peerLoop; // There are no more peers, so exit loop.
           theAppLog.appendToFileV("(to-peer?)"); // Log that we're considering peer.
-          if (scanPeersCursor.testB("isConnected")) // This peer is already connected 
+          if (! scanPeersCursor.testB("isConnected")) // This peer is not connected 
             continue peerLoop; // so loop to try next peer.
+          theAppLog.appendToFileV("(YES!)"); // Log that we're sending data.
           messageUnicaster.putV( // Queue peer data for sending
               MapEpiNode.makeSingleEntryMapEpiNode( // wrapped in another map.
                 "RemoteCurrentState", scanPeersCursor.getSelectedMapEpiNode())

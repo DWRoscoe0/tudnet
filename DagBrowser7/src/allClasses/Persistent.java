@@ -42,7 +42,7 @@ public class Persistent
   	  
   	  A path does not end in a slash.  A prefix ends in a slash.
 
-    ////opt Paths used internally might eventually be eliminated completely.
+    ///opt Paths used internally might eventually be eliminated completely.
 	  
 	 	*/
 	
@@ -173,7 +173,7 @@ public class Persistent
         An empty pathString is interpreted to mean baseMapEpiNodeNode.
         It returns a null if there is an error parsing pathString.
         
-        //// Note, it appears that this is never called with 
+        /// Note, it appears that this is never called with 
           a path of more than one element, in other words, a simple key.
         */
       {
@@ -199,7 +199,7 @@ public class Persistent
                   resultMapEpiNode.getOrMakeMapEpiNode(keyString);
                 break goReturn; // Return with the non-null value.
                 }
-            //// This code does not appear to be reached with single key paths.
+            ///This code does not appear to be reached with single key paths.
             String keyString= // Extract next key from path up to separator.
                 pathString.substring(scanKeyOffsetI, separatorKeyOffsetI);
             if (keyString.isEmpty()) break goLogError;

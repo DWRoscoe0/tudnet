@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 
 import static allClasses.AppLog.theAppLog;
-//// import static allClasses.SystemSettings.NL;
 
 
 public class UnicasterManager
@@ -233,7 +232,6 @@ public class UnicasterManager
             Unicaster theUnicaster= ((Unicaster)childDataNode);
             if (theUnicaster.isConnectedB())
               theUnicaster.getNotifyingQueueOfStrings().
-                //// add(messageString);
                 put(messageString);
             }
         }

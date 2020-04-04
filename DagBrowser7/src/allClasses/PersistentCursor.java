@@ -155,7 +155,7 @@ public class PersistentCursor
 		    on no element.  Either the position moved past the end of the list,
 		    or the list is empty.
 		    
-		    ////opt This could and should be improved by using
+		    ///opt This could and should be improved by using
 		    an actual Iterator in this class, instead of calling
 		    MapEpiNode.getNextString(..) to using an iterator to
 		    search for the next string position.    
