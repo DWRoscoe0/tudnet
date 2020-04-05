@@ -160,8 +160,6 @@ public class LinkedMachineState
         if  ( tryInputB("Shutdown") ) // Process any local termination/shutdown request.
           if ( isConnectedB() ) { // Disconnect if connected.
             theAppLog.debug("LinkedMachineState.onInputsB() disconnecting for shutdown.");
-            thePeersCursor.updateFieldV( // Update persistent data before we go. 
-                "wasConnected", isConnectedB()); /// Is this still needed?
             processInputB("Disconnect"); // Now cause disconnect.
             }
         boolean returnB= // Try processing in OrState machine of superclass.
