@@ -9,8 +9,8 @@ public class InfogoraRoot  extends NamedList {
     */
   
   public InfogoraRoot(   // Constructor. 
-  		DataNode... inDataNodes 
-  		)
+      DataNode... inDataNodes 
+      )
     {
 	    initializeV( // Calling superclass NamedList with...
 	        "Infogora-Root", // ...the name for this DataNode and...

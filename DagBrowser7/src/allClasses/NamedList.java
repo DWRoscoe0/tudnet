@@ -46,12 +46,35 @@ public class NamedList
 	      ///opt This could be replaced with a SelfReturningNodeOrNodes class.
         ///enh Distinguish between active children and lazy children?
         // See MetaFileManager for ideas.
-    
-    public void initializeV(
-        String nameString, 
-        DataNode... inDataNodes 
-        )
-      /* This initializes the NamedList with
+
+	    
+	    /* Constructors: An instance of this class can be created by either
+	       * using NamedList(String nameString,DataNode... inDataNodes).
+	         This is the preferred way.  It is simpler for this class and its subclasses. 
+	       * using NamedList() followed by 
+	         initializeV(String nameString,DataNode... inDataNodes).
+	         
+
+	     */
+      
+      public NamedList(
+          String nameString, 
+          DataNode... inDataNodes 
+          )
+        { 
+          initializeV(nameString, inDataNodes); 
+          }
+      
+      public NamedList()
+        /* If this constructor is used then 
+          initializeV(String nameString,DataNode... inDataNodes)
+          should be called afterward to do remaining initialization.
+         */
+        { 
+          }
+	    
+	    public void initializeV(String nameString,DataNode... inDataNodes)
+      /* This initializes the NamedList with a name and
         0 or more DataNodes from the array inDataNodes.
         Theoretically it could be used for 
         many different types of DataNodes.

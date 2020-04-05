@@ -27,6 +27,18 @@ public class MutableList extends NamedList
 	  // Variables for injected values, none.
 	
     // Constructors, none.
+  
+      public MutableList()
+        /* If this constructor is used then initializeV(nameString, inDataNodes)
+          should be called later. 
+          */
+        { 
+          }
+      
+      public MutableList(String nameString,DataNode... inDataNodes)
+        { 
+          initializeV(nameString, inDataNodes); 
+          }
 
     // Initialization methods, none.
 
