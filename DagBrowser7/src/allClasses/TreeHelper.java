@@ -29,15 +29,19 @@ public class TreeHelper
     Including an instance of TreeHelper in a DataNode viewer can make 
     coding a new tree node viewer much easier.
     
-    The code in this class was put here instead of the TreeAware JComponent
+    This class was created, and code placed here instead of TreeAware JComponents,
     because of Java's lack of multiple inheritance.
 
-    In the JComponents that has one, the TreeHelper instance 
-    is typically named "aTreeHelper".
-    So, for example, Helper code to access the present Part TreePath:
+    In the JComponents that have a TreeHelper instance, 
+    the variable that references it is typically named "aTreeHelper".
+    So, for example, code to access the present Part TreePath:
     would be "aTreeHelper.getPartTreePath()";
+    
+    In code outside of JComponents, public methods of 
+    a TreeAware JComponent's TreeHelper by calling the getTreeHelper() method 
+    of the TreeAware interface.
 
-    TreeHelper can be sub-classed if it needs customized tree-help.  
+    TreeHelper can be sub-classed if customized tree-help is needed.  
     Within a TreeAware JComponent, a TreeHelper subclass is usually called 
     MyTreeHelper and is a non-static nested class.
     
@@ -52,7 +56,7 @@ public class TreeHelper
       * A coordinating JComponent, presently only DagBrowserPanel,
         used to coordinate the simultaneous display of 2 TreeAware JComponents.
 
-    These 3 objects interact as follows:
+    The above mentioned 3 objects interact as follows:
     
       * The coordinating component listens for TreeHelper Part TreePathEvent-s
         and makes TreePath adjustments in other components which
@@ -93,7 +97,7 @@ public class TreeHelper
 
       * Constructors.
       
-      ? Being added: initializeV() and finalizeV().
+      * Initialization methods initializeHelperV() and finalizeHelperV().
 
       * Keyboard and mouse listener methods for 
         handling of user input common to tree node viewers
@@ -101,7 +105,7 @@ public class TreeHelper
 
       * Command methods, which can be used for
         testing for the validity of, or actual execution of,
-        various cursor moving commands (next, previous, child, parent).
+        various tree cursor moving commands (next, previous, child, parent).
 
       * Methods for getting and setting the Whole,
         by TreePath, with optional auto-select.
@@ -111,31 +115,27 @@ public class TreeHelper
 
       * Code managing and using TreePathListener-s.
 
-    This class was originally intended for right panel JComponents only,
-    but now it is used by the left panel RootJTree also.
+    This class was originally intended for right panel viewer JComponents only,
+    but now it is used by the left RootJTree navigation panel also.
     
     This class may be extended before being instantiated
     to provide slightly different tree handling behavior.
     See RootJTree.MyTreeHelper for an example.
 
-    ?? Because there are closed paths between the coordinating component
+    Because there are closed paths between the coordinating component
     and the TreeHelper, and between the owning component and the TreeHelper,
     there is the danger of infinite recursion.
-    This should be detected and prevented.
-    The logical place to do this is in TreeHelper, because it
-    is part of all the closed paths.  Add this.
+    This is now detected and prevented in TreeHelper.
     
-    ?? This class will probably be changed to not force the Whole 
+    ///enh?? This class will probably be changed to not force the Whole 
     to be direct parent of the Part, as it is now.
     It would remain constant through the life of the object.
     This will allow it to be used for more components, 
     including JTree with Whole being the tree root.
     
-    ?? Break-out an interface of public methods for documentation purposes.
+    ///doc?? Break-out an interface of public methods for documentation purposes.
 
-    ?? Name this class something else, such as TreeLogic, 
-    or eliminate it by integrating it into 
-    a TreeAware JComponent subclass or abstract.
+    ///doc?? Name this class something else, such as TreeLogic.
 
     */
 
@@ -148,55 +148,57 @@ public class TreeHelper
       */
     MetaRoot theMetaRoot;
 
-    TreeHelper( 	// Constructor.
-        JComponent inOwningJComponent,
-        MetaRoot theMetaRoot,
-        TreePath inWholeTreePath  // Eliminate this constructor injection.
-        )
-      /* Constructs a TreeHelper.
-        inWholeTreePath identifies the root of the Whole subtree to display.
-        The Part TreePath is auto-selected if possible.
-        */
-      {
-        this.owningJComponent= inOwningJComponent; // Saving owning JComponent.
-        this.theMetaRoot= theMetaRoot;
-
-        setWholeWithPartAutoSelectV(  // Making initial sSelection.
-          inWholeTreePath 
-          );
-        }
-    
-    public void initializeHelperV( 
-    		TreePathListener theTreePathListener,
-    		FocusListener theFocusListener,
-    		DataTreeModel theDataTreeModel
-    		)
-    	/* This method, or it equivalent in a subclass, is the start and end of 
-    	  the JComponent/TreeAware and TreeHelper initialization,
-    	  not including what should be very simple construction.
-    	  It also does listener registrations.
-    	  */
-      {
-    		// appLogger.debug("TreeHelper.initializeHelperV(.) begins.");
-    		// Doing final common listener registrations.
-	      owningJComponent.addFocusListener(this); // Making this TreeHelper 
-	        // be a FocusListener of its owning JComponent.
-    	  addTreePathListener( theTreePathListener );
-    	  addFocusListener( theFocusListener );
-    	  
-    	  // Setting the TreeModel.
-        setDataTreeModelV(theDataTreeModel); // Needed??
-        // appLogger.debug("TreeHelper.initializeHelperV(.) ends.");
-      	}
-    
-    public void finalizeHelperV() 
-	  	/* This method, or it equivalent in a subclass, is the start and end of 
-  		  the JComponent/TreeAware and TreeHelper finalization. 
-    	  It exists mainly for undoing non-final listener registrations.  
-  		  */
-      {
-      	setDataTreeModelV( null ); //  prevent listener leak. Needed??
-        }
+    // Constructor, initialization, and finalization.
+      
+      TreeHelper( 	// Constructor.
+          JComponent inOwningJComponent,
+          MetaRoot theMetaRoot,
+          TreePath inWholeTreePath  // Eliminate this constructor injection.
+          )
+        /* Constructs a TreeHelper.
+          inWholeTreePath identifies the root of the Whole subtree to display.
+          The Part TreePath is auto-selected if possible.
+          */
+        {
+          this.owningJComponent= inOwningJComponent; // Saving owning JComponent.
+          this.theMetaRoot= theMetaRoot;
+  
+          setWholeWithPartAutoSelectV(  // Making initial sSelection.
+            inWholeTreePath 
+            );
+          }
+      
+      public void initializeHelperV( 
+      		TreePathListener theTreePathListener,
+      		FocusListener theFocusListener,
+      		DataTreeModel theDataTreeModel
+      		)
+      	/* This method, or it equivalent in a subclass, is the start and end of 
+      	  the JComponent/TreeAware and TreeHelper initialization,
+      	  not including what should be very simple construction.
+      	  It also does listener registrations.
+      	  */
+        {
+      		// appLogger.debug("TreeHelper.initializeHelperV(.) begins.");
+      		// Doing final common listener registrations.
+  	      owningJComponent.addFocusListener(this); // Making this TreeHelper 
+  	        // be a FocusListener of its owning JComponent.
+      	  addTreePathListener( theTreePathListener );
+      	  addFocusListener( theFocusListener );
+      	  
+      	  // Setting the TreeModel.
+          setDataTreeModelV(theDataTreeModel); // Needed??
+          // appLogger.debug("TreeHelper.initializeHelperV(.) ends.");
+        	}
+      
+      public void finalizeHelperV() 
+  	  	/* This method, or it equivalent in a subclass, is the start and end of 
+    		  the JComponent/TreeAware and TreeHelper finalization. 
+      	  It exists mainly for undoing non-final listener registrations.  
+    		  */
+        {
+        	setDataTreeModelV( null ); //  prevent listener leak. Needed??
+          }
       
     // TreeModel code with Listener registration, etc.
 
@@ -543,7 +545,7 @@ public class TreeHelper
             
           }
           
-    // Whole related code.  
+    // Whole-related code.  
     
       /* The Whole is the whole tree node being viewed.
         This was previously called the Subject.
@@ -659,7 +661,7 @@ public class TreeHelper
           return childDataNode;  // Return final result.
           }
 
-    // Part related code.  
+    // Part-related code.  
       
       /* The Part is the tree node displayed highlighted within the Whole.
         It it one of possibly multiple child nodes being displayed.
@@ -799,7 +801,7 @@ public class TreeHelper
           setPartTreePathB( childTreePath );  // Set Part TreePath.
           }
 
-    // TreePathListener code for adding, removing, and triggering them.
+    // TreePathListener code for adding, removing, and triggering with them.
 
       /* This code manages TreePathListener-s and sends TreePathEvent-s to them.
 
