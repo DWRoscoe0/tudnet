@@ -121,18 +121,5 @@ public class Infinitree
             hash = hash * 31 + parentInfinitree.hashCode();
           return hash;
           }
-
-      public JComponent GetDataJComponent( 
-          TreePath inTreePath, 
-          MetaRoot theMetaRoot,
-          DataTreeModel InDataTreeModel
-          )
-        { // GetDataJComponent()
-          JComponent resultJComponent= null;  // For result.
-
-          resultJComponent= // Set result for exploring a List.
-            new TitledListViewer( inTreePath, InDataTreeModel );
-
-          return resultJComponent;  // Return the result from above.
-          } // GetDataJComponent()
+      
     }

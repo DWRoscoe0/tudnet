@@ -255,7 +255,7 @@ public class IFile
           return valueString;
           }
       
-      public JComponent GetDataJComponent( 
+      public JComponent getDataJComponent( 
           TreePath inTreePath, 
           MetaRoot theMetaRoot, 
           DataTreeModel inDataTreeModel 
@@ -265,7 +265,7 @@ public class IFile
           This ignores the DataTreeModel for DataNode subclasses
           which do not yet support it.
           */
-        { // GetDataJComponent.
+        { // getDataJComponent.
           Object inObject= inTreePath.getLastPathComponent();
           IFile inIFile= // Cast to actual type, an abstract IFile name...
             (IFile)inObject;  // ...from the input Object.
@@ -298,7 +298,7 @@ public class IFile
                 } // Handle unreadable folder or device.
             } // calculate the associated DagNodeViewer.
           return resultJComponent;  // return the final result.
-          } // GetDataJComponent.
+          } // getDataJComponent.
           
     // other methods.
 

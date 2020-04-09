@@ -2,7 +2,6 @@ package allClasses;
 
 import java.io.File;
 
-import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
 
 public class FileRoots extends DataNode
@@ -147,34 +146,19 @@ public class FileRoots extends DataNode
           return "File-System-Roots";
           }
       
-      public JComponent GetDataJComponent( 
-          TreePath InTreePath, 
-          MetaRoot theMetaRoot,
-          DataTreeModel InDataTreeModel
-          )
-        /* Returns a JComponent which is appropriate for viewing 
-          the current tree node represented specified by InTreePath
-          using context from InDataTreeModel.
+      public static TreePath TreePathStart()
+        /* Returns the TreePath representing the path to the tree node
+          that should be selected when beginning browsing FileRoots.
+          The user DataNode at the beginning of the path
+          can be used as the root of the tree when building a
+          DataDataTreeModel.
           */
-        { // GetDataJComponent.
-          JComponent ResultJComponent=  // Calculate a ListViewer.
-            new TitledListViewer( InTreePath, InDataTreeModel );
-          return ResultJComponent;  // return the final result.
-          } // GetDataJComponent.
-
-        public static TreePath TreePathStart()
-          /* Returns the TreePath representing the path to the tree node
-            that should be selected when beginning browsing FileRoots.
-            The user DataNode at the beginning of the path
-            can be used as the root of the tree when building a
-            DataDataTreeModel.
-            */
-          { // TreePathStart()
-            TreePath StartTreePath=  // Create the StartTreePath from...
-              new TreePath(  // ...a single...
-                new FileRoots()  // ...FilesRoots object.
-                );
-            return StartTreePath;  // Return it.
-            } // TreePathStart()
+        { // TreePathStart()
+          TreePath StartTreePath=  // Create the StartTreePath from...
+            new TreePath(  // ...a single...
+              new FileRoots()  // ...FilesRoots object.
+              );
+          return StartTreePath;  // Return it.
+          } // TreePathStart()
 
     } // class FileRoots
