@@ -15,7 +15,7 @@ import javax.swing.JComponent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreePath;
 
-import static allClasses.AppLog.theAppLog;
+/// import static allClasses.AppLog.theAppLog;
 
 public class TreeHelper
   implements KeyListener, MouseListener, FocusListener
