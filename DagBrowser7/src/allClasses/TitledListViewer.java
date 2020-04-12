@@ -194,10 +194,9 @@ public class TitledListViewer // adapted from TitledListViewer.
 
   		public void finalizeHelpeeV( DataTreeModel theDataTreeModel )
 	  		{
-	      	// A previous listener registration is undone now to prevent leak.
-	        theDataTreeModel.  // For displaying changing title.
-	          removeTreeModelListener(this); // Remove what was previously added.
-	  			
+  		    // The only thing that was here was de-registration of
+  		    // this as a TreeModelListener, but now that is done by
+  		    // the TreeHelper.
 	  		  }
   		
       public void titleJLabelInitializationV()
