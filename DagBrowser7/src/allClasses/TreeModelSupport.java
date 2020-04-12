@@ -32,7 +32,7 @@ public abstract class TreeModelSupport
   {
     private Vector<TreeModelListener> vectorOfTreeModelListener =
       new Vector<TreeModelListener>();   // Listener storage.
-    private int maxListenersI= 7; // It should never, or rarely, exceed this.
+    private int maxListenersI= 0; // 7; // It should never, or rarely, exceed this.
     
     public void addTreeModelListener( TreeModelListener theTreeModelListener )
       /* ///fix Note, I suspect I have a Listener leak, 
@@ -49,26 +49,22 @@ public abstract class TreeModelSupport
       {
 	  		// appLogger.debug(
 	    	//		"TreeModelSupport.addTreeModelListener(..) begins with "+theTreeModelListener);
-        if ( 
-        		  theTreeModelListener != null && 
-        		  !vectorOfTreeModelListener.contains( theTreeModelListener ) 
-        		  )
+        if ( theTreeModelListener != null && 
+        	  !vectorOfTreeModelListener.contains( theTreeModelListener ) )
 	        { 
 	        	vectorOfTreeModelListener.addElement( theTreeModelListener );
 		        if ( vectorOfTreeModelListener.size() > maxListenersI) {
-			    		theAppLog.error( // Change warn to error to see interactively.
-			      			"TreeModelSupport.addTreeModelListener(..), maxListenersI: "+
-		      		    vectorOfTreeModelListener.size()+ NL + "  "+
-		      		    theTreeModelListener.getClass().getName() + "@" +
-		      		    Integer.toHexString(
-		      		    		System.identityHashCode(theTreeModelListener)
-		      		    		)
-			            );
+			    		theAppLog.debug(
+		      			"TreeModelSupport.addTreeModelListener(..), maxListenersI: "+
+	      		    vectorOfTreeModelListener.size()+ NL + "  "+
+	      		    theTreeModelListener.getClass().getName() + "@" +
+	      		    Integer.toHexString(System.identityHashCode(theTreeModelListener))
+		            );
 			    		maxListenersI++; // Increment maximum listeners so far.
 			    		}
   	        }
         	else
-	    		theAppLog.error(
+	    		theAppLog.debug(
       			"TreeModelSupport.addTreeModelListener(..) rejecting duplicate listener "+
       		    NL + "  "+theTreeModelListener
             );

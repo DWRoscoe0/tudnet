@@ -1,9 +1,5 @@
 package allClasses;
 
-// import static allClasses.Globals.appLogger;
-
-//import static allClasses.Globals.appLogger;
-
 import java.awt.Component;
 import java.awt.event.InputEvent;
 import java.awt.event.FocusEvent;
@@ -16,9 +12,10 @@ import java.util.Enumeration;
 import java.util.Vector;
 
 import javax.swing.JComponent;
+import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreePath;
 
-//import static allClasses.Globals.*;  // appLogger;
+import static allClasses.AppLog.theAppLog;
 
 public class TreeHelper
   implements KeyListener, MouseListener, FocusListener
@@ -177,6 +174,7 @@ public class TreeHelper
       	  the JComponent/TreeAware and TreeHelper initialization,
       	  not including what should be very simple construction.
       	  It also does listener registrations.
+      	  See finalizeHelperV().
       	  */
         {
       		// appLogger.debug("TreeHelper.initializeHelperV(.) begins.");
@@ -186,35 +184,57 @@ public class TreeHelper
       	  addTreePathListener( theTreePathListener );
       	  addFocusListener( theFocusListener );
       	  
-      	  // Setting the TreeModel.
-          setDataTreeModelV(theDataTreeModel); // Needed??
+      	  // Setting the TreeModel, which also sets JComponent as TreeModelListener.
+          setDataTreeModelV(theDataTreeModel); // This also registers a Listener.
           // appLogger.debug("TreeHelper.initializeHelperV(.) ends.");
         	}
       
       public void finalizeHelperV() 
   	  	/* This method, or it equivalent in a subclass, is the start and end of 
     		  the JComponent/TreeAware and TreeHelper finalization. 
-      	  It exists mainly for undoing non-final listener registrations.  
+      	  It exists mainly for undoing non-final listener registrations
+      	  to prevent listener leaks.
+      	  Not all Listeners need to be unregistered.
+      	    
     		  */
         {
-        	setDataTreeModelV( null ); //  prevent listener leak. Needed??
+        	setDataTreeModelV( null ); //  prevent listener leak.
           }
       
     // TreeModel code with Listener registration, etc.
 
       protected DataTreeModel theDataTreeModel;
-
-      public void setDataTreeModelV(DataTreeModel theDataTreeModel)
-        /* Sets theDataTreeModel value.and returns the old value.
-          It doesn't set any TreeModelListeners.
-          It just saves the TreeModel for possible later use by this helper.  
-          TreeModelListeners should be registered and unregistered by
-          the owningJComponent's TreeHelper subclasses, if needed, 
-          because only they know specifically what needs to be done.
-          */
-        {
-      	  this.theDataTreeModel= theDataTreeModel;
-      	  }
+      
+      public void setDataTreeModelV(DataTreeModel newDataTreeModel)
+      /* Sets new DataTreeModel.
+       * It also makes the present ListModel be a Listener of
+       * newDataTreeModel so the former reflects the latter.
+       * The JList should be a Listener of the ListModel
+       * In normal use this method will be called only twice:
+       * * once with newDataTreeModel != null during initialization,
+       * * and once with newDataTreeModel == null during finalization,
+       * but it should be able to work with any null combination.
+       */
+      {
+        // appLogger.debug("TreeHelper.setDataTreeModel(.) begins with "+newDataTreeModel);'
+        if // If TreeModelListener then link or unlink Component as TreeModelListener.
+          (owningJComponent instanceof TreeModelListener) 
+          { // Link or unlink JComponent as TreeModelListener.
+            DataTreeModel oldDataTreeModel= theDataTreeModel;
+            if ( oldDataTreeModel != null ) {
+              // theAppLog.debug("TreeHelper.setDataTreeModel(.) "
+              //     + "removing TreeModelListener " + owningJComponent);
+              oldDataTreeModel.removeTreeModelListener(
+                (TreeModelListener)owningJComponent);
+              }
+            if ( newDataTreeModel != null ) {
+              newDataTreeModel.addTreeModelListener(
+                (TreeModelListener)owningJComponent);
+              }
+            }
+        theDataTreeModel= newDataTreeModel;
+        // appLogger.debug("setDataTreeModelV.setDataTreeModel(.) ends with "+newDataTreeModel);
+        }
       
     // FocusListener code: registration, firing, and the interface.
 

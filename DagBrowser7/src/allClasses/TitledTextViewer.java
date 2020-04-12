@@ -182,31 +182,6 @@ public class TitledTextViewer
             super(inOwningJComponent, theMetaRoot, inTreePath);
             }
 
-        public void setDataTreeModelV(DataTreeModel newDataTreeModel)
-          /* Sets new DataTreeModel.
-           * It also makes the present ListModel be a Listener of
-           * newDataTreeModel so the former reflects the latter.
-           * The JList should be a Listener of the ListModel
-		       * In normal use this method will be called only twice:
-		       * * once with newDataTreeModel != null during initialization,
-		       * * and once with newDataTreeModel == null during finalization,
-		       * but it should be able to work with any null combination.
-           */
-          {
-        		// appLogger.debug("TitledTextViewer.setDataTreeModel(.) begins with "+newDataTreeModel);
-        		DataTreeModel oldDataTreeModel= theDataTreeModel;
-      	    if ( oldDataTreeModel != null )
-  	          oldDataTreeModel.removeTreeModelListener(
-  	    	  	  (TitledTextViewer)owningJComponent 
-  	    	  	  );
-  	    	  if ( newDataTreeModel != null )
-  	    	  	newDataTreeModel.addTreeModelListener(
-	    	  	  (TitledTextViewer)owningJComponent 
-	    	  	  );
-  	    	  theDataTreeModel= newDataTreeModel;
-        		// appLogger.debug("TitledTextViewer.setDataTreeModel(.) ends with "+newDataTreeModel);
-        	  }
-
         } // MyTreeHelper
 
     }

@@ -17,15 +17,28 @@ public class DataNode
 	  /* This class forms the basis of the classes 
 	    which represent the DAG (Directed Acyclic Graph). 
 	    All subclasses of this class add non-DAG-essential capabilities.
+	    Presently it does not support full DAG capabilities,
+	    because a node can have only one parent.  Eventually this might change.
 
-	    Many of methods in this class are similar to 
-	    methods in the DataTreeModel interface.
+      When displayed, the DAG is treated as a tree.
+      Many of methods in this class are similar to methods in the TreeModel interface.
+      DataTreeModel implements this interface.
+      Many of its getter methods simply call the DataNode equivalents.
 	    
 	    Some of the methods in this class are 
 	    non working stubs and MUST be overridden.
 	    Other methods in this class work as is,
 	    but might be inefficient in nodes with large numbers of children, 
 	    and SHOULD be overridden. 
+
+      One important method in this class is 
+        JComponent getDataJComponent(TreePath inTreePath, DataTreeModel inDataTreeModel).
+      Its purpose is to return a JComponent that can 
+      display and possibly manipulate an instance of this DataNode.
+      This method in this class returns JComponents that
+      display the node either as a simple list or as a block of text.
+      More complicated DataNodes should override this default method
+      with one that returns a more capable JComponent.   
 
 	    ///enh Possible methods to add:
 	
@@ -41,7 +54,7 @@ public class DataNode
 			    This might be able to be temporary, like a Render component.
 	
 	    ?? Maybe add a field, parentsObject, which contains references to
-	      DataNodes which parents of this node.
+	      DataNodes which are parents of this node.
 	      This would be used by DataTreeModel.translatingToTreePath( .. ).
 	
 	    */

@@ -95,8 +95,14 @@ public class DataTreeModel
 
     // Other variables.
 
-      private HashMap<DataNode,TreePath> nodeToPathHashMap= // For cache because 
-      		new HashMap<DataNode,TreePath>(); // TreeModels need node TreePaths. 
+      private HashMap<DataNode,TreePath> nodeToPathHashMap= // Cache of node path. 
+        new HashMap<DataNode,TreePath>(); /* This is needed because 
+          TreeModels need node TreePaths.  
+          For this to work depends on DataNode's having only one parent node.
+          If they ever have more than one parent then a node's
+          path would need to be stored elsewhere.
+          The logical place is probably the JComponent used to display the node.
+          */
 
     // constructor and initialization methods.
 
@@ -162,16 +168,19 @@ public class DataTreeModel
 
       public synchronized Object getChild( Object parentObject, int childIndexI ) 
         /* Returns the Object which is the child of parentObject
-          whose child index is childIndexI, or null if child does not exist.
-
+          whose child index is childIndexI, 
+          or null if the desired child does not exist.
           This operation is delegated to parentObject which
           is assumed to satisfy the DataNode interface.
+
+          This method also calculates and stores the full path to the child 
+          in the path cache. 
           */
         {
       	  DataNode childDataNode= // Getting the child from parent.
       	  		((DataNode)parentObject).getChild( childIndexI ); 
 
-      	  if // Add child to path map 
+      	  if // Add child path to path map 
       	    ( childDataNode != null ) // if child is present.
 	      	  { // Calculating and adding to map the TreePath of this child.  
 		      	  DataNode parentDataNode= (DataNode)parentObject;
@@ -414,7 +423,7 @@ public class DataTreeModel
       private TreePath translatingToTreePath( DataNode targetDataNode )
 	      /* This method returns the TreePath of targetDataNode,
   	      or null if node can not be found in the DataNode tree.
-  	      It tries to return a value from nodeToPathHashMap first.
+  	      It tries to return a value cached in nodeToPathHashMap first.
   	      If that fails then tries to build the TreePath recursively
   	      from the targetDataNode and the translated TreePath of its parent.
   	      TreePaths that are built are cached in the nodeToPathHashMap.

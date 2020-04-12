@@ -111,7 +111,7 @@ public class TitledListViewer // adapted from TitledListViewer.
           		DataTreeModel theDataTreeModel
           		)
           	/* This method is the start and end of the initialization of 
-		      	  this JComponent/TreeAware and its TreeHelpe, 
+		      	  this JComponent/TreeAware and its TreeHelper, 
 		      	  not including what should be very simple construction. 
 		      	  */
             {
@@ -140,18 +140,23 @@ public class TitledListViewer // adapted from TitledListViewer.
     	        }
 
           public void setDataTreeModelV(DataTreeModel newDataTreeModel)
-            /* Sets new DataTreeModel.
-             * It also makes the present ListModel be a Listener of
-             * newDataTreeModel so the former reflects the latter.
-             * The JList should be made a Listener of the ListModel
-  		       * For a given instance this method will normally be called twice:
-  		       * * once with newDataTreeModel != null during initialization,
-  		       * * and once with newDataTreeModel == null during finalization,
-  		       * but it should be able to work with any null combination.
-             */
+            /* Sets a new DataTreeModel.  
+              This includes unregistering an old model, if any, first,
+              and if the JComponent is a TreeModelListener,
+              unregistering is as a listener with the old model, 
+              and registering it with the new one.
+
+              It also makes the present ListModel be a Listener of
+              newDataTreeModel so the former reflects the latter.
+              The JList should be made a Listener of the ListModel
+  		        For a given instance this method will normally be called twice:
+  		        * once with newDataTreeModel != null during initialization,
+  		        * and once with newDataTreeModel == null during finalization,
+  		        but it should be able to work with any null combination.
+              */
             { 
           		// appLogger.debug("TitledListViewer.setDataTreeModel(.) begins with "+theDataTreeModel);
-          		super.setDataTreeModelV( newDataTreeModel ); // Needed??
+          		super.setDataTreeModelV( newDataTreeModel ); // Let superclass do most work.
 
           	  theTreeListModel.setDataTreeModel( newDataTreeModel );
           	  // appLogger.debug("TitledListViewer.setDataTreeModel(.) ends with "+theDataTreeModel);
@@ -167,8 +172,6 @@ public class TitledListViewer // adapted from TitledListViewer.
 	    	{ // initializeHelpeeV(..).
 	  	  	{ // Final initialization.
 		        cachedJListBackgroundColor= Color.WHITE; 
-		            //// UIColor.inactiveStateColor;
-		          //// getBackground();  // Saving background for later use.
 		        setLayout( new BorderLayout() );
 		        
 		        titleJLabelInitializationV(); // Initializing titleJLabel.
@@ -187,17 +190,11 @@ public class TitledListViewer // adapted from TitledListViewer.
             theJList.getSelectionModel().
               addListSelectionListener(this);
 	  	  		}
-
-          { // Non-final initialization.
-          	// A listener registration that must be undone to prevent leak.
-            theDataTreeModel.  // For displaying changing title.
-              addTreeModelListener(this);
-            }
 	      	} // initializeHelpeeV(..).
 
   		public void finalizeHelpeeV( DataTreeModel theDataTreeModel )
 	  		{
-	      	// A previous listener registration is undone to prevent leak.
+	      	// A previous listener registration is undone now to prevent leak.
 	        theDataTreeModel.  // For displaying changing title.
 	          removeTreeModelListener(this); // Remove what was previously added.
 	  			

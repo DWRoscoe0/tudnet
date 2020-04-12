@@ -848,7 +848,9 @@ public class DagBrowserPanel
             TreeHelper.initializeHelperV and TreeHelper.finalizeHelperV().
             */
           {
-        		// appLogger.debug("DagBrowserPanel.replaceRightPanelContentWithV(.) begins.");
+        		// theAppLog.debug(
+            //   "DagBrowserPanel.replaceRightPanelContentWithV(.) begins with:"
+              //   + NL + "  " + inTreePath);
         	  TreeAware oldTreeAware=  // Saving  (alias of) present JComponent. 
         	  		dataTreeAware;
 
@@ -858,13 +860,17 @@ public class DagBrowserPanel
             dataTreeAware= // Calculating its new TreeAware alias.
               (TreeAware)dataJComponent;
 
+            // theAppLog.debug("DagBrowserPanel.replaceRightPanelContentWithV(.):"
+            //   + "initialize new JComponent.");
             dataTreeAware. // Initializing the new JComponent by calling
               getTreeHelper().initializeHelperV( // its helper's initializer.
-            		theTreePathListener, // using this panel's TreePathListener.
-            		this, // as a FocusListener.
-            		theDataTreeModel
+            		theTreePathListener, // using this panel's TreePathListener,
+            		this, // this as a FocusListener,
+            		theDataTreeModel // and the DataTreeModel.
                 );
 
+            // theAppLog.debug("DagBrowserPanel.replaceRightPanelContentWithV(.):"
+            //   + "replacing scroller with new JComponent and doing repaint().");
       	    { // Replacing scroller content with new JComponent. ?? factor? 
 	            dataJScrollPane.setViewportView(  // in the dataJScrollPane's viewport...
 	              dataJComponent  // ...set the DataJPanel for viewing.
@@ -874,11 +880,13 @@ public class DagBrowserPanel
 	            dataJComponent.repaint();  // make certain it's displayed.
       	      }
 
+          	// theAppLog.debug("DagBrowserPanel.replaceRightPanelContentWithV(.):"
+          	//   + "finalizing old JComponent.");
             if // Finalizing old scroller content
               ( oldTreeAware != null ) // if it exists, using
             	oldTreeAware.getTreeHelper().finalizeHelperV(); // its TreeHelper.
                 // This is done to prevent Listener leaks.
-            // appLogger.debug("DagBrowserPanel.replaceRightPanelContentWithV(.) ends.");
+            // theAppLog.debug("DagBrowserPanel.replaceRightPanelContentWithV(.) ends.");
             }
 
 

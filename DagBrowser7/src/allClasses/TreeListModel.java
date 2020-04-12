@@ -35,7 +35,20 @@ public class TreeListModel
 
 	  // Other instance variables.
 	  private DataTreeModel theDataTreeModel;  // Model of tree containing node.
-	  private int lastSizeI; // For implementing StructuralChange events.
+	  private int lastSizeI; /* Last known size of list.
+      This variable is used to save the size of the List so that
+      treeStructureChanged(..) will know how big an interval to use
+      when it calls fireContentsChanges(..).
+      Unfortunately it needs to be saved from every place where
+      the number of elements in the list might have changed.
+      The reason getSize() can not be used instead is because that returns
+      the size after the change had already happened.
+      
+      ///enh A more robust way of dealing with this problem might be to
+      create an array of nodes mirroring the child nodes from the TreeModel,
+      adjusting this array in response to change events from the TreeModel,
+      and use this array as the basis for this ListModel. 
+      */
 
     TreeListModel(  // Constructor.
     		DataNode theListDataNode, TreePath theTreePath
@@ -49,15 +62,16 @@ public class TreeListModel
     // Initialization/setter methods.
 
       public DataTreeModel setDataTreeModel(DataTreeModel newDataTreeModel)
-	      /* Sets new DataTreeModel.  
+	      /* This method sets a new DataTreeModel to be newDataTreeModel.
 	        This was added to help plug Listener leaks.
           If this ListModel is a TreeModelListener of the old DataTreeModel
           then it removes itself from its listener list.
           It adds itself to the listener list of the new DataTreeModel.
-	      	It returns the old DataTreeModel.
+          
+	      	This method returns the old DataTreeModel.
 	      	In normal use it will be called only twice:
-	      	* once with newDataTreeModel != null,
-	      	* and once with newDataTreeModel == null,
+	      	* once during initialization with newDataTreeModel != null,
+	      	* and once during finalization with newDataTreeModel == null,
 	      	but it should be able to work with any sequence.
           */
 	      {
@@ -102,9 +116,12 @@ public class TreeListModel
 
     /* Each of these TreeModelListener interface methods translates 
       a TreeModelListener method call with a TreeModelEvent into
-      a ListDataListener method call with a ListDataEvent,
+      one or more ListDataListener method calls with ListDataEvents,
       but only when the TreeModelEvent is about the subset of nodes
-      covered by this (Tree)ListModel.
+      covered by this TreeListModel.
+      The translation is one-to-many because
+      a TreeModelEvent contains an array of child indexes of interest,
+      but a ListDataEvent contains an interval of child indexes. 
       */
 
 	    public void treeNodesInserted(TreeModelEvent theTreeModelEvent)
@@ -118,7 +135,7 @@ public class TreeListModel
 	    	      	)
 	    	  	; // Doing nothing.
 	    	  	else
-	    	  	{ // Sending an equivalent ListModelEvent for each child.
+	    	  	{ // Sending an equivalent ListModelEvent for each child in array.
 	    	  		for (int childI: theTreeModelEvent.getChildIndices()) {
 	    	  			fireIntervalAdded( 
 		    	  				ListDataEvent.INTERVAL_ADDED,
@@ -141,7 +158,7 @@ public class TreeListModel
 	    	      	)
 	    	  	; // Doing nothing.
 	    	  	else
-	    	  	{ // Sending an equivalent ListModelEvent.
+            { // Sending an equivalent ListModelEvent for each child in array.
 	    	  		for (int childI: theTreeModelEvent.getChildIndices()) {
 	    	  			fireIntervalRemoved( 
 		    	  				ListDataEvent.INTERVAL_REMOVED,
@@ -164,7 +181,7 @@ public class TreeListModel
 	    	      	)
 	    	  	; // Doing nothing.
 	    	  	else
-	    	  	{ // Firing an equivalent ListModelEvent.
+            { // Sending an equivalent ListModelEvent for each child in array.
 	    	  		for (int childI: theTreeModelEvent.getChildIndices()) {
 	    	  			fireContentsChanged(
 		    	  				ListDataEvent.CONTENTS_CHANGED,
@@ -178,10 +195,11 @@ public class TreeListModel
 
 	    public void treeStructureChanged(TreeModelEvent theTreeModelEvent) 
 	      /* This method is implemented by calling fireContentsChanged(..)
-	        for the entire List interval. 
+	        for an interval which is the entire last known size of the List. 
 	        
-	        ///fix Implement by signaling removal of all elements,
-	         then inserting all new ones.
+	        Implementing this by signaling removal of all elements,
+	        then inserting all new ones would eliminate the need for lastSizeI
+	        because one would still need to know it to know how many to remove.
 	        */
 	      {
 		  		fireContentsChanged(
@@ -193,12 +211,6 @@ public class TreeListModel
 	     		}
 
 	    private void saveSizeV()
-	      /* This method is used to save the size of the List so that
-	        treeStructureChanged(..) will know how big an interval to use
-	        when it calls fireContentsChanges(..).
-	        Unfortunately it needs to be called from every place where
-	        the number of elements in the list might have changed. 
-	       	*/
 		    {
 		    	lastSizeI= getSize(); 
 		    	}

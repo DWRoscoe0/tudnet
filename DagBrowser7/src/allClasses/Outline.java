@@ -216,7 +216,6 @@ public class Outline
         Normally the root node is constructed with Outline( 0 ).
         */
       { // Outline(.)
-    		//// initializeV(
         super(
 	        NamedNonLeaf.temporaryNameString, 
           new DataNode[]{} // Initially empty List for lazy-loaded children.

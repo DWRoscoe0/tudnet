@@ -214,11 +214,6 @@ public class Unicaster
 	          doOnEntryV(); // Recursively activate all states that should be. 
 	          /// appLogger.info("run() machine activated, doing first display.");
         		theDataTreeModel.displayTreeModelChangesV(); // Display tree after arrival.
-        		/*  ////
-        		if // Reconnect if we were connected at shutdown.
-        		  (thePeersCursor.testB("wasConnected"))
-        		  connectToPeerV(); // Command state-machine to connect.
-            */  ////
 
 	      	  runLoop(); // Do actual input processing in a loop.
 
@@ -245,7 +240,7 @@ public class Unicaster
 		    
 		    Input message sources now include:
 		    * The EpiInputStream.  These are passed to the superclass state machine. 
-		      //// This is being changed so any leftover is sent as a MapEpiNode
+		      /// This is being changed so any leftover is sent as a MapEpiNode
 		      to the ConnectionManager.
 		    * The String queue.  These are passed to the superclass state machine.
 		    * the EpiNode queue.  

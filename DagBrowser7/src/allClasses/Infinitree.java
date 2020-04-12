@@ -1,7 +1,5 @@
 package allClasses;
 
-import javax.swing.JComponent;
-import javax.swing.tree.TreePath;
 
 public class Infinitree 
 
