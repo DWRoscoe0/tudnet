@@ -13,7 +13,6 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 import javax.swing.JPanel;
-import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import static allClasses.AppLog.theAppLog;
 
@@ -41,9 +40,9 @@ public class TextStreamViewer
       // static variables.
 
       // instance variables.
-
-        private DataTreeModel theDataTreeModel;
-        
+        private Border raisedEtchedBorder= // Common style used elsewhere.
+            BorderFactory.createEtchedBorder(EtchedBorder.RAISED);
+      
         private JLabel titleJLabel;  // Label with the title.
 
         private IJTextArea streamIJTextArea; // For viewing the stream text.
@@ -54,8 +53,7 @@ public class TextStreamViewer
 
       public TextStreamViewer(  // Constructor.
           TreePath theTreePath, 
-          DataTreeModel theDataTreeModel, 
-          String initialString 
+          DataTreeModel theDataTreeModel 
           )
         /* Constructs a TextStreamViewer.
           theTreePath is the TreePath associated with
@@ -66,60 +64,42 @@ public class TextStreamViewer
           */
         {
           theAppLog.debug("TextStreamViewer.TextStreamViewer(.) begins.");
-          this.theDataTreeModel= theDataTreeModel;
-          // streamIJTextArea= new IJTextArea(initialString);
-          streamIJTextArea= new IJTextArea("Type text will be moved to here\n");
-          inputIJTextArea= new IJTextArea("");
-          commonInitializationV( theTreePath, theDataTreeModel );
-          }
-
-
-      private void commonInitializationV( 
-          TreePath theTreePath, 
-          TreeModel theTreeModel
-          )
-        /* This grouping method creates and initializes the JTextArea.  
-          It was intended for use when there is more than one constructor.
-          */
-        {
           if ( theTreePath == null )  // prevent null TreePath.
-            theTreePath = new TreePath( 
-                NamedLeaf.makeNamedLeaf( "ERROR TreePath" )
-                );
-          aTreeHelper=  // construct helper class instance.
-            new TreeHelper(this, theDataTreeModel.getMetaRoot(), theTreePath);
+            theTreePath = new TreePath( NamedLeaf.makeNamedLeaf( "ERROR TreePath" ));
+
+          aTreeHelper= new TreeHelper(this, theDataTreeModel.getMetaRoot(), theTreePath);
+          addKeyListener(aTreeHelper);  // Make TreeHelper a KeyListeer.
 
           setLayout( new BorderLayout() );
 
-          doSubcomponentsV(); // Initialize and add the subcomponents.
-
-          { // Add listeners.
-            addKeyListener(aTreeHelper);  // Make TreeHelper the KeyListeer.
-            // addTreeModelListener( this ) is done elsewhere.
-            }
+          addJLabelV();
+          addStreamIJTextAreaV();
+          addInputIJTextAreaV();
           }
 
-      private void doSubcomponentsV() // Initializes and adds the subcomponents.
+      private void addJLabelV()
         {
-          Border raisedEtchedBorder=
-              BorderFactory.createEtchedBorder(EtchedBorder.RAISED);
-          
-          titleJLabel= new JLabel(
-            //"TEST-TITLE"
-            aTreeHelper.getWholeDataNode().getNameString( )
-            );
+          titleJLabel= new JLabel(aTreeHelper.getWholeDataNode().getNameString( ));
           titleJLabel.setOpaque( true );
           Font labelFont= titleJLabel.getFont();
           titleJLabel.setFont(labelFont.deriveFont( labelFont.getSize() * 1.5f) );
-          //titleJLabel.setAlignmentX( Component.CENTER_ALIGNMENT );
           titleJLabel.setHorizontalAlignment( SwingConstants.CENTER );
           titleJLabel.setBorder(raisedEtchedBorder);
           add(titleJLabel,BorderLayout.NORTH); // Adding it to top of main JPanel.
-    
+          }
+
+      private void addStreamIJTextAreaV()
+        {
+          streamIJTextArea= new IJTextArea("Typed text will be moved to here\n");
           streamIJTextArea.setBorder(raisedEtchedBorder);
+          streamIJTextArea.getCaret().setVisible(true); // Make viewer cursor visible.
           streamIJTextArea.setLineWrap(true);
           add(streamIJTextArea,BorderLayout.CENTER); // Adding to center.
-          
+          }
+      
+      private void addInputIJTextAreaV()
+        {
+          inputIJTextArea= new IJTextArea("");
           inputIJTextArea.getCaret().setVisible(true); // Make input cursor visible.
           inputIJTextArea.setBorder(raisedEtchedBorder);
           inputIJTextArea.setRows(2);
@@ -127,27 +107,29 @@ public class TextStreamViewer
           inputIJTextArea.setLineWrap(true);
           inputIJTextArea.setWrapStyleWord(true);
           inputIJTextArea.addKeyListener(new KeyListener(){
-            @Override
-            public void keyPressed(KeyEvent e){
-              if(e.getKeyCode() == KeyEvent.VK_ENTER){
-                streamIJTextArea.append(inputIJTextArea.getText());
-                streamIJTextArea.append("\n");
-                inputIJTextArea.setText("");
-                //// inputIJTextArea.setCaretPosition(0);
-                e.consume();
-                }
-            }
-
-            @Override
-            public void keyTyped(KeyEvent e) {
-            }
-
-            @Override
-            public void keyReleased(KeyEvent e) {
-            }
-        });          add(inputIJTextArea,BorderLayout.SOUTH); // Adding it at bottom.
-          }
+              @Override
+              public void keyPressed(KeyEvent e){
+                if(e.getKeyCode() == KeyEvent.VK_ENTER){
+                  streamIJTextArea.append(inputIJTextArea.getText());
+                  streamIJTextArea.append("\n");
+                  inputIJTextArea.setText("");
+                  //// inputIJTextArea.setCaretPosition(0);
+                  e.consume();
+                  }
+              }
       
+              @Override
+              public void keyTyped(KeyEvent e) {
+              }
+      
+              @Override
+              public void keyReleased(KeyEvent e) {
+              }
+            });
+          
+          add(inputIJTextArea,BorderLayout.SOUTH); // Adding it at bottom of JPanel.
+          }
+        
     // rendering methods.  to be added ??
 
     // TreeAware interface code for TreeHelper access.

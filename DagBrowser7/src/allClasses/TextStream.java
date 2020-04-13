@@ -61,8 +61,7 @@ public class TextStream
           JComponent resultJComponent= 
             new TextStreamViewer( 
               inTreePath, 
-              inDataTreeModel, 
-              getContentString() 
+              inDataTreeModel
               );
           return resultJComponent;  // return the final result.
           }
