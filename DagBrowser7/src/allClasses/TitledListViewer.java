@@ -30,15 +30,11 @@ import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreePath;
 
 
-public class TitledListViewer // adapted from TitledListViewer.
+public class TitledListViewer
 
   extends JPanel
- 
-  implements 
-    ListSelectionListener
-    , FocusListener
-    , TreeAware
-    , TreeModelListener
+  
+  implements ListSelectionListener, FocusListener, TreeAware, TreeModelListener
   
   /* This class was developed from, and is intended to replace, 
     the ListViewer class.
@@ -54,18 +50,106 @@ public class TitledListViewer // adapted from TitledListViewer.
     a static or intermediate base class that handles common operations.
     */
     
-  { // TitledListViewer
+  { // class TitledListViewer
+
+    // interface TreeAware support code for TreeHelper access.
   
-    // variables, most of them.
+      public TreeHelper theTreeHelper;
+  
+      public TreeHelper getTreeHelper() { return theTreeHelper; }
+    
+      class MyTreeHelper  // Customized TreeHelper subclass.
+    
+        extends TreeHelper 
+    
+        {
+          MyTreeHelper(  // Constructor.
+              JComponent inOwningJComponent, 
+              MetaRoot theMetaRoot,
+              TreePath inTreePath
+              )
+            {
+              super(inOwningJComponent, theMetaRoot, inTreePath);
+              }
+    
+          public void initializeHelperV( 
+              TreePathListener theTreePathListener,
+              FocusListener theFocusListener,
+              DataTreeModel theDataTreeModel
+              )
+            {
+              // appLogger.debug("TitledListViewer.MyTreeHelper.initializeHelperV(.) begins");
+  
+              initializeComponentV(theDataTreeModel);
+  
+              super.initializeHelperV( // Use base TreeHelper to link the common listeners.
+                  theTreePathListener,
+                  theFocusListener,
+                  theDataTreeModel
+                  );
+  
+              theJList.addKeyListener(theTreeHelper);
+              theJList.addMouseListener(theTreeHelper);
+              theJList.addFocusListener(theTreeHelper);
+              theJList.addFocusListener((TitledListViewer)owningJComponent); // For kludgy Java bug fix?
+              owningJComponent.addFocusListener(
+                  (FocusListener)owningJComponent);
+                  //// For kludgy Java bug fix.
 
-      private JLabel titleJLabel;  // Label with the title.
+              // appLogger.debug("TitledListViewer.MyTreeHelper.initializeHelperV(.) ends.");
+              }
+  
+          /*  ////
+          public void initializeHelpeeV( DataTreeModel theDataTreeModel) // Useful code.
+            /* This method initializes the owning JComponent/TreeAware, 
+              aka Helpee.  It is called by TreeHelper.
+              Final initialization is followed by non-final initialization.
+              */
+            /*  ////
+            { // initializeHelpeeV(..).
+              { // Final initialization.
+                cachedJListBackgroundColor= getBackground();  // Saving background for later use.
+                setLayout( new BorderLayout() );
+                
+                titleJLabelInitializationV(); // Initializing titleJLabel.
+      
+                theJListInitializationV( theDataTreeModel );
+                
+                // Final listener registrations.
+                theTreeHelper.addTreePathListener(   // Listen for TreePath changes.
+                    theTreePathListener
+                    );
+                theJList.addKeyListener(theTreeHelper);
+                theJList.addMouseListener(theTreeHelper);
+                theJList.addFocusListener(theTreeHelper);
+                theJList.addFocusListener(this);  // For kludgy Java bug fix.
+                addFocusListener(this);  // For kludgy Java bug fix.
+                theJList.getSelectionModel().
+                  addListSelectionListener(this);
+                }
+             */  ////
+  
+          public void setDataTreeModelV(DataTreeModel newDataTreeModel)
+            /* This method does what its base class version does, and something else.
+            
+              It also makes the present ListModel be a Listener of
+              newDataTreeModel so the JList component can use
+              the children of the DataNode being viewed as its data source.
+              */
+            { 
+              // appLogger.debug("TitledListViewer.setDataTreeModel(.) begins with "+theDataTreeModel);
+  
+              super.setDataTreeModelV( newDataTreeModel ); // Let superclass do its work.
+  
+              theTreeListModel.setDataTreeModelV( // Link JList to tree by linking 
+                  newDataTreeModel ); // to the TreeModel.
+              
+              // appLogger.debug("TitledListViewer.setDataTreeModel(.) ends with "+theDataTreeModel);
+              }
+    
+          } // MyTreeHelper
 
-      private JList<DataNode> theJList;  // Component with the content.
-      private TreeListModel theTreeListModel;  // Model with the content.
-
-      private Color cachedJListBackgroundColor;
-
-    // constructor and constructed-related methods.
+    // constructor, initialization and finalization methods.
 
       public TitledListViewer(  // Constructor.
           TreePath inTreePath,
@@ -80,7 +164,7 @@ public class TitledListViewer // adapted from TitledListViewer.
           super();   // Constructing the superclass JPanel.
 
           { // Prepare the helper object.
-            aTreeHelper=  // Construct helper object to be
+            theTreeHelper=  // Construct helper object to be
               new MyTreeHelper(  // an instance of my customized TreeHelper.
                 this, theDataTreeModel.getMetaRoot(), inTreePath 
                 );  // Note, subject not set yet.
@@ -90,116 +174,57 @@ public class TitledListViewer // adapted from TitledListViewer.
 
           } // TitledListViewer(.)
 
-      class MyTreeHelper  // TreeHelper customization subclass.
-
-        extends TreeHelper 
-
+      public void buildAndAddComponentsV()
+        /* This method does part of the initialization of this TreeAware JComponent,
+          basically the UI structure of it.
+          */
         {
+          cachedJListBackgroundColor= Color.WHITE;
 
-          MyTreeHelper(  // Constructor.
-              JComponent inOwningJComponent, 
-              MetaRoot theMetaRoot,
-              TreePath inTreePath
-              )
-            {
-              super(inOwningJComponent, theMetaRoot, inTreePath);
-              }
+          setLayout( new BorderLayout() );
 
-          public void initializeHelperV( 
-          		TreePathListener theTreePathListener,
-          		FocusListener theFocusListener,
-          		DataTreeModel theDataTreeModel
-          		)
-          	/* This method is the start and end of the initialization of 
-		      	  this JComponent/TreeAware and its TreeHelper, 
-		      	  not including what should be very simple construction. 
-		      	  */
-            {
-          		// appLogger.debug("TitledListViewer.MyTreeHelper.initializeHelperV(.) begins");
-        	    initializeHelpeeV( theDataTreeModel );
+          buildAndAddJLabelV(); // Initializing titleJLabel.
 
-            	super.initializeHelperV( // This links the common listeners.
-	          		theTreePathListener,
-	          		theFocusListener,
-	          		theDataTreeModel
-	          		);
-            	
-            	// Non-final settings.
-    		      setTitleTextV();
-              setJListSelection();
-              setJListScrollState();
-              // appLogger.debug("TitledListViewer.MyTreeHelper.initializeHelperV(.) ends.");
-            	}
-            	  
-          public void finalizeHelperV() 
-    	      {
-          		// appLogger.debug("TitledListViewer.MyTreeHelper.finalizeHelperV(.) begins.");
-          		finalizeHelpeeV( theDataTreeModel );
-        			super.finalizeHelperV();
-        			// appLogger.debug("TitledListViewer.MyTreeHelper.finalizeHelperV(.) ends.");
-    	        }
+          buildAndAddJListV();
+          }
+      
+      private void initializeComponentV(DataTreeModel theDataTreeModel)
+        /* This method does most of the JComponent initialization.
+          It is called by the MyTreeHelper.initializeV(..).
+          The little initialization that remains is done by TreeHelper.
+          */
+        {
+          buildAndAddComponentsV();
+         
+          buildAndLinkDataModelsV(theDataTreeModel);
 
-          public void setDataTreeModelV(DataTreeModel newDataTreeModel)
-            /* Sets a new DataTreeModel.  
-              This includes unregistering an old model, if any, first,
-              and if the JComponent is a TreeModelListener,
-              unregistering is as a listener with the old model, 
-              and registering it with the new one.
+          theJList.getSelectionModel().addListSelectionListener(this);
 
-              It also makes the present ListModel be a Listener of
-              newDataTreeModel so the former reflects the latter.
-              The JList should be made a Listener of the ListModel
-  		        For a given instance this method will normally be called twice:
-  		        * once with newDataTreeModel != null during initialization,
-  		        * and once with newDataTreeModel == null during finalization,
-  		        but it should be able to work with any null combination.
-              */
-            { 
-          		// appLogger.debug("TitledListViewer.setDataTreeModel(.) begins with "+theDataTreeModel);
-          		super.setDataTreeModelV( newDataTreeModel ); // Let superclass do most work.
+          ////// THESE v-2-THINGS-^ WHEN REVERSED CAUSES EXCEPTION!
+  
+          // Non-final settings.
+          setTitleTextV();
+          setJListSelection();
+          setJListScrollState();
+  
+        }
+  
+      private void buildAndLinkDataModelsV(DataTreeModel theDataTreeModel)
+        /* This method links the data models to the JList.  */
+        {
+          theTreeListModel= // Create ListModel using tree coordinates. 
+            new TreeListModel(
+              theTreeHelper.getWholeDataNode( ),
+              theTreeHelper.getWholeTreePath( )
+              );
+  
+          theJList.setModel( theTreeListModel ); // Link ListModel to the JList.
+          
+          theTreeListModel.setDataTreeModelV( // Link TreeModel to ListModel. 
+              theDataTreeModel );
+          }
 
-          	  theTreeListModel.setDataTreeModel( newDataTreeModel );
-          	  // appLogger.debug("TitledListViewer.setDataTreeModel(.) ends with "+theDataTreeModel);
-          	  }
-
-          } // MyTreeHelper
-
-  	  public void initializeHelpeeV( DataTreeModel theDataTreeModel)
-  	    /* This method initializes the owning JComponent/TreeAware, 
-  	      aka Helpee.  It is called by TreeHelper.
-  	      Final initialization is followed by non-final initialization.
-  	      */
-	    	{ // initializeHelpeeV(..).
-	  	  	{ // Final initialization.
-		        cachedJListBackgroundColor= Color.WHITE; 
-		        setLayout( new BorderLayout() );
-		        
-		        titleJLabelInitializationV(); // Initializing titleJLabel.
-	
-		      	theJListInitializationV( theDataTreeModel );
-		      	
-		      	// Final listener registrations.
-            aTreeHelper.addTreePathListener(   // Listen for TreePath changes.
-                theTreePathListener
-                );
-            theJList.addKeyListener(aTreeHelper);
-            theJList.addMouseListener(aTreeHelper);
-            theJList.addFocusListener(aTreeHelper);
-            theJList.addFocusListener(this);  // For kludgy Java bug fix.
-            addFocusListener(this);  // For kludgy Java bug fix.
-            theJList.getSelectionModel().
-              addListSelectionListener(this);
-	  	  		}
-	      	} // initializeHelpeeV(..).
-
-  		public void finalizeHelpeeV( DataTreeModel theDataTreeModel )
-	  		{
-  		    // The only thing that was here was de-registration of
-  		    // this as a TreeModelListener, but now that is done by
-  		    // the TreeHelper.
-	  		  }
-  		
-      public void titleJLabelInitializationV()
+      public void buildAndAddJLabelV()
 	      {
 		      titleJLabel= new JLabel();
 		      titleJLabel.setOpaque( true );
@@ -212,25 +237,15 @@ public class TitledListViewer // adapted from TitledListViewer.
 		      add(titleJLabel,BorderLayout.NORTH); // Adding it to main JPanel.
 	      	}
 
-      private void theJListInitializationV( DataTreeModel theDataTreeModel )
-        /* This grouping method creates and initializes the JList.  
-          */
-        { // theJListInitializationV( )
+      private void buildAndAddJListV()
+        {
       		theJList= new JList<DataNode>();  // Construct JList.
-	        add(theJList,BorderLayout.CENTER); // Adding it to main JPanel.
-          { // Set ListModel for the proper type of elements.
-            theTreeListModel= new TreeListModel(
-          		aTreeHelper.getWholeDataNode( ),
-          		aTreeHelper.getWholeTreePath( )
-              );
-          	theTreeListModel.setDataTreeModel( theDataTreeModel );
-          	theJList.setModel( theTreeListModel );  // Define its ListModel.
-            } // Set ListModel for the proper type of elements.
           theJList.setSelectionMode( ListSelectionModel.SINGLE_SELECTION );
           theJList.setCellRenderer(   // Setting custom rendering.
             theTitledListCellRenderer 
             );
-          } // theJListInitializationV( )
+          add(theJList,BorderLayout.CENTER); // Adding it to main JPanel.
+          }
 
 	    private void setTitleTextV() // Sets text in titleJLabel.
 	      /* This method is called during initialization and DataNode change
@@ -238,7 +253,7 @@ public class TitledListViewer // adapted from TitledListViewer.
 	       	*/
 		   	{
 	        titleJLabel.setText(
-	        		aTreeHelper.getWholeDataNode().getLineSummaryString( )
+	        		theTreeHelper.getWholeDataNode().getLineSummaryString( )
 	        		);
 		   	  }
 
@@ -252,6 +267,7 @@ public class TitledListViewer // adapted from TitledListViewer.
           }
       ?? */
 
+
       private void setJListSelection()
         /* This grouping method updates the JList selection state
           from the selection-related instance variables.
@@ -261,8 +277,8 @@ public class TitledListViewer // adapted from TitledListViewer.
           external TreeSelectionListeners-s. */
         { // setJListSelection()
           int IndexI= // try to get index of selected child.
-            aTreeHelper.getWholeDataNode( ).getIndexOfChild( 
-              aTreeHelper.getPartDataNode() 
+            theTreeHelper.getWholeDataNode( ).getIndexOfChild( 
+              theTreeHelper.getPartDataNode() 
               );
           if ( IndexI < 0 )  // force index to 0 if child not found.
             IndexI= 0;
@@ -270,6 +286,7 @@ public class TitledListViewer // adapted from TitledListViewer.
             IndexI, IndexI 
             );
           }  // setJListSelection()
+      
 
       private void selectRowV(int IndexI)
         {
@@ -295,47 +312,48 @@ public class TitledListViewer // adapted from TitledListViewer.
             );
           }  // setJListScrollState()
 
-      /* TreeModelListener methods. 
-        Most do nothing but are required by the TreeModelListener interface.
-        Only treeNodesInserted(..) does anything.
-        It updates the displayed title if the TreePath is of this List.
-        Changes to the List itself are handled by the ListModel,
-        which is itself also a TreeModelListener.
-        */
+    /* TreeModelListener methods. 
+      Most do nothing but are required by the TreeModelListener interface.
+      Only treeNodesChanged(..) does anything.
+      It updates the displayed title if the TreePath is of this List.
+      Changes to the List itself are handled by the ListModel,
+      which is itself also a TreeModelListener.
+      */
 
-		    public void treeStructureChanged(TreeModelEvent theTreeModelEvent)
-		      { 
-		    		//appLogger.debug("TitledListViewer.treeStructureChanged()" + NL + "  "+theTreeModelEvent);
-			    	}
+	    public void treeStructureChanged(TreeModelEvent theTreeModelEvent)
+	      { 
+	    		//appLogger.debug("TitledListViewer.treeStructureChanged()" + NL + "  "+theTreeModelEvent);
+		    	}
 
-		    public void treeNodesRemoved(TreeModelEvent theTreeModelEvent) 
-		      { 
-		    		//appLogger.debug("TitledListViewer.treeNodesRemoved()" + NL + "  "+theTreeModelEvent);
-		      	}
-		
-		    public void treeNodesInserted(TreeModelEvent theTreeModelEvent) 
-		      { 
-		    		//appLogger.debug("TitledListViewer.treeNodesInserted()" + NL + "  "+theTreeModelEvent);
-		      	}
-		
-		    public void treeNodesChanged(TreeModelEvent theTreeModelEvent) 
-		      { 
-		        //appLogger.debug("TitledListViewer.treeNodesChanged()" + NL + "  "+theTreeModelEvent);
-		    	  if ( // Ignoring event if parent TreePath doesn't match our List's. 
-	    	      	!aTreeHelper.getWholeTreePath().getParentPath().equals(
-	    	      			theTreeModelEvent.getTreePath()
-	    	      			)
-	    	      	)
-  	    	  	; // Ignoring.
-	    	  	else
-	    	  		for // Updating title text if our List matches a child. 
-	    	  		  (Object childObject: theTreeModelEvent.getChildren()) 
-	    	  			if ( childObject == aTreeHelper.getWholeDataNode())
-	  				    	setTitleTextV(); // Updating title text.
-		      	}
+	    public void treeNodesRemoved(TreeModelEvent theTreeModelEvent) 
+	      { 
+	    		//appLogger.debug("TitledListViewer.treeNodesRemoved()" + NL + "  "+theTreeModelEvent);
+	      	}
+	
+	    public void treeNodesInserted(TreeModelEvent theTreeModelEvent) 
+	      { 
+	    		//appLogger.debug("TitledListViewer.treeNodesInserted()" + NL + "  "+theTreeModelEvent);
+	      	}
+	
+	    public void treeNodesChanged(TreeModelEvent theTreeModelEvent) 
+	      { 
+	        //appLogger.debug("TitledListViewer.treeNodesChanged()" + NL + "  "+theTreeModelEvent);
+	    	  if ( // Ignoring event if parent TreePath doesn't match our List's. 
+    	      	!theTreeHelper.getWholeTreePath().getParentPath().equals(
+    	      			theTreeModelEvent.getTreePath()
+    	      			)
+    	      	)
+	    	  	; // Ignoring.
+    	  	else
+    	  		for // Updating title text if our List matches a child. 
+    	  		  (Object childObject: theTreeModelEvent.getChildren()) 
+    	  			if ( childObject == theTreeHelper.getWholeDataNode())
+  				    	setTitleTextV(); // Updating title text.
+	      	}
+
 
     /* ListSelectionListener interface method, 
-     * for processing ListSelectionEvent-s from the List's SelectionModel.
+      for processing ListSelectionEvent-s from the List's SelectionModel.
       */
 
       public void valueChanged(ListSelectionEvent TheListSelectionEvent) 
@@ -353,15 +371,16 @@ public class TitledListViewer // adapted from TitledListViewer.
           if // Process the selection if...
             ( //...the selection index is legal.
               (IndexI >= 0) && 
-              (IndexI < aTreeHelper.getWholeDataNode( ).getChildCount( ))
+              (IndexI < theTreeHelper.getWholeDataNode( ).getChildCount( ))
               )
             { // Process the selection.
               DataNode newSelectionDataNode=  // Get selected DataNode...
-                aTreeHelper.getWholeDataNode( ).
+                theTreeHelper.getWholeDataNode( ).
                   getChild(IndexI);  // ...which is child at IndexI.
-              aTreeHelper.setPartDataNodeV( newSelectionDataNode );
+              theTreeHelper.setPartDataNodeV( newSelectionDataNode );
             } // Process the selection.
           } // void valueChanged(ListSelectionEvent TheListSelectionEvent)
+
     
     /* FocusListener interface methods.
       This was created initially to fix JTable cell-invalidate/repaint bug.
@@ -375,8 +394,8 @@ public class TitledListViewer // adapted from TitledListViewer.
           It also fixed a repaint bug.
          */
         {
-    			Misc.requestFocusV(theJList);
-      	  setJListScrollState();
+          setJListScrollState();
+    			Misc.requestFocusAndLogV(theJList);
           repaint();  // bug fix Kluge to display cell in correct color.  
           }
     
@@ -388,39 +407,31 @@ public class TitledListViewer // adapted from TitledListViewer.
           repaint();  // bug fix Kluge to display cell in correct color.  
           }
 
-    // interface TreeAware code for TreeHelper access.
+    private class MyTreePathListener
 
-			public TreeHelper aTreeHelper;
+      extends TreePathAdapter
 
-			public TreeHelper getTreeHelper() { return aTreeHelper; }
+      /* TreePathListener code, for when TreePathEvent-s
+        happen in either the left or right panel.
+        This was based on TreeSelectionListener code.
+        For a while it used TreeSelectionEvent-s for 
+        passing TreePath data.
+        */
+      
+      { // MyTreePathListener
+        public void setPartTreePathV( TreePathEvent inTreePathEvent )
+          /* This TreePathListener method translates 
+            inTreePathEvent TreeHelper tree path into 
+            an internal JList selection.
+            It ignores any paths with which it cannot deal.
+            */
+          {
+            selectRowV(   // Select row appropriate to...
+              theTreeHelper.getPartIndexI() // the selected Part index.
+              );  // Note, this might trigger ListSelectionEvent.
+            }
 
-    /* TreePathListener code, for when TreePathEvent-s
-      happen in either the left or right panel.
-      This was based on TreeSelectionListener code.
-      For a while it used TreeSelectionEvent-s for 
-      passing TreePath data.
-      */
-
-      private TreePathListener theTreePathListener= 
-        new MyTreePathListener();
-
-      private class MyTreePathListener
-        extends TreePathAdapter
-        { // MyTreePathListener
-
-          public void setPartTreePathV( TreePathEvent inTreePathEvent )
-            /* This TreePathListener method translates 
-              inTreePathEvent TreeHelper tree path into 
-              an internal JList selection.
-              It ignores any paths with which it cannot deal.
-              */
-            {
-              selectRowV(   // Select row appropriate to...
-                aTreeHelper.getPartIndexI() // index.
-                );  // Note, this might trigger ListSelectionEvent.
-              }
-
-          } // MyTreePathListener
+        } // MyTreePathListener
 
     // List cell rendering.
 
@@ -457,5 +468,14 @@ public class TitledListViewer // adapted from TitledListViewer.
               }
 
         } // class TitledListCellRendererOfDataNodes    
+    
+    // variables, most of them.
+
+      private JLabel titleJLabel;  // Label with the title.
+
+      private JList<DataNode> theJList; // Component to display content.
+      private TreeListModel theTreeListModel; // Model with the content.
+
+      private Color cachedJListBackgroundColor;
 
     } // TitledListViewer

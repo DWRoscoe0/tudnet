@@ -1,6 +1,6 @@
 package allClasses;
 
-//import static allClasses.Globals.appLogger;
+import static allClasses.AppLog.theAppLog;
 
 import javax.swing.AbstractListModel;
 import javax.swing.event.ListDataEvent;
@@ -35,10 +35,10 @@ public class TreeListModel
 
 	  // Other instance variables.
 	  private DataTreeModel theDataTreeModel;  // Model of tree containing node.
-	  private int lastSizeI; /* Last known size of list.
+	  private int lastSizeI= 0; /* Last known size of list.
       This variable is used to save the size of the List so that
       treeStructureChanged(..) will know how big an interval to use
-      when it calls fireContentsChanges(..).
+      when it calls fireContentsChanged(..).
       Unfortunately it needs to be saved from every place where
       the number of elements in the list might have changed.
       The reason getSize() can not be used instead is because that returns
@@ -56,40 +56,55 @@ public class TreeListModel
       {
 	      this.theListDataNode= theListDataNode;
 	      this.theTreePath= theTreePath;
-	  		saveSizeV();
+	  		//// saveSizeV(); // not needed when constructed.
         }
 
     // Initialization/setter methods.
 
-      public DataTreeModel setDataTreeModel(DataTreeModel newDataTreeModel)
-	      /* This method sets a new DataTreeModel to be newDataTreeModel.
-	        This was added to help plug Listener leaks.
-          If this ListModel is a TreeModelListener of the old DataTreeModel
-          then it removes itself from its listener list.
-          It adds itself to the listener list of the new DataTreeModel.
-          
-	      	This method returns the old DataTreeModel.
-	      	In normal use it will be called only twice:
-	      	* once during initialization with newDataTreeModel != null,
-	      	* and once during finalization with newDataTreeModel == null,
-	      	but it should be able to work with any sequence.
+      public void setDataTreeModelV(DataTreeModel newDataTreeModel)
+        /* This method is similar to TreeHelper's method of the same name. 
+          It sets a new DataTreeModel by storing it in a TreeHelper variable,
+          and it adjusts TreeModelListener registrations.
+          The purpose is to allow this ListModel to use tree node children
+          as the source of its data, and to know when it changes.
+    
+          First it adjusts TreeModelListener registrations.
+          If the present DataTreeModel is not null,
+          then this TreeListModel is a listener of that model,
+          so it unregisters it.
+          Next, if newDataTreeModel is not null,
+          then this TreeListModel is registered as 
+          a listener of the newDataTreeModel.
+    
+          After listener registrations are done, the newDataTreeModel 
+          is stored in a variable as the present DataTreeModel.
+    
+          In normal usage this method should be called only twice:
+          * once with newDataTreeModel != null, during initialization,
+          * and once with newDataTreeModel == null during finalization,
+            mainly to prevent TreeModelListener memory leaks.
+          However it should be able to be called any number of times
+          with any of 4 null/not-null combinations.
           */
 	      {
-      	  DataTreeModel oldDataTreeModel= this.theDataTreeModel;
+      	  DataTreeModel oldDataTreeModel= this.theDataTreeModel; // Save old model.
+          this.theDataTreeModel= newDataTreeModel; // Store new model.
 
-      	  if ( oldDataTreeModel != null )
-	          oldDataTreeModel.removeTreeModelListener( this ); 
-
-	    	  if ( newDataTreeModel != null )
+          // Adjust listener registrations.
+          if ( oldDataTreeModel != null ) {
+	          oldDataTreeModel.removeTreeModelListener( this );
+	          saveSizeV(0); // Reset to zero the last saved size because model removed.
+      	    }
+	    	  if ( newDataTreeModel != null ) {
 	    	  	newDataTreeModel.addTreeModelListener( this );
-
-	    	  this.theDataTreeModel= newDataTreeModel;
-
-		  		saveSizeV();
-	        return oldDataTreeModel;
+	    	  	saveSizeV(); // Update last size from new model.
+	    	  	}
 	    	  }
 
-    // ListModel interface methods.
+    /* Each of these ListModel interface methods translates
+      into calls to TreeModel interface methods using the context of
+      the present tree node children as list elements.
+      */
 	    
 	    @Override
 	    public DataNode getElementAt(int indexI)
@@ -107,7 +122,7 @@ public class TreeListModel
 	      {
 	    	  if ( theDataTreeModel == null )
 		    	  {
-		    		  //appLogger.debug("TreeListModel.getSize(): null pointer!");
+		    		  theAppLog.debug("TreeListModel.getSize(): null TreeModel!");
 		    		  return 0;
 		    	    }
 		    	  else
@@ -117,8 +132,8 @@ public class TreeListModel
     /* Each of these TreeModelListener interface methods translates 
       a TreeModelListener method call with a TreeModelEvent into
       one or more ListDataListener method calls with ListDataEvents,
-      but only when the TreeModelEvent is about the subset of nodes
-      covered by this TreeListModel.
+      but only when the TreeModelEvent is about 
+      the subset of child nodes covered by this TreeListModel.
       The translation is one-to-many because
       a TreeModelEvent contains an array of child indexes of interest,
       but a ListDataEvent contains an interval of child indexes. 
@@ -210,9 +225,14 @@ public class TreeListModel
 		  		saveSizeV();
 	     		}
 
-	    private void saveSizeV()
-		    {
-		    	lastSizeI= getSize(); 
-		    	}
+	  // Miscellaneous.
+
+      private void saveSizeV()
+        /* Saves last known list size.  See lastSizeI for more information.  */
+        { saveSizeV( getSize() ); }
+
+      private void saveSizeV(int sizeI)
+        /* Saves sizeI as last known list size.  See lastSizeI for more information.  */
+        { lastSizeI= sizeI; }
 
     } // class TreeListModel

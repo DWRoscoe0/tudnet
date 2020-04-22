@@ -103,41 +103,79 @@ public class Misc
           return ResultString;
           }
 
-  		public static void requestFocusV(Component theComponent)
+  		public static void requestFocusAndLogV(
+  		    Component theComponent)
   		  /* This is a logging wrapper for requestFocusInWindow(),
   		    added mainly for debugging.  It logs when
   		    Component.requestFocusInWindow() returns false,
   		    unless the focus owner is null before Component.requestFocusInWindow()
   		    is called, which in this case a false is returned,
   		    even though the call probably will succeed.
+  		    ///fix? Maybe another case should be checked, whether 
+  		      the old and new components are the same.  
+  		      This seems to be associated with failure. 
   		    */
 	  		{
-  			  Component focusedComponent= // Getting focus owner.
-            KeyboardFocusManager.
-              getCurrentKeyboardFocusManager().getFocusOwner();
-		  	  boolean successB= theComponent.requestFocusInWindow();
-		  		if (  // Logging any definite focus failures,
-		  				!successB // when request fails,
-		  				&& focusedComponent!=null // and there was a focus owner.
-		  				)
-		    		{ // Reporting failure and possible causes.
+  		    toReturn: {
+    			  Component focusedComponent= // Getting focus owner.
+              KeyboardFocusManager.
+                getCurrentKeyboardFocusManager().getFocusOwner();
+            theAppLog.debug("Misc.requestFocusAndLogV() before request" 
+              +Misc.componentFocusInfoString(
+                NL+"  "+"owner:",focusedComponent)
+              +Misc.componentFocusInfoString(
+                NL+"  requesterowner:",focusedComponent) );
+
+  		  	  boolean successB= theComponent.requestFocusInWindow();
+
+            theAppLog.debug("Misc.requestFocusAndLogV() after request"
+                +", success="+successB
+                +Misc.componentFocusInfoString(
+                  NL+"  "+"owner:",focusedComponent)
+                +Misc.componentFocusInfoString(
+                  NL+"  requesterowner:",focusedComponent) );
+  		  	  if (successB) break toReturn; // Exit if success.
+            if (focusedComponent == null) // If no previous focus owner,
+              ; ////  break toReturn; // exit.
+            if (focusedComponent == theComponent) // Same components.
+              { theAppLog.debug( Misc.componentFocusInfoString(
+                   "Misc.requestFocusAndLogV(), both components are ",
+                   theComponent));
+                break toReturn; // This may be considered success.
+                }
+		    		{ // Reporting failure and possible clues about the causes.
 							theAppLog.warning(
-									"Misc.requestFocusV() of "+Misc.componentInfoString(theComponent) 
-					    		+ NL + "  previous focus-owner="+Misc.componentInfoString(focusedComponent)
+									"Misc.requestFocusAndLogV() of "+Misc.componentInfoString(theComponent) 
+					    		+ NL + "  focus-owner="+Misc.componentInfoString(focusedComponent)
 									+ " requestFocusInWindow() successB=" + successB
 									);
 		    			while ( theComponent != null ) {
 		      			theAppLog.debug(
-		    		    		" ancestor: visible="+theComponent.isVisible() 
-		    		    		+" focusable="+theComponent.isFocusable() 
-		    		    		+" enabled="+theComponent.isEnabled()
-                    +" "+Misc.componentInfoString(theComponent)
-		      					);
+		      			    Misc.componentFocusInfoString(
+		      			        "Misc.requestFocusAndLogV(): ",
+		      			        theComponent
+		      			        ));
 		      			theComponent= theComponent.getParent();
 		    				}
 		    		  }
+  		      } // toReturn:
 	  			}
 
+  		private static String componentFocusInfoString(
+  		    String headerString, Component theComponent)
+    		{
+          return headerString +
+            (
+              (theComponent == null)
+              ? " null"
+              : " visible="+theComponent.isVisible() 
+                +" focusable="+theComponent.isFocusable() 
+                +" enabled="+theComponent.isEnabled()
+                +" focus-owner="+(theComponent == KeyboardFocusManager.
+                  getCurrentKeyboardFocusManager().getFocusOwner())
+                +" "+Misc.componentInfoString(theComponent)
+              );
+      		}
   	  
       // Exception handling and logging.
 

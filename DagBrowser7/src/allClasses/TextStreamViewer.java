@@ -8,6 +8,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
 import javax.swing.BorderFactory;
+import javax.swing.JComponent;
 import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
 import javax.swing.JLabel;
@@ -67,8 +68,8 @@ public class TextStreamViewer
           if ( theTreePath == null )  // prevent null TreePath.
             theTreePath = new TreePath( NamedLeaf.makeNamedLeaf( "ERROR TreePath" ));
 
-          aTreeHelper= new TreeHelper(this, theDataTreeModel.getMetaRoot(), theTreePath);
-          addKeyListener(aTreeHelper);  // Make TreeHelper a KeyListeer.
+          theTreeHelper= // Create and store customized TreeHelper. 
+              new MyTreeHelper(this, theDataTreeModel.getMetaRoot(), theTreePath);
 
           setLayout( new BorderLayout() );
 
@@ -79,7 +80,7 @@ public class TextStreamViewer
 
       private void addJLabelV()
         {
-          titleJLabel= new JLabel(aTreeHelper.getWholeDataNode().getNameString( ));
+          titleJLabel= new JLabel(theTreeHelper.getWholeDataNode().getNameString( ));
           titleJLabel.setOpaque( true );
           Font labelFont= titleJLabel.getFont();
           titleJLabel.setFont(labelFont.deriveFont( labelFont.getSize() * 1.5f) );
@@ -94,6 +95,7 @@ public class TextStreamViewer
           streamIJTextArea.setBorder(raisedEtchedBorder);
           streamIJTextArea.getCaret().setVisible(true); // Make viewer cursor visible.
           streamIJTextArea.setLineWrap(true);
+          streamIJTextArea.setWrapStyleWord(true);
           add(streamIJTextArea,BorderLayout.CENTER); // Adding to center.
           }
       
@@ -108,13 +110,12 @@ public class TextStreamViewer
           inputIJTextArea.setWrapStyleWord(true);
           inputIJTextArea.addKeyListener(new KeyListener(){
               @Override
-              public void keyPressed(KeyEvent e){
-                if(e.getKeyCode() == KeyEvent.VK_ENTER){
+              public void keyPressed(KeyEvent theKeyEvent){
+                if(theKeyEvent.getKeyCode() == KeyEvent.VK_ENTER){
                   streamIJTextArea.append(inputIJTextArea.getText());
                   streamIJTextArea.append("\n");
                   inputIJTextArea.setText("");
-                  //// inputIJTextArea.setCaretPosition(0);
-                  e.consume();
+                  theKeyEvent.consume();
                   }
               }
       
@@ -134,8 +135,25 @@ public class TextStreamViewer
 
     // TreeAware interface code for TreeHelper access.
 
-      public TreeHelper aTreeHelper;
+      public TreeHelper theTreeHelper;
 
-      public TreeHelper getTreeHelper() { return aTreeHelper; }
+      public TreeHelper getTreeHelper() { return theTreeHelper; }
+
+      class MyTreeHelper  // TreeHelper customization subclass.
+
+        extends TreeHelper 
+
+        {
+
+          MyTreeHelper(  // Constructor.
+              JComponent inOwningJComponent, 
+              MetaRoot theMetaRoot,
+              TreePath inTreePath
+              )
+            {
+              super(inOwningJComponent, theMetaRoot, inTreePath);
+              }
+
+          } // MyTreeHelper
 
     }

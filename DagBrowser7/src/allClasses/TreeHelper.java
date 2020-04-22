@@ -17,46 +17,53 @@ import javax.swing.tree.TreePath;
 
 /// import static allClasses.AppLog.theAppLog;
 
-public class TreeHelper
+public class TreeHelper 
+  
   implements KeyListener, MouseListener, FocusListener
 
-  /* This class holds code which is useful for JComponents
-    which implement the TreeAware interface for accessing tree DataNode-s.
-    TreeAware JComponents are viewers for various types of tree DataNode-s.
-    Including an instance of TreeHelper in a DataNode viewer can make 
-    coding a new tree node viewer much easier.
-    
-    This class was created, and code placed here instead of TreeAware JComponents,
-    because of Java's lack of multiple inheritance.
+  /* This TreeHelper class, along with the associated TreeAware interface,
+    is used to add capabilities to TreeAware JComponent subclasses.
 
-    In the JComponents that have a TreeHelper instance, 
-    the variable that references it is typically named "aTreeHelper".
+    The reason these 2 classes are used instead of 
+    adding needed code to JComponent subclasses is:
+    * there is a large amount of needed code, and
+    * Java lacks multiple inheritance.
+
+    TreeHelpers and TreeWare JComponents complement each other and work together.
+    They are linked together by Event Listeners and other methods.
+    Both JComponent subclasses and TreeHelper can be subclassed as needed.
+
+    The present TreeHelper code is mostly about commands for 
+    navigating, viewing, and manipulating the app's tree of DataNodes.
+
+    When a JComponent's subclass has a TreeHelper, 
+    the variable that references it is typically named "theTreeHelper".
     So, for example, code to access the present Part TreePath:
-    would be "aTreeHelper.getPartTreePath()";
-    
-    In code outside of JComponents, public methods of 
-    a TreeAware JComponent's TreeHelper by calling the getTreeHelper() method 
-    of the TreeAware interface.
+    would be "theTreeHelper.getPartTreePath()";
 
-    TreeHelper can be sub-classed if customized tree-help is needed.  
-    Within a TreeAware JComponent, a TreeHelper subclass is usually called 
-    MyTreeHelper and is a non-static nested class.
+    Access to a JComponent's TreeHelper can be had by calling 
+    the getTreeHelper() method of the TreeAware interface.
     
-    ///? Is it possible to eliminate most aTreeHelper references in JComponents
-    by always having a MyTreeHelper nested non-static class,
-    and moving most of the JComponent code into it?
+    It is possible to move most code in a TreeAware JComponent subclass
+    to a nested non-static TreeHelper subclass. 
+    An appropriate name for this sub-class is MyTreeHelper.
+    Instance methods can be added or overridden here as needed.
+    These methods can access all of the fields of the TreHelper subclass 
+    and all of the fields of the JComponent subclass.
+    These methods can include overrides of Event handlers of 
+    several Event Listener interfaces implemented by TreeHelper.
 
     A TreeHelper object instance typically interacts with 2 other objects:
+    * Its owning, DataNode viewing, TreeAware JComponent, 
+      such as TitledListViewer, TitledTextViewer, and RootJTree.
+    * A coordinating JComponent, presently only DagBrowserPanel,
+      used to coordinate the simultaneous display of 
+      2 side by side TreeAware JComponents.
 
-      * Its owning TreeAware JComponent DataNode viewer. 
-        Examples are TitledListViewer and TitledTextViewer.
-      * A coordinating JComponent, presently only DagBrowserPanel,
-        used to coordinate the simultaneous display of 2 TreeAware JComponents.
-
-    The above mentioned 3 objects interact as follows:
+    The above mentioned 3 objects interact in the following ways.
     
       * The coordinating component listens for TreeHelper Part TreePathEvent-s
-        and makes TreePath adjustments in other components which
+        and makes TreePath adjustments in the components which
         it is coordinating.
     
       * The coordinating component calls a TreeHelper setting method
@@ -92,11 +99,29 @@ public class TreeHelper
 
     Things provided by this class:
 
-      * Constructors.
-      
-      * Initialization methods initializeHelperV() and finalizeHelperV().
+      * A constructor.
 
-      * Keyboard and mouse listener methods for 
+      * Initialization method initializeHelperV():
+        This method is called by the coordinating JComponent.
+        The name might be misleading because its job is to initialize both
+        the TreeHelper and any initialization not done by 
+        its associated JComponent's constructor.
+        This base class method does default initialization, including
+        making the TreeHelper a listener for various events.
+        If overridden by a JComponent's nested non-static [aka inner] 
+        TreeHelper class subclass,
+        then it can also do some JComponent initialization. 
+
+      * Finalization method finalizeHelperV():
+        The minimum purpose of this method is to prevent Listener memory leaks.
+        This can happen because TreeAware components are TreeModelListeners.
+        The TreeModel holds references to its listeners.
+        When one TreeAware viewer JComponent is replaced by another in a JPanel
+        the old component must be unregistered as a TreeModelalistener,
+        otherwise it would not be garbage collected.
+        It doesn't unregister other types of listeners because there is no need.
+
+      * Default keyboard and mouse listener methods for 
         handling of user input common to tree node viewers
         which differ from the default ones provided by Java libraries.
 
@@ -110,22 +135,26 @@ public class TreeHelper
       * Methods for getting and setting the Part,
         by TreePath, DataNode, and maybe later child Index.
 
-      * Code managing and using TreePathListener-s.
+      * Code which manages and uses TreePathListener-s.
 
-    This class was originally intended for right panel viewer JComponents only,
-    but now it is used by the left RootJTree navigation panel also.
-    
-    This class may be extended before being instantiated
-    to provide slightly different tree handling behavior.
-    See RootJTree.MyTreeHelper for an example.
+    This class was originally intended for 
+    right panel viewer JComponents only,
+    but now it is used by RootJTree in the left navigation panel also.
 
-    Because there are closed paths between the coordinating component
-    and the TreeHelper, and between the owning component and the TreeHelper,
+    Because there are closed TreePathListener paths between 
+    the coordinating component and TreeHelpers, 
+    and between the owning component and its TreeHelper,
     there is the danger of infinite recursion.
-    This is now detected and prevented in TreeHelper.
-    
+    This is now detected and prevented in TreeHelper by testing for
+    a new TreePath which is not different from the old one,
+    and taking no action if they are equivalent.
+
+    ///org? Divide into 2 classes:
+      * ComponentHelper which knows about Listeners, but not trees.
+      * TreeHelper extends ComponentHelper   
+
     ///enh?? This class will probably be changed to not force the Whole 
-    to be direct parent of the Part, as it is now.
+    to be a direct parent of the Part, as it is now.
     It would remain constant through the life of the object.
     This will allow it to be used for more components, 
     including JTree with Whole being the tree root.
@@ -138,7 +167,7 @@ public class TreeHelper
 
   { // class TreeHelper
 
-    protected JComponent owningJComponent;  /* JComponent being helped.
+    protected JComponent owningJComponent;  /* TreeAware JComponent being helped.
       This is the JComponent to which other parts of the system will refer.
       That JComponent has a reference to this object also,
       so this linkage might be referred to as mutual-composition.  
@@ -155,6 +184,7 @@ public class TreeHelper
         /* Constructs a TreeHelper.
           inWholeTreePath identifies the root of the Whole subtree to display.
           The Part TreePath is auto-selected if possible.
+          initializeHelperV(..) must be called later to complete initialization.
           */
         {
           this.owningJComponent= inOwningJComponent; // Saving owning JComponent.
@@ -170,35 +200,59 @@ public class TreeHelper
       		FocusListener theFocusListener,
       		DataTreeModel theDataTreeModel
       		)
-      	/* This method, or it equivalent in a subclass, is the start and end of 
-      	  the JComponent/TreeAware and TreeHelper initialization,
-      	  not including what should be very simple construction.
-      	  It also does listener registrations.
-      	  See finalizeHelperV().
+        /* This method is called after construction to do or finish initialization
+          of both this TreeHelper and its associated TreeAware JComponent,
+          This default version does the following:
+          * It makes this TreeHelper be both a FocusListener and a KeyListener
+            of the TreeAware JComponent.  This makes it easy for a JComponent
+            to respond to Focus or Key events by simply adding 
+            the appropriate Listener interface method to its TreeHelper subclass.
+          * It adds theTreePathListener to this TreeHelper 
+            so that it can respond to and distribute TreePathEvents.
+          * It sets DataTreeModel to be theDataTreeModel,
+            which includes making the TreeAware JComponent a listener of
+            theDataTreeModel. 
+
+          This method can be overridden in a subclass, usually to add functionality.
+          
+      	  See the sister method, finalizeHelperV(), which unsets the DataTreeModel.
       	  */
         {
       		// appLogger.debug("TreeHelper.initializeHelperV(.) begins.");
+
       		// Doing final common listener registrations.
   	      owningJComponent.addFocusListener(this); // Making this TreeHelper 
   	        // be a FocusListener of its owning JComponent.
-      	  addTreePathListener( theTreePathListener );
-      	  addFocusListener( theFocusListener );
-      	  
+          addFocusListener( theFocusListener ); // Making coordinating
+            // components FocusListener be a FocusListener of this Helper.
+
+  	      owningJComponent.addKeyListener(this); // Make this TreeHelper
+  	      // be a KeyListener of its owning JComponent.
+  	      ///? Should we addMouseListener(this) also?
+
+      	  addTreePathListener( theTreePathListener ); // Coordinating Component.
+
       	  // Setting the TreeModel, which also sets JComponent as TreeModelListener.
           setDataTreeModelV(theDataTreeModel); // This also registers a Listener.
+        
           // appLogger.debug("TreeHelper.initializeHelperV(.) ends.");
         	}
-      
+
       public void finalizeHelperV() 
-  	  	/* This method, or it equivalent in a subclass, is the start and end of 
-    		  the JComponent/TreeAware and TreeHelper finalization. 
+  	  	/* This method, or its equivalent in a subclass, 
+    		  does JTreeHelper and TreeAware Component finalization. 
       	  It exists mainly for undoing non-final listener registrations
       	  to prevent listener leaks.
+      	  It does this by setting the TreeModel to null.
+
       	  Not all Listeners need to be unregistered.
-      	    
+      	  The Infogora TreeModelListeners must be unregistered because
+      	  they are components with shorter scope than the TreeModel
+      	  and many of them can be created, used briefly, and then dereferenced.
+      	  Failure to unregister them would result in massive Listener memory leaks.
     		  */
         {
-        	setDataTreeModelV( null ); //  prevent listener leak.
+        	setDataTreeModelV( null ); // Unregister TreeModelListener JComponent.
           }
       
     // TreeModel code with Listener registration, etc.
@@ -206,18 +260,28 @@ public class TreeHelper
       protected DataTreeModel theDataTreeModel;
       
       public void setDataTreeModelV(DataTreeModel newDataTreeModel)
-      /* Sets new DataTreeModel.
-       * It also makes the present ListModel be a Listener of
-       * newDataTreeModel so the former reflects the latter.
-       * The JList should be a Listener of the ListModel
-       * In normal use this method will be called only twice:
-       * * once with newDataTreeModel != null during initialization,
-       * * and once with newDataTreeModel == null during finalization,
-       * but it should be able to work with any null combination.
-       */
+      /* Sets new DataTreeModel by storing it in a TreeHelper variable,
+        and it adjusts TreeModelListener registrations.
+
+        First it adjusts TreeModelListener registrations.
+        If the present DataTreeModel is not null,
+        then the owning JComponent is a listener of that model and will be unregistered.
+        Next, if newDataTreeModel is not null,
+        the owning JComponent will be registered as a listener of the newDataTreeModel.
+
+        After listener registrations are done, the newDataTreeModel 
+        is stored in a TreeHelper variable as the present DataTreeMode.
+
+        In normal usage this method will be called only twice per JComponent:
+        * once with newDataTreeModel != null, during component initialization,
+        * and once with newDataTreeModel == null during component finalization,
+          mainly to prevent TreeModelListener memory leaks.
+        However it should be able to be called any number of times
+        with any of 4 null/not-null combinations.
+        */
       {
         // appLogger.debug("TreeHelper.setDataTreeModel(.) begins with "+newDataTreeModel);'
-        if // If TreeModelListener then link or unlink Component as TreeModelListener.
+        if // If component implements TreeModelListener then adjust registrations.
           (owningJComponent instanceof TreeModelListener) 
           { // Link or unlink JComponent as TreeModelListener.
             DataTreeModel oldDataTreeModel= theDataTreeModel;
@@ -232,16 +296,25 @@ public class TreeHelper
                 (TreeModelListener)owningJComponent);
               }
             }
-        theDataTreeModel= newDataTreeModel;
+        theDataTreeModel= newDataTreeModel; // Finally, store the new model.
         // appLogger.debug("setDataTreeModelV.setDataTreeModel(.) ends with "+newDataTreeModel);
         }
       
     // FocusListener code: registration, firing, and the interface.
 
-      /* This code implements the FocusListener interface.
-        It listens for and receives FocusEvents from its owningJComponent,
-        and passes them on to any FocusListener-s that have registered with it.
-        With this code TreeHelper-s can help manage focus events.
+      /* This code deals with FocusEvents.
+        The TreeHelper is automatically made 
+        a FocusListener of its JComponent.
+        
+        The TreeHelper's FocusEvent handler methods can be used in 2 ways:
+        * The handler methods can be used to pass FocusEvents to 
+          other objects by making those objects FocusListeners of 
+          the TreeHelper.  This is their default behavior.
+        * The handler methods can be overridden by a TreeHelper subclass
+          used by the JComponent.
+        
+        An object should be a FocusListener of either a JComponent or
+        its TreeHelper, but not both.
         */
 
       private Vector<FocusListener> focusListenerVector =   // Listeners.
@@ -262,8 +335,12 @@ public class TreeHelper
           }
 
       public void focusGained(FocusEvent theFocusEvent)
-        /* This interface method simply passes 
-          the event and the call to other listeners.
+        /* This interface method simply passes the event and the call to 
+         * focus listeners of this TreeHelper instance.
+          Note, even though the FocusListener was registered with
+          this TreeHelper, listener calls and FocusEvents 
+          will appear be come from another object, 
+          the source in the FocusEvent that is received by this TreeHelper.
           */
         {
       	  /* debug 
@@ -347,37 +424,37 @@ public class TreeHelper
             * Left-Arrow keys to go to parent.
           */
         { // keyPressed.
-          int KeyCodeI = inKeyEvent.getKeyCode(); // Copyiing key pressed.
-          boolean KeyProcessedB=  // Sssuming key event will be processed.
+          int keyCodeI = inKeyEvent.getKeyCode(); // Copying key pressed.
+          boolean keyProcessedB=  // Assuming key event will be processed.
             true;
           { // Trying to process the key event.
             // /* Tab decoded elsewhere by JList.
-            if (KeyCodeI == KeyEvent.VK_TAB) // Handling Tab key maybe.
+            if (keyCodeI == KeyEvent.VK_TAB) // Handling Tab key maybe.
               { // Handling Tab key.
-                Component SourceComponent= 
+                Component sourceComponent= 
                   (Component)inKeyEvent.getSource();
                 int shift = // Determine (Shift) key state.
                   inKeyEvent.getModifiersEx() & InputEvent.SHIFT_DOWN_MASK;
                 if // Moving focus forward or backward. 
                   (shift == 0) // (Shift key) not down.
-                  SourceComponent.transferFocus();  // Move forward.
+                  sourceComponent.transferFocus();  // Move forward.
                   else   // (Shift key) is down.
-                  SourceComponent.transferFocusBackward(); // Move backward.
+                  sourceComponent.transferFocusBackward(); // Move backward.
                 } // process Tab key.
             else 
             // Tab decoded elsewehre by JList.
             // */
-            if (KeyCodeI == KeyEvent.VK_LEFT) // Handling left-arrow maybe.
+            if (keyCodeI == KeyEvent.VK_LEFT) // Handling left-arrow maybe.
               commandGoToParentB(true);  // Going to parent folder.
-            else if (KeyCodeI == KeyEvent.VK_RIGHT) // right-arrow maybe.
+            else if (keyCodeI == KeyEvent.VK_RIGHT) // right-arrow maybe.
               commandGoToChildB(true);  // Going to child folder.
-            else if (KeyCodeI == KeyEvent.VK_ENTER)  // Enter maybe.
+            else if (keyCodeI == KeyEvent.VK_ENTER)  // Enter maybe.
               commandGoToChildB(true);  // Going to child folder.
             else  // no more keys to check.
-              KeyProcessedB= false;  // Indicating no key was handled.
+              keyProcessedB= false;  // Indicating no key was handled.
             }
           if  // Preventing processing by Event source of key handled.
-            (KeyProcessedB)
+            (keyProcessedB)
             inKeyEvent.consume(); // Preventing more processing of the key.
           } // keyPressed.
 
@@ -388,7 +465,7 @@ public class TreeHelper
     // MouseListener methods.
 
       /* MouseListener methods, for user input from mouse.
-        Because this is a helper class, putting the MouseListener methds
+        Because this is a helper class, putting the MouseListener methods
         in a MouseAdapter subclass would not be very helpful.
         */
 
@@ -421,7 +498,7 @@ public class TreeHelper
         * Executing particular commands.
         * Testing whether particular commands are legal,
           given the present cursor/selection possibles, etc.
-          This is useful in determing whether command gadgets,
+          This is useful in determining whether command gadgets,
           such as buttons and menus, should be grayed out.
 
         ?? Maybe implement the Command pattern.
@@ -873,8 +950,8 @@ public class TreeHelper
           See RootJTree and Infogora details.
           */
         {
-          fireSetPartTreePathV(  // Notify the listeners...
-            getPartTreePath()  // ...by sending an unchanged path.
+          fireSetPartTreePathV(  // Notify the listeners about node change
+            getPartTreePath()  // by sending an unchanged path.
             );
           }
 
@@ -927,7 +1004,7 @@ public class TreeHelper
               owningJComponent  // ...the source JComponent being helped,...
               ,inTreePath  // ...and the TreePath of interest,
               ); 
-          Enumeration<TreePathListener> listeners =  // Getting listenres.
+          Enumeration<TreePathListener> listeners =  // Getting listeners.
             listenerVector.elements();
           boolean legalB= true;  // Assuming inTreePath is legal.
           while  // Calling listeners while...

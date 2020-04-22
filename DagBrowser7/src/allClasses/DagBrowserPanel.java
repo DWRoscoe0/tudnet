@@ -93,9 +93,9 @@ public class DagBrowserPanel
     // Injected dependency storage variables.
 
       AppInstanceManager theAppInstanceManager;  // For update checking.
-      DataTreeModel theDataTreeModel;  // holds all browsable data.
+      DataTreeModel theDataTreeModel;  // holds all browse-able data.
       DataRoot theDataRoot;  // The stuff to display.
-      MetaRoot theMetaRoot;  // How to display it.
+      MetaRoot theMetaRoot;  // Metadata about how to display it.
       BackgroundEventQueue theBackgroundEventQueue;
 
     // Other instance variables.
@@ -419,7 +419,7 @@ public class DagBrowserPanel
             the Button-s and the activityTimer.
 
             ?? The button panel could be made its own class
-            which uses aTreeHelper for the commands.
+            which uses a TreeHelper for the commands.
 
             */
           { // actionPerformed( ActionEvent )
@@ -661,10 +661,22 @@ public class DagBrowserPanel
 
       /* TreePathListener code.
 
-        /* This code is for when TreePathEvent-s happen in either the 
-          left or right panel.  This was based on TreeSelectionListener code.
+        /* This TreePathListener code is for coordinating actions in
+           * the left panel, containing a RootJTree for tree navigation
+           * the right pane, containing a Viewer appropriate to
+             a particular type of tree node selected in the left panel
+           * miscellaneous fields displaying the TreePath 
+             and information about the node identified by the TreePath.
+           When a TreePathEvent is received from 
+           either the left or right pane,
+           it means activity there has resulted in the selection of 
+           a new tree node with a new TreePath.
+           This listener reacts by taking action appropriate
+           to update all the dependent components. 
+
+          This was based on TreeSelectionListener code.
           For a while it used TreeSelectionEvent-s for 
-          passing TreePath data.
+          passing TreePath data but this seemed overly complicated. 
           */
 
         private TreePathListener theTreePathListener= 
@@ -794,7 +806,7 @@ public class DagBrowserPanel
             replaceRightPanelContentWithV( inTreePath );
             } // processSelectionFromLeftSubpanel(.)
 
-        private TreePath oldParentTreePath; // Previous right-panel TreePath.
+        private TreePath rightPanelTreePath; // For sibling testing.
 
         private void processSelectionFromRightSubpanel( 
         		TreePath selectedTreePath 
@@ -817,14 +829,12 @@ public class DagBrowserPanel
             */
           { // processSelectionFromRightSubpanel()
             boolean siblingsB=  // Calculating whether paths are siblings.
-              selectedTreePath.getParentPath().equals(oldParentTreePath);
+              selectedTreePath.getParentPath().equals(rightPanelTreePath);
             if ( siblingsB ) // New and old Part paths have same parent.
               ; // Nothing needs to be done.
               else // New and old selections do NOT have same parent.
               { // Replace right panel and update things.
   	            TreePath parentTreePath= selectedTreePath.getParentPath();
-  	            oldParentTreePath=   // Save path for compares later.
-  	            		parentTreePath;
                 replaceRightPanelContentWithV( parentTreePath );
                 theRootJTree  // In the left sub-panel JTree's...
                   .getTreeHelper()  // ...TreeHelper...
@@ -845,33 +855,38 @@ public class DagBrowserPanel
             During this process it also does registration and unregistration of 
             objects such as TreeModelListeners to prevent 
             TreeModelListener leakage.  It does this with 
-            TreeHelper.initializeHelperV and TreeHelper.finalizeHelperV().
+            TreeHelper.initializeHelperV and TreeHelper.finalizeHelperV()
+            respectively.
             */
           {
-        		// theAppLog.debug(
-            //   "DagBrowserPanel.replaceRightPanelContentWithV(.) begins with:"
-              //   + NL + "  " + inTreePath);
-        	  TreeAware oldTreeAware=  // Saving  (alias of) present JComponent. 
+        		theAppLog.debug(
+              "DagBrowserPanel.replaceRightPanelContentWithV(.) begins with:"
+              + NL + "  " + inTreePath);
+  
+        		TreeAware oldTreeAware= // Saving  (alias of) present JComponent. 
         	  		dataTreeAware;
 
-            dataJComponent=   // Calculating new JComponent...
-              theDataTreeModel.  // ...by having the TreeModel build it.
-                getDataJComponent( inTreePath );
-            dataTreeAware= // Calculating its new TreeAware alias.
-              (TreeAware)dataJComponent;
+            dataJComponent=   // Calculating new JComponent
+              theDataTreeModel.getDataJComponent( // by having the TreeModel build it
+                inTreePath ); // based on last element of TreePath.
+            dataTreeAware= (TreeAware)dataJComponent; // Calculating its TreeAware alias.
 
             // theAppLog.debug("DagBrowserPanel.replaceRightPanelContentWithV(.):"
             //   + "initialize new JComponent.");
-            dataTreeAware. // Initializing the new JComponent by calling
+            dataTreeAware. // [Complete]initializing the new JComponent by calling
               getTreeHelper().initializeHelperV( // its helper's initializer.
-            		theTreePathListener, // using this panel's TreePathListener,
-            		this, // this as a FocusListener,
-            		theDataTreeModel // and the DataTreeModel.
+                theTreePathListener, // using this panel's TreePathListener,
+                this, // this as a FocusListener,
+                theDataTreeModel // and the DataTreeModel.
                 );
+
+            dataTreeAware.getTreeHelper().addFocusListener(this); // This is done so that
+              // when the right viewer component gains focus, our FocusListener
+              // can appropriately update various dependent displayed fields. 
 
             // theAppLog.debug("DagBrowserPanel.replaceRightPanelContentWithV(.):"
             //   + "replacing scroller with new JComponent and doing repaint().");
-      	    { // Replacing scroller content with new JComponent. ?? factor? 
+      	    { // Replacing scroller content with new JComponent. 
 	            dataJScrollPane.setViewportView(  // in the dataJScrollPane's viewport...
 	              dataJComponent  // ...set the DataJPanel for viewing.
 	              );
@@ -882,10 +897,11 @@ public class DagBrowserPanel
 
           	// theAppLog.debug("DagBrowserPanel.replaceRightPanelContentWithV(.):"
           	//   + "finalizing old JComponent.");
-            if // Finalizing old scroller content
-              ( oldTreeAware != null ) // if it exists, using
+            if ( oldTreeAware != null ) // Finalizing old JComponent if it exists, using
             	oldTreeAware.getTreeHelper().finalizeHelperV(); // its TreeHelper.
-                // This is done to prevent Listener leaks.
+                // This is done mainly to prevent Listener memory leaks.
+
+            rightPanelTreePath= inTreePath; // Save for sibling tests later.
             // theAppLog.debug("DagBrowserPanel.replaceRightPanelContentWithV(.) ends.");
             }
 
@@ -963,8 +979,8 @@ public class DagBrowserPanel
               */
 	          {
           		TreeAware theTreeAware= null;
-	            switch // Updating path and info based on focus owner. 
-	              ( theMasterPane ) 
+	            switch // Calculate which TreeAware JComponent has path of interest
+	              ( theMasterPane ) // based on the one with focus.
 		            {
 			            case RIGHT_PANE: 
 			            	theTreeAware= dataTreeAware; 
@@ -1038,7 +1054,7 @@ public class DagBrowserPanel
               }
 
 
-      /* Focus management code.
+      /* FocusListener and related code.
         This includes methods of the FocusListener, 
         the FocusStateMachine (being deprecated), and others.
 
@@ -1049,8 +1065,8 @@ public class DagBrowserPanel
 				  last had focus.  This is so that focus can be restored if
 				  the loss of that focus was temporary.
 
-        WARNING: Focus code is presently difficult to debug because
-        using Eclipse's breakpoints and stepping affects the
+        WARNING: Focus code is presently difficult to debug under Eclipse
+        because Eclipse's breakpoints and stepping affects the
         focus state of the app.  
         It might be necessary to debug using logging.
         But at least these focus changes no longer interfere with
@@ -1179,7 +1195,7 @@ public class DagBrowserPanel
 	      	  default:
 	      	  	; // Nothing.
       			}
-      		Misc.requestFocusV(theComponent);
+      		Misc.requestFocusAndLogV(theComponent);
           } // restoreFocusV()
 
 

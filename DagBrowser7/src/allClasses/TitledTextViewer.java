@@ -84,7 +84,7 @@ public class TitledTextViewer
           			NamedLeaf.makeNamedLeaf( "ERROR TreePath" )
           			);
 
-          aTreeHelper=  // construct helper class instance.
+          theTreeHelper=  // construct helper class instance.
             new MyTreeHelper( 
               this, theDataTreeModel.getMetaRoot(), theTreePath 
               );
@@ -94,7 +94,7 @@ public class TitledTextViewer
 
           titleJLabel= new JLabel(
             //"TEST-TITLE"
-            aTreeHelper.getWholeDataNode().getNameString( )
+            theTreeHelper.getWholeDataNode().getNameString( )
             );
           //titleJLabel.setBackground( Color.RED );
           titleJLabel.setOpaque( true );
@@ -108,13 +108,10 @@ public class TitledTextViewer
           titleJLabel.setBorder(raisedetched);
           add(titleJLabel,BorderLayout.NORTH); // Adding it to main JPanel.
 
-          theIJTextArea.getCaret().setVisible(true);  // Make cursor visible.
+          theIJTextArea.getCaret().setVisible(true); // Make viewer cursor visible.
+          theIJTextArea.setLineWrap(true); // Make all visible.
+          theIJTextArea.setWrapStyleWord(true); // Make it pretty.
           add(theIJTextArea,BorderLayout.CENTER); // Adding it to main JPanel.
-
-          { // Add listeners.
-            addKeyListener(aTreeHelper);  // Make TreeHelper the KeyListeer.
-            // addTreeModelListener( this ) is done elsewhere.
-            } // Add listeners.
           } // CommonInitialization( )
 
     // rendering methods.  to be added ??
@@ -138,7 +135,7 @@ public class TitledTextViewer
 	      {
 	    		//appLogger.debug("TitledTextViewer.treeNodesChanged(..)");
 	    		if ( // Ignoring event if event parent path isn't our parent path. 
-	    	      	!aTreeHelper.getWholeTreePath().getParentPath().equals(
+	    	      	!theTreeHelper.getWholeTreePath().getParentPath().equals(
 	    	      			theTreeModelEvent.getTreePath()
 	    	      			)
 	    	      	)
@@ -147,7 +144,7 @@ public class TitledTextViewer
 	          for 
 		          ( Object childObject: theTreeModelEvent.getChildren() )
 	          	{ // Updating TextArea if it shows this event child DataNode.
-	          	  if ( childObject == aTreeHelper.getWholeDataNode() )
+	          	  if ( childObject == theTreeHelper.getWholeDataNode() )
 	  	    	  		theIJTextArea.replaceRange(
 	  	    	  				((DataNode)childObject).getContentString(),
 	  	    	  			  0,
@@ -163,9 +160,9 @@ public class TitledTextViewer
 
     // TreeAware interface code for TreeHelper access.
 
-			public TreeHelper aTreeHelper;
+			public TreeHelper theTreeHelper;
 
-			public TreeHelper getTreeHelper() { return aTreeHelper; }
+			public TreeHelper getTreeHelper() { return theTreeHelper; }
 
     class MyTreeHelper  // TreeHelper customization subclass.
 

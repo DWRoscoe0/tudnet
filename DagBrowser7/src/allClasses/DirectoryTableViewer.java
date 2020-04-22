@@ -82,7 +82,7 @@ public class DirectoryTableViewer
           super( );  // Call superclass constructor.
             
           { // Construct and initialize the helper object.
-            aTreeHelper= new TreeHelper(  // Construct helper class instance...
+            theTreeHelper= new TreeHelper(  // Construct helper class instance...
               this, 
               theMetaRoot,
               inTreePath  // ...with back-referene and path info.
@@ -91,7 +91,7 @@ public class DirectoryTableViewer
 
           DirectoryTableModel ADirectoryTableModel =  // Construct...
             new DirectoryTableModel(  //...directory table model from...
-              (IFile)aTreeHelper.getWholeDataNode(), //...subject IFile...
+              (IFile)theTreeHelper.getWholeDataNode(), //...subject IFile...
               InTreeModel  // ...and TreeModel.
               );
           setModel( ADirectoryTableModel );  // store TableModel.
@@ -117,17 +117,19 @@ public class DirectoryTableViewer
             getSelectionModel().addListSelectionListener(this); // Making...
               // ...this DirectoryTableViewer be a ListSelectionListener...
               // ...for its own ListSelectionEvent-s.
-            addFocusListener(this);  // Making this...
+            //// addFocusListener(this);  // Making this...
               // DirectoryTableViewer be a FocusListener for...
               // its own FocusEvent-s.
-            aTreeHelper.addTreePathListener( // Making...
+            theTreeHelper.addTreePathListener( // Making...
               theTreePathListener  // ...my special TreePathAdapter be...
               ); //  ...a TreePathListener for TreeHelper TreePathEvent-s.
 
-            addKeyListener(aTreeHelper); // Making TreeHelper be...
+            /*  ////
+            addKeyListener(theTreeHelper); // Making TreeHelper be...
               // ...a KeyListener for DirectoryTableViewer KeyEvent-s.
-            addMouseListener(aTreeHelper);// Making TreeHelper be...
+            addMouseListener(theTreeHelper);// Making TreeHelper be...
               // ...a MouseListener for DirectoryTableViewer MouseEvent-s.
+            */  ////
             }
 
           UpdateJTableForContentV();
@@ -149,7 +151,7 @@ public class DirectoryTableViewer
           int IndexI =   // get index of selected element from the model.
             TheListSelectionModel.getMinSelectionIndex();
           IFile subjectIFile=  // Cache Subject directory.
-            (IFile)aTreeHelper.getWholeDataNode();
+            (IFile)theTreeHelper.getWholeDataNode();
           String[] IFileNameStrings =  // Calculate array of child file names.
             subjectIFile.getFile().list();
           if ( IFileNameStrings == null )  // If array is null replace with empty array.
@@ -163,7 +165,7 @@ public class DirectoryTableViewer
               IFile NewSelectionIFile=   // build IFile of selection at IndexI.
                 new IFile( subjectIFile, IFileNameStrings[IndexI] );
               //SetSelectionRelatedVariablesFrom( NewSelectionIFile );
-              aTreeHelper.setPartDataNodeV( NewSelectionIFile );
+              theTreeHelper.setPartDataNodeV( NewSelectionIFile );
                 // This will set the TreePaths also.
                 // This converts the row selection to a tree selection.
               } // Process the selection.
@@ -191,9 +193,9 @@ public class DirectoryTableViewer
 
     // TreeAware and TreePathListener interface code for TreeHelper class.
 
-			private TreeHelper aTreeHelper;  // Reference to helper class.
+			private TreeHelper theTreeHelper;  // Reference to helper class.
 
-			public TreeHelper getTreeHelper() { return aTreeHelper; }
+			public TreeHelper getTreeHelper() { return theTreeHelper; }
       /* TreePathListener code, for when TreePathEvent-s
         happen in either the left or right panel.
         This was based on TreeSelectionListener code.
@@ -208,8 +210,8 @@ public class DirectoryTableViewer
           extends TreePathAdapter
           {
             public void setPartTreePathV( TreePathEvent inTreePathEvent )
-              /* This TreePathListener method is called by aTreeHelper
-                when aTreeHelper accepts a new TreePath.
+              /* This TreePathListener method is called by theTreeHelper
+                when theTreeHelper accepts a new TreePath.
                 This method translates inTreePathEvent TreeHelper tree path 
                 into an internal JTable selection.
 
@@ -242,7 +244,7 @@ public class DirectoryTableViewer
           if  // Update other stuff if...
             ( getModel().getRowCount() > 0 ) // ... any rows in model.
             { // Update other stuff.
-              TreePath inTreePath= aTreeHelper.getPartTreePath();
+              TreePath inTreePath= theTreeHelper.getPartTreePath();
               selectTableRowV(inTreePath);  // Select appropriate row.  
                 // Note, this might trigger ListSelectionEvent.
               UpdateJTableScrollState();  // Adjust scroll position.
@@ -266,14 +268,14 @@ public class DirectoryTableViewer
             if ( inDataNode == null )  // There is no selection.
               break toReturn;  // Exit without selecting.
             if (   // New path not is sibling of old one because...
-                ! aTreeHelper.getWholeTreePath( ).  // ...whole path isn't...
+                ! theTreeHelper.getWholeTreePath( ).  // ...whole path isn't...
                    equals( inTreePath.getParentPath() )  // ...parent of new.
                   )
               break toReturn;  // Exit without selecting.
             int IndexI;  // Allocate index.
             { // Calculate new path's child's index.
               IndexI= // try to get index of selected child.
-                aTreeHelper.getWholeDataNode().getIndexOfChild( inDataNode );
+                theTreeHelper.getWholeDataNode().getIndexOfChild( inDataNode );
               if ( IndexI < 0 )  // force index to 0 if child not found.
                 IndexI= 0;
               } // Calculate new path's child's index.

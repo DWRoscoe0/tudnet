@@ -4,18 +4,26 @@ package allClasses;
 
 public interface TreePathListener 
 
-  /* Classes that need to know when a TreeAware's Part TreePath has changed
-    should implement this Listener.
+  /* Classes that need to know when a TreePath has changed
+    should implement this Listener.  
+    These classes are typically displaying part or parts of a tree, 
+    those parts being identified by a TreePath.
+    It must respond when that TreePath changes
+    by displaying a different part or parts. 
 
-    This Listener processes changes to the selection 
-    within a tree that is being displayed.
-    Compare this with TreeModelListener, which process
-    changes to the content or structure of a tree being displayed.
+    Compare this with TreeModelListener, which responds to
+    changes in the content or structure of a tree being displayed,
+    not the location within the tree.
+
+    This class is similar to Java's TreeSelectionLListener, but
+    it PathListener is simpler because it communicates 
+    only single node selections, but TreeSelectionListener 
+    communicates multiple simultaneous node selections.
 
     ///rev The TreePathEvent received by this listener
     doesn't actually need to have a TreePath in it
-    because that information could be gotten by interrogating
-    the TreeHelper that is the source of the Event.
+    because that information could be gotten by interrogating 
+    the source of the event.
     */
 
   {
