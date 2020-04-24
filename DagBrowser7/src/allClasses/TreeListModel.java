@@ -56,7 +56,6 @@ public class TreeListModel
       {
 	      this.theListDataNode= theListDataNode;
 	      this.theTreePath= theTreePath;
-	  		//// saveSizeV(); // not needed when constructed.
         }
 
     // Initialization/setter methods.

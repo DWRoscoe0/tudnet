@@ -2,7 +2,6 @@ package allClasses;
 
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.event.MouseEvent;
 import java.awt.Rectangle;
 
 import javax.swing.JComponent;
@@ -113,25 +112,6 @@ public class RootJTree
               return doableB;  // Return doability result.
               }
   
-          @Override
-          public void mouseClicked(MouseEvent inMouseEvent) 
-            /* This MouseListener method checks for double click on mouse,
-              which now means to expand or collapse the present node,
-              so is synonymous with the Enter key.
-              JTree already does this and it can not be overridden
-              so this only notifies TreePathLlistener about
-              a possible change which could effect button enabling.
-              */
-            {
-              if (inMouseEvent.getClickCount() >= 2)
-                {
-                  //commandExpandOrCollapseV();  // Already done by JTree.
-                  //inMouseEvent.consume();  // This not needed either.
-  
-                  theTreeHelper.notifyListenersAboutChangeV( );
-                  }
-              }
-  
           } // MyTreeHelper
   
     // Constants.
@@ -190,9 +170,6 @@ public class RootJTree
           setShowsRootHandles( true );
           putClientProperty( "IJTree.lineStyle", "Angled" );
   
-           //// getModel().addTreeModelListener( // This listening for TreeModel events.
-           //// 		this
-           //// 		);
           addTreeSelectionListener(this); // Listen for tree selections.
           addTreeExpansionListener(this); // Listen for expansion events.
           
@@ -201,8 +178,6 @@ public class RootJTree
           theTreeHelper.addTreePathListener( // Customized listening
             new MyTreePathListener()); // for tree paths.
           addFocusListener(theTreeHelper); // TreeHelper listening for focus events.
-          //// addMouseListener(theTreeHelper); // TreeHelper listening for MouseEvent-s.
-  
           } // Constructor.
   
       public void initializeV( TreePath selectedTreePath )
@@ -372,7 +347,7 @@ public class RootJTree
       */
 
       /* TreeModelListener methods. Most do nothing.
-        Only treeNodesInserted(..) does anything.
+        Only treeNodesInserted(..) does anything, the others are no-ops.
         It is used to restore the selection state to what it was at shutdown.
         */
 

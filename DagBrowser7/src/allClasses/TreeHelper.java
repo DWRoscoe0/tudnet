@@ -31,10 +31,15 @@ public class TreeHelper
 
     TreeHelpers and TreeWare JComponents complement each other and work together.
     They are linked together by Event Listeners and other methods.
-    Both JComponent subclasses and TreeHelper can be subclassed as needed.
+    Both JComponent subclasses and TreeHelper can be sub-classed as needed.
 
-    The present TreeHelper code is mostly about commands for 
+    The present base TreeHelper code is mostly about commands for 
     navigating, viewing, and manipulating the app's tree of DataNodes.
+    It contains public override-able, including some Listener methods,
+    code that registers and sometimes un-registers Listeners,
+    and private support methods.  Of course, the public methods
+    may be overridden by subclasses of the TreeHelper and JComponent
+    to replace or augment the default behavior of those methods. 
 
     When a JComponent's subclass has a TreeHelper, 
     the variable that references it is typically named "theTreeHelper".
@@ -196,21 +201,22 @@ public class TreeHelper
           }
       
       public void initializeHelperV( 
-      		TreePathListener theTreePathListener,
-      		FocusListener theFocusListener,
+      		TreePathListener coordinatingTreePathListener,
+      		FocusListener coordinatingFocusListener,
       		DataTreeModel theDataTreeModel
       		)
         /* This method is called after construction to do or finish initialization
           of both this TreeHelper and its associated TreeAware JComponent,
           This default version does the following:
           * It makes this TreeHelper be both a FocusListener and a KeyListener
-            of the TreeAware JComponent.  This makes it easy for a JComponent
+            of the owning TreeAware JComponent.  This makes it easy for a JComponent
             to respond to Focus or Key events by simply adding 
             the appropriate Listener interface method to its TreeHelper subclass.
-          * It adds theTreePathListener to this TreeHelper 
-            so that it can respond to and distribute TreePathEvents.
+          * It registers coordinatingTreePathListener and coordinatingFocusListener
+            of the coordinating component with this TreeHelper 
+            so that it can distribute Focus and TreePath events.
           * It sets DataTreeModel to be theDataTreeModel,
-            which includes making the TreeAware JComponent a listener of
+            which includes making the owning TreeAware JComponent a listener of
             theDataTreeModel. 
 
           This method can be overridden in a subclass, usually to add functionality.
@@ -219,22 +225,21 @@ public class TreeHelper
       	  */
         {
       		// appLogger.debug("TreeHelper.initializeHelperV(.) begins.");
-
-      		// Doing final common listener registrations.
-  	      owningJComponent.addFocusListener(this); // Making this TreeHelper 
-  	        // be a FocusListener of its owning JComponent.
-          addFocusListener( theFocusListener ); // Making coordinating
-            // components FocusListener be a FocusListener of this Helper.
-
-  	      owningJComponent.addKeyListener(this); // Make this TreeHelper
-  	      // be a KeyListener of its owning JComponent.
-  	      ///? Should we addMouseListener(this) also?
-
-      	  addTreePathListener( theTreePathListener ); // Coordinating Component.
-
-      	  // Setting the TreeModel, which also sets JComponent as TreeModelListener.
-          setDataTreeModelV(theDataTreeModel); // This also registers a Listener.
-        
+          { // Do common listener registrations with owning JComponent.
+            owningJComponent.addFocusListener(this); // Making this TreeHelper 
+              // be a FocusListener of its owning JComponent.
+            owningJComponent.addKeyListener(this); // Make this TreeHelper
+            // be a KeyListener of its owning JComponent.
+            ///? Should we addMouseListener(this) also?
+            }
+          { // Do common listener registrations with coordinating component.
+            addTreePathListener( coordinatingTreePathListener ); // Make coordinating 
+              // component's TreePathListener be the only TreePathListener.
+            addFocusListener( coordinatingFocusListener ); // Making coordinating 
+              // component's FocusListener be a FocusListener of this Helper.
+            }
+          setDataTreeModelV(theDataTreeModel); // Set the TreeModel.
+            // This also sets JComponent as TreeModelListener.
           // appLogger.debug("TreeHelper.initializeHelperV(.) ends.");
         	}
 

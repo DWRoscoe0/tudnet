@@ -120,23 +120,23 @@ public class Misc
     			  Component focusedComponent= // Getting focus owner.
               KeyboardFocusManager.
                 getCurrentKeyboardFocusManager().getFocusOwner();
-            theAppLog.debug("Misc.requestFocusAndLogV() before request" 
-              +Misc.componentFocusInfoString(
-                NL+"  "+"owner:",focusedComponent)
-              +Misc.componentFocusInfoString(
-                NL+"  requesterowner:",focusedComponent) );
+            /// theAppLog.debug("Misc.requestFocusAndLogV() before request" 
+        		///   +Misc.componentFocusInfoString(
+        		///    NL+"  "+"owner:",focusedComponent)
+        		///  +Misc.componentFocusInfoString(
+        		///    NL+"  requesterowner:",focusedComponent) );
 
   		  	  boolean successB= theComponent.requestFocusInWindow();
 
-            theAppLog.debug("Misc.requestFocusAndLogV() after request"
-                +", success="+successB
-                +Misc.componentFocusInfoString(
-                  NL+"  "+"owner:",focusedComponent)
-                +Misc.componentFocusInfoString(
-                  NL+"  requesterowner:",focusedComponent) );
+      		  /// theAppLog.debug("Misc.requestFocusAndLogV() after request"
+      		  ///     +", success="+successB
+      		  ///     +Misc.componentFocusInfoString(
+      		  ///       NL+"  "+"owner:",focusedComponent)
+      		  ///     +Misc.componentFocusInfoString(
+      		  ///       NL+"  requesterowner:",focusedComponent) );
   		  	  if (successB) break toReturn; // Exit if success.
             if (focusedComponent == null) // If no previous focus owner,
-              ; ////  break toReturn; // exit.
+              ; ///  break toReturn; // exit.
             if (focusedComponent == theComponent) // Same components.
               { theAppLog.debug( Misc.componentFocusInfoString(
                    "Misc.requestFocusAndLogV(), both components are ",
