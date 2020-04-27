@@ -1,6 +1,7 @@
 package allClasses;
 
 import java.awt.Dialog;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Frame;
 import java.awt.KeyEventDispatcher;
@@ -327,6 +328,11 @@ class GUIManager
             );
         theJFrame.setContentPane( theDagBrowserPanel );  // Store content.
         theJFrame.pack();  // Layout all the content's sub-panels.
+        Dimension screenDimension= Toolkit.getDefaultToolkit().getScreenSize();
+        theJFrame.setSize( // Use 3/4 of the screen extent vertically and horizontally.
+            (int)(screenDimension.getWidth() * 0.75), 
+            (int)(screenDimension.getHeight() * 0.75)
+            ); // << not working!!!
         theJFrame.setLocationRelativeTo(null);  // Center JFrame on screen.
         theJFrame.setDefaultCloseOperation( // Set the close operation to be
           JFrame.DO_NOTHING_ON_CLOSE // nothing, so listener can handle it all. 

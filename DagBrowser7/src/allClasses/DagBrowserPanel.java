@@ -9,6 +9,7 @@ import java.awt.FlowLayout; // not recommended by Eclipse QuickFix.
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.KeyboardFocusManager;  // See note about this below.
+import java.awt.Toolkit;
 import java.awt.event.*;
 
 import javax.swing.border.Border;
