@@ -95,7 +95,7 @@ public class TitledListViewer
               { // Other miscellaneous settings.
                 setTitleTextV();
                 setJListSelection();
-                setJListScrollState();
+                ensureJListSelectionVisibleV();
                 }
               // appLogger.debug("TitledListViewer.MyTreeHelper.initializeHelperV(.) ends.");
               }
@@ -239,12 +239,12 @@ public class TitledListViewer
             );
           }  // setJListSelection()
       
-      private void setJListScrollState()
+      private void ensureJListSelectionVisibleV()
         /* This method sets the JList scroll state
           from its selection state to make certain that
           the selection is visible.
           */
-        { // setJListScrollState()
+        {
           ListSelectionModel theListSelectionModel = // Get selection model.
             (ListSelectionModel)theJList.getSelectionModel();
           int SelectionIndexI= // Get index of row selected.
@@ -252,7 +252,7 @@ public class TitledListViewer
           theJList.ensureIndexIsVisible( // Scroll into view the row...
             SelectionIndexI // ...with that index.
             );
-          }  // setJListScrollState()
+          }
 
     /* TreeModelListener methods. 
       Most do nothing but are required by the TreeModelListener interface.
@@ -336,7 +336,7 @@ public class TitledListViewer
           It also fixed a repaint bug.
          */
         {
-          setJListScrollState();
+          ensureJListSelectionVisibleV();
     			Misc.requestFocusAndLogV(theJList);
           repaint();  // bug fix Kluge to display cell in correct color.  
           }
@@ -345,7 +345,7 @@ public class TitledListViewer
       public void focusLost(FocusEvent arg0) 
         {
       		//appLogger.debug("TitledListViewer.focusLost() adjusting JList.");
-          setJListScrollState();
+          ensureJListSelectionVisibleV();
           repaint();  // bug fix Kluge to display cell in correct color.  
           }
 

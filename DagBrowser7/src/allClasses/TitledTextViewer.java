@@ -14,6 +14,7 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
@@ -67,7 +68,8 @@ public class TitledTextViewer
           this.theDataTreeModel= theDataTreeModel;
 
           theIJTextArea= new IJTextArea(   // Construct JTextArea.
-            theString  // String to view.
+            "--------------DEBUG--------------  \n"
+              +theString  // String to view.
             );
           CommonInitialization( theTreePath, theDataTreeModel );
           } // TitledTextViewer(.)
@@ -111,7 +113,9 @@ public class TitledTextViewer
           theIJTextArea.getCaret().setVisible(true); // Make viewer cursor visible.
           theIJTextArea.setLineWrap(true); // Make all visible.
           theIJTextArea.setWrapStyleWord(true); // Make it pretty.
-          add(theIJTextArea,BorderLayout.CENTER); // Adding it to main JPanel.
+          JScrollPane theJScrollPane= // Place the JTextArea in a scroll pane.
+              new JScrollPane(theIJTextArea);
+          add(theJScrollPane,BorderLayout.CENTER); // Add it to main JPanel.
           } // CommonInitialization( )
 
     // rendering methods.  to be added ??

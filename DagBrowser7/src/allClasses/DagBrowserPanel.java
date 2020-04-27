@@ -124,7 +124,7 @@ public class DagBrowserPanel
           private JSplitPane theSplitPane;  // horizontally split content panel
             private JScrollPane treeJScrollPane;  // left scroller sub-panel...
               private RootJTree theRootJTree;  // ... and tree content.
-            private JScrollPane dataJScrollPane;  // right scroller sub-panel...
+            //// private JScrollPane dataJScrollPane;  // right scroller sub-panel...
               private JComponent dataJComponent;  // ... and its data content.
               private TreeAware dataTreeAware;  // ... and its TreeAware alias.
 
@@ -318,18 +318,20 @@ public class DagBrowserPanel
           It is added in the center of the viewJPanel
           */
         {
-          buildLeftJScrollPaneV();  // Build the navigation sub-panel.
-          buildRightJScrollPaneV();  // Build the content sub-panel.
-          theSplitPane = // construct...
+          theSplitPane= // construct...
             new JSplitPane(  // ... JSplitPane...
-              JSplitPane.HORIZONTAL_SPLIT,  // ...split horizontally into...
-              treeJScrollPane,  // ...left scroller sub-panel and...
-              dataJScrollPane  // ...right scroller sub-panel.
+              JSplitPane.HORIZONTAL_SPLIT  // ...split horizontally into...
               );
-          theSplitPane.setContinuousLayout( true );  // Enable continuous layoug mode.
+          theSplitPane.setContinuousLayout( true );  // Enable continuous layout mode.
           theSplitPane.setDividerLocation( 0.25 );  // Set the position of split.
           theSplitPane.setResizeWeight( 0.25 );  // Handle extra space
           viewJPanel.add(theSplitPane,BorderLayout.CENTER); // add TheJSplitPane as...
+          buildLeftJScrollPaneV();  // Build the navigation sub-panel.
+          buildRightJScrollPaneV();  // Build the content sub-panel.
+          theSplitPane.setLeftComponent(treeJScrollPane); // set left sub-panel.
+          // Right side will be set later.
+          //// theSplitPane.setRightComponent(new JLabel("debug"));
+          //// dataJScrollPane  // ...right scroller sub-panel.
           }
 
       private void buildLeftJScrollPaneV()
@@ -362,13 +364,14 @@ public class DagBrowserPanel
             );
           }
 
-      private void buildRightJScrollPaneV()
+      private void buildRightJScrollPaneV() ////
         /* This composition method builds the right JScrollPane
           which contains whatever JComponent is appropriate for
           displaying the item selected in 
           the left JScrollPane navigation pane.
           */
         {
+          /*  ////
           // Maybe move JScrollPane into ViewHelpter or dataJComponent??
           dataJScrollPane =   // Construct JScrollPane with null content.
             new JScrollPane( null );
@@ -378,6 +381,7 @@ public class DagBrowserPanel
           //dataJScrollPane.setOpaque( false );
           dataJScrollPane.getViewport().setOpaque( true );
           dataJScrollPane.getViewport().setBackground( Color.GRAY );
+          */  ////
 
           replaceRightPanelContentWithV(  // Replace null JScrollPane content...
             startTreePath  // ...with content based on startTreePath.
@@ -886,13 +890,16 @@ public class DagBrowserPanel
 
             // theAppLog.debug("DagBrowserPanel.replaceRightPanelContentWithV(.):"
             //   + "replacing scroller with new JComponent and doing repaint().");
-      	    { // Replacing scroller content with new JComponent. 
+      	    { // Replacing scroller content with new JComponent.
+      	      /*  //////
 	            dataJScrollPane.setViewportView(  // in the dataJScrollPane's viewport...
 	              dataJComponent  // ...set the DataJPanel for viewing.
 	              );
 	            dataJScrollPane.getViewport().setOpaque( true );
 	            dataJScrollPane.getViewport().setBackground( Color.GRAY );
-	            dataJComponent.repaint();  // make certain it's displayed.
+	            */  ////
+      	      theSplitPane.setRightComponent(dataJComponent);
+      	      dataJComponent.repaint();  // make certain it's displayed.
       	      }
 
           	// theAppLog.debug("DagBrowserPanel.replaceRightPanelContentWithV(.):"

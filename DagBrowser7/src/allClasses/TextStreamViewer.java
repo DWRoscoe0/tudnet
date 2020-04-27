@@ -64,6 +64,8 @@ public class TextStreamViewer
           theTreeModel provides context.
           */
         {
+          super();   // Constructing the superclass JPanel.
+          
           theAppLog.debug("TextStreamViewer.TextStreamViewer(.) begins.");
           if ( theTreePath == null )  // prevent null TreePath.
             theTreePath = new TreePath( NamedLeaf.makeNamedLeaf( "ERROR TreePath" ));
