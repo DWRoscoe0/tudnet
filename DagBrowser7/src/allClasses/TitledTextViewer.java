@@ -68,8 +68,8 @@ public class TitledTextViewer
           this.theDataTreeModel= theDataTreeModel;
 
           theIJTextArea= new IJTextArea(   // Construct JTextArea.
-            "--------------DEBUG--------------  \n"
-              +theString  // String to view.
+            /// "--------------DEBUG--------------  \n"+
+            theString  // String to view.
             );
           CommonInitialization( theTreePath, theDataTreeModel );
           } // TitledTextViewer(.)

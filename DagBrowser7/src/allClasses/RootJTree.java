@@ -360,8 +360,8 @@ public class RootJTree
 		        and is a descendant of the presently selected node.
 		        If it is then it is selected.
 		        The purpose of this is to automatically select and display a node
-		        which was selected and being displayed when the app shutdown.
-		        /////////////fix Isn't called?
+		        which was selected and was being displayed when the app shutdown.
+		        ///fix Isn't called?
 		        */
 		      {
   		      theAppLog.debug("RootJTree.treeNodesInserted(TreeModelEvent) called.");

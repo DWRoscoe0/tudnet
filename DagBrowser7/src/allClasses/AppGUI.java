@@ -207,7 +207,7 @@ class GUIManager
         }
 
     public void initializeOnEDTV() // GUIManager.
-      /* This method does initialization.  It must be run on the EDT. 
+      /* This method does initialization of the GUI.  It must be run on the EDT. 
         It builds the app's GUI in a new JFrame and starts it.
         */
       {
@@ -232,8 +232,7 @@ class GUIManager
 
     		theDagBrowserPanel.initializeV();
 
-    		theJFrame =  // Construct and start the app JFrame.
-    				startingJFrame();
+    		buildJFrameV(); // Construct and start the app JFrame.
 
         theAppInstanceManager.setAppInstanceListener(
           theAppGUIFactory.makeInstanceCreationRunnable(theJFrame)
@@ -312,28 +311,20 @@ class GUIManager
 	      return processedKeyB;
 				}
 
-    private JFrame startingJFrame()
-      /* This method creates the app's JFrame and starts it.
+    private void buildJFrameV()
+      /* This method creates the app's JFrame.
         It is meant to be run on the EDT (Event Dispatching Thread).
         The JFrame content is set to a DagBrowserPanel 
         which contains the GUI and other code which does most of the work.
-        It returns the JFrame.  
         */
       {
-        JFrame theJFrame =  // Make the main application JFrame.
+        theJFrame=  // Make the main application JFrame.
           theAppGUIFactory.makeJFrame( 
             Config.appString
             +", version "
             +theAppInstanceManager.thisAppDateString()
             );
         theJFrame.setContentPane( theDagBrowserPanel );  // Store content.
-        theJFrame.pack();  // Layout all the content's sub-panels.
-        Dimension screenDimension= Toolkit.getDefaultToolkit().getScreenSize();
-        theJFrame.setSize( // Use 3/4 of the screen extent vertically and horizontally.
-            (int)(screenDimension.getWidth() * 0.75), 
-            (int)(screenDimension.getHeight() * 0.75)
-            ); // << not working!!!
-        theJFrame.setLocationRelativeTo(null);  // Center JFrame on screen.
         theJFrame.setDefaultCloseOperation( // Set the close operation to be
           JFrame.DO_NOTHING_ON_CLOSE // nothing, so listener can handle it all. 
           );
@@ -345,7 +336,6 @@ class GUIManager
               theShutdowner.requestAppShutdownV();
               }
           	});
-        theJFrame.setVisible(true);  // Make the window visible.
         theAppLog.info(
           	"GUIManager.theJFrame.setVisible(true) done."
           	);
@@ -359,7 +349,14 @@ class GUIManager
             Compoent.requestFocusInWindow() will cause 
             NullPointerException before the first dispatched message.
             */
-        return theJFrame;
+        theJFrame.pack();  // Layout all the content's sub-panels, then
+        Dimension screenDimension= Toolkit.getDefaultToolkit().getScreenSize();
+        theJFrame.setSize( // Use 3/4 of the screen extent vertically and horizontally.
+            (int)(screenDimension.getWidth() * 0.75), 
+            (int)(screenDimension.getHeight() * 0.75)
+            ); // << not working!!!
+        theJFrame.setLocationRelativeTo(null);  // center JFrame on screen.
+        theJFrame.setVisible(true);  // Make the window visible.
         }
 
     } // GUIManager

@@ -4,12 +4,10 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
-import java.awt.Dimension;
 import java.awt.FlowLayout; // not recommended by Eclipse QuickFix.
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.KeyboardFocusManager;  // See note about this below.
-import java.awt.Toolkit;
 import java.awt.event.*;
 
 import javax.swing.border.Border;
@@ -122,10 +120,10 @@ public class DagBrowserPanel
         private JPanel viewJPanel; // JPanel where desired data is displayed.
           private JLabel treePathJLabel; // a place to display directory path.
 
-          private JSplitPane theSplitPane;  // horizontally split content panel
+          private JSplitPane theJSplitPane;  // horizontally split content panel
             private JScrollPane treeJScrollPane;  // left scroller sub-panel...
               private RootJTree theRootJTree;  // ... and tree content.
-            //// private JScrollPane dataJScrollPane;  // right scroller sub-panel...
+            /// private JScrollPane dataJScrollPane;  // right scroller sub-panel...
               private JComponent dataJComponent;  // ... and its data content.
               private TreeAware dataTreeAware;  // ... and its TreeAware alias.
 
@@ -206,13 +204,21 @@ public class DagBrowserPanel
             buildAndAddViewJPanelV();  // Contains data components.
             } // Build and add sub-panels of this Panel.
           { // Define the content in the above panels.
-          	theRootJTree.initializeV( startTreePath );
+          	theRootJTree.initializeV( startTreePath ); 
 	            // Initializing the RootJTree should trigger a series of events 
 	            // which load all the data-dependent sub-panel components
 	            // and get them ready for display.  
             } // Define the content in the above panels.
 
           miscellaneousInitializationV();  // Odds and ends.
+
+          theJSplitPane.addComponentListener(new ComponentAdapter() 
+            { // Do this so JSplitPane divider stays in place during resizing.
+              public void componentResized(ComponentEvent e) {
+                  // Recalculate the variable you mentioned
+                  //theAppLog.info("DagBrowserPanel() theJSplitPane.componentResized(..).");
+                  restoreJSplitPaneDividerV();
+                  }});
 
           //appLogger.info("DagBrowserPanel constructor End.(");
           }
@@ -288,29 +294,27 @@ public class DagBrowserPanel
           path and status line sub-panels.
           */
         {
-          { // build viewJPanel.
-            viewJPanel= new JPanel();  // construct viewJPanel.
-            viewJPanel.setLayout(new BorderLayout());  // set layout manager.
-            { // Build and add Current Working treePathJLabel.
-              treePathJLabel= new JLabel();  // create CWD JLabel.
-              treePathJLabel.setAlignmentX(Component.LEFT_ALIGNMENT);  // align it.
-              treePathJLabel.setBorder(
-                BorderFactory.createEtchedBorder(EtchedBorder.RAISED)
-                );
-              // ?? Use left or center elipsis, not right, when truncating.
-              viewJPanel.add(treePathJLabel,BorderLayout.NORTH);  // add as north sub-panel.
-              } // Build and add Current Working treePathJLabel.
-            buildAndAddJSplitPane();  // Contains left and right sub-panels.
-              // It is added to the center sub-panel.
-            { // Build and add infoJLabel for displaying file information.
-              infoJLabel= new JLabel();  // construct it.
-              infoJLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-              infoJLabel.setOpaque( true ); // ??
-              infoJLabel.setText("UNDEFINED");  // report the present info string.
-              viewJPanel.add(infoJLabel,BorderLayout.SOUTH);  // add as south sub-panel.
-              } // Build and add infoJLabel for displaying file information.
-            add(viewJPanel,BorderLayout.CENTER);  // add it as center sub-panel.
-            } // build viewJPanel.
+          viewJPanel= new JPanel();  // construct viewJPanel.
+          viewJPanel.setLayout(new BorderLayout());  // set layout manager.
+          { // Build and add Current Working treePathJLabel.
+            treePathJLabel= new JLabel();  // create CWD JLabel.
+            treePathJLabel.setAlignmentX(Component.LEFT_ALIGNMENT);  // align it.
+            treePathJLabel.setBorder(
+              BorderFactory.createEtchedBorder(EtchedBorder.RAISED)
+              );
+            // ?? Use left or center elipsis, not right, when truncating.
+            viewJPanel.add(treePathJLabel,BorderLayout.NORTH);  // add as north sub-panel.
+            } // Build and add Current Working treePathJLabel.
+          buildAndAddJSplitPane();  // Contains left and right sub-panels.
+            // It is added to the center sub-panel.
+          { // Build and add infoJLabel for displaying file information.
+            infoJLabel= new JLabel();  // construct it.
+            infoJLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            infoJLabel.setOpaque( true ); // ??
+            infoJLabel.setText("UNDEFINED");  // report the present info string.
+            viewJPanel.add(infoJLabel,BorderLayout.SOUTH);  // add as south sub-panel.
+            } // Build and add infoJLabel for displaying file information.
+          add(viewJPanel,BorderLayout.CENTER);  // add it as center sub-panel.
           }
 
       private void buildAndAddJSplitPane()
@@ -319,20 +323,20 @@ public class DagBrowserPanel
           It is added in the center of the viewJPanel
           */
         {
-          theSplitPane= // construct...
+          theJSplitPane= // construct...
             new JSplitPane(  // ... JSplitPane...
               JSplitPane.HORIZONTAL_SPLIT  // ...split horizontally into...
               );
-          theSplitPane.setContinuousLayout( true );  // Enable continuous layout mode.
-          theSplitPane.setDividerLocation( 0.25 );  // Set the position of split.
-          theSplitPane.setResizeWeight( 0.25 );  // Handle extra space
-          viewJPanel.add(theSplitPane,BorderLayout.CENTER); // add TheJSplitPane as...
+          theJSplitPane.setContinuousLayout( true );  // Enable continuous layout mode.
+          theJSplitPane.setDividerLocation( 0.50 );  // Set the position of split.
+          theJSplitPane.setResizeWeight( 0.5 );  // Handle extra space
+          viewJPanel.add(theJSplitPane,BorderLayout.CENTER); // add TheJSplitPane as...
           buildLeftJScrollPaneV();  // Build the navigation sub-panel.
-          buildRightJScrollPaneV();  // Build the content sub-panel.
-          theSplitPane.setLeftComponent(treeJScrollPane); // set left sub-panel.
-          // Right side will be set later.
-          //// theSplitPane.setRightComponent(new JLabel("debug"));
-          //// dataJScrollPane  // ...right scroller sub-panel.
+          theJSplitPane.setLeftComponent(treeJScrollPane); // set left sub-panel.
+          replaceRightPanelContentWithV(  // Replace null right pane content...
+              startTreePath  // ...with content based on startTreePath.
+              );
+          // theJSplitPane.setOneTouchExpandable(true);
           }
 
       private void buildLeftJScrollPaneV()
@@ -342,8 +346,6 @@ public class DagBrowserPanel
           */
         {
           treeJScrollPane = new JScrollPane( );  // construct JScrollPane.
-          treeJScrollPane.setMinimumSize( new Dimension( 0, 0 ) );
-          treeJScrollPane.setPreferredSize( new Dimension( 400, 400 ) );
           treeJScrollPane.getViewport().setOpaque( true );
           treeJScrollPane.getViewport().setBackground( UIColor.activeColor );
           { // Build the JTree view for the JScrollPane.
@@ -365,25 +367,13 @@ public class DagBrowserPanel
             );
           }
 
-      private void buildRightJScrollPaneV() ////
+      private void buildRightJScrollPaneV() ///
         /* This composition method builds the right JScrollPane
           which contains whatever JComponent is appropriate for
           displaying the item selected in 
           the left JScrollPane navigation pane.
           */
         {
-          /*  ////
-          // Maybe move JScrollPane into ViewHelpter or dataJComponent??
-          dataJScrollPane =   // Construct JScrollPane with null content.
-            new JScrollPane( null );
-          dataJScrollPane.setMinimumSize( new Dimension( 0, 0 ) );
-          dataJScrollPane.setPreferredSize( new Dimension( 400, 400 ) );
-          //dataJScrollPane.setBackground( Color.white );
-          //dataJScrollPane.setOpaque( false );
-          dataJScrollPane.getViewport().setOpaque( true );
-          dataJScrollPane.getViewport().setBackground( Color.GRAY );
-          */  ////
-
           replaceRightPanelContentWithV(  // Replace null JScrollPane content...
             startTreePath  // ...with content based on startTreePath.
             );
@@ -583,8 +573,8 @@ public class DagBrowserPanel
 
                     theJFrame.setContentPane( theJPanel );
                     
-                    theJFrame.pack();  // Layout all the content's sub-panels.
-                    theJFrame.setLocationRelativeTo(null);  // Center JFrame on screen.
+                    theJFrame.pack();  // Layout all the content's sub-panels, then
+                    theJFrame.setLocationRelativeTo(null);  // center JFrame on screen.
                     theJFrame.setVisible(true);  // Make the window visible.
 	                  } 
 	                } 
@@ -892,14 +882,7 @@ public class DagBrowserPanel
             // theAppLog.debug("DagBrowserPanel.replaceRightPanelContentWithV(.):"
             //   + "replacing scroller with new JComponent and doing repaint().");
       	    { // Replacing scroller content with new JComponent.
-      	      /*  //////
-	            dataJScrollPane.setViewportView(  // in the dataJScrollPane's viewport...
-	              dataJComponent  // ...set the DataJPanel for viewing.
-	              );
-	            dataJScrollPane.getViewport().setOpaque( true );
-	            dataJScrollPane.getViewport().setBackground( Color.GRAY );
-	            */  ////
-      	      theSplitPane.setRightComponent(dataJComponent);
+      	      theJSplitPane.setRightComponent(dataJComponent);
       	      dataJComponent.repaint();  // make certain it's displayed.
       	      }
 
@@ -911,8 +894,28 @@ public class DagBrowserPanel
 
             rightPanelTreePath= inTreePath; // Save for sibling tests later.
             // theAppLog.debug("DagBrowserPanel.replaceRightPanelContentWithV(.) ends.");
+
+            restoreJSplitPaneDividerV();
             }
 
+        private void restoreJSplitPaneDividerV()
+          /* This method should be called to restore the JSplitPane divider
+            to its correct position after actions that might change it.
+           */
+          {
+            theJSplitPane.setDividerLocation( 0.4 );  // Set the position of split.
+            }
+
+        /*  ///
+        private JLabel testJLabel()
+          {
+            JLabel theJLabel= new JLabel("TEST JLabel");
+            theJLabel.setBackground( Color.CYAN );
+            theJLabel.setForeground( Color.MAGENTA );
+            theJLabel.setOpaque(true);
+            return theJLabel;
+            }
+        */  ///
 
         // Key and Action bindings (KeyboardFocusManager ).  Experimental/Unused??
         
