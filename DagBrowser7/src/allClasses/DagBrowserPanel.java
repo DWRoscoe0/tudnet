@@ -367,17 +367,20 @@ public class DagBrowserPanel
             );
           }
 
+      /*  //// 
       private void buildRightJScrollPaneV() ///
         /* This composition method builds the right JScrollPane
           which contains whatever JComponent is appropriate for
           displaying the item selected in 
           the left JScrollPane navigation pane.
           */
+      /*  //// 
         {
           replaceRightPanelContentWithV(  // Replace null JScrollPane content...
             startTreePath  // ...with content based on startTreePath.
             );
           }
+      */  //// 
 
       private void miscellaneousInitializationV()
         /* This composition method does initialization of
