@@ -7,6 +7,7 @@ import java.awt.Font;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.FileWriter;
+import java.io.IOException;
 
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
@@ -17,7 +18,6 @@ import javax.swing.SwingConstants;
 import javax.swing.JPanel;
 import javax.swing.tree.TreePath;
 import static allClasses.AppLog.theAppLog;
-import static allClasses.SystemSettings.NL;
 
 public class TextStreamViewer
 
@@ -169,32 +169,29 @@ public class TextStreamViewer
           private void storeStreamV( String fileString )
             /* This method stores the stream data that is in main memory to 
               the external text file whose name is fileString.
-              
-              ///??? The Exception handling in this method is not required,
-              but it does no harm.
               */
             {
-              theAppLog.info(
-                "TextStreamViewer.MyTreeHelper.storeStreamV(..) "
-                + "streamIJTextArea.getText()="+streamIJTextArea.getText());
+              theAppLog.info("TextStreamViewer.MyTreeHelper.storeStreamV(..) begins.");
               FileWriter theFileOutputStream= null;
               try {
                   theFileOutputStream= new FileWriter(
                     AppSettings.makeRelativeToAppFolderFile(fileString));  
                   streamIJTextArea.write(theFileOutputStream); 
                   }
-                catch (Exception theException) { 
-                  theAppLog.exception("Persistent.storeEpiNodeDataV(..)", theException);
+                catch (IOException theIOException) { 
+                  theAppLog.exception(
+                      "TextStreamViewer.MyTreeHelper.storeStreamV(..)", theIOException);
                   }
                 finally {
                   try {
                     if ( theFileOutputStream != null ) theFileOutputStream.close();
                     }
-                  catch ( Exception theException ) { 
-                    theAppLog.exception("Persistent.storeEpiNodeDataV(..)", theException);
+                  catch ( IOException theIOException ) { 
+                    theAppLog.exception(
+                        "TextStreamViewer.MyTreeHelper.storeStreamV(..)", theIOException);
                     }
                   }
-              theAppLog.info("Persistent.storeEpiNodeDataV(..) ends.");
+              theAppLog.info("TextStreamViewer.MyTreeHelper.storeStreamV(..) ends.");
               }
 
           } // MyTreeHelper
