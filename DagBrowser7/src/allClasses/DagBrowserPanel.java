@@ -405,6 +405,7 @@ public class DagBrowserPanel
 
       public void finalizationV()
         { 
+          dataTreeAware.getTreeHelper().finalizeHelperV(); // Mainly for TextStreamViewer.
           theTimerThread.stopAndJoinV(); // This should be quick. 
           }
 
