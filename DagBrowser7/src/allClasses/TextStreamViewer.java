@@ -6,6 +6,8 @@ import java.awt.BorderLayout;
 import java.awt.Font;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+//// import java.io.FileOutputStream;
+import java.io.FileWriter;
 
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
@@ -16,6 +18,7 @@ import javax.swing.SwingConstants;
 import javax.swing.JPanel;
 import javax.swing.tree.TreePath;
 import static allClasses.AppLog.theAppLog;
+////import static allClasses.SystemSettings.NL;
 
 public class TextStreamViewer
 
@@ -93,20 +96,27 @@ public class TextStreamViewer
 
       private void addStreamIJTextAreaV()
         {
-          streamIJTextArea= new IJTextArea("Typed text will be moved to here\n");
-          streamIJTextArea.setBorder(raisedEtchedBorder);
+          streamIJTextArea= new IJTextArea("(from streamIJTextArea construction)");
+              ////"Typed text will be moved to here\n"
+              ////+ "Second line of initial text.");
+          streamIJTextArea.setText("(from streamIJTextArea setText(..))");
           streamIJTextArea.getCaret().setVisible(true); // Make viewer cursor visible.
+          streamIJTextArea.setBorder(raisedEtchedBorder);
+          streamIJTextArea.setRows(4);
+          streamIJTextArea.setEditable(true);
           streamIJTextArea.setLineWrap(true);
           streamIJTextArea.setWrapStyleWord(true);
-          add(streamIJTextArea,BorderLayout.CENTER); // Adding to center.
+          ////add(streamIJTextArea,BorderLayout.CENTER); // Adding to center.
+          add(streamIJTextArea,BorderLayout.NORTH); // Adding to center.
           }
       
       private void addInputIJTextAreaV()
         {
-          inputIJTextArea= new IJTextArea("");
+          inputIJTextArea= new IJTextArea("(from inputIJTextArea construction)");
+          inputIJTextArea.setText("(from inputIJTextArea setText(..))");
           inputIJTextArea.getCaret().setVisible(true); // Make input cursor visible.
           inputIJTextArea.setBorder(raisedEtchedBorder);
-          inputIJTextArea.setRows(2);
+          inputIJTextArea.setRows(4);
           inputIJTextArea.setEditable(true);
           inputIJTextArea.setLineWrap(true);
           inputIJTextArea.setWrapStyleWord(true);
@@ -114,11 +124,19 @@ public class TextStreamViewer
               @Override
               public void keyPressed(KeyEvent theKeyEvent){
                 if(theKeyEvent.getKeyCode() == KeyEvent.VK_ENTER){
+                  theAppLog.info(
+                    "TextStreamViewer.KeyListener processing ENTER");
                   streamIJTextArea.append(inputIJTextArea.getText());
                   streamIJTextArea.append("\n");
-                  inputIJTextArea.setText("");
+                  //// inputIJTextArea.setText("");
                   theKeyEvent.consume();
                   }
+              theAppLog.info(
+                  "TextStreamViewer.KeyListener inputIJTextArea.getText()="
+                  +inputIJTextArea.getText());
+              theAppLog.info(
+                  "TextStreamViewer.KeyListener streamIJTextArea.getText()="
+                  +streamIJTextArea.getText());
               }
       
               @Override
@@ -129,7 +147,6 @@ public class TextStreamViewer
               public void keyReleased(KeyEvent e) {
               }
             });
-          
           add(inputIJTextArea,BorderLayout.SOUTH); // Adding it at bottom of JPanel.
           }
         
@@ -154,6 +171,51 @@ public class TextStreamViewer
               )
             {
               super(inOwningJComponent, theMetaRoot, inTreePath);
+              }
+
+          public void finalizeHelperV() 
+            {
+              storeStreamV( "textStreamFile.txt");
+              super.finalizeHelperV();
+              }
+          
+          private void storeStreamV( String fileString )
+            /* This method stores the stream data that is in main memory to 
+              the external text file whose name is fileString.
+              
+              ////??? The exception handling in this method is not required,
+              but it does no harm.
+              */
+            {
+              theAppLog.info(
+                "TextStreamViewer.MyTreeHelper.storeStreamV(..) "
+                + "streamIJTextArea.getText()="+streamIJTextArea.getText());
+              ////FileOutputStream theFileOutputStream= null;
+              FileWriter theFileOutputStream= null;
+              try {
+                  //// theFileOutputStream= new FileOutputStream(
+                    theFileOutputStream= new FileWriter(
+                      AppSettings.makeRelativeToAppFolderFile(fileString));  
+                  theFileOutputStream.write(
+                      "#--- stream data follows ---"); //// .getBytes());
+                  //// streamIJTextArea.write(theFileOutputStream); 
+                  theFileOutputStream.write(streamIJTextArea.getText());
+                  ////theFileOutputStream.write(streamIJTextArea.getSelectedText());
+                  theFileOutputStream.write(
+                      ("#--- end of stream data ---")); //// .getBytes());
+                  }
+                catch (Exception theException) { 
+                  theAppLog.exception("Persistent.storeEpiNodeDataV(..)", theException);
+                  }
+                finally {
+                  try {
+                    if ( theFileOutputStream != null ) theFileOutputStream.close();
+                    }
+                  catch ( Exception theException ) { 
+                    theAppLog.exception("Persistent.storeEpiNodeDataV(..)", theException);
+                    }
+                  }
+              theAppLog.info("Persistent.storeEpiNodeDataV(..) ends.");
               }
 
           } // MyTreeHelper

@@ -218,7 +218,8 @@ class Infogora  // The root of this app.
               waitV(0);
               } // while(true)
             
-    	      waitV(5000); // Try waiting another 5 seconds.
+    	      waitV(Config.threadJoinTimeOutMsL + 1000); // Try waiting 
+    	        // for thread time-out plus 1 second more.
     	      
     	      // If we got this far, timer has expired, and termination probably failed.
     	      
@@ -233,7 +234,7 @@ class Infogora  // The root of this app.
             System.exit(1); // Force process termination with an error code.
     	      }
     
-  	    private void waitV(int msI)
+  	    private void waitV(long msI)
   	      /* This helper method waits and handles any InterruptedException. 
   	        Waits for msI milliseconds, or an interrupt, or a notification,
   	        which ever happens first.

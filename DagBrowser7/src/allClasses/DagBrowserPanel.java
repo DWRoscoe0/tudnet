@@ -404,7 +404,9 @@ public class DagBrowserPanel
           } // miscellaneousInitializationV()
 
       public void finalizationV()
-        { theTimerThread.stopAndJoinV(); }
+        { 
+          theTimerThread.stopAndJoinV(); // This should be quick. 
+          }
 
     // Listener methods and their helper methods.
   
@@ -607,9 +609,10 @@ public class DagBrowserPanel
           public void run()
             {
               periodicTargetTimeMsL= System.currentTimeMillis();
-        			while (! testInterruptB())
+        			while (true)
                 {
               		doDelayMeasurementsV();
+                  if (testInterruptB()) break; // Exit loop if requested.
                   theAppInstanceManager. // Executing updater if present.
                     thingsToDoPeriodicallyV();
                   theDataTreeModel.displayTreeModelChangesV();
@@ -639,20 +642,22 @@ public class DagBrowserPanel
     	  			activityLockAndSignal.waitingForInterruptOrIntervalOrNotificationE(
     	  					periodicTargetTimeMsL, periodMsL
       					); // Waiting for next mark.
-    	  			periodicTargetTimeMsL+= periodMsL; // Advancing target.
-    	  			EDTUtilities.invokeAndWaitV( // Executing on EDT...
-	              new Runnable() {
-	                @Override  
-	                public void run() { 
-	                	activityJLabel.setText( "Active" );
-	                	periodicToggleB^=true;
-                  	Color activityColor= periodicToggleB 
-                  			? Color.WHITE
-                  		  : getBackground();
-                    activityJLabel.setBackground(activityColor);
-                    }  
-	                } 
-	              );
+    	  			if (! testInterruptB()) { // Continue unless exit requested.
+      	  			periodicTargetTimeMsL+= periodMsL; // Advancing target.
+      	  			EDTUtilities.invokeAndWaitV( // Executing on EDT...
+  	              new Runnable() {
+  	                @Override  
+  	                public void run() { 
+  	                	activityJLabel.setText( "Active" );
+  	                	periodicToggleB^=true;
+                    	Color activityColor= periodicToggleB 
+                    			? Color.WHITE
+                    		  : getBackground();
+                      activityJLabel.setBackground(activityColor);
+                      }  
+  	                } 
+  	              );
+    	  			  }
         			}
       		
           } // class TimerThread

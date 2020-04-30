@@ -245,13 +245,12 @@ class GUIManager
         }
 
     public void finalizeV()
-      /* This method does finalization.  
-        It does this by running finalizeOnEDTV()on the AWT thread.
+      /* This method does finalization.
+        It is called during shutdown.  
+        It switches to the AWT thread to do [part of] this.
         */
       {
         theAppLog.info("GUIManager.finalizeOnV() called.");
-        theDagBrowserPanel.finalizationV(); // To terminate ActivityTimer.
-          ///fix For some reason, this fails when run on EDT!
         EDTUtilities.invokeAndWaitV( // Dispatching on EDT
             new Runnable() {
               @Override
@@ -267,9 +266,12 @@ class GUIManager
       /* This method does finalization.  It must be run on the EDT.
         */
       { 
-         // appLogger.info("GUIManager.finalizeOnEDTV() begins.");
-         // appLogger.info("GUIManager.finalizeOnEDTV() after theDagBrowserPanel.finalizationV().");
-        for (Window aWindow : Window.getWindows()) {
+        theAppLog.debug("GUIManager.finalizeOnEDTV() begins.");
+        theDagBrowserPanel.finalizationV(); // To terminate ActivityTimer.
+        ///fix ? For some reason, this fails when run on EDT!
+        theAppLog.debug("GUIManager.finalizeOnEDTV() after theDagBrowserPanel.finalizationV().");
+        
+        for (Window aWindow : Window.getWindows()) { // Dispose all windows.
           theAppLog.info(
               "GUIManager.finalizeOnEDTV() disposing Window titled: "
               +((Frame)aWindow).getTitle());
