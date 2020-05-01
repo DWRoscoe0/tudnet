@@ -4,10 +4,13 @@ package allClasses;
 
 import java.awt.BorderLayout;
 import java.awt.Font;
+import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
@@ -158,6 +161,62 @@ public class TextStreamViewer
               )
             {
               super(inOwningJComponent, theMetaRoot, inTreePath);
+              }
+
+          public void initializeHelperV( 
+              TreePathListener coordinatingTreePathListener,
+              FocusListener coordinatingFocusListener,
+              DataTreeModel theDataTreeModel
+              )
+            {
+              super.initializeHelperV(
+                  coordinatingTreePathListener,
+                  coordinatingFocusListener,
+                  theDataTreeModel
+                  );
+              loadStreamV( "textStreamFile.txt");
+              }
+          
+          private void loadStreamV( String fileString )
+            /* This method loads the streamJTextArea from 
+              the contents of the external text file whose name is fileString.  
+              Note, this opens a random access file,
+              though random access is not needed, yet.
+              */
+            {
+              RandomAccessInputStream theRandomAccessInputStream= null;
+              RandomAccessFile theRandomAccessFile= null;
+
+              try { 
+                  theRandomAccessFile= new RandomAccessFile(
+                      AppSettings.makeRelativeToAppFolderFile( fileString ),"r");
+                  theRandomAccessInputStream= 
+                      new RandomFileInputStream(theRandomAccessFile);
+                  byte[] bufferAB= new byte[1024];
+                  int lengthI;
+                  while (true) {
+                    lengthI= theRandomAccessInputStream.read(bufferAB);
+                    if (lengthI <= 0) // Transfer completed.
+                      break; // Record success and exit loop.
+                    String readString= new String(bufferAB);
+                    streamIJTextArea.append(readString);
+                    }
+                  } 
+                catch (FileNotFoundException theFileNotFoundException) { 
+                  theAppLog.warning("Persistent.loadEpiNodeDataV(..)"+theFileNotFoundException);
+                  }
+                catch (Exception theException) { 
+                  theAppLog.exception("Persistent.loadEpiNodeDataV(..)", theException);
+                  }
+                finally { 
+                  try { 
+                    if ( theRandomAccessInputStream != null ) theRandomAccessInputStream.close(); 
+                    if ( theRandomAccessFile != null ) theRandomAccessFile.close(); 
+                    }
+                  catch (Exception theException) { 
+                    theAppLog.exception("Persistent.loadEpiNodeDataV(..)", theException);
+                    }
+                  }
               }
 
           public void finalizeHelperV() 
