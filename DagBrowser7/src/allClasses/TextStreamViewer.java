@@ -4,6 +4,7 @@ package allClasses;
 
 import java.awt.BorderLayout;
 import java.awt.Font;
+import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -18,6 +19,7 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.tree.TreePath;
 import static allClasses.AppLog.theAppLog;
 
@@ -103,7 +105,15 @@ public class TextStreamViewer
           streamIJTextArea.setEditable(false);
           streamIJTextArea.setLineWrap(true);
           streamIJTextArea.setWrapStyleWord(true);
-          add(streamIJTextArea,BorderLayout.CENTER); // Adding to center.
+          streamIJTextArea.addFocusListener(new FocusListener() {
+            public void focusGained(FocusEvent e) {
+              streamIJTextArea.getCaret().setVisible(true); // Make  cursor visible again.
+              }
+            public void focusLost(FocusEvent e) {}
+            });
+          JScrollPane streamJScrollPane= // Place the JTextArea in a scroll pane.
+              new JScrollPane(streamIJTextArea);
+          add(streamJScrollPane,BorderLayout.CENTER); // Adding to center.
           }
       
       private void addInputIJTextAreaV()
