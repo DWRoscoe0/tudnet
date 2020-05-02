@@ -7,10 +7,9 @@ import java.awt.Font;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
@@ -122,8 +121,13 @@ public class TextStreamViewer
                 if(theKeyEvent.getKeyCode() == KeyEvent.VK_ENTER){
                   inputIJTextArea.append("\n"); // Add JTextArea line terminator.
                   { // Move all text from input area to stream area.
-                    streamIJTextArea.append(inputIJTextArea.getText());
+                    String messageString= inputIJTextArea.getText();
+                    streamIJTextArea.append(messageString);
                     inputIJTextArea.setText("");
+                    broadcastStreamMessageV(messageString);
+                    theAppLog.debug(
+                        "TextStreamViewer.TextStreamViewer.keyPressed(.) message="
+                        + messageString);
                     }
                   theKeyEvent.consume(); // Prevent further processing.
                   }
@@ -139,7 +143,10 @@ public class TextStreamViewer
             });
           add(inputIJTextArea,BorderLayout.SOUTH); // Adding it at bottom of JPanel.
           }
-        
+
+      private void broadcastStreamMessageV(String messageString)
+        {}
+
     // rendering methods.  to be added ??
 
     // TreeAware interface code for TreeHelper access.
@@ -180,43 +187,29 @@ public class TextStreamViewer
           private void loadStreamV( String fileString )
             /* This method loads the streamJTextArea from 
               the contents of the external text file whose name is fileString.  
-              Note, this opens a random access file,
-              though random access is not needed, yet.
               */
             {
-              RandomAccessInputStream theRandomAccessInputStream= null;
-              RandomAccessFile theRandomAccessFile= null;
-
-              try { 
-                  theRandomAccessFile= new RandomAccessFile(
-                      AppSettings.makeRelativeToAppFolderFile( fileString ),"r");
-                  theRandomAccessInputStream= 
-                      new RandomFileInputStream(theRandomAccessFile);
-                  byte[] bufferAB= new byte[1024];
-                  int lengthI;
-                  while (true) {
-                    lengthI= theRandomAccessInputStream.read(bufferAB);
-                    if (lengthI <= 0) // Transfer completed.
-                      break; // Record success and exit loop.
-                    String readString= new String(bufferAB);
-                    streamIJTextArea.append(readString);
-                    }
-                  } 
-                catch (FileNotFoundException theFileNotFoundException) { 
-                  theAppLog.warning("Persistent.loadEpiNodeDataV(..)"+theFileNotFoundException);
+              theAppLog.info("TextStreamViewer.MyTreeHelper.loadStreamV(..) begins.");
+              FileReader theFileInputStream= null;
+              try {
+                  theFileInputStream= new FileReader(
+                    AppSettings.makeRelativeToAppFolderFile(fileString));  
+                  streamIJTextArea.read(theFileInputStream,null); 
                   }
-                catch (Exception theException) { 
-                  theAppLog.exception("Persistent.loadEpiNodeDataV(..)", theException);
+                catch (IOException theIOException) { 
+                  theAppLog.exception(
+                      "TextStreamViewer.MyTreeHelper.loadStreamV(..)", theIOException);
                   }
-                finally { 
-                  try { 
-                    if ( theRandomAccessInputStream != null ) theRandomAccessInputStream.close(); 
-                    if ( theRandomAccessFile != null ) theRandomAccessFile.close(); 
+                finally {
+                  try {
+                    if ( theFileInputStream != null ) theFileInputStream.close();
                     }
-                  catch (Exception theException) { 
-                    theAppLog.exception("Persistent.loadEpiNodeDataV(..)", theException);
+                  catch ( IOException theIOException ) { 
+                    theAppLog.exception(
+                        "TextStreamViewer.MyTreeHelper.loadStreamV(..)", theIOException);
                     }
                   }
+              theAppLog.info("TextStreamViewer.MyTreeHelper.loadStreamV(..) ends.");
               }
 
           public void finalizeHelperV() 
