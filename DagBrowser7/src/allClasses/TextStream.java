@@ -15,15 +15,23 @@ public class TextStream
   {
   
     // Variables.
-      String valueString;
-      
+      private String valueString;
+      private UnicasterManager theUnicasterManager;
+      private Persistent thePersistent;
+
     // Constructors.
 
-      TextStream( String inString ) 
+      TextStream( 
+          String inString, 
+          UnicasterManager theUnicasterManager,
+          Persistent thePersistent
+          )
         // Constructs a TextStream with a name inString.
         { 
           theAppLog.debug("TextStream.TextStream(.) called.");
           valueString= inString;
+          this.theUnicasterManager= theUnicasterManager;
+          this.thePersistent= thePersistent;
           }
 
     // theFile pass-through methods.
@@ -61,7 +69,9 @@ public class TextStream
           JComponent resultJComponent= 
             new TextStreamViewer( 
               inTreePath, 
-              inDataTreeModel
+              inDataTreeModel,
+              theUnicasterManager,
+              thePersistent
               );
           return resultJComponent;  // return the final result.
           }

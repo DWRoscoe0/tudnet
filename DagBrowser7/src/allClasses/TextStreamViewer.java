@@ -11,6 +11,7 @@ import java.awt.event.KeyListener;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+//// import java.util.Timer;
 
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
@@ -22,6 +23,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.tree.TreePath;
 import static allClasses.AppLog.theAppLog;
+import static allClasses.SystemSettings.NL;
 
 public class TextStreamViewer
 
@@ -47,6 +49,11 @@ public class TextStreamViewer
       // static variables.
 
       // instance variables.
+  
+        // Constructor-injected variables.
+        private UnicasterManager theUnicasterManager;
+        private Persistent thePersistent;
+
         private Border raisedEtchedBorder= // Common style used elsewhere.
             BorderFactory.createEtchedBorder(EtchedBorder.RAISED);
       
@@ -60,7 +67,9 @@ public class TextStreamViewer
 
       public TextStreamViewer(  // Constructor.
           TreePath theTreePath, 
-          DataTreeModel theDataTreeModel 
+          DataTreeModel theDataTreeModel,
+          UnicasterManager theUnicasterManager,
+          Persistent thePersistent
           )
         /* Constructs a TextStreamViewer.
           theTreePath is the TreePath associated with
@@ -71,6 +80,9 @@ public class TextStreamViewer
           */
         {
           super();   // Constructing the superclass JPanel.
+          
+          this.theUnicasterManager= theUnicasterManager;
+          this.thePersistent= thePersistent;
           
           theAppLog.debug("TextStreamViewer.TextStreamViewer(.) begins.");
           if ( theTreePath == null )  // prevent null TreePath.
@@ -129,33 +141,60 @@ public class TextStreamViewer
               @Override
               public void keyPressed(KeyEvent theKeyEvent){
                 if(theKeyEvent.getKeyCode() == KeyEvent.VK_ENTER){
-                  inputIJTextArea.append("\n"); // Add JTextArea line terminator.
                   { // Move all text from input area to stream area.
                     String messageString= inputIJTextArea.getText();
-                    streamIJTextArea.append(messageString);
-                    inputIJTextArea.setText("");
-                    broadcastStreamMessageV(messageString);
                     theAppLog.debug(
                         "TextStreamViewer.TextStreamViewer.keyPressed(.) message="
                         + messageString);
+                    streamIJTextArea.append(messageString); // Append to stream window.
+                    streamIJTextArea.append("\n"); // Add JTextArea line terminator.
+                    inputIJTextArea.setText(""); // Clear input area for next line.
+                    broadcastStreamMessageV(messageString); // Inform peers.
                     }
                   theKeyEvent.consume(); // Prevent further processing.
                   }
-              }
-      
+                }
               @Override
-              public void keyTyped(KeyEvent e) {
-              }
-      
+              public void keyTyped(KeyEvent e) {}
               @Override
-              public void keyReleased(KeyEvent e) {
-              }
-            });
+              public void keyReleased(KeyEvent e) {}
+              });
           add(inputIJTextArea,BorderLayout.SOUTH); // Adding it at bottom of JPanel.
           }
 
       private void broadcastStreamMessageV(String messageString)
-        {}
+        /* This method notifies all connected peers about
+          the messageString.
+          */
+        {
+          EpiNode messageEpiNode= new ScalarEpiNode(messageString);
+            theAppLog.debug( "TextStreamViewer.broadcastStreamMessageV() called.");
+            PeersCursor scanPeersCursor= // Used for iteration. 
+                PeersCursor.makeOnNoEntryPeersCursor( thePersistent );
+          peerLoop: while (true) { // Process all peers in my peer list. 
+            if (scanPeersCursor.nextKeyString().isEmpty() ) // Try getting next scan peer. 
+              break peerLoop; // There are no more peers, so exit loop.
+            theAppLog.appendToFileV("(strean?)"); // Log that peer is being considered.
+            if (! scanPeersCursor.testB("isConnected")) // This peer is not connected 
+              continue peerLoop; // so loop to try next peer.
+            String peerIPString= scanPeersCursor.getFieldString("IP");
+            String peerPortString= scanPeersCursor.getFieldString("Port");
+            IPAndPort theIPAndPort= new IPAndPort(peerIPString, peerPortString);
+            Unicaster scanUnicaster= // Try getting associated Unicaster.
+                theUnicasterManager.tryingToGetUnicaster(theIPAndPort);
+            if (scanUnicaster == null) { // Unicaster of scan peer doesn't exist
+              theAppLog.error(
+                  "TextStreamViewer.broadcastStreamMessageV() non-existent Unicaster.");
+              continue peerLoop; // so loop to try next peer.
+              }
+            theAppLog.appendToFileV("(YES!)"); // Log that we're sending data.
+            scanUnicaster.putV( // Queue text stream message to Unicaster of scan peer
+              MapEpiNode.makeSingleEntryMapEpiNode( // wrapped in its own State map.
+                "StreamText", messageEpiNode)
+              );
+          } // peerLoop: 
+            theAppLog.appendToFileV("(end of peers)"+NL); // Mark end of list with new line.
+          }
 
     // rendering methods.  to be added ??
 
