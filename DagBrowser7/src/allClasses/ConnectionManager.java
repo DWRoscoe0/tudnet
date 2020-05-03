@@ -788,7 +788,7 @@ public class ConnectionManager
             MapEpiNode.makeSingleEntryMapEpiNode( // wrapped in a RemoteNewState map.
               "RemoteNewState", messagePeerMapEpiNode)
             );
-        } // processOnePeer: 
+        } // peerLoop: 
           theAppLog.appendToFileV("(end of peers)"+NL); // Mark end of list with new line.
         }
 
@@ -823,7 +823,7 @@ public class ConnectionManager
               MapEpiNode.makeSingleEntryMapEpiNode( // wrapped in another map.
                 "RemoteCurrentState", scanPeersCursor.getSelectedMapEpiNode())
               );
-        } // processOnePeer: 
+        } // peerLoop: 
           theAppLog.appendToFileV("(end of peers)"+NL); // Mark end of list with new line.
         } // toReturn:
           return;
