@@ -18,6 +18,7 @@ import java.util.LinkedHashMap;
 import javax.swing.BorderFactory;
 import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
+import javax.swing.text.Document;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 import javax.swing.JPanel;
@@ -200,7 +201,11 @@ public class TextStreamViewer
             theLinkedHashMap.put(messageString,null); // Put in map to prevent repeat.
             streamIJTextArea.append(messageString); // Append to stream window.
             streamIJTextArea.append("\n"); // Add JTextArea line terminator.
-            broadcastStreamMessageV(messageString); // Inform peers.
+            { // Put cursor at end of append.
+              Document d = streamIJTextArea.getDocument();
+              streamIJTextArea.select(d.getLength(), d.getLength());
+              }
+            broadcastStreamMessageV(messageString); // Inform peers of input text.
           } // toReturn:
           }
 
