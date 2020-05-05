@@ -18,13 +18,15 @@ public class TextStream
       private String valueString;
       private UnicasterManager theUnicasterManager;
       private Persistent thePersistent;
+      private ConnectionManager theConnectionManager;
 
     // Constructors.
 
       TextStream( 
           String inString, 
           UnicasterManager theUnicasterManager,
-          Persistent thePersistent
+          Persistent thePersistent,
+          ConnectionManager theConnectionManager
           )
         // Constructs a TextStream with a name inString.
         { 
@@ -32,6 +34,7 @@ public class TextStream
           valueString= inString;
           this.theUnicasterManager= theUnicasterManager;
           this.thePersistent= thePersistent;
+          this.theConnectionManager= theConnectionManager;
           }
 
     // theFile pass-through methods.
@@ -71,7 +74,8 @@ public class TextStream
               inTreePath, 
               inDataTreeModel,
               theUnicasterManager,
-              thePersistent
+              thePersistent,
+              theConnectionManager
               );
           return resultJComponent;  // return the final result.
           }

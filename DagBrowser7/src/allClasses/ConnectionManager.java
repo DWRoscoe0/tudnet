@@ -681,6 +681,9 @@ public class ConnectionManager
             + "messageMapEpiNode=" + NL + "  " + messageMapEpiNode);
           MapEpiNode valueMapEpiNode;
         goReturn: {
+          if (callEpiNodeListenerB(messageMapEpiNode)) // Try TextStream processing.
+            { break goReturn; } // Success, so exit.
+            
           valueMapEpiNode= messageMapEpiNode.getMapEpiNode("LocalNewState");
           if (valueMapEpiNode != null) 
             { processLocalNewStateV(valueMapEpiNode); break goReturn; }
@@ -827,6 +830,27 @@ public class ConnectionManager
           theAppLog.appendToFileV("(end of peers)"+NL); // Mark end of list with new line.
         } // toReturn:
           return;
+        }
+
+
+    // TextStreamViewer message processing.
+    
+    private TextStreamViewer listenerTextStreamViewer= null;
+
+    public void setEpiNodeListener(TextStreamViewer theTextStreamViewer)
+      {
+        listenerTextStreamViewer= theTextStreamViewer;
+        }
+
+    private boolean callEpiNodeListenerB(MapEpiNode theMapEpiNode)
+      /* If the TextStream's listener is defined and able to decode theMapEpiNode 
+        then this method returns true, false otherwise.
+        */
+      {
+        boolean successB= false;
+        if (listenerTextStreamViewer != null) // Call TextStream's listener if defined.
+          successB= listenerTextStreamViewer.processMapEpiNodeB(theMapEpiNode);
+        return successB;
         }
 
     } // class ConnectionManager.

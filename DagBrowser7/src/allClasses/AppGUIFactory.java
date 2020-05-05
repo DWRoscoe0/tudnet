@@ -102,7 +102,8 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
           theConnectionManager,
           new NamedList(
             "Test Center",
-            new TextStream("test Stream Data",theUnicasterManager,thePersistent),
+            new TextStream(
+              "test Stream Data",theUnicasterManager,thePersistent,theConnectionManager),
             new Infinitree( null, 0 )
             )
           );

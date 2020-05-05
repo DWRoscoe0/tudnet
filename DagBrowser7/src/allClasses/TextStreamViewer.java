@@ -8,13 +8,14 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 //// import java.util.Timer;
+import java.util.LinkedHashMap;
 
 import javax.swing.BorderFactory;
-import javax.swing.JComponent;
 import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
 import javax.swing.JLabel;
@@ -53,6 +54,7 @@ public class TextStreamViewer
         // Constructor-injected variables.
         private UnicasterManager theUnicasterManager;
         private Persistent thePersistent;
+        private ConnectionManager theConnectionManager;
 
         private Border raisedEtchedBorder= // Common style used elsewhere.
             BorderFactory.createEtchedBorder(EtchedBorder.RAISED);
@@ -69,7 +71,8 @@ public class TextStreamViewer
           TreePath theTreePath, 
           DataTreeModel theDataTreeModel,
           UnicasterManager theUnicasterManager,
-          Persistent thePersistent
+          Persistent thePersistent,
+          ConnectionManager theConnectionManager
           )
         /* Constructs a TextStreamViewer.
           theTreePath is the TreePath associated with
@@ -83,7 +86,8 @@ public class TextStreamViewer
           
           this.theUnicasterManager= theUnicasterManager;
           this.thePersistent= thePersistent;
-          
+          this.theConnectionManager= theConnectionManager;
+
           theAppLog.debug("TextStreamViewer.TextStreamViewer(.) begins.");
           if ( theTreePath == null )  // prevent null TreePath.
             theTreePath = new TreePath( NamedLeaf.makeNamedLeaf( "ERROR TreePath" ));
@@ -144,12 +148,9 @@ public class TextStreamViewer
                   { // Move all text from input area to stream area.
                     String messageString= inputIJTextArea.getText();
                     theAppLog.debug(
-                        "TextStreamViewer.TextStreamViewer.keyPressed(.) message="
-                        + messageString);
-                    streamIJTextArea.append(messageString); // Append to stream window.
-                    streamIJTextArea.append("\n"); // Add JTextArea line terminator.
+                        "TextStreamViewer.TextStreamViewer.keyPressed(.) ENTER pressed.");
                     inputIJTextArea.setText(""); // Clear input area for next line.
-                    broadcastStreamMessageV(messageString); // Inform peers.
+                    processLineV(messageString);
                     }
                   theKeyEvent.consume(); // Prevent further processing.
                   }
@@ -160,6 +161,47 @@ public class TextStreamViewer
               public void keyReleased(KeyEvent e) {}
               });
           add(inputIJTextArea,BorderLayout.SOUTH); // Adding it at bottom of JPanel.
+          }
+
+      public boolean processMapEpiNodeB(MapEpiNode theMapEpiNode)
+        /* This is the Listener method called by the ConnectionManager
+          to try decoding a TextStream message MapEpiNode.
+          It returns true if the decode was successful, false otherwise.
+          */
+      {
+        String valueString= theMapEpiNode.getString("StreamText");
+        boolean decodedB= (valueString != null); // Test for a StreamText message?
+        if (decodedB)
+          EDTUtilities.runOrInvokeAndWaitV( // Do following on EDT thread. 
+              new Runnable() {
+                @Override  
+                public void run() {
+                  synchronized(this) {
+                    processLineV(valueString);
+                    }
+                  }
+                } 
+              );
+          ; // process text.
+        return decodedB;
+        }
+
+      LinkedHashMap<String,Object> theLinkedHashMap= 
+          new LinkedHashMap<String,Object>();
+      
+      private void processLineV(String messageString)
+        {
+          toReturn: {
+            theAppLog.debug(
+                "TextStreamViewer.TextStreamViewer.processLineV(.) message="
+                + messageString);
+            if (theLinkedHashMap.containsKey(messageString)) // Already in map?
+              break toReturn; // Yes, so received before and we are ignoring it.
+            theLinkedHashMap.put(messageString,null); // Put in map to prevent repeat.
+            streamIJTextArea.append(messageString); // Append to stream window.
+            streamIJTextArea.append("\n"); // Add JTextArea line terminator.
+            broadcastStreamMessageV(messageString); // Inform peers.
+          } // toReturn:
           }
 
       private void broadcastStreamMessageV(String messageString)
@@ -209,14 +251,17 @@ public class TextStreamViewer
         extends TreeHelper 
 
         {
+          TextStreamViewer theTextStreamViewer; 
 
           MyTreeHelper(  // Constructor.
-              JComponent inOwningJComponent, 
+              TextStreamViewer theTextStreamViewer, 
               MetaRoot theMetaRoot,
               TreePath inTreePath
               )
             {
-              super(inOwningJComponent, theMetaRoot, inTreePath);
+              super(theTextStreamViewer, theMetaRoot, inTreePath);
+
+              this.theTextStreamViewer= theTextStreamViewer; // Save a copy. 
               }
 
           public void initializeHelperV( 
@@ -225,12 +270,16 @@ public class TextStreamViewer
               DataTreeModel theDataTreeModel
               )
             {
-              super.initializeHelperV(
+              super.initializeHelperV( // Call superclass constructor.
                   coordinatingTreePathListener,
                   coordinatingFocusListener,
                   theDataTreeModel
                   );
-              loadStreamV( "textStreamFile.txt");
+              
+              loadStreamV( "textStreamFile.txt"); // Load text previously saved to disk.
+              
+              theConnectionManager.setEpiNodeListener( // Listen to ConnectionManager for
+                  theTextStreamViewer); // receiving text from  remote systems. 
               }
           
           private void loadStreamV( String fileString )
@@ -244,6 +293,10 @@ public class TextStreamViewer
                   theFileInputStream= new FileReader(
                     AppSettings.makeRelativeToAppFolderFile(fileString));  
                   streamIJTextArea.read(theFileInputStream,null); 
+                  }
+                catch (FileNotFoundException theFileNotFoundException) { 
+                  theAppLog.info(
+                      "TextStreamViewer.MyTreeHelper.loadStreamV(..) file not found");
                   }
                 catch (IOException theIOException) { 
                   theAppLog.exception(
