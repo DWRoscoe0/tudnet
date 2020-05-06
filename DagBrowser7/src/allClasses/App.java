@@ -63,10 +63,23 @@ public class App { // The App, especially pre-GUI stuff.
 
 
   private void definePeerIdentityV()
-    /* This method creates a node identity number for this peer
-      if it does not already exist.
-      Though the id is 256 bits long, it does not have that much entropy.
-      ///fix This is temporary.  This code will eventually be replaced.
+    /* This method creates a PeerIdentity number value for this peer,
+      unless that value has already been created.
+      This is done quickly to get a node operational quickly.
+      It does not require any user interaction.
+      
+      ///enh Though the ID is 256 bits long, it does not contain that much entropy.
+      This is not a problem now, but when the rate of node creation increases,
+      ID collisions will become possible, even probable.
+      At that time, it will be necessary to collect more entropy. 
+      It might be possible to collect one-time entropy from user file metadata or data,
+      or from the time needed to access files on mass storage. 
+      
+      A more sophisticated system for entropy collection will be needed
+      for generating the ID (private and public keys) for a user, because
+      * This might not be a one-time operation
+      * It requires user interaction anyway for saving a copy of 
+        the private key.
      	*/
 	  {
 	    String nodeIdentyString= 
