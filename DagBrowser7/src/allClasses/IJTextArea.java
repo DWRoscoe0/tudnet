@@ -38,7 +38,8 @@ public class IJTextArea
           commonInitializationV();
           }
 
-      public IJTextArea(File InFile)
+      /*  ////
+      public IJTextArea(File InFile) /// This is not used.
         {
           super( );  // Construct superclass without any content yet.
 
@@ -63,6 +64,7 @@ public class IJTextArea
 
           commonInitializationV();
           }
+      */  ////
 
       private void commonInitializationV()
         {
@@ -75,7 +77,7 @@ public class IJTextArea
       
     // FocusListener methods, to change color when focused.
 
-      @Override
+      // @Override
       public void focusGained(FocusEvent arg0) 
         {
           setBackground(UIColor.activeColor);

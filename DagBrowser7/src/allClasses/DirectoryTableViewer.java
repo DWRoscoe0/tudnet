@@ -69,8 +69,8 @@ public class DirectoryTableViewer
 
       public DirectoryTableViewer(
           TreePath inTreePath, 
-          MetaRoot theMetaRoot, 
-          TreeModel InTreeModel
+          //// MetaRoot theMetaRoot, 
+          DataTreeModel InTreeModel
           )
         /* Constructs a DirectoryTableViewer.
           inTreePath is the TreePath associated with
@@ -84,8 +84,8 @@ public class DirectoryTableViewer
           { // Construct and initialize the helper object.
             theTreeHelper= new TreeHelper(  // Construct helper class instance...
               this, 
-              theMetaRoot,
-              inTreePath  // ...with back-referene and path info.
+              InTreeModel.getMetaRoot(), //// theMetaRoot,
+              inTreePath  // ...with back-reference and path info.
               );  // Note, subject not set yet.
             } // Construct and initialize the helper object.
 

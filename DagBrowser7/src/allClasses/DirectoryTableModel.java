@@ -99,7 +99,7 @@ public class DirectoryTableModel
               case 1:  // file name.
                   resultObject= rowFile.getName();  // Name of file.
                   break;
-              case 2:  // file lenfth.
+              case 2:  // file length.
                   if ( rowFile.isDirectory() )  // Is a directories.
                       resultObject= "--";  // Use dashes.
                   else  // actual length for files.

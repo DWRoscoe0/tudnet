@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Component;
 
 import javax.swing.JTable;
+import static allClasses.AppLog.theAppLog;
 
 public class DirectoryTableCellRenderer
   extends javax.swing.table.DefaultTableCellRenderer
@@ -46,13 +47,18 @@ public class DirectoryTableCellRenderer
         Component RenderComponent= super.getTableCellRendererComponent( 
           table, value, isSelected, hasFocus, row, column );
 
-        UIColor.setColorsV( // Override its colors in renderer.
-        		RenderComponent,
-            Color.RED, // kluge, cachedBackgroundColor not used for directories.
-            (DataNode)value,
-            isSelected,
-            hasFocus
-            );
+        try { ////////
+          UIColor.setColorsV( // Override its colors in renderer.
+          		RenderComponent,
+              Color.RED, // kluge, cachedBackgroundColor not used for directories.
+              //// (DataNode)value,
+              value,
+              isSelected,
+              hasFocus
+              );
+        } catch (Exception e) {
+          theAppLog.exception("TEMPORARY",e);
+        }
 
         return RenderComponent;
         } // getTableCellRendererComponent(.)

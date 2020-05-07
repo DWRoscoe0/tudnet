@@ -58,7 +58,8 @@ public class UIColor {
   public static void setColorsV
     ( Component theRenderComponent,
       Color defaultBackgroundColor,
-    	DataNode theDataNode,
+      Object valueObject,
+    	//// DataNode theDataNode,
       boolean isSelectedB,
       boolean hasFocusB
       )
@@ -72,10 +73,14 @@ public class UIColor {
       setColors: { 
   			// Calculating colors based on various conditions.
     		{ // Set most probable colors.
-      	  backgroundColor= // Set default background. 
-      	  		theDataNode.getBackgroundColor(defaultBackgroundColor);
-      	        // This gets DataNode's preferred color, if it has one,
-      	  			// or defaultBackgroundColor if not.
+          backgroundColor= Color.YELLOW; //// temporary default for testing.
+          if (valueObject instanceof DataNode) {
+            DataNode theDataNode= (DataNode)valueObject;
+        	  backgroundColor= // Set default background. 
+        	  		theDataNode.getBackgroundColor(defaultBackgroundColor);
+        	        // This gets DataNode's preferred color, if it has one,
+        	  			// or defaultBackgroundColor if not.
+            }
         	foregroundColor= // Set default foreground.
         			UIColor.normalForgroundColor;
     			}

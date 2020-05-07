@@ -226,7 +226,7 @@ public class IFile
           return stringResult;  // Return the final result.
           }
 
-      public String getContentString()
+      public String getFileString() //// Was named getContentString().
         /* This method produces the value which is used by
           TitledTextViewer to display the contents of a file.
           */
@@ -255,9 +255,9 @@ public class IFile
           return valueString;
           }
       
-      public JComponent getDataJComponent( 
+      public JComponent getDataJComponent( //// This is never called!
           TreePath inTreePath, 
-          MetaRoot theMetaRoot, 
+          //// MetaRoot theMetaRoot, 
           DataTreeModel inDataTreeModel 
           )
         /* Returns a JComponent capable of displaying this IFile.  
@@ -275,14 +275,15 @@ public class IFile
             if ( inIFile.theFile.isDirectory() )  // file is a directory.
               resultJComponent= 
                 new DirectoryTableViewer( 
-                  inTreePath, theMetaRoot, inDataTreeModel 
+                  //// inTreePath, theMetaRoot, inDataTreeModel 
+                  inTreePath, inDataTreeModel
                   );
             else if ( inIFile.theFile.isFile() )  // file is a regular file.
               resultJComponent=  // calculate a blank JPanel DagNodeViewer.
 	              new TitledTextViewer( 
 	                inTreePath, 
 	                inDataTreeModel, 
-	                getContentString() 
+	                getFileString() 
 	                );
             else  // file is neither.
               { // Handle unreadable folder or device.

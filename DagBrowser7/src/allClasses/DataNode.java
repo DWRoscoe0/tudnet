@@ -491,12 +491,14 @@ public class DataNode
     public JComponent getDataJComponent( 
 	      TreePath inTreePath, DataTreeModel inDataTreeModel 
 	      ) 
-      /* Returns a JComponent capable of displaying this DataNode
-        and using the DataTreeModel InDataTreeModel to provide context.  
-        The DataTreeModel might be ignored.
-        This default method returns a TextViewer for leaves and 
-        a ListViewer for non-leaves.
+      /* Returns a JComponent capable of displaying this DataNode.
+        It may use the DataTreeModel inDataTreeModel to provide context.  
+        This base class method returns useful defaults:
+        * a TextViewer for leaves and 
+        * a ListViewer for non-leaves.
         The DataNode to be viewed is the last element of inTreePath,
+
+        This method may be overridden if a more specialized viewer is needed.
         */
       {
         JComponent resultJComponent= null;
