@@ -26,13 +26,13 @@ public class DirectoryTableModel
     // variables.
       private static final long serialVersionUID = 1L;
 
-      protected IFile DirectoryIFile;  // The directory modelled as a table.
+      protected IFile directoryIFile;  // The directory modeled as a table.
       protected TreeModel theTreeModel;  // TreeModel which provides context.
       
-      protected Object DirectoryIconObject;  // ?? unused.
-      protected Object FileIconObject;  // ?? unused.
+      protected Object directoryIconObject;  ///enh ?? unused.  reactivate?
+      protected Object fileIconObject;  ///enh ?? unused.  reactivate?
 
-      private SimpleDateFormat ASimpleDateFormat=  // For time-stamps.
+      private SimpleDateFormat aSimpleDateFormat=  // For time-stamps.
         new SimpleDateFormat(); 
       
     // constructor methods.
@@ -44,9 +44,9 @@ public class DirectoryTableModel
           */
         {
           { // Load icons.
-            DirectoryIconObject = 
+            directoryIconObject = 
               UIManager.get( "DirectoryPane.directoryIcon" );
-            FileIconObject = UIManager.get( "DirectoryPane.FileIconObject" );
+            fileIconObject = UIManager.get( "DirectoryPane.FileIconObject" );
             } // Load icons.
 
           theTreeModel= inTreeModel;  // Save TreeModel.
@@ -58,7 +58,7 @@ public class DirectoryTableModel
       public void setDirectory( IFile inIFile ) 
         /* Sets the directory whose contents will be displayed as a table.  */
         {
-          DirectoryIFile = inIFile;  // save directory to be modeled.
+          directoryIFile = inIFile;  // save directory to be modeled.
           fireTableDataChanged();  // inform listeners about possible changes.
           }
 
@@ -69,7 +69,7 @@ public class DirectoryTableModel
           the number of rows in the table. 
           */
         {
-          return theTreeModel.getChildCount( DirectoryIFile );
+          return theTreeModel.getChildCount( directoryIFile );
           }
 
       public int getColumnCount() 
@@ -85,7 +85,7 @@ public class DirectoryTableModel
           */
         { 
           IFile rowIFile= // Get the IFile associated with row rowI.
-            ((IFile)theTreeModel.getChild( DirectoryIFile, rowI ));
+            ((IFile)theTreeModel.getChild( directoryIFile, rowI ));
           File rowFile= rowIFile.getFile(); // Get the File also.
           Object resultObject;  // Place for result.
           switch   // Return the appropriate value.
@@ -108,11 +108,11 @@ public class DirectoryTableModel
               case 3:  // modified date and time.
                   Date ModifiedDate= new Date(rowFile.lastModified());
                   String ModifiedString= 
-                    ASimpleDateFormat.format( ModifiedDate );
+                    aSimpleDateFormat.format( ModifiedDate );
                   resultObject= ModifiedString;
                   break;
-              default:  // anything else, return empty string.
-                  resultObject= "column?";
+              default:  // anything else, indicate undefined value.
+                  resultObject= "UNDEFINED-CELL-VALUE";
               }
           return resultObject;  // Return calculated result.
           }
@@ -132,11 +132,11 @@ public class DirectoryTableModel
             case 3:
                 return "Modified";
             default:
-                return "column?";
+                return "UNDEFINED-COLUMN-NAME";
             }
           }
 
-      public Class<? extends Object> getColumnClass( int columnI ) 
+      public Class<? extends Object> getColumnClass( int columnI ) ///enh reactivate?
         /* Returns the class of the objects in 
           the column whose number is ComumnI.
           I think this is to handle an earlier version when

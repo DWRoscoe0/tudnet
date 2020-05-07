@@ -252,22 +252,25 @@ public class DataTreeModel
           the current tree node specified by inTreePath.  
           */
         {
-          DataNode InDataNode= // extract...
+          DataNode inDataNode= // extract...
             (DataNode)  // ...user Object...
             inTreePath.getLastPathComponent();  // ...from the TreePath.
-          JComponent ResultJComponent; 
+          String errorString= null;
+          JComponent resultJComponent;
           try { 
-            ResultJComponent= 
-              InDataNode.getDataJComponent( 
+            resultJComponent= 
+              inDataNode.getDataJComponent( 
                 inTreePath, this 
                 );
             }
           catch ( IllegalArgumentException e) {
-            ResultJComponent= null;  
-            ResultJComponent=  // calculate a blank JLabel with message.
-              new TitledTextViewer( inTreePath, this, "getDataJComponent : "+e );
+            errorString= "DataTreeModel.getDataJComponent(TreePath): "+e;
+            resultJComponent=  // calculate a blank JLabel with error message.
+              new TitledTextViewer( inTreePath, this, errorString );
             }
-          return ResultJComponent;
+          if (errorString!=null) // Log error if one produced. 
+            theAppLog.error(errorString);
+          return resultJComponent;
           }
 
       public synchronized String getNameString( Object theObject )

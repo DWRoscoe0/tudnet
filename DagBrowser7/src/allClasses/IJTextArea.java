@@ -4,13 +4,7 @@ package allClasses;
 import java.awt.Color;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
-import java.io.File; // added manually.
-
 import javax.swing.JTextArea;
-import static allClasses.SystemSettings.NL;
 
 
 public class IJTextArea

@@ -1,34 +1,32 @@
 package allClasses;
 
+import java.awt.BorderLayout;
 //import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-//import javax.swing.event.TreeSelectionListener;
-//import javax.swing.event.TreeSelectionEvent;
 import javax.swing.table.TableCellRenderer;
-import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
-
-//import static allClasses.Globals.*;  // appLogger;
 
 
 public class DirectoryTableViewer
 
-  extends JTable
+  extends JPanel
   
   implements 
     FocusListener, ListSelectionListener, TreeAware
   
-  /* This class displays filesystem directories as tables.
-    They appear in the main app's right side subpanel as a JTable.
-    
+  /* This class displays file-system directories as tables.
+    They appear in the main app's right side sub-panel as a JTable.
+
     This class is more complicated than ListViewer because
     more than one cell, every cell in a row,
     is associated with the IFile which is displayed in that row.
@@ -36,32 +34,24 @@ public class DirectoryTableViewer
     the File/IFile name String-s,
     an array of which is stored in TheDirectoryTableModel,
     with the value of the first column in the rows.
-    
+
     It might simplify things to make fuller use of the IFile DataNode-s
-    interface and the DataTreeModel.  ??
+    interface and the DataTreeModel.  ///enh ??
     Though doing this might occupy more memory.
     It would allow using more common code and reduce complexity.
     
-    It might be worthwhile to create a generic JTableViewer,
-    which gets all its data from an augmented TableModel which
-    also understands TreePath-s.  ??
-    
-    ?? If this panel has focus, and a selected folder is far from the top,
+    ///fix?? If this panel has focus, and a selected folder is far from the top,
     it might appear below the bottom of the Scroller 
     if the selection is moved to either a parent or child folder.  
-
-    ?? Rewrite so that calls to Combining 
-    SetSelectedChildTreePath( TreePath ) and 
-    NotifyTreeSelectionListenersV( boolean ) can be combined.
 
     */
   
   { // DirectoryTableViewer
   
     // Variables, some of them.
-  
-      private static final long serialVersionUID = 1L;
 
+      private JTable theJTable;
+      
       private DirectoryTableCellRenderer theDirectoryTableCellRenderer= 
         new DirectoryTableCellRenderer(); // for custom node rendering.
       
@@ -69,7 +59,6 @@ public class DirectoryTableViewer
 
       public DirectoryTableViewer(
           TreePath inTreePath, 
-          //// MetaRoot theMetaRoot, 
           DataTreeModel InTreeModel
           )
         /* Constructs a DirectoryTableViewer.
@@ -84,37 +73,39 @@ public class DirectoryTableViewer
           { // Construct and initialize the helper object.
             theTreeHelper= new TreeHelper(  // Construct helper class instance...
               this, 
-              InTreeModel.getMetaRoot(), //// theMetaRoot,
+              InTreeModel.getMetaRoot(),
               inTreePath  // ...with back-reference and path info.
               );  // Note, subject not set yet.
             } // Construct and initialize the helper object.
 
+          setupTheJTable(InTreeModel);  // Initialize JTable state.
+          JScrollPane theJScrollPane= // Place the JTextArea in a scroll pane.
+              new JScrollPane(theJTable);
+          add(theJScrollPane,BorderLayout.CENTER); // Add it to main JPanel.
+          }
+
+      private void setupTheJTable(DataTreeModel InTreeModel )
+        /* This grouping method initializes the JTable.  */
+        { // setupTheJTable( )
+          theJTable= new JTable();
           DirectoryTableModel ADirectoryTableModel =  // Construct...
             new DirectoryTableModel(  //...directory table model from...
               (IFile)theTreeHelper.getWholeDataNode(), //...subject IFile...
               InTreeModel  // ...and TreeModel.
               );
-          setModel( ADirectoryTableModel );  // store TableModel.
-
-          setupTheJTable( );  // Initialize JTable state.
-          }
-
-      private void setupTheJTable( )
-        /* This grouping method initializes the JTable.  */
-        { // setupTheJTable( )
-
-          setShowHorizontalLines( false );
-          setShowVerticalLines( false );
-          setIntercellSpacing( new Dimension( 0, 2 ) );
-          setSelectionMode( ListSelectionModel.SINGLE_SELECTION );
+          theJTable.setModel( ADirectoryTableModel );  // store TableModel.
+          theJTable.setShowHorizontalLines( false );
+          theJTable.setShowVerticalLines( false );
+          theJTable.setIntercellSpacing( new Dimension( 0, 2 ) );
+          theJTable.setSelectionMode( ListSelectionModel.SINGLE_SELECTION );
           
           { // limit Type field display width.
-            getColumn( "Type" ).setMaxWidth( 32 );
-            getColumn( "Type" ).setMinWidth( 32 );
+            theJTable.getColumn( "Type" ).setMaxWidth( 32 );
+            theJTable.getColumn( "Type" ).setMinWidth( 32 );
             } // limit Type field display width.
           
           { // Linking event listeners to event sources.
-            getSelectionModel().addListSelectionListener(this); // Making...
+            theJTable.getSelectionModel().addListSelectionListener(this); // Making...
               // ...this DirectoryTableViewer be a ListSelectionListener...
               // ...for its own ListSelectionEvent-s.
             theTreeHelper.addTreePathListener( // Making...
@@ -232,7 +223,7 @@ public class DirectoryTableViewer
         { // UpdateJTableForContentV()
           //UpdateJTableModel();  // Update the JTable's DataModel.
           if  // Update other stuff if...
-            ( getModel().getRowCount() > 0 ) // ... any rows in model.
+            ( theJTable.getModel().getRowCount() > 0 ) // ... any rows in model.
             { // Update other stuff.
               TreePath inTreePath= theTreeHelper.getPartTreePath();
               selectTableRowV(inTreePath);  // Select appropriate row.  
@@ -269,7 +260,7 @@ public class DirectoryTableViewer
               if ( IndexI < 0 )  // force index to 0 if child not found.
                 IndexI= 0;
               } // Calculate new path's child's index.
-            setRowSelectionInterval(  // Selection row as interval...
+            theJTable.setRowSelectionInterval(  // Selection row as interval...
               IndexI, IndexI  // ...with same start and end row index.
               );
               
@@ -284,10 +275,10 @@ public class DirectoryTableViewer
           */
         { // UpdateJTableScrollState()
           int SelectionIndexI= // cache selection index.
-            getSelectedRow();
+              theJTable.getSelectedRow();
           Rectangle SelectionRectangle= // calculate rectangle...
             new Rectangle(  //...of selected cell.
-              getCellRect(SelectionIndexI, 0, true)
+                theJTable.getCellRect(SelectionIndexI, 0, true)
             );
           scrollRectToVisible( // scroll into view...
             SelectionRectangle); //...the cell's rectangle.
