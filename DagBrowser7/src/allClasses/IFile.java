@@ -226,80 +226,62 @@ public class IFile
           return stringResult;  // Return the final result.
           }
 
-      public String getFileString() //// Was named getContentString().
+      public String getFileString() // Was previously named getContentString().
         /* This method produces the value which is used by
           TitledTextViewer to display the contents of a file.
           */
         {
-      	  String valueString= "";
+          StringBuilder theStringBuilder= new StringBuilder();
           { // Read in file to JTextArea.
-            String LineString;  // temporary storage for file lines.
+            String lineString;  // temporary storage for file lines.
             try {
-              FileInputStream TheFileInputStream = 
+              FileInputStream theFileInputStream = 
               		new FileInputStream(getFile());
               @SuppressWarnings("resource")
-              BufferedReader TheBufferedReader = 
-                new BufferedReader(new InputStreamReader(TheFileInputStream));
+              BufferedReader theBufferedReader = 
+                new BufferedReader(new InputStreamReader(theFileInputStream));
               
-              while ((LineString = TheBufferedReader.readLine()) != null) {
-                  valueString= valueString.concat(LineString + NL);
+              while ((lineString = theBufferedReader.readLine()) != null) {
+                  theStringBuilder.append(lineString + NL);
                   }
               }
             catch (Exception ReaderException){
               // System.out.println("error reading file! " + ReaderException);
-            	valueString= valueString.concat(
+              theStringBuilder.append(
             			NL + "Error reading file!" + NL + NL + ReaderException + NL
             			);
               }
             } // Read in file to JTextArea.
-          return valueString;
+          return theStringBuilder.toString();
           }
       
-      public JComponent getDataJComponent( //// This is never called!
-          TreePath inTreePath, 
-          //// MetaRoot theMetaRoot, 
+      public JComponent getDataJComponent(
+          TreePath inTreePath,
           DataTreeModel inDataTreeModel 
           )
-        /* Returns a JComponent capable of displaying this IFile.  
-          using a DataTreeModel argument.  
-          This ignores the DataTreeModel for DataNode subclasses
-          which do not yet support it.
-          */
-        { // getDataJComponent.
-          Object inObject= inTreePath.getLastPathComponent();
-          IFile inIFile= // Cast to actual type, an abstract IFile name...
-            (IFile)inObject;  // ...from the input Object.
+        /* Returns a JComponent capable of displaying IFile at the end of inTreePath. */
+        {
+          IFile inIFile= (IFile)inTreePath.getLastPathComponent();  // Get the IFile.
           JComponent resultJComponent= null;  // allocate result space.
-
-          { // calculate the associated DagNodeViewer.
+          { // calculate the appropriate IFile viewer.
             if ( inIFile.theFile.isDirectory() )  // file is a directory.
-              resultJComponent= 
-                new DirectoryTableViewer( 
-                  //// inTreePath, theMetaRoot, inDataTreeModel 
-                  inTreePath, inDataTreeModel
-                  );
+              resultJComponent=  // Return a directory table viewer to view it.
+                new DirectoryTableViewer(inTreePath, inDataTreeModel);
             else if ( inIFile.theFile.isFile() )  // file is a regular file.
-              resultJComponent=  // calculate a blank JPanel DagNodeViewer.
-	              new TitledTextViewer( 
-	                inTreePath, 
-	                inDataTreeModel, 
-	                getFileString() 
-	                );
-            else  // file is neither.
-              { // Handle unreadable folder or device.
-                resultJComponent=  // calculate a blank JPanel DagNodeViewer.
-                  new TitledTextViewer( 
+              resultJComponent=  // Return a text viewer to view the file.
+	              new TitledTextViewer(inTreePath, inDataTreeModel, getFileString());
+            else  // file is not a valid file or directory.
+              { // Inform user of error condition.
+                resultJComponent= new TitledTextViewer( // Return a view of error message. 
                     inTreePath, 
                     inDataTreeModel, 
                     NL + NL + "    UNREADABLE AS FILE OR FOLDER" + NL 
                     );
-                resultJComponent.setBackground(  // Indicate error with color.
-                  Color.PINK
-                  );
+                resultJComponent.setBackground(Color.PINK); // Show it in color.
                 } // Handle unreadable folder or device.
-            } // calculate the associated DagNodeViewer.
+            }
           return resultJComponent;  // return the final result.
-          } // getDataJComponent.
+          }
           
     // other methods.
 
