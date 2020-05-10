@@ -8,17 +8,21 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 //// import java.util.Timer;
 import java.util.LinkedHashMap;
 
 import javax.swing.BorderFactory;
 import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
+import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
+import javax.swing.text.PlainDocument;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 import javax.swing.JPanel;
@@ -281,6 +285,7 @@ public class TextStreamViewer
                   theDataTreeModel
                   );
               
+              ///loadStreamV( "textStreamFile.txt"); // Load text previously saved to disk.
               loadStreamV( "textStreamFile.txt"); // Load text previously saved to disk.
               
               theConnectionManager.setEpiNodeListener( // Listen to ConnectionManager for
@@ -289,34 +294,57 @@ public class TextStreamViewer
           
           private void loadStreamV( String fileString )
             /* This method loads the streamJTextArea from 
-              the contents of the external text file whose name is fileString.  
+              the contents of the external text file whose name is fileString.
+              This version does it indirectly through the JTextArea's Document.
               */
             {
-              theAppLog.info("TextStreamViewer.MyTreeHelper.loadStreamV(..) begins.");
-              FileReader theFileInputStream= null;
+              theAppLog.info("TextStreamViewer.MyTreeHelper.NEWloadStreamV(..) begins.");
+              ////FileReader theFileInputStream= null;
+              BufferedReader theBufferedReader= null; 
               try {
-                  theFileInputStream= new FileReader(
-                    AppSettings.makeRelativeToAppFolderFile(fileString));  
-                  streamIJTextArea.read(theFileInputStream,null); 
+                  //// Document theDocument= streamIJTextArea.getDocument(); 
+                  Document theDocument= new PlainDocument();
+                  streamIJTextArea.setDocument(theDocument); 
+                  ////theFileInputStream= new FileReader(
+                  ////  AppSettings.makeRelativeToAppFolderFile(fileString));  
+                  //// streamIJTextArea.read(theFileInputStream,null);
+                  String lineString;
+                  FileInputStream theFileInputStream = 
+                      new FileInputStream(
+                          AppSettings.makeRelativeToAppFolderFile(fileString));
+                  //// @SuppressWarnings("resource")
+                  theBufferedReader = 
+                    new BufferedReader(new InputStreamReader(theFileInputStream));
+                  while ((lineString = theBufferedReader.readLine()) != null) {
+                    ////theStringBuilder.append(lineString + "\n");
+                    theDocument.insertString( // Append line to document.
+                        theDocument.getLength(),lineString + "\n",null);
+                    }
+                  //// streamIJTextArea.setText(theStringBuilder.toString());
+                  }
+                catch (BadLocationException theBadLocationException) { 
+                  theAppLog.exception(
+                      "TextStreamViewer.MyTreeHelper.NEWloadStreamV(..) ",
+                      theBadLocationException);
                   }
                 catch (FileNotFoundException theFileNotFoundException) { 
                   theAppLog.info(
-                      "TextStreamViewer.MyTreeHelper.loadStreamV(..) file not found");
+                      "TextStreamViewer.MyTreeHelper.NEWloadStreamV(..) file not found");
                   }
                 catch (IOException theIOException) { 
                   theAppLog.exception(
-                      "TextStreamViewer.MyTreeHelper.loadStreamV(..)", theIOException);
+                      "TextStreamViewer.MyTreeHelper.NEWloadStreamV(..)", theIOException);
                   }
                 finally {
                   try {
-                    if ( theFileInputStream != null ) theFileInputStream.close();
+                    if ( theBufferedReader != null ) theBufferedReader.close();
                     }
                   catch ( IOException theIOException ) { 
                     theAppLog.exception(
-                        "TextStreamViewer.MyTreeHelper.loadStreamV(..)", theIOException);
+                        "TextStreamViewer.MyTreeHelper.NEWloadStreamV(..)", theIOException);
                     }
                   }
-              theAppLog.info("TextStreamViewer.MyTreeHelper.loadStreamV(..) ends.");
+              theAppLog.info("TextStreamViewer.MyTreeHelper.NEWloadStreamV(..) ends.");
               }
 
           public void finalizeHelperV() 
