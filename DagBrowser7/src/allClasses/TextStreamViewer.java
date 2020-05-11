@@ -14,14 +14,15 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-//// import java.util.Timer;
 import java.util.LinkedHashMap;
 
 import javax.swing.BorderFactory;
 import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
+import javax.swing.text.AbstractDocument;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
+import javax.swing.text.Element;
 import javax.swing.text.PlainDocument;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
@@ -299,28 +300,20 @@ public class TextStreamViewer
               */
             {
               theAppLog.info("TextStreamViewer.MyTreeHelper.NEWloadStreamV(..) begins.");
-              ////FileReader theFileInputStream= null;
               BufferedReader theBufferedReader= null; 
               try {
-                  //// Document theDocument= streamIJTextArea.getDocument(); 
                   Document theDocument= new PlainDocument();
                   streamIJTextArea.setDocument(theDocument); 
-                  ////theFileInputStream= new FileReader(
-                  ////  AppSettings.makeRelativeToAppFolderFile(fileString));  
-                  //// streamIJTextArea.read(theFileInputStream,null);
                   String lineString;
                   FileInputStream theFileInputStream = 
                       new FileInputStream(
                           AppSettings.makeRelativeToAppFolderFile(fileString));
-                  //// @SuppressWarnings("resource")
                   theBufferedReader = 
                     new BufferedReader(new InputStreamReader(theFileInputStream));
                   while ((lineString = theBufferedReader.readLine()) != null) {
-                    ////theStringBuilder.append(lineString + "\n");
                     theDocument.insertString( // Append line to document.
                         theDocument.getLength(),lineString + "\n",null);
                     }
-                  //// streamIJTextArea.setText(theStringBuilder.toString());
                   }
                 catch (BadLocationException theBadLocationException) { 
                   theAppLog.exception(
@@ -352,35 +345,61 @@ public class TextStreamViewer
               storeStreamV( "textStreamFile.txt");
               super.finalizeHelperV();
               }
-          
+
           private void storeStreamV( String fileString )
             /* This method stores the stream data that is in main memory to 
               the external text file whose name is fileString.
               */
             {
               theAppLog.info("TextStreamViewer.MyTreeHelper.storeStreamV(..) begins.");
-              FileWriter theFileOutputStream= null;
+              FileWriter theFileWriter= null;
+              AbstractDocument theAbstractDocument= 
+                  (AbstractDocument)streamIJTextArea.getDocument();
+              theAbstractDocument.readLock();
               try {
-                  theFileOutputStream= new FileWriter(
+                  theFileWriter= new FileWriter(
                     AppSettings.makeRelativeToAppFolderFile(fileString));  
-                  streamIJTextArea.write(theFileOutputStream); 
+                  writeAllLineElementsV(theAbstractDocument,theFileWriter);
+                  }
+                catch (BadLocationException theBadLocationException) { 
+                  theAppLog.exception( "TextStreamViewer.MyTreeHelper.storeStreamV(..)", 
+                      theBadLocationException);
                   }
                 catch (IOException theIOException) { 
-                  theAppLog.exception(
-                      "TextStreamViewer.MyTreeHelper.storeStreamV(..)", theIOException);
+                  theAppLog.exception("TextStreamViewer.MyTreeHelper.storeStreamV(..)", 
+                      theIOException);
                   }
                 finally {
                   try {
-                    if ( theFileOutputStream != null ) theFileOutputStream.close();
+                    if ( theFileWriter != null ) theFileWriter.close();
                     }
                   catch ( IOException theIOException ) { 
                     theAppLog.exception(
                         "TextStreamViewer.MyTreeHelper.storeStreamV(..)", theIOException);
                     }
+                  theAbstractDocument.readUnlock();
                   }
               theAppLog.info("TextStreamViewer.MyTreeHelper.storeStreamV(..) ends.");
               }
 
+          private void writeAllLineElementsV(
+              AbstractDocument theAbstractDocument,FileWriter theFileWriter)
+            throws BadLocationException, IOException 
+          {
+            Element rootElement= theAbstractDocument.getDefaultRootElement();
+            for // For all line elements in document...
+              ( int elementI=0; elementI<rootElement.getElementCount(); elementI++ ) 
+              { // Write the line to file.
+                Element lineElement= rootElement.getElement(elementI);
+                int startOffset= lineElement.getStartOffset();
+                int endOffset= lineElement.getEndOffset();
+                theFileWriter.write(theAbstractDocument.getText(
+                    startOffset,endOffset-startOffset-1
+                    )); // Output one line of text.
+                theFileWriter.write(NL); // Write line terminator.
+                }
+            }
+         
           } // MyTreeHelper
 
     }
