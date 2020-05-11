@@ -149,6 +149,7 @@ public class AppGUI
         theConnectionManagerEpiThread.stopAndJoinV( );
           // Terminate ConnectionManager connections and all related threads.
         theGUIManager.finalizeV();
+        theDataTreeModel.finalizeV();
     		theAppLog.info("AppGUI.runV() ends.");
         }
 

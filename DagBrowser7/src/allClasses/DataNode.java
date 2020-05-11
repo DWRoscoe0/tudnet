@@ -167,19 +167,31 @@ public class DataNode
       
     // Instance methods.
 
-  	  protected void propagateIntoSubtreeV( DataTreeModel theDataTreeModel )
-  	    /* This method is called to propagate theDataTreeModel
-  	      into the nodes which needed it when 
-  	      a DataNode is added to a NamedList or one of its subclasses.
-  	        
-  	      This method ignores theDataTreeModel and does nothing 
-  	      because this is a leaf node and leaves have no subtrees,
-  	      so the propagation ends here.
-	        List nodes that do need it will override this method.
-	        See NamedList.
+  	  protected void finalizeDataNodesV()
+  	    /* This method is called to finalize the non-State aspects of
+  	      the subtree rooted at this DataNode.
+  	      It is meant to be overridden if it needs to do anything but
+  	      finalize its children, for example close files it has open.
+          See NamedList for an override.
   	      */
   		  {
+  	      theAppLog.debug("DataNode.finalizeDataNodesV() called.");
+  	      // This base class has nothing to do.
   		  	}
+
+      protected void propagateIntoSubtreeV( DataTreeModel theDataTreeModel )
+        /* This method is called to propagate theDataTreeModel
+          into the nodes which needed it when 
+          a DataNode is added to a NamedList or one of its subclasses.
+            
+          This method ignores theDataTreeModel and does nothing 
+          because this is a leaf node and leaves have no subtrees,
+          so the propagation ends here.
+          List nodes that do need it will override this method.
+          See NamedList.
+          */
+        {
+          }
 
   	  protected void setParentToV( NamedList parentNamedList )
   	    /* This method is called when a DataNode is added to a NamedList
@@ -202,8 +214,7 @@ public class DataNode
       	{
       	  if ( parentNamedList == null )
       	  	{
-	      	  	theAppLog.debug(
-	      	  	"reportChangeOfSelfV(): parentNamedList == null!");
+	      	  	theAppLog.debug("reportChangeOfSelfV(): parentNamedList == null!");
       	  	  /// Eventually replace variable or link it to DAG.
 	      	  	}
       	  	else
@@ -372,25 +383,25 @@ public class DataNode
 
   // Methods which return Strings about the node.
 
-	  	protected String getNodePathString()
-	  	  /* Recursively calculates and returns 
-	  	    a comma-separated list of node names
-	  	    from the root of the hierarchy to this state.
-	  	   */
-	  	  {
-	  		  String resultString;
-	  		  
-	  		  if ( parentNamedList == null )
-	  		  	resultString= getNameString();
-	  		  else
-	  		    resultString= 
-	  		    	parentNamedList.getNodePathString()
-	  		  		+ ", "
-	  		  		+ getNameString(); 
+	  protected String getNodePathString()
+  	  /* Recursively calculates and returns 
+  	    a comma-separated list of node names
+  	    from the root of the hierarchy to this state.
+  	   */
+  	  {
+  		  String resultString;
+  		  
+  		  if ( parentNamedList == null )
+  		  	resultString= getNameString();
+  		  else
+  		    resultString= 
+  		    	parentNamedList.getNodePathString()
+  		  		+ ", "
+  		  		+ getNameString(); 
 
-	  		  Nulls.fastFailNullCheckT(resultString);
-	  		  return resultString;
-	  	  	}
+  		  Nulls.fastFailNullCheckT(resultString);
+  		  return resultString;
+  	  	}
 	  	
     public String getNameString( )
 	    /* Returns the name of the DataNode as a String.  
@@ -573,4 +584,4 @@ public class DataNode
 	    	return defaultBackgroundColor;
 	    	}
 
-  } // interface DataNode.
+  }

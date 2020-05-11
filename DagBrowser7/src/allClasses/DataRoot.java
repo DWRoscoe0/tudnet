@@ -34,48 +34,54 @@ public class DataRoot {
 
   // Injector methods.
 
-    public void initializeV( 
-    		DataNode rootDataNode, DataTreeModel theDataTreeModel 
-    		)
-      /* This method sets the root data node to rootDataNode and
-				adjusts all dependent variables.
-				Doing this correctly is tricky and a little confusing because:
-	      * DataNode-s are built right to left, 
-	        with parents referencing their children.
-	      * TreePath-s:
-	        * Are built left to right, from a new child and
-	          a smaller TreePath referencing all the child's ancestors.
-	        * Some of the TreePath constructors provided by Java which
-	          could make the following code more self-documenting
-	          are not public and can not be used here.
-	      This method also propagates theDataTreeModel into the structure
-	      starting with the parent of the root, so that all present nodes
-	      and all nodes added to the tree later, will have it.
-				*/
-	    { 
-		    this.rootDataNode= rootDataNode;  // Setting root DataNode.
+  public void initializeDataNodesV( 
+      DataNode rootDataNode, DataTreeModel theDataTreeModel 
+      )
+    /* This method sets the root data node to rootDataNode and
+      adjusts all dependent variables.
+      Doing this correctly is tricky and a little confusing because:
+      * DataNode-s are built right to left, 
+        with parents referencing their children.
+      * TreePath-s:
+        * Are built left to right, from a new child and
+          a smaller TreePath referencing all the child's ancestors.
+        * Some of the TreePath constructors provided by Java which
+          could make the following code more self-documenting
+          are not public and can not be used here.
+      This method also propagates theDataTreeModel into the structure
+      starting with the parent of the root, so that all present nodes
+      and all nodes added to the tree later, will have it.
+      */
+    { 
+      this.rootDataNode= rootDataNode;  // Setting root DataNode.
 
-		    parentOfRootDataNode= // Calculating parent of root node...
-		      new SingleChildDataNode(   // to be single child parent of...
-		        rootDataNode // ..root node.
-		        );
+      parentOfRootDataNode= // Calculating parent of root node...
+        new SingleChildDataNode(   // to be single child parent of...
+          rootDataNode // ..root node.
+          );
 
-		    // Use propagateDownV(..) to store theDataTreeModel in structure.
-		    parentOfRootDataNode.propagateIntoSubtreeV(  
-		    		theDataTreeModel // This will be copied to all non-leaf nodes.
-		    		); 
+      // Use propagateDownV(..) to store theDataTreeModel in structure.
+      parentOfRootDataNode.propagateIntoSubtreeV(  
+          theDataTreeModel // This will be copied to all non-leaf nodes.
+          ); 
 
-		    parentOfRootTreePath= // Calculating path to parent...
-		      new TreePath(   // ...to be TreePath consisting of only...
-		        parentOfRootDataNode  // ...the parent node.
-		        );
+      parentOfRootTreePath= // Calculating path to parent...
+        new TreePath(   // ...to be TreePath consisting of only...
+          parentOfRootDataNode  // ...the parent node.
+          );
 
-		    rootTreePath= // Calculating path to root...
-		      parentOfRootTreePath.  // ...to be the TreePath to parent...
-		        pathByAddingChild(  // ...and adding...
-		          rootDataNode  // ...the root node.
-		          );
-	      }
+      rootTreePath= // Calculating path to root...
+        parentOfRootTreePath.  // ...to be the TreePath to parent...
+          pathByAddingChild(  // ...and adding...
+            rootDataNode  // ...the root node.
+            );
+      }
+
+  public void finalizeDataNodesV()
+    /* This method finalizes the DataNode tree by finalizing the root data node.  */
+    { 
+      rootDataNode.finalizeDataNodesV();
+      }
 
   // Other methods.
 

@@ -136,7 +136,7 @@ public class DataTreeModel
             which is used as a base for tree exploration and growth. 
             */
           {
-            theDataRoot.initializeV( theInitialDataNode, this ); 
+            theDataRoot.initializeDataNodesV( theInitialDataNode, this ); 
             theMetaRoot.initializeV( );
             theShutdowner.addShutdownerListener( theMetaFileManagerFinisher );
 
@@ -144,6 +144,12 @@ public class DataTreeModel
         	  		theDataRoot.getParentOfRootDataNode( ), 
         	  		theDataRoot.getParentOfRootTreePath( ) 
   	      			); // From this root path, descendant node paths will be made.
+            }
+
+        public void finalizeV()
+          {
+            theAppLog.debug("DataTreeModel.finalizeDataNodesV() called.");
+            theDataRoot.finalizeDataNodesV(); 
             }
 
     // AbstractTreeModel/TreeModel interface methods.
