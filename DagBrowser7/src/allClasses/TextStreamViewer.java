@@ -8,21 +8,12 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.LinkedHashMap;
 
 import javax.swing.BorderFactory;
 import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
-import javax.swing.text.AbstractDocument;
-import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
-import javax.swing.text.Element;
 import javax.swing.text.PlainDocument;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
@@ -64,7 +55,9 @@ public class TextStreamViewer
 
         private Border raisedEtchedBorder= // Common style used elsewhere.
             BorderFactory.createEtchedBorder(EtchedBorder.RAISED);
-      
+
+        private PlainDocument thePlainDocument;
+
         private JLabel titleJLabel;  // Label with the title.
 
         private IJTextArea streamIJTextArea; // For viewing the stream text.
@@ -78,7 +71,8 @@ public class TextStreamViewer
           DataTreeModel theDataTreeModel,
           UnicasterManager theUnicasterManager,
           Persistent thePersistent,
-          ConnectionManager theConnectionManager
+          ConnectionManager theConnectionManager,
+          PlainDocument thePlainDocument
           )
         /* Constructs a TextStreamViewer.
           theTreePath is the TreePath associated with
@@ -93,6 +87,7 @@ public class TextStreamViewer
           this.theUnicasterManager= theUnicasterManager;
           this.thePersistent= thePersistent;
           this.theConnectionManager= theConnectionManager;
+          this.thePlainDocument=  thePlainDocument;
 
           theAppLog.debug("TextStreamViewer.TextStreamViewer(.) begins.");
           if ( theTreePath == null )  // prevent null TreePath.
@@ -206,14 +201,17 @@ public class TextStreamViewer
             theLinkedHashMap.put(messageString,null); // Put in map to prevent repeat.
             streamIJTextArea.append(messageString); // Append to stream window.
             streamIJTextArea.append("\n"); // Add JTextArea line terminator.
-            { // Put cursor at end of append.
-              Document d = streamIJTextArea.getDocument();
-              streamIJTextArea.select(d.getLength(), d.getLength());
-              }
+            putCursorAtEndV();
             broadcastStreamMessageV(messageString); // Inform peers of input text.
           } // toReturn:
           }
 
+      private void putCursorAtEndV()
+        {
+          Document d = streamIJTextArea.getDocument();
+          streamIJTextArea.select(d.getLength(), d.getLength());
+          }
+      
       private void broadcastStreamMessageV(String messageString)
         /* This method notifies all connected peers about
           the messageString.
@@ -286,119 +284,11 @@ public class TextStreamViewer
                   theDataTreeModel
                   );
               
-              ///loadStreamV( "textStreamFile.txt"); // Load text previously saved to disk.
-              loadStreamV( "textStreamFile.txt"); // Load text previously saved to disk.
-              
+              streamIJTextArea.setDocument(thePlainDocument); 
+              putCursorAtEndV();
               theConnectionManager.setEpiNodeListener( // Listen to ConnectionManager for
                   theTextStreamViewer); // receiving text from  remote systems. 
               }
-          
-          private void loadStreamV( String fileString )
-            /* This method loads the streamJTextArea from 
-              the contents of the external text file whose name is fileString.
-              This version does it indirectly through the JTextArea's Document.
-              */
-            {
-              theAppLog.info("TextStreamViewer.MyTreeHelper.NEWloadStreamV(..) begins.");
-              BufferedReader theBufferedReader= null; 
-              try {
-                  Document theDocument= new PlainDocument();
-                  streamIJTextArea.setDocument(theDocument); 
-                  String lineString;
-                  FileInputStream theFileInputStream = 
-                      new FileInputStream(
-                          AppSettings.makeRelativeToAppFolderFile(fileString));
-                  theBufferedReader = 
-                    new BufferedReader(new InputStreamReader(theFileInputStream));
-                  while ((lineString = theBufferedReader.readLine()) != null) {
-                    theDocument.insertString( // Append line to document.
-                        theDocument.getLength(),lineString + "\n",null);
-                    }
-                  }
-                catch (BadLocationException theBadLocationException) { 
-                  theAppLog.exception(
-                      "TextStreamViewer.MyTreeHelper.NEWloadStreamV(..) ",
-                      theBadLocationException);
-                  }
-                catch (FileNotFoundException theFileNotFoundException) { 
-                  theAppLog.info(
-                      "TextStreamViewer.MyTreeHelper.NEWloadStreamV(..) file not found");
-                  }
-                catch (IOException theIOException) { 
-                  theAppLog.exception(
-                      "TextStreamViewer.MyTreeHelper.NEWloadStreamV(..)", theIOException);
-                  }
-                finally {
-                  try {
-                    if ( theBufferedReader != null ) theBufferedReader.close();
-                    }
-                  catch ( IOException theIOException ) { 
-                    theAppLog.exception(
-                        "TextStreamViewer.MyTreeHelper.NEWloadStreamV(..)", theIOException);
-                    }
-                  }
-              theAppLog.info("TextStreamViewer.MyTreeHelper.NEWloadStreamV(..) ends.");
-              }
-
-          public void finalizeHelperV() 
-            {
-              storeStreamV( "textStreamFile.txt");
-              super.finalizeHelperV();
-              }
-
-          private void storeStreamV( String fileString )
-            /* This method stores the stream data that is in main memory to 
-              the external text file whose name is fileString.
-              */
-            {
-              theAppLog.info("TextStreamViewer.MyTreeHelper.storeStreamV(..) begins.");
-              FileWriter theFileWriter= null;
-              AbstractDocument theAbstractDocument= 
-                  (AbstractDocument)streamIJTextArea.getDocument();
-              theAbstractDocument.readLock();
-              try {
-                  theFileWriter= new FileWriter(
-                    AppSettings.makeRelativeToAppFolderFile(fileString));  
-                  writeAllLineElementsV(theAbstractDocument,theFileWriter);
-                  }
-                catch (BadLocationException theBadLocationException) { 
-                  theAppLog.exception( "TextStreamViewer.MyTreeHelper.storeStreamV(..)", 
-                      theBadLocationException);
-                  }
-                catch (IOException theIOException) { 
-                  theAppLog.exception("TextStreamViewer.MyTreeHelper.storeStreamV(..)", 
-                      theIOException);
-                  }
-                finally {
-                  try {
-                    if ( theFileWriter != null ) theFileWriter.close();
-                    }
-                  catch ( IOException theIOException ) { 
-                    theAppLog.exception(
-                        "TextStreamViewer.MyTreeHelper.storeStreamV(..)", theIOException);
-                    }
-                  theAbstractDocument.readUnlock();
-                  }
-              theAppLog.info("TextStreamViewer.MyTreeHelper.storeStreamV(..) ends.");
-              }
-
-          private void writeAllLineElementsV(
-              AbstractDocument theAbstractDocument,FileWriter theFileWriter)
-            throws BadLocationException, IOException 
-          {
-            Element rootElement= theAbstractDocument.getDefaultRootElement();
-            for // For all line elements in document...
-              ( int elementI=0; elementI<rootElement.getElementCount(); elementI++ ) 
-              { // Write the line to file.
-                Element lineElement= rootElement.getElement(elementI);
-                int startOffset= lineElement.getStartOffset();
-                int endOffset= lineElement.getEndOffset();
-                theFileWriter.write(theAbstractDocument.getText(
-                    startOffset,endOffset-startOffset-1
-                    )); // Output one line of text.
-                theFileWriter.write(NL); // Write line terminator.
-                }
-            }
          
           } // MyTreeHelper
 
