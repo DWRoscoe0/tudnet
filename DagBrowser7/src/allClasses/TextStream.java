@@ -146,11 +146,11 @@ public class TextStream
           theAppLog.info("TextStream.loadStreamV(..) ends.");
           }
 
-      protected void finalizeDataNodesV()
+      protected int finalizeDataNodesI()
         /* This override method finalizes all the children and then the base class. */
         {
           storeDocumentV( "textStreamFile.txt");
-          super.finalizeDataNodesV(); // Finalize base class
+          return super.finalizeDataNodesI(); // Finalize base class
           }
 
       private void storeDocumentV( String fileString )

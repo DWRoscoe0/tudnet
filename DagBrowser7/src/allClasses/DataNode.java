@@ -167,16 +167,21 @@ public class DataNode
       
     // Instance methods.
 
-  	  protected void finalizeDataNodesV()
+  	  protected int finalizeDataNodesI()
   	    /* This method is called to finalize the non-State aspects of
   	      the subtree rooted at this DataNode.
   	      It is meant to be overridden if it needs to do anything but
-  	      finalize its children, for example close files it has open.
-          See NamedList for an override.
+  	      finalize its children, for example close files that it has open.
+  	      Returns the number of nodes finalized, which in this case is 1.
+          See NamedList for an override example.
+          
+          Note, this does not finalize some nodes with virtual children,
+          for example Infinitree and IFile, which do not extend NamedList.
   	      */
   		  {
-  	      theAppLog.debug("DataNode.finalizeDataNodesV() called.");
+  	      //theAppLog.debug("DataNode.finalizeDataNodesV() called.");
   	      // This base class has nothing to do.
+  	      return 1; // Return a total of 1 node for just ourself.
   		  	}
 
       protected void propagateIntoSubtreeV( DataTreeModel theDataTreeModel )

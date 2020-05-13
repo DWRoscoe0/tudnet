@@ -1,5 +1,7 @@
 package allClasses;
 
+import static allClasses.AppLog.theAppLog;
+
 import javax.swing.tree.TreePath;
 
 public class DataRoot {
@@ -78,9 +80,12 @@ public class DataRoot {
       }
 
   public void finalizeDataNodesV()
-    /* This method finalizes the DataNode tree by finalizing the root data node.  */
+    /* This method finalizes the DataNode tree by finalizing the root DataNode.  */
     { 
-      rootDataNode.finalizeDataNodesV();
+      theAppLog.info("DateRoot.finalizeDataNodesV() begins.");
+      int nodeTotalI= rootDataNode.finalizeDataNodesI();
+      theAppLog.info(
+          "DateRoot.finalizeDataNodesV() ends, total nodes finalized=" + nodeTotalI);
       }
 
   // Other methods.

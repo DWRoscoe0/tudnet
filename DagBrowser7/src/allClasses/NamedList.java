@@ -173,12 +173,16 @@ public class NamedList
         		indexI, childDataNode );
 	      }
 
-    protected void finalizeDataNodesV()
-      /* This override method finalizes all the children and then the base class. */
+    protected int finalizeDataNodesI()
+      /* This override method finalizes all the children and then the base class. 
+        It increases and returns nodeCountI by the number of nodes finalized.*/
       {
+        int nodeTotalI= 0;
         for ( DataNode theDataNode : theListOfDataNodes) // For each child
-          theDataNode.finalizeDataNodesV();  // recursively finalize it.
-        super.finalizeDataNodesV(); // Finalize base class
+          nodeTotalI+=   // recursively finalize it, adding the number finalized to total.
+            theDataNode.finalizeDataNodesI();
+        nodeTotalI+= super.finalizeDataNodesI(); // Finalize base class
+        return nodeTotalI;
         }
 
 	  protected void propagateIntoSubtreeV( DataTreeModel theDataTreeModel )
