@@ -833,13 +833,13 @@ public class ConnectionManager
         }
 
 
-    // TextStreamViewer message processing.
+    // TextStream message processing.
     
-    private TextStreamViewer listenerTextStreamViewer= null;
+    private TextStream listenerTextStream= null;
 
-    public void setEpiNodeListener(TextStreamViewer theTextStreamViewer)
+    public void setEpiNodeListener(TextStream theTextStream)
       {
-        listenerTextStreamViewer= theTextStreamViewer;
+        listenerTextStream= theTextStream;
         }
 
     private boolean callEpiNodeListenerB(MapEpiNode theMapEpiNode)
@@ -848,8 +848,8 @@ public class ConnectionManager
         */
       {
         boolean successB= false;
-        if (listenerTextStreamViewer != null) // Call TextStream's listener if defined.
-          successB= listenerTextStreamViewer.processIncomingMapEpiNodeB(theMapEpiNode);
+        if (listenerTextStream != null) // Call TextStream's listener if defined.
+          successB= listenerTextStream.processIncomingMapEpiNodeB(theMapEpiNode);
         return successB;
         }
 

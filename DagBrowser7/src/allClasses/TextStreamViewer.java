@@ -53,11 +53,11 @@ public class TextStreamViewer
         private UnicasterManager theUnicasterManager;
         private Persistent thePersistent;
         private ConnectionManager theConnectionManager;
+        private PlainDocument thePlainDocument;
+        private TextStream theTextStream;
 
         private Border raisedEtchedBorder= // Common style used elsewhere.
             BorderFactory.createEtchedBorder(EtchedBorder.RAISED);
-
-        private PlainDocument thePlainDocument;
 
         private JLabel titleJLabel;  // Label with the title.
 
@@ -73,7 +73,8 @@ public class TextStreamViewer
           UnicasterManager theUnicasterManager,
           Persistent thePersistent,
           ConnectionManager theConnectionManager,
-          PlainDocument thePlainDocument
+          PlainDocument thePlainDocument,
+          TextStream theTextStream
           )
         /* Constructs a TextStreamViewer.
           theTreePath is the TreePath associated with
@@ -89,6 +90,7 @@ public class TextStreamViewer
           this.thePersistent= thePersistent;
           this.theConnectionManager= theConnectionManager;
           this.thePlainDocument=  thePlainDocument;
+          this.theTextStream= theTextStream;
 
           theAppLog.debug("TextStreamViewer.TextStreamViewer(.) begins.");
           if ( theTreePath == null )  // prevent null TreePath.
@@ -152,7 +154,7 @@ public class TextStreamViewer
                     theAppLog.debug(
                         "TextStreamViewer.TextStreamViewer.keyPressed(.) ENTER pressed.");
                     inputIJTextArea.setText(""); // Clear input area for next line.
-                    processStreamPayloadV(messageString);
+                    theTextStream.processStreamPayloadV(messageString);
                     }
                   theKeyEvent.consume(); // Prevent further processing.
                   }
@@ -163,113 +165,6 @@ public class TextStreamViewer
               public void keyReleased(KeyEvent e) {}
               });
           add(inputIJTextArea,BorderLayout.SOUTH); // Adding it at bottom of JPanel.
-          }
-
-      public boolean processIncomingMapEpiNodeB(MapEpiNode theMapEpiNode)
-        /* This is the Listener method called by the ConnectionManager
-          to try decoding a TextStream message MapEpiNode.
-          It returns true if the decode was successful, false otherwise.
-          */
-      {
-        EpiNode payloadEpiNode= theMapEpiNode.getEpiNode("StreamText");
-        boolean decodedB= (payloadEpiNode != null); // It a StreamText message?
-        if (decodedB) {
-          //// String valueString= payloadEpiNode.toString();
-          EDTUtilities.runOrInvokeAndWaitV( // Do following on EDT thread. 
-              new Runnable() {
-                @Override  
-                public void run() {
-                  synchronized(this) {
-                    //// processStreamPayloadV(valueString);
-                    processStreamPayloadV(payloadEpiNode);
-                    }
-                  }
-                } 
-              );
-          }
-        return decodedB;
-        }
-
-      LinkedHashMap<String,Object> antiRepeatLinkedHashMap= // Used to prevent storms.
-          new LinkedHashMap<String,Object>();
-
-      //// Text stream message area.  Cancelled!
-      //// Because of queuing of values, later mutations can cause errors.
-    ////ScalarEpiNode payloadScalarEpiNode= new ScalarEpiNode(null); 
-    ////// A message String will replace the null above.
-    ////MapEpiNode messageMapEpiNode= MapEpiNode.makeSingleEntryMapEpiNode(
-    ////  "StreamText", payloadScalarEpiNode);  // Complete MapEpiNode message.
-      
-      private void processStreamPayloadV(EpiNode payloadEpiNode)
-        {
-          String payloadString= payloadEpiNode.toString();
-          processStreamPayloadV(payloadString);
-          }
-        
-      private void processStreamPayloadV(String payloadString)
-        {
-          toReturn: {
-            theAppLog.debug(
-                "TextStreamViewer.TextStreamViewer.processLineV(.) payload="  //////
-                + payloadString);
-            if (antiRepeatLinkedHashMap.containsKey(payloadString)) // Already in map?
-              break toReturn; // Yes, so received before and we are ignoring it.
-            antiRepeatLinkedHashMap.put(payloadString,null); // Put in map to prevent repeat.
-            //// streamIJTextArea.append(messageString); // Append to stream window.
-            //// streamIJTextArea.append("\n"); // Add JTextArea line terminator.
-            try {
-              thePlainDocument.insertString( // Append message to document as a line.
-                thePlainDocument.getLength(),payloadString + "\n",null);
-            } catch (BadLocationException theBadLocationException) { 
-              theAppLog.exception(
-                  "TextStreamViewer.processLineV(..) ",theBadLocationException);
-              }
-
-            putCursorAtEndOfStreamDocumentV();
-            
-            ScalarEpiNode payloadScalarEpiNode= new ScalarEpiNode(payloadString); 
-            MapEpiNode messageMapEpiNode= MapEpiNode.makeSingleEntryMapEpiNode(
-                "StreamText", payloadScalarEpiNode);  // Complete MapEpiNode message.
-            ////payloadScalarEpiNode.storeStringV( // Store string in message for sending.
-            ////    payloadString);
-            distrubuteMessageV(messageMapEpiNode); // Distribute message as EpiNode.
-          } // toReturn: 
-          }
-      
-      private void distrubuteMessageV(MapEpiNode messageMapEpiNode)
-        /* This method notifies all connected peers about the message messageMapEpiNode,
-          which should be an immutable value.
-          */
-        {
-            theAppLog.debug( "TextStreamViewer.broadcastStreamMessageV() called.");
-            //// EpiNode messageEpiNode= new ScalarEpiNode(messageString);
-            PeersCursor scanPeersCursor= // Used for iteration. 
-                PeersCursor.makeOnNoEntryPeersCursor( thePersistent );
-          peerLoop: while (true) { // Process all peers in my peer list. 
-            if (scanPeersCursor.nextKeyString().isEmpty() ) // Try getting next scan peer. 
-              break peerLoop; // There are no more peers, so exit loop.
-            theAppLog.appendToFileV("(stream?)"); // Log that peer is being considered.
-            if (! scanPeersCursor.testB("isConnected")) // This peer is not connected 
-              continue peerLoop; // so loop to try next peer.
-            String peerIPString= scanPeersCursor.getFieldString("IP");
-            String peerPortString= scanPeersCursor.getFieldString("Port");
-            IPAndPort theIPAndPort= new IPAndPort(peerIPString, peerPortString);
-            Unicaster scanUnicaster= // Try getting associated Unicaster.
-                theUnicasterManager.tryingToGetUnicaster(theIPAndPort);
-            if (scanUnicaster == null) { // Unicaster of scan peer doesn't exist
-              theAppLog.error(
-                  "TextStreamViewer.broadcastStreamMessageV() non-existent Unicaster.");
-              continue peerLoop; // so loop to try next peer.
-              }
-            theAppLog.appendToFileV("(YES!)"); // Log that we're sending data.
-            //// scanUnicaster.putV( // Queue text stream message to Unicaster of scan peer
-             ////   MapEpiNode.makeSingleEntryMapEpiNode( // wrapped in its own State map.
-             ////     "StreamText", messageEpiNode)
-             ////   );
-            scanUnicaster.putV( // Queue full message EpiNode to Unicaster of scan peer.
-                messageMapEpiNode);
-          } // peerLoop: 
-            theAppLog.appendToFileV("(end of peers)"+NL); // Mark end of list with new line.
           }
 
       private void putCursorAtEndOfStreamDocumentV()
@@ -318,8 +213,6 @@ public class TextStreamViewer
               
               streamIJTextArea.setDocument(thePlainDocument); 
               putCursorAtEndOfStreamDocumentV();
-              theConnectionManager.setEpiNodeListener( // Listen to ConnectionManager for
-                  theTextStreamViewer); // receiving text from  remote systems. 
               }
          
           } // MyTreeHelper
