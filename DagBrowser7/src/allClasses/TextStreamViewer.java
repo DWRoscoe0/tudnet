@@ -13,6 +13,7 @@ import java.util.LinkedHashMap;
 import javax.swing.BorderFactory;
 import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
+import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.PlainDocument;
 import javax.swing.JLabel;
@@ -151,7 +152,7 @@ public class TextStreamViewer
                     theAppLog.debug(
                         "TextStreamViewer.TextStreamViewer.keyPressed(.) ENTER pressed.");
                     inputIJTextArea.setText(""); // Clear input area for next line.
-                    processLineV(messageString);
+                    processStreamPayloadV(messageString);
                     }
                   theKeyEvent.consume(); // Prevent further processing.
                   }
@@ -164,67 +165,90 @@ public class TextStreamViewer
           add(inputIJTextArea,BorderLayout.SOUTH); // Adding it at bottom of JPanel.
           }
 
-      public boolean processMapEpiNodeB(MapEpiNode theMapEpiNode)
+      public boolean processIncomingMapEpiNodeB(MapEpiNode theMapEpiNode)
         /* This is the Listener method called by the ConnectionManager
           to try decoding a TextStream message MapEpiNode.
           It returns true if the decode was successful, false otherwise.
           */
       {
-        String valueString= theMapEpiNode.getString("StreamText");
-        boolean decodedB= (valueString != null); // Test for a StreamText message?
-        if (decodedB)
+        EpiNode payloadEpiNode= theMapEpiNode.getEpiNode("StreamText");
+        boolean decodedB= (payloadEpiNode != null); // It a StreamText message?
+        if (decodedB) {
+          //// String valueString= payloadEpiNode.toString();
           EDTUtilities.runOrInvokeAndWaitV( // Do following on EDT thread. 
               new Runnable() {
                 @Override  
                 public void run() {
                   synchronized(this) {
-                    processLineV(valueString);
+                    //// processStreamPayloadV(valueString);
+                    processStreamPayloadV(payloadEpiNode);
                     }
                   }
                 } 
               );
-          ; // process text.
+          }
         return decodedB;
         }
 
-      LinkedHashMap<String,Object> theLinkedHashMap= 
+      LinkedHashMap<String,Object> antiRepeatLinkedHashMap= // Used to prevent storms.
           new LinkedHashMap<String,Object>();
+
+      //// Text stream message area.  Cancelled!
+      //// Because of queuing of values, later mutations can cause errors.
+    ////ScalarEpiNode payloadScalarEpiNode= new ScalarEpiNode(null); 
+    ////// A message String will replace the null above.
+    ////MapEpiNode messageMapEpiNode= MapEpiNode.makeSingleEntryMapEpiNode(
+    ////  "StreamText", payloadScalarEpiNode);  // Complete MapEpiNode message.
       
-      private void processLineV(String messageString)
+      private void processStreamPayloadV(EpiNode payloadEpiNode)
+        {
+          String payloadString= payloadEpiNode.toString();
+          processStreamPayloadV(payloadString);
+          }
+        
+      private void processStreamPayloadV(String payloadString)
         {
           toReturn: {
             theAppLog.debug(
-                "TextStreamViewer.TextStreamViewer.processLineV(.) message="
-                + messageString);
-            if (theLinkedHashMap.containsKey(messageString)) // Already in map?
+                "TextStreamViewer.TextStreamViewer.processLineV(.) payload="  //////
+                + payloadString);
+            if (antiRepeatLinkedHashMap.containsKey(payloadString)) // Already in map?
               break toReturn; // Yes, so received before and we are ignoring it.
-            theLinkedHashMap.put(messageString,null); // Put in map to prevent repeat.
-            streamIJTextArea.append(messageString); // Append to stream window.
-            streamIJTextArea.append("\n"); // Add JTextArea line terminator.
-            putCursorAtEndV();
-            broadcastStreamMessageV(messageString); // Inform peers of input text.
-          } // toReturn:
-          }
+            antiRepeatLinkedHashMap.put(payloadString,null); // Put in map to prevent repeat.
+            //// streamIJTextArea.append(messageString); // Append to stream window.
+            //// streamIJTextArea.append("\n"); // Add JTextArea line terminator.
+            try {
+              thePlainDocument.insertString( // Append message to document as a line.
+                thePlainDocument.getLength(),payloadString + "\n",null);
+            } catch (BadLocationException theBadLocationException) { 
+              theAppLog.exception(
+                  "TextStreamViewer.processLineV(..) ",theBadLocationException);
+              }
 
-      private void putCursorAtEndV()
-        {
-          Document d = streamIJTextArea.getDocument();
-          streamIJTextArea.select(d.getLength(), d.getLength());
+            putCursorAtEndOfStreamDocumentV();
+            
+            ScalarEpiNode payloadScalarEpiNode= new ScalarEpiNode(payloadString); 
+            MapEpiNode messageMapEpiNode= MapEpiNode.makeSingleEntryMapEpiNode(
+                "StreamText", payloadScalarEpiNode);  // Complete MapEpiNode message.
+            ////payloadScalarEpiNode.storeStringV( // Store string in message for sending.
+            ////    payloadString);
+            distrubuteMessageV(messageMapEpiNode); // Distribute message as EpiNode.
+          } // toReturn: 
           }
       
-      private void broadcastStreamMessageV(String messageString)
-        /* This method notifies all connected peers about
-          the messageString.
+      private void distrubuteMessageV(MapEpiNode messageMapEpiNode)
+        /* This method notifies all connected peers about the message messageMapEpiNode,
+          which should be an immutable value.
           */
         {
-          EpiNode messageEpiNode= new ScalarEpiNode(messageString);
             theAppLog.debug( "TextStreamViewer.broadcastStreamMessageV() called.");
+            //// EpiNode messageEpiNode= new ScalarEpiNode(messageString);
             PeersCursor scanPeersCursor= // Used for iteration. 
                 PeersCursor.makeOnNoEntryPeersCursor( thePersistent );
           peerLoop: while (true) { // Process all peers in my peer list. 
             if (scanPeersCursor.nextKeyString().isEmpty() ) // Try getting next scan peer. 
               break peerLoop; // There are no more peers, so exit loop.
-            theAppLog.appendToFileV("(strean?)"); // Log that peer is being considered.
+            theAppLog.appendToFileV("(stream?)"); // Log that peer is being considered.
             if (! scanPeersCursor.testB("isConnected")) // This peer is not connected 
               continue peerLoop; // so loop to try next peer.
             String peerIPString= scanPeersCursor.getFieldString("IP");
@@ -238,12 +262,20 @@ public class TextStreamViewer
               continue peerLoop; // so loop to try next peer.
               }
             theAppLog.appendToFileV("(YES!)"); // Log that we're sending data.
-            scanUnicaster.putV( // Queue text stream message to Unicaster of scan peer
-              MapEpiNode.makeSingleEntryMapEpiNode( // wrapped in its own State map.
-                "StreamText", messageEpiNode)
-              );
+            //// scanUnicaster.putV( // Queue text stream message to Unicaster of scan peer
+             ////   MapEpiNode.makeSingleEntryMapEpiNode( // wrapped in its own State map.
+             ////     "StreamText", messageEpiNode)
+             ////   );
+            scanUnicaster.putV( // Queue full message EpiNode to Unicaster of scan peer.
+                messageMapEpiNode);
           } // peerLoop: 
             theAppLog.appendToFileV("(end of peers)"+NL); // Mark end of list with new line.
+          }
+
+      private void putCursorAtEndOfStreamDocumentV()
+        {
+          Document d = streamIJTextArea.getDocument();
+          streamIJTextArea.select(d.getLength(), d.getLength());
           }
 
     // rendering methods.  to be added ??
@@ -285,7 +317,7 @@ public class TextStreamViewer
                   );
               
               streamIJTextArea.setDocument(thePlainDocument); 
-              putCursorAtEndV();
+              putCursorAtEndOfStreamDocumentV();
               theConnectionManager.setEpiNodeListener( // Listen to ConnectionManager for
                   theTextStreamViewer); // receiving text from  remote systems. 
               }

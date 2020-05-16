@@ -236,6 +236,11 @@ class ScalarEpiNode extends EpiNode
     public String extractFromEpiNodeString(int indexI) 
         throws IOException 
       { return scalarString; }
+    
+    public void storeStringV(String scalarString) 
+      {
+        this.scalarString= scalarString;
+        }
 
     public String toString() { return scalarString; }
     

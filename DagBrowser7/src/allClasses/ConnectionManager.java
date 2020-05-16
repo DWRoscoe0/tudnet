@@ -849,7 +849,7 @@ public class ConnectionManager
       {
         boolean successB= false;
         if (listenerTextStreamViewer != null) // Call TextStream's listener if defined.
-          successB= listenerTextStreamViewer.processMapEpiNodeB(theMapEpiNode);
+          successB= listenerTextStreamViewer.processIncomingMapEpiNodeB(theMapEpiNode);
         return successB;
         }
 
