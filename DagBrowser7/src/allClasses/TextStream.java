@@ -13,7 +13,6 @@ import java.util.LinkedHashMap;
 
 import javax.swing.JComponent;
 import javax.swing.text.BadLocationException;
-import javax.swing.text.Document;
 import javax.swing.text.Element;
 import javax.swing.text.PlainDocument;
 import javax.swing.tree.TreePath;
@@ -30,18 +29,18 @@ public class TextStream
     // Variables.
   
       // Injected variables:
-      private String valueString;
       private UnicasterManager theUnicasterManager;
       private Persistent thePersistent;
       private ConnectionManager theConnectionManager;
 
       // Other variables:
-      private PlainDocument thePlainDocument= null;
+      private PlainDocument thePlainDocument= null; // Where the stream is stored.
+      LinkedHashMap<String,Object> antiRepeatLinkedHashMap= // Used to prevent storms.
+          new LinkedHashMap<String,Object>();
 
     // Constructors.
 
       TextStream( 
-          String inString, 
           UnicasterManager theUnicasterManager,
           Persistent thePersistent,
           ConnectionManager theConnectionManager
@@ -49,16 +48,15 @@ public class TextStream
         // Constructs a TextStream with a name inString.
         { 
           theAppLog.debug("TextStream.TextStream(.) called.");
-          valueString= inString;
           this.theUnicasterManager= theUnicasterManager;
           this.thePersistent= thePersistent;
           this.theConnectionManager= theConnectionManager;
           
           loadDocumentV("textStreamFile.txt"); // Load document from disk text.
 
-          theConnectionManager.setEpiNodeListener( // Listen to ConnectionManager for
+          this.theConnectionManager.setEpiNodeListener( // Listen to ConnectionManager for
               this); // receiving text from  remote systems.
-              ////org Should this be in an DataNode .initializeV() method?
+              ///org Should this be in an DataNode .initializeV() method?
           }
 
     // theFile pass-through methods.
@@ -79,14 +77,6 @@ public class TextStream
           
     // other interface DataNode methods.
 
-      public String getContentString()
-        /* This method produces the value which is used by
-          TitledTextViewer to display the contents of a file.
-          */
-        {
-          return valueString;
-          }
-      
       public JComponent getDataJComponent( 
           TreePath inTreePath, 
           DataTreeModel inDataTreeModel 
@@ -97,9 +87,6 @@ public class TextStream
             new TextStreamViewer( 
               inTreePath, 
               inDataTreeModel,
-              theUnicasterManager,
-              thePersistent,
-              theConnectionManager,
               thePlainDocument,
               this
               );
@@ -210,24 +197,24 @@ public class TextStream
         }
 
       
-      //// Code imported from TextStream, to be integrated and made to work.
+      // Code imported from TextStream, to be integrated and made to work.
       
-      public boolean processIncomingMapEpiNodeB(MapEpiNode theMapEpiNode)
+      public boolean listenerToProcessIncomingMapEpiNodeB(MapEpiNode theMapEpiNode)
         /* This is the Listener method called by the ConnectionManager
           to try decoding a TextStream message MapEpiNode.
           It returns true if the decode was successful, false otherwise.
+          Note that if the payload message EpiNode is processed,
+          it is done while switched to the Event Dispatch Thread (EDT).
           */
       {
         EpiNode payloadEpiNode= theMapEpiNode.getEpiNode("StreamText");
         boolean decodedB= (payloadEpiNode != null); // It a StreamText message?
         if (decodedB) {
-          //// String valueString= payloadEpiNode.toString();
           EDTUtilities.runOrInvokeAndWaitV( // Do following on EDT thread. 
               new Runnable() {
                 @Override  
                 public void run() {
                   synchronized(this) {
-                    //// processStreamPayloadV(valueString);
                     processStreamPayloadV(payloadEpiNode);
                     }
                   }
@@ -236,16 +223,6 @@ public class TextStream
           }
         return decodedB;
         }
-
-      LinkedHashMap<String,Object> antiRepeatLinkedHashMap= // Used to prevent storms.
-          new LinkedHashMap<String,Object>();
-
-      //// Text stream message area.  Cancelled!
-      //// Because of queuing of values, later mutations can cause errors.
-    ////ScalarEpiNode payloadScalarEpiNode= new ScalarEpiNode(null); 
-    ////// A message String will replace the null above.
-    ////MapEpiNode messageMapEpiNode= MapEpiNode.makeSingleEntryMapEpiNode(
-    ////  "StreamText", payloadScalarEpiNode);  // Complete MapEpiNode message.
       
       private void processStreamPayloadV(EpiNode payloadEpiNode)
         {
@@ -257,13 +234,11 @@ public class TextStream
         {
           toReturn: {
             theAppLog.debug(
-                "TextStreamViewer.TextStreamViewer.processLineV(.) payload="  //////
+                "TextStreamViewer.TextStreamViewer.processLineV(.) payload="
                 + payloadString);
             if (antiRepeatLinkedHashMap.containsKey(payloadString)) // Already in map?
               break toReturn; // Yes, so received before and we are ignoring it.
             antiRepeatLinkedHashMap.put(payloadString,null); // Put in map to prevent repeat.
-            //// streamIJTextArea.append(messageString); // Append to stream window.
-            //// streamIJTextArea.append("\n"); // Add JTextArea line terminator.
             try {
               thePlainDocument.insertString( // Append message to document as a line.
                 thePlainDocument.getLength(),payloadString + "\n",null);
@@ -271,14 +246,10 @@ public class TextStream
               theAppLog.exception(
                   "TextStreamViewer.processLineV(..) ",theBadLocationException);
               }
-
-            ////// putCursorAtEndOfStreamDocumentV();
             
             ScalarEpiNode payloadScalarEpiNode= new ScalarEpiNode(payloadString); 
             MapEpiNode messageMapEpiNode= MapEpiNode.makeSingleEntryMapEpiNode(
                 "StreamText", payloadScalarEpiNode);  // Complete MapEpiNode message.
-            ////payloadScalarEpiNode.storeStringV( // Store string in message for sending.
-            ////    payloadString);
             distrubuteMessageV(messageMapEpiNode); // Distribute message as EpiNode.
           } // toReturn: 
           }
@@ -289,7 +260,6 @@ public class TextStream
           */
         {
             theAppLog.debug( "TextStreamViewer.broadcastStreamMessageV() called.");
-            //// EpiNode messageEpiNode= new ScalarEpiNode(messageString);
             PeersCursor scanPeersCursor= // Used for iteration. 
                 PeersCursor.makeOnNoEntryPeersCursor( thePersistent );
           peerLoop: while (true) { // Process all peers in my peer list. 
@@ -309,10 +279,6 @@ public class TextStream
               continue peerLoop; // so loop to try next peer.
               }
             theAppLog.appendToFileV("(YES!)"); // Log that we're sending data.
-            //// scanUnicaster.putV( // Queue text stream message to Unicaster of scan peer
-             ////   MapEpiNode.makeSingleEntryMapEpiNode( // wrapped in its own State map.
-             ////     "StreamText", messageEpiNode)
-             ////   );
             scanUnicaster.putV( // Queue full message EpiNode to Unicaster of scan peer.
                 messageMapEpiNode);
           } // peerLoop: 

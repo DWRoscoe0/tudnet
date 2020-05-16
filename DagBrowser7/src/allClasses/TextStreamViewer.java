@@ -8,12 +8,10 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.util.LinkedHashMap;
 
 import javax.swing.BorderFactory;
 import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
-import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.PlainDocument;
 import javax.swing.JLabel;
@@ -22,7 +20,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.tree.TreePath;
 import static allClasses.AppLog.theAppLog;
-import static allClasses.SystemSettings.NL;
 
 public class TextStreamViewer
 
@@ -50,9 +47,6 @@ public class TextStreamViewer
       // instance variables.
   
         // Constructor-injected variables.
-        private UnicasterManager theUnicasterManager;
-        private Persistent thePersistent;
-        private ConnectionManager theConnectionManager;
         private PlainDocument thePlainDocument;
         private TextStream theTextStream;
 
@@ -70,9 +64,6 @@ public class TextStreamViewer
       public TextStreamViewer(  // Constructor.
           TreePath theTreePath, 
           DataTreeModel theDataTreeModel,
-          UnicasterManager theUnicasterManager,
-          Persistent thePersistent,
-          ConnectionManager theConnectionManager,
           PlainDocument thePlainDocument,
           TextStream theTextStream
           )
@@ -86,9 +77,6 @@ public class TextStreamViewer
         {
           super();   // Constructing the superclass JPanel.
           
-          this.theUnicasterManager= theUnicasterManager;
-          this.thePersistent= thePersistent;
-          this.theConnectionManager= theConnectionManager;
           this.thePlainDocument=  thePlainDocument;
           this.theTextStream= theTextStream;
 
