@@ -36,10 +36,10 @@ public class TextStream
 
       // Other variables:
       private PlainDocument thePlainDocument= null; // Where the stream is stored.
-      LinkedHashMap<String,Object> antiRepeatLinkedHashMap= // Used to prevent storms.
-          new LinkedHashMap<String,Object>() {
+      LinkedHashMap<Integer,Object> antiRepeatLinkedHashMap= // Used to prevent storms.
+          new LinkedHashMap<Integer,Object>() {
             @Override
-            protected boolean removeEldestEntry(Map.Entry<String,Object> eldest) {
+            protected boolean removeEldestEntry(Map.Entry<Integer,Object> eldest) {
                 return size() > 8; // Limit map size to 8 entries.
                 }
       };
@@ -223,8 +223,7 @@ public class TextStream
                   synchronized(this) {
                     MapEpiNode payloadMapEpiNode= payloadEpiNode.getMapEpiNode();
                     if (payloadMapEpiNode != null) {
-                      String theString= payloadMapEpiNode.getString("message");
-                      processStreamStringV(theString);
+                      processStreamMapEpiNodeV(payloadMapEpiNode);
                       }
                     }
                   }
@@ -235,9 +234,16 @@ public class TextStream
         }
 
       public void processStreamStringV(String theString)
+        /* This method builds a MapEpiNode containing theString,
+          the PeerIdentity, and the present time, 
+          and passes it along for processing and possible distribution.
+         */
         {
           MapEpiNode theMapEpiNode= new MapEpiNode();
           theMapEpiNode.putV("message", theString);
+          String nodeIdentyString= thePersistent.getTmptyOrString("PeerIdentity");
+          theMapEpiNode.putV("PeerIdentity", nodeIdentyString);
+          theMapEpiNode.putV("time", ""+System.currentTimeMillis());
           processStreamMapEpiNodeV(theMapEpiNode);
           }
 
@@ -248,9 +254,11 @@ public class TextStream
             theAppLog.debug(
                 "TextStreamViewer.processStringStringV(.) String="
                 + theString);
-            if (antiRepeatLinkedHashMap.containsKey(theString)) // Already in map?
+            Integer hashInteger= new Integer( ///opt Probably more complicated than needed.
+                theString.hashCode()+theMapEpiNode.getString("time").hashCode());
+            if (antiRepeatLinkedHashMap.containsKey(hashInteger)) // Already in map?
               break toReturn; // Yes, so received before and we are ignoring it.
-            antiRepeatLinkedHashMap.put(theString,null); // Put in map to prevent repeat.
+            antiRepeatLinkedHashMap.put(hashInteger,null); // Put in map to prevent repeat.
             try {
               thePlainDocument.insertString( // Append message to document as a line.
                 thePlainDocument.getLength(),theString + "\n",null);
