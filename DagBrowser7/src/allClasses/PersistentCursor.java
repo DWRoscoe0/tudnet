@@ -304,7 +304,7 @@ public class PersistentCursor
         return lowerMapEpiNode.testB(fieldKeyString);
         }
 
-    public String getDefaultingToBlankString( String keyString )
+    public String getEmptyOrString( String keyString )
     /* Returns the value String associated with keyString,
       or the empty string if there is none.
       */

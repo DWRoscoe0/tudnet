@@ -83,7 +83,7 @@ public class App { // The App, especially pre-GUI stuff.
      	*/
 	  {
 	    String nodeIdentyString= 
-	    		thePersistent.getDefaultingToBlankString("PeerIdentity");
+	    		thePersistent.getTmptyOrString("PeerIdentity");
 	    if ( ! nodeIdentyString.isEmpty() ) {
 	    	  ; // Do nothing because identity is already defined.
 	    	} else { // Define and store identity.

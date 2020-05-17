@@ -732,8 +732,8 @@ public class ConnectionManager
           if (thePeersCursor.testB("isConnected")) // We're already connected to this peer
             break toReturn; // so exit.
           if // Same IDs, so subject peer is actually the local peer
-            ( thePeersCursor.getDefaultingToBlankString("PeerIdentity").equals(
-                thePersistent.getDefaultingToBlankString("PeerIdentity")))
+            ( thePeersCursor.getEmptyOrString("PeerIdentity").equals(
+                thePersistent.getTmptyOrString("PeerIdentity")))
             break toReturn; // so exit.
 
           theAppLog.debug("ConnectionManager.processRemoteUpdatedStateV(MapEpiNode) "
