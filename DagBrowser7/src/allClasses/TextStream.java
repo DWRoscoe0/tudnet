@@ -10,6 +10,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 import javax.swing.JComponent;
 import javax.swing.text.BadLocationException;
@@ -36,7 +37,12 @@ public class TextStream
       // Other variables:
       private PlainDocument thePlainDocument= null; // Where the stream is stored.
       LinkedHashMap<String,Object> antiRepeatLinkedHashMap= // Used to prevent storms.
-          new LinkedHashMap<String,Object>();
+          new LinkedHashMap<String,Object>() {
+            @Override
+            protected boolean removeEldestEntry(Map.Entry<String,Object> eldest) {
+                return size() > 8; // Limit map size to 8 entries.
+                }
+      };
 
     // Constructors.
 
@@ -199,7 +205,7 @@ public class TextStream
       
       // Code imported from TextStream, to be integrated and made to work.
       
-      public boolean listenerToProcessIncomingMapEpiNodeB(MapEpiNode theMapEpiNode)
+      public boolean listenerToProcessIncomingMapEpiNodeB(MapEpiNode messageMapEpiNode)
         /* This is the Listener method called by the ConnectionManager
           to try decoding a TextStream message MapEpiNode.
           It returns true if the decode was successful, false otherwise.
@@ -207,7 +213,7 @@ public class TextStream
           it is done while switched to the Event Dispatch Thread (EDT).
           */
       {
-        EpiNode payloadEpiNode= theMapEpiNode.getEpiNode("StreamText");
+        EpiNode payloadEpiNode= messageMapEpiNode.getEpiNode("StreamText");
         boolean decodedB= (payloadEpiNode != null); // It a StreamText message?
         if (decodedB) {
           EDTUtilities.runOrInvokeAndWaitV( // Do following on EDT thread. 
@@ -215,7 +221,11 @@ public class TextStream
                 @Override  
                 public void run() {
                   synchronized(this) {
-                    processStreamPayloadV(payloadEpiNode);
+                    MapEpiNode payloadMapEpiNode= payloadEpiNode.getMapEpiNode();
+                    if (payloadMapEpiNode != null) {
+                      String theString= payloadMapEpiNode.getString("message");
+                      processStreamStringV(theString);
+                      }
                     }
                   }
                 } 
@@ -223,38 +233,39 @@ public class TextStream
           }
         return decodedB;
         }
-      
-      private void processStreamPayloadV(EpiNode payloadEpiNode)
+
+      public void processStreamStringV(String theString)
         {
-          String payloadString= payloadEpiNode.toString();
-          processStreamPayloadV(payloadString);
+          MapEpiNode theMapEpiNode= new MapEpiNode();
+          theMapEpiNode.putV("message", theString);
+          processStreamMapEpiNodeV(theMapEpiNode);
           }
-        
-      public void processStreamPayloadV(String payloadString)
+
+      public void processStreamMapEpiNodeV(MapEpiNode theMapEpiNode)
         {
+            String theString= theMapEpiNode.getString("message");
           toReturn: {
             theAppLog.debug(
-                "TextStreamViewer.TextStreamViewer.processLineV(.) payload="
-                + payloadString);
-            if (antiRepeatLinkedHashMap.containsKey(payloadString)) // Already in map?
+                "TextStreamViewer.processStringStringV(.) String="
+                + theString);
+            if (antiRepeatLinkedHashMap.containsKey(theString)) // Already in map?
               break toReturn; // Yes, so received before and we are ignoring it.
-            antiRepeatLinkedHashMap.put(payloadString,null); // Put in map to prevent repeat.
+            antiRepeatLinkedHashMap.put(theString,null); // Put in map to prevent repeat.
             try {
               thePlainDocument.insertString( // Append message to document as a line.
-                thePlainDocument.getLength(),payloadString + "\n",null);
+                thePlainDocument.getLength(),theString + "\n",null);
             } catch (BadLocationException theBadLocationException) { 
               theAppLog.exception(
-                  "TextStreamViewer.processLineV(..) ",theBadLocationException);
+                  "TextStreamViewer.processStringStringV(..) ",theBadLocationException);
               }
-            
-            ScalarEpiNode payloadScalarEpiNode= new ScalarEpiNode(payloadString); 
+
             MapEpiNode messageMapEpiNode= MapEpiNode.makeSingleEntryMapEpiNode(
-                "StreamText", payloadScalarEpiNode);  // Complete MapEpiNode message.
-            distrubuteMessageV(messageMapEpiNode); // Distribute message as EpiNode.
+                "StreamText", theMapEpiNode);  // Complete MapEpiNode message.
+            distributeMessageV(messageMapEpiNode); // Distribute message as EpiNode.
           } // toReturn: 
           }
       
-      private void distrubuteMessageV(MapEpiNode messageMapEpiNode)
+      private void distributeMessageV(MapEpiNode messageMapEpiNode)
         /* This method notifies all connected peers about the message messageMapEpiNode,
           which should be an immutable value.
           */

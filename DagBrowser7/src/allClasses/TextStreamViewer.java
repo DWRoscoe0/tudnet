@@ -142,7 +142,7 @@ public class TextStreamViewer
                     theAppLog.debug(
                         "TextStreamViewer.TextStreamViewer.keyPressed(.) ENTER pressed.");
                     inputIJTextArea.setText(""); // Clear input area for next line.
-                    theTextStream.processStreamPayloadV(messageString);
+                    theTextStream.processStreamStringV(messageString);
                     }
                   theKeyEvent.consume(); // Prevent further processing.
                   }

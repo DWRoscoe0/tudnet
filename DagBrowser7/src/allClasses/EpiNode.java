@@ -38,7 +38,7 @@ public abstract class EpiNode
         The mapping between index values and Strings in the EpiNode 
         is complex, depends on the EpiNode, and may be temporary.  
 
-        //// This method is meant to act as a temporary bridge between 
+        ///tmp This method is meant to act as a temporary bridge between 
         accessing data by position and accessing data by name.
         Because of this, and the fact that the methods are temporary,
         error reporting is crude, just enough for debugging and 
@@ -678,11 +678,10 @@ class MapEpiNode extends EpiNode
         A line with a smaller indent level terminates the map.
         If not successful then this method returns null and 
         the position of the input stream is unchanged. 
-       */ ////
+       */
       {
         LinkedHashMap<EpiNode,EpiNode> resultLinkedHashMap= 
           new LinkedHashMap<EpiNode,EpiNode>(); // Create initially empty map.
-          ////new LinkedHashMap<EpiNode,EpiNode>(16,0.75F,true); // Create initially empty map.
       toReturn: {
         EpiNode keyScalarEpiNode= null; // Initially null meaning map entry is not valid.
         EpiNode valueEpiNode= null;
@@ -731,7 +730,7 @@ class MapEpiNode extends EpiNode
         If this method fails then it returns -1 and 
         the stream position is unchanged.
         
-        //// Being modified to skip over comments?
+        ///enh Modified to skip over comments?
         */
       {
           int firstStreamPositionI= theRandomAccessInputStream.getPositionI();
@@ -878,7 +877,9 @@ class MapEpiNode extends EpiNode
     public static MapEpiNode makeSingleEntryMapEpiNode(
         String keyString, EpiNode valueEpiNode)
       /* This method returns a new MapEpiNode which contains 
-       * a single entry consisting of keyString and valueEpiNode.
+        a single entry consisting of keyString and valueEpiNode.
+        This is useful for creating EpiNode messages consisting of 
+        key keyString which indicates a message type, and a value valueEpiNode.
         */
       {
         return makeSingleEntryMapEpiNode(
@@ -890,7 +891,7 @@ class MapEpiNode extends EpiNode
     public static MapEpiNode makeSingleEntryMapEpiNode(
         EpiNode keyEpiNode, EpiNode valueEpiNode)
       /* This method returns a new MapEpiNode which contains 
-       * a single entry consisting of keyEpiNode and valueEpiNode.
+        a single entry consisting of keyEpiNode and valueEpiNode.
         */
       {
         MapEpiNode resultMapEpiNode= // Make a new empty map. 
@@ -903,7 +904,7 @@ class MapEpiNode extends EpiNode
         }
 
 
-    // Methods that store data in a map.
+    // Methods that store various types of data in a map.
 
     public synchronized void putV(String keyString, String valueString)
       /* This associates valueString with keyString in this MapEpiNode.
@@ -913,6 +914,17 @@ class MapEpiNode extends EpiNode
         putV(
             new ScalarEpiNode(keyString),
             new ScalarEpiNode(valueString)
+            );
+        }
+
+    public synchronized void putV(String keyString, EpiNode valueEpiNode)
+      /* This associates valueString with keyString in this MapEpiNode.
+        The strings are converted to ScalarEpiNodes first.
+        */
+      {
+        putV(
+            new ScalarEpiNode(keyString),
+            valueEpiNode
             );
         }
 
@@ -928,7 +940,7 @@ class MapEpiNode extends EpiNode
         }
 
     public synchronized void removeV( String keyString)
-    /* This method remove the field whose name is fieldKeyString.
+    /* This method removes the field whose name is fieldKeyString.
       */
     { 
       theLinkedHashMap.remove( new ScalarEpiNode(keyString ));
