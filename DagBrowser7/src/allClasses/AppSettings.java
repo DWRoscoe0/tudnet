@@ -24,28 +24,54 @@ public class AppSettings {
   public static File userAppFolderFile= new File( 
       new File( SystemSettings.homeFolderPathString ), Config.appString );
   
+  /* Create app folder if it doesn't exist.
+    The error handling is unconventional because this must be done
+    before theAppLog logging facility is running.
+    Many things, such as Logging, fail without this directory.
+    */
   static {
-    String errorString= null;
-
-    makeDir: { // Make directory for the user's app, with full error checking.
-      try {
-        if (AppSettings.userAppFolderFile.exists())
-          break makeDir; // Do nothing if directory already exists.
-        if (! AppSettings.userAppFolderFile.mkdirs())
-          errorString= 
-            "AppSettings loader: "+userAppFolderFile+" mkdirs() failed.";
-        } catch (Exception e){
-          errorString= 
-            "AppSettings loader: "+userAppFolderFile+" mkdirs() "+e;
-        } // Many things, such as Logging, fail without this directory.
-      } // makeDir:
-    
-      if (errorString != null) { // Handle error by displaying and exiting.
-        System.out.println(errorString);
-        System.exit(1);
-        }
+    String errorString= // Try creating app folder if it doesn't exist.
+        makeDirectoryAndAncestorsString(userAppFolderFile);
+    if (errorString != null) { // If there was an error, display it and exit.
+      System.out.println(errorString);
+      System.exit(1);
+      }
     }
-
+  
+  public static void makeDirectoryAndAncestorsWithLoggingV(File directoryFile)
+    /* This method creates a directory and its ancestors if needed,
+      but if any errors happen, it logs them.
+      */
+    {
+      String errorString= // Try creating desired folder if it doesn't exist.
+          makeDirectoryAndAncestorsString(directoryFile);
+      if (errorString != null) { // If there was an error, log it.
+        theAppLog.error(
+            "AppSettings.makeDirectoryAndAncestorsWithLoggingV(.) " + errorString);
+        }
+      }
+  
+  private static String makeDirectoryAndAncestorsString(File directoryFile)
+    /* This method tries to create the directory whose name is directoryFile,
+      and any ancestor directories that do not exist.
+      It returns null if successful, an error message string if not.
+      */
+    {
+      String errorString= null; // Assume no errors.
+      makeDir: { 
+        try {
+          if (directoryFile.exists())
+            break makeDir; // Do nothing if directory already exists.
+          if (! directoryFile.mkdirs())
+            errorString= 
+              "AppSettings loader: "+directoryFile+" mkdirs() failed.";
+        } catch (Exception theException){
+          errorString= "AppSettings.makeDirectoryAndAncestorsString(.): "
+              + directoryFile + theException;
+        }
+      } // makeDir:
+      return errorString;
+      }
   
   // Methods that calculate and return values which depend on app settings.
 
@@ -103,8 +129,12 @@ public class AppSettings {
           +Arrays.toString(theCommandArgs.args()));
       theAppLog.info("AppSettings.initializeV(..) entryPointClass="+
           entryPointClass.getCanonicalName());
+      
       setInitiatorV(entryPointClass, theCommandArgs);
-    
+      
+      makeDirectoryAndAncestorsWithLoggingV( // Make another directory we'll need.
+          makePathRelativeToAppFolderFile( "Peers" ) );
+      
       SystemSettings.logSystemPropertiesV(theAppLog);
       }
     

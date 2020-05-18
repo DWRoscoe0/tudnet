@@ -4,6 +4,7 @@ import static allClasses.AppLog.theAppLog;
 import static allClasses.SystemSettings.NL;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
@@ -42,7 +43,8 @@ public class TextStream
             protected boolean removeEldestEntry(Map.Entry<Integer,Object> eldest) {
                 return size() > 8; // Limit map size to 8 entries.
                 }
-      };
+          };
+      private File streamFile; 
 
     // Constructors.
 
@@ -58,7 +60,12 @@ public class TextStream
           this.thePersistent= thePersistent;
           this.theConnectionManager= theConnectionManager;
           
-          loadDocumentV("textStreamFile.txt"); // Load document from disk text.
+          streamFile= AppSettings.makePathRelativeToAppFolderFile(
+                  "Peers" 
+                  + File.separator + thePersistent.getTmptyOrString("PeerIdentity") 
+                  + File.separator + "textStreamFile.txt"
+                  );
+          loadDocumentV(streamFile); // Load document from disk text.
 
           this.theConnectionManager.setEpiNodeListener( // Listen to ConnectionManager for
               this); // receiving text from  remote systems.
@@ -106,7 +113,7 @@ public class TextStream
           JTree uses something else (getName()?).
           */
       
-      private void loadDocumentV( String fileString )
+      private void loadDocumentV( File theFile )
         /* This method loads the stream document Area with
           the contents of the external text file whose name is fileString.
           */
@@ -115,9 +122,7 @@ public class TextStream
           BufferedReader theBufferedReader= null; 
           try {
               thePlainDocument= new PlainDocument();
-              FileInputStream theFileInputStream = 
-                  new FileInputStream(
-                      AppSettings.makeRelativeToAppFolderFile(fileString));
+              FileInputStream theFileInputStream= new FileInputStream( theFile );
               theBufferedReader = 
                 new BufferedReader(new InputStreamReader(theFileInputStream));
               String lineString;
@@ -130,7 +135,8 @@ public class TextStream
               theAppLog.exception("TextStream.loadStreamV(..) ",theBadLocationException);
               }
             catch (FileNotFoundException theFileNotFoundException) { 
-              theAppLog.info("TextStream.loadStreamV(..) file not found");
+              theAppLog.info("TextStream.loadStreamV(..) "
+                + theFileNotFoundException);
               }
             catch (IOException theIOException) { 
               theAppLog.exception("TextStream.loadStreamV(..)", theIOException);
@@ -149,11 +155,11 @@ public class TextStream
       protected int finalizeDataNodesI()
         /* This override method finalizes all the children and then the base class. */
         {
-          storeDocumentV( "textStreamFile.txt");
+          storeDocumentV( streamFile );
           return super.finalizeDataNodesI(); // Finalize base class
           }
 
-      private void storeDocumentV( String fileString )
+      private void storeDocumentV( File theFile )
         /* This method stores the stream data that is in main memory to 
           the external text file whose name is fileString.
           */
@@ -162,8 +168,9 @@ public class TextStream
           FileWriter theFileWriter= null;
           thePlainDocument.readLock();
           try {
-              theFileWriter= new FileWriter(
-                AppSettings.makeRelativeToAppFolderFile(fileString));  
+              AppSettings.makeDirectoryAndAncestorsWithLoggingV(
+                theFile.getParentFile());
+              theFileWriter= new FileWriter( theFile );
               writeAllLineElementsV(theFileWriter);
               }
             catch (BadLocationException theBadLocationException) { 
