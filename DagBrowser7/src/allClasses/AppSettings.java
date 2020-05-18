@@ -48,18 +48,44 @@ public class AppSettings {
 
   
   // Methods that calculate and return values which depend on app settings.
-  
+
   public static File makeRelativeToAppFolderFile( 
       String fileRelativePathString )
-    /* This method creates a File name object from fileRelativePathString.
-      fileRelativePathString is a String representing the relative path
-      from the standard app folder to the file of interest.  
-      fileRelativePathString may be a single element path name, 
-      such as "Infogora.jar", or a multiple element path name, 
-      such as "TCPCopierStaging\Infogora.jar". 
+    /* This method creates a File name object by appending fileRelativePathString
+      to the path name for the standard app folder,
+      This method works by delegating to a method that takes 
+      an array containing fileRelativePathString as its only element. 
+      See the delegate method for details. 
       */
     {
-      return new File( AppSettings.userAppFolderFile, fileRelativePathString );
+      return makePathRelativeToAppFolderFile( fileRelativePathString );
+      }
+
+  public static File makePathRelativeToAppFolderFile(String... fileRelativePathStrings )
+    /* This method creates a File name path object by adding,
+      to the path name for the standard app folder,
+      the fileRelativePathStrings, which is an array of Strings 
+      representing path elements to be appended..  
+      All but the last element represents a directory,
+      The last element could be either a directory or a file,
+      fileRelativePathStrings may contain a single name element, such as 
+        {"TCPCopierStaging" + File.separator + "Infogora.exe"} 
+      or multiple elements, such as 
+        {"TCPCopierStaging", "Infogora.exe"} 
+      Note that the above 2 examples represent the same path
+      expressed in 2 different ways.
+      */
+    {
+      File resultFile= AppSettings.userAppFolderFile; // Start with bare app folder
+
+      for // For all the elements of the relative path element array 
+        (String elementString: fileRelativePathStrings) {
+        resultFile= new File(resultFile, elementString); // add next element.
+        theAppLog.debug("AppSettings.makePathRelativeToAppFolderFile(.) " 
+            + elementString + " " + resultFile);
+        }
+
+      return resultFile; // Return the accumulated result.
       }
   
   public static void initializeV(

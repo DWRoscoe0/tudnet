@@ -40,7 +40,7 @@ public class TCPCopier extends EpiThread
     The new single-thread system will work as follows.
     * On startup it will update the TCP staging area if the app file is new.
     * It will enter a loop which alternates between client and server modes.
-      * In client modethread attempts both 
+      * In client mode thread attempts both 
         * file updating across a socket connection and
         * local inter-folder file updating.
 		
@@ -57,8 +57,11 @@ public class TCPCopier extends EpiThread
 
 	  /* File name and path definitions.
 	    2 file names are used, one for the client and one for the server.
-	    This is done to for testing with localhost and 2 separate folder.
+	    This is done for testing with localhost and 2 separate folders.
 	    During normal operations there will be only one folder and file name.
+	    
+	    ///org Note that File.separator is used to manually construct some paths.
+	      It might be better to use the File-path-building methods in AppSettings. 
 	   	*/
 	  //private static final String fileToUpdateString= "TCPCopier.txt";
     private static final String fileToUpdateString=
@@ -149,7 +152,7 @@ public class TCPCopier extends EpiThread
       The method will return early if the thread is interrupted.
       */
     {
-      /// theAppLog.info("run() begins.");
+      theAppLog.info("run() begins.");
       EpiThread.interruptibleSleepB(Config.tcpCopierRunDelayMsL);
       theAppLog.info("run() start delay done.");
 
