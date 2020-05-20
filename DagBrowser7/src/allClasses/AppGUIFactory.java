@@ -79,6 +79,9 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 	      new NetcasterQueue(cmThreadLockAndSignal, Config.QUEUE_SIZE);
       NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue=
           new NetcasterQueue(cmThreadLockAndSignal, Config.QUEUE_SIZE);
+      TextStream theTextStream= new TextStream(
+          theUnicasterManager,thePersistent);
+      DataNode theTextStreamsDataNode= new TextStreams("Text-Streams",theTextStream);
 	    ConnectionManager theConnectionManager= new ConnectionManager(
         this, // the AppGuiFactory.
     	  thePersistent,
@@ -88,7 +91,8 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
   	    multicasterToConnectionManagerNetcasterQueue,
   	    unconnectedReceiverToConnectionManagerNetcasterQueue,
   	    toConnectionManagerNotifyingQueueOfStrings,
-        toConnectionManagerNotifyingQueueOfMapEpiNodes
+        toConnectionManagerNotifyingQueueOfMapEpiNodes,
+        theTextStream
   	    );
       EpiThread theConnectionManagerEpiThread=
         AppGUIFactory.makeEpiThread( theConnectionManager, "ConnMgr" );
@@ -96,22 +100,18 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
         new SystemsMonitor(toConnectionManagerNotifyingQueueOfStrings);
       EpiThread theCPUMonitorEpiThread=
         AppGUIFactory.makeEpiThread( theSystemsMonitor, "SystemsMonitor" );
-      DataNode theInitialRootDataNode=  // Building DataNode tree.
-        new InfogoraRoot( 
-          new FileRoots(),
-          new Outline( 0 ),
-          theSystemsMonitor,
-          theConnectionManager,
-          new NamedList(
-            "Test Center",
-            new TextStreams(
-              "TextStreams",
-              new TextStream(
-                theUnicasterManager,thePersistent,theConnectionManager)
-              ),
-            new Infinitree( null, 0 )
-            )
+      DataNode testCenterDataNode= new NamedList(
+          "Test-Center",
+          theTextStreamsDataNode,
+          new Infinitree( null, 0 )
           );
+      DataNode theInitialRootDataNode= new InfogoraRoot( // Building DataNode tree.
+        new FileRoots(),
+        new Outline( 0 ),
+        theSystemsMonitor,
+        theConnectionManager,
+        testCenterDataNode
+        );
   		TracingEventQueueMonitor theTracingEventQueueMonitor=
   				new TracingEventQueueMonitor(
 	  	  				TracingEventQueueMonitor.LIMIT

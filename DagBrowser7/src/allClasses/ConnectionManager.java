@@ -99,37 +99,39 @@ public class ConnectionManager
 
     	private UnicasterManager theUnicasterManager;
 
-	    private LockAndSignal cmThreadLockAndSignal;  // LockAndSignal for this thread.
-      /* This single object is used to synchronize communication between 
-        the ConnectionManager and all threads providing data to it.
-				It should be the same LockAndSignal instance used in the construction
-				of the input queues that follow.
-        It man also be used separately to signal asynchronous inputs
-        such as the socket open/closed state.
-        The old way of synchronizing inputs used 
-        an Objects for a lock and a separate boolean signal.
-        */
+	    private LockAndSignal cmThreadLockAndSignal;
+        /* This single object is used to synchronize communication between 
+          the ConnectionManager and all threads providing data to it.
+  				It should be the same LockAndSignal instance used in the construction
+  				of the input queues that follow.
+          It can also be used separately to signal asynchronous inputs
+          such as the socket open/closed state.
+          The old way of synchronizing inputs used 
+          an Object for a lock and a separate boolean signal.
+          */
 
+      // Synchronized inputs to the connection manager's thread.
 	    private NetcasterQueue multicasterToConnectionManagerNetcasterQueue; 
-      // Queue of multicast packets received from Multicaster.
-
-	    // Inputs to the connection manager thread.
+	      // Queue of multicast packets received from Multicaster.
 	    private NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue;
 	    	// Queue of unconnected unicast packets received from Unicasters.
       private NotifyingQueue<String> toConnectionManagerNotifyingQueueOfStrings;
         // For inputs in the form of Strings.
       private NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes;
         // For inputs in the form of MapEpiNodes.
+      
+      private TextStream theTextStream= null;
 
     // Other instance variables, all private.
-		  private MulticastSocket theMulticastSocket; // For multicast receiver. 
+
+      private MulticastSocket theMulticastSocket; // For multicast receiver. 
 	    private EpiThread multicasterEpiThread ; // Its thread.
   		private InetAddress multicastInetAddress;
 		
 	    public DatagramSocket unconnectedDatagramSocket; // For UDP io.
 	      // It is used for receiving unicast packets and sending both types.
 
-	    private EpiThread theUnconnectedReceiverEpiThread ; // its thread.
+	    private EpiThread theUnconnectedReceiverEpiThread; // its thread.
 
 	    private EpiThread theSenderEpiThread ; // its thread.
 	
@@ -144,7 +146,8 @@ public class ConnectionManager
     		NetcasterQueue multicasterToConnectionManagerNetcasterQueue,
     		NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue,
         NotifyingQueue<String> toConnectionManagerNotifyingQueueOfStrings,
-        NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes
+        NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes,
+        TextStream theTextStream
     		)
       {
       	super.initializeV(  // Constructing base class.
@@ -166,6 +169,8 @@ public class ConnectionManager
             toConnectionManagerNotifyingQueueOfStrings;
         this.toConnectionManagerNotifyingQueueOfMapEpiNodes=
             toConnectionManagerNotifyingQueueOfMapEpiNodes;
+        this.theTextStream= theTextStream;
+
         }
 
 
@@ -681,7 +686,7 @@ public class ConnectionManager
             + "messageMapEpiNode=" + NL + "  " + messageMapEpiNode);
           MapEpiNode valueMapEpiNode;
         goReturn: {
-          if (callEpiNodeListenerB(messageMapEpiNode)) // Try TextStream processing.
+          if (tryProcessingByTextStreamB(messageMapEpiNode)) // Try TextStream processing.
             { break goReturn; } // Success, so exit.
             
           valueMapEpiNode= messageMapEpiNode.getMapEpiNode("LocalNewState");
@@ -834,23 +839,12 @@ public class ConnectionManager
 
 
     // TextStream message processing.
-    
-    private TextStream listenerTextStream= null;
 
-    public void setEpiNodeListener(TextStream theTextStream)
-      {
-        listenerTextStream= theTextStream;
-        }
-
-    private boolean callEpiNodeListenerB(MapEpiNode theMapEpiNode)
-      /* If the TextStream's listener is defined and able to decode theMapEpiNode 
-        then this method returns true, false otherwise.
+    private boolean tryProcessingByTextStreamB(MapEpiNode theMapEpiNode)
+      /* Returns true if TextStream was able to process, false otherwise.
         */
       {
-        boolean successB= false;
-        if (listenerTextStream != null) // Call TextStream's listener if defined.
-          successB= listenerTextStream.listenerToProcessIncomingMapEpiNodeB(theMapEpiNode);
-        return successB;
+        return theTextStream.tryProcessingMapEpiNodeB(theMapEpiNode);
         }
 
     } // class ConnectionManager.

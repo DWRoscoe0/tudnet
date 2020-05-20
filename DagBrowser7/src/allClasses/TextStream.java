@@ -33,7 +33,6 @@ public class TextStream
       // Injected variables:
       private UnicasterManager theUnicasterManager;
       private Persistent thePersistent;
-      private ConnectionManager theConnectionManager;
 
       // Other variables:
       private PlainDocument thePlainDocument= null; // Where the stream is stored.
@@ -50,15 +49,13 @@ public class TextStream
 
       TextStream( 
           UnicasterManager theUnicasterManager,
-          Persistent thePersistent,
-          ConnectionManager theConnectionManager
+          Persistent thePersistent
           )
         // Constructs a TextStream with a name inString.
         { 
           theAppLog.debug("TextStream.TextStream(.) called.");
           this.theUnicasterManager= theUnicasterManager;
           this.thePersistent= thePersistent;
-          this.theConnectionManager= theConnectionManager;
           
           streamFile= AppSettings.makePathRelativeToAppFolderFile(
                   "Peers" 
@@ -66,10 +63,6 @@ public class TextStream
                   + File.separator + "textStreamFile.txt"
                   );
           loadDocumentV(streamFile); // Load document from disk text.
-
-          this.theConnectionManager.setEpiNodeListener( // Listen to ConnectionManager for
-              this); // receiving text from  remote systems.
-              ///org Should this be in an DataNode .initializeV() method?
           }
 
     // theFile pass-through methods.
@@ -213,7 +206,7 @@ public class TextStream
       
       // Code imported from TextStream, to be integrated and made to work.
       
-      public boolean listenerToProcessIncomingMapEpiNodeB(MapEpiNode messageMapEpiNode)
+      public boolean tryProcessingMapEpiNodeB(MapEpiNode messageMapEpiNode)
         /* This is the Listener method called by the ConnectionManager
           to try decoding a TextStream message MapEpiNode.
           It returns true if the decode was successful, false otherwise.
