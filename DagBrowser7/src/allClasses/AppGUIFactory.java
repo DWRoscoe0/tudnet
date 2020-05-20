@@ -16,14 +16,15 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
   /* This is the factory for all classes with GUI scope.
     Most have lifetimes close to the AppGUI lifetime, but some are shorter.
     The app has a maximum of one instance of this factory.
-    
+
     This factory wires together the 2nd level of the application.
     The classes constructed here are mainly the ones 
-    used to present a GUI to the user and must of the GUI content.
-    
-    There is only one AppGUI, 
-    and all its code could have been put in the AppFactory,
-    but a GUI is not always created,
+    used to present a GUI (Graphical User Interface) to the user,
+    and must of the GUI content.
+
+    There is only one AppGUI. 
+    All of its code could have been put in the AppFactory,
+    but a GUI is not always needed,
     so it made sense to divide the code between the App and GUI factory classes.
 
     */
@@ -51,15 +52,16 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
   		AppInstanceManager theAppInstanceManager,
   		TCPCopier theTCPCopier
   		)
-  	// This builds all objects that are or comprise unconditional singletons.
-    // Note, no non-static maker methods are called from here.
+  	/* This method builds all objects that are, or comprise, unconditional singletons.
+  	   
+       Note, no non-static maker methods are called from here.
+       */
     {
   	  LockAndSignal senderLockAndSignal= new LockAndSignal();
   	  NetcasterQueue netcasterToSenderNetcasterQueue= 
   	  		new NetcasterQueue( senderLockAndSignal, Config.QUEUE_SIZE );
       DataRoot theDataRoot= new DataRoot();
-      MetaFileManager theMetaFileManager= 
-      		new MetaFileManager( theDataRoot );
+      MetaFileManager theMetaFileManager= new MetaFileManager( theDataRoot );
       MetaRoot theMetaRoot= new MetaRoot(theDataRoot, theMetaFileManager);
       MetaFileManager.Finisher theMetaFileManagerFinisher= 
       	new MetaFileManager.Finisher( theMetaFileManager, theMetaRoot );
@@ -102,8 +104,11 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
           theConnectionManager,
           new NamedList(
             "Test Center",
-            new TextStream(
-              theUnicasterManager,thePersistent,theConnectionManager),
+            new TextStreams(
+              "TextStreams",
+              new TextStream(
+                theUnicasterManager,thePersistent,theConnectionManager)
+              ),
             new Infinitree( null, 0 )
             )
           );
@@ -188,9 +193,15 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
   // None.
 
   
-  // Maker methods which construct something with the new-operator each time called.
-  // These are for classes for which there are multiple instances in space or time.
-  ///opt fastFailNullCheckT(..) might no longer be needed.
+  /* Maker methods which construct something with the new-operator each time called.
+    These are for classes for which there are multiple instances in space or time.
+    They have lifetimes that are shorter than AppGUI.
+    
+    ///org Maybe they should be put into their own factory?
+      This would eliminate the need to pass "this" AppGUIFactory as a parameter.
+      
+    ///opt fastFailNullCheckT(..) might no longer be needed.
+     */
 
 	public static EpiThread makeEpiThread( Runnable aRunnable, String nameString )
 	  { return new EpiThread( aRunnable, nameString ); }
