@@ -169,8 +169,8 @@ public class TextStream
           thePlainDocument.readLock();
           try {
               AppSettings.makeDirectoryAndAncestorsWithLoggingV(
-                theFile.getParentFile());
-              theFileWriter= new FileWriter( theFile );
+                theFile.getParentFile()); // Create directory if needed.
+              theFileWriter= new FileWriter( theFile ); // Open file.
               writeAllLineElementsV(theFileWriter);
               }
             catch (BadLocationException theBadLocationException) { 
@@ -189,6 +189,7 @@ public class TextStream
                 }
               thePlainDocument.readUnlock();
               }
+          thePlainDocument= null; // Indicate document is no longer being viewed.
           theAppLog.info("TextStream.storeDocumentV(..) ends.");
           }
 

@@ -10,19 +10,18 @@ import static allClasses.SystemSettings.NL;
 /* This file is the root of this application.  
   If you want to understand this application then
   this is where you should start reading.
-  It by using, to a large extent, by using 
-  the Dependency-Injection software pattern.  
- 
-  This file defines the Infogora class: 
-  This class contains a main(..) method
+  To a large extent it uses the Dependency-Injection software pattern.  
+
+  This file defines the Infogora class. 
+  This class contains a main(..) method 
   which is the entry point of the application.
-  Other classes might have main methods, InfogoraStarter for example.
-  
+  Other classes also might have main methods, InfogoraStarter for example.
+
   The main(..) method constructs the AppFactory, 
   uses it to construct the single App instance, 
   and runs a method in that instance.
   
-  Much about the structure of this can be obtained by
+  Much about the structure of this app can be obtained by
   examining the high-level factory classes.  They are:
 
 	* AppFactory: This is the factory for all classes with app lifetime.
@@ -33,7 +32,7 @@ import static allClasses.SystemSettings.NL;
 	  It wires together the second level of the app.
 
   * UnicasterFactory: This is the factory for all classes with
-    lifetimes of a connection.
+    lifetimes of a Unicaster network connection.
 
   The factories above may not be the only factories in the app,
   but they are the top levels.  Factories have the following attributes:
@@ -85,11 +84,14 @@ class Infogora  // The root of this app.
 
 	  public static void main(String[] argStrings)
 			/* This method is the app's entry point.  It does the following:
-	
+
+	      * It prepares the AppLog logger for use.
+	      * It creates and activates the app BackupTerminator.
 			  * It sets a default Exception handler.
 			  * It creates the AppFactory object.
 			  * It uses the AppFactory to create the App object.
 			  * It calls the App object's runV() method.
+			  * IT does some progress logging.
     
 				See the AppFactory for information about 
 				this app's high-level structure.
@@ -99,8 +101,8 @@ class Infogora  // The root of this app.
 	      or normal threads which will soon terminate themselves.
 	      When all threads terminate, it should trigger a JVM shutdown,
 	      unless a JVM shutdown was triggered already, and terminate the app.
-	      Unfortunately the app doesn't also terminate, for unknown reasons, 
-	      so ///fix we use BackupTerminator to handle this possibility.
+	      Unfortunately the app doesn't always terminate, for unknown reasons, 
+	      so we use BackupTerminator to handle this possibility.
 
 	      ///fix so exit() in BackupTerminator doesn't need to be called.
 	        List all remaining active threads seems to show that
@@ -160,7 +162,7 @@ class Infogora  // The root of this app.
           + NL + "    by closing log file and exiting the main(..) method.");
         theAppLog.closeFileIfOpenB(); // Close log for exit.
         theBackupTerminator.setTerminationUnderwayV(); // In case termination fails.
-        // while(true) ; // Use this to test BackupTerminator.
+        // while(true) ; // Uncomment this line to test BackupTerminator.
 	      } // main(..)
 
 	  
@@ -231,7 +233,7 @@ class Infogora  // The root of this app.
               theAppLog.debug("run() closing log file and executing System.exit(1)." );
               theAppLog.closeFileIfOpenB(); // Close log before exit.
               }
-            System.exit(1); // Force process termination with an error code.
+            System.exit(1); // Force termination with an error code of 1.
     	      }
     
   	    private void waitV(long msI)
