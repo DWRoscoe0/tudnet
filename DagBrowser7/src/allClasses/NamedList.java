@@ -25,7 +25,17 @@ public class NamedList
     Also, there is nothing preventing changes in
     its children or other descendants.
     
-    ///enh Make generic, NamedList<T> and Iterable<T>.
+    ///opt Reduce storage used by eliminating redundant child collections. 
+    This one of 3 non-leaf classes that define storage for child references.
+    This class uses a List to store its children.
+    The other 2 are 
+    * MutableListWithMap, which contains a HashMap for fast child lookup. 
+    * StateList, which contains a list of children which
+      duplicates some of the regular child list, but only the ones that are states.
+    This might be possible by defining some new classes, such as
+    * EmptyList, whose subclasses can use the type of child lists
+      that best fits its purpose.  
+     
     */
   
   { // class NamedList
@@ -269,8 +279,6 @@ public class NamedList
           processedB= theDataNode.tryProcessingMapEpiNodeB(theMapEpiNode);
           if (processedB) break; // Exit if the child successfully processed the data.
           }
-        //// for ( DataNode theDataNode : theListOfDataNodes)  // For each child
-        ////   theDataNode.tryProcessingMapEpiNodeB(messageMapEpiNode);
         return processedB; 
         }
 
