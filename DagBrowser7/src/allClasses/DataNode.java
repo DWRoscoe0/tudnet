@@ -226,6 +226,16 @@ public class DataNode
       			parentNamedList.reportChangeInChildB( this );
       		}
 
+      protected boolean tryProcessingMapEpiNodeB(MapEpiNode theMapEpiNode)
+        /* This method tries processing a MapEpiNode.
+          It is supposed to return true if processing is successful, false otherwise.
+          This version does no processing so it returns false.
+          Methods which override this method will return true in some cases.
+          For an example, see the NamesList class.
+          */
+        { 
+          return false; 
+          }
       
       /* Customized logging methods.
         These methods, along with this.theMaxLogLevel and class AppLog,

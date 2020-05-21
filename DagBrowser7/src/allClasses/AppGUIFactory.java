@@ -81,7 +81,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
           new NetcasterQueue(cmThreadLockAndSignal, Config.QUEUE_SIZE);
       TextStream theTextStream= new TextStream(
           theUnicasterManager,thePersistent);
-      DataNode theTextStreamsDataNode= new TextStreams("Text-Streams",theTextStream);
+      TextStreams theTextStreams= new TextStreams("Text-Streams",theTextStream);
 	    ConnectionManager theConnectionManager= new ConnectionManager(
         this, // the AppGuiFactory.
     	  thePersistent,
@@ -92,7 +92,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
   	    unconnectedReceiverToConnectionManagerNetcasterQueue,
   	    toConnectionManagerNotifyingQueueOfStrings,
         toConnectionManagerNotifyingQueueOfMapEpiNodes,
-        theTextStream
+        theTextStreams
   	    );
       EpiThread theConnectionManagerEpiThread=
         AppGUIFactory.makeEpiThread( theConnectionManager, "ConnMgr" );
@@ -102,7 +102,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
         AppGUIFactory.makeEpiThread( theSystemsMonitor, "SystemsMonitor" );
       DataNode testCenterDataNode= new NamedList(
           "Test-Center",
-          theTextStreamsDataNode,
+          theTextStreams,
           new Infinitree( null, 0 )
           );
       DataNode theInitialRootDataNode= new InfogoraRoot( // Building DataNode tree.

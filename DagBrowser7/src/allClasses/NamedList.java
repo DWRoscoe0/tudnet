@@ -5,6 +5,7 @@ import java.util.Iterator;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ListIterator;
 
 import allClasses.AppLog.LogLevel;
 
@@ -248,6 +249,30 @@ public class NamedList
     		theDataTreeModel.signalChangeV( childDataNode );
     	  return true;
 				}
+
+    protected boolean tryProcessingMapEpiNodeB(MapEpiNode theMapEpiNode)
+      /* This method tries processing a MapEpiNode.
+        It does this by trying to have each child process the theMapEpiNode 
+        by its method of the same name, until one of them returns true,
+        or the end of the child list is reached.
+        It returns true if the processing was successful by a child, false otherwise.
+        This is a general purpose child scanner which can be used by subclasses
+        or overridden for customized behavior.
+        */
+      { 
+        boolean processedB= false; // Assume all children will fail to process.
+        ListIterator<DataNode> theListIterator= // Prepare a child list iterator.
+            theListOfDataNodes.listIterator();
+        while (true) { // Process children until something causes exit.
+          if (! theListIterator.hasNext()) break; // Exit if no more children.
+          DataNode theDataNode= theListIterator.next(); // Get next child.
+          processedB= theDataNode.tryProcessingMapEpiNodeB(theMapEpiNode);
+          if (processedB) break; // Exit if the child successfully processed the data.
+          }
+        //// for ( DataNode theDataNode : theListOfDataNodes)  // For each child
+        ////   theDataNode.tryProcessingMapEpiNodeB(messageMapEpiNode);
+        return processedB; 
+        }
 
 	  
 	  // interface DataNode methods.

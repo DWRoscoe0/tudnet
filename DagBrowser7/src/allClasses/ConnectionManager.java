@@ -120,7 +120,7 @@ public class ConnectionManager
       private NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes;
         // For inputs in the form of MapEpiNodes.
       
-      private TextStream theTextStream= null;
+      private TextStreams theTextStreams= null;
 
     // Other instance variables, all private.
 
@@ -147,7 +147,7 @@ public class ConnectionManager
     		NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue,
         NotifyingQueue<String> toConnectionManagerNotifyingQueueOfStrings,
         NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes,
-        TextStream theTextStream
+        TextStreams theTextStreams
     		)
       {
       	super.initializeV(  // Constructing base class.
@@ -169,7 +169,7 @@ public class ConnectionManager
             toConnectionManagerNotifyingQueueOfStrings;
         this.toConnectionManagerNotifyingQueueOfMapEpiNodes=
             toConnectionManagerNotifyingQueueOfMapEpiNodes;
-        this.theTextStream= theTextStream;
+        this.theTextStreams= theTextStreams;
 
         }
 
@@ -686,7 +686,7 @@ public class ConnectionManager
             + "messageMapEpiNode=" + NL + "  " + messageMapEpiNode);
           MapEpiNode valueMapEpiNode;
         goReturn: {
-          if (tryProcessingByTextStreamB(messageMapEpiNode)) // Try TextStream processing.
+          if (tryProcessingByTextStreamsB(messageMapEpiNode)) // Try TextStreams processing.
             { break goReturn; } // Success, so exit.
             
           valueMapEpiNode= messageMapEpiNode.getMapEpiNode("LocalNewState");
@@ -838,13 +838,13 @@ public class ConnectionManager
         }
 
 
-    // TextStream message processing.
+    // TextStreams message processing.
 
-    private boolean tryProcessingByTextStreamB(MapEpiNode theMapEpiNode)
-      /* Returns true if TextStream was able to process, false otherwise.
+    private boolean tryProcessingByTextStreamsB(MapEpiNode theMapEpiNode)
+      /* Returns true if TextStreams was able to process, false otherwise.
         */
       {
-        return theTextStream.tryProcessingMapEpiNodeB(theMapEpiNode);
+        return theTextStreams.tryProcessingMapEpiNodeB(theMapEpiNode);
         }
 
     } // class ConnectionManager.
