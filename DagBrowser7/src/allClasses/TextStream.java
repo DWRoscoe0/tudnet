@@ -21,9 +21,11 @@ import javax.swing.tree.TreePath;
 
 public class TextStream
 
-  extends DataNode
+  //// extends DataNode
 
-  /* This class extends DataNode to represent text streams.
+  extends KeyedStateList< String >  //// 
+
+  /* This class represents a single text streams.
     */
   
   {
@@ -48,11 +50,17 @@ public class TextStream
     // Constructors.
 
       TextStream( 
+          String peerIdentityString,
           UnicasterManager theUnicasterManager,
           Persistent thePersistent
           )
         // Constructs a TextStream with a name inString.
         { 
+        // Superclass's injections.
+          super( // Constructing MutableList superclass.
+              "TextStream", //// nameString, // Type name but not entire name.
+              peerIdentityString
+              );
           theAppLog.debug("TextStream.TextStream(.) called.");
           this.theUnicasterManager= theUnicasterManager;
           this.thePersistent= thePersistent;
@@ -76,10 +84,12 @@ public class TextStream
 
       // Methods which return Strings about the node.
 
+      /*  ////
       public String getNameString( )
         {
           return "Text-Stream";
           }
+      */  ////
           
     // other interface DataNode methods.
 
@@ -101,7 +111,7 @@ public class TextStream
           
     // other methods.
 
-      public String toString( ) { return getNameString( ); }
+      //// public String toString( ) { return getNameString( ); }
         /* it appears that JList uses toString() but
           JTree uses something else (getName()?).
           */
