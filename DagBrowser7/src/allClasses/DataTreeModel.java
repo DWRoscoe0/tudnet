@@ -348,14 +348,14 @@ public class DataTreeModel
           return resultString;  // Return completed resultString.
           } // GetAbsolutePathString(.)
 
-      public synchronized String getInfoString(TreePath inTreePath)
-        /* Returns a String representing information about 
+      public synchronized String getAttributesString(TreePath inTreePath)
+        /* Returns a String representing attributes about the last element of 
           TreePath inTreePath. 
           */
         {
-          DataNode lastDataNode= 
-            (DataNode)(inTreePath.getLastPathComponent());
-          return lastDataNode.getInfoString();
+          DataNode lastDataNode= (DataNode)(inTreePath.getLastPathComponent());
+
+          return lastDataNode.getAttributesString();
           }
 
 

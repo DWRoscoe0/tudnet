@@ -15,7 +15,7 @@ import static allClasses.SystemSettings.NL;
 
 public class NamedList 
 
-	extends NamedNonLeaf  // Will override all remaining leaf behavior.
+	extends NamedBranch  // Will override all remaining leaf behavior.
 
 	implements Iterable<DataNode>
   

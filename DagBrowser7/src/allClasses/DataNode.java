@@ -133,6 +133,13 @@ public class DataNode
 			protected LogLevel theMaxLogLevel= AppLog.defaultMaxLogLevel;
 			  // Used to determine logging from this node.
 
+	  // Constructor
+			
+			public DataNode()
+			  // This is not needed, but was created to make Eclipse searches easier.
+  			{
+  			  }
+			
     // Static methods.
 
 		  static DataNode[] emptyListOfDataNodes()
@@ -318,18 +325,12 @@ public class DataNode
 
   	  
   	  // Other instance methods.
-  	  
-      public String toString()
-        // Returns a meaningful and useful String representation.
-        { 
-          return getLineSummaryString( );  // Using the summary string.
-          }
     
       public int IDCode() { return super.hashCode(); }
       
     // Instance getter and tester methods with equivalents in DataTreeModel.
 
-	    public boolean isLeaf( )
+	    public boolean isLeaf()
 		    /* This method and any of its overridden version
 		      returns true if this is a leaf node,
 		      which means it can never have children.
@@ -396,7 +397,20 @@ public class DataNode
 	        return childIndexI;  // Return index as search result.
 	        } // getIndexOfChild(.)
 
-  // Methods which return Strings about the node.
+  /* Methods which return Strings containing information about the node.
+    These should be overridden by subclasses as needed.
+    The meaning of each method should be preserved in the overrides.
+    */
+
+    public String toString()
+      /* Returns a meaningful and useful String representation.
+        Typically it returns a string representing the entire object state,
+        including objects referenced in fields, so this, in theory, 
+        is the most complex of the String-returning method.
+        */
+      { 
+        return getLineSummaryString( ); // For now, return the summary string.
+        }
 
 	  protected String getNodePathString()
   	  /* Recursively calculates and returns 
@@ -417,25 +431,6 @@ public class DataNode
   		  Nulls.fastFailNullCheckT(resultString);
   		  return resultString;
   	  	}
-	  	
-    public String getNameString( )
-	    /* Returns the name of the DataNode as a String.  
-	      This should be a unique String among its siblings.
-	      It will be used as part of a path-name and which
-	      identifies this DataNode distinctly from all other tree nodes.
-	      */
-      {
-    	  return "-UNDEFINED-NAME-"; // Base class has no name.
-        }
-
-    public String getValueString( )
-	    /* Returns the value of the DataNode as a String.  
-	      This is meant to be a very short summary string that
-	      might be appended to the name to represent a title. 
-	      */
-      {
-    		return "-UNDEFINED-VALUE-"; // Base class has no value.
-    		}
 
     public String getContentString( )
 	    /* Returns the content of the DataNode as a String.  
@@ -444,37 +439,8 @@ public class DataNode
 	      and it might consist of multiple lines.
 	      */
       {
-    		return getValueString( );
+    		return getValueString();
     		}
-
-    public String getLineSummaryString()  
-    /* Returns a one-line summary of
-      the contents of this DataNode as a String.
-      The line consists of the name of the node,
-      and sometimes followed by something else,
-      such as a child count, or some other type of value summary information.
-      This is not meant to be a unique identifier.  
-      */
-      {
-    	  String nameString= processedNameString();
-    	  String valueString= processedValueString();
-    	  
-    	  // Combine name with value.
-    	  String resultString;
-    	  if // Combining with name if value not nil or same as name.
-    	  	( ( valueString != "" ) && 
-    	  		( ! nameString.equals(valueString) ) 
-    	  		)
-      	  resultString= // Using
-      	  		nameString // the name,
-	        		+ " : " // a separator,
-	        		+valueString // and the value.
-	        		;
-    	  	else
-      	  resultString= nameString; // Using only the name.
-    	  
-    	  return resultString; 
-        }
 
 	  public String processedNameString()
 	    /* This method returns a name String which is might have been decorated
@@ -506,10 +472,71 @@ public class DataNode
 			  return valueString;
 			  }
 
-    public String getInfoString( )
-    	// Returns additional attributes about this DataNode as a String.
+    public String getLineSummaryString()  
+    /* Returns a [one-line?] summary of
+      the contents of this DataNode as a String.
+      The line consists of the name of the node,
+      and sometimes followed by something else,
+      such as a child count, or some other type of value summary information.
+      This is not meant to be used as an immutable unique identifier.  
+      */
+      {
+        String nameString= processedNameString();
+        String valueString= processedValueString();
+        
+        // Combine name with value.
+        String resultString;
+        if // Combining with name if value not nil or same as name.
+          ( ( valueString != "" ) && 
+            ( ! nameString.equals(valueString) ) 
+            )
+          resultString= getAttributesString(); // Use attributes string.
+          else
+          resultString= nameString; // Using only the name.
+        
+        return resultString; 
+        }
+
+    public String getAttributesString()
+      /* Returns attributes of this DataNode as a String.
+        This version returns the only known attributes pair,
+        the name and the value.
+       */
       { 
-        return getLineSummaryString( );  // Using the summary string.
+        String nameString= processedNameString();
+        String valueString= processedValueString();
+        return
+            nameString // the name,
+            + " : " // a separator,
+            +valueString // and the value.
+            ;
+        }
+
+    public String getValueString()
+      /* Returns the value of the DataNode as a String.  
+        This is meant to be a very short summary string that
+        might be appended to the name to represent a title. 
+        */
+      {
+        return
+          "VALUE-OF-"
+          + super.toString(); // Object's toString(), equivalent to: 
+        // getClass().getName() + '@' + Integer.toHexString(hashCode())
+        }
+
+    public String getNameString()
+      /* Returns the name of the DataNode as a String.  
+        This should be a unique String among its siblings because
+        it will be used to distinguish it from those sibling,
+        and as part of tree path-names.
+        This not necessarily be exactly what is displayed in JTree or JList cells.
+        Object.toString() satisfies these requirements.
+        */
+      {
+        return 
+            "NAME-OF-"
+            + super.toString(); // Object's toString(), equivalent to: 
+                // getClass().getName() + '@' + Integer.toHexString(hashCode())
         }
 
   // Other methods.
@@ -565,7 +592,7 @@ public class DataNode
                   break;  // Exiting loop.
                   }
               if  // Handling child with matching name.
-                ( inString.equals( childDataNode.getNameString( ) ) )
+                ( inString.equals( childDataNode.getNameString() ) )
                 break;  // Exiting while loop.
               }
 

@@ -2,13 +2,13 @@ package allClasses;
 
 public class NamedLeaf
   
-  /* This is a utility class that appears to be 
-    simply a leaf with a name.  
-   */
+  /* This class is the base class for all named DataNodes that
+    are leaves, meaning they are not branches.
+    */
 
-	extends NamedNonLeaf
+  extends NamedDataNode
   
-  { // class NamedLeaf
+  {
 
 		public static NamedLeaf makeNamedLeaf( String nameString )
 			{
@@ -18,9 +18,10 @@ public class NamedLeaf
 	  		return theNamedLeaf;
 	  		}
 	
-    public boolean isLeaf( ) 
+    public boolean isLeaf( )
+      // Make it clear: This is a leaf node, not a branch.
       {
-        return true;  // Overriding superclass non-leaf result.
+        return true;
         }
       
-    } // class NamedLeaf
+    }

@@ -217,7 +217,7 @@ public class Outline
         */
       { // Outline(.)
         super(
-	        NamedNonLeaf.temporaryNameString, 
+	        NamedBranch.temporaryNameString, 
           new DataNode[]{} // Initially empty List for lazy-loaded children.
 	        );
         startingOffsetL= offsetInL;  // Save starting file offset.

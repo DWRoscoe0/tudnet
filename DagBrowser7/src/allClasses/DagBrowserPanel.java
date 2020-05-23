@@ -127,7 +127,7 @@ public class DagBrowserPanel
               private JComponent dataJComponent;  // ... and its data content.
               private TreeAware dataTreeAware;  // ... and its TreeAware alias.
 
-          private JLabel infoJLabel;  // a place to display directory/file info.
+          private JLabel attributesJLabel;  // a place to display node attributes.
 
         /* Component focus control.
 
@@ -307,13 +307,13 @@ public class DagBrowserPanel
             } // Build and add Current Working treePathJLabel.
           buildAndAddJSplitPane();  // Contains left and right sub-panels.
             // It is added to the center sub-panel.
-          { // Build and add infoJLabel for displaying file information.
-            infoJLabel= new JLabel();  // construct it.
-            infoJLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-            infoJLabel.setOpaque( true ); // ??
-            infoJLabel.setText("UNDEFINED");  // report the present info string.
-            viewJPanel.add(infoJLabel,BorderLayout.SOUTH);  // add as south sub-panel.
-            } // Build and add infoJLabel for displaying file information.
+          { // Build and add JLabel for displaying node attributes.
+            attributesJLabel= new JLabel();
+            attributesJLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            attributesJLabel.setOpaque( true );
+            attributesJLabel.setText("UNDEFINED");
+            viewJPanel.add(attributesJLabel,BorderLayout.SOUTH); // Add at bottom.
+            }
           add(viewJPanel,BorderLayout.CENTER);  // add it as center sub-panel.
           }
 
@@ -396,7 +396,7 @@ public class DagBrowserPanel
             bindActions();
             } // Create key mapping.  Experimental and incomplete.
 
-          displayPathAndInfoV(  // display left sub-panel's info.
+          displayPathAndAttributesV(  // display left sub-panel's info.
               theRootJTree.getSelectedTreePath()
               );
           buttonEnableScanV( );  // Updating button graying.
@@ -753,7 +753,7 @@ public class DagBrowserPanel
                 be created and placed in the right sub-panel 
                 to display the node identified by the TreePath.  
                 
-                The treePathJLabel and infoJLabel are updated with information 
+                The treePathJLabel and attributesJLabel are updated with information 
                 based on any new selection in the MasterPane.
 
                 This method might be re-entered.
@@ -1017,17 +1017,17 @@ public class DagBrowserPanel
 		            buttonEnableScanV( theTreeAware );
 		            TreePath theTreePath= 
 		            		theTreeAware.getTreeHelper().getPartTreePath() ;
-			          displayPathAndInfoV( theTreePath );
+			          displayPathAndAttributesV( theTreePath );
 	          		theMetaRoot.set( theTreePath ); // Record as global selection.
 	            	}
 		          }
 
-          private void displayPathAndInfoV(TreePath inTreePath)
-            /* This method Updates treePathJLabel and infoJLabel, 
+          private void displayPathAndAttributesV(TreePath inTreePath)
+            /* This method Updates treePathJLabel and attributesJLabel, 
               which appear as two lines above and below the two main sub-panels.
               It displays the string representation of inTreePath 
               in treePathJLabel, and various attributes of 
-              the final DataNode of that path in infoJLabel.
+              the final DataNode of that path in attributesJLabel.
               This method is meant to be called whenever:
               * the TreeSelection changes
               * or left-panel/right-panel focus changes.
@@ -1041,7 +1041,7 @@ public class DagBrowserPanel
                 { // display null info.
                   //appLogger.info("DagBrowserPanel.displayPathAndInfoV( null )");
                   treePathJLabel.setText("NO PATH");
-                  infoJLabel.setText("NO INFORMATION AVAILABLE");
+                  attributesJLabel.setText("NO INFORMATION AVAILABLE");
                   } // display null info.
                 else  // Handling path provided.
                 { // display non-null info.
@@ -1054,9 +1054,9 @@ public class DagBrowserPanel
                         inTreePath  // ...of inTreePath.
                       )
                     );
-                  infoJLabel.setText(  // set infoJLabel to be...
+                  attributesJLabel.setText(  // set attributesJLabel to be...
                     theDataTreeModel.  // ...DataTreeModel's calculation of...
-                      getInfoString(inTreePath)  // the info string of inTreePath.
+                      getAttributesString(inTreePath) // attributes string of inTreePath.
                     );
                   } // display non-null info.
               } // displayPathAndInfoV(TreePath inTreePath)

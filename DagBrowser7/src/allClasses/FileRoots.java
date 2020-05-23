@@ -134,7 +134,7 @@ public class FileRoots extends DataNode
           return getNameString( );
           }
 
-      public String getInfoString()
+      public String getAttributesString()
         /* Returns a String representing information about this object. */
         { 
           return getNameString( );

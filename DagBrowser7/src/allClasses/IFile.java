@@ -166,7 +166,7 @@ public class IFile
           
     // other interface DataNode methods.
 
-      public String getInfoString()
+      public String getAttributesString()
         /* Returns a String representing information about this object. */
         { // GetInfoString()
           String resultInfoString= "";
