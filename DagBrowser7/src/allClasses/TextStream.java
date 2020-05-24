@@ -82,7 +82,15 @@ public class TextStream
           return true;
           }
 
-      // Methods which return Strings about the node.
+      // Methods about returning Strings about the node.
+
+      public boolean isDecoratingB()
+        /* Disables DataNode String decoration because we 
+          don't want that StateList feature.
+          */
+        {
+          return false;
+          }
 
       /*  ////
       public String getNameString( )

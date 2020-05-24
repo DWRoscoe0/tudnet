@@ -1186,6 +1186,14 @@ public class StateList extends MutableList implements Runnable {
 
   /* Methods for UI cell rendering.  */
 
+  public boolean isDecoratingB()
+    /* Enables DataNode String decoration because we use it to indicate
+      that we are a state node and whether or not we are active.
+      */
+    {
+      return true;
+      }
+  
 	public String decoratedCellString()
     /* This method returns a decorated name String.
       The decoration prefixes indicate that this node is a state,

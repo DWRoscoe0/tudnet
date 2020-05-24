@@ -444,6 +444,16 @@ public class DataNode
 	        return resultString; 
 	        }
 
+    public boolean isDecoratingB()
+      /* Returns indication of whether node String decoration is enabled.
+        By default it is disabled.
+        Subclasses that t want decoration should override this method
+        with one that returns true.
+       */
+      {
+        return false;
+        }
+
     public String toString()
       /* According the Java documentation, this is supposed to returns 
         a meaningful and useful String representation.
@@ -456,7 +466,10 @@ public class DataNode
         This method returns a decorated cell string.
         */
       { 
-        return decoratedCellString();
+        if (isDecoratingB()) // If decoration is enabled
+          return decoratedCellString(); // return decorated string
+          else // otherwise
+          return getCellString(); // return undecorated string.
         }
 
 	  public String decoratedCellString()
