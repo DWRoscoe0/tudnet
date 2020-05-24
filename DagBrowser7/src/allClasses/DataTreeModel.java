@@ -355,7 +355,7 @@ public class DataTreeModel
         {
           DataNode lastDataNode= (DataNode)(inTreePath.getLastPathComponent());
 
-          return lastDataNode.getAttributesString();
+          return lastDataNode.getMetaDataString();
           }
 
 

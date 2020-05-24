@@ -204,7 +204,7 @@ public class UnicasterManager
         theEpiThread.startV(); // Start the actual thread.
         }
 
-    public String getValueString( )
+    public String getSummaryString( )
 	    /* Returns a string indicating the numbers of Unicasters being managed,
 				both connected and disconnected.
        	*/

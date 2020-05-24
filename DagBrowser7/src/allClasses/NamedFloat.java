@@ -21,7 +21,7 @@ public class NamedFloat // A DataNode for tracking floating point things.
 		  	this.theF= theF;
         }
 
-    public String getValueString( ) // DataNode interface method.
+    public String getContentString( ) // DataNode interface method.
       {
         return Float.toString( theF );
         }

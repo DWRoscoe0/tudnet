@@ -47,16 +47,6 @@ public class NamedDataNode
         }
 
     // Getters.
-
-    
-
-    public String getValueString()
-      /* Returns a blank value string, meaning, this node has no value,
-        This overrides DataNode's undefined value. 
-        */
-      {
-        return "";
-        }
     
     public String getNameString()
       /* Returns String representing name of this Object.  */

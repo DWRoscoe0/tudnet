@@ -17,4 +17,9 @@ public abstract class NamedBranch
         return false; 
         }
 
+    public String getContentString( ) // DataNode interface method.
+      {
+        return ""; // By default, there is no content.
+        }
+
     }

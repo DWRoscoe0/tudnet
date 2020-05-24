@@ -3,7 +3,7 @@ package allClasses;
 
 public class Infinitree 
 
-	extends   DataNode
+  extends NamedBranch
 
   /* The purpose of this class is to create a an infinite subtree
     for testing the Infogora browser.

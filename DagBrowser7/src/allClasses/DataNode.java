@@ -341,14 +341,14 @@ public class DataNode
 	        return false; 
 	        }
 	
-	    public int getChildCount( )
+	    public int getChildCount()
 		    /* This method returns the number of children in this node.
 	        The method of this class actually scans all the children that are
 	        visible to the method getChild(..) and counts them.  
 	        It assumes a functional getChild( IndexI ) method which
 	        returns null if IndexI is out of range.  
 	        */
-	      { // getChildCount( )
+	      { // getChildCount()
 	        int childIndexI= 0;  // Initialize child index.
 	
 	        while  // Process all children...
@@ -358,7 +358,7 @@ public class DataNode
 	            } // process this child.
 	
 	        return childIndexI;  // Return ending index as count.
-	        } // getChildCount( )
+	        } // getChildCount()
 	
 	    public DataNode getChild( int indexI )
 		    /* This method returns the child DataNode 
@@ -398,130 +398,125 @@ public class DataNode
 	        } // getIndexOfChild(.)
 
   /* Methods which return Strings containing information about the node.
-    These should be overridden by subclasses as needed.
+    These may be overridden by subclasses as needed.
     The meaning of each method should be preserved in the overrides.
     */
 
+	    protected String getNodePathString()
+	      /* Recursively calculates and returns the path to this node.
+	        The path is a comma-separated list of node names
+	        from the root of the hierarchy to this node.
+	        It gathers the path elements by following node parent links. 
+	        It is used only the DataTreeModel for logging.
+	       */
+	      {
+	        String resultString;
+	        
+	        if ( parentNamedList == null )
+	          resultString= getNameString();
+	        else
+	          resultString= 
+	            parentNamedList.getNodePathString()
+	            + ", "
+	            + getNameString(); 
+
+	        Nulls.fastFailNullCheckT(resultString);
+	        return resultString;
+	        }
+
+	    public String getMetaDataString()
+	      /* Returns meta-data of this DataNode as a String.
+	        This is typically a sequence of name:value pair attributes 
+	        and the names of present value-less attributes.
+	        Meta-data is generally considered to be all associated attributes except 
+	        content-type attributes, which tend to be large.
+	        This default method returns the concatenation of the Name attribute and,
+	        if its value is non-blank, the Summary attribute.
+	        Other classes might want to override this method to return
+	        additional attributes.
+	        */
+	      { 
+	        String resultString= "Name=" + getNameString(); // Assume only Name attribute.
+	        String summaryString= getSummaryString();
+	        if (! summaryString.isEmpty()) // Append Summary attribute if value isn't blank
+	          resultString+= " Summary=" + summaryString;
+
+	        return resultString; 
+	        }
+
     public String toString()
-      /* Returns a meaningful and useful String representation.
-        Typically it returns a string representing the entire object state,
-        including objects referenced in fields, so this, in theory, 
-        is the most complex of the String-returning method.
+      /* According the Java documentation, this is supposed to returns 
+        a meaningful and useful String representation.
+        Typically it returns a possibly very long string which represents 
+        the entire object state, including objects referenced in fields,
+        So this, in theory, is the most complex of the String-returning methods.
+        But the Swing cell-rendering methods use this to get a value suitable
+        for display in a cell, including JTree cells.
+        So this method is defined to return a limited length string.
+        This method returns a decorated cell string.
         */
       { 
-        return getLineSummaryString( ); // For now, return the summary string.
+        return decoratedCellString();
         }
 
-	  protected String getNodePathString()
-  	  /* Recursively calculates and returns 
-  	    a comma-separated list of node names
-  	    from the root of the hierarchy to this state.
-  	   */
-  	  {
-  		  String resultString;
-  		  
-  		  if ( parentNamedList == null )
-  		  	resultString= getNameString();
-  		  else
-  		    resultString= 
-  		    	parentNamedList.getNodePathString()
-  		  		+ ", "
-  		  		+ getNameString(); 
-
-  		  Nulls.fastFailNullCheckT(resultString);
-  		  return resultString;
-  	  	}
-
-    public String getContentString( )
-	    /* Returns the content of the DataNode as a String.  
-	      This is meant to represent potentially large blocks of data, 
-	      such as the contents of files, 
-	      and it might consist of multiple lines.
-	      */
-      {
-    		return getValueString();
-    		}
-
-	  public String processedNameString()
-	    /* This method returns a name String which is might have been decorated
-	      with other characters, but still viewable as a name.
-	      This method should not be used to get a unique identifying name,
-	      because the decorations could change.
-	      getNameString() should be used for that.
-	      This version returns the ordinary name,
-	      but subclasses could decorate the name as desired.
+	  public String decoratedCellString()
+	    /* This method returns String appropriate for display in
+	      a Component cell which  might include decoration
+	      with other characters to indicate state information.
+	      This method returns the default of the undecorated cell String,
+	      but subclasses could decorate as desired.
 	     	*/
   		{
-		  	return getNameString();
+	      return getCellString();
 		  	}
 
-	  private String processedValueString()
-	    // This method returns a value String which is okay to display in a cell.
-	  	{
-	  		String valueString= getValueString(); // Initializing process value.
-	  		process: {
-			  	if // Convert undefined to blank.
-			  	  ( valueString == "-UNDEFINED-VALUE-" )
-			  	  { valueString= ""; break process; }
-			  	int indexOfNewLineI= valueString.indexOf(NL);
-		  	  if // Trimming extra lines if there are any in value string.
-		  	    ( indexOfNewLineI >= 0 )
-		  	  	valueString= // Replacing value string with only its first line. 
-		  	  	  valueString.substring(0,indexOfNewLineI);
-		  	  } // process:
-			  return valueString;
-			  }
-
-    public String getLineSummaryString()  
-    /* Returns a [one-line?] summary of
-      the contents of this DataNode as a String.
-      The line consists of the name of the node,
-      and sometimes followed by something else,
-      such as a child count, or some other type of value summary information.
-      This is not meant to be used as an immutable unique identifier.  
+    public String getCellString()  
+    /* Returns an undecorated String representation of this node, 
+      suitable for use in rendering the node
+      in the cell of a JTree, JList, or other Component.
+      This version returns the node name followed by
+      the Summary attribute value if it is not blank.
       */
       {
-        String nameString= processedNameString();
-        String valueString= processedValueString();
-        
-        // Combine name with value.
-        String resultString;
-        if // Combining with name if value not nil or same as name.
-          ( ( valueString != "" ) && 
-            ( ! nameString.equals(valueString) ) 
-            )
-          resultString= getAttributesString(); // Use attributes string.
-          else
-          resultString= nameString; // Using only the name.
-        
+        String resultString= getNameString(); // Assume result will be name only.
+
+        String summaryString= getSummaryString();
+        if (! summaryString.isEmpty()) // Append value if there is one. 
+          resultString+= " : " + summaryString;
+
         return resultString; 
         }
 
-    public String getAttributesString()
-      /* Returns attributes of this DataNode as a String.
-        This version returns the only known attributes pair,
-        the name and the value.
-       */
-      { 
-        String nameString= processedNameString();
-        String valueString= processedValueString();
-        return
-            nameString // the name,
-            + " : " // a separator,
-            +valueString // and the value.
-            ;
+    public String getSummaryString()
+      /* This method returns Summary attribute value String of the node.
+        It is a calculated value that is meant to be combined 
+        with the node's name and used for rendering in a Component cell.
+        The String might be a value, a child count,
+        or some other type of summary information.
+        This default method returns the first line of the Content attribute value.
+        Other classes might want to override this behavior.
+        */
+      {
+        String resultString= getContentString(); // Assume no content trimming is needed.
+        int indexOfNewLineI= resultString.indexOf(NL);
+        if // Trim extra lines if there are any in content string.
+          ( indexOfNewLineI >= 0 )
+          resultString= // Replacing string with only its first line. 
+            resultString.substring(0,indexOfNewLineI);
+        return resultString;
         }
 
-    public String getValueString()
-      /* Returns the value of the DataNode as a String.  
-        This is meant to be a very short summary string that
-        might be appended to the name to represent a title. 
+    public String getContentString()
+      /* Returns the content of the DataNode as a String.  
+        This is potentially a long String, such as the content of a file, 
+        and it might consist of multiple lines.
+        This method will be overridden.
         */
       {
         return
-          "VALUE-OF-"
-          + super.toString(); // Object's toString(), equivalent to: 
-        // getClass().getName() + '@' + Integer.toHexString(hashCode())
+            "UNDEFINED-CONTENT-OF-"
+            + super.toString(); // Object's toString(), equivalent to: 
+              // getClass().getName() + '@' + Integer.toHexString(hashCode())
         }
 
     public String getNameString()
@@ -531,12 +526,13 @@ public class DataNode
         and as part of tree path-names.
         This not necessarily be exactly what is displayed in JTree or JList cells.
         Object.toString() satisfies these requirements.
+        This method will be overridden.
         */
       {
         return 
-            "NAME-OF-"
-            + super.toString(); // Object's toString(), equivalent to: 
-                // getClass().getName() + '@' + Integer.toHexString(hashCode())
+          "UNDEFINED-NAME-OF-"
+          + super.toString(); // Object's toString(), equivalent to: 
+              // getClass().getName() + '@' + Integer.toHexString(hashCode())
         }
 
   // Other methods.
@@ -556,7 +552,7 @@ public class DataNode
       {
         JComponent resultJComponent= null;
 
-        if ( isLeaf( ) ) // Using TitledTextViewer if node is leaf.
+        if ( isLeaf() ) // Using TitledTextViewer if node is leaf.
           resultJComponent= // Using TitledTextViewer.
             new TitledTextViewer( 
               inTreePath, 

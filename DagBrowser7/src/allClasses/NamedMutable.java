@@ -18,7 +18,7 @@ public class NamedMutable
 				valueObject= newObject; // Setting new value.
         }
 
-    public String getValueString( ) // DataNode interface method.
+    public String getContentString( ) // DataNode interface method.
       {
         return valueObject.toString();
         }

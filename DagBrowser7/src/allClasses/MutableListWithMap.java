@@ -39,9 +39,9 @@ public class MutableListWithMap<
       		);
 	      }
 
-    public String getValueString( ) // This is for displaying the List count.
+    public String getSummaryString( ) // This simply uses the number of List elements.
       {
-    	  return Integer.toString(getChildCount( ));
+    	  return Integer.toString(getChildCount());
         }
     
 	  protected synchronized void addingV( K childK, V childV )

@@ -420,10 +420,10 @@ public class LinkMeasurementState
 										ackReceivedTimeNsL - sentSequenceNumberTimeNsL; 
 					  	  processRoundTripTimeV(rawRoundTripTimeNsL);
 				  			rttString+= ""+
-			        		rawRoundTripTimeNsAsMsNamedLong.getValueString()+","+
-			        		smoothedMinRoundTripTimeNsAsMsNamedLong.getValueString()+
+			        		rawRoundTripTimeNsAsMsNamedLong.getSummaryString()+","+
+			        		smoothedMinRoundTripTimeNsAsMsNamedLong.getSummaryString()+
 			        		","+
-			        		smoothedMaxRoundTripTimeNsAsMsNamedLong.getValueString()
+			        		smoothedMaxRoundTripTimeNsAsMsNamedLong.getSummaryString()
 					  			;
 								}
 					  if (theAppLog.logB(TRACE)) theAppLog.logV(

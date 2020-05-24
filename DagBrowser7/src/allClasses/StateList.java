@@ -1186,9 +1186,9 @@ public class StateList extends MutableList implements Runnable {
 
   /* Methods for UI cell rendering.  */
 
-	public String processedNameString()
+	public String decoratedCellString()
     /* This method returns a decorated name String.
-      The decorations indicate that this node is a state,
+      The decoration prefixes indicate that this node is a state,
       and whether the state is active.
       */
 		{
@@ -1196,9 +1196,9 @@ public class StateList extends MutableList implements Runnable {
 			if ( (parentStateList != null)
 					&& (parentStateList.getpresentSubStateList() == this)
 					)
-				resultString= "*-" + getNameString();
+				resultString= "*-" + getNameString(); // Active state.
 				else
-				resultString= " -" + getNameString();
+				resultString= " -" + getNameString(); // Inactive state.
 	  	return resultString;
 	  	}
 

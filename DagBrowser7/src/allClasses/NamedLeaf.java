@@ -23,5 +23,10 @@ public class NamedLeaf
       {
         return true;
         }
+
+    public String getContentString( ) // DataNode interface method.
+      {
+        return ""; // By default, there is no content.
+        }
       
     }

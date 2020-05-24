@@ -18,7 +18,7 @@ public class NamedLong
 		  	this.theL= theL;
         }
 
-    public String getValueString( ) // DataNode interface method.
+	  public String getContentString( ) // DataNode interface method.
       {
         return Long.toString( theL );
         }

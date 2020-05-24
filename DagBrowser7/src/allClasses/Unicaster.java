@@ -419,7 +419,7 @@ public class Unicaster
         return false;
 				}
 
-    public String getValueString( )
+    public String getSummaryString( )
       /* Returns a string indicating whether 
         this Unicaster is presently connected or disconnected.
        	*/

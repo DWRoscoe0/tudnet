@@ -205,7 +205,7 @@ public class TitledListViewer
 	       	*/
 		   	{
 	        titleJLabel.setText(
-	        		theTreeHelper.getWholeDataNode().getLineSummaryString( )
+	        		theTreeHelper.getWholeDataNode().getCellString( )
 	        		);
 		   	  }
 
