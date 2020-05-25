@@ -107,7 +107,7 @@ public class TextStreamViewer
 
       private void addStreamIJTextAreaV()
         {
-          streamIJTextArea= new IJTextArea("");
+          streamIJTextArea= new IJTextArea();
           streamIJTextArea.getCaret().setVisible(true); // Make viewer cursor visible.
           streamIJTextArea.setBorder(raisedEtchedBorder);
           streamIJTextArea.setEditable(false);
@@ -126,7 +126,7 @@ public class TextStreamViewer
       
       private void addInputIJTextAreaV()
         {
-          inputIJTextArea= new IJTextArea("");
+          inputIJTextArea= new IJTextArea();
           inputIJTextArea.getCaret().setVisible(true); // Make input cursor visible.
           inputIJTextArea.setBorder(raisedEtchedBorder);
           inputIJTextArea.setRows(2);

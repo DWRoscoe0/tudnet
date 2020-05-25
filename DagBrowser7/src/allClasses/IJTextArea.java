@@ -20,11 +20,13 @@ public class IJTextArea
       The append(..) method is quite slow.
       */
 
-    private static final long serialVersionUID = 1L;
-    private Color backgroundColor= null;  // null means default.
-
     // constructors.
-      
+
+      public IJTextArea()
+        {
+          this( "" );
+          }
+
       public IJTextArea( String StringIn )
         {
           super( StringIn );  // Construct superclass with text StringIn.
@@ -32,40 +34,13 @@ public class IJTextArea
           commonInitializationV();
           }
 
-      /*  ////
-      public IJTextArea(File InFile) /// This is not used.
-        {
-          super( );  // Construct superclass without any content yet.
-
-          { // Read in file to JTextArea.
-            String LineString;  // temporary storage for file lines.
-            try {
-              FileInputStream TheFileInputStream = new FileInputStream(InFile);
-              @SuppressWarnings("resource")
-              BufferedReader TheBufferedReader = 
-                new BufferedReader(new InputStreamReader(TheFileInputStream));
-              
-              while ((LineString = TheBufferedReader.readLine()) != null) {
-                  append(LineString + NL);
-                  }
-              }
-            catch (Exception ReaderException){
-              // System.out.println("error reading file! " + ReaderException);
-            	append(NL + "Error reading file!" + NL + NL + ReaderException + NL);
-              backgroundColor= Color.PINK;  // Overriding color for error.
-              }
-            } // Read in file to JTextArea.
-
-          commonInitializationV();
-          }
-      */  ////
-
       private void commonInitializationV()
         {
           setEditable(false);  // allow user to read only.
           addFocusListener(this);
-          setBackground(backgroundColor);  // revert to default color.
-          // setLineWrap(true);  This doesn't work well.
+          setBackground(null);  // revert to default gray color.
+          setLineWrap(true);
+          setWrapStyleWord(true);
           setCaretPosition(0);  // Put caret at beginning of text.
           }
       
@@ -74,13 +49,13 @@ public class IJTextArea
       // @Override
       public void focusGained(FocusEvent arg0) 
         {
-          setBackground(UIColor.activeColor);
+          setBackground(Color.white);
           }
     
       @Override
       public void focusLost(FocusEvent arg0) 
         {
-          setBackground(backgroundColor);  // revert to default color.
+          setBackground(null);  // revert to default color.
           }
 
     }

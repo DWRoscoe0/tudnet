@@ -118,7 +118,7 @@ public class DagBrowserPanel
           private JLabel activityJLabel; // window monitor status.
           
         private JPanel viewJPanel; // JPanel where desired data is displayed.
-          private JLabel treePathJLabel; // a place to display directory path.
+          private JTextArea treePathJTextArea; // a place to display directory path.
 
           private JSplitPane theJSplitPane;  // horizontally split content panel
             private JScrollPane treeJScrollPane;  // left scroller sub-panel...
@@ -127,7 +127,7 @@ public class DagBrowserPanel
               private JComponent dataJComponent;  // ... and its data content.
               private TreeAware dataTreeAware;  // ... and its TreeAware alias.
 
-          private JLabel attributesJLabel;  // a place to display node attributes.
+          private JTextArea attributesJTextArea;  // a place to display node attributes.
 
         /* Component focus control.
 
@@ -297,22 +297,24 @@ public class DagBrowserPanel
           viewJPanel= new JPanel();  // construct viewJPanel.
           viewJPanel.setLayout(new BorderLayout());  // set layout manager.
           { // Build and add Current Working treePathJLabel.
-            treePathJLabel= new JLabel();  // create CWD JLabel.
-            treePathJLabel.setAlignmentX(Component.LEFT_ALIGNMENT);  // align it.
-            treePathJLabel.setBorder(
+            treePathJTextArea= new IJTextArea();  // create CWD JLabel.
+            treePathJTextArea.setAlignmentX(Component.LEFT_ALIGNMENT);  // align it.
+            treePathJTextArea.setLineWrap(true);
+            treePathJTextArea.setBorder(
               BorderFactory.createEtchedBorder(EtchedBorder.RAISED)
               );
             // ?? Use left or center elipsis, not right, when truncating.
-            viewJPanel.add(treePathJLabel,BorderLayout.NORTH);  // add as north sub-panel.
+            viewJPanel.add(treePathJTextArea,BorderLayout.NORTH);  // add as north sub-panel.
             } // Build and add Current Working treePathJLabel.
           buildAndAddJSplitPane();  // Contains left and right sub-panels.
             // It is added to the center sub-panel.
           { // Build and add JLabel for displaying node attributes.
-            attributesJLabel= new JLabel();
-            attributesJLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-            attributesJLabel.setOpaque( true );
-            attributesJLabel.setText("UNDEFINED");
-            viewJPanel.add(attributesJLabel,BorderLayout.SOUTH); // Add at bottom.
+            attributesJTextArea= new IJTextArea();
+            attributesJTextArea.setAlignmentX(Component.LEFT_ALIGNMENT);
+            attributesJTextArea.setLineWrap(true);
+            attributesJTextArea.setOpaque( true );
+            attributesJTextArea.setText("UNDEFINED");
+            viewJPanel.add(attributesJTextArea,BorderLayout.SOUTH); // Add at bottom.
             }
           add(viewJPanel,BorderLayout.CENTER);  // add it as center sub-panel.
           }
@@ -347,7 +349,7 @@ public class DagBrowserPanel
         {
           treeJScrollPane = new JScrollPane( );  // construct JScrollPane.
           treeJScrollPane.getViewport().setOpaque( true );
-          treeJScrollPane.getViewport().setBackground( UIColor.activeColor );
+          treeJScrollPane.getViewport().setBackground( UIColor.inactiveColor );
           { // Build the JTree view for the JScrollPane.
             theRootJTree= new RootJTree(  // Construct the JTree with...
               theDataTreeModel,  // ...this model for tree data and...
@@ -366,21 +368,6 @@ public class DagBrowserPanel
             theRootJTree  // ...to be JTree .
             );
           }
-
-      /*  //// 
-      private void buildRightJScrollPaneV() ///
-        /* This composition method builds the right JScrollPane
-          which contains whatever JComponent is appropriate for
-          displaying the item selected in 
-          the left JScrollPane navigation pane.
-          */
-      /*  //// 
-        {
-          replaceRightPanelContentWithV(  // Replace null JScrollPane content...
-            startTreePath  // ...with content based on startTreePath.
-            );
-          }
-      */  //// 
 
       private void miscellaneousInitializationV()
         /* This composition method does initialization of
@@ -1040,21 +1027,21 @@ public class DagBrowserPanel
               if (inTreePath == null) // Handling no path provided.
                 { // display null info.
                   //appLogger.info("DagBrowserPanel.displayPathAndInfoV( null )");
-                  treePathJLabel.setText("NO PATH");
-                  attributesJLabel.setText("NO INFORMATION AVAILABLE");
+                  treePathJTextArea.setText("NO PATH");
+                  attributesJTextArea.setText("NO INFORMATION AVAILABLE");
                   } // display null info.
                 else  // Handling path provided.
                 { // display non-null info.
                   while // Strip all error nodes from tail of TreePath.
                     ( UnknownDataNode.isOneB( inTreePath.getLastPathComponent() ))
                     inTreePath= inTreePath.getParentPath();  // Strip the node.
-                  treePathJLabel.setText(  // in treePathJLabel display set...
+                  treePathJTextArea.setText(  // in treePathJLabel display set...
                     theDataTreeModel.  // ...DataTreeModel's calculation of...
                       getAbsolutePathString(  // ...String representation of...
                         inTreePath  // ...of inTreePath.
                       )
                     );
-                  attributesJLabel.setText(  // set attributesJLabel to be...
+                  attributesJTextArea.setText(  // set attributesJLabel to be...
                     theDataTreeModel.  // ...DataTreeModel's calculation of...
                       getAttributesString(inTreePath) // attributes string of inTreePath.
                     );
