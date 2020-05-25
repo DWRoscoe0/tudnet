@@ -79,8 +79,10 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 	      new NetcasterQueue(cmThreadLockAndSignal, Config.QUEUE_SIZE);
       NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue=
           new NetcasterQueue(cmThreadLockAndSignal, Config.QUEUE_SIZE);
+      String thePeerIdentity= thePersistent.getTmptyOrString("PeerIdentity");
       TextStream theTextStream= new TextStream(
-          "Local-Peer",theUnicasterManager,thePersistent);
+          //// "Local-Peer",theUnicasterManager,thePersistent);
+          thePeerIdentity,theUnicasterManager,thePersistent);
       TextStreams theTextStreams= new TextStreams("Text-Streams",theTextStream);
 	    ConnectionManager theConnectionManager= new ConnectionManager(
         this, // the AppGuiFactory.

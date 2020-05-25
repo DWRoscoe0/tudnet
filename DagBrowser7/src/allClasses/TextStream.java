@@ -57,9 +57,9 @@ public class TextStream
         // Constructs a TextStream with a name inString.
         { 
         // Superclass's injections.
-          super( // Constructing MutableList superclass.
+          super( // Constructing KeyedStateList< String > superclass.
               "TextStream", //// nameString, // Type name but not entire name.
-              peerIdentityString
+              peerIdentityString // key
               );
           theAppLog.debug("TextStream.TextStream(.) called.");
           this.theUnicasterManager= theUnicasterManager;
@@ -67,7 +67,8 @@ public class TextStream
           
           streamFile= AppSettings.makePathRelativeToAppFolderFile(
                   "Peers" 
-                  + File.separator + thePersistent.getTmptyOrString("PeerIdentity") 
+                  //// + File.separator + thePersistent.getTmptyOrString("PeerIdentity") 
+                  + File.separator + getKeyK()
                   + File.separator + "textStreamFile.txt"
                   );
           loadDocumentV(streamFile); // Load document from disk text.
