@@ -57,7 +57,13 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
        Note, no non-static maker methods are called from here.
        */
     {
-  	  LockAndSignal senderLockAndSignal= new LockAndSignal();
+
+      // Save injected dependencies for immediate use by factory methods.
+      this.theShutdowner= theShutdowner;
+      this.thePortManager= thePortManager;
+      this.thePersistent= thePersistent;
+
+      LockAndSignal senderLockAndSignal= new LockAndSignal();
   	  NetcasterQueue netcasterToSenderNetcasterQueue= 
   	  		new NetcasterQueue( senderLockAndSignal, Config.QUEUE_SIZE );
       DataRoot theDataRoot= new DataRoot();
@@ -79,11 +85,11 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 	      new NetcasterQueue(cmThreadLockAndSignal, Config.QUEUE_SIZE);
       NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue=
           new NetcasterQueue(cmThreadLockAndSignal, Config.QUEUE_SIZE);
-      String thePeerIdentity= thePersistent.getTmptyOrString("PeerIdentity");
-      TextStream theTextStream= new TextStream(
-          //// "Local-Peer",theUnicasterManager,thePersistent);
-          thePeerIdentity,theUnicasterManager,thePersistent);
-      TextStreams theTextStreams= new TextStreams("Text-Streams",theTextStream);
+      //// String localPeerIdentityString= thePersistent.getTmptyOrString("PeerIdentity");
+      //// TextStream theTextStream= makeTextSteam(localPeerIdentityString);
+      TextStreams theTextStreams= new TextStreams(
+          //// "Text-Streams",this,thePersistent,theTextStream);
+          "Text-Streams",this,thePersistent);
 	    ConnectionManager theConnectionManager= new ConnectionManager(
         this, // the AppGuiFactory.
     	  thePersistent,
@@ -163,11 +169,6 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 							Config.initialRoundTripTime100MsL * 2
 							);
 
-      // Save in instance variables injected objects that are needed later.
-  	  this.theShutdowner= theShutdowner;
-  	  this.thePortManager= thePortManager;
-  	  this.thePersistent= thePersistent;
-
   	  // Save in instance variables other non-injected objects that are needed later.
       this.theUnicasterManager= theUnicasterManager;
       this.senderLockAndSignal= senderLockAndSignal;
@@ -204,6 +205,9 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
       
     ///opt fastFailNullCheckT(..) might no longer be needed.
      */
+
+  public TextStream makeTextSteam(String thePeerIdentityString)
+    { return new TextStream(thePeerIdentityString,theUnicasterManager,thePersistent); }
 
 	public static EpiThread makeEpiThread( Runnable aRunnable, String nameString )
 	  { return new EpiThread( aRunnable, nameString ); }
