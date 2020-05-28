@@ -1,5 +1,7 @@
 package allClasses;
 
+import java.io.File;
+
 public class TextStreams extends NamedList {
 
   private Persistent thePersistent;
@@ -28,11 +30,35 @@ public class TextStreams extends NamedList {
       That is done only when a stream is viewed.
       */
     {
-      String localPeerIdentityString= 
-          thePersistent.getTmptyOrString("PeerIdentity");
+      createLocalTextStreamV();
+      
+      createRemoteTextStreamsV();
+      }
+
+  private void createLocalTextStreamV()
+    {
+      String localPeerIdentityString= thePersistent.getTmptyOrString("PeerIdentity");
       TextStream theTextStream= theAppGUIFactory.makeTextSteam(localPeerIdentityString);
       addAtEndB( theTextStream );
       }
+
+  private void createRemoteTextStreamsV()
+    {
+      File peersFile= AppSettings.makePathRelativeToAppFolderFile(
+        "Peers"
+        );
+      String[] peerStrings= // Read names of peer directories from Peers directory.
+          peersFile.list();
+      String localPeerIdentityString= thePersistent.getTmptyOrString("PeerIdentity");
+      for (String peerIdentityString : peerStrings) // For every Peer folder 
+        toPeerDone: { // Try creating a TextStream for this peer.
+          if (localPeerIdentityString.equals(peerIdentityString)) // Skip ourselves. 
+            break toPeerDone;
+          TextStream theTextStream= theAppGUIFactory.makeTextSteam(peerIdentityString);
+          addAtEndB( theTextStream );
+          } // toPeerDone:
+      }
+    
 
   /*  ////
   private boolean tryProcessingByTextStreamB(MapEpiNode theMapEpiNode)
