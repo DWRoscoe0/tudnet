@@ -65,7 +65,9 @@ public class TextStreamViewer
           TreePath theTreePath, 
           DataTreeModel theDataTreeModel,
           PlainDocument thePlainDocument,
-          TextStream theTextStream
+          TextStream theTextStream,
+          String thePeerIdentityString,
+          Persistent thePersistent
           )
         /* Constructs a TextStreamViewer.
           theTreePath is the TreePath associated with
@@ -91,7 +93,9 @@ public class TextStreamViewer
 
           addJLabelV();
           addStreamIJTextAreaV();
-          addInputIJTextAreaV();
+          String localPeerIdentityString= thePersistent.getTmptyOrString("PeerIdentity");
+          if (! localPeerIdentityString.equals(thePeerIdentityString)) // Skip ourselves. 
+            addInputIJTextAreaV();
           }
 
       private void addJLabelV()

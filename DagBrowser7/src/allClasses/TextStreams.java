@@ -6,15 +6,13 @@ public class TextStreams extends NamedList {
 
   private Persistent thePersistent;
   private AppGUIFactory theAppGUIFactory;
-  
   public TextStreams( // Constructor.
       String nameString,
+      
       AppGUIFactory theAppGUIFactory,
       Persistent thePersistent
-      //// DataNode... inDataNodes  //// remove
       )
     { 
-      //// super(nameString,inDataNodes);
       super(nameString,emptyListOfDataNodes());
       this.thePersistent= thePersistent;
       this.theAppGUIFactory= theAppGUIFactory;
@@ -59,13 +57,4 @@ public class TextStreams extends NamedList {
           } // toPeerDone:
       }
     
-
-  /*  ////
-  private boolean tryProcessingByTextStreamB(MapEpiNode theMapEpiNode)
-    // Returns true if TextStream was able to process, false otherwise.
-    {
-      return false;  //// theTextStream.tryProcessingMapEpiNodeB(theMapEpiNode);
-      }
-  */  ////
-
   }

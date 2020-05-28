@@ -21,9 +21,7 @@ import javax.swing.tree.TreePath;
 
 public class TextStream
 
-  //// extends DataNode
-
-  extends KeyedStateList< String >  //// 
+  extends KeyedStateList< String > 
 
   /* This class represents a single text streams.
     */
@@ -46,7 +44,8 @@ public class TextStream
                 }
           };
       private File streamFile; 
-
+      private String thePeerIdentityString;
+      
     // Constructors.
 
       TextStream( 
@@ -58,7 +57,7 @@ public class TextStream
         { 
         // Superclass's injections.
           super( // Constructing KeyedStateList< String > superclass.
-              "TextStream", //// nameString, // Type name but not entire name.
+              "TextStream", // Type name but not entire name.
               peerIdentityString // key
               );
           theAppLog.debug("TextStream.TextStream(.) called.");
@@ -67,7 +66,6 @@ public class TextStream
           
           streamFile= AppSettings.makePathRelativeToAppFolderFile(
                   "Peers" 
-                  //// + File.separator + thePersistent.getTmptyOrString("PeerIdentity") 
                   + File.separator + getKeyK()
                   + File.separator + "textStreamFile.txt"
                   );
@@ -93,13 +91,6 @@ public class TextStream
           return false;
           }
 
-      /*  ////
-      public String getNameString( )
-        {
-          return "Text-Stream";
-          }
-      */  ////
-          
     // other interface DataNode methods.
 
       public JComponent getDataJComponent( 
@@ -113,17 +104,14 @@ public class TextStream
               inTreePath, 
               inDataTreeModel,
               thePlainDocument,
-              this
+              this,
+              thePeerIdentityString,
+              thePersistent
               );
           return resultJComponent;  // return the final result.
           }
           
     // other methods.
-
-      //// public String toString( ) { return getNameString( ); }
-        /* it appears that JList uses toString() but
-          JTree uses something else (getName()?).
-          */
       
       private void loadDocumentV( File theFile )
         /* This method loads the stream document Area with
