@@ -7,19 +7,20 @@ public class DataNodeWithKeyAndThreadValue<
 
   extends Object
   
-  /* This class is an Object subclass, not a DataNode subclass,
-    but a DataNode subclass is stored in one of its fields.
-
+  /* 
+    ///org This class should probably be eliminated.
+    I think I created it in the early days when I was new to Java,
+    and I was learning about Maps and Threads, and Java generics,
+    and was impatient to get some code working.
     This class is used as the Value part of the entries in HashMaps
     used for fast lookup by StreamcasterManager/MutableListWithMap subclasses.
+    I now think that it would have been easier to store the Thread
+    in the DataNode itself, along with the key, and not in this separate object.
     
     This class combines
     * a subclass of a KeyedStateList, which is
       a DataNode that has an integrated key, and
     * an associated EpiThread.
-    This is a rather kludgey way of associating data, in this case, a thread,
-    with another object, in this case a DataNode. 
-    ??? Why was this done?  Could the thread be stored in the DataNode?
       
     This combination was first used in what is now one of its subclasses, 
     the Unicaster class.
