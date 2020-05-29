@@ -74,7 +74,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
       DataTreeModel theDataTreeModel= new DataTreeModel( 
         theDataRoot, theMetaRoot, theMetaFileManagerFinisher, theShutdowner 
         );
-      UnicasterManager theUnicasterManager= 
+      theUnicasterManager= 
           new UnicasterManager( this, thePersistent, theTCPCopier );
 	    LockAndSignal cmThreadLockAndSignal= new LockAndSignal();
       NotifyingQueue<String> toConnectionManagerNotifyingQueueOfStrings=
@@ -85,10 +85,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 	      new NetcasterQueue(cmThreadLockAndSignal, Config.QUEUE_SIZE);
       NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue=
           new NetcasterQueue(cmThreadLockAndSignal, Config.QUEUE_SIZE);
-      //// String localPeerIdentityString= thePersistent.getTmptyOrString("PeerIdentity");
-      //// TextStream theTextStream= makeTextSteam(localPeerIdentityString);
       TextStreams theTextStreams= new TextStreams(
-          //// "Text-Streams",this,thePersistent,theTextStream);
           "Text-Streams",this,thePersistent);
 	    ConnectionManager theConnectionManager= new ConnectionManager(
         this, // the AppGuiFactory.
@@ -169,8 +166,8 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 							Config.initialRoundTripTime100MsL * 2
 							);
 
-  	  // Save in instance variables other non-injected objects that are needed later.
-      this.theUnicasterManager= theUnicasterManager;
+      // Note, some non-injected instance variables were saved when calculated.
+      // Save in instance variables other non-injected objects that are needed later.
       this.senderLockAndSignal= senderLockAndSignal;
       this.netcasterToSenderNetcasterQueue= netcasterToSenderNetcasterQueue;
       this.unconnectedReceiverToConnectionManagerNetcasterQueue=

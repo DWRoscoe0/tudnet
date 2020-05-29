@@ -1,8 +1,10 @@
 package allClasses;
 
 import java.io.File;
+//// import java.util.ListIterator;
 
-public class TextStreams extends NamedList {
+//// public class TextStreams extends NamedList {
+public class TextStreams extends SimplerListWithMap<String,TextStream> {
 
   private Persistent thePersistent;
   private AppGUIFactory theAppGUIFactory;
@@ -55,6 +57,26 @@ public class TextStreams extends NamedList {
           TextStream theTextStream= theAppGUIFactory.makeTextSteam(peerIdentityString);
           addAtEndB( theTextStream );
           } // toPeerDone:
+      }
+
+  protected boolean tryProcessingMapEpiNodeB(MapEpiNode theMapEpiNode)
+    /* This method tries processing a MapEpiNode.
+      It must be a single element map with a key of "StreamText".
+      If it does then it returns true after having the value 
+      processed by the appropriate child.
+      Presently it does this by trying to have each child process that value,
+      by its method of the same name, until one of them returns true,
+      or the end of the child list is reached.
+      //// Later it will pass it to the child with the matching PeerIdentity.
+      */
+    { 
+      MapEpiNode payloadMapEpiNode= theMapEpiNode.getMapEpiNode("StreamText");
+      boolean decodedB= (payloadMapEpiNode != null); // It a StreamText message?
+      if (decodedB) {
+        //// super.tryProcessingMapEpiNodeB(theMapEpiNode); // Just distribute.
+        super.tryProcessingMapEpiNodeB(payloadMapEpiNode); // Just distribute.
+        }
+      return decodedB;
       }
     
   }

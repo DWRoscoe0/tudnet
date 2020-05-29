@@ -210,36 +210,6 @@ public class TextStream
             }
         }
 
-      
-      // Code imported from TextStream, to be integrated and made to work.
-      
-      public boolean tryProcessingMapEpiNodeB(MapEpiNode messageMapEpiNode)
-        /* This is the Listener method called by the ConnectionManager
-          to try decoding a TextStream message MapEpiNode.
-          It returns true if the decode was successful, false otherwise.
-          Note that if the payload message EpiNode is processed,
-          it is done while switched to the Event Dispatch Thread (EDT).
-          */
-      {
-        EpiNode payloadEpiNode= messageMapEpiNode.getEpiNode("StreamText");
-        boolean decodedB= (payloadEpiNode != null); // It a StreamText message?
-        if (decodedB) {
-          EDTUtilities.runOrInvokeAndWaitV( // Do following on EDT thread. 
-              new Runnable() {
-                @Override  
-                public void run() {
-                  synchronized(this) {
-                    MapEpiNode payloadMapEpiNode= payloadEpiNode.getMapEpiNode();
-                    if (payloadMapEpiNode != null) {
-                      processStreamMapEpiNodeV(payloadMapEpiNode);
-                      }
-                    }
-                  }
-                } 
-              );
-          }
-        return decodedB;
-        }
 
       public void processStreamStringV(String theString)
         /* This method builds a MapEpiNode containing theString,
@@ -254,6 +224,25 @@ public class TextStream
           theMapEpiNode.putV("time", ""+System.currentTimeMillis());
           processStreamMapEpiNodeV(theMapEpiNode);
           }
+      
+      public boolean tryProcessingMapEpiNodeB(MapEpiNode theMapEpiNode)
+        /* This method tries to process TextStream message theMapEpiNode.
+          It switches to the Event Dispatch Thread (EDT) if needed,
+          so this method can be called from the EDT or another thread.
+          */
+      {
+        EDTUtilities.runOrInvokeAndWaitV( // Do following on EDT thread. 
+            new Runnable() {
+              @Override  
+              public void run() {
+                synchronized(this) {
+                  processStreamMapEpiNodeV(theMapEpiNode);
+                  }
+                }
+              } 
+            );
+        return true;
+        }
 
       public void processStreamMapEpiNodeV(MapEpiNode theMapEpiNode)
         {
