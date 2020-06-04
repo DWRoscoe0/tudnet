@@ -186,6 +186,8 @@ public class ConnectionManager
       {
     		initializeV();  // Doing non-injection initialization.
 
+    		theTextStreams.startServiceV(); // Will create child TextStream-s.
+    		
     		restartPreviousUnicastersV();
 
         processingInputsAndExecutingEventsV(); // Until thread termination...

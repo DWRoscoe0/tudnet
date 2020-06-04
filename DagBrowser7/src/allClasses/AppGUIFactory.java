@@ -34,7 +34,12 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
   private final PortManager thePortManager;
 
 	// Other objects that will be needed later.
+
+  // Saved while constructing singletons.
+  private TextStreams theTextStreams;
   private final UnicasterManager theUnicasterManager;
+
+  ///org Saved after constructing singletons.  These could be while-constructing variables.
   private final LockAndSignal senderLockAndSignal;
   private final NetcasterQueue netcasterToSenderNetcasterQueue;
   private final NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue;
@@ -44,7 +49,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
   private final NamedLong multicasterFixedTimeOutMsNamedLong;
   private final Persistent thePersistent;
   private NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes;
-
+  
   public AppGUIFactory(  // Factory constructor.
   	  Persistent thePersistent,
   	  PortManager thePortManager,
@@ -54,7 +59,10 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
   		)
   	/* This method builds all objects that are, or comprise, unconditional singletons.
   	   
-       Note, no non-static maker methods are called from here.
+       ///org Note, no non-static maker methods are called from here, otherwise 
+         it could go undetected by the compiler and result in NullPointerExceptions.
+         Find a better way to organize this factory so that the compiler will detect
+         this type of error. 
        */
     {
 
@@ -85,8 +93,8 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 	      new NetcasterQueue(cmThreadLockAndSignal, Config.QUEUE_SIZE);
       NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue=
           new NetcasterQueue(cmThreadLockAndSignal, Config.QUEUE_SIZE);
-      TextStreams theTextStreams= new TextStreams(
-          "Text-Streams",this,thePersistent);
+      theTextStreams= new TextStreams(
+          "Text-Streams",this,thePersistent,theUnicasterManager);
 	    ConnectionManager theConnectionManager= new ConnectionManager(
         this, // the AppGuiFactory.
     	  thePersistent,
@@ -204,7 +212,10 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
      */
 
   public TextStream makeTextSteam(String thePeerIdentityString)
-    { return new TextStream(thePeerIdentityString,theUnicasterManager,thePersistent); }
+    { 
+      return new TextStream(
+        thePeerIdentityString,theUnicasterManager,thePersistent,theTextStreams); 
+      }
 
 	public static EpiThread makeEpiThread( Runnable aRunnable, String nameString )
 	  { return new EpiThread( aRunnable, nameString ); }
