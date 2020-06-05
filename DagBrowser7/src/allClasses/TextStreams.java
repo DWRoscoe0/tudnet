@@ -4,15 +4,24 @@ import static allClasses.SystemSettings.NL;
 import static allClasses.AppLog.theAppLog;
 
 import java.io.File;
-//// import java.util.ListIterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
-//// public class TextStreams extends NamedList {
 public class TextStreams extends SimplerListWithMap<String,TextStream> {
 
+  // Constructor-injected dependencies.
   private Persistent thePersistent;
   private AppGUIFactory theAppGUIFactory;
   private UnicasterManager theUnicasterManager;
-  
+
+  LinkedHashMap<Integer,Object> antiRepeatLinkedHashMap= // Used to prevent storms.
+      new LinkedHashMap<Integer,Object>() {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<Integer,Object> eldest) {
+            return size() > 8; // Limit map size to 8 entries.
+            }
+      };
+
   public TextStreams( // Constructor.
       String nameString,
       
@@ -26,8 +35,6 @@ public class TextStreams extends SimplerListWithMap<String,TextStream> {
       this.thePersistent= thePersistent;
       this.theAppGUIFactory= theAppGUIFactory;
       this.theUnicasterManager= theUnicasterManager;
-
-      //// createTextStreamsV();
       }
 
   public void startServiceV() 
@@ -80,32 +87,65 @@ public class TextStreams extends SimplerListWithMap<String,TextStream> {
   protected boolean tryProcessingMapEpiNodeB(MapEpiNode theMapEpiNode)
     /* This method tries processing a MapEpiNode.
       It must be a single element map with a key of "StreamText".
-      If it does then it returns true after having the value 
-      processed by the appropriate child.
+      If it is not then it ignores the data and returns false.
+      If it is then it returns true after having the value 
+      processed for TextStream content.
+      Processing is done on the Event Dispatch Thread (EDT), switching if needed.
+
       Presently it does this by trying to have each child process that value,
       by its method of the same name, until one of them returns true,
       or the end of the child list is reached.
-      //// Later it will pass it to the child with the matching PeerIdentity.
+      //// This is being changed to be partially processed here.
+       * Later it will pass it to the child with the matching PeerIdentity.
       */
     { 
       MapEpiNode payloadMapEpiNode= theMapEpiNode.getMapEpiNode("StreamText");
       boolean decodedB= (payloadMapEpiNode != null); // It a StreamText message?
       if (decodedB) {
-        //// super.tryProcessingMapEpiNodeB(theMapEpiNode); // Just distribute.
-        super.tryProcessingMapEpiNodeB(payloadMapEpiNode); // Just distribute.
+        EDTUtilities.runOrInvokeAndWaitV( // Switch to EDT thread if needed. 
+            new Runnable() {
+              @Override  
+              public void run() {
+                synchronized(this) {
+                  processIfNewV(payloadMapEpiNode);
+                  }
+                }
+              } 
+            );
         }
       return decodedB;
       }
-  
-  public void distributeMessageV(MapEpiNode messageMapEpiNode)
-    /* This method notifies all connected peers about the message messageMapEpiNode,
-      which should be an immutable value.
-      It is assumed that this particular message has not already been sent.
+
+  public void processIfNewV(MapEpiNode theMapEpiNode)
+    /* This method examines theMapEpiNode.  
+      If the TextStream message it represents has been seen before,
+      then the method returns with no further action.
+      If it has not been seen before then it
+      * sends the message to the appropriate child TextStream, and
+      * distributes the message to other connected peers.
+     */
+    {
+      toReturn: {
+        Integer hashInteger= new Integer( ///opt Probably more complicated than needed.
+            theMapEpiNode.getString("time").hashCode());
+        if (antiRepeatLinkedHashMap.containsKey(hashInteger)) // Already in map?
+          break toReturn; // Yes, so received before and we are ignoring it.
+        antiRepeatLinkedHashMap.put(hashInteger,null); // Put in map to prevent repeat.
+        super.tryProcessingMapEpiNodeB(theMapEpiNode); // Distribute to all children.
+        sendToPeersV(theMapEpiNode);
+        } // toReturn:
+      }
+
+  public void sendToPeersV(MapEpiNode theMapEpiNode)
+    /* This sends to all connected peers the message messageMapEpiNode.
+      It is assumed that "TextStream" has already been added.
       */
     {
         theAppLog.debug( "TextStreamViewer.broadcastStreamMessageV() called.");
         PeersCursor scanPeersCursor= // Used for iteration. 
             PeersCursor.makeOnNoEntryPeersCursor( thePersistent );
+        MapEpiNode messageMapEpiNode= MapEpiNode.makeSingleEntryMapEpiNode(
+            "StreamText", theMapEpiNode);  // Complete MapEpiNode message.
       peerLoop: while (true) { // Process all peers in my peer list. 
         if (scanPeersCursor.nextKeyString().isEmpty() ) // Try getting next scan peer. 
           break peerLoop; // There are no more peers, so exit loop.
@@ -128,5 +168,5 @@ public class TextStreams extends SimplerListWithMap<String,TextStream> {
       } // peerLoop: 
         theAppLog.appendToFileV("(end of peers)"+NL); // Mark end of list with new line.
       }
-    
+  
   }

@@ -31,7 +31,6 @@ public class TextStream
     // Variables.
   
       // Injected variables:
-      private UnicasterManager theUnicasterManager; //// no longer used.
       private Persistent thePersistent;
       private TextStreams theTextStreams;
 
@@ -51,7 +50,6 @@ public class TextStream
 
       TextStream( 
           String peerIdentityString,
-          UnicasterManager theUnicasterManager, //// No longer used.
           Persistent thePersistent,
           TextStreams theTextStreams
           )
@@ -63,7 +61,6 @@ public class TextStream
               peerIdentityString // key
               );
           theAppLog.debug("TextStream.TextStream(.) called.");
-          this.theUnicasterManager= theUnicasterManager;
           this.thePersistent= thePersistent;
           Nulls.fastFailNullCheckT(theTextStreams);
           this.theTextStreams= theTextStreams;
@@ -214,32 +211,12 @@ public class TextStream
             }
         }
 
-      
-      public boolean tryProcessingMapEpiNodeB(MapEpiNode theMapEpiNode)
-        /* This method tries to process TextStream message theMapEpiNode.
-          It switches to the Event Dispatch Thread (EDT) if needed,
-          so this method can be called from the EDT or another thread.
-          */
-      {
-        EDTUtilities.runOrInvokeAndWaitV( // Switch to EDT thread if needed. 
-            new Runnable() {
-              @Override  
-              public void run() {
-                synchronized(this) {
-                  processStreamMapEpiNodeV(theMapEpiNode);
-                  }
-                }
-              } 
-            );
-        return true;
-        }
-
       public void processNewStreamStringV(String theString)
         /* This method processes a new Stream String entered by the user
-          into an associated TextSTreamViewer.
+          into an associated TextStreamViewer.
           It does this by building a MapEpiNode containing theString,
           the PeerIdentity, and the present time, 
-          and passing it along for processing and possible distribution.
+          and passing it to the TextStreams coordinator for processing.
          */
         {
           MapEpiNode theMapEpiNode= new MapEpiNode();
@@ -247,66 +224,27 @@ public class TextStream
           String nodeIdentyString= thePersistent.getTmptyOrString("PeerIdentity");
           theMapEpiNode.putV("PeerIdentity", nodeIdentyString);
           theMapEpiNode.putV("time", ""+System.currentTimeMillis());
-          processStreamMapEpiNodeV(theMapEpiNode);
+          theTextStreams.processIfNewV(theMapEpiNode);
           }
 
-      public void processStreamMapEpiNodeV(MapEpiNode theMapEpiNode)
+      public boolean tryProcessingMapEpiNodeB(MapEpiNode theMapEpiNode) 
+        /* This method tries to process TextStream message theMapEpiNode.
+          It switches to the Event Dispatch Thread (EDT) if needed,
+          so this method can be called from the EDT or another thread.
+          */
         {
-            String theString= theMapEpiNode.getString("message");
-          toReturn: {
-            theAppLog.debug(
-                "TextStreamViewer.processStringStringV(.) String="
-                + theString);
-            Integer hashInteger= new Integer( ///opt Probably more complicated than needed.
-                theString.hashCode()+theMapEpiNode.getString("time").hashCode());
-            if (antiRepeatLinkedHashMap.containsKey(hashInteger)) // Already in map?
-              break toReturn; // Yes, so received before and we are ignoring it.
-            antiRepeatLinkedHashMap.put(hashInteger,null); // Put in map to prevent repeat.
-            try {
-              thePlainDocument.insertString( // Append message to document as a line.
-                thePlainDocument.getLength(),theString + "\n",null);
-            } catch (BadLocationException theBadLocationException) { 
-              theAppLog.exception(
-                  "TextStreamViewer.processStringStringV(..) ",theBadLocationException);
-              }
-
-            MapEpiNode messageMapEpiNode= MapEpiNode.makeSingleEntryMapEpiNode(
-                "StreamText", theMapEpiNode);  // Complete MapEpiNode message.
-            theTextStreams.distributeMessageV(messageMapEpiNode); // Distribute message as EpiNode.
-            //// distributeMessageV(messageMapEpiNode); // Distribute message as EpiNode.
-          } // toReturn: 
+          String theString= theMapEpiNode.getString("message");
+          theAppLog.debug(
+              "TextStreamViewer.processStringStringV(.) String="
+              + theString);
+          try {
+            thePlainDocument.insertString( // Append message to document as a line.
+              thePlainDocument.getLength(),theString + "\n",null);
+          } catch (BadLocationException theBadLocationException) { 
+            theAppLog.exception(
+                "TextStreamViewer.processStringStringV(..) ",theBadLocationException);
           }
-  
-  public void distributeMessageV(MapEpiNode messageMapEpiNode)  //// remove.
-    /* This method notifies all connected peers about the message messageMapEpiNode,
-      which should be an immutable value.
-      It is assumed that this particular message has not already been sent.
-      */
-    {
-        theAppLog.debug( "TextStreamViewer.broadcastStreamMessageV() called.");
-        PeersCursor scanPeersCursor= // Used for iteration. 
-            PeersCursor.makeOnNoEntryPeersCursor( thePersistent );
-      peerLoop: while (true) { // Process all peers in my peer list. 
-        if (scanPeersCursor.nextKeyString().isEmpty() ) // Try getting next scan peer. 
-          break peerLoop; // There are no more peers, so exit loop.
-        theAppLog.appendToFileV("(stream?)"); // Log that peer is being considered.
-        if (! scanPeersCursor.testB("isConnected")) // This peer is not connected 
-          continue peerLoop; // so loop to try next peer.
-        String peerIPString= scanPeersCursor.getFieldString("IP");
-        String peerPortString= scanPeersCursor.getFieldString("Port");
-        IPAndPort theIPAndPort= new IPAndPort(peerIPString, peerPortString);
-        Unicaster scanUnicaster= // Try getting associated Unicaster.
-            theUnicasterManager.tryingToGetUnicaster(theIPAndPort);
-        if (scanUnicaster == null) { // Unicaster of scan peer doesn't exist
-          theAppLog.error(
-              "TextStreamViewer.broadcastStreamMessageV() non-existent Unicaster.");
-          continue peerLoop; // so loop to try next peer.
+          return true;
           }
-        theAppLog.appendToFileV("(YES!)"); // Log that we're sending data.
-        scanUnicaster.putV( // Queue full message EpiNode to Unicaster of scan peer.
-            messageMapEpiNode);
-      } // peerLoop: 
-        theAppLog.appendToFileV("(end of peers)"+NL); // Mark end of list with new line.
-      }
 
     }

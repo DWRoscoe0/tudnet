@@ -214,7 +214,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
   public TextStream makeTextSteam(String thePeerIdentityString)
     { 
       return new TextStream(
-        thePeerIdentityString,theUnicasterManager,thePersistent,theTextStreams); 
+        thePeerIdentityString,thePersistent,theTextStreams);
       }
 
 	public static EpiThread makeEpiThread( Runnable aRunnable, String nameString )
