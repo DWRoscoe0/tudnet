@@ -14,7 +14,7 @@ public class TextStreams extends SimplerListWithMap<String,TextStream> {
   private AppGUIFactory theAppGUIFactory;
   private UnicasterManager theUnicasterManager;
 
-  LinkedHashMap<Integer,Object> antiRepeatLinkedHashMap= // Used to prevent storms.
+  LinkedHashMap<Integer,Object> antiRepeatLinkedHashMap= // For preventing message storms.
       new LinkedHashMap<Integer,Object>() {
         @Override
         protected boolean removeEldestEntry(Map.Entry<Integer,Object> eldest) {
@@ -40,7 +40,7 @@ public class TextStreams extends SimplerListWithMap<String,TextStream> {
   public void startServiceV() 
     /* This is the first service of this class.
       It specifically not called during construction-initialization
-      because some of the services on which it this class relies
+      because some of the services on which this class relies
       are not ready to provide service until after construction.
       */
     {
@@ -57,17 +57,16 @@ public class TextStreams extends SimplerListWithMap<String,TextStream> {
     {
       createLocalTextStreamV();
       
-      createRemoteTextStreamsV();
+      createRemoteTextStreamsFromFoldersV();
       }
 
   private void createLocalTextStreamV()
     {
-      String localPeerIdentityString= thePersistent.getTmptyOrString("PeerIdentity");
-      TextStream theTextStream= theAppGUIFactory.makeTextSteam(localPeerIdentityString);
-      addAtEndB( theTextStream );
+      String thePeerIdentityString= thePersistent.getTmptyOrString("PeerIdentity");
+      createAndAddTextStream(thePeerIdentityString);
       }
 
-  private void createRemoteTextStreamsV()
+  private void createRemoteTextStreamsFromFoldersV()
     {
       File peersFile= AppSettings.makePathRelativeToAppFolderFile(
         "Peers"
@@ -75,12 +74,11 @@ public class TextStreams extends SimplerListWithMap<String,TextStream> {
       String[] peerStrings= // Read names of peer directories from Peers directory.
           peersFile.list();
       String localPeerIdentityString= thePersistent.getTmptyOrString("PeerIdentity");
-      for (String peerIdentityString : peerStrings) // For every Peer folder 
+      for (String scanPeerIdentityString : peerStrings) // For every Peer folder 
         toPeerDone: { // Try creating a TextStream for this peer.
-          if (localPeerIdentityString.equals(peerIdentityString)) // Skip ourselves. 
+          if (localPeerIdentityString.equals(scanPeerIdentityString)) // Skip ourselves. 
             break toPeerDone;
-          TextStream theTextStream= theAppGUIFactory.makeTextSteam(peerIdentityString);
-          addAtEndB( theTextStream );
+          createAndAddTextStream(scanPeerIdentityString);
           } // toPeerDone:
       }
 
@@ -91,12 +89,8 @@ public class TextStreams extends SimplerListWithMap<String,TextStream> {
       If it is then it returns true after having the value 
       processed for TextStream content.
       Processing is done on the Event Dispatch Thread (EDT), switching if needed.
-
-      Presently it does this by trying to have each child process that value,
-      by its method of the same name, until one of them returns true,
-      or the end of the child list is reached.
-      //// This is being changed to be partially processed here.
-       * Later it will pass it to the child with the matching PeerIdentity.
+      The message is passed to the appropriate TextStream based on
+      PeerIdenty in theMapEpiNode, creating the TextStream if needed.
       */
     { 
       MapEpiNode payloadMapEpiNode= theMapEpiNode.getMapEpiNode("StreamText");
@@ -126,19 +120,43 @@ public class TextStreams extends SimplerListWithMap<String,TextStream> {
      */
     {
       toReturn: {
-        Integer hashInteger= new Integer( ///opt Probably more complicated than needed.
-            theMapEpiNode.getString("time").hashCode());
+        Integer hashInteger= new Integer( theMapEpiNode.getString("time").hashCode());
         if (antiRepeatLinkedHashMap.containsKey(hashInteger)) // Already in map?
-          break toReturn; // Yes, so received before and we are ignoring it.
+          break toReturn; // Yes, so it was received before, so we ignore it.
         antiRepeatLinkedHashMap.put(hashInteger,null); // Put in map to prevent repeat.
-        super.tryProcessingMapEpiNodeB(theMapEpiNode); // Distribute to all children.
+        sendToTextStreamV(theMapEpiNode);
         sendToPeersV(theMapEpiNode);
         } // toReturn:
       }
 
-  public void sendToPeersV(MapEpiNode theMapEpiNode)
-    /* This sends to all connected peers the message messageMapEpiNode.
-      It is assumed that "TextStream" has already been added.
+  private void sendToTextStreamV(MapEpiNode theMapEpiNode)
+    /* This method sends theMapEpiNode to the appropriate child TextStream.
+     */
+    {
+      String peerIdentityString= theMapEpiNode.getString("PeerIdentity");
+      TextStream theTextStream=  // Getting the appropriate TextStream.
+          getOrBuildAddAndTextStream(peerIdentityString);
+      theTextStream.tryProcessingMapEpiNodeB(theMapEpiNode);
+      }
+
+  private TextStream getOrBuildAddAndTextStream(String peerIdentityString)
+    {
+      TextStream theTextStream= childHashMap.get(peerIdentityString); // Try lookup.
+      if (null == theTextStream)
+        theTextStream= createAndAddTextStream(peerIdentityString);
+      return theTextStream;
+      }
+
+  private TextStream createAndAddTextStream(String peerIdentityString)
+    {
+      TextStream theTextStream= theAppGUIFactory.makeTextSteam(peerIdentityString);
+      addingV(peerIdentityString, theTextStream); // Add to list and HashMap.
+      return theTextStream;
+      }
+
+  private void sendToPeersV(MapEpiNode theMapEpiNode)
+    /* This sends to all connected peers theMapEpiNode.
+      It is assumed that "TextStream" has already been added as the enclosing key 
       */
     {
         theAppLog.debug( "TextStreamViewer.broadcastStreamMessageV() called.");
