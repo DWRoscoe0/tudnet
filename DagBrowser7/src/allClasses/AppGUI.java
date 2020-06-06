@@ -269,7 +269,6 @@ class GUIManager
         theAppLog.debug("GUIManager.finalizeOnEDTV() begins.");
 
         theDagBrowserPanel.finalizationV(); // No longer fails on EDT!
-        ////theAppLog.debug("GUIManager.finalizeOnEDTV() after theDagBrowserPanel.finalizationV().");
         
         for (Window aWindow : Window.getWindows()) { // Dispose all windows.
           theAppLog.info(

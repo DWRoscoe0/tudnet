@@ -47,11 +47,10 @@ public class DirectoryTableCellRenderer
         Component RenderComponent= super.getTableCellRendererComponent( 
           table, value, isSelected, hasFocus, row, column );
 
-        try { ////////
+        try {
           UIColor.setColorsV( // Override its colors in renderer.
           		RenderComponent,
               Color.RED, // kluge, cachedBackgroundColor not used for directories.
-              //// (DataNode)value,
               value,
               isSelected,
               hasFocus

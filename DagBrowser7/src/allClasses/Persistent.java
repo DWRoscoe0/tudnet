@@ -115,7 +115,7 @@ public class Persistent
 	      rootMapEpiNode.putV(keyString, valueString);
 		  	}
 	
-	  public String getTmptyOrString( String keyString )
+	  public String getEmptyOrString( String keyString )
 		  /* Returns the value String associated with keyString,
 		    or the empty string if there is none.
 		   	*/

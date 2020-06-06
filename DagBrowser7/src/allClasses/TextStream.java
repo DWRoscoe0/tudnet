@@ -64,6 +64,7 @@ public class TextStream
           this.thePersistent= thePersistent;
           Nulls.fastFailNullCheckT(theTextStreams);
           this.theTextStreams= theTextStreams;
+          this.thePeerIdentityString= getKeyK(); 
           
           streamFile= AppSettings.makePathRelativeToAppFolderFile(
                   "Peers" 
@@ -221,7 +222,7 @@ public class TextStream
         {
           MapEpiNode theMapEpiNode= new MapEpiNode();
           theMapEpiNode.putV("message", theString);
-          String nodeIdentyString= thePersistent.getTmptyOrString("PeerIdentity");
+          String nodeIdentyString= thePersistent.getEmptyOrString("PeerIdentity");
           theMapEpiNode.putV("PeerIdentity", nodeIdentyString);
           theMapEpiNode.putV("time", ""+System.currentTimeMillis());
           theTextStreams.processIfNewV(theMapEpiNode);

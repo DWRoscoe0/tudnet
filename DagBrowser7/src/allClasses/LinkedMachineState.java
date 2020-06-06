@@ -562,7 +562,7 @@ public class LinkedMachineState
           boolean successB= false; /// This is always overriden!
         goReturn: {
           if // Same IDs, so subject peer is actually the local peer,
-            ( thePersistent.getTmptyOrString("PeerIdentity").equals(
+            ( thePersistent.getEmptyOrString("PeerIdentity").equals(
                 inIdentityString))
             { // so ignore this HELLO. 
               theAppLog.warning("LinkedMachineState.processPeerIdentityB(String) "
@@ -620,7 +620,7 @@ public class LinkedMachineState
             "{HELLO:{"
             + "IP:"+theUnicaster.getKeyK().getInetAddress().getHostAddress() // remote IP
             + ","
-            + "PeerIdentity:"+thePersistent.getTmptyOrString("PeerIdentity")
+            + "PeerIdentity:"+thePersistent.getEmptyOrString("PeerIdentity")
             + "}}"
             );
         theNetcasterOutputStream.endBlockAndSendPacketV(); // Forcing send.

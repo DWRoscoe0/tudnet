@@ -740,7 +740,7 @@ public class ConnectionManager
             break toReturn; // so exit.
           if // Same IDs, so subject peer is actually the local peer
             ( thePeersCursor.getEmptyOrString("PeerIdentity").equals(
-                thePersistent.getTmptyOrString("PeerIdentity")))
+                thePersistent.getEmptyOrString("PeerIdentity")))
             break toReturn; // so exit.
 
           theAppLog.debug("ConnectionManager.processRemoteUpdatedStateV(MapEpiNode) "

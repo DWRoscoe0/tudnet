@@ -101,7 +101,7 @@ s     */
         if (normalPortI != 0) break toReturnValue; // Exit if already defined.
   	 	toGenerateNewValue: {
 		    String localPortString= 
-		    		thePersistent.getTmptyOrString("NormalPort");
+		    		thePersistent.getEmptyOrString("NormalPort");
 		    if ( localPortString.isEmpty() ) break toGenerateNewValue; 
 	      try { 
 	  	    normalPortI= Integer.parseInt( localPortString );

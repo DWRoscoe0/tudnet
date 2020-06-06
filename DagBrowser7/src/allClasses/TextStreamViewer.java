@@ -29,15 +29,10 @@ public class TextStreamViewer
     TreeAware
     // TreeModelListener
   
-  /* This class, based on TextViewer, will eventually be a TextStreamViewer.
-   * 
-   * TextViewer was a simple DagNodeViewer that
-   * displays and browses Text using a JTextArea.
-   * It was based on TitledTextViewer.
-   * It was created from TextViewer, which was created quickly from ListViewer.
-   * For a while it contained a lot of unused and useless code,
-   * but it has been trimmed down.
-   */
+  /* This class if a JComponent for viewing a TextStream.
+    If the TextStream is our own then it includes an input area
+    into which the user may type text to be appended to the stream.
+    */
     
   {
     // variables.
@@ -55,9 +50,9 @@ public class TextStreamViewer
 
         private JLabel titleJLabel;  // Label with the title.
 
-        private IJTextArea streamIJTextArea; // For viewing the stream text.
+        private IJTextArea outputIJTextArea; // For viewing the stream text.
 
-        private IJTextArea inputIJTextArea; // For entering next text to append.
+        private IJTextArea inputIJTextArea; // For entering next text to be appended.
 
     // Constructors and constructor-related methods.
 
@@ -93,9 +88,10 @@ public class TextStreamViewer
 
           addJLabelV();
           addStreamIJTextAreaV();
-          String localPeerIdentityString= thePersistent.getTmptyOrString("PeerIdentity");
-          if (! localPeerIdentityString.equals(thePeerIdentityString)) // Skip ourselves. 
-            addInputIJTextAreaV();
+          String localPeerIdentityString= thePersistent.getEmptyOrString("PeerIdentity");
+          if // If the TextStream 
+            (localPeerIdentityString.equals(thePeerIdentityString)) // is our own 
+            addInputIJTextAreaV(); // then add the input TextArea.
           }
 
       private void addJLabelV()
@@ -111,20 +107,20 @@ public class TextStreamViewer
 
       private void addStreamIJTextAreaV()
         {
-          streamIJTextArea= new IJTextArea();
-          streamIJTextArea.getCaret().setVisible(true); // Make viewer cursor visible.
-          streamIJTextArea.setBorder(raisedEtchedBorder);
-          streamIJTextArea.setEditable(false);
-          streamIJTextArea.setLineWrap(true);
-          streamIJTextArea.setWrapStyleWord(true);
-          streamIJTextArea.addFocusListener(new FocusListener() {
+          outputIJTextArea= new IJTextArea();
+          outputIJTextArea.getCaret().setVisible(true); // Make viewer cursor visible.
+          outputIJTextArea.setBorder(raisedEtchedBorder);
+          outputIJTextArea.setEditable(false);
+          outputIJTextArea.setLineWrap(true);
+          outputIJTextArea.setWrapStyleWord(true);
+          outputIJTextArea.addFocusListener(new FocusListener() {
             public void focusGained(FocusEvent e) {
-              streamIJTextArea.getCaret().setVisible(true); // Make  cursor visible again.
+              outputIJTextArea.getCaret().setVisible(true); // Make  cursor visible again.
               }
             public void focusLost(FocusEvent e) {}
             });
           JScrollPane streamJScrollPane= // Place the JTextArea in a scroll pane.
-              new JScrollPane(streamIJTextArea);
+              new JScrollPane(outputIJTextArea);
           add(streamJScrollPane,BorderLayout.CENTER); // Adding to center.
           }
       
@@ -161,8 +157,8 @@ public class TextStreamViewer
 
       private void putCursorAtEndOfStreamDocumentV()
         {
-          Document d = streamIJTextArea.getDocument();
-          streamIJTextArea.select(d.getLength(), d.getLength());
+          Document d = outputIJTextArea.getDocument();
+          outputIJTextArea.select(d.getLength(), d.getLength());
           }
 
     // rendering methods.  to be added ??
@@ -203,7 +199,7 @@ public class TextStreamViewer
                   theDataTreeModel
                   );
               
-              streamIJTextArea.setDocument(thePlainDocument); 
+              outputIJTextArea.setDocument(thePlainDocument); 
               putCursorAtEndOfStreamDocumentV();
               }
          

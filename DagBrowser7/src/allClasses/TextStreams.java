@@ -62,7 +62,7 @@ public class TextStreams extends SimplerListWithMap<String,TextStream> {
 
   private void createLocalTextStreamV()
     {
-      String thePeerIdentityString= thePersistent.getTmptyOrString("PeerIdentity");
+      String thePeerIdentityString= thePersistent.getEmptyOrString("PeerIdentity");
       createAndAddTextStream(thePeerIdentityString);
       }
 
@@ -73,7 +73,7 @@ public class TextStreams extends SimplerListWithMap<String,TextStream> {
         );
       String[] peerStrings= // Read names of peer directories from Peers directory.
           peersFile.list();
-      String localPeerIdentityString= thePersistent.getTmptyOrString("PeerIdentity");
+      String localPeerIdentityString= thePersistent.getEmptyOrString("PeerIdentity");
       for (String scanPeerIdentityString : peerStrings) // For every Peer folder 
         toPeerDone: { // Try creating a TextStream for this peer.
           if (localPeerIdentityString.equals(scanPeerIdentityString)) // Skip ourselves. 
