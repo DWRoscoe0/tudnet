@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.ListIterator;
 
 import allClasses.AppLog.LogLevel;
+import allClasses.multilink.ListMultiLink;
+import allClasses.multilink.MultiLink;
 
 import static allClasses.AppLog.theAppLog;
 import static allClasses.SystemSettings.NL;
@@ -17,7 +19,9 @@ public class NamedList
 
 	extends NamedBranch  // Will override all remaining leaf behavior.
 
-	implements Iterable<DataNode>
+	implements 
+    //// MultiLink<DataNode>, already done in superclass.
+    Iterable<DataNode>
   
   /* This is a utility class that is simply a List with a name.
     It is is immutable after construction and initialization, 
@@ -53,10 +57,10 @@ public class NamedList
 		        Arrays.asList(  // an immutable List made from
 		        		emptyListOfDataNodes() // an empty DataNode list.
 		            )
-		        ); 
-	      ///opt This could be replaced with a SelfReturningNodeOrNodes class.
-        ///enh Distinguish between active children and lazy children?
-        // See MetaFileManager for ideas.
+		        );
+
+	    protected MultiLink<DataNode> childMultiLinkOfDataNodes= // Set to an empty
+          new ListMultiLink<DataNode>(); // ListMultiList of DataNodes.
 
 	    
 	    /* Constructors: An instance of this class can be created by either
@@ -144,6 +148,7 @@ public class NamedList
             		? theListOfDataNodes.size() // to mean end of list,
             	  : requestedIndexI; // otherwise use requested index.
             addPhysicallyV( actualIndexI, childDataNode );
+            childMultiLinkOfDataNodes.addV(actualIndexI, childDataNode );
             notifyTreeModelAboutAdditionV(
             		parentDataNode, actualIndexI, childDataNode );
             successB= true; // Returning add success.
@@ -308,6 +313,31 @@ public class NamedList
 		  {
 		    return theListOfDataNodes.iterator();
 		  	}
+
+	  
+	  /* Related originally auto-generated method stubs for interface MultiLink.
+	    They simply pass control to the same-named methods in the childMultiLink.
+	    */
+    
+    @Override
+    public boolean hasNoLinks() {
+      return childMultiLinkOfDataNodes.hasNoLinks();
+      }
+
+    @Override
+    public int getLinkCountI() {
+      return childMultiLinkOfDataNodes.getLinkCountI();
+      }
+
+    @Override
+    public DataNode getLinkL(int indexI) {
+      return childMultiLinkOfDataNodes.getLinkL(indexI); 
+      }
+
+    @Override
+    public int getIndexOfLinkI(DataNode theL) {
+      return childMultiLinkOfDataNodes.getIndexOfLinkI(theL);
+      }
 
 	  
 	  ///dbg methods.

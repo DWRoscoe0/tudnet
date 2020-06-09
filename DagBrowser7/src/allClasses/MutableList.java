@@ -58,7 +58,11 @@ public class MutableList extends NamedList
 		      I don't understand why.  Maybe it's TreePath translation.
 		      */
 		    {
-		  		theListOfDataNodes.add( theListOfDataNodes.size(), childDataNode );
+          theListOfDataNodes.add( theListOfDataNodes.size(), childDataNode );
+          childMultiLinkOfDataNodes.addV( 
+              childMultiLinkOfDataNodes.getLinkCountI(), 
+              childDataNode 
+              );
 		      }
 	
 		  public synchronized boolean removeB( final DataNode childDataNode )
@@ -88,6 +92,7 @@ public class MutableList extends NamedList
 		    	  {
 	          	//appLogger.debug("MutableList.remove(..): removing.");
 				  		theListOfDataNodes.remove( indexI );
+				  		childMultiLinkOfDataNodes.removeV(indexI);
 				  		theDataTreeModel.signalRemovalV( 
 				      		parentDataNode, indexI, childDataNode 
     				      );
