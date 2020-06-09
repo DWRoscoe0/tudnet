@@ -73,8 +73,6 @@ public class ListMultiLink<
               indexI
               );
           }
-
-      // Other methods.
       
       public Iterator<L> iterator() 
         {

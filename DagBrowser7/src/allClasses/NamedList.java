@@ -145,7 +145,8 @@ public class NamedList
 	    	  { // Adding to List because it's not there yet.
 	    	  	int actualIndexI= // Converting 
 	    	  			(requestedIndexI < 0) // requested index < 0 
-            		? theListOfDataNodes.size() // to mean end of list,
+            		//// ? theListOfDataNodes.size() // to mean end of list,
+	    	  			? childMultiLinkOfDataNodes.getLinkCountI() // to mean end of list,
             	  : requestedIndexI; // otherwise use requested index.
             addPhysicallyV( actualIndexI, childDataNode );
             childMultiLinkOfDataNodes.addV(actualIndexI, childDataNode );
@@ -194,7 +195,8 @@ public class NamedList
         It increases and returns nodeCountI by the number of nodes finalized.*/
       {
         int nodeTotalI= 0;
-        for ( DataNode theDataNode : theListOfDataNodes) // For each child
+        //// for ( DataNode theDataNode : theListOfDataNodes) // For each child
+        for ( DataNode theDataNode : childMultiLinkOfDataNodes) // For each child
           nodeTotalI+=   // recursively finalize it, adding the number finalized to total.
             theDataNode.finalizeDataNodesI();
         nodeTotalI+= super.finalizeDataNodesI(); // Finalize base class
@@ -211,7 +213,8 @@ public class NamedList
 		  	  	&& ( this.theDataTreeModel == null )  // our TreeModel is null.
 		  	  	)
 			  	{
-			  		for ( DataNode theDataNode : theListOfDataNodes) // For each child
+			  		//// for ( DataNode theDataNode : theListOfDataNodes) // For each child
+		  	    for ( DataNode theDataNode : childMultiLinkOfDataNodes) // For each child
 			  			theDataNode.propagateIntoSubtreeV(  // recursively propagate
 			  					theDataTreeModel // the TreeModel 
 			  					);
@@ -246,7 +249,8 @@ public class NamedList
 	      but not into this node.  It remains unchanged.
 		    */
 		  {
-	  		for ( DataNode theDataNode : theListOfDataNodes)  // For each child
+	  		//// for ( DataNode theDataNode : theListOfDataNodes)  // For each child
+	      for ( DataNode theDataNode : childMultiLinkOfDataNodes)  // For each child
 	  			theDataNode.propagateIntoSubtreeB( // recursively propagate  
 	  					theMaxLogLevel); // the new level into child subtree.
 		  	}
@@ -276,11 +280,12 @@ public class NamedList
         */
       { 
         boolean processedB= false; // Assume all children will fail to process.
-        ListIterator<DataNode> theListIterator= // Prepare a child list iterator.
-            theListOfDataNodes.listIterator();
+        Iterator<DataNode> theIterator= // Prepare a child iterator.
+            //// theListOfDataNodes.listIterator();
+            childMultiLinkOfDataNodes.iterator();
         while (true) { // Process children until something causes exit.
-          if (! theListIterator.hasNext()) break; // Exit if no more children.
-          DataNode theDataNode= theListIterator.next(); // Get next child.
+          if (! theIterator.hasNext()) break; // Exit if no more children.
+          DataNode theDataNode= theIterator.next(); // Get next child.
           processedB= theDataNode.tryProcessingMapEpiNodeB(theMapEpiNode);
           if (processedB) break; // Exit if the child successfully processed the data.
           }
@@ -294,6 +299,8 @@ public class NamedList
       /* This returns the child with index indexI or null
         if no such child exists.
         */
+      { return childMultiLinkOfDataNodes.getLinkL(indexI); }
+    /*  ////
       {
         DataNode resultDataNode;  // Allocating result space.
 
@@ -308,10 +315,12 @@ public class NamedList
 
         return resultDataNode;
         }
+    */  ////
     
 	  public Iterator<DataNode> iterator() 
 		  {
-		    return theListOfDataNodes.iterator();
+		    //// return theListOfDataNodes.iterator();
+	      return childMultiLinkOfDataNodes.iterator();
 		  	}
 
 	  

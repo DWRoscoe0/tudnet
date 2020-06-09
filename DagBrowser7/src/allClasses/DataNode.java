@@ -4,6 +4,7 @@ import allClasses.AppLog.LogLevel;
 import allClasses.multilink.MultiLink;
 
 import java.awt.Color;
+import java.util.Iterator;
 
 import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
@@ -439,6 +440,11 @@ public class DataNode
           // Do nothing.  Could also thrown an exception or log an error.
           }
 
+      @Override
+      public Iterator<DataNode> iterator()
+        {
+          return null; // Do nothing.  Could also thrown an exception or log an error.
+          }
 
   /* Methods which return Strings containing information about the node.
     These may be overridden by subclasses as needed.

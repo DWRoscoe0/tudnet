@@ -1,9 +1,12 @@
 package allClasses.multilink;
 
+import java.util.Iterator;
 
 public interface MultiLink<
     L // Link type.   //// Should this be ? extends MultiLink
     > 
+
+  extends Iterable<L>
 
   {
   
@@ -37,5 +40,7 @@ public interface MultiLink<
     public void addV(int indexI, L theLink);
     
     public void removeV(int indexI);
+    
+    public Iterator<L> iterator();
     
     }
