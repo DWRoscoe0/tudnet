@@ -5,7 +5,7 @@ import java.util.Iterator;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.ListIterator;
+//// import java.util.ListIterator;
 
 import allClasses.AppLog.LogLevel;
 import allClasses.multilink.ListMultiLink;
@@ -52,12 +52,14 @@ public class NamedList
 			  // and all its descendants has already occurred and 
 			  // need not be done again, except for new added children. 
 	
+			/*  ////
 	    protected List<DataNode> theListOfDataNodes= // Set to empty,
 	    		new ArrayList<DataNode>(  // a mutable ArrayList from
 		        Arrays.asList(  // an immutable List made from
 		        		emptyListOfDataNodes() // an empty DataNode list.
 		            )
 		        );
+      */  ////
 
 	    protected MultiLink<DataNode> childMultiLinkOfDataNodes= // Set to an empty
           new ListMultiLink<DataNode>(); // ListMultiList of DataNodes.
@@ -186,8 +188,8 @@ public class NamedList
 	  		
 	  		childDataNode.setParentToV( this ); // Link child to this node.
 
-	  		theListOfDataNodes.add( // Link this node to child. 
-        		indexI, childDataNode );
+	  		//// theListOfDataNodes.add( // Link this node to child. 
+	  		//// 		indexI, childDataNode );
 	      }
 
     protected int finalizeDataNodesI()
