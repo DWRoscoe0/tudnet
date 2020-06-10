@@ -1,13 +1,11 @@
 package allClasses;
 
-import allClasses.AppLog.LogLevel;
-import allClasses.multilink.MultiLink;
-
 import java.awt.Color;
-import java.util.Iterator;
-
 import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
+
+import allClasses.AppLog.LogLevel;
+import allClasses.multilink.ElementMultiLink;
 
 import static allClasses.AppLog.theAppLog;
 import static allClasses.SystemSettings.NL;
@@ -15,7 +13,7 @@ import static allClasses.SystemSettings.NL;
 
 public class DataNode
 
-  implements MultiLink<DataNode>
+  implements ElementMultiLink<DataNode>
   
   {
 
@@ -402,49 +400,6 @@ public class DataNode
 	        return childIndexI;  // Return index as search result.
 	        } // getIndexOfChild(.)
 
-	    
-	    // Related originally auto-generated method stubs for interface MultiLink.
-	    
-	    @Override
-	    public boolean hasNoLinks() {
-	      return true;
-	      }
-
-	    @Override
-	    public int getLinkCountI() 
-  	    {
-  	      return 0;
-  	      }
-
-	    @Override
-	    public DataNode getLinkL(int indexI) 
-  	    {
-  	      return null;
-  	      }
-
-	    @Override
-	    public int getIndexOfLinkI(DataNode theDataNode) 
-  	    {
-  	      return -1;
-  	      }
-  	    
-      @Override
-      public void addV(int indexI, DataNode theDataNode) 
-        {
-          // Do nothing.  Could also thrown an exception or log an error.
-          }
-
-      @Override
-      public void removeV(int indexI)
-        {
-          // Do nothing.  Could also thrown an exception or log an error.
-          }
-
-      @Override
-      public Iterator<DataNode> iterator()
-        {
-          return null; // Do nothing.  Could also thrown an exception or log an error.
-          }
 
   /* Methods which return Strings containing information about the node.
     These may be overridden by subclasses as needed.

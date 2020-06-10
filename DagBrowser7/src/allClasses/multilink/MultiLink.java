@@ -3,44 +3,55 @@ package allClasses.multilink;
 import java.util.Iterator;
 
 public interface MultiLink<
-    L // Link type. 
+    E // Element type. 
     > 
 
-  extends Iterable<L>
+  extends Iterable<E>
 
   {
   
-    /* This interface defines the methods used to access a set of links.
-      At first this will be used to access DataNode child links,
-      but eventually it might be used multiple parent DAG DataNode links.
-      
-      This interface can be implemented several ways:
-      * By an L object as a list of that L object and nothing else.
-        This requires no MultiLink field in the object.
-      * By a non-L object which is referenced by L object 
-        childMultiLink field.  The possibilities are:
-        * A class that contains a list of L objects.
-        * A class that represents an empty list of L objects.
-      ///ehn If mutator methods return MultiLink then in theory
-      each time a mutator is called, the childMultiLink referenced
-      could be replaced with with the most space-efficient representation. 
+    /* This interface defines the methods used to access 
+      reference links to a list of elements.
+      At first this will be used to access DataNode child links, but eventually 
+      it might be used to access multiple parent DAG DataNode links.
+      It is not limited to elements that are DataNodes.
 
       The public methods of this class are similar in function to
       methods in DataTreeModel.
+
+      This interface is fully implemented by ListMultiLink so that
+      it can be used like an ArrayList with a reference to it in an element field.  
+      It is now in full use this way and working.
+
+      But this interface is also partially implemented for use in another way.
+      DataNode implements the interface so that a DataNode can eventually act as
+      a single-element MultiLink.  This makes it possible for storage compression.
+      ///opt The following changes are tentatively planned:
+      * Create class EmptyMultiLink and create a singleton instance of it.
+      * Modify the MultiLink mutators to return a MultiLink which is
+        either the original one, or a different one that is equivalent.
+        Calculate that MultiLink return value as follows:
+        * If the MultiLink has become empty, return the singleton EmptyMultiLink.
+        * If the MultiLink has only 1 element, return the element,
+          which implements the ElementMultiLink interface.
+        * If the MultiLink has 2 or more elements, return a ListMultiLink,
+          maybe the same one whose method was called.
+        This value can be stored back in the element field from which it came.
+        This can save a lot of storage if many MultiLinks have either 0 or 1 elements.
       */
   
-    public boolean hasNoLinks(); // Equivalent of isLeaf().
+    public boolean isEmptyB(); // Equivalent of isLeaf().
   
-    public int getLinkCountI(); // Equivalent of getChildCount().
+    public int getCountI(); // Equivalent of getChildCount().
   
-    public L getLinkL(int indexI); // Equivalent of DataNode getChild( int indexI );
+    public E getE(int indexI); // Equivalent of DataNode getChild( int indexI );
   
-    public int getIndexOfLinkI(L theL); // int getIndexOfChild( Object inChildObject );
+    public int getIndexOfI(E theE); // int getIndexOfChild( Object inChildObject );
     
-    public void addV(int indexI, L theLink);
+    public void addV(int indexI, E theLink);
     
     public void removeV(int indexI);
     
-    public Iterator<L> iterator();
+    public Iterator<E> iterator();
     
     }

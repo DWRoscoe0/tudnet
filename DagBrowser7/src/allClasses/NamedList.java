@@ -139,7 +139,7 @@ public class NamedList
             childDataNode.setParentToV( this ); // Link child back to this node as parent.
 	    	  	int actualIndexI= // Converting 
 	    	  			(requestedIndexI < 0) // requested index < 0 
-	    	  			? childMultiLinkOfDataNodes.getLinkCountI() // to mean end of list,
+	    	  			? childMultiLinkOfDataNodes.getCountI() // to mean end of list,
             	  : requestedIndexI; // otherwise use requested index.
             childMultiLinkOfDataNodes.addV(actualIndexI, childDataNode );
             notifyTreeModelAboutAdditionV(
@@ -267,7 +267,7 @@ public class NamedList
         if no such child exists.
         */
       { 
-        return childMultiLinkOfDataNodes.getLinkL(indexI); 
+        return childMultiLinkOfDataNodes.getE(indexI); 
         }
     
 	  public Iterator<DataNode> iterator() 
@@ -275,32 +275,7 @@ public class NamedList
 	      return childMultiLinkOfDataNodes.iterator();
 		  	}
 
-	  
-	  /* Related originally auto-generated method stubs for interface MultiLink.
-	    They simply pass control to the same-named methods in the childMultiLink.
-	    */
-    
-    @Override
-    public boolean hasNoLinks() {
-      return childMultiLinkOfDataNodes.hasNoLinks();
-      }
 
-    @Override
-    public int getLinkCountI() {
-      return childMultiLinkOfDataNodes.getLinkCountI();
-      }
-
-    @Override
-    public DataNode getLinkL(int indexI) {
-      return childMultiLinkOfDataNodes.getLinkL(indexI); 
-      }
-
-    @Override
-    public int getIndexOfLinkI(DataNode theL) {
-      return childMultiLinkOfDataNodes.getIndexOfLinkI(theL);
-      }
-
-	  
 	  ///dbg methods.
 	  
   	protected void logNullDataTreeModelsV()  ///dbg

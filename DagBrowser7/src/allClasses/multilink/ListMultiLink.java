@@ -5,17 +5,20 @@ import java.util.Iterator;
 import java.util.List;
 
 public class ListMultiLink<
-    L // Link type.   /// Should this be "? extends MultiLink"?
-    > 
+    E extends MultiLink<E> // Element type.
+    >
 
-  implements MultiLink<L>
+  implements MultiLink<E>
 
   {
-  
+
+
+    MultiLink<E> get(E theE) { return theE; }
+
     // Instance variables.
   
-      protected List<L> theListOfLs= // Set to empty,
-          new ArrayList<L>(); // ArrayList.
+      protected List<E> theListOfEs= // Set to empty,
+          new ArrayList<E>(); // ArrayList.
       
       public ListMultiLink() // Constructor.
         { 
@@ -25,28 +28,28 @@ public class ListMultiLink<
     // interface MultiLink methods.
       
       @Override
-      public boolean hasNoLinks() 
+      public boolean isEmptyB() 
         {
-          return (getLinkCountI() == 0);
+          return (getCountI() == 0);
           }
 
       @Override
-      public int getLinkCountI() 
+      public int getCountI() 
         {
-          return theListOfLs.size();
+          return theListOfEs.size();
           }
 
       @Override
-      public L getLinkL(int indexI) 
+      public E getE(int indexI) 
         {
-          L resultL;  // Allocating result space.
+          E resultL;  // Allocating result space.
 
           if  // Handling index which is out of range.
-            ( (indexI < 0) || (indexI >= theListOfLs.size()) )
+            ( (indexI < 0) || (indexI >= theListOfEs.size()) )
             resultL= null;  // Setting result to null.
           else  // Handling index which is in range.
             resultL=   // Setting result to be child from...
-              theListOfLs.get(   // ...L List...
+              theListOfEs.get(   // ...E List...
                 indexI  // ...at the desired position.
                 );
 
@@ -54,29 +57,29 @@ public class ListMultiLink<
           }
 
       @Override
-      public int getIndexOfLinkI(L theL) 
+      public int getIndexOfI(E theE) 
         {
-          return theListOfLs.indexOf(theL);
+          return theListOfEs.indexOf(theE);
           }
 
-      public void addV(int indexI, L theLink)
+      public void addV(int indexI, E theE)
         {
-          theListOfLs.add(
+          theListOfEs.add(
               indexI,
-              theLink
+              theE
               );
           }
 
       public void removeV(int indexI)
         {
-          theListOfLs.remove(
+          theListOfEs.remove(
               indexI
               );
           }
       
-      public Iterator<L> iterator() 
+      public Iterator<E> iterator() 
         {
-          return theListOfLs.iterator();
+          return theListOfEs.iterator();
           }
 
     }

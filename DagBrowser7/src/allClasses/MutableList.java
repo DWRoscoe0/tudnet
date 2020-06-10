@@ -59,7 +59,7 @@ public class MutableList extends NamedList
 		      */
 		    {
           childMultiLinkOfDataNodes.addV( 
-              childMultiLinkOfDataNodes.getLinkCountI(), 
+              childMultiLinkOfDataNodes.getCountI(), 
               childDataNode 
               );
 		      }
