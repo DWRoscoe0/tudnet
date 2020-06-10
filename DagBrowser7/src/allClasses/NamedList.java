@@ -1,11 +1,6 @@
 package allClasses;
 
-import java.util.Arrays;
 import java.util.Iterator;
-
-import java.util.ArrayList;
-import java.util.List;
-//// import java.util.ListIterator;
 
 import allClasses.AppLog.LogLevel;
 import allClasses.multilink.ListMultiLink;
@@ -20,7 +15,6 @@ public class NamedList
 	extends NamedBranch  // Will override all remaining leaf behavior.
 
 	implements 
-    //// MultiLink<DataNode>, already done in superclass.
     Iterable<DataNode>
   
   /* This is a utility class that is simply a List with a name.
@@ -52,17 +46,8 @@ public class NamedList
 			  // and all its descendants has already occurred and 
 			  // need not be done again, except for new added children. 
 	
-			/*  ////
-	    protected List<DataNode> theListOfDataNodes= // Set to empty,
-	    		new ArrayList<DataNode>(  // a mutable ArrayList from
-		        Arrays.asList(  // an immutable List made from
-		        		emptyListOfDataNodes() // an empty DataNode list.
-		            )
-		        );
-      */  ////
-
 	    protected MultiLink<DataNode> childMultiLinkOfDataNodes= // Set to an empty
-          new ListMultiLink<DataNode>(); // ListMultiList of DataNodes.
+          new ListMultiLink<DataNode>(); // ListMultiLink of DataNodes.
 
 	    
 	    /* Constructors: An instance of this class can be created by either
@@ -132,6 +117,11 @@ public class NamedList
 	      it also informs theDataTreeModel about it
 	      so that TreeModelListeners can be notified.
 
+        Also, it makes the following adjusts to the child:
+        * It propagates theDataTreeModel, into the childDataNode,
+          and its descendants if necessary.
+        * It stores this NamedList as the child's parent node.
+
 	      These operations are done in a thread-safe manner
 	      by being synchronized and using synchronized methods.
 	      The EDT thread might not be used at all.
@@ -145,12 +135,12 @@ public class NamedList
     	  	successB= false; // Returning add failure.
     	  	else // Child was not found in list.
 	    	  { // Adding to List because it's not there yet.
+            childDataNode.propagateIntoSubtreeV( theDataTreeModel );
+            childDataNode.setParentToV( this ); // Link child back to this node as parent.
 	    	  	int actualIndexI= // Converting 
 	    	  			(requestedIndexI < 0) // requested index < 0 
-            		//// ? theListOfDataNodes.size() // to mean end of list,
 	    	  			? childMultiLinkOfDataNodes.getLinkCountI() // to mean end of list,
             	  : requestedIndexI; // otherwise use requested index.
-            addPhysicallyV( actualIndexI, childDataNode );
             childMultiLinkOfDataNodes.addV(actualIndexI, childDataNode );
             notifyTreeModelAboutAdditionV(
             		parentDataNode, actualIndexI, childDataNode );
@@ -171,33 +161,11 @@ public class NamedList
 		      	}
 	      }
 
-	  private void addPhysicallyV(
-	  		final int indexI, final DataNode childDataNode 
-	  		)
-	    /* This method adds childDataNode to this node's list of children,
-	      but into that child it propagates the following information:
-	      * theDataTreeModel, into the childDataNode,
-	        and its descendants if necessary.
-	      * this NamedList, as the child's parent node.
-	      However, it does not do TreeModel notifications.
-	      
-	      This is not synchronized because it is called only by addB(..).
-	      */
-	    {
-	  		childDataNode.propagateIntoSubtreeV( theDataTreeModel );
-	  		
-	  		childDataNode.setParentToV( this ); // Link child to this node.
-
-	  		//// theListOfDataNodes.add( // Link this node to child. 
-	  		//// 		indexI, childDataNode );
-	      }
-
     protected int finalizeDataNodesI()
       /* This override method finalizes all the children and then the base class. 
         It increases and returns nodeCountI by the number of nodes finalized.*/
       {
         int nodeTotalI= 0;
-        //// for ( DataNode theDataNode : theListOfDataNodes) // For each child
         for ( DataNode theDataNode : childMultiLinkOfDataNodes) // For each child
           nodeTotalI+=   // recursively finalize it, adding the number finalized to total.
             theDataNode.finalizeDataNodesI();
@@ -215,7 +183,6 @@ public class NamedList
 		  	  	&& ( this.theDataTreeModel == null )  // our TreeModel is null.
 		  	  	)
 			  	{
-			  		//// for ( DataNode theDataNode : theListOfDataNodes) // For each child
 		  	    for ( DataNode theDataNode : childMultiLinkOfDataNodes) // For each child
 			  			theDataNode.propagateIntoSubtreeV(  // recursively propagate
 			  					theDataTreeModel // the TreeModel 
@@ -251,7 +218,6 @@ public class NamedList
 	      but not into this node.  It remains unchanged.
 		    */
 		  {
-	  		//// for ( DataNode theDataNode : theListOfDataNodes)  // For each child
 	      for ( DataNode theDataNode : childMultiLinkOfDataNodes)  // For each child
 	  			theDataNode.propagateIntoSubtreeB( // recursively propagate  
 	  					theMaxLogLevel); // the new level into child subtree.
@@ -283,7 +249,6 @@ public class NamedList
       { 
         boolean processedB= false; // Assume all children will fail to process.
         Iterator<DataNode> theIterator= // Prepare a child iterator.
-            //// theListOfDataNodes.listIterator();
             childMultiLinkOfDataNodes.iterator();
         while (true) { // Process children until something causes exit.
           if (! theIterator.hasNext()) break; // Exit if no more children.
@@ -301,27 +266,12 @@ public class NamedList
       /* This returns the child with index indexI or null
         if no such child exists.
         */
-      { return childMultiLinkOfDataNodes.getLinkL(indexI); }
-    /*  ////
-      {
-        DataNode resultDataNode;  // Allocating result space.
-
-        if  // Handling index which is out of range.
-          ( (indexI < 0) || (indexI >= theListOfDataNodes.size()) )
-          resultDataNode= null;  // Setting result to null.
-        else  // Handling index which is in range.
-          resultDataNode=   // Setting result to be child from...
-            theListOfDataNodes.get(   // ...DataNode List...
-              indexI  // ...at the desired position.
-              );
-
-        return resultDataNode;
+      { 
+        return childMultiLinkOfDataNodes.getLinkL(indexI); 
         }
-    */  ////
     
 	  public Iterator<DataNode> iterator() 
 		  {
-		    //// return theListOfDataNodes.iterator();
 	      return childMultiLinkOfDataNodes.iterator();
 		  	}
 

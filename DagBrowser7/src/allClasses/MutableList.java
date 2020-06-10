@@ -58,7 +58,6 @@ public class MutableList extends NamedList
 		      I don't understand why.  Maybe it's TreePath translation.
 		      */
 		    {
-          //// theListOfDataNodes.add( theListOfDataNodes.size(), childDataNode );
           childMultiLinkOfDataNodes.addV( 
               childMultiLinkOfDataNodes.getLinkCountI(), 
               childDataNode 
@@ -70,7 +69,7 @@ public class MutableList extends NamedList
 		      then it does nothing and returns false,
 		      otherwise it removes childDataNode from the List and returns true. 
 
-			    It also informs theDataTreeModel of the removal, if any,
+			    It also informs theDataTreeModel of the removal, if it happened,
 			    so TreeModelListeners can be informed.
 
 		      It does all this in a thread-safe manner using synchronization.
@@ -91,7 +90,6 @@ public class MutableList extends NamedList
 	    	  	else
 		    	  {
 	          	//appLogger.debug("MutableList.remove(..): removing.");
-				  		//// theListOfDataNodes.remove( indexI );
 				  		childMultiLinkOfDataNodes.removeV(indexI);
 				  		theDataTreeModel.signalRemovalV( 
 				      		parentDataNode, indexI, childDataNode 

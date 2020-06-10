@@ -3,7 +3,7 @@ package allClasses.multilink;
 import java.util.Iterator;
 
 public interface MultiLink<
-    L // Link type.   //// Should this be ? extends MultiLink
+    L // Link type. 
     > 
 
   extends Iterable<L>

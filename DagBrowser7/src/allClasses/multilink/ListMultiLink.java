@@ -5,7 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class ListMultiLink<
-    L // Link type.   //// Should this be ? extends MultiLink
+    L // Link type.   /// Should this be "? extends MultiLink"?
     > 
 
   implements MultiLink<L>
