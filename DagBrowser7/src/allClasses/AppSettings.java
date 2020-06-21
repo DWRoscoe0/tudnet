@@ -56,8 +56,11 @@ public class AppSettings {
       
       setInitiatorV(entryPointClass, theCommandArgs);
       
-      FileOps.makeDirectoryAndAncestorsWithLoggingV( // Make another directory we'll need.
+      // Make more directories we'll need.
+      FileOps.makeDirectoryAndAncestorsWithLoggingV(
           FileOps.makePathRelativeToAppFolderFile( "Peers" ) );
+      FileOps.makeDirectoryAndAncestorsWithLoggingV(
+          FileOps.makePathRelativeToAppFolderFile( "Replications" ) );
       
       SystemSettings.logSystemPropertiesV(theAppLog);
       }
