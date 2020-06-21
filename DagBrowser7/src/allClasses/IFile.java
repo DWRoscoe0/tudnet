@@ -306,6 +306,9 @@ public class IFile
         /* Returns an array of Strings of names of files in 
           directory associated with this object.
           It loads this array if it has not already been loaded.
+          ///enh The use of File.list() could be replaced with 
+            a DirectoryStream<Path> iterator, and be able to handle very long
+            unsorted directories.  Some caching would be needed for reverse scrolling.
           */
         {
           if ( childStrings == null )  // Read names of children if needed.

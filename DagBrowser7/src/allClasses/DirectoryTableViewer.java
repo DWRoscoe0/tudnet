@@ -125,6 +125,7 @@ public class DirectoryTableViewer
           adjusting any dependent instance variables,
           and firing a TreePathEvent to notify
           any interested TreeSelectionListener-s.
+          ///opt Does list() need to be done?  Couldn't we get list from DataNode.
           */
         { // void valueChanged(TheListSelectionEvent)
           ListSelectionModel TheListSelectionModel = // get ListSelectionModel.
