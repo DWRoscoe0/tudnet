@@ -37,6 +37,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 
   // Saved while constructing singletons.
   private TextStreams theTextStreams;
+  private TextStreams2 theTextStreams2;
   private final UnicasterManager theUnicasterManager;
 
   ///org Saved after constructing singletons.  These could be while-constructing variables.
@@ -94,7 +95,9 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
       NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue=
           new NetcasterQueue(cmThreadLockAndSignal, Config.QUEUE_SIZE);
       theTextStreams= new TextStreams(
-          "Text-Streams",this,thePersistent,theUnicasterManager);
+          "Text-Replication-Streams",this,thePersistent,theUnicasterManager);
+      theTextStreams2= new TextStreams2(
+          "Text-Streams",this,thePersistent);
 	    ConnectionManager theConnectionManager= new ConnectionManager(
         this, // the AppGuiFactory.
     	  thePersistent,
@@ -105,7 +108,8 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
   	    unconnectedReceiverToConnectionManagerNetcasterQueue,
   	    toConnectionManagerNotifyingQueueOfStrings,
         toConnectionManagerNotifyingQueueOfMapEpiNodes,
-        theTextStreams
+        theTextStreams,
+        theTextStreams2
   	    );
       EpiThread theConnectionManagerEpiThread=
         AppGUIFactory.makeEpiThread( theConnectionManager, "ConnMgr" );
@@ -115,6 +119,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
         AppGUIFactory.makeEpiThread( theSystemsMonitor, "SystemsMonitor" );
       DataNode testCenterDataNode= new NamedList(
           "Test-Center",
+          theTextStreams2,
           theTextStreams,
           new Infinitree( null, 0 )
           );

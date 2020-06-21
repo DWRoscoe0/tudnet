@@ -121,6 +121,7 @@ public class ConnectionManager
         // For inputs in the form of MapEpiNodes.
       
       private TextStreams theTextStreams= null;
+      private TextStreams2 theTextStreams2= null;
 
     // Other instance variables, all private.
 
@@ -147,7 +148,8 @@ public class ConnectionManager
     		NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue,
         NotifyingQueue<String> toConnectionManagerNotifyingQueueOfStrings,
         NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes,
-        TextStreams theTextStreams
+        TextStreams theTextStreams,
+        TextStreams2 theTextStreams2
     		)
       {
       	super.initializeV(  // Constructing base class.
@@ -170,7 +172,7 @@ public class ConnectionManager
         this.toConnectionManagerNotifyingQueueOfMapEpiNodes=
             toConnectionManagerNotifyingQueueOfMapEpiNodes;
         this.theTextStreams= theTextStreams;
-
+        this.theTextStreams2= theTextStreams2;
         }
 
 
@@ -186,7 +188,8 @@ public class ConnectionManager
       {
     		initializeV();  // Doing non-injection initialization.
 
-    		theTextStreams.startServiceV(); // Will create child TextStream-s.
+        theTextStreams.startServiceV(); // Will create child TextStream-s.
+        theTextStreams2.startServiceV(); // Will request TextStream by replication.
     		
     		restartPreviousUnicastersV();
 
