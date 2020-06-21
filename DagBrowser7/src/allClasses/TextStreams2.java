@@ -55,7 +55,7 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream> {
 
   private void createRemoteTextStreamsFromFoldersV()
     {
-      File peersFile= AppSettings.makePathRelativeToAppFolderFile(
+      File peersFile= FileOps.makePathRelativeToAppFolderFile(
         "Replications"
         );
       String[] peerStrings= // Read names of peer directories from Peers directory.

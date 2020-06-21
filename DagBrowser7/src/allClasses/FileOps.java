@@ -23,7 +23,7 @@ public class FileOps
   {
   
     /* This class contains code useful for operating on files.
-      This class was created by moving file-related code from the class Misc.
+      ///org It should probably be organized by grouping related methods.
       */
     
     public static void updateFromToV(File thisFile, File thatFile)
@@ -328,6 +328,82 @@ public class FileOps
         */
       {
         return Misc.dateString( theFile.lastModified() );
+        }
+
+    
+
+    // File path and directory maker methods.
+
+    public static File makePathRelativeToAppFolderFile(String... fileRelativePathStrings )
+      /* This method creates a File name path object by adding,
+        to the path name for the standard app folder,
+        the fileRelativePathStrings, which is an array of Strings 
+        representing path elements to be appended..  
+        All but the last element represents a directory,
+        The last element could be either a directory or a file,
+        fileRelativePathStrings may contain a single name element, such as 
+          {"TCPCopierStaging" + File.separator + "Infogora.exe"} 
+        or multiple elements, such as 
+          {"TCPCopierStaging", "Infogora.exe"} 
+        Note that the above 2 examples represent the same path
+        expressed in 2 different ways.
+        */
+      {
+        File resultFile= AppSettings.userAppFolderFile; // Start with bare app folder
+      
+        for // For all the elements of the relative path element array 
+          (String elementString: fileRelativePathStrings) {
+          resultFile= new File(resultFile, elementString); // add next element.
+          theAppLog.debug("AppSettings.makePathRelativeToAppFolderFile(.) " 
+              + elementString + " " + resultFile);
+          }
+      
+        return resultFile; // Return the accumulated result.
+        }
+
+    public static File makeRelativeToAppFolderFile( 
+        String fileRelativePathString )
+      /* This method creates a File name path object by 
+        calling makePathRelativeToAppFolderFile(String...)
+        with fileRelativePathString as the only element of the argument array.
+        */
+      {
+        return makePathRelativeToAppFolderFile( fileRelativePathString );
+        }
+
+    static String makeDirectoryAndAncestorsString(File directoryFile)
+      /* This method tries to create the directory whose name is directoryFile,
+        and any ancestor directories that do not exist.
+        It returns null if successful, an error message string if not.
+        */
+      {
+        String errorString= null; // Assume no errors.
+        makeDir: { 
+          try {
+            if (directoryFile.exists())
+              break makeDir; // Do nothing if directory already exists.
+            if (! directoryFile.mkdirs())
+              errorString= 
+                "AppSettings loader: "+directoryFile+" mkdirs() failed.";
+          } catch (Exception theException){
+            errorString= "AppSettings.makeDirectoryAndAncestorsString(.): "
+                + directoryFile + theException;
+          }
+        } // makeDir:
+        return errorString;
+        }
+
+    public static void makeDirectoryAndAncestorsWithLoggingV(File directoryFile)
+      /* This method creates a directory and its ancestors if needed,
+        but if any errors happen, it logs them.
+        */
+      {
+        String errorString= // Try creating desired folder if it doesn't exist.
+            makeDirectoryAndAncestorsString(directoryFile);
+        if (errorString != null) { // If there was an error, log it.
+          theAppLog.error(
+              "AppSettings.makeDirectoryAndAncestorsWithLoggingV(.) " + errorString);
+          }
         }
 
     }

@@ -66,11 +66,16 @@ public class TextStream
           this.theTextStreams= theTextStreams;
           this.thePeerIdentityString= getKeyK(); 
           
+          /*  ////
           streamFile= AppSettings.makePathRelativeToAppFolderFile(
                   "Peers" 
                   + File.separator + getKeyK()
                   + File.separator + "textStreamFile.txt"
                   );
+          */  ////
+          streamFile= FileOps.makePathRelativeToAppFolderFile(
+              "Peers",getKeyK(),"textStreamFile.txt"
+              );
           loadDocumentV(streamFile); // Load document from disk text.
           }
 
@@ -170,7 +175,7 @@ public class TextStream
           FileWriter theFileWriter= null;
           thePlainDocument.readLock();
           try {
-              AppSettings.makeDirectoryAndAncestorsWithLoggingV(
+              FileOps.makeDirectoryAndAncestorsWithLoggingV(
                 theFile.getParentFile()); // Create directory if needed.
               theFileWriter= new FileWriter( theFile ); // Open file.
               writeAllLineElementsV(theFileWriter);

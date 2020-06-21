@@ -191,12 +191,12 @@ l    * If the app receives a message indicating
 	      runningAppFile= AppSettings.initiatorFile;
 
 	      standardAppFile=
-	          AppSettings.makeRelativeToAppFolderFile( 
+	          FileOps.makeRelativeToAppFolderFile( 
               AppSettings.initiatorNameString
               );
 
 	      tcpCopierAppFile= // Calculating File name of TCPCopier target file.
-	      		AppSettings.makeRelativeToAppFolderFile( 
+	      		FileOps.makeRelativeToAppFolderFile( 
 	      				Config.tcpCopierOutputFolderString 
 	      				+ File.separator 
 	      				+ AppSettings.initiatorNameString

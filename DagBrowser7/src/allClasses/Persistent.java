@@ -82,7 +82,7 @@ public class Persistent
 
         try { 
             theRandomAccessFile= new RandomAccessFile(
-                AppSettings.makeRelativeToAppFolderFile( fileString ),"r");
+                FileOps.makeRelativeToAppFolderFile( fileString ),"r");
             theRandomAccessInputStream= 
                 new RandomFileInputStream(theRandomAccessFile);
             resultMapEpiNode= MapEpiNode.tryBlockMapEpiNode(theRandomAccessInputStream, 0 );
@@ -245,7 +245,7 @@ public class Persistent
         FileOutputStream theFileOutputStream= null;
         try {
             theFileOutputStream= 
-              new FileOutputStream(AppSettings.makeRelativeToAppFolderFile(fileString));  
+              new FileOutputStream(FileOps.makeRelativeToAppFolderFile(fileString));  
             theFileOutputStream.write(
                 "#---YAML-like EpiNode data output follows---".getBytes());
               theEpiNode.writeV(theFileOutputStream, // Write all of theEpiNode tree 

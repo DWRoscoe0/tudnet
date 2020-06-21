@@ -31,88 +31,12 @@ public class AppSettings {
     */
   static {
     String errorString= // Try creating app folder if it doesn't exist.
-        makeDirectoryAndAncestorsString(userAppFolderFile);
-    if (errorString != null) { // If there was an error, display it and exit.
+        FileOps.makeDirectoryAndAncestorsString(userAppFolderFile);
+    if (errorString != null) { // If there was an error, display it on console and exit.
       System.out.println(errorString);
       System.exit(1);
       }
     }
-  
-  public static void makeDirectoryAndAncestorsWithLoggingV(File directoryFile)
-    /* This method creates a directory and its ancestors if needed,
-      but if any errors happen, it logs them.
-      */
-    {
-      String errorString= // Try creating desired folder if it doesn't exist.
-          makeDirectoryAndAncestorsString(directoryFile);
-      if (errorString != null) { // If there was an error, log it.
-        theAppLog.error(
-            "AppSettings.makeDirectoryAndAncestorsWithLoggingV(.) " + errorString);
-        }
-      }
-  
-  private static String makeDirectoryAndAncestorsString(File directoryFile)
-    /* This method tries to create the directory whose name is directoryFile,
-      and any ancestor directories that do not exist.
-      It returns null if successful, an error message string if not.
-      */
-    {
-      String errorString= null; // Assume no errors.
-      makeDir: { 
-        try {
-          if (directoryFile.exists())
-            break makeDir; // Do nothing if directory already exists.
-          if (! directoryFile.mkdirs())
-            errorString= 
-              "AppSettings loader: "+directoryFile+" mkdirs() failed.";
-        } catch (Exception theException){
-          errorString= "AppSettings.makeDirectoryAndAncestorsString(.): "
-              + directoryFile + theException;
-        }
-      } // makeDir:
-      return errorString;
-      }
-  
-  // Methods that calculate and return values which depend on app settings.
-
-  public static File makeRelativeToAppFolderFile( 
-      String fileRelativePathString )
-    /* This method creates a File name object by appending fileRelativePathString
-      to the path name for the standard app folder,
-      This method works by delegating to a method that takes 
-      an array containing fileRelativePathString as its only element. 
-      See the delegate method for details. 
-      */
-    {
-      return makePathRelativeToAppFolderFile( fileRelativePathString );
-      }
-
-  public static File makePathRelativeToAppFolderFile(String... fileRelativePathStrings )
-    /* This method creates a File name path object by adding,
-      to the path name for the standard app folder,
-      the fileRelativePathStrings, which is an array of Strings 
-      representing path elements to be appended..  
-      All but the last element represents a directory,
-      The last element could be either a directory or a file,
-      fileRelativePathStrings may contain a single name element, such as 
-        {"TCPCopierStaging" + File.separator + "Infogora.exe"} 
-      or multiple elements, such as 
-        {"TCPCopierStaging", "Infogora.exe"} 
-      Note that the above 2 examples represent the same path
-      expressed in 2 different ways.
-      */
-    {
-      File resultFile= AppSettings.userAppFolderFile; // Start with bare app folder
-
-      for // For all the elements of the relative path element array 
-        (String elementString: fileRelativePathStrings) {
-        resultFile= new File(resultFile, elementString); // add next element.
-        theAppLog.debug("AppSettings.makePathRelativeToAppFolderFile(.) " 
-            + elementString + " " + resultFile);
-        }
-
-      return resultFile; // Return the accumulated result.
-      }
   
   public static void initializeV(
       Class<?> entryPointClass, CommandArgs theCommandArgs)
@@ -132,12 +56,11 @@ public class AppSettings {
       
       setInitiatorV(entryPointClass, theCommandArgs);
       
-      makeDirectoryAndAncestorsWithLoggingV( // Make another directory we'll need.
-          makePathRelativeToAppFolderFile( "Peers" ) );
+      FileOps.makeDirectoryAndAncestorsWithLoggingV( // Make another directory we'll need.
+          FileOps.makePathRelativeToAppFolderFile( "Peers" ) );
       
       SystemSettings.logSystemPropertiesV(theAppLog);
       }
-    
   
   /* The initiator file is the first file which is both
     * executed, and is considered to be part of the application.
@@ -205,5 +128,6 @@ public class AppSettings {
               + AppSettings.initiatorExtensionString
             + ", initiatorFile=" + NL + "  " + AppSettings.initiatorFile);
         }
+
 
     }

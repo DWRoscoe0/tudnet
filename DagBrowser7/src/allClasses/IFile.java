@@ -237,7 +237,7 @@ public class IFile
             try {
               FileInputStream theFileInputStream = 
               		new FileInputStream(getFile());
-              @SuppressWarnings("resource")
+              //// @SuppressWarnings("resource")
               BufferedReader theBufferedReader = 
                 new BufferedReader(new InputStreamReader(theFileInputStream));
               

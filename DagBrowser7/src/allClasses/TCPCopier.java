@@ -196,11 +196,11 @@ public class TCPCopier extends EpiThread
         The method will return early if the thread is interrupted.
         */
       {
-        File tcpFolderFile= AppSettings.makeRelativeToAppFolderFile( 
+        File tcpFolderFile= FileOps.makeRelativeToAppFolderFile( 
             Config.tcpCopierInputFolderString );
         tcpFolderFile.mkdir();  // Create destination folder if needed.
         FileOps.updateFromToV( // Update staging area from standard folder.
-          AppSettings.makeRelativeToAppFolderFile(
+          FileOps.makeRelativeToAppFolderFile(
               Config.appString + AppSettings.initiatorExtensionString),
           new File( tcpFolderFile, AppSettings.initiatorNameString)
           );
@@ -342,7 +342,7 @@ public class TCPCopier extends EpiThread
         ///     + ", serverIPString= " + serverIPString
         ///     + ", serverPortString= " + serverPortString);
         File clientFile= 
-            AppSettings.makeRelativeToAppFolderFile( clientFileString );
+            FileOps.makeRelativeToAppFolderFile( clientFileString );
         int serverPortI= Integer.parseUnsignedInt( serverPortString );
         InetSocketAddress theInetSocketAddress= null; 
         try {
@@ -471,7 +471,7 @@ public class TCPCopier extends EpiThread
         */
       {
         serverFile= // Calculating File name.
-            AppSettings.makeRelativeToAppFolderFile( serverFileString );
+            FileOps.makeRelativeToAppFolderFile( serverFileString );
         long serverFileLastModifiedL= serverFile.lastModified();
         long serverFileFizeL= serverFile.length();
         long resultL= tryTransferingFileL(
