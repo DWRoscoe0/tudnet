@@ -21,17 +21,24 @@ public class PersistentCursor
     The iterator that this class implements is a pitererator,
     which is an iterator with pointer semantics.
 
+    ///org Stop using this class's field-access methods.
+      Use the MapEpiNode methods that these field-access methods call.
+      This will mean that the callers will need to first call 
+      getSelectedMapEpiNode() to get the value MapEpiNode.
+      
     ///org The use of the term "persistent" is unfortunate.
       According to Wikipedia, that term is used to describe data structures
       which, when they are changed, retain 
       previous versions of the data structure.
-      These are used extensively in applicative languages. 
+      These are used extensively in applicative languages.
+       
 	  ///pos Should this be changed to support unsorted keys?
 	    Possibly, but not immediately.  Underway
+	    
 	  ///pos Make PersistentNode able to return one of these
 	    and eliminate absolute path support?
 	    
-	  Code in this file is ordered by general use time.
+	  Within each of the 2 major code groups, code is ordered by general use time.
 	  
    	*/
 
@@ -215,8 +222,15 @@ public class PersistentCursor
         return this.entryKeyString;
         }
 
+    public MapEpiNode getSelectedMapEpiNode()
+      /* Returns the MapEpiNode presently selected by the iterator,
+        or null if no entry is selected.  */
+      { 
+        return lowerMapEpiNode; 
+        }
 
-		// Methods that access fields of selected map.
+
+		// Methods that read or write fields of selected map.
 
 
 		/* Methods which update fields, meaning they store a value only if it is changing.
@@ -251,8 +265,19 @@ public class PersistentCursor
         but also updates the field "lastModified" with the present time.
         */
       { 
+        //// putFieldV( fieldKeyString, fieldValueString );
+        //// putFieldV( "lastModified", ""+System.currentTimeMillis());
+        putFieldWithTimeModifiedV(fieldKeyString, fieldValueString, "lastModified" );
+        }
+
+    private void putFieldWithTimeModifiedV( 
+        String fieldKeyString, String fieldValueString, String timeModifiedString )
+      /* This method stores fieldValueString into the field whose name is fieldKeyString
+        but also updates the field "lastModified" with the present time.
+        */
+      { 
         putFieldV( fieldKeyString, fieldValueString );
-        putFieldV( "lastModified", ""+System.currentTimeMillis());
+        putFieldV( timeModifiedString, ""+System.currentTimeMillis());
         }
 
     
@@ -275,13 +300,6 @@ public class PersistentCursor
     { 
       lowerMapEpiNode.removeV( fieldKeyString );
       }
-
-    public MapEpiNode getSelectedMapEpiNode()
-      /* Returns the MapEpiNode presently selected by the iterator,
-        or null if no entry is selected.  */
-      { 
-        return lowerMapEpiNode; 
-        }
     
     // Methods which test values in fields.
 
