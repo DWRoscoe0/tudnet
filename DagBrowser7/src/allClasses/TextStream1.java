@@ -19,7 +19,7 @@ import javax.swing.text.Element;
 import javax.swing.text.PlainDocument;
 import javax.swing.tree.TreePath;
 
-public class TextStream
+public class TextStream1
 
   extends KeyedStateList< String > 
 
@@ -32,7 +32,7 @@ public class TextStream
   
       // Injected variables:
       private Persistent thePersistent;
-      private TextStreams theTextStreams;
+      private TextStreams1 theTextStreams;
 
       // Other variables:
       private PlainDocument thePlainDocument= null; // Where the stream is stored.
@@ -48,10 +48,10 @@ public class TextStream
       
     // Constructors.
 
-      TextStream( 
+      TextStream1( 
           String peerIdentityString,
           Persistent thePersistent,
-          TextStreams theTextStreams
+          TextStreams1 theTextStreams
           )
         // Constructs a TextStream with a name inString.
         { 
@@ -107,7 +107,7 @@ public class TextStream
         {
           theAppLog.debug("TextStream.getDataJComponent(.) called.");
           JComponent resultJComponent= 
-            new TextStreamViewer( 
+            new TextStream1Viewer( 
               inTreePath, 
               inDataTreeModel,
               thePlainDocument,

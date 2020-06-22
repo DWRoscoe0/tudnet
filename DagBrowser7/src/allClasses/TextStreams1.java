@@ -7,7 +7,7 @@ import java.io.File;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class TextStreams extends SimplerListWithMap<String,TextStream> {
+public class TextStreams1 extends SimplerListWithMap<String,TextStream1> {
 
   // Constructor-injected dependencies.
   private Persistent thePersistent;
@@ -22,7 +22,7 @@ public class TextStreams extends SimplerListWithMap<String,TextStream> {
             }
       };
 
-  public TextStreams( // Constructor.
+  public TextStreams1( // Constructor.
       String nameString,
       
       AppGUIFactory theAppGUIFactory,
@@ -134,22 +134,22 @@ public class TextStreams extends SimplerListWithMap<String,TextStream> {
      */
     {
       String peerIdentityString= theMapEpiNode.getString("PeerIdentity");
-      TextStream theTextStream=  // Getting the appropriate TextStream.
+      TextStream1 theTextStream=  // Getting the appropriate TextStream.
           getOrBuildAddAndTextStream(peerIdentityString);
       theTextStream.tryProcessingMapEpiNodeB(theMapEpiNode);
       }
 
-  private TextStream getOrBuildAddAndTextStream(String peerIdentityString)
+  private TextStream1 getOrBuildAddAndTextStream(String peerIdentityString)
     {
-      TextStream theTextStream= childHashMap.get(peerIdentityString); // Try lookup.
+      TextStream1 theTextStream= childHashMap.get(peerIdentityString); // Try lookup.
       if (null == theTextStream)
         theTextStream= createAndAddTextStream(peerIdentityString);
       return theTextStream;
       }
 
-  private TextStream createAndAddTextStream(String peerIdentityString)
+  private TextStream1 createAndAddTextStream(String peerIdentityString)
     {
-      TextStream theTextStream= theAppGUIFactory.makeTextSteam(peerIdentityString);
+      TextStream1 theTextStream= theAppGUIFactory.makeTextSteam1(peerIdentityString);
       addingV(peerIdentityString, theTextStream); // Add to list and HashMap.
       return theTextStream;
       }

@@ -2,7 +2,7 @@ package allClasses;
 
 import java.io.File;
 
-public class TextStreams2 extends SimplerListWithMap<String,TextStream> {
+public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
   
   /* This class implements a list of peer TextStreams 
     based on data replication instead of TextStreams2 broadcast.  */
@@ -106,9 +106,21 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream> {
       //// do something.
       }
 
-  private TextStream createAndAddTextStream(String peerIdentityString)
+  public void processIfNewV(MapEpiNode theMapEpiNode)
+    /* This method examines theMapEpiNode.  
+      If the TextStream message it represents has been seen before,
+      then the method returns with no further action.
+      If it has not been seen before then it
+      * sends the message to the appropriate child TextStream, and
+      * distributes the message to other connected peers.
+     */
     {
-      TextStream theTextStream= theAppGUIFactory.makeTextSteam(peerIdentityString);
+      //// do nothing
+      }
+
+  private TextStream2 createAndAddTextStream(String peerIdentityString)
+    {
+      TextStream2 theTextStream= theAppGUIFactory.makeTextSteam2(peerIdentityString);
       addingV(peerIdentityString, theTextStream); // Add to list and HashMap.
       return theTextStream;
       }

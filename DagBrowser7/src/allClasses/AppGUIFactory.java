@@ -36,7 +36,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 	// Other objects that will be needed later.
 
   // Saved while constructing singletons.
-  private TextStreams theTextStreams;
+  private TextStreams1 theTextStreams1;
   private TextStreams2 theTextStreams2;
   private final UnicasterManager theUnicasterManager;
 
@@ -94,7 +94,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 	      new NetcasterQueue(cmThreadLockAndSignal, Config.QUEUE_SIZE);
       NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue=
           new NetcasterQueue(cmThreadLockAndSignal, Config.QUEUE_SIZE);
-      theTextStreams= new TextStreams(
+      theTextStreams1= new TextStreams1(
           "Text-Replication-Streams",this,thePersistent,theUnicasterManager);
       theTextStreams2= new TextStreams2(
           "Text-Streams",this,thePersistent);
@@ -108,7 +108,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
   	    unconnectedReceiverToConnectionManagerNetcasterQueue,
   	    toConnectionManagerNotifyingQueueOfStrings,
         toConnectionManagerNotifyingQueueOfMapEpiNodes,
-        theTextStreams,
+        theTextStreams1,
         theTextStreams2
   	    );
       EpiThread theConnectionManagerEpiThread=
@@ -120,7 +120,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
       DataNode testCenterDataNode= new NamedList(
           "Test-Center",
           theTextStreams2,
-          theTextStreams,
+          theTextStreams1,
           new Infinitree( null, 0 )
           );
       DataNode theInitialRootDataNode= new InfogoraRoot( // Building DataNode tree.
@@ -216,10 +216,16 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
     ///opt fastFailNullCheckT(..) might no longer be needed.
      */
 
-  public TextStream makeTextSteam(String thePeerIdentityString)
+  public TextStream1 makeTextSteam1(String thePeerIdentityString)
     { 
-      return new TextStream(
-        thePeerIdentityString,thePersistent,theTextStreams);
+      return new TextStream1(
+        thePeerIdentityString,thePersistent,theTextStreams1);
+      }
+
+  public TextStream2 makeTextSteam2(String thePeerIdentityString)
+    { 
+      return new TextStream2(
+        thePeerIdentityString,thePersistent,theTextStreams2);
       }
 
 	public static EpiThread makeEpiThread( Runnable aRunnable, String nameString )

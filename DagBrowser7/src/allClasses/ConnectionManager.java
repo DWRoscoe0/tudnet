@@ -120,7 +120,7 @@ public class ConnectionManager
       private NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes;
         // For inputs in the form of MapEpiNodes.
       
-      private TextStreams theTextStreams= null;
+      private TextStreams1 theTextStreams= null;
       private TextStreams2 theTextStreams2= null;
 
     // Other instance variables, all private.
@@ -148,7 +148,7 @@ public class ConnectionManager
     		NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue,
         NotifyingQueue<String> toConnectionManagerNotifyingQueueOfStrings,
         NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes,
-        TextStreams theTextStreams,
+        TextStreams1 theTextStreams,
         TextStreams2 theTextStreams2
     		)
       {

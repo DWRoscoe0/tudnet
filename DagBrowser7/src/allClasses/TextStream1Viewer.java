@@ -21,7 +21,7 @@ import javax.swing.JScrollPane;
 import javax.swing.tree.TreePath;
 import static allClasses.AppLog.theAppLog;
 
-public class TextStreamViewer
+public class TextStream1Viewer
 
   extends JPanel
  
@@ -43,7 +43,7 @@ public class TextStreamViewer
   
         // Constructor-injected variables.
         private PlainDocument thePlainDocument;
-        private TextStream theTextStream;
+        private TextStream1 theTextStream;
 
         private Border raisedEtchedBorder= // Common style used elsewhere.
             BorderFactory.createEtchedBorder(EtchedBorder.RAISED);
@@ -56,11 +56,11 @@ public class TextStreamViewer
 
     // Constructors and constructor-related methods.
 
-      public TextStreamViewer(  // Constructor.
+      public TextStream1Viewer(  // Constructor.
           TreePath theTreePath, 
           DataTreeModel theDataTreeModel,
           PlainDocument thePlainDocument,
-          TextStream theTextStream,
+          TextStream1 theTextStream,
           String thePeerIdentityString,
           Persistent thePersistent
           )
@@ -174,10 +174,10 @@ public class TextStreamViewer
         extends TreeHelper 
 
         {
-          TextStreamViewer theTextStreamViewer; 
+          TextStream1Viewer theTextStreamViewer; 
 
           MyTreeHelper(  // Constructor.
-              TextStreamViewer theTextStreamViewer, 
+              TextStream1Viewer theTextStreamViewer, 
               MetaRoot theMetaRoot,
               TreePath inTreePath
               )
