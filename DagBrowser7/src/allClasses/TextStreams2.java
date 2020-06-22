@@ -5,7 +5,13 @@ import java.io.File;
 public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
   
   /* This class implements a list of peer TextStreams 
-    based on data replication instead of TextStreams2 broadcast.  */
+    based on data replication instead of TextStreams2 broadcast.  
+    
+    ///fix Eventually the protocols will include time-out and retrying,
+      but for now those things are not included.
+      Retrying will be the job of the person doing the testing
+      in those few cases where it is needed.
+    */
 
   // Constructor-injected dependencies.
   private Persistent thePersistent;
@@ -56,7 +62,7 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
   private void createRemoteTextStreamsFromFoldersV()
     {
       File peersFile= FileOps.makePathRelativeToAppFolderFile(
-        "Replications"
+        Config.textStream2FolderString
         );
       String[] peerStrings= // Read names of peer directories from Peers directory.
           peersFile.list();

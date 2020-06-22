@@ -90,6 +90,8 @@ public class Config
 
 		public static final String appString= "Infogora";
 	  public static final String appJarString= appString + ".jar";
+    public static final String textStream1FolderString= "Peers";
+    public static final String textStream2FolderString= "Replications";
 
   	private Config() {} // Constructor is private so it can't be constructed.
 	

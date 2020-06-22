@@ -74,7 +74,7 @@ public class TextStream1
                   );
           */  ////
           streamFile= FileOps.makePathRelativeToAppFolderFile(
-              "Peers",getKeyK(),"textStreamFile.txt"
+              Config.textStream1FolderString,getKeyK(),"textStreamFile.txt"
               );
           loadDocumentV(streamFile); // Load document from disk text.
           }

@@ -58,9 +58,9 @@ public class AppSettings {
       
       // Make more directories we'll need.
       FileOps.makeDirectoryAndAncestorsWithLoggingV(
-          FileOps.makePathRelativeToAppFolderFile( "Peers" ) );
+          FileOps.makePathRelativeToAppFolderFile( Config.textStream1FolderString ) );
       FileOps.makeDirectoryAndAncestorsWithLoggingV(
-          FileOps.makePathRelativeToAppFolderFile( "Replications" ) );
+          FileOps.makePathRelativeToAppFolderFile( Config.textStream2FolderString ) );
       
       SystemSettings.logSystemPropertiesV(theAppLog);
       }
