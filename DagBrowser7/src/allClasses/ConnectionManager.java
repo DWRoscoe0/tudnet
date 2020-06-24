@@ -187,11 +187,11 @@ public class ConnectionManager
         */
       {
     		initializeV();  // Doing non-injection initialization.
-
-        theTextStreams.startServiceV(); // Will create child TextStream-s.
-        theTextStreams2.startServiceV(); // Will request TextStream by replication.
     		
     		restartPreviousUnicastersV();
+
+        theTextStreams.startServiceV(); // Starts flooding child TextStream-s.
+        theTextStreams2.startServiceV(); // Starts replicating child TextStream-s.
 
         processingInputsAndExecutingEventsV(); // Until thread termination...
           // ...is requested.

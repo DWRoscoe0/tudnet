@@ -97,7 +97,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
       theTextStreams1= new TextStreams1(
           "Text-Replication-Streams",this,thePersistent,theUnicasterManager);
       theTextStreams2= new TextStreams2(
-          "Text-Streams",this,thePersistent);
+          "Text-Streams",this,thePersistent,theUnicasterManager);
 	    ConnectionManager theConnectionManager= new ConnectionManager(
         this, // the AppGuiFactory.
     	  thePersistent,
