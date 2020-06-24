@@ -51,7 +51,10 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
 
   private void updatePeersAboutStreamsV() 
     {
-    sendToPeersV(null);
+      //// for (TextStream2 scanTextStream2 : childHashMap.values()) // For every stream
+      {
+      sendToPeersV(null); //// Iterate through streams.
+      }
     }
 
   private void sendToPeersV(MapEpiNode theMapEpiNode)  ////
