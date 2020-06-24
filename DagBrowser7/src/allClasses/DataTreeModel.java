@@ -7,7 +7,8 @@ import javax.swing.event.TreeModelEvent;
 import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
 
-import allClasses.DataNode.ChangeFlag;
+//// import allClasses.DataNode.ChangeFlag;
+import allClasses.DNode.ChangeFlag;
 
 import javax.swing.tree.TreeModel;
 
