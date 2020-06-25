@@ -283,7 +283,7 @@ public class PersistentCursor
     
     // Methods which unconditionally store values in fields.
 
-    public void putFieldV( String fieldKeyString, String fieldValueString )
+    protected void putFieldV( String fieldKeyString, String fieldValueString )
       /* This method stores fieldValueString into the field whose name is fieldKeyString
         in the presently selected list element's map.
         */
@@ -293,55 +293,70 @@ public class PersistentCursor
         // "PersistentCursor.putFieldV( "+fieldKeyString+"= "+fieldValueString);
         }
 
-    public void removeFieldV( String fieldKeyString)
+    /*  ////
+    private void removeFieldV( String fieldKeyString)
     /* This method remove the field whose name is fieldKeyString
       in the presently selected list element's map.
       */
+    /*  ////
     { 
       lowerMapEpiNode.removeV( fieldKeyString );
       }
+    */  ////
     
     // Methods which test values in fields.
 
-    public boolean testFieldIsB( String testKeyString, String testValueString )
+    /*  ////
+    private boolean testFieldIsB( String testKeyString, String testValueString )
       /* This method returns true if the field whose key is fieldKeyString
         equals testValueString, false otherwise.
         */
+    /*  ////
       {
         String valueString= getFieldString(testKeyString);
         return testValueString.equals( valueString );
         }
+    */  ////
     
     // Methods which get values from fields.
 
-    public boolean testB( String fieldKeyString )
+    /*  ////
+    private boolean testB( String fieldKeyString )
       /* This method returns the boolean value of the field whose key is fieldKeyString
         in the present element's map.
         */
+    /*  ////
       {
         return lowerMapEpiNode.testB(fieldKeyString);
         }
+    */  ////
 
-    public String getEmptyOrString( String keyString )
+    /*  ////
+    private String getEmptyOrString( String keyString )
     /* Returns the value String associated with keyString,
       or the empty string if there is none.
       */
+    /*  ////
     {
       return getString( keyString, "" );
       }
+    */  ////
     
+    /*  ////
     private String getString( String keyString, String defaultValueString )
       /* Returns the value String associated with keyString,
         or defaultValueString if there is no value String stored.
         */
+    /*  ////
       {
         String childValueString= getFieldString(keyString); 
         if (childValueString == null) 
           childValueString= defaultValueString;
         return childValueString;
       }
+    */  ////
 
-    public String getFieldString( String fieldKeyString )
+    private String getFieldString( String fieldKeyString )  ////
       /* This method returns the value of the field whose key is fieldKeyString
         in the present element's map.
         */

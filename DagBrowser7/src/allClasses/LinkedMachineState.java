@@ -226,8 +226,10 @@ public class LinkedMachineState
             and transitions to the ConnectedState. 
             */
           {
+            MapEpiNode theMapEpiNode= thePeersCursor.getSelectedMapEpiNode();
             if (tryReceivingHelloB(this)) { // Connect requested from remote peer.
-              if (thePeersCursor.testB("ignorePeer"))
+              //// if (thePeersCursor.testB("ignorePeer"))
+              if (theMapEpiNode.testB("ignorePeer"))
                 theAppLog.info("LinkedMachineState.onInputsToReturnFalseV() ignorePeer:true.");
                 else
                 {
@@ -475,7 +477,9 @@ public class LinkedMachineState
 		    public void onExitV() throws IOException
 		      { 
 		        theAppLog.debug( "ConnectedState.onExitV() Disconnecting" );
-            thePeersCursor.removeFieldV( "isConnected"); // Record disconnection.
+		        MapEpiNode theMapEpiNode= thePeersCursor.getSelectedMapEpiNode();
+            //// thePeersCursor.removeFieldV( "isConnected"); // Record disconnection.
+		        theMapEpiNode.removeV( "isConnected"); // Record disconnection.
 		        super.onExitV();
 		        }
 
@@ -552,13 +556,14 @@ public class LinkedMachineState
         If this Unicaster's PeerIdentity has not yet been defined
         entries exist with and without peer identity,
         This method searches the Persistent storage cache for 
-        entries matching this Uniaster.
+        entries matching this Unicaster.
         If entries exist with and without peer identity,
         then it combines them into a single entry.
         
         It returns true if an acceptable PeerIdentity was processesd, false otherwise.
        */
       {
+          MapEpiNode theMapEpiNode= thePeersCursor.getSelectedMapEpiNode();
           boolean successB= false; /// This is always overriden!
         goReturn: {
           if // Same IDs, so subject peer is actually the local peer,
@@ -567,8 +572,10 @@ public class LinkedMachineState
             { // so ignore this HELLO. 
               theAppLog.warning("LinkedMachineState.processPeerIdentityB(String) "
                   + "This is local peer, ignoring.");
-              thePeersCursor.putFieldV("ignorePeer","true");
-              thePeersCursor.putFieldV("ID_WARNING","This is local peer");
+              //// thePeersCursor.putFieldV("ignorePeer","true");
+              theMapEpiNode.putV("ignorePeer","true");
+              //// thePeersCursor.putFieldV("ID_WARNING","This is local peer");
+              theMapEpiNode.putV("ID_WARNING","This is local peer");
               break goReturn; // so exit with failure.
               }
           IPAndPort remoteIPAndPort= theUnicaster.getKeyK();     
@@ -582,7 +589,8 @@ public class LinkedMachineState
             { // So store identity in this Unicaster's data entry and in easy-access copy. 
               theAppLog.info(
                   "LinkedMachineState.processPeerIdentityB(String) Saving identity.");
-              thePeersCursor.putFieldV("PeerIdentity",inIdentityString);
+              //// thePeersCursor.putFieldV("PeerIdentity",inIdentityString);
+              theMapEpiNode.putV("PeerIdentity",inIdentityString);
               successB= true; 
               break goReturn; 
               }

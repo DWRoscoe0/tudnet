@@ -105,11 +105,15 @@ public class PeersCursor extends PersistentCursor {
       while // Search entire list or until the desired element is found. 
         (! this.nextKeyString().isEmpty()) // Get next element or exit if there is none.
         {
-          if (! testFieldIsB("IP",ipString)) continue;
-          if (! testFieldIsB("Port", portString)) continue;
+          MapEpiNode theMapEpiNode= getSelectedMapEpiNode();
+          //// if (! testFieldIsB("IP",ipString)) continue;
+          if (! theMapEpiNode.testKeyForValueB("IP",ipString)) continue;
+          //// if (! testFieldIsB("Port", portString)) continue;
+          if (! theMapEpiNode.testKeyForValueB("Port", portString)) continue;
           if (
             (peerIdentityString != null) // ID present. 
-            && ! testFieldIsB("PeerIdentity", peerIdentityString)) 
+            //// && ! testFieldIsB("PeerIdentity", peerIdentityString)) 
+            && ! theMapEpiNode.testKeyForValueB("PeerIdentity", peerIdentityString))
               continue;
           break; // All search parameters matched, exit loop positioned on matching entry.
           }

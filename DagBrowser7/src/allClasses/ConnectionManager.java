@@ -286,21 +286,26 @@ public class ConnectionManager
         */
       {
         toReturn: {
-          if (thePeersCursor.testB("ignorePeer")) // This peer is supposed to be ignored?
+          MapEpiNode theMapEpiNode= thePeersCursor.getSelectedMapEpiNode();
+          //// if (thePeersCursor.testB("ignorePeer")) // This peer is supposed to be ignored?
+          if (theMapEpiNode.testB("ignorePeer")) // This peer is supposed to be ignored?
             break toReturn;  // Yes, ignore this peer by exiting now.
-
-          String peerIPString= thePeersCursor.getFieldString("IP");
-          String peerPortString= thePeersCursor.getFieldString("Port");
+          //// String peerIPString= thePeersCursor.getFieldString("IP");
+          String peerIPString= theMapEpiNode.getString("IP");
+          //// String peerPortString= thePeersCursor.getFieldString("Port");
+          String peerPortString= theMapEpiNode.getString("Port");
           IPAndPort theIPAndPort= new IPAndPort(peerIPString, peerPortString);
           Unicaster theUnicaster= 
               theUnicasterManager.tryGettingAndLoggingPreexistingUnicaster(theIPAndPort);
           if ( theUnicaster == null ) // Unicaster does not yet exist.
             { // Create it, start it, and maybe connect it.
-              String theIdString= thePeersCursor.getFieldString("PeerIdentity");
+              //// String theIdString= thePeersCursor.getFieldString("PeerIdentity");
+              String theIdString= theMapEpiNode.getString("PeerIdentity");
               theUnicaster= theUnicasterManager.buildAddAndStartUnicaster(
                   theIPAndPort, theIdString); // Restore peer with Unicaster.
               if // Reconnect to peer if it was connected at shutdown.
-                (thePeersCursor.testB("wasConnected"))
+                //// (thePeersCursor.testB("wasConnected"))
+                (theMapEpiNode.testB("wasConnected"))
                 theUnicaster.connectToPeerV(); // Message state-machine to connect.
               }
         } // toReturn:
@@ -737,21 +742,28 @@ public class ConnectionManager
               PeersCursor.makeOnNoEntryPeersCursor( thePersistent );
           thePeersCursor.findOrAddPeerV(subjectPeerMapEpiNode); // Locate subject peer
             // data in Persistent storage, or create new data.
-          if (thePeersCursor.testB("ignorePeer")) // This peer is supposed to be ignored?
+          MapEpiNode theMapEpiNode= thePeersCursor.getSelectedMapEpiNode();
+          //// if (thePeersCursor.testB("ignorePeer")) // This peer is supposed to be ignored?
+          if (theMapEpiNode.testB("ignorePeer")) // This peer is supposed to be ignored?
             break toReturn; // so exit.
-          if (thePeersCursor.testB("isConnected")) // We're already connected to this peer
+          //// if (thePeersCursor.testB("isConnected")) // We're already connected to this peer
+          if (theMapEpiNode.testB("isConnected")) // We're already connected to this peer
             break toReturn; // so exit.
           if // Same IDs, so subject peer is actually the local peer
-            ( thePeersCursor.getEmptyOrString("PeerIdentity").equals(
+            //// ( thePeersCursor.getEmptyOrString("PeerIdentity").equals(
+            ( theMapEpiNode.getEmptyOrString("PeerIdentity").equals(
                 thePersistent.getEmptyOrString("PeerIdentity")))
             break toReturn; // so exit.
 
           theAppLog.debug("ConnectionManager.processRemoteUpdatedStateV(MapEpiNode) "
             + "connecting to subject peer!!!!!!!!!!!");
-          String peerIPString= thePeersCursor.getFieldString("IP");
-          String peerPortString= thePeersCursor.getFieldString("Port");
+          //// String peerIPString= thePeersCursor.getFieldString("IP");
+          String peerIPString= theMapEpiNode.getString("IP");
+          //// String peerPortString= thePeersCursor.getFieldString("Port");
+          String peerPortString= theMapEpiNode.getString("Port");
           IPAndPort theIPAndPort= new IPAndPort(peerIPString, peerPortString);
-          String theIdString= thePeersCursor.getFieldString("PeerIdentity");
+          //// String theIdString= thePeersCursor.getFieldString("PeerIdentity");
+          String theIdString= theMapEpiNode.getString("PeerIdentity");
           Unicaster theUnicaster= 
               theUnicasterManager.getOrBuildAddAndStartUnicaster(theIPAndPort,theIdString);
           theUnicaster.connectToPeerV(); // Message state-machine to connect.
@@ -783,11 +795,15 @@ public class ConnectionManager
         peerLoop: while (true) { // Process all peers in my peer list. 
           if (scanPeersCursor.nextKeyString().isEmpty() ) // Try getting next scan peer. 
             break peerLoop; // There are no more peers, so exit loop.
+          MapEpiNode scanMapEpiNode= scanPeersCursor.getSelectedMapEpiNode();
           theAppLog.appendToFileV("(to-peers?)"); // Log that peer is being considered.
-          if (! scanPeersCursor.testB("isConnected")) // This peer is not connected 
+          //// if (! scanPeersCursor.testB("isConnected")) // This peer is not connected 
+          if (! scanMapEpiNode.testB("isConnected")) // This peer is not connected
             continue peerLoop; // so loop to try next peer.
-          String peerIPString= scanPeersCursor.getFieldString("IP");
-          String peerPortString= scanPeersCursor.getFieldString("Port");
+          //// String peerIPString= scanPeersCursor.getFieldString("IP");
+          String peerIPString= scanMapEpiNode.getString("IP");
+          //// String peerPortString= scanPeersCursor.getFieldString("Port");
+          String peerPortString= scanMapEpiNode.getString("Port");
           IPAndPort theIPAndPort= new IPAndPort(peerIPString, peerPortString);
           Unicaster scanUnicaster= // Try getting associated Unicaster.
               theUnicasterManager.tryingToGetUnicaster(theIPAndPort);
@@ -828,8 +844,10 @@ public class ConnectionManager
         peerLoop: while (true) { // Process all peers in my peer list. 
           if (scanPeersCursor.nextKeyString().isEmpty() ) // Try getting next scan peer. 
             break peerLoop; // There are no more peers, so exit loop.
+          MapEpiNode scanMapEpiNode= scanPeersCursor.getSelectedMapEpiNode();
           theAppLog.appendToFileV("(to-peer?)"); // Log that we're considering peer.
-          if (! scanPeersCursor.testB("isConnected")) // This peer is not connected 
+          //// if (! scanPeersCursor.testB("isConnected")) // This peer is not connected 
+          if (! scanMapEpiNode.testB("isConnected")) // This peer is not connected
             continue peerLoop; // so loop to try next peer.
           theAppLog.appendToFileV("(YES!)"); // Log that we're sending data.
           messageUnicaster.putV( // Queue peer data for sending

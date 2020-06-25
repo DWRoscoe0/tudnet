@@ -305,8 +305,11 @@ public class TCPCopier extends EpiThread
         toReturn: {
           if ( thePeersCursor.getEntryKeyString().isEmpty() )
             break toReturn; // Do nothing because peer list is empty.
-          serverIPString= thePeersCursor.getFieldString("IP");
-          serverPortString= thePeersCursor.getFieldString("Port");
+          MapEpiNode theMapEpiNode= thePeersCursor.getSelectedMapEpiNode();
+          //// serverIPString= thePeersCursor.getFieldString("IP");
+          serverIPString= theMapEpiNode.getString("IP");
+          //// serverPortString= thePeersCursor.getFieldString("Port");
+          serverPortString= theMapEpiNode.getString("Port");
           long resultL= 
               tryExchangingFilesWithServerL(serverIPString,serverPortString);
           if (resultL == 0) break toReturn; // No file data was transfered.

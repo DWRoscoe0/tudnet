@@ -71,10 +71,14 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
         if (scanPeersCursor.nextKeyString().isEmpty() ) // Try getting next scan peer. 
           break peerLoop; // There are no more peers, so exit loop.
         theAppLog.appendToFileV("(stream?)"); // Log that peer is being considered.
-        if (! scanPeersCursor.testB("isConnected")) // This peer is not connected 
+        MapEpiNode scanMapEpiNode= scanPeersCursor.getSelectedMapEpiNode();
+        //// if (! scanPeersCursor.testB("isConnected")) // This peer is not connected 
+        if (! scanMapEpiNode.testB("isConnected")) // This peer is not connected
           continue peerLoop; // so loop to try next peer.
-        String peerIPString= scanPeersCursor.getFieldString("IP");
-        String peerPortString= scanPeersCursor.getFieldString("Port");
+        //// String peerIPString= scanPeersCursor.getFieldString("IP");
+        String peerIPString= scanMapEpiNode.getString("IP");
+        //// String peerPortString= scanPeersCursor.getFieldString("Port");
+        String peerPortString= scanMapEpiNode.getString("Port");
         IPAndPort theIPAndPort= new IPAndPort(peerIPString, peerPortString);
         Unicaster scanUnicaster= // Try getting associated Unicaster.
             theUnicasterManager.tryingToGetUnicaster(theIPAndPort);
