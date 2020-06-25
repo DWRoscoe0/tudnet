@@ -293,5 +293,68 @@ public class Persistent
 	    {
 	  		thePrintWriter.print(theString);
 	      }
+
+	  
+	  // Static methods for updating fields.
+
+	  /*  ////
+    public void updateFieldV( 
+        String fieldKeyString, boolean fieldValueB )
+      /* If fieldValueB is different from the value presently associated with 
+        fieldKeyString, then it replaces the stored value and
+        the field "lastModified" is set to the present time.
+        */
+    /*  ////
+      { 
+        MapEpiNode theMapEpiNode= childMapEpiNode;
+
+        updateFieldV( theMapEpiNode, fieldKeyString, fieldValueB );
+        }
+    */  ////
+
+    public static void updateFieldV( 
+        MapEpiNode theMapEpiNode, String fieldKeyString, boolean fieldValueB )
+      /* If fieldValueB is different from the value presently associated with 
+        fieldKeyString, then it replaces the stored value and
+        the field "lastModified" is set to the present time.
+        */
+      { 
+        updateFieldV( theMapEpiNode, fieldKeyString, ""+fieldValueB );
+        }
+
+    private static void updateFieldV( 
+          MapEpiNode theMapEpiNode, String fieldKeyString, String fieldValueString )
+      /* If fieldValueString is different from the value presently associated with 
+        fieldKeyString, then it replaces the stored value and
+        the field "lastModified" is set to the present time.
+        */
+      { 
+        boolean changeNeededB= // Calculate whether field needs to be changed. 
+            ! fieldValueString.equals(theMapEpiNode.getString(fieldKeyString));
+        if (changeNeededB)
+          putFieldWithLastModifiedV( theMapEpiNode, fieldKeyString, fieldValueString );
+        }
+
+    private static void putFieldWithLastModifiedV( 
+        MapEpiNode theMapEpiNode, String fieldKeyString, String fieldValueString )
+      /* This method stores fieldValueString into the field whose name is fieldKeyString
+        but also updates the field "lastModified" with the present time.
+        */
+      { 
+        putFieldWithTimeModifiedV(
+            theMapEpiNode, fieldKeyString, fieldValueString, "lastModified" );
+        }
+
+    private static void putFieldWithTimeModifiedV( MapEpiNode theMapEpiNode, 
+        String fieldKeyString, String fieldValueString, String timeModifiedKeyString )
+      /* This method stores fieldValueString into the field whose name is fieldKeyString
+        but also updates the field "lastModified" with the present time.
+        */
+      { 
+        theMapEpiNode.putV( fieldKeyString, fieldValueString );
+        theMapEpiNode.putV( timeModifiedKeyString, ""+System.currentTimeMillis());
+        }
+	  
 	  
 		}
+

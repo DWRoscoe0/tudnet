@@ -63,9 +63,9 @@ public class PersistentCursor
       // These are considered equivalent.
 
     // EpiNode data cursor variables.
-    protected MapEpiNode upperMapEpiNode= null;
+    protected MapEpiNode parentMapEpiNode= null;
       // MapEpiNode which is the upper map which is being iterated.
-    private MapEpiNode lowerMapEpiNode= null;
+    protected MapEpiNode childMapEpiNode= null;
       // MapEpiNode which is the value of the selected entry of the upper map. 
       // It is the lower map which contains various data fields of that entry. 
 
@@ -88,14 +88,14 @@ public class PersistentCursor
 	    { 
 	      String trialKeyString;
         int trialIndexI= // Set trial index to map size + 1; 
-            upperMapEpiNode.getSizeI() + 1;
+            parentMapEpiNode.getSizeI() + 1;
         while (true) // Search for a child index key not already in use in map.
           {
             trialKeyString= String.valueOf(trialIndexI); // Convert index to String.
             ScalarEpiNode keyScalarEpiNode= // Convert String to Scalar.
                 new ScalarEpiNode(trialKeyString);
             EpiNode childEpiNode= // Try getting value node at that Scalar key.
-                upperMapEpiNode.getEpiNode(keyScalarEpiNode);
+                parentMapEpiNode.getEpiNode(keyScalarEpiNode);
             if (null == childEpiNode) // Exit if no node, meaning key is available.
               break;
             trialIndexI--; // Prepare to test next lower key index.
@@ -116,7 +116,7 @@ public class PersistentCursor
 			{
 				// appLogger.debug(
 				// 		"PersistentCursor.setListPathV("+listPathString+") begins.");
-        upperMapEpiNode= thePersistent.getOrMakeMapEpiNode(listKeyString);
+        parentMapEpiNode= thePersistent.getOrMakeMapEpiNode(listKeyString);
 	  		return moveToFirstKeyString();
 				}
 
@@ -170,7 +170,7 @@ public class PersistentCursor
 			{
         String nextEntryKeyString= null;
         nextEntryKeyString= 
-          upperMapEpiNode.getNextString(entryKeyString);
+          parentMapEpiNode.getNextString(entryKeyString);
 		    setEntryKeyString(  // Set cursor to this position
             Nulls.toEmptyString( // after converting possible null to empty string.
                 nextEntryKeyString ) );
@@ -195,7 +195,7 @@ public class PersistentCursor
         It returns with the cursor not on any element.
         */
       {
-        upperMapEpiNode.removeV( entryKeyString ); // Remove present element
+        parentMapEpiNode.removeV( entryKeyString ); // Remove present element
         setEntryKeyString( EMPTY_STRING ); // Set position on no element.
         }
 
@@ -215,10 +215,10 @@ public class PersistentCursor
         //    "PersistentCursor.setEntryKeyV( "+entryKeyString+" )" );
         this.entryKeyString= entryKeyString; // Store the selection/position key.
         if (! entryKeyString.isEmpty()) // If there is supposed to be a node there
-          this.lowerMapEpiNode= // cache the node at that position. 
-              upperMapEpiNode.getOrMakeMapEpiNode(entryKeyString);
+          this.childMapEpiNode= // cache the node at that position. 
+              parentMapEpiNode.getOrMakeMapEpiNode(entryKeyString);
           else
-          this.lowerMapEpiNode= null;
+          this.childMapEpiNode= null;
         return this.entryKeyString;
         }
 
@@ -226,7 +226,7 @@ public class PersistentCursor
       /* Returns the MapEpiNode presently selected by the iterator,
         or null if no entry is selected.  */
       { 
-        return lowerMapEpiNode; 
+        return childMapEpiNode; 
         }
 
 
@@ -237,61 +237,76 @@ public class PersistentCursor
 		  They also updated lastModified in that case, but only in that case.
 		  */
 
-    public void updateFieldV( 
+    public void updateFieldV( //// remove this and following private methods.
         String fieldKeyString, boolean fieldValueB )
       /* If fieldValueB is different from the value presently associated with 
         fieldKeyString, then it replaces the stored value and
         the field "lastModified" is set to the present time.
         */
       { 
-        updateFieldV( fieldKeyString, ""+fieldValueB );
+        MapEpiNode theMapEpiNode= childMapEpiNode;
+
+        updateFieldV( theMapEpiNode, fieldKeyString, fieldValueB );
         }
 
-    private void updateFieldV( String fieldKeyString, String fieldValueString )
+    private void updateFieldV( 
+        MapEpiNode theMapEpiNode, String fieldKeyString, boolean fieldValueB )
+      /* If fieldValueB is different from the value presently associated with 
+        fieldKeyString, then it replaces the stored value and
+        the field "lastModified" is set to the present time.
+        */
+      { 
+        updateFieldV( theMapEpiNode, fieldKeyString, ""+fieldValueB );
+        }
+
+    private void updateFieldV( 
+          MapEpiNode theMapEpiNode, String fieldKeyString, String fieldValueString )
       /* If fieldValueString is different from the value presently associated with 
         fieldKeyString, then it replaces the stored value and
         the field "lastModified" is set to the present time.
         */
       { 
         boolean changeNeededB= // Calculate whether field needs to be changed. 
-            ! fieldValueString.equals(getFieldString(fieldKeyString));
+            ! fieldValueString.equals(theMapEpiNode.getString(fieldKeyString));
         if (changeNeededB)
-          putFieldWithLastModifiedV( fieldKeyString, fieldValueString );
+          putFieldWithLastModifiedV( theMapEpiNode, fieldKeyString, fieldValueString );
         }
 
     private void putFieldWithLastModifiedV( 
-        String fieldKeyString, String fieldValueString )
+        MapEpiNode theMapEpiNode, String fieldKeyString, String fieldValueString )
       /* This method stores fieldValueString into the field whose name is fieldKeyString
         but also updates the field "lastModified" with the present time.
         */
       { 
-        //// putFieldV( fieldKeyString, fieldValueString );
-        //// putFieldV( "lastModified", ""+System.currentTimeMillis());
-        putFieldWithTimeModifiedV(fieldKeyString, fieldValueString, "lastModified" );
+        putFieldWithTimeModifiedV(
+            theMapEpiNode, fieldKeyString, fieldValueString, "lastModified" );
         }
 
-    private void putFieldWithTimeModifiedV( 
-        String fieldKeyString, String fieldValueString, String timeModifiedString )
+    private void putFieldWithTimeModifiedV( MapEpiNode theMapEpiNode, 
+        String fieldKeyString, String fieldValueString, String timeModifiedKeyString )
       /* This method stores fieldValueString into the field whose name is fieldKeyString
         but also updates the field "lastModified" with the present time.
         */
       { 
-        putFieldV( fieldKeyString, fieldValueString );
-        putFieldV( timeModifiedString, ""+System.currentTimeMillis());
+        theMapEpiNode.putV( fieldKeyString, fieldValueString );
+        theMapEpiNode.putV( timeModifiedKeyString, ""+System.currentTimeMillis());
         }
 
     
     // Methods which unconditionally store values in fields.
 
+    /*  ////
     protected void putFieldV( String fieldKeyString, String fieldValueString )
       /* This method stores fieldValueString into the field whose name is fieldKeyString
         in the presently selected list element's map.
         */
+    /*  ////
       { 
-        lowerMapEpiNode.putV( fieldKeyString, fieldValueString );
+        childMapEpiNode.putV( fieldKeyString, fieldValueString );
         // appLogger.debug(
         // "PersistentCursor.putFieldV( "+fieldKeyString+"= "+fieldValueString);
         }
+    */  ////
 
     /*  ////
     private void removeFieldV( String fieldKeyString)
@@ -356,17 +371,20 @@ public class PersistentCursor
       }
     */  ////
 
+    /*  ////
     private String getFieldString( String fieldKeyString )  ////
       /* This method returns the value of the field whose key is fieldKeyString
         in the present element's map.
         */
+    /*  ////
       {
         String fieldValueString= null;
-        fieldValueString= lowerMapEpiNode.getString(fieldKeyString);
+        fieldValueString= childMapEpiNode.getString(fieldKeyString);
         // appLogger.debug( "PersistentCursor.getFieldString( "
         //    +fieldKeyString+" ) returning:"+fieldValueString);
         return fieldValueString;
         }
+    */  ////
 
 
 		// Finalization code: none.

@@ -82,10 +82,10 @@ public class PeersCursor extends PersistentCursor {
         createEntryInPersistentCursor(); // Create new element.
         }
       { // Store or update the fields in the found or created element.
-        putFieldV( "IP", ipString );
-        putFieldV( "Port", portString );
+        childMapEpiNode.putV( "IP", ipString );
+        childMapEpiNode.putV( "Port", portString );
         if (theIdentityString!=null)
-          putFieldV( "PeerIdentity", theIdentityString );
+          childMapEpiNode.putV( "PeerIdentity", theIdentityString );
           else
           theAppLog.warning(
               "PeersCursor.findOrAddPeerV(ipString,portString,theIdentityString) "

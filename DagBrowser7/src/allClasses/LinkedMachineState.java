@@ -412,8 +412,11 @@ public class LinkedMachineState
             super.onEntryV();
             
             IPAndPort remoteIPAndPort= theUnicaster.getKeyK();
-            thePeersCursor.updateFieldV( "wasConnected", true ); // Record connection.
-            thePeersCursor.updateFieldV( "isConnected", true ); // Record connection.
+            MapEpiNode theMapEpiNode= thePeersCursor.getSelectedMapEpiNode();
+            //// thePeersCursor.updateFieldV( "wasConnected", true ); // Record connection.
+            Persistent.updateFieldV( theMapEpiNode, "wasConnected", true ); // Record connection.
+            //// thePeersCursor.updateFieldV( "isConnected", true ); // Record connection.
+            Persistent.updateFieldV( theMapEpiNode, "isConnected", true ); // Record connection.
 	    	    theAppLog.debug( "Connecting, notifying ConnectionManager with: \n  "
 	    	        + thePeersCursor.getSelectedMapEpiNode()
 	    	        );
@@ -452,8 +455,11 @@ public class LinkedMachineState
 					  			}
               if ( tryInputB("GOODBYE") ) { // Peer disconnected itself by saying goodbye?
                 sayGoodbyesV(); // Respond to peer with our own goodbyes.
-                thePeersCursor.updateFieldV( // Record remote intentional disconnect.
-                    "wasConnected", false);
+                MapEpiNode theMapEpiNode= thePeersCursor.getSelectedMapEpiNode();
+                //// thePeersCursor.updateFieldV( // Record remote intentional disconnect.
+                ////     "wasConnected", false);
+                Persistent.updateFieldV( // Record remote intentional disconnect.
+                    theMapEpiNode, "wasConnected", false);
                 notifyConnectionManagerOfPeerConnectionChangeV();
                 requestAncestorSubStateV( theDisconnectedState); // Disconnect ourselves.
                 break goReturn; // Return with signal true.
