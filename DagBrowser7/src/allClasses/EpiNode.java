@@ -929,6 +929,30 @@ class MapEpiNode extends EpiNode
         }
 
 
+    // Special method that renames keys.
+    
+    public synchronized void renameKeysV(String oldKeyString, String newKeyString)
+      /* This method all instances of map keys with value oldKeyString to NewKeyString.
+         It is meant to be used for Persistent.txt file format changes.
+         */
+      { 
+        for // First, recursively rename keys in map entry values which are maps. 
+          (EpiNode valueEpiNode: theLinkedHashMap.values()) 
+          { // Process one value.
+            MapEpiNode valueMapEpiNode= valueEpiNode.getMapEpiNode();
+            if (null != valueMapEpiNode) // If value is a map, recursively rename in it.
+              valueMapEpiNode.renameKeysV(oldKeyString, newKeyString);
+            }
+        
+        // Now rename key in this map, if present.
+        EpiNode oldValueEpiNode= // Try removing old key from this map.
+            removeEpiNode(oldKeyString);
+        if (null != oldValueEpiNode) { // If old key was removed then
+          putV(newKeyString, oldValueEpiNode); // associate its value with new key.
+          }
+        }
+
+
     // Methods that store various types of data in a map.
 
     public synchronized void putV(String keyString, String valueString)
@@ -968,7 +992,16 @@ class MapEpiNode extends EpiNode
     /* This method removes the field whose name is fieldKeyString.
       */
     { 
-      theLinkedHashMap.remove( new ScalarEpiNode(keyString ));
+      removeEpiNode(keyString);
+      }
+
+    public synchronized EpiNode removeEpiNode(String keyString)
+    /* This method removes the field whose name is fieldKeyString.
+      It returns the previous EpiNode value, or null if there was none.
+      */
+    { 
+      theAppLog.debug("MapEpiNode.removeEpiNode(\""+keyString+"\") called.");
+      return theLinkedHashMap.remove( new ScalarEpiNode(keyString ));
       }
 
     
