@@ -1,5 +1,7 @@
 package allClasses;
 
+import static allClasses.AppLog.theAppLog;
+
 // import static allClasses.Globals.appLogger;
 
 public class PersistentCursor 
@@ -79,29 +81,18 @@ public class PersistentCursor
 		// Service code.
 
 	  public PersistentCursor createEntryInPersistentCursor()
-	    /* This method creates a new entry in this PersistentCursor 
-	      with no data and no particular key.
-	      The only guarantee is that the key in the new element will be unique.
-	      It uses a key String that is a low-value numerical index,
-	      even though existing keys might not be numerical indexes.
+	    /* This method creates a new entry in this PersistentCursor parent map 
+	      with no particular key but an empty MapEpiNode as its value.
+	      The key is low-value numerical key converted to a String,
+	      no greater than the size of the map.
+	      even though other keys in the map might not be numerical. 
+	      The PeersCursor is positioned to the new entry.
 	      */
 	    { 
-	      String trialKeyString;
-        int trialIndexI= // Set trial index to map size + 1; 
-            parentMapEpiNode.getSizeI() + 1;
-        while (true) // Search for a child index key not already in use in map.
-          {
-            trialKeyString= String.valueOf(trialIndexI); // Convert index to String.
-            ScalarEpiNode keyScalarEpiNode= // Convert String to Scalar.
-                new ScalarEpiNode(trialKeyString);
-            EpiNode childEpiNode= // Try getting value node at that Scalar key.
-                parentMapEpiNode.getEpiNode(keyScalarEpiNode);
-            if (null == childEpiNode) // Exit if no node, meaning key is available.
-              break;
-            trialIndexI--; // Prepare to test next lower key index.
-            }
-        setEntryKeyString( trialKeyString ); // Create and store node with selected key.
-	      return this; // This cursor pointing to new node.
+        theAppLog.debug("PersistentCursor.createEntryInPersistentCursor() called.");
+        String newKeyString= parentMapEpiNode.createEmptyMapWithNewKeyString();
+        setEntryKeyString( newKeyString ); // Point to the new entry.
+	      return this;
 	      } 
 
 		public String setListFirstKeyString( String listKeyString )

@@ -844,7 +844,31 @@ class MapEpiNode extends EpiNode
 
     
     // Methods that get or make instances with entries.
-    
+
+    public synchronized String createEmptyMapWithNewKeyString()
+      /* This method creates a new map entry in this map with
+        a new unique key and a nested empty map as the value.
+        The only guarantee about the key is that it will be unique.
+        It creates a key which is a small integer converted to a String,
+        even though other keys in the map might not be numerical indexes.
+        It returns the key String of the created entry.
+        */
+      { 
+        theAppLog.debug("MapEpiNode.createEmptyMapWithNewKeyString() called.");
+        String scanKeyString;
+        int scanIndexI= getSizeI() + 1; // Set initial trial index to map size + 1; 
+            
+        while (true) // Search map for a key that is not already in use.
+          {
+            scanKeyString= String.valueOf(scanIndexI); // Convert index to key String.
+            EpiNode valueEpiNode= getEpiNode(scanKeyString); // Try getting a value.
+            if (null == valueEpiNode) break; // Exit if no value, key is available.
+            scanIndexI--; // Prepare to test next lower key index.
+            }
+        putV(scanKeyString, new MapEpiNode() ); // Create nested empty map with this key.
+        return scanKeyString; // Return key of the created entry.
+        } 
+
     public synchronized MapEpiNode getOrMakeMapEpiNode(String keyString)
       /* This method returns the MapEpiNode value 
         that is associated with the key keyString.  
@@ -855,6 +879,7 @@ class MapEpiNode extends EpiNode
         not something else such as a ScalarEpiNode.
        */
       {
+          // theAppLog.debug("MapEpiNode.getOrMakeMapEpiNode(String) called.");
           MapEpiNode valueMapEpiNode; // For function result. 
           EpiNode valueEpiNode= null;
         toReturnValue: { 
