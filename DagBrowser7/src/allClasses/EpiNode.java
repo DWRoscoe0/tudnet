@@ -932,11 +932,12 @@ class MapEpiNode extends EpiNode
     // Special method that renames keys.
     
     public synchronized void renameKeysV(String oldKeyString, String newKeyString)
-      /* This method all instances of map keys with value oldKeyString to NewKeyString.
-         It is meant to be used for Persistent.txt file format changes.
-         */
+      /* This method replaces instances of map keys 
+        with value oldKeyString to NewKeyString.
+        It is meant to be used for Persistent.txt file format changes.
+        */
       { 
-        for // First, recursively rename keys in map entry values which are maps. 
+        for // First, recursively rename keys in entry values which are maps. 
           (EpiNode valueEpiNode: theLinkedHashMap.values()) 
           { // Process one value.
             MapEpiNode valueMapEpiNode= valueEpiNode.getMapEpiNode();
