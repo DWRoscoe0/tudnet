@@ -36,18 +36,24 @@ public class IPAndPort
 				this.netcasterInetAddress= netcasterInetAddress;
 				this.netcasterPortI= netcasterPortI;
 				}
+
 		public IPAndPort( String IPString , String portString )
 		  /* This constructor creates an IPAndPort from Strings. */
 			{
-				try { // Doing this here is a bit of a kludge.
-						this.netcasterInetAddress= InetAddress.getByName(IPString);
-						this.netcasterPortI= Integer.parseUnsignedInt(portString);
-					} catch ( UnknownHostException | NumberFormatException e ) { 
-				    theAppLog.warning( // Log warning.
-		      			"IPAndPort.IPAndPort("+IPString+", "+portString+")"+e );
-						this.netcasterInetAddress= InetAddress.getLoopbackAddress();
-						this.netcasterPortI= Integer.parseUnsignedInt(portString);
-					}
+        try {
+            this.netcasterInetAddress= InetAddress.getByName(IPString);
+          } catch ( UnknownHostException e ) { 
+            theAppLog.warning( // Log warning.
+                "IPAndPort.IPAndPort(.) "+IPString+" bad "+e );
+            this.netcasterInetAddress= InetAddress.getLoopbackAddress();
+          }
+        try {
+            this.netcasterPortI= Integer.parseUnsignedInt(portString);
+          } catch ( NumberFormatException e ) { 
+            theAppLog.warning( // Log warning.
+                "IPAndPort.IPAndPort(.) "+portString+" bad "+e );
+            this.netcasterPortI= -1;
+          }
 				}
 
 		
