@@ -93,6 +93,10 @@ public class Config
     public static final String textStream1FolderString= "Peers";
     public static final String textStream2FolderString= "Replications";
 
+    //// public static final String rootIdString= "PeerIdentity"; // old
+    public static final String rootIdString= "OwnerId"; // new
+    
+
   	private Config() {} // Constructor is private so it can't be constructed.
 	
   	}

@@ -362,7 +362,7 @@ public class Unicaster
 
     private boolean isAboutThisUnicasterB(MapEpiNode otherMapEpiNode)
       /* This method returns true if theMapEpiNode contains information about
-        this Unicaster, based on IP, Port, and PeerIdentity.
+        this Unicaster, based on IP, Port, and RootId.
         It returns false otherwise.
         */
       {
@@ -378,9 +378,9 @@ public class Unicaster
           if (testEpiNode == null) break goReturn;
           if (! testEpiNode.equals(thisMapEpiNode.getEpiNode("Port"))) break goReturn;
 
-          testEpiNode= otherMapEpiNode.getEpiNode("PeerIdentity"); 
+          testEpiNode= otherMapEpiNode.getEpiNode(Config.rootIdString); 
           if (testEpiNode == null) break goReturn;
-          if (! testEpiNode.equals(thisMapEpiNode.getEpiNode("PeerIdentity"))) 
+          if (! testEpiNode.equals(thisMapEpiNode.getEpiNode(Config.rootIdString))) 
             break goReturn;
 
           resultB= true; // All is the same, so return true.

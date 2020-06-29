@@ -109,8 +109,8 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
 
   private void createLocalTextStreamV()
     {
-      String thePeerIdentityString= thePersistent.getEmptyOrString("PeerIdentity");
-      createAndAddTextStream(thePeerIdentityString);
+      String theRootIdString= thePersistent.getEmptyOrString(Config.rootIdString);
+      createAndAddTextStream(theRootIdString);
       }
 
   private void createRemoteTextStreamsFromFoldersV()
@@ -122,12 +122,12 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
           peersFile.list();
       if ( peerStrings == null ) // If array is null replace with empty array.
         peerStrings= new String[ 0 ]; // Replace with empty array.
-      String localPeerIdentityString= thePersistent.getEmptyOrString("PeerIdentity");
-      for (String scanPeerIdentityString : peerStrings) // For every Peer folder 
+      String localRootIdString= thePersistent.getEmptyOrString(Config.rootIdString);
+      for (String scanRootIdString : peerStrings) // For every Peer folder 
         toPeerDone: { // Try creating a TextStream for this peer.
-          if (localPeerIdentityString.equals(scanPeerIdentityString)) // Skip ourselves. 
+          if (localRootIdString.equals(scanRootIdString)) // Skip ourselves. 
             break toPeerDone;
-          createAndAddTextStream(scanPeerIdentityString);
+          createAndAddTextStream(scanRootIdString);
           } // toPeerDone:
       }
 

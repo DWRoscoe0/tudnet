@@ -501,7 +501,7 @@ public class LinkedMachineState
   	private boolean tryReceivingHelloB(StateList subStateList) 
   			throws IOException
   	  /* This method tries to receive and process the Hello message,
-  	    including its arguments, IP and PeerIdentity.
+  	    including its arguments, IP and RootId.
   	    This method is part of this state class, 
   	    but is not called by its own code.
   	    It is called by one of its sub-states, 
@@ -523,8 +523,8 @@ public class LinkedMachineState
   	    This method returns true if HELLO is received and processed, 
   	    false otherwise.
   	    
-  	    ///pos This method could also select a leader based on PeerIdentity
-  	    instead of IP address.  Presently PeerIdentity is read but discarded.
+  	    ///pos This method could also select a leader based on RootId
+  	    instead of IP address.  Presently RootId is read but discarded.
   	    */
 	  	{
   	      boolean gotGoodHelloB= false; // Assume default of failure.
@@ -534,7 +534,7 @@ public class LinkedMachineState
 					String localIpString= theNetcasterInputStream.readAString();
           String peerIdentityString= theNetcasterInputStream.readAString(); 
           
-          if (! processPeerIdentityB(peerIdentityString)) // Process PeerIdendity
+          if (! processRootIdB(peerIdentityString)) // Process PeerIdendity
              break toReturn; // or exit if fail.
 					String remoteIpString= 
 							theUnicaster.getKeyK().getInetAddress().getHostAddress();
@@ -554,29 +554,29 @@ public class LinkedMachineState
   		    return gotGoodHelloB;
 	  		}
     
-    private boolean processPeerIdentityB(String inIdentityString)
+    private boolean processRootIdB(String inIdentityString)
       /* This method is a kludge to handle the problem of Unicasters being created 
-        before the PeerIdentity of the remote peer is known.
+        before the RootId of the remote peer is known.
         The ConnectionManager thread does this when it creates Unicasters.
         
-        If this Unicaster's PeerIdentity has not yet been defined
+        If this Unicaster's RootId has not yet been defined
         entries exist with and without peer identity,
         This method searches the Persistent storage cache for 
         entries matching this Unicaster.
         If entries exist with and without peer identity,
         then it combines them into a single entry.
         
-        It returns true if an acceptable PeerIdentity was processesd, false otherwise.
+        It returns true if an acceptable RootId was processesd, false otherwise.
        */
       {
           MapEpiNode theMapEpiNode= thePeersCursor.getSelectedMapEpiNode();
           boolean successB= false; /// This is always overriden!
         goReturn: {
           if // Same IDs, so subject peer is actually the local peer,
-            ( thePersistent.getEmptyOrString("PeerIdentity").equals(
+            ( thePersistent.getEmptyOrString(Config.rootIdString).equals(
                 inIdentityString))
             { // so ignore this HELLO. 
-              theAppLog.warning("LinkedMachineState.processPeerIdentityB(String) "
+              theAppLog.warning("LinkedMachineState.processRootIdB(String) "
                   + "This is local peer, ignoring.");
               //// thePeersCursor.putFieldV("ignorePeer","true");
               theMapEpiNode.putV("ignorePeer","true");
@@ -594,9 +594,9 @@ public class LinkedMachineState
           if (anotherPeersCursor.getEntryKeyString().isEmpty())  // Not found. 
             { // So store identity in this Unicaster's data entry and in easy-access copy. 
               theAppLog.info(
-                  "LinkedMachineState.processPeerIdentityB(String) Saving identity.");
-              //// thePeersCursor.putFieldV("PeerIdentity",inIdentityString);
-              theMapEpiNode.putV("PeerIdentity",inIdentityString);
+                  "LinkedMachineState.processRootIdB(String) Saving identity.");
+              //// thePeersCursor.putFieldV(Config.rootIDString,inIdentityString);
+              theMapEpiNode.putV(Config.rootIdString,inIdentityString);
               successB= true; 
               break goReturn; 
               }
@@ -606,7 +606,7 @@ public class LinkedMachineState
             (! thePeersCursor.getEntryKeyString().equals(
                 anotherPeersCursor.getEntryKeyString())) 
           { // Eliminate one entry, the newer one without identity.
-            theAppLog.info("LinkedMachineState.processPeerIdentityB(String) "
+            theAppLog.info("LinkedMachineState.processRootIdB(String) "
                 + "replacing Unicasters new peer entry with old one with ID.");
             thePeersCursor.removeEntryV(); // Delete new entry without ID.
             thePeersCursor=  // Replace this Unicaster's PeersCursor with 
@@ -614,7 +614,7 @@ public class LinkedMachineState
             successB= true; 
             break goReturn; 
             }
-          theAppLog.info("LinkedMachineState.processPeerIdentityB(String) "
+          theAppLog.info("LinkedMachineState.processRootIdB(String) "
               + "Found entry is Unicaster's entry.  Using  it.");
           successB= true;
         } // goReturn:
@@ -634,7 +634,9 @@ public class LinkedMachineState
             "{HELLO:{"
             + "IP:"+theUnicaster.getKeyK().getInetAddress().getHostAddress() // remote IP
             + ","
-            + "PeerIdentity:"+thePersistent.getEmptyOrString("PeerIdentity")
+            //// + "PeerIdentity:"+thePersistent.getEmptyOrString(Config.rootIdString)
+            + Config.rootIdString+":"
+            + thePersistent.getEmptyOrString(Config.rootIdString)
             + "}}"
             );
         theNetcasterOutputStream.endBlockAndSendPacketV(); // Forcing send.

@@ -299,8 +299,8 @@ public class ConnectionManager
               theUnicasterManager.tryGettingAndLoggingPreexistingUnicaster(theIPAndPort);
           if ( theUnicaster == null ) // Unicaster does not yet exist.
             { // Create it, start it, and maybe connect it.
-              //// String theIdString= thePeersCursor.getFieldString("PeerIdentity");
-              String theIdString= theMapEpiNode.getString("PeerIdentity");
+              //// String theIdString= thePeersCursor.getFieldString(Config.rootIDString);
+              String theIdString= theMapEpiNode.getString(Config.rootIdString);
               theUnicaster= theUnicasterManager.buildAddAndStartUnicaster(
                   theIPAndPort, theIdString); // Restore peer with Unicaster.
               if // Reconnect to peer if it was connected at shutdown.
@@ -750,9 +750,9 @@ public class ConnectionManager
           if (theMapEpiNode.testB("isConnected")) // We're already connected to this peer
             break toReturn; // so exit.
           if // Same IDs, so subject peer is actually the local peer
-            //// ( thePeersCursor.getEmptyOrString("PeerIdentity").equals(
-            ( theMapEpiNode.getEmptyOrString("PeerIdentity").equals(
-                thePersistent.getEmptyOrString("PeerIdentity")))
+            //// ( thePeersCursor.getEmptyOrString(Config.rootIDString).equals(
+            ( theMapEpiNode.getEmptyOrString(Config.rootIdString).equals(
+                thePersistent.getEmptyOrString(Config.rootIdString)))
             break toReturn; // so exit.
 
           theAppLog.debug("ConnectionManager.processRemoteUpdatedStateV(MapEpiNode) "
@@ -762,8 +762,8 @@ public class ConnectionManager
           //// String peerPortString= thePeersCursor.getFieldString("Port");
           String peerPortString= theMapEpiNode.getString("Port");
           IPAndPort theIPAndPort= new IPAndPort(peerIPString, peerPortString);
-          //// String theIdString= thePeersCursor.getFieldString("PeerIdentity");
-          String theIdString= theMapEpiNode.getString("PeerIdentity");
+          //// String theIdString= thePeersCursor.getFieldString(Config.rootIDString);
+          String theIdString= theMapEpiNode.getString(Config.rootIdString);
           Unicaster theUnicaster= 
               theUnicasterManager.getOrBuildAddAndStartUnicaster(theIPAndPort,theIdString);
           theUnicaster.connectToPeerV(); // Message state-machine to connect.

@@ -216,16 +216,16 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
     ///opt fastFailNullCheckT(..) might no longer be needed.
      */
 
-  public TextStream1 makeTextSteam1(String thePeerIdentityString)
+  public TextStream1 makeTextSteam1(String theRootIdString)
     { 
       return new TextStream1(
-        thePeerIdentityString,thePersistent,theTextStreams1);
+        theRootIdString,thePersistent,theTextStreams1);
       }
 
-  public TextStream2 makeTextSteam2(String thePeerIdentityString)
+  public TextStream2 makeTextSteam2(String theRootIdString)
     { 
       return new TextStream2(
-        thePeerIdentityString,thePersistent,theTextStreams2);
+        theRootIdString,thePersistent,theTextStreams2);
       }
 
 	public static EpiThread makeEpiThread( Runnable aRunnable, String nameString )

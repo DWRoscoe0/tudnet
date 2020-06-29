@@ -40,7 +40,7 @@ public class App { // The App, especially pre-GUI stuff.
       // App initialization.
   		theAppLog.info("App.run() begins.");
   		thePersistent.initializeV();  // Prepare access to persistent data.
-  	  definePeerIdentityV();
+  	  defineRootIdV();
 			theShutdowner.initializeV();
 
 			theAppInstanceManager.initializeV();
@@ -62,8 +62,8 @@ public class App { // The App, especially pre-GUI stuff.
       } // runV().
 
 
-  private void definePeerIdentityV()
-    /* This method creates a PeerIdentity number value for this peer,
+  private void defineRootIdV()
+    /* This method creates a RootId number value for this peer,
       unless that value has already been created.
       This is done quickly to get a node operational quickly.
       It does not require any user interaction.
@@ -83,14 +83,14 @@ public class App { // The App, especially pre-GUI stuff.
      	*/
 	  {
 	    String nodeIdentyString= 
-	    		thePersistent.getEmptyOrString("PeerIdentity");
+	    		thePersistent.getEmptyOrString(Config.rootIdString);
 	    if ( ! nodeIdentyString.isEmpty() ) {
 	    	  ; // Do nothing because identity is already defined.
 	    	} else { // Define and store identity.
 	    		Random theRandom= new Random();  // Construct random # generator.
           theRandom.setSeed( System.currentTimeMillis() ); // Seed with time.
 	    		BigInteger identityBigInteger= new BigInteger(256, theRandom);
-	    		thePersistent.putV("PeerIdentity", ""+identityBigInteger);
+	    		thePersistent.putV(Config.rootIdString, ""+identityBigInteger);
 	    	}
 	  	}
 

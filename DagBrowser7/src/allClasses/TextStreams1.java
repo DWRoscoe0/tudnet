@@ -62,8 +62,8 @@ public class TextStreams1 extends SimplerListWithMap<String,TextStream1> {
 
   private void createLocalTextStreamV()
     {
-      String thePeerIdentityString= thePersistent.getEmptyOrString("PeerIdentity");
-      createAndAddTextStream(thePeerIdentityString);
+      String theRootIdString= thePersistent.getEmptyOrString(Config.rootIdString);
+      createAndAddTextStream(theRootIdString);
       }
 
   private void createRemoteTextStreamsFromFoldersV()
@@ -73,12 +73,12 @@ public class TextStreams1 extends SimplerListWithMap<String,TextStream1> {
         );
       String[] peerStrings= // Read names of peer directories from Peers directory.
           peersFile.list();
-      String localPeerIdentityString= thePersistent.getEmptyOrString("PeerIdentity");
-      for (String scanPeerIdentityString : peerStrings) // For every Peer folder 
+      String localRootIdString= thePersistent.getEmptyOrString(Config.rootIdString);
+      for (String scanRootIdString : peerStrings) // For every Peer folder 
         toPeerDone: { // Try creating a TextStream for this peer.
-          if (localPeerIdentityString.equals(scanPeerIdentityString)) // Skip ourselves. 
+          if (localRootIdString.equals(scanRootIdString)) // Skip ourselves. 
             break toPeerDone;
-          createAndAddTextStream(scanPeerIdentityString);
+          createAndAddTextStream(scanRootIdString);
           } // toPeerDone:
       }
 
@@ -133,7 +133,7 @@ public class TextStreams1 extends SimplerListWithMap<String,TextStream1> {
     /* This method sends theMapEpiNode to the appropriate child TextStream.
      */
     {
-      String peerIdentityString= theMapEpiNode.getString("PeerIdentity");
+      String peerIdentityString= theMapEpiNode.getString(Config.rootIdString);
       TextStream1 theTextStream=  // Getting the appropriate TextStream.
           getOrBuildAddAndTextStream(peerIdentityString);
       theTextStream.tryProcessingMapEpiNodeB(theMapEpiNode);

@@ -10,7 +10,7 @@ public class PeersCursor extends PersistentCursor {
       Presently they are:
       * Persistent: the data structure
       * IPAndPort: 2 fields: IP address and port #
-      * String: PeerIdentity ///org makes its own type?
+      * String: RootId ///org makes its own type?
 
    */
 
@@ -53,7 +53,7 @@ public class PeersCursor extends PersistentCursor {
       String portString= // Extract port.
           targetMapEpiNode.getString("Port");
       String theIdentityString= // Extract peer ID.
-          targetMapEpiNode.getString("PeerIdentity");
+          targetMapEpiNode.getString(Config.rootIdString);
 
       findOrAddPeerV(ipString, portString, theIdentityString);
       }
@@ -86,7 +86,7 @@ public class PeersCursor extends PersistentCursor {
         childMapEpiNode.putV( "IP", ipString );
         childMapEpiNode.putV( "Port", portString );
         if (theIdentityString!=null)
-          childMapEpiNode.putV( "PeerIdentity", theIdentityString );
+          childMapEpiNode.putV( Config.rootIdString, theIdentityString );
           else
           theAppLog.warning(
               "PeersCursor.findOrAddPeerV(ipString,portString,theIdentityString) "
@@ -113,8 +113,8 @@ public class PeersCursor extends PersistentCursor {
           if (! theMapEpiNode.testKeyForValueB("Port", portString)) continue;
           if (
             (peerIdentityString != null) // ID present. 
-            //// && ! testFieldIsB("PeerIdentity", peerIdentityString)) 
-            && ! theMapEpiNode.testKeyForValueB("PeerIdentity", peerIdentityString))
+            //// && ! testFieldIsB(Config.rootIDString, peerIdentityString)) 
+            && ! theMapEpiNode.testKeyForValueB(Config.rootIdString, peerIdentityString))
               continue;
           break; // All search parameters matched, exit loop positioned on matching entry.
           }

@@ -44,7 +44,7 @@ public class TextStream1
                 }
           };
       private File streamFile; 
-      private String thePeerIdentityString;
+      private String theRootIdString;
       
     // Constructors.
 
@@ -64,7 +64,7 @@ public class TextStream1
           this.thePersistent= thePersistent;
           Nulls.fastFailNullCheckT(theTextStreams);
           this.theTextStreams= theTextStreams;
-          this.thePeerIdentityString= getKeyK(); 
+          this.theRootIdString= getKeyK(); 
           
           /*  ////
           streamFile= AppSettings.makePathRelativeToAppFolderFile(
@@ -112,7 +112,7 @@ public class TextStream1
               inDataTreeModel,
               thePlainDocument,
               this,
-              thePeerIdentityString,
+              theRootIdString,
               thePersistent
               );
           return resultJComponent;  // return the final result.
@@ -221,14 +221,14 @@ public class TextStream1
         /* This method processes a new Stream String entered by the user
           into an associated TextStreamViewer.
           It does this by building a MapEpiNode containing theString,
-          the PeerIdentity, and the present time, 
+          the RootId, and the present time, 
           and passing it to the TextStreams coordinator for processing.
          */
         {
           MapEpiNode theMapEpiNode= new MapEpiNode();
           theMapEpiNode.putV("message", theString);
-          String nodeIdentyString= thePersistent.getEmptyOrString("PeerIdentity");
-          theMapEpiNode.putV("PeerIdentity", nodeIdentyString);
+          String nodeIdentyString= thePersistent.getEmptyOrString(Config.rootIdString);
+          theMapEpiNode.putV(Config.rootIdString, nodeIdentyString);
           theMapEpiNode.putV("time", ""+System.currentTimeMillis());
           theTextStreams.processIfNewV(theMapEpiNode);
           }

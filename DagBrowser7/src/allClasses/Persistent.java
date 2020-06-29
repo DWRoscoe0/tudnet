@@ -78,13 +78,22 @@ public class Persistent
         if (rootMapEpiNode == null) // Define root map to be empty map if load failed. 
           rootMapEpiNode= new MapEpiNode();
         
-        // The following will be used for Persistent.txt file format changes.
-        theAppLog.info("Persistent.initializeV() MapEpiNode.renameKeysV(.) being called.");
-        //// rootMapEpiNode.renameKeysV("oldKeyString", "newKeyString");
-        rootMapEpiNode.renameKeysV("peers", "Unicasters");
-        theAppLog.info("Persistent.initializeV() MapEpiNode.renameKeysV(.) has returned.");
+        updateFormatV();
 	  	  }
-	  
+
+    private void updateFormatV()
+      // This method is used for Persistent.txt file format changes, if any.
+      {
+        theAppLog.info("Persistent.updateFormatV() begins.");
+        
+        //// rootMapEpiNode.renameKeysV("oldKeyString", "newKeyString");
+        
+        rootMapEpiNode.renameKeysV("peers", "Unicasters");
+        rootMapEpiNode.renameKeysV("PeerIdentity", "OwnerId"); // new.
+        
+        theAppLog.info("Persistent.updateFormatV() ends.");
+        }
+
     private MapEpiNode loadMapEpiNode( String fileString )
       /* This method creates an EpiNode from 
         the contents of the external text file whose name is fileString.  

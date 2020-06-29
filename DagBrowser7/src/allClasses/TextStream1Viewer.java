@@ -61,7 +61,7 @@ public class TextStream1Viewer
           DataTreeModel theDataTreeModel,
           PlainDocument thePlainDocument,
           TextStream1 theTextStream,
-          String thePeerIdentityString,
+          String theRootIdString,
           Persistent thePersistent
           )
         /* Constructs a TextStreamViewer.
@@ -88,9 +88,10 @@ public class TextStream1Viewer
 
           addJLabelV();
           addStreamIJTextAreaV();
-          String localPeerIdentityString= thePersistent.getEmptyOrString("PeerIdentity");
+          String localRootIdString= 
+              thePersistent.getEmptyOrString(Config.rootIdString);
           if // If the TextStream 
-            (localPeerIdentityString.equals(thePeerIdentityString)) // is our own 
+            (localRootIdString.equals(theRootIdString)) // is our own 
             addInputIJTextAreaV(); // then add the input TextArea.
           }
 
