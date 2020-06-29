@@ -30,7 +30,8 @@ public class PeersCursor extends PersistentCursor {
       */
     { 
       PeersCursor thePeersCursor= new PeersCursor(thePersistent);
-      thePeersCursor.setListFirstKeyString("peers"); // Point cursor to peer list.
+      //// thePeersCursor.setListFirstKeyString("peers"); // Point cursor to peer list.
+      thePeersCursor.setListFirstKeyString("Unicasters"); // Point cursor to Unicasters.
       thePeersCursor.moveToNoKeyString(); // Point to no entry within the list.
       return thePeersCursor;
       }

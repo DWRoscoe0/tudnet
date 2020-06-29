@@ -80,7 +80,8 @@ public class Persistent
         
         // The following will be used for Persistent.txt file format changes.
         theAppLog.info("Persistent.initializeV() MapEpiNode.renameKeysV(.) being called.");
-        rootMapEpiNode.renameKeysV("oldKeyString", "newKeyString");
+        //// rootMapEpiNode.renameKeysV("oldKeyString", "newKeyString");
+        rootMapEpiNode.renameKeysV("peers", "Unicasters");
         theAppLog.info("Persistent.initializeV() MapEpiNode.renameKeysV(.) has returned.");
 	  	  }
 	  
