@@ -414,9 +414,9 @@ public class LinkedMachineState
             IPAndPort remoteIPAndPort= theUnicaster.getKeyK();
             MapEpiNode theMapEpiNode= thePeersCursor.getSelectedMapEpiNode();
             //// thePeersCursor.updateFieldV( "wasConnected", true ); // Record connection.
-            Persistent.updateFieldV( theMapEpiNode, "wasConnected", true ); // Record connection.
+            AppMapEpiNode.updateFieldV( theMapEpiNode, "wasConnected", true ); // Record connection.
             //// thePeersCursor.updateFieldV( "isConnected", true ); // Record connection.
-            Persistent.updateFieldV( theMapEpiNode, "isConnected", true ); // Record connection.
+            AppMapEpiNode.updateFieldV( theMapEpiNode, "isConnected", true ); // Record connection.
 	    	    theAppLog.debug( "Connecting, notifying ConnectionManager with: \n  "
 	    	        + thePeersCursor.getSelectedMapEpiNode()
 	    	        );
@@ -458,7 +458,7 @@ public class LinkedMachineState
                 MapEpiNode theMapEpiNode= thePeersCursor.getSelectedMapEpiNode();
                 //// thePeersCursor.updateFieldV( // Record remote intentional disconnect.
                 ////     "wasConnected", false);
-                Persistent.updateFieldV( // Record remote intentional disconnect.
+                AppMapEpiNode.updateFieldV( // Record remote intentional disconnect.
                     theMapEpiNode, "wasConnected", false);
                 notifyConnectionManagerOfPeerConnectionChangeV();
                 requestAncestorSubStateV( theDisconnectedState); // Disconnect ourselves.

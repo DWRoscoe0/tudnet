@@ -26,7 +26,7 @@ public class Persistent
 	  Unlike MapEpiNode, which does not understand paths within a tree, this class does.
 	  However the internal use of paths to identify persistent data has been deprecated. 
     Although some multiple element path capability is present, it is not presently used,
-    meaning that paths parameters are all single element keys.
+    meaning that paths parameters are all single element map keys.
 
     If paths are ever used again:
     
@@ -43,11 +43,20 @@ public class Persistent
   	  A path does not end in a slash.  A prefix ends in a slash.
 
     ///opt Paths used internally might eventually be eliminated completely.
+    
+    ///org Many service methods below are in the process of being moved or eliminated, 
+    so that this class will do nothing more than load from, and store data to, disk.
+    All the methods which actually access of individual fields will be in either
+    * MapEpiNode methods, or
+    * Methods of classes which perform a particular purpose but use 
+      a subtree of EpiNodes for storage.
+    This process is being done gradually because the methods are called from many places.
+    When all references to these service methods have been eliminated,
+    the methods will be removed from this class. 
 	  
 	 	*/
 	
 	{
-
 		private MapEpiNode rootMapEpiNode= null; // EpiNode root of tree data.
 
   	
@@ -108,6 +117,84 @@ public class Persistent
               }
             }
         return resultMapEpiNode; 
+        }
+
+
+    // Finalization methods not called by initialization or service sections.
+    
+    public void finalizeV()
+    /* This method stores the persistent data to the external file.
+      Temporarily it stores both PersistentNode data and EpiNode data.
+      Eventually it will store only one.
+      */
+    {
+      storeEpiNodeDataV(rootMapEpiNode, "PersistentEpiNode.txt"); // Write EpiNode data.
+      }
+  
+    private void storeEpiNodeDataV( EpiNode theEpiNode, String fileString )
+      /* This method stores the Persistent data that is in main memory to 
+        the external text file whose name is fileString.
+        Presently it stores twice:
+        * The data only in the root node.
+        * The data in all nodes of the tree.
+        So some information appears twice in the file,
+        but when reloaded it should go to the same place.
+        
+        The exception handling in this method is not required,
+        but it does no harm.
+        */
+      {
+        theAppLog.info("Persistent.storeEpiNodeDataV(..) begins.");
+        FileOutputStream theFileOutputStream= null;
+        try {
+            theFileOutputStream= 
+              new FileOutputStream(FileOps.makeRelativeToAppFolderFile(fileString));  
+            theFileOutputStream.write(
+                "#---YAML-like EpiNode data output follows---".getBytes());
+              theEpiNode.writeV(theFileOutputStream, // Write all of theEpiNode tree 
+                0 // starting at indent level 0.
+                );
+            theFileOutputStream.write(
+                (NL+"#--- end of file ---"+NL).getBytes());
+            }
+          catch (Exception theException) { 
+            theAppLog.exception("Persistent.storeEpiNodeDataV(..)", theException);
+            }
+          finally {
+            try {
+              if ( theFileOutputStream != null ) theFileOutputStream.close(); 
+              }
+            catch ( Exception theException ) { 
+              theAppLog.exception("Persistent.storeEpiNodeDataV(..)", theException);
+              }
+            }
+        theAppLog.info("Persistent.storeEpiNodeDataV(..) ends.");
+        }
+  
+    public void writingCommentLineV( 
+        PrintWriter thePrintWriter, String commentString ) 
+      throws IOException
+      /* This method writes theString followed by a newline
+        to the text file OutputStream.
+        */
+      {
+        thePrintWriter.print('#'); // Write comment character.
+        writingLineV(thePrintWriter, commentString); // Write comment content as line.
+        }
+  
+    public void writingLineV( PrintWriter thePrintWriter, String lineString ) 
+      /* This method writes theString followed by a newline
+        to the text file OutputStream.
+        */
+      {
+        writingV(thePrintWriter, lineString); // Write string.
+        thePrintWriter.println(); // Terminate line.
+        }
+  
+    public void writingV( PrintWriter thePrintWriter, String theString ) 
+      // This method writes theString to the text file OutputStream.
+      {
+        thePrintWriter.print(theString);
         }
 
 
@@ -220,146 +307,6 @@ public class Persistent
         } // goReturn:
           return resultMapEpiNode;
         }
-
-
-	  // Finalization methods not called by initialization or service sections.
-	  
-	  public void finalizeV()
-	  /* This method stores the persistent data to the external file.
-	    Temporarily it stores both PersistentNode data and EpiNode data.
-	    Eventually it will store only one.
-	    */
-	  {
-      storeEpiNodeDataV(rootMapEpiNode, "PersistentEpiNode.txt"); // Write EpiNode data.
-	  	}
-  
-    private void storeEpiNodeDataV( EpiNode theEpiNode, String fileString )
-      /* This method stores the Persistent data that is in main memory to 
-        the external text file whose name is fileString.
-        Presently it stores twice:
-        * The data only in the root node.
-        * The data in all nodes of the tree.
-        So some information appears twice in the file,
-        but when reloaded it should go to the same place.
-        
-        The exception handling in this method is not required,
-        but it does no harm.
-        */
-      {
-        theAppLog.info("Persistent.storeEpiNodeDataV(..) begins.");
-        FileOutputStream theFileOutputStream= null;
-        try {
-            theFileOutputStream= 
-              new FileOutputStream(FileOps.makeRelativeToAppFolderFile(fileString));  
-            theFileOutputStream.write(
-                "#---YAML-like EpiNode data output follows---".getBytes());
-              theEpiNode.writeV(theFileOutputStream, // Write all of theEpiNode tree 
-                0 // starting at indent level 0.
-                );
-            theFileOutputStream.write(
-                (NL+"#--- end of file ---"+NL).getBytes());
-            }
-          catch (Exception theException) { 
-            theAppLog.exception("Persistent.storeEpiNodeDataV(..)", theException);
-            }
-          finally {
-            try {
-              if ( theFileOutputStream != null ) theFileOutputStream.close(); 
-              }
-            catch ( Exception theException ) { 
-              theAppLog.exception("Persistent.storeEpiNodeDataV(..)", theException);
-              }
-            }
-        theAppLog.info("Persistent.storeEpiNodeDataV(..) ends.");
-        }
-	
-	  public void writingCommentLineV( 
-	      PrintWriter thePrintWriter, String commentString ) 
-	  	throws IOException
-	    /* This method writes theString followed by a newline
-	      to the text file OutputStream.
-	      */
-	    {
-        thePrintWriter.print('#'); // Write comment character.
-	  		writingLineV(thePrintWriter, commentString); // Write comment content as line.
-	      }
-	
-	  public void writingLineV( PrintWriter thePrintWriter, String lineString ) 
-	    /* This method writes theString followed by a newline
-	      to the text file OutputStream.
-	      */
-	    {
-	  		writingV(thePrintWriter, lineString); // Write string.
-        thePrintWriter.println(); // Terminate line.
-	      }
-	
-	  public void writingV( PrintWriter thePrintWriter, String theString ) 
-	    // This method writes theString to the text file OutputStream.
-	    {
-	  		thePrintWriter.print(theString);
-	      }
-
-	  
-	  // Static methods for updating fields.
-
-	  /*  ////
-    public void updateFieldV( 
-        String fieldKeyString, boolean fieldValueB )
-      /* If fieldValueB is different from the value presently associated with 
-        fieldKeyString, then it replaces the stored value and
-        the field "lastModified" is set to the present time.
-        */
-    /*  ////
-      { 
-        MapEpiNode theMapEpiNode= childMapEpiNode;
-
-        updateFieldV( theMapEpiNode, fieldKeyString, fieldValueB );
-        }
-    */  ////
-
-    public static void updateFieldV( 
-        MapEpiNode theMapEpiNode, String fieldKeyString, boolean fieldValueB )
-      /* If fieldValueB is different from the value presently associated with 
-        fieldKeyString, then it replaces the stored value and
-        the field "lastModified" is set to the present time.
-        */
-      { 
-        updateFieldV( theMapEpiNode, fieldKeyString, ""+fieldValueB );
-        }
-
-    private static void updateFieldV( 
-          MapEpiNode theMapEpiNode, String fieldKeyString, String fieldValueString )
-      /* If fieldValueString is different from the value presently associated with 
-        fieldKeyString, then it replaces the stored value and
-        the field "lastModified" is set to the present time.
-        */
-      { 
-        boolean changeNeededB= // Calculate whether field needs to be changed. 
-            ! fieldValueString.equals(theMapEpiNode.getString(fieldKeyString));
-        if (changeNeededB)
-          putFieldWithLastModifiedV( theMapEpiNode, fieldKeyString, fieldValueString );
-        }
-
-    private static void putFieldWithLastModifiedV( 
-        MapEpiNode theMapEpiNode, String fieldKeyString, String fieldValueString )
-      /* This method stores fieldValueString into the field whose name is fieldKeyString
-        but also updates the field "lastModified" with the present time.
-        */
-      { 
-        putFieldWithTimeModifiedV(
-            theMapEpiNode, fieldKeyString, fieldValueString, "lastModified" );
-        }
-
-    private static void putFieldWithTimeModifiedV( MapEpiNode theMapEpiNode, 
-        String fieldKeyString, String fieldValueString, String timeModifiedKeyString )
-      /* This method stores fieldValueString into the field whose name is fieldKeyString
-        but also updates the field "lastModified" with the present time.
-        */
-      { 
-        theMapEpiNode.putV( fieldKeyString, fieldValueString );
-        theMapEpiNode.putV( timeModifiedKeyString, ""+System.currentTimeMillis());
-        }
-	  
 	  
 		}
 
