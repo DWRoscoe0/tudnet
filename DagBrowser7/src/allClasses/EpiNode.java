@@ -937,6 +937,9 @@ class MapEpiNode extends EpiNode
         It is meant to be used for Persistent.txt file format changes.
         */
       { 
+        //// theAppLog.debug( "MapEpiNode.renameKeys(\""
+        ////   + oldKeyString + "\",\"" + newKeyString 
+        ////   + "\") called.");
         for // First, recursively rename keys in entry values which are maps. 
           (EpiNode valueEpiNode: theLinkedHashMap.values()) 
           { // Process one value.
@@ -1001,7 +1004,7 @@ class MapEpiNode extends EpiNode
       It returns the previous EpiNode value, or null if there was none.
       */
     { 
-      theAppLog.debug("MapEpiNode.removeEpiNode(\""+keyString+"\") called.");
+      // theAppLog.debug("MapEpiNode.removeEpiNode(\""+keyString+"\") called.");
       return theLinkedHashMap.remove( new ScalarEpiNode(keyString ));
       }
 

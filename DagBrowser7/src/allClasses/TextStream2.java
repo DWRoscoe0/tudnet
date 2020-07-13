@@ -61,7 +61,7 @@ public class TextStream2
               "TextStream", // Type name but not entire name.
               peerIdentityString // key
               );
-          theAppLog.debug("TextStream.TextStream(.) called.");
+          theAppLog.debug("TextStream2.TextStream(.) called.");
           this.thePersistent= thePersistent;
           Nulls.fastFailNullCheckT(theTextStreams2);
           this.theTextStreams= theTextStreams2;
@@ -106,7 +106,7 @@ public class TextStream2
           DataTreeModel inDataTreeModel 
           )
         {
-          theAppLog.debug("TextStream.getDataJComponent(.) called.");
+          theAppLog.debug("TextStream2.getDataJComponent(.) called.");
           JComponent resultJComponent= 
             new TextStream2Viewer( 
               inTreePath, 
@@ -126,7 +126,7 @@ public class TextStream2
           the contents of the external text file whose name is fileString.
           */
         {
-          theAppLog.info("TextStream.loadStreamV(..) begins.");
+          theAppLog.info("TextStream2.loadStreamV(..) begins.");
           BufferedReader theBufferedReader= null; 
           try {
               thePlainDocument= new PlainDocument();
@@ -140,24 +140,24 @@ public class TextStream2
                 }
               }
             catch (BadLocationException theBadLocationException) { 
-              theAppLog.exception("TextStream.loadStreamV(..) ",theBadLocationException);
+              theAppLog.exception("TextStream2.loadStreamV(..) ",theBadLocationException);
               }
             catch (FileNotFoundException theFileNotFoundException) { 
-              theAppLog.info("TextStream.loadStreamV(..) "
+              theAppLog.info("TextStream2.loadStreamV(..) "
                 + theFileNotFoundException);
               }
             catch (IOException theIOException) { 
-              theAppLog.exception("TextStream.loadStreamV(..)", theIOException);
+              theAppLog.exception("TextStream2.loadStreamV(..)", theIOException);
               }
             finally {
               try {
                 if ( theBufferedReader != null ) theBufferedReader.close();
                 }
               catch ( IOException theIOException ) { 
-                theAppLog.exception("TextStream.loadStreamV(..)", theIOException);
+                theAppLog.exception("TextStream2.loadStreamV(..)", theIOException);
                 }
               }
-          theAppLog.info("TextStream.loadStreamV(..) ends.");
+          theAppLog.info("TextStream2.loadStreamV(..) ends.");
           }
 
       protected int finalizeDataNodesI()
@@ -172,7 +172,7 @@ public class TextStream2
           the external text file whose name is fileString.
           */
         {
-          theAppLog.info("TextStream.storeDocumentV(..) begins.");
+          theAppLog.info("TextStream2.storeDocumentV(..) begins.");
           FileWriter theFileWriter= null;
           thePlainDocument.readLock();
           try {
@@ -182,23 +182,23 @@ public class TextStream2
               writeAllLineElementsV(theFileWriter);
               }
             catch (BadLocationException theBadLocationException) { 
-              theAppLog.exception( "TextStream.storeDocumentV(..)",
+              theAppLog.exception( "TextStream2.storeDocumentV(..)",
                   theBadLocationException);
               }
             catch (IOException theIOException) { 
-              theAppLog.exception("TextStream.storeDocumentV(..)",theIOException);
+              theAppLog.exception("TextStream2.storeDocumentV(..)",theIOException);
               }
             finally {
               try {
                 if ( theFileWriter != null ) theFileWriter.close();
                 }
               catch ( IOException theIOException ) { 
-                theAppLog.exception("TextStream.storeDocumentV(..)", theIOException);
+                theAppLog.exception("TextStream2.storeDocumentV(..)", theIOException);
                 }
               thePlainDocument.readUnlock();
               }
           thePlainDocument= null; // Indicate document is no longer being viewed.
-          theAppLog.info("TextStream.storeDocumentV(..) ends.");
+          theAppLog.info("TextStream2.storeDocumentV(..) ends.");
           }
 
       private void writeAllLineElementsV(FileWriter theFileWriter)

@@ -88,10 +88,24 @@ public class Persistent
         
         //// rootMapEpiNode.renameKeysV("oldKeyString", "newKeyString");
         
-        rootMapEpiNode.renameKeysV("peers", "Unicasters");
-        rootMapEpiNode.renameKeysV("PeerIdentity", "OwnerId"); // new.
+        //// rootMapEpiNode.renameKeysV("peers", "Unicasters");
+        renameKeysV("peers", "Unicasters");
+        //// rootMapEpiNode.renameKeysV("PeerIdentity", "OwnerId"); // new.
+        renameKeysV("PeerIdentity", "OwnerId"); // new.
         
         theAppLog.info("Persistent.updateFormatV() ends.");
+        }
+
+    private void renameKeysV(String oldKeyString, String newKeyString)
+      /* This method replaces instances of map keys 
+        with value oldKeyString to NewKeyString.
+        It is meant to be used for Persistent.txt file format changes.
+        */
+      { 
+        theAppLog.debug( "Persistent.renameKeys(\""
+          + oldKeyString + "\",\"" + newKeyString 
+          + "\") called.");
+        rootMapEpiNode.renameKeysV(oldKeyString, newKeyString);
         }
 
     private MapEpiNode loadMapEpiNode( String fileString )

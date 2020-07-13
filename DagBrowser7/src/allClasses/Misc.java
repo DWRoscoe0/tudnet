@@ -18,6 +18,7 @@ public class Misc
     ///org Code needs moving now.
     
     Here are some notes to mark possible work to do:
+    ///new : new code being created or adapted.
     ///tmp : temporary code, for debugging or a development kluge.
     ///dbg : code used for debugging, for code or comment disabling code.
     ///fix : a problem to fix.

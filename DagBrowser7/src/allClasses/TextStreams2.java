@@ -1,3 +1,4 @@
+
 package allClasses;
 
 import static allClasses.AppLog.theAppLog;
@@ -9,10 +10,12 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
   
   /* This class implements a list of peer TextStreams 
     based on data replication instead of TextStreams2 broadcast.  
-    
-    ///fix Eventually the protocols will include time-out and retrying,
+
+    ///new : New code for subscription-based text streaming being created or adapted.
+
+    ///fix : Eventually the protocols will include time-out and retrying,
       but for now those things are not included.
-      Retrying will be the job of the person doing the testing
+      Retrying will be the job of the developer doing the testing
       in those few cases where it is needed.
     */
 
@@ -45,24 +48,35 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
     {
       createTextStreamsV();
 
-      boolean falseB= false;
+      boolean falseB= true;
       if (falseB) updatePeersAboutStreamsV(); //// Reference, but don't call.
       }
 
-  private void updatePeersAboutStreamsV() 
+  private void updatePeersAboutStreamsV()
+    /* Because now all peers are assumed to be subscribed to 
+      the entire TextStreams2 peer list, peers update each other
+      whenever anything changes.
+      
+      ///fix? This normally does nothing because it is called
+        before any connections have been made.
+        */
     {
-      //// for (TextStream2 scanTextStream2 : childHashMap.values()) // For every stream
-      {
-      sendToPeersV(null); //// Iterate through streams.
-      }
+      for (TextStream2 scanTextStream2 : childHashMap.values()) // For all Streams2
+        { // Send its ID to all peers.
+          MapEpiNode theMapEpiNode= new MapEpiNode();
+          String nodeIdentyString= scanTextStream2.getKeyK();
+          theMapEpiNode.putV(Config.rootIdString, nodeIdentyString);
+          sendToPeersV(theMapEpiNode);
+          }
     }
 
-  private void sendToPeersV(MapEpiNode theMapEpiNode)  ////
+  private void sendToPeersV(MapEpiNode theMapEpiNode)
     /* This sends to all connected peers theMapEpiNode.
       It wraps it in a single-entry MapEpiNode with the key "TextStreams2" first.
       */
     {
-        theAppLog.debug( "TextStreams2.sendToPeersV() called.");
+        theAppLog.debug( "TextStreams2.sendToPeersV() called with"
+          + " theMapEpiNode=" + NL + "  " + theMapEpiNode);
         PeersCursor scanPeersCursor= // Used for iteration. 
             PeersCursor.makeOnNoEntryPeersCursor( thePersistent );
         MapEpiNode messageMapEpiNode= MapEpiNode.makeSingleEntryMapEpiNode(
@@ -70,7 +84,7 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
       peerLoop: while (true) { // Process all peers in my peer list. 
         if (scanPeersCursor.nextKeyString().isEmpty() ) // Try getting next scan peer. 
           break peerLoop; // There are no more peers, so exit loop.
-        theAppLog.appendToFileV("(stream?)"); // Log that peer is being considered.
+        theAppLog.appendToFileV("(stream2?)"); // Log that peer is being considered.
         MapEpiNode scanMapEpiNode= scanPeersCursor.getSelectedMapEpiNode();
         //// if (! scanPeersCursor.testB("isConnected")) // This peer is not connected 
         if (! scanMapEpiNode.testB("isConnected")) // This peer is not connected
@@ -131,39 +145,30 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
           } // toPeerDone:
       }
 
-  protected boolean tryProcessingMapEpiNodeB(MapEpiNode theMapEpiNode) //// remove?
+  protected boolean tryProcessingMapEpiNodeB(MapEpiNode theMapEpiNode) //// being adapted.
+    //// The original or something like it belongs in TextStream2 for actual text.
     /* This method tries processing a MapEpiNode.
-      It must be a single element map with a key of "StreamText".
+      It must be a single element map with a key of "TextStreams2"
+      which should contain an update to the TextStream list.
       If it is not then it ignores the data and returns false.
       If it is then it returns true after having the value 
-      processed for TextStream content.
+      processed for TextStream peer list content.
       Processing is done on the Event Dispatch Thread (EDT), switching if needed.
       The message is passed to the appropriate TextStream based on
       PeerIdenty in theMapEpiNode, creating the TextStream if needed.
       */
     { 
-      MapEpiNode payloadMapEpiNode= theMapEpiNode.getMapEpiNode("StreamText");
-      boolean decodedB= (payloadMapEpiNode != null); // It a StreamText message?
+      MapEpiNode payloadMapEpiNode= theMapEpiNode.getMapEpiNode("TextStreams2");
+      boolean decodedB= (payloadMapEpiNode != null); // It's a StreamText message?
       if (decodedB) {
-        EDTUtilities.runOrInvokeAndWaitV( // Switch to EDT thread if needed. 
-            new Runnable() {
-              @Override  
-              public void run() {
-                synchronized(this) {
-                  processReplicationMessageV(payloadMapEpiNode);
-                  }
-                }
-              } 
-            );
+        String peerIdentityString= payloadMapEpiNode.getString(Config.rootIdString);
+        TextStream2 theTextStream= childHashMap.get(peerIdentityString); // Try lookup.
+        if (null == theTextStream) { // If TextStream2 does not exist for this peer
+          theTextStream= createAndAddTextStream(peerIdentityString);
+          sendToPeersV(payloadMapEpiNode); // Inform other peers of this new stream.
+          }
         }
       return decodedB;
-      }
-
-  public void processReplicationMessageV(MapEpiNode theMapEpiNode)
-    /* This method examines theMapEpiNode, and tries to process it. 
-     */
-    {
-      //// do something.
       }
 
   public void processIfNewV(MapEpiNode theMapEpiNode)
@@ -175,7 +180,32 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
       * distributes the message to other connected peers.
      */
     {
-      //// do nothing
+      //// toReturn: {
+        //// Integer hashInteger= new Integer( theMapEpiNode.getString("time").hashCode());
+        //// if (antiRepeatLinkedHashMap.containsKey(hashInteger)) // Already in map?
+        ////   break toReturn; // Yes, so it was received before, so we ignore it.
+        //// antiRepeatLinkedHashMap.put(hashInteger,null); // Put in map to prevent repeat.
+        sendToTextStreamV(theMapEpiNode);
+        sendToPeersV(theMapEpiNode);
+        //// } // toReturn:
+      }
+
+  private void sendToTextStreamV(MapEpiNode theMapEpiNode)
+    /* This method sends theMapEpiNode to the appropriate child TextStream.
+     */
+    {
+      String peerIdentityString= theMapEpiNode.getString(Config.rootIdString);
+      TextStream2 theTextStream=  // Getting the appropriate TextStream.
+          getOrBuildAddAndTextStream(peerIdentityString);
+      theTextStream.tryProcessingMapEpiNodeB(theMapEpiNode);
+      }
+
+  private TextStream2 getOrBuildAddAndTextStream(String peerIdentityString)
+    {
+      TextStream2 theTextStream= childHashMap.get(peerIdentityString); // Try lookup.
+      if (null == theTextStream)
+        theTextStream= createAndAddTextStream(peerIdentityString);
+      return theTextStream;
       }
 
   private TextStream2 createAndAddTextStream(String peerIdentityString)

@@ -91,7 +91,7 @@ public class Config
 		public static final String appString= "Infogora";
 	  public static final String appJarString= appString + ".jar";
     public static final String textStream1FolderString= "Peers";
-    public static final String textStream2FolderString= "Replications";
+    public static final String textStream2FolderString= "Owners";
 
     //// public static final String rootIdString= "PeerIdentity"; // old
     public static final String rootIdString= "OwnerId"; // new
