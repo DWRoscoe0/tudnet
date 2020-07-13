@@ -351,8 +351,8 @@ public class ConnectionManager
     	  	  			) )
     	  	  		break preparingSocketLoop;
     	  	  	} // preparingSocketLoop:
+            startingUnicastReceiverThreadV();
 	      	  startingSenderThreadV();
-	          startingUnicastReceiverThreadV();
             theAppLog.info(
                 "ConnectionManager.maintainingDatagramSocketAndDependentThreadsV()"
                 + " has finished the renewal of threads and sockets.");
