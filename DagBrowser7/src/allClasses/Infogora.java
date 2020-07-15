@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.Set;
 
 import static allClasses.AppLog.LogLevel.WARN;
+import static allClasses.AppLog.LogLevel.INFO;
 import static allClasses.AppLog.theAppLog;
 import static allClasses.SystemSettings.NL;
 
@@ -220,10 +221,16 @@ class Infogora  // The root of this app.
               waitV(0);
               } // while(true)
             
-    	      waitV(Config.threadJoinTimeOutMsL + 1000); // Try waiting 
-    	        // for thread time-out plus 1 second more.
+            int secondsI= 5;
+            theAppLog.logB( INFO, true, null,
+                "run() Starting "+secondsI+"-second backup exit timer");
+            while (secondsI-- > 0) { // Count down, time and, display progress.
+              waitV(1000); // Waiting 1 second.
+              System.out.print(".");
+    	        }
     	      
-    	      // If we got this far, timer has expired, and termination probably failed.
+    	      // If we got this far, time has expired, 
+            // and termination probably failed.
     	      
             synchronized(theAppLog) { // Log the following block as an indivisible block.
               theAppLog.logB( WARN, true, null,
