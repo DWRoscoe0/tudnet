@@ -120,7 +120,7 @@ public class ConnectionManager
       private NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes;
         // For inputs in the form of MapEpiNodes.
       
-      private TextStreams1 theTextStreams= null;
+      private TextStreams1 theTextStreams1= null;
       private TextStreams2 theTextStreams2= null;
 
     // Other instance variables, all private.
@@ -171,7 +171,7 @@ public class ConnectionManager
             toConnectionManagerNotifyingQueueOfStrings;
         this.toConnectionManagerNotifyingQueueOfMapEpiNodes=
             toConnectionManagerNotifyingQueueOfMapEpiNodes;
-        this.theTextStreams= theTextStreams;
+        this.theTextStreams1= theTextStreams;
         this.theTextStreams2= theTextStreams2;
         }
 
@@ -190,7 +190,7 @@ public class ConnectionManager
     		
     		restartPreviousUnicastersV();
 
-        theTextStreams.startServiceV(); // Starts flooding child TextStream-s.
+        theTextStreams1.startServiceV(); // Starts flooding child TextStream-s.
         theTextStreams2.startServiceV(); // Starts replicating child TextStream-s.
 
         processingInputsAndExecutingEventsV(); // Until thread termination...
@@ -782,6 +782,10 @@ public class ConnectionManager
         
         notifyPeerAboutPeersV(subjectPeerMapEpiNode); // To the subject peer,
           // send the statuses of all our [other] peers.
+
+        //// if (subjectPeerMapEpiNode.testB("isConnected")) // Peer just connected.
+        theTextStreams2.notifyNewConnectionAboutTextStreamsV(
+            subjectPeerMapEpiNode); // Update it about TextStreams2.
         }
 
     private void notifyPeersAboutPeerV(MapEpiNode messagePeerMapEpiNode)
@@ -865,9 +869,13 @@ public class ConnectionManager
 
     private boolean tryProcessingByTextStreamsB(MapEpiNode theMapEpiNode)
       /* Returns true if TextStreams was able to process, false otherwise.
+        It tries both the new and the old.
         */
       {
-        return theTextStreams.tryProcessingMapEpiNodeB(theMapEpiNode);
+        boolean successB= theTextStreams2.tryProcessingMapEpiNodeB(theMapEpiNode);
+        if (!successB)
+          successB= theTextStreams1.tryProcessingMapEpiNodeB(theMapEpiNode);
+        return successB; 
         }
 
     } // class ConnectionManager.

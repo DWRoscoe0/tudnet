@@ -53,6 +53,76 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
       }
 
   private void updatePeersAboutStreamsV()
+    /* This is like updatePeersAboutStreamsV() but with
+      the inner and outer loops reversed.  
+      //// Update documentation.
+       */
+    {
+        theAppLog.appendToFileV("(streams2 peers:)"); // Log that peer is being considered.
+        PeersCursor scanPeersCursor= // Used for iteration. 
+            PeersCursor.makeOnNoEntryPeersCursor( thePersistent );
+      peerLoop: while (true) { // Process all peers in my peer list. 
+        if (scanPeersCursor.nextKeyString().isEmpty() ) // Try getting next scan peer. 
+          break peerLoop; // There are no more peers, so exit loop.
+        theAppLog.appendToFileV("(peer?)"); // Log that peer is being considered.
+        MapEpiNode peerMapEpiNode= scanPeersCursor.getSelectedMapEpiNode();
+        updatePeerAboutStreams2V(peerMapEpiNode);
+      } // peerLoop: 
+        theAppLog.appendToFileV("(end of peers)"+NL); // Mark end of list with new line.
+    }
+
+  public void notifyNewConnectionAboutTextStreamsV(
+      MapEpiNode subjectPeerMapEpiNode)
+    {
+      updatePeerAboutStreams2V(subjectPeerMapEpiNode);
+      }
+  
+
+  private void updatePeerAboutStreams2V(MapEpiNode peerMapEpiNode)
+    {
+      endPeer: {
+        if (! peerMapEpiNode.testB("isConnected")) // This peer is not connected
+          break endPeer; // so end this peer to try next peer.
+        //// String peerIPString= scanPeersCursor.getFieldString("IP");
+        String peerIPString= peerMapEpiNode.getString("IP");
+        //// String peerPortString= scanPeersCursor.getFieldString("Port");
+        String peerPortString= peerMapEpiNode.getString("Port");
+        IPAndPort theIPAndPort= new IPAndPort(peerIPString, peerPortString);
+        Unicaster scanUnicaster= // Try getting associated Unicaster.
+            theUnicasterManager.tryingToGetUnicaster(theIPAndPort);
+        if (scanUnicaster == null) { // Unicaster of scan peer doesn't exist
+          theAppLog.error(
+              "TextStreams2.sendToPeersV() non-existent Unicaster.");
+          break endPeer; // so end this peer to try next peer.
+          }
+        theAppLog.appendToFileV("(PEER!)"); // Log that we're sending data.
+        updateStreamsToUnicasterV(scanUnicaster);
+        //// scanUnicaster.putV( // Queue full message EpiNode to Unicaster of scan peer.
+        ////     messageMapEpiNode);
+      } // peerDone:
+  }
+
+  private void updateStreamsToUnicasterV(Unicaster theUnicaster)
+    /* Sends all TextStream2 IDs to theUnicaster. */
+    {
+      theAppLog.appendToFileV("(Streams2:)"); // Log beginning of data.
+      for  // For all Streams2
+        (TextStream2 scanTextStream2 : childHashMap.values())
+        { // Send the stream ID to theUnicaster.
+          MapEpiNode theMapEpiNode= new MapEpiNode();
+          String nodeIdentyString= scanTextStream2.getKeyK();
+          theMapEpiNode.putV(Config.rootIdString, nodeIdentyString);
+          MapEpiNode messageMapEpiNode= MapEpiNode.makeSingleEntryMapEpiNode(
+            "TextStreams2", theMapEpiNode);  // Complete MapEpiNode message.
+          //// sendToPeersV(theMapEpiNode);
+          theAppLog.appendToFileV("(STREAM2!)"); // Log sending Stream2 data.
+          theUnicaster.putV( // Queue full message EpiNode to Unicaster.
+             messageMapEpiNode);
+          }
+      theAppLog.appendToFileV("(STREAMS2!)"); // Log end of data.
+    }
+
+  private void OLDupdatePeersAboutStreamsV() ////
     /* Because now all peers are assumed to be subscribed to 
       the entire TextStreams2 peer list, peers update each other
       whenever anything changes.
@@ -69,7 +139,7 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
           sendToPeersV(theMapEpiNode);
           }
     }
-
+  
   private void sendToPeersV(MapEpiNode theMapEpiNode)
     /* This sends to all connected peers theMapEpiNode.
       It wraps it in a single-entry MapEpiNode with the key "TextStreams2" first.
@@ -85,10 +155,10 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
         if (scanPeersCursor.nextKeyString().isEmpty() ) // Try getting next scan peer. 
           break peerLoop; // There are no more peers, so exit loop.
         theAppLog.appendToFileV("(stream2?)"); // Log that peer is being considered.
+      endPeer: {
         MapEpiNode scanMapEpiNode= scanPeersCursor.getSelectedMapEpiNode();
-        //// if (! scanPeersCursor.testB("isConnected")) // This peer is not connected 
         if (! scanMapEpiNode.testB("isConnected")) // This peer is not connected
-          continue peerLoop; // so loop to try next peer.
+          break endPeer; // so end this peer to try next peer.
         //// String peerIPString= scanPeersCursor.getFieldString("IP");
         String peerIPString= scanMapEpiNode.getString("IP");
         //// String peerPortString= scanPeersCursor.getFieldString("Port");
@@ -99,11 +169,12 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
         if (scanUnicaster == null) { // Unicaster of scan peer doesn't exist
           theAppLog.error(
               "TextStreams2.sendToPeersV() non-existent Unicaster.");
-          continue peerLoop; // so loop to try next peer.
+          break endPeer; // so end this peer to try next peer.
           }
         theAppLog.appendToFileV("(YES!)"); // Log that we're sending data.
         scanUnicaster.putV( // Queue full message EpiNode to Unicaster of scan peer.
             messageMapEpiNode);
+      } // peerDone:
       } // peerLoop: 
         theAppLog.appendToFileV("(end of peers)"+NL); // Mark end of list with new line.
       }
