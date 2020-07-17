@@ -145,12 +145,14 @@ public class Misc
                 break toReturn; // This may be considered success.
                 }
 		    		{ // Reporting failure and possible clues about the causes.
-							theAppLog.warning(
+							// theAppLog.warning( // Use this to get stack dump.
+		    		  theAppLog.debug(
 									"Misc.requestFocusAndLogV() of "+Misc.componentInfoString(theComponent) 
 					    		+ NL + "  focus-owner="+Misc.componentInfoString(focusedComponent)
 									+ " requestFocusInWindow() successB=" + successB
 									);
-		    			while ( theComponent != null ) {
+		    		  boolean showPathB= false; // Make true to show path.
+		    			while ( showPathB && (theComponent != null) ) {
 		      			theAppLog.debug(
 		      			    Misc.componentFocusInfoString(
 		      			        "Misc.requestFocusAndLogV(): ",

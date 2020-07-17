@@ -54,12 +54,12 @@ public abstract class TreeModelSupport
 	        { 
 	        	vectorOfTreeModelListener.addElement( theTreeModelListener );
 		        if ( vectorOfTreeModelListener.size() > maxListenersI) {
-			    		theAppLog.debug(
-		      			"TreeModelSupport.addTreeModelListener(..), maxListenersI: "+
-	      		    vectorOfTreeModelListener.size()+ NL + "  "+
-	      		    theTreeModelListener.getClass().getName() + "@" +
-	      		    Integer.toHexString(System.identityHashCode(theTreeModelListener))
-		            );
+			    		// theAppLog.debug(
+		      		// 	"TreeModelSupport.addTreeModelListener(..), maxListenersI: "+
+	      		  //   vectorOfTreeModelListener.size()+ NL + "  "+
+	      		  //   theTreeModelListener.getClass().getName() + "@" +
+	      		  //   Integer.toHexString(System.identityHashCode(theTreeModelListener))
+		          //   );
 			    		maxListenersI++; // Increment maximum listeners so far.
 			    		}
   	        }

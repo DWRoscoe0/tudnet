@@ -62,7 +62,7 @@ public class NotifyingQueue<E> // Queue inter-thread communication.
 	    {
 	      super(Integer.MAX_VALUE); // Construct superclass with no size limit.
 	  	  /// this.sizeLimitI= capacityI; // Set size limit to capacity parameter.
-	      this.sizeLimitI= 0; // Set size limit something small to test logic.
+	      this.sizeLimitI= 4;  // 0; // Use 0 to test logic.
 	      this.consumerThreadLockAndSignal= consumerThreadLockAndSignal;
 	      }
 		
@@ -105,7 +105,7 @@ public class NotifyingQueue<E> // Queue inter-thread communication.
         if ( size() >= sizeLimitI ) { // Handle whether size limit exceeded.
           sizeLimitI++;
           theAppLog.info(
-              "NotifyingQueue<E>.put(E) growing queue to "+sizeLimitI
+              "NotifyingQueue<E>.put(E) growing queue to size "+sizeLimitI
               + " for:" + NL + "  " + anE);
           }
         super.add( anE ); // Adding element to queue.

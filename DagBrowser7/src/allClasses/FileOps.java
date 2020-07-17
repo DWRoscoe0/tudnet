@@ -354,8 +354,8 @@ public class FileOps
         for // For all the elements of the relative path element array 
           (String elementString: fileRelativePathStrings) {
           resultFile= new File(resultFile, elementString); // add next element.
-          theAppLog.debug("AppSettings.makePathRelativeToAppFolderFile(.) " 
-              + elementString + " " + resultFile);
+          // theAppLog.debug("AppSettings.makePathRelativeToAppFolderFile(.) " 
+          //    + elementString + " " + resultFile);
           }
       
         return resultFile; // Return the accumulated result.

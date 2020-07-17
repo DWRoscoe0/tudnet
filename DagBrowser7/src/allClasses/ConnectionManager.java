@@ -677,7 +677,7 @@ public class ConnectionManager
           if (messageMapEpiNode == null) break;  // Exit if no more messages
           theAppLog.debug( 
               "ConnectionManager.processPeerDataMessagesV() dequeued peerMapEpiNode:"
-              + messageMapEpiNode.toString(2));
+              + messageMapEpiNode.toString());
           decodePeerMapEpiNodeV(messageMapEpiNode);
           }
         }

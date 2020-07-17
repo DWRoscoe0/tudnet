@@ -60,7 +60,7 @@ public class TextStream1
               "TextStream", // Type name but not entire name.
               peerIdentityString // key
               );
-          theAppLog.debug("TextStream1.TextStream(.) called.");
+          // theAppLog.debug("TextStream1.TextStream(.) called.");
           this.thePersistent= thePersistent;
           Nulls.fastFailNullCheckT(theTextStreams);
           this.theTextStreams= theTextStreams;
@@ -125,7 +125,7 @@ public class TextStream1
           the contents of the external text file whose name is fileString.
           */
         {
-          theAppLog.info("TextStream1.loadStreamV(..) begins.");
+          // theAppLog.info("TextStream1.loadStreamV(..) begins.");
           BufferedReader theBufferedReader= null; 
           try {
               thePlainDocument= new PlainDocument();
@@ -156,7 +156,7 @@ public class TextStream1
                 theAppLog.exception("TextStream1.loadStreamV(..)", theIOException);
                 }
               }
-          theAppLog.info("TextStream1.loadStreamV(..) ends.");
+          // theAppLog.info("TextStream1.loadStreamV(..) ends.");
           }
 
       protected int finalizeDataNodesI()
@@ -171,7 +171,7 @@ public class TextStream1
           the external text file whose name is fileString.
           */
         {
-          theAppLog.info("TextStream1.storeDocumentV(..) begins.");
+          // theAppLog.info("TextStream1.storeDocumentV(..) begins.");
           FileWriter theFileWriter= null;
           thePlainDocument.readLock();
           try {
@@ -197,7 +197,7 @@ public class TextStream1
               thePlainDocument.readUnlock();
               }
           thePlainDocument= null; // Indicate document is no longer being viewed.
-          theAppLog.info("TextStream1.storeDocumentV(..) ends.");
+          // theAppLog.info("TextStream1.storeDocumentV(..) ends.");
           }
 
       private void writeAllLineElementsV(FileWriter theFileWriter)

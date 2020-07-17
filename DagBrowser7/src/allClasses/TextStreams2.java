@@ -122,6 +122,7 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
       theAppLog.appendToFileV("(STREAMS2!)"); // Log end of data.
     }
 
+  @SuppressWarnings("unused")
   private void OLDupdatePeersAboutStreamsV() ////
     /* Because now all peers are assumed to be subscribed to 
       the entire TextStreams2 peer list, peers update each other
