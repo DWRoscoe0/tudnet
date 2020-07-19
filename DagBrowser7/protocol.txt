@@ -1,0 +1,37 @@
+This file describes protocol messages used by the app.
+
+TextStreams2:  # New style, subscription-type TextStream2 messages.
+  OwnerID: nn...  # ID of owner of subject stream.
+    # If this ID is being seen for the first time, it is passed to neighbors.
+  StartOffset: offset   # Offset of start of text of interest.
+  Text: "...."          # Text being sent, to be appended at offset StartOffset.
+                        # If not present it means text there is wanted.
+
+StreamText: Old style flooding TextStream1 messages.
+            
+LocalNewState: This message is generated locally by a Unicaster
+  to inform the ConnectionManager when the associated remote node 
+  has connected or disconnected.
+
+RemoteNewState: This message is used to notify all connected peers about
+  about a single [newly] connected peer.
+  It is used when a peer connects.
+  It does the opposite of RemoteCurrentState.
+
+RemoteCurrentState: This message is used to notify a single [newly] 
+  connected peer about all [other] peers.
+  It is used when a peer connects.
+  It does the opposite of RemoteNewState.
+  
+DISCOVERY:      # Multicast node discovery.
+
+ALIVE:          # Multicast node response.
+
+PS:             # Packet Sequence
+ SN: n          # Sequence Number 
+
+PA:             # Packet Acknowledgment
+  SN: n..       # packet Sequence Number
+  PC: n..       # Packet Count
+   
+  

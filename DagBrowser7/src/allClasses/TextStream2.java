@@ -11,8 +11,6 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 import javax.swing.JComponent;
 import javax.swing.text.BadLocationException;
@@ -33,18 +31,11 @@ public class TextStream2
   
       // Injected variables:
       private Persistent thePersistent;
-      private TextStreams2 theTextStreams;
+      private TextStreams2 theTextStreams2;
 
       // Other variables:
-      private PlainDocument thePlainDocument= null; // Where the stream is stored.
-      LinkedHashMap<Integer,Object> antiRepeatLinkedHashMap= // Used to prevent storms.
-          new LinkedHashMap<Integer,Object>() {
-            @Override
-            protected boolean removeEldestEntry(Map.Entry<Integer,Object> eldest) {
-                return size() > 8; // Limit map size to 8 entries.
-                }
-          };
-      private File streamFile; 
+      private PlainDocument thePlainDocument= null; // Internal document store.
+      private File streamFile; // File name of external document store. 
       private String theRootIdString;
       
     // Constructors.
@@ -64,7 +55,7 @@ public class TextStream2
           theAppLog.debug("TextStream2.TextStream(.) called.");
           this.thePersistent= thePersistent;
           Nulls.fastFailNullCheckT(theTextStreams2);
-          this.theTextStreams= theTextStreams2;
+          this.theTextStreams2= theTextStreams2;
           this.theRootIdString= getKeyK(); 
           
           /*  ////
@@ -227,11 +218,11 @@ public class TextStream2
          */
         {
           MapEpiNode theMapEpiNode= new MapEpiNode();
-          theMapEpiNode.putV("message", theString);
+          theMapEpiNode.putV("text", theString);
           String nodeIdentyString= thePersistent.getEmptyOrString(Config.rootIdString);
           theMapEpiNode.putV(Config.rootIdString, nodeIdentyString);
           theMapEpiNode.putV("time", ""+System.currentTimeMillis());
-          theTextStreams.processIfNewV(theMapEpiNode);
+          theTextStreams2.processNewTextV(theMapEpiNode);
           }
 
       public boolean tryProcessingMapEpiNodeB(MapEpiNode theMapEpiNode) 
@@ -240,16 +231,16 @@ public class TextStream2
           so this method can be called from the EDT or another thread.
           */
         {
-          String theString= theMapEpiNode.getString("message");
+          String theString= theMapEpiNode.getString("text");
           theAppLog.debug(
-              "TextStreamViewer.processStringStringV(.) String="
+              "TextStream2.tryProcessingMapEpiNodeB(.) String="
               + theString);
           try {
             thePlainDocument.insertString( // Append message to document as a line.
               thePlainDocument.getLength(),theString + "\n",null);
           } catch (BadLocationException theBadLocationException) { 
             theAppLog.exception(
-                "TextStreamViewer.processStringStringV(..) ",theBadLocationException);
+                "TextStream2.tryProcessingMapEpiNodeB(..) ",theBadLocationException);
           }
           return true;
           }

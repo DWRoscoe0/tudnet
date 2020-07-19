@@ -119,8 +119,8 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
         AppGUIFactory.makeEpiThread( theSystemsMonitor, "SystemsMonitor" );
       DataNode testCenterDataNode= new NamedList(
           "Test-Center",
-          theTextStreams1,
           theTextStreams2,
+          theTextStreams1,
           new Infinitree( null, 0 )
           );
       DataNode theInitialRootDataNode= new InfogoraRoot( // Building DataNode tree.

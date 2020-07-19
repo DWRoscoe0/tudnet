@@ -235,20 +235,22 @@ public class TextStream1
 
       public boolean tryProcessingMapEpiNodeB(MapEpiNode theMapEpiNode) 
         /* This method tries to process TextStream message theMapEpiNode.
+          
           It switches to the Event Dispatch Thread (EDT) if needed,
           so this method can be called from the EDT or another thread.
+          WRONG!!! It must be called on the EDT.  It doesn't switch.
           */
         {
           String theString= theMapEpiNode.getString("message");
           theAppLog.debug(
-              "TextStreamViewer.processStringStringV(.) String="
+              "TextStream1.tryProcessingMapEpiNodeB(.) String="
               + theString);
           try {
             thePlainDocument.insertString( // Append message to document as a line.
               thePlainDocument.getLength(),theString + "\n",null);
           } catch (BadLocationException theBadLocationException) { 
             theAppLog.exception(
-                "TextStreamViewer.processStringStringV(..) ",theBadLocationException);
+                "TextStream1.tryProcessingMapEpiNodeB(..) ",theBadLocationException);
           }
           return true;
           }

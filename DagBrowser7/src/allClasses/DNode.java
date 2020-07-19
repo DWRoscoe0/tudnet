@@ -251,7 +251,7 @@ public class DNode<N extends DNode<N>>
           It is supposed to return true if processing is successful, false otherwise.
           This version does no processing so it returns false.
           Methods which override this method will return true in some cases.
-          For an example, see the NamesList class.
+          For an example, see the NamedList class.
           */
         { 
           return false; 

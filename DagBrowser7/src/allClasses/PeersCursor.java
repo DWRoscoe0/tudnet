@@ -88,9 +88,9 @@ public class PeersCursor extends PersistentCursor {
         if (theIdentityString!=null)
           childMapEpiNode.putV( Config.rootIdString, theIdentityString );
           else
-          theAppLog.warning(
-              "PeersCursor.findOrAddPeerV(ipString,portString,theIdentityString) "
-              + "theIdentityString==null");
+          theAppLog.debug(
+            "PeersCursor.findOrAddPeerV(ipString,portString,theIdentityString) "
+            + "theIdentityString==null, IP="+ipString+", Port="+portString);
         }
       }
 
