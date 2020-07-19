@@ -55,7 +55,7 @@ public class PersistentCursor
 		
 		// State, generally from most significant to least significant.
 
-		private final Persistent thePersistent; // Underlying dual-format storage structure.
+		protected final Persistent thePersistent; // Underlying dual-format storage structure.
 
     private String entryKeyString= EMPTY_STRING; // Key name String of 
       // presently selected entry in the upper map, the map being iterated.

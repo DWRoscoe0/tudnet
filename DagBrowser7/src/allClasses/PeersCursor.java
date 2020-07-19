@@ -78,6 +78,8 @@ public class PeersCursor extends PersistentCursor {
       and positions the iterator to it.
       */
     { 
+      checkOwnerIdB(theIdentityString); // debug
+      
       findPeerV(ipString, portString, theIdentityString);
       if (getEntryKeyString().isEmpty()) { // Create new element if needed.
         createEntryInPersistentCursor(); // Create new element.
@@ -92,6 +94,18 @@ public class PeersCursor extends PersistentCursor {
             "PeersCursor.findOrAddPeerV(ipString,portString,theIdentityString) "
             + "theIdentityString==null, IP="+ipString+", Port="+portString);
         }
+      }
+
+  private boolean checkOwnerIdB(String ownerIdString)
+    {
+      boolean resultB= Nulls.equals(
+          ownerIdString,
+          thePersistent.getEmptyOrString(Config.rootIdString)
+          );
+      if (resultB)
+          theAppLog.debug(
+            "PeersCursor.checkOwnerIdB(.) This is US!"); 
+      return resultB;
       }
 
   public void findPeerV(String ipString, String portString, String peerIdentityString)

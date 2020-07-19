@@ -731,6 +731,11 @@ public class ConnectionManager
         theAppLog.debug("ConnectionManager.processRemoteUpdatedStateV(..) begins."
             + NL + "  subjectPeerMapEpiNode=" + subjectPeerMapEpiNode);
         toReturn: {
+          if // Exit if same IDs, meaning subject peer is actually local peer
+            ( subjectPeerMapEpiNode.getEmptyOrString(
+                Config.rootIdString).equals(
+                    thePersistent.getEmptyOrString(Config.rootIdString)))
+            break toReturn; // so exit.
           if // Exit if subject peer is not connected to the remote peer.
             (! subjectPeerMapEpiNode.testB("isConnected")) 
             break toReturn;
@@ -748,11 +753,6 @@ public class ConnectionManager
             break toReturn; // so exit.
           //// if (thePeersCursor.testB("isConnected")) // We're already connected to this peer
           if (theMapEpiNode.testB("isConnected")) // We're already connected to this peer
-            break toReturn; // so exit.
-          if // Same IDs, so subject peer is actually the local peer
-            //// ( thePeersCursor.getEmptyOrString(Config.rootIDString).equals(
-            ( theMapEpiNode.getEmptyOrString(Config.rootIdString).equals(
-                thePersistent.getEmptyOrString(Config.rootIdString)))
             break toReturn; // so exit.
 
           theAppLog.debug("ConnectionManager.processRemoteUpdatedStateV(MapEpiNode) "
