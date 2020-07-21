@@ -45,10 +45,8 @@ public class TextStream2
           Persistent thePersistent,
           TextStreams2 theTextStreams2
           )
-        // Constructs a TextStream with a name inString.
         { 
-        // Superclass's injections.
-          super( // Constructing KeyedStateList< String > superclass.
+          super( // Superclass KeyedStateList<String> constructor injections.
               "TextStream", // Type name but not entire name.
               peerIdentityString // key
               );
@@ -58,17 +56,10 @@ public class TextStream2
           this.theTextStreams2= theTextStreams2;
           this.theRootIdString= getKeyK(); 
           
-          /*  ////
-          streamFile= AppSettings.makePathRelativeToAppFolderFile(
-                  "Peers" 
-                  + File.separator + getKeyK()
-                  + File.separator + "textStreamFile.txt"
-                  );
-          */  ////
           streamFile= FileOps.makePathRelativeToAppFolderFile(
               Config.textStream2FolderString,getKeyK(),"textStreamFile.txt"
-              );
-          loadDocumentV(streamFile); // Load document from disk text.
+              ); // Create file path name.
+          loadDocumentV(streamFile); // Load document from file.
           }
 
     // theFile pass-through methods.
@@ -151,6 +142,25 @@ public class TextStream2
           theAppLog.info("TextStream2.loadStreamV(..) ends.");
           }
 
+      public void requestNextTextV()
+        /* Notifies text sources that we are interested in receiving
+         * the next append-able text. 
+         */
+        {
+          theAppLog.debug("TextStream2.requestNextTextV() called.");
+          if (! isOurStreamB())
+            {
+              MapEpiNode theMapEpiNode= new MapEpiNode();
+              String nodeIdentyString= 
+                  thePersistent.getEmptyOrString(Config.rootIdString);
+              theMapEpiNode.putV(Config.rootIdString, nodeIdentyString);
+              theMapEpiNode.putV(
+                  "StartOffset", ""+thePlainDocument.getLength());
+              theTextStreams2.sendToPeersV(theMapEpiNode);  ////
+              }
+
+        }
+      
       protected int finalizeDataNodesI()
         /* This override method finalizes all the children and then the base class. */
         {
@@ -209,7 +219,29 @@ public class TextStream2
             }
         }
 
-      public void processNewStreamStringV(String theString)
+      public void processEnteredStringV(String theString)
+        /* This method processes a new Stream String entered by the user
+          into an associated TextStreamViewer.
+          It is appended to the stream document.
+         */
+        {
+          try {
+              thePlainDocument.insertString( // Append message to document as a line.
+                thePlainDocument.getLength(),theString + "\n",null);
+            } catch (BadLocationException theBadLocationException) { 
+              theAppLog.exception(
+                "TextStream2.processEnteredStringV(..) ",theBadLocationException);
+            }
+          processSendAbleChangeV();
+          }
+
+      private void processSendAbleChangeV()
+        /* This method tries to satisfy any stream subscription requests
+         * that are satisfiable.
+         */
+        {}
+      
+      public void processNewStreamStringV(String theString) ////
         /* This method processes a new Stream String entered by the user
           into an associated TextStreamViewer.
           It does this by building a MapEpiNode containing theString,
@@ -245,4 +277,16 @@ public class TextStream2
           return true;
           }
 
-    }
+      public boolean isOurStreamB()
+        /* Returns true is this is our stream, editable,
+          and there not a read-only stream.
+          */
+        {
+          String localRootIdString= 
+                thePersistent.getEmptyOrString(Config.rootIdString);
+          boolean resultB=  
+              (localRootIdString.equals(theRootIdString)); 
+          return resultB;
+          }
+      
+      }  

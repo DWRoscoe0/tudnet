@@ -144,9 +144,10 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
           }
     }
   
-  private void sendToPeersV(MapEpiNode theMapEpiNode)
+  public void sendToPeersV(MapEpiNode theMapEpiNode)
     /* This sends to all connected peers theMapEpiNode.
-      It wraps it in a single-entry MapEpiNode with the key "TextStreams2" first.
+      It wraps it in a single-entry MapEpiNode with 
+      the key "TextStreams2" first.
       */
     {
         theAppLog.debug( "TextStreams2.sendToPeersV() called with"
