@@ -88,10 +88,14 @@ public class Persistent
         
         //// rootMapEpiNode.renameKeysV("oldKeyString", "newKeyString");
         
-        //// rootMapEpiNode.renameKeysV("peers", "Unicasters");
         renameKeysV("peers", "Unicasters");
-        //// rootMapEpiNode.renameKeysV("PeerIdentity", "OwnerId"); // new.
-        renameKeysV("PeerIdentity", "OwnerId"); // new.
+        renameKeysV("Unicasters","UnicasterIndexes");
+
+        renameKeysV("PeerIdentity", "OwnerId");
+        renameKeysV("OwnerId","UserId");
+
+        renameKeysV("NormalPort","Port");
+
         
         theAppLog.info("Persistent.updateFormatV() ends.");
         }

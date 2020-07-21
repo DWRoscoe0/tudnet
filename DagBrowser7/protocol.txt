@@ -4,8 +4,8 @@ TextStreams2:  # New style, subscription-type TextStream2 messages.
   OwnerID: nn...  # ID of owner of subject stream.
     # If this ID is being seen for the first time, it is passed to neighbors.
   StartOffset: offset   # Offset of start of text of interest.
-  Text: "...."          # Text being sent, to be appended at offset StartOffset.
-                        # If not present it means text there is wanted.
+  Text: "...."          # Text being appended at offset StartOffset.
+                        # If not present it means that text is wanted.
 
 StreamText: Old style flooding TextStream1 messages.
             
@@ -22,10 +22,6 @@ RemoteCurrentState: This message is used to notify a single [newly]
   connected peer about all [other] peers.
   It is used when a peer connects.
   It does the opposite of RemoteNewState.
-  
-DISCOVERY:      # Multicast node discovery.
-
-ALIVE:          # Multicast node response.
 
 PS:             # Packet Sequence
  SN: n          # Sequence Number 
@@ -34,4 +30,19 @@ PA:             # Packet Acknowledgment
   SN: n..       # packet Sequence Number
   PC: n..       # Packet Count
    
+DEBUG:          # Just a counter, incremented with each use, usually with HELLO.
+  N: n...       # Count value.
+
+HELLO:
+  IP: n.n.n.n   # ip-address of RECEIVER.
+  OwnerId: n... # id of owner sender
+
+GOODBYE:        # Signals end of connection.
+ 
   
+DISCOVERY:      # Multicast node discovery.
+
+ALIVE:          # Multicast node response.
+
+MULTICAST-GOODBYE: # Multicast end of connection. 
+ 
