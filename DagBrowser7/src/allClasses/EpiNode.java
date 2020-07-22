@@ -32,7 +32,8 @@ public abstract class EpiNode
   
     abstract public String extractFromEpiNodeString(int indexI) 
         throws IOException;
-      /* This method tries to extract the String whose index is indexI from this EpiNode. 
+      /* This method tries to extract the String 
+        whose index is indexI from this EpiNode. 
         If it succeeds it returns the String.  If it fails it returns null, 
         meaning there is no data at the index position requested.
         The mapping between index values and Strings in the EpiNode 
@@ -51,7 +52,8 @@ public abstract class EpiNode
         In this base class, it always returns null and logs an error.
         */
       {
-        theAppLog.error( "EpiNode.getEpiNode(int): base class should not be called.");
+        theAppLog.error( 
+            "EpiNode.getEpiNode(int): base class should not be called.");
         return null;
         }
 
@@ -60,14 +62,17 @@ public abstract class EpiNode
         converted to Flow style text.
         */
       {
-        ByteArrayOutputStream theByteArrayOutputStream = new ByteArrayOutputStream();
+        ByteArrayOutputStream theByteArrayOutputStream= 
+            new ByteArrayOutputStream();
         try {
             writeV(theByteArrayOutputStream);
           } catch(IOException theIOException) {
             throw new RuntimeException(
-              "Should not happen because writing to storage.", theIOException);
+              "Should not happen because writing to storage.", 
+              theIOException);
           }
-        String resultString = new String(theByteArrayOutputStream.toByteArray());
+        String resultString= 
+            new String(theByteArrayOutputStream.toByteArray());
         return resultString;
         }
 
@@ -76,14 +81,17 @@ public abstract class EpiNode
         converted to Block style text, starting at indentation indentI.
         */
       {
-        ByteArrayOutputStream theByteArrayOutputStream = new ByteArrayOutputStream();
+        ByteArrayOutputStream theByteArrayOutputStream= 
+            new ByteArrayOutputStream();
         try {
             writeV(theByteArrayOutputStream, indentI);
           } catch(IOException theIOException) {
             throw new RuntimeException(
-              "Should not happen because writing to storage.", theIOException);
+              "Should not happen because writing to storage.", 
+              theIOException);
           }
-        String resultString = new String(theByteArrayOutputStream.toByteArray());
+        String resultString= 
+            new String(theByteArrayOutputStream.toByteArray());
         return resultString;
         }
     
@@ -99,7 +107,8 @@ public abstract class EpiNode
         meaning no new-lines and now indenting.
         */
 
-    public static EpiNode tryEpiNode(RandomAccessInputStream theRandomAccessInputStream ) 
+    public static EpiNode tryEpiNode(
+        RandomAccessInputStream theRandomAccessInputStream ) 
       throws IOException
     /* This method tries to parse an EpiNode.
       It returns the node if the parse is successful, null otherwise.
@@ -111,21 +120,25 @@ public abstract class EpiNode
     { 
         EpiNode resultEpiNode= null; 
       toReturn: {
-        resultEpiNode= SequenceEpiNode.trySequenceEpiNode(theRandomAccessInputStream);
+        resultEpiNode= 
+            SequenceEpiNode.trySequenceEpiNode(theRandomAccessInputStream);
         if (resultEpiNode != null) break toReturn;
         resultEpiNode= MapEpiNode.tryMapEpiNode(theRandomAccessInputStream);
         if (resultEpiNode != null) break toReturn;
-        resultEpiNode= ScalarEpiNode.tryScalarEpiNode(theRandomAccessInputStream);
+        resultEpiNode= 
+            ScalarEpiNode.tryScalarEpiNode(theRandomAccessInputStream);
       } // toReturn:
         return resultEpiNode;
       }
 
     public static EpiNode tryBlockEpiNode(
-        RandomAccessInputStream theRandomAccessInputStream, int minIndentI ) 
+        RandomAccessInputStream theRandomAccessInputStream, int minIndentI )
       throws IOException
     /* This method tries to parse an EpiNode from theRandomAccessInputStream.
       It looks for the block aka indented flow syntax.
-      indentI is the minimum indentation level for nested structures, like maps. 
+      indentI is the minimum indentation level for nested structures, 
+      like maps. 
+      
       This method returns the node if the parse is successful, null otherwise.
       It tries parsing node types in the following order:
       * ScalarEpiNode
@@ -135,7 +148,8 @@ public abstract class EpiNode
     {
         EpiNode resultEpiNode= null; 
       toReturn: {
-        resultEpiNode= ScalarEpiNode.tryScalarEpiNode(theRandomAccessInputStream);
+        resultEpiNode= 
+            ScalarEpiNode.tryScalarEpiNode(theRandomAccessInputStream);
         if (resultEpiNode != null) break toReturn;
         resultEpiNode= MapEpiNode.tryBlockMapEpiNode(
             theRandomAccessInputStream, minIndentI);
@@ -143,8 +157,9 @@ public abstract class EpiNode
         return resultEpiNode;
       }
         
-    protected static void newLineAndIndentV(OutputStream theOutputStream, int indentI)
-       throws IOException
+    protected static void newLineAndIndentV(
+        OutputStream theOutputStream, int indentI)
+      throws IOException
       {
         theOutputStream.write(NL.getBytes()); // Write a newline.
         while (indentI > 0) {
@@ -154,12 +169,13 @@ public abstract class EpiNode
         }
     
     public static boolean tryByteB(
-          RandomAccessInputStream theRandomAccessInputStream, int desiredByteI) 
+        RandomAccessInputStream theRandomAccessInputStream, int desiredByteI) 
       throws IOException
-      /* Reads a byte from theRandomAccessInputStream and compares it to desiredByteI.
+      /* Reads a byte from theRandomAccessInputStream 
+        and compares it to desiredByteI.
         If they are equal it returns true, otherwise false.
-        Failure can happen when either the byte read is not the desired byte or
-        if there is no byte available.
+        Failure can happen when either the byte read 
+        is not the desired byte or if there is no byte available.
         The stream advances only if a read byte is the desired one.
         */
       /* Tries to read desiredByteI from the stream.
@@ -167,27 +183,29 @@ public abstract class EpiNode
         is not changed if desiredByteI can not be read from the stream.
         */
       {
-        int positionI= theRandomAccessInputStream.getPositionI(); // Save stream position.
+        int positionI= 
+            theRandomAccessInputStream.getPositionI(); // Save stream position.
         boolean successB= // Read and test byte.
             getByteB(theRandomAccessInputStream,desiredByteI);
-        if ( ! successB ) // If failure
-          theRandomAccessInputStream.setPositionV(positionI); // rewind stream position.
+        if ( ! successB ) // If failure, rewind stream position.
+          theRandomAccessInputStream.setPositionV(positionI);
         return successB;
         }
 
     public static boolean getByteB(
         RandomAccessInputStream theRandomAccessInputStream, int desiredByteI) 
       throws IOException
-      /* Reads a byte from theRandomAccessInputStream and compares it to desiredByteI.
+      /* Reads a byte from theRandomAccessInputStream and 
+        compares it to desiredByteI.
         If they are equal it returns true, otherwise false.
-        Failure can happen when either the byte read is not the desired byte or
-        if there is no byte available.
+        Failure can happen when either the byte read 
+        is not the desired byte or if there is no byte available.
         The stream advances whether or not a read byte is the desired one.
         */
       {
         int byteI= theRandomAccessInputStream.read(); // read the byte
         boolean successB= // Test byte for correctness.
-            (byteI == desiredByteI); // Fails if byteI is -1 or not desired byte.
+          (byteI == desiredByteI); // Fails if byteI is -1 or not desired byte.
         return successB;
         }
 
@@ -247,8 +265,8 @@ class ScalarEpiNode extends EpiNode
     public static ScalarEpiNode tryScalarEpiNode( 
           RandomAccessInputStream theRandomAccessInputStream ) 
         throws IOException
-      /* This method tries to parse a ScalarEpiNode (YAML subset scalar string)
-        from theRandomAccessInputStream.
+      /* This method tries to parse a ScalarEpiNode 
+        (YAML subset scalar string) from theRandomAccessInputStream.
         If successful then it returns the ScalarEpiNode 
         and the stream is moved past the scalar characters,
         but whatever terminated the scalar remains to be read.
@@ -259,9 +277,11 @@ class ScalarEpiNode extends EpiNode
       {
           ScalarEpiNode theScalarEpiNode;
         goReturn: {
-          theScalarEpiNode= tryUnquotedScalarEpiNode( theRandomAccessInputStream );
+          theScalarEpiNode= 
+              tryUnquotedScalarEpiNode( theRandomAccessInputStream );
           if (theScalarEpiNode != null) break goReturn;
-          theScalarEpiNode= tryQuotedScalarEpiNode( theRandomAccessInputStream );
+          theScalarEpiNode= 
+              tryQuotedScalarEpiNode( theRandomAccessInputStream );
         } // goReturn:
           return theScalarEpiNode; // Return result.
         }
@@ -281,16 +301,18 @@ class ScalarEpiNode extends EpiNode
             if ( Character.isLetterOrDigit(byteI)) break toAppendAcceptedChar;
             if ( '-'==byteI ) break toAppendAcceptedChar;
             if ( '.'==byteI ) break toAppendAcceptedChar;
-            theRandomAccessInputStream.setPositionV(positionI); // Restore stream position.
-            ///opt Alternative way to reject final character only, outside of loop:
-            //   setPositionV(getPositionI()-1);
+            theRandomAccessInputStream.setPositionV(positionI);
+              // Restore stream position.
+            ///opt Alternative way to reject final character only, 
+            /// outside of loop: setPositionV(getPositionI()-1);
             break readLoop; // Go try to return what's accumulated so far.
             } // toAppendAcceptedChar:
-          accumulatorString+= (char)byteI; // Append accepted byte to accumulator.
+          accumulatorString+= (char)byteI; // Append byte to accumulator.
           }
         } // readLoop: 
           if (accumulatorString.length() != 0) // Reject 0-length strings.
-            theScalarEpiNode= new ScalarEpiNode(accumulatorString); // Override null result.
+            theScalarEpiNode= 
+              new ScalarEpiNode(accumulatorString); // Override null result.
           return theScalarEpiNode; // Return result.
         }
     
@@ -308,13 +330,15 @@ class ScalarEpiNode extends EpiNode
           String accumulatorString= ""; // Clear character accumulator.
         readLoop: while (true) {
             byteI= theRandomAccessInputStream.read();
-            if ( '"'==byteI ) break readLoop; // Exit with what's been accumulated. 
-            accumulatorString+= (char)byteI; // Append accepted byte to accumulator.
+            if ( '"'==byteI ) break readLoop; // Exit with accumulated bytes. 
+            accumulatorString+= (char)byteI; // Append accepted byte.
         } // readLoop: 
-          if (accumulatorString.length() == 0) break goReturn; // Reject 0-length strings.
-          theScalarEpiNode= new ScalarEpiNode(accumulatorString); // Override null result.
+          if (accumulatorString.length() == 0) // Reject 0-length strings. 
+            break goReturn;
+          theScalarEpiNode= 
+              new ScalarEpiNode(accumulatorString); // Override null result.
         } // goReturn:
-          if (theScalarEpiNode == null)  // Restore initial stream position if no result.
+          if (theScalarEpiNode == null) // Rewind stream if no result.
             theRandomAccessInputStream.setPositionV(initialPositionI);
           return theScalarEpiNode; // Return result.
         }
@@ -330,7 +354,7 @@ class ScalarEpiNode extends EpiNode
         returnResult: { returnTrue: { returnFalse: {
           if (this == otherObject) break returnTrue; 
           if (this.getClass() != otherObject.getClass()) break returnFalse; 
-          ScalarEpiNode otherScalarEpiNode= // Create variable for field-access.
+          ScalarEpiNode otherScalarEpiNode= // Create field-access variable.
             (ScalarEpiNode)otherObject;
           if ( ! this.scalarString.equals(otherScalarEpiNode.scalarString) )
             break returnFalse;
@@ -355,7 +379,8 @@ class SequenceEpiNode extends EpiNode
 
   /* This class implements a YAML sequence, flow style only.
    
-    This class was used for a while to encode packet data, but it is no longer used.
+    This class was used for a while to encode packet data, 
+    but it is no longer used.
    */
 
   {
@@ -369,12 +394,12 @@ class SequenceEpiNode extends EpiNode
     public void writeV(OutputStream theOutputStream) 
         throws IOException
       { 
-        boolean afterElementB= false; // Determines when comma must be written.
+        boolean afterElementB= false; // At first no comma need be written.
         theOutputStream.write("[".getBytes()); // Introduce sequence.
-        for (EpiNode elementEpiNode : theListOfEpiNode) // Write all elements
+        for (EpiNode elementEpiNode : theListOfEpiNode) // Write all elements.
           { // Write one element possibly preceded by comma.
             if (afterElementB) // Has an element been written yet?
-              theOutputStream.write(",".getBytes()); // Yes, write separating comma.
+              theOutputStream.write(",".getBytes()); // Yes, write comma.
             elementEpiNode.writeV(theOutputStream); // Output element
             afterElementB= true;
             }
@@ -387,10 +412,10 @@ class SequenceEpiNode extends EpiNode
         for (EpiNode elementEpiNode : theListOfEpiNode)
           {
             EpiNode.newLineAndIndentV(theOutputStream, indentI);
-            theOutputStream.write("- ".getBytes()); // Introduce sequence element.
+            theOutputStream.write("- ".getBytes()); // Introduce element.
             elementEpiNode.writeV( // Output element
                 theOutputStream, 
-                indentI + 2 // with further indenting of any element components.
+                indentI + 2 // with further indenting of element components.
                 );
             }
         }
@@ -401,8 +426,8 @@ class SequenceEpiNode extends EpiNode
       { 
         String elementString= null; // Set default result to indicate failure.
         EpiNode elementEpiNode= getEpiNode(indexI);
-        if (elementEpiNode != null) // If got element node, extract string and return it. 
-          elementString= elementEpiNode.toString();
+        if (elementEpiNode != null) // If got element node 
+          elementString= elementEpiNode.toString(); // extract string.
         return elementString;
         }
 
@@ -412,11 +437,11 @@ class SequenceEpiNode extends EpiNode
         */
       {
         return 
-          ( (indexI >= 0) && (indexI < theListOfEpiNode.size())) // Test for in range.
-            ? theListOfEpiNode.get(indexI) // Value if in range.
-            : null; // Value if out of range.
+          ( (indexI >= 0) && (indexI < theListOfEpiNode.size())) // In range?
+            ? theListOfEpiNode.get(indexI) // Yes, so return stored value.
+            : null; // No, so return null.
         }
-    
+
     public static SequenceEpiNode trySequenceEpiNode( 
         RandomAccessInputStream theRandomAccessInputStream ) 
         throws IOException
@@ -429,19 +454,23 @@ class SequenceEpiNode extends EpiNode
         and the stream position is unchanged.
         */
       {
-          SequenceEpiNode returnSequenceEpiNode= null; // Set default failure result.
+          SequenceEpiNode returnSequenceEpiNode= null; // Set failure result.
           ArrayList<EpiNode> resultListOfEpiNodes= null;
-          int initialStreamPositionI= theRandomAccessInputStream.getPositionI();
+          int initialStreamPositionI= 
+              theRandomAccessInputStream.getPositionI();
         toReturn: { toNotASequence: {
-          if (! getByteB(theRandomAccessInputStream, '[')) break toNotASequence;
+          if (! getByteB(theRandomAccessInputStream, '[')) 
+            break toNotASequence;
           resultListOfEpiNodes=  // Always succeeds.
               getListOfEpiNodes(theRandomAccessInputStream); 
-          if (! getByteB(theRandomAccessInputStream, ']')) break toNotASequence;
-          returnSequenceEpiNode= // We got everything needed.  Create successful result. 
+          if (! getByteB(theRandomAccessInputStream, ']')) 
+            break toNotASequence;
+          returnSequenceEpiNode= // We got everything needed.  Create result. 
               new SequenceEpiNode(resultListOfEpiNodes);
           break toReturn;
-        } // toNotASequence: // Coming here means we failed to parse a complete sequence.
-          theRandomAccessInputStream.setPositionV(initialStreamPositionI); // Restore position.
+        } // toNotASequence: // Coming here means parse of sequence failed.
+          theRandomAccessInputStream.setPositionV(initialStreamPositionI);
+            // Restore initial stream position.
         } // toReturn:
           return returnSequenceEpiNode; // Return result.
         }
@@ -464,20 +493,21 @@ class SequenceEpiNode extends EpiNode
         while (true) { // Accumulating list elements until sequence ends.
           EpiNode theEpiNode=  // Try getting a list element.
               EpiNode.tryEpiNode(theRandomAccessInputStream);
-          if (! gotCommaB) // Comma not gotten yet so looking for the first element
+          if (! gotCommaB) // Comma not gotten yet so we need first element
             { if (theEpiNode == null) // but there is no first element
-              break toReturn; // so exit now with an empty list.
+                break toReturn; // so exit now with an empty list.
               }
-          else // Comma was gotten so we need a non-first element.
+            else // Comma was gotten so we need a non-first element.
             { if (theEpiNode == null) { // but there was no element so
-                theRandomAccessInputStream.setPositionV( // restore stream position to before comma.
-                    preCommaPositionI);
+                theRandomAccessInputStream.setPositionV( // rewind stream
+                    preCommaPositionI); // to before comma.
                 break toReturn; // and exit now with a non-empty list.
                 }
               }
-          resultListOfEpiNodes.add(theEpiNode); // Append gotten element to list.
+          resultListOfEpiNodes.add(theEpiNode); // Append element to list.
           preCommaPositionI= theRandomAccessInputStream.getPositionI();
-          if (! tryByteB(theRandomAccessInputStream,',')) break toReturn; // Exit if no comma.
+          if (! tryByteB(theRandomAccessInputStream,',')) // Exit if no comma.
+            break toReturn;
           gotCommaB= true; // Got comma, so record it.
           } // while(true)
       } // toReturn:
@@ -493,8 +523,9 @@ class MapEpiNode extends EpiNode
     */
 
   {
-    private LinkedHashMap<EpiNode,EpiNode> theLinkedHashMap; // Where the data is. 
-      // Will reference map with default of insertion-order.  Rejected access-order map.  
+    private LinkedHashMap<EpiNode,EpiNode> theLinkedHashMap; // Map data. 
+      // Will reference map with default of insertion-order.  
+      // Rejected access-order map.  
 
     
     // Methods that output to OutputStreams.
@@ -503,18 +534,20 @@ class MapEpiNode extends EpiNode
         throws IOException
       { 
         Map.Entry<EpiNode,EpiNode> scanMapEntry= null;
-        Set<Map.Entry<EpiNode,EpiNode>> theSetOfMapEntrys= theLinkedHashMap.entrySet();
-        Iterator<Map.Entry<EpiNode,EpiNode>> entryIterator= theSetOfMapEntrys.iterator();
-        boolean afterElementB= false; // Determines when comma must be written.
+        Set<Map.Entry<EpiNode,EpiNode>> theSetOfMapEntrys= 
+            theLinkedHashMap.entrySet();
+        Iterator<Map.Entry<EpiNode,EpiNode>> entryIterator= 
+            theSetOfMapEntrys.iterator();
+        boolean afterElementB= false; // Initially no comma need be written.
         theOutputStream.write("{".getBytes()); // Introduce map.
         while(true) { // Iterate over all entries.
           if (! entryIterator.hasNext()) // More entries? 
             break; // No, so exit.
-          if (afterElementB) // Has an element been written yet?
-            theOutputStream.write(",".getBytes()); // Yes, write separating comma.
+          if (afterElementB) // If an element been written
+            theOutputStream.write(",".getBytes()); // write separating comma.
           scanMapEntry= entryIterator.next(); // Yes, get current entry.
           scanMapEntry.getKey().writeV(theOutputStream); // Write key.
-          theOutputStream.write(":".getBytes()); // Write map key-value separator.
+          theOutputStream.write(":".getBytes()); // Write key-value separator.
           scanMapEntry.getValue().writeV(theOutputStream); // Write value.
           afterElementB= true;
           }
@@ -525,15 +558,17 @@ class MapEpiNode extends EpiNode
         throws IOException
       { 
         Map.Entry<EpiNode,EpiNode> scanMapEntry= null;
-        Set<Map.Entry<EpiNode,EpiNode>> theSetOfMapEntrys= theLinkedHashMap.entrySet();
-        Iterator<Map.Entry<EpiNode,EpiNode>> entryIterator= theSetOfMapEntrys.iterator();
+        Set<Map.Entry<EpiNode,EpiNode>> theSetOfMapEntrys= 
+            theLinkedHashMap.entrySet();
+        Iterator<Map.Entry<EpiNode,EpiNode>> entryIterator= 
+            theSetOfMapEntrys.iterator();
         while(true) { // Iterate over all entries.
           if (! entryIterator.hasNext()) // More entries? 
             break; // No, so exit.
           EpiNode.newLineAndIndentV(theOutputStream, indentI);
           scanMapEntry= entryIterator.next(); // Yes, get current entry.
           scanMapEntry.getKey().writeV(theOutputStream, indentI); // Write key.
-          theOutputStream.write(": ".getBytes()); // Write map key-value separator.
+          theOutputStream.write(": ".getBytes()); // Write key-value separator.
           scanMapEntry.getValue().writeV( // Write value.
               theOutputStream, 
               indentI + 2); // Indent components, if any, here.
@@ -546,7 +581,8 @@ class MapEpiNode extends EpiNode
     public static MapEpiNode tryMapEpiNode( 
         RandomAccessInputStream theRandomAccessInputStream ) 
         throws IOException
-      /* This method tries to parse a MapEpiNode (YAML map) from theRandomAccessInputStream.
+      /* This method tries to parse a MapEpiNode (YAML map) 
+        from theRandomAccessInputStream.
         If successful then it returns the MapEpiNode
         and the stream is moved past the map characters,
         but whatever terminated the MapEpiNode remains to be read.
@@ -562,17 +598,19 @@ class MapEpiNode extends EpiNode
       {
           MapEpiNode resultMapEpiNode= null; // Set default failure result.
           LinkedHashMap<EpiNode,EpiNode> theLinkedHashMapOfEpiNode= null;
-          int initialStreamPositionI= theRandomAccessInputStream.getPositionI();
+          int initialStreamPositionI= 
+              theRandomAccessInputStream.getPositionI();
         toReturn: { toNotAMap: {
           if (! getByteB(theRandomAccessInputStream, '{')) break toNotAMap;
           theLinkedHashMapOfEpiNode=  // Always succeeds.
               getLinkedHashMap(theRandomAccessInputStream); 
           if (! getByteB(theRandomAccessInputStream, '}')) break toNotAMap;
-          resultMapEpiNode= // We got everything needed.  Create successful result. 
+          resultMapEpiNode= // We got everything needed so create result. 
               new MapEpiNode(theLinkedHashMapOfEpiNode);
           break toReturn;
-        } // toNotAMap: // Coming here means we failed to parse a complete map.
-          theRandomAccessInputStream.setPositionV(initialStreamPositionI); // Restore position.
+        } // toNotAMap: // Coming here means parse of a complete map failed.
+          theRandomAccessInputStream.setPositionV( // Restore position.
+              initialStreamPositionI);
         } // toReturn:
           return resultMapEpiNode; // Return result.
         }
@@ -593,40 +631,45 @@ class MapEpiNode extends EpiNode
         int preCommaPositionI=0;
         boolean gotCommaB= false; // Becomes true when comma seen.
         LinkedHashMap<EpiNode,EpiNode> resultLinkedHashMap= 
-            new LinkedHashMap<EpiNode,EpiNode>(); // Create initially empty map.
+          new LinkedHashMap<EpiNode,EpiNode>(); // Create initially empty map.
       toReturn: {
         EpiNode keyEpiNode= null; // If null then map entry is not valid.
         EpiNode valueEpiNode= null; // Optional value, null for now.
         while (true) { // Accumulating map entries until they end.
-            int preMapEntryPositionI= theRandomAccessInputStream.getPositionI();
+            int preMapEntryPositionI= 
+                theRandomAccessInputStream.getPositionI();
           toEndEntry: { toNoEntry: {
             valueEpiNode= null; // Assume no value node unless one provided.
             keyEpiNode=  // Try parsing a key node.
                 EpiNode.tryEpiNode(theRandomAccessInputStream);
             if (keyEpiNode == null) break toNoEntry; // Got no key so no entry.
-            if (! tryByteB(theRandomAccessInputStream,':')) // No separating colon 
+            if (! tryByteB(theRandomAccessInputStream,':')) // No separator ":"
               break toEndEntry; // so no value, so end map entry now.
-            valueEpiNode= EpiNode.tryEpiNode(theRandomAccessInputStream); // Try parsing value.
+            valueEpiNode= // Try parsing value.
+                EpiNode.tryEpiNode(theRandomAccessInputStream);
             if (valueEpiNode != null) break toEndEntry; // Got value so complete entry.
           } // toNoEntry: Being here means unable to parse an acceptable map entry.
             keyEpiNode= null; // Be certain to indicate map entry parsing failed.
-            theRandomAccessInputStream.setPositionV(preMapEntryPositionI); // Rewind input steam.
-          } // toEndEntry: Being here means entry parsing is done, either pass or fail.
-            if (! gotCommaB) // Comma not gotten yet so we want the first map entry
+            theRandomAccessInputStream.setPositionV( // Rewind input steam.
+                preMapEntryPositionI);
+          } // toEndEntry: Entry parsing either passed or failed, but is done, .
+            if (! gotCommaB) // No comma yet so we want the first map entry
               { if (keyEpiNode == null) // but there was no first map entry
                   break toReturn; // so exit now with an empty map.
                 }
               else // Comma was gotten so we need a non-first map entry.
               { if (keyEpiNode == null) { // but there was no map entry so
-                theRandomAccessInputStream.setPositionV( // restore input stream position 
+                theRandomAccessInputStream.setPositionV( // restore stream
                       preCommaPositionI); // to position before comma.
                   break toReturn; // and exit now with a non-empty map.
                   }
                 }
-            resultLinkedHashMap.put(keyEpiNode,valueEpiNode); // Append entry to map.
-            preCommaPositionI= theRandomAccessInputStream.getPositionI(); // Save stream position.
-            if (! tryByteB(theRandomAccessInputStream,',')) break toReturn; // Exit if no comma.
-            gotCommaB= true; // Got comma, so record it for earlier map entry processing.
+            resultLinkedHashMap.put(keyEpiNode,valueEpiNode); // Append entry.
+            preCommaPositionI= // Save this stream position.
+                theRandomAccessInputStream.getPositionI();
+            if (! tryByteB(theRandomAccessInputStream,',')) // If no comma 
+              break toReturn; // Exit.
+            gotCommaB= true; // Got comma, so record it.
             } // while(true)  Looping to try for another non-first map entry.
       } // toReturn:
         return resultLinkedHashMap;
@@ -647,34 +690,39 @@ class MapEpiNode extends EpiNode
         */
       {
           MapEpiNode resultMapEpiNode= null; // Set default failure result.
-          int initialStreamPositionI= theRandomAccessInputStream.getPositionI();
+          int initialStreamPositionI= 
+              theRandomAccessInputStream.getPositionI();
         toReturn: {
-          int mapEntryIndentI= // Try getting a good newline indentation of first entry. 
+          int mapEntryIndentI= // Try for newline indentation of first entry. 
             tryNewlineIndentationI(theRandomAccessInputStream, minIndentI);
           if (mapEntryIndentI < 0) // If failed to get needed indentation
             break toReturn; // then exit with failure.
-          LinkedHashMap<EpiNode,EpiNode> theLinkedHashMap= // Try parsing indented entries.
-              tryBlockLinkedHashMap(theRandomAccessInputStream, mapEntryIndentI);
+          LinkedHashMap<EpiNode,EpiNode> theLinkedHashMap=
+            tryBlockLinkedHashMap(theRandomAccessInputStream, mapEntryIndentI);
+              // Try parsing indented entries.
           if (theLinkedHashMap == null) // If no map entries parsed
             break toReturn; // then exit with failure.
           resultMapEpiNode= // We got everything needed so 
-              new MapEpiNode(theLinkedHashMap); // create successful MapEpiNode result.
+              new MapEpiNode(theLinkedHashMap); // create MapEpiNode result.
         } // toReturn:
-          if (resultMapEpiNode == null) // If no result to return then rewind stream. 
+          if (resultMapEpiNode == null) // If no result then rewind stream. 
             theRandomAccessInputStream.setPositionV(initialStreamPositionI);
           return resultMapEpiNode; // Return result.
         }
 
     protected static LinkedHashMap<EpiNode,EpiNode> tryBlockLinkedHashMap(
-        RandomAccessInputStream theRandomAccessInputStream, int mapEntryIndentI ) 
+        RandomAccessInputStream theRandomAccessInputStream, 
+        int mapEntryIndentI ) 
       throws IOException
       /* This method parses a set of map entries of a map.
-        If successful then it returns a LinkedHashMap of the parsed map entries
-        and the position of the input stream is moved past all parsed entries.
+        If successful then it returns a LinkedHashMap of 
+        the parsed map entries and the position of the input stream 
+        is moved past all parsed entries.
         There must be at least one entry for success.
         mapEntryIndentI is the starting indent level.
         The first entry is assumed to start immediately.
-        Later entries, if any, are assumed to start on later lines at the same indent.
+        Later entries, if any, are assumed to start 
+        on later lines at the same indent.
         A line with a smaller indent level terminates the map.
         If not successful then this method returns null and 
         the position of the input stream is unchanged. 
@@ -683,32 +731,38 @@ class MapEpiNode extends EpiNode
         LinkedHashMap<EpiNode,EpiNode> resultLinkedHashMap= 
           new LinkedHashMap<EpiNode,EpiNode>(); // Create initially empty map.
       toReturn: {
-        EpiNode keyScalarEpiNode= null; // Initially null meaning map entry is not valid.
+        EpiNode keyScalarEpiNode= null; // Used as got-first-map-entry flag.
         EpiNode valueEpiNode= null;
         while (true) { // Accumulating map entries until they end.
-            int preMapEntryPositionI= theRandomAccessInputStream.getPositionI();
+            int preMapEntryPositionI= 
+                theRandomAccessInputStream.getPositionI();
           toEndEntry: { toNoEntry: {
             valueEpiNode= null; // Assume no value node unless one provided.
-            keyScalarEpiNode=  // Try parsing a key node, limited to scalars for now.
+            keyScalarEpiNode=  // Try parsing a key ScalarEpiNode.
                 ScalarEpiNode.tryScalarEpiNode(theRandomAccessInputStream);
-            if (keyScalarEpiNode == null) break toNoEntry; // Got no key so no entry.
-            if (! tryByteB(theRandomAccessInputStream,':')) // No separating colon 
+            if (keyScalarEpiNode == null) // Got no key 
+              break toNoEntry; // so no entry.
+            if (! tryByteB(theRandomAccessInputStream,':')) // No separator ":"
               break toNoEntry; // so no value, so no map entry.
             trySpacesI(theRandomAccessInputStream); // Skip spaces.
-            valueEpiNode=  // Try parsing value, possibly itself an indented map
+            valueEpiNode=  // Try parsing value, possibly an indented map
                 EpiNode.tryBlockEpiNode(theRandomAccessInputStream,
                     mapEntryIndentI+1); // using a nigher minimum indentation.
-            if (valueEpiNode != null) break toEndEntry; // Got value so complete entry.
-          } // toNoEntry: Being here means unable to parse an acceptable map entry.
-            keyScalarEpiNode= null; // Be certain to indicate map entry parsing failed.
-            theRandomAccessInputStream.setPositionV(preMapEntryPositionI); // Rewind input steam.
-          } // toEndEntry: Being here means entry parsing is done, either pass or fail.
-            if (keyScalarEpiNode == null) // but there was no first map entry
-                break toReturn; // so exit now with an empty map.
-            resultLinkedHashMap.put(keyScalarEpiNode,valueEpiNode); // Append entry to map.
-            int indentI= // Try getting a good newline indentation of next entry. 
-                tryNewlineIndentationI(theRandomAccessInputStream, mapEntryIndentI);
-            if ( indentI < 0 ) break toReturn; // Exit if insufficient indentation.
+            if (valueEpiNode != null) // If got value, got complete entry.
+              break toEndEntry;
+          } // toNoEntry: Being here means unable to parse a map entry.
+            keyScalarEpiNode= null; // Indicate map entry parsing failed.
+            theRandomAccessInputStream.setPositionV(preMapEntryPositionI);
+          } // toEndEntry: Entry parsing is done, either pass or fail.
+            if (keyScalarEpiNode == null) // If there was no first map entry
+                break toReturn; // go exit with an empty map.
+            resultLinkedHashMap.put( // Append entry to map.
+                keyScalarEpiNode,valueEpiNode);
+            int indentI= // Try getting newline indentation of next entry. 
+                tryNewlineIndentationI(
+                  theRandomAccessInputStream, mapEntryIndentI);
+            if ( indentI < 0 ) // If insufficient indentation 
+              break toReturn; // exit.
         } // while(true)  Looping to try for another non-first map entry.
       } // toReturn:
         if ( resultLinkedHashMap.isEmpty()) // Convert empty map result
@@ -723,8 +777,8 @@ class MapEpiNode extends EpiNode
         in theRandomAccessInputStream.
         This method is usually called when a node boundary is expected.
         If only newlines and indentation characters are seen,
-        and the indentation level after the final newline is at least minIndentI,
-        then this method succeeds, and
+        and the indentation level after the final newline 
+        is at least minIndentI, then this method succeeds, and
         it returns a number > 0 which is the new indentation level,
         and the stream has been moved past all characters that were processed.
         If this method fails then it returns -1 and 
@@ -736,13 +790,13 @@ class MapEpiNode extends EpiNode
           int firstStreamPositionI= theRandomAccessInputStream.getPositionI();
           int resultIndentI= -1;
         loop: while(true) { // Process newlines and indentations.
-          if (! tryEndLineI(theRandomAccessInputStream)) // Exit if no end of line. 
-            break loop;
-          while (tryEndLineI(theRandomAccessInputStream)) // Skip additional EndLines
+          if (! tryEndLineI(theRandomAccessInputStream)) // If no end of line 
+            break loop; // exit loop.
+          while (tryEndLineI(theRandomAccessInputStream)) // Skip any extras
             ; // by doing nothing for each one.
           resultIndentI= trySpacesI(theRandomAccessInputStream);
         } // loop:
-          if (resultIndentI < minIndentI) // If indentation too small or nonexistent
+          if (resultIndentI < minIndentI) // If indentation too small
             { // restore stream position and return failure.
               theRandomAccessInputStream.setPositionV(firstStreamPositionI);
               resultIndentI= -1;
@@ -753,8 +807,8 @@ class MapEpiNode extends EpiNode
     private static boolean tryEndLineI(
         RandomAccessInputStream theRandomAccessInputStream ) 
       throws IOException
-      /* This method tries to read past spaces, a comment, and trailing newline,
-        in theRandomAccessInputStream.
+      /* This method tries to read past spaces, a comment, 
+        and trailing newline, in theRandomAccessInputStream.
         It returns true if it succeeds
         and the stream has been moved past all characters that were processed.
         If this method fails then it returns false and 
@@ -767,7 +821,7 @@ class MapEpiNode extends EpiNode
           trySpacesI(theRandomAccessInputStream); // Skip optional spaces.
           tryCommentB(theRandomAccessInputStream); // Skip optional comment.
           boolean successB= (tryNewlineB(theRandomAccessInputStream)); 
-          if (! successB) // If there w something besides comment before newline
+          if (! successB) // If no newline
             { // restore stream position and return failure.
               theRandomAccessInputStream.setPositionV(firstStreamPositionI);
               }
@@ -791,7 +845,8 @@ class MapEpiNode extends EpiNode
             {
               finalStreamPositionI= theRandomAccessInputStream.getPositionI();
               int CI= theRandomAccessInputStream.read(); // Read next byte.
-              if (SystemSettings.NLTestB(CI)) break toReturn; // Exit if newline.
+              if (SystemSettings.NLTestB(CI)) // Exit if character is newline. 
+                break toReturn;
               }
         } // toReturn:
           theRandomAccessInputStream.setPositionV(finalStreamPositionI);
@@ -808,35 +863,38 @@ class MapEpiNode extends EpiNode
         which might be 0 if there were no spaces before the next non-space.
         */
       {
-        int spacesI= 0;
+        int numberOfSpacesI= 0;
         int scanStreamPositionI;
         while (true) // Process all spaces.
           {
             scanStreamPositionI= theRandomAccessInputStream.getPositionI();
             int CI= theRandomAccessInputStream.read(); // Read next byte.
-            if ( CI != ' ' ) { // Restore stream before byte and exit if not space.
-              theRandomAccessInputStream.setPositionV(scanStreamPositionI);
-              break;
-              }
-            spacesI++;
+            if ( CI != ' ' ) //  If byte is not space
+              { // restore stream before byte and exit.
+                theRandomAccessInputStream.setPositionV(scanStreamPositionI);
+                break;
+                }
+            numberOfSpacesI++;
             }
-        return spacesI; 
+        return numberOfSpacesI; 
         }
 
     private static boolean tryNewlineB( 
         RandomAccessInputStream theRandomAccessInputStream ) 
       throws IOException
-      /* This method tries to read a single newline from theRandomAccessInputStream.
+      /* This method tries to read a single newline 
+        from theRandomAccessInputStream.
         If this method is successful then it returns true
         and the stream is moved past the newline.
         If this method is not successful then it returns false 
         and the stream position is unchanged.
-        To skip all newline characters, call this method in a loop.
+        To skip all sequential newline characters, call this method in a loop.
         */
       {
         int firstStreamPositionI= theRandomAccessInputStream.getPositionI();
         int CI= theRandomAccessInputStream.read();
-        boolean successB= SystemSettings.NLTestB(CI); // Test whether we got newline.
+        boolean successB=  // Test whether we got newline.
+            SystemSettings.NLTestB(CI);
         if (! successB) // If not newline then restore stream position.
           theRandomAccessInputStream.setPositionV(firstStreamPositionI);
         return successB;
@@ -856,16 +914,20 @@ class MapEpiNode extends EpiNode
       { 
         theAppLog.debug("MapEpiNode.createEmptyMapWithNewKeyString() called.");
         String scanKeyString;
-        int scanIndexI= getSizeI() + 1; // Set initial trial index to map size + 1; 
+        int scanIndexI= getSizeI()+1; // Set trial index to map size + 1; 
             
         while (true) // Search map for a key that is not already in use.
           {
-            scanKeyString= String.valueOf(scanIndexI); // Convert index to key String.
-            EpiNode valueEpiNode= getEpiNode(scanKeyString); // Try getting a value.
-            if (null == valueEpiNode) break; // Exit if no value, key is available.
+            scanKeyString= // Convert index to key String.
+                String.valueOf(scanIndexI);
+            EpiNode valueEpiNode= // Try getting a value for that key.
+                getEpiNode(scanKeyString);
+            if (null == valueEpiNode) // If no value then key is available 
+              break; // so exit.
             scanIndexI--; // Prepare to test next lower key index.
             }
-        putV(scanKeyString, new MapEpiNode() ); // Create nested empty map with this key.
+        putV( // Create entry with the found key, and an empty map as value.
+            scanKeyString, new MapEpiNode() );
         return scanKeyString; // Return key of the created entry.
         } 
 
@@ -885,15 +947,16 @@ class MapEpiNode extends EpiNode
         toReturnValue: { 
         toMakeMap: {
           valueEpiNode= getEpiNode(keyString);
-          if (valueEpiNode == null) // No value EpiNode is associated with this key.
+          if (valueEpiNode == null) // No value is associated with this key.
             break toMakeMap; // so go make one.
-          valueMapEpiNode= valueEpiNode.getMapEpiNode(); // Try converting value to map.
+          valueMapEpiNode= // Try converting value to map.
+              valueEpiNode.getMapEpiNode();
           if (valueMapEpiNode == null) // The value is not a map
             break toMakeMap; // so go make a replacement which is a map.
           break toReturnValue; // Value is a map, so go return it as is.
         } // toMakeMap: 
           valueMapEpiNode= new MapEpiNode(); // Make a new empty map.
-          theLinkedHashMap.put( // Associate new map with key as entry in this map.
+          theLinkedHashMap.put( // Associate new map with key in this map.
               new ScalarEpiNode(keyString),valueMapEpiNode);
         } // toReturnValue:
           return valueMapEpiNode;
@@ -904,7 +967,8 @@ class MapEpiNode extends EpiNode
       /* This method returns a new MapEpiNode which contains 
         a single entry consisting of keyString and valueEpiNode.
         This is useful for creating EpiNode messages consisting of 
-        key keyString which indicates a message type, and a value valueEpiNode.
+        key keyString which indicates a message type, 
+        and a value valueEpiNode.
         */
       {
         return makeSingleEntryMapEpiNode(
@@ -931,7 +995,8 @@ class MapEpiNode extends EpiNode
 
     // Special method that renames keys.
     
-    public synchronized void renameKeysV(String oldKeyString, String newKeyString)
+    public synchronized void renameKeysV(
+        String oldKeyString, String newKeyString)
       /* This method replaces instances of map keys 
         with value oldKeyString to NewKeyString.
         It is meant to be used for Persistent.txt file format changes.
@@ -944,16 +1009,17 @@ class MapEpiNode extends EpiNode
           (EpiNode valueEpiNode: theLinkedHashMap.values()) 
           { // Process one value.
             MapEpiNode valueMapEpiNode= valueEpiNode.getMapEpiNode();
-            if (null != valueMapEpiNode) // If value is a map, recursively rename in it.
-              valueMapEpiNode.renameKeysV(oldKeyString, newKeyString);
+            if (null != valueMapEpiNode) // If value is a map
+              valueMapEpiNode.renameKeysV( // recursively rename within it.
+                oldKeyString, newKeyString);
             }
         
         // Now rename key in this map, if present.
         EpiNode oldValueEpiNode= // Try removing old key from this map.
             removeEpiNode(oldKeyString);
-        if (null != oldValueEpiNode) { // If old key was removed then
-          putV(newKeyString, oldValueEpiNode); // associate its value with new key.
-          }
+        if (null != oldValueEpiNode) // If old key was removed then
+          putV( // associate value with new key.
+            newKeyString, oldValueEpiNode);
         }
 
 
@@ -1026,7 +1092,8 @@ class MapEpiNode extends EpiNode
             }
           MapEpiNode nestedMapEpiNode= // Get nested map which should be 
             (MapEpiNode)firstMapEntry.getValue(); // value of first entry.
-              ///fix This could produce a ClassCastException, but it's only temporary.
+              ///fix This could produce a ClassCastException, 
+              // but it's only temporary.
           if (nestedMapEpiNode == null) // Is there a value, itself a map? 
             break toReturnFail; // No, so return with fail.
           Map.Entry<EpiNode,EpiNode> nestedMapEntry= // From nested map
@@ -1054,8 +1121,10 @@ class MapEpiNode extends EpiNode
       { 
         Map.Entry<EpiNode,EpiNode> resultMapEntry= null;
         Map.Entry<EpiNode,EpiNode> scanMapEntry= null;
-        Set<Map.Entry<EpiNode,EpiNode>> theSetOfMapEntrys= theLinkedHashMap.entrySet();
-        Iterator<Map.Entry<EpiNode,EpiNode>> entryIterator= theSetOfMapEntrys.iterator();
+        Set<Map.Entry<EpiNode,EpiNode>> theSetOfMapEntrys= 
+            theLinkedHashMap.entrySet();
+        Iterator<Map.Entry<EpiNode,EpiNode>> entryIterator= 
+            theSetOfMapEntrys.iterator();
         while(true) { // Iterate to the desired entry.
           if (! entryIterator.hasNext()) // More entries? 
             break; // No, so exit with null value.
@@ -1072,14 +1141,16 @@ class MapEpiNode extends EpiNode
     public synchronized String getNextString(String keyString) 
       /* Returns key String of next entry after the one selected by keyString.
         or null if we are at end of map and there is no next entry.
-        It finds the correct entry by iterating to the entry with the desired key,
-        then moving one more step.
+        It finds the correct entry by iterating to the entry 
+        with the desired key, then moving one more step.
         */
       { 
           String resultString= null; // Default String result of null.
           Map.Entry<EpiNode,EpiNode> scanMapEntry= null;
-          Set<Map.Entry<EpiNode,EpiNode>> theSetOfMapEntrys= theLinkedHashMap.entrySet();
-          Iterator<Map.Entry<EpiNode,EpiNode>> entryIterator= theSetOfMapEntrys.iterator();
+          Set<Map.Entry<EpiNode,EpiNode>> theSetOfMapEntrys= 
+              theLinkedHashMap.entrySet();
+          Iterator<Map.Entry<EpiNode,EpiNode>> entryIterator= 
+              theSetOfMapEntrys.iterator();
         goReturn: {
           if (keyString.isEmpty()) // On an actual entry now? 
             { // No, so return first entry if there is one. 
@@ -1089,11 +1160,12 @@ class MapEpiNode extends EpiNode
                   entryIterator.next();
               break goReturn; // Go return it.
               }
-          while(true) { // Iterate to entry with keyString and return its successor.
-            if (! entryIterator.hasNext()) { // Is there a first or next entry?
-              scanMapEntry= null; // No, so Clear entry
-              break goReturn; // so we will return null string result.
-              }
+          while(true) { // Find entry with keyString and return its successor.
+            if (! entryIterator.hasNext()) // Is there a first or next entry?
+              { // No, so
+                scanMapEntry= null; // clear entry
+                break goReturn; // so we will return null string result.
+                }
             scanMapEntry= entryIterator.next(); // Yes, get the next entry.
             if  // Is keyString its key?
               (keyString.equals(scanMapEntry.getKey().toString()))
@@ -1101,13 +1173,14 @@ class MapEpiNode extends EpiNode
                 if (! entryIterator.hasNext()) // Is there a next entry? 
                   scanMapEntry= null; // No, so set null result.
                   else
-                  scanMapEntry= entryIterator.next(); // Yes, so get it as result.
+                  scanMapEntry= // Yes, so use it as result.
+                    entryIterator.next();
                 break goReturn; // Go return result.
                 }
             }
         } // goReturn:
-          if (scanMapEntry != null) // If we found an actual entry using entryIterator
-            resultString=  // override null result string with entry key string.
+          if (scanMapEntry != null) // If we found an entry
+            resultString=  // override null result string with entry key.
               scanMapEntry.getKey().toString();
           return resultString;
         }
@@ -1122,8 +1195,8 @@ class MapEpiNode extends EpiNode
         }
 
     public boolean testKeyForValueB(String keyString, String testValueString) 
-      /* Returns true if testValueString is the value associated with keyString,
-        false otherwise.
+      /* Returns true if testValueString is the value 
+        associated with keyString, false otherwise.
         */
       { 
         String valueString= getString(keyString);
@@ -1163,13 +1236,15 @@ class MapEpiNode extends EpiNode
         }
 
     public MapEpiNode getMapEpiNode(String keyString)
-      /* This method returns the MapEpiNode that is associated with the key keyString.
+      /* This method returns the MapEpiNode 
+        that is associated with the key keyString.
         If there is no such node then null is returned. 
        */
       {
         MapEpiNode valueMapEpiNode= null;
         toReturn: {
-          EpiNode valueEpiNode= getEpiNode(keyString); // Get associated value.
+          EpiNode valueEpiNode= // Get associated value.
+              getEpiNode(keyString);
           if (valueEpiNode == null) break toReturn;
           valueMapEpiNode=  // Try converting EpiNode to MapEpiNode.
               valueEpiNode.getMapEpiNode();
@@ -1178,7 +1253,8 @@ class MapEpiNode extends EpiNode
         }
 
     public EpiNode getEpiNode(String keyString)
-      /* This method returns the EpiNode that is associated with the key keyString.
+      /* This method returns the EpiNode 
+        that is associated with the key keyString.
         If there is no such node then null is returned. 
        */
       {
@@ -1187,8 +1263,10 @@ class MapEpiNode extends EpiNode
             keyString= "MapEpiNode.getOrMakeMapEpiNode() Missing keyString.";
             theAppLog.error(keyString);
             }
-        EpiNode keyEpiNode= new ScalarEpiNode(keyString); // Convert String to EpiNode.
-        EpiNode valueEpiNode= getEpiNode(keyEpiNode); // Lookup value of this key.
+        EpiNode keyEpiNode= // Convert String to EpiNode.
+            new ScalarEpiNode(keyString);
+        EpiNode valueEpiNode= // Lookup value of this key.
+            getEpiNode(keyEpiNode);
         return valueEpiNode;
         }
 
@@ -1223,7 +1301,8 @@ class MapEpiNode extends EpiNode
 
     // Constructors.
 
-    public MapEpiNode(LinkedHashMap<EpiNode,EpiNode> theLinkedHashMap) // constructor.
+    public MapEpiNode( // constructor.
+        LinkedHashMap<EpiNode,EpiNode> theLinkedHashMap)
       {
         this.theLinkedHashMap= theLinkedHashMap;
         }
@@ -1232,7 +1311,7 @@ class MapEpiNode extends EpiNode
     public MapEpiNode() // constructor.
       {
         this( // Call parameter constructor with
-            new LinkedHashMap<EpiNode,EpiNode>() // an initially empty LinkedHashMap.  
+            new LinkedHashMap<EpiNode,EpiNode>() // an empty LinkedHashMap.  
             );
         }
 
