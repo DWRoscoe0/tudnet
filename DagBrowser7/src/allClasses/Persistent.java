@@ -152,10 +152,17 @@ public class Persistent
     
     public void finalizeV()
     /* This method stores the persistent data to the external file.
-      Temporarily it stores both PersistentNode data and EpiNode data.
-      Eventually it will store only one.
+
+      Before it writes the data, it places the UnicasterIndexes list last.
+      It does this by removing it, then adding it.
+      This is to reduce manual search time during debugging and testing.
+      ///enh Generalize this to put lists last in all MapEpiNodes.
       */
     {
+      // Make certain UnicasterIndexes are last when written by get and put.
+      EpiNode theEpiNode= rootMapEpiNode.removeEpiNode("UnicasterIndexes");
+      rootMapEpiNode.putV("UnicasterIndexes",theEpiNode);
+      
       storeEpiNodeDataV(rootMapEpiNode, "PersistentEpiNode.txt"); // Write EpiNode data.
       }
   
