@@ -36,8 +36,10 @@ public class LinkedMachineState
 		private Unicaster theUnicaster;
 		private Persistent thePersistent; 
     private PeersCursor thePeersCursor;
+    @SuppressWarnings("unused") ///opt  Remove eventually.
     private NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes;
       // For inputs in the form of MapEpiNodes.
+    private ConnectionManager theConnectionManager;
 
 		// Other variables: none.
 		
@@ -64,7 +66,8 @@ public class LinkedMachineState
 					Persistent thePersistent, 
 					PeersCursor thePeersCursor,
 					LinkMeasurementState theLinkMeasurementState,
-		      NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes
+		      NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes,
+	        ConnectionManager theConnectionManager
 	        )
 				throws IOException
 		  {
@@ -81,7 +84,7 @@ public class LinkedMachineState
         this.thePeersCursor= thePeersCursor;
         this.toConnectionManagerNotifyingQueueOfMapEpiNodes=
             toConnectionManagerNotifyingQueueOfMapEpiNodes;
-
+        this.theConnectionManager= theConnectionManager;
 	  		// Adding measurement count.
 
     		// Construct all sub-states of this state machine.
@@ -658,12 +661,12 @@ public class LinkedMachineState
         wrapping the MapEpiNode data of the peer connection.
         */
       {
-        toConnectionManagerNotifyingQueueOfMapEpiNodes.put( // Add to queue
-          MapEpiNode.makeSingleEntryMapEpiNode( // this wrapped map containing data.
-            "LocalNewState", 
-            thePeersCursor.getSelectedMapEpiNode()
-            )
-          );
+        MapEpiNode messageMapEpiNode= MapEpiNode.makeSingleEntryMapEpiNode(
+            "LocalNewState", thePeersCursor.getSelectedMapEpiNode());
+        theConnectionManager.decodePeerMapEpiNodeV(messageMapEpiNode,null); // Decode it.
+        //// toConnectionManagerNotifyingQueueOfMapEpiNodes.put( // Add to queue
+        ////   messageMapEpiNode
+        ////   );
         }
 
 		} // class LinkedMachineState

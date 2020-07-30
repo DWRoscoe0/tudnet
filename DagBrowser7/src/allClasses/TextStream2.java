@@ -23,7 +23,12 @@ public class TextStream2
   extends KeyedStateList< String > 
 
   /* This class represents a single text streams.
-    */
+   * 
+   * ///fix  Because TextStream2Viewer listens to thePlainDocument,
+   * operations which mutate its contents might need to switch to the EDT,
+   * at least after loading and before saving.
+   * Maybe the string appending method should be changed to do this.
+   */
   
   {
   
@@ -35,6 +40,7 @@ public class TextStream2
 
       // Other variables:
       private PlainDocument thePlainDocument= null; // Internal document store.
+        ////// This should be accessed on EDT only?
       private File streamFile; // File name of external document store. 
       private String theRootIdString;
       
@@ -112,7 +118,8 @@ public class TextStream2
           BufferedReader theBufferedReader= null; 
           try {
               thePlainDocument= new PlainDocument();
-              FileInputStream theFileInputStream= new FileInputStream( theFile );
+              FileInputStream theFileInputStream= 
+                new FileInputStream( theFile );
               theBufferedReader = 
                 new BufferedReader(new InputStreamReader(theFileInputStream));
               String lineString;
@@ -223,6 +230,7 @@ public class TextStream2
         /* This method processes a new Stream String entered by the user
           into an associated TextStreamViewer.
           It is appended to the stream document.
+          ////// This might need to switch to the EDT.
          */
         {
           try {
@@ -240,41 +248,96 @@ public class TextStream2
          * that are satisfiable.
          */
         {}
-      
+
+      public boolean tryProcessingMapEpiNodeB(MapEpiNode theMapEpiNode) 
+        /* This method tries to process TextStream message theMapEpiNode.
+          */
+        {
+            boolean successB= true; // Assume one alternative will succeed.
+          goReturn: {
+            if (tryProcessingTextV(theMapEpiNode)) break goReturn;
+            if (tryProcessingOffsetOnlyB(theMapEpiNode)) break goReturn;
+            successB= false; // Everything failed.  Show in returned value.
+          } // goReturn:
+            return successB;
+          }
+
+      public boolean tryProcessingOffsetOnlyB(MapEpiNode theMapEpiNode)
+        /* This method tries to process stream offsets in theMapEpiNode.
+          This would be a stream text subscription request, which is recorded.
+          If the requested text is available, it might later result in 
+          one or more packets being send in response.
+          */
+        {
+          String textString= theMapEpiNode.getString("offset");
+          boolean gotOffsetB= (null != textString); 
+          if (gotOffsetB) { // Process offset if present.
+            //// Subscribee UserId is needed.
+            doEnabledSubscriptionActionsV();
+            }
+          return gotOffsetB;
+          }
+
+      public boolean tryProcessingTextV(MapEpiNode theMapEpiNode)
+        /* This method tries to process text in theMapEpiNode.
+          It returns true if successful, false otherwise.
+          It switches to the Event Dispatch Thread (EDT) if needed,
+          so this method can be called from the EDT or another thread.
+          */
+        {
+          String textString= theMapEpiNode.getString("text");
+          boolean gotTextB= (null != textString);
+          if (gotTextB) { // Insert text if present.
+            EDTUtilities.runOrInvokeAndWaitV( // Switch to EDT thread if needed. 
+                new Runnable() {
+                  @Override  
+                  public void run() {
+                    synchronized(this) { //// Needed?
+                      processNewStreamStringV(textString);
+                      }
+                    }
+                  } 
+                );
+            }
+          return gotTextB;
+          }
+
       public void processNewStreamStringV(String theString) ////
         /* This method processes a new Stream String entered by the user
           into an associated TextStreamViewer.
-          It does this by building a MapEpiNode containing theString,
-          the RootId, and the present time, 
-          and passing it to the TextStreams coordinator for processing.
+          It does this by adding the string to the stream document
+          and updating affected subscriptions. 
+           */
+        {
+          try {
+              thePlainDocument.insertString( // Append text to document as a line.
+                thePlainDocument.getLength(),theString + "\n",null);
+            } catch (BadLocationException theBadLocationException) { 
+              theAppLog.exception( "TextStream2.processNewStreamStringV(.) ",
+                theBadLocationException);
+            }
+          theAppLog.debug(
+              "TextStream2.processNewStreamStringV(.) String=" + theString);
+          doEnabledSubscriptionActionsV();
+          }
+
+      public void doEnabledSubscriptionActionsV()
+        /* This method should be called when something happens,
+         * such as the appending of a new line of text,
+         * that makes some subscription action possible. 
+         *
+         * It does this by building a one or more MapEpiNodes
+         * and sending them to one or more connected Unicasters.
          */
         {
+          /*  ////
           MapEpiNode theMapEpiNode= new MapEpiNode();
           theMapEpiNode.putV("text", theString);
           String nodeIdentyString= thePersistent.getEmptyOrString(Config.rootIdString);
           theMapEpiNode.putV(Config.rootIdString, nodeIdentyString);
           theMapEpiNode.putV("time", ""+System.currentTimeMillis());
           theTextStreams2.processNewTextV(theMapEpiNode);
-          }
-
-      public boolean tryProcessingMapEpiNodeB(MapEpiNode theMapEpiNode) 
-        /* This method tries to process TextStream message theMapEpiNode.
-          It switches to the Event Dispatch Thread (EDT) if needed,
-          so this method can be called from the EDT or another thread.
-          */
-        {
-          String theString= theMapEpiNode.getString("text");
-          theAppLog.debug(
-              "TextStream2.tryProcessingMapEpiNodeB(.) String="
-              + theString);
-          try {
-            thePlainDocument.insertString( // Append message to document as a line.
-              thePlainDocument.getLength(),theString + "\n",null);
-          } catch (BadLocationException theBadLocationException) { 
-            theAppLog.exception(
-                "TextStream2.tryProcessingMapEpiNodeB(..) ",theBadLocationException);
-          }
-          return true;
+          */  ////
           }
 
       public boolean isOurStreamB()

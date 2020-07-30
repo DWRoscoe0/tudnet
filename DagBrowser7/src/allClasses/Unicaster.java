@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.Timer;
 
 import static allClasses.AppLog.theAppLog;
+import static allClasses.SystemSettings.NL;
 
 
 public class Unicaster
@@ -67,10 +68,12 @@ public class Unicaster
       private final Timer theTimer;
       private final Persistent thePersistent;
       private PeersCursor thePeersCursor;
+        ///org replace with MapEpiNode thisMapEpiNode= thePeersCursor.getSelectedMapEpiNode();
       private NotifyingQueue<String> unicasterNotifyingQueueOfStrings;
       private NotifyingQueue<MapEpiNode> toUnicasterNotifyingQueueOfMapEpiNodes;
       private NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes;
-      
+      private ConnectionManager theConnectionManager;
+
   		// Other instance variables.
       private EpiThread theEpiThread;
   		private LinkedMachineState theLinkedMachineState;
@@ -100,7 +103,8 @@ public class Unicaster
 	  		NamedLong initialRetryTimeOutMsNamedLong,
 	  		DefaultBooleanLike leadingDefaultBooleanLike,
 	  		NotifyingQueue<String> unicasterNotifyingQueueOfStrings,
-        NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes
+        NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes,
+        ConnectionManager theConnectionManager
 	  		)
 	    /* This constructor constructs a Unicaster for the purpose of
 	      communicating with the node at remoteInetSocketAddress,
@@ -133,6 +137,8 @@ public class Unicaster
 	        this.unicasterNotifyingQueueOfStrings= unicasterNotifyingQueueOfStrings;
           this.toConnectionManagerNotifyingQueueOfMapEpiNodes=
               toConnectionManagerNotifyingQueueOfMapEpiNodes;
+          this.theConnectionManager= theConnectionManager;
+
 	      }
 
     protected void initializeWithIOExceptionV( 
@@ -173,7 +179,8 @@ public class Unicaster
 		  				thePersistent,
 		          thePeersCursor,
 		  				theLinkMeasurementState,
-		  	      toConnectionManagerNotifyingQueueOfMapEpiNodes
+		  	      toConnectionManagerNotifyingQueueOfMapEpiNodes,
+		  	      theConnectionManager
 		  	  		);
   				addStateListV( theLinkedMachineState );
 
@@ -353,7 +360,10 @@ public class Unicaster
                 "processUnprocessedInputV() ignoring above data about this Unicaster.");
             break toConsumeInput; // Ignoring to prevent self-reference message storm.
             }
-          toConnectionManagerNotifyingQueueOfMapEpiNodes.put(theMapEpiNode); // Send...
+          theAppLog.debug("UnicasterManager.processUnprocessedInputV(.) queuing "
+            + NL + "  " + theMapEpiNode);
+          //// toConnectionManagerNotifyingQueueOfMapEpiNodes.put(theMapEpiNode); // Send...
+          theConnectionManager.decodePeerMapEpiNodeV(theMapEpiNode,null); // Decode it.
         } // toConsumeInput: 
           resetOfferedInputV();  // consume unprocessed state machine String input.
         } // toReturn:

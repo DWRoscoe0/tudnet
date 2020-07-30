@@ -118,7 +118,7 @@ public class ConnectionManager
       private NotifyingQueue<String> toConnectionManagerNotifyingQueueOfStrings;
         // For inputs in the form of Strings.
       private NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes;
-        // For inputs in the form of MapEpiNodes.
+        // For inputs in the form of MapEpiNodes. //// Eliminate when no longer needed.
       
       private TextStreams1 theTextStreams1= null;
       private TextStreams2 theTextStreams2= null;
@@ -675,8 +675,8 @@ public class ConnectionManager
           messageMapEpiNode= // Try getting next message from queue.
               toConnectionManagerNotifyingQueueOfMapEpiNodes.poll();
           if (messageMapEpiNode == null) break;  // Exit if no more messages
-          theAppLog.debug( 
-              "ConnectionManager.processPeerDataMessagesV() dequeued peerMapEpiNode:"
+          theAppLog.error( 
+              "ConnectionManager.processPeerDataMessagesV() shouldn't happen.  Dequeued:"
               + messageMapEpiNode.toString());
           decodePeerMapEpiNodeV(messageMapEpiNode);
           }
@@ -687,7 +687,22 @@ public class ConnectionManager
         based on the value of the key of that entry.
         The value of the entry is another MapEpiNode 
         containing actual data about a subject peer.
-        The message could be from a local Unicaster about a change in its connection state,
+        The message could be from a local Unicaster 
+        about a change in its connection state,
+        or it could be from a remote peer about the possibly changed state
+        of another peer.
+        */
+      { 
+        decodePeerMapEpiNodeV(messageMapEpiNode,null); 
+        }
+
+    public void decodePeerMapEpiNodeV(MapEpiNode messageMapEpiNode,String userIdString)
+      /* This method decodes the received single-entry messageMapEpiNode, 
+        based on the value of the key of that entry.
+        The value of the entry is another MapEpiNode 
+        containing actual data about a subject peer.
+        The message could be from a local Unicaster 
+        about a change in its connection state,
         or it could be from a remote peer about the possibly changed state
         of another peer.
         */
@@ -696,7 +711,7 @@ public class ConnectionManager
             + "messageMapEpiNode=" + NL + "  " + messageMapEpiNode);
           MapEpiNode valueMapEpiNode;
         goReturn: {
-          if (tryProcessingByTextStreamsB(messageMapEpiNode)) // Try TextStreams processing.
+          if (tryProcessingByTextStreamsB(messageMapEpiNode))
             { break goReturn; } // Success, so exit.
             
           valueMapEpiNode= messageMapEpiNode.getMapEpiNode("LocalNewState");
@@ -728,7 +743,7 @@ public class ConnectionManager
         This implements a promiscuous connection behavior.
         */
       {
-        theAppLog.debug("ConnectionManager.processRemoteUpdatedStateV(..) begins."
+        theAppLog.debug("ConnectionManager.processRemoteStateV(..) begins."
             + NL + "  subjectPeerMapEpiNode=" + subjectPeerMapEpiNode);
         toReturn: {
           if // Exit if same IDs, meaning subject peer is actually local peer
@@ -755,7 +770,7 @@ public class ConnectionManager
           if (theMapEpiNode.testB("isConnected")) // We're already connected to this peer
             break toReturn; // so exit.
 
-          theAppLog.debug("ConnectionManager.processRemoteUpdatedStateV(MapEpiNode) "
+          theAppLog.debug("ConnectionManager.processRemoteStateV(MapEpiNode) "
             + "connecting to subject peer!!!!!!!!!!!");
           //// String peerIPString= thePeersCursor.getFieldString("IP");
           String peerIPString= theMapEpiNode.getString("IP");
@@ -768,7 +783,7 @@ public class ConnectionManager
               theUnicasterManager.getOrBuildAddAndStartUnicaster(theIPAndPort,theIdString);
           theUnicaster.connectToPeerV(); // Message state-machine to connect.
         } // toReturn:
-          theAppLog.debug("ConnectionManager.processRemoteUpdatedStateV(..) ends.");
+          theAppLog.debug("ConnectionManager.processRemoteStateV(..) ends.");
           return;
         }
 
@@ -777,6 +792,7 @@ public class ConnectionManager
         received in a LocalNewState message about a subject peer. 
         */
       {
+        theAppLog.debug("ConnectionManager.processLocalNewStateV(.) begins.");
         notifyPeersAboutPeerV(subjectPeerMapEpiNode); // To our peers,
           // send information about the status change of the subject peer.
         
@@ -786,6 +802,7 @@ public class ConnectionManager
         //// if (subjectPeerMapEpiNode.testB("isConnected")) // Peer just connected.
         theTextStreams2.notifyNewConnectionAboutTextStreamsV(
             subjectPeerMapEpiNode); // Update it about TextStreams2.
+        theAppLog.debug("ConnectionManager.processLocalNewStateV(.) ends.");
         }
 
     private void notifyPeersAboutPeerV(MapEpiNode messagePeerMapEpiNode)

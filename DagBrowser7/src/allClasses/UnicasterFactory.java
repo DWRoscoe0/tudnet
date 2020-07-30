@@ -33,8 +33,8 @@ public class UnicasterFactory {
   		int queueCapacityI,
   		Timer theTimer,
   		Persistent thePersistent,
-      NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes
-
+      NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes,
+      ConnectionManager theConnectionManager
   		)
   	/* This builds all objects that are or comprise 
   	  unconditional singletons relative to their Unicaster.
@@ -87,7 +87,8 @@ public class UnicasterFactory {
 		      initialRetryTimeOutMsNamedLong,
 		      leadingDefaultBooleanLike,
 		      unicasterInputQueueOfStrings,
-	        toConnectionManagerNotifyingQueueOfMapEpiNodes
+	        toConnectionManagerNotifyingQueueOfMapEpiNodes,
+	        theConnectionManager
 			  	);
   	
 	    

@@ -50,6 +50,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
   private final NamedLong multicasterFixedTimeOutMsNamedLong;
   private final Persistent thePersistent;
   private NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes;
+  private ConnectionManager theConnectionManager;
   
   public AppGUIFactory(  // Factory constructor.
   	  Persistent thePersistent,
@@ -98,7 +99,8 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
           "Flooding-Text-Streams",this,thePersistent,theUnicasterManager);
       theTextStreams2= new TextStreams2(
           "Replication-Text-Streams",this,thePersistent,theUnicasterManager);
-	    ConnectionManager theConnectionManager= new ConnectionManager(
+	    //// ConnectionManager theConnectionManager= new ConnectionManager(
+      theConnectionManager= new ConnectionManager(
         this, // the AppGuiFactory.
     	  thePersistent,
     	  thePortManager,
@@ -402,7 +404,8 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 				Config.QUEUE_SIZE,
 	  		theTimer,
 	  		thePersistent,
-        toConnectionManagerNotifyingQueueOfMapEpiNodes
+        toConnectionManagerNotifyingQueueOfMapEpiNodes,
+        theConnectionManager
 				);
 	  	}
 

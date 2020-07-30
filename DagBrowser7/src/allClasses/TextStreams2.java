@@ -1,15 +1,19 @@
-
 package allClasses;
 
 import static allClasses.AppLog.theAppLog;
 import static allClasses.SystemSettings.NL;
 
 import java.io.File;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
   
   /* This class implements a list of peer TextStreams 
-    based on data replication instead of TextStreams2 broadcast.  
+    based on data replication instead of TextStreams2 broadcast.
+    ///org However it is probably going to be changed into
+    a more general UserId list as part of a general PubSub system.
 
     ///new : New code for subscription-based text streaming being created or adapted.
 
@@ -148,6 +152,8 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
     /* This sends to all connected peers theMapEpiNode.
       It wraps it in a single-entry MapEpiNode with 
       the key "TextStreams2" first.
+      
+      ///chg Wrap in "Subs" instead.
       */
     {
         theAppLog.debug( "TextStreams2.sendToPeersV() called with"
@@ -224,29 +230,82 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
   protected boolean tryProcessingMapEpiNodeB(MapEpiNode theMapEpiNode) //// being adapted.
     //// The original or something like it belongs in TextStream2 for actual text.
     /* This method tries processing a MapEpiNode.
-      It must be a single element map with a key of "TextStreams2"
-      which should contain an update to the TextStream list.
+      It must be a single element map with a key of "Subs" [was "TextStreams2"]
+      which should contain an update to the TextStream list
+      [though eventually it may be any subscription-related message].
       If it is not then it ignores the data and returns false.
       If it is then it returns true after having the value 
-      processed for TextStream peer list content.
-      Processing is done on the Event Dispatch Thread (EDT), switching if needed.
-      The message is passed to the appropriate TextStream based on
-      PeerIdenty in theMapEpiNode, creating the TextStream if needed.
+      processed for TextStream actions.
+      Some processing is done on the Event Dispatch Thread (EDT), 
+      if needed.
       */
     { 
-      MapEpiNode payloadMapEpiNode= theMapEpiNode.getMapEpiNode("TextStreams2");
-      boolean isTextStreamMessageB= (null != payloadMapEpiNode); 
+      //// MapEpiNode payloadMapEpiNode= theMapEpiNode.getMapEpiNode("TextStreams2");
+      MapEpiNode valueMapEpiNode= theMapEpiNode.getMapEpiNode("Subs");
+      boolean isTextStreamMessageB= (null != valueMapEpiNode); 
       if (isTextStreamMessageB) {
-        String peerIdentityString= 
-            payloadMapEpiNode.getString(Config.rootIdString);
-        TextStream2 theTextStream2= childHashMap.get(peerIdentityString);
-        if (null == theTextStream2) { // If this TextStream2 does not exist
-          theTextStream2= // create it and
-              createAndAddTextStream(peerIdentityString);
-          sendToPeersV(payloadMapEpiNode); // inform other peers about it.
-          }
+        processUserIdsV(valueMapEpiNode);
         }
       return isTextStreamMessageB;
+      }
+
+  public void processUserIdsV(MapEpiNode userIdsMapEpiNode)
+    /* This method processes the text stream message theMapEpiNode
+      which is assumed to be a map of 0 or more UserIds and associated
+      [text stream] subscription data.
+     */
+    {
+      Set<Map.Entry<EpiNode,EpiNode>> theSetOfMapEntrys= 
+          userIdsMapEpiNode.getLinkedHashMap().entrySet();
+      Iterator<Map.Entry<EpiNode,EpiNode>> entryIterator= 
+          theSetOfMapEntrys.iterator();
+      while (entryIterator.hasNext()) { // Iterate over all entries. 
+        Map.Entry<EpiNode,EpiNode> userMapEntry= 
+            entryIterator.next(); // Get next map entry.
+        processUserMapEntryV(userMapEntry); // Process it.
+        }
+    }
+
+  public void processUserMapEntryV(Map.Entry<EpiNode,EpiNode> userMapEntry)
+    /* This method processes one userMapEntry, including:
+     * * creating a new stream if needed and informing other peers
+     * * processing new stream text 
+     * * processing any other new stream subscription data
+     * * subscription fulfillment if that became possible by new data
+     * The associated stream display is updated if needed.
+     * Messages are sent to other subscribed peers if needed.
+     */
+    {
+      goReturn: {
+        String userIdString= userMapEntry.getKey().toString();
+        EpiNode userIdValueEpiNode= userMapEntry.getValue();
+        MapEpiNode userIdValueMapEpiNode= // Try getting nested map.
+            userIdValueEpiNode.tryOrLogMapEpiNode();
+        if (userIdValueMapEpiNode == null) // The value is not a map
+          break goReturn; // so abandon further processing and exit.
+        TextStream2 theTextStream2= childHashMap.get(userIdString);
+        if (null == theTextStream2) { // Make TextStream2 if it does not exist.
+          theTextStream2= makeNewTextStream2(userIdString);
+          }
+        theTextStream2.tryProcessingMapEpiNodeB(userIdValueMapEpiNode);
+        //// processSatisfiedSubscriptionsV();
+      } // goReturn:
+      }
+
+  public TextStream2 makeNewTextStream2(String userIdString)
+    /* This method create a new stream associated with userIdString,
+     * adds it to the other streams, and informs other peers about it.
+     * It should be called only when it has been determined
+     * that a stream for the given user does not exist.
+     */
+    {
+      TextStream2 theTextStream2= createAndAddTextStream(userIdString);
+      { // Inform other peers about new stream.
+        MapEpiNode newUserStreamMapEpiNode= new MapEpiNode();
+        newUserStreamMapEpiNode.putV(Config.rootIdString, userIdString);
+        sendToPeersV(newUserStreamMapEpiNode);
+        }
+      return theTextStream2;
       }
 
   public void processNewTextV(MapEpiNode theMapEpiNode)
@@ -264,9 +323,9 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
      */
     {
       String peerIdentityString= theMapEpiNode.getString(Config.rootIdString);
-      TextStream2 theTextStream=  // Getting the appropriate TextStream.
+      TextStream2 theTextStream2=  // Getting the appropriate TextStream.
           getOrBuildAddAndTextStream(peerIdentityString);
-      theTextStream.tryProcessingMapEpiNodeB(theMapEpiNode);
+      theTextStream2.tryProcessingMapEpiNodeB(theMapEpiNode);
       }
 
   private TextStream2 getOrBuildAddAndTextStream(String peerIdentityString)

@@ -242,7 +242,8 @@ public class NamedList
         It does this by trying to have each child process the theMapEpiNode 
         by its method of the same name, until one of them returns true,
         or the end of the child list is reached.
-        It returns true if the processing was successful by a child, false otherwise.
+        It returns true if the processing was successful by a child, 
+        false otherwise.
         This is a general purpose child scanner which can be used by subclasses
         or overridden for customized behavior.
         */
@@ -253,6 +254,7 @@ public class NamedList
         while (true) { // Process children until something causes exit.
           if (! theIterator.hasNext()) break; // Exit if no more children.
           DataNode theDataNode= theIterator.next(); // Get next child.
+          ////// Add UserId of source Unicaster.
           processedB= theDataNode.tryProcessingMapEpiNodeB(theMapEpiNode);
           if (processedB) break; // Exit if the child successfully processed the data.
           }

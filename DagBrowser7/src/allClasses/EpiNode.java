@@ -209,10 +209,21 @@ public abstract class EpiNode
         return successB;
         }
 
-    public MapEpiNode getMapEpiNode()
+    public MapEpiNode tryOrLogMapEpiNode()
+      /* This method acts the same as tryMapEpiNode() except that
+       * it logs an error if it can not return a MapEpiNode.
+       */
+      {
+        MapEpiNode theMapEpiNode= tryMapEpiNode();
+        if (null == theMapEpiNode)
+          theAppLog.debug("MapEpiNode.tryOrLogMapEpiNode() not MapEpiNode.");
+        return theMapEpiNode;
+        }
+
+    public MapEpiNode tryMapEpiNode()
       /* This method returns the (this) reference if this is a MapEpiNode,
-        null otherwise.  
-        * This method returns null.
+        null otherwise.
+        * This method returns null from this class.
         * MapEpiNode will override the null with its this reference.
         */
       {
@@ -950,7 +961,7 @@ class MapEpiNode extends EpiNode
           if (valueEpiNode == null) // No value is associated with this key.
             break toMakeMap; // so go make one.
           valueMapEpiNode= // Try converting value to map.
-              valueEpiNode.getMapEpiNode();
+              valueEpiNode.tryOrLogMapEpiNode();
           if (valueMapEpiNode == null) // The value is not a map
             break toMakeMap; // so go make a replacement which is a map.
           break toReturnValue; // Value is a map, so go return it as is.
@@ -1008,7 +1019,7 @@ class MapEpiNode extends EpiNode
         for // First, recursively rename keys in entry values which are maps. 
           (EpiNode valueEpiNode: theLinkedHashMap.values()) 
           { // Process one value.
-            MapEpiNode valueMapEpiNode= valueEpiNode.getMapEpiNode();
+            MapEpiNode valueMapEpiNode= valueEpiNode.tryMapEpiNode();
             if (null != valueMapEpiNode) // If value is a map
               valueMapEpiNode.renameKeysV( // recursively rename within it.
                 oldKeyString, newKeyString);
@@ -1247,7 +1258,7 @@ class MapEpiNode extends EpiNode
               getEpiNode(keyString);
           if (valueEpiNode == null) break toReturn;
           valueMapEpiNode=  // Try converting EpiNode to MapEpiNode.
-              valueEpiNode.getMapEpiNode();
+              valueEpiNode.tryOrLogMapEpiNode();
           } // toReturn:
         return valueMapEpiNode;
         }
@@ -1283,7 +1294,7 @@ class MapEpiNode extends EpiNode
 
     // Special getters or calculated values.
     
-    public MapEpiNode getMapEpiNode()
+    public MapEpiNode tryMapEpiNode()
       /* This method returns the (this) reference if this is a MapEpiNode,
         null otherwise.
         */
@@ -1295,6 +1306,12 @@ class MapEpiNode extends EpiNode
       /* This method returns number of elements in the map.  */
       {
         return theLinkedHashMap.size();
+        }
+
+    public LinkedHashMap<EpiNode,EpiNode> getLinkedHashMap()
+      /* This method returns the maps LinkedHashMap.  */
+      {
+        return theLinkedHashMap;
         }
     
 

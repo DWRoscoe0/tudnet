@@ -100,7 +100,7 @@ public class TextStreams1 extends SimplerListWithMap<String,TextStream1> {
             new Runnable() {
               @Override  
               public void run() {
-                synchronized(this) {
+                synchronized(this) { //// Needed?
                   processIfNewV(payloadMapEpiNode);
                   }
                 }
