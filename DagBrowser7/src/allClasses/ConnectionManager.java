@@ -693,12 +693,19 @@ public class ConnectionManager
         of another peer.
         */
       { 
-        decodePeerMapEpiNodeV(messageMapEpiNode,null); 
+        decodePeerMapEpiNodeV(
+            messageMapEpiNode,
+            thePersistent.getEmptyOrString(Config.rootIdString) 
+              // Use local UserId as context.
+            ); 
         }
 
-    public void decodePeerMapEpiNodeV(MapEpiNode messageMapEpiNode,String userIdString)
-      /* This method decodes the received single-entry messageMapEpiNode, 
+    public void decodePeerMapEpiNodeV(
+        MapEpiNode messageMapEpiNode,String sourceUserIdString)
+      /* This method decodes the received single-map-entry messageMapEpiNode, 
         based on the value of the key of that entry.
+        The message is assumed to have come from 
+        the user whose UserId is sourceUserIdString.
         The value of the entry is another MapEpiNode 
         containing actual data about a subject peer.
         The message could be from a local Unicaster 
@@ -711,7 +718,7 @@ public class ConnectionManager
             + "messageMapEpiNode=" + NL + "  " + messageMapEpiNode);
           MapEpiNode valueMapEpiNode;
         goReturn: {
-          if (tryProcessingByTextStreamsB(messageMapEpiNode))
+          if (tryProcessingByTextStreamsB(messageMapEpiNode,sourceUserIdString))
             { break goReturn; } // Success, so exit.
             
           valueMapEpiNode= messageMapEpiNode.getMapEpiNode("LocalNewState");
@@ -884,14 +891,19 @@ public class ConnectionManager
 
     // TextStreams message processing.
 
-    private boolean tryProcessingByTextStreamsB(MapEpiNode theMapEpiNode)
-      /* Returns true if TextStreams was able to process, false otherwise.
-        It tries both the new and the old.
+    private boolean tryProcessingByTextStreamsB(
+        MapEpiNode messageMapEpiNode, String sourceUserIdString)
+      /* Returns true if one of the TextStreams was able to process, 
+        false otherwise.
+        It tries both the new TextStreams2 and the old TextStreams1.
+        The message is assumed to have come from 
+        the user whose UserId is sourceUserIdString.
         */
       {
-        boolean successB= theTextStreams2.tryProcessingMapEpiNodeB(theMapEpiNode);
+        boolean successB= theTextStreams2.tryProcessingMapEpiNodeB(
+            messageMapEpiNode,sourceUserIdString);
         if (!successB)
-          successB= theTextStreams1.tryProcessingMapEpiNodeB(theMapEpiNode);
+          successB= theTextStreams1.tryProcessingMapEpiNodeB(messageMapEpiNode);
         return successB; 
         }
 

@@ -227,33 +227,41 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
           } // toPeerDone:
       }
 
-  protected boolean tryProcessingMapEpiNodeB(MapEpiNode theMapEpiNode) //// being adapted.
+  protected boolean tryProcessingMapEpiNodeB(  //// being adapted.
+      MapEpiNode messageMapEpiNode,String sourceUserIdString)
     //// The original or something like it belongs in TextStream2 for actual text.
-    /* This method tries processing a MapEpiNode.
-      It must be a single element map with a key of "Subs" [was "TextStreams2"]
-      which should contain an update to the TextStream list
-      [though eventually it may be any subscription-related message].
-      If it is not then it ignores the data and returns false.
-      If it is then it returns true after having the value 
-      processed for TextStream actions.
-      Some processing is done on the Event Dispatch Thread (EDT), 
-      if needed.
+    /* This method tries processing a message MapEpiNode.
+      sourceUserIdString provides context.
+      The message is assumed to have come from 
+      the user whose UserId is sourceUserIdString.
+      The message must be a single element map 
+      with a key of "Subs" [was "TextStreams2"].
+      It can contain various types of 
+      TextStreams2 subscription-related information.
+      If it is not a TextStream message then 
+      it ignores the data and returns false.
+      If it is then it returns true after processing the data.
+      Some processing may be done on the Event Dispatch Thread (EDT). 
       */
     { 
       //// MapEpiNode payloadMapEpiNode= theMapEpiNode.getMapEpiNode("TextStreams2");
-      MapEpiNode valueMapEpiNode= theMapEpiNode.getMapEpiNode("Subs");
+      MapEpiNode valueMapEpiNode= messageMapEpiNode.getMapEpiNode("Subs");
       boolean isTextStreamMessageB= (null != valueMapEpiNode); 
       if (isTextStreamMessageB) {
-        processUserIdsV(valueMapEpiNode);
+        processUserIdsV(valueMapEpiNode,sourceUserIdString);
         }
       return isTextStreamMessageB;
       }
 
-  public void processUserIdsV(MapEpiNode userIdsMapEpiNode)
+  public void processUserIdsV(
+      MapEpiNode userIdsMapEpiNode,String sourceUserIdString)
     /* This method processes the text stream message theMapEpiNode
       which is assumed to be a map of 0 or more UserIds and associated
       [text stream] subscription data.
-     */
+      sourceUserIdString provides context.
+      The message is assumed to have come from 
+      the user whose UserId is sourceUserIdString.
+      */
     {
       Set<Map.Entry<EpiNode,EpiNode>> theSetOfMapEntrys= 
           userIdsMapEpiNode.getLinkedHashMap().entrySet();

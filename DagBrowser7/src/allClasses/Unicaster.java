@@ -67,8 +67,7 @@ public class Unicaster
       private final TCPCopier theTCPCopier;
       private final Timer theTimer;
       private final Persistent thePersistent;
-      private PeersCursor thePeersCursor;
-        ///org replace with MapEpiNode thisMapEpiNode= thePeersCursor.getSelectedMapEpiNode();
+      private PeersCursor thePeersCursor; ///org replace with thisMapEpiNode as parameter.
       private NotifyingQueue<String> unicasterNotifyingQueueOfStrings;
       private NotifyingQueue<MapEpiNode> toUnicasterNotifyingQueueOfMapEpiNodes;
       private NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes;
@@ -77,6 +76,7 @@ public class Unicaster
   		// Other instance variables.
       private EpiThread theEpiThread;
   		private LinkedMachineState theLinkedMachineState;
+      private MapEpiNode thisMapEpiNode;
 
   	  Color getBackgroundColor( Color defaultBackgroundColor )
   	    /* This method is a kludge to return the background color from 
@@ -149,6 +149,7 @@ public class Unicaster
     		super.initializeWithoutStreamsV(); // Stream counts are added below in
     		  // one of the sub-state machines.
 
+        this.thisMapEpiNode= thePeersCursor.getSelectedMapEpiNode();
     		this.theEpiThread= theEpiThread;
 
         this.toUnicasterNotifyingQueueOfMapEpiNodes= // Make empty EmpNode queue. 
@@ -363,7 +364,11 @@ public class Unicaster
           theAppLog.debug("UnicasterManager.processUnprocessedInputV(.) queuing "
             + NL + "  " + theMapEpiNode);
           //// toConnectionManagerNotifyingQueueOfMapEpiNodes.put(theMapEpiNode); // Send...
-          theConnectionManager.decodePeerMapEpiNodeV(theMapEpiNode,null); // Decode it.
+          //// theConnectionManager.decodePeerMapEpiNodeV(theMapEpiNode,null); // Decode it.
+          theConnectionManager.decodePeerMapEpiNodeV(
+            theMapEpiNode,
+            thisMapEpiNode.getEmptyOrString(Config.rootIdString) // Unicaster UserId as context.
+            );
         } // toConsumeInput: 
           resetOfferedInputV();  // consume unprocessed state machine String input.
         } // toReturn:
@@ -378,7 +383,6 @@ public class Unicaster
       {
           boolean resultB= false; // Assume something is different.
         goReturn: {
-          MapEpiNode thisMapEpiNode= thePeersCursor.getSelectedMapEpiNode();
 
           EpiNode testEpiNode= otherMapEpiNode.getEpiNode("IP");
           if (testEpiNode == null) break goReturn;

@@ -42,6 +42,7 @@ public class LinkedMachineState
     private ConnectionManager theConnectionManager;
 
 		// Other variables: none.
+    private MapEpiNode thisMapEpiNode;
 		
 		// Sub-state-machine instances.
     private DisconnectedState theDisconnectedState;
@@ -86,6 +87,9 @@ public class LinkedMachineState
             toConnectionManagerNotifyingQueueOfMapEpiNodes;
         this.theConnectionManager= theConnectionManager;
 	  		// Adding measurement count.
+
+        // Initialize other variables.
+        this.thisMapEpiNode= thePeersCursor.getSelectedMapEpiNode();
 
     		// Construct all sub-states of this state machine.
         theDisconnectedState= new DisconnectedState();
@@ -663,7 +667,10 @@ public class LinkedMachineState
       {
         MapEpiNode messageMapEpiNode= MapEpiNode.makeSingleEntryMapEpiNode(
             "LocalNewState", thePeersCursor.getSelectedMapEpiNode());
-        theConnectionManager.decodePeerMapEpiNodeV(messageMapEpiNode,null); // Decode it.
+        theConnectionManager.decodePeerMapEpiNodeV(
+            messageMapEpiNode,
+            thisMapEpiNode.getEmptyOrString(Config.rootIdString) // Unicaster UserId as context.
+            ); // Decode it.
         //// toConnectionManagerNotifyingQueueOfMapEpiNodes.put( // Add to queue
         ////   messageMapEpiNode
         ////   );
