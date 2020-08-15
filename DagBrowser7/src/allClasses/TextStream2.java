@@ -267,14 +267,18 @@ public class TextStream2
       {
         Element rootElement= thePlainDocument.getDefaultRootElement();
         for // For all line elements in document...
-          ( int elementI=0; elementI<rootElement.getElementCount(); elementI++ ) 
+          ( int elementI=0; 
+            elementI<rootElement.getElementCount()-1; // Last element is 
+            elementI++ )  // ignored because it's always just a newline.
           { // Write the line to file.
             Element lineElement= rootElement.getElement(elementI);
             int startOffset= lineElement.getStartOffset();
             int endOffset= lineElement.getEndOffset();
-            theFileWriter.write(thePlainDocument.getText(
-                startOffset,endOffset-startOffset-1
-                )); // Output one line of text.
+            String lineString= thePlainDocument.getText(
+                startOffset,endOffset-startOffset-1);
+            theAppLog.debug(
+                "TextStream2.writeAllLineElementsV(.) String=" + lineString);
+            theFileWriter.write(lineString); // Output one line of text.
             theFileWriter.write(NL); // Write line terminator.
             }
         }
