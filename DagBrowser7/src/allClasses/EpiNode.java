@@ -1005,7 +1005,7 @@ class MapEpiNode extends EpiNode
 
 
     // Special method that renames keys.
-    
+
     public synchronized void renameKeysV(
         String oldKeyString, String newKeyString)
       /* This method replaces instances of map keys 
@@ -1035,6 +1035,16 @@ class MapEpiNode extends EpiNode
 
 
     // Methods that store various types of data in a map.
+
+    public synchronized void putV(String keyString, long valueL)
+      /* This associates integer valueI with keyString in this MapEpiNode.
+        */
+      {
+        putV(
+            new ScalarEpiNode(keyString),
+            new ScalarEpiNode(""+valueL)
+            );
+        }
 
     public synchronized void putV(String keyString, String valueString)
       /* This associates valueString with keyString in this MapEpiNode.
@@ -1199,6 +1209,7 @@ class MapEpiNode extends EpiNode
     public boolean testB( String keyString )
       /* This method returns true if value of the field whose key is keyString
         is non-null "true", ignoring case, false otherwise.
+        ///org Rename to getB(.).
         */
       {
         String valueString= getString(keyString);
@@ -1213,6 +1224,25 @@ class MapEpiNode extends EpiNode
         String valueString= getString(keyString);
         boolean resultB= testValueString.equals(valueString);
         return resultB;
+        }
+  
+    public int getZeroOrI(String keyString)
+      /* Returns the integer value associated with keyString.
+        If the value is missing, or not parse-able as an integer,
+        it returns 0.
+        */
+      {
+        int valueI= 0; // Assume there will be an error.
+        String valueString= getEmptyOrString(keyString);
+        try 
+          { 
+            valueI= Integer.parseInt(valueString); 
+            }
+        catch (NumberFormatException theNumberFormatException) 
+          { 
+            ; // Ignore exception.  Return value is already set to 0.
+            }
+        return valueI;
         }
   
     public String getEmptyOrString( String keyString )
@@ -1237,6 +1267,8 @@ class MapEpiNode extends EpiNode
     public String getString(String keyString) 
       /* Returns String representation of value associated with keyString,
         or null if there is no such value.
+        ///fix to not use toString() so that non-Scalar values
+          produce an error string, to prevent long string results. 
         */
       { 
         String resultString= null;

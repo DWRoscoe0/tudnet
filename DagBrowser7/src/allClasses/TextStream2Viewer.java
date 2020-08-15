@@ -44,7 +44,8 @@ public class TextStream2Viewer
         // Constructor-injected variables.
         private PlainDocument thePlainDocument;
         private TextStream2 theTextStream2;
-
+        private Persistent thePersistent;
+        
         private Border raisedEtchedBorder= // Common style used elsewhere.
             BorderFactory.createEtchedBorder(EtchedBorder.RAISED);
 
@@ -76,6 +77,7 @@ public class TextStream2Viewer
           
           this.thePlainDocument=  thePlainDocument;
           this.theTextStream2= theTextStream;
+          this.thePersistent= thePersistent;
 
           theAppLog.debug("TextStream2Viewer.TextStream2Viewer(.) begins.");
           if ( theTreePath == null )  // prevent null TreePath.
@@ -88,10 +90,10 @@ public class TextStream2Viewer
 
           addJLabelV();
           addStreamIJTextAreaV();
-          if (theTextStream2.isOurStreamB())
+          if (theTextStream2.isLocalB())
             addInputIJTextAreaV(); // Add the input TextArea to window.
             else
-            theTextStream2.requestNextTextV();
+            theTextStream2.requestNextTextFromAllSubscribersV();
           }
 
       private void addJLabelV()
@@ -139,10 +141,13 @@ public class TextStream2Viewer
                 if(theKeyEvent.getKeyCode() == KeyEvent.VK_ENTER){
                   { // Move all text from input area to stream area.
                     String messageString= inputIJTextArea.getText();
-                    theAppLog.debug(
-                        "TextStream2Viewer.TextStream2Viewer.keyPressed(.) ENTER pressed.");
-                    inputIJTextArea.setText(""); // Clear input area for next line.
-                    theTextStream2.processNewStreamStringV(messageString);
+                    theAppLog.debug( "TextStream2Viewer.TextStream2Viewer"
+                        + ".keyPressed(.) ENTER pressed.");
+                    inputIJTextArea.setText(""); // Reset input area.
+                    theTextStream2.processNewTextStringV(
+                        messageString + "\n", // Note added newline.
+                        thePersistent.getEmptyOrString(Config.userIdString)
+                        );
                     }
                   theKeyEvent.consume(); // Prevent further processing.
                   }

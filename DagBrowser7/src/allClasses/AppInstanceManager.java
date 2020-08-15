@@ -275,7 +275,7 @@ l    * If the app receives a message indicating
   	      if ( tryDelegationToRunningInstanceB( ) ) break tryDelegation;
   	      if ( tryDelegationToFileInstanceB( ) ) break tryDelegation;
 	    		theAppLog.info( "tryDelegatingToAnotherAppInstanceB() "
-		  				+"======== DELEGATION FAILED, GUI WILL START ========" );
+		  				+"======== DELEGATION FAILED SO GUI WILL START ========" );
 	        successB= false; // Setting return result to prevent app exit.
   		    } // tryDelegation:
 	

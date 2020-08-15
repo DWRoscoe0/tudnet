@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 
 import static allClasses.AppLog.theAppLog;
+import static allClasses.SystemSettings.NL;
 
 
 public class UnicasterManager
@@ -18,10 +19,13 @@ public class UnicasterManager
 	  It provides methods for creating them, storing references to them,
 	  displaying them, testing for their existence, and destroying them.
 	  Most of its methods are synchronized.
+	  
+	  It extends StreamcasterManager.
+	  The of the keys for the map maintained by this class is IPAndPort.
 	  */
 
   {
-		@SuppressWarnings("unused") ///tmp
+		//// @SuppressWarnings("unused") ///tmp
   	private final Persistent thePersistent;
   	private final TCPCopier theTCPCopier; 
   
@@ -97,7 +101,7 @@ public class UnicasterManager
         /// theAppLog.debug( 
         ///    "ConnectionManager.getOrBuildAddAndStartUnicaster(IPAndPort) called.");
         Unicaster theUnicaster= // Testing whether Unicaster exists.  
-            tryingToGetUnicaster( theIPAndPort );
+            tryToGetUnicaster( theIPAndPort );
         if ( theUnicaster == null ) // Build, add, and start one if one doesn't exist.
           theUnicaster= buildAddAndStartUnicaster( theIPAndPort, theIdString );
         return theUnicaster;
@@ -114,7 +118,7 @@ public class UnicasterManager
         */
       {
     		IPAndPort theIPAndPort= makeIPAndPort(theNetcasterPacket);
-        return tryingToGetUnicaster( theIPAndPort );
+        return tryToGetUnicaster( theIPAndPort );
         }
 
 
@@ -131,8 +135,6 @@ public class UnicasterManager
         return theIPAndPort;
         }
 
-
-
     public synchronized Unicaster buildAddAndStartUnicaster( 
           IPAndPort theIPAndPort, String theIdString )
       /* This method returns a Unicaster to handle communications 
@@ -146,7 +148,7 @@ public class UnicasterManager
         */
 	    { 
         /// theAppLog.debug( "ConnectionManager.buildAndAddUnicaster(IPAndPort) called.");
-        Unicaster theUnicaster= tryGettingAndLoggingPreexistingUnicaster( theIPAndPort );
+        Unicaster theUnicaster= tryToGetXorLogUnicaster( theIPAndPort );
         if ( theUnicaster == null ) // Unicaster does not yet exist.
           { // So build, add, and start the non-existent Unicaster.
         	  UnicasterFactory theUnicasterFactory= theAppGUIFactory.makeUnicasterFactory(
@@ -168,17 +170,16 @@ public class UnicasterManager
 	      return theUnicaster;
 	      }
 
-
-    public synchronized Unicaster tryGettingAndLoggingPreexistingUnicaster(
+    public synchronized Unicaster tryToGetXorLogUnicaster(
         IPAndPort theIPAndPort)
-      /* This method tests whether the Unicaster associated with 
-        the address in theKeyedPacket exists.
-        If it exists then it logs an error and returns the Unicaster.
-        If it doesn't exist then it returns null.
+      /* This method tests whether the Unicaster 
+        associated with theIPAndPort exists.
+        If it doesn't exist then null is returned.  This is the expected result.
+        If it exists then the method logs an error and returns the Unicaster.
         */
       {
         Unicaster theUnicaster= // Testing whether Unicaster exists.  
-            tryingToGetUnicaster( theIPAndPort );
+            tryToGetUnicaster( theIPAndPort );
         if ( theUnicaster != null ) // This Unicaster already exists.
             theAppLog.error( // Log this as an error.
               "UnicasterManager.tryGettingAndLoggingPreexistingUnicaster(IPAndPort) "
@@ -186,7 +187,57 @@ public class UnicasterManager
         return theUnicaster;
         }
 
-    public synchronized Unicaster tryingToGetUnicaster(IPAndPort theIPAndPort)
+    public synchronized Unicaster tryToGetUnicaster(String userIdString)
+      /* This method returns the connected Unicaster 
+       * associated with userIdString, if such a Unicaster exists.
+        If it doesn't exist then the method returns null.
+        
+        ///enh It's possible that more than one Unicaster
+        is associated with a UserId.
+        This method can not yet deal with this case.
+        */
+      {
+        IPAndPort theIPAndPort= toIpAndPort(userIdString);
+        return tryingToGetDataNodeWithKeyD( theIPAndPort );
+        }
+
+    private IPAndPort toIpAndPort(String userIdString)
+      /* This method returns the IPAndPort associated with userIdString,
+        or null if there is no such association.
+        
+        ///opt It does this by doing a linear table look-up.
+          This will need improvement when the table becomes large. 
+        */
+      {
+          IPAndPort resultIPAndPort= null;
+          PeersCursor scanPeersCursor= // Used for iteration. 
+              PeersCursor.makeOnNoEntryPeersCursor( thePersistent );
+        endLoop: while (true) { // Potentially process all peers in list. 
+          if (scanPeersCursor.nextKeyString().isEmpty() ) // Try getting next scan peer. 
+            break endLoop; // There are no more peers, so exit loop.
+        endPeer: {
+          MapEpiNode scanMapEpiNode= scanPeersCursor.getSelectedMapEpiNode();
+          if (! scanMapEpiNode.testB("isConnected")) // If this peer not connected
+            break endPeer; // end this peer to try next one.
+          String scanUserIdString= scanMapEpiNode.getString(Config.userIdString);
+          if (userIdString.equals(scanUserIdString))// If IDs don't match
+            break endPeer; // end this peer to try next one.
+          String scanIPString= scanMapEpiNode.getString("IP");
+          String scanPortString= scanMapEpiNode.getString("Port");
+          IPAndPort scanIPAndPort= new IPAndPort(scanIPString, scanPortString);
+          Unicaster scanUnicaster= // Try getting associated Unicaster.
+              tryToGetUnicaster(scanIPAndPort);
+          if (scanUnicaster == null) // Unicaster of scan peer doesn't exist
+            break endPeer; // so end this peer to try next peer.
+          resultIPAndPort= scanIPAndPort;
+          break endLoop; // Alternative loop exit with final answer.
+        } // endPeer:
+        } // endLoop: 
+          theAppLog.appendToFileV("(end of peers)"+NL); // Mark end of list with new line.
+        return resultIPAndPort;
+        }
+    
+    public synchronized Unicaster tryToGetUnicaster(IPAndPort theIPAndPort)
       /* This method returns the Unicaster associated with the
         address in theKeyedPacket, if such a Unicaster exists.
         If it doesn't exist then it returns null.

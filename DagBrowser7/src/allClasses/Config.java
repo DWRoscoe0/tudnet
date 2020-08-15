@@ -95,7 +95,7 @@ public class Config
 
     //// public static final String rootIdString= "PeerIdentity"; // old
     //// public static final String rootIdString= "OwnerId"; // old
-    public static final String rootIdString= "UserId"; // new
+    public static final String userIdString= "UserId"; // new
     
 
   	private Config() {} // Constructor is private so it can't be constructed.

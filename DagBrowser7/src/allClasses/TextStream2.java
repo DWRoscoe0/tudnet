@@ -11,23 +11,52 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Iterator;
+import java.util.Set;
 
 import javax.swing.JComponent;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Element;
 import javax.swing.text.PlainDocument;
+import javax.swing.text.Segment;
 import javax.swing.tree.TreePath;
 
 public class TextStream2
 
   extends KeyedStateList< String > 
 
-  /* This class represents a single text streams.
+  /* This class represents a single text stream.
    * 
-   * ///fix  Because TextStream2Viewer listens to thePlainDocument,
-   * operations which mutate its contents might need to switch to the EDT,
-   * at least after loading and before saving.
-   * Maybe the string appending method should be changed to do this.
+   * A user node can take on one or more of the following roles:
+   * 
+   * * subscribee: This is a user node that is a producer of content.  
+   *   It receives requests for text and text acknowledgments from others.
+   *   It sends text to others.  All TextStream messages contain
+   *   an explicit subscribee UserId.
+   *   
+   * * subscriber; This is a user node that is a consumer of content.  
+   *   It sends requests for text and text acknowledgments to others.
+   *   It receives text from others.  
+   *   A subscriber can also act like a subscribee if it already has
+   *   a some of the subscribee's text, thereby functioning as
+   *   forwarder of subscribee content. 
+   *   
+   * * starter, [also/previously known as source, requester, or initiator]:
+   *   This is a user node that initiates a subscription operation, either by:
+   *   * being the source of a message which triggers an operation,
+   *     meaning the remote node at the other end of the Unicaster link
+   *     on which the message was received, or
+   *   * being the caller of a method that performs an operation,
+   *     meaning the local node.
+   *   The identity of the starter is important because it's used to determine 
+   *   whether a subscriber should receive text or a text acknowledgment
+   *   
+   *   A subscription operation always involves:
+   *   * 1 subscribee
+   *   * 1 or more subscribers
+   *   * 1 starter
+   *   The starter is either the subscribee or 
+   *   one of the subscribee's subscribers.
    */
   
   {
@@ -40,10 +69,16 @@ public class TextStream2
 
       // Other variables:
       private PlainDocument thePlainDocument= null; // Internal document store.
-        ////// This should be accessed on EDT only?
+        // This has some EDT (Event Dispatch Thread) restrictions.
       private File streamFile; // File name of external document store. 
-      private String theRootIdString;
-      
+      private MapEpiNode subscribeeUserIdsMapEpiNode; 
+        // Map of subscribee UserIds.
+      private String subscribeeUserIdString;
+      private MapEpiNode subscribeeMapEpiNode;
+        // Map of subscribee fields.
+      private MapEpiNode subscriberUserIdsMapEpiNode;
+        // Map of subscriber UserIds.
+
     // Constructors.
 
       TextStream2( 
@@ -60,8 +95,17 @@ public class TextStream2
           this.thePersistent= thePersistent;
           Nulls.fastFailNullCheckT(theTextStreams2);
           this.theTextStreams2= theTextStreams2;
-          this.theRootIdString= getKeyK(); 
           
+          // Calculate and cache some values we might need later.
+          subscribeeUserIdsMapEpiNode= // Calculate map of subscribees.
+              thePersistent.getOrMakeMapEpiNode("SubscribeeUserIds");
+          subscribeeUserIdString= getKeyK(); // Get our UserId.
+          subscribeeMapEpiNode= // Calculate map of our subscribee data.
+              subscribeeUserIdsMapEpiNode.getOrMakeMapEpiNode(
+                  subscribeeUserIdString);
+          subscriberUserIdsMapEpiNode= // Calculate map of our subscribers.
+              subscribeeMapEpiNode.getOrMakeMapEpiNode("SubscriberUserIds");
+              
           streamFile= FileOps.makePathRelativeToAppFolderFile(
               Config.textStream2FolderString,getKeyK(),"textStreamFile.txt"
               ); // Create file path name.
@@ -101,7 +145,7 @@ public class TextStream2
               inDataTreeModel,
               thePlainDocument,
               this,
-              theRootIdString,
+              subscribeeUserIdString,
               thePersistent
               );
           return resultJComponent;  // return the final result.
@@ -149,23 +193,32 @@ public class TextStream2
           theAppLog.info("TextStream2.loadStreamV(..) ends.");
           }
 
-      public void requestNextTextV()
-        /* Notifies text sources that we are interested in receiving
-         * the next append-able text. 
+      public void requestNextTextFromAllSubscribersV()
+        /* Notifies connected subscriber Unicasters that 
+         * we would like to receive the next text available
+         * for this subscribee, unless this is the local subscribee.
+         * It does this by sending an acknowledgement of 
+         * the text it has received so far.
+         * This method is called when a viewer opens any non-local text stream.
          */
         {
           theAppLog.debug("TextStream2.requestNextTextV() called.");
-          if (! isOurStreamB())
-            {
-              MapEpiNode theMapEpiNode= new MapEpiNode();
-              String nodeIdentyString= 
-                  thePersistent.getEmptyOrString(Config.rootIdString);
-              theMapEpiNode.putV(Config.rootIdString, nodeIdentyString);
-              theMapEpiNode.putV(
-                  "StartOffset", ""+thePlainDocument.getLength());
-              theTextStreams2.sendToPeersV(theMapEpiNode);  ////
-              }
 
+          Set<EpiNode> subscriberUserIdsSetOfEpiNodes= 
+              subscriberUserIdsMapEpiNode.getLinkedHashMap().keySet();
+          Iterator<EpiNode> subscriberUserIdsIterator= 
+              subscriberUserIdsSetOfEpiNodes.iterator();
+          while // For each subscriber of this subscribee
+            (subscriberUserIdsIterator.hasNext())
+            { // send an acknowledgement to the subscriber.
+              String subscriberUserIdString=
+                  subscriberUserIdsIterator.next().toString();
+              MapEpiNode subscriberMapEpiNode=
+                  subscriberUserIdsMapEpiNode.getMapEpiNode(
+                      subscriberUserIdString);
+              subscriberSendAckV(
+                  subscriberMapEpiNode,subscriberUserIdString);
+              }
         }
       
       protected int finalizeDataNodesI()
@@ -226,130 +279,319 @@ public class TextStream2
             }
         }
 
-      public void processEnteredStringV(String theString)
-        /* This method processes a new Stream String entered by the user
-          into an associated TextStreamViewer.
-          It is appended to the stream document.
-          ////// This might need to switch to the EDT.
-         */
-        {
-          try {
-              thePlainDocument.insertString( // Append message to document as a line.
-                thePlainDocument.getLength(),theString + "\n",null);
-            } catch (BadLocationException theBadLocationException) { 
-              theAppLog.exception(
-                "TextStream2.processEnteredStringV(..) ",theBadLocationException);
-            }
-          processSendAbleChangeV();
-          }
-
-      private void processSendAbleChangeV()
-        /* This method tries to satisfy any stream subscription requests
-         * that are satisfiable.
-         */
-        {}
-
-      public boolean tryProcessingMapEpiNodeB(MapEpiNode theMapEpiNode) 
-        /* This method tries to process TextStream message theMapEpiNode.
+      public boolean tryProcessingUserDataMapEpiNodeB(
+          MapEpiNode userIdDataMapEpiNode,String senderUserIdString) 
+        /* This method tries to process TextStream message userIdDataMapEpiNode.
+          starterUserIdString identifies the source of the message.
           */
         {
             boolean successB= true; // Assume one alternative will succeed.
           goReturn: {
-            if (tryProcessingTextV(theMapEpiNode)) break goReturn;
-            if (tryProcessingOffsetOnlyB(theMapEpiNode)) break goReturn;
-            successB= false; // Everything failed.  Show in returned value.
+            if (tryProcessingTextB(
+                userIdDataMapEpiNode,senderUserIdString))
+              break goReturn;
+            if (tryProcessingOffsetOnlyB(
+                userIdDataMapEpiNode,senderUserIdString))
+              break goReturn;
+            successB= false; // Show that everything failed in returned value.
           } // goReturn:
             return successB;
           }
 
-      public boolean tryProcessingOffsetOnlyB(MapEpiNode theMapEpiNode)
-        /* This method tries to process stream offsets in theMapEpiNode.
-          This would be a stream text subscription request, which is recorded.
-          If the requested text is available, it might later result in 
-          one or more packets being send in response.
+      public boolean tryProcessingOffsetOnlyB(
+          MapEpiNode fieldsMapEpiNode,String starterUserIdString)
+        /* This method tries to process "HaveToOffset" 
+          in fieldsMapEpiNode in a received message.
+          If present, it is recorded as subscriber information.
+          starterUserIdString identifies the user node 
+          which is the source of the message and 
+          to which text might be sent in response.
+          This method returns true if processing succeeds, false otherwise.
           */
         {
-          String textString= theMapEpiNode.getString("offset");
-          boolean gotOffsetB= (null != textString); 
-          if (gotOffsetB) { // Process offset if present.
-            //// Subscribee UserId is needed.
-            doEnabledSubscriptionActionsV();
-            }
-          return gotOffsetB;
+            boolean gotOffsetB; 
+          goReturn: {
+            String messageOffsetString= 
+                fieldsMapEpiNode.getString("HaveToOffset");
+            gotOffsetB= (null != messageOffsetString); 
+            if (! gotOffsetB) break goReturn; // No offset present, so exit.
+            MapEpiNode subscriberMapEpiNode= 
+              subscribeeUserIdsMapEpiNode.getMapEpiNode(starterUserIdString);
+            subscriberMapEpiNode.putV("HaveToOffset",messageOffsetString);
+            subscriberSendTextV(starterUserIdString);
+          } // goReturn:
+            return gotOffsetB;
           }
 
-      public boolean tryProcessingTextV(MapEpiNode theMapEpiNode)
-        /* This method tries to process text in theMapEpiNode.
+      public boolean tryProcessingTextB(
+          MapEpiNode fieldsMapEpiNode, String starterUserIdString)
+          ///opt starterUserIdString not needed?
+        /* This method tries to process "Text" in fieldsMapEpiNode.
+          starterUserIdString is context as the source of the message.
           It returns true if successful, false otherwise.
           It switches to the Event Dispatch Thread (EDT) if needed,
           so this method can be called from the EDT or another thread.
           */
         {
-          String textString= theMapEpiNode.getString("text");
-          boolean gotTextB= (null != textString);
-          if (gotTextB) { // Insert text if present.
-            EDTUtilities.runOrInvokeAndWaitV( // Switch to EDT thread if needed. 
-                new Runnable() {
-                  @Override  
-                  public void run() {
-                    synchronized(this) { //// Needed?
-                      processNewStreamStringV(textString);
+            boolean gotTextB= false;
+          toReturn: {
+            String senderTextString= fieldsMapEpiNode.getString("Text");
+            if (null == senderTextString) 
+              break toReturn; // Exit if no Text.
+            int senderTextOffsetI= fieldsMapEpiNode.getZeroOrI("TextAtOffset");
+            int subscribeeHaveToOffsetI=
+                subscribeeMapEpiNode.getZeroOrI("HaveToOffset");
+            if (senderTextOffsetI != subscribeeHaveToOffsetI)
+              break toReturn; // Exit because text us not at expected offset.
+            { // Process the received text.
+              EDTUtilities.runOrInvokeAndWaitV( // Switch to EDT thread if needed. 
+                  new Runnable() {
+                    @Override  
+                    public void run() {
+                      synchronized(this) { //// Needed?
+                        processNewTextStringV(
+                            senderTextString,starterUserIdString);
+                        }
                       }
-                    }
-                  } 
-                );
-            }
-          return gotTextB;
+                    } 
+                  );
+              }
+            gotTextB= true; // Success.
+          } // toReturn: {
+            return gotTextB;
           }
 
-      public void processNewStreamStringV(String theString) ////
-        /* This method processes a new Stream String entered by the user
-          into an associated TextStreamViewer.
-          It does this by adding the string to the stream document
-          and updating affected subscriptions. 
-           */
+      public void processNewTextStringV(
+          String textString, String starterUserIdString)
+        /* This method processes textString as new TextStream text.
+          starterUserIdString identifies the source of the text.
+          It either could be the sender of a message containing the text,
+          or it could be the local node's user keyboard.
+          The text may contain '\n' to represent newlines, 
+          independent of platform's operating system.
+          The text is processed by appending it to 
+          the subscribees stream document,
+          then doing any acknowledgment or forwarding operations that 
+          might have been made possible by receipt of the new text.
+
+          This method should be called from the EDT (Event Dispatch Thread)
+          only because it modifies a PlainDocument which
+          calls listeners in GUI Swing classes.
+           *   
+           * ///fix  Because TextStream2Viewer listens to thePlainDocument,
+           * operations which mutate its contents might need to switch 
+           * to the EDT, at least after loading and before saving.
+           * Maybe this appending method should be changed to do this,
+           * even though it isn't necessary when it's called on the EDT.
+          */
         {
-          try {
-              thePlainDocument.insertString( // Append text to document as a line.
-                thePlainDocument.getLength(),theString + "\n",null);
+          theAppLog.debug(
+              "TextStream2.processNewStreamStringV(.) String=" + textString);
+
+          try { // Append string to document.
+              thePlainDocument.insertString( // Add to end of document.
+                thePlainDocument.getLength(),textString,null);
+              subscribeeMapEpiNode.putV( // Record offset of new document end.
+                  "HaveToOffset",thePlainDocument.getLength());
             } catch (BadLocationException theBadLocationException) { 
               theAppLog.exception( "TextStream2.processNewStreamStringV(.) ",
                 theBadLocationException);
             }
-          theAppLog.debug(
-              "TextStream2.processNewStreamStringV(.) String=" + theString);
-          doEnabledSubscriptionActionsV();
+
+          subscribersSendAckOrTextV(starterUserIdString);
           }
 
-      public void doEnabledSubscriptionActionsV()
-        /* This method should be called when something happens,
-         * such as the appending of a new line of text,
-         * that makes some subscription action possible. 
-         *
-         * It does this by building a one or more MapEpiNodes
-         * and sending them to one or more connected Unicasters.
+      public void subscribersSendAckOrTextV(
+          String starterUserIdString)
+        /* This method sends an acknowledgement or sends text
+         * to all active subscriber Unicasters of this subscribee,
+         * but only if it is appropriate to do so.
+         * starterUserIdString identifies the trigger of these actions.
          */
         {
-          /*  ////
-          MapEpiNode theMapEpiNode= new MapEpiNode();
-          theMapEpiNode.putV("text", theString);
-          String nodeIdentyString= thePersistent.getEmptyOrString(Config.rootIdString);
-          theMapEpiNode.putV(Config.rootIdString, nodeIdentyString);
-          theMapEpiNode.putV("time", ""+System.currentTimeMillis());
-          theTextStreams2.processNewTextV(theMapEpiNode);
-          */  ////
+          Set<EpiNode> subscriberUserIdsSetOfEpiNodes= 
+              subscriberUserIdsMapEpiNode.getLinkedHashMap().keySet();
+          Iterator<EpiNode> subscriberUserIdsIterator= 
+              subscriberUserIdsSetOfEpiNodes.iterator();
+          while // For all subscriber UserIds for this subscribee
+            (subscriberUserIdsIterator.hasNext())
+            { // process a subscriber UserId.
+              String subscriberUserIdString=
+                  subscriberUserIdsIterator.next().toString();
+              subscriberSendAckOrTextV(
+                  subscriberUserIdString,starterUserIdString);
+              }
           }
 
-      public boolean isOurStreamB()
-        /* Returns true is this is our stream, editable,
-          and there not a read-only stream.
-          */
+      private void subscriberSendAckOrTextV(
+              String subscriberUserIdString,
+              String starterUserIdString
+              )
+        /* This method is called when this subscribee receives new text.
+         * This method sends an acknowledgement or sends text
+         * to the subscriber Unicaster identified by subscriberUserIdString,
+         * the following conditions are met:
+         * * The subscriber is not the local user.
+         * * The subscriber Unicaster exists and is connected.
+         * What gets sent depends on circumstances:
+         * * If the subscriber is also the user node 
+         *   that started this operation, meaning was the text source,
+         *   identified by starterUserIdString, then an acknowledgement is sent.
+         * * Any other subscriber receives the new text if it wants it.
+         */
         {
-          String localRootIdString= 
-                thePersistent.getEmptyOrString(Config.rootIdString);
-          boolean resultB=  
-              (localRootIdString.equals(theRootIdString)); 
-          return resultB;
+          subscriberProcessing: {
+            // Exit if map entry value is invalid.
+            MapEpiNode subscriberMapEpiNode=
+                subscriberUserIdsMapEpiNode.getMapEpiNode(
+                    subscriberUserIdString);
+            if (null == subscriberMapEpiNode) // Entry invalid?
+              break subscriberProcessing; // Yes, so exit.
+
+            // Send acknowledgment if subscriber is starter of operation.
+            if (starterUserIdString.equals(subscriberUserIdString)) {
+              subscriberSendAckV(subscriberMapEpiNode,starterUserIdString);
+              break subscriberProcessing; // And we are done.
+              }
+
+            // Send text because this subscriber is not starter of operation.
+            subscriberSendTextV(subscriberUserIdString);
+          } // subscriberProcessing:
+            return;
           }
+
+      private void subscriberSendTextV( 
+          String subscriberUserIdString)
+        /* This method sends at least some of the most recently received text
+         * to the subscriber identified by subscriberUserIdString,
+         * unless 
+         * * the subscriber doesn't want any of the new text, or
+         * * the subscriber is the local User.
+         */
+        {
+          goReturn: {
+            // If subscriber is local, exit.  Text already stored locally.
+            if (theTextStreams2.isLocalB(subscriberUserIdString))
+              break goReturn; // Yes, so exit.  Don't send text to ourselves.
+
+            // Get MapEntry value but exit if it is invalid.
+            MapEpiNode subscriberMapEpiNode=
+                subscriberUserIdsMapEpiNode.getMapEpiNode(
+                    subscriberUserIdString);
+            if (null == subscriberMapEpiNode) // Entry invalid?
+              break goReturn; // Yes, so exit.
+
+            // Exit if there is no text to send.
+            int subscribeeHaveToOffsetI= 
+                subscribeeMapEpiNode.getZeroOrI("HaveToOffset");
+            int subscriberHaveToOffsetI= 
+                subscriberMapEpiNode.getZeroOrI("HaveToOffset");
+            if // Any unsent text for this subscriber?
+              (subscriberHaveToOffsetI >= subscribeeHaveToOffsetI)
+              break goReturn; // No, so exit.
+            
+            // Send the next, possibly partial, piece of text to subscriber.
+            String nextTextString= getDocumentString(subscriberHaveToOffsetI);
+            MapEpiNode subscribeeFieldsMapEpiNode= new MapEpiNode();
+            subscribeeFieldsMapEpiNode.putV("Text", nextTextString);
+            subscribeeFieldsMapEpiNode.putV( // Include starting offset of text.
+                "TextAtOffset",subscriberHaveToOffsetI);
+            sendToSubscriberUnicasterV(
+                subscribeeFieldsMapEpiNode,subscriberUserIdString);
+  
+            // Update state of subscription data to include text that was sent.
+            subscriberMapEpiNode.putV( // Calculate and record sent-end offset.
+              "SentToOffset",subscriberHaveToOffsetI+nextTextString.length());
+            subscriberMapEpiNode.putV( // Record ack time-out, 100ms in future.
+              "AckTime", System.currentTimeMillis()+100);
+          } // goReturn:
+        }
+
+      private void subscriberSendAckV(
+          MapEpiNode subscriberMapEpiNode,String subscriberUserIdString)
+        /* This method sends acknowledgment of the most recently processed text
+         * to the subscriber whose data is in subscriberMapEpiNode
+         * and is identified by subscriberUserIdString,
+         * unless the subscriber is the local User.
+         * Note, a text acknowledgment is also considered to be
+         * a request for the next available text. 
+         */
+        {
+          goReturn: {
+        
+            if // Is subscriber local?
+              (theTextStreams2.isLocalB(subscriberUserIdString))
+              break goReturn; // Yes, so exit.  Don't send ack to ourselves.
+
+            // Send acknowledgement to remote subscriber.
+            MapEpiNode subscribeeFieldsMapEpiNode= new MapEpiNode();
+            int subscriberHaveToOffsetI= // Extract offset from subscriber data.
+              subscriberMapEpiNode.getZeroOrI("HaveToOffset");
+            subscribeeFieldsMapEpiNode.putV( // Store offset in message map.
+              "HaveToOffset",subscriberHaveToOffsetI);
+            sendToSubscriberUnicasterV( 
+              subscribeeFieldsMapEpiNode, subscriberUserIdString);
       
+          } // goReturn:
+      
+            return;
+          }
+
+      private void sendToSubscriberUnicasterV(
+          MapEpiNode subscribeeFieldsMapEpiNode, String subscriberUserIdString)
+        /* This method sends the subscribeeFieldsMapEpiNode 
+         * to the Unicaster whose UserId is subscriberUserIdString.
+         * First it wraps the map in a map whose key is
+         * the subscribee's UserId, and then passes it to theTextStreams2.
+         */
+        {
+          MapEpiNode userIdMapEpiNode= // Wrap parameters map in UserId map. 
+            MapEpiNode.makeSingleEntryMapEpiNode(
+              getKeyK(), // This is our/subscribee UserId
+              subscribeeFieldsMapEpiNode
+              );
+          
+          // Pass on up to TextStreams2 manager.
+          theTextStreams2.sendToSubscriberUnicasterV( 
+            userIdMapEpiNode,
+            subscriberUserIdString
+            );
+          }
+
+      public String getDocumentString(int wantFromOffsetI)
+        /* Returns a String containing text from the Document, 
+         * starting at offset wantFromOffsetI.
+         * The String is limited to a maximum of one line, 
+         * including the trailing newline, if present.
+         */
+        {
+          Segment textSegment= new Segment();
+          textSegment.setPartialReturn(true);
+          int remainingI= thePlainDocument.getLength() - wantFromOffsetI; 
+          try { // Get a segment of text at desired offset.
+              thePlainDocument.getText(wantFromOffsetI,remainingI,textSegment);
+            } catch (BadLocationException theBadLocationException) {
+              theAppLog.debug(
+                "TextStream2.getDocumentString(.) "+theBadLocationException);
+            }
+          int scanIndexI= textSegment.getBeginIndex();
+          while (true) { // Find end of sub-segment to return.
+            if (scanIndexI >= textSegment.length()) break; // At end, so exit.
+            char theChar= textSegment.charAt(scanIndexI);
+            scanIndexI++;
+            if ('\n' == theChar) break; // After newline, so exit.
+            }
+          CharSequence resultCharSequence= 
+            textSegment.subSequence(textSegment.getBeginIndex(),scanIndexI);
+          return resultCharSequence.toString();
+          }
+
+      public boolean isLocalB()
+        /* Returns true if this text stream is local, false otherwise.
+         * It is equivalent to isLocalB(subscribeeUserIdString).
+         */
+        {
+          return theTextStreams2.isLocalB(subscribeeUserIdString);
+          }
+
       }  

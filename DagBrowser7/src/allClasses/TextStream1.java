@@ -227,8 +227,8 @@ public class TextStream1
         {
           MapEpiNode theMapEpiNode= new MapEpiNode();
           theMapEpiNode.putV("message", theString);
-          String nodeIdentyString= thePersistent.getEmptyOrString(Config.rootIdString);
-          theMapEpiNode.putV(Config.rootIdString, nodeIdentyString);
+          String nodeIdentyString= thePersistent.getEmptyOrString(Config.userIdString);
+          theMapEpiNode.putV(Config.userIdString, nodeIdentyString);
           theMapEpiNode.putV("time", ""+System.currentTimeMillis());
           theTextStreams.processIfNewV(theMapEpiNode);
           }

@@ -513,7 +513,7 @@ public class AppLog extends EpiThread
       { 
         synchronized(this) { // Must synchronized on AppLog object so 
       		logB( WARN, false, null, inString );
-          doStackTraceV(null);
+          // doStackTraceV(null);
           }
         }
     

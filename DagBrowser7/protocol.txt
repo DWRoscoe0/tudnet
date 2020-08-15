@@ -1,9 +1,26 @@
 This file describes protocol messages used by the app.
 
-Subs:   # Subscriptions: Not needed but use for now (was TextStreams2)
-    UserId-1:      # UserId of the Subscribee TextStream2 of interest.
-      offset:  nnnnnn         # Offset of first wanted or given text byte.
-      text: "..."             # Optional: new text that starts at given offset.
+Subs:  # Was TextStreams2, then MessageUserIds.
+  SubscribeeUserId-1: # UserId of the first TextStream2 subscribee.
+    ...                   # All UserId values have the same format.  
+                          # See MessageUserId-n.
+  SubscribeeUserId-n: # UserId of the last TextStream2 subscribee.
+    Text: "..."           # New text for this subscribee.
+    TextAtOffset: nnnnnn  # Offset of first byte of new text.
+                          # The correct response is to 
+                          # send acknowledgment to the sender subscriber
+                          # and forward the text to all other subscribers.
+    
+    or
+    
+    HaveToOffset: nnnnnn  # Offset of first byte not stored by us
+                          # for this subscribee.  This is used to either:
+                          # * Acknowledge Text received, or
+                          # * Request text at this offset.
+                          # This is the stream Document size
+                          # and increases when text is added.
+                          # The correct response is to 
+                          # send text back if any is available.
 
 StreamText: Old style flooding TextStream1 messages.
             

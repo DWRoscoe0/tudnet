@@ -254,7 +254,6 @@ public class NamedList
         while (true) { // Process children until something causes exit.
           if (! theIterator.hasNext()) break; // Exit if no more children.
           DataNode theDataNode= theIterator.next(); // Get next child.
-          ////// Add UserId of source Unicaster.
           processedB= theDataNode.tryProcessingMapEpiNodeB(theMapEpiNode);
           if (processedB) break; // Exit if the child successfully processed the data.
           }

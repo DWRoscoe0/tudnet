@@ -367,7 +367,7 @@ public class Unicaster
           //// theConnectionManager.decodePeerMapEpiNodeV(theMapEpiNode,null); // Decode it.
           theConnectionManager.decodePeerMapEpiNodeV(
             theMapEpiNode,
-            thisMapEpiNode.getEmptyOrString(Config.rootIdString) // Unicaster UserId as context.
+            thisMapEpiNode.getEmptyOrString(Config.userIdString) // Unicaster UserId as context.
             );
         } // toConsumeInput: 
           resetOfferedInputV();  // consume unprocessed state machine String input.
@@ -392,9 +392,9 @@ public class Unicaster
           if (testEpiNode == null) break goReturn;
           if (! testEpiNode.equals(thisMapEpiNode.getEpiNode("Port"))) break goReturn;
 
-          testEpiNode= otherMapEpiNode.getEpiNode(Config.rootIdString); 
+          testEpiNode= otherMapEpiNode.getEpiNode(Config.userIdString); 
           if (testEpiNode == null) break goReturn;
-          if (! testEpiNode.equals(thisMapEpiNode.getEpiNode(Config.rootIdString))) 
+          if (! testEpiNode.equals(thisMapEpiNode.getEpiNode(Config.userIdString))) 
             break goReturn;
 
           resultB= true; // All is the same, so return true.

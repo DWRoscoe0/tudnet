@@ -6,7 +6,12 @@ public class PeersCursor extends PersistentCursor {
   
   /* This class is a piterator for peer data in the Persistent data structure.
 
-    Each type of data should have its own distinguishing type.
+    The use of this class, as well as PersistentCursor, is being deprecated.
+    / Field access elimination (mostly done)
+    = Stop using as iterator (not done yet)
+    The plan is to use more conventional map iterator techniques.
+
+    Each type of app data should have its own distinguishing type.
       Presently they are:
       * Persistent: the data structure
       * IPAndPort: 2 fields: IP address and port #
@@ -54,7 +59,7 @@ public class PeersCursor extends PersistentCursor {
       String portString= // Extract port.
           targetMapEpiNode.getString("Port");
       String theIdentityString= // Extract peer ID.
-          targetMapEpiNode.getString(Config.rootIdString);
+          targetMapEpiNode.getString(Config.userIdString);
 
       findOrAddPeerV(ipString, portString, theIdentityString);
       }
@@ -89,7 +94,7 @@ public class PeersCursor extends PersistentCursor {
         childMapEpiNode.putV( "IP", ipString );
         childMapEpiNode.putV( "Port", portString );
         if (theIdentityString!=null)
-          childMapEpiNode.putV( Config.rootIdString, theIdentityString );
+          childMapEpiNode.putV( Config.userIdString, theIdentityString );
           else
           theAppLog.debug(
             "PeersCursor.findOrAddPeerV(ipString,portString,theIdentityString) "
@@ -101,7 +106,7 @@ public class PeersCursor extends PersistentCursor {
     {
       boolean resultB= Nulls.equals(
           ownerIdString,
-          thePersistent.getEmptyOrString(Config.rootIdString)
+          thePersistent.getEmptyOrString(Config.userIdString)
           );
       if (resultB)
           theAppLog.debug(
@@ -129,7 +134,7 @@ public class PeersCursor extends PersistentCursor {
           if (
             (peerIdentityString != null) // ID present. 
             //// && ! testFieldIsB(Config.rootIDString, peerIdentityString)) 
-            && ! theMapEpiNode.testKeyForValueB(Config.rootIdString, peerIdentityString))
+            && ! theMapEpiNode.testKeyForValueB(Config.userIdString, peerIdentityString))
               continue;
           break; // All search parameters matched, exit loop positioned on matching entry.
           }

@@ -7,6 +7,9 @@ public class Nulls
 
   /* Contains static methods which do helpful and meaningful things 
     with null arguments.
+    
+    ///opt Several methods here can be eliminated because 
+      class Object contains equivalent methods.
     */
 
 	{

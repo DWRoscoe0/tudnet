@@ -296,11 +296,11 @@ public class ConnectionManager
           String peerPortString= theMapEpiNode.getString("Port");
           IPAndPort theIPAndPort= new IPAndPort(peerIPString, peerPortString);
           Unicaster theUnicaster= 
-              theUnicasterManager.tryGettingAndLoggingPreexistingUnicaster(theIPAndPort);
+              theUnicasterManager.tryToGetXorLogUnicaster(theIPAndPort);
           if ( theUnicaster == null ) // Unicaster does not yet exist.
             { // Create it, start it, and maybe connect it.
               //// String theIdString= thePeersCursor.getFieldString(Config.rootIDString);
-              String theIdString= theMapEpiNode.getString(Config.rootIdString);
+              String theIdString= theMapEpiNode.getString(Config.userIdString);
               theUnicaster= theUnicasterManager.buildAddAndStartUnicaster(
                   theIPAndPort, theIdString); // Restore peer with Unicaster.
               if // Reconnect to peer if it was connected at shutdown.
@@ -695,17 +695,17 @@ public class ConnectionManager
       { 
         decodePeerMapEpiNodeV(
             messageMapEpiNode,
-            thePersistent.getEmptyOrString(Config.rootIdString) 
+            thePersistent.getEmptyOrString(Config.userIdString) 
               // Use local UserId as context.
             ); 
         }
 
     public void decodePeerMapEpiNodeV(
-        MapEpiNode messageMapEpiNode,String sourceUserIdString)
+        MapEpiNode messageMapEpiNode,String senderUserIdString)
       /* This method decodes the received single-map-entry messageMapEpiNode, 
         based on the value of the key of that entry.
         The message is assumed to have come from 
-        the user whose UserId is sourceUserIdString.
+        the user whose UserId is senderUserIdString.
         The value of the entry is another MapEpiNode 
         containing actual data about a subject peer.
         The message could be from a local Unicaster 
@@ -718,7 +718,7 @@ public class ConnectionManager
             + "messageMapEpiNode=" + NL + "  " + messageMapEpiNode);
           MapEpiNode valueMapEpiNode;
         goReturn: {
-          if (tryProcessingByTextStreamsB(messageMapEpiNode,sourceUserIdString))
+          if (tryProcessingByTextStreamsB(messageMapEpiNode,senderUserIdString))
             { break goReturn; } // Success, so exit.
             
           valueMapEpiNode= messageMapEpiNode.getMapEpiNode("LocalNewState");
@@ -755,8 +755,8 @@ public class ConnectionManager
         toReturn: {
           if // Exit if same IDs, meaning subject peer is actually local peer
             ( subjectPeerMapEpiNode.getEmptyOrString(
-                Config.rootIdString).equals(
-                    thePersistent.getEmptyOrString(Config.rootIdString)))
+                Config.userIdString).equals(
+                    thePersistent.getEmptyOrString(Config.userIdString)))
             break toReturn; // so exit.
           if // Exit if subject peer is not connected to the remote peer.
             (! subjectPeerMapEpiNode.testB("isConnected")) 
@@ -785,7 +785,7 @@ public class ConnectionManager
           String peerPortString= theMapEpiNode.getString("Port");
           IPAndPort theIPAndPort= new IPAndPort(peerIPString, peerPortString);
           //// String theIdString= thePeersCursor.getFieldString(Config.rootIDString);
-          String theIdString= theMapEpiNode.getString(Config.rootIdString);
+          String theIdString= theMapEpiNode.getString(Config.userIdString);
           Unicaster theUnicaster= 
               theUnicasterManager.getOrBuildAddAndStartUnicaster(theIPAndPort,theIdString);
           theUnicaster.connectToPeerV(); // Message state-machine to connect.
@@ -834,7 +834,7 @@ public class ConnectionManager
           String peerPortString= scanMapEpiNode.getString("Port");
           IPAndPort theIPAndPort= new IPAndPort(peerIPString, peerPortString);
           Unicaster scanUnicaster= // Try getting associated Unicaster.
-              theUnicasterManager.tryingToGetUnicaster(theIPAndPort);
+              theUnicasterManager.tryToGetUnicaster(theIPAndPort);
           if (scanUnicaster == null) { // Unicaster of scan peer doesn't exist
             theAppLog.error(
                 "ConnectionManager.notifyPeersAboutPeerV() non-existent Unicaster.");
@@ -864,7 +864,7 @@ public class ConnectionManager
           String thePortString= messagePeerMapEpiNode.getString("Port");
           IPAndPort theIPAndPort= new IPAndPort(theIPString, thePortString);
           Unicaster messageUnicaster= 
-              theUnicasterManager.tryingToGetUnicaster(theIPAndPort);
+              theUnicasterManager.tryToGetUnicaster(theIPAndPort);
           if (messageUnicaster== null) // Peer in message has no Unicaster
             break toReturn; // so end processing.
           PeersCursor scanPeersCursor= // Create cursor to be used for peer iteration. 
@@ -892,16 +892,16 @@ public class ConnectionManager
     // TextStreams message processing.
 
     private boolean tryProcessingByTextStreamsB(
-        MapEpiNode messageMapEpiNode, String sourceUserIdString)
+        MapEpiNode messageMapEpiNode, String senderUserIdString)
       /* Returns true if one of the TextStreams was able to process, 
         false otherwise.
         It tries both the new TextStreams2 and the old TextStreams1.
         The message is assumed to have come from 
-        the user whose UserId is sourceUserIdString.
+        the user whose UserId is senderUserIdString.
         */
       {
         boolean successB= theTextStreams2.tryProcessingMapEpiNodeB(
-            messageMapEpiNode,sourceUserIdString);
+            messageMapEpiNode,senderUserIdString);
         if (!successB)
           successB= theTextStreams1.tryProcessingMapEpiNodeB(messageMapEpiNode);
         return successB; 

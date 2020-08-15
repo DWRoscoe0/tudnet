@@ -89,7 +89,7 @@ public class TextStream1Viewer
           addJLabelV();
           addStreamIJTextAreaV();
           String localRootIdString= 
-              thePersistent.getEmptyOrString(Config.rootIdString);
+              thePersistent.getEmptyOrString(Config.userIdString);
           if // If the TextStream 
             (localRootIdString.equals(theRootIdString)) // is our own 
             addInputIJTextAreaV(); // then add the input TextArea.

@@ -88,8 +88,9 @@ public class Persistent
         
         //// rootMapEpiNode.renameKeysV("oldKeyString", "newKeyString");
         
-        renameKeysV("peers", "Unicasters");
-        renameKeysV("Unicasters","UnicasterIndexes");
+        /// Disabled these when UnicasterIndexes kept disappearing.
+        //// renameKeysV("peers", "Unicasters");
+        //// renameKeysV("Unicasters","UnicasterIndexes");
 
         renameKeysV("PeerIdentity", "OwnerId");
         renameKeysV("OwnerId","UserId");
@@ -160,8 +161,9 @@ public class Persistent
       */
     {
       // Make certain UnicasterIndexes are last when written by get and put.
-      EpiNode theEpiNode= rootMapEpiNode.removeEpiNode("UnicasterIndexes");
-      rootMapEpiNode.putV("UnicasterIndexes",theEpiNode);
+      /// Disabled these when UnicasterIndexes kept disappearing.
+      //// EpiNode theEpiNode= rootMapEpiNode.removeEpiNode("UnicasterIndexes");
+      //// rootMapEpiNode.putV("UnicasterIndexes",theEpiNode);
       
       storeEpiNodeDataV(rootMapEpiNode, "PersistentEpiNode.txt"); // Write EpiNode data.
       }
@@ -287,6 +289,7 @@ public class Persistent
       {
         return getOrMakeMapEpiNode( rootMapEpiNode, keyString );
         }
+
 
     private MapEpiNode getOrMakeMapEpiNode(MapEpiNode baseMapEpiNode, String pathString)
       /* Returns the MapEpiNodeNode associated with pathString.

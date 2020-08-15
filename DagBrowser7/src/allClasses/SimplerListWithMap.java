@@ -41,18 +41,15 @@ public class SimplerListWithMap<
         return Integer.toString(getChildCount());
         }
     
-    protected synchronized void addingV( K childK, D childD ) //////
+    protected synchronized void addingV( K childK, D childD )
       /* This adds childV to the HashMap and the DataNode part
         to this MutableList, keeping them synchronized.
         The entry added to the HashMap has childK as its key.
         */
       {
-        //// DataNode childDataNode= childR.getDataNodeD();
-        
         childHashMap.put( childK, childD );  // Adding value to HashMap.
 
         if  // Adding DataNode only to MutableList unless it's there already.
-          //// ( ! addAtEndB( childDataNode ) )
           ( ! addAtEndB( childD ) )
           theAppLog.error( // Logging error if already in list.
               "SimplerListWithMap.addingV(..): Already present."

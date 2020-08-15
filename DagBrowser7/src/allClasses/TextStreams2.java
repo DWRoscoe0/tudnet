@@ -26,7 +26,7 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
   // Constructor-injected dependencies.
   private Persistent thePersistent;
   private AppGUIFactory theAppGUIFactory;
-  private UnicasterManager theUnicasterManager; //// fully activate this.
+  private UnicasterManager theUnicasterManager;
   
   public TextStreams2( // Constructor.
       String nameString,
@@ -59,7 +59,6 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
   private void updatePeersAboutStreamsV()
     /* This is like updatePeersAboutStreamsV() but with
       the inner and outer loops reversed.  
-      //// Update documentation.
        */
     {
         theAppLog.debug("updatePeersAboutStreamsV() begins.");
@@ -90,13 +89,11 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
         theAppLog.appendToFileV("(peer-Stream2?)"); // Log that consideration.
         if (! peerMapEpiNode.testB("isConnected")) // This peer is not connected
           break endPeer; // so end this peer to try next peer.
-        //// String peerIPString= scanPeersCursor.getFieldString("IP");
         String peerIPString= peerMapEpiNode.getString("IP");
-        //// String peerPortString= scanPeersCursor.getFieldString("Port");
         String peerPortString= peerMapEpiNode.getString("Port");
         IPAndPort theIPAndPort= new IPAndPort(peerIPString, peerPortString);
         Unicaster scanUnicaster= // Try getting associated Unicaster.
-            theUnicasterManager.tryingToGetUnicaster(theIPAndPort);
+            theUnicasterManager.tryToGetUnicaster(theIPAndPort);
         if (scanUnicaster == null) { // Unicaster of scan peer doesn't exist
           theAppLog.error(
               "TextStreams2.updatePeerAboutStreams2V() non-existent Unicaster.");
@@ -104,13 +101,14 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
           }
         theAppLog.appendToFileV("(PEER-STREAM2!)"); // Log that we're sending.
         updateStreamsToUnicasterV(scanUnicaster);
-        //// scanUnicaster.putV( // Queue full message EpiNode to Unicaster of scan peer.
-        ////     messageMapEpiNode);
       } // peerDone:
   }
 
   private void updateStreamsToUnicasterV(Unicaster theUnicaster)
-    /* Sends all TextStream2 IDs to theUnicaster. */
+    /* Sends all TextStream2 IDs to theUnicaster. 
+     * The purpose of this is to let connected peers know about
+     * the existence of other streams about which it might not yet know.
+     */
     {
       theAppLog.appendToFileV("(Streams2:)"); // Log beginning of data.
       for  // For all Streams2
@@ -118,41 +116,21 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
         { // Send the stream ID to theUnicaster.
           MapEpiNode theMapEpiNode= new MapEpiNode();
           String nodeIdentyString= scanTextStream2.getKeyK();
-          theMapEpiNode.putV(Config.rootIdString, nodeIdentyString);
+          theMapEpiNode.putV(Config.userIdString, nodeIdentyString);
           MapEpiNode messageMapEpiNode= MapEpiNode.makeSingleEntryMapEpiNode(
-            "TextStreams2", theMapEpiNode);  // Complete MapEpiNode message.
-          //// sendToPeersV(theMapEpiNode);
+            "Subs", theMapEpiNode);  // Complete MapEpiNode message.
           theAppLog.appendToFileV("(STREAM2!)"); // Log sending Stream2 data.
           theUnicaster.putV( // Queue full message EpiNode to Unicaster.
              messageMapEpiNode);
           }
       theAppLog.appendToFileV("(STREAMS2!)"); // Log end of data.
     }
-
-  @SuppressWarnings("unused")
-  private void OLDupdatePeersAboutStreamsV() ////
-    /* Because now all peers are assumed to be subscribed to 
-      the entire TextStreams2 peer list, peers update each other
-      whenever anything changes.
-      
-      ///fix? This normally does nothing because it is called
-        before any connections have been made.
-        */
-    {
-      for (TextStream2 scanTextStream2 : childHashMap.values()) // For all Streams2
-        { // Send its ID to all peers.
-          MapEpiNode theMapEpiNode= new MapEpiNode();
-          String nodeIdentyString= scanTextStream2.getKeyK();
-          theMapEpiNode.putV(Config.rootIdString, nodeIdentyString);
-          sendToPeersV(theMapEpiNode);
-          }
-    }
   
   public void sendToPeersV(MapEpiNode theMapEpiNode)
     /* This sends to all connected peers theMapEpiNode.
       It wraps it in a single-entry MapEpiNode with 
-      the key "TextStreams2" first.
-      
+      the key "Subs" first.
+
       ///chg Wrap in "Subs" instead.
       */
     {
@@ -161,7 +139,7 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
         PeersCursor scanPeersCursor= // Used for iteration. 
             PeersCursor.makeOnNoEntryPeersCursor( thePersistent );
         MapEpiNode messageMapEpiNode= MapEpiNode.makeSingleEntryMapEpiNode(
-            "TextStreams2", theMapEpiNode);  // Complete MapEpiNode message.
+            "Subs", theMapEpiNode);  // Complete MapEpiNode message.
       peerLoop: while (true) { // Process all peers in my peer list. 
         if (scanPeersCursor.nextKeyString().isEmpty() ) // Try getting next scan peer. 
           break peerLoop; // There are no more peers, so exit loop.
@@ -170,13 +148,11 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
         MapEpiNode scanMapEpiNode= scanPeersCursor.getSelectedMapEpiNode();
         if (! scanMapEpiNode.testB("isConnected")) // This peer is not connected
           break endPeer; // so end this peer to try next peer.
-        //// String peerIPString= scanPeersCursor.getFieldString("IP");
         String peerIPString= scanMapEpiNode.getString("IP");
-        //// String peerPortString= scanPeersCursor.getFieldString("Port");
         String peerPortString= scanMapEpiNode.getString("Port");
         IPAndPort theIPAndPort= new IPAndPort(peerIPString, peerPortString);
         Unicaster scanUnicaster= // Try getting associated Unicaster.
-            theUnicasterManager.tryingToGetUnicaster(theIPAndPort);
+            theUnicasterManager.tryToGetUnicaster(theIPAndPort);
         if (scanUnicaster == null) { // Unicaster of scan peer doesn't exist
           theAppLog.error(
               "TextStreams2.sendToPeersV() non-existent Unicaster.");
@@ -188,6 +164,34 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
       } // peerDone:
       } // peerLoop: 
         theAppLog.appendToFileV("(end of peers)"+NL); // Mark end of list with new line.
+      }
+
+  public void sendToSubscriberUnicasterV(
+      MapEpiNode subscribeeUserIdMapEpiNode, String subscriberUserIdString)
+    /* This method sends the subscribeeUserIdMapEpiNode to the Unicaster whose
+     * UserId is subscriberUserIdString, unless subscriberUserIdString
+     * identifies the local user, or the Unicaster does not exist.  
+     * If it does send, it wraps the map node in a Subs map first.
+     */
+    {
+      goReturn: {
+        if (isLocalB(subscriberUserIdString)) // Exit if local node.
+          break goReturn;
+        Unicaster theUnicaster= // Try getting associated Unicaster.
+            theUnicasterManager.tryToGetUnicaster(subscriberUserIdString);
+        if (null == theUnicaster) { // Exit if Unicaster does not exist.
+          theAppLog.debug("TextStreams2.sendToSubscriberUnicasterV() "
+              + "non-existent Unicaster.");
+          break goReturn;
+          }
+        MapEpiNode subsMapEpiNode= // Wrap subscriber UserIds map in Subs map. 
+          MapEpiNode.makeSingleEntryMapEpiNode(
+            "Subs", // This is the root key of all subscription messages.
+            subscribeeUserIdMapEpiNode
+            );
+        theUnicaster.putV(subsMapEpiNode); // Send to peer through Unicaster.
+      } // goReturn:
+        return;
       }
 
   private void createTextStreamsV()
@@ -205,7 +209,8 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
 
   private void createLocalTextStreamV()
     {
-      String theRootIdString= thePersistent.getEmptyOrString(Config.rootIdString);
+      String theRootIdString= 
+          thePersistent.getEmptyOrString(Config.userIdString);
       createAndAddTextStream(theRootIdString);
       }
 
@@ -218,7 +223,7 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
           peersFile.list();
       if ( peerStrings == null ) // If array is null replace with empty array.
         peerStrings= new String[ 0 ]; // Replace with empty array.
-      String localRootIdString= thePersistent.getEmptyOrString(Config.rootIdString);
+      String localRootIdString= thePersistent.getEmptyOrString(Config.userIdString);
       for (String scanRootIdString : peerStrings) // For every Peer folder 
         toPeerDone: { // Try creating a TextStream for this peer.
           if (localRootIdString.equals(scanRootIdString)) // Skip ourselves. 
@@ -228,79 +233,87 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
       }
 
   protected boolean tryProcessingMapEpiNodeB(  //// being adapted.
-      MapEpiNode messageMapEpiNode,String sourceUserIdString)
-    //// The original or something like it belongs in TextStream2 for actual text.
+      MapEpiNode messageMapEpiNode,String senderUserIdString)
     /* This method tries processing a message MapEpiNode.
-      sourceUserIdString provides context.
-      The message is assumed to have come from 
-      the user whose UserId is sourceUserIdString.
+      This method is called by the ConnectionManager.
+      senderUserIdString identifies the sender of the message.
       The message must be a single element map 
-      with a key of "Subs" [was "TextStreams2"].
+      with a key of "Subs" [was "TextStreams2", then "MessageUserIds"].
       It can contain various types of 
       TextStreams2 subscription-related information.
       If it is not a TextStream message then 
-      it ignores the data and returns false.
-      If it is then it returns true after processing the data.
+      this method ignores the data and returns false.
+      If it is a TextStream message then it returns true 
+      after processing the data.
       Some processing may be done on the Event Dispatch Thread (EDT). 
       */
     { 
-      //// MapEpiNode payloadMapEpiNode= theMapEpiNode.getMapEpiNode("TextStreams2");
-      MapEpiNode valueMapEpiNode= messageMapEpiNode.getMapEpiNode("Subs");
-      boolean isTextStreamMessageB= (null != valueMapEpiNode); 
-      if (isTextStreamMessageB) {
-        processUserIdsV(valueMapEpiNode,sourceUserIdString);
+      MapEpiNode subsUserIdsMapEpiNode= 
+          messageMapEpiNode.getMapEpiNode("Subs");
+      boolean isMessageUserIdsB= (null != subsUserIdsMapEpiNode); 
+      if (isMessageUserIdsB) {
+        processSubsUserIdsV(subsUserIdsMapEpiNode,senderUserIdString);
         }
-      return isTextStreamMessageB;
+      return isMessageUserIdsB;
       }
 
-  public void processUserIdsV(
-      MapEpiNode userIdsMapEpiNode,String sourceUserIdString)
-    /* This method processes the text stream message theMapEpiNode
-      which is assumed to be a map of 0 or more UserIds and associated
-      [text stream] subscription data.
-      sourceUserIdString provides context.
-      The message is assumed to have come from 
-      the user whose UserId is sourceUserIdString.
+  public void processSubsUserIdsV(
+      MapEpiNode userIdsMapEpiNode,String senderUserIdString)
+    /* This method processes userIdsMapEpiNode
+      which is assumed to be a map of 0 or more 
+      subscribee UserIds and associated subscription data.
+      senderUserIdString provides context and is assumed to be
+      the UserId of the source of the request.
       */
     {
-      Set<Map.Entry<EpiNode,EpiNode>> theSetOfMapEntrys= 
+      Set<Map.Entry<EpiNode,EpiNode>> subscribeeSetOfMapEntrys= 
           userIdsMapEpiNode.getLinkedHashMap().entrySet();
-      Iterator<Map.Entry<EpiNode,EpiNode>> entryIterator= 
-          theSetOfMapEntrys.iterator();
-      while (entryIterator.hasNext()) { // Iterate over all entries. 
-        Map.Entry<EpiNode,EpiNode> userMapEntry= 
-            entryIterator.next(); // Get next map entry.
-        processUserMapEntryV(userMapEntry); // Process it.
+      Iterator<Map.Entry<EpiNode,EpiNode>> subscribeeIterator= 
+          subscribeeSetOfMapEntrys.iterator();
+      while (subscribeeIterator.hasNext()) { // Iterate over all subscribees. 
+        Map.Entry<EpiNode,EpiNode> subscribeeUserIdMapEntry= 
+            subscribeeIterator.next(); // Get next map entry.
+        processSubscribeeMapEntryV( // Process
+            subscribeeUserIdMapEntry, // the subscribee map entry
+            senderUserIdString // with this sender UserId as context.
+            );
         }
     }
 
-  public void processUserMapEntryV(Map.Entry<EpiNode,EpiNode> userMapEntry)
-    /* This method processes one userMapEntry, including:
-     * * creating a new stream if needed and informing other peers
-     * * processing new stream text 
-     * * processing any other new stream subscription data
-     * * subscription fulfillment if that became possible by new data
-     * The associated stream display is updated if needed.
-     * Messages are sent to other subscribed peers if needed.
+  public void processSubscribeeMapEntryV(
+      Map.Entry<EpiNode,EpiNode> subscribeeUserIdMapEntry,
+      String senderUserIdString)
+    /* This method processes one subscribeeUserIdMapEntry 
+     * received from another node,
+     * using senderUserIdString as context as the source.
+     * Processing includes:
+     * * Creating a new stream if needed and informing other peers about it.
+     * * Processing any new stream text data. 
+     * * Processing any new stream offset data.
+     * * Forwarding text to subscribers if it became possible with new text.
+     * * Updating the associated stream display if it needs changing.
+     *   This happens by calling a Document listener.
      */
     {
       goReturn: {
-        String userIdString= userMapEntry.getKey().toString();
-        EpiNode userIdValueEpiNode= userMapEntry.getValue();
-        MapEpiNode userIdValueMapEpiNode= // Try getting nested map.
-            userIdValueEpiNode.tryOrLogMapEpiNode();
-        if (userIdValueMapEpiNode == null) // The value is not a map
+        String subscribeeUserIdString= 
+            subscribeeUserIdMapEntry.getKey().toString();
+        EpiNode subscribeeUserDataEpiNode= subscribeeUserIdMapEntry.getValue();
+        MapEpiNode subscribeeUserDataMapEpiNode= // Try converting to map.
+            subscribeeUserDataEpiNode.tryOrLogMapEpiNode();
+        if (null == subscribeeUserDataMapEpiNode) // The value is not a map
           break goReturn; // so abandon further processing and exit.
-        TextStream2 theTextStream2= childHashMap.get(userIdString);
-        if (null == theTextStream2) { // Make TextStream2 if it does not exist.
-          theTextStream2= makeNewTextStream2(userIdString);
-          }
-        theTextStream2.tryProcessingMapEpiNodeB(userIdValueMapEpiNode);
-        //// processSatisfiedSubscriptionsV();
+        TextStream2 subscribeeIdTextStream2= 
+            childHashMap.get(subscribeeUserIdString);
+        if (null == subscribeeIdTextStream2) // Make TextStream2 if needed.
+          subscribeeIdTextStream2= 
+            makeAndAnnounceTextStream2(subscribeeUserIdString);
+        subscribeeIdTextStream2.tryProcessingUserDataMapEpiNodeB(
+          subscribeeUserDataMapEpiNode,senderUserIdString);
       } // goReturn:
       }
 
-  public TextStream2 makeNewTextStream2(String userIdString)
+  public TextStream2 makeAndAnnounceTextStream2(String userIdString)
     /* This method create a new stream associated with userIdString,
      * adds it to the other streams, and informs other peers about it.
      * It should be called only when it has been determined
@@ -310,38 +323,10 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
       TextStream2 theTextStream2= createAndAddTextStream(userIdString);
       { // Inform other peers about new stream.
         MapEpiNode newUserStreamMapEpiNode= new MapEpiNode();
-        newUserStreamMapEpiNode.putV(Config.rootIdString, userIdString);
+        newUserStreamMapEpiNode.putV(Config.userIdString, userIdString);
         sendToPeersV(newUserStreamMapEpiNode);
         }
       return theTextStream2;
-      }
-
-  public void processNewTextV(MapEpiNode theMapEpiNode)
-    /* This method processes the text message within it.
-      * sends the message to the appropriate child TextStream
-      It does not distribute the message to other connected peers, yet.
-     */
-    {
-      sendToTextStreamV(theMapEpiNode);
-      // sendToPeersV(theMapEpiNode);
-      }
-
-  private void sendToTextStreamV(MapEpiNode theMapEpiNode)
-    /* This method sends theMapEpiNode to the appropriate child TextStream.
-     */
-    {
-      String peerIdentityString= theMapEpiNode.getString(Config.rootIdString);
-      TextStream2 theTextStream2=  // Getting the appropriate TextStream.
-          getOrBuildAddAndTextStream(peerIdentityString);
-      theTextStream2.tryProcessingMapEpiNodeB(theMapEpiNode);
-      }
-
-  private TextStream2 getOrBuildAddAndTextStream(String peerIdentityString)
-    {
-      TextStream2 theTextStream= childHashMap.get(peerIdentityString); // Try lookup.
-      if (null == theTextStream)
-        theTextStream= createAndAddTextStream(peerIdentityString);
-      return theTextStream;
       }
 
   private TextStream2 createAndAddTextStream(String peerIdentityString)
@@ -349,6 +334,25 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
       TextStream2 theTextStream= theAppGUIFactory.makeTextSteam2(peerIdentityString);
       addingV(peerIdentityString, theTextStream); // Add to list and HashMap.
       return theTextStream;
+      }
+
+  public boolean isLocalB(String theUserIdString) 
+    /* Returns true if the text stream identified by theUserIdString
+     * is local, returns false otherwise.
+     * * true means that the stream's text source is only
+     *   the keyboard attached to this local device.
+     *   This stream may send text but never send
+     *   requests for text or text acknowledgments.
+     * * false means that this stream may receive text from
+     *   any other device that has it, and may send
+     *   acknowledgment of, and requests for, text.
+     */
+    {
+      String localUserIdString= // Get the UserId of the local node.
+        thePersistent.getEmptyOrString(Config.userIdString);
+      boolean isLocalB= // Compare UserIds.
+        (localUserIdString.equals(theUserIdString)); 
+      return isLocalB;
       }
 
   

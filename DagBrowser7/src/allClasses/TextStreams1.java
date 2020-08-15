@@ -62,7 +62,7 @@ public class TextStreams1 extends SimplerListWithMap<String,TextStream1> {
 
   private void createLocalTextStreamV()
     {
-      String theRootIdString= thePersistent.getEmptyOrString(Config.rootIdString);
+      String theRootIdString= thePersistent.getEmptyOrString(Config.userIdString);
       createAndAddTextStream(theRootIdString);
       }
 
@@ -73,7 +73,7 @@ public class TextStreams1 extends SimplerListWithMap<String,TextStream1> {
         );
       String[] peerStrings= // Read names of peer directories from Peers directory.
           peersFile.list();
-      String localRootIdString= thePersistent.getEmptyOrString(Config.rootIdString);
+      String localRootIdString= thePersistent.getEmptyOrString(Config.userIdString);
       for (String scanRootIdString : peerStrings) // For every Peer folder 
         toPeerDone: { // Try creating a TextStream for this peer.
           if (localRootIdString.equals(scanRootIdString)) // Skip ourselves. 
@@ -133,7 +133,7 @@ public class TextStreams1 extends SimplerListWithMap<String,TextStream1> {
     /* This method sends theMapEpiNode to the appropriate child TextStream.
      */
     {
-      String peerIdentityString= theMapEpiNode.getString(Config.rootIdString);
+      String peerIdentityString= theMapEpiNode.getString(Config.userIdString);
       TextStream1 theTextStream=  // Getting the appropriate TextStream.
           getOrBuildAddAndTextStream(peerIdentityString);
       theTextStream.tryProcessingMapEpiNodeB(theMapEpiNode);
@@ -178,7 +178,7 @@ public class TextStreams1 extends SimplerListWithMap<String,TextStream1> {
         String peerPortString= scanMapEpiNode.getString("Port");
         IPAndPort theIPAndPort= new IPAndPort(peerIPString, peerPortString);
         Unicaster scanUnicaster= // Try getting associated Unicaster.
-            theUnicasterManager.tryingToGetUnicaster(theIPAndPort);
+            theUnicasterManager.tryToGetUnicaster(theIPAndPort);
         if (scanUnicaster == null) { // Unicaster of scan peer doesn't exist
           theAppLog.error(
               "TextStreamViewer.broadcastStreamMessageV() non-existent Unicaster.");
