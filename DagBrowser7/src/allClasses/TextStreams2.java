@@ -116,9 +116,12 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
         { // Send the stream ID to theUnicaster.
           MapEpiNode theMapEpiNode= new MapEpiNode();
           String nodeIdentyString= scanTextStream2.getKeyK();
-          theMapEpiNode.putV(Config.userIdString, nodeIdentyString);
+          //// theMapEpiNode.putV(Config.userIdString, nodeIdentyString);
+          theMapEpiNode= MapEpiNode.makeSingleEntryMapEpiNode(
+              nodeIdentyString, theMapEpiNode);
           MapEpiNode messageMapEpiNode= MapEpiNode.makeSingleEntryMapEpiNode(
             "Subs", theMapEpiNode);  // Complete MapEpiNode message.
+          // We now have a triple-nested map to send.
           theAppLog.appendToFileV("(STREAM2!)"); // Log sending Stream2 data.
           theUnicaster.putV( // Queue full message EpiNode to Unicaster.
              messageMapEpiNode);
