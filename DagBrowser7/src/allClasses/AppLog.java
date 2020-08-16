@@ -62,6 +62,10 @@ public class AppLog extends EpiThread
     Like all synchronized code, this code should complete quickly.
     See the method Infogora.logThreadsV() for an example of doing this.
 
+    ///enh: Change to output newline (NL) before the line data
+      instead of after so that data bits can be added at end
+      instead of at the beginning where they destroy the line header.
+
     ///enh: Transition to a logger that doesn't need to be 
       a static singleton and can be injected.  Allow both 
       static and injected-non-static, at least for a while.

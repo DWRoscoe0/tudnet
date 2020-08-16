@@ -292,9 +292,8 @@ public class LinkedMachineState
             else if // Try handling time-out?
               (theTimerInput.testInputArrivedB())
               {
-                theAppLog.debug( theUnicaster.getNameString()+" exponential time-out of "
-                  + theTimerInput.getLastDelayMsL() + " ms after HELLO in"
-                  + getFormattedStatePathString() );
+                theAppLog.appendToFileV("["+theTimerInput.getLastDelayMsL()
+                    +"ms time-out after HELLO]");
                 boolean limitReachedB= // Reschedule time-out with exponential back-off
                     (theTimerInput.rescheduleB(
                         Config.maxTimeOutMsL)); // up to this limit.

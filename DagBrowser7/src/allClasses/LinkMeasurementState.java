@@ -28,6 +28,7 @@ public class LinkMeasurementState
 		private NetcasterOutputStream theNetcasterOutputStream; 
 		private NamedLong initialRetryTimeOutMsNamedLong;
 		private Timer theTimer; 
+    @SuppressWarnings("unused") ///org
     private Unicaster theUnicaster;
 		
 		// Sub-state machine instances.
@@ -277,8 +278,7 @@ public class LinkMeasurementState
                 }
              */  ////
             if (successB)
-              theAppLog.debug( "MeasurementHandshakingState ignoring late PA message");
-                ////  + theNetcasterInputStream.tryMapEpiNode().toString());
+              theAppLog.appendToFileV("[ignoring late PA]");
               else // Rewind input stream if input was not acceptable.
               theNetcasterInputStream.setPositionV(streamPositionI);
             return successB;
@@ -356,10 +356,9 @@ public class LinkMeasurementState
 		            else if // Try handling time-out?
 		              (measurementTimerInput.testInputArrivedB())
 					    		{ // Process time-out.
-		                theAppLog.info("MeasurementHandshakingState "
-		                    + theUnicaster.getNameString()+" exponential time-out of " 
-		                    + exponentialRetryTimeOutMsL + " ms for "
-		                    + "PA of PS " + lastSequenceNumberSentL);
+		                theAppLog.appendToFileV("["+exponentialRetryTimeOutMsL
+		                    +"ms time-out for PA of PS "
+		                    +lastSequenceNumberSentL+"]");
 								    if ( exponentialRetryTimeOutMsL <= Config.maxTimeOutMsL )
 				    				  { exponentialRetryTimeOutMsL*=2;  // Doubling time-out limit.
   			                measurementTimerInput.scheduleV(exponentialRetryTimeOutMsL);
