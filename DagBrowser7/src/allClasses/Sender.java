@@ -228,6 +228,7 @@ public class Sender // Uunicast and multicast sender thread.
         retryLoop: while (true) {
   	    	try { // Try sending the packet.
     	        theDatagramSocket.send(theDatagramPacket); // Send packet.
+    	        theAppLog.appendToFileV("[packet-sent]");
     	        break retryLoop;
     	      } catch (IOException theIOException) { // Handle exception.
               failuresI++;

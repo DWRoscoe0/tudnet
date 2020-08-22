@@ -194,16 +194,20 @@ public class TextStream2
           }
 
       public void requestNextTextFromAllSubscribersV()
-        /* Notifies connected subscriber Unicasters that 
+        /* Notifies connected subscribers that 
          * we would like to receive the next text available
          * for this subscribee, unless this is the local subscribee.
          * It does this by sending an acknowledgement of 
          * the text it has received so far.
+         * This includes the subscribee, which is considered to be
+         * a subscriber to itself.
          * This method is called when a viewer opens any non-local text stream.
          */
         {
-          theAppLog.debug("TextStream2.requestNextTextV() called.");
+          theAppLog.debug(
+              "TextStream2.requestNextTextFromAllSubscribersV() called.");
 
+          // Notifiy all the regular subscribers.
           Set<EpiNode> subscriberUserIdsSetOfEpiNodes= 
               subscriberUserIdsMapEpiNode.getLinkedHashMap().keySet();
           Iterator<EpiNode> subscriberUserIdsIterator= 
@@ -213,14 +217,31 @@ public class TextStream2
             { // send an acknowledgement to the subscriber.
               String subscriberUserIdString=
                   subscriberUserIdsIterator.next().toString();
-              MapEpiNode subscriberMapEpiNode=
-                  subscriberUserIdsMapEpiNode.getMapEpiNode(
-                      subscriberUserIdString);
-              subscriberSendAckV(
-                  subscriberMapEpiNode,subscriberUserIdString);
+              subscriberSendAckV(subscriberUserIdString);
               }
-        }
-      
+
+          // Notify the subscribee, which technically is also a subscriber.
+          // It is part of the overlay network that can source the content.
+          //// subscriberSendAckV(subscribeeUserIdString);
+          subscriberSendAckV(subscribeeMapEpiNode,subscribeeUserIdString);
+          }
+
+      public void subscriberSendAckV(String subscriberUserIdString)
+        /* Notifies the subscriber identified by subscriberUserIdString
+         * that we would like to receive the next text available
+         * for this subscribee, unless this is the local subscribee.
+         * It does this by sending an acknowledgement of 
+         * the text it has received so far.
+         * This method is called when a viewer opens any non-local text stream.
+         */
+        {
+          MapEpiNode subscriberMapEpiNode=
+              subscriberUserIdsMapEpiNode.getMapEpiNode(
+                  subscriberUserIdString);
+          subscriberSendAckV(
+              subscriberMapEpiNode,subscriberUserIdString);
+          }
+
       protected int finalizeDataNodesI()
         /* This override method finalizes all the children and then the base class. */
         {
@@ -319,9 +340,14 @@ public class TextStream2
                 fieldsMapEpiNode.getString("HaveToOffset");
             gotOffsetB= (null != messageOffsetString); 
             if (! gotOffsetB) break goReturn; // No offset present, so exit.
-            MapEpiNode subscriberMapEpiNode= 
-              subscribeeUserIdsMapEpiNode.getMapEpiNode(starterUserIdString);
-            subscriberMapEpiNode.putV("HaveToOffset",messageOffsetString);
+            MapEpiNode subscriberUserIdsMapEpiNode= 
+              subscribeeMapEpiNode.getOrMakeMapEpiNode(
+                "SubscriberUserIds");
+            MapEpiNode subscriberUserFieldsMapEpiNode= 
+              subscriberUserIdsMapEpiNode.getOrMakeMapEpiNode(
+                starterUserIdString);
+            subscriberUserFieldsMapEpiNode.putV(
+              "HaveToOffset",messageOffsetString);
             subscriberSendTextV(starterUserIdString);
           } // goReturn:
             return gotOffsetB;

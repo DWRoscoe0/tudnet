@@ -26,6 +26,14 @@ public abstract class EpiNode
     which uses indentation to indicate structure.  
     This code is less complete, but is complete enough to be useful.
     Flow and Block syntaxes can not be mixed now, but may be later.
+
+    ///enh Change to immediately cast bytes into characters
+    to make debugging [parsers] easier by eliminating the need
+    to convert integers to characters.
+     
+    ///enh If a RandomAccessReader abstract class is created,
+    similar to RandomAccessInputStream, then the parsers in this file
+    could be rewritten to be able to deal with characters instead of bytes.
     */
 
   {
@@ -232,7 +240,15 @@ public abstract class EpiNode
 
     } // class EpiNode
 
-class ScalarEpiNode extends EpiNode 
+class ScalarEpiNode extends EpiNode
+
+  /* This class approximately implements the YAML Scalar.
+   * 
+   * This class is a little kludgey with respect to 
+   * ways of dealing with which characters 
+   * are or not legal within a Scalar and how they are represented.  
+   * This will probably change in the future.
+   */
 
   {
     private String scalarString;
@@ -252,16 +268,49 @@ class ScalarEpiNode extends EpiNode
 
     public void writeV(OutputStream theOutputStream, int indentI ) 
         throws IOException
-      /* Writes the string to theOutputSteam, enclosed by double quotes if
-        the string contains any spaces.  indentI is ignored. 
+      /* Writes the scalar string to theOutputSteam, 
+       * enclosed by double quotes if needed.
+       * indentI is ignored.
        */
       {
-        boolean quotesNeededB= (scalarString.indexOf(' ') >= 0);
-        if (quotesNeededB) theOutputStream.write('"');
-        theOutputStream.write(scalarString.getBytes());
-        if (quotesNeededB) theOutputStream.write('"');
+        boolean noQuotesNeededB= needsNoDoubleQuotesB(scalarString);
+        if (noQuotesNeededB)
+          theOutputStream.write(scalarString.getBytes()); // write bare String.
+          else
+          { // write quoted-escaped String.
+            theOutputStream.write('"'); // Leading quote.
+            int indexI = 0;
+            while (true) { // Write entire string with any needed back-slashes.
+              if (indexI >= scalarString.length()) // If no more characters
+                break; // exit
+              byte theB= (byte)scalarString.charAt(indexI); // Get next.
+              if (needsBackSlashB(theB)) // Write back-slash if needed.
+                theOutputStream.write('\\');
+              theOutputStream.write(theB);
+              indexI++;
+              }
+            theOutputStream.write('"'); // Trailing quote.
+            }
         }
-    
+
+    private static boolean needsNoDoubleQuotesB(String theString)
+      /* Returns true if theString contains no special characters
+       * that require quoting. 
+       */
+      {
+        boolean resultB= false;
+        int indexI = 0;
+        while (true) { // For up to the entire string...
+          if (indexI >= theString.length()) // If no more characters
+            break; // exit with false result.
+          byte theB= (byte)theString.charAt(indexI); // Get next string.
+          if (! needsNoDoubleQuotesB(theB)) // If it's a special character
+            { resultB= true; break; } // Set true result and exit.
+          indexI++; // Increment character index.
+          }
+        return resultB;
+        }
+
     public String extractFromEpiNodeString(int indexI) 
         throws IOException 
       { return scalarString; }
@@ -297,28 +346,29 @@ class ScalarEpiNode extends EpiNode
           return theScalarEpiNode; // Return result.
         }
     
-    public static ScalarEpiNode tryUnquotedScalarEpiNode( 
+    private static ScalarEpiNode tryUnquotedScalarEpiNode( 
           RandomAccessInputStream theRandomAccessInputStream ) 
         throws IOException
       /* This method tries to parse an unquoted ScalarEpiNode.  */
       {
           ScalarEpiNode theScalarEpiNode= null;
-          int byteI;
+          byte theB;
           String accumulatorString= ""; // Clear character accumulator.
         readLoop: { while (true) {
           int positionI= theRandomAccessInputStream.getPositionI();
           toAppendAcceptedChar: {
-            byteI= theRandomAccessInputStream.read();
-            if ( Character.isLetterOrDigit(byteI)) break toAppendAcceptedChar;
-            if ( '-'==byteI ) break toAppendAcceptedChar;
-            if ( '.'==byteI ) break toAppendAcceptedChar;
+            theB= theRandomAccessInputStream.readB(); //// loss of precision.
+            if (Character.isLetterOrDigit(theB)) // Common character shortcut.
+              break toAppendAcceptedChar;
+            if (needsNoDoubleQuotesB(theB)) // Anything else.
+              break toAppendAcceptedChar;
             theRandomAccessInputStream.setPositionV(positionI);
-              // Restore stream position.
+              // Restore previous stream position.
             ///opt Alternative way to reject final character only, 
             /// outside of loop: setPositionV(getPositionI()-1);
             break readLoop; // Go try to return what's accumulated so far.
             } // toAppendAcceptedChar:
-          accumulatorString+= (char)byteI; // Append byte to accumulator.
+          accumulatorString+= (char)theB; // Append byte to accumulator.
           }
         } // readLoop: 
           if (accumulatorString.length() != 0) // Reject 0-length strings.
@@ -327,7 +377,7 @@ class ScalarEpiNode extends EpiNode
           return theScalarEpiNode; // Return result.
         }
     
-    public static ScalarEpiNode tryQuotedScalarEpiNode( 
+    private static ScalarEpiNode tryQuotedScalarEpiNode( 
           RandomAccessInputStream theRandomAccessInputStream ) 
         throws IOException
       /* This method tries to parse a quoted ScalarEpiNode.  */
@@ -337,14 +387,16 @@ class ScalarEpiNode extends EpiNode
           int initialPositionI= theRandomAccessInputStream.getPositionI();
         goReturn: {
           byteI= theRandomAccessInputStream.read();
-          if ( '"'!=byteI ) break goReturn;
-          String accumulatorString= ""; // Clear character accumulator.
+          if ( '"'!=byteI ) break goReturn; // Exit if no leading quote.
+          String accumulatorString= ""; // Clear String character accumulator.
         readLoop: while (true) {
             byteI= theRandomAccessInputStream.read();
-            if ( '"'==byteI ) break readLoop; // Exit with accumulated bytes. 
-            accumulatorString+= (char)byteI; // Append accepted byte.
+            if ( '"'==byteI ) break readLoop; // Exit if trailing quote found.
+            if ('\\' == byteI) // Is escape character replace with next byte.
+              byteI= theRandomAccessInputStream.read();
+            accumulatorString+= (char)byteI; // Append byte to accumulator.
         } // readLoop: 
-          if (accumulatorString.length() == 0) // Reject 0-length strings. 
+          if (accumulatorString.length() == 0) // Reject 0-length strings?//// 
             break goReturn;
           theScalarEpiNode= 
               new ScalarEpiNode(accumulatorString); // Override null result.
@@ -352,6 +404,49 @@ class ScalarEpiNode extends EpiNode
           if (theScalarEpiNode == null) // Rewind stream if no result.
             theRandomAccessInputStream.setPositionV(initialPositionI);
           return theScalarEpiNode; // Return result.
+        }
+
+    private static boolean needsNoDoubleQuotesB(byte theC)
+      /* Returns true if character in theC does not need to be
+       * inside a double-quoted string in a Scalar name. 
+       */
+      {
+        return !
+          (
+            cIsInStringB(theC, " ,:={}")
+            ||
+            needsBackSlashB(theC)
+            );
+        }
+
+    private static boolean needsBackSlashB(byte theB)
+      /* Returns true if character in theB needs to be preceded by
+       * '\' when in a quoted string in a Scalar name.
+       * The end-of-stream indicator (-1) is included
+       * as a kludge to prevent infinite loop elsewhere.
+       */
+      {
+        return 
+            cIsInStringB(theB, "\\\"")
+            ||
+            Character.isISOControl(theB)
+            ||
+            (theB == -1) // Include end-of-stream.
+            ;
+        }
+
+    private static boolean cIsInStringB(byte theB,String theString)
+      /* Returns true if character in theC is in theString, false otherwise.
+       * It does this by searching for the position of theC in theString.
+       * If the position index is >= 0, then it is present.
+       */
+      {
+        return (
+            theString // In this String
+              .indexOf(theB) // find the position of theB
+            >= // and if the returned position is greater than
+            0 // zero
+            ); // then the character was found.
         }
 
     public String getString()
@@ -653,11 +748,15 @@ class MapEpiNode extends EpiNode
             valueEpiNode= null; // Assume no value node unless one provided.
             keyEpiNode=  // Try parsing a key node.
                 EpiNode.tryEpiNode(theRandomAccessInputStream);
+            theAppLog.debug("MapEpiNode.getLinkedHashMap() "
+                + "keyEpiNode="+keyEpiNode);
             if (keyEpiNode == null) break toNoEntry; // Got no key so no entry.
             if (! tryByteB(theRandomAccessInputStream,':')) // No separator ":"
               break toEndEntry; // so no value, so end map entry now.
             valueEpiNode= // Try parsing value.
                 EpiNode.tryEpiNode(theRandomAccessInputStream);
+            theAppLog.debug("MapEpiNode.getLinkedHashMap() "
+                + "valueEpiNode="+valueEpiNode);
             if (valueEpiNode != null) break toEndEntry; // Got value so complete entry.
           } // toNoEntry: Being here means unable to parse an acceptable map entry.
             keyEpiNode= null; // Be certain to indicate map entry parsing failed.
@@ -946,7 +1045,7 @@ class MapEpiNode extends EpiNode
       /* This method returns the MapEpiNode value 
         that is associated with the key keyString.  
         If there is no such MapEpiNode, then an empty one is created,
-        and it is associated in this MepEpiNode with keyString.
+        and it is associated in this MapEpiNode with keyString.
         If this method is called, it is assumed that
         the associated EpiNode is supposed to be a MapEpiNode, 
         not something else such as a ScalarEpiNode.

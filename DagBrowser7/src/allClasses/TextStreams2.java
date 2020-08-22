@@ -183,8 +183,8 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
         Unicaster theUnicaster= // Try getting associated Unicaster.
             theUnicasterManager.tryToGetUnicaster(subscriberUserIdString);
         if (null == theUnicaster) { // Exit if Unicaster does not exist.
-          theAppLog.debug("TextStreams2.sendToSubscriberUnicasterV() "
-              + "non-existent Unicaster.");
+          theAppLog.debug(
+              "TextStreams2.sendToSubscriberUnicasterV() null Unicaster.");
           break goReturn;
           }
         MapEpiNode subsMapEpiNode= // Wrap subscriber UserIds map in Subs map. 

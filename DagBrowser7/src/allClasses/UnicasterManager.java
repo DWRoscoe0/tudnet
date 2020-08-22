@@ -194,11 +194,17 @@ public class UnicasterManager
         
         ///enh It's possible that more than one Unicaster
         is associated with a UserId.
-        This method can not yet deal with this case.
+        This method can not yet deal with these cases.
         */
       {
+        Unicaster resultUnicaster= null;
         IPAndPort theIPAndPort= toIpAndPort(userIdString);
-        return tryingToGetDataNodeWithKeyD( theIPAndPort );
+        if (null != theIPAndPort) 
+          resultUnicaster= tryingToGetDataNodeWithKeyD( theIPAndPort );
+          else
+          theAppLog.debug("UnicasterManager.tryToGetUnicaster(userIdString), "
+              + "null IPAndPort.");
+        return resultUnicaster;
         }
 
     private IPAndPort toIpAndPort(String userIdString)
@@ -220,7 +226,7 @@ public class UnicasterManager
           if (! scanMapEpiNode.testB("isConnected")) // If this peer not connected
             break endPeer; // end this peer to try next one.
           String scanUserIdString= scanMapEpiNode.getString(Config.userIdString);
-          if (userIdString.equals(scanUserIdString))// If IDs don't match
+          if (! userIdString.equals(scanUserIdString))// If IDs don't match
             break endPeer; // end this peer to try next one.
           String scanIPString= scanMapEpiNode.getString("IP");
           String scanPortString= scanMapEpiNode.getString("Port");

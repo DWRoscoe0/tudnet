@@ -2,6 +2,7 @@ package allClasses;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
+import java.util.Objects;
 
 import static allClasses.AppLog.theAppLog;
 
@@ -239,8 +240,12 @@ public class EpiInputStream<
         */
       { 
         MapEpiNode resultMapEpiNode= null; // Set default result to indicate failure.
-        if (packetMapEpiNode == null) // If node not ready
+        if (packetMapEpiNode == null) { // If node not ready
+          bufferLoggerV("EpiInputStream.tryMapEpiNode()", 0);
           packetMapEpiNode= MapEpiNode.tryMapEpiNode(this); // try parsing one.
+          }
+        theAppLog.debug("EpiInputStream.tryMapEpiNode() packetMapEpiNode="
+            +Objects.toString(packetMapEpiNode,"null"));
         if (packetMapEpiNode != null) { // If we have a node now
           resultMapEpiNode= packetMapEpiNode; // set it for return as result.
           packetMapEpiNode= null; // Reset since we're taking node away.
@@ -457,9 +462,14 @@ public class EpiInputStream<
 	
 	      // Setting variables for reading from the new packet.
 	  	  loadedDatagramPacket= loadedKeyedPacketE.getDatagramPacket();
-	      bufferBytes= loadedDatagramPacket.getData();
-	      bufferIndexI= loadedDatagramPacket.getOffset();
-	      packetSizeI= loadedDatagramPacket.getLength();
+        bufferBytes= loadedDatagramPacket.getData();
+        bufferIndexI= loadedDatagramPacket.getOffset();
+        packetSizeI= loadedDatagramPacket.getLength();
+        
+        //// //// Override for debugging.
+        //// bufferBytes= "{A:B}".getBytes();
+        //// bufferIndexI= 0;
+        //// packetSizeI= bufferBytes.length;
 		    }
 
     public void bufferLoggerV(String messageString, int positionI)

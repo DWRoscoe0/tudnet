@@ -12,17 +12,20 @@ public abstract class RandomAccessInputStream
 
    Some subclass of this class must implement the abstract methods below and
    at least the inherited abstract method InputStream.read().
-   
+
+   ///new It would probably be worthwhile to add a RandomAccessReader,
+   a Character Stream class with similar RandomAccess capabilities.
+   Then the EpiNode parsers could be rewritten to be able to 
+   deal with characters instead of bytes.
    */
   
   {
 
     /* Stream position methods follow.
      
-      ///enh  The int use to represent InputStream position
+      ///enh  The int used to represent InputStream position
         could eventually be replaced by some type of Object,
         if what underlies the stream is more complex than an array of bytes.
-        list of sequence elements and an index to the next one.
        
      */
   
@@ -38,6 +41,16 @@ public abstract class RandomAccessInputStream
         This method is more general than the not nest-able reset() method.
         */ 
 
+    public byte readB() throws IOException
+      /* This is a convenience method that returns a byte instead of an int.
+       * This means that the value -1 for no byte available
+       * will be converted to 0xff.
+       * It is assumed that end-of-stream will be detected elsewhere. 
+       */
+      {
+        return (byte)read();
+        }
+    
     /*  //// No longer needed.
     protected int bufferByteCountI()
 
