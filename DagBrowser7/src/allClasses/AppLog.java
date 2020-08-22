@@ -710,6 +710,7 @@ public class AppLog extends EpiThread
     		long nowMillisL= System.currentTimeMillis(); // Saving present time.
 
         String aString= ""; // Initialize String to empty, then append to it...
+        aString+= NL; //...and a final line terminator, to start a new line...
         aString+= theSessionI;  //...the session number,...
         aString+= processIDString;
         aString+= ":";  //...and a separator.
@@ -735,7 +736,7 @@ public class AppLog extends EpiThread
           aString+= theThrowable;
         	}
         
-        aString+= NL; //...and a final line terminator.
+        //// aString+= NL; //...and a final line terminator.
 
       	appendToOpenFileV(aString);  // Append it to log file.
         
