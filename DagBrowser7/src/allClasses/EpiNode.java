@@ -102,6 +102,15 @@ public abstract class EpiNode
             new String(theByteArrayOutputStream.toByteArray());
         return resultString;
         }
+
+    public String toRawString()
+      /* This method provides a way to access the raw string value of
+       * Scalars without quotes or escape characters.
+       * ScalarEpiNode redefines this to return its String value.
+       */
+      { 
+        return "(RAW-STRING)"; 
+        }
     
     public abstract void writeV(OutputStream theOutputStream, int indentI ) 
         throws IOException;
@@ -298,14 +307,14 @@ class ScalarEpiNode extends EpiNode
        * that require quoting. 
        */
       {
-        boolean resultB= false;
+        boolean resultB= true; // Assume no quotes needed until we find need.
         int indexI = 0;
         while (true) { // For up to the entire string...
           if (indexI >= theString.length()) // If no more characters
-            break; // exit with false result.
-          byte theB= (byte)theString.charAt(indexI); // Get next string.
-          if (! needsNoDoubleQuotesB(theB)) // If it's a special character
-            { resultB= true; break; } // Set true result and exit.
+            break; // exit with true result.
+          byte theB= (byte)theString.charAt(indexI); // Get next character.
+          if (! needsNoDoubleQuotesB(theB)) // If it needs quoting
+            { resultB= false; break; } // set false result and exit.
           indexI++; // Increment character index.
           }
         return resultB;
@@ -320,7 +329,14 @@ class ScalarEpiNode extends EpiNode
         this.scalarString= scalarString;
         }
 
-    public String toString() { return scalarString; }
+    public String toRawString() 
+      /* This method provides a way to access the raw string value of
+       * Scalars without quotes or escape characters.
+       * ScalarEpiNode redefines this to return its String value.
+       */
+      { 
+        return scalarString; 
+        }
     
     public static ScalarEpiNode tryScalarEpiNode( 
           RandomAccessInputStream theRandomAccessInputStream ) 
@@ -748,15 +764,15 @@ class MapEpiNode extends EpiNode
             valueEpiNode= null; // Assume no value node unless one provided.
             keyEpiNode=  // Try parsing a key node.
                 EpiNode.tryEpiNode(theRandomAccessInputStream);
-            theAppLog.debug("MapEpiNode.getLinkedHashMap() "
-                + "keyEpiNode="+keyEpiNode);
+            /// theAppLog.debug("MapEpiNode.getLinkedHashMap() "
+            ///     + "keyEpiNode="+keyEpiNode);
             if (keyEpiNode == null) break toNoEntry; // Got no key so no entry.
             if (! tryByteB(theRandomAccessInputStream,':')) // No separator ":"
               break toEndEntry; // so no value, so end map entry now.
             valueEpiNode= // Try parsing value.
                 EpiNode.tryEpiNode(theRandomAccessInputStream);
-            theAppLog.debug("MapEpiNode.getLinkedHashMap() "
-                + "valueEpiNode="+valueEpiNode);
+            /// theAppLog.debug("MapEpiNode.getLinkedHashMap() "
+            ///     + "valueEpiNode="+valueEpiNode);
             if (valueEpiNode != null) break toEndEntry; // Got value so complete entry.
           } // toNoEntry: Being here means unable to parse an acceptable map entry.
             keyEpiNode= null; // Be certain to indicate map entry parsing failed.

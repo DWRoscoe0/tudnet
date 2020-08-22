@@ -365,14 +365,14 @@ public class TextStream2
         {
             boolean gotTextB= false;
           toReturn: {
-            String senderTextString= fieldsMapEpiNode.getString("Text");
-            if (null == senderTextString) 
-              break toReturn; // Exit if no Text.
+            EpiNode textEpiNode= fieldsMapEpiNode.getEpiNode("Text");
+            if (null == textEpiNode)break toReturn; // Exit if no Text.
+            String senderTextString= textEpiNode.toRawString();
             int senderTextOffsetI= fieldsMapEpiNode.getZeroOrI("TextAtOffset");
             int subscribeeHaveToOffsetI=
                 subscribeeMapEpiNode.getZeroOrI("HaveToOffset");
             if (senderTextOffsetI != subscribeeHaveToOffsetI)
-              break toReturn; // Exit because text us not at expected offset.
+              break toReturn; // Exit because text is not at expected offset.
             { // Process the received text.
               EDTUtilities.runOrInvokeAndWaitV( // Switch to EDT thread if needed. 
                   new Runnable() {

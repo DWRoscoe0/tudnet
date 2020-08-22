@@ -2,7 +2,7 @@ package allClasses;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
-import java.util.Objects;
+//// import java.util.Objects;
 
 import static allClasses.AppLog.theAppLog;
 
@@ -241,11 +241,11 @@ public class EpiInputStream<
       { 
         MapEpiNode resultMapEpiNode= null; // Set default result to indicate failure.
         if (packetMapEpiNode == null) { // If node not ready
-          bufferLoggerV("EpiInputStream.tryMapEpiNode()", 0);
+          /// bufferLoggerV("EpiInputStream.tryMapEpiNode()", 0);
           packetMapEpiNode= MapEpiNode.tryMapEpiNode(this); // try parsing one.
           }
-        theAppLog.debug("EpiInputStream.tryMapEpiNode() packetMapEpiNode="
-            +Objects.toString(packetMapEpiNode,"null"));
+        /// theAppLog.debug("EpiInputStream.tryMapEpiNode() packetMapEpiNode="
+        ///     +Objects.toString(packetMapEpiNode,"null"));
         if (packetMapEpiNode != null) { // If we have a node now
           resultMapEpiNode= packetMapEpiNode; // set it for return as result.
           packetMapEpiNode= null; // Reset since we're taking node away.
