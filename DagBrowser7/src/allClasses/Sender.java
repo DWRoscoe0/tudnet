@@ -35,6 +35,10 @@ public class Sender // Uunicast and multicast sender thread.
     may need to be done in a coordinated manner to prevent loss of
     important packets.
 
+    Packets are logged after being removed from the send queue,
+    but before processing it, usually calling the DatagramSocket.send(.) method.
+    Logging is done with PacketManager.logSenderPacketV(theDatagramPacket),
+    
     ///enh Simplify how the delay and dropping of packets for testing
     is controlled.
     
@@ -158,7 +162,8 @@ public class Sender // Uunicast and multicast sender thread.
 	    {
     	  goReturn: {
           PacketManager.logSenderPacketV(theDatagramPacket);
-            // Logging before sending so log order is always correct.
+            // Logging before sending, droping, or delaying,
+            // so log order is always correct.
 			    if  // If dropping a fraction of packets to test retry logic.
 			    	( testingForDropOfPacketB( theDatagramPacket ) )
 				    { ; // Drop this packet by doing nothing.
@@ -228,7 +233,7 @@ public class Sender // Uunicast and multicast sender thread.
         retryLoop: while (true) {
   	    	try { // Try sending the packet.
     	        theDatagramSocket.send(theDatagramPacket); // Send packet.
-    	        theAppLog.appendToFileV("[packet-sent]");
+    	        // theAppLog.appendToFileV("[send]");
     	        break retryLoop;
     	      } catch (IOException theIOException) { // Handle exception.
               failuresI++;

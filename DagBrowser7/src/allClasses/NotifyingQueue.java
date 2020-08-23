@@ -12,33 +12,44 @@ public class NotifyingQueue<E> // Queue inter-thread communication.
 	
 	/* This convenience class combines the following was created to make easier
 	  the passing of streams of objects between threads.
-	  It has changed over time as needs have changed and problems encountered and solved.
+	  It has changed over time as needs have changed 
+	  and problems encountered and solved.
 	  It has the following features:
 
 	  * It is a subclass of either the thread-safe 
 	    * LinkedBlockingQueue<E> or
 	    * ConcurrentLinkedQueue<E>
-	    classes depending on whether queue size limitations and blocking are needed.
+	    classes depending on whether queue size limitations and blocking 
+	    are needed.
 	  * A LockAndSignal monitor-lock variable that producer threads
 	    can use to notify a single consumer thread 
 	    when new input is available, of which adding to the queue is an example.
 	  * Methods that combine addition of new data elements to the queue with 
 	    notification of the consumer thread of those additions using the LockAndSignal.
 
+    Summary of superclass BlockingQueue methods:
+    
+             Throws-exception Special-value   Blocks      Times-out
+    * Insert     add(e)         offer(e)      put(e)    offer(e,time,unit)
+    * Remove     remove()       poll()        take()    poll(time,unit)
+    * Examine    element()      peek()          NA          NA
+
     This class was created to allow easy changing of 
     the properties of queues used for thread communication.  
     These properties can have a large affect on app behavior.
-    * Blocking can be used to throttle producer threads by consumer threads.
+    * Blocking can be used by consumer threads to throttle producer threads.
     * Blocking can make app behavior be more unpredictable.
 
 	  Normally a single consumer thread will use one or more of these queues,
-	  and perhaps other types of inputs, all linked to the same LockAndSignal object,
-	  to detect the availability and receive data produced by producer threads.
+	  and perhaps other types of inputs, 
+	  all linked to the same LockAndSignal object to detect 
+	  the availability and receive data produced by producer threads.
 
 		Interface BlockingQueue<E> methods take() and poll(time, unit)
 		should not be used externally.  
-		When used they block the current thread until their conditions are satisfied.  
-		However they are incompatible with the use of class LockAndSignal.
+		When used they block the current thread 
+		until their conditions are satisfied.  
+		However they are incompatible with the use of the class LockAndSignal.
 		Instead of these methods, use methods poll() or peek() instead, 
 		in a LockAndSignal wait loop.  See class LockAndSignal for more information.
 
@@ -50,20 +61,25 @@ public class NotifyingQueue<E> // Queue inter-thread communication.
     Previous names for this class were:
     * InputQueue.
     * SignalingQueue?
+
 	  */
 	
 	{
-	  LockAndSignal consumerThreadLockAndSignal;  // The monitor-lock to use.
-	  int sizeLimitI; // Size which triggers warning log message.
+	  private LockAndSignal consumerThreadLockAndSignal;  // The monitor-lock.
+	  private int logSizeLimitI; // Size which triggers warning log message.
+	  private String logIdString= null;
 	  
 	  NotifyingQueue(   // Constructor. 
-	  		LockAndSignal consumerThreadLockAndSignal, int capacityI 
+	      LockAndSignal consumerThreadLockAndSignal, 
+	      int capacityI, 
+	      String logIdString 
 	  		)
 	    {
 	      super(Integer.MAX_VALUE); // Construct superclass with no size limit.
 	  	  /// this.sizeLimitI= capacityI; // Set size limit to capacity parameter.
-	      this.sizeLimitI= 4;  // 0; // Use 0 to test logic.
+	      this.logSizeLimitI= 4;  // 0; // Use 0 to test logic.
 	      this.consumerThreadLockAndSignal= consumerThreadLockAndSignal;
+	      this.logIdString= logIdString;
 	      }
 		
 	  public LockAndSignal getLockAndSignal()
@@ -102,17 +118,52 @@ public class NotifyingQueue<E> // Queue inter-thread communication.
         It ignores but maintains Thread interrupt status for testing later.
         */
       {
-        if ( size() >= sizeLimitI ) { // Handle whether size limit exceeded.
-          sizeLimitI++;
+        if ( size() >= logSizeLimitI ) { // Handle whether size limit exceeded.
+          logSizeLimitI++;
           theAppLog.info(
-              "NotifyingQueue<E>.put(E) growing queue to size "+sizeLimitI
+              "NotifyingQueue<E>.put(E) growing queue to size "+logSizeLimitI
               + " for:" + NL + "  " + anE);
           }
+        logMaybeV("qa"); // Log it, maybe.
         super.add( anE ); // Adding element to queue.
         consumerThreadLockAndSignal.notifyingV();
         }
 
-	  /*  ////  Blocking put(..).
+    public E take() throws InterruptedException
+      // This is like take(), but with optional logging.
+      {
+        E resultE= super.take(); // Get element, blocking if needed.
+        logMaybeV("qt"); // Log it, maybe.
+        return resultE;
+        }
+    
+    public E poll()
+      // This is like poll(), but with optional logging.
+      {
+        E resultE= super.poll(); // Try to get element.
+        if (null != resultE) // If got one
+          logMaybeV("qp"); // log it, maybe.
+        return resultE;
+        }
+    
+    private void logMaybeV(String operationString)
+      /* This method creates a short log entry of 
+       * the operation identified by operationString
+       * if logIdString is not null.
+       * Otherwise it does nothing.
+       */
+      {
+        if (null != logIdString)
+          theAppLog.appendToFileV(
+              "["
+              +operationString
+              +"-"
+              +logIdString
+              +"]"
+              );
+        }
+
+    /*  ////  Blocking put(..).
 	  public void put( E anE )
 	    /* If there is no space available in the queue 
 	      then it blocks until there is.  When there is space:

@@ -42,9 +42,10 @@ public class UnicasterFactory {
     {
   	  LockAndSignal unicasterLockAndSignal= new LockAndSignal();
 			NetcasterQueue receiverToUnicasterNetcasterQueue= 
-					new NetcasterQueue( unicasterLockAndSignal, queueCapacityI );
+    		new NetcasterQueue( unicasterLockAndSignal, queueCapacityI, "uruc" );
       NotifyingQueue<String> unicasterInputQueueOfStrings=
-        new NotifyingQueue<String>(unicasterLockAndSignal, Config.STRING_QUEUE_SIZE);
+        new NotifyingQueue<String>(
+            unicasterLockAndSignal, Config.STRING_QUEUE_SIZE, "ucs");
 			NetcasterInputStream unicasterNetcasterInputStream=
 					theAppGUIFactory.makeNetcasterInputStream( 
 							receiverToUnicasterNetcasterQueue, 
@@ -57,7 +58,7 @@ public class UnicasterFactory {
 						theNetcasterPacketManager 
 						);
 			subcasterToUnicasterSubcasterQueue= 
-					new SubcasterQueue( unicasterLockAndSignal, queueCapacityI );
+					new SubcasterQueue( unicasterLockAndSignal, queueCapacityI, "scuc" );
       DefaultBooleanLike leadingDefaultBooleanLike=
       		new DefaultBooleanLike(false);  // Used to settle race conditions.
 		  SubcasterManager theSubcasterManager= new SubcasterManager( 
@@ -127,7 +128,7 @@ public class UnicasterFactory {
 			SubcasterPacketManager theSubcasterPacketManager=
 					new SubcasterPacketManager( keyString ); 
 			SubcasterQueue unicasterToSubcasterSubcasterQueue=
-					new SubcasterQueue( subcasterLockAndSignal, queueCapacityI );
+					new SubcasterQueue( subcasterLockAndSignal, queueCapacityI, "ucsc" );
 			SubcasterInputStream theSubcasterInputStream= 
 			  	makeSubcasterInputStream( 
 			  			unicasterToSubcasterSubcasterQueue, 

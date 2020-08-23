@@ -75,7 +75,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 
       LockAndSignal senderLockAndSignal= new LockAndSignal();
   	  NetcasterQueue netcasterToSenderNetcasterQueue= 
-  	  		new NetcasterQueue( senderLockAndSignal, Config.QUEUE_SIZE );
+  	  		new NetcasterQueue( senderLockAndSignal, Config.QUEUE_SIZE, "sndp");
       DataRoot theDataRoot= new DataRoot();
       MetaFileManager theMetaFileManager= new MetaFileManager( theDataRoot );
       MetaRoot theMetaRoot= new MetaRoot(theDataRoot, theMetaFileManager);
@@ -88,13 +88,15 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
           new UnicasterManager( this, thePersistent, theTCPCopier );
 	    LockAndSignal cmThreadLockAndSignal= new LockAndSignal();
       NotifyingQueue<String> toConnectionManagerNotifyingQueueOfStrings=
-          new NotifyingQueue<String>(cmThreadLockAndSignal, Config.QUEUE_SIZE);
+          new NotifyingQueue<String>(
+              cmThreadLockAndSignal, Config.QUEUE_SIZE,"cms");
       NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes=
-          new NotifyingQueue<MapEpiNode>(cmThreadLockAndSignal, Config.QUEUE_SIZE);
+          new NotifyingQueue<MapEpiNode>(
+              cmThreadLockAndSignal, Config.QUEUE_SIZE,"cmn");
 	    NetcasterQueue multicasterToConnectionManagerNetcasterQueue=
-	      new NetcasterQueue(cmThreadLockAndSignal, Config.QUEUE_SIZE);
+	      new NetcasterQueue(cmThreadLockAndSignal, Config.QUEUE_SIZE, "mccmp");
       NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue=
-          new NetcasterQueue(cmThreadLockAndSignal, Config.QUEUE_SIZE);
+          new NetcasterQueue(cmThreadLockAndSignal, Config.QUEUE_SIZE, "urcmp");
       theTextStreams1= new TextStreams1(
           "Flooding-Text-Streams",this,thePersistent,theUnicasterManager);
       theTextStreams2= new TextStreams2(
@@ -366,7 +368,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 	  { 
 		  LockAndSignal multicasterLockAndSignal= new LockAndSignal();  
 		  NetcasterQueue multicastReceiverToMulticasterNetcasterQueue= 
-		  		new NetcasterQueue(multicasterLockAndSignal, Config.QUEUE_SIZE);
+		  	new NetcasterQueue(multicasterLockAndSignal, Config.QUEUE_SIZE, "mrmc");
 			int multicastPortI= thePortManager.getMulticastPortI();
 			IPAndPort theIPAndPort= AppGUIFactory.makeIPAndPort(
   				multicastInetAddress, multicastPortI 

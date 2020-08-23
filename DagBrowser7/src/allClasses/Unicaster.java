@@ -152,8 +152,8 @@ public class Unicaster
         this.thisMapEpiNode= thePeersCursor.getSelectedMapEpiNode();
     		this.theEpiThread= theEpiThread;
 
-        this.toUnicasterNotifyingQueueOfMapEpiNodes= // Make empty EmpNode queue. 
-            new NotifyingQueue<MapEpiNode>(theLockAndSignal, 5);
+        this.toUnicasterNotifyingQueueOfMapEpiNodes= // Make empty MapEpiNode queue. 
+            new NotifyingQueue<MapEpiNode>(theLockAndSignal, 5,"ucn");
 
 	  		// Create and start the sub-state machines.
 
