@@ -146,6 +146,7 @@ public class TextStream2Viewer
                     inputIJTextArea.setText(""); // Reset input area.
                     theTextStream2.processNewTextStringV(
                         messageString + "\n", // Note added newline.
+                        thePlainDocument.getLength(), // Append at end.
                         thePersistent.getEmptyOrString(Config.userIdString)
                         );
                     }

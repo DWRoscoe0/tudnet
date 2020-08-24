@@ -381,7 +381,7 @@ public class TextStream2
                     public void run() {
                       synchronized(this) { //// Needed?
                         processNewTextStringV(
-                            senderTextString,starterUserIdString);
+                          senderTextString,senderTextOffsetI,starterUserIdString);
                         }
                       }
                     } 
@@ -393,8 +393,11 @@ public class TextStream2
           }
 
       public void processNewTextStringV(
-          String textString, String starterUserIdString)
+          String textString, int offsetI, String starterUserIdString)
         /* This method processes textString as new TextStream text.
+          Text is replaced starting at offset offsetI.
+          If the textString length exceeds the text that follows the offset,
+          then the excess text is appended to the end of the document.
           starterUserIdString identifies the source of the text.
           It either could be the sender of a message containing the text,
           or it could be the local node's user keyboard.
@@ -419,9 +422,16 @@ public class TextStream2
           theAppLog.debug(
               "TextStream2.processNewStreamStringV(.) String=" + textString);
 
-          try { // Append string to document.
-              thePlainDocument.insertString( // Add to end of document.
-                thePlainDocument.getLength(),textString,null);
+          try { // Put text into document.
+              //// thePlainDocument.insertString( // Add to end of document.
+              ////   thePlainDocument.getLength(),textString,null);
+              thePlainDocument.replace(
+                  offsetI,
+                  Math.min( thePlainDocument.getLength()-offsetI,
+                      textString.length()),
+                  textString, // The new text.
+                  null // No AttributeSet.
+                  );
               subscribeeMapEpiNode.putV( // Record offset of new document end.
                   "HaveToOffset",thePlainDocument.getLength());
             } catch (BadLocationException theBadLocationException) { 
@@ -429,9 +439,8 @@ public class TextStream2
                 theBadLocationException);
             }
 
-          subscriberUserIdsMapEpiNode.getOrMakeMapEpiNode(
-            starterUserIdString); // Make certain that
-              // starter is also a subscriber.
+          subscriberUserIdsMapEpiNode.getOrMakeMapEpiNode( // Make certain that
+            starterUserIdString); // starter is also a subscriber.
           subscribersSendAckOrTextV(starterUserIdString);
           }
 
