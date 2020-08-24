@@ -38,8 +38,9 @@ public class TextStream2
    *   It sends requests for text and text acknowledgments to others.
    *   It receives text from others.  
    *   A subscriber can also act like a subscribee if it already has
-   *   a some of the subscribee's text, thereby functioning as
-   *   forwarder of subscribee content. 
+   *   some of the subscribee's content text, thereby functioning as
+   *   an alternative source of that text.  Ideally, most content
+   *   provided to subscribers will be provided by fellow subscribers.
    *   
    * * starter, [also/previously known as source, requester, or initiator]:
    *   This is a user node that initiates a subscription operation, either by:
@@ -78,6 +79,9 @@ public class TextStream2
         // Map of subscribee fields.
       private MapEpiNode subscriberUserIdsMapEpiNode;
         // Map of subscriber UserIds.
+      ///opt Some of the above maps might be created even though
+        // they contain no data.  Can this be avoided?
+        // Maybe just remove map entries with empty map values on exit?
 
     // Constructors.
 
@@ -340,9 +344,6 @@ public class TextStream2
                 fieldsMapEpiNode.getString("HaveToOffset");
             gotOffsetB= (null != messageOffsetString); 
             if (! gotOffsetB) break goReturn; // No offset present, so exit.
-            MapEpiNode subscriberUserIdsMapEpiNode= 
-              subscribeeMapEpiNode.getOrMakeMapEpiNode(
-                "SubscriberUserIds");
             MapEpiNode subscriberUserFieldsMapEpiNode= 
               subscriberUserIdsMapEpiNode.getOrMakeMapEpiNode(
                 starterUserIdString);
@@ -428,6 +429,9 @@ public class TextStream2
                 theBadLocationException);
             }
 
+          subscriberUserIdsMapEpiNode.getOrMakeMapEpiNode(
+            starterUserIdString); // Make certain that
+              // starter is also a subscriber.
           subscribersSendAckOrTextV(starterUserIdString);
           }
 
@@ -554,13 +558,13 @@ public class TextStream2
               break goReturn; // Yes, so exit.  Don't send ack to ourselves.
 
             // Send acknowledgement to remote subscriber.
-            MapEpiNode subscribeeFieldsMapEpiNode= new MapEpiNode();
-            int subscriberHaveToOffsetI= // Extract offset from subscriber data.
-              subscriberMapEpiNode.getZeroOrI("HaveToOffset");
-            subscribeeFieldsMapEpiNode.putV( // Store offset in message map.
-              "HaveToOffset",subscriberHaveToOffsetI);
+            MapEpiNode subscribeeSendMapEpiNode= new MapEpiNode();
+            int subscribeeHaveToOffsetI= // Get offset from subscribee data.
+              subscribeeMapEpiNode.getZeroOrI("HaveToOffset");
+            subscribeeSendMapEpiNode.putV( // Store offset in message map.
+              "HaveToOffset",subscribeeHaveToOffsetI);
             sendToSubscriberUnicasterV( 
-              subscribeeFieldsMapEpiNode, subscriberUserIdString);
+              subscribeeSendMapEpiNode, subscriberUserIdString);
       
           } // goReturn:
       
