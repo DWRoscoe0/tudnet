@@ -95,7 +95,8 @@ public class TextStream2
               "TextStream", // Type name but not entire name.
               peerIdentityString // key
               );
-          theAppLog.debug("TextStream2.TextStream(.) called.");
+          theAppLog.debug(
+              "TextStream2.TextStream(.) called for "+peerIdentityString);
           this.thePersistent= thePersistent;
           Nulls.fastFailNullCheckT(theTextStreams2);
           this.theTextStreams2= theTextStreams2;
