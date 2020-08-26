@@ -33,7 +33,8 @@ public class DNode<N extends DNode<N>>
       because a node can have only one parent.  Eventually this might change.
 
       When displayed, the DAG is treated as a tree.
-      Many of methods in this class are similar to methods in the TreeModel interface.
+      Many of methods in this class are similar to 
+      methods in the TreeModel interface.
       DataTreeModel implements this interface.
       Many of its getter methods simply call the DataNode equivalents.
       
@@ -44,12 +45,15 @@ public class DNode<N extends DNode<N>>
       and SHOULD be overridden. 
 
       One important method in this class is 
-        JComponent getDataJComponent(TreePath inTreePath, DataTreeModel inDataTreeModel).
+        JComponent getDataJComponent(
+          TreePath inTreePath, 
+          DataTreeModel inDataTreeModel
+          )
       Its purpose is to return a JComponent that can 
-      display and possibly manipulate an instance of this DataNode.
+      display and possibly manipulate an instance of this DNode.
       This method in this class returns JComponents that
       display the node either as a simple list or as a block of text.
-      More complicated DataNodes should override this default method
+      More complicated DNodes should override this default method
       with one that returns a more capable JComponent.   
 
       ///enh Possible methods to add:
@@ -68,6 +72,7 @@ public class DNode<N extends DNode<N>>
       ?? Maybe add a field, parentsObject, which contains references to
         DataNodes which are parents of this node.
         This would be used by DataTreeModel.translatingToTreePath( .. ).
+        This could be a MultiLink object.
   
       */
   
@@ -76,8 +81,8 @@ public class DNode<N extends DNode<N>>
       /* Variables for a hybrid computing cache using
         lazy evaluation by up-propagation of 
         properties DataNode in the DataNode hierarchy.
-        Changes in a DataNode can affect the properties,
-        including the displayed appearance, of ancestor DataNodes.
+        Changes in a DNode can affect the properties,
+        including the displayed appearance, of ancestor DNodes.
         They are used mainly for deciding when to repaint
         cells representing DataNodes in JTrees, JLists, and JLabels.
         */
@@ -97,7 +102,7 @@ public class DNode<N extends DNode<N>>
           and display the entire subtree that contains it.
           
           ///org To better match the way caches are invalidated,
-          theChaneFlag field should probably be converted into two fields:
+          theChangeFlag field should probably be converted into two fields:
           * a field to indicate subtree changes
           * a field to indicate structure changes
           SUBTREE_CHANGED and STRUCTURE_CHANGED 
@@ -189,12 +194,14 @@ public class DNode<N extends DNode<N>>
       protected int finalizeDataNodesI()
         /* This method is called to finalize the non-State aspects of
           the subtree rooted at this DataNode.
-          It is meant to be overridden if it needs to do anything but
-          finalize its children, for example close files that it has open.
+          It is meant to be overridden if it needs 
+          to do anything but finalize its children, 
+          for example close any files that it has opened.
           Returns the number of nodes finalized, which in this case is 1.
           See NamedList for an override example.
           
-          Note, this does not finalize some nodes with virtual children,
+          Note, this does not finalize some nodes with 
+          children that are created with lazy eveluation,
           for example Infinitree and IFile, which do not extend NamedList.
           */
         {
@@ -461,7 +468,7 @@ public class DNode<N extends DNode<N>>
     public boolean isDecoratingB()
       /* Returns indication of whether node String decoration is enabled.
         By default it is disabled.
-        Subclasses that t want decoration should override this method
+        Subclasses that want decoration should override this method
         with one that returns true.
        */
       {
@@ -520,7 +527,8 @@ public class DNode<N extends DNode<N>>
         with the node's name and used for rendering in a Component cell.
         The String might be a value, a child count,
         or some other type of summary information.
-        This default method returns the first line of the Content attribute value.
+        This default method returns the first line of 
+        the Content attribute value.
         Other classes might want to override this behavior.
         */
       {

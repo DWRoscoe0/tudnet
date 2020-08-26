@@ -2,11 +2,12 @@ package allClasses;
 
 import java.io.File;
 
-import javax.swing.tree.TreePath;
-
 public class FileRoots extends DataNode
 
-  /* This class is the root of the Infogora user's file system.  */
+  /* This class is the root of the Infogora user's file system.  
+   * It is similar in structure and operation to IFile,
+   * which is used for other, non-root folders.
+   */
 
   { // class FileRoots
 
@@ -16,95 +17,59 @@ public class FileRoots extends DataNode
        They are the same length.
        Each slot represents one filesystem root.
        */
-      
-      File[] ChildFiles;  // Initially empty cache array of root Files.
-      IFile ChildIFiles[];  // Initially empty cache array of root IFiles.
+      File[] childFiles;  // Initially empty cache array of root Files.
+      IFile childIFiles[];  // Initially empty cache array of root IFiles.
     
     // Constructors (none yet).
     
     // A subset of delegated AbstractDataTreeModel methods.
 
-      /*
-      public boolean isLeaf( ) 
-        /* Returns false, because every computer has filesystem roots,
-          even if there are 0 of them.  */
-      /*
-        {
-          return false;  
-          }
-      */
-
-      public int getChildCount( )
+      public int getChildCount()
         /* Returns the number of filesystem roots.  */
         {
           return // Return...
-            GetArrayOfFiles( )  // ...the child File array...
+            getArrayOfFiles()  // ...the child File array...
               .length;  // ...length.
           }
     
-      public DataNode getChild( int IndexI ) 
-        /* This returns the child with index IndexI.
+      public DataNode getChild( int indexI ) 
+        /* This returns the child with index indexI.
           It gets the child from an array cache if possible.
           If not then it calculates the child and 
           saves it in the cache for later.
           In either case it returns it.
           */
         {
-          IFile ChildIFile= null; // Default result of null.
-          SetupCacheArrays( );  // Setup the cache arrays for use.
+          IFile childIFile= null; // Default result of null.
+          setupCacheArrays();  // Prepare the cache arrays for use.
 
           toReturn: { // block beginning.
 
             if  // Handling IndexI out of range.
-              ( ( IndexI < 0 ) ||  // Too low.
-                ( IndexI >= getChildCount( ) )  // Too High.
+              ( ( indexI < 0 ) ||  // Too low.
+                ( indexI >= getChildCount() )  // Too High.
                 )
-              break toReturn;  // Extting with null.
+              break toReturn;  // Exiting with null result.
 
-            ChildIFile=  // Try to get child IFile from cache.
-              ChildIFiles[ IndexI ];
-            if  // Fix the cache if IFile slot is empty.
-              ( ChildIFile == null )  // null means empty.
-              { // Fill the empty cache slot.
-                ChildIFile=  // Calculate IFile slot value to be...
+            childIFile=  // Try to get child IFile from cache.
+              childIFiles[ indexI ];
+            if  // Fix the cache entry if the value is undefined.
+              ( childIFile == null )
+              {
+                childIFile=  // Calculate IFile value to be...
                   new IFile(  // ...a new IFile constructed from...
-                    ChildFiles[IndexI].  // ...the child File's...
+                    childFiles[indexI].  // ...the child File's...
                       getAbsolutePath()  // ...absolute path name.
                     );
-                ChildIFiles[ IndexI ]=  // Save in cache slot...
-                  ChildIFile;  // the resulting IFile.
-                } // Fill the empty cache slot.
+                childIFiles[ indexI ]=  // Save in cache...
+                  childIFile;  // the resulting IFile.
+                }
 
           } // toReturn
-            return ChildIFile;  // Return IFile as result DataNode.
+            return childIFile;  // Return IFile as result DataNode.
           }
 
-      /*
-      public int getIndexOfChild( Object ChildObject ) 
-        /* Returns the index of the filesystem root named by ChildObject 
-          in the list of filesystem roots, or -1 if it is not found.
-          It does they by comparing Object-s as File-s.
-          */
-      /*
-        {
-          //System.out.println( "FileRoots.getIndexOfChild(...) is untested" );
-
-          int ResultI = -1;  // Set default result for not found.
-          File ChildFile = ((IFile)ChildObject).GetFile();  // Caste Object to File.
-          File[] ChildFiles= File.listRoots();  // Get array of roots.
-          for ( int i = 0; i < ChildFiles.length; ++i ) 
-            {
-              if ( ChildFile.equals( ChildFiles[i] ) ) 
-              {
-                ResultI = i;
-                break;
-                }
-              }
-          return ResultI;
-          }
-      */
-
-      public void SetupCacheArrays( )
+      public void setupCacheArrays()
         /* Sets up the cache arrays of Files and IFiles 
           associated with this object.
           It loads the Files array if it has not already been loaded,
@@ -112,53 +77,43 @@ public class FileRoots extends DataNode
           the same size as the Files array if it hasn't yet.
           */
         {
-          GetArrayOfFiles( );  // Load array of Files if needed.
-          if ( ChildIFiles == null )  // Create array of IFiles if needed.
-            ChildIFiles=  // Create array of IFiles with same length as...
-              new IFile[ ChildFiles.length ];  // ... array of Files.
+          getArrayOfFiles();  // Load array of Files if needed.
+          if ( childIFiles == null )  // Create array of IFiles if needed.
+            childIFiles=  // Create array of IFiles with same length as...
+              new IFile[ childFiles.length ];  // ... array of Files.
           }
 
-      public File[] GetArrayOfFiles( )
+      public File[] getArrayOfFiles()
         /* Returns an array of Files representing the filesystem roots.
           It loads this array if it has not already been loaded.
           */
         {
-          if ( ChildFiles == null )  // Read the filesystem roots if needed.
-            ChildFiles= File.listRoots();  // Read the filesystem roots.
-          return ChildFiles;  // Return the array.
+          if ( childFiles == null )  // Read the filesystem roots if needed.
+            childFiles= File.listRoots();  // Read the filesystem roots.
+          return childFiles;  // Return the array.
           }
 
       public String toString()
         /* Override of the standard converter because List uses it. */
         { 
-          return getNameString( );
+          return getNameString();
           }
 
       public String getMetaDataString()
         /* Returns a String representing information about this object. */
         { 
-          return getNameString( );
+          return getNameString();
+          }
+      
+      public String getCellString()  
+        {
+          return getNameString();
           }
 
-      public String getNameString( )
+      public String getNameString()
         /* Returns String representing name of this Object.  */
         {
           return "File-System-Roots";
           }
-      
-      public static TreePath TreePathStart()
-        /* Returns the TreePath representing the path to the tree node
-          that should be selected when beginning browsing FileRoots.
-          The user DataNode at the beginning of the path
-          can be used as the root of the tree when building a
-          DataDataTreeModel.
-          */
-        { // TreePathStart()
-          TreePath StartTreePath=  // Create the StartTreePath from...
-            new TreePath(  // ...a single...
-              new FileRoots()  // ...FilesRoots object.
-              );
-          return StartTreePath;  // Return it.
-          } // TreePathStart()
 
     } // class FileRoots
