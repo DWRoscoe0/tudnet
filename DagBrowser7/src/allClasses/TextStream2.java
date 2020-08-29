@@ -11,6 +11,7 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.text.CharacterIterator;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -227,7 +228,6 @@ public class TextStream2
 
           // Notify the subscribee, which technically is also a subscriber.
           // It is part of the overlay network that can source the content.
-          //// subscriberSendAckV(subscribeeUserIdString);
           subscriberSendAckV(subscribeeMapEpiNode,subscribeeUserIdString);
           }
 
@@ -424,13 +424,11 @@ public class TextStream2
               "TextStream2.processNewStreamStringV(.) String=" + textString);
 
           try { // Put text into document.
-              //// thePlainDocument.insertString( // Add to end of document.
-              ////   thePlainDocument.getLength(),textString,null);
-              thePlainDocument.replace(
-                  offsetI,
+              thePlainDocument.replace( // Replace text
+                  offsetI, // starting here and
                   Math.min( thePlainDocument.getLength()-offsetI,
-                      textString.length()),
-                  textString, // The new text.
+                      textString.length()), // this long
+                  textString, // with this new text.
                   null // No AttributeSet.
                   );
               subscribeeMapEpiNode.putV( // Record offset of new document end.
@@ -618,16 +616,23 @@ public class TextStream2
               theAppLog.debug(
                 "TextStream2.getDocumentString(.) "+theBadLocationException);
             }
-          int scanIndexI= textSegment.getBeginIndex();
-          while (true) { // Find end of sub-segment to return.
-            if (scanIndexI >= textSegment.length()) break; // At end, so exit.
-            char theChar= textSegment.charAt(scanIndexI);
-            scanIndexI++;
-            if ('\n' == theChar) break; // After newline, so exit.
+          char theChar= textSegment.first();
+          int startI= textSegment.getIndex();
+          while (true) { // Move to end of segment or past first newline.
+            if (CharacterIterator.DONE == theChar) // No more characters so 
+              break; // exit.
+            if ('\n' == theChar) { // Character is newline, so
+              textSegment.next(); // move past it to include it,
+              break; // and exit.
+              }
+            theChar= textSegment.next(); // Get next character.
             }
-          CharSequence resultCharSequence= 
-            textSegment.subSequence(textSegment.getBeginIndex(),scanIndexI);
-          return resultCharSequence.toString();
+          int endI= textSegment.getIndex();
+          CharSequence resultCharSequence= // Extract scanned characters 
+            textSegment.subSequence(0, endI-startI); 
+              // Note, subsequence indexes are RELATIVE to 
+              // ABSOLUTE array index Segment.getBeginIndex() set by .first().
+          return resultCharSequence.toString(); // and return them as String.
           }
 
       public boolean isLocalB()
