@@ -6,8 +6,8 @@ import java.awt.BorderLayout;
 import java.awt.Font;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 
 import javax.swing.BorderFactory;
 import javax.swing.border.Border;
@@ -135,7 +135,7 @@ public class TextStream2Viewer
           inputIJTextArea.setEditable(true);
           inputIJTextArea.setLineWrap(true);
           inputIJTextArea.setWrapStyleWord(true);
-          inputIJTextArea.addKeyListener(new KeyListener(){
+          inputIJTextArea.addKeyListener(new KeyAdapter(){
               @Override
               public void keyPressed(KeyEvent theKeyEvent){
                 if(theKeyEvent.getKeyCode() == KeyEvent.VK_ENTER){
@@ -153,10 +153,6 @@ public class TextStream2Viewer
                   theKeyEvent.consume(); // Prevent further processing.
                   }
                 }
-              @Override
-              public void keyTyped(KeyEvent e) {}
-              @Override
-              public void keyReleased(KeyEvent e) {}
               });
           add(inputIJTextArea,BorderLayout.SOUTH); // Adding it at bottom of JPanel.
           }
