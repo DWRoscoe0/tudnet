@@ -2,6 +2,7 @@ package allClasses;
 
 import java.io.IOException;
 import java.util.Timer;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import static allClasses.AppLog.LogLevel.TRACE;
 import static allClasses.AppLog.theAppLog;
@@ -27,8 +28,10 @@ public class LinkMeasurementState
 		private NetcasterInputStream theNetcasterInputStream;
 		private NetcasterOutputStream theNetcasterOutputStream; 
 		private NamedLong initialRetryTimeOutMsNamedLong;
-		private Timer theTimer; 
-    @SuppressWarnings("unused") ///org
+    @SuppressWarnings("unused") ////
+		private Timer theTimer; //// 
+		private ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor;
+		@SuppressWarnings("unused") ///org
     private Unicaster theUnicaster;
 		
 		// Sub-state machine instances.
@@ -37,8 +40,9 @@ public class LinkMeasurementState
 		private LocalMeasurementState theLocalMeasurementState;
 
 		LinkMeasurementState(  // Constructor.
-				Timer theTimer, 
-			  NetcasterInputStream theNetcasterInputStream,
+				Timer theTimer,
+				ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor,
+        NetcasterInputStream theNetcasterInputStream,
 				NetcasterOutputStream theNetcasterOutputStream,
 				NamedLong initialRetryTimeOutMsNamedLong,
 				Unicaster theUnicaster
@@ -50,6 +54,7 @@ public class LinkMeasurementState
 			  this.theNetcasterOutputStream= theNetcasterOutputStream;
 			  this.initialRetryTimeOutMsNamedLong= initialRetryTimeOutMsNamedLong;
         this.theTimer= theTimer;
+        this.theScheduledThreadPoolExecutor= theScheduledThreadPoolExecutor;
         this.theUnicaster= theUnicaster;
 			  }
 			
@@ -65,8 +70,9 @@ public class LinkMeasurementState
 	  		
 	  	  measurementTimerInput= // Creating our timer and linking to this state. 
 			  		new TimerInput(  ///? Move to factory or parent?
-			  				theTimer,
-			  				this
+			  				//// theTimer,
+			  		    this.theScheduledThreadPoolExecutor,
+                this
 			  				);
 
     		// Create and add to DAG the sub-states of this and-state-machine.

@@ -12,6 +12,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.Enumeration;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
@@ -173,6 +174,7 @@ class GUIManager
 		private Shutdowner theShutdowner;
 		private TracingEventQueue theTracingEventQueue;
   	private BackgroundEventQueue theBackgroundEventQueue;
+    private ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor;
 
     // Other AppGUI instance variables.
     private JFrame theJFrame;  // App's only JFrame (now).
@@ -183,8 +185,9 @@ class GUIManager
     		AppGUIFactory theAppGUIFactory,
     		Shutdowner theShutdowner,
     		TracingEventQueue theTracingEventQueue,
-      	BackgroundEventQueue theBackgroundEventQueue
-    		)
+      	BackgroundEventQueue theBackgroundEventQueue,
+      	ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor
+  		)
       {
     		this.theAppInstanceManager= theAppInstanceManager;
     		this.theDagBrowserPanel= theDagBrowserPanel;
@@ -192,6 +195,7 @@ class GUIManager
     		this.theShutdowner= theShutdowner;
     		this.theTracingEventQueue= theTracingEventQueue;
       	this.theBackgroundEventQueue= theBackgroundEventQueue;
+      	this.theScheduledThreadPoolExecutor= theScheduledThreadPoolExecutor;
         }
 
     public void initializeV()
@@ -251,6 +255,7 @@ class GUIManager
         */
       {
         theAppLog.info("GUIManager.finalizeOnV() called, doing on EDT.");
+        theScheduledThreadPoolExecutor.shutdownNow(); // Terminate pool threads.
         EDTUtilities.invokeAndWaitV( // Dispatching on EDT
             new Runnable() {
               @Override

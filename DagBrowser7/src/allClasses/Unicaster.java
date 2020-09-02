@@ -3,6 +3,7 @@ package allClasses;
 import java.awt.Color;
 import java.io.IOException;
 import java.util.Timer;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import static allClasses.AppLog.theAppLog;
 import static allClasses.SystemSettings.NL;
@@ -66,6 +67,7 @@ public class Unicaster
       private final SubcasterManager theSubcasterManager;
       private final TCPCopier theTCPCopier;
       private final Timer theTimer;
+      private final ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor; 
       private final Persistent thePersistent;
       private PeersCursor thePeersCursor; ///org replace with thisMapEpiNode as parameter.
       private NotifyingQueue<String> unicasterNotifyingQueueOfStrings;
@@ -98,6 +100,7 @@ public class Unicaster
 	      Shutdowner theShutdowner,
 	      SubcasterQueue subcasterToUnicasterSubcasterQueue, ///opt Subcasters?
 	  		Timer theTimer,
+	  		ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor,
 	  		Persistent thePersistent,
 	  		PeersCursor thePeersCursor,
 	  		NamedLong initialRetryTimeOutMsNamedLong,
@@ -131,7 +134,8 @@ public class Unicaster
 				  this.theUnicasterManager= theUnicasterManager;
 				  this.theSubcasterManager= theSubcasterManager;
 				  this.theTCPCopier= theTCPCopier;
-		  		this.theTimer= theTimer;
+          this.theTimer= theTimer;
+          this.theScheduledThreadPoolExecutor= theScheduledThreadPoolExecutor; 
 		  		this.thePersistent= thePersistent;
 		      this.thePeersCursor= thePeersCursor;
 	        this.unicasterNotifyingQueueOfStrings= unicasterNotifyingQueueOfStrings;
@@ -161,7 +165,8 @@ public class Unicaster
     			
     			LinkMeasurementState theLinkMeasurementState= 
     				 new LinkMeasurementState( 
-  		    				theTimer, 
+  		    				theTimer,
+  		    				theScheduledThreadPoolExecutor,
   		    				theEpiInputStreamI,
   			  				theEpiOutputStreamO,
   			  				initialRetryTimeOutMsNamedLong,
@@ -171,7 +176,8 @@ public class Unicaster
 
   				theLinkedMachineState= new LinkedMachineState();
   				theLinkedMachineState.initializeWithIOExceptionLinkedMachineState(
-		  				theTimer, 
+		  				theTimer,
+		  				theScheduledThreadPoolExecutor,
 		  			  theEpiInputStreamI,
 		  				theEpiOutputStreamO,
 		  				initialRetryTimeOutMsNamedLong,

@@ -3,6 +3,7 @@ package allClasses;
 import java.awt.Color;
 import java.io.IOException;
 import java.util.Timer;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import static allClasses.AppLog.theAppLog;
 
@@ -32,7 +33,9 @@ public class LinkedMachineState
 		private NetcasterOutputStream theNetcasterOutputStream; 
 		private NamedLong initialRetryTimeOutMsNamedLong;
 		private TCPCopier theTCPCopier;
-		private Timer theTimer; ///opt.  use function parameter only. 
+		@SuppressWarnings("unused") ////
+    private Timer theTimer; ///opt.  use function parameter only. 
+    private ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor;
 		private Unicaster theUnicaster;
 		private Persistent thePersistent; 
     private PeersCursor thePeersCursor;
@@ -60,6 +63,7 @@ public class LinkedMachineState
 	  public synchronized LinkedMachineState 
 	  	initializeWithIOExceptionLinkedMachineState(
 					Timer theTimer, 
+					ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor,
 				  NetcasterInputStream theNetcasterInputStream,
 					NetcasterOutputStream theNetcasterOutputStream,
 					NamedLong initialRetryTimeOutMsNamedLong,
@@ -77,6 +81,7 @@ public class LinkedMachineState
 
   	  	// Injected dependencies.
 			  this.theTimer= theTimer;
+        this.theScheduledThreadPoolExecutor= theScheduledThreadPoolExecutor;
 			  this.theNetcasterInputStream= theNetcasterInputStream;
 			  this.theNetcasterOutputStream= theNetcasterOutputStream;
 			  this.initialRetryTimeOutMsNamedLong= initialRetryTimeOutMsNamedLong;
@@ -110,12 +115,13 @@ public class LinkedMachineState
         theConnectedState.setTargetDisconnectStateV(theSlowPeriodicRetryConnectingState);
 
         setFirstOrSubStateV( theDisconnectedState ); // Initial state is Disconnected.
-    		
-	  	  theTimerInput= // Creating our timer and linking it to this state. 
-			  		new TimerInput(  ///? Move to factory or parent?
-			  				this.theTimer,
-			  				this
-			  				);
+
+        theTimerInput= // Creating our timer and linking it to this state. 
+            new TimerInput(
+                //// this.theTimer,
+                this.theScheduledThreadPoolExecutor,
+                this
+                );
 
 	  	  /*  ///dbg
 	  	  { ///dbg adjust logging for debugging.

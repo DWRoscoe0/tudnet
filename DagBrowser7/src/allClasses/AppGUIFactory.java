@@ -8,6 +8,7 @@ import java.net.MulticastSocket;
 import java.net.SocketAddress;
 import java.net.SocketException;
 import java.util.Timer;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import javax.swing.JFrame;
 
@@ -47,6 +48,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
   private final AppGUI theAppGUI;
   private final NetcasterPacketManager receiverNetcasterPacketManager;
 	private final Timer theTimer;
+  private final ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor;
   private final NamedLong multicasterFixedTimeOutMsNamedLong;
   private final Persistent thePersistent;
   private NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes;
@@ -158,13 +160,21 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
     			theMetaRoot,
     			theBackgroundEventQueue
 	        );
+      Timer theTimer= new Timer( //// being deprecated.
+        "AppTimer", // Thread name.
+        true); // Run as daemon thread.
+      ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor=
+        new ScheduledThreadPoolExecutor(1);  //// (5); // Only 1 thread for now.
+          // Single ScheduledThreadPoolExecutor for entire app,
+          // used for threads and timers.
       GUIManager theGUIBuilderStarter= new GUIManager( 
   		  theAppInstanceManager,
   		  theDagBrowserPanel,
         this, // GUIBuilderStarter gets to know the factory that made it. 
         theShutdowner,
     		theTracingEventQueue,
-      	theBackgroundEventQueue
+      	theBackgroundEventQueue,
+      	theScheduledThreadPoolExecutor
         );
       AppGUI theAppGUI= new AppGUI( 
         theConnectionManagerEpiThread,
@@ -178,10 +188,6 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 
       receiverNetcasterPacketManager=  //? use local? 
       		new NetcasterPacketManager( (IPAndPort)null );
-
-  		Timer theTimer= new Timer(  // Single timer for entire app.
-  				"AppTimer", true
-  				);
 
       NamedLong multicasterTimeOutMsNamedLong= 
 					new NamedLong( 
@@ -197,6 +203,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
       		unconnectedReceiverToConnectionManagerNetcasterQueue;
       this.theAppGUI= theAppGUI;
   		this.theTimer= theTimer;
+      this.theScheduledThreadPoolExecutor= theScheduledThreadPoolExecutor;
   		this.multicasterFixedTimeOutMsNamedLong= 
   				multicasterTimeOutMsNamedLong;
       this.toConnectionManagerNotifyingQueueOfMapEpiNodes=
@@ -411,6 +418,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 				theShutdowner, 
 				Config.QUEUE_SIZE,
 	  		theTimer,
+	  		theScheduledThreadPoolExecutor,
 	  		thePersistent,
         toConnectionManagerNotifyingQueueOfMapEpiNodes,
         theConnectionManager

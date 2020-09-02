@@ -49,22 +49,50 @@ public class TimerInput
     private Runnable outputRunnable;
     
     
-    TimerInput( // Constructor.
+    public TimerInput( // Constructor.
         Timer theTimer,
         Runnable inputRunnable
         )
       {
-        this.theTimer= theTimer;
-        this.inputRunnable= inputRunnable;
+        this(
+          theTimer,
+          null,
+          inputRunnable
+          );
+        //// this.theTimer= theTimer;
+        //// this.inputRunnable= inputRunnable;
         }
-    
-    TimerInput( // Constructor.  //// alternative form.
-        Runnable theRunnable,
-        ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor
+
+    public TimerInput( // Constructor.  //// alternative form.
+        ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor,
+        Runnable inputRunnable
         )
       {
+        this(
+          null,
+          theScheduledThreadPoolExecutor,
+          inputRunnable
+          );
+        //// this.theScheduledThreadPoolExecutor= theScheduledThreadPoolExecutor;
+        //// this.inputRunnable= theRunnable;
+        }
+
+    private TimerInput( // Constructor, common form.
+        Timer theTimer,
+        ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor,
+        Runnable inputRunnable
+        )
+      {
+        this.theTimer= theTimer;
+        if (null != theTimer)
+          theAppLog.debug( "TimerInput(.) constructing with Timer." );
+        
         this.theScheduledThreadPoolExecutor= theScheduledThreadPoolExecutor;
-        this.inputRunnable= theRunnable;
+        if (null != theScheduledThreadPoolExecutor)
+            theAppLog.debug( 
+                "TimerInput.(.) constructing with ScheduledThreadPoolExecutor." );
+
+        this.inputRunnable= inputRunnable;
         }
 
     public void disableV()
