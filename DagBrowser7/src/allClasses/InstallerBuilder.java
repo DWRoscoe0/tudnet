@@ -4,20 +4,17 @@ package allClasses;
 
 import java.awt.BorderLayout;
 import java.awt.Font;
-import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 
 import javax.swing.BorderFactory;
 import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
 import javax.swing.text.Document;
-import javax.swing.text.PlainDocument;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.tree.TreePath;
 import static allClasses.AppLog.theAppLog;
 
@@ -29,10 +26,12 @@ public class InstallerBuilder
     TreeAware
     // TreeModelListener
   
-  /* This class if a JComponent for viewing a TextStream.
-    If the TextStream is our own then it includes an input area
-    into which the user may type text to be appended to the stream.
-    */
+  /* This class is based on TextStream2Viewer.
+   * It is a JComponent for using a TextArea for 
+   * interacting with the user to build an installer volume,
+   * most likely a USB thumb drive,
+   * which contains all the files for installing this app.
+   */
     
   {
     // variables.
@@ -42,51 +41,36 @@ public class InstallerBuilder
       // instance variables.
   
         // Constructor-injected variables.
-        private PlainDocument thePlainDocument;
-        private TextStream2 theTextStream2;
-        private Persistent thePersistent;
+        //// private Persistent thePersistent;
         
         private Border raisedEtchedBorder= // Common style used elsewhere.
             BorderFactory.createEtchedBorder(EtchedBorder.RAISED);
-
         private JLabel titleJLabel;  // Label with the title.
-
-        private IJTextArea outputIJTextArea; // For viewing the stream text.
-
-        private IJTextArea inputIJTextArea; // For entering next text to be appended.
+        private IJTextArea ioIJTextArea; // For entering next text to be appended.
 
     // Constructors and constructor-related methods.
 
       public InstallerBuilder(  // Constructor.
           TreePath theTreePath, 
-          DataTreeModel theDataTreeModel
-          ) {}  ///////
-
-      public InstallerBuilder(  // Constructor.
-          TreePath theTreePath, 
           DataTreeModel theDataTreeModel,
-          PlainDocument thePlainDocument,
-          TextStream2 theTextStream,
-          String theRootIdString,
-          Persistent thePersistent
+          Persistent thePersistent //// leave for now.
           )
-        /* Constructs a InstallerBuilder.
+        /* Constructs an InstallerBuilder viewer.
           theTreePath is the TreePath associated with
           the node of the Tree to be displayed.
           The last DataNode in the path is that Node.
-          The contents is theString.
           theTreeModel provides context.
           */
         {
           super();   // Constructing the superclass JPanel.
           
-          this.thePlainDocument=  thePlainDocument;
-          this.theTextStream2= theTextStream;
-          this.thePersistent= thePersistent;
+          //// this.thePersistent= thePersistent;
 
           theAppLog.debug("InstallerBuilder.InstallerBuilder(.) begins.");
           if ( theTreePath == null )  // prevent null TreePath.
-            theTreePath = new TreePath( NamedLeaf.makeNamedLeaf( "ERROR TreePath" ));
+            theTreePath = new TreePath( 
+                NamedLeaf.makeNamedLeaf( "ERROR TreePath" ));
+            //////
 
           theTreeHelper= // Create and store customized TreeHelper. 
               new MyTreeHelper(this, theDataTreeModel.getMetaRoot(), theTreePath);
@@ -94,13 +78,48 @@ public class InstallerBuilder
           setLayout( new BorderLayout() );
 
           addJLabelV();
-          addStreamIJTextAreaV();
-          if (theTextStream2.isLocalB())
-            addInputIJTextAreaV(); // Add the input TextArea to window.
-            else
-            theTextStream2.requestNextTextFromAllSubscribersV();
+          addIOIJTextAreaV(); // Add the input TextArea to window.
+          cycleStateMachineV();
           }
 
+      public enum State
+        {
+          INITIAL_GREETING,
+          AWAIT_DEVICE_INSERTION
+          }
+
+      State theState= State.INITIAL_GREETING;
+      State nextState= null;
+      
+      private void cycleStateMachineV()
+        {
+          while (true) {
+            switch (theState) {
+              case INITIAL_GREETING: initialGreetingV(); break;
+              case AWAIT_DEVICE_INSERTION: awaitDeviceInsertionV(); break;
+              }
+            if (null == nextState) break;  // Exit loop and return.
+            theState= nextState;
+            nextState= null;
+            }
+        }
+      
+      private void initialGreetingV()
+        {
+          ioIJTextArea.append(
+              "\nTo begin building a volume with installation files,"+
+              "\nplease insert the device to use into a USB port."+
+              "\nIf you have already inserted one then please "+
+              "\nremove it and insert it again.");
+          nextState= State.AWAIT_DEVICE_INSERTION;
+          }
+
+      private void awaitDeviceInsertionV()
+        {
+          ioIJTextArea.append(
+              "\n\nThis is where we wait.");
+          }
+      
       private void addJLabelV()
         {
           titleJLabel= new JLabel(theTreeHelper.getWholeDataNode().getNameString( ));
@@ -111,65 +130,39 @@ public class InstallerBuilder
           titleJLabel.setBorder(raisedEtchedBorder);
           add(titleJLabel,BorderLayout.NORTH); // Adding it to top of main JPanel.
           }
-
-      private void addStreamIJTextAreaV()
-        {
-          outputIJTextArea= new IJTextArea();
-          outputIJTextArea.getCaret().setVisible(true); // Make viewer cursor visible.
-          outputIJTextArea.setBorder(raisedEtchedBorder);
-          outputIJTextArea.setEditable(false);
-          outputIJTextArea.setLineWrap(true);
-          outputIJTextArea.setWrapStyleWord(true);
-          outputIJTextArea.addFocusListener(new FocusListener() {
-            public void focusGained(FocusEvent e) {
-              outputIJTextArea.getCaret().setVisible(true); // Make  cursor visible again.
-              }
-            public void focusLost(FocusEvent e) {}
-            });
-          JScrollPane streamJScrollPane= // Place the JTextArea in a scroll pane.
-              new JScrollPane(outputIJTextArea);
-          add(streamJScrollPane,BorderLayout.CENTER); // Adding to center.
-          }
       
-      private void addInputIJTextAreaV()
+      private void addIOIJTextAreaV()
         {
-          inputIJTextArea= new IJTextArea();
-          inputIJTextArea.getCaret().setVisible(true); // Make input cursor visible.
-          inputIJTextArea.setBorder(raisedEtchedBorder);
-          inputIJTextArea.setRows(2);
-          inputIJTextArea.setEditable(true);
-          inputIJTextArea.setLineWrap(true);
-          inputIJTextArea.setWrapStyleWord(true);
-          inputIJTextArea.addKeyListener(new KeyListener(){
+          ioIJTextArea= new IJTextArea();
+          ioIJTextArea.getCaret().setVisible(true); // Make input cursor visible.
+          ioIJTextArea.setBorder(raisedEtchedBorder);
+          ioIJTextArea.setRows(2);
+          ioIJTextArea.setEditable(true);
+          ioIJTextArea.setLineWrap(true);
+          ioIJTextArea.setWrapStyleWord(true);
+          ioIJTextArea.addKeyListener(new KeyAdapter(){
               @Override
-              public void keyPressed(KeyEvent theKeyEvent){
-                if(theKeyEvent.getKeyCode() == KeyEvent.VK_ENTER){
-                  { // Move all text from input area to stream area.
-                    String messageString= inputIJTextArea.getText();
-                    theAppLog.debug( "InstallerBuilder.InstallerBuilder"
-                        + ".keyPressed(.) ENTER pressed.");
-                    inputIJTextArea.setText(""); // Reset input area.
-                    theTextStream2.processNewTextStringV(
-                        messageString + "\n", // Note added newline.
-                        thePlainDocument.getLength(), // Append at end.
-                        thePersistent.getEmptyOrString(Config.userIdString)
-                        );
-                    }
-                  theKeyEvent.consume(); // Prevent further processing.
-                  }
+              public void keyPressed(KeyEvent theKeyEvent) {
+                processKeyPressedV(theKeyEvent);
                 }
-              @Override
-              public void keyTyped(KeyEvent e) {}
-              @Override
-              public void keyReleased(KeyEvent e) {}
               });
-          add(inputIJTextArea,BorderLayout.SOUTH); // Adding it at bottom of JPanel.
+          add(ioIJTextArea,BorderLayout.CENTER); // Adding it at bottom of JPanel.
           }
 
-      private void putCursorAtEndOfStreamDocumentV()
+      private void processKeyPressedV(KeyEvent theKeyEvent)
+        //// Thread safety might be a problem.  
+        //// Only insertString(.) is thread safe.
         {
-          Document d = outputIJTextArea.getDocument();
-          outputIJTextArea.select(d.getLength(), d.getLength());
+          //// if(theKeyEvent.getKeyCode() == KeyEvent.VK_ENTER){
+          theAppLog.debug( "InstallerBuilder.processKeyPressedV(.) called.");
+          //// theKeyEvent.consume(); // Prevent further processing.
+          ioIJTextArea.append("\nA key was pressed.\n");
+          }
+
+      private void putCursorAtEndDocumentV()
+        {
+          Document d = ioIJTextArea.getDocument();
+          ioIJTextArea.select(d.getLength(), d.getLength());
           }
 
     // rendering methods.  to be added ??
@@ -210,8 +203,7 @@ public class InstallerBuilder
                   theDataTreeModel
                   );
               
-              outputIJTextArea.setDocument(thePlainDocument); 
-              putCursorAtEndOfStreamDocumentV();
+              putCursorAtEndDocumentV();
               }
          
           } // MyTreeHelper

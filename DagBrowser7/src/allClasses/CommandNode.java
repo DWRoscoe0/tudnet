@@ -18,15 +18,18 @@ public class CommandNode
 
     // Locally stored injected dependency.
     private String viewerClassString;
+    private Persistent thePersistent;
   
     public CommandNode( // constructor
         String nameString, // Node name.
-        String viewerClassString // Name of viewer class for this node.
+        String viewerClassString, // Name of viewer class for this node.
+        Persistent thePersistent
         )
       {
         super.initializeV(nameString);
         
         this.viewerClassString= viewerClassString; 
+        this.thePersistent= thePersistent;
         }
     public String getSummaryString()
       {
@@ -49,7 +52,8 @@ public class CommandNode
           Exception theException= null;
           JComponent theJComponent= null;
           theJComponent= ////// 
-              new InstallerBuilder(inTreePath, inDataTreeModel);
+            new InstallerBuilder(inTreePath, inDataTreeModel, thePersistent);
+          
         toProcessResults: {
           try { 
                 String getNameString= getClass().getName();
@@ -64,13 +68,13 @@ public class CommandNode
             }
           try {
               theConstructor= theClass.getConstructor(
-                  TreePath.class, DataTreeModel.class);
+                  TreePath.class, DataTreeModel.class, Persistent.class);
             } catch (NoSuchMethodException | SecurityException e1) {
               theException= e1; break toProcessResults;
             }
           try {
-              componentObject= 
-                  theConstructor.newInstance(inTreePath, inDataTreeModel);
+              componentObject= theConstructor.newInstance(
+                  inTreePath, inDataTreeModel, thePersistent);
             } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
                 | InvocationTargetException e) {
               theException= e; break toProcessResults;
@@ -88,9 +92,9 @@ public class CommandNode
             theJComponent= (JComponent)componentObject;
               //// Using this results in NullPointerException.
               //// InstallerBuilder needs customization as planned.
-            theJComponent= new TitledTextViewer( 
-              inTreePath, inDataTreeModel,
-                "CommandNode.getDataJComponent(.): test Component");
+            //// theJComponent= new TitledTextViewer( 
+            ////   inTreePath, inDataTreeModel,
+            ////     "CommandNode.getDataJComponent(.): test Component");
             }
          
         return theJComponent;
