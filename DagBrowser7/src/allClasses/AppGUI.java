@@ -375,8 +375,11 @@ class PlatformUI
 		static int minFontSizeI= 3;  // minimum font size. 
 
 	  public static void adjustUIFont(int sizeChangeI)
-	    /* This method adjsts the default font for all UI component types
+	    /* This method adjusts the default font for all UI component types
 	      by changing the font size by sizeChangeI.
+	      
+	      ///enh Fix to not change the color of JTextAreas to white
+	        when the Font is adjusted.
 	      */
 	    {
 	  	  fontSizeI+= sizeChangeI;
