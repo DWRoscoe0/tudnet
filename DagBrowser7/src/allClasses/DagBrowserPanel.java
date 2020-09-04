@@ -509,69 +509,65 @@ public class DagBrowserPanel
               
             The Help command itself uses a JTextArea in a JFrame.
             
-            ?? Improve:
-              ? Determine why restoreFocusV() doesn't work with this.
-              ? Don't open multiple help JFrames if Help button pressed 
+            ///enh Don't change JTextArea color during resizing.
+            ///enh Don't open multiple help JFrames if Help button pressed 
                 multiple times.
+            ///fix Determine why restoreFocusV() doesn't work with this.
             */
           { // queueCommandHelpV()
 	          theBackgroundEventQueue.setBackgroundRunnableV(
-	              new Runnable() {
-	                @Override
-	                public void run() { 
-	                  String helpString= 
-	                  		"<Ctrl++> zooms in, <Ctrl+-> zooms out." + NL +
-	                    	"Use Arrows, in keys or buttons, to navigate folders." + NL +
-	                      "      <Right-arrow> moves to child item." + NL +
-	                      "      <Left-arrow> moves to parent item." + NL +
-	                      "      <Down-arrow> moves to next item." + NL +
-	                      "      <Up-arrow> moves to previous item" + NL +
-	                      "<Tab> key selects next window gadget." + NL +
-	                      "<Enter> key manually expands or collapses an item.";
-	                    
-                    final JFrame theJFrame =  // Make the Help JFrame.
-                        new JFrame( 
-                          Config.appString
-                          +" Help"
-                          );
-                    
-                    JPanel theJPanel= new JPanel();
-                    Border emptyBorder = BorderFactory.createEmptyBorder(
-                    		20,20,20,20
-                    		);
-                    theJPanel.setBorder( emptyBorder );
-                    theJPanel.setLayout( 
-                    		new BoxLayout( theJPanel, BoxLayout.PAGE_AXIS) 
-                    		);
-                    
-                    JTextArea theJTextArea= new JTextArea( helpString );
-                    theJTextArea.setBackground( theJFrame.getBackground() );
-                    theJTextArea.setEditable( false );
-                    theJTextArea.setFocusable( false );
-                    theJPanel.add( theJTextArea );
-                    
-                    Component spacerComponent= Box.createVerticalStrut( 10 );
-                    theJPanel.add( spacerComponent );
-                    
-                    JButton theJButton= new JButton("OK");
-                    theJButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-                    theJButton.addActionListener( 
-                    		new ActionListener() {
-                    			public void actionPerformed(ActionEvent inActionEvent) {
-                    				theJFrame.dispose();
-                    			}
-                    			}
-                    		);
-                    theJPanel.add( theJButton );
+              new Runnable() {
+                @Override
+                public void run() { 
+                  String helpString= 
+                		"<Ctrl+'+'> zooms in, <Ctrl+Shift+'-'> zooms out." + NL +
+                  	"Use Arrows in keys or in buttons to navigate folders." + NL +
+                    "      <Right-arrow> moves to child item." + NL +
+                    "      <Left-arrow> moves to parent item." + NL +
+                    "      <Down-arrow> moves to next item." + NL +
+                    "      <Up-arrow> moves to previous item" + NL +
+                    "<Tab> key selects next window gadget." + NL +
+                    "<Shift+Tab> selects previous window gadget." + NL +
+                    "<Enter> key manually expands or collapses an item.";
 
-                    theJFrame.setContentPane( theJPanel );
-                    
-                    theJFrame.pack();  // Layout all the content's sub-panels, then
-                    theJFrame.setLocationRelativeTo(null);  // center JFrame on screen.
-                    theJFrame.setVisible(true);  // Make the window visible.
-	                  } 
-	                } 
-	              );
+                  final JFrame theJFrame=  // Make the Help JFrame.
+                      new JFrame( Config.appString + " Help" );
+
+                  JPanel theJPanel= new JPanel();
+                  Border emptyBorder = BorderFactory.createEmptyBorder(
+                  		20,20,20,20);
+                  theJPanel.setBorder( emptyBorder );
+                  theJPanel.setLayout( 
+                  		new BoxLayout( theJPanel, BoxLayout.PAGE_AXIS));
+
+                  JTextArea theJTextArea= new JTextArea( helpString );
+                  theJTextArea.setBackground( theJFrame.getBackground() );
+                  theJTextArea.setEditable( false );
+                  theJTextArea.setFocusable( false );
+                  theJPanel.add( theJTextArea );
+                  
+                  Component spacerComponent= Box.createVerticalStrut( 10 );
+                  theJPanel.add( spacerComponent );
+                  
+                  JButton theJButton= new JButton("OK");
+                  theJButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+                  theJButton.addActionListener( 
+                  		new ActionListener() {
+                  			public void actionPerformed(ActionEvent inActionEvent) {
+                  				theJFrame.dispose();
+                  			}
+                			}
+                		);
+                  theJPanel.add( theJButton );
+
+                  theJFrame.setContentPane( theJPanel );
+                  
+                  theJFrame.pack(); // Layout all the content's sub-panels.
+                  theJFrame.setLocationRelativeTo(null); // Center on screen.
+                  theJFrame.setVisible(true);  // Make the window visible.
+                  } 
+                } 
+              );
             } // queueCommandHelpV()
 
       class TimerThread extends EpiThread
