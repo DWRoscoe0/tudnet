@@ -33,7 +33,7 @@ public class LinkedMachineState
 		private NetcasterOutputStream theNetcasterOutputStream; 
 		private NamedLong initialRetryTimeOutMsNamedLong;
 		private TCPCopier theTCPCopier;
-		@SuppressWarnings("unused") ////
+		@SuppressWarnings("unused") ///opt
     private Timer theTimer; ///opt.  use function parameter only. 
     private ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor;
 		private Unicaster theUnicaster;
@@ -118,7 +118,7 @@ public class LinkedMachineState
 
         theTimerInput= // Creating our timer and linking it to this state. 
             new TimerInput(
-                //// this.theTimer,
+                ///opt this.theTimer,
                 this.theScheduledThreadPoolExecutor,
                 this
                 );
@@ -243,7 +243,6 @@ public class LinkedMachineState
           {
             MapEpiNode theMapEpiNode= thePeersCursor.getSelectedMapEpiNode();
             if (tryReceivingHelloB(this)) { // Connect requested from remote peer.
-              //// if (thePeersCursor.testB("ignorePeer"))
               if (theMapEpiNode.testB("ignorePeer"))
                 theAppLog.info("LinkedMachineState.onInputsToReturnFalseV() ignorePeer:true.");
                 else
@@ -427,9 +426,7 @@ public class LinkedMachineState
             
             IPAndPort remoteIPAndPort= theUnicaster.getKeyK();
             MapEpiNode theMapEpiNode= thePeersCursor.getSelectedMapEpiNode();
-            //// thePeersCursor.updateFieldV( "wasConnected", true ); // Record connection.
             AppMapEpiNode.updateFieldV( theMapEpiNode, "wasConnected", true ); // Record connection.
-            //// thePeersCursor.updateFieldV( "isConnected", true ); // Record connection.
             AppMapEpiNode.updateFieldV( theMapEpiNode, "isConnected", true ); // Record connection.
 	    	    theAppLog.debug( "Connecting, notifying ConnectionManager with: \n  "
 	    	        + thePeersCursor.getSelectedMapEpiNode()
@@ -470,8 +467,6 @@ public class LinkedMachineState
               if ( tryInputB("GOODBYE") ) { // Peer disconnected itself by saying goodbye?
                 sayGoodbyesV(); // Respond to peer with our own goodbyes.
                 MapEpiNode theMapEpiNode= thePeersCursor.getSelectedMapEpiNode();
-                //// thePeersCursor.updateFieldV( // Record remote intentional disconnect.
-                ////     "wasConnected", false);
                 AppMapEpiNode.updateFieldV( // Record remote intentional disconnect.
                     theMapEpiNode, "wasConnected", false);
                 notifyConnectionManagerOfPeerConnectionChangeV();
@@ -498,7 +493,6 @@ public class LinkedMachineState
 		      { 
 		        theAppLog.debug( "ConnectedState.onExitV() Disconnecting" );
 		        MapEpiNode theMapEpiNode= thePeersCursor.getSelectedMapEpiNode();
-            //// thePeersCursor.removeFieldV( "isConnected"); // Record disconnection.
 		        theMapEpiNode.removeV( "isConnected"); // Record disconnection.
 		        super.onExitV();
 		        }
@@ -606,7 +600,6 @@ public class LinkedMachineState
             { // So store identity in this Unicaster's data entry and in easy-access copy. 
               theAppLog.info(
                   "LinkedMachineState.processUserIdB(String) Saving identity.");
-              //// thePeersCursor.putFieldV(Config.rootIDString,inIdentityString);
               theMapEpiNode.putV(Config.userIdString,inUserIdString);
               successB= true; 
               break goReturn; 
@@ -656,7 +649,6 @@ public class LinkedMachineState
             "{HELLO:{"
             + "IP:"+theUnicaster.getKeyK().getInetAddress().getHostAddress() // remote IP
             + ","
-            //// + "PeerIdentity:"+thePersistent.getEmptyOrString(Config.rootIdString)
             + Config.userIdString+":"
             + thePersistent.getEmptyOrString(Config.userIdString)
             + "}}"

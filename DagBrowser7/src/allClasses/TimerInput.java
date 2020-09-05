@@ -4,6 +4,7 @@ import static allClasses.AppLog.theAppLog;
 
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -40,16 +41,23 @@ public class TimerInput
 	  private Timer theTimer= null;
 	  private Runnable inputRunnable;
 	  private ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor= null;
-	  
-		// Other variables.
-		private TimerTask ourTimerTask= null;
-		private boolean inputArrivedB= false; 
+
+		// Other (non-injected) variables.
+
+	  // Common variables
+    private boolean inputArrivedB= false; 
     private long lastDelayUsedMsL= 0;
     private boolean enabledB= true;
+    
+    // Timer variables
+    private TimerTask ourTimerTask= null;
+    
+    // ScheduledThreadPoolExecutor variables.
     private Runnable outputRunnable;
+    private ScheduledFuture<?> outputFuture;
     
     
-    public TimerInput( // Constructor.
+    public TimerInput( // Constructor.  ///opt
         Timer theTimer,
         Runnable inputRunnable
         )
@@ -59,11 +67,9 @@ public class TimerInput
           null,
           inputRunnable
           );
-        //// this.theTimer= theTimer;
-        //// this.inputRunnable= inputRunnable;
         }
 
-    public TimerInput( // Constructor.  //// alternative form.
+    public TimerInput( // Constructor.
         ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor,
         Runnable inputRunnable
         )
@@ -73,8 +79,6 @@ public class TimerInput
           theScheduledThreadPoolExecutor,
           inputRunnable
           );
-        //// this.theScheduledThreadPoolExecutor= theScheduledThreadPoolExecutor;
-        //// this.inputRunnable= theRunnable;
         }
 
     private TimerInput( // Constructor, common form.
@@ -138,12 +142,6 @@ public class TimerInput
         return inputArrivedB; 
         }
 	
-    /*  ////
-    public boolean getInputScheduledB() 
-	    // Returns whether or not the timer input has been scheduled.
-	    { return theTimerTask != null; }
-	  */  ////
-
 	  public synchronized void scheduleV( long delayMsL )
 	    /* Schedules this timer for input activation 
 	      after delayMsL milliseconds.
@@ -157,7 +155,8 @@ public class TimerInput
         cancelingV(); // Canceling any previous input.
         if (null != theTimer) 
           {
-            theAppLog.debug( "TimerInput.schedule(..) using Timer." );
+            theAppLog.debug("TimerInput.schedule("
+                + delayMsL + ") using Timer." );
     	    	ourTimerTask= new TimerTask() {
     	        public void run()
     	          // Our Runnable method to process triggering of the timer.
@@ -173,8 +172,6 @@ public class TimerInput
             }
           else
           {
-            theAppLog.debug( 
-                "TimerInput.schedule(..) using ScheduledThreadPoolExecutor." );
             outputRunnable= new Runnable() { // Runnable for scheduler.
               public void run() 
                 {
@@ -185,7 +182,7 @@ public class TimerInput
                       }
                   }
               };
-            theScheduledThreadPoolExecutor.schedule(
+            outputFuture= theScheduledThreadPoolExecutor.schedule(
               outputRunnable,
               delayMsL,
               TimeUnit.MILLISECONDS
@@ -239,11 +236,11 @@ public class TimerInput
 	        else
       	  {
             inputArrivedB= false; // Erasing any arrived input.
-            theScheduledThreadPoolExecutor.remove(outputRunnable);
-            //// ourTimerTask.cancel(); // Canceling timer.
-            //// ourTimerTask= null; // Recording as not created and scheduled.
-	          
-      	  } ////// schedule
+            if (null != outputFuture) {
+              outputFuture.cancel(true);
+              outputFuture= null;
+              }
+            }
 	    	}	 
 	
 		} // class TimerInput

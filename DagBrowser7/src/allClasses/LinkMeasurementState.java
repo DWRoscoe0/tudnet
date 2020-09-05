@@ -28,8 +28,8 @@ public class LinkMeasurementState
 		private NetcasterInputStream theNetcasterInputStream;
 		private NetcasterOutputStream theNetcasterOutputStream; 
 		private NamedLong initialRetryTimeOutMsNamedLong;
-    @SuppressWarnings("unused") ////
-		private Timer theTimer; //// 
+    @SuppressWarnings("unused") ///opt
+		private Timer theTimer; ///opt
 		private ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor;
 		@SuppressWarnings("unused") ///org
     private Unicaster theUnicaster;
@@ -70,7 +70,7 @@ public class LinkMeasurementState
 	  		
 	  	  measurementTimerInput= // Creating our timer and linking to this state. 
 			  		new TimerInput(  ///? Move to factory or parent?
-			  				//// theTimer,
+			  				//// theTimer, ///opt
 			  		    this.theScheduledThreadPoolExecutor,
                 this
 			  				);
@@ -448,9 +448,9 @@ public class LinkMeasurementState
 				    Integer arithmetic is used for speed.
 				    */
 					{
-				  	rawRoundTripTimeNsAsMsNamedLong.setValueL(
-				    		rawRoundTripTimeNsL
-				    		);
+				    theAppLog.appendToFileV("[rtt="
+				        +((float)rawRoundTripTimeNsL)/1000000+"]");
+            rawRoundTripTimeNsAsMsNamedLong.setValueL(rawRoundTripTimeNsL);
 				
 				  	smoothedRoundTripTimeNsAsMsNamedLong.setValueL(
 				  			( (7 * smoothedRoundTripTimeNsAsMsNamedLong.getValueL()) + 

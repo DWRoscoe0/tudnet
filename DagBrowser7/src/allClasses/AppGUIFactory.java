@@ -103,7 +103,6 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
           "Flooding-Text-Streams",this,thePersistent,theUnicasterManager);
       theTextStreams2= new TextStreams2(
           "Replication-Text-Streams",this,thePersistent,theUnicasterManager);
-	    //// ConnectionManager theConnectionManager= new ConnectionManager(
       theConnectionManager= new ConnectionManager(
         this, // the AppGuiFactory.
     	  thePersistent,
@@ -160,11 +159,11 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
     			theMetaRoot,
     			theBackgroundEventQueue
 	        );
-      Timer theTimer= new Timer( //// being deprecated.
+      Timer theTimer= new Timer( ///opt being deprecated.
         "AppTimer", // Thread name.
         true); // Run as daemon thread.
       ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor=
-        new ScheduledThreadPoolExecutor(1);  //// (5); // Only 1 thread for now.
+        new ScheduledThreadPoolExecutor(5); // Only 5 threads for now.
           // Single ScheduledThreadPoolExecutor for entire app,
           // used for threads and timers.
       GUIManager theGUIBuilderStarter= new GUIManager( 
