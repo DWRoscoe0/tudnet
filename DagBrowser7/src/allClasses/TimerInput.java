@@ -30,7 +30,7 @@ public class TimerInput
       ! Underway.  At first code with be conditional on whether or not
         theTimer is null.  Later, that will be removed.
     
-    ///ehn Add ability to track total schedule and reschedule time
+    ///enh Add ability to track total schedule and reschedule time
       since previous cancel so it can trigger on both retry interval times
       and interval total times.
 
@@ -95,13 +95,13 @@ public class TimerInput
         this.inputRunnable= inputRunnable;
         }
 
-    public void disableV()
+    public synchronized void disableV()
       /* This is used for disabling the timer when doing debug traces.  */
       { 
         enabledB= false; 
         }
 
-    public void purgeV()
+    public synchronized void purgeV()
       /* This is used to disable pending timer events
         when doing debug traces.  
         ///doc The above documentation might not be correct.
@@ -114,7 +114,7 @@ public class TimerInput
           theScheduledThreadPoolExecutor.purge(); // Purge pending timer events.
         }
     
-    public boolean getInputArrivedB() 
+    public synchronized boolean getInputArrivedB() 
       /* Tests whether or not the timer input has been activated,
         and returns the result.
         If it returns true, then it cancels the timer input before returning,
@@ -127,7 +127,7 @@ public class TimerInput
         return returnB; 
         }
     
-    public boolean testInputArrivedB() 
+    public synchronized boolean testInputArrivedB() 
       /* Tests whether or not the timer input has been activated
         and returns the result.
 
