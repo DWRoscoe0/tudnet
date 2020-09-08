@@ -311,7 +311,7 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
         if (null == subscribeeIdTextStream2) // Make TextStream2 if needed.
           subscribeeIdTextStream2= 
             makeAndAnnounceTextStream2(subscribeeUserIdString);
-        subscribeeIdTextStream2.tryProcessingUserDataMapEpiNodeB(
+        subscribeeIdTextStream2.tryProcessingReceivedMapEpiNodeB(
           subscribeeUserDataMapEpiNode,senderUserIdString);
       } // goReturn:
       }

@@ -144,7 +144,7 @@ public class TextStream2Viewer
                     theAppLog.debug( "TextStream2Viewer.TextStream2Viewer"
                         + ".keyPressed(.) ENTER pressed.");
                     inputIJTextArea.setText(""); // Reset input area.
-                    theTextStream2.processNewTextStringV(
+                    theTextStream2.processInputTextStringV(
                         messageString + "\n", // Note added newline.
                         thePlainDocument.getLength(), // Append at end.
                         thePersistent.getEmptyOrString(Config.userIdString)

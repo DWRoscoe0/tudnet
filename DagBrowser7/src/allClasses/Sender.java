@@ -3,6 +3,7 @@ package allClasses;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.util.Random;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -79,7 +80,7 @@ public class Sender // Uunicast and multicast sender thread.
 		// Other variables.
 		private ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor=
 				new ScheduledThreadPoolExecutor(1); ///? Inject this dependency.
-		//private Random theRandom= new Random(1);
+		private Random theRandom= new Random(1);
 		  // Seed is not zero so first DISCOVER packet is sent.  
 
 		Sender( // Constructor. 
@@ -197,17 +198,21 @@ public class Sender // Uunicast and multicast sender thread.
        */
 	    {
     	  boolean droppingB= 
-    	  		//(theRandom.nextInt(20) == 0); // Debug.
-    	  		false;
+    	  		(theRandom.nextInt(2) == 0); // Debug.
+    	  		// false;
+    	  droppingB= false;  // Comment this out cause drop packets.
 		    if ( droppingB )
 			    {
-			      theAppLog.info( // Logging the drop of the packet.
-			      		"dropping packet "
+			      /*  ////
+			       theAppLog.debug( // Logging the drop of the packet.
+			       	"dropping packet "
 			      		+PacketManager.gettingDirectedPacketString(
 			      				theDatagramPacket,true
 			      				)
 			      		);
-			    	}
+			     	*/  ////
+            theAppLog.appendToFileV("[DROPPING PACKET]");
+            }
 		    return droppingB;
 	    	}
 
