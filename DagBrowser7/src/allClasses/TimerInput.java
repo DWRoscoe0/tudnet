@@ -196,16 +196,16 @@ public class TimerInput
 	      exponential back-off, doubling the previous delay used,
 	      but not greater than maxDelayMsl.
 	      Otherwise, it works like scheduleV(.).
-	      Returns true if maximum delay was exceeded, false otherwise. 
+	      Returns true if maximum delay was exceeded, false otherwise.
+	      If the limit is exceeded then it does not schedule the timer. 
 	     */
 	    {
 	  	  long theDelayMsL= 2 * lastDelayUsedMsL; // Double previous delay.
-	  	  boolean resultB= // Calculate whether maximum exceeded.
+	  	  boolean limitedExceededB= // Calculate whether maximum exceeded.
 	  	  		(theDelayMsL > maxDelayMsL);
-	  	  if (resultB) // Limit time-out delay to maximum allowed. 
-	  	  	theDelayMsL= maxDelayMsL;
-	  	  scheduleV(theDelayMsL); // Schedule using result.
-	  	  return resultB;
+	  	  if (!limitedExceededB) // Schedule timer if limit is not exceeded.
+	  	    scheduleV(theDelayMsL); // Schedule using result.
+	  	  return limitedExceededB;
 	    	}
 
     public synchronized long getLastDelayMsL()
