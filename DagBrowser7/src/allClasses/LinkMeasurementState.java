@@ -340,6 +340,7 @@ public class LinkMeasurementState
 				  	  { 
                 exponentialRetryTimeOutMsL=   // Initializing retry time-out.
                     initialRetryTimeOutMsNamedLong.getValueL();
+                initialRetryTimeOutMsL= exponentialRetryTimeOutMsL; //// And saving.
 		    			  measurementTimerInput.scheduleV(exponentialRetryTimeOutMsL);
 				    		sendingSequenceNumberV();
 			  				}
@@ -362,17 +363,22 @@ public class LinkMeasurementState
 		            else if // Try handling time-out?
 		              (measurementTimerInput.testInputArrivedB())
 					    		{ // Process time-out.
+		                //// final long timeOutLimitMsL= Config.maxTimeOutMsL;
+		                final long timeOutLimitMsL= 40 * initialRetryTimeOutMsL;
 		                theAppLog.appendToFileV("["+exponentialRetryTimeOutMsL
 		                    +"ms time-out for PA of PS "
 		                    +lastSequenceNumberSentL+"]");
-								    if ( exponentialRetryTimeOutMsL <= Config.maxTimeOutMsL )
+								    if ( exponentialRetryTimeOutMsL <= timeOutLimitMsL )
 				    				  { exponentialRetryTimeOutMsL*=2;  // Doubling time-out limit.
   			                measurementTimerInput.scheduleV(exponentialRetryTimeOutMsL);
   			                sendingSequenceNumberV();
   	                   } 
 				    			  else // Giving up after maximum time-out reached.
 				    			  { // Trigger breaking of connection.
-                      theAppLog.info("MeasurementHandshakingState time-out.");
+                      //// theAppLog.info("MeasurementHandshakingState time-out.");
+                      String messageString= "Time-out limit "+ timeOutLimitMsL
+                          + " ms reached in" + getFormattedStatePathString();
+                      Anomalies.displayDialogB(messageString);
 				    			    requestAncestorSubStateV(theBrokenConnectionState);
 					    		      // Break the connection.
 				    			    }
@@ -643,8 +649,9 @@ public class LinkMeasurementState
 	  private NsAsMsNamedLong smoothedMaxRoundTripTimeNsAsMsNamedLong; // Maximum.
 	  
 		// Other variables.
-		private long exponentialRetryTimeOutMsL; 
-		  // This is used as an time-out value
+    private long initialRetryTimeOutMsL; 
+    private long exponentialRetryTimeOutMsL; 
+		  // This is used as a time-out value
 		  // in exponential back off for re-sending PSs.
 
 	  private long sentSequenceNumberTimeNsL;
