@@ -60,7 +60,7 @@ public class LinkedMachineState
 	  	{
 			  }
 
-	  public synchronized LinkedMachineState 
+	  public synchronized LinkedMachineState
 	  	initializeWithIOExceptionLinkedMachineState(
 					Timer theTimer, 
 					ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor,
@@ -297,18 +297,20 @@ public class LinkedMachineState
             else if // Try handling time-out?
               (theTimerInput.testInputArrivedB())
               {
-                theAppLog.appendToFileV("["+theTimerInput.getLastDelayMsL()
-                    +"ms time-out after HELLO]");
+                final long timeOutLimitMsL= 
+                  initialRetryTimeOutMsNamedLong.getValueL() * 40;
+                  // was Config.maxTimeOutMsL; 
+                theAppLog.appendToFileV("[" + theTimerInput.getLastDelayMsL()
+                    + "ms time-out after HELLO]");
                 boolean limitReachedB= // Reschedule time-out with exponential back-off
-                    (theTimerInput.rescheduleB(
-                        Config.maxTimeOutMsL)); // up to this limit.
-                if (! limitReachedB)
-                  sendHelloV(this); // Not at max time-out so re-send hello and
-                    // stay in this state.
-                  else
-                  { // End exponential backup by switching to another state.
-                    theAppLog.info(
-                        "Time-out limit reached in"+getFormattedStatePathString());
+                    (theTimerInput.rescheduleB(timeOutLimitMsL)); // up to this limit.
+                if (! limitReachedB) // Not at max time-out so  
+                  sendHelloV(this); // re-send hello and stay in this state.
+                  else // Time-out limit was reached.
+                  { // End exponential back off by reporting it and changing state.
+                    String messageString= "Time-out limit "+ timeOutLimitMsL
+                        + " ms reached in" + getFormattedStatePathString();
+                    Anomalies.displayDialogB(messageString);
                     requestAncestorSubStateV( // Switch to different type of retrying.
                         theSlowPeriodicRetryConnectingState);
                     }

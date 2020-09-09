@@ -14,6 +14,7 @@ import java.awt.event.WindowEvent;
 import java.util.Enumeration;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
@@ -271,17 +272,30 @@ class GUIManager
       /* This method does finalization.  It must be run on the EDT.
         */
       { 
-        theAppLog.debug("GUIManager.finalizeOnEDTV() begins.");
+        theAppLog.debug("GUIManager.finalizeOnEDTV() called.");
 
         theDagBrowserPanel.finalizationV(); // No longer fails on EDT!
-        
-        for (Window aWindow : Window.getWindows()) { // Dispose all windows.
-          theAppLog.info(
-              "GUIManager.finalizeOnEDTV() disposing Window titled: "
-              +((Frame)aWindow).getTitle());
-          aWindow.dispose(); // Do this so Event Dispatch Thread terminates.
-          }
-        // appLogger.info("GUIManager.finalizeOnEDTV() ends.");
+        for // Log and dispose all windows. 
+          (Window aWindow : Window.getWindows()) 
+          { // Log and dispose one window.
+            String windowTypeString= "unknown type of";
+            String titleString= "(unknown)";
+            if (aWindow instanceof Frame) {
+                windowTypeString= "Frame";
+                titleString= ((Frame)aWindow).getTitle();
+                }
+            if (aWindow instanceof JDialog) {
+                windowTypeString= "JDialog";
+                titleString= ((JDialog)aWindow).getTitle();
+                }
+            String messageString=
+                "GUIManager.finalizeOnEDTV() disposing "
+                + windowTypeString
+                + " Window titled: "
+                + titleString;
+            theAppLog.info(messageString);
+            aWindow.dispose(); // Do this so Event Dispatch Thread terminates.
+            }
         }
     
 		public boolean dispatchKeyEvent(KeyEvent theKeyEvent)
