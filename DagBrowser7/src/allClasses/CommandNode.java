@@ -11,12 +11,24 @@ public class CommandNode
   extends NamedDataNode
 
   {
-    /* This class is meant to be a leaf node, with a name,
-     * and a particular viewer for the execution of 
-     * a particular command defined by type CV. 
+    /* 
+     * ///opt This class is being deprecated.
+     * 
+     *  It was meant to be part of a way of adding new command features.
+     *  A new feature could be created by instantiating this DataNode class
+     *  with the name of the Viewer class implementing the feature,
+     *  and then implementing the Viewer class.
+     *  This class uses Java reflection to calculate 
+     *  the appropriate Viewer class from a name string.
+     *  
+     *  It was later decided that it is better to put 
+     *  the intelligence and state of the command feature in a new DataNode,
+     *  and display it with one of a small set of simple Viewer JComponents
+     *  which display lists of items from the DataNode.
+     *  
      */
 
-    // Locally stored injected dependency.
+    // Locally stored injected dependencies.
     private String viewerClassString;
     private Persistent thePersistent;
   
@@ -31,6 +43,7 @@ public class CommandNode
         this.viewerClassString= viewerClassString; 
         this.thePersistent= thePersistent;
         }
+    
     public String getSummaryString()
       {
         return "";
@@ -50,19 +63,14 @@ public class CommandNode
           Class<?> theClass= null;
           Constructor<?> theConstructor= null;
           Exception theException= null;
-          JComponent theJComponent= null;
-          theJComponent= ////// 
-            new InstallerBuilder(inTreePath, inDataTreeModel, thePersistent);
+          JComponent theJComponent;
           
         toProcessResults: {
           try { 
                 String getNameString= getClass().getName();
                 theAppLog.debug("CommandNode.getDataJComponent(.) class:"
                     +getNameString);
-                //// theClass= Class.forName(getNameString);
                 theClass= Class.forName(viewerClassString);
-                //// Class t = Class.forName("java.lang.Thread"); 
-                //// theClass= Class.forName("java.lang.String");
             } catch (ClassNotFoundException e) {
               theException= e; break toProcessResults;
             }
@@ -80,24 +88,19 @@ public class CommandNode
               theException= e; break toProcessResults;
             }
         } // toProcessResults:
-        if (null != theException) { // Deal with any exception.
-            theAppLog.exception("CommandNode.getDataJComponent(.)", 
-                theException);
-            theJComponent= 
-              new TitledTextViewer( inTreePath, inDataTreeModel,
-                "CommandNode.getDataJComponent(.): "
-                    +theException.toString());
-            }
-          else {
-            theJComponent= (JComponent)componentObject;
-              //// Using this results in NullPointerException.
-              //// InstallerBuilder needs customization as planned.
-            //// theJComponent= new TitledTextViewer( 
-            ////   inTreePath, inDataTreeModel,
-            ////     "CommandNode.getDataJComponent(.): test Component");
-            }
-         
-        return theJComponent;
+          if (null != theException) { // Deal with any exception.
+              theAppLog.exception("CommandNode.getDataJComponent(.)", 
+                  theException);
+              theJComponent= 
+                new TitledTextViewer( inTreePath, inDataTreeModel,
+                  "CommandNode.getDataJComponent(.): "
+                      +theException.toString());
+              }
+            else {
+              theJComponent= (JComponent)componentObject;
+              }
+           
+          return theJComponent;
         }
 
     } 
