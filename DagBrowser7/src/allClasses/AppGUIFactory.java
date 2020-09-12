@@ -122,14 +122,14 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
         new SystemsMonitor(toConnectionManagerNotifyingQueueOfStrings);
       EpiThread theCPUMonitorEpiThread=
         AppGUIFactory.makeEpiThread( theSystemsMonitor, "SystemsMonitor" );
-      CommandNode theInstallerBuilderCommandNode=
-          new CommandNode( "Installer-Builder", 
-              "allClasses.InstallerBuilder",
+      InstallerBuilder theInstallerBuilder=
+          new InstallerBuilder( "Installer-Builder", 
+              //// "allClasses.InstallerBuilder",
               thePersistent
               );
       DataNode testCenterDataNode= new NamedList(
           "Test-Center",
-          theInstallerBuilderCommandNode,
+          theInstallerBuilder,
           theTextStreams2,
           theTextStreams1,
           new Infinitree( null, 0 )

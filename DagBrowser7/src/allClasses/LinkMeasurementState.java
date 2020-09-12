@@ -68,7 +68,7 @@ public class LinkMeasurementState
 		  {
 	  		super.initializeWithIOExceptionStateList();
 	  		
-	  	  measurementTimerInput= // Creating our timer and linking to this state. 
+	  	  theTimerInput= // Creating our timer and linking to this state. 
 			  		new TimerInput(  ///? Move to factory or parent?
 			  				//// theTimer, ///opt
 			  		    this.theScheduledThreadPoolExecutor,
@@ -149,7 +149,7 @@ public class LinkMeasurementState
 		  {
 	  	  super.finalizeV();
 	  		onInputsB(); // This throws any saved IOException from timer.
-	  		measurementTimerInput.cancelingV(); // To stop our timer.
+	  		theTimerInput.cancelingV(); // To stop our timer.
 	      }
 		
 	  private class LocalMeasurementState extends OrState 
@@ -305,20 +305,20 @@ public class LinkMeasurementState
 			    	   	*/
 				  	  {
 			    			///dbg appLogger.debug( "MeasurementPausedState.onEntryV() ");
-			    	  	measurementTimerInput.scheduleV(Config.measurementPauseMsL);
+			    	  	theTimerInput.scheduleV(Config.measurementPauseMsL);
 			  				}
 	
 					  public void onInputsToReturnFalseV()
 					    // Waits for the end of the pause interval.
 					  	{ 
-					  	  if (measurementTimerInput.testInputArrivedB()) // Timer done. 
+					  	  if (theTimerInput.testInputArrivedB()) // Timer done. 
 	                requestAncestorSubStateV(theMeasurementHandshakingState);
 					  		}
 	
 						public void onExitV() throws IOException
 						  // Cancels timer and initializes the handshake time-out.
 						  { 
-								measurementTimerInput.cancelingV();
+								theTimerInput.cancelingV();
 								super.onExitV();
 								}
 					
@@ -341,7 +341,7 @@ public class LinkMeasurementState
                 exponentialRetryTimeOutMsL=   // Initializing retry time-out.
                     initialRetryTimeOutMsNamedLong.getValueL();
                 initialRetryTimeOutMsL= exponentialRetryTimeOutMsL; //// And saving.
-		    			  measurementTimerInput.scheduleV(exponentialRetryTimeOutMsL);
+		    			  theTimerInput.scheduleV(exponentialRetryTimeOutMsL);
 				    		sendingSequenceNumberV();
 			  				}
 	
@@ -361,27 +361,31 @@ public class LinkMeasurementState
 	                ; // Ignoring it.
 								  }
 		            else if // Try handling time-out?
-		              (measurementTimerInput.testInputArrivedB())
+		              (theTimerInput.testInputArrivedB())
 					    		{ // Process time-out.
 		                //// final long timeOutLimitMsL= Config.maxTimeOutMsL;
 		                final long timeOutLimitMsL= 40 * initialRetryTimeOutMsL;
-		                theAppLog.appendToFileV("["+exponentialRetryTimeOutMsL
-		                    +"ms time-out for PA of PS "
+		                theAppLog.appendToFileV("["+theTimerInput.getLastDelayMsL()
+		                    +" ms time-out for PA of PS "
 		                    +lastSequenceNumberSentL+"]");
-								    if ( exponentialRetryTimeOutMsL <= timeOutLimitMsL )
-				    				  { exponentialRetryTimeOutMsL*=2;  // Doubling time-out limit.
-  			                measurementTimerInput.scheduleV(exponentialRetryTimeOutMsL);
+                    boolean limitReachedB= // Reschedule time-out with exponential back-off
+                        (theTimerInput.rescheduleB(timeOutLimitMsL)); // up to this limit.
+                    if (! limitReachedB) // Not at max time-out so  
+								    //// if ( exponentialRetryTimeOutMsL <= timeOutLimitMsL )
+				    				  { 
+                        //// exponentialRetryTimeOutMsL*=2;  // Doubling time-out limit.
+  			                //// measurementTimerInput.scheduleV(exponentialRetryTimeOutMsL);
   			                sendingSequenceNumberV();
-  	                   } 
-				    			  else // Giving up after maximum time-out reached.
-				    			  { // Trigger breaking of connection.
-                      //// theAppLog.info("MeasurementHandshakingState time-out.");
-                      String messageString= "Time-out limit "+ timeOutLimitMsL
-                          + " ms reached in" + getFormattedStatePathString();
-                      Anomalies.displayDialogB(messageString);
-				    			    requestAncestorSubStateV(theBrokenConnectionState);
-					    		      // Break the connection.
-				    			    }
+  	                    } 
+  				    			  else // Giving up after maximum time-out reached.
+  				    			  { // Trigger breaking of connection.
+                        //// theAppLog.info("MeasurementHandshakingState time-out.");
+                        String messageString= "Time-out limit "+ timeOutLimitMsL
+                            + " ms reached in" + getFormattedStatePathString();
+                        Anomalies.displayDialogB(messageString);
+  				    			    requestAncestorSubStateV(theBrokenConnectionState);
+  					    		      // Break the connection.
+  				    			    }
   					    		}
 				  	  	}
 					  
@@ -390,7 +394,7 @@ public class LinkMeasurementState
 				public void onExitV() throws IOException
 				  // Cancels acknowledgement timer.
 				  { 
-						measurementTimerInput.cancelingV();
+						theTimerInput.cancelingV();
 						super.onExitV();
 						}
 			
@@ -660,7 +664,7 @@ public class LinkMeasurementState
 		private long lastSequenceNumberSentL;
 		  // This is the sequence number in the last PS message sent.
 
-	  private TimerInput measurementTimerInput;
+	  private TimerInput theTimerInput;
 	    // This is the timer used by this state machine for pauses and time-outs. 
 
 	  private NamedLong measurementHandshakesNamedLong;
