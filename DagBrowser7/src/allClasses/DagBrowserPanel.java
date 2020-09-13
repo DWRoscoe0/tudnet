@@ -95,7 +95,6 @@ public class DagBrowserPanel
       DataTreeModel theDataTreeModel;  // holds all browse-able data.
       DataRoot theDataRoot;  // The stuff to display.
       MetaRoot theMetaRoot;  // Metadata about how to display it.
-      BackgroundEventQueue theBackgroundEventQueue;
 
     // Other instance variables.
 
@@ -168,8 +167,7 @@ public class DagBrowserPanel
           AppInstanceManager theAppInstanceManager,
           DataTreeModel theDataTreeModel,
           DataRoot theDataRoot,
-          MetaRoot theMetaRoot,
-          BackgroundEventQueue theBackgroundEventQueue
+          MetaRoot theMetaRoot
           )
         /* This constructor creates the DagBrowserPanel.
           This includes creating all the components,  
@@ -183,7 +181,6 @@ public class DagBrowserPanel
           this.theDataTreeModel= theDataTreeModel;
           this.theDataRoot= theDataRoot;
           this.theMetaRoot= theMetaRoot;
-          this.theBackgroundEventQueue= theBackgroundEventQueue;
           }
 
       public void initializeV()
@@ -500,12 +497,7 @@ public class DagBrowserPanel
 
         private void queueCommandHelpV()
           /* This composition method implements the Help command JFrame.
-            It does this by queuing a Runnable for executing.
-            
-            The queuing is done on the EDT on theBackgroundEventQueue.
-            theBackgroundEventQueue was used so the main JFrame 
-            could be setup completely, but might no longer be necessary.
-            Using invokeLater(..) might now be sufficient.
+            It does this by queuing a Runnable for executing using invokeLater(..).
               
             The Help command itself uses a JTextArea in a JFrame.
             
@@ -515,7 +507,7 @@ public class DagBrowserPanel
             ///fix Determine why restoreFocusV() doesn't work with this.
             */
           { // queueCommandHelpV()
-	          theBackgroundEventQueue.setBackgroundRunnableV(
+            java.awt.EventQueue.invokeLater(
               new Runnable() {
                 @Override
                 public void run() { 

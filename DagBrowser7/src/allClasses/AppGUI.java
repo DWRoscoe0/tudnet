@@ -174,7 +174,6 @@ class GUIManager
 		private AppGUIFactory theAppGUIFactory;
 		private Shutdowner theShutdowner;
 		private TracingEventQueue theTracingEventQueue;
-  	private BackgroundEventQueue theBackgroundEventQueue;
     private ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor;
 
     // Other AppGUI instance variables.
@@ -186,7 +185,6 @@ class GUIManager
     		AppGUIFactory theAppGUIFactory,
     		Shutdowner theShutdowner,
     		TracingEventQueue theTracingEventQueue,
-      	BackgroundEventQueue theBackgroundEventQueue,
       	ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor
   		)
       {
@@ -195,7 +193,6 @@ class GUIManager
     		this.theAppGUIFactory= theAppGUIFactory;
     		this.theShutdowner= theShutdowner;
     		this.theTracingEventQueue= theTracingEventQueue;
-      	this.theBackgroundEventQueue= theBackgroundEventQueue;
       	this.theScheduledThreadPoolExecutor= theScheduledThreadPoolExecutor;
         }
 
@@ -223,9 +220,6 @@ class GUIManager
       	Toolkit.getDefaultToolkit().getSystemEventQueue().push(
       			theTracingEventQueue
       			); // For monitoring dispatch times.
-      	Toolkit.getDefaultToolkit().getSystemEventQueue().push(
-      			theBackgroundEventQueue
-      			); // For doing low-priority window creation.
 
     	  //try { // Change GUI look-and-feel to be OS instead of java.
         //  UIManager.setLookAndFeel(UIManager.

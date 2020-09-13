@@ -150,14 +150,11 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
     	    new TracingEventQueue(
     	    		theTracingEventQueueMonitor
 		  	  		  );
-    	BackgroundEventQueue theBackgroundEventQueue=
-    			new BackgroundEventQueue();
       DagBrowserPanel theDagBrowserPanel= new DagBrowserPanel(
     			theAppInstanceManager, 
     			theDataTreeModel, 
     			theDataRoot, 
-    			theMetaRoot,
-    			theBackgroundEventQueue
+    			theMetaRoot
 	        );
       Timer theTimer= new Timer( ///opt being deprecated.
         "AppTimer", // Thread name.
@@ -172,7 +169,6 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
         this, // GUIBuilderStarter gets to know the factory that made it. 
         theShutdowner,
     		theTracingEventQueue,
-      	theBackgroundEventQueue,
       	theScheduledThreadPoolExecutor
         );
       AppGUI theAppGUI= new AppGUI( 
