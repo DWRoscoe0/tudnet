@@ -3,10 +3,6 @@ package allClasses;
 import static allClasses.AppLog.theAppLog;
 import static allClasses.SystemSettings.NL;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import javax.swing.JOptionPane;
-
 public class Anomalies 
   {
 
@@ -29,40 +25,27 @@ public class Anomalies
      * 
      */
   
-    public static boolean displayDialogB(  ////// being adapted. 
+    public static void displayDialogV( 
         String messageString )
       /* This method displays a dialog box containing messageString.
         This method takes care of switching to the EDT thread, etc.
-        and returns the true.
+
+        It also throws, and catches, a DebugException, 
+        for use in determining the causes of anomalies.
        */
       {
+        // theAppLog.info(
+        //     "Anomalies.displayDialogV(..) called," + NL + messageString);
+
         java.awt.Toolkit.getDefaultToolkit().beep(); // Create audible Beep.
-        theAppLog.info(
-            "Anomalies.displayDialogB(..) called," + NL + messageString);
-        final AtomicBoolean resultAtomicBoolean= new AtomicBoolean(true);
-        final String titleString= "Infogora Anomaly Detected";
-        final String outString= messageString;
-        EDTUtilities.runOrInvokeAndWaitV( // Run following on EDT thread. 
-            new Runnable() {
-              @Override  
-              public void run() {
-                JOptionPane.showMessageDialog(
-                  null, // No parent component. 
-                  outString,
-                  titleString,
-                  JOptionPane.INFORMATION_MESSAGE
-                  );
-                }
-              } 
-            );
-        //// theAppLog.info( "Anomalies.displayDialogB(..) ends, value= " 
-        ////     + resultAtomicBoolean.get() );
-        try { // Throw an exception that Eclipse IDE can to suspend thread.
+
+        Dialogger.showModelessDialogV(messageString, "Anomaly Detected");
+
+        try { // Throw an exception that Eclipse IDE can use to suspend thread.
             throw new DebugException();
           } catch (DebugException theDebugException) {
             ; 
           }
-        return resultAtomicBoolean.get();
         }
   
     }

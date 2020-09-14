@@ -310,7 +310,7 @@ public class LinkedMachineState
                   { // End exponential back off by reporting it and changing state.
                     String messageString= "Time-out limit "+ timeOutLimitMsL
                         + " ms reached in" + getFormattedStatePathString();
-                    Anomalies.displayDialogB(messageString);
+                    Anomalies.displayDialogV(messageString);
                     requestAncestorSubStateV( // Switch to different type of retrying.
                         theSlowPeriodicRetryConnectingState);
                     }

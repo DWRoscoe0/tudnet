@@ -24,12 +24,6 @@ public class TimerInput
 		An earlier version of this class used LockAndSignal.notifyingV()
 	  in the run() method of TimerTask instances that it creates for quickness.
 	  This version does not have that guarantee.
-
-  . ///enh Change class TimerInput to use 
-      java.util.concurrent.ScheduledThreadPoolExecutor
-      instead of java.util.Timer.
-      ! Underway.  At first code with be conditional on whether or not
-        theTimer is null.  Later, that will be removed.
     
     ///enh Add ability to track total schedule and reschedule time
       since previous cancel so it can trigger on both retry interval times
@@ -197,7 +191,8 @@ public class TimerInput
 	      but not greater than maxDelayMsl.
 	      Otherwise, it works like scheduleV(.).
 	      Returns true if maximum delay was exceeded, false otherwise.
-	      If the limit is exceeded then it does not schedule the timer. 
+	      If the limit is exceeded then it does not schedule the timer,
+	      and instead cancels the present timer input. 
 	     */
 	    {
 	  	  long theDelayMsL= 2 * lastDelayUsedMsL; // Double previous delay.
@@ -205,6 +200,8 @@ public class TimerInput
 	  	  		(theDelayMsL > maxDelayMsL);
 	  	  if (!limitedExceededB) // Schedule timer if limit is not exceeded.
 	  	    scheduleV(theDelayMsL); // Schedule using result.
+	  	    else
+	  	    cancelingV(); // otherwise cancel existing input.
 	  	  return limitedExceededB;
 	    	}
 

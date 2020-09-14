@@ -116,7 +116,6 @@ public class DagBrowserPanel
           private JSplitPane theJSplitPane;  // horizontally split content panel
             private JScrollPane treeJScrollPane;  // left scroller sub-panel...
               private RootJTree theRootJTree;  // ... and tree content.
-            /// private JScrollPane dataJScrollPane;  // right scroller sub-panel...
               private JComponent dataJComponent;  // ... and its data content.
               private TreeAware dataTreeAware;  // ... and its TreeAware alias.
 
@@ -378,7 +377,6 @@ public class DagBrowserPanel
               theRootJTree.getSelectedTreePath()
               );
           buttonEnableScanV( );  // Updating button graying.
-          showCommandHelpV();  // Queuing display of Help dialog.
           } // miscellaneousInitializationV()
 
       public void finalizationV()
@@ -835,17 +833,6 @@ public class DagBrowserPanel
           {
             theJSplitPane.setDividerLocation( 0.4 );  // Set the position of split.
             }
-
-        /*  ///
-        private JLabel testJLabel()
-          {
-            JLabel theJLabel= new JLabel("TEST JLabel");
-            theJLabel.setBackground( Color.CYAN );
-            theJLabel.setForeground( Color.MAGENTA );
-            theJLabel.setOpaque(true);
-            return theJLabel;
-            }
-        */  ///
 
         // Key and Action bindings (KeyboardFocusManager ).  Experimental/Unused??
         

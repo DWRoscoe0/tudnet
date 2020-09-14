@@ -364,8 +364,9 @@ public class LinkMeasurementState
 		                theAppLog.appendToFileV("["+theTimerInput.getLastDelayMsL()
 		                    +" ms time-out for PA of PS "
 		                    +lastSequenceNumberSentL+"]");
-                    boolean limitReachedB= // Reschedule time-out with exponential back-off
-                        (theTimerInput.rescheduleB(timeOutLimitMsL)); // up to this limit.
+                    boolean limitReachedB= // Reschedule time-out
+                        (theTimerInput.rescheduleB( // with exponential back-off
+                            timeOutLimitMsL)); // up to this limit.
                     if (! limitReachedB) // Not at max time-out so  
 				    				  { 
   			                sendingSequenceNumberV();
@@ -374,7 +375,7 @@ public class LinkMeasurementState
   				    			  { // Trigger breaking of connection.
                         String messageString= "Time-out limit "+ timeOutLimitMsL
                             + " ms reached in" + getFormattedStatePathString();
-                        Anomalies.displayDialogB(messageString);
+                        Anomalies.displayDialogV(messageString);
   				    			    requestAncestorSubStateV(theBrokenConnectionState);
   					    		      // Break the connection.
   				    			    }
