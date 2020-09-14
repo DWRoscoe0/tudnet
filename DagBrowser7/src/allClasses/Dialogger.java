@@ -30,9 +30,14 @@ public class Dialogger extends Object
        * It displays titleTailString after the app name in the title bar,
        * and displays theString in the main window,
        * and waits for the user to execute OK before it closes.  
+       * 
+        ///enh Don't change JTextArea color during resizing.
+        ///enh Don't open multiple instances of the same dialog.
+        ///fix Determine why restoreFocusV() doesn't work with this?
        * */
       {
-        java.awt.EventQueue.invokeLater( // Do everything on the EDT.
+        /// java.awt.EventQueue.invokeLater( // Do following later on the EDT.
+        EDTUtilities.runOrInvokeAndWaitV( // Run following now on EDT thread. 
           new Runnable() {
             @Override
             public void run() { 

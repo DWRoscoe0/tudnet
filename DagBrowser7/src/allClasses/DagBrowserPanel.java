@@ -378,7 +378,7 @@ public class DagBrowserPanel
               theRootJTree.getSelectedTreePath()
               );
           buttonEnableScanV( );  // Updating button graying.
-          queueCommandHelpV();  // Queuing display of Help dialog.
+          showCommandHelpV();  // Queuing display of Help dialog.
           } // miscellaneousInitializationV()
 
       public void finalizationV()
@@ -410,7 +410,7 @@ public class DagBrowserPanel
                 if ( buttonCommandScanB( sourceObject ) )
                   ; // Nothing else.  Button command was executed.
                 else if (sourceObject == helpIJButton)
-                  queueCommandHelpV();  // give help.
+                  showCommandHelpV();  // give help.
                 else
                   buttonDoneB= false; // indicate no button action done.
                 } // Try the various buttons and execute JTree commands.
@@ -489,16 +489,9 @@ public class DagBrowserPanel
           	  	}
 	            }
 
-        private void queueCommandHelpV()
-          /* This composition method implements the Help command JFrame.
-            It does this by queuing a Runnable for executing using invokeLater(..).
-              
-            The Help command itself uses a JTextArea in a JFrame.
-            
-            ///enh Don't change JTextArea color during resizing.
-            ///enh Don't open multiple help JFrames if Help button pressed 
-                multiple times.
-            ///fix Determine why restoreFocusV() doesn't work with this.
+        public void showCommandHelpV()
+          /* This composition method implements the Help command.
+            It does this by displaying a mode-less dialog.
             */
           { // queueCommandHelpV()
             String helpString= 

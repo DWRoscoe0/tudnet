@@ -215,11 +215,11 @@ class GUIManager
         */
       {
     		theAppLog.info("GUIManager.initializeOnEDTV() begins.");
-    		theTracingEventQueue.initializeV(); // to start monitor thread.
 
+    		theTracingEventQueue.initializeV(); 
+    		  // Start monitor thread is our customized Event dispatcher.
       	Toolkit.getDefaultToolkit().getSystemEventQueue().push(
-      			theTracingEventQueue
-      			); // For monitoring dispatch times.
+      			theTracingEventQueue); // Replace Event dispatcher with our customized one.
 
     	  //try { // Change GUI look-and-feel to be OS instead of java.
         //  UIManager.setLookAndFeel(UIManager.
@@ -232,14 +232,16 @@ class GUIManager
 
     		theDagBrowserPanel.initializeV();
 
-    		buildJFrameV(); // Construct and start the app JFrame.
+    		buildJFrameV(); // Build and display the app JFrame.
+
+        theDagBrowserPanel.showCommandHelpV(); // Build and display the Help dialog.
+
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().
+          addKeyEventDispatcher( this );
 
         theAppInstanceManager.setAppInstanceListener(
           theAppGUIFactory.makeInstanceCreationRunnable(theJFrame)
           ); // For dealing with other running app instances.
-
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().
-          addKeyEventDispatcher( this );
 
     		theAppLog.info("GUIManager.initializeOnEDTV() ends.");
         }
