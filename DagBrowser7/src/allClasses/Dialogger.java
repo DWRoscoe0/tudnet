@@ -1,6 +1,7 @@
 package allClasses;
 
 import java.awt.Component;
+import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -8,8 +9,7 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
+import javax.swing.JDialog;
 import javax.swing.JTextArea;
 import javax.swing.border.Border;
 
@@ -30,52 +30,49 @@ public class Dialogger extends Object
        * It displays titleTailString after the app name in the title bar,
        * and displays theString in the main window,
        * and waits for the user to execute OK before it closes.  
-       * 
+       *
         ///enh Don't change JTextArea color during resizing.
         ///enh Don't open multiple instances of the same dialog.
         ///fix Determine why restoreFocusV() doesn't work with this?
        * */
       {
-        /// java.awt.EventQueue.invokeLater( // Do following later on the EDT.
-        EDTUtilities.runOrInvokeAndWaitV( // Run following now on EDT thread. 
+        /// java.awt.EventQueue.invokeLater( // Do following LATER on the EDT.
+        EDTUtilities.runOrInvokeAndWaitV( // Run following NOW on EDT thread. 
           new Runnable() {
             @Override
             public void run() { 
-              final JFrame theJFrame=  // Make the JFrame.
-                  new JFrame( Config.appString + " " + titleTailString );
-
-              JPanel theJPanel= new JPanel();
+              final JDialog theJDialog= new JDialog(
+                (Frame)null, Config.appString + " " + titleTailString, false);
               Border emptyBorder = BorderFactory.createEmptyBorder(
-                  20,20,20,20);
-              theJPanel.setBorder( emptyBorder );
-              theJPanel.setLayout( 
-                  new BoxLayout( theJPanel, BoxLayout.PAGE_AXIS));
+                20,20,20,20);
+              theJDialog.getRootPane().setBorder( emptyBorder );
+              theJDialog.setLayout( new BoxLayout( 
+                  theJDialog.getContentPane(), BoxLayout.PAGE_AXIS ) );
 
               JTextArea theJTextArea= new JTextArea( theString );
-              theJTextArea.setBackground( theJFrame.getBackground() );
+              theJTextArea.setBackground( theJDialog.getBackground() );
               theJTextArea.setEditable( false );
               theJTextArea.setFocusable( false );
-              theJPanel.add( theJTextArea );
               
               Component spacerComponent= Box.createVerticalStrut( 10 );
-              theJPanel.add( spacerComponent );
               
               JButton theJButton= new JButton("OK");
               theJButton.setAlignmentX(Component.CENTER_ALIGNMENT);
               theJButton.addActionListener( 
                   new ActionListener() {
                     public void actionPerformed(ActionEvent inActionEvent) {
-                      theJFrame.dispose();
+                      theJDialog.dispose();
                     }
                   }
                 );
-              theJPanel.add( theJButton );
 
-              theJFrame.setContentPane( theJPanel );
+              theJDialog.add( theJTextArea );
+              theJDialog.add( spacerComponent );
+              theJDialog.add( theJButton );
               
-              theJFrame.pack(); // Layout all the content's sub-panels.
-              theJFrame.setLocationRelativeTo(null); // Center on screen.
-              theJFrame.setVisible(true);  // Make the window visible.
+              theJDialog.pack(); // Layout all the content's sub-panels.
+              theJDialog.setLocationRelativeTo(null); // Center on screen.
+              theJDialog.setVisible(true); // Make the window visible.
               } 
             } 
           );

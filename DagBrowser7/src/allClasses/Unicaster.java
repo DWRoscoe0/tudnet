@@ -6,7 +6,7 @@ import java.util.Timer;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import static allClasses.AppLog.theAppLog;
-import static allClasses.SystemSettings.NL;
+/// import static allClasses.SystemSettings.NL;
 
 
 public class Unicaster
@@ -354,23 +354,21 @@ public class Unicaster
             break toConsumeInput; // Finished up.
             }
           { // Log any other input and log OrState states. 
-            theAppLog.info("processUnprocessedInputV() input= "+offeredString);
+            /// theAppLog.info("processUnprocessedInputV() input= "+offeredString);
             /// logOrSubstatesB("processUnprocessedInputV()"); // Log active sub-states.
             }
           MapEpiNode theMapEpiNode= // Get any left-over input as a MapEpiNode.
               theEpiInputStreamI.tryMapEpiNode();
           if (theMapEpiNode == null) break toConsumeInput; // Clean up if no MapEpiNode.
-          theAppLog.info( // Log the EpiNode.
-              "processUnprocessedInputV() EpiNode= " + theMapEpiNode.toString());
+          /// theAppLog.info( // Log the EpiNode.
+          ///    "processUnprocessedInputV() EpiNode= " + theMapEpiNode.toString());
           if (isAboutThisUnicasterB(theMapEpiNode)) { // Ignore if about this Unicaster.
-            theAppLog.info(
-                "processUnprocessedInputV() ignoring above data about this Unicaster.");
+            /// theAppLog.info(
+            ///     "processUnprocessedInputV() ignoring above data about this Unicaster.");
             break toConsumeInput; // Ignoring to prevent self-reference message storm.
             }
-          theAppLog.debug("UnicasterManager.processUnprocessedInputV(.) queuing "
-            + NL + "  " + theMapEpiNode);
-          //// toConnectionManagerNotifyingQueueOfMapEpiNodes.put(theMapEpiNode); // Send...
-          //// theConnectionManager.decodePeerMapEpiNodeV(theMapEpiNode,null); // Decode it.
+          /// theAppLog.debug("UnicasterManager.processUnprocessedInputV(.) queuing "
+          ///   + NL + "  " + theMapEpiNode);
           theConnectionManager.decodePeerMapEpiNodeV(
             theMapEpiNode,
             thisMapEpiNode.getEmptyOrString(Config.userIdString) // Unicaster UserId as context.

@@ -347,10 +347,10 @@ public class LinkMeasurementState
 					  	  initiating a retry using twice the time-out,
 					  	  until the acknowledgement is received,
 					  	  or giving up if the time-out limit is reached.
+					  	  
+					  	  ///doc This method is called a lot.  Learn and document why.
 					  	  */
 					  	{
-                theAppLog.debug( ///tmp
-                    "MeasurementHandshakingState.onInputsToReturnFalseV() called.");
 								if ( tryProcessingExpectedPacketAcknowledgementB() ) {
 									requestAncestorSubStateV(theMeasurementPausedState);
 								  }

@@ -34,8 +34,7 @@ public class Anomalies
         for use in determining the causes of anomalies.
        */
       {
-        // theAppLog.info(
-        //     "Anomalies.displayDialogV(..) called," + NL + messageString);
+        theAppLog.info("Anomalies.displayDialogV(..) called," + NL + messageString);
 
         java.awt.Toolkit.getDefaultToolkit().beep(); // Create audible Beep.
 
