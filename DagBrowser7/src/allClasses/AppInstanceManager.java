@@ -10,6 +10,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import javax.swing.JOptionPane;
+
 import static allClasses.AppLog.theAppLog;
 import static allClasses.SystemSettings.NL;
 
@@ -663,40 +665,42 @@ l    * If the app receives a message indicating
 	    	{
     			java.awt.Toolkit.getDefaultToolkit().beep(); // Beep.
 	        theAppLog.info("displayUpdateApprovalDialogB(..) begins.");
-		  		final AtomicBoolean resultAtomicBoolean= new AtomicBoolean(true);
-		  		/*  ///tmp ///dbg
-	    		final String outString= 
-	    				messageString
-	    				+ NL + "The file that contains the other app is: "
-	    				+ appFile.toString()
-	    				+ NL + "It's creation time is: "
-	    				+ FileOps.dateString(appFile)
-	    				+ ( informDontApproveB ? "" : NL + "Do you approve?");
-		  		EDTUtilities.runOrInvokeAndWaitV( // Run following on EDT thread. 
-			    		new Runnable() {
-			    			@Override  
-			          public void run() {
-			    				if (!informDontApproveB) { // Approving.
-			    				 	int answerI= JOptionPane.showConfirmDialog(
-			    				 		null, // No parent component. 
-			                outString,
-			                "Infogora Info",
-			                JOptionPane.OK_CANCEL_OPTION
-			                );
-	    		    	  	resultAtomicBoolean.set(
-	    		    	  			(answerI == JOptionPane.OK_OPTION) );
-			    					}
-			    				else // Informing only.
-				    				JOptionPane.showMessageDialog(
-			    						null, // No parent component. 
-			                outString,
-			                "Infogora Info",
-			                JOptionPane.INFORMATION_MESSAGE
-			                );
-			    				}
-			          } 
-			        );
-		  		*/  ///tmp ///dbg
+		  		final AtomicBoolean resultAtomicBoolean= // Set default of approval. 
+		  		    new AtomicBoolean(true);
+		  		boolean dialogB= false; // true;
+		  		if (dialogB) { // Display dialog if desired.
+  	    		final String outString= 
+  	    				messageString
+  	    				+ NL + "The file that contains the other app is: "
+  	    				+ appFile.toString()
+  	    				+ NL + "It's creation time is: "
+  	    				+ FileOps.dateString(appFile)
+  	    				+ ( informDontApproveB ? "" : NL + "Do you approve?");
+  		  		EDTUtilities.runOrInvokeAndWaitV( // Run following on EDT thread. 
+  			    		new Runnable() {
+  			    			@Override  
+  			          public void run() {
+  			    				if (!informDontApproveB) { // Approving.
+  			    				 	int answerI= JOptionPane.showConfirmDialog(
+  			    				 		null, // No parent component. 
+  			                outString,
+  			                "Infogora Info",
+  			                JOptionPane.OK_CANCEL_OPTION
+  			                );
+  	    		    	  	resultAtomicBoolean.set(
+  	    		    	  			(answerI == JOptionPane.OK_OPTION) );
+  			    					}
+  			    				else // Informing only.
+  				    				JOptionPane.showMessageDialog(
+  			    						null, // No parent component. 
+  			                outString,
+  			                "Infogora Info",
+  			                JOptionPane.INFORMATION_MESSAGE
+  			                );
+  			    				}
+  			          } 
+  			        );
+		  		  }
     			theAppLog.info(
     					"displayUpdateApprovalDialogB(..) ends, value= " 
     					+ resultAtomicBoolean.get() );
