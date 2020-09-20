@@ -405,20 +405,36 @@ public class AppLog extends EpiThread
 				logB( TRACE, false, null, inString );
         }
   
+    public void debug(String conditionString, String inString)
+      /* This method writes a debug String inString to a log entry
+        but not to the console,
+        and only if the condition named by conditionString is enabled.
+        */
+      { 
+        if (isEnabledB(conditionString))
+          debug(inString);
+        }
+
+    private MapEpiNode logMapEpiNode= null;
+    
+    public boolean isEnabledB(String conditionString)
+      { 
+        return true; 
+        }
+
     public void debug(String inString)
       /* This method writes a debug String inString to a log entry
         but not to the console.
         It is tagged as for debugging.
         */
       { 
-    		if (debugEnabledB) 
-    			logB( DEBUG, consoleCopyModeB, null, inString );
+        if (debugEnabledB) 
+          logB( DEBUG, consoleCopyModeB, null, inString );
         }
 
     public void info(boolean debugB, String inString)
       /* This method writes an information String inString to a log entry
         but not to the console.
-        If theThrowable is not null then it displays that also.
         */
       { 
         info(debugB, null, inString); 

@@ -714,8 +714,8 @@ public class ConnectionManager
         of another peer.
         */
       {
-          theAppLog.debug("ConnectionManager.decodePeerMapEpiNodeV(..) begins, "
-            + "messageMapEpiNode=" + NL + "  " + messageMapEpiNode);
+          //// theAppLog.debug("ConnectionManager.decodePeerMapEpiNodeV(..) begins, "
+          ////   + "messageMapEpiNode=" + NL + "  " + messageMapEpiNode);
           MapEpiNode valueMapEpiNode;
         goReturn: {
           if (tryProcessingByTextStreamsB(messageMapEpiNode,senderUserIdString))
@@ -736,7 +736,7 @@ public class ConnectionManager
           theAppLog.debug("ConnectionManager.decodePeerMapEpiNodeV(..) ignoring"
             + NL + "  " + messageMapEpiNode); // Report message being ignored.
         } // goReturn:
-          theAppLog.debug("ConnectionManager.decodePeerMapEpiNodeV(..) ends.");
+          //// theAppLog.debug("ConnectionManager.decodePeerMapEpiNodeV(..) ends.");
           return;
         }
 
