@@ -84,19 +84,18 @@ public class Persistent
     private void updateFormatV()
       // This method is used for Persistent.txt file format changes, if any.
       {
+        theAppLog.setLogConditionMapV( // Do this for setting-dependent log entries.
+            rootMapEpiNode.getMapEpiNode("Logging"));
+
         theAppLog.info("Persistent.updateFormatV() begins.");
         
-        //// rootMapEpiNode.renameKeysV("oldKeyString", "newKeyString");
-        
         /// Disabled these when UnicasterIndexes kept disappearing.
-        //// renameKeysV("peers", "Unicasters");
-        //// renameKeysV("Unicasters","UnicasterIndexes");
-
+        renameKeysV("peers", "Unicasters");
+        renameKeysV("Unicasters","UnicasterIndexes");
+        /// This have always been enabled.
         renameKeysV("PeerIdentity", "OwnerId");
         renameKeysV("OwnerId","UserId");
-
         renameKeysV("NormalPort","Port");
-
         
         theAppLog.info("Persistent.updateFormatV() ends.");
         }
@@ -160,10 +159,10 @@ public class Persistent
       ///enh Generalize this to put lists last in all MapEpiNodes.
       */
     {
-      // Make certain UnicasterIndexes are last when written by get and put.
+      /// This done to put UnicasterIndexes last, done by get and put.
       /// Disabled these when UnicasterIndexes kept disappearing.
-      //// EpiNode theEpiNode= rootMapEpiNode.removeEpiNode("UnicasterIndexes");
-      //// rootMapEpiNode.putV("UnicasterIndexes",theEpiNode);
+      /// EpiNode theEpiNode= rootMapEpiNode.removeEpiNode("UnicasterIndexes");
+      /// rootMapEpiNode.putV("UnicasterIndexes",theEpiNode);
       
       storeEpiNodeDataV(rootMapEpiNode, "PersistentEpiNode.txt"); // Write EpiNode data.
       }

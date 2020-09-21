@@ -417,9 +417,23 @@ public class AppLog extends EpiThread
 
     private MapEpiNode logMapEpiNode= null;
     
-    public boolean isEnabledB(String conditionString)
+    public synchronized void setLogConditionMapV(MapEpiNode logMapEpiNode)
+      /* Used to define the MapEpiNode which stores log conditions. */
       { 
-        return true; 
+        this.logMapEpiNode= logMapEpiNode;
+        }
+    
+    public synchronized boolean isEnabledB(String conditionString)
+      /* Returns true if the log condition specified by conditionString 
+       * is true.
+       * Returns false otherwise.
+       */
+      { 
+        boolean resultB= false; // Assume default result of logging disabled.
+        if (null != logMapEpiNode) // If logging conditions map defined
+          resultB= // override result with value from map. 
+            logMapEpiNode.isTrueB(conditionString);
+        return resultB; // Return condition. 
         }
 
     public void debug(String inString)
@@ -752,8 +766,6 @@ public class AppLog extends EpiThread
           aString+= theThrowable;
         	}
         
-        //// aString+= NL; //...and a final line terminator.
-
       	appendToOpenFileV(aString);  // Append it to log file.
         
    	  	if (consoleCopyEntryB || consoleCopyModeB) // Append to console if called for... 
