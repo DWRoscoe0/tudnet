@@ -223,7 +223,7 @@ public class UnicasterManager
             break endLoop; // There are no more peers, so exit loop.
         endPeer: {
           MapEpiNode scanMapEpiNode= scanPeersCursor.getSelectedMapEpiNode();
-          if (! scanMapEpiNode.testB("isConnected")) // If this peer not connected
+          if (! scanMapEpiNode.isTrueB("isConnected")) // If this peer not connected
             break endPeer; // end this peer to try next one.
           String scanUserIdString= scanMapEpiNode.getString(Config.userIdString);
           if (! userIdString.equals(scanUserIdString))// If IDs don't match

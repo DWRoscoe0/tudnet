@@ -128,7 +128,7 @@ public class Persistent
                 FileOps.makeRelativeToAppFolderFile( fileString ),"r");
             theRandomAccessInputStream= 
                 new RandomFileInputStream(theRandomAccessFile);
-            resultMapEpiNode= MapEpiNode.tryBlockMapEpiNode(theRandomAccessInputStream, 0 );
+            resultMapEpiNode= MapEpiNode.getBlockMapEpiNode(theRandomAccessInputStream, 0 );
             } 
           catch (FileNotFoundException theFileNotFoundException) { 
             theAppLog.warning("Persistent.loadEpiNodeDataV(..)"+theFileNotFoundException);

@@ -243,7 +243,7 @@ public class LinkedMachineState
           {
             MapEpiNode theMapEpiNode= thePeersCursor.getSelectedMapEpiNode();
             if (tryReceivingHelloB(this)) { // Connect requested from remote peer.
-              if (theMapEpiNode.testB("ignorePeer"))
+              if (theMapEpiNode.isTrueB("ignorePeer"))
                 theAppLog.info("LinkedMachineState.onInputsToReturnFalseV() ignorePeer:true.");
                 else
                 {

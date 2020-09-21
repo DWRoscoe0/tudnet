@@ -282,8 +282,8 @@ public class TextStream2
             int endOffset= lineElement.getEndOffset();
             String lineString= thePlainDocument.getText(
                 startOffset,endOffset-startOffset-1);
-            theAppLog.debug(
-                "TextStream2.writeAllLineElementsV(.) String=" + lineString);
+            // theAppLog.debug(
+            //     "TextStream2.writeAllLineElementsV(.) String=" + lineString);
             theFileWriter.write(lineString); // Output one line of text.
             theFileWriter.write(NL); // Write line terminator.
             }

@@ -87,7 +87,7 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
     {
       endPeer: {
         theAppLog.appendToFileV("(peer-Stream2?)"); // Log that consideration.
-        if (! peerMapEpiNode.testB("isConnected")) // This peer is not connected
+        if (! peerMapEpiNode.isTrueB("isConnected")) // This peer is not connected
           break endPeer; // so end this peer to try next peer.
         String peerIPString= peerMapEpiNode.getString("IP");
         String peerPortString= peerMapEpiNode.getString("Port");
@@ -149,7 +149,7 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
         theAppLog.appendToFileV("(stream2?)"); // Log that peer is being considered.
       endPeer: {
         MapEpiNode scanMapEpiNode= scanPeersCursor.getSelectedMapEpiNode();
-        if (! scanMapEpiNode.testB("isConnected")) // This peer is not connected
+        if (! scanMapEpiNode.isTrueB("isConnected")) // This peer is not connected
           break endPeer; // so end this peer to try next peer.
         String peerIPString= scanMapEpiNode.getString("IP");
         String peerPortString= scanMapEpiNode.getString("Port");

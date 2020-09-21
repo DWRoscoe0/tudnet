@@ -170,7 +170,7 @@ public class TextStreams1 extends SimplerListWithMap<String,TextStream1> {
         theAppLog.appendToFileV("(stream?)"); // Log that peer is being considered.
         MapEpiNode scanMapEpiNode= scanPeersCursor.getSelectedMapEpiNode();
         //// if (! scanPeersCursor.testB("isConnected")) // This peer is not connected 
-        if (! scanMapEpiNode.testB("isConnected")) // This peer is not connected
+        if (! scanMapEpiNode.isTrueB("isConnected")) // This peer is not connected
           continue peerLoop; // so loop to try next peer.
         //// String peerIPString= scanPeersCursor.getFieldString("IP");
         String peerIPString= scanMapEpiNode.getString("IP");

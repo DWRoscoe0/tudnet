@@ -154,23 +154,31 @@ public abstract class EpiNode
     /* This method tries to parse an EpiNode from theRandomAccessInputStream.
       It looks for the block aka indented flow syntax.
       indentI is the minimum indentation level for nested structures, 
-      like maps. 
+      such as maps, in case there are any. 
       
-      This method returns the node if the parse is successful, null otherwise.
+      This method returns the EpiNode if the parse is successful, null otherwise.
       It tries parsing node types in the following order:
       * ScalarEpiNode
-      * MapEpiNode (to be added)
-      This method does not support sequences and map keys may be scalars only.
+      * MapEpiNode
+      This method does not support sequences, and map keys must be scalars only.
       */
     {
-        EpiNode resultEpiNode= null; 
+        EpiNode resultEpiNode= null;
+
       toReturn: {
+
         resultEpiNode= 
             ScalarEpiNode.tryScalarEpiNode(theRandomAccessInputStream);
         if (resultEpiNode != null) break toReturn;
-        resultEpiNode= MapEpiNode.tryBlockMapEpiNode(
+        
+        //// resultEpiNode= MapEpiNode.tryBlockMapEpiNode(
+        ////     theRandomAccessInputStream, minIndentI);
+
+        resultEpiNode= MapEpiNode.getBlockMapEpiNode(
             theRandomAccessInputStream, minIndentI);
+
       } // toReturn:
+
         return resultEpiNode;
       }
         
@@ -801,6 +809,20 @@ class MapEpiNode extends EpiNode
         return resultLinkedHashMap;
       }
 
+    public static MapEpiNode getBlockMapEpiNode( 
+        RandomAccessInputStream theRandomAccessInputStream, int minIndentI ) 
+        throws IOException
+      /* This method is like tryBlockMapEpiNode(.) except instead of returning null,
+        it returns and empty MapEpiNode if it finds no map entries. 
+        */
+      { 
+        MapEpiNode resultMapEpiNode= // Try for a map with at least one entry. 
+            tryBlockMapEpiNode( theRandomAccessInputStream, minIndentI );
+        if (null == resultMapEpiNode) // If failure
+          resultMapEpiNode= new MapEpiNode(); // set result to be an empty map.
+        return resultMapEpiNode;
+        }
+
     public static MapEpiNode tryBlockMapEpiNode( 
         RandomAccessInputStream theRandomAccessInputStream, int minIndentI ) 
         throws IOException
@@ -825,7 +847,7 @@ class MapEpiNode extends EpiNode
             break toReturn; // then exit with failure.
           LinkedHashMap<EpiNode,EpiNode> theLinkedHashMap=
             tryBlockLinkedHashMap(theRandomAccessInputStream, mapEntryIndentI);
-              // Try parsing indented entries.
+              // Try parsing indented entries into a HashMap.
           if (theLinkedHashMap == null) // If no map entries parsed
             break toReturn; // then exit with failure.
           resultMapEpiNode= // We got everything needed so 
@@ -873,7 +895,7 @@ class MapEpiNode extends EpiNode
             trySpacesI(theRandomAccessInputStream); // Skip spaces.
             valueEpiNode=  // Try parsing value, possibly an indented map
                 EpiNode.tryBlockEpiNode(theRandomAccessInputStream,
-                    mapEntryIndentI+1); // using a nigher minimum indentation.
+                    mapEntryIndentI+1); // using a higher minimum indentation.
             if (valueEpiNode != null) // If got value, got complete entry.
               break toEndEntry;
           } // toNoEntry: Being here means unable to parse a map entry.
@@ -899,28 +921,31 @@ class MapEpiNode extends EpiNode
     private static int tryNewlineIndentationI(
         RandomAccessInputStream theRandomAccessInputStream, int minIndentI ) 
       throws IOException
-      /* This method tries to read past newlines and indentation characters
-        in theRandomAccessInputStream.
-        This method is usually called when a node boundary is expected.
-        If only newlines and indentation characters are seen,
-        and the indentation level after the final newline 
-        is at least minIndentI, then this method succeeds, and
-        it returns a number > 0 which is the new indentation level,
-        and the stream has been moved past all characters that were processed.
-        If this method fails then it returns -1 and 
-        the stream position is unchanged.
+      /* This method tries to skip past spaces, comments, newlines and 
+        indentation characters in theRandomAccessInputStream.
+        This method is called when the beginning of a new node is expected.
+        * If this method succeeds then:
+          * It means that at least one newline was processed and
+            the indentation level after the last newline at least minIndentI.
+          * It returns a number > 0 which is the new indentation level.
+          * The stream is moved past all characters that were processed.
+        * If this method fails then:
+          * It means that no newlines were seen or
+            the indentation level after the last newline was less than minIndentI.
+          * It returns -1.
+          * The stream position is unchanged.
         
         ///enh Modified to skip over comments?
         */
       {
           int firstStreamPositionI= theRandomAccessInputStream.getPositionI();
           int resultIndentI= -1;
-        loop: while(true) { // Process newlines and indentations.
+        loop: while(true) { // Skip all spaces, comments, newlines, and indentations.
           if (! tryEndLineI(theRandomAccessInputStream)) // If no end of line 
             break loop; // exit loop.
           while (tryEndLineI(theRandomAccessInputStream)) // Skip any extras
             ; // by doing nothing for each one.
-          resultIndentI= trySpacesI(theRandomAccessInputStream);
+          resultIndentI= trySpacesI(theRandomAccessInputStream); // Skip indentation.
         } // loop:
           if (resultIndentI < minIndentI) // If indentation too small
             { // restore stream position and return failure.
@@ -1321,14 +1346,53 @@ class MapEpiNode extends EpiNode
           return resultString;
         }
 
-    public boolean testB( String keyString )
+    /*  ////
+    public boolean isTrueB( String keyString )
       /* This method returns true if value of the field whose key is keyString
         is non-null "true", ignoring case, false otherwise.
-        ///org Rename to getB(.).
+        ///org Rename to getB(.)?
+        */
+    /*  ////
+      {
+        return getB(keyString,false);
+        //// String valueString= getString(keyString);
+        //// return Boolean.parseBoolean( valueString );
+        }
+    */  ////
+    
+    /*  //// This isn't needed if both isFalseB(.) and isTrueB(.) exist.
+    public boolean getB(String keyString, boolean defaultB)
+      /* This method returns the boolean value associated with keyString.
+        If there is no value or it is not a valid boolean value character sequence
+        then defaultB is returned.
+        */
+    /*  ////
+      {
+        boolean resultB= defaultB; // Assume default value.
+
+        if (defaultB) // if true is default, override if string value is false.
+          resultB= ! isFalseB(keyString);
+        else // if false is default, override if string value is true.
+          resultB= isTrueB(keyString);
+
+        return resultB;
+        }
+    */  ////
+
+    public boolean isTrueB(String keyString)
+      /* This method returns true if the String value associated with keyString
+        is a representation of true, false otherwise.
         */
       {
-        String valueString= getString(keyString);
-        return Boolean.parseBoolean( valueString );
+        return ("true".equalsIgnoreCase(getString(keyString)));
+        }
+
+    public boolean isFalseB(String keyString)
+      /* This method returns true if the String value associated with keyString
+        is a representation of false, false otherwise.
+        */
+      {
+        return ("false".equalsIgnoreCase(getString(keyString)));
         }
 
     public boolean testKeyForValueB(String keyString, String testValueString) 
