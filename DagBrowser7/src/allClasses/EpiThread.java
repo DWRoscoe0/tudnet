@@ -60,7 +60,8 @@ public class EpiThread
     public void startV()
       /* This method writes to the log and calls start().  */
       {
-      	theAppLog.info("EpiThread(" + getName() + ").startV(): starting.");
+      	theAppLog.debug("Threads",
+      	    "EpiThread.startV(): thread '" + getName() + "' starting.");
 
       	try { 
         	    start();
@@ -145,8 +146,9 @@ public class EpiThread
                   + ").joinV(): termination incomplete after time-out of " 
                   + Config.threadJoinTimeOutMsL + " ms.");
                 else
-                theAppLog.info("EpiThread(" + getName()  // Yes, report termination.
-                    + ").joinV(): termination complete.");
+                theAppLog.debug("Threads", // Yes, report termination."
+                  "EpiThread.joinV(): thread '" + getName() 
+                  + "' termination complete.");
               ; // Yes, being here means this's thread has terminated.
               waitLoopShouldTerminateB= true; // In either case, terminate wait loop.
               }

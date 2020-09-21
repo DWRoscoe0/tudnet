@@ -174,7 +174,8 @@ public class MetaFileManager {
         ?? This should probably be renamed to saveV().
         */
       { // finish()
-        theAppLog.info( "MetaFileManager.finish() begin.  This could take a while.");
+        theAppLog.debug("MetaFileManager",
+            "MetaFileManager.finish() begin.  This could take a while.");
 
         forcedLoadingEnabledB= true;  // Turn on forced loading.
 
@@ -199,7 +200,7 @@ public class MetaFileManager {
           theMetaRoot.getRootMetaNode( ) 
           );  // This file is what will be lazy-loaded during next run.
 
-        theAppLog.info( "MetaFileManager.finish() end.");
+        theAppLog.debug("MetaFileManager", "MetaFileManager.finish() end.");
         } // finish()
 
   public static class Finisher implements ShutdownerListener {
@@ -221,8 +222,8 @@ public class MetaFileManager {
         }
         
     public void doMyShutdown() {  // ShutdownerListener method.
-      theAppLog.info( 
-      		"MetaFileManager.Finisher.doMyShutdown() calling finish()"
+      theAppLog.debug("MetaFileManager",
+          "MetaFileManager.Finisher.doMyShutdown() calling finish()"
       		);
 
       theMetaFileManager.finish(   // Finishing MetaFile operations.

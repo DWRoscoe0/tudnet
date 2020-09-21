@@ -87,7 +87,7 @@ public class Persistent
         theAppLog.setLogConditionMapV( // Do this for setting-dependent log entries.
             rootMapEpiNode.getMapEpiNode("Logging"));
 
-        theAppLog.info("Persistent.updateFormatV() begins.");
+        theAppLog.debug("Persistent","Persistent.updateFormatV() begins.");
         
         /// Disabled these when UnicasterIndexes kept disappearing.
         renameKeysV("peers", "Unicasters");
@@ -97,7 +97,7 @@ public class Persistent
         renameKeysV("OwnerId","UserId");
         renameKeysV("NormalPort","Port");
         
-        theAppLog.info("Persistent.updateFormatV() ends.");
+        theAppLog.debug("Persistent","Persistent.updateFormatV() ends.");
         }
 
     private void renameKeysV(String oldKeyString, String newKeyString)
@@ -106,7 +106,7 @@ public class Persistent
         It is meant to be used for Persistent.txt file format changes.
         */
       { 
-        theAppLog.debug( "Persistent.renameKeys(\""
+        theAppLog.debug("Persistent","Persistent.renameKeys(\""
           + oldKeyString + "\",\"" + newKeyString 
           + "\") called.");
         rootMapEpiNode.renameKeysV(oldKeyString, newKeyString);
@@ -180,7 +180,7 @@ public class Persistent
         but it does no harm.
         */
       {
-        theAppLog.info("Persistent.storeEpiNodeDataV(..) begins.");
+        theAppLog.debug("Persistent","Persistent.storeEpiNodeDataV(..) begins.");
         FileOutputStream theFileOutputStream= null;
         try {
             theFileOutputStream= 
@@ -204,7 +204,7 @@ public class Persistent
               theAppLog.exception("Persistent.storeEpiNodeDataV(..)", theException);
               }
             }
-        theAppLog.info("Persistent.storeEpiNodeDataV(..) ends.");
+        theAppLog.debug("Persistent","Persistent.storeEpiNodeDataV(..) ends.");
         }
   
     public void writingCommentLineV( 

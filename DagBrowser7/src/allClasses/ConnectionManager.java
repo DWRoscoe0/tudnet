@@ -268,7 +268,7 @@ public class ConnectionManager
             )
           return;
         
-      	theAppLog.info("ConnectionManager.restartPreviousUnicastersV() begins.");
+      	theAppLog.debug("CM","ConnectionManager.restartPreviousUnicastersV() begins.");
 	    	PeersCursor thePeersCursor= // Used for iteration. 
 	    	    PeersCursor.makeOnFirstEntryPeersCursor( thePersistent );
 			  while // Process all peers in peer list. 
@@ -277,7 +277,7 @@ public class ConnectionManager
             tryToStartUnicasterV(thePeersCursor);
 					    thePeersCursor.nextKeyString(); // Advance cursor.
 					  }
-      	theAppLog.info("ConnectionManager.restartPreviousUnicastersV() ends.");
+      	theAppLog.debug("CM","ConnectionManager.restartPreviousUnicastersV() ends.");
 				}
 
     private void tryToStartUnicasterV(PeersCursor thePeersCursor)
@@ -337,7 +337,7 @@ public class ConnectionManager
     	  if // Preparing socket and dependencies if socket not working.
     	    ( EpiDatagramSocket.isNullOrClosedB( unconnectedDatagramSocket ) )
 	    	  preparingAll: { // Preparing socket and dependencies.
-            theAppLog.info(
+            theAppLog.debug("CM",
                 "ConnectionManager.maintainingDatagramSocketAndDependentThreadsV()"
                 + " has begun the renewal of threads and sockets.");
         	  stoppingSenderThreadV();
@@ -353,7 +353,7 @@ public class ConnectionManager
     	  	  	} // preparingSocketLoop:
             startingUnicastReceiverThreadV();
 	      	  startingSenderThreadV();
-            theAppLog.info(
+            theAppLog.debug("CM",
                 "ConnectionManager.maintainingDatagramSocketAndDependentThreadsV()"
                 + " has finished the renewal of threads and sockets.");
 	    	  	} // preparingAll: 
@@ -454,7 +454,7 @@ public class ConnectionManager
 
           if (theMessageString == null) break;  // Exit if no more messages
           
-          theAppLog.debug(
+          theAppLog.debug("CM",
             "ConnectionManager.processingLocalStringMessagesB()" + theMessageString);
           theUnicasterManager.passToUnicastersV( theMessageString ); ///rev disabled for testing.
 
@@ -472,7 +472,7 @@ public class ConnectionManager
         closing the associated socket.
         */
 	    {
-        theAppLog.info( // Note this special situation in log.
+        theAppLog.debug("CM", // Note this special situation in log.
             "ConnectionManager.stoppingUnicastReceiverThreadV()."
             + NL + "  This may take several seconds for Socket to close.");
         EpiDatagramSocket.closeIfNotNullV( // Close socket to allow termination.
@@ -496,7 +496,7 @@ public class ConnectionManager
     	  if // Preparing socket and dependencies if socket not working.
     	    ( EpiDatagramSocket.isNullOrClosedB( theMulticastSocket ) )
 	    	  preparingAll: { // Building or rebuilding socket and dependencies. 
-            theAppLog.debug(
+            theAppLog.debug("CM",
                 "ConnectionManager.maintainingMulticastSocketAndDependentThreadsV() "
                 + " has begun the renewal of thread and socket.");
             stoppingMulticasterThreadV();
@@ -509,11 +509,11 @@ public class ConnectionManager
     	        EpiThread.interruptibleSleepB(  // Don't hog CPU in error loop.
     	            Config.errorRetryPause1000MsL
     	            );
-              theAppLog.debug(
+              theAppLog.debug("CM",
                   "maintainingMulticastSocketAndDependentThreadsV() loopng.");
     	  	  	} // preparingSocketLoop:
             startingMulticasterThreadV();
-            theAppLog.info(
+            theAppLog.debug("CM",
                 "ConnectionManager.maintainingMulticastSocketAndDependentThreadsV()"
                 + " has finished the renewal of thread and socket.");
 	    	  	} // preparingAll: 
@@ -545,7 +545,7 @@ public class ConnectionManager
 		      ,multicasterToConnectionManagerNetcasterQueue // ...receive queue,...
 		      ,multicastInetAddress
 		      );
-        theAppLog.debug(
+        theAppLog.debug("CM",
             "startingMulticasterThreadV() adding theMulticaster and starting thread.");
     		addAtEndB( theMulticaster );  // Add to DataNode List.
         multicasterEpiThread= AppGUIFactory.makeEpiThread( 
@@ -577,7 +577,7 @@ public class ConnectionManager
 	      		);
           // */  ///rev
   				if (! theUnicaster.isConnectedB()) { // Become connected if not already.
-  	        theAppLog.info(
+  	        theAppLog.debug("CM",
   	            "processingMulticasterSockPacketsB() connecting to peer.");
   				  theUnicaster.connectToPeerV();
   				  }
@@ -621,7 +621,7 @@ public class ConnectionManager
 		      		theNetcasterPacket 
 		      		);
         if (! theUnicaster.isConnectedB()) { // Become connected if not already.
-          theAppLog.info(
+          theAppLog.debug("CM",
               "passToUnicasterV() connecting to peer.");
           theUnicaster.connectToPeerV();
           }
@@ -669,7 +669,7 @@ public class ConnectionManager
       /* This method process all MapEpiNode messages about peer state changes.
         */
       {
-        /// theAppLog.debug("ConnectionManager.processPeerDataMessagesV() called.");
+        /// theAppLog.debug("CM","ConnectionManager.processPeerDataMessagesV() called.");
         MapEpiNode messageMapEpiNode;
         while (true) {  // Process all messages.
           messageMapEpiNode= // Try getting next message from queue.
@@ -714,7 +714,7 @@ public class ConnectionManager
         of another peer.
         */
       {
-          theAppLog.debug("CMDecode",
+          theAppLog.debug("CM",
             "ConnectionManager.decodePeerMapEpiNodeV(..) begins, "
             + "messageMapEpiNode=" + NL + "  " + messageMapEpiNode);
           MapEpiNode valueMapEpiNode;
@@ -737,7 +737,7 @@ public class ConnectionManager
           theAppLog.debug("ConnectionManager.decodePeerMapEpiNodeV(..) ignoring"
             + NL + "  " + messageMapEpiNode); // Report message being ignored.
         } // goReturn:
-          theAppLog.debug("CMDecode",
+          theAppLog.debug("CM",
               "ConnectionManager.decodePeerMapEpiNodeV(..) ends.");
           return;
         }
@@ -752,7 +752,7 @@ public class ConnectionManager
         This implements a promiscuous connection behavior.
         */
       {
-        theAppLog.debug("ConnectionManager.processRemoteStateV(..) begins."
+        theAppLog.debug("CM","ConnectionManager.processRemoteStateV(..) begins."
             + NL + "  subjectPeerMapEpiNode=" + subjectPeerMapEpiNode);
         toReturn: {
           if // Exit if same IDs, meaning subject peer is actually local peer
@@ -779,7 +779,7 @@ public class ConnectionManager
           if (theMapEpiNode.isTrueB("isConnected")) // We're already connected to this peer
             break toReturn; // so exit.
 
-          theAppLog.debug("ConnectionManager.processRemoteStateV(MapEpiNode) "
+          theAppLog.debug("CM","ConnectionManager.processRemoteStateV(MapEpiNode) "
             + "connecting to subject peer!!!!!!!!!!!");
           //// String peerIPString= thePeersCursor.getFieldString("IP");
           String peerIPString= theMapEpiNode.getString("IP");
@@ -792,7 +792,7 @@ public class ConnectionManager
               theUnicasterManager.getOrBuildAddAndStartUnicaster(theIPAndPort,theIdString);
           theUnicaster.connectToPeerV(); // Message state-machine to connect.
         } // toReturn:
-          theAppLog.debug("ConnectionManager.processRemoteStateV(..) ends.");
+          theAppLog.debug("CM","ConnectionManager.processRemoteStateV(..) ends.");
           return;
         }
 
@@ -801,7 +801,7 @@ public class ConnectionManager
         received in a LocalNewState message about a subject peer. 
         */
       {
-        theAppLog.debug("ConnectionManager.processLocalNewStateV(.) begins.");
+        theAppLog.debug("CM","ConnectionManager.processLocalNewStateV(.) begins.");
         notifyPeersAboutPeerV(subjectPeerMapEpiNode); // To our peers,
           // send information about the status change of the subject peer.
         
@@ -811,7 +811,7 @@ public class ConnectionManager
         //// if (subjectPeerMapEpiNode.testB("isConnected")) // Peer just connected.
         theTextStreams2.notifyNewConnectionAboutTextStreamsV(
             subjectPeerMapEpiNode); // Update it about TextStreams2.
-        theAppLog.debug("ConnectionManager.processLocalNewStateV(.) ends.");
+        theAppLog.debug("CM","ConnectionManager.processLocalNewStateV(.) ends.");
         }
 
     private void notifyPeersAboutPeerV(MapEpiNode messagePeerMapEpiNode)
@@ -819,14 +819,14 @@ public class ConnectionManager
         the changed connection status of the peer described by messagePeerMapEpiNode.
         */
       {
-          theAppLog.debug( "ConnectionManager.notifyPeersAboutPeerV() called.");
+          theAppLog.debug("CM","ConnectionManager.notifyPeersAboutPeerV() called.");
           PeersCursor scanPeersCursor= // Used for iteration. 
               PeersCursor.makeOnNoEntryPeersCursor( thePersistent );
         peerLoop: while (true) { // Process all peers in my peer list. 
           if (scanPeersCursor.nextKeyString().isEmpty() ) // Try getting next scan peer. 
             break peerLoop; // There are no more peers, so exit loop.
           MapEpiNode scanMapEpiNode= scanPeersCursor.getSelectedMapEpiNode();
-          theAppLog.appendToFileV("(to-peers?)"); // Log that peer is being considered.
+          theAppLog.appendToFileV("[npsap?]"); // Log that peer is being considered.
           //// if (! scanPeersCursor.testB("isConnected")) // This peer is not connected 
           if (! scanMapEpiNode.isTrueB("isConnected")) // This peer is not connected
             continue peerLoop; // so loop to try next peer.
@@ -842,13 +842,13 @@ public class ConnectionManager
                 "ConnectionManager.notifyPeersAboutPeerV() non-existent Unicaster.");
             continue peerLoop; // so loop to try next peer.
             }
-          theAppLog.appendToFileV("(YES!)"); // Log that we're sending data.
+          theAppLog.appendToFileV("[YES]"); // Log that we're sending data.
           scanUnicaster.putV( // Queue scan peer data to Unicaster of scan peer
             MapEpiNode.makeSingleEntryMapEpiNode( // wrapped in a RemoteNewState map.
               "RemoteNewState", messagePeerMapEpiNode)
             );
         } // peerLoop: 
-          theAppLog.appendToFileV("(end of peers)"+NL); // Mark end of list with new line.
+          theAppLog.appendToFileV("[end]"); // Mark end of list.
         }
 
     private void notifyPeerAboutPeersV(MapEpiNode messagePeerMapEpiNode)
@@ -859,7 +859,7 @@ public class ConnectionManager
         */
       {
         toReturn: {
-          theAppLog.debug("ConnectionManager.notifyPeerAboutPeersV() called.");
+          theAppLog.debug("CM","ConnectionManager.notifyPeerAboutPeersV() called.");
           if (! messagePeerMapEpiNode.isTrueB("isConnected")) // Message peer not connected 
             break toReturn; // so end processing.
           String theIPString= messagePeerMapEpiNode.getString("IP");
@@ -875,17 +875,17 @@ public class ConnectionManager
           if (scanPeersCursor.nextKeyString().isEmpty() ) // Try getting next scan peer. 
             break peerLoop; // There are no more peers, so exit loop.
           MapEpiNode scanMapEpiNode= scanPeersCursor.getSelectedMapEpiNode();
-          theAppLog.appendToFileV("(to-peer?)"); // Log that we're considering peer.
+          theAppLog.appendToFileV("[npaps?]"); // Log that we're considering peer.
           //// if (! scanPeersCursor.testB("isConnected")) // This peer is not connected 
           if (! scanMapEpiNode.isTrueB("isConnected")) // This peer is not connected
             continue peerLoop; // so loop to try next peer.
-          theAppLog.appendToFileV("(YES!)"); // Log that we're sending data.
+          theAppLog.appendToFileV("[YES]"); // Log that we're sending data.
           messageUnicaster.putV( // Queue peer data for sending
               MapEpiNode.makeSingleEntryMapEpiNode( // wrapped in another map.
                 "RemoteCurrentState", scanPeersCursor.getSelectedMapEpiNode())
               );
         } // peerLoop: 
-          theAppLog.appendToFileV("(end of peers)"+NL); // Mark end of list with new line.
+          theAppLog.appendToFileV("[end]"); // Mark end of list.
         } // toReturn:
           return;
         }

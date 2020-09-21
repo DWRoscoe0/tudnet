@@ -32,10 +32,10 @@ import static allClasses.SystemSettings.NL;
 
   This class presently uses multicast for only peer service discovery.
   Presently this is done with 2 types of packets:
-  * A DISCOVERY packet is multicast periodically to request
+  * An MC-QUERY packet is multicast periodically to request
     the IDs of peers on the LAN. 
-  * An ALIVE packets are multicast in response to
-    to receipt of a DISCOVERY packet.
+  * An MC-ALIVE packets are multicast in response to
+    to receipt of an MC-QUERY packet.
 
   After construction and initialization, 
   packets processed by this class pass through the following Queues:
@@ -61,14 +61,14 @@ import static allClasses.SystemSettings.NL;
 	     * doing in random time slot divided by number of nodes
 
   	///enh Make more like Simple Service Discovery Protocol (SSDP).
-  	   = ALIVE sent on device-app startup and end of sleep mode. 
+  	   = MC-ALIVE sent on device-app startup and end of sleep mode. 
   	   = BYEBYE sent on shutdown, entering sleep mode, or any service termination.
   	   Because nodes are peers, both clients and servers,
   	   the above two should be enough to function.
-  	   = DISCOVERY, might be needed, even if above 2 are used for cases when
+  	   = MC-QUERY, might be needed, even if above 2 are used for cases when
   	     * a neighbor disappears and a replacement is needed, 
   	       unless new neighbors can be found in cache.
-  	     * an ALIVE message was lost.
+  	     * an MC-ALIVE message was lost.
   	   ? Add a time parameter to query message to allow
   	     receiving only updates since the node's most recent BYEBYE.
   	   ? Storms will not be a problem because
@@ -240,7 +240,7 @@ public class Multicaster
             for consumption by the main multicaster thread.
             */
           {
-        		theAppLog.info("run() begin.");
+        		theAppLog.info("run() begins.");
 	          try { // Operations that might produce an IOException.
 	            while  // Receiving and queuing packets unless termination is
 	              ( ! EpiThread.testInterruptB() ) // requested.
@@ -270,7 +270,7 @@ public class Multicaster
 				  					"run() IOException: ", e
 				  					);
 	            }
-        		theAppLog.info("run() end.");
+            theAppLog.info("run() ends.");
             }
 
         } // MulticastReceiver
@@ -316,7 +316,7 @@ public class Multicaster
                 	( ! EpiThread.testInterruptB() )
     	            { // Send and receive multicast packets.
     	              try {
-    	                theEpiOutputStreamO.writeV( "{DISCOVERY}" ); // Writing query.
+    	                theEpiOutputStreamO.writeV( "{MC-QUERY}" ); // Writing query.
     	                theEpiOutputStreamO.flush(); // Sending it.
     	                receivingPacketsV( ); // Receiving packets until done.
     	                }
@@ -333,7 +333,7 @@ public class Multicaster
     	          stoppingMulticastReceiverThreadV();
     	          }
             for(int i=3; i>0; i--){ // Say goodbye 3 times...
-              theEpiOutputStreamO.writeV( "{MULTICAST-GOODBYE}" ); // Writing goodbye.
+              theEpiOutputStreamO.writeV( "{MC-GOODBYE}" ); // Writing goodbye.
               theEpiOutputStreamO.flush(); // Sending it.
               }
             }
@@ -378,14 +378,14 @@ public class Multicaster
         It reports all received packets to the ConnectionManager.
         */
       {
-        theAppLog.debug("receivingPacketsV() begins.");
+        theAppLog.debug("MC","receivingPacketsV() begins.");
     		long delayMsL= // Minimum time between multicasts. 
     				// 3600000; // 1 hour for testing to disable multicasting.
     				Config.multicastPeriodMsL;
     		LockAndSignal.Input theInput;  // Type of input that ends waits.
         processorLoop: while (true) { // Processing messages until exit request.
         	{ // Processing messages or exiting.
-            /// theAppLog.debug("receivingPacketsV() at processorLoop beginning.");
+            /// theAppLog.debug("MC","receivingPacketsV() at processorLoop beginning.");
         	  long baseTimeMsL= System.currentTimeMillis();
           	theInput=  // Awaiting next input.
           	  waitingForSubnotificationOrIntervalOrInterruptE(
@@ -400,16 +400,16 @@ public class Multicaster
 	            	messageDecoder: {
 	            		String inString=
 	            				theEpiInputStreamI.readAString(); // Reading message.
-                  theAppLog.debug("receivingPacketsV() decoding:"+ inString);
-	            		if (inString.equals( "DISCOVERY" )) // Handling query, maybe.
+                  theAppLog.debug("MC","receivingPacketsV() decoding:"+ inString);
+	            		if (inString.equals( "MC-QUERY" )) // Handling query, maybe.
 			        			{ 
-                      theEpiOutputStreamO.writeV( "{ALIVE}" ); // Writing response.
+                      theEpiOutputStreamO.writeV( "{MC-ALIVE}" ); // Writing response.
                       theEpiOutputStreamO.flush(); // Sending it.
 			        			  processingPossibleNewUnicasterV(); 
 			        			  multicastActivityLoggerV(true);
                       break messageDecoder;
 				              }
-			        		if (inString.equals( "ALIVE" )) // Handling response, maybe.
+			        		if (inString.equals( "MC-ALIVE" )) // Handling response, maybe.
 				            { processingPossibleNewUnicasterV(); 
   				            multicastActivityLoggerV(true);
                       break messageDecoder; 
@@ -425,10 +425,10 @@ public class Multicaster
 		            		);
 		            break inputDecoder;
 	            } // inputDecoder: 
-          	  /// theAppLog.debug("receivingPacketsV() have exited inputDecoder.");
+          	  /// theAppLog.debug("MC","receivingPacketsV() have exited inputDecoder.");
             } // Processing packets until exit.
         	} // processorLoop:  // Processing packet or exiting.
-        theAppLog.debug("receivingPacketsV() ends.");
+        theAppLog.debug("MC","receivingPacketsV() ends.");
         }
 
     private void processingPossibleNewUnicasterV() throws IOException
@@ -462,7 +462,7 @@ public class Multicaster
 		    theMulticastSocket.setLoopbackMode( true );  // Disable loopback.
 		    theMulticastSocket.setTimeToLive( ttl );
 		    theMulticastSocket.setNetworkInterface(gatewayNetworkInterface);
-        theAppLog.info(
+        theAppLog.debug("MC",
             "initializeWithIOExceptionV()" + NL
             + "  gatewayNetworkInterface= " + gatewayNetworkInterface 
             );
@@ -498,7 +498,7 @@ public class Multicaster
         } catch (Exception e) {
           theAppLog.exception( "determineGatewayNetworkInterfaceV(): ", e);
         }
-        theAppLog.info(
+        theAppLog.debug("MC",
             "determineGatewayNetworkInterfaceV()" + NL + "  "
             + "theInetAddress= " + theInetAddress 
             + ", theNetworkInterface= " + theNetworkInterface 
@@ -512,6 +512,7 @@ public class Multicaster
       /* This method logs when bidirectional multicast communication
         either begins or ends.  Activity ending is defined as
         no received multicast packets for the multicast period.
+        This is considered an anomaly.
        */
     	{
     	  if ( multicastActiveB != activeB ) // Has activity changed? 

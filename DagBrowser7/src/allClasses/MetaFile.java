@@ -271,14 +271,14 @@ public class MetaFile { // For app's meta-data files.
         or the one which was read.
         */
       {
-	      theAppLog.info("MetaFile.rwFileMetaNode(.) begins, "
+	      theAppLog.debug("MetaFile","MetaFile.rwFileMetaNode(.) begins, "
 	      		+theMode+", "+getRwStructure());
         if // Do nothing or process depending on conditions.
           ( ( theMode == MetaFileManager.Mode.WRITING ) &&
             ( inRootMetaNode == null )
             ) 
 	        { // Do nothing because there is nothing to write.
-        		theAppLog.info("MetaFile.rwFileMetaNode(.) null operation.");
+        		theAppLog.debug("MetaFile.rwFileMetaNode(.) null operation.");
 	          }
           else
           { // Read or write.
@@ -299,7 +299,7 @@ public class MetaFile { // For app's meta-data files.
                 );
             } // Read or write process.
 
-	      theAppLog.info("MetaFile.rwFileMetaNode(.) ends, linesI="+linesI);
+	      theAppLog.debug("MetaFile","MetaFile.rwFileMetaNode(.) ends, linesI="+linesI);
         return inRootMetaNode;  // Return the new or old root.
         }
 

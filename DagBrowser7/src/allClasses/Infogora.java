@@ -295,7 +295,7 @@ class Infogora  // The root of this app.
               int priorityI= t.getPriority();
               String typeString= t.isDaemon() ? "Daemon" : "Normal";
               String nameString= t.getName();
-              theAppLog.getPrintWriter().printf("    %-13s %2d  %s  %-25s  " + NL, 
+              theAppLog.getPrintWriter().printf(NL+ "    %-13s %2d  %s  %-25s  ", 
                   threadState, priorityI, typeString, nameString);
               }
           }

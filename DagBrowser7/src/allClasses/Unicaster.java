@@ -264,19 +264,19 @@ public class Unicaster
         ///fix  Legitimate input is sometimes not consumed!
 		    */
 			{
-	  		theAppLog.info("runLoop() begins.");
+	  		theAppLog.debug("UC","runLoop() begins.");
         doOnInputsB(); // This first call guarantees that state machine timers start.
 	      processingLoop: while (true) {
 	        if (EpiThread.testInterruptB()) break processingLoop; // Exit if requested.
-          // theAppLog.info("runLoop() before processPacketStreamInputV().");
+          // theAppLog.debug("UC","runLoop() before processPacketStreamInputV().");
           processPacketStreamInputV();
-          // theAppLog.info("runLoop() before processNotificationStringInputV().");
+          // theAppLog.debug("UC","runLoop() before processNotificationStringInputV().");
           processNotificationStringInputV();
           processNotificationMapEpiNodeInputV();
-          // theAppLog.info("runLoop() before waitingForInterruptOrNotificationE().");
+          // theAppLog.debug("UC","runLoop() before waitingForInterruptOrNotificationE().");
           theLockAndSignal.waitingForInterruptOrNotificationE();
 	      	} // processingLoop:
-  			theAppLog.info("runLoop() loop interrupted, stopping state machine.");
+  			theAppLog.debug("UC","runLoop() loop interrupted, stopping state machine.");
   			// ? theTimer.cancel(); // Cancel all Timer events for debug tracing, ///dbg
         while (doOnInputsB()) ; // Cycle state machine until nothing remains to be done.
 				}
@@ -331,7 +331,7 @@ public class Unicaster
     public void connectToPeerV()
       // This method tells the state-machine to connect.
       {
-        theAppLog.info("Unicaster.connectToPeerV() executing, queuing 'Connect'.");
+        theAppLog.debug("UC","Unicaster.connectToPeerV() executing, queuing 'Connect'.");
         unicasterNotifyingQueueOfStrings.put("Connect");
         }
     
@@ -354,20 +354,20 @@ public class Unicaster
             break toConsumeInput; // Finished up.
             }
           { // Log any other input and log OrState states. 
-            /// theAppLog.info("processUnprocessedInputV() input= "+offeredString);
+            /// theAppLog.debug("UC","processUnprocessedInputV() input= "+offeredString);
             /// logOrSubstatesB("processUnprocessedInputV()"); // Log active sub-states.
             }
           MapEpiNode theMapEpiNode= // Get any left-over input as a MapEpiNode.
               theEpiInputStreamI.tryMapEpiNode();
           if (theMapEpiNode == null) break toConsumeInput; // Clean up if no MapEpiNode.
-          /// theAppLog.info( // Log the EpiNode.
+          /// theAppLog.debug("UC", // Log the EpiNode.
           ///    "processUnprocessedInputV() EpiNode= " + theMapEpiNode.toString());
           if (isAboutThisUnicasterB(theMapEpiNode)) { // Ignore if about this Unicaster.
-            /// theAppLog.info(
+            /// theAppLog.debug("UC",
             ///     "processUnprocessedInputV() ignoring above data about this Unicaster.");
             break toConsumeInput; // Ignoring to prevent self-reference message storm.
             }
-          /// theAppLog.debug("UnicasterManager.processUnprocessedInputV(.) queuing "
+          /// theAppLog.debug("UC","UnicasterManager.processUnprocessedInputV(.) queuing "
           ///   + NL + "  " + theMapEpiNode);
           theConnectionManager.decodePeerMapEpiNodeV(
             theMapEpiNode,
@@ -423,13 +423,13 @@ public class Unicaster
 		    	String eventMessageString= theEpiInputStreamI.tryingToGetString();
 	      	if ( eventMessageString != null ) // There is an unprocessed message.
 		      	{ // Log and ignore the message.
-		  	    	theAppLog.info( 
+		  	    	theAppLog.debug( 
 		  	    			"Unicaster.onInputsV() unprocessed message: "
 		  	    			+ eventMessageString 
 		  	    			);
 			    		break process;
 		      		}
-	      	theAppLog.info( 
+	      	theAppLog.debug( 
   	    			"Unicaster.onInputsV() no message to process!"
   	    			+ eventMessageString 
   	    			);

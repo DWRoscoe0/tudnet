@@ -44,9 +44,9 @@ HELLO:
 GOODBYE:        # Signals end of connection.
  
   
-DISCOVERY:      # Multicast node discovery.
+MC-DISCOVERY:   # Multicast node discovery.
 
-ALIVE:          # Multicast node response.
+MC-ALIVE:       # Multicast node response.
 
-MULTICAST-GOODBYE: # Multicast end of connection. 
+MC-GOODBYE:     # Multicast end of connection. 
  

@@ -114,7 +114,7 @@ public class TextStream2
               "TextStream", // Type name but not entire name.
               peerIdentityString // key
               );
-          theAppLog.debug(
+          theAppLog.debug("TextStream2",
               "TextStream2.TextStream(.) called for "+peerIdentityString);
           this.thePersistent= thePersistent;
           Nulls.fastFailNullCheckT(theTextStreams2);
@@ -143,7 +143,7 @@ public class TextStream2
           the contents of the external text file whose name is fileString.
           */
         {
-          theAppLog.info("TextStream2.loadStreamV(..) begins.");
+          theAppLog.debug("TextStream2","TextStream2.loadStreamV(..) begins.");
           BufferedReader theBufferedReader= null; 
           try {
               thePlainDocument= new PlainDocument();
@@ -175,7 +175,7 @@ public class TextStream2
                 theAppLog.exception("TextStream2.loadStreamV(..)", theIOException);
                 }
               }
-          theAppLog.info("TextStream2.loadStreamV(..) ends.");
+          theAppLog.debug("TextStream2","TextStream2.loadStreamV(..) ends.");
           }
 
       public void requestNextTextFromAllSubscribersV()
@@ -189,7 +189,7 @@ public class TextStream2
          * This method is called when a viewer opens any non-local text stream.
          */
         {
-          theAppLog.debug(
+          theAppLog.debug("TextStream2",
               "TextStream2.requestNextTextFromAllSubscribersV() called.");
 
           // Notifiy all the regular subscribers.
@@ -239,7 +239,7 @@ public class TextStream2
           the external text file whose name is fileString.
           */
         {
-          theAppLog.info("TextStream2.storeDocumentV(..) begins.");
+          theAppLog.debug("TextStream2","TextStream2.storeDocumentV(..) begins.");
           FileWriter theFileWriter= null;
           thePlainDocument.readLock();
           try {
@@ -265,7 +265,7 @@ public class TextStream2
               thePlainDocument.readUnlock();
               }
           thePlainDocument= null; // Indicate document is no longer being viewed.
-          theAppLog.info("TextStream2.storeDocumentV(..) ends.");
+          theAppLog.debug("TextStream2","TextStream2.storeDocumentV(..) ends.");
           }
 
       private void writeAllLineElementsV(FileWriter theFileWriter)
@@ -282,7 +282,7 @@ public class TextStream2
             int endOffset= lineElement.getEndOffset();
             String lineString= thePlainDocument.getText(
                 startOffset,endOffset-startOffset-1);
-            // theAppLog.debug(
+            // theAppLog.debug("TextStream2",
             //     "TextStream2.writeAllLineElementsV(.) String=" + lineString);
             theFileWriter.write(lineString); // Output one line of text.
             theFileWriter.write(NL); // Write line terminator.
@@ -313,7 +313,7 @@ public class TextStream2
           DataTreeModel inDataTreeModel 
           )
         {
-          theAppLog.debug("TextStream2.getDataJComponent(.) called.");
+          theAppLog.debug("TextStream2","TextStream2.getDataJComponent(.) called.");
           JComponent resultJComponent= 
             new TextStream2Viewer( 
               inTreePath, 
@@ -432,7 +432,7 @@ public class TextStream2
            * even though it isn't necessary when it's called on the EDT.
           */
         {
-          theAppLog.debug(
+          theAppLog.debug("TextStream2",
               "TextStream2.processNewStreamStringV(.) String=" + textString);
 
           try { // Put text into document.

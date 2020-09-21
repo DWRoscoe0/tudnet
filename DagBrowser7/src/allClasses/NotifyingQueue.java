@@ -120,7 +120,7 @@ public class NotifyingQueue<E> // Queue inter-thread communication.
       {
         if ( size() >= logSizeLimitI ) { // Handle whether size limit exceeded.
           logSizeLimitI++;
-          theAppLog.info(
+          theAppLog.debug("NotifyingQueue",
               "NotifyingQueue<E>.put(E) growing queue to size "+logSizeLimitI
               + " for:" + NL + "  " + anE);
           }

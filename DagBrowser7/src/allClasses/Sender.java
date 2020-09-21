@@ -105,6 +105,8 @@ public class Sender // Uunicast and multicast sender thread.
         the thread will terminate.
         */
       {
+          theAppLog.info("run() begins.");
+
 	  	  beforeReturn: while (true) { // Processing packets until terminated.
           if ( tryingToProcessOneQueuedSockPacketB() ) // Try sending one. 
           	continue beforeReturn; // Looping if success.
@@ -115,6 +117,8 @@ public class Sender // Uunicast and multicast sender thread.
 
           senderLockAndSignal.waitingForInterruptOrNotificationE();
 	        } // while (true) beforeReturn:
+          
+          theAppLog.info("run() ends.");
         }
 
     private boolean tryingToProcessOneQueuedSockPacketB()

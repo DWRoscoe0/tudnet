@@ -37,7 +37,7 @@ public class PortManager {
     /* Get port to be used for peer discovery.  
       This port will be used for
       UDP multicast for remote peer app discovery using
-      DISCOVERY query packets and ALIVE response packets.
+      MC-DISCOVERY query packets and MC-ALIVE response packets.
       The server port is this discovery port.
       The client port is the local port.
 s     */
