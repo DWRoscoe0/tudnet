@@ -385,7 +385,7 @@ public class Multicaster
     		LockAndSignal.Input theInput;  // Type of input that ends waits.
         processorLoop: while (true) { // Processing messages until exit request.
         	{ // Processing messages or exiting.
-            /// theAppLog.debug("MC","receivingPacketsV() at processorLoop beginning.");
+            theAppLog.debug("MC","receivingPacketsV() at processorLoop beginning.");
         	  long baseTimeMsL= System.currentTimeMillis();
           	theInput=  // Awaiting next input.
           	  waitingForSubnotificationOrIntervalOrInterruptE(
@@ -425,7 +425,7 @@ public class Multicaster
 		            		);
 		            break inputDecoder;
 	            } // inputDecoder: 
-          	  /// theAppLog.debug("MC","receivingPacketsV() have exited inputDecoder.");
+          	  theAppLog.debug("MC","receivingPacketsV() have exited inputDecoder.");
             } // Processing packets until exit.
         	} // processorLoop:  // Processing packet or exiting.
         theAppLog.debug("MC","receivingPacketsV() ends.");
@@ -512,13 +512,12 @@ public class Multicaster
       /* This method logs when bidirectional multicast communication
         either begins or ends.  Activity ending is defined as
         no received multicast packets for the multicast period.
-        This is considered an anomaly.
        */
     	{
     	  if ( multicastActiveB != activeB ) // Has activity changed? 
       	  { // Yes.
       	  	multicastActiveB= activeB; // Record new activity state.
-            theAppLog.info( // Log new state. 
+            theAppLog.debug("MC", // Log new state. 
                 "multicastActivityLoggerV(..) multicastActiveB= " + multicastActiveB );
             }
     	  }
