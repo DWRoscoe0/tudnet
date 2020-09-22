@@ -234,14 +234,16 @@ public abstract class EpiNode
         return successB;
         }
 
-    public MapEpiNode tryOrLogMapEpiNode()
+    public MapEpiNode tryOrLogMapEpiNode(String idString)
       /* This method acts the same as tryMapEpiNode() except that
-       * it logs an error if it can not return a MapEpiNode.
+       * it makes a log entry if it can not return a MapEpiNode.
+       * The message includes messageString.
        */
       {
         MapEpiNode theMapEpiNode= tryMapEpiNode();
         if (null == theMapEpiNode)
-          theAppLog.debug("MapEpiNode.tryOrLogMapEpiNode() not MapEpiNode.");
+          theAppLog.debug(
+            "MapEpiNode.tryOrLogMapEpiNode() not MapEpiNode: "+idString);
         return theMapEpiNode;
         }
 
@@ -1101,7 +1103,7 @@ class MapEpiNode extends EpiNode
           if (valueEpiNode == null) // No value is associated with this key.
             break toMakeMap; // so go make one.
           valueMapEpiNode= // Try converting value to map.
-              valueEpiNode.tryOrLogMapEpiNode();
+              valueEpiNode.tryOrLogMapEpiNode(keyString);
           if (valueMapEpiNode == null) // The value is not a map
             break toMakeMap; // so go make a replacement which is a map.
           break toReturnValue; // Value is a map, so go return it as is.
@@ -1469,7 +1471,7 @@ class MapEpiNode extends EpiNode
               getEpiNode(keyString);
           if (valueEpiNode == null) break toReturn;
           valueMapEpiNode=  // Try converting EpiNode to MapEpiNode.
-              valueEpiNode.tryOrLogMapEpiNode();
+              valueEpiNode.tryOrLogMapEpiNode(keyString);
           } // toReturn:
         return valueMapEpiNode;
         }

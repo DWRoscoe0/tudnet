@@ -304,7 +304,9 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
             subscribeeUserIdMapEntry.getKey().toString();
         EpiNode subscribeeUserDataEpiNode= subscribeeUserIdMapEntry.getValue();
         MapEpiNode subscribeeUserDataMapEpiNode= // Try converting to map.
-            subscribeeUserDataEpiNode.tryOrLogMapEpiNode();
+            subscribeeUserDataEpiNode.tryOrLogMapEpiNode(
+                "TextStreams2.processSubscribeeMapEntryV(.), Id="
+                +subscribeeUserIdString);
         if (null == subscribeeUserDataMapEpiNode) // The value is not a map
           break goReturn; // so abandon further processing and exit.
         TextStream2 subscribeeIdTextStream2= 
