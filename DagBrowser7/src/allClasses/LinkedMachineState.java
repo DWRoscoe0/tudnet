@@ -381,7 +381,8 @@ public class LinkedMachineState
       MapEpiNode theMapEpiNode = thePeersCursor.getSelectedMapEpiNode();
       AppMapEpiNode.updateFieldV(theMapEpiNode, "wasConnected", true); // Record connection.
       AppMapEpiNode.updateFieldV(theMapEpiNode, "isConnected", true); // Record connection.
-      theAppLog.debug("UCLinkedMachine","ConnectedState.onEntryV() "
+      //// theAppLog.debug("UCLinkedMachine","ConnectedState.onEntryV() "
+      theAppLog.info("ConnectedState.onEntryV() "
           + "Connecting, notifying ConnectionManager with: \n  "
           + thePeersCursor.getSelectedMapEpiNode());
       notifyConnectionManagerOfPeerConnectionChangeV();
@@ -443,7 +444,8 @@ public class LinkedMachineState
     }
 
     public void onExitV() throws IOException {
-      theAppLog.debug("UCLinkedMachine","ConnectedState.onExitV() Disconnecting");
+      //// theAppLog.debug("UCLinkedMachine","ConnectedState.onExitV() Disconnecting");
+      theAppLog.info("ConnectedState.onExitV() Disconnecting");
       MapEpiNode theMapEpiNode = thePeersCursor.getSelectedMapEpiNode();
       theMapEpiNode.removeV("isConnected"); // Record disconnection.
       super.onExitV();
