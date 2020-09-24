@@ -41,7 +41,7 @@ public class LinkedMachineState
   private ConnectionManager theConnectionManager;
 
   // Other variables: none.
-  private MapEpiNode thisMapEpiNode;
+  private MapEpiNode theMapEpiNode;
   private String theUserIdString;
 
   // Sub-state-machine instances.
@@ -78,8 +78,8 @@ public class LinkedMachineState
     // Adding measurement count.
 
     // Initialize other variables.
-    thisMapEpiNode = thePeersCursor.getSelectedMapEpiNode();
-    theUserIdString = thisMapEpiNode.getEmptyOrString(Config.userIdString);
+    theMapEpiNode = thePeersCursor.getSelectedMapEpiNode();
+    theUserIdString = theMapEpiNode.getEmptyOrString(Config.userIdString);
 
     // Construct all sub-states of this state machine.
     theDisconnectedState = new DisconnectedState();
@@ -173,11 +173,20 @@ public class LinkedMachineState
 
   public boolean isConnectedB()
   /*
-   * This method returns true if this Unicaster is connected to its peer, false
-   * otherwise.
+   * This method returns true if this Unicaster is connected to its peer, 
+   * false otherwise.
    */
   {
     return (getpresentSubStateList() == theConnectedState);
+  }
+
+  public boolean isDisconnectedB()
+  /*
+   * This method returns true if this Unicaster is Disconnected from its peer, 
+   * false otherwise.
+   */
+  {
+    return (getpresentSubStateList() == theDisconnectedState);
   }
 
   /*
@@ -208,6 +217,7 @@ public class LinkedMachineState
 
     public void onEntryV() throws IOException {
       super.onEntryV();
+      AppMapEpiNode.updateFieldV(theMapEpiNode, "reconnectType", null);
     }
 
     public void onInputsToReturnFalseV() throws IOException
@@ -216,7 +226,7 @@ public class LinkedMachineState
      * received. It also absorbs and ignores GOODBYE messages.
      */
     {
-      MapEpiNode theMapEpiNode = thePeersCursor.getSelectedMapEpiNode();
+      //// MapEpiNode theMapEpiNode = thePeersCursor.getSelectedMapEpiNode();
       if (tryReceivingHelloB(this)) { // Connect requested from remote peer.
         if (theMapEpiNode.isTrueB("ignorePeer"))
           theAppLog.debug("UCLinkedMachine",
@@ -225,11 +235,16 @@ public class LinkedMachineState
           sendHelloV(this); // Send a response HELLO.
           requestAncestorSubStateV(theConnectedState); // Become connected.
         }
-      } else if (tryInputB("Connect")) { // Local connect requested, at startup.
+      } else if (tryInputB("ExponentialRetryConnect")) { // Local connect requested.
         theAppLog.debug("UCLinkedMachine",
-            "LinkedMachineState.onInputsToReturnFalseV() Executing Connect request.");
+            "DisconnectedState.onInputsToReturnFalseV() ExponentialRetryConnect.");
         sendHelloV(this); // Send initial HELLO.
         requestAncestorSubStateV(theExponentialRetryConnectingState);
+      } else if (tryInputB("SlowPeriodicRetryConnect")) { // Local connect requested.
+        theAppLog.debug("UCLinkedMachine",
+            "DisconnectedState.onInputsToReturnFalseV() SlowPeriodicRetryConnect.");
+        //// sendHelloV(this); // Send initial HELLO.
+        requestAncestorSubStateV(theSlowPeriodicRetryConnectingState);
       } else if (tryInputB("GOODBYE")) { // Ignore any redundant GOODBYE message.
         // appLogger.info("LinkedMachineState.onInputsToReturnFalseV() GOODBYE received
         // and ignored while in DisconnectedState.");
@@ -300,8 +315,12 @@ public class LinkedMachineState
 
     public void onEntryV() throws IOException {
       super.onEntryV();
+
       sendHelloV(this); // Initial HELLO for this state. Done here because
       // some predecessor states (ConnectedState sub-states) can't do it.
+      
+      AppMapEpiNode.updateFieldV(theMapEpiNode, "reconnectType", "periodicRetry");
+
       theTimerInput.scheduleV(Config.slowPeriodicRetryTimeOutMsL);
     }
 
@@ -362,12 +381,13 @@ public class LinkedMachineState
 
     public void setTargetDisconnectStateV(StateList theBrokenConnectionState)
     /*
-     * This method sells the LinkMeasurementState what state to request it it
+     * This method tells the LinkMeasurementState what state to request if it
      * appears that the communication link to the peer is broken.
      */
     {
-      theLinkMeasurementState.setTargetDisconnectStateV(theSlowPeriodicRetryConnectingState);
-    }
+      theLinkMeasurementState.setTargetDisconnectStateV(
+          theSlowPeriodicRetryConnectingState);
+      }
 
     public void onEntryV() throws IOException
     /*
@@ -378,9 +398,10 @@ public class LinkedMachineState
     {
       super.onEntryV();
 
-      MapEpiNode theMapEpiNode = thePeersCursor.getSelectedMapEpiNode();
-      AppMapEpiNode.updateFieldV(theMapEpiNode, "wasConnected", true); // Record connection.
+      //// MapEpiNode theMapEpiNode = thePeersCursor.getSelectedMapEpiNode();
+      //// AppMapEpiNode.updateFieldV(theMapEpiNode, "wasConnected", true); // Record connection.
       AppMapEpiNode.updateFieldV(theMapEpiNode, "isConnected", true); // Record connection.
+      AppMapEpiNode.updateFieldV(theMapEpiNode, "reconnectType", "exponentialRetry");
       //// theAppLog.debug("UCLinkedMachine","ConnectedState.onEntryV() "
       theAppLog.info("ConnectedState.onEntryV() "
           + "Connecting, notifying ConnectionManager with: \n  "
@@ -420,9 +441,9 @@ public class LinkedMachineState
         }
         if (tryInputB("GOODBYE")) { // Peer disconnected itself by saying goodbye?
           sayGoodbyesV(); // Respond to peer with our own goodbyes.
-          MapEpiNode theMapEpiNode = thePeersCursor.getSelectedMapEpiNode();
-          AppMapEpiNode.updateFieldV( // Record remote intentional disconnect.
-              theMapEpiNode, "wasConnected", false);
+          //// MapEpiNode theMapEpiNode = thePeersCursor.getSelectedMapEpiNode();
+          //// AppMapEpiNode.updateFieldV( // Record remote intentional disconnect.
+          ////     theMapEpiNode, "wasConnected", false);
           notifyConnectionManagerOfPeerConnectionChangeV();
           requestAncestorSubStateV(theDisconnectedState); // Disconnect ourselves.
           break goReturn; // Return with signal true.
@@ -446,7 +467,7 @@ public class LinkedMachineState
     public void onExitV() throws IOException {
       //// theAppLog.debug("UCLinkedMachine","ConnectedState.onExitV() Disconnecting");
       theAppLog.info("ConnectedState.onExitV() Disconnecting");
-      MapEpiNode theMapEpiNode = thePeersCursor.getSelectedMapEpiNode();
+      //// MapEpiNode theMapEpiNode= thePeersCursor.getSelectedMapEpiNode();
       theMapEpiNode.removeV("isConnected"); // Record disconnection.
       super.onExitV();
     }
@@ -518,7 +539,7 @@ public class LinkedMachineState
    * It returns true if an acceptable RootId was processed, false otherwise.
    */
   {
-    MapEpiNode theMapEpiNode = thePeersCursor.getSelectedMapEpiNode();
+    //// MapEpiNode theMapEpiNode= thePeersCursor.getSelectedMapEpiNode();
     boolean successB = false; /// This is always overridden!
     goReturn: {
       if // Same IDs, so subject peer is actually the local peer,

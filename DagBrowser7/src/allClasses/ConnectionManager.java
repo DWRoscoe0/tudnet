@@ -187,13 +187,15 @@ public class ConnectionManager
         */
       {
     		initializeV();  // Doing non-injection initialization.
+    		createOrRecreateDatagramSocketAndDependentIOThreadsV(); // Create these things,
+    		  // because the app is starting and they will be needed ahead.
     		
     		restartPreviousUnicastersV();
 
         theTextStreams1.startServiceV(); // Starts flooding child TextStream-s.
         theTextStreams2.startServiceV(); // Starts replicating child TextStream-s.
 
-        processingInputsAndExecutingEventsV(); // Until thread termination...
+        processingInputsAndExecutingEventsV(); // Do this until thread termination...
           // ...is requested.
 
         stoppingAllThreadsV();
@@ -232,7 +234,7 @@ public class ConnectionManager
         */
       {
     		while (true) { // Repeating until thread termination requested.
-      		maintainingDatagramSocketAndDependentThreadsV( );
+      		createOrRecreateDatagramSocketAndDependentIOThreadsV();
       		maintainingMulticastSocketAndDependentThreadsV( );
 
           LockAndSignal.Input theInput= // Waiting for any new inputs. 
@@ -274,39 +276,41 @@ public class ConnectionManager
 			  while // Process all peers in peer list. 
 			  	( ! thePeersCursor.getEntryKeyString().isEmpty() ) 
 			  	{ // Process one peer in peer list.
-            tryToStartUnicasterV(thePeersCursor);
-					    thePeersCursor.nextKeyString(); // Advance cursor.
+            tryToRestartUnicasterV(thePeersCursor);
+					  thePeersCursor.nextKeyString(); // Advance cursor.
 					  }
       	theAppLog.debug("CM","ConnectionManager.restartPreviousUnicastersV() ends.");
 				}
 
-    private void tryToStartUnicasterV(PeersCursor thePeersCursor)
-      /* This method tries to start the Unicaster,
+    private void tryToRestartUnicasterV(PeersCursor thePeersCursor)
+      /* This method tries to restart the Unicaster,
         the data of which thePeersCursor points.
+        This includes building it and starting its thread if needed,
+        and restoring its connection state.
         */
       {
         toReturn: {
           MapEpiNode theMapEpiNode= thePeersCursor.getSelectedMapEpiNode();
-          //// if (thePeersCursor.testB("ignorePeer")) // This peer is supposed to be ignored?
           if (theMapEpiNode.isTrueB("ignorePeer")) // This peer is supposed to be ignored?
             break toReturn;  // Yes, ignore this peer by exiting now.
-          //// String peerIPString= thePeersCursor.getFieldString("IP");
           String peerIPString= theMapEpiNode.getString("IP");
-          //// String peerPortString= thePeersCursor.getFieldString("Port");
           String peerPortString= theMapEpiNode.getString("Port");
           IPAndPort theIPAndPort= new IPAndPort(peerIPString, peerPortString);
           Unicaster theUnicaster= 
               theUnicasterManager.tryToGetXorLogUnicaster(theIPAndPort);
           if ( theUnicaster == null ) // Unicaster does not yet exist.
             { // Create it, start it, and maybe connect it.
-              //// String theIdString= thePeersCursor.getFieldString(Config.rootIDString);
               String theIdString= theMapEpiNode.getString(Config.userIdString);
               theUnicaster= theUnicasterManager.buildAddAndStartUnicaster(
                   theIPAndPort, theIdString); // Restore peer with Unicaster.
-              if // Reconnect to peer if it was connected at shutdown.
-                //// (thePeersCursor.testB("wasConnected"))
-                (theMapEpiNode.isTrueB("wasConnected"))
-                theUnicaster.connectToPeerV(); // Message state-machine to connect.
+              //// if // Reconnect to peer if it was connected at shutdown.
+              ////   (theMapEpiNode.isTrueB("wasConnected"))
+              ////   theUnicaster.exponentialRetryConnectV(); // Message state-machine to connect.
+              ////   /// slowPeriodicRetryConnectV()
+              if (theMapEpiNode.testKeyForValueB("reconnectType", "periodicRetry"))
+                theUnicaster.slowPeriodicRetryConnectV();
+              else if (theMapEpiNode.testKeyForValueB("reconnectType", "exponentialRetry"))
+                theUnicaster.exponentialRetryConnectV();
               }
         } // toReturn:
           return;
@@ -320,16 +324,16 @@ public class ConnectionManager
        	*/
       {
     		stoppingMulticasterThreadV(); 
-        theUnicasterManager.stoppingEntryThreadsV(); // Stop Unicasters threads.
+        theUnicasterManager.stoppingEntryThreadsV(); // Stop Unicaster threads.
 
         stoppingSenderThreadV(); // Stops only after queued packets are sent.
         stoppingUnicastReceiverThreadV();
         }
 
-	  private void maintainingDatagramSocketAndDependentThreadsV()
-      /* This method creates the DatagramSocket and 
+	  private void createOrRecreateDatagramSocketAndDependentIOThreadsV()
+      /* This method creates or recreates the DatagramSocket and 
         the threads which depend on it.  It does this when either
-        * the socket has not been opened yet, or
+        * the socket has not been opened yet when the app is starting, or
         * the socket had been open but was closed for some reason,
           such as an IOException.  
        */
@@ -579,7 +583,7 @@ public class ConnectionManager
   				if (! theUnicaster.isConnectedB()) { // Become connected if not already.
   	        theAppLog.debug("CM",
   	            "processingMulticasterSockPacketsB() connecting to peer.");
-  				  theUnicaster.connectToPeerV();
+  				  theUnicaster.exponentialRetryConnectV();
   				  }
 
           packetsProcessedB= true;
@@ -621,9 +625,8 @@ public class ConnectionManager
 		      		theNetcasterPacket 
 		      		);
         if (! theUnicaster.isConnectedB()) { // Become connected if not already.
-          theAppLog.debug("CM",
-              "passToUnicasterV() connecting to peer.");
-          theUnicaster.connectToPeerV();
+          theAppLog.debug("CM","passToUnicasterV() connecting to peer.");
+          theUnicaster.exponentialRetryConnectV();
           }
 	      theUnicaster.puttingKeyedPacketV( // Giving to Unicaster as its first? packet.  
 	      		theNetcasterPacket
@@ -790,7 +793,7 @@ public class ConnectionManager
           String theIdString= theMapEpiNode.getString(Config.userIdString);
           Unicaster theUnicaster= 
               theUnicasterManager.getOrBuildAddAndStartUnicaster(theIPAndPort,theIdString);
-          theUnicaster.connectToPeerV(); // Message state-machine to connect.
+          theUnicaster.exponentialRetryConnectV(); // Message state-machine to connect.
         } // toReturn:
           theAppLog.debug("CM","ConnectionManager.processRemoteStateV(..) ends.");
           return;

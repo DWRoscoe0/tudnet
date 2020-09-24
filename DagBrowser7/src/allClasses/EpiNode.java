@@ -274,6 +274,7 @@ class ScalarEpiNode extends EpiNode
     
     ScalarEpiNode(String scalarString)
       {
+        Nulls.fastFailNullCheckT( scalarString );
         this.scalarString= scalarString;
         }
 
@@ -1447,16 +1448,25 @@ class MapEpiNode extends EpiNode
 
     public String getString(String keyString) 
       /* Returns String representation of value associated with keyString,
-        or null if there is no such value.
+        or null if there is no such value or keyString is null.
+        
         ///fix to not use toString() so that non-Scalar values
           produce an error string, to prevent long string results. 
         */
       { 
-        String resultString= null;
-        EpiNode valueEpiNode= getEpiNode(keyString);
-        if (valueEpiNode != null)
+          String resultString= null;
+        
+        goReturn: {
+          if (null == keyString) // If key is null
+            break goReturn; // exit with null.
+          
+          EpiNode valueEpiNode= getEpiNode(keyString);
+          if (null == valueEpiNode) // If value with that key is null
+            break goReturn; // exit with null.
+          
           resultString= valueEpiNode.toString();
-        return resultString;
+        } // goReturn:
+          return resultString;
         }
 
     public MapEpiNode getMapEpiNode(String keyString)

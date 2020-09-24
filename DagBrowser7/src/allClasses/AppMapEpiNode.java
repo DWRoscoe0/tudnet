@@ -1,7 +1,7 @@
 package allClasses;
 
-//// import java.io.IOException;
-//// import java.util.LinkedHashMap;
+import java.util.Objects;
+
 
 public class AppMapEpiNode 
 
@@ -41,40 +41,73 @@ public class AppMapEpiNode
         the field "lastModified" is set to the present time.
         */
       { 
-        AppMapEpiNode.updateFieldV( theMapEpiNode, fieldKeyString, ""+fieldValueB );
+        AppMapEpiNode.updateFieldV( 
+            theMapEpiNode, fieldKeyString, ""+fieldValueB );
         }
   
     static void updateFieldV( 
-        MapEpiNode theMapEpiNode, String fieldKeyString, String fieldValueString )
-      /* If fieldValueString is different from the value presently associated with 
-        fieldKeyString, then it replaces the stored value and
-        the field "lastModified" is set to the present time.
+        MapEpiNode theMapEpiNode, 
+        String fieldKeyString, 
+        String fieldValueString 
+        )
+      /* If fieldValueString is different from the value 
+       * presently associated with fieldKeyString, 
+       * then it replaces the stored value and
+       * the field "lastModified" is set to the present time.
+        
+        //////////// Make null value cause removal of entry?
         */
       { 
         boolean changeNeededB= // Calculate whether field needs to be changed. 
-            ! fieldValueString.equals(theMapEpiNode.getString(fieldKeyString));
-        if (changeNeededB)
-          AppMapEpiNode.putFieldWithLastModifiedV( theMapEpiNode, fieldKeyString, fieldValueString );
+            ! Objects.equals(
+                fieldValueString,
+                theMapEpiNode.getString(fieldKeyString)
+                );
+            //// ! fieldValueString.equals(theMapEpiNode.getString(fieldKeyString));
+        if (changeNeededB) { // Change storage is needed.
+          if (null != fieldValueString) // Act based on whether new value is null.
+            theMapEpiNode.putV( fieldKeyString, fieldValueString ); // Store in entry.
+            else
+            theMapEpiNode.removeV(fieldKeyString); // Remove entry.
+          updateLastModifiedTimeV(theMapEpiNode); // Update time-stamp.
+          //// AppMapEpiNode.putFieldWithLastModifiedV( theMapEpiNode, fieldKeyString, fieldValueString );
+          }
         }
   
+    /*  ////
     static void putFieldWithLastModifiedV( 
         MapEpiNode theMapEpiNode, String fieldKeyString, String fieldValueString )
       /* This method stores fieldValueString into the field whose name is fieldKeyString
         but also updates the field "lastModified" with the present time.
         */
+    /*  ////
       { 
-        AppMapEpiNode.putFieldWithTimeModifiedV(
-            theMapEpiNode, fieldKeyString, fieldValueString, "lastModified" );
+        //// AppMapEpiNode.putFieldWithTimeModifiedV(
+        ////     theMapEpiNode, fieldKeyString, fieldValueString, "lastModified" );
+        
+        theMapEpiNode.putV( fieldKeyString, fieldValueString );
+        updateLastModifiedTimeV(theMapEpiNode);
         }
+    */  ////
     
+    /*  ////
     static void putFieldWithTimeModifiedV( MapEpiNode theMapEpiNode, 
         String fieldKeyString, String fieldValueString, String timeModifiedKeyString )
       /* This method stores fieldValueString into the field whose name is fieldKeyString
         but also updates the field "lastModified" with the present time.
         */
+    /*  ////
       { 
         theMapEpiNode.putV( fieldKeyString, fieldValueString );
         theMapEpiNode.putV( timeModifiedKeyString, ""+System.currentTimeMillis());
+        }
+    */  ////
+    
+    static void updateLastModifiedTimeV(MapEpiNode theMapEpiNode) 
+      /* This method updates the field "lastModified" with the present time.
+        */
+      { 
+        theMapEpiNode.putV( "lastModified", ""+System.currentTimeMillis());
         }
     
   

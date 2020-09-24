@@ -327,12 +327,23 @@ public class Unicaster
           processUnprocessedInputV(); // Handle any left-over input.
           }
         }
-
-    public void connectToPeerV()
-      // This method tells the state-machine to connect.
+    
+    public void slowPeriodicRetryConnectV()
+      /* This method tells the state-machine to connect
+       * using slow periodic retrying.
+       */
       {
-        theAppLog.debug("UC","Unicaster.connectToPeerV() executing, queuing 'Connect'.");
-        unicasterNotifyingQueueOfStrings.put("Connect");
+        theAppLog.debug("UC","Unicaster.exponentialRetryConnectV() queuing command.");
+        unicasterNotifyingQueueOfStrings.put("SlowPeriodicRetryConnect");
+        }
+    
+    public void exponentialRetryConnectV()
+      /* This method tells the state-machine to connect
+       * using fast exponential back-off retrying.
+       */
+      {
+        theAppLog.debug("UC","Unicaster.exponentialRetryConnectV() queuing command.");
+        unicasterNotifyingQueueOfStrings.put("ExponentialRetryConnect");
         }
     
     private void processUnprocessedInputV() throws IOException
@@ -444,14 +455,22 @@ public class Unicaster
       {
     	  return isConnectedB() ? "Connected" : "Disconnected"; 
         }
-		
-		public boolean isConnectedB()
-		  /* This method returns true if this Unicaster is connected to its peer,
-		    false otherwise.
-		   	*/
-			{
-				return theLinkedMachineState.isConnectedB(); 
-				}
+    
+    public boolean isConnectedB()
+      /* This method returns true if this Unicaster is connected to its peer,
+        false otherwise, meaning its state is Connected.
+        */
+      {
+        return theLinkedMachineState.isConnectedB(); 
+        }
+    
+    public boolean isDisconnectedB()
+      /* This method returns true if this Unicaster is connected to its peer,
+        false otherwise, meaning its state is Disconnected.
+        */
+      {
+        return theLinkedMachineState.isDisconnectedB(); 
+        }
 
     public NotifyingQueue<String> getNotifyingQueueOfStrings()
       /* This method returns it NotifyingQueueOfStrings to allow callers
