@@ -217,8 +217,7 @@ public class LinkedMachineState
 
     public void onEntryV() throws IOException {
       super.onEntryV();
-      AppMapEpiNode.updateFieldV(theMapEpiNode, "reconnectType", null);
-    }
+      }
 
     public void onInputsToReturnFalseV() throws IOException
     /*
@@ -226,7 +225,6 @@ public class LinkedMachineState
      * received. It also absorbs and ignores GOODBYE messages.
      */
     {
-      //// MapEpiNode theMapEpiNode = thePeersCursor.getSelectedMapEpiNode();
       if (tryReceivingHelloB(this)) { // Connect requested from remote peer.
         if (theMapEpiNode.isTrueB("ignorePeer"))
           theAppLog.debug("UCLinkedMachine",
@@ -243,7 +241,6 @@ public class LinkedMachineState
       } else if (tryInputB("SlowPeriodicRetryConnect")) { // Local connect requested.
         theAppLog.debug("UCLinkedMachine",
             "DisconnectedState.onInputsToReturnFalseV() SlowPeriodicRetryConnect.");
-        //// sendHelloV(this); // Send initial HELLO.
         requestAncestorSubStateV(theSlowPeriodicRetryConnectingState);
       } else if (tryInputB("GOODBYE")) { // Ignore any redundant GOODBYE message.
         // appLogger.info("LinkedMachineState.onInputsToReturnFalseV() GOODBYE received
@@ -288,8 +285,9 @@ public class LinkedMachineState
           sendHelloV(this); // re-send hello and stay in this state.
         else // Time-out limit was reached.
         { // End exponential back off by reporting it and changing state.
-          String messageString = "Time-out limit " + timeOutLimitMsL + " ms reached in" + getFormattedStatePathString();
-          Anomalies.displayDialogV(messageString);
+          Anomalies.displayDialogV(
+              "Time-out limit of " + timeOutLimitMsL + " ms was reached, while in" 
+              + getFormattedStatePathString());
           requestAncestorSubStateV( // Switch to different type of retrying.
               theSlowPeriodicRetryConnectingState);
         }
@@ -326,15 +324,18 @@ public class LinkedMachineState
 
     public void onInputsToReturnFalseV() throws IOException {
       if (tryReceivingHelloB(this)) // Try to process HELLO.
-      { // Success. Move to ConnectedState.
-        sendHelloV(this); // Send one in case HELLO came from peer in same state.
-        requestAncestorSubStateV(theConnectedState); // Request connected state.
-      } else if (theTimerInput.testInputArrivedB()) // Time-out?
-      { // Send another HELLO and keep waiting.
-        sendHelloV(this);
-        theTimerInput.scheduleV( // Restart timer.
-            Config.slowPeriodicRetryTimeOutMsL);
-      }
+        { // Success. Move to ConnectedState.
+          sendHelloV(this); // Send one back in case HELLO came from peer in same state.
+          Anomalies.displayDialogV("A broken connection has been reestablished, from" 
+              + getFormattedStatePathString());
+          requestAncestorSubStateV(theConnectedState); // Request connected state.
+          }
+      else if (theTimerInput.testInputArrivedB()) // Time-out?
+        { // Send another HELLO and keep waiting.
+          sendHelloV(this);
+          theTimerInput.scheduleV( // Restart timer.
+              Config.slowPeriodicRetryTimeOutMsL);
+          }
     }
 
     Color getBackgroundColor(Color defaultBackgroundColor) {
@@ -398,11 +399,8 @@ public class LinkedMachineState
     {
       super.onEntryV();
 
-      //// MapEpiNode theMapEpiNode = thePeersCursor.getSelectedMapEpiNode();
-      //// AppMapEpiNode.updateFieldV(theMapEpiNode, "wasConnected", true); // Record connection.
       AppMapEpiNode.updateFieldV(theMapEpiNode, "isConnected", true); // Record connection.
       AppMapEpiNode.updateFieldV(theMapEpiNode, "reconnectType", "exponentialRetry");
-      //// theAppLog.debug("UCLinkedMachine","ConnectedState.onEntryV() "
       theAppLog.info("ConnectedState.onEntryV() "
           + "Connecting, notifying ConnectionManager with: \n  "
           + thePeersCursor.getSelectedMapEpiNode());
@@ -438,43 +436,39 @@ public class LinkedMachineState
             requestAncestorSubStateV(this); // Reenter this to reset sub-states.
           }
           break goReturn; // Return with signal true.
-        }
+          }
         if (tryInputB("GOODBYE")) { // Peer disconnected itself by saying goodbye?
           sayGoodbyesV(); // Respond to peer with our own goodbyes.
-          //// MapEpiNode theMapEpiNode = thePeersCursor.getSelectedMapEpiNode();
-          //// AppMapEpiNode.updateFieldV( // Record remote intentional disconnect.
-          ////     theMapEpiNode, "wasConnected", false);
           notifyConnectionManagerOfPeerConnectionChangeV();
+          AppMapEpiNode.updateFieldV(theMapEpiNode, "reconnectType", null);
           requestAncestorSubStateV(theDisconnectedState); // Disconnect ourselves.
           break goReturn; // Return with signal true.
-        }
+          }
         if (tryInputB("Disconnect")) { // Disconnect requested (for our shutdown)?
           sayGoodbyesV(); // Inform peer.
           requestAncestorSubStateV(theDisconnectedState); // Disconnect ourselves.
           break goReturn; // Return with signal true.
-        }
+          }
         if (tryInputB("Skipped-Time")) { // We just woke up from sleep.
           sendHelloV(this); // send a HELLO to reestablish connection.
           requestAncestorSubStateV( // Yes, so assume connection broke
               theExponentialRetryConnectingState); // and try to reestablish.
           break goReturn; // Return with signal true.
-        }
+          }
         signalB = false; // Everything failed. Set no signal.
       } // goReturn:
       return signalB;
     }
 
     public void onExitV() throws IOException {
-      //// theAppLog.debug("UCLinkedMachine","ConnectedState.onExitV() Disconnecting");
       theAppLog.info("ConnectedState.onExitV() Disconnecting");
-      //// MapEpiNode theMapEpiNode= thePeersCursor.getSelectedMapEpiNode();
       theMapEpiNode.removeV("isConnected"); // Record disconnection.
       super.onExitV();
-    }
+      }
 
     Color getBackgroundColor(Color defaultBackgroundColor) {
       return activityBasedBackgroundColor(UIColor.activeBeforeTimeOutStateColor);
-    }
+      }
 
   } // class ConnectedState
 
@@ -539,7 +533,6 @@ public class LinkedMachineState
    * It returns true if an acceptable RootId was processed, false otherwise.
    */
   {
-    //// MapEpiNode theMapEpiNode= thePeersCursor.getSelectedMapEpiNode();
     boolean successB = false; /// This is always overridden!
     goReturn: {
       if // Same IDs, so subject peer is actually the local peer,
