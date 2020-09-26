@@ -25,7 +25,6 @@ public class UnicasterManager
 	  */
 
   {
-		//// @SuppressWarnings("unused") ///tmp
   	private final Persistent thePersistent;
   	private final TCPCopier theTCPCopier; 
   
@@ -43,21 +42,7 @@ public class UnicasterManager
 	      		);
 			  this.thePersistent= thePersistent;
 			  this.theTCPCopier= theTCPCopier; 
-			  
-			  testPersistentV(); ///dbg
 			  }
-
-		private void testPersistentV() {
-			//% updatePeerInfoV( "a" );
-			//% updatePeerInfoV( "b" );
-			//% updatePeerInfoV( "c" );
-
-			//updatePeerInfoV( "IDTest1", "1.2.3.4", "5" );
-			//updatePeerInfoV( "IDTest2", "11.22.33.44", "55" );
-
-			// This is the important one for test TCPCopier.
-			//updatePeerInfoV( "IDLocalHost", "127.0.0.1", "11111" );
-		  }
 
     public synchronized Unicaster getOrBuildAndAddUnicaster(
     		String IPString , String portString, String theIdString )
@@ -86,7 +71,8 @@ public class UnicasterManager
 	    { 
         /// theAppLog.debug( 
         ///  "ConnectionManager.getOrBuildAddAndStartUnicaster(NetcasterPacket) called.");
-    		IPAndPort theIPAndPort= makeIPAndPort(theNetcasterPacket);
+
+        IPAndPort theIPAndPort= makeIPAndPort(theNetcasterPacket);
 
 		    return getOrBuildAddAndStartUnicaster(theIPAndPort,null);
 		    }
@@ -95,15 +81,21 @@ public class UnicasterManager
       /* This method returns a Unicaster associated with
         the remote peer whose address is theIPAndPort and ID is theIdString
         If a Unicaster doesn't already exist then it creates and initializes one, 
-        adds it to the tree, and starts its thread.
+        adds it to the tree, starts its thread, 
+        and informs the user about the newly discovered Unicaster.
         */
       { 
         /// theAppLog.debug( 
         ///    "ConnectionManager.getOrBuildAddAndStartUnicaster(IPAndPort) called.");
+
         Unicaster theUnicaster= // Testing whether Unicaster exists.  
             tryToGetUnicaster( theIPAndPort );
-        if ( theUnicaster == null ) // Build, add, and start one if one doesn't exist.
-          theUnicaster= buildAddAndStartUnicaster( theIPAndPort, theIdString );
+        if ( theUnicaster == null ) { // Create Unicaster if it didn't exist.
+          Anomalies.displayDialogV( // Inform user about new Unicaster.
+              "New Unicaster discovered: " + theIPAndPort + ", ID=" + theIdString);
+          theUnicaster= // Create Unicaster. 
+              buildAddAndStartUnicaster( theIPAndPort, theIdString );
+          }
         return theUnicaster;
         }
 
