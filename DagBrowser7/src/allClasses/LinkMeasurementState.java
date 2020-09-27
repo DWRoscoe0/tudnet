@@ -74,59 +74,79 @@ public class LinkMeasurementState
                 this
 			  				);
 
-    		// Create and add to DAG the sub-states of this and-state-machine.
+	  	  // Calculate now the children to be added ahead, and related variables.
+
+	  	  rawRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong( 
+            "Raw-Round-Trip-Time (ms)", 
+            Config.initialRoundTripTime100MsAsNsL );
+        smoothedRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
+            "Smoothed-Round-Trip-Time (ms)", 
+            Config.initialRoundTripTime100MsAsNsL );
+        smoothedMinRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
+            "Smoothed-Minimum-Round-Trip-Time (ms)", 
+            Config.initialRoundTripTime100MsAsNsL );
+        smoothedMaxRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
+            "Smoothed-Maximum-Round-Trip-Time (ms)", 
+            Config.initialRoundTripTime100MsAsNsL );
+        
+        newIncomingPacketsSentDefaultLongLike= new DefaultLongLike(0);
+        oldIncomingPacketsSentNamedLong= 
+            new NamedLong("Incoming-Packets-Sent", 0 );
+        newIncomingPacketsReceivedNamedLong= 
+          theNetcasterInputStream.getCounterNamedLong();
+        oldIncomingPacketsReceivedDefaultLongLike= new DefaultLongLike(0);
+        incomingPacketLossNamedFloat= 
+            new NamedFloat("Incoming-Packet-Loss", 0.0F );
+
+        newOutgoingPacketsSentNamedLong=
+            theNetcasterOutputStream.getCounterNamedLong(); 
+        newOutgoingPacketsSentEchoedNamedLong= 
+            new NamedLong("Outgoing-Packets-Sent-Echoed", 0);
+        oldOutgoingPacketsSentDefaultLongLike= new DefaultLongLike(0);
+        newOutgoingPacketsReceivedNamedLong= 
+            new NamedLong("Outgoing-Packets-Received", 0);
+        outgoingPacketLossNamedFloat= 
+            new NamedFloat("Outgoing-Packet-Loss", 0.0f);
+        oldOutgoingPacketsReceivedDefaultLongLike= new DefaultLongLike(0);
+
+    		// Create and add to DAG the sub-state children of this and-state-machine.
 	  	  initAndAddStateListV( theRemoteMeasurementState= 
 	  	  		new RemoteMeasurementState() );
 	  	  initAndAddStateListV( theLocalMeasurementState= 
 	  	  		new LocalMeasurementState() );
 
+	  	  // Now add non-State children.
+	  	  
 	  		// Adding measurement count.
 	  	  addAtEndB( measurementHandshakesNamedLong= new NamedLong(
 	      		"Measurement-Handshakes", 0 ) );
 
-	  		addAtEndB( initialRetryTimeOutMsNamedLong );
-
         // Adding the new round trip time trackers.
-	      addAtEndB( smoothedRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
-	      		"Smoothed-Round-Trip-Time (ms)", 
-	      		Config.initialRoundTripTime100MsAsNsL ) );
-	  	  addAtEndB( smoothedMinRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
-	      		"Smoothed-Minimum-Round-Trip-Time (ms)", 
-	      		Config.initialRoundTripTime100MsAsNsL ) );
-	  	  addAtEndB( smoothedMaxRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong(
-	      		"Smoothed-Maximum-Round-Trip-Time (ms)", 
-	      		Config.initialRoundTripTime100MsAsNsL ) );
-	      addAtEndB( rawRoundTripTimeNsAsMsNamedLong= new NsAsMsNamedLong( 
-	      		"Raw-Round-Trip-Time (ms)", 
-	      		Config.initialRoundTripTime100MsAsNsL ) );
+        addAtEndB(rawRoundTripTimeNsAsMsNamedLong);
+	  	  addAtEndB(smoothedMinRoundTripTimeNsAsMsNamedLong);
+	  	  addAtEndB(smoothedMaxRoundTripTimeNsAsMsNamedLong);
+        addAtEndB(smoothedRoundTripTimeNsAsMsNamedLong);
+
+        addAtEndB( initialRetryTimeOutMsNamedLong ); // First time-out value for
+          // exponential retry time-outs.
 
         // Adding incoming packet statistics children and related trackers.
-	  	  newIncomingPacketsSentDefaultLongLike= new DefaultLongLike(0);
-	  	  addAtEndB( oldIncomingPacketsSentNamedLong= new NamedLong(
-	      		"Incoming-Packets-Sent", 0 ) );
-		    addAtEndB( newIncomingPacketsReceivedNamedLong=
-		    		theNetcasterInputStream.getCounterNamedLong() );
-	  	  oldIncomingPacketsReceivedDefaultLongLike= new DefaultLongLike(0);
-	  	  addAtEndB( incomingPacketLossNamedFloat= new NamedFloat(  
-	  	  		"Incoming-Packet-Loss", 0.0F ) );
-	  	  incomingPacketLossAverager= new LossAverager(
-	  	  				oldIncomingPacketsSentNamedLong,
-	  	  				oldIncomingPacketsReceivedDefaultLongLike,
-	  	  				incomingPacketLossNamedFloat
-	  	  				);
+        addAtEndB(oldIncomingPacketsSentNamedLong);
+		    addAtEndB(newIncomingPacketsReceivedNamedLong);
+	  	  addAtEndB(incomingPacketLossNamedFloat);
 
 	  	  // Adding outgoing packet statistics children and related trackers.
-    		newOutgoingPacketsSentNamedLong=
-    				theNetcasterOutputStream.getCounterNamedLong(); 
 		    addAtEndB( newOutgoingPacketsSentNamedLong );
-		    addAtEndB( newOutgoingPacketsSentEchoedNamedLong= new NamedLong(
-		    		"Outgoing-Packets-Sent-Echoed", 0 ) ); 
-		    oldOutgoingPacketsSentDefaultLongLike= new DefaultLongLike(0);
-		    addAtEndB( newOutgoingPacketsReceivedNamedLong= new NamedLong( 
-			      "Outgoing-Packets-Received", 0 ) );
-	  	  addAtEndB( outgoingPacketLossNamedFloat= new NamedFloat( 
-	  	  		"Outgoing-Packet-Loss", 0.0f ) );
-	  	  oldOutgoingPacketsReceivedDefaultLongLike= new DefaultLongLike(0);
+		    addAtEndB(newOutgoingPacketsSentEchoedNamedLong);
+        addAtEndB(newOutgoingPacketsReceivedNamedLong);
+	  	  addAtEndB(outgoingPacketLossNamedFloat);
+	  	  
+	  	  // Create the loss averagers.
+        incomingPacketLossAverager= new LossAverager(
+                oldIncomingPacketsSentNamedLong,
+                oldIncomingPacketsReceivedDefaultLongLike,
+                incomingPacketLossNamedFloat
+                );
 	  	  outgoingPacketLossLossAverager= new LossAverager(
 	  	  		oldOutgoingPacketsSentDefaultLongLike,
 	  	  		oldOutgoingPacketsReceivedDefaultLongLike,
@@ -532,7 +552,7 @@ public class LinkMeasurementState
 				    This ratio is accurate when calculated because
 				    the values it uses in the calculation are synchronized.
 	
-				    This method also sends an "PA" message back with the same 
+				    This method also sends a "PA" message back with the same 
 				    numbers so the remote peer can calculate the same ratio, which 
 				    for the remote peer is called the outgoing packet loss ratio.
 				    By sending and using both numbers the remote peer's calculation 
@@ -595,7 +615,7 @@ public class LinkMeasurementState
 		  // When sent this argument was the remote end's 
 		  // EpiOutputStream packet counter.
 	  	// This value usually increases, but can decrease 
-	    // if an "PS" is carried by an out-of-order packets.
+	    // if a "PS" is carried by an out-of-order packets.
 	  private NamedLong oldIncomingPacketsSentNamedLong;
 	  	// A difference between this and newIncomingPacketsSentDefaultLongLike 
 	    // indicates a new received sequence number needs to be processed.
@@ -608,7 +628,7 @@ public class LinkMeasurementState
 			// indicates a new packet has been received and needs to be processed.
 		private NamedFloat incomingPacketLossNamedFloat;
 	    // Floating representation of the fraction of incoming packets lost.
-	  LossAverager incomingPacketLossAverager;
+	  private LossAverager incomingPacketLossAverager;
 		
 	  // Variables for managing outgoing packets and their acknowledgement.
 	  private NamedLong newOutgoingPacketsSentNamedLong;
@@ -661,7 +681,7 @@ public class LinkMeasurementState
 	    // This is the timer used by this state machine for pauses and time-outs. 
 
 	  private NamedLong measurementHandshakesNamedLong;
-	    // This counts home many measurement handshakes have occurred,
+	    // This counts how many of our measurement handshakes have occurred,
 	    // which is the number of PA messages received.
 
 		} // class LinkMeasurementState
