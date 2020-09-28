@@ -89,22 +89,22 @@ public class LinkMeasurementState
             "Smoothed-Maximum-Round-Trip-Time (ms)", 
             Config.initialRoundTripTime100MsAsNsL );
         
-        newIncomingPacketsSentDefaultLongLike= new DefaultLongLike(0);
-        oldIncomingPacketsSentNamedLong= 
-            new NamedLong("Incoming-Packets-Sent", 0 );
-        newIncomingPacketsReceivedNamedLong= 
+        newRemotePacketsSentDefaultLongLike= new DefaultLongLike(0);
+        oldRemotePacketsSentNamedLong= 
+            new NamedLong("Remote-Packets-Sent", 0 );
+        newLocalPacketsReceivedNamedLong= 
           theNetcasterInputStream.getCounterNamedLong();
-        oldIncomingPacketsReceivedDefaultLongLike= new DefaultLongLike(0);
+        oldLocalPacketsReceivedDefaultLongLike= new DefaultLongLike(0);
         incomingPacketLossNamedFloat= 
             new NamedFloat("Incoming-Packet-Loss", 0.0F );
 
-        newOutgoingPacketsSentNamedLong=
+        newLocalPacketsSentNamedLong=
             theNetcasterOutputStream.getCounterNamedLong(); 
-        newOutgoingPacketsSentEchoedNamedLong= 
-            new NamedLong("Outgoing-Packets-Sent-Echoed", 0);
+        newLocalPacketsSentEchoedNamedLong= 
+            new NamedLong("Local-Packets-Sent-Echoed", 0);
         oldOutgoingPacketsSentDefaultLongLike= new DefaultLongLike(0);
-        newOutgoingPacketsReceivedNamedLong= 
-            new NamedLong("Outgoing-Packets-Received", 0);
+        newRemotePacketsReceivedNamedLong= 
+            new NamedLong("Remote-Packets-Received", 0);
         outgoingPacketLossNamedFloat= 
             new NamedFloat("Outgoing-Packet-Loss", 0.0f);
         oldOutgoingPacketsReceivedDefaultLongLike= new DefaultLongLike(0);
@@ -130,21 +130,23 @@ public class LinkMeasurementState
         addAtEndB( initialRetryTimeOutMsNamedLong ); // First time-out value for
           // exponential retry time-outs.
 
-        // Adding incoming packet statistics children and related trackers.
-        addAtEndB(oldIncomingPacketsSentNamedLong);
-		    addAtEndB(newIncomingPacketsReceivedNamedLong);
-	  	  addAtEndB(incomingPacketLossNamedFloat);
+        // Adding local packet statistics children.
+		    addAtEndB(newLocalPacketsReceivedNamedLong);
+        addAtEndB(newLocalPacketsSentNamedLong);
+        addAtEndB(newLocalPacketsSentEchoedNamedLong);
 
-	  	  // Adding outgoing packet statistics children and related trackers.
-		    addAtEndB( newOutgoingPacketsSentNamedLong );
-		    addAtEndB(newOutgoingPacketsSentEchoedNamedLong);
-        addAtEndB(newOutgoingPacketsReceivedNamedLong);
+	  	  // Adding outgoing packet statistics children.
+        addAtEndB(newRemotePacketsReceivedNamedLong);
+        addAtEndB(oldRemotePacketsSentNamedLong);
+
+        // Packet loss ratios in both directions.
+        addAtEndB(incomingPacketLossNamedFloat);
 	  	  addAtEndB(outgoingPacketLossNamedFloat);
 	  	  
 	  	  // Create the loss averagers.
         incomingPacketLossAverager= new LossAverager(
-                oldIncomingPacketsSentNamedLong,
-                oldIncomingPacketsReceivedDefaultLongLike,
+                oldRemotePacketsSentNamedLong,
+                oldLocalPacketsReceivedDefaultLongLike,
                 incomingPacketLossNamedFloat
                 );
 	  	  outgoingPacketLossLossAverager= new LossAverager(
@@ -242,12 +244,12 @@ public class LinkMeasurementState
                     theNetcasterInputStream.readANumberI();
                 measurementHandshakesNamedLong.addDeltaL(1);
                 
-                newOutgoingPacketsSentEchoedNamedLong.setValueL(
+                newLocalPacketsSentEchoedNamedLong.setValueL(
                     sequenceNumberI + 1); // Convert sequence # to sent packet count.
-                newOutgoingPacketsReceivedNamedLong.setValueL(packetsReceivedI);
+                newRemotePacketsReceivedNamedLong.setValueL(packetsReceivedI);
                 outgoingPacketLossLossAverager.recordPacketsReceivedOrLostV(
-                    newOutgoingPacketsSentEchoedNamedLong,
-                    newOutgoingPacketsReceivedNamedLong
+                    newLocalPacketsSentEchoedNamedLong,
+                    newRemotePacketsReceivedNamedLong
                     );
                 calculateRoundTripTimesV(
                     sequenceNumberI, ackReceivedTimeNsL, packetsReceivedI);
@@ -578,15 +580,15 @@ public class LinkMeasurementState
 		    	  try {
 						  int sequenceNumberI=  // Reading # from packet.
 						  		theNetcasterInputStream.readANumberI();
-						  newIncomingPacketsSentDefaultLongLike.setValueL( // Recording.
+						  newRemotePacketsSentDefaultLongLike.setValueL( // Recording.
 									sequenceNumberI + 1
 									); // Adding 1 converts sequence # to remote packet count.
 							incomingPacketLossAverager.recordPacketsReceivedOrLostV(
-									newIncomingPacketsSentDefaultLongLike,
-									newIncomingPacketsReceivedNamedLong
+									newRemotePacketsSentDefaultLongLike,
+									newLocalPacketsReceivedNamedLong
 							  );
               long receivedPacketCountL= 
-                  newIncomingPacketsReceivedNamedLong.getValueL(); 
+                  newLocalPacketsReceivedNamedLong.getValueL(); 
               theNetcasterOutputStream.writeV( 
                   "{PA:{SN:" + sequenceNumberI + ",PC:" + receivedPacketCountL + "}}" );
 							theNetcasterOutputStream.endBlockAndSendPacketV();
@@ -609,39 +611,39 @@ public class LinkMeasurementState
 		
 	  // Variables for managing incoming packets and 
 	  // their sequence numbers.  They all start at 0.
-	  private DefaultLongLike newIncomingPacketsSentDefaultLongLike;
+	  private DefaultLongLike newRemotePacketsSentDefaultLongLike;
 	  	// This is set to the value of the sequence number argument of the
 		  // most recently received "PS" message plus 1.  
 		  // When sent this argument was the remote end's 
 		  // EpiOutputStream packet counter.
 	  	// This value usually increases, but can decrease 
 	    // if a "PS" is carried by an out-of-order packets.
-	  private NamedLong oldIncomingPacketsSentNamedLong;
-	  	// A difference between this and newIncomingPacketsSentDefaultLongLike 
+	  private NamedLong oldRemotePacketsSentNamedLong;
+	  	// A difference between this and newRemotePacketsSentDefaultLongLike 
 	    // indicates a new received sequence number needs to be processed.
-	  private NamedLong newIncomingPacketsReceivedNamedLong;
+	  private NamedLong newLocalPacketsReceivedNamedLong;
 	  	// This is a copy of the local EpiInputStream packet counter.
 	  	// It represents the latest count of locally received packets.
 	  	// This value can only increase.
-		private DefaultLongLike oldIncomingPacketsReceivedDefaultLongLike;
-			// A difference between this and newIncomingPacketsReceivedNamedLong 
+		private DefaultLongLike oldLocalPacketsReceivedDefaultLongLike;
+			// A difference between this and newLocalPacketsReceivedNamedLong 
 			// indicates a new packet has been received and needs to be processed.
 		private NamedFloat incomingPacketLossNamedFloat;
 	    // Floating representation of the fraction of incoming packets lost.
 	  private LossAverager incomingPacketLossAverager;
 		
 	  // Variables for managing outgoing packets and their acknowledgement.
-	  private NamedLong newOutgoingPacketsSentNamedLong;
+	  private NamedLong newLocalPacketsSentNamedLong;
 	  	// This is a copy of the local EpiOutputStreamO packet counter.
 	  	// This value can only increase.
-	  private NamedLong newOutgoingPacketsSentEchoedNamedLong;
+	  private NamedLong newLocalPacketsSentEchoedNamedLong;
 	  	// This is the local EpiOutputStreamO packet counter after 
 	    // being returned from remote.  It might lag the real counter by RTT.
 	  	// This value can only increase.
 	  private DefaultLongLike oldOutgoingPacketsSentDefaultLongLike;
-	  	// A difference between this and newOutgoingPacketsSentNamedLong 
+	  	// A difference between this and newLocalPacketsSentNamedLong 
 	    // indicates new packets have been sent and need to be processed.
-	  private NamedLong newOutgoingPacketsReceivedNamedLong;
+	  private NamedLong newRemotePacketsReceivedNamedLong;
 	  	// This value comes from the most recently received "PA" message.  
 		  // When sent this argument was the remote end's 
 		  // EpiInputStream packet counter, 
@@ -649,7 +651,7 @@ public class LinkMeasurementState
 	  	// This value normally increases, but can decrease because of 
 	    // out-of-order "PA" packets. 
 	  private DefaultLongLike oldOutgoingPacketsReceivedDefaultLongLike;
-	  	// A difference between this and newOutgoingPacketsReceivedNamedLong 
+	  	// A difference between this and newRemotePacketsReceivedNamedLong 
 	    // indicates a new packet has been acknowledged and 
 			// needs to be processed.
 		private NamedFloat outgoingPacketLossNamedFloat;

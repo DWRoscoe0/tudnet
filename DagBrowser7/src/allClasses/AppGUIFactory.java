@@ -124,7 +124,6 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
         AppGUIFactory.makeEpiThread( theSystemsMonitor, "SystemsMonitor" );
       InstallerBuilder theInstallerBuilder=
           new InstallerBuilder( "Installer-Builder", 
-              //// "allClasses.InstallerBuilder",
               thePersistent
               );
       DataNode testCenterDataNode= new NamedList(
@@ -342,7 +341,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 	  {
 			NamedLong packetsReceivedNamedLong=  
 					new NamedLong( 
-							"Incoming-Packets-Received", 0 
+					    "Local-Packets-Received", 0
 							);
 	  	return new NetcasterInputStream(
 	  	  receiverToNetcasterNetcasterQueue, 
@@ -357,7 +356,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 	  {
 		  NamedLong packetsSentNamedLong= 
 					new NamedLong( 
-							"Outgoing-Packets-Sent", 0 
+					    "Local-Packets-Sent", 0
 							);
 		  return new NetcasterOutputStream(
 		  	netcasterToSenderNetcasterQueue,
