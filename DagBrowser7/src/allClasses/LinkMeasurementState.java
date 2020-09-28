@@ -157,6 +157,50 @@ public class LinkMeasurementState
 
 			  return this;
 			  }
+
+    public void onEntryV() throws IOException 
+      /* This method, called when the state is entered, 
+       * which is when ConnectedState is entered,
+       * resets all the packet counter variables.
+       * Both ends should reset their variables to 0.
+       */
+      {
+        // Anomalies.displayDialogV("LinkMeasurementState.onEntryV() called.");
+
+        /*  ////
+        rawRoundTripTimeNsAsMsNamedLong.setValueL(
+            Config.initialRoundTripTime100MsAsNsL);
+        smoothedRoundTripTimeNsAsMsNamedLong.setValueL(
+            Config.initialRoundTripTime100MsAsNsL);
+        smoothedMinRoundTripTimeNsAsMsNamedLong.setValueL( 
+            Config.initialRoundTripTime100MsAsNsL);
+        smoothedMaxRoundTripTimeNsAsMsNamedLong.setValueL(
+            Config.initialRoundTripTime100MsAsNsL);
+        */  ////
+
+        newRemotePacketsSentDefaultLongLike.setValueL(0);
+        oldRemotePacketsSentNamedLong.setValueL(0);
+        newLocalPacketsReceivedNamedLong.setValueL(0); 
+          //// theNetcasterInputStream.getCounterNamedLong();
+        oldLocalPacketsReceivedDefaultLongLike.setValueL(0);
+        //// incomingPacketLossNamedFloat= 
+        ////     new NamedFloat("Incoming-Packet-Loss", 0.0F );
+
+        newLocalPacketsSentNamedLong.setValueL(0);
+            //// theNetcasterOutputStream.getCounterNamedLong(); 
+        newLocalPacketsSentEchoedNamedLong.setValueL(0); 
+            //// new NamedLong("Local-Packets-Sent-Echoed", 0);
+        oldOutgoingPacketsSentDefaultLongLike.setValueL(0);
+            //// = new DefaultLongLike(0);
+        newRemotePacketsReceivedNamedLong.setValueL(0);
+            //// = new NamedLong("Remote-Packets-Received", 0);
+        //// outgoingPacketLossNamedFloat= 
+        ////     new NamedFloat("Outgoing-Packet-Loss", 0.0f);
+        oldOutgoingPacketsReceivedDefaultLongLike.setValueL(0);
+            ////= new DefaultLongLike(0);
+
+        super.onEntryV();
+        }
     
     public void setTargetDisconnectStateV(StateList theBrokenConnectionState) ///org 
       {
