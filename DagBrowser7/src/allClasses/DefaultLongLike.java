@@ -5,6 +5,7 @@ public class DefaultLongLike
   
   /* This class is useful for passing references to long values,
     and for passing long values from a method back to its caller.
+    It also does simple addition.
     */
   
   {
@@ -20,12 +21,12 @@ public class DefaultLongLike
         this.theL= theL;
         }
 
-    public long getValueL( )
+    public synchronized long getValueL( )
       {
         return theL;
         }
 
-    public long addDeltaL( long deltaL )
+    public synchronized long addDeltaL( long deltaL )
 	    /* This method adds deltaL to the value and returns the new value.
 		    */
       {
@@ -33,9 +34,9 @@ public class DefaultLongLike
 	  	  return theL; // Returning possibly different value.
         }
 
-    public long setValueL( final long newL )
+    public synchronized long setValueL( final long newL )
 	    /* This method sets newL as the new value 
-		    and returns the previus value.
+		    and returns the previous value.
 		    */
 	    {
 	  	  long oldL= this.theL; // Saving present value as old one.
