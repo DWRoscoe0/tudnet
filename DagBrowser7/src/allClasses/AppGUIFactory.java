@@ -9,6 +9,7 @@ import java.net.SocketAddress;
 import java.net.SocketException;
 import java.util.Timer;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.JFrame;
 
@@ -158,10 +159,15 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
       Timer theTimer= new Timer( ///opt being deprecated.
         "AppTimer", // Thread name.
         true); // Run as daemon thread.
-      ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor=
-        new ScheduledThreadPoolExecutor(5); // Only 5 threads for now.
-          // Single ScheduledThreadPoolExecutor for entire app,
-          // used for threads and timers.
+      ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor; {
+        // Single ScheduledThreadPoolExecutor for entire app,
+        // used for threads and timers.
+        theScheduledThreadPoolExecutor=
+          new ScheduledThreadPoolExecutor(1); // Minimum of 1 thread,
+        theScheduledThreadPoolExecutor.setMaximumPoolSize(15); // 15 max.
+        theScheduledThreadPoolExecutor.setKeepAliveTime(
+            5,TimeUnit.SECONDS); // Time before unused thread are reclaimed.
+        }
       GUIManager theGUIBuilderStarter= new GUIManager( 
   		  theAppInstanceManager,
   		  theDagBrowserPanel,
