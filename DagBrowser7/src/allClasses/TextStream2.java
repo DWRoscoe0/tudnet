@@ -378,7 +378,7 @@ public class TextStream2
       
     // Public subscription action methods.
 
-      public synchronized boolean tryProcessingReceivedMapEpiNodeB(
+      public boolean tryProcessingReceivedMapEpiNodeB(
           MapEpiNode userIdDataMapEpiNode,String senderUserIdString) 
         /* This method tries to process a received TextStream 
          * userIdDataMapEpiNode.  
@@ -517,10 +517,8 @@ public class TextStream2
                   new Runnable() {
                     @Override  
                     public void run() {
-                      synchronized(this) { //// Needed?
-                        processInputTextStringV(
-                          senderTextString,senderTextOffsetI,starterUserIdString);
-                        }
+                      processInputTextStringV(
+                        senderTextString,senderTextOffsetI,starterUserIdString);
                       }
                     } 
                   );
