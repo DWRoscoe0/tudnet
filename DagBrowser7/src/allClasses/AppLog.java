@@ -411,7 +411,7 @@ public class AppLog extends EpiThread
         and only if the condition named by conditionString is enabled.
         */
       { 
-        if (isEnabledB(conditionString))
+        if (isEnabledForLoggingB(conditionString))
           debug(inString);
         }
 
@@ -423,7 +423,7 @@ public class AppLog extends EpiThread
         this.logMapEpiNode= logMapEpiNode;
         }
     
-    public synchronized boolean isEnabledB(String conditionString)
+    public synchronized boolean isEnabledForLoggingB(String conditionString)
       /* Returns true if the log condition specified by conditionString 
        * is true.
        * Returns false otherwise.
@@ -509,6 +509,10 @@ public class AppLog extends EpiThread
       { 
         String wholeString= "EXCEPTION: " + inString + " :" + NL + "  " + e ;
 
+        Anomalies.displayDialogV( // Display exception info as a dialog. 
+            wholeString
+            );
+
         synchronized(this) { // Must synchronize on AppLog object so 
           System.out.println(wholeString); // intro string and
           e.printStackTrace(System.out); // stack trace
@@ -529,11 +533,15 @@ public class AppLog extends EpiThread
     public void error(Throwable theThrowable, String inString)
       /* This method writes an error String inString to a log entry,
         and also to the console stream.
+        and to a dialog.
         An error is something with which the app should not have to deal.
         Response is to either retry or terminate.
         It also includes a stack trace.
         */
       { 
+        Anomalies.displayDialogV( // Display all errors as a dialog. 
+            "ERROR"+NL
+            +inString);
         synchronized(this) { // Must synchronized on AppLog object so 
           logB( ERROR, true, theThrowable, inString);
           doStackTraceV(theThrowable);
@@ -541,10 +549,14 @@ public class AppLog extends EpiThread
         }
     
     public void warning(String inString)
-      /* This method writes a warning error String inString to a log entry.
-        It also includes a stack trace.
-        */
+      /* This method writes a warning error String inString to a log entry
+       * to a dialog.
+       * It also includes a stack trace.
+       */
       { 
+        Anomalies.displayDialogV( // Display all warnings as a dialog. 
+            "WARNING"+NL
+            +inString);
         synchronized(this) { // Must synchronized on AppLog object so 
       		logB( WARN, false, null, inString );
           // doStackTraceV(null);
