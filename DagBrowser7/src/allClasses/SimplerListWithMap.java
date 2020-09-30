@@ -47,12 +47,16 @@ public class SimplerListWithMap<
         The entry added to the HashMap has childK as its key.
         */
       {
+        if (null != childHashMap.get( childK))
+          theAppLog.error( // Logging error if already in HashMap.
+              "SimplerListWithMap.addingV(..): Already in HashMap: " + childK
+              );
         childHashMap.put( childK, childD );  // Adding value to HashMap.
 
         if  // Adding DataNode only to MutableList unless it's there already.
           ( ! addAtEndB( childD ) )
           theAppLog.error( // Logging error if already in list.
-              "SimplerListWithMap.addingV(..): Already present."
+              "SimplerListWithMap.addingV(..): Already in DataNode list: " + childK
               );
         }
 

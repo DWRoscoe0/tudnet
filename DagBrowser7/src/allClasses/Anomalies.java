@@ -29,9 +29,6 @@ public class Anomalies
         String messageString )
       /* This method displays a dialog box containing messageString.
         This method takes care of switching to the EDT thread, etc.
-
-        It also throws, and catches, a DebugException, 
-        for use in determining the causes of anomalies.
        */
       {
         theAppLog.info("Anomalies.displayDialogV(..) called," + NL + messageString);
@@ -39,12 +36,6 @@ public class Anomalies
         java.awt.Toolkit.getDefaultToolkit().beep(); // Create audible Beep.
 
         Dialogger.showModelessDialogV(messageString, "Anomaly Detected");
-
-        try { // Throw an exception that Eclipse IDE can use to suspend thread.
-            throw new DebugException();
-          } catch (DebugException theDebugException) {
-            ; 
-          }
         }
   
     }

@@ -505,6 +505,9 @@ public class AppLog extends EpiThread
         Note, console output is all done to System.out, not System.err.
         This is done to avoid console output which is out of order.
         ///enh Make this display a StackTrace with exception.
+
+        It also throws, and catches, a DebugException, 
+        for use in determining the causes of anomalies.
         */
       { 
         String wholeString= "EXCEPTION: " + inString + " :" + NL + "  " + e ;
@@ -519,10 +522,15 @@ public class AppLog extends EpiThread
           } // are together on console.
 
         synchronized(this) { // Must synchronized on AppLog object so 
-          logB( ERROR, true, e, wholeString); // log entry intro and
+          logB( ERROR, true, e, wholeString); // log entry introduction and
           doStackTraceV(e); // stack trace
           } // are together in log file.
 
+        try { // Throw an exception that Eclipse IDE can use to suspend thread.
+            throw new DebugException();
+          } catch (DebugException theDebugException) {
+            ; 
+          }
         }
     
     public void error(String inString)
@@ -537,14 +545,24 @@ public class AppLog extends EpiThread
         An error is something with which the app should not have to deal.
         Response is to either retry or terminate.
         It also includes a stack trace.
+
+        It also throws, and catches, a DebugException, 
+        for use in determining the causes of anomalies.
         */
       { 
         Anomalies.displayDialogV( // Display all errors as a dialog. 
             "ERROR"+NL
             +inString);
+
         synchronized(this) { // Must synchronized on AppLog object so 
           logB( ERROR, true, theThrowable, inString);
           doStackTraceV(theThrowable);
+          }
+
+        try { // Throw an exception that Eclipse IDE can use to suspend thread.
+            throw new DebugException();
+          } catch (DebugException theDebugException) {
+            ; 
           }
         }
     
