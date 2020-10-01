@@ -193,7 +193,7 @@ public class Unicaster
 
   				} // Create and add actual sub-states.
 
-	  	  addAtEndB( theSubcasterManager );
+	  	  addAtEndV( theSubcasterManager );
 	  	  
 	  	  // propagateIntoSubtreeB( LogLevel.TRACE ); ///dbg /// tmp
 	  	  

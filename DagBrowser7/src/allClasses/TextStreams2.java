@@ -43,7 +43,7 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
       this.theUnicasterManager= theUnicasterManager;
       }
 
-  public void startServiceV() 
+  public synchronized void startServiceV() 
     /* This is the first service of this class.
       It is specifically not called during construction-initialization
       because some of the services on which this class relies
@@ -74,7 +74,7 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
         theAppLog.debug("TextStreams2","updatePeersAboutStreamsV() ends.");
     }
 
-  public void notifyNewConnectionAboutTextStreamsV(
+  public synchronized void notifyNewConnectionAboutTextStreamsV(
       MapEpiNode subjectPeerMapEpiNode)
     {
       theAppLog.debug("TextStreams2","notifyNewConnectionAboutTextStreamsV() begins.");
@@ -129,7 +129,7 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
       theAppLog.appendToFileV("[end]"); // Log end of data.
     }
   
-  public void sendToPeersV(MapEpiNode theMapEpiNode)
+  private void sendToPeersV(MapEpiNode theMapEpiNode)
     /* This sends to all connected peers theMapEpiNode.
       It wraps it in a single-entry MapEpiNode with 
       the key "Subs" first.
@@ -170,7 +170,7 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
         theAppLog.appendToFileV("[end]"); // Mark end of list with new line.
       }
 
-  public void sendToSubscriberUnicasterV(
+  public synchronized void sendToSubscriberUnicasterV(
       MapEpiNode subscribeeUserIdMapEpiNode, String subscriberUserIdString)
     /* This method sends the subscribeeUserIdMapEpiNode to the Unicaster whose
      * UserId is subscriberUserIdString, unless subscriberUserIdString
@@ -261,7 +261,7 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
       return isMessageUserIdsB;
       }
 
-  public void processSubsUserIdsV(
+  private void processSubsUserIdsV(
       MapEpiNode userIdsMapEpiNode,String senderUserIdString)
     /* This method processes userIdsMapEpiNode
       which is assumed to be a map of 0 or more 
@@ -284,7 +284,7 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
         }
     }
 
-  public void processSubscribeeMapEntryV(
+  private void processSubscribeeMapEntryV(
       Map.Entry<EpiNode,EpiNode> subscribeeUserIdMapEntry,
       String senderUserIdString)
     /* This method processes one subscribeeUserIdMapEntry 
@@ -319,7 +319,7 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
       } // goReturn:
       }
 
-  public TextStream2 makeAndAnnounceTextStream2(String userIdString)
+  private TextStream2 makeAndAnnounceTextStream2(String userIdString)
     /* This method create a new stream associated with userIdString,
      * adds it to the other streams, and informs other peers about it.
      * It should be called only when it has been determined
@@ -342,7 +342,7 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
       return theTextStream;
       }
 
-  public boolean isLocalB(String theUserIdString) 
+  public synchronized boolean isLocalB(String theUserIdString) 
     /* Returns true if the text stream identified by theUserIdString
      * is local, returns false otherwise.
      * * true means that the stream's text source is only

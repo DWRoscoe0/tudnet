@@ -118,30 +118,30 @@ public class LinkMeasurementState
 	  	  // Now add non-State children.
 	  	  
 	  		// Adding measurement count.
-	  	  addAtEndB( measurementHandshakesNamedLong= new NamedLong(
+	  	  addAtEndV( measurementHandshakesNamedLong= new NamedLong(
 	      		"Measurement-Handshakes", 0 ) );
 
         // Adding the new round trip time trackers.
-        addAtEndB(rawRoundTripTimeNsAsMsNamedLong);
-	  	  addAtEndB(smoothedMinRoundTripTimeNsAsMsNamedLong);
-	  	  addAtEndB(smoothedMaxRoundTripTimeNsAsMsNamedLong);
-        addAtEndB(smoothedRoundTripTimeNsAsMsNamedLong);
+        addAtEndV(rawRoundTripTimeNsAsMsNamedLong);
+	  	  addAtEndV(smoothedMinRoundTripTimeNsAsMsNamedLong);
+	  	  addAtEndV(smoothedMaxRoundTripTimeNsAsMsNamedLong);
+        addAtEndV(smoothedRoundTripTimeNsAsMsNamedLong);
 
-        addAtEndB( initialRetryTimeOutMsNamedLong ); // First time-out value for
+        addAtEndV( initialRetryTimeOutMsNamedLong ); // First time-out value for
           // exponential retry time-outs.
 
         // Adding local packet statistics children.
-		    addAtEndB(newLocalPacketsReceivedNamedLong);
-        addAtEndB(newLocalPacketsSentNamedLong);
-        addAtEndB(newLocalPacketsSentEchoedNamedLong);
+		    addAtEndV(newLocalPacketsReceivedNamedLong);
+        addAtEndV(newLocalPacketsSentNamedLong);
+        addAtEndV(newLocalPacketsSentEchoedNamedLong);
 
 	  	  // Adding outgoing packet statistics children.
-        addAtEndB(newRemotePacketsReceivedNamedLong);
-        addAtEndB(oldRemotePacketsSentNamedLong);
+        addAtEndV(newRemotePacketsReceivedNamedLong);
+        addAtEndV(oldRemotePacketsSentNamedLong);
 
         // Packet loss ratios in both directions.
-        addAtEndB(incomingPacketLossNamedFloat);
-	  	  addAtEndB(outgoingPacketLossNamedFloat);
+        addAtEndV(incomingPacketLossNamedFloat);
+	  	  addAtEndV(outgoingPacketLossNamedFloat);
 	  	  
 	  	  // Create the loss averagers.
         incomingPacketLossAverager= new LossAverager(

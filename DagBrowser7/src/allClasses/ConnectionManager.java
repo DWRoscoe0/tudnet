@@ -204,7 +204,7 @@ public class ConnectionManager
     public void initializeV()
     	// This method does non-injection initialization.
       {
-		    addAtEndB( theUnicasterManager ); // Adding UnicasterManager to our list.
+		    addAtEndV( theUnicasterManager ); // Adding UnicasterManager to our list.
 
 				try { // Doing this here is a bit of a kludge.
 					  multicastInetAddress= InetAddress.getByName("239.255.0.0"); }
@@ -551,7 +551,7 @@ public class ConnectionManager
 		      );
         theAppLog.debug("CM",
             "startingMulticasterThreadV() adding theMulticaster and starting thread.");
-    		addAtEndB( theMulticaster );  // Add to DataNode List.
+    		addAtEndV( theMulticaster );  // Add to DataNode List.
         multicasterEpiThread= AppGUIFactory.makeEpiThread( 
             theMulticaster,
             "Multicaster"

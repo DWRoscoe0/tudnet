@@ -87,21 +87,38 @@ public class NamedList
     		super.initializeV( nameString );
 
 	  		for ( DataNode theDataNode : inDataNodes) // For each new child
-	  			addAtEndB( theDataNode ); // append child to list.
+	  			addAtEndV( theDataNode ); // append child to list.
         }
 
-	  public boolean addAtEndB(  // Add child at end of List.
-	  		final DataNode childDataNode 
-	  		)
-	    /* This method uses addB( indexI , childDataNode ) to add
-	      childDataNode at the end of the List.  Otherwise it's identical.
-	      */
-	    {
-	  	  return addB(  // Adding with index == -1 which means end of list.
-	  	  		-1, childDataNode 
-	  	  		);
-	      }
+    public void addAtEndV(  // Add child at end of List.
+        final DataNode childDataNode 
+        )
+      /* This method uses addB( childDataNode ) to add
+        childDataNode at the end of the List.  
+        It returns void.
+        Otherwise it's identical.
+        */
+      {
+        addAtEndB(childDataNode);
+        }
 
+    public boolean addAtEndB(  // Add child at end of List.
+        final DataNode childDataNode 
+        )
+      /* This method uses addB( indexI , childDataNode ) to add
+        childDataNode at the end of the List.  Otherwise it's identical.
+        */
+      {
+        boolean resultB= addB(  // Adding with index == -1 which means end of list.
+            -1, childDataNode 
+            );
+        if (! resultB)
+          theAppLog.error( // Logging error if already in list.
+              "NamedList.addingB_TEMPORARY(..): Already present."
+              );
+        return resultB;
+        }
+    
 	  public synchronized boolean addB(  // Add at index. 
 	  		final int requestedIndexI, final DataNode childDataNode 
 	  		)

@@ -153,17 +153,17 @@ public class SystemsMonitor
 	        	);
 
 			  // Add variables to our displayed list.
-	      addAtEndB( measurementCountNamedLong );
-	      addAtEndB( processorsNamedLong );
-	      addAtEndB( javaVersionNamedMutable );
+	      addAtEndV( measurementCountNamedLong );
+	      addAtEndV( processorsNamedLong );
+	      addAtEndV( javaVersionNamedMutable );
 	      //addB( nanoTimeOverheadNamedInteger );
-	      addAtEndB( cpuSpeedNamedLong );
-	      addAtEndB( waitJitterNsNamedLong );
-	      addAtEndB( endWaitMsNamedLong );
-	      addAtEndB( eventQueueInvokeAndWaitEntryNsAsMsNamedLong );
-	      addAtEndB( eventQueueInvokeAndWaitExitNsAsMsNamedLong );
-	      addAtEndB( skippedTimeMsNamedLong );
-	      addAtEndB( reversedTimeMsNamedLong );
+	      addAtEndV( cpuSpeedNamedLong );
+	      addAtEndV( waitJitterNsNamedLong );
+	      addAtEndV( endWaitMsNamedLong );
+	      addAtEndV( eventQueueInvokeAndWaitEntryNsAsMsNamedLong );
+	      addAtEndV( eventQueueInvokeAndWaitExitNsAsMsNamedLong );
+	      addAtEndV( skippedTimeMsNamedLong );
+	      addAtEndV( reversedTimeMsNamedLong );
 	      }
 
     private long doBinarySearchOfCPUSpeedAndDoOtherStuffL()

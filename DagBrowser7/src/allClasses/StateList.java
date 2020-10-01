@@ -466,7 +466,7 @@ public class StateList extends MutableList implements Runnable {
     	  	// the sub-state's parent state.
         } // Add as StateList child.
   	  
-  	  addAtEndB( theSubStateList ); // Add as DataNode child.
+  	  addAtEndV( theSubStateList ); // Add as DataNode child.
   	  }
 
   protected boolean propagateIntoSubtreeB( int pathLevelI )
