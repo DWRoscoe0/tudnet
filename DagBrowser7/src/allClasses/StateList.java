@@ -74,7 +74,7 @@ public class StateList extends MutableList implements Runnable {
 			* If a sub-state needs references to another sub-state
 			  which wasn't created until later, the reference is injected now. 
 
-	  At this point the state-machine is fully constructed and ready to go.
+	  At this point the state-machine is fully constructed and ready to run.
     Machine activation is all that remains.
     The doOnEntry(..) method of the state-machine is called.
     This recursively calls the doOnEntry(..) method of sub-machines 
@@ -91,21 +91,21 @@ public class StateList extends MutableList implements Runnable {
 		
 		There are 2 types of state machine threads:
 		* The thread that drives the root machine of a hierarchical state machine.
-		  It is similar to a dispatch loop.
+		  It is similar to an event dispatch loop.
 		  It waits for and receives one or more 
 		  different types of ordinary inputs 
       and passes them to the root state-machine handler.
       The handler returns when those inputs, 
       and possibly some newly arriving ones, have been handled.
-    * There can be zero or more additional threads are used to deliver 
-      inputs triggered by timers.
+    * There can be zero or more additional threads 
+      that are used to deliver inputs triggered by timers.
       These timers are created or called-upon by states as needed.
 
     State-machine handler methods are synchronized,
-		so only one thread at one time may execute state's handler code.
+		so only one thread at one time may execute a state's handler code.
 
 		State machine handler code should not do busy-waits, 
-		or run very long loops, because doing so could disable 
+		or contain long loops, because doing so could disable 
 		other parts of the hierarchical state machine of which it is a part.
 
 
@@ -127,11 +127,11 @@ public class StateList extends MutableList implements Runnable {
     Hierarchical state machine major states: 
 
     A hierarchical state machine has two major states,
-    not to be confused with the sub-states that comprise the state machine.  
-    These major states are:
+    not to be confused with their own sub-states.  The major states are:
     * Waiting for the next input event.  
       In this major state, no handler methods are active.
-      All threads that provide inputs to the machine are waiting. 
+      All threads that provide inputs to the machine are waiting
+      or busy doing other things. 
     * Processing input events.  
       In this major state, one or more handler methods are active.
       They are processing one or more input events.
@@ -173,13 +173,13 @@ public class StateList extends MutableList implements Runnable {
     	This property is contextual.  A signal which is
     	an output of one machine might be an input to another machine.
 
-    Here are some signals of interest to these state machines,
+    The following is a list of some signals of interest to these state machines,
     signals that are checked by the base state-machine infrastructure, 
-    and how they should be handled:
+    and how these signals should be handled:
   	* A state change request: 
   	  A state machine can make this request to its ancestor state machines.
   	  In most cases, the ancestor state that should respond is the parent.
-  	  The appropriate ancestor state responds by changing it state 
+  	  The appropriate ancestor state responds by changing its state 
   	  to the sub-state requested, and calling its handler.
     * A timer being triggered.  
       The affected state handler will take an appropriate action.
@@ -194,7 +194,7 @@ public class StateList extends MutableList implements Runnable {
       When a return code is true, it means that 
       some other otherwise undocumented signal has been produced.  
       See the additional information below about 
-      handler methods and return code.
+      handler methods and return codes.
 
 
 		Handler methods and their protocol (return status values):
@@ -209,8 +209,7 @@ public class StateList extends MutableList implements Runnable {
 
 		A state handler method may return at any time.
 		The way the caller responds to a return depends on
-		the handler method's return code.
-		For more information see below.
+		the handler method's return code.  Details follow.
 
 		There are several ways that a state can pass information/signals.
 		* state [change] request: This is a signal requesting that
@@ -230,12 +229,15 @@ public class StateList extends MutableList implements Runnable {
       * Input being consumed means that the input was fully processed 
         by the state that consumes it and no further action is needed.
       * Input NOT being consumed means either
-        * that the input was not processed by the state that did not consume it, or
+        * that the input was not processed by 
+          the state that did not consume it, or
         * that the input was processed by the state that did not consume it but
-          this is a broadcast type of input that may be processed by multiple states.
+          this is a broadcast type of input that may be processed by 
+          multiple states.
 		  * Generally a state will offer the input to one or more of its children
 		    before trying to process the input itself.
-		    This makes it possible for sub-states to override default behavior of their parent. 
+		    This makes it possible for sub-states to override 
+		    the default behavior of their parent. 
 		  * If the state's handler processes and consumes the discrete input, 
 		    it sets the input variable to null to indicate this.
 		    The setter of the variable interprets this to mean
@@ -254,10 +256,12 @@ public class StateList extends MutableList implements Runnable {
         the current state's descendant states, if any, 
         examined all available state machine inputs of interest to them,
         and found no input that could be processed in any way.
-        Previously false this meant that there might or might not have been progress,
+        Previously false meant that there might or might not have been progress,
         but no further progress was possible.
-      * true: This means that some computational progress was made processing inputs.
-        In this case, the following should happen.
+      * true: This means that some computational progress was made 
+        Previously true meant that that at least some input-processing work 
+        remains to be done.
+      * processing inputs.  In this case, the following should happen.
         * The handlers of other states, probably concurrent sibling states, 
           should be called to process the remaining inputs,
           and any output signals that might have been produced by 
@@ -266,8 +270,6 @@ public class StateList extends MutableList implements Runnable {
           to try to finish up its work.
           If it returns true again, this sequence should be repeated,
           until it finally returns false indicating no further work is possible.
-	      Previously true meant that that at least some input-processing work 
-        remains to be done.
 
 
 		Exception Handling:
@@ -347,8 +349,9 @@ public class StateList extends MutableList implements Runnable {
   private String offeredInputString; /* Temporarily stores a discrete input event.
     It is the one place this state checks for discrete input.
     This variable is set according to the following protocol:
-    * set to a non-null reference to an input String by the state handler's caller
-      immediately before the handler is called to try to process the input
+    * set to a non-null reference to an input String by 
+      the state handler's caller immediately before 
+      the handler is called to try to process the input
     * set to null.
   	  * This is done by the handler immediately after processing the input if
   	    the input was fully processed.  Setting to null in this case
@@ -944,7 +947,6 @@ public class StateList extends MutableList implements Runnable {
 	  Maybe tie to InputStream?
 	  */
 	
-
 	protected final synchronized boolean doOnInputsToSubstateB( 
 			  StateList subStateList )
 		  throws IOException
@@ -974,7 +976,7 @@ public class StateList extends MutableList implements Runnable {
 					subStateList.setOfferedInputV(offeredString);
 				  	// Store copy of discrete input, if any, in sub-state.
 					signalB= subStateList.doOnInputsB(); // Process with offered input.
-					if // Process consumption of input by substate, if it happened.
+					if // Process consumption of input by sub-state, if it happened.
 						(subStateList.getOfferedInputString() == null) // It was consumed.
 						{ resetOfferedInputV(); // Remove input from this state also.
 							signalB= true; // Treat input consumption as progress.
@@ -985,17 +987,18 @@ public class StateList extends MutableList implements Runnable {
 			return signalB;
 			}
 
-
   public boolean processInputB(String inputString) throws IOException
-    /* This method processes a specific discrete input string, inputString,
-      It does this by offering the string and cycling the state machine.
+    /* This method processes a specific discrete input string, inputString.
+      It was created for responding to outputs from other states,
+      not inputs from the network.
+      Processing is done by offering the string and cycling the state machine.
       If the string is processed by the machine, true is returned,
       otherwise false is returned.
-      In either case, the offer variable is reset.
+      In either case, the offer variable is reset before returning.
       */
     {
       setOfferedInputV(inputString); // Store string in input variable.
-      while (doOnInputsB()) ; // Cycle state machine to try processing it.
+      while (doOnInputsB()) ; // Cycle state machine as many times as needed.
       boolean successB= // Calculate whether input was consumed.
           (getOfferedInputString() == null);
       if (!successB) { // Handle not-consumed input.
@@ -1012,7 +1015,7 @@ public class StateList extends MutableList implements Runnable {
       otherwise the offered input string
       is not consumed and false is returned.
       If true is returned then it is the responsibility of the caller
-      to process other data associated with testString 
+      to process any other data that might be associated with testString 
       which follows it in the input stream.
       */
     {
@@ -1108,7 +1111,7 @@ public class StateList extends MutableList implements Runnable {
 		  Nulls.fastFailNullCheckT(resultString);
 		  return resultString;
 	  	}
-	
+
 
 	/* Method for dealing with timer input.  */
 
