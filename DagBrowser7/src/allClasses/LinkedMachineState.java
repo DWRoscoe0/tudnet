@@ -336,6 +336,13 @@ public class LinkedMachineState
           theTimerInput.scheduleV( // Restart timer.
               Config.slowPeriodicRetryTimeOutMsL);
           }
+      else if (tryInputB("ExponentialRetryConnect")) 
+        { // Local connect requested.
+          theAppLog.debug("UCLinkedMachine",
+              "SlowPeriodicRetryConnectingState.onInputsToReturnFalseV() ExponentialRetryConnect.");
+          sendHelloV(this); // Send initial HELLO.
+          requestAncestorSubStateV(theExponentialRetryConnectingState);
+          }
     }
 
     Color getBackgroundColor(Color defaultBackgroundColor) {
