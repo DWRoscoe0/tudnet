@@ -217,7 +217,7 @@ public class EpiInputStream<
             //// packetEpiNode= EpiNode.tryEpiNode(this); // Try parsing node.
             packetMapEpiNode= tryMapEpiNode(); // Try parsing node and caching it.
             if (packetMapEpiNode == null) { // Unable to get another node.
-              emptyingBufferV(); // Make certain buffer is empty to prevent looping.
+              emptyingBufferV(); // Empty packet buffer to prevent looping.
               break; // Exit with fail.
               }
             packetElementIndexI= 0; // Reset index for scanning node elements.
@@ -239,7 +239,7 @@ public class EpiInputStream<
         If it fails it returns null and the stream position is unchanged.
         */
       { 
-        MapEpiNode resultMapEpiNode= null; // Set default result to indicate failure.
+        MapEpiNode resultMapEpiNode= null; // Assume result of failure.
         if (packetMapEpiNode == null) { // If node not ready
           /// bufferLoggerV("EpiInputStream.tryMapEpiNode()", 0);
           packetMapEpiNode= MapEpiNode.tryMapEpiNode(this); // try parsing one.

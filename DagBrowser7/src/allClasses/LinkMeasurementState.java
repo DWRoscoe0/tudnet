@@ -248,72 +248,6 @@ public class LinkMeasurementState
 			  	  setFirstOrSubStateV( theMeasurementPausedState ); // Initial state.
 						return this;
 			    	}
-
-        private boolean tryProcessingExpectedPacketAcknowledgementB() 
-            throws IOException
-          /* This input method tries to process the "PA" sequence number 
-            feedback message, which the remote peer sends
-            in response to receiving an "PS" sequence number message.
-            This includes the PA parameters:
-            * a copy of the sent packet sequence number 
-              received with PS by the remote peer,
-            * the remote peers received packet count.
-            From these two values this method calculates 
-            the packet loss ratio in the remote peer receiver.
-            By having "PA" include both values, 
-            its calculation is RTT-immune.
-            
-            It returns true if it succeeds, false otherwise.
-  
-            See processSequenceNumberB(..) about "PS", for more information.
-            */
-          {
-              int streamPositionI= theNetcasterInputStream.getPositionI();
-              boolean successB= false;
-              boolean gotPAB= false;
-            toReturn: {
-              try {
-                gotPAB= tryInputB("PA"); 
-                if (!gotPAB) // If acknowledgement token PA not gotten
-                  break toReturn; // exit.
-                long ackReceivedTimeNsL= System.nanoTime();
-                int sequenceNumberI=  // Reading echo of sequence #.
-                    theNetcasterInputStream.readANumberI();
-                if // Reject out-of-sequence sequence number.
-                  ( sequenceNumberI != lastSequenceNumberSentL )
-                  {
-                    break toReturn;
-                    }
-                int packetsReceivedI=  // Reading packets received.
-                    theNetcasterInputStream.readANumberI();
-                measurementHandshakesNamedLong.addDeltaL(1);
-                
-                newLocalPacketsSentEchoedNamedLong.setValueL(
-                    sequenceNumberI + 1); // Convert sequence # to sent packet count.
-                newRemotePacketsReceivedNamedLong.setValueL(packetsReceivedI);
-                outgoingPacketLossLossAverager.recordPacketsReceivedOrLostV(
-                    newLocalPacketsSentEchoedNamedLong,
-                    newRemotePacketsReceivedNamedLong
-                    );
-                calculateRoundTripTimesV(
-                    sequenceNumberI, ackReceivedTimeNsL, packetsReceivedI);
-                successB= true; // Everything succeeded.
-                }
-              catch ( BadReceivedDataException theBadReceivedDataException ) {
-                successB= false; ///? needed?
-                theAppLog.exception( 
-                    "MeasurementHandshakingState.tryProcessingPacketAcknowledgementB() ",
-                    theBadReceivedDataException);
-                }
-              } // toReturn:
-            if (!successB) // Rewind inputs if any input was not acceptable.
-              {
-                theNetcasterInputStream.setPositionV(streamPositionI);
-                if (gotPAB) // If acknowledgement token PA gotten
-                  setOfferedInputV("PA"); // restore it as offered input.
-                }
-            return successB;
-            }
         
         private boolean tryProcessingOldPacketAcknowledgementB() 
             throws IOException
@@ -447,9 +381,96 @@ public class LinkMeasurementState
   				    			    }
   					    		}
 				  	  	}
+
+        private boolean tryProcessingExpectedPacketAcknowledgementB() 
+            throws IOException
+          /* This input method tries to process the "PA" sequence number 
+            feedback message, which the remote peer sends
+            in response to receiving an "PS" sequence number message.
+            This includes the PA parameters:
+            * a copy of the sent packet sequence number 
+              received with PS by the remote peer,
+            * the remote peers received packet count.
+            From these two values this method calculates 
+            the packet loss ratio in the remote peer receiver.
+            By having "PA" include both values, 
+            its calculation is RTT-immune.
+            
+            It returns true if it succeeds, false otherwise.
+  
+            See processSequenceNumberB(..) about "PS", for more information.
+            */
+          {
+              int streamPositionI= theNetcasterInputStream.getPositionI();
+              boolean successB= false;
+              boolean gotPAB= false;
+            toReturn: {
+              try {
+                //// theAppLog.debug(
+                ////     "tryProcessingExpectedPacketAcknowledgementB(),"
+                ////     + " before tryInputB(\"PA\"), offeredInputString="
+                ////     + offeredInputString);
+                gotPAB= tryInputB("PA");  
+                //// theAppLog.debug(
+                ////     "tryProcessingExpectedPacketAcknowledgementB(),"
+                ////     + " after tryInputB(\"PA\"), is: "+gotPAB);
+                if (!gotPAB) // If acknowledgement token PA not gotten
+                  break toReturn; // exit.
+                //// theAppLog.debug( "tryProcessingExpectedPacketAcknowledgementB(),"
+                ////     + " got PA, processing it.");
+                long ackReceivedTimeNsL= System.nanoTime();
+                int sequenceNumberI=  // Reading echo of sequence #.
+                    theNetcasterInputStream.readANumberI();
+                if // Reject out-of-sequence sequence number.
+                  ( sequenceNumberI != lastSequenceNumberSentL )
+                  {
+                    break toReturn;
+                    }
+                int packetsReceivedI=  // Reading packets received.
+                    theNetcasterInputStream.readANumberI();
+                measurementHandshakesNamedLong.addDeltaL(1);
+                
+                newLocalPacketsSentEchoedNamedLong.setValueL(
+                    sequenceNumberI + 1); // Convert sequence # to sent packet count.
+                newRemotePacketsReceivedNamedLong.setValueL(packetsReceivedI);
+                outgoingPacketLossLossAverager.recordPacketsReceivedOrLostV(
+                    newLocalPacketsSentEchoedNamedLong,
+                    newRemotePacketsReceivedNamedLong
+                    );
+                calculateRoundTripTimesV(
+                    sequenceNumberI, ackReceivedTimeNsL, packetsReceivedI);
+                successB= true; // Everything succeeded.
+                }
+              catch ( BadReceivedDataException theBadReceivedDataException ) {
+                successB= false; ///? needed?
+                theAppLog.exception( 
+                    "MeasurementHandshakingState.tryProcessingPacketAcknowledgementB() ",
+                    theBadReceivedDataException);
+                }
+              } // toReturn:
+            if (!successB) // Rewind inputs if any input was not acceptable.
+              {
+                theNetcasterInputStream.setPositionV(streamPositionI);
+                if (gotPAB) // If acknowledgement token PA gotten
+                  setOfferedInputV("PA"); // restore it as offered input.
+                }
+            return successB;
+            }
 					  
 			  		} // class MeasurementHandshakingState 
-	
+
+				/*  ////
+				public boolean onInputsB() throws IOException  //// debug.
+          {
+				    if ("PA".equals(offeredInputString))
+                theAppLog.debug( "LinkMeasurementState.onInputsB(), "
+                    + "\"PA\".equals(offeredInputString).");
+				    boolean returnB = // Try processing in OrState machine of superclass.
+                super.onInputsB();
+            return returnB;
+            }
+        */  ////
+
 				public void onExitV() throws IOException
 				  // Cancels acknowledgement timer.
 				  { 

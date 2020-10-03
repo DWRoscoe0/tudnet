@@ -346,7 +346,9 @@ public class StateList extends MutableList implements Runnable {
   protected List<StateList> theListOfSubStateLists= // Our sub-states.
       new ArrayList<StateList>(); // Initially empty list.
 
-  private String offeredInputString; /* Temporarily stores a discrete input event.
+  private MapEpiNode offeredInputMapEpiNode= null; ////// New input.
+  protected String offeredInputString; //// make private after debugged. 
+    /* Temporarily stores a discrete input event.
     It is the one place this state checks for discrete input.
     This variable is set according to the following protocol:
     * set to a non-null reference to an input String by 
@@ -545,6 +547,8 @@ public class StateList extends MutableList implements Runnable {
   	  substateScansUntilNoProgress: while(true) {
  	  		for (StateList subStateList : theListOfSubStateLists)
    	  		{
+ 	  		    //// theAppLog.debug( "andStateOnInputsB(), input: "+
+ 	  		    ////     offeredInputString);
    	  		  boolean substateProgressB= doOnInputsToSubstateB(subStateList); 
   	  	  	if (substateProgressB) 
   		  	  	{
@@ -554,6 +558,7 @@ public class StateList extends MutableList implements Runnable {
    	  		  }
  	  		break substateScansUntilNoProgress; // No progress was made in this final scan.
   	  	} // substateScansUntilNoProgress:
+      //// theAppLog.debug( "andStateOnInputsB(): done.");
 			return stateProgressB; 
 			}
 
@@ -868,6 +873,8 @@ public class StateList extends MutableList implements Runnable {
 	    StateList sub-classes may override.
 	    */
 	  { 
+      //// theAppLog.debug("onInputsB(), offeredInputString= "+offeredInputString
+      ////     + ", "+getFormattedStatePathString() );
 			boolean signalB= onInputsB();
       stateChange: { // Detect and prepare left-over state change request.
         if ((nextSubStateList == null)) // Not requested.
@@ -963,19 +970,23 @@ public class StateList extends MutableList implements Runnable {
 			then it will remain stored in this state machine,
 			and it is the responsibility of the caller to deal with it,
 			either by removing it, trying to process it in a sibling state, 
-			or by calling this method until the input is consumed.
+			or by calling this method again until the input is consumed.
 			*/
 		{
 			boolean signalB;
-			String offeredString= getOfferedInputString();
-			if ( offeredString == null ) // Discrete input not present.
+			//// String offeredString= getOfferedInputString();
+			//// if ( offeredString == null ) // Discrete input not present.
+			if ( ! hasOfferedInputB(this) ) // Discrete input not present.
 				signalB= // Process without passing the offered input.
 					subStateList.doOnInputsB();
 				else // Offered input is present.
 				{
-					subStateList.setOfferedInputV(offeredString);
-				  	// Store copy of discrete input, if any, in sub-state.
+					//// subStateList.setOfferedInputV(offeredString);
+            // Store copy of discrete input, if any, in sub-state.
+				  moveOfferedInputV(this, subStateList);
+            // Move offered input from this state to sub-state.
 					signalB= subStateList.doOnInputsB(); // Process with offered input.
+					/*  ////
 					if // Process consumption of input by sub-state, if it happened.
 						(subStateList.getOfferedInputString() == null) // It was consumed.
 						{ resetOfferedInputV(); // Remove input from this state also.
@@ -983,6 +994,14 @@ public class StateList extends MutableList implements Runnable {
 							}
 						else // Discrete input was not consumed by sub-state.
 						subStateList.resetOfferedInputV(); // Remove it from sub-state.
+					*/  ////
+          if // Process consumption of input by sub-state, if it happened.
+            (! hasOfferedInputB(subStateList)) // It was consumed.
+            { signalB= true; // Treat input consumption as progress.
+              }
+            else // Discrete input was not consumed by sub-state.
+            moveOfferedInputV( // Move it back to this state.
+                subStateList, this);
 					}
 			return signalB;
 			}
@@ -1043,30 +1062,84 @@ public class StateList extends MutableList implements Runnable {
 			return offeredInputString;
 		  }
 
-	public void setOfferedInputV(String newOfferedInputString)
-		/* This method stores offeredInputString within this state
-		  for possible input by the state.
-		 	*/
-	  {
-			{ // Log anomalous behavior first.
-				String anomalyString= null;
-			  if ( newOfferedInputString == null )
-			  	anomalyString= 
-			  	  newOfferedInputString + " value is ILLEGAL input to";
-			  else if ( this.offeredInputString != null ) 
-				  	anomalyString= 
-				  		"Old input '" + this.offeredInputString + "' was NOT consumed by";
-			  if ( anomalyString != null ) // Log if anomaly produced.
-			  	theAppLog.warning(
-			  			"StateList.setOfferedInputV(..), "
-					  	+ anomalyString
-			  			+ getFormattedStatePathString()
-			  			);
-				}
+  public void setOfferedInputV(String newOfferedInputString)
+    /* This method stores offeredInputString within this state
+      for possible input by the state.
+      */
+    {
+      { // Log anomalous behavior first.
+        String anomalyString= null;
+        if ( newOfferedInputString == null )
+          anomalyString= 
+            newOfferedInputString + " value is ILLEGAL input to";
+        else if ( this.offeredInputString != null ) 
+            anomalyString= 
+              "Old input '" + this.offeredInputString + "' was NOT consumed by";
+        if ( anomalyString != null ) // Log if anomaly produced.
+          theAppLog.warning(
+              "StateList.setOfferedInputV(String), "
+              + anomalyString
+              + getFormattedStatePathString()
+              );
+        }
 
       // theAppLog.debug("StateList.setOfferedInputV(..) with "+newOfferedInputString);
-			this.offeredInputString= newOfferedInputString; // Store new input.
-		  }
+      this.offeredInputString= newOfferedInputString; // Store new input.
+      }
+
+  private void moveOfferedInputV(
+      StateList sourceStateList, StateList destinationStateList)
+    /* This method moves offered input from sourceStateList
+     * to destinationStateList.
+     * ///enh add error checking.
+     */
+    {
+      //// theAppLog.debug( "StateList.moveOfferedInputV(.): "
+      ////     +sourceStateList.offeredInputString);
+      if (! hasOfferedInputB(sourceStateList))
+        theAppLog.warning(
+          "StateList.moveOfferedInputV(.), source has no input.");
+      if (hasOfferedInputB(destinationStateList))
+        theAppLog.warning(
+          "StateList.moveOfferedInputV(.), destination has leftover input.");
+
+      destinationStateList.offeredInputString= // Copy input to destination.
+          sourceStateList.offeredInputString;
+      sourceStateList.offeredInputString= null; // Remove from source.
+      }
+      
+  private boolean hasOfferedInputB(StateList theStateList)
+    /* This method returns true if theStateList has any offered input,
+     * false otherwise.
+     */
+      { 
+        return (null != theStateList.offeredInputString);
+        }
+
+  public void setOfferedInputV(MapEpiNode newOfferedInputMapEpiNode)
+    /* This method stores offeredInputString within this state
+      for possible input by the state.
+      */
+    {
+      { // Log anomalous behavior first.
+        String anomalyString= null;
+        if ( newOfferedInputMapEpiNode == null )
+          anomalyString= 
+            newOfferedInputMapEpiNode + " value is ILLEGAL input to";
+        else if ( this.offeredInputMapEpiNode != null ) 
+            anomalyString= 
+              "Old input '" + this.offeredInputMapEpiNode + "' was NOT consumed by";
+        if ( anomalyString != null ) // Log if anomaly produced.
+          theAppLog.warning(
+              "StateList.setOfferedInputV(MapEpiNode), "
+              + anomalyString
+              + getFormattedStatePathString()
+              );
+        }
+
+      // theAppLog.debug("StateList.setOfferedInputV(MapEpiNode) with "+newOfferedInputString);
+      this.offeredInputMapEpiNode= newOfferedInputMapEpiNode; // Store new input.
+      }
 
 	public void resetOfferedInputV()
 		/* This method clears the offeredInputString within this state,
