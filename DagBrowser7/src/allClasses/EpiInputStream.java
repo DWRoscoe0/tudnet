@@ -2,7 +2,6 @@ package allClasses;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
-//// import java.util.Objects;
 
 import static allClasses.AppLog.theAppLog;
 
@@ -61,17 +60,23 @@ public class EpiInputStream<
 		private final char delimiterChar;
 		
 	  // Other instance variables.
+
 		// Whole packet buffer.
 		private E loadedKeyedPacketE= null;
 		private DatagramPacket loadedDatagramPacket = null;
 		private byte[] bufferBytes = null;
-    // Stream scan position: Buffer is empty/consumed when packetIndexI >= packetSizeI.
 		private int packetSizeI = 0;
-		private int bufferIndexI = 0;
-		// Position of parsed EpiNode data gotten from packet.
-    private MapEpiNode packetMapEpiNode= null; // Cached MapEpiNode parsed from packet.
-    private int packetElementIndexI= 0; // Index of element within EpiNode.
-    // Legacy position marking variables.
+		
+		// EpiNode within packet.
+    private int bufferIndexI = 0; // Buffer/stream scan position.
+      // Buffer is consumed when packetIndexI >= packetSizeI.
+    private MapEpiNode cachedMapEpiNode= null; // Cached MapEpiNode parsed from packet.
+    
+    // Strings within MapEpiNode.
+    private int stringElementIndexI= 0; // Index of Strings within EpiNode.
+    private String cachedString= null;
+
+    // Legacy InputStream position marking variables.
     private boolean markedB= false;
     private int markIndexI= -1; 
 
@@ -171,65 +176,65 @@ public class EpiInputStream<
        */
       {
           String accumulatorString= "";
-          //// int byteI;
-        toReturn: { //// toNoData: {
+        toReturn: {
           accumulatorString= tryFromEpiNodeString(); // Try string from sequence.
           if (accumulatorString != null) break toReturn; // Exiting if gotten.
 
           theAppLog.error( "readAString(): unable to get string from EpiNode.");
-          /*  ////
-          theAppLog.debug( "readAString(): trying old !-delimited parsing.");
-          accumulatorString= ""; // Set accumulator to empty string.
-          while (true) { // Skipping possible YAML lead-in characters.
-            byteI= tryBufferByteI();
-            if ( ! isLeadDelimiterB(byteI) ) break; // Exiting if not lead-in byte.
-            // Ignore lead-in character.
-            }
-          while (true) { // Reading and accumulating string bytes until terminator.
-            if ( isDelimiterB(byteI) ) break toReturn; // Exiting if terminator seen.
-            accumulatorString+= (char)byteI; // Append string byte.
-            if ( bufferByteCountI() <= 0 ) break toNoData;
-            byteI= read();
-            }
-          */  ////
-        //// } // toNoData: Being here means end of packet reached.
           accumulatorString+="!NO-DATA-AVAILABLE!";
           // theAppLog.error( // Log this way to debug.
           theAppLog.warning( // Log this way normally.  
               "readAString(): returning " + accumulatorString );
-          //// theAppLog.reallyDoStackTraceV(null);
         } // toReturn:
           return accumulatorString;
         }
     
-    // Parsers of YAML-like language. //// temporary
-
     private String tryFromEpiNodeString() throws IOException
       /* This method tries to get a String by parsing and caching EpiNodes,
         then extracting Strings from them.
-        If it succeeds it returns the next String.
-        If it fails it returns null.
+        If it succeeds then it returns the next String.
+        If it fails then it returns null.
         */
       { 
-        String elementString= null; // Set default result to indicate failure.
-        while (true) { // Keep trying until no more EpiNode elements to return.
-          if (packetMapEpiNode == null) { // Handle missing EpiNode if needed.
-            //// packetEpiNode= EpiNode.tryEpiNode(this); // Try parsing node.
-            packetMapEpiNode= tryMapEpiNode(); // Try parsing node and caching it.
-            if (packetMapEpiNode == null) { // Unable to get another node.
+        cachedString= null;
+        return testFromEpiNodeString();
+        }
+
+    private String testFromEpiNodeString() throws IOException
+      /* This method tests whether there is a String available
+       * parsed from MapEpiNodes, then extracting Strings from them.
+       * If true then it returns the String.
+       * If not then it returns null.
+       */
+      { 
+          String resultString= cachedString;
+        goReturn: {
+          if (null != resultString)
+            break goReturn;
+          while (true) { // Keep trying until no more EpiNode elements to return.
+            cachedMapEpiNode= testMapEpiNode(); // Test for node and cach it.
+            if (cachedMapEpiNode == null) { // Unable to get another node.
               emptyingBufferV(); // Empty packet buffer to prevent looping.
+              stringElementIndexI= 0; // Reset index for scanning node elements.
               break; // Exit with fail.
               }
-            packetElementIndexI= 0; // Reset index for scanning node elements.
-            }
-          elementString= packetMapEpiNode.extractFromEpiNodeString(packetElementIndexI);
-          if (elementString != null) { // If got string, return it. 
-            packetElementIndexI++; // Increment index for next string.
-            break; // Exit with success.
-            }
-          packetMapEpiNode= null; // Reset to try for another node.
-          } // while
-        return elementString;
+            cachedString= cachedMapEpiNode.extractFromEpiNodeString(stringElementIndexI);
+            if (cachedString != null) { // If got string, return it. 
+              stringElementIndexI++; // Increment index for next string.
+              break; // Exit with success.
+              }
+            cachedMapEpiNode= null; // Reset to try for another node.
+            } // while
+        } // goReturn:
+          return cachedString;
+        }
+
+    public MapEpiNode testMapEpiNode() throws IOException
+      {
+        if (cachedMapEpiNode == null) { // Handle missing EpiNode if needed.
+          cachedMapEpiNode= tryMapEpiNode(); // Try parsing node and caching it.
+          }
+        return cachedMapEpiNode;
         }
 
     public MapEpiNode tryMapEpiNode() throws IOException
@@ -240,19 +245,25 @@ public class EpiInputStream<
         */
       { 
         MapEpiNode resultMapEpiNode= null; // Assume result of failure.
-        if (packetMapEpiNode == null) { // If node not ready
+        if (cachedMapEpiNode == null) { // If node not ready
           /// bufferLoggerV("EpiInputStream.tryMapEpiNode()", 0);
-          packetMapEpiNode= MapEpiNode.tryMapEpiNode(this); // try parsing one.
+          cachedMapEpiNode= MapEpiNode.tryMapEpiNode(this); // try parsing one.
           }
         /// theAppLog.debug("EpiInputStream.tryMapEpiNode() packetMapEpiNode="
         ///     +Objects.toString(packetMapEpiNode,"null"));
-        if (packetMapEpiNode != null) { // If we have a node now
-          resultMapEpiNode= packetMapEpiNode; // set it for return as result.
-          packetMapEpiNode= null; // Reset since we're taking node away.
+        if (cachedMapEpiNode != null) { // If we have a node now
+          resultMapEpiNode= cachedMapEpiNode; // set it for return as result.
+          cachedMapEpiNode= null; // Reset since we're taking node away.
           }
         return resultMapEpiNode;
         }
 
+    public void consumeInputV()
+      /* This method consumes any cached String and MapEpiNode. */
+      {
+        cachedMapEpiNode= null; // Reset since we're taking node away.
+        cachedString= null;
+        }
     
     @SuppressWarnings("unused") ///
     private String remainingBufferString() throws IOException
@@ -466,10 +477,6 @@ public class EpiInputStream<
         bufferIndexI= loadedDatagramPacket.getOffset();
         packetSizeI= loadedDatagramPacket.getLength();
         
-        //// //// Override for debugging.
-        //// bufferBytes= "{A:B}".getBytes();
-        //// bufferIndexI= 0;
-        //// packetSizeI= bufferBytes.length;
 		    }
 
     public void bufferLoggerV(String messageString, int positionI)
@@ -550,8 +557,8 @@ public class EpiInputStream<
       {
         bufferIndexI= thePositionI; // Restoring buffer byte index.
         
-        packetMapEpiNode= null; //// Kludge: reset EpiNode parser.
-        packetElementIndexI= 0; //// Kludge: reset EpiNode parser.
+        cachedMapEpiNode= null; //// Kludge: reset EpiNode parser.
+        stringElementIndexI= 0; //// Kludge: reset EpiNode parser.
         }
 	
 		}

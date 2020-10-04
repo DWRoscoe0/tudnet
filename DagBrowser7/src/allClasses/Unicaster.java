@@ -254,11 +254,10 @@ public class Unicaster
 		    
 		    Input message sources now include:
 		    * The EpiInputStream.  These are passed to the superclass state machine. 
-		      /// This is being changed so any leftover is sent as a MapEpiNode
-		      to the ConnectionManager.
+		      Leftover input is sent as a MapEpiNode to the the ConnectionManager.
 		    * The String queue.  These are passed to the superclass state machine.
 		    * the EpiNode queue.  
-		      These come from the ConnectionManager.
+		      These comes from the ConnectionManager.
 		      They are serialized to a packet and sent to the remote peer.
 
         ///fix  Legitimate input is sometimes not consumed!
@@ -315,14 +314,14 @@ public class Unicaster
     private void processPacketStreamInputV() throws IOException
       /* This method gets all available Strings, if any,
         from the theEpiInputStreamI,
-        and passes them to the Unicaster state machine,
+        and passes them to the Unicaster top level state machine,
         and cycles the machine until each String is fully processed.
         Any input that remains, if any, if processed by processUnprocessedInputV().
         */
       {
         while (theEpiInputStreamI.available() > 0) { // Try parsing more of packet stream.
           String inString= theEpiInputStreamI.readAString(); // Get next token.
-          setOfferedInputV( inString ); // Offer it to state machine.
+          setOfferedInputV( inString ); // Offer it as input to state machine.
           while (doOnInputsB()) ; // Cycle state machine until processing stops.
           processUnprocessedInputV(); // Handle any left-over input.
           }
@@ -385,7 +384,8 @@ public class Unicaster
             thisMapEpiNode.getEmptyOrString(Config.userIdString) // Unicaster UserId as context.
             );
         } // toConsumeInput: 
-          resetOfferedInputV();  // consume unprocessed state machine String input.
+            theEpiInputStreamI.consumeInputV();
+            resetOfferedInputV();  // consume unprocessed state machine String input.
         } // toReturn:
           return;
         }
