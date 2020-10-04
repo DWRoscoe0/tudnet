@@ -347,7 +347,7 @@ public class StateList extends MutableList implements Runnable {
       new ArrayList<StateList>(); // Initially empty list.
 
   private MapEpiNode offeredInputMapEpiNode= null; ////// New input.
-  protected String offeredInputString; //// make private after debugged. 
+  private String offeredInputString; 
     /* Temporarily stores a discrete input event.
     It is the one place this state checks for discrete input.
     This variable is set according to the following protocol:
@@ -547,8 +547,6 @@ public class StateList extends MutableList implements Runnable {
   	  substateScansUntilNoProgress: while(true) {
  	  		for (StateList subStateList : theListOfSubStateLists)
    	  		{
- 	  		    //// theAppLog.debug( "andStateOnInputsB(), input: "+
- 	  		    ////     offeredInputString);
    	  		  boolean substateProgressB= doOnInputsToSubstateB(subStateList); 
   	  	  	if (substateProgressB) 
   		  	  	{
@@ -558,7 +556,6 @@ public class StateList extends MutableList implements Runnable {
    	  		  }
  	  		break substateScansUntilNoProgress; // No progress was made in this final scan.
   	  	} // substateScansUntilNoProgress:
-      //// theAppLog.debug( "andStateOnInputsB(): done.");
 			return stateProgressB; 
 			}
 
@@ -873,8 +870,6 @@ public class StateList extends MutableList implements Runnable {
 	    StateList sub-classes may override.
 	    */
 	  { 
-      //// theAppLog.debug("onInputsB(), offeredInputString= "+offeredInputString
-      ////     + ", "+getFormattedStatePathString() );
 			boolean signalB= onInputsB();
       stateChange: { // Detect and prepare left-over state change request.
         if ((nextSubStateList == null)) // Not requested.
@@ -974,27 +969,14 @@ public class StateList extends MutableList implements Runnable {
 			*/
 		{
 			boolean signalB;
-			//// String offeredString= getOfferedInputString();
-			//// if ( offeredString == null ) // Discrete input not present.
 			if ( ! hasOfferedInputB(this) ) // Discrete input not present.
 				signalB= // Process without passing the offered input.
 					subStateList.doOnInputsB();
 				else // Offered input is present.
-				{
-					//// subStateList.setOfferedInputV(offeredString);
-            // Store copy of discrete input, if any, in sub-state.
+				{ // Process with passed input.
 				  moveOfferedInputV(this, subStateList);
             // Move offered input from this state to sub-state.
 					signalB= subStateList.doOnInputsB(); // Process with offered input.
-					/*  ////
-					if // Process consumption of input by sub-state, if it happened.
-						(subStateList.getOfferedInputString() == null) // It was consumed.
-						{ resetOfferedInputV(); // Remove input from this state also.
-							signalB= true; // Treat input consumption as progress.
-							}
-						else // Discrete input was not consumed by sub-state.
-						subStateList.resetOfferedInputV(); // Remove it from sub-state.
-					*/  ////
           if // Process consumption of input by sub-state, if it happened.
             (! hasOfferedInputB(subStateList)) // It was consumed.
             { signalB= true; // Treat input consumption as progress.
@@ -1006,7 +988,8 @@ public class StateList extends MutableList implements Runnable {
 			return signalB;
 			}
 
-  public boolean processInputB(String inputString) throws IOException
+  public synchronized boolean processInputB(String inputString) 
+      throws IOException
     /* This method processes a specific discrete input string, inputString.
       It was created for responding to outputs from other states,
       not inputs from the network.
@@ -1019,7 +1002,7 @@ public class StateList extends MutableList implements Runnable {
       setOfferedInputV(inputString); // Store string in input variable.
       while (doOnInputsB()) ; // Cycle state machine as many times as needed.
       boolean successB= // Calculate whether input was consumed.
-          (getOfferedInputString() == null);
+          !hasOfferedInputB(this);
       if (!successB) { // Handle not-consumed input.
         theAppLog.debug( "StateList processInputB(..) unprocessed: "+inputString);
         resetOfferedInputV(); // Consume the input.
@@ -1057,10 +1040,20 @@ public class StateList extends MutableList implements Runnable {
       }
 
 	protected String getOfferedInputString()
-	  // This method returns the discrete input string stored in this state.
+	  /* This method returns the discrete input String 
+     * stored in this state.
+     */
 	  {
 			return offeredInputString;
 		  }
+
+  protected MapEpiNode getOfferedInputMapEpiNode()
+    /* This method returns the discrete input MapEpiNode
+     * stored in this state.
+     */
+    {
+      return offeredInputMapEpiNode;
+      }
 
   public void setOfferedInputV(String newOfferedInputString)
     /* This method stores offeredInputString within this state
@@ -1087,38 +1080,11 @@ public class StateList extends MutableList implements Runnable {
       this.offeredInputString= newOfferedInputString; // Store new input.
       }
 
-  private void moveOfferedInputV(
-      StateList sourceStateList, StateList destinationStateList)
-    /* This method moves offered input from sourceStateList
-     * to destinationStateList.
-     * ///enh add error checking.
-     */
-    {
-      //// theAppLog.debug( "StateList.moveOfferedInputV(.): "
-      ////     +sourceStateList.offeredInputString);
-      if (! hasOfferedInputB(sourceStateList))
-        theAppLog.warning(
-          "StateList.moveOfferedInputV(.), source has no input.");
-      if (hasOfferedInputB(destinationStateList))
-        theAppLog.warning(
-          "StateList.moveOfferedInputV(.), destination has leftover input.");
-
-      destinationStateList.offeredInputString= // Copy input to destination.
-          sourceStateList.offeredInputString;
-      sourceStateList.offeredInputString= null; // Remove from source.
-      }
-      
-  private boolean hasOfferedInputB(StateList theStateList)
-    /* This method returns true if theStateList has any offered input,
-     * false otherwise.
-     */
-      { 
-        return (null != theStateList.offeredInputString);
-        }
-
   public void setOfferedInputV(MapEpiNode newOfferedInputMapEpiNode)
     /* This method stores offeredInputString within this state
       for possible input by the state.
+      What this method does, resetOfferedInputV() is used to undo
+      if the input is not consumed.
       */
     {
       { // Log anomalous behavior first.
@@ -1146,17 +1112,52 @@ public class StateList extends MutableList implements Runnable {
 		  by setting it to null.
 		  It should be used on a state and all its ancestors
 		  when the input is processed and consumed,
-		  and on a single state that processes the input but doesn't consume it.  
+		  and on a single state that processes the input but doesn't consume it.
+		  This method undoes what setOfferedInputV(.) does.  
 		 	*/
 		{
-		  if ( this.offeredInputString == null )
-		  	theAppLog.error(
-		  			"StateList.resetOfferedInputV(), input already consumed in"
-		  			+ getFormattedStatePathString()
-		  			);
+      if ( ! hasOfferedInputB(this))
+        theAppLog.error(
+    			"StateList.resetOfferedInputV(), input already consumed in"
+    			+ getFormattedStatePathString()
+    			);
 		  
-			this.offeredInputString= null;
-		  }
+      this.offeredInputString= null;
+      this.offeredInputMapEpiNode= null;
+  	  }
+
+  private void moveOfferedInputV(
+      StateList sourceStateList, StateList destinationStateList)
+    /* This method moves offered input from sourceStateList
+     * to destinationStateList.
+     * ///enh add error checking.
+     */
+    {
+      if (! hasOfferedInputB(sourceStateList))
+        theAppLog.warning(
+          "StateList.moveOfferedInputV(.), source has no input.");
+      if (hasOfferedInputB(destinationStateList))
+        theAppLog.warning(
+          "StateList.moveOfferedInputV(.), destination has unconsumed input.");
+
+      destinationStateList.offeredInputString= // Copy to destination.
+          sourceStateList.offeredInputString;
+      sourceStateList.offeredInputString= null; // Remove from source.
+      destinationStateList.offeredInputMapEpiNode= // Copy to destination.
+          sourceStateList.offeredInputMapEpiNode;
+      sourceStateList.offeredInputMapEpiNode= null; // Remove from source.
+      }
+      
+  private boolean hasOfferedInputB(StateList theStateList)
+    /* This method returns true if theStateList has any offered input,
+     * false otherwise.
+     */
+      { 
+        return 
+            (null != theStateList.offeredInputString) ||
+            (null != theStateList.offeredInputMapEpiNode)
+            ;
+        }
 
 	protected String getFormattedStatePathString()
 	  /* Returns string with "state:" on first line, 
@@ -1302,10 +1303,6 @@ public class StateList extends MutableList implements Runnable {
      */
     {
       return activityBasedBackgroundColor( UIColor.activeStateColor );
-          //// ( getActiveB() 
-           //// ? UIColor.activeStateColor 
-           //// : UIColor.inactiveStateColor
-           //// );
       }
 
   Color activityBasedBackgroundColor( Color activeColor )
