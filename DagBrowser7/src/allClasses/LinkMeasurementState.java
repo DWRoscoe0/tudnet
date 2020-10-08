@@ -249,7 +249,7 @@ public class LinkMeasurementState
 						return this;
 			    	}
         
-        private boolean tryProcessingOldPacketAcknowledgementB() 
+        private boolean tryProcessingLatePacketAcknowledgementB() 
             throws IOException
           /* This input method is similar to 
             tryProcessingExpectedPacketAcknowledgementB(),
@@ -257,35 +257,21 @@ public class LinkMeasurementState
             It should be called only after tryProcessingExpectedPacketAcknowledgementB()
             has been tried and failed.
             If it gets a PA message now, it must be an old timed-out one.
-            In this case it consumes, logs, and then ignores it the message
+            In this case it consumes, logs, and then ignores the message
             and its parameters, and returns true.
             Otherwise it returns false.
             */
           {
-            int streamPositionI= theNetcasterInputStream.getPositionI();
-            boolean successB= tryInputB("PA");
-            /*  ///tmp temporarily ignore addition arguments until
-              parsing EpiNodes instead of bytes. 
-            try {
-              if (successB)
-                { // Read and ignore the 2 numbers that follow.
-                  int sequenceNumberI= theNetcasterInputStream.readANumberI();
-                  theNetcasterInputStream.readANumberI();
-                  theAppLog.debug( "MeasurementHandshakingState "
-                    + "ignoring timed-out PA of PS " + sequenceNumberI);
-                  }
-                }
-              catch ( BadReceivedDataException theBadReceivedDataException ) {
-                successB= false;
-                theAppLog.exception( "MeasurementHandshakingState."
-                    + "tryProcessingOldPacketAcknowledgementB() ",
-                    theBadReceivedDataException);
-                }
-             */  ///tmp
-            if (successB)
-              theAppLog.appendToFileV("[ignoring late PA]");
-              else // Rewind input stream if input was not acceptable.
-              theNetcasterInputStream.setPositionV(streamPositionI);
+            //// int streamPositionI= theNetcasterInputStream.getPositionI();
+            //// boolean successB= tryInputB("PA");
+            MapEpiNode valueMapEpiNode= testInputMapEpiNode("PA");
+            boolean successB= (null != valueMapEpiNode);
+            if (successB) // Got [late] PA, so
+            ////  break toReturn; // exit.
+            //// if (successB)
+              theAppLog.appendToFileV("[ignoring late PA]"); // log it.
+            ////   else // Rewind input stream if input was not acceptable.
+            ////   theNetcasterInputStream.setPositionV(streamPositionI);
             return successB;
             }
 				
@@ -354,8 +340,8 @@ public class LinkMeasurementState
 								if ( tryProcessingExpectedPacketAcknowledgementB() ) {
 									requestAncestorSubStateV(theMeasurementPausedState);
 								  }
-								else if ( tryProcessingOldPacketAcknowledgementB() ) {
-	                ; // Ignoring it.
+								else if ( tryProcessingLatePacketAcknowledgementB() ) {
+	                ; // Got one, but ignoring it.
 								  }
 		            else if // Try handling time-out?
 		              (theTimerInput.testInputArrivedB())
@@ -401,33 +387,28 @@ public class LinkMeasurementState
             See processSequenceNumberB(..) about "PS", for more information.
             */
           {
-              int streamPositionI= theNetcasterInputStream.getPositionI();
+              //// int streamPositionI= theNetcasterInputStream.getPositionI();
               boolean successB= false;
-              boolean gotPAB= false;
+              boolean gotPAB= false; ////
             toReturn: {
-              try {
-                //// theAppLog.debug(
-                ////     "tryProcessingExpectedPacketAcknowledgementB(),"
-                ////     + " before tryInputB(\"PA\"), offeredInputString="
-                ////     + offeredInputString);
-                gotPAB= tryInputB("PA");  
-                //// theAppLog.debug(
-                ////     "tryProcessingExpectedPacketAcknowledgementB(),"
-                ////     + " after tryInputB(\"PA\"), is: "+gotPAB);
+              //// try {
+                //// gotPAB= tryInputB("PA");  
+                MapEpiNode valueMapEpiNode= testInputMapEpiNode("PA");
+                gotPAB= (null != valueMapEpiNode);
                 if (!gotPAB) // If acknowledgement token PA not gotten
                   break toReturn; // exit.
-                //// theAppLog.debug( "tryProcessingExpectedPacketAcknowledgementB(),"
-                ////     + " got PA, processing it.");
                 long ackReceivedTimeNsL= System.nanoTime();
                 int sequenceNumberI=  // Reading echo of sequence #.
-                    theNetcasterInputStream.readANumberI();
+                    //// theNetcasterInputStream.readANumberI();
+                    valueMapEpiNode.getZeroOrI("SN");
                 if // Reject out-of-sequence sequence number.
                   ( sequenceNumberI != lastSequenceNumberSentL )
                   {
                     break toReturn;
                     }
                 int packetsReceivedI=  // Reading packets received.
-                    theNetcasterInputStream.readANumberI();
+                    //// theNetcasterInputStream.readANumberI();
+                    valueMapEpiNode.getZeroOrI("PC");
                 measurementHandshakesNamedLong.addDeltaL(1);
                 
                 newLocalPacketsSentEchoedNamedLong.setValueL(
@@ -440,20 +421,22 @@ public class LinkMeasurementState
                 calculateRoundTripTimesV(
                     sequenceNumberI, ackReceivedTimeNsL, packetsReceivedI);
                 successB= true; // Everything succeeded.
-                }
-              catch ( BadReceivedDataException theBadReceivedDataException ) {
-                successB= false; ///? needed?
-                theAppLog.exception( 
-                    "MeasurementHandshakingState.tryProcessingPacketAcknowledgementB() ",
-                    theBadReceivedDataException);
-                }
+              ////   }
+              //// catch ( BadReceivedDataException theBadReceivedDataException ) {
+              ////   successB= false; ///? needed?
+              ////   theAppLog.exception( 
+              ////       "MeasurementHandshakingState.tryProcessingPacketAcknowledgementB() ",
+              ////       theBadReceivedDataException);
+              ////   }
               } // toReturn:
             if (!successB) // Rewind inputs if any input was not acceptable.
               {
-                theNetcasterInputStream.setPositionV(streamPositionI);
-                if (gotPAB) // If acknowledgement token PA gotten
-                  setOfferedInputV("PA"); // restore it as offered input.
+                //// theNetcasterInputStream.setPositionV(streamPositionI);
+                //// if (gotPAB) // If acknowledgement token PA gotten
+                ////   setOfferedInputV("PA"); // restore it as offered input.
                 }
+              else
+              resetOfferedInputV();
             return successB;
             }
 					  
@@ -487,14 +470,19 @@ public class LinkMeasurementState
 			      */
 			    {
 			    	lastSequenceNumberSentL= 
-			    			theNetcasterOutputStream.getCounterNamedLong().getValueL(); 
-			      ///dbg appLogger.info( 
-				    ///dbg 		"sendingSequenceNumberV() " + lastSequenceNumberSentL
-				    ///dbg 	);
-            theNetcasterOutputStream.writeV( 
-                "{PS:{SN:" + lastSequenceNumberSentL + "}}" );
-			      theNetcasterOutputStream.endBlockAndSendPacketV();
-			  		sentSequenceNumberTimeNsL= System.nanoTime();
+			    			theNetcasterOutputStream.getCounterNamedLong().getValueL();
+			    	
+            //// theNetcasterOutputStream.writeV( 
+            ////     "{PS:{SN:" + lastSequenceNumberSentL + "}}" );
+            MapEpiNode fieldsMapEpiNode= // Make empty fields map. 
+                new MapEpiNode();
+            fieldsMapEpiNode.putV( "SN", lastSequenceNumberSentL );
+            MapEpiNode messageMapEpiNode= // Wrap fields map in a PS map.
+                MapEpiNode.makeSingleEntryMapEpiNode("PS", fieldsMapEpiNode);
+            messageMapEpiNode.writeV(theNetcasterOutputStream);
+            theNetcasterOutputStream.endBlockAndSendPacketV();
+            
+			  		sentSequenceNumberTimeNsL= System.nanoTime(); // Record the time.
 			      }
 			  
 				// Other support code.
@@ -601,16 +589,19 @@ public class LinkMeasurementState
 			  	  It does this forever.  This state is never inactive.
 			  	  */
 			  	{
-					  if (tryInputB("PS" )) // Test and process PS message.
-						  processPacketSequenceNumberB(); // Process PS message body.
+            //// if (tryInputB("PS" )) // Test and process PS message.
+            MapEpiNode valueMapEpiNode= tryInputMapEpiNode("PS");
+            if (null != valueMapEpiNode) // If offered input not a HELLO message
+						  processPacketSequenceNumberB(valueMapEpiNode); // Process PS message body.
 
 					  // Staying in same state, whether message is processed or not.
 						}
 	
-		    private boolean processPacketSequenceNumberB() 
+		    private boolean processPacketSequenceNumberB(MapEpiNode valueMapEpiNode) 
 						throws IOException
 				  /* This method finishes processing the "PS" message.
-				    The "PS" header is assumed to have been processed already.
+				    MapEpiNode valueMapEpiNode contains the fields of the PS message.
+				    The "PS" header map is assumed to have been removed already.
 				    It is followed by the packet sequence number which comes from 
 				    the remote peer EpiOutputStreamO packet count.
 				    From this and the local EPIInputStreamI packet count it 
@@ -642,9 +633,10 @@ public class LinkMeasurementState
 					  */
 			  	{
 		    	  boolean successB= true;
-		    	  try {
+		    	  //// try {
 						  int sequenceNumberI=  // Reading # from packet.
-						  		theNetcasterInputStream.readANumberI();
+						  		//// theNetcasterInputStream.readANumberI();
+						      valueMapEpiNode.getZeroOrI("SN");
 						  newRemotePacketsSentDefaultLongLike.setValueL( // Recording.
 									sequenceNumberI + 1
 									); // Adding 1 converts sequence # to remote packet count.
@@ -654,20 +646,29 @@ public class LinkMeasurementState
 							  );
               long receivedPacketCountL= 
                   newLocalPacketsReceivedNamedLong.getValueL(); 
-              theNetcasterOutputStream.writeV( 
-                  "{PA:{SN:" + sequenceNumberI + ",PC:" + receivedPacketCountL + "}}" );
-							theNetcasterOutputStream.endBlockAndSendPacketV();
+
+              //// theNetcasterOutputStream.writeV(  //// 
+              ////     "{PA:{SN:" + sequenceNumberI + ",PC:" + receivedPacketCountL + "}}" );
+              MapEpiNode fieldsMapEpiNode= // Make empty fields map. 
+                  new MapEpiNode();
+              fieldsMapEpiNode.putV( "SN", sequenceNumberI );
+              fieldsMapEpiNode.putV( "PC", receivedPacketCountL );
+              MapEpiNode messageMapEpiNode= // Wrap fields map in a PA map.
+                  MapEpiNode.makeSingleEntryMapEpiNode("PA", fieldsMapEpiNode);
+              messageMapEpiNode.writeV(theNetcasterOutputStream);
+              theNetcasterOutputStream.endBlockAndSendPacketV();
 							  // Sending now for minimum RTT.
-						  if (theAppLog.logB(TRACE)) theAppLog.logV(
+
+              if (theAppLog.logB(TRACE)) theAppLog.logV(
 					  		TRACE,
 					  		"processPacketSequenceNumberB(..) PS:"
 					  		  +sequenceNumberI+","
 					      	+receivedPacketCountL
 				  		  );
-	    	  		}
-		    	  catch ( BadReceivedDataException theBadReceivedDataException ) {
-		    	  	successB= false; 
-	    	  		}
+	    	  	//// 	}
+		    	  //// catch ( BadReceivedDataException theBadReceivedDataException ) {
+		    	  //// 	successB= false; 
+	    	  	//// 	}
 		    	  return successB;
 						}
 			

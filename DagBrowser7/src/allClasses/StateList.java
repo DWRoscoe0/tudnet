@@ -1057,7 +1057,7 @@ public class StateList extends MutableList implements Runnable {
 			return offeredInputString;
 		  }
 
-  public MapEpiNode tryInputMapEpiNode(String keyString) throws IOException
+  public MapEpiNode tryInputMapEpiNode(String keyString)
     /* This method tries to process a specific discrete input MapEpiNode.
      * If keyString is a key in the next input MapEpiNode,
      * the offered input MapEpiNode is consumed and 
@@ -1076,7 +1076,7 @@ public class StateList extends MutableList implements Runnable {
         return valueMapEpiNode; // Return value map as result.
       }
 
-  public MapEpiNode testInputMapEpiNode(String keyString) throws IOException
+  public MapEpiNode testInputMapEpiNode(String keyString)
     /* This method tests for a specific discrete input MapEpiNode.
      * If keyString is a key in the next input MapEpiNode then
      * the value associated with the key String is returned.

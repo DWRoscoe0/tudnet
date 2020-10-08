@@ -621,7 +621,7 @@ public class LinkedMachineState
     fieldsMapEpiNode.putV( // Add IP.
         "IP", theUnicaster.getKeyK().getInetAddress().getHostAddress());
     fieldsMapEpiNode.putV( // //// for debugging.
-        "HelloCount", ++helloCountI); ////
+        "HelloCount", helloCountI); ////
     fieldsMapEpiNode.putV( // Add UserId.
         Config.userIdString, thePersistent.getEmptyOrString(Config.userIdString));
     MapEpiNode helloMapEpiNode= MapEpiNode.makeSingleEntryMapEpiNode( // Wrap in HELLO map.
