@@ -320,9 +320,16 @@ public class Unicaster
         */
       {
         while (theEpiInputStreamI.available() > 0) { // Try parsing more of packet stream.
-          String inString= theEpiInputStreamI.readAString(); // Get next token.
-          setOfferedInputV( inString ); // Offer it as input to state machine.
+          MapEpiNode inMapEpiNode= // Get next MapEpiNode input. 
+              theEpiInputStreamI.testMapEpiNode(); 
+          setOfferedInputV( inMapEpiNode ); // Offer as state machine input.
+
+          String inString= // Get next String input.
+              theEpiInputStreamI.readAString();
+          setOfferedInputV( inString ); // Offer as state machine input.
+
           while (doOnInputsB()) ; // Cycle state machine until processing stops.
+
           processUnprocessedInputV(); // Handle any left-over input.
           }
         }
@@ -358,7 +365,10 @@ public class Unicaster
           String offeredString= getOfferedInputString();
         toReturn: { 
         toConsumeInput: { 
-          if ( offeredString == null ) break toReturn; // Input string consumed, exit.
+          //// if ( offeredString == null ) // String input consumed?
+          if (! hasOfferedInputB(this)) //If input consumed
+            break toReturn; // exit.
+            //// break toConsumeInput; // Yes, go consume any MapEpiNode and exit.
           if (offeredString.equals("DEBUG")) { // Ignore DEBUG messages
             theEpiInputStreamI.readAString(); // and their message count arguments.
             break toConsumeInput; // Finished up.
@@ -384,9 +394,10 @@ public class Unicaster
             thisMapEpiNode.getEmptyOrString(Config.userIdString) // Unicaster UserId as context.
             );
         } // toConsumeInput: 
-            theEpiInputStreamI.consumeInputV();
-            resetOfferedInputV();  // consume unprocessed state machine String input.
+          theEpiInputStreamI.consumeInputV();
+          resetOfferedInputV();  // consume unprocessed state machine String input.
         } // toReturn:
+          theEpiInputStreamI.consumeInputV(); //// Again for transition.
           return;
         }
 

@@ -13,6 +13,7 @@ import static allClasses.AppLog.LogLevel.*;
 import static allClasses.SystemSettings.NL;
 
 
+@SuppressWarnings("unused") ////
 public class StateList extends MutableList implements Runnable {
 
 	/*  This class is the base class for all state objects and state-machines.
@@ -573,6 +574,8 @@ public class StateList extends MutableList implements Runnable {
 	    Each sub-state handler gets a chance to process the discrete input,
 	    if one is available, until it is consumed. 
 	    
+	    //////fix? State changes should keep loop going
+	      and count as progress?
 	    ///enh Must check for sub-state validity vs. super-state 
 	      when and if behavioral inheritance is added.
       */
@@ -709,8 +712,10 @@ public class StateList extends MutableList implements Runnable {
 		  */
 		{ 
       /// appLogger.debug( "StateList.doOnEntryV() to"+ getFormattedStatePathString() );
-			if ( logB(TRACE)) logV( 
-					TRACE, "StateList.doOnEntryV() to"+ getFormattedStatePathString() );
+			//// if ( logB(TRACE)) logV( 
+			//// 		TRACE, "StateList.doOnEntryV() to"+ getFormattedStatePathString() );
+      theAppLog.debug("StateList",
+          "StateList.doOnEntryV() to"+ getFormattedStatePathString() );
 
 			onEntryV(); 
 			}
@@ -774,8 +779,10 @@ public class StateList extends MutableList implements Runnable {
 	    */
 	  { 
 			onExitV();
-			if ( logB(TRACE)) logV( // Log that exit took place. 
-					TRACE, "StateList.doOnExitV() from"+ getFormattedStatePathString() );
+			//// if ( logB(TRACE)) logV( // Log that exit took place. 
+			//// 		TRACE, "StateList.doOnExitV() from"+ getFormattedStatePathString() );
+      theAppLog.debug("StateList",
+          "StateList.doOnExitV() from"+ getFormattedStatePathString() );
 			}
 
 	public void onExitV() throws IOException
@@ -870,6 +877,7 @@ public class StateList extends MutableList implements Runnable {
 	    StateList sub-classes may override.
 	    */
 	  { 
+      helloCheckV();
 			boolean signalB= onInputsB();
       stateChange: { // Detect and prepare left-over state change request.
         if ((nextSubStateList == null)) // Not requested.
@@ -880,6 +888,7 @@ public class StateList extends MutableList implements Runnable {
           nextSubStateList= null; // Consume our state-change request.
           }
         } // stateChange: 
+      helloCheckV();
 			return signalB;
 		  }
 
@@ -992,11 +1001,11 @@ public class StateList extends MutableList implements Runnable {
       throws IOException
     /* This method processes a specific discrete input string, inputString.
       It was created for responding to outputs from other states,
-      not inputs from the network.
+      not inputs from the network, by injecting them into a machine.
       Processing is done by offering the string and cycling the state machine.
       If the string is processed by the machine, true is returned,
       otherwise false is returned.
-      In either case, the offer variable is reset before returning.
+      In either case, the offered input variables are reset before returning.
       */
     {
       setOfferedInputV(inputString); // Store string in input variable.
@@ -1034,7 +1043,8 @@ public class StateList extends MutableList implements Runnable {
               + getFormattedStatePathString()
               );
           */  ///dbg
-          offeredInputString= null; // Consume input string.
+          //// offeredInputString= null; // Consume input string.
+          resetOfferedInputV(); // Consume the input.
           }
       return successB; // Returning result of the comparison.
       }
@@ -1046,6 +1056,42 @@ public class StateList extends MutableList implements Runnable {
 	  {
 			return offeredInputString;
 		  }
+
+  public MapEpiNode tryInputMapEpiNode(String keyString) throws IOException
+    /* This method tries to process a specific discrete input MapEpiNode.
+     * If keyString is a key in the next input MapEpiNode,
+     * the offered input MapEpiNode is consumed and 
+     * the value associated with the key String is returned.
+     * Otherwise the offered input MapEpiNode is not consumed 
+     * and null is returned.
+     */
+    {
+        MapEpiNode valueMapEpiNode= null; // Assume not found.
+      toReturn: {
+        valueMapEpiNode= // Test for value for key from input map.  
+          testInputMapEpiNode(keyString);
+        if (null != valueMapEpiNode) // If input contained a value map
+          resetOfferedInputV(); // consume that input.
+      } // toReturn:
+        return valueMapEpiNode; // Return value map as result.
+      }
+
+  public MapEpiNode testInputMapEpiNode(String keyString) throws IOException
+    /* This method tests for a specific discrete input MapEpiNode.
+     * If keyString is a key in the next input MapEpiNode then
+     * the value associated with the key String is returned.
+     * Otherwise null is returned.
+     */
+    {
+        MapEpiNode valueMapEpiNode= null; // Assume not found.
+      toReturn: {
+        if (null == offeredInputMapEpiNode) // If no input
+          break toReturn; // exit with null result.
+        valueMapEpiNode= // Try getting value from input map.  
+            offeredInputMapEpiNode.getMapEpiNode(keyString);
+      } // toReturn:
+        return valueMapEpiNode; // Return value map as result.
+      }
 
   protected MapEpiNode getOfferedInputMapEpiNode()
     /* This method returns the discrete input MapEpiNode
@@ -1108,20 +1154,22 @@ public class StateList extends MutableList implements Runnable {
       }
 
 	public void resetOfferedInputV()
-		/* This method clears the offeredInputString within this state,
-		  by setting it to null.
-		  It should be used on a state and all its ancestors
-		  when the input is processed and consumed,
-		  and on a single state that processes the input but doesn't consume it.
-		  This method undoes what setOfferedInputV(.) does.  
+		/* This method resets the offered input areas.
+		  It does this by setting the input variables to null.
+		  This method is needed only for reseting input that has been consumed.
+		  Non-consumed input is reset by moving it back to its parent state. 
 		 	*/
 		{
-      if ( ! hasOfferedInputB(this))
+      if ( ! hasOfferedInputB(this)) // Error check that there is input.
         theAppLog.error(
     			"StateList.resetOfferedInputV(), input already consumed in"
     			+ getFormattedStatePathString()
     			);
-		  
+
+      // theAppLog.debug(
+      //  "offeredInputCheckReset from" + getFormattedStatePathString() );
+      staticOfferedInputMapEpiNode= null;
+      // Reset both types of inputs.
       this.offeredInputString= null;
       this.offeredInputMapEpiNode= null;
   	  }
@@ -1130,7 +1178,6 @@ public class StateList extends MutableList implements Runnable {
       StateList sourceStateList, StateList destinationStateList)
     /* This method moves offered input from sourceStateList
      * to destinationStateList.
-     * ///enh add error checking.
      */
     {
       if (! hasOfferedInputB(sourceStateList))
@@ -1148,18 +1195,62 @@ public class StateList extends MutableList implements Runnable {
       sourceStateList.offeredInputMapEpiNode= null; // Remove from source.
       }
       
-  private boolean hasOfferedInputB(StateList theStateList)
+  private static MapEpiNode staticOfferedInputMapEpiNode= null;
+
+  private void offeredInputCheckV()
+    {
+      if 
+        ( 
+          (staticOfferedInputMapEpiNode != offeredInputMapEpiNode)
+          && (null != offeredInputMapEpiNode)
+          )
+        
+      {
+        theAppLog.debug(  ///////////
+            "offeredInputCheckSet: "+offeredInputMapEpiNode
+            +" from"+ getFormattedStatePathString() );
+        staticOfferedInputMapEpiNode= offeredInputMapEpiNode;
+        }
+      }
+
+  protected boolean hasOfferedInputB(StateList theStateList)
     /* This method returns true if theStateList has any offered input,
      * false otherwise.
      */
       { 
-        return 
+        // offeredInputCheckV();
+        boolean resultB= 
             (null != theStateList.offeredInputString) ||
             (null != theStateList.offeredInputMapEpiNode)
             ;
+        return resultB; 
         }
 
-	protected String getFormattedStatePathString()
+  /////////////////// ?
+  private StateList savedStateList= null;
+  private int helloCountI= 0;
+
+  public void helloResetV()
+    {
+      // theAppLog.debug( "helloResetV() called.");
+      savedStateList= null;
+      }
+  
+  public void helloCheckV() throws IOException
+    {
+      goReturn: {
+        MapEpiNode valueMapEpiNode= 
+            testInputMapEpiNode("HELLO");
+        if (null == valueMapEpiNode)
+          break goReturn;
+        if (null == savedStateList)
+          helloCountI++;
+        savedStateList= this;
+      } // goReturn: 
+        return;
+      }
+  
+  protected String getFormattedStatePathString()
 	  /* Returns string with "state:" on first line, 
 	    and "  (state path)" on the second.
 	   */

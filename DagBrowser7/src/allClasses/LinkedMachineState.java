@@ -25,6 +25,7 @@ public class LinkedMachineState
 
 {
   // Injected dependencies.
+  @SuppressWarnings("unused")
   private NetcasterInputStream theNetcasterInputStream;
   private NetcasterOutputStream theNetcasterOutputStream;
   private NamedLong initialRetryTimeOutMsNamedLong;
@@ -121,6 +122,7 @@ public class LinkedMachineState
 
   private long debugMessageCountL = 0;
 
+  @SuppressWarnings("unused")
   private void sendDebugCountV() throws IOException
   /*
    * This method sends a DEBUG message followed by the debug message count to the
@@ -500,18 +502,27 @@ public class LinkedMachineState
    * 
    * This method returns true if HELLO is received and processed, false otherwise.
    * 
-   * ///pos This method could also select a leader based on RootId instead of IP
-   * address. Presently RootId is read but discarded.
+   * ///pos This method could also select a leader based on UserId instead of IP
+   * address.
    */
   {
     boolean gotGoodHelloB = false; // Assume default of failure.
     toReturn: {
+      /*  ////
       if (!subStateList.tryInputB("HELLO"))
         break toReturn; // Fail if not HELLO.
       String localIpString = theNetcasterInputStream.readAString();
       String useIdString = theNetcasterInputStream.readAString();
-
-      if (!processUserIdB(useIdString)) // Process Id.
+      */  ////
+      MapEpiNode valueMapEpiNode= subStateList.tryInputMapEpiNode("HELLO");
+      if (null == valueMapEpiNode) // If offered input not a HELLO message
+        break toReturn; // exit with failure.
+      subStateList.helloResetV(); //// debug.
+      // theAppLog.debug("tryReceivingHelloB((.), fields: "+valueMapEpiNode
+      //    + "from" + subStateList.getFormattedStatePathString() );
+      String localIpString = valueMapEpiNode.getString("IP");
+      String userIdString = valueMapEpiNode.getString("UserId");
+      if (!processUserIdB(userIdString)) // Process Id.
         break toReturn; // or exit if fail.
       String remoteIpString = theUnicaster.getKeyK().getInetAddress().getHostAddress();
       theUnicaster.leadingDefaultBooleanLike.setValueB( // Decide who leads.
@@ -589,6 +600,8 @@ public class LinkedMachineState
     return resultB;
   }
 
+  private int helloCountI= 0;  ////
+  
   private void sendHelloV(StateList subStateList) throws IOException
   /*
    * This method sends a HELLO message to the remote peer from state subStateList,
@@ -596,11 +609,26 @@ public class LinkedMachineState
    * the remote peer and the ID of the local peer.
    */
   {
-    sendDebugCountV();
-    theNetcasterOutputStream.writeV( // Write complete HELLO message in map syntax.
-        "{HELLO:{" + "IP:" + theUnicaster.getKeyK().getInetAddress().getHostAddress() // remote IP
-            + "," + Config.userIdString + ":" + thePersistent.getEmptyOrString(Config.userIdString) + "}}");
-    theNetcasterOutputStream.endBlockAndSendPacketV(); // Forcing send.
+    synchronized (theAppLog) { ////
+      // theAppLog.debug(
+      //    "sendHelloV() from" + subStateList.getFormattedStatePathString() );
+      // theAppLog.doStackTraceV(null);
+      }
+    
+    //// sendDebugCountV(); // This is 1st block.
+
+    MapEpiNode fieldsMapEpiNode= new MapEpiNode(); // Make empty map.
+    fieldsMapEpiNode.putV( // Add IP.
+        "IP", theUnicaster.getKeyK().getInetAddress().getHostAddress());
+    fieldsMapEpiNode.putV( // //// for debugging.
+        "HelloCount", ++helloCountI); ////
+    fieldsMapEpiNode.putV( // Add UserId.
+        Config.userIdString, thePersistent.getEmptyOrString(Config.userIdString));
+    MapEpiNode helloMapEpiNode= MapEpiNode.makeSingleEntryMapEpiNode( // Wrap in HELLO map.
+        "HELLO", fieldsMapEpiNode);
+    helloMapEpiNode.writeV(theNetcasterOutputStream); // Write complete map as 2nd block.
+    
+    theNetcasterOutputStream.endBlockAndSendPacketV(); // Forcing send of both blocks.
   }
 
   private void sayGoodbyesV() throws IOException

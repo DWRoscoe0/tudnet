@@ -230,6 +230,9 @@ public class EpiInputStream<
         }
 
     public MapEpiNode testMapEpiNode() throws IOException
+      /* Returns a MapEpiNode if one is available but does not consume it.
+       * Returns null otherwise.
+       */
       {
         if (cachedMapEpiNode == null) { // Handle missing EpiNode if needed.
           cachedMapEpiNode= tryMapEpiNode(); // Try parsing node and caching it.

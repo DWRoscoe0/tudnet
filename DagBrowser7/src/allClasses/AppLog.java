@@ -598,6 +598,7 @@ public class AppLog extends EpiThread
       {
         if (theThrowable == null)
           theThrowable= new Throwable("Throwable created to display stack trace");
+        appendToOpenFileV(NL);  // Go to new line.
         theThrowable.printStackTrace(getPrintWriter());
         }
 
