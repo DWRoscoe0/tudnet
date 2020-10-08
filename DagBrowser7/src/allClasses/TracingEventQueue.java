@@ -17,6 +17,8 @@ public class TracingEventQueue extends EventQueue {
 	  https://today.java.net/pub/a/today/2007/08/30/debugging-swing.html
 	  Its purpose is to identify when the EDT is taking too long
 	  to process events.
+	  
+	  ///enh? Integrate with or replace by a general watch-dog timer.
 	 	*/
 
   private TracingEventQueueMonitor theTracingEventQueueMonitor;
@@ -126,15 +128,15 @@ class TracingEventQueueMonitor extends Thread {
 		{
 			long currProcessingTime = currTime - startTime;
 			boolean thresholdExceededB= 
-					(currProcessingTime >= this.thresholdDelay);
+					(currProcessingTime > this.thresholdDelay);
 			if (thresholdExceededB) {
 				String outString= "EDT "
 						//Event [" + event.hashCode() + "] "
 						+ labelString
 						+ " "
 						+ event.getClass().getName()
-						+ " has taken too much time (" + currProcessingTime
-						+ ")";
+						+ " time of " + currProcessingTime
+						+ "ms exceeded limist of " + this.thresholdDelay;
 				//System.out.println(outString);
         theAppLog.warning(outString);
 			  }
