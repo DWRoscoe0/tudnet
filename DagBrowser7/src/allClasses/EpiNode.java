@@ -34,6 +34,18 @@ public abstract class EpiNode
     ///enh If a RandomAccessReader abstract class is created,
     similar to RandomAccessInputStream, then the parsers in this file
     could be rewritten to be able to deal with characters instead of bytes.
+
+    ///enh Maybe add the capability to parse special entities,
+    for example:
+    * A single-element map.
+    * A single-element map whose value is a nested map.
+    * A map whose keys are scalars only (already exists).
+    * A single element map with a nested empty as a value
+      from a string without a ":" or "{}".
+    Selections can be made with an options argument 
+    which is passed to general-purpose parsers.
+    This allows general-purpose parser code 
+    to be reused for special purposes.
     */
 
   {
