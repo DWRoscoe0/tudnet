@@ -1081,6 +1081,7 @@ public class StateList extends MutableList implements Runnable {
      * If keyString is a key in the next input MapEpiNode then
      * the value associated with the key String is returned.
      * Otherwise null is returned.
+     * The input is not consumed.
      */
     {
         MapEpiNode valueMapEpiNode= null; // Assume not found.
@@ -1096,6 +1097,7 @@ public class StateList extends MutableList implements Runnable {
   protected MapEpiNode getOfferedInputMapEpiNode()
     /* This method returns the discrete input MapEpiNode
      * stored in this state.
+     * The input is not consumed.
      */
     {
       return offeredInputMapEpiNode;
