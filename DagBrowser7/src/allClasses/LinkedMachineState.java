@@ -227,27 +227,37 @@ public class LinkedMachineState
      * received. It also absorbs and ignores GOODBYE messages.
      */
     {
-      if (tryReceivingHelloB(this)) { // Connect requested from remote peer.
-        if (theMapEpiNode.isTrueB("ignorePeer"))
+      goReturn: {
+        if (tryReceivingHelloB(this)) { // Connect requested from remote peer.
+          if (theMapEpiNode.isTrueB("ignorePeer"))
+            theAppLog.debug("UCLinkedMachine",
+                "LinkedMachineState.onInputsToReturnFalseV() ignorePeer:true.");
+          else {
+            sendHelloV(this); // Send a response HELLO.
+            requestAncestorSubStateV(theConnectedState); // Become connected.
+            }
+          break goReturn;
+          }
+        if (tryInputB("ExponentialRetryConnect")) { // Local connect requested.
           theAppLog.debug("UCLinkedMachine",
-              "LinkedMachineState.onInputsToReturnFalseV() ignorePeer:true.");
-        else {
-          sendHelloV(this); // Send a response HELLO.
-          requestAncestorSubStateV(theConnectedState); // Become connected.
-        }
-      } else if (tryInputB("ExponentialRetryConnect")) { // Local connect requested.
-        theAppLog.debug("UCLinkedMachine",
-            "DisconnectedState.onInputsToReturnFalseV() ExponentialRetryConnect.");
-        sendHelloV(this); // Send initial HELLO.
-        requestAncestorSubStateV(theExponentialRetryConnectingState);
-      } else if (tryInputB("SlowPeriodicRetryConnect")) { // Local connect requested.
-        theAppLog.debug("UCLinkedMachine",
-            "DisconnectedState.onInputsToReturnFalseV() SlowPeriodicRetryConnect.");
-        requestAncestorSubStateV(theSlowPeriodicRetryConnectingState);
-      } else if (tryInputB("GOODBYE")) { // Ignore any redundant GOODBYE message.
-        // appLogger.info("LinkedMachineState.onInputsToReturnFalseV() GOODBYE received
-        // and ignored while in DisconnectedState.");
-      }
+              "DisconnectedState.onInputsToReturnFalseV() ExponentialRetryConnect.");
+          sendHelloV(this); // Send initial HELLO.
+          requestAncestorSubStateV(theExponentialRetryConnectingState);
+          break goReturn;
+          } 
+        if (tryInputB("SlowPeriodicRetryConnect")) { // Local connect requested.
+          theAppLog.debug("UCLinkedMachine",
+              "DisconnectedState.onInputsToReturnFalseV() SlowPeriodicRetryConnect.");
+          requestAncestorSubStateV(theSlowPeriodicRetryConnectingState);
+          break goReturn;
+          }
+        if (tryInputB("GOODBYE")) { // Ignore any redundant GOODBYE message.
+          // appLogger.info("LinkedMachineState.onInputsToReturnFalseV() GOODBYE received
+          // and ignored while in DisconnectedState.");
+          break goReturn;
+          }
+    } // goReturn:
+      return;
     }
 
     Color getBackgroundColor(Color defaultBackgroundColor) {

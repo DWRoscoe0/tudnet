@@ -1128,6 +1128,15 @@ class MapEpiNode extends EpiNode
           return valueMapEpiNode;
         }
 
+    public static MapEpiNode makeSingleEntryEmptyMapEpiNode(
+          String keyString)
+      {
+        MapEpiNode fieldsMapEpiNode= new MapEpiNode(); // Make empty map.
+        MapEpiNode messageMapEpiNode=  // Wrap in mcString map.
+            MapEpiNode.makeSingleEntryMapEpiNode(keyString, fieldsMapEpiNode);
+        return messageMapEpiNode;
+        }
+
     public static MapEpiNode makeSingleEntryMapEpiNode(
         String keyString, EpiNode valueEpiNode)
       /* This method returns a new MapEpiNode which contains 

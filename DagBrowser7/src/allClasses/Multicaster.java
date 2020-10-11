@@ -459,9 +459,8 @@ public class Multicaster
         //// theEpiOutputStreamO.writeV( "{" + mcString + "}" ); // Write the data.
         ////theEpiOutputStreamO.flush(); // Sending it.
 
-        MapEpiNode fieldsMapEpiNode= new MapEpiNode(); // Make empty map.
-        MapEpiNode messageMapEpiNode=  // Wrap in mcString map.
-            MapEpiNode.makeSingleEntryMapEpiNode(mcString, fieldsMapEpiNode);
+        MapEpiNode messageMapEpiNode= 
+            MapEpiNode.makeSingleEntryEmptyMapEpiNode(mcString);
         messageMapEpiNode.writeV(theEpiOutputStreamO); // Write complete map.
         theEpiOutputStreamO.endBlockAndSendPacketV();
         }

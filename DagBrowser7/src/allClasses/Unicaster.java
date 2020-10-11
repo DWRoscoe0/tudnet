@@ -307,6 +307,13 @@ public class Unicaster
           String notificationString= unicasterNotifyingQueueOfStrings.poll();
           if (notificationString == null) break; // Exit if no string.
           setOfferedInputV(notificationString); // Offer String to state machine.
+          {
+            MapEpiNode fieldsMapEpiNode= new MapEpiNode(); // Make empty map.
+            MapEpiNode messageMapEpiNode=  // Wrap in notificationString map.
+              MapEpiNode.makeSingleEntryMapEpiNode(
+                notificationString, fieldsMapEpiNode);
+            setOfferedInputV(messageMapEpiNode); // Offer MapEpiNode to state machine.
+            }
           while (doOnInputsB()) ; // Cycle state machine until nothing remains to be done.
           }
         }
