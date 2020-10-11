@@ -53,10 +53,11 @@ public class EDTUtilities {
         or it became true during processing.
         It will be false on return otherwise.
         
-        If an unhandled exception occurs in theRunnable,
+        If exception occurs in theRunnable which is not handled then 
         this method will throw a RuntimeException which wraps an
-        InvocationTargetException which wraps the
-        unhandled exception which occured in theRunnable.
+        InvocationTargetException which wraps the exception 
+        which occurred in theRunnable.
+        
         ///fix This might not work if the exception happens after
         an InterruptedException occurs.
         */

@@ -68,7 +68,7 @@ class TracingEventQueueMonitor extends Thread {
 	
 	class EventValue { 
 		long startTimeL; 
-		boolean outputtedB; 
+		boolean reportedB; 
 		EventValue(long startTimeL) {
 			this.startTimeL= startTimeL;
 		  }
@@ -119,11 +119,15 @@ class TracingEventQueueMonitor extends Thread {
 	  /* Reports whether an event dispatch has been running to long,
 	    longer that thresholdDelay. 
 	    It returns true if it has, false otherwise. 
-	    It is called by:
-	    * run() when excessive dispatch time is first detected.
-	      The EDT stack is displayed at this time also.
-	    * eventDispatchingEndingV(..) later to 
-	      display total dispatch time.
+	    It is called
+	    * by eventDispatchingEndingV(..) after 
+	      an an event dispatch completes to check 
+	      its total processing time.
+      * by run() to check whether there are 
+        any events have been dispatched but not yet completed,
+        and the time since dispatch exceeds the maximum time.
+      If the limited is exceeded then it reports it 
+      in the log and in a dialog.
 	    */
 		{
 			long currProcessingTime = currTime - startTime;
@@ -136,7 +140,7 @@ class TracingEventQueueMonitor extends Thread {
 						+ " "
 						+ event.getClass().getName()
 						+ " time of " + currProcessingTime
-						+ "ms exceeded limist of " + this.thresholdDelay;
+						+ "ms exceeded limit of " + this.thresholdDelay;
 				//System.out.println(outString);
         theAppLog.warning(outString);
 			  }
@@ -159,8 +163,8 @@ class TracingEventQueueMonitor extends Thread {
 						AWTEvent event = entry.getKey();
 						if (entry.getValue() == null) // Skipping if no entry.
 							continue;
-						if  // Skipping if this entry output earlier.
-						  (entry.getValue().outputtedB)
+						if  // Skipping if this entry reported earlier.
+						  (entry.getValue().reportedB)
 							continue;
 						long startTime = entry.getValue().startTimeL;
     				boolean thresholdExceededB= // Displaying if too long.
@@ -171,7 +175,7 @@ class TracingEventQueueMonitor extends Thread {
     				  ( thresholdExceededB )
 	    				{
 	    					displayStackTraceV();
-	  						entry.getValue().outputtedB= true; // Recording output.
+	  						entry.getValue().reportedB= true; // Recording output.
 	    					}
 
 					}

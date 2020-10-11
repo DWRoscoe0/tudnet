@@ -1,6 +1,7 @@
 package allClasses;
 
 import java.awt.Component;
+import java.awt.EventQueue;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -27,7 +28,7 @@ public class Dialogger extends Object
       /* General-purpose non-modal (mode-less) dialog displayer.
        * It queues the display of the dialog on the EDT (Event Dispatch Thread, 
        * then returns immediately. 
-       * It displays titleTailString after the app name in the title bar,
+       * The dialog displays titleTailString after the app name in the title bar,
        * and displays theString in the main window,
        * and waits for the user to execute OK before it closes.  
        *
@@ -37,7 +38,8 @@ public class Dialogger extends Object
        * */
       {
         /// java.awt.EventQueue.invokeLater( // Do following LATER on the EDT.
-        EDTUtilities.runOrInvokeAndWaitV( // Run following NOW on EDT thread. 
+        //// EDTUtilities.runOrInvokeAndWaitV( // Run following NOW on EDT thread.
+        EventQueue.invokeLater(
           new Runnable() {
             @Override
             public void run() { 
