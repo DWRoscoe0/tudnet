@@ -306,15 +306,16 @@ public class Unicaster
         while (true) {
           String notificationString= unicasterNotifyingQueueOfStrings.poll();
           if (notificationString == null) break; // Exit if no string.
-          setOfferedInputV(notificationString); // Offer String to state machine.
-          {
+          { // Convert String to MapEpiNode and offer that to state machine also.
             MapEpiNode fieldsMapEpiNode= new MapEpiNode(); // Make empty map.
             MapEpiNode messageMapEpiNode=  // Wrap in notificationString map.
               MapEpiNode.makeSingleEntryMapEpiNode(
                 notificationString, fieldsMapEpiNode);
             setOfferedInputV(messageMapEpiNode); // Offer MapEpiNode to state machine.
+            ////setOfferedInputV(notificationString); // Offer String to state machine.
+            setOfferedInputNoCheckV(notificationString); // Offer String to state machine.
             }
-          while (doOnInputsB()) ; // Cycle state machine until nothing remains to be done.
+          while (doOnInputsB()) ; // Cycle state machine until input is processed.
           }
         }
 
@@ -329,11 +330,15 @@ public class Unicaster
         while (theEpiInputStreamI.available() > 0) { // Try parsing more of packet stream.
           MapEpiNode inMapEpiNode= // Get next MapEpiNode input. 
               theEpiInputStreamI.testMapEpiNode(); 
-          setOfferedInputV( inMapEpiNode ); // Offer as state machine input.
 
-          String inString= // Get next String input.
-              theEpiInputStreamI.readAString();
-          setOfferedInputV( inString ); // Offer as state machine input.
+          //// String inString= // Get next String input.
+          ////     theEpiInputStreamI.readAString();
+          // The order of the following is important temporarilly because
+            // setting from String also does a set from MapEpiNode
+            // with an empty value map!
+          //// setOfferedInputV( inString ); // Offer as state machine input.
+          //// setOfferedInputNoCheckV(inString);
+          setOfferedInputV( inMapEpiNode ); // Offer as state machine input.
 
           while (doOnInputsB()) ; // Cycle state machine until processing stops.
 
@@ -369,17 +374,17 @@ public class Unicaster
         The ConnectionManager is the processor of last resort.
         */
       {
-          String offeredString= getOfferedInputString();
+          //// String offeredString= getOfferedInputString();
         toReturn: { 
         toConsumeInput: { 
           //// if ( offeredString == null ) // String input consumed?
           if (! hasOfferedInputB(this)) //If input consumed
             break toReturn; // exit.
             //// break toConsumeInput; // Yes, go consume any MapEpiNode and exit.
-          if (offeredString.equals("DEBUG")) { // Ignore DEBUG messages
-            theEpiInputStreamI.readAString(); // and their message count arguments.
-            break toConsumeInput; // Finished up.
-            }
+          //// if (offeredString.equals("DEBUG")) { // Ignore DEBUG messages
+          ////   theEpiInputStreamI.readAString(); // and their message count arguments.
+          ////   break toConsumeInput; // Finished up.
+          ////   }
           { // Log any other input and log OrState states. 
             /// theAppLog.debug("UC","processUnprocessedInputV() input= "+offeredString);
             /// logOrSubstatesB("processUnprocessedInputV()"); // Log active sub-states.
@@ -435,6 +440,7 @@ public class Unicaster
           return resultB;
         }
 
+    /*  ////
     public boolean onInputsV() throws IOException
       /* This method does, or will do itself, or will delegate to Subcasters, 
         all protocols of a Unicaster.  This might include:
@@ -445,6 +451,7 @@ public class Unicaster
         * Doing simple received message decoding.
         * Connection/Hello handshake state machine cycling.
         */
+    /*  ////
 	    { 
 	    	process: {
 		    	if ( super.orStateOnInputsB() ) // Try processing by sub-states first. 
@@ -465,6 +472,7 @@ public class Unicaster
 	    		} // process:
         return false;
 				}
+    */  ////
 
     public String getSummaryString( )
       /* Returns a string indicating whether 

@@ -106,7 +106,7 @@ public class EpiInputStream<
 			{ return receiverToStreamcasterNotifyingQueueQ.getLockAndSignal(); }
 
 		
-
+    /*  ////
     protected boolean tryingToGetStringB( String theString ) throws IOException
       /* This method tries to get a particular String theString.
         It consumes the String and returns true 
@@ -117,6 +117,7 @@ public class EpiInputStream<
         * The characters available in the input stream buffer are
           not the desired string.
         */
+    /*  ////
       {
   			boolean gotStringB= false;
     		mark(0); // Marking stream position.
@@ -128,11 +129,14 @@ public class EpiInputStream<
     	  	reset(); // Putting String back into stream.
     	  return gotStringB;
       	}
+    */  ////
 
+    /*  ////
     protected String tryingToGetString() throws IOException
     /* This method tries to get any String.
       It returns a String if there is one available, null otherwise.
       */
+    /*  ////
     {
 			String inString= null;
 			if // Overriding if desired string is able to be read. 
@@ -142,7 +146,9 @@ public class EpiInputStream<
 	    	  }
   	  return inString;
     	}
+    */  ////
 
+    /*  ////
 		protected int readANumberI()
   		throws IOException, BadReceivedDataException
   		/* This method reads and returns one int number 
@@ -151,6 +157,7 @@ public class EpiInputStream<
   		  It blocks if a full number is not available.
   		  It converts NumberFormatExceptions to a BadReceivedDataExceptions. 
   		  */
+    /*  ////
 			{
 				String numberString= readAString();
 	      int numberI;
@@ -162,6 +169,7 @@ public class EpiInputStream<
 	      	}
 			  return numberI;
 				}
+    */  ////
 
     protected String readAString() throws IOException
       /* This method is a kludge.

@@ -4,8 +4,8 @@ import java.io.IOException;
 
 import allClasses.LockAndSignal.Input;
 
-import static allClasses.AppLog.theAppLog;
-import static allClasses.SystemSettings.NL;
+//// import static allClasses.AppLog.theAppLog;
+//// import static allClasses.SystemSettings.NL;
 
 
 public class Streamcaster< 
@@ -35,15 +35,17 @@ public class Streamcaster<
   
 	  // Constants.
 		
-	  protected final long PeriodMillisL= // PING-REPLY handshake period.
+    /*  ////
+    private final long PeriodMillisL= // PING-REPLY handshake period.
 	    //4000;   // 4 seconds.
 	  	//100;
 	  	//200;
 	  	//400;
 	  	//1000;
 	    Config.pingReplyHandshakePeriod2000MsL; // 2000;
-	  protected final long HalfPeriodMillisL= // Half of period.
-	    PeriodMillisL / 2;  
+	  //// private final long HalfPeriodMillisL= // Half of period.
+	  ////   PeriodMillisL / 2;  
+    */  ////
 
 	  // Injected dependencies.
 	  protected final LockAndSignal theLockAndSignal;
@@ -51,7 +53,8 @@ public class Streamcaster<
       // the construction of the following queue. 
 	  protected final O theEpiOutputStreamO;
 		protected final I theEpiInputStreamI;
-    protected final Shutdowner theShutdowner;
+    @SuppressWarnings("unused")
+    private final Shutdowner theShutdowner;
     protected NamedLong initialRetryTimeOutMsNamedLong;
     protected DefaultBooleanLike leadingDefaultBooleanLike;
 
@@ -88,13 +91,15 @@ public class Streamcaster<
 	    {
 		    }
 
-		public void pingReplyProtocolV() throws IOException
+    /*  //// Note, this is referenced in Subcaster class.
+		private void pingReplyProtocolV() throws IOException
       /* This method does the full PING-REPLY protocol.  
         It will terminate this thread if requested.
         Except for this method, this protocol code 
         is written as a thread, not as a state machine.
         Control stays within it until Unicaster termination.
        */
+    /*  ////
 	    {
 	  	  if (! leadingDefaultBooleanLike.getValueB()) // Start with ping-receive if not leading. 
 	  	  	tryingPingReceiveV();
@@ -106,8 +111,10 @@ public class Streamcaster<
 	  	    	tryingPingReceiveV();
 	          } // while(true)
 	    	}
+    */  ////
 
-    protected void tryingPingSendV() throws IOException
+    /*  ////
+    private void tryingPingSendV() throws IOException
     /* This method does the sub-protocol of trying to 
         send a ping to the remote peer and receiving a REPLY in response.
         If it doesn't receive a REPLY message in response
@@ -117,6 +124,7 @@ public class Streamcaster<
         If it receives a ping instead of an echo then
         it might give up this sub-protocol.
         */
+    /*  ////
       {
         LockAndSignal.Input theInput;  // Type of input that ends waits.
         int maxTriesI= 5;
@@ -176,19 +184,24 @@ public class Streamcaster<
           retransmitDelayMsL*= 2; // Doubling the time-out delay.
           } // pingEchoRetryLoop: 
         }
+    */  ////
 
+    /*  ////
 		private void ignoringOrLoggingStringV()
 		  throws IOException
 		  /* This method is similar to ignoringOrLoggingStringV(String inString)
 		    but it tries to read the string which is to be ignored.
 		    If there is not string available for reading then it is logged as null.
 		    */
+    /*  ////
 		  {
 			  String inString=  // Reading string to ignore.
 			  		theEpiInputStreamI.tryingToGetString( );
 			  ignoringOrLoggingStringV(inString); // Ignoring it.
 			  }
+    */  ////
 
+    /*  ////
 		private void ignoringOrLoggingStringV(String inString)
 				 throws IOException
 		  /* This method does several things:
@@ -197,6 +210,7 @@ public class Streamcaster<
 		    * It logs the fact of ignoring inString, for debugging, if enabled.
 		    * It documents with its calls where input is ignored.
 		    */
+    /*  ////
 			{
 		    theAppLog.info( 
 						"ignoringOrLoggingStringV(..) : "
@@ -207,8 +221,10 @@ public class Streamcaster<
 							)
 					);
 				}
+    */  ////
 
-    protected void tryingPingReceiveV() throws IOException
+		/*  ////
+    private void tryingPingReceiveV() throws IOException
 	    /* This method does the sub-protocol of trying to 
 		    receive a PING message from the remote peer 
 		    to which it replies by sending a REPLY response.
@@ -222,6 +238,7 @@ public class Streamcaster<
         It will exit immediately if isInterrupted() becomes true
         or a SHUTTING-DOWN message is received.
         */
+    /*  ////
       {
     	  all: { // Block of entire method, for exiting.
 	        LockAndSignal.Input theInput;  // Type of input that ends wait.
@@ -278,6 +295,7 @@ public class Streamcaster<
 	          }
     			} // all:
         }
+    */  ////
 
     protected Input waitingForSubnotificationOrIntervalOrInterruptE( 
     			long startMsL, long lengthMsL
@@ -324,7 +342,7 @@ public class Streamcaster<
     
     // Miscellaneous methods.
 
-    public void puttingKeyedPacketV( E theKeyedPacketE )
+    protected void puttingKeyedPacketV( E theKeyedPacketE )
       /* This method is used by various Receiver threads
         to add a KeyedPacket to the queue of this Streamcaster's
         EpiInputStream.  It is from these packets that
@@ -335,12 +353,16 @@ public class Streamcaster<
     	  theStreamcasterQueueQ.put(theKeyedPacketE);
         }
 
-    public M getPacketManagerM()
+    /*  ////
+    private M getPacketManagerM()
       /* Returns the PacketManager that can be used to create packets
         for the InputStream.  It returns the one the OutputStream uses
         to allocate its packets.
 	      */
+    /*  ////
 	    {
 	    	return theEpiOutputStreamO.getPacketManagerM();
 	    	}
+    */  ////
+    
 	}

@@ -1019,43 +1019,27 @@ public class StateList extends MutableList implements Runnable {
       return successB; // Returning result of the attempt.
       }
 
-  public boolean tryInputB(String testString) throws IOException
+  public boolean tryInputB(String keyString) throws IOException
     /* This method tries to process a specific discrete input string.
-      If testString equals the offered input string then 
-      the offered input string is consumed and true is returned, 
-      otherwise the offered input string
-      is not consumed and false is returned.
-      If true is returned then it is the responsibility of the caller
-      to process any other data that might be associated with testString 
-      which follows it in the input stream.
+      If testString matches the offered input then 
+      the offered input is consumed and true is returned, 
+      otherwise the offered input is not consumed and false is returned.
       */
     {
-      boolean successB= // Comparing requested discrete input to test input. 
-          (testString.equals(offeredInputString));
-      if (successB) // Consuming offered input if it matched.
-        {
-          /*  ///dbg
-          if ( logB(DEBUG)) logV( 
-              DEBUG,
-              "StateList.tryInputB(..), \""
-              + this.offeredInputString
-              + "\" consumed by"
-              + getFormattedStatePathString()
-              );
-          */  ///dbg
-          //// offeredInputString= null; // Consume input string.
-          resetOfferedInputV(); // Consume the input.
-          }
-      return successB; // Returning result of the comparison.
+        boolean successB; 
+        MapEpiNode valueMapEpiNode= null; // Assume not found.
+      toReturn: {
+        valueMapEpiNode= // Test for value for key from input map.  
+          testInputMapEpiNode(keyString);
+          //// (keyString.equals(offeredInputString));
+        successB= // If input contained a value map
+            (null != valueMapEpiNode);
+        if (! successB) // Exit if fail.
+          break toReturn; 
+        resetOfferedInputV(); // Consume the input.
+      } // toReturn:
+        return successB; // Returning result of the comparison.
       }
-
-	protected String getOfferedInputString()
-	  /* This method returns the discrete input String 
-     * stored in this state.
-     */
-	  {
-			return offeredInputString;
-		  }
 
   public MapEpiNode tryInputMapEpiNode(String keyString)
     /* This method tries to process a specific discrete input MapEpiNode.
@@ -1078,7 +1062,7 @@ public class StateList extends MutableList implements Runnable {
 
   public MapEpiNode testInputMapEpiNode(String keyString)
     /* This method tests for a specific discrete input MapEpiNode.
-     * If keyString is a key in the next input MapEpiNode then
+     * If keyString is a key in the input MapEpiNode then
      * the value associated with the key String is returned.
      * Otherwise null is returned.
      * The input is not consumed.
@@ -1093,6 +1077,17 @@ public class StateList extends MutableList implements Runnable {
       } // toReturn:
         return valueMapEpiNode; // Return value map as result.
       }
+
+  /*  ////
+  protected String getOfferedInputString()
+    /* This method returns the discrete input String 
+     * stored in this state.
+     */
+  /*  ////
+    {
+      return offeredInputString;
+      }
+  */  ////
 
   protected MapEpiNode getOfferedInputMapEpiNode()
     /* This method returns the discrete input MapEpiNode
@@ -1125,11 +1120,22 @@ public class StateList extends MutableList implements Runnable {
         }
 
       // theAppLog.debug("StateList.setOfferedInputV(..) with "+newOfferedInputString);
-      this.offeredInputString= newOfferedInputString; // Store new input.
+      //// this.offeredInputString= newOfferedInputString; // Store new String input.
+      setOfferedInputNoCheckV(newOfferedInputString);
+      setOfferedInputV( // Store new MapEpiNode input equivalent
+          MapEpiNode.makeSingleEntryEmptyMapEpiNode(newOfferedInputString));
+      }
+
+  public void setOfferedInputNoCheckV(String newOfferedInputString)
+    /* This method stores offeredInputString within this state
+      for possible input by the state but it does not error checking.
+      */
+    {
+      this.offeredInputString= newOfferedInputString; // Store new String input.
       }
 
   public void setOfferedInputV(MapEpiNode newOfferedInputMapEpiNode)
-    /* This method stores offeredInputString within this state
+    /* This method stores newOfferedInputMapEpiNode within this state
       for possible input by the state.
       What this method does, resetOfferedInputV() is used to undo
       if the input is not consumed.

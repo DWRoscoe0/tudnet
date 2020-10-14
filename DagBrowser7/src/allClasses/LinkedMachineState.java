@@ -645,9 +645,13 @@ public class LinkedMachineState
   /* This method sends 3 GOODBYEs, each in a separate packet. */
   {
     for (int i = 0; i < 3; i++) { // Send 3 GOODBYE packets.
-      theNetcasterOutputStream.writeV("{GOODBYE}");
-      theNetcasterOutputStream.flush();
-    }
+      //// theNetcasterOutputStream.writeV("{GOODBYE}");
+      //// theNetcasterOutputStream.flush();
+      MapEpiNode messageMapEpiNode= 
+          MapEpiNode.makeSingleEntryEmptyMapEpiNode("GOODBYE");
+      messageMapEpiNode.writeV(theNetcasterOutputStream);
+        theNetcasterOutputStream.endBlockAndSendPacketV();
+      }
   }
 
   private void notifyConnectionManagerOfPeerConnectionChangeV()
