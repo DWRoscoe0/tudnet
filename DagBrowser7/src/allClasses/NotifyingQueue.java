@@ -87,7 +87,7 @@ public class NotifyingQueue<E> // Queue inter-thread communication.
 	    // mainly for debugging.
 	    { return consumerThreadLockAndSignal; }
 	  
-	  /*  //// Don't use this.  It doesn't have the capacity limit checking.
+	  /*  /// Don't use this.  It doesn't have the capacity limit checking.
 	  public boolean add( E anE )
 	    /* 
 	      If this method returns true then:
@@ -101,18 +101,19 @@ public class NotifyingQueue<E> // Queue inter-thread communication.
 
 				It never returns false.  This is the spec. of Queue.add(E).
 	     	*/
-	   /*  ////
+	   /*  ///
 	    {
 	      boolean resultB= super.add( anE );
 	      consumerThreadLockAndSignal.notifyingV();
 	      return resultB;
 	      }
-	    */  ////
+	    */  ///
 	  
-    public void put( E anE ) //// Non-blocking put(..).
+    public void put( E anE )
       /* This method
         * Logs a warning if the size limit it being exceeded.
-          If this happens, the size limit is increased by one. 
+          If this happens, the size limit is increased by one,
+          so this is a non-blocking put(..). 
         * It adds anE to the queue.
         * It notifies the consumer thread of the new element.
         It ignores but maintains Thread interrupt status for testing later.
@@ -163,7 +164,7 @@ public class NotifyingQueue<E> // Queue inter-thread communication.
               );
         }
 
-    /*  ////  Blocking put(..).
+    /*  ///  Blocking put(..).
 	  public void put( E anE )
 	    /* If there is no space available in the queue 
 	      then it blocks until there is.  When there is space:
@@ -174,7 +175,7 @@ public class NotifyingQueue<E> // Queue inter-thread communication.
 	      
 	      ///err Test for full queue and log message if so before putting?
 	     	*/
-    /*  ////  Blocking put(..).
+    /*  ///  Blocking put(..).
 	    {
 	  	  boolean interruptedB= false; // Assume no interruption will happen.
 
@@ -197,7 +198,7 @@ public class NotifyingQueue<E> // Queue inter-thread communication.
 	      	( interruptedB ) 
 	      	Thread.currentThread().interrupt();
 	      }
-	      */  ////  Blocking put(..).
+	      */  ///  Blocking put(..).
 
 	  /*///
 	  public boolean XaddAll(Collection<? extends E> aCollection) 

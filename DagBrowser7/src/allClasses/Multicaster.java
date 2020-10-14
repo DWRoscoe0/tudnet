@@ -316,8 +316,6 @@ public class Multicaster
                 	( ! EpiThread.testInterruptB() )
     	            { // Send and receive multicast packets.
     	              try {
-    	                //// theEpiOutputStreamO.writeV( "{MC-QUERY}" ); // Writing query.
-    	                //// theEpiOutputStreamO.flush(); // Sending it.
                       mcSendWordAsMapMessageV("MC-QUERY");
     	                receivingPacketsV( ); // Receiving packets until done.
     	                }
@@ -334,8 +332,6 @@ public class Multicaster
     	          stoppingMulticastReceiverThreadV();
     	          }
             for(int i=3; i>0; i--){ // Say goodbye 3 times...
-              //// theEpiOutputStreamO.writeV( "{MC-GOODBYE}" ); // Writing goodbye.
-              //// theEpiOutputStreamO.flush(); // Sending it.
               mcSendWordAsMapMessageV("MC-GOODBYE");
               }
             }
@@ -406,27 +402,17 @@ public class Multicaster
                     theAppLog.debug("MC","receivingPacketsV() no MapEpiNode!");
                     break messageDecoder; // exit.
                     }
-                  //// if (null == valueMapEpiNode) // If offered input not a HELLO message
-	            		//// String inString=
-	            		//// 		theEpiInputStreamI.readAString(); // Reading message.
-                  //// theAppLog.debug("MC","receivingPacketsV() decoding:"+ inString);
                   theAppLog.debug(
                       "MC","receivingPacketsV() decoding:" + messageMapEpiNode);
-                  //// if (inString.equals( "MC-QUERY" )) // Handling query, maybe.
-                  //// if (null != tryInputMapEpiNode( "MC-QUERY" )) // Handling query, maybe.
                   MapEpiNode valueMapEpiNode= // Try for "MC-QUERY". 
                       messageMapEpiNode.getMapEpiNode("MC-QUERY");
                   if (null != valueMapEpiNode) // If got it, process.
 			        			{ 
-                      //// theEpiOutputStreamO.writeV( "{MC-ALIVE}" ); // Writing response.
-                      //// theEpiOutputStreamO.flush(); // Sending it.
                       mcSendWordAsMapMessageV("MC-ALIVE");
 			        			  processingPossibleNewUnicasterV(); 
 			        			  multicastActivityLoggerV(true);
                       break messageDecoder;
 				              }
-			        		//// if (inString.equals( "MC-ALIVE" )) // Handling response, maybe.
-                  //// if (null != tryInputMapEpiNode( "MC-ALIVE" )) // Handling response, maybe.
                   valueMapEpiNode= // Try for "MC-ALIVE". 
                       messageMapEpiNode.getMapEpiNode("MC-ALIVE");
                   if (null != valueMapEpiNode) // If got it, process.
@@ -436,7 +422,6 @@ public class Multicaster
                       }
 		          		// Ignoring anything else.
                   theAppLog.debug( "receivingPacketsV() ignoring unexpected: "
-			        		////   + inString);
                       + messageMapEpiNode);
 	            		} // messageDecoder:
 	            	break inputDecoder;
@@ -456,9 +441,6 @@ public class Multicaster
       /* This method sends mcString in a YAML-like map packet.
        */
       {
-        //// theEpiOutputStreamO.writeV( "{" + mcString + "}" ); // Write the data.
-        ////theEpiOutputStreamO.flush(); // Sending it.
-
         MapEpiNode messageMapEpiNode= 
             MapEpiNode.makeSingleEntryEmptyMapEpiNode(mcString);
         messageMapEpiNode.writeV(theEpiOutputStreamO); // Write complete map.

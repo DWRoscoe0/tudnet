@@ -518,16 +518,9 @@ public class LinkedMachineState
   {
     boolean gotGoodHelloB = false; // Assume default of failure.
     toReturn: {
-      /*  ////
-      if (!subStateList.tryInputB("HELLO"))
-        break toReturn; // Fail if not HELLO.
-      String localIpString = theNetcasterInputStream.readAString();
-      String useIdString = theNetcasterInputStream.readAString();
-      */  ////
       MapEpiNode valueMapEpiNode= subStateList.tryInputMapEpiNode("HELLO");
       if (null == valueMapEpiNode) // If offered input not a HELLO message
         break toReturn; // exit with failure.
-      subStateList.helloResetV(); //// debug.
       // theAppLog.debug("tryReceivingHelloB((.), fields: "+valueMapEpiNode
       //    + "from" + subStateList.getFormattedStatePathString() );
       String localIpString = valueMapEpiNode.getString("IP");
@@ -610,7 +603,7 @@ public class LinkedMachineState
     return resultB;
   }
 
-  private int helloCountI= 0;  ////
+  private int helloCountI= 0;  // Debugging aid.
   
   private void sendHelloV(StateList subStateList) throws IOException
   /*
@@ -619,19 +612,11 @@ public class LinkedMachineState
    * the remote peer and the ID of the local peer.
    */
   {
-    synchronized (theAppLog) { ////
-      // theAppLog.debug(
-      //    "sendHelloV() from" + subStateList.getFormattedStatePathString() );
-      // theAppLog.doStackTraceV(null);
-      }
-    
-    //// sendDebugCountV(); // This is 1st block.
-
     MapEpiNode fieldsMapEpiNode= new MapEpiNode(); // Make empty map.
     fieldsMapEpiNode.putV( // Add IP.
         "IP", theUnicaster.getKeyK().getInetAddress().getHostAddress());
-    fieldsMapEpiNode.putV( // //// for debugging.
-        "HelloCount", helloCountI); ////
+    fieldsMapEpiNode.putV(
+        "HelloCount", helloCountI);
     fieldsMapEpiNode.putV( // Add UserId.
         Config.userIdString, thePersistent.getEmptyOrString(Config.userIdString));
     MapEpiNode helloMapEpiNode= MapEpiNode.makeSingleEntryMapEpiNode( // Wrap in HELLO map.
@@ -645,8 +630,6 @@ public class LinkedMachineState
   /* This method sends 3 GOODBYEs, each in a separate packet. */
   {
     for (int i = 0; i < 3; i++) { // Send 3 GOODBYE packets.
-      //// theNetcasterOutputStream.writeV("{GOODBYE}");
-      //// theNetcasterOutputStream.flush();
       MapEpiNode messageMapEpiNode= 
           MapEpiNode.makeSingleEntryEmptyMapEpiNode("GOODBYE");
       messageMapEpiNode.writeV(theNetcasterOutputStream);

@@ -71,10 +71,6 @@ public class EpiInputStream<
     private int bufferIndexI = 0; // Buffer/stream scan position.
       // Buffer is consumed when packetIndexI >= packetSizeI.
     private MapEpiNode cachedMapEpiNode= null; // Cached MapEpiNode parsed from packet.
-    
-    // Strings within MapEpiNode.
-    private int stringElementIndexI= 0; // Index of Strings within EpiNode.
-    private String cachedString= null;
 
     // Legacy InputStream position marking variables.
     private boolean markedB= false;
@@ -105,137 +101,6 @@ public class EpiInputStream<
 		  // through which data is passing, mainly for debugging.
 			{ return receiverToStreamcasterNotifyingQueueQ.getLockAndSignal(); }
 
-		
-    /*  ////
-    protected boolean tryingToGetStringB( String theString ) throws IOException
-      /* This method tries to get a particular String theString.
-        It consumes the String and returns true 
-        if the desired string is there, 
-        otherwise it does not consume the String and returns false.
-        The string is considered to be not there if either:
-        * There are no characters available in the input stream buffer.
-        * The characters available in the input stream buffer are
-          not the desired string.
-        */
-    /*  ////
-      {
-  			boolean gotStringB= false;
-    		mark(0); // Marking stream position.
-    		String inString= tryingToGetString();
-		    //appLogger.debug( "tryingToGetStringB(): inString= "+ inString );
-    	  gotStringB=  // Testing for desired string.
-    	  		theString.equals( inString );
-		    if ( ! gotStringB ) // Resetting position if String is not correct.
-    	  	reset(); // Putting String back into stream.
-    	  return gotStringB;
-      	}
-    */  ////
-
-    /*  ////
-    protected String tryingToGetString() throws IOException
-    /* This method tries to get any String.
-      It returns a String if there is one available, null otherwise.
-      */
-    /*  ////
-    {
-			String inString= null;
-			if // Overriding if desired string is able to be read. 
-			  ( available() > 0 )
-				{
-	    	  inString= readAString();
-	    	  }
-  	  return inString;
-    	}
-    */  ////
-
-    /*  ////
-		protected int readANumberI()
-  		throws IOException, BadReceivedDataException
-  		/* This method reads and returns one int number 
-  		  converted from a String ending in the delimiterC.
-  		  This means it could not be used for floating point numbers.  
-  		  It blocks if a full number is not available.
-  		  It converts NumberFormatExceptions to a BadReceivedDataExceptions. 
-  		  */
-    /*  ////
-			{
-				String numberString= readAString();
-	      int numberI;
-	      try { 
-	      	numberI= Integer.parseInt( numberString ); 
-	      	}
-	      catch ( NumberFormatException theNumberFormatException ) {
-	      	throw new BadReceivedDataException(theNumberFormatException);
-	      	}
-			  return numberI;
-				}
-    */  ////
-
-    protected String readAString() throws IOException
-      /* This method is a kludge.
-        It reads and returns one String from either the old style strings-terminated-by-!, 
-        or the next scalar string from a flow-style YAML sequence.
-        The String returned does not include any delimiters.
-        This method does not block.
-        If a complete string, including terminating delimiter, is not available,
-        then it logs this as an error and returns an empty string.
-        
-        ///opt  Remove old !-delimited parsing.
-       */
-      {
-          String accumulatorString= "";
-        toReturn: {
-          accumulatorString= tryFromEpiNodeString(); // Try string from sequence.
-          if (accumulatorString != null) break toReturn; // Exiting if gotten.
-
-          theAppLog.error( "readAString(): unable to get string from EpiNode.");
-          accumulatorString+="!NO-DATA-AVAILABLE!";
-          // theAppLog.error( // Log this way to debug.
-          theAppLog.warning( // Log this way normally.  
-              "readAString(): returning " + accumulatorString );
-        } // toReturn:
-          return accumulatorString;
-        }
-    
-    private String tryFromEpiNodeString() throws IOException
-      /* This method tries to get a String by parsing and caching EpiNodes,
-        then extracting Strings from them.
-        If it succeeds then it returns the next String.
-        If it fails then it returns null.
-        */
-      { 
-        cachedString= null;
-        return testFromEpiNodeString();
-        }
-
-    private String testFromEpiNodeString() throws IOException
-      /* This method tests whether there is a String available
-       * parsed from MapEpiNodes, then extracting Strings from them.
-       * If true then it returns the String.
-       * If not then it returns null.
-       */
-      { 
-          String resultString= cachedString;
-        goReturn: {
-          if (null != resultString)
-            break goReturn;
-          while (true) { // Keep trying until no more EpiNode elements to return.
-            cachedMapEpiNode= testMapEpiNode(); // Test for node and cach it.
-            if (cachedMapEpiNode == null) { // Unable to get another node.
-              emptyingBufferV(); // Empty packet buffer to prevent looping.
-              stringElementIndexI= 0; // Reset index for scanning node elements.
-              break; // Exit with fail.
-              }
-            cachedString= cachedMapEpiNode.extractFromEpiNodeString(stringElementIndexI);
-            if (cachedString != null) { // If got string, return it. 
-              stringElementIndexI++; // Increment index for next string.
-              break; // Exit with success.
-              }
-            cachedMapEpiNode= null; // Reset to try for another node.
-            } // while
-        } // goReturn:
-          return cachedString;
-        }
 
     public MapEpiNode testMapEpiNode() throws IOException
       /* Returns a MapEpiNode if one is available but does not consume it.
@@ -273,7 +138,6 @@ public class EpiInputStream<
       /* This method consumes any cached String and MapEpiNode. */
       {
         cachedMapEpiNode= null; // Reset since we're taking node away.
-        cachedString= null;
         }
     
     @SuppressWarnings("unused") ///
@@ -568,8 +432,7 @@ public class EpiInputStream<
       {
         bufferIndexI= thePositionI; // Restoring buffer byte index.
         
-        cachedMapEpiNode= null; //// Kludge: reset EpiNode parser.
-        stringElementIndexI= 0; //// Kludge: reset EpiNode parser.
+        cachedMapEpiNode= null; ///fix Kludge: reset EpiNode parser.
         }
 	
 		}

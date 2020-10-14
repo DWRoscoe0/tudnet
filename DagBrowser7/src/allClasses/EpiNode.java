@@ -182,9 +182,6 @@ public abstract class EpiNode
         resultEpiNode= 
             ScalarEpiNode.tryScalarEpiNode(theRandomAccessInputStream);
         if (resultEpiNode != null) break toReturn;
-        
-        //// resultEpiNode= MapEpiNode.tryBlockMapEpiNode(
-        ////     theRandomAccessInputStream, minIndentI);
 
         resultEpiNode= MapEpiNode.getBlockMapEpiNode(
             theRandomAccessInputStream, minIndentI);
@@ -391,15 +388,15 @@ class ScalarEpiNode extends EpiNode
       /* This method tries to parse an unquoted ScalarEpiNode.  */
       {
           ScalarEpiNode theScalarEpiNode= null;
-          byte theB;
+          byte theByte;
           String accumulatorString= ""; // Clear character accumulator.
         readLoop: { while (true) {
           int positionI= theRandomAccessInputStream.getPositionI();
           toAppendAcceptedChar: {
-            theB= theRandomAccessInputStream.readB(); //// loss of precision.
-            if (Character.isLetterOrDigit(theB)) // Common character shortcut.
+            theByte= theRandomAccessInputStream.readB();
+            if (Character.isLetterOrDigit(theByte)) // Common character shortcut.
               break toAppendAcceptedChar;
-            if (needsNoDoubleQuotesB(theB)) // Anything else.
+            if (needsNoDoubleQuotesB(theByte)) // Anything else.
               break toAppendAcceptedChar;
             theRandomAccessInputStream.setPositionV(positionI);
               // Restore previous stream position.
@@ -407,7 +404,7 @@ class ScalarEpiNode extends EpiNode
             /// outside of loop: setPositionV(getPositionI()-1);
             break readLoop; // Go try to return what's accumulated so far.
             } // toAppendAcceptedChar:
-          accumulatorString+= (char)theB; // Append byte to accumulator.
+          accumulatorString+= (char)theByte; // Append byte to accumulator.
           }
         } // readLoop: 
           if (accumulatorString.length() != 0) // Reject 0-length strings.
@@ -435,7 +432,7 @@ class ScalarEpiNode extends EpiNode
               byteI= theRandomAccessInputStream.read();
             accumulatorString+= (char)byteI; // Append byte to accumulator.
         } // readLoop: 
-          if (accumulatorString.length() == 0) // Reject 0-length strings?//// 
+          if (accumulatorString.length() == 0) // Reject 0-length strings? 
             break goReturn;
           theScalarEpiNode= 
               new ScalarEpiNode(accumulatorString); // Override null result.
@@ -1177,9 +1174,6 @@ class MapEpiNode extends EpiNode
         It is meant to be used for Persistent.txt file format changes.
         */
       { 
-        //// theAppLog.debug( "MapEpiNode.renameKeys(\""
-        ////   + oldKeyString + "\",\"" + newKeyString 
-        ////   + "\") called.");
         for // First, recursively rename keys in entry values which are maps. 
           (EpiNode valueEpiNode: theLinkedHashMap.values()) 
           { // Process one value.
@@ -1369,39 +1363,6 @@ class MapEpiNode extends EpiNode
               scanMapEntry.getKey().toString();
           return resultString;
         }
-
-    /*  ////
-    public boolean isTrueB( String keyString )
-      /* This method returns true if value of the field whose key is keyString
-        is non-null "true", ignoring case, false otherwise.
-        ///org Rename to getB(.)?
-        */
-    /*  ////
-      {
-        return getB(keyString,false);
-        //// String valueString= getString(keyString);
-        //// return Boolean.parseBoolean( valueString );
-        }
-    */  ////
-    
-    /*  //// This isn't needed if both isFalseB(.) and isTrueB(.) exist.
-    public boolean getB(String keyString, boolean defaultB)
-      /* This method returns the boolean value associated with keyString.
-        If there is no value or it is not a valid boolean value character sequence
-        then defaultB is returned.
-        */
-    /*  ////
-      {
-        boolean resultB= defaultB; // Assume default value.
-
-        if (defaultB) // if true is default, override if string value is false.
-          resultB= ! isFalseB(keyString);
-        else // if false is default, override if string value is true.
-          resultB= isTrueB(keyString);
-
-        return resultB;
-        }
-    */  ////
 
     public boolean isTrueB(String keyString)
       /* This method returns true if the String value associated with keyString

@@ -6,7 +6,7 @@ import java.util.Timer;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import static allClasses.AppLog.theAppLog;
-/// import static allClasses.SystemSettings.NL;
+import static allClasses.SystemSettings.NL;
 
 
 public class Unicaster
@@ -312,8 +312,6 @@ public class Unicaster
               MapEpiNode.makeSingleEntryMapEpiNode(
                 notificationString, fieldsMapEpiNode);
             setOfferedInputV(messageMapEpiNode); // Offer MapEpiNode to state machine.
-            ////setOfferedInputV(notificationString); // Offer String to state machine.
-            setOfferedInputNoCheckV(notificationString); // Offer String to state machine.
             }
           while (doOnInputsB()) ; // Cycle state machine until input is processed.
           }
@@ -331,13 +329,6 @@ public class Unicaster
           MapEpiNode inMapEpiNode= // Get next MapEpiNode input. 
               theEpiInputStreamI.testMapEpiNode(); 
 
-          //// String inString= // Get next String input.
-          ////     theEpiInputStreamI.readAString();
-          // The order of the following is important temporarilly because
-            // setting from String also does a set from MapEpiNode
-            // with an empty value map!
-          //// setOfferedInputV( inString ); // Offer as state machine input.
-          //// setOfferedInputNoCheckV(inString);
           setOfferedInputV( inMapEpiNode ); // Offer as state machine input.
 
           while (doOnInputsB()) ; // Cycle state machine until processing stops.
@@ -374,33 +365,22 @@ public class Unicaster
         The ConnectionManager is the processor of last resort.
         */
       {
-          //// String offeredString= getOfferedInputString();
         toReturn: { 
         toConsumeInput: { 
-          //// if ( offeredString == null ) // String input consumed?
           if (! hasOfferedInputB(this)) //If input consumed
             break toReturn; // exit.
-            //// break toConsumeInput; // Yes, go consume any MapEpiNode and exit.
-          //// if (offeredString.equals("DEBUG")) { // Ignore DEBUG messages
-          ////   theEpiInputStreamI.readAString(); // and their message count arguments.
-          ////   break toConsumeInput; // Finished up.
-          ////   }
-          { // Log any other input and log OrState states. 
-            /// theAppLog.debug("UC","processUnprocessedInputV() input= "+offeredString);
-            /// logOrSubstatesB("processUnprocessedInputV()"); // Log active sub-states.
-            }
           MapEpiNode theMapEpiNode= // Get any left-over input as a MapEpiNode.
               theEpiInputStreamI.tryMapEpiNode();
           if (theMapEpiNode == null) break toConsumeInput; // Clean up if no MapEpiNode.
-          /// theAppLog.debug("UC", // Log the EpiNode.
-          ///    "processUnprocessedInputV() EpiNode= " + theMapEpiNode.toString());
+          theAppLog.debug("UC", // Log the EpiNode.
+            "processUnprocessedInputV() EpiNode= " + theMapEpiNode.toString());
           if (isAboutThisUnicasterB(theMapEpiNode)) { // Ignore if about this Unicaster.
-            /// theAppLog.debug("UC",
-            ///     "processUnprocessedInputV() ignoring above data about this Unicaster.");
+            theAppLog.debug("UC",
+            "processUnprocessedInputV() ignoring above data about this Unicaster.");
             break toConsumeInput; // Ignoring to prevent self-reference message storm.
             }
-          /// theAppLog.debug("UC","UnicasterManager.processUnprocessedInputV(.) queuing "
-          ///   + NL + "  " + theMapEpiNode);
+          theAppLog.debug("UC","UnicasterManager.processUnprocessedInputV(.) queuing "
+            + NL + "  " + theMapEpiNode);
           theConnectionManager.decodePeerMapEpiNodeV(
             theMapEpiNode,
             thisMapEpiNode.getEmptyOrString(Config.userIdString) // Unicaster UserId as context.
@@ -409,7 +389,7 @@ public class Unicaster
           theEpiInputStreamI.consumeInputV();
           resetOfferedInputV();  // consume unprocessed state machine String input.
         } // toReturn:
-          theEpiInputStreamI.consumeInputV(); //// Again for transition.
+          theEpiInputStreamI.consumeInputV(); ///??? Again for transition.
           return;
         }
 
@@ -440,7 +420,7 @@ public class Unicaster
           return resultB;
         }
 
-    /*  ////
+    /*  ///?
     public boolean onInputsV() throws IOException
       /* This method does, or will do itself, or will delegate to Subcasters, 
         all protocols of a Unicaster.  This might include:
@@ -451,7 +431,7 @@ public class Unicaster
         * Doing simple received message decoding.
         * Connection/Hello handshake state machine cycling.
         */
-    /*  ////
+    /*  ///
 	    { 
 	    	process: {
 		    	if ( super.orStateOnInputsB() ) // Try processing by sub-states first. 
@@ -472,7 +452,7 @@ public class Unicaster
 	    		} // process:
         return false;
 				}
-    */  ////
+    */  ///
 
     public String getSummaryString( )
       /* Returns a string indicating whether 

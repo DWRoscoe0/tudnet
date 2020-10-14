@@ -37,8 +37,6 @@ public class Dialogger extends Object
         ///fix Determine why restoreFocusV() doesn't work with this?
        * */
       {
-        /// java.awt.EventQueue.invokeLater( // Do following LATER on the EDT.
-        //// EDTUtilities.runOrInvokeAndWaitV( // Run following NOW on EDT thread.
         EventQueue.invokeLater(
           new Runnable() {
             @Override
