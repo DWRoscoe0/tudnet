@@ -21,6 +21,9 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
       but for now those things are not included.
       Retrying will be the job of the developer doing the testing
       in those few cases where it is needed.
+
+    ///org? makeTextSteam2(peerIdentityString) should not be in AppGUIFactory?
+      Shouldn't it be in here?  It's called only from this file.
     */
 
   // Constructor-injected dependencies.

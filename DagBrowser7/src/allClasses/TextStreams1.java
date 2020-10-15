@@ -11,6 +11,7 @@ public class TextStreams1 extends SimplerListWithMap<String,TextStream1> {
 
   // Constructor-injected dependencies.
   private Persistent thePersistent;
+  @SuppressWarnings("unused") ////
   private AppGUIFactory theAppGUIFactory;
   private UnicasterManager theUnicasterManager;
 
@@ -149,7 +150,8 @@ public class TextStreams1 extends SimplerListWithMap<String,TextStream1> {
 
   private TextStream1 createAndAddTextStream(String peerIdentityString)
     {
-      TextStream1 theTextStream= theAppGUIFactory.makeTextSteam1(peerIdentityString);
+      TextStream1 theTextStream= 
+          null; //////////////// theAppGUIFactory.makeTextSteam1(peerIdentityString);
       addingV(peerIdentityString, theTextStream); // Add to list and HashMap.
       return theTextStream;
       }
