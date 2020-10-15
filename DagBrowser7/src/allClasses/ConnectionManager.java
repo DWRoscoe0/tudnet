@@ -120,7 +120,6 @@ public class ConnectionManager
       private NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes;
         // For inputs in the form of MapEpiNodes. /// Eliminate when no longer needed.
       
-      //// private TextStreams1 theTextStreams1= null;
       private TextStreams2 theTextStreams2= null;
 
     // Other instance variables, all private.
@@ -148,7 +147,6 @@ public class ConnectionManager
     		NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue,
         NotifyingQueue<String> toConnectionManagerNotifyingQueueOfStrings,
         NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes,
-        //// TextStreams1 theTextStreams,
         TextStreams2 theTextStreams2
     		)
       {
@@ -171,7 +169,6 @@ public class ConnectionManager
             toConnectionManagerNotifyingQueueOfStrings;
         this.toConnectionManagerNotifyingQueueOfMapEpiNodes=
             toConnectionManagerNotifyingQueueOfMapEpiNodes;
-        //// this.theTextStreams1= theTextStreams;
         this.theTextStreams2= theTextStreams2;
         }
 
@@ -192,7 +189,6 @@ public class ConnectionManager
     		
     		restartPreviousUnicastersV();
 
-        //// theTextStreams1.startServiceV(); // Starts flooding child TextStream-s.
         theTextStreams2.startServiceV(); // Starts replicating child TextStream-s.
 
         processingInputsAndExecutingEventsV(); // Do this until thread termination...
@@ -886,15 +882,12 @@ public class ConnectionManager
         MapEpiNode messageMapEpiNode, String senderUserIdString)
       /* Returns true if one of the TextStreams was able to process, 
         false otherwise.
-        It tries both the new TextStreams2 and the old TextStreams1.
         The message is assumed to have come from 
         the user whose UserId is senderUserIdString.
         */
       {
         boolean successB= theTextStreams2.tryProcessingMapEpiNodeB(
             messageMapEpiNode,senderUserIdString);
-        //// if (!successB)
-        ////   successB= theTextStreams1.tryProcessingMapEpiNodeB(messageMapEpiNode);
         return successB; 
         }
 

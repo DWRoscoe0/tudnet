@@ -38,7 +38,6 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 	// Other objects that will be needed later.
 
   // Saved while constructing singletons.
-  //// private TextStreams1 theTextStreams1;
   private TextStreams2 theTextStreams2;
   private final UnicasterManager theUnicasterManager;
 
@@ -100,8 +99,6 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 	      new NetcasterQueue(cmThreadLockAndSignal, Config.QUEUE_SIZE, "mccmp");
       NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue=
           new NetcasterQueue(cmThreadLockAndSignal, Config.QUEUE_SIZE, "urcmp");
-      //// theTextStreams1= new TextStreams1(
-      ////     "Flooding-Text-Streams",this,thePersistent,theUnicasterManager);
       theTextStreams2= new TextStreams2(
           "Replication-Text-Streams",this,thePersistent,theUnicasterManager);
       theConnectionManager= new ConnectionManager(
@@ -114,7 +111,6 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
   	    unconnectedReceiverToConnectionManagerNetcasterQueue,
   	    toConnectionManagerNotifyingQueueOfStrings,
         toConnectionManagerNotifyingQueueOfMapEpiNodes,
-        //// theTextStreams1,
         theTextStreams2
   	    );
       EpiThread theConnectionManagerEpiThread=
@@ -131,7 +127,6 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
           "Test-Center",
           theInstallerBuilder,
           theTextStreams2,
-          //// theTextStreams1,
           new Infinitree( null, 0 )
           );
       DataNode theInitialRootDataNode= new InfogoraRoot( // Building DataNode tree.
@@ -232,14 +227,6 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
       
     ///opt fastFailNullCheckT(..) might no longer be needed.
      */
-
-  /*  ////
-  public TextStream1 makeTextSteam1(String theRootIdString)
-    { 
-      return new TextStream1(
-        theRootIdString,thePersistent,theTextStreams1);
-      }
-  */  ////
 
   public TextStream2 makeTextSteam2(String theRootIdString)
     { 
