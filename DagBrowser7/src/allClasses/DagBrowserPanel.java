@@ -782,9 +782,9 @@ public class DagBrowserPanel
             respectively.
             */
           {
-        		theAppLog.debug(
-              "DagBrowserPanel.replaceRightPanelContentWithV(.) begins with:"
-              + NL + "  " + inTreePath);
+        		// theAppLog.debug(
+            //   "DagBrowserPanel.replaceRightPanelContentWithV(.) begins with:"
+            //   + NL + "  " + inTreePath);
   
         		TreeAware oldTreeAware= // Saving  (alias of) present JComponent. 
         	  		dataTreeAware;
