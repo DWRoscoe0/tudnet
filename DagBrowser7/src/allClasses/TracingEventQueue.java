@@ -15,8 +15,8 @@ public class TracingEventQueue extends EventQueue {
 
 	/* This simple class was based on one gotten from an article at
 	  https://today.java.net/pub/a/today/2007/08/30/debugging-swing.html
-	  Its purpose is to identify when the EDT is taking too long
-	  to process events.
+	  Its purpose is to report when the EDT is taking too long to process events.
+	  It tests both during a dispatch, and after every dispatch completes.
 	  
 	  ///enh? Integrate with or replace by a general watch-dog timer.
 	 	*/
@@ -101,7 +101,7 @@ class TracingEventQueueMonitor extends Thread {
 			eventDispatchingEndingB= true;
 		  synchronized(this) {
 				this.checkEventTimeB(
-						"Total",
+						"completed",
 						event, 
 						System.currentTimeMillis(),
 						this.eventTimeMap.get(event).startTimeL);
@@ -114,7 +114,10 @@ class TracingEventQueueMonitor extends Thread {
 		  }
 
 	private boolean checkEventTimeB(
-			String labelString, AWTEvent event, long currTime, long startTime
+			String underwayOrCompletedString, 
+			AWTEvent dispatchedAWTEvent, 
+			long currTime, 
+			long startTime
 			) 
 	  /* Reports whether an event dispatch has been running to long,
 	    longer that thresholdDelay. 
@@ -134,13 +137,12 @@ class TracingEventQueueMonitor extends Thread {
 			boolean thresholdExceededB= 
 					(currProcessingTime > this.thresholdDelay);
 			if (thresholdExceededB) {
-				String outString= "EDT "
-						//Event [" + event.hashCode() + "] "
-						+ labelString
-						+ " "
-						+ event.getClass().getName()
-						+ " time of " + currProcessingTime
-						+ "ms exceeded limit of " + this.thresholdDelay;
+				String outString= "In EDT dispatch of "
+            + dispatchedAWTEvent.getClass().getName()
+            + ", now "
+						+ underwayOrCompletedString
+						+ ", processing time of " + currProcessingTime
+						+ "ms exceeds limit of " + this.thresholdDelay;
 				//System.out.println(outString);
         theAppLog.warning(outString);
 			  }
@@ -169,7 +171,7 @@ class TracingEventQueueMonitor extends Thread {
 						long startTime = entry.getValue().startTimeL;
     				boolean thresholdExceededB= // Displaying if too long.
     						this.checkEventTimeB(
-    								"Partial",event, currTime, startTime
+    								"underway",event, currTime, startTime
     								);
     				if  // Displaying stack also if too long.
     				  ( thresholdExceededB )
