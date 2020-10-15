@@ -629,11 +629,11 @@ public class LinkedMachineState
   private void sayGoodbyesV() throws IOException
   /* This method sends 3 GOODBYEs, each in a separate packet. */
   {
-    for (int i = 0; i < 3; i++) { // Send 3 GOODBYE packets.
-      MapEpiNode messageMapEpiNode= 
-          MapEpiNode.makeSingleEntryEmptyMapEpiNode("GOODBYE");
+    MapEpiNode messageMapEpiNode= // Create the message packet with GOODBYE content. 
+        MapEpiNode.makeSingleEntryEmptyMapEpiNode("GOODBYE");
+    for (int i = 0; i < 3; i++) { // Send 3 packets with the same content.
       messageMapEpiNode.writeV(theNetcasterOutputStream);
-        theNetcasterOutputStream.endBlockAndSendPacketV();
+      theNetcasterOutputStream.endBlockAndSendPacketV();
       }
   }
 

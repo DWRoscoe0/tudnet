@@ -786,9 +786,11 @@ class MapEpiNode extends EpiNode
                 EpiNode.tryEpiNode(theRandomAccessInputStream);
             /// theAppLog.debug("MapEpiNode.getLinkedHashMap() "
             ///     + "keyEpiNode="+keyEpiNode);
-            if (keyEpiNode == null) break toNoEntry; // Got no key so no entry.
+            if (keyEpiNode == null) // Got no key so no entry 
+              break toNoEntry; // so fail this entry.
             if (! tryByteB(theRandomAccessInputStream,':')) // No separator ":"
-              break toEndEntry; // so no value, so end map entry now.
+              //// break toEndEntry; // so no value, so end map entry now.
+              break toNoEntry; // so fail this entry.
             valueEpiNode= // Try parsing value.
                 EpiNode.tryEpiNode(theRandomAccessInputStream);
             /// theAppLog.debug("MapEpiNode.getLinkedHashMap() "
