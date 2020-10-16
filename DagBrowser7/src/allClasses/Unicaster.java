@@ -333,7 +333,10 @@ public class Unicaster
 
           while (doOnInputsB()) ; // Cycle state machine until processing stops.
 
-          processUnprocessedInputV(); // Handle any left-over input.
+          processUnprocessedInputV(); // Redirect any left-over input.
+
+          theEpiInputStreamI.emptyingBufferV(); // Make certain no junk remains.
+            // Means presently only MapEpiNode will be processed 0per packet.
           }
         }
     
@@ -358,8 +361,7 @@ public class Unicaster
     private void processUnprocessedInputV() throws IOException
       /* This method is called to process any offered input that
         the Unicaster state machine was unable to process.
-        Unprocessed Debug messages are silently ignored.
-        Other messages are logged, converted to MapEpiNodes, 
+        Other messages are optionally logged, converted to MapEpiNodes, 
         and added to the toConnectionManagerNotifyingQueueOfMapEpiNodes
         for processing by the ConnectionManager.
         The ConnectionManager is the processor of last resort.
