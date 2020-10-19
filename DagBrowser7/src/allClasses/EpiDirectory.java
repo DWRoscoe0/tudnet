@@ -14,38 +14,35 @@ import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
 import static allClasses.SystemSettings.NL;
 
-public class IFile 
-
-  extends DataNode
+//// public class IFile 
+public class EpiDirectory extends DataNode {
 
   /* This class extends DataNode to represent files and directories.
     It does not distinguish duplicate links to 
     files and directories from full copies of files and directories
     */
   
-  { // class IFile
-  
     // Variables.
       
       File theFile;  // File associated with this DataNode.
 
       String[] childStrings= null;  // Initially empty array of child names.
-      IFile[] childIFiles= null;  // Initially empty array of child IFiles.
+      EpiDirectory[] childEpiDirectories= null;  // Same for EpiDirectory-s..
     
     // Constructors.
 
-      IFile ( String inString ) 
+      EpiDirectory( String inString ) 
         // Constructs an IFile with a single element whose name is inString.
         { 
           theFile= new File( inString );
           }
     
-      IFile ( IFile inIFile, String inString ) 
+      EpiDirectory( EpiDirectory inEpiDirectory, String inString ) 
         /* Constructs an IFile whose parent is inIFile and 
           whose last element has name inString.
           */
         { 
-          theFile= new File( inIFile.theFile, inString );
+          theFile= new File( inEpiDirectory.theFile, inString );
           }
 
     // theFile pass-through methods.
@@ -105,7 +102,7 @@ public class IFile
             return childCountI;  // return the final child count.
 
           }
-    
+
       public DataNode getChild( int IndexI ) 
         /* This returns the child with index IndexI.
           It gets the child from an array cache if that is possible.
@@ -115,26 +112,26 @@ public class IFile
           */
         { // getChild( int IndexI ) 
           setupCacheArrays( );  // Setup the cache arrays for use.
-          IFile childIFile= null;
+          EpiDirectory childEpiDirectory= null;
 
-          do {  // Exittable block.
+          do {  // Exit-able block.
             if  // Exit if index out of bounds.
-              ( IndexI < 0 || IndexI >= childIFiles.length ) 
+              ( IndexI < 0 || IndexI >= childEpiDirectories.length ) 
               break;
-            childIFile=  // Try to get child IFile from cache.
-              childIFiles[ IndexI ];
-            if ( childIFile == null )  // Fix the cache if IFile slot was empty.
+            childEpiDirectory=  // Try to get child IFile from cache.
+              childEpiDirectories[ IndexI ];
+            if ( childEpiDirectory == null )  // Fix the cache if IFile slot was empty.
               { // Fill the empty cache slot.
-                childIFile=  // Calculate IFile slot value
-                  new IFile(   // return representation of desired child.
+                childEpiDirectory=  // Calculate IFile slot value
+                  new EpiDirectory(   // return representation of desired child.
                     this, 
                     GetArrayOfStrings( )[IndexI] 
                     );
-                childIFiles[ IndexI ]= childIFile;  // Save IFile in cache slot.
+                childEpiDirectories[ IndexI ]= childEpiDirectory;  // Save IFile in cache slot.
                 } // Fill the empty cache slot.
             } while ( false );  // Exittable block.
 
-          return childIFile;  // Return IFile as result.
+          return childEpiDirectory;  // Return IFile as result.
           } // getChild( int IndexI ) 
 
       public int getIndexOfChild( Object childObject ) 
@@ -145,8 +142,8 @@ public class IFile
           which would happen if AbDataNode.getIndexOfChild(.) were used.
           */
         {
-      		DataNode childDataNode= (DataNode)childObject;
-      		String childString= childDataNode.toString();
+          DataNode childDataNode= (DataNode)childObject;
+          String childString= childDataNode.toString();
 
           String[] childrenStrings =  // Get local reference to Strings array.
             GetArrayOfStrings( );
@@ -154,11 +151,11 @@ public class IFile
           int resultI = -1;  // Initialize result for not found.
           for ( int i = 0; i < childrenStrings.length; ++i ) 
             {
-          		if ( childString.equals( childrenStrings[i] ) )
-	              {
-	                resultI = i;  // Set result to index of found child.
-	                break;
-	                }
+              if ( childString.equals( childrenStrings[i] ) )
+                {
+                  resultI = i;  // Set result to index of found child.
+                  break;
+                  }
               }
 
           return resultI;
@@ -236,7 +233,7 @@ public class IFile
             String lineString;  // temporary storage for file lines.
             try {
               FileInputStream theFileInputStream = 
-              		new FileInputStream(getFile());
+                  new FileInputStream(getFile());
               //// @SuppressWarnings("resource")
               BufferedReader theBufferedReader = 
                 new BufferedReader(new InputStreamReader(theFileInputStream));
@@ -248,8 +245,8 @@ public class IFile
             catch (Exception ReaderException){
               // System.out.println("error reading file! " + ReaderException);
               theStringBuilder.append(
-            			NL + "Error reading file!" + NL + NL + ReaderException + NL
-            			);
+                  NL + "Error reading file!" + NL + NL + ReaderException + NL
+                  );
               }
             } // Read in file to JTextArea.
           return theStringBuilder.toString();
@@ -269,7 +266,7 @@ public class IFile
                 new DirectoryTableViewer(inTreePath, inDataTreeModel);
             else if ( inIFile.theFile.isFile() )  // file is a regular file.
               resultJComponent=  // Return a text viewer to view the file.
-	              new TitledTextViewer(inTreePath, inDataTreeModel, getFileString());
+                new TitledTextViewer(inTreePath, inDataTreeModel, getFileString());
             else  // file is not a valid file or directory.
               { // Inform user of error condition.
                 resultJComponent= new TitledTextViewer( // Return a view of error message. 
@@ -285,7 +282,7 @@ public class IFile
           
     // other methods.
 
-      private IFile[] setupCacheArrays( )
+      private EpiDirectory[] setupCacheArrays( )
         /* Sets up the array of Strings and IFile-s 
           associated with this object.
           It loads the String array if it has not already been loaded,
@@ -295,11 +292,11 @@ public class IFile
         {
           GetArrayOfStrings( );  // Load array of Strings if needed.
 
-          if ( childIFiles == null )  // Create array of IFiles if needed.
-            childIFiles=  // Create array of IFiles with same size as...
-              new IFile[GetArrayOfStrings( ).length];  // ... childStrings.
+          if ( childEpiDirectories == null )  // Create array of IFiles if needed.
+            childEpiDirectories=  // Create array of IFiles with same size as...
+              new EpiDirectory[GetArrayOfStrings( ).length];  // ... childStrings.
 
-          return childIFiles;  // Return the array.
+          return childEpiDirectories;  // Return the array.
           }
 
       private String[] GetArrayOfStrings( )
@@ -327,4 +324,4 @@ public class IFile
           JTree uses something else (getName()?).
           */
 
-    } // class IFile
+  }

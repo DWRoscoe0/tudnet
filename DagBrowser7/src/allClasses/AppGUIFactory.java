@@ -123,14 +123,17 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
           new InstallerBuilder( "Installer-Builder", 
               thePersistent
               );
+      EpiFileRoots theEpiFileRoots= new EpiFileRoots(); 
       DataNode testCenterDataNode= new NamedList(
           "Test-Center",
+          theEpiFileRoots,
           theInstallerBuilder,
           theTextStreams2,
           new Infinitree( null, 0 )
           );
+      FileRoots theFileRoots= new FileRoots(); 
       DataNode theInitialRootDataNode= new InfogoraRoot( // Building DataNode tree.
-        new FileRoots(),
+        theFileRoots,
         new Outline( 0 ),
         theSystemsMonitor,
         theConnectionManager,
