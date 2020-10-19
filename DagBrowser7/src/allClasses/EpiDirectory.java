@@ -14,7 +14,7 @@ import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
 import static allClasses.SystemSettings.NL;
 
-//// public class IFile 
+//// public class EpiDirectory 
 public class EpiDirectory extends DataNode {
 
   /* This class extends DataNode to represent files and directories.
@@ -32,13 +32,13 @@ public class EpiDirectory extends DataNode {
     // Constructors.
 
       EpiDirectory( String inString ) 
-        // Constructs an IFile with a single element whose name is inString.
+        // Constructs an EpiDirectory with a single element whose name is inString.
         { 
           theFile= new File( inString );
           }
     
       EpiDirectory( EpiDirectory inEpiDirectory, String inString ) 
-        /* Constructs an IFile whose parent is inIFile and 
+        /* Constructs an EpiDirectory whose parent is inEpiDirectory and 
           whose last element has name inString.
           */
         { 
@@ -53,15 +53,15 @@ public class EpiDirectory extends DataNode {
           return theFile;
           }
       
-      public boolean equals( Object inIFile )
-        /* Compares this to inIFile.  
+      public boolean equals( Object inEpiDirectory )
+        /* Compares this to inEpiDirectory.  
           This is not a complete implementation of equals(..).
           */
         {
           boolean resultB = false;
-          if (inIFile instanceof IFile) {
-              IFile OtherIFile = (IFile) inIFile;
-              resultB = theFile.equals( OtherIFile.theFile );
+          if (inEpiDirectory instanceof EpiDirectory) {
+              EpiDirectory OtherEpiDirectory = (EpiDirectory) inEpiDirectory;
+              resultB = theFile.equals( OtherEpiDirectory.theFile );
               }
           return resultB;
           }
@@ -118,27 +118,27 @@ public class EpiDirectory extends DataNode {
             if  // Exit if index out of bounds.
               ( IndexI < 0 || IndexI >= childEpiDirectories.length ) 
               break;
-            childEpiDirectory=  // Try to get child IFile from cache.
+            childEpiDirectory=  // Try to get child EpiDirectory from cache.
               childEpiDirectories[ IndexI ];
-            if ( childEpiDirectory == null )  // Fix the cache if IFile slot was empty.
+            if ( childEpiDirectory == null )  // Fix the cache if EpiDirectory slot was empty.
               { // Fill the empty cache slot.
-                childEpiDirectory=  // Calculate IFile slot value
+                childEpiDirectory=  // Calculate EpiDirectory slot value
                   new EpiDirectory(   // return representation of desired child.
                     this, 
                     GetArrayOfStrings( )[IndexI] 
                     );
-                childEpiDirectories[ IndexI ]= childEpiDirectory;  // Save IFile in cache slot.
+                childEpiDirectories[ IndexI ]= childEpiDirectory;  // Save EpiDirectory in cache slot.
                 } // Fill the empty cache slot.
             } while ( false );  // Exittable block.
 
-          return childEpiDirectory;  // Return IFile as result.
+          return childEpiDirectory;  // Return EpiDirectory as result.
           } // getChild( int IndexI ) 
 
       public int getIndexOfChild( Object childObject ) 
         /* Returns the index of childObject in directory ParentObject.  
           It does this by searching in the childStrings array,
           because file name strings uniquely identify the file.
-          It doesn't need to calculate or use the childIFiles array,
+          It doesn't need to calculate or use the childEpiDirectorys array,
           which would happen if AbDataNode.getIndexOfChild(.) were used.
           */
         {
@@ -256,15 +256,15 @@ public class EpiDirectory extends DataNode {
           TreePath inTreePath,
           DataTreeModel inDataTreeModel 
           )
-        /* Returns a JComponent capable of displaying IFile at the end of inTreePath. */
+        /* Returns a JComponent capable of displaying EpiDirectory at the end of inTreePath. */
         {
-          IFile inIFile= (IFile)inTreePath.getLastPathComponent();  // Get the IFile.
+          EpiDirectory inEpiDirectory= (EpiDirectory)inTreePath.getLastPathComponent();  // Get the EpiDirectory.
           JComponent resultJComponent= null;  // allocate result space.
-          { // calculate the appropriate IFile viewer.
-            if ( inIFile.theFile.isDirectory() )  // file is a directory.
+          { // calculate the appropriate EpiDirectory viewer.
+            if ( inEpiDirectory.theFile.isDirectory() )  // file is a directory.
               resultJComponent=  // Return a directory table viewer to view it.
                 new DirectoryTableViewer(inTreePath, inDataTreeModel);
-            else if ( inIFile.theFile.isFile() )  // file is a regular file.
+            else if ( inEpiDirectory.theFile.isFile() )  // file is a regular file.
               resultJComponent=  // Return a text viewer to view the file.
                 new TitledTextViewer(inTreePath, inDataTreeModel, getFileString());
             else  // file is not a valid file or directory.
@@ -283,17 +283,17 @@ public class EpiDirectory extends DataNode {
     // other methods.
 
       private EpiDirectory[] setupCacheArrays( )
-        /* Sets up the array of Strings and IFile-s 
+        /* Sets up the array of Strings and EpiDirectory-s 
           associated with this object.
           It loads the String array if it has not already been loaded,
-          and it allocates a blank array of IFile-s which is
+          and it allocates a blank array of EpiDirectory-s which is
           the same size as the String array if it hasn't yet.
           */
         {
           GetArrayOfStrings( );  // Load array of Strings if needed.
 
-          if ( childEpiDirectories == null )  // Create array of IFiles if needed.
-            childEpiDirectories=  // Create array of IFiles with same size as...
+          if ( childEpiDirectories == null )  // Create array of EpiDirectorys if needed.
+            childEpiDirectories=  // Create array of EpiDirectorys with same size as...
               new EpiDirectory[GetArrayOfStrings( ).length];  // ... childStrings.
 
           return childEpiDirectories;  // Return the array.

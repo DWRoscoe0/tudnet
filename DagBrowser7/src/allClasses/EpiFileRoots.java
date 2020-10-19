@@ -5,7 +5,7 @@ import java.io.File;
 public class EpiFileRoots extends DataNode
 
   /* This class is the root of the Infogora user's file system.  
-   * It is similar in structure and operation to IFile,
+   * It is similar in structure and operation to EpiDirectory,
    * which is used for other, non-root folders.
    */
 
@@ -18,7 +18,7 @@ public class EpiFileRoots extends DataNode
        Each slot represents one filesystem root.
        */
       File[] childFiles;  // Initially empty cache array of root Files.
-      IFile childIFiles[];  // Initially empty cache array of root IFiles.
+      EpiDirectory childEpiDirectorys[];  // Initially empty cache array of root EpiDirectorys.
     
     // Constructors (none yet).
     
@@ -40,7 +40,7 @@ public class EpiFileRoots extends DataNode
           In either case it returns it.
           */
         {
-          IFile childIFile= null; // Default result of null.
+          EpiDirectory childEpiDirectory= null; // Default result of null.
           setupCacheArrays();  // Prepare the cache arrays for use.
 
           toReturn: { // block beginning.
@@ -51,36 +51,36 @@ public class EpiFileRoots extends DataNode
                 )
               break toReturn;  // Exiting with null result.
 
-            childIFile=  // Try to get child IFile from cache.
-              childIFiles[ indexI ];
+            childEpiDirectory=  // Try to get child EpiDirectory from cache.
+              childEpiDirectorys[ indexI ];
             if  // Fix the cache entry if the value is undefined.
-              ( childIFile == null )
+              ( childEpiDirectory == null )
               {
-                childIFile=  // Calculate IFile value to be...
-                  new IFile(  // ...a new IFile constructed from...
+                childEpiDirectory=  // Calculate EpiDirectory value to be...
+                  new EpiDirectory(  // ...a new EpiDirectory constructed from...
                     childFiles[indexI].  // ...the child File's...
                       getAbsolutePath()  // ...absolute path name.
                     );
-                childIFiles[ indexI ]=  // Save in cache...
-                  childIFile;  // the resulting IFile.
+                childEpiDirectorys[ indexI ]=  // Save in cache...
+                  childEpiDirectory;  // the resulting EpiDirectory.
                 }
 
           } // toReturn
-            return childIFile;  // Return IFile as result DataNode.
+            return childEpiDirectory;  // Return EpiDirectory as result DataNode.
           }
 
       public void setupCacheArrays()
-        /* Sets up the cache arrays of Files and IFiles 
+        /* Sets up the cache arrays of Files and EpiDirectorys 
           associated with this object.
           It loads the Files array if it has not already been loaded,
-          and it allocates a blank array of IFiles which is
+          and it allocates a blank array of EpiDirectorys which is
           the same size as the Files array if it hasn't yet.
           */
         {
           getArrayOfFiles();  // Load array of Files if needed.
-          if ( childIFiles == null )  // Create array of IFiles if needed.
-            childIFiles=  // Create array of IFiles with same length as...
-              new IFile[ childFiles.length ];  // ... array of Files.
+          if ( childEpiDirectorys == null )  // Create array of EpiDirectorys if needed.
+            childEpiDirectorys=  // Create array of EpiDirectorys with same length as...
+              new EpiDirectory[ childFiles.length ];  // ... array of Files.
           }
 
       public File[] getArrayOfFiles()
