@@ -31,39 +31,51 @@ public class IFile
 
       String[] childStrings= null;  // Initially empty array of child names.
       IFile[] childIFiles= null;  // Initially empty array of child IFiles.
+        // The above 2 variables will be wasted if this is not a directory.
     
     // Constructors.
 
-      IFile ( String inString ) 
-        // Constructs an IFile with a single element whose name is inString.
+      IFile ( String pathString ) 
+        /* Constructs an IFile from pathString.
+         * pathString could represent more than one element,
+         * but presently this constructor is used only by FileRoots 
+         * to create single-element paths for 
+         * filesystem partition names (roots).
+         */
         { 
-          theFile= new File( inString );
+          theFile= new File( pathString );
           }
     
-      IFile ( IFile inIFile, String inString ) 
-        /* Constructs an IFile whose parent is inIFile and 
-          whose last element has name inString.
-          */
+      IFile ( IFile ancestorPathIFile, String descentantPathString ) 
+        /* Constructs an IFile by combining the paths
+         * from ancestorPathIFile and descentantPathString.
+         * ancestorPathIFile and descentantPathString 
+         * could be arbitrary paths,
+         * but in this app ancestorPathIFile usually represents a directory,
+         * and descentantPathString is the name of a file or directory
+         * within the first directory. 
+         */
         { 
-          theFile= new File( inIFile.theFile, inString );
+          theFile= 
+              new File( ancestorPathIFile.theFile, descentantPathString );
           }
 
     // theFile pass-through methods.
       
-      public File getFile( )
+      public File getFile()
         /* This method returns the theFile associated with this DataNode.  */
         {
           return theFile;
           }
       
-      public boolean equals( Object inIFile )
-        /* Compares this to inIFile.  
+      public boolean equals( Object pathIFile )
+        /* Compares this to pathIFile.  
           This is not a complete implementation of equals(..).
           */
         {
           boolean resultB = false;
-          if (inIFile instanceof IFile) {
-              IFile OtherIFile = (IFile) inIFile;
+          if (pathIFile instanceof IFile) {
+              IFile OtherIFile = (IFile) pathIFile;
               resultB = theFile.equals( OtherIFile.theFile );
               }
           return resultB;
@@ -77,13 +89,13 @@ public class IFile
 
     // A subset of delegated DataTreeModel methods.
 
-      public boolean isLeaf( )
+      public boolean isLeaf()
         /* Returns true if this is a file, false if a directory.  */
         {
           return theFile.isFile();
           }
 
-      public int getChildCount( ) 
+      public int getChildCount() 
         /* This is pretty fast because it doesn't do actual counting.
           It returns the length of the file name string array.
           */
@@ -94,7 +106,7 @@ public class IFile
             if ( ! theFile.isDirectory() )  //  This is not a directory
               break goReturn; //  Keep 0 as number of children.
             String[] childrenStrings=   // Calculate list of child file names.
-              GetArrayOfStrings( );
+              getArrayOfFileNameStrings();
             if   // No list produced because directory inaccessible then
               (childrenStrings == null)
               break goReturn; //  Keep 0 as number of children.
@@ -108,13 +120,13 @@ public class IFile
     
       public DataNode getChild( int IndexI ) 
         /* This returns the child with index IndexI.
-          It gets the child from an array cache if that is possible.
+          It gets the child from an array cache if it is there.
           If not then it calculates the child and 
           saves it in the cache for later.
           In either case it returns a reference to the child.
           */
         { // getChild( int IndexI ) 
-          setupCacheArrays( );  // Setup the cache arrays for use.
+          setupCacheArrays();  // Setup the cache arrays for use.
           IFile childIFile= null;
 
           do {  // Exittable block.
@@ -128,7 +140,7 @@ public class IFile
                 childIFile=  // Calculate IFile slot value
                   new IFile(   // return representation of desired child.
                     this, 
-                    GetArrayOfStrings( )[IndexI] 
+                    getArrayOfFileNameStrings()[IndexI] 
                     );
                 childIFiles[ IndexI ]= childIFile;  // Save IFile in cache slot.
                 } // Fill the empty cache slot.
@@ -149,7 +161,7 @@ public class IFile
       		String childString= childDataNode.toString();
 
           String[] childrenStrings =  // Get local reference to Strings array.
-            GetArrayOfStrings( );
+            getArrayOfFileNameStrings();
 
           int resultI = -1;  // Initialize result for not found.
           for ( int i = 0; i < childrenStrings.length; ++i ) 
@@ -201,7 +213,7 @@ public class IFile
           return resultInfoString;  // return the accumulated information string.
           } // GetInfoString()
 
-      public String getNameString( )
+      public String getNameString()
         /* Returns a String representing the name of this Object.  
           This is the last element of the File path.
           If the path represents a file or directory
@@ -261,13 +273,13 @@ public class IFile
           )
         /* Returns a JComponent capable of displaying IFile at the end of inTreePath. */
         {
-          IFile inIFile= (IFile)inTreePath.getLastPathComponent();  // Get the IFile.
+          IFile pathIFile= (IFile)inTreePath.getLastPathComponent();  // Get the IFile.
           JComponent resultJComponent= null;  // allocate result space.
           { // calculate the appropriate IFile viewer.
-            if ( inIFile.theFile.isDirectory() )  // file is a directory.
+            if ( pathIFile.theFile.isDirectory() )  // file is a directory.
               resultJComponent=  // Return a directory table viewer to view it.
                 new DirectoryTableViewer(inTreePath, inDataTreeModel);
-            else if ( inIFile.theFile.isFile() )  // file is a regular file.
+            else if ( pathIFile.theFile.isFile() )  // file is a regular file.
               resultJComponent=  // Return a text viewer to view the file.
 	              new TitledTextViewer(inTreePath, inDataTreeModel, getFileString());
             else  // file is not a valid file or directory.
@@ -285,24 +297,25 @@ public class IFile
           
     // other methods.
 
-      private IFile[] setupCacheArrays( )
+      private IFile[] setupCacheArrays()
         /* Sets up the array of Strings and IFile-s 
           associated with this object.
-          It loads the String array if it has not already been loaded,
-          and it allocates a blank array of IFile-s which is
-          the same size as the String array if it hasn't yet.
+          It loads the String array if it has not already been loaded.
+          Each string is the name of one file.
+          It also allocates an array of null IFile references
+          with the same number of elements.
           */
         {
-          GetArrayOfStrings( );  // Load array of Strings if needed.
+          getArrayOfFileNameStrings();  // Load array of Strings if needed.
 
           if ( childIFiles == null )  // Create array of IFiles if needed.
             childIFiles=  // Create array of IFiles with same size as...
-              new IFile[GetArrayOfStrings( ).length];  // ... childStrings.
+              new IFile[getArrayOfFileNameStrings().length];  // ... childStrings.
 
           return childIFiles;  // Return the array.
           }
 
-      private String[] GetArrayOfStrings( )
+      private String[] getArrayOfFileNameStrings()
         /* Returns an array of Strings of names of files in 
           directory associated with this object.
           It loads this array if it has not already been loaded.
@@ -322,7 +335,7 @@ public class IFile
           return childStrings;  // Return the array.
           }
 
-      public String toString( ) { return getNameString( ); }
+      public String toString() { return getNameString(); }
         /* it appears that JList uses toString() but
           JTree uses something else (getName()?).
           */
