@@ -12,18 +12,22 @@ public class ListMultiLink<
 
   {
 
-
-    MultiLink<E> get(E theE) { return theE; }
+    /* This class implements a fully functional MultiLink class
+     * that is backed by an ArrayList.
+     * It is meant to be referenced by a node, not inherited by a node.
+     * It can hold any number of elements,
+     * but to optimize space it should be dereferenced and replaced
+     * by special purpose MultiLink instances if that number goes below 2. 
+     */
 
     // Instance variables.
   
-      protected List<E> theListOfEs= // Set to empty,
+      protected List<E> theListOfEs= // Set initially to empty
           new ArrayList<E>(); // ArrayList.
       
       public ListMultiLink() // Constructor.
         { 
           }
-
       
     // interface MultiLink methods.
       
