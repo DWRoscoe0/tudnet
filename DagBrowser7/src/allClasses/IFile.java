@@ -16,11 +16,13 @@ import static allClasses.SystemSettings.NL;
 
 public class IFile 
 
-  extends DataNode
+  //// extends DataNode
+  extends NamedList
 
   /* This class extends DataNode to represent files and directories.
     It does not distinguish duplicate links to 
-    files and directories from full copies of files and directories
+    files and directories from full copies of files and directories.
+    Java JTrees can't have duplicate siblings.
     */
   
   { // class IFile
@@ -29,6 +31,8 @@ public class IFile
       
       File theFile;  // File associated with this DataNode.
 
+      ////// The following 2 fields are being replaced with 
+      ////// NameList.childMultiLinkOfDataNodes.
       String[] childStrings= null;  // Initially empty array of child names.
       IFile[] childIFiles= null;  // Initially empty array of child IFiles.
         // The above 2 variables will be wasted if this is not a directory.
@@ -332,7 +336,16 @@ public class IFile
             childStrings=  // Make it be a zero-length array.
               new String[ 0 ];
 
+          copyChildStringsToMultiLinkV();
           return childStrings;  // Return the array.
+          }
+
+      private void copyChildStringsToMultiLinkV()
+        { 
+          ////for (int indexI= 0; index<childStrings.length; index++) {
+            ;//// need MultiLink.replace(.) method.
+            
+            ////}
           }
 
       public String toString() { return getNameString(); }

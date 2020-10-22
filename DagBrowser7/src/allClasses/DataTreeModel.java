@@ -471,7 +471,7 @@ public class DataTreeModel
       
       Alternatively, this could be viewed as a hybrid data cache system,
       with the change of a node invalidating both
-      the rendering of that node and all its descendants.
+      the rendering of that node and all its ancestors.
       
       The way this works is by storing in the DataNodes information about
       whether any changes have occurred since the previous display,
@@ -496,7 +496,7 @@ public class DataTreeModel
       Infogora hierarchy for later and more efficient display to the user.
       These methods do not need to be called on the Event Dispatch Thread (EDT).
       
-      This is in implementation of up-propagation of
+      This as in implementation of up-propagation of
       the affect of changes on the appearance of ancestor nodes.
       This is not a general-purpose up-propagation system.
       It is highly customized for Java, its JTree class, and its GUI.
@@ -552,16 +552,16 @@ public class DataTreeModel
       		EDTUtilities.testAndLogIfRunningEDTB();
 
 					switch ( parentDataNode.theChangeFlag ) {
-			  		case NONE:
-			  		case SUBTREE_CHANGED:
+			  		case NONE: // Node is unmarked, so must mark it.
+			  		case SUBTREE_CHANGED: // Structure change overrides node change.
 		      	  parentDataNode.theChangeFlag= // Mark structure changed. 
 		      	  	DataNode.ChangeFlag.STRUCTURE_CHANGED;
 		      	  signalSubtreeChangeV( // Propagate as ordinary change to parent. 
 		      	  		parentDataNode.parentNamedList  );
 			  			break;
 			  			
-			  		case STRUCTURE_CHANGED:
-			  	  	; // Desired status is already set, so do nothing.
+			  		case STRUCTURE_CHANGED: // Already marked correctly.
+			  	  	; // So do nothing.
 			  	  	break;
 			  		}
           }
@@ -569,27 +569,27 @@ public class DataTreeModel
       private void signalSubtreeChangeV( 
 		      DataNode theDataNode
 		      )
-        /* This method signals that a change happened
-          in this node or one of its subtrees.
+        /* This method signals that a change happened that might affect
+          this node or one of its subtrees.
           If it needs to change the update status of theDataNode then
           it will also propagate the change to the node's parent if needed.
           */
         {
 	      	EDTUtilities.testAndLogIfRunningEDTB();
-	      	if ( theDataNode == null ) // No node to update. 
-      	  	; // Do nothing.
+	      	if ( theDataNode == null ) // No node to update 
+      	  	; // so do nothing.
       	  else // Mark as changed this node and its unmarked ancestors.
 		  	  	switch ( theDataNode.theChangeFlag ) {
-				  		case NONE:
+            case NONE: // Node is unmarked, so must mark it.
 			      	  theDataNode.theChangeFlag= // Mark node changed. 
 			      	  	DataNode.ChangeFlag.SUBTREE_CHANGED;
 			      	  signalSubtreeChangeV( // Propagate to parent, if any. 
 			      	  		theDataNode.parentNamedList );
 				  			break;
 				  			
-		  	  		case STRUCTURE_CHANGED:
-				  		case SUBTREE_CHANGED:
-				  	  	; // Anything else means no new changes need recording.
+		  	  		case STRUCTURE_CHANGED: // Already marked for structure change.
+				  		case SUBTREE_CHANGED: // Already marked with node/subtree change.
+				  	  	; // Do no new marking is needed.
 				  	  	break;
 				  		}
           }
@@ -649,15 +649,15 @@ public class DataTreeModel
 	    	  else { // Check this subtree.
 		    		theAppLog.trace( "DataTreeModel.displayChangedNodesFromV() "
 		            + theDataNode.getNodePathString() );
-	    	  	// Display this node any updated descendants.
+	    	  	// Display this node and any updated descendants.
 		  	  	switch ( theDataNode.theChangeFlag ) {
-				  		case NONE:
-				  	  	; // Nothing in this subtree needs displaying.
+				  		case NONE: // This subtree is unmarked.
+				  	  	; // Display nothing.
 				  	  	break;
-			  	  	case STRUCTURE_CHANGED: 
+			  	  	case STRUCTURE_CHANGED: // Structure or this subtree changed.
 				  			displayStructuralChangeV( parentTreePath, theDataNode );
 			  	  		break;
-				  		case SUBTREE_CHANGED:
+				  		case SUBTREE_CHANGED: // Something else in this subtree changed.
 				  			displayChangedSubtreeV( parentTreePath, theDataNode );
 				  	  	break;
 				  		}
@@ -683,7 +683,8 @@ public class DataTreeModel
     			reportingStructuralChangeB( theTreePath ); // Display by reporting
     			  // to the listeners.
 
-    			resetChangesInSubtreeV( theDataNode );
+    			resetChangesInSubtreeV( // Be certain none of subtree is marked. 
+    			    theDataNode );
 	      	}
 
   		private void displayChangedSubtreeV(
@@ -711,9 +712,9 @@ public class DataTreeModel
 			        		theTreePath, childDataNode ); 
 			        childIndexI++;  // Increment index for processing next child.
 			      	}
-					reportingChangeB(  // Display possible appearance change of root node.
+					reportingChangeB(  // Display subtree root node.
 							parentTreePath, theDataNode );
-			    theDataNode.theChangeFlag= // Reset root update status. 
+			    theDataNode.theChangeFlag= // Unmark the subtree root. 
 			    		ChangeFlag.NONE;
 	      	}
 
@@ -750,7 +751,8 @@ public class DataTreeModel
 
     /* Reporting methods and their support methods for 
       reporting changes of the TreeModel data.
-        
+      One of these methods is called when the DataNode tree changes.
+
       Reporting changes is tricky for 2 reasons:
       * The TreeModel is used to report changes, 
         but the TreeModel itself doesn't make changes.

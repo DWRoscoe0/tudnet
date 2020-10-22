@@ -74,10 +74,18 @@ public class ListMultiLink<
               );
           }
 
-      public void removeV(int indexI)
+      public E removeE(int indexI)
         {
-          theListOfEs.remove(
+          return theListOfEs.remove(
               indexI
+              );
+          }
+
+      public E setE(int indexI, E theE)
+        {
+          return theListOfEs.set(
+              indexI,
+              theE
               );
           }
       

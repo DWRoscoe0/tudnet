@@ -39,19 +39,21 @@ public interface MultiLink<
         This value can be stored back in the element field from which it came.
         This can save a lot of storage if many MultiLinks have either 0 or 1 elements.
       */
-  
+
     public boolean isEmptyB(); // Equivalent of isLeaf().
-  
+
     public int getCountI(); // Equivalent of getChildCount().
-  
+
     public E getE(int indexI); // Equivalent of DataNode getChild( int indexI );
-  
+
     public int getIndexOfI(E theE); // int getIndexOfChild( Object inChildObject );
-    
-    public void addV(int indexI, E theLink);
-    
-    public void removeV(int indexI);
-    
+
+    public void addV(int indexI, E theE);
+
+    public E removeE(int indexI);
+
+    public E setE(int indexI, E theE);
+
     public Iterator<E> iterator();
-    
+
     }

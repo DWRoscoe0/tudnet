@@ -71,9 +71,17 @@ public interface ElementMultiLink<E extends ElementMultiLink<E>>
       }
 
   @Override
-  default void removeV(int indexI)
+  default E removeE(int indexI)
     {
       theAppLog.warning("ElementMultiLink.removeV(): should never be called.");
+      return null;
+      }
+
+  @Override
+  default E setE(int indexI, E theE)
+    {
+      theAppLog.warning("ElementMultiLink.setE(): should never be called.");
+      return null;
       }
 
   @SuppressWarnings("unchecked")
