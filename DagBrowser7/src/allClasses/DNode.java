@@ -19,10 +19,14 @@ public class DNode<N extends DNode<N>>
 
   {
 
-    /* Code is being moved from DataNode to this class.
-      Eventually it should contain most of it.
+    /* Much of the code here came from an earlier version of DataNode.
       
       ////fix After the code is moved, some of it will need to be generified.
+
+      ///opt: Remove theMaxLogLevelto reduce node storage, 
+        also the methods what use it,
+        because this feature hasn't been used for a long time,
+        and there are probably ways to do controlled logging.
       */
     
 
@@ -148,7 +152,9 @@ public class DNode<N extends DNode<N>>
         // unless we allow casting of the variable.
 
       protected LogLevel theMaxLogLevel= AppLog.defaultMaxLogLevel;
-        // Used to determine logging from this node.
+        // Used to determine logging from this node and its descendants.
+        ///opt: Remove to reduce node storage, because
+        // this feature hasn't been used for a long time.
 
     // Constructor
       
