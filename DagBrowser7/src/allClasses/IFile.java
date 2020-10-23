@@ -16,10 +16,10 @@ import static allClasses.SystemSettings.NL;
 
 public class IFile 
 
-  //// extends DataNode
   extends NamedList
 
   /* This class extends DataNode to represent files and directories.
+
     It does not distinguish duplicate links to 
     files and directories from full copies of files and directories.
     Java JTrees can't have duplicate siblings.
@@ -30,12 +30,6 @@ public class IFile
     // Variables.
       
       File theFile;  // File associated with this DataNode.
-
-      ////// The following 2 fields are being replaced with 
-      ////// NameList.childMultiLinkOfDataNodes.
-      //// String[] childStrings= null;  // Initially empty array of child names.
-      //// IFile[] childIFiles= null;  // Initially empty array of child IFiles.
-        // The above 2 variables will be wasted if this is not a directory.
     
     // Constructors.
 
@@ -48,13 +42,13 @@ public class IFile
          */
         { 
           theFile= new File( pathString );
-          setupCacheArrays();
+          initializeChildrenV();
           }
     
-      IFile ( IFile ancestorPathIFile, String descentantPathString ) 
+      IFile ( IFile ancestorPathIFile, String descendantPathString ) 
         /* Constructs an IFile by combining the paths
-         * from ancestorPathIFile and descentantPathString.
-         * ancestorPathIFile and descentantPathString 
+         * from ancestorPathIFile and descendantPathString.
+         * ancestorPathIFile and descendantPathString 
          * could be arbitrary paths,
          * but in this app ancestorPathIFile usually represents a directory,
          * and descentantPathString is the name of a file or directory
@@ -62,27 +56,21 @@ public class IFile
          */
         { 
           theFile= 
-              new File( ancestorPathIFile.theFile, descentantPathString );
-          setupCacheArrays();
+              new File( ancestorPathIFile.theFile, descendantPathString );
+          initializeChildrenV();
           }
 
-    // theFile pass-through methods.
-      
-      public File getFile()
-        /* This method returns the theFile associated with this DataNode.  */
-        {
-          return theFile;
-          }
-      
+    // Object overrides.
+
       public boolean equals( Object pathIFile )
         /* Compares this to pathIFile.  
           This is not a complete implementation of equals(..).
           */
         {
-          boolean resultB = false;
+          boolean resultB= false;
           if (pathIFile instanceof IFile) {
-              IFile OtherIFile = (IFile) pathIFile;
-              resultB = theFile.equals( OtherIFile.theFile );
+              IFile otherIFile= (IFile) pathIFile;
+              resultB= theFile.equals( otherIFile.theFile );
               }
           return resultB;
           }
@@ -100,77 +88,32 @@ public class IFile
         {
           return theFile.isFile();
           }
-
-      public int getChildCount()
-        {
-          return childMultiLinkOfDataNodes.getCountI();
-          }
-      
-        /* This is pretty fast because it doesn't do actual counting.
-          It returns the length of the file name string array.
-          */
-
-        /*  ////
-        {
-          int childCountI= 0;  // Assume count of 0 children.
-
-          goReturn: {  // For block-exit breaks below.
-            if ( ! theFile.isDirectory() )  //  This is not a directory
-              break goReturn; //  Keep 0 as number of children.
-            String[] childrenStrings=   // Calculate list of child file names.
-              getArrayOfFileNameStrings();
-            if   // No list produced because directory inaccessible then
-              (childrenStrings == null)
-              break goReturn; //  Keep 0 as number of children.
-            childCountI=   // Override 0 count with actual child file count.
-              childrenStrings.length;
-
-          } // goReturn
-            return childCountI;  // return the final child count.
-
-          }
-          */  ////
     
       public DataNode getChild( int indexI ) 
         /* This returns the child with index IndexI.
-          It gets the child from an array cache if it is there.
+          It gets the child from the child cache if it is there.
           If not then it calculates the child and 
           saves it in the cache for later.
           In either case it returns a reference to the child.
           */
         { // getChild( int IndexI ) 
-          //// setupCacheArrays();  // Setup the cache arrays for use.
           IFile childIFile= null;
 
           goReturn: {
             if  // Exit if index out of bounds.
-              //// ( indexI < 0 || indexI >= childIFiles.length ) 
               ( indexI < 0 || indexI >= childMultiLinkOfDataNodes.getCountI())
               break goReturn; // exit with null.
             DataNode childDataNode= childMultiLinkOfDataNodes.getE(indexI);
-            //// if ( null != childIFile ) // If got IFile from cache
             if (childDataNode instanceof IFile) { // If got actual IFile 
               childIFile= (IFile)childDataNode; // set it as result.
               break goReturn; // exit with it.
               }
             String childString= // Get name of child. 
-                //// getArrayOfFileNameStrings()[indexI];
                 childMultiLinkOfDataNodes.getE(indexI).getNameString();
-            childIFile=  // Calculate IFile from child name.
-              new IFile(
-                this, 
-                //// getArrayOfFileNameStrings()[indexI]
-                childString
-                );
-            //// childIFiles[ indexI ]= childIFile;  // Save in IFile cache.
-            childMultiLinkOfDataNodes.setE( // Save in NamedList cache also.
-                indexI, // at this location
-                //// (DataNode)(NamedLeaf.makeNamedLeaf( // this name place-holder.
-                //// ////     childStrings[indexI]))
-                ////     childString
-                (DataNode)childIFile
-                ////    )));
-                );
+            childIFile=  // Calculate new child IFile from child name.
+              new IFile(this, childString);
+            childMultiLinkOfDataNodes.setE( // Save in cache.
+                indexI, (DataNode)childIFile);
             } // goReturn:
 
           return childIFile;  // Return IFile as result.
@@ -178,30 +121,22 @@ public class IFile
 
       public int getIndexOfChild( Object childObject ) 
         /* Returns the index of childObject in directory ParentObject.  
-          It does this by searching in the childStrings array,
-          because file name strings uniquely identify the file.
-          It doesn't need to calculate or use the childIFiles array,
-          which would happen if AbDataNode.getIndexOfChild(.) were used.
+          It does this by searching for a child with a matching name.
+          This works regardless of how many the children
+          have been converted to IFiles.
+          This avoids calculating a lot of IFiles unnecessarily.
           */
         {
       		DataNode childDataNode= (DataNode)childObject;
-      		String childString= childDataNode.toString();
-
-          //// String[] childrenStrings =  // Get local reference to Strings array.
-          ////   getArrayOfFileNameStrings();
+      		String childString= childDataNode.toString(); // Get name of target.
 
           int resultI = -1;  // Initialize result for not found.
-          for 
-            ( int i = 0; 
-              //// i < childrenStrings.length;
-              i < childMultiLinkOfDataNodes.getCountI();
-              ++i 
-              ) 
+          for // Search for child with matching name. 
+            ( int i = 0; i < childMultiLinkOfDataNodes.getCountI(); ++i) 
             {
-          		if ( childString.equals( 
-          		    //// childrenStrings[i]
-          		    childMultiLinkOfDataNodes.getE(i).getNameString()
-          		    ) )
+          		if 
+          		  ( childString.equals( 
+          		      childMultiLinkOfDataNodes.getE(i).getNameString()))
 	              {
 	                resultI = i;  // Set result to index of found child.
 	                break;
@@ -210,8 +145,8 @@ public class IFile
 
           return resultI;
           }
-          
-    // other interface DataNode methods.
+
+    // interface DataNode methods.
 
       public String getMetaDataString()
         /* Returns a String representing information about this object. */
@@ -274,18 +209,17 @@ public class IFile
           }
 
       public String getFileString() // Was previously named getContentString().
-        /* This method produces the value which is used by
-          TitledTextViewer to display the contents of a file.
+        /* This method produces a String containing the contents of a file.
+         * It is used by TitledTextViewer to display a file.
           */
         {
           StringBuilder theStringBuilder= new StringBuilder();
           { // Read in file to JTextArea.
             String lineString;  // temporary storage for file lines.
             try {
-              FileInputStream theFileInputStream = 
-              		new FileInputStream(getFile());
-              //// @SuppressWarnings("resource")
-              BufferedReader theBufferedReader = 
+              FileInputStream theFileInputStream= 
+                new FileInputStream(getFile());
+              BufferedReader theBufferedReader= 
                 new BufferedReader(new InputStreamReader(theFileInputStream));
               
               while ((lineString = theBufferedReader.readLine()) != null) {
@@ -306,7 +240,9 @@ public class IFile
           TreePath inTreePath,
           DataTreeModel inDataTreeModel 
           )
-        /* Returns a JComponent capable of displaying IFile at the end of inTreePath. */
+        /* Returns a JComponent capable of displaying the 
+         * IFile at the end of inTreePath. 
+         */
         {
           IFile pathIFile= (IFile)inTreePath.getLastPathComponent();  // Get the IFile.
           JComponent resultJComponent= null;  // allocate result space.
@@ -332,94 +268,40 @@ public class IFile
           
     // other methods.
 
-      private IFile[] setupCacheArrays()
-        /* Sets up the array of Strings and IFile-s 
-          associated with this object.
-          It loads the String array if it has not already been loaded.
-          Each string is the name of one file.
-          It also allocates an array of null IFile references
-          with the same number of elements.
-          */
-        {
-          //// getArrayOfFileNameStringsV();  // Load array of Strings if needed.
-          String childStrings[]= null;
-          //// if ( childStrings == null ) { // Define child string array if needed.
-
-            childStrings=  // Define by reading names of children from directory.
-              theFile.list();
-            if ( childStrings == null )  // Make certain the array is not null.
-              childStrings=  // Make it be a zero-length array.
-                new String[ 0 ];
-
-            //// copyChildStringsToMultiLinkV();
-            for (int indexI= 0; indexI<childStrings.length; indexI++) {
-              childMultiLinkOfDataNodes.addV( // Store in the NamedList's array
-                  indexI, // at this location
-                  (DataNode)(NamedLeaf.makeNamedLeaf( // this name place-holder.
-                      childStrings[indexI]))
-                  );
-              }
-
-          //// if ( childIFiles == null )  // Create array of IFiles if needed.
-          ////   childIFiles=  // Create array of IFiles with same size as...
-          ////     new IFile[getArrayOfFileNameStrings().length];  // ... childStrings.
-
-          //// return childIFiles;  // Return the array.
-          return null;  // Return the array.
-          }
-
-      //// private String[] getArrayOfFileNameStringsV()
-      @SuppressWarnings("unused") //// 
-      private void getArrayOfFileNameStringsV()
-        /* Returns an array of Strings of names of files in 
-          directory associated with this object.
-          It loads this array if it has not already been loaded.
-          ///enh The use of File.list() could be replaced with 
-            a DirectoryStream<Path> iterator, and be able to handle very long
-            unsorted directories.  Some caching would be needed for reverse scrolling.
-          */
+      private void initializeChildrenV()
+        /* Sets up the child cache array. 
+         * This is meaningful only if this IFile represents a directory.
+         */
         {
           String childStrings[]= null;
-          //// if ( childStrings == null ) { // Define child string array if needed.
 
-            childStrings=  // Define by reading names of children from directory.
-              theFile.list();
-            if ( childStrings == null )  // Make certain the array is not null.
-              childStrings=  // Make it be a zero-length array.
-                new String[ 0 ];
+          childStrings=  // Define by reading names of children from directory.
+            theFile.list();
+          if ( childStrings == null )  // Make certain the array is not null.
+            childStrings=  // Make it be a zero-length array.
+              new String[ 0 ];
 
-            //// copyChildStringsToMultiLinkV();
-            for (int indexI= 0; indexI<childStrings.length; indexI++) {
-              childMultiLinkOfDataNodes.addV( // Store in the NamedList's array
-                  indexI, // at this location
-                  (DataNode)(NamedLeaf.makeNamedLeaf( // this name place-holder.
-                      childStrings[indexI]))
-                  );
-              }
-
-            //// }
-
-          //// return childStrings;  // Return the array.
-          }
-
-      /*  ////
-      @SuppressWarnings("unused")
-      private void copyChildStringsToMultiLinkV()  ////
-        { 
           for (int indexI= 0; indexI<childStrings.length; indexI++) {
             childMultiLinkOfDataNodes.addV( // Store in the NamedList's array
                 indexI, // at this location
-                (DataNode)(NamedLeaf.makeNamedLeaf( // this name place-holder.
-                    childStrings[indexI]))
+                NamedLeaf.makeNamedLeaf( // this name place-holder.
+                    childStrings[indexI])
                 );
-            
             }
           }
-      */  ////
 
-      public String toString() { return getNameString(); }
-        /* it appears that JList uses toString() but
+      public String toString() 
+        /* This is needed because it appears that JList uses toString() but
           JTree uses something else (getName()?).
           */
+        { 
+          return getNameString(); 
+          }
+      
+      public File getFile()
+        /* This method returns the theFile associated with this DataNode.  */
+        {
+          return theFile;
+          }
 
     } // class IFile
