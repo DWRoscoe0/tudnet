@@ -9,7 +9,7 @@ public class NamedDataNode
     to the base class DataNode.  
 
     The name can be changed, but this should happen only shortly after construction.
-    This for replacing a temporary value set earlier.
+    This is for replacing a temporary name set earlier.
     This is done for lazy loading of nodes.
     */
 
