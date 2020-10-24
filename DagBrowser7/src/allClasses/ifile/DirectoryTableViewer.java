@@ -38,13 +38,13 @@ public class DirectoryTableViewer
 
     This class is more complicated than ListViewer because
     more than one cell, every cell in a row,
-    is associated with the IFile which is displayed in that row.
+    is associated with the IDirectory which is displayed in that row.
     This association is presently maintained by comparing 
-    the File/IFile name String-s,
+    the File/IDirectory name String-s,
     an array of which is stored in TheDirectoryTableModel,
     with the value of the first column in the rows.
 
-    It might simplify things to make fuller use of the IFile DataNode-s
+    It might simplify things to make fuller use of the IDirectory DataNode-s
     interface and the DataTreeModel.  ///enh ??
     Though doing this might occupy more memory.
     It would allow using more common code and reduce complexity.
@@ -72,8 +72,8 @@ public class DirectoryTableViewer
           )
         /* Constructs a DirectoryTableViewer.
           inTreePath is the TreePath associated with
-          the Subject IFile DataNode to be displayed.
-          The last IFile DataNode in the TreePath is the Subject.
+          the Subject IDirectory DataNode to be displayed.
+          The last IDirectory DataNode in the TreePath is the Subject.
           It uses InTreeModel for context, but is presently ignored.
           */
         {
@@ -99,7 +99,7 @@ public class DirectoryTableViewer
           theJTable= new JTable();
           DirectoryTableModel ADirectoryTableModel =  // Construct...
             new DirectoryTableModel(  //...directory table model from...
-              (IFile)theTreeHelper.getWholeDataNode(), //...subject IFile...
+              (IDirectory)theTreeHelper.getWholeDataNode(), //...subject IDirectory...
               InTreeModel  // ...and TreeModel.
               );
           theJTable.setModel( ADirectoryTableModel );  // store TableModel.
@@ -141,22 +141,22 @@ public class DirectoryTableViewer
             (ListSelectionModel)TheListSelectionEvent.getSource();
           int IndexI =   // get index of selected element from the model.
             TheListSelectionModel.getMinSelectionIndex();
-          IFile subjectIFile=  // Cache Subject directory.
-            (IFile)theTreeHelper.getWholeDataNode();
-          String[] IFileNameStrings =  // Calculate array of child file names.
-            subjectIFile.getFile().list();
-          if ( IFileNameStrings == null )  // If array is null replace with empty array.
-            IFileNameStrings= new String[ 0 ]; // Replace with empty array.
+          IDirectory subjectIDirectory=  // Cache Subject directory.
+            (IDirectory)theTreeHelper.getWholeDataNode();
+          String[] IDirectoryNameStrings =  // Calculate array of child file names.
+            subjectIDirectory.getFile().list();
+          if ( IDirectoryNameStrings == null )  // If array is null replace with empty array.
+            IDirectoryNameStrings= new String[ 0 ]; // Replace with empty array.
           if // Process the selection if...
             ( //...the selection index is within the legal range.
               (IndexI >= 0) && 
-              (IndexI < IFileNameStrings.length)
+              (IndexI < IDirectoryNameStrings.length)
               )
             { // Process the selection.
-              IFile NewSelectionIFile=   // build IFile of selection at IndexI.
-                new IFile( subjectIFile, IFileNameStrings[IndexI] );
-              //SetSelectionRelatedVariablesFrom( NewSelectionIFile );
-              theTreeHelper.setPartDataNodeV( NewSelectionIFile );
+              IDirectory NewSelectionIDirectory=   // build IDirectory of selection at IndexI.
+                new IDirectory( subjectIDirectory, IDirectoryNameStrings[IndexI] );
+              //SetSelectionRelatedVariablesFrom( NewSelectionIDirectory );
+              theTreeHelper.setPartDataNodeV( NewSelectionIDirectory );
                 // This will set the TreePaths also.
                 // This converts the row selection to a tree selection.
               } // Process the selection.

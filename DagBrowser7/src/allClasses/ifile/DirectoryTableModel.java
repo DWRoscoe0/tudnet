@@ -26,7 +26,7 @@ public class DirectoryTableModel
     // variables.
       private static final long serialVersionUID = 1L;
 
-      protected IFile directoryIFile;  // The directory modeled as a table.
+      protected IDirectory directoryIDirectory;  // The directory modeled as a table.
       protected TreeModel theTreeModel;  // TreeModel which provides context.
       
       protected Object directoryIconObject;  ///enh ?? unused.  reactivate?
@@ -37,8 +37,8 @@ public class DirectoryTableModel
       
     // constructor methods.
     
-      public DirectoryTableModel( IFile inIFile, TreeModel inTreeModel ) 
-        /* The constructs an instance for displaying directory inIFile
+      public DirectoryTableModel( IDirectory inIDirectory, TreeModel inTreeModel ) 
+        /* The constructs an instance for displaying directory inIDirectory
           using inTreeModel to convert child directory entries
           as rows in the table.
           */
@@ -50,15 +50,15 @@ public class DirectoryTableModel
             } // Load icons.
 
           theTreeModel= inTreeModel;  // Save TreeModel.
-          setDirectory( inIFile );  // Save directory to be displayed.
+          setDirectory( inIDirectory );  // Save directory to be displayed.
           }
 
     // input methods (there was only one.)
 
-      public void setDirectory( IFile inIFile ) 
+      public void setDirectory( IDirectory inIDirectory ) 
         /* Sets the directory whose contents will be displayed as a table.  */
         {
-          directoryIFile = inIFile;  // save directory to be modeled.
+          directoryIDirectory = inIDirectory;  // save directory to be modeled.
           fireTableDataChanged();  // inform listeners about possible changes.
           }
 
@@ -69,7 +69,7 @@ public class DirectoryTableModel
           the number of rows in the table. 
           */
         {
-          return theTreeModel.getChildCount( directoryIFile );
+          return theTreeModel.getChildCount( directoryIDirectory );
           }
 
       public int getColumnCount() 
@@ -84,9 +84,9 @@ public class DirectoryTableModel
           then it returns null.
           */
         { 
-          IFile rowIFile= // Get the IFile associated with row rowI.
-            ((IFile)theTreeModel.getChild( directoryIFile, rowI ));
-          File rowFile= rowIFile.getFile(); // Get the File also.
+          IDirectory rowIDirectory= // Get the IDirectory associated with row rowI.
+            ((IDirectory)theTreeModel.getChild( directoryIDirectory, rowI ));
+          File rowFile= rowIDirectory.getFile(); // Get the File also.
           Object resultObject;  // Place for result.
           switch   // Return the appropriate value.
             ( columnI )  // based on the desired column whose number is columnI.

@@ -7,7 +7,7 @@ import allClasses.DataNode;
 public class FileRoots extends DataNode
 
   /* This class is the root of the Infogora user's file system.  
-   * It is similar in structure and operation to IFile,
+   * It is similar in structure and operation to IDirectory,
    * which is used for other, non-root folders.
    */
 
@@ -20,7 +20,7 @@ public class FileRoots extends DataNode
        Each slot represents one filesystem root.
        */
       File[] childFiles;  // Initially empty cache array of root Files.
-      IFile childIFiles[];  // Initially empty cache array of root IFiles.
+      IDirectory childIDirectorys[];  // Initially empty cache array of root IDirectorys.
     
     // Constructors (none yet).
     
@@ -42,7 +42,7 @@ public class FileRoots extends DataNode
           In either case it returns it.
           */
         {
-          IFile childIFile= null; // Default result of null.
+          IDirectory childIDirectory= null; // Default result of null.
           setupCacheArrays();  // Prepare the cache arrays for use.
 
           toReturn: { // block beginning.
@@ -53,36 +53,36 @@ public class FileRoots extends DataNode
                 )
               break toReturn;  // Exiting with null result.
 
-            childIFile=  // Try to get child IFile from cache.
-              childIFiles[ indexI ];
+            childIDirectory=  // Try to get child IDirectory from cache.
+              childIDirectorys[ indexI ];
             if  // Fix the cache entry if the value is undefined.
-              ( childIFile == null )
+              ( childIDirectory == null )
               {
-                childIFile=  // Calculate IFile value to be...
-                  new IFile(  // ...a new IFile constructed from...
+                childIDirectory=  // Calculate IDirectory value to be...
+                  new IDirectory(  // ...a new IDirectory constructed from...
                     childFiles[indexI].  // ...the child File's...
                       getAbsolutePath()  // ...absolute path name.
                     );
-                childIFiles[ indexI ]=  // Save in cache...
-                  childIFile;  // the resulting IFile.
+                childIDirectorys[ indexI ]=  // Save in cache...
+                  childIDirectory;  // the resulting IDirectory.
                 }
 
           } // toReturn
-            return childIFile;  // Return IFile as result DataNode.
+            return childIDirectory;  // Return IDirectory as result DataNode.
           }
 
       public void setupCacheArrays()
-        /* Sets up the cache arrays of Files and IFiles 
+        /* Sets up the cache arrays of Files and IDirectorys 
           associated with this object.
           It loads the Files array if it has not already been loaded,
-          and it allocates a blank array of IFiles which is
+          and it allocates a blank array of IDirectorys which is
           the same size as the Files array if it hasn't yet.
           */
         {
           getArrayOfFiles();  // Load array of Files if needed.
-          if ( childIFiles == null )  // Create array of IFiles if needed.
-            childIFiles=  // Create array of IFiles with same length as...
-              new IFile[ childFiles.length ];  // ... array of Files.
+          if ( childIDirectorys == null )  // Create array of IDirectorys if needed.
+            childIDirectorys=  // Create array of IDirectorys with same length as...
+              new IDirectory[ childFiles.length ];  // ... array of Files.
           }
 
       public File[] getArrayOfFiles()
