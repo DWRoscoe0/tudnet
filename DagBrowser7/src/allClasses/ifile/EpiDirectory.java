@@ -1,4 +1,4 @@
-package allClasses;
+package allClasses.ifile;
 
 import java.awt.Color;
 import java.io.BufferedReader;
@@ -12,6 +12,11 @@ import java.nio.file.Path;
 
 import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
+
+import allClasses.DataNode;
+import allClasses.DataTreeModel;
+import allClasses.TitledTextViewer;
+
 import static allClasses.SystemSettings.NL;
 
 //// public class EpiDirectory 

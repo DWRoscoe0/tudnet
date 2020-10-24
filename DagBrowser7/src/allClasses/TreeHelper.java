@@ -181,7 +181,7 @@ public class TreeHelper
 
     // Constructor, initialization, and finalization.
       
-      TreeHelper( 	// Constructor.
+      public TreeHelper( 	// Constructor.
           JComponent inOwningJComponent,
           MetaRoot theMetaRoot,
           TreePath inWholeTreePath  // Eliminate this constructor injection.
@@ -795,7 +795,7 @@ public class TreeHelper
 
       private int thePartIndexI; // Index of Part.
 
-      protected TreePath getPartTreePath()
+      public TreePath getPartTreePath()
         /* This method returns the TreePath representing the Part. */
         { 
           return thePartTreePath;  // return TreePath of Part.
@@ -889,7 +889,7 @@ public class TreeHelper
           setSelectionAndNotifyListenersV( inTreePath );
           }  
 
-      protected void setPartDataNodeV( DataNode inDataNode )
+      public void setPartDataNodeV( DataNode inDataNode )
         /* This method sets the Part DataNode to be inDataNode.
           It updates other variables appropriately.
           It also notifies any TreePathListener about it.

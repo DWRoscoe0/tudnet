@@ -13,6 +13,9 @@ import java.util.concurrent.TimeUnit;
 
 import javax.swing.JFrame;
 
+import allClasses.ifile.EpiFileRoots;
+import allClasses.ifile.FileRoots;
+
 public class AppGUIFactory {  // For classes with GUI lifetimes.
 
   /* This is the factory for all classes with GUI scope.

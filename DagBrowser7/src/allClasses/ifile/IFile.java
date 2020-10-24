@@ -1,4 +1,4 @@
-package allClasses;
+package allClasses.ifile;
 
 import java.awt.Color;
 import java.io.BufferedReader;
@@ -12,6 +12,13 @@ import java.nio.file.Path;
 
 import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
+
+import allClasses.DataNode;
+import allClasses.DataTreeModel;
+import allClasses.NamedLeaf;
+import allClasses.NamedList;
+import allClasses.TitledTextViewer;
+
 import static allClasses.SystemSettings.NL;
 
 public class IFile 
@@ -33,7 +40,7 @@ public class IFile
     
     // Constructors.
 
-      IFile ( String pathString ) 
+      public IFile ( String pathString ) 
         /* Constructs an IFile from pathString.
          * pathString could represent more than one element,
          * but presently this constructor is used only by FileRoots 
@@ -45,7 +52,7 @@ public class IFile
           initializeChildrenV();
           }
     
-      IFile ( IFile ancestorPathIFile, String descendantPathString ) 
+      public IFile ( IFile ancestorPathIFile, String descendantPathString ) 
         /* Constructs an IFile by combining the paths
          * from ancestorPathIFile and descendantPathString.
          * ancestorPathIFile and descendantPathString 

@@ -1,4 +1,4 @@
-package allClasses;
+package allClasses.ifile;
 
 import java.awt.BorderLayout;
 //import java.awt.Component;
@@ -15,6 +15,15 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.tree.TreePath;
+
+import allClasses.DataNode;
+import allClasses.DataTreeModel;
+import allClasses.DirectoryTableCellRenderer;
+import allClasses.TreeAware;
+import allClasses.TreeHelper;
+import allClasses.TreePathAdapter;
+import allClasses.TreePathEvent;
+import allClasses.TreePathListener;
 
 
 public class DirectoryTableViewer
