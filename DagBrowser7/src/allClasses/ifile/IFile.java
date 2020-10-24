@@ -16,14 +16,15 @@ import javax.swing.tree.TreePath;
 import allClasses.DataNode;
 import allClasses.DataTreeModel;
 import allClasses.NamedLeaf;
-import allClasses.NamedList;
+//// import allClasses.NamedList;
 import allClasses.TitledTextViewer;
 
 import static allClasses.SystemSettings.NL;
 
 public class IFile 
 
-  extends NamedList
+  //// extends NamedList
+  extends INamedList
 
   /* This class extends DataNode to represent files and directories.
 
