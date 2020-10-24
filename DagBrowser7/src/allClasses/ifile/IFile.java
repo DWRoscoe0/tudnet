@@ -37,7 +37,7 @@ public class IFile
   
     // Variables.
       
-      File theFile;  // File associated with this DataNode.
+      private File theFile;  // File associated with this DataNode.
     
     // Constructors.
 
@@ -70,14 +70,14 @@ public class IFile
 
     // Object overrides.
 
-      public boolean equals( Object pathIFile )
+      public boolean equals( Object pathObject )
         /* Compares this to pathIFile.  
           This is not a complete implementation of equals(..).
           */
         {
           boolean resultB= false;
-          if (pathIFile instanceof IFile) {
-              IFile otherIFile= (IFile) pathIFile;
+          if (pathObject instanceof IFile) {
+              IFile otherIFile= (IFile) pathObject;
               resultB= theFile.equals( otherIFile.theFile );
               }
           return resultB;
@@ -106,25 +106,36 @@ public class IFile
           */
         { // getChild( int IndexI ) 
           IFile childIFile= null;
+          DataNode childDataNode= null;
 
           goReturn: {
             if  // Exit if index out of bounds.
               ( indexI < 0 || indexI >= childMultiLinkOfDataNodes.getCountI())
               break goReturn; // exit with null.
-            DataNode childDataNode= childMultiLinkOfDataNodes.getE(indexI);
-            if (childDataNode instanceof IFile) { // If got actual IFile 
-              childIFile= (IFile)childDataNode; // set it as result.
-              break goReturn; // exit with it.
+            childDataNode= childMultiLinkOfDataNodes.getE(indexI);
+            //// if (childDataNode instanceof IFile) { // If got actual IFile 
+            if  // If did got place-holder
+              (! (childDataNode instanceof NamedLeaf)) {
+              //// childIFile= (IFile)childDataNode; // set it as result.
+              break goReturn; // exit with that as result.
               }
             String childString= // Get name of child. 
-                childMultiLinkOfDataNodes.getE(indexI).getNameString();
-            childIFile=  // Calculate new child IFile from child name.
-              new IFile(this, childString);
+                //// childMultiLinkOfDataNodes.getE(indexI).getNameString();
+                childDataNode.getNameString();
+            File childFile= new File(theFile,childString);
+            if (childFile.isDirectory())
+              childIFile=  // Calculate new child IFile from child name.
+                new IFile(this, childString);
+              else
+              childIFile=  // Calculate new child IFile from child name.
+                new IFile(this, childString);
             childMultiLinkOfDataNodes.setE( // Save in cache.
                 indexI, (DataNode)childIFile);
+            childDataNode= childIFile;
             } // goReturn:
 
-          return childIFile;  // Return IFile as result.
+          //// return childIFile;  // Return IFile as result.
+          return childDataNode;
           }
 
       public int getIndexOfChild( Object childObject ) 
