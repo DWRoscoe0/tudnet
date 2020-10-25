@@ -34,8 +34,6 @@ public class IDirectory
   {
   
     // Variables.
-      
-      File theFile;  // File associated with this DataNode.
     
     // Constructors.
 
@@ -141,8 +139,8 @@ public class IDirectory
         /* Returns the index of childObject in directory ParentObject.  
           It does this by searching for a child with a matching name.
           This works regardless of how many the children
-          have been converted to IDirectorys.
-          This avoids calculating a lot of IDirectorys unnecessarily.
+          have been converted to IDirectories.
+          This avoids calculating a lot of IDirectories unnecessarily.
           */
         {
           DataNode childDataNode= (DataNode)childObject;
@@ -314,12 +312,6 @@ public class IDirectory
           */
         { 
           return getNameString(); 
-          }
-      
-      public File getFile()
-        /* This method returns the theFile associated with this DataNode.  */
-        {
-          return theFile;
           }
 
     }

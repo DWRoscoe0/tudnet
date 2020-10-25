@@ -36,8 +36,6 @@ public class IFile
   { // class IFile
   
     // Variables.
-      
-      private File theFile;  // File associated with this DataNode.
     
     // Constructors.
 

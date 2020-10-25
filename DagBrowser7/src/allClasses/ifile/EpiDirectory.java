@@ -143,7 +143,7 @@ public class EpiDirectory extends DataNode {
         /* Returns the index of childObject in directory ParentObject.  
           It does this by searching in the childStrings array,
           because file name strings uniquely identify the file.
-          It doesn't need to calculate or use the childEpiDirectorys array,
+          It doesn't need to calculate or use the childEpiDirectories array,
           which would happen if AbDataNode.getIndexOfChild(.) were used.
           */
         {
@@ -297,8 +297,8 @@ public class EpiDirectory extends DataNode {
         {
           GetArrayOfStrings( );  // Load array of Strings if needed.
 
-          if ( childEpiDirectories == null )  // Create array of EpiDirectorys if needed.
-            childEpiDirectories=  // Create array of EpiDirectorys with same size as...
+          if ( childEpiDirectories == null )  // Create array of EpiDirectories if needed.
+            childEpiDirectories=  // Create array of EpiDirectories with same size as...
               new EpiDirectory[GetArrayOfStrings( ).length];  // ... childStrings.
 
           return childEpiDirectories;  // Return the array.

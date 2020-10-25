@@ -38,11 +38,7 @@ public class DirectoryTableViewer
 
     This class is more complicated than ListViewer because
     more than one cell, every cell in a row,
-    is associated with the IDirectory which is displayed in that row.
-    This association is presently maintained by comparing 
-    the File/IDirectory name String-s,
-    an array of which is stored in TheDirectoryTableModel,
-    with the value of the first column in the rows.
+    is associated with the INamedList which is displayed in that row.
 
     It might simplify things to make fuller use of the IDirectory DataNode-s
     interface and the DataTreeModel.  ///enh ??
@@ -53,6 +49,8 @@ public class DirectoryTableViewer
     it might appear below the bottom of the Scroller 
     if the selection is moved to either a parent or child folder.  
 
+    ///opt ///org Does list() need to be done in valueChanged(.)?  
+     * Couldn't we get list from DataNode.
     */
   
   { // DirectoryTableViewer
@@ -99,7 +97,7 @@ public class DirectoryTableViewer
           theJTable= new JTable();
           DirectoryTableModel ADirectoryTableModel =  // Construct...
             new DirectoryTableModel(  //...directory table model from...
-              (IDirectory)theTreeHelper.getWholeDataNode(), //...subject IDirectory...
+              (IDirectory)theTreeHelper.getWholeDataNode(), //...IDirectory...
               InTreeModel  // ...and TreeModel.
               );
           theJTable.setModel( ADirectoryTableModel );  // store TableModel.
@@ -134,7 +132,6 @@ public class DirectoryTableViewer
           adjusting any dependent instance variables,
           and firing a TreePathEvent to notify
           any interested TreeSelectionListener-s.
-          ///opt Does list() need to be done?  Couldn't we get list from DataNode.
           */
         { // void valueChanged(TheListSelectionEvent)
           ListSelectionModel TheListSelectionModel = // get ListSelectionModel.
@@ -143,20 +140,23 @@ public class DirectoryTableViewer
             TheListSelectionModel.getMinSelectionIndex();
           IDirectory subjectIDirectory=  // Cache Subject directory.
             (IDirectory)theTreeHelper.getWholeDataNode();
-          String[] IDirectoryNameStrings =  // Calculate array of child file names.
-            subjectIDirectory.getFile().list();
-          if ( IDirectoryNameStrings == null )  // If array is null replace with empty array.
-            IDirectoryNameStrings= new String[ 0 ]; // Replace with empty array.
+          //// String[] IDirectoryNameStrings =  // Calculate array of child file names.
+          ////   subjectIDirectory.getFile().list();
+          //// if ( IDirectoryNameStrings == null )  // If array is null replace with empty array.
+          ////   IDirectoryNameStrings= new String[ 0 ]; // Replace with empty array.
           if // Process the selection if...
             ( //...the selection index is within the legal range.
               (IndexI >= 0) && 
-              (IndexI < IDirectoryNameStrings.length)
+              //// (IndexI < IDirectoryNameStrings.length)
+              (IndexI < subjectIDirectory.getCountI())
               )
             { // Process the selection.
-              IDirectory NewSelectionIDirectory=   // build IDirectory of selection at IndexI.
-                new IDirectory( subjectIDirectory, IDirectoryNameStrings[IndexI] );
-              //SetSelectionRelatedVariablesFrom( NewSelectionIDirectory );
-              theTreeHelper.setPartDataNodeV( NewSelectionIDirectory );
+              //// IDirectory newSelectionIDirectory=   // build IDirectory of selection at IndexI.
+              ////   new IDirectory( subjectIDirectory, IDirectoryNameStrings[IndexI] );
+              DataNode newSelectionDataNode= subjectIDirectory.getChild(IndexI);
+              //SetSelectionRelatedVariablesFrom( newSelectionIDirectory );
+              //// theTreeHelper.setPartDataNodeV( newSelectionIDirectory );
+              theTreeHelper.setPartDataNodeV(newSelectionDataNode);
                 // This will set the TreePaths also.
                 // This converts the row selection to a tree selection.
               } // Process the selection.

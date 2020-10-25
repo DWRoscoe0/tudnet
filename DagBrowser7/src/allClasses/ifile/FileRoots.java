@@ -20,7 +20,7 @@ public class FileRoots extends DataNode
        Each slot represents one filesystem root.
        */
       File[] childFiles;  // Initially empty cache array of root Files.
-      IDirectory childIDirectorys[];  // Initially empty cache array of root IDirectorys.
+      IDirectory childIDirectories[];  // Initially empty cache array of root IDirectories.
     
     // Constructors (none yet).
     
@@ -54,7 +54,7 @@ public class FileRoots extends DataNode
               break toReturn;  // Exiting with null result.
 
             childIDirectory=  // Try to get child IDirectory from cache.
-              childIDirectorys[ indexI ];
+              childIDirectories[ indexI ];
             if  // Fix the cache entry if the value is undefined.
               ( childIDirectory == null )
               {
@@ -63,7 +63,7 @@ public class FileRoots extends DataNode
                     childFiles[indexI].  // ...the child File's...
                       getAbsolutePath()  // ...absolute path name.
                     );
-                childIDirectorys[ indexI ]=  // Save in cache...
+                childIDirectories[ indexI ]=  // Save in cache...
                   childIDirectory;  // the resulting IDirectory.
                 }
 
@@ -72,16 +72,16 @@ public class FileRoots extends DataNode
           }
 
       public void setupCacheArrays()
-        /* Sets up the cache arrays of Files and IDirectorys 
+        /* Sets up the cache arrays of Files and IDirectories 
           associated with this object.
           It loads the Files array if it has not already been loaded,
-          and it allocates a blank array of IDirectorys which is
+          and it allocates a blank array of IDirectories which is
           the same size as the Files array if it hasn't yet.
           */
         {
           getArrayOfFiles();  // Load array of Files if needed.
-          if ( childIDirectorys == null )  // Create array of IDirectorys if needed.
-            childIDirectorys=  // Create array of IDirectorys with same length as...
+          if ( childIDirectories == null )  // Create array of IDirectories if needed.
+            childIDirectories=  // Create array of IDirectories with same length as...
               new IDirectory[ childFiles.length ];  // ... array of Files.
           }
 

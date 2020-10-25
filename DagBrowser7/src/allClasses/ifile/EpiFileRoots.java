@@ -20,7 +20,7 @@ public class EpiFileRoots extends DataNode
        Each slot represents one filesystem root.
        */
       File[] childFiles;  // Initially empty cache array of root Files.
-      EpiDirectory childEpiDirectorys[];  // Initially empty cache array of root EpiDirectorys.
+      EpiDirectory childEpiDirectories[];  // Initially empty cache array of root EpiDirectories.
     
     // Constructors (none yet).
     
@@ -54,7 +54,7 @@ public class EpiFileRoots extends DataNode
               break toReturn;  // Exiting with null result.
 
             childEpiDirectory=  // Try to get child EpiDirectory from cache.
-              childEpiDirectorys[ indexI ];
+              childEpiDirectories[ indexI ];
             if  // Fix the cache entry if the value is undefined.
               ( childEpiDirectory == null )
               {
@@ -63,7 +63,7 @@ public class EpiFileRoots extends DataNode
                     childFiles[indexI].  // ...the child File's...
                       getAbsolutePath()  // ...absolute path name.
                     );
-                childEpiDirectorys[ indexI ]=  // Save in cache...
+                childEpiDirectories[ indexI ]=  // Save in cache...
                   childEpiDirectory;  // the resulting EpiDirectory.
                 }
 
@@ -72,16 +72,16 @@ public class EpiFileRoots extends DataNode
           }
 
       public void setupCacheArrays()
-        /* Sets up the cache arrays of Files and EpiDirectorys 
+        /* Sets up the cache arrays of Files and EpiDirectories 
           associated with this object.
           It loads the Files array if it has not already been loaded,
-          and it allocates a blank array of EpiDirectorys which is
+          and it allocates a blank array of EpiDirectories which is
           the same size as the Files array if it hasn't yet.
           */
         {
           getArrayOfFiles();  // Load array of Files if needed.
-          if ( childEpiDirectorys == null )  // Create array of EpiDirectorys if needed.
-            childEpiDirectorys=  // Create array of EpiDirectorys with same length as...
+          if ( childEpiDirectories == null )  // Create array of EpiDirectories if needed.
+            childEpiDirectories=  // Create array of EpiDirectories with same length as...
               new EpiDirectory[ childFiles.length ];  // ... array of Files.
           }
 

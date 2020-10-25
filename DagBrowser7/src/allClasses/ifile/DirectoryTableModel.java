@@ -26,7 +26,7 @@ public class DirectoryTableModel
     // variables.
       private static final long serialVersionUID = 1L;
 
-      protected IDirectory directoryIDirectory;  // The directory modeled as a table.
+      protected IDirectory theIDirectory;  // The directory modeled as a table.
       protected TreeModel theTreeModel;  // TreeModel which provides context.
       
       protected Object directoryIconObject;  ///enh ?? unused.  reactivate?
@@ -58,7 +58,7 @@ public class DirectoryTableModel
       public void setDirectory( IDirectory inIDirectory ) 
         /* Sets the directory whose contents will be displayed as a table.  */
         {
-          directoryIDirectory = inIDirectory;  // save directory to be modeled.
+          theIDirectory = inIDirectory;  // save directory to be modeled.
           fireTableDataChanged();  // inform listeners about possible changes.
           }
 
@@ -69,7 +69,7 @@ public class DirectoryTableModel
           the number of rows in the table. 
           */
         {
-          return theTreeModel.getChildCount( directoryIDirectory );
+          return theTreeModel.getChildCount( theIDirectory );
           }
 
       public int getColumnCount() 
@@ -84,9 +84,9 @@ public class DirectoryTableModel
           then it returns null.
           */
         { 
-          IDirectory rowIDirectory= // Get the IDirectory associated with row rowI.
-            ((IDirectory)theTreeModel.getChild( directoryIDirectory, rowI ));
-          File rowFile= rowIDirectory.getFile(); // Get the File also.
+          INamedList rowINamedList= // Get the INamedList associated with rowI.
+            ((INamedList)theTreeModel.getChild( theIDirectory, rowI ));
+          File rowFile= rowINamedList.getFile(); // Get the File also.
           Object resultObject;  // Place for result.
           switch   // Return the appropriate value.
             ( columnI )  // based on the desired column whose number is columnI.

@@ -1,5 +1,7 @@
 package allClasses.ifile;
 
+import java.io.File;
+
 import allClasses.NamedList;
 
 public class INamedList 
@@ -11,5 +13,15 @@ public class INamedList
    */
   
   {
+  
+    // Variables.
+      
+      protected File theFile;  // File associated with this node.
+
+      public File getFile()
+        /* This method returns the theFile associated with this DataNode.  */
+        {
+          return theFile;
+          }
   
     }
