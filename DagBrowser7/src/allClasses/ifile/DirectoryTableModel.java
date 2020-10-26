@@ -97,7 +97,9 @@ public class DirectoryTableModel
                     : "f";  // false: f for non-directory files.
                   break;
               case 1:  // file name.
-                  resultObject= rowFile.getName();  // Name of file.
+                  resultObject=  // Name of file.
+                    INamedList.getNodeNameString(rowFile); 
+                    //// rowFile.getName();  // Name of file.
                   break;
               case 2:  // file length.
                   if ( rowFile.isDirectory() )  // Is a directories.

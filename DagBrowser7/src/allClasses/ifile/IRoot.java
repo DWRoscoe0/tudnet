@@ -17,9 +17,18 @@ public class IRoot
 
     // Variables.
     
-    // Constructors (none yet).
+    // Constructors.
   
-      public IRoot() 
+    public IRoot() 
+      {
+        super(
+            "IRoot-Roots", // Name for this node.
+            File.listRoots() // List of Filesystem roots.
+            );
+        }
+
+    /*  ////
+    public void Root()  ////////////// 
       {
         super(
             //// null, // Null parent.
@@ -31,7 +40,9 @@ public class IRoot
         IDirectory();
         initializeChildrenFromObjectsV(File.listRoots());
         */  ////
+        /*  ////
         }
+        */  ////
     
     // A subset of delegated AbstractDataTreeModel methods.
 

@@ -58,11 +58,12 @@ public class FileRoots extends DataNode
             if  // Fix the cache entry if the value is undefined.
               ( childIDirectory == null )
               {
-                childIDirectory=  // Calculate IDirectory value to be...
-                  new IDirectory(  // ...a new IDirectory constructed from...
-                    childFiles[indexI].  // ...the child File's...
-                      getAbsolutePath()  // ...absolute path name.
-                    );
+                String childString=  // Set child name string to
+                  childFiles[indexI].  // the child File's
+                    getAbsolutePath();  // absolute path name.
+                childIDirectory=  // Calculate IDirectory value to be
+                  new IDirectory(  // a new IDirectory constructed from
+                    new File(childString)); // childs file name.
                 childIDirectories[ indexI ]=  // Save in cache...
                   childIDirectory;  // the resulting IDirectory.
                 }

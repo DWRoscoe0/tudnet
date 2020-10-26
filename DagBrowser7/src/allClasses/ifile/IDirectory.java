@@ -26,30 +26,26 @@ public class IDirectory
     
     // Constructors and initialization.
 
-      public IDirectory( String pathString ) //// keep temporarily for FileRoots. 
-        /* Constructs an IDirectory from pathString.
-         * pathString could represent more than one element,
-         * but presently this constructor is used only by FileRoots 
-         * to create single-element paths for 
-         * filesystem partition names (roots).
-         */
+      public IDirectory( String pathString, Object childObjects[]) 
         { 
-          //// super(new File(pathString));
-          this(new File(pathString));
-          //// initializeChildrenV();
+          super(pathString);
+          initializeChildrenFromObjectsV(childObjects);
           }
 
-      public IDirectory(File theFile) 
+      public IDirectory(File theFile) //// Needed by us, twice.
+        /* Non-null theFile provides name, attributes, and other content.
+         */
         { 
           this(
               theFile, // Name of this directory.
               theFile.list() // This directory's children.
               );
-          //// initializeChildrenV();
-          //// Object childObjects[]= getFile().list();
           }
 
       public IDirectory(File theFile, Object childObjects[]) 
+        //// Needed by us above, and new IRoot, maybe.
+        /* Non-null theFile provides name, attributes, and other content.
+         */
         { 
           super(theFile); // Store name of this directory.
           initializeChildrenFromObjectsV(childObjects);

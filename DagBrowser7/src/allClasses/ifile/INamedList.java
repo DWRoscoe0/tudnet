@@ -22,15 +22,45 @@ public class INamedList
     // Variables.
       
       protected File theFile;  // File name path associated with this node.
+        // This is stored for accessing content and attributes, but not name.
     
     // Constructors and initialization.
 
       public INamedList(File theFile)
+        /* This constructs an instance.
+         * * theFile provides both
+         *   * the node name from the last element of the path, and
+         *   * how to find other content such as all other node content.
+         */
         {
-          //// super.initializeV();
-          super.initializeV(
-              getNameString(theFile)
+          this(
+              getNodeNameString(theFile),
+              theFile
               );
+          }
+
+      public INamedList(String nameString)
+        /* This constructs an instance.
+         * * nameString provides the node name.
+         * * There is no File for this node, 
+         *   though there will be for the children.
+         * Child information is provided later.
+         */
+        {
+          this(
+              nameString,
+              null
+              );
+          }
+
+      private INamedList(String nameString, File theFile)
+        /* This constructs an instance.
+         * * nameString provides the node name.
+         * * theFile provides all other node metadata.
+         * Child information is provided later.
+         */
+        {
+          super.initializeV(nameString);
           this.theFile= theFile;
           }
 
@@ -105,26 +135,30 @@ public class INamedList
       //// public String getNameString() //////// should not be needed.
       ////   { return getNameString(theFile); }
 
-      public String getNameString(File theFile) //////// should not be needed.
+      public static String getNodeNameString(File theFile) //////// should not be needed.
         /* Returns a String representing the name of this Object from theFile.  
           The name is the last element of the File path.
           If the path represents a file or directory
           then it is the last name in the path.
           If it represents a filesystem root,
           then it is the path prefix, which is also the entire path String.
-          This is sort of a kludge, but that's the way the class File works.
+          This is sort of a kludge, but that's the way the File class works.
 
           ///opt? get from the String stored in the NamedDataNode.
           */
         {
-          String resultString= // Try getting the last file-name element.
-            theFile.getName();
-
-          if // There is no file-name part, get the whole path, which is parent.
-            ( resultString.equals( "" ) )
-            //// resultString= "INamedList.getNameString(): theFile==null.";
-            resultString= theFile.getPath();
-
+            String resultString= null;
+          toReturn: {
+            resultString= // Try getting the last file-name element.
+              theFile.getName();
+  
+            if // If got a file-name part
+              ( ! resultString.equals( "" ) )
+              break toReturn;
+              //// resultString= "INamedList.getNameString(): theFile==null.";
+              resultString= // get the whole path, which is parent. 
+                  theFile.getPath();
+          } // toReturn:
           return resultString;  // Return the final result.
           }
 
