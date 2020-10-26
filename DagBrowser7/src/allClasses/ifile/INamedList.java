@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.util.Objects;
 
 import allClasses.NamedList;
 
@@ -21,7 +22,16 @@ public class INamedList
     // Variables.
       
       protected File theFile;  // File name path associated with this node.
+    
+    // Constructors and initialization.
 
+      public INamedList(File theFile)
+        {
+          this.theFile= theFile;
+          }
+
+    // Getter.
+      
       public File getFile()
         /* This method returns theFile associated with this DataNode.  */
         {
@@ -39,7 +49,7 @@ public class INamedList
           boolean resultB= false;
           if (pathObject instanceof INamedList) {
               INamedList otherINamedList= (INamedList) pathObject;
-              resultB= theFile.equals( otherINamedList.theFile );
+              resultB= Objects.equals(theFile, otherINamedList.theFile );
               }
           return resultB;
           }
@@ -47,7 +57,7 @@ public class INamedList
       public int hashCode() 
         // Returns the hash code of the single File field.
         {
-          return theFile.hashCode();
+          return Objects.hashCode(theFile);
           }
 
     // interface DataNode methods.
@@ -59,27 +69,28 @@ public class INamedList
           try { // Build information string about file.
             resultInfoString+= ""
               + "Name=\"" + getNameString() + "\""; // file name.
-            resultInfoString+= " Size=" + theFile.length(); // file size.
-            
-            Path ThePath= theFile.toPath();  // Convert to Path for following.
-            if ( Files.isDirectory( ThePath, LinkOption.NOFOLLOW_LINKS ) )
-              resultInfoString+= " Directory";
-            if ( Files.isRegularFile( ThePath, LinkOption.NOFOLLOW_LINKS ) )
-              resultInfoString+= " RegularFile";
-            if ( Files.isSymbolicLink( ThePath ) )
-              resultInfoString+= " SymbolicLink";
-            if ( Files.isReadable( ThePath ) )
-              resultInfoString+= " Readable";
-            if ( Files.isWritable( ThePath ) )
-              resultInfoString+= " Writable";
-            /* These always return true, so don't use.  
+            if (null != theFile) { // Add the following only if theFile not null.
+              resultInfoString+= " Size=" + theFile.length(); // file size.
+              Path thePath= theFile.toPath();  // Convert to Path for following.
+              if ( Files.isDirectory( thePath, LinkOption.NOFOLLOW_LINKS ) )
+                resultInfoString+= " Directory";
+              if ( Files.isRegularFile( thePath, LinkOption.NOFOLLOW_LINKS ) )
+                resultInfoString+= " RegularFile";
+              if ( Files.isSymbolicLink( thePath ) )
+                resultInfoString+= " SymbolicLink";
+              if ( Files.isReadable( thePath ) )
+                resultInfoString+= " Readable";
+              if ( Files.isWritable( thePath ) )
+                resultInfoString+= " Writable";
+              /* These always return true, so don't use.  
               if ( Files.isExecutable( ThePath ) )
                 resultInfoString+= " isExecutable";
               if ( theFile.canExecute() )
                 resultInfoString+= " canExecute";
-              */
-            if ( Files.isHidden( ThePath ) )
-              resultInfoString+= " Hidden";
+               */
+              if ( Files.isHidden( thePath ) )
+                resultInfoString+= " Hidden";
+              }
             } // Build information string about file.
           catch ( Throwable AThrowable ) {  // Handle any exception by...
             resultInfoString+= " "+AThrowable;  // ...appending its description to string.
@@ -87,29 +98,28 @@ public class INamedList
           return resultInfoString;  // return the accumulated information string.
           } // GetInfoString()
 
-      public String getNameString()
-        /* Returns a String representing the name of this Object.  
-          This is the last element of the File path.
+      public String getNameString() //////// should not be needed.
+        /* Returns a String representing the name of this Object.
+          Presently it gets this from theFile.  
+          The name is the last element of the File path.
           If the path represents a file or directory
           then it is the last name in the path.
           If it represents a filesystem root,
-          then it is the path prefix, which is also
-          the entire canonical path.
+          then it is the path prefix, which is also the entire path String.
+          This is sort of a kludge, but that's the way the class File works.
+
+          ///opt? get from the String stored in the NamedDataNode.
           */
         {
-          String stringResult=   // Try getting the last name element.
+          String resultString= // Try getting the last file-name element.
             theFile.getName();
 
-          if // Get the prefix if there is no name.
-            ( stringResult.equals( "" ) )
-            try {
-              stringResult= // Get the prefix which is actually...
-                theFile.getCanonicalPath();
-              } catch (IOException e) {
-                stringResult= "IOException";  // Get error string.
-              }  // ...the canonical path name.
+          if // There is no file-name part, get the whole path, which is parent.
+            ( resultString.equals( "" ) )
+            //// resultString= "INamedList.getNameString(): theFile==null.";
+            resultString= theFile.getPath();
 
-          return stringResult;  // Return the final result.
+          return resultString;  // Return the final result.
           }
 
       public String toString() 

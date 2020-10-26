@@ -24,9 +24,9 @@ public class IDirectory
   
     // Variables.
     
-    // Constructors.
+    // Constructors and initialization.
 
-      public IDirectory( String pathString ) 
+      public IDirectory( String pathString ) //// keep temporarily for FileRoots. 
         /* Constructs an IDirectory from pathString.
          * pathString could represent more than one element,
          * but presently this constructor is used only by FileRoots 
@@ -34,24 +34,49 @@ public class IDirectory
          * filesystem partition names (roots).
          */
         { 
-          theFile= new File( pathString );
-          initializeChildrenV();
+          //// super(new File(pathString));
+          this(new File(pathString));
+          //// initializeChildrenV();
           }
-    
-      public IDirectory( 
-          IDirectory ancestorPathIDirectory, String descendantPathString ) 
-        /* Constructs an IDirectory by combining the paths
-         * from ancestorPathIDirectory and descendantPathString.
-         * ancestorPathIDirectory and descendantPathString 
-         * could be arbitrary paths,
-         * but in this app ancestorPathIDirectory usually represents a directory,
-         * and descentantPathString is the name of a file or directory
-         * within the first directory. 
-         */
+
+      public IDirectory(File theFile) 
         { 
-          theFile= 
-              new File( ancestorPathIDirectory.theFile, descendantPathString );
-          initializeChildrenV();
+          this(
+              theFile, // Name of this directory.
+              theFile.list() // This directory's children.
+              );
+          //// initializeChildrenV();
+          //// Object childObjects[]= getFile().list();
+          }
+
+      public IDirectory(File theFile, Object childObjects[]) 
+        { 
+          super(theFile); // Store name of this directory.
+          initializeChildrenFromObjectsV(childObjects);
+          }
+
+      @SuppressWarnings("unused")
+      private void XXXXinitializeChildrenV()  //// temporary?
+        /* Sets up the child cache array.  */
+        {
+          Object childObjects[]= getFile().list();
+          initializeChildrenFromObjectsV(childObjects);
+          }
+
+      protected void initializeChildrenFromObjectsV(Object childObjects[])
+        /* Sets up the child cache array from the childObjects array.  */
+        {
+          if ( childObjects == null )  // Make certain the array is not null.
+            childObjects=  // Make it be a zero-length array of something.
+              new String[ 0 ];
+
+          for (int indexI= 0; indexI<childObjects.length; indexI++) {
+            childMultiLinkOfDataNodes.addV( // Store in the NamedList's array
+                indexI, // at this location
+                NamedLeaf.makeNamedLeaf( // this name place-holder.
+                    childObjects[indexI].toString())
+                );
+            }
           }
 
     // Object overrides.
@@ -84,13 +109,15 @@ public class IDirectory
                 }
             String childString= // Get name of child. 
                 childDataNode.getNameString();
-            File childFile= new File(theFile,childString);
+            File childFile= new File(getFile(),childString);
             if (childFile.isDirectory()) // Convert based on type.
               childDataNode=  // Calculate new child from child name
-                new IDirectory(this, childString); // to be directory.
+                //// new IDirectory(this, childString); // to be directory.
+                new IDirectory(childFile); // to be directory.
               else
               childDataNode=  // Calculate new child from child name
-                new IFile(this, childString); // to be regular file.
+                //// new IFile(this, childString); // to be regular file.
+                new IFile(childFile); // to be regular file.
             childMultiLinkOfDataNodes.setE( // Save in cache.
                 indexI, childDataNode);
             } // goReturn:
@@ -140,27 +167,5 @@ public class IDirectory
           }
           
     // other methods.
-
-      private void initializeChildrenV()
-        /* Sets up the child cache array. 
-         * This is meaningful only if this IDirectory represents a directory.
-         */
-        {
-          String childStrings[]= null;
-
-          childStrings=  // Define by reading names of children from directory.
-            theFile.list();
-          if ( childStrings == null )  // Make certain the array is not null.
-            childStrings=  // Make it be a zero-length array.
-              new String[ 0 ];
-
-          for (int indexI= 0; indexI<childStrings.length; indexI++) {
-            childMultiLinkOfDataNodes.addV( // Store in the NamedList's array
-                indexI, // at this location
-                NamedLeaf.makeNamedLeaf( // this name place-holder.
-                    childStrings[indexI])
-                );
-            }
-          }
 
     }

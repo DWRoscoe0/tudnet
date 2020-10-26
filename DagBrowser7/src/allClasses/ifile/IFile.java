@@ -27,19 +27,9 @@ public class IFile
     
     // Constructors.
 
-      public IFile ( 
-            IDirectory ancestorPathIDirectory, String descendantPathString ) 
-        /* Constructs an IFile by combining the paths
-         * from ancestorPathIDirectory and descendantPathString.
-         * ancestorPathIDirectory and descendantPathString 
-         * could be arbitrary paths,
-         * but in this app ancestorPathIDirectory usually represents a directory,
-         * and descentantPathString is the name of a file or directory
-         * within the first directory. 
-         */
+      public IFile(File theFile) 
         { 
-          theFile= 
-              new File( ancestorPathIDirectory.theFile, descendantPathString );
+          super(theFile);
           }
 
     // A subset of delegated DataTreeModel methods.
