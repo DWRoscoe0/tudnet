@@ -1,7 +1,7 @@
 package allClasses.ifile;
 
 import java.io.File;
-import java.io.IOException;
+//// import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
@@ -27,6 +27,10 @@ public class INamedList
 
       public INamedList(File theFile)
         {
+          //// super.initializeV();
+          super.initializeV(
+              getNameString(theFile)
+              );
           this.theFile= theFile;
           }
 
@@ -98,9 +102,11 @@ public class INamedList
           return resultInfoString;  // return the accumulated information string.
           } // GetInfoString()
 
-      public String getNameString() //////// should not be needed.
-        /* Returns a String representing the name of this Object.
-          Presently it gets this from theFile.  
+      //// public String getNameString() //////// should not be needed.
+      ////   { return getNameString(theFile); }
+
+      public String getNameString(File theFile) //////// should not be needed.
+        /* Returns a String representing the name of this Object from theFile.  
           The name is the last element of the File path.
           If the path represents a file or directory
           then it is the last name in the path.
