@@ -23,7 +23,7 @@ public class DataTreeModel
 
   /* This class implements an extended TreeModel 
     used for browsing the Infogora hierarchy tree (eventually DAG).
-    It's purpose is to provide link Infogora hierarchy to
+    It's purpose is to provide a link from the Infogora hierarchy to
     Java GUI components, especially the Java JTree.
     Because of this, most of the code, including extensions,
     is meant to be run on the Event Dispatch Thread (EDT).
@@ -54,13 +54,14 @@ public class DataTreeModel
     * Threading Considerations:
       * Some methods in this class are not thread-safe
         and must execute in the EDT (Event Dispatch Thread).
-        These methods manage data displayed by JTree and other non-tree Components, 
-        as part of the graphical user interface.
+        These methods manage data displayed by JTree and 
+        other non-tree Components, as part of the graphical user interface.
         An example of this is the code which fires TreeModelListeners
         to update the display with data changes.
         Switching to the EDT is done by calling the invokeAndWait(..) method
         and the EDT methods tend to be private ones to limit their access.
-      * Some methods in this class are synchronized, which makes them thread-safe.
+      * Some methods in this class are synchronized, 
+        which makes them thread-safe.
         These methods tend to be public, allowing any thread to access them.
         They are called often and execute quickly,
         mostly to aggregate change notifications into DataNode.theChangeFlag,
@@ -430,27 +431,33 @@ public class DataTreeModel
       	}
 
       private TreePath translatingToTreePath( DataNode targetDataNode )
-	      /* This method returns the TreePath of targetDataNode,
-  	      or null if node can not be found in the DataNode tree.
-  	      It tries to return a value cached in nodeToPathHashMap first.
+	      /* This method returns the TreePath of targetDataNode.
+          It returns the resultant TreePath or null if 
+          it was unable to find it in the nodeToPathHashMap or build it.
+          Null means the node or one of its ancestors
+          was not a descendant of the root, 
+          which was added to the map during initialization. 
+  	      
+  	      This method tries to return a value from nodeToPathHashMap first.
   	      If that fails then tries to build the TreePath recursively
   	      from the targetDataNode and the translated TreePath of its parent.
-  	      TreePaths that are built are cached in the nodeToPathHashMap.
-  	      It returns the resultant TreePath or null if 
-  	      it was unable to find or build the TreePath.
+  	      This is possible only because nodes presently have only one parent.
+  	      Another method would be needed if the node tree is replaced by a DAG.
+  	      
+  	      Any TreePaths that are built are saved in the nodeToPathHashMap.
   	      
   	      ///opt This may no longer be needed.
   	      */
       	{ 
-      	  TreePath targetTreePath= // Looking in cache first.
+      	  TreePath targetTreePath= // Looking in HashMap first.
       	  		nodeToPathHashMap.get( targetDataNode );
-	        if ( targetTreePath == null ) // Building the path if not in cache.
-		        {
+	        if ( null == targetTreePath ) // If path not in map
+		        { // build the path from its parent's
       	  		DataNode parentDataNode= targetDataNode.parentNamedList;
           	  TreePath parentTreePath= translatingToTreePath(parentDataNode);
-			        if ( parentTreePath != null ) // Caching build result, if any.
-				        {
-			      	  	targetTreePath= 
+			        if ( null != parentTreePath ) // If got parent path then
+				        { // build target path by adding to parent's and add to map.
+			      	  	targetTreePath=
 			      	  			parentTreePath.pathByAddingChild( targetDataNode );
 				        	nodeToPathHashMap.put( targetDataNode, targetTreePath );
 				        	}
