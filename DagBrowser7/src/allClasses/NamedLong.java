@@ -43,7 +43,6 @@ public class NamedLong extends NamedLeaf implements LongLike
     boolean changedB;
     long resultL;
 
-    //// synchronized (this) 
     { // Set the new value if different from old one.
       resultL = theL; // Saving present value for returning.
       changedB = newL != theL;

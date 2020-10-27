@@ -18,12 +18,14 @@ public class NamedList
     Iterable<DataNode>
   
   /* This is a utility class that is simply a List with a name.
-    It is is immutable after construction and initialization, 
+    It is immutable after construction and initialization, 
     but subclasses could add mutation abilities.
     Also, there is nothing preventing changes in
     its children or other descendants.
-    
-    ///opt Reduce storage used by eliminating redundant child collections. 
+
+    ///opt Reduce storage used by eliminating redundant child collections,
+      not necessarily in this class, but in its subclasses.
+
     This one of 3 non-leaf classes that define storage for child references.
     This class uses a List to store its children.
     The other 2 are 
@@ -33,7 +35,11 @@ public class NamedList
     This might be possible by defining some new classes, such as
     * EmptyList, whose subclasses can use the type of child lists
       that best fits its purpose.  
-     
+
+    ///enh? Should NamedList be converted to a generic class?
+      getChild(int indexI) returns a DataNode, so maybe there's no point.
+      Maybe getChildE(int indexI) could be added 
+      to have the best of both worlds? 
     */
   
   { // class NamedList
@@ -46,7 +52,7 @@ public class NamedList
 			  // and all its descendants has already occurred and 
 			  // need not be done again, except for new added children. 
 	
-	    protected MultiLink<DataNode> childMultiLinkOfDataNodes= // Set to an empty
+	    protected MultiLink<DataNode> childMultiLinkOfDataNodes= // Set to empty
           new ListMultiLink<DataNode>(); // ListMultiLink of DataNodes.
 
 	    

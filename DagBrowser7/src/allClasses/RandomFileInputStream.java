@@ -2,7 +2,6 @@ package allClasses;
 
 import static allClasses.AppLog.theAppLog;
 
-//// import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -19,20 +18,19 @@ public class RandomFileInputStream
     public RandomFileInputStream(RandomAccessFile theRandomAccessFile) 
       throws FileNotFoundException
       {
-        //// super((String)null);
         this.theRandomAccessFile= theRandomAccessFile;
         }
     
     public int getPositionI()
       { 
         int positionI= 0;
-        try { 
-          positionI= //// kludge 
-              (int)theRandomAccessFile.getFilePointer();
-        } catch (IOException theIOException) {
-          theAppLog.debug( "getPositionI() "+theIOException); ////
 
-        }
+        try { 
+            positionI= (int)theRandomAccessFile.getFilePointer();
+          } catch (IOException theIOException) {
+            theAppLog.debug( "getPositionI() "+theIOException);
+          }
+
         return positionI;  
         } 
   

@@ -140,22 +140,14 @@ public class DirectoryTableViewer
             TheListSelectionModel.getMinSelectionIndex();
           IDirectory subjectIDirectory=  // Cache Subject directory.
             (IDirectory)theTreeHelper.getWholeDataNode();
-          //// String[] IDirectoryNameStrings =  // Calculate array of child file names.
-          ////   subjectIDirectory.getFile().list();
-          //// if ( IDirectoryNameStrings == null )  // If array is null replace with empty array.
-          ////   IDirectoryNameStrings= new String[ 0 ]; // Replace with empty array.
           if // Process the selection if...
             ( //...the selection index is within the legal range.
               (IndexI >= 0) && 
-              //// (IndexI < IDirectoryNameStrings.length)
               (IndexI < subjectIDirectory.getCountI())
               )
             { // Process the selection.
-              //// IDirectory newSelectionIDirectory=   // build IDirectory of selection at IndexI.
-              ////   new IDirectory( subjectIDirectory, IDirectoryNameStrings[IndexI] );
               DataNode newSelectionDataNode= subjectIDirectory.getChild(IndexI);
               //SetSelectionRelatedVariablesFrom( newSelectionIDirectory );
-              //// theTreeHelper.setPartDataNodeV( newSelectionIDirectory );
               theTreeHelper.setPartDataNodeV(newSelectionDataNode);
                 // This will set the TreePaths also.
                 // This converts the row selection to a tree selection.

@@ -7,6 +7,7 @@ public abstract class NamedBranch
 
   /* This class is the base class for all named DataNodes that
     are not leaves, meaning they are branches.
+    Though it is a branch, not a leaf, it has no children.
     */
 
   {

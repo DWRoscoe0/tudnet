@@ -2,8 +2,6 @@ package allClasses.ifile;
 
 import java.io.File;
 
-//// import java.io.File;
-
 public class IRoot
 
   extends IDirectory
@@ -22,28 +20,9 @@ public class IRoot
     public IRoot() 
       {
         super(
-            "IRoot-Roots", // Name for this node.
+            "File-System-Roots", // Name for this node.
             File.listRoots() // List of Filesystem roots.
             );
         }
-
-    /*  ////
-    public void Root()  ////////////// 
-      {
-        super(
-            //// null, // Null parent.
-            new File("IRoot-File!"), // Null parent of filesystem roots. 
-            File.listRoots() // Filesystem roots.
-            );
-        /*  ////
-        childFiles= File.listRoots();
-        IDirectory();
-        initializeChildrenFromObjectsV(File.listRoots());
-        */  ////
-        /*  ////
-        }
-        */  ////
-    
-    // A subset of delegated AbstractDataTreeModel methods.
 
     } // class FileRoots

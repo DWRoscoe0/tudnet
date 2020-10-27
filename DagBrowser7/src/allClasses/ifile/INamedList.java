@@ -1,7 +1,6 @@
 package allClasses.ifile;
 
 import java.io.File;
-//// import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
@@ -132,10 +131,7 @@ public class INamedList
           return resultInfoString;  // return the accumulated information string.
           } // GetInfoString()
 
-      //// public String getNameString() //////// should not be needed.
-      ////   { return getNameString(theFile); }
-
-      public static String getNodeNameString(File theFile) //////// should not be needed.
+      protected static String getNodeNameString(File theFile)
         /* Returns a String representing the name of this Object from theFile.  
           The name is the last element of the File path.
           If the path represents a file or directory
@@ -155,9 +151,8 @@ public class INamedList
             if // If got a file-name part
               ( ! resultString.equals( "" ) )
               break toReturn;
-              //// resultString= "INamedList.getNameString(): theFile==null.";
-              resultString= // get the whole path, which is parent. 
-                  theFile.getPath();
+            resultString= // get the whole path, which is parent. 
+                theFile.getPath();
           } // toReturn:
           return resultString;  // Return the final result.
           }

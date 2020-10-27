@@ -9,8 +9,6 @@ import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
 
 import allClasses.AppLog.LogLevel;
-//// import allClasses.DataNode.ChangeFlag;
-//// import allClasses.DNode.ChangeFlag;
 import allClasses.multilink.ElementMultiLink;
 
 public class DNode<N extends DNode<N>>
@@ -21,7 +19,7 @@ public class DNode<N extends DNode<N>>
 
     /* Much of the code here came from an earlier version of DataNode.
       
-      ////fix After the code is moved, some of it will need to be generified.
+      ///fix After the code is moved, some of it will need to be generified.
 
       ///opt: Remove theMaxLogLevelto reduce node storage, 
         also the methods what use it,

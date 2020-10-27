@@ -217,7 +217,6 @@ public class Outline
         */
       { // Outline(.)
         super(
-	        //// NamedBranch.temporaryNameString,
           "Outline:TEMPORARY-NAME",
           new DataNode[]{} // Initially empty List for lazy-loaded children.
 	        );

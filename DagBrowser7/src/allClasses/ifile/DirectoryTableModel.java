@@ -99,7 +99,6 @@ public class DirectoryTableModel
               case 1:  // file name.
                   resultObject=  // Name of file.
                     INamedList.getNodeNameString(rowFile); 
-                    //// rowFile.getName();  // Name of file.
                   break;
               case 2:  // file length.
                   if ( rowFile.isDirectory() )  // Is a directories.

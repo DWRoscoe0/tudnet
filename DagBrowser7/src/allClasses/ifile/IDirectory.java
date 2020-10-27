@@ -27,13 +27,17 @@ public class IDirectory
     // Constructors and initialization.
 
       public IDirectory( String pathString, Object childObjects[]) 
+        /* pathString provides provides the name.
+         * childObjects provides the children.
+         */
         { 
           super(pathString);
           initializeChildrenFromObjectsV(childObjects);
           }
 
-      public IDirectory(File theFile) //// Needed by us, twice.
-        /* Non-null theFile provides name, attributes, and other content.
+      private IDirectory(File theFile)
+        /* Non-null theFile provides name, attributes, 
+         * and the directory's children.
          */
         { 
           this(
@@ -42,20 +46,12 @@ public class IDirectory
               );
           }
 
-      public IDirectory(File theFile, Object childObjects[]) 
-        //// Needed by us above, and new IRoot, maybe.
-        /* Non-null theFile provides name, attributes, and other content.
+      private IDirectory(File theFile, Object childObjects[]) 
+        /* Non-null theFile provides name, attributes.
+         * childObjects provides the children.
          */
         { 
           super(theFile); // Store name of this directory.
-          initializeChildrenFromObjectsV(childObjects);
-          }
-
-      @SuppressWarnings("unused")
-      private void XXXXinitializeChildrenV()  //// temporary?
-        /* Sets up the child cache array.  */
-        {
-          Object childObjects[]= getFile().list();
           initializeChildrenFromObjectsV(childObjects);
           }
 
@@ -108,11 +104,9 @@ public class IDirectory
             File childFile= new File(getFile(),childString);
             if (childFile.isDirectory()) // Convert based on type.
               childDataNode=  // Calculate new child from child name
-                //// new IDirectory(this, childString); // to be directory.
                 new IDirectory(childFile); // to be directory.
               else
               childDataNode=  // Calculate new child from child name
-                //// new IFile(this, childString); // to be regular file.
                 new IFile(childFile); // to be regular file.
             childMultiLinkOfDataNodes.setE( // Save in cache.
                 indexI, childDataNode);

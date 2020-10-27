@@ -789,7 +789,6 @@ class MapEpiNode extends EpiNode
             if (keyEpiNode == null) // Got no key so no entry 
               break toNoEntry; // so fail this entry.
             if (! tryByteB(theRandomAccessInputStream,':')) // No separator ":"
-              //// break toEndEntry; // so no value, so end map entry now.
               break toNoEntry; // so fail this entry.
             valueEpiNode= // Try parsing value.
                 EpiNode.tryEpiNode(theRandomAccessInputStream);

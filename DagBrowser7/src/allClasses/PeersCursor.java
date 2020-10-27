@@ -35,7 +35,6 @@ public class PeersCursor extends PersistentCursor {
       */
     { 
       PeersCursor thePeersCursor= new PeersCursor(thePersistent);
-      //// thePeersCursor.setListFirstKeyString("peers"); // Point cursor to peer list.
       thePeersCursor.setListFirstKeyString(
           "UnicasterIndexes"); // Point cursor to Unicasters.
       thePeersCursor.moveToNoKeyString(); // Point to no entry within the list.
@@ -127,13 +126,10 @@ public class PeersCursor extends PersistentCursor {
         (! this.nextKeyString().isEmpty()) // Get next element or exit if there is none.
         {
           MapEpiNode theMapEpiNode= getSelectedMapEpiNode();
-          //// if (! testFieldIsB("IP",ipString)) continue;
           if (! theMapEpiNode.testKeyForValueB("IP",ipString)) continue;
-          //// if (! testFieldIsB("Port", portString)) continue;
           if (! theMapEpiNode.testKeyForValueB("Port", portString)) continue;
           if (
             (peerIdentityString != null) // ID present. 
-            //// && ! testFieldIsB(Config.rootIDString, peerIdentityString)) 
             && ! theMapEpiNode.testKeyForValueB(Config.userIdString, peerIdentityString))
               continue;
           break; // All search parameters matched, exit loop positioned on matching entry.

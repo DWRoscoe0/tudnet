@@ -19,13 +19,16 @@ import allClasses.TitledTextViewer;
 
 import static allClasses.SystemSettings.NL;
 
-//// public class EpiDirectory 
 public class EpiDirectory extends DataNode {
 
-  /* This class extends DataNode to represent files and directories.
-    It does not distinguish duplicate links to 
-    files and directories from full copies of files and directories
-    */
+  /* This class will eventually extend IDirectory in a way
+   * that can re-represent some special files and directories,
+   * that is, file and directories with special names or content,
+   * such that they can coexist with 
+   * regular filesystem files and directories.
+   * 
+   * ///org  Most of the following code will be replaced.
+   */
   
     // Variables.
       
@@ -239,7 +242,6 @@ public class EpiDirectory extends DataNode {
             try {
               FileInputStream theFileInputStream = 
                   new FileInputStream(getFile());
-              //// @SuppressWarnings("resource")
               BufferedReader theBufferedReader = 
                 new BufferedReader(new InputStreamReader(theFileInputStream));
               
