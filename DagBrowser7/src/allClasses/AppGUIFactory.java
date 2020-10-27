@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
 import javax.swing.JFrame;
 
 import allClasses.ifile.EpiFileRoots;
-import allClasses.ifile.IRoot;
+import allClasses.ifile.IRoots;
 
 public class AppGUIFactory {  // For classes with GUI lifetimes.
 
@@ -134,7 +134,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
           theTextStreams2,
           new Infinitree( null, 0 )
           );
-      IRoot theIRoot= new IRoot(); 
+      IRoots theIRoot= new IRoots(); 
       DataNode theInitialRootDataNode= new InfogoraRoot( // Building DataNode tree.
         theIRoot,
         new Outline( 0 ),
