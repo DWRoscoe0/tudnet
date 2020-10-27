@@ -48,9 +48,6 @@ public class DirectoryTableViewer
     ///fix?? If this panel has focus, and a selected folder is far from the top,
     it might appear below the bottom of the Scroller 
     if the selection is moved to either a parent or child folder.  
-
-    ///opt ///org Does list() need to be done in valueChanged(.)?  
-     * Couldn't we get list from DataNode.
     */
   
   { // DirectoryTableViewer
