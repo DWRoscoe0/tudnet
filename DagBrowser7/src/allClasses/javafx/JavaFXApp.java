@@ -1,7 +1,5 @@
 package allClasses.javafx;
 
-//// import com.gluonapplication.Icon;
-
 import javafx.application.Application;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -32,6 +30,7 @@ public class JavaFXApp extends Application {
         theBorderPane.setCenter(theVBox);
         primaryStage.setScene(theScene);
         primaryStage.show();
+        JavaFXWindows.recordWindow(primaryStage);
       } catch(Exception e) {
         e.printStackTrace();
       }

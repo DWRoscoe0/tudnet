@@ -20,6 +20,9 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.plaf.FontUIResource;
 
+import allClasses.javafx.JavaFXWindows;
+import javafx.application.Platform;
+
 import static allClasses.AppLog.theAppLog;  // For appLogger;
 
 public class AppGUI
@@ -260,6 +263,12 @@ class GUIManager
                 // appLogger.info("GUIManager.finalizeOnV() invokeAndWaitV() run() begins.");
                 finalizeOnEDTV();  
                 // appLogger.info("GUIManager.finalizeOnV() invokeAndWaitV() run() ends.");
+                } } );
+        Platform.runLater( // Dispatching JavaFX thread
+            new Runnable() {
+              @Override
+              public void run() { 
+                JavaFXWindows.closeWindows();
                 } } );
         // appLogger.info("GUIManager.finalizeOnV() ends.");
         }
