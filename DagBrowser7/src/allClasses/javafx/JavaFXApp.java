@@ -10,6 +10,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 public class JavaFXApp extends Application {
+  
   @Override
   public void start(Stage primaryStage) {
       try {
@@ -30,14 +31,16 @@ public class JavaFXApp extends Application {
         theBorderPane.setCenter(theVBox);
         primaryStage.setScene(theScene);
         primaryStage.show();
-        JavaFXWindows.recordWindow(primaryStage);
+        JavaFXWindows.recordOpenWindowV(primaryStage);
       } catch(Exception e) {
         e.printStackTrace();
       }
     }
   
+  /*  ////
   public static void main(String[] args) {
-      launch(args);
+      Application.launch(args);
       }
+  */  ////
 
   }
