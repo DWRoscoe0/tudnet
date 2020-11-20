@@ -54,8 +54,8 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
   private final ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor;
   private final NamedLong multicasterFixedTimeOutMsNamedLong;
   private final Persistent thePersistent;
-  private NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes;
-  private ConnectionManager theConnectionManager;
+  private final NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes;
+  private final ConnectionManager theConnectionManager;
   
   public AppGUIFactory(  // Factory constructor.
   	  Persistent thePersistent,
@@ -151,12 +151,6 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
     	    new TracingEventQueue(
     	    		theTracingEventQueueMonitor
 		  	  		  );
-      DagBrowserPanel theDagBrowserPanel= new DagBrowserPanel(
-    			theAppInstanceManager, 
-    			theDataTreeModel, 
-    			theDataRoot, 
-    			theMetaRoot
-	        );
       Timer theTimer= new Timer( ///opt being deprecated.
         "AppTimer", // Thread name.
         true); // Run as daemon thread.
@@ -167,25 +161,8 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
           new ScheduledThreadPoolExecutor(1); // Minimum of 1 thread,
         theScheduledThreadPoolExecutor.setMaximumPoolSize(15); // 15 max.
         theScheduledThreadPoolExecutor.setKeepAliveTime(
-            5,TimeUnit.SECONDS); // Time before unused thread are reclaimed.
+            5,TimeUnit.SECONDS); // Time before unused threads are reclaimed.
         }
-      GUIManager theGUIBuilderStarter= new GUIManager( 
-  		  theAppInstanceManager,
-  		  theDagBrowserPanel,
-        this, // GUIBuilderStarter gets to know the factory that made it. 
-        theShutdowner,
-    		theTracingEventQueue,
-      	theScheduledThreadPoolExecutor
-        );
-      AppGUI theAppGUI= new AppGUI( 
-        theConnectionManagerEpiThread,
-        theCPUMonitorEpiThread,
-        theDataTreeModel,
-        theInitialRootDataNode,
-        theGUIBuilderStarter,
-        theShutdowner,
-        theTCPCopier
-        );
 
       receiverNetcasterPacketManager=  //? use local? 
       		new NetcasterPacketManager( (IPAndPort)null );
@@ -195,6 +172,34 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 							"Retransmit-Delay(Ms)",
 							Config.initialRoundTripTime100MsL * 2
 							);
+
+      // Internals code is above this point.
+      // GUI code is below this point.
+
+      DagBrowserPanel theDagBrowserPanel= new DagBrowserPanel(
+          theAppInstanceManager, 
+          theDataTreeModel, 
+          theDataRoot, 
+          theMetaRoot
+          );
+      GUIManager theGUIBuilderStarter= new GUIManager( 
+        theAppInstanceManager,
+        theDagBrowserPanel,
+        this, // GUIBuilderStarter gets to know the factory that made it. 
+        theShutdowner,
+        theTracingEventQueue
+        //// theScheduledThreadPoolExecutor
+        );
+      AppGUI theAppGUI= new AppGUI( 
+        theConnectionManagerEpiThread,
+        theCPUMonitorEpiThread,
+        theDataTreeModel,
+        theInitialRootDataNode,
+        theGUIBuilderStarter,
+        theShutdowner,
+        theTCPCopier,
+        theScheduledThreadPoolExecutor
+        );
 
       // Note, some non-injected instance variables were saved when calculated.
       // Save in instance variables other non-injected objects that are needed later.

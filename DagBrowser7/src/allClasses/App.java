@@ -3,7 +3,7 @@ package allClasses;
 import java.math.BigInteger;
 import java.util.Random;
 
-import allClasses.javafx.JavaFXWindows;
+//// import allClasses.javafx.JavaFXWindows;
 //// import allClasses.javafx.Main;
 
 import static allClasses.AppLog.theAppLog;
@@ -110,10 +110,12 @@ public class App { // The App, especially pre-GUI stuff.
 		    ; // Delegation succeeded.  Do nothing except exit.
 		    else
 		    { // Delegation failed.  Presenting GUI to user and interacting.
+		      /*  ////
           JavaFXWindows theJavaFXWindows= 
               new JavaFXWindows();
           theJavaFXWindows.startJavaFXLaunchV(null); // Start thread that presents
             // JavaFX GUI window.
+          */  ////
 		  	  AppGUIFactory theAppGUIFactory= 
 		  	  		theAppFactory.lazyGetAppGUIFactory();
 		      AppGUI theAppGUI= theAppGUIFactory.getAppGUI();

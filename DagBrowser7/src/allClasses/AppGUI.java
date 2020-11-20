@@ -43,6 +43,7 @@ public class AppGUI
     private GUIManager theGUIManager;
     private Shutdowner theShutdowner;
     private TCPCopier theTCPCopier;
+    private ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor;
 
     public AppGUI(   // Constructor.
         EpiThread theConnectionManagerEpiThread,
@@ -51,7 +52,8 @@ public class AppGUI
         DataNode theInitialRootDataNode,
         GUIManager theGUIManager,
         Shutdowner theShutdowner,
-        TCPCopier theTCPCopier
+        TCPCopier theTCPCopier,
+        ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor
         )
       {
 	      this.theConnectionManagerEpiThread= theConnectionManagerEpiThread;
@@ -61,6 +63,7 @@ public class AppGUI
         this.theGUIManager= theGUIManager;
         this.theShutdowner= theShutdowner;
         this.theTCPCopier= theTCPCopier;
+        this.theScheduledThreadPoolExecutor= theScheduledThreadPoolExecutor;
         }
     
     class InstanceCreationRunnable // Listens for other local app instances.
@@ -133,27 +136,31 @@ public class AppGUI
 
     public void runV()
       /* This method does the main AppGUI run phase.
-        It does not return until a Shutdown is requested
-        and it has shutdown the things for which it is responsible.
-        */
+       * It does 3 things:
+       * 
+       * * Finishes app initialization and startup, including the GUI.
+       * * Waits for a shutdown request, which can come from various places.
+       * * Does shutdown and finalization of 
+       *   the things it initialized and started earlier.
+       *   
+       * It does not return until it has finished all of these things.
+       */
       {
     		theAppLog.info("AppGUI.runV() begins.");
         theDataTreeModel.initializeV( theInitialRootDataNode );
-        theGUIManager.initializeV();
+        theGUIManager.initializeV(); // Start the GUI.
         theConnectionManagerEpiThread.startV();
         theCPUMonitorEpiThread.startV();
         theTCPCopier.initializeV();
 
-        // Now the app is running and interacting with the user.
-        theShutdowner.waitForAppShutdownRequestedV(); // Wait for shutdown.
+        theShutdowner.waitForAppShutdownRequestedV();
 
-        // Now the app is shutting down.
         theTCPCopier.finalizeV();
         theCPUMonitorEpiThread.stopAndJoinV();
         theDataTreeModel.logListenersV(); ///dbg
         theConnectionManagerEpiThread.stopAndJoinV( );
-          // Terminate ConnectionManager connections and all related threads.
-        theGUIManager.finalizeV();
+        theScheduledThreadPoolExecutor.shutdownNow(); // Terminate pool threads.
+        theGUIManager.finalizeV(); // Stop the GUI.
         theDataTreeModel.finalizeV();
     		theAppLog.info("AppGUI.runV() ends.");
         }
@@ -164,10 +171,9 @@ class GUIManager
   implements KeyEventDispatcher 
 
   /* This nested class is used to manage the app's GUI.
-    It signals its completion by executing doNotify() on
-    the LockAndSignal object passed to it when 
-    its instance is constructed.
-    */
+   * Originally this included only a Swing GUI.
+   * Later a JavaFX GUI component was added. 
+   */
 
   { // GUIManager
 
@@ -177,7 +183,7 @@ class GUIManager
 		private AppGUIFactory theAppGUIFactory;
 		private Shutdowner theShutdowner;
 		private TracingEventQueue theTracingEventQueue;
-    private ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor;
+    //// private ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor;
 
     // Other AppGUI instance variables.
     private JFrame theJFrame;  // App's only JFrame (now).
@@ -187,8 +193,8 @@ class GUIManager
     		DagBrowserPanel theDagBrowserPanel,
     		AppGUIFactory theAppGUIFactory,
     		Shutdowner theShutdowner,
-    		TracingEventQueue theTracingEventQueue,
-      	ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor
+    		TracingEventQueue theTracingEventQueue
+      	//// ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor
   		)
       {
     		this.theAppInstanceManager= theAppInstanceManager;
@@ -196,24 +202,36 @@ class GUIManager
     		this.theAppGUIFactory= theAppGUIFactory;
     		this.theShutdowner= theShutdowner;
     		this.theTracingEventQueue= theTracingEventQueue;
-      	this.theScheduledThreadPoolExecutor= theScheduledThreadPoolExecutor;
+      	//// this.theScheduledThreadPoolExecutor= theScheduledThreadPoolExecutor;
         }
 
     public void initializeV()
-      /* This method does the initialization that 
+      /* This method does the GUI initialization that 
         could not be done with constructor dependency injection.
-        It does this by running initializeOnEDTV()on the AWT thread.
+        It does it for both Swing and JavaFX.
         */
       {
+
+        // Start Swing GUI.
         EDTUtilities.invokeAndWaitV( // Dispatching on EDT
             new Runnable() {
               @Override
               public void run() { initializeOnEDTV(); }  
               } );
+
+        // Start JavaFX GUI.
+        JavaFXWindows theJavaFXWindows= 
+            new JavaFXWindows();
+        theJavaFXWindows.startJavaFXLaunchV(null); // Start thread that presents
+          // JavaFX GUI window.
+
         }
 
+    
+    // Swing GUI start and stop methods.
+    
     public void initializeOnEDTV() // GUIManager.
-      /* This method does initialization of the GUI.  It must be run on the EDT. 
+      /* This method does initialization of the Swing GUI.  It must be run on the EDT. 
         It builds the app's GUI in a new JFrame and starts it.
         */
       {
@@ -250,12 +268,12 @@ class GUIManager
         }
 
     public void finalizeV()
-      /* This method does finalization.  It is called during shutdown.  
+      /* This method does finalization of the Swing GUI.  It is called during shutdown.  
         It switches to the AWT thread EDT to do its work.
         */
       {
         theAppLog.info("GUIManager.finalizeOnV() called, doing on EDT.");
-        theScheduledThreadPoolExecutor.shutdownNow(); // Terminate pool threads.
+        //// theScheduledThreadPoolExecutor.shutdownNow(); // Terminate pool threads.
         EDTUtilities.invokeAndWaitV( // Dispatching on EDT
             new Runnable() {
               @Override
@@ -384,7 +402,11 @@ class GUIManager
         theJFrame.setVisible(true);  // Make the window visible.
         }
 
-    } // GUIManager
+    
+    // JavaFX GUI start and stop methods are in other files.  See JavaFXWindows.
+
+
+  } // GUIManager
 
 
 class PlatformUI 
