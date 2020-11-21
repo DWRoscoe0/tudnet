@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import javafx.stage.Window;
 
-public class JavaFXWindows
+public class JavaFXGUI
 
   /* This class is used to manage JavaFX operations,
    * including launching and windows.
@@ -15,42 +15,40 @@ public class JavaFXWindows
    * They involve a lot of Java reflection and static methods.
    * To deal with this fact, this class is being made 
    * a Singleton with static access methods.
-
-00000000001111111111222222222233333333334444444444555555555566666666667777777777
-01234567890123456789012345678901234567890123456789012345678901234567890123456789
-
    */
 
   {
   
-    private static JavaFXWindows theJavaFXWindows= null; // The 1 instance.
+    private static JavaFXGUI theJavaFXGUI= null; // The 1 instance.
     
-    public static JavaFXWindows getJavaFXWindows() 
+    public static JavaFXGUI getJavaFXGUI() 
       // This is the instance getter method.
       {
-        if (null == theJavaFXWindows) {
-          theAppLog.error("JavaFXWindows.getJavaFXWindows() "
+        if (null == theJavaFXGUI) {
+          theAppLog.error("JavaFXGUI.getJavaFXGUI() "
               + "Instance not constructed yet!");
-          theJavaFXWindows= initializeJavaFXWindows();
+          theJavaFXGUI= initializeJavaFXGUI();
           }
-        return theJavaFXWindows;
+        return theJavaFXGUI;
         }
 
-    public static JavaFXWindows initializeJavaFXWindows()
-      // This is the initializer and dependency injector.
+    public static JavaFXGUI initializeJavaFXGUI()
+      /* This is the initializer and dependency injector.
+       * It doesn't inject any dependencies yet, but this is where they will go.
+       */
     {
-      if (null != theJavaFXWindows)
-        theAppLog.error("JavaFXWindows.initializeJavaFXWindows() "
+      if (null != theJavaFXGUI)
+        theAppLog.error("JavaFXGUI.initializeJavaFXGUI() "
             + "Instance already constructed!");
         else
-        theJavaFXWindows= new JavaFXWindows();
-      return theJavaFXWindows;
+        theJavaFXGUI= new JavaFXGUI();
+      return theJavaFXGUI;
       }
 
     private Map<Window,Boolean> windowMap= // Stores showing windows. 
         new HashMap<Window,Boolean>();
 
-    private JavaFXWindows() {} // private constructor guarantees single instance.
+    private JavaFXGUI() {} // private constructor guarantees single instance.
     
     /*  ////
       {

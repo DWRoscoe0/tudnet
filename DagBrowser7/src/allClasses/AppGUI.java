@@ -20,7 +20,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.plaf.FontUIResource;
 
-import allClasses.javafx.JavaFXWindows;
+import allClasses.javafx.JavaFXGUI;
 import javafx.application.Platform;
 
 import static allClasses.AppLog.theAppLog;  // For appLogger;
@@ -186,7 +186,7 @@ class GUIManager
 
     // Other AppGUI instance variables.
     private JFrame theJFrame;  // App's only JFrame (now).
-    private JavaFXWindows theJavaFXWindows;
+    private JavaFXGUI theJavaFXGUI;
 
     GUIManager(   // Constructor. 
     		AppInstanceManager theAppInstanceManager,
@@ -194,7 +194,7 @@ class GUIManager
     		AppGUIFactory theAppGUIFactory,
     		Shutdowner theShutdowner,
     		TracingEventQueue theTracingEventQueue,
-    		JavaFXWindows theJavaFXWindows
+    		JavaFXGUI theJavaFXGUI
   		)
       {
     		this.theAppInstanceManager= theAppInstanceManager;
@@ -202,7 +202,7 @@ class GUIManager
     		this.theAppGUIFactory= theAppGUIFactory;
     		this.theShutdowner= theShutdowner;
     		this.theTracingEventQueue= theTracingEventQueue;
-    		this.theJavaFXWindows= theJavaFXWindows;
+    		this.theJavaFXGUI= theJavaFXGUI;
         }
 
     public void initializeV()
@@ -220,7 +220,7 @@ class GUIManager
               } );
 
         // Start JavaFX GUI.
-        theJavaFXWindows.startJavaFXLaunchV(null); // Start thread that presents
+        theJavaFXGUI.startJavaFXLaunchV(null); // Start thread that presents
           // JavaFX GUI window.
 
         }
@@ -283,7 +283,7 @@ class GUIManager
             new Runnable() {
               @Override
               public void run() { 
-                theJavaFXWindows.finalizeV();
+                theJavaFXGUI.finalizeV();
                 } } );
         // appLogger.info("GUIManager.finalizeOnV() ends.");
         }
@@ -400,7 +400,7 @@ class GUIManager
         }
 
     
-    // JavaFX GUI start and stop methods are in other files.  See JavaFXWindows.
+    // JavaFX GUI start and stop methods are in other files.  See JavaFXGUI.
 
 
   } // GUIManager

@@ -33,7 +33,7 @@ public class JavaFXApp extends Application
           theBorderPane.setCenter(theVBox);
           primaryStage.setScene(theScene);
           primaryStage.show();
-          JavaFXWindows.getJavaFXWindows().recordOpenWindowV(primaryStage);
+          JavaFXGUI.getJavaFXGUI().recordOpenWindowV(primaryStage);
         } catch(Exception e) {
           e.printStackTrace();
         }

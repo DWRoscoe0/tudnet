@@ -15,7 +15,7 @@ import javax.swing.JFrame;
 
 import allClasses.ifile.EpiFileRoots;
 import allClasses.ifile.IRoots;
-import allClasses.javafx.JavaFXWindows;
+import allClasses.javafx.JavaFXGUI;
 
 public class AppGUIFactory {  // For classes with GUI lifetimes.
 
@@ -183,14 +183,14 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
           theDataRoot, 
           theMetaRoot
           );
-      JavaFXWindows theJavaFXWindows= JavaFXWindows.initializeJavaFXWindows();
+      JavaFXGUI theJavaFXGUI= JavaFXGUI.initializeJavaFXGUI();
       GUIManager theGUIBuilderStarter= new GUIManager( 
         theAppInstanceManager,
         theDagBrowserPanel,
         this, // GUIBuilderStarter gets to know the factory that made it. 
         theShutdowner,
         theTracingEventQueue,
-        theJavaFXWindows
+        theJavaFXGUI
         );
       AppGUI theAppGUI= new AppGUI( 
         theConnectionManagerEpiThread,
