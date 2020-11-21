@@ -183,18 +183,18 @@ class GUIManager
 		private AppGUIFactory theAppGUIFactory;
 		private Shutdowner theShutdowner;
 		private TracingEventQueue theTracingEventQueue;
-    //// private ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor;
 
     // Other AppGUI instance variables.
     private JFrame theJFrame;  // App's only JFrame (now).
+    private JavaFXWindows theJavaFXWindows;
 
     GUIManager(   // Constructor. 
     		AppInstanceManager theAppInstanceManager,
     		DagBrowserPanel theDagBrowserPanel,
     		AppGUIFactory theAppGUIFactory,
     		Shutdowner theShutdowner,
-    		TracingEventQueue theTracingEventQueue
-      	//// ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor
+    		TracingEventQueue theTracingEventQueue,
+    		JavaFXWindows theJavaFXWindows
   		)
       {
     		this.theAppInstanceManager= theAppInstanceManager;
@@ -202,7 +202,7 @@ class GUIManager
     		this.theAppGUIFactory= theAppGUIFactory;
     		this.theShutdowner= theShutdowner;
     		this.theTracingEventQueue= theTracingEventQueue;
-      	//// this.theScheduledThreadPoolExecutor= theScheduledThreadPoolExecutor;
+    		this.theJavaFXWindows= theJavaFXWindows;
         }
 
     public void initializeV()
@@ -220,8 +220,6 @@ class GUIManager
               } );
 
         // Start JavaFX GUI.
-        JavaFXWindows theJavaFXWindows= 
-            new JavaFXWindows();
         theJavaFXWindows.startJavaFXLaunchV(null); // Start thread that presents
           // JavaFX GUI window.
 
@@ -273,7 +271,6 @@ class GUIManager
         */
       {
         theAppLog.info("GUIManager.finalizeOnV() called, doing on EDT.");
-        //// theScheduledThreadPoolExecutor.shutdownNow(); // Terminate pool threads.
         EDTUtilities.invokeAndWaitV( // Dispatching on EDT
             new Runnable() {
               @Override
@@ -286,7 +283,7 @@ class GUIManager
             new Runnable() {
               @Override
               public void run() { 
-                JavaFXWindows.closeWindows();
+                theJavaFXWindows.finalizeV();
                 } } );
         // appLogger.info("GUIManager.finalizeOnV() ends.");
         }
