@@ -1,42 +1,33 @@
 package allClasses.javafx;
 
 import javafx.application.Application;
-import javafx.geometry.Pos;
-import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 public class JavaFXApp extends Application
 
+  /* This class defines the JavaFX "Application".
+   * It's only purpose is to satisfy the requirement for
+   * a subclass of javafx.application.Application    * in the JavaFX Life-Cycle.
+   * 
+   * The name "Application" is a little misleading.
+   * It includes only the JavaFX part of the GUI.  
+   * It does not include a possible Swing part.
+   * It does not include the non-GUI business logic.
+   * 
+   * The only method defined is start(.),
+   * and it does nothing but delegate to a JavaFXGUI method.
+   * Start runs only on the JavaFX application thread. 
+   */
+
   {
     
     @Override
-    public void start(Stage primaryStage) {
-        try {
-          BorderPane theBorderPane = new BorderPane();
-          Scene theScene = new Scene(theBorderPane,400,400);
-          theScene.getStylesheets().add(getClass()
-              .getResource("application.css").toExternalForm());
-          Label theLabel = 
-              new Label("JavaFX sub-Application window!");
-  
-          Button theButton = new Button("Who wrote this app?");
-          theButton.setOnAction(e -> theLabel.setText(
-              "David Roscoe wrote this app!"));
-          
-          VBox theVBox = new VBox(15.0, theLabel, theButton);
-          theVBox.setAlignment(Pos.CENTER);
-          
-          theBorderPane.setCenter(theVBox);
-          primaryStage.setScene(theScene);
-          primaryStage.show();
-          JavaFXGUI.getJavaFXGUI().recordOpenWindowV(primaryStage);
-        } catch(Exception e) {
-          e.printStackTrace();
+    public void start(Stage fromLauncherToBeIgnoredStage)
+      {
+        fromLauncherToBeIgnoredStage= null; // Set to null to garbage collect
+          // the ignored and unused Stage.  We will construct our own Stages.
+        
+        JavaFXGUI.getJavaFXGUI().continueLaunchV();
         }
-      }
   
     }

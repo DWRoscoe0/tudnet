@@ -6,6 +6,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 import allClasses.Shutdowner;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 import javafx.stage.Window;
 
 public class JavaFXGUI
@@ -59,14 +66,6 @@ public class JavaFXGUI
 
     private JavaFXGUI() {} // private constructor guarantees single instance.
     
-    /*  ////
-      {
-        Stage theStage= new Stage(); // Construct Stage.
-        recordOpenWindowV(theStage); // Record it in map.
-        return theStage;
-        }
-     */  ////
-    
     public void recordOpenWindowV(Window theWindow)
       /* This method records an open (showing) window.  */
       {
@@ -90,11 +89,11 @@ public class JavaFXGUI
           new Runnable() {
             @Override
             public void run() {
-              JavaFXApp.launch(JavaFXApp.class, args);
+              JavaFXApp.launch(JavaFXApp.class, args); // Launch JavaFX sub-App.
               JavaFXGUI.getJavaFXGUI().theShutdowner.requestAppShutdownV();
               }
             };
-        Thread javaFXLauncherThread= // Create launcher thread.
+        Thread javaFXLauncherThread= // Create launcher thread from Runnable.
           new Thread(
             javaFXRunnable,
             "JavaFXLauncher" // Thread name.
@@ -102,6 +101,71 @@ public class JavaFXGUI
         javaFXLauncherThread.start(); // Start launcher thread.
         }
     
+    public void continueLaunchV()
+      /* This method continues the launch begun by 
+       * the Application subclass start(.) method. 
+       * It will run only on the JavaFX application thread. 
+       */
+      {
+        // Create a couple of demo windows.
+        new DemoStage();
+        new DemoStage();
+        
+        // Return to Application.start().
+        // After start(.) returns, the launch will be complete.
+        }
+    
+    /*  ////
+      {
+        Stage theStage= new Stage(); // Construct Stage.
+        recordOpenWindowV(theStage); // Record it in map.
+        return theStage;
+        }
+     */  ////
+    
+    class EpiStage extends Stage 
+      { 
+        public EpiStage()
+          /* */
+          {}
+      }
+    
+    class DemoStage extends EpiStage 
+      { 
+        public DemoStage()
+          /* This method finishes the launch begun by the Application subclass. 
+           * It should run only on the JavaFX application thread. 
+           */
+          {
+            try {
+              BorderPane theBorderPane = new BorderPane();
+              Scene theScene = new Scene(theBorderPane,400,400);
+              theScene.getStylesheets().add(getClass()
+                  .getResource("application.css").toExternalForm());
+              Label theLabel = 
+                  new Label("JavaFX sub-Application window!");
+      
+              Button theButton = new Button("Who wrote this app?");
+              theButton.setOnAction(e -> theLabel.setText(
+                  "David Roscoe wrote this app!"));
+              
+              VBox theVBox = new VBox(15.0, theLabel, theButton);
+              theVBox.setAlignment(Pos.CENTER);
+              
+              theBorderPane.setCenter(theVBox);
+              //// mainStage.setScene(theScene);
+              setScene(theScene);
+              //// mainStage.show();
+              show();
+              //// JavaFXGUI.getJavaFXGUI().recordOpenWindowV(mainStage);
+              //// JavaFXGUI.getJavaFXGUI().recordOpenWindowV(this);
+              recordOpenWindowV(this);
+            } catch(Exception e) {
+              e.printStackTrace();
+            }
+          }
+        }
+
     public void finalizeV()
       /* This method finalizes the JavaFX GUI.
        * It does this by closing (hiding) all open (showing) JavaFX windows.
