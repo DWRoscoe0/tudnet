@@ -107,12 +107,12 @@ public class JavaFXGUI
        * It will run only on the JavaFX application thread. 
        */
       {
-        // Create a couple of demo windows.
-        new DemoStage();
-        new DemoStage();
+        // Create a couple of windows aka Stages.
+        new DemoStage(this);
+        new TreeStage(this);
         
-        // Return to Application.start().
-        // After start(.) returns, the launch will be complete.
+        // We will now return to Application.start(.).
+        // After Application.start(.) returns, the launch will be complete.
         }
     
     /*  ////
@@ -122,49 +122,6 @@ public class JavaFXGUI
         return theStage;
         }
      */  ////
-    
-    class EpiStage extends Stage 
-      { 
-        public EpiStage()
-          /* */
-          {}
-      }
-    
-    class DemoStage extends EpiStage 
-      { 
-        public DemoStage()
-          /* This method finishes the launch begun by the Application subclass. 
-           * It should run only on the JavaFX application thread. 
-           */
-          {
-            try {
-              BorderPane theBorderPane = new BorderPane();
-              Scene theScene = new Scene(theBorderPane,400,400);
-              theScene.getStylesheets().add(getClass()
-                  .getResource("application.css").toExternalForm());
-              Label theLabel = 
-                  new Label("JavaFX sub-Application window!");
-      
-              Button theButton = new Button("Who wrote this app?");
-              theButton.setOnAction(e -> theLabel.setText(
-                  "David Roscoe wrote this app!"));
-              
-              VBox theVBox = new VBox(15.0, theLabel, theButton);
-              theVBox.setAlignment(Pos.CENTER);
-              
-              theBorderPane.setCenter(theVBox);
-              //// mainStage.setScene(theScene);
-              setScene(theScene);
-              //// mainStage.show();
-              show();
-              //// JavaFXGUI.getJavaFXGUI().recordOpenWindowV(mainStage);
-              //// JavaFXGUI.getJavaFXGUI().recordOpenWindowV(this);
-              recordOpenWindowV(this);
-            } catch(Exception e) {
-              e.printStackTrace();
-            }
-          }
-        }
 
     public void finalizeV()
       /* This method finalizes the JavaFX GUI.
@@ -177,4 +134,46 @@ public class JavaFXGUI
           theWindow.hide();
         }
     
+    }
+
+
+class EpiStage extends Stage 
+  { 
+    public EpiStage()
+      /* */
+      {}
+  }
+
+class DemoStage extends EpiStage 
+  { 
+    public DemoStage(JavaFXGUI theJavaFXGUI)
+      /* This method finishes the launch begun by the Application subclass. 
+       * It should run only on the JavaFX application thread. 
+       */
+      {
+        try {
+          BorderPane theBorderPane = new BorderPane();
+          Scene theScene = new Scene(theBorderPane,400,400);
+          theScene.getStylesheets().add(getClass()
+              .getResource("application.css").toExternalForm());
+          Label theLabel = 
+              new Label("JavaFX sub-Application window!");
+  
+          Button theButton = new Button("Who wrote this app?");
+          theButton.setOnAction(e -> theLabel.setText(
+              "David Roscoe wrote this app!"));
+          
+          VBox theVBox = new VBox(15.0, theLabel, theButton);
+          theVBox.setAlignment(Pos.CENTER);
+          
+          theBorderPane.setCenter(theVBox);
+          setScene(theScene);
+          show();
+          theJavaFXGUI.recordOpenWindowV(this);
+        } catch(Exception e) {
+          //// e.printStackTrace();
+          theAppLog.error("DemoStage.TreeStage(.) "+e);
+        }
+      }
+
     }
