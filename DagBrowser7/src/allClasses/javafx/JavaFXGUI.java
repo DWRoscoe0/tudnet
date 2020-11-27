@@ -6,13 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import allClasses.Shutdowner;
-import javafx.geometry.Pos;
-import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
+import javafx.scene.Node;
 import javafx.stage.Window;
 
 public class JavaFXGUI
@@ -27,13 +21,21 @@ public class JavaFXGUI
    */
 
   {
+
     // Injected dependencies.
+
     private Shutdowner theShutdowner;
-  
+
+
+    // Other variables
+
     private Map<Window,Boolean> windowMap= // Stores showing windows. 
         new HashMap<Window,Boolean>();
   
     private static JavaFXGUI theJavaFXGUI= null; // The 1 instance.
+
+
+    // Methods
     
     public static JavaFXGUI getJavaFXGUI() 
       // This is the instance getter method.
@@ -64,7 +66,7 @@ public class JavaFXGUI
       return theJavaFXGUI;
       }
 
-    private JavaFXGUI() {} // private constructor guarantees single instance.
+    private JavaFXGUI() {} // private constructor guarantees a single instance.
     
     public void recordOpenWindowV(Window theWindow)
       /* This method records an open (showing) window.  */
@@ -72,6 +74,9 @@ public class JavaFXGUI
         windowMap.put(theWindow, true); // Record it in map.
         }
 
+    public void setDefaultFont(Node theNode) ////
+      {}
+    
     public void startJavaFXLaunchV(String[] args) 
     
       /* This method creates and starts a thread 
@@ -103,16 +108,19 @@ public class JavaFXGUI
     
     public void continueLaunchV()
       /* This method continues the launch begun by 
-       * the Application subclass start(.) method. 
-       * It will run only on the JavaFX application thread. 
+       * the Application subclass start(Stage) method. 
+       * It should be run only on the JavaFX application thread. 
        */
       {
-        // Create a couple of windows aka Stages.
-        new DemoStage(this);
-        new TreeStage(this);
+        ///////// Create a couple of temporary demonstration windows aka Stages.
+      
+        new TreeStage().initializeV(this); // Create tree demonstration.
         
-        // We will now return to Application.start(.).
-        // After Application.start(.) returns, the launch will be complete.
+        DemoStage.makeDemoStage(this); // Create button and label demonstration.
+
+
+        // This method will now return to Application.start(Stage).
+        // After Application.start(Stage) returns, the launch will be complete.
         }
     
     /*  ////
@@ -134,46 +142,4 @@ public class JavaFXGUI
           theWindow.hide();
         }
     
-    }
-
-
-class EpiStage extends Stage 
-  { 
-    public EpiStage()
-      /* */
-      {}
-  }
-
-class DemoStage extends EpiStage 
-  { 
-    public DemoStage(JavaFXGUI theJavaFXGUI)
-      /* This method finishes the launch begun by the Application subclass. 
-       * It should run only on the JavaFX application thread. 
-       */
-      {
-        try {
-          BorderPane theBorderPane = new BorderPane();
-          Scene theScene = new Scene(theBorderPane,400,400);
-          theScene.getStylesheets().add(getClass()
-              .getResource("application.css").toExternalForm());
-          Label theLabel = 
-              new Label("JavaFX sub-Application window!");
-  
-          Button theButton = new Button("Who wrote this app?");
-          theButton.setOnAction(e -> theLabel.setText(
-              "David Roscoe wrote this app!"));
-          
-          VBox theVBox = new VBox(15.0, theLabel, theButton);
-          theVBox.setAlignment(Pos.CENTER);
-          
-          theBorderPane.setCenter(theVBox);
-          setScene(theScene);
-          show();
-          theJavaFXGUI.recordOpenWindowV(this);
-        } catch(Exception e) {
-          //// e.printStackTrace();
-          theAppLog.error("DemoStage.TreeStage(.) "+e);
-        }
-      }
-
     }

@@ -14,7 +14,7 @@ public class JavaFXApp extends Application
    * It does not include a possible Swing part.
    * It does not include the non-GUI business logic.
    * 
-   * The only method defined is start(.),
+   * The only method defined is start(Stage),
    * and it does nothing but delegate to a JavaFXGUI method.
    * Start runs only on the JavaFX application thread. 
    */
