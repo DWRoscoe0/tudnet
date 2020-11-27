@@ -118,6 +118,7 @@ public class JavaFXGUI
         
         DemoStage.makeDemoStage(this); // Create button and label demonstration.
 
+        Navigation.makeStageV(this); // Create Navigation Stage.
 
         // This method will now return to Application.start(Stage).
         // After Application.start(Stage) returns, the launch will be complete.
