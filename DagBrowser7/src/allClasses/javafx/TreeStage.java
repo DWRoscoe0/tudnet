@@ -9,9 +9,10 @@ import javafx.stage.Stage;
 public class TreeStage extends EpiStage 
   { 
 
-    public void initializeV(JavaFXGUI theJavaFXGUI)
+    //// public void initializeV(JavaFXGUI theJavaFXGUI)
+    public static Stage makeStage(JavaFXGUI theJavaFXGUI)
       {
-        Stage theStage= this;
+        EpiStage theEpiStage= EpiStage.prepareEpiStage(theJavaFXGUI);
         TreeItem<String> rootTreeItem= new TreeItem<String> ("Inbox");
         rootTreeItem.setExpanded(true);
         for (int i= 1; i < 6; i++) {
@@ -20,11 +21,11 @@ public class TreeStage extends EpiStage
           }
         TreeView<String> theTreeView= new TreeView<String>(rootTreeItem);        
         Scene theScene= new Scene(theTreeView, 300, 250);
-        EpiStage.finishSettingsAndShowV(
-          theStage,
-          theJavaFXGUI, 
+        theEpiStage.finishSettingsAndShowV(
+          theEpiStage,
           theScene,
           "Tree View Sample"
           );
+        return theEpiStage;
       }
     }

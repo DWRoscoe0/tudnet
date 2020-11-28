@@ -112,11 +112,13 @@ public class JavaFXGUI
        * It should be run only on the JavaFX application thread. 
        */
       {
-        ///////// Create a couple of temporary demonstration windows aka Stages.
+        ///////// Create some temporary demonstration windows 
+        // and an actual useful one.
       
-        new TreeStage().initializeV(this); // Create tree demonstration.
+        //// new TreeStage().initializeV(this); // Create tree demonstration.
+        TreeStage.makeStage(this); // Create tree demonstration.
         
-        DemoStage.makeDemoStage(this); // Create button and label demonstration.
+        DemoStage.makeStage(this); // Create button demonstration.
 
         Navigation.makeStageV(this); // Create Navigation Stage.
 

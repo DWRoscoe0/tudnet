@@ -1,5 +1,6 @@
 package allClasses.javafx;
 
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
@@ -12,13 +13,18 @@ class EpiStage
 
   { 
 
-    public EpiStage()
-      /* */
-      {}
+    private JavaFXGUI theJavaFXGUI;
 
-    public static void finishSettingsAndShowV(
+    public static EpiStage prepareEpiStage(JavaFXGUI theJavaFXGUI)
+      /* */
+      {
+        EpiStage theEpiStage= new EpiStage();
+        theEpiStage.theJavaFXGUI= theJavaFXGUI;
+        return theEpiStage;
+        }
+
+    public void finishSettingsAndShowV(
         Stage theStage,
-        JavaFXGUI theJavaFXGUI,
         Scene theScene,
         String titleString
         )
@@ -27,6 +33,12 @@ class EpiStage
        * their construction and initialization.
        */
       {
+
+        Node rootNode= //// theBorderPane;
+            theScene.getRoot();
+        rootNode.setStyle(
+            "-fx-font-size: 22; -fx-font-family: \"monospace\"; ");
+
         theStage.setScene(theScene);
         theStage.setTitle(titleString);
         
