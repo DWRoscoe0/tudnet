@@ -9,7 +9,6 @@ import javafx.stage.Stage;
 public class TreeStage extends EpiStage 
   { 
 
-    //// public void initializeV(JavaFXGUI theJavaFXGUI)
     public static Stage makeStage(JavaFXGUI theJavaFXGUI)
       {
         EpiStage theEpiStage= EpiStage.prepareEpiStage(theJavaFXGUI);

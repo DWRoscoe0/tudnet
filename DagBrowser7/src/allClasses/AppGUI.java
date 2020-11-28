@@ -220,7 +220,7 @@ class GUIManager
               } );
 
         // Start JavaFX GUI.
-        theJavaFXGUI.startJavaFXLaunchV(null); // Start thread that presents
+        theJavaFXGUI.startJavaFXLaunchV(); // Start thread that presents
           // JavaFX GUI window.
 
         }

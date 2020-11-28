@@ -183,9 +183,8 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
           theDataRoot, 
           theMetaRoot
           );
-      JavaFXGUI theJavaFXGUI= JavaFXGUI.initializeJavaFXGUI(
-          theShutdowner
-          );
+      JavaFXGUI theJavaFXGUI= JavaFXGUI.getJavaFXGUI(
+          theInitialRootDataNode,theShutdowner);
       GUIManager theGUIBuilderStarter= new GUIManager( 
         theAppInstanceManager,
         theDagBrowserPanel,

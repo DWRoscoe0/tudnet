@@ -5,8 +5,8 @@ import static allClasses.AppLog.theAppLog;
 import java.util.HashMap;
 import java.util.Map;
 
+import allClasses.DataNode;
 import allClasses.Shutdowner;
-import javafx.scene.Node;
 import javafx.stage.Window;
 
 public class JavaFXGUI
@@ -16,8 +16,7 @@ public class JavaFXGUI
    * 
    * The JavaFX app launching and life-cycle are NOT elegant.
    * They involve a lot of Java reflection and static methods.
-   * To deal with this fact, this class is being made 
-   * a Singleton with static access methods.
+   * To deal with this fact, this class is a Singleton.
    */
 
   {
@@ -36,30 +35,30 @@ public class JavaFXGUI
 
 
     // Methods
-    
-    public static JavaFXGUI getJavaFXGUI() 
-      // This is the instance getter method.
+
+    public static JavaFXGUI getInstanceJavaFXGUI() 
+      /* This is the instance getter method.  */
       {
         if (null == theJavaFXGUI) {
-          theAppLog.error("JavaFXGUI.getJavaFXGUI() "
-              + "Instance not constructed yet!");
-          theJavaFXGUI= initializeJavaFXGUI(null);
+          throw new IllegalStateException(
+              "JavaFXGUI Instance not constructed yet!");
           }
         return theJavaFXGUI;
         }
 
-    public static JavaFXGUI initializeJavaFXGUI(
+    public static JavaFXGUI getJavaFXGUI(
+          DataNode theInitialRootDataNode,
           Shutdowner theShutdowner
           )
-      /* This is the initializer and dependency injector.
-       * It doesn't inject any dependencies yet, but this is where they will go.
+      /* This method constructs and initializes which willl be
+       * a single instance of the JavaFXGUI object.
        */
     {
       if (null != theJavaFXGUI)
-        theAppLog.error("JavaFXGUI.initializeJavaFXGUI() "
+        theAppLog.error("JavaFXGUI.getJavaFXGUI(.) "
             + "Instance already constructed!");
         else
-        { // Create instance and store dependencies into it.
+        { // Create instance and store injected dependencies.
           theJavaFXGUI= new JavaFXGUI();
           theJavaFXGUI.theShutdowner= theShutdowner;
           }
@@ -73,11 +72,8 @@ public class JavaFXGUI
       {
         windowMap.put(theWindow, true); // Record it in map.
         }
-
-    public void setDefaultFont(Node theNode) ////
-      {}
     
-    public void startJavaFXLaunchV(String[] args) 
+    public void startJavaFXLaunchV()
     
       /* This method creates and starts a thread 
        * which launches the JavaFX sub-Application.
@@ -94,8 +90,9 @@ public class JavaFXGUI
           new Runnable() {
             @Override
             public void run() {
-              JavaFXApp.launch(JavaFXApp.class, args); // Launch JavaFX sub-App.
-              JavaFXGUI.getJavaFXGUI().theShutdowner.requestAppShutdownV();
+              JavaFXApp.launch( // Launch sub-App as JavaFX Application.
+                  JavaFXApp.class, (String[])null);
+              theShutdowner.requestAppShutdownV();
               }
             };
         Thread javaFXLauncherThread= // Create launcher thread from Runnable.
@@ -106,16 +103,15 @@ public class JavaFXGUI
         javaFXLauncherThread.start(); // Start launcher thread.
         }
     
-    public void continueLaunchV()
+    public void continueStartV()
       /* This method continues the launch begun by 
        * the Application subclass start(Stage) method. 
        * It should be run only on the JavaFX application thread. 
+       * It creates some temporary demonstration windows
+       * and an actual useful one.
        */
       {
-        ///////// Create some temporary demonstration windows 
-        // and an actual useful one.
       
-        //// new TreeStage().initializeV(this); // Create tree demonstration.
         TreeStage.makeStage(this); // Create tree demonstration.
         
         DemoStage.makeStage(this); // Create button demonstration.
@@ -125,14 +121,6 @@ public class JavaFXGUI
         // This method will now return to Application.start(Stage).
         // After Application.start(Stage) returns, the launch will be complete.
         }
-    
-    /*  ////
-      {
-        Stage theStage= new Stage(); // Construct Stage.
-        recordOpenWindowV(theStage); // Record it in map.
-        return theStage;
-        }
-     */  ////
 
     public void finalizeV()
       /* This method finalizes the JavaFX GUI.

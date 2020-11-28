@@ -34,8 +34,7 @@ class EpiStage
        */
       {
 
-        Node rootNode= //// theBorderPane;
-            theScene.getRoot();
+        Node rootNode= theScene.getRoot();
         rootNode.setStyle(
             "-fx-font-size: 22; -fx-font-family: \"monospace\"; ");
 

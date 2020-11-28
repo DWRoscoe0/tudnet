@@ -7,27 +7,33 @@ public class JavaFXApp extends Application
 
   /* This class defines the JavaFX "Application".
    * It's only purpose is to satisfy the requirement for
-   * a subclass of javafx.application.Application    * in the JavaFX Life-Cycle.
+   * a subclass of javafx.application.Application
+   * in the not-elegant JavaFX Life-Cycle.
    * 
-   * The name "Application" is a little misleading.
+   * The name "Application" is misleading.
    * It includes only the JavaFX part of the GUI.  
    * It does not include a possible Swing part.
    * It does not include the non-GUI business logic.
    * 
    * The only method defined is start(Stage),
-   * and it does nothing but delegate to a JavaFXGUI method.
-   * Start runs only on the JavaFX application thread. 
    */
 
   {
     
     @Override
     public void start(Stage fromLauncherToBeIgnoredStage)
+      /* This method does only 2 things:
+       * * It dereferences the Stage argument so it will be garbage collected.
+       *   The Stages this app needs will be constructed elsewhere.
+       * * It immediately calls back to JavaFXGUI to finish what needs doing
+       *   in the launch process.
+       *
+       * This method runs on the JavaFX application thread. 
+       */
       {
-        fromLauncherToBeIgnoredStage= null; // Set to null to garbage collect
-          // the ignored and unused Stage.  We will construct our own Stages.
+        fromLauncherToBeIgnoredStage= null; // Set to null to garbage collect.
         
-        JavaFXGUI.getJavaFXGUI().continueLaunchV();
+        JavaFXGUI.getInstanceJavaFXGUI().continueStartV();
         }
   
     }
