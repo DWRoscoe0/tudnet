@@ -24,7 +24,7 @@ public class JavaFXGUI
     // Injected dependencies.
 
     private Shutdowner theShutdowner;
-
+    private DataNode theInitialRootDataNode;
 
     // Other variables
 
@@ -36,7 +36,7 @@ public class JavaFXGUI
 
     // Methods
 
-    public static JavaFXGUI getInstanceJavaFXGUI() 
+    public static JavaFXGUI getInstanceJavaFXGUI()
       /* This is the instance getter method.  */
       {
         if (null == theJavaFXGUI) {
@@ -50,7 +50,7 @@ public class JavaFXGUI
           DataNode theInitialRootDataNode,
           Shutdowner theShutdowner
           )
-      /* This method constructs and initializes which willl be
+      /* This method constructs and initializes which will be
        * a single instance of the JavaFXGUI object.
        */
     {
@@ -61,6 +61,7 @@ public class JavaFXGUI
         { // Create instance and store injected dependencies.
           theJavaFXGUI= new JavaFXGUI();
           theJavaFXGUI.theShutdowner= theShutdowner;
+          theJavaFXGUI.theInitialRootDataNode= theInitialRootDataNode;
           }
       return theJavaFXGUI;
       }
@@ -116,7 +117,8 @@ public class JavaFXGUI
         
         DemoStage.makeStage(this); // Create button demonstration.
 
-        Navigation.makeStageV(this); // Create Navigation Stage.
+        Navigation.makeStageV( // Create Navigation Stage.
+            this, theInitialRootDataNode);
 
         // This method will now return to Application.start(Stage).
         // After Application.start(Stage) returns, the launch will be complete.
