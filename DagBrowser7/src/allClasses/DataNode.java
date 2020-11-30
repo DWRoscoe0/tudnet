@@ -1,7 +1,7 @@
 package allClasses;
 
 
-public class DataNode
+public abstract class DataNode
 
   extends DNode<DataNode>  
 
@@ -18,5 +18,5 @@ public class DataNode
 
 			  {
   			  }
-
-    }
+  
+      }

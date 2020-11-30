@@ -93,23 +93,10 @@ public class ListMultiLink<
         {
           return theListOfEs.iterator();
           }
-      
-      public Iterable<E> getSelfIterable() //// new
-        {
-          Iterable<E> theIterableOfE= getIterableOfE();
-          return theIterableOfE;
-          }
 
-      //// @Override
-      public Iterable<E> getIterableOfE()
-        // Returns the already Iterable List of links.
-        {
-          return theListOfEs;
-          }
-
-      public Iterable<E> getLinksIterable()  //// new
+      public Iterable<E> getLinksIterable()
         { 
-          return getIterableOfE(); 
+          return theListOfEs;
           }
 
       }

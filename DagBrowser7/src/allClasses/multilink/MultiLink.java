@@ -1,12 +1,8 @@
 package allClasses.multilink;
 
-import java.util.Iterator;
-
 public interface MultiLink<
     E // Element type. 
     > 
-
-  //// extends Iterable<E>
 
   {
   
@@ -73,16 +69,8 @@ public interface MultiLink<
       /* Set the element at position indexI, overwriting whatever is there.  
        */
 
-    public Iterator<E> iterator();
-      /* Returns an iterator on the links.
-       */
-
-    public Iterable<E> getSelfIterable(); //// new
-      /* Returns an iteratable containing only this object.
-       */
-
-    public Iterable<E> getLinksIterable();  //// new
-      /* Returns an iteratable containing the children of this object.
+    public Iterable<E> getLinksIterable();
+      /* Returns an Iteratable containing the links of this object.
        */
 
     }

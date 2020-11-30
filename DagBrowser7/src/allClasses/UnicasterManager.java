@@ -260,7 +260,6 @@ public class UnicasterManager
       {
     	  int connectedI= 0;
     	  int disconnectedI= 0;
-        //// for ( DataNode childDataNode: this)
         for // For each child
           ( DataNode childDataNode : 
             childMultiLinkOfDataNodes.getLinksIterable()
@@ -280,7 +279,6 @@ public class UnicasterManager
       {
         theAppLog.debug("passToUnicastersV(..), to only connected Unicasters, message:"
           + messageString);
-        //// for ( DataNode childDataNode: this )  // For every Unicaster 
         for // For every Unicaster
           ( DataNode childDataNode : 
             childMultiLinkOfDataNodes.getLinksIterable()

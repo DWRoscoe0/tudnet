@@ -3,14 +3,12 @@ package allClasses.multilink;
 import static allClasses.AppLog.theAppLog;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 
 public interface ElementMultiLink<E extends ElementMultiLink<E>> 
 
   extends 
-    MultiLink<E> //// ,
-    //// Iterable<E>
+    MultiLink<E>
 
   {
 
@@ -85,31 +83,12 @@ public interface ElementMultiLink<E extends ElementMultiLink<E>>
       return null;
       }
 
-  default Iterable<E> getSelfIterable() //// new
-    {
-      Iterable<E> theIterableOfE= getLinksIterable();
-      return theIterableOfE;
-      }
-
-  //// @SuppressWarnings("unchecked")
-  @Override
-  default Iterator<E> iterator()
-    // The returned iterator is for read access only.
-    {
-      /// ArrayList<E> theArrayList= new ArrayList<E>();  // Create empty list. 
-      /// theArrayList.add((E)this); // Add this as only element.
-      /// return theArrayList.iterator(); // Return iterator on that List.
-      Iterable<E> theIterableOfE= getLinksIterable();
-      return theIterableOfE.iterator();
-      }
-
   @SuppressWarnings("unchecked")
-  default Iterable<E> getLinksIterable()  //// new
+  default Iterable<E> getLinksIterable()
     { 
       ArrayList<E> theArrayList= new ArrayList<E>();  // Create empty list. 
       theArrayList.add((E)this); // Add this as only element.
       return theArrayList;
-      //// return getIterableOfE(); 
       }
 
   }

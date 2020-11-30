@@ -16,8 +16,7 @@ public class EpiTreeItem
 
     public EpiTreeItem(DataNode theDataNode) 
       {
-        super(theDataNode);
-        /// setValue(theDataNode);
+        super(theDataNode); // Was setValue(theDataNode);
         }
 
     @Override 
@@ -31,27 +30,12 @@ public class EpiTreeItem
     public ObservableList<TreeItem<DataNode>> getChildren() 
       {
         if (! childCacheLoadedB) {
-          /*  ////
           Iterator<DataNode> theIterator= 
-              getValue().getChildrenIterable().iterator();
+              getValue().getChildIterable().iterator();
           while (theIterator.hasNext())
             super.getChildren().add(
                 new EpiTreeItem(theIterator.next())
                 );
-          */  ////
-          //// /*  ////
-          DataNode theDataNode= getValue();
-          for 
-            (
-              int childIndexI= 0; 
-              childIndexI < theDataNode.getChildCount();
-              childIndexI++
-              )
-            super.getChildren().add(
-                new EpiTreeItem(
-                    theDataNode.getChild(childIndexI))
-                );
-          //// */  ////
           childCacheLoadedB= true;
           }
         return super.getChildren();
