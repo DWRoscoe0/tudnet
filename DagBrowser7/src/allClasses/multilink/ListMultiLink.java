@@ -21,26 +21,26 @@ public class ListMultiLink<
      */
 
     // Instance variables.
-  
+
       protected List<E> theListOfEs= // Set initially to empty
           new ArrayList<E>(); // ArrayList.
-      
+
       public ListMultiLink() // Constructor.
         { 
           }
-      
+
     // interface MultiLink methods.
       
       @Override
       public boolean isEmptyB() 
         {
-          return (getCountI() == 0);
+          return (getCountI() == 0); // Is empty if there are 0 elements.
           }
 
       @Override
       public int getCountI() 
         {
-          return theListOfEs.size();
+          return theListOfEs.size(); // Count is size of list.
           }
 
       @Override
@@ -93,5 +93,23 @@ public class ListMultiLink<
         {
           return theListOfEs.iterator();
           }
+      
+      public Iterable<E> getSelfIterable() //// new
+        {
+          Iterable<E> theIterableOfE= getIterableOfE();
+          return theIterableOfE;
+          }
 
-    }
+      //// @Override
+      public Iterable<E> getIterableOfE()
+        // Returns the already Iterable List of links.
+        {
+          return theListOfEs;
+          }
+
+      public Iterable<E> getLinksIterable()  //// new
+        { 
+          return getIterableOfE(); 
+          }
+
+      }

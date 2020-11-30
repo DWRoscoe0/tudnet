@@ -14,8 +14,8 @@ public class NamedList
 
 	extends NamedBranch  // Will override all remaining leaf behavior.
 
-	implements 
-    Iterable<DataNode>
+	//// implements 
+  ////   Iterable<DataNode>
   
   /* This is a utility class that is simply a List with a name.
     It is immutable after construction and initialization, 
@@ -189,7 +189,10 @@ public class NamedList
         It increases and returns nodeCountI by the number of nodes finalized.*/
       {
         int nodeTotalI= 0;
-        for ( DataNode theDataNode : childMultiLinkOfDataNodes) // For each child
+        for // For each child
+          ( DataNode theDataNode : 
+            childMultiLinkOfDataNodes.getLinksIterable()
+            )
           nodeTotalI+=   // recursively finalize it, adding the number finalized to total.
             theDataNode.finalizeDataNodesI();
         nodeTotalI+= super.finalizeDataNodesI(); // Finalize base class
@@ -206,7 +209,11 @@ public class NamedList
 		  	  	&& ( this.theDataTreeModel == null )  // our TreeModel is null.
 		  	  	)
 			  	{
-		  	    for ( DataNode theDataNode : childMultiLinkOfDataNodes) // For each child
+		  	    //// for ( DataNode theDataNode : childMultiLinkOfDataNodes) // For each child
+            for // For each child
+              ( DataNode theDataNode : 
+                childMultiLinkOfDataNodes.getLinksIterable()
+                )
 			  			theDataNode.propagateIntoSubtreeV(  // recursively propagate
 			  					theDataTreeModel // the TreeModel 
 			  					);
@@ -241,7 +248,11 @@ public class NamedList
 	      but not into this node.  It remains unchanged.
 		    */
 		  {
-	      for ( DataNode theDataNode : childMultiLinkOfDataNodes)  // For each child
+	      //// for ( DataNode theDataNode : childMultiLinkOfDataNodes)  // For each child
+          for // For each child
+            ( DataNode theDataNode : 
+              childMultiLinkOfDataNodes.getLinksIterable()
+              )
 	  			theDataNode.propagateIntoSubtreeB( // recursively propagate  
 	  					theMaxLogLevel); // the new level into child subtree.
 		  	}
@@ -294,10 +305,21 @@ public class NamedList
         return childMultiLinkOfDataNodes.getE(indexI); 
         }
     
+    /*  ////
 	  public Iterator<DataNode> iterator() 
 		  {
 	      return childMultiLinkOfDataNodes.iterator();
 		  	}
+    */  ////
+
+    public Iterable<DataNode> getChildrenIterable()  //// new
+      /* Returns an Iteratable containing the children of this object.
+       * This version returns the MultiLink links Iterable.
+       * It should be overridden by non-leaf subclasses.
+       */
+      { 
+        return childMultiLinkOfDataNodes.getLinksIterable(); 
+        }
 
 
 	  ///dbg methods.

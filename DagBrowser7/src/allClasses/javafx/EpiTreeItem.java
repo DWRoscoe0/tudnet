@@ -1,5 +1,7 @@
 package allClasses.javafx;
 
+import java.util.Iterator;
+
 import allClasses.DataNode;
 import javafx.collections.ObservableList;
 import javafx.scene.control.TreeItem;
@@ -30,12 +32,14 @@ public class EpiTreeItem
       {
         if (! childCacheLoadedB) {
           /*  ////
-          Iterator<DataNode> theIterator= getValue().iterator();
+          Iterator<DataNode> theIterator= 
+              getValue().getChildrenIterable().iterator();
           while (theIterator.hasNext())
             super.getChildren().add(
-                new TreeItem<DataNode>(theIterator.next())
+                new EpiTreeItem(theIterator.next())
                 );
           */  ////
+          //// /*  ////
           DataNode theDataNode= getValue();
           for 
             (
@@ -47,6 +51,7 @@ public class EpiTreeItem
                 new EpiTreeItem(
                     theDataNode.getChild(childIndexI))
                 );
+          //// */  ////
           childCacheLoadedB= true;
           }
         return super.getChildren();

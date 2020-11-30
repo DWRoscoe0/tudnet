@@ -9,8 +9,8 @@ import java.util.Iterator;
 public interface ElementMultiLink<E extends ElementMultiLink<E>> 
 
   extends 
-    MultiLink<E>,
-    Iterable<E>
+    MultiLink<E> //// ,
+    //// Iterable<E>
 
   {
 
@@ -22,7 +22,7 @@ public interface ElementMultiLink<E extends ElementMultiLink<E>>
     DNode implements this as ElementMultiLink<DataNode>.
     It doesn't actually have any of the interface methods,
     because this interface has default methods for all methods.
-    These methods have not been tested may contain errors.
+    These methods have not been [fully] tested and may contain errors.
     Testing will require implementing MultiLink with
     a MultiLink variable as class NamedList now does,
     but also replacing the variable's value with
@@ -36,20 +36,21 @@ public interface ElementMultiLink<E extends ElementMultiLink<E>>
   @Override
   default boolean isEmptyB() 
     {
-      return false;
+      return false; // False because one element is more than zero.
       }
 
   @Override
   default int getCountI() 
     {
-      return 1;
+      return 1; // Single element means count is one.
       }
 
   @SuppressWarnings("unchecked") ///fix Find a way to type check?
   @Override
   default E getE(int indexI)
     {
-      E resultE= (E) this; // Cast needed to avoid type-conversion error. 
+      E resultE= // Result is this object,
+          (E) this; // cast is needed to avoid type-conversion error. 
       if (0 != indexI) // If index does not select the only element
         resultE= null; // override result to indicate no element.
       return resultE;
@@ -58,9 +59,9 @@ public interface ElementMultiLink<E extends ElementMultiLink<E>>
   @Override
   default int getIndexOfI(E theE) 
     {
-      int resultI= 0; // Assume theE is this
+      int resultI= 0; // Assume theE is this object.
       if (this != theE) // If it's not, override result
-        resultI= -1; // to indicate element not present.
+        resultI= -1; // with -1 to indicate that the element not present.
       return resultI;
       }
 
@@ -84,14 +85,31 @@ public interface ElementMultiLink<E extends ElementMultiLink<E>>
       return null;
       }
 
-  @SuppressWarnings("unchecked")
+  default Iterable<E> getSelfIterable() //// new
+    {
+      Iterable<E> theIterableOfE= getLinksIterable();
+      return theIterableOfE;
+      }
+
+  //// @SuppressWarnings("unchecked")
   @Override
   default Iterator<E> iterator()
     // The returned iterator is for read access only.
     {
+      /// ArrayList<E> theArrayList= new ArrayList<E>();  // Create empty list. 
+      /// theArrayList.add((E)this); // Add this as only element.
+      /// return theArrayList.iterator(); // Return iterator on that List.
+      Iterable<E> theIterableOfE= getLinksIterable();
+      return theIterableOfE.iterator();
+      }
+
+  @SuppressWarnings("unchecked")
+  default Iterable<E> getLinksIterable()  //// new
+    { 
       ArrayList<E> theArrayList= new ArrayList<E>();  // Create empty list. 
       theArrayList.add((E)this); // Add this as only element.
-      return theArrayList.iterator(); // Return iterator on that List.
+      return theArrayList;
+      //// return getIterableOfE(); 
       }
 
   }

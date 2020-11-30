@@ -4,6 +4,7 @@ import static allClasses.AppLog.theAppLog;
 import static allClasses.SystemSettings.NL;
 
 import java.awt.Color;
+import java.util.ArrayList;
 
 import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
@@ -12,6 +13,7 @@ import allClasses.AppLog.LogLevel;
 import allClasses.multilink.ElementMultiLink;
 
 public class DNode<N extends DNode<N>>
+//// public abstract class DNode<N extends DNode<N>> //////////////////////
 
   implements ElementMultiLink<DataNode>
 
@@ -420,6 +422,19 @@ public class DNode<N extends DNode<N>>
   
           return childIndexI;  // Return index as search result.
           } // getIndexOfChild(.)
+
+      //// abstract Iterable<DataNode> getChildrenIterable();  //// new
+      //// /*  ////
+      public Iterable<DataNode> getChildrenIterable()  //// new
+        /* Returns an Iteratable containing the children of this object.
+         * This version returns an empty list.
+         * It should be overridden by non-leaf subclasses.
+         */
+      //// /*  ////
+        { 
+          return new ArrayList<DataNode>(); 
+          }
+      //// */  ////
 
 
   /* Methods which return Strings containing information about the node.

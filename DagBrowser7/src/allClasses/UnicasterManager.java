@@ -260,7 +260,11 @@ public class UnicasterManager
       {
     	  int connectedI= 0;
     	  int disconnectedI= 0;
-    	  for ( DataNode childDataNode: this)
+        //// for ( DataNode childDataNode: this)
+        for // For each child
+          ( DataNode childDataNode : 
+            childMultiLinkOfDataNodes.getLinksIterable()
+            )
     	  	if (((Unicaster)childDataNode).isConnectedB())
     	  		connectedI++; 
     	  		else 
@@ -276,7 +280,11 @@ public class UnicasterManager
       {
         theAppLog.debug("passToUnicastersV(..), to only connected Unicasters, message:"
           + messageString);
-        for ( DataNode childDataNode: this )  // For every Unicaster 
+        //// for ( DataNode childDataNode: this )  // For every Unicaster 
+        for // For every Unicaster
+          ( DataNode childDataNode : 
+            childMultiLinkOfDataNodes.getLinksIterable()
+            )
           { // [ass message to it.
             Unicaster theUnicaster= ((Unicaster)childDataNode);
             if (theUnicaster.isConnectedB())

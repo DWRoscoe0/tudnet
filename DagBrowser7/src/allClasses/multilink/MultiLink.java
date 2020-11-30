@@ -6,7 +6,7 @@ public interface MultiLink<
     E // Element type. 
     > 
 
-  extends Iterable<E>
+  //// extends Iterable<E>
 
   {
   
@@ -20,18 +20,21 @@ public interface MultiLink<
       methods in DataTreeModel.
 
       This interface is fully implemented by ListMultiLink so that
-      it can be used like an ArrayList with a reference to it in an element field.  
+      it can be used like an ArrayList with a reference to it 
+      in an element field.  
       It is now in full use this way and working.
 
       But this interface is also partially implemented for use in another way.
-      DataNode implements the interface so that a DataNode can eventually act as
-      a single-element MultiLink.  This makes it possible for storage compression.
+      DataNode implements the interface so that a DataNode 
+      can eventually act as a single-element MultiLink.  
+      This makes it possible for storage compression.
       ///opt The following changes are tentatively planned:
       * Create class EmptyMultiLink and create a singleton instance of it.
       * Modify the MultiLink mutators to return a MultiLink which is
         either the original one, or a different one that is equivalent.
         Calculate that MultiLink return value as follows:
-        * If the MultiLink has become empty, return the singleton EmptyMultiLink.
+        * If the MultiLink has become empty, 
+          return the singleton EmptyMultiLink.
         * If the MultiLink has only 1 element, return the element,
           which implements the ElementMultiLink interface.
         * If the MultiLink has 2 or more elements, return a ListMultiLink,
@@ -41,19 +44,45 @@ public interface MultiLink<
       */
 
     public boolean isEmptyB(); // Equivalent of isLeaf().
+      /* Returns true if the link collection is empty.  */
 
     public int getCountI(); // Equivalent of getChildCount().
+      /* Returns the number of links.  */
 
     public E getE(int indexI); // Equivalent of DataNode getChild( int indexI );
+      /* Returns link whose index is indexI.
+       * The first link is # 0.  The last link is # getCountI()-1.
+       */
 
-    public int getIndexOfI(E theE); // int getIndexOfChild( Object inChildObject );
+    public int getIndexOfI(E theE); // int getIndexOfChild( inChildObject );
+      /* Returns the index of child theE,
+       * or -1 if theE is not present.
+       */
 
     public void addV(int indexI, E theE);
+      /* Adds element theE to the collection at position indexI.  
+       * The first link is # 0.  The last link is # getCountI()-1.
+       */
 
     public E removeE(int indexI);
+      /* Removes the element at position indexI.  
+       * The first link is # 0.  The last link is # getCountI()-1.
+       */
 
     public E setE(int indexI, E theE);
+      /* Set the element at position indexI, overwriting whatever is there.  
+       */
 
     public Iterator<E> iterator();
+      /* Returns an iterator on the links.
+       */
+
+    public Iterable<E> getSelfIterable(); //// new
+      /* Returns an iteratable containing only this object.
+       */
+
+    public Iterable<E> getLinksIterable();  //// new
+      /* Returns an iteratable containing the children of this object.
+       */
 
     }
