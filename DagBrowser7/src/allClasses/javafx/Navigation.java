@@ -2,7 +2,6 @@ package allClasses.javafx;
 
 import allClasses.DataNode;
 import javafx.scene.Scene;
-import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 
 public class Navigation 
@@ -18,17 +17,11 @@ public class Navigation
         JavaFXGUI theJavaFXGUI, DataNode theInitialRootDataNode)
       {
         EpiStage theEpiStage= EpiStage.prepareEpiStage(theJavaFXGUI);
-        TreeItem<DataNode> rootTreeItem= 
-            //// new TreeItem<String> ("Naviation-Tree");
-            new TreeItem<DataNode> (theInitialRootDataNode);
-        rootTreeItem.setExpanded(true);
-        /*  ////
-        for (int i= 1; i < 6; i++) {
-          TreeItem<String> item= new TreeItem<String> ("Item" + i);            
-          rootTreeItem.getChildren().add(item);
-          }
-        */  ////
-        TreeView<DataNode> theTreeView= new TreeView<DataNode>(rootTreeItem);        
+        EpiTreeItem rootEpiTreeItem= 
+            new EpiTreeItem(theInitialRootDataNode);
+        rootEpiTreeItem.setExpanded(true);
+        TreeView<DataNode> theTreeView= 
+            new TreeView<DataNode>(rootEpiTreeItem);        
         Scene theScene= new Scene(theTreeView, 300, 250);
         theEpiStage.finishSettingsAndShowV(
           theEpiStage,
