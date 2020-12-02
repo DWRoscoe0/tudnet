@@ -24,7 +24,7 @@ class EpiStage
         }
 
     public void finishSettingsAndShowV(
-        Stage theStage,
+        //// Stage theStage,
         Scene theScene,
         String titleString
         )
@@ -38,11 +38,11 @@ class EpiStage
         rootNode.setStyle(
             "-fx-font-size: 22; -fx-font-family: \"monospace\"; ");
 
-        theStage.setScene(theScene);
-        theStage.setTitle(titleString);
+        setScene(theScene);
+        setTitle(titleString);
         
-        theStage.show();
-        theJavaFXGUI.recordOpenWindowV(theStage); // Record showing.
+        show();
+        theJavaFXGUI.recordOpenWindowV(this); // Record showing.
         }
   
   }

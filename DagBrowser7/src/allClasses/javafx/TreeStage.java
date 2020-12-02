@@ -21,7 +21,7 @@ public class TreeStage extends EpiStage
         TreeView<String> theTreeView= new TreeView<String>(rootTreeItem);        
         Scene theScene= new Scene(theTreeView, 300, 250);
         theEpiStage.finishSettingsAndShowV(
-          theEpiStage,
+          //// theEpiStage,
           theScene,
           "Tree View Sample"
           );
