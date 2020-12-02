@@ -1,6 +1,6 @@
 package allClasses.javafx;
 
-import javafx.scene.Node;
+//// import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
@@ -33,10 +33,7 @@ class EpiStage
        * their construction and initialization.
        */
       {
-
-        Node rootNode= theScene.getRoot();
-        rootNode.setStyle(
-            "-fx-font-size: 22; -fx-font-family: \"monospace\"; ");
+        EpiScene.setDefaultsV(theScene);
 
         setScene(theScene);
         setTitle(titleString);
