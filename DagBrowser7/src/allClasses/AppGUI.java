@@ -266,9 +266,10 @@ class GUIManager
         }
 
     public void finalizeV()
-      /* This method does finalization of the Swing GUI.  It is called during shutdown.  
-        It switches to the AWT thread EDT to do its work.
-        */
+      /* This method does finalization of the Swing GUI.  
+       * It is called during shutdown.
+       * It switches to the AWT thread EDT to do its work.
+       */
       {
         theAppLog.info("GUIManager.finalizeOnV() called, doing on EDT.");
         EDTUtilities.invokeAndWaitV( // Dispatching on EDT

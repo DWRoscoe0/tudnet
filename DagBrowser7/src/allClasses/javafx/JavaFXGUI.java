@@ -16,7 +16,7 @@ public class JavaFXGUI
    * 
    * The JavaFX app launching and life-cycle are NOT elegant.
    * They involve a lot of Java reflection and static methods.
-   * To deal with this fact, this class is a Singleton.
+   * To deal with this fact, this class was made a Singleton.
    */
 
   {
@@ -31,16 +31,20 @@ public class JavaFXGUI
     private Map<Window,Boolean> windowMap= // Stores showing windows. 
         new HashMap<Window,Boolean>();
   
-    private static JavaFXGUI theJavaFXGUI= null; // The 1 instance.
+    private static JavaFXGUI theJavaFXGUI=  // The 1 instance of this class. 
+        null;
 
 
     // Methods
 
     public static JavaFXGUI getInstanceJavaFXGUI()
-      /* This is the instance getter method.  */
+      /* This is the instance getter method.
+       * This method should not be called until 
+       * getJavaFXGUI(.) has been called.
+       */
       {
-        if (null == theJavaFXGUI) {
-          throw new IllegalStateException(
+        if (null == theJavaFXGUI) { // If not defined yet
+          throw new IllegalStateException( // throw exception.
               "JavaFXGUI Instance not constructed yet!");
           }
         return theJavaFXGUI;
@@ -50,8 +54,8 @@ public class JavaFXGUI
           DataNode theInitialRootDataNode,
           Shutdowner theShutdowner
           )
-      /* This method constructs and initializes which will be
-       * a single instance of the JavaFXGUI object.
+      /* This method constructs and initializes what will become
+       * the only instance of this JavaFXGUI class.
        */
     {
       if (null != theJavaFXGUI)
@@ -69,7 +73,7 @@ public class JavaFXGUI
     private JavaFXGUI() {} // private constructor guarantees a single instance.
     
     public void recordOpenWindowV(Window theWindow)
-      /* This method records an open (showing) window.  */
+      /* This method records an opening (showing) of theWindow.  */
       {
         windowMap.put(theWindow, true); // Record it in map.
         }
@@ -85,6 +89,12 @@ public class JavaFXGUI
        * the JavaFX GUI and JavaFX part of the app has closed,
        * so a complete shutdown is requested
        * which will shutdown the Swing GUI also.
+       * 
+       * This method initiates what is normally shown as being done by
+       * the main(.) method in example JavaFX applications.
+       * This method was created so that a JavaFX GUI 
+       * could be developed in parallel to an existing Java Swing GUI,
+       * both being part of the same app. 
        */
       {
         Runnable javaFXRunnable= // Create launcher Runnable. 
@@ -106,29 +116,29 @@ public class JavaFXGUI
     
     public void continueStartV()
       /* This method continues the launch begun by 
-       * the Application subclass start(Stage) method. 
-       * It should be run only on the JavaFX application thread. 
-       * It creates some temporary demonstration windows
-       * and an actual useful one.
+       * the Application subclass start(Stage) method.
+       * It creates some GUI Stages for the application, then exits.
+       * 
+       * This method should be run only on the JavaFX application thread. 
        */
       {
-      
-        TreeStage.makeStage(this); // Create tree demonstration.
-        
-        DemoStage.makeStage(this); // Create button demonstration.
+        TreeStage.makeStage(this); // Create temporary tree demonstration.
+        DemoStage.makeStage(this); // Create temporary button demonstration.
 
-        Navigation.makeStageV( // Create Navigation Stage.
+        Navigation.makeStageV( // Create application Navigation Stage.
             this, theInitialRootDataNode);
 
-        // This method will now return to Application.start(Stage).
+        // This method will now return to the Application.start(Stage) method.
         // After Application.start(Stage) returns, the launch will be complete.
         }
 
     public void finalizeV()
-      /* This method finalizes the JavaFX GUI.
-       * It does this by closing (hiding) all open (showing) JavaFX windows.
-       * This will allow the app to terminate 
-       * if other termination conditions are satisfied.  
+      /* This method finalizes the JavaFX GUI
+       * in preparation for app exit.  It is called during app shutdown.
+       * 
+       * This method works by hiding (closing) all showing JavaFX windows.
+       * This is a signal to JavaFX to stop all GUI operations 
+       * assuming other termination conditions are satisfied.  
        */
       {
         for (Window theWindow : windowMap.keySet())

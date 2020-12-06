@@ -22,7 +22,7 @@ public class JavaFXApp extends Application
     
     @Override
     public void start(Stage fromLauncherToBeIgnoredStage)
-      /* This method does only 2 things:
+      /* This is the standard start(.) method.  It does only 2 things:
        * * It dereferences the Stage argument so it will be garbage collected.
        *   The Stages this app needs will be constructed elsewhere.
        * * It immediately calls back to JavaFXGUI to finish what needs doing
