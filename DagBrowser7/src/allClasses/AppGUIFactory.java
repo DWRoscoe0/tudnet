@@ -183,9 +183,9 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
           theDataRoot, 
           theMetaRoot
           );
-      JavaFXGUI theJavaFXGUI= JavaFXGUI.getJavaFXGUI(
+      JavaFXGUI theJavaFXGUI= JavaFXGUI.initializeJavaFXGUI(
           theInitialRootDataNode,theShutdowner);
-      GUIManager theGUIBuilderStarter= new GUIManager( 
+      GUIManager theGUIManager= new GUIManager( 
         theAppInstanceManager,
         theDagBrowserPanel,
         this, // GUIBuilderStarter gets to know the factory that made it. 
@@ -198,7 +198,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
         theCPUMonitorEpiThread,
         theDataTreeModel,
         theInitialRootDataNode,
-        theGUIBuilderStarter,
+        theGUIManager,
         theShutdowner,
         theTCPCopier,
         theScheduledThreadPoolExecutor
