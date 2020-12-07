@@ -6,16 +6,15 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
 
 class DemoStage extends EpiStage 
 { 
   
   private DemoStage() {}
   
-  public static Stage makeStage(JavaFXGUI theJavaFXGUI)
+  public static void makeInitializeAndStartV(JavaFXGUI theJavaFXGUI)
     {
-      EpiStage theEpiStage= EpiStage.prepareEpiStage(theJavaFXGUI);
+      EpiStage theEpiStage= EpiStage.makeEpiStage(theJavaFXGUI);
       BorderPane theBorderPane = new BorderPane(); // This is the root node.
       Scene theScene = new Scene(theBorderPane,400,400);
       Label theLabel = 
@@ -30,12 +29,10 @@ class DemoStage extends EpiStage
       
       theBorderPane.setCenter(theVBox);
 
-      theEpiStage.finishSettingsAndShowV(
-        //// theEpiStage,
-        theScene,
+      theEpiStage.setScene(theScene);
+      theEpiStage.finishInitAndStartV(
         "Demo"
         );
-      return theEpiStage;
       }
 
   }

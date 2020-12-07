@@ -3,15 +3,14 @@ package allClasses.javafx;
 import javafx.scene.Scene;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
-import javafx.stage.Stage;
 
 
 public class TreeStage extends EpiStage 
   { 
 
-    public static Stage makeStage(JavaFXGUI theJavaFXGUI)
+    public static void makeInitializeAndStartV(JavaFXGUI theJavaFXGUI)
       {
-        EpiStage theEpiStage= EpiStage.prepareEpiStage(theJavaFXGUI);
+        EpiStage theEpiStage= EpiStage.makeEpiStage(theJavaFXGUI);
         TreeItem<String> rootTreeItem= new TreeItem<String> ("Inbox");
         rootTreeItem.setExpanded(true);
         for (int i= 1; i < 6; i++) {
@@ -20,11 +19,9 @@ public class TreeStage extends EpiStage
           }
         TreeView<String> theTreeView= new TreeView<String>(rootTreeItem);        
         Scene theScene= new Scene(theTreeView, 300, 250);
-        theEpiStage.finishSettingsAndShowV(
-          //// theEpiStage,
-          theScene,
+        theEpiStage.setScene(theScene);
+        theEpiStage.finishInitAndStartV(
           "Tree View Sample"
           );
-        return theEpiStage;
       }
     }

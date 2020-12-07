@@ -1,7 +1,5 @@
 package allClasses.javafx;
 
-//// import javafx.scene.Node;
-import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 class EpiStage 
@@ -15,29 +13,34 @@ class EpiStage
 
     private JavaFXGUI theJavaFXGUI;
 
-    public static EpiStage prepareEpiStage(JavaFXGUI theJavaFXGUI)
+    protected EpiStage()
+      {
+        }
+
+    protected EpiStage(JavaFXGUI theJavaFXGUI)
+      {
+        this.theJavaFXGUI= theJavaFXGUI;
+        }
+    
+    public static EpiStage makeEpiStage(JavaFXGUI theJavaFXGUI)
       /* */
       {
-        EpiStage theEpiStage= new EpiStage();
-        theEpiStage.theJavaFXGUI= theJavaFXGUI;
+        EpiStage theEpiStage= new EpiStage(theJavaFXGUI);
         return theEpiStage;
         }
 
-    public void finishSettingsAndShowV(
-        //// Stage theStage,
-        Scene theScene,
+    public void finishInitAndStartV(
         String titleString
         )
-      /* This method does some of initialization that 
-       * Stages have in common near the end of 
-       * their construction and initialization.
+      /* This method finishes initialization that Stages have in common,
+       * consisting of the setting of the titleString and some default settings.
+       * Then it shows the Stage and records that fact.
        */
       {
-        EpiScene.setDefaultsV(theScene);
-
-        setScene(theScene);
         setTitle(titleString);
-        
+
+        EpiScene.setDefaultsV(getScene());
+
         show();
         theJavaFXGUI.recordOpenWindowV(this); // Record showing.
         }

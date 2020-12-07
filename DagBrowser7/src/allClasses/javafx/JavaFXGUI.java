@@ -118,16 +118,17 @@ public class JavaFXGUI
     public void continueStartV()
       /* This method continues the launch begun by 
        * the Application subclass start(Stage) method.
-       * It creates some GUI Stages for the application, then exits.
+       * It creates and starts some GUI Stages for the application, 
+       * then exits.
        * 
        * This method should be run only on the JavaFX application thread. 
        */
       {
-        TreeStage.makeStage(this); // Create temporary tree demonstration.
-        DemoStage.makeStage(this); // Create temporary button demonstration.
+        TreeStage.makeInitializeAndStartV(this); // Start tree demo stage.
+        DemoStage.makeInitializeAndStartV(this); // Start button demo stage.
 
-        Navigation.makeStageV( // Create application Navigation Stage.
-            this, theInitialRootDataNode);
+        new Navigation(theJavaFXGUI, theInitialRootDataNode).
+          initializeAndStartV();
 
         // This method will now return to the Application.start(Stage) method.
         // After Application.start(Stage) returns, the launch will be complete.
