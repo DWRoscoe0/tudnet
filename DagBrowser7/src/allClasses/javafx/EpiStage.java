@@ -33,12 +33,16 @@ class EpiStage
         String titleString
         )
       /* This method finishes initialization that Stages have in common,
-       * consisting of the setting of the titleString and some default settings.
+       * consisting of:
+       * * the setting of the titleString
+       * * default Stage size
+       * * default Scene Font style and size.
        * Then it shows the Stage and records that fact.
        */
       {
         setTitle(titleString);
-
+        setHeight(600);
+        setWidth(400);
         EpiScene.setDefaultsV(getScene());
 
         show();

@@ -64,7 +64,7 @@ public class Navigation extends EpiStage
         BorderPane treeRootBorderPane= new BorderPane();
         treeRootBorderPane.setTop(treeButton);
         treeRootBorderPane.setCenter(theTreeView);
-        treeScene= new Scene(treeRootBorderPane, 300, 500);
+        treeScene= new Scene(treeRootBorderPane);
         EpiScene.setDefaultsV(treeScene);
         }
 
@@ -76,7 +76,7 @@ public class Navigation extends EpiStage
         BorderPane listRootBorderPane= new BorderPane();
         listRootBorderPane.setTop(listButton);
         listRootBorderPane.setCenter(theListView);
-        listScene= new Scene(listRootBorderPane, 400, 600);
+        listScene= new Scene(listRootBorderPane);
         EpiScene.setDefaultsV(listScene);
         }
 
