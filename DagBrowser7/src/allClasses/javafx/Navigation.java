@@ -1,9 +1,13 @@
 package allClasses.javafx;
 
+import java.util.List;
+
 import allClasses.DataNode;
+import javafx.collections.ObservableList;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
+import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.layout.BorderPane;
 
@@ -22,7 +26,9 @@ public class Navigation extends EpiStage
     // Other variables.
     private Scene treeScene; 
     private Button treeButton;
+    private TreeView<DataNode> theTreeView; 
     private Scene listScene;
+    private ListView<DataNode> theListView; 
     private Button listButton;
             
     public Navigation(JavaFXGUI theJavaFXGUI, DataNode theInitialRootDataNode)
@@ -37,16 +43,10 @@ public class Navigation extends EpiStage
        */
       {
         initializeTreeSceneV();
+
         initializeListSceneV();
 
-        // Set button actions, now that Scenes are defined.
-        treeButton.setOnAction(e -> {
-          ////// define list from tree selection.
-          setScene(listScene);
-          });
-        listButton.setOnAction(e -> { 
-          setScene(treeScene);
-          });
+        setButtonActionsV(); // Okay to do now that Scenes are defined.
 
         setScene(treeScene); // Use tree scene as first one displayed.
         
@@ -58,8 +58,7 @@ public class Navigation extends EpiStage
         EpiTreeItem theEpiTreeItem=
             new EpiTreeItem(theInitialRootDataNode);
         theEpiTreeItem.setExpanded(true);
-        TreeView<DataNode> theTreeView= 
-            new TreeView<DataNode>(theEpiTreeItem);
+        theTreeView= new TreeView<DataNode>(theEpiTreeItem);
         treeButton= new Button("Show List");
         BorderPane treeRootBorderPane= new BorderPane();
         treeRootBorderPane.setTop(treeButton);
@@ -70,14 +69,35 @@ public class Navigation extends EpiStage
 
     private void initializeListSceneV()
       {
-        ListView<DataNode> theListView= 
-            new ListView<DataNode>();
+        theListView= new ListView<DataNode>();
         listButton= new Button("Show Tree");
         BorderPane listRootBorderPane= new BorderPane();
         listRootBorderPane.setTop(listButton);
         listRootBorderPane.setCenter(theListView);
         listScene= new Scene(listRootBorderPane);
         EpiScene.setDefaultsV(listScene);
+        }
+    
+    private void setButtonActionsV()
+      /* This method defines what actions will be taken when
+       * the user activates the available buttons.
+       */
+      {
+        treeButton.setOnAction(e -> {
+          ////// define list from tree selection.
+          TreeItem<DataNode> theTreeItemOfDataNode=
+            theTreeView.getSelectionModel().getSelectedItem();
+          if (null != theTreeItemOfDataNode) {
+            DataNode theDataNode= theTreeItemOfDataNode.getValue();
+            ObservableList<DataNode> childObservableList= 
+                theDataNode.getChildObservableListOfDataNodes();
+            theListView.setItems(childObservableList);
+            }
+          setScene(listScene); // Switch to list scene.
+          });
+        listButton.setOnAction(e -> { 
+          setScene(treeScene); // Switch to tree scene.
+          });
         }
 
     }

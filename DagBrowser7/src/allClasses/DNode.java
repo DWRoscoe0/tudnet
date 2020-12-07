@@ -12,6 +12,8 @@ import javax.swing.tree.TreePath;
 
 import allClasses.AppLog.LogLevel;
 import allClasses.multilink.ElementMultiLink;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 public abstract class DNode<N extends DNode<N>>
 
@@ -425,12 +427,21 @@ public abstract class DNode<N extends DNode<N>>
 
       public Iterable<DataNode> getChildIterable()
         /* Returns an Iteratable containing the children of this object.
-         * This version returns an empty list.
-         * It should be overridden by non-leaf subclasses.
+         */
+        {
+          return getChildObservableListOfDataNodes();
+          }
+
+      public ObservableList<DataNode> getChildObservableListOfDataNodes()
+        /* Returns an ObservableList containing the children of this object.
+         * This version builds a list by adding all children to an empty list.
+         * It should be overridden by non-leaf subclasses
+         * which contain their own lists.
          */
         { 
-          List<DataNode> theList= new ArrayList<DataNode>();
-          for 
+          ObservableList<DataNode> theList= // Create empty list. 
+              FXCollections.observableArrayList();
+          for // Add all the children.
             (
               int childIndexI= 0; 
               childIndexI < getChildCount();
