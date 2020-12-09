@@ -1,9 +1,10 @@
 package allClasses.javafx;
 
-import java.util.List;
+import javax.swing.tree.TreePath;
 
 import allClasses.DataNode;
-import javafx.collections.ObservableList;
+
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
@@ -30,6 +31,7 @@ public class Navigation extends EpiStage
     private Scene listScene;
     private ListView<DataNode> theListView; 
     private Button listButton;
+    private BorderPane listRootBorderPane;
             
     public Navigation(JavaFXGUI theJavaFXGUI, DataNode theInitialRootDataNode)
       {
@@ -69,10 +71,10 @@ public class Navigation extends EpiStage
 
     private void initializeListSceneV()
       {
-        theListView= new ListView<DataNode>();
         listButton= new Button("Show Tree");
-        BorderPane listRootBorderPane= new BorderPane();
+        listRootBorderPane= new BorderPane();
         listRootBorderPane.setTop(listButton);
+        theListView= new ListView<DataNode>();
         listRootBorderPane.setCenter(theListView);
         listScene= new Scene(listRootBorderPane);
         EpiScene.setDefaultsV(listScene);
@@ -80,18 +82,17 @@ public class Navigation extends EpiStage
     
     private void setButtonActionsV()
       /* This method defines what actions will be taken when
-       * the user activates the available buttons.
+       * the user activates one of the available buttons.
        */
       {
         treeButton.setOnAction(e -> {
-          ////// define list from tree selection.
           TreeItem<DataNode> theTreeItemOfDataNode=
             theTreeView.getSelectionModel().getSelectedItem();
           if (null != theTreeItemOfDataNode) {
             DataNode theDataNode= theTreeItemOfDataNode.getValue();
-            ObservableList<DataNode> childObservableList= 
-                theDataNode.getChildObservableListOfDataNodes();
-            theListView.setItems(childObservableList);
+            TreePath theTreePath= theDataNode.getTreePath();
+            Node listNode= theDataNode.getJavaFXNode(theTreePath, null);
+            listRootBorderPane.setCenter(listNode);
             }
           setScene(listScene); // Switch to list scene.
           });

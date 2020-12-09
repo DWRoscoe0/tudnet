@@ -4,16 +4,16 @@ import static allClasses.AppLog.theAppLog;
 import static allClasses.SystemSettings.NL;
 
 import java.awt.Color;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
 
 import allClasses.AppLog.LogLevel;
+import allClasses.javafx.TitledTextNode;
 import allClasses.multilink.ElementMultiLink;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.scene.Node;
 
 public abstract class DNode<N extends DNode<N>>
 
@@ -618,7 +618,8 @@ public abstract class DNode<N extends DNode<N>>
         This base class method returns useful defaults:
         * a TextViewer for leaves and 
         * a ListViewer for non-leaves.
-        The DataNode to be viewed is the last element of inTreePath,
+        This DataNode, the DataNode to be viewed,
+        is the last element of inTreePath,
 
         This method may be overridden if a more specialized viewer is needed.
         */
@@ -638,6 +639,58 @@ public abstract class DNode<N extends DNode<N>>
 
         return resultJComponent;  // Returning result from above.
         }
+
+    public Node getJavaFXNode( 
+        TreePath inTreePath, DataTreeModel inDataTreeModel 
+        ) 
+      /* Returns a Node Component capable of displaying this DataNode.
+        It may use the DataTreeModel inDataTreeModel to provide context.  
+        This base class method returns useful defaults:
+        * a TextViewerNode for leaves and 
+        * a ListViewerNode for non-leaves.
+        This DataNode, the DataNode to be viewed,
+        is the last element of inTreePath,
+
+        This method may be overridden if a more specialized viewer is needed.
+        */
+      {
+        Node resultNode= null;
+
+        if ( isLeaf() ) // Display as text if this DataNode is leaf.
+          resultNode= // Using TitledTextViewer.
+            new TitledTextNode( 
+              inTreePath, 
+              inDataTreeModel, 
+              getContentString()
+              );
+          else  // Display as list if this DataNode is not a leaf.
+          resultNode= // Using TitledListViewer.
+            new TitledListNode( inTreePath, inDataTreeModel );
+
+        return resultNode;  // Returning result from above.
+        }
+
+      public TreePath getTreePath()
+        /* This method returns the TreePath associated with this DataNode.
+         * The path always includes at least one element and
+         * this DataNode is always the last element of the path.
+         * 
+         * This method would be simpler if all constructors of TreePath
+         * were public.
+         * 
+         *  ///opt Use cache like 
+         *    DataTreeModel.translatingToTreePath( DataNode targetDataNode ).
+         */
+        { 
+          TreePath resultTreePath;
+          if ( null == parentNamedList ) // If node has no parent then
+            resultTreePath= 
+              new TreePath(this); // path is only this node.
+          else // Node has a parent so recursively
+            resultTreePath= // construct path from parent and this node. 
+              parentNamedList.getTreePath().pathByAddingChild(this);
+          return resultTreePath;   
+          }
 
     public int getIndexOfNamedChild( String inString )
       /* Returns the index of the child whose name is inString,
