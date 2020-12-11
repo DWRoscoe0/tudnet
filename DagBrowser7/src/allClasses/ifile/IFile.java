@@ -11,6 +11,8 @@ import javax.swing.tree.TreePath;
 import allClasses.DataNode;
 import allClasses.DataTreeModel;
 import allClasses.TitledTextViewer;
+import allClasses.javafx.TitledTextNode;
+import javafx.scene.Node;
 
 import static allClasses.SystemSettings.NL;
 
@@ -108,6 +110,20 @@ public class IFile
 	              new TitledTextViewer(inTreePath, inDataTreeModel, getFileString());
           return resultJComponent;  // return the final result.
           }
+
+      public Node getJavaFXNode( 
+          TreePath inTreePath, DataTreeModel inDataTreeModel 
+          ) 
+        /* Returns a Node Component capable of displaying this IFile.
+          */
+        {
+          Node resultNode= // Using TitledListViewer.
+            new TitledTextNode(
+                inTreePath, inDataTreeModel, getFileString());
+  
+          return resultNode;  // Returning result from above.
+          }
+
           
     // other methods.
 

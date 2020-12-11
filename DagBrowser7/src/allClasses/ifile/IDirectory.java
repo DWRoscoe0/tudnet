@@ -95,7 +95,7 @@ public class IDirectory
               ( indexI < 0 || indexI >= childMultiLinkOfDataNodes.getCountI())
               break goReturn; // exit with null.
             childDataNode= childMultiLinkOfDataNodes.getE(indexI);
-            if  // If did got place-holder
+            if  // If did ot place-holder
               (! (childDataNode instanceof NamedLeaf)) {
                 break goReturn; // exit with that as result.
                 }

@@ -670,27 +670,27 @@ public abstract class DNode<N extends DNode<N>>
         return resultNode;  // Returning result from above.
         }
 
-      public TreePath getTreePath()
-        /* This method returns the TreePath associated with this DataNode.
-         * The path always includes at least one element and
-         * this DataNode is always the last element of the path.
-         * 
-         * This method would be simpler if all constructors of TreePath
-         * were public.
-         * 
-         *  ///opt Use cache like 
-         *    DataTreeModel.translatingToTreePath( DataNode targetDataNode ).
-         */
-        { 
-          TreePath resultTreePath;
-          if ( null == parentNamedList ) // If node has no parent then
-            resultTreePath= 
-              new TreePath(this); // path is only this node.
-          else // Node has a parent so recursively
-            resultTreePath= // construct path from parent and this node. 
-              parentNamedList.getTreePath().pathByAddingChild(this);
-          return resultTreePath;   
-          }
+    public TreePath getTreePath()
+      /* This method returns the TreePath associated with this DataNode.
+       * The path always includes at least one element and
+       * this DataNode is always the last element of the path.
+       * 
+       * This method would be simpler if all constructors of TreePath
+       * were public.
+       * 
+       *  ///opt Use cache like 
+       *    DataTreeModel.translatingToTreePath( DataNode targetDataNode ).
+       */
+      { 
+        TreePath resultTreePath;
+        if ( null == parentNamedList ) // If node has no parent then
+          resultTreePath= 
+            new TreePath(this); // path is only this node.
+        else // Node has a parent so recursively
+          resultTreePath= // construct path from parent and this node. 
+            parentNamedList.getTreePath().pathByAddingChild(this);
+        return resultTreePath;   
+        }
 
     public int getIndexOfNamedChild( String inString )
       /* Returns the index of the child whose name is inString,
