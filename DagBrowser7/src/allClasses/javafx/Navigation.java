@@ -63,19 +63,20 @@ public class Navigation extends EpiStage
         theTreeView= new TreeView<DataNode>(theEpiTreeItem);
         treeButton= new Button("Show List");
         BorderPane treeRootBorderPane= new BorderPane();
-        treeRootBorderPane.setTop(treeButton);
         treeRootBorderPane.setCenter(theTreeView);
+        //// treeRootBorderPane.setTop(treeButton);
+        treeRootBorderPane.setBottom(treeButton);
         treeScene= new Scene(treeRootBorderPane);
         EpiScene.setDefaultsV(treeScene);
         }
 
     private void initializeListSceneV()
       {
-        listButton= new Button("Show Tree");
         listRootBorderPane= new BorderPane();
-        listRootBorderPane.setTop(listButton);
         theListView= new ListView<DataNode>();
         listRootBorderPane.setCenter(theListView);
+        listButton= new Button("Show Tree");
+        listRootBorderPane.setBottom(listButton);
         listScene= new Scene(listRootBorderPane);
         EpiScene.setDefaultsV(listScene);
         }

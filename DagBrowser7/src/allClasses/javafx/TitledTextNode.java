@@ -42,13 +42,16 @@ public class TitledTextNode extends BorderPane
           //"TEST-TITLE"
           ((DataNode)(theTreePath.getLastPathComponent())).toString()
           );
-        titleLabel.setAlignment(Pos.CENTER);
         setTop(titleLabel); // Adding it to main JPanel.
+        BorderPane.setAlignment(titleLabel,Pos.CENTER);
 
         TextArea theTextArea= new TextArea(   // Construct JTextArea.
           /// "--------------DEBUG--------------  \n"+
           theString  // Text String to view.
           );
+        /// theTextArea.getCaret().setVisible(true); // Make viewer cursor visible.
+        theTextArea.setWrapText(true); // Make all visible.
+        /// theTextArea.setWrapStyleWord(true); // Make it pretty.
         setCenter(theTextArea);
         }
 

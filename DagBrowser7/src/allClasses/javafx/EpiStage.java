@@ -41,8 +41,8 @@ class EpiStage
        */
       {
         setTitle(titleString);
-        setHeight(600);
-        setWidth(400);
+        setHeight(700);
+        setWidth(600);
         EpiScene.setDefaultsV(getScene());
 
         show();
