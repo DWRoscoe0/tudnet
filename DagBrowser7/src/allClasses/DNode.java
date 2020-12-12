@@ -427,18 +427,6 @@ public abstract class DNode<N extends DNode<N>>
           return childIndexI;  // Return index as search result.
           } // getIndexOfChild(.)
 
-      public Iterable<DataNode> getChildIterable()
-        /* Returns an Iteratable containing the children of this object.
-         * 
-         * ///org Maybe eliminate this and rely instead on
-         *   getChildObservableListOfDataNodes() or
-         *   a new method getChildListOfDataNodes(),
-         *   because Lists are iterable.
-         */
-        {
-          return getChildObservableListOfDataNodes();
-          }
-
       public ObservableList<DataNode> getChildObservableListOfDataNodes()
         /* Returns an ObservableList containing the children of this object.
          */
@@ -451,7 +439,7 @@ public abstract class DNode<N extends DNode<N>>
          * This version builds a list by adding all children to an empty list.
          * 
          * This method should be overridden if a non-leaf subclass
-         * already contains its children in a list.
+         * already contains its children in its own list.
          */
         { 
           List<DataNode> theList= // Create empty list. 
@@ -463,11 +451,26 @@ public abstract class DNode<N extends DNode<N>>
               childIndexI++
               )
             {
-              theList.add(
-                  getChild(childIndexI)
-                  );
+              theList.add(getChild(childIndexI));
               } 
           return theList;
+          }
+
+      public List<DataNode> getChildLazyListOfDataNodes()
+        /* Returns a List containing the children of this object
+         * which might contain temporary unevaluated children.
+         * It returns a regular evaluated list 
+         * if an unevaluated one does not exist.
+         * 
+         * This version builds and returns an empty list.
+         * 
+         * This method should be overridden by any class
+         * whose children's laziness differs from its superclass.
+         */
+        { 
+          List<DataNode> theList= // Create empty list. 
+              new ArrayList<DataNode>();
+          return theList; // Return it.
           }
 
 

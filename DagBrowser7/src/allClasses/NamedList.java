@@ -1,5 +1,6 @@
 package allClasses;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -207,7 +208,8 @@ public class NamedList
 		  	  	&& ( this.theDataTreeModel == null )  // our TreeModel is null.
 		  	  	)
 			  	{
-            for (DataNode theDataNode : getChildIterable()) // For each child
+		  	    for // For each child
+		  	      (DataNode theDataNode : getChildLazyListOfDataNodes())
 			  			theDataNode.propagateIntoSubtreeV(  // recursively propagate
 			  					theDataTreeModel // the TreeModel 
 			  					);
@@ -242,7 +244,8 @@ public class NamedList
 	      but not into this node.  It remains unchanged.
 		    */
 		  {
-        for (DataNode theDataNode : getChildIterable()) // For each child
+        for  // For each child
+          (DataNode theDataNode : getChildLazyListOfDataNodes())
 	  			theDataNode.propagateIntoSubtreeB( // recursively propagate  
 	  					theMaxLogLevel); // the new level into child subtree.
 		  	}
@@ -274,7 +277,7 @@ public class NamedList
       { 
         boolean processedB= false; // Assume all children will fail to process.
         Iterator<DataNode> theIterator= // Prepare a child iterator.
-            getChildIterable().iterator();
+            getChildLazyListOfDataNodes().iterator();
         while (true) { // Process children until something causes exit.
           if (! theIterator.hasNext()) break; // Exit if no more children.
           DataNode theDataNode= theIterator.next(); // Get next child.
@@ -300,15 +303,10 @@ public class NamedList
         return childMultiLinkOfDataNodes.getListOfEs(); 
         }
     
-    public Iterable<DataNode> getChildIterable()
-      /* Returns an Iteratable containing the children of this object.
-       * This version returns the MultiLink links Iterable.
-       * It should be overridden by non-leaf subclasses.
-       */
+    public List<DataNode> getChildLazyListOfDataNodes()
       { 
-        return childMultiLinkOfDataNodes.getLinksIterable(); 
+        return childMultiLinkOfDataNodes.getListOfEs(); 
         }
-
 
 	  ///dbg methods.
 	  

@@ -10,8 +10,6 @@ import javax.swing.tree.TreePath;
 import allClasses.DataNode;
 import allClasses.DataTreeModel;
 
-
-///////////// imports for Swing...
 // import static allClasses.Globals.appLogger;
 
 
@@ -27,11 +25,9 @@ public class TitledTextNode extends BorderPane
   
   {
 
-    //// private DataTreeModel theDataTreeModel;
-    
     public TitledTextNode( 
                 TreePath theTreePath, 
-                DataTreeModel theDataTreeModel, 
+                DataTreeModel theDataTreeModel, ///opt 
                 String theString
                 )
       /* Constructs a TitledTextNode.
@@ -42,8 +38,6 @@ public class TitledTextNode extends BorderPane
         theDataTreeModel provides context.
         */
       {
-        //// this.theDataTreeModel= theDataTreeModel;
-
         Label titleLabel= new Label(
           //"TEST-TITLE"
           ((DataNode)(theTreePath.getLastPathComponent())).toString()

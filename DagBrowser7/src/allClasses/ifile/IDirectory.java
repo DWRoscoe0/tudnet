@@ -83,15 +83,6 @@ public class IDirectory
           return false; // Because directories are branches and can have children.
           }
 
-      /*  //// When uncommented some lazy evaluators become greedy
-        and cause the app to become nonresponsive while 
-        propagating into directory tree.
-      public Iterable<DataNode> getChildIterable()
-        {
-          return getChildListOfDataNodes();
-          }
-      */  ////
-
       public List<DataNode> getChildListOfDataNodes()
         /* This method returns the list of directory entries.
          * If the entire list has not been validated yet,

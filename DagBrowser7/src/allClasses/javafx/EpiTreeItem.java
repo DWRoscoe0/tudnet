@@ -37,7 +37,7 @@ public class EpiTreeItem
         if (! childCacheLoadedB) {
           DataNode parentDataNode= getValue();
           Iterator<DataNode> theIterator=
-              parentDataNode.getChildIterable().iterator();
+              parentDataNode.getChildListOfDataNodes().iterator();
           while (theIterator.hasNext()) {
             DataNode childDataNode= theIterator.next();
             super.getChildren().add(
