@@ -96,7 +96,12 @@ public class ListMultiLink<
 
       public Iterable<E> getLinksIterable()
         { 
-          return theListOfEs;
+          return getListOfEs();
           }
 
+      public List<E> getListOfEs()
+        {
+          return theListOfEs;
+          }
+      
       }

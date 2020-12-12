@@ -1,5 +1,7 @@
 package allClasses.multilink;
 
+import java.util.List;
+
 public interface MultiLink<
     E // Element type. 
     > 
@@ -70,7 +72,10 @@ public interface MultiLink<
        */
 
     public Iterable<E> getLinksIterable();
-      /* Returns an Iteratable containing the links of this object.
+      /* Returns an Iteratable containing over links of this object.
        */
 
+    public List<E> getListOfEs();
+      /* Returns a list of the links of this object.
+       */
     }

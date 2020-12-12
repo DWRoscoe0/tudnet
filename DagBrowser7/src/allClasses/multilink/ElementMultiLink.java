@@ -3,6 +3,7 @@ package allClasses.multilink;
 import static allClasses.AppLog.theAppLog;
 
 import java.util.ArrayList;
+import java.util.List;
 
 
 public interface ElementMultiLink<E extends ElementMultiLink<E>> 
@@ -83,9 +84,17 @@ public interface ElementMultiLink<E extends ElementMultiLink<E>>
       return null;
       }
 
-  @SuppressWarnings("unchecked")
   default Iterable<E> getLinksIterable()
     { 
+      return getListOfEs();
+      }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  default List<E> getListOfEs()
+    /* Returns a list of the links of this object.
+     */
+    {
       ArrayList<E> theArrayList= new ArrayList<E>();  // Create empty list. 
       theArrayList.add((E)this); // Add this as only element.
       return theArrayList;

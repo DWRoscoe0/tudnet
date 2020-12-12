@@ -24,18 +24,26 @@ public class EpiTreeItem
       {
         return getValue().isLeaf();
         }
- 
-       
+
     @Override 
-    public ObservableList<TreeItem<DataNode>> getChildren() 
+    public ObservableList<TreeItem<DataNode>> getChildren()
+      /* This method returns the TreeItem's child list.
+       * It first checks to see whether the TreeItem child list 
+       * has been calculated based on the child list in the value DataNode.
+       * If not, then it calculates and stores it.
+       * Finally it returns the TreeItem's child list.
+       */
       {
         if (! childCacheLoadedB) {
-          Iterator<DataNode> theIterator= 
-              getValue().getChildIterable().iterator();
-          while (theIterator.hasNext())
+          DataNode parentDataNode= getValue();
+          Iterator<DataNode> theIterator=
+              parentDataNode.getChildIterable().iterator();
+          while (theIterator.hasNext()) {
+            DataNode childDataNode= theIterator.next();
             super.getChildren().add(
-                new EpiTreeItem(theIterator.next())
+                new EpiTreeItem(childDataNode)
                 );
+            }
           childCacheLoadedB= true;
           }
         return super.getChildren();

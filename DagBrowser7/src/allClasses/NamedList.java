@@ -1,6 +1,7 @@
 package allClasses;
 
 import java.util.Iterator;
+import java.util.List;
 
 import allClasses.AppLog.LogLevel;
 import allClasses.multilink.ListMultiLink;
@@ -292,6 +293,11 @@ public class NamedList
         */
       { 
         return childMultiLinkOfDataNodes.getE(indexI); 
+        }
+
+    public List<DataNode> getChildListOfDataNodes()
+      { 
+        return childMultiLinkOfDataNodes.getListOfEs(); 
         }
     
     public Iterable<DataNode> getChildIterable()

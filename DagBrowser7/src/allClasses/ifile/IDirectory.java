@@ -1,6 +1,7 @@
 package allClasses.ifile;
 
 import java.io.File;
+import java.util.List;
 
 import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
@@ -23,6 +24,8 @@ public class IDirectory
   {
   
     // Variables.
+  
+      private boolean childrenValidB= false; // Means all children validated.
     
     // Constructors and initialization.
 
@@ -79,7 +82,36 @@ public class IDirectory
         {
           return false; // Because directories are branches and can have children.
           }
-    
+
+      /*  //// When uncommented some lazy evaluators become greedy
+        and cause the app to become nonresponsive while 
+        propagating into directory tree.
+      public Iterable<DataNode> getChildIterable()
+        {
+          return getChildListOfDataNodes();
+          }
+      */  ////
+
+      public List<DataNode> getChildListOfDataNodes()
+        /* This method returns the list of directory entries.
+         * If the entire list has not been validated yet,
+         * it validates every entry by getting each child.
+         * After validation has been assured, it returns the list.
+         */
+      {
+        if (! childrenValidB) { // Validate entire list if needed.
+          for // For all the children.
+            (
+              int childIndexI= 0; 
+              childIndexI < getChildCount();
+              childIndexI++
+              )
+            getChild(childIndexI); // Evaluate and retrieve child.
+          childrenValidB= true; // Mark entire list valid.
+          }
+        return childMultiLinkOfDataNodes.getListOfEs();
+        }
+
       public DataNode getChild( int indexI ) 
         /* This returns the child with index IndexI.
           It gets the child from the child cache if it is there.
@@ -95,9 +127,9 @@ public class IDirectory
               ( indexI < 0 || indexI >= childMultiLinkOfDataNodes.getCountI())
               break goReturn; // exit with null.
             childDataNode= childMultiLinkOfDataNodes.getE(indexI);
-            if  // If did ot place-holder
+            if  // If did not get lazy evaluation place-holder 
               (! (childDataNode instanceof NamedLeaf)) {
-                break goReturn; // exit with that as result.
+                break goReturn; // exit with that as evaluated result.
                 }
             String childString= // Get name of child. 
                 childDataNode.getNameString();

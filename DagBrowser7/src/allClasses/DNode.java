@@ -4,6 +4,8 @@ import static allClasses.AppLog.theAppLog;
 import static allClasses.SystemSettings.NL;
 
 import java.awt.Color;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
@@ -427,6 +429,11 @@ public abstract class DNode<N extends DNode<N>>
 
       public Iterable<DataNode> getChildIterable()
         /* Returns an Iteratable containing the children of this object.
+         * 
+         * ///org Maybe eliminate this and rely instead on
+         *   getChildObservableListOfDataNodes() or
+         *   a new method getChildListOfDataNodes(),
+         *   because Lists are iterable.
          */
         {
           return getChildObservableListOfDataNodes();
@@ -434,13 +441,21 @@ public abstract class DNode<N extends DNode<N>>
 
       public ObservableList<DataNode> getChildObservableListOfDataNodes()
         /* Returns an ObservableList containing the children of this object.
-         * This version builds a list by adding all children to an empty list.
-         * It should be overridden by non-leaf subclasses
-         * which contain their own lists.
          */
         { 
-          ObservableList<DataNode> theList= // Create empty list. 
-              FXCollections.observableArrayList();
+          return FXCollections.observableArrayList(getChildListOfDataNodes()); 
+          }
+
+      public List<DataNode> getChildListOfDataNodes()
+        /* Returns a List containing the children of this object.
+         * This version builds a list by adding all children to an empty list.
+         * 
+         * This method should be overridden if a non-leaf subclass
+         * already contains its children in a list.
+         */
+        { 
+          List<DataNode> theList= // Create empty list. 
+              new ArrayList<DataNode>();
           for // Add all the children.
             (
               int childIndexI= 0; 
