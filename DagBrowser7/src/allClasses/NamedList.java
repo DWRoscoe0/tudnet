@@ -296,11 +296,6 @@ public class NamedList
       { 
         return childMultiLinkOfDataNodes.getE(indexI); 
         }
-
-    public List<DataNode> getChildListOfDataNodes()
-      { 
-        return childMultiLinkOfDataNodes.getListOfEs(); 
-        }
     
     public List<DataNode> getChildLazyListOfDataNodes()
       { 
