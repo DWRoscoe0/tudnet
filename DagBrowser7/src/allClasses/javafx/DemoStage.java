@@ -30,7 +30,7 @@ class DemoStage extends EpiStage
       theBorderPane.setCenter(theVBox);
 
       theEpiStage.setScene(theScene);
-      theEpiStage.finishInitAndStartV(
+      theEpiStage.finishStateInitAndStartV(
         "Demo"
         );
       }

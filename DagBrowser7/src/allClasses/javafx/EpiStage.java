@@ -29,7 +29,7 @@ class EpiStage
         return theEpiStage;
         }
 
-    public void finishInitAndStartV(
+    public void finishStateInitAndStartV(
         String titleString
         )
       /* This method finishes initialization that Stages have in common,

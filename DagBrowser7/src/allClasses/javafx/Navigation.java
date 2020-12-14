@@ -25,13 +25,17 @@ public class Navigation extends EpiStage
     private final DataNode theInitialRootDataNode;
 
     // Other variables.
-    private Scene treeScene; 
-    private Button treeButton;
+    //// private TreePath locationTreePath;
+    
+    private EpiTreeItem theRootEpiTreeItem;
+    private Button theTreeShowItemButton;
+    private Scene theTreeScene; 
+
     private TreeView<DataNode> theTreeView; 
-    private Scene listScene;
+    private Scene theItemScene;
     private ListView<DataNode> theListView; 
-    private Button listButton;
-    private BorderPane listRootBorderPane;
+    private Button theItemShowTreeButton;
+    private BorderPane itemRootBorderPane;
             
     public Navigation(JavaFXGUI theJavaFXGUI, DataNode theInitialRootDataNode)
       {
@@ -40,66 +44,94 @@ public class Navigation extends EpiStage
         }
     
     public void initializeAndStartV()
-      /* This method initializes and starts the Navigation Stage, 
-       * then returns.  
+      /* This method initializes and starts the Navigation Stage, then returns.
+       * The Stage alternates between a Scene which displays
+       * the hierarchy as a tree,,
+       * and a Scene which displays a single node within the tree.
+       * Each Scene has a button to switch to the other.
        */
       {
-        initializeTreeSceneV();
+        //// locationTreePath= theInitialRootDataNode.getTreePath();
+        theRootEpiTreeItem= new EpiTreeItem(theInitialRootDataNode);
 
-        initializeListSceneV();
+        theTreeShowItemButton= new Button("Show Item");
+        theItemShowTreeButton= new Button("Show Tree");
 
-        setButtonActionsV(); // Okay to do now that Scenes are defined.
+        theTreeScene= makeTreeScene(theTreeShowItemButton, theRootEpiTreeItem);
 
-        setScene(treeScene); // Use tree scene as first one displayed.
-        
-        finishInitAndStartV("Infogora JavaFX Navigatioo UI");
+        theItemScene= makeItemScene();
+
+        //// setButtonActionsV(); // Okay to do now that Scenes are defined.
+        theTreeShowItemButton.setOnAction(e -> doTreeShowItemButtonActionV());
+        theItemShowTreeButton.setOnAction(e -> doItemShowTreeButtonActionV());
+
+        setScene(theTreeScene); // Use tree scene as first one displayed.
+        finishStateInitAndStartV("Infogora JavaFX Navigatioo UI");
         }
 
-    private void initializeTreeSceneV()
+    private Scene makeTreeScene(
+        Button theSwitchButton, EpiTreeItem rootEpiTreeItem)
+      /* Creates and returns the initial Scene to display a tree. 
+       * It will be reused so as to reuse tree browsing context.  
+       */ 
       {
-        EpiTreeItem theEpiTreeItem=
-            new EpiTreeItem(theInitialRootDataNode);
-        theEpiTreeItem.setExpanded(true);
-        theTreeView= new TreeView<DataNode>(theEpiTreeItem);
-        treeButton= new Button("Show List");
+        rootEpiTreeItem.setExpanded(true);
+        theTreeView= new TreeView<DataNode>(rootEpiTreeItem);
+        theTreeView.getSelectionModel().select(rootEpiTreeItem);
         BorderPane treeRootBorderPane= new BorderPane();
         treeRootBorderPane.setCenter(theTreeView);
-        //// treeRootBorderPane.setTop(treeButton);
-        treeRootBorderPane.setBottom(treeButton);
-        treeScene= new Scene(treeRootBorderPane);
-        EpiScene.setDefaultsV(treeScene);
+        treeRootBorderPane.setBottom(theSwitchButton);
+        Scene theScene= new Scene(treeRootBorderPane);
+        EpiScene.setDefaultsV(theScene);
+        return theScene;
         }
 
-    private void initializeListSceneV()
+    private Scene makeItemScene()
+      /* Creates and returns a Scene displaying a single item. */ 
       {
-        listRootBorderPane= new BorderPane();
-        theListView= new ListView<DataNode>();
-        listRootBorderPane.setCenter(theListView);
-        listButton= new Button("Show Tree");
-        listRootBorderPane.setBottom(listButton);
-        listScene= new Scene(listRootBorderPane);
-        EpiScene.setDefaultsV(listScene);
+        itemRootBorderPane= new BorderPane();
+        theListView= new ListView<DataNode>(); // Empty ListView.
+        itemRootBorderPane.setCenter(theListView);
+        itemRootBorderPane.setBottom(theItemShowTreeButton);
+        Scene itemScene= new Scene(itemRootBorderPane);
+        EpiScene.setDefaultsV(itemScene);
+        return itemScene;
         }
     
+    /*  ////
     private void setButtonActionsV()
       /* This method defines what actions will be taken when
        * the user activates one of the available buttons.
+       * It does the tree button and the list button.
+       */
+    /*  ////
+      {
+        theTreeShowItemButton.setOnAction(e -> doItemButtonActionV());
+        theItemShowTreeButton.setOnAction(e -> doTreeButtonActionV());
+        }
+    */  ////
+
+    private void doTreeShowItemButtonActionV()
+      /* This method sets the Scene to display
+       * the TreeItem presently displayed by the TreeView.
        */
       {
-        treeButton.setOnAction(e -> {
-          TreeItem<DataNode> theTreeItemOfDataNode=
-            theTreeView.getSelectionModel().getSelectedItem();
-          if (null != theTreeItemOfDataNode) {
-            DataNode theDataNode= theTreeItemOfDataNode.getValue();
-            TreePath theTreePath= theDataNode.getTreePath();
-            Node listNode= theDataNode.getJavaFXNode(theTreePath, null);
-            listRootBorderPane.setCenter(listNode);
-            }
-          setScene(listScene); // Switch to list scene.
-          });
-        listButton.setOnAction(e -> { 
-          setScene(treeScene); // Switch to tree scene.
-          });
+        TreeItem<DataNode> theTreeItemOfDataNode=
+          theTreeView.getSelectionModel().getSelectedItem();
+        if (null != theTreeItemOfDataNode) { // Process if item selected.
+          DataNode theDataNode= theTreeItemOfDataNode.getValue();
+          TreePath theTreePath= theDataNode.getTreePath();
+          Node itemNode= theDataNode.getJavaFXNode(theTreePath, null);
+          itemRootBorderPane.setCenter(itemNode);
+          }
+        setScene(theItemScene); // Switch to item scene.
         }
 
+    private void doItemShowTreeButtonActionV()
+      /* This method sets the Scene to display the TreeView.
+       */
+      {
+        setScene(theTreeScene); // Switch [back] to tree scene.
+        }
+    
     }
