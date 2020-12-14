@@ -1,4 +1,4 @@
-package allClasses;
+package allClasses.javafx;
 
 import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
@@ -6,6 +6,9 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.BorderPane;
 import javax.swing.tree.TreePath;
+
+import allClasses.DataNode;
+import allClasses.DataTreeModel;
 
 public class TitledListNode extends BorderPane  
 
