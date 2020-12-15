@@ -149,7 +149,7 @@ class Infogora  // The root of this app.
 	      BackupTerminator theBackupTerminator= BackupTerminator.makeBackupTerminator();
 
         theAppLog.info(true,
-	          "Infogora.main() beginning. ======== APP IS STARTING ========");
+	          "Infogora.main() ======== APP IS STARTING ========");
 	      CommandArgs theCommandArgs= new CommandArgs(argStrings);
         AppSettings.initializeV(Infogora.class, theCommandArgs);
 	      AppFactory theAppFactory= new AppFactory(theCommandArgs);
