@@ -14,9 +14,6 @@ public class TitledListNode extends BorderPane
 
   /* This class is used for displaying Nodes that
    * can be displayed as lists.
-   * 
-   * ///fix Though the name of this class includes "Titled",
-   * it does not yet display a title.
    */
 
   {
@@ -24,9 +21,7 @@ public class TitledListNode extends BorderPane
     public TitledListNode( TreePath theTreePath, DataTreeModel inDataTreeModel )
       {
         Label titleLabel= new Label(
-          //"TEST-TITLE"
-          ((DataNode)(theTreePath.getLastPathComponent())).toString()
-          );
+          ((DataNode)(theTreePath.getLastPathComponent())).toString());
         setTop(titleLabel); // Adding it to main JPanel.
         BorderPane.setAlignment(titleLabel,Pos.CENTER);
 

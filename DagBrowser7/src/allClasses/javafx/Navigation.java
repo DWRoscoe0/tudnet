@@ -1,5 +1,7 @@
 package allClasses.javafx;
 
+import java.awt.event.KeyEvent;
+
 import javax.swing.tree.TreePath;
 
 import allClasses.DataNode;
@@ -10,6 +12,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 
 public class Navigation extends EpiStage
@@ -46,7 +49,7 @@ public class Navigation extends EpiStage
     public void initializeAndStartV()
       /* This method initializes and starts the Navigation Stage, then returns.
        * The Stage alternates between a Scene which displays
-       * the hierarchy as a tree,,
+       * the hierarchy as a tree,
        * and a Scene which displays a single node within the tree.
        * Each Scene has a button to switch to the other.
        */
@@ -61,9 +64,7 @@ public class Navigation extends EpiStage
 
         theItemScene= makeItemScene();
 
-        //// setButtonActionsV(); // Okay to do now that Scenes are defined.
-        theTreeShowItemButton.setOnAction(e -> doTreeShowItemButtonActionV());
-        theItemShowTreeButton.setOnAction(e -> doItemShowTreeButtonActionV());
+        setEventHandlersV(); // Okay to do now that above definitions are done.
 
         setScene(theTreeScene); // Use tree scene as first one displayed.
         finishStateInitAndStartV("Infogora JavaFX Navigatioo UI");
@@ -98,19 +99,24 @@ public class Navigation extends EpiStage
         return itemScene;
         }
     
-    /*  ////
-    private void setButtonActionsV()
-      /* This method defines what actions will be taken when
-       * the user activates one of the available buttons.
-       * It does the tree button and the list button.
+    private void setEventHandlersV()
+      /* This method registers EventHandlers for various events.
        */
-    /*  ////
       {
-        theTreeShowItemButton.setOnAction(e -> doItemButtonActionV());
-        theItemShowTreeButton.setOnAction(e -> doTreeButtonActionV());
-        }
-    */  ////
+        theTreeShowItemButton.setOnAction(e -> doTreeShowItemButtonActionV());
+        theItemShowTreeButton.setOnAction(e -> doItemShowTreeButtonActionV());
 
+        theItemScene.setOnKeyPressed(e -> doItemKeyV(e));
+
+      }
+
+    private void doItemKeyV(javafx.scene.input.KeyEvent theKeyEvent)
+      {
+        KeyCode keyCodeI = theKeyEvent.getCode(); // Copying key pressed.
+        if (keyCodeI == KeyCode.RIGHT) // right-arrow maybe.
+          System.out.println("Right-arrow typed.");
+        }
+    
     private void doTreeShowItemButtonActionV()
       /* This method sets the Scene to display
        * the TreeItem presently displayed by the TreeView.
