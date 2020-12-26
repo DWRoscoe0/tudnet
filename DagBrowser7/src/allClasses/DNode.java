@@ -629,6 +629,13 @@ public abstract class DNode<N extends DNode<N>>
 
   // Other methods.
 
+    /*  ////
+    public Test getDataJComponent( 
+        TreePath inTreePath, DataTreeModel inDataTreeModel 
+        ) 
+    {return null;}
+    */  ////
+
     public JComponent getDataJComponent( 
         TreePath inTreePath, DataTreeModel inDataTreeModel 
         ) 

@@ -1,10 +1,6 @@
 package allClasses.javafx;
 
-import java.awt.event.KeyEvent;
-
 import javax.swing.tree.TreePath;
-
-import allClasses.DataNode;
 
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -13,7 +9,10 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
+
+import allClasses.DataNode;
 
 public class Navigation extends EpiStage
 
@@ -103,18 +102,25 @@ public class Navigation extends EpiStage
       /* This method registers EventHandlers for various events.
        */
       {
-        theTreeShowItemButton.setOnAction(e -> doTreeShowItemButtonActionV());
-        theItemShowTreeButton.setOnAction(e -> doItemShowTreeButtonActionV());
+        theTreeShowItemButton.setOnAction(
+            theActionEvent -> doTreeShowItemButtonActionV() );
+        theItemShowTreeButton.setOnAction(
+            theActionEvent -> doItemShowTreeButtonActionV() );
 
-        theItemScene.setOnKeyPressed(e -> doItemKeyV(e));
-
-      }
+        theItemScene.addEventHandler(
+            KeyEvent.KEY_PRESSED, e -> doItemKeyV(e) );
+        }
 
     private void doItemKeyV(javafx.scene.input.KeyEvent theKeyEvent)
       {
-        KeyCode keyCodeI = theKeyEvent.getCode(); // Copying key pressed.
-        if (keyCodeI == KeyCode.RIGHT) // right-arrow maybe.
-          System.out.println("Right-arrow typed.");
+        KeyCode keyCodeI = theKeyEvent.getCode(); // Get code of key pressed.
+        switch (keyCodeI) {
+          case RIGHT:  // right-arrow.
+            System.out.println("Right-arrow typed."); break;
+            //// setItemRootFromDataNodeV(theDataNode);
+          default: 
+            break;
+          }
         }
     
     private void doTreeShowItemButtonActionV()
@@ -126,11 +132,16 @@ public class Navigation extends EpiStage
           theTreeView.getSelectionModel().getSelectedItem();
         if (null != theTreeItemOfDataNode) { // Process if item selected.
           DataNode theDataNode= theTreeItemOfDataNode.getValue();
-          TreePath theTreePath= theDataNode.getTreePath();
-          Node itemNode= theDataNode.getJavaFXNode(theTreePath, null);
-          itemRootBorderPane.setCenter(itemNode);
+          setItemRootFromDataNodeV(theDataNode);
           }
         setScene(theItemScene); // Switch to item scene.
+        }
+
+    private void setItemRootFromDataNodeV(DataNode theDataNode)
+      {
+        TreePath theTreePath= theDataNode.getTreePath();
+        Node itemNode= theDataNode.getJavaFXNode(theTreePath, null);
+        itemRootBorderPane.setCenter(itemNode);
         }
 
     private void doItemShowTreeButtonActionV()
