@@ -140,7 +140,9 @@ public class Navigation extends EpiStage
     private void setItemRootFromDataNodeV(DataNode theDataNode)
       {
         TreePath theTreePath= theDataNode.getTreePath();
-        Node itemNode= theDataNode.getJavaFXNode(theTreePath, null);
+        //// Node itemNode= theDataNode.getJavaFXNode(theTreePath, null);
+        TreeStuff theTreeStuff= theDataNode.makeTreeStuff(theTreePath, null);
+        Node itemNode= theTreeStuff.theNode;
         itemRootBorderPane.setCenter(itemNode);
         }
 

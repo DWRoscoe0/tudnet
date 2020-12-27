@@ -12,6 +12,7 @@ import allClasses.DataNode;
 import allClasses.DataTreeModel;
 import allClasses.TitledTextViewer;
 import allClasses.javafx.TitledTextNode;
+import allClasses.javafx.TreeStuff;
 import javafx.scene.Node;
 
 import static allClasses.SystemSettings.NL;
@@ -119,7 +120,7 @@ public class IFile
         {
           Node resultNode= // Using TitledListViewer.
             new TitledTextNode(
-                inTreePath, inDataTreeModel, getFileString());
+                inTreePath, inDataTreeModel, getFileString(),new TreeStuff());
   
           return resultNode;  // Returning result from above.
           }

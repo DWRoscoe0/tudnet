@@ -25,10 +25,31 @@ public class TitledTextNode extends BorderPane
   
   {
 
-    public TitledTextNode( 
+    @SuppressWarnings("unused")
+    private TreeStuff theTreeStuff; //// = new TreeStuff(Node theNode);
+
+    public static TreeStuff makeTreeStuff(
                 TreePath theTreePath, 
                 DataTreeModel theDataTreeModel, ///opt 
                 String theString
+                )
+    { 
+      TreeStuff theTreeStuff= new TreeStuff();
+      TitledTextNode theTitledTextNode= new TitledTextNode( 
+        theTreePath, 
+        theDataTreeModel, 
+        theString,
+        theTreeStuff
+        );
+      theTreeStuff.setNode(theTitledTextNode);
+      return theTreeStuff;
+      }
+    
+    public TitledTextNode( 
+                TreePath theTreePath, 
+                DataTreeModel theDataTreeModel, ///opt 
+                String theString,
+                TreeStuff theTreeStuff
                 )
       /* Constructs a TitledTextNode.
         theTreePath is the TreePath associated with
@@ -38,6 +59,7 @@ public class TitledTextNode extends BorderPane
         theDataTreeModel provides context.
         */
       {
+        this.theTreeStuff= theTreeStuff;
         Label titleLabel= new Label(
           //"TEST-TITLE"
           ((DataNode)(theTreePath.getLastPathComponent())).toString()

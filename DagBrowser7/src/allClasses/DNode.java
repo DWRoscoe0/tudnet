@@ -13,6 +13,7 @@ import javax.swing.tree.TreePath;
 import allClasses.AppLog.LogLevel;
 import allClasses.javafx.TitledListNode;
 import allClasses.javafx.TitledTextNode;
+import allClasses.javafx.TreeStuff;
 import allClasses.multilink.ElementMultiLink;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -659,6 +660,26 @@ public abstract class DNode<N extends DNode<N>>
         return resultJComponent;  // Returning result from above.
         }
 
+    public TreeStuff makeTreeStuff( 
+        TreePath inTreePath, DataTreeModel inDataTreeModel 
+        )
+      {
+        TreeStuff resultTreeStuff= null;
+
+        if ( isLeaf() ) // Display as text if this DataNode is leaf.
+          resultTreeStuff= // Using TitledTextViewer.
+            TitledTextNode.makeTreeStuff(
+                inTreePath,inDataTreeModel,getContentString());
+            //// new TitledTextNode(inTreePath,inDataTreeModel,getContentString());
+          else  // Display as list if this DataNode is not a leaf.
+          resultTreeStuff= // Using TitledListViewer.
+            TitledListNode.makeTreeStuff(
+                inTreePath, inDataTreeModel );
+            //// new TitledListNode( inTreePath, inDataTreeModel );
+
+        return resultTreeStuff;  // Returning result from above.
+        }
+
     public Node getJavaFXNode( 
         TreePath inTreePath, DataTreeModel inDataTreeModel 
         ) 
@@ -680,11 +701,12 @@ public abstract class DNode<N extends DNode<N>>
             new TitledTextNode( 
               inTreePath, 
               inDataTreeModel, 
-              getContentString()
+              getContentString(),
+              new TreeStuff()
               );
           else  // Display as list if this DataNode is not a leaf.
           resultNode= // Using TitledListViewer.
-            new TitledListNode( inTreePath, inDataTreeModel );
+            new TitledListNode( inTreePath, inDataTreeModel,new TreeStuff() );
 
         return resultNode;  // Returning result from above.
         }

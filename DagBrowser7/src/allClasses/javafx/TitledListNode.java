@@ -27,7 +27,7 @@ public class TitledListNode
     ListView<DataNode> theListView= // List view GUI Node. 
         new ListView<DataNode>();
 
-    private TreeStuff theTreeStuff= new TreeStuff();
+    private TreeStuff theTreeStuff; //// = new TreeStuff(Node theNode);
     
     public TreeStuff getTreeStuff()
       { 
@@ -42,8 +42,31 @@ public class TitledListNode
       return childDataNode;
     }
 
-    public TitledListNode( TreePath theTreePath, DataTreeModel inDataTreeModel )
+
+    public static TreeStuff makeTreeStuff(
+                TreePath theTreePath, 
+                DataTreeModel theDataTreeModel 
+                //// String theString
+                )
+    { 
+      TreeStuff theTreeStuff= new TreeStuff();
+      TitledListNode theTitledListNode= new TitledListNode( 
+        theTreePath, 
+        theDataTreeModel,
+        //// theString
+        theTreeStuff
+        );
+      theTreeStuff.setNode(theTitledListNode);
+      return theTreeStuff;
+      }
+
+    public TitledListNode( 
+        TreePath theTreePath, 
+        DataTreeModel inDataTreeModel, 
+        TreeStuff theTreeStuff
+        )
       {
+        this.theTreeStuff= theTreeStuff;
         Label titleLabel= new Label(
           ((DataNode)(theTreePath.getLastPathComponent())).toString());
         setTop(titleLabel); // Adding it to main JPanel.
