@@ -38,7 +38,9 @@ public class Navigation extends EpiStage
     private ListView<DataNode> theListView; 
     private Button theItemShowTreeButton;
     private BorderPane itemRootBorderPane;
-            
+
+    private TreeStuff itemTreeStuff;
+
     public Navigation(JavaFXGUI theJavaFXGUI, DataNode theInitialRootDataNode)
       {
         super(theJavaFXGUI);
@@ -116,8 +118,9 @@ public class Navigation extends EpiStage
         KeyCode keyCodeI = theKeyEvent.getCode(); // Get code of key pressed.
         switch (keyCodeI) {
           case RIGHT:  // right-arrow.
-            System.out.println("Right-arrow typed."); break;
-            //// setItemRootFromDataNodeV(theDataNode);
+            System.out.println("Right-arrow typed.");
+            setItemRootFromDataNodeV(itemTreeStuff.selectedDataNode);
+            break;
           default: 
             break;
           }
@@ -141,8 +144,8 @@ public class Navigation extends EpiStage
       {
         TreePath theTreePath= theDataNode.getTreePath();
         //// Node itemNode= theDataNode.getJavaFXNode(theTreePath, null);
-        TreeStuff theTreeStuff= theDataNode.makeTreeStuff(theTreePath, null);
-        Node itemNode= theTreeStuff.theNode;
+        itemTreeStuff= theDataNode.makeTreeStuff(theTreePath, null);
+        Node itemNode= itemTreeStuff.getNode();
         itemRootBorderPane.setCenter(itemNode);
         }
 
