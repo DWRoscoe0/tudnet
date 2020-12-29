@@ -8,7 +8,6 @@ import javafx.scene.layout.BorderPane;
 import javax.swing.tree.TreePath;
 
 import allClasses.DataNode;
-import allClasses.DataTreeModel;
 
 // import static allClasses.Globals.appLogger;
 
@@ -30,14 +29,12 @@ public class TitledTextNode extends BorderPane
 
     public static TreeStuff makeTreeStuff(
                 TreePath theTreePath, 
-                DataTreeModel theDataTreeModel, ///opt 
                 String theString
                 )
     { 
       TreeStuff theTreeStuff= new TreeStuff();
       TitledTextNode theTitledTextNode= new TitledTextNode( 
         theTreePath, 
-        theDataTreeModel, 
         theString,
         theTreeStuff
         );
@@ -47,7 +44,6 @@ public class TitledTextNode extends BorderPane
     
     public TitledTextNode( 
                 TreePath theTreePath, 
-                DataTreeModel theDataTreeModel, ///opt 
                 String theString,
                 TreeStuff theTreeStuff
                 )

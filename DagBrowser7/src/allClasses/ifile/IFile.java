@@ -120,7 +120,11 @@ public class IFile
         {
           Node resultNode= // Using TitledListViewer.
             new TitledTextNode(
-                inTreePath, inDataTreeModel, getFileString(),new TreeStuff());
+                inTreePath, 
+                //// inDataTreeModel, 
+                getFileString(),
+                new TreeStuff()
+                );
   
           return resultNode;  // Returning result from above.
           }

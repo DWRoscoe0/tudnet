@@ -669,17 +669,20 @@ public abstract class DNode<N extends DNode<N>>
         if ( isLeaf() ) // Display as text if this DataNode is leaf.
           resultTreeStuff= // Using TitledTextViewer.
             TitledTextNode.makeTreeStuff(
-                inTreePath,inDataTreeModel,getContentString());
+                inTreePath,
+                getContentString()
+                );
           else  // Display as list if this DataNode is not a leaf.
           resultTreeStuff= // Using TitledListViewer.
             TitledListNode.makeTreeStuff(
-                inTreePath, inDataTreeModel );
+                inTreePath 
+                );
 
         return resultTreeStuff;  // Returning result from above.
         }
 
     public Node getJavaFXNode( 
-        TreePath inTreePath, DataTreeModel inDataTreeModel 
+        TreePath inTreePath 
         ) 
       /* Returns a Node Component capable of displaying this DataNode.
         It may use the DataTreeModel inDataTreeModel to provide context.  
@@ -698,13 +701,15 @@ public abstract class DNode<N extends DNode<N>>
           resultNode= // Using TitledTextViewer.
             new TitledTextNode( 
               inTreePath, 
-              inDataTreeModel, 
               getContentString(),
               new TreeStuff()
               );
           else  // Display as list if this DataNode is not a leaf.
           resultNode= // Using TitledListViewer.
-            new TitledListNode( inTreePath, inDataTreeModel,new TreeStuff() );
+            new TitledListNode( 
+                inTreePath, 
+                new TreeStuff() 
+                );
 
         return resultNode;  // Returning result from above.
         }

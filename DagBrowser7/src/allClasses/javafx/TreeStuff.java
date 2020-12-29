@@ -20,6 +20,7 @@ public class TreeStuff
   {
     private Node theGuiNode= null;
       // This should be the JavaFX Node used to display the DataNode. 
+    @SuppressWarnings("unused")
     private DataNode subjectDataNode= null;
       // This is the whole DataNode being displayed.
       // It should be the parent of the selected DataNode, if any.

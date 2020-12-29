@@ -10,7 +10,6 @@ import javafx.scene.layout.BorderPane;
 import javax.swing.tree.TreePath;
 
 import allClasses.DataNode;
-import allClasses.DataTreeModel;
 
 public class TitledListNode 
   extends BorderPane
@@ -34,14 +33,12 @@ public class TitledListNode
         }
 
     public static TreeStuff makeTreeStuff(
-                TreePath theTreePath, 
-                DataTreeModel theDataTreeModel 
+                TreePath theTreePath 
                 )
     { 
       TreeStuff theTreeStuff= new TreeStuff();
       TitledListNode theTitledListNode= new TitledListNode( 
         theTreePath, 
-        theDataTreeModel,
         theTreeStuff
         );
       theTreeStuff.initializeV(theTitledListNode);
@@ -50,7 +47,6 @@ public class TitledListNode
 
     public TitledListNode( 
         TreePath theTreePath, 
-        DataTreeModel inDataTreeModel, 
         TreeStuff theTreeStuff
         )
       {
