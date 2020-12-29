@@ -44,7 +44,7 @@ public class TitledListNode
         theDataTreeModel,
         theTreeStuff
         );
-      theTreeStuff.setNode(theTitledListNode);
+      theTreeStuff.initializeV(theTitledListNode);
       return theTreeStuff;
       }
 
@@ -78,7 +78,7 @@ public class TitledListNode
           (observableValueOfDataNode,oldDataNode,newDataNode) 
           -> 
           { System.out.println("TitledListNode selection changed."); 
-            getTreeStuff().selectedDataNode= selectedItemProperty.get();
+            getTreeStuff().setSelectedDataNodeV(selectedItemProperty.get());
             }
           );
 

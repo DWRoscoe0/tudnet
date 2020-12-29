@@ -41,7 +41,7 @@ public class TitledTextNode extends BorderPane
         theString,
         theTreeStuff
         );
-      theTreeStuff.setNode(theTitledTextNode);
+      theTreeStuff.initializeV(theTitledTextNode);
       return theTreeStuff;
       }
     

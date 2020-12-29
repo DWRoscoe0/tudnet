@@ -4,37 +4,52 @@ import allClasses.DataNode;
 import javafx.scene.Node;
 
 public class TreeStuff 
-  /* This class manages movements in the hierarchy
-   * for JavaFX Node viewers.
+  /* This class stores information about 
+   * a location in the hierarchy for JavaFX Node viewers.
    * It stores both the location of the Node,
    * and the location of the selection, if any, within the Node.
    * It should be updated by the selection model of
    * the Node's associated viewer.
-   * It may be interrogated for location other objects.
+   * It may be interrogated for location information.
    * Location can be expressed by either
-   * a TreePath or the path's terminal DataNode. 
+   * a TreePath or the DataNode of interest that terminates it. 
    * A TreePath can be calculated from a DataNode
    * by following the links to parent DataNodes.
    */
 
   {
-    /// private DataNode theDataNode= null;
-      // This should always be the parent of selected child DataNode.
-    public DataNode selectedDataNode= null;
-      // This should be the selected child of the parent.
+    private Node theGuiNode= null;
+      // This should be the JavaFX Node used to display the DataNode. 
+    private DataNode subjectDataNode= null;
+      // This is the whole DataNode being displayed.
+      // It should be the parent of the selected DataNode, if any.
+    private DataNode selectedChildDataNode= null;
+      // This should be the selected child DataNode of the subject DataNode.
+      // This may be null if there is not selection.
       ///org Maybe bind this to viewer instead of assigning it.
-    private Node theNode= null;
-      // This should be the referenced value of theNode
-      // Associated JavaFX Node. 
 
-    public void setNode(Node theNode)
+
+    public void initializeV(Node theNode)
       { 
-        this.theNode= theNode;
+        this.theGuiNode= theNode;
         }
 
-    public Node getNode()
+
+    public DataNode getSelectedDataNode()
       {
-        return theNode;
+        return selectedChildDataNode;
+        }
+    
+    public void setSelectedDataNodeV(DataNode theDataNode)
+      {
+        selectedChildDataNode= theDataNode;
+        }
+
+
+    public Node getGuiNode()
+      /* Returns the JavaFX GUI Node being used to display the DataNode. */
+      {
+        return theGuiNode;
         }
 
     }

@@ -117,7 +117,11 @@ public class Navigation extends EpiStage
         switch (keyCodeI) {
           case RIGHT:  // right-arrow.
             System.out.println("Right-arrow typed.");
-            setItemRootFromDataNodeV(itemTreeStuff.selectedDataNode);
+            setItemRootFromDataNodeV(itemTreeStuff.getSelectedDataNode());
+            break;
+          case LEFT:  // left-arrow.
+            System.out.println("Left-arrow typed.");
+            ////setItemRootFromDataNodeV(itemTreeStuff.selectedDataNode);
             break;
           default: 
             break;
@@ -147,7 +151,7 @@ public class Navigation extends EpiStage
         if (null != theDataNode) { // Process DataNode if present.
           TreePath theTreePath= theDataNode.getTreePath();
           itemTreeStuff= theDataNode.makeTreeStuff(theTreePath, null);
-          Node itemNode= itemTreeStuff.getNode();
+          Node itemNode= itemTreeStuff.getGuiNode();
           itemRootBorderPane.setCenter(itemNode);
           }
         }
