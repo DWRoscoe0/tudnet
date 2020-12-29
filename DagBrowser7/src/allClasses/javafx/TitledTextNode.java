@@ -25,8 +25,8 @@ public class TitledTextNode extends BorderPane
   
   {
 
-    @SuppressWarnings("unused")
-    private TreeStuff theTreeStuff; //// = new TreeStuff(Node theNode);
+    @SuppressWarnings("unused") ///
+    private TreeStuff theTreeStuff;
 
     public static TreeStuff makeTreeStuff(
                 TreePath theTreePath, 

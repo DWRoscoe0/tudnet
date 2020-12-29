@@ -670,12 +670,10 @@ public abstract class DNode<N extends DNode<N>>
           resultTreeStuff= // Using TitledTextViewer.
             TitledTextNode.makeTreeStuff(
                 inTreePath,inDataTreeModel,getContentString());
-            //// new TitledTextNode(inTreePath,inDataTreeModel,getContentString());
           else  // Display as list if this DataNode is not a leaf.
           resultTreeStuff= // Using TitledListViewer.
             TitledListNode.makeTreeStuff(
                 inTreePath, inDataTreeModel );
-            //// new TitledListNode( inTreePath, inDataTreeModel );
 
         return resultTreeStuff;  // Returning result from above.
         }

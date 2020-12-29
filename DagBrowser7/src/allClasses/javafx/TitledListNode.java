@@ -27,33 +27,22 @@ public class TitledListNode
     ListView<DataNode> theListView= // List view GUI Node. 
         new ListView<DataNode>();
 
-    private TreeStuff theTreeStuff; //// = new TreeStuff(Node theNode);
+    private TreeStuff theTreeStuff;
     
     public TreeStuff getTreeStuff()
       { 
         return theTreeStuff;
         }
 
-    public DataNode getSelectedDataNode() ////
-    {
-      MultipleSelectionModel<DataNode> theMultipleSelectionModel=
-          theListView.getSelectionModel();
-      DataNode childDataNode= theMultipleSelectionModel.getSelectedItem();
-      return childDataNode;
-    }
-
-
     public static TreeStuff makeTreeStuff(
                 TreePath theTreePath, 
                 DataTreeModel theDataTreeModel 
-                //// String theString
                 )
     { 
       TreeStuff theTreeStuff= new TreeStuff();
       TitledListNode theTitledListNode= new TitledListNode( 
         theTreePath, 
         theDataTreeModel,
-        //// theString
         theTreeStuff
         );
       theTreeStuff.setNode(theTitledListNode);
@@ -72,7 +61,6 @@ public class TitledListNode
         setTop(titleLabel); // Adding it to main JPanel.
         BorderPane.setAlignment(titleLabel,Pos.CENTER);
 
-        //// ListView<DataNode> theListView= new ListView<DataNode>();
         parentDataNode= (DataNode)theTreePath.getLastPathComponent();
         ObservableList<DataNode> childObservableList= 
             parentDataNode.getChildObservableListOfDataNodes();
@@ -87,7 +75,6 @@ public class TitledListNode
             theListView.getSelectionModel();
         ReadOnlyObjectProperty<DataNode> selectedItemProperty=
             theMultipleSelectionModel.selectedItemProperty();
-        //// theMultipleSelectionModel.selectedItemProperty().addListener(
         selectedItemProperty.addListener(
           (observableValueOfDataNode,oldDataNode,newDataNode) 
           -> 

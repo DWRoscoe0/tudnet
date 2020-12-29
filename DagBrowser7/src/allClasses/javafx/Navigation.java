@@ -27,7 +27,6 @@ public class Navigation extends EpiStage
     private final DataNode theInitialRootDataNode;
 
     // Other variables.
-    //// private TreePath locationTreePath;
     
     private EpiTreeItem theRootEpiTreeItem;
     private Button theTreeShowItemButton;
@@ -55,7 +54,6 @@ public class Navigation extends EpiStage
        * Each Scene has a button to switch to the other.
        */
       {
-        //// locationTreePath= theInitialRootDataNode.getTreePath();
         theRootEpiTreeItem= new EpiTreeItem(theInitialRootDataNode);
 
         theTreeShowItemButton= new Button("Show Item");
@@ -141,12 +139,17 @@ public class Navigation extends EpiStage
         }
 
     private void setItemRootFromDataNodeV(DataNode theDataNode)
+      /* If theDataNode is null then this method does nothing.
+       * Otherwise it calculates an appropriate GUI Node for theDataNode
+       * and stores at the center of the item Pane.
+       */
       {
-        TreePath theTreePath= theDataNode.getTreePath();
-        //// Node itemNode= theDataNode.getJavaFXNode(theTreePath, null);
-        itemTreeStuff= theDataNode.makeTreeStuff(theTreePath, null);
-        Node itemNode= itemTreeStuff.getNode();
-        itemRootBorderPane.setCenter(itemNode);
+        if (null != theDataNode) { // Process DataNode if present.
+          TreePath theTreePath= theDataNode.getTreePath();
+          itemTreeStuff= theDataNode.makeTreeStuff(theTreePath, null);
+          Node itemNode= itemTreeStuff.getNode();
+          itemRootBorderPane.setCenter(itemNode);
+          }
         }
 
     private void doItemShowTreeButtonActionV()
