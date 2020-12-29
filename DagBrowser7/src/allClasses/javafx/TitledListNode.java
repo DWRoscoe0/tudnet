@@ -14,8 +14,7 @@ import allClasses.DataTreeModel;
 
 public class TitledListNode 
   extends BorderPane
-  implements Treeish
-
+  
   /* This class is used for displaying Nodes that
    * can be displayed as lists.
    */
