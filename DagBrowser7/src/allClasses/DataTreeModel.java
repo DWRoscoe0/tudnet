@@ -524,7 +524,7 @@ public class DataTreeModel
           DataNode childDataNode 
           )
         /* This method signals the insertion of a single child DataNode, 
-          childDataNode, into parentDataNode at child position indexI.
+          childDataNode, into theSubjectDataNode at child position indexI.
 		      ///opt Implement without StructuralChange.
           */
         {
@@ -538,7 +538,7 @@ public class DataTreeModel
           DataNode childDataNode 
           )
 	      /* This method signals the removal of a single child DataNode, 
-		      childDataNode, from parentDataNode at child position indexI.
+		      childDataNode, from theSubjectDataNode at child position indexI.
 		      ///opt Implement without StructuralChange.
 		      */
 		    {
@@ -551,7 +551,7 @@ public class DataTreeModel
           int indexI, 
           DataNode childDataNode 
 		      )
-        /* This method is used to signal a parentDataNode about 
+        /* This method is used to signal a theSubjectDataNode about 
           the insertion or deletion of an unnamed child node.
           */
         {
@@ -778,7 +778,7 @@ public class DataTreeModel
             )
           /* This method creates and fires a single-child TreeModelEvent
             for the insertion of a single child DataNode, childDataNode,
-            into parentDataNode at position indexI.
+            into theSubjectDataNode at position indexI.
             It also adds the path of the new child to the map for use later.
             */
           {
@@ -811,7 +811,7 @@ public class DataTreeModel
             )
         	/* This method creates and fires a single-child TreeModelEvent
             for the removal of a single child DataNode, childDataNode,
-            whose previous position was indexI, into parentDataNode.
+            whose previous position was indexI, into theSubjectDataNode.
             */
           {
         		theAppLog.error( "THIS IS SUPPOSED TO BE UNUSED CODE!" ); 
@@ -875,7 +875,7 @@ public class DataTreeModel
                 } catch ( Exception theException  ) {
                   theAppLog.debug( "DataTreeModel.reportingChangeB((..) to "
                     + NL + "  theDataNode=" + theDataNode + " with indexI=" + indexI 
-                    + NL + "  in parentDataNode=" + parentDataNode 
+                    + NL + "  in theSubjectDataNode=" + parentDataNode 
                     + ", ignoring Exception " + theException );
                   break toReturn;
                 }
@@ -973,13 +973,13 @@ public class DataTreeModel
           		TreePath parentTreePath = queueOfTreePath.poll(); 
           	  if ( parentTreePath == null) break queueScanner;
           	    // Exiting if queue empty.
-            	DataNode parentDataNode= 
+            	DataNode theSubjectDataNode= 
             		(DataNode)parentTreePath.getLastPathComponent(); 
               for // Checking children.
                 ( int childIndexI=0; ; childIndexI++ ) 
                 { 
                 	DataNode childDataNode= 
-                	  parentDataNode.getChild(childIndexI);
+                	  theSubjectDataNode.getChild(childIndexI);
               	  if ( childDataNode == null) break;
               	    // Exiting checking-children loop if no more children.
                   TreePath childTreePath=

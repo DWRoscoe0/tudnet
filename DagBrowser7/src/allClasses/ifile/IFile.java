@@ -100,27 +100,29 @@ public class IFile
           }
       
       public JComponent getDataJComponent(
-          TreePath inTreePath,
+          TreePath theTreePath,
           DataTreeModel inDataTreeModel 
           )
         /* Returns a JComponent capable of displaying the 
-         * IFile at the end of inTreePath. 
+         * IFile at the end of theTreePath. 
          */
         {
           JComponent resultJComponent= // Return a text viewer to view the file.
-	              new TitledTextViewer(inTreePath, inDataTreeModel, getFileString());
+	              new TitledTextViewer(theTreePath, inDataTreeModel, getFileString());
           return resultJComponent;  // return the final result.
           }
 
       public Node getJavaFXNode( 
-          TreePath inTreePath, DataTreeModel inDataTreeModel 
+          TreePath theTreePath, 
+          DataNode subjectDataNode, 
+          DataTreeModel inDataTreeModel 
           ) 
         /* Returns a Node Component capable of displaying this IFile.
           */
         {
           Node resultNode= // Using TitledListViewer.
             new TitledTextNode(
-                inTreePath, 
+                subjectDataNode,
                 //// inDataTreeModel, 
                 getFileString(),
                 new TreeStuff()

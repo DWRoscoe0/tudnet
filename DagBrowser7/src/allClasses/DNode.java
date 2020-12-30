@@ -661,7 +661,7 @@ public abstract class DNode<N extends DNode<N>>
         }
 
     public TreeStuff makeTreeStuff( 
-        TreePath inTreePath, DataTreeModel inDataTreeModel 
+        DataNode subjectDataNode
         )
       {
         TreeStuff resultTreeStuff= null;
@@ -669,49 +669,16 @@ public abstract class DNode<N extends DNode<N>>
         if ( isLeaf() ) // Display as text if this DataNode is leaf.
           resultTreeStuff= // Using TitledTextViewer.
             TitledTextNode.makeTreeStuff(
-                inTreePath,
+                subjectDataNode,
                 getContentString()
                 );
           else  // Display as list if this DataNode is not a leaf.
           resultTreeStuff= // Using TitledListViewer.
             TitledListNode.makeTreeStuff(
-                inTreePath 
+                subjectDataNode
                 );
 
         return resultTreeStuff;  // Returning result from above.
-        }
-
-    public Node getJavaFXNode( 
-        TreePath inTreePath 
-        ) 
-      /* Returns a Node Component capable of displaying this DataNode.
-        It may use the DataTreeModel inDataTreeModel to provide context.  
-        This base class method returns useful defaults:
-        * a TextViewerNode for leaves and 
-        * a ListViewerNode for non-leaves.
-        This DataNode, the DataNode to be viewed,
-        is the last element of inTreePath,
-
-        This method may be overridden if a more specialized viewer is needed.
-        */
-      {
-        Node resultNode= null;
-
-        if ( isLeaf() ) // Display as text if this DataNode is leaf.
-          resultNode= // Using TitledTextViewer.
-            new TitledTextNode( 
-              inTreePath, 
-              getContentString(),
-              new TreeStuff()
-              );
-          else  // Display as list if this DataNode is not a leaf.
-          resultNode= // Using TitledListViewer.
-            new TitledListNode( 
-                inTreePath, 
-                new TreeStuff() 
-                );
-
-        return resultNode;  // Returning result from above.
         }
 
     public TreePath getTreePath()

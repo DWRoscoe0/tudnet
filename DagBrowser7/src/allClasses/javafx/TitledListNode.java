@@ -7,7 +7,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MultipleSelectionModel;
 import javafx.scene.layout.BorderPane;
-import javax.swing.tree.TreePath;
 
 import allClasses.DataNode;
 
@@ -20,7 +19,8 @@ public class TitledListNode
 
   {
 
-    DataNode parentDataNode= null; // DataNode containing our list.
+    DataNode theSubjectDataNode= null; // DataNode containing our list.
+      //////opt This should be eliminated and theTreeStuff used instead.
     
     ListView<DataNode> theListView= // List view GUI Node. 
         new ListView<DataNode>();
@@ -33,12 +33,12 @@ public class TitledListNode
         }
 
     public static TreeStuff makeTreeStuff(
-                TreePath theTreePath 
+                DataNode subjectDataNode
                 )
     { 
       TreeStuff theTreeStuff= new TreeStuff();
       TitledListNode theTitledListNode= new TitledListNode( 
-        theTreePath, 
+        subjectDataNode,
         theTreeStuff
         );
       theTreeStuff.initializeV(theTitledListNode);
@@ -46,19 +46,19 @@ public class TitledListNode
       }
 
     public TitledListNode( 
-        TreePath theTreePath, 
+        DataNode subjectDataNode,
         TreeStuff theTreeStuff
         )
       {
         this.theTreeStuff= theTreeStuff;
         Label titleLabel= new Label(
-          ((DataNode)(theTreePath.getLastPathComponent())).toString());
+          subjectDataNode.toString());
         setTop(titleLabel); // Adding it to main JPanel.
         BorderPane.setAlignment(titleLabel,Pos.CENTER);
 
-        parentDataNode= (DataNode)theTreePath.getLastPathComponent();
+        theSubjectDataNode= subjectDataNode;  //////
         ObservableList<DataNode> childObservableList= 
-            parentDataNode.getChildObservableListOfDataNodes();
+            theSubjectDataNode.getChildObservableListOfDataNodes();
         theListView.setItems(childObservableList);
         setCenter(theListView);
         setEventHandlersV();

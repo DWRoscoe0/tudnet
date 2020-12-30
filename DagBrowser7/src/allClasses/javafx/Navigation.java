@@ -1,7 +1,5 @@
 package allClasses.javafx;
 
-import javax.swing.tree.TreePath;
-
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -121,7 +119,7 @@ public class Navigation extends EpiStage
             break;
           case LEFT:  // left-arrow.
             System.out.println("Left-arrow typed.");
-            ////setItemRootFromDataNodeV(itemTreeStuff.selectedDataNode);
+            //////setItemRootFromDataNodeV(itemTreeStuff.selectedDataNode);
             break;
           default: 
             break;
@@ -149,8 +147,9 @@ public class Navigation extends EpiStage
        */
       {
         if (null != theDataNode) { // Process DataNode if present.
-          TreePath theTreePath= theDataNode.getTreePath();
-          itemTreeStuff= theDataNode.makeTreeStuff(theTreePath, null);
+          itemTreeStuff= theDataNode.makeTreeStuff(
+              theDataNode
+              );
           Node itemNode= itemTreeStuff.getGuiNode();
           itemRootBorderPane.setCenter(itemNode);
           }

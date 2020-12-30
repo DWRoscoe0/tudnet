@@ -5,8 +5,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.BorderPane;
 
-import javax.swing.tree.TreePath;
-
 import allClasses.DataNode;
 
 // import static allClasses.Globals.appLogger;
@@ -28,13 +26,13 @@ public class TitledTextNode extends BorderPane
     private TreeStuff theTreeStuff;
 
     public static TreeStuff makeTreeStuff(
-                TreePath theTreePath, 
+                DataNode subjectDataNode,
                 String theString
                 )
     { 
       TreeStuff theTreeStuff= new TreeStuff();
       TitledTextNode theTitledTextNode= new TitledTextNode( 
-        theTreePath, 
+        subjectDataNode,
         theString,
         theTreeStuff
         );
@@ -42,14 +40,13 @@ public class TitledTextNode extends BorderPane
       return theTreeStuff;
       }
     
-    public TitledTextNode( 
-                TreePath theTreePath, 
+    public TitledTextNode(
+                DataNode subjectDataNode,
                 String theString,
                 TreeStuff theTreeStuff
                 )
       /* Constructs a TitledTextNode.
-        theTreePath is the TreePath associated with
-        the node of the Tree to be displayed.
+        subjectDataNode is the node of the Tree to be displayed.
         The last DataNode in the path is that Node.
         The content text to be displayed is theString.
         theDataTreeModel provides context.
@@ -58,7 +55,7 @@ public class TitledTextNode extends BorderPane
         this.theTreeStuff= theTreeStuff;
         Label titleLabel= new Label(
           //"TEST-TITLE"
-          ((DataNode)(theTreePath.getLastPathComponent())).toString()
+          subjectDataNode.toString()
           );
         setTop(titleLabel); // Adding it to main JPanel.
         BorderPane.setAlignment(titleLabel,Pos.CENTER);
