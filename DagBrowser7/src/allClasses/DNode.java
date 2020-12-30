@@ -17,7 +17,6 @@ import allClasses.javafx.TreeStuff;
 import allClasses.multilink.ElementMultiLink;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.scene.Node;
 
 public abstract class DNode<N extends DNode<N>>
 
@@ -236,7 +235,7 @@ public abstract class DNode<N extends DNode<N>>
         {
           }
 
-      protected void setParentToV( NamedList parentNamedList )
+      public void setParentToV( NamedList parentNamedList )
         /* This method is called when a DataNode is added to a NamedList
           or one of its subclasses.  This method:
           * Stores parentNamedList, because every node has a parent
@@ -255,12 +254,12 @@ public abstract class DNode<N extends DNode<N>>
           than for the children to do it.
          */
         {
-          if ( parentNamedList == null )
+          if ( getParentNamedList() == null )
             {
               theAppLog.debug("reportChangeOfSelfV(): parentNamedList == null!");
               }
             else
-            parentNamedList.reportChangeInChildB( 
+            getParentNamedList().reportChangeInChildB( 
                 (DataNode)this ///org Temporary until generified. 
                 );
           }
@@ -491,11 +490,11 @@ public abstract class DNode<N extends DNode<N>>
         {
           String resultString;
           
-          if ( parentNamedList == null )
+          if ( getParentNamedList() == null )
             resultString= getNameString();
           else
             resultString= 
-              parentNamedList.getNodePathString()
+              getParentNamedList().getNodePathString()
               + ", "
               + getNameString(); 
 
@@ -694,12 +693,12 @@ public abstract class DNode<N extends DNode<N>>
        */
       { 
         TreePath resultTreePath;
-        if ( null == parentNamedList ) // If node has no parent then
+        if ( null == getParentNamedList() ) // If node has no parent then
           resultTreePath= 
             new TreePath(this); // path is only this node.
         else // Node has a parent so recursively
           resultTreePath= // construct path from parent and this node. 
-            parentNamedList.getTreePath().pathByAddingChild(this);
+            getParentNamedList().getTreePath().pathByAddingChild(this);
         return resultTreePath;   
         }
 
@@ -757,6 +756,11 @@ public abstract class DNode<N extends DNode<N>>
        */
       {
         return defaultBackgroundColor;
+        }
+
+    public NamedList getParentNamedList() 
+      {
+        return parentNamedList;
         }
 
     }

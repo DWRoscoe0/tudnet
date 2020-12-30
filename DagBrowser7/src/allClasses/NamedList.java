@@ -316,7 +316,7 @@ public class NamedList
 	  		  	break toReturn;
 	  		  	}
 	  		  
-	  		  if ( parentNamedList == null ) { 
+	  		  if ( getParentNamedList() == null ) { 
 			  		theAppLog.debug(
 			  				"checkForNullDataTreeModelV() parentNamedList == null in:" + NL
 			  				+ this);
@@ -327,7 +327,7 @@ public class NamedList
 		  				"checkForNullDataTreeModelV() "
 		  				+ "theDataTreeModel == null and  parentNamedList != null in:" + NL
 		  				+ this);
-	  		  parentNamedList.logNullDataTreeModelsV(); // Recurs for ancestors.
+	  		  getParentNamedList().logNullDataTreeModelsV(); // Recurs for ancestors.
   				} // toReturn:
   	  	}
 

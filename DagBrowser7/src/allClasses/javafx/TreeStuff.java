@@ -20,7 +20,7 @@ public class TreeStuff
   {
     private Node theGuiNode= null;
       // This should be the JavaFX Node used to display the DataNode. 
-    @SuppressWarnings("unused")
+    @SuppressWarnings("unused") //////
     private DataNode subjectDataNode= null;
       // This is the whole DataNode being displayed.
       // It should be the parent of the selected DataNode, if any.
@@ -36,7 +36,14 @@ public class TreeStuff
         }
 
 
-    public DataNode getSelectedDataNode()
+    public Node getGuiNode()
+      /* Returns the JavaFX GUI Node being used to display the DataNode. */
+      {
+        return theGuiNode;
+        }
+
+
+    public DataNode getSelectedChildDataNode()
       {
         return selectedChildDataNode;
         }
@@ -47,10 +54,28 @@ public class TreeStuff
         }
 
 
-    public Node getGuiNode()
-      /* Returns the JavaFX GUI Node being used to display the DataNode. */
+    public DataNode getParentDataNode()
+      /* Tries to return the parent of the subject node.
+       * Returns null if there is none.
+       */
       {
-        return theGuiNode;
+        DataNode resultDataNode;
+        goReturn: {
+
+          resultDataNode= selectedChildDataNode;
+          if (null == resultDataNode) break goReturn;
+          // We now have the non-null selected child node.
+
+          resultDataNode= resultDataNode.getParentNamedList();
+          if (null == resultDataNode) break goReturn;
+          // We now have the non-null subject node.
+
+          resultDataNode= resultDataNode.getParentNamedList();
+          // We now have a the possibly null parent of the subject node.
+
+        } // goReturn:
+        
+        return resultDataNode; // Return the possibly null result.
         }
 
     }

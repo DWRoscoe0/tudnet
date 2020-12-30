@@ -131,6 +131,7 @@ public class IDirectory
               else
               childDataNode=  // Calculate new child from child name
                 new IFile(childFile); // to be regular file.
+            childDataNode.setParentToV( this ); // Set this as child's parent.
             childMultiLinkOfDataNodes.setE( // Save in cache.
                 indexI, childDataNode);
             } // goReturn:
