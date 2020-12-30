@@ -7,8 +7,6 @@ import javax.swing.event.TreeModelEvent;
 import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
 
-import allClasses.DNode.ChangeFlag;
-
 import javax.swing.tree.TreeModel;
 
 import static allClasses.AppLog.theAppLog;
@@ -721,7 +719,7 @@ public class DataTreeModel
 					reportingChangeB(  // Display subtree root node.
 							parentTreePath, theDataNode );
 			    theDataNode.theChangeFlag= // Unmark the subtree root. 
-			    		ChangeFlag.NONE;
+			    		DataNode.ChangeFlag.NONE;
 	      	}
 
   		private void resetChangesInSubtreeV( DataNode theDataNode )
@@ -750,7 +748,7 @@ public class DataTreeModel
 					        childIndexI++;  // Increment index for processing next child.
 					      	}
 					    theDataNode.theChangeFlag= // Reset root node update status. 
-					    		ChangeFlag.NONE;
+					    		DataNode.ChangeFlag.NONE;
 			  	  	break;
 			  		}
 	      	}
