@@ -1,5 +1,6 @@
 package allClasses.javafx;
 
+import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
@@ -66,6 +67,14 @@ public class TitledListNode
             theSubjectDataNode.getChildObservableListOfDataNodes();
         theListView.setItems(childObservableList);
         setCenter(theListView);
+        theListView.getSelectionModel().
+          select(theTreeStuff.getSelectedChildDataNode());
+        Platform.runLater(new Runnable() {
+          @Override
+          public void run() {
+              theListView.requestFocus();
+              }
+          });
         setEventHandlersV();
         }
 
