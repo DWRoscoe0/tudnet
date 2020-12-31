@@ -33,10 +33,15 @@ public class TitledListNode
         }
 
     public static TreeStuff makeTreeStuff(
-                DataNode subjectDataNode
+                DataNode subjectDataNode,
+                DataNode selectedDataNode
                 )
     { 
-      TreeStuff theTreeStuff= new TreeStuff();
+      //// TreeStuff theTreeStuff= new TreeStuff(
+      TreeStuff theTreeStuff= TreeStuff.makeWithAutoCompleteTreeStuff(
+          subjectDataNode,
+          selectedDataNode
+          );
       TitledListNode theTitledListNode= new TitledListNode( 
         subjectDataNode,
         theTreeStuff

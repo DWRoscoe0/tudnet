@@ -27,10 +27,15 @@ public class TitledTextNode extends BorderPane
 
     public static TreeStuff makeTreeStuff(
                 DataNode subjectDataNode,
+                DataNode selectedDataNode,
                 String theString
                 )
     { 
-      TreeStuff theTreeStuff= new TreeStuff();
+      //// TreeStuff theTreeStuff= new TreeStuff(
+      TreeStuff theTreeStuff= TreeStuff.makeWithAutoCompleteTreeStuff(
+          subjectDataNode,
+          selectedDataNode
+          );
       TitledTextNode theTitledTextNode= new TitledTextNode( 
         subjectDataNode,
         theString,

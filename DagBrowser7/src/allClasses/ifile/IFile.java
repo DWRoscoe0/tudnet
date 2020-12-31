@@ -125,7 +125,11 @@ public class IFile
                 subjectDataNode,
                 //// inDataTreeModel, 
                 getFileString(),
-                new TreeStuff()
+                //// new TreeStuff(
+                TreeStuff.makeWithAutoCompleteTreeStuff(
+                    subjectDataNode,
+                    null
+                    )
                 );
   
           return resultNode;  // Returning result from above.

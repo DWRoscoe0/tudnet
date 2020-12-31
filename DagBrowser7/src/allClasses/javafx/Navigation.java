@@ -148,7 +148,8 @@ public class Navigation extends EpiStage
       {
         if (null != theDataNode) { // Process DataNode if present.
           itemTreeStuff= theDataNode.makeTreeStuff(
-              theDataNode
+              //// theDataNode,
+              null
               );
           Node itemNode= itemTreeStuff.getGuiNode();
           itemRootBorderPane.setCenter(itemNode);

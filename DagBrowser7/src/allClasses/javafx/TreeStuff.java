@@ -20,7 +20,6 @@ public class TreeStuff
   {
     private Node theGuiNode= null;
       // This should be the JavaFX Node used to display the DataNode. 
-    @SuppressWarnings("unused") //////
     private DataNode subjectDataNode= null;
       // This is the whole DataNode being displayed.
       // It should be the parent of the selected DataNode, if any.
@@ -30,6 +29,34 @@ public class TreeStuff
       ///org Maybe bind this to viewer instead of assigning it.
 
 
+
+    public TreeStuff(
+        DataNode subjectDataNode,
+        DataNode selectedChildDataNode
+        )
+      { 
+        this.subjectDataNode= subjectDataNode;
+        this.selectedChildDataNode= selectedChildDataNode;
+        }
+
+    public static TreeStuff makeWithAutoCompleteTreeStuff(
+        DataNode subjectDataNode,
+        DataNode selectedChildDataNode
+        )
+      { 
+        TreeStuff resultTreeStuff= new TreeStuff(
+            subjectDataNode,
+            selectedChildDataNode
+            );
+
+        if  // If nothing selected
+          (null == resultTreeStuff.selectedChildDataNode) 
+          resultTreeStuff.selectedChildDataNode= // try selecting first child. 
+            resultTreeStuff.subjectDataNode.getChild(0);
+
+        return resultTreeStuff;
+        }
+          
     public void initializeV(Node theNode)
       { 
         this.theGuiNode= theNode;
@@ -47,6 +74,27 @@ public class TreeStuff
       {
         return selectedChildDataNode;
         }
+
+    /*  ////
+    public TreeStuff makeSelectedChildTreeStuff()
+      /* This method makes and returns a TreeStuff appropriate for
+       * the presently selected child.
+       */
+    /*  ////
+      { 
+        DataNode theSelectedDataNode= getSelectedChildDataNode();
+        TreeStuff theTreeStuff= theSelectedDataNode.makeTreeStuff(theSelectedDataNode);
+        TitledListNode theTitledListNode= new TitledListNode( 
+          subjectDataNode,
+          theTreeStuff
+          );
+        theTreeStuff.initializeV(theTitledListNode);
+        return theTreeStuff;
+        }
+    */  ////
+
+    ////// TreeStuff.getSelectedChildDataNode());
+    ////// TreeStuff.getParentDataNode());
     
     public void setSelectedDataNodeV(DataNode theDataNode)
       {
@@ -77,5 +125,5 @@ public class TreeStuff
         
         return resultDataNode; // Return the possibly null result.
         }
-
+    
     }
