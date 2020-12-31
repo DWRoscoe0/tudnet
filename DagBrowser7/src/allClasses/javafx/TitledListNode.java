@@ -69,12 +69,14 @@ public class TitledListNode
         setCenter(theListView);
         theListView.getSelectionModel().
           select(theTreeStuff.getSelectedChildDataNode());
-        Platform.runLater(new Runnable() {
-          @Override
-          public void run() {
-              theListView.requestFocus();
-              }
-          });
+        Platform.runLater( // Request focus later after being added to Scene.
+          new Runnable() {
+            @Override
+            public void run() {
+                theListView.requestFocus();
+                }
+            }
+          );
         setEventHandlersV();
         }
 
