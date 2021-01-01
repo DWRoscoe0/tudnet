@@ -3,27 +3,38 @@ package allClasses;
 
 public class Infinitree 
 
-  extends NamedBranch
+  //// extends NamedBranch
+  extends NamedList
 
   /* The purpose of this class is to create a an infinite subtree
     for testing the Infogora browser.
+    Though this class extends the class NamedList,
+    it doesn't actually store references to its children.
+    The getChild( int inIndexI ) method 
+    constructs a new class instance each time it is called.
+    This avoids the complication of managing a lazy-evaluation cache.
+    This technique might be called "super-lazy-evaluation".
     */
+
   {
   
     // variables.
-       int childNumberI;  // The number of the parent's 0 - (n-1) children.
-       Infinitree parentInfinitree= null;  // Parent node, or null if none.
+
+      int childNumberI;  // The number of the parent's 0 - (n-1) children.
+      Infinitree parentInfinitree= null; // Parent Infinitree node, or null.
+        // This is a copy of the parentNamedList, except a different type.
        
     // Constructors.
 
-      public Infinitree( Infinitree inparentInfinitree, int inChildI )
+      public Infinitree( Infinitree inParentInfinitree, int inChildI )
         /* Constructs an Infinitree node.
-          inparentInfinitree will be the parent of the new node.
-          inChildI is the child number of the node.
+          inParentInfinitree will be the parent of the new node.
+          inChildI is the number of the new node within the parent's children.
           */
         { // Infinitree(.)
           childNumberI= inChildI;  // save child index.
-          parentInfinitree= inparentInfinitree;  // save parent.
+          parentInfinitree= inParentInfinitree; // Save parent Infinitree.
+          this.setParentToV(inParentInfinitree); // Set DataNode parent.
           } // Infinitree(.)
        
     // Other methods.
@@ -31,25 +42,25 @@ public class Infinitree
       public int getChildCount( ) 
         /* This method returns the child cound.
           Because the children are virtual, calculated as needed,
-          the child count is calculated from 
-          the number of ancestor levels below the root.
+          the child count is calculated from the number of 
+          ancestor levels between here and the tree root.
           */
         { // getChildCount( )
-          Infinitree ScanInfinitree= parentInfinitree;
-          int ChildIndexI= 2;  // Initialize child index.
-          while  // Increase that by the number of ancestors levels.
-            ( ScanInfinitree != null )
+          Infinitree scanInfinitree= parentInfinitree;
+          int childIndexI= 2;  // Initialize child index.
+          while  // Increase that by the number of ancestor levels.
+            ( scanInfinitree != null )
             {
-              ChildIndexI++;  // increment index.
-              ScanInfinitree= ScanInfinitree.parentInfinitree;
+              childIndexI++;  // increment index.
+              scanInfinitree= scanInfinitree.parentInfinitree;
               }
-          return ChildIndexI;  // Return ending index as count.
+          return childIndexI;  // Return ending index as count.
           } // getChildCount( )
 
       public DataNode getChild( int inIndexI ) 
         /* This returns this node's child whose index is inIndexI.  
           The node's children are not cached within the node.
-          They are constructe as needed,
+          They are constructed when needed,
           so repeated calls to this method will return 
           different but equal(..) instances.
           */
@@ -67,18 +78,22 @@ public class Infinitree
       public String getNameString( )
         /* This method returns the String representation of
           the name of this tree node.
+          It is constructed recursively.
+          The result is a base String representing the root concatenated with
+          all the child numbers between the tree root and this node.
           */
         {
           String resultString= null;
 
           if ( parentInfinitree == null ) // This node is the root.
-            resultString= "Infinite-Test-Tree";  // Use root's name.
+            resultString= "Infinite-Test-Tree";  // Result is root's name.
+          
             else  // This node is not root.
-            resultString=  // Use parent's name with our chid number appended.
-              parentInfinitree.toString() +
-              "."+ childNumberI;
+            resultString=  // Recursively calculate result to be
+              parentInfinitree.toString() // the parent's name 
+              + "." + childNumberI; // with our child number appended.
 
-          return resultString;  // Return ending String.
+          return resultString;
           }
 
       @Override public boolean equals(Object other) 
