@@ -55,6 +55,8 @@ public class MutableList extends NamedList
 		      ?? This is used by the Outline class for lazy construction.
 		      Using addB(..) in this case causes:
 		        Uncaught Exception, AWT-EventQueue-1, java.lang.StackOverflowError
+		      or
+		        Thread [JavaFX Application Thread] (Suspended (uncaught exception java.lang.StackOverflowError))  
 		      I don't understand why.  Maybe it's TreePath translation.
 		      */
 		    {
@@ -62,6 +64,13 @@ public class MutableList extends NamedList
               childMultiLinkOfDataNodes.getCountI(), 
               childDataNode 
               );
+          childDataNode.setParentToV(this);
+
+          /*  ///
+          addAtEndB(  // Try old way.  This causes StackOverflowError!
+              childDataNode
+              );
+          */  ///
 		      }
 	
 		  public synchronized boolean removeB( final DataNode childDataNode )
