@@ -26,17 +26,20 @@ public class Navigation extends EpiStage
 
     // Other variables.
     
-    private EpiTreeItem theRootEpiTreeItem;
-    private Button theTreeShowItemButton;
     private Scene theTreeScene; 
-
+    private BorderPane treeRootBorderPane;
     private TreeView<DataNode> theTreeView; 
+    private Button theTreeShowItemButton;
+    private EpiTreeItem theRootEpiTreeItem;
+    private TreeStuff itemTreeStuff;
+
     private Scene theItemScene;
+    private BorderPane itemRootBorderPane;
     private ListView<DataNode> theListView; 
     private Button theItemShowTreeButton;
-    private BorderPane itemRootBorderPane;
 
-    private TreeStuff itemTreeStuff;
+
+    // Constructors.
 
     public Navigation(JavaFXGUI theJavaFXGUI, DataNode theInitialRootDataNode)
       {
@@ -52,38 +55,83 @@ public class Navigation extends EpiStage
        * Each Scene has a button to switch to the other.
        */
       {
-        theRootEpiTreeItem= new EpiTreeItem(theInitialRootDataNode);
-
         theTreeShowItemButton= new Button("Show Item");
         theItemShowTreeButton= new Button("Show Tree");
 
-        theTreeScene= makeTreeScene(theTreeShowItemButton, theRootEpiTreeItem);
+        theTreeScene= makeTreeScene(
+            theTreeShowItemButton, theInitialRootDataNode);
+        setTreeSelectionFromDataNodeV(theInitialRootDataNode);
 
         theItemScene= makeItemScene();
         setItemRootFromDataNodeV(theInitialRootDataNode);
 
         setEventHandlersV(); // Okay to do now that above definitions are done.
 
-        //// setScene(theTreeScene); // Use tree scene as first one displayed.
-        setScene(theItemScene); // Use item scene as first one displayed.
-        finishStateInitAndStartV("Infogora JavaFX Navigatioo UI");
+        setScene(theTreeScene); // Use tree scene as first one displayed.
+        // setScene(theItemScene); // Use item scene as first one displayed.
+
+        finishStateInitAndStartV("Infogora JavaFX Navigation UI");
         }
 
     private Scene makeTreeScene(
-        Button theSwitchButton, EpiTreeItem rootEpiTreeItem)
+        Button theSwitchButton, DataNode rootDataNode)
       /* Creates and returns the initial Scene to display a tree. 
        * It will be reused so as to reuse tree browsing context.  
        */ 
       {
-        rootEpiTreeItem.setExpanded(true);
-        theTreeView= new TreeView<DataNode>(rootEpiTreeItem);
-        theTreeView.getSelectionModel().select(rootEpiTreeItem);
-        BorderPane treeRootBorderPane= new BorderPane();
+        theRootEpiTreeItem= new EpiTreeItem(theInitialRootDataNode);
+        theRootEpiTreeItem.setExpanded(true);
+        theTreeView= new TreeView<DataNode>(theRootEpiTreeItem);
+        treeRootBorderPane= new BorderPane();
         treeRootBorderPane.setCenter(theTreeView);
         treeRootBorderPane.setBottom(theSwitchButton);
         Scene theScene= new Scene(treeRootBorderPane);
         EpiScene.setDefaultsV(theScene);
         return theScene;
+        }
+
+    private void setTreeSelectionFromDataNodeV(DataNode theDataNode) 
+      /* If theDataNode is null then this method does nothing.
+       * Otherwise it calculates an appropriate GUI Node for theDataNode
+       * and stores at the center of the item Pane to be displayed.
+       */
+      { 
+        if (null != theDataNode) { // Process DataNode if present.
+          TreeItem<DataNode> theTreeItem= 
+              toTreeItem(theDataNode,theRootEpiTreeItem); 
+          theTreeView.getSelectionModel().select(theTreeItem);
+          }
+        }
+
+    private TreeItem<DataNode> toTreeItem(
+        DataNode targetDataNode, TreeItem<DataNode> rootTreeItem) 
+      /* This translates targetDataNode to the TreeItem that references it
+       * by searching for the ancestor DataNode referenced by rootTreeItem,
+       * then tracing TreeItems back to the target DataNode.
+       * This is done recursively to simplify path tracking.  
+       * Returns the target TreeItem or null if the translation fails.
+       */
+      {
+          TreeItem<DataNode> resultTreeItem;
+        main: {
+          if // Root TreeItem references target DataNode.
+            (rootTreeItem.getValue() == targetDataNode)
+            { resultTreeItem= rootTreeItem; break main; } // Exit with root.
+          TreeItem<DataNode> parentTreeItem= // Recursively translate parent. 
+              toTreeItem(targetDataNode.getParentNamedList(), rootTreeItem);
+          if (null == parentTreeItem) // Parent translation failed.
+            { resultTreeItem= null; break main; } // Indicate failure with null.
+          for // Search for target DataNode in translated parent's children.
+            ( TreeItem<DataNode> childTreeItem : parentTreeItem.getChildren() )
+            {
+              if  // Exit with child TreeItem if it references target DataNode.
+                (childTreeItem.getValue() == targetDataNode)
+                { resultTreeItem= childTreeItem; break main; }
+              }
+          // If here then no child referenced target DataNode.
+          resultTreeItem= null; // Indicate failure with null.
+        } // main:
+          return resultTreeItem;
         }
 
     private Scene makeItemScene()
@@ -145,13 +193,12 @@ public class Navigation extends EpiStage
     private void setItemRootFromDataNodeV(DataNode theDataNode)
       /* If theDataNode is null then this method does nothing.
        * Otherwise it calculates an appropriate GUI Node for theDataNode
-       * and stores at the center of the item Pane.
+       * and stores at the center of the item Pane to be displayed.
        */
       {
         if (null != theDataNode) { // Process DataNode if present.
           itemTreeStuff= theDataNode.makeTreeStuff(
-              //// theDataNode,
-              null
+              null // no known selection at this point
               );
           Node itemNode= itemTreeStuff.getGuiNode();
           itemRootBorderPane.setCenter(itemNode);
@@ -162,6 +209,10 @@ public class Navigation extends EpiStage
       /* This method sets the Scene to display the TreeView.
        */
       {
+        DataNode selectedDataNode= itemTreeStuff.getSelectedChildDataNode();
+        TreeItem<DataNode> theTreeItemOfDataNode= 
+            toTreeItem(selectedDataNode,theRootEpiTreeItem);
+        theTreeView.getSelectionModel().select(theTreeItemOfDataNode);
         setScene(theTreeScene); // Switch [back] to tree scene.
         }
     

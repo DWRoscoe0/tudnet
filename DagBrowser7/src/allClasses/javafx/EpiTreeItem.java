@@ -9,18 +9,25 @@ import javafx.scene.control.TreeItem;
 public class EpiTreeItem
 
   extends TreeItem<DataNode>
-  
+
+  /* This class acts as a kind of bridge between JavaFX TreeItems
+   * and DataNodes.
+   * It lazily creates child TreeItems, one for each child DataNode,
+   * meaning only when the TreeItem children are needed, not before.
+   */
+
   {
 
-    boolean childCacheLoadedB= false;
+    boolean childCacheLoadedB= false; // Whether TreeItem children are defined.
 
-    public EpiTreeItem(DataNode theDataNode) 
+    public EpiTreeItem(DataNode theDataNode) // Constructor. 
       {
         super(theDataNode); // Was setValue(theDataNode);
         }
 
     @Override 
-    public boolean isLeaf() 
+    public boolean isLeaf()
+      // This is a leaf if value DataNode is a leaf.
       {
         return getValue().isLeaf();
         }
