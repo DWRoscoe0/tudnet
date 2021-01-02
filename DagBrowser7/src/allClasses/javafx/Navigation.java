@@ -211,8 +211,10 @@ public class Navigation extends EpiStage
        */
       {
         DataNode selectedDataNode= itemTreeStuff.getSelectedChildDataNode();
+        DataNode parentOfSelectedDataNode= 
+            selectedDataNode.getParentNamedList();
         TreeItem<DataNode> theTreeItemOfDataNode= 
-            toTreeItem(selectedDataNode,theRootEpiTreeItem);
+            toTreeItem(parentOfSelectedDataNode,theRootEpiTreeItem);
         theTreeView.getSelectionModel().select(theTreeItemOfDataNode);
         requestFocusLaterInV(theTreeView);
         setScene(theTreeScene); // Switch [back] to tree scene.
