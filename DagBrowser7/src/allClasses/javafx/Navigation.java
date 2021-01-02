@@ -1,5 +1,6 @@
 package allClasses.javafx;
 
+import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -213,7 +214,22 @@ public class Navigation extends EpiStage
         TreeItem<DataNode> theTreeItemOfDataNode= 
             toTreeItem(selectedDataNode,theRootEpiTreeItem);
         theTreeView.getSelectionModel().select(theTreeItemOfDataNode);
+        requestFocusLaterInV(theTreeView);
         setScene(theTreeScene); // Switch [back] to tree scene.
         }
-    
+
+    private void requestFocusLaterInV(Node theNode)
+      /* This method queues a request to focus theNode later.
+       */
+      {
+        Platform.runLater( // Later
+          new Runnable() {
+            @Override
+            public void run() { // run a request to
+                theNode.requestFocus(); // focus the Node.
+                }
+            }
+          );
+        }
+
     }
