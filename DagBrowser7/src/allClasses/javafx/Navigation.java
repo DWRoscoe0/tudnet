@@ -68,8 +68,8 @@ public class Navigation extends EpiStage
 
         setEventHandlersV(); // Okay to do now that above definitions are done.
 
-        setScene(theTreeScene); // Use tree scene as first one displayed.
-        // setScene(theItemScene); // Use item scene as first one displayed.
+        // setScene(theTreeScene); // Use tree scene as first one displayed.
+        setScene(theItemScene); // Use item scene as first one displayed.
 
         finishStateInitAndStartV("Infogora JavaFX Navigation UI");
         }

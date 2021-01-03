@@ -135,7 +135,17 @@ public class IFile
           return resultNode;  // Returning result from above.
           }
 
-          
+
+    public String getContentString()
+      /* Returns the content of the DataNode as a String.  
+        This is potentially a long String, such as the content of a file, 
+        and it might consist of multiple lines.
+        This method will be overridden.
+        */
+      {
+        return getFileString();
+        }
+
     // other methods.
 
     } // class IFile
