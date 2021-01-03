@@ -210,9 +210,10 @@ public class Navigation extends EpiStage
       /* This method sets the Scene to display the TreeView.
        */
       {
-        DataNode selectedDataNode= itemTreeStuff.getSelectedChildDataNode();
-        DataNode parentOfSelectedDataNode= 
-            selectedDataNode.getParentNamedList();
+        //// DataNode selectedDataNode= itemTreeStuff.getSelectedChildDataNode();
+        DataNode parentOfSelectedDataNode= ////// aka subjectDataNode.
+        ////    selectedDataNode.getParentNamedList();
+            itemTreeStuff.getSubjectDataNode();
         TreeItem<DataNode> theTreeItemOfDataNode= 
             toTreeItem(parentOfSelectedDataNode,theRootEpiTreeItem);
         theTreeView.getSelectionModel().select(theTreeItemOfDataNode);

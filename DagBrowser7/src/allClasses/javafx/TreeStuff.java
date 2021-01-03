@@ -70,11 +70,6 @@ public class TreeStuff
         }
 
 
-    public DataNode getSelectedChildDataNode()
-      {
-        return selectedChildDataNode;
-        }
-
     /*  ////
     public TreeStuff makeSelectedChildTreeStuff()
       /* This method makes and returns a TreeStuff appropriate for
@@ -110,11 +105,12 @@ public class TreeStuff
         DataNode resultDataNode;
         goReturn: {
 
-          resultDataNode= selectedChildDataNode;
-          if (null == resultDataNode) break goReturn;
-          // We now have the non-null selected child node.
+          //// resultDataNode= selectedChildDataNode;
+          //// if (null == resultDataNode) break goReturn;
+          //// // We now have the non-null selected child node.
 
-          resultDataNode= resultDataNode.getParentNamedList();
+          //// resultDataNode= resultDataNode.getParentNamedList();
+          resultDataNode= getSubjectDataNode();
           if (null == resultDataNode) break goReturn;
           // We now have the non-null subject node.
 
@@ -124,6 +120,26 @@ public class TreeStuff
         } // goReturn:
         
         return resultDataNode; // Return the possibly null result.
+        }
+
+    public DataNode getSubjectDataNode()
+      /* Returns subject DataNode.  
+       * Tries to calculate it as parent of selected child DataNode
+       * if immediate value is null.
+       * Returns null if all attempts to calculate it fail. 
+       */
+      {
+        if (null == subjectDataNode) // If null, try calculating it from child.
+          subjectDataNode= getSelectedChildDataNode().getParentNamedList();
+        return subjectDataNode;
+        }
+
+    public DataNode getSelectedChildDataNode()
+      /* Returns selected child DataNode.  There is only one way to do this.
+       * It simply returns the stored value.
+       */
+      {
+        return selectedChildDataNode;
         }
     
     }
