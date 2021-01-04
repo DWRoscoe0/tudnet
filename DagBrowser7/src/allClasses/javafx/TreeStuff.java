@@ -29,14 +29,45 @@ public class TreeStuff
       ///org Maybe bind this to viewer instead of assigning it.
 
 
-
-    public TreeStuff(
+     public TreeStuff( // Constructor.
         DataNode subjectDataNode,
         DataNode selectedChildDataNode
         )
       { 
         this.subjectDataNode= subjectDataNode;
         this.selectedChildDataNode= selectedChildDataNode;
+        }
+
+    public TreeStuff moveRightAndMakeTreeStuff()
+      /* Returns a TreeStuff for the location to the right of the present one,
+       * hopefully the most recently visited child, or the first child,
+       * or null if moving to the right in this way is not possible.
+       */
+      {
+        TreeStuff theTreeStuff= null;
+        DataNode childDataNode= getSelectedChildDataNode();
+        if (null != childDataNode) { // If there's a child,
+          theTreeStuff= childDataNode.makeTreeStuff( // make TreeStuff from it.
+              null // No selection within child specified yet.
+              ); 
+          }
+        return theTreeStuff;
+        }
+
+    public TreeStuff moveLeftAndMakeTreeStuff()
+      /* Returns a TreeStuff for the location to the left of the present one,
+       * hopefully the parent,
+       * or null if moving to the left in this way is not possible.
+       */
+      {
+        TreeStuff theTreeStuff= null;
+        DataNode parentDataNode= getParentDataNode();
+        if (null != parentDataNode) { // If there's a parent
+          theTreeStuff= parentDataNode.makeTreeStuff( // make TreeStuff from it.
+              null // No selection within child specified yet.
+              ); 
+          }
+        return theTreeStuff;
         }
 
     public static TreeStuff makeWithAutoCompleteTreeStuff(
@@ -141,5 +172,5 @@ public class TreeStuff
       {
         return selectedChildDataNode;
         }
-    
+
     }

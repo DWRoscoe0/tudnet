@@ -166,11 +166,13 @@ public class Navigation extends EpiStage
         switch (keyCodeI) {
           case RIGHT:  // right-arrow.
             System.out.println("Right-arrow typed.");
-            setItemRootFromDataNodeV(itemTreeStuff.getSelectedChildDataNode());
+            //// setItemRootFromDataNodeV(itemTreeStuff.getSelectedChildDataNode());
+            setItemRootFromTreeStuffV(itemTreeStuff.moveRightAndMakeTreeStuff());
             break;
           case LEFT:  // left-arrow.
             System.out.println("Left-arrow typed.");
-            setItemRootFromDataNodeV(itemTreeStuff.getParentDataNode());
+            //// setItemRootFromDataNodeV(itemTreeStuff.getParentDataNode());
+            setItemRootFromTreeStuffV(itemTreeStuff.moveLeftAndMakeTreeStuff());
             break;
           default: 
             break;
@@ -189,6 +191,19 @@ public class Navigation extends EpiStage
           setItemRootFromDataNodeV(theDataNode);
           }
         setScene(theItemScene); // Switch to item scene.
+        }
+
+    private void setItemRootFromTreeStuffV(TreeStuff theTreeStuff)
+      /* If theTreeStuff is null then this method does nothing.
+       * Otherwise it calculates an appropriate GUI Node for theTreeStuff
+       * and stores at the center of the item Pane to be displayed.
+       */
+      {
+        if (null != theTreeStuff) { // Process TreeStuff if present.
+          itemTreeStuff= theTreeStuff; // Save in instance field.
+          Node itemNode= itemTreeStuff.getGuiNode();
+          itemRootBorderPane.setCenter(itemNode);
+          }
         }
 
     private void setItemRootFromDataNodeV(DataNode theDataNode)

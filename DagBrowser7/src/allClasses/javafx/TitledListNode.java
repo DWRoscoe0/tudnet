@@ -89,8 +89,9 @@ public class TitledListNode
         selectedItemProperty.addListener(
           (observableValueOfDataNode,oldDataNode,newDataNode) 
           -> 
-          { System.out.println("TitledListNode selection changed."); 
-            getTreeStuff().setSelectedDataNodeV(selectedItemProperty.get());
+          { System.out.println("TitledListNode selection changed.");
+            DataNode newSelectedDataNode= selectedItemProperty.get();
+            getTreeStuff().setSelectedDataNodeV(newSelectedDataNode);
             }
           );
 
