@@ -2,6 +2,8 @@ package allClasses;
 
 import static allClasses.AppLog.theAppLog;
 
+import allClasses.epinode.MapEpiNode;
+
 public class PeersCursor extends PersistentCursor {
   
   /* This class is a piterator for peer data in the Persistent data structure.

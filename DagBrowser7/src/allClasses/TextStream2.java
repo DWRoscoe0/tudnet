@@ -22,6 +22,9 @@ import javax.swing.text.PlainDocument;
 import javax.swing.text.Segment;
 import javax.swing.tree.TreePath;
 
+import allClasses.epinode.EpiNode;
+import allClasses.epinode.MapEpiNode;
+
 public class TextStream2
 
   extends KeyedStateList< String > 

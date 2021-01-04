@@ -3,6 +3,8 @@ package allClasses;
 import java.io.IOException;
 import java.net.DatagramPacket;
 
+import allClasses.epinode.MapEpiNode;
+
 import static allClasses.AppLog.theAppLog;
 
 

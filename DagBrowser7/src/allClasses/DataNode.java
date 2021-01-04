@@ -11,6 +11,7 @@ import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
 
 import allClasses.AppLog.LogLevel;
+import allClasses.epinode.MapEpiNode;
 import allClasses.javafx.TitledListNode;
 import allClasses.javafx.TitledTextNode;
 import allClasses.javafx.TreeStuff;

@@ -2,6 +2,8 @@ package allClasses;
 
 import java.util.Objects;
 
+import allClasses.epinode.MapEpiNode;
+
 
 public class AppMapEpiNode 
 

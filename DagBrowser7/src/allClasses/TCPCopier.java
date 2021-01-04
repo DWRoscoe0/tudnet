@@ -8,6 +8,8 @@ import java.net.*;
 import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import allClasses.epinode.MapEpiNode;
+
 import static allClasses.AppLog.theAppLog;
 import static allClasses.SystemSettings.NL;
 

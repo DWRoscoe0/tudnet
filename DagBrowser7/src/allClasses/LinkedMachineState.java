@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.util.Timer;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
+import allClasses.epinode.MapEpiNode;
+
 import static allClasses.AppLog.theAppLog;
 
 public class LinkedMachineState

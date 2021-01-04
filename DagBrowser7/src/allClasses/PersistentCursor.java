@@ -2,6 +2,8 @@ package allClasses;
 
 import static allClasses.AppLog.theAppLog;
 
+import allClasses.epinode.MapEpiNode;
+
 // import static allClasses.Globals.appLogger;
 
 public class PersistentCursor 

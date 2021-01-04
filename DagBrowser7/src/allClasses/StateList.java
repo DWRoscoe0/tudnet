@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import allClasses.epinode.MapEpiNode;
+
 import static allClasses.AppLog.theAppLog;
 import static allClasses.SystemSettings.NL;
 

@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.swing.JFrame;
 
+import allClasses.epinode.MapEpiNode;
 import allClasses.ifile.EpiFileRoots;
 import allClasses.ifile.IRoots;
 import allClasses.javafx.JavaFXGUI;

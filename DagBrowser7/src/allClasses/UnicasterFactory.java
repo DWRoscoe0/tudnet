@@ -3,6 +3,8 @@ package allClasses;
 import java.util.Timer;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
+import allClasses.epinode.MapEpiNode;
+
 public class UnicasterFactory {
 
   /* This is the factory for classes with Unicaster lifetimes.

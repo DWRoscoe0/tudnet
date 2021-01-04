@@ -5,6 +5,9 @@ import java.io.IOException;
 import java.util.Timer;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
+import allClasses.epinode.EpiNode;
+import allClasses.epinode.MapEpiNode;
+
 import static allClasses.AppLog.theAppLog;
 import static allClasses.SystemSettings.NL;
 

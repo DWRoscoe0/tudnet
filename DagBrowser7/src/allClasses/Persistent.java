@@ -6,6 +6,10 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
 
+import allClasses.epinode.EpiNode;
+import allClasses.epinode.MapEpiNode;
+import allClasses.epinode.ScalarEpiNode;
+
 import static allClasses.AppLog.theAppLog;
 import static allClasses.SystemSettings.NL;
 

@@ -8,6 +8,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import allClasses.epinode.EpiNode;
+import allClasses.epinode.MapEpiNode;
+
 public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
   
   /* This class implements a list of peer TextStreams 

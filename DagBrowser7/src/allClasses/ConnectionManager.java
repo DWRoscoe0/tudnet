@@ -9,6 +9,7 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 
 import allClasses.LockAndSignal.Input;
+import allClasses.epinode.MapEpiNode;
 
 import static allClasses.AppLog.theAppLog;
 import static allClasses.SystemSettings.NL;

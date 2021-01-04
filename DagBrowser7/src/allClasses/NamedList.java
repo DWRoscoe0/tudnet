@@ -4,6 +4,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import allClasses.AppLog.LogLevel;
+import allClasses.epinode.MapEpiNode;
 import allClasses.multilink.ListMultiLink;
 import allClasses.multilink.MultiLink;
 

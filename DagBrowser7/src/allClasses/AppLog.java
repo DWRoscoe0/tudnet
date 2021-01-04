@@ -12,6 +12,7 @@ import java.nio.channels.FileLock;
 import java.nio.channels.FileLockInterruptionException;
 
 import allClasses.LockAndSignal.Input;
+import allClasses.epinode.MapEpiNode;
 
 import static allClasses.AppLog.LogLevel.*;
 import static allClasses.SystemSettings.NL;

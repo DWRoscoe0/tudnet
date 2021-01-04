@@ -9,6 +9,8 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Properties;
 
+import allClasses.epinode.MapEpiNode;
+
 import static allClasses.AppLog.theAppLog;
 import static allClasses.SystemSettings.NL;
 
