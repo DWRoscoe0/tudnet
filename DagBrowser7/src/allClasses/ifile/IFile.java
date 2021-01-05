@@ -10,6 +10,7 @@ import javax.swing.tree.TreePath;
 
 import allClasses.DataNode;
 import allClasses.DataTreeModel;
+import allClasses.Persistent;
 import allClasses.TitledTextViewer;
 import allClasses.javafx.TitledTextNode;
 import allClasses.javafx.TreeStuff;
@@ -115,7 +116,8 @@ public class IFile
       public Node getJavaFXNode( 
           TreePath theTreePath, 
           DataNode subjectDataNode, 
-          DataTreeModel inDataTreeModel 
+          DataTreeModel inDataTreeModel,
+          Persistent thePersistent
           ) 
         /* Returns a Node Component capable of displaying this IFile.
           */
@@ -128,7 +130,8 @@ public class IFile
                 //// new TreeStuff(
                 TreeStuff.makeWithAutoCompleteTreeStuff(
                     subjectDataNode,
-                    null
+                    null,
+                    thePersistent
                     )
                 );
   

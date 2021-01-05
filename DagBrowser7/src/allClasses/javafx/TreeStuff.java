@@ -1,7 +1,10 @@
 package allClasses.javafx;
 
 import allClasses.DataNode;
+import allClasses.Persistent;
+import allClasses.epinode.MapEpiNode;
 import javafx.scene.Node;
+
 
 public class TreeStuff 
   /* This class stores information about 
@@ -27,15 +30,25 @@ public class TreeStuff
       // This should be the selected child DataNode of the subject DataNode.
       // This may be null if there is not selection.
       ///org Maybe bind this to viewer instead of assigning it.
+    private Persistent thePersistent;
 
+    //// @SuppressWarnings("unused") ////
+    private MapEpiNode selectionHistoryMapEpiNode;
+      // This is where selection history is stored to enable
+      // easily visiting previously visited children.
 
-     public TreeStuff( // Constructor.
+    public TreeStuff( // Constructor.
         DataNode subjectDataNode,
-        DataNode selectedChildDataNode
+        DataNode selectedChildDataNode,
+        Persistent thePersistent
         )
       { 
         this.subjectDataNode= subjectDataNode;
         this.selectedChildDataNode= selectedChildDataNode;
+        this.thePersistent= thePersistent;
+        
+        this.selectionHistoryMapEpiNode= // Calculate map of subscribees.
+            this.thePersistent.getOrMakeMapEpiNode("SelectionHistory");
         }
 
     public TreeStuff moveRightAndMakeTreeStuff()
@@ -48,7 +61,8 @@ public class TreeStuff
         DataNode childDataNode= getSelectedChildDataNode();
         if (null != childDataNode) { // If there's a child,
           theTreeStuff= childDataNode.makeTreeStuff( // make TreeStuff from it.
-              null // No selection within child specified yet.
+              null, // No selection within child specified yet.
+              thePersistent
               ); 
           }
         return theTreeStuff;
@@ -64,7 +78,8 @@ public class TreeStuff
         DataNode parentDataNode= getParentDataNode();
         if (null != parentDataNode) { // If there's a parent
           theTreeStuff= parentDataNode.makeTreeStuff( // make TreeStuff from it.
-              null // No selection within child specified yet.
+              null, // No selection within child specified yet.
+              thePersistent
               ); 
           }
         return theTreeStuff;
@@ -72,12 +87,14 @@ public class TreeStuff
 
     public static TreeStuff makeWithAutoCompleteTreeStuff(
         DataNode subjectDataNode,
-        DataNode selectedChildDataNode
+        DataNode selectedChildDataNode,
+        Persistent thePersistent
         )
       { 
         TreeStuff resultTreeStuff= new TreeStuff(
             subjectDataNode,
-            selectedChildDataNode
+            selectedChildDataNode,
+            thePersistent
             );
 
         if  // If nothing selected
@@ -123,10 +140,44 @@ public class TreeStuff
     ////// TreeStuff.getParentDataNode());
     
     public void setSelectedDataNodeV(DataNode theDataNode)
+      ////////////////////////
       {
         selectedChildDataNode= theDataNode;
+        
+        recordSelectionPathV(theDataNode);
         }
 
+    private void recordSelectionPathV(DataNode theDataNode)
+      /* Records locationDataNode in Persistent storage.
+       * This is done recursively to simplify path tracking.  
+       */
+      {
+          selectionHistoryMapEpiNode.getOrMakeMapEpiNode(
+              theDataNode.getNameString()); ////// Do this later in appropriate place.
+
+        /*  ////
+          TreeItem<DataNode> resultTreeItem;
+        main: {
+          if // Root TreeItem references target DataNode.
+            (rootTreeItem.getValue() == targetDataNode)
+            { resultTreeItem= rootTreeItem; break main; } // Exit with root.
+          TreeItem<DataNode> parentTreeItem= // Recursively translate parent. 
+              toTreeItem(targetDataNode.getParentNamedList(), rootTreeItem);
+          if (null == parentTreeItem) // Parent translation failed.
+            { resultTreeItem= null; break main; } // Indicate failure with null.
+          for // Search for target DataNode in translated parent's children.
+            ( TreeItem<DataNode> childTreeItem : parentTreeItem.getChildren() )
+            {
+              if  // Exit with child TreeItem if it references target DataNode.
+                (childTreeItem.getValue() == targetDataNode)
+                { resultTreeItem= childTreeItem; break main; }
+              }
+          // If here then no child referenced target DataNode.
+          resultTreeItem= null; // Indicate failure with null.
+        } // main:
+          return resultTreeItem;
+        */  ////
+        }
 
     public DataNode getParentDataNode()
       /* Tries to return the parent of the subject node.

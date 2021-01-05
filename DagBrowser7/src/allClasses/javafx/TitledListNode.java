@@ -10,6 +10,7 @@ import javafx.scene.control.MultipleSelectionModel;
 import javafx.scene.layout.BorderPane;
 
 import allClasses.DataNode;
+import allClasses.Persistent;
 
 public class TitledListNode 
   extends BorderPane
@@ -35,13 +36,15 @@ public class TitledListNode
 
     public static TreeStuff makeTreeStuff(
                 DataNode subjectDataNode,
-                DataNode selectedDataNode
+                DataNode selectedDataNode,
+                Persistent thePersistent
                 )
     { 
       //// TreeStuff theTreeStuff= new TreeStuff(
       TreeStuff theTreeStuff= TreeStuff.makeWithAutoCompleteTreeStuff(
           subjectDataNode,
-          selectedDataNode
+          selectedDataNode,
+          thePersistent
           );
       TitledListNode theTitledListNode= new TitledListNode( 
         subjectDataNode,

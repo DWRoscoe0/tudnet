@@ -669,7 +669,8 @@ public abstract class DataNode
 
     public TreeStuff makeTreeStuff( 
         //// DataNode subjectDataNode, 
-        DataNode selectedDataNode
+        DataNode selectedDataNode,
+        Persistent thePersistent
         )
       {
         TreeStuff resultTreeStuff= null;
@@ -679,13 +680,15 @@ public abstract class DataNode
             TitledTextNode.makeTreeStuff(
                 this,
                 selectedDataNode,
-                getContentString()
+                getContentString(),
+                thePersistent
                 );
           else  // Display as list if this DataNode is not a leaf.
           resultTreeStuff= // Using TitledListViewer.
             TitledListNode.makeTreeStuff(
                 this,
-                selectedDataNode
+                selectedDataNode,
+                thePersistent
                 );
 
         return resultTreeStuff;  // Returning result from above.
