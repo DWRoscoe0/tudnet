@@ -366,7 +366,21 @@ public abstract class DataNode
       // Other instance methods.
     
       public int IDCode() { return super.hashCode(); }
-      
+    
+      public boolean isRootB()
+        /* Returns whether this node is the root node.
+         * This default method returns false.
+         * The class which defines the root should return true.
+         * This method provides an easy and low cost way
+         * to determine whether a node is the root node without
+         * comparing node references, which would require having
+         * access to the known root node.
+         */
+        { 
+          return false; 
+          }
+
+
     // Instance getter and tester methods with equivalents in DataTreeModel.
 
       public boolean isLeaf()

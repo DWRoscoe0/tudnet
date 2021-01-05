@@ -17,6 +17,15 @@ public class InfogoraRoot  extends NamedList {
 	        inDataNodes // ...the array of all child DataNodes.
 	        );
       }
+  
+    @Override
+    public boolean isRootB()
+      /* Returns true, indicating that this node is the root node.
+       * This is the only class that does this.
+       */
+      { 
+        return true; 
+        }
 
       
   }
