@@ -70,8 +70,6 @@ public class TitledListNode
             theSubjectDataNode.getChildObservableListOfDataNodes();
         theListView.setItems(childObservableList);
         setCenter(theListView);
-        theListView.getSelectionModel().
-          select(theTreeStuff.getSelectedChildDataNode());
         Platform.runLater( // Request focus later after being added to Scene.
           new Runnable() {
             @Override
@@ -80,7 +78,9 @@ public class TitledListNode
                 }
             }
           );
-        setEventHandlersV();
+        setEventHandlersV(); // Needed for initial selection which follows.
+        theListView.getSelectionModel().
+          select(theTreeStuff.getSelectedChildDataNode());
         }
 
     private void setEventHandlersV()

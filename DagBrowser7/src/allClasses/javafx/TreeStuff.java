@@ -140,7 +140,6 @@ public class TreeStuff
     ////// TreeStuff.getParentDataNode());
     
     public void setSelectedDataNodeV(DataNode theDataNode)
-      ////////////////////////
       {
         selectedChildDataNode= theDataNode;
         
