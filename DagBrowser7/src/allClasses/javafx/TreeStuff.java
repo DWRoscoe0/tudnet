@@ -144,39 +144,33 @@ public class TreeStuff
       {
         selectedChildDataNode= theDataNode;
         
-        recordSelectionPathV(theDataNode);
+        recordSelectionPathAsMapEpiNode(theDataNode);
         }
 
-    private void recordSelectionPathV(DataNode theDataNode)
-      /* Records locationDataNode in Persistent storage.
-       * This is done recursively to simplify path tracking.  
+    private MapEpiNode recordSelectionPathAsMapEpiNode(DataNode theDataNode)
+      /* This method records the path location of theDataNode 
+       * in Persistent storage and returns 
+       * the MapEpiNode associated with that location.
+       * This is done recursively to simplify path tracking.
+       * The return value is use internally during recursion
+       * and is normally ignored by the original caller.  
        */
       {
-          selectionHistoryMapEpiNode.getOrMakeMapEpiNode(
-              theDataNode.getNameString()); ////// Do this later in appropriate place.
+        MapEpiNode dataMapEpiNode; // MapEpiNode associated with DataNode name. 
+        MapEpiNode parentMapEpiNode; // MapEpiNode which is above's parent. 
 
-        /*  ////
-          TreeItem<DataNode> resultTreeItem;
-        main: {
-          if // Root TreeItem references target DataNode.
-            (rootTreeItem.getValue() == targetDataNode)
-            { resultTreeItem= rootTreeItem; break main; } // Exit with root.
-          TreeItem<DataNode> parentTreeItem= // Recursively translate parent. 
-              toTreeItem(targetDataNode.getParentNamedList(), rootTreeItem);
-          if (null == parentTreeItem) // Parent translation failed.
-            { resultTreeItem= null; break main; } // Indicate failure with null.
-          for // Search for target DataNode in translated parent's children.
-            ( TreeItem<DataNode> childTreeItem : parentTreeItem.getChildren() )
-            {
-              if  // Exit with child TreeItem if it references target DataNode.
-                (childTreeItem.getValue() == targetDataNode)
-                { resultTreeItem= childTreeItem; break main; }
-              }
-          // If here then no child referenced target DataNode.
-          resultTreeItem= null; // Indicate failure with null.
-        } // main:
-          return resultTreeItem;
-        */  ////
+        if (theDataNode.isRootB()) // DataNode is the root node.
+          parentMapEpiNode= // So use root as parent EpiNode.
+            selectionHistoryMapEpiNode; 
+          else  // DataNode is not Root.
+          parentMapEpiNode= // Recurse to get parent EpiNode. 
+              recordSelectionPathAsMapEpiNode( 
+                  theDataNode.getParentNamedList()); // from parent DataNode
+        dataMapEpiNode= // Record name of DataNode and return its MapEpiNode. 
+            parentMapEpiNode.getOrMakeMapEpiNode(
+                theDataNode.getNameString()); 
+
+        return dataMapEpiNode; // Return this in case this is a recursive call.
         }
 
     public DataNode getParentDataNode()
