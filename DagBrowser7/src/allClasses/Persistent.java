@@ -25,41 +25,48 @@ public class Persistent
 
     Each node can be either:
     * a ScalarEpiNode value, representing a simple text string, or
-    * a MapEpiNode, a nested map of key-value pairs, with each value being another node.
-    
-	  Unlike MapEpiNode, which does not understand paths within a tree, this class does.
-	  However the internal use of paths to identify persistent data has been deprecated. 
-    Although some multiple element path capability is present, it is not presently used,
-    meaning that paths parameters are all single element map keys.
+    * a MapEpiNode, a nested map of key-value pairs, 
+      with each value being another node.
+
+	  Unlike MapEpiNode, which does not understand paths within a tree, 
+	  this class does.
+
+	  However the internal use of paths 
+	  to identify persistent data has been deprecated. 
+    Although some multiple element path capability exists, 
+    it is not presently used,
+    meaning that paths parameter are all single element map keys.
 
     If paths are ever used again:
-    
+
 		  A path can be:
   		* relative to a given map node, or
   		* absolute, meaning relative to the root map node.
-  
+
   		A path expressed as a String is a list of elements separated by a "/".
   		A path can contain 0, 1, 2, or more elements.
-  
+
   	  In earlier versions of this class, "key" was synonymous with "full path".
   	  Now "key" is only a single element of a path.
-  	  
+
   	  A path does not end in a slash.  A prefix ends in a slash.
 
     ///opt Paths used internally might eventually be eliminated completely.
-    
-    ///org Many service methods below are in the process of being moved or eliminated, 
-    so that this class will do nothing more than load from, and store data to, disk.
-    All the methods which actually access of individual fields will be in either
+
+    ///org Many service methods below are in the process 
+    of being moved or eliminated, so that this class 
+    will do nothing more than load from, and store data to, disk.
+    All the methods which actually access individual fields will be in either
     * MapEpiNode methods, or
     * Methods of classes which perform a particular purpose but use 
       a subtree of EpiNodes for storage.
-    This process is being done gradually because the methods are called from many places.
+    This process is being done gradually because 
+    the methods are called from many places.
     When all references to these service methods have been eliminated,
     the methods will be removed from this class. 
-	  
+
 	 	*/
-	
+
 	{
 		private MapEpiNode rootMapEpiNode= null; // EpiNode root of tree data.
 
@@ -71,7 +78,8 @@ public class Persistent
 	      It also does some temporary data conversions and extra file outputs
 	      as part of the conversion from PersistentNode data to EpiNode data. 
 	     
-	      It is possible to eliminate this method, and trigger things by lazy loading,
+	      It is possible to eliminate this method, 
+	      and trigger things by lazy loading,
 	      triggered by the first call that needs theMap variable defined.
 	      But because finalizeV() must be called to write any changes,
 	      we might as well just call initializeV() as well.
@@ -79,7 +87,8 @@ public class Persistent
 	    {
         rootMapEpiNode=  // Translate text file data to EpiNode data.
           loadMapEpiNode("PersistentEpiNode.txt");
-        if (rootMapEpiNode == null) // Define root map to be empty map if load failed. 
+        if  // Define root map to be empty map if load failed.
+          (rootMapEpiNode == null) 
           rootMapEpiNode= new MapEpiNode();
         
         updateFormatV();
@@ -88,7 +97,7 @@ public class Persistent
     private void updateFormatV()
       // This method is used for Persistent.txt file format changes, if any.
       {
-        theAppLog.setLogConditionMapV( // Do this for setting-dependent log entries.
+        theAppLog.setLogConditionMapV( // Add for setting-dependent log entries.
             rootMapEpiNode.getMapEpiNode("Logging"));
 
         theAppLog.debug("Persistent","Persistent.updateFormatV() begins.");
@@ -131,21 +140,26 @@ public class Persistent
                 FileOps.makeRelativeToAppFolderFile( fileString ),"r");
             theRandomAccessInputStream= 
                 new RandomFileInputStream(theRandomAccessFile);
-            resultMapEpiNode= MapEpiNode.getBlockMapEpiNode(theRandomAccessInputStream, 0 );
+            resultMapEpiNode= MapEpiNode.getBlockMapEpiNode(
+                theRandomAccessInputStream, 0 );
             } 
           catch (FileNotFoundException theFileNotFoundException) { 
-            theAppLog.warning("Persistent.loadEpiNodeDataV(..)"+theFileNotFoundException);
+            theAppLog.warning(
+                "Persistent.loadEpiNodeDataV(..)"+theFileNotFoundException);
             }
           catch (Exception theException) { 
-            theAppLog.exception("Persistent.loadEpiNodeDataV(..)", theException);
+            theAppLog.exception(
+                "Persistent.loadEpiNodeDataV(..)", theException);
             }
           finally { 
             try { 
-              if ( theRandomAccessInputStream != null ) theRandomAccessInputStream.close(); 
+              if ( theRandomAccessInputStream != null ) 
+                theRandomAccessInputStream.close(); 
               if ( theRandomAccessFile != null ) theRandomAccessFile.close(); 
               }
             catch (Exception theException) { 
-              theAppLog.exception("Persistent.loadEpiNodeDataV(..)", theException);
+              theAppLog.exception(
+                  "Persistent.loadEpiNodeDataV(..)", theException);
               }
             }
         return resultMapEpiNode; 
@@ -157,10 +171,13 @@ public class Persistent
     public void finalizeV()
     /* This method stores the persistent data to the external file.
 
-      Before it writes the data, it places the UnicasterIndexes list last.
-      It does this by removing it, then adding it.
-      This is to reduce manual search time during debugging and testing.
-      ///enh Generalize this to put lists last in all MapEpiNodes.
+      Before it writes the data, it might do some reordering of entries.
+      It does this by removing and adding particular entries.
+      These entries will appear last.
+      This is done to reduce manual search time during debugging and testing.
+
+      ///enh Maybe use a similar technique to put 
+        all entries whose values are MapEpiNodes last.
       */
     {
       /// This done to put UnicasterIndexes last, done by get and put.
@@ -168,44 +185,44 @@ public class Persistent
       /// EpiNode theEpiNode= rootMapEpiNode.removeEpiNode("UnicasterIndexes");
       /// rootMapEpiNode.putV("UnicasterIndexes",theEpiNode);
       
-      storeEpiNodeDataV(rootMapEpiNode, "PersistentEpiNode.txt"); // Write EpiNode data.
+      storeEpiNodeDataV( // Write EpiNode data.
+          rootMapEpiNode, "PersistentEpiNode.txt");
       }
   
     private void storeEpiNodeDataV( EpiNode theEpiNode, String fileString )
       /* This method stores the Persistent data that is in main memory to 
         the external text file whose name is fileString.
-        Presently it stores twice:
-        * The data only in the root node.
-        * The data in all nodes of the tree.
-        So some information appears twice in the file,
-        but when reloaded it should go to the same place.
         
-        The exception handling in this method is not required,
+        ///opt The exception handling in this method is not required,
         but it does no harm.
         */
       {
-        theAppLog.debug("Persistent","Persistent.storeEpiNodeDataV(..) begins.");
+        theAppLog.debug(
+            "Persistent","Persistent.storeEpiNodeDataV(..) begins.");
         FileOutputStream theFileOutputStream= null;
         try {
-            theFileOutputStream= 
-              new FileOutputStream(FileOps.makeRelativeToAppFolderFile(fileString));  
-            theFileOutputStream.write(
+            theFileOutputStream= new FileOutputStream(
+                FileOps.makeRelativeToAppFolderFile(fileString));  
+            theFileOutputStream.write( // Write leading comment.
                 "#---YAML-like EpiNode data output follows---".getBytes());
-              theEpiNode.writeV(theFileOutputStream, // Write all of theEpiNode tree 
-                0 // starting at indent level 0.
-                );
-            theFileOutputStream.write(
+            theEpiNode.writeV( // Write all of theEpiNode tree
+              theFileOutputStream, 
+              0 // starting at indent level 0.
+              );
+            theFileOutputStream.write( // Write trailing comment.
                 (NL+"#--- end of file ---"+NL).getBytes());
             }
           catch (Exception theException) { 
-            theAppLog.exception("Persistent.storeEpiNodeDataV(..)", theException);
+            theAppLog.exception(
+                "Persistent.storeEpiNodeDataV(..)", theException);
             }
           finally {
             try {
               if ( theFileOutputStream != null ) theFileOutputStream.close(); 
               }
             catch ( Exception theException ) { 
-              theAppLog.exception("Persistent.storeEpiNodeDataV(..)", theException);
+              theAppLog.exception(
+                  "Persistent.storeEpiNodeDataV(..)", theException);
               }
             }
         theAppLog.debug("Persistent","Persistent.storeEpiNodeDataV(..) ends.");
@@ -219,7 +236,8 @@ public class Persistent
         */
       {
         thePrintWriter.print('#'); // Write comment character.
-        writingLineV(thePrintWriter, commentString); // Write comment content as line.
+        writingLineV( // Write comment content as line.
+            thePrintWriter, commentString);
         }
   
     public void writingLineV( PrintWriter thePrintWriter, String lineString ) 
@@ -268,18 +286,20 @@ public class Persistent
 		
 	  private String getString( String keyString)
 			/* This is like getEpiNode(keyString) except that
-			  instead of returning an EpiNode, it returns the value String stored there.
+			  instead of returning an EpiNode, 
+			  it returns the value String stored there.
 			  If either the node or the value String are not at 
 			  the location specified by String then null is returned.
 		   	*/
 		  {
-  	      String resultValueString= null; // Default null result value, to be overridden.
+  	      String resultValueString= null; // Default result, to be overridden.
         goReturn: {
           EpiNode keyEpiNode= new ScalarEpiNode(keyString);
           EpiNode valueEpiNode= rootMapEpiNode.getEpiNode(keyEpiNode);
           if (valueEpiNode == null) // If there is no node with this key
             break goReturn; // return with default null String.
-          resultValueString= valueEpiNode.toString(); // Get node's string value. 
+          resultValueString= // Get node's string value.
+              valueEpiNode.toString(); 
         } // goReturn:
 	  			return resultValueString;
 		  }
@@ -294,7 +314,8 @@ public class Persistent
         }
 
 
-    private MapEpiNode getOrMakeMapEpiNode(MapEpiNode baseMapEpiNode, String pathString)
+    private MapEpiNode getOrMakeMapEpiNode(
+        MapEpiNode baseMapEpiNode, String pathString)
       /* Returns the MapEpiNodeNode associated with pathString.
         If there is none, then it makes one, along with 
         all the other MapEpiNodeNodes between it and baseMapEpiNodeNode. 
@@ -302,7 +323,8 @@ public class Persistent
         to the desired MapEpiNodeNode.
         Each path element is used as a key to select or create
         the next child in the MapEpiNodeNode hierarchy.
-        It does one key lookup, or new node creation, for every element of the path.
+        It does one key lookup, or new node creation, 
+        for every element of the path.
         An empty pathString is interpreted to mean baseMapEpiNodeNode.
         It returns a null if there is an error parsing pathString.
         
