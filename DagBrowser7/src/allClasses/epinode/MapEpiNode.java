@@ -676,42 +676,6 @@ public class MapEpiNode extends EpiNode
           return resultString;
         }
 
-    /*  ////
-    public String extractFromEpiNodeString(int indexI) 
-        throws IOException
-      /* See base abstract class for documentation.  */
-    /*  ////
-      { 
-          EpiNode resultEpiNode;
-        toReturn: { toReturnFail: {
-          Map.Entry<EpiNode,EpiNode> firstMapEntry= getMapEntry(0);
-          if (firstMapEntry == null) // First entry exists? 
-            break toReturnFail; // No, so return with fail.
-          if (indexI == 0) { // First string desired? 
-            resultEpiNode= firstMapEntry.getKey(); // So entry key is result.
-            break toReturn;
-            }
-          MapEpiNode nestedMapEpiNode= // Get nested map which should be 
-            (MapEpiNode)firstMapEntry.getValue(); // value of first entry.
-              ///fix This could produce a ClassCastException, 
-              // but it's only temporary.
-          if (nestedMapEpiNode == null) // Is there a value, itself a map? 
-            break toReturnFail; // No, so return with fail.
-          Map.Entry<EpiNode,EpiNode> nestedMapEntry= // From nested map
-              nestedMapEpiNode.getMapEntry(indexI-1); // get desired entry.
-          if (nestedMapEntry == null) // Is an entry there? 
-            break toReturnFail; // No, so return with fail.
-          resultEpiNode= nestedMapEntry.getValue(); // Get entry value.
-          if (resultEpiNode != null) // Is a value there? 
-            break toReturn; // Yes, so use it.
-        } // toReturnFail: // Come here to return null indicating failure.
-          resultEpiNode= null; // Set result indicating extraction failure.
-        } // toReturn:
-          return  // Returned desiredEpiNode converted to String or null.
-            (resultEpiNode != null) ? resultEpiNode.toString() : null;
-        }
-    */  ////
-
     private Map.Entry<EpiNode,EpiNode> getMapEntry(int indexI) 
       /* Returns Map.Entry at position indexI, 
         or null if the indexI is out of range, or the entry itself is null.

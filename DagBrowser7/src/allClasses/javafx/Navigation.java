@@ -174,12 +174,10 @@ public class Navigation extends EpiStage
         switch (keyCodeI) {
           case RIGHT:  // right-arrow.
             System.out.println("Right-arrow typed.");
-            //// setItemRootFromDataNodeV(itemTreeStuff.getSelectedChildDataNode());
             setItemRootFromTreeStuffV(itemTreeStuff.moveRightAndMakeTreeStuff());
             break;
           case LEFT:  // left-arrow.
             System.out.println("Left-arrow typed.");
-            //// setItemRootFromDataNodeV(itemTreeStuff.getParentDataNode());
             setItemRootFromTreeStuffV(itemTreeStuff.moveLeftAndMakeTreeStuff());
             break;
           default: 
@@ -234,10 +232,7 @@ public class Navigation extends EpiStage
       /* This method sets the Scene to display the TreeView.
        */
       {
-        //// DataNode selectedDataNode= itemTreeStuff.getSelectedChildDataNode();
-        DataNode parentOfSelectedDataNode= ////// aka subjectDataNode.
-        ////    selectedDataNode.getParentNamedList();
-            itemTreeStuff.getSubjectDataNode();
+        DataNode parentOfSelectedDataNode= itemTreeStuff.getSubjectDataNode();
         TreeItem<DataNode> theTreeItemOfDataNode= 
             toTreeItem(parentOfSelectedDataNode,theRootEpiTreeItem);
         theTreeView.getSelectionModel().select(theTreeItemOfDataNode);

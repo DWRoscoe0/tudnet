@@ -21,9 +21,6 @@ public class TitledListNode
 
   {
 
-    DataNode theSubjectDataNode= null; // DataNode containing our list.
-      //////opt This should be eliminated and theTreeStuff used instead.
-    
     ListView<DataNode> theListView= // List view GUI Node. 
         new ListView<DataNode>();
 
@@ -40,7 +37,6 @@ public class TitledListNode
                 Persistent thePersistent
                 )
     { 
-      //// TreeStuff theTreeStuff= new TreeStuff(
       TreeStuff theTreeStuff= TreeStuff.makeWithAutoCompleteTreeStuff(
           subjectDataNode,
           selectedDataNode,
@@ -65,9 +61,8 @@ public class TitledListNode
         setTop(titleLabel); // Adding it to main JPanel.
         BorderPane.setAlignment(titleLabel,Pos.CENTER);
 
-        theSubjectDataNode= subjectDataNode;  //////
         ObservableList<DataNode> childObservableList= 
-            theSubjectDataNode.getChildObservableListOfDataNodes();
+            subjectDataNode.getChildObservableListOfDataNodes();
         theListView.setItems(childObservableList);
         setCenter(theListView);
         Platform.runLater( // Request focus later after being added to Scene.

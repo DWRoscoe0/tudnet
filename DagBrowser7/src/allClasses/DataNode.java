@@ -21,9 +21,6 @@ import javafx.collections.ObservableList;
 
 public abstract class DataNode
 
-  //// extends DNode<DataNode>  
-  //// extends DNode
-
   implements ElementMultiLink<DataNode>
 
   {
@@ -682,7 +679,6 @@ public abstract class DataNode
         }
 
     public TreeStuff makeTreeStuff( 
-        //// DataNode subjectDataNode, 
         DataNode selectedDataNode,
         Persistent thePersistent
         )

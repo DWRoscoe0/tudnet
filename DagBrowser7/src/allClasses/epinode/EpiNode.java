@@ -47,36 +47,6 @@ public abstract class EpiNode
     */
 
   {
-  
-    //// abstract public String extractFromEpiNodeString(int indexI) 
-    ////     throws IOException;
-      /* This method tries to extract the String 
-        whose index is indexI from this EpiNode. 
-        If it succeeds it returns the String.  If it fails it returns null, 
-        meaning there is no data at the index position requested.
-        The mapping between index values and Strings in the EpiNode 
-        is complex, depends on the EpiNode, and may be temporary.  
-
-        ////////////////////tmp 
-        This method is meant to act as a temporary bridge between 
-        accessing IOStream data by position and accessing data by name.
-        Because of this, and the fact that the methods are temporary,
-        error reporting is crude, just enough for debugging and 
-        moving on to the next development phase.
-        */
-
-    /*  ////
-    public EpiNode getEpiNode(int indexI)
-      /* This method returns the element EpiNode at index indexI,
-        In this base class, it always returns null and logs an error.
-        */
-    /*  ////
-      {
-        theAppLog.error( 
-            "EpiNode.getEpiNode(int): base class should not be called.");
-        return null;
-        }
-    */  ////
 
     public String toString()
       /* This method returns the String equivalent of this EpiNode

@@ -52,30 +52,6 @@ public class TreeStuff
             this.thePersistent.getOrMakeMapEpiNode("SelectionHistory");
         }
 
-    public TreeStuff OLDmoveRightAndMakeTreeStuff() ////
-      /* This method is called when a viewer is given a command to
-       * move to the right, which usually means move to an appropriate child
-       * of the DataNode the viewer is presently displaying. 
-       * This method returns a TreeStuff appropriate for displaying
-       * the DataNode at the new location.
-       * This will include the both the subject and selected child DataNodes,
-       * and a JavaFX Node for viewing appropriate for 
-       * displaying the subject DataNode, with the viewer initialized
-       * with the proper selection.
-       */
-      {
-          TreeStuff resultTreeStuff= // Return self if no movement possible.
-            this;
-          DataNode childDataNode= getSelectedChildDataNode();
-          if (null != childDataNode) { // If there's a child,
-            resultTreeStuff= childDataNode.makeTreeStuff( // make TreeStuff from it.
-                null, // No selection within child specified yet.
-                thePersistent
-                ); 
-            }
-          return resultTreeStuff;
-        }
-
     public TreeStuff moveRightAndMakeTreeStuff()
       /* This method is called when a viewer is given a command to
        * move to the right, which usually means moving to an appropriate child
@@ -189,35 +165,12 @@ public class TreeStuff
         this.theGuiNode= theNode;
         }
 
-
     public Node getGuiNode()
       /* Returns the JavaFX GUI Node being used to display the DataNode. */
       {
         return theGuiNode;
         }
 
-
-    /*  ////
-    public TreeStuff makeSelectedChildTreeStuff()
-      /* This method makes and returns a TreeStuff appropriate for
-       * the presently selected child.
-       */
-    /*  ////
-      { 
-        DataNode theSelectedDataNode= getSelectedChildDataNode();
-        TreeStuff theTreeStuff= theSelectedDataNode.makeTreeStuff(theSelectedDataNode);
-        TitledListNode theTitledListNode= new TitledListNode( 
-          theSubjectDataNode,
-          theTreeStuff
-          );
-        theTreeStuff.initializeV(theTitledListNode);
-        return theTreeStuff;
-        }
-    */  ////
-
-    ////// TreeStuff.getSelectedChildDataNode());
-    ////// TreeStuff.getParentDataNode());
-    
     public void setSelectedDataNodeV(DataNode theDataNode)
       {
         theAppLog.debug(
@@ -264,11 +217,6 @@ public class TreeStuff
         DataNode resultDataNode;
         goReturn: {
 
-          //// resultDataNode= selectedChildDataNode;
-          //// if (null == resultDataNode) break goReturn;
-          //// // We now have the non-null selected child node.
-
-          //// resultDataNode= resultDataNode.getParentNamedList();
           resultDataNode= getSubjectDataNode();
           if (null == resultDataNode) break goReturn;
           // We now have the non-null subject node.

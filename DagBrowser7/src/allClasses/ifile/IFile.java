@@ -125,9 +125,7 @@ public class IFile
           Node resultNode= // Using TitledListViewer.
             new TitledTextNode(
                 subjectDataNode,
-                //// inDataTreeModel, 
                 getFileString(),
-                //// new TreeStuff(
                 TreeStuff.makeWithAutoCompleteTreeStuff(
                     subjectDataNode,
                     null,

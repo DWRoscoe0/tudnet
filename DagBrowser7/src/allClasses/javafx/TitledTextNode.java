@@ -33,7 +33,6 @@ public class TitledTextNode extends BorderPane
                 Persistent thePersistent
                 )
     { 
-      //// TreeStuff theTreeStuff= new TreeStuff(
       TreeStuff theTreeStuff= TreeStuff.makeWithAutoCompleteTreeStuff(
           subjectDataNode,
           selectedDataNode,

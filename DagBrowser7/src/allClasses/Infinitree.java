@@ -3,7 +3,6 @@ package allClasses;
 
 public class Infinitree 
 
-  //// extends NamedBranch
   extends NamedList
 
   /* The purpose of this class is to create a an infinite subtree
