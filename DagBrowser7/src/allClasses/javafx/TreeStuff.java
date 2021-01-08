@@ -107,9 +107,9 @@ public class TreeStuff
                   newSubjectDataNode, null); // new subject.
           resultTreeStuff=  // For the new 
               newSubjectDataNode.makeTreeStuff( // subject node, make TreeStuff
-              newSelectedDataNode, // with this as subject's selection 
-              thePersistent // and include a copy of this.
-              ); 
+                newSelectedDataNode, // with this as subject's selection 
+                thePersistent // and include a copy of this.
+                ); 
         } // main:
           return resultTreeStuff;
         }
@@ -147,19 +147,21 @@ public class TreeStuff
     
     public TreeStuff moveLeftAndMakeTreeStuff()
       /* Returns a TreeStuff for the location to the left of the present one,
-       * hopefully the parent,
-       * or null if moving to the left in this way is not possible.
+       * hopefully the parent, or null if moving to the left is not possible.
        */
       {
-        TreeStuff theTreeStuff= null;
-        DataNode parentDataNode= getParentDataNode();
-        if (null != parentDataNode) { // If there's a parent
-          theTreeStuff= parentDataNode.makeTreeStuff( // make TreeStuff from it.
-              null, // No selection within child specified yet.
+        TreeStuff resultTreeStuff= // Return self if no movement possible.
+          this;
+        DataNode oldSubjectDataNode= getSubjectDataNode();
+        DataNode oldParentDataNode= getParentDataNode();
+        if (null != oldParentDataNode) { // If there's a parent
+          resultTreeStuff= // make new TreeStuff
+              oldParentDataNode.makeTreeStuff( // for parent node
+              oldSubjectDataNode, // and subject node as selection in parent.
               thePersistent
               ); 
           }
-        return theTreeStuff;
+        return resultTreeStuff;
         }
 
     public static TreeStuff makeWithAutoCompleteTreeStuff(
@@ -247,10 +249,10 @@ public class TreeStuff
           parentMapEpiNode= // Recurse to get parent EpiNode. 
               recordAndTranslateToMapEpiNode( 
                   theDataNode.getParentNamedList()); // from parent DataNode
-        dataMapEpiNode= // Get or make MapEpiNode associated with DataNode name. 
-            parentMapEpiNode.getOrMakeMapEpiNode(
-                theDataNode.getNameString()); 
-
+        String keyString= theDataNode.getNameString(); // Get DataNode name.
+        dataMapEpiNode= // Get or make MapEpiNode associated with that Node name. 
+            parentMapEpiNode.getOrMakeMapEpiNode(keyString); 
+        parentMapEpiNode.moveToEndOfListV(keyString); // Move it to end of list.
         return dataMapEpiNode; // Return resulting MapEpiNode.
         }
 

@@ -520,7 +520,7 @@ public class MapEpiNode extends EpiNode
         }
 
 
-    // Special method that renames keys.
+    // Special methods.
 
     public synchronized void renameKeysV(
         String oldKeyString, String newKeyString)
@@ -544,6 +544,19 @@ public class MapEpiNode extends EpiNode
         if (null != oldValueEpiNode) // If old key was removed then
           putV( // associate value with new key.
             newKeyString, oldValueEpiNode);
+        }
+
+    public synchronized void moveToEndOfListV(String keyString)
+      /* This method moves to the end of the map's entry list
+       * the entry whose key is keyString.
+       * If that entry does not exist then this method does nothing.
+       */
+      { 
+        EpiNode valueEpiNode= // Try removing from this map the 
+            removeEpiNode(keyString); // entry with the desired key.
+        if (null != valueEpiNode) // If entry was removed then
+          putV( // create and add a new entry, which puts it at end of list,
+            keyString, valueEpiNode); // using same key and value.
         }
 
 
