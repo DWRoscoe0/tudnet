@@ -611,9 +611,63 @@ public class MapEpiNode extends EpiNode
     
     // Methods that get keys, values, entries, or other functions of the map.
 
+    public EpiNode getMapEpiNode(int indexI)
+      /* This method returns the value MapEpiNode at index position indexI,
+        or null if there is no value or it is another type.
+
+        ///org This could be rewritten to use an additional nested method:
+           EpiNode getValueEpiNode(int indexI)
+        */
+      {
+          MapEpiNode resultMapEpiNode= null; // Default result indicating fail.
+        main: {
+          Map.Entry<EpiNode,EpiNode> theMapEntry= // Try getting  
+            getMapEntry(indexI); // map entry at desired index position.
+          if (null == theMapEntry) // If no map entry there
+            break main; // exit.
+          EpiNode valueEpiNode= theMapEntry.getValue(); // Get value from entry.
+          if (null == valueEpiNode) // If no value there
+            break main; // exit.
+          resultMapEpiNode=  // Try overriding result with 
+              valueEpiNode.tryMapEpiNode(); // value converted to MapEpiNode.
+          // At this point, if resultMapEpiNode != null, 
+          // then it's the desired MapEpiNode value,
+          // otherwise value is another type.
+        } // main:
+          return resultMapEpiNode;
+        }
+
+    public String getKeyString(int indexI)
+      /* This method returns the String value of the key 
+       * at index position indexI,
+       * or null if there is no value there.
+
+        ///org This could be rewritten to use an additional nested method:
+           EpiNode getKeyEpiNode(int indexI)
+       */
+      {
+          String resultString= null; // Default result indicating fail.
+        main: {
+          Map.Entry<EpiNode,EpiNode> theMapEntry= // Try getting  
+            getMapEntry(indexI); // map entry at desired index position.
+          if (null == theMapEntry) // If no map entry there
+            break main; // exit.
+          EpiNode keyEpiNode= theMapEntry.getKey(); // Get key from entry.
+          if (null == keyEpiNode) // If no key there
+            break main; // exit.
+          resultString=  // Try overriding result with 
+              keyEpiNode.toString(); // key converted to String.
+          // At this point, if resultMapEpiNode != null, 
+          // then it's the desired String.
+        } // main:
+          return resultString;
+        }
+
+    /*  ////
     public String extractFromEpiNodeString(int indexI) 
         throws IOException
       /* See base abstract class for documentation.  */
+    /*  ////
       { 
           EpiNode resultEpiNode;
         toReturn: { toReturnFail: {
@@ -643,31 +697,35 @@ public class MapEpiNode extends EpiNode
           return  // Returned desiredEpiNode converted to String or null.
             (resultEpiNode != null) ? resultEpiNode.toString() : null;
         }
+    */  ////
 
     private Map.Entry<EpiNode,EpiNode> getMapEntry(int indexI) 
-        throws IOException
       /* Returns Map.Entry at position indexI, 
-        or null if indexI is out of range, or the entry itself is null.
+        or null if the indexI is out of range, or the entry itself is null.
         It finds the correct entry by iterating to the desired position 
         and returning the Map.Entry there.
+        This is not fast for large maps.
         The map order is the insertion order.
+        
+        This method can be used as the basis for getting 
+        anything from a map based on index.
         */
       { 
         Map.Entry<EpiNode,EpiNode> resultMapEntry= null;
-        Map.Entry<EpiNode,EpiNode> scanMapEntry= null;
         Set<Map.Entry<EpiNode,EpiNode>> theSetOfMapEntrys= 
             theLinkedHashMap.entrySet();
         Iterator<Map.Entry<EpiNode,EpiNode>> entryIterator= 
             theSetOfMapEntrys.iterator();
+        Map.Entry<EpiNode,EpiNode> scanMapEntry;
         while(true) { // Iterate to the desired entry.
           if (! entryIterator.hasNext()) // More entries? 
             break; // No, so exit with null value.
           scanMapEntry= entryIterator.next(); // Yes, get current entry.
           if (indexI == 0) { // Is this the entry we want?
-            resultMapEntry= scanMapEntry; // Yes, set the entry as result
+            resultMapEntry= scanMapEntry; // Yes, override result with entry.
             break; // and exit.
             }
-          indexI--; // Decrement entry down-counter.
+          indexI--; // Decrement entry index down-counter.
           }
         return resultMapEntry;
         }

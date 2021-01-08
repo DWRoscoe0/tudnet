@@ -1,5 +1,7 @@
 package allClasses.javafx;
 
+import static allClasses.AppLog.theAppLog;
+
 import allClasses.DataNode;
 import allClasses.Persistent;
 import allClasses.epinode.MapEpiNode;
@@ -9,13 +11,14 @@ import javafx.scene.Node;
 public class TreeStuff 
   /* This class stores information about 
    * a location in the hierarchy for JavaFX Node viewers.
-   * It stores both the location of the Node,
-   * and the location of the selection, if any, within the Node.
+   * It stores both the location of the subject DataNode,
+   * and the location of the selection DataNode, if any, 
+   * within the subject DataNode.
    * It should be updated by the selection model of
    * the Node's associated viewer.
    * It may be interrogated for location information.
-   * Location can be expressed by either
-   * a TreePath or the DataNode of interest that terminates it. 
+   * Location can be expressed by either a TreePath 
+   * or the DataNode of interest that terminates that path. 
    * A TreePath can be calculated from a DataNode
    * by following the links to parent DataNodes.
    */
@@ -23,16 +26,14 @@ public class TreeStuff
   {
     private Node theGuiNode= null;
       // This should be the JavaFX Node used to display the DataNode. 
-    private DataNode subjectDataNode= null;
-      // This is the whole DataNode being displayed.
+    private DataNode theSubjectDataNode= null;
+      // This is the whole DataNode being displayed by a viewer.
       // It should be the parent of the selected DataNode, if any.
     private DataNode selectedChildDataNode= null;
       // This should be the selected child DataNode of the subject DataNode.
-      // This may be null if there is not selection.
+      // This may be null if there is no selection.
       ///org Maybe bind this to viewer instead of assigning it.
     private Persistent thePersistent;
-
-    //// @SuppressWarnings("unused") ////
     private MapEpiNode selectionHistoryMapEpiNode;
       // This is where selection history is stored to enable
       // easily visiting previously visited children.
@@ -43,31 +44,107 @@ public class TreeStuff
         Persistent thePersistent
         )
       { 
-        this.subjectDataNode= subjectDataNode;
+        this.theSubjectDataNode= subjectDataNode;
         this.selectedChildDataNode= selectedChildDataNode;
         this.thePersistent= thePersistent;
         
-        this.selectionHistoryMapEpiNode= // Calculate map of subscribees.
+        this.selectionHistoryMapEpiNode= // Calculate history root MapEpiNode.
             this.thePersistent.getOrMakeMapEpiNode("SelectionHistory");
         }
 
-    public TreeStuff moveRightAndMakeTreeStuff()
-      /* Returns a TreeStuff for the location to the right of the present one,
-       * hopefully the most recently visited child, or the first child,
-       * or null if moving to the right in this way is not possible.
+    public TreeStuff OLDmoveRightAndMakeTreeStuff() ////
+      /* This method is called when a viewer is given a command to
+       * move to the right, which usually means move to an appropriate child
+       * of the DataNode the viewer is presently displaying. 
+       * This method returns a TreeStuff appropriate for displaying
+       * the DataNode at the new location.
+       * This will include the both the subject and selected child DataNodes,
+       * and a JavaFX Node for viewing appropriate for 
+       * displaying the subject DataNode, with the viewer initialized
+       * with the proper selection.
        */
       {
-        TreeStuff theTreeStuff= null;
-        DataNode childDataNode= getSelectedChildDataNode();
-        if (null != childDataNode) { // If there's a child,
-          theTreeStuff= childDataNode.makeTreeStuff( // make TreeStuff from it.
-              null, // No selection within child specified yet.
-              thePersistent
-              ); 
-          }
-        return theTreeStuff;
+          TreeStuff resultTreeStuff= // Return self if no movement possible.
+            this;
+          DataNode childDataNode= getSelectedChildDataNode();
+          if (null != childDataNode) { // If there's a child,
+            resultTreeStuff= childDataNode.makeTreeStuff( // make TreeStuff from it.
+                null, // No selection within child specified yet.
+                thePersistent
+                ); 
+            }
+          return resultTreeStuff;
         }
 
+    public TreeStuff moveRightAndMakeTreeStuff()
+      /* This method is called when a viewer is given a command to
+       * move to the right, which usually means moving to an appropriate child
+       * of the DataNode the viewer is presently displaying. 
+       * This method returns a TreeStuff appropriate for displaying
+       * a DataNode to the right of the present one.
+       * This TreeStuff will include the subject and selected child DataNodes,
+       * and a JavaFX Node of a viewer appropriate for 
+       * displaying the new subject DataNode, with the viewer initialized
+       * with the proper selection.
+       */
+      {
+          DataNode oldSubjectDataNode, oldSelectedDataNode; 
+          DataNode newSubjectDataNode, newSelectedDataNode; 
+          TreeStuff resultTreeStuff= // Return self if no movement possible.
+            this;
+        main: {
+          oldSubjectDataNode= getSubjectDataNode();
+          if (null == oldSubjectDataNode) // If subject not defined 
+            break main; // this is a serious problem, so give up.
+          oldSelectedDataNode= getSelectedChildDataNode();
+          newSubjectDataNode= // Set new subject to be
+              chooseSelectedDataNode( // result of choosing a selection from
+                  oldSubjectDataNode, oldSelectedDataNode); // old subject.
+          if (null == newSubjectDataNode) // If new subject not defined 
+            break main; // we can not move right, so give up.
+          newSelectedDataNode= // Set new selection to be 
+              chooseSelectedDataNode( // result of choosing a selection from
+                  newSubjectDataNode, null); // new subject.
+          resultTreeStuff=  // For the new 
+              newSubjectDataNode.makeTreeStuff( // subject node, make TreeStuff
+              newSelectedDataNode, // with this as subject's selection 
+              thePersistent // and include a copy of this.
+              ); 
+        } // main:
+          return resultTreeStuff;
+        }
+
+    private DataNode chooseSelectedDataNode(
+        DataNode subjectDataNode, DataNode selectedDataNode)
+      /* This method returns a DataNode to be used as the selection within
+       * the subjectDataNode.  
+       * It returns selectedDataNode if it is not null.
+       * Otherwise it tries to find the most recent selected child
+       * from the selection history.
+       * If there is none then it tries to return the first child.
+       * If there are no children then it returns null.
+       */
+      {
+        main: {
+          if (null != selectedDataNode) // Selection was provided.
+            break main; // Return it.
+          MapEpiNode subjectMapEpiNode= // Get subject MapEpiNode from history.
+            recordAndTranslateToMapEpiNode(subjectDataNode);
+          String selectionNameString= // Get name of previous selection,
+              subjectMapEpiNode.getKeyString(
+                  subjectMapEpiNode.getSizeI()-1); // the most recent entry.
+          selectedDataNode= // Try getting child by that name from child list. 
+              subjectDataNode.getNamedChildDataNode(selectionNameString);
+          if (null != selectedDataNode) // Got child.
+            break main; // Return it.
+          selectedDataNode= // Try getting first child from list. 
+              subjectDataNode.getChild(0);
+          // At this point, null means there will be no selection,
+          // non-null means result selection is first child of subject.
+        } // main: 
+          return selectedDataNode;
+        }
+    
     public TreeStuff moveLeftAndMakeTreeStuff()
       /* Returns a TreeStuff for the location to the left of the present one,
        * hopefully the parent,
@@ -100,7 +177,7 @@ public class TreeStuff
         if  // If nothing selected
           (null == resultTreeStuff.selectedChildDataNode) 
           resultTreeStuff.selectedChildDataNode= // try selecting first child. 
-            resultTreeStuff.subjectDataNode.getChild(0);
+            resultTreeStuff.theSubjectDataNode.getChild(0);
 
         return resultTreeStuff;
         }
@@ -128,7 +205,7 @@ public class TreeStuff
         DataNode theSelectedDataNode= getSelectedChildDataNode();
         TreeStuff theTreeStuff= theSelectedDataNode.makeTreeStuff(theSelectedDataNode);
         TitledListNode theTitledListNode= new TitledListNode( 
-          subjectDataNode,
+          theSubjectDataNode,
           theTreeStuff
           );
         theTreeStuff.initializeV(theTitledListNode);
@@ -141,18 +218,23 @@ public class TreeStuff
     
     public void setSelectedDataNodeV(DataNode theDataNode)
       {
+        theAppLog.debug(
+            "TreeStuff.setSelectedDataNodeV(() "+theDataNode);
+
         selectedChildDataNode= theDataNode;
         
-        recordSelectionPathAsMapEpiNode(theDataNode);
+        recordAndTranslateToMapEpiNode(theDataNode);
         }
 
-    private MapEpiNode recordSelectionPathAsMapEpiNode(DataNode theDataNode)
-      /* This method records the path location of theDataNode 
-       * in Persistent storage and returns 
-       * the MapEpiNode associated with that location.
+    private MapEpiNode recordAndTranslateToMapEpiNode(DataNode theDataNode)
+      /* This method translates theDataNode to 
+       * the MapEpiNode at the location in Persistent storage
+       * associated with that DataNode.
+       * If it needs to create that MapEpiNode,
+       * or any others between it and the root of Persistent storage,
+       * then it does so.
+       * It returns the resulting MapEpiNode.  It never returns null.
        * This is done recursively to simplify path tracking.
-       * The return value is use internally during recursion
-       * and is normally ignored by the original caller.  
        */
       {
         MapEpiNode dataMapEpiNode; // MapEpiNode associated with DataNode name. 
@@ -163,13 +245,13 @@ public class TreeStuff
             selectionHistoryMapEpiNode; 
           else  // DataNode is not Root.
           parentMapEpiNode= // Recurse to get parent EpiNode. 
-              recordSelectionPathAsMapEpiNode( 
+              recordAndTranslateToMapEpiNode( 
                   theDataNode.getParentNamedList()); // from parent DataNode
-        dataMapEpiNode= // Record name of DataNode and return its MapEpiNode. 
+        dataMapEpiNode= // Get or make MapEpiNode associated with DataNode name. 
             parentMapEpiNode.getOrMakeMapEpiNode(
                 theDataNode.getNameString()); 
 
-        return dataMapEpiNode; // Return this in case this is a recursive call.
+        return dataMapEpiNode; // Return resulting MapEpiNode.
         }
 
     public DataNode getParentDataNode()
@@ -204,9 +286,9 @@ public class TreeStuff
        * Returns null if all attempts to calculate it fail. 
        */
       {
-        if (null == subjectDataNode) // If null, try calculating it from child.
-          subjectDataNode= getSelectedChildDataNode().getParentNamedList();
-        return subjectDataNode;
+        if (null == theSubjectDataNode) // If null, try calculating it from child.
+          theSubjectDataNode= getSelectedChildDataNode().getParentNamedList();
+        return theSubjectDataNode;
         }
 
     public DataNode getSelectedChildDataNode()
