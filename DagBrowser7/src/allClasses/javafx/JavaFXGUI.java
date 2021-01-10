@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import allClasses.DataNode;
+import allClasses.DataRoot;
 import allClasses.Persistent;
 import allClasses.Shutdowner;
 import javafx.stage.Window;
@@ -27,7 +28,8 @@ public class JavaFXGUI
     private Shutdowner theShutdowner;
     private DataNode theInitialRootDataNode;
     private Persistent thePersistent;
-    
+    private DataRoot theDataRoot;
+
     // Other variables
 
     private Map<Window,Boolean> windowMap= // Stores showing windows. 
@@ -42,7 +44,8 @@ public class JavaFXGUI
     public static JavaFXGUI initializeJavaFXGUI(
           DataNode theInitialRootDataNode,
           Shutdowner theShutdowner,
-          Persistent thePersistent
+          Persistent thePersistent,
+          DataRoot theDataRoot
           )
       /* This method constructs, initializes, and returs
        * what will become the only instance of this class.
@@ -57,6 +60,7 @@ public class JavaFXGUI
           theJavaFXGUI.theShutdowner= theShutdowner;
           theJavaFXGUI.theInitialRootDataNode= theInitialRootDataNode;
           theJavaFXGUI.thePersistent= thePersistent;
+          theJavaFXGUI.theDataRoot= theDataRoot;
           }
       return theJavaFXGUI;
       }
@@ -131,7 +135,8 @@ public class JavaFXGUI
         TreeStage.makeInitializeAndStartV(this); // Start tree demo stage.
         DemoStage.makeInitializeAndStartV(this); // Start button demo stage.
 
-        new Navigation(theJavaFXGUI, theInitialRootDataNode, thePersistent).
+        new Navigation(
+            theJavaFXGUI, theInitialRootDataNode, thePersistent, theDataRoot).
           initializeAndStartV();
 
         // This method will now return to the Application.start(Stage) method.

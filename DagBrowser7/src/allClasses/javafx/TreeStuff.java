@@ -2,8 +2,16 @@ package allClasses.javafx;
 
 import static allClasses.AppLog.theAppLog;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import allClasses.DataNode;
+import allClasses.DataRoot;
 import allClasses.Persistent;
+import allClasses.epinode.EpiNode;
 import allClasses.epinode.MapEpiNode;
 import javafx.scene.Node;
 
@@ -24,6 +32,7 @@ public class TreeStuff
    */
 
   {
+    // Injected fields.
     private Node theGuiNode= null;
       // This should be the JavaFX Node used to display the DataNode. 
     private DataNode theSubjectDataNode= null;
@@ -34,20 +43,26 @@ public class TreeStuff
       // This may be null if there is no selection.
       ///org Maybe bind this to viewer instead of assigning it.
     private Persistent thePersistent;
+    private DataRoot theDataRoot;
+    
+    // Calculated fields.
     private MapEpiNode selectionHistoryMapEpiNode;
       // This is where selection history is stored to enable
       // easily visiting previously visited children.
 
+
     public TreeStuff( // Constructor.
         DataNode subjectDataNode,
         DataNode selectedChildDataNode,
-        Persistent thePersistent
+        Persistent thePersistent,
+        DataRoot theDataRoot
         )
       { 
         this.theSubjectDataNode= subjectDataNode;
         this.selectedChildDataNode= selectedChildDataNode;
         this.thePersistent= thePersistent;
-        
+        this.theDataRoot= theDataRoot;
+
         this.selectionHistoryMapEpiNode= // Calculate history root MapEpiNode.
             this.thePersistent.getOrMakeMapEpiNode("SelectionHistory");
         }
@@ -84,7 +99,8 @@ public class TreeStuff
           resultTreeStuff=  // For the new 
               newSubjectDataNode.makeTreeStuff( // subject node, make TreeStuff
                 newSelectedDataNode, // with this as subject's selection 
-                thePersistent // and include a copy of this.
+                thePersistent, // and include a copy of this
+                theDataRoot // and this.
                 ); 
         } // main:
           return resultTreeStuff;
@@ -133,23 +149,30 @@ public class TreeStuff
         if (null != oldParentDataNode) { // If there's a parent
           resultTreeStuff= // make new TreeStuff
               oldParentDataNode.makeTreeStuff( // for parent node
-              oldSubjectDataNode, // and subject node as selection in parent.
-              thePersistent
+                oldSubjectDataNode, // and subject node as selection in parent
+                thePersistent, // and this
+                theDataRoot // and this.
               ); 
           }
+        //// purgeAndTestB(
+        ////     selectionHistoryMapEpiNode,
+        ////     theDataRoot.getRootDataNode()
+        ////     );
         return resultTreeStuff;
         }
 
     public static TreeStuff makeWithAutoCompleteTreeStuff(
         DataNode subjectDataNode,
         DataNode selectedChildDataNode,
-        Persistent thePersistent
+        Persistent thePersistent,
+        DataRoot theDataRoot
         )
       { 
         TreeStuff resultTreeStuff= new TreeStuff(
             subjectDataNode,
             selectedChildDataNode,
-            thePersistent
+            thePersistent,
+            theDataRoot
             );
 
         if  // If nothing selected
@@ -199,14 +222,77 @@ public class TreeStuff
           parentMapEpiNode= // So use root as parent EpiNode.
             selectionHistoryMapEpiNode; 
           else  // DataNode is not Root.
-          parentMapEpiNode= // Recurse to get parent EpiNode. 
-              recordAndTranslateToMapEpiNode( 
+          parentMapEpiNode= // Recurse to get parent EpiNode 
+              recordAndTranslateToMapEpiNode(
                   theDataNode.getParentNamedList()); // from parent DataNode
         String keyString= theDataNode.getNameString(); // Get DataNode name.
         dataMapEpiNode= // Get or make MapEpiNode associated with that Node name. 
             parentMapEpiNode.getOrMakeMapEpiNode(keyString); 
         parentMapEpiNode.moveToEndOfListV(keyString); // Move it to end of list.
         return dataMapEpiNode; // Return resulting MapEpiNode.
+        }
+
+    private boolean purgeAndTestB(MapEpiNode theMapEpiNode,DataNode theDataNode) //////
+      /* This method tries to purge and test purge-ability of theMapEpiNode.
+        The purpose is to remove all map entries which contain
+        no useful, meaning non-default, information
+        in either themselves or their descendants.
+
+        This method is recursively called on all of the child map entries.
+        It removes child entries that
+        * had true returned from the recursive call, and
+        * whose DataNode was not child 0, the first child,
+          which is the child used for default selection. 
+        It can not and does not remove the map entry containing theMapEpiNode.
+        That may be done by the caller if this method returns true.
+
+        This method returns true if none of the children remain.
+        It returns false otherwise, meaning that 
+          at least one child and possibly some if its descendants survived.
+        */
+      {
+          boolean allPurgedB= true; // Assume no child entries will survive.
+        toReturn: {
+          if (null == theMapEpiNode) // If input map is null
+            break toReturn; // exit now treating it as a purge success.
+          Set<Map.Entry<EpiNode,EpiNode>> theSetOfMapEntrys= 
+              theMapEpiNode.getLinkedHashMap().entrySet();
+          List<Map.Entry<EpiNode,EpiNode>> theListOfMapEntrys= 
+              new ArrayList<Map.Entry<EpiNode,EpiNode>>(theSetOfMapEntrys);
+                // Copy to avoid ConcurrentModificationException.
+          Iterator<Map.Entry<EpiNode,EpiNode>> entryIterator= 
+              //// theSetOfMapEntrys.iterator();
+              theListOfMapEntrys.iterator();
+        childLoop: while(true) { // Iterate through child entries.
+          if (! entryIterator.hasNext()) // Any more entries? 
+            break childLoop; // No, so exit loop.
+        oneChild: { // Process one child entry.
+          Map.Entry<EpiNode,EpiNode> childMapEntry= // Get entry.
+              entryIterator.next();
+          EpiNode valueEpiNode= childMapEntry.getValue();
+          if (null == valueEpiNode) // If value is null
+            break oneChild; // done with child which is considered purged.
+          MapEpiNode valueMapEpiNode= valueEpiNode.tryMapEpiNode();
+          if (null == valueMapEpiNode) // If it's not a Map value
+            break oneChild; // done with child which is considered purged.
+          String keyString= childMapEntry.getValue().toString();
+          //// int childIndexI= theDataNode.getIndexOfNamedChild(keyString);
+          DataNode childDataNode= theDataNode.getNamedChildDataNode(keyString);
+        childPurgeFailCauses: {
+          boolean childPurgedB= // Try recursive child purge.
+              purgeAndTestB(valueMapEpiNode,childDataNode); 
+          if (! childPurgedB) // The child was not completely purge-able
+            break childPurgeFailCauses; // Done with this child entry.
+          ////// Here should go the child=0 test.
+          theMapEpiNode.removeEpiNode( // Remove purge-able child entry
+              childMapEntry.getKey().toString()); // by it's name.
+          break oneChild; // Done with this child entry.
+        } // childPurgeFailCauses:
+          allPurgedB= false; // so entire parent map fails purge also.
+        } // oneChild:
+        } // childLoop:
+        } // toReturn.
+          return allPurgedB; // Return whether all children were purged.
         }
 
     public DataNode getParentDataNode()

@@ -9,6 +9,7 @@ import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
 
 import allClasses.DataNode;
+import allClasses.DataRoot;
 import allClasses.DataTreeModel;
 import allClasses.Persistent;
 import allClasses.TitledTextViewer;
@@ -117,7 +118,8 @@ public class IFile
           TreePath theTreePath, 
           DataNode subjectDataNode, 
           DataTreeModel inDataTreeModel,
-          Persistent thePersistent
+          Persistent thePersistent,
+          DataRoot theDataRoot
           ) 
         /* Returns a Node Component capable of displaying this IFile.
           */
@@ -129,7 +131,8 @@ public class IFile
                 TreeStuff.makeWithAutoCompleteTreeStuff(
                     subjectDataNode,
                     null,
-                    thePersistent
+                    thePersistent,
+                    theDataRoot
                     )
                 );
   

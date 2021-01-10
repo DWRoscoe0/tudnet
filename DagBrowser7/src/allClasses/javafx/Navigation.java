@@ -12,6 +12,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 
 import allClasses.DataNode;
+import allClasses.DataRoot;
 import allClasses.Persistent;
 
 public class Navigation extends EpiStage
@@ -26,6 +27,7 @@ public class Navigation extends EpiStage
     // Injected dependencies.
     private final DataNode theInitialRootDataNode;
     private final Persistent thePersistent;
+    private DataRoot theDataRoot;
 
     // Other variables.
     
@@ -47,13 +49,14 @@ public class Navigation extends EpiStage
     public Navigation(
         JavaFXGUI theJavaFXGUI, 
         DataNode theInitialRootDataNode,
-        Persistent thePersistent
+        Persistent thePersistent,
+        DataRoot theDataRoot
         )
       {
         super(theJavaFXGUI);
         this.theInitialRootDataNode= theInitialRootDataNode;
+        this.theDataRoot= theDataRoot;
         this.thePersistent= thePersistent;
-
         }
     
     public void initializeAndStartV()
@@ -221,7 +224,8 @@ public class Navigation extends EpiStage
         if (null != theDataNode) { // Process DataNode if present.
           itemTreeStuff= theDataNode.makeTreeStuff(
               null, // no known selection at this point
-              thePersistent
+              thePersistent,
+              theDataRoot
               );
           Node itemNode= itemTreeStuff.getGuiNode();
           itemRootBorderPane.setCenter(itemNode);

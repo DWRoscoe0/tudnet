@@ -6,6 +6,7 @@ import javafx.scene.control.TextArea;
 import javafx.scene.layout.BorderPane;
 
 import allClasses.DataNode;
+import allClasses.DataRoot;
 import allClasses.Persistent;
 
 // import static allClasses.Globals.appLogger;
@@ -30,13 +31,15 @@ public class TitledTextNode extends BorderPane
                 DataNode subjectDataNode,
                 DataNode selectedDataNode,
                 String theString,
-                Persistent thePersistent
+                Persistent thePersistent,
+                DataRoot theDataRoot
                 )
     { 
       TreeStuff theTreeStuff= TreeStuff.makeWithAutoCompleteTreeStuff(
           subjectDataNode,
           selectedDataNode,
-          thePersistent
+          thePersistent,
+          theDataRoot
           );
       TitledTextNode theTitledTextNode= new TitledTextNode( 
         subjectDataNode,
