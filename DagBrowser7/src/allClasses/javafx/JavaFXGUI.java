@@ -132,8 +132,8 @@ public class JavaFXGUI
        * This method should be run only on the JavaFX application thread. 
        */
       {
-        TreeStage.makeInitializeAndStartV(this); // Start tree demo stage.
-        DemoStage.makeInitializeAndStartV(this); // Start button demo stage.
+        ///// TreeStage.makeInitializeAndStartV(this); // Start tree demo stage.
+        ///// DemoStage.makeInitializeAndStartV(this); // Start button demo stage.
 
         new Navigation(
             theJavaFXGUI, theInitialRootDataNode, thePersistent, theDataRoot).
