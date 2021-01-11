@@ -29,6 +29,7 @@ public class JavaFXGUI
     private DataNode theInitialRootDataNode;
     private Persistent thePersistent;
     private DataRoot theDataRoot;
+    private Selections theSelections;
 
     // Other variables
 
@@ -45,7 +46,8 @@ public class JavaFXGUI
           DataNode theInitialRootDataNode,
           Shutdowner theShutdowner,
           Persistent thePersistent,
-          DataRoot theDataRoot
+          DataRoot theDataRoot,
+          Selections theSelections
           )
       /* This method constructs, initializes, and returs
        * what will become the only instance of this class.
@@ -61,6 +63,7 @@ public class JavaFXGUI
           theJavaFXGUI.theInitialRootDataNode= theInitialRootDataNode;
           theJavaFXGUI.thePersistent= thePersistent;
           theJavaFXGUI.theDataRoot= theDataRoot;
+          theJavaFXGUI.theSelections= theSelections;
           }
       return theJavaFXGUI;
       }
@@ -136,8 +139,12 @@ public class JavaFXGUI
         ///// DemoStage.makeInitializeAndStartV(this); // Start button demo stage.
 
         new Navigation(
-            theJavaFXGUI, theInitialRootDataNode, thePersistent, theDataRoot).
-          initializeAndStartV();
+            theJavaFXGUI, 
+            theInitialRootDataNode, 
+            thePersistent, 
+            theDataRoot, 
+            theSelections
+            ).initializeAndStartV();
 
         // This method will now return to the Application.start(Stage) method.
         // After Application.start(Stage) returns, the launch will be complete.

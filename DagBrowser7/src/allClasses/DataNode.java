@@ -12,6 +12,7 @@ import javax.swing.tree.TreePath;
 
 import allClasses.AppLog.LogLevel;
 import allClasses.epinode.MapEpiNode;
+import allClasses.javafx.Selections;
 import allClasses.javafx.TitledListNode;
 import allClasses.javafx.TitledTextNode;
 import allClasses.javafx.TreeStuff;
@@ -681,7 +682,8 @@ public abstract class DataNode
     public TreeStuff makeTreeStuff( 
         DataNode selectedDataNode,
         Persistent thePersistent,
-        DataRoot theDataRoot
+        DataRoot theDataRoot,
+        Selections theSelections
         )
       {
         TreeStuff resultTreeStuff= null;
@@ -693,7 +695,8 @@ public abstract class DataNode
                 selectedDataNode,
                 getContentString(),
                 thePersistent,
-                theDataRoot
+                theDataRoot,
+                theSelections
                 );
           else  // Display as list if this DataNode is not a leaf.
           resultTreeStuff= // Using TitledListViewer.
@@ -701,7 +704,8 @@ public abstract class DataNode
                 this,
                 selectedDataNode,
                 theDataRoot,
-                thePersistent
+                thePersistent,
+                theSelections
                 );
 
         return resultTreeStuff;  // Returning result from above.

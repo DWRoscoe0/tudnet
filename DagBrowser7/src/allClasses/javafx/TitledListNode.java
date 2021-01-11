@@ -36,14 +36,16 @@ public class TitledListNode
                 DataNode subjectDataNode,
                 DataNode selectedDataNode,
                 DataRoot theDataRoot,
-                Persistent thePersistent
+                Persistent thePersistent,
+                Selections theSelections
                 )
     { 
       TreeStuff theTreeStuff= TreeStuff.makeWithAutoCompleteTreeStuff(
           subjectDataNode,
           selectedDataNode,
           thePersistent,
-          theDataRoot
+          theDataRoot,
+          theSelections
           );
       TitledListNode theTitledListNode= new TitledListNode( 
         subjectDataNode,

@@ -29,6 +29,7 @@ public class Navigation extends EpiStage
     private final DataNode initialSelectionDataNode;
     private final Persistent thePersistent;
     private DataRoot theDataRoot;
+    private Selections theSelections;
 
     // Other variables.
     
@@ -51,13 +52,15 @@ public class Navigation extends EpiStage
         JavaFXGUI theJavaFXGUI, 
         DataNode initialSelectionDataNode,
         Persistent thePersistent,
-        DataRoot theDataRoot
+        DataRoot theDataRoot,
+        Selections theSelections
         )
       {
         super(theJavaFXGUI);
         this.initialSelectionDataNode= initialSelectionDataNode;
         this.theDataRoot= theDataRoot;
         this.thePersistent= thePersistent;
+        this.theSelections= theSelections;
         }
     
     public void initializeAndStartV()
@@ -228,7 +231,8 @@ public class Navigation extends EpiStage
           itemTreeStuff= theDataNode.makeTreeStuff(
               null, // no known selection at this point
               thePersistent,
-              theDataRoot
+              theDataRoot,
+              theSelections
               );
           Node itemNode= itemTreeStuff.getGuiNode();
           itemRootBorderPane.setCenter(itemNode);

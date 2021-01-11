@@ -17,6 +17,7 @@ import allClasses.epinode.MapEpiNode;
 import allClasses.ifile.EpiFileRoots;
 import allClasses.ifile.IRoots;
 import allClasses.javafx.JavaFXGUI;
+import allClasses.javafx.Selections;
 
 public class AppGUIFactory {  // For classes with GUI lifetimes.
 
@@ -184,8 +185,17 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
           theDataRoot, 
           theMetaRoot
           );
+      Selections theSelections= new Selections(
+          thePersistent,
+          theDataRoot
+          );
       JavaFXGUI theJavaFXGUI= JavaFXGUI.initializeJavaFXGUI(
-          theInitialRootDataNode,theShutdowner,thePersistent,theDataRoot);
+          theInitialRootDataNode,
+          theShutdowner,
+          thePersistent,
+          theDataRoot,
+          theSelections
+          );
       GUIManager theGUIManager= new GUIManager( 
         theAppInstanceManager,
         theDagBrowserPanel,

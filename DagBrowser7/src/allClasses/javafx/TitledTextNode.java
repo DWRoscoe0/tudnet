@@ -32,14 +32,16 @@ public class TitledTextNode extends BorderPane
                 DataNode selectedDataNode,
                 String theString,
                 Persistent thePersistent,
-                DataRoot theDataRoot
+                DataRoot theDataRoot,
+                Selections theSelections
                 )
     { 
       TreeStuff theTreeStuff= TreeStuff.makeWithAutoCompleteTreeStuff(
           subjectDataNode,
           selectedDataNode,
           thePersistent,
-          theDataRoot
+          theDataRoot,
+          theSelections
           );
       TitledTextNode theTitledTextNode= new TitledTextNode( 
         subjectDataNode,
