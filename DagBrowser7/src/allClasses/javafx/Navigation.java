@@ -19,13 +19,14 @@ public class Navigation extends EpiStage
 
   /* This class is, or eventually will be,
    * for navigation of the Infogora hierarchy.
-   * It's central control is the TreeView. 
+   * It's contains both a TreeView and a ListView.
+   * It starts displaying the ListView. 
    */
 
   {
 
     // Injected dependencies.
-    private final DataNode theInitialRootDataNode;
+    private final DataNode initialSelectionDataNode;
     private final Persistent thePersistent;
     private DataRoot theDataRoot;
 
@@ -48,13 +49,13 @@ public class Navigation extends EpiStage
 
     public Navigation(
         JavaFXGUI theJavaFXGUI, 
-        DataNode theInitialRootDataNode,
+        DataNode initialSelectionDataNode,
         Persistent thePersistent,
         DataRoot theDataRoot
         )
       {
         super(theJavaFXGUI);
-        this.theInitialRootDataNode= theInitialRootDataNode;
+        this.initialSelectionDataNode= initialSelectionDataNode;
         this.theDataRoot= theDataRoot;
         this.thePersistent= thePersistent;
         }
@@ -70,12 +71,14 @@ public class Navigation extends EpiStage
         theTreeShowItemButton= new Button("Show Item");
         theItemShowTreeButton= new Button("Show Tree");
 
+        DataNode initialDataNode= initialSelectionDataNode;
+        
         theTreeScene= makeTreeScene(
-            theTreeShowItemButton, theInitialRootDataNode);
-        setTreeSelectionFromDataNodeV(theInitialRootDataNode);
+            theTreeShowItemButton, initialDataNode);
+        setTreeSelectionFromDataNodeV(initialDataNode);
 
         theItemScene= makeItemScene();
-        setItemRootFromDataNodeV(theInitialRootDataNode);
+        setItemRootFromDataNodeV(initialDataNode);
 
         setEventHandlersV(); // Okay to do now that above definitions are done.
 
@@ -91,7 +94,7 @@ public class Navigation extends EpiStage
        * It will be reused so as to reuse tree browsing context.  
        */ 
       {
-        theRootEpiTreeItem= new EpiTreeItem(theInitialRootDataNode);
+        theRootEpiTreeItem= new EpiTreeItem(initialSelectionDataNode);
         theRootEpiTreeItem.setExpanded(true);
         theTreeView= new TreeView<DataNode>(theRootEpiTreeItem);
         treeRootBorderPane= new BorderPane();
