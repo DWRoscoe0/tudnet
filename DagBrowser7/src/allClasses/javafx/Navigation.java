@@ -144,7 +144,8 @@ public class Navigation extends EpiStage
             ( TreeItem<DataNode> childTreeItem : parentTreeItem.getChildren() )
             {
               if  // Exit with child TreeItem if it references target DataNode.
-                (childTreeItem.getValue() == targetDataNode)
+                //// (childTreeItem.getValue() == targetDataNode)
+                (childTreeItem.getValue().equals(targetDataNode))
                 { resultTreeItem= childTreeItem; break main; }
               }
           // If here then no child referenced target DataNode.
