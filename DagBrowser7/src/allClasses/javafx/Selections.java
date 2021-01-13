@@ -23,13 +23,14 @@ public class Selections
 
     // Injected variables.
     private Persistent thePersistent;
-    @SuppressWarnings("unused") ////
     private DataRoot theDataRoot;
     
     // Calculated variables.
     private MapEpiNode selectionHistoryMapEpiNode;
       // This is where selection history is stored to enable
       // easily visiting previously visited children.
+      // The first and only element of the map at this level
+      // is the map entry associated with the root DataNode.
 
     public Selections( // Constructor.
         Persistent thePersistent,
@@ -43,7 +44,6 @@ public class Selections
             this.thePersistent.getOrMakeMapEpiNode("SelectionHistory");
         }
     
-
     public boolean purgeAndTestB(MapEpiNode theMapEpiNode,DataNode theDataNode) //////
       /* This method tries to purge and test purge-ability of theMapEpiNode.
         The purpose is to remove all map entries which contain
@@ -112,6 +112,39 @@ public class Selections
           return allPurgedB; // Return whether purge of all children succeeded.
         }
 
+    public DataNode getPreviousSelectedDataNode()
+      /* This method returns the DataNode representing 
+       * the last selection displayed by the app,
+       * which is recorded in the selection history.
+       * It works by following the path of 
+       * recent selections in the Persistent storage tree
+       * while following an equivalent path in the DataNode tree,
+       * starting each from its respective root.
+       */
+      {
+          DataNode scanDataNode= theDataRoot.getRootDataNode();
+          MapEpiNode scanMapEpiNode= // Get map of root DataNode. 
+            recordAndTranslateToMapEpiNode(scanDataNode);
+              // Forces root to be in selection path history.
+        loop: while(true) { // Loop to follow selection history path to its end.
+          // At this point, we  have a valid [partial] selection.
+          String testString= // Get name of next-level candidate selection
+              scanMapEpiNode.getKeyString(
+                  scanMapEpiNode.getSizeI()-1); // at end of map.
+          if (null == testString) break loop; // No name, no selection, exit.
+          DataNode testDataNode= // Try getting same-name child DataNode. 
+              scanDataNode.getNamedChildDataNode(testString);
+          if (null == testDataNode) break loop; // No DataNode, exit.
+          MapEpiNode testMapEpiNode= // Try getting next-level map. 
+              scanMapEpiNode.getMapEpiNode(testString);
+          if (null == testMapEpiNode) break loop; // No next level map, exit.
+          // At this point, we have all data needed to go to next level.  Do it.
+          scanDataNode= testDataNode;
+          scanMapEpiNode= testMapEpiNode;
+        } // loop: 
+          return scanDataNode; // Return last valid DataNode, the selection.
+        }
+
     public DataNode chooseSelectedDataNode(
         DataNode subjectDataNode, DataNode selectedDataNode)
       /* This method returns a DataNode to be used as the selection within
@@ -125,22 +158,52 @@ public class Selections
       {
         main: {
           if (null != selectedDataNode) // Selection was provided.
-            break main; // Return it.
-          MapEpiNode subjectMapEpiNode= // Get subject MapEpiNode from history.
-            recordAndTranslateToMapEpiNode(subjectDataNode);
-          String selectionNameString= // Get name of previous selection,
-              subjectMapEpiNode.getKeyString(
-                  subjectMapEpiNode.getSizeI()-1); // the most recent entry.
-          selectedDataNode= // Try getting child by that name from child list. 
-              subjectDataNode.getNamedChildDataNode(selectionNameString);
+            break main; // Use it.
+          selectedDataNode= // Choose selection from selection history. 
+              chooseSelectedDataNode(subjectDataNode); 
+        } // main: 
+          return selectedDataNode;
+      }
+
+    public DataNode chooseSelectedDataNode(
+        DataNode subjectDataNode)
+      /* This method returns a DataNode to be used as the selection within
+       * the subjectDataNode.  
+       * It tries to find the most recent selected child
+       * from the selection history.
+       * If there is none then it tries to return the subject's first child.
+       * If there are no children then it returns null.
+       */
+      {
+          DataNode selectedDataNode; // For result selection.
+        main: {
+          selectedDataNode= chooseFromHistoryDataNode(subjectDataNode);
           if (null != selectedDataNode) // Got child.
             break main; // Return it.
-          selectedDataNode= // Try getting first child from list. 
-              subjectDataNode.getChild(0);
+          selectedDataNode= // Try getting first child from node's child list. 
+            subjectDataNode.getChild(0);
           // At this point, null means there will be no selection,
           // non-null means result selection is first child of subject.
         } // main: 
           return selectedDataNode;
+        }
+
+    public DataNode chooseFromHistoryDataNode(DataNode subjectDataNode)
+      /* This method returns a DataNode to be used as the selection within
+       * the DataNode subjectDataNode.  
+       * It tries to find the most recent selected child
+       * from the selection history for that node.
+       * If there is none then it returns null.
+       */
+      {
+        MapEpiNode subjectMapEpiNode= // Get subject MapEpiNode from history.
+          recordAndTranslateToMapEpiNode(subjectDataNode);
+        String selectionNameString= // Get the name of most previous selection,
+            subjectMapEpiNode.getKeyString(
+                subjectMapEpiNode.getSizeI()-1); // the most recent entry.
+        DataNode selectedDataNode= // Try getting child by that name from child list. 
+            subjectDataNode.getNamedChildDataNode(selectionNameString);
+        return selectedDataNode;
         }
 
     public MapEpiNode recordAndTranslateToMapEpiNode(DataNode theDataNode)
@@ -152,6 +215,10 @@ public class Selections
        * then it does so.
        * It returns the resulting MapEpiNode.  It never returns null.
        * This is done recursively to simplify path tracking.
+       * Execution time is O*d.
+       * This method is used both for recording selection path information
+       * and for looking up selection path information MapEpiNodes
+       * associated with DataNodes.
        */
       {
         MapEpiNode dataMapEpiNode; // MapEpiNode associated with DataNode name. 
@@ -165,7 +232,7 @@ public class Selections
               recordAndTranslateToMapEpiNode(
                   theDataNode.getParentNamedList()); // from parent DataNode
         String keyString= theDataNode.getNameString(); // Get DataNode name.
-        dataMapEpiNode= // Get or make MapEpiNode associated with that Node name. 
+        dataMapEpiNode= // Get or make MapEpiNode associated with Node name. 
             parentMapEpiNode.getOrMakeMapEpiNode(keyString); 
         parentMapEpiNode.moveToEndOfListV(keyString); // Move it to end of list.
         return dataMapEpiNode; // Return resulting MapEpiNode.

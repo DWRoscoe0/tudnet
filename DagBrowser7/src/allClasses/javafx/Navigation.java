@@ -81,7 +81,8 @@ public class Navigation extends EpiStage
         setTreeSelectionFromDataNodeV(initialDataNode);
 
         theItemScene= makeItemScene();
-        setItemRootFromDataNodeV(initialDataNode);
+        //// setItemRootFromDataNodeV(initialDataNode);
+        setItemRootFromDataNodeV(theSelections.getPreviousSelectedDataNode());
 
         setEventHandlersV(); // Okay to do now that above definitions are done.
 

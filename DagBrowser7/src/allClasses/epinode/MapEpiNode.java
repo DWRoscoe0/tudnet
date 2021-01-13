@@ -676,7 +676,7 @@ public class MapEpiNode extends EpiNode
           return resultString;
         }
 
-    private Map.Entry<EpiNode,EpiNode> getMapEntry(int indexI) 
+    public Map.Entry<EpiNode,EpiNode> getMapEntry(int indexI) 
       /* Returns Map.Entry at position indexI, 
         or null if the indexI is out of range, or the entry itself is null.
         It finds the correct entry by iterating to the desired position 

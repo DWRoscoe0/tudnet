@@ -316,24 +316,25 @@ public class Persistent
 
     private MapEpiNode getOrMakeMapEpiNode(
         MapEpiNode baseMapEpiNode, String pathString)
-      /* Returns the MapEpiNodeNode associated with pathString.
+      /* Returns the MapEpiNode associated with pathString.
         If there is none, then it makes one, along with 
-        all the other MapEpiNodeNodes between it and baseMapEpiNodeNode. 
-        It interprets pathString as a path from baseMapEpiNodeNode
-        to the desired MapEpiNodeNode.
+        all the other MapEpiNodes between it and baseMapEpiNode. 
+        It interprets pathString as a path from baseMapEpiNode
+        to the desired MapEpiNode.
         Each path element is used as a key to select or create
-        the next child in the MapEpiNodeNode hierarchy.
+        the next child in the MapEpiNode hierarchy.
         It does one key lookup, or new node creation, 
         for every element of the path.
-        An empty pathString is interpreted to mean baseMapEpiNodeNode.
+        An empty pathString is interpreted to mean baseMapEpiNode.
         It returns a null if there is an error parsing pathString.
         
-        /// Note, it appears that this is never called with 
-          a path of more than one element, in other words, a simple key.
+        /// Note, it appears that this is always called with 
+          a path of one element, in other words, a simple key.
+          So it always finds or creates one MapEpiNode.
         */
       {
           // appLogger.debug(
-          //    "Persistent.getOrMakeMapEpiNodeNode("
+          //    "Persistent.getOrMakeMapEpiNode("
           //      +pathString+") begins.");
           MapEpiNode resultMapEpiNode= // Initial result value
               baseMapEpiNode; // is base node.
@@ -363,7 +364,7 @@ public class Persistent
             scanKeyOffsetI= separatorKeyOffsetI+1; // Compute next key offset.
           } // while (true)... Loop to select or make next descendant node.
         } // goLogError:
-          String errorString= "Persistent.getMapEpiNodeNode(..), "
+          String errorString= "Persistent.getMapEpiNode(..), "
               +"error getting value, path="+pathString;
           theAppLog.error(errorString); // Log error string.
           resultMapEpiNode= null; // and return null.
