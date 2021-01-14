@@ -44,34 +44,54 @@ public class Selections
             this.thePersistent.getOrMakeMapEpiNode("SelectionHistory");
         }
     
-    public boolean purgeAndTestB(MapEpiNode theMapEpiNode,DataNode theDataNode) //////
-      /* This method tries to purge and test purge-ability of theMapEpiNode.
-        The purpose is to remove all map entries which contain
-        no useful, meaning non-default, information
-        in either themselves or their descendants.
+    public boolean purgeAndTestB(MapEpiNode theMapEpiNode,DataNode theDataNode)
+      /* 
+        This method tries to purge and test purge-ability of theMapEpiNode.
 
-        This method is recursively called on all of the child map entries.
-        It removes child entries that
-        * had true returned from the recursive call, and
-        * whose DataNode was NOT child 0, the first child,
-          which is the child used for default selection, and
-        * whose map entry is not the last one in the map,
-          which means it is the most recent selection.
-        It treats as purge successes data that is out of spec,
-        assuming that such data is best deleted at a higher level.
+        The purpose of this method is to remove all map entries 
+        in the tree rooted at theMapEpiNode which contain no useful information.
+        Not useful information is information which causes behavior 
+        which is identical to the behavior if the information was absent.
+        At this time the behavior of interest is only
+        the selection of previously visited data nodes,
+        but this might change.
+
+        The method works by recursively traversing 
+        * the MapEpiNode tree rooted at theMapEpiNode, and
+        * the DataNode tree rooted at theDataNode
+        MapEpiNodes may be deleted but DataNodes are not.
+        The DataNode tree is used only to provide context needed for
+        deciding what is useful information in the MapEpiNode tree.
+
+        This method is recursively called on all of the child map entries
+        and removed what can be deleted.
+        It keeps a child map entry, meaning it does not remove one,  
+        * that had false returned from the recursive call to this method, or
+        * whose associated DataNode, the child DataNode with the same name, 
+          is child 0, the first child DataNode, which is used as 
+          the default selection if the selection 
+          is not specified by a map entry, or
+        * whose map entry is the last one in the map, because that one
+          is used to represent the most recent selection.
+
+        Any data that is out of spec is removed or treated as purge-able.
 
         This method can not and does not remove 
-        the map entry containing theMapEpiNode.
+        the parent map entry containing theMapEpiNode.
         That MAY be done by the caller if this method returns true.
 
-        This method returns true if none of the children remain.
-        It returns false otherwise, meaning that 
-        at least one child and possibly some if its descendants survived.
+        This method returns true to indicate a purge success,
+        meaning that none of the child map entries remain,
+        and the parent map entry MAY be removed.
+        It returns false to indicate failure, meaning that 
+        at least one child map entry and possibly some if its descendants 
+        survived the purge.
         */
       {
-          boolean allPurgedB= true; // Default result for all children purged.
+          boolean allPurgedB= true; // Default result meaning successful purge.
         toReturn: {
-          if (null == theMapEpiNode) break toReturn; // No map child entries.
+          if (null == theMapEpiNode) // Map missing. 
+            break toReturn; // Considering it a purge success.
           Set<Map.Entry<EpiNode,EpiNode>> theSetOfMapEntrys= 
               theMapEpiNode.getLinkedHashMap().entrySet();
           List<Map.Entry<EpiNode,EpiNode>> theListOfMapEntrys= 
@@ -80,36 +100,45 @@ public class Selections
           int lastEntryIndexI= theListOfMapEntrys.size()-1;
           Iterator<Map.Entry<EpiNode,EpiNode>> entryIterator= 
               theListOfMapEntrys.iterator();
-        childLoop: while(true) { // Iterate through child entries.
-          if (! entryIterator.hasNext()) break childLoop; // No more children.
-        success: { failure: { 
+
+        entryLoop: while(true) { // Iterate through child map entries.
+          if (! entryIterator.hasNext()) break entryLoop; // No more entries.
+        entryDone: { keepEntry: { 
           Map.Entry<EpiNode,EpiNode> childMapEntry= entryIterator.next();
+        removeEntry: {
           EpiNode valueEpiNode= childMapEntry.getValue(); // Try to get value.
-        removeAndSuccess: {
-          if (null == valueEpiNode) break success; // Success if no value.
+          if (null == valueEpiNode) break removeEntry; // No value.
           MapEpiNode valueMapEpiNode= valueEpiNode.tryMapEpiNode();
-          if (null == valueMapEpiNode) break success; // Success if not map.
-          String keyString= childMapEntry.getKey().toString();
-          DataNode childDataNode= theDataNode.getNamedChildDataNode(keyString);
-          if (null == childDataNode) break success; // Success if name failed.
-          boolean childPurgeAbleB= // Try recursive child purge and purge test.
+          if (null == valueMapEpiNode) break removeEntry; // Value not a map.
+          String keyString= childMapEntry.getKey().toRawString(); // Get name.
+          DataNode childDataNode= // Get DataNode associated with key name. 
+              theDataNode.getNamedChildDataNode(keyString);
+          if (null == childDataNode) break removeEntry; // DataNode missing.
+          boolean childPurgeAbleB= // Try recursive child entry purge and test.
             purgeAndTestB(valueMapEpiNode,childDataNode); 
-          if (! childPurgeAbleB) break failure; // Failure if test failed.
-          if (0 == theDataNode.getIndexOfNamedChild(keyString)) // If is child 0
-            break removeAndSuccess; // remove with success.
-          if (theListOfMapEntrys.get(lastEntryIndexI) != childMapEntry)
-            break removeAndSuccess; // Remove with success if not last entry.
-          break failure; // so purge failure.
-        } // removeAndSuccess:
+          if (! childPurgeAbleB) break keepEntry; // Some sub-entries survived.
+          if // If empty map entry is associated with DataNode child 0
+            (0 == theDataNode.getIndexOfNamedChild(keyString))
+            break removeEntry; // remove it because it is a not needed default.
+          if // If empty map entry is not last one in parent map
+            (theListOfMapEntrys.get(lastEntryIndexI) != childMapEntry)
+            break removeEntry; // remove it because it's not present selection.
+          break keepEntry; // so purge failure.
+
+        } // removeEntry:
           theMapEpiNode.removeEpiNode( // Remove purge-able entry from map
-              childMapEntry.getKey().toString()); // by name.
-          break success; // Tests passed.  Child removed.  Treat as success.
-        } // failure: Something caused child purge to fail.
-          allPurgedB= false; // so entire parent map fails purge also.
-        } // success: This child is done.
-        } // childLoop: Continue with next child entry.
+              childMapEntry.getKey().toRawString()); // by name.
+          break entryDone; // Tests passed.  Child removed.  Done, with success.
+
+        } // keepEntry: Map entry is needed for some reason, so leave it.
+          allPurgedB= false; // Record that entire parent map purge failed.
+
+        } // entryDone: processing of this map entry is done.
+
+        } // entryLoop: Continue with next child entry.
+
         } // toReturn: We're done.
-          return allPurgedB; // Return whether purge of all children succeeded.
+          return allPurgedB; // Return whether purge of all entries succeeded.
         }
 
     public DataNode getPreviousSelectedDataNode()

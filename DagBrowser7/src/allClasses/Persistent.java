@@ -104,7 +104,8 @@ public class Persistent
         
         /// Disabled these when UnicasterIndexes kept disappearing.
         renameKeysV("peers", "Unicasters");
-        renameKeysV("Unicasters","UnicasterIndexes");
+        /// renameKeysV("Unicasters","UnicasterIndexes");
+         // Disabled because it was interfering with SelectionHistory data. 
         /// This have always been enabled.
         renameKeysV("PeerIdentity", "OwnerId");
         renameKeysV("OwnerId","UserId");
