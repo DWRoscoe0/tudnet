@@ -102,6 +102,7 @@ public class TreeStuff
                 theSelections // and this.
                 ); 
         } // main:
+          purgeSelectionStorageV();
           return resultTreeStuff;
         }
     
@@ -123,11 +124,16 @@ public class TreeStuff
                 theSelections // and this.
                 ); 
           }
+        purgeSelectionStorageV();
+        return resultTreeStuff;
+        }
+
+    private void purgeSelectionStorageV()
+      {
         theSelections.purgeAndTestB(
             selectionHistoryMapEpiNode,
             theDataRoot.getParentOfRootDataNode()
             );
-        return resultTreeStuff;
         }
 
     public static TreeStuff makeWithAutoCompleteTreeStuff(
