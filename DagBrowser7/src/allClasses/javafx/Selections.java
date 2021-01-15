@@ -15,8 +15,15 @@ import allClasses.epinode.MapEpiNode;
 public class Selections
 
   /* This class stores and retrieves DataNode selection history.
-   * It makes it possible for the user to quickly return to
-   * previously visited locations in the hierarchy.
+   * It makes it possible for a user to quickly return close to
+   * many different previously visited selection locations 
+   * in the DataNode hierarchy.
+   * 
+   * This system is not complete because,
+   * though it stores past selections, 
+   * which is very useful for developing,
+   * it does not store the final selection path at shutdown,
+   * which would be expected by a user who is not a developer.
    */
 
   {
