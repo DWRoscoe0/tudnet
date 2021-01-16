@@ -685,12 +685,26 @@ public abstract class DataNode
         DataRoot theDataRoot,
         Selections theSelections
         )
+      /* This is the JavaFX version of getDataJComponent(.).
+       * 
+       * This method creates a TreeStuff object for displaying this DataNode.
+       * * selectedDataNode is the DataNode to be the selected child data node,
+       *   or null if there is to be no selected child DataNode,
+       *   or the selection should come from the selection history.
+       * * thePersistent provides access to persistent data storage.
+       * * theDataRoot provides to the base of the data hierarchy.
+       * * theSelections provides to the DataNode selection history.
+       * 
+       * This implementation creates one of 2 default JavaFX Node viewers:
+       * * one for displaying leaves as text
+       * * one for displaying branches as a list
+       * DataNode subclasses may override this method to create custom viewers.
+       */
       {
-        TreeStuff resultTreeStuff= null;
+        TreeStuff resultTreeStuff;
 
         if ( isLeaf() ) // Display as text if this DataNode is leaf.
-          resultTreeStuff= // Using TitledTextViewer.
-            TitledTextNode.makeTreeStuff(
+          resultTreeStuff= TitledTextNode.makeTreeStuff(
                 this,
                 selectedDataNode,
                 getContentString(),
@@ -699,8 +713,7 @@ public abstract class DataNode
                 theSelections
                 );
           else  // Display as list if this DataNode is not a leaf.
-          resultTreeStuff= // Using TitledListViewer.
-            TitledListNode.makeTreeStuff(
+          resultTreeStuff= TitledListNode.makeTreeStuff(
                 this,
                 selectedDataNode,
                 theDataRoot,
@@ -708,7 +721,7 @@ public abstract class DataNode
                 theSelections
                 );
 
-        return resultTreeStuff;  // Returning result from above.
+        return resultTreeStuff;
         }
 
     public TreePath getTreePath()

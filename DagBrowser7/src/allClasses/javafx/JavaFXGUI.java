@@ -26,7 +26,7 @@ public class JavaFXGUI
     // Injected dependencies.
 
     private Shutdowner theShutdowner;
-    private DataNode theInitialRootDataNode;
+    private DataNode theRootDataNode;
     private Persistent thePersistent;
     private DataRoot theDataRoot;
     private Selections theSelections;
@@ -43,13 +43,13 @@ public class JavaFXGUI
     // Methods
 
     public static JavaFXGUI initializeJavaFXGUI(
-          DataNode theInitialRootDataNode,
+          DataNode theRootDataNode,
           Shutdowner theShutdowner,
           Persistent thePersistent,
           DataRoot theDataRoot,
           Selections theSelections
           )
-      /* This method constructs, initializes, and returs
+      /* This method constructs, initializes, and returns
        * what will become the only instance of this class.
        */
     {
@@ -60,7 +60,7 @@ public class JavaFXGUI
         { // Create instance and store injected dependencies.
           theJavaFXGUI= new JavaFXGUI();
           theJavaFXGUI.theShutdowner= theShutdowner;
-          theJavaFXGUI.theInitialRootDataNode= theInitialRootDataNode;
+          theJavaFXGUI.theRootDataNode= theRootDataNode;
           theJavaFXGUI.thePersistent= thePersistent;
           theJavaFXGUI.theDataRoot= theDataRoot;
           theJavaFXGUI.theSelections= theSelections;
@@ -135,12 +135,12 @@ public class JavaFXGUI
        * This method should be run only on the JavaFX application thread. 
        */
       {
-        ///// TreeStage.makeInitializeAndStartV(this); // Start tree demo stage.
-        ///// DemoStage.makeInitializeAndStartV(this); // Start button demo stage.
+        /// TreeStage.makeInitializeAndStartV(this); // Start tree demo stage.
+        /// DemoStage.makeInitializeAndStartV(this); // Start button demo stage.
 
-        new Navigation(
+        new Navigation( // Create and start the main JavaFX UI.
             theJavaFXGUI, 
-            theInitialRootDataNode, 
+            theRootDataNode, 
             thePersistent, 
             theDataRoot, 
             theSelections

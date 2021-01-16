@@ -5,31 +5,33 @@ import static allClasses.AppLog.theAppLog;
 import allClasses.DataNode;
 import allClasses.DataRoot;
 import allClasses.Persistent;
-import allClasses.epinode.MapEpiNode;
 import javafx.scene.Node;
 
 
 public class TreeStuff 
-  /* This class stores information about 
-   * a location in the hierarchy for JavaFX Node viewers.
-   * It stores both the location of the subject DataNode,
-   * and the location of the selection DataNode, if any, 
-   * within the subject DataNode.
-   * It should be updated by the selection model of
-   * the Node's associated viewer.
+  /* This class does several things.
+   * * It stores information about 
+   *   a location in the hierarchy for JavaFX Node viewers.
+   *   * It stores both the location of the subject DataNode.
+   *   * It stores the location of the selection DataNode, if any, 
+   *     within the subject DataNode.
+   * An instance of this class should be updated by 
+   * the selection model of the Node's associated viewer.
    * It may be interrogated for location information.
-   * Location can be expressed by either a TreePath 
-   * or the DataNode of interest that terminates that path. 
-   * A TreePath can be calculated from a DataNode
-   * by following the links to parent DataNodes.
+   * 
+   * Location is stored both locally, and in the Selections class.
+   * 
+   * Location is usually represented by the DataNode of interest.
+   * Location can also be represented by the TreePath
+   * from the root DataNode to the DataNode of interest.
    */
 
   {
     // Injected variables.
     // Some of these are circular parameters used in factory methods only,
     // and may eventually be deleted.
-    private Node theGuiNode= null;
-      // This should be the JavaFX Node used to display the DataNode. 
+  
+    // Initialized by constructor injection.
     private DataNode theSubjectDataNode= null;
       // This is the whole DataNode being displayed by a viewer.
       // It should be the parent of the selected DataNode, if any.
@@ -41,29 +43,10 @@ public class TreeStuff
     private DataRoot theDataRoot;
     private Selections theSelections;
     
-    // Calculated variables.
-    private MapEpiNode selectionHistoryMapEpiNode;
-      // This is where selection history is stored to enable
-      // easily visiting previously visited children.
+    // Initialized by setter injection.
+    private Node theGuiNode= null;
+      // This should be the JavaFX Node used to display the DataNode. 
 
-
-    public TreeStuff( // Constructor.
-        DataNode subjectDataNode,
-        DataNode selectedChildDataNode,
-        Persistent thePersistent,
-        DataRoot theDataRoot,
-        Selections theSelections
-        )
-      { 
-        this.theSubjectDataNode= subjectDataNode;
-        this.selectedChildDataNode= selectedChildDataNode;
-        this.thePersistent= thePersistent;
-        this.theDataRoot= theDataRoot;
-        this.theSelections= theSelections;
-
-        this.selectionHistoryMapEpiNode= // Calculate history root MapEpiNode.
-            this.thePersistent.getOrMakeMapEpiNode("SelectionHistory");
-        }
 
     public TreeStuff moveRightAndMakeTreeStuff()
       /* This method is called when a viewer is given a command to
@@ -75,6 +58,7 @@ public class TreeStuff
        * and a JavaFX Node of a viewer appropriate for 
        * displaying the new subject DataNode, with the viewer initialized
        * with the proper selection.
+       * This method returns null if moving to the left is not possible.
        */
       {
           DataNode oldSubjectDataNode, oldSelectedDataNode; 
@@ -87,12 +71,12 @@ public class TreeStuff
             break main; // this is a serious problem, so give up.
           oldSelectedDataNode= getSelectedChildDataNode();
           newSubjectDataNode= // Set new subject to be
-              theSelections.chooseSelectedDataNode( // result of choosing a selection from
+              theSelections.chooseSelectedDataNode( // result of choosing from
                   oldSubjectDataNode, oldSelectedDataNode); // old subject.
           if (null == newSubjectDataNode) // If new subject not defined 
             break main; // we can not move right, so give up.
           newSelectedDataNode= // Set new selection to be 
-              theSelections.chooseSelectedDataNode( // result of choosing a selection from
+              theSelections.chooseSelectedDataNode( // result of choosing from
                   newSubjectDataNode, null); // new subject.
           resultTreeStuff=  // For the new 
               newSubjectDataNode.makeTreeStuff( // subject node, make TreeStuff
@@ -107,8 +91,16 @@ public class TreeStuff
         }
     
     public TreeStuff moveLeftAndMakeTreeStuff()
-      /* Returns a TreeStuff for the location to the left of the present one,
-       * hopefully the parent, or null if moving to the left is not possible.
+      /* This method is called when a viewer is given a command to
+       * move to the left, which means moving to the parent
+       * of the DataNode the viewer is presently displaying. 
+       * This method returns a TreeStuff appropriate for displaying
+       * a DataNode to the left of the present one.
+       * This TreeStuff will include the subject and selected child DataNodes,
+       * and a JavaFX Node of a viewer appropriate for 
+       * displaying the new subject DataNode, with the viewer initialized
+       * with the proper selection.
+       * This method returns null if moving to the left is not possible.
        */
       {
         TreeStuff resultTreeStuff= // Return self if no movement possible.
@@ -128,57 +120,40 @@ public class TreeStuff
         return resultTreeStuff;
         }
 
-    private void purgeSelectionStorageV()
-      {
-        theSelections.purgeAndTestB(
-            selectionHistoryMapEpiNode,
-            theDataRoot.getParentOfRootDataNode()
-            );
-        }
-
-    public static TreeStuff makeWithAutoCompleteTreeStuff(
-        DataNode subjectDataNode,
-        DataNode selectedChildDataNode,
-        Persistent thePersistent,
-        DataRoot theDataRoot,
-        Selections theSelections
-        )
-      { 
-        TreeStuff resultTreeStuff= new TreeStuff(
-            subjectDataNode,
-            selectedChildDataNode,
-            thePersistent,
-            theDataRoot,
-            theSelections
-            );
-
-        if  // If nothing selected
-          (null == resultTreeStuff.selectedChildDataNode) 
-          resultTreeStuff.selectedChildDataNode= // try selecting first child. 
-            resultTreeStuff.theSubjectDataNode.getChild(0);
-
-        return resultTreeStuff;
-        }
-          
-    public void initializeV(Node theNode)
-      { 
-        this.theGuiNode= theNode;
-        }
-
     public Node getGuiNode()
-      /* Returns the JavaFX GUI Node being used to display the DataNode. */
+      /* Returns the JavaFX GUI Node being used to display 
+       * the subject DataNode. 
+       */
       {
         return theGuiNode;
         }
 
     public void setSelectedDataNodeV(DataNode theDataNode)
+      /* This method stores theDataNode as the selection of
+       * the associated viewer.
+       * This includes storing the selection locally 
+       * and in the selection history.
+       */
       {
         theAppLog.debug(
             "TreeStuff.setSelectedDataNodeV(() "+theDataNode);
 
-        selectedChildDataNode= theDataNode;
-        
+        selectedChildDataNode= theDataNode; // Store selection locally.
+
         theSelections.recordAndTranslateToMapEpiNode(theDataNode);
+          // Store selection in the selection history.
+        purgeSelectionStorageV(); // Purge unneeded selection history. 
+        }
+
+    private void purgeSelectionStorageV()
+      /* This method purges any unneeded selection data from
+       * Persistent storage starting from the root of that data.
+       */
+      {
+        theSelections.purgeAndTestB(
+            theSelections.getSelectionHistoryMapEpiNode(),
+            theDataRoot.getParentOfRootDataNode()
+            );
         }
 
     public DataNode getParentDataNode()
@@ -219,6 +194,57 @@ public class TreeStuff
        */
       {
         return selectedChildDataNode;
+        }
+
+    public static TreeStuff makeWithAutoCompleteTreeStuff(
+        DataNode subjectDataNode,
+        DataNode selectedChildDataNode,
+        Persistent thePersistent,
+        DataRoot theDataRoot,
+        Selections theSelections
+        )
+      /* This is the factory method for TreeStuff objects.
+       * All TreeStuffs are made with this, 
+       * followed by a call to initializeV(theNode) to finish initialization.
+       */
+      { 
+        TreeStuff resultTreeStuff= new TreeStuff(
+            subjectDataNode,
+            selectedChildDataNode,
+            thePersistent,
+            theDataRoot,
+            theSelections
+            );
+        if  // If nothing selected in the TreeStuff
+          (null == resultTreeStuff.selectedChildDataNode) 
+          resultTreeStuff.selectedChildDataNode= // try selecting first child. 
+            resultTreeStuff.theSubjectDataNode.getChild(0);
+        resultTreeStuff.setSelectedDataNodeV(
+            resultTreeStuff.selectedChildDataNode);
+        return resultTreeStuff;
+        }
+          
+    public void initializeV(Node theNode)
+      /* This does the bit of dependency injection 
+       * that can not be done by the constructor. 
+       */
+      { 
+        this.theGuiNode= theNode;
+        }
+
+    private TreeStuff( // Constructor.
+        DataNode subjectDataNode,
+        DataNode selectedChildDataNode,
+        Persistent thePersistent,
+        DataRoot theDataRoot,
+        Selections theSelections
+        )
+      { 
+        this.theSubjectDataNode= subjectDataNode;
+        this.selectedChildDataNode= selectedChildDataNode;
+        this.thePersistent= thePersistent;
+        this.theDataRoot= theDataRoot;
+        this.theSelections= theSelections;
         }
 
     }

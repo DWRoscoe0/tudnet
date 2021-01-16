@@ -138,7 +138,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
           new Infinitree( null, 0 )
           );
       IRoots theIRoot= new IRoots(); 
-      DataNode theInitialRootDataNode= new InfogoraRoot( // Building DataNode tree.
+      DataNode theRootDataNode= new InfogoraRoot( // Building DataNode tree.
         theIRoot,
         new Outline( 0 ),
         theSystemsMonitor,
@@ -190,7 +190,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
           theDataRoot
           );
       JavaFXGUI theJavaFXGUI= JavaFXGUI.initializeJavaFXGUI(
-          theInitialRootDataNode,
+          theRootDataNode,
           theShutdowner,
           thePersistent,
           theDataRoot,
@@ -208,7 +208,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
         theConnectionManagerEpiThread,
         theCPUMonitorEpiThread,
         theDataTreeModel,
-        theInitialRootDataNode,
+        theRootDataNode,
         theGUIManager,
         theShutdowner,
         theTCPCopier,

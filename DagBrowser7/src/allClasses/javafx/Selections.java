@@ -55,7 +55,7 @@ public class Selections
       /* 
         This method tries to purge and test purge-ability of theMapEpiNode.
 
-        The purpose of this method is to remove all map entries 
+        The purpose of this method is to save space by removing all map entries 
         in the tree rooted at theMapEpiNode which contain no useful information.
         Not useful information is information which causes behavior 
         which is identical to the behavior if the information was absent.
@@ -156,6 +156,7 @@ public class Selections
        * recent selections in the Persistent storage tree
        * while following an equivalent path in the DataNode tree,
        * starting each from its respective root.
+       * It returns the last DataNode in the DataNode path.
        */
       {
           DataNode scanDataNode= theDataRoot.getRootDataNode();
@@ -274,4 +275,8 @@ public class Selections
         return dataMapEpiNode; // Return resulting MapEpiNode.
         }
 
+    public MapEpiNode getSelectionHistoryMapEpiNode() 
+      { 
+        return selectionHistoryMapEpiNode; 
+        }
   }
