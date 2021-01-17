@@ -86,8 +86,8 @@ public class Navigation extends EpiStage
 
         setEventHandlersV(); // Okay to do now that above definitions are done.
 
-        /// setScene(theTreeScene); // Use tree scene as first one displayed.
-        setScene(theDataNodeScene); // Use item scene as first one displayed.
+        setScene(theTreeScene); // Use tree scene as first one displayed.
+        /// setScene(theDataNodeScene); // Use item scene as first one displayed.
 
         finishStateInitAndStartV("Infogora JavaFX Navigation UI");
         }
@@ -192,12 +192,12 @@ public class Navigation extends EpiStage
         KeyCode keyCodeI = theKeyEvent.getCode(); // Get code of key pressed.
         switch (keyCodeI) {
           case RIGHT:  // right-arrow.
-            System.out.println("Right-arrow typed.");
+            //// System.out.println("Right-arrow typed.");
             setGuiNodeAndTreeStuffV(
                 theDataNodeTreeStuff.moveRightAndMakeTreeStuff());
             break;
           case LEFT:  // left-arrow.
-            System.out.println("Left-arrow typed.");
+            //// System.out.println("Left-arrow typed.");
             setGuiNodeAndTreeStuffV(
                 theDataNodeTreeStuff.moveLeftAndMakeTreeStuff());
             break;
@@ -277,27 +277,7 @@ public class Navigation extends EpiStage
             toTreeItem(parentOfSelectedDataNode,theRootEpiTreeItem);
         theTreeView.getSelectionModel().select(theTreeItemOfDataNode);
         setScene(theTreeScene); // Switch [back] to tree scene.
-        requestFocusLaterInV(theTreeView);
-        }
-
-    private void requestFocusLaterInV(Node theNode)
-      /* This method causes a request to be queued to the Application thread.
-       * That request is to request focus for Node theNode.
-       * The reason focus is requested this way is because,
-       * though focus may be considered to be setup,
-       * for a Node to actually become the focus owner,
-       * it must be both active and showing first.
-       * Queuing for later is a way to make this possible.
-       */
-      {
-        Platform.runLater( // Later
-          new Runnable() {
-            @Override
-            public void run() { // run a request to
-              theNode.requestFocus(); // focus the Node.
-              }
-            }
-          );
+        Platform.runLater( () -> theTreeView.requestFocus() );
         }
 
     }

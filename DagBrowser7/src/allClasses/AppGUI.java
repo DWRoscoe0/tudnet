@@ -280,12 +280,7 @@ class GUIManager
                 finalizeOnEDTV();  
                 // appLogger.info("GUIManager.finalizeOnV() invokeAndWaitV() run() ends.");
                 } } );
-        Platform.runLater( // Dispatching JavaFX thread
-            new Runnable() {
-              @Override
-              public void run() { 
-                theJavaFXGUI.finalizeV();
-                } } );
+        Platform.runLater( () -> theJavaFXGUI.finalizeV() );
         // appLogger.info("GUIManager.finalizeOnV() ends.");
         }
     

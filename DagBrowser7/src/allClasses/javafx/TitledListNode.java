@@ -70,14 +70,7 @@ public class TitledListNode
             subjectDataNode.getChildObservableListOfDataNodes();
         theListView.setItems(childObservableList);
         setCenter(theListView);
-        Platform.runLater( // Request focus later after being added to Scene.
-          new Runnable() {
-            @Override
-            public void run() {
-                theListView.requestFocus();
-                }
-            }
-          );
+        Platform.runLater( () -> theListView.requestFocus() );
         setEventHandlersV(); // Needed for initial selection which follows.
         theListView.getSelectionModel().
           select(theTreeStuff.getSelectedChildDataNode());
@@ -92,7 +85,7 @@ public class TitledListNode
         selectedItemProperty.addListener(
           (observableValueOfDataNode,oldDataNode,newDataNode) 
           -> 
-          { System.out.println("TitledListNode selection changed.");
+          { //// System.out.println("TitledListNode selection changed.");
             DataNode newSelectedDataNode= selectedItemProperty.get();
             getTreeStuff().setSelectedDataNodeV(newSelectedDataNode);
             }
