@@ -72,6 +72,8 @@ public class Navigation extends EpiStage
        * Each Scene has a button to switch to the other Scene.
        */
       {
+        theRootEpiTreeItem= new EpiTreeItem(theRootDataNode);
+
         theTreeShowItemButton= new Button("Show Node");
         theDataNodeShowTreeButton= new Button("Show Tree");
         
@@ -98,7 +100,6 @@ public class Navigation extends EpiStage
        * the user wants to display DataNodes as a tree. 
        */ 
       {
-        theRootEpiTreeItem= new EpiTreeItem(theRootDataNode);
         theRootEpiTreeItem.setExpanded(true);
         theTreeView= new TreeView<DataNode>(theRootEpiTreeItem);
         treeContentBorderPane= new BorderPane();
@@ -116,42 +117,9 @@ public class Navigation extends EpiStage
       { 
         if (null != theDataNode) { // Process DataNode if present.
           TreeItem<DataNode> theTreeItem= // Translate to TreeItem. 
-              toTreeItem(theDataNode,theRootEpiTreeItem); 
+              TreeStuff.toTreeItem(theDataNode,theRootEpiTreeItem); 
           theTreeView.getSelectionModel().select(theTreeItem); // Select it.
           }
-        }
-
-    private TreeItem<DataNode> toTreeItem(
-        DataNode targetDataNode, TreeItem<DataNode> rootTreeItem) 
-      /* This translates targetDataNode to the TreeItem that references it
-       * by searching for the ancestor DataNode referenced by rootTreeItem,
-       * then tracing TreeItems back to the target DataNode.
-       * This is done recursively to simplify path tracking.  
-       * This method returns the target TreeItem or null if translation fails.
-       * The returned TreeItem and some of its immediate ancestors
-       * might be created if they do not exist when this method is called.
-       */
-      {
-          TreeItem<DataNode> resultTreeItem;
-        main: {
-          if // Root TreeItem references target DataNode.
-            (rootTreeItem.getValue() == targetDataNode)
-            { resultTreeItem= rootTreeItem; break main; } // Exit with root.
-          TreeItem<DataNode> parentTreeItem= // Recursively translate parent. 
-              toTreeItem(targetDataNode.getParentNamedList(), rootTreeItem);
-          if (null == parentTreeItem) // Parent translation failed.
-            { resultTreeItem= null; break main; } // Indicate failure with null.
-          for // Search for target DataNode in translated parent's children.
-            ( TreeItem<DataNode> childTreeItem : parentTreeItem.getChildren() )
-            {
-              if  // Exit with child TreeItem if it references target DataNode.
-                (childTreeItem.getValue().equals(targetDataNode))
-                { resultTreeItem= childTreeItem; break main; }
-              }
-          // If here then no child referenced the target DataNode.
-          resultTreeItem= null; // Indicate failure with null.
-        } // main:
-          return resultTreeItem;
         }
 
     private void buildDataNodeSceneV()
@@ -182,7 +150,8 @@ public class Navigation extends EpiStage
             theActionEvent -> doDataNodeShowTreeButtonActionV() );
 
         // Key presses, DataNode scene only.
-        theDataNodeScene.addEventHandler(
+        //// theDataNodeScene.addEventHandler(
+        theDataNodeContentBorderPane.addEventHandler(
             KeyEvent.KEY_PRESSED, e -> doItemKeyV(e) );
         }
 
@@ -274,7 +243,7 @@ public class Navigation extends EpiStage
         DataNode parentOfSelectedDataNode= 
             theDataNodeTreeStuff.getSubjectDataNode();
         TreeItem<DataNode> theTreeItemOfDataNode= 
-            toTreeItem(parentOfSelectedDataNode,theRootEpiTreeItem);
+            TreeStuff.toTreeItem(parentOfSelectedDataNode,theRootEpiTreeItem);
         theTreeView.getSelectionModel().select(theTreeItemOfDataNode);
         setScene(theTreeScene); // Switch [back] to tree scene.
         Platform.runLater( () -> theTreeView.requestFocus() );

@@ -63,7 +63,7 @@ public class TitledListNode
         this.theTreeStuff= theTreeStuff;
         Label titleLabel= new Label(
           subjectDataNode.toString());
-        setTop(titleLabel); // Adding it to main JPanel.
+        setTop(titleLabel); // Adding it to main Node.
         BorderPane.setAlignment(titleLabel,Pos.CENTER);
 
         ObservableList<DataNode> childObservableList= 
