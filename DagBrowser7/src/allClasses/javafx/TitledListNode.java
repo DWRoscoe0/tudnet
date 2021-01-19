@@ -36,6 +36,7 @@ public class TitledListNode
                 DataNode subjectDataNode,
                 DataNode selectedDataNode,
                 DataRoot theDataRoot,
+                EpiTreeItem theRootEpiTreeItem,
                 Persistent thePersistent,
                 Selections theSelections
                 )
@@ -45,6 +46,7 @@ public class TitledListNode
           selectedDataNode,
           thePersistent,
           theDataRoot,
+          theRootEpiTreeItem,
           theSelections
           );
       TitledListNode theTitledListNode= new TitledListNode( 

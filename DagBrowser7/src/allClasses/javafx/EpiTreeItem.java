@@ -14,6 +14,12 @@ public class EpiTreeItem
    * and DataNodes.
    * It lazily creates child TreeItems, one for each child DataNode,
    * meaning only when the TreeItem children are needed, not before.
+   * 
+   * ///org I was going to try to make this class generic,
+   * and remove the dependency on the DataNode class,
+   * but some tree node functionality is needed,
+   * so I might need to define a tree interface and extend that for 
+   * the type parameter.
    */
 
   {

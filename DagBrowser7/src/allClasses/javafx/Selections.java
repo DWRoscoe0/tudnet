@@ -71,7 +71,7 @@ public class Selections
         deciding what is useful information in the MapEpiNode tree.
 
         This method is recursively called on all of the child map entries
-        and removed what can be deleted.
+        and removes what can be deleted.
         It keeps a child map entry, meaning it does not remove one,  
         * that had false returned from the recursive call to this method, or
         * whose associated DataNode, the child DataNode with the same name, 
@@ -182,27 +182,27 @@ public class Selections
           return scanDataNode; // Return last valid DataNode, the selection.
         }
 
-    public DataNode chooseSelectedDataNode(
+    public DataNode chooseSelectionDataNode(
         DataNode subjectDataNode, DataNode selectedDataNode)
       /* This method returns a DataNode to be used as the selection within
        * the subjectDataNode.  
        * It returns selectedDataNode if it is not null.
-       * Otherwise it tries to find the most recent selected child
-       * from the selection history.
-       * If there is none then it tries to return the first child.
-       * If there are no children then it returns null.
+       * Otherwise it tries to find an appropriate child DataNode
+       * that may be used as the selection.
+       * If it finds one then it returns it.
+       * Otherwise it returns null.
        */
       {
         main: {
-          if (null != selectedDataNode) // Selection was provided.
-            break main; // Use it.
-          selectedDataNode= // Choose selection from selection history. 
-              chooseSelectedDataNode(subjectDataNode); 
+          if (null != selectedDataNode) // Selection was provided as parameter
+            break main; // so return it.
+          selectedDataNode= // Choose an appropriate selection.
+              chooseAppropriateSelectionDataNode(subjectDataNode); 
         } // main: 
           return selectedDataNode;
       }
 
-    public DataNode chooseSelectedDataNode(
+    public DataNode chooseAppropriateSelectionDataNode(
         DataNode subjectDataNode)
       /* This method returns a DataNode to be used as the selection within
        * the subjectDataNode.  
@@ -215,7 +215,7 @@ public class Selections
           DataNode selectedDataNode; // For result selection.
         main: {
           selectedDataNode= chooseFromHistoryDataNode(subjectDataNode);
-          if (null != selectedDataNode) // Got child.
+          if (null != selectedDataNode) // Got previous selection from history.
             break main; // Return it.
           selectedDataNode= // Try getting first child from node's child list. 
             subjectDataNode.getChild(0);
@@ -252,7 +252,7 @@ public class Selections
        * then it does so.
        * It returns the resulting MapEpiNode.  It never returns null.
        * This is done recursively to simplify path tracking.
-       * Execution time is O*d.
+       * Execution time is O*d where d is the tree depth traversed.
        * This method is used both for recording selection path information
        * and for looking up selection path information MapEpiNodes
        * associated with DataNodes.

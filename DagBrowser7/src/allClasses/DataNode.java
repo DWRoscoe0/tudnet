@@ -12,6 +12,7 @@ import javax.swing.tree.TreePath;
 
 import allClasses.AppLog.LogLevel;
 import allClasses.epinode.MapEpiNode;
+import allClasses.javafx.EpiTreeItem;
 import allClasses.javafx.Selections;
 import allClasses.javafx.TitledListNode;
 import allClasses.javafx.TitledTextNode;
@@ -683,6 +684,7 @@ public abstract class DataNode
         DataNode selectedDataNode,
         Persistent thePersistent,
         DataRoot theDataRoot,
+        EpiTreeItem theRootEpiTreeItem,
         Selections theSelections
         )
       /* This is the JavaFX version of getDataJComponent(.).
@@ -710,6 +712,7 @@ public abstract class DataNode
                 getContentString(),
                 thePersistent,
                 theDataRoot,
+                theRootEpiTreeItem,
                 theSelections
                 );
           else  // Display as list if this DataNode is not a leaf.
@@ -717,6 +720,7 @@ public abstract class DataNode
                 this,
                 selectedDataNode,
                 theDataRoot,
+                theRootEpiTreeItem,
                 thePersistent,
                 theSelections
                 );

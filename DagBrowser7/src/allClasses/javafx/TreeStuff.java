@@ -52,13 +52,21 @@ public class TreeStuff
       // This should be the JavaFX Node used to display the DataNode. 
 
 
+    public TreeItem<DataNode> toTreeItem(DataNode targetDataNode) 
+      {
+        return TreeStuff.toTreeItem(
+          targetDataNode, 
+          theRootEpiTreeItem
+          ); 
+        }
+
     public static TreeItem<DataNode> toTreeItem(
         DataNode targetDataNode, TreeItem<DataNode> ancestorTreeItem) 
       /* This translates targetDataNode to the TreeItem that references it
        * by searching for the ancestor DataNode referenced by ancestorTreeItem,
-       * Usually ancestorTreeItem is the rott TreeItem.
        * then tracing TreeItems back to the target DataNode.
        * This is done recursively to simplify path tracking.  
+       * Usually ancestorTreeItem is the root TreeItem.
        * This method returns the target TreeItem or null if translation fails.
        * The returned TreeItem and some of its immediate ancestors
        * might be created if they do not exist before this method is called.
@@ -69,6 +77,8 @@ public class TreeStuff
           if // Root TreeItem references target DataNode.
             (ancestorTreeItem.getValue() == targetDataNode)
             { resultTreeItem= ancestorTreeItem; break main; } // Exit with root.
+          if (null == targetDataNode) // Target is null.
+            { resultTreeItem= null; break main; } // Indicate failure with null.
           TreeItem<DataNode> parentTreeItem= // Recursively translate parent. 
               toTreeItem(targetDataNode.getParentNamedList(), ancestorTreeItem);
           if (null == parentTreeItem) // Parent translation failed.
@@ -109,18 +119,19 @@ public class TreeStuff
             break main; // this is a serious problem, so give up.
           oldSelectedDataNode= getSelectedChildDataNode();
           newSubjectDataNode= // Set new subject to be
-              theSelections.chooseSelectedDataNode( // result of choosing from
+              theSelections.chooseSelectionDataNode( // result of choosing from
                   oldSubjectDataNode, oldSelectedDataNode); // old subject.
           if (null == newSubjectDataNode) // If new subject not defined 
             break main; // we can not move right, so give up.
           newSelectedDataNode= // Set new selection to be 
-              theSelections.chooseSelectedDataNode( // result of choosing from
+              theSelections.chooseSelectionDataNode( // result of choosing from
                   newSubjectDataNode, null); // new subject.
           resultTreeStuff=  // For the new 
               newSubjectDataNode.makeTreeStuff( // subject node, make TreeStuff
                 newSelectedDataNode, // with this as subject's selection 
                 thePersistent, // and include a copy of this
                 theDataRoot, // and this
+                theRootEpiTreeItem, // and this
                 theSelections // and this.
                 ); 
         } // main:
@@ -151,6 +162,7 @@ public class TreeStuff
                 oldSubjectDataNode, // and subject node as selection in parent
                 thePersistent, // and this
                 theDataRoot, // and this
+                theRootEpiTreeItem, // and this
                 theSelections // and this.
                 ); 
           }
@@ -189,8 +201,8 @@ public class TreeStuff
        */
       {
         theSelections.purgeAndTestB(
-            theSelections.getSelectionHistoryMapEpiNode(),
-            theDataRoot.getParentOfRootDataNode()
+            theSelections.getSelectionHistoryMapEpiNode(), // History root.
+            theDataRoot.getParentOfRootDataNode() // DataNodes root.
             );
         }
 
@@ -244,27 +256,34 @@ public class TreeStuff
         DataNode selectedChildDataNode,
         Persistent thePersistent,
         DataRoot theDataRoot,
+        EpiTreeItem theRootEpiTreeItem,
         Selections theSelections
         )
       /* This is the factory method for TreeStuff objects.
-       * All TreeStuffs are made with this, 
+       * All TreeStuffs are made by a call to this method, 
        * followed by a call to initializeV(theNode) to finish initialization.
+       * This method tries to fill in a value for a selectedChildDataNode
+       * within the subjectDataNode.  It might or might not succeed.
        */
-      { 
-        TreeStuff resultTreeStuff= new TreeStuff(
+      {
+        TreeStuff theTreeStuff= new TreeStuff(
             subjectDataNode,
             selectedChildDataNode,
             thePersistent,
             theDataRoot,
+            theRootEpiTreeItem,
             theSelections
             );
         if  // If nothing selected in the TreeStuff
-          (null == resultTreeStuff.selectedChildDataNode) 
-          resultTreeStuff.selectedChildDataNode= // try selecting first child. 
-            resultTreeStuff.theSubjectDataNode.getChild(0);
-        resultTreeStuff.setSelectedDataNodeV(
-            resultTreeStuff.selectedChildDataNode);
-        return resultTreeStuff;
+          (null == theTreeStuff.getSelectedChildDataNode())
+          {
+            //// theTreeStuff.selectedChildDataNode= // try selecting first child. 
+            ////   theTreeStuff.theSubjectDataNode.getChild(0);
+            DataNode chosenSelectionDataNode=
+              theSelections.chooseAppropriateSelectionDataNode(subjectDataNode);
+            theTreeStuff.setSelectedDataNodeV(chosenSelectionDataNode);
+            }
+        return theTreeStuff;
         }
           
     public void initializeV(Node theNode)
@@ -280,6 +299,7 @@ public class TreeStuff
         DataNode selectedChildDataNode,
         Persistent thePersistent,
         DataRoot theDataRoot,
+        EpiTreeItem theRootEpiTreeItem,
         Selections theSelections
         )
       { 

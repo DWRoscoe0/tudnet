@@ -13,6 +13,7 @@ import allClasses.DataRoot;
 import allClasses.DataTreeModel;
 import allClasses.Persistent;
 import allClasses.TitledTextViewer;
+import allClasses.javafx.EpiTreeItem;
 import allClasses.javafx.Selections;
 import allClasses.javafx.TitledTextNode;
 import allClasses.javafx.TreeStuff;
@@ -121,6 +122,7 @@ public class IFile
           DataTreeModel inDataTreeModel,
           Persistent thePersistent,
           DataRoot theDataRoot,
+          EpiTreeItem theRootEpiTreeItem,
           Selections theSelections
           ) 
         /* Returns a Node Component capable of displaying this IFile.
@@ -135,6 +137,7 @@ public class IFile
                     null,
                     thePersistent,
                     theDataRoot,
+                    theRootEpiTreeItem,
                     theSelections
                     )
                 );

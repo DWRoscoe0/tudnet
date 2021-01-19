@@ -33,6 +33,7 @@ public class TitledTextNode extends BorderPane
                 String theString,
                 Persistent thePersistent,
                 DataRoot theDataRoot,
+                EpiTreeItem theRootEpiTreeItem,
                 Selections theSelections
                 )
     { 
@@ -41,6 +42,7 @@ public class TitledTextNode extends BorderPane
           selectedDataNode,
           thePersistent,
           theDataRoot,
+          theRootEpiTreeItem,
           theSelections
           );
       TitledTextNode theTitledTextNode= new TitledTextNode( 

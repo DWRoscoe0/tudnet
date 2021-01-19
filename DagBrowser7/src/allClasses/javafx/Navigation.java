@@ -1,11 +1,10 @@
 package allClasses.javafx;
 
-import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TreeItem;
-import javafx.scene.control.TreeView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
@@ -35,9 +34,9 @@ public class Navigation extends EpiStage
     // Variables related to the tree view Scene.
     private Scene theTreeScene;
     private BorderPane treeContentBorderPane;
-    private TreeView<DataNode> theTreeView; 
+    ////// private TreeView<DataNode> theTreeView; 
     private Button theTreeShowItemButton;
-    private EpiTreeItem theRootEpiTreeItem;
+    private TreeStuff treeTreeStuff;
 
     // Variables related to the DataNode view Scene.
     private Scene theDataNodeScene;
@@ -45,7 +44,9 @@ public class Navigation extends EpiStage
       // The center of this will change to display different DataNodes.
     private Button theDataNodeShowTreeButton;
     private TreeStuff theDataNodeTreeStuff; // For location tracking.
- 
+
+    // Other variables.
+    private EpiTreeItem theRootEpiTreeItem;
 
     // Construction.
 
@@ -73,20 +74,22 @@ public class Navigation extends EpiStage
        */
       {
         theRootEpiTreeItem= new EpiTreeItem(theRootDataNode);
+        theRootEpiTreeItem.setExpanded(true);
 
         theTreeShowItemButton= new Button("Show Node");
         theDataNodeShowTreeButton= new Button("Show Tree");
-        
+
         DataNode previouslySelectedDataNode= 
             theSelections.getPreviousSelectedDataNode();
-        
-        buildTreeSceneV(theTreeShowItemButton, theRootDataNode);
-        setTreeSelectionFromDataNodeV(previouslySelectedDataNode);
+
+        buildTreeSceneV(theRootDataNode);
+        //// setTreeSelectionFromDataNodeV(previouslySelectedDataNode);
+        setTreeContentFromDataNodeV(previouslySelectedDataNode);
 
         buildDataNodeSceneV();
         setDataNodeContentFromDataNodeV(previouslySelectedDataNode);
 
-        setEventHandlersV(); // Okay to do now that above definitions are done.
+        setEventHandlersV(); // Okay to do this now that Scenes are built.
 
         setScene(theTreeScene); // Use tree scene as first one displayed.
         /// setScene(theDataNodeScene); // Use item scene as first one displayed.
@@ -94,26 +97,49 @@ public class Navigation extends EpiStage
         finishStateInitAndStartV("Infogora JavaFX Navigation UI");
         }
 
-    private void buildTreeSceneV(
-        Button theSwitchButton, DataNode rootDataNode)
+    private void buildTreeSceneV(DataNode rootDataNode)
       /* This method builds the Scene to be used when
        * the user wants to display DataNodes as a tree. 
        */ 
       {
-        theRootEpiTreeItem.setExpanded(true);
-        theTreeView= new TreeView<DataNode>(theRootEpiTreeItem);
+        ////// TitledTreeView will go here.
+        //// theTreeView= new TreeView<DataNode>(theRootEpiTreeItem);
         treeContentBorderPane= new BorderPane();
-        treeContentBorderPane.setCenter(theTreeView);
-        treeContentBorderPane.setBottom(theSwitchButton);
+        ////treeContentBorderPane.setCenter(theTreeView);
+        treeContentBorderPane.setBottom(theTreeShowItemButton);
+        treeContentBorderPane.setCenter( // This will be replaced later.
+            new TextArea("UNDEFINED")); 
         theTreeScene= new Scene(treeContentBorderPane);
         EpiScene.setDefaultsV(theTreeScene);
         }
 
+    private void setTreeContentFromDataNodeV(DataNode selectedDataNode)
+      /* If theDataNode is null then this method does nothing.
+       * Otherwise it calculates a new TreeStuff from theDataNode,
+       * and stores a GUI Node for displaying theDataNode as a tree
+       * at the center of the content BorderPane of the DataNode Scene 
+       * so that theDataNode will be displayed.
+       */
+      {
+        treeTreeStuff= TitledTreeNode.makeTreeStuff(
+                selectedDataNode,
+                (DataNode)null,
+                theDataRoot,
+                theRootEpiTreeItem,
+                thePersistent,
+                theSelections
+                );
+        Node guiNode= treeTreeStuff.getGuiNode();
+        treeContentBorderPane.setCenter(guiNode);
+        }
+
+    /*  //// No longer used.
     private void setTreeSelectionFromDataNodeV(DataNode theDataNode) 
       /* If theDataNode is null then this method does nothing.
        * Otherwise it calculates the TreeItem that references theDataNode
        * and causes the TreeView's SelectionModel to select it.
        */
+    /*  ////
       { 
         if (null != theDataNode) { // Process DataNode if present.
           TreeItem<DataNode> theTreeItem= // Translate to TreeItem. 
@@ -121,6 +147,7 @@ public class Navigation extends EpiStage
           theTreeView.getSelectionModel().select(theTreeItem); // Select it.
           }
         }
+    */  ////
 
     private void buildDataNodeSceneV()
       /* Creates and returns a Scene for displaying a single DataNode.
@@ -162,37 +189,20 @@ public class Navigation extends EpiStage
         switch (keyCodeI) {
           case RIGHT:  // right-arrow.
             //// System.out.println("Right-arrow typed.");
-            setGuiNodeAndTreeStuffV(
+            setDataNodeGuiNodeAndTreeStuffV(
                 theDataNodeTreeStuff.moveRightAndMakeTreeStuff());
             break;
           case LEFT:  // left-arrow.
             //// System.out.println("Left-arrow typed.");
-            setGuiNodeAndTreeStuffV(
+            setDataNodeGuiNodeAndTreeStuffV(
                 theDataNodeTreeStuff.moveLeftAndMakeTreeStuff());
             break;
           default: 
             break;
           }
         }
-    
-    private void doTreeShowDataNodeButtonActionV()
-      /* This method sets the Scene to display
-       * the DataNode referenced by the TreeItem 
-       * presently selected in and displayed by the TreeView.
-       * This method is used to cause a switch of Scenes 
-       * from the Tree scene to the DataNode Scene.
-       */
-      {
-        TreeItem<DataNode> theTreeItemOfDataNode=
-          theTreeView.getSelectionModel().getSelectedItem();
-        if (null != theTreeItemOfDataNode) { // Process if a TreeItem selected.
-          DataNode theDataNode= theTreeItemOfDataNode.getValue();
-          setDataNodeContentFromDataNodeV(theDataNode);
-          }
-        setScene(theDataNodeScene); // Switch Scene to DataNode Scene.
-        }
 
-    private void setGuiNodeAndTreeStuffV(TreeStuff theTreeStuff)
+    private void setDataNodeGuiNodeAndTreeStuffV(TreeStuff theTreeStuff)
       /* If theTreeStuff is null then this method does nothing.
        * Otherwise it saves the TreeStuff for reference later,
        * and gets the JavaFX GUI Node for theTreeStuff
@@ -209,6 +219,28 @@ public class Navigation extends EpiStage
           }
         }
 
+    //// /*  ////
+    private void doTreeShowDataNodeButtonActionV()
+      /* This method sets the Scene to display
+       * the DataNode referenced by the TreeItem 
+       * presently selected in and displayed by the TreeView.
+       * This method is used to cause a switch of Scenes 
+       * from the Tree scene to the DataNode Scene.
+       */
+    //// /*  ////
+      {
+        TreeItem<DataNode> selectedTreeItemOfDataNode=
+          //// theTreeView.getSelectionModel().getSelectedItem();
+          treeTreeStuff.toTreeItem(
+              treeTreeStuff.getSelectedChildDataNode());
+        if (null != selectedTreeItemOfDataNode) { // Set selection if present.
+          DataNode theDataNode= selectedTreeItemOfDataNode.getValue();
+          setDataNodeContentFromDataNodeV(theDataNode);
+          }
+        setScene(theDataNodeScene); // Switch Scene to DataNode Scene.
+        }
+    //// */  ////
+
     private void setDataNodeContentFromDataNodeV(DataNode theDataNode)
       /* If theDataNode is null then this method does nothing.
        * Otherwise it calculates a new TreeStuff from theDataNode,
@@ -223,6 +255,7 @@ public class Navigation extends EpiStage
               (DataNode)null, // No child selection specified.
               thePersistent,
               theDataRoot,
+              theRootEpiTreeItem,
               theSelections
               );
           Node guiNode= theDataNodeTreeStuff.getGuiNode();
@@ -240,6 +273,7 @@ public class Navigation extends EpiStage
        * then sets the Scene to be the TreeView Scene.
        */
       {
+        /*  ////
         DataNode parentOfSelectedDataNode= 
             theDataNodeTreeStuff.getSubjectDataNode();
         TreeItem<DataNode> theTreeItemOfDataNode= 
@@ -247,6 +281,7 @@ public class Navigation extends EpiStage
         theTreeView.getSelectionModel().select(theTreeItemOfDataNode);
         setScene(theTreeScene); // Switch [back] to tree scene.
         Platform.runLater( () -> theTreeView.requestFocus() );
+        */  ////
         }
 
     }
