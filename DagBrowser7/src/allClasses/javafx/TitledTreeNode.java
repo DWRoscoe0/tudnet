@@ -53,7 +53,8 @@ public class TitledTreeNode
           theSelections
           );
       TitledTreeNode theTitledTreeNode= new TitledTreeNode( 
-        subjectDataNode,
+        //// subjectDataNode,
+        selectedDataNode,
         theRootEpiTreeItem,
         theTreeStuff
         );
@@ -61,8 +62,8 @@ public class TitledTreeNode
       return theTreeStuff;
       }
 
-    public TitledTreeNode( 
-        DataNode subjectDataNode,
+    public TitledTreeNode( // Constructor. 
+        DataNode selectionDataNode,
         EpiTreeItem theRootEpiTreeItem,
         TreeStuff theTreeStuff
         )
@@ -77,6 +78,10 @@ public class TitledTreeNode
         //// treeContentBorderPane.setBottom(theSwitchButton);
         //// theTreeScene= new Scene(treeContentBorderPane);
         //// EpiScene.setDefaultsV(theTreeScene);
+
+        TreeItem<DataNode> selectionTreeItemOfDataNode= 
+            TreeStuff.toTreeItem(selectionDataNode,theRootEpiTreeItem);
+        theTreeView.getSelectionModel().select(selectionTreeItemOfDataNode);
 
         this.theTreeStuff= theTreeStuff;
         Label titleLabel= new Label( // Set label to be name of root node.

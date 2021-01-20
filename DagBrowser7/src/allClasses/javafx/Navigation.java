@@ -96,6 +96,69 @@ public class Navigation extends EpiStage
 
         finishStateInitAndStartV("Infogora JavaFX Navigation UI");
         }
+    
+    private void setEventHandlersV()
+      /* This method registers EventHandlers for various 
+       * button activation and key press events.
+       * The handlers registered are for the relatively small number of events
+       * for which the desired handler behavior is different from 
+       * the default behavior provided by handlers in the JavaFX libraries. 
+       */
+      {
+        // Button activations.
+        theTreeShowItemButton.setOnAction(
+            theActionEvent -> doTreeShowDataNodeButtonActionV() );
+        theDataNodeShowTreeButton.setOnAction(
+            theActionEvent -> doDataNodeShowTreeButtonActionV() );
+
+        // Key presses, DataNode scene only.
+        //// theDataNodeScene.addEventHandler(
+        theDataNodeContentBorderPane.addEventHandler(
+            KeyEvent.KEY_PRESSED, e -> doItemKeyV(e) );
+        }
+
+    private void doDataNodeShowTreeButtonActionV()
+      /* 
+       * This method is used to cause a switch of Scenes 
+       * from the DataNode Scene to the tree Scene.
+       * It gets the subject DataNode that 
+       * is being displayed by the DataNode viewer,
+       * sets that as the selection in the TreeView,
+       * then sets the Scene to be the TreeView Scene.
+       */
+      {
+        /*  //// 
+        DataNode parentOfSelectedDataNode= 
+            theDataNodeTreeStuff.getSubjectDataNode();
+        TreeItem<DataNode> theTreeItemOfDataNode= 
+            TreeStuff.toTreeItem(parentOfSelectedDataNode,theRootEpiTreeItem);
+        theTreeView.getSelectionModel().select(theTreeItemOfDataNode);
+        setScene(theTreeScene); // Switch [back] to tree scene.
+        Platform.runLater( () -> theTreeView.requestFocus() );
+        */  ////
+        }
+
+    private void doTreeShowDataNodeButtonActionV()
+      /* This method sets the Scene to display
+       * the DataNode referenced by the TreeItem 
+       * presently selected in and displayed by the TreeView.
+       * This method is used to cause a switch of Scenes 
+       * from the Tree scene to the DataNode Scene.
+       */
+      {
+        TreeItem<DataNode> selectedTreeItemOfDataNode=
+          //// theTreeView.getSelectionModel().getSelectedItem();
+          treeTreeStuff.toTreeItem(
+              treeTreeStuff.getSelectedChildDataNode());
+        if (null != selectedTreeItemOfDataNode) { // Set selection if present.
+          DataNode theDataNode= selectedTreeItemOfDataNode.getValue();
+          setDataNodeContentFromDataNodeV(theDataNode);
+          }
+        setScene(theDataNodeScene); // Switch Scene to DataNode Scene.
+        }
+
+
+    // Tree scene methods.
 
     private void buildTreeSceneV(DataNode rootDataNode)
       /* This method builds the Scene to be used when
@@ -122,8 +185,8 @@ public class Navigation extends EpiStage
        */
       {
         treeTreeStuff= TitledTreeNode.makeTreeStuff(
-                selectedDataNode,
                 (DataNode)null,
+                selectedDataNode,
                 theDataRoot,
                 theRootEpiTreeItem,
                 thePersistent,
@@ -133,7 +196,7 @@ public class Navigation extends EpiStage
         treeContentBorderPane.setCenter(guiNode);
         }
 
-    /*  //// No longer used.
+    /*  //// setTreeSelectionFromDataNodeV(DataNode theDataNode) is no longer used.
     private void setTreeSelectionFromDataNodeV(DataNode theDataNode) 
       /* If theDataNode is null then this method does nothing.
        * Otherwise it calculates the TreeItem that references theDataNode
@@ -149,6 +212,9 @@ public class Navigation extends EpiStage
         }
     */  ////
 
+
+    // DataNode scene methods.
+
     private void buildDataNodeSceneV()
       /* Creates and returns a Scene for displaying a single DataNode.
         As a aide-effect, it also sets theDataNodeContentBorderPane so that
@@ -160,26 +226,6 @@ public class Navigation extends EpiStage
         theDataNodeContentBorderPane.setBottom(theDataNodeShowTreeButton);
         theDataNodeScene= new Scene(theDataNodeContentBorderPane);
         EpiScene.setDefaultsV(theDataNodeScene);
-        }
-    
-    private void setEventHandlersV()
-      /* This method registers EventHandlers for various 
-       * button activation and key press events.
-       * The handlers registered are for the relatively small number of events
-       * for which the desired handler behavior is different from 
-       * the default behavior provided by handlers in the JavaFX libraries. 
-       */
-      {
-        // Button activations.
-        theTreeShowItemButton.setOnAction(
-            theActionEvent -> doTreeShowDataNodeButtonActionV() );
-        theDataNodeShowTreeButton.setOnAction(
-            theActionEvent -> doDataNodeShowTreeButtonActionV() );
-
-        // Key presses, DataNode scene only.
-        //// theDataNodeScene.addEventHandler(
-        theDataNodeContentBorderPane.addEventHandler(
-            KeyEvent.KEY_PRESSED, e -> doItemKeyV(e) );
         }
 
     private void doItemKeyV(javafx.scene.input.KeyEvent theKeyEvent)
@@ -219,28 +265,6 @@ public class Navigation extends EpiStage
           }
         }
 
-    //// /*  ////
-    private void doTreeShowDataNodeButtonActionV()
-      /* This method sets the Scene to display
-       * the DataNode referenced by the TreeItem 
-       * presently selected in and displayed by the TreeView.
-       * This method is used to cause a switch of Scenes 
-       * from the Tree scene to the DataNode Scene.
-       */
-    //// /*  ////
-      {
-        TreeItem<DataNode> selectedTreeItemOfDataNode=
-          //// theTreeView.getSelectionModel().getSelectedItem();
-          treeTreeStuff.toTreeItem(
-              treeTreeStuff.getSelectedChildDataNode());
-        if (null != selectedTreeItemOfDataNode) { // Set selection if present.
-          DataNode theDataNode= selectedTreeItemOfDataNode.getValue();
-          setDataNodeContentFromDataNodeV(theDataNode);
-          }
-        setScene(theDataNodeScene); // Switch Scene to DataNode Scene.
-        }
-    //// */  ////
-
     private void setDataNodeContentFromDataNodeV(DataNode theDataNode)
       /* If theDataNode is null then this method does nothing.
        * Otherwise it calculates a new TreeStuff from theDataNode,
@@ -261,27 +285,6 @@ public class Navigation extends EpiStage
           Node guiNode= theDataNodeTreeStuff.getGuiNode();
           theDataNodeContentBorderPane.setCenter(guiNode); // Store for display.
           }
-        }
-
-    private void doDataNodeShowTreeButtonActionV()
-      /* 
-       * This method is used to cause a switch of Scenes 
-       * from the DataNode Scene to the tree Scene.
-       * It gets the subject DataNode that 
-       * is being displayed by the DataNode viewer,
-       * sets that as the selection in the TreeView,
-       * then sets the Scene to be the TreeView Scene.
-       */
-      {
-        /*  ////
-        DataNode parentOfSelectedDataNode= 
-            theDataNodeTreeStuff.getSubjectDataNode();
-        TreeItem<DataNode> theTreeItemOfDataNode= 
-            TreeStuff.toTreeItem(parentOfSelectedDataNode,theRootEpiTreeItem);
-        theTreeView.getSelectionModel().select(theTreeItemOfDataNode);
-        setScene(theTreeScene); // Switch [back] to tree scene.
-        Platform.runLater( () -> theTreeView.requestFocus() );
-        */  ////
         }
 
     }
