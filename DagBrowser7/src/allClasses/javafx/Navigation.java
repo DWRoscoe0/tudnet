@@ -125,7 +125,7 @@ public class Navigation extends EpiStage
       {
         TreeItem<DataNode> selectedTreeItemOfDataNode=
           treeTreeStuff.toTreeItem(
-              treeTreeStuff.getSelectedChildDataNode());
+              treeTreeStuff.getSelectionDataNode());
         if (null != selectedTreeItemOfDataNode) { // Set selection if present.
           DataNode theDataNode= selectedTreeItemOfDataNode.getValue();
           setDataNodeContentFromDataNodeV(theDataNode);
@@ -190,6 +190,7 @@ public class Navigation extends EpiStage
         }
 
     private void handleDataNodeKeyPressV(KeyEvent theKeyEvent)
+      ///org relative to Selections and TreeStuff.
       {
         KeyCode keyCodeI = theKeyEvent.getCode(); // Get code of key pressed.
         switch (keyCodeI) {

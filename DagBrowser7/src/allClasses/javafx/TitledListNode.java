@@ -75,7 +75,7 @@ public class TitledListNode
         Platform.runLater( () -> theListView.requestFocus() );
         setEventHandlersV(); // Needed for initial selection which follows.
         theListView.getSelectionModel().
-          select(theTreeStuff.getSelectedChildDataNode());
+          select(theTreeStuff.getSelectionDataNode());
         }
 
     private void setEventHandlersV()

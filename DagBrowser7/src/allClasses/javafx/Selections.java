@@ -197,13 +197,12 @@ public class Selections
           if (null != selectedDataNode) // Selection was provided as parameter
             break main; // so return it.
           selectedDataNode= // Choose an appropriate selection.
-              chooseAppropriateSelectionDataNode(subjectDataNode); 
+              chooseSelectionDataNode(subjectDataNode); 
         } // main: 
           return selectedDataNode;
       }
 
-    public DataNode chooseAppropriateSelectionDataNode(
-        DataNode subjectDataNode)
+    public DataNode chooseSelectionDataNode(DataNode subjectDataNode)
       /* This method returns a DataNode to be used as the selection within
        * the subjectDataNode.  
        * It tries to find the most recent selected child

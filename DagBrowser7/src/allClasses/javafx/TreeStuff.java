@@ -38,7 +38,7 @@ public class TreeStuff
     private DataNode theSubjectDataNode= null;
       // This is the whole DataNode being displayed by a viewer.
       // It should be the parent of the selected DataNode, if any.
-    private DataNode selectedChildDataNode= null;
+    private DataNode selectedDataNode= null;
       // This should be the selected child DataNode of the subject DataNode.
       // This may be null if there is no selection.
       ///org Maybe bind this to viewer instead of assigning it.
@@ -117,7 +117,7 @@ public class TreeStuff
           oldSubjectDataNode= getSubjectDataNode();
           if (null == oldSubjectDataNode) // If subject not defined 
             break main; // this is a serious problem, so give up.
-          oldSelectedDataNode= getSelectedChildDataNode();
+          oldSelectedDataNode= getSelectionDataNode();
           newSubjectDataNode= // Set new subject to be
               theSelections.chooseSelectionDataNode( // result of choosing from
                   oldSubjectDataNode, oldSelectedDataNode); // old subject.
@@ -188,7 +188,7 @@ public class TreeStuff
         theAppLog.debug(
             "TreeStuff.setSelectedDataNodeV(() "+theDataNode);
 
-        selectedChildDataNode= theDataNode; // Store selection locally.
+        selectedDataNode= theDataNode; // Store selection locally.
 
         theSelections.recordAndTranslateToMapEpiNode(theDataNode);
           // Store selection in the selection history.
@@ -234,17 +234,38 @@ public class TreeStuff
        */
       {
         if (null == theSubjectDataNode) // If null, try calculating it from child.
-          theSubjectDataNode= getSelectedChildDataNode().getParentNamedList();
+          theSubjectDataNode= getSelectionDataNode().getParentNamedList();
         return theSubjectDataNode;
         }
 
-    public DataNode getSelectedChildDataNode()
+    public DataNode getSelectionDataNode()
       /* Returns selected child DataNode.  There is only one way to do this.
        * It simply returns the stored value.
+       * It might return null, if there is no selection.
        */
       {
-        return selectedChildDataNode;
+        return selectedDataNode;
         }
+
+    public DataNode getSubselectionDataNode()
+      /* Returns the best candidate for a DataNode to be
+       * a selected child within the present selection.
+       * The best candidate either comes from the selection history,
+       * or if there is none, child 0, or if there is none, null.
+       */
+      {
+        DataNode resultDataNode=  // Get present selection.
+            getSelectionDataNode();
+      main: {
+        if (null == resultDataNode) // If there is no present selection 
+          break main; // exit with null.
+        resultDataNode= // Get best sub-selection. with present selection.
+          theSelections.chooseSelectionDataNode(resultDataNode);
+        if (null == resultDataNode) // If there is no best sub-selection
+          break main; // exit with null.
+      } // main:
+        return resultDataNode;
+      }
 
     public DataRoot getDataRoot()
       {
@@ -253,7 +274,7 @@ public class TreeStuff
 
     public static TreeStuff makeWithAutoCompleteTreeStuff(
         DataNode subjectDataNode,
-        DataNode selectedChildDataNode,
+        DataNode selectedDataNode,
         Persistent thePersistent,
         DataRoot theDataRoot,
         EpiTreeItem theRootEpiTreeItem,
@@ -262,25 +283,23 @@ public class TreeStuff
       /* This is the factory method for TreeStuff objects.
        * All TreeStuffs are made by a call to this method, 
        * followed by a call to initializeV(theNode) to finish initialization.
-       * This method tries to fill in a value for a selectedChildDataNode
+       * This method tries to fill in a value for a selectedDataNode
        * within the subjectDataNode.  It might or might not succeed.
        */
       {
         TreeStuff theTreeStuff= new TreeStuff(
             subjectDataNode,
-            selectedChildDataNode,
+            selectedDataNode,
             thePersistent,
             theDataRoot,
             theRootEpiTreeItem,
             theSelections
             );
         if  // If nothing selected in the TreeStuff
-          (null == theTreeStuff.getSelectedChildDataNode())
+          (null == theTreeStuff.getSelectionDataNode())
           {
-            //// theTreeStuff.selectedChildDataNode= // try selecting first child. 
-            ////   theTreeStuff.theSubjectDataNode.getChild(0);
             DataNode chosenSelectionDataNode=
-              theSelections.chooseAppropriateSelectionDataNode(subjectDataNode);
+              theSelections.chooseSelectionDataNode(subjectDataNode);
             theTreeStuff.setSelectedDataNodeV(chosenSelectionDataNode);
             }
         return theTreeStuff;
@@ -296,7 +315,7 @@ public class TreeStuff
 
     private TreeStuff( // Constructor.
         DataNode subjectDataNode,
-        DataNode selectedChildDataNode,
+        DataNode selectedDataNode,
         Persistent thePersistent,
         DataRoot theDataRoot,
         EpiTreeItem theRootEpiTreeItem,
@@ -304,7 +323,7 @@ public class TreeStuff
         )
       { 
         this.theSubjectDataNode= subjectDataNode;
-        this.selectedChildDataNode= selectedChildDataNode;
+        this.selectedDataNode= selectedDataNode;
         this.thePersistent= thePersistent;
         this.theDataRoot= theDataRoot;
         this.theRootEpiTreeItem= theRootEpiTreeItem;
