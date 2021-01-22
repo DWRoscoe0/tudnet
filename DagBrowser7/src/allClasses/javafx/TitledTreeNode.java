@@ -25,9 +25,6 @@ public class TitledTreeNode
     private TreeView<DataNode> theTreeView= // Tree view GUI Node. 
         new TreeView<DataNode>();
 
-    //// @SuppressWarnings("unused") ////
-    //// private EpiTreeItem theRootEpiTreeItem;
-
     private TreeStuff theTreeStuff;
     
     public TreeStuff getTreeStuff()
@@ -53,7 +50,6 @@ public class TitledTreeNode
           theSelections
           );
       TitledTreeNode theTitledTreeNode= new TitledTreeNode( 
-        //// subjectDataNode,
         selectedDataNode,
         theRootEpiTreeItem,
         theTreeStuff
@@ -68,16 +64,7 @@ public class TitledTreeNode
         TreeStuff theTreeStuff
         )
       {
-        //// theRootEpiTreeItem= new EpiTreeItem(theRootDataNode);
-        //// theRootEpiTreeItem= new EpiTreeItem(
-        ////   theTreeStuff.toTreeItem(theTreeStuff.getDataRoot().getRootDataNode()));
-        //// theRootEpiTreeItem.setExpanded(true);
         theTreeView= new TreeView<DataNode>(theRootEpiTreeItem);
-        //// treeContentBorderPane= new BorderPane();
-        //// treeContentBorderPane.setCenter(theTreeView);
-        //// treeContentBorderPane.setBottom(theSwitchButton);
-        //// theTreeScene= new Scene(treeContentBorderPane);
-        //// EpiScene.setDefaultsV(theTreeScene);
 
         TreeItem<DataNode> selectionTreeItemOfDataNode= 
             TreeStuff.toTreeItem(selectionDataNode,theRootEpiTreeItem);
@@ -85,25 +72,21 @@ public class TitledTreeNode
 
         this.theTreeStuff= theTreeStuff;
         Label titleLabel= new Label( // Set label to be name of root node.
-          //// subjectDataNode.toString());
           theTreeStuff.getDataRoot().toString());
         setTop(titleLabel); // Adding it to main Node.
         BorderPane.setAlignment(titleLabel,Pos.CENTER);
 
-        //// ObservableList<DataNode> childObservableList= 
-        ////     subjectDataNode.getChildObservableListOfDataNodes();
-        //// theTreeView.setItems(childObservableList);
         setCenter(theTreeView);
         setEventHandlersV(); // Needed for initial selection which follows.
-        //// theTreeView.getSelectionModel().
-        ////   select(theTreeStuff.getSelectedChildDataNode());
         Platform.runLater( () -> theTreeView.requestFocus() );
         }
 
-    //// @SuppressWarnings("unused") ////
     private void setEventHandlersV()
       /* This method sets a handler so that TreeNode selection changes
        * are sent to the TreeStuff where it does its normal processing.
+       * 
+       * WARNING: left-arrow causes a temporary selection of null,
+       * so that condition is ignored below.
        */
       {
         MultipleSelectionModel<TreeItem<DataNode>> theMultipleSelectionModel=
@@ -113,13 +96,14 @@ public class TitledTreeNode
         selectedItemProperty.addListener(
           (observableValueOfDataNode,oldDataNode,newDataNode) 
           -> 
-          { System.out.println("TitledTreeNode selection changed.");
+          { System.out.println("TitledTreeNode selection change:"
+              +oldDataNode+","+newDataNode);
             TreeItem<DataNode> newSelectedTreeItem= selectedItemProperty.get();
-            //// getTreeStuff().setSelectedDataNodeV(newSelectedTreeItem.getValue());
-            theTreeStuff.setSelectedDataNodeV(newSelectedTreeItem.getValue());
+            if (null != newSelectedTreeItem) // Ignore temporary null selection. 
+              theTreeStuff.setSelectedDataNodeV( // Inform our TreeStuff.
+                newSelectedTreeItem.getValue());
             }
           );
-
         }
 
     }
