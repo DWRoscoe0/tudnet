@@ -92,8 +92,8 @@ public class Navigation extends EpiStage
         buildDataNodeSceneV();
         setDataNodeContentFromDataNodeV(previouslySelectedDataNode);
 
-        /// setScene(theTreeScene); // Use tree scene as first one displayed.
-        setScene(theDataNodeScene); // Use item scene as first one displayed.
+        setScene(theTreeScene); // Use tree scene as first one displayed.
+        /// setScene(theDataNodeScene); // Use item scene as first one displayed.
 
         finishStateInitAndStartV("Infogora JavaFX Navigation UI");
         }

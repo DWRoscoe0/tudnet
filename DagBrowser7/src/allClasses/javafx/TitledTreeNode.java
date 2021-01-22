@@ -4,6 +4,8 @@ import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.geometry.Pos;
 import javafx.scene.control.TreeView;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.control.Label;
 import javafx.scene.control.MultipleSelectionModel;
 import javafx.scene.control.TreeItem;
@@ -75,13 +77,40 @@ public class TitledTreeNode
           theTreeStuff.getDataRoot().toString());
         setTop(titleLabel); // Adding it to main Node.
         BorderPane.setAlignment(titleLabel,Pos.CENTER);
-
         setCenter(theTreeView);
-        setEventHandlersV(); // Needed for initial selection which follows.
+
+        theTreeView.addEventHandler(
+          KeyEvent.KEY_PRESSED, 
+          (theKeyEvent) -> keyEventHandlerV(theKeyEvent)
+          );
+        setSelectionEventHandlerV();
+
         Platform.runLater( () -> theTreeView.requestFocus() );
         }
 
-    private void setEventHandlersV()
+    private void keyEventHandlerV(KeyEvent theKeyEvent)
+      /* This method sets a handler for the right arrow key
+       * so that the best child Node selection is made.
+       */
+      {
+        System.out.println("TitledTreeNode key handler.");
+        KeyCode keyCodeI = theKeyEvent.getCode(); // Get code of key pressed.
+        switch (keyCodeI) {
+          case RIGHT:  // right-arrow.
+            DataNode subselectionDataNode= // Calculate best sub-selection. 
+              theTreeStuff.getSubselectionDataNode();
+            if (null == subselectionDataNode) // Exit if no sub-selection. 
+              break;
+            theTreeView.getSelectionModel().select( // Select it.
+                theTreeStuff.toTreeItem(subselectionDataNode));
+            theKeyEvent.consume();
+            break;
+          default: 
+            break;
+          }
+        }
+
+    private void setSelectionEventHandlerV()
       /* This method sets a handler so that TreeNode selection changes
        * are sent to the TreeStuff where it does its normal processing.
        * 
@@ -96,8 +125,8 @@ public class TitledTreeNode
         selectedItemProperty.addListener(
           (observableValueOfDataNode,oldDataNode,newDataNode) 
           -> 
-          { System.out.println("TitledTreeNode selection change:"
-              +oldDataNode+","+newDataNode);
+          { /// System.out.println("TitledTreeNode selection change:"
+            ///   +oldDataNode+","+newDataNode);
             TreeItem<DataNode> newSelectedTreeItem= selectedItemProperty.get();
             if (null != newSelectedTreeItem) // Ignore temporary null selection. 
               theTreeStuff.setSelectedDataNodeV( // Inform our TreeStuff.
