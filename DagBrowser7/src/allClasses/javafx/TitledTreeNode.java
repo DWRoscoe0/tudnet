@@ -73,8 +73,8 @@ public class TitledTreeNode
         theTreeView.getSelectionModel().select(selectionTreeItemOfDataNode);
 
         this.theTreeStuff= theTreeStuff;
-        Label titleLabel= new Label( // Set label to be name of root node.
-          theTreeStuff.getDataRoot().toString());
+        Label titleLabel= // Set label to indicate tree view. 
+            new Label("Tree View");
         setTop(titleLabel); // Adding it to main Node.
         BorderPane.setAlignment(titleLabel,Pos.CENTER);
         setCenter(theTreeView);
@@ -94,20 +94,39 @@ public class TitledTreeNode
        */
       {
         System.out.println("TitledTreeNode key handler.");
+        boolean doneB= true;
         KeyCode keyCodeI = theKeyEvent.getCode(); // Get code of key pressed.
         switch (keyCodeI) {
-          case RIGHT:  // right-arrow.
-            DataNode subselectionDataNode= // Calculate best sub-selection. 
-              theTreeStuff.getSubselectionDataNode();
-            if (null == subselectionDataNode) // Exit if no sub-selection. 
-              break;
-            theTreeView.getSelectionModel().select( // Select it.
-                theTreeStuff.toTreeItem(subselectionDataNode));
-            theKeyEvent.consume();
-            break;
-          default: 
-            break;
+          case RIGHT: // right-arrow.
+            tryGoingRightV(); break;
+
+          default: doneB= false; break; // Being here means no key processed.
           }
+        if (doneB) theKeyEvent.consume();
+        }
+
+    private void tryGoingRightV()
+      {
+        main: {
+          DataNode selectionDataNode= theTreeStuff.getSelectionDataNode();
+          if (null == selectionDataNode) break main; // Exit if no selection. 
+          TreeItem<DataNode> selectionTreeItem= // Get its TreeItem. 
+              theTreeStuff.toTreeItem(selectionDataNode);
+          if (null == selectionTreeItem) break main; // Exit if no TreeItem.
+          if (! selectionTreeItem.isExpanded()) // If not already expanded
+            { selectionTreeItem.setExpanded(true); // expand TreeItem.
+              break main; // Do nothing else for this key.
+              }
+          DataNode subselectionDataNode= // Calculate best sub-selection. 
+            theTreeStuff.getSubselectionDataNode();
+          if (null == subselectionDataNode) // Exit if no sub-selection. 
+            break main;
+          TreeItem<DataNode> subselectionTreeItem= 
+              theTreeStuff.toTreeItem(subselectionDataNode);
+          theTreeView.getSelectionModel().select( // Select the child.
+              subselectionTreeItem);
+        } // main:
+          return;
         }
 
     private void setSelectionEventHandlerV()

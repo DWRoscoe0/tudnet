@@ -53,6 +53,9 @@ public class TreeStuff
 
 
     public TreeItem<DataNode> toTreeItem(DataNode targetDataNode) 
+      /* This method is equivalent to toTreeItem(targetDataNode, ancestorTreeItem)
+       * with ancestorTreeItem set to the root of the TreeItem tree.
+       */
       {
         return TreeStuff.toTreeItem(
           targetDataNode, 
