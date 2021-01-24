@@ -155,11 +155,12 @@ public class TreeStuff
        * This method returns null if moving to the left is not possible.
        */
       {
-        TreeStuff resultTreeStuff= // Return self if no movement possible.
-          this;
-        DataNode oldSubjectDataNode= getSubjectDataNode();
-        DataNode oldParentDataNode= getParentDataNode();
-        if (null != oldParentDataNode) { // If there's a parent
+          TreeStuff resultTreeStuff= this; // Return self if anything fails.
+        main: { 
+          DataNode oldSubjectDataNode= getSubjectDataNode();
+          if (oldSubjectDataNode.isRootB()) break main; // Fail if at root.
+          DataNode oldParentDataNode= getParentDataNode();
+          if (null == oldParentDataNode) break main; // Fail if no parent
           resultTreeStuff= // make new TreeStuff
               oldParentDataNode.makeTreeStuff( // for parent node
                 oldSubjectDataNode, // and subject node as selection in parent
@@ -168,9 +169,9 @@ public class TreeStuff
                 theRootEpiTreeItem, // and this
                 theSelections // and this.
                 ); 
-          }
-        purgeSelectionStorageV();
-        return resultTreeStuff;
+          purgeSelectionStorageV();
+        } // main: 
+          return resultTreeStuff;
         }
 
     public Node getGuiNode()
