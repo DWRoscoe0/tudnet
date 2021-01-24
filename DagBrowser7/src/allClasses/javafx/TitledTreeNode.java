@@ -68,10 +68,6 @@ public class TitledTreeNode
       {
         theTreeView= new TreeView<DataNode>(theRootEpiTreeItem);
 
-        TreeItem<DataNode> selectionTreeItemOfDataNode= 
-            TreeStuff.toTreeItem(selectionDataNode,theRootEpiTreeItem);
-        theTreeView.getSelectionModel().select(selectionTreeItemOfDataNode);
-
         this.theTreeStuff= theTreeStuff;
         Label titleLabel= // Set label to indicate tree view. 
             new Label("Tree View");
@@ -85,7 +81,10 @@ public class TitledTreeNode
           );
         setSelectionEventHandlerV();
 
-        Platform.runLater( () -> theTreeView.requestFocus() );
+        Platform.runLater( () -> {
+          selectV(selectionDataNode);
+          theTreeView.requestFocus();
+          } );
         }
 
     private void keyEventHandlerV(KeyEvent theKeyEvent)
@@ -94,15 +93,18 @@ public class TitledTreeNode
        */
       {
         System.out.println("TitledTreeNode key handler.");
-        boolean doneB= true;
-        KeyCode keyCodeI = theKeyEvent.getCode(); // Get code of key pressed.
+        boolean keyProcessedB= true;
+        KeyCode keyCodeI= theKeyEvent.getCode(); // Get code of key pressed.
         switch (keyCodeI) {
           case RIGHT: // right-arrow.
             tryGoingRightV(); break;
 
-          default: doneB= false; break; // Being here means no key processed.
+          default: keyProcessedB= false; break; // Being here means no key processed.
           }
-        if (doneB) theKeyEvent.consume();
+        if (keyProcessedB) theKeyEvent.consume();
+        Platform.runLater( () -> { // After or later key processing done
+          scrollToSelectionV(); // scroll selection into view. 
+          });
         }
 
     private void tryGoingRightV()
@@ -121,12 +123,34 @@ public class TitledTreeNode
             theTreeStuff.getSubselectionDataNode();
           if (null == subselectionDataNode) // Exit if no sub-selection. 
             break main;
-          TreeItem<DataNode> subselectionTreeItem= 
-              theTreeStuff.toTreeItem(subselectionDataNode);
-          theTreeView.getSelectionModel().select( // Select the child.
-              subselectionTreeItem);
+          selectV(subselectionDataNode);
         } // main:
           return;
+        }
+
+    private void selectV(DataNode theDataNode)
+      {
+        Platform.runLater( () -> {
+          TreeItem<DataNode> theTreeItem= 
+              theTreeStuff.toTreeItem(theDataNode);
+          theTreeView.getSelectionModel().select( // Select the child.
+              theTreeItem);
+          int selectedI= // Get its index. 
+              theTreeView.getSelectionModel().getSelectedIndex();
+          theTreeView.scrollTo(selectedI); // Bring into view.
+            /// might not be needed.
+          /// layout(); // kludge said to fix scrollTo(.) bug, doesn't.
+          System.out.println("TitledTreeNode.selectV(.) "+selectedI);
+          } );
+        }
+
+    private void scrollToSelectionV()
+      /* This method scrolls the present selection into view.  */
+      {
+        int selectedI= // Get its index. 
+            theTreeView.getSelectionModel().getSelectedIndex();
+        theTreeView.scrollTo(selectedI);
+        System.out.println("TitledTreeNode.scrollToSelectionV() "+selectedI);
         }
 
     private void setSelectionEventHandlerV()
