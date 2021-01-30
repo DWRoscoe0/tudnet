@@ -24,6 +24,10 @@ public class Selections
    * which is very useful for developing,
    * it does not store the final selection path at shutdown,
    * which would be expected by a user who is not a developer.
+   * 
+   * ///org At some point this will probably be divided into:
+   *   * Selection
+   *   * Hierarchy/Attributes
    */
 
   {
@@ -243,45 +247,16 @@ public class Selections
       {
         MapEpiNode subjectMapEpiNode= // Get subject MapEpiNode from history.
           recordAndTranslateToMapEpiNode(subjectDataNode);
-        String selectionNameString= // Get the name of most previous selection,
-            subjectMapEpiNode.getKeyString(
-                subjectMapEpiNode.getSizeI()-1); // the most recent entry.
-        DataNode selectedDataNode= // Try getting child by that name from child list. 
+        MapEpiNode childrenAttributeMapEpiNode= 
+            subjectMapEpiNode.getOrMakeMapEpiNode("Children"); 
+        String selectionNameString= // Get the name of most recent selection,
+          childrenAttributeMapEpiNode.getKeyString(
+            childrenAttributeMapEpiNode.getSizeI()-1); // the most recent entry.
+        DataNode selectedDataNode= // Try getting child by name from child list. 
             subjectDataNode.getNamedChildDataNode(selectionNameString);
         return selectedDataNode;
         }
 
-    public MapEpiNode OLDrecordAndTranslateToMapEpiNode(DataNode theDataNode)
-      /* This method translates theDataNode to 
-       * the MapEpiNode at the location in Persistent storage
-       * associated with that DataNode.
-       * If it needs to create that MapEpiNode,
-       * or any others between it and the root of Persistent storage,
-       * then it does so.
-       * It returns the resulting MapEpiNode.  It never returns null.
-       * This is done recursively to simplify path tracking.
-       * Execution time is O*d where d is the tree depth traversed.
-       * This method is used both for recording selection path information
-       * and for looking up selection path information MapEpiNodes
-       * associated with DataNodes.
-       */
-      {
-        MapEpiNode dataMapEpiNode; // MapEpiNode associated with DataNode name. 
-        MapEpiNode parentMapEpiNode; // MapEpiNode which is above's parent. 
-
-        if (theDataNode.isRootB()) // DataNode is the root node.
-          parentMapEpiNode= // So use root as parent EpiNode.
-            selectionHistoryMapEpiNode; 
-          else  // DataNode is not Root.
-          parentMapEpiNode= // Recurse to get parent EpiNode 
-              recordAndTranslateToMapEpiNode(
-                  theDataNode.getParentNamedList()); // from parent DataNode
-        String keyString= theDataNode.getNameString(); // Get DataNode name.
-        dataMapEpiNode= // Get or make MapEpiNode associated with Node name. 
-            parentMapEpiNode.getOrMakeMapEpiNode(keyString); 
-        parentMapEpiNode.moveToEndOfListV(keyString); // Move it to end of list.
-        return dataMapEpiNode; // Return resulting MapEpiNode.
-        }
 
     public MapEpiNode recordAndTranslateToMapEpiNode(DataNode theDataNode)
       /* This method translates theDataNode to 
