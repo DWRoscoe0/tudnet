@@ -16,11 +16,16 @@ public class PathAttributeMetaTool
       or was but is the first child of its parent,
       which is the default selection when going to a child node.  
       All descendants have the same default value.
-    * "IS": this node is now part of the path.
-    * "WAS": this node was the most recent part of the path of all its siblings.
-    * "OLD": this node was part of the path but is not the most recent
-      of all its siblings.
-
+    * "IS": This node is now part of the path.
+    * "WAS": This node is not now part of the path, but it was,
+      and was most recently of all its siblings.
+      When an automatic child selection needs to be done,
+      this marks the child node that will be reselected. 
+    * "OLD": This node is not now part of the path, but it was,
+      but was not most recently of all its siblings.
+      This value exists mainly to indicate that some descendants
+      contain path attributes with value="WAS".
+      
     This is based on the my InfogoraPathHistoryAttribute notes.
     */
   
