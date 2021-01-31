@@ -57,9 +57,6 @@ public class Selections
     
     public boolean purgeAndTestB(MapEpiNode theMapEpiNode,DataNode theDataNode)
       /* 
-        ///chg This is being changed to deal with "Children" attributes,
-          but no other attributes.
-
         This method tries to purge and test purge-ability of theMapEpiNode.
 
         The purpose of this method is to save space by removing all map entries 
@@ -88,8 +85,7 @@ public class Selections
         * whose map entry is the last one in the map, because that one
           is used to represent the most recent selection.
 
-        Any data that is out of specification 
-        is removed or treated as purge-able.
+        Any data that is out of specification considered purge-able.
 
         This method can not and does not remove 
         the parent map entry containing theMapEpiNode.
@@ -108,7 +104,7 @@ public class Selections
           if (null == theMapEpiNode) // Map missing. 
             break toReturn; // Considering it a purge success.
           MapEpiNode childrenAttributeMapEpiNode= // Get Children attribute map. 
-            theMapEpiNode.getOrMakeMapEpiNode("Children");
+              getOrMakeChildrenMapEpiNode(theMapEpiNode);
           Set<Map.Entry<EpiNode,EpiNode>> childrenSetOfMapEntrys= 
               childrenAttributeMapEpiNode.getLinkedHashMap().entrySet();
           List<Map.Entry<EpiNode,EpiNode>> childrenListOfMapEntrys= 
@@ -177,7 +173,7 @@ public class Selections
         loop: while(true) { // Loop to follow selection history path to its end.
           // At this point, we  have a valid [partial] selection.
           MapEpiNode childrenAttributeMapEpiNode= // Get Children attribute map. 
-            scanMapEpiNode.getOrMakeMapEpiNode("Children");
+            getOrMakeChildrenMapEpiNode(scanMapEpiNode);
           String childString= // Get name of next-level candidate selection
             childrenAttributeMapEpiNode.getKeyString(
               childrenAttributeMapEpiNode.getSizeI()-1); // at end of map.
@@ -248,7 +244,7 @@ public class Selections
         MapEpiNode subjectMapEpiNode= // Get subject MapEpiNode from history.
           recordAndTranslateToMapEpiNode(subjectDataNode);
         MapEpiNode childrenAttributeMapEpiNode= 
-            subjectMapEpiNode.getOrMakeMapEpiNode("Children"); 
+            getOrMakeChildrenMapEpiNode(subjectMapEpiNode);
         String selectionNameString= // Get the name of most recent selection,
           childrenAttributeMapEpiNode.getKeyString(
             childrenAttributeMapEpiNode.getSizeI()-1); // the most recent entry.
@@ -256,7 +252,6 @@ public class Selections
             subjectDataNode.getNamedChildDataNode(selectionNameString);
         return selectedDataNode;
         }
-
 
     public MapEpiNode recordAndTranslateToMapEpiNode(DataNode theDataNode)
       /* This method translates theDataNode to 
@@ -286,7 +281,7 @@ public class Selections
                   theDataNode.getParentNamedList()); // from parent DataNode
         String keyString= theDataNode.getNameString(); // Get DataNode name.
         childrenAttributeMapEpiNode= 
-            parentMapEpiNode.getOrMakeMapEpiNode("Children"); 
+            getOrMakeChildrenMapEpiNode(parentMapEpiNode);
         resultMapEpiNode= 
             childrenAttributeMapEpiNode.getOrMakeMapEpiNode(keyString); 
         childrenAttributeMapEpiNode.moveToEndOfListV(keyString);
@@ -296,6 +291,13 @@ public class Selections
     public MapEpiNode getSelectionHistoryMapEpiNode() 
       { 
         return selectionHistoryMapEpiNode; 
+        }
+
+    private MapEpiNode getOrMakeChildrenMapEpiNode(MapEpiNode parentMapEpiNode)
+      /* This method get the "Children" attribute value from parentMapEpiNode.
+       */
+      { 
+        return parentMapEpiNode.getOrMakeMapEpiNode("Children");
         }
 
     }
