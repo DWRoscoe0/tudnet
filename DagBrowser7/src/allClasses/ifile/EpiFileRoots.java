@@ -3,12 +3,21 @@ package allClasses.ifile;
 import java.io.File;
 
 import allClasses.DataNode;
+import allClasses.NamedList;
 
-public class EpiFileRoots extends DataNode
+public class EpiFileRoots
+
+  ////extends DataNode
+  extends NamedList
 
   /* This class is the root of the Infogora user's file system.  
    * It is similar in structure and operation to EpiDirectory,
    * which is used for other, non-root folders.
+   * 
+   * ///org The base class is NamedList, not because
+   *   it any of its functionality is needed,
+   *   but because the parameter for DataNode.setParentToV(.) 
+   *   must be a NamedList.
    */
 
   { // class EpiFileRoots
@@ -65,6 +74,7 @@ public class EpiFileRoots extends DataNode
                     );
                 childEpiDirectories[ indexI ]=  // Save in cache...
                   childEpiDirectory;  // the resulting EpiDirectory.
+                childEpiDirectory.setParentToV( this ); // Set parent link.
                 }
 
           } // toReturn
