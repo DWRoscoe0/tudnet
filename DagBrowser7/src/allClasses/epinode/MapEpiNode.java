@@ -4,8 +4,10 @@ import static allClasses.AppLog.theAppLog;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -14,14 +16,20 @@ import allClasses.SystemSettings;
 
 public class MapEpiNode extends EpiNode 
 
-  /* Note, to avoid ConcurrentModificationException,
-    methods that iterate over or modify the object are synchronized.
-    */
+  /* 
+   * This class implements an EpiNode which is a map.
+   * 
+   * ///enh Though this class uses map iterators internally,
+   * it does not provide them in a public method, yet.
+   * 
+   * Note, to avoid ConcurrentModificationException,
+   * methods that iterate over or modify the object are synchronized.
+   */
 
   {
     private LinkedHashMap<EpiNode,EpiNode> theLinkedHashMap; // Map data. 
       // Will reference map with default of insertion-order.  
-      // Rejected access-order map.  
+      // Access-order was Rejected  
 
     
     // Methods that output to OutputStreams.
@@ -30,10 +38,8 @@ public class MapEpiNode extends EpiNode
         throws IOException
       { 
         Map.Entry<EpiNode,EpiNode> scanMapEntry= null;
-        Set<Map.Entry<EpiNode,EpiNode>> theSetOfMapEntrys= 
-            theLinkedHashMap.entrySet();
-        Iterator<Map.Entry<EpiNode,EpiNode>> entryIterator= 
-            theSetOfMapEntrys.iterator();
+        Iterator<Map.Entry<EpiNode,EpiNode>> entryIterator=
+             getListIteratorOfEntries();
         boolean afterElementB= false; // Initially no comma need be written.
         theOutputStream.write("{".getBytes()); // Introduce map.
         while(true) { // Iterate over all entries.
@@ -54,10 +60,8 @@ public class MapEpiNode extends EpiNode
         throws IOException
       { 
         Map.Entry<EpiNode,EpiNode> scanMapEntry= null;
-        Set<Map.Entry<EpiNode,EpiNode>> theSetOfMapEntrys= 
-            theLinkedHashMap.entrySet();
         Iterator<Map.Entry<EpiNode,EpiNode>> entryIterator= 
-            theSetOfMapEntrys.iterator();
+            getListIteratorOfEntries();
         while(true) { // Iterate over all entries.
           if (! entryIterator.hasNext()) // More entries? 
             break; // No, so exit.
@@ -689,10 +693,8 @@ public class MapEpiNode extends EpiNode
         */
       { 
         Map.Entry<EpiNode,EpiNode> resultMapEntry= null;
-        Set<Map.Entry<EpiNode,EpiNode>> theSetOfMapEntrys= 
-            theLinkedHashMap.entrySet();
-        Iterator<Map.Entry<EpiNode,EpiNode>> entryIterator= 
-            theSetOfMapEntrys.iterator();
+        Iterator<Map.Entry<EpiNode,EpiNode>> entryIterator=
+            getListIteratorOfEntries();
         Map.Entry<EpiNode,EpiNode> scanMapEntry;
         while(true) { // Iterate to the desired entry.
           if (! entryIterator.hasNext()) // More entries? 
@@ -716,10 +718,8 @@ public class MapEpiNode extends EpiNode
       { 
           String resultString= null; // Default String result of null.
           Map.Entry<EpiNode,EpiNode> scanMapEntry= null;
-          Set<Map.Entry<EpiNode,EpiNode>> theSetOfMapEntrys= 
-              theLinkedHashMap.entrySet();
-          Iterator<Map.Entry<EpiNode,EpiNode>> entryIterator= 
-              theSetOfMapEntrys.iterator();
+          Iterator<Map.Entry<EpiNode,EpiNode>> entryIterator=
+              getListIteratorOfEntries();
         goReturn: {
           if (keyString.isEmpty()) // On an actual entry now? 
             { // No, so return first entry if there is one. 
@@ -888,6 +888,26 @@ public class MapEpiNode extends EpiNode
 
 
     // Special getters or calculated values.
+
+    public ListIterator<Map.Entry<EpiNode,EpiNode>> getListIteratorOfEntries()
+      /* This method returns a ListIterator for iterating over the map entries.
+       * A copy of the map collection is made in an ArrayList so that
+       * code that uses the iterator can mutate the map.
+       * without getting a ConcurrentModificationException.
+       * Making this copy is not always needed, and takes more time,
+       * but it simplifies the code, and the slow down has not been a problem.
+       * Also, a ListIterator has more functionality than a plain Iterator. 
+       */
+      {
+        Set<Map.Entry<EpiNode,EpiNode>> theSetOfMapEntrys= 
+            getLinkedHashMap().entrySet(); // Extract entries as a set.
+        ArrayList<Map.Entry<EpiNode,EpiNode>> theListOfMapEntrys=
+            new ArrayList<Map.Entry<EpiNode,EpiNode>>(theSetOfMapEntrys);
+              // Copy collection to avoid ConcurrentModificationException.
+        ListIterator<Map.Entry<EpiNode,EpiNode>> theListIteratorOfEntries=
+            theListOfMapEntrys.listIterator(); // Create iterator for copy.
+        return theListIteratorOfEntries;
+        }
     
     public MapEpiNode tryMapEpiNode()
       /* This method returns the (this) reference if this is a MapEpiNode,

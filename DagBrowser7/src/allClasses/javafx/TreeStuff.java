@@ -205,7 +205,7 @@ public class TreeStuff
        */
       {
         theSelections.purgeAndTestB(
-            theSelections.getSelectionHistoryMapEpiNode(), // History root.
+            theSelections.getHierarchyAttributesMapEpiNode(), // History root.
             theDataRoot.getParentOfRootDataNode() // DataNodes root.
             );
         }
