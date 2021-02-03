@@ -195,21 +195,26 @@ public class TreeStuff
         selectedDataNode= theDataNode; // Store selection locally.
 
         // Store selection in the selection history.
+        theSelections.removeSelectionPathV( // deactivate old selection path.
+            theSelections.getHierarchyAttributesMapEpiNode());
         theSelections.recordAndTranslateToMapEpiNode(theDataNode); //// Old way.
         theSelections.recordPathTowardRootAndGetMapEpiNode(theDataNode); //// New way.
-
+        
         purgeSelectionStorageV(); // Purge unneeded selection history. 
         }
 
-    private void purgeSelectionStorageV()
+    private void purgeSelectionStorageV() ////// This fails sometimes.
       /* This method purges any unneeded selection data from
        * Persistent storage starting from the root of that data.
        */
       {
+        // /*  //////
         theSelections.purgeAndTestB(
             theSelections.getHierarchyAttributesMapEpiNode(), // History root.
-            theDataRoot.getParentOfRootDataNode() // DataNodes root.
+            //// theDataRoot.getParentOfRootDataNode() // DataNodes root.
+            theDataRoot.getRootDataNode() // DataNodes root.
             );
+        //  */  //////
         }
 
     public DataNode getParentDataNode()
