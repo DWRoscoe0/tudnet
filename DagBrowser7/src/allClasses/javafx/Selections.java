@@ -28,7 +28,9 @@ public class Selections
    */
 
   {
-    final String selectionPathKeyString= "SelectionPath";
+    final String pathKeyString= "SelectionPath";
+    final String pathNewValueString= "NOW";
+    final String pathOldValueString= "LAST";
   
     // Injected variables.
     private Persistent thePersistent;
@@ -174,8 +176,9 @@ public class Selections
           MapEpiNode childrenAttributeMapEpiNode= // Get Children attribute map. 
             getOrMakeChildrenMapEpiNode(scanMapEpiNode);
           String childString= // Get name of next-level candidate selection
-            childrenAttributeMapEpiNode.getKeyString(
-              childrenAttributeMapEpiNode.getSizeI()-1); // at end of map.
+          ////   childrenAttributeMapEpiNode.getKeyString(
+          ////     childrenAttributeMapEpiNode.getSizeI()-1); // at end of map.
+              searchForChildString(childrenAttributeMapEpiNode); // from map.
           if (null == childString) break loop; // No name, no selection, exit.
           DataNode childDataNode= // Try getting same-name child DataNode. 
               scanDataNode.getNamedChildDataNode(childString);
@@ -188,6 +191,37 @@ public class Selections
           scanMapEpiNode= childMapEpiNode;
         } // loop: 
           return scanDataNode; // Return last valid DataNode, the selection.
+        }
+
+    private String searchForChildString(MapEpiNode childrenAttributeMapEpiNode)
+      /* This method returns the name of the first child in 
+       * the children in childrenAttributeMapEpiNode 
+       * for one which has an active path selection.
+       * There should be only one.
+       * Returns the name if found, null otherwise.
+       */
+      {
+          String childNameString= null; // Default of child not found.
+        toReturn: {
+          ListIterator<Map.Entry<EpiNode,EpiNode>> childIterator=
+              childrenAttributeMapEpiNode.getListIteratorOfEntries();
+        childLoop: while(true) { // Iterate through child map entries.
+          if (! childIterator.hasNext()) break childLoop; // No more entries.
+        toChildDone: { 
+          Map.Entry<EpiNode,EpiNode> childMapEntry= childIterator.next();
+          EpiNode childValueEpiNode= childMapEntry.getValue();
+          if (null == childValueEpiNode) break toChildDone; // No child value.
+          MapEpiNode childValueMapEpiNode= childValueEpiNode.tryMapEpiNode();
+          if (null == childValueMapEpiNode) break toChildDone; // Not a map.
+          String pathValueString= childValueMapEpiNode.getString(pathKeyString);
+          if (! pathNewValueString.equals(pathValueString))// Not active path.
+            break toChildDone;
+          childNameString= childMapEntry.getKey().toRawString(); // Get name.
+          break toReturn; // Exit child loop with child name.
+        } // toChildDone: processing of this map entry is done.
+        } // childLoop: Continue with next child entry.
+        } // toReturn:
+          return childNameString;
         }
 
     public DataNode chooseSelectionDataNode(
@@ -282,7 +316,7 @@ public class Selections
             /// This might be deprecated.
         } // goRecord:
           subjectMapEpiNode.putV( // Record this node part of selected path.
-              selectionPathKeyString,"NOW");
+              pathKeyString,"NOW");
           return subjectMapEpiNode; // Return resulting MapEpiNode.
           //// */  //////
           //// return null;
@@ -294,9 +328,6 @@ public class Selections
        * It works recursively.
        */
       {
-          final String pathKeyString= "SelectionPath";
-          /// final String pathNewValueString= "NOW";
-          final String pathOldValueString= "LAST";
         toReturn: {
           String pathValueString= subjectMapEpiNode.getString(pathKeyString);
           if (null == pathValueString) // Exit immediately if key not present. 
@@ -337,7 +368,7 @@ public class Selections
           return null; //////
       }
 
-    public MapEpiNode OLDrecordAndTranslateToMapEpiNode(DataNode subjectDataNode)
+    public MapEpiNode OLDrecordAndTranslateToMapEpiNode(DataNode subjectDataNode) ////
       /* This method translates subjectDataNode to 
        * the MapEpiNode at the location in Persistent storage
        * associated with that DataNode.
