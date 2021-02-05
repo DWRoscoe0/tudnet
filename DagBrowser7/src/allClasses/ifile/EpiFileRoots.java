@@ -7,7 +7,6 @@ import allClasses.NamedList;
 
 public class EpiFileRoots
 
-  ////extends DataNode
   extends NamedList
 
   /* This class is the root of the Infogora user's file system.  

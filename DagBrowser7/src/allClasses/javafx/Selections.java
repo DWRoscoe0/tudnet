@@ -29,8 +29,8 @@ public class Selections
 
   {
     final String pathKeyString= "SelectionPath";
-    final String pathNewValueString= "PRIMARY"; //// "NOW";
-    final String pathOldValueString= "SECONDARY"; //// "LAST";
+    final String pathNewValueString= "PRIMARY";
+    final String pathOldValueString= "SECONDARY";
   
     // Injected variables.
     private Persistent thePersistent;
@@ -107,7 +107,6 @@ public class Selections
             break toReturn; // Considering it a purge success.
           MapEpiNode childrenAttributeMapEpiNode= // Get Children attribute map. 
               getOrMakeChildrenMapEpiNode(subjectMapEpiNode);
-          //// int childCountI= childrenAttributeMapEpiNode.getSizeI();
           ListIterator<Map.Entry<EpiNode,EpiNode>> childIterator=
               childrenAttributeMapEpiNode.getListIteratorOfEntries();
 
@@ -128,14 +127,6 @@ public class Selections
             purgeAndTestB(childValueMapEpiNode,childDataNode); 
           if (childPurgeAbleB) // Child is purge-able.
             break toRemoveChild; // Go remove it. 
-          //// if (! childPurgeAbleB) // Some sub-entries survived. 
-          ////   break toKeepChild;
-          //// if // If empty map entry is associated with DataNode child 0
-          ////   (0 == subjectDataNode.getIndexOfNamedChild(childKeyString))
-          ////   break toRemoveChild; // remove it because it's a not needed default.
-          //// if // If empty map entry is not last one in parent map
-          ////   (childCountI != childIterator.nextIndex()) // If not last entry 
-          ////   break toRemoveChild; // remove it because it's not selected now.
           break toKeepChild; // Keep child because all purge options failed.
 
         } // toRemoveChild:
@@ -175,16 +166,14 @@ public class Selections
           // At this point, we  have a valid [partial] selection.
           MapEpiNode childrenAttributeMapEpiNode= // Get Children attribute map. 
             getOrMakeChildrenMapEpiNode(scanMapEpiNode);
-          String childString= // Get name of next-level candidate selection
-          ////   childrenAttributeMapEpiNode.getKeyString(
-          ////     childrenAttributeMapEpiNode.getSizeI()-1); // at end of map.
-              searchForChildString(childrenAttributeMapEpiNode); // from map.
+          String childString= // Get name of next-level candidate selection.
+            getChildSelectionCandidateString(childrenAttributeMapEpiNode);
           if (null == childString) break loop; // No name, no selection, exit.
           DataNode childDataNode= // Try getting same-name child DataNode. 
-              scanDataNode.getNamedChildDataNode(childString);
+            scanDataNode.getNamedChildDataNode(childString);
           if (null == childDataNode) break loop; // No child DataNode, exit.
           MapEpiNode childMapEpiNode= // Try getting next-level child map. 
-              childrenAttributeMapEpiNode.getMapEpiNode(childString);
+            childrenAttributeMapEpiNode.getMapEpiNode(childString);
           if (null == childMapEpiNode) break loop; // No next level map, exit.
           // At this point, we have all data needed to go to next level.  Do it.
           scanDataNode= childDataNode;
@@ -193,10 +182,10 @@ public class Selections
           return scanDataNode; // Return last valid DataNode, the selection.
         }
 
-    private String searchForChildString(MapEpiNode childrenAttributeMapEpiNode)
-      /* This method returns the name of the first child in 
-       * the children in childrenAttributeMapEpiNode 
-       * for one which has an active path selection.
+    private String getChildSelectionCandidateString(
+        MapEpiNode childrenAttributeMapEpiNode)
+      /* This method returns the name of the child in 
+       * childrenAttributeMapEpiNode which has an active path.
        * There should be only one.
        * Returns the name if found, null otherwise.
        */
@@ -286,43 +275,7 @@ public class Selections
         return selectedDataNode;
         }
 
-    public MapEpiNode OLDrecordPathTowardRootAndGetMapEpiNode( ////
-        DataNode subjectDataNode)
-      /* This method adjusts PathAttributes to store a selection path
-       * from subjectDataNode to the root.
-       * It add new path information and removes old path information.
-       * It works recursively.
-       * It returns the attribute MapEpiNode associated with subjectDataNode.
-       */
-      {
-          //// /*  //////
-          MapEpiNode subjectMapEpiNode; // Used for returned result. 
-          MapEpiNode parentMapEpiNode;
-          MapEpiNode parentsChildrenMapEpiNode;
-  
-        goRecord: {
-          if (subjectDataNode.isRootB()) { // DataNode is the root node.
-            subjectMapEpiNode= hierarchyRootMapEpiNode; // So use root MapEpiNode.
-            break goRecord;
-            }
-          parentMapEpiNode= recordPathTowardRootAndGetMapEpiNode( // Recurse
-            subjectDataNode.getParentNamedList()); // with parent of subject.
-          String subjectKeyString= subjectDataNode.getNameString(); // Get name.
-          parentsChildrenMapEpiNode=
-              getOrMakeChildrenMapEpiNode(parentMapEpiNode);
-          subjectMapEpiNode= 
-              parentsChildrenMapEpiNode.getOrMakeMapEpiNode(subjectKeyString);
-          parentsChildrenMapEpiNode.moveToEndOfListV(subjectKeyString);
-            /// This might be deprecated.
-        } // goRecord:
-          subjectMapEpiNode.putV( // Record this node part of selected path.
-              pathKeyString,"NOW");
-          return subjectMapEpiNode; // Return resulting MapEpiNode.
-          //// */  //////
-          //// return null;
-        }
-
-    public MapEpiNode recordPathTowardRootAndGetMapEpiNode(  ////// new.
+    public MapEpiNode recordPathTowardRootAndGetMapEpiNode(
         DataNode subjectDataNode)
       /* This method adjusts PathAttributes to store a selection path.
        * It deactivates the present selection,
@@ -331,7 +284,6 @@ public class Selections
        * It returns the attribute MapEpiNode associated with subjectDataNode.
        */
       {
-          //// /*  //////
           MapEpiNode subjectAttributesMapEpiNode; // Used for returned result. 
   
         goRecord: {
@@ -347,9 +299,6 @@ public class Selections
           String subjectNameKeyString= subjectDataNode.getNameString();
           subjectAttributesMapEpiNode= 
             parentsChildrenMapEpiNode.getOrMakeMapEpiNode(subjectNameKeyString);
-          //// if (! "PRIMARY".equals(subjectAttributesMapEpiNode.getString(pathKeyString)))
-          ////   deactivatePathInChildrenV(parentsChildrenMapEpiNode);
-          ////     // Deactivate path in subject's siblings.
           parentsChildrenMapEpiNode.moveToEndOfListV(subjectNameKeyString);
             /// This might be deprecated.
         } // goRecord:
@@ -357,11 +306,9 @@ public class Selections
           subjectAttributesMapEpiNode.putV( // [re]select this node in path.
               pathKeyString,"PRIMARY");
           return subjectAttributesMapEpiNode; // Return resulting MapEpiNode.
-          //// */  //////
-          //// return null;
         }
 
-    public void deactivatePathInChildrenV( //////
+    public void deactivatePathInChildrenV(
         MapEpiNode subjectsAttributesMapEpiNode)
       /* This method deactivates the primary path 
        * in any child for which the path is active.
@@ -385,93 +332,11 @@ public class Selections
           MapEpiNode childValueMapEpiNode= childValueEpiNode.tryMapEpiNode();
           if (null == childValueMapEpiNode) break toChildDone; // Not a map.
           if // Replace any path attribute with secondary path indicator.
-            //// (! "PRIMARY".equals(childValueMapEpiNode.getString(pathKeyString)))
             (null != childValueMapEpiNode.getString(pathKeyString))
             childValueMapEpiNode.putV(pathKeyString,"SECONTARY");
         } // toChildDone: processing of this map entry is done.
         } // childLoop: Continue with next child entry.
           return;
-        }
-
-    public void XXXremoveSelectionPathV(MapEpiNode subjectMapEpiNode) ////
-      /* This method adjusts PathAttributes to deactivate 
-       * the present selection path starting with subjectMapEpiNode.  
-       * It works recursively.
-       */
-      {
-        toReturn: {
-          String pathValueString= subjectMapEpiNode.getString(pathKeyString);
-          if (null == pathValueString) // Exit immediately if key not present. 
-            break toReturn;
-          MapEpiNode childrenAttributeMapEpiNode= // Get Children attribute map. 
-              getOrMakeChildrenMapEpiNode(subjectMapEpiNode);
-          ListIterator<Map.Entry<EpiNode,EpiNode>> childIterator=
-              childrenAttributeMapEpiNode.getListIteratorOfEntries();
-        childLoop: while(true) { // Iterate through child map entries.
-          if (! childIterator.hasNext()) break childLoop; // No more entries.
-        toChildDone: { 
-          Map.Entry<EpiNode,EpiNode> childMapEntry= childIterator.next();
-          EpiNode childValueEpiNode= childMapEntry.getValue();
-          if (null == childValueEpiNode) break toChildDone; // No child value.
-          MapEpiNode childValueMapEpiNode= childValueEpiNode.tryMapEpiNode();
-          if (null == childValueMapEpiNode) break toChildDone; // Not a map.
-          XXXremoveSelectionPathV(childValueMapEpiNode); // Recursive call with child.
-        } // toChildDone: processing of this map entry is done.
-        } // childLoop: Continue with next child entry.
-          subjectMapEpiNode.putV( // Replace new path value with old value.
-              pathKeyString, pathOldValueString);
-        } // toReturn:
-          return;
-        }
-
-    @SuppressWarnings("unused")
-    private MapEpiNode getChildMapEpiNode(String keyString,String valueString)
-    {
-      /*  ////
-          MapEpiNode childMapEpiNode;
-        toReturn: {
-          if (null == childMapEpiNode) // Exit if key not present. 
-            break goReturn;
-          if (! childMapEpiNode.testKeyForValueB(keyString,valueString))
-            break toReturn; // Exit if value not present.
-        } // toReturn:
-      */  ////
-          return null; //////
-      }
-
-    public MapEpiNode OLDrecordAndTranslateToMapEpiNode(DataNode subjectDataNode) ////
-      /* This method translates subjectDataNode to 
-       * the MapEpiNode at the location in Persistent storage
-       * associated with that DataNode.
-       * If it needs to create that MapEpiNode,
-       * or any others between it and the root of Persistent storage,
-       * then it does so.
-       * It returns the resulting MapEpiNode.  It never returns null.
-       * This is done recursively to simplify path tracking.
-       * Execution time is O*d where d is the tree depth traversed.
-       * This method is used both for recording selection path information
-       * and for looking up selection path information MapEpiNodes
-       * associated with DataNodes.
-       */
-      {
-        MapEpiNode subjectMapEpiNode; 
-        MapEpiNode parentMapEpiNode;
-        MapEpiNode parentsChildrenMapEpiNode;
-
-        if (subjectDataNode.isRootB()) // DataNode is the root node.
-          parentMapEpiNode= // So use root as parent EpiNode.
-            hierarchyRootMapEpiNode; 
-          else  // DataNode is not Root.
-          parentMapEpiNode= // Recurse to get parent EpiNode 
-              recordAndTranslateToMapEpiNode(
-                  subjectDataNode.getParentNamedList()); // from parent DataNode
-        String subjectKeyString= subjectDataNode.getNameString(); // Get name.
-        parentsChildrenMapEpiNode= 
-            getOrMakeChildrenMapEpiNode(parentMapEpiNode);
-        subjectMapEpiNode= 
-            parentsChildrenMapEpiNode.getOrMakeMapEpiNode(subjectKeyString); 
-        parentsChildrenMapEpiNode.moveToEndOfListV(subjectKeyString);
-        return subjectMapEpiNode; // Return resulting MapEpiNode.
         }
 
     public MapEpiNode recordAndTranslateToMapEpiNode(DataNode subjectDataNode)
