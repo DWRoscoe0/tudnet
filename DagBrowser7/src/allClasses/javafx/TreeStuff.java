@@ -195,9 +195,9 @@ public class TreeStuff
         selectedDataNode= theDataNode; // Store selection locally.
 
         // Store selection in the selection history.
-        theSelections.removeSelectionPathV( // deactivate old selection path.
-            theSelections.getHierarchyAttributesMapEpiNode());
-        theSelections.recordAndTranslateToMapEpiNode(theDataNode); //// Old way.
+        //// theSelections.removeSelectionPathV( // deactivate old selection path.
+        ////     theSelections.getHierarchyAttributesMapEpiNode()); //// no longer needed?
+        //// theSelections.recordAndTranslateToMapEpiNode(theDataNode); //// Old way.
         theSelections.recordPathTowardRootAndGetMapEpiNode(theDataNode); //// New way.
         
         purgeSelectionStorageV(); // Purge unneeded selection history. 
