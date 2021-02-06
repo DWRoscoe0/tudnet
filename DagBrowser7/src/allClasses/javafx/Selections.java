@@ -29,8 +29,8 @@ public class Selections
 
   {
     final String pathKeyString= "SelectionPath";
-    final String pathNewValueString= "PRIMARY";
-    final String pathOldValueString= "SECONDARY";
+    final String pathPrimaryString= "PRIMARY";
+    final String pathSecondaryString= "SECONDARY";
   
     // Injected variables.
     private Persistent thePersistent;
@@ -57,9 +57,15 @@ public class Selections
 
     public boolean purgeAndTestB(
         MapEpiNode subjectMapEpiNode,DataNode subjectDataNode)
-      /* 
+      /*
+        ///org This might be eliminated if 
+        customized and incremental purging is done.
+
         This method tries to purge and test 
-        the purge-ability of subjectMapEpiNode.
+        the purge-ability of the subtree rooted at subjectMapEpiNode.
+        subjectDataNode provides context.
+        This method is usually used recursively from the root
+        to purge the entire hierarchy metadata tree.
 
         The purpose of this method is to save space by removing all map entries 
         in the tree rooted at theMapEpiNode which contain no useful information.
@@ -147,6 +153,61 @@ public class Selections
           return allPurgedB; // Return whether purge of all entries succeeded.
         }
 
+    public boolean purgeEmptyAttributesB(MapEpiNode attributesMapEpiNode) //////
+      /*
+        This method tries to purge empty attributes in attributesMapEpiNode.
+        All attributes in the map are examined.
+        This includes the "Children" attribute, 
+        but it doesn't examine individual non-empty children attributes 
+        for internal purge opportunities.
+        Attributes are kept if their values are scalars or
+        if their values are maps that are not empty.
+        This method returns true if no attribute remains, false otherwise.
+        */
+      {
+          boolean allPurgedB= true; // Default result meaning complete purge.
+        toReturn: {
+          if (null == attributesMapEpiNode) // Map missing. 
+            break toReturn; // Considering it a purge success.
+          ListIterator<Map.Entry<EpiNode,EpiNode>> attributeIterator=
+              attributesMapEpiNode.getListIteratorOfEntries();
+
+        attributeLoop: while(true) { // Iterate through attribute map entries.
+          if (! attributeIterator.hasNext()) // Exit if no more attributes. 
+            break attributeLoop;
+        toAttributeDone: { toKeepAttribute: { 
+          Map.Entry<EpiNode,EpiNode> attributeMapEntry= 
+            attributeIterator.next();
+        toRemoveAttribute: {
+          EpiNode attributeValueEpiNode= attributeMapEntry.getValue();
+          if (null == attributeValueEpiNode) // No value. 
+            break toRemoveAttribute; // So remove it.
+          MapEpiNode attributeValueMapEpiNode= 
+              attributeValueEpiNode.tryMapEpiNode();
+          if (null == attributeValueMapEpiNode) // Not a map, a Scalar.
+            break toKeepAttribute; // So keep it.
+          if (0 == attributeValueMapEpiNode.getSizeI()) // Is an empty map. 
+            break toRemoveAttribute; // So remove it. 
+          break toKeepAttribute; // It's a non-empty map, so keep it.
+
+        } // toRemoveAttribute:
+          attributesMapEpiNode.removeEpiNode( // Remove attribute from map
+              attributeMapEntry.getKey().toRawString()); // by name.
+          break toAttributeDone;
+
+        } // toKeepAttribute: Map entry is needed for some reason, so leave it.
+          allPurgedB= false; // Record that at least one map purge failed.
+
+        } // toAttributeDone: processing of this map entry is done.
+
+        } // attributeLoop: Continue with next attribute entry.
+          //// if (0 != attributesMapEpiNode.getSizeI()) // If anything survived
+          ////   allPurgedB= false; // return purge failure.
+
+        } // toReturn: Everythng's done.
+          return allPurgedB; // Return whether purge of all entries succeeded.
+        }
+
     public DataNode getPreviousSelectedDataNode()
       /* This method returns the DataNode representing 
        * the last selection displayed by the app,
@@ -203,7 +264,7 @@ public class Selections
           MapEpiNode childValueMapEpiNode= childValueEpiNode.tryMapEpiNode();
           if (null == childValueMapEpiNode) break toChildDone; // Not a map.
           String pathValueString= childValueMapEpiNode.getString(pathKeyString);
-          if (! pathNewValueString.equals(pathValueString))// Not active path.
+          if (! pathPrimaryString.equals(pathValueString))// Not active path.
             break toChildDone;
           childNameString= childMapEntry.getKey().toRawString(); // Get name.
           break toReturn; // Exit child loop with child name.
@@ -233,6 +294,7 @@ public class Selections
           return selectedDataNode;
       }
 
+
     public DataNode chooseSelectionDataNode(DataNode subjectDataNode)
       /* This method returns a DataNode to be used as the selection within
        * the subjectDataNode.  
@@ -254,6 +316,7 @@ public class Selections
         } // main: 
           return selectedDataNode;
         }
+
 
     public DataNode chooseFromHistoryDataNode(DataNode subjectDataNode)
       /* This method returns a DataNode to be used as the selection within
@@ -278,7 +341,7 @@ public class Selections
     public MapEpiNode recordPathTowardRootAndGetMapEpiNode(
         DataNode subjectDataNode)
       /* This method adjusts PathAttributes to store a selection path.
-       * It deactivates the present selection,
+       * It deactivates the present selection path,
        * and activates a new path from subjectDataNode to the root.
        * It works recursively.
        * It returns the attribute MapEpiNode associated with subjectDataNode.
@@ -304,7 +367,8 @@ public class Selections
         } // goRecord:
           deactivatePathInChildrenV(subjectAttributesMapEpiNode);
           subjectAttributesMapEpiNode.putV( // [re]select this node in path.
-              pathKeyString,"PRIMARY");
+              pathKeyString,pathPrimaryString);
+          purgeEmptyAttributesB(subjectAttributesMapEpiNode);
           return subjectAttributesMapEpiNode; // Return resulting MapEpiNode.
         }
 
@@ -333,7 +397,7 @@ public class Selections
           if (null == childValueMapEpiNode) break toChildDone; // Not a map.
           if // Replace any path attribute with secondary path indicator.
             (null != childValueMapEpiNode.getString(pathKeyString))
-            childValueMapEpiNode.putV(pathKeyString,"SECONTARY");
+            childValueMapEpiNode.putV(pathKeyString,pathSecondaryString);
         } // toChildDone: processing of this map entry is done.
         } // childLoop: Continue with next child entry.
           return;

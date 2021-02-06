@@ -205,10 +205,12 @@ public class TreeStuff
        * Persistent storage starting from the root of that data.
        */
       {
+        /*  //////
         theSelections.purgeAndTestB(
             theSelections.getHierarchyAttributesMapEpiNode(), // History root.
             theDataRoot.getRootDataNode() // DataNodes root.
             );
+        */  //////
         }
 
     public DataNode getParentDataNode()
