@@ -12,25 +12,35 @@ import allClasses.epinode.MapEpiNode;
 public class Selections
 
   /* This class stores and retrieves DataNode selection history.
-   * It makes it possible for a user to quickly return close to
-   * many different previously visited selection locations 
-   * in the DataNode hierarchy.
+   * It makes it possible for a user to quickly return to
+   * many different previously visited locations in the DataNode hierarchy.
+   * The information is stored in Persistent storage at shutdown
+   * so the selection state can be restored during app restart.
    * 
-   * This system is not complete because,
-   * though it stores past selections, 
-   * which is very useful for developing,
-   * it does not store the final selection path at shutdown,
-   * which would be expected by a user who is not a developer.
-   * 
-   * ///org At some point this will probably be divided into:
+   * ///org At some point this class will probably be divided into:
    *   * Selection
    *   * Hierarchy/Attributes
    */
 
   {
-    final String pathKeyString= "SelectionPath";
-    final String pathPrimaryString= "PRIMARY";
-    final String pathSecondaryString= "SECONDARY";
+    final String pathKeyString= "SelectionPath"; // Name of path attribute.
+      // Selection path information is stored in this attributes.
+    final String pathPrimaryString= "PRIMARY"; // Value indicating active
+      // or potentially re-active selection path.
+    final String pathSecondaryString= "SECONDARY"; // Value indicating previous
+      // path.
+
+    // The above is sufficient to encode path information at app shutdown
+    // for reactivation at app restart.
+    // But it does not store all the information needed for
+    // selection of a previously selected node when executing a move-right.
+    // Move-right is presently handled by selecting the most-recently 
+    // accessed child, recorded in the linked list in the LinkedHashMap
+    // of the MapEpiNode class.
+    // To do this without the LnkedHashMap it might be necessary to
+    // go to a 3-valued attribute, as was done in PathAttributeMetaTool,
+    // which uses path attribute values: "IS", "WAS", and "OLD".
+    // Recommended values are: "PRESENT", "PREVIOUS", and "EARLIER".
   
     // Injected variables.
     private Persistent thePersistent;
@@ -64,7 +74,7 @@ public class Selections
         This method tries to purge and test 
         the purge-ability of the subtree rooted at subjectMapEpiNode.
         subjectDataNode provides context.
-        This method is usually used recursively from the root
+        This method is meant to be used recursively from the root
         to purge the entire hierarchy metadata tree.
 
         The purpose of this method is to save space by removing all map entries 
@@ -153,13 +163,22 @@ public class Selections
           return allPurgedB; // Return whether purge of all entries succeeded.
         }
 
+    @SuppressWarnings("unused") ////// incomplete.
+    private boolean purgePathChildrenB(MapEpiNode childrenMapEpiNode)
+      /*
+        This method tries to purge children 
+        that have no useful path information from
+        the map at childrenMapEpiNode.
+        */
+      { return false; }
+
     public boolean purgeEmptyAttributesB(MapEpiNode attributesMapEpiNode) //////
       /*
         This method tries to purge empty attributes in attributesMapEpiNode.
         All attributes in the map are examined.
         This includes the "Children" attribute, 
         but it doesn't examine individual non-empty children attributes 
-        for internal purge opportunities.
+        for internal purge opportunities.  This should have been done earlier.
         Attributes are kept if their values are scalars or
         if their values are maps that are not empty.
         This method returns true if no attribute remains, false otherwise.
@@ -167,8 +186,8 @@ public class Selections
       {
           boolean allPurgedB= true; // Default result meaning complete purge.
         toReturn: {
-          if (null == attributesMapEpiNode) // Map missing. 
-            break toReturn; // Considering it a purge success.
+          if (null == attributesMapEpiNode) // Map is missing.   
+            break toReturn; // This shouldn't happen, but consider it a purge.
           ListIterator<Map.Entry<EpiNode,EpiNode>> attributeIterator=
               attributesMapEpiNode.getListIteratorOfEntries();
 
@@ -184,9 +203,9 @@ public class Selections
             break toRemoveAttribute; // So remove it.
           MapEpiNode attributeValueMapEpiNode= 
               attributeValueEpiNode.tryMapEpiNode();
-          if (null == attributeValueMapEpiNode) // Not a map, a Scalar.
+          if (null == attributeValueMapEpiNode) // Not a map, must be a Scalar.
             break toKeepAttribute; // So keep it.
-          if (0 == attributeValueMapEpiNode.getSizeI()) // Is an empty map. 
+          if (0 == attributeValueMapEpiNode.getSizeI()) // It is an empty map. 
             break toRemoveAttribute; // So remove it. 
           break toKeepAttribute; // It's a non-empty map, so keep it.
 
@@ -195,8 +214,8 @@ public class Selections
               attributeMapEntry.getKey().toRawString()); // by name.
           break toAttributeDone;
 
-        } // toKeepAttribute: Map entry is needed for some reason, so leave it.
-          allPurgedB= false; // Record that at least one map purge failed.
+        } // toKeepAttribute: Attribute is needed for some reason, so keep it.
+          allPurgedB= false; // Record that at least one entry purge failed.
 
         } // toAttributeDone: processing of this map entry is done.
 
@@ -217,6 +236,8 @@ public class Selections
        * while following an equivalent path in the DataNode tree,
        * starting each from its respective root.
        * It returns the last DataNode in the DataNode path.
+       * This method is used at app start up to restore 
+       * the selection that existed when the app shut down.
        */
       {
           DataNode scanDataNode= theDataRoot.getRootDataNode();
@@ -274,31 +295,34 @@ public class Selections
           return childNameString;
         }
 
-    public DataNode chooseSelectionDataNode(
-        DataNode subjectDataNode, DataNode selectedDataNode)
-      /* This method returns a DataNode to be used as the selection within
-       * the subjectDataNode.  
-       * It returns selectedDataNode if it is not null.
+    public DataNode chooseChildDataNode(
+        DataNode subjectDataNode, DataNode preferedDataNode)
+      /* This method returns a child DataNode within the subjectDataNode 
+       * to be used as the next selection.  
+       * This is used by the move-right command.  
+       * It returns preferedDataNode if it is not null.
        * Otherwise it tries to find an appropriate child DataNode
        * that may be used as the selection.
        * If it finds one then it returns it.
        * Otherwise it returns null.
        */
       {
+          DataNode resultDataNode;
         main: {
-          if (null != selectedDataNode) // Selection was provided as parameter
-            break main; // so return it.
-          selectedDataNode= // Choose an appropriate selection.
-              chooseSelectionDataNode(subjectDataNode); 
+          if (null != preferedDataNode) // Preferred selection was provided
+            { resultDataNode= preferedDataNode; break main; } // so use it.
+          resultDataNode= // Choose an appropriate selection.
+              chooseChildDataNode(subjectDataNode); 
         } // main: 
-          return selectedDataNode;
+          return resultDataNode;
       }
 
 
-    public DataNode chooseSelectionDataNode(DataNode subjectDataNode)
-      /* This method returns a DataNode to be used as the selection within
-       * the subjectDataNode.  
-       * It tries to find the most recent selected child
+    public DataNode chooseChildDataNode(DataNode subjectDataNode)
+      /* This method returns a child DataNode within the subjectDataNode 
+       * to be used as the next selection.  
+       * This is used by the move-right command.  
+       * First it tries to find the most recent selected child
        * from the selection history.
        * If there is none then it tries to return the subject's first child.
        * If there are no children then it returns null.
@@ -306,7 +330,7 @@ public class Selections
       {
           DataNode selectedDataNode; // For result selection.
         main: {
-          selectedDataNode= chooseFromHistoryDataNode(subjectDataNode);
+          selectedDataNode= chooseChildFromHistoryDataNode(subjectDataNode);
           if (null != selectedDataNode) // Got previous selection from history.
             break main; // Return it.
           selectedDataNode= // Try getting first child from node's child list. 
@@ -318,22 +342,23 @@ public class Selections
         }
 
 
-    public DataNode chooseFromHistoryDataNode(DataNode subjectDataNode)
-      /* This method returns a DataNode to be used as the selection within
-       * the DataNode subjectDataNode.  
-       * It tries to find the most recent selected child
+    public DataNode chooseChildFromHistoryDataNode(DataNode subjectDataNode)
+      /* This method returns the subjectDataNode's child DataNode 
+       * to be used as the selection.  
+       * It tries to find the most recently selected child
        * from the selection history for that node.
-       * If there is none then it returns null.
+       * The last child in the selection history is assumed to be that child. 
+       * If there is one then it returns that child, otherwise it returns null.
        */
       {
-        MapEpiNode subjectMapEpiNode= // Get subject MapEpiNode from history.
+        MapEpiNode subjectMapEpiNode= // Get subject's MapEpiNode from history.
           recordAndTranslateToMapEpiNode(subjectDataNode);
-        MapEpiNode childrenAttributeMapEpiNode= 
+        MapEpiNode childrenAttributeMapEpiNode= // Get map of it's children.
             getOrMakeChildrenMapEpiNode(subjectMapEpiNode);
-        String selectionNameString= // Get the name of most recent selection,
+        String selectionNameString= // Get the name of child which is
           childrenAttributeMapEpiNode.getKeyString(
             childrenAttributeMapEpiNode.getSizeI()-1); // the most recent entry.
-        DataNode selectedDataNode= // Try getting child by name from child list. 
+        DataNode selectedDataNode= // Try getting child DataNode by name. 
             subjectDataNode.getNamedChildDataNode(selectionNameString);
         return selectedDataNode;
         }
@@ -366,7 +391,7 @@ public class Selections
             /// This might be deprecated.
         } // goRecord:
           deactivatePathInChildrenV(subjectAttributesMapEpiNode);
-          subjectAttributesMapEpiNode.putV( // [re]select this node in path.
+          subjectAttributesMapEpiNode.putV( // [Re]activate this node in path.
               pathKeyString,pathPrimaryString);
           purgeEmptyAttributesB(subjectAttributesMapEpiNode);
           return subjectAttributesMapEpiNode; // Return resulting MapEpiNode.
@@ -379,8 +404,8 @@ public class Selections
        * It does this using iteration of 
        * the children in subjectsAttributesMapEpiNode.
        * Even though there should be a maximum of 1 child 
-       * for which this is true, it processes all children,
-       * but it does only one level.
+       * for which this is true, it examines all children,
+       * but it does this in only one level.
        */
       {
           MapEpiNode subjectsChildrenMapEpiNode=

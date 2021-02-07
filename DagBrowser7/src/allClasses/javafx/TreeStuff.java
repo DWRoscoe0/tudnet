@@ -122,12 +122,12 @@ public class TreeStuff
             break main; // this is a serious problem, so give up.
           oldSelectedDataNode= getSelectionDataNode();
           newSubjectDataNode= // Set new subject to be
-              theSelections.chooseSelectionDataNode( // result of choosing from
+              theSelections.chooseChildDataNode( // result of choosing from
                   oldSubjectDataNode, oldSelectedDataNode); // old subject.
           if (null == newSubjectDataNode) // If new subject not defined 
             break main; // we can not move right, so give up.
           newSelectedDataNode= // Set new selection to be 
-              theSelections.chooseSelectionDataNode( // result of choosing from
+              theSelections.chooseChildDataNode( // result of choosing from
                   newSubjectDataNode, null); // new subject.
           resultTreeStuff=  // For the new 
               newSubjectDataNode.makeTreeStuff( // subject node, make TreeStuff
@@ -267,7 +267,7 @@ public class TreeStuff
         if (null == resultDataNode) // If there is no present selection 
           break main; // exit with null.
         resultDataNode= // Get best sub-selection. with present selection.
-          theSelections.chooseSelectionDataNode(resultDataNode);
+          theSelections.chooseChildDataNode(resultDataNode);
         if (null == resultDataNode) // If there is no best sub-selection
           break main; // exit with null.
       } // main:
@@ -306,7 +306,7 @@ public class TreeStuff
           (null == theTreeStuff.getSelectionDataNode())
           {
             DataNode chosenSelectionDataNode=
-              theSelections.chooseSelectionDataNode(subjectDataNode);
+              theSelections.chooseChildDataNode(subjectDataNode);
             theTreeStuff.setSelectedDataNodeV(chosenSelectionDataNode);
             }
         return theTreeStuff;
