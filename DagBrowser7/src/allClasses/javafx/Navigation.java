@@ -87,14 +87,21 @@ public class Navigation extends EpiStage
             theSelections.getPreviousSelectedDataNode();
 
         buildTreeSceneV(theRootDataNode);
-        setTreeContentFromDataNodeV(previouslySelectedDataNode);
 
         buildDataNodeSceneV();
-        setDataNodeContentFromDataNodeV(previouslySelectedDataNode);
 
-        setScene(theTreeScene); // Use tree scene as first one displayed.
-        /// setScene(theDataNodeScene); // Use item scene as first one displayed.
-
+        { // Calculate only one content to avoid selection history pollution.
+          boolean displayTreeFirstB= true;
+          if (displayTreeFirstB)
+            { setTreeContentFromDataNodeV(previouslySelectedDataNode);
+              setScene(theTreeScene); // Use tree scene as first one displayed.
+              }
+            else
+            { setDataNodeContentFromDataNodeV(previouslySelectedDataNode);
+              setScene(theDataNodeScene); // Use item scene as first one displayed.
+              }
+          }
+        
         finishStateInitAndStartV("Infogora JavaFX Navigation UI");
         }
     
