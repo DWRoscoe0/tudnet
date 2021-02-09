@@ -555,9 +555,10 @@ public class Selections
             MapEpiNode lastPathChildMapEpiNode= getChildWithSelectionMapEpiNode(
                 childrenMapEpiNode,pathLastString); // Look for last path.
             if (null != lastPathChildMapEpiNode) // If found, replace it.
-              presentPathChildMapEpiNode.putV(pathKeyString,pathEarlierString);
+              lastPathChildMapEpiNode.putV(pathKeyString,pathEarlierString);
             presentPathChildMapEpiNode.putV(pathKeyString,pathLastString);
             }
+        purgeEmptyAttributesB(subjectsAttributesMapEpiNode);
         }
 
     private MapEpiNode getChildWithSelectionMapEpiNode(
