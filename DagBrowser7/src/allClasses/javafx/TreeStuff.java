@@ -138,7 +138,7 @@ public class TreeStuff
                 theSelections // and this.
                 ); 
         } // main:
-          purgeSelectionStorageV();
+          //// purgeSelectionStorageV();
           return resultTreeStuff;
         }
     
@@ -169,7 +169,7 @@ public class TreeStuff
                 theRootEpiTreeItem, // and this
                 theSelections // and this.
                 ); 
-          purgeSelectionStorageV();
+          //// purgeSelectionStorageV();
         } // main: 
           return resultTreeStuff;
         }
@@ -197,10 +197,11 @@ public class TreeStuff
         // Store selection in the selection history.
         theSelections.recordPathTowardRootAndGetMapEpiNode(theDataNode);
         
-        purgeSelectionStorageV(); // Purge unneeded selection history. 
+        //// purgeSelectionStorageV();
         }
 
-    private void purgeSelectionStorageV()
+    @SuppressWarnings("unused")
+    private void purgeSelectionStorageV() ////
       /* This method purges any unneeded selection data from
        * Persistent storage starting from the root of that data.
        */
