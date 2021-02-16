@@ -195,7 +195,8 @@ public class TreeStuff
         selectedDataNode= theDataNode; // Store selection locally.
 
         // Store selection in the selection history.
-        theSelections.recordPathTowardRootAndGetMapEpiNode(theDataNode);
+        //// theSelections.recordPathTowardRootAndGetMapEpiNode(theDataNode);
+        theSelections.adjustForNewSelectionV(theDataNode);
         
         //// purgeSelectionStorageV();
         }

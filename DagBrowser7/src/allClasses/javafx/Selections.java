@@ -33,13 +33,30 @@ public class Selections
     final String pathActiveString= "ACTIVE"; // Value indicating that
       // this sibling is part of the active path.
     final String pathNextString= "NEXT"; // Value indicating that
-      // this sibling should become part of the active 
-      // if there is a move from its parent to an unspecified child.
+      // this sibling should become ACTIVE if its parent is ACTIVE 
+      // if there is a move from there to an unspecified child.
     final String pathHoldingString= "HOLDING"; // Value indicating that
-      // this sibling is holding path information in
+      // this sibling is holding NEXT or HOLDING path attributes in
       // one or more of its children.
 
-    /* This 3-valued attribute system was based loosely on 
+    /* A set of siblings may contain the following types of nodes:
+     * * One ACTIVE node, or one NEXT node, or neither, but not both.
+     * * Any number of HOLDING nodes.
+     * * Any number of null nodes.
+     * 
+     * For all nodes except the root node:
+     * * The parent of an ACTIVE node must be ACTIVE.  
+     *   Its children may be of any type.
+     * * The parent of a NEXT node must be ACTIVE, NEXT, or HOLDING.
+     *   Its children may be of any type.
+     * * The parent of a HOLDING node must be ACTIVE, NEXT, or HOLDING.
+     *   It must have at least one NEXT or HOLDING child node.
+     * * The parent of a null node may be anything.
+     *   All of its children must null.
+     * The root node is always an ACTIVE node.
+     */
+    
+    /* This above 3-valued attribute system is based loosely on 
      * class PathAttributeMetaTool, which uses path attribute values: 
      * "IS", "WAS", and "OLD".
      *   
@@ -251,43 +268,71 @@ public class Selections
 
     // Mutator methods.
 
+    public void adjustForNewSelectionV(DataNode subjectDataNode)
+      /* This method adjusts the information in Persistent storage
+       * about what was and is selected.
+       * The new selection is subjectDataNode.
+       */
+      { 
+        MapEpiNode parentChildrenMapEpiNode= // Adjust for path toward root.
+          recordPathTowardRootAndGetMapEpiNode(subjectDataNode);
+        
+        String subjectNameKeyString= subjectDataNode.getNameString();
+        demotePathInChildrenV( // Adjust for old path further from root.
+            parentChildrenMapEpiNode.getOrMakeMapEpiNode(
+                subjectNameKeyString));
+        }
+    
     public MapEpiNode recordPathTowardRootAndGetMapEpiNode(
         DataNode subjectDataNode)
-      /* This method adjusts PathAttributes to store a selection path.
-       * It deactivates the old selection path by demotion,
-       * and activates a new path from subjectDataNode to the root.
-       * It returns the attribute MapEpiNode associated with subjectDataNode.
-       * It works recursively, as follows:
-       * * It makes recursive calls until the root DataNode is found.
-       * * It calls demotePathInChildrenV(.) on the root MapEpiNode
-       *   to deactivate the old path.  
-       *   Care must be taken to maintain constraints.
-       * * It activates the new path while making recursive returns,
-       *   returning associated MapEpiNode as it goes.
-       * This process happens in these 3 phases because
-       * at the beginning the association between 
-       * DataNodes of the data hierarchy
-       * and MapEpiNodes of the selection history
-       * is not known, so it is revealed by the recursive calls.  
-       * If this association were somehow maintained during normal use, 
-       * these phases could be eliminate or replaced.
+      /*
+       *  //////org This method is being rewritten to do its work
+       * without having a separate deactivation/demotion phase,
+       * and instead deactivate only the part of the path that needs it,
+       * and only when it needs it.
+       * It will do this by using the context of 2 levels of hierarchy. 
+       * 
+       * This method adjusts PathAttributes to activate a new path
+       * from the root to subjectDataNode while deactivating the old path
+       * defined by the path attributes in Persistent storage.
+       * It also returns the map of the set of children 
+       * that contains the subject.
+       * This method uses recursion and works in 2 phases:
+       * * Recursively calls itself until the root DataNode is reached.
+       *   It does this to associate MapEpiNodes with DataNodes.
+       * * Returns from previous recursive calls 
+       *   while examining the state of the subject's siblings,
+       *   and adjusting the path attributes of the subject node
+       *   its sibling's subtrees appropriately. 
+       *   This return phase is divided into 3 sub-phases:
+       *   1: Where the old path node and new path node are the same node.
+       *     In this case the subject node is already ACTIVE,
+       *     so nothing needs to be changed.
+       *   2: Where the old and new paths do not match.
+       *     This is the level at which the paths diverge.
+       *     It is where the old path is ACTIVE and the new path is not, yet.
+       *     In this case the old path must be deactivated.
+``````       *     The ACTIVE node in the old path will become a HOLDING node,
+       *     and converted to NEXT in the descendants.
+       *     No HOLDING nodes need to change.
+       *     A non-ACTIVE node in the new path will become an ACTIVE node.
+       *     This piece of path might have a length of 1,
+       *     or 0, in which case nothing actually happens.
+       *   3: After path divergence, the new part of the desired path
+       *     must be activated by storing ACTIVE in the subject node.
+       *     Because ACTIVE and NEXT can not be siblings,
+       *     any NEXT sibling[s] must be demoted to HOLDING first,
+       *     but in this case nothing needs to be done in the subtree[s]. 
+       *     This piece of path might have a length of 0.
        */
       {
-          MapEpiNode parentsChildrenMapEpiNode; // Used for returned result.
-          MapEpiNode subjectAttributesMapEpiNode; // Used for returned result. 
+          MapEpiNode parentChildrenMapEpiNode; // Used for returned result.
           String subjectNameKeyString= subjectDataNode.getNameString();
   
-        goRecord: {
-          //// if (subjectDataNode.isRootB()) { // DataNode is the root node.
+        recursingOrNot: {
           if (subjectDataNode == theDataRoot.getRootDataNode()) { // At root 
-            //// subjectAttributesMapEpiNode= hierarchyRootMapEpiNode; // Use root.
-            parentsChildrenMapEpiNode= hierarchyRootMapEpiNode; // Use root.
-            //// demotePathInChildrenV(subjectAttributesMapEpiNode);
-            demotePathInChildrenV( // Deactivate present active path.
-                parentsChildrenMapEpiNode.getOrMakeMapEpiNode(
-                    subjectNameKeyString));
-            break goRecord; //////// go before or after record?
-            //// break goReturn; //////// go before or after record?
+            parentChildrenMapEpiNode= hierarchyRootMapEpiNode; // Use root.
+            break recursingOrNot;
             }
           DataNode parentDataNode= subjectDataNode.getParentNamedList();
           String parentNameKeyString= parentDataNode.getNameString();
@@ -297,75 +342,92 @@ public class Selections
           MapEpiNode parentAttributesMapEpiNode= 
             grandparentChildrenMapEpiNode.getOrMakeMapEpiNode(
                 parentNameKeyString);
-          parentsChildrenMapEpiNode=
+          parentChildrenMapEpiNode=
               getOrMakeChildrenMapEpiNode(parentAttributesMapEpiNode);
-        } // goRecord:
-          subjectAttributesMapEpiNode= 
-            parentsChildrenMapEpiNode.getOrMakeMapEpiNode(subjectNameKeyString);
+        } // recursingOrNot:
+          MapEpiNode subjectAttributesMapEpiNode= 
+            parentChildrenMapEpiNode.getOrMakeMapEpiNode(subjectNameKeyString);
+          String subjectPathValueString= 
+              subjectAttributesMapEpiNode.getString(pathKeyString);
+        adjustThisLevel: { goActivateSubject: { ////// this could move up.
+          String activeNodeNameString= // Get name of old ACTIVE node, if any.
+            getByAttributeChildString(
+              parentChildrenMapEpiNode,pathActiveString);
+          if // We have returned past the point of path divergence because
+            (null == activeNodeNameString) { // there is no old ACTIVE node.
+              demoteSiblingsOfInToHoldingV( // so check and demote siblings
+                  subjectPathValueString,parentChildrenMapEpiNode);
+              break goActivateSubject; // and go make subject node ACTIVE.
+              }
+          if // We have not yet returned to the point of path divergence because
+            (subjectNameKeyString.equals( // the subject node is ACTIVE
+                activeNodeNameString))
+            break adjustThisLevel; // so exit because no adjustment is needed.
+          // We are at the point of divergence
+          demoteSiblingsOfInToHoldingV( // so check and demote sibling[s].
+              subjectNameKeyString,parentChildrenMapEpiNode);
+        } // goActivateSubject:
           subjectAttributesMapEpiNode.putV( // [Re]activate this node in path.
               pathKeyString,pathActiveString);
+        } // adjustThisLevel:
           purgeEmptyAttributesB(subjectAttributesMapEpiNode);
-          //// return subjectAttributesMapEpiNode; // Return resulting MapEpiNode.
-          return parentsChildrenMapEpiNode;
+          return parentChildrenMapEpiNode;
         }
 
-    public MapEpiNode OLDrecordPathTowardRootAndGetMapEpiNode( ////// OLD
-        DataNode subjectDataNode)
-      /* This method adjusts PathAttributes to store a selection path
-       * for the path from the root to subjectDataNode.
-       * It also returns the map of children that contains 
-       * path information about the subject.
-       * This method uses recursion and works in 4 phases:
-       * * Recursively calls itself until the root DataNode is reached,
-       *   ///org or maybe the parent of the root DataNode.
-       * * Recursively returns while comparing the actual path attributes
-       *   with the desired path attributes.
-       *   * While the desired and actual path attributes match,
-       *     nothing needs to be changed.
-       *   * Where the desired and actual paths diverge,
-       *     from the actual path must be disabled, aka demoted.
-       *     This piece of path might have 0 length.
-       *     In this case nothing actually happens.
-       *   * After path divergence, the new part of the desired path
-       *     must be activated.
-       *     This piece of path might have 0 length.
-       * 
-       * ! ///org This will not work!  
-       *   Don't have the between level information needed!
-       *   Maybe it would work if I stopped at parent of root instead of root?
+    private void demoteSiblingsOfInToHoldingV( /////////////// to be completed.
+        String subjectNameString,MapEpiNode childrenMapEpiNode)
+      /* This method demotes siblings of the node 
+       * whose name is subjectNameString in the map childrenMapEpiNode 
+       * to the HOLDING state.
+       * This method is used when a subject node
+       * is going to become either ACTIVE or NEXT
+       * from a state that is neither ACTIVE or NEXT.
+       * This method demotes to HOLDING any sibling nodes 
+       * that are ACTIVE or NEXT, though there should be only one.
+       * If it demotes an ACTIVE sibling node then it
+       * will also demote to NEXT any ACTIVE descendants of that sibling.
        */
       {
-          MapEpiNode subjectAttributesMapEpiNode; // Used for returned result. 
-  
-        goRecord: {
-          //// if (subjectDataNode.isRootB()) { // DataNode is the root node.
-          if (subjectDataNode == theDataRoot.getRootDataNode()) { // At root 
-            subjectAttributesMapEpiNode= hierarchyRootMapEpiNode; // Use root.
-            demotePathInChildrenV(subjectAttributesMapEpiNode); ////// needed?
-            break goRecord;
+          MapEpiNode childAttributesMapEpiNode;
+          ListIterator<Map.Entry<EpiNode,EpiNode>> childrenIterator=
+              childrenMapEpiNode.getListIteratorOfEntries();
+        childLoop: while(true) { // Iterate through child map entries.
+          if (! childrenIterator.hasNext()) break childLoop; // No more entries.
+        toChildDone: { toDemoteChild: {
+          Map.Entry<EpiNode,EpiNode> childMapEntry= 
+              childrenIterator.next(); // Get next entry.
+          String childKeyNameString= childMapEntry.getKey().toRawString();
+          if // This child is the subject node, not one of its siblings
+            (childKeyNameString.equals(subjectNameString))
+            break toChildDone; // so skip it.
+          EpiNode childAttributesEpiNode= childMapEntry.getValue();
+          if (null == childAttributesEpiNode) break toChildDone; // No value.
+          childAttributesMapEpiNode= childAttributesEpiNode.tryMapEpiNode();
+          if (null == childAttributesMapEpiNode) break toChildDone; // Not map.
+          String pathValueString= // Get value of path attribute. 
+             childAttributesMapEpiNode.getString(pathKeyString);
+          if (pathNextString.equals(pathValueString)) // Is a NEXT node
+            break toDemoteChild; // so just demote it.
+          if (pathActiveString.equals(pathValueString)) { // Is an ACTIVE node
+            break toDemoteChild; // and demote the node.
             }
-          MapEpiNode parentsAttributesMapEpiNode= // Get parent DataNode
-            recordPathTowardRootAndGetMapEpiNode( // by recursion with 
-              subjectDataNode.getParentNamedList()); // subject's parent.
-          MapEpiNode parentsChildrenMapEpiNode=
-            getOrMakeChildrenMapEpiNode(parentsAttributesMapEpiNode);
-          String subjectNameKeyString= subjectDataNode.getNameString();
-          subjectAttributesMapEpiNode= 
-            parentsChildrenMapEpiNode.getOrMakeMapEpiNode(subjectNameKeyString);
-        } // goRecord:
-          subjectAttributesMapEpiNode.putV( // [Re]activate this node in path.
-              pathKeyString,pathActiveString);
-          purgeEmptyAttributesB(subjectAttributesMapEpiNode);
-          return subjectAttributesMapEpiNode; // Return resulting MapEpiNode.
+          break toChildDone; // Ignore any other child.
+        } // toDemoteChild:
+          childAttributesMapEpiNode.putV( // Set as HOLDING.
+              pathKeyString, pathHoldingString);
+        } // toChildDone: processing of this map entry is done.
+        } // childLoop: Continue with next child entry.
+          return;
         }
-
-    public void demotePathInChildrenV(
+    
+    private void demotePathInChildrenV( ////// might soon not be used.
         MapEpiNode subjectAttributesMapEpiNode)
       /* This recursive method deactivates the primary path 
        * in any child for which the path is active,
        * starting with the children in subjectsAttributesMapEpiNode.
        *
-       * It does this by replacing selection values, as follows: ///////
+       * It does this by replacing selection values, as follows: 
+       * /////// changed to use ACTIVE, NEXT, and HOLDING. 
        * * replace PRESENT with LAST
        * * replace LAST with EARLIER if a new LAST was created.
        * * removes EARLIER nodes that have no needed children.
@@ -426,31 +488,6 @@ public class Selections
             }
         }
 
-    @SuppressWarnings("unused") ////
-    private boolean tryDemotingPathAttributesInB(
-        MapEpiNode subjectAttributesMapEpiNode)
-      /* This method tries to demote the path attribute one level, 
-       * if the attribute is present.
-       * It returns true if demotion was successful, false otherwise.
-       * 
-       * Presently this demotes either PRESENT or LAST.
-       * This is not usable as is.
-       */
-      {
-        boolean resultB= true; // Assume an attribute substitution will be made.
-        String pathValueString= // Get the present path attribute value, if any. 
-            subjectAttributesMapEpiNode.getString(pathKeyString);
-
-        if (pathActiveString.equals(pathValueString)) // Try 1st substitution.
-          subjectAttributesMapEpiNode.putV(pathKeyString,pathNextString);
-        else if (pathNextString.equals(pathValueString)) // Try 2nd.
-          subjectAttributesMapEpiNode.putV(pathKeyString,pathHoldingString);
-        else // Indicate that both substitutions failed.
-          resultB= false;
-
-        return resultB;
-        }
-
     public MapEpiNode recordAndTranslateToMapEpiNode(DataNode subjectDataNode)
       /* This method translates subjectDataNode to 
        * the MapEpiNode at the location in Persistent storage
@@ -472,10 +509,7 @@ public class Selections
           String subjectNameKeyString= subjectDataNode.getNameString();
         toReturn: {
           if (subjectDataNode.isRootB()) { // subjectDataNode is the root node.
-            //// subjectMapEpiNode= hierarchyRootMapEpiNode; // Return it.
             parentsChildrenMapEpiNode= hierarchyRootMapEpiNode; // Use root.
-            //// demotePathInChildrenV(subjectAttributesMapEpiNode);
-            //// demotePathInChildrenV( // Deactivate present active path.
             subjectMapEpiNode=
                 parentsChildrenMapEpiNode.getOrMakeMapEpiNode(
                     subjectNameKeyString);
@@ -484,7 +518,6 @@ public class Selections
           DataNode parentDataNode= subjectDataNode.getParentNamedList();
           parentMapEpiNode= // Recursing to translate parent. 
                 recordAndTranslateToMapEpiNode(parentDataNode);
-          //// String subjectKeyString= subjectDataNode.getNameString(); // Get name.
           parentsChildrenMapEpiNode= 
               getOrMakeChildrenMapEpiNode(parentMapEpiNode);
           subjectMapEpiNode= 
@@ -709,13 +742,14 @@ public class Selections
         return selectedDataNode;
         }
 
-    private MapEpiNode getWithPathChildAttributesMapEpiNode( //////
+    private MapEpiNode getWithPathChildAttributesMapEpiNode(
         MapEpiNode childrenMapEpiNode,String desiredValueString)
       /* This method searches the children in childrenMapEpiNode for 
        * a child with a selection attribute with value of desiredValueString,
-       * any value if desiredValueString is null.
+       * or any value if desiredValueString is null.
        * It returns the attributes MapEpiNode of the found child,
        * or null if such a child is not found. 
+       * 
        */
       {
         MapEpiNode childAttributesMapEpiNode= null; // Assume search failure.
@@ -727,11 +761,11 @@ public class Selections
         return childAttributesMapEpiNode;
         }
 
-    private String getWithPathChildAttributesNameString( ////// new
+    private String getWithPathChildAttributesNameString(
         MapEpiNode childrenMapEpiNode,String desiredValueString)
       /* This method searches the children in childrenMapEpiNode for 
        * a child with a selection attribute with value of desiredValueString,
-       * any value if desiredValueString is null.
+       * or any value if desiredValueString is null.
        * It returns the String name of the found child,
        * or null if such a child is not found. 
        */
