@@ -461,6 +461,12 @@ public class MapEpiNode extends EpiNode
         If this method is called, it is assumed that
         the associated EpiNode is supposed to be a MapEpiNode, 
         not something else such as a ScalarEpiNode.
+        
+       * //////org Using this method can create empty an empty attribute
+       * if it is used for condition testing.
+       * It should be used only when an attribute is being created 
+       * unless an empty attribute purge is done afterward.
+
        */
       {
           // theAppLog.debug("MapEpiNode.getOrMakeMapEpiNode(String) called.");
