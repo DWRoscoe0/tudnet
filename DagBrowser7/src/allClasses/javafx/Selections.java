@@ -88,11 +88,12 @@ public class Selections
     private DataRoot theDataRoot;
     
     // Calculated variables.
-    private MapEpiNode hierarchyRootMapEpiNode;
-      // This is where selection history and other attributes are stored 
-      // to enable easily visiting previously visited children.
-      // The first and only element of the map at this level
-      // is the map entry associated with the root DataNode.
+
+    // This is where selection history and other attributes are stored 
+    // to enable easily visiting previously visited children.
+    // Temporarily there are 2 variables for accessing it.
+    private MapEpiNode hierarchyRootParentsAttributesMapEpiNode; ////// new.
+    private MapEpiNode hierarchyRootParentsChildrenMapEpiNode;
 
     public Selections( // Constructor.
         Persistent thePersistent,
@@ -102,8 +103,12 @@ public class Selections
         this.thePersistent= thePersistent;
         this.theDataRoot= theDataRoot;
 
-        this.hierarchyRootMapEpiNode= // Calculate root MapEpiNode.
-            this.thePersistent.getOrMakeMapEpiNode("HierarchyMetaDataRoot");
+        hierarchyRootParentsAttributesMapEpiNode= ////// new root?
+            thePersistent.getOrMakeMapEpiNode(
+                "HierarchyRootsParentsAttributes");
+        hierarchyRootParentsChildrenMapEpiNode= // Calculate root MapEpiNode.
+            thePersistent.getOrMakeMapEpiNode(
+                "HierarchyRootsParentsChildren");
         }
 
 
@@ -269,10 +274,12 @@ public class Selections
           String subjectNameKeyString= subjectDataNode.getNameString();
   
         recursingOrNot: {
-          if (subjectDataNode == theDataRoot.getRootDataNode()) { // At root 
-            parentsChildrenMapEpiNode= hierarchyRootMapEpiNode; // Use root.
-            break recursingOrNot;
-            }
+          if (subjectDataNode == theDataRoot.getRootDataNode()) // At root
+            { // so use root children, don't call recursively.
+              parentsChildrenMapEpiNode= getRootParentsChildrenMapEpiNode();
+              break recursingOrNot;
+              }
+          // We need to do a recursive call.
           DataNode parentDataNode= subjectDataNode.getParentNamedList();
           String parentNameKeyString= parentDataNode.getNameString();
           MapEpiNode grandparentChildrenMapEpiNode=
@@ -422,7 +429,7 @@ public class Selections
           String subjectNameKeyString= subjectDataNode.getNameString();
         toExit: {
           if (subjectDataNode.isRootB()) { // subjectDataNode is the root node.
-            parentsChildrenMapEpiNode= hierarchyRootMapEpiNode; // Use root.
+            parentsChildrenMapEpiNode= getRootParentsChildrenMapEpiNode(); // Use root.
             subjectMapEpiNode=
                 parentsChildrenMapEpiNode.getOrMakeMapEpiNode(
                     subjectNameKeyString);
@@ -745,10 +752,22 @@ public class Selections
         return parentMapEpiNode.getMapEpiNode("Children");
         }
 
-    public MapEpiNode getHierarchyAttributesMapEpiNode()
-      /* This returns the root of the path meta-data hierarchy.  */
+    private MapEpiNode getRootParentsChildrenMapEpiNode()
+      /* This returns the children map of the parent of 
+       * the root of the path meta-data hierarchy.  
+       */
       { 
-        return hierarchyRootMapEpiNode; 
+        //// return hierarchyRootParentsChildrenMapEpiNode; 
+        return getOrMakeChildrenMapEpiNode(
+            getRootParentsAttributesMapEpiNode());
+        }
+
+    private MapEpiNode getRootParentsAttributesMapEpiNode()
+      /* This returns the attributes map of the parent of 
+       * the root of the path meta-data hierarchy.  
+       */
+      { 
+        return hierarchyRootParentsAttributesMapEpiNode; 
         }
 
     }
