@@ -462,10 +462,10 @@ public class MapEpiNode extends EpiNode
         the associated EpiNode is supposed to be a MapEpiNode, 
         not something else such as a ScalarEpiNode.
         
-       * //////org Using this method can create empty an empty attribute
+       * Using this method can create empty an empty attribute
        * if it is used for condition testing.
        * It should be used only when an attribute is being created 
-       * unless an empty attribute purge is done afterward.
+       * unless a purge of empty attributes is done afterward.
 
        */
       {

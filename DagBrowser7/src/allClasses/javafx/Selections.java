@@ -113,110 +113,15 @@ public class Selections
      * are not being purged.
      */
 
-    ///org This might be eliminated if customized and incremental purging 
-    ///   is done after all structural changes.  Keep for reference for a while.
-    @SuppressWarnings("unused")
-    private boolean purgeAndTestB( ///
-        MapEpiNode subjectMapEpiNode,DataNode subjectDataNode)
-      /*
-        This method tries to purge and test 
-        the purge-ability of the subtree rooted at subjectMapEpiNode.
-        subjectDataNode provides context.
-        This method is meant to be used recursively from the root
-        to purge the entire hierarchy metadata tree.
-
-        The purpose of this method is to save space by removing all map entries 
-        in the tree rooted at theMapEpiNode which contain no useful information.
-        Not useful information is information which causes behavior 
-        which is identical to the behavior if the information was absent.
-        At this time the behavior of interest is only
-        the selection of previously visited data nodes,
-        but this might change.
-
-        The method works by recursively traversing 
-        * the MapEpiNode tree rooted at theMapEpiNode, and
-        * the DataNode tree rooted at subjectDataNode
-        MapEpiNodes may be deleted but DataNodes are not.
-        The DataNode tree is used only to provide context needed for
-        deciding what is useful information in the MapEpiNode tree.
-
-        This method is recursively called on all of the child map entries
-        and removes what can be deleted.
-        It keeps a child map entry, meaning it does not remove one,  
-        * that had false returned from the recursive call to this method, or
-        * whose associated DataNode, the child DataNode with the same name, 
-          is child 0, the first child DataNode, which is used as 
-          the default selection if the selection 
-          is not specified by a map entry, or
-        * whose map entry is the last one in the map, because that one
-          is used to represent the most recent selection.
-
-        Any data that is out of specification considered purge-able.
-
-        This method can not and does not remove 
-        the parent map entry containing theMapEpiNode.
-        That MAY be done by the caller if this method returns true.
-
-        This method returns true to indicate a purge success,
-        meaning that none of the child map entries remain,
-        and the parent map entry MAY be removed.
-        It returns false to indicate failure, meaning that 
-        at least one child map entry and possibly some if its descendants 
-        survived the purge.
-        */
-      {
-          boolean allPurgedB= true; // Default result meaning successful purge.
-        toExit: {
-          if (null == subjectMapEpiNode) // Map missing. 
-            break toExit; // Considering it a purge success.
-          MapEpiNode childrenAttributeMapEpiNode= // Get Children attribute map. 
-              getOrMakeChildrenMapEpiNode(subjectMapEpiNode);
-          ListIterator<Map.Entry<EpiNode,EpiNode>> childIterator=
-              childrenAttributeMapEpiNode.getListIteratorOfEntries();
-
-        childLoop: while(true) { // Iterate through child map entries.
-          if (! childIterator.hasNext()) break childLoop; // No more entries.
-        toChildDone: { toKeepChild: { 
-          Map.Entry<EpiNode,EpiNode> childMapEntry= childIterator.next();
-        toRemoveChild: {
-          EpiNode childValueEpiNode= childMapEntry.getValue();
-          if (null == childValueEpiNode) break toRemoveChild; // No child value.
-          MapEpiNode childValueMapEpiNode= childValueEpiNode.tryMapEpiNode();
-          if (null == childValueMapEpiNode) break toKeepChild; // Keep non-map.
-          String childKeyString= childMapEntry.getKey().toRawString(); // Name.
-          DataNode childDataNode= // Get DataNode for this child key name. 
-              subjectDataNode.getNamedChildDataNode(childKeyString);
-          if (null == childDataNode) break toRemoveChild; // No DataNode.
-          boolean childPurgeAbleB= // Try recursive child entry purge and test.
-            purgeAndTestB(childValueMapEpiNode,childDataNode); 
-          if (childPurgeAbleB) // Child is purge-able.
-            break toRemoveChild; // Go remove it. 
-          break toKeepChild; // Keep child because all purge options failed.
-
-        } // toRemoveChild:
-          childrenAttributeMapEpiNode.removeEpiNode( // Remove child from map
-              childMapEntry.getKey().toRawString()); // by name.
-          break toChildDone; // Tests passed, child removed, done, with success.
-
-        } // toKeepChild: Map entry is needed for some reason, so leave it.
-          allPurgedB= false; // Record that some of parent map purge failed.
-
-        } // toChildDone: processing of this map entry is done.
-
-        } // childLoop: Continue with next child entry.
-          if (0 != subjectMapEpiNode.getSizeI()) // If anything survived
-            allPurgedB= false; // return purge failure.
-
-        } // toExit: Everythng's done.
-          return allPurgedB; // Return whether purge of all entries succeeded.
-        }
-
     private void purgePathAttributesIn1V(MapEpiNode subjectAttributesMapEpiNode)
       /* This method is a path-specific purge method.
         It tries to purge path attributes from subjectAttributesMapEpiNode.
         The main path attribute and the "Children" attribute are examined, 
         but only at this level.  It doesn't examine other levels.
         This method returns true if no attribute remains, false otherwise.
+        
+        ////// ? Change parameter to parentAttributes,subjectNameString
+          so that this method can purge the subject if it becomes purge-able.
         */
       {
         toExit: { 
@@ -229,20 +134,18 @@ public class Selections
             (! pathHoldingString.equals(pathValueString))
             break toExit; // so exit without doing anything.
           MapEpiNode childrenMapEpiNode= // Get our children, if any.
-              //// getOrMakeChildrenMapEpiNode(subjectAttributesMapEpiNode);
               getChildrenMapEpiNode(subjectAttributesMapEpiNode);
           if (null == childrenMapEpiNode) // If we have no children 
             break removeOurAttribute;// go remove our path attribute.
           String childNameString= // Search our children for one
             getChildNameIn1WithPathValue2String( // with any path attribute.
                 childrenMapEpiNode,null);
-          //// if (null == childNameString) // No child found with path attribute
-          ////   break removeOurAttribute; // so go remove our path attribute.
           if (null != childNameString) // Child found with a path attribute
             break toExit; // so exit without removing ours.
         } // removeOurAttribute: We have an unneeded path attribute
           subjectAttributesMapEpiNode.removeV( // so remove it.
               pathKeyString);
+          ////// try purging subject.  Needed higher parameter.
         } // toExit: Everythng's done
           return; // so exit.
         }
@@ -316,13 +219,11 @@ public class Selections
         MapEpiNode parentsChildrenMapEpiNode= // Adjust here and toward root.
           recordPathFrom1ToRootAndGetParentsChildrenMapEpiNode(subjectDataNode);
         
-        { // Adjust away from root.  ///////////
+        { // Adjust away from root.
           String subjectsNameKeyString= subjectDataNode.getNameString();
           MapEpiNode subjectsAttributesMapEpiNode=
               parentsChildrenMapEpiNode.getMapEpiNode(subjectsNameKeyString);
-          //// MapEpiNode subjectsChildrenMapEpiNode=
-          ////     getOrMakeChildrenMapEpiNode(subjectsAttributesMapEpiNode);
-          //// deactivatePathIn1V(subjectsChildrenMapEpiNode);
+
           deactivatePathFrom1V(subjectsAttributesMapEpiNode);
           }
         }
@@ -330,12 +231,6 @@ public class Selections
     public MapEpiNode recordPathFrom1ToRootAndGetParentsChildrenMapEpiNode(
         DataNode subjectDataNode)
       /*
-       *  //////org This method is being rewritten to do its work
-       * without having a separate deactivation/demotion phase,
-       * and instead deactivate only the parts of the path that needs it,
-       * and only when it needs it.
-       * It will do this by using the context of 2 levels of hierarchy. 
-       * 
        * This method adjusts PathAttributes to activate a new path
        * from the root to subjectDataNode while deactivating the old path
        * defined by the path attributes in Persistent storage.
@@ -346,7 +241,7 @@ public class Selections
        *   It does this to associate MapEpiNodes with DataNodes.
        * * Returns from previous recursive calls 
        *   while examining the state of the subject's siblings,
-       *   and adjusting the path attributes of the subject node
+       *   and adjusting the path attributes of 
        *   its sibling's subtrees appropriately. 
        *   This return phase is divided into 3 sub-phases:
        *   1: Where the old path node and new path node are the same node.
@@ -432,21 +327,14 @@ public class Selections
       {
         toExit: {
           MapEpiNode parentsChildrenMapEpiNode=
-            //// getOrMakeChildrenMapEpiNode(parentMapEpiNode);
             getChildrenMapEpiNode(parentMapEpiNode);
           if (null == parentsChildrenMapEpiNode) // If there are no children
             break toExit; // exit because a path in children requires children.
-          //// deactivatePathIn1V(parentsChildrenMapEpiNode);
           MapEpiNode activeSubjectAttributesMapEpiNode= // Look for child 
             getChildIn1WithPathValue2MapEpiNode(
               parentsChildrenMapEpiNode,pathActiveString); // in active path.
-          //// if (null != activeSubjectAttributesMapEpiNode) // Active path found.
           if (null == activeSubjectAttributesMapEpiNode) // Not in Active path
             break toExit; // so exit.
-          //// MapEpiNode activeSubjectsChildrenMapEpiNode=
-          ////     getOrMakeChildrenMapEpiNode(activeSubjectAttributesMapEpiNode);
-          //// deactivatePathIn1V( // First recurse in found child's children.
-          ////     activeSubjectsChildrenMapEpiNode);
           deactivatePathFrom1V( // First recurse in found child's children.
               activeSubjectAttributesMapEpiNode);
           activeSubjectAttributesMapEpiNode.putV( // In this node, replace 
@@ -456,57 +344,7 @@ public class Selections
 
         }
 
-    @SuppressWarnings("unused") ////
-    private void OLDdeactivatePathFrom1V(MapEpiNode parentMapEpiNode) ////
-      /* This method is a non-recursive adapter for 
-       * the recursive method deactivatePathIn1V(.).
-       * This method deactivates the active path in 
-       * the children of parentMapEpiNode.
-       * It does this by finding and replacing any ACTIVE attribute values
-       * with NEXT.
-       * 
-       * Because this does a simple replacement, no purge checks are needed.
-       * 
-       * This method anddeactivatePathIn1V(.) are mutually recursive. 
-       * ///fix Make it not create "Children" attribute if it doesn't exist.
-       s*/
-      {
-        MapEpiNode parentsChildrenMapEpiNode=
-          getOrMakeChildrenMapEpiNode(parentMapEpiNode);
-        deactivatePathIn1V(parentsChildrenMapEpiNode);
-        }
-
-    private void deactivatePathIn1V(MapEpiNode parentsChildrenMapEpiNode)
-      /* This method deactivates the active path in parentsChildrenMapEpiNode.
-       * It does this by finding and replacing any ACTIVE attribute values
-       * with NEXT.
-       * 
-       * Because this does a simple replacement, no purge checks are needed.       
-       * 
-       * This method anddeactivatePathFrom1V(.) are mutually recursive.
-       * ///org This method might eventually be eliminated. 
-       */
-      {
-        toExit: {
-          MapEpiNode activeSubjectAttributesMapEpiNode= // Look for child 
-            getChildIn1WithPathValue2MapEpiNode(
-              parentsChildrenMapEpiNode,pathActiveString); // in active path.
-          //// if (null != activeSubjectAttributesMapEpiNode) // Active path found.
-          if (null == activeSubjectAttributesMapEpiNode) // Not in Active path
-            break toExit; // so exit.
-          //// MapEpiNode activeSubjectsChildrenMapEpiNode=
-          ////     getOrMakeChildrenMapEpiNode(activeSubjectAttributesMapEpiNode);
-          //// deactivatePathIn1V( // First recurse in found child's children.
-          ////     activeSubjectsChildrenMapEpiNode);
-          deactivatePathFrom1V( // First recurse in found child's children.
-              activeSubjectAttributesMapEpiNode);
-          activeSubjectAttributesMapEpiNode.putV( // In this node, replace 
-              pathKeyString,pathNextString); // ACTIVE with NEXT.
-        } // toExit:
-          return;
-        }
-
-    private void demoteSiblingsOf1In2ToHoldingV( ///////// to be completed.
+    private void demoteSiblingsOf1In2ToHoldingV(
         String subjectNameString,MapEpiNode childrenMapEpiNode)
       /* This method demotes siblings of the node 
        * whose name is subjectNameString in the map childrenMapEpiNode 
@@ -522,7 +360,7 @@ public class Selections
        * /////////// If a node is set to HOLDING,
        * but the node has no children with path attributes,
        * then the HOLDING attribute is removed
-       * and the node becomes eligible for purging.
+       * and the child node becomes eligible for purging.
        */
       {
           MapEpiNode childAttributesMapEpiNode;
@@ -547,9 +385,6 @@ public class Selections
             break toDemoteChild; // so just demote it.
           if (pathActiveString.equals(pathValueString)) // Is an ACTIVE node
             { // so deactivate its descendants
-              //// MapEpiNode childsChildrenMapEpiNode=
-              ////   getOrMakeChildrenMapEpiNode(childAttributesMapEpiNode);
-              //// deactivatePathIn1V(childsChildrenMapEpiNode);
               deactivatePathFrom1V(childAttributesMapEpiNode);
               break toDemoteChild; // and go demote the node.
               }
@@ -564,75 +399,6 @@ public class Selections
         }
     
 
-    private void demotePathInChildrenV( //// might soon not be used.
-        MapEpiNode subjectAttributesMapEpiNode)
-      /* This recursive method deactivates the primary path 
-       * in any child for which the path is active,
-       * starting with the children in subjectsAttributesMapEpiNode.
-       *
-       * It does this by replacing selection values, as follows: 
-       * /////// changed to use ACTIVE, NEXT, and HOLDING. 
-       * * replace PRESENT with LAST
-       * * replace LAST with EARLIER if a new LAST was created.
-       * * removes EARLIER nodes that have no needed children.
-       * 
-       * Presently, this is called from only one place, 
-       * and that call processes the entire history subtree.
-       */
-      {
-        MapEpiNode subjectChildrenMapEpiNode= // Get the children of subject.
-          getOrMakeChildrenMapEpiNode(subjectAttributesMapEpiNode);
-        demoteActivePathV( // Do active path demotion and adjustments.
-            subjectChildrenMapEpiNode);
-        purgeAttributesIn1B( // Purge empty subject attributes.
-            subjectAttributesMapEpiNode);
-        purgeAttributesIn1B( // Purge empty children.
-            subjectChildrenMapEpiNode);
-        }
-
-
-    private void demoteActivePathV(MapEpiNode subjectChildrenMapEpiNode)
-      /* This method demotes the active path attribute
-       * in subjectChildrenMapEpiNode, and handles any consequences.
-       */
-      {
-        MapEpiNode presentPathChildAttributesMapEpiNode= // Look for child 
-          getChildIn1WithPathValue2MapEpiNode(
-            subjectChildrenMapEpiNode,pathActiveString); // in active path.
-        if (null != presentPathChildAttributesMapEpiNode) // Active path found.
-          { // Demote path in this node and its descendants.
-            demotePathInChildrenV( // First recurse in found child's children.
-                presentPathChildAttributesMapEpiNode);
-            demoteNextPathV(subjectChildrenMapEpiNode);
-            presentPathChildAttributesMapEpiNode.putV( // Replace active path
-                pathKeyString,pathNextString); // with next path.
-            }
-        }
-
-
-    private void demoteNextPathV(MapEpiNode subjectChildrenMapEpiNode)
-      /* This method demotes the next path attribute
-       * in subjectChildrenMapEpiNode, and handles any consequences.
-       * This means either changing NEXT to HOLDING,
-       * if there are children with path attributes,
-       * or simply removing the NEXT attribute if there are not.
-       */
-      {
-        MapEpiNode nextPathChildAttributesMapEpiNode= // Look for NEXT path.
-          getChildIn1WithPathValue2MapEpiNode(
-            subjectChildrenMapEpiNode,pathNextString);
-        if (null != nextPathChildAttributesMapEpiNode) // If NEXT found
-          { // remove or replace NEXT.
-            String childNameString= // Are there any children with path info?
-                getChildNameIn1WithPathValue2String(
-                    nextPathChildAttributesMapEpiNode,null);
-            if (null == childNameString) // If no path children, remove NEXT.
-              nextPathChildAttributesMapEpiNode.removeV(pathKeyString);
-              else // Otherwise replace NEXT with HOLDING.
-              nextPathChildAttributesMapEpiNode.putV(
-                pathKeyString,pathHoldingString);
-            }
-        }
 
 
     public MapEpiNode recordAndTranslateToMapEpiNode(DataNode subjectDataNode)
