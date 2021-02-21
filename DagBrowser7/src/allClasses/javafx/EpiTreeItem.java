@@ -45,9 +45,16 @@ public class EpiTreeItem
        * has been calculated based on the child list in the value DataNode.
        * If not, then it calculates and stores it.
        * Finally it returns the TreeItem's child list.
+       * 
+       * Note!: childCacheLoadedB is set before loading is complete.
+       * This is done because super.getChildren() calls getChildren(),
+       * specifically in TreeItem.updateExpandedDescendentCount(boolean reset), 
+       * which resulted in a StackOverflowError when 
+       * childCacheLoadedB was set after loading was complete.
        */
       {
         if (! childCacheLoadedB) {
+          childCacheLoadedB= true; // See Note! above.
           DataNode parentDataNode= getValue();
           Iterator<DataNode> theIterator=
               parentDataNode.getChildListOfDataNodes().iterator();
@@ -57,7 +64,7 @@ public class EpiTreeItem
                 new EpiTreeItem(childDataNode)
                 );
             }
-          childCacheLoadedB= true;
+          // childCacheLoadedB= true; // Doing resulted in StackOverflowError.
           }
         return super.getChildren();
         }
