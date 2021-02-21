@@ -119,44 +119,84 @@ public class Selections
      */
 
     //// private void purgePathAttributesIn1V(MapEpiNode subjectAttributesMapEpiNode)
-    private void purgePathAttributesIn1V(
+    private void purgeChild1WithUnneededHoldingIn2V(
         String subjectsNameString,MapEpiNode parentsAttributesMapEpiNode)
       /* This method is a path-specific purge method.
-        It tries to purge path attributes from subjectAttributesMapEpiNode.
-        The main path attribute and the "Children" attribute are examined, 
-        but only at this level.  It doesn't examine other levels.
-        
-        ////// ? Change parameter to subjectNameString,parentAttributes
-          so that this method can purge the subject if it becomes purge-able.
-        */
+       * If the subject child specified by the name subjectsNameString
+       * in parentsAttributesMapEpiNode contains HOLDING in its path attribute
+       * and that subject has no children with path attributes of their own,
+       * then it will remove the HOLDING path attribute from the subject,
+       * and if no attributes remain in the subject,
+       * it will be removed from the parent's Children list attribute,
+       * and if the Children list attribute becomes empty, 
+       * the Children list attribute will be removed from 
+       * the parent's attribute list.
+       * 
+       * /////////////// the child purging has not been added yet. 
+       */
       {
         toExit: {
-          MapEpiNode parentsChildrenMapEpiNode= // Get children from attributes.
+          MapEpiNode parentsChildrenMapEpiNode= // Get children from parent.
             getOrMakeChildrenMapEpiNode(parentsAttributesMapEpiNode);
           MapEpiNode subjectsAttributesMapEpiNode= // Get subject attributes.
               parentsChildrenMapEpiNode.getMapEpiNode(subjectsNameString);
         removeOurAttribute: {
-          if (null == subjectsAttributesMapEpiNode) // Map is missing.   
+          if (null == subjectsAttributesMapEpiNode) // Subject map is missing.   
             break toExit; // This shouldn't happen, so exit.
-          String pathValueString= // Get value of our path attribute. 
+          String pathValueString= // Get value of subject's path attribute. 
              subjectsAttributesMapEpiNode.getString(pathKeyString);
           if // The value is not HOLDING, which is the only case of interest,
             (! pathHoldingString.equals(pathValueString))
             break toExit; // so exit without doing anything.
-          MapEpiNode childrenMapEpiNode= // Get our children, if any.
+          MapEpiNode subjectsChildrenMapEpiNode= // Get subject's children.
               getChildrenMapEpiNode(subjectsAttributesMapEpiNode);
-          if (null == childrenMapEpiNode) // If we have no children 
-            break removeOurAttribute;// go remove our path attribute.
-          String childNameString= // Search our children for one
+          if (null == subjectsChildrenMapEpiNode) // If subject has no children 
+            break removeOurAttribute;// go remove subject's attribute.
+          String childNameString= // Search subject's children for one
             getChildNameIn1WithPathValue2String( // with any path attribute.
-                childrenMapEpiNode,null);
+                subjectsChildrenMapEpiNode,null);
           if (null != childNameString) // Child found with a path attribute
-            break toExit; // so exit without removing ours.
+            break toExit; // so exit without removing our path attribute.
         } // removeOurAttribute: We have an unneeded path attribute
           subjectsAttributesMapEpiNode.removeV( // so remove it.
               pathKeyString);
-          ////// try purging subject.  Needed higher parameter.
+          ////// try purging subject.
+          purgeChild1InAttributes2IfEmptyV(
+            subjectsNameString,parentsAttributesMapEpiNode);
         } // toExit: Everythng's done
+          return; // so exit.
+        }
+
+    private void purgeChild1InAttributes2IfEmptyV(
+            String subjectsNameString,MapEpiNode parentsAttributesMapEpiNode)
+      /* This method purges a subject and its Children contain, if possible.
+       * If no attributes remain in the subject's attributes map then
+       * the subject will be removed from the parent's Children map attribute.
+       * If the parent's Children map attribute becomes empty, 
+       * then the Children map attribute will be removed from 
+       * the parent's attribute map.
+       */
+      {
+        toExit: {
+          MapEpiNode parentsChildrenMapEpiNode= // Get Children from parent.
+            getChildrenMapEpiNode(parentsAttributesMapEpiNode);
+        childrenPurge: {
+          if (null == parentsChildrenMapEpiNode) // Parent has no Children   
+            break toExit; // so exit because there is nothing to purge.
+          MapEpiNode subjectsAttributesMapEpiNode= // Get subject attributes.
+              parentsChildrenMapEpiNode.getMapEpiNode(subjectsNameString);
+          if (null == subjectsAttributesMapEpiNode) // Subject map is missing   
+            break childrenPurge; // so go try purging children map now.
+          if // Subject map is present but empty
+            (0 == subjectsAttributesMapEpiNode.getSizeI())
+            parentsChildrenMapEpiNode.removeEpiNode( // so remove from children
+              subjectsNameString); // the subject map by name.
+        } // childrenPurge:
+          if // There are no children in Children attribute map
+            (0 == parentsChildrenMapEpiNode.getSizeI())
+            parentsAttributesMapEpiNode.removeEpiNode( // so remove from parent.
+              "Children"); // 
+        } // toExit: Everythng possible has been done
           return; // so exit.
         }
 
@@ -528,7 +568,7 @@ public class Selections
        * If it demotes an ACTIVE sibling node then it
        * will also demote to NEXT any ACTIVE descendants of that sibling.
        * 
-       * /////////// If a node is set to HOLDING,
+       * /////////// Purging: If a node is set to HOLDING,
        * but the node has no children with path attributes,
        * then the HOLDING attribute is removed
        * and the child node becomes eligible for purging.
@@ -567,7 +607,7 @@ public class Selections
           childAttributesMapEpiNode.putV( // Set as HOLDING.
               pathKeyString, pathHoldingString);
           //// purgePathAttributesIn1V(childAttributesMapEpiNode);
-          purgePathAttributesIn1V(
+          purgeChild1WithUnneededHoldingIn2V(
               childKeyNameString,parentsAttributesMapEpiNode);
         } // toChildDone: processing of this child's map entry is done.
         } // childLoop: Continue with next child entry.
