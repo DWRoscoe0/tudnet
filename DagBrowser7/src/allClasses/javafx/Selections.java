@@ -523,9 +523,9 @@ public class Selections
         }
     */  //// being replaced.
 
-    private void deactivatePathFrom1V(MapEpiNode parentMapEpiNode)
+    private void deactivatePathFrom1V(MapEpiNode parentAttributesMapEpiNode)
       /* This method deactivates the active path in 
-       * the children of parentMapEpiNode.
+       * the children of parentAttributesMapEpiNode.
        * It does this by finding and replacing any ACTIVE attribute values
        * with NEXT.
        * 
@@ -536,8 +536,10 @@ public class Selections
        s*/
       {
         toExit: {
+          if (null == parentAttributesMapEpiNode) // If there are no parent map
+            break toExit; // exit because parental access is required.
           MapEpiNode parentsChildrenMapEpiNode=
-            getChildrenMapEpiNode(parentMapEpiNode);
+            getChildrenMapEpiNode(parentAttributesMapEpiNode);
           if (null == parentsChildrenMapEpiNode) // If there are no children
             break toExit; // exit because a path in children requires children.
           MapEpiNode activeSubjectAttributesMapEpiNode= // Look for child 
