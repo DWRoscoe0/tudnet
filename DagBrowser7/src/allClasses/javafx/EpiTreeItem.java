@@ -1,5 +1,6 @@
 package allClasses.javafx;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 
 import allClasses.DataNode;
@@ -46,25 +47,37 @@ public class EpiTreeItem
        * If not, then it calculates and stores it.
        * Finally it returns the TreeItem's child list.
        * 
-       * Note!: childCacheLoadedB is set before loading is complete.
+       * Note-1: childCacheLoadedB is set before loading is complete.
        * This is done because super.getChildren() calls getChildren(),
        * specifically in TreeItem.updateExpandedDescendentCount(boolean reset), 
        * which resulted in a StackOverflowError when 
        * childCacheLoadedB was set after loading was complete.
+       * 
+       * Note-2: Originally lazily-evaluated children 
+       * were evaluated and added to the TreeItem.getChildren() ObservableList 
+       * one-at-a-time.
+       * This resulted in an unwanted selection when a node was expanded
+       * if the selection was below the expanded node.
+       * This problem disappeared when the entire collection of children
+       * was evaluated and added at once, similar to
+       * the way it is done in the TreeItem documentation example of
+       *  an overridden getChildren() that uses lazy-evaluation. 
        */
       {
         if (! childCacheLoadedB) {
-          childCacheLoadedB= true; // See Note! above.
+          childCacheLoadedB= true; // See Note-1 above.
           DataNode parentDataNode= getValue();
           Iterator<DataNode> theIterator=
               parentDataNode.getChildListOfDataNodes().iterator();
+          ArrayList<EpiTreeItem> accumulatorList= new ArrayList<EpiTreeItem>();
           while (theIterator.hasNext()) {
             DataNode childDataNode= theIterator.next();
-            super.getChildren().add(
+            accumulatorList.add( // See Note-2 above.
                 new EpiTreeItem(childDataNode)
                 );
             }
-          // childCacheLoadedB= true; // Doing resulted in StackOverflowError.
+          super.getChildren().setAll(accumulatorList);
+          // childCacheLoadedB= true; // Doing here caused StackOverflowError.
           }
         return super.getChildren();
         }
