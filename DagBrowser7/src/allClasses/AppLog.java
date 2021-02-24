@@ -165,7 +165,7 @@ public class AppLog extends EpiThread
       private FileLock theLogFileLock= null; // For locking while file is open.
         // This facilitates multiple processes logging to the same file.
       private long openedAtMsL; // Time file was last opened.
-      private long appendedAtMsL; // Time file received it last output.
+      private long appendedAtMsL; // Time file received its last output.
 
       private boolean bufferedModeB= true; // Initially buffering.
       private int openSleepDelayMsI= 0;
@@ -193,7 +193,7 @@ public class AppLog extends EpiThread
         * not leaving it open too long, so other apps can access log file.
         It does this with the following approximate delays:
         * 1 ms between open file retries.  See openWithDelayFileWriter().
-        * 10 ms minimum time file it is closed after 
+        * 10 ms minimum time file is closed after 
           it is closed for any reason.  See closeFileAndDelayV().
         * 200 ms maximum time file is open with no output.
         * 300 ms maximum time file is open with or without output.

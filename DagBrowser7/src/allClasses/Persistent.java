@@ -68,11 +68,11 @@ public class Persistent
 	 	*/
 
 	{
-		private MapEpiNode rootMapEpiNode= null; // EpiNode root of tree data.
+		private MapEpiNode rootMapEpiNode= null; // Root of tree data to persist.
 
-  	
-  	// Initialization methods.
-  	
+
+		// Initialization and loading methods.
+
 	  public void initializeV()
 	    /* This method loads the persistent data from an external file.
 	      It also does some temporary data conversions and extra file outputs
@@ -85,9 +85,10 @@ public class Persistent
 	      we might as well just call initializeV() as well.
 	      */
 	    {
-        rootMapEpiNode=  // Translate text file data to EpiNode data.
-          loadMapEpiNode("PersistentEpiNode.txt");
-        if  // Define root map to be empty map if load failed.
+        rootMapEpiNode=  // Translate external text to internal EpiNodes
+          loadMapEpiNode("PersistentEpiNode.txt"); // by loading text file.
+
+        if  // Define root to be an empty map if the load failed.
           (rootMapEpiNode == null) 
           rootMapEpiNode= new MapEpiNode();
         
@@ -95,7 +96,10 @@ public class Persistent
 	  	  }
 
     private void updateFormatV()
-      // This method is used for Persistent.txt file format changes, if any.
+      /* This method was created to deal with 
+       * Persistent.txt file format changes.
+       * Except for logging, the code in this method should be temporary.
+       */
       {
         theAppLog.setLogConditionMapV( // Add for setting-dependent log entries.
             rootMapEpiNode.getMapEpiNode("Logging"));
@@ -115,7 +119,7 @@ public class Persistent
         }
 
     private void renameKeysV(String oldKeyString, String newKeyString)
-      /* This method replaces instances of map keys 
+      /* This helper method replaces instances of map keys 
         with value oldKeyString to NewKeyString.
         It is meant to be used for Persistent.txt file format changes.
         */
@@ -127,9 +131,10 @@ public class Persistent
         }
 
     private MapEpiNode loadMapEpiNode( String fileString )
-      /* This method creates an EpiNode from 
-        the contents of the external text file whose name is fileString.  
-        */
+      /* This method translate external text to internal EpiNodes
+       * by loading the text file whose name is fileString.
+       * It returns the resulting root MapEpiNode or null if the load fails.
+       */
       {
         MapEpiNode resultMapEpiNode= null; 
 
@@ -167,28 +172,61 @@ public class Persistent
         }
 
 
-    // Finalization methods not called by initialization or service sections.
+    /* Change saving methods.
+     * These methods are used to save Persistent data when 
+     * changes are made long before the data is saved at app termination.
+     */
+
+    public void signalDataChangeV()
+      /* This method should be called AFTER 
+       * a change has been made that needs to be saved on disk.
+       * 
+       *  ///enh Change to save state less often, but often enough.
+       *  Save at times that will satisfy both of the following constraints:
+       *  * Do a save within 5 seconds of every change.
+       *    The time of the last unsaved change must be saved.
+       *  * Do a save within 1 second of the last change.
+       *    The time of the last change must be saved.
+       *  This logic can be placed in a method which is called
+       *  * at every change and 
+       *  * when the timer is triggered.
+       *  A timer is set for the next scheduled save,
+       *  which will often be overridden as changes are triggered.
+       */
+      {
+        storeEpiNodeDataV();
+        }
+
     
+    // Finalization methods.
+
     public void finalizeV()
-    /* This method stores the persistent data to the external file.
-
-      Before it writes the data, it might do some reordering of entries.
-      It does this by removing and adding particular entries.
-      These entries will appear last.
-      This is done to reduce manual search time during debugging and testing.
-
-      ///enh Maybe use a similar technique to put 
-        all entries whose values are MapEpiNodes last.
-      */
-    {
-      /// This done to put UnicasterIndexes last, done by get and put.
-      /// Disabled these when UnicasterIndexes kept disappearing.
-      /// EpiNode theEpiNode= rootMapEpiNode.removeEpiNode("UnicasterIndexes");
-      /// rootMapEpiNode.putV("UnicasterIndexes",theEpiNode);
-      
-      storeEpiNodeDataV( // Write EpiNode data.
-          rootMapEpiNode, "PersistentEpiNode.txt");
-      }
+      {
+        storeEpiNodeDataV();
+        }
+  
+    private void storeEpiNodeDataV()
+      /* This method stores the persistent data to the external file.
+  
+        Before it writes the data, it might do some reordering of entries.
+        It does this by removing and adding particular entries.
+        These entries will appear last.
+        This is done to reduce manual search time during debugging and testing.
+  
+        ///enh Maybe use a similar technique to put 
+          all entries whose values are MapEpiNodes last.
+        */
+      {
+        /// This is done to put UnicasterIndexes last, done by get and put.
+        /// Disabled these when UnicasterIndexes kept disappearing.
+        /// EpiNode theEpiNode= rootMapEpiNode.removeEpiNode("UnicasterIndexes");
+        /// rootMapEpiNode.putV("UnicasterIndexes",theEpiNode);
+        
+        storeEpiNodeDataV( // Write 
+            rootMapEpiNode, // all EpiNode data 
+            "PersistentEpiNode.txt" // to this file.
+            );
+        }
   
     private void storeEpiNodeDataV( EpiNode theEpiNode, String fileString )
       /* This method stores the Persistent data that is in main memory to 

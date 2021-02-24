@@ -85,7 +85,8 @@ public class Selections
   
     // Injected variables.
     private DataRoot theDataRoot;
-    
+    private Persistent thePersistent;
+
     // Calculated variables.
 
     // This is where selection history and other attributes are stored 
@@ -98,6 +99,7 @@ public class Selections
         )
       { 
         this.theDataRoot= theDataRoot;
+        this.thePersistent= thePersistent;
 
         hierarchyRootParentsAttributesMapEpiNode=
             thePersistent.getOrMakeMapEpiNode(
@@ -269,6 +271,7 @@ public class Selections
 
           deactivatePathFrom1V(subjectsAttributesMapEpiNode);
           }
+        thePersistent.signalDataChangeV(); // Cause save of selection state.
         }
 
     /// new method.
