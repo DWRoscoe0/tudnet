@@ -158,7 +158,7 @@ public class NamedList
     	  	else // Child was not found in list.
 	    	  { // Adding to List because it's not there yet.
             childDataNode.propagateIntoSubtreeV( theDataTreeModel );
-            childDataNode.setParentToV( this ); // Link child back to this node as parent.
+            childDataNode.setTreeParentToV( this ); // Set child's parent link.
 	    	  	int actualIndexI= // Converting 
 	    	  			(requestedIndexI < 0) // requested index < 0 
 	    	  			? childMultiLinkOfDataNodes.getCountI() // to mean end of list,
@@ -317,7 +317,7 @@ public class NamedList
 	  		  	break toReturn;
 	  		  	}
 	  		  
-	  		  if ( getParentNamedList() == null ) { 
+	  		  if ( getTreeParentNamedList() == null ) { 
 			  		theAppLog.debug(
 			  				"checkForNullDataTreeModelV() parentNamedList == null in:" + NL
 			  				+ this);
@@ -328,7 +328,7 @@ public class NamedList
 		  				"checkForNullDataTreeModelV() "
 		  				+ "theDataTreeModel == null and  parentNamedList != null in:" + NL
 		  				+ this);
-	  		  getParentNamedList().logNullDataTreeModelsV(); // Recurs for ancestors.
+	  		  getTreeParentNamedList().logNullDataTreeModelsV(); // Recurs for ancestors.
   				} // toReturn:
   	  	}
 

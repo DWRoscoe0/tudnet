@@ -64,7 +64,7 @@ public class MutableList extends NamedList
               childMultiLinkOfDataNodes.getCountI(), 
               childDataNode 
               );
-          childDataNode.setParentToV(this);
+          childDataNode.setTreeParentToV(this);
 
           /*  ///
           addAtEndB(  // Try old way.  This causes StackOverflowError!

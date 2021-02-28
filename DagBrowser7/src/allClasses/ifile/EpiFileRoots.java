@@ -73,7 +73,7 @@ public class EpiFileRoots
                     );
                 childEpiDirectories[ indexI ]=  // Save in cache...
                   childEpiDirectory;  // the resulting EpiDirectory.
-                childEpiDirectory.setParentToV( this ); // Set parent link.
+                childEpiDirectory.setTreeParentToV( this ); // Set parent link.
                 }
 
           } // toReturn

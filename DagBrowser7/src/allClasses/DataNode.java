@@ -164,11 +164,25 @@ public abstract class DataNode
           */  ///opt
           }
 
-      protected NamedList parentNamedList= null; // My parent node.
-        // If there is a parent, it must be a list.
+      private NamedList treeParentNamedList= null; /* Parent node of this node.
+        If there is a parent, the parent must be a list, hence NamedList.
+
+        The value in this variable has multiple uses.
+        * It is used for up-propagation of change notifications,
+          needed for timely updating of displays.
+        * It is used in the first phase of translating
+          a DataNode to an associated 
+          * MapEpiNode or MetaNode in order to access metadata.
+          * TreeItem for JavaFX TreeViewer. 
+
+        This variable might be replaced by a list later, possibly a MultiLink,
+        when and if DAGs are supported and multiple parents are required.
+
         ///opt If we eliminate StateList.parentStateList then
         // this would need to be changed to a StateList,
         // unless we allow casting of the variable.
+        
+        */
 
       protected LogLevel theMaxLogLevel= AppLog.defaultMaxLogLevel;
         // Used to determine logging from this node and its descendants.
@@ -242,14 +256,14 @@ public abstract class DataNode
         {
           }
 
-      public void setParentToV( NamedList parentNamedList )
+      public void setTreeParentToV( NamedList treeParentNamedList )
         /* This method is called when a DataNode is added to a NamedList
-          or one of its subclasses.  This method:
-          * Stores parentNamedList, because every node has a parent
-            and needs access to it.
+          or one of its subclasses.  
+          This method stores treeParentNamedList within this node, 
+          because every node has a parent and needs access to its parent.
           */
-        {
-          this.parentNamedList= parentNamedList;
+              {
+          this.treeParentNamedList= treeParentNamedList;
           }
 
       protected void reportChangeOfSelfV()
@@ -261,12 +275,12 @@ public abstract class DataNode
           than for the children to do it.
          */
         {
-          if ( getParentNamedList() == null )
+          if ( getTreeParentNamedList() == null )
             {
-              theAppLog.debug("reportChangeOfSelfV(): parentNamedList == null!");
+              theAppLog.debug("reportChangeOfSelfV(): treeParentNamedList == null!");
               }
             else
-            getParentNamedList().reportChangeInChildB( 
+            getTreeParentNamedList().reportChangeInChildB( 
                 (DataNode)this ///org Temporary until generified. 
                 );
           }
@@ -511,11 +525,11 @@ public abstract class DataNode
         {
           String resultString;
           
-          if ( getParentNamedList() == null )
+          if ( getTreeParentNamedList() == null )
             resultString= getNameString();
           else
             resultString= 
-              getParentNamedList().getNodePathString()
+              getTreeParentNamedList().getNodePathString()
               + ", "
               + getNameString(); 
 
@@ -741,12 +755,12 @@ public abstract class DataNode
        */
       { 
         TreePath resultTreePath;
-        if ( null == getParentNamedList() ) // If node has no parent then
+        if ( null == getTreeParentNamedList() ) // If node has no parent then
           resultTreePath= 
             new TreePath(this); // path is only this node.
         else // Node has a parent so recursively
           resultTreePath= // construct path from parent and this node. 
-            getParentNamedList().getTreePath().pathByAddingChild(this);
+            getTreeParentNamedList().getTreePath().pathByAddingChild(this);
         return resultTreePath;   
         }
 
@@ -806,9 +820,20 @@ public abstract class DataNode
         return defaultBackgroundColor;
         }
 
-    public NamedList getParentNamedList() 
+    public NamedList getTreeParentNamedList()
+      /* This method returns a reference to this node's tree parent node.
+       * 
+       * This method has different uses, depending on context.
+       * * Sometimes it is used to get the parent DataNode.  
+       *   This is the tree sense.
+       * * Sometimes it is used to access the viewer of the parent DataNode.
+       *   This is the DAG sense.
+       * 
+       * This method might be replaced by multiple methods later,
+       * one for trees and one for DAGs.
+       */
       {
-        return parentNamedList;
+        return treeParentNamedList;
         }
 
     }

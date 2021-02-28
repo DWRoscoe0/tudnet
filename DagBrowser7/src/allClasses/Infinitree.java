@@ -33,7 +33,7 @@ public class Infinitree
         { // Infinitree(.)
           childNumberI= inChildI;  // save child index.
           parentInfinitree= inParentInfinitree; // Save parent Infinitree.
-          this.setParentToV(inParentInfinitree); // Set DataNode parent.
+          this.setTreeParentToV(inParentInfinitree); // Set DataNode parent.
           } // Infinitree(.)
        
     // Other methods.

@@ -451,7 +451,7 @@ public class DataTreeModel
       	  		nodeToPathHashMap.get( targetDataNode );
 	        if ( null == targetTreePath ) // If path not in map
 		        { // build the path from its parent's
-      	  		DataNode parentDataNode= targetDataNode.getParentNamedList();
+      	  		DataNode parentDataNode= targetDataNode.getTreeParentNamedList();
           	  TreePath parentTreePath= translatingToTreePath(parentDataNode);
 			        if ( null != parentTreePath ) // If got parent path then
 				        { // build target path by adding to parent's and add to map.
@@ -561,7 +561,7 @@ public class DataTreeModel
 		      	  parentDataNode.theChangeFlag= // Mark structure changed. 
 		      	  	DataNode.ChangeFlag.STRUCTURE_CHANGED;
 		      	  signalSubtreeChangeV( // Propagate as ordinary change to parent. 
-		      	  		parentDataNode.getParentNamedList()  );
+		      	  		parentDataNode.getTreeParentNamedList()  );
 			  			break;
 			  			
 			  		case STRUCTURE_CHANGED: // Already marked correctly.
@@ -588,7 +588,7 @@ public class DataTreeModel
 			      	  theDataNode.theChangeFlag= // Mark node changed. 
 			      	  	DataNode.ChangeFlag.SUBTREE_CHANGED;
 			      	  signalSubtreeChangeV( // Propagate to parent, if any. 
-			      	  		theDataNode.getParentNamedList() );
+			      	  		theDataNode.getTreeParentNamedList() );
 				  			break;
 				  			
 		  	  		case STRUCTURE_CHANGED: // Already marked for structure change.

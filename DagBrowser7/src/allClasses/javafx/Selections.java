@@ -322,7 +322,7 @@ public class Selections
               break recursingOrNot;
               }
           // We need to do a recursive call.
-          DataNode parentDataNode= subjectDataNode.getParentNamedList();
+          DataNode parentDataNode= subjectDataNode.getTreeParentNamedList();
           String parentNameKeyString= parentDataNode.getNameString();
           MapEpiNode grandParentsAttributesMapEpiNode= // Recurse with parent
             recordPathFrom1ToRootAndGetParentsAttributesMapEpiNode(
@@ -482,7 +482,7 @@ public class Selections
                     subjectNameKeyString);
             break toExit;
             }
-          DataNode parentDataNode= subjectDataNode.getParentNamedList();
+          DataNode parentDataNode= subjectDataNode.getTreeParentNamedList();
           parentMapEpiNode= // Recursing to translate parent. 
                 recordAndTranslateToMapEpiNode(parentDataNode);
           parentsChildrenMapEpiNode= 

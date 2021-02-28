@@ -83,7 +83,8 @@ public class TreeStuff
           if (null == targetDataNode) // Target is null.
             { resultTreeItem= null; break main; } // Indicate failure with null.
           TreeItem<DataNode> parentTreeItem= // Recursively translate parent. 
-              toTreeItem(targetDataNode.getParentNamedList(), ancestorTreeItem);
+              toTreeItem(
+                  targetDataNode.getTreeParentNamedList(), ancestorTreeItem);
           if (null == parentTreeItem) // Parent translation failed.
             { resultTreeItem= null; break main; } // Indicate failure with null.
           for // Search for target DataNode in translated parent's children.
@@ -208,7 +209,7 @@ public class TreeStuff
           if (null == resultDataNode) break goReturn;
           // We now have the non-null subject node.
 
-          resultDataNode= resultDataNode.getParentNamedList();
+          resultDataNode= resultDataNode.getTreeParentNamedList();
           // We now have a the possibly null parent of the subject node.
 
         } // goReturn:
@@ -223,8 +224,8 @@ public class TreeStuff
        * Returns null if all attempts to calculate it fail. 
        */
       {
-        if (null == theSubjectDataNode) // If null, try calculating it from child.
-          theSubjectDataNode= getSelectionDataNode().getParentNamedList();
+        if (null == theSubjectDataNode) // If null, try calculating from child.
+          theSubjectDataNode= getSelectionDataNode().getTreeParentNamedList();
         return theSubjectDataNode;
         }
 
