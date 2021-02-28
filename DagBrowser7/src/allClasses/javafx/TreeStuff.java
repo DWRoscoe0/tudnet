@@ -26,7 +26,7 @@ public class TreeStuff
    * the DataNode of interest at that location.
    * Location can also be represented by the TreePath
    * from the root DataNode to the DataNode of interest,
-   * this is not being done now.
+   * though this is not being done now.
    */
 
   {

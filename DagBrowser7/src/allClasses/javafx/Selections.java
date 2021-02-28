@@ -250,38 +250,41 @@ public class Selections
     // Mutator methods.
 
     public void adjustForNewSelectionV(DataNode subjectDataNode)
-      /* This method adjusts the information in Persistent storage
+      /* This method does nothing if subjectDataNode is null.
+       * If subjectDataNode is not null then 
+       * this method adjusts the information in Persistent storage
        * about what was and is selected.
        * The new selection is subjectDataNode.
        * It makes adjustments in this node, nodes closer to the root,
        * and nodes farther from the root.
        */
-      { 
-        MapEpiNode parentsAttributesMapEpiNode= // Adjust here and toward root.
-          recordPathFrom1ToRootAndGetParentsAttributesMapEpiNode(
-            subjectDataNode);
-
-        MapEpiNode parentsChildrenMapEpiNode= // Get children from attributes.
-          getOrMakeChildrenMapEpiNode(parentsAttributesMapEpiNode);
-        
-        { // Adjust away from root.
-          String subjectsNameKeyString= subjectDataNode.getNameString();
-          MapEpiNode subjectsAttributesMapEpiNode=
-              parentsChildrenMapEpiNode.getMapEpiNode(subjectsNameKeyString);
-
-          deactivatePathFrom1V(subjectsAttributesMapEpiNode);
-          }
-        thePersistent.signalDataChangeV(); // Cause save of selection state.
+      {
+        if (null != subjectDataNode) // If parameter is not-null,
+          { // record it as new selection.
+            MapEpiNode parentsAttributesMapEpiNode= // Record toward root.
+              recordPathFrom1ToRootAndGetParentsAttributesMapEpiNode(
+                subjectDataNode);
+            MapEpiNode parentsChildrenMapEpiNode=
+              getOrMakeChildrenMapEpiNode(parentsAttributesMapEpiNode);
+            { // Record away from root.
+              String subjectsNameKeyString= subjectDataNode.getNameString();
+              MapEpiNode subjectsAttributesMapEpiNode=
+                  parentsChildrenMapEpiNode.getMapEpiNode(subjectsNameKeyString);
+              deactivatePathFrom1V(subjectsAttributesMapEpiNode);
+              }
+            thePersistent.signalDataChangeV(); // Cause save of selection state.
+            }
         }
 
-    /// new method.
     public MapEpiNode recordPathFrom1ToRootAndGetParentsAttributesMapEpiNode(
         DataNode subjectDataNode)
       /*
-       * This method adjusts PathAttributes to activate a new path
-       * from the root to subjectDataNode while deactivating the old path
-       * defined by the path attributes in Persistent storage.
-       * It also returns the map of the attributes of the subject's parent.
+       * This method adjusts PathAttributes in Persistent storage
+       * to activate a new path from the root to subjectDataNode 
+       * while deactivating the old path.
+       * It also returns the map of the attributes of the subject's parent,
+       * which is useful to the caller for adjustments
+       * on the side of subjectDataNode away from the root.
        * This method uses recursion and works in 2 phases:
        * * Recursively calls itself until the root DataNode is reached.
        *   It does this to associate MapEpiNodes with DataNodes.
