@@ -129,9 +129,12 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
           new InstallerBuilder( "Installer-Builder", 
               thePersistent
               );
-      EpiFileRoots theEpiFileRoots= new EpiFileRoots(); 
+      EpiFileRoots theEpiFileRoots= new EpiFileRoots();
+      ConsoleBase theConsoleBase= new ConsoleBase(
+          "Console-Base",thePersistent);
       DataNode testCenterDataNode= new NamedList(
           "Test-Center",
+          theConsoleBase,
           theEpiFileRoots,
           theInstallerBuilder,
           theTextStreams2,

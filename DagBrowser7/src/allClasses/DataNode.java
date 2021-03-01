@@ -708,18 +708,18 @@ public abstract class DataNode
        *   or null if there is to be no selected child DataNode,
        *   or the selection should come from the selection history.
        * * thePersistent provides access to persistent data storage.
-       * * theDataRoot provides to the base of the data hierarchy.
-       * * theSelections provides to the DataNode selection history.
+       * * theDataRoot provides access to the root of the data hierarchy.
+       * * theSelections provides access to the DataNode selection history.
        * 
        * This implementation creates one of 2 default JavaFX Node viewers:
        * * one for displaying leaves as text
        * * one for displaying branches as a list
-       * DataNode subclasses may override this method to create custom viewers.
+       * A DataNode subclass may override this method to create viewers
+       * customized for viewing that particular subclass. 
        */
       {
         TreeStuff resultTreeStuff;
-
-        if ( isLeaf() ) // Display as text if this DataNode is leaf.
+        if ( isLeaf() ) // Create a text viewer Node if this DataNode is leaf.
           resultTreeStuff= TitledTextNode.makeTreeStuff(
                 this,
                 selectedDataNode,
@@ -729,7 +729,7 @@ public abstract class DataNode
                 theRootEpiTreeItem,
                 theSelections
                 );
-          else  // Display as list if this DataNode is not a leaf.
+          else  // Create a list viewer Node if this DataNode is not a leaf.
           resultTreeStuff= TitledListNode.makeTreeStuff(
                 this,
                 selectedDataNode,
@@ -738,8 +738,7 @@ public abstract class DataNode
                 thePersistent,
                 theSelections
                 );
-
-        return resultTreeStuff;
+        return resultTreeStuff; // Return the view that was created.
         }
 
     public TreePath getTreePath()
