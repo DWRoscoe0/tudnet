@@ -12,6 +12,7 @@ import javafx.scene.layout.BorderPane;
 import allClasses.DataNode;
 import allClasses.DataRoot;
 import allClasses.Persistent;
+import allClasses.epinode.MapEpiNode;
 
 public class Navigation extends EpiStage
 
@@ -21,6 +22,7 @@ public class Navigation extends EpiStage
    * * showing the hierarchy as a navigable tree using a TreeView, or 
    * * showing a particular DataNode and possibly some of its descendants.
    * At startup it displays the DataNode that was being displayed at shutdown.
+   *  ///enh Persist tree vs. item.
    */
 
   {
@@ -46,6 +48,7 @@ public class Navigation extends EpiStage
 
     // Other variables.
     private EpiTreeItem theRootEpiTreeItem;
+    private MapEpiNode persistentMapEpiNode; // Root of Persistent data.
 
     // Construction.
 
@@ -62,6 +65,8 @@ public class Navigation extends EpiStage
         this.theDataRoot= theDataRoot;
         this.thePersistent= thePersistent;
         this.theSelections= theSelections;
+        
+        persistentMapEpiNode= thePersistent.getRootMapEpiNode();
         }
     
     public void initializeAndStartV()
@@ -82,29 +87,16 @@ public class Navigation extends EpiStage
         theDataNodeShowTreeButton= new Button("Show Tree");
         theDataNodeShowTreeButton.setOnAction(
             theActionEvent -> doDataNodeShowTreeButtonActionV() );
-        
-        DataNode previouslySelectedDataNode= 
-            theSelections.getPreviousSelectedDataNode();
 
         buildTreeSceneV(theRootDataNode);
 
         buildDataNodeSceneV();
 
-        { // Calculate only one content to avoid selection history pollution.
-          boolean displayTreeFirstB= true;
-          if (displayTreeFirstB)
-            { setTreeContentFromDataNodeV(previouslySelectedDataNode);
-              setScene(theTreeScene); // Use tree scene as first one displayed.
-              }
-            else
-            { setDataNodeContentFromDataNodeV(previouslySelectedDataNode);
-              setScene(theDataNodeScene); // Use item scene as first one displayed.
-              }
-          }
-        
+        displayTreeOrDataNodeV();
+
         finishStateInitAndStartV("Infogora JavaFX Navigation UI");
         }
-    
+
     private void doDataNodeShowTreeButtonActionV()
       /* 
        * This method is used to cause a switch of Scenes 
@@ -116,6 +108,8 @@ public class Navigation extends EpiStage
        */
       {
         /// System.out.println("doDataNodeShowTreeButtonActionV() called.");
+        persistentMapEpiNode.putTrueOrRemoveB( // Record in Persistent storage
+            "DisplayAsTree", true); // to display as tree.
         DataNode parentOfSelectedDataNode= 
             theDataNodeTreeStuff.getSubjectDataNode();
         setTreeContentFromDataNodeV(parentOfSelectedDataNode);//
@@ -130,6 +124,8 @@ public class Navigation extends EpiStage
        * from the Tree scene to the DataNode Scene.
        */
       {
+        persistentMapEpiNode.putTrueOrRemoveB( // Record in Persistent storage
+            "DisplayAsTree", false); // to display as DataNode.
         TreeItem<DataNode> selectedTreeItemOfDataNode=
           treeTreeStuff.toTreeItem(
               treeTreeStuff.getSelectionDataNode());
@@ -140,6 +136,37 @@ public class Navigation extends EpiStage
         setScene(theDataNodeScene); // Switch Scene to DataNode Scene.
         }
 
+
+
+    private void displayTreeOrDataNodeV(boolean displayTreeB)
+      /* If displayTreeB is true, it displays the tree,
+       * otherwise it displays a DataNode.
+       * It displays based on the selection path stored in persistent storage.
+       */
+      {
+        persistentMapEpiNode.putTrueOrRemoveB( // Record in Persistent storage
+            "DisplayAsTree", displayTreeB); // how to display.
+        displayTreeOrDataNodeV(); // Display based on modified Persistent data.
+        }
+
+    private void displayTreeOrDataNodeV()
+      /* Depending on the contents of Persistent storage,
+       * this methods displays the tree or it displays a DataNode.
+       * The selection also comes from Persistent storage.
+       */
+      {
+        DataNode spreviouslySelectedDataNode= 
+            theSelections.getPreviousSelectedDataNode();
+        boolean displayTreeB= persistentMapEpiNode.isTrueB("DisplayAsTree");
+        if (displayTreeB)
+          { setTreeContentFromDataNodeV(spreviouslySelectedDataNode);
+            setScene(theTreeScene); // Use tree scene as first one displayed.
+            }
+          else
+          { setDataNodeContentFromDataNodeV(spreviouslySelectedDataNode);
+            setScene(theDataNodeScene); // Use item scene as first one displayed.
+            }
+        }
 
     // Tree scene methods.
 

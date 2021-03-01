@@ -572,6 +572,19 @@ public class MapEpiNode extends EpiNode
 
     // Methods that store various types of data in a map.
 
+    public synchronized void putTrueOrRemoveB(String keyString, boolean valueB)
+      /* If valueB is true then this method stores the value "true"
+       * associated with keyString, otherwise it removes the entry completely.
+       * These values can be tested with isTrueB(String keyString).
+       * This saves space when most boolean options are false.
+       */
+      {
+        if (valueB) 
+          putV(keyString,"true");
+        else
+          removeV(keyString);
+        }
+
     public synchronized void putV(String keyString, long valueL)
       /* This associates integer valueI with keyString in this MapEpiNode.
         */

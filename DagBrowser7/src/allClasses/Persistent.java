@@ -410,6 +410,11 @@ public class Persistent
         } // goReturn:
           return resultMapEpiNode;
         }
-	  
-		}
+
+    public MapEpiNode getRootMapEpiNode() 
+      {
+        return rootMapEpiNode;
+        }
+
+	}
 

@@ -504,13 +504,13 @@ public class Selections
       /* This method returns the DataNode representing 
        * the last selection displayed by the app,
        * which is recorded in the selection history.
-       * It works by following the path of 
+       * Unless the app is starting, 
+       * this is also the selection being displayed now.
+       * This method works by following the path of 
        * recent selections in the Persistent storage tree
        * while following an equivalent path in the DataNode tree,
        * starting each from its respective root.
        * It returns the last DataNode in the DataNode path.
-       * This method is used at app start up to restore 
-       * the selection that existed when the app shut down.
        */
       {
           DataNode scanDataNode= theDataRoot.getRootDataNode();
