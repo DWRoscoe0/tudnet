@@ -215,7 +215,7 @@ public class Navigation extends EpiStage
       {
         theDataNodeContentBorderPane= new BorderPane();
         theDataNodeContentBorderPane.setBottom(theDataNodeShowTreeButton);
-        theDataNodeContentBorderPane.addEventHandler(
+        theDataNodeContentBorderPane.addEventFilter( // or addEventHandler(
           KeyEvent.KEY_PRESSED, 
           (theKeyEvent) -> handleDataNodeKeyPressV(theKeyEvent)
           );
