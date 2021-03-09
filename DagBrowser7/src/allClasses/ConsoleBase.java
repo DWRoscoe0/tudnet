@@ -1,8 +1,6 @@
 package allClasses;
 
 
-import static allClasses.AppLog.theAppLog;
-
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import javax.swing.JComponent;
@@ -12,10 +10,13 @@ import javax.swing.text.PlainDocument;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.tree.TreePath;
 
+import allClasses.LockAndSignal.Input;
 import allClasses.javafx.ConsoleNode;
 import allClasses.javafx.EpiTreeItem;
 import allClasses.javafx.Selections;
 import allClasses.javafx.TreeStuff;
+
+import static allClasses.AppLog.theAppLog;
 
 
 public class ConsoleBase
@@ -88,8 +89,6 @@ public class ConsoleBase
       { 
         thePlainDocument.addDocumentListener(listener); 
         }
-    
-    private void append(String theString) {}
 
     public void run() // For our Thread.
       {
@@ -100,19 +99,32 @@ public class ConsoleBase
       {
         outputStringBuffer.append("ConsoleBase: thread starting.\n");
         mainLoop: while(true) {
-        loopBody: {
+         loopBody: {
           if (0 < outputStringBuffer.length()) {
-            String charString= outputStringBuffer.substring(0,1);
-            theAppLog.debug(
-                "ConsoleBase.mainThreadLogicV() charString='"+charString+"'");
-            appendToDocumentV(charString);
+            String outString= outputStringBuffer.substring(0,1);
+            //// theAppLog.debug(
+            ////     "ConsoleBase.mainThreadLogicV() char='"+outString+"'");
+            appendToDocumentV(outString);
             outputStringBuffer.delete(0,1);
             EpiThread.interruptibleSleepB(20);
             break loopBody;
             }
-          EpiThread.interruptibleSleepB(1000);
+          if (0 < inputStringBuffer.length()) {
+            String inString= inputStringBuffer.substring(0,1);
+            theAppLog.debug(
+              "ConsoleBase.mainThreadLogicV() inString='"+inString+"'");
+            inputStringBuffer.delete(0,1);
+            outputStringBuffer.append(
+                "The character '"+inString+"' was typed.\n");
+            break loopBody;
+            }
+          //// EpiThread.interruptibleSleepB(1000);
           //// appendToDocumentV("ConsoleBase:Looping append.\n");
-          outputStringBuffer.append("ConsoleBase:Looping output.\n");
+          LockAndSignal.Input theInput= // Waiting for any new inputs. 
+            theLockAndSignal.waitingForNotificationOrInterruptE();
+          if // Exiting loop if  thread termination is requested.
+            ( theInput == Input.INTERRUPTION )
+            break mainLoop;
         } // loopBody: 
         } // mainLoop: 
         }

@@ -8,8 +8,6 @@ import javafx.scene.control.TextArea;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 
-import static allClasses.AppLog.theAppLog;
-
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
@@ -86,8 +84,8 @@ public class ConsoleNode
         setTop(titleLabel); // Add title to main Pane.
         BorderPane.setAlignment(titleLabel,Pos.CENTER);
 
-        theAppLog.debug(
-          "ConsoleNode.ConsoleNode(.) TextArea('"+initialContentString+"'");
+        //// theAppLog.debug(
+        ////   "ConsoleNode.ConsoleNode(.) TextArea('"+initialContentString+"'");
         theTextArea= // Construct TextArea with initial text.
           new TextArea(initialContentString);
         /// theTextArea.getCaret().setVisible(true); // Make viewer cursor visible.
@@ -119,11 +117,11 @@ public class ConsoleNode
           int offsetI= e.getOffset();
           int lengthI= e.getLength();
           final String theString= theDocument.getText(offsetI, lengthI);
-          theAppLog.debug(
-            "ConsoleNode.insertUpdate(.) theString='"+theString+"'");
+          //// theAppLog.debug(
+          ////   "ConsoleNode.insertUpdate(.) theString='"+theString+"'");
           Platform.runLater( () -> {
-              theAppLog.debug(
-                "ConsoleNode.insertUpdate(.) QUEUED theString='"+theString+"'");
+              //// theAppLog.debug(
+              ////   "ConsoleNode.insertUpdate(.) QUEUED theString='"+theString+"'");
               int endI= theTextArea.getLength();
               theTextArea.insertText(endI, theString);
               theTextArea.positionCaret(theTextArea.getLength());
@@ -138,10 +136,13 @@ public class ConsoleNode
 
 
     private void handleKeyV(KeyEvent theKeyEvent)
+      /* This event handler method passes the key in theKeyEvent
+       * to theConsoleBase DataNode for processing.
+       */
       {
         String keyString= theKeyEvent.getCharacter();
-        theTextArea.appendText(
-            "The character '"+keyString+"' was typed.\n");
+        //// theTextArea.appendText(
+        ////     "The character '"+keyString+"' was typed.\n");
 
         theConsoleBase.processInputKeyV(keyString);
         theKeyEvent.consume(); // Prevent further processing.
