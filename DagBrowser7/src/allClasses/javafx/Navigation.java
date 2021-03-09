@@ -22,7 +22,10 @@ public class Navigation extends EpiStage
    * * showing the hierarchy as a navigable tree using a TreeView, or 
    * * showing a particular DataNode and possibly some of its descendants.
    * At startup it displays the DataNode that was being displayed at shutdown.
-   *  ///enh Persist tree vs. item.
+   * 
+   * ///fix To prevent Listener leak, in Finalization,
+   *   remove ConsoleNode Document change listener from ConsoleBase 
+   *   
    */
 
   {
