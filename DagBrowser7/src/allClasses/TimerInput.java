@@ -18,9 +18,13 @@ public class TimerInput
 	  a thread or a state machine.
 	  There is a rescheduleB(.) method for doing exponential back-off.
 
-	  This class uses a  java.util.Timer to do the timing.
-	  The run() method that is triggered must return quickly or 
-	  other events using the same Timer could be delayed.
+	  This class can use either java.util.Timer or 
+	  java.util.concurrent.ScheduledThreadPoolExecutor to do the timing.
+	  Lately the java.util.concurrent.ScheduledThreadPoolExecutor is being used.
+
+	  If java.util.Timer is used, the run() method that is triggered 
+	  must return quickly or other events using the same Timer could be delayed.
+
 		An earlier version of this class used LockAndSignal.notifyingV()
 	  in the run() method of TimerTask instances that it creates for quickness.
 	  This version does not have that guarantee.

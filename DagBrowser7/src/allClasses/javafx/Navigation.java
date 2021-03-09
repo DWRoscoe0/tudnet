@@ -137,18 +137,6 @@ public class Navigation extends EpiStage
         }
 
 
-
-    private void displayTreeOrDataNodeV(boolean displayTreeB)
-      /* If displayTreeB is true, it displays the tree,
-       * otherwise it displays a DataNode.
-       * It displays based on the selection path stored in persistent storage.
-       */
-      {
-        persistentMapEpiNode.putTrueOrRemoveB( // Record in Persistent storage
-            "DisplayAsTree", displayTreeB); // how to display.
-        displayTreeOrDataNodeV(); // Display based on modified Persistent data.
-        }
-
     private void displayTreeOrDataNodeV()
       /* Depending on the contents of Persistent storage,
        * this methods displays the tree or it displays a DataNode.

@@ -27,6 +27,9 @@ public class TreeStuff
    * Location can also be represented by the TreePath
    * from the root DataNode to the DataNode of interest,
    * though this is not being done now.
+   * 
+   * ///org Representing location with a TreePath might be necessary 
+   * when and if Infogora supports DataNode DAGs instead of trees.
    */
 
   {

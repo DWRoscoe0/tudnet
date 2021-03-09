@@ -105,6 +105,18 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 	      new NetcasterQueue(cmThreadLockAndSignal, Config.QUEUE_SIZE, "mccmp");
       NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue=
           new NetcasterQueue(cmThreadLockAndSignal, Config.QUEUE_SIZE, "urcmp");
+      Timer theTimer= new Timer( ///opt being deprecated.
+        "AppTimer", // Thread name.
+        true); // Run as daemon thread.
+      ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor; {
+        // Single ScheduledThreadPoolExecutor for entire app,
+        // used for threads and timers.
+        theScheduledThreadPoolExecutor=
+          new ScheduledThreadPoolExecutor(1); // Minimum of 1 thread,
+        theScheduledThreadPoolExecutor.setMaximumPoolSize(15); // 15 max.
+        theScheduledThreadPoolExecutor.setKeepAliveTime(
+            5,TimeUnit.SECONDS); // Time before unused threads are reclaimed.
+        }
       theTextStreams2= new TextStreams2(
           "Replication-Text-Streams",this,thePersistent,theUnicasterManager);
       theConnectionManager= new ConnectionManager(
@@ -131,7 +143,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
               );
       EpiFileRoots theEpiFileRoots= new EpiFileRoots();
       ConsoleBase theConsoleBase= new ConsoleBase(
-          "Console-Base",thePersistent);
+          "Console-Base",thePersistent,theScheduledThreadPoolExecutor);
       DataNode testCenterDataNode= new NamedList(
           "Test-Center",
           theConsoleBase,
@@ -157,18 +169,6 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
     	    new TracingEventQueue(
     	    		theTracingEventQueueMonitor
 		  	  		  );
-      Timer theTimer= new Timer( ///opt being deprecated.
-        "AppTimer", // Thread name.
-        true); // Run as daemon thread.
-      ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor; {
-        // Single ScheduledThreadPoolExecutor for entire app,
-        // used for threads and timers.
-        theScheduledThreadPoolExecutor=
-          new ScheduledThreadPoolExecutor(1); // Minimum of 1 thread,
-        theScheduledThreadPoolExecutor.setMaximumPoolSize(15); // 15 max.
-        theScheduledThreadPoolExecutor.setKeepAliveTime(
-            5,TimeUnit.SECONDS); // Time before unused threads are reclaimed.
-        }
 
       receiverNetcasterPacketManager=  //? use local? 
       		new NetcasterPacketManager( (IPAndPort)null );

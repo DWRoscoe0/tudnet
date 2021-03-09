@@ -1,8 +1,15 @@
 package allClasses;
 
 
-import java.awt.event.KeyEvent;
+import static allClasses.AppLog.theAppLog;
+
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+
 import javax.swing.JComponent;
+import javax.swing.event.DocumentListener;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.PlainDocument;
+import javax.swing.text.SimpleAttributeSet;
 import javax.swing.tree.TreePath;
 
 import allClasses.javafx.ConsoleNode;
@@ -10,52 +17,125 @@ import allClasses.javafx.EpiTreeItem;
 import allClasses.javafx.Selections;
 import allClasses.javafx.TreeStuff;
 
-import static allClasses.AppLog.theAppLog;
-
 
 public class ConsoleBase
-
   extends NamedDataNode
+  implements Runnable
 
   {
-    /* 
-     * ///opt This class is being deprecated.
-     * 
-     *  It was meant to be part of a way of adding new command features.
-     *  A new feature could be created by instantiating this DataNode class
-     *  with the name of the Viewer class implementing the feature,
-     *  and then implementing the Viewer class.
-     *  This class uses Java reflection to calculate 
-     *  the appropriate Viewer class from a name string.
-     *  
-     *  It was later decided that it is better to put 
-     *  the intelligence and state of the command feature in a new DataNode,
-     *  and display it with one of a small set of simple Viewer JComponents
-     *  which display lists of items from the DataNode.
-     *  
-     */
+  
+    // static variables.
+
+  
+    // instance variables.
+
+    // Constructor-injected variables.
 
     // Locally stored injected dependencies.
-    //// private String viewerClassString;
     @SuppressWarnings("unused") ////
     private Persistent thePersistent;
-  
+
+    // Other variables.
+    private StringBuffer inputStringBuffer= new StringBuffer();
+    private StringBuffer outputStringBuffer= new StringBuffer();
+    private LockAndSignal theLockAndSignal= new LockAndSignal();
+    private PlainDocument thePlainDocument= new PlainDocument();
+      // Internal document store.
+      // Unlike thePlainDocument in TextStream2,
+      // this has no EDT (Event Dispatch Thread) restrictions,
+      // because it is not used directly by any GUI TextArea.
+
     public ConsoleBase( // constructor
         String nameString, // Node name.
-        //// String viewerClassString, // Name of viewer class for this node.
-        Persistent thePersistent
+        Persistent thePersistent,
+        ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor ////
         )
       {
         super.initializeV(nameString);
-        
-        //// this.viewerClassString= viewerClassString; 
+
         this.thePersistent= thePersistent;
+        
+        //// appendToDocumentV("ConsoleBase initial content.\n");
+        outputStringBuffer.append(
+            "ConsoleBase:  initial content by outputStringBuffer.append.\n");
+        
+        theScheduledThreadPoolExecutor.execute(this); // Start our thread.
         }
     
     public String getSummaryString()
       {
         return "";
         }
+
+    private void appendToDocumentV(String theString)
+      // Convenience method that appends and handles exceptions.
+      {
+        try { // Insert initial content.
+          thePlainDocument.insertString( // Insert into document
+              // 0,"ConsoleBase initial content.\n",SimpleAttributeSet.EMPTY);
+              thePlainDocument.getLength(), // at its end
+              theString, // the given string
+              SimpleAttributeSet.EMPTY // with no special attributes.
+              );
+        } catch (BadLocationException e) {
+          ////// TODO Auto-generated catch block
+          e.printStackTrace();
+        }
+      }
+
+    public void addDocumentListener(DocumentListener listener)
+      /* This method simply forwards to thePlainDocument. */
+      { 
+        thePlainDocument.addDocumentListener(listener); 
+        }
+    
+    private void append(String theString) {}
+
+    public void run() // For our Thread.
+      {
+        mainThreadLogicV();
+        }
+
+    private void mainThreadLogicV() 
+      {
+        outputStringBuffer.append("ConsoleBase: thread starting.\n");
+        mainLoop: while(true) {
+        loopBody: {
+          if (0 < outputStringBuffer.length()) {
+            String charString= outputStringBuffer.substring(0,1);
+            theAppLog.debug(
+                "ConsoleBase.mainThreadLogicV() charString='"+charString+"'");
+            appendToDocumentV(charString);
+            outputStringBuffer.delete(0,1);
+            EpiThread.interruptibleSleepB(20);
+            break loopBody;
+            }
+          EpiThread.interruptibleSleepB(1000);
+          //// appendToDocumentV("ConsoleBase:Looping append.\n");
+          outputStringBuffer.append("ConsoleBase:Looping output.\n");
+        } // loopBody: 
+        } // mainLoop: 
+        }
+
+    public void processInputKeyV(String theKeyString) {
+      //// inputQueueOfKeyCode.enqueue(theKeyCode);
+      inputStringBuffer.append(theKeyString);
+
+      theLockAndSignal.notifyingV();
+
+      startThreadMaybeV();
+      }
+
+    private synchronized void startThreadMaybeV()
+      {
+        }
+
+    
+    // Swing, TreeAware, and TreeHelper code.
+
+    public TreeHelper theTreeHelper;
+
+    public TreeHelper getTreeHelper() { return theTreeHelper; }
 
     public JComponent getDataJComponent( 
         TreePath inTreePath, DataTreeModel inDataTreeModel 
@@ -73,89 +153,9 @@ public class ConsoleBase
             new TitledTextViewer( 
                 inTreePath, 
                 inDataTreeModel,
-                "ConsoleBase stub, work-in-progress.");
+                "ConsoleBase stub, JavaFX work in-progress.");
           return theJComponent;
         }
-    
-    // variables.
-    
-      // static variables.
-
-      // instance variables.
-  
-        // Constructor-injected variables.
-        //// private Persistent thePersistent;
-        
-    // Constructors and constructor-related methods.
-
-      public enum State
-        {
-          INITIAL_GREETING,
-          AWAIT_DEVICE_INSERTION
-          }
-
-      State theState= State.INITIAL_GREETING;
-      State nextState= null;
-      
-      @SuppressWarnings("unused") ////
-      private void cycleStateMachineV()
-        {
-          while (true) {
-            switch (theState) {
-              case INITIAL_GREETING: initialGreetingV(); break;
-              case AWAIT_DEVICE_INSERTION: awaitDeviceInsertionV(); break;
-              }
-            if (null == nextState) break;  // Exit loop and return.
-            theState= nextState;
-            nextState= null;
-            }
-        }
-      
-      private void initialGreetingV()
-        {
-          append(
-              "\nTo begin building a volume with installation files,"+
-              "\nplease insert the device to use into a USB port."+
-              "\nIf you have already inserted one then please "+
-              "\nremove it and insert it again.");
-          nextState= State.AWAIT_DEVICE_INSERTION;
-          }
-
-      private void awaitDeviceInsertionV()
-        {
-          append(
-              "\n\nThis is where we wait.");
-          }
-
-      private void append(String theString) {}
-
-      @SuppressWarnings("unused") ////
-      private void processKeyPressedV(KeyEvent theKeyEvent)
-        //// Thread safety might be a problem.  
-        //// Only insertString(.) is thread safe.
-        {
-          //// if(theKeyEvent.getKeyCode() == KeyEvent.VK_ENTER){
-          theAppLog.debug( "ConsoleBase.processKeyPressedV(.) called.");
-          //// theKeyEvent.consume(); // Prevent further processing.
-          //// ioIJTextArea.append("\nA key was pressed.\n");
-          }
-
-      @SuppressWarnings("unused") ////
-      private void putCursorAtEndDocumentV()
-        {
-          ////
-          }
-
-    // rendering methods.  to be added ??
-
-    // TreeAware interface code for TreeHelper access.
-
-      public TreeHelper theTreeHelper;
-
-      public TreeHelper getTreeHelper() { return theTreeHelper; }
-
-    // Other / TreeStuff methods.
-      
 
     public TreeStuff makeTreeStuff( 
         DataNode selectedDataNode,
@@ -171,15 +171,21 @@ public class ConsoleBase
        * for displaying this DataNode.
        */
       {
-        TreeStuff resultTreeStuff= ConsoleNode.makeTreeStuff(
-                this,
-                selectedDataNode,
-                getContentString(),
-                thePersistent,
-                theDataRoot,
-                theRootEpiTreeItem,
-                theSelections
-                );
+        TreeStuff resultTreeStuff= null;
+        try {
+          resultTreeStuff = ConsoleNode.makeTreeStuff(
+                  this,
+                  selectedDataNode,
+                  thePlainDocument.getText(0,thePlainDocument.getLength()),
+                  thePersistent,
+                  theDataRoot,
+                  theRootEpiTreeItem,
+                  theSelections
+                  );
+        } catch (BadLocationException e) {
+          ////// TODO Auto-generated catch block
+          e.printStackTrace();
+        }
         return resultTreeStuff; // Return the view that was created.
         }
 

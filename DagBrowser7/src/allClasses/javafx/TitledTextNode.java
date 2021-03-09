@@ -55,10 +55,7 @@ public class TitledTextNode extends BorderPane
       }
     
     public TitledTextNode(
-                DataNode subjectDataNode,
-                String theString,
-                TreeStuff theTreeStuff
-                )
+        DataNode subjectDataNode, String theString, TreeStuff theTreeStuff )
       /* Constructs a TitledTextNode.
         subjectDataNode is the node of the Tree to be displayed.
         The last DataNode in the path is that Node.
