@@ -36,21 +36,22 @@ public class VolumeChecker
         theAppLog.debug(
           myToString()+"VolumeChecker.VolumeChecker(.) ends, nameString='"+nameString+"'");
         }
-      
-      private void initialGreetingV()
-        {
-          append(
-              "\nPlease insert the volume to be checked into a USB port."+
-              "\nIf you have already inserted one then please "+
-              "\nremove it and insert it again.");
-          }
 
-      private void awaitDeviceInsertionV()
-        {
-          append(
-              "\n\nThis is where we wait.");
-          }
+    protected void mainThreadLogicV()
+      // This should be overridden by subclasses. 
+      {
+        while(true) {
+          queueSlowOutputV(
+            "\nPlease insert the volume to be checked into a USB port.  "+
+            "If you have already inserted one then please "+
+            "remove it and insert it again.  ");
+          String inString= promptAndGetKeyString();
+          if (null == inString) // Exit if termination requested.
+            break;
+          queueSlowOutputV("\nThe character '"+inString+"' was typed.\n");
+          } 
+        }
 
-      private void append(String theString) {}
+    private void append(String theString) {}
 
     }

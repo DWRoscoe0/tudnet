@@ -64,11 +64,6 @@ public class ConsoleBase
         super.initializeV(nameString);
         
         this.theScheduledThreadPoolExecutor= theScheduledThreadPoolExecutor;
-        
-        outputStringBuffer.append(
-            "ConsoleBase:  initial content by outputStringBuffer.append.\n");
-
-        //// startThreadV();
 
         /// theAppLog.debug(
         ///   myToString()+"ConsoleBase.ConsoleBase(.) ends, nameString='"+nameString+"'");
@@ -98,7 +93,6 @@ public class ConsoleBase
       {
         try { // Insert initial content.
           thePlainDocument.insertString( // Insert into document
-              // 0,"ConsoleBase initial content.\n",SimpleAttributeSet.EMPTY);
               thePlainDocument.getLength(), // at its end
               theString, // the given string
               SimpleAttributeSet.EMPTY // with no special attributes.
@@ -123,37 +117,79 @@ public class ConsoleBase
         /// theAppLog.debug(myToString()+"ConsoleBase.run() ends.");
         }
 
-    private void mainThreadLogicV()
+    protected void mainThreadLogicV()
+      // This should be overridden by subclasses. 
       {
-        outputStringBuffer.append("ConsoleBase: mainThreadLogicV() begins.\n");
-        mainLoop: while(true) {
-         loopBody: {
-          if (0 < outputStringBuffer.length()) {
-            String outString= outputStringBuffer.substring(0,1);
-            /// theAppLog.debug(myToString()+"ConsoleBase.mainThreadLogicV() "
-            ///     + "processing from outputStringBuffer \""+outString+"\"");
-            appendToDocumentV(outString);
-            outputStringBuffer.delete(0,1);
-            EpiThread.interruptibleSleepB(20);
-            break loopBody;
-            }
-          if (0 < inputStringBuffer.length()) {
-            String inString= inputStringBuffer.substring(0,1);
-            /// theAppLog.debug(myToString()+"ConsoleBase.mainThreadLogicV() "
-            ///     + "processing from inputStringBuffer \""+inString+"\"");
-            inputStringBuffer.delete(0,1);
-            outputStringBuffer.append(
-                "The character '"+inString+"' was typed.\n");
-            break loopBody;
-            }
+        queueSlowOutputV("ConsoleBase echo test.\n\n");
+        while(true) {
+          queueSlowOutputV("Press key to echo: ");
+          String inString= promptAndGetKeyString(); 
+          if (null == inString) // Exit if termination requested.
+            break;
+          queueSlowOutputV("\nThe character '"+inString+"' was typed.\n");
+          } 
+        }
+
+    protected String promptAndGetKeyString()
+      /* This method output slowly any queued output text,
+       * then waits for and return a key string, 
+       * or null if thread termination is requested.
+       */
+      {
+        displayQueuedOutputSlowlyV();
+        return getKeyString();
+        }
+      
+    protected void queueSlowOutputV(String theString)
+      {
+        outputStringBuffer.append(theString);
+        }
+
+    protected String getKeyString()
+      /* This method extracts and returns the next key as a String
+       * from the keyboard input queue, 
+       * or null if thread termination is requested.
+       * It will wait until one of those input types happens.
+       */
+      {
+        String resultString= null; // Assume thread termination.
+        while (true) {
+          resultString= tryToGetFromQueueKeyString();
+          if (null != resultString) break; // Exit if got key.
           LockAndSignal.Input theInput= // Waiting for any new inputs. 
             theLockAndSignal.waitingForNotificationOrInterruptE();
-          if // Exiting loop if  thread termination is requested.
-            ( theInput == Input.INTERRUPTION )
-            break mainLoop;
-        } // loopBody: 
-        } // mainLoop: 
-        outputStringBuffer.append("ConsoleBase: mainThreadLogicV() ends.\n");
+          if // Exiting loop with null if thread termination is requested.
+            (Input.INTERRUPTION == theInput)
+            break;
+          }
+        return resultString;
+        }
+
+    private String tryToGetFromQueueKeyString()
+      /* This method tries to extract the next key as a String
+       * from the keyboard input queue, or null if there is none.
+       */
+      {
+        String inString= null;
+        if (0 < inputStringBuffer.length()) {
+          inString= inputStringBuffer.substring(0,1);
+          inputStringBuffer.delete(0,1);
+          }
+        /// theAppLog.debug(myToString()+"ConsoleBase.mainThreadLogicV() "
+        ///     + "processing from inputStringBuffer \""+inString+"\"");
+        return inString;
+        }
+    
+    protected void displayQueuedOutputSlowlyV()
+      {
+        while (0 < outputStringBuffer.length()) {
+          String outString= outputStringBuffer.substring(0,1);
+          /// theAppLog.debug(myToString()+"ConsoleBase.mainThreadLogicV() "
+          ///     + "processing from outputStringBuffer \""+outString+"\"");
+          appendToDocumentV(outString);
+          outputStringBuffer.delete(0,1);
+          EpiThread.interruptibleSleepB(20);
+          }
         }
 
     public void processInputKeyV(String theKeyString) {
@@ -178,7 +214,7 @@ public class ConsoleBase
     public JComponent getDataJComponent( 
         TreePath inTreePath, DataTreeModel inDataTreeModel 
         ) 
-      /* Returns a JComponent of type whose name is //////////doc
+      /* Returns a JComponent of type whose name is //////doc
        * which should be a viewer capable of displaying 
        * this DataNode and executing the command associated with it.
        * The DataNode to be viewed should be 
