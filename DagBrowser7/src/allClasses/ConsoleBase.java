@@ -23,6 +23,15 @@ public class ConsoleBase
   extends NamedDataNode
   implements Runnable
 
+  /* This class is the DataNode basis for features that use 
+   * a simple console-like user interface.
+   * It and its subclasses work with the ConsoleNode class
+   * to provide this behavior.
+   * It provides keyboard input and text display output.
+   * The text output is intentionally slowed for 
+   * readability and comprehension.
+   */
+
   {
   
     // static variables.
@@ -31,10 +40,10 @@ public class ConsoleBase
     // instance variables.
 
     // Constructor-injected variables.
-
-    // Locally stored injected dependencies.
+      ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor;
 
     // Other variables.
+    private boolean threadRunningB= false;
     private StringBuffer inputStringBuffer= new StringBuffer();
     private StringBuffer outputStringBuffer= new StringBuffer();
     private LockAndSignal theLockAndSignal= new LockAndSignal();
@@ -54,13 +63,23 @@ public class ConsoleBase
         ///   myToString()+"ConsoleBase.ConsoleBase(.) begins, nameString='"+nameString+"'");
         super.initializeV(nameString);
         
+        this.theScheduledThreadPoolExecutor= theScheduledThreadPoolExecutor;
+        
         outputStringBuffer.append(
             "ConsoleBase:  initial content by outputStringBuffer.append.\n");
-        
-        theScheduledThreadPoolExecutor.execute(this); // Start our thread.
+
+        //// startThreadV();
 
         /// theAppLog.debug(
         ///   myToString()+"ConsoleBase.ConsoleBase(.) ends, nameString='"+nameString+"'");
+        }
+
+    private synchronized void startThreadIfNeededV()
+      {
+        if (! threadRunningB) { // If our thread is not running
+          theScheduledThreadPoolExecutor.execute(this); // start our thread
+          threadRunningB|= true; // and record same.
+          }
         }
     
     protected String myToString()
@@ -94,6 +113,7 @@ public class ConsoleBase
       /* This method simply forwards to thePlainDocument. */
       { 
         thePlainDocument.addDocumentListener(listener); 
+        startThreadIfNeededV();
         }
 
     public void run() // For our Thread.
