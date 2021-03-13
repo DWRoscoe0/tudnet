@@ -1,5 +1,7 @@
 package allClasses;
 
+import static allClasses.AppLog.theAppLog;
+
 import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -9,7 +11,6 @@ import java.net.SocketAddress;
 import java.net.SocketException;
 import java.util.Timer;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import javax.swing.JFrame;
 
@@ -35,6 +36,17 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
     but a GUI is not always needed,
     so it made sense to divide the code between the App and GUI factory classes.
 
+    ScheduledThreadPoolExecutor is used in this class.
+    Unfortunately it appears that ScheduledThreadPoolExecutor disables
+    some functionality of the ThreadPoolExecutor in the control of 
+    the thread pool.  In the ScheduledThreadPoolExecutor,
+    the pool size, the so-called core size, is fixed.
+    It can not expand or contract as needed.
+
+    ///enh It might be necessary to create a new class that uses 
+    the ThreadPoolExecutor configured for a widely variable number of threads
+    to provide a ScheduledThreadPoolExecutor-like class 
+    that can provide a potentially large number of timer threads.
     */
 
   // Injected dependencies that need saving for later.
@@ -109,13 +121,15 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
         "AppTimer", // Thread name.
         true); // Run as daemon thread.
       ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor; {
-        // Single ScheduledThreadPoolExecutor for entire app,
-        // used for threads and timers.
-        theScheduledThreadPoolExecutor=
-          new ScheduledThreadPoolExecutor(1); // Minimum of 1 thread,
-        theScheduledThreadPoolExecutor.setMaximumPoolSize(15); // 15 max.
-        theScheduledThreadPoolExecutor.setKeepAliveTime(
-            5,TimeUnit.SECONDS); // Time before unused threads are reclaimed.
+        // Single ScheduledThreadPoolExecutor for many app threads and timers.
+        theScheduledThreadPoolExecutor= new ScheduledThreadPoolExecutor(
+            5, // Fixed thread pool size.
+            (theRunnable,theThreadPoolExecutor) -> { theAppLog.error(
+                "ScheduledThreadPoolExecutor rejected execution."); }
+            ); // Minimum of 1 thread,
+        //// theScheduledThreadPoolExecutor.setMaximumPoolSize(15); // 15 max.
+        //// theScheduledThreadPoolExecutor.setKeepAliveTime(
+        ////   5,TimeUnit.SECONDS); // Time before unused threads are reclaimed.
         }
       theTextStreams2= new TextStreams2(
           "Replication-Text-Streams",this,thePersistent,theUnicasterManager);
@@ -142,11 +156,14 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
               thePersistent
               );
       EpiFileRoots theEpiFileRoots= new EpiFileRoots();
+      VolumeChecker theVolumeChecker= new VolumeChecker(
+          "Volume-Checker",thePersistent,theScheduledThreadPoolExecutor);
       ConsoleBase theConsoleBase= new ConsoleBase(
           "Console-Base",thePersistent,theScheduledThreadPoolExecutor);
       DataNode testCenterDataNode= new NamedList(
           "Test-Center",
           theConsoleBase,
+          theVolumeChecker,
           theEpiFileRoots,
           theInstallerBuilder,
           theTextStreams2,

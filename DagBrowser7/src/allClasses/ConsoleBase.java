@@ -16,7 +16,7 @@ import allClasses.javafx.EpiTreeItem;
 import allClasses.javafx.Selections;
 import allClasses.javafx.TreeStuff;
 
-import static allClasses.AppLog.theAppLog;
+/// import static allClasses.AppLog.theAppLog;
 
 
 public class ConsoleBase
@@ -33,8 +33,6 @@ public class ConsoleBase
     // Constructor-injected variables.
 
     // Locally stored injected dependencies.
-    @SuppressWarnings("unused") ////
-    private Persistent thePersistent;
 
     // Other variables.
     private StringBuffer inputStringBuffer= new StringBuffer();
@@ -49,20 +47,28 @@ public class ConsoleBase
     public ConsoleBase( // constructor
         String nameString, // Node name.
         Persistent thePersistent,
-        ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor ////
+        ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor
         )
       {
+        /// theAppLog.debug(
+        ///   myToString()+"ConsoleBase.ConsoleBase(.) begins, nameString='"+nameString+"'");
         super.initializeV(nameString);
-
-        this.thePersistent= thePersistent;
         
-        //// appendToDocumentV("ConsoleBase initial content.\n");
         outputStringBuffer.append(
             "ConsoleBase:  initial content by outputStringBuffer.append.\n");
         
         theScheduledThreadPoolExecutor.execute(this); // Start our thread.
+
+        /// theAppLog.debug(
+        ///   myToString()+"ConsoleBase.ConsoleBase(.) ends, nameString='"+nameString+"'");
         }
     
+    protected String myToString()
+      // Method to simulate Object.toString().
+      {
+        return getClass().getName() + '@' + Integer.toHexString(hashCode())+":";
+        }
+
     public String getSummaryString()
       {
         return "";
@@ -92,18 +98,20 @@ public class ConsoleBase
 
     public void run() // For our Thread.
       {
+        /// theAppLog.debug(myToString()+"ConsoleBase.run() begins.");
         mainThreadLogicV();
+        /// theAppLog.debug(myToString()+"ConsoleBase.run() ends.");
         }
 
-    private void mainThreadLogicV() 
+    private void mainThreadLogicV()
       {
-        outputStringBuffer.append("ConsoleBase: thread starting.\n");
+        outputStringBuffer.append("ConsoleBase: mainThreadLogicV() begins.\n");
         mainLoop: while(true) {
          loopBody: {
           if (0 < outputStringBuffer.length()) {
             String outString= outputStringBuffer.substring(0,1);
-            //// theAppLog.debug(
-            ////     "ConsoleBase.mainThreadLogicV() char='"+outString+"'");
+            /// theAppLog.debug(myToString()+"ConsoleBase.mainThreadLogicV() "
+            ///     + "processing from outputStringBuffer \""+outString+"\"");
             appendToDocumentV(outString);
             outputStringBuffer.delete(0,1);
             EpiThread.interruptibleSleepB(20);
@@ -111,15 +119,13 @@ public class ConsoleBase
             }
           if (0 < inputStringBuffer.length()) {
             String inString= inputStringBuffer.substring(0,1);
-            theAppLog.debug(
-              "ConsoleBase.mainThreadLogicV() inString='"+inString+"'");
+            /// theAppLog.debug(myToString()+"ConsoleBase.mainThreadLogicV() "
+            ///     + "processing from inputStringBuffer \""+inString+"\"");
             inputStringBuffer.delete(0,1);
             outputStringBuffer.append(
                 "The character '"+inString+"' was typed.\n");
             break loopBody;
             }
-          //// EpiThread.interruptibleSleepB(1000);
-          //// appendToDocumentV("ConsoleBase:Looping append.\n");
           LockAndSignal.Input theInput= // Waiting for any new inputs. 
             theLockAndSignal.waitingForNotificationOrInterruptE();
           if // Exiting loop if  thread termination is requested.
@@ -127,10 +133,10 @@ public class ConsoleBase
             break mainLoop;
         } // loopBody: 
         } // mainLoop: 
+        outputStringBuffer.append("ConsoleBase: mainThreadLogicV() ends.\n");
         }
 
     public void processInputKeyV(String theKeyString) {
-      //// inputQueueOfKeyCode.enqueue(theKeyCode);
       inputStringBuffer.append(theKeyString);
 
       theLockAndSignal.notifyingV();

@@ -17,6 +17,7 @@ import allClasses.ConsoleBase;
 import allClasses.DataNode;
 import allClasses.DataRoot;
 import allClasses.Persistent;
+/// import static allClasses.AppLog.theAppLog;
 
 // import static allClasses.Globals.appLogger;
 
@@ -84,14 +85,13 @@ public class ConsoleNode
         setTop(titleLabel); // Add title to main Pane.
         BorderPane.setAlignment(titleLabel,Pos.CENTER);
 
-        //// theAppLog.debug(
-        ////   "ConsoleNode.ConsoleNode(.) TextArea('"+initialContentString+"'");
+        /// theAppLog.debug(
+        ///   "ConsoleNode.ConsoleNode(.) TextArea(\""+initialContentString+"\")");
         theTextArea= // Construct TextArea with initial text.
           new TextArea(initialContentString);
         /// theTextArea.getCaret().setVisible(true); // Make viewer cursor visible.
         theTextArea.setWrapText(true); // Make all visible.
         /// theTextArea.setWrapStyleWord(true); // Make it pretty.
-        //// theTextArea.requestFocus();
         Platform.runLater( () -> {
             theTextArea.requestFocus();
             theTextArea.positionCaret(theTextArea.getLength());
@@ -110,18 +110,22 @@ public class ConsoleNode
 
     public void changedUpdate(DocumentEvent e) {} // Not needed.
 
-    public void insertUpdate(DocumentEvent e) 
+    public void insertUpdate(DocumentEvent e)
+      /* This method processes Document insert events by 
+       * extracting the text that was inserted into the document,
+       * and appending that text to the end of theTextArea. 
+       */
       {
         try {
           Document theDocument= e.getDocument();
           int offsetI= e.getOffset();
           int lengthI= e.getLength();
           final String theString= theDocument.getText(offsetI, lengthI);
-          //// theAppLog.debug(
-          ////   "ConsoleNode.insertUpdate(.) theString='"+theString+"'");
+          /// theAppLog.debug(
+          ///   "ConsoleNode.insertUpdate(.) theString='"+theString+"'");
           Platform.runLater( () -> {
-              //// theAppLog.debug(
-              ////   "ConsoleNode.insertUpdate(.) QUEUED theString='"+theString+"'");
+              /// theAppLog.debug(
+              ///   "ConsoleNode.insertUpdate(.) QUEUED theString='"+theString+"'");
               int endI= theTextArea.getLength();
               theTextArea.insertText(endI, theString);
               theTextArea.positionCaret(theTextArea.getLength());
@@ -141,8 +145,6 @@ public class ConsoleNode
        */
       {
         String keyString= theKeyEvent.getCharacter();
-        //// theTextArea.appendText(
-        ////     "The character '"+keyString+"' was typed.\n");
 
         theConsoleBase.processInputKeyV(keyString);
         theKeyEvent.consume(); // Prevent further processing.
