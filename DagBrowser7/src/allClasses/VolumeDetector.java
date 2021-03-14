@@ -5,7 +5,7 @@ import static allClasses.AppLog.theAppLog;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 
-public class VolumeChecker
+public class VolumeDetector
 
   extends ConsoleBase
 
@@ -22,7 +22,7 @@ public class VolumeChecker
         
     // Constructors and constructor-related methods.
   
-    public VolumeChecker( // constructor
+    public VolumeDetector( // constructor
         String nameString, // Node name.
         Persistent thePersistent,
         ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor
@@ -34,7 +34,7 @@ public class VolumeChecker
           theScheduledThreadPoolExecutor
           );
         theAppLog.debug(
-          myToString()+"VolumeChecker.VolumeChecker(.) ends, nameString='"+nameString+"'");
+          myToString()+"VolumeDetector.VolumeChecker(.) ends, nameString='"+nameString+"'");
         }
 
     protected void mainThreadLogicV()

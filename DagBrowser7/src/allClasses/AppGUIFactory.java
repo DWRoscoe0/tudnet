@@ -156,7 +156,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
               thePersistent
               );
       EpiFileRoots theEpiFileRoots= new EpiFileRoots();
-      VolumeChecker theVolumeChecker= new VolumeChecker(
+      VolumeDetector theVolumeChecker= new VolumeDetector(
           "Volume-Checker",thePersistent,theScheduledThreadPoolExecutor);
       ConsoleBase theConsoleBase= new ConsoleBase(
           "Console-Base",thePersistent,theScheduledThreadPoolExecutor);
