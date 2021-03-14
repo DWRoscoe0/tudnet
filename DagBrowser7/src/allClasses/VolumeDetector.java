@@ -2,7 +2,11 @@ package allClasses;
 
 import static allClasses.AppLog.theAppLog;
 
+import java.io.File;
+import java.util.Arrays;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+
+import allClasses.LockAndSignal.Input;
 
 
 public class VolumeDetector
@@ -40,18 +44,37 @@ public class VolumeDetector
     protected void mainThreadLogicV()
       // This should be overridden by subclasses. 
       {
+        File[] newVolumeFiles;
+        File[] oldVolumeFiles;
         while(true) {
-          queueSlowOutputV(
-            "\nPlease insert the volume to be checked into a USB port.  "+
-            "If you have already inserted one then please "+
-            "remove it and insert it again.  ");
-          String inString= promptAndGetKeyString();
-          if (null == inString) // Exit if termination requested.
+          if (Input.INTERRUPTION == theLockAndSignal.testingForInterruptE())
             break;
-          queueSlowOutputV("\nThe character '"+inString+"' was typed.\n");
+          oldVolumeFiles= getVolumeFiles(); 
+          queueAndDisplayOutputSlowlyV(
+            "\nPresent volumes available are:\n  "
+            + Arrays.toString(oldVolumeFiles)
+            + "\n\nPlease insert or connect the volume "
+            + "to be used in this operation.  "
+            + "If you have already done this then please "
+            + "remove or disconnect it, "
+            + "then insert or connect it again.  ");
+          while (true) {
+            newVolumeFiles= getVolumeFiles();
+            if // If volume list has changed
+              (! Arrays.equals(oldVolumeFiles,newVolumeFiles)) 
+              break; // exit loop.
+            EpiThread.interruptibleSleepB(20);
+            if (Input.INTERRUPTION == theLockAndSignal.testingForInterruptE())
+              break;
+            }
+          queueSlowOutputV("\n\nVolumes changed.");
           } 
         }
 
-    private void append(String theString) {}
+        private File[] getVolumeFiles()
+          {
+            File[] resultFiles= File.listRoots();
+            return resultFiles;
+            }
 
     }

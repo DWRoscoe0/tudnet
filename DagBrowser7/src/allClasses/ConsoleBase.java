@@ -46,7 +46,7 @@ public class ConsoleBase
     private boolean threadRunningB= false;
     private StringBuffer inputStringBuffer= new StringBuffer();
     private StringBuffer outputStringBuffer= new StringBuffer();
-    private LockAndSignal theLockAndSignal= new LockAndSignal();
+    protected LockAndSignal theLockAndSignal= new LockAndSignal();
     private PlainDocument thePlainDocument= new PlainDocument();
       // Internal document store.
       // Unlike thePlainDocument in TextStream2,
@@ -138,6 +138,12 @@ public class ConsoleBase
       {
         displayQueuedOutputSlowlyV();
         return getKeyString();
+        }
+      
+    protected void queueAndDisplayOutputSlowlyV(String theString)
+      {
+        queueSlowOutputV(theString);
+        displayQueuedOutputSlowlyV();
         }
       
     protected void queueSlowOutputV(String theString)
