@@ -123,16 +123,27 @@ public class ConsoleBase
         queueSlowOutputV("ConsoleBase echo test.\n\n");
         while(true) {
           queueSlowOutputV("Press key to echo: ");
-          String inString= promptAndGetKeyString(); 
+          String inString= promptSlowlyAndGetKeyString(); 
           if (null == inString) // Exit if termination requested.
             break;
           queueSlowOutputV("\nThe character '"+inString+"' was typed.\n");
           } 
         }
 
-    protected String promptAndGetKeyString()
-      /* This method output slowly any queued output text,
-       * then waits for and return a key string, 
+    protected String promptSlowlyAndGetKeyString(String promptString)
+      /* This method output slowly any queued output text
+       * followed by prompt string,
+       * then waits for and returns a key string, 
+       * or null if thread termination is requested.
+       */
+      { 
+        queueSlowOutputV(promptString);
+        return promptSlowlyAndGetKeyString();
+        }
+      
+    protected String promptSlowlyAndGetKeyString()
+      /* This method outputs slowly any queued output text,
+       * then waits for and returns a key string, 
        * or null if thread termination is requested.
        */
       {
@@ -194,7 +205,7 @@ public class ConsoleBase
           ///     + "processing from outputStringBuffer \""+outString+"\"");
           appendToDocumentV(outString);
           outputStringBuffer.delete(0,1);
-          EpiThread.interruptibleSleepB(20);
+          EpiThread.interruptibleSleepB(5);
           }
         }
 

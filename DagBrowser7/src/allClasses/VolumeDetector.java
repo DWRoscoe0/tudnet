@@ -47,39 +47,55 @@ public class VolumeDetector
         queueAndDisplayOutputSlowlyV(
           "This feature tests the detection of storage volumes "
           + "attached to this device.\n");
-        File[] newVolumeFiles;
         File[] oldVolumeFiles= getVolumeFiles(); 
         while(true) {
+          File[] newVolumeFiles= 
+              waitForTerminationOrChangeOfVolumeFiles(oldVolumeFiles);
           if (Input.INTERRUPTION == theLockAndSignal.testingForInterruptE())
             break;
-          queueAndDisplayOutputSlowlyV(
-            "\nPresent volumes available are:\n  "
-            + Arrays.toString(oldVolumeFiles)
-            + "\n\nPlease insert or connect "
-            + "the next USB or other storage volume "
-            + "to be used in this operation.  "
-            + "If you have already done this then please "
-            + "remove or disconnect it, "
-            + "then insert or connect it again.  ");
-          while (true) {
-            newVolumeFiles= getVolumeFiles();
-            if // If volume list has changed
-              (! Arrays.equals(oldVolumeFiles,newVolumeFiles)) 
-              break; // exit loop.
-            EpiThread.interruptibleSleepB(20);
-            if (Input.INTERRUPTION == theLockAndSignal.testingForInterruptE())
-              break;
-            }
-          java.awt.Toolkit.getDefaultToolkit().beep(); // Create audible Beep.
+          /// java.awt.Toolkit.getDefaultToolkit().beep(); // Create audible Beep.
           queueSlowOutputV("\n\nVolumes changed.");
-          oldVolumeFiles= newVolumeFiles; 
+          oldVolumeFiles= newVolumeFiles;
           } 
         }
 
-        private File[] getVolumeFiles()
-          {
-            File[] resultFiles= File.listRoots();
-            return resultFiles;
-            }
+    protected File[] waitForTerminationOrChangeOfVolumeFiles(
+        File[] oldVolumeFiles)
+      /* This method returns an array of attached volumes
+       * the next time the set changes,
+       * or null if thread termination is requested.
+       */
+      {
+        File[] newVolumeFiles;
+        queueAndDisplayOutputSlowlyV(
+          "\n\nPresent volumes attached are:\n  "
+          + Arrays.toString(oldVolumeFiles)
+          + "\n\nPlease insert or connect "
+          + "the next USB or other storage volume "
+          + "to be used in this operation.  "
+          + "If you have already done this then please "
+          + "remove or disconnect it, "
+          + "then insert or connect it again.  ");
+        while (true) {
+          newVolumeFiles= getVolumeFiles();
+          if // Exit loop will null if termination is requested.
+            (Input.INTERRUPTION == theLockAndSignal.testingForInterruptE())
+            { newVolumeFiles= null; break; }
+          if // If volume list has changed
+            (! Arrays.equals(oldVolumeFiles,newVolumeFiles)) 
+            break; // exit loop.
+          EpiThread.interruptibleSleepB(20);
+          }
+        return newVolumeFiles;
+        }
+
+    protected File[] getVolumeFiles()
+      /* This method returns an array of Files describing 
+       * storage volumes available at this time. 
+       */
+      {
+        File[] resultFiles= File.listRoots();
+        return resultFiles;
+        }
 
     }
