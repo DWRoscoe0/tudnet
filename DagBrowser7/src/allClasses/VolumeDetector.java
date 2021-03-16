@@ -44,7 +44,7 @@ public class VolumeDetector
     protected void mainThreadLogicV()
       // This should be overridden by subclasses. 
       {
-        queueAndDisplayOutputSlowlyV(
+        queueAndDisplayOutputSlowV(
           "This feature tests the detection of storage volumes "
           + "attached to this device.\n");
         File[] oldVolumeFiles= getVolumeFiles(); 
@@ -54,7 +54,7 @@ public class VolumeDetector
           if (Input.INTERRUPTION == theLockAndSignal.testingForInterruptE())
             break;
           /// java.awt.Toolkit.getDefaultToolkit().beep(); // Create audible Beep.
-          queueSlowOutputV("\n\nVolumes changed.");
+          queueOutputV("\n\nVolumes changed.");
           oldVolumeFiles= newVolumeFiles;
           } 
         }
@@ -67,7 +67,7 @@ public class VolumeDetector
        */
       {
         File[] newVolumeFiles;
-        queueAndDisplayOutputSlowlyV(
+        queueAndDisplayOutputSlowV(
           "\n\nPresent volumes attached are:\n  "
           + Arrays.toString(oldVolumeFiles)
           + "\n\nPlease insert or connect "

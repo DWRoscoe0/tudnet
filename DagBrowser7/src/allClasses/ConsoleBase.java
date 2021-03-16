@@ -120,24 +120,39 @@ public class ConsoleBase
     protected void mainThreadLogicV()
       // This should be overridden by subclasses. 
       {
-        queueSlowOutputV("ConsoleBase echo test.\n\n");
+        queueOutputV("ConsoleBase echo test.\n\n");
         while(true) {
-          queueSlowOutputV("Press key to echo: ");
+          queueOutputV("Press key to echo: ");
           String inString= promptSlowlyAndGetKeyString(); 
           if (null == inString) // Exit if termination requested.
             break;
-          queueSlowOutputV("\nThe character '"+inString+"' was typed.\n");
+          queueOutputV("\nThe character '"+inString+"' was typed.\n");
           } 
         }
 
+    protected String reportWithPromptSlowlyAndGetKeyString(String reportString)
+      /* This method outputs slowly any queued output text
+       * followed by report string, followed by a prompt to press Enter,
+       * then waits for and returns a key string,
+       * or null if thread termination is requested.
+       */
+      { 
+        queueOutputV(
+            "\n"
+            + reportString
+            + "\nPress Enter key to continue: "
+            );
+        return promptSlowlyAndGetKeyString();
+        }
+
     protected String promptSlowlyAndGetKeyString(String promptString)
-      /* This method output slowly any queued output text
+      /* This method outputs slowly any queued output text
        * followed by prompt string,
        * then waits for and returns a key string, 
        * or null if thread termination is requested.
        */
       { 
-        queueSlowOutputV(promptString);
+        queueOutputV(promptString);
         return promptSlowlyAndGetKeyString();
         }
       
@@ -147,17 +162,23 @@ public class ConsoleBase
        * or null if thread termination is requested.
        */
       {
-        displayQueuedOutputSlowlyV();
+        displayQueuedOutputSlowV();
         return getKeyString();
         }
       
-    protected void queueAndDisplayOutputSlowlyV(String theString)
+    protected void queueAndDisplayOutputSlowV(String theString)
       {
-        queueSlowOutputV(theString);
-        displayQueuedOutputSlowlyV();
+        queueOutputV(theString);
+        displayQueuedOutputSlowV();
         }
       
-    protected void queueSlowOutputV(String theString)
+    protected void queueAndDisplayOutputFastV(String theString)
+      {
+        queueOutputV(theString);
+        displayQueuedOutputFastV();
+        }
+      
+    protected void queueOutputV(String theString)
       {
         outputStringBuffer.append(theString);
         }
@@ -196,8 +217,8 @@ public class ConsoleBase
         ///     + "processing from inputStringBuffer \""+inString+"\"");
         return inString;
         }
-    
-    protected void displayQueuedOutputSlowlyV()
+
+    protected void displayQueuedOutputSlowV()
       {
         while (0 < outputStringBuffer.length()) {
           String outString= outputStringBuffer.substring(0,1);
@@ -206,6 +227,15 @@ public class ConsoleBase
           appendToDocumentV(outString);
           outputStringBuffer.delete(0,1);
           EpiThread.interruptibleSleepB(5);
+          }
+        }
+
+    protected void displayQueuedOutputFastV()
+      {
+        while (0 < outputStringBuffer.length()) {
+          String outString= outputStringBuffer.substring(0,1);
+          appendToDocumentV(outString);
+          outputStringBuffer.delete(0,1);
           }
         }
 

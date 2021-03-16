@@ -299,7 +299,32 @@ public class FileOps
         long timestamp = System.currentTimeMillis();
         theFile.setLastModified(timestamp);
         }
-  
+
+    public final static String requiredConfirmationString= 
+        "I AM CERTAIN ABOUT THIS!"; 
+
+    public static String deleteRecursivelyReturnString(
+        File theFile,String confirmationString) 
+      //// throws IOException 
+      {
+        String errorString= null;
+      goReturn: {
+        if (requiredConfirmationString != confirmationString) {
+          errorString= "FileOps.deleteRecursivelyB(.) Unconfirmed request";
+          break goReturn;
+          }
+        if (theFile.isDirectory()) // If file is a directory then
+          for (File childFile : theFile.listFiles()) { // for each child
+            errorString= // recursively delete the child.
+                deleteRecursivelyReturnString(childFile,confirmationString);
+            if (null != errorString) break goReturn; // Exit if error.
+            }
+        if (!theFile.delete()) // Delete what remains after children are gone.
+          errorString= "Failed to delete file: " + theFile;
+      } // goReturn:
+        return errorString;
+      }
+    
     public static void deleteDeleteable(File tmpFile)
       {
         if (tmpFile != null) tmpFile.delete();
@@ -354,7 +379,7 @@ public class FileOps
         for // For all the elements of the relative path element array 
           (String elementString: fileRelativePathStrings) {
           resultFile= new File(resultFile, elementString); // add next element.
-          // theAppLog.debug("AppSettings.makePathRelativeToAppFolderFile(.) " 
+          // theAppLog.debug("FileOps.makePathRelativeToAppFolderFile(.) " 
           //    + elementString + " " + resultFile);
           }
       
@@ -383,10 +408,10 @@ public class FileOps
             if (directoryFile.exists())
               break makeDir; // Do nothing if directory already exists.
             if (! directoryFile.mkdirs())
-              errorString= 
-                "AppSettings loader: "+directoryFile+" mkdirs() failed.";
+              errorString=
+                "FileOps: "+directoryFile+" mkdirs() failed.";
           } catch (Exception theException){
-            errorString= "AppSettings.makeDirectoryAndAncestorsString(.): "
+            errorString= "FileOps.makeDirectoryAndAncestorsString(.): "
                 + directoryFile + theException;
           }
         } // makeDir:
@@ -402,7 +427,7 @@ public class FileOps
             makeDirectoryAndAncestorsString(directoryFile);
         if (errorString != null) { // If there was an error, log it.
           theAppLog.error(
-              "AppSettings.makeDirectoryAndAncestorsWithLoggingV(.) " + errorString);
+              "FileOps.makeDirectoryAndAncestorsWithLoggingV(.) " + errorString);
           }
         }
 
