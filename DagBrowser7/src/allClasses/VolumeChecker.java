@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
@@ -22,7 +23,7 @@ public class VolumeChecker
     // variables.
 
       final int bytesPerBlockI= 512;
-      final long bytesPerFileL= 1024 * 1024; /// 2 * bytesPerBlockI;
+      final long bytesPerFileL= 1024 * 1024 * 1024; // 1 Gb
       
       // static variables.
 
@@ -72,7 +73,7 @@ public class VolumeChecker
         String keyString= promptSlowlyAndGetKeyString(
           "\nWould you like to check volume "
           + theFile 
-          + "[y/n]?"
+          + " [y/n] ? "
           );
         //// queueAndDisplayOutputSlowlyV("\nKey typed: "+keyString);
         queueAndDisplayOutputSlowV(keyString);
@@ -87,7 +88,7 @@ public class VolumeChecker
        */
       {
         String errorString; 
-        queueAndDisplayOutputSlowV("\n\nChecking " + volumeFile);
+        queueAndDisplayOutputSlowV("\n\nChecking " + volumeFile + "\n");
         File testFolderFile= new File(volumeFile,"InfogoraTest");
       goReturn: {
       goFinish: {
@@ -104,11 +105,16 @@ public class VolumeChecker
           break goFinish;
           }
       }  // goFinish:
+        java.awt.Toolkit.getDefaultToolkit().beep(); // Create audible Beep.
+        queueAndDisplayOutputSlowV(
+            "\nWriting done, deleting temporary files...");
         errorString= FileOps.deleteRecursivelyReturnString(
             testFolderFile,FileOps.requiredConfirmationString);
         if (null != errorString) {
           reportWithPromptSlowlyAndGetKeyString(errorString);
+          break goReturn;
           }
+        queueAndDisplayOutputSlowV(" Done.\n");
       }  // goReturn:
         return;
       }
@@ -144,7 +150,7 @@ public class VolumeChecker
             fileBytesToWriteL-= bytesPerBlockI;
           } // blockLoop:
           theFileOutputStream.close();
-          queueAndDisplayOutputFastV("f   ");
+          queueAndDisplayOutputFastV("f ");
           fileI++;
           } // fileLoop:
         } catch (Exception theException) { 
@@ -172,8 +178,12 @@ public class VolumeChecker
        */
       {
         ////// String blockString= 
-        for (int i=0 ; i<bytesPerBlockI; i++)
-          theFileOutputStream.write("x".getBytes());
+        byte[] bytes= new byte[bytesPerBlockI];
+        Arrays.fill(bytes, (byte)'x');
+        //// ByteBuffer theByteBuffer= ByteBuffer.wrap(bytes); 
+        //// for (int i=0 ; i<bytesPerBlockI; i++)
+          //// theFileOutputStream.write("x".getBytes());
+        theFileOutputStream.write(bytes);
         //// queueAndDisplayOutputFastV("b ");
         }
 
