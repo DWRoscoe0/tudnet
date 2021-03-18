@@ -132,6 +132,7 @@ public class VolumeChecker
         //// long byteI= 0; // Index of next byte to write.
         long blockL= 0; // Index of next block to write.
         int fileI= 0; // Index of next file to write.
+        int progressOffsetI= thePlainDocument.getLength();
         try {
           fileLoop: while (true) {
             volumeBytesToWriteL= // Update remaining space to fill.
@@ -142,6 +143,7 @@ public class VolumeChecker
             theFileOutputStream= new FileOutputStream(testFile);
             fileBytesToWriteL= Math.min(bytesPerFileL,volumeBytesToWriteL);
           blockLoop: while (true) {
+            replaceDocumentTailAt1With2V(progressOffsetI, ""+blockL);
             if (0 >= fileBytesToWriteL) // Exit if no more bytes to write.
               break blockLoop;
             writeBlockV(theFileOutputStream,blockL);

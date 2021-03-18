@@ -123,7 +123,7 @@ public class ConsoleNode
         /// theAppLog.debug(
         ///   "ConsoleNode.insertUpdate(.) theString='"+theString+"'");
         Platform.runLater( () -> {
-            Document tmpDocument= theDocument; ////// debug
+            //// Document tmpDocument= theDocument; ////// debug
             /// theAppLog.debug(
             ///   "ConsoleNode.insertUpdate(.) QUEUED theString='"+theString+"'");
             theTextArea.insertText(offsetI, theString);

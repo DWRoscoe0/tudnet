@@ -16,7 +16,7 @@ import allClasses.javafx.EpiTreeItem;
 import allClasses.javafx.Selections;
 import allClasses.javafx.TreeStuff;
 
-/// import static allClasses.AppLog.theAppLog;
+import static allClasses.AppLog.theAppLog;
 
 
 public class ConsoleBase
@@ -47,7 +47,7 @@ public class ConsoleBase
     private StringBuffer inputStringBuffer= new StringBuffer();
     private StringBuffer outputStringBuffer= new StringBuffer();
     protected LockAndSignal theLockAndSignal= new LockAndSignal();
-    private PlainDocument thePlainDocument= new PlainDocument();
+    protected PlainDocument thePlainDocument= new PlainDocument();
       // Internal document store.
       // Unlike thePlainDocument in TextStream2,
       // this has no EDT (Event Dispatch Thread) restrictions,
@@ -86,28 +86,6 @@ public class ConsoleBase
     public String getSummaryString()
       {
         return "";
-        }
-
-    private void appendToDocumentV(String theString)
-      // Convenience method that appends and handles exceptions.
-      {
-        try { // Insert initial content.
-          thePlainDocument.insertString( // Insert into document
-              thePlainDocument.getLength(), // at its end
-              theString, // the given string
-              SimpleAttributeSet.EMPTY // with no special attributes.
-              );
-        } catch (BadLocationException e) {
-          ////// TODO Auto-generated catch block
-          e.printStackTrace();
-        }
-      }
-
-    public void addDocumentListener(DocumentListener listener)
-      /* This method simply forwards to thePlainDocument. */
-      { 
-        thePlainDocument.addDocumentListener(listener); 
-        startThreadIfNeededV();
         }
 
     public void run() // For our Thread.
@@ -174,13 +152,17 @@ public class ConsoleBase
         displayQueuedOutputSlowV();
         }
       
-    protected void queueAndDisplayOutputFastV(String theString)
+    protected void queueAndDisplayOutputFastV(String theString) ////// not used
       {
         queueOutputV(theString);
-        displayQueuedOutputFastV();
+        // displayQueuedOutputFastV();
+        displayQueuedOutputSlowV(); ////// Temporary.
         }
       
     protected void queueOutputV(String theString)
+      /* Use this method to add content to the outputStringBuffer.
+       * The content is always appended.
+       */
       {
         outputStringBuffer.append(theString);
         }
@@ -221,6 +203,13 @@ public class ConsoleBase
         }
 
     protected void displayQueuedOutputSlowV()
+      /* This method outputs the content of the outputStringBuffer slowly,
+       * one character at a time, appending each to the end of theDocument,
+       * with several milliseconds between them.
+       * This makes it clear that output is occurring,
+       * and makes it easier to follow the output.
+       * It doesn't stop until the outputStringBuffer is empty.
+       */
       {
         while (0 < outputStringBuffer.length()) {
           String outString= outputStringBuffer.substring(0,1);
@@ -232,13 +221,66 @@ public class ConsoleBase
           }
         }
 
-    protected void displayQueuedOutputFastV()
+    private void appendToDocumentV(String theString)
+      // Convenience method that appends and handles exceptions.
       {
-        while (0 < outputStringBuffer.length()) {
-          String outString= outputStringBuffer.substring(0,1);
-          appendToDocumentV(outString);
-          outputStringBuffer.delete(0,1);
-          }
+        replaceInDocumentV(
+          thePlainDocument.getLength(),
+           0,
+           theString
+           );
+        /*  ////
+        try { // Insert initial content.
+          thePlainDocument.insertString( // Insert into document
+              thePlainDocument.getLength(), // at its end
+              theString, // the given string
+              SimpleAttributeSet.EMPTY // with no special attributes.
+              );
+        } catch (BadLocationException e) {
+          ////// TODO Auto-generated catch block
+          e.printStackTrace();
+        }
+      */  ////
+      }
+
+    protected void replaceDocumentTailAt1With2V(
+        int tailOffsetI,String newTailString)
+      {
+        replaceInDocumentV( // Replace the text in the document
+           tailOffsetI, // from here
+           thePlainDocument.getLength()-tailOffsetI, // to the document end 
+           newTailString // with this new text.
+           );
+        }
+
+    private void replaceInDocumentV(
+           int oldTextOffsetI,
+           int oldTextLengthI,
+           String newTextString
+           ) ////// new
+      /* This method replaces a piece of the document by a new  piece
+       * and handles exceptions.
+       */
+      {
+        try {
+         thePlainDocument.replace( // Replace in document the old text
+           oldTextOffsetI, // that starts here
+           oldTextLengthI, // and is this long
+           newTextString, // by this new text
+           SimpleAttributeSet.EMPTY // with no special attributes.
+           );
+        } catch (BadLocationException e) {
+          theAppLog.warning(
+              "ConsoleBase.replaceInDocumentV(.) failed, "+e);
+          e.printStackTrace();
+        }
+      }
+
+    public void addDocumentListener(DocumentListener listener)
+      /* This method simply forwards to thePlainDocument. */
+      { 
+        thePlainDocument.addDocumentListener(listener); 
+        startThreadIfNeededV();
         }
 
     public void processInputKeyV(String theKeyString) {
