@@ -126,6 +126,8 @@ public class ConsoleBase
           String inString= promptSlowlyAndGetKeyString(); 
           if (null == inString) // Exit if termination requested.
             break;
+          if ("\r".equals(inString)) // If needed replace Enter with
+            inString= "\n"; // standard newline.
           queueOutputV("\nThe character '"+inString+"' was typed.\n");
           } 
         }

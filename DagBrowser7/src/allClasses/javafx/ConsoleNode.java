@@ -108,36 +108,59 @@ public class ConsoleNode
      * The cursor is placed at the end of the insert.
      */
 
-    public void changedUpdate(DocumentEvent e) {} // Not needed.
+    public void changedUpdate(DocumentEvent theDocumentEvent) {} // Not needed.
 
-    public void insertUpdate(DocumentEvent e)
+    public void insertUpdate(DocumentEvent theDocumentEvent)
       /* This method processes Document insert events by 
-       * extracting the text that was inserted into the document,
-       * and appending that text to the end of theTextArea. 
+       * duplicating the document change in the theTextArea.
        */
       {
-        try {
-          Document theDocument= e.getDocument();
-          int offsetI= e.getOffset();
-          int lengthI= e.getLength();
-          final String theString= theDocument.getText(offsetI, lengthI);
-          /// theAppLog.debug(
-          ///   "ConsoleNode.insertUpdate(.) theString='"+theString+"'");
-          Platform.runLater( () -> {
-              /// theAppLog.debug(
-              ///   "ConsoleNode.insertUpdate(.) QUEUED theString='"+theString+"'");
-              int endI= theTextArea.getLength();
-              theTextArea.insertText(endI, theString);
-              theTextArea.positionCaret(theTextArea.getLength());
-              } );
-        } catch (BadLocationException e1) {
-          ////// TODO Auto-generated catch block
-          e1.printStackTrace();
+        final Document theDocument= theDocumentEvent.getDocument();
+        final int offsetI= theDocumentEvent.getOffset();
+        final int lengthI= theDocumentEvent.getLength();
+        final String theString= fromDocumentGetString(
+            theDocument, offsetI, lengthI);
+        /// theAppLog.debug(
+        ///   "ConsoleNode.insertUpdate(.) theString='"+theString+"'");
+        Platform.runLater( () -> {
+            Document tmpDocument= theDocument; ////// debug
+            /// theAppLog.debug(
+            ///   "ConsoleNode.insertUpdate(.) QUEUED theString='"+theString+"'");
+            theTextArea.insertText(offsetI, theString);
+            theTextArea.positionCaret(offsetI + theString.length());
+            } );
         }
+
+    private String fromDocumentGetString(
+        Document theDocument, int offsetI, int lengthI)
+      {
+        String theString;
+        try {
+            theString= theDocument.getText(offsetI, lengthI);
+          } catch (BadLocationException e1) {
+            theString= "[BadLocationException]";
+            ////// TODO Auto-generated catch block
+            e1.printStackTrace();
+          }
+        return theString;
       }
 
-    public void removeUpdate(DocumentEvent e) {} // Not needed.
-
+    public void removeUpdate(DocumentEvent theDocumentEvent)
+      /* This method processes Document remove events by 
+       * duplicating the document change in the theTextArea.
+       */
+      {
+        final int offsetI= theDocumentEvent.getOffset();
+        final int lengthI= theDocumentEvent.getLength();
+        /// theAppLog.debug(
+        ///   "ConsoleNode.removeUpdate(.) theString='"+theString+"'");
+        Platform.runLater( () -> {
+            /// theAppLog.debug(
+            ///   "ConsoleNode.removeUpdate(.) QUEUED theString='"+theString+"'");
+            theTextArea.deleteText(offsetI, offsetI+lengthI);
+            theTextArea.positionCaret(offsetI);
+            } );
+        }
 
     private void handleKeyV(KeyEvent theKeyEvent)
       /* This event handler method passes the key in theKeyEvent
@@ -147,6 +170,7 @@ public class ConsoleNode
         String keyString= theKeyEvent.getCharacter();
 
         theConsoleBase.processInputKeyV(keyString);
+
         theKeyEvent.consume(); // Prevent further processing.
         }
 
