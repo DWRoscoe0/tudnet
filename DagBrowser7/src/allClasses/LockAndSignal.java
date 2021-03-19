@@ -162,6 +162,12 @@ public class LockAndSignal  // Combination lock and signal class.
     LockAndSignal for each thread in the opposite direction.  
     But would it make sense to create a special class for this?
 
+    ///enh Convert the methods that do not reference instance variables
+    to static methods.  This will allow use of some useful low-level methods
+    without requiring the creation of an object instance,
+    which isn't always needed.  It might make sense to move these methods
+    to a different class, but that would be much more work.
+    
     Notes on time variables and parameters.
     * All time values end in "MsL", "Ms" for milliseconds, "L" for long.
     * long waitDelayMsL: 
@@ -181,7 +187,7 @@ public class LockAndSignal  // Combination lock and signal class.
         Often this is time now, returned by System.currentTimeMillis().  
       * long lengthMsL: This is the length of the interval.
     * long shiftMsL: 
-      This is a quantity of time to be added to point in time
+      This is a quantity of time to be added to another point in time
       to put it in a desired interval.
 
     */
@@ -417,8 +423,8 @@ public class LockAndSignal  // Combination lock and signal class.
 	      			testingForInterruptOrDelayOrNotificationE( 
 	      					delayMsL 
 	      					);
-		        if  // Exiting with input type unless...
-		          ( theInput != Input.NONE ) // ...there is no input available. 
+		        if  // Exiting with input type if...
+		          ( theInput != Input.NONE ) // ...there is input available. 
 		        	break; // Exiting.
 		        waitingForInterruptOrDelayOrNotificationV( // Waiting for any input.
 			      		delayMsL
@@ -582,7 +588,7 @@ public class LockAndSignal  // Combination lock and signal class.
 			        An input signal notification occurred,
 			        and was then cleared by this method.
 			        This means that inputs have arrived on at least one of
-			        the input ports that accompanied by calls to notifyingV().
+			        the input ports that are accompanied by calls to notifyingV().
 			        All of these input ports should be tested and processed
 			        before calling this method again.
 	
@@ -682,17 +688,18 @@ public class LockAndSignal  // Combination lock and signal class.
       which is returned by System.currentTimeMillis(),
       can suddenly move forward or backward large amounts.
       By using these methods, a thread can ensure that
-      such time changes not block a thread for long time intervals.
-      
+      such time changes will not block a thread for long time intervals.
+
       Time can seem to suddenly move when:
-      * he device's clock is set, or
+      * the device's clock is set to a different value,
+        NOT including changes for Daylight Saving Time (DST), or
       * the device sleeps for some period of time.
-      
-      ??? rename delay producers:
+
+      ///doc? rename delay producers:
       shiftedDelay
       checkedDelay
       
-      ??? new method to shift a time using shiftCorrectionMsL()?
+      ///org? new method to shift a time using shiftCorrectionMsL()?
      */
 
 	    public long periodCorrectedShiftMsL( 
@@ -703,8 +710,8 @@ public class LockAndSignal  // Combination lock and signal class.
 	        that begins at startTimeMsL and is periodLengthMsL long.
 	        Most calls to this method return 0, but sometimes it will return
 	        positive or negative multiples of periodLengthMsL,
-	        depending on whether System.currentTimeMillis() has been 
-	        advanced or retarded by amounts greater than periodLengthMsL.
+	        depending on whether System.currentTimeMillis() has moved 
+	        forward or backward by amounts greater than periodLengthMsL.
 	        */
 			{
 	    	long shiftMsL= 0;
@@ -774,7 +781,7 @@ public class LockAndSignal  // Combination lock and signal class.
 		    	  final long endMsL= startMsL + lengthMsL; // Calculating end time.
 		    	  if ( nowMsL-endMsL >= 0) // Exiting with 0 if after interval end.
 		    	  	break process;
-		    	  if ( nowMsL-startMsL < 0) // Exiting with 0 if before interval start.
+		    	  if (nowMsL-startMsL < 0) // Exiting with 0 if before interval start.
 		    	  	break process;
 		    	  // Time is within interval.  
 		    	  waitFlagMsL= // Set delay to be the time to the end of the interval.
