@@ -20,22 +20,23 @@ import static allClasses.SystemSettings.NL;
 public class AppLog extends EpiThread
 
   /* This class is for logging information from application programs.  
-    It is of a special design to provide the following features:
+    It was designed to provide the following features:
     * Logs strings provided by the application.
-    * Thread-safe any app thread may log.
-      There entries are appended to the same file
-      and their log entries will be interleaved.
-      Entries contain the name of the thread that logged it.
-    ? Multiple app process instances may log.
-      There entries are appended to the same file
-      and their log entries will be interleaved.
-      Entries contain a session number,
+    * It is thread-safe so any app thread may log.
+      Log entries by all threads are appended to the same file.
+      The log entries from different threads are interleaved.
+      Each entry contains the name of the thread that logged it.
+    ? It is process-safe so multiple app process instances may log.
+      Log entries by all processes are appended to the same file.
+      The log entries from different processes are interleaved.
+      Each entry contains a session number,
       which should be unique for each logging process.
+      Process-safety has not been completely tested.
     * Log entries are stamped with the relative times since
       the previous entry of the same process session.
 
-    Multiple thread safety is achieved using synchronized Java code.
-    Multiple process safety is achieved using file locking.
+    Thread-safety is achieved using synchronized Java code.
+    Process-safety is achieved using file locking.
     ///tst : process safety needs to be [better] tested.
     
 		If any errors occur during logging they will be reported:
@@ -59,13 +60,9 @@ public class AppLog extends EpiThread
     Note, to output several lines iteratively to this log's PrintWriter
     in a way that will not be interrupted by output from other threads,
     use the method getPrintWriter() to get the PrintWriter,
-    and puts all of the code inside a block synchronized on this log object.
+    and put all of the code inside a block synchronized on this log object.
     Like all synchronized code, this code should complete quickly.
     See the method Infogora.logThreadsV() for an example of doing this.
-
-    ///enh: Change to output newline (NL) before the line data
-      instead of after so that data bits can be added at end
-      instead of at the beginning where they destroy the line header.
 
     ///enh: Transition to a logger that doesn't need to be 
       a static singleton and can be injected.  Allow both 
@@ -90,7 +87,7 @@ public class AppLog extends EpiThread
       and log if they are quick enough.
       It might be necessary to use alternating temporary output files 
       to receive logging data to prevent blocking.
-      
+
 		///enh: Make the logging routines more orthogonal, in the following
 		  dimensions:
 		  * label on output: info/debug/error/exception
@@ -806,6 +803,24 @@ public class AppLog extends EpiThread
         lastMillisL= nowMillisL; // Saving present time as new last time.
         }
 
+    private long previousDebugClockOutTimeMsL= 0;
+    public synchronized void debugClockOutV(String theString)
+      /* This method appends theString to the log file and to the console.
+       * It is meant for temporary use during debugging.
+       * It is anticipated that this method will output mostly
+       * high frequency, short length strings.
+       */
+      {
+        long nowTimeMsL= System.currentTimeMillis();
+        long differenceTimeMsL= nowTimeMsL - previousDebugClockOutTimeMsL;
+        if (0 != differenceTimeMsL)
+          theString= differenceTimeMsL + " " + theString;
+        previousDebugClockOutTimeMsL= nowTimeMsL;
+        theString= "["+theString+"]";
+        System.out.print(theString);
+        appendToFileV(theString);
+        }
+    
     public synchronized void appendToFileV(String inString)
       /* This method writes to thePrintWriter, 
         which may be open or closed.

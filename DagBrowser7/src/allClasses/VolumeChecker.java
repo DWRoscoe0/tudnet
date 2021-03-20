@@ -24,13 +24,25 @@ public class VolumeChecker
 
       final int bytesPerBlockI= 512;
       final long bytesPerFileL= 1024 * 1024 * 1024; // 1 Gb
-      
+      final long periodMsL= 1000; // 1 second.
+
       // static variables.
 
       // instance variables.
   
         // Constructor-injected variables.
-        
+
+        // Other instance variables.
+          private int reportNumberI;
+          private long reportTimeMsL; // Next time to do report.
+          private long previousReportTimeMsL;
+          private File testFile;
+          private int progressReportOffsetI; // Offset in thePlainDocument.
+          private long diskBlockNumberL;
+          private long fileBytesToWriteL;
+          private long volumeBytesToWriteL;
+          private int spinnerI;
+
     // Constructors and constructor-related methods.
   
     public VolumeChecker( // constructor
@@ -127,32 +139,46 @@ public class VolumeChecker
       {
         String errorString= null;
         FileOutputStream theFileOutputStream= null;
-        long volumeBytesToWriteL; ////// = 8*bytesPerBlockI; ////// test value.
-        long fileBytesToWriteL= bytesPerFileL;
+        spinnerI= 0;
+        //// volumeBytesToWriteL; ////// = 8*bytesPerBlockI; ////// test value.
+        fileBytesToWriteL= bytesPerFileL;
         //// long byteI= 0; // Index of next byte to write.
-        long blockL= 0; // Index of next block to write.
+        diskBlockNumberL= 0; // Next block to write.
         int fileI= 0; // Index of next file to write.
-        int progressOffsetI= thePlainDocument.getLength();
+        progressReportOffsetI= thePlainDocument.getLength();
+        reportTimeMsL= // Setting time to do first report... 
+            System.currentTimeMillis(); //  to be immediately.
+        previousReportTimeMsL= reportTimeMsL;
+        reportNumberI= 0;
+        updateProgressV(); // Initial progress report.
         try {
           fileLoop: while (true) {
             volumeBytesToWriteL= // Update remaining space to fill.
                 testFolderFile.getUsableSpace();
             if (0 >= volumeBytesToWriteL) // Exit if no more bytes to write. 
               break fileLoop;
-            File testFile= new File(testFolderFile,""+fileI);
+            testFile= new File(testFolderFile,""+fileI);
+            theAppLog.debug(
+              myToString()+"VolumeChecker.writeTestReturnString(.) "
+              + "opening file= " + testFile);
             theFileOutputStream= new FileOutputStream(testFile);
             fileBytesToWriteL= Math.min(bytesPerFileL,volumeBytesToWriteL);
           blockLoop: while (true) {
-            replaceDocumentTailAt1With2V(progressOffsetI, ""+blockL);
+            updateProgressMaybeV();
             if (0 >= fileBytesToWriteL) // Exit if no more bytes to write.
               break blockLoop;
-            writeBlockV(theFileOutputStream,blockL);
-            blockL++;
+            theAppLog.debugClockOutV("bb"); // Begin block write.
+            writeBlockV(theFileOutputStream,diskBlockNumberL);
+            theAppLog.debugClockOutV("be"); // End block write.
+            diskBlockNumberL++;
             volumeBytesToWriteL-= bytesPerBlockI;
             fileBytesToWriteL-= bytesPerBlockI;
           } // blockLoop:
+          theAppLog.debug(
+            myToString()+"VolumeChecker.writeTestReturnString(.) "
+            + "closing file= " + testFile);
           theFileOutputStream.close();
-          queueAndDisplayOutputFastV("f ");
+          queueAndDisplayOutputFastV("f");
           fileI++;
           } // fileLoop:
         } catch (Exception theException) { 
@@ -166,8 +192,66 @@ public class VolumeChecker
                 "VolumeCheck.writeTestString(.)", theException);
           } // catch
         } // finally
+        updateProgressV(); // Final progress report.
         testFolderFile.delete();
         return errorString;
+        }
+
+    private void updateProgressMaybeV()
+      {
+        //// System.out.print("-");
+        long nowTimeMsL= System.currentTimeMillis();
+        /*  /// 
+        long excessTimeMsL= nowTimeMsL-reportTimeMsL;
+        if (excessTimeMsL >= 0)
+        */  ///
+        long remainingTimeMsL= nowTimeMsL-reportTimeMsL;
+          //// theLockAndSignal.realTimeWaitDelayMsL(
+          ////     reportTimeMsL, periodMsL);
+        if // Update progress report if time remaining in period reached 0.
+          //// (0 == remainingTimeMsL)
+          (0 <= remainingTimeMsL)
+          {
+            updateProgressV();
+            //// long deltaTimeMsL= theLockAndSignal.periodCorrectedDelayMsL(
+            long deltaTimeMsL= theLockAndSignal.periodCorrectedShiftMsL(
+              reportTimeMsL, periodMsL);
+            /// long deltaTimeMsL= periodMsL;
+            //// long newTimeMsL= reportTimeMsL + deltaTimeMsL + periodMsL;
+            long newTimeMsL= nowTimeMsL + deltaTimeMsL + periodMsL;
+            theAppLog.debug("VolumeChecker.updateProgressMaybeV() times:"
+                /* ///
+                +" now="+nowTimeMsL
+                +" excess="+excessTimeMsL
+                */  ///
+                +" old="+reportTimeMsL
+                +", delta="+deltaTimeMsL
+                +", new="+newTimeMsL
+                );
+            reportTimeMsL= newTimeMsL;
+            }
+        }
+
+    private void updateProgressV()
+      {
+        // theAppLog.debug(
+        //   "VolumeChecker.updateProgressV() updating.");
+        theAppLog.debugClockOutV("pr");
+        long nowTimeMsL= System.currentTimeMillis();
+        String outputString= ""
+            + "\nReport-Number: " + reportNumberI
+              + " " + "-\\|/".substring(spinnerI, spinnerI+1)
+            + "\nDelta-Time: " + (nowTimeMsL - previousReportTimeMsL) 
+            + "\nFile: " + testFile
+            + "\nDisk-Block: " + diskBlockNumberL
+            + "\nFile-Byte: " + fileBytesToWriteL
+            + "\nVolume-Byte: " + volumeBytesToWriteL
+            ;
+        reportNumberI++;
+        if (4 <= (++spinnerI)) spinnerI= 0;
+        previousReportTimeMsL= nowTimeMsL;
+        replaceDocumentTailAt1With2V(progressReportOffsetI, outputString);
+        /// EpiThread.interruptibleSleepB(1); //////
         }
 
     private void writeBlockV(FileOutputStream theFileOutputStream,long blockL) 

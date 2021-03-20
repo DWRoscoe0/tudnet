@@ -145,6 +145,30 @@ public class ConsoleNode
         return theString;
       }
 
+    /*  ///fix in removeUpdate(.) method which follows: 
+          java.lang.StringIndexOutOfBoundsException: 
+                String index out of range: -127
+        It happened when I pressed left-arrow and right-arrow to exit viewer
+        and re-enter, it resulted in an exception.  Console showed:
+          !!!!!!!!!!!!!!!!!!!!!!!!!!!!DefaultExceptionHandler.uncaughtException(..): Uncaught Exception in thread JavaFX Application Threadjava.lang.StringIndexOutOfBoundsException: 
+            String index out of range: -127
+          !EXCEPTION: DefaultExceptionHandler.uncaughtException(..): Uncaught Exception in thread JavaFX Application Thread :
+            java.lang.StringIndexOutOfBoundsException: String index out of range: -127
+          !java.lang.StringIndexOutOfBoundsException: String index out of range: -127
+            at java.lang.String.substring(String.java:1967)
+            at javafx.scene.control.TextInputControl.updateContent(TextInputControl.java:571)
+            at javafx.scene.control.TextInputControl.replaceText(TextInputControl.java:548)
+            at javafx.scene.control.TextInputControl.deleteText(TextInputControl.java:496)
+            at allClasses.javafx.ConsoleNode.lambda$3(ConsoleNode.java:160)
+            at com.sun.javafx.application.PlatformImpl.lambda$null$5(PlatformImpl.java:295)
+        * It happened in the Runnable in ConsoleNode.removeUpdate(.) calling
+          TextArea.deleteText(.).
+        ? I suspect this problem is related to 
+          ? a synchronization problem
+          ? a leaked Listener
+        I tried reproducing it and failed, 
+      */
+    
     public void removeUpdate(DocumentEvent theDocumentEvent)
       /* This method processes Document remove events by 
        * duplicating the document change in the theTextArea.
