@@ -30,8 +30,8 @@ public class ConsoleNode
   /* This class is used for displaying leaf Nodes that
    * can be displayed as blocks of text.
    * 
-   * ///fix Though the name of this class includes "Titled",
-   * it does not yet display a title.
+   * ///fix Sometimes the caret of the TextArea is below the bottom, 
+   *   so it is not visible.  Make it always be visible.
    */
   
   {

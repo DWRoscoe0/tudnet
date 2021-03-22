@@ -15,33 +15,55 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 public class VolumeChecker
 
+  /* This class is used to check a mass storage volume.
+   * Presently the only test is does is to write all remaining free space.
+   * 
+   * ///enh Eventually it should also:
+   * * Verify that each block can store unique data,
+   *   testing for volumes with fake sizes.
+   * 
+   * When checking large storage devices, long pauses can happen in the process.
+   * The pauses are probably caused by flushing large sections of disk cache
+   * to the storage device.  Pauses can happen:
+   * * At file close time.
+   * * In the middle of a write of one of the files.
+   */
   extends VolumeDetector
 
   {
     // Locally stored injected dependencies (none).
     
-    // variables.
+    // Constants.
 
       final int bytesPerBlockI= 512;
-      final long bytesPerFileL= 1024 * 1024 * 1024; // 1 Gb
-      final long periodMsL= 1000; // 1 second.
+      final long bytesPerFileL= 64 * 1024 * 1024; // 1 GB /// 1024 * 1024 * 1024; // 1 GB
+      final long msPerReportMsL= 100; //// 1000; // 1 second.
+      /// final long msPerReportMsL= 1000000; // 1 second. for ns.
+      final long bytesReportPeriodL= 16 * 1024 * 1024; // 16 MB
 
-      // static variables.
+    // static variables.
 
-      // instance variables.
-  
-        // Constructor-injected variables.
+    // instance variables.
 
-        // Other instance variables.
-          private int reportNumberI;
-          private long reportTimeMsL; // Next time to do report.
-          private long previousReportTimeMsL;
-          private File testFile;
-          private int progressReportOffsetI; // Offset in thePlainDocument.
-          private long diskBlockNumberL;
-          private long fileBytesToWriteL;
-          private long volumeBytesToWriteL;
-          private int spinnerI;
+      // Constructor-injected variables.
+
+      // Other instance variables.
+      
+        private String operationString;
+        private long presentTimeMsL;
+        private long excessTimeMsL;
+        private int reportNumberI;
+        private long timeOfNextReportMsL;
+        private long byteOfNextReportMsL;
+        private long previousReportTimeMsL;
+        private File testFile;
+        private int offsetOfProgressReportI;
+        private long volumeBlockNumberL;
+        private long remainingFileBytesL;
+        private long remainingVolumeBytesL;
+        private long nextVolumeByteL;
+        private int spinnerStateI;
+        //// private long skippedTimeMsL;
 
     // Constructors and constructor-related methods.
   
@@ -76,29 +98,30 @@ public class VolumeChecker
         }
 
     protected void checkVolumeListV(List<File> addedVolumeListOfFiles)
-    {
-      queueAndDisplayOutputSlowV(
-        "\n\nAdded volume[s]: "
-        + addedVolumeListOfFiles.toString()
-        );
-      for (File theFile : addedVolumeListOfFiles) {
-        String keyString= promptSlowlyAndGetKeyString(
-          "\nWould you like to check volume "
-          + theFile 
-          + " [y/n] ? "
+      {
+        queueAndDisplayOutputSlowV(
+          "\n\nAdded volume[s]: "
+          + addedVolumeListOfFiles.toString()
           );
-        //// queueAndDisplayOutputSlowlyV("\nKey typed: "+keyString);
-        queueAndDisplayOutputSlowV(keyString);
-        if ("y".equals(keyString))
-          checkVolumeV(theFile);
+        for (File theFile : addedVolumeListOfFiles) {
+          String keyString= promptSlowlyAndGetKeyString(
+            "\nWould you like to check volume "
+            + theFile 
+            + " [y/n] ? "
+            );
+          //// queueAndDisplayOutputSlowlyV("\nKey typed: "+keyString);
+          queueAndDisplayOutputSlowV(keyString);
+          if ("y".equals(keyString))
+            checkVolumeV(theFile);
+          }
         }
-      }
 
     private void checkVolumeV(File volumeFile)
       /* This method checks the volume specified by volumeFile.
        * 
        */
       {
+        theAppLog.debug("VolumeChecker.checkVolumeV(.) begins.");
         String errorString; 
         queueAndDisplayOutputSlowV("\n\nChecking " + volumeFile + "\n");
         File testFolderFile= new File(volumeFile,"InfogoraTest");
@@ -117,68 +140,70 @@ public class VolumeChecker
           break goFinish;
           }
       }  // goFinish:
-        java.awt.Toolkit.getDefaultToolkit().beep(); // Create audible Beep.
-        queueAndDisplayOutputSlowV(
-            "\nWriting done, deleting temporary files...");
-        errorString= FileOps.deleteRecursivelyReturnString(
-            testFolderFile,FileOps.requiredConfirmationString);
         if (null != errorString) {
           reportWithPromptSlowlyAndGetKeyString(errorString);
           break goReturn;
           }
+        theAppLog.debug("VolumeChecker.checkVolumeV(.) deleting done.");
         queueAndDisplayOutputSlowV(" Done.\n");
       }  // goReturn:
         return;
-      }
+      } // checkVolumeV(._
 
     private String writeTestReturnString(File testFolderFile)
       /* This method does a write test by writing files in
        * the folder specified by testFolderFile.
        * It returns null if success, an error String if not.
+       * 
+       *  ///fix Return error string in all cases of errors.
        */
       {
         String errorString= null;
         FileOutputStream theFileOutputStream= null;
-        spinnerI= 0;
-        //// volumeBytesToWriteL; ////// = 8*bytesPerBlockI; ////// test value.
-        fileBytesToWriteL= bytesPerFileL;
+        spinnerStateI= 0;
+        remainingFileBytesL= bytesPerFileL;
         //// long byteI= 0; // Index of next byte to write.
-        diskBlockNumberL= 0; // Next block to write.
+        volumeBlockNumberL= 0; // Next block to write.
         int fileI= 0; // Index of next file to write.
-        progressReportOffsetI= thePlainDocument.getLength();
-        reportTimeMsL= // Setting time to do first report... 
-            System.currentTimeMillis(); //  to be immediately.
-        previousReportTimeMsL= reportTimeMsL;
+        offsetOfProgressReportI= thePlainDocument.getLength();
+        timeOfNextReportMsL= getTimeMsL(); // Do do first report immediately.
+        byteOfNextReportMsL= 0;
+        previousReportTimeMsL= timeOfNextReportMsL;
         reportNumberI= 0;
-        updateProgressV(); // Initial progress report.
+        setAndDisplayOperationV("starting");
+        updateProgressDisplayV(); // Initial progress report.
         try {
           fileLoop: while (true) {
-            volumeBytesToWriteL= // Update remaining space to fill.
+            remainingVolumeBytesL= // Update remaining space to fill.
                 testFolderFile.getUsableSpace();
-            if (0 >= volumeBytesToWriteL) // Exit if no more bytes to write. 
+            if (0 >= remainingVolumeBytesL) // Exit if no more bytes to write. 
               break fileLoop;
             testFile= new File(testFolderFile,""+fileI);
-            theAppLog.debug(
-              myToString()+"VolumeChecker.writeTestReturnString(.) "
-              + "opening file= " + testFile);
+            setAndDisplayOperationV("opening file ");
+            //// theAppLog.debug(
+            ////   myToString()+"VolumeChecker.writeTestReturnString(.) "
+            ////   + "opening file= " + testFile);
             theFileOutputStream= new FileOutputStream(testFile);
-            fileBytesToWriteL= Math.min(bytesPerFileL,volumeBytesToWriteL);
+            remainingFileBytesL= Math.min(bytesPerFileL,remainingVolumeBytesL);
+            setAndDisplayOperationV("writing file blocks");
           blockLoop: while (true) {
             updateProgressMaybeV();
-            if (0 >= fileBytesToWriteL) // Exit if no more bytes to write.
+            if (0 >= remainingFileBytesL) // Exit if no more bytes to write.
               break blockLoop;
-            theAppLog.debugClockOutV("bb"); // Begin block write.
-            writeBlockV(theFileOutputStream,diskBlockNumberL);
-            theAppLog.debugClockOutV("be"); // End block write.
-            diskBlockNumberL++;
-            volumeBytesToWriteL-= bytesPerBlockI;
-            fileBytesToWriteL-= bytesPerBlockI;
+            //// theAppLog.debugClockOutV("bb"); // Begin block write.
+            writeBlockV(theFileOutputStream,volumeBlockNumberL);
+            //// theAppLog.debugClockOutV("be"); // End block write.
+            volumeBlockNumberL++;
+            remainingVolumeBytesL-= bytesPerBlockI;
+            remainingFileBytesL-= bytesPerBlockI;
+            nextVolumeByteL+= bytesPerBlockI;
           } // blockLoop:
-          theAppLog.debug(
-            myToString()+"VolumeChecker.writeTestReturnString(.) "
-            + "closing file= " + testFile);
+          //// theAppLog.debug(
+          ////   myToString()+"VolumeChecker.writeTestReturnString(.) "
+          ////   + "closing file= " + testFile);
+          setAndDisplayOperationV("closing file");
           theFileOutputStream.close();
-          queueAndDisplayOutputFastV("f");
+          //// queueAndDisplayOutputFastV("f");
           fileI++;
           } // fileLoop:
         } catch (Exception theException) { 
@@ -192,65 +217,80 @@ public class VolumeChecker
                 "VolumeCheck.writeTestString(.)", theException);
           } // catch
         } // finally
-        updateProgressV(); // Final progress report.
-        testFolderFile.delete();
+        setAndDisplayOperationV("deleting temporary files");
+        //// updateProgressDisplayV(); // Final progress report.
+        //// testFolderFile.delete();
+        theAppLog.debug("VolumeChecker.writeTestReturnString(.) deleting.");
+        java.awt.Toolkit.getDefaultToolkit().beep(); // Create audible Beep.
+        //// queueAndDisplayOutputSlowV(
+        ////     "\nWriting done, deleting temporary files...");
+        errorString= FileOps.deleteRecursivelyReturnString(
+            testFolderFile,FileOps.requiredConfirmationString);
+        setAndDisplayOperationV("done");
         return errorString;
         }
 
+    private void setAndDisplayOperationV(String operationString)
+      {
+        this.operationString= operationString;
+        updateProgressDisplayV();
+        theAppLog.debug(
+            "VolumeChecker.setAndDisplayOperationV(.): " + operationString);
+        }
+    
     private void updateProgressMaybeV()
       {
-        //// System.out.print("-");
-        long nowTimeMsL= System.currentTimeMillis();
-        /*  /// 
-        long excessTimeMsL= nowTimeMsL-reportTimeMsL;
-        if (excessTimeMsL >= 0)
-        */  ///
-        long remainingTimeMsL= nowTimeMsL-reportTimeMsL;
-          //// theLockAndSignal.realTimeWaitDelayMsL(
-          ////     reportTimeMsL, periodMsL);
-        if // Update progress report if time remaining in period reached 0.
-          //// (0 == remainingTimeMsL)
-          (0 <= remainingTimeMsL)
-          {
-            updateProgressV();
-            //// long deltaTimeMsL= theLockAndSignal.periodCorrectedDelayMsL(
-            long deltaTimeMsL= theLockAndSignal.periodCorrectedShiftMsL(
-              reportTimeMsL, periodMsL);
-            /// long deltaTimeMsL= periodMsL;
-            //// long newTimeMsL= reportTimeMsL + deltaTimeMsL + periodMsL;
-            long newTimeMsL= nowTimeMsL + deltaTimeMsL + periodMsL;
-            theAppLog.debug("VolumeChecker.updateProgressMaybeV() times:"
-                /* ///
-                +" now="+nowTimeMsL
-                +" excess="+excessTimeMsL
-                */  ///
-                +" old="+reportTimeMsL
-                +", delta="+deltaTimeMsL
-                +", new="+newTimeMsL
-                );
-            reportTimeMsL= newTimeMsL;
-            }
-        }
+        /// Thread.yield(); // This didn't help.
+      goReturn: {
 
-    private void updateProgressV()
+        presentTimeMsL= getTimeMsL(); // [Try to] measure the time.
+        long remainingTimeMsL= presentTimeMsL-timeOfNextReportMsL;
+        if // Produce progress report if time remaining in period reached 0.
+          (0 <= remainingTimeMsL)
+          { // Produce progress report.
+            excessTimeMsL= theLockAndSignal.periodCorrectedDelayMsL(
+              timeOfNextReportMsL, msPerReportMsL);
+            long newTimeMsL= presentTimeMsL + excessTimeMsL + msPerReportMsL;
+            theAppLog.debug(
+                "VolumeChecker.updateProgressMaybeV() time triggered.");
+            updateProgressDisplayV();
+            timeOfNextReportMsL= newTimeMsL; // Calculate next report time.
+            break goReturn;
+            }
+
+        if (0 <= nextVolumeByteL - byteOfNextReportMsL)
+          {
+            theAppLog.debug(
+                "VolumeChecker.updateProgressMaybeV() byte triggered.");
+            updateProgressDisplayV();
+            byteOfNextReportMsL+= bytesReportPeriodL;
+            break goReturn;
+            }
+
+      } // goReturn:
+        return;
+      }
+
+    private void updateProgressDisplayV()
       {
         // theAppLog.debug(
         //   "VolumeChecker.updateProgressV() updating.");
         theAppLog.debugClockOutV("pr");
-        long nowTimeMsL= System.currentTimeMillis();
+        long nowTimeMsL= getTimeMsL();
         String outputString= ""
-            + "\nReport-Number: " + reportNumberI
-              + " " + "-\\|/".substring(spinnerI, spinnerI+1)
+            + "\nReport-Number: " + (++reportNumberI)
+              + " " + "-\\|/".substring(spinnerStateI, spinnerStateI+1)
+            + "\nOperation: " + operationString
+            //// + "\nSkipped-Time: " + skippedTimeMsL 
             + "\nDelta-Time: " + (nowTimeMsL - previousReportTimeMsL) 
             + "\nFile: " + testFile
-            + "\nDisk-Block: " + diskBlockNumberL
-            + "\nFile-Byte: " + fileBytesToWriteL
-            + "\nVolume-Byte: " + volumeBytesToWriteL
+            + "\nDisk-Block: " + volumeBlockNumberL
+            + "\nFile-Byte: " + remainingFileBytesL
+            + "\nVolume-Byte: " + remainingVolumeBytesL
             ;
-        reportNumberI++;
-        if (4 <= (++spinnerI)) spinnerI= 0;
+        if (4 <= (++spinnerStateI)) spinnerStateI= 0;
         previousReportTimeMsL= nowTimeMsL;
-        replaceDocumentTailAt1With2V(progressReportOffsetI, outputString);
+        replaceDocumentTailAt1With2V(offsetOfProgressReportI, outputString);
         /// EpiThread.interruptibleSleepB(1); //////
         }
 
@@ -259,6 +299,8 @@ public class VolumeChecker
       /* This method writes a block containing the block number blockI.
        * A block is bytesPerBlockI bytes.
        * It throws IOException if there is an error.
+       * ///ehn blockL will eventually be used to write a pattern
+       * into the block that is unique to the block. 
        * 
        * ///opt For now use NonDirect ByteBuffer.  Use Direct later for speed.
        */
@@ -297,6 +339,12 @@ public class VolumeChecker
           oldVolumeFiles= newVolumeFiles;
           }
         return addedVolumeListOfFiles;
+        }
+
+    private long getTimeMsL()
+      { 
+        return System.currentTimeMillis();
+        // return System.nanoTime()/1000;
         }
 
     }
