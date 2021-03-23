@@ -28,6 +28,8 @@ public class LockAndSignal  // Combination lock and signal class.
 
       INTERRUPTION: The thread's interrupted status was true.
         This is commonly used to request thread termination.
+        This Input is equivalent to 
+        Thread.currentThread().isInterrupted() returning true.
       TIME: A time event has occurred.  
         This is commonly used to generate delays and for time-outs.
       NOTIFICATION: notifyingV() was called at least once.
@@ -529,31 +531,51 @@ public class LockAndSignal  // Combination lock and signal class.
       The methods differ only in how they treat
       pre-existing Thread interrupted status.
       
-      For examples of users of these methods,
+      For examples of users of some of these methods,
       see their callers above this point in this file.
       */
 
       public synchronized Input testingForInterruptE() 
-		    /* This method, called by a consumer thread,
-			    tests for the thread interrupt status input only.  
-			    It returns results as follows:
+        /* This method, called by a consumer thread,
+          tests for the thread interrupt status input only.
+          It returns results as follows:
 
-	          Input.INTERRUPTION: 
-		          The current thread's interrupt status was found to be true,
-		          and was kept that way.
+            Input.INTERRUPTION: 
+              The current thread's interrupt status was found to be true,
+              and was kept that way.  This Input is equivalent to
+              Thread.currentThread().isInterrupted() returning true.
 
-		     	  Input.NONE: None of the above inputs was available.
-		     	    This means current thread's interrupt status 
-		     	    was found to be false, and was kept that way.
+            Input.NONE: None of the above inputs was available.
+              This means current thread's interrupt status 
+              was found to be false, and was kept that way.
 
-	        */
-	      {
-	 	      if // Testing and returning thread interruption status.
-	 	        ( Thread.currentThread().isInterrupted() )
-	 	      	return Input.INTERRUPTION;
-	 	      	else
-	 	      	return Input.NONE;
-	      	}
+          */
+        {
+          if // Testing and returning thread interruption status.
+            (LockAndSignal.isInterruptedB())
+            return Input.INTERRUPTION;
+            else
+            return Input.NONE;
+          }
+
+      public static synchronized boolean isInterruptedB()
+        /* This method, called by a consumer thread,
+          tests for the thread interrupt status input only.  
+          It is a convenience method.  It returns results as follows:
+
+            true: 
+              The current thread's interrupt status was found to be true,
+              and was kept that way.  This Input is equivalent to
+              Thread.currentThread().isInterrupted() returning true.
+
+            false:
+              This means current thread's interrupt status 
+              was found to be false, and was kept that way.
+
+          */
+        {
+          return Thread.currentThread().isInterrupted();
+          }
 
       public synchronized Input testingRemainingDelayE( long waitDelayMsL )
 		    /* This method, called by a consumer thread,
