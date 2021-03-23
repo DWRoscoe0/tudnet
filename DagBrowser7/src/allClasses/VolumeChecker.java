@@ -63,7 +63,6 @@ public class VolumeChecker
         private long remainingVolumeBytesL;
         private long nextVolumeByteL;
         private int spinnerStateI;
-        //// private long skippedTimeMsL;
 
     // Constructors and constructor-related methods.
   
@@ -83,19 +82,24 @@ public class VolumeChecker
         }
 
     protected void mainThreadLogicV()
-      // This should be overridden by subclasses. 
+      // This overrides the superclass method. 
       {
         queueAndDisplayOutputSlowV(
           "This feature does simple functional testing of storage volumes "
           + "attached to this device.");
         List<File> addedVolumeListOfFiles;
-        while(true) {
-          addedVolumeListOfFiles= getAddedVolumeListOfFiles();
-          if (0 >= addedVolumeListOfFiles.size()) // If no volumes added
-            break; // treat as exit request and exit.
-          checkVolumeListV(addedVolumeListOfFiles);
-          } 
-        }
+      theLoop: while(true) {
+        addedVolumeListOfFiles= getTerminationOrKeyOrAddedVolumeListOfFiles();
+        if (LockAndSignal.isInterruptedB()) break; // Process exit request.
+        if (0 < addedVolumeListOfFiles.size()) { // If any volumes added
+          checkVolumeListV(addedVolumeListOfFiles); // check only those volumes.
+          continue theLoop;
+          }
+        checkVolumeListV( // Check each attached volume that has user's consent.
+            Arrays.asList(getVolumeFiles()));
+      } // theLoop:
+        return;
+      }
 
     protected void checkVolumeListV(List<File> addedVolumeListOfFiles)
       {
@@ -109,7 +113,6 @@ public class VolumeChecker
             + theFile 
             + " [y/n] ? "
             );
-          //// queueAndDisplayOutputSlowlyV("\nKey typed: "+keyString);
           queueAndDisplayOutputSlowV(keyString);
           if ("y".equals(keyString))
             checkVolumeV(theFile);
@@ -162,7 +165,6 @@ public class VolumeChecker
         FileOutputStream theFileOutputStream= null;
         spinnerStateI= 0;
         remainingFileBytesL= bytesPerFileL;
-        //// long byteI= 0; // Index of next byte to write.
         volumeBlockNumberL= 0; // Next block to write.
         int fileI= 0; // Index of next file to write.
         offsetOfProgressReportI= thePlainDocument.getLength();
@@ -180,31 +182,23 @@ public class VolumeChecker
               break fileLoop;
             testFile= new File(testFolderFile,""+fileI);
             setAndDisplayOperationV("opening file ");
-            //// theAppLog.debug(
-            ////   myToString()+"VolumeChecker.writeTestReturnString(.) "
-            ////   + "opening file= " + testFile);
             theFileOutputStream= new FileOutputStream(testFile);
             remainingFileBytesL= Math.min(bytesPerFileL,remainingVolumeBytesL);
             setAndDisplayOperationV("writing file blocks");
           blockLoop: while (true) {
             updateProgressMaybeV();
-            if (0 >= remainingFileBytesL) // Exit if no more bytes to write.
-              break blockLoop;
-            //// theAppLog.debugClockOutV("bb"); // Begin block write.
+            errorString= testForKeyReturnString();
+            if (null != errorString) break blockLoop;
+            if (0 >= remainingFileBytesL) break blockLoop;
             writeBlockV(theFileOutputStream,volumeBlockNumberL);
-            //// theAppLog.debugClockOutV("be"); // End block write.
             volumeBlockNumberL++;
             remainingVolumeBytesL-= bytesPerBlockI;
             remainingFileBytesL-= bytesPerBlockI;
             nextVolumeByteL+= bytesPerBlockI;
           } // blockLoop:
-          //// theAppLog.debug(
-          ////   myToString()+"VolumeChecker.writeTestReturnString(.) "
-          ////   + "closing file= " + testFile);
-          setAndDisplayOperationV("closing file");
-          theFileOutputStream.close();
-          //// queueAndDisplayOutputFastV("f");
-          fileI++;
+            setAndDisplayOperationV("closing file");
+            theFileOutputStream.close();
+            fileI++;
           } // fileLoop:
         } catch (Exception theException) { 
           theAppLog.exception(
@@ -218,18 +212,23 @@ public class VolumeChecker
           } // catch
         } // finally
         setAndDisplayOperationV("deleting temporary files");
-        //// updateProgressDisplayV(); // Final progress report.
-        //// testFolderFile.delete();
         theAppLog.debug("VolumeChecker.writeTestReturnString(.) deleting.");
         java.awt.Toolkit.getDefaultToolkit().beep(); // Create audible Beep.
-        //// queueAndDisplayOutputSlowV(
-        ////     "\nWriting done, deleting temporary files...");
         errorString= FileOps.deleteRecursivelyReturnString(
             testFolderFile,FileOps.requiredConfirmationString);
         setAndDisplayOperationV("done");
         return errorString;
         }
 
+    private String testForKeyReturnString()
+      { 
+        String keyString= tryToGetFromQueueKeyString();
+        if (null != keyString) {
+          reportWithPromptSlowlyAndGetKeyString("Interrupted.");
+          }
+        return null; // Always return null for now.  ////////// 
+        }
+    
     private void setAndDisplayOperationV(String operationString)
       {
         this.operationString= operationString;
@@ -281,7 +280,6 @@ public class VolumeChecker
             + "\nReport-Number: " + (++reportNumberI)
               + " " + "-\\|/".substring(spinnerStateI, spinnerStateI+1)
             + "\nOperation: " + operationString
-            //// + "\nSkipped-Time: " + skippedTimeMsL 
             + "\nDelta-Time: " + (nowTimeMsL - previousReportTimeMsL) 
             + "\nFile: " + testFile
             + "\nDisk-Block: " + volumeBlockNumberL
@@ -291,7 +289,6 @@ public class VolumeChecker
         if (4 <= (++spinnerStateI)) spinnerStateI= 0;
         previousReportTimeMsL= nowTimeMsL;
         replaceDocumentTailAt1With2V(offsetOfProgressReportI, outputString);
-        /// EpiThread.interruptibleSleepB(1); //////
         }
 
     private void writeBlockV(FileOutputStream theFileOutputStream,long blockL) 
@@ -305,28 +302,29 @@ public class VolumeChecker
        * ///opt For now use NonDirect ByteBuffer.  Use Direct later for speed.
        */
       {
-        ////// String blockString= 
         byte[] bytes= new byte[bytesPerBlockI];
         Arrays.fill(bytes, (byte)'x');
-        //// ByteBuffer theByteBuffer= ByteBuffer.wrap(bytes); 
-        //// for (int i=0 ; i<bytesPerBlockI; i++)
-          //// theFileOutputStream.write("x".getBytes());
         theFileOutputStream.write(bytes);
-        //// queueAndDisplayOutputFastV("b ");
         }
 
-    protected List<File> getAddedVolumeListOfFiles()
-      /* This method returns an array of added volumes
-       * the next time one or more is added to the set of attached volumes,
-       * or an empty array if thread termination is requested.
+    protected List<File> getTerminationOrKeyOrAddedVolumeListOfFiles()
+      /* This method waits for one of several inputs and then returns.
+       * The inputs which terminate the wait are:
+       * * termination request: can be tested with
+       *   LockAndSignal.testingForInterruptE().
+       * * key pressed: can be tested with
+       *   testGetFromQueueKeyString() or related methods. 
+       * * attached volumes changed: returns the list of volumes added,
+       *   can be tested returned (List.size() > 0).
        */
       {
         ArrayList<File> addedVolumeListOfFiles= new ArrayList<File>();
         File[] oldVolumeFiles= getVolumeFiles();
         while (true) {
-          File[] newVolumeFiles=
-              waitForTerminationOrChangeOfVolumeFiles(oldVolumeFiles);
-          if (null == newVolumeFiles) break; // Exit if termination requested.
+          File[] newVolumeFiles= // Get next input.
+              getTerminationOrKeyOrChangeOfVolumeFiles(oldVolumeFiles);
+          if (null == newVolumeFiles) // If the input was not a volume change 
+            break; // its one of the other 2 inputs, so exit.
           for (File outerFile : newVolumeFiles) 
             { // Copy all additions to result list.
               boolean addedB= true; // Assume it was added.

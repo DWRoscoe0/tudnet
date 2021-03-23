@@ -47,6 +47,8 @@ public class ConsoleBase
     private StringBuffer inputStringBuffer= new StringBuffer();
     private StringBuffer outputStringBuffer= new StringBuffer();
     protected LockAndSignal theLockAndSignal= new LockAndSignal();
+      // processInputKeyV(.) uses this for notification.
+      // Subclasses may add notifications for additional inputs.
     protected PlainDocument thePlainDocument= new PlainDocument();
       // Internal document store.
       // Unlike thePlainDocument in TextStream2,
@@ -168,37 +170,58 @@ public class ConsoleBase
         }
 
     protected String getKeyString()
-      /* This method extracts and returns the next key as a String
-       * from the keyboard input queue, 
-       * or null if thread termination is requested.
+      /* This method first flushes the keyboard input queue.
+       * Then it waits for and returns the next key to appear in the queue.
+       * It returns this key as a String,
+       * or returns null if thread termination is requested first.
        * It will wait until one of those input types happens.
        */
       {
-        String resultString= null; // Assume thread termination.
+        String keyString;
+        while (true) { // Keep getting keys until the key queue is empty.
+          keyString= tryToGetFromQueueKeyString(); // Try getting a key.
+          if (null == keyString) break; // Exit if null meaning queue empty.
+          }
         while (true) {
-          resultString= tryToGetFromQueueKeyString();
-          if (null != resultString) break; // Exit if got key.
+          keyString= tryToGetFromQueueKeyString();
+          if (null != keyString) break; // Exit if got key.
           LockAndSignal.Input theInput= // Waiting for any new inputs. 
             theLockAndSignal.waitingForNotificationOrInterruptE();
           if // Exiting loop with null if thread termination is requested.
             (Input.INTERRUPTION == theInput)
             break;
           }
-        return resultString;
+        return keyString;
         }
 
-    private String tryToGetFromQueueKeyString()
+    protected String tryToGetFromQueueKeyString()
       /* This method tries to extract the next key as a String
        * from the keyboard input queue, or null if there is none.
+       */
+      {
+        //// String inString= null;
+        String inString= testGetFromQueueKeyString();
+        ////vif (0 < inputStringBuffer.length()) {
+        if (null != inString) { // If got key, delete it from queue.
+          //// inString= inputStringBuffer.substring(0,1);
+          inputStringBuffer.delete(0,1);
+          }
+        /// theAppLog.debug(myToString()+"ConsoleBase.mainThreadLogicV() "
+        ///     + "processing from inputStringBuffer \""+inString+"\"");
+        return inString;
+        }
+
+    protected String testGetFromQueueKeyString()
+      /* This method test whether there it is possible 
+       * to extract the next key as a String
+       * from the keyboard input queue.
+       * It returns the key if so, or null if there is none.
        */
       {
         String inString= null;
         if (0 < inputStringBuffer.length()) {
           inString= inputStringBuffer.substring(0,1);
-          inputStringBuffer.delete(0,1);
           }
-        /// theAppLog.debug(myToString()+"ConsoleBase.mainThreadLogicV() "
-        ///     + "processing from inputStringBuffer \""+inString+"\"");
         return inString;
         }
 

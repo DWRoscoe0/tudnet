@@ -50,7 +50,7 @@ public class VolumeDetector
         File[] oldVolumeFiles= getVolumeFiles(); 
         while(true) {
           File[] newVolumeFiles= 
-              waitForTerminationOrChangeOfVolumeFiles(oldVolumeFiles);
+              getTerminationOrKeyOrChangeOfVolumeFiles(oldVolumeFiles);
           if (Input.INTERRUPTION == theLockAndSignal.testingForInterruptE())
             break;
           /// java.awt.Toolkit.getDefaultToolkit().beep(); // Create audible Beep.
@@ -59,11 +59,16 @@ public class VolumeDetector
           } 
         }
 
-    protected File[] waitForTerminationOrChangeOfVolumeFiles(
+    protected File[] getTerminationOrKeyOrChangeOfVolumeFiles(
         File[] oldVolumeFiles)
-      /* This method returns an array of attached volumes
-       * the next time the set changes,
-       * or null if thread termination is requested.
+      /* This method waits for one of several inputs and then returns.
+       * The inputs which terminate the wait are:
+       * * termination request: returns null, can be tested with
+       *   LockAndSignal.testingForInterruptE().
+       * * key pressed: returns null, can be tested with
+       *   testGetFromQueueKeyString() or related methods. 
+       * * attached volumes changed: returns the new list of volumes,
+       *   can be tested with null!=return.
        */
       {
         File[] newVolumeFiles;
@@ -77,14 +82,18 @@ public class VolumeDetector
           + "remove or disconnect it, "
           + "then insert or connect it again.  ");
         while (true) {
-          newVolumeFiles= getVolumeFiles();
-          if // Exit loop will null if termination is requested.
+          newVolumeFiles= null;
+          if // Exit loop with null if termination is requested.
             (Input.INTERRUPTION == theLockAndSignal.testingForInterruptE())
-            { newVolumeFiles= null; break; }
+            break; // Exit loop;
+          if (null != testGetFromQueueKeyString()) // If a key was pressed
+            break; // exit loop.
+          newVolumeFiles= getVolumeFiles();
           if // If volume list has changed
             (! Arrays.equals(oldVolumeFiles,newVolumeFiles)) 
             break; // exit loop.
-          EpiThread.interruptibleSleepB(20);
+          //// EpiThread.interruptibleSleepB(20);
+          theLockAndSignal.waitingForInterruptOrDelayOrNotificationE(20);
           }
         return newVolumeFiles;
         }
