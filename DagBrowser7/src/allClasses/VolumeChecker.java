@@ -92,7 +92,8 @@ public class VolumeChecker
         addedVolumeListOfFiles= getTerminationOrKeyOrAddedVolumeListOfFiles();
         if (LockAndSignal.isInterruptedB()) break; // Process exit request.
         if (0 < addedVolumeListOfFiles.size()) { // If any volumes added
-          checkVolumeListV(addedVolumeListOfFiles); // check only those volumes.
+          checkVolumeListV( // check each added volume that has user's consent
+              addedVolumeListOfFiles);
           continue theLoop;
           }
         checkVolumeListV( // Check each attached volume that has user's consent.
@@ -108,13 +109,9 @@ public class VolumeChecker
           + addedVolumeListOfFiles.toString()
           );
         for (File theFile : addedVolumeListOfFiles) {
-          String keyString= promptSlowlyAndGetKeyString(
-            "\nWould you like to check volume "
-            + theFile 
-            + " [y/n] ? "
-            );
-          queueAndDisplayOutputSlowV(keyString);
-          if ("y".equals(keyString))
+          if (getConfirmationKeyPressB( // Check volume if user okays it.
+               "Would you like to check this volume? " + theFile)
+              )
             checkVolumeV(theFile);
           }
         }
@@ -132,23 +129,23 @@ public class VolumeChecker
       goFinish: {
         errorString= FileOps.makeDirectoryAndAncestorsString(testFolderFile);
         if (null != errorString) {
-          reportWithPromptSlowlyAndGetKeyString(
+          reportWithPromptSlowlyAndWaitForKeyV(
               "\n\nError creating folder: " + errorString);
           break goFinish;
           }
         errorString= writeTestReturnString(testFolderFile);
         if (null != errorString) {
-          reportWithPromptSlowlyAndGetKeyString(
+          reportWithPromptSlowlyAndWaitForKeyV(
               "\n\nError doing write-test: " + errorString);
           break goFinish;
           }
       }  // goFinish:
         if (null != errorString) {
-          reportWithPromptSlowlyAndGetKeyString(errorString);
+          reportWithPromptSlowlyAndWaitForKeyV(errorString);
           break goReturn;
           }
         theAppLog.debug("VolumeChecker.checkVolumeV(.) deleting done.");
-        queueAndDisplayOutputSlowV(" Done.\n");
+        queueAndDisplayOutputSlowV("\n\nDone.\n");
       }  // goReturn:
         return;
       } // checkVolumeV(._
@@ -187,8 +184,11 @@ public class VolumeChecker
             setAndDisplayOperationV("writing file blocks");
           blockLoop: while (true) {
             updateProgressMaybeV();
-            errorString= testForKeyReturnString();
-            if (null != errorString) break blockLoop;
+            //// errorString= testForKeyReturnString();
+            errorString= testInterruptionGetConfirmation1ReturnResultString(
+                "Do you want to terminate this operation?",
+                "Operation terminated by user.");
+            if (! isAbsentB(errorString)) break blockLoop;
             if (0 >= remainingFileBytesL) break blockLoop;
             writeBlockV(theFileOutputStream,volumeBlockNumberL);
             volumeBlockNumberL++;
@@ -198,6 +198,7 @@ public class VolumeChecker
           } // blockLoop:
             setAndDisplayOperationV("closing file");
             theFileOutputStream.close();
+            if (! isAbsentB(errorString)) break fileLoop;
             fileI++;
           } // fileLoop:
         } catch (Exception theException) { 
@@ -214,19 +215,96 @@ public class VolumeChecker
         setAndDisplayOperationV("deleting temporary files");
         theAppLog.debug("VolumeChecker.writeTestReturnString(.) deleting.");
         java.awt.Toolkit.getDefaultToolkit().beep(); // Create audible Beep.
-        errorString= FileOps.deleteRecursivelyReturnString(
+        String deleteErrorString= FileOps.deleteRecursivelyReturnString(
             testFolderFile,FileOps.requiredConfirmationString);
+        if (null != deleteErrorString); 
+        if (null != errorString) ; 
+        //////////////// combine error strings while passing condition?
         setAndDisplayOperationV("done");
         return errorString;
         }
 
-    private String testForKeyReturnString()
+    private static String combineLinesString(
+        String the1String,String the2String)
+      {
+        String valueString;
+      toReturn: {
+        if (isAbsentB(the1String)) // If there is no string 1
+          { valueString= the2String; break toReturn; } // return string 2.
+        if (isAbsentB(the2String)) // If there is no string 2
+          { valueString= the1String; break toReturn; } // return string 1.
+        valueString= // Neither string is null so return a combination of both:
+          the1String 
+          + "\n" // with a line separator between them.
+          + the2String; // 
+      } // toReturn:
+        return valueString;
+      }
+
+    private static boolean isAbsentB(String theString)
+      /* This method return true if theString is null or "", 
+       * false otherwise.  
+       */
+      {
+        boolean valueB;
+      toReturn: {
+        if (null == theString) // If string is null
+          { valueB= true; break toReturn; } // return true.
+        if (theString.isEmpty()) // If non-null string is empty
+          { valueB= true; break toReturn; } // return true.
+        valueB= false; // Otherwise return false. 
+      } // toReturn:
+        return valueB;
+      }
+
+    private String testInterruptionGetConfirmation1ReturnResultString(
+        String confirmationQuestionString,String resultDescriptionString)
+      {
+        String returnString= null; // Assume no interruption.
+      toReturn: {
+        if  // Exit if no interruption key pressed.
+          //// (null == testForOperationInterruptKeyReturnString()) 
+          (null == tryToGetFromQueueKeyString())
+          break toReturn;
+        if // Exit if the interruption is not confirmed.
+          (! getConfirmationKeyPressB(confirmationQuestionString))
+          break toReturn;
+        returnString= resultDescriptionString; // Override return value.
+      } // toReturn:
+        return returnString;
+      }
+
+    private boolean getConfirmationKeyPressB(
+        String confirmationQuestionString)
+      {
+        boolean confirmedB= false;
+        String responseString= promptSlowlyAndGetKeyString(
+          "\n\n"
+          + confirmationQuestionString
+          + " [y/n] "
+          );
+        queueAndDisplayOutputSlowV(responseString); // Echo response.
+        responseString= responseString.toLowerCase();
+        if ("y".equals(responseString))
+          confirmedB= true;
+        return confirmedB;
+        }
+
+    private String testForOperationInterruptKeyReturnString()
+      /* This method tests for any key press,
+       * which is interpreted as an interrupt of the present operation.
+       * Confirmation is requested and if the user responds with "y",
+       * then "interrupted by user" is returned.
+       * Otherwise null is returned.
+       *  ///del? Not used.
+       */
       { 
+        String returnString= null;
         String keyString= tryToGetFromQueueKeyString();
         if (null != keyString) {
-          reportWithPromptSlowlyAndGetKeyString("Interrupted.");
+          reportWithPromptSlowlyAndWaitForKeyV("Interrupted."); ///////////
           }
-        return null; // Always return null for now.  ////////// 
+        return returnString; 
         }
     
     private void setAndDisplayOperationV(String operationString)
@@ -274,7 +352,7 @@ public class VolumeChecker
       {
         // theAppLog.debug(
         //   "VolumeChecker.updateProgressV() updating.");
-        theAppLog.debugClockOutV("pr");
+        // theAppLog.debugClockOutV("pr");
         long nowTimeMsL= getTimeMsL();
         String outputString= ""
             + "\nReport-Number: " + (++reportNumberI)

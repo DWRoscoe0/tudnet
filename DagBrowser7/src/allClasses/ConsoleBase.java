@@ -112,19 +112,20 @@ public class ConsoleBase
           } 
         }
 
-    protected String reportWithPromptSlowlyAndGetKeyString(String reportString)
+    protected void reportWithPromptSlowlyAndWaitForKeyV(String reportString)
       /* This method outputs slowly any queued output text
-       * followed by report string, followed by a prompt to press Enter,
-       * then waits for and returns a key string,
-       * or null if thread termination is requested.
+       * followed by reportString, followed by a prompt to press Enter.
+       * Then it waits for any key press or thread termination request
+       * and returns.
        */
       { 
         queueOutputV(
-            "\n"
+            "\n\n"
             + reportString
             + "\nPress Enter key to continue: "
             );
-        return promptSlowlyAndGetKeyString();
+        //// return promptSlowlyAndGetKeyString();
+        promptSlowlyAndGetKeyString();
         }
 
     protected String promptSlowlyAndGetKeyString(String promptString)
@@ -140,12 +141,18 @@ public class ConsoleBase
       
     protected String promptSlowlyAndGetKeyString()
       /* This method outputs slowly any queued output text,
+       * then flushes the keyboard input queue,
        * then waits for and returns a key string, 
-       * or null if thread termination is requested.
+       * or returns null if thread termination is requested first.
        */
       {
         displayQueuedOutputSlowV();
-        return getKeyString();
+        String keyString;
+        while (true) { // Keep getting keys until the key queue is empty.
+          keyString= tryToGetFromQueueKeyString(); // Try getting a key.
+          if (null == keyString) break; // Exit if null meaning queue empty.
+          }
+        return getKeyString(); // Now get a new key.
         }
       
     protected void queueAndDisplayOutputSlowV(String theString)
@@ -170,18 +177,13 @@ public class ConsoleBase
         }
 
     protected String getKeyString()
-      /* This method first flushes the keyboard input queue.
-       * Then it waits for and returns the next key to appear in the queue.
+      /* This method waits for and returns the next key to appear in the queue.
        * It returns this key as a String,
        * or returns null if thread termination is requested first.
        * It will wait until one of those input types happens.
        */
       {
         String keyString;
-        while (true) { // Keep getting keys until the key queue is empty.
-          keyString= tryToGetFromQueueKeyString(); // Try getting a key.
-          if (null == keyString) break; // Exit if null meaning queue empty.
-          }
         while (true) {
           keyString= tryToGetFromQueueKeyString();
           if (null != keyString) break; // Exit if got key.
