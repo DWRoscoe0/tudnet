@@ -402,20 +402,20 @@ public class FileOps
         It returns null if successful, an error message string if not.
         */
       {
-        String errorString= null; // Assume no errors.
+        String resultString= null; // Assume no errors.
         makeDir: { 
           try {
             if (directoryFile.exists())
               break makeDir; // Do nothing if directory already exists.
             if (! directoryFile.mkdirs())
-              errorString=
+              resultString=
                 "FileOps: "+directoryFile+" mkdirs() failed.";
           } catch (Exception theException){
-            errorString= "FileOps.makeDirectoryAndAncestorsString(.): "
+            resultString= "FileOps.makeDirectoryAndAncestorsString(.): "
                 + directoryFile + theException;
           }
         } // makeDir:
-        return errorString;
+        return resultString;
         }
 
     public static void makeDirectoryAndAncestorsWithLoggingV(File directoryFile)
@@ -423,11 +423,11 @@ public class FileOps
         but if any errors happen, it logs them.
         */
       {
-        String errorString= // Try creating desired folder if it doesn't exist.
+        String resultString= // Try creating desired folder if it doesn't exist.
             makeDirectoryAndAncestorsString(directoryFile);
-        if (errorString != null) { // If there was an error, log it.
+        if (resultString != null) { // If there was an error, log it.
           theAppLog.error(
-              "FileOps.makeDirectoryAndAncestorsWithLoggingV(.) " + errorString);
+              "FileOps.makeDirectoryAndAncestorsWithLoggingV(.) " + resultString);
           }
         }
 

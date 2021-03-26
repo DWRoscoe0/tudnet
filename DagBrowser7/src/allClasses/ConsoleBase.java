@@ -118,7 +118,7 @@ public class ConsoleBase
        * Then it waits for any key press or thread termination request
        * and returns.
        */
-      { 
+      {
         queueOutputV(
             "\n\n"
             + reportString
@@ -138,7 +138,7 @@ public class ConsoleBase
         queueOutputV(promptString);
         return promptSlowlyAndGetKeyString();
         }
-      
+
     protected String promptSlowlyAndGetKeyString()
       /* This method outputs slowly any queued output text,
        * then flushes the keyboard input queue,
@@ -146,13 +146,31 @@ public class ConsoleBase
        * or returns null if thread termination is requested first.
        */
       {
+        //// displayQueuedOutputSlowV();
+        //// flushKeysV();
+        promptSlowlyV();
+        return getKeyString(); // Wait for and return a new key.
+        }
+
+    protected void promptSlowlyV()
+      /* This method outputs slowly any queued output text,
+       * then flushes the keyboard input queue in preparation for
+       * possible keyboard input.
+       */
+      {
         displayQueuedOutputSlowV();
+        flushKeysV();
+        }
+
+    protected void flushKeysV()
+      /* This method flushes the keyboard input queue.
+       */
+      {
         String keyString;
         while (true) { // Keep getting keys until the key queue is empty.
           keyString= tryToGetFromQueueKeyString(); // Try getting a key.
           if (null == keyString) break; // Exit if null meaning queue empty.
           }
-        return getKeyString(); // Now get a new key.
         }
       
     protected void queueAndDisplayOutputSlowV(String theString)

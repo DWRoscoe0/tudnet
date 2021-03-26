@@ -30,8 +30,12 @@ public class ConsoleNode
   /* This class is used for displaying leaf Nodes that
    * can be displayed as blocks of text.
    * 
-   * ///fix Sometimes the caret of the TextArea is below the bottom, 
-   *   so it is not visible.  Make it always be visible.
+   * The following problems were discovered when used with VolumeChecker.
+   * ///fix Sometimes the caret of the TextArea is below the bottom,
+   *   as if blank lines have been added to the end,
+   *   or deletions of previous text was incomplete.
+   * ///fix Sometimes the caret of the TextArea is not visible.
+   *   Make it always be visible.
    */
   
   {
@@ -95,6 +99,7 @@ public class ConsoleNode
         Platform.runLater( () -> {
             theTextArea.requestFocus();
             theTextArea.positionCaret(theTextArea.getLength());
+            ///fix  Make cursor visible?
             } );
         theTextArea.addEventFilter( // or addEventHandler(
           KeyEvent.KEY_TYPED, (theKeyEvent) -> handleKeyV(theKeyEvent) );

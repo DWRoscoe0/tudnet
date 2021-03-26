@@ -53,7 +53,11 @@ public class VolumeDetector
               getTerminationOrKeyOrChangeOfVolumeFiles(oldVolumeFiles);
           if (Input.INTERRUPTION == theLockAndSignal.testingForInterruptE())
             break;
-          /// java.awt.Toolkit.getDefaultToolkit().beep(); // Create audible Beep.
+          if (null != testGetFromQueueKeyString()) { // If key pressed
+            flushKeysV();
+            //// java.awt.Toolkit.getDefaultToolkit().beep(); // create audible Beep.
+            continue;
+            }
           queueOutputV("\n\nVolumes changed.");
           oldVolumeFiles= newVolumeFiles;
           } 

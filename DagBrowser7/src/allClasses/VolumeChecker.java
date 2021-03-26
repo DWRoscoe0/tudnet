@@ -37,7 +37,7 @@ public class VolumeChecker
 
       final int bytesPerBlockI= 512;
       final long bytesPerFileL= 64 * 1024 * 1024; // 1 GB /// 1024 * 1024 * 1024; // 1 GB
-      final long msPerReportMsL= 100; //// 1000; // 1 second.
+      final long msPerReportMsL= 100;
       /// final long msPerReportMsL= 1000000; // 1 second. for ns.
       final long bytesReportPeriodL= 16 * 1024 * 1024; // 16 MB
 
@@ -105,12 +105,12 @@ public class VolumeChecker
     protected void checkVolumeListV(List<File> addedVolumeListOfFiles)
       {
         queueAndDisplayOutputSlowV(
-          "\n\nAdded volume[s]: "
+          "\n\nAvailable volume[s]: "
           + addedVolumeListOfFiles.toString()
           );
         for (File theFile : addedVolumeListOfFiles) {
           if (getConfirmationKeyPressB( // Check volume if user okays it.
-               "Would you like to check this volume? " + theFile)
+               "Would you like to check " + theFile + " ? ")
               )
             checkVolumeV(theFile);
           }
@@ -122,30 +122,32 @@ public class VolumeChecker
        */
       {
         theAppLog.debug("VolumeChecker.checkVolumeV(.) begins.");
-        String errorString; 
+        String resultString; 
         queueAndDisplayOutputSlowV("\n\nChecking " + volumeFile + "\n");
         File testFolderFile= new File(volumeFile,"InfogoraTest");
       goReturn: {
       goFinish: {
-        errorString= FileOps.makeDirectoryAndAncestorsString(testFolderFile);
-        if (null != errorString) {
-          reportWithPromptSlowlyAndWaitForKeyV(
-              "\n\nError creating folder: " + errorString);
+        resultString= FileOps.makeDirectoryAndAncestorsString(
+            testFolderFile);
+        if (! isAbsentB(resultString)) {
+          resultString= combineLinesString(
+              "error creating folder", resultString);
           break goFinish;
           }
-        errorString= writeTestReturnString(testFolderFile);
-        if (null != errorString) {
-          reportWithPromptSlowlyAndWaitForKeyV(
-              "\n\nError doing write-test: " + errorString);
+        resultString= writeTestReturnString(testFolderFile);
+        if (! isAbsentB(resultString)) {
+          resultString= combineLinesString(
+              "error during write-test", resultString);
           break goFinish;
           }
       }  // goFinish:
-        if (null != errorString) {
-          reportWithPromptSlowlyAndWaitForKeyV(errorString);
+        if (! isAbsentB(resultString)) { // Report error.
+          reportWithPromptSlowlyAndWaitForKeyV(
+              "Abnormal termination:\n" + resultString);
           break goReturn;
           }
-        theAppLog.debug("VolumeChecker.checkVolumeV(.) deleting done.");
-        queueAndDisplayOutputSlowV("\n\nDone.\n");
+        queueAndDisplayOutputSlowV(
+            "\n\nThe operation completed without error.");
       }  // goReturn:
         return;
       } // checkVolumeV(._
@@ -154,8 +156,6 @@ public class VolumeChecker
       /* This method does a write test by writing files in
        * the folder specified by testFolderFile.
        * It returns null if success, an error String if not.
-       * 
-       *  ///fix Return error string in all cases of errors.
        */
       {
         String errorString= null;
@@ -184,10 +184,9 @@ public class VolumeChecker
             setAndDisplayOperationV("writing file blocks");
           blockLoop: while (true) {
             updateProgressMaybeV();
-            //// errorString= testForKeyReturnString();
             errorString= testInterruptionGetConfirmation1ReturnResultString(
                 "Do you want to terminate this operation?",
-                "Operation terminated by user.");
+                "operation terminated by user");
             if (! isAbsentB(errorString)) break blockLoop;
             if (0 >= remainingFileBytesL) break blockLoop;
             writeBlockV(theFileOutputStream,volumeBlockNumberL);
@@ -214,17 +213,15 @@ public class VolumeChecker
         } // finally
         setAndDisplayOperationV("deleting temporary files");
         theAppLog.debug("VolumeChecker.writeTestReturnString(.) deleting.");
-        java.awt.Toolkit.getDefaultToolkit().beep(); // Create audible Beep.
+        //// java.awt.Toolkit.getDefaultToolkit().beep(); // Create audible Beep.
         String deleteErrorString= FileOps.deleteRecursivelyReturnString(
             testFolderFile,FileOps.requiredConfirmationString);
-        if (null != deleteErrorString); 
-        if (null != errorString) ; 
-        //////////////// combine error strings while passing condition?
-        setAndDisplayOperationV("done");
+        errorString= combineLinesString(errorString, deleteErrorString);
+        setAndDisplayOperationV("completed");
         return errorString;
         }
 
-    private static String combineLinesString(
+    private String combineLinesString(
         String the1String,String the2String)
       {
         String valueString;
@@ -235,7 +232,7 @@ public class VolumeChecker
           { valueString= the1String; break toReturn; } // return string 1.
         valueString= // Neither string is null so return a combination of both:
           the1String 
-          + "\n" // with a line separator between them.
+          + ",\n" // with a line separator between them.
           + the2String; // 
       } // toReturn:
         return valueString;
@@ -263,7 +260,6 @@ public class VolumeChecker
         String returnString= null; // Assume no interruption.
       toReturn: {
         if  // Exit if no interruption key pressed.
-          //// (null == testForOperationInterruptKeyReturnString()) 
           (null == tryToGetFromQueueKeyString())
           break toReturn;
         if // Exit if the interruption is not confirmed.
@@ -288,23 +284,6 @@ public class VolumeChecker
         if ("y".equals(responseString))
           confirmedB= true;
         return confirmedB;
-        }
-
-    private String testForOperationInterruptKeyReturnString()
-      /* This method tests for any key press,
-       * which is interpreted as an interrupt of the present operation.
-       * Confirmation is requested and if the user responds with "y",
-       * then "interrupted by user" is returned.
-       * Otherwise null is returned.
-       *  ///del? Not used.
-       */
-      { 
-        String returnString= null;
-        String keyString= tryToGetFromQueueKeyString();
-        if (null != keyString) {
-          reportWithPromptSlowlyAndWaitForKeyV("Interrupted."); ///////////
-          }
-        return returnString; 
         }
     
     private void setAndDisplayOperationV(String operationString)
@@ -355,19 +334,24 @@ public class VolumeChecker
         // theAppLog.debugClockOutV("pr");
         long nowTimeMsL= getTimeMsL();
         String outputString= ""
-            + "\nReport-Number: " + (++reportNumberI)
-              + " " + "-\\|/".substring(spinnerStateI, spinnerStateI+1)
-            + "\nOperation: " + operationString
-            + "\nDelta-Time: " + (nowTimeMsL - previousReportTimeMsL) 
+            + "\nProgress-Report-Number: " + (++reportNumberI)
+              + " " + advanceAndGetSpinnerString()
             + "\nFile: " + testFile
-            + "\nDisk-Block: " + volumeBlockNumberL
-            + "\nFile-Byte: " + remainingFileBytesL
-            + "\nVolume-Byte: " + remainingVolumeBytesL
+            + "\nVolume-Blocks-Done: " + volumeBlockNumberL
+            + "\nFile-Bytes-Remaining: " + remainingFileBytesL
+            + "\nVolume-Bytes-Remaining: " + remainingVolumeBytesL
+            + "\nDelta-Time: " + (nowTimeMsL - previousReportTimeMsL) 
+            + "\nOperation: " + operationString
             ;
-        if (4 <= (++spinnerStateI)) spinnerStateI= 0;
         previousReportTimeMsL= nowTimeMsL;
         replaceDocumentTailAt1With2V(offsetOfProgressReportI, outputString);
         }
+
+    private String advanceAndGetSpinnerString()
+    {
+      if (4 <= (++spinnerStateI)) spinnerStateI= 0;
+      return "-\\|/".substring(spinnerStateI, spinnerStateI+1);
+      }
 
     private void writeBlockV(FileOutputStream theFileOutputStream,long blockL) 
         throws IOException
