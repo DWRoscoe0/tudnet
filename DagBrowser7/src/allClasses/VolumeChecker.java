@@ -2,9 +2,12 @@ package allClasses;
 
 import static allClasses.AppLog.theAppLog;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -123,7 +126,11 @@ public class VolumeChecker
       {
         theAppLog.debug("VolumeChecker.checkVolumeV(.) begins.");
         String resultString; 
+        spinnerStateI= 0;
+        timeOfNextReportMsL= getTimeMsL(); // Do do first report immediately.
+        reportNumberI= 0;
         queueAndDisplayOutputSlowV("\n\nChecking " + volumeFile + "\n");
+        offsetOfProgressReportI= thePlainDocument.getLength();
         File testFolderFile= new File(volumeFile,"InfogoraTest");
       goReturn: {
       goFinish: {
@@ -140,7 +147,21 @@ public class VolumeChecker
               "error during write-test", resultString);
           break goFinish;
           }
+        remainingVolumeBytesL= nextVolumeByteL;
+        resultString= readTestReturnString(testFolderFile);
+        if (! isAbsentB(resultString)) {
+          resultString= combineLinesString(
+              "error during read-test", resultString);
+          break goFinish;
+          }
       }  // goFinish:
+        setAndDisplayOperationV("deleting temporary files");
+        theAppLog.debug("VolumeChecker.writeTestReturnString(.) deleting.");
+        //// java.awt.Toolkit.getDefaultToolkit().beep(); // Create audible Beep.
+        String deleteErrorString= FileOps.deleteRecursivelyReturnString(
+            testFolderFile,FileOps.requiredConfirmationString);
+        resultString= combineLinesString(resultString, deleteErrorString);
+        setAndDisplayOperationV("completed");
         if (! isAbsentB(resultString)) { // Report error.
           reportWithPromptSlowlyAndWaitForKeyV(
               "Abnormal termination:\n" + resultString);
@@ -160,15 +181,15 @@ public class VolumeChecker
       {
         String errorString= null;
         FileOutputStream theFileOutputStream= null;
-        spinnerStateI= 0;
+        //// spinnerStateI= 0;
+        nextVolumeByteL=0;
         remainingFileBytesL= bytesPerFileL;
         volumeBlockNumberL= 0; // Next block to write.
         int fileI= 0; // Index of next file to write.
-        offsetOfProgressReportI= thePlainDocument.getLength();
-        timeOfNextReportMsL= getTimeMsL(); // Do do first report immediately.
+        //// timeOfNextReportMsL= getTimeMsL(); // Do do first report immediately.
         byteOfNextReportMsL= 0;
         previousReportTimeMsL= timeOfNextReportMsL;
-        reportNumberI= 0;
+        //// reportNumberI= 0;
         setAndDisplayOperationV("starting");
         updateProgressDisplayV(); // Initial progress report.
         try {
@@ -186,7 +207,7 @@ public class VolumeChecker
             updateProgressMaybeV();
             errorString= testInterruptionGetConfirmation1ReturnResultString(
                 "Do you want to terminate this operation?",
-                "operation terminated by user");
+                "write operation terminated by user");
             if (! isAbsentB(errorString)) break blockLoop;
             if (0 >= remainingFileBytesL) break blockLoop;
             writeBlockV(theFileOutputStream,volumeBlockNumberL);
@@ -208,17 +229,135 @@ public class VolumeChecker
             if ( theFileOutputStream != null ) theFileOutputStream.close(); 
           } catch ( Exception theException ) { 
             theAppLog.exception(
-                "VolumeCheck.writeTestString(.)", theException);
+                "VolumeCheck.writeTestReturnString(.)", theException);
           } // catch
         } // finally
-        setAndDisplayOperationV("deleting temporary files");
-        theAppLog.debug("VolumeChecker.writeTestReturnString(.) deleting.");
-        //// java.awt.Toolkit.getDefaultToolkit().beep(); // Create audible Beep.
-        String deleteErrorString= FileOps.deleteRecursivelyReturnString(
-            testFolderFile,FileOps.requiredConfirmationString);
-        errorString= combineLinesString(errorString, deleteErrorString);
-        setAndDisplayOperationV("completed");
         return errorString;
+        }
+
+    private String readTestReturnString(File testFolderFile)
+      /* This method does a read test by reading files in
+       * the folder specified by testFolderFile.
+       * It compares the data in each block that it reads 
+       * with the pattern that should be there.
+       * Any mismatch is considered an error.
+       * It returns null if success, an error String if not.
+       * 
+       *  /////////////// being converted from write routine.
+       */
+      {
+        String resultString= null;
+        FileInputStream theFileInputStream= null;
+        nextVolumeByteL=0;
+        remainingFileBytesL= bytesPerFileL;
+        volumeBlockNumberL= 0;
+        int fileI= 0;
+        byteOfNextReportMsL= 0;
+        previousReportTimeMsL= timeOfNextReportMsL;
+        setAndDisplayOperationV("starting read-back test");
+        updateProgressDisplayV(); // Initial progress report.
+        try {
+          fileLoop: while (true) {
+            //// remainingVolumeBytesL= // Update remaining space.
+            ////     testFolderFile.getUsableSpace();
+            if (0 >= remainingVolumeBytesL) // Exit if no more bytes to read. 
+              break fileLoop;
+            testFile= new File(testFolderFile,""+fileI);
+            setAndDisplayOperationV("opening file ");
+            //// theFileOutputStream= new FileOutputStream(testFile);
+            theFileInputStream= new FileInputStream(testFile);
+            remainingFileBytesL= Math.min(bytesPerFileL,remainingVolumeBytesL);
+            setAndDisplayOperationV("reading file blocks");
+          blockLoop: while (true) {
+            updateProgressMaybeV();
+            resultString= testInterruptionGetConfirmation1ReturnResultString(
+                "Do you want to terminate this operation?",
+                "read operation terminated by user");
+            if (! isAbsentB(resultString)) break blockLoop;
+            if (0 >= remainingFileBytesL) break blockLoop;
+            resultString= readBlockReturnString(
+                theFileInputStream,volumeBlockNumberL);
+            if (! isAbsentB(resultString)) break blockLoop;
+            volumeBlockNumberL++;
+            remainingVolumeBytesL-= bytesPerBlockI;
+            remainingFileBytesL-= bytesPerBlockI;
+            nextVolumeByteL+= bytesPerBlockI;
+          } // blockLoop:
+            setAndDisplayOperationV("closing file");
+            theFileInputStream.close();
+            if (! isAbsentB(resultString)) break fileLoop;
+            fileI++;
+          } // fileLoop:
+        } catch (Exception theException) { 
+          theAppLog.exception(
+              "VolumeCheck.readTestReturnString(.)", theException);
+        } finally {
+          try {
+            if ( theFileInputStream != null ) theFileInputStream.close(); 
+          } catch ( Exception theException ) { 
+            theAppLog.exception(
+                "VolumeCheck.readTestReturnString(.)", theException);
+          } // catch
+        } // finally
+        return resultString;
+        }
+
+    private void writeBlockV(FileOutputStream theFileOutputStream,long blockL) 
+        throws IOException
+      /* This method writes a block containing the block number blockI.
+       * A block is bytesPerBlockI bytes.
+       * It throws IOException if there is an error.
+       * ///ehn blockL will eventually be used to write a pattern
+       * into the block that is unique to the block. 
+       * 
+       * ///opt For now use NonDirect ByteBuffer.  Use Direct later for speed.
+       */
+      {
+        byte[] bytes= getPatternedBlockOfBytes(blockL);
+        //// byte[] bytes= new byte[bytesPerBlockI];
+        //// Arrays.fill(bytes, (byte)'x');
+        theFileOutputStream.write(bytes);
+        }
+
+    private String readBlockReturnString(
+        FileInputStream theFileInputStream,long blockL) 
+      throws IOException
+      /* This method reads a block containing the block number blockI.
+       * A block is bytesPerBlockI bytes.
+       * It throws IOException if there is an error.
+       * It returns true if the data read is incorrect, false otherwise.
+       */
+      {
+        String resultString= null;
+        byte[] expectedBytes= getPatternedBlockOfBytes(blockL);
+        byte[] readBytes= new byte[bytesPerBlockI];
+        theFileInputStream.read(readBytes);
+        boolean equalB= Arrays.equals(expectedBytes,readBytes);
+        if (! equalB)
+          resultString= "read-back compare error";
+        return resultString;
+        }
+
+    private byte[] getPatternedBlockOfBytes(long blockL) 
+      /* This method returns a block buffer containing the block number blockI.
+       * 
+       * ///opt For now use NonDirect ByteBuffer.  Use Direct later for speed.
+       */
+      {
+        ByteArrayOutputStream blockByteArrayOutputStream= 
+            new ByteArrayOutputStream(bytesPerBlockI);
+        //// PrintWriter blockPrintWriter=
+        ////     new PrintWriter(blockByteArrayOutputStream);
+        PrintStream blockPrintStream=
+          new PrintStream(blockByteArrayOutputStream);
+        for (int i= 0; i < (bytesPerBlockI / 32); i++) { // Repeat to fill block
+          //// blockPrintWriter.printf( // with lines of text showing block number.
+          blockPrintStream.printf( // with lines of text showing block number.
+            "block number = %15d\r\n", blockL);
+          }
+        byte[] blockBytes= 
+            blockByteArrayOutputStream.toByteArray();
+        return blockBytes;
         }
 
     private String combineLinesString(
@@ -239,8 +378,8 @@ public class VolumeChecker
       }
 
     private static boolean isAbsentB(String theString)
-      /* This method return true if theString is null or "", 
-       * false otherwise.  
+      /* This method returns true if theString is null or "", 
+       * false otherwise. 
        */
       {
         boolean valueB;
@@ -352,22 +491,6 @@ public class VolumeChecker
       if (4 <= (++spinnerStateI)) spinnerStateI= 0;
       return "-\\|/".substring(spinnerStateI, spinnerStateI+1);
       }
-
-    private void writeBlockV(FileOutputStream theFileOutputStream,long blockL) 
-        throws IOException
-      /* This method writes a block containing the block number blockI.
-       * A block is bytesPerBlockI bytes.
-       * It throws IOException if there is an error.
-       * ///ehn blockL will eventually be used to write a pattern
-       * into the block that is unique to the block. 
-       * 
-       * ///opt For now use NonDirect ByteBuffer.  Use Direct later for speed.
-       */
-      {
-        byte[] bytes= new byte[bytesPerBlockI];
-        Arrays.fill(bytes, (byte)'x');
-        theFileOutputStream.write(bytes);
-        }
 
     protected List<File> getTerminationOrKeyOrAddedVolumeListOfFiles()
       /* This method waits for one of several inputs and then returns.
