@@ -63,6 +63,7 @@ public class VolumeChecker
 
         private long volumeTotalBytesL; // Total partition size.
         private long initialVolumeFreeBytesL;
+        private long totalToCheckBytesL;
         private long initialVolumeUsedBytesL;
         private long volumeToDoBytesL;
         private long volumeDoneBytesL; // Also # of next byte to process.
@@ -143,7 +144,8 @@ public class VolumeChecker
         String resultString;
         readCheckedBytesL=0;
         volumeTotalBytesL= volumeFile.getTotalSpace();
-        initialVolumeFreeBytesL= volumeFile.getUsableSpace(); 
+        initialVolumeFreeBytesL= volumeFile.getUsableSpace();
+        totalToCheckBytesL= initialVolumeFreeBytesL;
         spinnerStateI= 0;
         timeOfNextReportMsL= getTimeMsL(); // Do do first report immediately.
         reportNumberI= 0;
@@ -496,16 +498,16 @@ public class VolumeChecker
         String outputString= ""
             + "\nProgress-Report-Number: " + (++reportNumberI)
               + " " + advanceAndGetSpinnerString()
-            + goodBytesString()
             + columnHeadingString()
             + bytesString()
             + blocksString()
             + filesString()
             + "\nFile: " + checkFile
-            + "\nVolume-Blocks-Done: " + volumeDoneBlocksL
-            + "\nFile-Bytes-Remaining: " + remainingFileBytesL
-            + "\nVolume-Bytes-Remaining: " + volumeToDoBytesL
+            //// + "\nVolume-Blocks-Done: " + volumeDoneBlocksL
+            //// + "\nFile-Bytes-Remaining: " + remainingFileBytesL
+            //// + "\nVolume-Bytes-Remaining: " + volumeToDoBytesL
             + "\nDelta-Time: " + (nowTimeMsL - previousReportTimeMsL) 
+            + goodBytesString()
             + "\nOperation: " + operationString
             ;
         previousReportTimeMsL= nowTimeMsL;
@@ -514,24 +516,48 @@ public class VolumeChecker
 
     private String columnHeadingString()
       { 
-        return String.format("\nUnit-- ----To-Do -----Done");
+        return String.format("\n        ----To-Go -----Done");
         }
 
     private String bytesString()
       {
         String resultString= String.format(
-            "\nbytes- %9d %9d", 
+            "\nbytes  :%9d %9d", 
             volumeToDoBytesL, volumeDoneBytesL);
-        previousVolumeDoneBytesL= volumeDoneBytesL;
+        previousVolumeDoneBytesL= volumeDoneBytesL;  ////////////  ?
         return resultString;
         }
 
     private String blocksString()
       {
         String resultString= String.format(
-          "\nblocks %9d %9d",
-            volumeToDoBlocksL, volumeDoneBlocksL);
-        previousVolumeDoneBlocksL= volumeDoneBlocksL;
+          "\nblocks :%9d %9d",
+            volumeToDoBytesL/bytesPerBlockI, volumeDoneBytesL/bytesPerBlockI);
+        return resultString;
+        }
+
+    private String filesString()
+      {
+        long totalFilesL=
+            (totalToCheckBytesL + (bytesPerFileL-1)) / bytesPerFileL;
+        long filesDoneL= volumeDoneBytesL / bytesPerFileL;
+        if (volumeDoneBytesL >= totalToCheckBytesL)
+          if (totalToCheckBytesL != (bytesPerFileL * totalFilesL))
+            filesDoneL++;
+        long filesToDoL= totalFilesL - filesDoneL;
+        
+        // totalGroupsL= (totalBytesL + (bytesPerGroupL-1)) / bytesPerGroupL;
+        // groupsDoneL= bytesDoneL / bytesPerGroupL; // plus tail adjustment.
+        // if (bytesDoneI >= totalBytesL)
+        //   if (totalBytesL != (bytesPerGroupL * totalGroupsL))
+        //     groupsDoneL++;
+        // long groupsToDoL= totalGroupsL - groupsDoneL;
+        
+        String resultString= String.format(
+          "\nfiles  :%9d %9d",
+          filesToDoL, // (volumeToDoBytesL + bytesPerFileL - 1) / bytesPerFileL,
+          filesDoneL  // (volumeDoneBytesL + bytesPerFileL - 1) / bytesPerFileL
+          ); 
         return resultString;
         }
 
@@ -543,19 +569,6 @@ public class VolumeChecker
           + "\n  " + initialVolumeUsedBytesL + " used + " 
             + readCheckedBytesL + " checked"
           ;
-        }
-
-    private String filesString()
-      {
-        /*  ////
-        long deltaFilesL= volumeDoneFilesL - previousvolumeDoneFilesL;
-        String resultString= 
-          String.format("\nfiles       %4d =-   %4d +=   %4d", 
-            previousvolumeDoneFilesL, deltaFilesL, volumeDoneFilesL);
-        previousvolumeDoneFilesL= volumeDoneFilesL;
-        return resultString;
-        */  ////
-        return "\nFILES WILL GO HERE.";
         }
 
     private String advanceAndGetSpinnerString()
