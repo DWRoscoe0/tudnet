@@ -162,6 +162,15 @@ public class ConsoleBase
         flushKeysV();
         }
 
+    protected void outputSlowlyV(String theString)
+      /* This method outputs theString slowly along with 
+       * anything else previously queued.
+       */
+      {
+        queueOutputV(theString);
+        displayQueuedOutputSlowV();
+        }
+
     protected void flushKeysV()
       /* This method flushes the keyboard input queue.
        */
