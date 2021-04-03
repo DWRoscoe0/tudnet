@@ -220,8 +220,8 @@ public class VolumeChecker
         toCheckRemainingBytesL= testFolderFile.getUsableSpace();
         try {
           fileLoop: while (true) {
-            //// accountForFreeSpaceChangesV();
-            toCheckRemainingBytesL= temporaryFolderFile.getUsableSpace();
+            accountForFreeSpaceChangesV();
+            //// toCheckRemainingBytesL= temporaryFolderFile.getUsableSpace();
             //// if (0 >= toCheckRemainingBytesL) // Exit if no more bytes to write. 
             ////   break fileLoop;
             checkFile= new File(testFolderFile,"tmp"+volumeDoneFilesL+".txt");
@@ -289,8 +289,7 @@ public class VolumeChecker
         return theIOException.getLocalizedMessage().contains(
             "There is not enough space on the disk");
         }
-    
-    @SuppressWarnings("unused")
+
     private void accountForFreeSpaceChangesV()
       /* This method makes adjustments in variables 
        * used to track the state of write passes.
@@ -300,24 +299,15 @@ public class VolumeChecker
        *   the files created by this feature, and
        * * changes in the space being used by other processes
        * This method is needed by the write pass, not the read-compare pass.
-       * It adjusts 2 things:
-       * * toCheckTotalBytesL
-       * * toCheckRemainingBytesL
        * 
        * ///opt It might adjust more frequently as toCheckRemainingBytesL 
        * approaches zero.
-       *  /// scrap this.  It's too complicated.
        */
       {
-        boolean controlB= false; ///////////////
-        if (controlB) {
-          long expectedFreeSpaceL= initialVolumeFreeBytesL - toCheckDoneBytesL;
-          long actualFreeSpace= temporaryFolderFile.getUsableSpace();
-          changeInFreeSpaceL= actualFreeSpace - expectedFreeSpaceL;
-  
-          toCheckRemainingBytesL+= changeInFreeSpaceL;
-            // When I do this, pass terminate almost immediately!
-            /////// toCheckTotalBytesL must be adjusted?
+        boolean enabledB= true; // For debugging experiments.
+        if (enabledB) {
+          toCheckRemainingBytesL= temporaryFolderFile.getUsableSpace();
+          toCheckTotalBytesL= toCheckRemainingBytesL + toCheckDoneBytesL;
           }
         }
 
@@ -695,7 +685,7 @@ public class VolumeChecker
       {
         return 
           "\n" + (initialVolumeUsedBytesL + readCheckedBytesL)
-            + " good-bytes = "
+            + " total-good-bytes = "
           + "\n  " + initialVolumeUsedBytesL + " used + " 
             + readCheckedBytesL + " checked"
           ;
