@@ -386,7 +386,7 @@ public class VolumeChecker
       {
         byte[] bytes= getPatternedBlockOfBytes(blockL);
         theFileOutputStream.write(bytes);
-        theAppLog.debugClockOutV("wb");
+        // theAppLog.debugClockOutV("wb");
         }
 
     private String readBlockReturnString(
@@ -548,7 +548,7 @@ public class VolumeChecker
       {
         // theAppLog.debug(
         //   "VolumeChecker.updateProgressV() updating.");
-        theAppLog.debugClockOutV("pr");
+        // theAppLog.debugClockOutV("pr");
         String outputString= getProgressReportString();
         replaceDocumentTailAt1With2V(offsetOfProgressReportI, outputString);
         }
@@ -655,12 +655,36 @@ public class VolumeChecker
 
     private String timeString()
       {
+        long safeToCheckDoneBytesL= // Prevent divide-by-zero ahead. 
+            (0 == toCheckDoneBytesL) ? 1 : toCheckDoneBytesL;
+        long doneTimeMsL= presentTimeMsL - checkingStartTimeMsL;
+        long remainingTimeMsL= (long)
+           ( ((double)doneTimeMsL * toCheckRemainingBytesL) / safeToCheckDoneBytesL );
+        String remainingTimeString= timeToString(remainingTimeMsL);
+        String doneTimeString= timeToString(doneTimeMsL);
         String resultString= String.format(
           "\n%-7s:%12s %12s", 
-          "time", 
-          "?", 
-          (presentTimeMsL - checkingStartTimeMsL)+" ms"
+          "time",
+          remainingTimeString, 
+          doneTimeString
           );
+        return resultString;
+        }
+
+    String timeToString(long timeMsL)
+      /* This method converts a time timeMsL to a String which it returns. */
+      {
+        long tL= timeMsL/1000; // Convert ms to seconds.
+        long secondsL= tL % 60; // Extracting minute fraction in seconds.
+        tL /= 60; // Calculating whole minutes.
+        long minutesL = tL % 60; // Extracting hour fraction in minutes.
+        tL /= 60; // Calculating whole hours.
+        long hoursL= tL % 24; // Extracting day fraction in hours.
+        tL /= 24; // Calculating whole days.
+        long daysL = tL; // The remainder is days.
+
+        String resultString= String.format(
+          "%dd%02dh%02dm%02ds",daysL,hoursL,minutesL,secondsL);
         return resultString;
         }
 
@@ -678,7 +702,7 @@ public class VolumeChecker
             speedIntervalStartTimeMsL= presentTimeMsL;
             }
         return String.format(
-            "\nspeed : %d bytes/second", speedL);
+            "\nspeed  : %d bytes/second", speedL);
         }
 
     private String goodBytesString()
