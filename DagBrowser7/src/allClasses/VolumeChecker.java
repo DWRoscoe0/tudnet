@@ -59,10 +59,10 @@ public class VolumeChecker
         // Note, free-space/usable-space can change wildly during file IO.
 
       // Volume pass scope.  Used for both write and read-compare passes.  
-      private long toCheckTotalBytesL;
-      private long toCheckRemainingBytesL; // Down counter.
-      private long toCheckDoneBytesL; // Up counter and # of next byte to do.
-      private long changeInFreeSpaceL;
+      private long toCheckTotalBytesL; // This should be the sum of:
+        private long toCheckRemainingBytesL; // Down counter and loop control.
+        private long toCheckDoneBytesL; // Up counter and # of next byte to do.
+      //// private long changeInFreeSpaceL;
 
       // Volume read-and-compare pass only scope.
       private long readCheckedBytesL; // Counts bytes read AND compared.
@@ -86,10 +86,10 @@ public class VolumeChecker
       private long speedStartVolumeDoneBytesL;
       private long speedL;
 
-      // File scope.
+      // File scope (file blocks to write or compare).
       private long volumeDoneFilesL; // Also # of next file to process.
       private File checkFile; // Name of file containing the active block.
-      private long remainingFileBytesL; // Remaining bytes to write or compare.
+      private long remainingFileBytesL; // Down counter and loop control.
 
 
     // Constructors and constructor-related methods.
@@ -221,12 +221,39 @@ public class VolumeChecker
         try {
           fileLoop: while (true) {
             accountForFreeSpaceChangesV();
-            //// toCheckRemainingBytesL= temporaryFolderFile.getUsableSpace();
-            //// if (0 >= toCheckRemainingBytesL) // Exit if no more bytes to write. 
-            ////   break fileLoop;
             checkFile= new File(testFolderFile,"tmp"+volumeDoneFilesL+".txt");
             setAndDisplayOperationV("opening file "+checkFile);
-            try { theFileOutputStream= new FileOutputStream(checkFile); }
+            try { 
+              theFileOutputStream= new FileOutputStream(checkFile); 
+              //// remainingFileBytesL= Math.min(bytesPerFileL,toCheckRemainingBytesL);
+              remainingFileBytesL= bytesPerFileL;
+              setAndDisplayOperationV("writing file blocks"); ///////
+              blockLoop: while (true) { // Write all blocks in file.
+                //// accountForFreeSpaceChangesV();
+                refreshProgressMaybeV();
+                errorString= testInterruptionGetConfirmation1ReturnResultString(
+                    "Do you want to terminate this operation?",
+                    "write operation terminated by user");
+                if (! isAbsentB(errorString)) break blockLoop;
+                if (0 >= remainingFileBytesL) break blockLoop;
+                //// if (0 >= toCheckRemainingBytesL) // Exit if no more bytes to write. 
+                ////   break blockLoop;
+                try { writeBlockV(
+                  theFileOutputStream,toCheckDoneBytesL / bytesPerBlockI); }
+                catch (IOException theIOException) {
+                  if (deviceFullB(theIOException)) // Convert device-full
+                    { theAppLog.debug(
+                        "writeTestReturnString(.): device-full during file write.");
+                      //// break blockLoop; //  to loop termination.
+                      break fileLoop; //  to loop termination.
+                      }
+                  throw theIOException; // Re-throw other exception subclasses.
+                  }
+                toCheckDoneBytesL+= bytesPerBlockI;
+                toCheckRemainingBytesL-= bytesPerBlockI;
+                remainingFileBytesL-= bytesPerBlockI;
+                } // blockLoop:
+              }
             catch (IOException theIOException) {
               if (deviceFullB(theIOException)) // Convert device-full exception
                 { theAppLog.debug(
@@ -235,37 +262,13 @@ public class VolumeChecker
                   }
               throw theIOException; // Re-throw other exception subclasses.
               }
-            //// remainingFileBytesL= Math.min(bytesPerFileL,toCheckRemainingBytesL);
-            remainingFileBytesL= bytesPerFileL;
-            setAndDisplayOperationV("writing file blocks, "+volumeDoneFilesL); ///////
-          blockLoop: while (true) {
-            //// accountForFreeSpaceChangesV();
-            refreshProgressMaybeV();
-            errorString= testInterruptionGetConfirmation1ReturnResultString(
-                "Do you want to terminate this operation?",
-                "write operation terminated by user");
-            if (! isAbsentB(errorString)) break blockLoop;
-            if (0 >= remainingFileBytesL) break blockLoop;
-            //// if (0 >= toCheckRemainingBytesL) // Exit if no more bytes to write. 
-            ////   break blockLoop;
-            try { writeBlockV(
-              theFileOutputStream,toCheckDoneBytesL / bytesPerBlockI); }
-            catch (IOException theIOException) {
-              if (deviceFullB(theIOException)) // Convert device-full exception
-                { theAppLog.debug(
-                    "writeTestReturnString(.): device-full during file write.");
-                  break blockLoop; //  to loop termination.
-                  }
-              throw theIOException; // Re-throw other exception subclasses.
+            finally {
+              setAndDisplayOperationV("closing file ");
+              volumeDoneFilesL++;
+              theFileOutputStream.close();
+              if (! isAbsentB(errorString)) break fileLoop;
               }
-            toCheckDoneBytesL+= bytesPerBlockI;
-            toCheckRemainingBytesL-= bytesPerBlockI;
-            remainingFileBytesL-= bytesPerBlockI;
-          } // blockLoop:
-            setAndDisplayOperationV("closing file "+checkFile);
-            theFileOutputStream.close();
-            if (! isAbsentB(errorString)) break fileLoop;
-            volumeDoneFilesL++;
+            /// ? Move following into above try block?
           } // fileLoop:
         } catch (Exception theException) { 
           theAppLog.exception(
@@ -335,7 +338,7 @@ public class VolumeChecker
             if (0 >= toCheckRemainingBytesL) // Exit if no more bytes to read. 
               break fileLoop;
             checkFile= new File(testFolderFile,"tmp"+volumeDoneFilesL+".txt");
-            setAndDisplayOperationV("opening file ");
+            setAndDisplayOperationV("opening file "+checkFile);
             theFileInputStream= new FileInputStream(checkFile);
             remainingFileBytesL= Math.min(bytesPerFileL,toCheckRemainingBytesL);
             setAndDisplayOperationV("reading file blocks");
@@ -572,7 +575,7 @@ public class VolumeChecker
             + timeString()
             + speedString()
             + "\nFile: " + checkFile
-            + "\nchangeInFreeSpaceL: " + changeInFreeSpaceL
+            //// + "\nchangeInFreeSpaceL: " + changeInFreeSpaceL
             + "\nDelta-Time: " + (nowTimeMsL - previousReportTimeMsL) 
             + goodBytesString()
             + "\nOperation: " + operationString
