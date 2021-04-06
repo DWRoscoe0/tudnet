@@ -124,7 +124,6 @@ public class ConsoleBase
             + reportString
             + "\nPress Enter key to continue: "
             );
-        //// return promptSlowlyAndGetKeyString();
         promptSlowlyAndGetKeyString();
         }
 
@@ -146,8 +145,6 @@ public class ConsoleBase
        * or returns null if thread termination is requested first.
        */
       {
-        //// displayQueuedOutputSlowV();
-        //// flushKeysV();
         promptSlowlyV();
         return getKeyString(); // Wait for and return a new key.
         }
@@ -188,13 +185,6 @@ public class ConsoleBase
         displayQueuedOutputSlowV();
         }
       
-    protected void queueAndDisplayOutputFastV(String theString) ////// not used
-      {
-        queueOutputV(theString);
-        // displayQueuedOutputFastV();
-        displayQueuedOutputSlowV(); ////// Temporary.
-        }
-      
     protected void queueOutputV(String theString)
       /* Use this method to add content to the outputStringBuffer.
        * The content is always appended.
@@ -228,11 +218,8 @@ public class ConsoleBase
        * from the keyboard input queue, or null if there is none.
        */
       {
-        //// String inString= null;
         String inString= testGetFromQueueKeyString();
-        ////vif (0 < inputStringBuffer.length()) {
         if (null != inString) { // If got key, delete it from queue.
-          //// inString= inputStringBuffer.substring(0,1);
           inputStringBuffer.delete(0,1);
           }
         /// theAppLog.debug(myToString()+"ConsoleBase.mainThreadLogicV() "
@@ -281,18 +268,6 @@ public class ConsoleBase
            0,
            theString
            );
-        /*  ////
-        try { // Insert initial content.
-          thePlainDocument.insertString( // Insert into document
-              thePlainDocument.getLength(), // at its end
-              theString, // the given string
-              SimpleAttributeSet.EMPTY // with no special attributes.
-              );
-        } catch (BadLocationException e) {
-          ////// TODO Auto-generated catch block
-          e.printStackTrace();
-        }
-      */  ////
       }
 
     protected void replaceDocumentTailAt1With2V(
@@ -309,7 +284,7 @@ public class ConsoleBase
            int oldTextOffsetI,
            int oldTextLengthI,
            String newTextString
-           ) ////// new
+           )
       /* This method replaces a piece of the document by a new  piece
        * and handles exceptions.
        */
