@@ -156,7 +156,7 @@ public class VolumeChecker
         readCheckedBytesL=0;
         volumeTotalBytesL= volumeFile.getTotalSpace();
         spinnerStateI= 0;
-        checkingStartTimeMsL= getTimeMsL(); // Record start of volume check.
+        checkingStartTimeMsL= presentTimeMsL= getTimeMsL(); // Record start of volume check.
         timeOfNextReportMsL= // Do do first report immediately.
             checkingStartTimeMsL;
         reportNumberI= 0;
@@ -189,12 +189,12 @@ public class VolumeChecker
           break goFinish;
           }
       }  // goFinish:
-        replaceOperationAndRefreshProgressReportV("deleting temporary files");
+        pushOperationAndRefreshProgressReportV("deleting temporary files");
         theAppLog.debug("VolumeChecker.checkVolumeV(.) deleting.");
         String deleteErrorString= FileOps.deleteRecursivelyReturnString(
             temporaryFolderFile,FileOps.requiredConfirmationString);
         resultString= combineLinesString(resultString, deleteErrorString);
-        replaceOperationAndRefreshProgressReportV("completed");
+        replaceOperationAndRefreshProgressReportV("done");
         if (! isAbsentB(resultString)) { // Report error.
           reportWithPromptSlowlyAndWaitForKeyV(
               "Abnormal termination:\n" + resultString);
@@ -215,6 +215,7 @@ public class VolumeChecker
       {
         pushOperationV("write pass");
         String errorString= null;
+        speedStartVolumeDoneBytesL= 0;
         FileOutputStream theFileOutputStream= null;
         initialVolumeUsedBytesL= 
             volumeTotalBytesL - testFolderFile.getUsableSpace();
@@ -331,6 +332,7 @@ public class VolumeChecker
        */
       {
         String resultString= null;
+        speedStartVolumeDoneBytesL= 0;
         FileInputStream theFileInputStream= null;
         toCheckRemainingBytesL= toCheckDoneBytesL; // Set to read what we wrote.
         toCheckDoneBytesL=0;
