@@ -140,7 +140,6 @@ public class ConsoleBase
 
     protected String promptSlowlyAndGetKeyString()
       /* This method outputs slowly any queued output text,
-       * then flushes the keyboard input queue,
        * then waits for and returns a key string, 
        * or returns null if thread termination is requested first.
        */
@@ -176,6 +175,9 @@ public class ConsoleBase
         while (true) { // Keep getting keys until the key queue is empty.
           keyString= tryToGetFromQueueKeyString(); // Try getting a key.
           if (null == keyString) break; // Exit if null meaning queue empty.
+          theAppLog.debug("ConsoleBase.flushKeysV(): flushed <"
+            + AppLog.glyphifyString(keyString)
+            + ">");
           }
         }
       
@@ -203,7 +205,11 @@ public class ConsoleBase
         String keyString;
         while (true) {
           keyString= tryToGetFromQueueKeyString();
-          if (null != keyString) break; // Exit if got key.
+          if (null != keyString) {
+            theAppLog.debug("ConsoleBase.getKeyString(): <"
+              + AppLog.glyphifyString(keyString) + ">");
+            break; // Exit if got key.
+            }
           LockAndSignal.Input theInput= // Waiting for any new inputs. 
             theLockAndSignal.waitingForNotificationOrInterruptE();
           if // Exiting loop with null if thread termination is requested.
@@ -232,11 +238,18 @@ public class ConsoleBase
        * to extract the next key as a String
        * from the keyboard input queue.
        * It returns the key if so, or null if there is none.
+       * All control characters are translated to \n.
        */
       {
         String inString= null;
+        theAppLog.debug("ConsoleBase.testGetFromQueueKeyString() buffer='"
+         +AppLog.glyphifyString(inputStringBuffer.toString())+"'");
         if (0 < inputStringBuffer.length()) {
           inString= inputStringBuffer.substring(0,1);
+          char C= inString.charAt(0);
+          if (Character.isISOControl(C)) { // Translate all control characters
+            inString= "\n"; // to standard newline character.
+            }
           }
         return inString;
         }
@@ -251,11 +264,13 @@ public class ConsoleBase
        */
       {
         while (0 < outputStringBuffer.length()) {
-          String outString= outputStringBuffer.substring(0,1);
+          //// int charactersToOutputI= 1;
+          int charactersToOutputI= outputStringBuffer.length();
+          String outString= outputStringBuffer.substring(0,charactersToOutputI);
           /// theAppLog.debug(myToString()+"ConsoleBase.mainThreadLogicV() "
           ///     + "processing from outputStringBuffer \""+outString+"\"");
           appendToDocumentV(outString);
-          outputStringBuffer.delete(0,1);
+          outputStringBuffer.delete(0,charactersToOutputI);
           EpiThread.interruptibleSleepB(5);
           }
         }
@@ -272,6 +287,10 @@ public class ConsoleBase
 
     protected void replaceDocumentTailAt1With2V(
         int tailOffsetI,String newTailString)
+      /* This method replaces the tail end of the document.
+       * This is used mainly for when the tail of the document
+       * is being used as an update-able display area.  
+       */
       {
         replaceInDocumentV( // Replace the text in the document
            tailOffsetI, // from here
@@ -290,17 +309,58 @@ public class ConsoleBase
        */
       {
         try {
-         thePlainDocument.replace( // Replace in document the old text
-           oldTextOffsetI, // that starts here
-           oldTextLengthI, // and is this long
-           newTextString, // by this new text
-           SimpleAttributeSet.EMPTY // with no special attributes.
-           );
+          /*  ////
+          logPlainDocumentStateV("before.replace");
+          theAppLog.debug(
+              "ConsoleBase.replaceInDocumentV(.) at " + oldTextOffsetI
+              + " " + oldTextLengthI
+              + " old chars:\n'" + AppLog.glyphifyString(
+                  getTextFromDocumentString(oldTextOffsetI,oldTextLengthI)) 
+              + "' with " + newTextString.length()
+              + " new chars:\n'" + AppLog.glyphifyString(newTextString)
+              + "'"
+              );
+          */  ////
+          thePlainDocument.replace( // Replace in document the old text
+            oldTextOffsetI, // that starts here
+            oldTextLengthI, // and is this long
+            newTextString, // by this new text
+            SimpleAttributeSet.EMPTY // with no special attributes.
+            );
+          //// logPlainDocumentStateV("after..replace");
         } catch (BadLocationException e) {
           theAppLog.warning(
               "ConsoleBase.replaceInDocumentV(.) failed, "+e);
           e.printStackTrace();
         }
+      }
+
+    private void logPlainDocumentStateV(String contextString)
+      {
+        int lengthI= thePlainDocument.getLength();
+        theAppLog.debug(
+            "ConsoleBase.logPlainDocumentStateV(.) " + contextString 
+            + " " + lengthI
+            + " chars:\n'"
+              + AppLog.glyphifyString(
+                  getTextFromDocumentString(0, lengthI)) 
+              + "'"
+            );
+        }
+
+    private String getTextFromDocumentString(int offsetI,int lengthI)
+      /* This method get some document text and and handles exceptions.
+       */
+      {
+        String resultString;
+        try {
+         resultString= thePlainDocument.getText(offsetI,lengthI);
+        } catch (BadLocationException e) {
+          resultString= "ConsoleBase.getTextFromDocumentString(.) failed, "+e;
+          theAppLog.warning(resultString);
+          e.printStackTrace();
+        }
+      return resultString;
       }
 
     public void addDocumentListener(DocumentListener listener)

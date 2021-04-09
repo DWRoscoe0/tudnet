@@ -85,8 +85,24 @@ public class VolumeDetector
           + "If you have already done this then please "
           + "remove or disconnect it, "
           + "then insert or connect it again.  ");
-        while (true) {
+        Input theInput= Input.TIME; // Set to do polling test first.
+        theLoop: while (true) {
           newVolumeFiles= null;
+          switch (theInput) {
+            case INTERRUPTION: break theLoop; // Exit if termination requested.
+            case NOTIFICATION: { // Exit if key pressed.
+              if (null != testGetFromQueueKeyString()) break theLoop;
+              break;
+              }
+            case TIME: { // It's time to test whether volume list has changed.
+              newVolumeFiles= getVolumeFiles(); // Read attached volumes.
+              if (! Arrays.equals(oldVolumeFiles,newVolumeFiles)) // Compare 
+                break theLoop; // and exit if any volumes have changed.
+              break;
+              }
+            default: break;
+            }
+          /*  ////
           if // Exit loop with null if termination is requested.
             (Input.INTERRUPTION == theLockAndSignal.testingForInterruptE())
             break; // Exit loop;
@@ -96,8 +112,9 @@ public class VolumeDetector
           if // If volume list has changed
             (! Arrays.equals(oldVolumeFiles,newVolumeFiles)) 
             break; // exit loop.
-          //// EpiThread.interruptibleSleepB(20);
-          theLockAndSignal.waitingForInterruptOrDelayOrNotificationE(20);
+          */  ////
+          theInput= 
+              theLockAndSignal.waitingForInterruptOrDelayOrNotificationE(20);
           }
         return newVolumeFiles;
         }

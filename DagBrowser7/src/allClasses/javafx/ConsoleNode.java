@@ -13,11 +13,12 @@ import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 
+import allClasses.AppLog;
 import allClasses.ConsoleBase;
 import allClasses.DataNode;
 import allClasses.DataRoot;
 import allClasses.Persistent;
-/// import static allClasses.AppLog.theAppLog;
+import static allClasses.AppLog.theAppLog;
 
 // import static allClasses.Globals.appLogger;
 
@@ -102,7 +103,8 @@ public class ConsoleNode
             ///fix  Make cursor visible?
             } );
         theTextArea.addEventFilter( // or addEventHandler(
-          KeyEvent.KEY_TYPED, (theKeyEvent) -> handleKeyV(theKeyEvent) );
+          //// KeyEvent.KEY_TYPED, (theKeyEvent) -> handleKeyV(theKeyEvent) );
+          KeyEvent.ANY, (theKeyEvent) -> handleKeyV(theKeyEvent) );
         theConsoleBase.addDocumentListener(this);
         setCenter(theTextArea);
         }
@@ -128,14 +130,49 @@ public class ConsoleNode
         /// theAppLog.debug(
         ///   "ConsoleNode.insertUpdate(.) theString='"+theString+"'");
         Platform.runLater( () -> {
-            //// Document tmpDocument= theDocument; ////// debug
-            /// theAppLog.debug(
-            ///   "ConsoleNode.insertUpdate(.) QUEUED theString='"+theString+"'");
+            /*  ////
+            logTextAreaTailStateV("before..insertText(.) ");
+            theAppLog.debug(
+              "ConsoleNode.insertUpdate(.) before insert TextArea is"
+              + " " + theTextArea.getLength() + " chars:\n'" 
+              + AppLog.glyphifyString(
+                  theTextArea.getText(0, theTextArea.getLength())) 
+              + "'"
+              );
+            theAppLog.debug("ConsoleNode.insertUpdate(.) "
+              + "at offset " + offsetI
+              + " " + lengthI + " chars:\n'" 
+              + AppLog.glyphifyString(theString) + "'");
+            */  ////
             theTextArea.insertText(offsetI, theString);
+            //// logTextAreaTailStateV("after...insertText(.) ");
             theTextArea.positionCaret(offsetI + theString.length());
+            /*  ////
+            logTextAreaTailStateV("after.positionCaret() ");
+            theAppLog.debug(
+              "ConsoleNode.insertUpdate(.) after insert TextArea is"
+              + " " + theTextArea.getLength() + " chars:\n'" 
+              + AppLog.glyphifyString(
+                  theTextArea.getText(0, theTextArea.getLength())) 
+              + "'"
+              );
+            */  ////
             } );
         }
 
+    private void logTextAreaTailStateV(String contextString)
+      {
+        int caretI= theTextArea.getCaretPosition();
+        int lengthI= theTextArea.getLength();
+        theAppLog.debug(
+            "ConsoleNode.logTextAreaStateV(.) " + contextString 
+            + ", caret and length: " + " " + caretI + " " + lengthI
+            + ", tail: '"
+              + AppLog.glyphifyString(theTextArea.getText(caretI, lengthI)) 
+              + "'"
+            );
+        }
+    
     private String fromDocumentGetString(
         Document theDocument, int offsetI, int lengthI)
       {
@@ -192,15 +229,26 @@ public class ConsoleNode
         }
 
     private void handleKeyV(KeyEvent theKeyEvent)
-      /* This event handler method passes the key in theKeyEvent
-       * to theConsoleBase DataNode for processing.
+      /* This event handler method handles key events by
+       * capturing all types keys and passing them to theConsoleBase.
+       * It is actually used as an event filter during the event capture stage,
+       * not as a handler during the event bubbling phase.
+       * It handles and consumes all KeyEvent.ANY sub-types by
+       * * passing typed characters to theConsoleBase from KEY_TYPED events
+       * * ignoring other KeyEvent types: KEY_PRESSED and KEY_RELEASED.
+       * It is done this way because apparently TextArea
+       * will insert "\n" after the caret in response to (Enter) key presses.
        */
       {
-        String keyString= theKeyEvent.getCharacter();
+        if (KeyEvent.KEY_TYPED == theKeyEvent.getEventType()) {
 
-        theConsoleBase.processInputKeyV(keyString);
+          String keyString= theKeyEvent.getCharacter();
+  
+          theConsoleBase.processInputKeyV(keyString);
+          }
 
-        theKeyEvent.consume(); // Prevent further processing.
+        theKeyEvent.consume(); // Consume event to prevent 
+          // further processing of all KeyEvent sub-types.
         }
 
     }

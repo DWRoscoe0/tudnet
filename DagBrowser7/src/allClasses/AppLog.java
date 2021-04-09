@@ -600,6 +600,21 @@ public class AppLog extends EpiThread
         theThrowable.printStackTrace(getPrintWriter());
         }
 
+    public static String glyphifyString(String theString)
+      {
+        StringBuilder resultStringBuilder= new StringBuilder();
+        for (int indexI = 0; indexI < theString.length(); indexI++) {
+          char C= theString.charAt(indexI);
+          if (Character.isISOControl(C)) {
+            resultStringBuilder.append(String.format("\\u%04x", (int)C));
+            resultStringBuilder.append(C);
+            }
+          else
+            resultStringBuilder.append(C);
+          }
+        return resultStringBuilder.toString();
+        }
+
     public void consoleInfo(String inString, boolean debugB)
       /* This method writes an error String inString to a log entry
         and also to the console error stream.
