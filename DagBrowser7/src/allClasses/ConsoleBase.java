@@ -242,8 +242,8 @@ public class ConsoleBase
        */
       {
         String inString= null;
-        theAppLog.debug("ConsoleBase.testGetFromQueueKeyString() buffer='"
-         +AppLog.glyphifyString(inputStringBuffer.toString())+"'");
+        /// theAppLog.debug("ConsoleBase.testGetFromQueueKeyString() buffer='"
+        ///  +AppLog.glyphifyString(inputStringBuffer.toString())+"'");
         if (0 < inputStringBuffer.length()) {
           inString= inputStringBuffer.substring(0,1);
           char C= inString.charAt(0);

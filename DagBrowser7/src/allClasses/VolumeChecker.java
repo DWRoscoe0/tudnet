@@ -4,6 +4,7 @@ import static allClasses.AppLog.theAppLog;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -211,12 +212,19 @@ public class VolumeChecker
       /* This method does a write test by writing files in
        * the folder specified by temporaryFolderFile.
        * It returns null if success, an error String if not.
+       * 
+       * Note that FileDescriptor.sync() is done on each file written
+       * before closing.  This seems to have the effect of
+       * flushing all data to the OS and writing all OS buffers to 
+       * the physical volume.  
+       * I'm not certain about the close() after that.
        */
       {
         pushOperationV("write pass");
         String errorString= null;
         speedStartVolumeDoneBytesL= 0;
         FileOutputStream theFileOutputStream= null;
+        FileDescriptor theFileDescriptor= null;
         initialVolumeUsedBytesL= 
             volumeTotalBytesL - testFolderFile.getUsableSpace();
         toCheckDoneBytesL=0;
@@ -234,7 +242,8 @@ public class VolumeChecker
             replaceOperationV("file "+checkFile);
             pushOperationAndRefreshProgressReportV("opening............");
             try { 
-              theFileOutputStream= new FileOutputStream(checkFile); 
+              theFileOutputStream= new FileOutputStream(checkFile);
+              theFileDescriptor= theFileOutputStream.getFD();
               remainingFileBytesL= bytesPerFileL;
               replaceOperationAndRefreshProgressReportV("writing-file-blocks");
               blockLoop: while (true) { // Write all blocks in file.
@@ -268,8 +277,9 @@ public class VolumeChecker
               throw theIOException; // Re-throw other exception subclasses.
               }
             finally {
-              replaceOperationAndRefreshProgressReportV("............closing");
+              replaceOperationAndRefreshProgressReportV("syncing-and-closing");
               volumeDoneFilesL++;
+              theFileDescriptor.sync();
               theFileOutputStream.close();
               popOperationV(); // File operation. 
               if (! isAbsentB(errorString)) break fileLoop;
