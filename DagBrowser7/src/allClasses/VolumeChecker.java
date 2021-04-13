@@ -281,20 +281,25 @@ public class VolumeChecker
               volumeDoneFilesL++;
               theFileDescriptor.sync();
               theFileOutputStream.close();
+              theFileOutputStream= null; // Prevent another close.
               popOperationV(); // File operation. 
               if (! isAbsentB(errorString)) break fileLoop;
               }
             /// ? Move following into above try block?
           } // fileLoop:
-        } catch (Exception theException) { 
-          theAppLog.exception(
-              "VolumeCheck.writeTestString(.)", theException);
+        } catch (Exception theException) {
+          errorString= combineLinesString(errorString, 
+            "VolumeCheck.writeTestReturnString(.) in normal close "
+            + theException);
+          theAppLog.exception(errorString, theException);
         } finally {
           try {
             if ( theFileOutputStream != null ) theFileOutputStream.close(); 
-          } catch ( Exception theException ) { 
-            theAppLog.exception(
-                "VolumeCheck.writeTestReturnString(.)", theException);
+          } catch ( Exception theException ) {
+            errorString= combineLinesString(errorString,
+              "VolumeCheck.writeTestReturnString(.) in error close "
+              + theException);
+            theAppLog.exception(errorString, theException);
           } // catch
         } // finally
         popOperationV(); // "FILE-NAME"
@@ -341,7 +346,7 @@ public class VolumeChecker
        * It returns null if success, an error String if not.
        */
       {
-        String resultString= null;
+        String errorString= null;
         speedStartVolumeDoneBytesL= 0;
         FileInputStream theFileInputStream= null;
         toCheckRemainingBytesL= toCheckDoneBytesL; // Set to read what we wrote.
@@ -364,14 +369,14 @@ public class VolumeChecker
             replaceOperationAndRefreshProgressReportV("reading");
           blockLoop: while (true) {
             refreshProgressReportMaybeV();
-            resultString= testInterruptionGetConfirmation1ReturnResultString(
+            errorString= testInterruptionGetConfirmation1ReturnResultString(
                 "Do you want to terminate this operation?",
                 "read operation terminated by user");
-            if (! isAbsentB(resultString)) break blockLoop;
+            if (! isAbsentB(errorString)) break blockLoop;
             if (0 >= remainingFileBytesL) break blockLoop;
-            resultString= readBlockReturnString(
+            errorString= readBlockReturnString(
                 theFileInputStream,toCheckDoneBytesL / bytesPerBlockI);
-            if (! isAbsentB(resultString)) break blockLoop;
+            if (! isAbsentB(errorString)) break blockLoop;
             toCheckRemainingBytesL-= bytesPerBlockI;
             remainingFileBytesL-= bytesPerBlockI;
             toCheckDoneBytesL+= bytesPerBlockI;
@@ -380,23 +385,27 @@ public class VolumeChecker
             replaceOperationAndRefreshProgressReportV("closing");
             theFileInputStream.close();
             popOperationV(); // "opening"
-            if (! isAbsentB(resultString)) break fileLoop;
+            if (! isAbsentB(errorString)) break fileLoop;
             volumeDoneFilesL++;
           } // fileLoop:
         } catch (Exception theException) { 
-          theAppLog.exception(
-              "VolumeCheck.readTestReturnString(.)", theException);
+          errorString= combineLinesString(errorString, 
+            "VolumeCheck.readTestReturnString(.) in normal close "
+            + theException);
+          theAppLog.exception(errorString, theException);
         } finally {
           try {
             if ( theFileInputStream != null ) theFileInputStream.close(); 
           } catch ( Exception theException ) { 
-            theAppLog.exception(
-                "VolumeCheck.readTestReturnString(.)", theException);
+            errorString= combineLinesString(errorString, 
+              "VolumeCheck.readTestReturnString(.) in error close "
+              + theException);
+            theAppLog.exception(errorString, theException);
           } // catch
         } // finally
         popOperationV(); // "FILE-NAME"
         popOperationV("read-and-compare pass");
-        return resultString;
+        return errorString;
         }
 
     private void writeBlockV(FileOutputStream theFileOutputStream,long blockL) 
