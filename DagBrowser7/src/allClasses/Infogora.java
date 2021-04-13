@@ -146,6 +146,7 @@ class Infogora  // The root of this app.
 	      theAppLog.enableCloseLoggingV( false );
 	      DefaultExceptionHandler.setDefaultExceptionHandlerV(); 
           // Preparing for exceptions before doing anything else.
+	      // ((String)null).charAt(0); // Test DefaultExceptionHandler.
 	      BackupTerminator theBackupTerminator= BackupTerminator.makeBackupTerminator();
 
         theAppLog.info(true,

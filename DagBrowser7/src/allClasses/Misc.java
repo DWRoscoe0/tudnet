@@ -16,24 +16,30 @@ public class Misc
     Temporary code sometimes becomes permanent and
     is moved to its own classes.
     ///org Code needs moving now.
-    
-    Here are some notes to mark possible work to do:
+
+    Here are some notes codes (tags) to mark possible work to do:
+    // : normal single line comment, no work needed.
+    //% : marks old code to be deleted.  Old.
+    ///... : an issue that needs resolving, work of some type.
+    ///que : questions that need answers.
+    ///mys : a mystery, something that happens that needs an explanation.
+    ///klu : kludge code created to deal with some mysterious behavior. 
     ///new : new code to be created or adapted.
-    ///tmp : temporary code, for debugging or a development kluge.
+    ///tmp : temporary code that should eventually be eliminated or changed.
     ///dbg : code used for debugging, for code or comment disabling code.
-    ///fix : a problem to fix.
+    ///fix : a problem that should be fixed.
     ///tst : code that needs to be [better] tested.
     ///pla : a planned change.
     ///pos : possible change.
     ///opt : an optimization change.
     ///org : an organizational enhancement.
-    ///err : error checking enhancement
+    ///err : an error-checking enhancement
     ///enh : other miscellaneous enhancement.
     ///elim : code that might not be needed and may be eliminated.
-    ///doc : fix documentation.
+    ///doc : documentation that should be fixed or improved.
     ///rev : to review for correctness. 
-    //% : marks old code to be deleted.  Old.
-    //// (4 or more slashes) : very temporary something else to do.
+    //// (4 slashes) : old code, commended out, to be deleted soon.
+    ////// (6 or more slashes) : very temporary something to do soon.
     */
 
   { // class Misc 

@@ -18,7 +18,10 @@ public class Dialogger extends Object
 
   /* This class contains code related to the creation of dialogs.
    * At first they will be simple message dialog, then error dialogs.
-   * ///enh Eventually the ability to add message setting controls might be added.
+   * 
+   * ///enh Eventually add the ability to add message setting controls?
+   * 
+   * ///pla Convert these to use JavaFX libraries instead of Swing libraries.
    */
    
   {

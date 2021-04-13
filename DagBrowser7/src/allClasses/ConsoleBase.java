@@ -264,7 +264,6 @@ public class ConsoleBase
        */
       {
         while (0 < outputStringBuffer.length()) {
-          //// int charactersToOutputI= 1;
           int charactersToOutputI= outputStringBuffer.length();
           String outString= outputStringBuffer.substring(0,charactersToOutputI);
           /// theAppLog.debug(myToString()+"ConsoleBase.mainThreadLogicV() "
@@ -309,7 +308,7 @@ public class ConsoleBase
        */
       {
         try {
-          /*  ////
+          /*  ///dbg
           logPlainDocumentStateV("before.replace");
           theAppLog.debug(
               "ConsoleBase.replaceInDocumentV(.) at " + oldTextOffsetI
@@ -320,14 +319,14 @@ public class ConsoleBase
               + " new chars:\n'" + AppLog.glyphifyString(newTextString)
               + "'"
               );
-          */  ////
+          */  ///dbg
           thePlainDocument.replace( // Replace in document the old text
             oldTextOffsetI, // that starts here
             oldTextLengthI, // and is this long
             newTextString, // by this new text
             SimpleAttributeSet.EMPTY // with no special attributes.
             );
-          //// logPlainDocumentStateV("after..replace");
+          ///dbg logPlainDocumentStateV("after..replace");
         } catch (BadLocationException e) {
           theAppLog.warning(
               "ConsoleBase.replaceInDocumentV(.) failed, "+e);
@@ -335,6 +334,7 @@ public class ConsoleBase
         }
       }
 
+    /*  ///dbg
     private void logPlainDocumentStateV(String contextString)
       {
         int lengthI= thePlainDocument.getLength();
@@ -349,8 +349,7 @@ public class ConsoleBase
         }
 
     private String getTextFromDocumentString(int offsetI,int lengthI)
-      /* This method get some document text and and handles exceptions.
-       */
+      // This method get some document text and and handles exceptions.
       {
         String resultString;
         try {
@@ -362,6 +361,7 @@ public class ConsoleBase
         }
       return resultString;
       }
+    */  ///dbg
 
     public void addDocumentListener(DocumentListener listener)
       /* This method simply forwards to thePlainDocument. */
@@ -392,8 +392,7 @@ public class ConsoleBase
     public JComponent getDataJComponent( 
         TreePath inTreePath, DataTreeModel inDataTreeModel 
         ) 
-      /* Returns a JComponent of type whose name is //////doc
-       * which should be a viewer capable of displaying 
+      /* Returns a JComponent which should be a viewer capable of displaying 
        * this DataNode and executing the command associated with it.
        * The DataNode to be viewed should be 
        * the last element of inTreePath,

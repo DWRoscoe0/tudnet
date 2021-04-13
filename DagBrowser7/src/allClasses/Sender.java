@@ -106,6 +106,7 @@ public class Sender // Uunicast and multicast sender thread.
         */
       {
           theAppLog.info("run() begins.");
+          // ((String)null).charAt(0); // Test DefaultExceptionHandler.
 
 	  	  beforeReturn: while (true) { // Processing packets until terminated.
           if ( tryingToProcessOneQueuedSockPacketB() ) // Try sending one. 

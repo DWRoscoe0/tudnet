@@ -13,12 +13,10 @@ import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 
-import allClasses.AppLog;
 import allClasses.ConsoleBase;
 import allClasses.DataNode;
 import allClasses.DataRoot;
 import allClasses.Persistent;
-import static allClasses.AppLog.theAppLog;
 
 // import static allClasses.Globals.appLogger;
 
@@ -100,10 +98,9 @@ public class ConsoleNode
         Platform.runLater( () -> {
             theTextArea.requestFocus();
             theTextArea.positionCaret(theTextArea.getLength());
-            ///fix  Make cursor visible?
+            ///mys ///fix  Kake cursor visible again.  Does unrequested scroll.
             } );
         theTextArea.addEventFilter( // or addEventHandler(
-          //// KeyEvent.KEY_TYPED, (theKeyEvent) -> handleKeyV(theKeyEvent) );
           KeyEvent.ANY, (theKeyEvent) -> handleKeyV(theKeyEvent) );
         theConsoleBase.addDocumentListener(this);
         setCenter(theTextArea);
@@ -130,7 +127,7 @@ public class ConsoleNode
         /// theAppLog.debug(
         ///   "ConsoleNode.insertUpdate(.) theString='"+theString+"'");
         Platform.runLater( () -> {
-            /*  ////
+            /*  ///dbg
             logTextAreaTailStateV("before..insertText(.) ");
             theAppLog.debug(
               "ConsoleNode.insertUpdate(.) before insert TextArea is"
@@ -143,11 +140,11 @@ public class ConsoleNode
               + "at offset " + offsetI
               + " " + lengthI + " chars:\n'" 
               + AppLog.glyphifyString(theString) + "'");
-            */  ////
+            */  ///dbg
             theTextArea.insertText(offsetI, theString);
-            //// logTextAreaTailStateV("after...insertText(.) ");
+            ///dbg logTextAreaTailStateV("after...insertText(.) ");
             theTextArea.positionCaret(offsetI + theString.length());
-            /*  ////
+            /*  ///dbg
             logTextAreaTailStateV("after.positionCaret() ");
             theAppLog.debug(
               "ConsoleNode.insertUpdate(.) after insert TextArea is"
@@ -156,10 +153,11 @@ public class ConsoleNode
                   theTextArea.getText(0, theTextArea.getLength())) 
               + "'"
               );
-            */  ////
+            */  ///dbg
             } );
         }
 
+    /*  ///dbg
     private void logTextAreaTailStateV(String contextString)
       {
         int caretI= theTextArea.getCaretPosition();
@@ -172,6 +170,7 @@ public class ConsoleNode
               + "'"
             );
         }
+    */  ///dbg
     
     private String fromDocumentGetString(
         Document theDocument, int offsetI, int lengthI)

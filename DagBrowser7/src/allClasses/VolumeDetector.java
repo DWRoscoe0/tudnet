@@ -55,7 +55,6 @@ public class VolumeDetector
             break;
           if (null != testGetFromQueueKeyString()) { // If key pressed
             flushKeysV();
-            //// java.awt.Toolkit.getDefaultToolkit().beep(); // create audible Beep.
             continue;
             }
           queueOutputV("\n\nVolumes changed.");
@@ -102,17 +101,6 @@ public class VolumeDetector
               }
             default: break;
             }
-          /*  ////
-          if // Exit loop with null if termination is requested.
-            (Input.INTERRUPTION == theLockAndSignal.testingForInterruptE())
-            break; // Exit loop;
-          if (null != testGetFromQueueKeyString()) // If a key was pressed
-            break; // exit loop.
-          newVolumeFiles= getVolumeFiles();
-          if // If volume list has changed
-            (! Arrays.equals(oldVolumeFiles,newVolumeFiles)) 
-            break; // exit loop.
-          */  ////
           theInput= 
               theLockAndSignal.waitingForInterruptOrDelayOrNotificationE(20);
           }

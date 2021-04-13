@@ -692,6 +692,8 @@ public class VolumeChecker
        * The method produces a line containing the group name,
        * the number of groups that remain to be processed,
        * and the number of groups that have been completely processed.
+       * 
+       * ///mys ///fix Sometimes displays negative remaining groups.  Fix.
        */
       {
         long totalGroupsL= 
