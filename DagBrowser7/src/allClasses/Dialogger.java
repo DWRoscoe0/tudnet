@@ -14,6 +14,10 @@ import javax.swing.JDialog;
 import javax.swing.JTextArea;
 import javax.swing.border.Border;
 
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+
 public class Dialogger extends Object
 
   /* This class contains code related to the creation of dialogs.
@@ -27,6 +31,36 @@ public class Dialogger extends Object
   {
 
     public static void showModelessDialogV(
+        String theString, String titleTailString)
+      /* General-purpose non-modal (mode-less) dialog displayer.
+       * It presently calls a method to display a Swing dialog.
+       * ///pla Change to display a JavaFX dialog.
+       */
+      {
+        showModelessSwingDialogV(theString, titleTailString);
+        //// showModelessJavaFXDialogV(theString, titleTailString);
+        }
+
+    public static void showModelessJavaFXDialogV(
+        String theString, String titleTailString)
+      /* General-purpose non-modal (mode-less) dialog displayer.
+       * It queues the display of the dialog on the JavaFX Application Thread, 
+       * then returns immediately. 
+       * The dialog displays titleTailString after the app name in the title bar,
+       * and displays theString in the main window,
+       * and waits for the user to execute OK before it closes.  
+       * */
+      {
+        Platform.runLater( () -> {
+          Alert alert= new Alert(
+              AlertType.CONFIRMATION, 
+              theString+"\n"+titleTailString
+              );
+          alert.showAndWait();
+          } );
+        }
+
+    public static void showModelessSwingDialogV(
         String theString, String titleTailString)
       /* General-purpose non-modal (mode-less) dialog displayer.
        * It queues the display of the dialog on the EDT (Event Dispatch Thread, 
