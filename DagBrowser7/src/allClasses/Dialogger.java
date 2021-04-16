@@ -17,6 +17,7 @@ import javax.swing.border.Border;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
+import javafx.stage.Modality;
 
 public class Dialogger extends Object
 
@@ -37,11 +38,11 @@ public class Dialogger extends Object
        * ///pla Change to display a JavaFX dialog.
        */
       {
-        showModelessSwingDialogV(theString, titleTailString);
-        //// showModelessJavaFXDialogV(theString, titleTailString);
+        //// showModelessSwingDialogV(theString, titleTailString);
+        showModelessJavaFXDialogV(theString, titleTailString);
         }
 
-    public static void showModelessJavaFXDialogV(
+    private static void showModelessJavaFXDialogV(
         String theString, String titleTailString)
       /* General-purpose non-modal (mode-less) dialog displayer.
        * It queues the display of the dialog on the JavaFX Application Thread, 
@@ -52,15 +53,17 @@ public class Dialogger extends Object
        * */
       {
         Platform.runLater( () -> {
-          Alert alert= new Alert(
-              AlertType.CONFIRMATION, 
-              theString+"\n"+titleTailString
+          Alert theAlert= new Alert(
+              AlertType.INFORMATION, 
+              titleTailString+"\n"+theString
               );
-          alert.showAndWait();
+          theAlert.initModality(Modality.NONE);
+          //// alert.showAndWait();
+          theAlert.show();
           } );
         }
 
-    public static void showModelessSwingDialogV(
+    private static void showModelessSwingDialogV(
         String theString, String titleTailString)
       /* General-purpose non-modal (mode-less) dialog displayer.
        * It queues the display of the dialog on the EDT (Event Dispatch Thread, 

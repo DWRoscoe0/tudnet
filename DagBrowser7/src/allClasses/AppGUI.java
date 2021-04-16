@@ -28,9 +28,9 @@ import static allClasses.AppLog.theAppLog;  // For appLogger;
 public class AppGUI
 
   /* This class is the top level of the app GUI.
-    Presently is manages only a single JFrame window
-    with a DagBrowserPanel as its content.
-    Later it might manage multiple JFrames with different contents.
+    Presently is manages GUI elements of both the Swing and JavaFX.
+    A transition from Swing to JavaFX is underway.
+    Eventually the Swing elements might be eliminated.
     */
 
   { // class AppGUI
@@ -209,8 +209,20 @@ class GUIManager
       /* This method does the GUI initialization that 
         could not be done with constructor dependency injection.
         It does it for both Swing and JavaFX.
+        It initializes JavaFX first because JavaFX GUI is now used for
+        various notification dialogs, which can be triggered by 
+        conditions in either Swing or JavaFX code.
         */
       {
+
+        // Start JavaFX GUI.
+        theJavaFXGUI.startJavaFXLaunchV(); // Start thread that presents
+          // JavaFX GUI window.
+        
+        ///fix? Might need to wait, either here, or in the atove method,
+        /// to guarantee that JavaFX has completed initialization
+        /// before continuing?  What would be nice to have is
+        /// Need an equivalent to Swing's runAndWait(.).
 
         // Start Swing GUI.
         EDTUtilities.invokeAndWaitV( // Dispatching on EDT
@@ -218,10 +230,6 @@ class GUIManager
               @Override
               public void run() { initializeOnEDTV(); }  
               } );
-
-        // Start JavaFX GUI.
-        theJavaFXGUI.startJavaFXLaunchV(); // Start thread that presents
-          // JavaFX GUI window.
 
         }
 
