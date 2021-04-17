@@ -63,6 +63,7 @@ public class Dialogger extends Object
           } );
         }
 
+    @SuppressWarnings("unused") ////
     private static void showModelessSwingDialogV(
         String theString, String titleTailString)
       /* General-purpose non-modal (mode-less) dialog displayer.

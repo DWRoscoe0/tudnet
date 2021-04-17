@@ -14,11 +14,20 @@ import javafx.stage.Window;
 public class JavaFXGUI
 
   /* This class is used to manage JavaFX operations,
-   * including launching and windows.
-   * It might superficially resemble a Singleton because
-   * it has a static method to return the only instance of this class.
-   * That is because the JavaFX app launching and life-cycle are NOT elegant,
-   * involve a lot of Java reflection and some static methods,
+   * including the app launch process and its windows.
+   * 
+   * ///klu This class contains much kludgy JavaFX codebe cause 
+   * I was new to JavaFX and I wanted to transition gradually 
+   * from the Swing libraries in this app to the JavaFX libraries,
+   * so I wanted to have code from both sets of libraries coexist.
+   * I tried to do it by adapting example code
+   * normally offered to show how to start a JavaFX-only app.
+   * I succeeded, but the result was definitely a kludge.
+   * 
+   * ///org Since that time I learned how to start the JavaFX runtime
+   * using the startup(.) method and did so in Infogora.main(.).
+   * It should now be possible to eliminate most of the kludginess
+   * in the code that follows and the code that calls it.
    */
 
   {
