@@ -503,7 +503,7 @@ public class DagBrowserPanel
               "<Shift+Tab> selects previous window gadget." + NL +
               "<Enter> key manually expands or collapses an item.";
 
-            Dialogger.showModelessDialogV(helpString, "Help");
+            Dialogger.showModelessSwingDialogV(helpString, "Swing UI Help");
             } // queueCommandHelpV()
   
       class TimerThread extends EpiThread

@@ -16,7 +16,7 @@ public class JavaFXGUI
   /* This class is used to manage JavaFX operations,
    * including the app launch process and its windows.
    * 
-   * ///klu This class contains much kludgy JavaFX codebe cause 
+   * ///klu This class contains much kludgy JavaFX code because 
    * I was new to JavaFX and I wanted to transition gradually 
    * from the Swing libraries in this app to the JavaFX libraries,
    * so I wanted to have code from both sets of libraries coexist.
@@ -97,8 +97,8 @@ public class JavaFXGUI
     
       /* This method creates and starts a thread 
        * which launches the JavaFX sub-Application.
-       * It must not be called until initialization method
-       * initializeJavaFXGUI(.) is called.
+       * It must not be called until initialization method above,
+       * initializeJavaFXGUI(.), is called.
        * 
        * It queues this job on the JavaFX runtime queue,
        * then it returns.

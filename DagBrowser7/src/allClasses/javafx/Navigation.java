@@ -9,8 +9,11 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 
+import static allClasses.SystemSettings.NL;
+
 import allClasses.DataNode;
 import allClasses.DataRoot;
+import allClasses.Dialogger;
 import allClasses.Persistent;
 import allClasses.epinode.MapEpiNode;
 
@@ -98,8 +101,31 @@ public class Navigation extends EpiStage
         displayTreeOrDataNodeV();
 
         finishStateInitAndStartV("Infogora JavaFX Navigation UI");
+        
+        showCommandHelpV();
         }
 
+    public void showCommandHelpV()
+      /* This method implements the Help command.
+        It does this by displaying a mode-less dialog.
+        */
+      { // queueCommandHelpV()
+        String helpString=
+          "This is a work-in-progress." + NL +
+          "Some of the following were copied from the Swing UI Help." + NL +
+          "They might not all work." + NL +
+          NL +
+          "Use Arrow keys to navigate folders." + NL +
+          "      <Right-arrow> moves to child item." + NL +
+          "      <Left-arrow> moves to parent item." + NL +
+          "      <Down-arrow> moves to next item." + NL +
+          "      <Up-arrow> moves to previous item" + NL +
+          "(Show Tree) and (Show Node) buttons alternate between views."
+          ;
+
+        Dialogger.showModelessJavaFXDialogV(helpString, "JavaFX UI Help");
+        } // queueCommandHelpV()
+        
     private void doDataNodeShowTreeButtonActionV()
       /* 
        * This method is used to cause a switch of Scenes 

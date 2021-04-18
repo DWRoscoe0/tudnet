@@ -42,7 +42,7 @@ public class Dialogger extends Object
         showModelessJavaFXDialogV(theString, titleTailString);
         }
 
-    private static void showModelessJavaFXDialogV(
+    public static void showModelessJavaFXDialogV(
         String theString, String titleTailString)
       /* General-purpose non-modal (mode-less) dialog displayer.
        * It queues the display of the dialog on the JavaFX Application Thread, 
@@ -53,18 +53,19 @@ public class Dialogger extends Object
        * */
       {
         Platform.runLater( () -> {
+          String featureString= Config.appString + " " + titleTailString;
           Alert theAlert= new Alert(
               AlertType.INFORMATION, 
-              titleTailString+"\n"+theString
+              featureString+"\n\n"+theString
               );
           theAlert.initModality(Modality.NONE);
+          theAlert.setTitle(featureString);
           //// alert.showAndWait();
           theAlert.show();
           } );
         }
 
-    @SuppressWarnings("unused") ////
-    private static void showModelessSwingDialogV(
+    public static void showModelessSwingDialogV( ///elim Delete when reproduced.
         String theString, String titleTailString)
       /* General-purpose non-modal (mode-less) dialog displayer.
        * It queues the display of the dialog on the EDT (Event Dispatch Thread, 
