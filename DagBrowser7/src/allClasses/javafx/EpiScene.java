@@ -9,8 +9,9 @@ public class EpiScene
     public static void setDefaultsV(Scene theScene)
       {
         Node rootNode= theScene.getRoot();
-        rootNode.setStyle(
-            "-fx-font-size: 22; -fx-font-family: \"monospace\"; ");
+        JavaFXGUI.setDefaultStyle(rootNode);
+        //// rootNode.setStyle(
+        ////     "-fx-font-size: 22; -fx-font-family: \"monospace\"; ");
         }
     
     }

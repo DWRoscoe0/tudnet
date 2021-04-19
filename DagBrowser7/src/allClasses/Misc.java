@@ -17,11 +17,13 @@ public class Misc
     is moved to its own classes.
     ///org Code needs moving now.
 
-    Here are some notes codes (tags) to mark possible work to do:
-    // : normal single line comment, no work needed.
+    Here are some notes codes (tags) to mark possible work to do
+    or other information of information of interest.
+    // : normal single line comment.
     //% : marks old code to be deleted.  Old.
     ///... : an issue that needs resolving, work of some type.
-    ///que : questions that need answers.
+    ///ano : an anomaly for which there might or might not be mitigating code.
+    ///que : question that need an answers.
     ///mys : a mystery, something that happens that needs an explanation.
     ///klu : kludge code created to deal with some mysterious behavior. 
     ///new : new code to be created or adapted.

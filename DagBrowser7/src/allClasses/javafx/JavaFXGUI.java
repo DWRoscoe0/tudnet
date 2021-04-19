@@ -9,6 +9,7 @@ import allClasses.DataNode;
 import allClasses.DataRoot;
 import allClasses.Persistent;
 import allClasses.Shutdowner;
+import javafx.scene.Node;
 import javafx.stage.Window;
 
 public class JavaFXGUI
@@ -178,4 +179,11 @@ public class JavaFXGUI
           theWindow.hide();
         }
     
+    public static void setDefaultStyle(Node theNode)
+      /* Sets the default style of theNode. */
+      {
+        theNode.setStyle(
+            "-fx-font-size: 22; -fx-font-family: \"monospace\"; ");
+        }
+
     }

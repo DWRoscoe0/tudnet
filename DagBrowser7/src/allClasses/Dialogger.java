@@ -14,9 +14,11 @@ import javax.swing.JDialog;
 import javax.swing.JTextArea;
 import javax.swing.border.Border;
 
+import allClasses.javafx.JavaFXGUI;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.layout.Region;
 import javafx.stage.Modality;
 
 public class Dialogger extends Object
@@ -50,14 +52,23 @@ public class Dialogger extends Object
        * The dialog displays titleTailString after the app name in the title bar,
        * and displays theString in the main window,
        * and waits for the user to execute OK before it closes.  
+       * 
+       * ///mys ///klu WindowOpensOffScreen.  It happened after I added
+        JavaFXGUI.setDefaultStyle(theAlert.getDialogPane());
+
        * */
       {
         Platform.runLater( () -> {
           String featureString= Config.appString + " " + titleTailString;
           Alert theAlert= new Alert(
               AlertType.INFORMATION, 
-              featureString+"\n\n"+theString
+              featureString + "\n\n" + theString
               );
+          theAlert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
+          theAlert.getDialogPane().setMinWidth(600); ///ano Fix for below.
+            ///ano Also fixes problem of title bar mostly off-screen.
+            ///ano Fails: theAlert.getDialogPane().setMinWidth(Region.USE_PREF_SIZE);
+          JavaFXGUI.setDefaultStyle(theAlert.getDialogPane());
           theAlert.initModality(Modality.NONE);
           theAlert.setTitle(featureString);
           //// alert.showAndWait();
