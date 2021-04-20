@@ -111,16 +111,18 @@ public class Navigation extends EpiStage
         */
       { // queueCommandHelpV()
         String helpString=
-          "This is a work-in-progress." + NL +
-          "Some of the following were copied from the Swing UI Help." + NL +
-          "They might not all work." + NL +
-          NL +
-          "Use Arrow keys to navigate folders." + NL +
-          "      <Right-arrow> moves to child item." + NL +
-          "      <Left-arrow> moves to parent item." + NL +
-          "      <Down-arrow> moves to next item." + NL +
-          "      <Up-arrow> moves to previous item" + NL +
-          "(Show Tree) and (Show Node) buttons alternate between views."
+          "This is a work-in-progress." + NL
+          + NL
+          + "Some of the following commands were copied from "
+          + "the Swing UI Help dialog." + NL
+          + "They might not all work." + NL
+          + NL
+          + "Use Arrow keys to navigate folders." + NL
+          + "      <Right-arrow> moves to child item." + NL
+          + "      <Left-arrow> moves to parent item." + NL
+          + "      <Down-arrow> moves to next item." + NL
+          + "      <Up-arrow> moves to previous item" + NL
+          + "(Show Tree) and (Show Node) buttons alternate between views."
           ;
 
         Dialogger.showModelessJavaFXDialogV(helpString, "JavaFX UI Help");

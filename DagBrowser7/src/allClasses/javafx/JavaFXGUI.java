@@ -5,10 +5,14 @@ import static allClasses.AppLog.theAppLog;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.sun.javafx.application.PlatformImpl;
+
 import allClasses.DataNode;
 import allClasses.DataRoot;
+import allClasses.LockAndSignal;
 import allClasses.Persistent;
 import allClasses.Shutdowner;
+import allClasses.LockAndSignal.Input;
 import javafx.scene.Node;
 import javafx.stage.Window;
 
@@ -25,10 +29,12 @@ public class JavaFXGUI
    * normally offered to show how to start a JavaFX-only app.
    * I succeeded, but the result was definitely a kludge.
    * 
-   * ///org Since that time I learned how to start the JavaFX runtime
-   * using the startup(.) method and did so in Infogora.main(.).
-   * It should now be possible to eliminate most of the kludginess
-   * in the code that follows and the code that calls it.
+   * ///org Since that time I learned how to 
+   * start the JavaFX runtime using the startup(.) method.
+   * That method is called from startJavaFXAndReturnString(),
+   * which itself is called Infogora.main(.).
+   * It should now be possible to eliminate much of the kludginess
+   * in the code that follows it.
    */
 
   {
@@ -51,6 +57,50 @@ public class JavaFXGUI
 
 
     // Methods
+
+    public static String startJavaFXAndReturnString()
+      /* This method starts the JavaFX runtime 
+       * so other elements can use it, for example for error reporting.
+       * 
+       * ///ano This method contains code to deal with an anomaly,
+       * a mysterious failure of the startup confirmation wait to end.
+       * Debug logging and a mitigation timeout were added to deal with it.
+       * After that code was added the failure stopped happening.
+       * This method returns a String describing the anomalous behavior,
+       * or null if there was none. 
+       */
+      {
+        String anomalyString= null; ///ano
+        System.out.println( ///ano
+            "Infogora.startJavaFXAndReturnString() begins."); ///ano
+        LockAndSignal runningLockAndSignal= new LockAndSignal();
+        long javaFXStartTimeMsL= System.currentTimeMillis(); ///ano
+        PlatformImpl.startup( () -> { // Start JavaFX runtime and confirm it.
+          System.out.println( ///ano
+              "Infogora.startJavaFXAndReturnString() notify begins."); ///ano  
+          runningLockAndSignal.notifyingV(); // Confirm that runtime is up.
+          System.out.println( ///ano
+              "Infogora.startJavaFXAndReturnString() notify ended."); ///ano
+          } );
+        long waitStartTimeMsL= System.currentTimeMillis(); ///ano
+        System.out.println( ///ano
+            "Infogora.startJavaFXAndReturnString() wait begins."); ///ano
+        Input theInput=  // Wait for runtime startup.  ///ano With timeout.
+          runningLockAndSignal.waitingForInterruptOrIntervalOrNotificationE(
+            javaFXStartTimeMsL, ///ano Mitigation, time-out interval start. 
+            2000); ///ano Mitigation, time-out interval length.
+        String waitResultString= ///ano
+            "Infogora.startJavaFXAndReturnString() wait ended because of "
+            +theInput+".\n  Used total of "
+            +(waitStartTimeMsL-javaFXStartTimeMsL)
+            +"+"+(System.currentTimeMillis()-waitStartTimeMsL)
+            +" ms.";
+        System.out.println( ///ano Report how wait ended and time needed.
+            waitResultString); ///ano
+        if (theInput == Input.TIME) ///ano If wait time-out anomaly happened 
+          anomalyString= waitResultString; ///ano return description string.
+        return anomalyString; ///ano
+        }
 
     public static JavaFXGUI initializeJavaFXGUI(
           DataNode theRootDataNode,

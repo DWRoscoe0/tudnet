@@ -22,7 +22,7 @@ public class Misc
     // : normal single line comment.
     //% : marks old code to be deleted.  Old.
     ///... : an issue that needs resolving, work of some type.
-    ///ano : an anomaly for which there might or might not be mitigating code.
+    ///ano : An anomaly being described, debugged, or mitigated.
     ///que : question that need an answers.
     ///mys : a mystery, something that happens that needs an explanation.
     ///klu : kludge code created to deal with some mysterious behavior. 

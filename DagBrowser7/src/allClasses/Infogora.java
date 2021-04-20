@@ -6,6 +6,7 @@ import java.util.Set;
 import com.sun.javafx.application.PlatformImpl;
 
 import allClasses.LockAndSignal.Input;
+import allClasses.javafx.JavaFXGUI;
 
 import static allClasses.AppLog.LogLevel.WARN;
 import static allClasses.AppLog.LogLevel.INFO;
@@ -60,20 +61,20 @@ import static allClasses.SystemSettings.NL;
 
 class Infogora  // The class is the root of this app.
 
-	/* This class contains 2 methods:
-
-	  * The main(..) method, which is the app's entry point.
-
-	  * setDefaultExceptionHandlerV(), which sets the app's 
-	    default handler for uncaught exceptions.
-
-		Both these methods use the new-operator.
-		Except for factories, immutable constants, 
-		and initially empty containers,
-		these should [eventually] be the only places 
-		where the new-operator is used.
-		This can make unit testing much easier.
-	  */
+  /* This class contains 2 methods:
+  
+    * The main(..) method, which is the app's entry point.
+  
+    * setDefaultExceptionHandlerV(), which sets the app's 
+      default handler for uncaught exceptions.
+  
+  	Both these methods use the new-operator.
+  	Except for factories, immutable constants, 
+  	and initially empty containers,
+  	these should [eventually] be the only places 
+  	where the new-operator is used.
+  	This can make unit testing much easier.
+    */
 
 	{ // Infogora
 
@@ -145,19 +146,21 @@ class Infogora  // The class is the root of this app.
 			  */
 
 	    { // main(..)
-        startJavaFXV();
-        
+        String javaFXStartAnomalyString= ///ano Save now for reporting later.
+            JavaFXGUI.startJavaFXAndReturnString(); // Start JavaFX runtime.
 	      theAppLog= new AppLog(new File( // Construct logger.
 	          new File(System.getProperty("user.home") ),Config.appString));
 	      theAppLog.enableCloseLoggingV( false );
 	      DefaultExceptionHandler.setDefaultExceptionHandlerV(); 
 	      // ((String)null).charAt(0); // For testing DefaultExceptionHandler.
-	      BackupTerminator theBackupTerminator= 
-	          BackupTerminator.makeBackupTerminator();
+	      BackupTerminator theBackupTerminator= ///ano 
+	          BackupTerminator.makeBackupTerminator(); ///ano
 
         theAppLog.info(true,
 	          "Infogora.main() ======== APP IS STARTING ========");
-	      CommandArgs theCommandArgs= new CommandArgs(argStrings);
+        if (null != javaFXStartAnomalyString) ///ano
+          theAppLog.error(javaFXStartAnomalyString); ///ano
+        CommandArgs theCommandArgs= new CommandArgs(argStrings);
         AppSettings.initializeV(Infogora.class, theCommandArgs);
 	      AppFactory theAppFactory= new AppFactory(theCommandArgs);
 	      App theApp= theAppFactory.getApp();  // Getting App from factory.
@@ -170,39 +173,10 @@ class Infogora  // The class is the root of this app.
           "Infogora.main() ======== APP IS ENDING ========"
           + NL + "    by closing log file and exiting the main(..) method.");
         theAppLog.closeFileIfOpenB(); // Close log for exit.
-        theBackupTerminator.setTerminationUnderwayV(); // Trigger exit timer.
-        // while(true) ; // Uncomment this line to test BackupTerminator.
+        theBackupTerminator.setTerminationUnderwayV(); ///ano Start exit timer.
+        // while(true) ; ///ano Uncomment this line to test BackupTerminator.
 
 	      } // main(..)
-
-      private static void startJavaFXV()
-        /* This method starts the JavaFX runtime 
-         * so other elements can use it, for example for error reporting.
-         * 
--        * ///mys ///klu Much of this code was added to deal with 
-         * a mysterious failure of the startup confirmation wait to end.
-         * Logging and a timeout were added. 
-         */
-        {
-          System.out.println("Infogora.startJavaFXV() begins.");
-          LockAndSignal javaFXLockAndSignal= new LockAndSignal();
-          long javaFXStartTimeMsL= System.currentTimeMillis();
-          PlatformImpl.startup( () -> { // Start JavaFX runtime and confirm it.
-            System.out.println("Infogora.startJavaFXV() before notify.");
-            javaFXLockAndSignal.notifyingV(); // Confirm that runtime is up.
-            System.out.println("Infogora.startJavaFXV() after notify.");
-            } );
-          long waitStartTimeMsL= System.currentTimeMillis();
-          System.out.println("Infogora.startJavaFXV() before wait.");
-          Input theInput=
-            javaFXLockAndSignal.waitingForInterruptOrIntervalOrNotificationE(
-              javaFXStartTimeMsL, 2000); // Wait for runtime startup, with a timeout.
-          System.out.println("Infogora.startJavaFXV() after wait, "
-              +"which ended because of "+theInput
-              +"\n  Needed "+(waitStartTimeMsL-javaFXStartTimeMsL)
-              +"+"+(System.currentTimeMillis()-waitStartTimeMsL)
-              +"ms total.");
-          }
 	  
 	  private static class BackupTerminator extends Thread
 	  
