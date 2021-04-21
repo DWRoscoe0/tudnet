@@ -16,6 +16,9 @@ public class Anomalies
      *     and wait for a response, which could be:
      *     * Confirmation
      *     * Change of settings to control what events to report in the future.
+     *     Anomalies that happen during app startup or app shutdown 
+     *     might not do this because the GUIs needed are not operational 
+     *     at those times.
      *   * Throw an exception which, if the app is running under an IDE,
      *     and the correct Exception breakpoint is set,
      *     could suspend the app and allow the app developer 

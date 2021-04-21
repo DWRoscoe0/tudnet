@@ -1,15 +1,9 @@
 package allClasses;
 
 import java.io.File;
-import java.util.Set;
 
-import com.sun.javafx.application.PlatformImpl;
-
-import allClasses.LockAndSignal.Input;
 import allClasses.javafx.JavaFXGUI;
 
-import static allClasses.AppLog.LogLevel.WARN;
-import static allClasses.AppLog.LogLevel.INFO;
 import static allClasses.AppLog.theAppLog;
 import static allClasses.SystemSettings.NL;
 
@@ -168,7 +162,7 @@ class Infogora  // The class is the root of this app.
 	        // This might not return if a shutdown is initiated by the JVM!
 
 	      // If here then shutdown was initiated in App.runV() and it returned.
-        logThreadsV(); // Record threads that are still active.
+        BackupTerminator.logThreadsV(); // Record threads that are still active.
 	      theAppLog.info(true,
           "Infogora.main() ======== APP IS ENDING ========"
           + NL + "    by closing log file and exiting the main(..) method.");
@@ -177,140 +171,6 @@ class Infogora  // The class is the root of this app.
         // while(true) ; ///ano Uncomment this line to test BackupTerminator.
 
 	      } // main(..)
-	  
-	  private static class BackupTerminator extends Thread
-	  
-	    /* This class is used to force termination of the app
-	      if it doesn't terminate on its own after exiting main(..).
-
-	      Forced termination by this class happened successfully in 2 tests:
-	      * I temporarily inserted an infinite loop just before 
-	        the end of main(..).
-	      * When the standard folder app failed to terminate
-	        when starting a new TCPCopierStaging app.
-
-	        I examined the Thread list at the main(..) exit 
-	        and BackupTerminator exit.  The following are
-	        all the differences and all threads that were Normal (non-daemon).
-
-          ? AWT-EventQueue-1 is WAITING 6 Normal first and later.
-          * BackupTerminator is WAITING 5 Daemon first, 
-            RUNNABLE 5 Daemon later.
-          ? AWT-Shutdown is TIMED_WAITING 5 Normal first and later.
-          * main is RUNNABLE 5 Normal first, then missing.
-          * DestroyJavaVM is missing first, then RUNNABLE 5 Normal later.
-            Apparently this is what waits for other non-daemon threads
-            to terminate.
-            
-          Note the two AWT threads.  Research indicates that
-          continuing AWT activity (GUI, events, etc.) might be preventing
-          these non-daemon threads terminating.
-          All windows have been disposed, so something strange 
-          is happening.  ///fix  
-	      */
-	  
-  	  {
-  	    
-  	    boolean terminationUnderwayB=false; // This flag is used 
-  	      // to prevent spurious wake ups.
-  
-  	    public static BackupTerminator makeBackupTerminator()
-  	      // This method makes and returns a ready and running BackupTerminator.
-    	    {
-    	      BackupTerminator theBackupTerminator= new BackupTerminator();
-            theBackupTerminator.setName("BackupTerminator");
-            theBackupTerminator.setDaemon(true); // Don't prevent termination ourselves.
-            theBackupTerminator.start(); // Start its thread.
-    	      return theBackupTerminator;
-    	      }
-  	    
-  	    public synchronized void run() 
-    	    {
-    	      
-            while (true) { // Wait for signal that termination is underway.
-              if (terminationUnderwayB) break; // Done waiting.
-              waitV(0);
-              } // while(true)
-            
-            int secondsI= 5;
-            theAppLog.logB( INFO, true, null,
-                "run() Starting "+secondsI+"-second backup exit timer");
-            while (secondsI-- > 0) { // Count down, time and, display progress.
-              waitV(1000); // Waiting 1 second.
-              System.out.print(".");
-    	        }
-    	      
-    	      // If we got this far, time has expired, 
-            // and termination probably failed.
-    	      
-            synchronized(theAppLog) { // Log the following block as an indivisible block.
-              theAppLog.logB( WARN, true, null,
-                  "run() ======== FORCING LATE APP TERMINATION ========");
-              theAppLog.doStackTraceV(null);
-              logThreadsV(); // Record threads that are still active.
-              theAppLog.debug("run() closing log file and executing System.exit(1)." );
-              theAppLog.closeFileIfOpenB(); // Close log before exit.
-              }
-            System.exit(1); // Force termination with an error code of 1.
-    	      }
-    
-  	    private void waitV(long msI)
-  	      /* This helper method waits and handles any InterruptedException. 
-  	        Waits for msI milliseconds, or an interrupt, or a notification,
-  	        which ever happens first.
-  	        */
-  	      {
-            try {
-              wait(msI);
-              }
-            catch (InterruptedException e) {
-              theAppLog.debug("BackupTerminator.waitV() wait(..), interrupted."); 
-              }
-  	      
-  	      }
-  	    
-          public synchronized void setTerminationUnderwayV() 
-            /* This method signals the thread that termination should
-              be imminent.  See run() for what happens next.
-               */
-          {
-            terminationUnderwayB= true;
-            notify(); // Unblock the thread.
-            }
-            
-  	    }
-
-    private static void logThreadsV()
-      /* Logs active threads, of which there should be very few,
-        because when this method is called,
-        all non-daemon app threads should have been terminated,
-        and all active windows should have been dispose()-ed.             
-        
-        This method was based on code from a web article.
-        
-        Although the output from this method might contain 
-        some still active Normal threads other than "main", for example 
-          TIMED_WAITING  5  Normal  AWT-Shutdown
-          WAITING        6  Normal  AWT-EventQueue-1
-        their termination in the near future should be quite certain. 
-        
-        ///fix Prevent log entry fragmentation because it presently uses
-          multiple calls to appLogger.
-        */
-      {
-        synchronized (theAppLog) { // Output thread list as single log entry.
-          theAppLog.info("Infogora.logThreadsV(), remaining active threads:"); 
-          Set<Thread> threadSet= Thread.getAllStackTraces().keySet();
-          for (Thread t : threadSet) {
-              Thread.State threadState= t.getState();
-              int priorityI= t.getPriority();
-              String typeString= t.isDaemon() ? "Daemon" : "Normal";
-              String nameString= t.getName();
-              theAppLog.getPrintWriter().printf(NL+ "    %-13s %2d  %s  %-25s  ", 
-                  threadState, priorityI, typeString, nameString);
-              }
-          }
-        }
 
 		} // Infogora
 
