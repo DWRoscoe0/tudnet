@@ -30,11 +30,12 @@ public class ConsoleNode
    * can be displayed as blocks of text.
    * 
    * The following problems were discovered when used with VolumeChecker.
-   * ///fix Sometimes the caret of the TextArea is below the bottom,
-   *   as if blank lines have been added to the end,
-   *   or deletions of previous text was incomplete.
-   * ///fix Sometimes the caret of the TextArea is not visible.
-   *   Make it always be visible.
+   * ///ano Detect when the caret of the TextArea scrolls out of view, 
+   *     and ask the user whether that action was the result 
+   *     of the user's command, or the action was an anomaly.
+   *     If it was an anomaly then scroll back to the correct position.
+   *     and automatically correct future scrolling anomalies
+   *     without bothering the user.
    */
   
   {

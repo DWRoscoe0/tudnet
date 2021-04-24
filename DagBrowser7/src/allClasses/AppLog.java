@@ -546,6 +546,10 @@ public class AppLog extends EpiThread
 
         It also throws, and catches, a DebugException, 
         for use in determining the causes of anomalies.
+        
+        ///ano Maybe not all errors should be reported as anomalies.
+        Maybe only a subset should be, 
+        and should go through the Anomalies class.
         */
       { 
         Anomalies.displayDialogV( // Display all errors as a dialog. 

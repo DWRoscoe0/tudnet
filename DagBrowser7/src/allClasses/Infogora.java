@@ -8,67 +8,64 @@ import static allClasses.AppLog.theAppLog;
 import static allClasses.SystemSettings.NL;
 
 /* This file is the root of this application.  
-  If you want to understand this application then
-  this is where you should start reading.
-  Look for 2 things:
-  * The main(.) method: This method is the top-level time sequencer of the app.
-  * The factory classes: The main(..) method constructs the AppFactory,
-  *   uses it to construct the single instance of the App class,
-  *   and runs a method in that instance.  
-  *   Factories of other types are created as needed.
-  *
-  * Some of the more important high-level factory classes are:
-  *   * AppFactory: This is the top level factory.
-  *     It makes all classes with app lifetime.
-  *     It wires together the first level of the app.
-  *   * AppGUIFactory: This is the factory for all classes with
-  *     app GUI lifetime, which is shorter than app lifetime.
-  *     It wires together the second level of the app.
-  *   * UnicasterFactory: This is the factory for all classes with
-  *     lifetimes of a Unicaster network connection.
-  *     
-  * Factories have the following attributes:
-    * Factories contain, or eventually will contain
-      all the new-operators, except for new-operators that create 
-      * some objects in the top level static Infogora.main(..) method,
-      * immutable constant objects, and 
-      * initially empty container objects.
-      This will, in theory, make unit testing easier.
-    * Factory code, and code in the main(..) method,
-      shows how objects relate to each other in the app
-      by concentrating and documenting all dependencies, 
-      usually with constructor injection, 
-      but occasionally with setter injection.
-      This will, in theory, make code easier to understand.
-    * All factory fields are one of the following.
-      * Non-lazy final variable singleton fields, preferably private.
-      * The factory's one constructor, which creates all the non-lazy singletons.
-      * Lazy singleton getter methods, each of which 
-        constructs its singleton only when first needed.
-        There should be no non-lazy getters, except one at the top level,
-        or the helper classes for each factory scope,
-        because non-lazy singletons should be constructor-injected. 
-      * Maker methods, which construct a new object each time called.
+  If you want to understand how this application works,
+  then you should start reading here.  That reading should include:
+  * The main(.) method in this class.
+  * The factory classes, starting with the AppFactory constructed by main(.).
+  * Anomalies, which are explained in more detail 
+    in by documentation in the Anomalies class.  ///ano  
+
+  The main(.) method in this class is the entry point of this app.
+  It acts as the top-level time sequencer of the app.
+
+  One of the things main(.) does is construct a single AppFactory object,
+  use it to construct a single App class object,
+  and run the runV(.) method in that object.
+  Factories of other types are created as needed.
+
+  The object factory classes are useful for understanding app structure.
+  They construct most of the objects in the app and link them together.
+  Factory classes are distinguished by the lifetimes of the objects they create. 
+  Some important factory classes are:
+  * AppFactory: This is the top level factory.
+    It makes all classes with app lifetime.
+    It wires together the first level of the app.
+  * AppGUIFactory: This is the factory for all classes with
+    app GUI lifetime, which is shorter than app lifetime.
+    It wires together the second level of the app.
+    [ Actually, since the addition of the JavaFX GUI,
+    whose runtime is started immediately,
+    this class should probably be called AppSwingGUIFactory. ]
+  * UnicasterFactory: This is the factory for all classes with
+    lifetimes of a Unicaster network connection.
+
+  Object factories have the following noteworthy characteristics:
+  * Factories contain most of the new-operators in the app.  Exceptions are:
+    * a small number of objects constructed by main(.),
+    * immutable constant objects, and 
+    * initially empty container objects.
+    Doing this, in theory, makes future unit testing easier.
+  * Factory code, because it constructs most of the service objects,
+    is good for documenting module dependencies and app structure. 
+  * All factory class fields are one of the following.
+    * Non-lazy final variable singleton fields, usually private,
+      some of which are dependency injections, 
+      and some of which are computed internally.
+    * The factory's one constructor, which creates all the non-lazy singletons.
+    * Lazy singleton getter methods, each of which 
+      constructs its singleton only when first needed.
+      There should be no non-lazy getters, except one at the top level,
+      or the helper classes for each factory scope,
+      because non-lazy singletons should be constructor-injected. 
+    * Maker methods, which construct a new object each time called.
     
+  The main(.) method deals with 2 anomalies.
+  For more information about anomalies, see the Anomalies class.
+
   */
 
 
 class Infogora  // The class is the root of this app.
-
-  /* This class contains 2 methods:
-  
-    * The main(..) method, which is the app's entry point.
-  
-    * setDefaultExceptionHandlerV(), which sets the app's 
-      default handler for uncaught exceptions.
-  
-  	Both these methods use the new-operator.
-  	Except for factories, immutable constants, 
-  	and initially empty containers,
-  	these should [eventually] be the only places 
-  	where the new-operator is used.
-  	This can make unit testing much easier.
-    */
 
 	{ // Infogora
 
@@ -80,37 +77,40 @@ class Infogora  // The class is the root of this app.
         * It starts the JavaFX runtime [new]
           so other elements can use it, for example to report errors.
 	      * It prepares the AppLog logger for use.
-	      * It creates and activates the app's BackupTerminator.
+	      * ///ano It creates and activates the app's BackupTerminator for
+	        possible use during shutdown.
 			  * It sets a default Exception handler for unhandled exceptions.
-			  * It creates the AppFactory object.
-			  * It uses the AppFactory to create the App object.
-			  * It calls the App.runV() method.
-			  * It may or may not do not some actions as part of app shutdown 
-			    if runV() returns, which depends on how shutdown is initiated.  
-			    Those optional actions include:
-			    * Some additional logging.
-			    * ///mys ///klu Triggering the BackupTerminator timer 
-			      to force process termination in case
-			      termination doesn't happen after this method exits.  
-			    * Returning from this method to the JVM.
+			  * It constructs the AppFactory object.
+			  * It uses the AppFactory object to construct the App object.
+			  * It calls the App.runV() method,
+			    which does most of the work of this app.
+			    This method might or might not return, depending on
+			    how shutdown is done.  Usually it returns.
+			  * If App.runV() returns then main(.) does these additional actions:
+			    * It does some additional logging.
+			    * ///ano It triggers the BackupTerminator timer to force termination 
+			      in case normal termination doesn't happen.  
+			      See BackupTerminator for details.
+			    * It returns to the JVM, which should itself shut down,
+			      and terminate the entire app.
 
 	      Exiting this method should cause process termination because
-	      all remaining threads should be either terminate-able daemon threads,
-	      or normal threads which will soon terminate themselves.
-	      When all threads terminate, it should trigger a JVM shutdown,
-	      unless a JVM shutdown was triggered already, and terminate the app.
+	      all remaining threads should be either daemon threads
+	      which do not need to be terminated,
+	      or normal threads which should be in the process of terminating.
+	      When all normal threads have terminated, 
+	      it should trigger a JVM shutdown, unless that happened earlier.
+	      When the JVM shuts down, the app's process terminates,
+	      and app termination is complete.
+	      
+	      ///ano Unfortunately, for unknown reasons, 
+	      this app doesn't always terminate as it should. 
+	      Termination is forced in that case.
+	      See BackupTerminator for details of this.
 
-	      ///mys ///klu Unfortunately the app doesn't always terminate, 
-	      for unknown reasons, so we use BackupTerminator 
-	      to force termination if that happens.
-        The List of active threads just before 
-        forcing termination with exit(.) seems to show that
-        the only non-daemon threads are Java JVM or UI related,
-        except possibly EventQueue-1 which might be related to
-        this app's TracingEventQueueMonitor thread.
-
-        Command line switches are one way used to pass information
-        from one app instance to another.  Legal switches are listed below.
+        Command line switches in method parameter argStrings
+        are used to pass information from one app instance to another.  
+        Legal switches are listed below.
         Ignore anything related to InfogoraStarter, 
         an old module that is not presently being used.
         * Legal switches input on the command line from the InfogoraStarter are;
@@ -139,21 +139,27 @@ class Infogora  // The class is the root of this app.
 
 			  */
 
-	    { // main(..)
-        String javaFXStartAnomalyString= ///ano Save now for reporting later.
+	    { // main(.)
+
+        String javaFXStartAnomalyString= ///ano Save result for reporting later.
             JavaFXGUI.startJavaFXAndReturnString(); // Start JavaFX runtime.
-	      theAppLog= new AppLog(new File( // Construct logger.
+
+        theAppLog= new AppLog(new File( // Construct logger.
 	          new File(System.getProperty("user.home") ),Config.appString));
 	      theAppLog.enableCloseLoggingV( false );
+
 	      DefaultExceptionHandler.setDefaultExceptionHandlerV(); 
-	      // ((String)null).charAt(0); // For testing DefaultExceptionHandler.
+	      // ((String)null).charAt(0); // This tests with a NullPointerException.
+
 	      BackupTerminator theBackupTerminator= ///ano 
 	          BackupTerminator.makeBackupTerminator(); ///ano
 
         theAppLog.info(true,
 	          "Infogora.main() ======== APP IS STARTING ========");
-        if (null != javaFXStartAnomalyString) ///ano
+
+        if (null != javaFXStartAnomalyString) ///ano Report any JavaFX anomaly.
           theAppLog.error(javaFXStartAnomalyString); ///ano
+
         CommandArgs theCommandArgs= new CommandArgs(argStrings);
         AppSettings.initializeV(Infogora.class, theCommandArgs);
 	      AppFactory theAppFactory= new AppFactory(theCommandArgs);
@@ -162,15 +168,16 @@ class Infogora  // The class is the root of this app.
 	        // This might not return if a shutdown is initiated by the JVM!
 
 	      // If here then shutdown was initiated in App.runV() and it returned.
-        BackupTerminator.logThreadsV(); // Record threads that are still active.
+        BackupTerminator.logThreadsV(); // Record threads that are active now.
 	      theAppLog.info(true,
           "Infogora.main() ======== APP IS ENDING ========"
-          + NL + "    by closing log file and exiting the main(..) method.");
+          + NL + "    by closing log file and exiting the main(.) method.");
         theAppLog.closeFileIfOpenB(); // Close log for exit.
-        theBackupTerminator.setTerminationUnderwayV(); ///ano Start exit timer.
-        // while(true) ; ///ano Uncomment this line to test BackupTerminator.
 
-	      } // main(..)
+        theBackupTerminator.setTerminationUnderwayV(); ///ano Start exit timer.
+        // while(true) {} ///ano Uncomment this line to test BackupTerminator.
+
+	      } // main(.)
 
 		} // Infogora
 

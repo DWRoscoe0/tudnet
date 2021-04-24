@@ -31,8 +31,8 @@ public class JavaFXGUI
    * 
    * ///org Since that time I learned how to 
    * start the JavaFX runtime using the startup(.) method.
-   * That method is called from startJavaFXAndReturnString(),
-   * which itself is called Infogora.main(.).
+   * That method is called from startJavaFXAndReturnString() method,
+   * which is called from Infogora.main(.).
    * It should now be possible to eliminate much of the kludginess
    * in the code that follows it.
    */
@@ -62,44 +62,50 @@ public class JavaFXGUI
       /* This method starts the JavaFX runtime 
        * so other elements can use it, for example for error reporting.
        * 
-       * ///ano This method contains code to deal with an anomaly,
-       * a mysterious failure of the startup confirmation wait to end.
-       * Debug logging and a mitigation timeout were added to deal with it.
-       * After that code was added the failure stopped happening.
-       * This method returns a String describing the anomalous behavior,
-       * or null if there was none. 
+       * ///ano Only a few lines of the code in this method 
+       * are needed to start the JavaFX runtime.
+       * Most of the code deals with an anomaly,
+       * a mysterious failure of a startup confirmation wait to end.
+       * Debug logging was added to debug the anomaly,
+       * and a timeout was added to mitigate it.  
+       * After that code was added, the failures stopped,
+       * but the mitigation code was left in.
+       * The code was tested with a breakpoint to simulate the failure.
+       * This method returns a String describing the anomalous behavior
+       * if the failure happened, or null if it didn't happen.
+       * 
        */
       {
-        String anomalyString= null; ///ano
-        System.out.println( ///ano
-            "Infogora.startJavaFXAndReturnString() begins."); ///ano
+        String resultString= null; ///ano
+        ///dbg System.out.println( ///ano
+        ///dbg     "Infogora.startJavaFXAndReturnString() begins."); ///ano
         LockAndSignal runningLockAndSignal= new LockAndSignal();
         long javaFXStartTimeMsL= System.currentTimeMillis(); ///ano
         PlatformImpl.startup( () -> { // Start JavaFX runtime and confirm it.
-          System.out.println( ///ano
-              "Infogora.startJavaFXAndReturnString() notify begins."); ///ano  
+          ///dbg System.out.println( ///ano
+          ///dbg     "Infogora.startJavaFXAndReturnString() notify begins."); ///ano  
           runningLockAndSignal.notifyingV(); // Confirm that runtime is up.
-          System.out.println( ///ano
-              "Infogora.startJavaFXAndReturnString() notify ended."); ///ano
+          ///dbg System.out.println( ///ano
+          ///dbg     "Infogora.startJavaFXAndReturnString() notify ended."); ///ano
           } );
         long waitStartTimeMsL= System.currentTimeMillis(); ///ano
-        System.out.println( ///ano
-            "Infogora.startJavaFXAndReturnString() wait begins."); ///ano
+        ///dbg System.out.println( ///ano
+        ///dbg     "Infogora.startJavaFXAndReturnString() wait begins."); ///ano
         Input theInput=  // Wait for runtime startup.  ///ano With timeout.
           runningLockAndSignal.waitingForInterruptOrIntervalOrNotificationE(
             javaFXStartTimeMsL, ///ano Mitigation, time-out interval start. 
-            2000); ///ano Mitigation, time-out interval length.
+            2000); ///ano Mitigation, time-out interval length, 2 seconds.
         String waitResultString= ///ano
             "Infogora.startJavaFXAndReturnString() wait ended because of "
             +theInput+".\n  Used total of "
             +(waitStartTimeMsL-javaFXStartTimeMsL)
             +"+"+(System.currentTimeMillis()-waitStartTimeMsL)
             +" ms.";
-        System.out.println( ///ano Report how wait ended and time needed.
-            waitResultString); ///ano
-        if (theInput == Input.TIME) ///ano If wait time-out anomaly happened 
-          anomalyString= waitResultString; ///ano return description string.
-        return anomalyString; ///ano
+        ///dbg System.out.println( ///ano Report how wait ended and the time needed.
+        ///dbg     waitResultString); ///ano
+        if (theInput == Input.TIME) ///ano If wait time-out anomaly happened,
+          resultString= waitResultString; ///ano return description string.
+        return resultString; ///ano
         }
 
     public static JavaFXGUI initializeJavaFXGUI(

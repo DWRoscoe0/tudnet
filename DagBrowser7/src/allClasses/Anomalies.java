@@ -3,47 +3,190 @@ package allClasses;
 import static allClasses.AppLog.theAppLog;
 import static allClasses.SystemSettings.NL;
 
-public class Anomalies 
+public class Anomalies
+
   {
 
-    /* The purpose of this class is to deal with anomalous behavior.
-     * It eventually could do all of the following: 
-     * * Receive calls reporting various potentially anomalous events.
-     * * Decide which events require action, and depending on that decision
-     *   it might:
-     *   * Log the event.
-     *   * Display a message to the user about the event
-     *     and wait for a response, which could be:
-     *     * Confirmation
-     *     * Change of settings to control what events to report in the future.
-     *     Anomalies that happen during app startup or app shutdown 
-     *     might not do this because the GUIs needed are not operational 
-     *     at those times.
-     *   * Throw an exception which, if the app is running under an IDE,
-     *     and the correct Exception breakpoint is set,
-     *     could suspend the app and allow the app developer 
-     *     to examine the stack to determine the cause of the anomalous event.
-     * * Use settings to control whether and how particular event types 
-     *   should be reported. and allow user to change the settings.
+    /* 
+     * Anomalies   ///ano
      * 
-     * ///pla Convert to use JavaFX libraries instead of Swing libraries.
+     * What is the purpose of this class?
      * 
-     * ///klu ///mys : Some callers of these methods are dealing with mysterious
-     * behaviors.
-     * * Some merely inform the user about the situation.
-     * * ///enh Some could give the user option of dealing with the situation
-     *   in different ways.  For example, if an unusual state is entered,
-     *   such as scrolling the caret position out of view,
-     *   the user could be asked to confirm that or bring it back into view.
-     * * ///fix A special model dialog could be added for rare errors
-     *   to help the developer by allowing the tracing of code from the dialog 
-     *   back to the caller and the cause of the error condition. 
+     * The purpose of this class is to contain code 
+     * that is useful for dealing with app anomalies.
+     * 
+     * What is an app anomaly?
+     * 
+     * An anomaly is a difference from the normal.
+     * An app anomaly is behavior that is different from expected app behavior.
+     * 
+     * How is an anomaly different from a malfunction?
+     * 
+     * All malfunctions are anomalies, but not all anomalies are malfunctions.
+     * 
+     * Can you give an example?
+     * 
+     * For example, if an Internet connection is performing poorly
+     * then an Internet app using that connection will perform poorly. 
+     * This is an app anomaly.  It is not an app malfunction.
+     * The app might actually be functioning perfectly, 
+     * doing the best that's possible under the circumstances.
+     * 
+     * Why is this anomaly-malfunction distinction important?
+     * 
+     * It's important for 2 reasons:
+     * * It helps to distinguish between 
+     *   problems caused by something inside the app,
+     *   and problems caused by something outside the app.
+     * * The number of problems caused by something outside the app
+     *   is likely to be more for this app than the average app.
+     * 
+     * Why would this app have more problems with outside causes?
+     * 
+     * A major purpose of this app is to be an anti-censorship tool.
+     * Powerful interests exist whose business models 
+     * depend on hiding information that is damaging to them.  
+     * They would not want this app or similar apps to succeed,
+     * and might try to to slow this app's development,
+     * or sabotage its use after release.
+     * 
+     * Is this actually happening?  
+     * 
+     * It's difficult to know for certain, 
+     * but the evidence seems to indicate that it is. 
+     * 
+     * What is the evidence?
+     * 
+     * Problems have been encountered during the development of this app 
+     * for which no cause could be found.
+     * Code that deals with anomalies is marked with the string "///ano".
+     * Search this app's source code for that string to see examples.
+     * A good place to start is the Infogora.main(.) method, 
+     * which is this app's entry point.
+     * 
+     * Why is so much attention being paid to anomalies?
+     * 
+     * App anomalies can ruin the user's experience of the app
+     * and they can ruin the app's usefulness.  
+     * They can cause the app to fail in its purpose.
+     * 
+     * How can one fix a problem if one can't determine the problem's cause?
+     * 
+     * One can't.
+     * 
+     * So, how does one deal with app anomalies?
+     * 
+     * It depends on the anomaly, but a reasonable first step in most cases 
+     * is to assume that the anomaly has a cause that can be found,
+     * and to use normal program debugging techniques to try to find it.
+     * These techniques include:
+     * * analyzing log files
+     * * program tracing
+     * * breakpoints
+     * * single stepping 
+     * These techniques can be used on both first-party app code,
+     * and third-party libraries if the source code is available.
+     * With luck the cause of the anomaly will be found and can be fixed with 
+     * a simple source code change.
+     * 
+     * What's the next step if the cause of the problem can't be found?
+     * 
+     * Again, it depends on the anomaly.
+     * 
+     * Can you give an example?
+     * 
+     * One example is network performance anomalies.
+     * Sometimes, for unknown reasons, 
+     * network packets are intermittently blocked going out, 
+     * or blocked coming in, or lost in some other way, 
+     * or delayed for long periods.  
+     * Any of these problems can cause poor app performance.
+     * It has happened even when both end points are on the same LAN, 
+     * and other network apps running at the same time work fine.
+     * 
+     * How do you deal with that?
+     * 
+     * The options are limited.
+     * There is no way for the app to force packets 
+     * though an uncooperative network connection.
+     * It can detect lost packets, and retransmit them until they get through,
+     * but not without negatively affecting app performance.
+     * 
+     * Is there anything else that can be done?
+     * 
+     * Yes, and this applies to not only this anomaly,
+     * but to any anomaly that appears to have a cause 
+     * that is outside the app's control.
+     * The user should be informed when it happens, 
+     * and that it is the cause of the app's poor performance.
+     * The specifics of the problem should be provided if possible. 
+     * This should be done because:
+     * 
+     * * It shifts the blame for the poor performance
+     *   away from the app and toward the actual cause.
+     *   
+     * * It might make whoever is causing the problem do it less often
+     *   if their existence is revealed each time they do it.
+     * 
+     * Is this whole anomaly situation discouraging?
+     * 
+     * It is in some ways.  In other ways it is motivating.  
+     * In any case, development of this app will continue.
+     *
+     * Doesn't blaming poor app performance on somebody else
+     * make you look like cry babies?
+     * 
+     * To some, it might.  But to state otherwise would be dishonest.
+     * And to the people that matter: app developers, users, and
+     * those who have been targets of COINTELPRO-like operations;
+     * it won't.
+     * 
+     * What do you say to people who have difficulty believing this?
+     * 
+     * Do some research.  Start the research with the following search terms:
+     * * communication interception black room
+     * * Microsoft AARD code
+     * * COINTELPRO
+     * * prank software
+     * 
+     * Are there any other plans for handling anomalies?
+     * 
+     * See below.
+     * 
+     * 
+     * 
+     * 
+     * 
+     * 
+     * 
+     * * ///pos When an anomaly is reported, give the user the option to
+     *   suppress or control in other ways the reporting of 
+     *   future instances of the same anomaly.  For example:
+     *   * Enable/Disable reporting.
+     *   * Time-out threshold for anomalies involving excessive response times.
+     *   * Enable/Disable throwing of a DeveloperException which, 
+     *     if the app is running under an IDE,
+     *     could be used to suspend the app and 
+     *     allow the app developer to do some analysis.
+     *     This may need to use a modal dialog instead of modeless.
+     * * ///pos Have an Anomaly Central screen which allows the user to browse
+     *     all the known anomalies, and for each anomaly:
+     *     * See a summary of recent activity. 
+     *     * See a history of occurrences.
+     *     * Allow the user to adjust trigger settings as described above.
+     * * ///pos Better link anomalies with the app features
+     *   whose performance they negatively affect, 
+     *   and include the performance effects in anomaly reports.
+     * * ///pos Anomalies are already logged, but maybe they should be
+     *   logged in a separate log file, one for anomalies only.
+     *     
      */
   
     public static void displayDialogV( 
         String messageString )
-      /* This method displays a modeless dialog box containing messageString.
-        This method takes care of switching to the EDT thread, etc.
+      /* This method displays a modeless dialog box 
+       * that displays messageString as an anomaly.
+       * It also plays a beep sound to get the user's attention.  
        */
       {
         theAppLog.info("Anomalies.displayDialogV(..) called," + NL + messageString);

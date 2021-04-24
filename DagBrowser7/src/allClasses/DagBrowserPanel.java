@@ -136,7 +136,8 @@ public class DagBrowserPanel
           a button is clicked because the button 
           temporarily takes the focus away from the MasterPane that had it.  
 
-          This code includes the ComponentFocusStateMachine, being deprecated.
+          This apparently no longer includes ComponentFocusStateMachine.
+          Apparently that has been completely removed.
           */
 
           private enum MasterPane { // Sub-panels which could have focus.
@@ -983,8 +984,9 @@ public class DagBrowserPanel
 
 
       /* FocusListener and related code.
-        This includes methods of the FocusListener, 
-        the FocusStateMachine (being deprecated), and others.
+        This includes methods of the FocusListener, and others classes.
+        It apparently no longer includes the ComponentFocusStateMachine.
+        Apparently that has been completely removed.
 
 				This code does the following:
 				* It updates various state and outputs when 
