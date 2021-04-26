@@ -404,7 +404,8 @@ public class ConsoleBase
             new TitledTextViewer( 
                 inTreePath, 
                 inDataTreeModel,
-                "ConsoleBase stub, JavaFX work in-progress.");
+                "Not implemented in the Java Swing user interface.\n" +
+                "For this feature, use the new JavaFX user interface instead.");
           return theJComponent;
         }
 
