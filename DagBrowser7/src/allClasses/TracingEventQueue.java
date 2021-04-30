@@ -13,12 +13,23 @@ import static allClasses.AppLog.theAppLog;
 
 public class TracingEventQueue extends EventQueue {
 
-	/* This simple class was based on one gotten from an article at
+	/* 
+    The purpose of this class and its associated class TracingEventQueueMonitor, 
+    is to report when Swing's Event Dispatch Thread (EDT) 
+    is using excessive time to process events.  ///ano
+    It tests this both during a dispatch, and after every dispatch completes.
+    The dispatch time does not include the time spent waiting in the queue.
+
+	  This class was based on one gotten from an article at
 	  https://today.java.net/pub/a/today/2007/08/30/debugging-swing.html
-	  Its purpose is to report when the EDT is taking too long to process events.
-	  It tests both during a dispatch, and after every dispatch completes.
+	  which is now a bad link.
 	  
-	  ///enh? Integrate with or replace by a general watch-dog timer.
+	  ///enh Make not use polling.
+	    ///enh? Integrate with or replace by a general watch-dog timer.
+	  
+	  ///enh Add event counter and use to identify events processed.
+	     
+	   ? 
 	 	*/
 
   private TracingEventQueueMonitor theTracingEventQueueMonitor;
@@ -32,23 +43,28 @@ public class TracingEventQueue extends EventQueue {
 
 	public void initializeV() // Post-constructor initialization.
 		{
-			theTracingEventQueueMonitor.start();
+			theTracingEventQueueMonitor.start(); // Start polling monitor thread.
 	  	}
 
   @Override
-  protected void dispatchEvent(AWTEvent event) {
-    this.theTracingEventQueueMonitor.eventDispatchingBeginningV(event);
-    super.dispatchEvent(event);
-    this.theTracingEventQueueMonitor.eventDispatchingEndingV(event);
-    }
+  protected void dispatchEvent(AWTEvent event)
+    /* This method wraps its superclass version such that
+     * it is preceded and followed by calls to methods that
+     * together check that the dispatch time is not too long.
+     */
+    {
+      this.theTracingEventQueueMonitor.eventDispatchBeginningV(event);
+
+      super.dispatchEvent(event);
+
+      this.theTracingEventQueueMonitor.eventDispatchEndingV(event);
+      }
   
   } // TracingEventQueue
 
 class TracingEventQueueMonitor extends Thread {
 
-	/* This class was based on one gotten from an article at
-	  https://today.java.net/pub/a/today/2007/08/30/debugging-swing.html
-	  Its purpose is to help TracingEventQueue 
+	/* The purpose of this class is to help TracingEventQueue 
 	  identify when the EDT is taking too long to process events.
 	  It helps in two ways:
 	  * It provides methods callable from TracingEventQueue to
@@ -58,6 +74,8 @@ class TracingEventQueueMonitor extends Thread {
 	    to help identify the CPU-hogging code.
 	  The Thread.sleep(..) time defines the sampling rate.
 	  It might need to be adjusted to locate CPU-hogging code.
+	  
+	  ///enh Maybe do without polling.  See note elsewhere about Watchdog timer.
  	  */
 
 	private long thresholdDelay;
@@ -66,13 +84,16 @@ class TracingEventQueueMonitor extends Thread {
 	public static final long LIMIT= 500; // was 500
 	private static final boolean displayStackB= false;
 	
-	class EventValue { 
-		long startTimeL; 
-		boolean reportedB; 
-		EventValue(long startTimeL) {
-			this.startTimeL= startTimeL;
-		  }
-		}
+	class EventValue 
+	  /* This class stores information about event being dispatched. */
+  	{
+  		long startTimeL; // When a dispatch began. 
+  		boolean reportedB; // true if limit exceeding happened.
+  		
+  		EventValue(long startTimeL) { // consructor.
+  			this.startTimeL= startTimeL;
+  		  }
+  		}
 
 	private Map<AWTEvent, EventValue> eventTimeMap;
 	private boolean eventDispatchingEndingB= false;
@@ -84,18 +105,19 @@ class TracingEventQueueMonitor extends Thread {
 	  setDaemon(true);
 		}
 
-	public synchronized void eventDispatchingBeginningV(AWTEvent event)
-	  // Processes the beginning of event dispatching by recording in map.
+	public synchronized void eventDispatchBeginningV(AWTEvent event)
+	  // Processes the beginning of event dispatch by recording in map.
 		{
 			this.eventTimeMap.put(
 					event, new EventValue(System.currentTimeMillis())
 					);
 		  }
 
-	public void eventDispatchingEndingV(AWTEvent event) 
-	  /* Processes the ending of event dispatching by
+	public void eventDispatchEndingV(AWTEvent event) 
+	  /* Processes the end of an event dispatch by
       doing a time check and removing the associated map entry.
-      It does not do a stack trace, which should already have been done.
+      It does not do a stack trace, which should already have been done
+      by an earlier check.
       */
 		{
 			eventDispatchingEndingB= true;
@@ -136,16 +158,17 @@ class TracingEventQueueMonitor extends Thread {
 			long currProcessingTime = currTime - startTime;
 			boolean thresholdExceededB= 
 					(currProcessingTime > this.thresholdDelay);
-			if (thresholdExceededB) {
-				String outString= "In EDT dispatch of "
-            + dispatchedAWTEvent.getClass().getName()
-            + ", now "
-						+ underwayOrCompletedString
-						+ ", processing time of " + currProcessingTime
-						+ "ms exceeds limit of " + this.thresholdDelay;
-				//System.out.println(outString);
-        theAppLog.warning(outString);
-			  }
+			if (thresholdExceededB) // If excessive time used for dispatch, report it.
+  			{ ///ano Report excessive time used for event dispatch.
+  				String outString= "In EDT dispatch of "
+              + dispatchedAWTEvent.getClass().getName()
+              + ", now "
+  						+ underwayOrCompletedString
+  						+ ", processing time of " + currProcessingTime
+  						+ "ms exceeds limit of " + this.thresholdDelay;
+  				//System.out.println(outString);
+          theAppLog.warning(outString);
+  			  }
 			return thresholdExceededB; 
 			}
 
