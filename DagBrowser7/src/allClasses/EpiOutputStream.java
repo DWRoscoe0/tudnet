@@ -4,8 +4,9 @@ import static allClasses.AppLog.theAppLog;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.Timer; ///fix Use of this is broken and should be replaced.
+import java.util.TimerTask; ///fix Use of this is broken and should be replaced.
+  ///fix above.  Use java.util.concurrent.ScheduledThreadPoolExecutor instead.
 
 public class EpiOutputStream<
 		K, // Key.

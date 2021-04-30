@@ -2,8 +2,9 @@ package allClasses;
 
 import static allClasses.AppLog.theAppLog;
 
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.Timer; ///del /// fix See below.
+import java.util.TimerTask; ///del /// fix See below.
+  ///fix by using java.util.concurrent.ScheduledThreadPoolExecutor only.
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -21,6 +22,8 @@ public class TimerInput
 	  This class can use either java.util.Timer or 
 	  java.util.concurrent.ScheduledThreadPoolExecutor to do the timing.
 	  Lately the java.util.concurrent.ScheduledThreadPoolExecutor is being used.
+	  ///del java.util.Timer should be deleted.  It has been put off,
+	    because it involves replacing a lot of conditional code.
 
 	  If java.util.Timer is used, the run() method that is triggered 
 	  must return quickly or other events using the same Timer could be delayed.
