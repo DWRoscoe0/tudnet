@@ -1,6 +1,5 @@
 package allClasses;
 
-import java.util.Timer;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import allClasses.epinode.MapEpiNode;
@@ -18,7 +17,6 @@ public class UnicasterFactory {
 	public final AppGUIFactory theAppGUIFactory;
 	private final Shutdowner theShutdowner;
 	private final int queueCapacityI;
-	private final Timer theTimer;
 	
 	// Other objects that will be needed later.
 	private final UnicasterValue unicasterUnicasterValue; 
@@ -34,7 +32,6 @@ public class UnicasterFactory {
   		TCPCopier theTCPCopier,
   		Shutdowner theShutdowner,
   		int queueCapacityI,
-  		Timer theTimer,
   		ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor,
   		Persistent thePersistent,
       NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes,
@@ -85,7 +82,6 @@ public class UnicasterFactory {
 		  		theTCPCopier,
 			   	theShutdowner,
 			   	subcasterToUnicasterSubcasterQueue,
-			   	theTimer,
 			   	theScheduledThreadPoolExecutor,
 			   	thePersistent,
 			   	thePeersCursor,
@@ -104,7 +100,6 @@ public class UnicasterFactory {
   		this.theAppGUIFactory= theAppGUIFactory;
 	  	this.theShutdowner= theShutdowner;
   		this.queueCapacityI= queueCapacityI;
-  		this.theTimer= theTimer;
 
 	  	// Save in instance variables other objects that are needed later.
       this.unicasterUnicasterValue= unicasterUnicasterValue;
@@ -167,7 +162,6 @@ public class UnicasterFactory {
   		  	subcasterToUnicasterSubcasterQueue,
   		  	theSubcasterPacketManager,
   		  	packetsSentNamedLong,
-  	  		theTimer,
   	  		Config.delimiterC
   	      );
   	    }

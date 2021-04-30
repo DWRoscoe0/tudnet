@@ -1,7 +1,6 @@
 package allClasses;
 
 import java.io.IOException;
-import java.util.Timer;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import allClasses.epinode.MapEpiNode;
@@ -30,8 +29,6 @@ public class LinkMeasurementState
 		private NetcasterInputStream theNetcasterInputStream;
 		private NetcasterOutputStream theNetcasterOutputStream; 
 		private NamedLong initialRetryTimeOutMsNamedLong;
-    @SuppressWarnings("unused") ///opt
-		private Timer theTimer; ///opt
 		private ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor;
 		@SuppressWarnings("unused") ///org
     private Unicaster theUnicaster;
@@ -42,7 +39,6 @@ public class LinkMeasurementState
 		private LocalMeasurementState theLocalMeasurementState;
 
 		LinkMeasurementState(  // Constructor.
-				Timer theTimer,
 				ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor,
         NetcasterInputStream theNetcasterInputStream,
 				NetcasterOutputStream theNetcasterOutputStream,
@@ -55,7 +51,6 @@ public class LinkMeasurementState
 			  this.theNetcasterInputStream= theNetcasterInputStream;
 			  this.theNetcasterOutputStream= theNetcasterOutputStream;
 			  this.initialRetryTimeOutMsNamedLong= initialRetryTimeOutMsNamedLong;
-        this.theTimer= theTimer;
         this.theScheduledThreadPoolExecutor= theScheduledThreadPoolExecutor;
         this.theUnicaster= theUnicaster;
 			  }

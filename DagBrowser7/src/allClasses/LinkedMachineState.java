@@ -2,7 +2,6 @@ package allClasses;
 
 import java.awt.Color;
 import java.io.IOException;
-import java.util.Timer;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import allClasses.epinode.MapEpiNode;
@@ -32,8 +31,6 @@ public class LinkedMachineState
   private NetcasterOutputStream theNetcasterOutputStream;
   private NamedLong initialRetryTimeOutMsNamedLong;
   private TCPCopier theTCPCopier;
-  @SuppressWarnings("unused") /// opt
-  private Timer theTimer; /// opt. use function parameter only.
   private ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor;
   private Unicaster theUnicaster;
   private Persistent thePersistent;
@@ -57,17 +54,25 @@ public class LinkedMachineState
   ) throws IOException {
   }
 
-  public synchronized LinkedMachineState initializeWithIOExceptionLinkedMachineState(Timer theTimer,
-      ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor, NetcasterInputStream theNetcasterInputStream,
-      NetcasterOutputStream theNetcasterOutputStream, NamedLong initialRetryTimeOutMsNamedLong, TCPCopier theTCPCopier,
-      Unicaster theUnicaster, Persistent thePersistent, PeersCursor thePeersCursor,
-      LinkMeasurementState theLinkMeasurementState,
-      NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes, ConnectionManager theConnectionManager)
-      throws IOException {
+  public synchronized LinkedMachineState 
+      initializeWithIOExceptionLinkedMachineState(
+            ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor, 
+            NetcasterInputStream theNetcasterInputStream,
+            NetcasterOutputStream theNetcasterOutputStream, 
+            NamedLong initialRetryTimeOutMsNamedLong, 
+            TCPCopier theTCPCopier,
+            Unicaster theUnicaster, 
+            Persistent thePersistent, 
+            PeersCursor thePeersCursor,
+            LinkMeasurementState theLinkMeasurementState,
+            NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes, 
+            ConnectionManager theConnectionManager
+            )
+      throws IOException 
+  {
     super.initializeWithIOExceptionStateList();
 
     // Injected dependencies.
-    this.theTimer = theTimer;
     this.theScheduledThreadPoolExecutor = theScheduledThreadPoolExecutor;
     this.theNetcasterInputStream = theNetcasterInputStream;
     this.theNetcasterOutputStream = theNetcasterOutputStream;

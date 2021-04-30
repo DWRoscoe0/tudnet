@@ -94,7 +94,6 @@ public class EpiOutputStream<
 				Q notifyingQueueQ,
 				M packetManagerM,
 				NamedLong packetCounterNamedLong,
-	  		Timer unusedTimer, ///opt remove?
 	  		char delimiterChar
 				)
 			{
@@ -255,6 +254,10 @@ public class EpiOutputStream<
       and sent together, thereby reducing the number of packets that need to be sent.
       The packet is not sent until the earliest latestMsL times 
       of all the blocks that the packet contains.
+      
+      ///fix This method can't possibly send delayed packets because
+      theTimer is never defined.  It must be null.  This feature was not tested.
+      Fix to use theScheduledThreadPoolExecutor instead, and test.
      	*/
     {
         boolean sendNowB= ( latestMsL == 0 );

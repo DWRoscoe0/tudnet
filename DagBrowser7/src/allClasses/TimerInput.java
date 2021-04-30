@@ -36,7 +36,7 @@ public class TimerInput
 	  */
 	{	
 	  // Injected dependencies.
-	  private Timer theTimer= null;
+	  private Timer theTimer= null; ///del
 	  private Runnable inputRunnable;
 	  private ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor= null;
 
@@ -55,7 +55,8 @@ public class TimerInput
     private ScheduledFuture<?> outputFuture;
     
     
-    public TimerInput( // Constructor.  ///opt
+    @SuppressWarnings("unused") ///del
+    private TimerInput( // Constructor.  ///opt
         Timer theTimer,
         Runnable inputRunnable
         )

@@ -9,7 +9,6 @@ import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
 import java.net.SocketAddress;
 import java.net.SocketException;
-import java.util.Timer;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import javax.swing.JFrame;
@@ -65,7 +64,6 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
   private final NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue;
   private final AppGUI theAppGUI;
   private final NetcasterPacketManager receiverNetcasterPacketManager;
-	private final Timer theTimer;
   private final ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor;
   private final NamedLong multicasterFixedTimeOutMsNamedLong;
   private final Persistent thePersistent;
@@ -117,9 +115,6 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 	      new NetcasterQueue(cmThreadLockAndSignal, Config.QUEUE_SIZE, "mccmp");
       NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue=
           new NetcasterQueue(cmThreadLockAndSignal, Config.QUEUE_SIZE, "urcmp");
-      Timer theTimer= new Timer( ///opt being deprecated.
-        "AppTimer", // Thread name.
-        true); // Run as daemon thread.
       ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor; {
         // Single ScheduledThreadPoolExecutor for many app threads and timers.
         theScheduledThreadPoolExecutor= new ScheduledThreadPoolExecutor(
@@ -127,9 +122,6 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
             (theRunnable,theThreadPoolExecutor) -> { theAppLog.error(
                 "ScheduledThreadPoolExecutor rejected execution."); }
             ); // Minimum of 1 thread,
-        //// theScheduledThreadPoolExecutor.setMaximumPoolSize(15); // 15 max.
-        //// theScheduledThreadPoolExecutor.setKeepAliveTime(
-        ////   5,TimeUnit.SECONDS); // Time before unused threads are reclaimed.
         }
       theTextStreams2= new TextStreams2(
           "Replication-Text-Streams",this,thePersistent,theUnicasterManager);
@@ -245,7 +237,6 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
       this.unconnectedReceiverToConnectionManagerNetcasterQueue=
       		unconnectedReceiverToConnectionManagerNetcasterQueue;
       this.theAppGUI= theAppGUI;
-  		this.theTimer= theTimer;
       this.theScheduledThreadPoolExecutor= theScheduledThreadPoolExecutor;
   		this.multicasterFixedTimeOutMsNamedLong= 
   				multicasterTimeOutMsNamedLong;
@@ -405,7 +396,6 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 		  	netcasterToSenderNetcasterQueue,
 		  	theNetcasterPacketManager,
 		  	packetsSentNamedLong,
-	  		theTimer,
 	  		Config.delimiterC
 	      );
 	    }
@@ -454,7 +444,6 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 				theTCPCopier,
 				theShutdowner, 
 				Config.QUEUE_SIZE,
-	  		theTimer,
 	  		theScheduledThreadPoolExecutor,
 	  		thePersistent,
         toConnectionManagerNotifyingQueueOfMapEpiNodes,

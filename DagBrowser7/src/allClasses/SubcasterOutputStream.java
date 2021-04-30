@@ -1,7 +1,5 @@
 package allClasses;
 
-import java.util.Timer;
-
 public class SubcasterOutputStream 
 
   extends EpiOutputStream<
@@ -19,7 +17,6 @@ public class SubcasterOutputStream
 				SubcasterQueue outputSubcasterQueue,
 				SubcasterPacketManager theSubcasterPacketManager,
 				NamedLong packetCounterNamedLong,
-	  		Timer theTimer,
 	  		char delimiterChar
 				)
 			{
@@ -27,7 +24,6 @@ public class SubcasterOutputStream
 			  		outputSubcasterQueue,
 			  		theSubcasterPacketManager,
 			  		packetCounterNamedLong,
-			  		theTimer,
 			  		delimiterChar
 			  		);
 	      }

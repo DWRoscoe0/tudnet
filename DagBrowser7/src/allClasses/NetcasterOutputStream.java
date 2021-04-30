@@ -1,7 +1,5 @@
 package allClasses;
 
-import java.util.Timer;
-
 public class NetcasterOutputStream 
 
   extends EpiOutputStream<
@@ -21,7 +19,6 @@ public class NetcasterOutputStream
 				NetcasterQueue outputNetcasterQueue,
 				NetcasterPacketManager theNetcasterPacketManager,
 				NamedLong packetCounterNamedLong,
-	  		Timer theTimer,
 	  		char delimiterChar
 				)
 			{
@@ -29,7 +26,6 @@ public class NetcasterOutputStream
 			  		outputNetcasterQueue,
 			  		theNetcasterPacketManager,
 			  		packetCounterNamedLong,
-			  		theTimer,
 			  		delimiterChar
 			  		);
 	      }

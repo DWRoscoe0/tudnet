@@ -2,7 +2,6 @@ package allClasses;
 
 import java.awt.Color;
 import java.io.IOException;
-import java.util.Timer;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import allClasses.epinode.EpiNode;
@@ -69,7 +68,6 @@ public class Unicaster
       private final UnicasterManager theUnicasterManager;
       private final SubcasterManager theSubcasterManager;
       private final TCPCopier theTCPCopier;
-      private final Timer theTimer;
       private final ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor; 
       private final Persistent thePersistent;
       private PeersCursor thePeersCursor; ///org replace with thisMapEpiNode as parameter.
@@ -102,7 +100,6 @@ public class Unicaster
 	      TCPCopier theTCPCopier,
 	      Shutdowner theShutdowner,
 	      SubcasterQueue subcasterToUnicasterSubcasterQueue, ///opt Subcasters?
-	  		Timer theTimer,
 	  		ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor,
 	  		Persistent thePersistent,
 	  		PeersCursor thePeersCursor,
@@ -137,7 +134,6 @@ public class Unicaster
 				  this.theUnicasterManager= theUnicasterManager;
 				  this.theSubcasterManager= theSubcasterManager;
 				  this.theTCPCopier= theTCPCopier;
-          this.theTimer= theTimer;
           this.theScheduledThreadPoolExecutor= theScheduledThreadPoolExecutor; 
 		  		this.thePersistent= thePersistent;
 		      this.thePeersCursor= thePeersCursor;
@@ -168,7 +164,6 @@ public class Unicaster
     			
     			LinkMeasurementState theLinkMeasurementState= 
     				 new LinkMeasurementState( 
-  		    				theTimer,
   		    				theScheduledThreadPoolExecutor,
   		    				theEpiInputStreamI,
   			  				theEpiOutputStreamO,
@@ -179,7 +174,6 @@ public class Unicaster
 
   				theLinkedMachineState= new LinkedMachineState();
   				theLinkedMachineState.initializeWithIOExceptionLinkedMachineState(
-		  				theTimer,
 		  				theScheduledThreadPoolExecutor,
 		  			  theEpiInputStreamI,
 		  				theEpiOutputStreamO,
