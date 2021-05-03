@@ -59,7 +59,7 @@ public class Dialogger extends Object
        * */
       {
         Platform.runLater( () -> {
-          String featureString= Config.appString + " " + titleTailString;
+          String featureString= Config.appString + ": " + titleTailString;
           Alert theAlert= new Alert(
               AlertType.INFORMATION,
               theString
