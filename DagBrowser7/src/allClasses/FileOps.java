@@ -95,7 +95,7 @@ public class FileOps
         File tmpFile= null;
         boolean successB= false; // Assume we will not be successful.
         toReturn: {
-          tmpFile= createTemporaryFile("Copy");
+          tmpFile= createTemporaryFile("Copy",destinationFile.getParentFile());
           if (tmpFile == null) break toReturn;
           Path sourcePath= sourceFile.toPath();
           Path tmpPath= tmpFile.toPath();
@@ -164,10 +164,22 @@ public class FileOps
         or null if it failed for any reason.
         */
       {
+        return createTemporaryFile(nameString, AppSettings.userAppFolderFile);
+        }
+  
+    public static File createTemporaryFile(
+        String nameString, File directoryFile)
+      /* This method tries to create a temporary file which contains
+        nameString as part of the name and in the folder directoryFile.
+        It logs any exceptions produced.
+        It returns the File of the temporary file created if successful,
+        or null if it failed for any reason.
+        */
+      {
         File tmpFile= null;
         try {
             tmpFile= File.createTempFile( // Creates empty file.
-              nameString,null,AppSettings.userAppFolderFile);
+              nameString,null,directoryFile);
           } catch (IOException theIOException) {
             theAppLog.exception(
                 "createTemporaryFile(..) failed with",theIOException); 

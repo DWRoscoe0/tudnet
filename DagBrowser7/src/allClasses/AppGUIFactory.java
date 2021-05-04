@@ -143,10 +143,8 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
         new SystemsMonitor(toConnectionManagerNotifyingQueueOfStrings);
       EpiThread theCPUMonitorEpiThread=
         AppGUIFactory.makeEpiThread( theSystemsMonitor, "SystemsMonitor" );
-      InstallerBuilder theInstallerBuilder=
-          new InstallerBuilder( "Installer-Builder", 
-              thePersistent
-              );
+      InstallerBuilder theInstallerBuilder= new InstallerBuilder( 
+          "Installer-Builder",thePersistent,theScheduledThreadPoolExecutor);
       EpiFileRoots theEpiFileRoots= new EpiFileRoots();
       VolumeChecker theVolumeChecker = new VolumeChecker (
           "Volume-Checker",thePersistent,theScheduledThreadPoolExecutor);
@@ -159,8 +157,8 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
           theVolumeChecker,
           theVolumeDetector,
           theConsoleBase,
-          theEpiFileRoots,
           theInstallerBuilder,
+          theEpiFileRoots,
           theTextStreams2,
           new Infinitree( null, 0 )
           );

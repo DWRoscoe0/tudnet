@@ -22,18 +22,15 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 public class VolumeChecker
 
   /* This class is used to check a mass storage volume.
-   * Presently the only test is does is to write all remaining free space.
+   * Presently it does the following tests:
    * 
-   * ///enh Eventually it should also:
-   * * Verify that each block can store unique data,
+   * * Measures usable writable space.
+   * 
+   * * Verifies that each free block can store unique data,
    *   testing for volumes with fake sizes.
    * 
-   * When checking large storage devices, long pauses can happen in the process.
-   * The pauses are probably caused by flushing large sections of disk cache
-   * to the storage device.  Pauses can happen:
-   * * At file close time.
-   * * In the middle of a write of one of the files.
    */
+
   extends VolumeDetector
 
   {
@@ -53,7 +50,7 @@ public class VolumeChecker
       // Constructor injections.  None.
 
       // Feature scope.
-      File temporaryFolderFile;
+      File buildFolderFile;
 
       // Volume scope.
       private long volumeTotalBytesL; // Partition size.
@@ -164,26 +161,26 @@ public class VolumeChecker
         queueAndDisplayOutputSlowV("\n\nChecking " + volumeFile + "\n");
         offsetOfProgressReportI= thePlainDocument.getLength();
         pushOperationV("VolumeChecker");
-        temporaryFolderFile= new File(volumeFile,"InfogoraTemp");
+        buildFolderFile= new File(volumeFile,"InfogoraTemp");
         initialVolumeFreeBytesL= volumeFile.getUsableSpace();
         toCheckTotalBytesL= initialVolumeFreeBytesL;
       goReturn: {
       goFinish: {
         resultString= FileOps.makeDirectoryAndAncestorsString(
-            temporaryFolderFile);
+            buildFolderFile);
         if (! isAbsentB(resultString)) {
           resultString= combineLinesString(
               "error creating folder", resultString);
           break goFinish;
           }
         outputProgressSlowlyV();
-        resultString= writeTestReturnString(temporaryFolderFile);
+        resultString= writeTestReturnString(buildFolderFile);
         if (! isAbsentB(resultString)) {
           resultString= combineLinesString(
               "error during write-test", resultString);
           break goFinish;
           }
-        resultString= readTestReturnString(temporaryFolderFile);
+        resultString= readTestReturnString(buildFolderFile);
         if (! isAbsentB(resultString)) {
           resultString= combineLinesString(
               "error during read-test", resultString);
@@ -193,7 +190,7 @@ public class VolumeChecker
         pushOperationAndRefreshProgressReportV("deleting temporary files");
         theAppLog.debug("VolumeChecker.checkVolumeV(.) deleting.");
         String deleteErrorString= FileOps.deleteRecursivelyReturnString(
-            temporaryFolderFile,FileOps.requiredConfirmationString);
+            buildFolderFile,FileOps.requiredConfirmationString);
         resultString= combineLinesString(resultString, deleteErrorString);
         replaceOperationAndRefreshProgressReportV("done");
         if (! isAbsentB(resultString)) { // Report error.
@@ -206,11 +203,11 @@ public class VolumeChecker
       }  // goReturn:
         theAppLog.debug("VolumeChecker.checkVolumeV(.) ends.");
         return;
-      } // checkVolumeV(._
+      } // checkVolumeV(.)
 
     private String writeTestReturnString(File testFolderFile)
       /* This method does a write test by writing files in
-       * the folder specified by temporaryFolderFile.
+       * the folder specified by buildFolderFile.
        * It returns null if success, an error String if not.
        * 
        * Note that FileDescriptor.sync() is done on each file written
@@ -307,7 +304,7 @@ public class VolumeChecker
         return errorString;
         }
 
-    private boolean deviceFullB(IOException theIOException)
+    protected boolean deviceFullB(IOException theIOException)
       /* Returns true if theIOException was caused because
        * a volume was or became full.
        */
@@ -332,14 +329,14 @@ public class VolumeChecker
       {
         boolean enabledB= true; // For debugging experiments.
         if (enabledB) {
-          toCheckRemainingBytesL= temporaryFolderFile.getUsableSpace();
+          toCheckRemainingBytesL= buildFolderFile.getUsableSpace();
           toCheckTotalBytesL= toCheckRemainingBytesL + toCheckDoneBytesL;
           }
         }
 
     private String readTestReturnString(File testFolderFile)
       /* This method does a read test by reading files in
-       * the folder specified by temporaryFolderFile.
+       * the folder specified by buildFolderFile.
        * It compares the data in each block that it reads 
        * with the pattern that should be there.
        * Any mismatch is considered an error.
@@ -468,7 +465,7 @@ public class VolumeChecker
         return blockBytes;
         }
 
-    private String combineLinesString(
+    protected String combineLinesString(
         String the1String,String the2String)
       {
         String valueString;
@@ -485,7 +482,7 @@ public class VolumeChecker
         return valueString;
       }
 
-    private static boolean isAbsentB(String theString)
+    protected static boolean isAbsentB(String theString)
       /* This method returns true if theString is null or "", 
        * false otherwise. 
        */
@@ -501,7 +498,7 @@ public class VolumeChecker
         return valueB;
       }
 
-    private String testInterruptionGetConfirmation1ReturnResultString(
+    protected String testInterruptionGetConfirmation1ReturnResultString(
         String confirmationQuestionString,String resultDescriptionString)
       {
         String returnString= null; // Assume no interruption.
@@ -517,7 +514,7 @@ public class VolumeChecker
         return returnString;
       }
 
-    private boolean getConfirmationKeyPressB(
+    protected boolean getConfirmationKeyPressB(
         String confirmationQuestionString)
       {
         boolean confirmedB= false;

@@ -125,7 +125,7 @@ public class AppSettings {
           initiatorNameString= iFile.getName();
           int dotIndexI= initiatorNameString.lastIndexOf('.');
           AppSettings.initiatorExtensionString= // Save file extension 
-            (dotIndexI < 0) ? "ERR" : initiatorNameString.substring(dotIndexI); 
+              (dotIndexI < 0) ? "ERR" : initiatorNameString.substring(dotIndexI); 
           theAppLog.info("AppSettings.setInitiatorV()"
             + ", initiatorExtensionString= " 
               + AppSettings.initiatorExtensionString

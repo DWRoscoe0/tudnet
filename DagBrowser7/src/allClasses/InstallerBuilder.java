@@ -6,29 +6,29 @@ import static allClasses.AppLog.theAppLog;
 
 
 import java.awt.event.KeyEvent;
+import java.io.File;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 
 public class InstallerBuilder
 
-  extends NamedDataNode
+  //// extends NamedDataNode
+  //// extends VolumeDetector
+  extends VolumeChecker
+
+  /* This class is used to write a mass storage volume with
+   * the files needed to create an Infogora installation.
+   * 
+   * Files that it will or might write:
+   * * Infogora.exe
+   * * ReadMe.txt
+   * * Persistent.txt
+   * * User Content
+   */
 
   {
-    /* 
-     * ///opt This class is being deprecated.
-     * 
-     *  It was meant to be part of a way of adding new command features.
-     *  A new feature could be created by instantiating this DataNode class
-     *  with the name of the Viewer class implementing the feature,
-     *  and then implementing the Viewer class.
-     *  This class uses Java reflection to calculate 
-     *  the appropriate Viewer class from a name string.
-     *  
-     *  It was later decided that it is better to put 
-     *  the intelligence and state of the command feature in a new DataNode,
-     *  and display it with one of a small set of simple Viewer JComponents
-     *  which display lists of items from the DataNode.
-     *  
-     */
 
     // Locally stored injected dependencies.
     //// private String viewerClassString;
@@ -37,16 +37,114 @@ public class InstallerBuilder
   
     public InstallerBuilder( // constructor
         String nameString, // Node name.
-        //// String viewerClassString, // Name of viewer class for this node.
-        Persistent thePersistent
+        Persistent thePersistent,
+        ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor
         )
       {
-        super.initializeV(nameString);
+        //// super.initializeV(nameString);
+        super( // constructor
+          nameString, // Node name.
+          thePersistent,
+          theScheduledThreadPoolExecutor
+          );
         
-        //// this.viewerClassString= viewerClassString; 
         this.thePersistent= thePersistent;
         }
+
+    protected void mainThreadLogicV()
+      // This overrides the superclass method. 
+      {
+        queueAndDisplayOutputSlowV(
+          "This feature installs the app to storage volumes "
+          + "attached to this device.");
+        List<File> addedVolumeListOfFiles;
+      theLoop: while(true) {
+        addedVolumeListOfFiles= getTerminationOrKeyOrAddedVolumeListOfFiles();
+        if (LockAndSignal.isInterruptedB()) break; // Process exit request.
+        if (0 < addedVolumeListOfFiles.size()) { // If any volumes added then
+          installToVolumeListV( // install to each with user's consent.
+              addedVolumeListOfFiles);
+          continue theLoop;
+          }
+        installToVolumeListV( // Install to each with user's consent.
+            Arrays.asList(getVolumeFiles()));
+      } // theLoop:
+        return;
+      }
     
+    protected void installToVolumeListV(List<File> addedVolumeListOfFiles)
+      {
+        queueAndDisplayOutputSlowV(
+          "\n\nAvailable volume[s]: "
+          + addedVolumeListOfFiles.toString()
+          );
+        for (File theFile : addedVolumeListOfFiles) {
+          if (getConfirmationKeyPressB( // Install if user okays it.
+               "Would you like to install to " + theFile + " ? ")
+              )
+            installToVolumeV(theFile);
+          }
+        }
+
+    private void installToVolumeV(File volumeFile)
+      /* This method checks the volume specified by volumeFile.
+       */
+      {
+        theAppLog.debug("VolumeChecker.checkVolumeV(.) begins.");
+        String resultString;
+        queueAndDisplayOutputSlowV("\n\nInstalling to " + volumeFile + "\n");
+        buildFolderFile= new File(volumeFile,"InfogoraTemp");
+      goReturn: {
+      goFinish: {
+        resultString= FileOps.makeDirectoryAndAncestorsString(
+            buildFolderFile);
+        if (! isAbsentB(resultString)) {
+          resultString= combineLinesString(
+              "error creating folder", resultString);
+          break goFinish;
+          }
+        resultString= writeFilesReturnString(buildFolderFile);
+        if (! isAbsentB(resultString)) {
+          resultString= combineLinesString(
+              "error during writing of files", resultString);
+          break goFinish;
+          }
+      }  // goFinish:
+        if (! isAbsentB(resultString)) { // Report error.
+          reportWithPromptSlowlyAndWaitForKeyV(
+              "Abnormal termination:\n" + resultString);
+          break goReturn;
+          }
+        reportWithPromptSlowlyAndWaitForKeyV(
+          "The operation completed without error.");
+      }  // goReturn:
+        theAppLog.debug("VolumeChecker.checkVolumeV(.) ends.");
+        return;
+      }
+
+    private String writeFilesReturnString(File destinationFolderFile)
+      /* This method creates an installation by 
+       * writing all the installation files to the folder specified by 
+       * destinationFolderFile which is assumed to exist already.
+       * It returns null if success, an error String if not.
+       */
+      {
+        String errorString= null;
+        File sourceFile= 
+            //// AppInstanceManager.standardAppFile;
+            //// FileOps.makeRelativeToAppFolderFile( 
+            ////   AppSettings.exeInitiatorFile
+            ////   );
+            FileOps.makeRelativeToAppFolderFile(Config.appString + ".exe");
+        File destinationFile= 
+            new File(destinationFolderFile, sourceFile.getName());
+        boolean successB= FileOps.tryCopyFileB(sourceFile, destinationFile);
+        if (!successB) {
+          errorString= "Error copying file "+sourceFile+" to "+destinationFile;
+          }
+        return errorString;
+        }
+
     public String getSummaryString()
       {
         return "";
