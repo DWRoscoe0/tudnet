@@ -257,20 +257,22 @@ public class ConsoleBase
     protected void displayQueuedOutputSlowV()
       /* This method outputs the content of the outputStringBuffer slowly,
        * one character at a time, appending each to the end of theDocument,
-       * with several milliseconds between them.
-       * This makes it clear that output is occurring,
+       * with a small delay between them.
+       * This makes it clear to the user that output is occurring,
        * and makes it easier to follow the output.
        * It doesn't stop until the outputStringBuffer is empty.
        */
       {
         while (0 < outputStringBuffer.length()) {
-          int charactersToOutputI= outputStringBuffer.length();
+          //// int charactersToOutputI= outputStringBuffer.length();
+          int charactersToOutputI= 1;
           String outString= outputStringBuffer.substring(0,charactersToOutputI);
           /// theAppLog.debug(myToString()+"ConsoleBase.mainThreadLogicV() "
           ///     + "processing from outputStringBuffer \""+outString+"\"");
           appendToDocumentV(outString);
           outputStringBuffer.delete(0,charactersToOutputI);
-          EpiThread.interruptibleSleepB(5);
+          //// EpiThread.interruptibleSleepB(5);
+          EpiThread.interruptibleSleepB(2);
           }
         }
 
