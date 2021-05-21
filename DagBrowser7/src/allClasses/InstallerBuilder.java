@@ -73,6 +73,8 @@ public class InstallerBuilder
       }
     
     protected void installToVolumeListV(List<File> addedVolumeListOfFiles)
+      /* This method installs to each volume in addedVolumeListOfFiles
+       * after getting confirmation from the user.  */
       {
         queueAndDisplayOutputSlowV(
           "\n\nAvailable volume[s]: "
@@ -87,28 +89,20 @@ public class InstallerBuilder
         }
 
     private void installToVolumeV(File volumeFile)
-      /* This method checks the volume specified by volumeFile.
-       */
+      /* This method installs to the volume specified by volumeFile.  */
       {
-        theAppLog.debug("VolumeChecker.checkVolumeV(.) begins.");
+        theAppLog.debug("InstallerBuilder.installToVolumeV(.) begins.");
         String resultString;
-        queueAndDisplayOutputSlowV("\n\nInstalling to " + volumeFile + "\n");
-        buildFolderFile= new File(volumeFile,"InfogoraTemp");
+        queueAndDisplayOutputSlowV("\n\nInstalling to " + volumeFile);
+        buildFolderFile= new File(volumeFile,"InfogoraInstall");
       goReturn: {
       goFinish: {
-        resultString= FileOps.makeDirectoryAndAncestorsString(
-            buildFolderFile);
-        if (! isAbsentB(resultString)) {
-          resultString= combineLinesString(
-              "error creating folder", resultString);
-          break goFinish;
-          }
-        resultString= writeFilesReturnString(buildFolderFile);
-        if (! isAbsentB(resultString)) {
-          resultString= combineLinesString(
-              "error during writing of files", resultString);
-          break goFinish;
-          }
+        resultString= createFolderReturnString(buildFolderFile);
+        if (! isAbsentB(resultString)) break goFinish;
+        resultString= writeAppFileReturnString(buildFolderFile);
+        if (! isAbsentB(resultString)) break goFinish;
+        resultString= writeReadMeFileReturnString(buildFolderFile);
+        if (! isAbsentB(resultString)) break goFinish;
       }  // goFinish:
         if (! isAbsentB(resultString)) { // Report error.
           reportWithPromptSlowlyAndWaitForKeyV(
@@ -118,29 +112,56 @@ public class InstallerBuilder
         reportWithPromptSlowlyAndWaitForKeyV(
           "The operation completed without error.");
       }  // goReturn:
-        theAppLog.debug("VolumeChecker.checkVolumeV(.) ends.");
+        theAppLog.debug("InstallerBuilder.installToVolumeV(.) ends.");
         return;
       }
 
-    private String writeFilesReturnString(File destinationFolderFile)
-      /* This method creates an installation by 
-       * writing all the installation files to the folder specified by 
+    private String createFolderReturnString(File buildFolderFile)
+      // This method creates the installation folder.
+      {
+        queueAndDisplayOutputSlowV("\nCreating folder "+buildFolderFile);
+        String resultString= FileOps.makeDirectoryAndAncestorsString(
+            buildFolderFile);
+        if (! isAbsentB(resultString))
+          resultString= combineLinesString(
+              "error creating folder", resultString);
+        return resultString;
+        }
+
+    private String writeAppFileReturnString(File destinationFolderFile)
+      /* This method writes the app file to the folder specified by 
        * destinationFolderFile which is assumed to exist already.
        * It returns null if success, an error String if not.
        */
       {
         String errorString= null;
-        File sourceFile= 
-            //// AppInstanceManager.standardAppFile;
-            //// FileOps.makeRelativeToAppFolderFile( 
-            ////   AppSettings.exeInitiatorFile
-            ////   );
+        queueAndDisplayOutputSlowV("\nWriting app file.");
+        File sourceFile=
             FileOps.makeRelativeToAppFolderFile(Config.appString + ".exe");
         File destinationFile= 
             new File(destinationFolderFile, sourceFile.getName());
         boolean successB= FileOps.tryCopyFileB(sourceFile, destinationFile);
         if (!successB) {
           errorString= "Error copying file "+sourceFile+" to "+destinationFile;
+          }
+        return errorString;
+        }
+
+    private String writeReadMeFileReturnString(File destinationFolderFile)
+      /* This method writes the app file to the folder specified by 
+       * destinationFolderFile which is assumed to exist already.
+       * It returns null if success, an error String if not.
+       */
+      {
+        String errorString= null;
+        queueAndDisplayOutputSlowV("\nWriting ReadMe.txt file.  NOT REALLY.");
+        //// File sourceFile=
+        ////     FileOps.makeRelativeToAppFolderFile("Readme.txt");
+        File destinationFile= 
+            new File(destinationFolderFile, "ReadMe.txt");
+        boolean successB= true; //// FileOps.tryCopyFileB(sourceFile, destinationFile);
+        if (!successB) {
+          errorString= "Error writing file "+destinationFile;
           }
         return errorString;
         }
