@@ -99,7 +99,7 @@ public class FileOps
           if (tmpFile == null) break toReturn;
           Path sourcePath= sourceFile.toPath();
           Path tmpPath= tmpFile.toPath();
-          if (!interruptibleTryCopyFileB(sourceFile,tmpFile)) 
+          if (!tryRawCopyFileB(sourceFile,tmpFile)) 
             break toReturn;
           if (!copyTimeAttributesB(sourcePath,tmpPath)) 
             break toReturn;
@@ -186,8 +186,8 @@ public class FileOps
           }
         return tmpFile;
         }
-    
-    private static boolean interruptibleTryCopyFileB(
+
+    private static boolean tryRawCopyFileB(
         File sourcesourceFile, File destinationFile) 
       /* This method tries to copy the sourceFile to the destinationFile.
         If there is an error, the copy fails.
@@ -195,22 +195,49 @@ public class FileOps
         This method returns true if the copy succeeds, false otherwise.
         */
       {
-        theAppLog.info("interruptibleTryCopyFileB(..) begins.");
+        theAppLog.info("tryRawCopyFileB(.) begins.");
         InputStream theInputStream= null;
-        OutputStream theOutputStream= null;
+        //// OutputStream theOutputStream= null;
         boolean successB= false;
         try {
             theInputStream= new FileInputStream(sourcesourceFile);
+            //// theOutputStream= new FileOutputStream(destinationFile);
+            //// successB= copyStreamBytesB(theInputStream,theOutputStream);
+            successB= tryCopyingInputStreamToFileB(theInputStream,destinationFile);
+          } catch (Exception e) {
+              theAppLog.exception("tryRawCopyFileB(.)",e); 
+          } finally { // Close things, error or not.
+            Closeables.closeWithErrorLoggingB(theInputStream);
+            //// Closeables.closeWithErrorLoggingB(theOutputStream);
+            ////  // Closing the OutputStream can block temporarily.
+          }
+        theAppLog.info("tryRawCopyFileB(.) ends, "
+            +"closes done, successB="+successB);
+        return successB;
+        }
+
+    public static boolean tryCopyingInputStreamToFileB(
+        InputStream theInputStream, File destinationFile) 
+      /* This method tries to copy the sourceFile to the destinationFile.
+        If there is an error, the copy fails.
+        If the copy is interrupted, the copy fails.
+        This method returns true if the copy succeeds, false otherwise.
+        */
+      {
+        theAppLog.info("tryRawCopyFileB(.) begins.");
+        OutputStream theOutputStream= null;
+        boolean successB= false;
+        try {
             theOutputStream= new FileOutputStream(destinationFile);
             successB= copyStreamBytesB(theInputStream,theOutputStream);
           } catch (Exception e) {
-              theAppLog.exception("interruptibleTryCopyFileB(..)",e); 
+              theAppLog.exception("tryRawCopyFileB(.)",e); 
           } finally { // Close things, error or not.
-            Closeables.closeWithErrorLoggingB(theInputStream);
+            //// Closeables.closeWithErrorLoggingB(theInputStream);
             Closeables.closeWithErrorLoggingB(theOutputStream);
               // Closing the OutputStream can block temporarily.
           }
-        theAppLog.info("interruptibleTryCopyFileB(..) ends, "
+        theAppLog.info("tryRawCopyFileB(.) ends, "
             +"closes done, successB="+successB);
         return successB;
         }

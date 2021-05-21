@@ -6,7 +6,9 @@ import static allClasses.AppLog.theAppLog;
 
 
 import java.awt.event.KeyEvent;
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -154,12 +156,15 @@ public class InstallerBuilder
        */
       {
         String errorString= null;
-        queueAndDisplayOutputSlowV("\nWriting ReadMe.txt file.  NOT REALLY.");
-        //// File sourceFile=
-        ////     FileOps.makeRelativeToAppFolderFile("Readme.txt");
+        queueAndDisplayOutputSlowV("\nWriting ReadMe.txt file.");
         File destinationFile= 
             new File(destinationFolderFile, "ReadMe.txt");
-        boolean successB= true; //// FileOps.tryCopyFileB(sourceFile, destinationFile);
+        String sourceString= "To install, [double-]click on "
+            + "the Infogora application file.";
+        InputStream sourceInputStream= 
+            new ByteArrayInputStream(sourceString.getBytes());
+        boolean successB= FileOps.tryCopyingInputStreamToFileB(
+            sourceInputStream, destinationFile);
         if (!successB) {
           errorString= "Error writing file "+destinationFile;
           }
