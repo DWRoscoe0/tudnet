@@ -3,6 +3,7 @@ package allClasses;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
 
@@ -265,6 +266,37 @@ public class Persistent
               }
             }
         theAppLog.debug("Persistent","Persistent.storeEpiNodeDataV(..) ends.");
+        }
+  
+    public void writeInstallationSubsetV( OutputStream theOutputStream )
+      /* This method writes a subset of storage needed for installations
+       * to theOutputStream. */
+      {
+        try {
+            theOutputStream.write( // Write leading comment.
+                "#---YAML-like installation subset data follows---".getBytes());
+            rootMapEpiNode.writeV( // Write all of theEpiNode tree
+              theOutputStream, 
+              0 // starting at indent level 0.
+              );
+            theOutputStream.write( // Write trailing comment.
+                (NL+"#--- end of installation subset data ---"+NL).getBytes());
+            }
+          catch (Exception theException) { 
+            theAppLog.exception(
+                "Persistent.writeInstallationSubsetV(..)", theException);
+            }
+          finally {
+            try {
+              if ( theOutputStream != null ) theOutputStream.close(); 
+              }
+            catch ( Exception theException ) { 
+              theAppLog.exception(
+                  "Persistent.writeInstallationSubsetV(..)", theException);
+              }
+            }
+        theAppLog.debug(
+            "Persistent","Persistent.writeInstallationSubsetV(..) ends.");
         }
   
     public void writingCommentLineV( 

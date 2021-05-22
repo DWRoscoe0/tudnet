@@ -40,7 +40,7 @@ public class InstallerBuilder
 
     // Locally stored injected dependencies.
     //// private String viewerClassString;
-    @SuppressWarnings("unused") ////
+    //// @SuppressWarnings("unused") ////
     private Persistent thePersistent;
   
     public InstallerBuilder( // constructor
@@ -191,16 +191,14 @@ public class InstallerBuilder
         queueAndDisplayOutputSlowV("\nWriting PersistentEpiNode.txt file.");
         File destinationFile= 
             new File(destinationFolderFile, "PersistentEpiNode.txt");
-        String sourceString= "This will be replaced by configuration data.";
+        //// String sourceString= "This will be replaced by configuration data.";
         //// InputStream sourceInputStream=
         ////     new ByteArrayInputStream(sourceString.getBytes());
         try {
-          PipedOutputStream thePipedOutputStream=
-              new PipedOutputStream();
-          PipedInputStream thePipedInputStream=
+          PipedOutputStream thePipedOutputStream= new PipedOutputStream();
+          PipedInputStream thePipedInputStream= 
             new PipedInputStream(thePipedOutputStream,1024);
-          thePipedOutputStream.write(sourceString.getBytes());
-          thePipedOutputStream.close();
+          //// thePipedOutputStream.write(sourceString.getBytes());
           Future<Boolean> theFutureOfBoolean= 
             theScheduledThreadPoolExecutor.submit(new Callable<Boolean>() {
                 public Boolean call() throws Exception {
@@ -208,8 +206,10 @@ public class InstallerBuilder
                       //// sourceInputStream, destinationFile);
                       thePipedInputStream, destinationFile);
                   }});
+          thePersistent.writeInstallationSubsetV(thePipedOutputStream);
+          thePipedOutputStream.close(); // This will terminate above thread.
           try { successB = theFutureOfBoolean.get(); } catch (Exception e) { 
-              successB= false; // Exception means failure.
+              successB= false; // Translate Exception to failure.
             }
           } catch (IOException e1) {
             /// TODO Auto-generated catch block
