@@ -224,7 +224,7 @@ public class FileOps
         This method returns true if the copy succeeds, false otherwise.
         */
       {
-        theAppLog.info("tryRawCopyFileB(.) begins.");
+        theAppLog.info("tryCopyingInputStreamToFileB(.) begins.");
         OutputStream theOutputStream= null;
         boolean successB= false;
         try {
@@ -237,7 +237,7 @@ public class FileOps
             Closeables.closeWithErrorLoggingB(theOutputStream);
               // Closing the OutputStream can block temporarily.
           }
-        theAppLog.info("tryRawCopyFileB(.) ends, "
+        theAppLog.info("tryCopyingInputStreamToFileB(.) ends, "
             +"closes done, successB="+successB);
         return successB;
         }

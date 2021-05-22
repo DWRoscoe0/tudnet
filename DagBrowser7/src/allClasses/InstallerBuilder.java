@@ -2,15 +2,21 @@ package allClasses;
 
 import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
+
 import static allClasses.AppLog.theAppLog;
 
 
 import java.awt.event.KeyEvent;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 
@@ -105,6 +111,8 @@ public class InstallerBuilder
         if (! isAbsentB(resultString)) break goFinish;
         resultString= writeReadMeFileReturnString(buildFolderFile);
         if (! isAbsentB(resultString)) break goFinish;
+        resultString= writeConfigurationFileReturnString(buildFolderFile);
+        if (! isAbsentB(resultString)) break goFinish;
       }  // goFinish:
         if (! isAbsentB(resultString)) { // Report error.
           reportWithPromptSlowlyAndWaitForKeyV(
@@ -165,6 +173,48 @@ public class InstallerBuilder
             new ByteArrayInputStream(sourceString.getBytes());
         boolean successB= FileOps.tryCopyingInputStreamToFileB(
             sourceInputStream, destinationFile);
+        if (!successB) {
+          errorString= "Error writing file "+destinationFile;
+          }
+        return errorString;
+        }
+
+    private String writeConfigurationFileReturnString(
+        File destinationFolderFile)
+      /* This method writes the configuration file to the folder specified by 
+       * destinationFolderFile which is assumed to exist already.
+       * It returns null if success, an error String if not.
+       */
+      {
+        boolean successB= false;
+        String errorString= null;
+        queueAndDisplayOutputSlowV("\nWriting PersistentEpiNode.txt file.");
+        File destinationFile= 
+            new File(destinationFolderFile, "PersistentEpiNode.txt");
+        String sourceString= "This will be replaced by configuration data.";
+        //// InputStream sourceInputStream=
+        ////     new ByteArrayInputStream(sourceString.getBytes());
+        try {
+          PipedOutputStream thePipedOutputStream=
+              new PipedOutputStream();
+          PipedInputStream thePipedInputStream=
+            new PipedInputStream(thePipedOutputStream,1024);
+          thePipedOutputStream.write(sourceString.getBytes());
+          thePipedOutputStream.close();
+          Future<Boolean> theFutureOfBoolean= 
+            theScheduledThreadPoolExecutor.submit(new Callable<Boolean>() {
+                public Boolean call() throws Exception {
+                  return FileOps.tryCopyingInputStreamToFileB(
+                      //// sourceInputStream, destinationFile);
+                      thePipedInputStream, destinationFile);
+                  }});
+          try { successB = theFutureOfBoolean.get(); } catch (Exception e) { 
+              successB= false; // Exception means failure.
+            }
+          } catch (IOException e1) {
+            /// TODO Auto-generated catch block
+            e1.printStackTrace();
+          }
         if (!successB) {
           errorString= "Error writing file "+destinationFile;
           }
