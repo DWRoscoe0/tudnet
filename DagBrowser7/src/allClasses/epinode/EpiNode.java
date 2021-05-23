@@ -13,7 +13,7 @@ import static allClasses.SystemSettings.NL;
 public abstract class EpiNode 
 
   /* This is the base class for 
-    classes meant to represent YAML-like data.
+  classes meant to represent YAML-like data.
     It supports scalars, sequences, and maps, though not fully. 
     It does not support null values. 
     Subclasses follow this class.

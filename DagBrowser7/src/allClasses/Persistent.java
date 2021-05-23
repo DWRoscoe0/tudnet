@@ -244,7 +244,7 @@ public class Persistent
             theFileOutputStream= new FileOutputStream(
                 FileOps.makeRelativeToAppFolderFile(fileString));  
             theFileOutputStream.write( // Write leading comment.
-                "#---YAML-like EpiNode data output follows---".getBytes());
+                "#---YAML-like EpiNode data follows---".getBytes());
             theEpiNode.writeV( // Write all of theEpiNode tree
               theFileOutputStream, 
               0 // starting at indent level 0.
@@ -275,10 +275,7 @@ public class Persistent
         try {
             theOutputStream.write( // Write leading comment.
                 "#---YAML-like installation subset data follows---".getBytes());
-            rootMapEpiNode.writeV( // Write all of theEpiNode tree
-              theOutputStream, 
-              0 // starting at indent level 0.
-              );
+            writeInstallationSubsetComponentsV(theOutputStream);
             theOutputStream.write( // Write trailing comment.
                 (NL+"#--- end of installation subset data ---"+NL).getBytes());
             }
@@ -299,6 +296,34 @@ public class Persistent
             "Persistent","Persistent.writeInstallationSubsetV(..) ends.");
         }
   
+    private void writeInstallationSubsetComponentsV( 
+        OutputStream theOutputStream )
+      throws IOException
+      /* This method writes the components of 
+       * the subset of storage needed for installations
+       * to theOutputStream. */
+      {
+        writeSubsetComponentV("SubscribeeUserIds",theOutputStream);
+        writeSubsetComponentV("UnicasterIndexes",theOutputStream); 
+        }
+  
+    private void writeSubsetComponentV(
+        String keyString,OutputStream theOutputStream)
+      throws IOException
+      /* This method writes the subset component named by keyString
+       * to theOutputStream. */
+      {
+        EpiNode keyEpiNode= new ScalarEpiNode(keyString);
+        EpiNode valueEpiNode= rootMapEpiNode.getEpiNode(keyEpiNode);
+        
+        MapEpiNode.writeV( // Write all of theEpiNode tree
+          keyEpiNode,
+          valueEpiNode,
+          theOutputStream, 
+          0 // starting at indent level 0.
+          );
+        }
+
     public void writingCommentLineV( 
         PrintWriter thePrintWriter, String commentString ) 
       throws IOException

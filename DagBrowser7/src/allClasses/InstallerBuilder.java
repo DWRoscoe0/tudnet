@@ -22,8 +22,6 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 public class InstallerBuilder
 
-  //// extends NamedDataNode
-  //// extends VolumeDetector
   extends VolumeChecker
 
   /* This class is used to write a mass storage volume with
@@ -191,19 +189,14 @@ public class InstallerBuilder
         queueAndDisplayOutputSlowV("\nWriting PersistentEpiNode.txt file.");
         File destinationFile= 
             new File(destinationFolderFile, "PersistentEpiNode.txt");
-        //// String sourceString= "This will be replaced by configuration data.";
-        //// InputStream sourceInputStream=
-        ////     new ByteArrayInputStream(sourceString.getBytes());
         try {
           PipedOutputStream thePipedOutputStream= new PipedOutputStream();
           PipedInputStream thePipedInputStream= 
             new PipedInputStream(thePipedOutputStream,1024);
-          //// thePipedOutputStream.write(sourceString.getBytes());
           Future<Boolean> theFutureOfBoolean= 
             theScheduledThreadPoolExecutor.submit(new Callable<Boolean>() {
                 public Boolean call() throws Exception {
                   return FileOps.tryCopyingInputStreamToFileB(
-                      //// sourceInputStream, destinationFile);
                       thePipedInputStream, destinationFile);
                   }});
           thePersistent.writeInstallationSubsetV(thePipedOutputStream);
@@ -250,7 +243,6 @@ public class InstallerBuilder
       // instance variables.
   
         // Constructor-injected variables.
-        //// private Persistent thePersistent;
         
     // Constructors and constructor-related methods.
 

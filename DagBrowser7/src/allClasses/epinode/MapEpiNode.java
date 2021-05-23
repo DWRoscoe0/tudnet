@@ -33,7 +33,7 @@ public class MapEpiNode extends EpiNode
 
     
     // Methods that output to OutputStreams.
-    
+
     public synchronized void writeV(OutputStream theOutputStream) 
         throws IOException
       { 
@@ -65,14 +65,41 @@ public class MapEpiNode extends EpiNode
         while(true) { // Iterate over all entries.
           if (! entryIterator.hasNext()) // More entries? 
             break; // No, so exit.
-          EpiNode.newLineAndIndentV(theOutputStream, indentI);
           scanMapEntry= entryIterator.next(); // Yes, get current entry.
-          scanMapEntry.getKey().writeV(theOutputStream, indentI); // Write key.
-          theOutputStream.write(": ".getBytes()); // Write key-value separator.
-          scanMapEntry.getValue().writeV( // Write value.
-              theOutputStream, 
-              indentI + 2); // Indent components, if any, here.
+          writeV( scanMapEntry, theOutputStream, indentI ); // Write entry. 
           }
+        }
+
+    public static synchronized void writeV(
+          Map.Entry<EpiNode,EpiNode> theMapEntry,
+          OutputStream theOutputStream, 
+          int indentI 
+          ) 
+        throws IOException
+      /* Writes theMapEntry to theOutputStream at indent level indentI. */
+      {
+        EpiNode keyEpiNode= theMapEntry.getKey();
+        EpiNode valueEpiNode= theMapEntry.getValue();
+
+        MapEpiNode.writeV(keyEpiNode,valueEpiNode,theOutputStream,indentI);
+        }
+
+    public static synchronized void writeV(
+          EpiNode keyEpiNode,
+          EpiNode valueEpiNode,
+          OutputStream theOutputStream, 
+          int indentI 
+          ) 
+        throws IOException
+      /* Writes the key-value pair <keyEpiNode,valueEpiNode> 
+       * to theOutputStream at indent level indentI. */
+      {
+        EpiNode.newLineAndIndentV(theOutputStream, indentI);
+        keyEpiNode.writeV(theOutputStream, indentI); // Write key.
+        theOutputStream.write(": ".getBytes()); // Write key-value separator.
+        valueEpiNode.writeV( // Write value.
+            theOutputStream, 
+            indentI + 2); // Indent components, if any, here.
         }
 
 
