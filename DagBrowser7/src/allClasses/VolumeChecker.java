@@ -149,8 +149,10 @@ public class VolumeChecker
        */
       {
         theAppLog.debug("VolumeChecker.checkVolumeV(.) begins.");
-        operationDequeOfStrings= new ArrayDeque<String>();
         String resultString;
+      goReturn: {
+      goFinish: {
+        operationDequeOfStrings= new ArrayDeque<String>();
         readCheckedBytesL=0;
         volumeTotalBytesL= volumeFile.getTotalSpace();
         spinnerStateI= 0;
@@ -159,13 +161,13 @@ public class VolumeChecker
             checkingStartTimeMsL;
         reportNumberI= 0;
         queueAndDisplayOutputSlowV("\n\nChecking " + volumeFile + "\n");
+        resultString= deleteAllVolumeFilesReturnString(volumeFile);
+        if (! isAbsentB(resultString)) break goReturn;
         offsetOfProgressReportI= thePlainDocument.getLength();
         pushOperationV("VolumeChecker");
         buildFolderFile= new File(volumeFile,"InfogoraTemp");
         initialVolumeFreeBytesL= volumeFile.getUsableSpace();
         toCheckTotalBytesL= initialVolumeFreeBytesL;
-      goReturn: {
-      goFinish: {
         resultString= FileOps.makeDirectoryAndAncestorsString(
             buildFolderFile);
         if (! isAbsentB(resultString)) {
@@ -193,17 +195,42 @@ public class VolumeChecker
             buildFolderFile,FileOps.requiredConfirmationString);
         resultString= combineLinesString(resultString, deleteErrorString);
         replaceOperationAndRefreshProgressReportV("done");
-        if (! isAbsentB(resultString)) { // Report error.
-          reportWithPromptSlowlyAndWaitForKeyV(
-              "Abnormal termination:\n" + resultString);
-          break goReturn;
-          }
-        reportWithPromptSlowlyAndWaitForKeyV(
-          "The operation completed without error.");
       }  // goReturn:
+        if (! isAbsentB(resultString)) // Report error or success.
+          reportWithPromptSlowlyAndWaitForKeyV( // Report error.
+              "Abnormal termination:\n" + resultString);
+          else 
+          reportWithPromptSlowlyAndWaitForKeyV( // Report success.
+            "The operation completed without error.");
         theAppLog.debug("VolumeChecker.checkVolumeV(.) ends.");
         return;
       } // checkVolumeV(.)
+
+    protected String deleteAllVolumeFilesReturnString(File volumeFile)
+      /* This method erases File volumeFile,
+       * meaning it deletes all non-hidden files on the volume,
+       * if the user gives permission.
+       */
+      {
+        String resultString= "Permission to delete was refused.";
+      goReturn: {
+        if (!getConfirmationKeyPressB(
+            "This operation will first erase "+volumeFile
+            + " !\nDo you really want to do this?") 
+            )
+          break goReturn;
+        java.awt.Toolkit.getDefaultToolkit().beep(); // Get user's attention.
+        if (!getConfirmationKeyPressB(
+            "Are you certain that you want to ERASE "+volumeFile+" ! ?"))
+          break goReturn;
+        queueAndDisplayOutputSlowV("\nDeleting files...");
+        resultString= FileOps.deleteRecursivelyReturnString(
+            volumeFile,FileOps.requiredConfirmationString);
+        queueAndDisplayOutputSlowV("done.");
+        resultString= null; // Signal success.
+      } // goReturn:
+      return resultString;
+      }
 
     private String writeTestReturnString(File testFolderFile)
       /* This method does a write test by writing files in
@@ -629,7 +656,7 @@ public class VolumeChecker
       {
         long nowTimeMsL= getTimeMsL();
         String outputString= ""
-            + "\nProgress-Report-Number: " + (++reportNumberI)
+            + "\n\nProgress-Report-Number: " + (++reportNumberI)
               + " " + advanceAndGetSpinnerString()
             + columnHeadingString()
             + bytesString()
