@@ -519,7 +519,7 @@ public class VolumeChecker
       {
         boolean confirmedB= false;
         String responseString= promptSlowlyAndGetKeyString(
-          "\n\n"
+          "\n"
           + confirmationQuestionString
           + " [y/n] "
           );

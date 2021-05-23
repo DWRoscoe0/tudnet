@@ -88,7 +88,7 @@ public class InstallerBuilder
           );
         for (File theFile : addedVolumeListOfFiles) {
           if (getConfirmationKeyPressB( // Install if user okays it.
-               "Would you like to install to " + theFile + " ? ")
+              "Would you like to install to " + theFile + " ? ")
               )
             installToVolumeV(theFile);
           }
@@ -103,6 +103,8 @@ public class InstallerBuilder
         buildFolderFile= new File(volumeFile,"InfogoraInstall");
       goReturn: {
       goFinish: {
+        resultString= deleteAllVolumeFilesReturnString(volumeFile);
+        if (! isAbsentB(resultString)) break goFinish;
         resultString= createFolderReturnString(buildFolderFile);
         if (! isAbsentB(resultString)) break goFinish;
         resultString= writeAppFileReturnString(buildFolderFile);
@@ -122,6 +124,32 @@ public class InstallerBuilder
       }  // goReturn:
         theAppLog.debug("InstallerBuilder.installToVolumeV(.) ends.");
         return;
+      }
+
+    private String deleteAllVolumeFilesReturnString(File volumeFile)
+      /* This method erases File volumeFile,
+       * meaning it deletes all non-hidden files on the volume,
+       * if the user gives permission.
+       */
+      {
+        String resultString= "Permission to delete was refused.";
+      goReturn: {
+        if (!getConfirmationKeyPressB(
+            "This operation will first erase "+volumeFile
+            + " !\nDo you really want to do this?") 
+            )
+          break goReturn;
+        java.awt.Toolkit.getDefaultToolkit().beep(); // Get user's attention.
+        if (!getConfirmationKeyPressB(
+            "Are you certain that you want to ERASE "+volumeFile+" ! ?"))
+          break goReturn;
+        queueAndDisplayOutputSlowV("\nDeleting files...");
+        resultString= FileOps.deleteRecursivelyReturnString(
+            volumeFile,FileOps.requiredConfirmationString);
+        queueAndDisplayOutputSlowV("done.");
+        resultString= null; // Signal success.
+      } // goReturn:
+      return resultString;
       }
 
     private String createFolderReturnString(File buildFolderFile)
