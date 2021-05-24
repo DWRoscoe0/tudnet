@@ -3,10 +3,6 @@ package allClasses;
 import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
 
-import static allClasses.AppLog.theAppLog;
-
-
-import java.awt.event.KeyEvent;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -18,6 +14,8 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+
+import static allClasses.AppLog.theAppLog;
 
 
 public class InstallerBuilder
@@ -32,6 +30,8 @@ public class InstallerBuilder
    * * ReadMe.txt
    * * Persistent.txt
    * * User Content
+   * 
+   * Later it might optionally include multi-media content.
    */
 
   {
@@ -236,81 +236,5 @@ public class InstallerBuilder
             new TitledTextViewer( inTreePath, inDataTreeModel,"Huh????????????");
           return theJComponent;
         }
-    
-    // variables.
-    
-      // static variables.
-
-      // instance variables.
-  
-        // Constructor-injected variables.
-        
-    // Constructors and constructor-related methods.
-
-      public enum State
-        {
-          INITIAL_GREETING,
-          AWAIT_DEVICE_INSERTION
-          }
-
-      State theState= State.INITIAL_GREETING;
-      State nextState= null;
-      
-      @SuppressWarnings("unused") //////
-      private void cycleStateMachineV()
-        {
-          while (true) {
-            switch (theState) {
-              case INITIAL_GREETING: initialGreetingV(); break;
-              case AWAIT_DEVICE_INSERTION: awaitDeviceInsertionV(); break;
-              }
-            if (null == nextState) break;  // Exit loop and return.
-            theState= nextState;
-            nextState= null;
-            }
-        }
-      
-      private void initialGreetingV()
-        {
-          append(
-              "\nTo begin building a volume with installation files,"+
-              "\nplease insert the device to use into a USB port."+
-              "\nIf you have already inserted one then please "+
-              "\nremove it and insert it again.");
-          nextState= State.AWAIT_DEVICE_INSERTION;
-          }
-
-      private void awaitDeviceInsertionV()
-        {
-          append(
-              "\n\nThis is where we wait.");
-          }
-
-      private void append(String theString) {}
-
-      @SuppressWarnings("unused") ////
-      private void processKeyPressedV(KeyEvent theKeyEvent)
-        //// Thread safety might be a problem.  
-        //// Only insertString(.) is thread safe.
-        {
-          //// if(theKeyEvent.getKeyCode() == KeyEvent.VK_ENTER){
-          theAppLog.debug( "InstallerBuilder.processKeyPressedV(.) called.");
-          //// theKeyEvent.consume(); // Prevent further processing.
-          //// ioIJTextArea.append("\nA key was pressed.\n");
-          }
-
-      @SuppressWarnings("unused") ////
-      private void putCursorAtEndDocumentV()
-        {
-          ////
-          }
-
-    // rendering methods.  to be added ??
-
-    // TreeAware interface code for TreeHelper access.
-
-      public TreeHelper theTreeHelper;
-
-      public TreeHelper getTreeHelper() { return theTreeHelper; }
 
     }
