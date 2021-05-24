@@ -37,8 +37,6 @@ public class InstallerBuilder
   {
 
     // Locally stored injected dependencies.
-    //// private String viewerClassString;
-    //// @SuppressWarnings("unused") ////
     private Persistent thePersistent;
   
     public InstallerBuilder( // constructor
@@ -47,7 +45,6 @@ public class InstallerBuilder
         ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor
         )
       {
-        //// super.initializeV(nameString);
         super( // constructor
           nameString, // Node name.
           thePersistent,
@@ -150,10 +147,13 @@ public class InstallerBuilder
             FileOps.makeRelativeToAppFolderFile(Config.appString + ".exe");
         File destinationFile= 
             new File(destinationFolderFile, sourceFile.getName());
-        boolean successB= FileOps.tryCopyFileB(sourceFile, destinationFile);
-        if (!successB) {
-          errorString= "Error copying file "+sourceFile+" to "+destinationFile;
-          }
+        errorString= FileOps.tryCopyFileReturnString(
+            sourceFile, destinationFile);
+        if (! isAbsentB(errorString))
+          errorString= combineLinesString(
+            "Error copying file "+sourceFile+" to "+destinationFile,
+            errorString
+            );
         return errorString;
         }
 
@@ -224,8 +224,7 @@ public class InstallerBuilder
     public JComponent getDataJComponent( 
         TreePath inTreePath, DataTreeModel inDataTreeModel 
         ) 
-      /* Returns a JComponent of type whose name is //////////doc
-       * which should be a viewer capable of displaying 
+      /* Returns a JComponent which should be a viewer capable of displaying 
        * this DataNode and executing the command associated with it.
        * The DataNode to be viewed should be 
        * the last element of inTreePath,
@@ -257,7 +256,7 @@ public class InstallerBuilder
       State theState= State.INITIAL_GREETING;
       State nextState= null;
       
-      @SuppressWarnings("unused") ////
+      @SuppressWarnings("unused") //////
       private void cycleStateMachineV()
         {
           while (true) {

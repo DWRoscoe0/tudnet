@@ -91,25 +91,40 @@ public class FileOps
         It logs any exception which causes failure.
         */
       {
-        theAppLog.debug("tryCopyFileB(..) begins");
+        return 
+          ( null 
+            == 
+            tryCopyFileReturnString(sourceFile, destinationFile)
+            );
+        }
+  
+    public static String tryCopyFileReturnString( 
+        File sourceFile, File destinationFile)
+      /* This method tries to copy the sourceFile to the destinationFile.
+        It returns null if the copy succeeds, 
+        a String describing the reason for failure if the copy fails.
+        It logs any exception which causes failure.
+        */
+      {
+        theAppLog.debug("tryCopyFileReturnString(.) begins");
+        String errorString= null; // Assume success.
         File tmpFile= null;
-        boolean successB= false; // Assume we will not be successful.
         toReturn: {
           tmpFile= createTemporaryFile("Copy",destinationFile.getParentFile());
           if (tmpFile == null) break toReturn;
           Path sourcePath= sourceFile.toPath();
           Path tmpPath= tmpFile.toPath();
-          if (!tryRawCopyFileB(sourceFile,tmpFile)) 
+          errorString= tryRawCopyFileReturnString(sourceFile,tmpFile);
+          if (null != errorString)
             break toReturn;
           if (!copyTimeAttributesB(sourcePath,tmpPath)) 
             break toReturn;
           if (!atomicRenameB(tmpFile.toPath(), destinationFile.toPath())) 
             break toReturn;
-          successB= true;
           } // toReturn:
         deleteDeleteable(tmpFile); // Delete possible temporary file debris.
-        theAppLog.info("tryCopyFileB(..) copySuccessB="+successB);
-        return successB;
+        theAppLog.info("tryCopyFileReturnString(.) errorString="+errorString);
+        return errorString;
         }
   
     public static boolean atomicRenameB(
@@ -187,103 +202,129 @@ public class FileOps
         return tmpFile;
         }
 
-    private static boolean tryRawCopyFileB(
+    private static String tryRawCopyFileReturnString(
         File sourcesourceFile, File destinationFile) 
       /* This method tries to copy the sourceFile to the destinationFile.
         If there is an error, the copy fails.
         If the copy is interrupted, the copy fails.
-        This method returns true if the copy succeeds, false otherwise.
+        This method returns null if the copy succeeds, 
+        a String describing the failure if the copy fails.
         */
       {
-        theAppLog.info("tryRawCopyFileB(.) begins.");
+        theAppLog.info("XtryRawCopyFileB(.) begins.");
         InputStream theInputStream= null;
-        //// OutputStream theOutputStream= null;
-        boolean successB= false;
+        String errorString= null;
         try {
             theInputStream= new FileInputStream(sourcesourceFile);
-            //// theOutputStream= new FileOutputStream(destinationFile);
-            //// successB= copyStreamBytesB(theInputStream,theOutputStream);
-            successB= tryCopyingInputStreamToFileB(theInputStream,destinationFile);
+            errorString= tryCopyingInputStreamToFileReturnString(
+                theInputStream,destinationFile);
           } catch (Exception e) {
-              theAppLog.exception("tryRawCopyFileB(.)",e); 
+              theAppLog.exception("XtryRawCopyFileB(.)",e); 
           } finally { // Close things, error or not.
+            theAppLog.info("XtryRawCopyFileB(.) closing InputStream.");
             Closeables.closeWithErrorLoggingB(theInputStream);
-            //// Closeables.closeWithErrorLoggingB(theOutputStream);
-            ////  // Closing the OutputStream can block temporarily.
           }
-        theAppLog.info("tryRawCopyFileB(.) ends, "
-            +"closes done, successB="+successB);
-        return successB;
+        theAppLog.info("XtryRawCopyFileB(.) ends, "
+            +"closes done, errorString="+errorString);
+        return errorString;
         }
 
     public static boolean tryCopyingInputStreamToFileB(
         InputStream theInputStream, File destinationFile) 
+      /* This is an adaptor method for callers which expect a boolean result.  
+       * */
+      { 
+        return 
+          ( null 
+            == 
+            tryCopyingInputStreamToFileReturnString(
+                theInputStream, destinationFile));
+        }
+
+    public static String tryCopyingInputStreamToFileReturnString(
+        InputStream theInputStream, File destinationFile) 
       /* This method tries to copy the sourceFile to the destinationFile.
         If there is an error, the copy fails.
         If the copy is interrupted, the copy fails.
-        This method returns true if the copy succeeds, false otherwise.
+        This method returns null if the copy succeeds, 
+        or a String describing the cause of the failure if the copy fails.
         */
       {
-        theAppLog.info("tryCopyingInputStreamToFileB(.) begins.");
+        theAppLog.info("tryCopyingInputStreamToFileReturnString(.) begins.");
         OutputStream theOutputStream= null;
         boolean successB= false;
+        String errorString= null;
         try {
             theOutputStream= new FileOutputStream(destinationFile);
-            successB= copyStreamBytesB(theInputStream,theOutputStream);
+            errorString= copyStreamBytesReturnString(
+                theInputStream,theOutputStream);
           } catch (Exception e) {
-              theAppLog.exception("tryRawCopyFileB(.)",e); 
+              theAppLog.exception(
+                  "tryCopyingInputStreamToFileReturnString(.)",e); 
           } finally { // Close things, error or not.
-            //// Closeables.closeWithErrorLoggingB(theInputStream);
+            theAppLog.info(
+              "tryCopyingInputStreamToFileReturnString(.) closing OutputStream.");
             Closeables.closeWithErrorLoggingB(theOutputStream);
               // Closing the OutputStream can block temporarily.
           }
-        theAppLog.info("tryCopyingInputStreamToFileB(.) ends, "
+        theAppLog.info("tryCopyingInputStreamToFileReturnString(.) ends, "
             +"closes done, successB="+successB);
-        return successB;
+        return errorString;
         }
   
     public static boolean copyStreamBytesB( 
+        InputStream theInputStream, OutputStream theOutputStream)
+      /* This is an adaptor method for callers which expect a boolean result.  
+       * */
+      { 
+        return 
+          ( null 
+            == 
+            copyStreamBytesReturnString(theInputStream, theOutputStream)
+            );
+        }
+  
+    public static String copyStreamBytesReturnString(
         InputStream theInputStream, OutputStream theOutputStream)
       /* This method copies all [remaining] bytes
         from theInputStream to theOutputStream.
         The streams are assumed to be open at entry 
         and they will remain open at exit.
-        It returns true if the copy of all data finished, 
-        false if it does not finish for any reason.
-        A Thread interrupt will interrupt the copy.
+        It returns null if the copy of all data finished without error.
+        It returns a String if the copy does not finish,
+        and the String describes the reason.
+        A Thread interrupt will interrupt the copy operation.
         */
       {
-        theAppLog.info("copyStreamBytesV(..) begins.");
+        theAppLog.info("copyStreamBytesReturnString(.) begins.");
+        String errorString;
         long startTimeMsL= System.currentTimeMillis();
         int byteCountI= 0;
-        boolean successB= false; // Assume we fill fail.
         try {
           byte[] bufferAB= new byte[1024];
           int lengthI;
           while (true) {
             lengthI= theInputStream.read(bufferAB);
             if (lengthI <= 0) // Transfer completed.
-              { successB= true; break; } // Record success and exit loop.
+              { errorString= null; break; } // Record success and exit loop.
             theOutputStream.write(bufferAB, 0, lengthI);
             byteCountI+= lengthI;
             if (EpiThread.testInterruptB()) { // Thread interruption.
-              theAppLog.info(true, 
-                  "copyStreamBytesV(..) terminated by interrupted");
+              errorString= "terminated by thread interrupt";
               break; // Exit loop without success.
               }
             }
           } 
         catch (IOException theIOException) {
-          if (EpiThread.testInterruptB()) // Thread interruption.
-            theAppLog.info(
-              "copyStreamBytesV(..) interrupted plus "+theIOException);
-            else
-              theAppLog.exception("copyStreamBytesV(..) terminated by",theIOException);
+          errorString= "failed because of "+theIOException;
+          theAppLog.exception("copyStreamBytesReturnString(.) terminated by",theIOException);
           }
-        theAppLog.info( "copyStreamBytesV() successB="+successB
+        String logString= errorString;
+        if (null==logString) logString= "succeeded";
+        theAppLog.info( "copyStreamBytesReturnString(.) "+ logString
             +", bytes transfered=" + byteCountI
             +", elapsed ms=" + (System.currentTimeMillis()-startTimeMsL));
-        return successB;
+        return errorString;
         }
   
     public static boolean copyTimeAttributesB(
@@ -344,7 +385,6 @@ public class FileOps
 
     public static String deleteRecursivelyReturnString(
         File theFile,String confirmationString) 
-      //// throws IOException 
       {
         String errorString= null;
       goReturn: {
