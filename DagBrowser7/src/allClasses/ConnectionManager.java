@@ -691,8 +691,8 @@ public class ConnectionManager
       { 
         decodePeerMapEpiNodeV(
             messageMapEpiNode,
-            thePersistent.getEmptyOrString(Config.userIdString) 
-              // Use local UserId as context.
+            thePersistent.getRootMapEpiNode().getEmptyOrString(
+                Config.userIdString) // Use local UserId as context.
             ); 
         }
 
@@ -754,7 +754,8 @@ public class ConnectionManager
           if // Exit if same IDs, meaning subject peer is actually local peer
             ( subjectPeerMapEpiNode.getEmptyOrString(
                 Config.userIdString).equals(
-                    thePersistent.getEmptyOrString(Config.userIdString)))
+                  thePersistent.getRootMapEpiNode().getEmptyOrString(
+                      Config.userIdString)))
             break toReturn; // so exit.
           if // Exit if subject peer is not connected to the remote peer.
             (! subjectPeerMapEpiNode.isTrueB("isConnected")) 

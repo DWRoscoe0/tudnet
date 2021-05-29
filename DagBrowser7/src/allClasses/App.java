@@ -85,14 +85,16 @@ public class App { // The App, especially pre-GUI stuff.
      	*/
 	  {
 	    String nodeIdentyString= 
-	    		thePersistent.getEmptyOrString(Config.userIdString);
+	    		thePersistent.getRootMapEpiNode().getEmptyOrString(
+	    		    Config.userIdString);
 	    if ( ! nodeIdentyString.isEmpty() ) {
 	    	  ; // Do nothing because identity is already defined.
 	    	} else { // Define and store identity.
 	    		Random theRandom= new Random();  // Construct random # generator.
           theRandom.setSeed( System.currentTimeMillis() ); // Seed with time.
 	    		BigInteger identityBigInteger= new BigInteger(256, theRandom);
-	    		thePersistent.putV(Config.userIdString, ""+identityBigInteger);
+	    		thePersistent.getRootMapEpiNode().putV(
+	    		    Config.userIdString, ""+identityBigInteger);
 	    	}
 	  	}
 

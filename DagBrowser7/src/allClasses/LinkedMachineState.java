@@ -604,7 +604,8 @@ public class LinkedMachineState
   }
 
   private boolean testForOurUserIdB(String inIdentityString) {
-    boolean resultB = thePersistent.getEmptyOrString(Config.userIdString).equals(inIdentityString);
+    boolean resultB = thePersistent.getRootMapEpiNode().getEmptyOrString(
+        Config.userIdString).equals(inIdentityString);
     if (resultB)
       theAppLog.warning("LinkedMachineState.thisIsOurUserIdB(.) UNICASTER IS US!");
     return resultB;
@@ -625,7 +626,9 @@ public class LinkedMachineState
     fieldsMapEpiNode.putV(
         "HelloCount", helloCountI);
     fieldsMapEpiNode.putV( // Add UserId.
-        Config.userIdString, thePersistent.getEmptyOrString(Config.userIdString));
+        Config.userIdString, 
+        thePersistent.getRootMapEpiNode().getEmptyOrString(
+            Config.userIdString));
     MapEpiNode helloMapEpiNode= MapEpiNode.makeSingleEntryMapEpiNode( // Wrap in HELLO map.
         "HELLO", fieldsMapEpiNode);
     helloMapEpiNode.writeV(theNetcasterOutputStream); // Write complete map as 2nd block.

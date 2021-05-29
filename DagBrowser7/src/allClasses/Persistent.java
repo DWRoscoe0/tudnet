@@ -303,7 +303,6 @@ public class Persistent
        * the subset of storage needed for installations
        * to theOutputStream. */
       {
-        writeSubsetComponentV("SubscribeeUserIds",theOutputStream);
         writeSubsetComponentV("UnicasterIndexes",theOutputStream); 
         }
   
@@ -352,120 +351,41 @@ public class Persistent
         }
 
 
-    // Service methods for get and put operations.
-    // There are basically wrappers for operations on the rootMapEpiNode.
-	  
-	  public void putV( String keyString, String valueString )
-	    /* This associates valueString with keyString.  */
-	    {
-	      rootMapEpiNode.putV(keyString, valueString);
-		  	}
-	
-	  public String getEmptyOrString( String keyString )
-		  /* Returns the value String associated with keyString,
-		    or the empty string if there is none.
-		   	*/
-		  {
-				return getString( keyString, "" );
-			  }
-		
-	  private String getString( String keyString, String defaultValueString )
-			/* Returns the value String associated with keyString,
-		    or defaultValueString if there is no value String stored.
-		   	*/
-		  {
-  			String childValueString= getString(keyString); 
-	  	  if (childValueString == null) 
-	  	  	childValueString= defaultValueString;
-				return childValueString;
-		  }
-		
-	  private String getString( String keyString)
-			/* This is like getEpiNode(keyString) except that
-			  instead of returning an EpiNode, 
-			  it returns the value String stored there.
-			  If either the node or the value String are not at 
-			  the location specified by String then null is returned.
-		   	*/
-		  {
-  	      String resultValueString= null; // Default result, to be overridden.
-        goReturn: {
-          EpiNode keyEpiNode= new ScalarEpiNode(keyString);
-          EpiNode valueEpiNode= rootMapEpiNode.getEpiNode(keyEpiNode);
-          if (valueEpiNode == null) // If there is no node with this key
-            break goReturn; // return with default null String.
-          resultValueString= // Get node's string value.
-              valueEpiNode.toString(); 
-        } // goReturn:
-	  			return resultValueString;
-		  }
+    /* Service methods for get and put operations.
+      
+      Many of these are basically pass-through wrappers for 
+      operations on the rootMapEpiNode.
+      ///org They can probably be eliminated after 
+      references to thePersisten are replaced by thePersistent.rootMapEpiNode
+      in other classes.
+      
+      Some public methods could be rewritten now to eliminate private methods,
+      but that would be a waste.  The callers should be rewritten
+      so that both the the public and private methods can be eliminated
+      simultaneously.
+     */
 
     public MapEpiNode getOrMakeMapEpiNode(String keyString)
       /* This is equivalent to
-              getOrMakeMapEpiNode(baseMapEpiNode, listKeyString)
+              getOrMakeFromPathMapEpiNode(keyString)
+        but is meant to be used with single element paths.
+        It reports an error if keyString contains 2 or more elements.
+        */
+      {
+        //// return getOrMakeFromPathMapEpiNode( keyString );
+        return rootMapEpiNode.getOrMakeMapEpiNode(keyString);
+        }
+
+    @SuppressWarnings("unused") ////
+    private MapEpiNode getOrMakeFromPathMapEpiNode(String pathString)
+    
+      /* This is equivalent to
+              MapEpiNode.getOrMakeFromPathMapEpiNode(baseMapEpiNode, pathString)
         with baseMapEpiNode set to rootMapEpiNode.
         */
       {
-        return getOrMakeMapEpiNode( rootMapEpiNode, keyString );
-        }
-
-
-    private MapEpiNode getOrMakeMapEpiNode(
-        MapEpiNode baseMapEpiNode, String pathString)
-      /* Returns the MapEpiNode associated with pathString.
-        If there is none, then it makes one, along with 
-        all the other MapEpiNodes between it and baseMapEpiNode. 
-        It interprets pathString as a path from baseMapEpiNode
-        to the desired MapEpiNode.
-        Each path element is used as a key to select or create
-        the next child in the MapEpiNode hierarchy.
-        It does one key lookup, or new node creation, 
-        for every element of the path.
-        An empty pathString is interpreted to mean baseMapEpiNode.
-        It returns a null if there is an error parsing pathString.
-        
-        /// Note, it appears that this is always called with 
-          a path of one element, in other words, a simple key.
-          So it always finds or creates one MapEpiNode.
-        */
-      {
-          // appLogger.debug(
-          //    "Persistent.getOrMakeMapEpiNode("
-          //      +pathString+") begins.");
-          MapEpiNode resultMapEpiNode= // Initial result value
-              baseMapEpiNode; // is base node.
-        goReturn: {
-          int separatorKeyOffsetI; // Offset of next key/path separator. 
-        goLogError: {
-          if (pathString.isEmpty()) break goReturn; // return base node.
-          int scanKeyOffsetI= 0; // Starting offset for path separator search.
-          while (true) { // Get/make child nodes until desired one is reached.
-            separatorKeyOffsetI= // Get offset of next key/path separator. 
-                pathString.indexOf(Config.pathSeperatorC, scanKeyOffsetI);
-            if (separatorKeyOffsetI < 0) // There is no next path separator...
-              { // So next node is final node.  Return appropriate child node.
-                String keyString= // Extract final key from path.
-                    pathString.substring(scanKeyOffsetI, pathString.length());
-                if (keyString.isEmpty()) break goLogError;
-                resultMapEpiNode= // Get or make associated child node.
-                  resultMapEpiNode.getOrMakeMapEpiNode(keyString);
-                break goReturn; // Return with the non-null value.
-                }
-            ///This code does not appear to be reached with single key paths.
-            String keyString= // Extract next key from path up to separator.
-                pathString.substring(scanKeyOffsetI, separatorKeyOffsetI);
-            if (keyString.isEmpty()) break goLogError;
-            resultMapEpiNode= // Get or make associated/next child node.
-                resultMapEpiNode.getOrMakeMapEpiNode(keyString);
-            scanKeyOffsetI= separatorKeyOffsetI+1; // Compute next key offset.
-          } // while (true)... Loop to select or make next descendant node.
-        } // goLogError:
-          String errorString= "Persistent.getMapEpiNode(..), "
-              +"error getting value, path="+pathString;
-          theAppLog.error(errorString); // Log error string.
-          resultMapEpiNode= null; // and return null.
-        } // goReturn:
-          return resultMapEpiNode;
+        return MapEpiNode.getOrMakeFromPathMapEpiNode( 
+            rootMapEpiNode, pathString );
         }
 
     public MapEpiNode getRootMapEpiNode() 

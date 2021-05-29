@@ -8,10 +8,10 @@ public class PeersCursor extends PersistentCursor {
   
   /* This class is a piterator for peer data in the Persistent data structure.
 
-    The use of this class, as well as PersistentCursor, is being deprecated.
-    / Field access elimination (mostly done)
-    = Stop using as iterator (not done yet)
-    The plan is to use more conventional map iterator techniques.
+    ///org The use of this class and PersistentCursor are being deprecated.
+      The plan is to use more conventional map iterator techniques.
+      / Field access elimination (mostly done)
+      = Stop using as iterator (not done yet)
 
     Each type of app data should have its own distinguishing type.
       Presently they are:
@@ -107,7 +107,8 @@ public class PeersCursor extends PersistentCursor {
     {
       boolean resultB= Nulls.equals(
           ownerIdString,
-          thePersistent.getEmptyOrString(Config.userIdString)
+          thePersistent.getRootMapEpiNode().getEmptyOrString(
+              Config.userIdString)
           );
       if (resultB)
           theAppLog.debug(

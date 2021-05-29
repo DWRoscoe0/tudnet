@@ -11,6 +11,7 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 
+import allClasses.Config;
 import allClasses.RandomAccessInputStream;
 import allClasses.SystemSettings;
 
@@ -455,6 +456,7 @@ public class MapEpiNode extends EpiNode
     public synchronized String createEmptyMapWithNewKeyString()
       /* This method creates a new map entry in this map with
         a new unique key and a nested empty map as the value.
+        The key may be used as an identifier for the nested map value.
         The only guarantee about the key is that it will be unique.
         It creates a key which is a small integer converted to a String,
         even though other keys in the map might not be numerical indexes.
@@ -480,6 +482,63 @@ public class MapEpiNode extends EpiNode
         return scanKeyString; // Return key of the created entry.
         } 
 
+    public static MapEpiNode getOrMakeFromPathMapEpiNode(
+        MapEpiNode baseMapEpiNode, String pathString)
+      /* Returns the MapEpiNode identified by following 
+        the path described by pathString relative to baseMapEpiNode. 
+        If there is no MapEpiNode there, then it makes one, along with 
+        all the other MapEpiNodes between it and baseMapEpiNode. 
+        It interprets pathString as a path from baseMapEpiNode
+        to the desired MapEpiNode.
+        Each path element is used as a key to select or create
+        the next child in the MapEpiNode hierarchy.
+        It does one key lookup, or new node creation, 
+        for every element of the path.
+        An empty pathString is interpreted to mean baseMapEpiNode.
+        It returns a null if there is an error parsing pathString.
+        
+        This method has been tested, but is not presently used.
+        */
+      {
+          // appLogger.debug(
+          //    "Persistent.getOrMakeMapEpiNode("
+          //      +pathString+") begins.");
+          MapEpiNode resultMapEpiNode= // Initial result value
+              baseMapEpiNode; // is base node.
+        goReturn: {
+          int separatorKeyOffsetI; // Offset of next key/path separator. 
+        goLogError: {
+          if (pathString.isEmpty()) break goReturn; // return base node.
+          int scanKeyOffsetI= 0; // Starting offset for path separator search.
+          while (true) { // Get/make child nodes until desired one is reached.
+            separatorKeyOffsetI= // Get offset of next key/path separator. 
+                pathString.indexOf(Config.pathSeperatorC, scanKeyOffsetI);
+            if (separatorKeyOffsetI < 0) // There is no next path separator...
+              { // So next node is final node.  Return appropriate child node.
+                String keyString= // Extract final key from path.
+                    pathString.substring(scanKeyOffsetI, pathString.length());
+                if (keyString.isEmpty()) break goLogError;
+                resultMapEpiNode= // Get or make associated child node.
+                  resultMapEpiNode.getOrMakeMapEpiNode(keyString);
+                break goReturn; // Return with the non-null value.
+                }
+            ///This code does not appear to be reached with single key paths.
+            String keyString= // Extract next key from path up to separator.
+                pathString.substring(scanKeyOffsetI, separatorKeyOffsetI);
+            if (keyString.isEmpty()) break goLogError;
+            resultMapEpiNode= // Get or make associated/next child node.
+                resultMapEpiNode.getOrMakeMapEpiNode(keyString);
+            scanKeyOffsetI= separatorKeyOffsetI+1; // Compute next key offset.
+          } // while (true)... Loop to select or make next descendant node.
+        } // goLogError:
+          String errorString= "Persistent.getOrMakeFromPathMapEpiNode(..), "
+              +"error getting value, path="+pathString;
+          theAppLog.error(errorString); // Log error string.
+          resultMapEpiNode= null; // and return null.
+        } // goReturn:
+          return resultMapEpiNode;
+        }
+
     public synchronized MapEpiNode getOrMakeMapEpiNode(String keyString)
       /* This method returns the MapEpiNode value 
         that is associated with the key keyString.  
@@ -497,6 +556,13 @@ public class MapEpiNode extends EpiNode
        */
       {
           // theAppLog.debug("MapEpiNode.getOrMakeMapEpiNode(String) called.");
+          { // Error check key.
+            int separatorKeyOffsetI= // Search for key/path separator. 
+                keyString.indexOf(Config.pathSeperatorC, 0);
+            if (separatorKeyOffsetI >= 0) // Key contains a path separator
+              theAppLog.error(
+                  "MapEpiNode.getOrMakeMapEpiNode() Not a single element path.");
+            }
           MapEpiNode valueMapEpiNode; // For function result. 
           EpiNode valueEpiNode= null;
         toReturnValue: { 

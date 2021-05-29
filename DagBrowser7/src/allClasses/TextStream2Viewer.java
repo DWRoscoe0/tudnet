@@ -147,7 +147,8 @@ public class TextStream2Viewer
                     theTextStream2.processInputTextStringV(
                         messageString + "\n", // Note added newline.
                         thePlainDocument.getLength(), // Append at end.
-                        thePersistent.getEmptyOrString(Config.userIdString)
+                        thePersistent.getRootMapEpiNode().getEmptyOrString(
+                            Config.userIdString)
                         );
                     }
                   theKeyEvent.consume(); // Prevent further processing.

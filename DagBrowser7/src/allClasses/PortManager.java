@@ -101,7 +101,7 @@ s     */
         if (normalPortI != 0) break toReturnValue; // Exit if already defined.
   	 	toGenerateNewValue: {
 		    String localPortString= 
-		    		thePersistent.getEmptyOrString("Port");
+		    		thePersistent.getRootMapEpiNode().getEmptyOrString("Port");
 		    if ( localPortString.isEmpty() ) break toGenerateNewValue; 
 	      try { 
 	  	    normalPortI= Integer.parseInt( localPortString );
@@ -118,7 +118,8 @@ s     */
         theAppLog.info(
         		"getNormalPortI() generated new random port: "+normalPortI);
         /// thePersistent.putV("normalPort", ""+normalPortI); // Using old erroneous name.
-        thePersistent.putV("Port", ""+normalPortI); // Make it persist.
+        thePersistent.getRootMapEpiNode().putV(
+            "Port", ""+normalPortI); // Make it persist.
 			} // toReturnValue:
 	  	  return normalPortI;
       }

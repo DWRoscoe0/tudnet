@@ -220,7 +220,8 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
   private void createLocalTextStreamV()
     {
       String theRootIdString= 
-          thePersistent.getEmptyOrString(Config.userIdString);
+          thePersistent.getRootMapEpiNode().getEmptyOrString(
+              Config.userIdString);
       createAndAddTextStream(theRootIdString);
       }
 
@@ -233,7 +234,9 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
           peersFile.list();
       if ( peerStrings == null ) // If array is null replace with empty array.
         peerStrings= new String[ 0 ]; // Replace with empty array.
-      String localRootIdString= thePersistent.getEmptyOrString(Config.userIdString);
+      String localRootIdString= 
+          thePersistent.getRootMapEpiNode().getEmptyOrString(
+              Config.userIdString);
       for (String scanRootIdString : peerStrings) // For every Peer folder 
         toPeerDone: { // Try creating a TextStream for this peer.
           if (localRootIdString.equals(scanRootIdString)) // Skip ourselves. 
@@ -361,7 +364,7 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
      */
     {
       String localUserIdString= // Get the UserId of the local node.
-        thePersistent.getEmptyOrString(Config.userIdString);
+        thePersistent.getRootMapEpiNode().getEmptyOrString(Config.userIdString);
       boolean isLocalB= // Compare UserIds.
         (localUserIdString.equals(theUserIdString)); 
       return isLocalB;

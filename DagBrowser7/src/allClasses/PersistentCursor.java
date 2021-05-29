@@ -8,15 +8,16 @@ import allClasses.epinode.MapEpiNode;
 
 public class PersistentCursor 
 
-  /* This class acts like a cursor into a data node hierarchy.
+  /* This class acts like a cursor into a Persistent data node hierarchy,
+    consisting now of EpiNodes, mostly MapEpiNodes.
     The hierarchy can be thought of as a tree data structure.
     At the branches of the tree are maps whose keys are strings.  
     At the leaves are string values. 
      
     This class caches several values.
     * A string representing the iterator position.
-    * An upper map representing the data structure being iterated.
-    * A lower map representing the data structure at the iterator position.
+    * An outer map representing the data structure being iterated.
+    * A inner map representing the data structure at the iterator position.
       Fields within this structure can be accessed by name.
 
     This class combines the ability to use paths to name positions within the hierarchy,
@@ -24,6 +25,10 @@ public class PersistentCursor
 
     The iterator that this class implements is a pitererator,
     which is an iterator with pointer semantics.
+
+    ///org The use of this class and PeersCursor are being deprecated.
+      The plan is to use more conventional map iterator techniques.
+      See PeersCursor.  Eliminate the use of that first.
 
     ///org Stop using this class's field-access methods.
       Use the MapEpiNode methods that these field-access methods call.
@@ -60,7 +65,7 @@ public class PersistentCursor
 		protected final Persistent thePersistent; // Underlying dual-format storage structure.
 
     private String entryKeyString= EMPTY_STRING; // Key name String of 
-      // presently selected entry in the upper map, the map being iterated.
+      // presently selected entry in the outer map, the map being iterated.
       // If this is the EMPTY_STRING then no map entry is selected.
       // In this case the iterator position may be considered to be
       // before the beginning of the entries or after the end of the entries.
@@ -68,10 +73,10 @@ public class PersistentCursor
 
     // EpiNode data cursor variables.
     protected MapEpiNode parentMapEpiNode= null;
-      // MapEpiNode which is the upper map which is being iterated.
+      // MapEpiNode which is the outer map which is being iterated.
     protected MapEpiNode childMapEpiNode= null;
-      // MapEpiNode which is the value of the selected entry of the upper map. 
-      // It is the lower map which contains various data fields of that entry. 
+      // MapEpiNode which is the value of the selected entry of the outer map. 
+      // It is the inner map which contains various data fields of that entry. 
 
 
 		public PersistentCursor( Persistent thePersistent ) // constructor
@@ -109,7 +114,8 @@ public class PersistentCursor
 			{
 				// appLogger.debug(
 				// 		"PersistentCursor.setListPathV("+listPathString+") begins.");
-        parentMapEpiNode= thePersistent.getOrMakeMapEpiNode(listKeyString);
+        parentMapEpiNode= 
+          thePersistent.getRootMapEpiNode().getOrMakeMapEpiNode(listKeyString);
 	  		return moveToFirstKeyString();
 				}
 
@@ -163,7 +169,7 @@ public class PersistentCursor
 			{
         String nextEntryKeyString= null;
         nextEntryKeyString= 
-          parentMapEpiNode.getNextString(entryKeyString);
+          parentMapEpiNode.getNextString(entryKeyString); /// This is slow.
 		    setEntryKeyString(  // Set cursor to this position
             Nulls.toEmptyString( // after converting possible null to empty string.
                 nextEntryKeyString ) );
