@@ -29,12 +29,14 @@ public class JavaFXGUI
    * normally offered to show how to start a JavaFX-only app.
    * I succeeded, but the result was definitely a kludge.
    * 
-   * ///org Since that time I learned how to 
-   * start the JavaFX runtime using the startup(.) method.
-   * That method is called from startJavaFXAndReturnString() method,
+   * Since that time I learned how to start the JavaFX runtime 
+   * using the method, without involving an Application subclass instance.
+   * This is done by calling startup(.) from startJavaFXAndReturnString(),
    * which is called from Infogora.main(.).
-   * It should now be possible to eliminate much of the kludginess
-   * in the code that follows it.
+   * 
+   * ///org It should now be possible to eliminate much of the kludginess
+   * in the code that follows it, and maybe move all the remaining code into
+   * the JavaFXApp class.
    */
 
   {
@@ -52,15 +54,25 @@ public class JavaFXGUI
     private Map<Window,Boolean> windowMap= // Stores showing windows. 
         new HashMap<Window,Boolean>();
   
-    private static JavaFXGUI theJavaFXGUI=  // The 1 instance of this class. 
-        null;
+    // Startup confirmation variables.
+    private static LockAndSignal runningLockAndSignal= new LockAndSignal();
+    private static volatile JavaFXGUI theJavaFXGUI= null; // Only instance. 
+    public static volatile boolean runtimeIsActiveB= false; 
+
+    static { // Used to log when this class is loaded.
+        theAppLog.debug("JavaFXGUI loaded.");
+        }
 
 
     // Methods
 
-    public static String startJavaFXAndReturnString()
-      /* This method starts the JavaFX runtime 
-       * so other elements can use it, for example for error reporting.
+    public static String startRuntimeAndReturnString()
+      /* This method manually starts the JavaFX runtime 
+       * so that it can be used early, before it would be started
+       * by a normal application launch.
+       * This might be useful, for example,
+       * for reporting errors in JavaFX dialogs that occur
+       * before the normal JavaFX Application GUI is displayed.
        * 
        * ///ano Only a few lines of the code in this method 
        * are needed to start the JavaFX runtime.
@@ -69,40 +81,67 @@ public class JavaFXGUI
        * Debug logging was added to debug the anomaly,
        * and a timeout was added to mitigate it.  
        * After that code was added, the failures stopped,
-       * but the mitigation code was left in.
+       * but the mitigation code was left in case they returned.
        * The code was tested with a breakpoint to simulate the failure.
+       * 
        * This method returns a String describing the anomalous behavior
        * if the failure happened, or null if it didn't happen.
+       * Failure can happen in 2 ways:
+       * * The runtime failed to start.
+       * * The runtime started but confirmation was not received.
+       * Either will be reported as failure.
+       * 
+       * ///enh Use 2 time-out values:
+       * * A value above which is considered a failure.
+       * * A value above which this method will not wait.
+       *   In this case the runtime might not have started.
+       *   
+       * There is no guarantee that the JavaFX runtime is running
+       * when this method returns.
        * 
        */
       {
         String resultString= null; ///ano
-        ///dbg System.out.println( ///ano
-        ///dbg     "Infogora.startJavaFXAndReturnString() begins."); ///ano
-        LockAndSignal runningLockAndSignal= new LockAndSignal();
+        theAppLog.debugToConsole( ///ano
+          "JavaFXGUI.startAndReturnString() begins."); ///ano
         long javaFXStartTimeMsL= System.currentTimeMillis(); ///ano
-        PlatformImpl.startup( () -> { // Start JavaFX runtime and confirm it.
-          ///dbg System.out.println( ///ano
-          ///dbg     "Infogora.startJavaFXAndReturnString() notify begins."); ///ano  
-          runningLockAndSignal.notifyingV(); // Confirm that runtime is up.
-          ///dbg System.out.println( ///ano
-          ///dbg     "Infogora.startJavaFXAndReturnString() notify ended."); ///ano
-          } );
+        PlatformImpl.startup( // Start FX runtime with confirmation Runnable. 
+          () -> {
+            //// EpiThread.interruptibleSleepB(5000); //////
+            theAppLog.debugToConsole("JavaFXGUI.startAndReturnString() " ///ano
+                + "notify begins, RUNTIME IS UP!"); ///ano
+            runtimeIsActiveB= true; // Confirm that JavaFX queue is active.
+            runningLockAndSignal.notifyingV(); // Notify about confirmation.
+            theAppLog.debugToConsole( ///ano
+                "JavaFXGUI.startAndReturnString() notify ended."); ///ano
+            } );
+        final long maxWaitL= 2000; // Maximum wait loop time.
         long waitStartTimeMsL= System.currentTimeMillis(); ///ano
-        ///dbg System.out.println( ///ano
-        ///dbg     "Infogora.startJavaFXAndReturnString() wait begins."); ///ano
-        Input theInput=  // Wait for runtime startup.  ///ano With timeout.
-          runningLockAndSignal.waitingForInterruptOrIntervalOrNotificationE(
-            javaFXStartTimeMsL, ///ano Mitigation, time-out interval start. 
-            2000); ///ano Mitigation, time-out interval length, 2 seconds.
+        theAppLog.debugToConsole( ///ano
+            "JavaFXGUI.startAndReturnString() wait begins."); ///ano
+        Input theInput= Input.NOTIFICATION; // Assume fast confirmation.
+        while (true) { // Loop until one of the exit conditions is satisfied.
+          theAppLog.debugToConsole( ///ano
+              "JavaFXGUI.startAndReturnString() "
+              + "theJavaFXGUI=="+theJavaFXGUI
+              + ", runtimeIsActiveB=="+runtimeIsActiveB);
+          if (runtimeIsActiveB) break; // Exit if runtime is active.
+          if (Input.INTERRUPTION == theInput) break; // Exit if interrupted.
+          if (Input.TIME == theInput) break; ///ano Exit if time-out.
+          theInput=  // Wait for runtime startup.  ///ano With timeout.
+            runningLockAndSignal.waitingForInterruptOrIntervalOrNotificationE(
+              javaFXStartTimeMsL, ///ano Mitigation, time-out interval start. 
+              maxWaitL); ///ano Mitigation, time-out interval length.
+          } // while(true)
+
         String waitResultString= ///ano
-            "Infogora.startJavaFXAndReturnString() wait ended because of "
+            "JavaFXGUI.startAndReturnString() wait ended because of "
             +theInput+".\n  Used total of "
             +(waitStartTimeMsL-javaFXStartTimeMsL)
             +"+"+(System.currentTimeMillis()-waitStartTimeMsL)
             +" ms.";
-        ///dbg System.out.println( ///ano Report how wait ended and the time needed.
-        ///dbg     waitResultString); ///ano
+        theAppLog.debugToConsole( ///ano Report how wait ended99.
+            waitResultString); ///ano
         if (theInput == Input.TIME) ///ano If wait time-out anomaly happened,
           resultString= waitResultString; ///ano return description string.
         return resultString; ///ano
@@ -119,22 +158,33 @@ public class JavaFXGUI
        * what will become the only instance of this class.
        */
     {
+      theAppLog.debug("initializeJavaFXGUI(.) begins.");
       if (null != theJavaFXGUI)
-        theAppLog.error("initializeJavaFXGUI.getJavaFXGUI(.) "
+        theAppLog.error("initializeJavaFXGUI(.) "
             + "Instance already constructed!");
         else
         { // Create instance and store injected dependencies.
-          theJavaFXGUI= new JavaFXGUI();
-          theJavaFXGUI.theShutdowner= theShutdowner;
-          theJavaFXGUI.theRootDataNode= theRootDataNode;
-          theJavaFXGUI.thePersistent= thePersistent;
-          theJavaFXGUI.theDataRoot= theDataRoot;
-          theJavaFXGUI.theSelections= theSelections;
+          JavaFXGUI aJavaFXGUI= new JavaFXGUI();
+          aJavaFXGUI.theShutdowner= theShutdowner;
+          aJavaFXGUI.theRootDataNode= theRootDataNode;
+          aJavaFXGUI.thePersistent= thePersistent;
+          aJavaFXGUI.theDataRoot= theDataRoot;
+          aJavaFXGUI.theSelections= theSelections;
+          theJavaFXGUI= aJavaFXGUI; // Finish by storing in static variable.
+          runningLockAndSignal.notifyingV(); // Inform caller of definition.
+          theAppLog.debugToConsole( ///ano
+          //// System.out.println( ///ano
+              "Infogora.initializeJavaFXGUI(.) defining "
+              + "theJavaFXGUI=="+theJavaFXGUI); ////
           }
+      theAppLog.debug("initializeJavaFXGUI(.) ends.");
       return theJavaFXGUI;
       }
 
-    private JavaFXGUI() {} // private constructor guarantees a single instance.
+    private JavaFXGUI() // private constructor guarantees a single instance.
+      {
+        theAppLog.debug("JavaFXGUI() constructor called.");
+        }
 
     public static JavaFXGUI getInstanceJavaFXGUI()
       /* This is the instance getter method.
@@ -143,6 +193,7 @@ public class JavaFXGUI
        * It exists mainly so that JavaFXApp can call back to this class.
        */
       {
+        theAppLog.debug("JavaFXGUI.getInstanceJavaFXGUI() called.");
         if (null == theJavaFXGUI) { // If not instantiated yet
           throw new IllegalStateException( // throw exception.
               "JavaFXGUI Instance not constructed yet!");
@@ -175,13 +226,22 @@ public class JavaFXGUI
        * both being part of the same app. 
        */
       {
+        theAppLog.debug("JavaFXGUI.startJavaFXLaunchV() begins.");
         Runnable javaFXRunnable= // Create launcher Runnable. 
           new Runnable() {
             @Override
             public void run() {
+              theAppLog.debug("javaFXRunnable.run() begins,"
+                + " calling JavaFXApp.launch(JavaFXApp.class, (String[])null);.");
               JavaFXApp.launch( // Launch sub-App as JavaFX Application.
                   JavaFXApp.class, (String[])null);
+              theAppLog.debug("javaFXRunnable.run() begins, "
+                  + "returned from JavaFXApp.launch(.),"
+                  + "calling theShutdowner.requestAppShutdownV().");
               theShutdowner.requestAppShutdownV();
+              theAppLog.debug("javaFXRunnable.run() "
+                  + "returned from theShutdowner.requestAppShutdownV(),"
+                  + "ending.");
               }
             };
         Thread javaFXLauncherThread= // Create launcher thread from Runnable.
@@ -189,22 +249,27 @@ public class JavaFXGUI
             javaFXRunnable,
             "JavaFXLauncher" // Thread name.
             );
+        theAppLog.debug("JavaFXGUI.startJavaFXLaunchV() calling "
+            + "javaFXLauncherThread.start().");
         javaFXLauncherThread.start(); // Start launcher thread.
+        theAppLog.debug("JavaFXGUI.startJavaFXLaunchV() ends.");
         }
     
-    public void continueStartV()
+    public void nestedStartV()
       /* This method continues the launch begun by 
        * the Application subclass start(Stage) method.
-       * It creates and starts some GUI Stages for the application, 
+       * It creates and starts one or more GUI Stages for the application, 
        * then exits.
        * 
-       * This method should be run only on the JavaFX application thread. 
+       * This method is run on the JavaFX application thread. 
        */
       {
         /// TreeStage.makeInitializeAndStartV(this); // Start tree demo stage.
         /// DemoStage.makeInitializeAndStartV(this); // Start button demo stage.
 
-        new Navigation( // Create and start the main JavaFX UI.
+        theAppLog.debug("JavaFXGUI.nestedStartV() begins,"
+            + " calling new Navigation(.).initializeAndStartV().");
+        new Navigation( // Create and start the main JavaFX UI Stage.
             theJavaFXGUI, 
             theRootDataNode, 
             thePersistent, 
@@ -212,14 +277,20 @@ public class JavaFXGUI
             theSelections
             ).initializeAndStartV();
 
-        // This method will now return to the Application.start(Stage) method.
-        // After Application.start(Stage) returns, the launch will be complete.
+        theAppLog.debug("JavaFXGUI.nestedStartV(), "
+            + "returned from new Navigation(.).initializeAndStartV(), "
+            + "ending.");
+
+        // This method will now return to the Application subclass
+        // JavaFXApp's start(Stage) method.
         }
     
     public void recordOpenWindowV(Window theWindow)
       /* This method records an opening (showing) of theWindow.  */
       {
+        theAppLog.debug("JavaFXGUI.recordOpenWindowV() begins.");
         windowMap.put(theWindow, true); // Record it in map.
+        theAppLog.debug("JavaFXGUI.recordOpenWindowV() ends.");
         }
 
     public void finalizeV()
@@ -231,8 +302,10 @@ public class JavaFXGUI
        * assuming other termination conditions are satisfied.  
        */
       {
+        theAppLog.debug("JavaFXGUI.finalizeV() begins.");
         for (Window theWindow : windowMap.keySet())
           theWindow.hide();
+        theAppLog.debug("JavaFXGUI.finalizeV() begins.");
         }
     
     public static void setDefaultStyle(Node theNode)

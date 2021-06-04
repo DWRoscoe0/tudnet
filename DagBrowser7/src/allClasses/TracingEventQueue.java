@@ -90,7 +90,7 @@ class TracingEventQueueMonitor extends Thread {
   		long startTimeL; // When a dispatch began. 
   		boolean reportedB; // true if limit exceeding happened.
   		
-  		EventValue(long startTimeL) { // consructor.
+  		EventValue(long startTimeL) { // constructor.
   			this.startTimeL= startTimeL;
   		  }
   		}

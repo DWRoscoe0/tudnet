@@ -3,6 +3,8 @@ package allClasses;
 import static allClasses.AppLog.theAppLog;
 import static allClasses.SystemSettings.NL;
 
+import allClasses.javafx.JavaFXGUI;
+
 public class Anomalies
 
   {
@@ -193,7 +195,13 @@ public class Anomalies
 
         java.awt.Toolkit.getDefaultToolkit().beep(); // Create audible Beep.
 
-        Dialogger.showModelessDialogV(messageString, "Anomaly Detected");
+        if (JavaFXGUI.runtimeIsActiveB) // If GUI is active, display dialog.
+          Dialogger.showModelessDialogV(messageString, "Anomaly Detected");
+        else
+          System.out.println(
+              "Anomalies.displayDialogV(.) called but GUI not yet operational."
+              + " messageString=="+messageString
+              );
         }
   
     }

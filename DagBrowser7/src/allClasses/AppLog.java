@@ -13,6 +13,7 @@ import java.nio.channels.FileLockInterruptionException;
 
 import allClasses.LockAndSignal.Input;
 import allClasses.epinode.MapEpiNode;
+import allClasses.javafx.JavaFXGUI;
 
 import static allClasses.AppLog.LogLevel.*;
 import static allClasses.SystemSettings.NL;
@@ -173,10 +174,10 @@ public class AppLog extends EpiThread
       only very limited conditions.  //? 
      	*/
       public static boolean testingForPingB= false;
-      private boolean debugEnabledB= true;
+      //// private boolean debugToConsoleEnabledB= true;
       private boolean consoleCopyModeB= false; // When true, logging goes to 
         // console as well as log file.
-        ///ehn change to Enum for generality and better self-documentation.
+        ///enh change to Enum for generality and better self-documentation.
       private boolean closeLoggingB= true;
 
     public void setIDProcessV( String processIDString )
@@ -374,8 +375,11 @@ public class AppLog extends EpiThread
       // This method is used to override the default log level at run time.
     	{ maxLogLevel= limitLogLevel; }
 
+    
+    // Delegating logging methods.
 
-    // Actual log methods start here.
+
+    // Special conditional log methods.
     
     public boolean testAndLogDisabledB(boolean disabledB, String logString)
       /* This method is used to log a special message about disabled code.
@@ -394,7 +398,8 @@ public class AppLog extends EpiThread
         return disabledB;
         }
 
-    // Non-delegating logging methods.
+
+    // Tracing methods.
     
     public void trace(String inString)
       /* This method is for tracing.  It writes only inString.
@@ -402,6 +407,9 @@ public class AppLog extends EpiThread
       { 
 				logB( TRACE, false, null, inString );
         }
+
+
+    // Debug methods.
   
     public void debug(String conditionString, String inString)
       /* This method writes a debug String inString to a log entry
@@ -413,43 +421,41 @@ public class AppLog extends EpiThread
           debug(inString);
         }
 
-    private MapEpiNode logMapEpiNode= null;
-    
-    public synchronized void setLogConditionMapV(MapEpiNode logMapEpiNode)
-      /* Used to define the MapEpiNode which stores log conditions. */
-      { 
-        this.logMapEpiNode= logMapEpiNode;
-        }
-    
-    public synchronized boolean isEnabledForLoggingB(String conditionString)
-      /* Returns true if the log condition specified by conditionString 
-       * is true.
-       * Returns false otherwise.
-       */
-      { 
-        boolean resultB= false; // Assume default result of logging disabled.
-        if (null != logMapEpiNode) // If logging conditions map defined
-          resultB= // override result with value from map. 
-            logMapEpiNode.isTrueB(conditionString);
-        return resultB; // Return condition. 
-        }
-
     public void debug(String inString)
-      /* This method writes a debug String inString to a log entry
-        but not to the console.
+      /* This method writes a debug String inString to a log entry.
         It is tagged as for debugging.
         */
       { 
-        if (debugEnabledB) 
-          logB( DEBUG, consoleCopyModeB, null, inString );
+        debug(false, inString);
         }
 
-    public void info(boolean debugB, String inString)
-      /* This method writes an information String inString to a log entry
-        but not to the console.
+    public void debugToConsole(String inString)
+      /* This method writes a debug String inString to a log entry
+        with a copy going to the console.
+        It is tagged as for debugging.
         */
       { 
-        info(debugB, null, inString); 
+        debug(true, inString);
+        }
+
+    public void debug(boolean toConsoleB, String inString)
+      /* This method writes a debug String inString to a log entry,
+        and to the console if either toConsoleB is true.
+        It is tagged as for debugging.
+        */
+      {
+        logB( DEBUG, toConsoleB, null, inString );
+        }
+
+
+    // Information methods.
+
+    public void info(boolean toConsoleB, String inString)
+      /* This method writes an information String inString to a log entry
+        and optionally to the console.
+        */
+      { 
+        info(toConsoleB, null, inString); 
         }
 
     public void info(Throwable theThrowable, String inString)
@@ -469,16 +475,19 @@ public class AppLog extends EpiThread
         info(false, null, inString); 
         }
 
-    public void info(
-        boolean consoleCopyEntryB, Throwable theThrowable, String inString)
+    public void info( // (toConsoleB, theThrowable, inString)
+        boolean toConsoleB, Throwable theThrowable, String inString)
       /* This method writes an information String inString to a log entry
         but not to the console.
         If theThrowable is not null then it displays that also.
-        If consoleCopyEntryB==true then out ismade to console also.
+        If toConsoleB==true then out ismade to console also.
         */
       { 
-				logB(INFO, consoleCopyEntryB, theThrowable, inString);
+				logB(INFO, toConsoleB, theThrowable, inString);
         }
+
+
+    // Exception methods.
     
     public void exceptionWithRethrowV(String inString, Exception e)
       throws Exception
@@ -530,6 +539,9 @@ public class AppLog extends EpiThread
             ; 
           }
         }
+
+
+    // Error methods.
     
     public void error(String inString)
       { 
@@ -552,9 +564,15 @@ public class AppLog extends EpiThread
         and should go through the Anomalies class.
         */
       { 
-        Anomalies.displayDialogV( // Display all errors as a dialog. 
+        if (JavaFXGUI.runtimeIsActiveB) // If GUI is active, display dialog.
+          Anomalies.displayDialogV( // Display all errors as a dialog. 
             "ERROR"+NL
             +inString);
+          else
+          System.out.println(
+              "AppLog.error(.) called but GUI not yet operational."
+              + inString + ", " + theThrowable
+              );
 
         synchronized(this) { // Must synchronized on AppLog object so 
           logB( ERROR, true, theThrowable, inString);
@@ -567,7 +585,10 @@ public class AppLog extends EpiThread
             ; 
           }
         }
-    
+
+
+    // Warning methods.
+
     public void warning(String inString)
       /* This method writes a warning error String inString to a log entry
        * to a dialog.
@@ -582,7 +603,10 @@ public class AppLog extends EpiThread
           // doStackTraceV(null);
           }
         }
-    
+
+
+    // Helper methods.
+
     public void doStackTraceV(Throwable theThrowable)
       /* This method might log a stack trace, if logStackTraceB is true.
         If it does, it does it as follows:
@@ -632,6 +656,30 @@ public class AppLog extends EpiThread
         }
 
 
+    // Log condition in Persistent storage.
+
+    private MapEpiNode logMapEpiNode= null;
+    
+    public synchronized void setLogConditionMapV(MapEpiNode logMapEpiNode)
+      /* Used to define the MapEpiNode which stores log conditions. */
+      { 
+        this.logMapEpiNode= logMapEpiNode;
+        }
+    
+    public synchronized boolean isEnabledForLoggingB(String conditionString)
+      /* Returns true if the log condition specified by conditionString 
+       * is true.
+       * Returns false otherwise.
+       */
+      { 
+        boolean resultB= false; // Assume default result of logging disabled.
+        if (null != logMapEpiNode) // If logging conditions map defined
+          resultB= // override result with value from map. 
+            logMapEpiNode.isTrueB(conditionString);
+        return resultB; // Return condition. 
+        }
+
+    
     /* LogB(..) and logV(..) family methods.
 
       * logB( theLogLevel ) returns true if theLogLevel is less than maxLogLevel.
@@ -646,7 +694,7 @@ public class AppLog extends EpiThread
       The following methods take various combinations of parameters 
       from the following set:
     	* LogLevel theLogLevel: used for filtering and is displayed. 
-      * boolean consoleCopyEntryB: controls whether a copy of the entry 
+      * boolean toConsoleB: controls whether a copy of the entry 
         goes to the console.
       * Throwable theThrowable: an exception to be displayed, if it is not null.
     	* String inString: message to be displayed.
@@ -655,14 +703,14 @@ public class AppLog extends EpiThread
 
     public synchronized boolean logB(
     		LogLevel theLogLevel, 
-    		boolean consoleCopyEntryB,
+    		boolean toConsoleB,
     		Throwable theThrowable, 
         String inString
     		)
 	    {
 	  		boolean loggingB= logB(theLogLevel);
 	  		if ( loggingB )
-	      		logV( theLogLevel, inString, theThrowable, consoleCopyEntryB );
+	      		logV( theLogLevel, inString, theThrowable, toConsoleB );
 	  		return loggingB;
       	}
 
@@ -695,13 +743,14 @@ public class AppLog extends EpiThread
     		logV(null, inString, null, false); 
     		}
 
+
     // Non-delegating logging methods.
     
     public synchronized void logV(
     		LogLevel theLogLevel, 
     		String inString, 
     		Throwable theThrowable, 
-    		boolean consoleCopyEntryB )
+    		boolean toConsoleB )
       /* The buck stops here.  
         This logging method does not delegate to another method in the family.
 
@@ -721,7 +770,7 @@ public class AppLog extends EpiThread
         * theThrowable if not null.
 
         This method also sends a copy of the log entry
-        to the console if consoleCopyEntryB is true.
+        to the console if toConsoleB is true.
 
         ///opt Replace String appends by StringBuilder appends, for speed?
         ///enh Add stackTraceB which displays stack,
@@ -736,13 +785,13 @@ public class AppLog extends EpiThread
           )
         { 
           openFileWithRetryDelayIfClosedV();
-          logToOpenFileV(theLogLevel,consoleCopyEntryB,theThrowable,inString);
+          logToOpenFileV(theLogLevel,toConsoleB,theThrowable,inString);
           closeFileV();
           }
         else // Buffered mode enabled or file is open.
         {
           openFileWithRetryDelayIfClosedV(); ///opt  needed?
-          logToOpenFileV(theLogLevel,consoleCopyEntryB,theThrowable,inString);
+          logToOpenFileV(theLogLevel,toConsoleB,theThrowable,inString);
           }
       }
 
@@ -780,7 +829,7 @@ public class AppLog extends EpiThread
 
     public synchronized void logToOpenFileV(
         LogLevel theLogLevel, 
-        boolean consoleCopyEntryB,
+        boolean toConsoleB,
         Throwable theThrowable, 
         String inString
         )
@@ -797,7 +846,7 @@ public class AppLog extends EpiThread
         		);
         aString+= " ";  //...a space,...
         
-   	  	if (consoleCopyEntryB || consoleCopyModeB) // ...a console flag if called for... 
+   	  	if (toConsoleB || consoleCopyModeB) // ...a console flag if called for... 
    	  		aString+= "CON ";
    	  	
         if ( theLogLevel != null ) { //..and the log level if present... 
@@ -805,7 +854,7 @@ public class AppLog extends EpiThread
 	        aString+= " ";  //...a space,...
 	        }
    	  	
-   	  	aString+= Thread.currentThread().getName(); // the name of thread,
+   	  	aString+= "["+Thread.currentThread().getName()+"]"; // the thread name,
         aString+= " ";  //...a space,...
    	    aString+= inString; //...the string to log,...
         aString+= " ";  //...and a space...
@@ -816,7 +865,7 @@ public class AppLog extends EpiThread
         
       	appendToOpenFileV(aString);  // Append it to log file.
         
-   	  	if (consoleCopyEntryB || consoleCopyModeB) // Append to console if called for... 
+   	  	if (toConsoleB || consoleCopyModeB) // Append to console if called for... 
    	  	  System.out.print(aString);
 
         lastMillisL= nowMillisL; // Saving present time as new last time.

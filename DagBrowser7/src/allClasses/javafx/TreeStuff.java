@@ -192,7 +192,7 @@ public class TreeStuff
        */
       {
         theAppLog.debug(
-            "TreeStuff.setSelectedDataNodeV(() "+theDataNode);
+            "TreeStuff.setSelectedDataNodeV() to "+theDataNode);
 
         selectedDataNode= theDataNode; // Store selection locally.
 

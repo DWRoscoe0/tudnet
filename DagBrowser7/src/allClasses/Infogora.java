@@ -141,12 +141,13 @@ class Infogora  // The class is the root of this app.
 
 	    { // main(.)
 
-        String javaFXStartAnomalyString= ///ano Save result for reporting later.
-            JavaFXGUI.startJavaFXAndReturnString(); // Start JavaFX runtime.
+        theAppLog= // Construct logger immediately because everything uses it.
+            new AppLog(new File(new File(
+                System.getProperty("user.home") ),Config.appString));
+	      theAppLog.enableCloseLoggingV( false ); // Close it when not in use.
 
-        theAppLog= new AppLog(new File( // Construct logger.
-	          new File(System.getProperty("user.home") ),Config.appString));
-	      theAppLog.enableCloseLoggingV( false );
+        String javaFXStartAnomalyString= ///ano Save result for reporting later.
+            JavaFXGUI.startRuntimeAndReturnString(); // Start JavaFX runtime.
 
 	      DefaultExceptionHandler.setDefaultExceptionHandlerV(); 
 	      // ((String)null).charAt(0); // This tests with a NullPointerException.
