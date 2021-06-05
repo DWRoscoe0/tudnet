@@ -570,11 +570,11 @@ public class AppLog extends EpiThread
             +inString);
           else
           System.out.println(
-              "AppLog.error(.) called but GUI not yet operational."
+              "\nAppLog.error(.) called but GUI not yet operational."
               + inString + ", " + theThrowable
               );
 
-        synchronized(this) { // Must synchronized on AppLog object so 
+        synchronized(this) { // Synchronized on AppLog object for coherence. 
           logB( ERROR, true, theThrowable, inString);
           doStackTraceV(theThrowable);
           }

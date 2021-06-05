@@ -125,7 +125,7 @@ public class Navigation extends EpiStage
           + "(Show Tree) and (Show Node) buttons alternate between views."
           ;
 
-        Dialogger.showModelessJavaFXDialogV(helpString, "JavaFX UI Help");
+        Dialogger.showModelessDialogB(helpString, "JavaFX UI Help");
         } // queueCommandHelpV()
         
     private void doDataNodeShowTreeButtonActionV()

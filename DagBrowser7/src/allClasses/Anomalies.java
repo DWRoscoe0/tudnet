@@ -3,8 +3,6 @@ package allClasses;
 import static allClasses.AppLog.theAppLog;
 import static allClasses.SystemSettings.NL;
 
-import allClasses.javafx.JavaFXGUI;
-
 public class Anomalies
 
   {
@@ -161,6 +159,11 @@ public class Anomalies
      * 
      * 
      * 
+     * * ///pos Integrate this Anomalies class into AppLog
+     *   as an injectable service.
+     *   This will mean creating a new AppLog method: anomaly(.),
+     *   or simply continue to treat all error(.) calls as anomalies.
+     * 
      * * ///pos When an anomaly is reported, give the user the option to
      *   suppress or control in other ways the reporting of 
      *   future instances of the same anomaly.  For example:
@@ -170,35 +173,48 @@ public class Anomalies
      *     if the app is running under an IDE,
      *     could be used to suspend the app and 
      *     allow the app developer to do some analysis.
-     *     This may need to use a modal dialog instead of modeless.
+     *     This may need to use a modal dialog instead of mode-less.
+     *     
      * * ///pos Have an Anomaly Central screen which allows the user to browse
      *     all the known anomalies, and for each anomaly:
-     *     * See a summary of recent activity. 
+     *     * See a summary of recent occurrences. 
      *     * See a history of occurrences.
      *     * Allow the user to adjust trigger settings as described above.
+     *     
      * * ///pos Better link anomalies with the app features
      *   whose performance they negatively affect, 
      *   and include the performance effects in anomaly reports.
+     *   
      * * ///pos Anomalies are already logged, but maybe they should be
      *   logged in a separate log file, one for anomalies only.
      *     
      */
   
-    public static void displayDialogV( 
+    public static void displayDialogV( ////// change this to displayDialogAndLogV? 
         String messageString )
-      /* This method displays a modeless dialog box 
+      /* This method is equivalent to displayDialogOnlyV(.) plus
+       * it logs the message.
+       */
+      {
+        theAppLog.info(
+            "Anomalies.displayDialogV(..) called," + NL + messageString);
+        displayDialogOnlyV(messageString);
+        }
+  
+    public static void displayDialogOnlyV(String messageString)
+      /* This method displays a mode-less dialog box 
        * that displays messageString as an anomaly.
        * It also plays a beep sound to get the user's attention.  
        */
       {
-        theAppLog.info("Anomalies.displayDialogV(..) called," + NL + messageString);
-
         java.awt.Toolkit.getDefaultToolkit().beep(); // Create audible Beep.
 
-        if (JavaFXGUI.runtimeIsActiveB) // If GUI is active, display dialog.
-          Dialogger.showModelessDialogV(messageString, "Anomaly Detected");
-        else
-          System.out.println(
+        //// if (JavaFXGUI.runtimeIsActiveB) // If GUI is active, display dialog.
+        if // Report anomaly via log file and UI dialog box. 
+          (Dialogger.showModelessDialogB(messageString, "Anomaly Detected"))
+          ; // Complete success, nothing else to do.
+          else // Successfully displayed to log, but not via dialog box.
+          System.out.println( // Display to console instead.
               "Anomalies.displayDialogV(.) called but GUI not yet operational."
               + " messageString=="+messageString
               );

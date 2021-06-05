@@ -18,24 +18,25 @@ public class JavaFXApp extends Application
    * It does not include the non-GUI business logic.
    * 
    * The only method that needs to be defined is start(Stage).
-   * Others were added for debugging.
+   * Other methods and a static code section 
+   * were added for debugging purposes.
    */
 
   {
-    
-    static {
+
+    static { // Added to log when this class is loaded.
         theAppLog.debug("JavaFXApp loaded.");
         }
-    
-    /*  Defining this constructor , with or without super(), causes:
-     *    java.lang.NoSuchMethodException: allClasses.javafx.JavaFXApp.<init>()
-    private JavaFXApp()
+
+    public JavaFXApp()
+      /* Note, this constructor must be public, otherwise a
+       *   java.lang.NoSuchMethodException: allClasses.javafx.JavaFXApp.<init>()
+       * will result.
+       */
       {
-        //// super();
+        super();
         theAppLog.debug("JavaFXApp() constructor called.");
         }
-     *    
-     */
 
     @Override
     public void init()

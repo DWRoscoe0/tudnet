@@ -1,5 +1,8 @@
 package allClasses;
 
+import static allClasses.AppLog.theAppLog;
+import static allClasses.SystemSettings.NL;
+
 import java.awt.Component;
 import java.awt.EventQueue;
 import java.awt.Frame;
@@ -24,32 +27,48 @@ import javafx.stage.Modality;
 public class Dialogger extends Object
 
   /* This class contains code related to the creation of dialogs.
-   * At first they will be simple message dialog, then error dialogs.
    * 
-   * ///enh Eventually add the ability to add message setting controls?
+   * It can create dialogs for both Swing and JavaFX,
+   * though Swing dialogs are being deprecated.
    * 
-   * ///pla Convert these to use JavaFX libraries instead of Swing libraries.
+   * The JavaFX method may be called at any time,
+   * but if the JavaFX runtime has not been started,
+   * no output will be produced.
+   * 
+   * ///enh Eventually add the ability to add message setting controls
+   * which deal with messages which happen a lot, by:
+   * * suppressing particular types of messages or 
+   * * reducing anomaly detection sensitivity.
+   * 
+   * ///enh Add ability to return user responses in the case of error dialogs,
+   * if that becomes useful.
+   * 
+   * ///enh UsesetAlwaysOnTop(boolean value) of the dialog's Stage
+   * for important error or anomaly dialogs so they will always show.
+   * Early anomaly dialogs are being obscured by the JavaFX Help dialog. 
+   * 
    */
    
   {
 
-    public static void showModelessDialogV(
+    public static boolean showModelessDialogB( // For JavaFX UI.
         String theString, String titleTailString)
       /* General-purpose non-modal (mode-less) dialog displayer.
-       * It presently calls a method to display a Swing dialog.
-       * ///pla Change to display a JavaFX dialog.
+       * It presently calls a method to display a JavaFX dialog.
+       * Earlier it displayed a Swing dialog.
        */
       {
         //// showModelessSwingDialogV(theString, titleTailString);
-        showModelessJavaFXDialogV(theString, titleTailString);
+        return showModelessJavaFXDialogB(theString, titleTailString);
         }
 
-    public static void showModelessJavaFXDialogV(
+    private static boolean showModelessJavaFXDialogB(
         String theString, String titleTailString)
       /* General-purpose non-modal (mode-less) dialog displayer.
-       * It queues the display of the dialog on the JavaFX Application Thread, 
-       * then returns immediately. 
-       * The dialog displays titleTailString after the app name in the title bar,
+       * It tries to queue a job to display the dialog 
+       * on the JavaFX Application Thread, then returns immediately. 
+       * The dialog displays titleTailString 
+       * after the app name in the title bar,
        * and displays theString in the main window,
        * and waits for the user to execute OK before it closes.  
        * 
@@ -58,23 +77,34 @@ public class Dialogger extends Object
 
        * */
       {
-        Platform.runLater( () -> {
-          String featureString= Config.appString + ": " + titleTailString;
-          Alert theAlert= new Alert(
-              AlertType.INFORMATION,
-              theString
-              );
-          theAlert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
-          theAlert.getDialogPane().setMinWidth(600); ///ano Fix for below.
-            ///ano getDialogPane().setMinWidth(Region.USE_PREF_SIZE) fails.
-            ///ano Also ended problem of title bar mostly off-screen.
-          JavaFXGUI.setDefaultStyle(theAlert.getDialogPane());
-          theAlert.initModality(Modality.NONE);
-          theAlert.setTitle(featureString);
-          theAlert.setHeaderText(featureString);
-          //// alert.showAndWait();
-          theAlert.show();
-          } );
+        boolean successB= true;
+        try {
+          Platform.runLater( () -> {
+            String featureString= Config.appString + ": " + titleTailString;
+            Alert theAlert= new Alert(
+                AlertType.INFORMATION,
+                theString
+                );
+            theAlert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
+            theAlert.getDialogPane().setMinWidth(600); ///ano Fix for below.
+              ///ano getDialogPane().setMinWidth(Region.USE_PREF_SIZE) fails.
+              ///ano Also ended problem of title bar mostly off-screen.
+            JavaFXGUI.setDefaultStyle(theAlert.getDialogPane());
+            theAlert.initModality(Modality.NONE);
+            theAlert.setTitle(featureString);
+            theAlert.setHeaderText(featureString);
+            //// alert.showAndWait();
+            theAlert.show();
+            } );
+          }
+        catch (IllegalStateException theIllegalStateException) {
+          theAppLog.error("DialoggerJavaFXGUI.showModelessJavaFXDialogV(() "
+              + "\n  "+theString); ///ano
+          successB= false;
+          }
+        theAppLog.info("Dialogger.showModelessJavaFXDialogB(.)," 
+            + NL + theString + " SuccessB= " + successB);
+        return successB;
         }
 
     public static void showModelessSwingDialogV( ///elim Delete when reproduced.

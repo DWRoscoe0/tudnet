@@ -208,10 +208,11 @@ class GUIManager
     public void initializeV()
       /* This method does the GUI initialization that 
         could not be done with constructor dependency injection.
-        It does it for both Swing and JavaFX.
-        It initializes JavaFX first because JavaFX GUI is now used for
-        various notification dialogs, which can be triggered by 
-        conditions in either Swing or JavaFX code.
+        It does it for both the Swing and JavaFX GUIs.
+        
+        It initializes JavaFX first, but this is no longer necessary,
+        because the JavaFX runtime is started earlier manually
+        for use in delivering message dialogs to the user.
         */
       {
 
@@ -219,7 +220,7 @@ class GUIManager
         theJavaFXGUI.startJavaFXLaunchV(); // Start thread that presents
           // JavaFX GUI window.
         
-        ///fix? Might need to wait, either here, or in the atove method,
+        ///fix? Might need to wait, either here, or in the above method,
         /// to guarantee that JavaFX has completed initialization
         /// before continuing?  What would be nice to have is
         /// Need an equivalent to Swing's runAndWait(.).
@@ -237,7 +238,8 @@ class GUIManager
     // Swing GUI start and stop methods.
     
     public void initializeOnEDTV() // GUIManager.
-      /* This method does initialization of the Swing GUI.  It must be run on the EDT. 
+      /* This method does initialization of the Swing GUI.  
+        It must be run on the EDT. 
         It builds the app's GUI in a new JFrame and starts it.
         */
       {

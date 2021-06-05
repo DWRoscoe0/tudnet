@@ -17,12 +17,10 @@ import static allClasses.SystemSettings.NL;
 
 public class AppInstanceManager {
 
-  /* This class detects and manages instances of app, and 
-    some if the communication between them.
-    It is also responsible for communicating with the app launcher, if any.  
-    
-    ///org : Though this works and works well, it is difficult to understand.
-      Fix this by reorganizing it.
+  /* This class detects and manages instances of this app, and 
+    some if the communication between those instances.
+    It is also responsible for communicating with the app launcher, 
+    if there is one.  
 
     There are 2 types of app instances:
     
@@ -41,7 +39,8 @@ public class AppInstanceManager {
       This is caused by a message from 
       a new running app instance starting up.
 
-    The app tries to maintain the following conditions about its instances:
+    The app tries to maintain or restore 
+    the following conditions about its instances:
     * There should be a maximum of one running instance at any given moment.
       Extra running instances are terminated.
     * The file instance in the standard folder should be the newest one known.  
@@ -79,7 +78,7 @@ l    * If the app receives a message indicating
 	    * If the app detects the existence of a newer file instance,
 	      then it runs that one and terminates itself.
 
-		The code which does all this is in methods:
+		The code which does all this is in or called from 2 methods.  They are:
 	  	* managingInstancesWithExitB( ) which is called at startup.
 	  	* thingsToDoPeriodicallyV() which is called periodically from by a timer.
 
@@ -91,6 +90,9 @@ l    * If the app receives a message indicating
 		The app is interested in 2 folders:
 		* The standard folder.
 		* The possibly different folder where the app was originally run.
+
+    ///org : Though this class works and works well, 
+      it is difficult to understand.  Fix this by reorganizing it.
 		
     ///doc?? Write a state-machine description summarizing the entire process.
 

@@ -7,6 +7,7 @@ import java.util.Map;
 
 import com.sun.javafx.application.PlatformImpl;
 
+import allClasses.Anomalies;
 import allClasses.DataNode;
 import allClasses.DataRoot;
 import allClasses.LockAndSignal;
@@ -19,7 +20,9 @@ import javafx.stage.Window;
 public class JavaFXGUI
 
   /* This class is used to manage JavaFX operations,
-   * including the app launch process and its windows.
+   * including:
+   * * the JavaFX runtime
+   * * the launching of a JavaFX Application
    * 
    * ///klu This class contains much kludgy JavaFX code because 
    * I was new to JavaFX and I wanted to transition gradually 
@@ -67,15 +70,18 @@ public class JavaFXGUI
     // Methods
 
     public static String startRuntimeAndReturnString()
-      /* This method manually starts the JavaFX runtime 
-       * so that it can be used early, before it would be started
-       * by a normal application launch.
+      /* This method manually starts the JavaFX runtime.  This can be used to 
+       * start the runtime before it would normally be started
+       * when the JavaFX Application class is launched,
+       * or if the app doesn't use the Application class at all.
+       * 
        * This might be useful, for example,
-       * for reporting errors in JavaFX dialogs that occur
+       * for reporting with JavaFX dialogs boxes 
+       * errors that might occur early in app startup,
        * before the normal JavaFX Application GUI is displayed.
        * 
        * ///ano Only a few lines of the code in this method 
-       * are needed to start the JavaFX runtime.
+       * are actually needed to start the JavaFX runtime.
        * Most of the code deals with an anomaly,
        * a mysterious failure of a startup confirmation wait to end.
        * Debug logging was added to debug the anomaly,
@@ -91,11 +97,11 @@ public class JavaFXGUI
        * * The runtime started but confirmation was not received.
        * Either will be reported as failure.
        * 
-       * ///enh Use 2 time-out values:
+       * ///enh Use 2 time-out values instead of only 1:
        * * A value above which is considered a failure.
        * * A value above which this method will not wait.
        *   In this case the runtime might not have started.
-       *   
+       * 
        * There is no guarantee that the JavaFX runtime is running
        * when this method returns.
        * 
@@ -105,9 +111,11 @@ public class JavaFXGUI
         theAppLog.debugToConsole( ///ano
           "JavaFXGUI.startAndReturnString() begins."); ///ano
         long javaFXStartTimeMsL= System.currentTimeMillis(); ///ano
+        //// /*   ////
+        Anomalies.displayDialogV("Test 1, before runtime start."); ///ano
         PlatformImpl.startup( // Start FX runtime with confirmation Runnable. 
           () -> {
-            //// EpiThread.interruptibleSleepB(5000); //////
+            //// EpiThread.interruptibleSleepB(5000);
             theAppLog.debugToConsole("JavaFXGUI.startAndReturnString() " ///ano
                 + "notify begins, RUNTIME IS UP!"); ///ano
             runtimeIsActiveB= true; // Confirm that JavaFX queue is active.
@@ -115,6 +123,8 @@ public class JavaFXGUI
             theAppLog.debugToConsole( ///ano
                 "JavaFXGUI.startAndReturnString() notify ended."); ///ano
             } );
+        //// */   ////
+        Anomalies.displayDialogV("Test 2, before runtime wait."); ///ano
         final long maxWaitL= 2000; // Maximum wait loop time.
         long waitStartTimeMsL= System.currentTimeMillis(); ///ano
         theAppLog.debugToConsole( ///ano
@@ -133,19 +143,21 @@ public class JavaFXGUI
               javaFXStartTimeMsL, ///ano Mitigation, time-out interval start. 
               maxWaitL); ///ano Mitigation, time-out interval length.
           } // while(true)
+        Anomalies.displayDialogV("Test 3, after runtime wait."); ///ano
 
         String waitResultString= ///ano
-            "JavaFXGUI.startAndReturnString() wait ended because of "
+            "\nJavaFXGUI.startAndReturnString() wait ended because of "
             +theInput+".\n  Used total of "
             +(waitStartTimeMsL-javaFXStartTimeMsL)
             +"+"+(System.currentTimeMillis()-waitStartTimeMsL)
             +" ms.";
-        theAppLog.debugToConsole( ///ano Report how wait ended99.
+        theAppLog.debugToConsole( ///ano Report how wait ended.
             waitResultString); ///ano
         if (theInput == Input.TIME) ///ano If wait time-out anomaly happened,
           resultString= waitResultString; ///ano return description string.
         return resultString; ///ano
         }
+
 
     public static JavaFXGUI initializeJavaFXGUI(
           DataNode theRootDataNode,
@@ -235,7 +247,7 @@ public class JavaFXGUI
                 + " calling JavaFXApp.launch(JavaFXApp.class, (String[])null);.");
               JavaFXApp.launch( // Launch sub-App as JavaFX Application.
                   JavaFXApp.class, (String[])null);
-              theAppLog.debug("javaFXRunnable.run() begins, "
+              theAppLog.debug("javaFXRunnable.run(), "
                   + "returned from JavaFXApp.launch(.),"
                   + "calling theShutdowner.requestAppShutdownV().");
               theShutdowner.requestAppShutdownV();
