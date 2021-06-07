@@ -30,12 +30,12 @@ public class Anomalies
      * The app might actually be functioning perfectly, 
      * doing the best that's possible under the circumstances.
      * 
-     * Why is this anomaly-malfunction distinction important?
+     * Why is this malfunction-anomaly distinction important?
      * 
      * It's important for 2 reasons:
      * * It helps to distinguish between 
-     *   problems caused by something inside the app,
-     *   and problems caused by something outside the app.
+     *   a problem caused by something inside the app,
+     *   and a problem caused by something outside the app.
      * * The number of problems caused by something outside the app
      *   is likely to be more for this app than the average app.
      * 
@@ -65,9 +65,9 @@ public class Anomalies
      * 
      * Why is so much attention being paid to anomalies?
      * 
-     * App anomalies can ruin the user's experience of the app 
-     * and the app's usefulness.  
-     * Anomalies can cause the app to fail in its purpose.
+     * Severe app anomalies can ruin 
+     * the user's experience of the app and the app's usefulness.  
+     * They can cause the app to fail in its purpose.
      * 
      * How can one fix a problem if one can't determine the problem's cause?
      * 
@@ -101,7 +101,7 @@ public class Anomalies
      * Packets might be intermittently blocked going out, 
      * or blocked coming in, or lost in some other way, 
      * or delayed for long periods.  
-     * Any of these problems can cause poor network app performance.
+     * Any of these problems can cause poor performance of a network app.
      * 
      * Aren't these problems normal.
      * Aren't network apps supposed to be able to deal with them?
@@ -116,7 +116,7 @@ public class Anomalies
      * 
      * The problem is that this works well only when a few packets are lost.
      * It will not work well if the anomaly is severe, 
-     * when most of the packets are lost.
+     * when many packets are lost.
      * 
      * Has a severe version of this anomaly happened to this app?
      * 
@@ -133,26 +133,27 @@ public class Anomalies
      * * Use protocols that are stateful at a high level
      *   to enable them to transfer, track, and acknowledge
      *   complex subsets of data.
-     * * Use protocols that can use multiple or alternative networks, 
-     *   including sneakernet, to transfer the data.
-     * * Never give up.  Continue to send the data until either 
+     * * Use protocols that can use multiple networks, including sneakernet,  
+     *   preferably simultaneously, to transfer data.
+     * * Never give up.  Continue to send data until either 
      *   the data is received at its destination
-     *   or the user cancels the data transfer. 
+     *   or the user cancels the data transfer request. 
      * 
      * Is there anything that can be done 
      * to deal with severe anomalies in general?
      * 
-     * Yes.  The user should be informed when a severe anomaly 
+     * Yes.  The user should be informed whenever a severe anomaly 
      * is causing the app to perform poorly.
-     * The specifics of the problem should be provided if possible. 
-     * This should be done because:
+     * The specifics of the anomaly should be provided if possible. 
      * 
+     * Why do this?
+     *
+     * Two reasons:
      * * Doing so rightfully shifts the blame for the app's poor performance
      *   away from the app and toward the actual cause.
-     *   
-     * * If an anomaly is being caused by a malicious agent,
+     * * If the anomaly is being caused by a malicious actor,
      *   identifying the anomaly to the user whenever it happens 
-     *   might cause the agent to do it less often.
+     *   might discourage the actor doing it often.
      *   
      * Is this whole anomaly situation discouraging?
      * 
@@ -160,25 +161,24 @@ public class Anomalies
      * In any case, development of this app will continue.
      *
      * Doesn't blaming poor app performance on anomalies,
-     * possibly caused by unidentified malicious agents,
+     * possibly caused by unidentified malicious actors,
      * make you seem like complainers?
      * 
-     * To some it might, but to do otherwise would be dishonest.
-     * To the people that matter, such as: 
-     * serious users of the app, app developers, and 
-     * people who have been targets of COINTELPRO-like operations;
-     * it won't.
+     * To some it might seem that way, but to the people that matter,
+     * such as app users, app developers, 
+     * and COINTELPRO-style operations targets, it won't.
      * 
-     * What do you say to people who have difficulty believing this?
+     * What do you say to people who say they have difficulty believing this?
      * 
      * They might have less difficulty believing after they do some research, 
      * starting with the following recommended search terms:
+     * 
      * * communication interception black room
      * * Microsoft AARD code
      * * COINTELPRO
      * * prank software
      * 
-     * Are there any other plans for handling anomalies?
+     * Are there other plans for handling anomalies?
      * 
      * Yes, but they are beyond the scope of this Q&A document.
      * 
@@ -187,7 +187,7 @@ public class Anomalies
      * 
      * 
      * 
-     * 
+     * Possible future work:
      * 
      * * ///pos Integrate this Anomalies class into AppLog
      *   as an injectable service.
@@ -220,6 +220,12 @@ public class Anomalies
      *     
      */
 
+  
+    /* Methods which display dialog boxes reporting anomalies.
+     * These methods are presently called only by AppLog methods
+     * which treat warnings, errors, and exceptions as report-able anomalies.
+     */
+  
     public static boolean displayDialogB(String messageString)
       /* This method tries to display a mode-less dialog box 
        * that displays messageString as an anomaly.
