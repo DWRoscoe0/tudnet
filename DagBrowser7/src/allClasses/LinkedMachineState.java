@@ -304,7 +304,7 @@ public class LinkedMachineState
           sendHelloV(this); // re-send hello and stay in this state.
         else // Time-out limit was reached.
         { // End exponential back off by reporting it and changing state.
-          Anomalies.displayDialogV(
+          Anomalies.displayDialogAndLogB(
               "Time-out limit of " + timeOutLimitMsL + " ms was reached, while in" 
               + getFormattedStatePathString());
           requestAncestorSubStateV( // Switch to different type of retrying.
@@ -345,7 +345,7 @@ public class LinkedMachineState
       if (tryReceivingHelloB(this)) // Try to process HELLO.
         { // Success. Move to ConnectedState.
           sendHelloV(this); // Send one back in case HELLO came from peer in same state.
-          Anomalies.displayDialogV("A broken connection has been reestablished, from" 
+          Anomalies.displayDialogAndLogB("A broken connection has been reestablished, from" 
               + getFormattedStatePathString());
           requestAncestorSubStateV(theConnectedState); // Request connected state.
           }

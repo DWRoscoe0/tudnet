@@ -2,7 +2,7 @@ package allClasses;
 
 import static allClasses.AppLog.theAppLog;
 import static allClasses.AppLog.LogLevel.INFO;
-import static allClasses.AppLog.LogLevel.WARN;
+import static allClasses.AppLog.LogLevel.WARNING;
 import static allClasses.SystemSettings.NL;
 
 import java.util.Set;
@@ -104,7 +104,7 @@ public class BackupTerminator extends Thread
         // normal termination probably failed, and termination must be forced.
 
         synchronized(theAppLog) { // Log the following together.
-          theAppLog.logB( WARN, true, null,
+          theAppLog.logB( WARNING, true, null,
               "run() ======== FORCING LATE APP TERMINATION ========");
           theAppLog.doStackTraceV(null);
           logThreadsV(); // Include all threads that are still active.

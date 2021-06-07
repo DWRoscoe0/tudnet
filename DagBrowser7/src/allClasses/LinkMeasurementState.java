@@ -331,7 +331,7 @@ public class LinkMeasurementState
   				    			  { // Trigger breaking of connection.
                         String messageString= "Time-out limit "+ timeOutLimitMsL
                             + " ms reached in" + getFormattedStatePathString();
-                        Anomalies.displayDialogV(messageString);
+                        Anomalies.displayDialogAndLogB(messageString);
   				    			    requestAncestorSubStateV(theBrokenConnectionState);
   					    		      // Break the connection.
   				    			    }

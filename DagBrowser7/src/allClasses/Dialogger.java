@@ -78,6 +78,34 @@ public class Dialogger extends Object
        * */
       {
         boolean successB= true;
+        String resultString= showModelessJavaFXDialogReturnString(
+            theString, titleTailString);
+        if (null != resultString) {
+          theAppLog.info("DialoggerJavaFXGUI.showModelessJavaFXDialogV(() "
+              + "\n  "+theString); ///ano
+          successB= false;
+          }
+        theAppLog.info("Dialogger.showModelessJavaFXDialogB(.)," 
+            + NL + theString + " SuccessB= " + successB);
+        return successB;
+        }
+
+    public static String showModelessJavaFXDialogReturnString(
+        String theString, String titleTailString)
+      /* General-purpose non-modal (mode-less) dialog displayer.
+       * It tries to queue a job to display the dialog 
+       * on the JavaFX Application Thread, then returns immediately. 
+       * The dialog displays titleTailString 
+       * after the app name in the title bar,
+       * and displays theString in the main window,
+       * and waits for the user to execute OK before it closes.  
+       * 
+       * ///mys ///klu WindowOpensOffScreen.  It happened after I added
+        JavaFXGUI.setDefaultStyle(theAlert.getDialogPane());
+
+       * */
+      {
+        String resultString= null;
         try {
           Platform.runLater( () -> {
             String featureString= Config.appString + ": " + titleTailString;
@@ -98,14 +126,13 @@ public class Dialogger extends Object
             } );
           }
         catch (IllegalStateException theIllegalStateException) {
-          theAppLog.error("DialoggerJavaFXGUI.showModelessJavaFXDialogV(() "
-              + "\n  "+theString); ///ano
-          successB= false;
+          resultString= "Dialog-Failed"; ///ano
           }
-        theAppLog.info("Dialogger.showModelessJavaFXDialogB(.)," 
-            + NL + theString + " SuccessB= " + successB);
-        return successB;
+        // theAppLog.info("Dialogger.showModelessJavaFXDialogReturnString(.)," 
+        //     + NL + theString + NL + " resultString= " + resultString);
+        return resultString;
         }
+
 
     public static void showModelessSwingDialogV( ///elim Delete when reproduced.
         String theString, String titleTailString)

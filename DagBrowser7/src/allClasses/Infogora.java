@@ -144,7 +144,7 @@ class Infogora  // The class is the root of this app.
         theAppLog= // Construct logger immediately because everything uses it.
             new AppLog(new File(new File(
                 System.getProperty("user.home") ),Config.appString));
-	      theAppLog.enableCloseLoggingV( false ); // Close it when not in use.
+	      theAppLog.enableCloseLoggingV( false ); // Close it only if not in use.
 
         String javaFXStartAnomalyString= ///ano Save result for reporting later.
             JavaFXGUI.startRuntimeAndReturnString(); // Start JavaFX runtime.
@@ -160,7 +160,7 @@ class Infogora  // The class is the root of this app.
 
         if (null != javaFXStartAnomalyString) ///ano Report any JavaFX anomaly.
           //// theAppLog.error(javaFXStartAnomalyString); ///ano
-          Anomalies.displayDialogV(javaFXStartAnomalyString); ///ano
+          Anomalies.displayDialogAndLogB(javaFXStartAnomalyString); ///ano
 
         CommandArgs theCommandArgs= new CommandArgs(argStrings);
         AppSettings.initializeV(Infogora.class, theCommandArgs);

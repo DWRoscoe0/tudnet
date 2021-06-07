@@ -101,8 +101,9 @@ public class Anomalies
      * or blocked coming in, or lost in some other way, 
      * or delayed for long periods.  
      * Any of these problems can cause poor app performance.
-     * It has happened even when both end points are on the same LAN, 
-     * and other network apps running at the same time work fine.
+     * These problems have happened even when 
+     * both end points are on the same LAN, 
+     * and when other network apps running at the same time work fine.
      * 
      * How do you deal with that?
      * 
@@ -117,17 +118,18 @@ public class Anomalies
      * Yes, and this applies to not only this anomaly,
      * but to any anomaly that appears to have a cause 
      * that is outside the app's control.
-     * The user should be informed when it happens, 
-     * and that it is the cause of the app's poor performance.
+     * The user should be informed when an anomaly is happening, 
+     * and that the anomaly is causing the app's poor performance.
      * The specifics of the problem should be provided if possible. 
      * This should be done because:
      * 
-     * * It shifts the blame for the poor performance
+     * * It rightfully shifts the blame for the poor performance
      *   away from the app and toward the actual cause.
      *   
-     * * It might make whoever is causing the problem do it less often
-     *   if their existence is revealed each time they do it.
-     * 
+     * * Identifying anomalies whenever they happen might make 
+     *   whoever is causing them do it less often
+     *   to reduce the risk of being exposed.
+     *   
      * Is this whole anomaly situation discouraging?
      * 
      * It is in some ways.  In other ways it is motivating.  
@@ -143,7 +145,8 @@ public class Anomalies
      * 
      * What do you say to people who have difficulty believing this?
      * 
-     * Do some research.  Start the research with the following search terms:
+     * I would suggest that they do some research, 
+     * starting with the following search terms:
      * * communication interception black room
      * * Microsoft AARD code
      * * COINTELPRO
@@ -190,34 +193,45 @@ public class Anomalies
      *     
      */
   
-    public static void displayDialogV( ////// change this to displayDialogAndLogV? 
-        String messageString )
+    public static boolean displayDialogAndLogB(String messageString) //////////
       /* This method is equivalent to displayDialogOnlyV(.) plus
-       * it logs the message.
+       * it logs the message as an INFO entry, to prevent stack overflow.
        */
       {
         theAppLog.info(
             "Anomalies.displayDialogV(..) called," + NL + messageString);
-        displayDialogOnlyV(messageString);
+        return displayDialogB(messageString);
         }
   
-    public static void displayDialogOnlyV(String messageString)
-      /* This method displays a mode-less dialog box 
+    public static boolean displayDialogB(String messageString)
+      /* This method tries to display a mode-less dialog box 
        * that displays messageString as an anomaly.
-       * It also plays a beep sound to get the user's attention.  
+       * It also plays a beep sound to get the user's attention.
+       * It returns true if the dialog box was displayed, false otherwise.
        */
       {
         java.awt.Toolkit.getDefaultToolkit().beep(); // Create audible Beep.
 
-        //// if (JavaFXGUI.runtimeIsActiveB) // If GUI is active, display dialog.
-        if // Report anomaly via log file and UI dialog box. 
-          (Dialogger.showModelessDialogB(messageString, "Anomaly Detected"))
-          ; // Complete success, nothing else to do.
-          else // Successfully displayed to log, but not via dialog box.
-          System.out.println( // Display to console instead.
-              "Anomalies.displayDialogV(.) called but GUI not yet operational."
-              + " messageString=="+messageString
-              );
+        boolean successB= // Try reporting via dialog box. 
+            Dialogger.showModelessDialogB(messageString, "Anomaly Detected");
+        return successB;
+        }
+  
+    public static String displayDialogReturnString(String messageString)
+      /* This method tries to display a mode-less dialog box 
+       * that displays messageString as an anomaly.
+       * It also plays a beep sound to get the user's attention.
+       * If it fails to display the dialog box,
+       * it tries display the message to the console.
+       * It returns true if the dialog box was displayed, false otherwise.
+       */
+      {
+        java.awt.Toolkit.getDefaultToolkit().beep(); // Create audible Beep.
+
+        String resultString= // Try reporting via dialog box. 
+            Dialogger.showModelessJavaFXDialogReturnString(
+                messageString, "Anomaly Detected");
+        return resultString;
         }
   
     }

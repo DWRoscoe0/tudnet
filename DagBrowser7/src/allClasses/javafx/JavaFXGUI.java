@@ -7,7 +7,6 @@ import java.util.Map;
 
 import com.sun.javafx.application.PlatformImpl;
 
-import allClasses.Anomalies;
 import allClasses.DataNode;
 import allClasses.DataRoot;
 import allClasses.LockAndSignal;
@@ -112,7 +111,8 @@ public class JavaFXGUI
           "JavaFXGUI.startAndReturnString() begins."); ///ano
         long javaFXStartTimeMsL= System.currentTimeMillis(); ///ano
         //// /*   ////
-        Anomalies.displayDialogV("Test 1, before runtime start."); ///ano
+        //// Anomalies.displayDialogAndLogB("Test 1, before runtime start."); ///ano
+        theAppLog.error("Test 1, before runtime start."); ///ano
         PlatformImpl.startup( // Start FX runtime with confirmation Runnable. 
           () -> {
             //// EpiThread.interruptibleSleepB(5000);
@@ -124,7 +124,9 @@ public class JavaFXGUI
                 "JavaFXGUI.startAndReturnString() notify ended."); ///ano
             } );
         //// */   ////
-        Anomalies.displayDialogV("Test 2, before runtime wait."); ///ano
+        theAppLog.warning("Test 2, before runtime wait."); ///ano
+        //// theAppLog.exception("Test 2.5, before runtime wait.",null); ///ano
+        //// Anomalies.displayDialogAndLogB("Test 2, before runtime wait."); ///ano
         final long maxWaitL= 2000; // Maximum wait loop time.
         long waitStartTimeMsL= System.currentTimeMillis(); ///ano
         theAppLog.debugToConsole( ///ano
@@ -143,7 +145,8 @@ public class JavaFXGUI
               javaFXStartTimeMsL, ///ano Mitigation, time-out interval start. 
               maxWaitL); ///ano Mitigation, time-out interval length.
           } // while(true)
-        Anomalies.displayDialogV("Test 3, after runtime wait."); ///ano
+        //// Anomalies.displayDialogAndLogB("Test 3, after runtime wait."); ///ano
+        theAppLog.error("Test 3, after runtime wait."); ///ano
 
         String waitResultString= ///ano
             "\nJavaFXGUI.startAndReturnString() wait ended because of "

@@ -13,7 +13,6 @@ import java.nio.channels.FileLockInterruptionException;
 
 import allClasses.LockAndSignal.Input;
 import allClasses.epinode.MapEpiNode;
-import allClasses.javafx.JavaFXGUI;
 
 import static allClasses.AppLog.LogLevel.*;
 import static allClasses.SystemSettings.NL;
@@ -65,9 +64,12 @@ public class AppLog extends EpiThread
     Like all synchronized code, this code should complete quickly.
     See the method Infogora.logThreadsV() for an example of doing this.
 
-    ///enh: Transition to a logger that doesn't need to be 
-      a static singleton and can be injected.  Allow both 
-      static and injected-non-static, at least for a while.
+    ///enh: Transition to a logger that can be changed and dependency-injected.
+     * Allow both static and injected-non-static, at least for a while.
+     * Divide logger into modifiable settings part, and the data engine part.
+     * Have methods which 
+       * return a new cloned  settings logger 
+       * do settings changes
 
     ///fix  Sometimes when the app is terminated from 
       the Windows Task Manager, the log file is truncated,
@@ -89,6 +91,10 @@ public class AppLog extends EpiThread
       It might be necessary to use alternating temporary output files 
       to receive logging data to prevent blocking.
 
+    ///enh: To make method calls more self-documenting and less ambigious, 
+      replace toConsoleB and similar simple-type flags with enums, 
+      like LogLevel.
+      
 		///enh: Make the logging routines more orthogonal, in the following
 		  dimensions:
 		  * label on output: info/debug/error/exception
@@ -136,8 +142,9 @@ public class AppLog extends EpiThread
       	UNDEFINED,
 	    	OFF,
 	    	FATAL,
-	    	ERROR,
-	    	WARN,
+	    	//// EXCEPTION, ///ano
+	    	ERROR, ///ano
+	    	WARNING, ///ano
 	    	INFO,
 	    	DEBUG,
 	    	TRACE
@@ -519,9 +526,10 @@ public class AppLog extends EpiThread
       { 
         String wholeString= "EXCEPTION: " + inString + " :" + NL + "  " + e ;
 
-        Anomalies.displayDialogV( // Display exception info as a dialog. 
-            wholeString
-            );
+        String errorString= // Display info as a dialog first.
+          Anomalies.displayDialogReturnString(wholeString);
+        if (null != errorString)
+          wholeString+= errorString; // Use error string as new info string.
 
         synchronized(this) { // Must synchronize on AppLog object so 
           System.out.println(wholeString); // intro string and
@@ -551,38 +559,38 @@ public class AppLog extends EpiThread
     public void error(Throwable theThrowable, String inString)
       /* This method writes an error String inString to a log entry,
         and also to the console stream.
-        and to a dialog.
+        and to an Anomaly dialog.
         An error is something with which the app should not have to deal.
-        Response is to either retry or terminate.
+        Response is usually to either retry or terminate.
         It also includes a stack trace.
 
-        It also throws, and catches, a DebugException, 
-        for use in determining the causes of anomalies.
+        It also throws, catches, and ignores a DebugException.
+        This can be used with the IDE in determining the causes of anomalies.
         
         ///ano Maybe not all errors should be reported as anomalies.
         Maybe only a subset should be, 
         and should go through the Anomalies class.
         */
       { 
-        if (JavaFXGUI.runtimeIsActiveB) // If GUI is active, display dialog.
-          Anomalies.displayDialogV( // Display all errors as a dialog. 
-            "ERROR"+NL
-            +inString);
-          else
-          System.out.println(
-              "\nAppLog.error(.) called but GUI not yet operational."
-              + inString + ", " + theThrowable
-              );
+        String wholeString= //// ERROR+NL+
+            inString+theThrowable;
+        
+        /*  ////
+        String errorString= // Display info as a dialog first.
+          Anomalies.displayDialogReturnString(wholeString);
+        if (null != errorString)
+          wholeString+= errorString; // Use error string as new info string.
+        */  ////
 
         synchronized(this) { // Synchronized on AppLog object for coherence. 
-          logB( ERROR, true, theThrowable, inString);
+          logV( ERROR, wholeString, null, true);
           doStackTraceV(theThrowable);
           }
 
         try { // Throw an exception that Eclipse IDE can use to suspend thread.
             throw new DebugException();
           } catch (DebugException theDebugException) {
-            ; 
+            ; // Catch and ignore the exception if the IDE doesn't process it.
           }
         }
 
@@ -594,13 +602,20 @@ public class AppLog extends EpiThread
        * to a dialog.
        * It also includes a stack trace.
        */
-      { 
-        Anomalies.displayDialogV( // Display all warnings as a dialog. 
-            "WARNING"+NL
-            +inString);
-        synchronized(this) { // Must synchronized on AppLog object so 
-      		logB( WARN, false, null, inString );
-          // doStackTraceV(null);
+      {
+        /*  ////
+        String wholeString= //// WARNING+NL+
+            inString;
+
+        String errorString= // Display info as a dialog first.
+          Anomalies.displayDialogReturnString(wholeString);
+        if (null != errorString)
+          wholeString+= errorString; // Use error string as new info string.
+        */  ////
+
+        synchronized(this) { // Synchronized on AppLog object for coherence. 
+          logV( WARNING, inString, null, false);
+          //// doStackTraceV(theThrowable);
           }
         }
 
@@ -610,9 +625,9 @@ public class AppLog extends EpiThread
     public void doStackTraceV(Throwable theThrowable)
       /* This method might log a stack trace, if logStackTraceB is true.
         If it does, it does it as follows:
-        If theThrowable is not null, it logs a stack trace of it.
-        If theThrowable IS null, it assigns a new Throwable to it.
-        Then it logs a stack trace of it theThrowable
+        If theThrowable is NOT null, it logs a stack trace of it.
+        If theThrowable IS null, it creates and assigns a new Throwable to it.
+        Then it logs a stack trace of theThrowable.
        */
       {
         boolean logStackTraceB= true; // false; // Change this to control stack trace.
@@ -745,7 +760,7 @@ public class AppLog extends EpiThread
 
 
     // Non-delegating logging methods.
-    
+
     public synchronized void logV(
     		LogLevel theLogLevel, 
     		String inString, 
@@ -755,46 +770,102 @@ public class AppLog extends EpiThread
         This logging method does not delegate to another method in the family.
 
         This is also the most capable logging method.
-        It can process all possible parameters.
+        It receives and processes all possible parameters.
         All the above logging methods in the family eventually call this one.
 
         This method creates one log entry and appends it to the log file.
-        It could be multiple lines if any of the parameters
+        The entry might contain multiple lines if any of the parameters
         evaluate to Strings which contain newlines.
-        The log entry always begins with
-        * the app session number,
-        * processIDString, if any,
-        * milliseconds since the previous entry,
-        * theLogLevel if not null, 
-        * the thread name,
-        * theThrowable if not null.
 
         This method also sends a copy of the log entry
         to the console if toConsoleB is true.
 
-        ///opt Replace String appends by StringBuilder appends, for speed?
-        ///enh Add stackTraceB which displays stack,
+        The method might also output to the Console and
+        to a Dialog box in the case of Anomalies.
+
+        The log entry always begins with
+        * the app session number,
+        * processIDString, if any,
+        * milliseconds since the previous entry,
+        * theLogLevel if not null,
+        * the thread name,
+        * theThrowable if not null.
+
+        ///opt Replace String appends with StringBuilder appends, for speed?
+
+        ///enh Add stackTraceB to cause the displays of a stacktrace,
           on console and in log, if true.
+          Or divide theThrowable into 2, 1 with and 1 without, a stacktrace.
         */
     { 
       initializeIfNeededV();
       logTriggeredPollerV(); 
-      if  // Acting based on whether file is open (buffered) or closed (not).
-        ( ( ! bufferedModeB ) // Buffered mode disabled.
-          &&( thePrintWriter == null ) // and file is closed.
-          )
-        { 
-          openFileWithRetryDelayIfClosedV();
-          logToOpenFileV(theLogLevel,toConsoleB,theThrowable,inString);
-          closeFileV();
+
+      long nowMillisL= System.currentTimeMillis(); // Save present time.
+
+      String aString= ""; // Initialize String accumulator to empty, then append
+      aString+= NL; // a line terminator to start a new line,
+      aString+= theSessionI;  // the session number,
+      aString+= processIDString;
+      aString+= ":";  // and a separator,
+      aString+= String.format(  // time since last output,
+          "%1$5d", nowMillisL - lastMillisL);
+      aString+= " ";  // a space,
+      if (toConsoleB || consoleCopyModeB) // a console flag if called for 
+        aString+= "CON ";
+      if ( theLogLevel != null ) { // and if the log level is present
+        aString+= theLogLevel; // the log level,
+        aString+= " ";  // and a space,
+        }
+      aString+= "["+Thread.currentThread().getName()+"]"; // the thread name,
+      aString+= " ";  // a space,
+      aString+= inString; // the content string provided by the caller,
+      aString+= " ";  // and a space
+      if ( theThrowable != null ) // and the Throwable if present. 
+        aString+= theThrowable;
+
+      if (null != theLogLevel) // Display Anomalies Dialog if desired.
+        switch (theLogLevel) {
+          case WARNING: ; case ERROR: 
+            String errorString= // Display info as a dialog first.
+              Anomalies.displayDialogReturnString(theLogLevel+" NEW CODE\n"+aString);
+            if (null != errorString) // If dialog failed
+              aString= errorString+aString; // prepend error to String to log.
+          default: ;
           }
-        else // Buffered mode enabled or file is open.
-        {
-          openFileWithRetryDelayIfClosedV(); ///opt  needed?
-          logToOpenFileV(theLogLevel,toConsoleB,theThrowable,inString);
-          }
+      
+      { // Append to log file.
+        boolean closeFileWhenDoneB=
+          ( ! bufferedModeB ) // Buffered mode disabled
+          && ( thePrintWriter == null ); // and file is closed.
+        openFileWithRetryDelayIfClosedV();
+        appendToOpenFileV(aString);  // Append completed String to log file.
+        if (closeFileWhenDoneB) closeFileV();
+        }
+
+      if (toConsoleB || consoleCopyModeB) // Append to console if called for
+        System.out.print(aString);
+
+      lastMillisL= nowMillisL; // Save present time as new last time.
       }
 
+  private void logToFileV(
+      LogLevel theLogLevel,
+      String inString,
+      Throwable theThrowable,
+      boolean toConsoleB)
+    /* This method outputs to the log file.
+     * See logB(.) above for details.
+     */
+    {
+      boolean closeFileWhenDoneB=
+        ( ( ! bufferedModeB ) // Buffered mode disabled.
+          &&( thePrintWriter == null ) // and file is closed.
+          );
+      openFileWithRetryDelayIfClosedV();
+      logToOpenFileV(theLogLevel,toConsoleB,theThrowable,inString);
+      if (closeFileWhenDoneB) closeFileV();
+      }
     
     public synchronized PrintWriter getPrintWriter()
       /* Returns an open PrintWriter for outputting to the log file.  
@@ -827,20 +898,23 @@ public class AppLog extends EpiThread
             }
       } 
 
-    public synchronized void logToOpenFileV(
+    private synchronized void logToOpenFileV(
         LogLevel theLogLevel, 
         boolean toConsoleB,
         Throwable theThrowable, 
         String inString
         )
+      /* This is the method in which most of the actual decoding,
+       * formatting, and outputting of parameters happens.
+       */
       {
     		long nowMillisL= System.currentTimeMillis(); // Saving present time.
 
         String aString= ""; // Initialize String to empty, then append to it...
-        aString+= NL; //...and a final line terminator, to start a new line...
+        aString+= NL; //...a line terminator to start a new line,...
         aString+= theSessionI;  //...the session number,...
         aString+= processIDString;
-        aString+= ":";  //...and a separator.
+        aString+= ":";  //...and a separator,
         aString+= String.format(  // ...time since last output,...
         		"%1$5d", nowMillisL - lastMillisL
         		);
@@ -863,17 +937,19 @@ public class AppLog extends EpiThread
           aString+= theThrowable;
         	}
         
-      	appendToOpenFileV(aString);  // Append it to log file.
+      	appendToOpenFileV(aString);  // Append completed String to log file.
         
    	  	if (toConsoleB || consoleCopyModeB) // Append to console if called for... 
    	  	  System.out.print(aString);
 
-        lastMillisL= nowMillisL; // Saving present time as new last time.
+        lastMillisL= nowMillisL; // Save present time as new last time.
         }
 
     private long previousDebugClockOutTimeMsL= 0;
     public synchronized void debugClockOutV(String theString)
       /* This method appends theString to the log file and to the console.
+       * It also outputs the number of ms since the previous similar output
+       * if that number is more than 0.
        * It is meant for temporary use during debugging.
        * It is anticipated that this method will output mostly
        * high frequency, short length strings.
