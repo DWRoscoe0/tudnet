@@ -1,7 +1,6 @@
 package allClasses;
 
 import static allClasses.AppLog.theAppLog;
-import static allClasses.SystemSettings.NL;
 
 import java.awt.Component;
 import java.awt.EventQueue;
@@ -58,7 +57,6 @@ public class Dialogger extends Object
        * Earlier it displayed a Swing dialog.
        */
       {
-        //// showModelessSwingDialogV(theString, titleTailString);
         return showModelessJavaFXDialogB(theString, titleTailString);
         }
 
@@ -85,8 +83,6 @@ public class Dialogger extends Object
               + "\n  "+theString); ///ano
           successB= false;
           }
-        theAppLog.info("Dialogger.showModelessJavaFXDialogB(.)," 
-            + NL + theString + " SuccessB= " + successB);
         return successB;
         }
 
@@ -121,7 +117,7 @@ public class Dialogger extends Object
             theAlert.initModality(Modality.NONE);
             theAlert.setTitle(featureString);
             theAlert.setHeaderText(featureString);
-            //// alert.showAndWait();
+            /// theAlert.showAndWait();
             theAlert.show();
             } );
           }

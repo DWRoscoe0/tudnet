@@ -93,8 +93,9 @@ public class UnicasterManager
         Unicaster theUnicaster= // Testing whether Unicaster exists.  
             tryToGetUnicaster( theIPAndPort );
         if ( theUnicaster == null ) { // Create Unicaster if it didn't exist.
-          Anomalies.displayDialogAndLogB( // Inform user about new Unicaster.
-              "New Unicaster discovered: " + theIPAndPort + ", ID=" + theIdString);
+          theAppLog.warning( // Inform user about new Unicaster.
+            "New Unicaster discovered: " + theIPAndPort + ", ID=" 
+              + theIdString);
           theUnicaster= // Create Unicaster. 
               buildAddAndStartUnicaster( theIPAndPort, theIdString );
           }

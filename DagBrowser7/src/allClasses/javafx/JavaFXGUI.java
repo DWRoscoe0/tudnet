@@ -110,12 +110,10 @@ public class JavaFXGUI
         theAppLog.debugToConsole( ///ano
           "JavaFXGUI.startAndReturnString() begins."); ///ano
         long javaFXStartTimeMsL= System.currentTimeMillis(); ///ano
-        //// /*   ////
-        //// Anomalies.displayDialogAndLogB("Test 1, before runtime start."); ///ano
-        theAppLog.error("Test 1, before runtime start."); ///ano
+        // theAppLog.error("Test 1, before runtime start."); ///ano
         PlatformImpl.startup( // Start FX runtime with confirmation Runnable. 
           () -> {
-            //// EpiThread.interruptibleSleepB(5000);
+            // EpiThread.interruptibleSleepB(5000); // Test.
             theAppLog.debugToConsole("JavaFXGUI.startAndReturnString() " ///ano
                 + "notify begins, RUNTIME IS UP!"); ///ano
             runtimeIsActiveB= true; // Confirm that JavaFX queue is active.
@@ -123,10 +121,7 @@ public class JavaFXGUI
             theAppLog.debugToConsole( ///ano
                 "JavaFXGUI.startAndReturnString() notify ended."); ///ano
             } );
-        //// */   ////
-        theAppLog.warning("Test 2, before runtime wait."); ///ano
-        //// theAppLog.exception("Test 2.5, before runtime wait.",null); ///ano
-        //// Anomalies.displayDialogAndLogB("Test 2, before runtime wait."); ///ano
+        // theAppLog.warning("Test 2, before runtime wait."); ///ano
         final long maxWaitL= 2000; // Maximum wait loop time.
         long waitStartTimeMsL= System.currentTimeMillis(); ///ano
         theAppLog.debugToConsole( ///ano
@@ -145,11 +140,10 @@ public class JavaFXGUI
               javaFXStartTimeMsL, ///ano Mitigation, time-out interval start. 
               maxWaitL); ///ano Mitigation, time-out interval length.
           } // while(true)
-        //// Anomalies.displayDialogAndLogB("Test 3, after runtime wait."); ///ano
         theAppLog.error("Test 3, after runtime wait."); ///ano
 
         String waitResultString= ///ano
-            "\nJavaFXGUI.startAndReturnString() wait ended because of "
+            "JavaFXGUI.startAndReturnString() wait ended because of "
             +theInput+".\n  Used total of "
             +(waitStartTimeMsL-javaFXStartTimeMsL)
             +"+"+(System.currentTimeMillis()-waitStartTimeMsL)
@@ -188,9 +182,8 @@ public class JavaFXGUI
           theJavaFXGUI= aJavaFXGUI; // Finish by storing in static variable.
           runningLockAndSignal.notifyingV(); // Inform caller of definition.
           theAppLog.debugToConsole( ///ano
-          //// System.out.println( ///ano
               "Infogora.initializeJavaFXGUI(.) defining "
-              + "theJavaFXGUI=="+theJavaFXGUI); ////
+              + "theJavaFXGUI=="+theJavaFXGUI);
           }
       theAppLog.debug("initializeJavaFXGUI(.) ends.");
       return theJavaFXGUI;

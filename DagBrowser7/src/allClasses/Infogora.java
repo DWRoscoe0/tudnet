@@ -159,8 +159,7 @@ class Infogora  // The class is the root of this app.
 	          "Infogora.main() ======== APP IS STARTING ========");
 
         if (null != javaFXStartAnomalyString) ///ano Report any JavaFX anomaly.
-          //// theAppLog.error(javaFXStartAnomalyString); ///ano
-          Anomalies.displayDialogAndLogB(javaFXStartAnomalyString); ///ano
+          theAppLog.error(javaFXStartAnomalyString); ///ano
 
         CommandArgs theCommandArgs= new CommandArgs(argStrings);
         AppSettings.initializeV(Infogora.class, theCommandArgs);

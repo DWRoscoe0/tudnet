@@ -1,14 +1,12 @@
 package allClasses;
 
-import static allClasses.AppLog.theAppLog;
-import static allClasses.SystemSettings.NL;
 
 public class Anomalies
 
   {
 
     /* 
-     * Anomalies   ///ano
+     * Anomalies Class  ///ano
      * 
      * What is the purpose of this class?
      * 
@@ -20,7 +18,7 @@ public class Anomalies
      * An anomaly is a difference from the normal.
      * An app anomaly is behavior that is different from expected app behavior.
      * 
-     * How is an anomaly different from a malfunction?
+     * How is an app anomaly different from an app malfunction?
      * 
      * All malfunctions are anomalies, but not all anomalies are malfunctions.
      * 
@@ -46,29 +44,30 @@ public class Anomalies
      * A major purpose of this app is to be an anti-censorship tool.
      * Powerful interests exist whose business models 
      * depend on hiding information that is damaging to them.  
-     * They would not want this app or similar apps to succeed,
+     * Because of this, they would not want this app or similar apps to succeed,
      * and might try to to slow this app's development,
      * or sabotage its use after release.
      * 
      * Is this actually happening?  
      * 
-     * It's difficult to know for certain, 
-     * but the evidence seems to indicate that it is. 
+     * It's difficult to know for certain, but 
+     * there is evidence that indicates that it is happening. 
      * 
      * What is the evidence?
      * 
-     * Problems have been encountered during the development of this app 
+     * Anomalies were encountered during the development of this app 
      * for which no cause could be found.
-     * Code that deals with anomalies is marked with the string "///ano".
+     * Source code that deals with these anomalies 
+     * is marked with the string "///ano".
      * Search this app's source code for that string to see examples.
      * A good place to start is the Infogora.main(.) method, 
      * which is this app's entry point.
      * 
      * Why is so much attention being paid to anomalies?
      * 
-     * App anomalies can ruin the user's experience of the app
-     * and they can ruin the app's usefulness.  
-     * They can cause the app to fail in its purpose.
+     * App anomalies can ruin the user's experience of the app 
+     * and the app's usefulness.  
+     * Anomalies can cause the app to fail in its purpose.
      * 
      * How can one fix a problem if one can't determine the problem's cause?
      * 
@@ -76,8 +75,8 @@ public class Anomalies
      * 
      * So, how does one deal with app anomalies?
      * 
-     * It depends on the anomaly, but a reasonable first step in most cases 
-     * is to assume that the anomaly has a cause that can be found,
+     * A reasonable first step is to assume that 
+     * the anomaly has a cause that can be found,
      * and to use normal program debugging techniques to try to find it.
      * These techniques include:
      * * analyzing log files
@@ -91,62 +90,89 @@ public class Anomalies
      * 
      * What's the next step if the cause of the problem can't be found?
      * 
-     * Again, it depends on the anomaly.
+     * It depends on the anomaly.
      * 
      * Can you give an example?
      * 
      * One example is network performance anomalies.
-     * Sometimes, for unknown reasons, 
-     * network packets are intermittently blocked going out, 
+     * Sometimes, for unknown reasons, the network packets 
+     * that carry information between devices on the Internet, 
+     * don't get through.
+     * Packets might be intermittently blocked going out, 
      * or blocked coming in, or lost in some other way, 
      * or delayed for long periods.  
-     * Any of these problems can cause poor app performance.
-     * These problems have happened even when 
-     * both end points are on the same LAN, 
-     * and when other network apps running at the same time work fine.
+     * Any of these problems can cause poor network app performance.
      * 
-     * How do you deal with that?
+     * Aren't these problems normal.
+     * Aren't network apps supposed to be able to deal with them?
      * 
-     * The options are limited.
-     * There is no way for the app to force packets 
-     * though an uncooperative network connection.
-     * It can detect lost packets, and retransmit them until they get through,
-     * but not without negatively affecting app performance.
+     * Yes and yes.
+     * Network apps are designed to deal with the occasional lost packet.
+     * An app might do this by detecting that a packet is overdue, 
+     * and causing it to be resent, repeatedly if necessary, 
+     * until the packet is finally received.
      * 
-     * Is there anything else that can be done?
+     * So what's the problem?
      * 
-     * Yes, and this applies to not only this anomaly,
-     * but to any anomaly that appears to have a cause 
-     * that is outside the app's control.
-     * The user should be informed when an anomaly is happening, 
-     * and that the anomaly is causing the app's poor performance.
+     * The problem is that this works well only when a few packets are lost.
+     * It will not work well if the anomaly is severe, 
+     * when most of the packets are lost.
+     * 
+     * Has a severe version of this anomaly happened to this app?
+     * 
+     * Yes.
+     * 
+     * Often?
+     * 
+     * Yes.
+     * 
+     * How do you deal with severe anomalies?
+     * 
+     * Again, it depends on the anomaly.
+     * In this case, one might do the following actions:
+     * * Use protocols that are stateful at a high level
+     *   to enable them to transfer, track, and acknowledge
+     *   complex subsets of data.
+     * * Use protocols that can use multiple or alternative networks, 
+     *   including sneakernet, to transfer the data.
+     * * Never give up.  Continue to send the data until either 
+     *   the data is received at its destination
+     *   or the user cancels the data transfer. 
+     * 
+     * Is there anything that can be done 
+     * to deal with severe anomalies in general?
+     * 
+     * Yes.  The user should be informed when a severe anomaly 
+     * is causing the app to perform poorly.
      * The specifics of the problem should be provided if possible. 
      * This should be done because:
      * 
-     * * It rightfully shifts the blame for the poor performance
+     * * Doing so rightfully shifts the blame for the app's poor performance
      *   away from the app and toward the actual cause.
      *   
-     * * Identifying anomalies whenever they happen might make 
-     *   whoever is causing them do it less often
-     *   to reduce the risk of being exposed.
+     * * If an anomaly is being caused by a malicious agent,
+     *   identifying the anomaly to the user whenever it happens 
+     *   might cause the agent to do it less often.
      *   
      * Is this whole anomaly situation discouraging?
      * 
-     * It is in some ways.  In other ways it is motivating.  
+     * It is, in some ways.  In other ways it is motivating.  
      * In any case, development of this app will continue.
      *
-     * Doesn't blaming poor app performance on somebody else
-     * make you look like cry babies?
+     * Doesn't blaming poor app performance on anomalies,
+     * possibly caused by unidentified malicious agents,
+     * make you seem like complainers?
      * 
-     * To some, it might.  But to state otherwise would be dishonest.
-     * And to the people that matter: app developers, users, and
-     * those who have been targets of COINTELPRO-like operations;
+     * To some it might, but to do otherwise would be dishonest.
+     * To the people that matter, such as: 
+     * serious users of the app, app developers, and 
+     * people who have been targets of COINTELPRO-like operations;
      * it won't.
      * 
      * What do you say to people who have difficulty believing this?
      * 
-     * I would suggest that they do some research, 
-     * starting with the following search terms:
+     * They might have less difficulty believing after they do some research, 
+     * starting with the following recommended search terms:
      * * communication interception black room
      * * Microsoft AARD code
      * * COINTELPRO
@@ -154,7 +180,8 @@ public class Anomalies
      * 
      * Are there any other plans for handling anomalies?
      * 
-     * See below.
+     * Yes, but they are beyond the scope of this Q&A document.
+     * 
      * 
      * 
      * 
@@ -192,17 +219,7 @@ public class Anomalies
      *   logged in a separate log file, one for anomalies only.
      *     
      */
-  
-    public static boolean displayDialogAndLogB(String messageString) //////////
-      /* This method is equivalent to displayDialogOnlyV(.) plus
-       * it logs the message as an INFO entry, to prevent stack overflow.
-       */
-      {
-        theAppLog.info(
-            "Anomalies.displayDialogV(..) called," + NL + messageString);
-        return displayDialogB(messageString);
-        }
-  
+
     public static boolean displayDialogB(String messageString)
       /* This method tries to display a mode-less dialog box 
        * that displays messageString as an anomaly.

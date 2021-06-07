@@ -142,7 +142,6 @@ public class AppLog extends EpiThread
       	UNDEFINED,
 	    	OFF,
 	    	FATAL,
-	    	//// EXCEPTION, ///ano
 	    	ERROR, ///ano
 	    	WARNING, ///ano
 	    	INFO,
@@ -181,7 +180,6 @@ public class AppLog extends EpiThread
       only very limited conditions.  //? 
      	*/
       public static boolean testingForPingB= false;
-      //// private boolean debugToConsoleEnabledB= true;
       private boolean consoleCopyModeB= false; // When true, logging goes to 
         // console as well as log file.
         ///enh change to Enum for generality and better self-documentation.
@@ -526,11 +524,6 @@ public class AppLog extends EpiThread
       { 
         String wholeString= "EXCEPTION: " + inString + " :" + NL + "  " + e ;
 
-        String errorString= // Display info as a dialog first.
-          Anomalies.displayDialogReturnString(wholeString);
-        if (null != errorString)
-          wholeString+= errorString; // Use error string as new info string.
-
         synchronized(this) { // Must synchronize on AppLog object so 
           System.out.println(wholeString); // intro string and
           e.printStackTrace(System.out); // stack trace
@@ -572,18 +565,8 @@ public class AppLog extends EpiThread
         and should go through the Anomalies class.
         */
       { 
-        String wholeString= //// ERROR+NL+
-            inString+theThrowable;
-        
-        /*  ////
-        String errorString= // Display info as a dialog first.
-          Anomalies.displayDialogReturnString(wholeString);
-        if (null != errorString)
-          wholeString+= errorString; // Use error string as new info string.
-        */  ////
-
         synchronized(this) { // Synchronized on AppLog object for coherence. 
-          logV( ERROR, wholeString, null, true);
+          logV( ERROR, inString, theThrowable, true);
           doStackTraceV(theThrowable);
           }
 
@@ -603,19 +586,9 @@ public class AppLog extends EpiThread
        * It also includes a stack trace.
        */
       {
-        /*  ////
-        String wholeString= //// WARNING+NL+
-            inString;
-
-        String errorString= // Display info as a dialog first.
-          Anomalies.displayDialogReturnString(wholeString);
-        if (null != errorString)
-          wholeString+= errorString; // Use error string as new info string.
-        */  ////
-
         synchronized(this) { // Synchronized on AppLog object for coherence. 
           logV( WARNING, inString, null, false);
-          //// doStackTraceV(theThrowable);
+          /// doStackTraceV(theThrowable);
           }
         }
 
@@ -803,35 +776,40 @@ public class AppLog extends EpiThread
 
       long nowMillisL= System.currentTimeMillis(); // Save present time.
 
-      String aString= ""; // Initialize String accumulator to empty, then append
-      aString+= NL; // a line terminator to start a new line,
-      aString+= theSessionI;  // the session number,
-      aString+= processIDString;
-      aString+= ":";  // and a separator,
-      aString+= String.format(  // time since last output,
+      String headString= ""; // Initialize head String to empty, then append
+      headString+= NL; // a line terminator to start a new line,
+      headString+= theSessionI;  // the session number,
+      headString+= processIDString;
+      headString+= ":";  // and a separator,
+      headString+= String.format(  // time since last output,
           "%1$5d", nowMillisL - lastMillisL);
-      aString+= " ";  // a space,
+      headString+= " ";  // a space,
       if (toConsoleB || consoleCopyModeB) // a console flag if called for 
-        aString+= "CON ";
+        headString+= "CON ";
       if ( theLogLevel != null ) { // and if the log level is present
-        aString+= theLogLevel; // the log level,
-        aString+= " ";  // and a space,
+        headString+= theLogLevel; // the log level,
+        headString+= " ";  // and a space,
         }
-      aString+= "["+Thread.currentThread().getName()+"]"; // the thread name,
-      aString+= " ";  // a space,
-      aString+= inString; // the content string provided by the caller,
-      aString+= " ";  // and a space
-      if ( theThrowable != null ) // and the Throwable if present. 
-        aString+= theThrowable;
+      headString+= "["+Thread.currentThread().getName()+"]"; // the thread name,
+      headString+= " ";  // and a space.
 
-      if (null != theLogLevel) // Display Anomalies Dialog if desired.
+      String contentString= ""; // Set content string to empty, then append
+      contentString+= inString; // the content string provided by the caller,
+      contentString+= " ";  // and a space
+      if ( theThrowable != null ) // and the Throwable if present. 
+        contentString+= theThrowable;
+
+      if (null != theLogLevel) // Display Anomalies Dialog if needed
         switch (theLogLevel) {
-          case WARNING: ; case ERROR: 
+          case WARNING: 
+          case ERROR: 
             String errorString= // Display info as a dialog first.
-              Anomalies.displayDialogReturnString(theLogLevel+" NEW CODE\n"+aString);
+              Anomalies.displayDialogReturnString(
+                theLogLevel + ".\n" + contentString);
             if (null != errorString) // If dialog failed
-              aString= errorString+aString; // prepend error to String to log.
-          default: ;
+              contentString=  // prepend error.
+                errorString + ": " + contentString;
+          default: // Do nothing for any other LogLevel.
           }
       
       { // Append to log file.
@@ -839,32 +817,14 @@ public class AppLog extends EpiThread
           ( ! bufferedModeB ) // Buffered mode disabled
           && ( thePrintWriter == null ); // and file is closed.
         openFileWithRetryDelayIfClosedV();
-        appendToOpenFileV(aString);  // Append completed String to log file.
+        appendToOpenFileV(headString + contentString);  // Both pieces.
         if (closeFileWhenDoneB) closeFileV();
         }
 
       if (toConsoleB || consoleCopyModeB) // Append to console if called for
-        System.out.print(aString);
+        System.out.print(headString + contentString);
 
       lastMillisL= nowMillisL; // Save present time as new last time.
-      }
-
-  private void logToFileV(
-      LogLevel theLogLevel,
-      String inString,
-      Throwable theThrowable,
-      boolean toConsoleB)
-    /* This method outputs to the log file.
-     * See logB(.) above for details.
-     */
-    {
-      boolean closeFileWhenDoneB=
-        ( ( ! bufferedModeB ) // Buffered mode disabled.
-          &&( thePrintWriter == null ) // and file is closed.
-          );
-      openFileWithRetryDelayIfClosedV();
-      logToOpenFileV(theLogLevel,toConsoleB,theThrowable,inString);
-      if (closeFileWhenDoneB) closeFileV();
       }
     
     public synchronized PrintWriter getPrintWriter()
@@ -897,53 +857,6 @@ public class AppLog extends EpiThread
             pollingB= true;
             }
       } 
-
-    private synchronized void logToOpenFileV(
-        LogLevel theLogLevel, 
-        boolean toConsoleB,
-        Throwable theThrowable, 
-        String inString
-        )
-      /* This is the method in which most of the actual decoding,
-       * formatting, and outputting of parameters happens.
-       */
-      {
-    		long nowMillisL= System.currentTimeMillis(); // Saving present time.
-
-        String aString= ""; // Initialize String to empty, then append to it...
-        aString+= NL; //...a line terminator to start a new line,...
-        aString+= theSessionI;  //...the session number,...
-        aString+= processIDString;
-        aString+= ":";  //...and a separator,
-        aString+= String.format(  // ...time since last output,...
-        		"%1$5d", nowMillisL - lastMillisL
-        		);
-        aString+= " ";  //...a space,...
-        
-   	  	if (toConsoleB || consoleCopyModeB) // ...a console flag if called for... 
-   	  		aString+= "CON ";
-   	  	
-        if ( theLogLevel != null ) { //..and the log level if present... 
-	   	  	aString+= theLogLevel; // ...the log level,...
-	        aString+= " ";  //...a space,...
-	        }
-   	  	
-   	  	aString+= "["+Thread.currentThread().getName()+"]"; // the thread name,
-        aString+= " ";  //...a space,...
-   	    aString+= inString; //...the string to log,...
-        aString+= " ";  //...and a space...
-
-        if ( theThrowable != null ) { //...and the exception if present... 
-          aString+= theThrowable;
-        	}
-        
-      	appendToOpenFileV(aString);  // Append completed String to log file.
-        
-   	  	if (toConsoleB || consoleCopyModeB) // Append to console if called for... 
-   	  	  System.out.print(aString);
-
-        lastMillisL= nowMillisL; // Save present time as new last time.
-        }
 
     private long previousDebugClockOutTimeMsL= 0;
     public synchronized void debugClockOutV(String theString)
