@@ -32,13 +32,13 @@ public class JavaFXGUI
    * I succeeded, but the result was definitely a kludge.
    * 
    * Since that time I learned how to start the JavaFX runtime 
-   * using the method, without involving an Application subclass instance.
+   * without involving an Application subclass instance.
    * This is done by calling startup(.) from startJavaFXAndReturnString(),
    * which is called from Infogora.main(.).
    * 
    * ///org It should now be possible to eliminate much of the kludginess
    * in the code that follows it, and maybe move all the remaining code into
-   * the JavaFXApp class.
+   * JavaFXApp, the Application subclass.
    */
 
   {
@@ -62,7 +62,7 @@ public class JavaFXGUI
     public static volatile boolean runtimeIsActiveB= false; 
 
     static { // Used to log when this class is loaded.
-        theAppLog.debug("JavaFXGUI loaded.");
+        theAppLog.info("JavaFXGUIInfo","JavaFXGUI loaded.");
         }
 
 
@@ -107,8 +107,8 @@ public class JavaFXGUI
        */
       {
         String resultString= null; ///ano
-        theAppLog.debugToConsole( ///ano
-          "JavaFXGUI.startAndReturnString() begins."); ///ano
+        // theAppLog.debugToConsole( ///ano
+        //   "JavaFXGUI.startAndReturnString() begins."); ///ano
         long javaFXStartTimeMsL= System.currentTimeMillis(); ///ano
         // theAppLog.error("Test 1, before runtime start."); ///ano
         PlatformImpl.startup( // Start FX runtime with confirmation Runnable. 
@@ -118,20 +118,20 @@ public class JavaFXGUI
                 + "notify begins, RUNTIME IS UP!"); ///ano
             runtimeIsActiveB= true; // Confirm that JavaFX queue is active.
             runningLockAndSignal.notifyingV(); // Notify about confirmation.
-            theAppLog.debugToConsole( ///ano
-                "JavaFXGUI.startAndReturnString() notify ended."); ///ano
+            // theAppLog.debugToConsole( ///ano
+            //    "JavaFXGUI.startAndReturnString() notify ended."); ///ano
             } );
         // theAppLog.warning("Test 2, before runtime wait."); ///ano
         final long maxWaitL= 2000; // Maximum wait loop time.
         long waitStartTimeMsL= System.currentTimeMillis(); ///ano
-        theAppLog.debugToConsole( ///ano
-            "JavaFXGUI.startAndReturnString() wait begins."); ///ano
+        // theAppLog.debugToConsole( ///ano
+        //     "JavaFXGUI.startAndReturnString() wait begins."); ///ano
         Input theInput= Input.NOTIFICATION; // Assume fast confirmation.
         while (true) { // Loop until one of the exit conditions is satisfied.
-          theAppLog.debugToConsole( ///ano
-              "JavaFXGUI.startAndReturnString() "
-              + "theJavaFXGUI=="+theJavaFXGUI
-              + ", runtimeIsActiveB=="+runtimeIsActiveB);
+          // theAppLog.debugToConsole( ///ano
+          //     "JavaFXGUI.startAndReturnString() "
+          //     + "theJavaFXGUI=="+theJavaFXGUI
+          //     + ", runtimeIsActiveB=="+runtimeIsActiveB);
           if (runtimeIsActiveB) break; // Exit if runtime is active.
           if (Input.INTERRUPTION == theInput) break; // Exit if interrupted.
           if (Input.TIME == theInput) break; ///ano Exit if time-out.
@@ -140,7 +140,7 @@ public class JavaFXGUI
               javaFXStartTimeMsL, ///ano Mitigation, time-out interval start. 
               maxWaitL); ///ano Mitigation, time-out interval length.
           } // while(true)
-        theAppLog.error("Test 3, after runtime wait."); ///ano
+        // theAppLog.error("Test 3, after runtime wait."); ///ano
 
         String waitResultString= ///ano
             "JavaFXGUI.startAndReturnString() wait ended because of "
@@ -167,7 +167,7 @@ public class JavaFXGUI
        * what will become the only instance of this class.
        */
     {
-      theAppLog.debug("initializeJavaFXGUI(.) begins.");
+      //// theAppLog.debug("initializeJavaFXGUI(.) begins.");
       if (null != theJavaFXGUI)
         theAppLog.error("initializeJavaFXGUI(.) "
             + "Instance already constructed!");
@@ -181,11 +181,10 @@ public class JavaFXGUI
           aJavaFXGUI.theSelections= theSelections;
           theJavaFXGUI= aJavaFXGUI; // Finish by storing in static variable.
           runningLockAndSignal.notifyingV(); // Inform caller of definition.
-          theAppLog.debugToConsole( ///ano
-              "Infogora.initializeJavaFXGUI(.) defining "
+          theAppLog.info("Infogora.initializeJavaFXGUI(.) defining "
               + "theJavaFXGUI=="+theJavaFXGUI);
           }
-      theAppLog.debug("initializeJavaFXGUI(.) ends.");
+      //// theAppLog.debug("initializeJavaFXGUI(.) ends.");
       return theJavaFXGUI;
       }
 

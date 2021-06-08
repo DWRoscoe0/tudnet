@@ -19,8 +19,15 @@ import static allClasses.SystemSettings.NL;
 
 public class AppLog extends EpiThread
 
-  /* This class is for logging information from application programs.  
-    It was designed to provide the following features:
+  /* The purpose of this class to log log information from application programs.
+   
+    A logger is one of the most important component on an application.
+    It is an almost indispensable tool for debugging.
+    Because of this, it tends to be one of 
+    the first components of an app to be constructed and initialized,
+    and one of the last to be finalized and destroyed. 
+    
+    This logger was designed to provide the following features:
     * Logs strings provided by the application.
     * It is thread-safe so any app thread may log.
       Log entries by all threads are appended to the same file.
@@ -39,7 +46,7 @@ public class AppLog extends EpiThread
     Process-safety is achieved using file locking.
     ///tst : process safety needs to be [better] tested.
     
-		If any errors occur during logging they will be reported:
+		If any errors occur during logging then they will be reported:
 		* As an Exception occurrence reported to the err stream
 		* As an error count later to the log, if possible.
 
@@ -130,7 +137,7 @@ public class AppLog extends EpiThread
 
     public AppLog(File appDirectoryFile)  // Constructor.
       {
-    	  super( "AppLog");
+    	  super( "AppLog"); // Set Thread name. 
     	  this.appDirectoryFile= appDirectoryFile;
       	}
       
@@ -183,7 +190,7 @@ public class AppLog extends EpiThread
       private boolean consoleCopyModeB= false; // When true, logging goes to 
         // console as well as log file.
         ///enh change to Enum for generality and better self-documentation.
-      private boolean closeLoggingB= true;
+      private boolean closeLoggingB= false;
 
     public void setIDProcessV( String processIDString )
     { this.processIDString= processIDString; }
@@ -470,6 +477,16 @@ public class AppLog extends EpiThread
         */
       { 
     		info(false, theThrowable, inString ); 
+        }
+
+    public void info(String conditionString, String inString)
+      /* This method writes an information String inString to a log entry
+        but not to the console,
+        and only if the condition named by conditionString is enabled.
+        */
+      { 
+        if (isEnabledForLoggingB(conditionString))
+          info(inString); 
         }
 
     public void info(String inString)

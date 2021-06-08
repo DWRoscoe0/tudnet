@@ -13,7 +13,7 @@ import static allClasses.SystemSettings.NL;
   * The main(.) method in this class.
   * The factory classes, starting with the AppFactory constructed by main(.).
   * Anomalies, which are explained in more detail 
-    in by documentation in the Anomalies class.  ///ano  
+    in by documentation with the Anomalies class.  ///ano  
 
   The main(.) method in this class is the entry point of this app.
   It acts as the top-level time sequencer of the app.
@@ -59,8 +59,8 @@ import static allClasses.SystemSettings.NL;
       because non-lazy singletons should be constructor-injected. 
     * Maker methods, which construct a new object each time called.
     
-  The main(.) method deals with 2 anomalies.
-  For more information about anomalies, see the Anomalies class.
+  ///ano The main(.) method deals with 2 anomalies.
+  For more information, see the main(.) method and the Anomalies class.
 
   */
 
@@ -74,25 +74,27 @@ class Infogora  // The class is the root of this app.
 			/* This method is the app's entry point.  
 			  It does the following actions in the following order:
 
-        * It starts the JavaFX runtime [new]
-          so other elements can use it, for example to report errors.
-	      * It prepares the AppLog logger for use.
-	      * ///ano It creates and activates the app's BackupTerminator for
-	        possible use during shutdown.
+        * It prepares the AppLog logger for use first, 
+          because many modules uses it to log significant events.
+        * ///ano It starts the JavaFX runtime next, so other modules can 
+          use its GUI to report early anomalies to the user.
+	      * ///ano It creates and activates the app's BackupTerminator in case
+	        normal termination fails at shutdown.
 			  * It sets a default Exception handler for unhandled exceptions.
+			  * 
 			  * It constructs the AppFactory object.
 			  * It uses the AppFactory object to construct the App object.
 			  * It calls the App.runV() method,
 			    which does most of the work of this app.
 			    This method might or might not return, depending on
-			    how shutdown is done.  Usually it returns.
-			  * If App.runV() returns then main(.) does these additional actions:
+			    how shutdown is done, but usually it returns.
+			  * If App.runV() does return, then main(.) does these additional actions:
 			    * It does some additional logging.
 			    * ///ano It triggers the BackupTerminator timer to force termination 
-			      in case normal termination doesn't happen.  
+			      in case normal termination doesn't happen after main(.) exits.  
 			      See BackupTerminator for details.
-			    * It returns to the JVM, which should itself shut down,
-			      and terminate the entire app.
+			    * It returns to the JVM, which should then itself shut down,
+			      terminating the entire app and the process containing it.
 
 	      Exiting this method should cause process termination because
 	      all remaining threads should be either daemon threads
@@ -106,7 +108,7 @@ class Infogora  // The class is the root of this app.
 	      ///ano Unfortunately, for unknown reasons, 
 	      this app doesn't always terminate as it should. 
 	      Termination is forced in that case.
-	      See BackupTerminator for details of this.
+	      See BackupTerminator for details about this.
 
         Command line switches in method parameter argStrings
         are used to pass information from one app instance to another.  
@@ -139,46 +141,40 @@ class Infogora  // The class is the root of this app.
 
 			  */
 
-	    { // main(.)
+	    { // Beginning of the body of main(.).
 
-        theAppLog= // Construct logger immediately because everything uses it.
-            new AppLog(new File(new File(
-                System.getProperty("user.home") ),Config.appString));
-	      theAppLog.enableCloseLoggingV( false ); // Close it only if not in use.
-
-        String javaFXStartAnomalyString= ///ano Save result for reporting later.
-            JavaFXGUI.startRuntimeAndReturnString(); // Start JavaFX runtime.
-
+        theAppLog= new AppLog( // Construct logger.
+          new File(new File(System.getProperty("user.home")),Config.appString));
+        String javaFXStartAnomalyString= ///ano Save to later report result of
+          JavaFXGUI.startRuntimeAndReturnString(); // starting JavaFX runtime.
 	      DefaultExceptionHandler.setDefaultExceptionHandlerV(); 
-	      // ((String)null).charAt(0); // This tests with a NullPointerException.
-
+	        // ((String)null).charAt(0); // Test above with NullPointerException.
 	      BackupTerminator theBackupTerminator= ///ano 
 	          BackupTerminator.makeBackupTerminator(); ///ano
 
-        theAppLog.info(true,
-	          "Infogora.main() ======== APP IS STARTING ========");
+        theAppLog.info(true,"Infogora.main() ======= APP IS STARTING =======");
 
-        if (null != javaFXStartAnomalyString) ///ano Report any JavaFX anomaly.
-          theAppLog.error(javaFXStartAnomalyString); ///ano
+        if (null != javaFXStartAnomalyString) ///ano Report any problem with
+          theAppLog.error(javaFXStartAnomalyString); ///ano runtime startup.
 
         CommandArgs theCommandArgs= new CommandArgs(argStrings);
         AppSettings.initializeV(Infogora.class, theCommandArgs);
 	      AppFactory theAppFactory= new AppFactory(theCommandArgs);
-	      App theApp= theAppFactory.getApp();  // Getting App from factory.
-	      theApp.runV();  // Running the app until shutdown.
+	      App theApp= theAppFactory.getApp();
+	      theApp.runV();  // Run the app until shutdown.
 	        // This might not return if a shutdown is initiated by the JVM!
 
 	      // If here then shutdown was initiated in App.runV() and it returned.
-        BackupTerminator.logThreadsV(); // Record threads that are active now.
-	      theAppLog.info(true,
-          "Infogora.main() ======== APP IS ENDING ========"
+        BackupTerminator.logThreadsV(); ///ano Record threads active now.
+	      theAppLog.info(true,"Infogora.main() ======== APP IS ENDING ========"
           + NL + "    by closing log file and exiting the main(.) method.");
-        theAppLog.closeFileIfOpenB(); // Close log for exit.
+        theAppLog.closeFileIfOpenB(); // Close log file for exit.
 
         theBackupTerminator.setTerminationUnderwayV(); ///ano Start exit timer.
-        // while(true) {} ///ano Uncomment this line to test BackupTerminator.
+          // while(true) {} ///ano Use this infinite loop to test above line.
 
-	      } // main(.)
+	      } // End of the body of main(.).
+
 
 		} // Infogora
 
