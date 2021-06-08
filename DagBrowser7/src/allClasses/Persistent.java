@@ -74,11 +74,12 @@ public class Persistent
 
 		// Initialization and loading methods.
 
-	  public void initializeV()
+	  public Persistent initializePersistent()
 	    /* This method loads the persistent data from an external file.
 	      It also does some temporary data conversions and extra file outputs
 	      as part of the conversion from PersistentNode data to EpiNode data. 
-	     
+	      It returns a reference to the initialized Persistent instance.
+
 	      It is possible to eliminate this method, 
 	      and trigger things by lazy loading,
 	      triggered by the first call that needs theMap variable defined.
@@ -94,6 +95,8 @@ public class Persistent
           rootMapEpiNode= new MapEpiNode();
         
         updateFormatV();
+        
+        return this;
 	  	  }
 
     private void updateFormatV()
@@ -372,20 +375,7 @@ public class Persistent
         It reports an error if keyString contains 2 or more elements.
         */
       {
-        //// return getOrMakeFromPathMapEpiNode( keyString );
         return rootMapEpiNode.getOrMakeMapEpiNode(keyString);
-        }
-
-    @SuppressWarnings("unused") ////
-    private MapEpiNode getOrMakeFromPathMapEpiNode(String pathString)
-    
-      /* This is equivalent to
-              MapEpiNode.getOrMakeFromPathMapEpiNode(baseMapEpiNode, pathString)
-        with baseMapEpiNode set to rootMapEpiNode.
-        */
-      {
-        return MapEpiNode.getOrMakeFromPathMapEpiNode( 
-            rootMapEpiNode, pathString );
         }
 
     public MapEpiNode getRootMapEpiNode() 

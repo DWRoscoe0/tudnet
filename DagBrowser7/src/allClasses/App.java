@@ -41,18 +41,16 @@ public class App { // The App, especially pre-GUI stuff.
     {
       // App initialization.
   		theAppLog.info("App.run() begins.");
-  		thePersistent.initializeV();  // Prepare access to persistent data.
   	  defineRootIdV();
 			theShutdowner.initializeV();
 
 			theAppInstanceManager.initializeV();
 
-			delegateOrDoV(); // Actually do some work.
+			delegateOrDoV(); // Actually do some work until shutdown requested.
 
       // App shutdown.
       theAppLog.info("App.run() shutting down.");
       theAppInstanceManager.finalizeV();
-  	  thePersistent.finalizeV();  // Write any new or changed app properties.
   		//appLogger.info("App calling Shutdowner.finishV().");
       theShutdowner.finishAppShutdownV();  // Doing final app shutdown jobs.
         // This might not return if shutdown began in the JVM. 
@@ -108,13 +106,13 @@ public class App { // The App, especially pre-GUI stuff.
       */
   	{
 		  if ( theAppInstanceManager.tryDelegatingToAnotherAppInstanceB() )
-		    ; // Delegation succeeded.  Do nothing except exit.
+		    ; // Do nothing because delegation succeeded and shutdown is requested.
 		    else
 		    { // Delegation failed.  Presenting GUI to user and interacting.
 		  	  AppGUIFactory theAppGUIFactory= 
 		  	  		theAppFactory.lazyGetAppGUIFactory();
 		      AppGUI theAppGUI= theAppGUIFactory.getAppGUI();
-		      theAppGUI.runV(); // Running GUI until it has shut down.
+		      theAppGUI.runV(); // Running GUI until shutdown is requested.
 		      	// Network operations happen at this time also.
 		      }
 	  	}

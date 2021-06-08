@@ -100,8 +100,9 @@ public class BackupTerminator extends Thread
           System.out.print("."); // Display one dot per second.
           }
 
-        // If control reaches this point then time has expired, 
-        // normal termination probably failed, and termination must be forced.
+        // If control reaches this point then 
+        // time has expired and normal termination probably failed.
+        // Termination will now be forced.
 
         synchronized(theAppLog) { // Log the following together.
           theAppLog.logB( WARNING, true, null,
@@ -154,7 +155,8 @@ public class BackupTerminator extends Thread
               int priorityI= t.getPriority();
               String typeString= t.isDaemon() ? "Daemon" : "Normal";
               String nameString= t.getName();
-              theAppLog.getPrintWriter().printf(NL+ "    %-13s %2d  %s  %-25s  ", 
+              theAppLog.getPrintWriter().printf(
+                  NL+ "    %-13s %2d  %s  %-25s  ", 
                   threadState, priorityI, typeString, nameString);
               }
           }

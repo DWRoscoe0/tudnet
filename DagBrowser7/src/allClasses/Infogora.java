@@ -13,7 +13,7 @@ import static allClasses.SystemSettings.NL;
   * The main(.) method in this class.
   * The factory classes, starting with the AppFactory constructed by main(.).
   * Anomalies, which are explained in more detail 
-    in by documentation with the Anomalies class.  ///ano  
+    by documentation with the Anomalies class.  ///ano  
 
   The main(.) method in this class is the entry point of this app.
   It acts as the top-level time sequencer of the app.
@@ -76,6 +76,8 @@ class Infogora  // The class is the root of this app.
 
         * It prepares the AppLog logger for use first, 
           because many modules uses it to log significant events.
+        * It constructs and initializes the Persistent data module
+          so modules can access app settings.
         * ///ano It starts the JavaFX runtime next, so other modules can 
           use its GUI to report early anomalies to the user.
 	      * ///ano It creates and activates the app's BackupTerminator in case
@@ -89,7 +91,9 @@ class Infogora  // The class is the root of this app.
 			    This method might or might not return, depending on
 			    how shutdown is done, but usually it returns.
 			  * If App.runV() does return, then main(.) does these additional actions:
-			    * It does some additional logging.
+			    * It does some final logging about app termination.
+          * It finalizes the Persistent data module, 
+            which saves changed data to non-volatile storage.
 			    * ///ano It triggers the BackupTerminator timer to force termination 
 			      in case normal termination doesn't happen after main(.) exits.  
 			      See BackupTerminator for details.
@@ -143,12 +147,13 @@ class Infogora  // The class is the root of this app.
 
 	    { // Beginning of the body of main(.).
 
-        theAppLog= new AppLog( // Construct logger.
+        theAppLog= new AppLog( // Prepare logger.
           new File(new File(System.getProperty("user.home")),Config.appString));
+        DefaultExceptionHandler.setDefaultExceptionHandlerV();
+          // ((String)null).charAt(0); // Test above with NullPointerException.
+        Persistent thePersistent= (new Persistent()).initializePersistent();
         String javaFXStartAnomalyString= ///ano Save to later report result of
-          JavaFXGUI.startRuntimeAndReturnString(); // starting JavaFX runtime.
-	      DefaultExceptionHandler.setDefaultExceptionHandlerV(); 
-	        // ((String)null).charAt(0); // Test above with NullPointerException.
+          JavaFXGUI.startRuntimeAndReturnString(); // start of JavaFX runtime.
 	      BackupTerminator theBackupTerminator= ///ano 
 	          BackupTerminator.makeBackupTerminator(); ///ano
 
@@ -159,17 +164,17 @@ class Infogora  // The class is the root of this app.
 
         CommandArgs theCommandArgs= new CommandArgs(argStrings);
         AppSettings.initializeV(Infogora.class, theCommandArgs);
-	      AppFactory theAppFactory= new AppFactory(theCommandArgs);
+	      AppFactory theAppFactory= new AppFactory(theCommandArgs, thePersistent);
 	      App theApp= theAppFactory.getApp();
 	      theApp.runV();  // Run the app until shutdown.
 	        // This might not return if a shutdown is initiated by the JVM!
 
-	      // If here then shutdown was initiated in App.runV() and it returned.
+	      // If here then shutdown was requested in App.runV() and it returned.
         BackupTerminator.logThreadsV(); ///ano Record threads active now.
 	      theAppLog.info(true,"Infogora.main() ======== APP IS ENDING ========"
           + NL + "    by closing log file and exiting the main(.) method.");
+	      thePersistent.finalizeV();  // Write any new or changed app properties.
         theAppLog.closeFileIfOpenB(); // Close log file for exit.
-
         theBackupTerminator.setTerminationUnderwayV(); ///ano Start exit timer.
           // while(true) {} ///ano Use this infinite loop to test above line.
 

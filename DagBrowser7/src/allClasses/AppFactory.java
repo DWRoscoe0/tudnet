@@ -27,9 +27,10 @@ public class AppFactory {  // For App class lifetimes.
   private AppGUIFactory theAppGUIFactory= null;
 
   public AppFactory(   // Factory constructor.
-      CommandArgs theCommandArgs)
+      CommandArgs theCommandArgs, Persistent thePersistent)
     {
-  	  thePersistent= new Persistent();
+      this.thePersistent= thePersistent;
+      
   		thePortManager= new PortManager( thePersistent );
   		theShutdowner= new Shutdowner();
   		AppInstanceManager theAppInstanceManager= new AppInstanceManager(

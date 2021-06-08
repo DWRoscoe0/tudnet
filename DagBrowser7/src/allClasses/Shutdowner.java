@@ -296,9 +296,6 @@ public class Shutdowner
           be waiting for this notification at this time.    
 
 				If this method is able to return, the app should exit ASAP.
-				
-				///enh ? Log a list of all unterminated non-daemon threads.  
-				There should be none.
 
         */
       {
