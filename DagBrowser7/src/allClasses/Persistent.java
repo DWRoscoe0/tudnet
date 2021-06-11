@@ -105,9 +105,6 @@ public class Persistent
        * Except for logging, the code in this method should be temporary.
        */
       {
-        theAppLog.setLogConditionMapV( // Add for setting-dependent log entries.
-            rootMapEpiNode.getMapEpiNode("Logging"));
-
         theAppLog.debug("Persistent","Persistent.updateFormatV() begins.");
         
         /// Disabled these when UnicasterIndexes kept disappearing.

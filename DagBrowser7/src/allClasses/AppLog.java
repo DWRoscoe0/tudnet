@@ -19,9 +19,9 @@ import static allClasses.SystemSettings.NL;
 
 public class AppLog extends EpiThread
 
-  /* The purpose of this class to log log information from application programs.
+  /* The purpose of this class to log information from application programs.
    
-    A logger is one of the most important component on an application.
+    A logger is one of the most important components of an application.
     It is an almost indispensable tool for debugging.
     Because of this, it tends to be one of 
     the first components of an app to be constructed and initialized,
@@ -441,6 +441,17 @@ public class AppLog extends EpiThread
         debug(false, inString);
         }
 
+    public void debugToConsole(String conditionString, String inString)
+      /* This method writes a debug String inString to a log entry
+        with a copy going to the console,
+        but only if the condition named by conditionString is enabled.
+        It is tagged as for debugging.
+        */
+      { 
+        if (isEnabledForLoggingB(conditionString))
+          debug(true, inString);
+        }
+
     public void debugToConsole(String inString)
       /* This method writes a debug String inString to a log entry
         with a copy going to the console.
@@ -665,16 +676,21 @@ public class AppLog extends EpiThread
 
     private MapEpiNode logMapEpiNode= null;
     
-    public synchronized void setLogConditionMapV(MapEpiNode logMapEpiNode)
-      /* Used to define the MapEpiNode which stores log conditions. */
-      { 
-        this.logMapEpiNode= logMapEpiNode;
+    public synchronized void setPersistentV(Persistent thePersistent)
+      /* Used to define the MapEpiNode which stores log conditions. 
+       * This is gotten from thePersistent.
+       */
+      {
+        this.logMapEpiNode= 
+          thePersistent.getRootMapEpiNode().getMapEpiNode("Logging");
         }
     
     public synchronized boolean isEnabledForLoggingB(String conditionString)
       /* Returns true if the log condition specified by conditionString 
        * is true.
        * Returns false otherwise.
+       * All conditions are considered false if 
+       * thePersistent has not yet been injected.
        */
       { 
         boolean resultB= false; // Assume default result of logging disabled.

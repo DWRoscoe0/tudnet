@@ -152,6 +152,7 @@ class Infogora  // The class is the root of this app.
         DefaultExceptionHandler.setDefaultExceptionHandlerV();
           // ((String)null).charAt(0); // Test above with NullPointerException.
         Persistent thePersistent= (new Persistent()).initializePersistent();
+        theAppLog.setPersistentV(thePersistent); // Add for conditional logging.
         String javaFXStartAnomalyString= ///ano Save to later report result of
           JavaFXGUI.startRuntimeAndReturnString(); // start of JavaFX runtime.
 	      BackupTerminator theBackupTerminator= ///ano 

@@ -25,7 +25,7 @@ public class JavaFXApp extends Application
   {
 
     static { // Added to log when this class is loaded.
-        theAppLog.debug("JavaFXApp loaded.");
+        theAppLog.info("JavaFXApp loaded.");
         }
 
     public JavaFXApp()
@@ -35,14 +35,14 @@ public class JavaFXApp extends Application
        */
       {
         super();
-        theAppLog.debug("JavaFXApp() constructor called.");
+        theAppLog.debug("JavaFXAppLog","JavaFXApp() constructor called.");
         }
 
     @Override
     public void init()
         throws Exception
       {
-        theAppLog.debug("JavaFXApp.init() called.");
+        theAppLog.debug("JavaFXAppLog","JavaFXApp.init() called.");
         }
     
     @Override
@@ -59,14 +59,14 @@ public class JavaFXApp extends Application
        * and so it should return quickly. 
        */
       {
-        theAppLog.debug("JavaFXApp.start(Stage) begins, "
+        theAppLog.debug("JavaFXAppLog","JavaFXApp.start(Stage) begins, "
             + "calling JavaFXGUI.getInstanceJavaFXGUI().nestedStartV"
             + "().");
 
         fromLauncherToBeIgnoredStage= null; // Set to null to garbage collect.
 
         JavaFXGUI.getInstanceJavaFXGUI().nestedStartV();
-        theAppLog.debug("JavaFXApp.start(Stage) "
+        theAppLog.debug("JavaFXAppLog","JavaFXApp.start(Stage) "
             + "returned from JavaFXGUI.getInstanceJavaFXGUI().nestedStartV(),"
             + " ending.");
         }
@@ -74,7 +74,7 @@ public class JavaFXApp extends Application
     public void stop()
           throws Exception
       {
-        theAppLog.debug("JavaFXApp.stop() called.");
+        theAppLog.debug("JavaFXAppLog","JavaFXApp.stop() called.");
         }
 
 
