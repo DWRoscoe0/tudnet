@@ -9,6 +9,29 @@ import static allClasses.AppLog.theAppLog;
 
 public class App { // The App, especially pre-GUI stuff.
 
+  /* 
+   * The name of this class, App, is a little misleading.
+   * It's not the entire app.
+   * It doesn't include the app's entry point and some modules used by it.
+   * The entry point is the app's main(.) method in a different class.
+   * 
+   * When this class runs, it does one of two things, depending on whether 
+   * the running instance of the app is NOT the correct one.
+   * 
+   * * If the running instance of the app is NOT the correct one, 
+   *   then it acts to run the correct one, which might include 
+   *   copying a software update file, terminating this instanced,
+   *   and starting a different one located in a different folder.
+   *   There is no interaction with the user,
+   *   except possibly to report an error. 
+   *   
+   * * If the running instance of the app IS the correct one, 
+   *   then it presents the GUI to the user
+   *   and allows the user to interact with app. 
+   *   This is when network operations might also occur.
+   *   If and when the user requests it, the app terminates.
+   */
+  
   AppFactory theAppFactory;
   Persistent thePersistent;
   Shutdowner theShutdowner;
@@ -97,7 +120,7 @@ public class App { // The App, especially pre-GUI stuff.
 	  	}
 
   private void delegateOrDoV()
-    /* This method checks with theAppInstanceManager,
+    /* This method calls the theAppInstanceManager,
       trying to delegate actions to another app instance.
       If delegation succeeds then its work is done and it exits.
       If delegation fails then it starts and runs the GUI
@@ -112,7 +135,7 @@ public class App { // The App, especially pre-GUI stuff.
 		  	  AppGUIFactory theAppGUIFactory= 
 		  	  		theAppFactory.lazyGetAppGUIFactory();
 		      AppGUI theAppGUI= theAppGUIFactory.getAppGUI();
-		      theAppGUI.runV(); // Running GUI until shutdown is requested.
+		      theAppGUI.runV(); // Running main GUI until shutdown is requested.
 		      	// Network operations happen at this time also.
 		      }
 	  	}

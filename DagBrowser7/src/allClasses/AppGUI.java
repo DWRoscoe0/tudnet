@@ -27,10 +27,18 @@ import static allClasses.AppLog.theAppLog;  // For appLogger;
 
 public class AppGUI
 
-  /* This class is the top level of the app GUI.
-    Presently is manages GUI elements of both the Swing and JavaFX.
+  /* 
+    ///org The name of this class, AppGUI, is not appropriate because:
+    1. Though this class includes elements of the app's GUI, 
+      it includes non-GUI elements also.
+    2. Since the addition of JavaFX, some GUI interaction 
+      can occur before this class becomes active.
+    The GUI presently includes elements of both 
+    the Java Swing and JavaFX libraries.
     A transition from Swing to JavaFX is underway.
     Eventually the Swing elements might be eliminated.
+
+    For more information, see the runV(.) method.
     */
 
   { // class AppGUI
@@ -153,8 +161,11 @@ public class AppGUI
         theCPUMonitorEpiThread.startV();
         theTCPCopier.initializeV();
 
+        // At this point, full interaction is possible
+        // with the user and with other network devices.
         theShutdowner.waitForAppShutdownRequestedV();
 
+        // At this point, shutdown has been requested.
         theTCPCopier.finalizeV();
         theCPUMonitorEpiThread.stopAndJoinV();
         theDataTreeModel.logListenersV(); ///dbg
@@ -235,7 +246,7 @@ class GUIManager
         }
 
     
-    // Swing GUI start and stop methods.
+    // GUI start and stop methods.
     
     public void initializeOnEDTV() // GUIManager.
       /* This method does initialization of the Swing GUI.  
@@ -276,9 +287,9 @@ class GUIManager
         }
 
     public void finalizeV()
-      /* This method does finalization of the Swing GUI.  
+      /* This method does finalization of the Swing GUI and JavaFXGUI.  
        * It is called during shutdown.
-       * It switches to the AWT thread EDT to do its work.
+       * It switches to the appropriate threads to do the work.
        */
       {
         theAppLog.info("GUIManager.finalizeOnV() called, doing on EDT.");

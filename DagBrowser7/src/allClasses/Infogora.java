@@ -75,7 +75,7 @@ class Infogora  // The class is the root of this app.
 			  It does the following actions in the following order:
 
         * It prepares the AppLog logger for use first, 
-          because many modules uses it to log significant events.
+          because many modules use it to log significant events.
         * It constructs and initializes the Persistent data module
           so modules can access app settings.
         * ///ano It starts the JavaFX runtime next, so other modules can 

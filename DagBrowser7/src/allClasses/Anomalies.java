@@ -28,7 +28,7 @@ public class Anomalies
      * then an Internet app using that connection will perform poorly. 
      * This is an app anomaly.  It is not an app malfunction.
      * The app might actually be functioning perfectly, 
-     * doing the best that's possible under the circumstances.
+     * doing the best that's possible under difficult circumstances.
      * 
      * Why is this malfunction-anomaly distinction important?
      * 
@@ -42,7 +42,7 @@ public class Anomalies
      * Why would this app have more problems with outside causes?
      * 
      * A major purpose of this app is to be an anti-censorship tool.
-     * Powerful interests exist whose business models 
+     * Powerful interests exist whose business models and fortunes 
      * depend on hiding information that is damaging to them.  
      * Because of this, they would not want this app or similar apps to succeed,
      * and might try to to slow this app's development,
@@ -50,14 +50,14 @@ public class Anomalies
      * 
      * Is this actually happening?  
      * 
-     * It's difficult to know for certain, but 
+     * It's difficult to be certain, but 
      * there is evidence that indicates that it is happening. 
      * 
      * What is the evidence?
      * 
      * Anomalies were encountered during the development of this app 
      * for which no cause could be found.
-     * Source code that deals with these anomalies 
+     * Some of the source code that deals with these anomalies 
      * is marked with the string "///ano".
      * Search this app's source code for that string to see examples.
      * A good place to start is the Infogora.main(.) method, 
@@ -76,19 +76,19 @@ public class Anomalies
      * So, how does one deal with app anomalies?
      * 
      * A reasonable first step is to assume that 
-     * the anomaly has a cause that can be found,
-     * and to use normal program debugging techniques to try to find it.
+     * the anomaly is a malfunction with an internal cause, 
+     * and to try to find the cause using normal program debugging techniques.
      * These techniques include:
      * * analyzing log files
      * * program tracing
      * * breakpoints
      * * single stepping 
      * These techniques can be used on both first-party app code,
-     * and third-party libraries if the source code is available.
-     * With luck the cause of the anomaly will be found and can be fixed with 
-     * a simple source code change.
+     * and third-party libraries if their source code is available.
+     * With luck the cause of the problem will be found and can be fixed with 
+     * a simple change to the app's source code.
      * 
-     * What's the next step if the cause of the problem can't be found?
+     * What if an internal cause can't be found?  What's the next step?
      * 
      * It depends on the anomaly.
      * 
@@ -96,14 +96,13 @@ public class Anomalies
      * 
      * One example is network performance anomalies.
      * Sometimes, for unknown reasons, the network packets 
-     * that carry information between devices on the Internet, 
+     * that carry information between apps connected to the Internet, 
      * don't get through.
-     * Packets might be intermittently blocked going out, 
-     * or blocked coming in, or lost in some other way, 
-     * or delayed for long periods.  
+     * Packets might be blocked going out, or blocked coming in, 
+     * or lost in some other way, or delayed for long periods.  
      * Any of these problems can cause poor performance of a network app.
      * 
-     * Aren't these problems normal.
+     * Aren't these network problems normal.
      * Aren't network apps supposed to be able to deal with them?
      * 
      * Yes and yes.
@@ -129,29 +128,31 @@ public class Anomalies
      * How do you deal with severe anomalies?
      * 
      * Again, it depends on the anomaly.
-     * In this case, one might do the following actions:
-     * * Use protocols that are stateful at a high level
-     *   to enable them to transfer, track, and acknowledge
-     *   complex subsets of data.
-     * * Use protocols that can use multiple networks, including sneakernet,  
-     *   preferably simultaneously, to transfer data.
-     * * Never give up.  Continue to send data until either 
+     * In this case, one could do the following:
+     * 1 Never give up.  Continue to send data until either 
      *   the data is received at its destination
-     *   or the user cancels the data transfer request. 
-     * 
+     *   or the user cancels the data transfer request.
+     *   Unless the blockage is complete and permanent, 
+     *   the data will eventually get through.
+     * 2 Use protocols that are stateful at a high level,
+     *   to enable them to transfer, track, and acknowledge
+     *   complex subsets of partially transfered data.
+     * 3 Use protocols that can use multiple networks, if available,   
+     *   to transfer data, including the ultimate backup network sneakernet.
+     *    
      * Is there anything that can be done 
      * to deal with severe anomalies in general?
      * 
-     * Yes.  The user should be informed whenever a severe anomaly 
+     * Yes.  The user should always be informed whenever a severe anomaly 
      * is causing the app to perform poorly.
      * The specifics of the anomaly should be provided if possible. 
      * 
      * Why do this?
      *
      * Two reasons:
-     * * Doing so rightfully shifts the blame for the app's poor performance
-     *   away from the app and toward the actual cause.
-     * * If the anomaly is being caused by a malicious actor,
+     * 1 Doing so rightfully shifts the blame for the app's poor performance
+     *   away from the app and toward the actual external cause.
+     * 2 If the anomaly is being caused by a malicious actor,
      *   identifying the anomaly to the user whenever it happens 
      *   might discourage the actor doing it often.
      *   
@@ -168,7 +169,7 @@ public class Anomalies
      * such as app users, app developers, 
      * and COINTELPRO-style operations targets, it won't.
      * 
-     * What do you say to people who say they have difficulty believing this?
+     * What do you say to people who have difficulty believing this?
      * 
      * They might have less difficulty believing after they do some research, 
      * starting with the following recommended search terms:
