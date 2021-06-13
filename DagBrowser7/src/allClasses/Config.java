@@ -92,6 +92,7 @@ public class Config
 	  public static final String appJarString= appString + ".jar";
     public static final String textStream1FolderString= "Peers";
     public static final String textStream2FolderString= "Owners";
+    public static final String persistentFileString= "PersistentEpiNode.txt";
 
     //// public static final String rootIdString= "PeerIdentity"; // old
     //// public static final String rootIdString= "OwnerId"; // old

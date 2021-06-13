@@ -190,7 +190,7 @@ public class InstallerBuilder
         String errorString= null;
         queueAndDisplayOutputSlowV("\nWriting PersistentEpiNode.txt file.");
         File destinationFile= 
-            new File(destinationFolderFile, "PersistentEpiNode.txt");
+            new File(destinationFolderFile, Config.persistentFileString);
         try {
           PipedOutputStream thePipedOutputStream= new PipedOutputStream();
           PipedInputStream thePipedInputStream= 

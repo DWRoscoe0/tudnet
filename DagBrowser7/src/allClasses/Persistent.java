@@ -88,7 +88,7 @@ public class Persistent
 	      */
 	    {
         rootMapEpiNode=  // Translate external text to internal EpiNodes
-          loadMapEpiNode("PersistentEpiNode.txt"); // by loading text file.
+          loadMapEpiNode(Config.persistentFileString); // by loading text file.
 
         if  // Define root to be an empty map if the load failed.
           (rootMapEpiNode == null) 
@@ -225,7 +225,7 @@ public class Persistent
         
         storeEpiNodeDataV( // Write 
             rootMapEpiNode, // all EpiNode data 
-            "PersistentEpiNode.txt" // to this file.
+            Config.persistentFileString // to this file.
             );
         }
   
