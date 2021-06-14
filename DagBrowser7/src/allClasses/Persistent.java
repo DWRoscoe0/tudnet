@@ -321,7 +321,7 @@ public class Persistent
         void writeToV(D destinationD) throws E;
         }
     
-    private void writeDataV( 
+    public void writeDataV( 
         WriterTo1Throws2<OutputStream,IOException> 
           sourceWriterTo1Throws2, 
         File destinationFileFile
