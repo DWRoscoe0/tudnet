@@ -251,6 +251,7 @@ public class Persistent
         storeEpiNodeDataV( theEpiNode, fileFile );
         }
 
+    @SuppressWarnings("unused") ////
     private void OLDstoreEpiNodeDataV( EpiNode theEpiNode, File fileFile )
       /* This method stores the Persistent data that is in main memory to 
         the external text file whose pathname is fileFile.
@@ -297,7 +298,7 @@ public class Persistent
       {
         theAppLog.debug(
             "Persistent","Persistent.NEWstoreEpiNodeDataV(.) begins.");
-        storeDataV(
+        writeDataV(
             (theOutputStream) -> {
               theOutputStream.write( // Write leading comment.
                   "#---YAML-like EpiNode data follows---".getBytes());
@@ -307,39 +308,37 @@ public class Persistent
                 );
               theOutputStream.write( // Write trailing comment.
                   (NL+"#--- end of file ---"+NL).getBytes());
-              },
-            fileFile
+              }, // source WriterTo1Throws2<OutputStream,IOException>
+            fileFile // destination file File
             );
         theAppLog.debug(
             "Persistent","Persistent.NEWstoreEpiNodeDataV(.) ends.");
         }
 
     @FunctionalInterface
-    public interface ThrowingWriterTo1Throws2<T, E extends Exception> {
-        void writeToV(T t) throws E;
-    }
+    public interface WriterTo1Throws2<D, E extends Exception> 
+      {
+        void writeToV(D destinationD) throws E;
+        }
     
-    private void storeDataV( 
-        ThrowingWriterTo1Throws2<OutputStream,IOException> 
-          sourceForOutputStream, 
-        File fileFile 
+    private void writeDataV( 
+        WriterTo1Throws2<OutputStream,IOException> 
+          sourceWriterTo1Throws2, 
+        File destinationFileFile
         )
-      /* This method writes data from sourceForOutputStream
-       * to an OutputStream created for an external text file 
-       * whose pathname is fileFile.
-        
-        ///opt The exception handling in this method is not required,
-        but it does no harm.
-        */
+      /* This method writes data from sourceWriterTo1Throws2
+       * using an OutputStream with the possibility of an IOException,
+       * to a new next file with a pathname of destinationFileFile.
+       */
       {
         theAppLog.debug(
             "Persistent","Persistent.storeDataV(.) begins.");
-        FileOutputStream theFileOutputStream= null;
+        FileOutputStream sourceFileOutputStream= null;
         try {
-            theFileOutputStream= new // Create OutputStream to file path.
-                FileOutputStream(fileFile);
-            sourceForOutputStream.writeToV( // Write all data to OutputStream.
-                theFileOutputStream);
+            sourceFileOutputStream= new FileOutputStream( // Create OutputStream 
+                destinationFileFile); // to file with this pathname.
+            sourceWriterTo1Throws2.writeToV( // Write all source data 
+                sourceFileOutputStream); // to OutputStream.
             }
           catch (Exception theException) { 
             theAppLog.exception(
@@ -347,7 +346,7 @@ public class Persistent
             }
           finally {
             try {
-              if ( theFileOutputStream != null ) theFileOutputStream.close(); 
+              if ( sourceFileOutputStream != null ) sourceFileOutputStream.close(); 
               }
             catch ( Exception theException ) { 
               theAppLog.exception(
