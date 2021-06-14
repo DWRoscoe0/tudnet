@@ -12,6 +12,8 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import javax.swing.JOptionPane;
 
+//// import allClasses.epinode.MapEpiNode;
+
 import static allClasses.AppLog.theAppLog;
 import static allClasses.SystemSettings.NL;
 
@@ -793,7 +795,7 @@ l    * If the app receives a message indicating
 	          ( ! standardAppFile.exists() )  // The file doesn't exist.
 	          {
 	            theAppLog.info("Trying to install.");
-	            appShouldExitB= copyAndPrepareToRunB();
+	            appShouldExitB= updateAndPrepareToRunB();
 	            }
 	        return appShouldExitB;
 	        }
@@ -814,7 +816,7 @@ l    * If the app receives a message indicating
   	          ( runningAppFile.lastModified() <= standardAppFile.lastModified() )
   	          break toReturn;
             appShouldExitB= true; // App exits in the following cases.
-            if (copyAndPrepareToRunB()) break toReturn; // Successful copy.
+            if (updateAndPrepareToRunB()) break toReturn; // Successful copy.
             theAppLog.error("Copy failed.  Waiting, then exiting.");
             EpiThread.interruptibleSleepB(5000); // Wait 5s.
           } // toReturn:
@@ -876,7 +878,7 @@ l    * If the app receives a message indicating
 	    	  return appShouldExitB;
 	        }
       
-      private boolean copyAndPrepareToRunB()
+      private boolean updateAndPrepareToRunB()
         /* This method tries to copy this running app's executable file to 
           the standard folder, and prepare it to be run as a Process on exit. 
           It keeps trying until copying succeeds, 
@@ -890,14 +892,16 @@ l    * If the app receives a message indicating
         {
             theAppLog.debug("copyAndPrepareToRunB() begin");
             boolean successB= false;
-          toExit: { toCopy: {
-            if (endsWithJarOrExeB(runningAppFile)) break toCopy;
-            theAppLog.info("copyAndPrepareToRunB() Not copying.  "
-                + "Not executable .jar or .exe file:" + NL + "  " + runningAppFile);
-            break toExit;
-          } // toCopy:
+          toExit: {
+            if (! endsWithJarOrExeB(runningAppFile)) {
+              theAppLog.info("copyAndPrepareToRunB() Not copying.  "
+                  + "Not executable .jar or .exe file:" + NL + "  " + runningAppFile);
+              break toExit;
+              }
             if (! copyExecutableFileB(runningAppFile, standardAppFile))
               break toExit; // Exit if copying of executable failed.
+            if (! mergePersistentDataB(runningAppFile, standardAppFile))
+              break toExit; // Exit if error transferring merged data.
             successB= requestProcessStartAndShutdownTrueB( 
                 standardAppFile.getAbsolutePath() 
                 );
@@ -924,6 +928,33 @@ l    * If the app receives a message indicating
             return resultB;
           }
 
+      private boolean mergePersistentDataB(
+          File sourceFile, File destinationFile)
+        /* This method tries to merge the PersistentEpiNode.txt file
+          from the same directory as the sourceFile to 
+          the PersistentEpiNode.txt file in 
+          the same directory as the destinationFile.
+          If there is an IO error then the method returns false.
+          If there is an IO error, or there is no file to merge,
+          then it returns true.
+          */
+        {
+            boolean successB= true; // for now, will be false;
+        /*  ///
+          toExit: {
+            File sourceFileFile= new File(
+                sourceFile.getParentFile(),Config.persistentFileString);
+            MapEpiNode sourceMapEpiNode= null;
+            File destinationFileFile= new File(
+                destinationFile.getParentFile(),Config.persistentFileString); 
+            FileOps.copyFileWithRetryV(sourceFile, destinationFile);
+            successB= true;
+          } // toExit:
+            theAppLog.debug("copyExecutableFileB()= "+successB);
+        */  ///
+            return successB;
+          }
+          
       private boolean copyExecutableFileB(
           File sourceFile, File destinationFile)
         /* This method tries to copy the executable 

@@ -23,8 +23,15 @@ public class FileOps
   {
   
     /* This class contains code useful for operating on files.
-      ///org It should probably be organized by grouping related methods.
-      */
+     * 
+     * ///org It should probably be organized by grouping related methods.
+     *
+     * ///org To better reuse code that creates and later closes
+     * stream-oriented files, maybe create a method 
+     * that takes a function parameter 
+     * that itself takes an OutputStream parameter.
+     * This could be called easily with a lambda expression.
+     */
     
     public static void updateFromToV(File thisFile, File thatFile)
       /* If thisFile is newer than thatFile, then
@@ -211,7 +218,7 @@ public class FileOps
         a String describing the failure if the copy fails.
         */
       {
-        theAppLog.info("XtryRawCopyFileB(.) begins.");
+        theAppLog.info("tryRawCopyFileB(.) begins.");
         InputStream theInputStream= null;
         String errorString= null;
         try {
@@ -219,12 +226,12 @@ public class FileOps
             errorString= tryCopyingInputStreamToFileReturnString(
                 theInputStream,destinationFile);
           } catch (Exception e) {
-              theAppLog.exception("XtryRawCopyFileB(.)",e); 
+              theAppLog.exception("tryRawCopyFileB(.)",e); 
           } finally { // Close things, error or not.
-            theAppLog.info("XtryRawCopyFileB(.) closing InputStream.");
+            theAppLog.info("tryRawCopyFileB(.) closing InputStream.");
             Closeables.closeWithErrorLoggingB(theInputStream);
           }
-        theAppLog.info("XtryRawCopyFileB(.) ends, "
+        theAppLog.info("tryRawCopyFileB(.) ends, "
             +"closes done, errorString="+errorString);
         return errorString;
         }
@@ -243,7 +250,8 @@ public class FileOps
 
     public static String tryCopyingInputStreamToFileReturnString(
         InputStream theInputStream, File destinationFile) 
-      /* This method tries to copy the sourceFile to the destinationFile.
+      /* This method tries to create the destinationFile,
+        copy theInputStream to it, then close it.
         If there is an error, the copy fails.
         If the copy is interrupted, the copy fails.
         This method returns null if the copy succeeds, 
@@ -288,8 +296,7 @@ public class FileOps
         InputStream theInputStream, OutputStream theOutputStream)
       /* This method copies all [remaining] bytes
         from theInputStream to theOutputStream.
-        The streams are assumed to be open at entry 
-        and they will remain open at exit.
+        The streams are assumed to be open at entry and will be open at exit.
         It returns null if the copy of all data finished without error.
         It returns a String if the copy does not finish,
         and the String describes the reason.

@@ -1,5 +1,6 @@
 package allClasses;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -132,9 +133,20 @@ public class Persistent
         }
 
     private MapEpiNode loadMapEpiNode( String fileString )
-      /* This method translate external text to internal EpiNodes
-       * by loading the text file whose name is fileString.
-       * It returns the resulting root MapEpiNode or null if the load fails.
+      /* This method translates external text to internal EpiNodes
+       * by loading the text file whose name is fileString
+       * that is located in the standard folder.
+       * It returns the resulting MapEpiNode or null if the load fails.
+       */
+      {
+        File fileFile= FileOps.makeRelativeToAppFolderFile( fileString );
+        return loadMapEpiNode(fileFile);
+      }
+
+    private MapEpiNode loadMapEpiNode( File fileFile )
+      /* This method translates external text to internal EpiNodes
+       * by loading the text file whose pathname is fileFile.
+       * It returns the resulting MapEpiNode or null if the load fails.
        */
       {
         MapEpiNode resultMapEpiNode= null; 
@@ -143,8 +155,7 @@ public class Persistent
         RandomAccessFile theRandomAccessFile= null;
 
         try { 
-            theRandomAccessFile= new RandomAccessFile(
-                FileOps.makeRelativeToAppFolderFile( fileString ),"r");
+            theRandomAccessFile= new RandomAccessFile(fileFile,"r");
             theRandomAccessInputStream= 
                 new RandomFileInputStream(theRandomAccessFile);
             resultMapEpiNode= MapEpiNode.getBlockMapEpiNode(
@@ -211,8 +222,9 @@ public class Persistent
   
         Before it writes the data, it might do some reordering of entries.
         It does this by removing and adding particular entries.
-        These entries will appear last.
-        This is done to reduce manual search time during debugging and testing.
+        The most recently added entries will appear last.
+        This ordering is done to reduce manual search time 
+        during debugging and testing.
   
         ///enh Maybe use a similar technique to put 
           all entries whose values are MapEpiNodes last.
@@ -228,10 +240,20 @@ public class Persistent
             Config.persistentFileString // to this file.
             );
         }
-  
+
     private void storeEpiNodeDataV( EpiNode theEpiNode, String fileString )
       /* This method stores the Persistent data that is in main memory to 
-        the external text file whose name is fileString.
+        the external text file whose name is fileString
+        and is in the standard folder.
+        */
+      {
+        File fileFile= FileOps.makeRelativeToAppFolderFile(fileString);
+        storeEpiNodeDataV( theEpiNode, fileFile );
+        }
+
+    private void OLDstoreEpiNodeDataV( EpiNode theEpiNode, File fileFile )
+      /* This method stores the Persistent data that is in main memory to 
+        the external text file whose pathname is fileFile.
         
         ///opt The exception handling in this method is not required,
         but it does no harm.
@@ -241,8 +263,8 @@ public class Persistent
             "Persistent","Persistent.storeEpiNodeDataV(..) begins.");
         FileOutputStream theFileOutputStream= null;
         try {
-            theFileOutputStream= new FileOutputStream(
-                FileOps.makeRelativeToAppFolderFile(fileString));  
+            theFileOutputStream= new FileOutputStream(fileFile);
+                //// FileOps.makeRelativeToAppFolderFile(fileString));
             theFileOutputStream.write( // Write leading comment.
                 "#---YAML-like EpiNode data follows---".getBytes());
             theEpiNode.writeV( // Write all of theEpiNode tree
@@ -267,7 +289,74 @@ public class Persistent
             }
         theAppLog.debug("Persistent","Persistent.storeEpiNodeDataV(..) ends.");
         }
-  
+
+    private void storeEpiNodeDataV( EpiNode theEpiNode, File fileFile )
+      /* This method stores the Persistent data that is in main memory to 
+        the external text file whose pathname is fileFile.
+        */
+      {
+        theAppLog.debug(
+            "Persistent","Persistent.NEWstoreEpiNodeDataV(.) begins.");
+        storeDataV(
+            (theOutputStream) -> {
+              theOutputStream.write( // Write leading comment.
+                  "#---YAML-like EpiNode data follows---".getBytes());
+              theEpiNode.writeV( // Write all of theEpiNode tree
+                theOutputStream, 
+                0 // starting at indent level 0.
+                );
+              theOutputStream.write( // Write trailing comment.
+                  (NL+"#--- end of file ---"+NL).getBytes());
+              },
+            fileFile
+            );
+        theAppLog.debug(
+            "Persistent","Persistent.NEWstoreEpiNodeDataV(.) ends.");
+        }
+
+    @FunctionalInterface
+    public interface ThrowingWriterTo1Throws2<T, E extends Exception> {
+        void writeToV(T t) throws E;
+    }
+    
+    private void storeDataV( 
+        ThrowingWriterTo1Throws2<OutputStream,IOException> 
+          sourceForOutputStream, 
+        File fileFile 
+        )
+      /* This method writes data from sourceForOutputStream
+       * to an OutputStream created for an external text file 
+       * whose pathname is fileFile.
+        
+        ///opt The exception handling in this method is not required,
+        but it does no harm.
+        */
+      {
+        theAppLog.debug(
+            "Persistent","Persistent.storeDataV(.) begins.");
+        FileOutputStream theFileOutputStream= null;
+        try {
+            theFileOutputStream= new // Create OutputStream to file path.
+                FileOutputStream(fileFile);
+            sourceForOutputStream.writeToV( // Write all data to OutputStream.
+                theFileOutputStream);
+            }
+          catch (Exception theException) { 
+            theAppLog.exception(
+                "Persistent.storeDataV(.)", theException);
+            }
+          finally {
+            try {
+              if ( theFileOutputStream != null ) theFileOutputStream.close(); 
+              }
+            catch ( Exception theException ) { 
+              theAppLog.exception(
+                  "Persistent.storeDataV(.)", theException);
+              }
+            }
+        theAppLog.debug("Persistent","Persistent.storeDataV(.) ends.");
+        }
+
     public void writeInstallationSubsetV( OutputStream theOutputStream )
       /* This method writes a subset of storage needed for installations
        * to theOutputStream. */

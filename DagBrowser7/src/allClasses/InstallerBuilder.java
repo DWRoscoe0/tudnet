@@ -181,9 +181,14 @@ public class InstallerBuilder
 
     private String writeConfigurationFileReturnString(
         File destinationFolderFile)
-      /* This method writes the configuration file to the folder specified by 
-       * destinationFolderFile which is assumed to exist already.
+      /* This method writes the installation configuration file 
+       * to the folder specified by destinationFolderFile 
+       * which is assumed to exist already.
        * It returns null if success, an error String if not.
+       * 
+       * The file is created with a special write method
+       * writing to an OutputStream piped to an InputStream
+       * which is copied to the destination file.
        */
       {
         boolean successB= false;
