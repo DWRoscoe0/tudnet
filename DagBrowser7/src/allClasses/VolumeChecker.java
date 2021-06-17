@@ -162,7 +162,7 @@ public class VolumeChecker
         reportNumberI= 0;
         queueAndDisplayOutputSlowV("\n\nChecking " + volumeFile + "\n");
         resultString= deleteAllVolumeFilesReturnString(volumeFile);
-        if (! isAbsentB(resultString)) break goReturn;
+        if (! EpiString.isAbsentB(resultString)) break goReturn;
         offsetOfProgressReportI= thePlainDocument.getLength();
         pushOperationV("VolumeChecker");
         buildFolderFile= new File(volumeFile,"InfogoraTemp");
@@ -170,21 +170,21 @@ public class VolumeChecker
         toCheckTotalBytesL= initialVolumeFreeBytesL;
         resultString= FileOps.makeDirectoryAndAncestorsString(
             buildFolderFile);
-        if (! isAbsentB(resultString)) {
-          resultString= combineLinesString(
+        if (! EpiString.isAbsentB(resultString)) {
+          resultString= EpiString.combineLinesString(
               "error creating folder", resultString);
           break goFinish;
           }
         outputProgressSlowlyV();
         resultString= writeTestReturnString(buildFolderFile);
-        if (! isAbsentB(resultString)) {
-          resultString= combineLinesString(
+        if (! EpiString.isAbsentB(resultString)) {
+          resultString= EpiString.combineLinesString(
               "error during write-test", resultString);
           break goFinish;
           }
         resultString= readTestReturnString(buildFolderFile);
-        if (! isAbsentB(resultString)) {
-          resultString= combineLinesString(
+        if (! EpiString.isAbsentB(resultString)) {
+          resultString= EpiString.combineLinesString(
               "error during read-test", resultString);
           break goFinish;
           }
@@ -193,10 +193,10 @@ public class VolumeChecker
         theAppLog.debug("VolumeChecker.checkVolumeV(.) deleting.");
         String deleteErrorString= FileOps.deleteRecursivelyReturnString(
             buildFolderFile,FileOps.requiredConfirmationString);
-        resultString= combineLinesString(resultString, deleteErrorString);
+        resultString= EpiString.combineLinesString(resultString, deleteErrorString);
         replaceOperationAndRefreshProgressReportV("done");
       }  // goReturn:
-        if (! isAbsentB(resultString)) // Report error or success.
+        if (! EpiString.isAbsentB(resultString)) // Report error or success.
           reportWithPromptSlowlyAndWaitForKeyV( // Report error.
               "Abnormal termination:\n" + resultString);
           else 
@@ -275,7 +275,7 @@ public class VolumeChecker
                 errorString= testInterruptionGetConfirmation1ReturnResultString(
                     "Do you want to terminate this operation?",
                     "write operation terminated by user");
-                if (! isAbsentB(errorString)) break blockLoop;
+                if (! EpiString.isAbsentB(errorString)) break blockLoop;
                 if (0 >= remainingFileBytesL) break blockLoop;
                 try { writeBlockV(
                   theFileOutputStream,toCheckDoneBytesL / bytesPerBlockI); }
@@ -307,12 +307,12 @@ public class VolumeChecker
               theFileOutputStream.close();
               theFileOutputStream= null; // Prevent another close.
               popOperationV(); // File operation. 
-              if (! isAbsentB(errorString)) break fileLoop;
+              if (! EpiString.isAbsentB(errorString)) break fileLoop;
               }
             /// ? Move following into above try block?
           } // fileLoop:
         } catch (Exception theException) {
-          errorString= combineLinesString(errorString, 
+          errorString= EpiString.combineLinesString(errorString, 
             "VolumeCheck.writeTestReturnString(.) in normal close "
             + theException);
           theAppLog.exception(errorString, theException);
@@ -320,7 +320,7 @@ public class VolumeChecker
           try {
             if ( theFileOutputStream != null ) theFileOutputStream.close(); 
           } catch ( Exception theException ) {
-            errorString= combineLinesString(errorString,
+            errorString= EpiString.combineLinesString(errorString,
               "VolumeCheck.writeTestReturnString(.) in error close "
               + theException);
             theAppLog.exception(errorString, theException);
@@ -396,11 +396,11 @@ public class VolumeChecker
             errorString= testInterruptionGetConfirmation1ReturnResultString(
                 "Do you want to terminate this operation?",
                 "read operation terminated by user");
-            if (! isAbsentB(errorString)) break blockLoop;
+            if (! EpiString.isAbsentB(errorString)) break blockLoop;
             if (0 >= remainingFileBytesL) break blockLoop;
             errorString= readBlockReturnString(
                 theFileInputStream,toCheckDoneBytesL / bytesPerBlockI);
-            if (! isAbsentB(errorString)) break blockLoop;
+            if (! EpiString.isAbsentB(errorString)) break blockLoop;
             toCheckRemainingBytesL-= bytesPerBlockI;
             remainingFileBytesL-= bytesPerBlockI;
             toCheckDoneBytesL+= bytesPerBlockI;
@@ -409,11 +409,11 @@ public class VolumeChecker
             replaceOperationAndRefreshProgressReportV("closing");
             theFileInputStream.close();
             popOperationV(); // "opening"
-            if (! isAbsentB(errorString)) break fileLoop;
+            if (! EpiString.isAbsentB(errorString)) break fileLoop;
             volumeDoneFilesL++;
           } // fileLoop:
         } catch (Exception theException) { 
-          errorString= combineLinesString(errorString, 
+          errorString= EpiString.combineLinesString(errorString, 
             "VolumeCheck.readTestReturnString(.) in normal close "
             + theException);
           theAppLog.exception(errorString, theException);
@@ -421,7 +421,7 @@ public class VolumeChecker
           try {
             if ( theFileInputStream != null ) theFileInputStream.close(); 
           } catch ( Exception theException ) { 
-            errorString= combineLinesString(errorString, 
+            errorString= EpiString.combineLinesString(errorString, 
               "VolumeCheck.readTestReturnString(.) in error close "
               + theException);
             theAppLog.exception(errorString, theException);
@@ -491,39 +491,6 @@ public class VolumeChecker
             blockByteArrayOutputStream.toByteArray();
         return blockBytes;
         }
-
-    protected String combineLinesString(
-        String the1String,String the2String)
-      {
-        String valueString;
-      toReturn: {
-        if (isAbsentB(the1String)) // If there is no string 1
-          { valueString= the2String; break toReturn; } // return string 2.
-        if (isAbsentB(the2String)) // If there is no string 2
-          { valueString= the1String; break toReturn; } // return string 1.
-        valueString= // Neither string is null so return a combination of both:
-          the1String 
-          + ",\n" // with a line separator between them.
-          + the2String; // 
-      } // toReturn:
-        return valueString;
-      }
-
-    protected static boolean isAbsentB(String theString)
-      /* This method returns true if theString is null or "", 
-       * false otherwise. 
-       */
-      {
-        boolean valueB;
-      toReturn: {
-        if (null == theString) // If string is null
-          { valueB= true; break toReturn; } // return true.
-        if (theString.isEmpty()) // If non-null string is empty
-          { valueB= true; break toReturn; } // return true.
-        valueB= false; // Otherwise return false. 
-      } // toReturn:
-        return valueB;
-      }
 
     protected String testInterruptionGetConfirmation1ReturnResultString(
         String confirmationQuestionString,String resultDescriptionString)

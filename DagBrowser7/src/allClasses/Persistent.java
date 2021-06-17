@@ -297,9 +297,12 @@ public class Persistent
         */
       {
         theAppLog.debug(
-            "Persistent","Persistent.NEWstoreEpiNodeDataV(.) begins.");
-        writeDataV(
+            "Persistent","Persistent.storeEpiNodeDataV(.) begins.");
+        writeDataReturnString(
             (theOutputStream) -> {
+              theAppLog.debug(
+                  "Persistent","Persistent.storeEpiNodeDataV(.) "
+                  + "write to OutputStream begins.");
               theOutputStream.write( // Write leading comment.
                   "#---YAML-like EpiNode data follows---".getBytes());
               theEpiNode.writeV( // Write all of theEpiNode tree
@@ -308,11 +311,14 @@ public class Persistent
                 );
               theOutputStream.write( // Write trailing comment.
                   (NL+"#--- end of file ---"+NL).getBytes());
+              theAppLog.debug(
+                  "Persistent","Persistent.storeEpiNodeDataV(.) "
+                  + "write to OutputStream ends.");
               }, // source WriterTo1Throws2<OutputStream,IOException>
             fileFile // destination file File
             );
         theAppLog.debug(
-            "Persistent","Persistent.NEWstoreEpiNodeDataV(.) ends.");
+            "Persistent","Persistent.storeEpiNodeDataV(.) ends.");
         }
 
     @FunctionalInterface
@@ -321,70 +327,65 @@ public class Persistent
         void writeToV(D destinationD) throws E;
         }
     
-    public void writeDataV( 
+    public String writeDataReturnString( 
         WriterTo1Throws2<OutputStream,IOException> 
           sourceWriterTo1Throws2, 
         File destinationFileFile
         )
       /* This method writes data from sourceWriterTo1Throws2
        * using an OutputStream with the possibility of an IOException,
-       * to a new next file with a pathname of destinationFileFile.
+       * to a new text file with a pathname of destinationFileFile.
+       * If the write is successful then it returns null,
+       * otherwise it returns a String describing the failure.
+       * 
+       * Most of the code here is about initialization, exception handling,
+       * and finalization of the file destinationFileFile.
+       * sourceWriterTo1Throws2 does all the data writing.
        */
       {
         theAppLog.debug(
-            "Persistent","Persistent.storeDataV(.) begins.");
+            "Persistent","Persistent.writeDataReturnString(.) begins, file: "
+            + destinationFileFile);
+        String errorString= null;
         FileOutputStream sourceFileOutputStream= null;
         try {
             sourceFileOutputStream= new FileOutputStream( // Create OutputStream 
-                destinationFileFile); // to file with this pathname.
+                destinationFileFile); // to the file with this pathname.
+            theAppLog.debug(
+              "Persistent","Persistent.writeDataReturnString(.) write begins.");
             sourceWriterTo1Throws2.writeToV( // Write all source data 
                 sourceFileOutputStream); // to OutputStream.
+            theAppLog.debug(
+              "Persistent","Persistent.writeDataReturnString(.) write ends.");
             }
-          catch (Exception theException) { 
-            theAppLog.exception(
-                "Persistent.storeDataV(.)", theException);
-            }
-          finally {
-            try {
-              if ( sourceFileOutputStream != null ) sourceFileOutputStream.close(); 
-              }
-            catch ( Exception theException ) { 
-              theAppLog.exception(
-                  "Persistent.storeDataV(.)", theException);
-              }
-            }
-        theAppLog.debug("Persistent","Persistent.storeDataV(.) ends.");
-        }
-
-    public void writeInstallationSubsetV( OutputStream theOutputStream )
-      /* This method writes a subset of storage needed for installations
-       * to theOutputStream. */
-      {
-        try {
-            theOutputStream.write( // Write leading comment.
-                "#---YAML-like installation subset data follows---".getBytes());
-            writeInstallationSubsetComponentsV(theOutputStream);
-            theOutputStream.write( // Write trailing comment.
-                (NL+"#--- end of installation subset data ---"+NL).getBytes());
-            }
-          catch (Exception theException) { 
-            theAppLog.exception(
-                "Persistent.writeInstallationSubsetV(..)", theException);
+          catch (Exception theException) {
+            errorString= "write error: "+theException;
             }
           finally {
             try {
-              if ( theOutputStream != null ) theOutputStream.close(); 
+              if ( sourceFileOutputStream != null ) 
+                sourceFileOutputStream.close(); 
               }
             catch ( Exception theException ) { 
-              theAppLog.exception(
-                  "Persistent.writeInstallationSubsetV(..)", theException);
+              EpiString.combineLinesString(
+                  errorString, "close error: "+theException);
               }
             }
+        if (null != errorString) { // If error occurred, add prefix.
+          errorString= EpiString.combineLinesString(
+              "Persistent.writeDataReturnString(.), "
+                  + "destinationFileFile= " + destinationFileFile,
+              errorString
+              );
+          theAppLog.error(errorString);
+          }
         theAppLog.debug(
-            "Persistent","Persistent.writeInstallationSubsetV(..) ends.");
+            "Persistent","Persistent.writeDataReturnString(.) ends, file: "
+            + destinationFileFile);
+        return errorString;
         }
   
-    private void writeInstallationSubsetComponentsV( 
+    public void writeInstallationSubsetComponentsV(
         OutputStream theOutputStream )
       throws IOException
       /* This method writes the components of 

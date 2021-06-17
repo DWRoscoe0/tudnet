@@ -5,17 +5,13 @@ import javax.swing.tree.TreePath;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import static allClasses.AppLog.theAppLog;
+import static allClasses.SystemSettings.NL;
 
 
 public class InstallerBuilder
@@ -101,17 +97,17 @@ public class InstallerBuilder
       goReturn: {
       goFinish: {
         resultString= deleteAllVolumeFilesReturnString(volumeFile);
-        if (! isAbsentB(resultString)) break goFinish;
+        if (! EpiString.isAbsentB(resultString)) break goFinish;
         resultString= createFolderReturnString(buildFolderFile);
-        if (! isAbsentB(resultString)) break goFinish;
+        if (! EpiString.isAbsentB(resultString)) break goFinish;
         resultString= writeAppFileReturnString(buildFolderFile);
-        if (! isAbsentB(resultString)) break goFinish;
+        if (! EpiString.isAbsentB(resultString)) break goFinish;
         resultString= writeReadMeFileReturnString(buildFolderFile);
-        if (! isAbsentB(resultString)) break goFinish;
+        if (! EpiString.isAbsentB(resultString)) break goFinish;
         resultString= writeConfigurationFileReturnString(buildFolderFile);
-        if (! isAbsentB(resultString)) break goFinish;
+        if (! EpiString.isAbsentB(resultString)) break goFinish;
       }  // goFinish:
-        if (! isAbsentB(resultString)) { // Report error.
+        if (! EpiString.isAbsentB(resultString)) { // Report error.
           reportWithPromptSlowlyAndWaitForKeyV(
               "Abnormal termination:\n" + resultString);
           break goReturn;
@@ -129,8 +125,8 @@ public class InstallerBuilder
         queueAndDisplayOutputSlowV("\nCreating folder "+buildFolderFile);
         String resultString= FileOps.makeDirectoryAndAncestorsString(
             buildFolderFile);
-        if (! isAbsentB(resultString))
-          resultString= combineLinesString(
+        if (! EpiString.isAbsentB(resultString))
+          resultString= EpiString.combineLinesString(
               "error creating folder", resultString);
         return resultString;
         }
@@ -149,8 +145,8 @@ public class InstallerBuilder
             new File(destinationFolderFile, sourceFile.getName());
         errorString= FileOps.tryCopyFileReturnString(
             sourceFile, destinationFile);
-        if (! isAbsentB(errorString))
-          errorString= combineLinesString(
+        if (! EpiString.isAbsentB(errorString))
+          errorString= EpiString.combineLinesString(
             "Error copying file "+sourceFile+" to "+destinationFile,
             errorString
             );
@@ -179,48 +175,6 @@ public class InstallerBuilder
         return errorString;
         }
 
-    private String OLDwriteConfigurationFileReturnString(
-        File destinationFolderFile)
-      /* This method writes the installation configuration file 
-       * to the folder specified by destinationFolderFile 
-       * which is assumed to exist already.
-       * It returns null if success, an error String if not.
-       * 
-       * The file is created with a special write method
-       * writing to an OutputStream piped to an InputStream
-       * which is copied to the destination file.
-       */
-      {
-        boolean successB= false;
-        String errorString= null;
-        queueAndDisplayOutputSlowV("\nWriting PersistentEpiNode.txt file.");
-        File destinationFile= 
-            new File(destinationFolderFile, Config.persistentFileString);
-        try {
-          PipedOutputStream thePipedOutputStream= new PipedOutputStream();
-          PipedInputStream thePipedInputStream= 
-            new PipedInputStream(thePipedOutputStream,1024);
-          Future<Boolean> theFutureOfBoolean= 
-            theScheduledThreadPoolExecutor.submit(new Callable<Boolean>() {
-                public Boolean call() throws Exception {
-                  return FileOps.tryCopyingInputStreamToFileB(
-                      thePipedInputStream, destinationFile);
-                  }});
-          thePersistent.writeInstallationSubsetV(thePipedOutputStream);
-          thePipedOutputStream.close(); // This will terminate above thread.
-          try { successB = theFutureOfBoolean.get(); } catch (Exception e) { 
-              successB= false; // Translate Exception to failure.
-            }
-          } catch (IOException e1) {
-            /// TODO Auto-generated catch block
-            e1.printStackTrace();
-          }
-        if (!successB) {
-          errorString= "Error writing file "+destinationFile;
-          }
-        return errorString;
-        }
-
     private String writeConfigurationFileReturnString( /////////////
         File destinationFolderFile)
       /* This method writes the installation configuration file 
@@ -232,9 +186,19 @@ public class InstallerBuilder
         queueAndDisplayOutputSlowV("\nWriting PersistentEpiNode.txt file.");
         File destinationFile= 
             new File(destinationFolderFile, Config.persistentFileString);
-        thePersistent.writeDataV(
+        thePersistent.writeDataReturnString(
             (theOutputStream) -> {
-              thePersistent.writeInstallationSubsetV(theOutputStream);
+              theAppLog.debug(
+                "InstallerBuilder.writeConfigurationFileReturnString(.) "
+                + "write to OutputStream begins.");
+              theOutputStream.write( // Write leading comment.
+                "#---YAML-like installation subset data follows---".getBytes());
+              thePersistent.writeInstallationSubsetComponentsV(theOutputStream);
+              theOutputStream.write( // Write trailing comment.
+                (NL+"#--- end of installation subset data ---"+NL).getBytes());
+              theAppLog.debug(
+                "InstallerBuilder.writeConfigurationFileReturnString(.) "
+                + "write to OutputStream ends.");
               }, // source WriterTo1Throws2<OutputStream,IOException>
             destinationFile // destination file File
             );

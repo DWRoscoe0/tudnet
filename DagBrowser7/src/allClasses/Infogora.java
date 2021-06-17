@@ -171,10 +171,10 @@ class Infogora  // The class is the root of this app.
 	        // This might not return if a shutdown is initiated by the JVM!
 
 	      // If here then shutdown was requested in App.runV() and it returned.
-        BackupTerminator.logThreadsV(); ///ano Record threads active now.
-	      theAppLog.info(true,"Infogora.main() ======== APP IS ENDING ========"
-          + NL + "    by closing log file and exiting the main(.) method.");
 	      thePersistent.finalizeV();  // Write any new or changed app properties.
+        BackupTerminator.logThreadsV(); ///ano Record threads active now.
+        theAppLog.info(true,"Infogora.main() ======== APP IS ENDING ========"
+          + NL + "    by closing log file and exiting the main(.) method.");
         theAppLog.closeFileIfOpenB(); // Close log file for exit.
         theBackupTerminator.setTerminationUnderwayV(); ///ano Start exit timer.
           // while(true) {} ///ano Use this infinite loop to test above line.
