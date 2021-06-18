@@ -52,7 +52,7 @@ public class FileOps
         long thatFileLastModifiedL= thatFile.lastModified();
         boolean updatingB= // Is this file is newer than that file?
             ( thisFileLastModifiedL > thatFileLastModifiedL );
-        theAppLog.info("updateFromToV((..), updatingB="+updatingB);
+        theAppLog.info("FileOps.updateFromToV((..), updatingB="+updatingB);
         if ( updatingB )  // Then replace that with this.
           copyFileWithRetryV(thisFile, thatFile);
     		}
@@ -68,24 +68,24 @@ public class FileOps
         */
       {
         ///enh create function to make double file path string.
-        theAppLog.info("copyFileWithRetryV(..) "
+        theAppLog.info("FileOps.copyFileWithRetryV(..) "
           + "======== COPYING FILE ======== "
           + twoFilesString(sourceFile, destinationFile));
         boolean copySuccessB= false;
         int attemptsI= 0;
         while (true) {
           if (EpiThread.testInterruptB()) { // Termination requested.
-            theAppLog.info( true,"copyFileWithRetryV(..) terminating.");
+            theAppLog.info( true,"FileOps.copyFileWithRetryV(..) terminating.");
             break; }
           attemptsI++;
           copySuccessB= tryCopyFileB(sourceFile, destinationFile);
           if (copySuccessB) { // Copy completed.
-            theAppLog.info( "copyFileWithRetryV(..) "
+            theAppLog.info( "FileOps.copyFileWithRetryV(..) "
                 + "Copying successful on attempt #"+attemptsI+" "
                 + twoFilesString(sourceFile, destinationFile));
             break; }
-          theAppLog.info("copyFileWithRetryV(..) failed attempt #"+attemptsI
-            +".  Will retry after 1 second."); 
+          theAppLog.info("FileOps.copyFileWithRetryV(..) failed attempt #"
+            + attemptsI + ".  Will retry after 1 second."); 
           EpiThread.interruptibleSleepB(
               Config.fileCopyRetryPause1000MsL); // Wait 1 second.
           }
@@ -113,7 +113,7 @@ public class FileOps
         It logs any exception which causes failure.
         */
       {
-        theAppLog.debug("tryCopyFileReturnString(.) begins");
+        theAppLog.debug("FileOps","FileOps.tryCopyFileReturnString(.) begins");
         String errorString= null; // Assume success.
         File tmpFile= null;
         toReturn: {
@@ -130,7 +130,8 @@ public class FileOps
             break toReturn;
           } // toReturn:
         deleteDeleteable(tmpFile); // Delete possible temporary file debris.
-        theAppLog.info("tryCopyFileReturnString(.) errorString="+errorString);
+        theAppLog.debug("FileOps","FileOps.tryCopyFileReturnString(.) "
+            + "errorString="+errorString);
         return errorString;
         }
   
@@ -148,7 +149,7 @@ public class FileOps
       {
         boolean successB= false;
         int attemptsI= 0;
-        theAppLog.info( "atomicRenameB(..) begins"
+        theAppLog.info( "FileOps","FileOps.atomicRenameB(..) begins"
             + twoFilesString(sourcePath.toFile(), destinationPath.toFile()));
         while (!EpiThread.testInterruptB()) { // Retry some failure types. 
           attemptsI++;
@@ -159,21 +160,23 @@ public class FileOps
               break;
             } catch (AccessDeniedException theAccessDeniedException) {
               theAppLog.warning(
-                  "atomicRenameB(..) failed attempt "+attemptsI
+                  "FileOps.atomicRenameB(..) failed attempt "+attemptsI
                   +", "+theAccessDeniedException);
               if (attemptsI >= 10) {
-                theAppLog.error("atomicRenameB(..) retry limit exceeded, aborting.");
+                theAppLog.error(
+                  "FileOps.atomicRenameB(..) retry limit exceeded, aborting.");
                 break;
                 }
             } catch (IOException theIOException) {
-              theAppLog.exception("atomicRenameB(..) failed with ",theIOException); 
+              theAppLog.exception(
+                  "FileOps.atomicRenameB(..) failed with ",theIOException); 
               break;
             }
           EpiThread.interruptibleSleepB( // Pause thread to prevent CPU hogging.
               Config.errorRetryPause1000MsL
               );
           } // while
-        theAppLog.info("atomicRenameB(..) ends, successB="+successB
+        theAppLog.info("FileOps.atomicRenameB(..) ends, successB="+successB
             +" after "+attemptsI+" attempts.");
         return successB;
         }
@@ -204,7 +207,7 @@ public class FileOps
               nameString,null,directoryFile);
           } catch (IOException theIOException) {
             theAppLog.exception(
-                "createTemporaryFile(..) failed with",theIOException); 
+                "FileOps.createTemporaryFile(..) failed with",theIOException); 
           }
         return tmpFile;
         }
@@ -218,7 +221,7 @@ public class FileOps
         a String describing the failure if the copy fails.
         */
       {
-        theAppLog.info("tryRawCopyFileB(.) begins.");
+        theAppLog.debug("FileOps","FileOps.tryRawCopyFileB(.) begins.");
         InputStream theInputStream= null;
         String errorString= null;
         try {
@@ -226,12 +229,13 @@ public class FileOps
             errorString= tryCopyingInputStreamToFileReturnString(
                 theInputStream,destinationFile);
           } catch (Exception e) {
-              theAppLog.exception("tryRawCopyFileB(.)",e); 
+              theAppLog.exception("FileOps.tryRawCopyFileB(.)",e); 
           } finally { // Close things, error or not.
-            theAppLog.info("tryRawCopyFileB(.) closing InputStream.");
+            theAppLog.debug("FileOps","FileOps.tryRawCopyFileB(.) "
+                + "closing InputStream.");
             Closeables.closeWithErrorLoggingB(theInputStream);
           }
-        theAppLog.info("tryRawCopyFileB(.) ends, "
+        theAppLog.debug("FileOps","FileOps.tryRawCopyFileB(.) ends, "
             +"closes done, errorString="+errorString);
         return errorString;
         }
@@ -258,7 +262,8 @@ public class FileOps
         or a String describing the cause of the failure if the copy fails.
         */
       {
-        theAppLog.info("tryCopyingInputStreamToFileReturnString(.) begins.");
+        theAppLog.debug("FileOps",
+            "FileOps.tryCopyingInputStreamToFileReturnString(.) begins.");
         OutputStream theOutputStream= null;
         boolean successB= false;
         String errorString= null;
@@ -268,15 +273,17 @@ public class FileOps
                 theInputStream,theOutputStream);
           } catch (Exception e) {
               theAppLog.exception(
-                  "tryCopyingInputStreamToFileReturnString(.)",e); 
+                  "FileOps.tryCopyingInputStreamToFileReturnString(.)",e); 
           } finally { // Close things, error or not.
-            theAppLog.info(
-              "tryCopyingInputStreamToFileReturnString(.) closing OutputStream.");
+            theAppLog.debug("FileOps","FileOps."
+              + "tryCopyingInputStreamToFileReturnString(.) "
+              + "closing OutputStream.");
             Closeables.closeWithErrorLoggingB(theOutputStream);
               // Closing the OutputStream can block temporarily.
           }
-        theAppLog.info("tryCopyingInputStreamToFileReturnString(.) ends, "
-            +"closes done, successB="+successB);
+        theAppLog.debug("FileOps","FileOps."
+            + "tryCopyingInputStreamToFileReturnString(.) "
+            + "ends, closes done, successB="+successB);
         return errorString;
         }
   
@@ -303,7 +310,8 @@ public class FileOps
         A Thread interrupt will interrupt the copy operation.
         */
       {
-        theAppLog.info("copyStreamBytesReturnString(.) begins.");
+        theAppLog.debug(
+            "FileOps","FileOps.copyStreamBytesReturnString(.) begins.");
         String errorString;
         long startTimeMsL= System.currentTimeMillis();
         int byteCountI= 0;
@@ -324,11 +332,13 @@ public class FileOps
           } 
         catch (IOException theIOException) {
           errorString= "failed because of "+theIOException;
-          theAppLog.exception("copyStreamBytesReturnString(.) terminated by",theIOException);
+          theAppLog.exception("FileOps.copyStreamBytesReturnString(.) "
+              + "terminated by",theIOException);
           }
         String logString= errorString;
         if (null==logString) logString= "succeeded";
-        theAppLog.info( "copyStreamBytesReturnString(.) "+ logString
+        theAppLog.info("FileOps",
+            "FileOps.copyStreamBytesReturnString(.) "+ logString
             +", bytes transfered=" + byteCountI
             +", elapsed ms=" + (System.currentTimeMillis()-startTimeMsL));
         return errorString;
@@ -355,7 +365,7 @@ public class FileOps
               sourceBasicFileAttributes.lastAccessTime();
           FileTime theCreateTime= 
               sourceBasicFileAttributes.creationTime();
-          theAppLog.info( "copyTimeAttributesV(..): "
+          theAppLog.debug("FileOps","FileOps.copyTimeAttributesV(..): "
               +theLastModifiedTime+", "+theLastAccessTime+", "+theCreateTime);
     
           BasicFileAttributeView destinationBasicFileAttributeView= 
@@ -367,7 +377,7 @@ public class FileOps
           successB= true;
         } catch (IOException theIOException) {
           theAppLog.exception(
-              "copyTimeAttributesB(..) failed with",theIOException); 
+              "FileOps.copyTimeAttributesB(..) failed with",theIOException); 
         }
       return successB;
       }
@@ -465,7 +475,7 @@ public class FileOps
         for // For all the elements of the relative path element array 
           (String elementString: fileRelativePathStrings) {
           resultFile= new File(resultFile, elementString); // add next element.
-          // theAppLog.debug("FileOps.makePathRelativeToAppFolderFile(.) " 
+          // theAppLog.debug("FileOps","FileOps.makePathRelativeToAppFolderFile(.) " 
           //    + elementString + " " + resultFile);
           }
       
@@ -513,8 +523,75 @@ public class FileOps
             makeDirectoryAndAncestorsString(directoryFile);
         if (resultString != null) { // If there was an error, log it.
           theAppLog.error(
-              "FileOps.makeDirectoryAndAncestorsWithLoggingV(.) " + resultString);
+            "FileOps.makeDirectoryAndAncestorsWithLoggingV(.) " + resultString);
           }
         }
 
+  
+    // Methods for use with lambda expressions to do writing to OutputStream.
+
+    @FunctionalInterface
+    public interface WriterTo1Throws2<D, E extends Exception> 
+      {
+        void writeToV(D destinationD) throws E;
+        }
+    
+    public static String writeDataReturnString( 
+        WriterTo1Throws2<OutputStream,IOException> 
+          sourceWriterTo1Throws2, 
+        File destinationFileFile
+        )
+      /* This method writes data from sourceWriterTo1Throws2
+       * using an OutputStream with the possibility of an IOException,
+       * to a new text file with a pathname of destinationFileFile.
+       * If the write is successful then it returns null,
+       * otherwise it returns a String describing the failure.
+       * 
+       * Most of the code here is about initialization, exception handling,
+       * and finalization of the file destinationFileFile.
+       * sourceWriterTo1Throws2 does all the data writing.
+       */
+      {
+        theAppLog.debug(// "FileOps",
+            "FileOps.writeDataReturnString(.) begins/called, file: "
+            + destinationFileFile);
+        String errorString= null;
+        FileOutputStream sourceFileOutputStream= null;
+        try {
+            sourceFileOutputStream= new FileOutputStream( // Create OutputStream 
+                destinationFileFile); // to the file with this pathname.
+            theAppLog.debug("FileOps",
+              "FileOps.writeDataReturnString(.) write begins.");
+            sourceWriterTo1Throws2.writeToV( // Write all source data 
+                sourceFileOutputStream); // to OutputStream.
+            theAppLog.debug("FileOps",
+              "FileOps.writeDataReturnString(.) write ends.");
+            }
+          catch (Exception theException) {
+            errorString= "write error: "+theException;
+            }
+          finally {
+            try {
+              if ( sourceFileOutputStream != null ) 
+                sourceFileOutputStream.close(); 
+              }
+            catch ( Exception theException ) { 
+              EpiString.combineLinesString(
+                  errorString, "close error: "+theException);
+              }
+            }
+        if (null != errorString) { // If error occurred, add prefix.
+          errorString= EpiString.combineLinesString(
+              "FileOps.writeDataReturnString(.), "
+                  + "destinationFileFile= " + destinationFileFile,
+              errorString
+              );
+          theAppLog.error(errorString);
+          }
+        theAppLog.debug("FileOps",
+            "FileOps.writeDataReturnString(.) ends, file: "
+            + destinationFileFile);
+        return errorString;
+        }
+    
     }

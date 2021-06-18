@@ -175,18 +175,21 @@ public class InstallerBuilder
         return errorString;
         }
 
-    private String writeConfigurationFileReturnString( /////////////
+    private String writeConfigurationFileReturnString(
         File destinationFolderFile)
       /* This method writes the installation configuration file 
        * to the folder specified by destinationFolderFile 
        * which is assumed to exist already.
-       * It returns null if success, an error String if not.
+       * It returns null if success, 
+       * an error String describing the problem if not.
        */
       {
+        theAppLog.debug(
+          "InstallerBuilder.writeConfigurationFileReturnString(.) begin.");
         queueAndDisplayOutputSlowV("\nWriting PersistentEpiNode.txt file.");
         File destinationFile= 
             new File(destinationFolderFile, Config.persistentFileString);
-        thePersistent.writeDataReturnString(
+        String errorString= FileOps.writeDataReturnString(
             (theOutputStream) -> {
               theAppLog.debug(
                 "InstallerBuilder.writeConfigurationFileReturnString(.) "
@@ -202,8 +205,9 @@ public class InstallerBuilder
               }, // source WriterTo1Throws2<OutputStream,IOException>
             destinationFile // destination file File
             );
-        //// return errorString;
-        return null;
+        theAppLog.debug(
+          "InstallerBuilder.writeConfigurationFileReturnString(.) ends.");
+        return errorString;
         }
 
     public String getSummaryString()

@@ -251,45 +251,6 @@ public class Persistent
         storeEpiNodeDataV( theEpiNode, fileFile );
         }
 
-    @SuppressWarnings("unused") ////
-    private void OLDstoreEpiNodeDataV( EpiNode theEpiNode, File fileFile )
-      /* This method stores the Persistent data that is in main memory to 
-        the external text file whose pathname is fileFile.
-        
-        ///opt The exception handling in this method is not required,
-        but it does no harm.
-        */
-      {
-        theAppLog.debug(
-            "Persistent","Persistent.storeEpiNodeDataV(..) begins.");
-        FileOutputStream theFileOutputStream= null;
-        try {
-            theFileOutputStream= new FileOutputStream(fileFile);
-                //// FileOps.makeRelativeToAppFolderFile(fileString));
-            theFileOutputStream.write( // Write leading comment.
-                "#---YAML-like EpiNode data follows---".getBytes());
-            theEpiNode.writeV( // Write all of theEpiNode tree
-              theFileOutputStream, 
-              0 // starting at indent level 0.
-              );
-            theFileOutputStream.write( // Write trailing comment.
-                (NL+"#--- end of file ---"+NL).getBytes());
-            }
-          catch (Exception theException) { 
-            theAppLog.exception(
-                "Persistent.storeEpiNodeDataV(..)", theException);
-            }
-          finally {
-            try {
-              if ( theFileOutputStream != null ) theFileOutputStream.close(); 
-              }
-            catch ( Exception theException ) { 
-              theAppLog.exception(
-                  "Persistent.storeEpiNodeDataV(..)", theException);
-              }
-            }
-        theAppLog.debug("Persistent","Persistent.storeEpiNodeDataV(..) ends.");
-        }
 
     private void storeEpiNodeDataV( EpiNode theEpiNode, File fileFile )
       /* This method stores the Persistent data that is in main memory to 
@@ -298,7 +259,7 @@ public class Persistent
       {
         theAppLog.debug(
             "Persistent","Persistent.storeEpiNodeDataV(.) begins.");
-        writeDataReturnString(
+        FileOps.writeDataReturnString(
             (theOutputStream) -> {
               theAppLog.debug(
                   "Persistent","Persistent.storeEpiNodeDataV(.) "
@@ -319,70 +280,6 @@ public class Persistent
             );
         theAppLog.debug(
             "Persistent","Persistent.storeEpiNodeDataV(.) ends.");
-        }
-
-    @FunctionalInterface
-    public interface WriterTo1Throws2<D, E extends Exception> 
-      {
-        void writeToV(D destinationD) throws E;
-        }
-    
-    public String writeDataReturnString( 
-        WriterTo1Throws2<OutputStream,IOException> 
-          sourceWriterTo1Throws2, 
-        File destinationFileFile
-        )
-      /* This method writes data from sourceWriterTo1Throws2
-       * using an OutputStream with the possibility of an IOException,
-       * to a new text file with a pathname of destinationFileFile.
-       * If the write is successful then it returns null,
-       * otherwise it returns a String describing the failure.
-       * 
-       * Most of the code here is about initialization, exception handling,
-       * and finalization of the file destinationFileFile.
-       * sourceWriterTo1Throws2 does all the data writing.
-       */
-      {
-        theAppLog.debug(
-            "Persistent","Persistent.writeDataReturnString(.) begins, file: "
-            + destinationFileFile);
-        String errorString= null;
-        FileOutputStream sourceFileOutputStream= null;
-        try {
-            sourceFileOutputStream= new FileOutputStream( // Create OutputStream 
-                destinationFileFile); // to the file with this pathname.
-            theAppLog.debug(
-              "Persistent","Persistent.writeDataReturnString(.) write begins.");
-            sourceWriterTo1Throws2.writeToV( // Write all source data 
-                sourceFileOutputStream); // to OutputStream.
-            theAppLog.debug(
-              "Persistent","Persistent.writeDataReturnString(.) write ends.");
-            }
-          catch (Exception theException) {
-            errorString= "write error: "+theException;
-            }
-          finally {
-            try {
-              if ( sourceFileOutputStream != null ) 
-                sourceFileOutputStream.close(); 
-              }
-            catch ( Exception theException ) { 
-              EpiString.combineLinesString(
-                  errorString, "close error: "+theException);
-              }
-            }
-        if (null != errorString) { // If error occurred, add prefix.
-          errorString= EpiString.combineLinesString(
-              "Persistent.writeDataReturnString(.), "
-                  + "destinationFileFile= " + destinationFileFile,
-              errorString
-              );
-          theAppLog.error(errorString);
-          }
-        theAppLog.debug(
-            "Persistent","Persistent.writeDataReturnString(.) ends, file: "
-            + destinationFileFile);
-        return errorString;
         }
   
     public void writeInstallationSubsetComponentsV(
