@@ -20,76 +20,23 @@ public class ConnectionManager
 
   implements Runnable
 
-  /* This class manages connections, both Unicast and Multicast connections,
-    with other Infogora peer nodes.
-    It makes use of the class UnicasterManager as a helper.
+  /* This class originally only managed network connections between peers.
+    Its role has expanded since then to include any passing of data
+    between peers, whether or not by network connection.
 
-    It extends MutableList to manage what it displays.
-    Because this list is accessed by a TreeModel for a GUI JTree,
-    the List is accessed synchronously on the Event Dispatch Thread (EDT).
-
-    ?? This class makes use of other threads 
-    to manage sending and receiving of network packets
-    and the individual connections receiving or sending those packets.
-    Packets are passed between threads via thread-safe queues.
-    ///org Some work is needed to better manage these threads,
-    because DatagramSockets must be closed to terminate these threads,
-    and recovery from an IOException on these sockets is troublesome.
-
-    Originally the plan was to use a separate 
-    connected DatagramSocket for each peer of a node.
-    Unfortunately, unlike TCP, which can demultiplex packets
-    based on both local and remote (IP,port) pairs,
-    UDP uses only the local (IP,port) pair when it demultiplexes.
-    So to prevent BindExceptions on sockets bound to
-    the same local ports, each peer of a given node would need 
-    to connect to the remote peer using a different remote port number.
-    This is an unacceptable complication.
-    
-    So, only 2 Datagram sockets are used: 
-    * one socket for multicast receiving and 
-    * another socket for unicast receiving and 
-      both multicast and unicast sending.
-    Their ports of these 2 sockets must be different.
-
-    There are several types of thread classes defined in this file
-    or in other java files.
-    * ConnectionManager: the main thread for this class.
-      It manages everything.  
-    * UnconnectedReceiver: receives unicast packets for ConnectionManager.
-    * Unicaster: there is one of these for each peer connection.  
-    * MulticastReceiver: used to receive multicast packets for Multicaster.
-    * Multicaster: sends and receives multicast packets.
-      This is used for discovering other peers on LANs.
-    * Sender: does the actual calls to send(..) to send all packets.
-
-    An IOException can be caused by external events,
-    such as a link going down, the computer going to sleep and waking up, etc.
-    These are handled by closing the socket, opening another,
-    and retrying the operation.
-    In the case of the MulticastReceiver and UnconnectedReceiver,
-    new DatagramSockets are passed to the constructors because
-    closing the socket is the only way to terminate receive() operations. 
-    ///org There should be a better way of doing this so 
-    the threads don't need to be completely reconstructed ??
-
-    ///org Presently the unconnected unicast receiver and multicast receiver
-    threads can not recover from an IOException.
-    This is related to the fact that their sockets are created by
-    other threads and injected so that closing the socket by
-    the connection manager can be used to immediately terminate
-    their waiting on receive() and terminate those threads.
-    Once closed the sockets can not be reused.
-    There needs to be a better way of doing this which is recoverable.
-    It can't recover on its own if socket is injected into constructor.
-    ? Could I use setDatagramSocketImplFactory(..) and
-      class DatagramSocketImpl?
-    ? Maybe put [re]creation of receiver threads in main processing loop. 
-    */
+    Its role, and its code, may now be considered to be divided as follows:
+    * Making and breaking Unicast and Multicast network connections 
+      between peers and passing data through those connections.
+    * Processing messages passed between peers.  
+      This includes messages containing:
+      * data about other available peers
+      * TextStreams messages
+    * Importing large chunks of data that comes from other peers,
+      including data that comes via sneakernet.
+   */
 
   { // class ConnectionManager.
 
-  
     // Injected instance variables, all private.
 	    
 			private AppGUIFactory theAppGUIFactory;
@@ -137,7 +84,6 @@ public class ConnectionManager
 	    private EpiThread theSenderEpiThread ; // its thread.
 	
 
-
     public ConnectionManager(  // Constructor.
     		AppGUIFactory theAppGUIFactory,
     	  Persistent thePersistent,
@@ -173,6 +119,78 @@ public class ConnectionManager
         this.theTextStreams2= theTextStreams2;
         }
 
+
+
+
+    /* Making and breaking Unicast and Multicast network connections 
+      between peers and passing data through those connections.
+
+      The following code manages connections with other Infogora peer nodes.
+      These includes both Unicast and Multicast connections.
+      It makes use of the class UnicasterManager as a helper.
+  
+      It extends MutableList to manage what it displays.
+      Because this list is accessed by a TreeModel for a GUI JTree,
+      the List is accessed synchronously on the Event Dispatch Thread (EDT).
+  
+      ?? This class makes use of other threads 
+      to manage sending and receiving of network packets
+      and the individual connections receiving or sending those packets.
+      Packets are passed between threads via thread-safe queues.
+      ///org Some work is needed to better manage these threads,
+      because DatagramSockets must be closed to terminate these threads,
+      and recovery from an IOException on these sockets is troublesome.
+  
+      Originally the plan was to use a separate 
+      connected DatagramSocket for each peer of a node.
+      Unfortunately, unlike TCP, which can demultiplex packets
+      based on both local and remote (IP,port) pairs,
+      UDP uses only the local (IP,port) pair when it demultiplexes.
+      So to prevent BindExceptions on sockets bound to
+      the same local ports, each peer of a given node would need 
+      to connect to the remote peer using a different remote port number.
+      This is an unacceptable complication.
+      
+      So, only 2 Datagram sockets are used: 
+      * one socket for multicast receiving and 
+      * another socket for unicast receiving and 
+        both multicast and unicast sending.
+      Their ports of these 2 sockets must be different.
+  
+      There are several types of thread classes defined in this file
+      or in other java files.
+      * ConnectionManager: the main thread for this class.
+        It manages everything.  
+      * UnconnectedReceiver: receives unicast packets for ConnectionManager.
+      * Unicaster: there is one of these for each peer connection.  
+      * MulticastReceiver: used to receive multicast packets for Multicaster.
+      * Multicaster: sends and receives multicast packets.
+        This is used for discovering other peers on LANs.
+      * Sender: does the actual calls to send(..) to send all packets.
+  
+      An IOException can be caused by external events,
+      such as a link going down, the computer going to sleep and waking up, etc.
+      These are handled by closing the socket, opening another,
+      and retrying the operation.
+      In the case of the MulticastReceiver and UnconnectedReceiver,
+      new DatagramSockets are passed to the constructors because
+      closing the socket is the only way to terminate receive() operations. 
+      ///org There should be a better way of doing this so 
+      the threads don't need to be completely reconstructed ??
+  
+      ///org Presently the unconnected unicast receiver and multicast receiver
+      threads can not recover from an IOException.
+      This is related to the fact that their sockets are created by
+      other threads and injected so that closing the socket by
+      the connection manager can be used to immediately terminate
+      their waiting on receive() and terminate those threads.
+      Once closed the sockets can not be reused.
+      There needs to be a better way of doing this which is recoverable.
+      It can't recover on its own if socket is injected into constructor.
+      ? Could I use setDatagramSocketImplFactory(..) and
+        class DatagramSocketImpl?
+      ? Maybe put [re]creation of receiver threads in main processing loop. 
+      */
 
     public void run()  // Main ConnectionManager thread logic.
       /* This method creates unconnectedDatagramSocket 
@@ -593,7 +611,6 @@ public class ConnectionManager
 				EpiThread.stopAndJoinIfNotNullV(multicasterEpiThread);
 		    }
 
-
     private void passToUnicasterV( NetcasterPacket theNetcasterPacket )
       /* This method passes theNetcasterPacket to the Unicaster 
         associated with the remote peer that sent the packet.
@@ -626,9 +643,16 @@ public class ConnectionManager
 	      		);
         }
 
-    
-    /*  ///
-      PeerDataExchange: The comments which follow are from a brainstorming session.
+
+
+
+    /* Processing messages passed between peers about other available peers.
+
+      The code in this section is for processing data about
+      what peers are or are not available for network connections.
+
+      PeerDataExchange: 
+        The comments which follow are from a brainstorming session.
         Not all of the material is being used or will be used.
 
       PeerTerminology:
@@ -877,7 +901,6 @@ public class ConnectionManager
           return;
         }
 
-
     // TextStreams message processing.
 
     private boolean tryProcessingByTextStreamsB(
@@ -893,4 +916,19 @@ public class ConnectionManager
         return successB; 
         }
 
+
+
+
+    /* Importing data from other peers.
+
+     The code in this section is for 
+     importing large chunks of data that comes from other peers,
+     including data that comes via sneakernet.
+
+     */
+
+    // New code will go here.
+    
+    
+    
     } // class ConnectionManager.
