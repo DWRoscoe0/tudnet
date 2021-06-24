@@ -787,6 +787,7 @@ public class VolumeChecker
        *   testGetFromQueueKeyString() or related methods. 
        * * attached volumes changed: returns the list of volumes added,
        *   can be tested returned (List.size() > 0).
+       * Any inputs that happen BEFORE this method is called are ignored.
        */
       {
         ArrayList<File> addedVolumeListOfFiles= new ArrayList<File>();

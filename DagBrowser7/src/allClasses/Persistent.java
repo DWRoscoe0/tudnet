@@ -2,7 +2,6 @@ package allClasses;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
@@ -143,7 +142,7 @@ public class Persistent
         return loadMapEpiNode(fileFile);
       }
 
-    private MapEpiNode loadMapEpiNode( File fileFile )
+    public static MapEpiNode loadMapEpiNode( File fileFile )
       /* This method translates external text to internal EpiNodes
        * by loading the text file whose pathname is fileFile.
        * It returns the resulting MapEpiNode or null if the load fails.
@@ -248,18 +247,23 @@ public class Persistent
         */
       {
         File fileFile= FileOps.makeRelativeToAppFolderFile(fileString);
-        storeEpiNodeDataV( theEpiNode, fileFile );
+        storeEpiNodeDataReturnString( theEpiNode, fileFile );
         }
 
 
-    private void storeEpiNodeDataV( EpiNode theEpiNode, File fileFile )
+    public static String storeEpiNodeDataReturnString( 
+        EpiNode theEpiNode, File fileFile )
       /* This method stores the Persistent data that is in main memory to 
         the external text file whose pathname is fileFile.
+        It returns null if the write succeeded.
+        If it failed it returns a String describing the failure. 
         */
       {
         theAppLog.debug(
             "Persistent","Persistent.storeEpiNodeDataV(.) begins.");
-        FileOps.writeDataReturnString(
+        theAppLog.debug("Persistent","Persistent.storeEpiNodeDataV(.) "
+          + "theEpiNode=\n" + theEpiNode.toString(4));
+        String errorString= FileOps.writeDataReturnString(
             (theOutputStream) -> {
               theAppLog.debug(
                   "Persistent","Persistent.storeEpiNodeDataV(.) "
@@ -280,6 +284,7 @@ public class Persistent
             );
         theAppLog.debug(
             "Persistent","Persistent.storeEpiNodeDataV(.) ends.");
+        return errorString;
         }
   
     public void writeInstallationSubsetComponentsV(

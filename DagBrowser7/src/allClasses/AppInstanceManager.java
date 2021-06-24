@@ -12,7 +12,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import javax.swing.JOptionPane;
 
-//// import allClasses.epinode.MapEpiNode;
+import allClasses.epinode.MapEpiNode;
 
 import static allClasses.AppLog.theAppLog;
 import static allClasses.SystemSettings.NL;
@@ -731,7 +731,7 @@ l    * If the app receives a message indicating
 	        to action by as many as 4 running app instances,
 	        for the case when a new app version is run 
 	        outside the standard folder when 
-	        an instance is already running from the standard.
+	        an instance is already running from the standard folder.
           
           ///org : simplify by adding labels: toReturnTrue and toReturnFalse.
 	        */
@@ -801,10 +801,10 @@ l    * If the app receives a message indicating
 	        }
 	
 	    private boolean tryUpdateToStandardFolderB()
-	      /* If the standard folder has an app jar file in it,
+	      /* If the standard folder has an app file in it,
 	        but it is older than the running app,
 	        then this method updates it by replacing 
-	        the jar file in the standard folder with the jar file for this app,
+	        the jar file in the standard folder with the file for this app,
 	        and returns true to indicate that this app should exit
 	        and run the copied app.
 	        Otherwise it returns false.
@@ -812,12 +812,13 @@ l    * If the app receives a message indicating
 	      {
 	          boolean appShouldExitB= false; // Default of no app exit.
 	    	  toReturn: {
-  	        if // This apps file is not newer that the one in standard folder.
+  	        if // This apps file is not newer than the one in standard folder.
   	          ( runningAppFile.lastModified() <= standardAppFile.lastModified() )
   	          break toReturn;
             appShouldExitB= true; // App exits in the following cases.
-            if (updateAndPrepareToRunB()) break toReturn; // Successful copy.
-            theAppLog.error("Copy failed.  Waiting, then exiting.");
+            if (updateAndPrepareToRunB()) break toReturn; // Successful update.
+            theAppLog.error("tryUpdateToStandardFolderB(): "
+                + "Update failed.  Waiting, then exiting.");
             EpiThread.interruptibleSleepB(5000); // Wait 5s.
           } // toReturn:
 	          return appShouldExitB;
@@ -879,8 +880,10 @@ l    * If the app receives a message indicating
 	        }
       
       private boolean updateAndPrepareToRunB()
-        /* This method tries to copy this running app's executable file to 
-          the standard folder, and prepare it to be run as a Process on exit. 
+        /* This method tries to update this running app's executable file to 
+          the standard folder, and prepare it to be run as a Process on exit.
+          If a PersistentEpiNode.txt file is present,
+          and it is newer than... //////////////////// 
           It keeps trying until copying succeeds, 
           or the thread is interrupted.
           If copying succeeds then it requests an app shutdown 
@@ -890,23 +893,23 @@ l    * If the app receives a message indicating
             then it returns false.
           */
         {
-            theAppLog.debug("copyAndPrepareToRunB() begin");
+            theAppLog.debug("updateAndPrepareToRunB() begin");
             boolean successB= false;
           toExit: {
             if (! endsWithJarOrExeB(runningAppFile)) {
-              theAppLog.info("copyAndPrepareToRunB() Not copying.  "
+              theAppLog.info("updateAndPrepareToRunB() Not copying.  "
                   + "Not executable .jar or .exe file:" + NL + "  " + runningAppFile);
               break toExit;
               }
             if (! copyExecutableFileB(runningAppFile, standardAppFile))
               break toExit; // Exit if copying of executable failed.
-            if (! mergePersistentDataB(runningAppFile, standardAppFile))
-              break toExit; // Exit if error transferring merged data.
+            //// if (! mergePersistentDataB(runningAppFile, standardAppFile))
+            ////   break toExit; // Exit if error transferring merged data.
             successB= requestProcessStartAndShutdownTrueB( 
                 standardAppFile.getAbsolutePath() 
                 );
           } // toExit:
-            theAppLog.debug("copyAndPrepareToRunB() ends= "+successB);
+            theAppLog.debug("updateAndPrepareToRunB() ends= "+successB);
             return successB;
           }
 
@@ -928,6 +931,7 @@ l    * If the app receives a message indicating
             return resultB;
           }
 
+      @SuppressWarnings("unused") ////// save until useful code recycled.
       private boolean mergePersistentDataB(
           File sourceFile, File destinationFile)
         /* This method tries to merge the PersistentEpiNode.txt file
@@ -935,26 +939,61 @@ l    * If the app receives a message indicating
           the PersistentEpiNode.txt file in 
           the same directory as the destinationFile.
           If there is an IO error then the method returns false.
-          If there is an IO error, or there is no file to merge,
+          If there is no IO error, or there is no file to merge,
           then it returns true.
           */
         {
-            boolean successB= true; // for now, will be false;
-        /*  ///
-          toExit: {
+            theAppLog.debug("mergePersistentDataB() entry.");
+            boolean successB= false; // for now, assume that we will fail;
+          toExit: { toSuccess: {
             File sourceFileFile= new File(
                 sourceFile.getParentFile(),Config.persistentFileString);
-            MapEpiNode sourceMapEpiNode= null;
+            if (! sourceFileFile.exists()) // Treat file not existing 
+              break toSuccess; // as a success.
+            theAppLog.debug("mergePersistentDataB() source file exists.");
+            MapEpiNode sourceMapEpiNode= 
+                Persistent.loadMapEpiNode(sourceFileFile);
+            if (null == sourceMapEpiNode) break toExit; // Load failed.
+            theAppLog.debug("mergePersistentDataB() source file loaded.");
             File destinationFileFile= new File(
                 destinationFile.getParentFile(),Config.persistentFileString); 
-            FileOps.copyFileWithRetryV(sourceFile, destinationFile);
-            successB= true;
+            MapEpiNode destinationMapEpiNode= 
+                Persistent.loadMapEpiNode(destinationFileFile);
+            if (null == destinationMapEpiNode) break toExit; // Load failed.
+            theAppLog.debug("mergePersistentDataB() destination file loaded.");
+            destinationMapEpiNode= // Merge the 2 sets of data into 1 set.
+                mergeMapEpiNode(destinationMapEpiNode,sourceMapEpiNode);
+            String errorString= Persistent.storeEpiNodeDataReturnString( 
+              destinationMapEpiNode, destinationFileFile);
+            if (null != errorString) break toExit; // Store failed.
+            theAppLog.debug("mergePersistentDataB() store/write succeeded.");
+          } // toSuccess:
+            theAppLog.debug("mergePersistentDataB() overall success.");
+            successB= true; // Whole succeeded because all parts succeeded.
           } // toExit:
-            theAppLog.debug("copyExecutableFileB()= "+successB);
-        */  ///
+            theAppLog.debug("mergePersistentDataB() exit, successB="+successB);
             return successB;
           }
-          
+
+
+      private MapEpiNode mergeMapEpiNode(
+          MapEpiNode destinationMapEpiNode,MapEpiNode sourceMapEpiNode)
+        /* This is a simple merge method.
+         * It stores sourceMapEpiNode as the value of an entry
+         * in destinationMapEpiNode and returns destinationMapEpiNode.   
+         */
+        {
+          theAppLog.debug("AppInstanceManager.mergeMapEpiNode(.) before merge "
+            + "sourceMapEpiNode=\n" + sourceMapEpiNode.toString(4));
+          theAppLog.debug("AppInstanceManager.mergeMapEpiNode(.) before merge "
+            + "destinationMapEpiNode=\n" + destinationMapEpiNode.toString(4));
+          destinationMapEpiNode.putV(
+              "ImportedPersistentData", sourceMapEpiNode);
+          theAppLog.debug("AppInstanceManager.mergeMapEpiNode(.) after merge "
+            + "destinationMapEpiNode=\n" + destinationMapEpiNode.toString(4));
+          return destinationMapEpiNode; 
+          }
+
       private boolean copyExecutableFileB(
           File sourceFile, File destinationFile)
         /* This method tries to copy the executable 

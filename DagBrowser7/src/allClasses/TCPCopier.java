@@ -32,16 +32,10 @@ public class TCPCopier extends EpiThread
     They are different folders for testing.
     They are the same folder for production.
     
-    There are presently 2 threads, but these are being replaced by one.
-    * The server thread only services requests,
-      and pauses for a while after each one to mitigate request spam.
-    * The client thread attempts both 
-    	* file updating across a socket connection and
-    	* local inter-folder file updating.
-    	
-    The new single-thread system will work as follows.
-    * On startup it will update the TCP staging area if the app file is new.
-    * It will enter a loop which alternates between client and server modes.
+    There were originally 2 threads, one server and one client.
+    The new single-thread system works as follows.
+    * On startup it updates the TCP staging area if the app file is new.
+    * It enters a loop which alternates between client and server modes.
       * In client mode thread attempts both 
         * file updating across a socket connection and
         * local inter-folder file updating.
