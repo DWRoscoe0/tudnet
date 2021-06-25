@@ -347,7 +347,7 @@ public class Multicaster
     private void startingMultcastReceiverThreadV()
       {
     		theMulticastReceiverEpiThread= // Constructing thread.
-    				AppGUIFactory.makeMulticastReceiverEpiThread(
+    				AppFactory.makeMulticastReceiverEpiThread(
 	            theEpiInputStreamI.getNotifyingQueueQ(),
 	            theMulticastSocket,
 				   		multicastReceiverNetcasterPacketManager

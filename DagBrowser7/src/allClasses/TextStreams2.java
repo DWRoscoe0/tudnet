@@ -25,19 +25,19 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
       Retrying will be the job of the developer doing the testing
       in those few cases where it is needed.
 
-    ///org? makeTextSteam2(peerIdentityString) should not be in AppGUIFactory?
+    ///org? makeTextSteam2(peerIdentityString) should not be in AppFactory?
       Shouldn't it be in here?  It's called only from this file.
     */
 
   // Constructor-injected dependencies.
   private Persistent thePersistent;
-  private AppGUIFactory theAppGUIFactory;
+  private AppFactory theAppFactory;
   private UnicasterManager theUnicasterManager;
   
   public TextStreams2( // Constructor.
       String nameString,
       
-      AppGUIFactory theAppGUIFactory,
+      AppFactory theAppFactory,
       Persistent thePersistent,
       UnicasterManager theUnicasterManager
       )
@@ -45,7 +45,7 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
       super(nameString,emptyListOfDataNodes());
 
       this.thePersistent= thePersistent;
-      this.theAppGUIFactory= theAppGUIFactory;
+      this.theAppFactory= theAppFactory;
       this.theUnicasterManager= theUnicasterManager;
       }
 
@@ -346,7 +346,7 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
 
   private TextStream2 createAndAddTextStream(String peerIdentityString)
     {
-      TextStream2 theTextStream= theAppGUIFactory.makeTextSteam2(peerIdentityString);
+      TextStream2 theTextStream= theAppFactory.makeTextSteam2(peerIdentityString);
       addingV(peerIdentityString, theTextStream); // Add to list and HashMap.
       return theTextStream;
       }

@@ -31,7 +31,7 @@ public class UnicasterManager
   	private final TCPCopier theTCPCopier; 
   
 		public UnicasterManager(  // Constructor. 
-	      AppGUIFactory theAppGUIFactory,
+	      AppFactory theAppFactory,
 			  Persistent thePersistent,
 			  TCPCopier theTCPCopier
 			  )
@@ -39,7 +39,7 @@ public class UnicasterManager
 	  		// Superclass's injections.
 	      super( // Constructing MutableListWithMap superclass.
 		        "Unicasters",
-		        theAppGUIFactory,
+		        theAppFactory,
 			  		new DataNode[]{} // Initially empty of children.
 	      		);
 			  this.thePersistent= thePersistent;
@@ -123,7 +123,7 @@ public class UnicasterManager
         DatagramPacket theDatagramPacket=  // Getting DatagramPacket.
           theNetcasterPacket.getDatagramPacket();
         IPAndPort theIPAndPort= // Building its remote address keyK
-	          AppGUIFactory.makeIPAndPort(		
+	          AppFactory.makeIPAndPort(		
 	              theDatagramPacket.getAddress(), // IP and
 	              theDatagramPacket.getPort()  // port #.
 	          		);
@@ -146,7 +146,7 @@ public class UnicasterManager
         Unicaster theUnicaster= tryToGetXorLogUnicaster( theIPAndPort );
         if ( theUnicaster == null ) // Unicaster does not yet exist.
           { // So build, add, and start the non-existent Unicaster.
-        	  UnicasterFactory theUnicasterFactory= theAppGUIFactory.makeUnicasterFactory(
+        	  UnicasterFactory theUnicasterFactory= theAppFactory.makeUnicasterFactory(
         	    theIPAndPort, theIdString, theTCPCopier);
     	      final UnicasterValue resultUnicasterValue=  // Getting the Unicaster. 
     	      	theUnicasterFactory.getUnicasterValue();

@@ -30,11 +30,11 @@ public class StreamcasterManager<
 
 	{
 
-		protected final AppGUIFactory theAppGUIFactory;
+		protected final AppFactory theAppFactory;
 
 	  public StreamcasterManager(   // Constructor.
 	      String nameString,
-	      AppGUIFactory theAppGUIFactory,
+	      AppFactory theAppFactory,
 	  		DataNode... inDataNodes 
 	      )
 	    {
@@ -45,7 +45,7 @@ public class StreamcasterManager<
 	      		);
 
 	      // This class's injections.
-	      this.theAppGUIFactory= theAppGUIFactory;
+	      this.theAppFactory= theAppFactory;
 	      }
 
   	public synchronized D tryingToGetDataNodeWithKeyD( K theKeyK )

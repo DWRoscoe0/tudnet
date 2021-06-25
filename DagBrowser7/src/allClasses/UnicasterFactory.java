@@ -14,7 +14,7 @@ public class UnicasterFactory {
     */
 
   // Injected dependencies that need saving for later.
-	public final AppGUIFactory theAppGUIFactory;
+	public final AppFactory theAppFactory;
 	private final Shutdowner theShutdowner;
 	private final int queueCapacityI;
 	
@@ -25,7 +25,7 @@ public class UnicasterFactory {
 
 	
   public UnicasterFactory(   // Factory constructor. 
-  		AppGUIFactory theAppGUIFactory,
+  		AppFactory theAppFactory,
   		UnicasterManager theUnicasterManager,
   		IPAndPort unicasterIPAndPort,
   		String unicasterIdString,
@@ -48,14 +48,14 @@ public class UnicasterFactory {
         new NotifyingQueue<String>(
             unicasterLockAndSignal, Config.STRING_QUEUE_SIZE, "ucs");
 			NetcasterInputStream unicasterNetcasterInputStream=
-					theAppGUIFactory.makeNetcasterInputStream( 
+					theAppFactory.makeNetcasterInputStream( 
 							receiverToUnicasterNetcasterQueue, 
 				  		Config.delimiterC
 							);
 		  NetcasterPacketManager theNetcasterPacketManager=
 		  		new NetcasterPacketManager( unicasterIPAndPort );
 			NetcasterOutputStream unicasterNetcasterOutputStream= 
-					theAppGUIFactory.makeNetcasterOutputStream( 
+					theAppFactory.makeNetcasterOutputStream( 
 						theNetcasterPacketManager 
 						);
 			subcasterToUnicasterSubcasterQueue= 
@@ -63,7 +63,7 @@ public class UnicasterFactory {
       DefaultBooleanLike leadingDefaultBooleanLike=
       		new DefaultBooleanLike(false);  // Used to settle race conditions.
 		  SubcasterManager theSubcasterManager= new SubcasterManager( 
-		  		theAppGUIFactory, this, leadingDefaultBooleanLike 
+		  		theAppFactory, this, leadingDefaultBooleanLike 
 		  		);
       NamedLong initialRetryTimeOutMsNamedLong= new NamedLong( 
 					"Initial-Retry-Time-Out (ms)",
@@ -97,7 +97,7 @@ public class UnicasterFactory {
   				new UnicasterValue( unicasterIPAndPort, theUnicaster );
 
       // Save in instance variables injected objects that are needed later.
-  		this.theAppGUIFactory= theAppGUIFactory;
+  		this.theAppFactory= theAppFactory;
 	  	this.theShutdowner= theShutdowner;
   		this.queueCapacityI= queueCapacityI;
 

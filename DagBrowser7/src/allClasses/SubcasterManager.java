@@ -22,7 +22,7 @@ public class SubcasterManager
 	  		// Determines whether Subcasters will be leaders vs. followers.
 
 		public SubcasterManager(  // Injecting constructor. 
-	      AppGUIFactory theAppGUIFactory,
+	      AppFactory theAppFactory,
 	      UnicasterFactory theUnicasterFactory,
 	  	  DefaultBooleanLike leadingDefaultBooleanLike
 	      )
@@ -30,7 +30,7 @@ public class SubcasterManager
 	  		// Superclass's injections.
 	      super( // Constructing MutableListWithMap superclass.
 		        "Subcasters",
-			      theAppGUIFactory,
+			      theAppFactory,
 	          new DataNode[]{} // Initially empty of children.
 	      		);
 

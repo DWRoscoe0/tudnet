@@ -39,7 +39,7 @@ public class ConnectionManager
 
     // Injected instance variables, all private.
 	    
-			private AppGUIFactory theAppGUIFactory;
+			private AppFactory theAppFactory;
 	    
 		  private final Persistent thePersistent;
 
@@ -85,7 +85,7 @@ public class ConnectionManager
 	
 
     public ConnectionManager(  // Constructor.
-    		AppGUIFactory theAppGUIFactory,
+    		AppFactory theAppFactory,
     	  Persistent thePersistent,
     	  PortManager thePortManager,
     	  UnicasterManager theUnicasterManager,
@@ -103,7 +103,7 @@ public class ConnectionManager
           );
 
         // Storing other dependencies injected into this class.
-  	    this.theAppGUIFactory= theAppGUIFactory;
+  	    this.theAppFactory= theAppFactory;
   	    this.thePersistent= thePersistent;
       	this.thePortManager= thePortManager;
   	    this.theUnicasterManager= theUnicasterManager; 
@@ -379,10 +379,10 @@ public class ConnectionManager
 		  {
 		    try { // Creating a new unconnected DatagramSocket and using it.
 		      unconnectedDatagramSocket= // Construct socket for UDP io.
-		      		theAppGUIFactory.makeDatagramSocket((SocketAddress)null);
+		      		theAppFactory.makeDatagramSocket((SocketAddress)null);
 		      unconnectedDatagramSocket.setReuseAddress(true);
 		      unconnectedDatagramSocket.bind( // Binding socket to...
-		      	AppGUIFactory.makeInetSocketAddress(
+		      	AppFactory.makeInetSocketAddress(
 		          thePortManager.getNormalPortI()  // ...app's local port.
 		          ) // Note, the IP is not defined.
 		        );
@@ -401,7 +401,7 @@ public class ConnectionManager
 
     private void startingSenderThreadV()
       { 
-    		theSenderEpiThread= theAppGUIFactory.makeSenderEpiThread( 
+    		theSenderEpiThread= theAppFactory.makeSenderEpiThread( 
     				unconnectedDatagramSocket 
             );
         theSenderEpiThread.startV();  // Starting thread.
@@ -410,7 +410,7 @@ public class ConnectionManager
     private void startingUnicastReceiverThreadV()
       {
     		theUnconnectedReceiverEpiThread= 
-    				theAppGUIFactory.makeUnconnectedReceiverEpiThread( 
+    				theAppFactory.makeUnconnectedReceiverEpiThread( 
     						unconnectedDatagramSocket 
     						);
         theUnconnectedReceiverEpiThread.startV();  // Starting thread.
@@ -540,7 +540,7 @@ public class ConnectionManager
       */
 	  {
 	    try { // Creating a new unconnected DatagramSocket and using it.
-	    	theMulticastSocket= theAppGUIFactory.makeMulticastSocket(
+	    	theMulticastSocket= theAppFactory.makeMulticastSocket(
 		      thePortManager.getMulticastPortI()  // ...bound to Discovery port.
 		      );
 	      }
@@ -555,7 +555,7 @@ public class ConnectionManager
 
     private void startingMulticasterThreadV()
       {
-    		Multicaster theMulticaster= theAppGUIFactory.makeMulticaster(
+    		Multicaster theMulticaster= theAppFactory.makeMulticaster(
 		      theMulticastSocket
 		      ,multicasterToConnectionManagerNetcasterQueue // ...receive queue,...
 		      ,multicastInetAddress
@@ -563,7 +563,7 @@ public class ConnectionManager
         theAppLog.debug("CM",
             "startingMulticasterThreadV() adding theMulticaster and starting thread.");
     		addAtEndV( theMulticaster );  // Add to DataNode List.
-        multicasterEpiThread= AppGUIFactory.makeEpiThread( 
+        multicasterEpiThread= AppFactory.makeEpiThread( 
             theMulticaster,
             "Multicaster"
             );

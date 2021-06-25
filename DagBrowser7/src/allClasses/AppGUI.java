@@ -191,7 +191,7 @@ class GUIManager
 		// Injected dependency variables.
 		private AppInstanceManager theAppInstanceManager;
 		private DagBrowserPanel theDagBrowserPanel;
-		private AppGUIFactory theAppGUIFactory;
+		private AppFactory theAppFactory;
 		private Shutdowner theShutdowner;
 		private TracingEventQueue theTracingEventQueue;
 
@@ -202,7 +202,7 @@ class GUIManager
     GUIManager(   // Constructor. 
     		AppInstanceManager theAppInstanceManager,
     		DagBrowserPanel theDagBrowserPanel,
-    		AppGUIFactory theAppGUIFactory,
+    		AppFactory theAppFactory,
     		Shutdowner theShutdowner,
     		TracingEventQueue theTracingEventQueue,
     		JavaFXGUI theJavaFXGUI
@@ -210,7 +210,7 @@ class GUIManager
       {
     		this.theAppInstanceManager= theAppInstanceManager;
     		this.theDagBrowserPanel= theDagBrowserPanel;
-    		this.theAppGUIFactory= theAppGUIFactory;
+    		this.theAppFactory= theAppFactory;
     		this.theShutdowner= theShutdowner;
     		this.theTracingEventQueue= theTracingEventQueue;
     		this.theJavaFXGUI= theJavaFXGUI;
@@ -280,7 +280,7 @@ class GUIManager
           addKeyEventDispatcher( this );
 
         theAppInstanceManager.setAppInstanceListener(
-          theAppGUIFactory.makeInstanceCreationRunnable(theJFrame)
+          theAppFactory.makeInstanceCreationRunnable(theJFrame)
           ); // For dealing with other running app instances.
 
     		theAppLog.info("GUIManager.initializeOnEDTV() ends.");
@@ -376,7 +376,7 @@ class GUIManager
         */
       {
         theJFrame=  // Make the main application JFrame.
-          theAppGUIFactory.makeJFrame( 
+          theAppFactory.makeJFrame( 
             Config.appString
             +", version "
             +theAppInstanceManager.thisAppDateString()
