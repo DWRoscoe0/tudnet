@@ -23,7 +23,25 @@ public class AppFactory {  // For App class lifetimes.
 
   /* This is the factory for all classes with App lifetime.
     The app has exactly one instance of this factory.
+    It includes classes that are part of the BUI.
     This class wires together the top level of the application.
+    The app has a maximum of one instance of this factory.
+
+    Originally the GUI objects were created 
+    by a different factory, AppGUIFactory, because the GUI isn't always needed.
+    Eventually those classes were moved to here.
+
+    ScheduledThreadPoolExecutor is used in this class.
+    Unfortunately it appears that ScheduledThreadPoolExecutor disables
+    some functionality of the ThreadPoolExecutor for controlling  
+    the thread pool.  In the ScheduledThreadPoolExecutor,
+    the pool size, the so-called core size, is fixed.
+    It can not expand or contract as needed.
+
+    ///enh It might be necessary to create a new class that uses 
+    the ThreadPoolExecutor configured for a widely variable number of threads
+    to provide a ScheduledThreadPoolExecutor-like class 
+    that can provide a potentially large number of timer threads.
     */
 
   // Injected dependencies that will still be needed after construction.
