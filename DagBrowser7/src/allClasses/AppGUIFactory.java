@@ -51,6 +51,7 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
   // Injected dependencies that need saving for later.
   private final Shutdowner theShutdowner;
   private final PortManager thePortManager;
+  private final Persistent thePersistent;
 
 	// Other objects that will be needed later.
 
@@ -58,16 +59,18 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
   private TextStreams2 theTextStreams2;
   private final UnicasterManager theUnicasterManager;
 
-  ///org Saved after constructing singletons.  These could be while-constructing variables.
+  ///org Saved after constructing singletons.  
+  /// These could be while-constructing variables.
   private final LockAndSignal senderLockAndSignal;
   private final NetcasterQueue netcasterToSenderNetcasterQueue;
-  private final NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue;
+  private final NetcasterQueue 
+    unconnectedReceiverToConnectionManagerNetcasterQueue;
   private final AppGUI theAppGUI;
   private final NetcasterPacketManager receiverNetcasterPacketManager;
   private final ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor;
   private final NamedLong multicasterFixedTimeOutMsNamedLong;
-  private final Persistent thePersistent;
-  private final NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes;
+  private final NotifyingQueue<MapEpiNode> 
+    toConnectionManagerNotifyingQueueOfMapEpiNodes;
   private final ConnectionManager theConnectionManager;
   
   public AppGUIFactory(  // Factory constructor.
@@ -77,16 +80,19 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
   		AppInstanceManager theAppInstanceManager,
   		TCPCopier theTCPCopier
   		)
-  	/* This method builds all objects that are, or comprise, unconditional singletons.
+  	/* This method builds all objects that are, or comprise, 
+  	   unconditional singletons.
   	   
        ///org Note, no non-static maker methods are called from here, otherwise 
-         it could go undetected by the compiler and result in NullPointerExceptions.
-         Find a better way to organize this factory so that the compiler will detect
-         this type of error. 
+         it could go undetected by the compiler 
+         and result in NullPointerExceptions.
+         Find a better way to organize this factory so that 
+         the compiler will detect this type of error. 
        */
     {
+      theAppLog.info("AppGUIFactory(.) entry.");
 
-      // Save injected dependencies for immediate use by factory methods.
+      // Save injected dependencies needed for use by factory methods.
       this.theShutdowner= theShutdowner;
       this.thePortManager= thePortManager;
       this.thePersistent= thePersistent;
@@ -170,15 +176,6 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
         theConnectionManager,
         testCenterDataNode
         );
-  		TracingEventQueueMonitor theTracingEventQueueMonitor=
-  				new TracingEventQueueMonitor(
-	  	  				TracingEventQueueMonitor.LIMIT
- 		  	  		  //  500
-	  	  				); 
-  		TracingEventQueue theTracingEventQueue=        	  
-    	    new TracingEventQueue(
-    	    		theTracingEventQueueMonitor
-		  	  		  );
 
       receiverNetcasterPacketManager=  //? use local? 
       		new NetcasterPacketManager( (IPAndPort)null );
@@ -191,6 +188,16 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
 
       // Internals code is above this point.
       // GUI code is below this point.
+
+      TracingEventQueueMonitor theTracingEventQueueMonitor=
+          new TracingEventQueueMonitor(
+                TracingEventQueueMonitor.LIMIT
+                //  500
+                ); 
+      TracingEventQueue theTracingEventQueue=           
+          new TracingEventQueue(
+              theTracingEventQueueMonitor
+                );
 
       DagBrowserPanel theDagBrowserPanel= new DagBrowserPanel(
           theAppInstanceManager, 
@@ -228,8 +235,12 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
         theScheduledThreadPoolExecutor
         );
 
-      // Note, some non-injected instance variables were saved when calculated.
-      // Save in instance variables other non-injected objects that are needed later.
+      // Note, some objects constructed above were saved immediately to
+      // non-injected instance variables.
+      // Other objects constructed above were saved to local variables,
+      // and will be saved to instance variables now.
+      // I think this was done to better detect use of
+      // improperly initialized variables.
       this.senderLockAndSignal= senderLockAndSignal;
       this.netcasterToSenderNetcasterQueue= netcasterToSenderNetcasterQueue;
       this.unconnectedReceiverToConnectionManagerNetcasterQueue=
@@ -240,6 +251,8 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
   				multicasterTimeOutMsNamedLong;
       this.toConnectionManagerNotifyingQueueOfMapEpiNodes=
           toConnectionManagerNotifyingQueueOfMapEpiNodes;
+
+      theAppLog.info("AppGUIFactory(.) exit.");
       }
 
   // Unconditional singleton getter methods with null checking.
@@ -255,8 +268,10 @@ public class AppGUIFactory {  // For classes with GUI lifetimes.
   // None.
 
   
-  /* Maker methods which construct something with the new-operator each time called.
-    These are for classes for which there are multiple instances in space or time.
+  /* Maker methods which construct a new object each time they are called.
+
+    These are for classes for which there are 
+    multiple instances in space or time.
     They have lifetimes that are shorter than AppGUI.
     
     ///org Maybe they should be put into their own factory?
