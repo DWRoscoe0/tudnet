@@ -132,9 +132,6 @@ public class App { // The App, especially pre-GUI stuff.
 		    ; // Do nothing because delegation succeeded and shutdown is requested.
 		    else
 		    { // Delegation failed.  Presenting GUI to user and interacting.
-		  	  //// AppGUIFactory theAppGUIFactory= //////
-		  	  //// 		theAppFactory.lazyGetAppGUIFactory();
-		      //// AppGUI theAppGUI= theAppGUIFactory.getAppGUI();
 		  	  AppGUI theAppGUI= theAppFactory.getAppGUI();
 		      theAppGUI.runV(); // Running main GUI until shutdown is requested.
 		      	// Network operations happen at this time also.

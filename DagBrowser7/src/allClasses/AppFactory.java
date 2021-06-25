@@ -23,12 +23,7 @@ public class AppFactory {  // For App class lifetimes.
 
   /* This is the factory for all classes with App lifetime.
     The app has exactly one instance of this factory.
-
     This class wires together the top level of the application.
-    The classes constructed here are mainly the ones 
-    needed before a GUI is presented to the user.  //////
-    In some cases the GUI is not presented, but if it is
-    then its factory is constructed by getAppGUIFactory().
     */
 
   // Injected dependencies that will still be needed after construction.
@@ -37,7 +32,6 @@ public class AppFactory {  // For App class lifetimes.
 	// Other objects that will be needed later.
 	private PortManager thePortManager;
   private final Shutdowner theShutdowner;
-  //// private final AppInstanceManager theAppInstanceManager;
   private final App theApp;
   private final TCPCopier theTCPCopier;
   private final AppGUI theAppGUI;
@@ -54,16 +48,12 @@ public class AppFactory {  // For App class lifetimes.
   private final NetcasterQueue netcasterToSenderNetcasterQueue;
   private final NetcasterQueue 
     unconnectedReceiverToConnectionManagerNetcasterQueue;
-  //// private final AppGUI theAppGUI;
   private final NetcasterPacketManager receiverNetcasterPacketManager;
   private final ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor;
   private final NamedLong multicasterFixedTimeOutMsNamedLong;
   private final NotifyingQueue<MapEpiNode> 
     toConnectionManagerNotifyingQueueOfMapEpiNodes;
   private final ConnectionManager theConnectionManager;
-
-  // Storage for conditional (lazy evaluation) singletons.
-  //// private AppGUIFactory theAppGUIFactory= null; //////
 
   public AppFactory(   // Factory constructor.
       CommandArgs inCommandArgs, Persistent inPersistent)
@@ -135,12 +125,10 @@ public class AppFactory {  // For App class lifetimes.
         theTextStreams2
         );
       EpiThread theConnectionManagerEpiThread=
-        //// AppGUIFactory.makeEpiThread( theConnectionManager, "ConnMgr" );
         makeEpiThread( theConnectionManager, "ConnMgr" );
       SystemsMonitor theSystemsMonitor= 
         new SystemsMonitor(toConnectionManagerNotifyingQueueOfStrings);
       EpiThread theCPUMonitorEpiThread=
-        //// AppGUIFactory.makeEpiThread( theSystemsMonitor, "SystemsMonitor" );
         makeEpiThread( theSystemsMonitor, "SystemsMonitor" );
       InstallerBuilder theInstallerBuilder= new InstallerBuilder( 
           "Installer-Builder",thePersistent,theScheduledThreadPoolExecutor);
@@ -193,7 +181,6 @@ public class AppFactory {  // For App class lifetimes.
                 );
 
       DagBrowserPanel theDagBrowserPanel= new DagBrowserPanel(
-          //// theAppInstanceManager, 
           newAppInstanceManager,
           theDataTreeModel, 
           theDataRoot, 
@@ -211,7 +198,6 @@ public class AppFactory {  // For App class lifetimes.
           theSelections
           );
       GUIManager theGUIManager= new GUIManager( 
-        //// theAppInstanceManager,
         newAppInstanceManager,
         theDagBrowserPanel,
         this, // GUIBuilderStarter gets to know the factory that made it. 
@@ -236,8 +222,7 @@ public class AppFactory {  // For App class lifetimes.
   	  // Save new objects that will be needed later 
   		// from local variables to instance variables. 
       //% this.theShutdowner= theShutdowner;
-      this.theAppGUI= newAppGUI; //// new.
-      //// this.theAppInstanceManager= newAppInstanceManager;
+      this.theAppGUI= newAppGUI;
       this.theApp= newApp;
 
       // Following were moved AppGUIFactory.
@@ -273,24 +258,6 @@ public class AppFactory {  // For App class lifetimes.
   // Unconditional singleton getters, allowed because it's for the top level.
   public App getApp() 
     { return theApp; }
-
-  // Conditional (lazy evaluation) singleton getter-constructors.
-
-  /*  ////
-  public AppGUIFactory lazyGetAppGUIFactory()
-    // This makes and gets the factory for the next smaller scope for this app.
-	  {
-	    if (theAppGUIFactory == null) // Constructing lazily and only one time.
-	      theAppGUIFactory= new AppGUIFactory(
-	      		thePersistent,
-	      	  thePortManager,
-	      		theShutdowner,
-	      		theAppInstanceManager,
-	      		theTCPCopier
-	      		);
-	    return theAppGUIFactory;
-	    }
-  */  ////
 
   /* Maker methods which construct a new object each time they are called.
     [ These were imported from AppGUIFactory. ]
@@ -329,7 +296,6 @@ public class AppFactory {  // For App class lifetimes.
     {
       Sender theSender= makeSender( unconnectedDatagramSocket );
       EpiThread theSenderEpiThread= 
-          //// AppGUIFactory.makeEpiThread( theSender, "Sender" );
           makeEpiThread( theSender, "Sender" );
       return theSenderEpiThread;
       }
@@ -353,7 +319,6 @@ public class AppFactory {  // For App class lifetimes.
       UnconnectedReceiver theUnconnectedReceiver= 
           makeUnconnectedReceiver( unconnectedDatagramSocket );
       EpiThread theUnconnectedReceiverEpiThread= 
-          //// AppGUIFactory.makeEpiThread( theUnconnectedReceiver, "UcRcvr" );
           makeEpiThread( theUnconnectedReceiver, "UcRcvr" );
       return theUnconnectedReceiverEpiThread;
       }
@@ -450,7 +415,6 @@ public class AppFactory {  // For App class lifetimes.
       NetcasterQueue multicastReceiverToMulticasterNetcasterQueue= 
         new NetcasterQueue(multicasterLockAndSignal, Config.QUEUE_SIZE, "mrmc");
       int multicastPortI= thePortManager.getMulticastPortI();
-      //// IPAndPort theIPAndPort= AppGUIFactory.makeIPAndPort(
       IPAndPort theIPAndPort= makeIPAndPort(
           multicastInetAddress, multicastPortI 
           );

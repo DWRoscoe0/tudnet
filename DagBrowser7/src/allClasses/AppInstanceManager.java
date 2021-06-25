@@ -883,7 +883,7 @@ l    * If the app receives a message indicating
         /* This method tries to update this running app's executable file to 
           the standard folder, and prepare it to be run as a Process on exit.
           If a PersistentEpiNode.txt file is present,
-          and it is newer than... //////////////////// 
+          and it is newer than... ////// 
           It keeps trying until copying succeeds, 
           or the thread is interrupted.
           If copying succeeds then it requests an app shutdown 
