@@ -182,17 +182,20 @@ public class AppGUI
     private void doPollingTasksWhileWaitingForShutdownV()
       /* This method polls some things that need to polled until
        * app shutdown is requested.  Then it returns.
+       * 
+       * ///org Use absolute instead of relative timing in wait.
        */
       {
         while (true) {
-          theAppLog.debug(
-              "GUIManager.doPollingTasksWhileWaitingForShutdownV()() loop.");
+          // theAppLog.debug(
+          //     "GUIManager.doPollingTasksWhileWaitingForShutdownV()() loop.");
           LockAndSignal.Input theInput= 
-              theShutdowner.waitForAppShutdownRequestedOrTimeOutOfE(1000); //////
+              theShutdowner.waitForAppShutdownRequestedOrTimeOutOfE(1000);
           if (LockAndSignal.Input.TIME != theInput) // If not time-out
             break; // exit loop for shutdown.
-          /// polling jobs would go here.
-          theAppInstanceManager. // Executing updater if update present.
+          
+          // Polling jobs follow.
+          theAppInstanceManager. // Executing app updater if update present.
             thingsToDoPeriodicallyV();
           theDataTreeModel.displayTreeModelChangesV();
           }

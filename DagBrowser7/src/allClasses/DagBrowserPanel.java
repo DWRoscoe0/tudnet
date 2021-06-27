@@ -95,7 +95,7 @@ public class DagBrowserPanel
       private LockAndSignal activityLockAndSignal=
       		new LockAndSignal();
       private TimerThread theTimerThread = // 2-second backup timer. 
-      		new TimerThread("ActivityTimer");
+      		new TimerThread("SwingActivityBlinker");
     
       // data models.
         private TreePath startTreePath;  // start TreePath to be displayed.
@@ -532,12 +532,9 @@ public class DagBrowserPanel
               periodicTargetTimeMsL= System.currentTimeMillis();
         			while (true)
                 {
-                  theAppLog.debug("DagBrowserPanel..run() loop.");
+                  // theAppLog.debug("DagBrowserPanel..run() loop.");
               		doDelayMeasurementsV();
                   if (testInterruptB()) break; // Exit loop if requested.
-                  //// theAppInstanceManager. // Executing updater if present.
-                  ////   thingsToDoPeriodicallyV();
-                  //// theDataTreeModel.displayTreeModelChangesV();
                   }
               }
 

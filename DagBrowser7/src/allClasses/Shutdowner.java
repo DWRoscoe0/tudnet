@@ -257,7 +257,7 @@ public class Shutdowner
 	  	  }
 
     public LockAndSignal.Input waitForAppShutdownRequestedOrTimeOutOfE(
-        long waitMsL) //////
+        long waitMsL)
       /* This method Waits until either:
         * app shutdown has been requested, or
         * this thread's isInterrupted() is true, or
@@ -267,8 +267,7 @@ public class Shutdowner
         LockAndSignal.Input theInput=
           appShutdownRequestedLockAndSignal.
             waitingForInterruptOrDelayOrNotificationE(waitMsL);
-          //// waitingForInterruptOrDelayOrNotificationV(waitMsL); 
-        //// theAppLog.info( "Shutdowner.waitForAppShutdownRequestedV(.) exit." );
+        // theAppLog.debug( "Shutdowner.waitForAppShutdownRequestedV(.) exit." );
         return theInput;
         }
 
