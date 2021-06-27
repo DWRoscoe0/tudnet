@@ -52,6 +52,7 @@ public class AppGUI
     private Shutdowner theShutdowner;
     private TCPCopier theTCPCopier;
     private ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor;
+    private AppInstanceManager theAppInstanceManager;
 
     public AppGUI(   // Constructor.
         EpiThread theConnectionManagerEpiThread,
@@ -61,7 +62,8 @@ public class AppGUI
         GUIManager theGUIManager,
         Shutdowner theShutdowner,
         TCPCopier theTCPCopier,
-        ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor
+        ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor,
+        AppInstanceManager theAppInstanceManager
         )
       {
 	      this.theConnectionManagerEpiThread= theConnectionManagerEpiThread;
@@ -72,6 +74,7 @@ public class AppGUI
         this.theShutdowner= theShutdowner;
         this.theTCPCopier= theTCPCopier;
         this.theScheduledThreadPoolExecutor= theScheduledThreadPoolExecutor;
+        this.theAppInstanceManager= theAppInstanceManager;
         }
     
     class InstanceCreationRunnable // Listens for other local app instances.
@@ -163,7 +166,7 @@ public class AppGUI
 
         // At this point, full interaction is possible
         // with the user and with other network devices.
-        theShutdowner.waitForAppShutdownRequestedV();
+        doPollingTasksWhileWaitingForShutdownV();
 
         // At this point, shutdown has been requested.
         theTCPCopier.finalizeV();
@@ -176,7 +179,26 @@ public class AppGUI
     		theAppLog.info("AppGUI.runV() ends.");
         }
 
-    } // class AppGUI
+    private void doPollingTasksWhileWaitingForShutdownV()
+      /* This method polls some things that need to polled until
+       * app shutdown is requested.  Then it returns.
+       */
+      {
+        while (true) {
+          theAppLog.debug(
+              "GUIManager.doPollingTasksWhileWaitingForShutdownV()() loop.");
+          LockAndSignal.Input theInput= 
+              theShutdowner.waitForAppShutdownRequestedOrTimeOutOfE(1000); //////
+          if (LockAndSignal.Input.TIME != theInput) // If not time-out
+            break; // exit loop for shutdown.
+          /// polling jobs would go here.
+          theAppInstanceManager. // Executing updater if update present.
+            thingsToDoPeriodicallyV();
+          theDataTreeModel.displayTreeModelChangesV();
+          }
+        }
+
+  } // class AppGUI
 
 class GUIManager 
   implements KeyEventDispatcher 

@@ -231,7 +231,8 @@ public class AppFactory {  // For App class lifetimes.
         theGUIManager,
         theShutdowner,
         theTCPCopier,
-        theScheduledThreadPoolExecutor
+        theScheduledThreadPoolExecutor,
+        newAppInstanceManager
         );
   		
   		// Save in instance variables injected objects that are needed later.

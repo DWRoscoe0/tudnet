@@ -532,11 +532,12 @@ public class DagBrowserPanel
               periodicTargetTimeMsL= System.currentTimeMillis();
         			while (true)
                 {
+                  theAppLog.debug("DagBrowserPanel..run() loop.");
               		doDelayMeasurementsV();
                   if (testInterruptB()) break; // Exit loop if requested.
-                  theAppInstanceManager. // Executing updater if present.
-                    thingsToDoPeriodicallyV();
-                  theDataTreeModel.displayTreeModelChangesV();
+                  //// theAppInstanceManager. // Executing updater if present.
+                  ////   thingsToDoPeriodicallyV();
+                  //// theDataTreeModel.displayTreeModelChangesV();
                   }
               }
 
