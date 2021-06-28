@@ -290,26 +290,27 @@ l    * If the app receives a message indicating
 	      return successB;  // Return whether app should exit.
 	      }
 
-	  public void thingsToDoPeriodicallyV() // Called by timer.
-	    /* This method is meant be called once per second by a timer thread
-	      to check for the appearance of a new version of the otherAppFile
+	  public boolean tryToStartUpdateB()
+	    /* This method is meant be called once per second
+	      to check for the appearance of a new version of the app file 
 	      and to do an update with it if it is a newer version.
+	      It checks both the otherAppFile and the tcpCopierAppFile.
 
 	      It works as follows:
 	      If this app is the app in the standard folder.
-	      and one of the apps discovered is 
-	      an approved later version updater app,
+	      and one of the apps discovered is an approved later version updater app,
 	      then setup to run that second app, which will do the update,
 	      and then trigger a shutdown of this app.
 	      If an update is triggered in this way,
-	      a lock will remain to prevent another update until this app exits.
-        */
+	      a lock will remain to prevent another update until this app exits,
+	      and it returns true, otherwise it returns false.
+	      */
 	    {
 	      tryUpdate: {
-          if (updatingB) break tryUpdate; // Prevent reentry block.
+          if (updatingB) break tryUpdate; // Prevent re-entry if updating.
           updaterReentrantLock.lock(); 
           try { 
-      		    updatingB= true;  // Assume updating.
+      		    updatingB= true;  // Assume update will begin.
   	  		    if ( (--inputCheckFileDelaySI < 0) && 
   			  	  		tryUpdateFromNewerFileInstancesB( otherAppFile ) )
   			  	  	break tryUpdate;
@@ -323,6 +324,7 @@ l    * If the app receives a message indicating
   				} // tryUpdate:
       if (updatingB) 
         theAppLog.info("thingsToDoPeriodicallyV() updating is [still] underway.");
+      return updatingB;
       }
 
 	  public String thisAppDateString()

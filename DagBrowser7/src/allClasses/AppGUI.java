@@ -53,6 +53,7 @@ public class AppGUI
     private TCPCopier theTCPCopier;
     private ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor;
     private AppInstanceManager theAppInstanceManager;
+    private ConnectionManager theConnectionManager;
 
     public AppGUI(   // Constructor.
         EpiThread theConnectionManagerEpiThread,
@@ -63,7 +64,8 @@ public class AppGUI
         Shutdowner theShutdowner,
         TCPCopier theTCPCopier,
         ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor,
-        AppInstanceManager theAppInstanceManager
+        AppInstanceManager theAppInstanceManager,
+        ConnectionManager theConnectionManager
         )
       {
 	      this.theConnectionManagerEpiThread= theConnectionManagerEpiThread;
@@ -75,6 +77,7 @@ public class AppGUI
         this.theTCPCopier= theTCPCopier;
         this.theScheduledThreadPoolExecutor= theScheduledThreadPoolExecutor;
         this.theAppInstanceManager= theAppInstanceManager;
+        this.theConnectionManager= theConnectionManager;
         }
     
     class InstanceCreationRunnable // Listens for other local app instances.
@@ -191,14 +194,36 @@ public class AppGUI
           //     "GUIManager.doPollingTasksWhileWaitingForShutdownV()() loop.");
           LockAndSignal.Input theInput= 
               theShutdowner.waitForAppShutdownRequestedOrTimeOutOfE(1000);
-          if (LockAndSignal.Input.TIME != theInput) // If not time-out
-            break; // exit loop for shutdown.
+          if (LockAndSignal.Input.TIME != theInput) // If not time-out then
+            break; // we must be shutting down, so exit loop.
           
-          // Polling jobs follow.
-          theAppInstanceManager. // Executing app updater if update present.
-            thingsToDoPeriodicallyV();
-          theDataTreeModel.displayTreeModelChangesV();
+          // Time-out has occurred.
+          doPollingJobsV();
           }
+        }
+
+    private void doPollingJobsV()
+      /* This method does various polling jobs.
+       * It always displays TreeModel changes.
+       * It may then do one additional job, 
+       * the first one that succeeds from the following list:
+       * * a executable file update using the AppInstanceManager
+       * * a data importation using the ConnectionManager
+       * 
+       *  An earlier version of this method returned a boolean 
+       *  to indicate that an exit should be done, but this was not needed.
+       *  
+       */
+      {
+        //// boolean exitB= true; // Set initial default exit flag.
+      toReturn: {
+        theDataTreeModel.displayTreeModelChangesV();
+        if (theAppInstanceManager.tryToStartUpdateB())
+          break toReturn; // Exit if update underway.
+        if (theConnectionManager.tryProcessingImportDataB())
+          break toReturn; // Exit.
+      } // goReturn:
+        //// exitB= false; // Everything failed, no exit.
         }
 
   } // class AppGUI

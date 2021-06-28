@@ -927,6 +927,18 @@ public class ConnectionManager
 
      */
 
+    public boolean tryProcessingImportDataB()
+      /* First this method tries copying import data associated with
+       * the present running app instance from its source location
+       * to the standard import area.
+       * At this point the source of the data may be disconnected.
+       * 
+       * If that fails, then it tries processing import data already copied.
+       */
+      { 
+        return false; 
+        }
+    
     // New code will go here.
     
     
