@@ -208,7 +208,7 @@ public class AppGUI
        * It may then do one additional job, 
        * the first one that succeeds from the following list:
        * * a executable file update using the AppInstanceManager
-       * * a data importation using the ConnectionManager
+       * * a data importation operation using the ConnectionManager
        * 
        *  An earlier version of this method returned a boolean 
        *  to indicate that an exit should be done, but this was not needed.
@@ -219,9 +219,10 @@ public class AppGUI
       toReturn: {
         theDataTreeModel.displayTreeModelChangesV();
         if (theAppInstanceManager.tryToStartUpdateB())
-          break toReturn; // Exit if update underway.
-        if (theConnectionManager.tryProcessingImportDataB())
-          break toReturn; // Exit.
+          break toReturn; // Exit immediately to complete update.
+        //// if (theConnectionManager.tryProcessingImportDataB())
+        ////  break toReturn; // Exit.
+        theConnectionManager.tryProcessingImportDataB();
       } // goReturn:
         //// exitB= false; // Everything failed, no exit.
         }

@@ -14,6 +14,8 @@ import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 
+import allClasses.bundles.BundleOf2;
+
 import static allClasses.AppLog.theAppLog;
 import static allClasses.SystemSettings.NL;
 
@@ -31,9 +33,17 @@ public class FileOps
      * that takes a function parameter 
      * that itself takes an OutputStream parameter.
      * This could be called easily with a lambda expression.
+     * 
+     * ///opt Some code could be simplified by making more use of
+     * the java.nio.file.Files class.
+     * 
+     * ///opt As methods are restructured, some public methods
+     * might become permanently unused and should be removed.
+     * Good examples of this are the methods which retry operations
+     * without limit. 
      */
-    
-    public static void updateFromToV(File thisFile, File thatFile)
+
+    public static void updateWithRetryFromToV(File thisFile, File thatFile)
       /* If thisFile is newer than thatFile, then
         thatFile is replaced by thisFile by copying.
         The time-stamp of the written file is updated
@@ -46,49 +56,84 @@ public class FileOps
         In that case the threads Interrupted status will be set.
         
         This method does not update in the reverse direction.
+        
+        ///org This method might eventually be replaced by 
+        calls to its componennts.
+        */
+      {
+        boolean updatableB= // Is this file is newer than that file?
+            isNewerB(thisFile, thatFile);
+        theAppLog.info("FileOps.updateFromToV((..), updatingB="+updatableB);
+        if ( updatableB )  // Then replace that with this.
+          copyFileWithRetryReturnString(thisFile, thatFile);
+        }
+
+    public static boolean isNewerB(File thisFile, File thatFile)
+      /* If thisFile is newer than thatFile, 
+        or thisFile exists but thatFile does not,
+        then return true, otherwise return false.
+        This works because File.lastModified() returns 0
+        if the file does not exist.
         */
       {
         long thisFileLastModifiedL= thisFile.lastModified();
         long thatFileLastModifiedL= thatFile.lastModified();
-        boolean updatingB= // Is this file is newer than that file?
-            ( thisFileLastModifiedL > thatFileLastModifiedL );
-        theAppLog.info("FileOps.updateFromToV((..), updatingB="+updatingB);
-        if ( updatingB )  // Then replace that with this.
-          copyFileWithRetryV(thisFile, thatFile);
-    		}
+        boolean isNewerB= ( thisFileLastModifiedL > thatFileLastModifiedL );
+        // theAppLog.debug("FileOps.isNewerB(.), newerB="+isNewerB
+        //     + twoFilesString(thisFile, thatFile));
+        return isNewerB;
+        }
   
-    public static void copyFileWithRetryV(
+    public static String copyFileWithRetryReturnString(
         File sourceFile, File destinationFile)
       /* This method copies the sourceFile to the destinationFile.
-        It does not return until the copy succeeds or 
-        thread termination is requested.
-        It assumes that a copy failure due to an IOException
-        was caused by a temporary condition such as 
-        the destination file being open for reading. 
+        It assumes that any copy failure due to an IOException
+        is caused by a temporary condition such as 
+        the destination file being open for reading.
+        In this case it will retry the operation.
+        It does not return until the copy succeeds,
+        another type of error occurs, or thread termination is requested.
+        It returns null if the operation succeeds.
+        It returns a String describing the failure's cause if it fails.
+
+        ///fix ///opt This should not retry forever.  Either:
+         * have anomaly limit on the number of retries, or
+         * do retries elsewhere, where the only possible error
+           is contention which is guaranteed to go away with sufficient retries.
         */
       {
-        ///enh create function to make double file path string.
-        theAppLog.info("FileOps.copyFileWithRetryV(..) "
-          + "======== COPYING FILE ======== "
+        ///enh create function to make double file path string?
+        final String methodIDString= "FileOps.tryCopyFileReturnString(.) ";
+        theAppLog.info(methodIDString + "======== COPYING FILE ======== "
           + twoFilesString(sourceFile, destinationFile));
-        boolean copySuccessB= false;
+        String errorString= null;
         int attemptsI= 0;
-        while (true) {
+        loop: while (true) {
           if (EpiThread.testInterruptB()) { // Termination requested.
-            theAppLog.info( true,"FileOps.copyFileWithRetryV(..) terminating.");
-            break; }
+            errorString= "Terminating.";
+            theAppLog.info( true,methodIDString + errorString );
+            break loop; // exit loop.
+            }
           attemptsI++;
-          copySuccessB= tryCopyFileB(sourceFile, destinationFile);
-          if (copySuccessB) { // Copy completed.
-            theAppLog.info( "FileOps.copyFileWithRetryV(..) "
+          errorString= tryCopyFileReturnString(sourceFile, destinationFile);
+          if (null == errorString) { // Copy completed.
+            theAppLog.info( methodIDString
                 + "Copying successful on attempt #"+attemptsI+" "
                 + twoFilesString(sourceFile, destinationFile));
-            break; }
-          theAppLog.info("FileOps.copyFileWithRetryV(..) failed attempt #"
-            + attemptsI + ".  Will retry after 1 second."); 
+            break loop; // exit loop.
+            }
+          theAppLog.info( methodIDString + "Failed attempt #"
+            + attemptsI + ".  Will retry after 1 second." ); 
           EpiThread.interruptibleSleepB(
               Config.fileCopyRetryPause1000MsL); // Wait 1 second.
+          } // loop:
+        theAppLog.debug("FileOps", methodIDString + "Exit with: "+errorString);
+        if (null != errorString) { // If error occurred
+          errorString= // prepend method ID
+              "FileOps.copyFileWithRetryReturnString(.) " + errorString;
+          theAppLog.error( errorString ); // and log it as an error.
           }
+        return errorString;
         }
   
     public static boolean tryCopyFileB(
@@ -104,12 +149,12 @@ public class FileOps
             tryCopyFileReturnString(sourceFile, destinationFile)
             );
         }
-  
+
     public static String tryCopyFileReturnString( 
         File sourceFile, File destinationFile)
       /* This method tries to copy the sourceFile to the destinationFile.
         It returns null if the copy succeeds, 
-        a String describing the reason for failure if the copy fails.
+        or a String describing the reason for failure if the copy fails.
         It logs any exception which causes failure.
         */
       {
@@ -117,29 +162,36 @@ public class FileOps
         String errorString= null; // Assume success.
         File tmpFile= null;
         toReturn: {
-          tmpFile= createTemporaryFile("Copy",destinationFile.getParentFile());
-          if (tmpFile == null) break toReturn;
+          //// tmpFile= createTemporaryFile("Copy",destinationFile.getParentFile());
+          tmpFile= createWithFoldersTemporaryFile(
+              "Copy",destinationFile.getParentFile());
+          if (tmpFile == null) {
+            errorString= "Failed to create temporary file"; 
+            break toReturn;
+            }
           Path sourcePath= sourceFile.toPath();
           Path tmpPath= tmpFile.toPath();
           errorString= tryRawCopyFileReturnString(sourceFile,tmpFile);
-          if (null != errorString)
-            break toReturn;
-          if (!copyTimeAttributesB(sourcePath,tmpPath)) 
-            break toReturn;
-          if (!atomicRenameB(tmpFile.toPath(), destinationFile.toPath())) 
-            break toReturn;
+          if (null != errorString) break toReturn;
+          errorString= copyTimeAttributesReturnString(sourcePath,tmpPath);
+          if (null != errorString) break toReturn;
+          errorString= atomicRenameReturnString(
+              tmpFile.toPath(), destinationFile.toPath()); 
+          if (null != errorString) break toReturn;
           } // toReturn:
         deleteDeleteable(tmpFile); // Delete possible temporary file debris.
         theAppLog.debug("FileOps","FileOps.tryCopyFileReturnString(.) "
-            + "errorString="+errorString);
+            + "exit with: "+errorString);
+        if (null != errorString) // If error, prepend method ID.
+          errorString= "FileOps.tryCopyFileReturnString(.) " + errorString; 
         return errorString;
         }
-  
-    public static boolean atomicRenameB(
+
+    public static String atomicRenameReturnString(
         Path sourcePath, Path destinationPath)
       /* This method atomically renames a file.
         It is what is used to safely replace one file with another.
-        It returns true if the rename succeeds, false otherwise.
+        It returns true if the rename succeeds, false otherwise.  //////
         If it encounters an AccessDeniedException, it will retry,
         assuming the exception was caused by the destination file
         being protected because it is temporarily open for reading.
@@ -147,17 +199,19 @@ public class FileOps
         ///fix Somehow eliminate retry-polling on rename failure.
         */
       {
+        String errorString= null;
         boolean successB= false;
         int attemptsI= 0;
         theAppLog.info( "FileOps","FileOps.atomicRenameB(..) begins"
             + twoFilesString(sourcePath.toFile(), destinationPath.toFile()));
-        while (!EpiThread.testInterruptB()) { // Retry some failure types. 
+        while (true) { // Loop to retry some fail types.
+          if (EpiThread.testInterruptB()) break; // Exit if requested.
           attemptsI++;
           try {
-              Files.move(sourcePath, destinationPath,
-                  StandardCopyOption.ATOMIC_MOVE);
-              successB= true;
-              break;
+              Files.move( // Try the rename.
+                  sourcePath, destinationPath, StandardCopyOption.ATOMIC_MOVE);
+              successB= true; // If here then rename succeeded.
+              break; // Exit loop.
             } catch (AccessDeniedException theAccessDeniedException) {
               theAppLog.warning(
                   "FileOps.atomicRenameB(..) failed attempt "+attemptsI
@@ -165,51 +219,104 @@ public class FileOps
               if (attemptsI >= 10) {
                 theAppLog.error(
                   "FileOps.atomicRenameB(..) retry limit exceeded, aborting.");
-                break;
+                break; // Exit loop.
                 }
             } catch (IOException theIOException) {
               theAppLog.exception(
                   "FileOps.atomicRenameB(..) failed with ",theIOException); 
-              break;
+              break; // Exit loop.
             }
           EpiThread.interruptibleSleepB( // Pause thread to prevent CPU hogging.
               Config.errorRetryPause1000MsL
               );
           } // while
-        theAppLog.info("FileOps.atomicRenameB(..) ends, successB="+successB
-            +" after "+attemptsI+" attempts.");
-        return successB;
+        theAppLog.info("FileOps.atomicRenameB(.) ends, successB="+successB
+            +" after "+attemptsI+" attempts, files:"
+                + "\n    " + sourcePath
+                + "\n    " + destinationPath);
+        if (!successB) errorString= "FileOps.atomicRenameB(.) failed.";
+        return errorString;
         }
   
     public static File createTemporaryFile(String nameString)
       /* This method tries to create a temporary file which contains
         nameString as part of the name and in the app folder.
+        The app folder should already have been created.
         It logs any exceptions produced.
         It returns the File of the temporary file created if successful,
         or null if it failed for any reason.
+        
+        ///opt This method creates the temporary file 
+        in the default app directory.  Because the temporary file 
+        will eventually be renamed to another name, 
+        possibly in distant directory,
+        t might be faster to create the temporary file
+        n the folder which is its ultimate destination.
         */
       {
         return createTemporaryFile(nameString, AppSettings.userAppFolderFile);
         }
   
-    public static File createTemporaryFile(
+    public static File createWithFoldersTemporaryFile( /////////// not used yet.
         String nameString, File directoryFile)
       /* This method tries to create a temporary file which contains
         nameString as part of the name and in the folder directoryFile.
-        It logs any exceptions produced.
+        It creates the folder and any ancestors if they don't already exist.
+        It reports any exceptions produced.
         It returns the File of the temporary file created if successful,
         or null if it failed for any reason.
         */
       {
-        File tmpFile= null;
+        File tmpFile= null; // Initially file is not created.
+      toReturn: { 
+      toCreateFile: {
+        if (directoryFile.exists()) // If file's folder already exists
+          break toCreateFile; // go make file.
+        if (! directoryFile.mkdirs()) // If unable to create its folder
+          break toReturn; // exit now.
+      } // toCreateFile:
+        tmpFile= createTemporaryFile(nameString, directoryFile);
+      } // toReturn: 
+        return tmpFile;
+        }
+
+    public static File createTemporaryFile(
+        String nameString, File directoryFile)
+      /* This method tries to create a temporary file which contains
+        nameString as part of the name and in the folder directoryFile.
+        It reports any errors produced.
+        It returns the File of the temporary file created if successful,
+        or null if it failed for any reason.
+        */
+      {
+        BundleOf2<String,File> resultBundle= 
+            createTemporaryFileReturnBundle(nameString, directoryFile);
+        String errorString= resultBundle.getV1();
+        if (null != errorString) 
+          theAppLog.error(errorString);
+        return resultBundle.getV2(); // Return file result.
+        }
+
+    public static BundleOf2<String,File> createTemporaryFileReturnBundle(
+        String nameString, File directoryFile)
+      /* This method tries to create a temporary file which contains
+        nameString as part of the name and in the folder directoryFile.
+        It returns a Bundle of the following:
+        * a String describing errors encountered, or null if no errors
+        * a File of the temporary file created, or null if not successful
+        */
+      {
+        File resultFile= null;
+        String errorString= null;
         try {
-            tmpFile= File.createTempFile( // Creates empty file.
+            resultFile= File.createTempFile( // Creates empty file.
               nameString,null,directoryFile);
           } catch (IOException theIOException) {
-            theAppLog.exception(
-                "FileOps.createTemporaryFile(..) failed with",theIOException); 
+            //// theAppLog.exception(
+            errorString= "FileOps.createTemporaryFile(..) failed creating "
+              + nameString + " in " + directoryFile + ", " + theIOException; 
           }
-        return tmpFile;
+        return new BundleOf2<String,File>(errorString,resultFile);
         }
 
     private static String tryRawCopyFileReturnString(
@@ -344,14 +451,15 @@ public class FileOps
         return errorString;
         }
   
-    public static boolean copyTimeAttributesB(
+    public static String copyTimeAttributesReturnString(
         Path sourcePath, Path destinationPath)
       /* This method copies the 3 time attributes from the source file
         to the destination file.
-        It returns true if successful, false otherwise.
+        It returns null if successful, 
+        a String describing the cause of the failure if not.
         */
       {
-        boolean successB= false;
+        String errorString= null;
         try {
           BasicFileAttributeView sourceBasicFileAttributeView= 
               Files.getFileAttributeView(
@@ -374,12 +482,12 @@ public class FileOps
     
           destinationBasicFileAttributeView.setTimes(
               theLastModifiedTime, theLastAccessTime, theCreateTime);
-          successB= true;
         } catch (IOException theIOException) {
-          theAppLog.exception(
-              "FileOps.copyTimeAttributesB(..) failed with",theIOException); 
+          errorString= "FileOps.copyTimeAttributesB(..) failed with "; 
+          theAppLog.exception(errorString,theIOException);
+          errorString+= theIOException;
         }
-      return successB;
+      return errorString;
       }
   
     public static void touchV(File theFile, long timeStampL) 
@@ -498,20 +606,21 @@ public class FileOps
         It returns null if successful, an error message string if not.
         */
       {
-        String resultString= null; // Assume no errors.
+        String errorString= null; // Assume no errors.
         makeDir: { 
           try {
             if (directoryFile.exists())
               break makeDir; // Do nothing if directory already exists.
             if (! directoryFile.mkdirs())
-              resultString=
-                "FileOps: "+directoryFile+" mkdirs() failed.";
+              errorString= " mkdirs() failed with " + directoryFile;
           } catch (Exception theException){
-            resultString= "FileOps.makeDirectoryAndAncestorsString(.): "
-                + directoryFile + theException;
+            errorString= "failure with " + directoryFile + " " + theException;
           }
+        if (null != errorString) // Prepend any error with method name. 
+          errorString= 
+            "FileOps.makeDirectoryAndAncestorsString(.):"+errorString;
         } // makeDir:
-        return resultString;
+        return errorString;
         }
 
     public static void makeDirectoryAndAncestorsWithLoggingV(File directoryFile)

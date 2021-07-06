@@ -190,12 +190,14 @@ public class TCPCopier extends EpiThread
         It needs to be called only once, at app start. 
 
         The method will return early if the thread is interrupted.
+        
+        This method is called by TCPCopier only.
         */
       {
         File tcpFolderFile= FileOps.makeRelativeToAppFolderFile( 
             Config.tcpCopierInputFolderString );
         tcpFolderFile.mkdir();  // Create destination folder if needed.
-        FileOps.updateFromToV( // Update staging area from standard folder.
+        FileOps.updateWithRetryFromToV( // Update staging area from standard folder.
           FileOps.makeRelativeToAppFolderFile(
               Config.appString + AppSettings.initiatorExtensionString),
           new File( tcpFolderFile, AppSettings.initiatorNameString)
@@ -616,7 +618,8 @@ public class TCPCopier extends EpiThread
         The new file has its TimeStamp set to remotetimeStamp.
         The above operations are done in a two-step process 
         using an intermediate temporary file.
-        The final step is an atomic rename of the temporary file to the local file.
+        The final step is an atomic rename 
+        of the temporary file to the local file.
         
         This method returns true if the entire file transfer finished, 
         false otherwise.
@@ -639,10 +642,10 @@ public class TCPCopier extends EpiThread
           if (!FileOps.copyStreamBytesB( // Copy stream to file or
               socketInputStream, tmpFileOutputStream))
             break toReturn; // terminate if failure.
-          theSocket.getOutputStream().write(0); // If this executes without IOException
-            // then peer finished sending its file and hasn't closed the socket.
-          theAppLog.debug(
-              "receiveNewerRemoteFileB() 0 byte sent back.  doing shutdownOutput().");
+          theSocket.getOutputStream().write(0); // If this returns then 
+            // peer finished sending its file and hasn't closed the socket.
+          theAppLog.debug("receiveNewerRemoteFileB() 0 byte sent back.  "
+              + "Doing shutdownOutput().");
           theSocket.shutdownOutput(); // Do an output half-close, signaling EOF.
           try { 
               tmpFileOutputStream.close(); // Close output file, not the socket.
@@ -655,9 +658,15 @@ public class TCPCopier extends EpiThread
             theAppLog.info("receiveNewerRemoteFileB(..) wrong file length=");
             break toReturn; // Exit because received file has wrong length.
             }
-          if (!FileOps.atomicRenameB(tmpFile.toPath(), localFile.toPath())) 
-            break toReturn; // Exit because rename failed.
+          //// if (!FileOps.atomicRenameReturnString(tmpFile.toPath(), localFile.toPath())) 
+          ////   break toReturn; // Exit because rename failed.
+          String errorString= FileOps.atomicRenameReturnString(
+              tmpFile.toPath(), localFile.toPath()); 
           successB= true; // Success because everything finished.
+          if (null != errorString) { // If error report it and exit.
+            theAppLog.error("receiveNewerRemoteFileB(..) " + errorString);
+            break toReturn;
+            }
           } // toReturn:
         Closeables.closeWithErrorLoggingB(tmpFileOutputStream); ///opt done needed?
         FileOps.deleteDeleteable(tmpFile); // Delete possible temporary debris.

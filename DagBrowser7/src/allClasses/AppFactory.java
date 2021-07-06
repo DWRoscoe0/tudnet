@@ -140,7 +140,8 @@ public class AppFactory {  // For App class lifetimes.
         unconnectedReceiverToConnectionManagerNetcasterQueue,
         toConnectionManagerNotifyingQueueOfStrings,
         toConnectionManagerNotifyingQueueOfMapEpiNodes,
-        theTextStreams2
+        theTextStreams2,
+        newAppInstanceManager
         );
       EpiThread theConnectionManagerEpiThread=
         makeEpiThread( theConnectionManager, "ConnMgr" );

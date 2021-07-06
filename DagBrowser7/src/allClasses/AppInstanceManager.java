@@ -153,7 +153,7 @@ l    * If the app receives a message indicating
     // File names.  Some of these might be equal.
 	  private File standardAppFile=  null; // App File name in standard folder.
     private File runningAppFile= null; // App File name of running app.
-    private File otherAppFile= null;  // File name of another instance.
+    public File otherAppFile= null;  // File name of another instance.
       // It can come from either:
       // * a command line argument from 
       //   an earlier app instance that started this app instance, or
@@ -903,7 +903,7 @@ l    * If the app receives a message indicating
                   + "Not executable .jar or .exe file:" + NL + "  " + runningAppFile);
               break toExit;
               }
-            if (! copyExecutableFileB(runningAppFile, standardAppFile))
+            if (! copyExecutableFileWithRetryB(runningAppFile, standardAppFile))
               break toExit; // Exit if copying of executable failed.
             //// if (! mergePersistentDataB(runningAppFile, standardAppFile))
             ////   break toExit; // Exit if error transferring merged data.
@@ -996,7 +996,7 @@ l    * If the app receives a message indicating
           return destinationMapEpiNode; 
           }
 
-      private boolean copyExecutableFileB(
+      private boolean copyExecutableFileWithRetryB(
           File sourceFile, File destinationFile)
         /* This method tries to copy the executable 
           sourceFile to the destinationFile.
@@ -1021,7 +1021,7 @@ l    * If the app receives a message indicating
                 +FileOps.twoFilesString(sourceFile, destinationFile));
             break toExit;
           } // toCopy:
-            FileOps.copyFileWithRetryV(sourceFile, destinationFile);
+            FileOps.copyFileWithRetryReturnString(sourceFile, destinationFile);
             successB= true;
           } // toExit:
             theAppLog.debug("copyExecutableFileB()= "+successB);

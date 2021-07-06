@@ -1,5 +1,6 @@
 package allClasses;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -69,6 +70,7 @@ public class ConnectionManager
         // For inputs in the form of MapEpiNodes. /// Eliminate when no longer needed.
       
       private TextStreams2 theTextStreams2= null;
+      private AppInstanceManager theAppInstanceManager;
 
     // Other instance variables, all private.
 
@@ -94,7 +96,8 @@ public class ConnectionManager
     		NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue,
         NotifyingQueue<String> toConnectionManagerNotifyingQueueOfStrings,
         NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes,
-        TextStreams2 theTextStreams2
+        TextStreams2 theTextStreams2,
+        AppInstanceManager theAppInstanceManager        
     		)
       {
       	super.initializeV(  // Constructing base class.
@@ -117,6 +120,7 @@ public class ConnectionManager
         this.toConnectionManagerNotifyingQueueOfMapEpiNodes=
             toConnectionManagerNotifyingQueueOfMapEpiNodes;
         this.theTextStreams2= theTextStreams2;
+        this.theAppInstanceManager= theAppInstanceManager;
         }
 
 
@@ -929,13 +933,35 @@ public class ConnectionManager
 
     public boolean tryProcessingImportDataB()
       /* First this method tries copying import data associated with
-       * the present running app instance from its source location
-       * to the standard import area.
-       * At this point the source of the data may be disconnected.
+       * the otherAppFile from its directory to the standard import area.
+       * If the copy attempt succeeds then 
+       * the source device may be removed if it is removable.
        * 
-       * If that fails, then it tries processing import data already copied.
+       * If the copy fails, either because there is no import data to copy,
+       * or it has already been copied,
+       * then it tries to process the data in the import area.
        */
       { 
+        // /*  ////
+      toReturn: {
+        if (null == theAppInstanceManager.otherAppFile) break toReturn;
+        File importSourceFileFile= new File(
+          theAppInstanceManager.otherAppFile.getParentFile(),
+          Config.persistentFileString
+          );
+        File importDestinationFileFile= FileOps.makePathRelativeToAppFolderFile(
+          Config.appImportFolderString,Config.persistentFileString);
+        boolean sourceIsNewerThanDestinationB=
+            FileOps.isNewerB(importSourceFileFile,importDestinationFileFile);
+        //// theAppLog.debug("ConnectionManager.ProcessingImportDataB()((..), "
+        ////    + "newerB="+sourceIsNewerThanDestinationB);
+        if (sourceIsNewerThanDestinationB)
+          //// FileOps.copyFileWithRetryReturnString( // Replace destination file.
+          FileOps.tryCopyFileReturnString(
+              importSourceFileFile,importDestinationFileFile);
+        ////// processing import data goes here.  Maybe do in separate method.
+      } // toReturn:
+        // */  ////
         return false; 
         }
     

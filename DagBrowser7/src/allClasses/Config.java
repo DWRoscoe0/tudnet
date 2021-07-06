@@ -89,7 +89,8 @@ public class Config
 		public static final char pathSeperatorC= '/'; 
 
 		public static final String appString= "Infogora";
-	  public static final String appJarString= appString + ".jar";
+    public static final String appImportFolderString= "Imports";
+    public static final String appJarString= appString + ".jar";
     public static final String textStream1FolderString= "Peers";
     public static final String textStream2FolderString= "Owners";
     public static final String persistentFileString= "PersistentEpiNode.txt";
