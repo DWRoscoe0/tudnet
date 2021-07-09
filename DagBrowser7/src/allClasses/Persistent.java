@@ -294,7 +294,10 @@ public class Persistent
        * the subset of storage needed for installations
        * to theOutputStream. */
       {
-        writeSubsetComponentV("UnicasterIndexes",theOutputStream); 
+        writeSubsetComponentV( // Source of data.
+            "UserId",theOutputStream); 
+        writeSubsetComponentV( // Neighbor data.
+            "UnicasterIndexes",theOutputStream);
         }
   
     private void writeSubsetComponentV(

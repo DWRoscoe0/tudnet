@@ -726,12 +726,15 @@ public class ConnectionManager
 
     public void decodePeerMapEpiNodeV(
         MapEpiNode messageMapEpiNode,String senderUserIdString)
-      /* This method decodes the received single-map-entry messageMapEpiNode, 
+      /* This method decodes a received single-map-entry messageMapEpiNode, 
         based on the value of the key of that entry.
+        It doesn't check that there is only one entry.
+        It looks for 3 different possible keys and
+        decodes based on the first key that it finds.
         The message is assumed to have come from 
         the user whose UserId is senderUserIdString.
-        The value of the entry is another MapEpiNode 
-        containing actual data about a subject peer.
+        The value of the matching entry is another MapEpiNode 
+        containing actual data about a single subject peer.
         The message could be from a local Unicaster 
         about a change in its connection state,
         or it could be from a remote peer about the possibly changed state
@@ -745,11 +748,11 @@ public class ConnectionManager
         goReturn: {
           if (tryProcessingByTextStreamsB(messageMapEpiNode,senderUserIdString))
             { break goReturn; } // Success, so exit.
-            
+
           valueMapEpiNode= messageMapEpiNode.getMapEpiNode("LocalNewState");
           if (valueMapEpiNode != null) 
             { processLocalNewStateV(valueMapEpiNode); break goReturn; }
-          
+
           valueMapEpiNode= messageMapEpiNode.getMapEpiNode("RemoteNewState");
           if (valueMapEpiNode != null) 
             { processRemoteStateV(valueMapEpiNode); break goReturn; }
@@ -757,7 +760,7 @@ public class ConnectionManager
           valueMapEpiNode= messageMapEpiNode.getMapEpiNode("RemoteCurrentState");
           if (valueMapEpiNode != null) 
             { processRemoteStateV(valueMapEpiNode); break goReturn; }
-          
+
           theAppLog.debug("ConnectionManager.decodePeerMapEpiNodeV(..) ignoring"
             + NL + "  " + messageMapEpiNode); // Report message being ignored.
         } // goReturn:
@@ -931,7 +934,7 @@ public class ConnectionManager
 
      */
 
-    public boolean tryProcessingImportDataB()
+    public boolean tryProcessingImportDataB() ////// finish
       /* First this method tries copying import data associated with
        * the otherAppFile from its directory to the standard import area.
        * If the copy attempt succeeds then 
@@ -939,34 +942,54 @@ public class ConnectionManager
        * 
        * If the copy fails, either because there is no import data to copy,
        * or it has already been copied,
-       * then it tries to process the data in the import area.
+       * then it tries to process any data that is in the import area.
        */
       { 
-        // /*  ////
-      toReturn: {
-        if (null == theAppInstanceManager.otherAppFile) break toReturn;
+        String errorString= null;
+        File importStagingFileFile= FileOps.makePathRelativeToAppFolderFile(
+          Config.appImportFolderString,Config.persistentFileString);
+      toCopyFailed: {
+        if (null == theAppInstanceManager.otherAppFile) break toCopyFailed;
         File importSourceFileFile= new File(
           theAppInstanceManager.otherAppFile.getParentFile(),
           Config.persistentFileString
           );
-        File importDestinationFileFile= FileOps.makePathRelativeToAppFolderFile(
-          Config.appImportFolderString,Config.persistentFileString);
         boolean sourceIsNewerThanDestinationB=
-            FileOps.isNewerB(importSourceFileFile,importDestinationFileFile);
-        //// theAppLog.debug("ConnectionManager.ProcessingImportDataB()((..), "
-        ////    + "newerB="+sourceIsNewerThanDestinationB);
+            FileOps.isNewerB(importSourceFileFile,importStagingFileFile);
         if (sourceIsNewerThanDestinationB)
-          //// FileOps.copyFileWithRetryReturnString( // Replace destination file.
-          FileOps.tryCopyFileReturnString(
-              importSourceFileFile,importDestinationFileFile);
-        ////// processing import data goes here.  Maybe do in separate method.
-      } // toReturn:
-        // */  ////
+          errorString= FileOps.tryCopyFileReturnString(
+              importSourceFileFile,importStagingFileFile);
+        if (null == errorString) break toCopyFailed;
+      } // toCopyFailed:
+        processAnyDataInImportAreaV(importStagingFileFile);
         return false; 
         }
     
+    private void processAnyDataInImportAreaV(File importDestinationFileFile)
+      /* This method does as its name describes.
+       * Various condition can cause it to quietly fail to complete its task.
+       * If it does complete its task then it deletes the input data file.
+       */
+      {
+      toExit: {
+        if (! importDestinationFileFile.exists()) break toExit; // No file.
+        MapEpiNode loadedMapEpiNode= 
+            Persistent.loadMapEpiNode(importDestinationFileFile);
+        if (null == loadedMapEpiNode) break toExit; // Unable to load file.
+        
+        String idString= loadedMapEpiNode.getString("UserId");
+        if (null == idString) break toExit;
+        MapEpiNode listMapEpiNode= 
+            loadedMapEpiNode.getMapEpiNode("UnicasterIndexes");
+        if (null == listMapEpiNode) break toExit;
+        listMapEpiNode.getLinkedHashMap().forEach((keyEpiNode,valueEpiNode) -> {
+          ////// Process valueEpiNode as Unicaster data.
+          });
+        theAppLog.debug("ConnectionManager.processAnyDataInImportAreaV():"
+            + " This is where import data processing goes!!!!!!!!!!!!");
+      } // toExit:
+      }
+    
     // New code will go here.
-    
-    
-    
+
     } // class ConnectionManager.

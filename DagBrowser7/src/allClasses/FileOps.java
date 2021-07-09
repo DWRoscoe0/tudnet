@@ -191,7 +191,8 @@ public class FileOps
         Path sourcePath, Path destinationPath)
       /* This method atomically renames a file.
         It is what is used to safely replace one file with another.
-        It returns true if the rename succeeds, false otherwise.  //////
+        It returns null if the rename succeeds, a String describing
+        the cause of failure if failure occurs.
         If it encounters an AccessDeniedException, it will retry,
         assuming the exception was caused by the destination file
         being protected because it is temporarily open for reading.
@@ -232,8 +233,8 @@ public class FileOps
           } // while
         theAppLog.info("FileOps.atomicRenameB(.) ends, successB="+successB
             +" after "+attemptsI+" attempts, files:"
-                + "\n    " + sourcePath
-                + "\n    " + destinationPath);
+                + "\n       sourcePath: " + sourcePath
+                + "\n  destinationPath: " + destinationPath);
         if (!successB) errorString= "FileOps.atomicRenameB(.) failed.";
         return errorString;
         }

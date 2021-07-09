@@ -20,11 +20,15 @@ public class MapEpiNode extends EpiNode
   /* 
    * This class implements an EpiNode which is a map.
    * 
-   * ///enh Though this class uses map iterators internally,
-   * it does not provide them in a public method, yet.
    * 
-   * Note, to avoid ConcurrentModificationException,
-   * methods that iterate over or modify the object are synchronized.
+   * Though this class uses map iterators internally,
+   * it does not provide them in a public method.
+   * It does provide getListIteratorOfEntries(),
+   * which returns an iterator for a List of the map entries, 
+   * not the map itself.
+   * An alternative since Java 8 is to use Map.forEach(.)
+   * with a lambda expression.
+   * ///enh Maybe provide a map-entry iterator for the map.
    */
 
   {
