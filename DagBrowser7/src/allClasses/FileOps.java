@@ -162,7 +162,6 @@ public class FileOps
         String errorString= null; // Assume success.
         File tmpFile= null;
         toReturn: {
-          //// tmpFile= createTemporaryFile("Copy",destinationFile.getParentFile());
           tmpFile= createWithFoldersTemporaryFile(
               "Copy",destinationFile.getParentFile());
           if (tmpFile == null) {
@@ -258,7 +257,7 @@ public class FileOps
         return createTemporaryFile(nameString, AppSettings.userAppFolderFile);
         }
   
-    public static File createWithFoldersTemporaryFile( /////////// not used yet.
+    public static File createWithFoldersTemporaryFile(
         String nameString, File directoryFile)
       /* This method tries to create a temporary file which contains
         nameString as part of the name and in the folder directoryFile.
@@ -313,7 +312,6 @@ public class FileOps
             resultFile= File.createTempFile( // Creates empty file.
               nameString,null,directoryFile);
           } catch (IOException theIOException) {
-            //// theAppLog.exception(
             errorString= "FileOps.createTemporaryFile(..) failed creating "
               + nameString + " in " + directoryFile + ", " + theIOException; 
           }
@@ -508,6 +506,16 @@ public class FileOps
 
     public final static String requiredConfirmationString= 
         "I AM CERTAIN ABOUT THIS!"; 
+
+    public static String deleteRecursivelyIfItExistsReturnString(
+        File theFile,String confirmationString) 
+      {
+        String errorString= null;
+        if (theFile.exists()) // Try deleting only if it actually exists. 
+          errorString= 
+            deleteRecursivelyReturnString(theFile,confirmationString);
+        return errorString;
+        }
 
     public static String deleteRecursivelyReturnString(
         File theFile,String confirmationString) 

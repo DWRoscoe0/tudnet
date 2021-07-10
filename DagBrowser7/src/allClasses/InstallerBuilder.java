@@ -25,9 +25,8 @@ public class InstallerBuilder
    * * Infogora.exe
    * * ReadMe.txt
    * * Persistent.txt
-   * * User Content
-   * 
-   * Later it might optionally include multi-media content.
+   * * User Content (///enh comes later)
+   * * Non-User Content (///enh comes later)
    */
 
   {
@@ -96,7 +95,9 @@ public class InstallerBuilder
         buildFolderFile= new File(volumeFile,"InfogoraInstall");
       goReturn: {
       goFinish: {
-        resultString= deleteAllVolumeFilesReturnString(volumeFile);
+        /// resultString= deleteAllVolumeFilesReturnString(volumeFile);
+        resultString= FileOps.deleteRecursivelyIfItExistsReturnString(
+          buildFolderFile,FileOps.requiredConfirmationString);
         if (! EpiString.isAbsentB(resultString)) break goFinish;
         resultString= createFolderReturnString(buildFolderFile);
         if (! EpiString.isAbsentB(resultString)) break goFinish;
