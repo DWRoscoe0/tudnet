@@ -1280,12 +1280,13 @@ public class StateList extends MutableList implements Runnable {
       */
 		{
 			String resultString;
-			if ( (parentStateList != null)
+			if ( (parentStateList != null) // Calculate state prefix.
 					&& (parentStateList.getpresentSubStateList() == this)
 					)
-				resultString= "*-" + getNameString(); // Active state.
+				resultString= "*-"; // Active state.
 				else
-				resultString= " -" + getNameString(); // Inactive state.
+				resultString= " -"; // Inactive state.
+      resultString+= getNameString(); // Append normal name.
 	  	return resultString;
 	  	}
 

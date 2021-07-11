@@ -19,7 +19,7 @@ public class Config
   {
     /* Disabling for debugging. */
       public static boolean tcpThreadsDisableB= false;
-      public static boolean multicasterThreadsDisableB= false;
+      public static boolean multicasterThreadsDisableB= true; //// false;
       public static boolean unicasterThreadsDisableB= false;
         
 		/* Miscellaneous startup behavior. */

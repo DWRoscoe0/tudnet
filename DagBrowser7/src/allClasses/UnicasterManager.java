@@ -79,7 +79,8 @@ public class UnicasterManager
 		    return getOrBuildAddAndStartUnicaster(theIPAndPort,null);
 		    }
 
-    public synchronized Unicaster getOrBuildAddAndStartUnicaster(IPAndPort theIPAndPort, String theIdString)
+    public synchronized Unicaster getOrBuildAddAndStartUnicaster(
+        IPAndPort theIPAndPort, String theIdString)
       /* This method returns a Unicaster associated with
         the remote peer whose address is theIPAndPort and ID is theIdString
         If a Unicaster doesn't already exist then it creates and initializes one, 
@@ -138,17 +139,20 @@ public class UnicasterManager
         If it does exist then it logs an error.
         If it does not exist then it builds one, adds it to 
         the appropriate data structures, and starts the Unicaster's thread.
-        addingV(..) to tree is done near the end because it could trigger displaying.
-        It returns the Unicaster, whether it existed already or was built by this method.
+        addingV(..) to the DataNode tree is done near the end because 
+        it could trigger displaying.
+        This method returns the Unicaster, 
+        whether it existed already or was built by this method.
         */
 	    { 
         /// theAppLog.debug( "ConnectionManager.buildAndAddUnicaster(IPAndPort) called.");
         Unicaster theUnicaster= tryToGetXorLogUnicaster( theIPAndPort );
         if ( theUnicaster == null ) // Unicaster does not yet exist.
           { // So build, add, and start the non-existent Unicaster.
-        	  UnicasterFactory theUnicasterFactory= theAppFactory.makeUnicasterFactory(
-        	    theIPAndPort, theIdString, theTCPCopier);
-    	      final UnicasterValue resultUnicasterValue=  // Getting the Unicaster. 
+        	  UnicasterFactory theUnicasterFactory= 
+        	    theAppFactory.makeUnicasterFactory(
+        	      theIPAndPort, theIdString, theTCPCopier);
+    	      final UnicasterValue resultUnicasterValue= // Getting the Unicaster. 
     	      	theUnicasterFactory.getUnicasterValue();
     	      theUnicaster= resultUnicasterValue.getDataNodeD(); 
             try { // Operations that might produce an IOException.
