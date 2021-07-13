@@ -256,8 +256,34 @@ public class Anomalies
         java.awt.Toolkit.getDefaultToolkit().beep(); // Create audible Beep.
 
         String resultString= // Try reporting via dialog box. 
+            Anomalies.displayDialogReturnString(null, messageString);
+        return resultString;
+        }
+  
+    public static String displayDialogReturnString(
+        String summaryIDLineString, String detailsString)
+      /* This method tries to display a mode-less dialog box. 
+       * It is similar to
+       *   Dialogger.showModelessJavaFXDialogReturnString(
+             String summaryIDLineString, String detailsString)
+       * but with the following differences to indicate an anomaly:
+       * * If summaryIDLineString is null, "Anomaly Detected" is used for it. 
+       * * If summaryIDLineString is NOT null, 
+       *   then "Anomaly Detected" is prepended to detailsString. 
+       */
+      {
+        java.awt.Toolkit.getDefaultToolkit().beep(); // Create audible Beep.
+        final String anomalyString= "Anomaly Detected";
+
+        if (null == summaryIDLineString) 
+          summaryIDLineString= anomalyString;
+        else
+          detailsString= anomalyString + "\n" + detailsString; 
+
+        String resultString= // Try reporting via dialog box. 
             Dialogger.showModelessJavaFXDialogReturnString(
-                "Anomaly Detected", messageString);
+                "Anomaly Detected", detailsString);
+
         return resultString;
         }
   
