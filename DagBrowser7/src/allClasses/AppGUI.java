@@ -167,6 +167,8 @@ public class AppGUI
         theCPUMonitorEpiThread.startV();
         theTCPCopier.initializeV();
 
+        theAppLog.error("AppGUI.runV() Test Anomaly Dialog.");
+        
         // At this point, full interaction is possible
         // with the user and with other network devices.
         doPollingTasksWhileWaitingForShutdownV();

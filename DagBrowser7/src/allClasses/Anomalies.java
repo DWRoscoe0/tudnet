@@ -227,12 +227,14 @@ public class Anomalies
      * which treat warnings, errors, and exceptions as report-able anomalies.
      */
   
+    /*  ////
     public static boolean displayDialogB(String messageString)
       /* This method tries to display a mode-less dialog box 
        * that displays messageString as an anomaly.
        * It also plays a beep sound to get the user's attention.
        * It returns true if the dialog box was displayed, false otherwise.
        */
+    /*  ////
       {
         java.awt.Toolkit.getDefaultToolkit().beep(); // Create audible Beep.
 
@@ -240,6 +242,7 @@ public class Anomalies
             Dialogger.showModelessDialogB(messageString, "Anomaly Detected");
         return successB;
         }
+    */  ////
   
     public static String displayDialogReturnString(String messageString)
       /* This method tries to display a mode-less dialog box 
@@ -254,7 +257,7 @@ public class Anomalies
 
         String resultString= // Try reporting via dialog box. 
             Dialogger.showModelessJavaFXDialogReturnString(
-                messageString, "Anomaly Detected");
+                "Anomaly Detected", messageString);
         return resultString;
         }
   

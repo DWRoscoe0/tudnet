@@ -1,6 +1,6 @@
 package allClasses;
 
-import static allClasses.AppLog.theAppLog;
+//// import static allClasses.AppLog.theAppLog;
 
 import java.awt.Component;
 import java.awt.EventQueue;
@@ -42,7 +42,7 @@ public class Dialogger extends Object
    * ///enh Add ability to return user responses in the case of error dialogs,
    * if that becomes useful.
    * 
-   * ///enh UsesetAlwaysOnTop(boolean value) of the dialog's Stage
+   * ///enh Use setAlwaysOnTop(boolean value) of the dialog's Stage
    * for important error or anomaly dialogs so they will always show.
    * Early anomaly dialogs are being obscured by the JavaFX Help dialog. 
    * 
@@ -50,30 +50,27 @@ public class Dialogger extends Object
    
   {
 
+    /*  ////
     public static boolean showModelessDialogB( // For JavaFX UI.
         String theString, String titleTailString)
       /* General-purpose non-modal (mode-less) dialog displayer.
        * It presently calls a method to display a JavaFX dialog.
        * Earlier it displayed a Swing dialog.
        */
+    /*  ////
       {
         return showModelessJavaFXDialogB(theString, titleTailString);
         }
+    */  ////
 
+    /*  ////
     private static boolean showModelessJavaFXDialogB(
         String theString, String titleTailString)
-      /* General-purpose non-modal (mode-less) dialog displayer.
-       * It tries to queue a job to display the dialog 
-       * on the JavaFX Application Thread, then returns immediately. 
-       * The dialog displays titleTailString 
-       * after the app name in the title bar,
-       * and displays theString in the main window,
-       * and waits for the user to execute OK before it closes.  
-       * 
-       * ///mys ///klu WindowOpensOffScreen.  It happened after I added
-        JavaFXGUI.setDefaultStyle(theAlert.getDialogPane());
-
-       * */
+      /* This is a wrapper for showModelessJavaFXDialogReturnString(.).
+       * It returns a boolean instead of a String, 
+       * true on success, false otherwise.
+       */
+    /*  ////
       {
         boolean successB= true;
         String resultString= showModelessJavaFXDialogReturnString(
@@ -85,44 +82,64 @@ public class Dialogger extends Object
           }
         return successB;
         }
+    */  ////
 
     public static String showModelessJavaFXDialogReturnString(
-        String theString, String titleTailString)
-      /* General-purpose non-modal (mode-less) dialog displayer.
-       * It tries to queue a job to display the dialog 
-       * on the JavaFX Application Thread, then returns immediately. 
-       * The dialog displays titleTailString 
-       * after the app name in the title bar,
-       * and displays theString in the main window,
-       * and waits for the user to execute OK before it closes.  
-       * 
-       * ///mys ///klu WindowOpensOffScreen.  It happened after I added
-        JavaFXGUI.setDefaultStyle(theAlert.getDialogPane());
+        String summaryIDLineString, String detailsString)
+      /* This method tries to display a dialog window.
+        This method is equivalent to 
+          showModelessJavaFXDialogReturnString(
+            titleString, summaryIDLineString, detailsString)
+        with titleString == appNameString + summaryIDLineString.
+        See that method for details.
+        */
+      {
+        String titleString= // Make title out of app name and summary line.
+            Config.appString + ": " + summaryIDLineString;
+        return showModelessJavaFXDialogReturnString(
+          titleString, summaryIDLineString, detailsString);
+        }
 
-       * */
+    private static String showModelessJavaFXDialogReturnString(
+        String titleString, String summaryIDLineString, String detailsString)
+      /* This method tries to run a job on the JavaFX Application Thread 
+       * to do the following:
+       * * Display a dialog window. 
+       * * Display the titleString in the title bar.
+       *   This might be meaningful for only large-screen OSs.
+       * * Display the summaryIDLineString in the header area.
+       * * Display the detailsString in the content area at the bottom.
+       * The method returns immediately after queuing the job,
+       * but the dialog waits for the user to execute OK before it disappears.
+       * It returns null if the job is successfully submitted,
+       * a String describing the failure if it fails.  
+       * 
+       * ///ano WindowOpensOffScreen.  It happened after I added
+        JavaFXGUI.setDefaultStyle(theAlert.getDialogPane());
+       */
       {
         String resultString= null;
         try {
           Platform.runLater( () -> {
-            String featureString= Config.appString + ": " + titleTailString;
-            Alert theAlert= new Alert(
-                AlertType.INFORMATION,
-                theString
-                );
+            Alert theAlert= new Alert(AlertType.INFORMATION);
             theAlert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
             theAlert.getDialogPane().setMinWidth(600); ///ano Fix for below.
               ///ano getDialogPane().setMinWidth(Region.USE_PREF_SIZE) fails.
               ///ano Also ended problem of title bar mostly off-screen.
             JavaFXGUI.setDefaultStyle(theAlert.getDialogPane());
             theAlert.initModality(Modality.NONE);
-            theAlert.setTitle(featureString);
-            theAlert.setHeaderText(featureString);
+
+            theAlert.setTitle(titleString);
+            theAlert.setHeaderText(summaryIDLineString);
+            theAlert.setContentText(detailsString);
+
             /// theAlert.showAndWait();
             theAlert.show();
             } );
           }
         catch (IllegalStateException theIllegalStateException) {
-          resultString= "Dialog-Failed"; ///ano
+          resultString= "Dialog-Failed" + theIllegalStateException;
+            ///ano See notes above.
           }
         // theAppLog.info("Dialogger.showModelessJavaFXDialogReturnString(.)," 
         //     + NL + theString + NL + " resultString= " + resultString);
