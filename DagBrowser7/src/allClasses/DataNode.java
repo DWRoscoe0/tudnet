@@ -360,7 +360,7 @@ public abstract class DataNode
           boolean loggingB= logB(theLogLevel);
           if ( loggingB )
             theAppLog.logV( 
-                theLogLevel, theLogString, theThrowable, consoleB );
+                theLogLevel, null, theLogString, theThrowable, consoleB );
           return loggingB;
           }
 
@@ -372,7 +372,7 @@ public abstract class DataNode
         /* This method logs unconditionally. */
         {
           theAppLog.logV( 
-              theLogLevel, theLogString, theThrowable, consoleB );
+              theLogLevel, null, theLogString, theThrowable, consoleB );
           }
 
 

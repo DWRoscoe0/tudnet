@@ -363,7 +363,9 @@ public class SystemsMonitor
       if (deltaL != 0) // Logging deltaL if it's not 0.
         {
           long timeNowL= System.currentTimeMillis();
-          theAppLog.debug( theNamedLong.getNameString( ) + " changed by " + deltaL
+          theAppLog.warning(
+              theNamedLong.getNameString( ),
+              theNamedLong.getNameString( ) + " changed by " + deltaL
                 + NL + "  time-then : " + Misc.dateString(timeNowL - deltaL) 
                 + NL + "  time-now  : " + Misc.dateString(timeNowL) 
                 );

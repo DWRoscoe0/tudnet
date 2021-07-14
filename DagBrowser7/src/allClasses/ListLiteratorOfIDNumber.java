@@ -86,7 +86,7 @@ public class ListLiteratorOfIDNumber
           }
         catch ( IOException theIOException ) {
           theAppLog.error(
-          	theIOException, "ListLiteratorOfIDNumber.tryLoadingIDNumber().");
+          	"ListLiteratorOfIDNumber.tryLoadingIDNumber().", theIOException);
       	  resultIDNumber= inIDNumber;
           };
       return resultIDNumber;

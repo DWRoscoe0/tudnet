@@ -694,12 +694,12 @@ public class FileOps
                 sourceFileOutputStream.close(); 
               }
             catch ( Exception theException ) { 
-              EpiString.combineLinesString(
+              EpiString.combine1And2WithNewlineString(
                   errorString, "close error: "+theException);
               }
             }
         if (null != errorString) { // If error occurred, add prefix.
-          errorString= EpiString.combineLinesString(
+          errorString= EpiString.combine1And2WithNewlineString(
               "FileOps.writeDataReturnString(.), "
                   + "destinationFileFile= " + destinationFileFile,
               errorString

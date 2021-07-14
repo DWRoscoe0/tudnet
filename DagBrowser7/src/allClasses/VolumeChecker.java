@@ -171,20 +171,20 @@ public class VolumeChecker
         resultString= FileOps.makeDirectoryAndAncestorsString(
             buildFolderFile);
         if (! EpiString.isAbsentB(resultString)) {
-          resultString= EpiString.combineLinesString(
+          resultString= EpiString.combine1And2WithNewlineString(
               "error creating folder", resultString);
           break goFinish;
           }
         outputProgressSlowlyV();
         resultString= writeTestReturnString(buildFolderFile);
         if (! EpiString.isAbsentB(resultString)) {
-          resultString= EpiString.combineLinesString(
+          resultString= EpiString.combine1And2WithNewlineString(
               "error during write-test", resultString);
           break goFinish;
           }
         resultString= readTestReturnString(buildFolderFile);
         if (! EpiString.isAbsentB(resultString)) {
-          resultString= EpiString.combineLinesString(
+          resultString= EpiString.combine1And2WithNewlineString(
               "error during read-test", resultString);
           break goFinish;
           }
@@ -193,7 +193,7 @@ public class VolumeChecker
         theAppLog.debug("VolumeChecker.checkVolumeV(.) deleting.");
         String deleteErrorString= FileOps.deleteRecursivelyReturnString(
             buildFolderFile,FileOps.requiredConfirmationString);
-        resultString= EpiString.combineLinesString(resultString, deleteErrorString);
+        resultString= EpiString.combine1And2WithNewlineString(resultString, deleteErrorString);
         replaceOperationAndRefreshProgressReportV("done");
       }  // goReturn:
         if (! EpiString.isAbsentB(resultString)) // Report error or success.
@@ -312,7 +312,7 @@ public class VolumeChecker
             /// ? Move following into above try block?
           } // fileLoop:
         } catch (Exception theException) {
-          errorString= EpiString.combineLinesString(errorString, 
+          errorString= EpiString.combine1And2WithNewlineString(errorString, 
             "VolumeCheck.writeTestReturnString(.) in normal close "
             + theException);
           theAppLog.exception(errorString, theException);
@@ -320,7 +320,7 @@ public class VolumeChecker
           try {
             if ( theFileOutputStream != null ) theFileOutputStream.close(); 
           } catch ( Exception theException ) {
-            errorString= EpiString.combineLinesString(errorString,
+            errorString= EpiString.combine1And2WithNewlineString(errorString,
               "VolumeCheck.writeTestReturnString(.) in error close "
               + theException);
             theAppLog.exception(errorString, theException);
@@ -413,7 +413,7 @@ public class VolumeChecker
             volumeDoneFilesL++;
           } // fileLoop:
         } catch (Exception theException) { 
-          errorString= EpiString.combineLinesString(errorString, 
+          errorString= EpiString.combine1And2WithNewlineString(errorString, 
             "VolumeCheck.readTestReturnString(.) in normal close "
             + theException);
           theAppLog.exception(errorString, theException);
@@ -421,7 +421,7 @@ public class VolumeChecker
           try {
             if ( theFileInputStream != null ) theFileInputStream.close(); 
           } catch ( Exception theException ) { 
-            errorString= EpiString.combineLinesString(errorString, 
+            errorString= EpiString.combine1And2WithNewlineString(errorString, 
               "VolumeCheck.readTestReturnString(.) in error close "
               + theException);
             theAppLog.exception(errorString, theException);

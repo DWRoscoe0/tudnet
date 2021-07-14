@@ -267,22 +267,21 @@ public class Anomalies
        *   Dialogger.showModelessJavaFXDialogReturnString(
              String summaryIDLineString, String detailsString)
        * but with the following differences to indicate an anomaly:
-       * * If summaryIDLineString is null, "Anomaly Detected" is used for it. 
-       * * If summaryIDLineString is NOT null, 
+       * * If summaryIDLineString is null, "Uncategorized Anomaly" is used. 
+       * * If summaryIDLineString is NOT null,
        *   then "Anomaly Detected" is prepended to detailsString. 
        */
       {
         java.awt.Toolkit.getDefaultToolkit().beep(); // Create audible Beep.
-        final String anomalyString= "Anomaly Detected";
 
         if (null == summaryIDLineString) 
-          summaryIDLineString= anomalyString;
+          summaryIDLineString= "Uncategorized Anomaly";
         else
-          detailsString= anomalyString + "\n" + detailsString; 
+          detailsString= "Anomaly Detected\n" + detailsString; 
 
         String resultString= // Try reporting via dialog box. 
             Dialogger.showModelessJavaFXDialogReturnString(
-                "Anomaly Detected", detailsString);
+                summaryIDLineString, detailsString);
 
         return resultString;
         }

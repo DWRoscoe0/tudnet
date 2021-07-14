@@ -127,7 +127,7 @@ public class InstallerBuilder
         String resultString= FileOps.makeDirectoryAndAncestorsString(
             buildFolderFile);
         if (! EpiString.isAbsentB(resultString))
-          resultString= EpiString.combineLinesString(
+          resultString= EpiString.combine1And2WithNewlineString(
               "error creating folder", resultString);
         return resultString;
         }
@@ -147,7 +147,7 @@ public class InstallerBuilder
         errorString= FileOps.tryCopyFileReturnString(
             sourceFile, destinationFile);
         if (! EpiString.isAbsentB(errorString))
-          errorString= EpiString.combineLinesString(
+          errorString= EpiString.combine1And2WithNewlineString(
             "Error copying file "+sourceFile+" to "+destinationFile,
             errorString
             );

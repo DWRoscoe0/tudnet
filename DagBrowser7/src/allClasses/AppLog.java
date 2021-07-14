@@ -572,17 +572,31 @@ public class AppLog extends EpiThread
 
     // Error methods.
     
-    public void error(String inString)
-      { 
-        error( null, inString); 
+    public void error(String summaryIDLineString)
+      {
+        error( summaryIDLineString, (Throwable)null); 
         }
     
-    public void error(Throwable theThrowable, String inString)
+    public void error(String summaryIDLineString,String detailsString)
+      {
+        error(summaryIDLineString, detailsString, null); 
+        }
+
+    public void error(String summaryIDLineString, Throwable theThrowable)
+      {
+        error(summaryIDLineString, null, theThrowable); 
+        }
+
+    public void error(
+        String summaryIDLineString, 
+        String detailsString, 
+        Throwable theThrowable
+        )
       /* This method writes an error String inString to a log entry,
         and also to the console stream.
         and to an Anomaly dialog.
         An error is something with which the app should not have to deal.
-        Response is usually to either retry or terminate.
+        Response to an error is usually to either retry or terminate.
         It also includes a stack trace.
 
         It also throws, catches, and ignores a DebugException.
@@ -594,7 +608,7 @@ public class AppLog extends EpiThread
         */
       { 
         synchronized(this) { // Synchronized on AppLog object for coherence. 
-          logV( ERROR, inString, theThrowable, true);
+          logV( ERROR, summaryIDLineString, detailsString, theThrowable, true);
           doStackTraceV(theThrowable);
           }
 
@@ -608,14 +622,20 @@ public class AppLog extends EpiThread
 
     // Warning methods.
 
-    public void warning(String inString)
-      /* This method writes a warning error String inString to a log entry
-       * to a dialog.
-       * It also includes a stack trace.
+    public void warning(String summaryIDLineString)
+      {
+        warning(summaryIDLineString, null);
+        }
+
+    public void warning(String summaryIDLineString, String detailsString)
+      /* This method writes a warning String to a log entry
+        and to an Anomaly dialog.
+        A warn is something with which the app should not have to deal.
+        Response to a warning is usually to either ignore it and continue.
        */
       {
         synchronized(this) { // Synchronized on AppLog object for coherence. 
-          logV( WARNING, inString, null, false);
+          logV( WARNING, summaryIDLineString, detailsString, null, false);
           /// doStackTraceV(theThrowable);
           }
         }
@@ -668,7 +688,7 @@ public class AppLog extends EpiThread
 
         System.err.println(wholeString);  // Send one copy to error console.
 
-        logV( null, wholeString, null, debugB );  // Send one copy to log. 
+        logV( null, null, wholeString, null, debugB );  // Send one copy to log. 
         }
 
 
@@ -731,7 +751,7 @@ public class AppLog extends EpiThread
 	    {
 	  		boolean loggingB= logB(theLogLevel);
 	  		if ( loggingB )
-	      		logV( theLogLevel, inString, theThrowable, toConsoleB );
+	      		logV( theLogLevel, null, inString, theThrowable, toConsoleB );
 	  		return loggingB;
       	}
 
@@ -756,20 +776,21 @@ public class AppLog extends EpiThread
     
     public void logV( LogLevel theLogLevel, String inString )
     	{ 
-    		logV(theLogLevel, inString, null, false); 
+    		logV(theLogLevel, null, inString, null, false); 
     		}
 
     public void logV( String inString )
     	{ 
-    		logV(null, inString, null, false); 
+    		logV(null, null, inString, null, false); 
     		}
 
 
     // Non-delegating logging methods.
 
     public synchronized void logV(
-    		LogLevel theLogLevel, 
-    		String inString, 
+    		LogLevel theLogLevel,
+    		String summaryIDLineString,
+    		String detailsString,
     		Throwable theThrowable, 
     		boolean toConsoleB )
       /* The buck stops here.  
@@ -786,8 +807,7 @@ public class AppLog extends EpiThread
         This method also sends a copy of the log entry
         to the console if toConsoleB is true.
 
-        The method might also output to the Console and
-        to a Dialog box in the case of Anomalies.
+        The method might also output to a Dialog box in the case of Anomalies.
 
         The log entry always begins with
         * the app session number,
@@ -809,53 +829,59 @@ public class AppLog extends EpiThread
 
       long nowMillisL= System.currentTimeMillis(); // Save present time.
 
-      String headString= ""; // Initialize head String to empty, then append
-      headString+= NL; // a line terminator to start a new line,
-      headString+= theSessionI;  // the session number,
-      headString+= processIDString;
-      headString+= ":";  // and a separator,
-      headString+= String.format(  // time since last output,
+      String entryHeadString= ""; // Initialize head String to empty, then append
+      entryHeadString+= NL; // a line terminator to start a new line,
+      entryHeadString+= theSessionI;  // the session number,
+      entryHeadString+= processIDString;
+      entryHeadString+= ":";  // and a separator,
+      entryHeadString+= String.format(  // time since last output,
           "%1$5d", nowMillisL - lastMillisL);
-      headString+= " ";  // a space,
+      entryHeadString+= " ";  // a space,
       if (toConsoleB || consoleCopyModeB) // a console flag if called for 
-        headString+= "CON ";
+        entryHeadString+= "CON ";
       if ( theLogLevel != null ) { // and if the log level is present
-        headString+= theLogLevel; // the log level,
-        headString+= " ";  // and a space,
+        entryHeadString+= theLogLevel; // the log level,
+        entryHeadString+= " ";  // and a space,
         }
-      headString+= "["+Thread.currentThread().getName()+"]"; // the thread name,
-      headString+= " ";  // and a space.
+      entryHeadString+= "["+Thread.currentThread().getName()+"]"; // the thread name,
+      entryHeadString+= " ";  // and a space.
 
-      String contentString= ""; // Set content string to empty, then append
-      contentString+= inString; // the content string provided by the caller,
-      contentString+= " ";  // and a space
+      String entryBodyString= ""; // Set content string to empty, then append
+      if (null == detailsString)
+        detailsString= "[no details available]";
+      entryBodyString+= detailsString; // the details string from the caller,
+      entryBodyString+= " ";  // and a space
       if ( theThrowable != null ) // and the Throwable if present. 
-        contentString+= theThrowable;
+        entryBodyString+= theThrowable;
 
-      if (null != theLogLevel) // Display Anomalies Dialog if needed
+      if (null != theLogLevel) // Display Anomalies Dialog window if needed.
         switch (theLogLevel) {
           case WARNING: 
           case ERROR: 
-            String errorString= // Display info as a dialog first.
+            String dialogErrorString= // Display info as a dialog first.
               Anomalies.displayDialogReturnString(
-                theLogLevel + ".\n" + contentString);
-            if (null != errorString) // If dialog failed
-              contentString=  // prepend error.
-                errorString + ": " + contentString;
-          default: // Do nothing for any other LogLevel.
+                summaryIDLineString, 
+                "Severity: " + theLogLevel + "\n" + entryBodyString
+                );
+              entryBodyString= EpiString.combine1And2With3String(
+                dialogErrorString, entryBodyString, ": ");
+          default: // Common actions for above and any other LogLevel.
+            // None.
           }
+      entryBodyString= EpiString.combine1And2With3String(
+          summaryIDLineString, entryBodyString, ":\n");
       
       { // Append to log file.
         boolean closeFileWhenDoneB=
           ( ! bufferedModeB ) // Buffered mode disabled
           && ( thePrintWriter == null ); // and file is closed.
         openFileWithRetryDelayIfClosedV();
-        appendToOpenFileV(headString + contentString);  // Both pieces.
+        appendToOpenFileV(entryHeadString + entryBodyString);  // Both pieces.
         if (closeFileWhenDoneB) closeFileV();
         }
 
       if (toConsoleB || consoleCopyModeB) // Append to console if called for
-        System.out.print(headString + contentString);
+        System.out.print(entryHeadString + entryBodyString);
 
       lastMillisL= nowMillisL; // Save present time as new last time.
       }

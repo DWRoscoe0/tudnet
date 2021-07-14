@@ -2,7 +2,18 @@ package allClasses;
 
 public class EpiString {
 
-  public static String combineLinesString(String the1String,String the2String)
+  public static String combine1And2WithNewlineString(
+      String the1String,String the2String)
+    {
+      return combine1And2With3String(
+          the1String,
+          the2String,
+          ",\n" // a line separator between them.
+          );
+      }
+
+  public static String combine1And2With3String(
+      String the1String, String the2String, String bridgeString)
     {
       String valueString;
     toReturn: {
@@ -12,7 +23,8 @@ public class EpiString {
         { valueString= the1String; break toReturn; } // return string 1.
       valueString= // Neither string is null so return a combination of both:
         the1String 
-        + ",\n" // with a line separator between them.
+        //// + 
+        + bridgeString
         + the2String; // 
     } // toReturn:
       return valueString;

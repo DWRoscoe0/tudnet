@@ -160,14 +160,16 @@ class TracingEventQueueMonitor extends Thread {
 					(currProcessingTime > this.thresholdDelay);
 			if (thresholdExceededB) // If excessive time used for dispatch, report it.
   			{ ///ano Report excessive time used for event dispatch.
-  				String outString= "In EDT dispatch of "
+			    String summaryIDLineString= 
+			        "Excessive time for EDT dispatch, "+underwayOrCompletedString;
+  				String detailsString= "In EDT dispatch of "
               + dispatchedAWTEvent.getClass().getName()
-              + ", now "
-  						+ underwayOrCompletedString
+              //// + ", now "
+  						//// + underwayOrCompletedString
   						+ ", processing time of " + currProcessingTime
   						+ "ms exceeds limit of " + this.thresholdDelay;
   				//System.out.println(outString);
-          theAppLog.warning(outString);
+          theAppLog.warning(summaryIDLineString, detailsString);
   			  }
 			return thresholdExceededB; 
 			}
