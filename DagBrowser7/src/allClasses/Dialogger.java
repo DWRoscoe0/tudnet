@@ -1,6 +1,6 @@
 package allClasses;
 
-//// import static allClasses.AppLog.theAppLog;
+import static allClasses.AppLog.theAppLog;
 
 import java.awt.Component;
 import java.awt.EventQueue;
@@ -141,8 +141,8 @@ public class Dialogger extends Object
           resultString= "Dialog-Failed" + theIllegalStateException;
             ///ano See notes above.
           }
-        // theAppLog.info("Dialogger.showModelessJavaFXDialogReturnString(.)," 
-        //     + NL + theString + NL + " resultString= " + resultString);
+        theAppLog.debug("Dialogger.showModelessJavaFXDialogReturnString(.): " 
+             + summaryIDLineString + ": resultString= " + resultString);
         return resultString;
         }
 
