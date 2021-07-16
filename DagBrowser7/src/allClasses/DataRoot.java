@@ -82,10 +82,10 @@ public class DataRoot {
   public void finalizeDataNodesV()
     /* This method finalizes the DataNode tree by finalizing the root DataNode.  */
     { 
-      theAppLog.info("DateRoot.finalizeDataNodesV() begins.");
+      theAppLog.info("DataRoot.finalizeDataNodesV() begins.");
       int nodeTotalI= rootDataNode.finalizeDataNodesI();
       theAppLog.info(
-          "DateRoot.finalizeDataNodesV() ends, total nodes finalized=" + nodeTotalI);
+          "DataRoot.finalizeDataNodesV() ends, total nodes finalized=" + nodeTotalI);
       }
 
   // Other methods.

@@ -133,6 +133,8 @@ public class Dialogger extends Object
             theAlert.setHeaderText(summaryIDLineString);
             theAlert.setContentText(detailsString);
 
+            JavaFXGUI.recordOpenWindowV( // Record showing.
+                theAlert.getDialogPane().getScene().getWindow());
             /// theAlert.showAndWait();
             theAlert.show();
             } );

@@ -9,12 +9,14 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 
+import static allClasses.AppLog.theAppLog;
 import static allClasses.SystemSettings.NL;
 
 import allClasses.DataNode;
 import allClasses.DataRoot;
 import allClasses.Dialogger;
 import allClasses.Persistent;
+import allClasses.Shutdowner;
 import allClasses.epinode.MapEpiNode;
 
 public class Navigation extends EpiStage
@@ -63,10 +65,12 @@ public class Navigation extends EpiStage
         DataNode theRootDataNode,
         Persistent thePersistent,
         DataRoot theDataRoot,
-        Selections theSelections
+        Selections theSelections,
+        Shutdowner theShutdowner
         )
       {
-        super(theJavaFXGUI);
+        //// super(theJavaFXGUI,theShutdowner);
+        super(theShutdowner);
         this.theRootDataNode= theRootDataNode;
         this.theDataRoot= theDataRoot;
         this.thePersistent= thePersistent;
@@ -93,6 +97,13 @@ public class Navigation extends EpiStage
         theDataNodeShowTreeButton= new Button("Show Tree");
         theDataNodeShowTreeButton.setOnAction(
             theActionEvent -> doDataNodeShowTreeButtonActionV() );
+
+        setOnCloseRequest( (theWindowEvent) -> {
+              theAppLog.info(
+                "Navigation.initializeAndStartV().setOnCloseRequest(.) handler"
+                + "\n   ======== REQUESTING APP SHUTDOWN =========");
+              theShutdowner.requestAppShutdownV();
+              });
 
         buildTreeSceneV(theRootDataNode);
 

@@ -53,7 +53,7 @@ public class JavaFXGUI
 
     // Other variables
 
-    private Map<Window,Boolean> windowMap= // Stores showing windows. 
+    private static Map<Window,Boolean> windowMap= // Stores showing windows. 
         new HashMap<Window,Boolean>();
   
     // Startup confirmation variables.
@@ -236,28 +236,21 @@ public class JavaFXGUI
       {
         theAppLog.debug("JavaFXGUILog",
             "JavaFXGUI.startJavaFXLaunchV() begins.");
-        Runnable javaFXRunnable= // Create launcher Runnable. 
-          new Runnable() {
-            @Override
-            public void run() {
-              theAppLog.debug("JavaFXGUILog","javaFXRunnable.run() begins,"
-                + " calling JavaFXApp.launch(JavaFXApp.class, (String[])null);.");
-              JavaFXApp.launch( // Launch sub-App as JavaFX Application.
-                  JavaFXApp.class, (String[])null);
-              theAppLog.debug("JavaFXGUILog","javaFXRunnable.run(), "
-                  + "returned from JavaFXApp.launch(.),"
-                  + "calling theShutdowner.requestAppShutdownV().");
-              theShutdowner.requestAppShutdownV();
-              theAppLog.debug("JavaFXGUILog","javaFXRunnable.run() "
-                  + "returned from theShutdowner.requestAppShutdownV(),"
-                  + "ending.");
-              }
+        Runnable javaFXRunnable= () -> { // Create launcher Runnable. 
+            theAppLog.debug("JavaFXGUILog","javaFXRunnable.run() begins,"
+              + " calling JavaFXApp.launch(JavaFXApp.class, (String[])null);.");
+            JavaFXApp.launch( // Launch sub-App as JavaFX Application.
+                JavaFXApp.class, (String[])null);
+            theAppLog.debug("JavaFXGUILog","javaFXRunnable.run(), "
+                + "returned from JavaFXApp.launch(.),"
+                + "calling theShutdowner.requestAppShutdownV().");
+            theShutdowner.requestAppShutdownV();
+            theAppLog.debug("JavaFXGUILog","javaFXRunnable.run() "
+                + "returned from theShutdowner.requestAppShutdownV(),"
+                + "ending.");
             };
         Thread javaFXLauncherThread= // Create launcher thread from Runnable.
-          new Thread(
-            javaFXRunnable,
-            "JavaFXLauncher" // Thread name.
-            );
+          new Thread(javaFXRunnable, "JavaFXLauncher");
         theAppLog.debug("JavaFXGUILog","JavaFXGUI.startJavaFXLaunchV() calling "
             + "javaFXLauncherThread.start().");
         javaFXLauncherThread.start(); // Start launcher thread.
@@ -273,8 +266,10 @@ public class JavaFXGUI
        * This method is run on the JavaFX application thread. 
        */
       {
-        /// TreeStage.makeInitializeAndStartV(this); // Start tree demo stage.
-        /// DemoStage.makeInitializeAndStartV(this); // Start button demo stage.
+        TreeStage.makeInitializeAndStartV( // Start tree demo stage.
+            this,theShutdowner);
+        DemoStage.makeInitializeAndStartV( // Start button demo stage.
+            this,theShutdowner);
 
         theAppLog.debug("JavaFXGUILog","JavaFXGUI.nestedStartV() begins,"
             + " calling new Navigation(.).initializeAndStartV().");
@@ -283,7 +278,8 @@ public class JavaFXGUI
             theRootDataNode, 
             thePersistent, 
             theDataRoot, 
-            theSelections
+            theSelections,
+            theShutdowner
             ).initializeAndStartV();
 
         theAppLog.debug("JavaFXGUILog","JavaFXGUI.nestedStartV(), "
@@ -292,14 +288,6 @@ public class JavaFXGUI
 
         // This method will now return to the Application subclass
         // JavaFXApp's start(Stage) method.
-        }
-    
-    public void recordOpenWindowV(Window theWindow)
-      /* This method records an opening (showing) of theWindow.  */
-      {
-        theAppLog.debug("JavaFXGUILog","JavaFXGUI.recordOpenWindowV() begins.");
-        windowMap.put(theWindow, true); // Record it in map.
-        theAppLog.debug("JavaFXGUILog","JavaFXGUI.recordOpenWindowV() ends.");
         }
 
     public void finalizeV()
@@ -311,17 +299,41 @@ public class JavaFXGUI
        * assuming other termination conditions are satisfied.  
        */
       {
-        theAppLog.debug("JavaFXGUILog","JavaFXGUI.finalizeV() begins.");
-        for (Window theWindow : windowMap.keySet())
-          theWindow.hide();
-        theAppLog.debug("JavaFXGUILog","JavaFXGUI.finalizeV() begins.");
+        theAppLog.debug("JavaFXGUILog","JavaFXGUI.JavaFXGUI.finalizeV() begins.");
+        hideAllWindowsV();
+        theAppLog.debug("JavaFXGUILog","JavaFXGUI.JavaFXGUI.finalizeV() ends.");
         }
-    
+
     public static void setDefaultStyle(Node theNode)
       /* Sets the default style of theNode. */
       {
         theNode.setStyle(
             "-fx-font-size: 22; -fx-font-family: \"monospace\"; ");
+        }
+
+
+    // JavaFX Window management.
+
+    public void hideAllWindowsV()
+      /* This method hides all windows.
+       * This is used in preparation for shutdown.  
+       * */
+      {
+        theAppLog.debug("JavaFXGUILog","JavaFXGUI.hideAllWindowsV() begins.");
+        for (Window theWindow : windowMap.keySet()) {
+          theAppLog.debug("JavaFXGUILog","JavaFXGUI.hideAllWindowsV() "
+              + "hiding window= " + theWindow);
+          theWindow.hide();
+          }
+        theAppLog.debug("JavaFXGUILog","JavaFXGUI.hideAllWindowsV() ends.");
+        }
+
+    public static void recordOpenWindowV(Window theWindow)
+      /* This method records an opening (showing) of theWindow.  */
+      {
+        theAppLog.debug("JavaFXGUILog","JavaFXGUI.recordOpenWindowV() begins.");
+        JavaFXGUI.windowMap.put(theWindow, true); // Record it in map.
+        theAppLog.debug("JavaFXGUILog","JavaFXGUI.recordOpenWindowV() ends.");
         }
 
     }
