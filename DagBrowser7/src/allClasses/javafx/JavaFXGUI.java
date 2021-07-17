@@ -53,8 +53,8 @@ public class JavaFXGUI
 
     // Other variables
 
-    private static Map<Window,Boolean> windowMap= // Stores showing windows. 
-        new HashMap<Window,Boolean>();
+    private static Map<String,Window> windowMap= // Stores showing windows. 
+        new HashMap<String,Window>();
   
     // Startup confirmation variables.
     private static LockAndSignal runningLockAndSignal= new LockAndSignal();
@@ -320,9 +320,12 @@ public class JavaFXGUI
        * */
       {
         theAppLog.debug("JavaFXGUILog","JavaFXGUI.hideAllWindowsV() begins.");
-        for (Window theWindow : windowMap.keySet()) {
+        //// for (Window theWindow : windowMap.keySet()) {
+        //// for (Window theWindow : windowMap.values()) {
+        for (String keyString : windowMap.keySet()) {
+          Window theWindow= windowMap.get(keyString);
           theAppLog.debug("JavaFXGUILog","JavaFXGUI.hideAllWindowsV() "
-              + "hiding window= " + theWindow);
+              + "key= " + keyString + ", theWindow= " + theWindow);
           theWindow.hide();
           }
         theAppLog.debug("JavaFXGUILog","JavaFXGUI.hideAllWindowsV() ends.");
@@ -332,7 +335,8 @@ public class JavaFXGUI
       /* This method records an opening (showing) of theWindow.  */
       {
         theAppLog.debug("JavaFXGUILog","JavaFXGUI.recordOpenWindowV() begins.");
-        JavaFXGUI.windowMap.put(theWindow, true); // Record it in map.
+        JavaFXGUI.windowMap.put( // Record it in map.
+            theWindow.toString(),theWindow);
         theAppLog.debug("JavaFXGUILog","JavaFXGUI.recordOpenWindowV() ends.");
         }
 
