@@ -268,10 +268,12 @@ public class JavaFXGUI
        * This method is run on the JavaFX application thread. 
        */
       {
+        /* Demo/test windows. 
         TreeStage.makeInitializeAndStartV( // Start tree demo stage.
             this,theShutdowner);
         DemoStage.makeInitializeAndStartV( // Start button demo stage.
             this,theShutdowner);
+        */
 
         theAppLog.debug("JavaFXGUILog","JavaFXGUI.nestedStartV() begins,"
             + " calling new Navigation(.).initializeAndStartV().");
