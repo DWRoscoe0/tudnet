@@ -55,7 +55,7 @@ class EpiStage
         EpiScene.setDefaultsV(getScene());
 
         show();
-        JavaFXGUI.recordOpenWindowV(this); // Record showing.
+        JavaFXGUI.recordOpenWindowV(null,this,null); // Record showing.
         }
   
   }

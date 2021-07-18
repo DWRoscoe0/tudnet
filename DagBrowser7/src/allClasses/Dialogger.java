@@ -121,20 +121,26 @@ public class Dialogger extends Object
         String resultString= null;
         try {
           Platform.runLater( () -> {
-            Alert theAlert= new Alert(AlertType.INFORMATION);
-            theAlert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
-            theAlert.getDialogPane().setMinWidth(600); ///ano Fix for below.
-              ///ano getDialogPane().setMinWidth(Region.USE_PREF_SIZE) fails.
-              ///ano Also ended problem of title bar mostly off-screen.
-            JavaFXGUI.setDefaultStyle(theAlert.getDialogPane());
-            theAlert.initModality(Modality.NONE);
+            Alert theAlert= JavaFXGUI.testForAlert(summaryIDLineString);
+            if (null == theAlert) { // If Alert not cached, make new one.
+              theAlert= new Alert(AlertType.INFORMATION);
+              theAlert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
+              theAlert.getDialogPane().setMinWidth(600); ///ano Fix for below.
+                ///ano getDialogPane().setMinWidth(Region.USE_PREF_SIZE) fails.
+                ///ano Also ended problem of title bar mostly off-screen.
+              JavaFXGUI.setDefaultStyle(theAlert.getDialogPane());
+              theAlert.initModality(Modality.NONE);
+  
+              theAlert.setTitle(titleString);
+              theAlert.setHeaderText(summaryIDLineString);
+  
+              JavaFXGUI.recordOpenWindowV( // Record showing.
+                  summaryIDLineString,
+                  theAlert.getDialogPane().getScene().getWindow(), theAlert
+                  );
+              }
 
-            theAlert.setTitle(titleString);
-            theAlert.setHeaderText(summaryIDLineString);
-            theAlert.setContentText(detailsString);
-
-            JavaFXGUI.recordOpenWindowV( // Record showing.
-                theAlert.getDialogPane().getScene().getWindow());
+            theAlert.setContentText(detailsString); // Customize with content.
             /// theAlert.showAndWait();
             theAlert.show();
             } );

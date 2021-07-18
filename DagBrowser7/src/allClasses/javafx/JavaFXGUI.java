@@ -12,8 +12,10 @@ import allClasses.DataRoot;
 import allClasses.LockAndSignal;
 import allClasses.Persistent;
 import allClasses.Shutdowner;
+import allClasses.bundles.BundleOf2;
 import allClasses.LockAndSignal.Input;
 import javafx.scene.Node;
+import javafx.scene.control.Alert;
 import javafx.stage.Window;
 
 public class JavaFXGUI
@@ -53,8 +55,8 @@ public class JavaFXGUI
 
     // Other variables
 
-    private static Map<String,Window> windowMap= // Stores showing windows. 
-        new HashMap<String,Window>();
+    private static Map<String,BundleOf2<Window,Alert>> windowMap= 
+      new HashMap<String,BundleOf2<Window,Alert>>();
   
     // Startup confirmation variables.
     private static LockAndSignal runningLockAndSignal= new LockAndSignal();
@@ -323,7 +325,7 @@ public class JavaFXGUI
         //// for (Window theWindow : windowMap.keySet()) {
         //// for (Window theWindow : windowMap.values()) {
         for (String keyString : windowMap.keySet()) {
-          Window theWindow= windowMap.get(keyString);
+          Window theWindow= windowMap.get(keyString).getV1();
           theAppLog.debug("JavaFXGUILog","JavaFXGUI.hideAllWindowsV() "
               + "key= " + keyString + ", theWindow= " + theWindow);
           theWindow.hide();
@@ -331,13 +333,31 @@ public class JavaFXGUI
         theAppLog.debug("JavaFXGUILog","JavaFXGUI.hideAllWindowsV() ends.");
         }
 
-    public static void recordOpenWindowV(Window theWindow)
-      /* This method records an opening (showing) of theWindow.  */
+    public static void recordOpenWindowV(
+        String theIDString, Window theWindow, Alert theAlert)
+      /* This method records an opening (showing) of a new window.  */
       {
         theAppLog.debug("JavaFXGUILog","JavaFXGUI.recordOpenWindowV() begins.");
+        if (null == theWindow) theWindow= 
+            theAlert.getDialogPane().getScene().getWindow();
+        if (null == theIDString) theIDString= theWindow.toString();
         JavaFXGUI.windowMap.put( // Record it in map.
-            theWindow.toString(),theWindow);
+            theIDString,
+            new BundleOf2<Window,Alert>(theWindow,theAlert)
+            );
         theAppLog.debug("JavaFXGUILog","JavaFXGUI.recordOpenWindowV() ends.");
+        }
+
+    public static Alert testForAlert(String windowIDString)
+      /* This method returns the Alert dialog object
+       * associated with windowsIDString, or null if there is none.  
+       */
+      {
+        Alert resultAlert= null;
+        BundleOf2<Window,Alert> theBundleOf2= 
+            JavaFXGUI.windowMap.get(windowIDString);
+        if (null != theBundleOf2) resultAlert= theBundleOf2.getV2();
+        return resultAlert; 
         }
 
     }
