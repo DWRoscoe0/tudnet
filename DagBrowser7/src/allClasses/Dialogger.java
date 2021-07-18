@@ -50,40 +50,6 @@ public class Dialogger extends Object
    
   {
 
-    /*  ////
-    public static boolean showModelessDialogB( // For JavaFX UI.
-        String theString, String titleTailString)
-      /* General-purpose non-modal (mode-less) dialog displayer.
-       * It presently calls a method to display a JavaFX dialog.
-       * Earlier it displayed a Swing dialog.
-       */
-    /*  ////
-      {
-        return showModelessJavaFXDialogB(theString, titleTailString);
-        }
-    */  ////
-
-    /*  ////
-    private static boolean showModelessJavaFXDialogB(
-        String theString, String titleTailString)
-      /* This is a wrapper for showModelessJavaFXDialogReturnString(.).
-       * It returns a boolean instead of a String, 
-       * true on success, false otherwise.
-       */
-    /*  ////
-      {
-        boolean successB= true;
-        String resultString= showModelessJavaFXDialogReturnString(
-            theString, titleTailString);
-        if (null != resultString) {
-          theAppLog.info("DialoggerJavaFXGUI.showModelessJavaFXDialogV(() "
-              + "\n  "+theString); ///ano
-          successB= false;
-          }
-        return successB;
-        }
-    */  ////
-
     public static String showModelessJavaFXDialogReturnString(
         String summaryIDLineString, String detailsString)
       /* This method tries to display a dialog window.
@@ -135,9 +101,7 @@ public class Dialogger extends Object
               theAlert.setHeaderText(summaryIDLineString);
   
               JavaFXGUI.recordOpenWindowV( // Record showing.
-                  summaryIDLineString,
-                  theAlert.getDialogPane().getScene().getWindow(), theAlert
-                  );
+                  summaryIDLineString, null, theAlert);
               }
 
             theAlert.setContentText(detailsString); // Customize with content.

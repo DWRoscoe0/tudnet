@@ -884,8 +884,6 @@ l    * If the app receives a message indicating
       private boolean updateAndPrepareToRunB()
         /* This method tries to update this running app's executable file to 
           the standard folder, and prepare it to be run as a Process on exit.
-          If a PersistentEpiNode.txt file is present,
-          and it is newer than... ////// 
           It keeps trying until copying succeeds, 
           or the thread is interrupted.
           If copying succeeds then it requests an app shutdown 
@@ -905,8 +903,6 @@ l    * If the app receives a message indicating
               }
             if (! copyExecutableFileWithRetryB(runningAppFile, standardAppFile))
               break toExit; // Exit if copying of executable failed.
-            //// if (! mergePersistentDataB(runningAppFile, standardAppFile))
-            ////   break toExit; // Exit if error transferring merged data.
             successB= requestProcessStartAndShutdownTrueB( 
                 standardAppFile.getAbsolutePath() 
                 );

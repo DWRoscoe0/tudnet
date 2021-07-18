@@ -23,7 +23,6 @@ public class EpiString {
         { valueString= the1String; break toReturn; } // return string 1.
       valueString= // Neither string is null so return a combination of both:
         the1String 
-        //// + 
         + bridgeString
         + the2String; // 
     } // toReturn:

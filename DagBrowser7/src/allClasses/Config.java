@@ -95,8 +95,8 @@ public class Config
     public static final String textStream2FolderString= "Owners";
     public static final String persistentFileString= "PersistentEpiNode.txt";
 
-    //// public static final String rootIdString= "PeerIdentity"; // old
-    //// public static final String rootIdString= "OwnerId"; // old
+    // public static final String rootIdString= "PeerIdentity"; // old
+    // public static final String rootIdString= "OwnerId"; // old
     public static final String userIdString= "UserId"; // new
     
 

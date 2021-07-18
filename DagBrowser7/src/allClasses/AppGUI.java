@@ -217,16 +217,12 @@ public class AppGUI
        *  
        */
       {
-        //// boolean exitB= true; // Set initial default exit flag.
       toReturn: {
         theDataTreeModel.displayTreeModelChangesV();
         if (theAppInstanceManager.tryToStartUpdateB())
           break toReturn; // Exit immediately to complete update.
-        //// if (theConnectionManager.tryProcessingImportDataB())
-        ////  break toReturn; // Exit.
         theConnectionManager.tryProcessingImportDataB();
       } // goReturn:
-        //// exitB= false; // Everything failed, no exit.
         }
 
   } // class AppGUI

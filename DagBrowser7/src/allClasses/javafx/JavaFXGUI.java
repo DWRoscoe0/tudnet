@@ -322,8 +322,6 @@ public class JavaFXGUI
        * */
       {
         theAppLog.debug("JavaFXGUILog","JavaFXGUI.hideAllWindowsV() begins.");
-        //// for (Window theWindow : windowMap.keySet()) {
-        //// for (Window theWindow : windowMap.values()) {
         for (String keyString : windowMap.keySet()) {
           Window theWindow= windowMap.get(keyString).getV1();
           theAppLog.debug("JavaFXGUILog","JavaFXGUI.hideAllWindowsV() "
@@ -335,15 +333,22 @@ public class JavaFXGUI
 
     public static void recordOpenWindowV(
         String theIDString, Window theWindow, Alert theAlert)
-      /* This method records an opening (showing) of a new window.  */
+      /* This method records an opening (showing) of a new window.
+       * It defines some parameters if they are null.
+       * 
+       * Note, there is no associated method for closing/hiding windows.
+       * So windows will be reused even after being hidden.
+       * ///enh Change this?
+       */
       {
         theAppLog.debug("JavaFXGUILog","JavaFXGUI.recordOpenWindowV() begins.");
-        if (null == theWindow) theWindow= 
+        if (null == theWindow) theWindow= // Get Window from Alert if needed. 
             theAlert.getDialogPane().getScene().getWindow();
-        if (null == theIDString) theIDString= theWindow.toString();
-        JavaFXGUI.windowMap.put( // Record it in map.
-            theIDString,
-            new BundleOf2<Window,Alert>(theWindow,theAlert)
+        if (null == theIDString) // Create ID String from Window if needed. 
+          theIDString= theWindow.toString();
+        JavaFXGUI.windowMap.put( // Record it all in map.
+            theIDString, // The key.
+            new BundleOf2<Window,Alert>(theWindow,theAlert) // The value.
             );
         theAppLog.debug("JavaFXGUILog","JavaFXGUI.recordOpenWindowV() ends.");
         }

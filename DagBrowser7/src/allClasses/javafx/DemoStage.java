@@ -8,16 +8,12 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 
-class DemoStage //// extends EpiStage 
+class DemoStage /// extends EpiStage 
 { 
-  
-  //// private DemoStage() {}
   
   public static void makeInitializeAndStartV(
       JavaFXGUI theJavaFXGUI,Shutdowner theShutdowner)
     {
-      //// EpiStage theEpiStage= EpiStage.makeEpiStage(theJavaFXGUI);
-      //// EpiStage theEpiStage= new EpiStage(theJavaFXGUI,theShutdowner);
       EpiStage theEpiStage= new EpiStage(theShutdowner);
       BorderPane theBorderPane = new BorderPane(); // This is the root node.
       Scene theScene = new Scene(theBorderPane,400,400);

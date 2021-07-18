@@ -1,7 +1,5 @@
 package allClasses.javafx;
 
-//// import static allClasses.AppLog.theAppLog;
-
 import allClasses.Shutdowner;
 import javafx.stage.Stage;
 
@@ -14,29 +12,12 @@ class EpiStage
 
   { 
 
-    //// private JavaFXGUI theJavaFXGUI;
     protected Shutdowner theShutdowner;
 
-    /*  ////
-    protected EpiStage()
-      {
-        }
-    */  ////
-
-    //// protected EpiStage(JavaFXGUI theJavaFXGUI, Shutdowner theShutdowner)
     protected EpiStage(Shutdowner theShutdowner)
       {
-        //// this.theJavaFXGUI= theJavaFXGUI;
         this.theShutdowner= theShutdowner;
         }
-    
-    /*  ////
-    public static EpiStage makeEpiStage(JavaFXGUI theJavaFXGUI)
-      {
-        EpiStage theEpiStage= new EpiStage(theJavaFXGUI);
-        return theEpiStage;
-        }
-    */  ////
 
     public void finishStateInitAndStartV(
         String titleString
