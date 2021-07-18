@@ -560,6 +560,7 @@ public class MapEpiNode extends EpiNode
        */
       {
           // theAppLog.debug("MapEpiNode.getOrMakeMapEpiNode(String) called.");
+          /*  ////
           { // Error check key.
             int separatorKeyOffsetI= // Search for key/path separator. 
                 keyString.indexOf(Config.pathSeperatorC, 0);
@@ -567,6 +568,7 @@ public class MapEpiNode extends EpiNode
               theAppLog.error(
                   "MapEpiNode.getOrMakeMapEpiNode() Not a single element path.");
             }
+          */  ////
           MapEpiNode valueMapEpiNode; // For function result. 
           EpiNode valueEpiNode= null;
         toReturnValue: { 
