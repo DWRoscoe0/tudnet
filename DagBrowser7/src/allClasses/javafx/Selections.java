@@ -1,5 +1,7 @@
 package allClasses.javafx;
 
+import static allClasses.AppLog.theAppLog;
+
 import java.util.ListIterator;
 import java.util.Map;
 
@@ -519,6 +521,8 @@ public class Selections
               // Forces root to be in selection path history.
         loop: while(true) { // Loop to follow selection history path to its end.
           // At this point, we  have a valid [partial] selection.
+          theAppLog.debug(
+              "Selections.getPreviousSelectedDataNode() at: " + scanDataNode);
           MapEpiNode childrenAttributeMapEpiNode= // Get Children attribute map. 
             getOrMakeChildrenMapEpiNode(scanMapEpiNode);
           String childString= // Get name of next-level candidate selection.
@@ -538,7 +542,8 @@ public class Selections
         }
 
 
-    public DataNode getByAttributeChildDataNode()
+    @SuppressWarnings("unused") ///eli?
+    private DataNode getByAttributeChildDataNode()
       /* This method returns the DataNode representing 
        * the last selection displayed by the app,
        * which is recorded in the selection history.
@@ -557,6 +562,8 @@ public class Selections
               // Forces root to be in selection path history.
         loop: while(true) { // Loop to follow selection history path to its end.
           // At this point, we  have a valid [partial] selection.
+          theAppLog.debug(
+              "Selections.getByAttributeChildDataNode()() at: " + scanDataNode);
           MapEpiNode childrenAttributeMapEpiNode= // Get Children attribute map. 
             getOrMakeChildrenMapEpiNode(scanMapEpiNode);
           String childString= // Get name of next-level candidate selection.

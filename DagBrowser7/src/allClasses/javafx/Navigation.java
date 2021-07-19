@@ -25,8 +25,16 @@ public class Navigation extends EpiStage
    * for navigation of the Infogora DataNode hierarchy.
    * It displays the hierarchy in 1 of 2 ways:
    * * showing the hierarchy as a navigable tree using a TreeView, or 
-   * * showing a particular DataNode and possibly some of its descendants.
+   * * showing a particular DataNode and possibly some of its descendants,
+   *   often but not always as a simple list of text lines.
    * At startup it displays the DataNode that was being displayed at shutdown.
+   * 
+   * ///ano Sometimes at startup this window fails to display.
+   *   This has happened when trying to display an empty directory as a node.
+   *   Switching to tree display mode before startup enabled display,
+   *   and then the window could be switched back and forth between modes.
+   *   After that, it could start in either mode and display correctly.
+   *    
    * 
    * ///fix To prevent Listener leak, in Finalization,
    *   remove ConsoleNode Document change listener from ConsoleBase 
@@ -188,6 +196,8 @@ public class Navigation extends EpiStage
         DataNode spreviouslySelectedDataNode= 
             theSelections.getPreviousSelectedDataNode();
         boolean displayTreeB= persistentMapEpiNode.isTrueB("DisplayAsTree");
+        theAppLog.debug(
+            "Navigation.displayTreeOrDataNodeV() tree= "+displayTreeB);
         if (displayTreeB)
           { setTreeContentFromDataNodeV(spreviouslySelectedDataNode);
             setScene(theTreeScene); // Use tree scene as first one displayed.
@@ -298,6 +308,8 @@ public class Navigation extends EpiStage
        * so that theDataNode will be displayed.
        */
       {
+        theAppLog.debug("Navigation.setDataNodeContentFromDataNodeV() "
+            + "theDataNode= "+theDataNode);
         if (null != theDataNode) { // Process DataNode if present.
           theDataNodeTreeStuff= // Make
             theDataNode.makeTreeStuff( // TreeStuff appropriate for DataNode.
@@ -308,6 +320,8 @@ public class Navigation extends EpiStage
               theSelections
               );
           Node guiNode= theDataNodeTreeStuff.getGuiNode();
+          theAppLog.debug("Navigation.setDataNodeContentFromDataNodeV() "
+            + "guiNode= "+guiNode);
           theDataNodeContentBorderPane.setCenter(guiNode); // Store for display.
           }
         }
