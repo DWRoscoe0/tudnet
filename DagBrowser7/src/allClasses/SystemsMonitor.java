@@ -358,6 +358,13 @@ public class SystemsMonitor
     /* This method does the same as addDeltaL(deltaL) 
       but also logs any deltaL which not 0.
       This is for NamedLongs which are not supposed to change.
+      
+      This has been tested and works.
+      * Skipped-Time changes is tested every time the computer wakes from sleep.
+      * Reversed-Time changes was tested on a computer that had been sleeping
+        for a long time with the app not running.  Apparently the computer clock
+        drifted behind of actual time 8 seconds and at the next Internet update
+        when the clock was corrected it was detected and reported as an anomaly.
       */
     {
       if (deltaL != 0) // Logging deltaL if it's not 0.
