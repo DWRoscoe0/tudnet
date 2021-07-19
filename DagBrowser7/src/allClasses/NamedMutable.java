@@ -12,7 +12,7 @@ public class NamedMutable
 	  		final Object newObject
 	  		)
 		  {
-	  		super.initializeV( nameString );
+	  		super.setNameV( nameString );
 
         // Storing injected values stored in this class.
 				valueObject= newObject; // Setting new value.

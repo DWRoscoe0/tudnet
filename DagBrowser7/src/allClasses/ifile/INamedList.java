@@ -59,7 +59,7 @@ public class INamedList
          * Child information is provided later.
          */
         {
-          super.initializeV(nameString);
+          super.setNameV(nameString);
           this.theFile= theFile;
           }
 

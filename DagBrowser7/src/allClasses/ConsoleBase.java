@@ -63,7 +63,7 @@ public class ConsoleBase
       {
         /// theAppLog.debug(
         ///   myToString()+"ConsoleBase.ConsoleBase(.) begins, nameString='"+nameString+"'");
-        super.initializeV(nameString);
+        super.setNameV(nameString);
         
         this.theScheduledThreadPoolExecutor= theScheduledThreadPoolExecutor;
 

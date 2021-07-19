@@ -29,13 +29,7 @@ public abstract class DataNode
 
 	  // Constructors and initialization.
 
-			public DataNode()
-
-			  /* This class is not needed for app operations.
-			   * It was created to make development, 
-			   * specifically Eclipse searches, easier.
-			   */
-
+			public DataNode() // Constructor.
 			  {}
 
     /* Much of the code here came from an earlier version of DataNode.
@@ -45,10 +39,9 @@ public abstract class DataNode
       ///opt: Remove theMaxLogLevelto reduce node storage, 
         also the methods what use it,
         because this feature hasn't been used for a long time,
-        and there are probably ways to do controlled logging.
+        and there are probably better ways to do controlled logging.
       */
     
-
     /* This class forms the basis of the classes 
       which represent the DAG (Directed Acyclic Graph). 
       All subclasses of this class add non-DAG-essential capabilities.
@@ -378,7 +371,7 @@ public abstract class DataNode
 
       // Other instance methods.
     
-      public int IDCode() { return super.hashCode(); }
+      public int IDCode() { return super.hashCode(); } /// Unused.
     
       public boolean isRootB()
         /* Returns whether this node is the root node.
@@ -515,47 +508,47 @@ public abstract class DataNode
     The meaning of each method should be preserved in the overrides.
     */
 
-      protected String getNodePathString()
-        /* Recursively calculates and returns the path to this node.
-          The path is a comma-separated list of node names
-          from the root of the hierarchy to this node.
-          It gathers the path elements by following node parent links. 
-          It is used only the DataTreeModel for logging.
-         */
-        {
-          String resultString;
-          
-          if ( getTreeParentNamedList() == null )
-            resultString= getNameString();
-          else
-            resultString= 
-              getTreeParentNamedList().getNodePathString()
-              + ", "
-              + getNameString(); 
+    protected String getNodePathString()
+      /* Recursively calculates and returns the path to this node.
+        The path is a comma-separated list of node names
+        from the root of the hierarchy to this node.
+        It gathers the path elements by following node parent links. 
+        It is used only the DataTreeModel for logging.
+       */
+      {
+        String resultString;
+        
+        if ( getTreeParentNamedList() == null )
+          resultString= getNameString();
+        else
+          resultString= 
+            getTreeParentNamedList().getNodePathString()
+            + ", "
+            + getNameString(); 
 
-          Nulls.fastFailNullCheckT(resultString);
-          return resultString;
-          }
+        Nulls.fastFailNullCheckT(resultString);
+        return resultString;
+        }
 
-      public String getMetaDataString()
-        /* Returns meta-data of this DataNode as a String.
-          This is typically a sequence of name:value pair attributes 
-          and the names of present value-less attributes.
-          Meta-data is generally considered to be all associated attributes except 
-          content-type attributes, which tend to be large.
-          This default method returns the concatenation of the Name attribute and,
-          if its value is non-blank, the Summary attribute.
-          Other classes might want to override this method to return
-          additional attributes.
-          */
-        { 
-          String resultString= "Name=" + getNameString(); // Assume only Name attribute.
-          String summaryString= getSummaryString();
-          if (! summaryString.isEmpty()) // Append Summary attribute if value isn't blank
-            resultString+= " Summary=" + summaryString;
+    public String getMetaDataString()
+      /* Returns meta-data of this DataNode as a String.
+        This is typically a sequence of name:value pair attributes 
+        and the names of present value-less attributes.
+        Meta-data is generally considered to be all associated attributes except 
+        content-type attributes, which tend to be large.
+        This default method returns the concatenation of the Name attribute and,
+        if its value is non-blank, the Summary attribute.
+        Other classes might want to override this method to return
+        additional attributes.
+        */
+      { 
+        String resultString= "Name=" + getNameString(); // Assume only Name attribute.
+        String summaryString= getSummaryString();
+        if (! summaryString.isEmpty()) // Append Summary attribute if value isn't blank
+          resultString+= " Summary=" + summaryString;
 
-          return resultString; 
-          }
+        return resultString; 
+        }
 
     public boolean isDecoratingB()
       /* Returns indication of whether node String decoration is enabled.
@@ -651,14 +644,18 @@ public abstract class DataNode
         This should be a unique String among its siblings because
         it will be used to distinguish it from those sibling,
         and as part of tree path-names.
-        This not necessarily be exactly what is displayed in JTree or JList cells.
+        It need not be unique in of all the DataNodes in the DataNode tree.
+
+        This might not necessarily be exactly what 
+        is displayed in JTree or JList cells.
         Object.toString() satisfies these requirements.
         This method will be overridden.
         */
       {
-        return 
-          "UNDEFINED-NAME-OF-"
-          + super.toString(); // Object's toString(), equivalent to: 
+        return
+          DataNode.class.getSimpleName()
+            + '@' 
+            + Integer.toHexString(((Object)this).hashCode());
               // getClass().getName() + '@' + Integer.toHexString(hashCode())
         }
 

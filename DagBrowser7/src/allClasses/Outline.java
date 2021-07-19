@@ -341,7 +341,8 @@ public class Outline
 	      	  case CONSTRUCTED: ;
 		      	  { // Doing partial loading.
 	      	  		Aid theAid= prepareAndGetAid();
-		      	  	setNameStringV(  // Redefining name from 
+		      	  	//// doSetNameV(  // Redefining name from 
+	      	  		setNameV(  // Redefining name from
 		      	  			theAid.lineString  // first line read from node text.
 		      	  			);
 		        	  theAid.getBodyString( );  // Read past header section.

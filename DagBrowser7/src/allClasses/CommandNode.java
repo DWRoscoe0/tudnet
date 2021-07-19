@@ -38,7 +38,7 @@ public class CommandNode
         Persistent thePersistent
         )
       {
-        super.initializeV(nameString);
+        super.setNameV(nameString);
         
         this.viewerClassString= viewerClassString; 
         this.thePersistent= thePersistent;

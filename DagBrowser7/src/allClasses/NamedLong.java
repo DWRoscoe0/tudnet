@@ -7,7 +7,7 @@ public class NamedLong extends NamedLeaf implements LongLike
 
   public NamedLong( // Constructor.
       String nameString, long theL) {
-    super.initializeV(nameString);
+    super.setNameV(nameString);
 
     this.theL = theL;
   }

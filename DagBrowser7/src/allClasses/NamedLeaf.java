@@ -13,7 +13,7 @@ public class NamedLeaf
 		public static NamedLeaf makeNamedLeaf( String nameString )
 			{
 				NamedLeaf theNamedLeaf= new NamedLeaf();
-				theNamedLeaf.initializeV( nameString );
+				theNamedLeaf.setNameV( nameString );
 
 	  		return theNamedLeaf;
 	  		}

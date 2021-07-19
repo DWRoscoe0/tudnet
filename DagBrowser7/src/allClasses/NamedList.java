@@ -89,7 +89,7 @@ public class NamedList
         ///fix This needs to initialize parent references.
         */
       {
-    		super.initializeV( nameString );
+    		super.setNameV( nameString );
 
 	  		for ( DataNode theDataNode : inDataNodes) // For each new child
 	  			addAtEndV( theDataNode ); // append child to list.

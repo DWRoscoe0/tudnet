@@ -53,7 +53,7 @@ public class StateList extends MutableList implements Runnable {
     Many have few, if any, dependency inputs at construction time.
 		To reduce boilerplate code in these low-level states, 
 		constructor source code has been eliminated.  
-		There are constructors, but they are the default constructors.
+		There are constructors, but they are the default, 0-argument constructors.
 		
 		For the states which require dependency inputs, setter injection is used.
 		Instance variables are initialized using various initialization methods,
@@ -83,7 +83,12 @@ public class StateList extends MutableList implements Runnable {
     doOnEntry(..) is called manually only in 
     the root machine of a state-machine hierarchy.
 
-
+    ///org It is not clear why there are 2 initialization methods
+    and when each should be called.
+      StateList initializeWithIOExceptionStateList() throws IOException
+      void initializeV()
+    Eliminate one or better document their different roles.
+    
 		Threads:
 
 		Most state machines don't have threads of their own. 
@@ -435,7 +440,9 @@ public class StateList extends MutableList implements Runnable {
 			from the sub-class versions of this method.
   		*/
     {
-  	  super.initializeV();
+      setNameV( // Set node name to be 
+          getClass().getSimpleName()  // the name of this class.
+          );
     	}
 
   public void initAndAddStateListV(StateList theSubStateList) 
