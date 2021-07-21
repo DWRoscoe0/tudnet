@@ -107,6 +107,8 @@ public class Persistent
       {
         theAppLog.debug("Persistent","Persistent.updateFormatV() begins.");
         
+        renameKeysV("reconnectType", "connectBy");
+        
         /// Disabled these when UnicasterIndexes kept disappearing.
         renameKeysV("peers", "Unicasters");
         /// renameKeysV("Unicasters","UnicasterIndexes");
@@ -128,7 +130,7 @@ public class Persistent
         theAppLog.debug("Persistent","Persistent.renameKeys(\""
           + oldKeyString + "\",\"" + newKeyString 
           + "\") called.");
-        rootMapEpiNode.renameKeysV(oldKeyString, newKeyString);
+        rootMapEpiNode.recursivelyRenameKeysV(oldKeyString, newKeyString);
         }
 
     private MapEpiNode loadMapEpiNode( String fileString )

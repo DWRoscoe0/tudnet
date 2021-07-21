@@ -335,7 +335,7 @@ public class LinkedMachineState
       sendHelloV(this); // Initial HELLO for this state. Done here because
       // some predecessor states (ConnectedState sub-states) can't do it.
       
-      AppMapEpiNode.updateFieldV(theMapEpiNode, "reconnectType", "periodicRetry");
+      AppMapEpiNode.updateFieldV(theMapEpiNode, "connectBy", "periodicRetry");
 
       theTimerInput.scheduleV(Config.slowPeriodicRetryTimeOutMsL);
     }
@@ -425,7 +425,7 @@ public class LinkedMachineState
       super.onEntryV();
 
       AppMapEpiNode.updateFieldV(theMapEpiNode, "isConnected", true); // Record connection.
-      AppMapEpiNode.updateFieldV(theMapEpiNode, "reconnectType", "exponentialRetry");
+      AppMapEpiNode.updateFieldV(theMapEpiNode, "connectBy", "exponentialRetry");
       theAppLog.info("ConnectedState.onEntryV() "
           + "Connecting, notifying ConnectionManager with: \n  "
           + thePeersCursor.getSelectedMapEpiNode());
@@ -465,7 +465,7 @@ public class LinkedMachineState
         if (tryInputB("GOODBYE")) { // Peer disconnected itself by saying goodbye?
           sayGoodbyesV(); // Respond to peer with our own goodbyes.
           notifyConnectionManagerOfPeerConnectionChangeV();
-          AppMapEpiNode.updateFieldV(theMapEpiNode, "reconnectType", null);
+          AppMapEpiNode.updateFieldV(theMapEpiNode, "connectBy", null);
           requestAncestorSubStateV(theDisconnectedState); // Disconnect ourselves.
           break goReturn; // Return with signal true.
           }

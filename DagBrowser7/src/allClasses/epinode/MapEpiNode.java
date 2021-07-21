@@ -631,9 +631,9 @@ public class MapEpiNode extends EpiNode
 
     // Special methods.
 
-    public synchronized void renameKeysV(
+    public synchronized void recursivelyRenameKeysV(
         String oldKeyString, String newKeyString)
-      /* This method replaces instances of map keys 
+      /* This method recursively replaces instances of map keys 
         with value oldKeyString to NewKeyString.
         It is meant to be used for Persistent.txt file format changes.
         */
@@ -643,7 +643,7 @@ public class MapEpiNode extends EpiNode
           { // Process one value.
             MapEpiNode valueMapEpiNode= valueEpiNode.tryMapEpiNode();
             if (null != valueMapEpiNode) // If value is a map
-              valueMapEpiNode.renameKeysV( // recursively rename within it.
+              valueMapEpiNode.recursivelyRenameKeysV( // recursively rename within it.
                 oldKeyString, newKeyString);
             }
         

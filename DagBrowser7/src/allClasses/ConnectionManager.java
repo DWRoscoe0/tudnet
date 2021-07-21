@@ -304,30 +304,37 @@ public class ConnectionManager
     private void tryToRestartUnicasterV(PeersCursor thePeersCursor)
       /* This method tries to restart the Unicaster,
         the data of which thePeersCursor points.
-        This includes building it and starting its thread if needed,
+        This includes building it, starting its thread,
         and restoring its connection state.
         */
       {
         toReturn: {
           MapEpiNode theMapEpiNode= thePeersCursor.getSelectedMapEpiNode();
-          if (theMapEpiNode.isTrueB("ignorePeer")) // This peer is supposed to be ignored?
+          if (theMapEpiNode.isTrueB("ignorePeer")) // Ignore this peer?
             break toReturn;  // Yes, ignore this peer by exiting now.
           String peerIPString= theMapEpiNode.getString("IP");
           String peerPortString= theMapEpiNode.getString("Port");
           IPAndPort theIPAndPort= new IPAndPort(peerIPString, peerPortString);
           Unicaster theUnicaster= 
               theUnicasterManager.tryToGetXorLogUnicaster(theIPAndPort);
-          if ( theUnicaster == null ) // Unicaster does not yet exist.
-            { // Create it, start it, and maybe connect it.
-              String theIdString= theMapEpiNode.getString(Config.userIdString);
-              theUnicaster= theUnicasterManager.buildAddAndStartUnicaster(
-                  theIPAndPort, theIdString); // Restore peer with Unicaster.
-              if (theMapEpiNode.testKeyForValueB("reconnectType", "periodicRetry"))
-                theUnicaster.slowPeriodicRetryConnectV();
-              else if (theMapEpiNode.testKeyForValueB("reconnectType", "exponentialRetry"))
-                theUnicaster.exponentialRetryConnectV();
-              }
-        } // toReturn:
+          if ( theUnicaster != null ) // Unicaster exists?
+            break toReturn;  // So exit now.
+
+          // Build, add, and start thread of Unicaster.
+          String theIdString= theMapEpiNode.getString(Config.userIdString);
+          theUnicaster= theUnicasterManager.buildAddAndStartUnicaster(
+              theIPAndPort, theIdString);
+          
+          // Connect appropriately if desired.
+          if 
+            (theMapEpiNode.testKeyForValueB("connectBy", "periodicRetry"))
+            { theUnicaster.slowPeriodicRetryConnectV(); break toReturn; }
+          if 
+            (theMapEpiNode.testKeyForValueB("connectBy","exponentialRetry"))
+            { theUnicaster.exponentialRetryConnectV(); break toReturn; }
+          // If here then disconnect was intentional.
+
+      } // toReturn:
           return;
         }
 
