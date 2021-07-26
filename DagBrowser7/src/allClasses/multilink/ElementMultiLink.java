@@ -18,7 +18,7 @@ public interface ElementMultiLink<E extends ElementMultiLink<E>>
     It was created to be used with the common case of 
     a node that has only one child.
 
-    DNode implements this as ElementMultiLink<DataNode>.
+    DataNode implements this as ElementMultiLink<DataNode>.
     It doesn't actually have any of the interface methods,
     because this interface has default methods for all methods.
     These methods have not been [fully] tested and may contain errors.

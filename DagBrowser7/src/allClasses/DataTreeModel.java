@@ -22,11 +22,11 @@ public class DataTreeModel
   /* This class implements an extended TreeModel 
     used for browsing the Infogora hierarchy tree (eventually DAG).
     It's purpose is to provide a link from the Infogora hierarchy to
-    Java GUI components, especially the Java JTree.
+    Java Swing GUI components, especially the Java JTree.
     Because of this, most of the code, including extensions,
     is meant to be run on the Event Dispatch Thread (EDT).
     This should be true of all methods unless stated otherwise.
-     
+
     This class implements, or will implement, the following extensions 
     beyond the basic TreeModel capabilities needed by the JTree class.
 	
@@ -37,6 +37,7 @@ public class DataTreeModel
 	    a DataNode and the TreePath (or TreePaths in the case of DAGs)
 	    that can be followed to get to them.
 	    This relationship is cached in nodeToPathHashMap.
+
 
     ///enh One understandable drawback of the superclass TreeModel is
     its inability to deal with the general Directed Graph,
@@ -55,14 +56,14 @@ public class DataTreeModel
         These methods manage data displayed by JTree and 
         other non-tree Components, as part of the graphical user interface.
         An example of this is the code which fires TreeModelListeners
-        to update the display with data changes.
+        to update the display when data changes.
         Switching to the EDT is done by calling the invokeAndWait(..) method
         and the EDT methods tend to be private ones to limit their access.
       * Some methods in this class are synchronized, 
         which makes them thread-safe.
         These methods tend to be public, allowing any thread to access them.
         They are called often and execute quickly,
-        mostly to aggregate change notifications into DataNode.theChangeFlag,
+        mostly to aggregate change notifications into DataNode.theTreeChange,
 
     ///pos Use ObjectInterning to use less memory and to run faster.
 
@@ -94,7 +95,7 @@ public class DataTreeModel
 
     // Other variables.
 
-      private HashMap<DataNode,TreePath> nodeToPathHashMap= // Cache of node path. 
+      private HashMap<DataNode,TreePath> nodeToPathHashMap= // Node path cache. 
         new HashMap<DataNode,TreePath>(); /* This is needed because 
           TreeModels need node TreePaths.  
           For this to work depends on DataNode's having only one parent node.
@@ -238,7 +239,7 @@ public class DataTreeModel
           Simply logs an error and returns.
           
           Actually this might no longer be true.  
-          See DataNode.ChangeFlag.SUBTREE_CHANGED and related code.
+          See DataNode.TreeChange.SUBTREE_CHANGED and related code.
           */
         { 
 	      	theAppLog.error( "DataTreeModel.valueForPathChanged(..) called" );
@@ -469,7 +470,10 @@ public class DataTreeModel
       	  return targetTreePath;   
       	  }
 
-    /* The following 3 sections comprise the display aggregation system.
+
+    /* Hierarchical data aggregation and GUI display.
+      
+      The following 2 sections comprise the display aggregation system.
       The purpose is to reduce the number of TreeModel events fired
       and the number of times the Event Dispatch Thread (EDT) is activated.
       
@@ -479,15 +483,25 @@ public class DataTreeModel
       
       The way this works is by storing in the DataNodes information about
       whether any changes have occurred since the previous display,
-      and propagating this information to the root of the tree.
+      and propagating this information toward the root of the tree.
       When it is time to display, the changed nodes are traversed
       in a depth-first order, and every node that was changed
       is communicated to the appropriate TreeModel listeners.
-      At the same time, the change information is cleared.
-      
+      As the display is updated, the change information is cleared.
+
       Displaying is done by calling a single method when display is desired.
       Normally this would be called periodically and immediately after 
       any important changes which should be displayed immediately.
+
+      Thread safety is attained by 2 redundant systems:
+      * Public methods which signal changes and 
+        the method which displays changes are synchronized.
+      . The order in which changes are recorded and later those records cleared
+        for nodes and their children is controlled so that 
+        no change goes undisplayed, though sometimes a node might be display
+        that doesn't need displaying.
+        * theTreeChange of a node is set after those of its children.
+        * theTreeChange of a node is cleared before those of its children.
 
 	    ///opt: Limit listener notification and change record clearing to
 	    only nodes that are displayed in any part of the displayed GUI.
@@ -499,9 +513,9 @@ public class DataTreeModel
     /* The following code is used to aggregate changes to the
       Infogora hierarchy for later and more efficient display to the user.
       These methods do not need to be called on the Event Dispatch Thread (EDT).
-      
-      This as in implementation of up-propagation of
-      the affect of changes on the appearance of ancestor nodes.
+
+      This is in implementation of up-propagation of changes 
+      that might affect the the appearance of ancestor nodes.
       This is not a general-purpose up-propagation system.
       It is highly customized for Java, its JTree class, and its GUI.
       */
@@ -512,8 +526,7 @@ public class DataTreeModel
 		      */
         {
 	      	EDTUtilities.testAndLogIfRunningEDTB();
-	      	signalSubtreeChangeV( // Convert to a subtree change. 
-	    	  		theDataNode );
+	      	signalSubtreeChangeV( theDataNode ); // Convert to a subtree change.
         	}
 
       public synchronized void signalInsertionV( 
@@ -527,7 +540,8 @@ public class DataTreeModel
           */
         {
       		EDTUtilities.testAndLogIfRunningEDTB();
-      	  signalStructuralChangeInV( parentDataNode, indexI, childDataNode );
+      	  signalStructuralChangeInV( // Translate to a structural change.
+      	      parentDataNode, indexI, childDataNode );
           }
 
       public synchronized void signalRemovalV( 
@@ -541,7 +555,8 @@ public class DataTreeModel
 		      */
 		    {
       		EDTUtilities.testAndLogIfRunningEDTB();
-      	  signalStructuralChangeInV( parentDataNode, indexI, childDataNode );
+      	  signalStructuralChangeInV( // Translate to a structural change. 
+      	      parentDataNode, indexI, childDataNode );
 		      }
 
       private void signalStructuralChangeInV(
@@ -549,25 +564,27 @@ public class DataTreeModel
           int indexI, 
           DataNode childDataNode 
 		      )
-        /* This method is used to signal a theSubjectDataNode about 
-          the insertion or deletion of an unnamed child node.
+        /* This method is used to signal a structural change in 
+          theSubjectDataNode.  It is used to deal with insertions and deletions.
           */
         {
       		EDTUtilities.testAndLogIfRunningEDTB();
 
-					switch ( parentDataNode.theChangeFlag ) {
-			  		case NONE: // Node is unmarked, so must mark it.
-			  		case SUBTREE_CHANGED: // Structure change overrides node change.
-		      	  parentDataNode.theChangeFlag= // Mark structure changed. 
-		      	  	DataNode.ChangeFlag.STRUCTURE_CHANGED;
-		      	  signalSubtreeChangeV( // Propagate as ordinary change to parent. 
-		      	  		parentDataNode.getTreeParentNamedList()  );
-			  			break;
-			  			
-			  		case STRUCTURE_CHANGED: // Already marked correctly.
-			  	  	; // So do nothing.
-			  	  	break;
-			  		}
+					switch // Act based on present flag value.
+					  ( parentDataNode.theTreeChange ) 
+					  { 
+  			  		case NONE: // Node is unmarked, so must mark it.
+  			  		case SUBTREE_CHANGED: // Node marked changed, so must override it.
+  		      	  parentDataNode.theTreeChange= // Mark node. 
+  		      	  	DataNode.TreeChange.STRUCTURE_CHANGED;
+  		      	  signalSubtreeChangeV( // Propagate as ordinary change 
+  		      	  		parentDataNode.getTreeParentNamedList()); // to parent.
+  			  			break;
+  			  			
+  			  		case STRUCTURE_CHANGED: // Already marked as desired
+  			  	  	; // so no additional marking is needed.
+  			  	  	break;
+  			  		}
           }
 
       private void signalSubtreeChangeV( 
@@ -583,35 +600,39 @@ public class DataTreeModel
 	      	if ( theDataNode == null ) // No node to update 
       	  	; // so do nothing.
       	  else // Mark as changed this node and its unmarked ancestors.
-		  	  	switch ( theDataNode.theChangeFlag ) {
-            case NONE: // Node is unmarked, so must mark it.
-			      	  theDataNode.theChangeFlag= // Mark node changed. 
-			      	  	DataNode.ChangeFlag.SUBTREE_CHANGED;
-			      	  signalSubtreeChangeV( // Propagate to parent, if any. 
+		  	  	switch ( theDataNode.theTreeChange ) {
+		  	  	  case NONE: // Node is unmarked, so now it must be.
+			      	  theDataNode.theTreeChange= // Mark node changed. 
+			      	  	DataNode.TreeChange.SUBTREE_CHANGED;
+			      	  signalSubtreeChangeV( // Propagate change to parent, if any. 
 			      	  		theDataNode.getTreeParentNamedList() );
 				  			break;
 				  			
 		  	  		case STRUCTURE_CHANGED: // Already marked for structure change.
 				  		case SUBTREE_CHANGED: // Already marked with node/subtree change.
-				  	  	; // Do no new marking is needed.
+				  	  	; // So no additional marking is needed.
 				  	  	break;
 				  		}
           }
 	
 	  /* The following code is used to display to the user
-	      previously aggregated changes in the Infogora hierarchy.
+	      previously aggregated changes recorded in 
+	      theTreeChange-s of DataNodes in the Infogora hierarchy.
 
 	      The displaying is done with the firing of notification events 
         to GUI components such as JTrees and JLists which
-        are displaying parts of the Infogora hierarchy, so with one exception,
-        these methods must be called on the Event Dispatch Thread (EDT).
+        are displaying parts of the Infogora hierarchy.
+        Wone exception, these methods must be called on 
+        the Event Dispatch Thread (EDT).
         The one exception is displayTreeModelChangesV(),
         which is the only public method in this group.
         */
 
       public void displayTreeModelChangesV()
-        /* This method switches to the EDT 
-          and calls displayChangedNodesFromRootV(). 
+        /* This method switches to the EDT if it is not the active thread, 
+          and calls displayChangedNodesFromRootV(),
+          which tries to display all nodes that have changed
+          since the previous call. 
           */
         {
       		theAppLog.trace( "DataTreeModel.displayTreeModelChangesV()" );
@@ -643,8 +664,8 @@ public class DataTreeModel
       private void displayChangedNodesFromV(
       		TreePath parentTreePath, DataNode theDataNode 
       		)
-        /* This method displays any nodes 
-          that need displaying starting with theDataNode.  
+        /* If theDataNode has changed, as indicated by it theTreeChange,
+          then it is displayed and repeats this for any children.
           The TreePath of its parent is parentTreePath.
           */
         {
@@ -653,12 +674,12 @@ public class DataTreeModel
 	    	  else { // Check this subtree.
 		    		theAppLog.trace( "DataTreeModel.displayChangedNodesFromV() "
 		            + theDataNode.getNodePathString() );
-	    	  	// Display this node and any updated descendants.
-		  	  	switch ( theDataNode.theChangeFlag ) {
+	    	  	// Display this node and any updated descendants if it's needed.
+		  	  	switch ( theDataNode.theTreeChange ) {
 				  		case NONE: // This subtree is unmarked.
-				  	  	; // Display nothing.
+				  	  	; // So display nothing.
 				  	  	break;
-			  	  	case STRUCTURE_CHANGED: // Structure or this subtree changed.
+			  	  	case STRUCTURE_CHANGED: // Structure of this subtree changed.
 				  			displayStructuralChangeV( parentTreePath, theDataNode );
 			  	  		break;
 				  		case SUBTREE_CHANGED: // Something else in this subtree changed.
@@ -683,12 +704,12 @@ public class DataTreeModel
           It shouldn't do any harm, except maybe take extra time.
           */
 	      {
-  			  TreePath theTreePath= parentTreePath.pathByAddingChild(theDataNode);
+          resetChangesInSubtreeV( // Do this now so late changes are recorded.
+              theDataNode );
+
+          TreePath theTreePath= parentTreePath.pathByAddingChild(theDataNode);
     			reportingStructuralChangeB( theTreePath ); // Display by reporting
     			  // to the listeners.
-
-    			resetChangesInSubtreeV( // Be certain none of subtree is marked. 
-    			    theDataNode );
 	      	}
 
   		private void displayChangedSubtreeV(
@@ -699,27 +720,28 @@ public class DataTreeModel
           It does this by reporting changes to the Java GUI.
           The TreePath of the subtree's parent is parentTreePath.
           The descendants are displayed recursively first.
-          The ChangeFlag of all the nodes of any subtree display is reset. 
+          The TreeChange of all the nodes of any subtree displayed is reset. 
           */
 	      {
   				theAppLog.trace( "DataTreeModel.displayChangedSubtreeV() "
   						+ theDataNode.getNodePathString() );
+          theDataNode.theTreeChange= // Unmark the subtree root now
+              DataNode.TreeChange.NONE; // to prevent loss of future changes.
+
       		TreePath theTreePath= parentTreePath.pathByAddingChild(theDataNode); 
 			    int childIndexI= 0;  // Initialize child scan index.
-			    while ( true ) // Recursively display any updated descendants.
+			    while ( true ) // Recursively display any changed descendants.
 			      { // Process one descendant subtree.
 			        DataNode childDataNode=  // Get the child, the descendant root.
 			           (DataNode)getChild( theDataNode, childIndexI );
 			        if ( childDataNode == null )  // Null means no more children.
 			            break;  // so exit while loop.
-			        displayChangedNodesFromV( // Recursively display descendant. 
+			        displayChangedNodesFromV( // Recursively display descendant group. 
 			        		theTreePath, childDataNode ); 
 			        childIndexI++;  // Increment index for processing next child.
 			      	}
 					reportingChangeB(  // Display subtree root node.
 							parentTreePath, theDataNode );
-			    theDataNode.theChangeFlag= // Unmark the subtree root. 
-			    		DataNode.ChangeFlag.NONE;
 	      	}
 
   		private void resetChangesInSubtreeV( DataNode theDataNode )
@@ -731,11 +753,13 @@ public class DataTreeModel
           are assumed to be connected to theDataNode.
           */
 	      {
-	  	  	switch ( theDataNode.theChangeFlag ) {
+	  	  	switch ( theDataNode.theTreeChange ) {
 			  		case NONE:
 			  	  	; // Do nothing.
 			  	  	break;
 			  	  default: 
+              theDataNode.theTreeChange= // Reset root node update status. 
+                  DataNode.TreeChange.NONE;
 			  	  	int childIndexI= 0;  // Initialize child scan index.
 					    while ( true ) // Recursively reset appropriate descendants.
 					      { // Process one child subtree.
@@ -747,26 +771,23 @@ public class DataTreeModel
 					        		childDataNode ); 
 					        childIndexI++;  // Increment index for processing next child.
 					      	}
-					    theDataNode.theChangeFlag= // Reset root node update status. 
-					    		DataNode.ChangeFlag.NONE;
 			  	  	break;
 			  		}
 	      	}
 
-    /* Reporting methods and their support methods for 
-      reporting changes of the TreeModel data.
-      One of these methods is called when the DataNode tree changes.
-
-      Reporting changes is tricky for 2 reasons:
-      * The TreeModel is used to report changes, 
-        but the TreeModel itself doesn't make changes.
-      * It must be done on the Event Dispatch Thread (EDT),
-        and must be done in real time.  
-        This is done using invokeAndWaitV(..).
-
-      All of these methods should be called only in the Event Dispatch Thread 
-      (EDT), and so should the changes that those calls report.
-      */
+      /* Reporting methods and their support methods for 
+        reporting changes of the TreeModel data.
+        One of these methods is called when the DataNode tree changes.
+  
+        Reporting changes is tricky for 2 reasons:
+        * The TreeModel is used to report changes, 
+          but the TreeModel itself doesn't make changes.
+        * It must be done on the Event Dispatch Thread (EDT),
+          and must be done in real time.  
+  
+        All of these methods should be called only in the Event Dispatch Thread 
+        (EDT), and so should the changes that those calls report.
+        */
 
         @SuppressWarnings("unused") ///opt Might need later.
         private void reportingInsertV(
@@ -869,7 +890,8 @@ public class DataTreeModel
 	              	new Object[] {theDataNode}
 	              	);
 	            try {
-  	              fireTreeNodesChanged( theTreeModelEvent );  // Firing as change event.
+  	              fireTreeNodesChanged( // Firing as change event.
+  	                  theTreeModelEvent);
                 } catch ( Exception theException  ) {
                   theAppLog.debug( "DataTreeModel.reportingChangeB((..) to "
                     + NL + "  theDataNode=" + theDataNode + " with indexI=" + indexI 
@@ -908,6 +930,7 @@ public class DataTreeModel
             return resultB;
             }
 
+        
     /*  ///opt  Maybe save this somewhere in case I need a DepthFirstSearch.
 			private TreePath searchingForTreePath( DataNode targetDataNode )
         /* This method is not needed anymore, because:

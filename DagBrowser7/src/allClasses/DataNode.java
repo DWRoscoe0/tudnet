@@ -66,10 +66,10 @@ public abstract class DataNode
           DataTreeModel inDataTreeModel
           )
       Its purpose is to return a JComponent that can 
-      display and possibly manipulate an instance of this DNode.
+      display and possibly manipulate an instance of this DataNode.
       This method in this class returns JComponents that
       display the node either as a simple list or as a block of text.
-      More complicated DNodes should override this default method
+      More complicated DataNodes should override this default method
       with one that returns a more capable JComponent.   
 
       ///enh Possible methods to add:
@@ -94,16 +94,31 @@ public abstract class DataNode
   
     // Instance variables
 
-      /* Variables for a hybrid computing cache using
-        lazy evaluation by up-propagation of 
-        properties DataNode in the DataNode hierarchy.
-        Changes in a DNode can affect the properties,
-        including the displayed appearance, of ancestor DNodes.
-        They are used mainly for deciding when to repaint
-        cells representing DataNodes in JTrees, JLists, and JLabels.
+      /* Tree node change notification system.
+       
+        This is part of a multiple thread system for 
+        aggregating and processing DataNode change notifications 
+        from multiple threads and eventually 
+        displaying changed nodes to the GUI.
+        Communication happens through shared memory consisting of
+        variables names "theTreeChange" in the DataNode tree.
+        Threads that report and aggregate node changes write
+        values other than TreeChange.NONE to the variables and
+        propagates these changes toward the root.
+        The thread that processes and displays nodes to the GUI
+        writes the value TreeChange.NONE to the variables
+        and propagate those changes toward the leaves.
+        A change to any node means that it and all its ancestors
+        should be redisplayed to the GUI.
+        This is an example of restricted value multitasking communication. 
+        No locks are used.
+        
+        This system is used for deciding when to repaint
+        cells representing DataNodes in JTrees and JLists.
+        ///enh Make it work with JavaFX trees also.
         */
-      public ChangeFlag theChangeFlag= ChangeFlag.NONE;
-      public enum ChangeFlag  
+      public TreeChange theTreeChange= TreeChange.NONE;
+      public enum TreeChange
         /* These constants are used to delay and manage the firing of 
           node appearance change notification events to GUI components.
           It is based on the theory that if the appearance of a node changes,
@@ -116,16 +131,13 @@ public abstract class DataNode
           which helps in dealing with changes in a tree's branching structure.
           STRUCTURE_CHANGED is interpreted as a need to reevaluate
           and display the entire subtree that contains it.
-          
+
           ///org To better match the way caches are invalidated,
-          theChangeFlag field should probably be converted into two fields:
+          theTreeChange field should probably be converted into two fields:
           * a field to indicate subtree changes
           * a field to indicate structure changes
-          SUBTREE_CHANGED and STRUCTURE_CHANGED 
-          are associated with value invalidation.
-          NONE is associated with value invalidation.
-          
-          ///org A more scalable solution would be 
+
+          ///org A more scalable solution might be 
           to not propagate general changes 
           which might cause a GUI appearance change,
           but propagate node field change dependencies between nodes,
@@ -134,7 +146,10 @@ public abstract class DataNode
           attributes in nodes that were actually being displayed. 
           */
         {
-          // Minimum needed for correct operation.
+          // Minimum values needed for correct operation.
+
+          // Value Name           // Value Description
+
           NONE,                   // No changes here or in descendants.
                                   // The cell is correct as displayed.
                                   // This subtree may be ignored.

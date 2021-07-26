@@ -221,7 +221,7 @@ public class NamedList
 			  		}
 		  	}
 
-	  protected boolean propagateIntoSubtreeB( LogLevel theMaxLogLevel )  ///enh Make boolean.
+	  protected boolean propagateIntoSubtreeB( LogLevel theMaxLogLevel )  
 	    /* This method propagates theMaxLogLevel into 
 		    this node and any of its descendants which need it.
 		    It acts only if the present level is different from theMaxLogLevel.
@@ -249,12 +249,15 @@ public class NamedList
 	  			theDataNode.propagateIntoSubtreeB( // recursively propagate  
 	  					theMaxLogLevel); // the new level into child subtree.
 		  	}
-	  
+
     protected boolean reportChangeInChildB( final DataNode childDataNode )
       /* This method reports a change to the DataTreeModel of 
         a change in childDataNode, which must be one of this node's children.
-        This will cause an update of the user display 
+        This will [eventually] cause an update of the user display 
         to show that change if needed.
+
+        This method always returns true.
+        Earlier versions returned false if there was an error,
         This method returns true if successful, false if there was an error,
           such as a null parameter or the the DataNode tree root
           not being reachable from the child. 
