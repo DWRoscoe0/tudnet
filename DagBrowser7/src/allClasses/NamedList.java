@@ -45,12 +45,6 @@ public class NamedList
 	
 		// Instance variables.
 	
-			protected DataTreeModel theDataTreeModel; // For reporting DAG changes.
-			  // This also doubles as a flag for the propagateDownV(..) method.
-			  // theDataTreeModel != null means down-propagation into this node
-			  // and all its descendants has already occurred and 
-			  // need not be done again, except for new added children. 
-	
 	    protected MultiLink<DataNode> childMultiLinkOfDataNodes= // Set to empty
           new ListMultiLink<DataNode>(); // ListMultiLink of DataNodes.
 
@@ -177,7 +171,8 @@ public class NamedList
 	      if // Notify TreeModel only if there is one referenced. 
 	        ( theDataTreeModel != null ) 
 		      {
-		      	theDataTreeModel.signalInsertionV( 
+		      	//// theDataTreeModel.signalInsertionV( 
+	          DataTreeModel.signalInsertionV(
 		      			parentDataNode, insertAtI, childDataNode 
 			      		);
 		      	}
@@ -203,8 +198,8 @@ public class NamedList
 	      this node and any of its descendants which need it. 
 	      */
 		  {
-		  	if // Propagate into children DataTreeModel only if 
-		  	  ( ( theDataTreeModel != null ) // input TreeModel is not null but 
+		  	if // Propagate only if 
+		  	  ( ( theDataTreeModel != null ) // input TreeModel is not null and 
 		  	  	&& ( this.theDataTreeModel == null )  // our TreeModel is null.
 		  	  	)
 			  	{
@@ -213,11 +208,13 @@ public class NamedList
 			  			theDataNode.propagateIntoSubtreeV(  // recursively propagate
 			  					theDataTreeModel // the TreeModel 
 			  					);
-			  	  super.propagateIntoSubtreeV( // Propagate List into super-class. 
-			  	  		theDataTreeModel 
-			  	  		);
-		  		  this.theDataTreeModel=  // Finally set TreeModel last because
-		  		  		theDataTreeModel; // it is the controlling flag.
+
+		  	    super.propagateIntoSubtreeV( // Propagate List into super-class. 
+			  	  		theDataTreeModel // This stores theDataTreeModel.
+			  	  		); // It's done last because it is the controlling flag.
+
+		  		  //// this.theDataTreeModel=  // Finally set TreeModel last because
+		  		  ////		theDataTreeModel; // it is the controlling flag.
 			  		}
 		  	}
 
@@ -263,7 +260,8 @@ public class NamedList
           not being reachable from the child. 
         */
     	{
-    		theDataTreeModel.signalChangeV( childDataNode );
+    		//// theDataTreeModel.signalChangeV( childDataNode );
+        DataTreeModel.signalChangeV( childDataNode );
     	  return true;
 				}
 

@@ -234,7 +234,8 @@ public class AppFactory {  // For App class lifetimes.
         theTCPCopier,
         theScheduledThreadPoolExecutor,
         newAppInstanceManager,
-        theConnectionManager
+        theConnectionManager,
+        theDataRoot
         );
   		
   		// Save in instance variables injected objects that are needed later.

@@ -54,6 +54,7 @@ public class AppGUI
     private ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor;
     private AppInstanceManager theAppInstanceManager;
     private ConnectionManager theConnectionManager;
+    private DataRoot theDataRoot;
 
     public AppGUI(   // Constructor.
         EpiThread theConnectionManagerEpiThread,
@@ -65,7 +66,8 @@ public class AppGUI
         TCPCopier theTCPCopier,
         ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor,
         AppInstanceManager theAppInstanceManager,
-        ConnectionManager theConnectionManager
+        ConnectionManager theConnectionManager,
+        DataRoot theDataRoot
         )
       {
 	      this.theConnectionManagerEpiThread= theConnectionManagerEpiThread;
@@ -78,6 +80,7 @@ public class AppGUI
         this.theScheduledThreadPoolExecutor= theScheduledThreadPoolExecutor;
         this.theAppInstanceManager= theAppInstanceManager;
         this.theConnectionManager= theConnectionManager;
+        this.theDataRoot= theDataRoot;
         }
     
     class InstanceCreationRunnable // Listens for other local app instances.
@@ -218,7 +221,14 @@ public class AppGUI
        */
       {
       toReturn: {
-        theDataTreeModel.displayTreeModelChangesV();
+        //// theDataTreeModel.displayTreeModelChangesV();
+          EDTUtilities.runOrInvokeAndWaitV( () -> { // Do on EDT thread. 
+              //// displayChangedNodesFromRootV()
+              DataTreeModel.displayChangedNodesFromV( // Display from...
+                  theDataRoot.getParentOfRootTreePath( ), 
+                  theDataRoot.getRootDataNode( ) 
+                  );
+              });
         if (theAppInstanceManager.tryToStartUpdateB())
           break toReturn; // Exit immediately to complete update.
         theConnectionManager.tryProcessingImportDataB();

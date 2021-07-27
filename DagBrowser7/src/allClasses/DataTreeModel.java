@@ -520,7 +520,9 @@ public class DataTreeModel
       It is highly customized for Java, its JTree class, and its GUI.
       */
 
-      public synchronized void signalChangeV( DataNode theDataNode )
+      //// public synchronized void signalChangeV( DataNode theDataNode )
+      //// public void signalChangeV( DataNode theDataNode )
+      public static void signalChangeV( DataNode theDataNode )
 	      /* This method signals the change of a single DataNode, 
 		      theDataNode.
 		      */
@@ -529,7 +531,9 @@ public class DataTreeModel
 	      	signalSubtreeChangeV( theDataNode ); // Convert to a subtree change.
         	}
 
-      public synchronized void signalInsertionV( 
+      //// public synchronized void signalInsertionV( 
+      //// public void signalInsertionV(
+      public static void signalInsertionV(
           DataNode parentDataNode, 
           int indexI, 
           DataNode childDataNode 
@@ -544,7 +548,9 @@ public class DataTreeModel
       	      parentDataNode, indexI, childDataNode );
           }
 
-      public synchronized void signalRemovalV( 
+      //// public synchronized void signalRemovalV( 
+      //// public void signalRemovalV(
+      public static void signalRemovalV(
           DataNode parentDataNode, 
           int indexI, 
           DataNode childDataNode 
@@ -559,7 +565,8 @@ public class DataTreeModel
       	      parentDataNode, indexI, childDataNode );
 		      }
 
-      private void signalStructuralChangeInV(
+      //// private void signalStructuralChangeInV(
+      private static void signalStructuralChangeInV(
           DataNode parentDataNode, 
           int indexI, 
           DataNode childDataNode 
@@ -587,7 +594,8 @@ public class DataTreeModel
   			  		}
           }
 
-      private void signalSubtreeChangeV( 
+      //// private void signalSubtreeChangeV( 
+      private static void signalSubtreeChangeV( 
 		      DataNode theDataNode
 		      )
         /* This method signals that a change happened that might affect
@@ -628,7 +636,9 @@ public class DataTreeModel
         which is the only public method in this group.
         */
 
-      public void displayTreeModelChangesV()
+      //// public void displayTreeModelChangesV()
+      @SuppressWarnings("unused") ////
+      private void displayTreeModelChangesV()
         /* This method switches to the EDT if it is not the active thread, 
           and calls displayChangedNodesFromRootV(),
           which tries to display all nodes that have changed
@@ -636,7 +646,14 @@ public class DataTreeModel
           */
         {
       		theAppLog.trace( "DataTreeModel.displayTreeModelChangesV()" );
-	    		EDTUtilities.runOrInvokeAndWaitV( // Do following on EDT thread. 
+	    		EDTUtilities.runOrInvokeAndWaitV( () -> { // Do on EDT thread. 
+              //// displayChangedNodesFromRootV()
+              displayChangedNodesFromV( // Display from...
+                  theDataRoot.getParentOfRootTreePath( ), 
+                  theDataRoot.getRootDataNode( ) 
+                  );
+    	    		});
+	    		  /*  ////
 		    		new Runnable() {
 		    			@Override  
 		          public void run() {
@@ -646,8 +663,11 @@ public class DataTreeModel
 		            }
 		          } 
 		        );
+            */  ////
         	}
 
+      //// private void displayChangedNodesFromRootV()
+      @SuppressWarnings("unused") ////
       private void displayChangedNodesFromRootV()
         /* This method displays any nodes 
           that need displaying starting with 
@@ -661,7 +681,8 @@ public class DataTreeModel
 	        		);
         	}
 
-      private void displayChangedNodesFromV(
+      //// private static void displayChangedNodesFromV(
+      public static void displayChangedNodesFromV(
       		TreePath parentTreePath, DataNode theDataNode 
       		)
         /* If theDataNode has changed, as indicated by it theTreeChange,
@@ -689,7 +710,8 @@ public class DataTreeModel
 	    	  	}
         }
 
-  		private void displayStructuralChangeV( 
+  		//// private void displayStructuralChangeV( 
+      private static void displayStructuralChangeV(
   				TreePath parentTreePath, DataNode theDataNode 
       		)
   		  /* This method displays a structural change of
@@ -708,11 +730,12 @@ public class DataTreeModel
               theDataNode );
 
           TreePath theTreePath= parentTreePath.pathByAddingChild(theDataNode);
-    			reportingStructuralChangeB( theTreePath ); // Display by reporting
+    			//// reportingStructuralChangeB( theTreePath ); // Display by reporting
+          theDataNode.theDataTreeModel.reportingStructuralChangeB( theTreePath ); // Display by reporting
     			  // to the listeners.
 	      	}
 
-  		private void displayChangedSubtreeV(
+  		private static void displayChangedSubtreeV(
       		TreePath parentTreePath, DataNode theDataNode 
       		)
         /* This method displays a subtree rooted at theDataNode,
@@ -733,18 +756,23 @@ public class DataTreeModel
 			    while ( true ) // Recursively display any changed descendants.
 			      { // Process one descendant subtree.
 			        DataNode childDataNode=  // Get the child, the descendant root.
-			           (DataNode)getChild( theDataNode, childIndexI );
+			           //// (DataNode)getChild( theDataNode, childIndexI );
+			           theDataNode.getChild( childIndexI );
 			        if ( childDataNode == null )  // Null means no more children.
 			            break;  // so exit while loop.
-			        displayChangedNodesFromV( // Recursively display descendant group. 
+			        //// displayChangedNodesFromV( // Recursively display descendant group. 
+			        //// theDataNode.theDataTreeModel.displayChangedNodesFromV( // Recursively display descendant group.
+			        DataTreeModel.displayChangedNodesFromV( // Recursively display descendant group.
 			        		theTreePath, childDataNode ); 
 			        childIndexI++;  // Increment index for processing next child.
 			      	}
-					reportingChangeB(  // Display subtree root node.
+					//// reportingChangeB(  // Display subtree root node.
+			    theDataNode.theDataTreeModel.reportingChangeB(  // Display subtree root node.
 							parentTreePath, theDataNode );
 	      	}
 
-  		private void resetChangesInSubtreeV( DataNode theDataNode )
+  		//// private void resetChangesInSubtreeV( DataNode theDataNode )
+  		private static void resetChangesInSubtreeV( DataNode theDataNode )
         /* This method resets the change status of 
           all the nodes in a subtree rooted at theDataNode.
           The node's descendants that need resetting 
@@ -764,7 +792,8 @@ public class DataTreeModel
 					    while ( true ) // Recursively reset appropriate descendants.
 					      { // Process one child subtree.
 					        DataNode childDataNode=  // Get the child.
-					           (DataNode)getChild( theDataNode, childIndexI );
+					           //// (DataNode)getChild( theDataNode, childIndexI );
+					           (DataNode)theDataNode.getChild(childIndexI);
 					        if ( childDataNode == null )  // Null means no more children.
 					            break;  // so exit while loop.
 					        resetChangesInSubtreeV( // Recursively reset child subtree. 
@@ -786,7 +815,9 @@ public class DataTreeModel
           and must be done in real time.  
   
         All of these methods should be called only in the Event Dispatch Thread 
-        (EDT), and so should the changes that those calls report.
+        (EDT), and so should the changes that those calls report,
+        or this method should SWITCH to the EDT before firing
+        their TreeModelEvent.
         */
 
         @SuppressWarnings("unused") ///opt Might need later.

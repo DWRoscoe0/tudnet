@@ -94,6 +94,12 @@ public abstract class DataNode
   
     // Instance variables
 
+      protected DataTreeModel theDataTreeModel; // For reporting DAG changes.
+        // This also doubles as a flag for the propagateDownV(..) method.
+        // theDataTreeModel != null means down-propagation into this node
+        // and all its descendants has already occurred and 
+        // need not be done again, except for new added children. 
+
       /* Tree node change notification system.
        
         This is part of a multiple thread system for 
@@ -255,13 +261,16 @@ public abstract class DataNode
           into the nodes which needed it when 
           a DataNode is added to a NamedList or one of its subclasses.
             
-          This method ignores theDataTreeModel and does nothing 
-          because this is a leaf node and leaves have no subtrees,
-          so the propagation ends here.
-          List nodes that do need it will override this method.
-          See NamedList.
+          This method simply stores theDataTreeModel.
+          It does nothing else because this is a leaf node 
+          and leaves have no subtrees, so the propagation ends here.
+          List nodes will override this method.  See NamedList.
+          
+          This method should be called last because 
+          theDataTreeModel is the controlling flag for tree traversal.
           */
         {
+          this.theDataTreeModel=  theDataTreeModel;
           }
 
       public void setTreeParentToV( NamedList treeParentNamedList )

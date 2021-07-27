@@ -224,7 +224,7 @@ public class Unicaster
             /// appLogger.info("run() activating root state machine.");
 	          doOnEntryV(); // Recursively activate all states that should be. 
 	          /// appLogger.info("run() machine activated, doing first display.");
-        		theDataTreeModel.displayTreeModelChangesV(); // Display tree after arrival.
+        		/// theDataTreeModel.displayTreeModelChangesV(); // Display tree after arrival.
 
 	      	  runLoop(); // Do actual input processing in a loop.
 
@@ -233,8 +233,8 @@ public class Unicaster
 	  	    	theUnicasterManager.removingV( this ); // Removing self from tree.
 	  	    	  // This isn't really needed, but is a good test of display logic.
 	  	    	/// appLogger.info("run() after remove and before final display.");
-	      		Nulls.fastFailNullCheckT(theDataTreeModel);
-	      		theDataTreeModel.displayTreeModelChangesV(); // Display tree after removal.
+	      		/// Nulls.fastFailNullCheckT(theDataTreeModel);
+	      		/// theDataTreeModel.displayTreeModelChangesV(); // Display tree after removal.
           	}
           catch( IOException theIOException) {
           	Misc.logAndRethrowAsRuntimeExceptionV( 
