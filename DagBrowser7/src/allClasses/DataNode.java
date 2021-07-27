@@ -123,7 +123,7 @@ public abstract class DataNode
         cells representing DataNodes in JTrees and JLists.
         ///enh Make it work with JavaFX trees also.
         */
-      public TreeChange theTreeChange= TreeChange.NONE;
+      public volatile TreeChange theTreeChange= TreeChange.NONE;
       public enum TreeChange
         /* These constants are used to delay and manage the firing of 
           node appearance change notification events to GUI components.
