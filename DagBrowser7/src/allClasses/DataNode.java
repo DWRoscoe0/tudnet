@@ -683,6 +683,7 @@ public abstract class DataNode
               // getClass().getName() + '@' + Integer.toHexString(hashCode())
         }
 
+
   // Other methods.
 
     public JComponent getDataJComponent( 
@@ -854,6 +855,242 @@ public abstract class DataNode
        */
       {
         return treeParentNamedList;
+        }
+
+    
+    // Methods refactored/moved from DataTreeModel.
+
+    /* The following code is used to aggregate changes to the
+      Infogora hierarchy for later and more efficient display to the user.
+      These methods do not need to be called on the Event Dispatch Thread (EDT).
+
+      This is in implementation of up-propagation of changes 
+      that might affect the the appearance of ancestor nodes.
+      This is not a general-purpose up-propagation system.
+      It is highly customized for Java, its JTree class, and its GUI.
+      */
+
+    public static void signalRemovalV(
+        DataNode parentDataNode, 
+        int indexI, 
+        DataNode childDataNode 
+        )
+      /* This method signals the removal of a single child DataNode, 
+        childDataNode, from theSubjectDataNode at child position indexI.
+        ///opt Implement without StructuralChange.
+        */
+      {
+        EDTUtilities.testAndLogIfRunningEDTB();
+        signalStructuralChangeInV( // Translate to a structural change. 
+            parentDataNode, indexI, childDataNode );
+        }
+
+    static void signalStructuralChangeInV(
+        DataNode parentDataNode, 
+        int indexI, 
+        DataNode childDataNode 
+        )
+      /* This method is used to signal a structural change in 
+        theSubjectDataNode.  It is used to deal with insertions and deletions.
+        */
+      {
+        EDTUtilities.testAndLogIfRunningEDTB();
+    
+        switch // Act based on present flag value.
+          ( parentDataNode.theTreeChange ) 
+          { 
+            case NONE: // Node is unmarked, so must mark it.
+            case SUBTREE_CHANGED: // Node marked changed, so must override it.
+              parentDataNode.theTreeChange= // Mark node. 
+                TreeChange.STRUCTURE_CHANGED;
+              signalSubtreeChangeV( // Propagate as ordinary change 
+                  parentDataNode.getTreeParentNamedList()); // to parent.
+              break;
+              
+            case STRUCTURE_CHANGED: // Already marked as desired
+              ; // so no additional marking is needed.
+              break;
+            }
+        }
+
+    static void signalSubtreeChangeV( 
+        DataNode theDataNode
+        )
+      /* This method signals that a change happened that might affect
+        this node or one of its subtrees.
+        If it needs to change the update status of theDataNode then
+        it will also propagate the change to the node's parent if needed.
+        */
+      {
+        EDTUtilities.testAndLogIfRunningEDTB();
+        if ( theDataNode == null ) // No node to update 
+          ; // so do nothing.
+        else // Mark as changed this node and its unmarked ancestors.
+          switch ( theDataNode.theTreeChange ) {
+            case NONE: // Node is unmarked, so now it must be.
+              theDataNode.theTreeChange= // Mark node changed. 
+                TreeChange.SUBTREE_CHANGED;
+              signalSubtreeChangeV( // Propagate change to parent, if any. 
+                  theDataNode.getTreeParentNamedList() );
+              break;
+              
+            case STRUCTURE_CHANGED: // Already marked for structure change.
+            case SUBTREE_CHANGED: // Already marked with node/subtree change.
+              ; // So no additional marking is needed.
+              break;
+            }
+        }
+
+    public static void signalInsertionV(
+        DataNode parentDataNode, 
+        int indexI, 
+        DataNode childDataNode 
+        )
+      /* This method signals the insertion of a single child DataNode, 
+        childDataNode, into theSubjectDataNode at child position indexI.
+        ///opt Implement without StructuralChange.
+        */
+      {
+        EDTUtilities.testAndLogIfRunningEDTB();
+        DataNode.signalStructuralChangeInV( // Translate to a structural change.
+            parentDataNode, indexI, childDataNode );
+        }
+
+    public static void signalChangeV( DataNode theDataNode )
+      /* This method signals the change of a single DataNode, 
+        theDataNode.
+        */
+      {
+        EDTUtilities.testAndLogIfRunningEDTB();
+        DataNode.signalSubtreeChangeV( theDataNode ); // Convert to a subtree change.
+        }
+
+  
+    /* The following code is used to display to the user
+        previously aggregated changes recorded in 
+        theTreeChange-s of DataNodes in the Infogora hierarchy.
+
+        The displaying is done with the firing of notification events 
+        to GUI components such as JTrees and JLists which
+        are displaying parts of the Infogora hierarchy.
+        Wone exception, these methods must be called on 
+        the Event Dispatch Thread (EDT).
+        The one exception is displayTreeModelChangesV(),
+        which is the only public method in this group.
+        */
+    
+    public static void displayChangedNodesFromV(
+        TreePath parentTreePath, DataNode theDataNode 
+        )
+      /* If theDataNode has changed, as indicated by it theTreeChange,
+        then it is displayed and repeats this for any children.
+        The TreePath of its parent is parentTreePath.
+        */
+      {
+        if ( theDataNode == null ) // Nothing to display. 
+          ; // Do nothing.
+        else { // Check this subtree.
+          theAppLog.trace( "DataTreeModel.displayChangedNodesFromV() "
+              + theDataNode.getNodePathString() );
+          // Display this node and any updated descendants if it's needed.
+          switch ( theDataNode.theTreeChange ) {
+            case NONE: // This subtree is unmarked.
+              ; // So display nothing.
+              break;
+            case STRUCTURE_CHANGED: // Structure of this subtree changed.
+              displayStructuralChangeV( parentTreePath, theDataNode );
+              break;
+            case SUBTREE_CHANGED: // Something else in this subtree changed.
+              displayChangedSubtreeV( parentTreePath, theDataNode );
+              break;
+            }
+          }
+      }
+
+    private static void displayStructuralChangeV(
+        TreePath parentTreePath, DataNode theDataNode 
+        )
+      /* This method displays a structural change of
+        a subtree rooted at theDataNode.
+        The TreePath of its parent is parentTreePath.
+    
+        ///fix?  It is presently assumed that displaying a structural change
+        will be handled by displaying the entire subtree.
+        If this is not true then it might be necessary
+        to report which nodes have changed also,
+        probably after the structure change has been reported.
+        It shouldn't do any harm, except maybe take extra time.
+        */
+      {
+        resetChangesInSubtreeV( // Do this now so late changes are recorded.
+            theDataNode );
+    
+        TreePath theTreePath= parentTreePath.pathByAddingChild(theDataNode);
+        theDataNode.theDataTreeModel.reportingStructuralChangeB( theTreePath ); // Display by reporting
+          // to the listeners.
+        }
+
+    static void displayChangedSubtreeV(
+      TreePath parentTreePath, DataNode theDataNode 
+      )
+    /* This method displays a subtree rooted at theDataNode,
+      a subtree which is known to have changed,
+      It does this by reporting changes to the Java GUI.
+      The TreePath of the subtree's parent is parentTreePath.
+      The descendants are displayed recursively first.
+      The TreeChange of all the nodes of any subtree displayed is reset. 
+      */
+    {
+      theAppLog.trace( "DataTreeModel.displayChangedSubtreeV() "
+          + theDataNode.getNodePathString() );
+      theDataNode.theTreeChange= // Unmark the subtree root now
+          TreeChange.NONE; // to prevent loss of future changes.
+    
+      TreePath theTreePath= parentTreePath.pathByAddingChild(theDataNode); 
+      int childIndexI= 0;  // Initialize child scan index.
+      while ( true ) // Recursively display any changed descendants.
+        { // Process one descendant subtree.
+          DataNode childDataNode=  // Get the child, the descendant root.
+             theDataNode.getChild( childIndexI );
+          if ( childDataNode == null )  // Null means no more children.
+              break;  // so exit while loop.
+          DataNode.displayChangedNodesFromV( // Recursively display descendant group.
+              theTreePath, childDataNode ); 
+          childIndexI++;  // Increment index for processing next child.
+          }
+      theDataNode.theDataTreeModel.reportingChangeB(  // Display subtree root node.
+          parentTreePath, theDataNode );
+      }
+
+    static void resetChangesInSubtreeV( DataNode theDataNode )
+      /* This method resets the change status of 
+        all the nodes in a subtree rooted at theDataNode.
+        The node's descendants that need resetting 
+        are reset recursively first.
+        All nodes that need resetting 
+        are assumed to be connected to theDataNode.
+        */
+      {
+        switch ( theDataNode.theTreeChange ) {
+          case NONE:
+            ; // Do nothing.
+            break;
+          default: 
+            theDataNode.theTreeChange= // Reset root node update status. 
+                TreeChange.NONE;
+            int childIndexI= 0;  // Initialize child scan index.
+            while ( true ) // Recursively reset appropriate descendants.
+              { // Process one child subtree.
+                DataNode childDataNode=  // Get the child.
+                   (DataNode)theDataNode.getChild(childIndexI);
+                if ( childDataNode == null )  // Null means no more children.
+                    break;  // so exit while loop.
+                resetChangesInSubtreeV( // Recursively reset child subtree. 
+                    childDataNode ); 
+                childIndexI++;  // Increment index for processing next child.
+                }
+            break;
+          }
         }
 
     }

@@ -221,10 +221,8 @@ public class AppGUI
        */
       {
       toReturn: {
-        //// theDataTreeModel.displayTreeModelChangesV();
           EDTUtilities.runOrInvokeAndWaitV( () -> { // Do on EDT thread. 
-              //// displayChangedNodesFromRootV()
-              DataTreeModel.displayChangedNodesFromV( // Display from...
+              DataNode.displayChangedNodesFromV( // Display from...
                   theDataRoot.getParentOfRootTreePath( ), 
                   theDataRoot.getRootDataNode( ) 
                   );

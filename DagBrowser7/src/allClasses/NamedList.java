@@ -172,7 +172,7 @@ public class NamedList
 	        ( theDataTreeModel != null ) 
 		      {
 		      	//// theDataTreeModel.signalInsertionV( 
-	          DataTreeModel.signalInsertionV(
+	          DataNode.signalInsertionV(
 		      			parentDataNode, insertAtI, childDataNode 
 			      		);
 		      	}
@@ -261,7 +261,7 @@ public class NamedList
         */
     	{
     		//// theDataTreeModel.signalChangeV( childDataNode );
-        DataTreeModel.signalChangeV( childDataNode );
+        DataNode.signalChangeV( childDataNode );
     	  return true;
 				}
 
