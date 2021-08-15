@@ -4,9 +4,11 @@ import static allClasses.AppLog.theAppLog;
 
 import javax.swing.tree.TreePath;
 
+import allClasses.javafx.EpiTreeItem;
+
 public class DataRoot {
 
-  /* This class manages the root of the Data DAG.  
+  /* This class manages the root of the Data DAG, expressed in various ways.
     In addition to providing access to the root of the DAG,
     it also provides a pseudo-root, which is the parent of the root,
     which can be used as a sentinel to make code which 
@@ -23,16 +25,18 @@ public class DataRoot {
   // Variables.
 
     private DataNode rootDataNode; // Root node of data DAG.
-
     private DataNode parentOfRootDataNode; // Parent of root node.
 
+    // Paths, mainly for Swing GUI.
     private TreePath parentOfRootTreePath; // Path to parent node.
+    private TreePath rootTreePath; // Path to root node, for Swing.
 
-    private TreePath rootTreePath; // Path to root node.
+    private EpiTreeItem rootEpiTreeItem; // Root TreeItem, for JavaFX GUI.
 
   DataRoot( )  // Non-injecting constructor. 
 	  {
 	    }
+
 
   // Injector methods.
 
@@ -77,6 +81,9 @@ public class DataRoot {
           pathByAddingChild(  // ...and adding...
             rootDataNode  // ...the root node.
             );
+      
+      rootEpiTreeItem= // Calculating root EpiTreeItem... 
+          new EpiTreeItem(rootDataNode); // ...from root DataNode.
       }
 
   public void finalizeDataNodesV()
@@ -90,17 +97,24 @@ public class DataRoot {
 
   // Other methods.
 
-    public DataNode getRootDataNode( )
+    public DataNode getRootDataNode()
       { return rootDataNode; }
 
-    public DataNode getParentOfRootDataNode( )
+
+    public DataNode getParentOfRootDataNode()
       { return parentOfRootDataNode; }
 
-    public TreePath getParentOfRootTreePath( )
+
+    public TreePath getParentOfRootTreePath()
       { return parentOfRootTreePath; }
 
-    public TreePath getRootTreePath( )
+
+    public TreePath getRootTreePath()
       { return rootTreePath; }
+
+
+    public EpiTreeItem getRootEpiTreeItem()
+      { return rootEpiTreeItem; }
 
     public boolean isLegalB( TreePath aTreePath)
       /* This method is used to test whether a TreePath is legal
@@ -116,5 +130,6 @@ public class DataRoot {
           && (! aTreePath.equals( getParentOfRootTreePath( ) ) )
           ; 
         }
+
 
   }

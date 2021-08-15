@@ -42,7 +42,7 @@ public class TextStreams2 extends SimplerListWithMap<String,TextStream2> {
       UnicasterManager theUnicasterManager
       )
     { 
-      super(nameString,emptyListOfDataNodes());
+      super(nameString,emptyArrayOfDataNodes());
 
       this.thePersistent= thePersistent;
       this.theAppFactory= theAppFactory;

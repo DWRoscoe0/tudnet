@@ -92,6 +92,8 @@ public class Navigation extends EpiStage
        * * one which displays a TreeView of the hierarchy, and
        * * one which displays a single DataNode and its descendants.
        * Each Scene has a button to switch to the other Scene.
+       * 
+       * ///opt Simplify by using theDataRoot.getRootEpiTreeItem().
        */
       {
         theRootEpiTreeItem= new EpiTreeItem(theRootDataNode);

@@ -224,7 +224,8 @@ public class AppGUI
           EDTUtilities.runOrInvokeAndWaitV( () -> { // Do on EDT thread. 
               DataNode.displayChangedNodesFromV( // Display from...
                   theDataRoot.getParentOfRootTreePath( ), 
-                  theDataRoot.getRootDataNode( ) 
+                  theDataRoot.getRootDataNode( ),
+                  theDataRoot.getRootEpiTreeItem()
                   );
               });
         if (theAppInstanceManager.tryToStartUpdateB())

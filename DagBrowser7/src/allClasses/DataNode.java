@@ -18,6 +18,7 @@ import allClasses.javafx.TitledListNode;
 import allClasses.javafx.TitledTextNode;
 import allClasses.javafx.TreeStuff;
 import allClasses.multilink.ElementMultiLink;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
@@ -203,9 +204,12 @@ public abstract class DataNode
         ///opt: Remove to reduce node storage, because
         // this feature hasn't been used for a long time.
 
+      private static NamedLeaf dummyDataNode=
+          NamedLeaf.makeNamedLeaf( "DUMMY-DataNode" );
+      
     // Static methods.
 
-      static DataNode[] emptyListOfDataNodes()
+      static DataNode[] emptyArrayOfDataNodes()
         // This method returns a new empty DataNode list.
         { 
           return new DataNode[]{}; 
@@ -980,11 +984,13 @@ public abstract class DataNode
         */
     
     public static void displayChangedNodesFromV(
-        TreePath parentTreePath, DataNode theDataNode 
+        TreePath parentTreePath, DataNode theDataNode,EpiTreeItem theEpiTreeItem 
         )
-      /* If theDataNode has changed, as indicated by it theTreeChange,
+      /* If theDataNode has changed, as indicated by theTreeChange,
         then it is displayed and repeats this for any children.
         The TreePath of its parent is parentTreePath.
+
+        theEpiTreeItem is ignored, but will be used for JavaFX TreeView display.
         */
       {
         if ( theDataNode == null ) // Nothing to display. 
@@ -1001,7 +1007,8 @@ public abstract class DataNode
               displayStructuralChangeV( parentTreePath, theDataNode );
               break;
             case SUBTREE_CHANGED: // Something else in this subtree changed.
-              displayChangedSubtreeV( parentTreePath, theDataNode );
+              displayChangedSubtreeV( 
+                  parentTreePath, theDataNode, theEpiTreeItem );
               break;
             }
           }
@@ -1031,14 +1038,16 @@ public abstract class DataNode
         }
 
     static void displayChangedSubtreeV(
-      TreePath parentTreePath, DataNode theDataNode 
+      TreePath parentTreePath, DataNode theDataNode, EpiTreeItem theEpiTreeItem 
       )
     /* This method displays a subtree rooted at theDataNode,
       a subtree which is known to have changed,
       It does this by reporting changes to the Java GUI.
-      The TreePath of the subtree's parent is parentTreePath.
       The descendants are displayed recursively first.
       The TreeChange of all the nodes of any subtree displayed is reset. 
+
+      parentTreePath is the TreePath of the subtree's parent 
+      and is used to identify the tree node to the Swing GUI.
       */
     {
       theAppLog.trace( "DataTreeModel.displayChangedSubtreeV() "
@@ -1054,12 +1063,22 @@ public abstract class DataNode
              theDataNode.getChild( childIndexI );
           if ( childDataNode == null )  // Null means no more children.
               break;  // so exit while loop.
-          DataNode.displayChangedNodesFromV( // Recursively display descendant group.
-              theTreePath, childDataNode ); 
+          DataNode.displayChangedNodesFromV( // Recursively display descendants.
+              theTreePath, childDataNode, theEpiTreeItem ); 
           childIndexI++;  // Increment index for processing next child.
           }
-      theDataNode.theDataTreeModel.reportingChangeB(  // Display subtree root node.
+      theDataNode.theDataTreeModel.reportingChangeB( // Display root with Swing.
           parentTreePath, theDataNode );
+      Platform.runLater(() -> {
+        ////// theEpiTreeItem.reportingChangeB( // Display root with JavaFX.
+        //////     parentTreePath, theDataNode );
+        // force reference change
+        //// theEpiTreeItem.setValue(null);
+        theEpiTreeItem.setValue(dummyDataNode);
+        // theEpiTreeItem.setValue(theDataNode);
+        System.out.println(
+          "DataNode.displayChangedSubtreeV(.) "+theDataNode+", "+theEpiTreeItem);
+        }); 
       }
 
     static void resetChangesInSubtreeV( DataNode theDataNode )

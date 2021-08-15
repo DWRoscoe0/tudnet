@@ -102,7 +102,7 @@ public class ConnectionManager
       {
       	super.initializeV(  // Constructing base class.
           "Connection-Manager", // DataNode (not thread) name.
-          emptyListOfDataNodes()
+          emptyArrayOfDataNodes()
           );
 
         // Storing other dependencies injected into this class.

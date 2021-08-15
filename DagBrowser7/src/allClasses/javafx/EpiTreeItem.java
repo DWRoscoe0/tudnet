@@ -1,7 +1,7 @@
 package allClasses.javafx;
 
 import java.util.ArrayList;
-import java.util.Iterator;
+//// import java.util.Iterator;
 
 import allClasses.DataNode;
 import javafx.collections.ObservableList;
@@ -48,36 +48,39 @@ public class EpiTreeItem
        * Finally it returns the TreeItem's child list.
        * 
        * Note-1: childCacheLoadedB is set before loading is complete.
-       * This is done because super.getChildren() calls getChildren(),
+       * This is done because super.getChildren() called getChildren(),
        * specifically in TreeItem.updateExpandedDescendentCount(boolean reset), 
        * which resulted in a StackOverflowError when 
        * childCacheLoadedB was set after loading was complete.
        * 
-       * Note-2: Originally lazily-evaluated children 
-       * were evaluated and added to the TreeItem.getChildren() ObservableList 
+       * Note-2: This method originally lazily-evaluated children 
+       * and added them to the TreeItem.getChildren() ObservableList 
        * one-at-a-time.
        * This resulted in an unwanted selection when a node was expanded
        * if the selection was below the expanded node.
        * This problem disappeared when the entire collection of children
        * was evaluated and added at once, similar to
        * the way it is done in the TreeItem documentation example of
-       *  an overridden getChildren() that uses lazy-evaluation. 
+       * an overridden getChildren() that uses lazy-evaluation. 
        */
       {
         if (! childCacheLoadedB) {
           childCacheLoadedB= true; // See Note-1 above.
           DataNode parentDataNode= getValue();
+          ArrayList<EpiTreeItem> childrenListOfTreeItems= // Make empty list. 
+              new ArrayList<EpiTreeItem>();
+          /*  ////
           Iterator<DataNode> theIterator=
               parentDataNode.getChildListOfDataNodes().iterator();
-          ArrayList<EpiTreeItem> accumulatorList= new ArrayList<EpiTreeItem>();
-          while (theIterator.hasNext()) {
+          while (theIterator.hasNext()) { // See Note-2 above.
             DataNode childDataNode= theIterator.next();
-            accumulatorList.add( // See Note-2 above.
-                new EpiTreeItem(childDataNode)
-                );
+            accumulatorList.add(new EpiTreeItem(childDataNode));
             }
-          super.getChildren().setAll(accumulatorList);
-          // childCacheLoadedB= true; // Doing here caused StackOverflowError.
+          */  ////
+          for // Add all children as TreeItems.  See Note-2 above.
+            (DataNode childDataNode : parentDataNode.getChildListOfDataNodes())
+            childrenListOfTreeItems.add(new EpiTreeItem(childDataNode));
+          super.getChildren().setAll(childrenListOfTreeItems);
           }
         return super.getChildren();
         }
