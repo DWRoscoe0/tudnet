@@ -1,6 +1,6 @@
 package allClasses;
 
-public class InfogoraRoot  extends NamedList {
+public class TUDNetRoot  extends NamedList {
   
   /* This class is the root node of the DataNode DAG.
     A NamedList could be used in its place,
@@ -8,12 +8,12 @@ public class InfogoraRoot  extends NamedList {
     makes debugging easier.
     */
   
-  public InfogoraRoot(   // Constructor. 
+  public TUDNetRoot(   // Constructor. 
       DataNode... inDataNodes 
       )
     {
 	    initializeV( // Calling superclass NamedList with...
-	        "Infogora-Root", // ...the name for this DataNode and...
+	        Config.appString + "-Root", // ...the name for this DataNode and...
 	        inDataNodes // ...the array of all child DataNodes.
 	        );
       }

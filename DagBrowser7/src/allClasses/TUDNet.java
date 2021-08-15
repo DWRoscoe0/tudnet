@@ -65,9 +65,9 @@ import static allClasses.SystemSettings.NL;
   */
 
 
-class Infogora  // The class is the root of this app.
+class TUDNet
 
-	{ // Infogora
+	{ // TUDNet
 
 	  public static void main(String[] argStrings)
 
@@ -124,16 +124,17 @@ class Infogora  // The class is the root of this app.
             to send messages back to the InfogoraStarter process.
           -userDir : see InfogoraStarter.
           -tempDir : see InfogoraStarter.
-        * Legal switches output from a parent Infogora app process
-          to a new child Infogora app process:
+        * Legal switches output from a parent Infogora/TUDNet app process
+          to a new child Infogora/TUDNet app process:
           -otherAppIs : followed by the full path to 
             the parent processes initiator file.
           -starterPort : passed through, see above.
-        * Legal switches output by an Infogora app instance which is starting
-          to the InstancePort of an already running Infogora app instance:
+        * Legal switches output by an Infogora/TUDNet app instance 
+          which is starting to the InstancePort of an already running 
+          Infogora/TUDNet app instance:
           -otherAppIs : followed by the full path to 
             the starting apps initiator file.
-        * Legal switches output from a descendant Infogora app to 
+        * Legal switches output from a descendant Infogora/TUDNet app to 
           the TCP socket -starterPort of an its ancestor InfogoraStarter app:
           -delegatorExiting : indicates that this descendant process which
             delegated its job to its own descendant, is exiting.
@@ -158,13 +159,13 @@ class Infogora  // The class is the root of this app.
 	      BackupTerminator theBackupTerminator= ///ano 
 	          BackupTerminator.makeBackupTerminator(); ///ano
 
-        theAppLog.info(true,"Infogora.main() ======= APP IS STARTING =======");
+        theAppLog.info(true,"TUDNet.main() ======= APP IS STARTING =======");
 
         if (null != javaFXStartAnomalyString) ///ano Report any problem with
           theAppLog.error(javaFXStartAnomalyString); ///ano runtime startup.
 
         CommandArgs theCommandArgs= new CommandArgs(argStrings);
-        AppSettings.initializeV(Infogora.class, theCommandArgs);
+        AppSettings.initializeV(TUDNet.class, theCommandArgs);
 	      AppFactory theAppFactory= new AppFactory(theCommandArgs, thePersistent);
 	      App theApp= theAppFactory.getApp();
 	      theApp.runV();  // Run the app until shutdown.
@@ -173,7 +174,7 @@ class Infogora  // The class is the root of this app.
 	      // If here then shutdown was requested in App.runV() and it returned.
 	      thePersistent.finalizeV();  // Write any new or changed app properties.
         BackupTerminator.logThreadsV(); ///ano Record threads active now.
-        theAppLog.info(true,"Infogora.main() ======== APP IS ENDING ========"
+        theAppLog.info(true,"TUDNet.main() ======== APP IS ENDING ========"
           + NL + "    by closing log file and exiting the main(.) method.");
         theAppLog.closeFileIfOpenB(); // Close log file for exit.
         theBackupTerminator.setTerminationUnderwayV(); ///ano Start exit timer.
@@ -182,6 +183,6 @@ class Infogora  // The class is the root of this app.
 	      } // End of the body of main(.).
 
 
-		} // Infogora
+		} // /TUDNet
 
 // End of file.
