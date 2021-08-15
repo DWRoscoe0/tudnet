@@ -29,7 +29,7 @@ public class TreeStuff
    * though this is not being done now.
    * 
    * ///org Representing location with a TreePath might be necessary 
-   * when and if Infogora supports DataNode DAGs instead of trees.
+   * when and if TUDNet supports DataNode DAGs instead of trees.
    */
 
   {

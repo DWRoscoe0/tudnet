@@ -7,7 +7,7 @@ public interface TreeAware
     is to return the JComponent's TreeHelper object.
     
     A TreeHelper is an object that helps a JComponent deal with
-    the Infogora DAG as a tree.  For more information,
+    the TUDNet DAG as a tree.  For more information,
     see the TreeHelper class.
     */
 

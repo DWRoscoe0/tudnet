@@ -14,7 +14,7 @@ public class Outline
 	extends MutableList
 
   /* The purpose of this class is to create 
-    a large subtree for Infogora demonstrations
+    a large subtree for TUDNet demonstrations
     from a text file that uses indented lines as in an outline.
     
     This class does lazy-loading, based on needs.

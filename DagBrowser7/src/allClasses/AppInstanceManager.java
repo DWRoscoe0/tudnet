@@ -550,7 +550,7 @@ l    * If the app receives a message indicating
 	        */
 	      {
 	        String outputString= // Make input string to be used in packet. 
-	            "-otherAppIs " + // Infogora -otherAppIs option.
+	            "-otherAppIs " + // App's -otherAppIs option.
 	            runningAppFile.getAbsolutePath(); // Path of this app's file.
           boolean successB= LocalSocket.localSendToPortB(
 	            outputString, thePortManager.getInstancePortI());
@@ -690,7 +690,8 @@ l    * If the app receives a message indicating
   			    				 	int answerI= JOptionPane.showConfirmDialog(
   			    				 		null, // No parent component. 
   			                outString,
-  			                "Infogora Info",
+  			                //// "Infogora Info",
+  			                Config.appString + " Info",
   			                JOptionPane.OK_CANCEL_OPTION
   			                );
   	    		    	  	resultAtomicBoolean.set(
@@ -700,7 +701,8 @@ l    * If the app receives a message indicating
   				    				JOptionPane.showMessageDialog(
   			    						null, // No parent component. 
   			                outString,
-  			                "Infogora Info",
+  			                //// "Infogora Info",
+                        Config.appString + " Info",
   			                JOptionPane.INFORMATION_MESSAGE
   			                );
   			    				}

@@ -572,7 +572,8 @@ public class FileOps
 
     // File path and directory maker methods.
 
-    public static File makePathRelativeToAppFolderFile(String... fileRelativePathStrings )
+    public static File makePathRelativeToAppFolderFile(
+        String... fileRelativePathStrings )
       /* This method creates a File name path object by adding,
         to the path name for the standard app folder,
         the fileRelativePathStrings, which is an array of Strings 

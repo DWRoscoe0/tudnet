@@ -129,7 +129,7 @@ public class ConnectionManager
     /* Making and breaking Unicast and Multicast network connections 
       between peers and passing data through those connections.
 
-      The following code manages connections with other Infogora peer nodes.
+      The following code manages connections with other TUDNet peer nodes.
       These includes both Unicast and Multicast connections.
       It makes use of the class UnicasterManager as a helper.
   

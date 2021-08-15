@@ -20,8 +20,8 @@ public class DataTreeModel
   implements TreeModel, Serializable
 
   /* This class implements an extended TreeModel 
-    used for browsing the Infogora hierarchy tree (eventually DAG).
-    It's purpose is to provide a link from the Infogora hierarchy to
+    used for browsing the TUDNet hierarchy tree (eventually DAG).
+    It's purpose is to provide a link from the TUDNet hierarchy to
     Java Swing GUI components, especially the Java JTree.
     Because of this, most of the code, including extensions,
     is meant to be run on the Event Dispatch Thread (EDT).
@@ -43,7 +43,7 @@ public class DataTreeModel
     its inability to deal with the general Directed Graph,
     or even the Directed Acyclic Graph (DAG), in which
     a node can have multiple parents.
-    This is  desirable feature of the Infogora Hierarchy
+    This is  desirable feature of the TUDNet Hierarchy
     so a solution needs to be found.
     * It will probably be done with a HashMap.
     * It might be done by changing the present node parent link to
@@ -164,7 +164,7 @@ public class DataTreeModel
 
       public synchronized Object getRoot() 
         /* Returns tree root.  
-          This is not the Infogora root DataNode.
+          This is not the TUDNet root DataNode.
           It is the parent of the root.
           See DataRoot for more information.
           */
@@ -235,7 +235,7 @@ public class DataTreeModel
       public synchronized void valueForPathChanged( 
           TreePath theTreePath, Object newValueObject 
           )
-        /* Unimplemented because Infogora doesn't edit the DAG/tree, yet
+        /* Unimplemented because TUDNet doesn't edit the DAG/tree, yet
           Simply logs an error and returns.
           
           Actually this might no longer be true.  

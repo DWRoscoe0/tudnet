@@ -1,4 +1,4 @@
-  Infogora Name Space
+  TUDNet Name Space
     Publications
         Publications By User
             Alice
@@ -34,13 +34,13 @@
                 .
             .
             Bob ...
-              Bob's Infogora Site
+              Bob's TUDNet Site
               
               COMING SOON
               .
             .
             Carol ...
-              Carol's Infogora Site
+              Carol's TUDNet Site
               
               COMING SOON
               .
@@ -48,40 +48,40 @@
         .
         Index Entries By Word (partial list).
             bob
-              Bob's Infogora Site
+              Bob's TUDNet Site
               .
             .
             carol
-              Carol's Infogora Site
+              Carol's TUDNet Site
               .
             .
             coming
-              Bob's Infogora Site
+              Bob's TUDNet Site
               .
-              Carol's Infogora Site
+              Carol's TUDNet Site
               .
             .
             infogora
-              Bob's Infogora Site
+              Bob's TUDNet Site
               .
-              Carol's Infogora Site
+              Carol's TUDNet Site
               .
             .
             site
-              Bob's Infogora Site
+              Bob's TUDNet Site
               .
-              Carol's Infogora Site
+              Carol's TUDNet Site
               .
             .
             soon
-              Bob's Infogora Site
+              Bob's TUDNet Site
               .
-              Carol's Infogora Site
+              Carol's TUDNet Site
               .
             .
         .
     .
-    Infogora Applications
+    TUDNet Applications
       Network Monitors
         Network Adapters
           Wire Networks
@@ -96,7 +96,7 @@
           .
           Sneaker Networks
           
-          [ If you exchange Infogora files with other people 
+          [ If you exchange TUDNet files with other people 
           using removable media, then those exchanges will appear here. ]
           .
         .
@@ -109,22 +109,22 @@
 
           [ Usually just The Internet will appear here. ]
           .
-          Infogora Overlay Networks
-            Infogora Base Network
+          TUDNet Overlay Networks
+            TUDNet Base Network
 
             Connected?  Yes/No
             Number Of Other Nodes Connected: #######
             Number Of Unique Files Stored: #########
             ...
             .
-            My Infogora Publication Networks.
+            My TUDNet Publication Networks.
             
-            [ These overlay networks hold all your Infogora publications. ]
+            [ These overlay networks hold all your TUDNet publications. ]
             .
-            My Infogora Subscription Networks.
+            My TUDNet Subscription Networks.
             
             [ These overlay networks represent all your 
-            Infogora subscriptions and active searches. ]
+            TUDNet subscriptions and active searches. ]
             .
           .
         .
@@ -132,15 +132,15 @@
       Publishing Tools
       
       [ These are applications for the creation and publishing
-      Infogora files, including documents, images, audios, and videos. 
+      TUDNet files, including documents, images, audios, and videos. 
       
       These tools also simultaneously create and publish 
       appropriate Index Entries for those files.
-      This is the invisible half of the Infogora search engine. ]
+      This is the invisible half of the TUDNet search engine. ]
       .
       Streaming Tools
       
-      [ These are applications for generating Infogora streams.
+      [ These are applications for generating TUDNet streams.
       
       A stream is a special type of publication.
       What makes a stream special is that instead of 
@@ -159,7 +159,7 @@
       [ This is the visible half of the distributed search engine.
       It looks like a typical Internet search engine.
       
-      It searches the Infogora Index for words the user types
+      It searches the TUDNet Index for words the user types
       to find publications which contain those words.
 
       It can also setup searches that run in the background,
@@ -176,7 +176,7 @@
       persistent/background searches.
       
       These are all the things that interest you
-      that the Infogora is monitoring for you, 
+      that the TUDNet is monitoring for you, 
       looking for new publications or changes in old ones.
       ]
       .
@@ -186,7 +186,7 @@
       e-mail, Instant Messaging, Twitter, Web forums, 
       text chat rooms, and USENET. 
       
-      The Infogora will provide functionally similar messaging,
+      The TUDNet will provide functionally similar messaging,
       but to limit spam it will be done using the same 
       Publish-Subscribe metaphor used for other publications. ]
       .
@@ -194,7 +194,7 @@
     My Short-Cuts
     
     [ This is where you can place short-cut links to
-    parts of the Infogora Name Space that you visit often. ]
+    parts of the TUDNet Name Space that you visit often. ]
     .
   .
   Sentinel-Record to catch going past EndOfFile.

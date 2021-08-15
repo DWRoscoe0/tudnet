@@ -865,7 +865,7 @@ public abstract class DataNode
     // Methods refactored/moved from DataTreeModel.
 
     /* The following code is used to aggregate changes to the
-      Infogora hierarchy for later and more efficient display to the user.
+      TUDNet hierarchy for later and more efficient display to the user.
       These methods do not need to be called on the Event Dispatch Thread (EDT).
 
       This is in implementation of up-propagation of changes 
@@ -972,11 +972,11 @@ public abstract class DataNode
   
     /* The following code is used to display to the user
         previously aggregated changes recorded in 
-        theTreeChange-s of DataNodes in the Infogora hierarchy.
+        theTreeChange-s of DataNodes in the TUDNet hierarchy.
 
         The displaying is done with the firing of notification events 
         to GUI components such as JTrees and JLists which
-        are displaying parts of the Infogora hierarchy.
+        are displaying parts of the TUDNet hierarchy.
         Wone exception, these methods must be called on 
         the Event Dispatch Thread (EDT).
         The one exception is displayTreeModelChangesV(),

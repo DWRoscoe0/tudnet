@@ -35,7 +35,7 @@ public class DagBrowserPanel
     // ,TreePathListener
 
   /* This class implements a JPanel which allows a user to browse 
-    the Infogora DAG (Directed Acyclic Graph) as a Tree.
+    the TUDNet DAG (Directed Acyclic Graph) as a Tree.
     The left main sub-panel is the navigation panel
     and displays the DAG as an outline using a JTree.
     The right main sub-panel displays an individual node  

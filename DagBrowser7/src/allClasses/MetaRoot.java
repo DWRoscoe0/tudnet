@@ -153,7 +153,7 @@ public class MetaRoot {
       selection meta-data is used to reselect 
       the most recently selected child, if there is one.
 
-      Note, because in the Infogora app 
+      Note, because in the TUDNet app 
       the selection in the right pane is normally 
       a child of the selection in the left pane,
       and because sometimes actual DataNodes are deleted or moved,

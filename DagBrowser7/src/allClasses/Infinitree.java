@@ -6,7 +6,7 @@ public class Infinitree
   extends NamedList
 
   /* The purpose of this class is to create a an infinite subtree
-    for testing the Infogora browser.
+    for testing the TUDNet browser.
     Though this class extends the class NamedList,
     it doesn't actually store references to its children.
     The getChild( int inIndexI ) method 

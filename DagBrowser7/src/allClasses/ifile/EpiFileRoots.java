@@ -9,7 +9,7 @@ public class EpiFileRoots
 
   extends NamedList
 
-  /* This class is the root of the Infogora user's file system.  
+  /* This class is the root of the TUDNet user's file system.  
    * It is similar in structure and operation to EpiDirectory,
    * which is used for other, non-root folders.
    * 

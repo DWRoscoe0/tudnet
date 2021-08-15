@@ -22,7 +22,7 @@ import allClasses.epinode.MapEpiNode;
 public class Navigation extends EpiStage
 
   /* This class is, or eventually will be,
-   * for navigation of the Infogora DataNode hierarchy.
+   * for navigation of the TUDNet DataNode hierarchy.
    * It displays the hierarchy in 1 of 2 ways:
    * * showing the hierarchy as a navigable tree using a TreeView, or 
    * * showing a particular DataNode and possibly some of its descendants,
@@ -120,7 +120,7 @@ public class Navigation extends EpiStage
 
         displayTreeOrDataNodeV();
 
-        finishStateInitAndStartV("Infogora JavaFX Navigation UI");
+        finishStateInitAndStartV("TUDNet JavaFX Navigation UI");
         
         showCommandHelpV();
         }

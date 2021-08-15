@@ -6,9 +6,9 @@ public class IRoots
 
   extends IDirectory
 
-  /* This class represents the root of the Infogora user's filesystems.
+  /* This class represents the root of the TUDNet user's filesystems.
    * It is the root of only the user's filesystems, 
-   * not the Infogora hierarchy, or the user's part of it that hierarchy,
+   * not the TUDNet hierarchy, or the user's part of it that hierarchy,
    *   
    * This class subclasses IDirectory for 
    * its ability to deal with lists of other directories.
